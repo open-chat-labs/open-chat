@@ -109,7 +109,7 @@
     $: undeletingMessagesStore = client.undeletingMessagesStore;
     $: undeleting = $undeletingMessagesStore.has(msg.messageId);
 
-    let canUndelete = true;
+    let canUndelete = false;
 
     afterUpdate(() => {
         if (readByMe && observer && msgElement) {
