@@ -3,7 +3,8 @@ use ic_cdk::timer::TimerId;
 use std::cell::Cell;
 use std::time::Duration;
 use tracing::trace;
-use types::{CanisterId, UserEvent};
+use types::CanisterId;
+use user_canister::Event as UserEvent;
 
 thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();

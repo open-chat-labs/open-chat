@@ -2,9 +2,19 @@ use crate::guards::caller_is_user_index_canister;
 use crate::{mutate_state, RuntimeState};
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
-use local_user_index_canister::c2c_notify_user_index_events::{Args, Response, UserIndexEvent};
+use local_user_index_canister::c2c_notify_events::{Response::*, *};
+use local_user_index_canister::Event;
 use tracing::info;
-use types::{PhoneNumberConfirmed, ReferredUserRegistered, StorageUpgraded, UserEvent, UserSuspended, UsernameChanged};
+use user_canister::{
+    Event as UserEvent, PhoneNumberConfirmed, ReferredUserRegistered, StorageUpgraded, UserJoinedGroup, UserSuspended,
+    UsernameChanged,
+};
+
+#[update_msgpack(guard = "caller_is_user_index_canister")]
+#[trace]
+fn c2c_notify_events(args: Args) -> Response {
+    mutate_state(|state| c2c_notify_user_index_events_impl(args, state))
+}
 
 #[update_msgpack(guard = "caller_is_user_index_canister")]
 #[trace]
@@ -16,19 +26,18 @@ fn c2c_notify_user_index_events_impl(args: Args, runtime_state: &mut RuntimeStat
     for event in args.events {
         handle_event(event, runtime_state);
     }
-
-    Response::Success
+    Success
 }
 
-fn handle_event(event: UserIndexEvent, runtime_state: &mut RuntimeState) {
+fn handle_event(event: Event, runtime_state: &mut RuntimeState) {
     match event {
-        UserIndexEvent::UsernameChanged(ev) => {
+        Event::UsernameChanged(ev) => {
             runtime_state.data.user_event_sync_queue.push(
                 ev.user_id.into(),
                 UserEvent::UsernameChanged(Box::new(UsernameChanged { username: ev.username })),
             );
         }
-        UserIndexEvent::UserSuspended(ev) => {
+        Event::UserSuspended(ev) => {
             runtime_state.data.user_event_sync_queue.push(
                 ev.user_id.into(),
                 UserEvent::UserSuspended(Box::new(UserSuspended {
@@ -39,7 +48,7 @@ fn handle_event(event: UserIndexEvent, runtime_state: &mut RuntimeState) {
                 })),
             );
         }
-        UserIndexEvent::PhoneNumberConfirmed(ev) => {
+        Event::PhoneNumberConfirmed(ev) => {
             runtime_state.data.user_event_sync_queue.push(
                 ev.user_id.into(),
                 UserEvent::PhoneNumberConfirmed(Box::new(PhoneNumberConfirmed {
@@ -49,7 +58,7 @@ fn handle_event(event: UserIndexEvent, runtime_state: &mut RuntimeState) {
                 })),
             );
         }
-        UserIndexEvent::StorageUpgraded(ev) => {
+        Event::StorageUpgraded(ev) => {
             runtime_state.data.user_event_sync_queue.push(
                 ev.user_id.into(),
                 UserEvent::StorageUpgraded(Box::new(StorageUpgraded {
@@ -59,7 +68,7 @@ fn handle_event(event: UserIndexEvent, runtime_state: &mut RuntimeState) {
                 })),
             );
         }
-        UserIndexEvent::UserRegistered(ev) => {
+        Event::UserRegistered(ev) => {
             runtime_state.data.global_users.add(ev.user_principal, ev.user_id, ev.is_bot);
 
             if let Some(referred_by) = ev.referred_by {
@@ -74,12 +83,22 @@ fn handle_event(event: UserIndexEvent, runtime_state: &mut RuntimeState) {
                 }
             }
         }
-        UserIndexEvent::SuperAdminStatusChanged(ev) => {
+        Event::SuperAdminStatusChanged(ev) => {
             runtime_state.data.global_users.set_super_admin(ev.user_id, ev.is_super_admin);
         }
-        UserIndexEvent::MaxConcurrentCanisterUpgradesChanged(ev) => {
+        Event::MaxConcurrentCanisterUpgradesChanged(ev) => {
             runtime_state.data.max_concurrent_canister_upgrades = ev.value;
             info!("Max concurrent canister upgrades set to {}", ev.value);
+        }
+        Event::UserJoinedGroup(ev) => {
+            runtime_state.data.user_event_sync_queue.push(
+                ev.user_id.into(),
+                UserEvent::UserJoinedGroup(Box::new(UserJoinedGroup {
+                    chat_id: ev.chat_id,
+                    as_super_admin: ev.as_super_admin,
+                    latest_message_index: ev.latest_message_index,
+                })),
+            );
         }
     }
     crate::jobs::sync_events_to_user_canisters::start_job_if_required(runtime_state);

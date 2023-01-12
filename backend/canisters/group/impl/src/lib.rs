@@ -57,6 +57,10 @@ impl RuntimeState {
         self.env.caller() == self.data.user_index_canister_id
     }
 
+    pub fn is_caller_local_user_index(&self) -> bool {
+        self.env.caller() == self.data.local_user_index_canister_id
+    }
+
     pub fn is_caller_group_index(&self) -> bool {
         let caller = self.env.caller();
         caller == self.data.group_index_canister_id || caller == self.data.local_group_index_canister_id

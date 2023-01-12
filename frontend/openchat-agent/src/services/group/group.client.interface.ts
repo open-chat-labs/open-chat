@@ -130,4 +130,5 @@ export interface IGroupClient {
         latestClientThreadUpdate: bigint | undefined
     ): Promise<ThreadPreviewsResponse>;
     registerProposalVote(messageIdx: number, adopt: boolean): Promise<RegisterProposalVoteResponse>;
+    localUserIndex(): Promise<string>;
 }

@@ -10,6 +10,7 @@ pub mod c2c_end_poll;
 pub mod c2c_grant_super_admin;
 pub mod c2c_handle_bot_messages;
 pub mod c2c_mark_read_v2;
+pub mod c2c_notify_events;
 pub mod c2c_notify_group_deleted;
 pub mod c2c_notify_user_events;
 pub mod c2c_remove_from_group;

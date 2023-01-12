@@ -844,6 +844,13 @@
         return true;
     }
 
+    function closeRightPanel() {
+        if ($rightPanelHistory.find((panel) => panel.kind === "message_thread_panel")) {
+            replace(removeQueryStringParam(new URLSearchParams($querystring), "open"));
+        }
+        rightPanelHistory.set([]);
+    }
+
     $: bgHeight = $dimensions.height * 0.9;
     $: bgClip = (($dimensions.height - 32) / bgHeight) * 361;
 </script>
@@ -916,8 +923,8 @@
 </main>
 
 {#if showRight && floatRightPanel}
-    <Overlay fade={!$mobileWidth}>
-        <div class="right-wrapper" class:rtl={$rtlStore}>
+    <Overlay on:close={closeRightPanel} dismissible fade={!$mobileWidth}>
+        <div on:click|stopPropagation class="right-wrapper" class:rtl={$rtlStore}>
             <RightPanel
                 on:showFaqQuestion={showFaqQuestion}
                 on:userAvatarSelected={userAvatarSelected}

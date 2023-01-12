@@ -401,4 +401,8 @@ export class CachingGroupClient implements IGroupClient {
     ): Promise<RegisterProposalVoteResponse> {
         return this.client.registerProposalVote(messageIdx, adopt);
     }
+
+    localUserIndex(): Promise<string> {
+        return this.client.localUserIndex();
+    }
 }

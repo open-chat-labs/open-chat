@@ -8,6 +8,14 @@ pub fn caller_is_controller() -> Result<(), String> {
     }
 }
 
+pub fn caller_is_local_user_index_canister() -> Result<(), String> {
+    if read_state(|state| state.is_caller_local_user_index_canister()) {
+        Ok(())
+    } else {
+        Err("Caller is not a local user index canister".to_string())
+    }
+}
+
 pub fn caller_is_group_index() -> Result<(), String> {
     if read_state(|state| state.is_caller_group_index_canister()) {
         Ok(())
