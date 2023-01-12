@@ -81,10 +81,6 @@ fn handle_event(event: UserIndexEvent, runtime_state: &mut RuntimeState) {
             runtime_state.data.max_concurrent_canister_upgrades = ev.value;
             info!("Max concurrent canister upgrades set to {}", ev.value);
         }
-        UserIndexEvent::LocalUserAdded(ev) => {
-            runtime_state.data.global_users.add(ev.user_principal, ev.user_id, false);
-            runtime_state.data.local_users.add(ev.user_id, ev.wasm_version, ev.created);
-        }
     }
     crate::jobs::sync_events_to_user_canisters::start_job_if_required(runtime_state);
 }
