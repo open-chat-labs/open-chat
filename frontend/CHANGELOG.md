@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Make the right hand panel dismissible via Esc or clicking away ([#2958](https://github.com/open-ic/open-chat/pull/2958))
+
 - Attempt to fix twitter card rendering ([#2957](https://github.com/open-ic/open-chat/pull/2957))
 
 - Attempt to reduce the re-rendering of ChatMessage ([#2956](https://github.com/open-ic/open-chat/pull/2956))
