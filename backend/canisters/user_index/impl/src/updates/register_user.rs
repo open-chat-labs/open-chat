@@ -27,29 +27,31 @@ async fn register_user(args: Args) -> Response {
         referred_by: args.referred_by,
     };
 
-    match local_user_index_canister_c2c_client::c2c_create_user(local_user_index_canister, &c2c_create_user_args).await {
-        Ok(local_user_index_canister::c2c_create_user::Response::Success(user_id)) => {
-            mutate_state(|state| {
-                commit(
-                    caller,
-                    args.username,
-                    user_wasm_version,
-                    user_id,
-                    args.referred_by,
-                    local_user_index_canister,
-                    state,
-                )
-            });
-            Success(user_id)
-        }
-        Ok(local_user_index_canister::c2c_create_user::Response::AlreadyRegistered) => AlreadyRegistered,
-        Ok(local_user_index_canister::c2c_create_user::Response::CyclesBalanceTooLow) => CyclesBalanceTooLow,
-        Ok(local_user_index_canister::c2c_create_user::Response::InternalError(error)) => InternalError(error),
-        Err(error) => {
-            mutate_state(|state| rollback(&args.username, state));
-            InternalError(format!("{error:?}"))
-        }
-    }
+    let result =
+        match local_user_index_canister_c2c_client::c2c_create_user(local_user_index_canister, &c2c_create_user_args).await {
+            Ok(local_user_index_canister::c2c_create_user::Response::Success(user_id)) => {
+                mutate_state(|state| {
+                    commit(
+                        caller,
+                        args.username,
+                        user_wasm_version,
+                        user_id,
+                        args.referred_by,
+                        local_user_index_canister,
+                        state,
+                    )
+                });
+                return Success(user_id);
+            }
+            Ok(local_user_index_canister::c2c_create_user::Response::AlreadyRegistered) => AlreadyRegistered,
+            Ok(local_user_index_canister::c2c_create_user::Response::CyclesBalanceTooLow) => CyclesBalanceTooLow,
+            Ok(local_user_index_canister::c2c_create_user::Response::InternalError(error)) => InternalError(error),
+            Err(error) => InternalError(format!("{error:?}")),
+        };
+
+    mutate_state(|state| rollback(&args.username, state));
+
+    result
 }
 
 struct PrepareOk {

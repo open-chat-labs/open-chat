@@ -8,7 +8,6 @@
     import SelectChatModal from "../SelectChatModal.svelte";
     import MiddlePanel from "./MiddlePanel.svelte";
     import RightPanel from "./RightPanel.svelte";
-    import { fly } from "svelte/transition";
     import {
         GroupSearchResponse,
         MessageMatch,
@@ -36,7 +35,6 @@
     import { push, replace, querystring } from "svelte-spa-router";
     import { pathParams } from "../../stores/routing";
     import type { RouteParams } from "../../stores/routing";
-    import { sineInOut } from "svelte/easing";
     import { toastStore } from "../../stores/toast";
     import {
         closeNotificationsForChat,
@@ -119,7 +117,7 @@
     $: confirmMessage = getConfirmMessage(confirmActionEvent);
 
     // layout stuff
-    $: showRight = $numberOfColumns === 3 || $rightPanelHistory.length > 0;
+    $: showRight = $rightPanelHistory.length > 0 || $numberOfColumns === 3;
     $: floatRightPanel = $numberOfColumns < 3;
     $: middleSelected = $pathParams.chatId !== undefined || hotGroups.kind !== "idle";
     $: leftSelected = $pathParams.chatId === undefined && hotGroups.kind === "idle";
@@ -287,8 +285,10 @@
             creatingThread = false;
             return;
         }
-        rightPanelHistory.update((history) => {
-            return history.filter((panel) => panel.kind !== "message_thread_panel");
+        tick().then(() => {
+            rightPanelHistory.update((history) => {
+                return history.filter((panel) => panel.kind !== "message_thread_panel");
+            });
         });
     }
 
@@ -583,13 +583,15 @@
                 creatingThread = true;
                 replace(`/${$selectedChatId}`);
             }
-            rightPanelHistory.set([
-                {
-                    kind: "message_thread_panel",
-                    threadRootMessageIndex: ev.threadRootMessageIndex,
-                    threadRootMessageId: ev.threadRootMessageId,
-                },
-            ]);
+            tick().then(() => {
+                rightPanelHistory.set([
+                    {
+                        kind: "message_thread_panel",
+                        threadRootMessageIndex: ev.threadRootMessageIndex,
+                        threadRootMessageId: ev.threadRootMessageId,
+                    },
+                ]);
+            });
         }
     }
 
