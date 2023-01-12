@@ -4,7 +4,9 @@ use candid::Principal;
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
 use local_user_index_canister::join_group::{Response::*, *};
-use types::{ChatId, MessageIndex, UserEvent, UserId, UserJoinedGroup};
+use types::{ChatId, MessageIndex, UserId};
+use user_canister::Event as UserEvent;
+use user_index_canister::Event as UserIndexEvent;
 
 #[update(guard = "caller_is_openchat_user")]
 #[trace]
@@ -70,22 +72,25 @@ fn commit(
     latest_message_index: Option<MessageIndex>,
     runtime_state: &mut RuntimeState,
 ) {
-    let event = UserJoinedGroup {
-        user_id,
-        chat_id,
-        as_super_admin,
-        latest_message_index,
-    };
     if runtime_state.data.local_users.get(&user_id).is_some() {
-        runtime_state
-            .data
-            .user_event_sync_queue
-            .push(user_id.into(), UserEvent::UserJoinedGroup(Box::new(event)));
+        runtime_state.data.user_event_sync_queue.push(
+            user_id.into(),
+            UserEvent::UserJoinedGroup(Box::new(user_canister::UserJoinedGroup {
+                chat_id,
+                as_super_admin,
+                latest_message_index,
+            })),
+        );
         crate::jobs::sync_events_to_user_canisters::start_job_if_required(runtime_state);
     } else {
         runtime_state.data.user_index_event_sync_queue.push(
             runtime_state.data.user_index_canister_id,
-            user_index_canister::c2c_notify_events::Event::UserJoinedGroup(event),
+            UserIndexEvent::UserJoinedGroup(user_index_canister::UserJoinedGroup {
+                user_id,
+                chat_id,
+                as_super_admin,
+                latest_message_index,
+            }),
         );
         crate::jobs::sync_events_to_user_index_canister::start_job_if_required(runtime_state);
     }

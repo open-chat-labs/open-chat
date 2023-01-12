@@ -147,9 +147,8 @@ mod sync_users_to_open_storage {
 }
 
 mod sync_events_to_local_user_index_canisters {
-    use local_user_index_canister::c2c_notify_user_index_events::Event;
-
     use super::*;
+    use local_user_index_canister::Event as LocalUserIndexEvent;
 
     pub fn run() {
         if let Some(batch) = mutate_state(next_batch) {
@@ -157,11 +156,11 @@ mod sync_events_to_local_user_index_canisters {
         }
     }
 
-    fn next_batch(runtime_state: &mut RuntimeState) -> Option<Vec<(CanisterId, Vec<Event>)>> {
+    fn next_batch(runtime_state: &mut RuntimeState) -> Option<Vec<(CanisterId, Vec<LocalUserIndexEvent>)>> {
         runtime_state.data.user_index_event_sync_queue.try_start_batch()
     }
 
-    async fn process_batch(batch: Vec<(CanisterId, Vec<Event>)>) {
+    async fn process_batch(batch: Vec<(CanisterId, Vec<LocalUserIndexEvent>)>) {
         let futures: Vec<_> = batch
             .into_iter()
             .map(|(canister_id, events)| sync_events(canister_id, events))
@@ -172,7 +171,7 @@ mod sync_events_to_local_user_index_canisters {
         mutate_state(|state| state.data.user_index_event_sync_queue.mark_batch_completed());
     }
 
-    async fn sync_events(canister_id: CanisterId, events: Vec<Event>) {
+    async fn sync_events(canister_id: CanisterId, events: Vec<LocalUserIndexEvent>) {
         let args = local_user_index_canister::c2c_notify_user_index_events::Args { events: events.clone() };
         if local_user_index_canister_c2c_client::c2c_notify_user_index_events(canister_id, &args)
             .await

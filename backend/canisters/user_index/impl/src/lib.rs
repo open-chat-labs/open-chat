@@ -7,7 +7,7 @@ use crate::model::user_principal_migration_queue::UserPrincipalMigrationQueue;
 use candid::Principal;
 use canister_logger::LogMessagesWrapper;
 use canister_state_macros::canister_state;
-use local_user_index_canister::c2c_notify_user_index_events::Event;
+use local_user_index_canister::Event as LocalUserIndexEvent;
 use model::local_user_index_map::LocalUserIndexMap;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
@@ -143,7 +143,7 @@ struct Data {
     pub cycles_dispenser_canister_id: CanisterId,
     pub open_storage_index_canister_id: CanisterId,
     pub open_storage_user_sync_queue: OpenStorageUserSyncQueue,
-    pub user_index_event_sync_queue: CanisterEventSyncQueue<Event>,
+    pub user_index_event_sync_queue: CanisterEventSyncQueue<LocalUserIndexEvent>,
     pub user_principal_migration_queue: UserPrincipalMigrationQueue,
     pub ledger_canister_id: CanisterId,
     pub super_admins: HashSet<UserId>,
@@ -210,13 +210,13 @@ impl Data {
         }
     }
 
-    pub fn push_event_to_local_user_index(&mut self, user_id: UserId, event: Event) {
+    pub fn push_event_to_local_user_index(&mut self, user_id: UserId, event: LocalUserIndexEvent) {
         if let Some(canister_id) = self.local_index_map.get_index_canister(&user_id) {
             self.user_index_event_sync_queue.push(canister_id, event);
         }
     }
 
-    pub fn push_event_to_all_local_user_indexes(&mut self, event: Event, except: Option<CanisterId>) {
+    pub fn push_event_to_all_local_user_indexes(&mut self, event: LocalUserIndexEvent, except: Option<CanisterId>) {
         for canister_id in self.local_index_map.canisters() {
             if except.map_or(true, |id| id != *canister_id) {
                 self.user_index_event_sync_queue.push(*canister_id, event.clone());

@@ -3,7 +3,7 @@ use crate::model::set_user_suspended_queue::{SetUserSuspendedInGroup, SetUserSus
 use crate::{mutate_state, read_state, RuntimeState};
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
-use local_user_index_canister::c2c_notify_user_index_events::{Event, UserSuspended};
+use local_user_index_canister::{Event, UserSuspended};
 use types::{ChatId, Milliseconds, SuspensionDuration, UserId};
 use user_index_canister::suspend_user::{Response::*, *};
 

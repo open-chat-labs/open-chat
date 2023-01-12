@@ -4,7 +4,9 @@ use model::global_user_map::GlobalUserMap;
 use model::local_user_map::LocalUserMap;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
-use types::{CanisterId, CanisterWasm, Cycles, TimestampMillis, Timestamped, UserEvent, UserId, Version};
+use types::{CanisterId, CanisterWasm, Cycles, TimestampMillis, Timestamped, UserId, Version};
+use user_canister::Event as UserEvent;
+use user_index_canister::Event as UserIndexEvent;
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::canister_event_sync_queue::CanisterEventSyncQueue;
 use utils::consts::CYCLES_REQUIRED_FOR_UPGRADE;
@@ -103,7 +105,7 @@ struct Data {
     pub total_cycles_spent_on_canisters: Cycles,
     pub user_event_sync_queue: CanisterEventSyncQueue<UserEvent>,
     #[serde(default)]
-    pub user_index_event_sync_queue: CanisterEventSyncQueue<user_index_canister::c2c_notify_events::Event>,
+    pub user_index_event_sync_queue: CanisterEventSyncQueue<UserIndexEvent>,
     pub test_mode: bool,
     pub max_concurrent_canister_upgrades: u32,
 }

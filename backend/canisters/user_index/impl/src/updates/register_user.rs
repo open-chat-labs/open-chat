@@ -3,7 +3,7 @@ use crate::{mutate_state, RuntimeState, USER_LIMIT};
 use candid::Principal;
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
-use local_user_index_canister::c2c_notify_user_index_events::{Event, UserRegistered};
+use local_user_index_canister::{Event, UserRegistered};
 use types::{CanisterId, UserId, Version};
 use user_index_canister::register_user::{Response::*, *};
 

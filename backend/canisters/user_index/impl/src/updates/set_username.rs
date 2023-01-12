@@ -2,7 +2,7 @@ use crate::model::user_map::UpdateUserResult;
 use crate::{mutate_state, RuntimeState};
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
-use local_user_index_canister::c2c_notify_user_index_events::{Event, UsernameChanged};
+use local_user_index_canister::{Event, UsernameChanged};
 use user_index_canister::set_username::{Response::*, *};
 
 const MAX_USERNAME_LENGTH: u16 = 25;

@@ -2,7 +2,7 @@ use crate::guards::caller_is_controller;
 use crate::{mutate_state, read_state, RuntimeState};
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
-use local_user_index_canister::c2c_notify_user_index_events::{Event, SuperAdminStatusChanged};
+use local_user_index_canister::{Event, SuperAdminStatusChanged};
 use types::UserId;
 use user_canister::c2c_grant_super_admin;
 use user_index_canister::add_super_admin::{Response::*, *};

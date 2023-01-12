@@ -2,10 +2,8 @@ use crate::model::direct_chat::DirectChat;
 use crate::updates::c2c_send_messages::{handle_message_impl, HandleMessageArgs};
 use crate::{mutate_state, RuntimeState, BASIC_GROUP_CREATION_LIMIT, PREMIUM_GROUP_CREATION_LIMIT};
 use ic_ledger_types::Tokens;
-use types::{
-    MessageContent, PhoneNumberConfirmed, ReferredUserRegistered, StorageUpgraded, SuspensionDuration, TextContent, UserId,
-    UserSuspended,
-};
+use types::{MessageContent, SuspensionDuration, TextContent, UserId};
+use user_canister::{PhoneNumberConfirmed, ReferredUserRegistered, StorageUpgraded, UserSuspended};
 use utils::consts::OPENCHAT_BOT_USER_ID;
 use utils::format::format_to_decimal_places;
 use utils::time::{DAY_IN_MS, HOUR_IN_MS};

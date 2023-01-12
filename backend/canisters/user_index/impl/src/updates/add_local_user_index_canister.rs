@@ -2,7 +2,7 @@ use crate::guards::caller_is_controller;
 use crate::{mutate_state, read_state, RuntimeState};
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
-use local_user_index_canister::c2c_notify_user_index_events::{Event, UserRegistered};
+use local_user_index_canister::{Event, UserRegistered};
 use tracing::info;
 use types::{CanisterId, CanisterWasm, Version};
 use user_index_canister::add_local_user_index_canister::{Response::*, *};

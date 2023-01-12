@@ -2,7 +2,7 @@ use crate::model::user_map::ConfirmPhoneNumberResult;
 use crate::{mutate_state, RuntimeState};
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
-use local_user_index_canister::c2c_notify_user_index_events::{Event, PhoneNumberConfirmed};
+use local_user_index_canister::{Event, PhoneNumberConfirmed};
 use open_storage_index_canister::add_or_update_users::UserConfig;
 use user_index_canister::confirm_phone_number::{Response::*, *};
 

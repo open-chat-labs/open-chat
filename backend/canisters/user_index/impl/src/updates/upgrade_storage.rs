@@ -4,7 +4,7 @@ use crate::{mutate_state, read_state, RuntimeState};
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
 use ic_ledger_types::{BlockIndex, TransferError};
-use local_user_index_canister::c2c_notify_user_index_events::{Event, StorageUpgraded};
+use local_user_index_canister::{Event, StorageUpgraded};
 use open_storage_index_canister::add_or_update_users::UserConfig;
 use std::cmp::max;
 use types::{nns::CryptoAmount, Cryptocurrency, ICP};

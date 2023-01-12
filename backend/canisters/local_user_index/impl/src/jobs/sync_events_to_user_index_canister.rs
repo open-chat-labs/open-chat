@@ -4,7 +4,7 @@ use std::cell::Cell;
 use std::time::Duration;
 use tracing::trace;
 use types::CanisterId;
-use user_index_canister::c2c_notify_events::Event;
+use user_index_canister::Event as UserIndexEvent;
 
 thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
@@ -38,7 +38,7 @@ fn run() {
 }
 
 enum NextBatchResult {
-    Success(CanisterId, Vec<Event>),
+    Success(CanisterId, Vec<UserIndexEvent>),
     Continue,
     QueueEmpty,
 }
@@ -55,7 +55,7 @@ fn next_batch(runtime_state: &mut RuntimeState) -> NextBatchResult {
     }
 }
 
-async fn sync_events(canister_id: CanisterId, events: Vec<Event>) {
+async fn sync_events(canister_id: CanisterId, events: Vec<UserIndexEvent>) {
     let args = user_index_canister::c2c_notify_events::Args { events: events.clone() };
     if user_index_canister_c2c_client::c2c_notify_events(canister_id, &args)
         .await

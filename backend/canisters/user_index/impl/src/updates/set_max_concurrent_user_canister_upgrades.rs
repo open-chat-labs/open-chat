@@ -2,7 +2,7 @@ use crate::guards::caller_is_controller;
 use crate::{mutate_state, RuntimeState};
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
-use local_user_index_canister::c2c_notify_user_index_events::{Event, MaxConcurrentCanisterUpgradesChanged};
+use local_user_index_canister::{Event, MaxConcurrentCanisterUpgradesChanged};
 use tracing::info;
 use user_index_canister::set_max_concurrent_user_canister_upgrades::{Response::*, *};
 
