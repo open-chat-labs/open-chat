@@ -85,6 +85,7 @@
     let alignProfileTo: DOMRect | undefined = undefined;
     let crypto = msg.content.kind === "crypto_content";
     let poll = msg.content.kind === "poll_content";
+    let canRevealDeleted = false;
 
     $: inThread = threadRootMessage !== undefined;
     $: threadRootMessageIndex =
@@ -107,8 +108,7 @@
     $: inert = msg.content.kind === "deleted_content" || collapsed;
     $: undeletingMessagesStore = client.undeletingMessagesStore;
     $: undeleting = $undeletingMessagesStore.has(msg.messageId);
-
-    let canUndelete = false;
+    $: showChatMenu = (!inert || canRevealDeleted) && !readonly;
 
     afterUpdate(() => {
         if (readByMe && observer && msgElement) {
@@ -126,11 +126,13 @@
         recalculateMediaDimensions();
 
         return now.subscribe((t) => {
-            canUndelete =
-                msg.content.kind === "deleted_content" &&
-                msg.content.deletedBy === user.userId &&
-                t - Number(msg.content.timestamp) < 5 * 60 * 1000 && // Only allow undeleting for 5 minutes
-                !undeleting;
+            canRevealDeleted = !undeleting 
+                && msg.content.kind === "deleted_content" 
+                && ((canDelete && msg.content.deletedBy !== msg.sender) || 
+                    // Only allow undeleting of your own messages for 5 minutes
+                    (msg.sender === user.userId 
+                        && msg.content.deletedBy === msg.sender 
+                        && t - Number(msg.content.timestamp) < 5 * 60 * 1000));             
         });
     });
 
