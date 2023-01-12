@@ -1,4 +1,4 @@
-use crate::{MessageContent, Milliseconds, PhoneNumber, TimestampMillis, UserId};
+use crate::{ChatId, MessageContent, MessageIndex, Milliseconds, PhoneNumber, TimestampMillis, UserId};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
@@ -10,6 +10,7 @@ pub enum UserEvent {
     ReferredUserRegistered(Box<ReferredUserRegistered>),
     UserSuspended(Box<UserSuspended>),
     OpenChatBotMessage(Box<MessageContent>),
+    UserJoinedGroup(Box<UserJoinedGroup>),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -49,4 +50,12 @@ pub struct UserSuspended {
 pub enum SuspensionDuration {
     Duration(Milliseconds),
     Indefinitely,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
+pub struct UserJoinedGroup {
+    pub user_id: UserId,
+    pub chat_id: ChatId,
+    pub as_super_admin: bool,
+    pub latest_message_index: Option<MessageIndex>,
 }

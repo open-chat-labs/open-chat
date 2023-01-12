@@ -1,10 +1,10 @@
 use candid::Principal;
 use serde::{Deserialize, Serialize};
-use types::{nns::CryptoAmount, PhoneNumber, SuspensionDuration, TimestampMillis, UserId};
+use types::{nns::CryptoAmount, PhoneNumber, SuspensionDuration, TimestampMillis, UserId, UserJoinedGroup};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
-    pub events: Vec<UserIndexEvent>,
+    pub events: Vec<LocalUserIndexEvent>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -13,7 +13,7 @@ pub enum Response {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub enum UserIndexEvent {
+pub enum LocalUserIndexEvent {
     UsernameChanged(UsernameChanged),
     PhoneNumberConfirmed(PhoneNumberConfirmed),
     StorageUpgraded(StorageUpgraded),
@@ -21,6 +21,7 @@ pub enum UserIndexEvent {
     SuperAdminStatusChanged(SuperAdminStatusChanged),
     MaxConcurrentCanisterUpgradesChanged(MaxConcurrentCanisterUpgradesChanged),
     UserSuspended(UserSuspended),
+    UserJoinedGroup(UserJoinedGroup),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

@@ -2,7 +2,7 @@ use crate::model::user_map::UpdateUserResult;
 use crate::{mutate_state, RuntimeState};
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
-use local_user_index_canister::c2c_notify_user_index_events::{UserIndexEvent, UsernameChanged};
+use local_user_index_canister::c2c_notify_user_index_events::{LocalUserIndexEvent, UsernameChanged};
 use user_index_canister::set_username::{Response::*, *};
 
 const MAX_USERNAME_LENGTH: u16 = 25;
@@ -35,7 +35,7 @@ fn set_username_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
             UpdateUserResult::Success => {
                 runtime_state.data.push_event_to_local_user_index(
                     user_id,
-                    UserIndexEvent::UsernameChanged(UsernameChanged { user_id, username }),
+                    LocalUserIndexEvent::UsernameChanged(UsernameChanged { user_id, username }),
                 );
 
                 Success

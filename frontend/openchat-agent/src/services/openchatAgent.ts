@@ -13,6 +13,8 @@ import { getAllUsers } from "../utils/userCache";
 import { UserIndexClient } from "./userIndex/userIndex.client";
 import { UserClient } from "./user/user.client";
 import { GroupClient } from "./group/group.client";
+import type { ILocalUserIndexClient } from "./localUserIndex/localUserIndex.client.interface";
+import { LocalUserIndexClient } from "./localUserIndex/localUserIndex.client";
 import type { INotificationsClient } from "./notifications/notifications.client.interface";
 import { NotificationsClient } from "./notifications/notifications.client";
 import type { IOnlineClient } from "./online/online.client.interface";
@@ -130,7 +132,7 @@ import {
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import { applyOptionUpdate } from "../utils/mapping";
-import {waitAll} from "../utils/promise";
+import { waitAll } from "../utils/promise";
 
 export const apiKey = Symbol();
 
@@ -213,6 +215,10 @@ export class OpenChatAgent extends EventTarget {
             return this._userClient;
         }
         throw new Error("Attempted to use the user client before it has been initialised");
+    }
+
+    private createLocalUserIndexClient(canisterId: string): ILocalUserIndexClient {
+        return LocalUserIndexClient.create(this.identity, this.config, canisterId);
     }
 
     private getProvidedInviteCode(chatId: string): string | undefined {
@@ -1032,8 +1038,13 @@ export class OpenChatAgent extends EventTarget {
         return this.userClient.leaveGroup(chatId);
     }
 
-    joinGroup(chatId: string): Promise<JoinGroupResponse> {
+    async joinGroup(chatId: string): Promise<JoinGroupResponse> {
         const inviteCode = this.getProvidedInviteCode(chatId);
+        const useNewJoinGroup = true;
+        if (useNewJoinGroup) {
+            const localUserIndex = await this.getGroupClient(chatId).localUserIndex();
+            return this.createLocalUserIndexClient(localUserIndex).joinGroup(chatId, inviteCode);
+        }
         return this.userClient.joinGroup(chatId, inviteCode);
     }
 

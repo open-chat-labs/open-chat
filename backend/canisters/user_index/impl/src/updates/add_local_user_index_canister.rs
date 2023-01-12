@@ -2,7 +2,7 @@ use crate::guards::caller_is_controller;
 use crate::{mutate_state, read_state, RuntimeState};
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
-use local_user_index_canister::c2c_notify_user_index_events::{UserIndexEvent, UserRegistered};
+use local_user_index_canister::c2c_notify_user_index_events::{LocalUserIndexEvent, UserRegistered};
 use tracing::info;
 use types::{CanisterId, CanisterWasm, Version};
 use user_index_canister::add_local_user_index_canister::{Response::*, *};
@@ -63,7 +63,7 @@ fn commit(canister_id: CanisterId, wasm_version: Version, runtime_state: &mut Ru
         for user in runtime_state.data.users.iter() {
             runtime_state.data.user_index_event_sync_queue.push(
                 canister_id,
-                UserIndexEvent::UserRegistered(UserRegistered {
+                LocalUserIndexEvent::UserRegistered(UserRegistered {
                     user_id: user.user_id,
                     user_principal: user.principal,
                     username: user.username.clone(),

@@ -41,5 +41,15 @@ fn process_event(event: UserEvent, runtime_state: &mut RuntimeState) {
             openchat_bot::send_user_suspended_message(&ev, runtime_state);
         }
         UserEvent::OpenChatBotMessage(content) => openchat_bot::send_message(*content, false, runtime_state),
+        UserEvent::UserJoinedGroup(ev) => {
+            let now = runtime_state.env.now();
+
+            runtime_state
+                .data
+                .group_chats
+                .join(ev.chat_id, ev.as_super_admin, ev.latest_message_index, now);
+
+            runtime_state.data.recommended_group_exclusions.remove(&ev.chat_id, now);
+        }
     }
 }

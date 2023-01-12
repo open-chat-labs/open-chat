@@ -4,7 +4,7 @@ use crate::{mutate_state, read_state, RuntimeState};
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
 use ic_ledger_types::{BlockIndex, TransferError};
-use local_user_index_canister::c2c_notify_user_index_events::{StorageUpgraded, UserIndexEvent};
+use local_user_index_canister::c2c_notify_user_index_events::{LocalUserIndexEvent, StorageUpgraded};
 use open_storage_index_canister::add_or_update_users::UserConfig;
 use std::cmp::max;
 use types::{nns::CryptoAmount, Cryptocurrency, ICP};
@@ -100,7 +100,7 @@ fn process_charge(
 
     runtime_state.data.push_event_to_local_user_index(
         user.user_id,
-        UserIndexEvent::StorageUpgraded(StorageUpgraded {
+        LocalUserIndexEvent::StorageUpgraded(StorageUpgraded {
             user_id: user.user_id,
             cost: CryptoAmount {
                 token: Cryptocurrency::InternetComputer,

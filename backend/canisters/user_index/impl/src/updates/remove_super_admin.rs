@@ -2,7 +2,7 @@ use crate::guards::caller_is_controller;
 use crate::{mutate_state, read_state, RuntimeState};
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
-use local_user_index_canister::c2c_notify_user_index_events::{SuperAdminStatusChanged, UserIndexEvent};
+use local_user_index_canister::c2c_notify_user_index_events::{LocalUserIndexEvent, SuperAdminStatusChanged};
 use types::{ChatId, UserId};
 use user_canister::c2c_revoke_super_admin;
 use user_index_canister::remove_super_admin::{Response::*, *};
@@ -37,7 +37,7 @@ fn commit(user_id: &UserId, groups_to_dismiss_user_from: Vec<ChatId>, runtime_st
     }
 
     runtime_state.data.push_event_to_all_local_user_indexes(
-        UserIndexEvent::SuperAdminStatusChanged(SuperAdminStatusChanged {
+        LocalUserIndexEvent::SuperAdminStatusChanged(SuperAdminStatusChanged {
             user_id: *user_id,
             is_super_admin: false,
         }),

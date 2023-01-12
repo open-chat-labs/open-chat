@@ -11,6 +11,7 @@ generate_c2c_call!(c2c_assume_super_admin);
 generate_c2c_call!(c2c_delete_group);
 generate_c2c_call!(c2c_dismiss_super_admin);
 generate_c2c_call!(c2c_freeze_group);
+generate_c2c_call!(c2c_join_group);
 generate_c2c_call!(c2c_join_group_v2);
 generate_c2c_call!(c2c_leave_group);
 generate_c2c_call!(c2c_relinquish_super_admin);
