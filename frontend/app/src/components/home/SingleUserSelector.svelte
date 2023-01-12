@@ -2,10 +2,8 @@
     import MentionPicker from "./MentionPicker.svelte";
     import { _ } from "svelte-i18n";
     import type { Member, OpenChat, PartialUserSummary } from "openchat-client";
-    import Avatar from "../Avatar.svelte";
-    import { AvatarSize } from "openchat-client";
-    import Close from "svelte-material-icons/Close.svelte";
     import { getContext } from "svelte";
+    import UserPill from "../UserPill.svelte";
 
     const client = getContext<OpenChat>("client");
     export let blockedUsers: Set<string>;
@@ -60,15 +58,7 @@
             {members} />
     {/if}
     {#if selectedReceiver !== undefined}
-        <div class="user-pill">
-            <div class="avatar">
-                <Avatar url={client.userAvatarUrl(selectedReceiver)} userId={selectedReceiver.userId} size={AvatarSize.Tiny} />
-            </div>
-            <span class="username">{`@${selectedReceiver.username}`}</span>
-            <span class="close" on:click={removeReceiver}>
-                <Close size={"1.2em"} color={"var(--button-txt)"} />
-            </span>
-        </div>
+        <UserPill on:deleteUser={removeReceiver} user={selectedReceiver} />
     {:else}
         <div class="wrapper" bind:clientHeight={inputHeight}>
             <input
@@ -103,27 +93,6 @@
 
         &::placeholder {
             color: var(--placeholder);
-        }
-    }
-
-    .user-pill {
-        background: var(--button-bg);
-        color: var(--button-txt);
-        display: inline-flex;
-        padding: $sp2 $sp3;
-        align-items: center;
-        border-radius: $sp2;
-        gap: $sp2;
-
-        .username {
-            flex: auto;
-            padding: $sp3;
-        }
-
-        .close {
-            cursor: pointer;
-            width: 20px;
-            display: flex;
         }
     }
 </style>
