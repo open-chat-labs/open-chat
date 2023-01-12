@@ -8,7 +8,6 @@ use user_canister::c2c_send_message;
 #[derive(Serialize, Deserialize, Clone)]
 pub enum TimerJob {
     RetrySendingFailedMessage(Box<RetrySendingFailedMessageJob>),
-    #[serde(alias = "RemoveDeletedMessageContent")]
     HardDeleteMessageContent(Box<HardDeleteMessageContentJob>),
 }
 

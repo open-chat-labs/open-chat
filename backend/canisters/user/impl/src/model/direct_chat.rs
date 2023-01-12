@@ -15,7 +15,6 @@ pub struct DirectChat {
     pub notifications_muted: Timestamped<bool>,
     pub archived: Timestamped<bool>,
     pub is_bot: bool,
-    #[serde(default)]
     pub unconfirmed: HashSet<MessageId>,
 }
 

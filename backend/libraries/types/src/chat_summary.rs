@@ -81,9 +81,7 @@ pub struct GroupChatSummary {
     pub latest_threads: Vec<ThreadSyncDetails>,
     pub archived: bool,
     pub frozen: Option<FrozenGroupInfo>,
-    #[serde(default)]
     pub date_last_pinned: Option<TimestampMillis>,
-    #[serde(default)]
     pub date_read_pinned: Option<TimestampMillis>,
 }
 
@@ -149,9 +147,7 @@ pub struct GroupChatSummaryUpdates {
     pub latest_threads: Vec<ThreadSyncDetails>,
     pub archived: Option<bool>,
     pub frozen: OptionUpdate<FrozenGroupInfo>,
-    #[serde(default)]
     pub date_last_pinned: Option<TimestampMillis>,
-    #[serde(default)]
     pub date_read_pinned: Option<TimestampMillis>,
 }
 
@@ -198,7 +194,6 @@ pub struct GroupCanisterGroupChatSummary {
     pub my_metrics: ChatMetrics,
     pub latest_threads: Vec<GroupCanisterThreadDetails>,
     pub frozen: Option<FrozenGroupInfo>,
-    #[serde(default)]
     pub date_last_pinned: Option<TimestampMillis>,
 }
 
@@ -320,7 +315,6 @@ pub struct GroupCanisterGroupChatSummaryUpdates {
     pub latest_threads: Vec<GroupCanisterThreadDetails>,
     pub notifications_muted: Option<bool>,
     pub frozen: OptionUpdate<FrozenGroupInfo>,
-    #[serde(default)]
     pub date_last_pinned: Option<TimestampMillis>,
 }
 
