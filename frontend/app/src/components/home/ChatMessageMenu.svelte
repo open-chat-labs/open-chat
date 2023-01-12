@@ -32,7 +32,6 @@
     const client = getContext<OpenChat>("client");
 
     export let chatId: string;
-    export let senderId: string;
     export let isProposal: boolean;
     export let inert: boolean;
     export let publicGroup: boolean;
@@ -67,7 +66,7 @@
 
     function blockUser() {
         if (!canBlockUser) return;
-        client.blockUser(chatId, senderId).then((success) => {
+        client.blockUser(chatId, msg.sender).then((success) => {
             if (success) {
                 toastStore.showSuccessToast("blockUserSucceeded");
             } else {
@@ -283,7 +282,10 @@
                 {/if}
                 {#if canUndelete}
                     <MenuItem on:click={undeleteMessage}>
-                        <DeleteOffOutline size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
+                        <DeleteOffOutline
+                            size={$iconSize}
+                            color={"var(--icon-inverted-txt)"}
+                            slot="icon" />
                         <div slot="text">{$_("undeleteMessage")}</div>
                     </MenuItem>
                 {/if}
