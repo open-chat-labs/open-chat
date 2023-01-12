@@ -9,6 +9,7 @@
         Dimensions,
         MessageContent,
         OpenChat,
+        PartialUserSummary,
     } from "openchat-client";
     import EmojiPicker from "./EmojiPicker.svelte";
     import Avatar from "../Avatar.svelte";
@@ -44,7 +45,7 @@
     export let chatId: string;
     export let chatType: "group_chat" | "direct_chat";
     export let user: CreatedUser;
-    export let senderId: string;
+    export let sender: PartialUserSummary | undefined;
     export let msg: Message;
     export let me: boolean;
     export let eventIndex: number;
@@ -91,10 +92,8 @@
             ? undefined
             : threadRootMessage?.messageIndex;
     $: translationStore = client.translationStore;
-    $: userStore = client.userStore;
     $: canEdit = me && supportsEdit && !deleted && !crypto && !poll;
-    $: sender = $userStore[senderId];
-    $: isBot = $userStore[senderId]?.kind === "bot";
+    $: isBot = sender?.kind === "bot";
     $: username = sender?.username;
     $: mediaDimensions = extractDimensions(msg.content);
     $: mediaCalculatedHeight = undefined as number | undefined;
@@ -109,11 +108,8 @@
     $: inert = deleted || collapsed;
     $: undeletingMessagesStore = client.undeletingMessagesStore;
     $: undeleting = $undeletingMessagesStore.has(msg.messageId);
-    $: canUndelete =
-        msg.content.kind === "deleted_content" &&
-        msg.content.deletedBy === user.userId &&
-        $now - Number(msg.content.timestamp) < 5 * 60 * 1000 && // Only allow undeleting for 5 minutes
-        !undeleting;
+
+    let canUndelete = true;
 
     afterUpdate(() => {
         if (readByMe && observer && msgElement) {
@@ -129,6 +125,14 @@
         }
 
         recalculateMediaDimensions();
+
+        return now.subscribe((t) => {
+            canUndelete =
+                msg.content.kind === "deleted_content" &&
+                msg.content.deletedBy === user.userId &&
+                t - Number(msg.content.timestamp) < 5 * 60 * 1000 && // Only allow undeleting for 5 minutes
+                !undeleting;
+        });
     });
 
     onDestroy(() => {
@@ -138,13 +142,13 @@
     });
 
     function chatWithUser() {
-        dispatch("chatWith", senderId);
+        dispatch("chatWith", msg.sender);
     }
 
     function createReplyContext(): EnhancedReplyContext {
         return {
             kind: "rehydrated_reply_context",
-            senderId,
+            senderId: msg.sender,
             chatId: chatId,
             eventIndex: eventIndex,
             content: msg.content,
@@ -322,7 +326,7 @@
 {#if viewProfile}
     <ViewUserProfile
         alignTo={alignProfileTo}
-        userId={sender.userId}
+        userId={msg.sender}
         chatButton={groupChat}
         on:openDirectChat={chatWithUser}
         on:close={closeUserProfile} />
@@ -342,7 +346,7 @@
                     <div class="avatar" on:click={openUserProfile}>
                         <Avatar
                             url={client.userAvatarUrl(sender)}
-                            userId={sender.userId}
+                            userId={msg.sender}
                             size={$mobileWidth ? AvatarSize.Tiny : AvatarSize.Small} />
                     </div>
                 {/if}
@@ -409,11 +413,11 @@
             {/if}
 
             <ChatMessageContent
+                senderId={msg.sender}
                 {readonly}
                 {fill}
                 {me}
                 {groupChat}
-                {senderId}
                 {chatId}
                 {collapsed}
                 {undeleting}
@@ -455,7 +459,6 @@
             {#if (!inert || canUndelete) && !readonly}
                 <ChatMessageMenu
                     {chatId}
-                    {senderId}
                     {isProposal}
                     {inert}
                     {publicGroup}
