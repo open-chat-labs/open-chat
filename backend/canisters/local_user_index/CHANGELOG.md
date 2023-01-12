@@ -9,3 +9,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Reduce log level of job started / stopped messages ([#2951](https://github.com/open-ic/open-chat/pull/2951))
+- Remove one-off code only needed for initializing the first local user index
