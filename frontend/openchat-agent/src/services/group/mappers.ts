@@ -91,6 +91,7 @@ import {
     apiPermissionRole,
     chatMetrics,
     groupPermissions,
+    memberRole,
     message,
     updatedMessage,
 } from "../common/chatMappers";
@@ -240,22 +241,6 @@ export function apiOptionalGroupPermissions(
         reply_in_thread: apiOptional(apiPermissionRole, permissions.replyInThread),
         react_to_messages: apiOptional(apiPermissionRole, permissions.reactToMessages),
     };
-}
-
-function memberRole(candid: ApiRole): MemberRole {
-    if ("Admin" in candid) {
-        return "admin";
-    }
-    if ("Participant" in candid) {
-        return "participant";
-    }
-    if ("Owner" in candid) {
-        return "owner";
-    }
-    if ("SuperAdmin" in candid) {
-        return "super_admin";
-    }
-    throw new UnsupportedValueError("Unexpected ApiRole type received", candid);
 }
 
 function member(candid: ApiParticipant): Member {

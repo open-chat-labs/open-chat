@@ -13,6 +13,7 @@ group_index_canister = { path = "../canisters/group_index/api" }
 ic-state-machine-tests = { workspace = true }
 itertools = { workspace = true }
 lazy_static = { workspace = true }
+local_user_index_canister = { path = "../canisters/local_user_index/api" }
 notifications_canister = { path = "../canisters/notifications/api" }
 notifications_index_canister = { path = "../canisters/notifications_index/api" }
 online_users_canister = { path = "../canisters/online_users/api" }

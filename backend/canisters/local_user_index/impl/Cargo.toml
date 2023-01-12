@@ -17,11 +17,14 @@ canister_logger = { path = "../../../libraries/canister_logger" }
 canister_state_macros = { workspace = true }
 canister_tracing_macros = { path = "../../../libraries/canister_tracing_macros" }
 futures = { workspace = true }
+group_canister = { path = "../../group/api" }
+group_canister_c2c_client = { path = "../../group/c2c_client" }
 http_request = { path = "../../../libraries/http_request" }
 ic-cdk = { workspace = true, features = ["timers"] }
 ic-cdk-macros = { workspace = true }
 ic-ledger-types = { workspace = true }
 ledger_utils = { path = "../../../libraries/ledger_utils" }
+local_user_index_canister = { path = "../api" }
 msgpack = { path = "../../../libraries/msgpack" }
 serde = { workspace = true }
 serde_json = { workspace = true }
@@ -30,5 +33,6 @@ tracing = { workspace = true }
 types = { path = "../../../libraries/types" }
 user_canister = { path = "../../user/api" }
 user_canister_c2c_client = { path = "../../user/c2c_client" }
-local_user_index_canister = { path = "../api" }
+user_index_canister = { path = "../../user_index/api" }
+user_index_canister_c2c_client = { path = "../../user_index/c2c_client" }
 utils = { path = "../../../libraries/utils" }

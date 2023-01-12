@@ -634,6 +634,8 @@ export const idlFactory = ({ IDL }) => {
     'NotAuthorized' : IDL.Null,
     'Success' : IDL.Record({ 'code' : IDL.Opt(IDL.Nat64) }),
   });
+  const LocalUserIndexArgs = IDL.Record({});
+  const LocalUserIndexResponse = IDL.Variant({ 'Success' : CanisterId });
   const MakePrivateArgs = IDL.Record({ 'correlation_id' : IDL.Nat64 });
   const MakePrivateResponse = IDL.Variant({
     'ChatFrozen' : IDL.Null,
@@ -1165,6 +1167,11 @@ export const idlFactory = ({ IDL }) => {
     'events_range' : IDL.Func([EventsRangeArgs], [EventsResponse], ['query']),
     'events_window' : IDL.Func([EventsWindowArgs], [EventsResponse], ['query']),
     'invite_code' : IDL.Func([InviteCodeArgs], [InviteCodeResponse], ['query']),
+    'local_user_index' : IDL.Func(
+        [LocalUserIndexArgs],
+        [LocalUserIndexResponse],
+        ['query'],
+      ),
     'make_private' : IDL.Func([MakePrivateArgs], [MakePrivateResponse], []),
     'messages_by_message_index' : IDL.Func(
         [MessagesByMessageIndexArgs],

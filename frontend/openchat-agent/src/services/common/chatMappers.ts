@@ -37,6 +37,8 @@ import type {
     ApiProposalDecisionStatus,
     ApiProposalRewardStatus,
     ApiChatMetrics,
+    ApiGroupSubtype,
+    ApiRole,
 } from "../user/candid/idl";
 import type {
     ApiListNervousSystemFunctionsResponse,
@@ -82,6 +84,8 @@ import {
     type SnsFunctionType,
     type ChatMetrics,
     UnsupportedValueError,
+    type MemberRole,
+    type GroupSubtype,
 } from "openchat-shared";
 
 const E8S_AS_BIGINT = BigInt(100_000_000);
@@ -545,6 +549,30 @@ export function chatMetrics(candid: ApiChatMetrics): ChatMetrics {
         polls: Number(candid.polls),
         reactions: Number(candid.reactions),
         reportedMessages: Number(candid.reported_messages),
+    };
+}
+
+export function memberRole(candid: ApiRole): MemberRole {
+    if ("Admin" in candid) {
+        return "admin";
+    }
+    if ("Participant" in candid) {
+        return "participant";
+    }
+    if ("Owner" in candid) {
+        return "owner";
+    }
+    if ("SuperAdmin" in candid) {
+        return "super_admin";
+    }
+    throw new UnsupportedValueError("Unexpected ApiRole type received", candid);
+}
+
+export function apiGroupSubtype(subtype: ApiGroupSubtype): GroupSubtype {
+    return {
+        kind: "governance_proposals",
+        isNns: subtype.GovernanceProposals.is_nns,
+        governanceCanisterId: subtype.GovernanceProposals.governance_canister_id.toText(),
     };
 }
 

@@ -599,6 +599,8 @@ export type InvalidPollReason = { 'DuplicateOptions' : null } |
 export type InviteCodeArgs = {};
 export type InviteCodeResponse = { 'NotAuthorized' : null } |
   { 'Success' : { 'code' : [] | [bigint] } };
+export type LocalUserIndexArgs = {};
+export type LocalUserIndexResponse = { 'Success' : CanisterId };
 export interface MakePrivateArgs { 'correlation_id' : bigint }
 export type MakePrivateResponse = { 'ChatFrozen' : null } |
   { 'NotAuthorized' : null } |
@@ -1252,6 +1254,10 @@ export interface _SERVICE {
   'events_range' : ActorMethod<[EventsRangeArgs], EventsResponse>,
   'events_window' : ActorMethod<[EventsWindowArgs], EventsResponse>,
   'invite_code' : ActorMethod<[InviteCodeArgs], InviteCodeResponse>,
+  'local_user_index' : ActorMethod<
+    [LocalUserIndexArgs],
+    LocalUserIndexResponse
+  >,
   'make_private' : ActorMethod<[MakePrivateArgs], MakePrivateResponse>,
   'messages_by_message_index' : ActorMethod<
     [MessagesByMessageIndexArgs],

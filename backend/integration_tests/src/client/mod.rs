@@ -2,6 +2,7 @@ mod macros;
 
 pub mod group;
 pub mod group_index;
+pub mod local_user_index;
 pub mod notifications;
 pub mod notifications_index;
 pub mod online_users;

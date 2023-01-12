@@ -1,3 +1,4 @@
+use crate::c2c_join_group;
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use types::GroupCanisterGroupChatSummary;
@@ -21,4 +22,17 @@ pub enum Response {
     UserNotFound,
     ChatFrozen,
     InternalError(String),
+}
+
+impl From<c2c_join_group::Response> for Response {
+    fn from(value: c2c_join_group::Response) -> Self {
+        match value {
+            c2c_join_group::Response::Success(s) => Response::Success(*s),
+            c2c_join_group::Response::AlreadyInGroup => Response::AlreadyInGroup,
+            c2c_join_group::Response::GroupNotPublic => Response::GroupNotPublic,
+            c2c_join_group::Response::Blocked => Response::Blocked,
+            c2c_join_group::Response::ParticipantLimitReached(l) => Response::ParticipantLimitReached(l),
+            c2c_join_group::Response::ChatFrozen => Response::ChatFrozen,
+        }
+    }
 }

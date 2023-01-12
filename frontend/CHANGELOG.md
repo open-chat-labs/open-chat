@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [unreleased]
 
+### Added
+
+- Integrated the new `join_group` flow ([#2955](https://github.com/open-ic/open-chat/pull/2955)) (currently disabled) 
+
 ### Changed
 
 - Improve re-use of user pill ([#2959](https://github.com/open-ic/open-chat/pull/2959))

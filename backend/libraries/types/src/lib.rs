@@ -39,10 +39,10 @@ mod reactions;
 mod registration_fee;
 mod role;
 mod subscription;
+mod suspension_duration;
 mod thread_summary;
 mod timestamped;
 mod user;
-mod user_events;
 mod user_summary;
 mod version;
 
@@ -84,10 +84,10 @@ pub use reactions::*;
 pub use registration_fee::*;
 pub use role::*;
 pub use subscription::*;
+pub use suspension_duration::*;
 pub use thread_summary::*;
 pub use timestamped::*;
 pub use user::*;
-pub use user_events::*;
 pub use user_summary::*;
 pub use version::*;
 

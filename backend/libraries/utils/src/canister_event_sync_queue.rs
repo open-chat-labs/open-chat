@@ -50,29 +50,36 @@ impl<T> CanisterEventSyncQueue<T> {
         }
     }
 
+    pub fn try_start_single(&mut self) -> Option<(CanisterId, Vec<T>)> {
+        if self.sync_in_progress {
+            return None;
+        }
+
+        let canister_id = self.queue.pop_front()?;
+        if let Some((events, has_more_events)) = self.take_events(canister_id) {
+            self.sync_in_progress = true;
+            if has_more_events {
+                self.queue.push_back(canister_id);
+            }
+            Some((canister_id, events))
+        } else {
+            None
+        }
+    }
+
     pub fn try_start_batch(&mut self) -> Option<Vec<(CanisterId, Vec<T>)>> {
         if self.sync_in_progress || self.queue.is_empty() {
             None
         } else {
-            self.sync_in_progress = true;
             let mut batch = Vec::new();
             let mut canisters_to_readd = Vec::new();
             while let Some(canister_id) = self.queue.pop_front() {
-                if let Occupied(mut e) = self.events.entry(canister_id) {
-                    let vec = e.get_mut();
-                    let count = min(vec.len(), self.max_events_per_canister_per_batch);
-                    let mut items = Vec::with_capacity(count);
-                    for item in vec.drain(..count) {
-                        items.push(item);
-                    }
-                    if vec.is_empty() {
-                        // If there are no more events, remove the entry from the map
-                        e.remove();
-                    } else {
+                if let Some((events, has_more_events)) = self.take_events(canister_id) {
+                    if has_more_events {
                         // If there are more events, queue up the canister to be processed again
                         canisters_to_readd.push(canister_id);
                     }
-                    batch.push((canister_id, items));
+                    batch.push((canister_id, events));
                     if batch.len() >= self.max_canisters_per_batch {
                         break;
                     }
@@ -81,7 +88,12 @@ impl<T> CanisterEventSyncQueue<T> {
             for canister_id in canisters_to_readd {
                 self.queue.push_back(canister_id);
             }
-            Some(batch)
+            if batch.is_empty() {
+                None
+            } else {
+                self.sync_in_progress = true;
+                Some(batch)
+            }
         }
     }
 
@@ -99,6 +111,31 @@ impl<T> CanisterEventSyncQueue<T> {
         };
 
         self.events.insert(canister_id, merged_events);
+    }
+
+    fn take_events(&mut self, canister_id: CanisterId) -> Option<(Vec<T>, bool)> {
+        if let Occupied(mut e) = self.events.entry(canister_id) {
+            let vec = e.get_mut();
+            let count = min(vec.len(), self.max_events_per_canister_per_batch);
+            if count == 0 {
+                return None;
+            }
+
+            let mut items = Vec::with_capacity(count);
+            for item in vec.drain(..count) {
+                items.push(item);
+            }
+
+            let has_more_events = !vec.is_empty();
+            if !has_more_events {
+                // If there are no more events, remove the entry from the map
+                e.remove();
+            }
+
+            Some((items, has_more_events))
+        } else {
+            None
+        }
     }
 }
 
