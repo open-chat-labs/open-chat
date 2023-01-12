@@ -222,9 +222,7 @@ struct Data {
     pub group_index_canister_id: CanisterId,
     pub local_group_index_canister_id: CanisterId,
     pub user_index_canister_id: CanisterId,
-    #[serde(default = "default_local_user_index_canister_id")]
     pub local_user_index_canister_id: CanisterId,
-    #[serde(default = "default_notifications_canister_id")]
     pub notifications_canister_id: CanisterId,
     pub ledger_canister_id: CanisterId,
     pub activity_notification_state: ActivityNotificationState,
@@ -237,16 +235,7 @@ struct Data {
     pub new_joiner_rewards: Option<NewJoinerRewards>,
     pub frozen: Timestamped<Option<FrozenGroupInfo>>,
     pub timer_jobs: TimerJobs<TimerJob>,
-    #[serde(default)]
     pub date_last_pinned: Option<TimestampMillis>,
-}
-
-fn default_local_user_index_canister_id() -> CanisterId {
-    Principal::from_text("nq4qv-wqaaa-aaaaf-bhdgq-cai").unwrap()
-}
-
-fn default_notifications_canister_id() -> CanisterId {
-    Principal::from_text("dobi3-tyaaa-aaaaf-adnna-cai").unwrap()
 }
 
 #[allow(clippy::too_many_arguments)]

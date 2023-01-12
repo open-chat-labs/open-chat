@@ -102,28 +102,17 @@ impl RuntimeState {
 
 #[derive(Serialize, Deserialize)]
 struct Data {
-    #[serde(default = "service_principals")]
     pub service_principals: HashSet<Principal>,
-    #[serde(default)]
     pub notifications_canisters: HashMap<CanisterId, NotificationsCanister>,
     pub push_service_principals: HashSet<Principal>,
     pub user_index_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
     pub principal_to_user_id: HashMap<Principal, UserId>,
     pub subscriptions: Subscriptions,
-    #[serde(default)]
     pub notifications_canister_wasm: CanisterWasm,
-    #[serde(default)]
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
-    #[serde(default)]
     pub notifications_index_event_sync_queue: CanisterEventSyncQueue<NotificationsIndexEvent>,
     pub test_mode: bool,
-}
-
-fn service_principals() -> HashSet<Principal> {
-    [Principal::from_text("tu45y-p4p3d-b4gg4-gmyy3-rgweo-whsrq-fephi-vshrn-cipca-xdkri-pae").unwrap()]
-        .into_iter()
-        .collect()
 }
 
 impl Data {

@@ -1,4 +1,3 @@
-use candid::Principal;
 use canister_logger::LogMessagesWrapper;
 use canister_state_macros::canister_state;
 use model::global_user_map::GlobalUserMap;
@@ -91,7 +90,6 @@ struct Data {
     pub user_canister_wasm: CanisterWasm,
     pub user_index_canister_id: CanisterId,
     pub group_index_canister_id: CanisterId,
-    #[serde(default = "default_notifications_canister_id")]
     pub notifications_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
@@ -107,10 +105,6 @@ struct Data {
 pub struct FailedMessageUsers {
     pub sender: UserId,
     pub recipient: UserId,
-}
-
-fn default_notifications_canister_id() -> CanisterId {
-    Principal::from_text("dobi3-tyaaa-aaaaf-adnna-cai").unwrap()
 }
 
 impl Data {
