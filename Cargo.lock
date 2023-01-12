@@ -4627,6 +4627,7 @@ dependencies = [
  "ic-state-machine-tests",
  "itertools",
  "lazy_static",
+ "local_user_index_canister",
  "notifications_canister",
  "notifications_index_canister",
  "online_users_canister",
