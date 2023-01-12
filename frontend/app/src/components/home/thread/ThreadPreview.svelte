@@ -25,6 +25,7 @@
     export let thread: ThreadPreview;
     export let observer: IntersectionObserver;
 
+    $: userStore = client.userStore;
     $: chatSummariesStore = client.chatSummariesStore;
     $: messagesRead = client.messagesRead;
     $: missingMessages = thread.totalReplies - thread.latestReplies.length;
@@ -116,7 +117,7 @@
             <div class="body">
                 <div class="root-msg">
                     <ChatMessage
-                        senderId={thread.rootMessage.event.sender}
+                        sender={$userStore[thread.rootMessage.event.sender]}
                         focused={false}
                         {observer}
                         confirmed={true}
@@ -157,7 +158,7 @@
                 {#each grouped as userGroup}
                     {#each userGroup as evt, i (evt.event.messageId)}
                         <ChatMessage
-                            senderId={evt.event.sender}
+                            sender={$userStore[evt.event.sender]}
                             focused={false}
                             {observer}
                             confirmed={true}

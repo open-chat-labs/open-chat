@@ -57,6 +57,7 @@
     let userSummary: UserSummary | undefined = undefined;
 
     $: typing = client.typing;
+    $: userStore = client.userStore;
     $: {
         userSummary = {
             kind: "user",
@@ -74,7 +75,7 @@
 
 {#if event.event.kind === "message"}
     <ChatMessage
-        senderId={event.event.sender}
+        sender={$userStore[event.event.sender]}
         senderTyping={client.isTyping($typing, event.event.sender, chatId)}
         {focused}
         {observer}
