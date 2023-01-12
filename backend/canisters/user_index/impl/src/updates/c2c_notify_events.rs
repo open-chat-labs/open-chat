@@ -2,7 +2,7 @@ use crate::guards::caller_is_local_user_index_canister;
 use crate::{mutate_state, RuntimeState};
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
-use local_user_index_canister::c2c_notify_user_index_events::LocalUserIndexEvent;
+use local_user_index_canister::c2c_notify_user_index_events::Event as LocalUserIndexEvent;
 use user_index_canister::c2c_notify_events::{Response::*, *};
 
 #[update_msgpack(guard = "caller_is_local_user_index_canister")]

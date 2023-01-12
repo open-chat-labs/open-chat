@@ -4,7 +4,7 @@ use types::{nns::CryptoAmount, PhoneNumber, SuspensionDuration, TimestampMillis,
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Args {
-    pub events: Vec<LocalUserIndexEvent>,
+    pub events: Vec<Event>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -13,7 +13,7 @@ pub enum Response {
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
-pub enum LocalUserIndexEvent {
+pub enum Event {
     UsernameChanged(UsernameChanged),
     PhoneNumberConfirmed(PhoneNumberConfirmed),
     StorageUpgraded(StorageUpgraded),

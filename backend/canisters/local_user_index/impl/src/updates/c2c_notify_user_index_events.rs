@@ -2,7 +2,7 @@ use crate::guards::caller_is_user_index_canister;
 use crate::{mutate_state, RuntimeState};
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
-use local_user_index_canister::c2c_notify_user_index_events::{Args, LocalUserIndexEvent, Response};
+use local_user_index_canister::c2c_notify_user_index_events::{Args, Event, Response};
 use tracing::info;
 use types::{PhoneNumberConfirmed, ReferredUserRegistered, StorageUpgraded, UserEvent, UserSuspended, UsernameChanged};
 
@@ -20,15 +20,15 @@ fn c2c_notify_user_index_events_impl(args: Args, runtime_state: &mut RuntimeStat
     Response::Success
 }
 
-fn handle_event(event: LocalUserIndexEvent, runtime_state: &mut RuntimeState) {
+fn handle_event(event: Event, runtime_state: &mut RuntimeState) {
     match event {
-        LocalUserIndexEvent::UsernameChanged(ev) => {
+        Event::UsernameChanged(ev) => {
             runtime_state.data.user_event_sync_queue.push(
                 ev.user_id.into(),
                 UserEvent::UsernameChanged(Box::new(UsernameChanged { username: ev.username })),
             );
         }
-        LocalUserIndexEvent::UserSuspended(ev) => {
+        Event::UserSuspended(ev) => {
             runtime_state.data.user_event_sync_queue.push(
                 ev.user_id.into(),
                 UserEvent::UserSuspended(Box::new(UserSuspended {
@@ -39,7 +39,7 @@ fn handle_event(event: LocalUserIndexEvent, runtime_state: &mut RuntimeState) {
                 })),
             );
         }
-        LocalUserIndexEvent::PhoneNumberConfirmed(ev) => {
+        Event::PhoneNumberConfirmed(ev) => {
             runtime_state.data.user_event_sync_queue.push(
                 ev.user_id.into(),
                 UserEvent::PhoneNumberConfirmed(Box::new(PhoneNumberConfirmed {
@@ -49,7 +49,7 @@ fn handle_event(event: LocalUserIndexEvent, runtime_state: &mut RuntimeState) {
                 })),
             );
         }
-        LocalUserIndexEvent::StorageUpgraded(ev) => {
+        Event::StorageUpgraded(ev) => {
             runtime_state.data.user_event_sync_queue.push(
                 ev.user_id.into(),
                 UserEvent::StorageUpgraded(Box::new(StorageUpgraded {
@@ -59,7 +59,7 @@ fn handle_event(event: LocalUserIndexEvent, runtime_state: &mut RuntimeState) {
                 })),
             );
         }
-        LocalUserIndexEvent::UserRegistered(ev) => {
+        Event::UserRegistered(ev) => {
             runtime_state.data.global_users.add(ev.user_principal, ev.user_id, ev.is_bot);
 
             if let Some(referred_by) = ev.referred_by {
@@ -74,14 +74,14 @@ fn handle_event(event: LocalUserIndexEvent, runtime_state: &mut RuntimeState) {
                 }
             }
         }
-        LocalUserIndexEvent::SuperAdminStatusChanged(ev) => {
+        Event::SuperAdminStatusChanged(ev) => {
             runtime_state.data.global_users.set_super_admin(ev.user_id, ev.is_super_admin);
         }
-        LocalUserIndexEvent::MaxConcurrentCanisterUpgradesChanged(ev) => {
+        Event::MaxConcurrentCanisterUpgradesChanged(ev) => {
             runtime_state.data.max_concurrent_canister_upgrades = ev.value;
             info!("Max concurrent canister upgrades set to {}", ev.value);
         }
-        LocalUserIndexEvent::UserJoinedGroup(ev) => {
+        Event::UserJoinedGroup(ev) => {
             runtime_state
                 .data
                 .user_event_sync_queue
