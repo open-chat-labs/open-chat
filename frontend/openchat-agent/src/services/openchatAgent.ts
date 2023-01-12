@@ -1040,7 +1040,8 @@ export class OpenChatAgent extends EventTarget {
 
     async joinGroup(chatId: string): Promise<JoinGroupResponse> {
         const inviteCode = this.getProvidedInviteCode(chatId);
-        const useNewJoinGroup = true;
+        // This can be enabled once userIndex, localUserIndex, user and group canisters have been upgraded
+        const useNewJoinGroup = false;
         if (useNewJoinGroup) {
             const localUserIndex = await this.getGroupClient(chatId).localUserIndex();
             return this.createLocalUserIndexClient(localUserIndex).joinGroup(chatId, inviteCode);
