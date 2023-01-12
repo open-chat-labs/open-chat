@@ -4,22 +4,12 @@ use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::{HashMap, VecDeque};
 use types::CanisterId;
 
-const fn default_max_canisters_per_batch() -> usize {
-    10
-}
-
-const fn default_max_events_per_canister_per_batch() -> usize {
-    1000
-}
-
 #[derive(Serialize, Deserialize)]
 pub struct CanisterEventSyncQueue<T> {
     queue: VecDeque<CanisterId>,
     sync_in_progress: bool,
     events: HashMap<CanisterId, Vec<T>>,
-    #[serde(default = "default_max_canisters_per_batch")]
     max_canisters_per_batch: usize,
-    #[serde(default = "default_max_events_per_canister_per_batch")]
     max_events_per_canister_per_batch: usize,
 }
 
@@ -29,8 +19,8 @@ impl<T> Default for CanisterEventSyncQueue<T> {
             queue: VecDeque::default(),
             sync_in_progress: false,
             events: HashMap::default(),
-            max_canisters_per_batch: default_max_canisters_per_batch(),
-            max_events_per_canister_per_batch: default_max_events_per_canister_per_batch(),
+            max_canisters_per_batch: 10,
+            max_events_per_canister_per_batch: 1000,
         }
     }
 }

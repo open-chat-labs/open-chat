@@ -5,7 +5,6 @@ use types::{MessageId, MessageIndex};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum TimerJob {
-    #[serde(alias = "RemoveDeletedMessageContent")]
     HardDeleteMessageContent(HardDeleteMessageContentJob),
     EndPoll(EndPollJob),
 }

@@ -1,4 +1,3 @@
-use candid::Principal;
 use canister_logger::LogMessagesWrapper;
 use canister_state_macros::canister_state;
 use model::local_group_map::LocalGroupMap;
@@ -86,10 +85,8 @@ struct Data {
     pub local_groups: LocalGroupMap,
     pub group_canister_wasm: CanisterWasm,
     pub user_index_canister_id: CanisterId,
-    #[serde(default = "default_local_user_index_canister_id")]
     pub local_user_index_canister_id: CanisterId,
     pub group_index_canister_id: CanisterId,
-    #[serde(default = "default_notifications_canister_id")]
     pub notifications_canister_id: CanisterId,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub cycles_dispenser_canister_id: CanisterId,
@@ -98,14 +95,6 @@ struct Data {
     pub total_cycles_spent_on_canisters: Cycles,
     pub test_mode: bool,
     pub max_concurrent_canister_upgrades: u32,
-}
-
-fn default_local_user_index_canister_id() -> CanisterId {
-    Principal::from_text("nq4qv-wqaaa-aaaaf-bhdgq-cai").unwrap()
-}
-
-fn default_notifications_canister_id() -> CanisterId {
-    Principal::from_text("dobi3-tyaaa-aaaaf-adnna-cai").unwrap()
 }
 
 impl Data {

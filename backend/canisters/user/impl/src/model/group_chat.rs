@@ -12,7 +12,6 @@ pub struct GroupChat {
     pub is_super_admin: bool,
     pub threads_read: TimestampedMap<MessageIndex, MessageIndex>,
     pub archived: Timestamped<bool>,
-    #[serde(default)]
     pub date_read_pinned: Timestamped<Option<TimestampMillis>>,
 }
 

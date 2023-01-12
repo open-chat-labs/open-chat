@@ -137,10 +137,8 @@ struct Data {
     pub group_chats: GroupChats,
     pub blocked_users: Timestamped<HashSet<UserId>>,
     pub user_index_canister_id: CanisterId,
-    #[serde(default = "default_local_user_index_canister_id")]
     pub local_user_index_canister_id: CanisterId,
     pub group_index_canister_id: CanisterId,
-    #[serde(default = "default_notifications_canister_id")]
     pub notifications_canister_id: CanisterId,
     pub ledger_canister_ids: HashMap<Cryptocurrency, CanisterId>,
     pub avatar: Timestamped<Option<Avatar>>,
@@ -157,16 +155,7 @@ struct Data {
     pub pinned_chats: Timestamped<Vec<ChatId>>,
     pub pending_user_principal_migration: Option<Principal>,
     pub suspended: Timestamped<bool>,
-    #[serde(default)]
     pub timer_jobs: TimerJobs<TimerJob>,
-}
-
-fn default_local_user_index_canister_id() -> CanisterId {
-    Principal::from_text("nq4qv-wqaaa-aaaaf-bhdgq-cai").unwrap()
-}
-
-fn default_notifications_canister_id() -> CanisterId {
-    Principal::from_text("dobi3-tyaaa-aaaaf-adnna-cai").unwrap()
 }
 
 impl Data {
