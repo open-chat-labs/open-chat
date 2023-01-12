@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [unreleased]
 
+### Added
+
+- Added `join_group` which avoids having to wait for any inter subnet updates ([#2955](https://github.com/open-ic/open-chat/pull/2955))
+
 ### Changed
 
 - Reduce log level of job started / stopped messages ([#2951](https://github.com/open-ic/open-chat/pull/2951))
