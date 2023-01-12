@@ -923,7 +923,7 @@
 </main>
 
 {#if showRight && floatRightPanel}
-    <Overlay on:close={closeRightPanel} dismissible={true} fade={!$mobileWidth}>
+    <Overlay on:close={closeRightPanel} dismissible fade={!$mobileWidth}>
         <div on:click|stopPropagation class="right-wrapper" class:rtl={$rtlStore}>
             <RightPanel
                 on:showFaqQuestion={showFaqQuestion}
