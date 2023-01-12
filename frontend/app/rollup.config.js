@@ -266,8 +266,8 @@ export default {
                                 <meta property="og:title" content="OpenChat">
                                 <meta property="og:type" content="website" />
                                 <meta property="og:description" content="OpenChat is a fully featured chat application running end-to-end on the Internet Computer blockchain.">
-                                <meta property="og:image" content="/assets/share-oc-light.png">
-                                <meta name="twitter:image" content="/assets/share-oc-light.png">
+                                <meta property="og:image" content="https://oc.app/assets/share-oc-light.png">
+                                <meta name="twitter:image" content="https://oc.app/assets/share-oc-light.png">
                                 <meta property="og:url" content="https://oc.app">
                                 <meta name="twitter:card" content="summary_large_image">
                                 <meta property="og:site_name" content="OpenChat">
