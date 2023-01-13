@@ -829,13 +829,15 @@ export class OpenChat extends EventTarget {
     }
 
     leaveGroup(chatId: string): Promise<"success" | "failure" | "owner_cannot_leave"> {
+        localChatSummaryUpdates.markRemoved(chatId);
         return this.api
             .leaveGroup(chatId)
             .then((resp) => {
                 if (resp === "success" || resp === "not_in_group" || resp === "group_not_found") {
-                    localChatSummaryUpdates.markRemoved(chatId);
                     return "success";
                 } else {
+                    const chat = this._liveState.chatSummaries[chatId];
+                    localChatSummaryUpdates.markAdded(chat);
                     if (resp === "owner_cannot_leave") {
                         return "owner_cannot_leave";
                     } else {
