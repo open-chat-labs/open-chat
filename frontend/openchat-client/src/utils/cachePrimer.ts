@@ -2,14 +2,12 @@ import type {
     ChatEvent,
     ChatSummary,
     EventsResponse,
-    EventWrapper,
     IndexRange
 } from "openchat-shared";
 import { compareChats, missingUserIds, userIdsFromEvents } from "openchat-shared";
 import { toRecord } from "./list";
 import { Poller } from "./poller";
 import type { OpenChatAgentWorker } from "../agentWorker";
-import { selectedChatId } from "../stores/chat";
 import { boolFromLS } from "../stores/localStorageSetting";
 import { messagesRead } from "../stores/markRead";
 import { userStore } from "../stores/user";
@@ -18,34 +16,20 @@ import { get } from "svelte/store";
 export class CachePrimer {
     private pending: Record<string, ChatSummary> = {};
     private runner: Poller | undefined = undefined;
-    private selectedChatId: string | undefined = undefined;
 
     constructor(private api: OpenChatAgentWorker) {
-        selectedChatId.subscribe((chatId) => {
-            if (chatId !== undefined) {
-                delete this.pending[chatId];
-            }
-            this.selectedChatId = chatId;
-        });
         debug("initialized");
     }
 
     processChatUpdates(previous: ChatSummary[], next: ChatSummary[]): void {
         const record = toRecord(previous, (c) => c.chatId);
-
-        const updated = next.filter((c) =>
-            c.chatId !== this.selectedChatId &&
-            !c.archived &&
-            hasBeenUpdated(record[c.chatId], c)
-        );
+        const updated = next.filter((c) => !c.archived && hasBeenUpdated(record[c.chatId], c));
 
         this.enqueue(updated);
     }
 
     processChatMarkedAsRead(chat: ChatSummary): void {
-        if (chat.chatId !== this.selectedChatId && !chat.archived) {
-            this.enqueue([chat]);
-        }
+        this.enqueue([chat]);
     }
 
     async processNext(): Promise<void> {
@@ -57,14 +41,35 @@ export class CachePrimer {
             }
             delete this.pending[chat.chatId];
 
-            debug(chat.chatId + " loading events");
+            const firstUnreadMessage = messagesRead.getFirstUnreadMessageIndex(
+                chat.chatId,
+                chat.latestMessage?.event.messageIndex
+            );
 
-            const eventsResponse = await this.getPageOfEvents(chat);
-
-            if (eventsResponse !== "events_failed" && eventsResponse.events.length > 0) {
-                await this.loadMissingUsers(chat.chatId, eventsResponse.events);
+            const userIds = new Set<string>();
+            if (firstUnreadMessage !== undefined) {
+                debug(chat.chatId + " loading events window");
+                const eventsWindowResponse = await this.getEventsWindow(chat, firstUnreadMessage);
+                debug(chat.chatId + " loaded events window");
+                if (eventsWindowResponse !== "events_failed") {
+                    userIdsFromEvents(eventsWindowResponse.events).forEach((u) => userIds.add(u));
+                }
             }
 
+            debug(chat.chatId + " loading latest events");
+            const latestEventsResponse = await this.getLatestEvents(chat);
+            debug(chat.chatId + " loaded latest events");
+            if (latestEventsResponse !== "events_failed") {
+                userIdsFromEvents(latestEventsResponse.events).forEach((u) => userIds.add(u));
+            }
+
+            if (userIds.size > 0) {
+                const missing = missingUserIds(get(userStore), userIds);
+                if (missing.length > 0) {
+                    debug(`${chat.chatId} loading ${missing.length} users`);
+                    await this.api.getUsers({userGroups: [{users: missing, updatedSince: BigInt(0)}]}, true);
+                }
+            }
             debug(chat.chatId + " completed");
         } finally {
             if (Object.keys(this.pending).length === 0) {
@@ -75,52 +80,38 @@ export class CachePrimer {
         }
     }
 
-    private async getPageOfEvents(chat: ChatSummary): Promise<EventsResponse<ChatEvent>> {
-        const firstUnreadMessage = messagesRead.getFirstUnreadMessageIndex(
-            chat.chatId,
-            chat.latestMessage?.event.messageIndex
-        );
-
-        if (firstUnreadMessage !== undefined) {
-            if (chat.kind === "direct_chat") {
-                return await this.api.directChatEventsWindow(
-                    [0, chat.latestEventIndex],
-                    chat.them,
-                    firstUnreadMessage,
-                    chat.latestEventIndex
-                );
-            } else {
-                return await this.api.groupChatEventsWindow(
-                    [chat.minVisibleEventIndex, chat.latestEventIndex],
-                    chat.chatId,
-                    firstUnreadMessage,
-                    chat.latestEventIndex
-                );
-            }
+    private async getEventsWindow(chat: ChatSummary, firstUnreadMessage: number): Promise<EventsResponse<ChatEvent>> {
+        if (chat.kind === "direct_chat") {
+            return await this.api.directChatEventsWindow(
+                [0, chat.latestEventIndex],
+                chat.them,
+                firstUnreadMessage,
+                chat.latestEventIndex
+            );
         } else {
-            const range: IndexRange = chat.kind === "direct_chat"
-                ? [0, chat.latestEventIndex]
-                : [chat.minVisibleEventIndex, chat.latestEventIndex];
-
-            return await this.api.chatEvents(
-                chat.kind,
+            return await this.api.groupChatEventsWindow(
+                [chat.minVisibleEventIndex, chat.latestEventIndex],
                 chat.chatId,
-                range,
-                chat.latestEventIndex,
-                false,
-                undefined,
+                firstUnreadMessage,
                 chat.latestEventIndex
             );
         }
     }
 
-    private async loadMissingUsers(chatId: string, events: EventWrapper<ChatEvent>[]): Promise<void> {
-        const usersFromEvents = userIdsFromEvents(events);
-        const missingUsers = missingUserIds(get(userStore), usersFromEvents);
-        if (missingUsers.length > 0) {
-            debug(`${chatId} loading ${missingUsers.length} users`);
-            await this.api.getUsers({userGroups: [{users: missingUsers, updatedSince: BigInt(0)}]}, true);
-        }
+    private async getLatestEvents(chat: ChatSummary): Promise<EventsResponse<ChatEvent>> {
+        const range: IndexRange = chat.kind === "direct_chat"
+            ? [0, chat.latestEventIndex]
+            : [chat.minVisibleEventIndex, chat.latestEventIndex];
+
+        return await this.api.chatEvents(
+            chat.kind,
+            chat.chatId,
+            range,
+            chat.latestEventIndex,
+            false,
+            undefined,
+            chat.latestEventIndex
+        );
     }
 
     private enqueue(chats: ChatSummary[]): void {
