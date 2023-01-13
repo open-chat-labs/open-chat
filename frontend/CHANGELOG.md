@@ -7,7 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [unreleased]
 
-## [2.0.543](https://github.com/open-ic/open-chat/releases/tag/v2.0.543-website)
+## [[2.0.543](https://github.com/open-ic/open-chat/releases/tag/v2.0.543-website)]
 
 ### Added
 
