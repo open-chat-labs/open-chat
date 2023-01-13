@@ -6,15 +6,6 @@ export class UpgradeRequired extends CustomEvent<"explain" | "icp" | "sms"> {
     }
 }
 
-export class DeletedMessagesExpanded extends CustomEvent<{
-    scrollTop: number;
-    scrollHeight: number;
-}> {
-    constructor(scrollTop: number, scrollHeight: number) {
-        super("openchat_event", { detail: { scrollTop, scrollHeight } });
-    }
-}
-
 export class LoadedNewMessages extends CustomEvent<boolean> {
     constructor(newLatestMessage: boolean) {
         super("openchat_event", { detail: newLatestMessage });

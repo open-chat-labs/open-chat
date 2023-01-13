@@ -29,7 +29,6 @@
         FilteredProposals,
         MessageReadState,
         LoadedNewMessages,
-        DeletedMessagesExpanded,
         ChatUpdated,
         LoadedMessageWindow,
         LoadedPreviousMessages,
@@ -152,18 +151,19 @@
         };
     });
 
+    function expandDeletedMessages(ev: CustomEvent<{ scrollTop: number; scrollHeight: number }>) {
+        tick().then(() => {
+            if (messagesDiv) {
+                expectedScrollTop = undefined;
+                const diff = (messagesDiv?.scrollHeight ?? 0) - ev.detail.scrollHeight;
+                messagesDiv.scrollTo({ top: ev.detail.scrollTop - diff, behavior: "auto" });
+            }
+        });
+    }
+
     function clientEvent(ev: Event): void {
         if (ev instanceof LoadedNewMessages) {
             onLoadedNewMessages(ev.detail);
-        }
-        if (ev instanceof DeletedMessagesExpanded) {
-            tick().then(() => {
-                if (messagesDiv) {
-                    expectedScrollTop = undefined;
-                    const diff = (messagesDiv?.scrollHeight ?? 0) - ev.detail.scrollHeight;
-                    messagesDiv.scrollTo({ top: ev.detail.scrollTop - diff, behavior: "auto" });
-                }
-            });
         }
         if (ev instanceof LoadedPreviousMessages) {
             onLoadedPreviousMessages();
@@ -662,6 +662,7 @@
                         on:collapseMessage={() => toggleMessageExpansion(evt, false)}
                         on:upgrade
                         on:forward
+                        on:expandDeletedMessages={expandDeletedMessages}
                         event={evt} />
                 {/each}
             {/each}
