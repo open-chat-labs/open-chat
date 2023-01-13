@@ -482,10 +482,8 @@
     function leaveGroup(chatId: string): Promise<void> {
         push("/");
 
-        return client.leaveGroup(chatId).then((resp) => {
-            if (resp === "success") {
-                toastStore.showSuccessToast("leftGroup");
-            } else {
+        client.leaveGroup(chatId).then((resp) => {
+            if (resp !== "success") {
                 if (resp === "owner_cannot_leave") {
                     toastStore.showFailureToast("ownerCantLeave");
                 } else {
@@ -494,6 +492,8 @@
                 push(`/${chatId}`);
             }
         });
+
+        return Promise.resolve();
     }
 
     function deleteDirectChat(ev: CustomEvent<string>) {
