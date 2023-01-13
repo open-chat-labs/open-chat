@@ -6,9 +6,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [unreleased]
 
+## [[2.0.546](https://github.com/open-ic/open-chat/releases/tag/v2.0.546-group)] - 2022-01-08
+
 ### Changed
 
-- Added `max_messages` to `events` and `events_window` ([#2947](https://github.com/open-ic/open-chat/pull/2947)) (requires website release first)
+- Added `max_messages` to `events` and `events_window` ([#2947](https://github.com/open-ic/open-chat/pull/2947))
 
 ### Removed
 
