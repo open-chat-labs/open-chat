@@ -201,6 +201,7 @@ import {
     ThreadMessagesLoaded,
     ThreadSelected,
     UpgradeRequired,
+    DeletedMessagesExpanded,
 } from "./events";
 import { LiveState } from "./liveState";
 import { getTypingString } from "./utils/chat";
@@ -2307,6 +2308,7 @@ export class OpenChat extends EventTarget {
 
     expandDeletedMessages(chatId: string, messageIndexes: Set<number>): void {
         chatStateStore.setProp(chatId, "expandedDeletedMessages", messageIndexes);
+        this.dispatchEvent(new DeletedMessagesExpanded(Math.min(...messageIndexes)));
     }
 
     remoteUserToggledReaction(

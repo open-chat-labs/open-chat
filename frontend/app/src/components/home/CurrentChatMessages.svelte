@@ -29,6 +29,7 @@
         FilteredProposals,
         MessageReadState,
         LoadedNewMessages,
+        DeletedMessagesExpanded,
         ChatUpdated,
         LoadedMessageWindow,
         LoadedPreviousMessages,
@@ -154,6 +155,9 @@
     function clientEvent(ev: Event): void {
         if (ev instanceof LoadedNewMessages) {
             onLoadedNewMessages(ev.detail);
+        }
+        if (ev instanceof DeletedMessagesExpanded) {
+            tick().then(() => scrollToMessageIndex(ev.detail, false));
         }
         if (ev instanceof LoadedPreviousMessages) {
             onLoadedPreviousMessages();
@@ -425,8 +429,6 @@
     }
 
     $: expandedDeletedMessages = client.expandedDeletedMessages;
-
-    $: console.log("Expanded: ", $expandedDeletedMessages);
 
     $: groupedEvents = client
         .groupEvents(events, user.userId, $expandedDeletedMessages, groupInner(filteredProposals))
