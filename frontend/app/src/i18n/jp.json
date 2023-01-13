@@ -631,7 +631,6 @@
     "features": "特徴",
     "architecture": "建築",
     "whitepaper": "白書",
-    "whatsOnYourMind": "何を考えているの？",
     "joined": "参加しました",
     "oneMessageDeleted": "1 件のメッセージを削除しました",
     "nMessagesDeleted": "{number} 件のメッセージが削除されました",
@@ -672,5 +671,6 @@
     "deleteMessageAndReport": "削除して報告",
     "howToBuyToken": "{token} の購入についてサポートが必要です",
     "reason": "理由",
-    "expandDeletedMessages": "このチャットで削除されたメッセージを展開する"
+    "expandDeletedMessages": "このチャットで削除されたメッセージを展開する",
+    "enterAMessage": "メッセージを入力してください..."
 }

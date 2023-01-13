@@ -631,7 +631,6 @@
     "features": "Đặc trưng",
     "architecture": "Ngành kiến trúc",
     "whitepaper": "Giấy trắng",
-    "whatsOnYourMind": "Bạn đang nghĩ gì vậy?",
     "joined": "đã tham gia",
     "oneMessageDeleted": "Đã xóa 1 tin nhắn",
     "nMessagesDeleted": "{number} tin nhắn đã bị xóa",
@@ -672,5 +671,6 @@
     "deleteMessageAndReport": "Xóa và báo cáo",
     "howToBuyToken": "Tôi cần trợ giúp mua {token}",
     "reason": "Lý do",
-    "expandDeletedMessages": "Mở rộng các tin nhắn đã xóa trong cuộc trò chuyện này"
+    "expandDeletedMessages": "Mở rộng các tin nhắn đã xóa trong cuộc trò chuyện này",
+    "enterAMessage": "Nhập tin nhắn..."
 }
