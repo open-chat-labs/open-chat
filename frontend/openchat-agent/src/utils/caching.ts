@@ -1,4 +1,4 @@
-import { MAX_EVENTS } from "../constants";
+import { MAX_MESSAGES } from "../constants";
 import { openDB, DBSchema, IDBPDatabase } from "idb";
 import {
     ChatEvent,
@@ -314,7 +314,7 @@ async function aggregateEventsWindow<T extends ChatEvent>(
         max = midpoint;
     }
 
-    const half = MAX_EVENTS / 2;
+    const half = MAX_MESSAGES / 2;
     const lowerBound = Math.max(min, midpoint - half);
     const upperBound = Math.min(max, midpoint + half);
 
@@ -352,8 +352,8 @@ async function aggregateEvents<T extends ChatEvent>(
     const resolvedDb = await db;
     const missing = new Set<number>();
 
-    const lowerBound = ascending ? startIndex : Math.max(min, startIndex - MAX_EVENTS);
-    const upperBound = ascending ? Math.min(max, startIndex + MAX_EVENTS) : startIndex;
+    const lowerBound = ascending ? startIndex : Math.max(min, startIndex - MAX_MESSAGES);
+    const upperBound = ascending ? Math.min(max, startIndex + MAX_MESSAGES) : startIndex;
 
     const range = IDBKeyRange.bound(
         createCacheKey(chatId, lowerBound, threadRootMessageIndex),
