@@ -2,7 +2,7 @@
 
 <script lang="ts">
     import type { OpenChat, UserLookup, UserSummary } from "openchat-client";
-    import { afterUpdate, getContext, onDestroy, onMount } from "svelte";
+    import { afterUpdate, createEventDispatcher, getContext, onDestroy, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import Markdown from "./Markdown.svelte";
 
@@ -15,6 +15,7 @@
 
     let deletedMessagesElement: HTMLElement;
 
+    const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
 
     $: userStore = client.userStore;
@@ -73,7 +74,11 @@
     }
 
     function expandDeletedMessages() {
-        client.expandDeletedMessages(chatId);
+        const chatMessages = document.getElementById("chat-messages");
+        const scrollTop = chatMessages?.scrollTop ?? 0;
+        const scrollHeight = chatMessages?.scrollHeight ?? 0;
+        client.expandDeletedMessages(chatId, new Set(messagesDeleted));
+        dispatch("expandDeletedMessages", { scrollTop, scrollHeight });
     }
 </script>
 
@@ -83,13 +88,12 @@
             <Markdown oneLine={true} suppressLinks={true} text={joinedText} />
         {/if}
         {#if deletedText !== undefined}
-            <p 
-                class="deleted" 
-                title={$_("expandDeletedMessages")} 
-                bind:this={deletedMessagesElement} 
-                data-index={messagesDeleted.join(" ")} 
-                on:click={expandDeletedMessages}
-            >
+            <p
+                class="deleted"
+                title={$_("expandDeletedMessages")}
+                bind:this={deletedMessagesElement}
+                data-index={messagesDeleted.join(" ")}
+                on:click={expandDeletedMessages}>
                 {deletedText}
             </p>
         {/if}

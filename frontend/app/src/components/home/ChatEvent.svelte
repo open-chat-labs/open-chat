@@ -139,7 +139,8 @@
         {readByMe}
         user={userSummary}
         joined={event.event.usersJoined}
-        messagesDeleted={event.event.messagesDeleted} />
+        messagesDeleted={event.event.messagesDeleted}
+        on:expandDeletedMessages />
 {:else if event.event.kind === "role_changed"}
     <RoleChangedEvent user={userSummary} event={event.event} timestamp={event.timestamp} />
 {:else if event.event.kind === "users_blocked"}

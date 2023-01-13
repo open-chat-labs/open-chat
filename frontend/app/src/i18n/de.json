@@ -630,7 +630,6 @@
     "features": "Merkmale",
     "architecture": "Die Architektur",
     "whitepaper": "Weißes Papier",
-    "whatsOnYourMind": "Was haben Sie auf dem Herzen?",
     "joined": "Trat bei",
     "oneMessageDeleted": "1 Nachricht gelöscht",
     "nMessagesDeleted": "{number} Nachrichten gelöscht",
@@ -672,5 +671,5 @@
     "howToBuyToken": "Ich brauche Hilfe beim Kauf von {token}",
     "reason": "Grund",
     "expandDeletedMessages": "Erweitern Sie gelöschte Nachrichten in diesem Chat",
-    "revealDeletedMessage": "Nachricht enthüllen"
+    "enterMessage": "Geben Sie eine Nachricht ein..."
 }

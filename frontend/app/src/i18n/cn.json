@@ -631,7 +631,6 @@
     "features": "特性",
     "architecture": "架构",
     "whitepaper": "白皮书",
-    "whatsOnYourMind": "你在想什么？",
     "nMessagesDeleted": "{number} 条消息已删除",
     "joined": "已加入",
     "oneMessageDeleted": "已删除 1 条消息",
@@ -673,5 +672,5 @@
     "howToBuyToken": "我需要购买 {token} 的帮助",
     "reason": "原因",
     "expandDeletedMessages": "展开此聊天中已删除的消息",
-    "revealDeletedMessage": "显示消息"
+    "enterMessage": "输入消息..."
 }

@@ -460,18 +460,18 @@ export function groupBySender<T extends ChatEvent>(events: EventWrapper<T>[]): E
 export function groupEvents(
     events: EventWrapper<ChatEvent>[],
     myUserId: string,
-    aggregateDeleted: boolean,
+    expandedDeletedMessages: Set<number>,
     groupInner?: (events: EventWrapper<ChatEvent>[]) => EventWrapper<ChatEvent>[][]
 ): EventWrapper<ChatEvent>[][][] {
     return groupWhile(sameDate, events.filter(eventIsVisible))
-        .map((e) => reduceJoinedOrLeft(e, myUserId, aggregateDeleted))
+        .map((e) => reduceJoinedOrLeft(e, myUserId, expandedDeletedMessages))
         .map(groupInner ?? groupBySender);
 }
 
 function reduceJoinedOrLeft(
     events: EventWrapper<ChatEvent>[],
     myUserId: string,
-    aggregateDeleted: boolean,
+    expandedDeletedMessages: Set<number>
 ): EventWrapper<ChatEvent>[] {
     function getLatestAggregateEventIfExists(
         events: EventWrapper<ChatEvent>[]
@@ -485,7 +485,8 @@ function reduceJoinedOrLeft(
         if (
             e.event.kind === "member_joined" ||
             e.event.kind === "member_left" ||
-            (aggregateDeleted && e.event.kind === "message" && messageIsHidden(e.event, myUserId))
+            (e.event.kind === "message" &&
+                messageIsHidden(e.event, myUserId, expandedDeletedMessages))
         ) {
             let agg = getLatestAggregateEventIfExists(previous);
             if (agg === undefined) {
@@ -528,10 +529,11 @@ function reduceJoinedOrLeft(
     }, []);
 }
 
-function messageIsHidden(message: Message, myUserId: string) {
+function messageIsHidden(message: Message, myUserId: string, expandedDeletedMessages: Set<number>) {
     return (
         message.content.kind === "deleted_content" &&
         message.sender !== myUserId &&
+        !expandedDeletedMessages.has(message.messageIndex) &&
         message.thread === undefined
     );
 }

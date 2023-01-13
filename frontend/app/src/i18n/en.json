@@ -183,7 +183,6 @@
     "downloadFile": "Download {name}",
     "enterCaption": "Enter a caption",
     "enterMessage": "Enter a message",
-    "whatsOnYourMind": "What's on your mind?",
     "dropFile": "Drop a file here",
     "cancel": "Cancel",
     "unknownUser": "Unknown User",
@@ -670,5 +669,6 @@
     "deleteMessageAndReport": "Delete and report",
     "reason": "Reason",
     "expandDeletedMessages": "Expand deleted messages in this chat",
+    "enterMessage": "Enter a message...",
     "revealDeletedMessage": "Reveal message"
 }

@@ -631,7 +631,6 @@
     "features": "Características",
     "architecture": "Arquitectura",
     "whitepaper": "Papel blanco",
-    "whatsOnYourMind": "¿Qué tienes en mente?",
     "joined": "Unido",
     "oneMessageDeleted": "1 mensaje eliminado",
     "nMessagesDeleted": "{number} mensajes eliminados",
@@ -673,5 +672,5 @@
     "howToBuyToken": "Necesito ayuda para comprar {token}",
     "reason": "Razón",
     "expandDeletedMessages": "Expandir mensajes eliminados en este chat",
-    "revealDeletedMessage": "Revelar mensaje"
+    "enterMessage": "Introduce un mensaje..."
 }

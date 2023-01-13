@@ -628,7 +628,6 @@
     "features": "תכונות",
     "architecture": "ארכיטקטורה",
     "whitepaper": "נייר לבן",
-    "whatsOnYourMind": "על מה אתה חושב?",
     "joined": "הצטרף",
     "oneMessageDeleted": "הודעה אחת נמחקה",
     "nMessagesDeleted": "{number} הודעות נמחקו",
@@ -670,5 +669,5 @@
     "howToBuyToken": "אני צריך עזרה בקניית {token}",
     "reason": "סיבה",
     "expandDeletedMessages": "הרחב הודעות שנמחקו בצ'אט זה",
-    "revealDeletedMessage": "לחשוף הודעה"
+    "enterMessage": "הזן הודעה..."
 }

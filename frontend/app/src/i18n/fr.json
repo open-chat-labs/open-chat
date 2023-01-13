@@ -630,7 +630,6 @@
     "features": "Fonctionnalités",
     "architecture": "Architecture",
     "whitepaper": "Papier blanc",
-    "whatsOnYourMind": "Qu'est-ce qui préoccupe votre esprit?",
     "joined": "Rejoint",
     "oneMessageDeleted": "1 message supprimé",
     "nMessagesDeleted": "{number} messages supprimés",
@@ -672,5 +671,5 @@
     "howToBuyToken": "J'ai besoin d'aide pour acheter {token}",
     "reason": "Raison",
     "expandDeletedMessages": "Développer les messages supprimés dans ce chat",
-    "revealDeletedMessage": "Révéler le message"
+    "enterMessage": "Entrez un message..."
 }
