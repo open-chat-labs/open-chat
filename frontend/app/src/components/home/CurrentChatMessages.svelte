@@ -157,7 +157,13 @@
             onLoadedNewMessages(ev.detail);
         }
         if (ev instanceof DeletedMessagesExpanded) {
-            tick().then(() => scrollToMessageIndex(ev.detail, false));
+            tick().then(() => {
+                if (messagesDiv) {
+                    expectedScrollTop = undefined;
+                    const diff = (messagesDiv?.scrollHeight ?? 0) - ev.detail.scrollHeight;
+                    messagesDiv.scrollTo({ top: ev.detail.scrollTop - diff, behavior: "auto" });
+                }
+            });
         }
         if (ev instanceof LoadedPreviousMessages) {
             onLoadedPreviousMessages();

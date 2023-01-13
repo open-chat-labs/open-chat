@@ -2306,9 +2306,16 @@ export class OpenChat extends EventTarget {
         chatStateStore.setProp(chatId, "focusMessageIndex", messageIndex);
     }
 
-    expandDeletedMessages(chatId: string, messageIndexes: Set<number>): void {
-        chatStateStore.setProp(chatId, "expandedDeletedMessages", messageIndexes);
-        this.dispatchEvent(new DeletedMessagesExpanded(Math.min(...messageIndexes)));
+    expandDeletedMessages(
+        chatId: string,
+        messageIndexes: Set<number>,
+        scrollTop = 0,
+        scrollHeight = 0
+    ): void {
+        chatStateStore.updateProp(chatId, "expandedDeletedMessages", (data) => {
+            return new Set([...messageIndexes, ...data]);
+        });
+        this.dispatchEvent(new DeletedMessagesExpanded(scrollTop, scrollHeight));
     }
 
     remoteUserToggledReaction(
