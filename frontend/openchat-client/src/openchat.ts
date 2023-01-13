@@ -201,7 +201,6 @@ import {
     ThreadMessagesLoaded,
     ThreadSelected,
     UpgradeRequired,
-    DeletedMessagesExpanded,
 } from "./events";
 import { LiveState } from "./liveState";
 import { getTypingString } from "./utils/chat";
