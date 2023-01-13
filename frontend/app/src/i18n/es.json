@@ -147,7 +147,7 @@
     "noAudio": "Tu navegador no admite audio incrustado",
     "downloadFile": "Descargar {name}",
     "enterCaption": "Introduce un título",
-    "enterMessage": "Introduce un mensaje",
+    "enterMessage": "Introduce un mensaje...",
     "dropFile": "Suelta un archivo aquí",
     "cancel": "Cancelar",
     "unknownUser": "Usuario desconocido",
@@ -672,5 +672,5 @@
     "howToBuyToken": "Necesito ayuda para comprar {token}",
     "reason": "Razón",
     "expandDeletedMessages": "Expandir mensajes eliminados en este chat",
-    "enterMessage": "Introduce un mensaje..."
+    "revealDeletedMessage": "Revelar mensaje"
 }
