@@ -151,6 +151,16 @@
         };
     });
 
+    function expandDeletedMessages(ev: CustomEvent<{ scrollTop: number; scrollHeight: number }>) {
+        tick().then(() => {
+            if (messagesDiv) {
+                expectedScrollTop = undefined;
+                const diff = (messagesDiv?.scrollHeight ?? 0) - ev.detail.scrollHeight;
+                messagesDiv.scrollTo({ top: ev.detail.scrollTop - diff, behavior: "auto" });
+            }
+        });
+    }
+
     function clientEvent(ev: Event): void {
         if (ev instanceof LoadedNewMessages) {
             onLoadedNewMessages(ev.detail);
@@ -424,10 +434,10 @@
         return firstKey;
     }
 
-    $: aggregateDeletedMessages = client.aggregateDeletedMessages;
+    $: expandedDeletedMessages = client.expandedDeletedMessages;
 
     $: groupedEvents = client
-        .groupEvents(events, user.userId, $aggregateDeletedMessages, groupInner(filteredProposals))
+        .groupEvents(events, user.userId, $expandedDeletedMessages, groupInner(filteredProposals))
         .reverse();
 
     $: {
@@ -652,6 +662,7 @@
                         on:collapseMessage={() => toggleMessageExpansion(evt, false)}
                         on:upgrade
                         on:forward
+                        on:expandDeletedMessages={expandDeletedMessages}
                         event={evt} />
                 {/each}
             {/each}
