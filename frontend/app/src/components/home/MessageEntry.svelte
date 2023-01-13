@@ -134,7 +134,7 @@
             ? $_("enterCaption")
             : dragging
             ? $_("dropFile")
-            : $_("whatsOnYourMind");
+            : $_("enterMessage");
 
     export function replaceSelection(text: string) {
         restoreSelection();

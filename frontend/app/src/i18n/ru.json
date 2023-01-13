@@ -630,7 +630,6 @@
     "features": "Функции",
     "architecture": "Архитектура",
     "whitepaper": "Белая бумага",
-    "whatsOnYourMind": "Что у тебя на уме?",
     "joined": "Присоединился",
     "oneMessageDeleted": "1 сообщение удалено",
     "nMessagesDeleted": "{number} сообщений удалено",
@@ -671,5 +670,6 @@
     "deleteMessageAndReport": "Удалить и пожаловаться",
     "howToBuyToken": "Мне нужна помощь в покупке {token}",
     "reason": "Причина",
-    "expandDeletedMessages": "Развернуть удаленные сообщения в этом чате"
+    "expandDeletedMessages": "Развернуть удаленные сообщения в этом чате",
+    "enterMessage": "Введите сообщение..."
 }

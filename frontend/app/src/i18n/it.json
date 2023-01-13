@@ -630,7 +630,6 @@
     "features": "Caratteristiche",
     "architecture": "Architettura",
     "whitepaper": "Carta bianca",
-    "whatsOnYourMind": "Cos'hai in mente?",
     "joined": "Partecipato",
     "oneMessageDeleted": "1 messaggio eliminato",
     "nMessagesDeleted": "{number} messaggi eliminati",
@@ -671,5 +670,6 @@
     "deleteMessageAndReport": "Elimina e segnala",
     "howToBuyToken": "Ho bisogno di aiuto per l'acquisto di {token}",
     "reason": "Motivo",
-    "expandDeletedMessages": "Espandi i messaggi eliminati in questa chat"
+    "expandDeletedMessages": "Espandi i messaggi eliminati in questa chat",
+    "enterMessage": "Inserisci un messaggio..."
 }
