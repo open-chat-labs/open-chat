@@ -2,9 +2,8 @@
 
 <script lang="ts">
     import type { OpenChat, UserLookup, UserSummary } from "openchat-client";
-    import { afterUpdate, getContext, onDestroy, onMount, tick } from "svelte";
+    import { afterUpdate, getContext, onDestroy, onMount } from "svelte";
     import { _ } from "svelte-i18n";
-    import { formatWithOptions } from "util";
     import Markdown from "./Markdown.svelte";
 
     export let chatId: string;
