@@ -672,5 +672,5 @@
     "howToBuyToken": "我需要购买 {token} 的帮助",
     "reason": "原因",
     "expandDeletedMessages": "展开此聊天中已删除的消息",
-    "enterAMessage": "输入消息..."
+    "enterMessage": "输入消息..."
 }

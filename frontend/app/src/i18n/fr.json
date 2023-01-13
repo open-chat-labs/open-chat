@@ -671,5 +671,5 @@
     "howToBuyToken": "J'ai besoin d'aide pour acheter {token}",
     "reason": "Raison",
     "expandDeletedMessages": "Développer les messages supprimés dans ce chat",
-    "enterAMessage": "Entrez un message..."
+    "enterMessage": "Entrez un message..."
 }

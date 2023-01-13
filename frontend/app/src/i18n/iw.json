@@ -669,5 +669,5 @@
     "howToBuyToken": "אני צריך עזרה בקניית {token}",
     "reason": "סיבה",
     "expandDeletedMessages": "הרחב הודעות שנמחקו בצ'אט זה",
-    "enterAMessage": "הזן הודעה..."
+    "enterMessage": "הזן הודעה..."
 }

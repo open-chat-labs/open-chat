@@ -669,5 +669,5 @@
     "deleteMessageAndReport": "Delete and report",
     "reason": "Reason",
     "expandDeletedMessages": "Expand deleted messages in this chat",
-    "enterAMessage": "Enter a message..."
+    "enterMessage": "Enter a message..."
 }
