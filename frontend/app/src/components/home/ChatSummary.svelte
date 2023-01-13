@@ -174,7 +174,7 @@
     }
 
     function archiveChat() {
-        client.markAllRead(chatSummary);
+        client.markAllRead(chatSummary.chatId);
         dispatch("archiveChat", chatSummary.chatId);
     }
 
@@ -332,7 +332,7 @@
                                 {/if}
                                 <MenuItem
                                     disabled={unreadMessages === 0}
-                                    on:click={() => client.markAllRead(chatSummary)}>
+                                    on:click={() => client.markAllRead(chatSummary.chatId)}>
                                     <CheckboxMultipleMarked
                                         size={$iconSize}
                                         color={"var(--icon-inverted-txt)"}

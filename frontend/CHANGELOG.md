@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [unreleased]
 
+### Added
+
+- Prime caches by background loading the first page of events for each chat
+
 ## [[2.0.543](https://github.com/open-ic/open-chat/releases/tag/v2.0.543-website)]
 
 ### Added

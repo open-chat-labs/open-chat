@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
+    "build": "turbo run build",
     "build:ci": "turbo run build:ci",
     "deploy:prod_test": "turbo run deploy:prod_test",
     "deploy:prod": "turbo run deploy:prod",

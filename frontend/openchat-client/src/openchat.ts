@@ -35,7 +35,6 @@ import {
     groupEvents,
     groupMessagesByDate,
     makeRtcConnections,
-    markAllRead,
     mergeServerEvents,
     messageIsReadByThem,
     metricsEqual,
@@ -61,6 +60,7 @@ import {
 } from "./utils/user";
 import { rtcConnectionsManager } from "./utils/rtcConnectionsManager";
 import { showTrace } from "./utils/profiling";
+import { CachePrimer } from "./utils/cachePrimer";
 import { Poller } from "./utils/poller";
 import {
     idbAuthClientStore,
@@ -317,6 +317,7 @@ export class OpenChat extends EventTarget {
     private _botDetected = false;
     private _lastOnlineDatesPending = new Set<string>();
     private _lastOnlineDatesPromise: Promise<Record<string, number>> | undefined;
+    private _cachePrimer: CachePrimer | undefined = undefined;
 
     constructor(private config: OpenChatConfig) {
         super();
@@ -464,6 +465,7 @@ export class OpenChat extends EventTarget {
         this._workerApi = new OpenChatAgentWorker(this.config);
         this._workerApi.addEventListener("openchat_event", (ev) => this.handleAgentEvent(ev));
         await this._workerApi.ready;
+        this._cachePrimer = new CachePrimer(this._workerApi);
         this.api
             .getCurrentUser()
             .then((user) => {
@@ -2155,8 +2157,18 @@ export class OpenChat extends EventTarget {
         }
     }
 
+    markAllRead(chatId: string): void {
+        const chat = this._liveState.chatSummaries[chatId];
+        if (chat !== undefined) {
+            const latestMessageIndex = chat.latestMessage?.event.messageIndex;
+            if (latestMessageIndex !== undefined) {
+                messagesRead.markReadUpTo(chat.chatId, latestMessageIndex);
+                this._cachePrimer?.processChatMarkedAsRead(chat);
+            }
+        }
+    }
+
     getFirstUnreadMention = getFirstUnreadMention;
-    markAllRead = markAllRead;
     buildCryptoTransferText = buildCryptoTransferText;
     buildTransactionLink = buildTransactionLink;
     getDisplayDate = getDisplayDate;
@@ -2928,6 +2940,8 @@ export class OpenChat extends EventTarget {
             this._chatUpdatesSince = chatsResponse.timestamp;
 
             if (chatsResponse.wasUpdated) {
+                this._cachePrimer?.processChatUpdates(chats, chatsResponse.chatSummaries);
+
                 const userIds = this.userIdsFromChatSummaries(chatsResponse.chatSummaries);
                 if (!init) {
                     for (const userId of this.user.referrals) {
