@@ -73,7 +73,6 @@
     }
 
     function expandDeletedMessages() {
-        // TODO - probably we should trigger a scroll to the first message in the list
         client.expandDeletedMessages(chatId, new Set(messagesDeleted));
     }
 </script>
