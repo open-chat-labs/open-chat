@@ -11,9 +11,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- Integrated the new `join_group` flow ([#2955](https://github.com/open-ic/open-chat/pull/2955)) (currently disabled) 
+- Integrated the new `join_group` flow ([#2955](https://github.com/open-ic/open-chat/pull/2955)) (currently disabled)
 
 ### Changed
+
+- Expand individual deleted messages groups ([#2963](https://github.com/open-ic/open-chat/pull/2963))
 
 - Improve re-use of user pill ([#2959](https://github.com/open-ic/open-chat/pull/2959))
 
