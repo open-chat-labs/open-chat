@@ -91,7 +91,7 @@ import {
     currentUserStore,
     eventsStore,
     focusMessageIndex,
-    aggregateDeletedMessages,
+    expandedDeletedMessages,
     isProposalGroup,
     nextEventAndMessageIndexes,
     numberOfThreadsStore,
@@ -1325,7 +1325,10 @@ export class OpenChat extends EventTarget {
         makeRtcConnections(this.user.userId, chat, events, this._liveState.userStore);
     }
 
-    private async updateUserStore(chatId: string, userIdsFromEvents: Iterable<string>): Promise<void> {
+    private async updateUserStore(
+        chatId: string,
+        userIdsFromEvents: Iterable<string>
+    ): Promise<void> {
         const userId = this.user.userId;
         const allUserIds = new Set<string>();
         chatStateStore.getProp(chatId, "members").forEach((m) => allUserIds.add(m.userId));
@@ -2302,8 +2305,8 @@ export class OpenChat extends EventTarget {
         chatStateStore.setProp(chatId, "focusMessageIndex", messageIndex);
     }
 
-    expandDeletedMessages(chatId: string): void {
-        chatStateStore.setProp(chatId, "aggregateDeletedMessages", false);
+    expandDeletedMessages(chatId: string, messageIndexes: Set<number>): void {
+        chatStateStore.setProp(chatId, "expandedDeletedMessages", messageIndexes);
     }
 
     remoteUserToggledReaction(
@@ -2500,9 +2503,11 @@ export class OpenChat extends EventTarget {
     getRecommendedGroups(): Promise<GroupChatSummary[]> {
         // TODO get the list of exclusions from the user canister
 
-        const exclusions = new Set<string>(this._liveState.chatSummariesList
-            .filter((c) => c.kind === "group_chat" && c.public)
-            .map((g) => g.chatId));
+        const exclusions = new Set<string>(
+            this._liveState.chatSummariesList
+                .filter((c) => c.kind === "group_chat" && c.public)
+                .map((g) => g.chatId)
+        );
 
         recommendedGroupExclusions.value().forEach((c) => exclusions.add(c));
 
@@ -2921,9 +2926,10 @@ export class OpenChat extends EventTarget {
                 pinnedChats: this._liveState.pinnedChats,
             };
             const avatarId = this._liveState.userStore[this.user.userId]?.blobReference?.blobId;
-            const chatsResponse = this._chatUpdatesSince === undefined
-                ? await this.initialStateV2()
-                : await this.updatesV2(this._chatUpdatesSince, currentState, avatarId)
+            const chatsResponse =
+                this._chatUpdatesSince === undefined
+                    ? await this.initialStateV2()
+                    : await this.updatesV2(this._chatUpdatesSince, currentState, avatarId);
 
             this._chatUpdatesSince = chatsResponse.timestamp;
 
@@ -3082,13 +3088,16 @@ export class OpenChat extends EventTarget {
         updatesSince: bigint,
         avatarId: bigint | undefined
     ): MergedUpdatesResponse {
-        const chatSummaries = (result.state.directChats as ChatSummary[]).concat(result.state.groupChats);
+        const chatSummaries = (result.state.directChats as ChatSummary[]).concat(
+            result.state.groupChats
+        );
 
         this.updateReadUpToStore(chatSummaries);
 
-        const avatarIdUpdate = result.state.avatarId === avatarId
-            ? undefined
-            : result.state.avatarId !== undefined
+        const avatarIdUpdate =
+            result.state.avatarId === avatarId
+                ? undefined
+                : result.state.avatarId !== undefined
                 ? { value: result.state.avatarId }
                 : "set_to_none";
 
@@ -3100,7 +3109,7 @@ export class OpenChat extends EventTarget {
             avatarIdUpdate,
             affectedEvents: result.affectedEvents,
             // If there were any errors we don't bump the timestamp, this ensures no updates get missed
-            timestamp: result.anyErrors ? updatesSince : result.state.timestamp
+            timestamp: result.anyErrors ? updatesSince : result.state.timestamp,
         };
     }
 
@@ -3111,13 +3120,18 @@ export class OpenChat extends EventTarget {
                     if (next.readUpTo !== undefined) {
                         res.push({
                             threadRootMessageIndex: next.threadRootMessageIndex,
-                            readUpTo: next.readUpTo
+                            readUpTo: next.readUpTo,
                         });
                     }
                     return res;
                 }, [] as ThreadRead[]);
 
-                messagesRead.syncWithServer(chat.chatId, chat.readByMeUpTo, threads, chat.dateReadPinned);
+                messagesRead.syncWithServer(
+                    chat.chatId,
+                    chat.readByMeUpTo,
+                    threads,
+                    chat.dateReadPinned
+                );
             } else {
                 messagesRead.syncWithServer(chat.chatId, chat.readByMeUpTo, [], undefined);
             }
@@ -3166,7 +3180,7 @@ export class OpenChat extends EventTarget {
     blockedUsers = blockedUsers;
     undeletingMessagesStore = undeletingMessagesStore;
     focusMessageIndex = focusMessageIndex;
-    aggregateDeletedMessages = aggregateDeletedMessages;
+    expandedDeletedMessages = expandedDeletedMessages;
     userGroupKeys = userGroupKeys;
     unconfirmedReadByThem = unconfirmedReadByThem;
     currentChatReplyingTo = currentChatReplyingTo;

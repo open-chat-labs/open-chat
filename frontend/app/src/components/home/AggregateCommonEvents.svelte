@@ -73,7 +73,7 @@
     }
 
     function expandDeletedMessages() {
-        client.expandDeletedMessages(chatId);
+        client.expandDeletedMessages(chatId, new Set(messagesDeleted));
     }
 </script>
 
@@ -83,13 +83,12 @@
             <Markdown oneLine={true} suppressLinks={true} text={joinedText} />
         {/if}
         {#if deletedText !== undefined}
-            <p 
-                class="deleted" 
-                title={$_("expandDeletedMessages")} 
-                bind:this={deletedMessagesElement} 
-                data-index={messagesDeleted.join(" ")} 
-                on:click={expandDeletedMessages}
-            >
+            <p
+                class="deleted"
+                title={$_("expandDeletedMessages")}
+                bind:this={deletedMessagesElement}
+                data-index={messagesDeleted.join(" ")}
+                on:click={expandDeletedMessages}>
                 {deletedText}
             </p>
         {/if}

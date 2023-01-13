@@ -664,11 +664,11 @@ export type EventsSuccessResult<T extends ChatEvent> = {
 };
 
 export type UpdatesResult = {
-    state: ChatStateFull,
+    state: ChatStateFull;
     affectedEvents: Record<string, number[]>;
-    anyUpdates: boolean,
-    anyErrors: boolean,
-}
+    anyUpdates: boolean;
+    anyErrors: boolean;
+};
 
 export type ChatStateFull = {
     timestamp: bigint;
@@ -740,7 +740,7 @@ export type UpdatesV2Response = {
 
 export type UserCanisterGroupChatSummary = {
     chatId: string;
-    readByMeUpTo: number | undefined,
+    readByMeUpTo: number | undefined;
     threadsRead: Record<number, number>;
     archived: boolean;
     dateReadPinned: bigint | undefined;
@@ -871,7 +871,7 @@ export type ChatSpecificState = {
     focusMessageIndex?: number;
     userGroupKeys: Set<string>;
     serverEvents: EventWrapper<ChatEvent>[];
-    aggregateDeletedMessages: boolean;
+    expandedDeletedMessages: Set<number>;
 };
 
 export type GroupRules = {
@@ -942,7 +942,8 @@ export type GroupChatSummary = DataContent &
 
 export type GroupCanisterSummaryResponse = GroupCanisterGroupChatSummary | CallerNotInGroup;
 
-export type GroupCanisterSummaryUpdatesResponse = GroupCanisterGroupChatSummaryUpdates
+export type GroupCanisterSummaryUpdatesResponse =
+    | GroupCanisterGroupChatSummaryUpdates
     | { kind: "success_no_updates" }
     | CallerNotInGroup;
 
@@ -1419,10 +1420,10 @@ export type UnpinMessageResponse =
 
 export type PinMessageResponse =
     | {
-        kind: "success";
-        eventIndex: number;
-        timestamp: bigint;
-    }
+          kind: "success";
+          eventIndex: number;
+          timestamp: bigint;
+      }
     | { kind: "index_out_of_range" }
     | { kind: "no_change" }
     | { kind: "caller_not_in_group" }
@@ -1568,6 +1569,4 @@ export type UnfreezeGroupResponse =
     | "not_authorized"
     | "internal_error";
 
-export type MarkPinnedMessagesReadResponse =
-    | "success"
-    | "chat_frozen";
+export type MarkPinnedMessagesReadResponse = "success" | "chat_frozen";
