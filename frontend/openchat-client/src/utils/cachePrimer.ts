@@ -25,11 +25,17 @@ export class CachePrimer {
         const record = toRecord(previous, (c) => c.chatId);
         const updated = next.filter((c) => !c.archived && hasBeenUpdated(record[c.chatId], c));
 
-        this.enqueue(updated);
-    }
+        if (updated.length > 0) {
+            for (const chat of updated) {
+                this.pending[chat.chatId] = chat;
+                debug("enqueued " + chat.chatId);
+            }
 
-    processChatMarkedAsRead(chat: ChatSummary): void {
-        this.enqueue([chat]);
+            if (this.runner === undefined) {
+                this.runner = new Poller(() => this.processNext(), 0);
+                debug("runner started");
+            }
+        }
     }
 
     async processNext(): Promise<void> {
@@ -112,20 +118,6 @@ export class CachePrimer {
             undefined,
             chat.latestEventIndex
         );
-    }
-
-    private enqueue(chats: ChatSummary[]): void {
-        if (chats.length > 0) {
-            for (const chat of chats) {
-                this.pending[chat.chatId] = chat;
-                debug("enqueued " + chat.chatId);
-            }
-
-            if (this.runner === undefined) {
-                this.runner = new Poller(() => this.processNext(), 0);
-                debug("runner started");
-            }
-        }
     }
 }
 

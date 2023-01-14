@@ -1032,6 +1032,13 @@ export function mergeSendMessageResponse(
     };
 }
 
+export function markAllRead(chat: ChatSummary): void {
+    const latestMessageIndex = chat.latestMessage?.event.messageIndex;
+    if (latestMessageIndex !== undefined) {
+        messagesRead.markReadUpTo(chat.chatId, latestMessageIndex);
+    }
+}
+
 export function mergeEventsAndLocalUpdates(
     events: EventWrapper<ChatEvent>[],
     unconfirmed: EventWrapper<Message>[],

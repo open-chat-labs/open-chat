@@ -35,6 +35,7 @@ import {
     groupEvents,
     groupMessagesByDate,
     makeRtcConnections,
+    markAllRead,
     mergeServerEvents,
     messageIsReadByThem,
     metricsEqual,
@@ -2162,18 +2163,8 @@ export class OpenChat extends EventTarget {
         }
     }
 
-    markAllRead(chatId: string): void {
-        const chat = this._liveState.chatSummaries[chatId];
-        if (chat !== undefined) {
-            const latestMessageIndex = chat.latestMessage?.event.messageIndex;
-            if (latestMessageIndex !== undefined) {
-                messagesRead.markReadUpTo(chat.chatId, latestMessageIndex);
-                this._cachePrimer?.processChatMarkedAsRead(chat);
-            }
-        }
-    }
-
     getFirstUnreadMention = getFirstUnreadMention;
+    markAllRead = markAllRead;
     buildCryptoTransferText = buildCryptoTransferText;
     buildTransactionLink = buildTransactionLink;
     getDisplayDate = getDisplayDate;

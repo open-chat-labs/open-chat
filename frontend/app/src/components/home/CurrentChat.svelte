@@ -103,7 +103,7 @@
     }
 
     function onMarkAllRead() {
-        client.markAllRead(chat.chatId);
+        client.markAllRead(chat);
     }
 
     function createPoll() {
