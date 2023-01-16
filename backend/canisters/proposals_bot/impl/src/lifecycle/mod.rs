@@ -4,6 +4,7 @@ use utils::env::Environment;
 
 mod heartbeat;
 mod init;
+mod inspect_message;
 mod post_upgrade;
 mod pre_upgrade;
 
