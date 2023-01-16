@@ -14,7 +14,6 @@ import type {
     AddRemoveReactionResponse,
     DeleteMessageResponse,
     UndeleteMessageResponse,
-    JoinGroupResponse,
     EditMessageResponse,
     MarkReadRequest,
     PendingCryptocurrencyWithdrawal,
@@ -81,7 +80,6 @@ export interface IUserClient {
     blockUser(userId: string): Promise<BlockUserResponse>;
     unblockUser(userId: string): Promise<UnblockUserResponse>;
     leaveGroup(chatId: string): Promise<LeaveGroupResponse>;
-    joinGroup(chatId: string, inviteCode: string | undefined): Promise<JoinGroupResponse>;
     markMessagesRead(request: MarkReadRequest): Promise<MarkReadResponse>;
     setAvatar(data: Uint8Array): Promise<BlobReference>;
     addReaction(
