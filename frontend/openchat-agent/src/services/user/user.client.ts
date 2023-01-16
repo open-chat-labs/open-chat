@@ -6,7 +6,7 @@ import {
     idlFactory,
     UserService,
 } from "./candid/idl";
-import {
+import type {
     InitialStateV2Response,
     UpdatesV2Response,
     EventsResponse,
@@ -24,7 +24,6 @@ import {
     AddRemoveReactionResponse,
     DeleteMessageResponse,
     UndeleteMessageResponse,
-    JoinGroupResponse,
     EditMessageResponse,
     MarkReadRequest,
     WithdrawCryptocurrencyResponse,
@@ -38,7 +37,6 @@ import {
     PublicProfile,
     SearchDirectChatResponse,
     SetBioResponse,
-    textToCode,
     ToggleMuteNotificationResponse,
     UnpinChatResponse,
 } from "openchat-shared";
@@ -53,7 +51,6 @@ import {
     getEventsResponse,
     getUpdatesV2Response,
     initialStateV2Response,
-    joinGroupResponse,
     leaveGroupResponse,
     markReadResponse,
     searchDirectChatResponse,
@@ -371,19 +368,6 @@ export class UserClient extends CandidService implements IUserClient {
                 correlation_id: generateUint64(),
             }),
             leaveGroupResponse
-        );
-    }
-
-    @profile("userClient")
-    joinGroup(chatId: string, inviteCode: string | undefined): Promise<JoinGroupResponse> {
-        return this.handleResponse(
-            this.userService.join_group_v2({
-                as_super_admin: false,
-                chat_id: Principal.fromText(chatId),
-                invite_code: apiOptional(textToCode, inviteCode),
-                correlation_id: generateUint64(),
-            }),
-            joinGroupResponse
         );
     }
 

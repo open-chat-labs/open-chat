@@ -766,24 +766,6 @@ export const idlFactory = ({ IDL }) => {
       'pinned_chats' : IDL.Vec(ChatId),
     }),
   });
-  const JoinGroupArgs = IDL.Record({
-    'invite_code' : IDL.Opt(IDL.Nat64),
-    'as_super_admin' : IDL.Bool,
-    'correlation_id' : IDL.Nat64,
-    'chat_id' : ChatId,
-  });
-  const JoinGroupResponse = IDL.Variant({
-    'Blocked' : IDL.Null,
-    'GroupNotFound' : IDL.Null,
-    'GroupNotPublic' : IDL.Null,
-    'AlreadyInGroup' : IDL.Null,
-    'ChatFrozen' : IDL.Null,
-    'Success' : GroupChatSummary,
-    'UserSuspended' : IDL.Null,
-    'NotSuperAdmin' : IDL.Null,
-    'ParticipantLimitReached' : IDL.Nat32,
-    'InternalError' : IDL.Text,
-  });
   const LeaveGroupArgs = IDL.Record({
     'correlation_id' : IDL.Nat64,
     'chat_id' : ChatId,
@@ -1111,7 +1093,6 @@ export const idlFactory = ({ IDL }) => {
         [InitialStateV2Response],
         ['query'],
       ),
-    'join_group_v2' : IDL.Func([JoinGroupArgs], [JoinGroupResponse], []),
     'leave_group' : IDL.Func([LeaveGroupArgs], [LeaveGroupResponse], []),
     'mark_read_v2' : IDL.Func([MarkReadArgs], [MarkReadResponse], []),
     'messages_by_message_index' : IDL.Func(

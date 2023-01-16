@@ -207,28 +207,6 @@ type CreateGroupResponse =
         UserSuspended;
     };
 
-type JoinGroupArgs =
-    record {
-        chat_id: ChatId;
-        as_super_admin: bool;
-        invite_code: opt nat64;
-        correlation_id: nat64;
-    };
-
-type JoinGroupResponse =
-    variant {
-        Success: GroupChatSummary;
-        AlreadyInGroup;
-        Blocked;
-        GroupNotFound;
-        GroupNotPublic;
-        ParticipantLimitReached: nat32;
-        InternalError: text;
-        NotSuperAdmin;
-        UserSuspended;
-        ChatFrozen;
-    };
-
 type LeaveGroupArgs =
     record {
         chat_id: ChatId;
@@ -674,7 +652,6 @@ service: {
     block_user: (BlockUserArgs) -> (BlockUserResponse);
     unblock_user: (UnblockUserArgs) -> (UnblockUserResponse);
     create_group: (CreateGroupArgs) -> (CreateGroupResponse);
-    join_group_v2: (JoinGroupArgs) -> (JoinGroupResponse);
     leave_group: (LeaveGroupArgs) -> (LeaveGroupResponse);
     delete_group: (DeleteGroupArgs) -> (DeleteGroupResponse);
     set_avatar: (SetAvatarArgs) -> (SetAvatarResponse);

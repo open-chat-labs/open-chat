@@ -614,22 +614,6 @@ export type InvalidPollReason = { 'DuplicateOptions' : null } |
   { 'OptionTooLong' : number } |
   { 'EndDateInThePast' : null } |
   { 'PollsNotValidForDirectChats' : null };
-export interface JoinGroupArgs {
-  'invite_code' : [] | [bigint],
-  'as_super_admin' : boolean,
-  'correlation_id' : bigint,
-  'chat_id' : ChatId,
-}
-export type JoinGroupResponse = { 'Blocked' : null } |
-  { 'GroupNotFound' : null } |
-  { 'GroupNotPublic' : null } |
-  { 'AlreadyInGroup' : null } |
-  { 'ChatFrozen' : null } |
-  { 'Success' : GroupChatSummary } |
-  { 'UserSuspended' : null } |
-  { 'NotSuperAdmin' : null } |
-  { 'ParticipantLimitReached' : number } |
-  { 'InternalError' : string };
 export interface LeaveGroupArgs {
   'correlation_id' : bigint,
   'chat_id' : ChatId,
@@ -1239,7 +1223,6 @@ export interface _SERVICE {
     [InitialStateV2Args],
     InitialStateV2Response
   >,
-  'join_group_v2' : ActorMethod<[JoinGroupArgs], JoinGroupResponse>,
   'leave_group' : ActorMethod<[LeaveGroupArgs], LeaveGroupResponse>,
   'mark_read_v2' : ActorMethod<[MarkReadArgs], MarkReadResponse>,
   'messages_by_message_index' : ActorMethod<
