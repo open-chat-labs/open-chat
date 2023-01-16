@@ -61,6 +61,7 @@ import {
     GroupCanisterThreadDetails,
     GroupSubtype,
     Mention,
+    DeletedMessageResponse,
 } from "./types";
 export {
     _SERVICE as GroupService,
@@ -124,6 +125,7 @@ export {
     GroupCanisterThreadDetails as ApiGroupCanisterThreadDetails,
     GroupSubtype as ApiGroupSubtype,
     Mention as ApiMention,
+    DeletedMessageResponse as ApiDeletedGroupMessageResponse,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

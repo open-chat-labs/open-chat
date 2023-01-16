@@ -85,6 +85,7 @@
     let alignProfileTo: DOMRect | undefined = undefined;
     let crypto = msg.content.kind === "crypto_content";
     let poll = msg.content.kind === "poll_content";
+    let canRevealDeleted = false;
 
     $: inThread = threadRootMessage !== undefined;
     $: threadRootMessageIndex =
@@ -92,24 +93,22 @@
             ? undefined
             : threadRootMessage?.messageIndex;
     $: translationStore = client.translationStore;
-    $: canEdit = me && supportsEdit && !deleted && !crypto && !poll;
+    $: canEdit = me && supportsEdit && !msg.deleted && !crypto && !poll;
     $: isBot = sender?.kind === "bot";
     $: username = sender?.username;
     $: mediaDimensions = extractDimensions(msg.content);
     $: mediaCalculatedHeight = undefined as number | undefined;
     $: msgBubbleCalculatedWidth = undefined as number | undefined;
-    $: deleted = msg.content.kind === "deleted_content";
     $: fill = client.fillMessage(msg);
     $: showAvatar = $screenWidth !== ScreenWidth.ExtraExtraSmall;
     $: translated = $translationStore.has(Number(msg.messageId));
     $: threadSummary = msg.thread;
     $: msgUrl = `/#/${chatId}/${msg.messageIndex}?open=true`;
     $: isProposal = msg.content.kind === "proposal_content";
-    $: inert = deleted || collapsed;
+    $: inert = msg.content.kind === "deleted_content" || collapsed;
     $: undeletingMessagesStore = client.undeletingMessagesStore;
     $: undeleting = $undeletingMessagesStore.has(msg.messageId);
-
-    let canUndelete = false;
+    $: showChatMenu = (!inert || canRevealDeleted) && !readonly;
 
     afterUpdate(() => {
         if (readByMe && observer && msgElement) {
@@ -127,11 +126,13 @@
         recalculateMediaDimensions();
 
         return now.subscribe((t) => {
-            canUndelete =
-                msg.content.kind === "deleted_content" &&
-                msg.content.deletedBy === user.userId &&
-                t - Number(msg.content.timestamp) < 5 * 60 * 1000 && // Only allow undeleting for 5 minutes
-                !undeleting;
+            canRevealDeleted = !undeleting 
+                && msg.content.kind === "deleted_content" 
+                && ((canDelete && msg.content.deletedBy !== msg.sender) || 
+                    // Only allow undeleting of your own messages for 5 minutes
+                    (msg.sender === user.userId 
+                        && msg.content.deletedBy === msg.sender 
+                        && t - Number(msg.content.timestamp) < 5 * 60 * 1000));             
         });
     });
 
@@ -177,6 +178,8 @@
     }
 
     function doubleClickMessage() {
+        if (msg.deleted) return;
+        
         if (me) {
             editMessage();
         } else if (confirmed) {
@@ -438,6 +441,8 @@
                     {timestamp}
                     {me}
                     {confirmed}
+                    deleted={msg.deleted}
+                    {undeleting}
                     {readByThem}
                     {crypto}
                     {chatType}
@@ -456,11 +461,11 @@
                 <pre>thread: {JSON.stringify(msg.thread, null, 4)}</pre>
             {/if}
 
-            {#if (!inert || canUndelete) && !readonly}
+            {#if showChatMenu}
                 <ChatMessageMenu
                     {chatId}
                     {isProposal}
-                    {inert}
+                    inert={msg.deleted || collapsed}
                     {publicGroup}
                     {confirmed}
                     canShare={canShare()}
@@ -477,7 +482,8 @@
                     {canBlockUser}
                     {canEdit}
                     {canDelete}
-                    {canUndelete}
+                    canUndelete={msg.deleted && msg.content.kind !== "deleted_content"}
+                    {canRevealDeleted}
                     {crypto}
                     translatable={msg.content.kind === "text_content"}
                     {translated}
@@ -489,7 +495,7 @@
             {/if}
         </div>
 
-        {#if !inert && canReact}
+        {#if !collapsed && !msg.deleted && canReact}
             <div class="actions">
                 <div class="reaction" on:click={() => (showEmojiPicker = true)}>
                     <HoverIcon>

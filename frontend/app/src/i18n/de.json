@@ -152,7 +152,7 @@
     "noAudio": "Ihr Browser unterstützt kein eingebettetes Audio",
     "downloadFile": "Laden Sie {name} herunter",
     "enterCaption": "Geben Sie eine Bildunterschrift ein",
-    "enterMessage": "Geben Sie eine Nachricht ein",
+    "enterMessage": "Geben Sie eine Nachricht ein...",
     "dropFile": "Legen Sie hier eine Datei ab",
     "cancel": "Abbrechen",
     "unknownUser": "Unbekannter Benutzer",
@@ -671,5 +671,5 @@
     "howToBuyToken": "Ich brauche Hilfe beim Kauf von {token}",
     "reason": "Grund",
     "expandDeletedMessages": "Erweitern Sie gelöschte Nachrichten in diesem Chat",
-    "enterMessage": "Geben Sie eine Nachricht ein..."
+    "revealDeletedMessage": "Nachricht enthüllen"
 }

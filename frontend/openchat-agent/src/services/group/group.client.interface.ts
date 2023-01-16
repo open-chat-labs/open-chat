@@ -34,6 +34,7 @@ import type {
     SearchGroupChatResponse,
     GroupCanisterSummaryResponse,
     GroupCanisterSummaryUpdatesResponse,
+    DeletedGroupMessageResponse,
 } from "openchat-shared";
 
 export interface IGroupClient {
@@ -107,6 +108,10 @@ export interface IGroupClient {
         messageIndexes: Set<number>,
         latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<Message>>;
+    getDeletedMessage(
+        messageId: bigint,
+        threadRootMessageIndex?: number,
+    ): Promise<DeletedGroupMessageResponse>;
     pinMessage(messageIndex: number): Promise<PinMessageResponse>;
     unpinMessage(messageIndex: number): Promise<UnpinMessageResponse>;
     registerPollVote(

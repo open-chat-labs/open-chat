@@ -152,7 +152,7 @@
     "noAudio": "Ваш браузер не поддерживает встроенное аудио",
     "downloadFile": "Скачать {name}",
     "enterCaption": "Введите заголовок",
-    "enterMessage": "Введите сообщение",
+    "enterMessage": "Введите сообщение...",
     "dropFile": "Перетащите сюда файл",
     "cancel": "Отмена",
     "unknownUser": "Неизвестный пользователь",
@@ -671,5 +671,5 @@
     "howToBuyToken": "Мне нужна помощь в покупке {token}",
     "reason": "Причина",
     "expandDeletedMessages": "Развернуть удаленные сообщения в этом чате",
-    "enterMessage": "Введите сообщение..."
+    "revealDeletedMessage": "Показать сообщение"
 }

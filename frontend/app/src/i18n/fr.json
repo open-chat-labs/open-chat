@@ -151,7 +151,7 @@
     "noAudio": "Votre navigateur ne prend pas en charge l'audio intégré",
     "downloadFile": "Télécharger {name}",
     "enterCaption": "Entrez une légende",
-    "enterMessage": "Entrez un message",
+    "enterMessage": "Entrez un message...",
     "dropFile": "Déposez un fichier ici",
     "cancel": "Annuler",
     "unknownUser": "Utilisateur inconnu",
@@ -671,5 +671,5 @@
     "howToBuyToken": "J'ai besoin d'aide pour acheter {token}",
     "reason": "Raison",
     "expandDeletedMessages": "Développer les messages supprimés dans ce chat",
-    "enterMessage": "Entrez un message..."
+    "revealDeletedMessage": "Révéler le message"
 }

@@ -148,7 +148,7 @@
     "noAudio": "Trình duyệt của bạn không hỗ trợ nhúng âm thanh (embedded audio)",
     "downloadFile": "Tải {name}",
     "enterCaption": "Nhập chú thích",
-    "enterMessage": "Nhập tin nhắn",
+    "enterMessage": "Nhập tin nhắn...",
     "dropFile": "Thả một tập tin vào đây",
     "cancel": "Hủy bỏ",
     "unknownUser": "Người dùng không xác định",
@@ -672,5 +672,5 @@
     "howToBuyToken": "Tôi cần trợ giúp mua {token}",
     "reason": "Lý do",
     "expandDeletedMessages": "Mở rộng các tin nhắn đã xóa trong cuộc trò chuyện này",
-    "enterMessage": "Nhập tin nhắn..."
+    "revealDeletedMessage": "Tiết lộ tin nhắn"
 }

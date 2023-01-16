@@ -123,7 +123,7 @@
     "noAudio": "您的浏览器不支持音频",
     "downloadFile": "下载 {name}",
     "enterCaption": "请输入标题",
-    "enterMessage": "请输入消息",
+    "enterMessage": "输入消息...",
     "dropFile": "拖拽文件到此处",
     "cancel": "取消",
     "unknownUser": "未知用户",
@@ -672,5 +672,5 @@
     "howToBuyToken": "我需要购买 {token} 的帮助",
     "reason": "原因",
     "expandDeletedMessages": "展开此聊天中已删除的消息",
-    "enterMessage": "输入消息..."
+    "revealDeletedMessage": "显示消息"
 }
