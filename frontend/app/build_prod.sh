@@ -6,9 +6,9 @@ export IC_URL=https://ic0.app
 export II_DERIVATION_ORIGIN=https://6hsbt-vqaaa-aaaaf-aaafq-cai.ic0.app
 export II_ALTERNATIVE_ORIGINS=https://oc.app,https://webtest.oc.app,https://xp7uu-xyaaa-aaaaf-aoa6a-cai.ic0.app
 export LEDGER_CANISTER_ICP=ryjl3-tyaaa-aaaaa-aaaba-cai
+export LEDGER_CANISTER_SNS1=zfcdd-tqaaa-aaaaq-aaaga-cai
 export LEDGER_CANISTER_BTC=ryjl3-tyaaa-aaaaa-aaaba-cai
 export LEDGER_CANISTER_CHAT=ryjl3-tyaaa-aaaaa-aaaba-cai
 export BLOB_URL_PATTERN=https://{canisterId}.raw.ic0.app/{blobType}/
-export ENABLE_MULTI_CRYPTO=false
 
 npx rollup -c

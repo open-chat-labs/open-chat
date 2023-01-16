@@ -1,6 +1,6 @@
 <script lang="ts">
     import { fade } from "svelte/transition";
-    import { cryptoCurrencyList } from "openchat-client";
+    import { cryptoCurrencyList, cryptoLookup } from "openchat-client";
     import type { Cryptocurrency } from "openchat-client";
     import { _ } from "svelte-i18n";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
@@ -10,11 +10,12 @@
 
     let selecting = false;
 
-    $: crypto = cryptoCurrencyList.map((t, i) => ({
-        symbol: t,
+    $: crypto = cryptoCurrencyList.map(t => ({
+        key: t,
+        symbol: cryptoLookup[t].symbol,
         name: $_(`tokenTransfer.${t}`),
-        disabled: !process.env.ENABLE_MULTI_CRYPTO && i > 0,
-    }));
+        disabled: cryptoLookup[t].disabled,
+    })).filter(token => !token.disabled);
 
     function selectToken(symbol: Cryptocurrency) {
         token = symbol;
@@ -30,7 +31,7 @@
 
 <div class="selected" on:click={() => (selecting = !selecting)}>
     <div class="symbol">
-        {token.toUpperCase()}
+        {cryptoLookup[token].symbol}
     </div>
     <div class="icon" class:selecting>
         <ChevronDown viewBox={"0 -3 24 24"} size={$iconSize} color={"var(--icon-txt)"} />
@@ -40,19 +41,14 @@
 {#if selecting}
     <div transition:fade|local={{ duration: 100 }} class="tokens">
         {#each crypto as token}
-            <div class="token" on:click={() => selectToken(token.symbol)}>
-                <div class={`icon ${token.symbol}`} />
-
+            <div class="token" on:click={() => selectToken(token.key)}>
+                <div class={`icon ${token.key}`} />
                 <div class="name">
                     {token.name}
                 </div>
-
                 <div class="symbol">
-                    {token.symbol.toUpperCase()}
+                    {token.symbol}
                 </div>
-                {#if token.disabled}
-                    <span class="coming-soon">{$_("cryptoAccount.comingSoon")}</span>
-                {/if}
             </div>
         {/each}
     </div>
@@ -117,17 +113,15 @@
             &.icp {
                 background-image: url("../assets/icp_token.png");
             }
+            &.sns1 {
+                background-image: url("../assets/sns1_token.png");
+            }
             &.btc {
                 background-image: url("../assets/bitcoin_token.png");
             }
             &.chat {
                 background-image: url("../assets/spinner.svg");
             }
-        }
-
-        .coming-soon {
-            color: var(--txt-light);
-            @include font(light, normal, fs-60);
         }
     }
 </style>

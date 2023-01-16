@@ -498,7 +498,8 @@
         "done": "refresh and continue",
         "icp": "Internet Computer",
         "btc": "Bitcoin",
-        "chat": "OpenChat"
+        "chat": "OpenChat",
+        "sns1": "SNS-1"
     },
     "cryptoAccount": {
         "shortBalanceLabel": "Balance",

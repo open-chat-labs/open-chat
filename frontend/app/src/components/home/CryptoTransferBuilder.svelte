@@ -99,11 +99,6 @@
         dispatch("close");
     }
 
-    function onTokenChanged() {
-        tokenChanging = true;
-        reset();
-    }
-
     function cancel() {
         toppingUp = false;
         dispatch("close");
@@ -136,16 +131,12 @@
     <ModalContent>
         <span class="header" slot="header">
             <div class="left">
-                {#if process.env.ENABLE_MULTI_CRYPTO}
-                    <div class="main-title">
-                        <div>{$_("tokenTransfer.send")}</div>
-                        <div>
-                            <CryptoSelector bind:token />
-                        </div>
+                <div class="main-title">
+                    <div>{$_("tokenTransfer.send")}</div>
+                    <div>
+                        <CryptoSelector bind:token />
                     </div>
-                {:else}
-                    <div>{$_("tokenTransfer.title", { values: { token: symbol } })}</div>
-                {/if}
+                </div>
             </div>
             <BalanceWithRefresh
                 bind:toppingUp
