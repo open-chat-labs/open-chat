@@ -14,7 +14,6 @@ import type {
     ApiDirectChatEvent,
     ApiDeleteMessageResponse,
     ApiUndeleteMessageResponse,
-    ApiJoinGroupResponse,
     ApiSearchDirectChatResponse,
     ApiMessageMatch,
     ApiEditMessageResponse,
@@ -58,7 +57,6 @@ import {
     AddRemoveReactionResponse,
     DeleteMessageResponse,
     UndeleteMessageResponse,
-    JoinGroupResponse,
     EditMessageResponse,
     InitialStateV2Response,
     UpdatesV2Response,
@@ -283,41 +281,6 @@ export function leaveGroupResponse(candid: ApiLeaveGroupResponse): LeaveGroupRes
         return "chat_frozen";
     }
     throw new UnsupportedValueError("Unexpected ApiLeaveGroupResponse type received", candid);
-}
-
-export function joinGroupResponse(candid: ApiJoinGroupResponse): JoinGroupResponse {
-    if ("Success" in candid) {
-        return groupChatSummary(candid.Success);
-    }
-    if ("Blocked" in candid) {
-        return { kind: "blocked" };
-    }
-    if ("AlreadyInGroup" in candid) {
-        return { kind: "already_in_group" };
-    }
-    if ("GroupNotPublic" in candid) {
-        return { kind: "group_not_public" };
-    }
-    if ("InternalError" in candid) {
-        return { kind: "internal_error" };
-    }
-    if ("ParticipantLimitReached" in candid) {
-        // todo - check if we need to deal with this in the UI
-        return { kind: "member_limit_reached" };
-    }
-    if ("GroupNotFound" in candid) {
-        return { kind: "group_not_found" };
-    }
-    if ("NotSuperAdmin" in candid) {
-        return { kind: "not_super_admin" };
-    }
-    if ("UserSuspended" in candid) {
-        return { kind: "user_suspended" };
-    }
-    if ("ChatFrozen" in candid) {
-        return { kind: "chat_frozen" };
-    }
-    throw new UnsupportedValueError("Unexpected ApiJoinGroupResponse type received", candid);
 }
 
 export function blockResponse(_candid: ApiBlockUserResponse): BlockUserResponse {

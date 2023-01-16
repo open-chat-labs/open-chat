@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [unreleased]
 
+### Removed
+
+- Removed `join_group` since this is now handled via the `local_user_index` canister ([#2966](https://github.com/open-ic/open-chat/pull/2966))
+
 ## [[2.0.547](https://github.com/open-ic/open-chat/releases/tag/v2.0.547-user)] - 2022-01-08
 
 ### Added

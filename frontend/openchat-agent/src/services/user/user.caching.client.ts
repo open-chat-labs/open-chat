@@ -14,7 +14,6 @@ import type {
     AddRemoveReactionResponse,
     DeleteMessageResponse,
     UndeleteMessageResponse,
-    JoinGroupResponse,
     EditMessageResponse,
     MarkReadRequest,
     WithdrawCryptocurrencyResponse,
@@ -266,10 +265,6 @@ export class CachingUserClient extends EventTarget implements IUserClient {
             this.config.logger.error("Failed to remove chat from cache", err)
         );
         return this.client.leaveGroup(chatId);
-    }
-
-    joinGroup(chatId: string, inviteCode: string | undefined): Promise<JoinGroupResponse> {
-        return this.client.joinGroup(chatId, inviteCode);
     }
 
     markMessagesRead(request: MarkReadRequest): Promise<MarkReadResponse> {
