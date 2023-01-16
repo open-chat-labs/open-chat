@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [[2.0.546](https://github.com/open-ic/open-chat/releases/tag/v2.0.546-group)] - 2022-01-08
 
+### Added
+
+- Allow admins and senders to see deleted message content ([#2922](https://github.com/open-ic/open-chat/pull/2922))
+
 ### Changed
 
 - Added `max_messages` to `events` and `events_window` ([#2947](https://github.com/open-ic/open-chat/pull/2947))

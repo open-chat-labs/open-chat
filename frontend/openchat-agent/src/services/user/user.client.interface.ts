@@ -30,6 +30,7 @@ import type {
     UnpinChatResponse,
     InitialStateV2Response,
     UpdatesV2Response,
+    DeletedDirectMessageResponse,
 } from "openchat-shared";
 
 export interface IUserClient {
@@ -127,4 +128,5 @@ export interface IUserClient {
     unarchiveChat(chatId: string): Promise<ArchiveChatResponse>;
     initUserPrincipalMigration(newPrincipal: string): Promise<void>;
     migrateUserPrincipal(): Promise<MigrateUserPrincipalResponse>;
+    getDeletedMessage(userId: string, messageId: bigint): Promise<DeletedDirectMessageResponse>;
 }

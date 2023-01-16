@@ -92,6 +92,7 @@ import {
     GroupSubtypeUpdate,
     ArchiveChatResponse,
     Icrc1Account,
+    DeletedMessageResponse,
 } from "./types";
 export {
     _SERVICE as UserService,
@@ -184,6 +185,7 @@ export {
     GroupSubtypeUpdate as ApiGroupSubtypeUpdate,
     ArchiveChatResponse as ApiArchiveChatResponse,
     Icrc1Account as ApiIcrc1Account,
+    DeletedMessageResponse as ApiDeletedDirectMessageResponse
 };
 
 export const idlFactory: IDL.InterfaceFactory;

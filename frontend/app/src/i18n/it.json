@@ -152,7 +152,7 @@
     "noAudio": "Il tuo browser non supporta l'audio incorporato",
     "downloadFile": "Scarica {name}",
     "enterCaption": "Inserisci una didascalia",
-    "enterMessage": "Inserisci un messaggio",
+    "enterMessage": "Inserisci un messaggio...",
     "dropFile": "Trascina un file qui",
     "cancel": "Annulla",
     "unknownUser": "Utente sconosciuto",
@@ -671,5 +671,5 @@
     "howToBuyToken": "Ho bisogno di aiuto per l'acquisto di {token}",
     "reason": "Motivo",
     "expandDeletedMessages": "Espandi i messaggi eliminati in questa chat",
-    "enterMessage": "Inserisci un messaggio..."
+    "revealDeletedMessage": "Rivela messaggio"
 }

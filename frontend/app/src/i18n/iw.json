@@ -162,7 +162,7 @@
     "noAudio": "הדפדפן שלך אינו תומך בשמע מוטבע",
     "downloadFile": "הורד את {name}",
     "enterCaption": "הזן כיתוב",
-    "enterMessage": "הזן הודעה",
+    "enterMessage": "הזן הודעה...",
     "dropFile": "שחרר כאן קובץ",
     "cancel": "לְבַטֵל",
     "unknownUser": "משתמש לא ידוע",
@@ -669,5 +669,5 @@
     "howToBuyToken": "אני צריך עזרה בקניית {token}",
     "reason": "סיבה",
     "expandDeletedMessages": "הרחב הודעות שנמחקו בצ'אט זה",
-    "enterMessage": "הזן הודעה..."
+    "revealDeletedMessage": "לחשוף הודעה"
 }

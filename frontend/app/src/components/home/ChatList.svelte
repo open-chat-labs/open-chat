@@ -17,7 +17,6 @@
     import SearchResult from "./SearchResult.svelte";
     import { push } from "svelte-spa-router";
     import NotificationsBar from "./NotificationsBar.svelte";
-    import Markdown from "./Markdown.svelte";
     import { chatListScroll } from "../../stores/scrollPos";
     import { menuCloser } from "../../actions/closeMenu";
     import ThreadPreviews from "./thread/ThreadPreviews.svelte";

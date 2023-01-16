@@ -8,6 +8,9 @@ import type {
     ChatEvent,
     ChatStateFull,
     CreateGroupResponse,
+    DeletedDirectMessageResponse,
+    DeletedGroupMessageResponse,
+
     DeleteGroupResponse,
     DeleteMessageResponse,
     DirectChatEvent,
@@ -185,7 +188,9 @@ export type WorkerRequest =
     | UnsuspendUser
     | MarkSuspectedBot
     | GetInitialStateV2
-    | GetUpdatesV2;
+    | GetUpdatesV2
+    | GetDeletedGroupMessage
+    | GetDeletedDirectMessage;
 
 type SetCachedMessageFromNotification = Request<{
     chatId: string;
@@ -784,6 +789,21 @@ type GetInitialStateV2 = Request<Record<string, never>> & {
     kind: "getInitialStateV2";
 };
 
+type GetDeletedGroupMessage = Request<{
+    chatId: string;
+    messageId: bigint;
+    threadRootMessageIndex: number | undefined;
+}> & {
+    kind: "getDeletedGroupMessage";
+};
+
+type GetDeletedDirectMessage = Request<{
+    userId: string;
+    messageId: bigint;
+}> & {
+    kind: "getDeletedDirectMessage";
+};
+
 /**
  * Worker error type
  */
@@ -874,6 +894,8 @@ export type WorkerResponse =
     | Response<SuspendUserResponse>
     | Response<UnsuspendUserResponse>
     | Response<UpdatesResult>
+    | Response<DeletedDirectMessageResponse>
+    | Response<DeletedGroupMessageResponse>
     | Response<undefined>;
 
 type Response<T> = {

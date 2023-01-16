@@ -100,6 +100,7 @@ describe("thread utils", () => {
                             reactions: [],
                             edited: false,
                             forwarded: false,
+                            deleted: false,
                         },
                     },
                 ],

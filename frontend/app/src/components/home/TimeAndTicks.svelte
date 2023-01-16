@@ -1,6 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
+    import DeletedIcon from "svelte-material-icons/DeleteOutline.svelte";
     import CheckCircleOutline from "svelte-material-icons/CheckCircleOutline.svelte";
     import CheckCircle from "svelte-material-icons/CheckCircle.svelte";
     import Pin from "svelte-material-icons/Pin.svelte";
@@ -20,6 +21,8 @@
     export let pinned: boolean;
     export let crypto: boolean;
     export let dateFormatter: (date: Date) => string = client.toShortTimeString;
+    export let deleted: boolean;
+    export let undeleting: boolean;
 
     let iconColor = "#ffffff";
     let pinnedColor = crypto || me || fill ? "#ffffff" : "var(--txt)";
@@ -29,24 +32,31 @@
     <span class="time">
         {dateFormatter(new Date(Number(timestamp)))}
     </span>
-    {#if me}
-        {#if confirmed}
-            <CheckCircle size={"0.9em"} color={iconColor} />
-        {:else}
+    {#if deleted}
+        <DeletedIcon size={"0.9em"} color={iconColor} />
+        {#if undeleting}
             <div class="confirming" />
         {/if}
-        {#if chatType === "direct_chat"}
-            {#if readByThem}
+    {:else}
+        {#if me}
+            {#if confirmed}
                 <CheckCircle size={"0.9em"} color={iconColor} />
             {:else}
-                <CheckCircleOutline size={"0.9em"} color={iconColor} />
+                <div class="confirming" />
             {/if}
+            {#if chatType === "direct_chat"}
+                {#if readByThem}
+                    <CheckCircle size={"0.9em"} color={iconColor} />
+                {:else}
+                    <CheckCircleOutline size={"0.9em"} color={iconColor} />
+                {/if}
+            {/if}
+        {:else if !confirmed}
+            <div class="confirming" />
         {/if}
-    {:else if !confirmed}
-        <div class="confirming" />
-    {/if}
-    {#if pinned}
-        <Pin size={"0.9em"} color={pinnedColor} />
+        {#if pinned}
+            <Pin size={"0.9em"} color={pinnedColor} />
+        {/if}
     {/if}
 </div>
 
