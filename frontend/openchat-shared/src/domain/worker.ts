@@ -10,7 +10,6 @@ import type {
     CreateGroupResponse,
     DeletedDirectMessageResponse,
     DeletedGroupMessageResponse,
-
     DeleteGroupResponse,
     DeleteMessageResponse,
     DirectChatEvent,
@@ -344,7 +343,7 @@ type GetGroupRules = Request<{
 };
 
 type GetRecommendedGroups = Request<{
-    exclusions: string[]
+    exclusions: string[];
 }> & {
     kind: "getRecommendedGroups";
 };
@@ -425,7 +424,7 @@ type SendMessage = Request<{
     chatId: string;
     user: CreatedUser;
     mentioned: User[];
-    msg: Message;
+    event: EventWrapper<Message>;
     threadRootMessageIndex?: number;
 }> & {
     kind: "sendMessage";
@@ -720,7 +719,7 @@ type GetAllCachedUsers = Request & {
 };
 
 type LastOnline = Request<{
-    userIds: string[]
+    userIds: string[];
 }> & {
     kind: "lastOnline";
 };

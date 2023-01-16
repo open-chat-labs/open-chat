@@ -53,6 +53,7 @@
     export let first: boolean;
     export let last: boolean;
     export let confirmed: boolean;
+    export let failed: boolean;
     export let readByThem: boolean;
     export let readByMe: boolean;
     export let observer: IntersectionObserver;
@@ -126,13 +127,14 @@
         recalculateMediaDimensions();
 
         return now.subscribe((t) => {
-            canRevealDeleted = !undeleting 
-                && msg.content.kind === "deleted_content" 
-                && ((canDelete && msg.content.deletedBy !== msg.sender) || 
+            canRevealDeleted =
+                !undeleting &&
+                msg.content.kind === "deleted_content" &&
+                ((canDelete && msg.content.deletedBy !== msg.sender) ||
                     // Only allow undeleting of your own messages for 5 minutes
-                    (msg.sender === user.userId 
-                        && msg.content.deletedBy === msg.sender 
-                        && t - Number(msg.content.timestamp) < 5 * 60 * 1000));             
+                    (msg.sender === user.userId &&
+                        msg.content.deletedBy === msg.sender &&
+                        t - Number(msg.content.timestamp) < 5 * 60 * 1000));
         });
     });
 
@@ -179,7 +181,7 @@
 
     function doubleClickMessage() {
         if (msg.deleted) return;
-        
+
         if (me) {
             editMessage();
         } else if (confirmed) {
@@ -441,6 +443,7 @@
                     {timestamp}
                     {me}
                     {confirmed}
+                    {failed}
                     deleted={msg.deleted}
                     {undeleting}
                     {readByThem}

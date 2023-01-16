@@ -19,7 +19,7 @@ import {
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 
-const CACHE_VERSION = 57;
+const CACHE_VERSION = 59;
 
 export type Database = Promise<IDBPDatabase<ChatSchema>>;
 
@@ -32,7 +32,7 @@ export interface ChatSchema extends DBSchema {
     chats_v2: {
         key: string;
         value: ChatStateFull;
-    }
+    };
 
     chats: {
         key: string; // the user's principal as a string
@@ -58,6 +58,11 @@ export interface ChatSchema extends DBSchema {
     group_details: {
         key: string;
         value: GroupChatDetails;
+    };
+
+    failed_chat_messages: {
+        key: string;
+        value: EnhancedWrapper<Message>;
     };
 }
 
@@ -93,6 +98,9 @@ export function openCache(principal: Principal): Database {
             if (db.objectStoreNames.contains("group_details")) {
                 db.deleteObjectStore("group_details");
             }
+            if (db.objectStoreNames.contains("failed_chat_messages")) {
+                db.deleteObjectStore("failed_chat_messages");
+            }
             const chatEvents = db.createObjectStore("chat_events");
             chatEvents.createIndex("messageIdx", "messageKey");
             const threadEvents = db.createObjectStore("thread_events");
@@ -100,6 +108,7 @@ export function openCache(principal: Principal): Database {
             db.createObjectStore("chats");
             db.createObjectStore("chats_v2");
             db.createObjectStore("group_details");
+            db.createObjectStore("failed_chat_messages");
         },
     });
 }
@@ -136,7 +145,7 @@ export async function setCachedChatsV2(
     db: Database,
     principal: Principal,
     chatState: ChatStateFull,
-    affectedEvents: Record<string, number[]>,
+    affectedEvents: Record<string, number[]>
 ): Promise<void> {
     const directChats = chatState.directChats
         .filter((c) => !isUninitialisedDirectChat(c))
@@ -150,8 +159,10 @@ export async function setCachedChatsV2(
         ...chatState,
         directChats,
         groupChats,
-    }
-    const latestMessages = prepareLatestMessagesForCache((directChats as ChatSummary[]).concat(groupChats));
+    };
+    const latestMessages = prepareLatestMessagesForCache(
+        (directChats as ChatSummary[]).concat(groupChats)
+    );
 
     const tx = (await db).transaction(["chats_v2", "chat_events"], "readwrite");
     const chatsStore = tx.objectStore("chats_v2");
@@ -494,6 +505,18 @@ function removeReplyContent(
     return repliesTo;
 }
 
+export async function recordFailedMessage<T extends Message>(
+    db: Database,
+    chatId: string,
+    event: EventWrapper<T>
+): Promise<void> {
+    (await db).put(
+        "failed_chat_messages",
+        makeSerialisable<T>(event, chatId),
+        createCacheKey(chatId, event.index)
+    );
+}
+
 export async function setCachedEvents<T extends ChatEvent>(
     db: Database,
     chatId: string,
@@ -632,11 +655,13 @@ function makeChatSummarySerializable<T extends ChatSummary>(chat: T): T {
 
     return {
         ...chat,
-        latestMessage: makeSerialisable(chat.latestMessage, chat.chatId)
+        latestMessage: makeSerialisable(chat.latestMessage, chat.chatId),
     };
 }
 
-function prepareLatestMessagesForCache(chats: ChatSummary[]): Record<string, EnhancedWrapper<Message>> {
+function prepareLatestMessagesForCache(
+    chats: ChatSummary[]
+): Record<string, EnhancedWrapper<Message>> {
     const latestMessages: Record<string, EnhancedWrapper<Message>> = {};
     for (const { chatId, latestMessage } of chats) {
         if (latestMessage !== undefined) {

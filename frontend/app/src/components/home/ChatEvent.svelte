@@ -34,6 +34,7 @@
     export let last: boolean;
     export let me: boolean;
     export let confirmed: boolean;
+    export let failed: boolean;
     export let readByThem: boolean;
     export let readByMe: boolean;
     export let observer: IntersectionObserver;
@@ -80,6 +81,7 @@
         {focused}
         {observer}
         {confirmed}
+        {failed}
         {readByMe}
         {readByThem}
         {chatId}

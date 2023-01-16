@@ -36,6 +36,7 @@ import { messagesRead } from "./markRead";
 import type { OpenChatAgentWorker } from "../agentWorker";
 import { localChatSummaryUpdates } from "./localChatSummaryUpdates";
 import { setsAreEqual } from "../utils/set";
+import { failedMessagesStore } from "./failedMessages";
 
 export type ChatState = {
     chatId: string;
@@ -484,12 +485,15 @@ export function removeGroupPreview(chatId: string): void {
 }
 
 export const eventsStore: Readable<EventWrapper<ChatEvent>[]> = derived(
-    [serverEventsStore, unconfirmed, localMessageUpdates],
-    ([$serverEventsForSelectedChat, $unconfirmed, $localMessageUpdates]) => {
+    [serverEventsStore, unconfirmed, localMessageUpdates, failedMessagesStore],
+    ([$serverEventsForSelectedChat, $unconfirmed, $localMessageUpdates, $failedMessages]) => {
         const chatId = get(selectedChatId) ?? "";
+        // for the purpose of merging, unconfirmed and failed can be treated the same
+        const failed = $failedMessages[chatId] ? Object.values($failedMessages[chatId]) : [];
+        const unconfirmed = $unconfirmed[chatId]?.messages ?? [];
         return mergeEventsAndLocalUpdates(
             $serverEventsForSelectedChat,
-            $unconfirmed[chatId]?.messages ?? [],
+            [...unconfirmed, ...failed],
             $localMessageUpdates
         );
     }
@@ -537,6 +541,21 @@ export function addServerEventsToStores(
     for (const event of newEvents) {
         if (event.event.kind === "message") {
             if (unconfirmed.delete(key, event.event.messageId)) {
+                if (threadRootMessageIndex === undefined) {
+                    messagesRead.confirmMessage(
+                        chatId,
+                        event.event.messageIndex,
+                        event.event.messageId
+                    );
+                } else {
+                    messagesRead.markThreadRead(
+                        chatId,
+                        threadRootMessageIndex,
+                        event.event.messageIndex
+                    );
+                }
+            }
+            if (failedMessagesStore.delete(key, event.event.messageId)) {
                 if (threadRootMessageIndex === undefined) {
                     messagesRead.confirmMessage(
                         chatId,

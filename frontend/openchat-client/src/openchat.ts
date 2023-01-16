@@ -289,6 +289,7 @@ import {
     ThreadRead,
     UpdatesResult,
 } from "openchat-shared";
+import { failedMessagesStore } from "./stores/failedMessages";
 
 const UPGRADE_POLL_INTERVAL = 1000;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -1181,18 +1182,16 @@ export class OpenChat extends EventTarget {
             return Promise.resolve(false);
         }
 
-        const result = chat.kind === "group_chat"
-            ? this.api.getDeletedGroupMessage(chatId, messageId, threadRootMessageIndex)
-            : this.api.getDeletedDirectMessage(chatId, messageId);
+        const result =
+            chat.kind === "group_chat"
+                ? this.api.getDeletedGroupMessage(chatId, messageId, threadRootMessageIndex)
+                : this.api.getDeletedDirectMessage(chatId, messageId);
 
         return result
             .then((resp) => {
                 const success = resp.kind === "success";
                 if (success) {
-                    localMessageUpdates.markContentRevealed(
-                        messageId.toString(),
-                        resp.content
-                    );
+                    localMessageUpdates.markContentRevealed(messageId.toString(), resp.content);
                 }
                 return success;
             })
@@ -1200,7 +1199,6 @@ export class OpenChat extends EventTarget {
                 this._logger.error("Get deleted message failed: ", err);
                 return false;
             });
-
     }
 
     selectReaction(
@@ -1560,6 +1558,7 @@ export class OpenChat extends EventTarget {
             for (const event of newEvents) {
                 if (event.event.kind === "message") {
                     unconfirmed.delete(selectedThreadKey, event.event.messageId);
+                    failedMessagesStore.delete(selectedThreadKey, event.event.messageId);
                 }
             }
 
@@ -1995,7 +1994,7 @@ export class OpenChat extends EventTarget {
         const event = { event: msg, index: nextEventIndex, timestamp: BigInt(Date.now()) };
 
         this.api
-            .sendMessage(chat.kind, chatId, this.user, [], event.event)
+            .sendMessage(chat.kind, chatId, this.user, [], event)
             .then(([resp, msg]) => {
                 if (resp.kind === "success") {
                     this.onSendMessageSuccess(chatId, resp, msg, undefined);
@@ -2008,6 +2007,7 @@ export class OpenChat extends EventTarget {
                         this.user.userId,
                         undefined
                     );
+                    failedMessagesStore.add(chatId, event);
                     this.dispatchEvent(new SendMessageFailed());
                 }
             })
@@ -2019,6 +2019,7 @@ export class OpenChat extends EventTarget {
                     this.user.userId,
                     undefined
                 );
+                failedMessagesStore.add(chatId, event);
                 this.dispatchEvent(new SendMessageFailed());
                 this._logger.error("Exception forwarding message", err);
             });
@@ -2123,14 +2124,7 @@ export class OpenChat extends EventTarget {
             const event = { event: msg, index: nextEventIndex, timestamp: BigInt(Date.now()) };
 
             this.api
-                .sendMessage(
-                    chat.kind,
-                    chatId,
-                    this.user,
-                    mentioned,
-                    event.event,
-                    threadRootMessageIndex
-                )
+                .sendMessage(chat.kind, chatId, this.user, mentioned, event, threadRootMessageIndex)
                 .then(([resp, msg]) => {
                     if (resp.kind === "success" || resp.kind === "transfer_success") {
                         this.onSendMessageSuccess(chatId, resp, msg, threadRootMessageIndex);
@@ -2165,6 +2159,7 @@ export class OpenChat extends EventTarget {
                             this.user.userId,
                             threadRootMessageIndex
                         );
+                        failedMessagesStore.add(chatId, event);
                         this.dispatchEvent(new SendMessageFailed());
                     }
                 })
@@ -2176,6 +2171,7 @@ export class OpenChat extends EventTarget {
                         this.user.userId,
                         threadRootMessageIndex
                     );
+                    failedMessagesStore.add(chatId, event);
                     this._logger.error("Exception sending message", err);
                     this.dispatchEvent(new SendMessageFailed());
                 });
@@ -3200,6 +3196,7 @@ export class OpenChat extends EventTarget {
     currentChatBlockedUsers = currentChatBlockedUsers;
     chatStateStore = chatStateStore;
     unconfirmed = unconfirmed;
+    failedMessagesStore = failedMessagesStore;
     lastCryptoSent = lastCryptoSent;
     draftThreadMessages = draftThreadMessages;
     translationStore = translationStore;

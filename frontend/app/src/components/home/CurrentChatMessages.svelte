@@ -34,6 +34,7 @@
         LoadedPreviousMessages,
         SentMessage,
         UpgradeRequired,
+        FailedMessages,
     } from "openchat-client";
     import { pop } from "../../utils/transition";
     import { menuStore } from "../../stores/menu";
@@ -73,6 +74,7 @@
     $: messagesRead = client.messagesRead;
     $: unconfirmedReadByThem = client.unconfirmedReadByThem;
     $: unconfirmed = client.unconfirmed;
+    $: failedMessagesStore = client.failedMessagesStore;
     $: userGroupKeys = client.userGroupKeys;
     $: currentChatDraftMessage = client.currentChatDraftMessage;
     $: focusMessageIndex = client.focusMessageIndex;
@@ -493,6 +495,13 @@
         return true;
     }
 
+    function isFailed(_failed: FailedMessages, evt: EventWrapper<ChatEventType>): boolean {
+        if (evt.event.kind === "message") {
+            failedMessagesStore.contains(chat.chatId, evt.event.messageId);
+        }
+        return false;
+    }
+
     function isReadByThem(
         chat: ChatSummary,
         readByThem: Set<bigint>,
@@ -630,6 +639,7 @@
                         focused={evt.event.kind === "message" &&
                             evt.event.messageIndex === $focusMessageIndex}
                         confirmed={isConfirmed(evt)}
+                        failed={isFailed($failedMessagesStore, evt)}
                         readByThem={isReadByThem(chat, $unconfirmedReadByThem, evt)}
                         readByMe={isReadByMe($messagesRead, evt)}
                         chatId={chat.chatId}

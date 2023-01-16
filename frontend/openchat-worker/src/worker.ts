@@ -160,7 +160,11 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
 
             case "getDeletedGroupMessage":
                 agent
-                    .getDeletedGroupMessage(payload.chatId, payload.messageId, payload.threadRootMessageIndex)
+                    .getDeletedGroupMessage(
+                        payload.chatId,
+                        payload.messageId,
+                        payload.threadRootMessageIndex
+                    )
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,
@@ -757,7 +761,7 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
                         payload.chatId,
                         payload.user,
                         payload.mentioned,
-                        payload.msg,
+                        payload.event,
                         payload.threadRootMessageIndex
                     )
                     .then((response) =>
