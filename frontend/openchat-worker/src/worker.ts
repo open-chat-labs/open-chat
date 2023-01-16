@@ -158,6 +158,28 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
                     .catch(sendError(correlationId));
                 break;
 
+            case "getDeletedGroupMessage":
+                agent
+                    .getDeletedGroupMessage(payload.chatId, payload.messageId, payload.threadRootMessageIndex)
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
+            case "getDeletedDirectMessage":
+                agent
+                    .getDeletedDirectMessage(payload.userId, payload.messageId)
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
             case "getUpdatesV2":
                 agent
                     .getUpdatesV2(payload.currentState)

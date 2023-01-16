@@ -11,6 +11,7 @@
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
     import DeleteOffOutline from "svelte-material-icons/DeleteOffOutline.svelte";
     import TranslateIcon from "svelte-material-icons/Translate.svelte";
+    import EyeIcon from "svelte-material-icons/Eye.svelte";
     import TranslateOff from "svelte-material-icons/TranslateOff.svelte";
     import ForwardIcon from "svelte-material-icons/Share.svelte";
     import Pin from "svelte-material-icons/Pin.svelte";
@@ -49,6 +50,7 @@
     export let canEdit: boolean;
     export let canDelete: boolean;
     export let canUndelete: boolean;
+    export let canRevealDeleted: boolean;
     export let translatable: boolean;
     export let translated: boolean;
     export let crypto: boolean;
@@ -130,6 +132,11 @@
                 toastStore.showFailureToast("undeleteMessageFailed");
             }
         });
+    }
+
+    function revealDeletedMessage() {
+        if (!canRevealDeleted) return;
+        client.revealDeletedMessage(chatId, msg.messageId, threadRootMessageIndex);
     }
 
     function untranslateMessage() {
@@ -278,6 +285,12 @@
                         <div slot="text">
                             {$_(me ? "deleteMessage" : "deleteMessageAndReport")}
                         </div>
+                    </MenuItem>
+                {/if}            
+                {#if canRevealDeleted}
+                    <MenuItem on:click={revealDeletedMessage}>
+                        <EyeIcon size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
+                        <div slot="text">{$_("revealDeletedMessage")}</div>
                     </MenuItem>
                 {/if}
                 {#if canUndelete}

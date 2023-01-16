@@ -40,6 +40,7 @@ import type {
     ApiArchiveChatResponse,
     ApiIcrc1Account,
     ApiDirectChatSummaryUpdates,
+    ApiDeletedDirectMessageResponse,
 } from "./candid/idl";
 import {
     EventsResponse,
@@ -79,6 +80,7 @@ import {
     UnpinChatResponse,
     UnsupportedValueError,
     DirectChatSummaryUpdates,
+    DeletedDirectMessageResponse,
 } from "openchat-shared";
 import { bytesToHexString, identity, optional, optionUpdate } from "../../utils/mapping";
 import {
@@ -967,4 +969,29 @@ function formatIcrc1Account(candid: ApiIcrc1Account): string {
     const subaccount = optional(candid.subaccount, bytesToHexString);
 
     return subaccount !== undefined ? `${owner}:${subaccount}` : owner;
+}
+
+export function deletedMessageResponse(candid: ApiDeletedDirectMessageResponse): DeletedDirectMessageResponse {
+    if ("Success" in candid) {
+        return { 
+            kind: "success",
+            content: messageContent(candid.Success.content, "unknown"),
+        };
+    }
+    if ("ChatNotFound" in candid) {
+        return { kind: "chat_not_found" };
+    }
+    if ("NotAuthorized" in candid) {
+        return { kind: "not_authorised" };
+    }
+    if ("MessageNotFound" in candid) {
+        return { kind: "message_not_found" };
+    }
+    if ("MessageNotDeleted" in candid) {
+        return { kind: "message_not_deleted" };
+    }
+    if ("MessageHardDeleted" in candid) {
+        return { kind: "message_hard_deleted" };
+    }
+    throw new UnsupportedValueError("Unexpected ApiDeletedDirectMessageResponse type received", candid);
 }

@@ -39,6 +39,7 @@ import type {
     SetBioResponse,
     ToggleMuteNotificationResponse,
     UnpinChatResponse,
+	DeletedDirectMessageResponse,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
@@ -66,6 +67,7 @@ import {
     unpinChatResponse,
     migrateUserPrincipal,
     archiveChatResponse,
+    deletedMessageResponse,
 } from "./mappers";
 import type { IUserClient } from "./user.client.interface";
 import { MAX_EVENTS, MAX_MESSAGES } from "../../constants";
@@ -605,6 +607,17 @@ export class UserClient extends CandidService implements IUserClient {
         return this.handleResponse(
             this.userService.migrate_user_principal({}),
             migrateUserPrincipal
+        );
+    }
+
+    @profile("userClient")
+    getDeletedMessage(userId: string, messageId: bigint): Promise<DeletedDirectMessageResponse> {
+        return this.handleResponse(
+            this.userService.deleted_message({
+                user_id: Principal.fromText(userId),
+                message_id: messageId,
+            }),
+            deletedMessageResponse
         );
     }
 }

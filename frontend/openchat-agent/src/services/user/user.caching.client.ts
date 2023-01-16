@@ -32,6 +32,7 @@ import type {
     UnpinChatResponse,
     InitialStateV2Response,
     UpdatesV2Response,
+	DeletedDirectMessageResponse,
 } from "openchat-shared";
 import type { IUserClient } from "./user.client.interface";
 import {
@@ -374,5 +375,9 @@ export class CachingUserClient extends EventTarget implements IUserClient {
 
     migrateUserPrincipal(): Promise<MigrateUserPrincipalResponse> {
         return this.client.migrateUserPrincipal();
+    }
+
+    getDeletedMessage(userId: string, messageId: bigint): Promise<DeletedDirectMessageResponse> {
+        return this.client.getDeletedMessage(userId, messageId);
     }
 }

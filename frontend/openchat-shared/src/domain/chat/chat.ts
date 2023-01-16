@@ -330,6 +330,7 @@ export type Message = {
     reactions: Reaction[];
     edited: boolean;
     forwarded: boolean;
+    deleted: boolean;
     thread?: ThreadSummary;
 };
 
@@ -387,6 +388,7 @@ export type LocalMessageUpdates = {
     };
     editedContent?: MessageContent;
     undeletedContent?: MessageContent;
+    revealedContent?: MessageContent;
     reactions?: LocalReaction[];
     pollVotes?: LocalPollVote[];
     threadSummary?: ThreadSummary;
@@ -1431,6 +1433,28 @@ export type PinMessageResponse =
     | { kind: "message_not_found" }
     | UserSuspended
     | ChatFrozen;
+
+export type DeletedGroupMessageResponse =
+    | {
+        kind: "success";
+        content: MessageContent;
+    }
+    | { kind: "caller_not_in_group" }
+    | { kind: "not_authorised" }
+    | { kind: "message_not_found" }
+    | { kind: "message_not_deleted" }
+    | { kind: "message_hard_deleted" };
+
+export type DeletedDirectMessageResponse =
+    | {
+        kind: "success";
+        content: MessageContent;
+    }
+    | { kind: "chat_not_found" }
+    | { kind: "not_authorised" }
+    | { kind: "message_not_found" }
+    | { kind: "message_not_deleted" }
+    | { kind: "message_hard_deleted" };
 
 export type RegisterPollVoteResponse =
     | "caller_not_in_group"

@@ -258,6 +258,7 @@ export function createMessage(
         reactions: [],
         edited: false,
         forwarded: false,
+        deleted: false,
     };
 }
 
@@ -1102,6 +1103,7 @@ function mergeLocalUpdates(
     if (localUpdates?.deleted !== undefined) {
         return {
             ...message,
+            deleted: true,
             content: {
                 kind: "deleted_content",
                 deletedBy: localUpdates.deleted.deletedBy,
@@ -1119,6 +1121,11 @@ function mergeLocalUpdates(
 
     if (localUpdates?.undeletedContent !== undefined) {
         message.content = localUpdates.undeletedContent;
+        message.deleted = false;
+    }
+
+    if (localUpdates?.revealedContent !== undefined) {
+        message.content = localUpdates.revealedContent;
     }
 
     if (localUpdates?.reactions !== undefined) {
@@ -1158,6 +1165,9 @@ function mergeLocalUpdates(
 
             if (replyContextLocalUpdates.editedContent !== undefined) {
                 message.repliesTo.content = replyContextLocalUpdates.editedContent;
+            }
+            if (replyContextLocalUpdates.revealedContent !== undefined) {
+                message.repliesTo.content = replyContextLocalUpdates.revealedContent;
             }
             if (
                 replyContextLocalUpdates.pollVotes !== undefined &&

@@ -92,9 +92,10 @@ const E8S_AS_BIGINT = BigInt(100_000_000);
 
 export function message(candid: ApiMessage): Message {
     const sender = candid.sender.toString();
+    const content = messageContent(candid.content, sender);
     return {
         kind: "message",
-        content: messageContent(candid.content, sender),
+        content,
         sender,
         repliesTo: optional(candid.replies_to, replyContext),
         messageId: candid.message_id,
@@ -102,6 +103,7 @@ export function message(candid: ApiMessage): Message {
         reactions: reactions(candid.reactions),
         edited: candid.edited,
         forwarded: candid.forwarded,
+        deleted: content.kind === "deleted_content",
         thread: optional(candid.thread_summary, threadSummary),
     };
 }
