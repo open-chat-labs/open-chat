@@ -39,9 +39,9 @@ function createFailedMessagesStore() {
             }
             return false;
         },
-        initialise() {
-            // todo - we need to call this on start-up to load all of the failed message from the agent into the store
-            console.log("Initialise failed messages store");
+        initialise(data: FailedMessages) {
+            store.set(data);
+            console.log("Failed messages initialised: ", data);
         },
     };
 }

@@ -189,7 +189,8 @@ export type WorkerRequest =
     | GetInitialStateV2
     | GetUpdatesV2
     | GetDeletedGroupMessage
-    | GetDeletedDirectMessage;
+    | GetDeletedDirectMessage
+    | LoadFailedMessages;
 
 type SetCachedMessageFromNotification = Request<{
     chatId: string;
@@ -895,7 +896,8 @@ export type WorkerResponse =
     | Response<UpdatesResult>
     | Response<DeletedDirectMessageResponse>
     | Response<DeletedGroupMessageResponse>
-    | Response<undefined>;
+    | Response<undefined>
+    | Response<Record<string, Record<number, EventWrapper<Message>>>>;
 
 type Response<T> = {
     kind: "worker_response";
@@ -931,3 +933,7 @@ export type RelayedUsersLoaded = WorkerEventCommon<{
     subkind: "users_loaded";
     users: PartialUserSummary[];
 }>;
+
+type LoadFailedMessages = Request & {
+    kind: "loadFailedMessages";
+};

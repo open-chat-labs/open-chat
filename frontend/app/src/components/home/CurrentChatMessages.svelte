@@ -497,7 +497,7 @@
 
     function isFailed(_failed: FailedMessages, evt: EventWrapper<ChatEventType>): boolean {
         if (evt.event.kind === "message") {
-            failedMessagesStore.contains(chat.chatId, evt.event.messageId);
+            return failedMessagesStore.contains(chat.chatId, evt.event.messageId);
         }
         return false;
     }

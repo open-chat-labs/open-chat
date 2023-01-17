@@ -81,7 +81,7 @@
     let msgBubbleElement: HTMLElement;
     let groupChat = chatType === "group_chat";
     let showEmojiPicker = false;
-    let debug = false;
+    let debug = true;
     let viewProfile = false;
     let alignProfileTo: DOMRect | undefined = undefined;
     let crypto = msg.content.kind === "crypto_content";
@@ -461,6 +461,7 @@
                 <pre>ReadByUs: {readByMe}</pre>
                 <pre>Pinned: {pinned}</pre>
                 <pre>edited: {msg.edited}</pre>
+                <pre>failed: {failed}</pre>
                 <pre>thread: {JSON.stringify(msg.thread, null, 4)}</pre>
             {/if}
 

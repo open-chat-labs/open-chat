@@ -6,6 +6,7 @@ import {
     Database,
     getCachedChatsV2,
     initDb,
+    loadFailedMessages,
     setCachedChatsV2,
     setCachedMessageIfNotExists,
 } from "../utils/caching";
@@ -1532,5 +1533,9 @@ export class OpenChatAgent extends EventTarget {
 
     markSuspectedBot(): Promise<MarkSuspectedBotResponse> {
         return this._userIndexClient.markSuspectedBot();
+    }
+
+    loadFailedMessages(): Promise<Record<string, Record<number, EventWrapper<Message>>>> {
+        return loadFailedMessages(this.db);
     }
 }

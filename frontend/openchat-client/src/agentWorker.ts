@@ -1265,6 +1265,13 @@ export class OpenChatAgentWorker extends EventTarget {
         });
     }
 
+    loadFailedMessages(): Promise<Record<string, Record<number, EventWrapper<Message>>>> {
+        return this.sendRequest({
+            kind: "loadFailedMessages",
+            payload: {},
+        });
+    }
+
     markSuspectedBot(): Promise<void> {
         return this.sendRequest({
             kind: "markSuspectedBot",

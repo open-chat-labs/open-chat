@@ -517,6 +517,19 @@ export async function recordFailedMessage<T extends Message>(
     );
 }
 
+export async function loadFailedMessages(
+    db: Database
+): Promise<Record<string, Record<number, EventWrapper<Message>>>> {
+    const result = await (await db).getAll("failed_chat_messages");
+    return result.reduce((res, ev) => {
+        if (res[ev.chatId] === undefined) {
+            res[ev.chatId] = {};
+        }
+        res[ev.chatId][Number(ev.event.messageId)] = ev;
+        return res;
+    }, {} as Record<string, Record<number, EventWrapper<Message>>>);
+}
+
 export async function setCachedEvents<T extends ChatEvent>(
     db: Database,
     chatId: string,
