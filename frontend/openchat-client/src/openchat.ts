@@ -2088,6 +2088,75 @@ export class OpenChat extends EventTarget {
         return upToDate;
     }
 
+    retrySendMessage(
+        chatId: string,
+        event: EventWrapper<Message>,
+        threadRootMessageIndex?: number
+    ): void {
+        const chat = this._liveState.chatSummaries[chatId];
+
+        if (chat === undefined) {
+            return;
+        }
+
+        unconfirmed.add(chat.chatId, event);
+        failedMessagesStore.delete(chat.chatId, event.event.messageId);
+
+        // TODO - what about mentions and threads
+        this.api
+            .sendMessage(chat.kind, chat.chatId, this.user, [], event, threadRootMessageIndex)
+            .then(([resp, msg]) => {
+                if (resp.kind === "success" || resp.kind === "transfer_success") {
+                    this.onSendMessageSuccess(chatId, resp, msg, threadRootMessageIndex);
+                    if (msg.kind === "message" && msg.content.kind === "crypto_content") {
+                        this.refreshAccountBalance(
+                            msg.content.transfer.token,
+                            this.user.cryptoAccount
+                        );
+                    }
+                    if (threadRootMessageIndex !== undefined) {
+                        trackEvent("sent_threaded_message");
+                    } else {
+                        if (chat.kind === "direct_chat") {
+                            trackEvent("sent_direct_message");
+                        } else {
+                            if (chat.public) {
+                                trackEvent("sent_public_group_message");
+                            } else {
+                                trackEvent("sent_private_group_message");
+                            }
+                        }
+                    }
+                    if (msg.repliesTo !== undefined) {
+                        // double counting here which I think is OK since we are limited to string events
+                        trackEvent("replied_to_message");
+                    }
+                } else {
+                    this.removeMessage(
+                        chat.kind,
+                        chatId,
+                        msg.messageId,
+                        this.user.userId,
+                        threadRootMessageIndex
+                    );
+                    failedMessagesStore.add(chatId, event);
+                    this.dispatchEvent(new SendMessageFailed());
+                }
+            })
+            .catch((err) => {
+                this.removeMessage(
+                    chat.kind,
+                    chatId,
+                    event.event.messageId,
+                    this.user.userId,
+                    threadRootMessageIndex
+                );
+                failedMessagesStore.add(chatId, event);
+                this._logger.error("Exception sending message", err);
+                this.dispatchEvent(new SendMessageFailed());
+            });
+    }
+
     sendMessageWithAttachment(
         chatId: string,
         currentEvents: EventWrapper<ChatEvent>[],

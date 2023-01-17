@@ -544,12 +544,12 @@ export function groupMessagesByDate(events: EventWrapper<Message>[]): EventWrapp
 
 export function getNextEventAndMessageIndexes(
     chat: ChatSummary,
-    unconfirmedMessages: EventWrapper<Message>[]
+    localMessages: EventWrapper<Message>[]
 ): [number, number] {
     let eventIndex = chat.latestEventIndex;
     let messageIndex = chat.latestMessage?.event.messageIndex ?? -1;
-    if (unconfirmedMessages.length > 0) {
-        const lastUnconfirmed = unconfirmedMessages[unconfirmedMessages.length - 1];
+    if (localMessages.length > 0) {
+        const lastUnconfirmed = localMessages[localMessages.length - 1];
         if (lastUnconfirmed.index > eventIndex) {
             eventIndex = lastUnconfirmed.index;
         }
@@ -591,12 +591,12 @@ export function mergeServerEvents(
     newEvents: EventWrapper<ChatEvent>[]
 ): EventWrapper<ChatEvent>[] {
     const merged = distinctBy([...newEvents, ...events], (e) => e.index);
-    merged.sort(sortByIndex);
+    merged.sort(sortByTimestamp);
     return merged;
 }
 
-function sortByIndex(a: EventWrapper<ChatEvent>, b: EventWrapper<ChatEvent>): number {
-    return a.index - b.index;
+function sortByTimestamp(a: EventWrapper<ChatEvent>, b: EventWrapper<ChatEvent>): number {
+    return Number(a.timestamp - b.timestamp);
 }
 
 export function revokeObjectUrls(event?: EventWrapper<ChatEvent>): void {
@@ -1069,7 +1069,7 @@ export function mergeEventsAndLocalUpdates(
     const merged = events.map((e) => processEvent(e));
 
     if (unconfirmed.length > 0) {
-        unconfirmed.sort(sortByIndex);
+        unconfirmed.sort(sortByTimestamp);
 
         let anyAdded = false;
         for (const message of unconfirmed) {
@@ -1086,7 +1086,7 @@ export function mergeEventsAndLocalUpdates(
             }
         }
         if (anyAdded) {
-            merged.sort(sortByIndex);
+            merged.sort(sortByTimestamp);
         }
     }
 

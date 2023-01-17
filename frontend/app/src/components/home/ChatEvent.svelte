@@ -72,6 +72,10 @@
     function editEvent() {
         dispatch("editEvent", event as EventWrapper<Message>);
     }
+
+    function retrySend() {
+        client.retrySendMessage(chatId, event as EventWrapper<Message>);
+    }
 </script>
 
 {#if event.event.kind === "message"}
@@ -108,6 +112,7 @@
         on:goToMessageIndex
         on:replyPrivatelyTo
         on:replyTo
+        on:retrySend={retrySend}
         on:editMessage={editEvent}
         on:upgrade
         on:forward

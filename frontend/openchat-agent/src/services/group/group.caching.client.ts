@@ -210,7 +210,14 @@ export class CachingGroupClient implements IGroupClient {
     ): Promise<[SendMessageResponse, Message]> {
         return this.client
             .sendMessage(senderName, mentioned, event, threadRootMessageIndex)
-            .then(setCachedMessageFromSendResponse(this.db, this.chatId, threadRootMessageIndex))
+            .then(
+                setCachedMessageFromSendResponse(
+                    this.db,
+                    this.chatId,
+                    event,
+                    threadRootMessageIndex
+                )
+            )
             .catch((err) => {
                 recordFailedMessage(this.db, this.chatId, event);
                 throw err;

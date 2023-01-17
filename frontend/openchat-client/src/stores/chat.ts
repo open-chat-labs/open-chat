@@ -182,12 +182,22 @@ export function nextEventAndMessageIndexesForThread(
     );
 }
 
+function sortByIndex(a: EventWrapper<ChatEvent>, b: EventWrapper<ChatEvent>): number {
+    return a.index - b.index;
+}
+
 export function nextEventAndMessageIndexes(): [number, number] {
     const chat = get(selectedServerChatStore);
     if (chat === undefined) {
         return [0, 0];
     }
-    return getNextEventAndMessageIndexes(chat, unconfirmed.getMessages(chat.chatId));
+
+    const localMsgs = [
+        ...unconfirmed.getMessages(chat.chatId),
+        ...failedMessagesStore.getMessages(chat.chatId),
+    ].sort(sortByIndex);
+
+    return getNextEventAndMessageIndexes(chat, localMsgs);
 }
 
 export const isProposalGroup = derived([selectedChatStore], ([$selectedChat]) => {

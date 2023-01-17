@@ -81,7 +81,7 @@
     let msgBubbleElement: HTMLElement;
     let groupChat = chatType === "group_chat";
     let showEmojiPicker = false;
-    let debug = true;
+    let debug = false;
     let viewProfile = false;
     let alignProfileTo: DOMRect | undefined = undefined;
     let crypto = msg.content.kind === "crypto_content";
@@ -376,6 +376,7 @@
             class:last
             class:readByMe
             class:crypto
+            class:failed
             class:proposal={isProposal && !inert}
             class:thread={inThread}
             class:rtl={$rtlStore}>
@@ -472,6 +473,7 @@
                     inert={msg.deleted || collapsed}
                     {publicGroup}
                     {confirmed}
+                    {failed}
                     canShare={canShare()}
                     {me}
                     {canPin}
@@ -494,12 +496,13 @@
                     on:collapseMessage
                     on:forward
                     on:reply={reply}
+                    on:retrySend
                     on:replyPrivately={replyPrivately}
                     on:editMessage={editMessage} />
             {/if}
         </div>
 
-        {#if !collapsed && !msg.deleted && canReact}
+        {#if !collapsed && !msg.deleted && canReact && !failed}
             <div class="actions">
                 <div class="reaction" on:click={() => (showEmojiPicker = true)}>
                     <HoverIcon>
@@ -628,10 +631,6 @@
         flex-wrap: wrap;
         gap: 3px;
 
-        // &.me {
-        //     justify-content: flex-end;
-        // }
-
         &.indent {
             margin-left: $avatar-width;
             @include mobile() {
@@ -644,10 +643,6 @@
         display: flex;
         justify-content: flex-start;
         margin-bottom: $sp2;
-
-        // &.me {
-        //     justify-content: flex-end;
-        // }
 
         .avatar-col {
             flex: 0 0 $avatar-width;
@@ -803,6 +798,10 @@
 
         &.me .forwarded {
             color: var(--currentChat-msg-me-muted);
+        }
+
+        &.failed {
+            background-color: var(--error);
         }
     }
 

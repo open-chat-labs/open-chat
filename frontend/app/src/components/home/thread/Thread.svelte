@@ -328,6 +328,8 @@
             return e.index.toString();
         }
     }
+
+    //TODO - come back and deal with failed messages
 </script>
 
 <PollBuilder
@@ -394,6 +396,7 @@
                                 $selectedThreadKey ?? "",
                                 evt.event.messageId
                             )}
+                            failed={false}
                             readByThem
                             readByMe
                             {observer}

@@ -505,6 +505,14 @@ function removeReplyContent(
     return repliesTo;
 }
 
+export async function removeFailedMessage(
+    db: Database,
+    chatId: string,
+    eventIndex: number
+): Promise<void> {
+    (await db).delete("failed_chat_messages", createCacheKey(chatId, eventIndex));
+}
+
 export async function recordFailedMessage<T extends Message>(
     db: Database,
     chatId: string,
@@ -557,14 +565,19 @@ export async function setCachedEvents<T extends ChatEvent>(
 export function setCachedMessageFromSendResponse(
     db: Database,
     chatId: string,
+    sentEvent: EventWrapper<Message>,
     threadRootMessageIndex?: number
 ): ([resp, message]: [SendMessageResponse, Message]) => [SendMessageResponse, Message] {
     return ([resp, message]: [SendMessageResponse, Message]) => {
-        if (resp.kind !== "success") return [resp, message];
+        if (resp.kind !== "success") {
+            recordFailedMessage(db, chatId, sentEvent);
+            return [resp, message];
+        }
 
         const event = messageToEvent(message, resp);
 
         setCachedMessageIfNotExists(db, chatId, event, threadRootMessageIndex);
+        removeFailedMessage(db, chatId, sentEvent.index);
 
         return [resp, message];
     };
