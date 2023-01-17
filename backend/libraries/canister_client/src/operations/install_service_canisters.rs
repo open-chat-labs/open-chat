@@ -1,12 +1,15 @@
 use crate::utils::{build_ic_agent, create_empty_canister, get_canister_wasm, install_wasm, set_controllers};
-use crate::{CanisterIds, CanisterName, CyclesDispenserInitArgs, OpenStorageCanisterName, OpenStorageInitArgs};
+use crate::{
+    CanisterIds, CanisterName, CyclesDispenserConfig, CyclesDispenserInitArgs, OpenStorageCanisterName, OpenStorageInitArgs,
+};
 use candid::Principal;
 use ic_agent::identity::BasicIdentity;
 use ic_agent::{Agent, Identity};
 use ic_utils::interfaces::ManagementCanister;
-use types::{CanisterId, Version};
+use types::{CanisterId, Cycles, Version};
 
 const NNS_GOVERNANCE_CANISTER_ID: CanisterId = Principal::from_slice(&[0, 0, 0, 0, 0, 0, 0, 1, 1, 1]);
+const T: Cycles = 1_000_000_000_000;
 
 pub async fn create_and_install_service_canisters(identity: BasicIdentity, url: String, test_mode: bool) -> CanisterIds {
     let principal = identity.sender().unwrap();
@@ -196,16 +199,21 @@ async fn install_service_canisters_impl(
             canister_ids.notifications,
             canister_ids.online_users,
             canister_ids.proposals_bot,
+            canister_ids.open_storage_index,
         ],
-        max_top_up_amount: 5_000_000_000_000,   // 5T
-        min_interval: 60 * 60 * 1000,           // 1 hour
-        min_cycles_balance: 10_000_000_000_000, // 10T
+        max_top_up_amount: 20 * T,
+        min_interval: 60 * 60 * 1000, // 1 hour
+        min_cycles_balance: 200 * T,
     };
 
     let open_storage_index_canister_wasm = get_canister_wasm(OpenStorageCanisterName::Index, version);
     let open_storage_index_init_args = OpenStorageInitArgs {
         service_principals: vec![principal, canister_ids.user_index, canister_ids.group_index],
         bucket_canister_wasm: get_canister_wasm(OpenStorageCanisterName::Bucket, version),
+        cycles_dispenser_config: Some(CyclesDispenserConfig {
+            canister_id: canister_ids.cycles_dispenser,
+            min_cycles_balance: 200 * T,
+        }),
         wasm_version: version,
         test_mode,
     };
