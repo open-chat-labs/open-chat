@@ -28,6 +28,10 @@ fn post_upgrade(args: Args) {
         Cryptocurrency::SNS1,
         Principal::from_text("zfcdd-tqaaa-aaaaq-aaaga-cai").expect("Invalid principal"),
     );
+    data.ledger_canister_ids.insert(
+        Cryptocurrency::CKBTC,
+        Principal::from_text("mxzaz-hqaaa-aaaar-qaada-cai").expect("Invalid principal"),
+    );
 
     init_state(env, data, args.wasm_version);
 
