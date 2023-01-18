@@ -8,6 +8,7 @@ const E8S_PER_TOKEN: u64 = 100_000_000;
 pub enum Cryptocurrency {
     InternetComputer,
     SNS1,
+    CKBTC,
 }
 
 impl Cryptocurrency {
@@ -15,6 +16,7 @@ impl Cryptocurrency {
         match self {
             Cryptocurrency::InternetComputer => "ICP".to_string(),
             Cryptocurrency::SNS1 => "SNS1".to_string(),
+            Cryptocurrency::CKBTC => "ckBTC".to_string(),
         }
     }
 
@@ -22,6 +24,7 @@ impl Cryptocurrency {
         match self {
             Cryptocurrency::InternetComputer => 8,
             Cryptocurrency::SNS1 => 8,
+            Cryptocurrency::CKBTC => 8,
         }
     }
 
@@ -29,6 +32,7 @@ impl Cryptocurrency {
         match self {
             Cryptocurrency::InternetComputer => (50 * E8S_PER_TOKEN).into(),
             Cryptocurrency::SNS1 => (10 * E8S_PER_TOKEN).into(),
+            Cryptocurrency::CKBTC => (E8S_PER_TOKEN / 100).into(),
         }
     }
 }
