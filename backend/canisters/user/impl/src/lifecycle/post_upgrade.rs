@@ -1,13 +1,14 @@
 use crate::lifecycle::{init_logger, init_state, UPGRADE_BUFFER_SIZE};
 use crate::{Data, LOG_MESSAGES};
+use candid::Principal;
 use canister_logger::{LogMessage, LogMessagesWrapper};
 use canister_tracing_macros::trace;
 use ic_cdk_macros::post_upgrade;
 use stable_memory::deserialize_from_stable_memory;
 use tracing::info;
+use types::Cryptocurrency;
 use user_canister::post_upgrade::Args;
 use utils::env::canister::CanisterEnv;
-use utils::env::Environment;
 
 #[post_upgrade]
 #[trace]
@@ -22,7 +23,11 @@ fn post_upgrade(args: Args) {
     init_logger(data.test_mode);
     LOG_MESSAGES.with(|l| rehydrate_log_messages(log_messages, trace_messages, &l.borrow()));
 
-    data.direct_chats.remove_old_deleted_message_content(env.now());
+    // TODO: This code should be removed after it has been deployed
+    data.ledger_canister_ids.insert(
+        Cryptocurrency::SNS1,
+        Principal::from_text("zfcdd-tqaaa-aaaaq-aaaga-cai").expect("Invalid principal"),
+    );
 
     init_state(env, data, args.wasm_version);
 
