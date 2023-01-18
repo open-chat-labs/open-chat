@@ -471,7 +471,8 @@
         "chooseReceiver": "nhập tên người dùng của người nhận",
         "icp": "Máy tính Internet",
         "btc": "Bitcoin",
-        "chat": "trò chuyện mở"
+        "chat": "trò chuyện mở",
+        "sns1": "SNS-1"
     },
     "cryptoAccount": {
         "manage": "Quản lý",
@@ -515,7 +516,8 @@
         "reactions": "phản ứng",
         "deletedMessages": "tin nhắn đã xóa",
         "reportedMessages": "Tin nhắn được báo cáo",
-        "reportedMessagesInfo": "Tin nhắn do bạn gửi đã bị người khác xóa hoặc báo cáo. Điều này có thể được sử dụng như một dấu hiệu cho thấy bạn không đóng góp tích cực cho cộng đồng."
+        "reportedMessagesInfo": "Tin nhắn do bạn gửi đã bị người khác xóa hoặc báo cáo. Điều này có thể được sử dụng như một dấu hiệu cho thấy bạn không đóng góp tích cực cho cộng đồng.",
+        "cryptoTransfers": "Tin nhắn tiền điện tử"
     },
     "andNMore": "và {n} khác",
     "confirmMakeGroupPrivate": "Bạn có chắc chắn muốn đặt nhóm này ở chế độ riêng tư không? Hiện tại không thể hoàn tác thao tác này!",

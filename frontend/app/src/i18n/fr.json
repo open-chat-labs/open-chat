@@ -470,7 +470,8 @@
         "chooseReceiver": "entrer le nom d'utilisateur du destinataire",
         "icp": "Ordinateur Internet",
         "btc": "Bitcoin",
-        "chat": "OpenChat"
+        "chat": "OpenChat",
+        "sns1": "SNS-1"
     },
     "cryptoAccount": {
         "manage": "Faire en sorte",
@@ -514,7 +515,8 @@
         "reactions": "réactions",
         "deletedMessages": "messages supprimés",
         "reportedMessages": "Messages signalés",
-        "reportedMessagesInfo": "Les messages que vous avez envoyés et qui ont été supprimés ou signalés par d'autres. Cela peut être utilisé comme une indication que vous ne contribuez pas positivement à la communauté."
+        "reportedMessagesInfo": "Les messages que vous avez envoyés et qui ont été supprimés ou signalés par d'autres. Cela peut être utilisé comme une indication que vous ne contribuez pas positivement à la communauté.",
+        "cryptoTransfers": "Message chiffré"
     },
     "andNMore": ", et {n} de plus",
     "confirmMakeGroupPrivate": "Voulez-vous vraiment rendre ce groupe privé ? Actuellement, cette opération ne peut pas être annulée !",
