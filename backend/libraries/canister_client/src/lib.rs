@@ -83,7 +83,9 @@ pub struct CanisterIds {
     pub proposals_bot: CanisterId,
     pub cycles_dispenser: CanisterId,
     pub open_storage_index: CanisterId,
-    pub ledger: CanisterId,
+    pub nns_governance: CanisterId,
+    pub nns_ledger: CanisterId,
+    pub nns_cmc: CanisterId,
 }
 
 #[derive(Debug)]
@@ -110,6 +112,9 @@ pub struct CyclesDispenserInitArgs {
     pub max_top_up_amount: Cycles,
     pub min_interval: Milliseconds,
     pub min_cycles_balance: Cycles,
+    pub icp_burn_amount_e8s: u64,
+    pub ledger_canister: CanisterId,
+    pub cycles_minting_canister: CanisterId,
 }
 
 #[derive(CandidType, Debug)]

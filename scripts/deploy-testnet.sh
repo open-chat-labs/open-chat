@@ -8,7 +8,9 @@ SCRIPT=$(readlink -f "$0")
 SCRIPT_DIR=$(dirname "$SCRIPT")
 cd $SCRIPT_DIR/..
 
-LEDGER_CANISTER_ID=ryjl3-tyaaa-aaaaa-aaaba-cai
+NNS_GOVERNANCE_CANISTER_ID=rrkah-fqaaa-aaaaa-aaaaq-cai
+NNS_LEDGER_CANISTER_ID=ryjl3-tyaaa-aaaaa-aaaba-cai
+NNS_CMC_CANISTER_ID=rkp4c-7iaaa-aaaaa-aaaca-cai
 
 # Create the OpenChat canisters
 dfx --identity $IDENTITY canister create --network $NETWORK --no-wallet --with-cycles 100000000000000 user_index
@@ -23,4 +25,4 @@ dfx --identity $IDENTITY canister create --network $NETWORK --no-wallet --with-c
 dfx --identity $IDENTITY canister create --network $NETWORK --no-wallet --with-cycles 100000000000000 open_storage_index
 
 # Install the OpenChat canisters
-./scripts/deploy.sh $NETWORK $IC_URL $IDENTITY $LEDGER_CANISTER_ID true
+./scripts/deploy.sh $NETWORK $IC_URL $IDENTITY $NNS_GOVERNANCE_CANISTER_ID $NNS_LEDGER_CANISTER_ID $NNS_CMC_CANISTER_ID true
