@@ -10,7 +10,9 @@ cd $SCRIPT_DIR/..
 
 # Create and install the NNS canisters
 dfx --identity $IDENTITY nns install
-LEDGER_CANISTER_ID=ryjl3-tyaaa-aaaaa-aaaba-cai
+NNS_GOVERNANCE_CANISTER_ID=rrkah-fqaaa-aaaaa-aaaaq-cai
+NNS_LEDGER_CANISTER_ID=ryjl3-tyaaa-aaaaa-aaaba-cai
+NNS_CMC_CANISTER_ID=rkp4c-7iaaa-aaaaa-aaaca-cai
 
 # Create the OpenChat canisters
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 100000000000000 user_index
@@ -25,4 +27,4 @@ dfx --identity $IDENTITY canister create --no-wallet --with-cycles 1000000000000
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 1000000000000000 open_storage_index
 
 # Install the OpenChat canisters
-./scripts/deploy.sh local http://127.0.0.1:8080/ $IDENTITY $LEDGER_CANISTER_ID true
+./scripts/deploy.sh local http://127.0.0.1:8080/ $IDENTITY $NNS_GOVERNANCE_CANISTER_ID $NNS_LEDGER_CANISTER_ID $NNS_CMC_CANISTER_ID true

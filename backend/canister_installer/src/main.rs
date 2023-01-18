@@ -19,7 +19,9 @@ async fn main() {
         proposals_bot: opts.proposals_bot,
         cycles_dispenser: opts.cycles_dispenser,
         open_storage_index: opts.open_storage_index,
-        ledger: opts.ledger,
+        nns_governance: opts.nns_governance,
+        nns_ledger: opts.nns_ledger,
+        nns_cmc: opts.nns_cmc,
     };
 
     let identity = get_dfx_identity(&opts.controller);
@@ -43,5 +45,7 @@ struct Opts {
     proposals_bot: CanisterId,
     cycles_dispenser: CanisterId,
     open_storage_index: CanisterId,
-    ledger: CanisterId,
+    nns_governance: CanisterId,
+    nns_ledger: CanisterId,
+    nns_cmc: CanisterId,
 }
