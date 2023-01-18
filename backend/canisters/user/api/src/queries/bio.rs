@@ -8,8 +8,3 @@ pub struct Args {}
 pub enum Response {
     Success(String),
 }
-
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub struct SuccessResult {
-    pub text: String,
-}

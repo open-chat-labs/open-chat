@@ -1,7 +1,6 @@
 use crate::guards::caller_is_owner;
 use crate::model::contact::Contact;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
-use std::collections::hash_map::Entry::{Occupied, Vacant};
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
 use types::{FieldTooLongResult, OptionUpdate};
@@ -25,8 +24,12 @@ fn set_contact_impl(args: Args, state: &mut RuntimeState) -> Response {
     match args.contact.nickname {
         OptionUpdate::NoChange => NoChange,
         OptionUpdate::SetToNone => {
-            if state.data.contacts.remove(&args.contact.user_id).is_some() { Success } else { NoChange } 
-        },
+            if state.data.contacts.remove(&args.contact.user_id).is_some() {
+                Success
+            } else {
+                NoChange
+            }
+        }
         OptionUpdate::SetToSome(nickname) => {
             let length_provided = nickname.len() as u32;
             if length_provided > MAX_NICKNAME_LEN {
@@ -40,12 +43,12 @@ fn set_contact_impl(args: Args, state: &mut RuntimeState) -> Response {
                 .data
                 .contacts
                 .entry(args.contact.user_id)
-                .and_modify(|e| e.nickname = Some(nickname) )
+                .and_modify(|e| e.nickname = Some(nickname.clone()))
                 .or_insert(Contact {
                     nickname: Some(nickname),
                 });
-            
-            Success    
+
+            Success
         }
     }
 }

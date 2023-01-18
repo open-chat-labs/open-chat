@@ -384,6 +384,13 @@ type AvatarUpdate =
         SetToSome: Avatar;
     };
 
+type TextUpdate =
+    variant {
+        NoChange;
+        SetToNone;
+        SetToSome: text;
+    };
+
 type AvatarIdUpdate =
     variant {
         NoChange;

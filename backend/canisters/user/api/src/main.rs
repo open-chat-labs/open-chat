@@ -2,6 +2,7 @@ use candid_gen::generate_candid_method;
 
 fn main() {
     generate_candid_method!(user, bio, query);
+    generate_candid_method!(user, contacts, query);
     generate_candid_method!(user, deleted_message, query);
     generate_candid_method!(user, events, query);
     generate_candid_method!(user, events_by_index, query);
@@ -33,6 +34,7 @@ fn main() {
     generate_candid_method!(user, send_message, update);
     generate_candid_method!(user, set_avatar, update);
     generate_candid_method!(user, set_bio, update);
+    generate_candid_method!(user, set_contact, update);
     generate_candid_method!(user, transfer_crypto_within_group_v2, update);
     generate_candid_method!(user, unarchive_chat, update);
     generate_candid_method!(user, unblock_user, update);
