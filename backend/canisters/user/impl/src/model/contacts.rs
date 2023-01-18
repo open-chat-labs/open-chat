@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 use types::{FieldTooLongResult, FieldTooShortResult, OptionUpdate, UserId};
@@ -10,7 +10,6 @@ const MIN_NICKNAME_LEN: u32 = 2;
 #[derive(Serialize, Deserialize, Default)]
 pub struct Contacts {
     map: HashMap<UserId, Contact>,
-    nicknames: HashSet<String>,
 }
 
 #[derive(Serialize, Deserialize, Default)]
@@ -21,7 +20,6 @@ pub struct Contact {
 pub enum SetContactResponse {
     Success,
     NoChange,
-    NicknameNameAlreadyUsed,
     NicknameTooShort(FieldTooShortResult),
     NicknameTooLong(FieldTooLongResult),
 }
@@ -55,18 +53,10 @@ impl Contacts {
                     });
                 }
 
-                if self.nicknames.contains(&nickname) {
-                    return SetContactResponse::NicknameNameAlreadyUsed;
-                }
-
                 self.map
                     .entry(contact.user_id)
                     .and_modify(|e| {
-                        if let Some(curr_nickname) = &e.nickname {
-                            self.nicknames.remove(curr_nickname);
-                        }
                         e.nickname = Some(nickname.clone());
-                        self.nicknames.insert(nickname.clone());
                     })
                     .or_insert(Contact {
                         nickname: Some(nickname),

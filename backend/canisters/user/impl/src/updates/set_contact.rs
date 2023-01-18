@@ -21,7 +21,6 @@ fn set_contact_impl(args: Args, state: &mut RuntimeState) -> Response {
     match state.data.contacts.set_contact(args.contact) {
         SetContactResponse::Success => Success,
         SetContactResponse::NoChange => NoChange,
-        SetContactResponse::NicknameNameAlreadyUsed => NicknameNameAlreadyUsed,
         SetContactResponse::NicknameTooLong(n) => NicknameTooLong(n),
         SetContactResponse::NicknameTooShort(n) => NicknameTooShort(n),
     }
