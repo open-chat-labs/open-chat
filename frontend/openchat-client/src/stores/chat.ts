@@ -17,7 +17,6 @@ import { derived, get, Readable, writable, Writable } from "svelte/store";
 import { immutableStore } from "./immutable";
 import {
     getNextEventAndMessageIndexes,
-    mergeServerEvents,
     mergeEventsAndLocalUpdates,
     mergeUnconfirmedIntoSummary,
     mergeChatMetrics,
@@ -32,7 +31,6 @@ import { filteredProposalsStore, resetFilteredProposalsStore } from "./filteredP
 import { createDerivedPropStore, createChatSpecificObjectStore } from "./dataByChatFactory";
 import { localMessageUpdates } from "./localMessageUpdates";
 import type { DraftMessage } from "./draftMessageFactory";
-import { messagesRead } from "./markRead";
 import type { OpenChatAgentWorker } from "../agentWorker";
 import { localChatSummaryUpdates } from "./localChatSummaryUpdates";
 import { setsAreEqual } from "../utils/set";
