@@ -1,4 +1,5 @@
 pub mod bio;
+pub mod contacts;
 pub mod deleted_message;
 pub mod events;
 pub mod events_by_index;
