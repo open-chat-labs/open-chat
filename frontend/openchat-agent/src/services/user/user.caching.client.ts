@@ -264,7 +264,7 @@ export class CachingUserClient extends EventTarget implements IUserClient {
                 )
             )
             .catch((err) => {
-                recordFailedMessage(this.db, this.userId, event);
+                recordFailedMessage(this.db, this.userId, event, threadRootMessageIndex);
                 throw err;
             });
     }

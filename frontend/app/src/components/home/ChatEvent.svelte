@@ -74,7 +74,11 @@
     }
 
     function retrySend() {
-        client.retrySendMessage(chatId, event as EventWrapper<Message>);
+        client.retrySendMessage(
+            chatId,
+            event as EventWrapper<Message>,
+            threadRootMessage?.messageIndex
+        );
     }
 </script>
 

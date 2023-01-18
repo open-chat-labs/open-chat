@@ -293,13 +293,23 @@ export const chatStateStore = createChatSpecificObjectStore<ChatSpecificState>((
 
 export const threadServerEventsStore: Writable<EventWrapper<ChatEvent>[]> = immutableStore([]);
 export const threadEvents = derived(
-    [threadServerEventsStore, unconfirmed, localMessageUpdates, selectedThreadKey],
-    ([serverEvents, unconf, localUpdates, threadKey]) => {
-        if (threadKey === undefined) return [];
+    [
+        threadServerEventsStore,
+        unconfirmed,
+        localMessageUpdates,
+        selectedThreadKey,
+        failedMessagesStore,
+    ],
+    ([$serverEvents, $unconfirmed, $localUpdates, $threadKey, $failedMessages]) => {
+        if ($threadKey === undefined) return [];
+        const failed = $failedMessages[$threadKey]
+            ? Object.values($failedMessages[$threadKey])
+            : [];
+        const unconfirmed = $unconfirmed[$threadKey]?.messages ?? [];
         return mergeEventsAndLocalUpdates(
-            serverEvents,
-            unconf[threadKey]?.messages ?? [],
-            localUpdates
+            $serverEvents,
+            [...unconfirmed, ...failed],
+            $localUpdates
         );
     }
 );

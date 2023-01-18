@@ -219,7 +219,7 @@ export class CachingGroupClient implements IGroupClient {
                 )
             )
             .catch((err) => {
-                recordFailedMessage(this.db, this.chatId, event);
+                recordFailedMessage(this.db, this.chatId, event, threadRootMessageIndex);
                 throw err;
             });
     }

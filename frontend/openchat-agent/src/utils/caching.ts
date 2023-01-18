@@ -64,6 +64,11 @@ export interface ChatSchema extends DBSchema {
         key: string;
         value: EnhancedWrapper<Message>;
     };
+
+    failed_thread_messages: {
+        key: string;
+        value: EnhancedWrapper<Message>;
+    };
 }
 
 function padMessageIndex(i: number): string {
@@ -101,6 +106,9 @@ export function openCache(principal: Principal): Database {
             if (db.objectStoreNames.contains("failed_chat_messages")) {
                 db.deleteObjectStore("failed_chat_messages");
             }
+            if (db.objectStoreNames.contains("failed_thread_messages")) {
+                db.deleteObjectStore("failed_thread_messages");
+            }
             const chatEvents = db.createObjectStore("chat_events");
             chatEvents.createIndex("messageIdx", "messageKey");
             const threadEvents = db.createObjectStore("thread_events");
@@ -109,6 +117,7 @@ export function openCache(principal: Principal): Database {
             db.createObjectStore("chats_v2");
             db.createObjectStore("group_details");
             db.createObjectStore("failed_chat_messages");
+            db.createObjectStore("failed_thread_messages");
         },
     });
 }
@@ -515,20 +524,26 @@ function removeReplyContent(
 export async function removeFailedMessage(
     db: Database,
     chatId: string,
-    eventIndex: number
+    index: number,
+    threadRootMessageIndex?: number
 ): Promise<void> {
-    (await db).delete("failed_chat_messages", createCacheKey(chatId, eventIndex));
+    const store =
+        threadRootMessageIndex !== undefined ? "failed_thread_messages" : "failed_chat_messages";
+    (await db).delete(store, createCacheKey(chatId, index, threadRootMessageIndex));
 }
 
 export async function recordFailedMessage<T extends Message>(
     db: Database,
     chatId: string,
-    event: EventWrapper<T>
+    event: EventWrapper<T>,
+    threadRootMessageIndex?: number
 ): Promise<void> {
+    const store =
+        threadRootMessageIndex !== undefined ? "failed_thread_messages" : "failed_chat_messages";
     (await db).put(
-        "failed_chat_messages",
-        makeSerialisable<T>(event, chatId, false),
-        createCacheKey(chatId, event.index)
+        store,
+        makeSerialisable<T>(event, chatId, false, threadRootMessageIndex),
+        createCacheKey(chatId, event.index, threadRootMessageIndex)
     );
 }
 
@@ -555,13 +570,18 @@ function rebuildBlobUrls(content: MessageContent): MessageContent {
 export async function loadFailedMessages(
     db: Database
 ): Promise<Record<string, Record<number, EventWrapper<Message>>>> {
-    const result = await (await db).getAll("failed_chat_messages");
-    return result.reduce((res, ev) => {
-        if (res[ev.chatId] === undefined) {
-            res[ev.chatId] = {};
+    const chatMessages = await (await db).getAll("failed_chat_messages");
+    const threadMessages = await (await db).getAll("failed_thread_messages");
+    return [...chatMessages, ...threadMessages].reduce((res, ev) => {
+        if (ev.messageKey === undefined) return res;
+
+        // drop the message index from the key
+        const key = ev.messageKey.split("_").slice(0, -1).join("_");
+        if (res[key] === undefined) {
+            res[key] = {};
         }
         ev.event.content = rebuildBlobUrls(ev.event.content);
-        res[ev.chatId][Number(ev.event.messageId)] = ev;
+        res[key][Number(ev.event.messageId)] = ev;
         return res;
     }, {} as Record<string, Record<number, EventWrapper<Message>>>);
 }
@@ -582,7 +602,7 @@ export async function setCachedEvents<T extends ChatEvent>(
     await Promise.all(
         resp.events.concat(resp.affectedEvents).map(async (event) => {
             await eventStore.put(
-                makeSerialisable<T>(event, chatId, true),
+                makeSerialisable<T>(event, chatId, true, threadRootMessageIndex),
                 createCacheKey(chatId, event.index, threadRootMessageIndex)
             );
         })
@@ -598,14 +618,14 @@ export function setCachedMessageFromSendResponse(
 ): ([resp, message]: [SendMessageResponse, Message]) => [SendMessageResponse, Message] {
     return ([resp, message]: [SendMessageResponse, Message]) => {
         if (resp.kind !== "success") {
-            recordFailedMessage(db, chatId, sentEvent);
+            recordFailedMessage(db, chatId, sentEvent, threadRootMessageIndex);
             return [resp, message];
         }
 
         const event = messageToEvent(message, resp);
 
         setCachedMessageIfNotExists(db, chatId, event, threadRootMessageIndex);
-        removeFailedMessage(db, chatId, sentEvent.index);
+        removeFailedMessage(db, chatId, sentEvent.index, threadRootMessageIndex);
 
         return [resp, message];
     };
@@ -624,7 +644,10 @@ export async function setCachedMessageIfNotExists(
     });
     const eventStore = tx.objectStore(store);
     if ((await eventStore.count(key)) === 0) {
-        await eventStore.add(makeSerialisable(messageEvent, chatId, true), key);
+        await eventStore.add(
+            makeSerialisable(messageEvent, chatId, true, threadRootMessageIndex),
+            key
+        );
     }
     await tx.done;
 }

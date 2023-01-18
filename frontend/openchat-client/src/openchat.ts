@@ -2051,10 +2051,7 @@ export class OpenChat extends EventTarget {
         threadRootMessageIndex: number | undefined
     ): Promise<boolean> {
         let upToDate = true;
-        const key =
-            threadRootMessageIndex === undefined
-                ? clientChat.chatId
-                : `${clientChat.chatId}_${threadRootMessageIndex}`;
+        const key = this.localMessagesKey(clientChat.chatId, threadRootMessageIndex);
 
         if (threadRootMessageIndex === undefined) {
             upToDate = isUpToDate(clientChat, currentEvents);
@@ -2088,6 +2085,12 @@ export class OpenChat extends EventTarget {
         return upToDate;
     }
 
+    private localMessagesKey(chatId: string, threadRootMessageIndex?: number): string {
+        return threadRootMessageIndex === undefined
+            ? chatId
+            : `${chatId}_${threadRootMessageIndex}`;
+    }
+
     retrySendMessage(
         chatId: string,
         event: EventWrapper<Message>,
@@ -2099,10 +2102,12 @@ export class OpenChat extends EventTarget {
             return;
         }
 
-        unconfirmed.add(chat.chatId, event);
-        failedMessagesStore.delete(chat.chatId, event.event.messageId);
+        const localKey = this.localMessagesKey(chatId, threadRootMessageIndex);
 
-        // TODO - what about mentions and threads
+        unconfirmed.add(localKey, event);
+        failedMessagesStore.delete(localKey, event.event.messageId);
+
+        // TODO - what about mentions?
         this.api
             .sendMessage(chat.kind, chat.chatId, this.user, [], event, threadRootMessageIndex)
             .then(([resp, msg]) => {
@@ -2139,7 +2144,7 @@ export class OpenChat extends EventTarget {
                         this.user.userId,
                         threadRootMessageIndex
                     );
-                    failedMessagesStore.add(chatId, event);
+                    failedMessagesStore.add(localKey, event);
                     this.dispatchEvent(new SendMessageFailed());
                 }
             })
@@ -2151,7 +2156,7 @@ export class OpenChat extends EventTarget {
                     this.user.userId,
                     threadRootMessageIndex
                 );
-                failedMessagesStore.add(chatId, event);
+                failedMessagesStore.add(localKey, event);
                 this._logger.error("Exception sending message", err);
                 this.dispatchEvent(new SendMessageFailed());
             });
@@ -2171,6 +2176,8 @@ export class OpenChat extends EventTarget {
         if (chat === undefined) {
             return;
         }
+
+        const localKey = this.localMessagesKey(chatId, threadRootMessageIndex);
 
         if (textContent || fileToAttach) {
             const storageRequired = this.getStorageRequiredForMessage(fileToAttach);
@@ -2229,7 +2236,7 @@ export class OpenChat extends EventTarget {
                             this.user.userId,
                             threadRootMessageIndex
                         );
-                        failedMessagesStore.add(chatId, event);
+                        failedMessagesStore.add(localKey, event);
                         this.dispatchEvent(new SendMessageFailed());
                     }
                 })
@@ -2241,7 +2248,7 @@ export class OpenChat extends EventTarget {
                         this.user.userId,
                         threadRootMessageIndex
                     );
-                    failedMessagesStore.add(chatId, event);
+                    failedMessagesStore.add(localKey, event);
                     this._logger.error("Exception sending message", err);
                     this.dispatchEvent(new SendMessageFailed());
                 });
