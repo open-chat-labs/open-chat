@@ -542,53 +542,6 @@ export function isContiguous(chatId: string, events: EventWrapper<ChatEvent>[]):
     return isContiguous;
 }
 
-export function addServerEventsToStores(
-    chatId: string,
-    newEvents: EventWrapper<ChatEvent>[],
-    threadRootMessageIndex: number | undefined
-): void {
-    if (newEvents.length === 0) {
-        return;
-    }
-
-    if (!isContiguous(chatId, newEvents)) {
-        return;
-    }
-
-    const key =
-        threadRootMessageIndex === undefined ? chatId : `${chatId}_${threadRootMessageIndex}`;
-
-    for (const event of newEvents) {
-        if (event.event.kind === "message") {
-            const wasUnconfirmed = unconfirmed.delete(key, event.event.messageId);
-            const wasFailed = failedMessagesStore.delete(key, event.event.messageId);
-            if (wasUnconfirmed || wasFailed) {
-                if (threadRootMessageIndex === undefined) {
-                    messagesRead.confirmMessage(
-                        chatId,
-                        event.event.messageIndex,
-                        event.event.messageId
-                    );
-                } else {
-                    messagesRead.markThreadRead(
-                        chatId,
-                        threadRootMessageIndex,
-                        event.event.messageIndex
-                    );
-                }
-            }
-        }
-    }
-
-    if (threadRootMessageIndex === undefined) {
-        chatStateStore.updateProp(chatId, "serverEvents", (events) =>
-            mergeServerEvents(events, newEvents)
-        );
-    } else if (key === get(selectedThreadKey)) {
-        threadServerEventsStore.update((events) => mergeServerEvents(events, newEvents));
-    }
-}
-
 export function clearServerEvents(chatId: string): void {
     chatStateStore.setProp(chatId, "serverEvents", []);
 }

@@ -46,7 +46,6 @@ function createFailedMessagesStore() {
         },
         initialise(data: FailedMessages) {
             store.set(data);
-            console.log("Failed messages initialised: ", data);
         },
     };
 }
