@@ -24,7 +24,7 @@ impl Cryptocurrency {
         match self {
             Cryptocurrency::InternetComputer => 8,
             Cryptocurrency::SNS1 => 8,
-            Cryptocurrency::CKBTC => 12,
+            Cryptocurrency::CKBTC => 8,
         }
     }
 
@@ -32,7 +32,7 @@ impl Cryptocurrency {
         match self {
             Cryptocurrency::InternetComputer => (50 * E8S_PER_TOKEN).into(),
             Cryptocurrency::SNS1 => (10 * E8S_PER_TOKEN).into(),
-            Cryptocurrency::CKBTC => (E8S_PER_TOKEN.saturating_div(100)).into(),
+            Cryptocurrency::CKBTC => (E8S_PER_TOKEN /100).into(),
         }
     }
 }
