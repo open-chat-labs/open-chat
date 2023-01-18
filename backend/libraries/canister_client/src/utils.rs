@@ -51,18 +51,6 @@ pub async fn build_ic_agent(url: String, identity: BasicIdentity) -> Agent {
     agent
 }
 
-const TEN_TRILLION: u128 = 10_000_000_000_000;
-pub async fn create_empty_canister(management_canister: &ManagementCanister<'_>) -> CanisterId {
-    let (canister_id,) = management_canister
-        .create_canister()
-        .as_provisional_create_with_amount(Some(TEN_TRILLION))
-        .call_and_wait(delay())
-        .await
-        .expect("Failed to create canister");
-
-    canister_id
-}
-
 pub async fn set_controllers(
     management_canister: &ManagementCanister<'_>,
     canister_id: &CanisterId,

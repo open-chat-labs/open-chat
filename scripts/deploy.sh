@@ -1,13 +1,15 @@
 #!/bin/sh
 
-# Pass in network name, IC url, identity name, Ledger canisterId, and test mode (true/false)
-# eg './deploy.sh ic https://ic0.app/ openchat ryjl3-tyaaa-aaaaa-aaaba-cai false'
+# Pass in network name, IC url, identity name, Governance canisterId, Ledger canisterId, CMC canisterId, and test mode (true/false)
+# eg './deploy.sh ic https://ic0.app/ openchat rrkah-fqaaa-aaaaa-aaaaq-cai ryjl3-tyaaa-aaaaa-aaaba-cai rkp4c-7iaaa-aaaaa-aaaca-cai false'
 
 NETWORK=$1
 IC_URL=$2
 IDENTITY=$3
-LEDGER_CANISTER_ID=$4
-TEST_MODE=$5
+NNS_GOVERNANCE_CANISTER_ID=$4
+NNS_LEDGER_CANISTER_ID=$5
+NNS_CMC_CANISTER_ID=$6
+TEST_MODE=$7
 
 SCRIPT=$(readlink -f "$0")
 SCRIPT_DIR=$(dirname "$SCRIPT")
@@ -41,4 +43,6 @@ cargo run \
   $PROPOSALS_BOT_CANISTER_ID \
   $CYCLES_DISPENSER_CANISTER_ID \
   $OPEN_STORAGE_INDEX_CANISTER_ID \
-  $LEDGER_CANISTER_ID \
+  $NNS_GOVERNANCE_CANISTER_ID \
+  $NNS_LEDGER_CANISTER_ID \
+  $NNS_CMC_CANISTER_ID \
