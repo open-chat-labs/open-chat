@@ -20,6 +20,5 @@ pub enum Response {
     NoChange,
     NicknameTooShort(FieldTooShortResult),
     NicknameTooLong(FieldTooLongResult),
-    NicknameNameAlreadyUsed,
     UserSuspended,
 }
