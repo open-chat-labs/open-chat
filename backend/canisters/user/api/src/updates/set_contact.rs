@@ -1,7 +1,7 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
-use types::{FieldTooLongResult, OptionUpdate, UserId};
+use types::{FieldTooLongResult, FieldTooShortResult, OptionUpdate, UserId};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -18,6 +18,8 @@ pub struct OptionalContact {
 pub enum Response {
     Success,
     NoChange,
+    NicknameTooShort(FieldTooShortResult),
     NicknameTooLong(FieldTooLongResult),
+    NicknameNameAlreadyUsed,
     UserSuspended,
 }

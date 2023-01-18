@@ -344,6 +344,8 @@ type SetContactResponse =
         Success;
         NoChange;
         NicknameTooLong: FieldTooLongResult;
+        NicknameTooShort: FieldTooShortResult;
+        NicknameNameAlreadyUsed;
         UserSuspended;
     };
 

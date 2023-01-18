@@ -1,12 +1,9 @@
 use crate::guards::caller_is_owner;
-use crate::model::contact::Contact;
+use crate::model::contacts::SetContactResponse;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
-use types::{FieldTooLongResult, OptionUpdate};
 use user_canister::set_contact::{Response::*, *};
-
-const MAX_NICKNAME_LEN: u32 = 32;
 
 #[update(guard = "caller_is_owner")]
 #[trace]
@@ -21,34 +18,11 @@ fn set_contact_impl(args: Args, state: &mut RuntimeState) -> Response {
         return UserSuspended;
     }
 
-    match args.contact.nickname {
-        OptionUpdate::NoChange => NoChange,
-        OptionUpdate::SetToNone => {
-            if state.data.contacts.remove(&args.contact.user_id).is_some() {
-                Success
-            } else {
-                NoChange
-            }
-        }
-        OptionUpdate::SetToSome(nickname) => {
-            let length_provided = nickname.len() as u32;
-            if length_provided > MAX_NICKNAME_LEN {
-                return NicknameTooLong(FieldTooLongResult {
-                    length_provided,
-                    max_length: MAX_NICKNAME_LEN,
-                });
-            }
-
-            state
-                .data
-                .contacts
-                .entry(args.contact.user_id)
-                .and_modify(|e| e.nickname = Some(nickname.clone()))
-                .or_insert(Contact {
-                    nickname: Some(nickname),
-                });
-
-            Success
-        }
+    match state.data.contacts.set_contact(args.contact) {
+        SetContactResponse::Success => Success,
+        SetContactResponse::NoChange => NoChange,
+        SetContactResponse::NicknameNameAlreadyUsed => NicknameNameAlreadyUsed,
+        SetContactResponse::NicknameTooLong(n) => NicknameTooLong(n),
+        SetContactResponse::NicknameTooShort(n) => NicknameTooShort(n),
     }
 }

@@ -8,7 +8,7 @@ use canister_logger::LogMessagesWrapper;
 use canister_state_macros::canister_state;
 use ic_ledger_types::AccountIdentifier;
 use ledger_utils::default_ledger_account;
-use model::contact::Contact;
+use model::contacts::Contacts;
 use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
@@ -160,7 +160,7 @@ struct Data {
     pub suspended: Timestamped<bool>,
     pub timer_jobs: TimerJobs<TimerJob>,
     #[serde(default)]
-    pub contacts: HashMap<UserId, Contact>,
+    pub contacts: Contacts,
 }
 
 impl Data {
@@ -201,7 +201,7 @@ impl Data {
             pending_user_principal_migration: None,
             suspended: Timestamped::default(),
             timer_jobs: TimerJobs::default(),
-            contacts: HashMap::new(),
+            contacts: Contacts::default(),
         }
     }
 
