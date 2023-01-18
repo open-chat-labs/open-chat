@@ -29,6 +29,8 @@ impl Contacts {
         match contact.nickname {
             OptionUpdate::NoChange => SetContactResponse::NoChange,
             OptionUpdate::SetToNone => {
+                // TODO: When we add more fields to Contact then removing nickname probably
+                // shouldn't result in removing the contact
                 if self.map.remove(&contact.user_id).is_some() {
                     SetContactResponse::Success
                 } else {
@@ -53,14 +55,7 @@ impl Contacts {
                     });
                 }
 
-                self.map
-                    .entry(contact.user_id)
-                    .and_modify(|e| {
-                        e.nickname = Some(nickname.clone());
-                    })
-                    .or_insert(Contact {
-                        nickname: Some(nickname),
-                    });
+                self.map.entry(contact.user_id).or_default().nickname = Some(nickname);
 
                 SetContactResponse::Success
             }
