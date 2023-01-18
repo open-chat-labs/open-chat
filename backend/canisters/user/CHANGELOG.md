@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [unreleased]
 
+### Added
+
+- Add SNS1 token to backend ([#2975](https://github.com/open-ic/open-chat/pull/2975))
+
 ### Removed
 
 - Removed `join_group` since this is now handled via the `local_user_index` canister ([#2966](https://github.com/open-ic/open-chat/pull/2966))
