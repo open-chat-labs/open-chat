@@ -625,7 +625,6 @@ export function setCachedMessageFromSendResponse(
         const event = messageToEvent(message, resp);
 
         setCachedMessageIfNotExists(db, chatId, event, threadRootMessageIndex);
-        removeFailedMessage(db, chatId, sentEvent.index, threadRootMessageIndex);
 
         return [resp, message];
     };

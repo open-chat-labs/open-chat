@@ -623,6 +623,9 @@
         const indexRequired = Math.max(client.earliestAvailableEventIndex(chat), 1);
         return earliestLoadedEventIndex <= indexRequired;
     }
+
+    $: console.log("XXX Failed: ", $failedMessagesStore);
+    $: console.log("XXX Unconfirmed: ", $unconfirmed);
 </script>
 
 <div

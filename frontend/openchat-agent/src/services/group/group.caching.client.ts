@@ -51,6 +51,7 @@ import {
     loadMessagesByMessageIndex,
     mergeSuccessResponses,
     recordFailedMessage,
+    removeFailedMessage,
     setCachedEvents,
     setCachedGroupDetails,
     setCachedMessageFromSendResponse,
@@ -208,6 +209,9 @@ export class CachingGroupClient implements IGroupClient {
         event: EventWrapper<Message>,
         threadRootMessageIndex?: number
     ): Promise<[SendMessageResponse, Message]> {
+        // pre-emtively remove the failed message from indexeddb - it will get re-added if anything goes wrong
+        removeFailedMessage(this.db, this.chatId, event.index, threadRootMessageIndex);
+
         return this.client
             .sendMessage(senderName, mentioned, event, threadRootMessageIndex)
             .then(

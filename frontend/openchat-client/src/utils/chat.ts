@@ -591,11 +591,15 @@ export function mergeServerEvents(
     newEvents: EventWrapper<ChatEvent>[]
 ): EventWrapper<ChatEvent>[] {
     const merged = distinctBy([...newEvents, ...events], (e) => e.index);
-    merged.sort(sortByTimestamp);
+    merged.sort(sortByTimestampThenEventIndex);
     return merged;
 }
 
-function sortByTimestamp(a: EventWrapper<ChatEvent>, b: EventWrapper<ChatEvent>): number {
+function sortByTimestampThenEventIndex(
+    a: EventWrapper<ChatEvent>,
+    b: EventWrapper<ChatEvent>
+): number {
+    if (a.timestamp === b.timestamp) return a.index - b.index;
     return Number(a.timestamp - b.timestamp);
 }
 
@@ -1069,7 +1073,7 @@ export function mergeEventsAndLocalUpdates(
     const merged = events.map((e) => processEvent(e));
 
     if (unconfirmed.length > 0) {
-        unconfirmed.sort(sortByTimestamp);
+        unconfirmed.sort(sortByTimestampThenEventIndex);
 
         let anyAdded = false;
         for (const message of unconfirmed) {
@@ -1086,7 +1090,7 @@ export function mergeEventsAndLocalUpdates(
             }
         }
         if (anyAdded) {
-            merged.sort(sortByTimestamp);
+            merged.sort(sortByTimestampThenEventIndex);
         }
     }
 

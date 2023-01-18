@@ -1558,11 +1558,6 @@ export class OpenChat extends EventTarget {
             for (const event of newEvents) {
                 if (event.event.kind === "message") {
                     unconfirmed.delete(selectedThreadKey, event.event.messageId);
-                    this.deleteFailedMessage(
-                        selectedThreadKey,
-                        event as EventWrapper<Message>,
-                        threadRootMessageIndex
-                    );
                 }
             }
 
@@ -2067,9 +2062,7 @@ export class OpenChat extends EventTarget {
 
         for (const event of newEvents) {
             if (event.event.kind === "message") {
-                const wasUnconfirmed = unconfirmed.delete(key, event.event.messageId);
-                const wasFailed = failedMessagesStore.delete(key, event.event.messageId);
-                if (wasUnconfirmed || wasFailed) {
+                if (unconfirmed.delete(key, event.event.messageId)) {
                     if (threadRootMessageIndex === undefined) {
                         messagesRead.confirmMessage(
                             chatId,
@@ -2083,11 +2076,6 @@ export class OpenChat extends EventTarget {
                             event.event.messageIndex
                         );
                     }
-                }
-                if (wasFailed) {
-                    // we need to do this to ensure that the message definitely gets deleted from the
-                    // failed messages indexeddb store as well as the svelte store
-                    this.api.deleteFailedMessage(chatId, event.index, threadRootMessageIndex);
                 }
             }
         }
@@ -2115,6 +2103,7 @@ export class OpenChat extends EventTarget {
         }
 
         unconfirmed.add(key, messageEvent);
+        failedMessagesStore.delete(key, messageEvent.event.messageId);
 
         rtcConnectionsManager.sendMessage(
             [...chatStateStore.getProp(clientChat.chatId, "userIds")],
@@ -2172,7 +2161,7 @@ export class OpenChat extends EventTarget {
         const localKey = this.localMessagesKey(chatId, threadRootMessageIndex);
 
         unconfirmed.add(localKey, event);
-        await this.deleteFailedMessage(chatId, event, threadRootMessageIndex);
+        failedMessagesStore.delete(localKey, event.event.messageId);
 
         // TODO - what about mentions?
         this.api

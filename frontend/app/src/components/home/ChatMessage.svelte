@@ -463,6 +463,7 @@
                 <pre>Pinned: {pinned}</pre>
                 <pre>edited: {msg.edited}</pre>
                 <pre>failed: {failed}</pre>
+                <pre>timestamp: {timestamp}</pre>
                 <pre>thread: {JSON.stringify(msg.thread, null, 4)}</pre>
             {/if}
 
