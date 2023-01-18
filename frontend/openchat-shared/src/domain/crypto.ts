@@ -31,11 +31,11 @@ export const cryptoLookup: Record<Cryptocurrency, CryptocurrencyDetails> = {
         disabled: false,
     },
     btc: {
-        symbol: "BTC",
-        name: "Bitcoin",
+        symbol: "ckBTC",
+        name: "Chain-key Bitcoin",
         transferFeesE8s: BigInt(10_000),
         howToBuyUrl: "https://www.finder.com/uk/how-to-buy-bitcoin",
-        disabled: true,
+        disabled: false,
     },
     chat: {
         symbol: "CHAT",
