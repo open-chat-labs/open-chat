@@ -361,7 +361,9 @@ pub struct ChatMetrics {
     pub poll_votes: u64,
     pub cycles_messages: u64,
     pub icp_messages: u64,
+    #[serde(default)]
     pub sns1_messages: u64,
+    #[serde(default)]
     pub ckbtc_messages: u64,
     pub deleted_messages: u64,
     pub giphy_messages: u64,
