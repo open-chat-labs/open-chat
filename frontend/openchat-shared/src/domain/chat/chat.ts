@@ -1523,6 +1523,8 @@ export type ChatMetrics = {
     cyclesMessages: number;
     edits: number;
     icpMessages: number;
+    sns1Messages: number;
+    ckbtcMessages: number;
     giphyMessages: number;
     deletedMessages: number;
     reportedMessages: number;

@@ -548,6 +548,8 @@ export function chatMetrics(candid: ApiChatMetrics): ChatMetrics {
         cyclesMessages: Number(candid.cycles_messages),
         edits: Number(candid.edits),
         icpMessages: Number(candid.icp_messages),
+        sns1Messages: Number(candid.sns1_messages),
+        ckbtcMessages: Number(candid.ckbtc_messages),
         giphyMessages: Number(candid.giphy_messages),
         deletedMessages: Number(candid.deleted_messages),
         fileMessages: Number(candid.file_messages),
