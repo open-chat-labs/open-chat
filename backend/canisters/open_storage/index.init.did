@@ -12,6 +12,10 @@ type InitArgs =
             version: Version;
             module: blob;
         };
+        cycles_dispenser_config: opt record {
+            canister_id: principal;
+            min_cycles_balance: nat;
+        };
         wasm_version: Version;
         test_mode: bool;
     };

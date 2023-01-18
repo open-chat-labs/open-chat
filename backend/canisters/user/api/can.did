@@ -328,6 +328,26 @@ type SetBioResponse =
         UserSuspended;
     };
 
+type SetContactArgs =
+    record {
+        contact: OptionalContact;
+    };
+
+type OptionalContact =
+    record {
+        user_id: UserId;
+        nickname: TextUpdate;
+    };
+
+type SetContactResponse =
+    variant {
+        Success;
+        NoChange;
+        NicknameTooLong: FieldTooLongResult;
+        NicknameTooShort: FieldTooShortResult;
+        UserSuspended;
+    };
+
 type TransferCryptoWithinGroupArgs =
     record {
         message_id: MessageId;
@@ -606,6 +626,21 @@ type BioResponse =
         Success: text;
     };
 
+type ContactsArgs = record {};
+
+type ContactsResponse =
+    variant {
+        Success: record {
+            contacts: vec Contact;            
+        };
+    };
+
+type Contact =
+    record {
+        user_id: UserId;
+        nickname: opt text;
+    };
+
 type PublicProfileArgs = record {};
 
 type PublicProfileResponse =
@@ -661,6 +696,7 @@ service: {
     relinquish_group_super_admin: (RelinquishGroupSuperAdminArgs) -> (RelinquishGroupSuperAdminResponse);
     add_recommended_group_exclusions: (AddRecommendedGroupExclusionsArgs) -> (AddRecommendedGroupExclusionsResponse);
     set_bio: (SetBioArgs) -> (SetBioResponse);
+    set_contact: (SetContactArgs) -> (SetContactResponse);
     transfer_crypto_within_group_v2: (TransferCryptoWithinGroupArgs) -> (TransferCryptoWithinGroupResponse);
     withdraw_crypto_v2: (WithdrawCryptoArgs) -> (WithdrawCryptoResponse);
     pin_chat: (PinChatRequest) -> (PinChatResponse);
@@ -682,5 +718,6 @@ service: {
     updates_v2: (UpdatesV2Args) -> (UpdatesV2Response) query;
     search_messages: (SearchMessagesArgs) -> (SearchMessagesResponse) query; // Search just the messages of one direct chat
     bio: (BioArgs) -> (BioResponse) query;
+    contacts: (ContactsArgs) -> (ContactsResponse) query;
     public_profile: (PublicProfileArgs) -> (PublicProfileResponse) query;
 }

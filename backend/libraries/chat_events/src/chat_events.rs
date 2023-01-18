@@ -22,21 +22,6 @@ pub struct AllChatEvents {
 }
 
 impl AllChatEvents {
-    pub fn remove_old_deleted_message_content(&mut self, now: TimestampMillis) {
-        for message in self
-            .threads
-            .values_mut()
-            .flat_map(|events| events.events.iter_mut().filter_map(|e| e.event.as_message_mut()))
-            .chain(self.main.events.iter_mut().filter_map(|e| e.event.as_message_mut()))
-        {
-            if let Some(deleted_by) = &message.deleted_by {
-                if now.saturating_sub(deleted_by.timestamp) > 5 * 60 * 1000 {
-                    message.content = MessageContentInternal::Deleted(deleted_by.clone());
-                }
-            }
-        }
-    }
-
     pub fn new_direct_chat(them: UserId, now: TimestampMillis) -> AllChatEvents {
         let mut events = ChatEvents {
             chat_id: them.into(),

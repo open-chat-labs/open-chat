@@ -1,28 +1,38 @@
-use crate::{TimestampMillis, UserId, ICP_TRANSFER_LIMIT};
+use crate::{TimestampMillis, UserId};
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
+
+const E8S_PER_TOKEN: u64 = 100_000_000;
 
 #[derive(CandidType, Serialize, Deserialize, Copy, Clone, Debug, Eq, PartialEq, Hash)]
 pub enum Cryptocurrency {
     InternetComputer,
+    SNS1,
+    CKBTC,
 }
 
 impl Cryptocurrency {
     pub fn token_symbol(&self) -> String {
         match self {
             Cryptocurrency::InternetComputer => "ICP".to_string(),
+            Cryptocurrency::SNS1 => "SNS1".to_string(),
+            Cryptocurrency::CKBTC => "ckBTC".to_string(),
         }
     }
 
     pub fn decimals(&self) -> usize {
         match self {
             Cryptocurrency::InternetComputer => 8,
+            Cryptocurrency::SNS1 => 8,
+            Cryptocurrency::CKBTC => 8,
         }
     }
 
     pub fn transfer_limit(&self) -> u128 {
         match self {
-            Cryptocurrency::InternetComputer => ICP_TRANSFER_LIMIT.e8s().into(),
+            Cryptocurrency::InternetComputer => (50 * E8S_PER_TOKEN).into(),
+            Cryptocurrency::SNS1 => (10 * E8S_PER_TOKEN).into(),
+            Cryptocurrency::CKBTC => (E8S_PER_TOKEN / 100).into(),
         }
     }
 }

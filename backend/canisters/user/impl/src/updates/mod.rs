@@ -33,6 +33,7 @@ pub mod remove_reaction;
 pub mod send_message;
 pub mod set_avatar;
 pub mod set_bio;
+pub mod set_contact;
 pub mod transfer_crypto_within_group;
 pub mod unblock_user;
 pub mod undelete_messages;

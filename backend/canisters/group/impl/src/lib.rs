@@ -67,12 +67,14 @@ impl RuntimeState {
     }
 
     pub fn push_notification(&mut self, recipients: Vec<UserId>, notification: Notification) {
-        let args = c2c_push_notification::Args {
-            recipients,
-            authorizer: Some(self.data.local_group_index_canister_id),
-            notification_bytes: candid::encode_one(notification).unwrap(),
-        };
-        ic_cdk::spawn(push_notification_inner(self.data.notifications_canister_id, args));
+        if !recipients.is_empty() {
+            let args = c2c_push_notification::Args {
+                recipients,
+                authorizer: Some(self.data.local_group_index_canister_id),
+                notification_bytes: candid::encode_one(notification).unwrap(),
+            };
+            ic_cdk::spawn(push_notification_inner(self.data.notifications_canister_id, args));
+        }
 
         async fn push_notification_inner(canister_id: CanisterId, args: c2c_push_notification::Args) {
             let _ = notifications_canister_c2c_client::c2c_push_notification(canister_id, &args).await;
@@ -185,6 +187,8 @@ impl RuntimeState {
             poll_votes: chat_metrics.poll_votes,
             cycles_messages: chat_metrics.cycles_messages,
             icp_messages: chat_metrics.icp_messages,
+            sns1_messages: chat_metrics.sns1_messages,
+            ckbtc_messages: chat_metrics.ckbtc_messages,
             deleted_messages: chat_metrics.deleted_messages,
             giphy_messages: chat_metrics.giphy_messages,
             replies: chat_metrics.replies,
@@ -351,6 +355,8 @@ pub struct Metrics {
     pub poll_votes: u64,
     pub cycles_messages: u64,
     pub icp_messages: u64,
+    pub sns1_messages: u64,
+    pub ckbtc_messages: u64,
     pub deleted_messages: u64,
     pub giphy_messages: u64,
     pub replies: u64,
