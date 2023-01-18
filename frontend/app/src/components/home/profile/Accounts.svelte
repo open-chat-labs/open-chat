@@ -129,7 +129,7 @@
             &.sns1 {
                 background-image: url("../assets/sns1_token.png");
             }
-            &.btc {
+            &.ckbtc {
                 background-image: url("../assets/bitcoin_token.png");
             }
             &.chat {

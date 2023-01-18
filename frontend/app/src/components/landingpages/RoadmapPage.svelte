@@ -209,7 +209,7 @@
             </p>
             <p>Some smaller feature ideas:</p>
             <ul class="list blurb">
-                <li>Send additional tokens as messages, such as BTC, ETH, etc</li>
+                <li>Send additional tokens as messages, such as ckBTC, ckETH, etc</li>
                 <li>Tag groups and search/filter by tag</li>
                 <li>Optionally sync with phone contacts and invite contacts</li>
                 <li>Link previews</li>

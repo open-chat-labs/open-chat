@@ -331,7 +331,7 @@ function cryptoContent(candid: ApiCryptoContent, sender: string): Cryptocurrency
 export function token(candid: ApiCryptocurrency): Cryptocurrency {
     if ("InternetComputer" in candid) return "icp";
     if ("SNS1" in candid) return "sns1";
-    if ("CKBTC" in candid) return "btc";
+    if ("CKBTC" in candid) return "ckbtc";
     throw new UnsupportedValueError("Unexpected ApiCryptocurrency type received", candid);
 }
 
@@ -339,7 +339,7 @@ export function apiToken(token: Cryptocurrency): ApiCryptocurrency {
     switch (token) {
         case "icp": return { InternetComputer: null };
         case "sns1": return { SNS1: null };
-        case "btc": return { CKBTC: null };
+        case "ckbtc": return { CKBTC: null };
     }
     throw new Error(`Unexpected Cryptocurrency type received - ${token}`);
 }

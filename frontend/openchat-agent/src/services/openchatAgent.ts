@@ -161,7 +161,7 @@ export class OpenChatAgent extends EventTarget {
         this._ledgerClients = {
             icp: LedgerClient.create(identity, config, this.config.ledgerCanisterICP),
             sns1: LedgerClient.create(identity, config, this.config.ledgerCanisterSNS1),
-            btc: LedgerClient.create(identity, config, this.config.ledgerCanisterBTC),
+            ckbtc: LedgerClient.create(identity, config, this.config.ledgerCanisterBTC),
             chat: LedgerClient.create(identity, config, this.config.ledgerCanisterCHAT),
         };
         this._groupClients = {};

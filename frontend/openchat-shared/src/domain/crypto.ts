@@ -2,7 +2,7 @@ export const E8S_PER_TOKEN = 100_000_000;
 
 export const ICP_TRANSFER_FEE_E8S = BigInt(10_000);
 
-export const cryptoCurrencyList = ["icp", "sns1", "btc", "chat"] as const;
+export const cryptoCurrencyList = ["icp", "sns1", "ckbtc", "chat"] as const;
 
 type CryptocurrenciesType = typeof cryptoCurrencyList;
 export type Cryptocurrency = CryptocurrenciesType[number];
@@ -30,7 +30,7 @@ export const cryptoLookup: Record<Cryptocurrency, CryptocurrencyDetails> = {
         howToBuyUrl: "https://avjzx-pyaaa-aaaaj-aadmq-cai.raw.ic0.app/ICDex/SNS1/ICP",
         disabled: false,
     },
-    btc: {
+    ckbtc: {
         symbol: "ckBTC",
         name: "Chain-key Bitcoin",
         transferFeesE8s: BigInt(10_000),
