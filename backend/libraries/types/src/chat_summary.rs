@@ -361,7 +361,10 @@ pub struct ChatMetrics {
     pub poll_votes: u64,
     pub cycles_messages: u64,
     pub icp_messages: u64,
+    #[serde(default)]
     pub sns1_messages: u64,
+    #[serde(default)]
+    pub ckbtc_messages: u64,
     pub deleted_messages: u64,
     pub giphy_messages: u64,
     pub replies: u64,
@@ -384,6 +387,7 @@ impl ChatMetrics {
         self.cycles_messages += other.cycles_messages;
         self.icp_messages += other.icp_messages;
         self.sns1_messages += other.sns1_messages;
+        self.ckbtc_messages += other.ckbtc_messages;
         self.deleted_messages += other.deleted_messages;
         self.giphy_messages += other.giphy_messages;
         self.replies += other.replies;
