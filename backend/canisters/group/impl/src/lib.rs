@@ -67,12 +67,14 @@ impl RuntimeState {
     }
 
     pub fn push_notification(&mut self, recipients: Vec<UserId>, notification: Notification) {
-        let args = c2c_push_notification::Args {
-            recipients,
-            authorizer: Some(self.data.local_group_index_canister_id),
-            notification_bytes: candid::encode_one(notification).unwrap(),
-        };
-        ic_cdk::spawn(push_notification_inner(self.data.notifications_canister_id, args));
+        if !recipients.is_empty() {
+            let args = c2c_push_notification::Args {
+                recipients,
+                authorizer: Some(self.data.local_group_index_canister_id),
+                notification_bytes: candid::encode_one(notification).unwrap(),
+            };
+            ic_cdk::spawn(push_notification_inner(self.data.notifications_canister_id, args));
+        }
 
         async fn push_notification_inner(canister_id: CanisterId, args: c2c_push_notification::Args) {
             let _ = notifications_canister_c2c_client::c2c_push_notification(canister_id, &args).await;
