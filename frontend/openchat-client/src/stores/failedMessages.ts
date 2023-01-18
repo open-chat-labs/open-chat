@@ -34,7 +34,12 @@ function createFailedMessagesStore() {
             const chatState = storeValue[key];
             if (chatState && chatState[Number(messageId)]) {
                 delete chatState[Number(messageId)];
-                store.set({ ...chatState });
+                store.update((state) => ({
+                    ...state,
+                    [key]: {
+                        ...chatState,
+                    },
+                }));
                 return true;
             }
             return false;

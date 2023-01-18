@@ -180,7 +180,7 @@
     }
 
     function doubleClickMessage() {
-        if (msg.deleted) return;
+        if (failed || msg.deleted) return;
 
         if (me) {
             editMessage();
@@ -342,9 +342,9 @@
         bind:this={msgElement}
         class="message"
         class:me
-        data-index={msg.messageIndex}
-        data-id={msg.messageId}
-        id={`event-${eventIndex}`}>
+        data-index={failed ? "" : msg.messageIndex}
+        data-id={failed ? "" : msg.messageId}
+        id={failed ? "" : `event-${eventIndex}`}>
         {#if showAvatar}
             <div class="avatar-col">
                 {#if first}

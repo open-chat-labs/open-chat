@@ -210,7 +210,10 @@
 
     function findMessageEvent(index: number): EventWrapper<Message> | undefined {
         return events.find(
-            (ev) => ev.event.kind === "message" && ev.event.messageIndex === index
+            (ev) =>
+                ev.event.kind === "message" &&
+                ev.event.messageIndex === index &&
+                !failedMessagesStore.contains(chat.chatId, ev.event.messageId)
         ) as EventWrapper<Message> | undefined;
     }
 
@@ -422,13 +425,14 @@
             const sender = first.event.sender;
             prefix = sender + "_";
         }
-        for (const { index } of group) {
-            const key = prefix + index;
+        for (const evt of group) {
+            const key = prefix + (evt.event.kind === "message" ? evt.event.messageId : evt.index);
             if ($userGroupKeys.has(key)) {
                 return key;
             }
         }
-        const firstKey = prefix + first.index;
+        const firstKey =
+            prefix + (first.event.kind === "message" ? first.event.messageId : first.index);
         chatStateStore.updateProp(chat.chatId, "userGroupKeys", (keys) => {
             keys.add(firstKey);
             return keys;
@@ -637,7 +641,8 @@
                     <ChatEvent
                         {observer}
                         focused={evt.event.kind === "message" &&
-                            evt.event.messageIndex === $focusMessageIndex}
+                            evt.event.messageIndex === $focusMessageIndex &&
+                            !isFailed($failedMessagesStore, evt)}
                         confirmed={isConfirmed(evt)}
                         failed={isFailed($failedMessagesStore, evt)}
                         readByThem={isReadByThem(chat, $unconfirmedReadByThem, evt)}

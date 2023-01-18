@@ -213,7 +213,7 @@ export async function setCachedChats(
         .filter((c) => !isPreviewing(c) && !isUninitialisedDirectChat(c))
         .map((c) => {
             const latestMessage = c.latestMessage
-                ? makeSerialisable(c.latestMessage, c.chatId)
+                ? makeSerialisable(c.latestMessage, c.chatId, true)
                 : undefined;
 
             if (latestMessage) {
@@ -465,6 +465,7 @@ export function mergeSuccessResponses<T extends ChatEvent>(
 function makeSerialisable<T extends ChatEvent>(
     ev: EventWrapper<T>,
     chatId: string,
+    removeBlobs: boolean,
     threadRootMessageIndex?: number
 ): EnhancedWrapper<T> {
     if (ev.event.kind !== "message") return { ...ev, chatId, messageKey: undefined };
@@ -475,10 +476,16 @@ function makeSerialisable<T extends ChatEvent>(
         messageKey: createCacheKey(chatId, ev.event.messageIndex, threadRootMessageIndex),
         event: {
             ...ev.event,
-            content: removeBlobData(ev.event.content),
+            content: removeBlobs ? removeBlobData(ev.event.content) : ev.event.content,
             repliesTo: removeReplyContent(ev.event.repliesTo, chatId),
         },
     };
+}
+
+function dataToBlobUrl(data: Uint8Array, type?: string): string {
+    const options = type ? { type } : undefined;
+    const blob = new Blob([data], options);
+    return URL.createObjectURL(blob);
 }
 
 function removeBlobData(content: MessageContent): MessageContent {
@@ -520,9 +527,29 @@ export async function recordFailedMessage<T extends Message>(
 ): Promise<void> {
     (await db).put(
         "failed_chat_messages",
-        makeSerialisable<T>(event, chatId),
+        makeSerialisable<T>(event, chatId, false),
         createCacheKey(chatId, event.index)
     );
+}
+
+function rebuildBlobUrls(content: MessageContent): MessageContent {
+    if (
+        (content.kind === "image_content" ||
+            content.kind === "file_content" ||
+            content.kind === "audio_content") &&
+        content.blobData !== undefined
+    ) {
+        content.blobUrl = dataToBlobUrl(content.blobData);
+    }
+    if (content.kind === "video_content") {
+        if (content.imageData.blobData !== undefined) {
+            content.imageData.blobUrl = dataToBlobUrl(content.imageData.blobData);
+        }
+        if (content.videoData.blobData !== undefined) {
+            content.videoData.blobUrl = dataToBlobUrl(content.videoData.blobData);
+        }
+    }
+    return content;
 }
 
 export async function loadFailedMessages(
@@ -533,6 +560,7 @@ export async function loadFailedMessages(
         if (res[ev.chatId] === undefined) {
             res[ev.chatId] = {};
         }
+        ev.event.content = rebuildBlobUrls(ev.event.content);
         res[ev.chatId][Number(ev.event.messageId)] = ev;
         return res;
     }, {} as Record<string, Record<number, EventWrapper<Message>>>);
@@ -554,7 +582,7 @@ export async function setCachedEvents<T extends ChatEvent>(
     await Promise.all(
         resp.events.concat(resp.affectedEvents).map(async (event) => {
             await eventStore.put(
-                makeSerialisable<T>(event, chatId),
+                makeSerialisable<T>(event, chatId, true),
                 createCacheKey(chatId, event.index, threadRootMessageIndex)
             );
         })
@@ -596,7 +624,7 @@ export async function setCachedMessageIfNotExists(
     });
     const eventStore = tx.objectStore(store);
     if ((await eventStore.count(key)) === 0) {
-        await eventStore.add(makeSerialisable(messageEvent, chatId), key);
+        await eventStore.add(makeSerialisable(messageEvent, chatId, true), key);
     }
     await tx.done;
 }
@@ -681,7 +709,7 @@ function makeChatSummarySerializable<T extends ChatSummary>(chat: T): T {
 
     return {
         ...chat,
-        latestMessage: makeSerialisable(chat.latestMessage, chat.chatId),
+        latestMessage: makeSerialisable(chat.latestMessage, chat.chatId, true),
     };
 }
 

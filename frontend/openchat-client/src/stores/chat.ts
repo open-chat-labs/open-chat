@@ -550,22 +550,9 @@ export function addServerEventsToStores(
 
     for (const event of newEvents) {
         if (event.event.kind === "message") {
-            if (unconfirmed.delete(key, event.event.messageId)) {
-                if (threadRootMessageIndex === undefined) {
-                    messagesRead.confirmMessage(
-                        chatId,
-                        event.event.messageIndex,
-                        event.event.messageId
-                    );
-                } else {
-                    messagesRead.markThreadRead(
-                        chatId,
-                        threadRootMessageIndex,
-                        event.event.messageIndex
-                    );
-                }
-            }
-            if (failedMessagesStore.delete(key, event.event.messageId)) {
+            const wasUnconfirmed = unconfirmed.delete(key, event.event.messageId);
+            const wasFailed = failedMessagesStore.delete(key, event.event.messageId);
+            if (wasUnconfirmed || wasFailed) {
                 if (threadRootMessageIndex === undefined) {
                     messagesRead.confirmMessage(
                         chatId,
