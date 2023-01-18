@@ -127,6 +127,10 @@
     }
 
     function deleteMessage() {
+        if (failed) {
+            dispatch("deleteFailedMessage");
+            return;
+        }
         if (!canDelete && user.userId !== msg.sender) return;
         client.deleteMessage(chatId, threadRootMessageIndex, msg.messageId);
     }

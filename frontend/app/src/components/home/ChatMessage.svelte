@@ -497,6 +497,7 @@
                     on:forward
                     on:reply={reply}
                     on:retrySend
+                    on:deleteFailedMessage
                     on:replyPrivately={replyPrivately}
                     on:editMessage={editMessage} />
             {/if}

@@ -2091,6 +2091,17 @@ export class OpenChat extends EventTarget {
             : `${chatId}_${threadRootMessageIndex}`;
     }
 
+    deleteFailedMessage(
+        chatId: string,
+        event: EventWrapper<Message>,
+        threadRootMessageIndex?: number
+    ): void {
+        this.api.deleteFailedMessage(chatId, event.index, threadRootMessageIndex).then(() => {
+            const localKey = this.localMessagesKey(chatId, threadRootMessageIndex);
+            failedMessagesStore.delete(localKey, event.event.messageId);
+        });
+    }
+
     retrySendMessage(
         chatId: string,
         event: EventWrapper<Message>,

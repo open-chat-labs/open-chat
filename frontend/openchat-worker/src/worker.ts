@@ -1231,6 +1231,21 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
                     .catch(sendError(correlationId));
                 break;
 
+            case "deleteFailedMessage":
+                agent
+                    .deleteFailedMessage(
+                        payload.chatId,
+                        payload.eventIndex,
+                        payload.threadRootMessageIndex
+                    )
+                    .then(() =>
+                        sendResponse(correlationId, {
+                            response: undefined,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
             default:
                 console.debug("WORKER: unknown message kind received: ", kind);
         }

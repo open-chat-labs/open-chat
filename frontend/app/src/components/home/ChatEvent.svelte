@@ -73,6 +73,14 @@
         dispatch("editEvent", event as EventWrapper<Message>);
     }
 
+    function deleteFailedMessage() {
+        client.deleteFailedMessage(
+            chatId,
+            event as EventWrapper<Message>,
+            threadRootMessage?.messageIndex
+        );
+    }
+
     function retrySend() {
         client.retrySendMessage(
             chatId,
@@ -122,6 +130,7 @@
         on:forward
         on:expandMessage
         on:collapseMessage
+        on:deleteFailedMessage={deleteFailedMessage}
         eventIndex={event.index}
         timestamp={event.timestamp}
         msg={event.event} />

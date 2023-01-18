@@ -190,7 +190,8 @@ export type WorkerRequest =
     | GetUpdatesV2
     | GetDeletedGroupMessage
     | GetDeletedDirectMessage
-    | LoadFailedMessages;
+    | LoadFailedMessages
+    | DeleteFailedMessage;
 
 type SetCachedMessageFromNotification = Request<{
     chatId: string;
@@ -936,4 +937,12 @@ export type RelayedUsersLoaded = WorkerEventCommon<{
 
 type LoadFailedMessages = Request & {
     kind: "loadFailedMessages";
+};
+
+type DeleteFailedMessage = Request<{
+    chatId: string;
+    eventIndex: number;
+    threadRootMessageIndex: number | undefined;
+}> & {
+    kind: "deleteFailedMessage";
 };

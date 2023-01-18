@@ -524,12 +524,12 @@ function removeReplyContent(
 export async function removeFailedMessage(
     db: Database,
     chatId: string,
-    index: number,
+    eventIndex: number,
     threadRootMessageIndex?: number
 ): Promise<void> {
     const store =
         threadRootMessageIndex !== undefined ? "failed_thread_messages" : "failed_chat_messages";
-    (await db).delete(store, createCacheKey(chatId, index, threadRootMessageIndex));
+    (await db).delete(store, createCacheKey(chatId, eventIndex, threadRootMessageIndex));
 }
 
 export async function recordFailedMessage<T extends Message>(

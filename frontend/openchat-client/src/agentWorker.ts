@@ -1272,6 +1272,21 @@ export class OpenChatAgentWorker extends EventTarget {
         });
     }
 
+    deleteFailedMessage(
+        chatId: string,
+        eventIndex: number,
+        threadRootMessageIndex?: number
+    ): Promise<void> {
+        return this.sendRequest({
+            kind: "deleteFailedMessage",
+            payload: {
+                chatId,
+                eventIndex,
+                threadRootMessageIndex,
+            },
+        });
+    }
+
     markSuspectedBot(): Promise<void> {
         return this.sendRequest({
             kind: "markSuspectedBot",

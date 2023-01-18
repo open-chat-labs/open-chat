@@ -7,6 +7,7 @@ import {
     getCachedChatsV2,
     initDb,
     loadFailedMessages,
+    removeFailedMessage,
     setCachedChatsV2,
     setCachedMessageIfNotExists,
 } from "../utils/caching";
@@ -1537,5 +1538,13 @@ export class OpenChatAgent extends EventTarget {
 
     loadFailedMessages(): Promise<Record<string, Record<number, EventWrapper<Message>>>> {
         return loadFailedMessages(this.db);
+    }
+
+    deleteFailedMessage(
+        chatId: string,
+        eventIndex: number,
+        threadRootMessageIndex?: number
+    ): Promise<void> {
+        return removeFailedMessage(this.db, chatId, eventIndex, threadRootMessageIndex);
     }
 }
