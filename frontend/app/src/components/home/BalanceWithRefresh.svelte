@@ -21,6 +21,8 @@
 
     let refreshing = false;
 
+    $: account = (token === "icp" ? user.cryptoAccount : user.userId);
+
     onMount(refresh);
 
     export function refresh() {
@@ -30,7 +32,7 @@
         refreshing = true;
 
         return client
-            .refreshAccountBalance(token, user.cryptoAccount)
+            .refreshAccountBalance(token, account)
             .then((val) => {
                 dispatch("refreshed", val);
             })

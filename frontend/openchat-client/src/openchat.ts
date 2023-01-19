@@ -2135,9 +2135,10 @@ export class OpenChat extends EventTarget {
                     if (resp.kind === "success" || resp.kind === "transfer_success") {
                         this.onSendMessageSuccess(chatId, resp, msg, threadRootMessageIndex);
                         if (msg.kind === "message" && msg.content.kind === "crypto_content") {
+                            const token = msg.content.transfer.token;
                             this.refreshAccountBalance(
-                                msg.content.transfer.token,
-                                this.user.cryptoAccount
+                                token,
+                                token == "icp" ? this.user.cryptoAccount : this.user.userId,
                             );
                         }
                         if (threadRootMessageIndex !== undefined) {

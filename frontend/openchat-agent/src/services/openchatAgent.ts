@@ -21,7 +21,8 @@ import type { IOnlineClient } from "./online/online.client.interface";
 import { OnlineClient } from "./online/online.client";
 import { DataClient } from "./data/data.client";
 import type { ILedgerClient } from "./ledger/ledger.client.interface";
-import { LedgerClient } from "./ledger/ledger.client";
+import { ICPLedgerClient } from "./ledger/icp/ledger.client";
+import { ICRC1LedgerClient } from "./ledger/icrc1/ledger.client";
 import type { IGroupIndexClient } from "./groupIndex/groupIndex.client.interface";
 import { GroupIndexClient } from "./groupIndex/groupIndex.client";
 import { toRecord } from "../utils/list";
@@ -159,10 +160,10 @@ export class OpenChatAgent extends EventTarget {
         this._groupIndexClient = GroupIndexClient.create(identity, config);
         this._notificationClient = NotificationsClient.create(identity, config);
         this._ledgerClients = {
-            icp: LedgerClient.create(identity, config, this.config.ledgerCanisterICP),
-            sns1: LedgerClient.create(identity, config, this.config.ledgerCanisterSNS1),
-            ckbtc: LedgerClient.create(identity, config, this.config.ledgerCanisterBTC),
-            chat: LedgerClient.create(identity, config, this.config.ledgerCanisterCHAT),
+            icp: ICPLedgerClient.create(identity, config, this.config.ledgerCanisterICP),
+            sns1: ICRC1LedgerClient.create(identity, config, this.config.ledgerCanisterSNS1),
+            ckbtc: ICRC1LedgerClient.create(identity, config, this.config.ledgerCanisterBTC),
+            chat: ICRC1LedgerClient.create(identity, config, this.config.ledgerCanisterCHAT),
         };
         this._groupClients = {};
     }
