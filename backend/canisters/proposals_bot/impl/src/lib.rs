@@ -1,6 +1,5 @@
 use crate::model::nervous_systems::NervousSystems;
 use candid::{CandidType, Principal};
-use canister_logger::LogMessagesWrapper;
 use canister_state_macros::canister_state;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
@@ -17,7 +16,6 @@ mod queries;
 mod updates;
 
 thread_local! {
-    static LOG_MESSAGES: RefCell<LogMessagesWrapper> = RefCell::default();
     static WASM_VERSION: RefCell<Timestamped<Version>> = RefCell::default();
 }
 
