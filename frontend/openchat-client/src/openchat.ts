@@ -2150,6 +2150,7 @@ export class OpenChat extends EventTarget {
     async retrySendMessage(
         chatId: string,
         event: EventWrapper<Message>,
+        currentEvents: EventWrapper<ChatEvent>[],
         threadRootMessageIndex?: number
     ): Promise<void> {
         const chat = this._liveState.chatSummaries[chatId];
@@ -2160,12 +2161,33 @@ export class OpenChat extends EventTarget {
 
         const localKey = this.localMessagesKey(chatId, threadRootMessageIndex);
 
-        unconfirmed.add(localKey, event);
-        failedMessagesStore.delete(localKey, event.event.messageId);
+        const [nextEventIndex, nextMessageIndex] =
+            threadRootMessageIndex !== undefined
+                ? nextEventAndMessageIndexesForThread(currentEvents)
+                : nextEventAndMessageIndexes();
+
+        // remove the *original* event from the failed store
+        await this.deleteFailedMessage(chatId, event, threadRootMessageIndex);
+
+        // regenerate the indexes for the retry message
+        const retryEvent = {
+            ...event,
+            index: nextEventIndex,
+            timestamp: BigInt(Date.now()),
+            event: {
+                ...event.event,
+                messageIndex: nextMessageIndex,
+            },
+        };
+
+        const canRetry = this.canRetryMessage(retryEvent.event.content);
+
+        // add the *new* event to unconfirmed
+        unconfirmed.add(localKey, retryEvent);
 
         // TODO - what about mentions?
         this.api
-            .sendMessage(chat.kind, chat.chatId, this.user, [], event, threadRootMessageIndex)
+            .sendMessage(chat.kind, chat.chatId, this.user, [], retryEvent, threadRootMessageIndex)
             .then(([resp, msg]) => {
                 if (resp.kind === "success" || resp.kind === "transfer_success") {
                     this.onSendMessageSuccess(chatId, resp, msg, threadRootMessageIndex);
@@ -2200,10 +2222,8 @@ export class OpenChat extends EventTarget {
                         this.user.userId,
                         threadRootMessageIndex
                     );
-                    failedMessagesStore.add(localKey, event);
-                    this.dispatchEvent(
-                        new SendMessageFailed(msg.content.kind === "crypto_content")
-                    );
+                    failedMessagesStore.add(localKey, retryEvent);
+                    this.dispatchEvent(new SendMessageFailed(!canRetry));
                 }
             })
             .catch((err) => {
@@ -2214,12 +2234,14 @@ export class OpenChat extends EventTarget {
                     this.user.userId,
                     threadRootMessageIndex
                 );
-                failedMessagesStore.add(localKey, event);
+                failedMessagesStore.add(localKey, retryEvent);
                 this._logger.error("Exception sending message", err);
-                this.dispatchEvent(
-                    new SendMessageFailed(event.event.content.kind === "crypto_content")
-                );
+                this.dispatchEvent(new SendMessageFailed(!canRetry));
             });
+    }
+
+    private canRetryMessage(content: MessageContent): boolean {
+        return content.kind !== "crypto_content" && content.kind !== "poll_content";
     }
 
     sendMessageWithAttachment(
@@ -2260,7 +2282,7 @@ export class OpenChat extends EventTarget {
             );
             const event = { event: msg, index: nextEventIndex, timestamp: BigInt(Date.now()) };
 
-            const canRetry = msg.content.kind !== "crypto_content";
+            const canRetry = this.canRetryMessage(msg.content);
 
             this.api
                 .sendMessage(chat.kind, chatId, this.user, mentioned, event, threadRootMessageIndex)

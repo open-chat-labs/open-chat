@@ -453,6 +453,7 @@
                     {dateFormatter} />
             {/if}
 
+            <pre>EventIdx: {eventIndex}</pre>
             {#if debug}
                 <pre>EventIdx: {eventIndex}</pre>
                 <pre>MsgIdx: {msg.messageIndex}</pre>

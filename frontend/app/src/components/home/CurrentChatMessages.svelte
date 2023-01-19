@@ -163,6 +163,10 @@
         });
     }
 
+    function retrySend(ev: CustomEvent<EventWrapper<Message>>): void {
+        client.retrySendMessage(chat.chatId, ev.detail, events, undefined);
+    }
+
     function clientEvent(ev: Event): void {
         if (ev instanceof LoadedNewMessages) {
             onLoadedNewMessages(ev.detail);
@@ -623,9 +627,6 @@
         const indexRequired = Math.max(client.earliestAvailableEventIndex(chat), 1);
         return earliestLoadedEventIndex <= indexRequired;
     }
-
-    $: console.log("XXX Failed: ", $failedMessagesStore);
-    $: console.log("XXX Unconfirmed: ", $unconfirmed);
 </script>
 
 <div
@@ -680,6 +681,7 @@
                         on:collapseMessage={() => toggleMessageExpansion(evt, false)}
                         on:upgrade
                         on:forward
+                        on:retrySend={retrySend}
                         on:expandDeletedMessages={expandDeletedMessages}
                         event={evt} />
                 {/each}

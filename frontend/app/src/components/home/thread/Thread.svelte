@@ -203,6 +203,10 @@
         draftThreadMessages.setEditing(threadRootMessageIndex, ev);
     }
 
+    function retrySend(ev: CustomEvent<EventWrapper<Message>>): void {
+        client.retrySendMessage(chat.chatId, ev.detail, $threadEvents, undefined);
+    }
+
     function sendMessageWithAttachment(
         textContent: string | undefined,
         mentioned: User[],
@@ -439,6 +443,7 @@
                             on:replyTo={replyTo}
                             on:replyPrivatelyTo
                             on:upgrade
+                            on:retrySend={retrySend}
                             on:forward />
                     {/each}
                 {/each}
