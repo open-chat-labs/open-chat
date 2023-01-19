@@ -1,7 +1,7 @@
 use crate::mutate_state;
 use crate::updates::send_message::send_to_recipients_canister;
+use canister_timer_jobs::Job;
 use serde::{Deserialize, Serialize};
-use timer_jobs::Job;
 use types::{ChatId, MessageId, MessageIndex, UserId};
 use user_canister::c2c_send_message;
 
