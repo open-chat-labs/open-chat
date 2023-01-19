@@ -115,3 +115,13 @@ impl<T: PartialEq> PushIfNotContains<T> for Vec<T> {
         }
     }
 }
+
+use candid::CandidType;
+use serde::{Deserialize, Serialize};
+
+// TODO remove this
+#[derive(CandidType, Serialize, Deserialize)]
+pub struct LogMessage {
+    pub timestamp: TimestampMillis,
+    pub json: String,
+}

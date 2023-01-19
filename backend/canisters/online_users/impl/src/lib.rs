@@ -1,6 +1,5 @@
 use crate::model::last_online_dates::LastOnlineDates;
 use crate::model::principal_to_user_id_map::PrincipalToUserIdMap;
-use canister_logger::LogMessagesWrapper;
 use canister_state_macros::canister_state;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
@@ -14,7 +13,6 @@ mod queries;
 mod updates;
 
 thread_local! {
-    static LOG_MESSAGES: RefCell<LogMessagesWrapper> = RefCell::default();
     static WASM_VERSION: RefCell<Timestamped<Version>> = RefCell::default();
 }
 

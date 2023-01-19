@@ -1,4 +1,3 @@
-use canister_logger::LogMessagesWrapper;
 use canister_state_macros::canister_state;
 use model::global_user_map::GlobalUserMap;
 use model::local_user_map::LocalUserMap;
@@ -24,7 +23,6 @@ const USER_CANISTER_INITIAL_CYCLES_BALANCE: Cycles = CYCLES_REQUIRED_FOR_UPGRADE
 const USER_CANISTER_TOP_UP_AMOUNT: Cycles = 100_000_000_000; // 0.1T cycles
 
 thread_local! {
-    static LOG_MESSAGES: RefCell<LogMessagesWrapper> = RefCell::default();
     static WASM_VERSION: RefCell<Timestamped<Version>> = RefCell::default();
 }
 
