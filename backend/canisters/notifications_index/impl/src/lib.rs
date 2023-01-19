@@ -1,7 +1,6 @@
 use crate::model::notifications_canister::NotificationsCanister;
 use crate::model::subscriptions::Subscriptions;
 use candid::Principal;
-use canister_logger::LogMessagesWrapper;
 use canister_state_macros::canister_state;
 use notifications_index_canister::{NotificationsIndexEvent, SubscriptionAdded, SubscriptionRemoved};
 use serde::{Deserialize, Serialize};
@@ -21,7 +20,6 @@ mod queries;
 mod updates;
 
 thread_local! {
-    static LOG_MESSAGES: RefCell<LogMessagesWrapper> = RefCell::default();
     static WASM_VERSION: RefCell<Timestamped<Version>> = RefCell::default();
 }
 

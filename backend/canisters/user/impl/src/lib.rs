@@ -4,7 +4,6 @@ use crate::model::group_chats::GroupChats;
 use crate::model::recommended_group_exclusions::RecommendedGroupExclusions;
 use crate::timer_job_types::TimerJob;
 use candid::Principal;
-use canister_logger::LogMessagesWrapper;
 use canister_state_macros::canister_state;
 use ic_ledger_types::AccountIdentifier;
 use ledger_utils::default_ledger_account;
@@ -36,7 +35,6 @@ pub const BASIC_GROUP_CREATION_LIMIT: u32 = 10;
 pub const PREMIUM_GROUP_CREATION_LIMIT: u32 = 25;
 
 thread_local! {
-    static LOG_MESSAGES: RefCell<LogMessagesWrapper> = RefCell::default();
     static WASM_VERSION: RefCell<Timestamped<Version>> = RefCell::default();
 }
 
