@@ -2144,7 +2144,7 @@ export class OpenChat extends EventTarget {
     ): Promise<void> {
         const localKey = this.localMessagesKey(chatId, threadRootMessageIndex);
         failedMessagesStore.delete(localKey, event.event.messageId);
-        return this.api.deleteFailedMessage(chatId, event.index, threadRootMessageIndex);
+        return this.api.deleteFailedMessage(chatId, event.event.messageId, threadRootMessageIndex);
     }
 
     async retrySendMessage(

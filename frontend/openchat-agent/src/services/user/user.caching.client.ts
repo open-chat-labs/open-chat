@@ -237,7 +237,7 @@ export class CachingUserClient extends EventTarget implements IUserClient {
         event: EventWrapper<Message>,
         threadRootMessageIndex?: number
     ): Promise<[SendMessageResponse, Message]> {
-        removeFailedMessage(this.db, this.userId, event.index, threadRootMessageIndex);
+        removeFailedMessage(this.db, this.userId, event.event.messageId, threadRootMessageIndex);
         return this.client
             .sendGroupICPTransfer(groupId, recipientId, sender, event, threadRootMessageIndex)
             .then(setCachedMessageFromSendResponse(this.db, groupId, event, threadRootMessageIndex))
@@ -255,7 +255,7 @@ export class CachingUserClient extends EventTarget implements IUserClient {
         replyingToChatId?: string,
         threadRootMessageIndex?: number
     ): Promise<[SendMessageResponse, Message]> {
-        removeFailedMessage(this.db, this.userId, event.index, threadRootMessageIndex);
+        removeFailedMessage(this.db, this.userId, event.event.messageId, threadRootMessageIndex);
         return this.client
             .sendMessage(recipientId, sender, event, replyingToChatId, threadRootMessageIndex)
             .then(

@@ -1542,9 +1542,9 @@ export class OpenChatAgent extends EventTarget {
 
     deleteFailedMessage(
         chatId: string,
-        eventIndex: number,
+        messageId: bigint,
         threadRootMessageIndex?: number
     ): Promise<void> {
-        return removeFailedMessage(this.db, chatId, eventIndex, threadRootMessageIndex);
+        return removeFailedMessage(this.db, chatId, messageId, threadRootMessageIndex);
     }
 }

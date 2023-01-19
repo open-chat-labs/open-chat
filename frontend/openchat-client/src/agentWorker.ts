@@ -1274,14 +1274,14 @@ export class OpenChatAgentWorker extends EventTarget {
 
     deleteFailedMessage(
         chatId: string,
-        eventIndex: number,
+        messageId: bigint,
         threadRootMessageIndex?: number
     ): Promise<void> {
         return this.sendRequest({
             kind: "deleteFailedMessage",
             payload: {
                 chatId,
-                eventIndex,
+                messageId,
                 threadRootMessageIndex,
             },
         });

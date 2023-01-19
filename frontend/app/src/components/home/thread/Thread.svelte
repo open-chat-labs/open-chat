@@ -204,7 +204,7 @@
     }
 
     function retrySend(ev: CustomEvent<EventWrapper<Message>>): void {
-        client.retrySendMessage(chat.chatId, ev.detail, $threadEvents, undefined);
+        client.retrySendMessage(chat.chatId, ev.detail, $threadEvents, threadRootMessageIndex);
     }
 
     function sendMessageWithAttachment(

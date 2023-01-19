@@ -75,6 +75,16 @@ function padMessageIndex(i: number): string {
     return i.toString().padStart(10, "0");
 }
 
+export function createFailedCacheKey(
+    chatId: string,
+    messageId: bigint,
+    threadRootMessageIndex?: number
+): string {
+    return threadRootMessageIndex === undefined
+        ? `${chatId}_${messageId}`
+        : `${chatId}_${threadRootMessageIndex}_${messageId}`;
+}
+
 export function createCacheKey(
     chatId: string,
     index: number,
@@ -524,12 +534,12 @@ function removeReplyContent(
 export async function removeFailedMessage(
     db: Database,
     chatId: string,
-    eventIndex: number,
+    messageId: bigint,
     threadRootMessageIndex?: number
 ): Promise<void> {
     const store =
         threadRootMessageIndex !== undefined ? "failed_thread_messages" : "failed_chat_messages";
-    (await db).delete(store, createCacheKey(chatId, eventIndex, threadRootMessageIndex));
+    (await db).delete(store, createFailedCacheKey(chatId, messageId, threadRootMessageIndex));
 }
 
 export async function recordFailedMessage<T extends Message>(
@@ -543,7 +553,7 @@ export async function recordFailedMessage<T extends Message>(
     (await db).put(
         store,
         makeSerialisable<T>(event, chatId, false, threadRootMessageIndex),
-        createCacheKey(chatId, event.index, threadRootMessageIndex)
+        createFailedCacheKey(chatId, event.event.messageId, threadRootMessageIndex)
     );
 }
 
@@ -575,7 +585,7 @@ export async function loadFailedMessages(
     return [...chatMessages, ...threadMessages].reduce((res, ev) => {
         if (ev.messageKey === undefined) return res;
 
-        // drop the message index from the key
+        // drop the messageId from the key
         const key = ev.messageKey.split("_").slice(0, -1).join("_");
         if (res[key] === undefined) {
             res[key] = {};

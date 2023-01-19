@@ -941,7 +941,7 @@ type LoadFailedMessages = Request & {
 
 type DeleteFailedMessage = Request<{
     chatId: string;
-    eventIndex: number;
+    messageId: bigint;
     threadRootMessageIndex: number | undefined;
 }> & {
     kind: "deleteFailedMessage";

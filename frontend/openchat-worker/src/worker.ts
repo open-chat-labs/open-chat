@@ -1235,7 +1235,7 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
                 agent
                     .deleteFailedMessage(
                         payload.chatId,
-                        payload.eventIndex,
+                        payload.messageId,
                         payload.threadRootMessageIndex
                     )
                     .then(() =>

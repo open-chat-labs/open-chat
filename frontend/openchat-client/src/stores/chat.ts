@@ -189,13 +189,10 @@ export function nextEventAndMessageIndexes(): [number, number] {
     if (chat === undefined) {
         return [0, 0];
     }
-
-    const localMsgs = [
-        ...unconfirmed.getMessages(chat.chatId),
-        ...failedMessagesStore.getMessages(chat.chatId),
-    ].sort(sortByIndex);
-
-    return getNextEventAndMessageIndexes(chat, localMsgs);
+    return getNextEventAndMessageIndexes(
+        chat,
+        unconfirmed.getMessages(chat.chatId).sort(sortByIndex)
+    );
 }
 
 export const isProposalGroup = derived([selectedChatStore], ([$selectedChat]) => {
