@@ -1,11 +1,11 @@
-use crate::lifecycle::{init_logger, init_state, UPGRADE_BUFFER_SIZE};
-use crate::{Data, LOG_MESSAGES};
-use canister_logger::{LogMessage, LogMessagesWrapper};
+use crate::lifecycle::{init_state, UPGRADE_BUFFER_SIZE};
+use crate::Data;
 use canister_tracing_macros::trace;
 use group_canister::post_upgrade::Args;
 use ic_cdk_macros::post_upgrade;
 use stable_memory::deserialize_from_stable_memory;
 use tracing::info;
+use types::LogMessage;
 use utils::env::canister::CanisterEnv;
 
 #[post_upgrade]
@@ -18,8 +18,21 @@ fn post_upgrade(args: Args) {
     let (mut data, log_messages, trace_messages): (Data, Vec<LogMessage>, Vec<LogMessage>) =
         deserialize_from_stable_memory(UPGRADE_BUFFER_SIZE).unwrap();
 
-    init_logger(data.test_mode);
-    LOG_MESSAGES.with(|l| rehydrate_log_messages(log_messages, trace_messages, &l.borrow()));
+    let logs = log_messages
+        .into_iter()
+        .map(|l| canister_logger::LogEntry {
+            timestamp: l.timestamp,
+            message: l.json,
+        })
+        .collect();
+    let traces = trace_messages
+        .into_iter()
+        .map(|t| canister_logger::LogEntry {
+            timestamp: t.timestamp,
+            message: t.json,
+        })
+        .collect();
+    canister_logger::init_with_logs(data.test_mode, logs, traces);
 
     // One-time code to initialize the date_last_pinned if the chat has pinned messages.
     // This means that all members will initially see the pinned messages as unread.
@@ -32,19 +45,5 @@ fn post_upgrade(args: Args) {
 fn init_date_last_pinned(data: &mut Data) {
     if !data.pinned_messages.is_empty() && data.date_last_pinned.is_none() {
         data.date_last_pinned = Some(0);
-    }
-}
-
-fn rehydrate_log_messages(
-    log_messages: Vec<LogMessage>,
-    trace_messages: Vec<LogMessage>,
-    messages_container: &LogMessagesWrapper,
-) {
-    for message in log_messages {
-        messages_container.logs.push(message);
-    }
-
-    for message in trace_messages {
-        messages_container.traces.push(message);
     }
 }

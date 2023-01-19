@@ -4,7 +4,6 @@ use crate::model::participants::{AddResult as AddParticipantResult, ParticipantI
 use crate::new_joiner_rewards::process_new_joiner_reward;
 use crate::timer_job_types::TimerJob;
 use candid::Principal;
-use canister_logger::LogMessagesWrapper;
 use canister_state_macros::canister_state;
 use chat_events::{AllChatEvents, ChatEventInternal};
 use notifications_canister::c2c_push_notification;
@@ -32,7 +31,6 @@ mod timer_job_types;
 mod updates;
 
 thread_local! {
-    static LOG_MESSAGES: RefCell<LogMessagesWrapper> = RefCell::default();
     static WASM_VERSION: RefCell<Timestamped<Version>> = RefCell::default();
 }
 

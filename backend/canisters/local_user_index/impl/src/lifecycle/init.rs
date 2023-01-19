@@ -1,4 +1,4 @@
-use crate::lifecycle::{init_logger, init_state};
+use crate::lifecycle::init_state;
 use crate::Data;
 use canister_tracing_macros::trace;
 use ic_cdk_macros::init;
@@ -13,7 +13,7 @@ const CANISTER_POOL_TARGET_SIZE: u16 = 20;
 #[trace]
 fn init(args: Args) {
     ic_cdk::setup();
-    init_logger(args.test_mode);
+    canister_logger::init(args.test_mode);
     init_cycles_dispenser_client(args.cycles_dispenser_canister_id);
 
     let env = Box::new(CanisterEnv::new());

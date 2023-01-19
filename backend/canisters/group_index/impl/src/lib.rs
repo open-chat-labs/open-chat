@@ -4,7 +4,6 @@ use crate::model::local_group_index_map::LocalGroupIndex;
 use crate::model::private_groups::PrivateGroups;
 use crate::model::public_groups::PublicGroups;
 use candid::{CandidType, Principal};
-use canister_logger::LogMessagesWrapper;
 use canister_state_macros::canister_state;
 use model::local_group_index_map::LocalGroupIndexMap;
 use serde::{Deserialize, Serialize};
@@ -28,7 +27,6 @@ const FIVE_MINUTES_IN_MS: Milliseconds = MINUTE_IN_MS * 5;
 const CACHED_HOT_GROUPS_COUNT: usize = 50;
 
 thread_local! {
-    static LOG_MESSAGES: RefCell<LogMessagesWrapper> = RefCell::default();
     static WASM_VERSION: RefCell<Timestamped<Version>> = RefCell::default();
 }
 

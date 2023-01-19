@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Add ckBTC token to backend ([#2981](https://github.com/open-ic/open-chat/pull/2981))
 - Support for assigning nicknames to other users ([#2982](https://github.com/open-ic/open-chat/pull/2982))
 
+### Changed
+
+- Use `canister_logger` and `canister_tracing_macros` from [ic-utils](https://github.com/open-ic/ic-utils) ([#2985](https://github.com/open-ic/open-chat/pull/2985))
+
 ### Removed
 
 - Removed `join_group` since this is now handled via the `local_user_index` canister ([#2966](https://github.com/open-ic/open-chat/pull/2966))

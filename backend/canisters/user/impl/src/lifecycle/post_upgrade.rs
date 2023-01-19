@@ -1,12 +1,11 @@
-use crate::lifecycle::{init_logger, init_state, UPGRADE_BUFFER_SIZE};
-use crate::{Data, LOG_MESSAGES};
+use crate::lifecycle::{init_state, UPGRADE_BUFFER_SIZE};
+use crate::Data;
 use candid::Principal;
-use canister_logger::{LogMessage, LogMessagesWrapper};
 use canister_tracing_macros::trace;
 use ic_cdk_macros::post_upgrade;
 use stable_memory::deserialize_from_stable_memory;
 use tracing::info;
-use types::Cryptocurrency;
+use types::{Cryptocurrency, LogMessage};
 use user_canister::post_upgrade::Args;
 use utils::env::canister::CanisterEnv;
 
@@ -20,8 +19,21 @@ fn post_upgrade(args: Args) {
     let (mut data, log_messages, trace_messages): (Data, Vec<LogMessage>, Vec<LogMessage>) =
         deserialize_from_stable_memory(UPGRADE_BUFFER_SIZE).unwrap();
 
-    init_logger(data.test_mode);
-    LOG_MESSAGES.with(|l| rehydrate_log_messages(log_messages, trace_messages, &l.borrow()));
+    let logs = log_messages
+        .into_iter()
+        .map(|l| canister_logger::LogEntry {
+            timestamp: l.timestamp,
+            message: l.json,
+        })
+        .collect();
+    let traces = trace_messages
+        .into_iter()
+        .map(|t| canister_logger::LogEntry {
+            timestamp: t.timestamp,
+            message: t.json,
+        })
+        .collect();
+    canister_logger::init_with_logs(data.test_mode, logs, traces);
 
     // TODO: This code should be removed after it has been deployed
     data.ledger_canister_ids.insert(
@@ -36,18 +48,4 @@ fn post_upgrade(args: Args) {
     init_state(env, data, args.wasm_version);
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
-}
-
-fn rehydrate_log_messages(
-    log_messages: Vec<LogMessage>,
-    trace_messages: Vec<LogMessage>,
-    messages_container: &LogMessagesWrapper,
-) {
-    for message in log_messages {
-        messages_container.logs.push(message);
-    }
-
-    for message in trace_messages {
-        messages_container.traces.push(message);
-    }
 }
