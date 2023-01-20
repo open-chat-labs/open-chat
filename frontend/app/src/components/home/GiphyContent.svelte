@@ -38,7 +38,7 @@
             class:reply
             class:rtl={$rtlStore} />
     {:else if $mobileWidth || hidden}
-        {#if hidden}
+        {#if hidden && !$mobileWidth}
             <div class="mask">
                 <div class="reveal">
                     <Button on:click={() => (hidden = false)}>{$_("loadGif")}</Button>
