@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [unreleased]
 
+## [[2.0.553](https://github.com/open-ic/open-chat/releases/tag/v2.0.553-user)] - 2022-01-20
+
 ### Added
 
 - Add SNS1 token to backend ([#2975](https://github.com/open-ic/open-chat/pull/2975))
@@ -15,7 +17,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Use `canister_logger` and `canister_tracing_macros` from [ic-utils](https://github.com/open-ic/ic-utils) ([#2985](https://github.com/open-ic/open-chat/pull/2985))
-
+- Ensure direct messages are received by the recipient's canister in the same order they were received by the sender's canister, even if some fail to be sent c2c on first attempt ([#2986](https://github.com/open-ic/open-chat/pull/2986))
+- Use timestamp in nanos not ms for ICRC1 Transfers ([#2988](https://github.com/open-ic/open-chat/pull/2988))
+ 
 ### Removed
 
 - Removed `join_group` since this is now handled via the `local_user_index` canister ([#2966](https://github.com/open-ic/open-chat/pull/2966))

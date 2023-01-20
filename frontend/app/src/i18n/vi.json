@@ -673,5 +673,10 @@
     "reason": "Lý do",
     "expandDeletedMessages": "Mở rộng các tin nhắn đã xóa trong cuộc trò chuyện này",
     "revealDeletedMessage": "Tiết lộ tin nhắn",
-    "retryMessage": "Thử lại tin nhắn"
+    "retryMessage": "Thử lại tin nhắn",
+    "lowBandwidth": "Băng thông thấp",
+    "loadImage": "Tải hình ảnh",
+    "loadGif": "tải gif",
+    "showTweet": "Hiển thị tweet",
+    "showVideo": "Hiển thị video"
 }

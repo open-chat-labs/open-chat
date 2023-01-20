@@ -11,27 +11,6 @@ use user_canister::c2c_send_messages::{Response::*, *};
 
 #[update_msgpack]
 #[trace]
-async fn c2c_send_message(args: user_canister::c2c_send_message::Args) -> user_canister::c2c_send_message::Response {
-    match c2c_send_messages_impl(Args {
-        messages: vec![SendMessageArgs {
-            message_id: args.message_id,
-            sender_message_index: args.sender_message_index,
-            content: args.content,
-            replies_to: args.replies_to,
-            forwarding: args.forwarding,
-            correlation_id: args.correlation_id,
-        }],
-        sender_name: args.sender_name,
-    })
-    .await
-    {
-        Success => user_canister::c2c_send_message::Response::Success,
-        Blocked => user_canister::c2c_send_message::Response::Blocked,
-    }
-}
-
-#[update_msgpack]
-#[trace]
 async fn c2c_send_messages(args: Args) -> Response {
     c2c_send_messages_impl(args).await
 }
@@ -52,6 +31,14 @@ async fn c2c_send_messages_impl(args: Args) -> Response {
 
     mutate_state(|state| {
         for message in args.messages {
+            // Messages sent c2c can be retried so the same messageId may be received multiple
+            // times, so here we skip any messages whose messageId already exists.
+            if let Some(chat) = state.data.direct_chats.get(&sender_user_id.into()) {
+                if chat.events.main().event_index_by_message_id(message.message_id).is_some() {
+                    continue;
+                }
+            }
+
             handle_message_impl(
                 sender_user_id,
                 HandleMessageArgs {
