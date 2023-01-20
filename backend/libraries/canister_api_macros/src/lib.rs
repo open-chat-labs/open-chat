@@ -110,7 +110,7 @@ pub fn proposal(attr: TokenStream, item: TokenStream) -> TokenStream {
 
 fn convert_to_validate_fn(original: ItemFn) -> ItemFn {
     let mut sig = original.sig;
-    let name = format!("{}_validate", sig.ident.to_string());
+    let name = format!("{}_validate", sig.ident);
     sig.ident = Ident::new(&name, Span::call_site());
     sig.output = syn::parse2(quote!(-> Result<String, String>)).unwrap();
     sig.asyncness = None;
