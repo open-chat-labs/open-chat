@@ -20,14 +20,18 @@ function createUnconfirmedStore() {
     store.subscribe((v) => (storeValue = v));
 
     function pruneOldMessages(): void {
-        // if (Object.keys(storeValue).length > 0) {
-        //     const oneMinuteAgo = BigInt(Date.now() - 60000);
-        //     store.update((state) => {
-        //         return Object.entries(state).reduce((result, [key, {messages}]) => {
-        //             return applyUpdateToState(result, key, removeWhere(messages, (m) => m.timestamp < oneMinuteAgo))
-        //         }, {} as UnconfirmedMessages);
-        //     });
-        // }
+        if (Object.keys(storeValue).length > 0) {
+            const oneMinuteAgo = BigInt(Date.now() - 60000);
+            store.update((state) => {
+                return Object.entries(state).reduce((result, [key, { messages }]) => {
+                    return applyUpdateToState(
+                        result,
+                        key,
+                        removeWhere(messages, (m) => m.timestamp < oneMinuteAgo)
+                    );
+                }, {} as UnconfirmedMessages);
+            });
+        }
     }
 
     function removeWhere(
