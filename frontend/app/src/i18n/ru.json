@@ -671,5 +671,6 @@
     "howToBuyToken": "Мне нужна помощь в покупке {token}",
     "reason": "Причина",
     "expandDeletedMessages": "Развернуть удаленные сообщения в этом чате",
-    "revealDeletedMessage": "Показать сообщение"
+    "revealDeletedMessage": "Показать сообщение",
+    "retryMessage": "Повторить сообщение"
 }

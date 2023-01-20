@@ -672,5 +672,6 @@
     "howToBuyToken": "{token} の購入についてサポートが必要です",
     "reason": "理由",
     "expandDeletedMessages": "このチャットで削除されたメッセージを展開する",
-    "revealDeletedMessage": "メッセージを表示"
+    "revealDeletedMessage": "メッセージを表示",
+    "retryMessage": "再試行メッセージ"
 }

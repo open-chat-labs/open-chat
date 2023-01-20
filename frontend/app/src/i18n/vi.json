@@ -672,5 +672,6 @@
     "howToBuyToken": "Tôi cần trợ giúp mua {token}",
     "reason": "Lý do",
     "expandDeletedMessages": "Mở rộng các tin nhắn đã xóa trong cuộc trò chuyện này",
-    "revealDeletedMessage": "Tiết lộ tin nhắn"
+    "revealDeletedMessage": "Tiết lộ tin nhắn",
+    "retryMessage": "Thử lại tin nhắn"
 }
