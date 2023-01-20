@@ -6,6 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [unreleased]
 
+## [[2.0.552](https://github.com/open-ic/open-chat/releases/tag/v2.0.552-group)] - 2022-01-20
+
 ### Added
 
 - Add SNS1 token to backend ([#2975](https://github.com/open-ic/open-chat/pull/2975))
