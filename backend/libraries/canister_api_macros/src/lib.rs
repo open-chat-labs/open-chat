@@ -103,7 +103,7 @@ pub fn proposal(attr: TokenStream, item: TokenStream) -> TokenStream {
         #[ic_cdk_macros::query(name = #validate_fn_name, #guard #manual_reply)]
         #validate_fn
 
-        #[ic_cdk_macros::update(name = #validate_fn_name, #guard #manual_reply)]
+        #[ic_cdk_macros::update(name = #name, #guard #manual_reply)]
         #original_fn
     })
 }
