@@ -1,26 +1,25 @@
 <script lang="ts">
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
-    import { rtlStore } from "../../stores/rtl";
+    import { rtlStore } from "../../../stores/rtl";
     import {
         ProposalContent,
         ProposalDecisionStatus,
         RegisterProposalVoteResponse,
     } from "openchat-client";
-    import Markdown from "./Markdown.svelte";
-    import { now, now500 } from "../../stores/time";
+    import Markdown from "../Markdown.svelte";
+    import { now, now500 } from "../../../stores/time";
     import EyeOff from "svelte-material-icons/EyeOff.svelte";
-    import ThumbUp from "svelte-material-icons/ThumbUp.svelte";
-    import ThumbDown from "svelte-material-icons/ThumbDown.svelte";
-    import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import Launch from "svelte-material-icons/Launch.svelte";
-    import { toastStore } from "../../stores/toast";
-    import { logger } from "../../utils/logging";
-    import Overlay from "../Overlay.svelte";
-    import ModalContent from "../ModalContent.svelte";
-    import { proposalVotes } from "../../stores/proposalVotes";
+    import { toastStore } from "../../../stores/toast";
+    import { logger } from "../../../utils/logging";
+    import Overlay from "../../Overlay.svelte";
+    import ModalContent from "../../ModalContent.svelte";
+    import { proposalVotes } from "../../../stores/proposalVotes";
     import { createEventDispatcher } from "svelte";
     import type { OpenChat } from "openchat-client";
+    import ProposalVoteButton from "./ProposalVoteButton.svelte";
+    import ProposalVotingProgress from "./ProposalVotingProgress.svelte";
 
     const dispatch = createEventDispatcher();
 
@@ -56,12 +55,12 @@
         proposal.status == ProposalDecisionStatus.Unspecified;
     $: proposalUrl = isNns
         ? `${dashboardUrl}/proposal/${proposal.id}`
-        // TODO FIX THESE SNS LINKS WHEN THEY ARE AVAILABLE
-        : `${nnsDappUrl}/sns/${content.governanceCanisterId}/proposal/${proposal.id}`;
+        : // TODO FIX THESE SNS LINKS WHEN THEY ARE AVAILABLE
+          `${nnsDappUrl}/sns/${content.governanceCanisterId}/proposal/${proposal.id}`;
     $: proposerUrl = isNns
         ? `${dashboardUrl}/neuron/${proposal.proposer}`
-        // TODO FIX THESE SNS LINKS WHEN THEY ARE AVAILABLE
-        : `${nnsDappUrl}/sns/${content.governanceCanisterId}/neuron/${proposal.proposer}`;
+        : // TODO FIX THESE SNS LINKS WHEN THEY ARE AVAILABLE
+          `${nnsDappUrl}/sns/${content.governanceCanisterId}/neuron/${proposal.proposer}`;
     $: adoptPercent = round2((100 * proposal.tally.yes) / proposal.tally.total);
     $: rejectPercent = round2((100 * proposal.tally.no) / proposal.tally.total);
     $: deadline = new Date(Number(proposal.deadline));
@@ -70,6 +69,7 @@
     $: votingDisabled = voteStatus !== undefined || disable;
     $: typeValue = getProposalTopicLabel(content, $proposalTopicsStore);
     $: rtl = $rtlStore ? "right" : "left";
+    // TODO - new design needs some rtl love
     $: showFullSummary = proposal.summary.length < 400;
 
     $: {
@@ -179,15 +179,6 @@
                     {ProposalDecisionStatus[proposal.status]}
                 </div>
             </div>
-            <div class="subtitle">
-                {typeValue} |
-                {$_("proposal.proposedBy")}
-                {#if isNns}
-                    <a target="_blank" rel="noreferrer" href={proposerUrl}>{truncatedProposerId()}</a>
-                {:else}
-                    {truncatedProposerId()}
-                {/if}
-            </div>
         </div>
 
         {#if proposal.summary.length > 0}
@@ -203,7 +194,27 @@
             </div>
         {/if}
 
-        <div class="votes" class:rtl={$rtlStore}>
+        <div class="votes2">
+            <ProposalVoteButton
+                voting={voteStatus === "adopting"}
+                voted={voteStatus === "adopted"}
+                disabled={votingDisabled}
+                mode={"yes"}
+                on:click={() => onVote(true)}
+                percentage={adoptPercent} />
+
+            <ProposalVotingProgress {adoptPercent} {rejectPercent} />
+
+            <ProposalVoteButton
+                voting={voteStatus === "rejecting"}
+                voted={voteStatus === "rejected"}
+                disabled={votingDisabled}
+                mode={"no"}
+                on:click={() => onVote(false)}
+                percentage={rejectPercent} />
+        </div>
+
+        <!-- <div class="votes" class:rtl={$rtlStore}>
             <div class="data">
                 <div class="yes">
                     <span class="label">{$_("yes")}</span>
@@ -240,9 +251,9 @@
                     </svg>
                 </div>
             </div>
-        </div>
+        </div> -->
 
-        <div class="vote" class:voted={voteStatus === "adopted" || voteStatus === "rejected"}>
+        <!-- <div class="vote" class:voted={voteStatus === "adopted" || voteStatus === "rejected"}>
             <button
                 class="adopt"
                 class:voting={voteStatus === "adopting"}
@@ -271,7 +282,7 @@
                     <div class="icon"><ThumbDown /></div>
                 </div>
             </button>
-        </div>
+        </div> -->
     </div>
     <div class="more" class:rtl={$rtlStore}>
         {#if isNns}
@@ -279,6 +290,15 @@
         {:else}
             {proposal.id}
         {/if}
+        <div class="subtitle">
+            {typeValue} |
+            {$_("proposal.proposedBy")}
+            {#if isNns}
+                <a target="_blank" rel="noreferrer" href={proposerUrl}>{truncatedProposerId()}</a>
+            {:else}
+                {truncatedProposerId()}
+            {/if}
+        </div>
     </div>
 {/if}
 
@@ -302,13 +322,11 @@
         .title-block {
             display: flex;
             justify-content: space-between;
-            gap: toRem(8);
+            align-items: center;
+            margin-bottom: $sp4;
+            gap: $sp3;
             .title {
-                @include font-size(fs-130);
-                margin-bottom: toRem(4);
-                text-decoration: underline;
-                text-decoration-thickness: 1px;
-                text-underline-offset: 2px;
+                @include font(bold, normal, fs-120, 22);
                 word-break: break-all;
 
                 a {
@@ -333,11 +351,6 @@
                     background-color: var(--vote-no-color);
                 }
             }
-        }
-
-        .subtitle {
-            @include font-size(fs-70);
-            padding: toRem(2) toRem(4);
         }
     }
 
@@ -378,6 +391,15 @@
         @include font-size(fs-120);
         font-feature-settings: "tnum";
         font-variant-numeric: tabular-nums;
+    }
+
+    .votes2 {
+        display: flex;
+        align-items: center;
+        gap: $sp5;
+        padding: $sp5 $sp4;
+        border-bottom: 1px solid var(--bd);
+        margin-bottom: $sp3;
     }
 
     .votes {
@@ -593,8 +615,16 @@
         margin-top: $sp2;
         @include font-size(fs-70);
         float: left;
+        display: flex;
+        gap: $sp3;
         &.rtl {
             float: right;
+        }
+
+        .subtitle {
+            @include font(book, normal, fs-70);
+            font-weight: 700;
+            @include font-size(fs-70);
         }
     }
 </style>
