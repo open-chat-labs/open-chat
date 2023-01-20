@@ -1,7 +1,7 @@
 use crate::read_state;
 use candid::Principal;
 use types::{
-    CanisterId, CompletedCryptoTransaction, FailedCryptoTransaction, PendingCryptoTransaction, TimestampMillis, UserId,
+    CanisterId, CompletedCryptoTransaction, FailedCryptoTransaction, PendingCryptoTransaction, TimestampNanos, UserId,
 };
 
 pub async fn process_transaction(
@@ -32,7 +32,7 @@ async fn process_transaction_internal(
 
         let my_user_id: UserId = state.env.canister_id().into();
         let ledger_canister_id = state.data.ledger_canister_id(&transaction.token());
-        let now = state.env.now();
+        let now = state.env.now_nanos();
 
         (my_user_id, ledger_canister_id, now)
     });
@@ -52,7 +52,7 @@ mod nns {
         transaction: types::nns::PendingCryptoTransaction,
         my_user_id: UserId,
         ledger_canister_id: CanisterId,
-        now: TimestampMillis,
+        now: TimestampNanos,
     ) -> Result<CompletedCryptoTransaction, FailedCryptoTransaction> {
         let memo = transaction.memo.unwrap_or(Memo(0));
         let fee = transaction.fee.unwrap_or(DEFAULT_FEE);
@@ -69,9 +69,7 @@ mod nns {
             fee,
             from_subaccount: None,
             to,
-            created_at_time: Some(Timestamp {
-                timestamp_nanos: now * 1000 * 1000,
-            }),
+            created_at_time: Some(Timestamp { timestamp_nanos: now }),
         };
 
         let transaction_hash = calculate_transaction_hash(my_user_id, &transfer_args);
@@ -121,7 +119,7 @@ mod sns {
         transaction: types::sns::PendingCryptoTransaction,
         my_user_id: UserId,
         ledger_canister_id: CanisterId,
-        now: TimestampMillis,
+        now: TimestampNanos,
     ) -> Result<CompletedCryptoTransaction, FailedCryptoTransaction> {
         let my_principal = ic_base_types::PrincipalId::from(Principal::from(my_user_id));
         let from = ic_icrc1::Account::from(my_principal);
