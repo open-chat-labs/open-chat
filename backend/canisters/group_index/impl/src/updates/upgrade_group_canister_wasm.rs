@@ -1,12 +1,12 @@
 use crate::guards::caller_is_controller;
 use crate::{mutate_state, read_state, RuntimeState};
+use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
 use group_index_canister::upgrade_group_canister_wasm::{Response::*, *};
-use ic_cdk_macros::update;
 use tracing::info;
 use types::{CanisterId, Version};
 
-#[update(guard = "caller_is_controller")]
+#[proposal(guard = "caller_is_controller")]
 #[trace]
 async fn upgrade_group_canister_wasm(args: Args) -> Response {
     let version = args.group_canister_wasm.version;

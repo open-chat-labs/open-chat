@@ -1,13 +1,13 @@
 use crate::guards::caller_is_controller;
 use crate::{mutate_state, read_state, RuntimeState};
+use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
-use ic_cdk_macros::update;
 use local_user_index_canister::{Event, SuperAdminStatusChanged};
 use types::{ChatId, UserId};
 use user_canister::c2c_revoke_super_admin;
 use user_index_canister::remove_super_admin::{Response::*, *};
 
-#[update(guard = "caller_is_controller")]
+#[proposal(guard = "caller_is_controller")]
 #[trace]
 async fn remove_super_admin(args: Args) -> Response {
     if !read_state(|state| is_already_super_admin(&args.user_id, state)) {
