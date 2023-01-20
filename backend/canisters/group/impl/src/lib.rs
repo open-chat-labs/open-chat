@@ -5,12 +5,12 @@ use crate::new_joiner_rewards::process_new_joiner_reward;
 use crate::timer_job_types::TimerJob;
 use candid::Principal;
 use canister_state_macros::canister_state;
+use canister_timer_jobs::TimerJobs;
 use chat_events::{AllChatEvents, ChatEventInternal};
 use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::ops::Deref;
-use timer_jobs::TimerJobs;
 use types::{
     Avatar, CanisterId, ChatId, Cycles, EventIndex, FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupPermissions,
     GroupRules, GroupSubtype, MessageIndex, Milliseconds, Notification, TimestampMillis, Timestamped, UserId, Version,

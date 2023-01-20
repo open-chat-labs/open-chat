@@ -3,7 +3,7 @@ use crate::time;
 use candid::Principal;
 use rand::rngs::StdRng;
 use rand::{RngCore, SeedableRng};
-use types::{CanisterId, Cycles, TimestampMillis};
+use types::{CanisterId, Cycles, TimestampNanos};
 
 pub struct CanisterEnv {
     rng: StdRng,
@@ -30,8 +30,8 @@ impl CanisterEnv {
 }
 
 impl Environment for CanisterEnv {
-    fn now(&self) -> TimestampMillis {
-        time::now_millis()
+    fn now_nanos(&self) -> TimestampNanos {
+        time::now_nanos()
     }
 
     fn caller(&self) -> Principal {
