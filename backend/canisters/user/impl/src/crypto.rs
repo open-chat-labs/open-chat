@@ -130,7 +130,7 @@ mod sns {
             from_subaccount: None,
             to: transaction.to.clone(),
             fee: Some(transaction.fee.e8s().into()),
-            created_at_time: Some(now),
+            created_at_time: Some(now * 1000 * 1000),
             memo: transaction.memo.map(|m| ic_icrc1::Memo::from(m.0)),
             amount: transaction.amount.e8s().into(),
         };
