@@ -672,5 +672,10 @@
     "howToBuyToken": "我需要购买 {token} 的帮助",
     "reason": "原因",
     "expandDeletedMessages": "展开此聊天中已删除的消息",
-    "revealDeletedMessage": "显示消息"
+    "revealDeletedMessage": "显示消息",
+    "lowBandwidth": "低带宽",
+    "loadImage": "载入图片",
+    "loadGif": "载入动图",
+    "showTweet": "显示推文",
+    "showVideo": "显示视频"
 }

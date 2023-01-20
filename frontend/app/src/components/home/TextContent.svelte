@@ -7,6 +7,8 @@
     import { _ } from "svelte-i18n";
     import { getContext } from "svelte";
     import type { OpenChat, TextContent } from "openchat-client";
+    import ArrowExpand from "svelte-material-icons/ArrowExpand.svelte";
+    import { lowBandwidth } from "../../stores/settings";
 
     const client = getContext<OpenChat>("client");
 
@@ -18,6 +20,8 @@
     export let edited: boolean;
     export let height: number | undefined = undefined;
     export let fill: boolean;
+
+    $: expanded = !$lowBandwidth;
 
     function truncateText(text: string): string {
         // todo - we might be able to do something nicer than this with pure css, but we just need to do
@@ -40,17 +44,25 @@
         <span class="edited-msg">({$_("edited")})</span>
     {/if}
     {#if twitterLinkMatch}
-        <IntersectionObserver let:intersecting>
-            <Tweet tweetId={twitterLinkMatch[2]} {intersecting} />
-        </IntersectionObserver>
+        {#if !expanded}
+            <span on:click={() => (expanded = true)} class="expand" title={$_("showTweet")}>
+                <ArrowExpand viewBox="0 -3 24 24" size={"1em"} color={"var(--txt)"} />
+            </span>
+        {:else}
+            <IntersectionObserver let:intersecting>
+                <Tweet tweetId={twitterLinkMatch[2]} {intersecting} />
+            </IntersectionObserver>
+        {/if}
     {/if}
 {:else}
-    <div class="social-video">
-        {#if socialVideoMatch[0] !== content.text}
-            <p class="social-video-txt">
-                <Markdown suppressLinks={pinned} {text} />
-            </p>
-        {/if}
+    {#if socialVideoMatch[0] !== content.text || !expanded}
+        <Markdown suppressLinks={pinned} {text} />
+    {/if}
+    {#if !expanded}
+        <span on:click={() => (expanded = true)} class="expand" title={$_("showVideo")}>
+            <ArrowExpand viewBox="0 -3 24 24" size={"1em"} color={"var(--txt)"} />
+        </span>
+    {:else}
         <iframe
             class:pinned
             class:fill
@@ -68,12 +80,17 @@
                         gyroscope;
                         picture-in-picture"
             allowfullscreen />
-    </div>
+    {/if}
 {/if}
 
 <style type="text/scss">
-    .social-video-txt {
-        margin-bottom: $sp3;
+    .expand {
+        cursor: pointer;
+        padding: 0 $sp3;
+    }
+
+    iframe {
+        margin-top: $sp3;
     }
 
     iframe:not(.fill) {
