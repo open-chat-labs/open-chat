@@ -1,5 +1,5 @@
 import { Principal } from "@dfinity/principal";
-import { bytesToHexString, hexStringToBytes, identity, optional } from "../../utils/mapping";
+import { bytesToHexString, identity, optional } from "../../utils/mapping";
 import type {
     ApiBlobReference,
     ApiFileContent,
@@ -771,13 +771,14 @@ function apiPendingCryptoTransaction(domain: CryptocurrencyTransfer): ApiCryptoT
     if (domain.kind === "pending") {
         return {
             Pending: {
-                NNS: {
+                SNS: {
                     token: apiToken(domain.token),
                     to: {
-                        User: Principal.fromText(domain.recipient),
+                        owner: Principal.fromText(domain.recipient),
+                        subaccount: [],
                     },
                     amount: apiICP(domain.amountE8s),
-                    fee: apiOptional(apiICP, domain.feeE8s),
+                    fee: apiICP(domain.feeE8s ?? BigInt(0)),
                     memo: apiOptional(identity, domain.memo),
                 },
             },
@@ -788,12 +789,12 @@ function apiPendingCryptoTransaction(domain: CryptocurrencyTransfer): ApiCryptoT
 
 export function apiPendingCryptocurrencyWithdrawal(
     domain: PendingCryptocurrencyWithdrawal
-): ApiNnsPendingCryptoTransaction {
+): ApiSnsPendingCryptoTransaction {
     return {
         token: apiToken(domain.token),
-        to: { Account: hexStringToBytes(domain.to) },
+        to: { owner: Principal.fromText(domain.to), subaccount: [] },
         amount: apiICP(domain.amountE8s),
-        fee: apiOptional(apiICP, domain.feeE8s),
+        fee: apiICP(domain.feeE8s ?? BigInt(0)),
         memo: apiOptional(identity, domain.memo),
     };
 }

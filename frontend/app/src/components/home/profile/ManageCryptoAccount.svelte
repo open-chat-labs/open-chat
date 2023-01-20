@@ -26,7 +26,6 @@
     const user = client.user;
 
     $: cryptoBalance = client.cryptoBalance;
-    $: account = (token === "icp" ? user.cryptoAccount : user.userId);
 
     let error: string | undefined = undefined;
     let targetAccount: string = "";
@@ -38,7 +37,7 @@
     $: valid =
         amountToWithdrawE8s > BigInt(0) &&
         targetAccount !== "" &&
-        targetAccount !== account;
+        targetAccount !== user.userId;
 
     $: transferFees = cryptoLookup[token].transferFeesE8s;
     $: symbol = cryptoLookup[token].symbol;
@@ -60,6 +59,7 @@
                 token: token,
                 to: targetAccount,
                 amountE8s: amountToWithdrawE8s,
+                feeE8s: transferFees,
             })
             .then((resp) => {
                 if (resp.kind === "completed") {

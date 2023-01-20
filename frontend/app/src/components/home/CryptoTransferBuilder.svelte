@@ -88,10 +88,11 @@
             kind: "crypto_content",
             caption: message === "" ? undefined : message,
             transfer: {
-                token: token,
+                token,
                 kind: "pending",
                 recipient: receiver.userId,
                 amountE8s: draftAmountE8s,
+                feeE8s: transferFees,
             },
         };
         dispatch("sendTransfer", [content, undefined]);

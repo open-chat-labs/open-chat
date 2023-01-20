@@ -2136,10 +2136,7 @@ export class OpenChat extends EventTarget {
                         this.onSendMessageSuccess(chatId, resp, msg, threadRootMessageIndex);
                         if (msg.kind === "message" && msg.content.kind === "crypto_content") {
                             const token = msg.content.transfer.token;
-                            this.refreshAccountBalance(
-                                token,
-                                token == "icp" ? this.user.cryptoAccount : this.user.userId,
-                            );
+                            this.refreshAccountBalance(token, this.user.userId);
                         }
                         if (threadRootMessageIndex !== undefined) {
                             trackEvent("sent_threaded_message");
@@ -2586,8 +2583,8 @@ export class OpenChat extends EventTarget {
         }
     }
 
-    refreshAccountBalance(crypto: Cryptocurrency, account: string): Promise<Tokens> {
-        return this.api.refreshAccountBalance(crypto, account).then((val) => {
+    refreshAccountBalance(crypto: Cryptocurrency, principal: string): Promise<Tokens> {
+        return this.api.refreshAccountBalance(crypto, principal).then((val) => {
             cryptoBalance.set(crypto, val);
             return val;
         });

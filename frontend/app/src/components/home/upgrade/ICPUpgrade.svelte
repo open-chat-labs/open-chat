@@ -37,7 +37,6 @@
     $: toPay = (newLimit - min) * icpPrice;
     $: insufficientFunds = toPay - icpBalance > 0.0001; //we need to account for the fact that js cannot do maths
     $: howToBuyUrl = cryptoLookup[token].howToBuyUrl;
-    $: account = (token === "icp" ? user.cryptoAccount : user.userId);
 
     onMount(refreshBalance);
 
@@ -45,7 +44,7 @@
         refreshing = true;
         error = undefined;
         client
-            .refreshAccountBalance(token, account)
+            .refreshAccountBalance(token, user.userId)
             .then((resp) => {
                 accountBalance = Number(resp.e8s);
                 error = undefined;

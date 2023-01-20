@@ -26,7 +26,7 @@ export const cryptoLookup: Record<Cryptocurrency, CryptocurrencyDetails> = {
     sns1: {
         symbol: "SNS1",
         name: "SNS-1",
-        transferFeesE8s: BigInt(10_000),
+        transferFeesE8s: BigInt(1_000),
         howToBuyUrl: "https://avjzx-pyaaa-aaaaj-aadmq-cai.raw.ic0.app/ICDex/SNS1/ICP",
         disabled: false,
     },

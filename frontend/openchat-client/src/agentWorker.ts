@@ -1058,12 +1058,12 @@ export class OpenChatAgentWorker extends EventTarget {
         });
     }
 
-    refreshAccountBalance(crypto: Cryptocurrency, account: string): Promise<Tokens> {
+    refreshAccountBalance(crypto: Cryptocurrency, principal: string): Promise<Tokens> {
         return this.sendRequest({
             kind: "refreshAccountBalance",
             payload: {
                 crypto,
-                account,
+                principal,
             },
         });
     }
