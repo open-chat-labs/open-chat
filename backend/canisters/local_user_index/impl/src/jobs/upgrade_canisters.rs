@@ -79,7 +79,7 @@ fn initialize_upgrade(canister_id: CanisterId, runtime_state: &mut RuntimeState)
         new_wasm: user_canister_wasm.clone(),
         deposit_cycles_if_needed,
         args: user_canister::post_upgrade::Args {
-            wasm_version: user_canister_wasm.version
+            wasm_version: user_canister_wasm.version,
         },
     })
 }
