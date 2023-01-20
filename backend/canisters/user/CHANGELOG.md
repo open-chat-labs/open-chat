@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [unreleased]
 
+### Removed
+
+- Remove one time fix to user date created ([#2994](https://github.com/open-ic/open-chat/pull/2994))
+
 ## [[2.0.553](https://github.com/open-ic/open-chat/releases/tag/v2.0.553-user)] - 2022-01-20
 
 ### Added

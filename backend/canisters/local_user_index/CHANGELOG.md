@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Use `canister_logger` and `canister_tracing_macros` from [ic-utils](https://github.com/open-ic/ic-utils) ([#2985](https://github.com/open-ic/open-chat/pull/2985))
 
+### Removed
+
+- Remove one time fix to user date created ([#2994](https://github.com/open-ic/open-chat/pull/2994))
+
 ## [[2.0.545](https://github.com/open-ic/open-chat/releases/tag/v2.0.545-local-user_index)] - 2022-01-08
 
 ### Added
