@@ -2,6 +2,7 @@ use crate::{generate_query_call, generate_update_call};
 use user_canister::*;
 
 // Queries
+generate_query_call!(events);
 generate_query_call!(events_by_index);
 generate_query_call!(events_range);
 generate_query_call!(initial_state_v2);
@@ -99,6 +100,36 @@ pub mod happy_path {
         match response {
             user_canister::initial_state_v2::Response::Success(result) => result,
             response => panic!("'initial_state_v2' error: {:?}", response),
+        }
+    }
+
+    pub fn events(
+        env: &StateMachine,
+        sender: &User,
+        user_id: UserId,
+        start_index: EventIndex,
+        ascending: bool,
+        max_messages: u32,
+        max_events: u32,
+    ) -> user_canister::events::SuccessResult {
+        let response = super::events(
+            env,
+            sender.principal,
+            sender.canister(),
+            &user_canister::events::Args {
+                user_id,
+                thread_root_message_index: None,
+                start_index,
+                ascending,
+                max_messages,
+                max_events,
+                latest_client_event_index: None,
+            },
+        );
+
+        match response {
+            user_canister::events::Response::Success(result) => result,
+            response => panic!("'events' error: {:?}", response),
         }
     }
 

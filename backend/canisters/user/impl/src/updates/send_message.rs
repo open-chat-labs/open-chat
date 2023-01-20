@@ -1,6 +1,6 @@
 use crate::crypto::process_transaction_without_caller_check;
 use crate::guards::caller_is_owner;
-use crate::timer_job_types::RetrySendingFailedMessageJob;
+use crate::timer_job_types::RetrySendingFailedMessagesJob;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState, TimerJob};
 use canister_tracing_macros::trace;
 use chat_events::PushMessageArgs;
@@ -10,8 +10,8 @@ use types::{
     CanisterId, CompletedCryptoTransaction, ContentValidationError, CryptoTransaction, MessageContent, MessageId, MessageIndex,
     UserId,
 };
-use user_canister::c2c_send_message;
-use user_canister::c2c_send_messages::C2CReplyContext;
+use user_canister::c2c_send_messages;
+use user_canister::c2c_send_messages::{C2CReplyContext, SendMessageArgs};
 use user_canister::send_message::{Response::*, *};
 use utils::consts::OPENCHAT_BOT_USER_ID;
 use utils::time::{MINUTE_IN_MS, SECOND_IN_MS};
@@ -155,13 +155,8 @@ fn send_message_impl(
             .push_message(true, recipient, None, push_message_args, user_type.is_bot());
 
     if !user_type.is_self() {
-        if let Some(chat) = runtime_state.data.direct_chats.get_mut(&recipient.into()) {
-            chat.mark_message_pending(args.message_id);
-        }
-
-        let c2c_args = c2c_send_message::Args {
+        let send_message_args = SendMessageArgs {
             message_id: args.message_id,
-            sender_name: args.sender_name,
             sender_message_index: message_event.event.message_index,
             content: args.content,
             replies_to: args.replies_to.and_then(|r| {
@@ -185,10 +180,26 @@ fn send_message_impl(
             correlation_id: args.correlation_id,
         };
 
-        if user_type.is_bot() {
-            ic_cdk::spawn(send_to_bot_canister(recipient, message_event.event.message_index, c2c_args));
-        } else {
-            ic_cdk::spawn(send_to_recipients_canister(recipient, c2c_args, 0));
+        if let Some(chat) = runtime_state.data.direct_chats.get_mut(&recipient.into()) {
+            chat.mark_message_pending(send_message_args.clone());
+
+            let sender_name = runtime_state.data.username.clone();
+
+            if user_type.is_bot() {
+                ic_cdk::spawn(send_to_bot_canister(
+                    recipient,
+                    message_event.event.message_index,
+                    bot_api::handle_direct_message::Args::new(send_message_args, sender_name),
+                ));
+            } else {
+                // Send this message along with any others which are still pending
+                let pending_messages = chat.get_pending_messages();
+                ic_cdk::spawn(send_to_recipients_canister(
+                    recipient,
+                    c2c_send_messages::Args::new(pending_messages, sender_name),
+                    0,
+                ));
+            }
         }
     }
 
@@ -210,11 +221,11 @@ fn send_message_impl(
     }
 }
 
-pub(crate) async fn send_to_recipients_canister(recipient: UserId, args: c2c_send_message::Args, attempt: u32) {
+pub(crate) async fn send_to_recipients_canister(recipient: UserId, args: c2c_send_messages::Args, attempt: u32) {
     // Note: We ignore any Blocked responses - it means the sender won't know they're blocked
     // but maybe that is not so bad. Otherwise we would have to wait for the call to the
     // recipient canister which would double the latency of every message.
-    if let Err(error) = user_canister_c2c_client::c2c_send_message(recipient.into(), &args).await {
+    if let Err(error) = user_canister_c2c_client::c2c_send_messages(recipient.into(), &args).await {
         let retry_interval = match attempt {
             0 => Some(10 * SECOND_IN_MS),
             1 => Some(20 * SECOND_IN_MS),
@@ -227,9 +238,8 @@ pub(crate) async fn send_to_recipients_canister(recipient: UserId, args: c2c_sen
             mutate_state(|state| {
                 let now = state.env.now();
                 state.data.timer_jobs.enqueue_job(
-                    TimerJob::RetrySendingFailedMessage(Box::new(RetrySendingFailedMessageJob {
+                    TimerJob::RetrySendingFailedMessages(Box::new(RetrySendingFailedMessagesJob {
                         recipient,
-                        args,
                         attempt: attempt + 1,
                     })),
                     now + interval,
@@ -242,7 +252,9 @@ pub(crate) async fn send_to_recipients_canister(recipient: UserId, args: c2c_sen
     } else {
         mutate_state(|state| {
             if let Some(chat) = state.data.direct_chats.get_mut(&recipient.into()) {
-                chat.mark_message_confirmed(&args.message_id);
+                for message_id in args.messages.iter().map(|m| m.message_id) {
+                    chat.mark_message_confirmed(message_id);
+                }
             }
         });
     }
@@ -273,7 +285,7 @@ async fn send_to_bot_canister(recipient: UserId, message_index: MessageIndex, ar
                 if let Some(chat) = state.data.direct_chats.get_mut(&recipient.into()) {
                     // Mark that the bot has read the message we just sent
                     chat.mark_read_up_to(message_index, false, now);
-                    chat.mark_message_confirmed(&args.message_id);
+                    chat.mark_message_confirmed(args.message_id);
                 }
             });
         }

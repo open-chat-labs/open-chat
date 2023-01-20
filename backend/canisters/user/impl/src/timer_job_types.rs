@@ -1,20 +1,28 @@
-use crate::mutate_state;
 use crate::updates::send_message::send_to_recipients_canister;
+use crate::{mutate_state, read_state};
 use serde::{Deserialize, Serialize};
 use timer_jobs::Job;
-use types::{ChatId, MessageId, MessageIndex, UserId};
-use user_canister::c2c_send_message;
+use types::{ChatId, MessageContent, MessageId, MessageIndex, UserId};
+use user_canister::c2c_send_messages;
+use user_canister::c2c_send_messages::SendMessageArgs;
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum TimerJob {
     RetrySendingFailedMessage(Box<RetrySendingFailedMessageJob>),
+    RetrySendingFailedMessages(Box<RetrySendingFailedMessagesJob>),
     HardDeleteMessageContent(Box<HardDeleteMessageContentJob>),
 }
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct RetrySendingFailedMessageJob {
     pub recipient: UserId,
-    pub args: c2c_send_message::Args,
+    pub args: C2cSendMessageArgs,
+    pub attempt: u32,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+pub struct RetrySendingFailedMessagesJob {
+    pub recipient: UserId,
     pub attempt: u32,
 }
 
@@ -30,6 +38,7 @@ impl Job for TimerJob {
     fn execute(&self) {
         match self {
             TimerJob::RetrySendingFailedMessage(job) => job.execute(),
+            TimerJob::RetrySendingFailedMessages(job) => job.execute(),
             TimerJob::HardDeleteMessageContent(job) => job.execute(),
         }
     }
@@ -37,7 +46,40 @@ impl Job for TimerJob {
 
 impl Job for RetrySendingFailedMessageJob {
     fn execute(&self) {
-        ic_cdk::spawn(send_to_recipients_canister(self.recipient, self.args.clone(), self.attempt));
+        let sender_name = read_state(|state| state.data.username.clone());
+        let args = c2c_send_messages::Args {
+            messages: vec![SendMessageArgs {
+                message_id: self.args.message_id,
+                sender_message_index: self.args.sender_message_index,
+                content: self.args.content.clone(),
+                replies_to: self.args.replies_to.clone(),
+                forwarding: self.args.forwarding,
+                correlation_id: self.args.correlation_id,
+            }],
+            sender_name,
+        };
+        ic_cdk::spawn(send_to_recipients_canister(self.recipient, args, self.attempt));
+    }
+}
+
+impl Job for RetrySendingFailedMessagesJob {
+    fn execute(&self) {
+        let (pending_messages, sender_name) = read_state(|state| {
+            (
+                state
+                    .data
+                    .direct_chats
+                    .get(&self.recipient.into())
+                    .map(|c| c.get_pending_messages())
+                    .unwrap_or_default(),
+                state.data.username.clone(),
+            )
+        });
+
+        if !pending_messages.is_empty() {
+            let args = c2c_send_messages::Args::new(pending_messages, sender_name);
+            ic_cdk::spawn(send_to_recipients_canister(self.recipient, args, self.attempt));
+        }
     }
 }
 
@@ -57,4 +99,16 @@ impl Job for HardDeleteMessageContentJob {
             }
         });
     }
+}
+
+// TODO delete this
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct C2cSendMessageArgs {
+    pub message_id: MessageId,
+    pub sender_message_index: MessageIndex,
+    pub sender_name: String,
+    pub content: MessageContent,
+    pub replies_to: Option<user_canister::c2c_send_messages::C2CReplyContext>,
+    pub forwarding: bool,
+    pub correlation_id: u64,
 }
