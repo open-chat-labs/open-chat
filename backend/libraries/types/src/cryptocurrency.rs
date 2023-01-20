@@ -1,4 +1,4 @@
-use crate::{TimestampMillis, UserId};
+use crate::{TimestampNanos, UserId};
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 
@@ -185,7 +185,7 @@ pub mod nns {
         pub from: CryptoAccount,
         pub to: CryptoAccount,
         pub memo: Memo,
-        pub created: TimestampMillis,
+        pub created: TimestampNanos,
         pub transaction_hash: TransactionHash,
         pub block_index: BlockIndex,
     }
@@ -198,7 +198,7 @@ pub mod nns {
         pub from: CryptoAccount,
         pub to: CryptoAccount,
         pub memo: Memo,
-        pub created: TimestampMillis,
+        pub created: TimestampNanos,
         pub transaction_hash: TransactionHash,
         pub error_message: String,
     }
@@ -232,7 +232,7 @@ pub mod sns {
         pub from: CryptoAccount,
         pub to: CryptoAccount,
         pub memo: Option<Memo>,
-        pub created: TimestampMillis,
+        pub created: TimestampNanos,
         pub transaction_hash: TransactionHash,
         pub block_index: BlockIndex,
     }
@@ -245,7 +245,7 @@ pub mod sns {
         pub from: CryptoAccount,
         pub to: CryptoAccount,
         pub memo: Option<Memo>,
-        pub created: TimestampMillis,
+        pub created: TimestampNanos,
         pub transaction_hash: TransactionHash,
         pub error_message: String,
     }
