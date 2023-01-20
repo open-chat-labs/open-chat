@@ -69,9 +69,7 @@ mod nns {
             fee,
             from_subaccount: None,
             to,
-            created_at_time: Some(Timestamp {
-                timestamp_nanos: now,
-            }),
+            created_at_time: Some(Timestamp { timestamp_nanos: now }),
         };
 
         let transaction_hash = calculate_transaction_hash(my_user_id, &transfer_args);
