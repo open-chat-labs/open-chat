@@ -1243,6 +1243,9 @@ export function buildTransactionUrl(content: CryptocurrencyContent): string | un
         return undefined;
     }
     // TODO: Where can we see the transactions for other tokens? In OpenChat I suppose...
+    if (content.transfer.token !== "icp") {
+        return undefined;
+    }
     return `https://dashboard.internetcomputer.org/transaction/${content.transfer.transactionHash}`;
 }
 
