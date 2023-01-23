@@ -38,6 +38,7 @@ import type {
     SearchGroupChatResponse,
     Logger,
     DeletedGroupMessageResponse,
+    EventWrapper,
 } from "openchat-shared";
 import type { IGroupClient } from "./group.client.interface";
 import type { IDBPDatabase } from "idb";
@@ -49,6 +50,8 @@ import {
     getCachedGroupDetails,
     loadMessagesByMessageIndex,
     mergeSuccessResponses,
+    recordFailedMessage,
+    removeFailedMessage,
     setCachedEvents,
     setCachedGroupDetails,
     setCachedMessageFromSendResponse,
@@ -203,12 +206,26 @@ export class CachingGroupClient implements IGroupClient {
     sendMessage(
         senderName: string,
         mentioned: User[],
-        message: Message,
+        event: EventWrapper<Message>,
         threadRootMessageIndex?: number
     ): Promise<[SendMessageResponse, Message]> {
+        // pre-emtively remove the failed message from indexeddb - it will get re-added if anything goes wrong
+        removeFailedMessage(this.db, this.chatId, event.event.messageId, threadRootMessageIndex);
+
         return this.client
-            .sendMessage(senderName, mentioned, message, threadRootMessageIndex)
-            .then(setCachedMessageFromSendResponse(this.db, this.chatId, threadRootMessageIndex));
+            .sendMessage(senderName, mentioned, event, threadRootMessageIndex)
+            .then(
+                setCachedMessageFromSendResponse(
+                    this.db,
+                    this.chatId,
+                    event,
+                    threadRootMessageIndex
+                )
+            )
+            .catch((err) => {
+                recordFailedMessage(this.db, this.chatId, event, threadRootMessageIndex);
+                throw err;
+            });
     }
 
     editMessage(message: Message, threadRootMessageIndex?: number): Promise<EditMessageResponse> {
@@ -342,9 +359,12 @@ export class CachingGroupClient implements IGroupClient {
         };
     }
 
-    getDeletedMessage(messageId: bigint, threadRootMessageIndex?: number): Promise<DeletedGroupMessageResponse> {
+    getDeletedMessage(
+        messageId: bigint,
+        threadRootMessageIndex?: number
+    ): Promise<DeletedGroupMessageResponse> {
         return this.client.getDeletedMessage(messageId, threadRootMessageIndex);
-    }    
+    }
 
     pinMessage(messageIndex: number): Promise<PinMessageResponse> {
         return this.client.pinMessage(messageIndex);
@@ -368,7 +388,11 @@ export class CachingGroupClient implements IGroupClient {
         );
     }
 
-    searchGroupChat(searchTerm: string, userIds: string[], maxResults: number): Promise<SearchGroupChatResponse> {
+    searchGroupChat(
+        searchTerm: string,
+        userIds: string[],
+        maxResults: number
+    ): Promise<SearchGroupChatResponse> {
         return this.client.searchGroupChat(searchTerm, userIds, maxResults);
     }
 

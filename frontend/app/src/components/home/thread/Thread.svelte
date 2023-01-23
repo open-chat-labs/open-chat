@@ -14,6 +14,7 @@
         Cryptocurrency,
         ThreadMessagesLoaded,
         SentThreadMessage,
+        FailedMessages,
     } from "openchat-client";
     import { getContext, onMount, tick } from "svelte";
     import { _ } from "svelte-i18n";
@@ -60,6 +61,7 @@
     $: unconfirmed = client.unconfirmed;
     $: currentChatBlockedUsers = client.currentChatBlockedUsers;
     $: threadEvents = client.threadEvents;
+    $: failedMessagesStore = client.failedMessagesStore;
 
     onMount(() => {
         client.addEventListener("openchat_event", clientEvent);
@@ -201,6 +203,10 @@
         draftThreadMessages.setEditing(threadRootMessageIndex, ev);
     }
 
+    function retrySend(ev: CustomEvent<EventWrapper<Message>>): void {
+        client.retrySendMessage(chat.chatId, ev.detail, $threadEvents, threadRootMessageIndex);
+    }
+
     function sendMessageWithAttachment(
         textContent: string | undefined,
         mentioned: User[],
@@ -328,6 +334,22 @@
             return e.index.toString();
         }
     }
+
+    function isConfirmed(_unconf: unknown, evt: EventWrapper<ChatEventType>): boolean {
+        if (evt.event.kind === "message") {
+            return !unconfirmed.contains($selectedThreadKey ?? "", evt.event.messageId);
+        }
+        return true;
+    }
+
+    function isFailed(_failed: FailedMessages, evt: EventWrapper<ChatEventType>): boolean {
+        if (evt.event.kind === "message") {
+            return failedMessagesStore.contains($selectedThreadKey ?? "", evt.event.messageId);
+        }
+        return false;
+    }
+
+    $: console.log("Failed: ", $failedMessagesStore, $selectedThreadKey);
 </script>
 
 <PollBuilder
@@ -390,10 +412,8 @@
                             first={i === 0}
                             last={i + 1 === userGroup.length}
                             me={evt.event.sender === user.userId}
-                            confirmed={!unconfirmed.contains(
-                                $selectedThreadKey ?? "",
-                                evt.event.messageId
-                            )}
+                            confirmed={isConfirmed($unconfirmed, evt)}
+                            failed={isFailed($failedMessagesStore, evt)}
                             readByThem
                             readByMe
                             {observer}
@@ -423,6 +443,7 @@
                             on:replyTo={replyTo}
                             on:replyPrivatelyTo
                             on:upgrade
+                            on:retrySend={retrySend}
                             on:forward />
                     {/each}
                 {/each}
