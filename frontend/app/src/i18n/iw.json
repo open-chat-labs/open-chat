@@ -470,7 +470,8 @@
         "chooseReceiver": "הזן את שם המשתמש של הנמען",
         "icp": "מחשב אינטרנט",
         "btc": "ביטקוין",
-        "chat": "OpenChat"
+        "chat": "OpenChat",
+        "sns1": "SNS-1"
     },
     "cryptoAccount": {
         "shortBalanceLabel": "איזון",
@@ -513,7 +514,8 @@
         "reactions": "תגובות",
         "deletedMessages": "הודעות שנמחקו",
         "reportedMessages": "הודעות מדווחות",
-        "reportedMessagesInfo": "הודעות שנשלחו על ידך שנמחקו או דווחו על ידי אחרים. זה עשוי לשמש כאינדיקציה לכך שאינך תורם באופן חיובי לקהילה."
+        "reportedMessagesInfo": "הודעות שנשלחו על ידך שנמחקו או דווחו על ידי אחרים. זה עשוי לשמש כאינדיקציה לכך שאינך תורם באופן חיובי לקהילה.",
+        "cryptoTransfers": "הודעת קריפטו"
     },
     "andNMore": ", ועוד {n}",
     "confirmMakeGroupPrivate": "האם אתה בהחלט רוצה להפוך את הקבוצה הזו לפרטית? כרגע לא ניתן לבטל את הפעולה הזו!",

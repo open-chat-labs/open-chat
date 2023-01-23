@@ -30,7 +30,7 @@
         refreshing = true;
 
         return client
-            .refreshAccountBalance(token, user.cryptoAccount)
+            .refreshAccountBalance(token, user.userId)
             .then((val) => {
                 dispatch("refreshed", val);
             })

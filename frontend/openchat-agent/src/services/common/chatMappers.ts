@@ -1,5 +1,5 @@
 import { Principal } from "@dfinity/principal";
-import { bytesToHexString, hexStringToBytes, identity, optional } from "../../utils/mapping";
+import { bytesToHexString, identity, optional } from "../../utils/mapping";
 import type {
     ApiBlobReference,
     ApiFileContent,
@@ -328,12 +328,20 @@ function cryptoContent(candid: ApiCryptoContent, sender: string): Cryptocurrency
     };
 }
 
-export function token(_candid: ApiCryptocurrency): Cryptocurrency {
-    return "icp";
+export function token(candid: ApiCryptocurrency): Cryptocurrency {
+    if ("InternetComputer" in candid) return "icp";
+    if ("SNS1" in candid) return "sns1";
+    if ("CKBTC" in candid) return "ckbtc";
+    throw new UnsupportedValueError("Unexpected ApiCryptocurrency type received", candid);
 }
 
-export function apiToken(_token: Cryptocurrency): ApiCryptocurrency {
-    return { InternetComputer: null };
+export function apiToken(token: Cryptocurrency): ApiCryptocurrency {
+    switch (token) {
+        case "icp": return { InternetComputer: null };
+        case "sns1": return { SNS1: null };
+        case "ckbtc": return { CKBTC: null };
+    }
+    throw new Error(`Unexpected Cryptocurrency type received - ${token}`);
 }
 
 function cryptoTransfer(
@@ -540,6 +548,8 @@ export function chatMetrics(candid: ApiChatMetrics): ChatMetrics {
         cyclesMessages: Number(candid.cycles_messages),
         edits: Number(candid.edits),
         icpMessages: Number(candid.icp_messages),
+        sns1Messages: Number(candid.sns1_messages),
+        ckbtcMessages: Number(candid.ckbtc_messages),
         giphyMessages: Number(candid.giphy_messages),
         deletedMessages: Number(candid.deleted_messages),
         fileMessages: Number(candid.file_messages),
@@ -761,13 +771,14 @@ function apiPendingCryptoTransaction(domain: CryptocurrencyTransfer): ApiCryptoT
     if (domain.kind === "pending") {
         return {
             Pending: {
-                NNS: {
+                SNS: {
                     token: apiToken(domain.token),
                     to: {
-                        User: Principal.fromText(domain.recipient),
+                        owner: Principal.fromText(domain.recipient),
+                        subaccount: [],
                     },
                     amount: apiICP(domain.amountE8s),
-                    fee: apiOptional(apiICP, domain.feeE8s),
+                    fee: apiICP(domain.feeE8s ?? BigInt(0)),
                     memo: apiOptional(identity, domain.memo),
                 },
             },
@@ -778,12 +789,12 @@ function apiPendingCryptoTransaction(domain: CryptocurrencyTransfer): ApiCryptoT
 
 export function apiPendingCryptocurrencyWithdrawal(
     domain: PendingCryptocurrencyWithdrawal
-): ApiNnsPendingCryptoTransaction {
+): ApiSnsPendingCryptoTransaction {
     return {
         token: apiToken(domain.token),
-        to: { Account: hexStringToBytes(domain.to) },
+        to: { owner: Principal.fromText(domain.to), subaccount: [] },
         amount: apiICP(domain.amountE8s),
-        fee: apiOptional(apiICP, domain.feeE8s),
+        fee: apiICP(domain.feeE8s ?? BigInt(0)),
         memo: apiOptional(identity, domain.memo),
     };
 }

@@ -483,6 +483,8 @@ export function emptyChatMetrics(): ChatMetrics {
         cyclesMessages: 0,
         edits: 0,
         icpMessages: 0,
+        sns1Messages: 0,
+        ckbtcMessages: 0,
         giphyMessages: 0,
         deletedMessages: 0,
         reportedMessages: 0,

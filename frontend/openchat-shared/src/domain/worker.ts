@@ -297,7 +297,7 @@ type ConfirmPhoneNumber = Request<{
 
 type RefreshAccountBalance = Request<{
     crypto: Cryptocurrency;
-    account: string;
+    principal: string;
 }> & {
     kind: "refreshAccountBalance";
 };

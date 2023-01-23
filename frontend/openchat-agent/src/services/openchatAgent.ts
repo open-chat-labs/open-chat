@@ -163,7 +163,8 @@ export class OpenChatAgent extends EventTarget {
         this._notificationClient = NotificationsClient.create(identity, config);
         this._ledgerClients = {
             icp: LedgerClient.create(identity, config, this.config.ledgerCanisterICP),
-            btc: LedgerClient.create(identity, config, this.config.ledgerCanisterBTC),
+            sns1: LedgerClient.create(identity, config, this.config.ledgerCanisterSNS1),
+            ckbtc: LedgerClient.create(identity, config, this.config.ledgerCanisterBTC),
             chat: LedgerClient.create(identity, config, this.config.ledgerCanisterCHAT),
         };
         this._groupClients = {};
@@ -1314,8 +1315,8 @@ export class OpenChatAgent extends EventTarget {
         return this._userIndexClient.upgradeStorage(newLimitBytes);
     }
 
-    refreshAccountBalance(crypto: Cryptocurrency, account: string): Promise<Tokens> {
-        return this._ledgerClients[crypto].accountBalance(account);
+    refreshAccountBalance(crypto: Cryptocurrency, principal: string): Promise<Tokens> {
+        return this._ledgerClients[crypto].accountBalance(principal);
     }
 
     getGroupMessagesByMessageIndex(

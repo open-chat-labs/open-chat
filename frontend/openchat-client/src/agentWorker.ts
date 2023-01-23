@@ -135,6 +135,7 @@ export class OpenChatAgentWorker extends EventTarget {
                 internetIdentityUrl: this.config.internetIdentityUrl,
                 nfidUrl: this.config.nfidUrl,
                 ledgerCanisterICP: this.config.ledgerCanisterICP,
+                ledgerCanisterSNS1: this.config.ledgerCanisterSNS1,
                 ledgerCanisterBTC: this.config.ledgerCanisterBTC,
                 ledgerCanisterCHAT: this.config.ledgerCanisterCHAT,
                 userGeekApiKey: this.config.userGeekApiKey,
@@ -1055,12 +1056,12 @@ export class OpenChatAgentWorker extends EventTarget {
         });
     }
 
-    refreshAccountBalance(crypto: Cryptocurrency, account: string): Promise<Tokens> {
+    refreshAccountBalance(crypto: Cryptocurrency, principal: string): Promise<Tokens> {
         return this.sendRequest({
             kind: "refreshAccountBalance",
             payload: {
                 crypto,
-                account,
+                principal,
             },
         });
     }

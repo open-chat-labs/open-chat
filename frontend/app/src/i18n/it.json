@@ -470,7 +470,8 @@
         "chooseReceiver": "inserire il nome utente del destinatario",
         "icp": "Computer Internet",
         "btc": "Bitcoin",
-        "chat": "ApriChat"
+        "chat": "ApriChat",
+        "sns1": "SNS-1"
     },
     "cryptoAccount": {
         "manage": "Gestire",
@@ -514,7 +515,8 @@
         "reactions": "reazioni",
         "deletedMessages": "messaggi cancellati",
         "reportedMessages": "Messaggi segnalati",
-        "reportedMessagesInfo": "Messaggi inviati da te che sono stati eliminati o segnalati da altri. Questo può essere usato come un'indicazione che non stai contribuendo positivamente alla comunità."
+        "reportedMessagesInfo": "Messaggi inviati da te che sono stati eliminati o segnalati da altri. Questo può essere usato come un'indicazione che non stai contribuendo positivamente alla comunità.",
+        "cryptoTransfers": "Messaggio crittografico"
     },
     "andNMore": ", e {n} altro",
     "confirmMakeGroupPrivate": "Vuoi assolutamente rendere privato questo gruppo? Attualmente questa operazione non può essere annullata!",
