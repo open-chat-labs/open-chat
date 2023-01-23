@@ -27,7 +27,7 @@ export const cryptoLookup: Record<Cryptocurrency, CryptocurrencyDetails> = {
         symbol: "SNS1",
         name: "SNS-1",
         transferFeesE8s: BigInt(1_000),
-        howToBuyUrl: "https://avjzx-pyaaa-aaaaj-aadmq-cai.raw.ic0.app/ICDex/SNS1/ICP",
+        howToBuyUrl: "https://3ezrj-4yaaa-aaaam-abcha-cai.ic0.app/sns/faq#how-do-you-get-sns-tokens",
         disabled: false,
     },
     ckbtc: {
@@ -35,7 +35,7 @@ export const cryptoLookup: Record<Cryptocurrency, CryptocurrencyDetails> = {
         name: "Chain-key Bitcoin",
         transferFeesE8s: BigInt(10_000),
         howToBuyUrl: "https://www.finder.com/uk/how-to-buy-bitcoin",
-        disabled: false,
+        disabled: true,
     },
     chat: {
         symbol: "CHAT",
