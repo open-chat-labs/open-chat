@@ -599,7 +599,9 @@
         "filter": "Lọc đề xuất",
         "collapse": "Thu gọn tin nhắn",
         "enableAll": "Cho phép tất cả",
-        "disableAll": "Vô hiệu hóa tất cả"
+        "disableAll": "Vô hiệu hóa tất cả",
+        "readmore": "Đọc thêm",
+        "readless": "Đọc ít hơn"
     },
     "yes": "Đúng",
     "no": "Không",

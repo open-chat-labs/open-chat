@@ -599,7 +599,9 @@
         "filter": "Filtrar propuestas",
         "collapse": "Ocultar mensaje",
         "enableAll": "Permitirlos todos",
-        "disableAll": "Desactivar todo"
+        "disableAll": "Desactivar todo",
+        "readmore": "Lee mas",
+        "readless": "Leer menos"
     },
     "yes": "Sí",
     "no": "No",

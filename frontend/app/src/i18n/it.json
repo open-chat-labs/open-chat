@@ -598,7 +598,9 @@
         "filter": "Filtra le proposte",
         "collapse": "Comprimi messaggio",
         "enableAll": "Attiva tutto",
-        "disableAll": "Disabilitare tutto"
+        "disableAll": "Disabilitare tutto",
+        "readmore": "Leggi di più",
+        "readless": "Leggi di meno"
     },
     "yes": "sì",
     "no": "No",
