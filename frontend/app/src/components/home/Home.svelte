@@ -144,7 +144,9 @@
             closeThread();
         } else if (ev instanceof SendMessageFailed) {
             // This can occur either for chat messages or thread messages so we'll just handle it here
-            toastStore.showFailureToast("errorSendingMessage");
+            if (ev.detail) {
+                toastStore.showFailureToast("errorSendingMessage");
+            }
         } else if (ev instanceof ChatsUpdated) {
             closeNotifications((notification: Notification) => {
                 if (

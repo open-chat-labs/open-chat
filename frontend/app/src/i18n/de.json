@@ -674,6 +674,7 @@
     "reason": "Grund",
     "expandDeletedMessages": "Erweitern Sie gelöschte Nachrichten in diesem Chat",
     "revealDeletedMessage": "Nachricht enthüllen",
+    "retryMessage": "Nachricht erneut versuchen",
     "lowBandwidth": "Niedrige Bandbreite",
     "loadImage": "Bild laden",
     "loadGif": "gif laden",

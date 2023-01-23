@@ -674,6 +674,7 @@
     "reason": "Причина",
     "expandDeletedMessages": "Развернуть удаленные сообщения в этом чате",
     "revealDeletedMessage": "Показать сообщение",
+    "retryMessage": "Повторить сообщение",
     "lowBandwidth": "Низкая пропускная способность",
     "loadImage": "Загрузить изображение",
     "loadGif": "Загрузить гифку",

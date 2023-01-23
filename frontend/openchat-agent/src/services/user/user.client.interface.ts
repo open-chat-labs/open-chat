@@ -31,6 +31,7 @@ import type {
     InitialStateV2Response,
     UpdatesV2Response,
     DeletedDirectMessageResponse,
+    EventWrapper,
 } from "openchat-shared";
 
 export interface IUserClient {
@@ -67,7 +68,7 @@ export interface IUserClient {
     sendMessage(
         recipientId: string,
         sender: CreatedUser,
-        message: Message,
+        event: EventWrapper<Message>,
         replyingToChatId?: string,
         threadRootMessageIndex?: number
     ): Promise<[SendMessageResponse, Message]>;
@@ -75,7 +76,7 @@ export interface IUserClient {
         groupId: string,
         recipientId: string,
         sender: CreatedUser,
-        message: Message,
+        event: EventWrapper<Message>,
         threadRootMessageIndex?: number
     ): Promise<[SendMessageResponse, Message]>;
     blockUser(userId: string): Promise<BlockUserResponse>;

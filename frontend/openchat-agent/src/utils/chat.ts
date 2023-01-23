@@ -252,8 +252,8 @@ function mergeParticipants(_: Member | undefined, updated: Member) {
 
 export function mergeDirectChatUpdates(
     directChats: DirectChatSummary[],
-    updates: DirectChatSummaryUpdates[]): DirectChatSummary[]
-{
+    updates: DirectChatSummaryUpdates[]
+): DirectChatSummary[] {
     const lookup = toRecord(updates, (u) => u.chatId);
 
     return directChats.map((c) => {
@@ -274,14 +274,14 @@ export function mergeDirectChatUpdates(
             metrics: u.metrics ?? c.metrics,
             myMetrics: u.myMetrics ?? c.myMetrics,
             archived: u.archived ?? c.archived,
-        }
+        };
     });
 }
 
 export function mergeGroupChatUpdates(
     groupChats: GroupChatSummary[],
     userCanisterUpdates: UserCanisterGroupChatSummaryUpdates[],
-    groupCanisterUpdates: GroupCanisterGroupChatSummaryUpdates[],
+    groupCanisterUpdates: GroupCanisterGroupChatSummaryUpdates[]
 ): GroupChatSummary[] {
     const userLookup = toRecord(userCanisterUpdates, (c) => c.chatId);
     const groupLookup = toRecord(groupCanisterUpdates, (c) => c.chatId);
@@ -316,13 +316,18 @@ export function mergeGroupChatUpdates(
             myRole: g?.myRole ?? c.myRole,
             permissions: g?.permissions ?? c.permissions,
             historyVisibleToNewJoiners: c.historyVisibleToNewJoiners,
-            latestThreads: mergeThreads(c.latestThreads, g?.latestThreads ?? [], u?.threadsRead ?? {}),
+            latestThreads: mergeThreads(
+                c.latestThreads,
+                g?.latestThreads ?? [],
+                u?.threadsRead ?? {}
+            ),
             subtype: applyOptionUpdate(c.subtype, g?.subtype),
             previewed: false,
             frozen: applyOptionUpdate(c.frozen, g?.frozen) ?? false,
-            readByMeUpTo: readByMeUpTo !== undefined && latestMessage !== undefined
-                ? Math.min(readByMeUpTo, latestMessage.event.messageIndex)
-                : readByMeUpTo,
+            readByMeUpTo:
+                readByMeUpTo !== undefined && latestMessage !== undefined
+                    ? Math.min(readByMeUpTo, latestMessage.event.messageIndex)
+                    : readByMeUpTo,
             latestEventIndex: g?.latestEventIndex ?? c.latestEventIndex,
             latestMessage,
             notificationsMuted: g?.notificationsMuted ?? c.notificationsMuted,
@@ -332,14 +337,14 @@ export function mergeGroupChatUpdates(
             blobReference: applyOptionUpdate(c.blobReference, blobReferenceUpdate),
             dateLastPinned: g?.dateLastPinned ?? c.dateLastPinned,
             dateReadPinned: u?.dateReadPinned ?? c.dateReadPinned,
-        }
-    })
+        };
+    });
 }
 
 export function mergeGroupChats(
     userCanisterGroups: UserCanisterGroupChatSummary[],
-    groupCanisterGroups: GroupCanisterGroupChatSummary[]): GroupChatSummary[]
-{
+    groupCanisterGroups: GroupCanisterGroupChatSummary[]
+): GroupChatSummary[] {
     const userCanisterGroupLookup = toRecord(userCanisterGroups, (u) => u.chatId);
 
     return groupCanisterGroups.map((g) => {
@@ -372,50 +377,54 @@ export function mergeGroupChats(
             metrics: g.metrics,
             myMetrics: g.myMetrics,
             archived: u?.archived ?? false,
-            blobReference: g.avatarId !== undefined
-                ? { blobId: g.avatarId, canisterId: g.chatId }
-                : undefined,
+            blobReference:
+                g.avatarId !== undefined ? { blobId: g.avatarId, canisterId: g.chatId } : undefined,
             dateLastPinned: g.dateLastPinned,
             dateReadPinned: u?.dateReadPinned,
-        }
+        };
     });
 }
 
 function mergeThreads(
     current: ThreadSyncDetails[],
     groupCanisterUpdates: GroupCanisterThreadDetails[],
-    readUpToUpdates: Record<number, number>): ThreadSyncDetails[]
-{
+    readUpToUpdates: Record<number, number>
+): ThreadSyncDetails[] {
     const threadsRecord = toRecord(current, (t) => t.threadRootMessageIndex);
 
     for (const groupUpdate of groupCanisterUpdates) {
         threadsRecord[groupUpdate.threadRootMessageIndex] = {
             ...threadsRecord[groupUpdate.threadRootMessageIndex],
-            ...groupUpdate
+            ...groupUpdate,
         };
     }
 
     return Object.values(threadsRecord).map((t) => {
         const readUpToUpdate = readUpToUpdates[t.threadRootMessageIndex];
-        return readUpToUpdate !== undefined
-            ? { ...t, readUpTo: readUpToUpdate }
-            : t;
+        return readUpToUpdate !== undefined ? { ...t, readUpTo: readUpToUpdate } : t;
     });
 }
 
-export function isSuccessfulGroupSummaryResponse(response: GroupCanisterSummaryResponse): response is GroupCanisterGroupChatSummary {
+export function isSuccessfulGroupSummaryResponse(
+    response: GroupCanisterSummaryResponse
+): response is GroupCanisterGroupChatSummary {
     return "chatId" in response;
 }
 
-export function isSuccessfulGroupSummaryUpdatesResponse(response: GroupCanisterSummaryUpdatesResponse): response is GroupCanisterGroupChatSummaryUpdates {
+export function isSuccessfulGroupSummaryUpdatesResponse(
+    response: GroupCanisterSummaryUpdatesResponse
+): response is GroupCanisterGroupChatSummaryUpdates {
     return "chatId" in response;
 }
 
-export function getAffectedEvents(directChats: DirectChatSummaryUpdates[], groupChats: GroupCanisterGroupChatSummaryUpdates[]): Record<string, number[]> {
+export function getAffectedEvents(
+    directChats: DirectChatSummaryUpdates[],
+    groupChats: GroupCanisterGroupChatSummaryUpdates[]
+): Record<string, number[]> {
     const result = {} as Record<string, number[]>;
 
-    directChats.forEach((c) => result[c.chatId] = c.affectedEvents);
-    groupChats.forEach((c) => result[c.chatId] = c.affectedEvents);
+    directChats.forEach((c) => (result[c.chatId] = c.affectedEvents));
+    groupChats.forEach((c) => (result[c.chatId] = c.affectedEvents));
 
     return result;
 }
@@ -495,7 +504,6 @@ export function enoughVisibleMessages(
     [minIndex, maxIndex]: IndexRange,
     events: EventWrapper<ChatEvent>[]
 ): boolean {
-    console.log("in the func");
     const filtered = events.filter(eventIsVisible);
     if (filtered.length >= EVENT_PAGE_SIZE) {
         return true;

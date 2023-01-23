@@ -38,6 +38,7 @@ import {
     GroupCanisterSummaryResponse,
     GroupCanisterSummaryUpdatesResponse,
     DeletedGroupMessageResponse,
+    EventWrapper,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
@@ -118,11 +119,7 @@ export class GroupClient extends CandidService implements IGroupClient {
 
     @profile("groupClient")
     summary(): Promise<GroupCanisterSummaryResponse> {
-        return this.handleQueryResponse(
-            () => this.groupService.summary({}),
-            summaryResponse,
-            {}
-        );
+        return this.handleQueryResponse(() => this.groupService.summary({}), summaryResponse, {});
     }
 
     @profile("groupClient")
@@ -289,35 +286,35 @@ export class GroupClient extends CandidService implements IGroupClient {
     sendMessage(
         senderName: string,
         mentioned: User[],
-        message: Message,
+        event: EventWrapper<Message>,
         threadRootMessageIndex?: number
     ): Promise<[SendMessageResponse, Message]> {
         const dataClient = DataClient.create(this.identity, this.config);
-        const uploadContentPromise = message.forwarded
-            ? dataClient.forwardData(message.content, [this.chatId])
-            : dataClient.uploadData(message.content, [this.chatId]);
+        const uploadContentPromise = event.event.forwarded
+            ? dataClient.forwardData(event.event.content, [this.chatId])
+            : dataClient.uploadData(event.event.content, [this.chatId]);
 
         return uploadContentPromise.then((content) => {
-            const newContent = content ?? message.content;
+            const newContent = content ?? event.event.content;
             const args = {
                 content: apiMessageContent(newContent),
-                message_id: message.messageId,
+                message_id: event.event.messageId,
                 sender_name: senderName,
                 replies_to: apiOptional(
                     (replyContext) => ({
                         event_index: replyContext.eventIndex,
                     }),
-                    message.repliesTo
+                    event.event.repliesTo
                 ),
                 mentioned: mentioned.map(apiUser),
-                forwarding: message.forwarded,
+                forwarding: event.event.forwarded,
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                 correlation_id: generateUint64(),
             };
             return this.handleResponse(
                 this.groupService.send_message(args),
                 sendMessageResponse
-            ).then((resp) => [resp, { ...message, content: newContent }]);
+            ).then((resp) => [resp, { ...event.event, content: newContent }]);
         });
     }
 
@@ -536,7 +533,10 @@ export class GroupClient extends CandidService implements IGroupClient {
     }
 
     @profile("groupClient")
-    getDeletedMessage(messageId: bigint, threadRootMessageIndex?: number): Promise<DeletedGroupMessageResponse> {
+    getDeletedMessage(
+        messageId: bigint,
+        threadRootMessageIndex?: number
+    ): Promise<DeletedGroupMessageResponse> {
         return this.handleResponse(
             this.groupService.deleted_message({
                 message_id: messageId,
@@ -544,7 +544,7 @@ export class GroupClient extends CandidService implements IGroupClient {
             }),
             deletedMessageResponse
         );
-    }    
+    }
 
     @profile("groupClient")
     pinMessage(messageIndex: number): Promise<PinMessageResponse> {
@@ -588,11 +588,18 @@ export class GroupClient extends CandidService implements IGroupClient {
     }
 
     @profile("groupClient")
-    searchGroupChat(searchTerm: string, userIds: string[], maxResults: number): Promise<SearchGroupChatResponse> {
+    searchGroupChat(
+        searchTerm: string,
+        userIds: string[],
+        maxResults: number
+    ): Promise<SearchGroupChatResponse> {
         const args = {
             search_term: searchTerm,
             max_results: maxResults,
-            users: apiOptional(identity, userIds.map((u) => Principal.fromText(u))),
+            users: apiOptional(
+                identity,
+                userIds.map((u) => Principal.fromText(u))
+            ),
         };
         return this.handleQueryResponse(
             () => this.groupService.search_messages(args),
@@ -671,9 +678,7 @@ export class GroupClient extends CandidService implements IGroupClient {
     @profile("groupClient")
     localUserIndex(): Promise<string> {
         return this.handleQueryResponse(
-            () =>
-                this.groupService.local_user_index({
-                }),
+            () => this.groupService.local_user_index({}),
             (resp) => resp.Success.toString()
         );
     }

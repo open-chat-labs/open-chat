@@ -18,6 +18,7 @@ canister_state_macros = { workspace = true }
 canister_tracing_macros = { workspace = true }
 futures = { workspace = true }
 http_request = { path = "../../../libraries/http_request" }
+human_readable = { path = "../../../libraries/human_readable" }
 ic-cdk = { workspace = true }
 ic-cdk-macros = { workspace = true }
 msgpack = { path = "../../../libraries/msgpack" }
