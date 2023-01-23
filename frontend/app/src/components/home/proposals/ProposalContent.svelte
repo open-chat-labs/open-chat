@@ -271,7 +271,7 @@
         .title-block {
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            align-items: flex-start;
             margin-bottom: $sp4;
             gap: $sp3;
             .title {
