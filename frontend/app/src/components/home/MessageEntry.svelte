@@ -273,6 +273,12 @@
             return true;
         }
 
+        const testMsgMatch = txt.match(/^\/test-msg (\d+)/);
+        if (testMsgMatch && testMsgMatch[1] !== undefined) {
+            dispatch("createTestMessages", Number(testMsgMatch[1]));
+            return true;
+        }
+
         if (/snow|xmas|christmas|noel/i.test(txt)) {
             $snowing = true;
         }

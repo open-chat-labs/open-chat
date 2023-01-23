@@ -123,5 +123,6 @@ use serde::{Deserialize, Serialize};
 #[derive(CandidType, Serialize, Deserialize)]
 pub struct LogMessage {
     pub timestamp: TimestampMillis,
+    #[serde(alias = "message")]
     pub json: String,
 }

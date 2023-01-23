@@ -160,7 +160,11 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
 
             case "getDeletedGroupMessage":
                 agent
-                    .getDeletedGroupMessage(payload.chatId, payload.messageId, payload.threadRootMessageIndex)
+                    .getDeletedGroupMessage(
+                        payload.chatId,
+                        payload.messageId,
+                        payload.threadRootMessageIndex
+                    )
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,
@@ -757,7 +761,7 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
                         payload.chatId,
                         payload.user,
                         payload.mentioned,
-                        payload.msg,
+                        payload.event,
                         payload.threadRootMessageIndex
                     )
                     .then((response) =>
@@ -1211,6 +1215,32 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
+            case "loadFailedMessages":
+                agent
+                    .loadFailedMessages()
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
+            case "deleteFailedMessage":
+                agent
+                    .deleteFailedMessage(
+                        payload.chatId,
+                        payload.messageId,
+                        payload.threadRootMessageIndex
+                    )
+                    .then(() =>
+                        sendResponse(correlationId, {
+                            response: undefined,
                         })
                     )
                     .catch(sendError(correlationId));

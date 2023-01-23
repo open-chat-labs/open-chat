@@ -143,6 +143,20 @@
         searchTerm = ev.detail;
     }
 
+    function createTestMessages(ev: CustomEvent<number>): void {
+        if (process.env.NODE_ENV === "production") return;
+
+        function send(n: number) {
+            if (n === ev.detail) return;
+
+            sendMessageWithAttachment(`Test message ${n}`, [], undefined);
+
+            setTimeout(() => send(n + 1), 500);
+        }
+
+        send(0);
+    }
+
     function sendMessage(ev: CustomEvent<[string | undefined, User[]]>) {
         if (!canSend) return;
         let [text, mentioned] = ev.detail;
@@ -300,6 +314,7 @@
             on:fileSelected={fileSelected}
             on:audioCaptured={fileSelected}
             on:sendMessage={sendMessage}
+            on:createTestMessages={createTestMessages}
             on:attachGif={attachGif}
             on:tokenTransfer={tokenTransfer}
             on:searchChat={searchChat}

@@ -14,3 +14,4 @@ export { MessageFormatter } from "./utils/i18n";
 export { createMapStore } from "./stores/mapStore";
 export { buildCryptoTransferText, buildTransactionUrl } from "./utils/chat";
 export { Poller } from "./utils/poller";
+export { FailedMessages } from "./stores/failedMessages";

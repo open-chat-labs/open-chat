@@ -34,10 +34,7 @@
         LoadedPreviousMessages,
         SentMessage,
         UpgradeRequired,
-        ProposalContent,
-        NnsProposalTopic,
-        ProposalDecisionStatus,
-        ProposalRewardStatus,
+        FailedMessages,
     } from "openchat-client";
     import { pop } from "../../utils/transition";
     import { menuStore } from "../../stores/menu";
@@ -77,6 +74,7 @@
     $: messagesRead = client.messagesRead;
     $: unconfirmedReadByThem = client.unconfirmedReadByThem;
     $: unconfirmed = client.unconfirmed;
+    $: failedMessagesStore = client.failedMessagesStore;
     $: userGroupKeys = client.userGroupKeys;
     $: currentChatDraftMessage = client.currentChatDraftMessage;
     $: focusMessageIndex = client.focusMessageIndex;
@@ -165,6 +163,10 @@
         });
     }
 
+    function retrySend(ev: CustomEvent<EventWrapper<Message>>): void {
+        client.retrySendMessage(chat.chatId, ev.detail, events, undefined);
+    }
+
     function clientEvent(ev: Event): void {
         if (ev instanceof LoadedNewMessages) {
             onLoadedNewMessages(ev.detail);
@@ -212,7 +214,10 @@
 
     function findMessageEvent(index: number): EventWrapper<Message> | undefined {
         return events.find(
-            (ev) => ev.event.kind === "message" && ev.event.messageIndex === index
+            (ev) =>
+                ev.event.kind === "message" &&
+                ev.event.messageIndex === index &&
+                !failedMessagesStore.contains(chat.chatId, ev.event.messageId)
         ) as EventWrapper<Message> | undefined;
     }
 
@@ -424,13 +429,14 @@
             const sender = first.event.sender;
             prefix = sender + "_";
         }
-        for (const { index } of group) {
-            const key = prefix + index;
+        for (const evt of group) {
+            const key = prefix + (evt.event.kind === "message" ? evt.event.messageId : evt.index);
             if ($userGroupKeys.has(key)) {
                 return key;
             }
         }
-        const firstKey = prefix + first.index;
+        const firstKey =
+            prefix + (first.event.kind === "message" ? first.event.messageId : first.index);
         chatStateStore.updateProp(chat.chatId, "userGroupKeys", (keys) => {
             keys.add(firstKey);
             return keys;
@@ -495,6 +501,13 @@
             return !unconfirmed.contains(chat.chatId, evt.event.messageId);
         }
         return true;
+    }
+
+    function isFailed(_failed: FailedMessages, evt: EventWrapper<ChatEventType>): boolean {
+        if (evt.event.kind === "message") {
+            return failedMessagesStore.contains(chat.chatId, evt.event.messageId);
+        }
+        return false;
     }
 
     function isReadByThem(
@@ -632,8 +645,10 @@
                     <ChatEvent
                         {observer}
                         focused={evt.event.kind === "message" &&
-                            evt.event.messageIndex === $focusMessageIndex}
+                            evt.event.messageIndex === $focusMessageIndex &&
+                            !isFailed($failedMessagesStore, evt)}
                         confirmed={isConfirmed(evt)}
+                        failed={isFailed($failedMessagesStore, evt)}
                         readByThem={isReadByThem(chat, $unconfirmedReadByThem, evt)}
                         readByMe={isReadByMe($messagesRead, evt)}
                         chatId={chat.chatId}
@@ -666,6 +681,7 @@
                         on:collapseMessage={() => toggleMessageExpansion(evt, false)}
                         on:upgrade
                         on:forward
+                        on:retrySend={retrySend}
                         on:expandDeletedMessages={expandDeletedMessages}
                         event={evt} />
                 {/each}

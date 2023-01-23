@@ -32,7 +32,8 @@ import type {
     UnpinChatResponse,
     InitialStateV2Response,
     UpdatesV2Response,
-	DeletedDirectMessageResponse,
+    DeletedDirectMessageResponse,
+    EventWrapper,
 } from "openchat-shared";
 import type { IUserClient } from "./user.client.interface";
 import {
@@ -41,7 +42,9 @@ import {
     getCachedEventsByIndex,
     getCachedEventsWindow,
     mergeSuccessResponses,
+    recordFailedMessage,
     removeCachedChat,
+    removeFailedMessage,
     setCachedEvents,
     setCachedMessageFromSendResponse,
 } from "../../utils/caching";
@@ -64,7 +67,7 @@ export class CachingUserClient extends EventTarget implements IUserClient {
         private db: Database,
         private identity: Identity,
         private config: AgentConfig,
-        private client: IUserClient,
+        private client: IUserClient
     ) {
         super();
     }
@@ -231,25 +234,42 @@ export class CachingUserClient extends EventTarget implements IUserClient {
         groupId: string,
         recipientId: string,
         sender: CreatedUser,
-        message: Message,
+        event: EventWrapper<Message>,
         threadRootMessageIndex?: number
     ): Promise<[SendMessageResponse, Message]> {
+        removeFailedMessage(this.db, this.userId, event.event.messageId, threadRootMessageIndex);
         return this.client
-            .sendGroupICPTransfer(groupId, recipientId, sender, message, threadRootMessageIndex)
-            .then(setCachedMessageFromSendResponse(this.db, groupId, threadRootMessageIndex));
+            .sendGroupICPTransfer(groupId, recipientId, sender, event, threadRootMessageIndex)
+            .then(setCachedMessageFromSendResponse(this.db, groupId, event, threadRootMessageIndex))
+            .catch((err) => {
+                recordFailedMessage(this.db, groupId, event);
+                throw err;
+            });
     }
 
     @profile("userCachingClient")
     sendMessage(
         recipientId: string,
         sender: CreatedUser,
-        message: Message,
+        event: EventWrapper<Message>,
         replyingToChatId?: string,
         threadRootMessageIndex?: number
     ): Promise<[SendMessageResponse, Message]> {
+        removeFailedMessage(this.db, this.userId, event.event.messageId, threadRootMessageIndex);
         return this.client
-            .sendMessage(recipientId, sender, message, replyingToChatId, threadRootMessageIndex)
-            .then(setCachedMessageFromSendResponse(this.db, this.userId, threadRootMessageIndex));
+            .sendMessage(recipientId, sender, event, replyingToChatId, threadRootMessageIndex)
+            .then(
+                setCachedMessageFromSendResponse(
+                    this.db,
+                    this.userId,
+                    event,
+                    threadRootMessageIndex
+                )
+            )
+            .catch((err) => {
+                recordFailedMessage(this.db, this.userId, event, threadRootMessageIndex);
+                throw err;
+            });
     }
 
     blockUser(userId: string): Promise<BlockUserResponse> {
