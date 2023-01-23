@@ -6,6 +6,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [unreleased]
 
+## [[2.0.555](https://github.com/open-ic/open-chat/releases/tag/v2.0.555-user)] - 2022-01-20
+
+### Fixed
+
+- Fix bug sending messages from canisters on v2.0.547 to canisters on version v2.0.553 and resend failed messages ([#2995](https://github.com/open-ic/open-chat/pull/2995))
+
 ## [[2.0.553](https://github.com/open-ic/open-chat/releases/tag/v2.0.553-user)] - 2022-01-20
 
 ### Added
