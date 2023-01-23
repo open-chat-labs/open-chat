@@ -245,11 +245,11 @@ export function lightTheme(): Theme {
 
         vote: {
             yes: {
-                color: blueAccent,
+                color: "#4ae97a",
                 hv: "#0d8cd4",
             },
             no: {
-                color: pinkAccent,
+                color: "#ff2e2e",
                 hv: "#ff4fa7",
             },
             maybe: {

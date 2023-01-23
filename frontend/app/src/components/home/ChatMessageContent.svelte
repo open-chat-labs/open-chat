@@ -11,7 +11,7 @@
     import CryptoContent from "./CryptoContent.svelte";
     import DeletedContent from "./DeletedContent.svelte";
     import PlaceholderContent from "./PlaceholderContent.svelte";
-    import ProposalContent from "./ProposalContent.svelte";
+    import ProposalContent from "./proposals/ProposalContent.svelte";
     import IntersectionObserver from "./IntersectionObserver.svelte";
     import type { MessageContent } from "openchat-client";
     import { _ } from "svelte-i18n";
