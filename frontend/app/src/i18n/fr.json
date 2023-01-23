@@ -600,7 +600,9 @@
         "filter": "Filtrer les propositions",
         "collapse": "Réduire le message",
         "enableAll": "Tout activer",
-        "disableAll": "Désactiver tous les"
+        "disableAll": "Désactiver tous les",
+        "readmore": "Lire la suite",
+        "readless": "Lire moins"
     },
     "yes": "Oui",
     "no": "Non",

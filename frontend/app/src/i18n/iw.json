@@ -598,7 +598,9 @@
         "filter": "סינון הצעות",
         "collapse": "כווץ הודעה",
         "enableAll": "אפשר הכל",
-        "disableAll": "השבת הכל"
+        "disableAll": "השבת הכל",
+        "readmore": "קרא עוד",
+        "readless": "תקרא פחות"
     },
     "yes": "כן",
     "no": "לא",

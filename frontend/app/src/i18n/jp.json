@@ -600,7 +600,9 @@
         "filter": "提案をフィルタリングする",
         "collapse": "メッセージを折りたたむ",
         "enableAll": "全て可能にする",
-        "disableAll": "すべて無効にします"
+        "disableAll": "すべて無効にします",
+        "readmore": "続きを読む",
+        "readless": "もっと読む"
     },
     "yes": "はい",
     "no": "いいえ",

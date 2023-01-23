@@ -601,7 +601,9 @@
         "filter": "过滤提案",
         "collapse": "收起消息",
         "enableAll": "全部启用",
-        "disableAll": "禁用所有"
+        "disableAll": "禁用所有",
+        "readmore": "阅读更多",
+        "readless": "少读"
     },
     "quoteReply": "引用",
     "groupNameTooShort": "群组名太短",
