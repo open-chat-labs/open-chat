@@ -18,7 +18,7 @@ fn upgrade_notifications_canister_wasm_impl(args: Args, runtime_state: &mut Runt
         VersionNotHigher
     } else {
         runtime_state.data.canisters_requiring_upgrade.clear();
-        runtime_state.data.notifications_canister_wasm = args.wasm.value();
+        runtime_state.data.notifications_canister_wasm = args.wasm;
 
         for canister_id in runtime_state.data.notifications_canisters.keys() {
             runtime_state.data.canisters_requiring_upgrade.enqueue(*canister_id);

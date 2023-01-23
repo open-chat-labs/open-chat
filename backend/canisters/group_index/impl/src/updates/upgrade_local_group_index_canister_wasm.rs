@@ -18,7 +18,7 @@ fn upgrade_local_group_index_canister_wasm_impl(args: Args, runtime_state: &mut 
         VersionNotHigher
     } else {
         runtime_state.data.canisters_requiring_upgrade.clear();
-        runtime_state.data.local_group_index_canister_wasm = args.wasm.value();
+        runtime_state.data.local_group_index_canister_wasm = args.wasm;
 
         for canister_id in runtime_state.data.local_index_map.canisters() {
             runtime_state.data.canisters_requiring_upgrade.enqueue(*canister_id);

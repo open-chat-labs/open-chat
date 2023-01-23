@@ -19,7 +19,7 @@ fn c2c_upgrade_group_canister_wasm_impl(args: Args, runtime_state: &mut RuntimeS
         VersionNotHigher
     } else {
         runtime_state.data.canisters_requiring_upgrade.clear();
-        runtime_state.data.group_canister_wasm = args.wasm.value();
+        runtime_state.data.group_canister_wasm = args.wasm;
 
         for chat_id in runtime_state
             .data

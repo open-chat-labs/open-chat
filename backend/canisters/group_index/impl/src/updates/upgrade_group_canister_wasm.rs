@@ -27,7 +27,7 @@ async fn upgrade_group_canister_wasm(args: Args) -> Response {
         InternalError(format!("{:?}", first_error))
     } else {
         mutate_state(|state| {
-            state.data.group_canister_wasm = args.wasm.value();
+            state.data.group_canister_wasm = args.wasm;
         });
 
         info!(%version, "Group canister wasm upgraded");

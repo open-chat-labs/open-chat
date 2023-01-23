@@ -1,13 +1,13 @@
 use crate::Version;
 use candid::CandidType;
-use human_readable::{HumanReadable, ToHumanReadable};
+use human_readable::ToHumanReadable;
 use serde::{Deserialize, Serialize};
 use sha256::sha256_string;
 use std::fmt::{Debug, Formatter};
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct UpgradeCanisterWasmArgs {
-    pub wasm: HumanReadable<CanisterWasm>,
+    pub wasm: CanisterWasm,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone)]
@@ -35,12 +35,9 @@ impl Debug for CanisterWasm {
     }
 }
 
-impl ToHumanReadable for CanisterWasm {
-    type Target = CanisterWasmTrimmed;
-
-    fn to_human_readable(&self) -> Self::Target {
-        self.into()
-    }
+#[derive(Serialize)]
+pub struct HumanReadableUpgradeCanisterWasmArgs {
+    wasm: CanisterWasmTrimmed,
 }
 
 #[derive(Serialize)]
@@ -48,6 +45,16 @@ pub struct CanisterWasmTrimmed {
     version: Version,
     module_hash: String,
     byte_length: u64,
+}
+
+impl ToHumanReadable for UpgradeCanisterWasmArgs {
+    type Target = HumanReadableUpgradeCanisterWasmArgs;
+
+    fn to_human_readable(&self) -> Self::Target {
+        HumanReadableUpgradeCanisterWasmArgs {
+            wasm: (&self.wasm).into(),
+        }
+    }
 }
 
 impl From<&CanisterWasm> for CanisterWasmTrimmed {

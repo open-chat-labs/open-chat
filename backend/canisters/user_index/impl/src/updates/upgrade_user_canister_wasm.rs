@@ -27,7 +27,7 @@ async fn upgrade_user_canister_wasm(args: Args) -> Response {
         InternalError(format!("{:?}", first_error))
     } else {
         mutate_state(|state| {
-            state.data.user_canister_wasm = args.wasm.value();
+            state.data.user_canister_wasm = args.wasm;
         });
 
         info!(%version, "User canister wasm upgraded");

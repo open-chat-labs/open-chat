@@ -2539,8 +2539,17 @@ name = "human_readable"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "human_readable_derive",
  "serde",
  "serde_json",
+]
+
+[[package]]
+name = "human_readable_derive"
+version = "0.1.0"
+dependencies = [
+ "quote 1.0.23",
+ "syn 1.0.107",
 ]
 
 [[package]]
