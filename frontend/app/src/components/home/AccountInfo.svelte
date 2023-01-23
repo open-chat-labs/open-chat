@@ -4,28 +4,22 @@
     import { toastStore } from "../../stores/toast";
     import ContentCopy from "svelte-material-icons/ContentCopy.svelte";
     import { iconSize } from "../../stores/iconSize";
-    import type { CreatedUser, Cryptocurrency } from "openchat-client";
+    import { CreatedUser, Cryptocurrency, cryptoLookup } from "openchat-client";
     import { copyToClipboard } from "../../utils/urls";
 
     export let user: CreatedUser;
     export let qrSize: "default" | "smaller" = "default";
     export let token: Cryptocurrency;
 
-    let accountSummary = collapseAccount(user.cryptoAccount);
-    function collapseAccount(account: string) {
-        if (account.length > 20) {
-            return account.slice(0, 10) + "..." + account.slice(account.length - 10);
-        }
-        return account;
-    }
+    $: symbol = cryptoLookup[token].symbol;
 
     function copy() {
-        copyToClipboard(user.cryptoAccount).then((success) => {
+        copyToClipboard(user.userId).then((success) => {
             if (success) {
                 toastStore.showSuccessToast("copiedToClipboard");
             } else {
                 toastStore.showFailureToast("failedToCopyToClipboard", {
-                    values: { account: user.cryptoAccount },
+                    values: { account: user.userId },
                 });
             }
         });
@@ -35,13 +29,13 @@
 <div class="account-info">
     <div class="qr-wrapper">
         <div class="qr" class:smaller={qrSize === "smaller"}>
-            <QR text={user.cryptoAccount} />
+            <QR text={user.userId} />
         </div>
     </div>
-    <p>{$_("tokenTransfer.yourAccount", { values: { token: token.toUpperCase() } })}</p>
+    <p>{$_("tokenTransfer.yourAccount", { values: { token: symbol } })}</p>
     <div class="receiver">
         <div class="account">
-            {accountSummary}
+            {user.userId}
         </div>
         <div class="copy" title={$_("copyToClipboard")} on:click={copy}>
             <ContentCopy size={$iconSize} color={"var(--icon-txt)"} />

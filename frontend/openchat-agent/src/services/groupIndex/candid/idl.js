@@ -186,7 +186,11 @@ export const idlFactory = ({ IDL }) => {
     'Account' : AccountIdentifier,
   });
   const Tokens = IDL.Record({ 'e8s' : IDL.Nat64 });
-  const Cryptocurrency = IDL.Variant({ 'InternetComputer' : IDL.Null });
+  const Cryptocurrency = IDL.Variant({
+    'InternetComputer' : IDL.Null,
+    'SNS1' : IDL.Null,
+    'CKBTC' : IDL.Null,
+  });
   const TransactionHash = IDL.Vec(IDL.Nat8);
   const Memo = IDL.Nat64;
   const NnsFailedCryptoTransaction = IDL.Record({

@@ -6,7 +6,8 @@ type BalanceByCrypto = Record<Cryptocurrency, bigint>;
 
 const cryptoBalanceStore = writable<BalanceByCrypto>({
     icp: BigInt(0),
-    btc: BigInt(0),
+    sns1: BigInt(0),
+    ckbtc: BigInt(0),
     chat: BigInt(0),
 });
 

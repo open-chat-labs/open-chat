@@ -37,7 +37,7 @@
     $: valid =
         amountToWithdrawE8s > BigInt(0) &&
         targetAccount !== "" &&
-        targetAccount !== client.user.cryptoAccount;
+        targetAccount !== user.userId;
 
     $: transferFees = cryptoLookup[token].transferFeesE8s;
     $: symbol = cryptoLookup[token].symbol;
@@ -59,6 +59,7 @@
                 token: token,
                 to: targetAccount,
                 amountE8s: amountToWithdrawE8s,
+                feeE8s: transferFees,
             })
             .then((resp) => {
                 if (resp.kind === "completed") {

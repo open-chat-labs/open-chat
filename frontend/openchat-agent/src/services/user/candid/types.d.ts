@@ -143,9 +143,11 @@ export interface ChatMetrics {
   'image_messages' : bigint,
   'replies' : bigint,
   'video_messages' : bigint,
+  'sns1_messages' : bigint,
   'polls' : bigint,
   'proposals' : bigint,
   'reported_messages' : bigint,
+  'ckbtc_messages' : bigint,
   'reactions' : bigint,
 }
 export type ChatSummary = { 'Group' : GroupChatSummary } |
@@ -161,6 +163,9 @@ export interface ConfirmationCodeSms {
   'confirmation_code' : string,
   'phone_number' : string,
 }
+export interface Contact { 'nickname' : [] | [string], 'user_id' : UserId }
+export type ContactsArgs = {};
+export type ContactsResponse = { 'Success' : { 'contacts' : Array<Contact> } };
 export interface CreateGroupArgs {
   'is_public' : boolean,
   'permissions' : [] | [GroupPermissions],
@@ -192,7 +197,9 @@ export interface CryptoContent {
 export type CryptoTransaction = { 'Failed' : FailedCryptoTransaction } |
   { 'Completed' : CompletedCryptoTransaction } |
   { 'Pending' : PendingCryptoTransaction };
-export type Cryptocurrency = { 'InternetComputer' : null };
+export type Cryptocurrency = { 'InternetComputer' : null } |
+  { 'SNS1' : null } |
+  { 'CKBTC' : null };
 export type Cycles = bigint;
 export interface CyclesRegistrationFee {
   'recipient' : Principal,
@@ -768,6 +775,7 @@ export interface NotificationEnvelope {
   'notification' : Notification,
   'recipients' : Array<UserId>,
 }
+export interface OptionalContact { 'nickname' : TextUpdate, 'user_id' : UserId }
 export interface OwnershipTransferred {
   'old_owner' : UserId,
   'new_owner' : UserId,
@@ -979,6 +987,12 @@ export interface SetBioArgs { 'text' : string }
 export type SetBioResponse = { 'TooLong' : FieldTooLongResult } |
   { 'Success' : null } |
   { 'UserSuspended' : null };
+export interface SetContactArgs { 'contact' : OptionalContact }
+export type SetContactResponse = { 'NoChange' : null } |
+  { 'NicknameTooLong' : FieldTooLongResult } |
+  { 'Success' : null } |
+  { 'UserSuspended' : null } |
+  { 'NicknameTooShort' : FieldTooShortResult };
 export type SnsAccount = { 'Mint' : null } |
   { 'Account' : Icrc1Account };
 export interface SnsCompletedCryptoTransaction {
@@ -1041,6 +1055,9 @@ export interface Tally {
   'timestamp' : TimestampMillis,
 }
 export interface TextContent { 'text' : string }
+export type TextUpdate = { 'NoChange' : null } |
+  { 'SetToNone' : null } |
+  { 'SetToSome' : string };
 export interface ThreadRead {
   'root_message_index' : MessageIndex,
   'read_up_to' : MessageIndex,
@@ -1206,6 +1223,7 @@ export interface _SERVICE {
   >,
   'bio' : ActorMethod<[BioArgs], BioResponse>,
   'block_user' : ActorMethod<[BlockUserArgs], BlockUserResponse>,
+  'contacts' : ActorMethod<[ContactsArgs], ContactsResponse>,
   'create_group' : ActorMethod<[CreateGroupArgs], CreateGroupResponse>,
   'delete_group' : ActorMethod<[DeleteGroupArgs], DeleteGroupResponse>,
   'delete_messages' : ActorMethod<[DeleteMessagesArgs], DeleteMessagesResponse>,
@@ -1248,6 +1266,7 @@ export interface _SERVICE {
   'send_message' : ActorMethod<[SendMessageArgs], SendMessageResponse>,
   'set_avatar' : ActorMethod<[SetAvatarArgs], SetAvatarResponse>,
   'set_bio' : ActorMethod<[SetBioArgs], SetBioResponse>,
+  'set_contact' : ActorMethod<[SetContactArgs], SetContactResponse>,
   'transfer_crypto_within_group_v2' : ActorMethod<
     [TransferCryptoWithinGroupArgs],
     TransferCryptoWithinGroupResponse

@@ -88,20 +88,16 @@
             kind: "crypto_content",
             caption: message === "" ? undefined : message,
             transfer: {
-                token: token,
+                token,
                 kind: "pending",
                 recipient: receiver.userId,
                 amountE8s: draftAmountE8s,
+                feeE8s: transferFees,
             },
         };
         dispatch("sendTransfer", [content, undefined]);
         lastCryptoSent.set(token);
         dispatch("close");
-    }
-
-    function onTokenChanged() {
-        tokenChanging = true;
-        reset();
     }
 
     function cancel() {
@@ -136,16 +132,12 @@
     <ModalContent>
         <span class="header" slot="header">
             <div class="left">
-                {#if process.env.ENABLE_MULTI_CRYPTO}
-                    <div class="main-title">
-                        <div>{$_("tokenTransfer.send")}</div>
-                        <div>
-                            <CryptoSelector bind:token />
-                        </div>
+                <div class="main-title">
+                    <div>{$_("tokenTransfer.send")}</div>
+                    <div>
+                        <CryptoSelector bind:token />
                     </div>
-                {:else}
-                    <div>{$_("tokenTransfer.title", { values: { token: symbol } })}</div>
-                {/if}
+                </div>
             </div>
             <BalanceWithRefresh
                 bind:toppingUp

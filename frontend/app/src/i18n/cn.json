@@ -470,7 +470,8 @@
         "chooseReceiver": "输入接收者的用户名",
         "icp": "上网电脑",
         "btc": "比特币",
-        "chat": "打开聊天"
+        "chat": "打开聊天",
+        "sns1": "社交网络-1"
     },
     "cryptoAccount": {
         "manage": "管理",
@@ -514,7 +515,8 @@
         "reactions": "反应",
         "deletedMessages": "已删除的消息",
         "reportedMessages": "举报信息",
-        "reportedMessagesInfo": "您发送的消息被他人删除或举报。这可能表明您没有为社区做出积极贡献。"
+        "reportedMessagesInfo": "您发送的消息被他人删除或举报。这可能表明您没有为社区做出积极贡献。",
+        "cryptoTransfers": "加密信息"
     },
     "andNMore": ", 和 {n} 更多",
     "confirmMakeGroupPrivate": "您确定要将此群组设为私有吗？目前此操作无法撤消！",

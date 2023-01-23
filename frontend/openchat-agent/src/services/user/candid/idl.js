@@ -53,6 +53,14 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Null,
     'UserSuspended' : IDL.Null,
   });
+  const ContactsArgs = IDL.Record({});
+  const Contact = IDL.Record({
+    'nickname' : IDL.Opt(IDL.Text),
+    'user_id' : UserId,
+  });
+  const ContactsResponse = IDL.Variant({
+    'Success' : IDL.Record({ 'contacts' : IDL.Vec(Contact) }),
+  });
   const PermissionRole = IDL.Variant({
     'Owner' : IDL.Null,
     'Admins' : IDL.Null,
@@ -258,7 +266,11 @@ export const idlFactory = ({ IDL }) => {
     'Account' : AccountIdentifier,
   });
   const Tokens = IDL.Record({ 'e8s' : IDL.Nat64 });
-  const Cryptocurrency = IDL.Variant({ 'InternetComputer' : IDL.Null });
+  const Cryptocurrency = IDL.Variant({
+    'InternetComputer' : IDL.Null,
+    'SNS1' : IDL.Null,
+    'CKBTC' : IDL.Null,
+  });
   const TransactionHash = IDL.Vec(IDL.Nat8);
   const Memo = IDL.Nat64;
   const NnsFailedCryptoTransaction = IDL.Record({
@@ -665,9 +677,11 @@ export const idlFactory = ({ IDL }) => {
     'image_messages' : IDL.Nat64,
     'replies' : IDL.Nat64,
     'video_messages' : IDL.Nat64,
+    'sns1_messages' : IDL.Nat64,
     'polls' : IDL.Nat64,
     'proposals' : IDL.Nat64,
     'reported_messages' : IDL.Nat64,
+    'ckbtc_messages' : IDL.Nat64,
     'reactions' : IDL.Nat64,
   });
   const MessageEventWrapper = IDL.Record({
@@ -939,6 +953,23 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Null,
     'UserSuspended' : IDL.Null,
   });
+  const TextUpdate = IDL.Variant({
+    'NoChange' : IDL.Null,
+    'SetToNone' : IDL.Null,
+    'SetToSome' : IDL.Text,
+  });
+  const OptionalContact = IDL.Record({
+    'nickname' : TextUpdate,
+    'user_id' : UserId,
+  });
+  const SetContactArgs = IDL.Record({ 'contact' : OptionalContact });
+  const SetContactResponse = IDL.Variant({
+    'NoChange' : IDL.Null,
+    'NicknameTooLong' : FieldTooLongResult,
+    'Success' : IDL.Null,
+    'UserSuspended' : IDL.Null,
+    'NicknameTooShort' : FieldTooShortResult,
+  });
   const User = IDL.Record({ 'username' : IDL.Text, 'user_id' : UserId });
   const GroupReplyContext = IDL.Record({ 'event_index' : EventIndex });
   const TransferCryptoWithinGroupArgs = IDL.Record({
@@ -1062,6 +1093,7 @@ export const idlFactory = ({ IDL }) => {
       ),
     'bio' : IDL.Func([BioArgs], [BioResponse], ['query']),
     'block_user' : IDL.Func([BlockUserArgs], [BlockUserResponse], []),
+    'contacts' : IDL.Func([ContactsArgs], [ContactsResponse], ['query']),
     'create_group' : IDL.Func([CreateGroupArgs], [CreateGroupResponse], []),
     'delete_group' : IDL.Func([DeleteGroupArgs], [DeleteGroupResponse], []),
     'delete_messages' : IDL.Func(
@@ -1134,6 +1166,7 @@ export const idlFactory = ({ IDL }) => {
     'send_message' : IDL.Func([SendMessageArgs], [SendMessageResponse], []),
     'set_avatar' : IDL.Func([SetAvatarArgs], [SetAvatarResponse], []),
     'set_bio' : IDL.Func([SetBioArgs], [SetBioResponse], []),
+    'set_contact' : IDL.Func([SetContactArgs], [SetContactResponse], []),
     'transfer_crypto_within_group_v2' : IDL.Func(
         [TransferCryptoWithinGroupArgs],
         [TransferCryptoWithinGroupResponse],

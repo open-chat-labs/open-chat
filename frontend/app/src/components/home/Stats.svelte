@@ -16,6 +16,7 @@
 
     let hoveredIndex: number | undefined;
     let rendered = false;
+    let cryptoMessages = stats.icpMessages + stats.sns1Messages + stats.ckbtcMessages;
 
     let previousStats: ChatMetrics | undefined = undefined;
     let totalMessages = 0;
@@ -25,7 +26,7 @@
     let audioPerc = writable(12.5);
     let filePerc = writable(12.5);
     let pollPerc = writable(12.5);
-    let icpPerc = writable(12.5);
+    let cryptoPerc = writable(12.5);
     let giphyPerc = writable(12.5);
 
     $: {
@@ -37,7 +38,7 @@
                 stats.audioMessages +
                 stats.fileMessages +
                 stats.polls +
-                stats.icpMessages +
+                cryptoMessages +
                 stats.giphyMessages;
 
             textPerc = slice(stats.textMessages);
@@ -46,7 +47,7 @@
             audioPerc = slice(stats.audioMessages);
             filePerc = slice(stats.fileMessages);
             pollPerc = slice(stats.polls);
-            icpPerc = slice(stats.icpMessages);
+            cryptoPerc = slice(cryptoMessages);
             giphyPerc = slice(stats.giphyMessages);
             previousStats = stats;
         }
@@ -79,7 +80,7 @@
         $audioPerc,
         $filePerc,
         $pollPerc,
-        $icpPerc,
+        $cryptoPerc,
         $giphyPerc,
     ];
 
@@ -119,8 +120,8 @@
             rotate: sumSlice(0, 5),
         },
         {
-            cls: "icp",
-            perc: $icpPerc,
+            cls: "crypto",
+            perc: $cryptoPerc,
             rotate: sumSlice(0, 6),
         },
         {
@@ -205,11 +206,11 @@
                 <span class="stat">{stats.polls.toLocaleString()}</span>{$_("stats.pollMessages")}
             </div>
         </div>
-        <div class="icp legend">
+        <div class="crypto legend">
             <div class="key" />
             <div class="label">
-                <span class="stat">{stats.icpMessages.toLocaleString()}</span>{$_(
-                    "stats.icpTransfers"
+                <span class="stat">{cryptoMessages.toLocaleString()}</span>{$_(
+                    "stats.cryptoTransfers"
                 )}
             </div>
         </div>
@@ -273,7 +274,7 @@
     $file-colour: #edc95e;
     $text-colour: #5e82ed;
     $poll-colour: #5eed82;
-    $icp-colour: #a6ed5e;
+    $crypto-colour: #a6ed5e;
     $giphy-colour: #ed5e5e;
 
     .stat {
@@ -418,10 +419,10 @@
         }
     }
 
-    .icp {
-        stroke: $icp-colour;
+    .crypto {
+        stroke: $crypto-colour;
         .key {
-            background-color: $icp-colour;
+            background-color: $crypto-colour;
         }
     }
 

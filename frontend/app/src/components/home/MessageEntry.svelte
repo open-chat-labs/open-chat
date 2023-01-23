@@ -26,7 +26,7 @@
         Questions,
         OpenChat,
     } from "openchat-client";
-    import { allQuestions } from "openchat-client";
+    import { allQuestions, cryptoCurrencyList, cryptoLookup } from "openchat-client";
     import Button from "../Button.svelte";
     import { enterSend } from "../../stores/settings";
     import MessageActions from "./MessageActions.svelte";
@@ -75,6 +75,8 @@
     let rangeToReplace: [number, number] | undefined = undefined;
     let isSuperAdmin = client.isSuperAdmin();
     let freezingInProgress = false;
+    let tokens = cryptoCurrencyList.filter(t => !cryptoLookup[t].disabled).map(t => t.toLowerCase()).join('|');
+    let tokenMatchRegex = new RegExp(`^\/(${tokens}) *(\d*[.,]?\d*)$`);
 
     // Update this to force a new textbox instance to be created
     let textboxId = Symbol();
@@ -85,7 +87,7 @@
     $: isBot = $userStore[userId]?.kind === "bot";
     $: messageIsEmpty = (textContent?.trim() ?? "").length === 0 && fileToAttach === undefined;
     $: isFrozen = client.isFrozen(chat.chatId);
-    $: pollsAllowed = isGroup && !isBot && client.canCreatePolls(chat.chatId);
+    $: pollsAllowed = isGroup && !isBot && client.canCreatePolls(chat.chatId);    
 
     $: {
         if (inp) {
@@ -312,9 +314,7 @@
             }
         }
 
-        const tokenMatch = process.env.ENABLE_MULTI_CRYPTO
-            ? txt.match(/^\/(icp|btc|chat) *(\d*[.,]?\d*)$/)
-            : txt.match(/^\/(icp) *(\d*[.,]?\d*)$/);
+        const tokenMatch = txt.match(tokenMatchRegex);
         if (tokenMatch && tokenMatch[2] !== undefined) {
             dispatch("tokenTransfer", {
                 token: tokenMatch[1],

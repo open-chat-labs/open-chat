@@ -170,9 +170,11 @@ export interface ChatMetrics {
   'image_messages' : bigint,
   'replies' : bigint,
   'video_messages' : bigint,
+  'sns1_messages' : bigint,
   'polls' : bigint,
   'proposals' : bigint,
   'reported_messages' : bigint,
+  'ckbtc_messages' : bigint,
   'reactions' : bigint,
 }
 export type ChatSummary = { 'Group' : GroupChatSummary } |
@@ -196,7 +198,9 @@ export interface CryptoContent {
 export type CryptoTransaction = { 'Failed' : FailedCryptoTransaction } |
   { 'Completed' : CompletedCryptoTransaction } |
   { 'Pending' : PendingCryptoTransaction };
-export type Cryptocurrency = { 'InternetComputer' : null };
+export type Cryptocurrency = { 'InternetComputer' : null } |
+  { 'SNS1' : null } |
+  { 'CKBTC' : null };
 export type Cycles = bigint;
 export interface CyclesRegistrationFee {
   'recipient' : Principal,
@@ -1093,6 +1097,9 @@ export interface Tally {
   'timestamp' : TimestampMillis,
 }
 export interface TextContent { 'text' : string }
+export type TextUpdate = { 'NoChange' : null } |
+  { 'SetToNone' : null } |
+  { 'SetToSome' : string };
 export interface ThreadPreview {
   'latest_replies' : Array<MessageEventWrapper>,
   'total_replies' : number,

@@ -954,6 +954,8 @@ export function mergeChatMetrics(a: ChatMetrics, b: ChatMetrics): ChatMetrics {
         cyclesMessages: a.cyclesMessages + b.cyclesMessages,
         edits: a.edits + b.edits,
         icpMessages: a.icpMessages + b.icpMessages,
+        sns1Messages: a.sns1Messages + b.sns1Messages,
+        ckbtcMessages: a.ckbtcMessages + b.ckbtcMessages,
         giphyMessages: a.giphyMessages + b.giphyMessages,
         deletedMessages: a.deletedMessages + b.deletedMessages,
         reportedMessages: a.reportedMessages + b.reportedMessages,
@@ -1245,6 +1247,9 @@ export function buildTransactionUrl(content: CryptocurrencyContent): string | un
         return undefined;
     }
     // TODO: Where can we see the transactions for other tokens? In OpenChat I suppose...
+    if (content.transfer.token !== "icp") {
+        return undefined;
+    }
     return `https://dashboard.internetcomputer.org/transaction/${content.transfer.transactionHash}`;
 }
 
