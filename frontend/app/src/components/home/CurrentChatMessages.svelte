@@ -440,17 +440,8 @@
 
     $: expandedDeletedMessages = client.expandedDeletedMessages;
 
-    $: groupedEventsX = client
-        .groupEvents(events, user.userId, $expandedDeletedMessages, groupInner(filteredProposals))
-        .reverse();
-
     $: groupedEvents = client
-        .groupEvents(
-            [...events, createAProposalEvent()],
-            user.userId,
-            $expandedDeletedMessages,
-            groupInner(filteredProposals)
-        )
+        .groupEvents(events, user.userId, $expandedDeletedMessages, groupInner(filteredProposals))
         .reverse();
 
     $: {
@@ -622,52 +613,6 @@
         // earliest loaded event index is 1, even though event 0 is available
         const indexRequired = Math.max(client.earliestAvailableEventIndex(chat), 1);
         return earliestLoadedEventIndex <= indexRequired;
-    }
-
-    function createAProposalEvent(): EventWrapper<ChatEventType> {
-        return {
-            index: 565,
-            timestamp: BigInt(Date.now()),
-            event: {
-                kind: "message",
-                messageId: BigInt(112499991379919400050094082157432537089),
-                messageIndex: 559,
-                sender: "wxns6-qiaaa-aaaaa-aaaqa-cai",
-                content: createAProposal(),
-                reactions: [],
-                edited: false,
-                forwarded: false,
-                deleted: false,
-            },
-        };
-    }
-
-    function createAProposal(): ProposalContent {
-        return {
-            kind: "proposal_content",
-            governanceCanisterId: "",
-            proposal: {
-                kind: "nns",
-                topic: NnsProposalTopic.Governance,
-                id: BigInt(123456),
-                url: "https://www.google.co.uk",
-                status: ProposalDecisionStatus.Open,
-                tally: {
-                    yes: 150,
-                    no: 65,
-                    total: 1000,
-                },
-                title: "This is a lovely little proposal",
-                created: +new Date(2022, 3, 20),
-                deadline: +new Date(2023, 3, 21),
-                lastUpdated: Date.now(),
-                rewardStatus: ProposalRewardStatus.ReadyToSettle,
-                summary:
-                    "The goal of this proposal is to implement a USD stablecoin system that will allow SNS-1 to issue and manage a stablecoin that is collateralized by Bitcoin. The stablecoin (referred to from here on as icUSD), will be pegged to the value of 1 US dollar and can be used for peer-to-peer transactions, payments, and as a store of value.\n\nThe SNS-1 DAO has a first mover advantage with ICP's protocol level support of Bitcoin that should be taken advantage of quickly in order to establish a dominant presence in the market. The goal of this proposal is to implement a USD stablecoin system that will allow SNS-1 to issue and manage a stablecoin that is collateralized by Bitcoin. The stablecoin (referred to from here on as icUSD), will be pegged to the value of 1 US dollar and can be used for peer-to-peer transactions, payments, and as a store of value.\n\nThe SNS-1 DAO has a first mover advantage with ICP's protocol level support of Bitcoin that should be taken advantage of quickly in order to establish a dominant presence in the market. The goal of this proposal is to implement a USD stablecoin system that will allow SNS-1 to issue and manage a stablecoin that is collateralized by Bitcoin. The stablecoin (referred to from here on as icUSD), will be pegged to the value of 1 US dollar and can be used for peer-to-peer transactions, payments, and as a store of value.\n\nThe SNS-1 DAO has a first mover advantage with ICP's protocol level support of Bitcoin that should be taken advantage of quickly in order to establish a dominant presence in the market. The goal of this proposal is to implement a USD stablecoin system that will allow SNS-1 to issue and manage a stablecoin that is collateralized by Bitcoin. The stablecoin (referred to from here on as icUSD), will be pegged to the value of 1 US dollar and can be used for peer-to-peer transactions, payments, and as a store of value.\n\nThe SNS-1 DAO has a first mover advantage with ICP's protocol level support of Bitcoin that should be taken advantage of quickly in order to establish a dominant presence in the market.",
-                proposer: "julian jelfs",
-            },
-            myVote: undefined,
-        };
     }
 </script>
 

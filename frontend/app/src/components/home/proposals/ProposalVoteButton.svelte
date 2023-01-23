@@ -12,9 +12,14 @@
 
     $: label = mode === "yes" ? $_("proposal.adopt") : $_("proposal.reject");
     $: iconColor = disabled && !voted ? "var(--vote-maybe-color)" : "var(--txt)";
+    $: title = voted
+        ? mode === "yes"
+            ? $_("proposal.youVotedAdopt")
+            : $_("proposal.youVotedReject")
+        : "";
 </script>
 
-<div class="vote-button">
+<div class="vote-button" {title}>
     <div class="label">{label}</div>
     <div on:click class:voting class:voted class:disabled class={`icon ${mode}`}>
         {#if !voting}

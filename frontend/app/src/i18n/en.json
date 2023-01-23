@@ -617,7 +617,9 @@
         "filter": "Filter proposals",
         "collapse": "Collapse message",
         "enableAll": "Enable all",
-        "disableAll": "Disable all"
+        "disableAll": "Disable all",
+        "readmore": "Read more",
+        "readless": "Read less"
     },
     "yes": "Yes",
     "no": "No",

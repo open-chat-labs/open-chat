@@ -8,7 +8,7 @@
         RegisterProposalVoteResponse,
     } from "openchat-client";
     import Markdown from "../Markdown.svelte";
-    import { now, now500 } from "../../../stores/time";
+    import { now } from "../../../stores/time";
     import EyeOff from "svelte-material-icons/EyeOff.svelte";
     import Launch from "svelte-material-icons/Launch.svelte";
     import { toastStore } from "../../../stores/toast";
@@ -20,6 +20,8 @@
     import type { OpenChat } from "openchat-client";
     import ProposalVoteButton from "./ProposalVoteButton.svelte";
     import ProposalVotingProgress from "./ProposalVotingProgress.svelte";
+    import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
+    import ProposalProgressLayout from "./ProposalProgressLayout.svelte";
 
     const dispatch = createEventDispatcher();
 
@@ -63,13 +65,10 @@
           `${nnsDappUrl}/sns/${content.governanceCanisterId}/neuron/${proposal.proposer}`;
     $: adoptPercent = round2((100 * proposal.tally.yes) / proposal.tally.total);
     $: rejectPercent = round2((100 * proposal.tally.no) / proposal.tally.total);
-    $: deadline = new Date(Number(proposal.deadline));
     $: votingEnded = proposal.deadline <= $now;
     $: disable = readonly || reply || votingEnded;
     $: votingDisabled = voteStatus !== undefined || disable;
     $: typeValue = getProposalTopicLabel(content, $proposalTopicsStore);
-    $: rtl = $rtlStore ? "right" : "left";
-    // TODO - new design needs some rtl love
     $: showFullSummary = proposal.summary.length < 400;
 
     $: {
@@ -192,97 +191,47 @@
                     <div class="gradient" />
                 {/if}
             </div>
+            {#if !showFullSummary}
+                <div class="expand" on:click={toggleSummary}>
+                    <div class="label">
+                        {summaryExpanded ? "Read less" : "Read more"}
+                    </div>
+                    <div class="icon" class:open={summaryExpanded}>
+                        <ChevronDown viewBox="0 -3 24 24" size="1.6em" color="var(--icon-txt" />
+                    </div>
+                </div>
+            {/if}
         {/if}
 
-        <div class="votes2">
-            <ProposalVoteButton
-                voting={voteStatus === "adopting"}
-                voted={voteStatus === "adopted"}
-                disabled={votingDisabled}
-                mode={"yes"}
-                on:click={() => onVote(true)}
-                percentage={adoptPercent} />
-
-            <ProposalVotingProgress {adoptPercent} {rejectPercent} />
-
-            <ProposalVoteButton
-                voting={voteStatus === "rejecting"}
-                voted={voteStatus === "rejected"}
-                disabled={votingDisabled}
-                mode={"no"}
-                on:click={() => onVote(false)}
-                percentage={rejectPercent} />
-        </div>
-
-        <!-- <div class="votes" class:rtl={$rtlStore}>
-            <div class="data">
-                <div class="yes">
-                    <span class="label">{$_("yes")}</span>
-                    <span class="value">{adoptPercent}%</span>
-                </div>
-                <div class="no">
-                    <span class="label">{$_("no")}</span>
-                    <span class="value">{rejectPercent}%</span>
-                </div>
-                <div class="remaining">
-                    {#if !votingEnded}
-                        <span class="label">{$_("proposal.votingPeriodRemaining")}</span>
-                        <span class="value"
-                            >{client.formatTimeRemaining($now500, proposal.deadline)}</span>
-                    {:else}
-                        <span class="label">{$_("proposal.votingPeriodEnded")}</span>
-                        <span class="value"
-                            >{client.toDateString(deadline)}
-                            {client.toShortTimeString(deadline)}</span>
-                    {/if}
-                </div>
+        <ProposalProgressLayout>
+            <div slot="adopt" class="adopt">
+                <ProposalVoteButton
+                    voting={voteStatus === "adopting"}
+                    voted={voteStatus === "adopted"}
+                    disabled={votingDisabled}
+                    mode={"yes"}
+                    on:click={() => onVote(true)}
+                    percentage={adoptPercent} />
             </div>
-            <div class="progress">
-                <div class="adopt" style="width: {adoptPercent}%" />
-                <div class="reject" style="width: {rejectPercent}%" />
-                <div class="vertical-line" style="{rtl}: 3%" />
-                <div class="vertical-line" style="{rtl}: 50%" />
-                <div class="icon" style="{rtl}: calc(3% - 0.5em)">
-                    <ChevronDown viewBox="-1 0 24 24" />
-                </div>
-                <div class="icon solid" style="{rtl}: calc(50% - 0.5em)">
-                    <svg viewBox="-1 0 24 24">
-                        <path d="M6,10 L12,16 L18,10 H7Z" fill="currentColor" />
-                    </svg>
-                </div>
-            </div>
-        </div> -->
 
-        <!-- <div class="vote" class:voted={voteStatus === "adopted" || voteStatus === "rejected"}>
-            <button
-                class="adopt"
-                class:voting={voteStatus === "adopting"}
-                class:disabled={votingDisabled}
-                class:gray={voteStatus === "rejected" || disable}
-                on:click={() => onVote(true)}>
-                <div class="contents">
-                    <div>
-                        {$_("proposal." + (voteStatus === "adopted" ? "youVotedAdopt" : "adopt"))}
-                    </div>
-                    <div class="icon"><ThumbUp /></div>
-                </div>
-            </button>
-            <button
-                class="reject"
-                class:voting={voteStatus === "rejecting"}
-                class:disabled={votingDisabled}
-                class:gray={voteStatus === "adopted" || disable}
-                on:click={() => onVote(false)}>
-                <div class="contents">
-                    <div>
-                        {$_(
-                            "proposal." + (voteStatus === "rejected" ? "youVotedReject" : "reject")
-                        )}
-                    </div>
-                    <div class="icon"><ThumbDown /></div>
-                </div>
-            </button>
-        </div> -->
+            <div slot="progress" class="progress">
+                <ProposalVotingProgress
+                    deadline={proposal.deadline}
+                    {votingEnded}
+                    {adoptPercent}
+                    {rejectPercent} />
+            </div>
+
+            <div slot="reject" class="reject">
+                <ProposalVoteButton
+                    voting={voteStatus === "rejecting"}
+                    voted={voteStatus === "rejected"}
+                    disabled={votingDisabled}
+                    mode={"no"}
+                    on:click={() => onVote(false)}
+                    percentage={rejectPercent} />
+            </div>
+        </ProposalProgressLayout>
     </div>
     <div class="more" class:rtl={$rtlStore}>
         {#if isNns}
@@ -393,222 +342,9 @@
         font-variant-numeric: tabular-nums;
     }
 
-    .votes2 {
-        display: flex;
-        align-items: center;
-        gap: $sp5;
-        padding: $sp5 $sp4;
-        border-bottom: 1px solid var(--bd);
-        margin-bottom: $sp3;
-    }
-
-    .votes {
-        margin: 12px 0;
-
-        .data {
-            margin-bottom: toRem(10);
-            position: relative;
-
-            > div {
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-            }
-
-            .label {
-                @include font(light, normal, fs-70);
-            }
-
-            .yes {
-                position: absolute;
-                left: 0;
-                align-items: flex-start;
-                .value {
-                    color: var(--vote-yes-color);
-                }
-            }
-
-            .no {
-                position: absolute;
-                right: 0;
-                align-items: flex-end;
-                .value {
-                    color: var(--vote-no-color);
-                }
-            }
-
-            .remaining {
-                margin: 0 auto;
-                .value {
-                    @include font-size(fs-100);
-                }
-            }
-        }
-
-        .progress {
-            height: toRem(16);
-            position: relative;
-            background: var(--chatSummary-bg-selected);
-
-            .adopt {
-                position: absolute;
-                top: 0;
-                left: 0;
-                bottom: 0;
-                background: var(--vote-yes-color);
-            }
-
-            .reject {
-                position: absolute;
-                top: 0;
-                right: 0;
-                bottom: 0;
-                background: var(--vote-no-color);
-            }
-
-            .vertical-line {
-                position: absolute;
-                top: 0;
-                bottom: 0;
-                width: 1px;
-                background-color: var(--txt);
-            }
-
-            .icon {
-                position: absolute;
-                top: toRem(-16);
-                color: var(--txt);
-
-                &.solid {
-                    width: 1em;
-                    height: 1em;
-                }
-            }
-        }
-
-        &.rtl {
-            .votes {
-                .yes {
-                    left: auto;
-                    right: 0;
-                }
-                .no {
-                    left: 0;
-                    right: auto;
-                }
-            }
-            .progress {
-                .adopt {
-                    left: auto;
-                    right: 0;
-                }
-                .reject {
-                    right: auto;
-                    left: 0;
-                }
-            }
-        }
-    }
-
-    .vote {
-        margin: $sp4 0 $sp3 0;
-        display: flex;
-        gap: $sp4;
-        justify-content: space-between;
-
-        @include size-below(xs) {
-            flex-direction: column;
-            align-items: stretch;
-            gap: $sp3;
-        }
-
-        &.voted button {
-            flex: auto;
-        }
-
-        button {
-            @include font-size(fs-120);
-            padding: toRem(12) toRem(6);
-            color: white;
-            cursor: pointer;
-            border: 0;
-            flex: 1;
-            transition: background-color ease-in-out 200ms;
-
-            .contents {
-                display: flex;
-                justify-content: center;
-                gap: $sp3;
-            }
-
-            .icon {
-                position: relative;
-                color: white;
-                transition: transform ease-in-out 200ms;
-            }
-
-            &.adopt {
-                background-color: var(--vote-yes-color);
-                .icon {
-                    height: toRem(16);
-                    top: toRem(1);
-                    @include size-below(sm) {
-                        top: 0;
-                    }
-                    @include size-below(xs) {
-                        top: toRem(-1);
-                    }
-                }
-            }
-
-            &.reject {
-                background-color: var(--vote-no-color);
-                .icon {
-                    height: toRem(16);
-                    top: toRem(4);
-                    @include size-below(sm) {
-                        top: toRem(3);
-                    }
-                    @include size-below(xs) {
-                        top: toRem(2);
-                    }
-                }
-            }
-
-            &:not(.disabled):hover {
-                &.adopt {
-                    background-color: var(--vote-yes-hv);
-                }
-                &.reject {
-                    background-color: var(--vote-no-hv);
-                }
-                .icon {
-                    transform: rotate(-8deg) scale(1.2);
-                }
-            }
-
-            &.disabled {
-                cursor: default;
-            }
-
-            &.gray {
-                background: var(--button-disabled);
-                border: 1px solid var(--button-disabled-bd);
-            }
-
-            &.voting {
-                .contents {
-                    visibility: hidden;
-                }
-
-                @include loading-spinner(
-                    toRem(20),
-                    toRem(10),
-                    var(--button-spinner),
-                    "../assets/plain-spinner.svg"
-                );
-            }
-        }
+    .progress {
+        flex: auto;
+        width: 100%;
     }
 
     .more {
@@ -625,6 +361,27 @@
             @include font(book, normal, fs-70);
             font-weight: 700;
             @include font-size(fs-70);
+        }
+    }
+
+    .expand {
+        @include font(book, normal, fs-80);
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        margin-top: $sp3;
+
+        .label {
+            min-width: 70px;
+        }
+
+        .icon {
+            transition: transform 200ms ease-in-out;
+            transform-origin: 50%;
+            &.open {
+                transform: rotate(180deg);
+            }
         }
     }
 </style>
