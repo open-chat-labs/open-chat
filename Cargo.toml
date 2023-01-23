@@ -51,6 +51,7 @@ members = [
     "backend/libraries/dynamodb_index_store",
     "backend/libraries/http_request",
     "backend/libraries/human_readable",
+    "backend/libraries/human_readable_derive",
     "backend/libraries/index_store",
     "backend/libraries/ledger_utils",
     "backend/libraries/msgpack",
