@@ -43,16 +43,13 @@ import {
     getCachedEventsWindow,
     mergeSuccessResponses,
     recordFailedMessage,
-    removeCachedChat,
     removeFailedMessage,
     setCachedEvents,
     setCachedMessageFromSendResponse,
 } from "../../utils/caching";
 import { MAX_MISSING } from "../../constants";
 import { profile } from "../common/profiling";
-import type { Identity } from "@dfinity/agent";
 import type { AgentConfig } from "../../config";
-import type { Principal } from "@dfinity/principal";
 
 /**
  * This exists to decorate the user client so that we can provide a write through cache to
@@ -65,15 +62,10 @@ export class CachingUserClient extends EventTarget implements IUserClient {
 
     constructor(
         private db: Database,
-        private identity: Identity,
         private config: AgentConfig,
         private client: IUserClient
     ) {
         super();
-    }
-
-    private get principal(): Principal {
-        return this.identity.getPrincipal();
     }
 
     private setCachedEvents<T extends ChatEvent>(
@@ -281,9 +273,6 @@ export class CachingUserClient extends EventTarget implements IUserClient {
     }
 
     leaveGroup(chatId: string): Promise<LeaveGroupResponse> {
-        removeCachedChat(this.db, this.principal, chatId).catch((err) =>
-            this.config.logger.error("Failed to remove chat from cache", err)
-        );
         return this.client.leaveGroup(chatId);
     }
 
