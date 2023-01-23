@@ -23,6 +23,7 @@ export type ImagesObject = {
     fixed_height: MultiformatImage;
     fixed_width: MultiformatImage;
     downsized_large: ImageVariant;
+    downsized: ImageVariant;
     original: MultiformatImage;
 };
 

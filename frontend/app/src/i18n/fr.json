@@ -673,5 +673,10 @@
     "howToBuyToken": "J'ai besoin d'aide pour acheter {token}",
     "reason": "Raison",
     "expandDeletedMessages": "Développer les messages supprimés dans ce chat",
-    "revealDeletedMessage": "Révéler le message"
+    "revealDeletedMessage": "Révéler le message",
+    "lowBandwidth": "Bas débit",
+    "loadImage": "Charger l'image",
+    "loadGif": "Charger le gif",
+    "showTweet": "Afficher le tweet",
+    "showVideo": "Afficher la vidéo"
 }

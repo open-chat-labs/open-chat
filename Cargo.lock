@@ -899,9 +899,10 @@ dependencies = [
 [[package]]
 name = "canister_logger"
 version = "0.1.0"
-source = "git+https://github.com/open-ic/ic-utils?rev=d18c778cd6064664e991b256c5e8a311568cbc4c#d18c778cd6064664e991b256c5e8a311568cbc4c"
+source = "git+https://github.com/open-ic/ic-utils?rev=2656695f78e5234be04561d353da7b057b11d553#2656695f78e5234be04561d353da7b057b11d553"
 dependencies = [
  "candid",
+ "canister_time",
  "ic0 0.18.7 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde",
  "tracing",
@@ -912,17 +913,35 @@ dependencies = [
 [[package]]
 name = "canister_state_macros"
 version = "0.1.0"
-source = "git+https://github.com/open-ic/ic-utils?rev=cfc89a86ae59ee7a12e155ddbc2df74713575071#cfc89a86ae59ee7a12e155ddbc2df74713575071"
+source = "git+https://github.com/open-ic/ic-utils?rev=2656695f78e5234be04561d353da7b057b11d553#2656695f78e5234be04561d353da7b057b11d553"
 
 [[package]]
 name = "canister_state_macros"
 version = "0.1.0"
-source = "git+https://github.com/open-ic/ic-utils?rev=d18c778cd6064664e991b256c5e8a311568cbc4c#d18c778cd6064664e991b256c5e8a311568cbc4c"
+source = "git+https://github.com/open-ic/ic-utils?rev=cfc89a86ae59ee7a12e155ddbc2df74713575071#cfc89a86ae59ee7a12e155ddbc2df74713575071"
+
+[[package]]
+name = "canister_time"
+version = "0.1.0"
+source = "git+https://github.com/open-ic/ic-utils?rev=2656695f78e5234be04561d353da7b057b11d553#2656695f78e5234be04561d353da7b057b11d553"
+dependencies = [
+ "ic0 0.18.7 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "canister_timer_jobs"
+version = "0.1.0"
+source = "git+https://github.com/open-ic/ic-utils?rev=2656695f78e5234be04561d353da7b057b11d553#2656695f78e5234be04561d353da7b057b11d553"
+dependencies = [
+ "canister_time",
+ "ic-cdk",
+ "serde",
+]
 
 [[package]]
 name = "canister_tracing_macros"
 version = "0.1.0"
-source = "git+https://github.com/open-ic/ic-utils?rev=d18c778cd6064664e991b256c5e8a311568cbc4c#d18c778cd6064664e991b256c5e8a311568cbc4c"
+source = "git+https://github.com/open-ic/ic-utils?rev=2656695f78e5234be04561d353da7b057b11d553#2656695f78e5234be04561d353da7b057b11d553"
 dependencies = [
  "proc-macro2",
  "quote 1.0.23",
@@ -2239,7 +2258,8 @@ dependencies = [
  "candid",
  "canister_api_macros",
  "canister_logger",
- "canister_state_macros 0.1.0 (git+https://github.com/open-ic/ic-utils?rev=d18c778cd6064664e991b256c5e8a311568cbc4c)",
+ "canister_state_macros 0.1.0 (git+https://github.com/open-ic/ic-utils?rev=2656695f78e5234be04561d353da7b057b11d553)",
+ "canister_timer_jobs",
  "canister_tracing_macros",
  "chat_events",
  "futures",
@@ -2265,7 +2285,6 @@ dependencies = [
  "serde",
  "serde_bytes",
  "stable_memory",
- "timer_jobs",
  "tracing",
  "types 0.1.0",
  "user_canister",
@@ -2313,7 +2332,7 @@ dependencies = [
  "candid",
  "canister_api_macros",
  "canister_logger",
- "canister_state_macros 0.1.0 (git+https://github.com/open-ic/ic-utils?rev=d18c778cd6064664e991b256c5e8a311568cbc4c)",
+ "canister_state_macros 0.1.0 (git+https://github.com/open-ic/ic-utils?rev=2656695f78e5234be04561d353da7b057b11d553)",
  "canister_tracing_macros",
  "futures",
  "group_canister",
@@ -4457,7 +4476,7 @@ dependencies = [
  "candid",
  "canister_api_macros",
  "canister_logger",
- "canister_state_macros 0.1.0 (git+https://github.com/open-ic/ic-utils?rev=d18c778cd6064664e991b256c5e8a311568cbc4c)",
+ "canister_state_macros 0.1.0 (git+https://github.com/open-ic/ic-utils?rev=2656695f78e5234be04561d353da7b057b11d553)",
  "canister_tracing_macros",
  "http_request",
  "ic-cdk",
@@ -4820,7 +4839,7 @@ dependencies = [
  "candid",
  "canister_api_macros",
  "canister_logger",
- "canister_state_macros 0.1.0 (git+https://github.com/open-ic/ic-utils?rev=d18c778cd6064664e991b256c5e8a311568cbc4c)",
+ "canister_state_macros 0.1.0 (git+https://github.com/open-ic/ic-utils?rev=2656695f78e5234be04561d353da7b057b11d553)",
  "canister_tracing_macros",
  "futures",
  "group_canister",
@@ -4871,7 +4890,7 @@ dependencies = [
  "candid",
  "canister_api_macros",
  "canister_logger",
- "canister_state_macros 0.1.0 (git+https://github.com/open-ic/ic-utils?rev=d18c778cd6064664e991b256c5e8a311568cbc4c)",
+ "canister_state_macros 0.1.0 (git+https://github.com/open-ic/ic-utils?rev=2656695f78e5234be04561d353da7b057b11d553)",
  "canister_tracing_macros",
  "futures",
  "group_canister",
@@ -5202,7 +5221,7 @@ dependencies = [
  "canister_api_macros",
  "canister_client_macros 0.1.0",
  "canister_logger",
- "canister_state_macros 0.1.0 (git+https://github.com/open-ic/ic-utils?rev=d18c778cd6064664e991b256c5e8a311568cbc4c)",
+ "canister_state_macros 0.1.0 (git+https://github.com/open-ic/ic-utils?rev=2656695f78e5234be04561d353da7b057b11d553)",
  "canister_tracing_macros",
  "http_request",
  "ic-cdk",
@@ -5259,7 +5278,7 @@ dependencies = [
  "candid",
  "canister_api_macros",
  "canister_logger",
- "canister_state_macros 0.1.0 (git+https://github.com/open-ic/ic-utils?rev=d18c778cd6064664e991b256c5e8a311568cbc4c)",
+ "canister_state_macros 0.1.0 (git+https://github.com/open-ic/ic-utils?rev=2656695f78e5234be04561d353da7b057b11d553)",
  "canister_tracing_macros",
  "futures",
  "http_request",
@@ -5500,7 +5519,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "canister_logger",
- "canister_state_macros 0.1.0 (git+https://github.com/open-ic/ic-utils?rev=d18c778cd6064664e991b256c5e8a311568cbc4c)",
+ "canister_state_macros 0.1.0 (git+https://github.com/open-ic/ic-utils?rev=2656695f78e5234be04561d353da7b057b11d553)",
  "canister_tracing_macros",
  "http_request",
  "ic-cdk",
@@ -5981,9 +6000,9 @@ dependencies = [
 
 [[package]]
 name = "proc-macro2"
-version = "1.0.49"
+version = "1.0.50"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "57a8eca9f9c4ffde41714334dee777596264c7825420f521abc92b5b5deb63a5"
+checksum = "6ef7d57beacfaf2d8aee5937dab7b7f28de3cb8b1828479bb5de2a7106f2bae2"
 dependencies = [
  "unicode-ident",
 ]
@@ -6035,7 +6054,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "canister_logger",
- "canister_state_macros 0.1.0 (git+https://github.com/open-ic/ic-utils?rev=d18c778cd6064664e991b256c5e8a311568cbc4c)",
+ "canister_state_macros 0.1.0 (git+https://github.com/open-ic/ic-utils?rev=2656695f78e5234be04561d353da7b057b11d553)",
  "canister_tracing_macros",
  "group_canister",
  "group_canister_c2c_client",
@@ -6794,7 +6813,7 @@ dependencies = [
 [[package]]
 name = "serializer"
 version = "0.1.0"
-source = "git+https://github.com/open-ic/ic-utils?rev=d18c778cd6064664e991b256c5e8a311568cbc4c#d18c778cd6064664e991b256c5e8a311568cbc4c"
+source = "git+https://github.com/open-ic/ic-utils?rev=2656695f78e5234be04561d353da7b057b11d553#2656695f78e5234be04561d353da7b057b11d553"
 dependencies = [
  "rmp-serde",
  "serde",
@@ -7055,7 +7074,7 @@ dependencies = [
  "candid",
  "canister_api_macros",
  "canister_logger",
- "canister_state_macros 0.1.0 (git+https://github.com/open-ic/ic-utils?rev=d18c778cd6064664e991b256c5e8a311568cbc4c)",
+ "canister_state_macros 0.1.0 (git+https://github.com/open-ic/ic-utils?rev=2656695f78e5234be04561d353da7b057b11d553)",
  "canister_tracing_macros",
  "http_request",
  "ic-cdk",
@@ -7109,7 +7128,7 @@ checksum = "a8f112729512f8e442d81f95a8a7ddf2b7c6b8a1a6f509a95864142b30cab2d3"
 [[package]]
 name = "stable_memory"
 version = "0.1.0"
-source = "git+https://github.com/open-ic/ic-utils?rev=d18c778cd6064664e991b256c5e8a311568cbc4c#d18c778cd6064664e991b256c5e8a311568cbc4c"
+source = "git+https://github.com/open-ic/ic-utils?rev=2656695f78e5234be04561d353da7b057b11d553#2656695f78e5234be04561d353da7b057b11d553"
 dependencies = [
  "ic-cdk",
  "serde",
@@ -7437,16 +7456,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d967f99f534ca7e495c575c62638eebc2898a8c84c119b89e250477bc4ba16b2"
 dependencies = [
  "time-core",
-]
-
-[[package]]
-name = "timer_jobs"
-version = "0.1.0"
-dependencies = [
- "ic-cdk",
- "serde",
- "types 0.1.0",
- "utils 0.1.0",
 ]
 
 [[package]]
@@ -7980,7 +7989,8 @@ dependencies = [
  "candid",
  "canister_api_macros",
  "canister_logger",
- "canister_state_macros 0.1.0 (git+https://github.com/open-ic/ic-utils?rev=d18c778cd6064664e991b256c5e8a311568cbc4c)",
+ "canister_state_macros 0.1.0 (git+https://github.com/open-ic/ic-utils?rev=2656695f78e5234be04561d353da7b057b11d553)",
+ "canister_timer_jobs",
  "canister_tracing_macros",
  "chat_events",
  "futures",
@@ -8010,7 +8020,6 @@ dependencies = [
  "serde",
  "serde_bytes",
  "stable_memory",
- "timer_jobs",
  "tracing",
  "types 0.1.0",
  "user_canister",
@@ -8062,7 +8071,7 @@ dependencies = [
  "candid",
  "canister_api_macros",
  "canister_logger",
- "canister_state_macros 0.1.0 (git+https://github.com/open-ic/ic-utils?rev=d18c778cd6064664e991b256c5e8a311568cbc4c)",
+ "canister_state_macros 0.1.0 (git+https://github.com/open-ic/ic-utils?rev=2656695f78e5234be04561d353da7b057b11d553)",
  "canister_tracing_macros",
  "captcha",
  "futures",

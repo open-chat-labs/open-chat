@@ -671,5 +671,10 @@
     "howToBuyToken": "אני צריך עזרה בקניית {token}",
     "reason": "סיבה",
     "expandDeletedMessages": "הרחב הודעות שנמחקו בצ'אט זה",
-    "revealDeletedMessage": "לחשוף הודעה"
+    "revealDeletedMessage": "לחשוף הודעה",
+    "lowBandwidth": "רוחב פס נמוך",
+    "loadImage": "טען תמונה",
+    "loadGif": "טען gif",
+    "showTweet": "הצג ציוץ",
+    "showVideo": "הצג וידאו"
 }

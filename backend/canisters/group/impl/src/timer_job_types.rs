@@ -1,6 +1,6 @@
 use crate::mutate_state;
+use canister_timer_jobs::Job;
 use serde::{Deserialize, Serialize};
-use timer_jobs::Job;
 use types::{MessageId, MessageIndex};
 
 #[derive(Serialize, Deserialize, Clone)]
