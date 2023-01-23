@@ -11,27 +11,6 @@ use user_canister::c2c_send_messages::{Response::*, *};
 
 #[update_msgpack]
 #[trace]
-async fn c2c_send_message(args: user_canister::c2c_send_message::Args) -> user_canister::c2c_send_message::Response {
-    match c2c_send_messages_impl(Args {
-        messages: vec![SendMessageArgs {
-            message_id: args.message_id,
-            sender_message_index: args.sender_message_index,
-            content: args.content,
-            replies_to: args.replies_to,
-            forwarding: args.forwarding,
-            correlation_id: args.correlation_id,
-        }],
-        sender_name: args.sender_name,
-    })
-    .await
-    {
-        Success => user_canister::c2c_send_message::Response::Success,
-        Blocked => user_canister::c2c_send_message::Response::Blocked,
-    }
-}
-
-#[update_msgpack]
-#[trace]
 async fn c2c_send_messages(args: Args) -> Response {
     c2c_send_messages_impl(args).await
 }

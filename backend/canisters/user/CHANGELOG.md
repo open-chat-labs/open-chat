@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Removed
 
 - Removed code only needed for the previous upgrade ([#3003](https://github.com/open-ic/open-chat/pull/3003))
+- Removed `c2c_send_message` ([#3005](https://github.com/open-ic/open-chat/pull/3005))
 
 ## [[2.0.555](https://github.com/open-ic/open-chat/releases/tag/v2.0.555-user)] - 2022-01-20
 
