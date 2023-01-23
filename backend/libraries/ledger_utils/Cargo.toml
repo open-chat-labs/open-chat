@@ -12,4 +12,5 @@ ic-ledger-types = { workspace = true }
 serde = { workspace = true }
 serde_cbor = { workspace = true }
 sha2 = { workspace = true }
+sha256 = { path = "../sha256" }
 types = { path = "../types" }

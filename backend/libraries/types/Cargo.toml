@@ -8,8 +8,10 @@ edition = "2021"
 
 [dependencies]
 candid = { workspace = true }
+human_readable = { path = "../human_readable" }
 ic-icrc1 = { workspace = true }
 ic-ledger-types = { workspace = true }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
 serde_json = { workspace = true }
+sha256 = { path = "../sha256" }
