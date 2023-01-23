@@ -110,6 +110,7 @@
     $: undeletingMessagesStore = client.undeletingMessagesStore;
     $: undeleting = $undeletingMessagesStore.has(msg.messageId);
     $: showChatMenu = (!inert || canRevealDeleted) && !readonly;
+    $: canUndelete = msg.deleted && msg.content.kind !== "deleted_content" && (msg.sender !== user.userId || canDelete);
 
     afterUpdate(() => {
         if (readByMe && observer && msgElement) {
@@ -131,10 +132,9 @@
                 !undeleting &&
                 msg.content.kind === "deleted_content" &&
                 ((canDelete && msg.content.deletedBy !== msg.sender) ||
-                    // Only allow undeleting of your own messages for 5 minutes
                     (msg.sender === user.userId &&
-                        msg.content.deletedBy === msg.sender &&
-                        t - Number(msg.content.timestamp) < 5 * 60 * 1000));
+                        // Only allow viewing of your own message for 5 minutes after deleting it
+                        (msg.content.deletedBy !== msg.sender || t - Number(msg.content.timestamp) < 5 * 60 * 1000)));
         });
     });
 
@@ -489,7 +489,7 @@
                     {canBlockUser}
                     {canEdit}
                     {canDelete}
-                    canUndelete={msg.deleted && msg.content.kind !== "deleted_content"}
+                    {canUndelete}
                     {canRevealDeleted}
                     {crypto}
                     translatable={msg.content.kind === "text_content"}
