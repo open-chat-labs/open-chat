@@ -34,6 +34,7 @@
     export let last: boolean;
     export let me: boolean;
     export let confirmed: boolean;
+    export let failed: boolean;
     export let readByThem: boolean;
     export let readByMe: boolean;
     export let observer: IntersectionObserver;
@@ -71,6 +72,18 @@
     function editEvent() {
         dispatch("editEvent", event as EventWrapper<Message>);
     }
+
+    function deleteFailedMessage() {
+        client.deleteFailedMessage(
+            chatId,
+            event as EventWrapper<Message>,
+            threadRootMessage?.messageIndex
+        );
+    }
+
+    function retrySend() {
+        dispatch("retrySend", event as EventWrapper<Message>);
+    }
 </script>
 
 {#if event.event.kind === "message"}
@@ -80,6 +93,7 @@
         {focused}
         {observer}
         {confirmed}
+        {failed}
         {readByMe}
         {readByThem}
         {chatId}
@@ -106,11 +120,13 @@
         on:goToMessageIndex
         on:replyPrivatelyTo
         on:replyTo
+        on:retrySend={retrySend}
         on:editMessage={editEvent}
         on:upgrade
         on:forward
         on:expandMessage
         on:collapseMessage
+        on:deleteFailedMessage={deleteFailedMessage}
         eventIndex={event.index}
         timestamp={event.timestamp}
         msg={event.event} />

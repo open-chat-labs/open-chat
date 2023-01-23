@@ -53,6 +53,7 @@
     export let first: boolean;
     export let last: boolean;
     export let confirmed: boolean;
+    export let failed: boolean;
     export let readByThem: boolean;
     export let readByMe: boolean;
     export let observer: IntersectionObserver;
@@ -126,13 +127,14 @@
         recalculateMediaDimensions();
 
         return now.subscribe((t) => {
-            canRevealDeleted = !undeleting 
-                && msg.content.kind === "deleted_content" 
-                && ((canDelete && msg.content.deletedBy !== msg.sender) || 
+            canRevealDeleted =
+                !undeleting &&
+                msg.content.kind === "deleted_content" &&
+                ((canDelete && msg.content.deletedBy !== msg.sender) ||
                     // Only allow undeleting of your own messages for 5 minutes
-                    (msg.sender === user.userId 
-                        && msg.content.deletedBy === msg.sender 
-                        && t - Number(msg.content.timestamp) < 5 * 60 * 1000));             
+                    (msg.sender === user.userId &&
+                        msg.content.deletedBy === msg.sender &&
+                        t - Number(msg.content.timestamp) < 5 * 60 * 1000));
         });
     });
 
@@ -178,8 +180,8 @@
     }
 
     function doubleClickMessage() {
-        if (msg.deleted) return;
-        
+        if (failed || msg.deleted) return;
+
         if (me) {
             editMessage();
         } else if (confirmed) {
@@ -340,9 +342,9 @@
         bind:this={msgElement}
         class="message"
         class:me
-        data-index={msg.messageIndex}
-        data-id={msg.messageId}
-        id={`event-${eventIndex}`}>
+        data-index={failed ? "" : msg.messageIndex}
+        data-id={failed ? "" : msg.messageId}
+        id={failed ? "" : `event-${eventIndex}`}>
         {#if showAvatar}
             <div class="avatar-col">
                 {#if first}
@@ -374,6 +376,7 @@
             class:last
             class:readByMe
             class:crypto
+            class:failed
             class:proposal={isProposal && !inert}
             class:thread={inThread}
             class:rtl={$rtlStore}>
@@ -441,6 +444,7 @@
                     {timestamp}
                     {me}
                     {confirmed}
+                    {failed}
                     deleted={msg.deleted}
                     {undeleting}
                     {readByThem}
@@ -458,6 +462,8 @@
                 <pre>ReadByUs: {readByMe}</pre>
                 <pre>Pinned: {pinned}</pre>
                 <pre>edited: {msg.edited}</pre>
+                <pre>failed: {failed}</pre>
+                <pre>timestamp: {timestamp}</pre>
                 <pre>thread: {JSON.stringify(msg.thread, null, 4)}</pre>
             {/if}
 
@@ -468,6 +474,7 @@
                     inert={msg.deleted || collapsed}
                     {publicGroup}
                     {confirmed}
+                    {failed}
                     canShare={canShare()}
                     {me}
                     {canPin}
@@ -490,12 +497,14 @@
                     on:collapseMessage
                     on:forward
                     on:reply={reply}
+                    on:retrySend
+                    on:deleteFailedMessage
                     on:replyPrivately={replyPrivately}
                     on:editMessage={editMessage} />
             {/if}
         </div>
 
-        {#if !collapsed && !msg.deleted && canReact}
+        {#if !collapsed && !msg.deleted && canReact && !failed}
             <div class="actions">
                 <div class="reaction" on:click={() => (showEmojiPicker = true)}>
                     <HoverIcon>
@@ -624,10 +633,6 @@
         flex-wrap: wrap;
         gap: 3px;
 
-        // &.me {
-        //     justify-content: flex-end;
-        // }
-
         &.indent {
             margin-left: $avatar-width;
             @include mobile() {
@@ -640,10 +645,6 @@
         display: flex;
         justify-content: flex-start;
         margin-bottom: $sp2;
-
-        // &.me {
-        //     justify-content: flex-end;
-        // }
 
         .avatar-col {
             flex: 0 0 $avatar-width;
@@ -799,6 +800,10 @@
 
         &.me .forwarded {
             color: var(--currentChat-msg-me-muted);
+        }
+
+        &.failed {
+            background-color: var(--error);
         }
     }
 

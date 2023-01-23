@@ -2,6 +2,7 @@ export * from "./version";
 export * from "./user";
 export * from "./version";
 export * from "./chat";
+export * from "./data";
 export * from "./auth";
 export * from "./faq";
 export * from "./crypto";

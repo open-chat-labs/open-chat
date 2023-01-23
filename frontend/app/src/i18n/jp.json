@@ -673,6 +673,7 @@
     "reason": "理由",
     "expandDeletedMessages": "このチャットで削除されたメッセージを展開する",
     "revealDeletedMessage": "メッセージを表示",
+    "retryMessage": "再試行メッセージ",
     "lowBandwidth": "低帯域幅",
     "loadImage": "画像を読み込む",
     "loadGif": "gif を読み込む",

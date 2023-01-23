@@ -17,20 +17,27 @@ function createUnconfirmedReadByThemStore() {
 function createUnconfirmedStore() {
     const store = writable<UnconfirmedMessages>({} as UnconfirmedMessages);
     let storeValue: UnconfirmedMessages = {};
-    store.subscribe((v) => storeValue = v);
+    store.subscribe((v) => (storeValue = v));
 
     function pruneOldMessages(): void {
         if (Object.keys(storeValue).length > 0) {
             const oneMinuteAgo = BigInt(Date.now() - 60000);
             store.update((state) => {
-                return Object.entries(state).reduce((result, [key, {messages}]) => {
-                    return applyUpdateToState(result, key, removeWhere(messages, (m) => m.timestamp < oneMinuteAgo))
+                return Object.entries(state).reduce((result, [key, { messages }]) => {
+                    return applyUpdateToState(
+                        result,
+                        key,
+                        removeWhere(messages, (m) => m.timestamp < oneMinuteAgo)
+                    );
                 }, {} as UnconfirmedMessages);
             });
         }
     }
 
-    function removeWhere(messages: EventWrapper<Message>[], predicate: (message: EventWrapper<Message>) => boolean): EventWrapper<Message>[] {
+    function removeWhere(
+        messages: EventWrapper<Message>[],
+        predicate: (message: EventWrapper<Message>) => boolean
+    ): EventWrapper<Message>[] {
         return messages.filter((m) => {
             if (predicate(m)) {
                 revokeObjectUrls(m);
@@ -40,21 +47,22 @@ function createUnconfirmedStore() {
         });
     }
 
-    function applyUpdateToState(state: UnconfirmedMessages, keyUpdated: string, messages: EventWrapper<Message>[]): UnconfirmedMessages {
+    function applyUpdateToState(
+        state: UnconfirmedMessages,
+        keyUpdated: string,
+        messages: EventWrapper<Message>[]
+    ): UnconfirmedMessages {
         if (messages.length === 0) {
             // Remove the key from the state
-            const {
-                [keyUpdated]: _,
-                ...withKeyRemoved
-            } = state;
+            const { [keyUpdated]: _, ...withKeyRemoved } = state;
             return withKeyRemoved;
         }
         return {
             ...state,
             [keyUpdated]: {
                 messages,
-                messageIds: new Set<bigint>(messages.map((m) => m.event.messageId))
-            }
+                messageIds: new Set<bigint>(messages.map((m) => m.event.messageId)),
+            },
         };
     }
 
@@ -82,7 +90,8 @@ function createUnconfirmedStore() {
                     const chatEvents = state[key] ?? {};
                     const messages = removeWhere(
                         chatEvents.messages ?? [],
-                        (m) => m.event.messageId === messageId);
+                        (m) => m.event.messageId === messageId
+                    );
                     return applyUpdateToState(state, key, messages);
                 });
                 return true;
