@@ -63,6 +63,14 @@
             background-color: var(--vote-no-color);
         }
 
+        &.yes:not(.voted):not(.voting):not(.disabled):hover {
+            background-color: var(--vote-yes-color);
+        }
+
+        &.no:not(.voted):not(.voting):not(.disabled):hover {
+            background-color: var(--vote-no-color);
+        }
+
         &.disabled {
             background-color: transparent;
             cursor: not-allowed;

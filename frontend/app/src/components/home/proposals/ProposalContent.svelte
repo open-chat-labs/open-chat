@@ -187,9 +187,6 @@
                 class:full={showFullSummary}
                 on:click={toggleSummary}>
                 <Markdown text={proposal.summary} inline={false} />
-                {#if !showFullSummary}
-                    <div class="gradient" />
-                {/if}
             </div>
             {#if !showFullSummary}
                 <div class="expand" on:click={toggleSummary}>
@@ -271,7 +268,7 @@
         .title-block {
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            align-items: flex-start;
             margin-bottom: $sp4;
             gap: $sp3;
             .title {
@@ -312,6 +309,8 @@
         position: relative;
         overflow-x: hidden;
         color: var(--markdown-fg-color);
+        background-color: rgba(0, 0, 0, 0.1);
+        padding: $sp3;
 
         &.expanded {
             transition: max-height ease-in 200ms;
@@ -321,18 +320,6 @@
         &.full {
             max-height: none;
             cursor: default;
-        }
-
-        .gradient {
-            position: sticky;
-            width: 100%;
-            background: linear-gradient(transparent, var(--currentChat-msg-bg));
-            height: toRem(24);
-            bottom: 0;
-        }
-
-        &.expanded .gradient {
-            display: none;
         }
     }
 

@@ -18,19 +18,19 @@
 </script>
 
 <div class="wrapper">
+    <div class="icon" style="{rtl}: calc(3% - 0.5em)">
+        <ChevronDown viewBox="-1 0 24 24" />
+    </div>
+    <div class="icon solid" style="{rtl}: calc(50% - 0.5em)">
+        <svg viewBox="-1 0 24 24">
+            <path d="M6,10 L12,16 L18,10 H7Z" fill="currentColor" />
+        </svg>
+    </div>
     <div class="progress">
         <div class="adopt" style="width: {adoptPercent}%" />
         <div class="reject" style="width: {rejectPercent}%" />
         <div class="vertical-line" style="{rtl}: 3%" />
         <div class="vertical-line" style="{rtl}: 50%" />
-        <div class="icon" style="{rtl}: calc(3% - 0.5em)">
-            <ChevronDown viewBox="-1 0 24 24" />
-        </div>
-        <div class="icon solid" style="{rtl}: calc(50% - 0.5em)">
-            <svg viewBox="-1 0 24 24">
-                <path d="M6,10 L12,16 L18,10 H7Z" fill="currentColor" />
-            </svg>
-        </div>
     </div>
 
     <div class="remaining">
@@ -49,6 +49,18 @@
 <style type="text/scss">
     .wrapper {
         flex: auto;
+        position: relative;
+    }
+
+    .icon {
+        position: absolute;
+        top: toRem(-16);
+        color: var(--txt);
+
+        &.solid {
+            width: 1em;
+            height: 1em;
+        }
     }
 
     .progress {
@@ -57,6 +69,7 @@
         background: var(--chatSummary-bg-selected);
         border-radius: $sp3;
         margin-top: 24px;
+        overflow: hidden;
         @include mobile() {
             margin-top: 0;
         }
@@ -85,17 +98,6 @@
             bottom: 0;
             width: 1px;
             background-color: var(--txt);
-        }
-
-        .icon {
-            position: absolute;
-            top: toRem(-16);
-            color: var(--txt);
-
-            &.solid {
-                width: 1em;
-                height: 1em;
-            }
         }
     }
     .remaining {

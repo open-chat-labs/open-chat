@@ -40,9 +40,11 @@
     {:else if $mobileWidth || hidden}
         {#if hidden && !$mobileWidth}
             <div class="mask">
-                <div class="reveal">
-                    <Button on:click={() => (hidden = false)}>{$_("loadGif")}</Button>
-                </div>
+                {#if !reply}
+                    <div class="reveal">
+                        <Button on:click={() => (hidden = false)}>{$_("loadGif")}</Button>
+                    </div>
+                {/if}
             </div>
         {/if}
         <img
