@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [unreleased]
 
+### Changed
+
+- Increase pinned chats limit ([#2998](https://github.com/open-ic/open-chat/pull/2998)) (user caninsters should be deployed ahead of website)
+
 ## [[2.0.555](https://github.com/open-ic/open-chat/releases/tag/v2.0.555-user)] - 2022-01-20
 
 ### Fixed

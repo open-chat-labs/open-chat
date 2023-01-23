@@ -4,7 +4,7 @@ use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
 use user_canister::pin_chat::*;
 
-const MAX_PINNED_CHATS: u32 = 5;
+const MAX_PINNED_CHATS: u32 = 10;
 
 #[update(guard = "caller_is_owner")]
 #[trace]

@@ -708,7 +708,7 @@ export class OpenChat extends EventTarget {
     }
 
     pinChat(chatId: string): Promise<PinChatResponse> {
-        const pinnedChatLimit = 5;
+        const pinnedChatLimit = 10;
         if (this._liveState.pinnedChats.length >= pinnedChatLimit) {
             return Promise.resolve({ kind: "limit_exceeded", limit: pinnedChatLimit });
         }
