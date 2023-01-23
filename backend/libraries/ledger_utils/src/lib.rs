@@ -1,7 +1,7 @@
 use candid::{CandidType, Principal};
 use ic_ledger_types::{AccountIdentifier, Memo, Subaccount, Timestamp, Tokens, TransferArgs, DEFAULT_SUBACCOUNT};
 use serde::{Deserialize, Serialize};
-use sha2::{Digest, Sha256};
+use sha256::sha256;
 use types::{TransactionHash, UserId};
 
 pub fn default_ledger_account(principal: Principal) -> AccountIdentifier {
@@ -65,8 +65,7 @@ struct Transaction {
 
 impl Transaction {
     pub fn hash(&self) -> TransactionHash {
-        let mut hash = Sha256::new();
-        hash.update(&serde_cbor::ser::to_vec_packed(&self).unwrap());
-        hash.finalize().into()
+        let bytes = serde_cbor::ser::to_vec_packed(&self).unwrap();
+        sha256(&bytes)
     }
 }

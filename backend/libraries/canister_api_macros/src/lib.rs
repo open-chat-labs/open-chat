@@ -116,14 +116,14 @@ fn convert_to_validate_fn(original: ItemFn) -> ItemFn {
     sig.asyncness = None;
 
     let arg_names = get_arg_names(&sig);
-    let serializer_input = match arg_names.len() {
+    let args = match arg_names.len() {
         1 => quote! { #(#arg_names),* },
         _ => quote! { (#(#arg_names),*) },
     };
 
     let block: Block = syn::parse2(quote! {
         {
-            serde_json::to_string(&#serializer_input).map_err(|e| format!("Deserialization error: {}", e))
+            human_readable::to_human_readable_string(&#args)
         }
     })
     .unwrap();

@@ -2298,6 +2298,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "candid_gen 0.1.0",
+ "human_readable",
  "serde",
  "types 0.1.0",
 ]
@@ -2339,6 +2340,7 @@ dependencies = [
  "group_canister_c2c_client",
  "group_index_canister",
  "http_request",
+ "human_readable",
  "ic-cdk",
  "ic-cdk-macros",
  "local_group_index_canister",
@@ -2531,6 +2533,15 @@ name = "httpdate"
 version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c4a1e36c821dbe04574f602848a19f742f4fb3c98d40449f11bcad18d6b17421"
+
+[[package]]
+name = "human_readable"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "serde",
+ "serde_json",
+]
 
 [[package]]
 name = "humantime"
@@ -4746,6 +4757,7 @@ dependencies = [
  "serde",
  "serde_cbor",
  "sha2 0.10.6",
+ "sha256",
  "types 0.1.0",
 ]
 
@@ -5245,6 +5257,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "candid_gen 0.1.0",
+ "human_readable",
  "serde",
  "types 0.1.0",
 ]
@@ -5283,6 +5296,7 @@ dependencies = [
  "canister_tracing_macros",
  "futures",
  "http_request",
+ "human_readable",
  "ic-cdk",
  "ic-cdk-macros",
  "msgpack",
@@ -6857,6 +6871,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "sha256"
+version = "0.1.0"
+dependencies = [
+ "sha2 0.10.6",
+]
+
+[[package]]
 name = "sharded-slab"
 version = "0.1.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7844,11 +7865,13 @@ name = "types"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "human_readable",
  "ic-icrc1",
  "ic-ledger-types",
  "serde",
  "serde_bytes",
  "serde_json",
+ "sha256",
 ]
 
 [[package]]
@@ -8037,6 +8060,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "candid_gen 0.1.0",
+ "human_readable",
  "ic-ledger-types",
  "serde",
  "serde_bytes",
@@ -8080,6 +8104,7 @@ dependencies = [
  "group_canister",
  "group_canister_c2c_client",
  "http_request",
+ "human_readable",
  "ic-cdk",
  "ic-cdk-macros",
  "ic-ledger-types",

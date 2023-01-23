@@ -9,15 +9,11 @@ use user_index_canister::upgrade_user_canister_wasm::{Response::*, *};
 #[proposal(guard = "caller_is_controller")]
 #[trace]
 async fn upgrade_user_canister_wasm(args: Args) -> Response {
-    let version = args.user_canister_wasm.version;
+    let version = args.wasm.version;
 
     let local_user_index_canisters = match read_state(|state| prepare(version, state)) {
         Ok(canisters) => canisters,
         Err(response) => return response,
-    };
-
-    let args = local_user_index_canister::c2c_upgrade_user_canister_wasm::Args {
-        user_canister_wasm: args.user_canister_wasm.clone(),
     };
 
     let futures: Vec<_> = local_user_index_canisters
@@ -31,7 +27,7 @@ async fn upgrade_user_canister_wasm(args: Args) -> Response {
         InternalError(format!("{:?}", first_error))
     } else {
         mutate_state(|state| {
-            state.data.user_canister_wasm = args.user_canister_wasm;
+            state.data.user_canister_wasm = args.wasm.value();
         });
 
         info!(%version, "User canister wasm upgraded");
