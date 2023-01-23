@@ -672,6 +672,7 @@
     "reason": "Raison",
     "expandDeletedMessages": "Développer les messages supprimés dans ce chat",
     "revealDeletedMessage": "Révéler le message",
+    "retryMessage": "Réessayer le message",
     "lowBandwidth": "Bas débit",
     "loadImage": "Charger l'image",
     "loadGif": "Charger le gif",

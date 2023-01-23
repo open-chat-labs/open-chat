@@ -230,6 +230,7 @@
     "reply": "Reply",
     "replyPrivately": "Reply privately",
     "deleteMessage": "Delete",
+    "retryMessage": "Retry message",
     "editMessage": "Edit",
     "messageDeleted": "Message deleted by {username} on {timestamp}",
     "deleteFailed": "Unable to delete your message",
