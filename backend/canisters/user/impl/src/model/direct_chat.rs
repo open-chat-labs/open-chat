@@ -1,7 +1,6 @@
 use crate::model::unread_message_index_map::UnreadMessageIndexMap;
 use chat_events::AllChatEvents;
 use serde::{Deserialize, Serialize};
-use std::collections::HashSet;
 use types::{DirectChatSummary, DirectChatSummaryUpdates, MessageId, MessageIndex, TimestampMillis, Timestamped, UserId};
 use user_canister::c2c_send_messages::SendMessageArgs;
 
@@ -16,8 +15,6 @@ pub struct DirectChat {
     pub notifications_muted: Timestamped<bool>,
     pub archived: Timestamped<bool>,
     pub is_bot: bool,
-    pub unconfirmed: HashSet<MessageId>,
-    #[serde(default)]
     pub unconfirmed_v2: Vec<SendMessageArgs>,
 }
 
@@ -33,7 +30,6 @@ impl DirectChat {
             notifications_muted: Timestamped::new(false, now),
             archived: Timestamped::new(false, now),
             is_bot,
-            unconfirmed: HashSet::new(),
             unconfirmed_v2: Vec::new(),
         }
     }
@@ -71,13 +67,7 @@ impl DirectChat {
     }
 
     pub fn mark_message_confirmed(&mut self, message_id: MessageId) {
-        self.unconfirmed.remove(&message_id);
         self.unconfirmed_v2.retain(|m| m.message_id != message_id);
-    }
-
-    // TODO delete this
-    pub fn get_unconfirmed_messages_old(&self) -> Vec<MessageId> {
-        self.unconfirmed.iter().copied().collect()
     }
 
     pub fn to_summary(&self, my_user_id: UserId) -> DirectChatSummary {
