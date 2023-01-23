@@ -1,6 +1,6 @@
 import { MAX_MESSAGES } from "../constants";
 import { openDB, DBSchema, IDBPDatabase } from "idb";
-import {
+import type {
     ChatEvent,
     ChatStateFull,
     ChatSummary,
@@ -9,17 +9,15 @@ import {
     EventWrapper,
     GroupChatDetails,
     IndexRange,
-    MergedUpdatesResponse,
     Message,
     MessageContent,
     ReplyContext,
     SendMessageResponse,
     SendMessageSuccess,
-    UnsupportedValueError,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 
-const CACHE_VERSION = 59;
+const CACHE_VERSION = 60;
 
 export type Database = Promise<IDBPDatabase<ChatSchema>>;
 
@@ -32,11 +30,6 @@ export interface ChatSchema extends DBSchema {
     chats_v2: {
         key: string;
         value: ChatStateFull;
-    };
-
-    chats: {
-        key: string; // the user's principal as a string
-        value: MergedUpdatesResponse;
     };
 
     chat_events: {
@@ -104,9 +97,6 @@ export function openCache(principal: Principal): Database {
             if (db.objectStoreNames.contains("thread_events")) {
                 db.deleteObjectStore("thread_events");
             }
-            if (db.objectStoreNames.contains("chats")) {
-                db.deleteObjectStore("chats");
-            }
             if (db.objectStoreNames.contains("chats_v2")) {
                 db.deleteObjectStore("chats_v2");
             }
@@ -123,7 +113,6 @@ export function openCache(principal: Principal): Database {
             chatEvents.createIndex("messageIdx", "messageKey");
             const threadEvents = db.createObjectStore("thread_events");
             threadEvents.createIndex("messageIdx", "messageKey");
-            db.createObjectStore("chats");
             db.createObjectStore("chats_v2");
             db.createObjectStore("group_details");
             db.createObjectStore("failed_chat_messages");
@@ -132,24 +121,12 @@ export function openCache(principal: Principal): Database {
     });
 }
 
-export async function removeCachedChat(
-    db: Database,
-    principal: Principal,
-    chatId: string
-): Promise<void> {
-    const fromCache = await getCachedChats(db, principal);
-    if (fromCache !== undefined) {
-        fromCache.chatSummaries = fromCache.chatSummaries.filter((c) => c.chatId !== chatId);
-        await setCachedChats(db, principal, fromCache);
-    }
-}
-
 export async function openDbAndGetCachedChats(
     principal: Principal
-): Promise<MergedUpdatesResponse | undefined> {
+): Promise<ChatStateFull | undefined> {
     const db = openCache(principal);
     if (db !== undefined) {
-        return getCachedChats(db, principal);
+        return getCachedChatsV2(db, principal);
     }
 }
 
@@ -201,92 +178,12 @@ export async function setCachedChatsV2(
     await tx.done;
 }
 
-export async function getCachedChats(
-    db: Database,
-    principal: Principal
-): Promise<MergedUpdatesResponse | undefined> {
-    return await (await db).get("chats", principal.toString());
-}
-
 function isPreviewing(chat: ChatSummary): boolean {
     return chat.kind === "group_chat" && chat.myRole === "previewer";
 }
 
 function isUninitialisedDirectChat(chat: ChatSummary): boolean {
     return chat.kind === "direct_chat" && chat.latestEventIndex < 0;
-}
-
-export async function setCachedChats(
-    db: Database,
-    principal: Principal,
-    data: MergedUpdatesResponse
-): Promise<void> {
-    if (!data.wasUpdated) {
-        return;
-    }
-
-    const latestMessages: Record<string, EnhancedWrapper<Message>> = {};
-
-    // irritating hoop jumping to keep typescript happy here
-    const chatSummaries = data.chatSummaries
-        .filter((c) => !isPreviewing(c) && !isUninitialisedDirectChat(c))
-        .map((c) => {
-            const latestMessage = c.latestMessage
-                ? makeSerialisable(c.latestMessage, c.chatId, true)
-                : undefined;
-
-            if (latestMessage) {
-                latestMessages[c.chatId] = {
-                    ...latestMessage,
-                    chatId: c.chatId,
-                    messageKey: createCacheKey(c.chatId, latestMessage.event.messageIndex),
-                };
-            }
-
-            if (c.kind === "direct_chat") {
-                return {
-                    ...c,
-                    latestMessage,
-                };
-            }
-
-            if (c.kind === "group_chat") {
-                return {
-                    ...c,
-                    latestMessage,
-                };
-            }
-
-            throw new UnsupportedValueError("Unrecognised chat type", c);
-        });
-
-    const tx = (await db).transaction(["chats", "chat_events"], "readwrite");
-    const chatsStore = tx.objectStore("chats");
-    const eventStore = tx.objectStore("chat_events");
-
-    const promises: Promise<string | void>[] = [
-        chatsStore.put(
-            {
-                wasUpdated: true,
-                chatSummaries,
-                timestamp: data.timestamp,
-                blockedUsers: data.blockedUsers,
-                pinnedChats: data.pinnedChats,
-                avatarIdUpdate: undefined,
-                affectedEvents: {},
-            },
-            principal.toString()
-        ),
-        ...Object.entries(latestMessages).flatMap(([chatId, message]) => [
-            eventStore.put(message, createCacheKey(chatId, message.index)),
-        ]),
-        ...Object.entries(data.affectedEvents)
-            .flatMap(([chatId, indexes]) => indexes.map((i) => createCacheKey(chatId, i)))
-            .map((key) => eventStore.delete(key)),
-    ];
-
-    await Promise.all(promises);
-    await tx.done;
 }
 
 export async function getCachedEventsWindow<T extends ChatEvent>(

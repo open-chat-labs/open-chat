@@ -108,7 +108,6 @@ export class UserClient extends CandidService implements IUserClient {
     ): IUserClient {
         return new CachingUserClient(
             db,
-            identity,
             config,
             new UserClient(identity, userId, config)
         );

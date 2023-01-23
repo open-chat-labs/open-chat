@@ -10,9 +10,13 @@ export async function ensureReplicaIsUpToDate(
     latestEventIndex: number
 ): Promise<void> {
     const chats = await openDbAndGetCachedChats(principal);
-    const latestSavedEventIndex = chats?.chatSummaries.find(
-        (c) => c.chatId === chatId
-    )?.latestEventIndex;
+    if (chats === undefined) return;
+
+    const chat = chats.directChats.find((c) => c.chatId === chatId)
+        ?? chats.groupChats.find((c) => c.chatId === chatId);
+
+    const latestSavedEventIndex = chat?.latestEventIndex;
+    if (latestSavedEventIndex === undefined) return;
 
     const latestClientEventIndex =
         threadRootMessageIndex === undefined
