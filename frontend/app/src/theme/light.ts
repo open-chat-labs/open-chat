@@ -253,7 +253,7 @@ export function lightTheme(): Theme {
                 hv: "#ff4fa7",
             },
             maybe: {
-                color: "#666666",
+                color: "#aaaaaa",
             },
         },
 
