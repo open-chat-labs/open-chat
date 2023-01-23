@@ -1,14 +1,14 @@
 use crate::guards::caller_is_controller;
 use crate::{mutate_state, read_state, NotificationsCanister, RuntimeState};
+use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
-use ic_cdk_macros::update;
 use notifications_index_canister::add_notifications_canister::{Response::*, *};
 use notifications_index_canister::{NotificationsIndexEvent, SubscriptionAdded};
 use std::collections::hash_map::Entry::Vacant;
 use types::{CanisterId, CanisterWasm, Version};
 use utils::canister::install;
 
-#[update(guard = "caller_is_controller")]
+#[proposal(guard = "caller_is_controller")]
 #[trace]
 async fn add_notifications_canister(args: Args) -> Response {
     match read_state(|state| prepare(args.canister_id, args.authorizers, state)) {

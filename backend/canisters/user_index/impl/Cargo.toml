@@ -13,14 +13,15 @@ crate-type = ["cdylib"]
 [dependencies]
 candid = { workspace = true }
 canister_api_macros = { path = "../../../libraries/canister_api_macros" }
-canister_logger = { path = "../../../libraries/canister_logger" }
+canister_logger = { workspace = true }
 canister_state_macros = { workspace = true }
-canister_tracing_macros = { path = "../../../libraries/canister_tracing_macros" }
+canister_tracing_macros = { workspace = true }
 captcha = { workspace = true }
 futures = { workspace = true }
 group_canister = { path = "../../group/api" }
 group_canister_c2c_client = { path = "../../group/c2c_client" }
 http_request = { path = "../../../libraries/http_request" }
+human_readable = { path = "../../../libraries/human_readable" }
 ic-cdk = { workspace = true }
 ic-cdk-macros = { workspace = true }
 ic-ledger-types = { workspace = true }

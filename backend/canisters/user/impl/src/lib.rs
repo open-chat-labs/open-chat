@@ -4,16 +4,16 @@ use crate::model::group_chats::GroupChats;
 use crate::model::recommended_group_exclusions::RecommendedGroupExclusions;
 use crate::timer_job_types::TimerJob;
 use candid::Principal;
-use canister_logger::LogMessagesWrapper;
 use canister_state_macros::canister_state;
+use canister_timer_jobs::TimerJobs;
 use ic_ledger_types::AccountIdentifier;
 use ledger_utils::default_ledger_account;
+use model::contacts::Contacts;
 use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use std::ops::Deref;
-use timer_jobs::TimerJobs;
 use types::{Avatar, CanisterId, ChatId, Cryptocurrency, Cycles, Notification, TimestampMillis, Timestamped, UserId, Version};
 use utils::env::Environment;
 use utils::memory;
@@ -35,7 +35,6 @@ pub const BASIC_GROUP_CREATION_LIMIT: u32 = 10;
 pub const PREMIUM_GROUP_CREATION_LIMIT: u32 = 25;
 
 thread_local! {
-    static LOG_MESSAGES: RefCell<LogMessagesWrapper> = RefCell::default();
     static WASM_VERSION: RefCell<Timestamped<Version>> = RefCell::default();
 }
 
@@ -112,6 +111,8 @@ impl RuntimeState {
             poll_votes: chat_metrics.poll_votes,
             cycles_messages: chat_metrics.cycles_messages,
             icp_messages: chat_metrics.icp_messages,
+            sns1_messages: chat_metrics.sns1_messages,
+            ckbtc_messages: chat_metrics.ckbtc_messages,
             deleted_messages: chat_metrics.deleted_messages,
             giphy_messages: chat_metrics.giphy_messages,
             replies: chat_metrics.replies,
@@ -156,6 +157,8 @@ struct Data {
     pub pending_user_principal_migration: Option<Principal>,
     pub suspended: Timestamped<bool>,
     pub timer_jobs: TimerJobs<TimerJob>,
+    #[serde(default)]
+    pub contacts: Contacts,
 }
 
 impl Data {
@@ -196,6 +199,7 @@ impl Data {
             pending_user_principal_migration: None,
             suspended: Timestamped::default(),
             timer_jobs: TimerJobs::default(),
+            contacts: Contacts::default(),
         }
     }
 
@@ -265,6 +269,8 @@ pub struct Metrics {
     pub poll_votes: u64,
     pub cycles_messages: u64,
     pub icp_messages: u64,
+    pub sns1_messages: u64,
+    pub ckbtc_messages: u64,
     pub deleted_messages: u64,
     pub giphy_messages: u64,
     pub replies: u64,

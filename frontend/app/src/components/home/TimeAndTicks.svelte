@@ -3,6 +3,7 @@
 <script lang="ts">
     import DeletedIcon from "svelte-material-icons/DeleteOutline.svelte";
     import CheckCircleOutline from "svelte-material-icons/CheckCircleOutline.svelte";
+    import AlertCircleOutline from "svelte-material-icons/AlertCircleOutline.svelte";
     import CheckCircle from "svelte-material-icons/CheckCircle.svelte";
     import Pin from "svelte-material-icons/Pin.svelte";
     import { rtlStore } from "../../stores/rtl";
@@ -14,6 +15,7 @@
 
     export let timestamp: bigint;
     export let confirmed: boolean;
+    export let failed: boolean;
     export let chatType: "group_chat" | "direct_chat";
     export let readByThem: boolean;
     export let me: boolean;
@@ -32,7 +34,9 @@
     <span class="time">
         {dateFormatter(new Date(Number(timestamp)))}
     </span>
-    {#if deleted}
+    {#if failed}
+        <AlertCircleOutline size={"0.9em"} color={iconColor} />
+    {:else if deleted}
         <DeletedIcon size={"0.9em"} color={iconColor} />
         {#if undeleting}
             <div class="confirming" />

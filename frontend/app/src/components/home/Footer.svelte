@@ -145,7 +145,8 @@
         on:fileSelected
         on:audioCaptured
         on:joinGroup
-        on:cancelPreview />
+        on:cancelPreview
+        on:createTestMessages />
 </div>
 
 <style type="text/scss">

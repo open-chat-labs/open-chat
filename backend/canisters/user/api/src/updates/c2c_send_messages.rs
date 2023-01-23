@@ -29,3 +29,9 @@ pub enum C2CReplyContext {
     ThisChat(MessageId),
     OtherChat(ChatId, EventIndex),
 }
+
+impl Args {
+    pub fn new(messages: Vec<SendMessageArgs>, sender_name: String) -> Args {
+        Args { messages, sender_name }
+    }
+}

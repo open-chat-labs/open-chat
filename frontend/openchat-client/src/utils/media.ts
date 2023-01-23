@@ -133,8 +133,6 @@ export function fillMessage(msg: Message): boolean {
             (msg.content.caption === undefined || msg.content.caption === "") &&
             msg.repliesTo === undefined
         );
-    } else if (msg.content.kind === "text_content" && isSocialVideoLink(msg.content.text)) {
-        return msg.repliesTo === undefined;
     } else {
         return false;
     }

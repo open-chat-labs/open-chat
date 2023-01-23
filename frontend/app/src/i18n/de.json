@@ -671,5 +671,11 @@
     "howToBuyToken": "Ich brauche Hilfe beim Kauf von {token}",
     "reason": "Grund",
     "expandDeletedMessages": "Erweitern Sie gelöschte Nachrichten in diesem Chat",
-    "revealDeletedMessage": "Nachricht enthüllen"
+    "revealDeletedMessage": "Nachricht enthüllen",
+    "retryMessage": "Nachricht erneut versuchen",
+    "lowBandwidth": "Niedrige Bandbreite",
+    "loadImage": "Bild laden",
+    "loadGif": "gif laden",
+    "showTweet": "Tweet anzeigen",
+    "showVideo": "Videos zeigen"
 }

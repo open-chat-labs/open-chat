@@ -52,6 +52,14 @@ async fn c2c_send_messages_impl(args: Args) -> Response {
 
     mutate_state(|state| {
         for message in args.messages {
+            // Messages sent c2c can be retried so the same messageId may be received multiple
+            // times, so here we skip any messages whose messageId already exists.
+            if let Some(chat) = state.data.direct_chats.get(&sender_user_id.into()) {
+                if chat.events.main().event_index_by_message_id(message.message_id).is_some() {
+                    continue;
+                }
+            }
+
             handle_message_impl(
                 sender_user_id,
                 HandleMessageArgs {

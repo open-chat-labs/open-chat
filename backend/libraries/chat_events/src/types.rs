@@ -306,6 +306,14 @@ impl MessageInternal {
                         incr(&mut metrics.icp_messages);
                         incr(&mut sender_metrics.icp_messages);
                     }
+                    Cryptocurrency::SNS1 => {
+                        incr(&mut metrics.sns1_messages);
+                        incr(&mut sender_metrics.sns1_messages);
+                    }
+                    Cryptocurrency::CKBTC => {
+                        incr(&mut metrics.ckbtc_messages);
+                        incr(&mut sender_metrics.ckbtc_messages);
+                    }
                 },
                 MessageContentInternal::Deleted(_) => {}
                 MessageContentInternal::Giphy(_) => {

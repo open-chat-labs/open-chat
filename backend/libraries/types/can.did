@@ -71,6 +71,8 @@ type ChatMetrics =
         poll_votes: nat64;
         cycles_messages: nat64;
         icp_messages: nat64;
+        sns1_messages: nat64;
+        ckbtc_messages: nat64;
         deleted_messages: nat64;
         giphy_messages: nat64;
         replies: nat64;
@@ -380,6 +382,13 @@ type AvatarUpdate =
         NoChange;
         SetToNone;
         SetToSome: Avatar;
+    };
+
+type TextUpdate =
+    variant {
+        NoChange;
+        SetToNone;
+        SetToSome: text;
     };
 
 type AvatarIdUpdate =
@@ -915,6 +924,8 @@ type Version =
 type Cryptocurrency =
     variant {
         InternetComputer;
+        SNS1;
+        CKBTC;
     };
 
 type CryptoTransaction =
@@ -959,7 +970,7 @@ type NnsCompletedCryptoTransaction =
         from: NnsCryptoAccount;
         to: NnsCryptoAccount;
         memo: Memo;
-        created: TimestampMillis;
+        created: TimestampNanos;
         transaction_hash: TransactionHash;
         block_index: BlockIndex;
     };
@@ -972,7 +983,7 @@ type NnsFailedCryptoTransaction =
         from: NnsCryptoAccount;
         to: NnsCryptoAccount;
         memo: Memo;
-        created: TimestampMillis;
+        created: TimestampNanos;
         transaction_hash: TransactionHash;
         error_message: text;
     };
@@ -1006,7 +1017,7 @@ type SnsCompletedCryptoTransaction =
         from: SnsAccount;
         to: SnsAccount;
         memo: opt Memo;
-        created: TimestampMillis;
+        created: TimestampNanos;
         transaction_hash: TransactionHash;
         block_index: BlockIndex;
     };
@@ -1019,7 +1030,7 @@ type SnsFailedCryptoTransaction =
         from: SnsAccount;
         to: SnsAccount;
         memo: opt Memo;
-        created: TimestampMillis;
+        created: TimestampNanos;
         transaction_hash: TransactionHash;
         error_message: text;
     };

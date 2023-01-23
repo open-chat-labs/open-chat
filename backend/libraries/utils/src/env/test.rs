@@ -1,6 +1,6 @@
 use crate::env::Environment;
 use candid::Principal;
-use types::{CanisterId, Cycles};
+use types::{CanisterId, Cycles, TimestampNanos};
 
 pub struct TestEnv {
     pub now: u64,
@@ -11,8 +11,8 @@ pub struct TestEnv {
 }
 
 impl Environment for TestEnv {
-    fn now(&self) -> u64 {
-        self.now
+    fn now_nanos(&self) -> TimestampNanos {
+        self.now * 1_000_000
     }
 
     fn caller(&self) -> Principal {

@@ -6,6 +6,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [unreleased]
 
+## [[2.0.552](https://github.com/open-ic/open-chat/releases/tag/v2.0.552-group)] - 2022-01-20
+
+### Added
+
+- Add SNS1 token to backend ([#2975](https://github.com/open-ic/open-chat/pull/2975))
+- Add ckBTC token to backend ([#2981](https://github.com/open-ic/open-chat/pull/2981))
+
+### Changed
+
+- Skip processing notifications with no recipients ([#2979](https://github.com/open-ic/open-chat/pull/2979))
+- Use `canister_logger` and `canister_tracing_macros` from [ic-utils](https://github.com/open-ic/ic-utils) ([#2985](https://github.com/open-ic/open-chat/pull/2985))
+
 ### Removed
 
 - Removed `join_group_v2` which has been superseded by the new `join_group` ([#2966](https://github.com/open-ic/open-chat/pull/2966))

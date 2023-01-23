@@ -25,6 +25,7 @@
         appearanceSectionOpen,
         chatsSectionOpen,
         enterSend,
+        lowBandwidth,
         referralOpen,
         statsSectionOpen,
         storageSectionOpen,
@@ -177,7 +178,10 @@
             headerText={$_("userInfoHeader")}>
             <div class="avatar">
                 {#if readonly}
-                    <Avatar url={client.userAvatarUrl(user)} userId={user.userId} size={AvatarSize.ExtraLarge} />
+                    <Avatar
+                        url={client.userAvatarUrl(user)}
+                        userId={user.userId}
+                        size={AvatarSize.ExtraLarge} />
                 {:else}
                     <EditableAvatar
                         overlayIcon={true}
@@ -294,6 +298,12 @@
                         : $_("enableNotificationsMenu")}
                     checked={$notificationStatus === "granted"} />
             {/if}
+            <Toggle
+                id={"low-bandwidth"}
+                small
+                on:change={() => lowBandwidth.toggle()}
+                label={$_("lowBandwidth")}
+                checked={$lowBandwidth} />
         </CollapsibleCard>
     </div>
     <div class="accounts">
