@@ -28,7 +28,7 @@
         showManageCryptoAccount = true;
     }
 
-    $: crypto = cryptoCurrencyList.map(t => ({
+    $: crypto = cryptoCurrencyList.map((t) => ({
         key: t,
         symbol: cryptoLookup[t].symbol,
         balance: $cryptoBalance[t],
@@ -130,7 +130,7 @@
                 background-image: url("../assets/sns1_token.png");
             }
             &.ckbtc {
-                background-image: url("../assets/bitcoin_token.png");
+                background-image: url("../assets/sns1_token1.png");
             }
             &.chat {
                 background-image: url("../assets/spinner.svg");
