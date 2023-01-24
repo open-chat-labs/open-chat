@@ -94,7 +94,7 @@
     let currentChatId = "";
     let observer: IntersectionObserver;
     let messageReadTimers: Record<number, number> = {};
-    let insideFromBottomThreshold: boolean = false;
+    let insideFromBottomThreshold: boolean = true;
     let morePrevAvailable = false;
     let previousScrollHeight: number | undefined = undefined;
 

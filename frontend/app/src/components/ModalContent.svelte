@@ -6,7 +6,6 @@
     import { _ } from "svelte-i18n";
     import HoverIcon from "./HoverIcon.svelte";
     import { rtlStore } from "../stores/rtl";
-    import { iconSize } from "../stores/iconSize";
     import { logger } from "../utils/logging";
     import { mobileWidth } from "../stores/screenDimensions";
 
@@ -37,6 +36,7 @@
                 await tick();
                 calculatePosition();
             }
+            tick().then(() => (actualWidth = divElement?.clientWidth));
         } catch (e: any) {
             logger.error("Failed to open modal", e);
             onClose();
@@ -65,7 +65,6 @@
 
 <div
     bind:this={divElement}
-    bind:clientWidth={actualWidth}
     {style}
     class="modal-content"
     class:square
