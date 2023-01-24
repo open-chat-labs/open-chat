@@ -19,7 +19,7 @@
         "sourceMap": true,
         "strict": true,
         "target": "es2020",
-        "types": ["jest", "node"]
+        "types": ["node"]
     },
     "exclude": ["node_modules/*", "../node_modules/*", "lib/*"],
     "include": ["src/**/*"]
