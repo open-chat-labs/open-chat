@@ -524,7 +524,7 @@ export type Milliseconds = bigint;
 export interface NnsCompletedCryptoTransaction {
   'to' : NnsCryptoAccount,
   'fee' : Tokens,
-  'created' : TimestampMillis,
+  'created' : TimestampNanos,
   'token' : Cryptocurrency,
   'transaction_hash' : TransactionHash,
   'block_index' : BlockIndex,
@@ -537,7 +537,7 @@ export type NnsCryptoAccount = { 'Mint' : null } |
 export interface NnsFailedCryptoTransaction {
   'to' : NnsCryptoAccount,
   'fee' : Tokens,
-  'created' : TimestampMillis,
+  'created' : TimestampNanos,
   'token' : Cryptocurrency,
   'transaction_hash' : TransactionHash,
   'from' : NnsCryptoAccount,
@@ -706,7 +706,7 @@ export type SnsAccount = { 'Mint' : null } |
 export interface SnsCompletedCryptoTransaction {
   'to' : SnsAccount,
   'fee' : Tokens,
-  'created' : TimestampMillis,
+  'created' : TimestampNanos,
   'token' : Cryptocurrency,
   'transaction_hash' : TransactionHash,
   'block_index' : BlockIndex,
@@ -717,7 +717,7 @@ export interface SnsCompletedCryptoTransaction {
 export interface SnsFailedCryptoTransaction {
   'to' : SnsAccount,
   'fee' : Tokens,
-  'created' : TimestampMillis,
+  'created' : TimestampNanos,
   'token' : Cryptocurrency,
   'transaction_hash' : TransactionHash,
   'from' : SnsAccount,

@@ -311,13 +311,6 @@ export interface EventsByIndexArgs {
   'events' : Uint32Array | number[],
   'thread_root_message_index' : [] | [MessageIndex],
 }
-export interface EventsRangeArgs {
-  'latest_client_event_index' : [] | [EventIndex],
-  'user_id' : UserId,
-  'to_index' : EventIndex,
-  'from_index' : EventIndex,
-  'thread_root_message_index' : [] | [MessageIndex],
-}
 export type EventsResponse = { 'ReplicaNotUpToDate' : EventIndex } |
   { 'ChatNotFound' : null } |
   { 'Success' : EventsSuccessResult };
@@ -719,7 +712,7 @@ export type MuteNotificationsResponse = { 'ChatNotFound' : null } |
 export interface NnsCompletedCryptoTransaction {
   'to' : NnsCryptoAccount,
   'fee' : Tokens,
-  'created' : TimestampMillis,
+  'created' : TimestampNanos,
   'token' : Cryptocurrency,
   'transaction_hash' : TransactionHash,
   'block_index' : BlockIndex,
@@ -732,7 +725,7 @@ export type NnsCryptoAccount = { 'Mint' : null } |
 export interface NnsFailedCryptoTransaction {
   'to' : NnsCryptoAccount,
   'fee' : Tokens,
-  'created' : TimestampMillis,
+  'created' : TimestampNanos,
   'token' : Cryptocurrency,
   'transaction_hash' : TransactionHash,
   'from' : NnsCryptoAccount,
@@ -998,7 +991,7 @@ export type SnsAccount = { 'Mint' : null } |
 export interface SnsCompletedCryptoTransaction {
   'to' : SnsAccount,
   'fee' : Tokens,
-  'created' : TimestampMillis,
+  'created' : TimestampNanos,
   'token' : Cryptocurrency,
   'transaction_hash' : TransactionHash,
   'block_index' : BlockIndex,
@@ -1009,7 +1002,7 @@ export interface SnsCompletedCryptoTransaction {
 export interface SnsFailedCryptoTransaction {
   'to' : SnsAccount,
   'fee' : Tokens,
-  'created' : TimestampMillis,
+  'created' : TimestampNanos,
   'token' : Cryptocurrency,
   'transaction_hash' : TransactionHash,
   'from' : SnsAccount,
@@ -1231,7 +1224,6 @@ export interface _SERVICE {
   'edit_message' : ActorMethod<[EditMessageArgs], EditMessageResponse>,
   'events' : ActorMethod<[EventsArgs], EventsResponse>,
   'events_by_index' : ActorMethod<[EventsByIndexArgs], EventsResponse>,
-  'events_range' : ActorMethod<[EventsRangeArgs], EventsResponse>,
   'events_window' : ActorMethod<[EventsWindowArgs], EventsResponse>,
   'init_user_principal_migration' : ActorMethod<
     [InitUserPrincipalMigrationArgs],

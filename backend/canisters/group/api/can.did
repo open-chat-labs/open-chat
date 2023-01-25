@@ -525,15 +525,6 @@ type EventsByIndexArgs =
         latest_client_event_index: opt EventIndex;
     };
 
-type EventsRangeArgs =
-    record {
-        thread_root_message_index: opt MessageIndex;
-        from_index: EventIndex;
-        to_index: EventIndex;
-        invite_code: opt nat64;
-        latest_client_event_index: opt EventIndex;
-    };
-
 type EventsWindowArgs =
     record {
         thread_root_message_index: opt MessageIndex;
@@ -720,7 +711,6 @@ service: {
 
     events: (EventsArgs) -> (EventsResponse) query;
     events_by_index: (EventsByIndexArgs) -> (EventsResponse) query;
-    events_range: (EventsRangeArgs) -> (EventsResponse) query;
     events_window: (EventsWindowArgs) -> (EventsResponse) query;
     local_user_index: (LocalUserIndexArgs) -> (LocalUserIndexResponse) query;
     messages_by_message_index: (MessagesByMessageIndexArgs) -> (MessagesByMessageIndexResponse) query;
