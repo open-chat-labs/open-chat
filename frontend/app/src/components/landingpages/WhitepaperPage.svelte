@@ -373,13 +373,13 @@
                 voting rewards are distributed daily and take into account all of the votes that ended
                 on that day. If there are no proposals on a given day the rewards are carried over to
                 the next day. The proportion of total token supply that is generated annually for voting
-                rewards is 5%. In practice, given that much of the supply will not be in voting neurons,
+                rewards is 2.5%. In practice, given that much of the supply will not be in voting neurons,
                 a neuron with a 1 year dissolve delay would expect a voting reward significantly higher
                 than this figure.
             </p>
             <p>
                 Please refer to <ExternalLink
-                    href="https://docs.google.com/document/d/1Ty25xNbXKIs8YiXlmpT8vuPApVzjp1aTJL1WXySOUto/edit#heading=h.rrc8s7i3mbk6"
+                    href="https://internetcomputer.org/docs/current/tokenomics/sns/rewards#voting-rewards"
                     >this document</ExternalLink> for a full description of SNS voting and rewards.
             </p>
             <HashLinkTarget on:copyUrl={onCopyUrl} id="3-5">The power of the DAO</HashLinkTarget>
@@ -514,10 +514,9 @@
                 The design of the user reward system has not been confirmed yet and we will consult
                 with the OpenChat community before finalizing the design and making a proposal to
                 carry it out. This system can of course evolve over time with further proposals.
-                Once it is ready, a proposal will be made to transfer the <HashLink id="5-1-3"
-                    >reserved 38% of the CHAT</HashLink>
-                from the SNS governance canister to the OpenChat root canister where it will be available
-                to OpenChat to algorithmically reward dapp users.
+                Once it is ready, a proposal will be made to transfer some CHAT from the SNS treasury
+                to the OpenChat root canister where it will be available to OpenChat to algorithmically 
+                reward dapp users.
             </p>
             <p>
                 There are challenges to creating an effective reward system. The aim is to
@@ -577,7 +576,7 @@
             <HashLinkTarget on:copyUrl={onCopyUrl} id="5-1"
                 >Initial token allocation</HashLinkTarget>
             <p>
-                The SNS will be initialized with 1 billion CHAT tokens allocated in the following
+                The SNS will be initialized with 100 million CHAT tokens allocated in the following
                 proportions.
             </p>
             <GoogleChart
