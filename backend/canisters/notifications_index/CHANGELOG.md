@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Expose notifications canisters in metrics ([#3007](https://github.com/open-ic/open-chat/pull/3007))
+
 ### Removed
 
 - Removed code only needed for the previous upgrade ([#3003](https://github.com/open-ic/open-chat/pull/3003))
