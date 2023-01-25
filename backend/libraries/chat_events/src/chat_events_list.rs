@@ -289,7 +289,9 @@ pub trait Reader {
         let backwards_iter = self.iter(Some(start_event_index.decr().into()), false);
         let combined = forwards_iter.interleave(backwards_iter);
 
-        self.cap_then_hydrate_events(combined, max_messages, max_events, my_user_id)
+        let mut events = self.cap_then_hydrate_events(combined, max_messages, max_events, my_user_id);
+        events.sort_unstable_by_key(|e| e.index);
+        events
     }
 
     fn message_internal(&self, event_key: EventKey) -> Option<&MessageInternal> {
@@ -502,12 +504,14 @@ pub trait Reader {
         iterator
             .take(max_events)
             .take_while(move |e| {
-                let is_message = matches!(e.event, ChatEventInternal::Message(_));
-                if is_message {
-                    message_count += 1;
-                    message_count < max_messages
-                } else {
+                if message_count < max_messages {
+                    let is_message = matches!(e.event, ChatEventInternal::Message(_));
+                    if is_message {
+                        message_count += 1;
+                    }
                     true
+                } else {
+                    false
                 }
             })
             .map(|e| self.hydrate_event(e, my_user_id))
@@ -558,4 +562,164 @@ fn try_into_message_event(
         correlation_id: event.correlation_id,
         event: message.hydrate(my_user_id),
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{ChatEvents, PushMessageArgs};
+    use candid::Principal;
+    use std::mem::size_of;
+    use types::{MessageContentInternal, TextContent};
+
+    #[test]
+    fn enum_size() {
+        let size = size_of::<ChatEventInternal>();
+        assert_eq!(size, 16);
+    }
+
+    #[test]
+    fn scan_ascending_from_start() {
+        let events = setup_events();
+        let events_reader = events.main_events_reader();
+
+        let results = events_reader.scan(None, true, usize::MAX, usize::MAX, None);
+
+        let event_indexes: Vec<usize> = results.iter().map(|e| e.index.into()).collect();
+
+        assert_eq!(event_indexes, (0..events_reader.len()).collect_vec());
+    }
+
+    #[test]
+    fn scan_descending_from_end() {
+        let events = setup_events();
+        let events_reader = events.main_events_reader();
+
+        let results = events_reader.scan(None, false, usize::MAX, usize::MAX, None);
+
+        let event_indexes: Vec<usize> = results.iter().map(|e| e.index.into()).collect();
+
+        assert_eq!(event_indexes, (0..events_reader.len()).rev().collect_vec());
+    }
+
+    #[test]
+    fn scan_ascending() {
+        let events = setup_events();
+        let events_reader = events.main_events_reader();
+
+        let start: MessageIndex = 20.into();
+
+        let results = events_reader.scan(Some(EventKey::MessageIndex(start)), true, usize::MAX, usize::MAX, None);
+
+        let first = results.first().unwrap();
+
+        if let ChatEvent::Message(m) = &first.event {
+            assert_eq!(start, m.message_index);
+        } else {
+            panic!();
+        }
+
+        let event_indexes: Vec<usize> = results.iter().map(|e| e.index.into()).collect();
+
+        assert_eq!(event_indexes, (first.index.into()..events_reader.len()).collect_vec());
+    }
+
+    #[test]
+    fn scan_descending() {
+        let events = setup_events();
+        let events_reader = events.main_events_reader();
+
+        let start = 30.into();
+
+        let results = events_reader.scan(Some(EventKey::MessageIndex(start)), false, usize::MAX, usize::MAX, None);
+
+        let first = results.first().unwrap();
+
+        if let ChatEvent::Message(m) = &first.event {
+            assert_eq!(start, m.message_index);
+        } else {
+            panic!();
+        }
+
+        let event_indexes: Vec<usize> = results.iter().map(|e| e.index.into()).collect();
+
+        assert_eq!(event_indexes, (0..=first.index.into()).rev().collect_vec());
+    }
+
+    #[test]
+    fn window_message_limit() {
+        let events = setup_events();
+        let events_reader = events.main_events_reader();
+
+        let start = 30.into();
+
+        let results = events_reader.window(EventKey::MessageIndex(start), 5, usize::MAX, None);
+
+        let messages: Vec<_> = results
+            .iter()
+            .filter_map(|e| if let ChatEvent::Message(m) = &e.event { Some(m.message_index) } else { None })
+            .collect();
+
+        assert_eq!(messages, (28..=32).map(|i| i.into()).collect_vec());
+    }
+
+    #[test]
+    fn window_event_limit() {
+        let events = setup_events();
+        let events_reader = events.main_events_reader();
+
+        let start = 40.into();
+
+        let results = events_reader.window(EventKey::EventIndex(start), usize::MAX, 15, None);
+
+        let event_indexes: Vec<_> = results.into_iter().map(|e| e.index).collect();
+
+        assert_eq!(event_indexes, (33..=47).map(|i| i.into()).collect_vec());
+    }
+
+    #[test]
+    fn window_min_visible_event_index() {
+        let events = setup_events();
+        let events_reader = events.main_events_reader_filtered(46.into());
+
+        let start = 50.into();
+
+        let results = events_reader.window(EventKey::EventIndex(start), usize::MAX, 25, None);
+
+        let event_indexes: Vec<_> = results.into_iter().map(|e| e.index).collect();
+
+        assert_eq!(event_indexes, (46..=70).map(|i| i.into()).collect_vec());
+    }
+
+    fn setup_events() -> ChatEvents {
+        let user_id = Principal::from_slice(&[1]).into();
+
+        let mut events = ChatEvents::new_direct_chat(Principal::from_slice(&[2]).into(), 1);
+
+        for i in 2..50 {
+            let message_id = i.into();
+            events.push_message(PushMessageArgs {
+                sender: user_id,
+                thread_root_message_index: None,
+                message_id,
+                content: MessageContentInternal::Text(TextContent {
+                    text: "hello".to_owned(),
+                }),
+                replies_to: None,
+                now: i as u64,
+                forwarded: false,
+                correlation_id: 0,
+            });
+            events.push_main_event(
+                ChatEventInternal::MessageReactionAdded(Box::new(UpdatedMessageInternal {
+                    updated_by: user_id,
+                    message_id,
+                })),
+                0,
+                i as u64,
+            );
+        }
+
+        events
+    }
 }
