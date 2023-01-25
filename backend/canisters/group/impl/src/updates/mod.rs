@@ -1,5 +1,5 @@
 use crate::{mutate_state, Data, RuntimeState};
-use chat_events::ChatEventInternal;
+use chat_events::{ChatEventInternal, Reader};
 use group_index_canister::c2c_mark_active;
 use std::collections::HashSet;
 use types::{CanisterId, Milliseconds, PublicGroupActivity, TimestampMillis};
@@ -82,7 +82,12 @@ fn handle_activity_notification(runtime_state: &mut RuntimeState) {
             }
         };
 
-        for event in data.events.main().iter().rev().take_while(|e| e.timestamp >= one_day_ago) {
+        for event in data
+            .events
+            .main_events_reader()
+            .iter(None, false)
+            .take_while(|e| e.timestamp >= one_day_ago)
+        {
             let within_last_hour = event.timestamp >= one_hour_ago;
 
             match &event.event {
