@@ -15,3 +15,4 @@ export { createMapStore } from "./stores/mapStore";
 export { buildCryptoTransferText, buildTransactionUrl } from "./utils/chat";
 export { Poller } from "./utils/poller";
 export { FailedMessages } from "./stores/failedMessages";
+export { chunk } from "./utils/list";

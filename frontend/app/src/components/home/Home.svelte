@@ -54,6 +54,7 @@
     import { themeStore } from "../../theme/themes";
     import SuspendedModal from "../SuspendedModal.svelte";
     import NewGroup from "./addgroup/NewGroup.svelte";
+    import TilePuzzle from "../TilePuzzle.svelte";
 
     export let logout: () => void;
 
@@ -87,10 +88,11 @@
         SelectChat,
         Suspended,
         NewGroup,
+        Puzzle,
     }
 
     let faqQuestion: Questions | undefined = undefined;
-    let modal = ModalType.None;
+    let modal = ModalType.Puzzle;
     let groupSearchResults: Promise<GroupSearchResponse> | undefined = undefined;
     let userSearchResults: Promise<UserSummary[]> | undefined = undefined;
     let searchTerm: string = "";
@@ -966,7 +968,7 @@
 
 {#if modal !== ModalType.None}
     <Overlay
-        dismissible={modal !== ModalType.SelectChat}
+        dismissible={modal !== ModalType.SelectChat && modal !== ModalType.Puzzle}
         alignLeft={modal === ModalType.SelectChat}
         on:close={closeModal}>
         {#if modal === ModalType.Faq}
@@ -980,6 +982,8 @@
             <SuspendedModal on:close={closeModal} />
         {:else if modal === ModalType.NewGroup && candidateGroup !== undefined}
             <NewGroup {candidateGroup} on:close={closeModal} />
+        {:else if modal === ModalType.Puzzle}
+            <TilePuzzle />
         {/if}
     </Overlay>
 {/if}
