@@ -266,6 +266,7 @@ export const idlFactory = ({ IDL }) => {
     'Account' : AccountIdentifier,
   });
   const Tokens = IDL.Record({ 'e8s' : IDL.Nat64 });
+  const TimestampNanos = IDL.Nat64;
   const Cryptocurrency = IDL.Variant({
     'InternetComputer' : IDL.Null,
     'SNS1' : IDL.Null,
@@ -276,7 +277,7 @@ export const idlFactory = ({ IDL }) => {
   const NnsFailedCryptoTransaction = IDL.Record({
     'to' : NnsCryptoAccount,
     'fee' : Tokens,
-    'created' : TimestampMillis,
+    'created' : TimestampNanos,
     'token' : Cryptocurrency,
     'transaction_hash' : TransactionHash,
     'from' : NnsCryptoAccount,
@@ -295,7 +296,7 @@ export const idlFactory = ({ IDL }) => {
   const SnsFailedCryptoTransaction = IDL.Record({
     'to' : SnsAccount,
     'fee' : Tokens,
-    'created' : TimestampMillis,
+    'created' : TimestampNanos,
     'token' : Cryptocurrency,
     'transaction_hash' : TransactionHash,
     'from' : SnsAccount,
@@ -311,7 +312,7 @@ export const idlFactory = ({ IDL }) => {
   const NnsCompletedCryptoTransaction = IDL.Record({
     'to' : NnsCryptoAccount,
     'fee' : Tokens,
-    'created' : TimestampMillis,
+    'created' : TimestampNanos,
     'token' : Cryptocurrency,
     'transaction_hash' : TransactionHash,
     'block_index' : BlockIndex,
@@ -322,7 +323,7 @@ export const idlFactory = ({ IDL }) => {
   const SnsCompletedCryptoTransaction = IDL.Record({
     'to' : SnsAccount,
     'fee' : Tokens,
-    'created' : TimestampMillis,
+    'created' : TimestampNanos,
     'token' : Cryptocurrency,
     'transaction_hash' : TransactionHash,
     'block_index' : BlockIndex,
@@ -625,13 +626,6 @@ export const idlFactory = ({ IDL }) => {
     'latest_client_event_index' : IDL.Opt(EventIndex),
     'user_id' : UserId,
     'events' : IDL.Vec(EventIndex),
-    'thread_root_message_index' : IDL.Opt(MessageIndex),
-  });
-  const EventsRangeArgs = IDL.Record({
-    'latest_client_event_index' : IDL.Opt(EventIndex),
-    'user_id' : UserId,
-    'to_index' : EventIndex,
-    'from_index' : EventIndex,
     'thread_root_message_index' : IDL.Opt(MessageIndex),
   });
   const EventsWindowArgs = IDL.Record({
@@ -1113,7 +1107,6 @@ export const idlFactory = ({ IDL }) => {
         [EventsResponse],
         ['query'],
       ),
-    'events_range' : IDL.Func([EventsRangeArgs], [EventsResponse], ['query']),
     'events_window' : IDL.Func([EventsWindowArgs], [EventsResponse], ['query']),
     'init_user_principal_migration' : IDL.Func(
         [InitUserPrincipalMigrationArgs],
