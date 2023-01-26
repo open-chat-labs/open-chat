@@ -35,9 +35,7 @@
 
     // make sure that they are not trying to withdraw to the same account - I can see people trying to do that
     $: valid =
-        amountToWithdrawE8s > BigInt(0) &&
-        targetAccount !== "" &&
-        targetAccount !== user.userId;
+        amountToWithdrawE8s > BigInt(0) && targetAccount !== "" && targetAccount !== user.userId;
 
     $: transferFees = cryptoLookup[token].transferFeesE8s;
     $: symbol = cryptoLookup[token].symbol;
@@ -123,7 +121,9 @@
                 <div class="token-input">
                     <TokenInput
                         {token}
-                        maxAmountE8s={$cryptoBalance[token] - transferFees}
+                        maxAmountE8s={BigInt(
+                            Math.max(0, Number($cryptoBalance[token] - transferFees))
+                        )}
                         bind:amountE8s={amountToWithdrawE8s} />
                 </div>
                 <div class="target">

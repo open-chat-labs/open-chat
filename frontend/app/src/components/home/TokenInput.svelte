@@ -12,6 +12,8 @@
     export let maxAmountE8s: bigint;
     export let token: Cryptocurrency;
 
+    const DEBOUNCE_MS = 1000;
+
     let inputElement: HTMLInputElement;
 
     $: symbol = cryptoLookup[token].symbol;
@@ -32,8 +34,20 @@
         }
     }
 
-    function onInput(ev: Event) {
-        const inputValue = (ev.target as HTMLInputElement).value;
+    const debouncedKeyup = debounce(onKeyup, DEBOUNCE_MS);
+
+    function debounce(fn: () => void, delay = 500) {
+        let timer: number | undefined;
+        return () => {
+            window.clearTimeout(timer);
+            timer = window.setTimeout(() => {
+                fn();
+            }, delay);
+        };
+    }
+
+    function onKeyup() {
+        const inputValue = inputElement.value;
 
         let { replacementText, e8s } = client.validateTokenInput(inputValue);
 
@@ -67,8 +81,8 @@
         max={Number(maxAmountE8s) / E8S_PER_TOKEN}
         type="number"
         bind:this={inputElement}
-        placeholder="0"
-        on:input={onInput} />
+        on:keyup={debouncedKeyup}
+        placeholder="0" />
 </div>
 
 <style type="text/scss">
