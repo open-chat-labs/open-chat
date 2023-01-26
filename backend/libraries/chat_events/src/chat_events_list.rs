@@ -708,7 +708,7 @@ mod tests {
     #[test]
     fn window_min_visible_event_index() {
         let events = setup_events();
-        let events_reader = events.main_events_reader_filtered(46.into());
+        let events_reader = events.visible_main_events_reader(46.into());
 
         let start = 50.into();
 

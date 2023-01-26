@@ -47,7 +47,7 @@ fn delete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
                 if let Some((message_index, sender)) = runtime_state
                     .data
                     .events
-                    .main_events_reader_filtered(min_visible_event_index)
+                    .visible_main_events_reader(min_visible_event_index)
                     .message_internal(message_id.into())
                     .map(|m| (m.message_index, m.sender))
                 {

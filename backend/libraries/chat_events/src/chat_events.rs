@@ -789,7 +789,7 @@ impl ChatEvents {
         ChatEventsListReader::new(&self.main)
     }
 
-    pub fn main_events_reader_filtered(&self, min_visible_event_index: EventIndex) -> ChatEventsListReader {
+    pub fn visible_main_events_reader(&self, min_visible_event_index: EventIndex) -> ChatEventsListReader {
         ChatEventsListReader::with_min_visible_event_index(&self.main, min_visible_event_index)
     }
 

@@ -70,7 +70,7 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
     if let Some(proposal) = runtime_state
         .data
         .events
-        .main_events_reader_filtered(min_visible_even_index)
+        .visible_main_events_reader(min_visible_even_index)
         .message_internal(args.message_index.into())
         .and_then(|m| if let MessageContentInternal::GovernanceProposal(p) = &m.content { Some(p) } else { None })
     {

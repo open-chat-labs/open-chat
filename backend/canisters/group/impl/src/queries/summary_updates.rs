@@ -100,7 +100,7 @@ fn process_events(
     runtime_state: &RuntimeState,
 ) -> UpdatesFromEvents {
     let data = &runtime_state.data;
-    let events_reader = data.events.main_events_reader_filtered(participant.min_visible_event_index());
+    let events_reader = data.events.visible_main_events_reader(participant.min_visible_event_index());
 
     let mut updates = UpdatesFromEvents {
         // We need to handle this separately because the message may have been sent before 'since' but

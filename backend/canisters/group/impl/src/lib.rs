@@ -79,7 +79,7 @@ impl RuntimeState {
         let data = &self.data;
         let min_visible_event_index = participant.min_visible_event_index();
         let min_visible_message_index = participant.min_visible_message_index();
-        let main_events_reader = data.events.main_events_reader_filtered(min_visible_event_index);
+        let main_events_reader = data.events.visible_main_events_reader(min_visible_event_index);
         let latest_event = main_events_reader.last();
 
         GroupCanisterGroupChatSummary {

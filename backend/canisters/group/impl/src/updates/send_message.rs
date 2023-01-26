@@ -109,7 +109,7 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
             runtime_state
                 .data
                 .events
-                .main_events_reader_filtered(min_visible_event_index)
+                .visible_main_events_reader(min_visible_event_index)
                 .message_internal(root_message_index.into())
                 .cloned()
         }) {

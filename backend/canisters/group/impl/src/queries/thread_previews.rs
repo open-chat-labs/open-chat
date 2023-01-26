@@ -46,7 +46,7 @@ fn build_thread_preview(
     min_visible_event_index: EventIndex,
     root_message_index: MessageIndex,
 ) -> Option<ThreadPreview> {
-    let events_reader = runtime_state.data.events.main_events_reader_filtered(min_visible_event_index);
+    let events_reader = runtime_state.data.events.visible_main_events_reader(min_visible_event_index);
     let root_message = events_reader.message_event(root_message_index.into(), Some(caller_user_id))?;
     let thread_events_reader = runtime_state
         .data
