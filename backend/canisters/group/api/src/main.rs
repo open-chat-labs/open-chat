@@ -4,7 +4,6 @@ fn main() {
     generate_candid_method!(group, deleted_message, query);
     generate_candid_method!(group, events, query);
     generate_candid_method!(group, events_by_index, query);
-    generate_candid_method!(group, events_range, query);
     generate_candid_method!(group, events_window, query);
     generate_candid_method!(group, local_user_index, query);
     generate_candid_method!(group, messages_by_message_index, query);

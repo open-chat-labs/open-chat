@@ -5,7 +5,7 @@
     let viewBox = "0 -3 26 26";
 </script>
 
-<a {href} target="_blank">
+<a {href} target="_blank" rel="noreferrer">
     <slot />
 
     <div class="icon">

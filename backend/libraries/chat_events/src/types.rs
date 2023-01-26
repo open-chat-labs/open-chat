@@ -5,8 +5,8 @@ use std::collections::{HashMap, HashSet};
 use std::ops::{Deref, DerefMut};
 use types::{
     AvatarChanged, ChatFrozen, ChatMetrics, ChatUnfrozen, Cryptocurrency, DeletedBy, DirectChatCreated, GroupChatCreated,
-    GroupDescriptionChanged, GroupInviteCodeChanged, GroupNameChanged, GroupRulesChanged, GroupVisibilityChanged,
-    MessageContentInternal, MessageId, MessageIndex, MessagePinned, MessageUnpinned, OwnershipTransferred,
+    GroupDescriptionChanged, GroupInviteCodeChanged, GroupNameChanged, GroupRulesChanged, GroupVisibilityChanged, Message,
+    MessageContent, MessageContentInternal, MessageId, MessageIndex, MessagePinned, MessageUnpinned, OwnershipTransferred,
     ParticipantAssumesSuperAdmin, ParticipantDismissedAsSuperAdmin, ParticipantJoined, ParticipantLeft,
     ParticipantRelinquishesSuperAdmin, ParticipantsAdded, ParticipantsRemoved, PermissionsChanged, PollVoteRegistered,
     Reaction, ReplyContext, RoleChanged, ThreadSummary, TimestampMillis, UserId, UsersBlocked, UsersUnblocked,
@@ -257,6 +257,29 @@ pub struct MessageInternal {
 }
 
 impl MessageInternal {
+    pub fn hydrate(&self, my_user_id: Option<UserId>) -> Message {
+        Message {
+            message_index: self.message_index,
+            message_id: self.message_id,
+            sender: self.sender,
+            content: if let Some(deleted_by) = self.deleted_by.clone() {
+                MessageContent::Deleted(deleted_by)
+            } else {
+                self.content.hydrate(my_user_id)
+            },
+            replies_to: self.replies_to.clone(),
+            reactions: self
+                .reactions
+                .iter()
+                .map(|(r, u)| (r.clone(), u.iter().copied().collect()))
+                .collect(),
+            edited: self.last_edited.is_some(),
+            forwarded: self.forwarded,
+            thread_summary: self.thread_summary.clone(),
+            last_updated: self.last_updated,
+        }
+    }
+
     pub fn add_to_metrics(&self, metrics: &mut ChatMetrics, per_user_metrics: &mut HashMap<UserId, ChatMetrics>) {
         let sender_metrics = per_user_metrics.entry(self.sender).or_default();
 
