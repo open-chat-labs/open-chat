@@ -505,7 +505,8 @@
         "icp": "Internet Computer",
         "btc": "Bitcoin",
         "chat": "OpenChat",
-        "sns1": "SNS-1"
+        "sns1": "SNS-1",
+        "max": "Max"
     },
     "cryptoAccount": {
         "shortBalanceLabel": "Balance",

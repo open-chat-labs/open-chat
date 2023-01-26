@@ -32,10 +32,15 @@
     let amountToWithdrawE8s = BigInt(0);
     let withdrawing = false;
     let balanceWithRefresh: BalanceWithRefresh;
+    let validAmount = false;
 
     // make sure that they are not trying to withdraw to the same account - I can see people trying to do that
+
     $: valid =
-        amountToWithdrawE8s > BigInt(0) && targetAccount !== "" && targetAccount !== user.userId;
+        validAmount &&
+        amountToWithdrawE8s > BigInt(0) &&
+        targetAccount !== "" &&
+        targetAccount !== user.userId;
 
     $: transferFees = cryptoLookup[token].transferFeesE8s;
     $: symbol = cryptoLookup[token].symbol;
@@ -117,13 +122,13 @@
 
                 <h4 class="title">{$_("cryptoAccount.withdraw")}</h4>
 
-                <Legend label={$_("tokenTransfer.amount", { values: { token: symbol } })} />
                 <div class="token-input">
                     <TokenInput
                         {token}
                         maxAmountE8s={BigInt(
                             Math.max(0, Number($cryptoBalance[token] - transferFees))
                         )}
+                        bind:valid={validAmount}
                         bind:amountE8s={amountToWithdrawE8s} />
                 </div>
                 <div class="target">

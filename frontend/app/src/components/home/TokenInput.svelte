@@ -4,6 +4,7 @@
     import Alert from "svelte-material-icons/Alert.svelte";
     import { iconSize } from "stores/iconSize";
     import { _ } from "svelte-i18n";
+    import Legend from "../Legend.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -11,8 +12,7 @@
     export let autofocus: boolean = false;
     export let maxAmountE8s: bigint;
     export let token: Cryptocurrency;
-
-    const DEBOUNCE_MS = 1000;
+    export let valid: boolean = false;
 
     let inputElement: HTMLInputElement;
 
@@ -34,34 +34,29 @@
         }
     }
 
-    const debouncedKeyup = debounce(onKeyup, DEBOUNCE_MS);
-
-    function debounce(fn: () => void, delay = 500) {
-        let timer: number | undefined;
-        return () => {
-            window.clearTimeout(timer);
-            timer = window.setTimeout(() => {
-                fn();
-            }, delay);
-        };
+    function onKeyup() {
+        const e8s = Math.round(Number(inputElement.value) * E8S_PER_TOKEN);
+        if (isNaN(e8s) || e8s <= 0 || e8s > maxAmountE8s) {
+            valid = false;
+        } else {
+            valid = true;
+        }
+        if (!isNaN(e8s)) {
+            amountE8s = BigInt(e8s);
+        }
     }
 
-    function onKeyup() {
-        const inputValue = inputElement.value;
-
-        let { replacementText, e8s } = client.validateTokenInput(inputValue);
-
-        if (e8s > maxAmountE8s) {
-            e8s = maxAmountE8s;
-            inputElement.value = client.formatTokens(maxAmountE8s, 0, ".");
-        } else if (replacementText !== undefined) {
-            inputElement.value = replacementText;
-        }
-
-        amountE8s = e8s;
+    function max() {
+        amountE8s = maxAmountE8s;
+        valid = true;
+        inputElement.value = client.formatTokens(maxAmountE8s, 0, ".");
     }
 </script>
 
+<div class="label">
+    <Legend label={$_("tokenTransfer.amount")} rules={`${symbol.toUpperCase()}`} />
+    <div on:click={max} class="max">{$_("tokenTransfer.max")}</div>
+</div>
 <div class="wrapper">
     <div class="fee">
         <Alert size={$iconSize} color={"var(--warn)"} />
@@ -80,14 +75,36 @@
         min={0}
         max={Number(maxAmountE8s) / E8S_PER_TOKEN}
         type="number"
+        step="0.00000001"
         bind:this={inputElement}
-        on:keyup={debouncedKeyup}
+        on:keyup={onKeyup}
         placeholder="0" />
 </div>
 
 <style type="text/scss">
     .wrapper {
         position: relative;
+    }
+
+    .label {
+        display: flex;
+        align-items: center;
+        gap: $sp3;
+
+        .max {
+            transition: background ease-in-out 200ms;
+            background: var(--button-bg);
+            color: var(--button-txt);
+            padding: 0 $sp3;
+            border-radius: $sp2;
+            cursor: pointer;
+            border: none;
+            @include font(book, normal, fs-50, 20);
+
+            &:hover {
+                background: var(--button-hv);
+            }
+        }
     }
 
     .amount-val {
