@@ -36,7 +36,7 @@ impl FromStr for Version {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let parts: Vec<_> = s.split('.').collect();
         if parts.len() != 3 {
-            return Err(format!("Unable to parse version: {}", s));
+            return Err(format!("Unable to parse version: {s}"));
         }
 
         let major = u32::from_str(parts[0]).map_err(|e| e.to_string())?;
