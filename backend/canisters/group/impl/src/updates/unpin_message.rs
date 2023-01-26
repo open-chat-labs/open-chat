@@ -1,4 +1,4 @@
-use crate::updates::handle_activity_notification;
+use crate::activity_notifications::handle_activity_notification;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use chat_events::ChatEventInternal;
@@ -28,11 +28,11 @@ fn unpin_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response 
             return NotAuthorized;
         }
 
-        if !runtime_state.data.events.is_message_accessible_by_index(
-            participant.min_visible_event_index(),
-            None,
-            args.message_index,
-        ) {
+        if !runtime_state
+            .data
+            .events
+            .is_accessible(participant.min_visible_event_index(), None, args.message_index.into())
+        {
             return MessageNotFound;
         }
 

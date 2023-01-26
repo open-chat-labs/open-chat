@@ -1,4 +1,4 @@
-use crate::updates::handle_activity_notification;
+use crate::activity_notifications::handle_activity_notification;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use chat_events::{RegisterPollVoteArgs, RegisterPollVoteResult};
@@ -26,17 +26,11 @@ fn register_poll_vote_impl(args: Args, runtime_state: &mut RuntimeState) -> Resp
 
         let now = runtime_state.env.now();
         let user_id = participant.user_id;
-
-        if !runtime_state.data.events.is_message_accessible_by_index(
-            participant.min_visible_event_index(),
-            args.thread_root_message_index,
-            args.message_index,
-        ) {
-            return PollNotFound;
-        }
+        let min_visible_event_index = participant.min_visible_event_index();
 
         let result = runtime_state.data.events.register_poll_vote(RegisterPollVoteArgs {
             user_id,
+            min_visible_event_index,
             thread_root_message_index: args.thread_root_message_index,
             message_index: args.message_index,
             option_index: args.poll_option,

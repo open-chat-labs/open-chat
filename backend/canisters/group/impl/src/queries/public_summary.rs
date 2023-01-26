@@ -1,6 +1,7 @@
 use crate::read_state;
 use crate::RuntimeState;
 use canister_api_macros::query_candid_and_msgpack;
+use chat_events::Reader;
 use group_canister::public_summary::{Response::*, *};
 use types::{Avatar, PublicGroupSummary, Version};
 
@@ -15,8 +16,8 @@ fn public_summary_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     }
 
     let data = &runtime_state.data;
-    let chat_events = runtime_state.data.events.main();
-    let latest_event = chat_events.last();
+    let events_reader = runtime_state.data.events.main_events_reader();
+    let latest_event = events_reader.last();
 
     let summary = PublicGroupSummary {
         chat_id: runtime_state.env.canister_id().into(),
@@ -25,7 +26,7 @@ fn public_summary_impl(args: Args, runtime_state: &RuntimeState) -> Response {
         description: data.description.clone(),
         subtype: data.subtype.value.clone(),
         avatar_id: Avatar::id(&data.avatar),
-        latest_message: chat_events.latest_message(None),
+        latest_message: events_reader.latest_message_event(None),
         latest_event_index: latest_event.index,
         participant_count: data.participants.len(),
         owner_id: runtime_state.data.owner_id,

@@ -6,7 +6,7 @@ use crate::timer_job_types::TimerJob;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
-use chat_events::{AllChatEvents, ChatEventInternal};
+use chat_events::{ChatEventInternal, ChatEvents, Reader};
 use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
@@ -21,6 +21,7 @@ use utils::memory;
 use utils::regular_jobs::RegularJobs;
 use utils::time::{DAY_IN_MS, HOUR_IN_MS};
 
+mod activity_notifications;
 mod guards;
 mod lifecycle;
 mod model;
@@ -45,10 +46,6 @@ struct RuntimeState {
 impl RuntimeState {
     pub fn new(env: Box<dyn Environment>, data: Data, regular_jobs: RegularJobs<Data>) -> RuntimeState {
         RuntimeState { env, data, regular_jobs }
-    }
-
-    pub fn is_caller_participant(&self) -> bool {
-        self.data.participants.get(self.env.caller()).is_some()
     }
 
     pub fn is_caller_user_index(&self) -> bool {
@@ -81,8 +78,10 @@ impl RuntimeState {
 
     pub fn summary(&self, participant: &ParticipantInternal) -> GroupCanisterGroupChatSummary {
         let data = &self.data;
-        let latest_event = data.events.main().last();
+        let min_visible_event_index = participant.min_visible_event_index();
         let min_visible_message_index = participant.min_visible_message_index();
+        let main_events_reader = data.events.visible_main_events_reader(min_visible_event_index);
+        let latest_event = main_events_reader.last();
 
         GroupCanisterGroupChatSummary {
             chat_id: self.env.canister_id().into(),
@@ -93,13 +92,9 @@ impl RuntimeState {
             avatar_id: Avatar::id(&data.avatar),
             is_public: data.is_public,
             history_visible_to_new_joiners: data.history_visible_to_new_joiners,
-            min_visible_event_index: participant.min_visible_event_index(),
+            min_visible_event_index,
             min_visible_message_index,
-            latest_message: data
-                .events
-                .main()
-                .latest_message(Some(participant.user_id))
-                .filter(|m| m.event.message_index >= min_visible_message_index),
+            latest_message: main_events_reader.latest_message_event(Some(participant.user_id)),
             latest_event_index: latest_event.index,
             joined: participant.date_added,
             participant_count: data.participants.len(),
@@ -114,7 +109,12 @@ impl RuntimeState {
                 .user_metrics(&participant.user_id, None)
                 .cloned()
                 .unwrap_or_default(),
-            latest_threads: data.events.latest_threads(&participant.threads, None, MAX_THREADS_IN_SUMMARY),
+            latest_threads: data.events.latest_threads(
+                min_visible_event_index,
+                participant.threads.iter(),
+                None,
+                MAX_THREADS_IN_SUMMARY,
+            ),
             frozen: data.frozen.value.clone(),
             wasm_version: Version::default(),
             date_last_pinned: data.date_last_pinned,
@@ -222,7 +222,7 @@ struct Data {
     pub avatar: Option<Avatar>,
     pub history_visible_to_new_joiners: bool,
     pub participants: Participants,
-    pub events: AllChatEvents,
+    pub events: ChatEvents,
     pub date_created: TimestampMillis,
     pub mark_active_duration: Milliseconds,
     pub group_index_canister_id: CanisterId,
@@ -269,7 +269,7 @@ impl Data {
         permissions: Option<GroupPermissions>,
     ) -> Data {
         let participants = Participants::new(creator_principal, creator_user_id, now);
-        let events = AllChatEvents::new_group_chat(chat_id, name.clone(), description.clone(), creator_user_id, now);
+        let events = ChatEvents::new_group_chat(chat_id, name.clone(), description.clone(), creator_user_id, now);
 
         Data {
             is_public,

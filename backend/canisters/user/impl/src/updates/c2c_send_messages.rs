@@ -2,7 +2,7 @@ use crate::guards::caller_is_known_bot;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
-use chat_events::PushMessageArgs;
+use chat_events::{PushMessageArgs, Reader};
 use ic_cdk_macros::update;
 use types::{
     CanisterId, DirectMessageNotification, MessageContent, MessageId, MessageIndex, Notification, ReplyContext, UserId,
@@ -34,7 +34,12 @@ async fn c2c_send_messages_impl(args: Args) -> Response {
             // Messages sent c2c can be retried so the same messageId may be received multiple
             // times, so here we skip any messages whose messageId already exists.
             if let Some(chat) = state.data.direct_chats.get(&sender_user_id.into()) {
-                if chat.events.main().event_index_by_message_id(message.message_id).is_some() {
+                if chat
+                    .events
+                    .main_events_reader()
+                    .message_internal(message.message_id.into())
+                    .is_some()
+                {
                     continue;
                 }
             }
@@ -202,7 +207,7 @@ fn convert_reply_context(
                 .data
                 .direct_chats
                 .get(&chat_id)
-                .and_then(|chat| chat.events.main().event_index_by_message_id(message_id))
+                .and_then(|chat| chat.events.main_events_reader().event_index(message_id.into()))
                 .map(|event_index| ReplyContext {
                     chat_id_if_other: None,
                     event_index,
