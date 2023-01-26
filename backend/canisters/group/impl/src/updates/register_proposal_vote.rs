@@ -38,7 +38,7 @@ async fn register_proposal_vote(args: Args) -> Response {
             user_canister::c2c_vote_on_proposal::Response::ProposalNotAcceptingVotes => ProposalNotAcceptingVotes,
             user_canister::c2c_vote_on_proposal::Response::InternalError(error) => InternalError(error),
         },
-        Err(error) => InternalError(format!("{:?}", error)),
+        Err(error) => InternalError(format!("{error:?}")),
     }
 }
 
