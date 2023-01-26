@@ -45,9 +45,9 @@ export const idlFactory = ({ IDL }) => {
   const EventIndex = IDL.Nat32;
   const TimestampMillis = IDL.Nat64;
   const PushEventResult = IDL.Record({
-    'disappears_at' : IDL.Opt(TimestampMillis),
     'timestamp' : TimestampMillis,
     'index' : EventIndex,
+    'expires_at' : IDL.Opt(TimestampMillis),
   });
   const AddReactionResponse = IDL.Variant({
     'MessageNotFound' : IDL.Null,
@@ -603,11 +603,11 @@ export const idlFactory = ({ IDL }) => {
     'ParticipantsAdded' : ParticipantsAdded,
   });
   const ChatEventWrapper = IDL.Record({
-    'disappears_at' : IDL.Opt(TimestampMillis),
     'event' : ChatEvent,
     'timestamp' : TimestampMillis,
     'index' : EventIndex,
     'correlation_id' : IDL.Nat64,
+    'expires_at' : IDL.Opt(TimestampMillis),
   });
   const EventsSuccessResult = IDL.Record({
     'affected_events' : IDL.Vec(ChatEventWrapper),
@@ -657,11 +657,11 @@ export const idlFactory = ({ IDL }) => {
     'thread_root_message_index' : IDL.Opt(MessageIndex),
   });
   const MessageEventWrapper = IDL.Record({
-    'disappears_at' : IDL.Opt(TimestampMillis),
     'event' : Message,
     'timestamp' : TimestampMillis,
     'index' : EventIndex,
     'correlation_id' : IDL.Nat64,
+    'expires_at' : IDL.Opt(TimestampMillis),
   });
   const MessagesByMessageIndexResponse = IDL.Variant({
     'ThreadMessageNotFound' : IDL.Null,
@@ -888,9 +888,9 @@ export const idlFactory = ({ IDL }) => {
     'ChatFrozen' : IDL.Null,
     'NotAuthorized' : IDL.Null,
     'Success' : IDL.Record({
-      'disappears_at' : IDL.Opt(TimestampMillis),
       'timestamp' : TimestampMillis,
       'event_index' : EventIndex,
+      'expires_at' : IDL.Opt(TimestampMillis),
       'message_index' : MessageIndex,
     }),
     'MessageEmpty' : IDL.Null,

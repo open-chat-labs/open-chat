@@ -8,6 +8,6 @@ pub struct EventWrapper<T: CandidType + Clone + Debug> {
     pub index: EventIndex,
     pub timestamp: TimestampMillis,
     pub correlation_id: u64,
-    pub disappears_at: Option<TimestampMillis>,
+    pub expires_at: Option<TimestampMillis>,
     pub event: T,
 }
