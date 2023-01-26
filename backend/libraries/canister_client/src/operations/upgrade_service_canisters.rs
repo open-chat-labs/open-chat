@@ -279,7 +279,7 @@ async fn upgrade_wasm<A: CandidType + Send + Sync>(
     }
     println!("Canister stopped");
 
-    println!("Upgrading wasm for canister {}", canister_id);
+    println!("Upgrading wasm for canister {canister_id}");
     match management_canister
         .install_code(canister_id, wasm_bytes)
         .with_mode(InstallMode::Upgrade)
@@ -291,7 +291,7 @@ async fn upgrade_wasm<A: CandidType + Send + Sync>(
         Err(error) => println!("Upgrade failed: {error:?}"),
     };
 
-    println!("Starting canister {}", canister_id);
+    println!("Starting canister {canister_id}");
     management_canister
         .start_canister(canister_id)
         .call_and_wait(delay())
