@@ -471,7 +471,8 @@
         "icp": "Computer Internet",
         "btc": "Bitcoin",
         "chat": "ApriChat",
-        "sns1": "SNS-1"
+        "sns1": "SNS-1",
+        "max": "Massimo"
     },
     "cryptoAccount": {
         "manage": "Gestire",
