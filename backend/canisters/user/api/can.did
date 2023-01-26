@@ -19,12 +19,14 @@ type SendMessageResponse =
             event_index: EventIndex;
             message_index: MessageIndex;
             timestamp: TimestampMillis;
+            disappears_at: opt TimestampMillis;
         };
         TransferSuccessV2: record {
             chat_id: ChatId;
             event_index: EventIndex;
             message_index: MessageIndex;
             timestamp: TimestampMillis;
+            disappears_at: opt TimestampMillis;
             transfer: CompletedCryptoTransaction;
         };
         MessageEmpty;
@@ -103,6 +105,7 @@ type AddReactionArgs =
 type AddReactionResponse =
     variant {
         Success: EventIndex;
+        SuccessV2: PushEventResult;
         NoChange;
         InvalidReaction;
         MessageNotFound;
@@ -122,6 +125,7 @@ type RemoveReactionArgs =
 type RemoveReactionResponse =
     variant {
         Success: EventIndex;
+        SuccessV2: PushEventResult;
         NoChange;
         MessageNotFound;
         ChatNotFound;
@@ -367,6 +371,7 @@ type TransferCryptoWithinGroupResponse =
             event_index: EventIndex;
             message_index: MessageIndex;
             timestamp: TimestampMillis;
+            disappears_at: opt TimestampMillis;
             transfer: CompletedCryptoTransaction;
         };
         TextTooLong: nat32;
@@ -547,15 +552,6 @@ type EventsByIndexArgs =
         latest_client_event_index: opt EventIndex;
     };
 
-type EventsRangeArgs =
-    record {
-        user_id: UserId;
-        thread_root_message_index: opt MessageIndex;
-        from_index: EventIndex;
-        to_index: EventIndex;
-        latest_client_event_index: opt EventIndex;
-    };
-
 type EventsWindowArgs =
     record {
         user_id: UserId;
@@ -631,7 +627,7 @@ type ContactsArgs = record {};
 type ContactsResponse =
     variant {
         Success: record {
-            contacts: vec Contact;            
+            contacts: vec Contact;
         };
     };
 
@@ -709,7 +705,6 @@ service: {
 
     events: (EventsArgs) -> (EventsResponse) query;
     events_by_index: (EventsByIndexArgs) -> (EventsResponse) query;
-    events_range: (EventsRangeArgs) -> (EventsResponse) query;
     events_window: (EventsWindowArgs) -> (EventsResponse) query;
     messages_by_message_index: (MessagesByMessageIndexArgs) -> (MessagesByMessageIndexResponse) query;
     deleted_message: (DeletedMessageArgs) -> (DeletedMessageResponse) query;

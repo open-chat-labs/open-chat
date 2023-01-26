@@ -32,7 +32,7 @@ async fn migrate_user_principal(_args: Args) -> Response {
             c2c_migrate_user_principal::Response::MigrationAlreadyInProgress => MigrationAlreadyInProgress,
             c2c_migrate_user_principal::Response::PrincipalAlreadyInUse => PrincipalAlreadyInUse,
         },
-        Err(error) => InternalError(format!("{:?}", error)),
+        Err(error) => InternalError(format!("{error:?}")),
     }
 }
 

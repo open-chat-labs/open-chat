@@ -442,7 +442,7 @@ export function undeleteMessageResponse(candid: ApiUndeleteMessageResponse): Und
 export function addRemoveReactionResponse(
     candid: ApiAddReactionResponse | ApiRemoveReactionResponse
 ): AddRemoveReactionResponse {
-    if ("Success" in candid) {
+    if ("Success" in candid || "SuccessV2" in candid) {
         return "success";
     }
     if ("NoChange" in candid) {
@@ -699,7 +699,7 @@ export function addMembersResponse(candid: ApiAddParticipantsResponse): AddMembe
 
 export function deletedMessageResponse(candid: ApiDeletedGroupMessageResponse): DeletedGroupMessageResponse {
     if ("Success" in candid) {
-        return { 
+        return {
             kind: "success",
             content: messageContent(candid.Success.content, "unknown"),
         };
@@ -755,7 +755,7 @@ export function pinMessageResponse(candid: ApiPinMessageResponse): PinMessageRes
 }
 
 export function unpinMessageResponse(candid: ApiUnpinMessageResponse): UnpinMessageResponse {
-    if ("Success" in candid) {
+    if ("Success" in candid || "SuccessV2" in candid) {
         return "success";
     }
     if ("CallerNotInGroup" in candid) {

@@ -4,7 +4,6 @@ fn main() {
     generate_candid_method!(group, deleted_message, query);
     generate_candid_method!(group, events, query);
     generate_candid_method!(group, events_by_index, query);
-    generate_candid_method!(group, events_range, query);
     generate_candid_method!(group, events_window, query);
     generate_candid_method!(group, local_user_index, query);
     generate_candid_method!(group, messages_by_message_index, query);
@@ -28,7 +27,6 @@ fn main() {
     generate_candid_method!(group, enable_invite_code, update);
     generate_candid_method!(group, make_private, update);
     generate_candid_method!(group, pin_message_v2, update);
-    generate_candid_method!(group, pin_message, update);
     generate_candid_method!(group, register_poll_vote, update);
     generate_candid_method!(group, register_proposal_vote, update);
     generate_candid_method!(group, remove_participant, update);

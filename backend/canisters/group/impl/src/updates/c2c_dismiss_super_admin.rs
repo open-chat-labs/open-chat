@@ -1,6 +1,6 @@
+use crate::activity_notifications::handle_activity_notification;
 use crate::guards::caller_is_user_index;
 use crate::model::participants::DismissSuperAdminResult;
-use crate::updates::handle_activity_notification;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;

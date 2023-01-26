@@ -18,6 +18,7 @@ type SendMessageResponse =
             message_index: MessageIndex;
             event_index: EventIndex;
             timestamp: TimestampMillis;
+            disappears_at: opt TimestampMillis;
         };
         MessageEmpty;
         TextTooLong: nat32;
@@ -113,6 +114,7 @@ type AddReactionArgs =
 type AddReactionResponse =
     variant {
         Success: EventIndex;
+        SuccessV2: PushEventResult;
         NoChange;
         InvalidReaction;
         MessageNotFound;
@@ -133,6 +135,7 @@ type RemoveReactionArgs =
 type RemoveReactionResponse =
     variant {
         Success: EventIndex;
+        SuccessV2: PushEventResult;
         NoChange;
         MessageNotFound;
         CallerNotInGroup;
@@ -361,21 +364,9 @@ type PinMessageArgs =
         correlation_id: nat64;
     };
 
-type PinMessageResponse =
-    variant {
-        Success: EventIndex;
-        NoChange;
-        MessageIndexOutOfRange;
-        NotAuthorized;
-        CallerNotInGroup;
-        MessageNotFound;
-        UserSuspended;
-        ChatFrozen;
-    };
-
 type PinMessageV2Response =
     variant {
-        Success: EventResult;
+        Success: PushEventResult;
         NoChange;
         MessageIndexOutOfRange;
         NotAuthorized;
@@ -394,6 +385,7 @@ type UnpinMessageArgs =
 type UnpinMessageResponse =
     variant {
         Success: EventIndex;
+        SuccessV2: PushEventResult;
         NoChange;
         NotAuthorized;
         CallerNotInGroup;
@@ -521,15 +513,6 @@ type EventsByIndexArgs =
     record {
         thread_root_message_index: opt MessageIndex;
         events: vec EventIndex;
-        invite_code: opt nat64;
-        latest_client_event_index: opt EventIndex;
-    };
-
-type EventsRangeArgs =
-    record {
-        thread_root_message_index: opt MessageIndex;
-        from_index: EventIndex;
-        to_index: EventIndex;
         invite_code: opt nat64;
         latest_client_event_index: opt EventIndex;
     };
@@ -691,7 +674,6 @@ service: {
     unblock_user: (UnblockUserArgs) -> (UnblockUserResponse); // public only
     remove_participant: (RemoveParticipantArgs) -> (RemoveParticipantResponse);
     update_group_v2: (UpdateGroupV2Args) -> (UpdateGroupV2Response);
-    pin_message: (PinMessageArgs) -> (PinMessageResponse);
     pin_message_v2: (PinMessageArgs) -> (PinMessageV2Response);
     unpin_message: (UnpinMessageArgs) -> (UnpinMessageResponse);
     change_role: (ChangeRoleArgs) -> (ChangeRoleResponse);
@@ -720,7 +702,6 @@ service: {
 
     events: (EventsArgs) -> (EventsResponse) query;
     events_by_index: (EventsByIndexArgs) -> (EventsResponse) query;
-    events_range: (EventsRangeArgs) -> (EventsResponse) query;
     events_window: (EventsWindowArgs) -> (EventsResponse) query;
     local_user_index: (LocalUserIndexArgs) -> (LocalUserIndexResponse) query;
     messages_by_message_index: (MessagesByMessageIndexArgs) -> (MessagesByMessageIndexResponse) query;
