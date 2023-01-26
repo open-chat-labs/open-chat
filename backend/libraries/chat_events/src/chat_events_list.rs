@@ -160,6 +160,7 @@ impl ChatEventsList {
         self.latest_message_index.map_or(MessageIndex::default(), |m| m.incr())
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub(crate) fn update_thread_summary(
         &mut self,
         thread_root_message_index: MessageIndex,
