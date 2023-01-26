@@ -4,7 +4,6 @@ use user_canister::*;
 // Queries
 generate_query_call!(events);
 generate_query_call!(events_by_index);
-generate_query_call!(events_range);
 generate_query_call!(initial_state_v2);
 generate_query_call!(updates_v2);
 

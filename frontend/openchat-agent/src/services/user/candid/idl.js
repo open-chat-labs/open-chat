@@ -12,6 +12,12 @@ export const idlFactory = ({ IDL }) => {
     'reaction' : IDL.Text,
   });
   const EventIndex = IDL.Nat32;
+  const TimestampMillis = IDL.Nat64;
+  const PushEventResult = IDL.Record({
+    'disappears_at' : IDL.Opt(TimestampMillis),
+    'timestamp' : TimestampMillis,
+    'index' : EventIndex,
+  });
   const AddReactionResponse = IDL.Variant({
     'MessageNotFound' : IDL.Null,
     'NoChange' : IDL.Null,
@@ -19,6 +25,7 @@ export const idlFactory = ({ IDL }) => {
     'Success' : EventIndex,
     'UserSuspended' : IDL.Null,
     'InvalidReaction' : IDL.Null,
+    'SuccessV2' : PushEventResult,
   });
   const Milliseconds = IDL.Nat64;
   const ChatId = CanisterId;
@@ -175,7 +182,6 @@ export const idlFactory = ({ IDL }) => {
     'total' : TotalPollVotes,
     'user' : IDL.Vec(IDL.Nat32),
   });
-  const TimestampMillis = IDL.Nat64;
   const PollConfig = IDL.Record({
     'allow_multiple_votes_per_user' : IDL.Bool,
     'text' : IDL.Opt(IDL.Text),
@@ -266,6 +272,7 @@ export const idlFactory = ({ IDL }) => {
     'Account' : AccountIdentifier,
   });
   const Tokens = IDL.Record({ 'e8s' : IDL.Nat64 });
+  const TimestampNanos = IDL.Nat64;
   const Cryptocurrency = IDL.Variant({
     'InternetComputer' : IDL.Null,
     'SNS1' : IDL.Null,
@@ -276,7 +283,7 @@ export const idlFactory = ({ IDL }) => {
   const NnsFailedCryptoTransaction = IDL.Record({
     'to' : NnsCryptoAccount,
     'fee' : Tokens,
-    'created' : TimestampMillis,
+    'created' : TimestampNanos,
     'token' : Cryptocurrency,
     'transaction_hash' : TransactionHash,
     'from' : NnsCryptoAccount,
@@ -295,7 +302,7 @@ export const idlFactory = ({ IDL }) => {
   const SnsFailedCryptoTransaction = IDL.Record({
     'to' : SnsAccount,
     'fee' : Tokens,
-    'created' : TimestampMillis,
+    'created' : TimestampNanos,
     'token' : Cryptocurrency,
     'transaction_hash' : TransactionHash,
     'from' : SnsAccount,
@@ -311,7 +318,7 @@ export const idlFactory = ({ IDL }) => {
   const NnsCompletedCryptoTransaction = IDL.Record({
     'to' : NnsCryptoAccount,
     'fee' : Tokens,
-    'created' : TimestampMillis,
+    'created' : TimestampNanos,
     'token' : Cryptocurrency,
     'transaction_hash' : TransactionHash,
     'block_index' : BlockIndex,
@@ -322,7 +329,7 @@ export const idlFactory = ({ IDL }) => {
   const SnsCompletedCryptoTransaction = IDL.Record({
     'to' : SnsAccount,
     'fee' : Tokens,
-    'created' : TimestampMillis,
+    'created' : TimestampNanos,
     'token' : Cryptocurrency,
     'transaction_hash' : TransactionHash,
     'block_index' : BlockIndex,
@@ -606,6 +613,7 @@ export const idlFactory = ({ IDL }) => {
     'ParticipantsAdded' : ParticipantsAdded,
   });
   const ChatEventWrapper = IDL.Record({
+    'disappears_at' : IDL.Opt(TimestampMillis),
     'event' : ChatEvent,
     'timestamp' : TimestampMillis,
     'index' : EventIndex,
@@ -625,13 +633,6 @@ export const idlFactory = ({ IDL }) => {
     'latest_client_event_index' : IDL.Opt(EventIndex),
     'user_id' : UserId,
     'events' : IDL.Vec(EventIndex),
-    'thread_root_message_index' : IDL.Opt(MessageIndex),
-  });
-  const EventsRangeArgs = IDL.Record({
-    'latest_client_event_index' : IDL.Opt(EventIndex),
-    'user_id' : UserId,
-    'to_index' : EventIndex,
-    'from_index' : EventIndex,
     'thread_root_message_index' : IDL.Opt(MessageIndex),
   });
   const EventsWindowArgs = IDL.Record({
@@ -685,6 +686,7 @@ export const idlFactory = ({ IDL }) => {
     'reactions' : IDL.Nat64,
   });
   const MessageEventWrapper = IDL.Record({
+    'disappears_at' : IDL.Opt(TimestampMillis),
     'event' : Message,
     'timestamp' : TimestampMillis,
     'index' : EventIndex,
@@ -874,6 +876,7 @@ export const idlFactory = ({ IDL }) => {
     'ChatNotFound' : IDL.Null,
     'Success' : EventIndex,
     'UserSuspended' : IDL.Null,
+    'SuccessV2' : PushEventResult,
   });
   const SearchMessagesArgs = IDL.Record({
     'max_results' : IDL.Nat8,
@@ -919,6 +922,7 @@ export const idlFactory = ({ IDL }) => {
     'TextTooLong' : IDL.Nat32,
     'TransferLimitExceeded' : IDL.Nat,
     'TransferSuccessV2' : IDL.Record({
+      'disappears_at' : IDL.Opt(TimestampMillis),
       'timestamp' : TimestampMillis,
       'chat_id' : ChatId,
       'event_index' : EventIndex,
@@ -927,6 +931,7 @@ export const idlFactory = ({ IDL }) => {
     }),
     'TransferCannotBeZero' : IDL.Null,
     'Success' : IDL.Record({
+      'disappears_at' : IDL.Opt(TimestampMillis),
       'timestamp' : TimestampMillis,
       'chat_id' : ChatId,
       'event_index' : EventIndex,
@@ -990,6 +995,7 @@ export const idlFactory = ({ IDL }) => {
     'ChatFrozen' : IDL.Null,
     'TransferCannotBeZero' : IDL.Null,
     'Success' : IDL.Record({
+      'disappears_at' : IDL.Opt(TimestampMillis),
       'timestamp' : TimestampMillis,
       'event_index' : EventIndex,
       'transfer' : CompletedCryptoTransaction,
@@ -1113,7 +1119,6 @@ export const idlFactory = ({ IDL }) => {
         [EventsResponse],
         ['query'],
       ),
-    'events_range' : IDL.Func([EventsRangeArgs], [EventsResponse], ['query']),
     'events_window' : IDL.Func([EventsWindowArgs], [EventsResponse], ['query']),
     'init_user_principal_migration' : IDL.Func(
         [InitUserPrincipalMigrationArgs],

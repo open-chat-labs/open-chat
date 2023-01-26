@@ -1,7 +1,6 @@
 mod deleted_message;
 mod events;
 mod events_by_index;
-mod events_range;
 mod events_window;
 mod http_request;
 mod invite_code;

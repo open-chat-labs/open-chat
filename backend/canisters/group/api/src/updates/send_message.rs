@@ -33,4 +33,5 @@ pub struct SuccessResult {
     pub event_index: EventIndex,
     pub message_index: MessageIndex,
     pub timestamp: TimestampMillis,
+    pub disappears_at: Option<TimestampMillis>,
 }

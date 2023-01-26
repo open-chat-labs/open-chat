@@ -79,6 +79,7 @@ export type ChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'AvatarChanged' : AvatarChanged } |
   { 'ParticipantsAdded' : ParticipantsAdded };
 export interface ChatEventWrapper {
+  'disappears_at' : [] | [TimestampMillis],
   'event' : ChatEvent,
   'timestamp' : TimestampMillis,
   'index' : EventIndex,
@@ -150,6 +151,7 @@ export interface DeletedGroupInfo {
 }
 export type DirectChatCreated = {};
 export interface DirectChatEventWrapper {
+  'disappears_at' : [] | [TimestampMillis],
   'event' : ChatEvent,
   'timestamp' : TimestampMillis,
   'index' : EventIndex,
@@ -193,10 +195,6 @@ export interface DirectReactionAddedNotification {
   'reaction' : string,
 }
 export type EventIndex = number;
-export interface EventResult {
-  'timestamp' : TimestampMillis,
-  'index' : EventIndex,
-}
 export type FailedCryptoTransaction = { 'NNS' : NnsFailedCryptoTransaction } |
   { 'SNS' : SnsFailedCryptoTransaction };
 export type FallbackRole = { 'Participant' : null } |
@@ -522,6 +520,7 @@ export type MessageContent = { 'Giphy' : GiphyContent } |
   { 'Video' : VideoContent } |
   { 'Deleted' : DeletedContent };
 export interface MessageEventWrapper {
+  'disappears_at' : [] | [TimestampMillis],
   'event' : Message,
   'timestamp' : TimestampMillis,
   'index' : EventIndex,
@@ -549,7 +548,7 @@ export type Milliseconds = bigint;
 export interface NnsCompletedCryptoTransaction {
   'to' : NnsCryptoAccount,
   'fee' : Tokens,
-  'created' : TimestampMillis,
+  'created' : TimestampNanos,
   'token' : Cryptocurrency,
   'transaction_hash' : TransactionHash,
   'block_index' : BlockIndex,
@@ -562,7 +561,7 @@ export type NnsCryptoAccount = { 'Mint' : null } |
 export interface NnsFailedCryptoTransaction {
   'to' : NnsCryptoAccount,
   'fee' : Tokens,
-  'created' : TimestampMillis,
+  'created' : TimestampNanos,
   'token' : Cryptocurrency,
   'transaction_hash' : TransactionHash,
   'from' : NnsCryptoAccount,
@@ -710,6 +709,11 @@ export interface PublicGroupSummary {
   'participant_count' : number,
   'latest_message' : [] | [MessageEventWrapper],
 }
+export interface PushEventResult {
+  'disappears_at' : [] | [TimestampMillis],
+  'timestamp' : TimestampMillis,
+  'index' : EventIndex,
+}
 export interface RecommendedGroupsArgs {
   'count' : number,
   'exclusions' : Array<ChatId>,
@@ -744,7 +748,7 @@ export type SnsAccount = { 'Mint' : null } |
 export interface SnsCompletedCryptoTransaction {
   'to' : SnsAccount,
   'fee' : Tokens,
-  'created' : TimestampMillis,
+  'created' : TimestampNanos,
   'token' : Cryptocurrency,
   'transaction_hash' : TransactionHash,
   'block_index' : BlockIndex,
@@ -755,7 +759,7 @@ export interface SnsCompletedCryptoTransaction {
 export interface SnsFailedCryptoTransaction {
   'to' : SnsAccount,
   'fee' : Tokens,
-  'created' : TimestampMillis,
+  'created' : TimestampNanos,
   'token' : Cryptocurrency,
   'transaction_hash' : TransactionHash,
   'from' : SnsAccount,

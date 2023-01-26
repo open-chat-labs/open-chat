@@ -3,7 +3,7 @@ use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use chat_events::{EditMessageArgs, EditMessageResult};
 use ic_cdk_macros::update;
-use types::{CanisterId, MessageContent, MessageId};
+use types::{CanisterId, EventIndex, MessageContent, MessageId};
 use user_canister::c2c_edit_message;
 use user_canister::edit_message::{Response::*, *};
 
@@ -28,6 +28,7 @@ fn edit_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
 
         let edit_message_args = EditMessageArgs {
             sender: my_user_id,
+            min_visible_event_index: EventIndex::default(),
             thread_root_message_index: None,
             message_id: args.message_id,
             content: args.content.clone(),
