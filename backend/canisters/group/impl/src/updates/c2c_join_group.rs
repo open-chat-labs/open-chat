@@ -31,8 +31,9 @@ fn c2c_join_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Response
             min_visible_event_index = EventIndex::default();
             min_visible_message_index = MessageIndex::default();
         } else {
-            min_visible_event_index = runtime_state.data.events.main().last().index.incr();
-            min_visible_message_index = runtime_state.data.events.main().next_message_index();
+            let events_reader = runtime_state.data.events.main_events_reader();
+            min_visible_event_index = events_reader.next_event_index();
+            min_visible_message_index = events_reader.next_message_index();
         };
 
         match runtime_state.add_participant(AddParticipantArgs {

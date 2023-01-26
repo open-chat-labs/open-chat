@@ -3,11 +3,11 @@ use crate::updates::handle_activity_notification;
 use crate::{mutate_state, run_regular_jobs, RuntimeState, TimerJob};
 use canister_api_macros::update_candid_and_msgpack;
 use canister_tracing_macros::trace;
-use chat_events::{ChatEventInternal, PushMessageArgs};
+use chat_events::{PushMessageArgs, Reader};
 use group_canister::send_message::{Response::*, *};
 use std::collections::HashSet;
 use types::{
-    ContentValidationError, EventWrapper, GroupMessageNotification, GroupReplyContext, MentionInternal, Message,
+    ContentValidationError, EventIndex, EventWrapper, GroupMessageNotification, GroupReplyContext, MentionInternal, Message,
     MessageContent, MessageIndex, Notification, UserId,
 };
 
@@ -61,20 +61,21 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
         }
 
         if let Some(root_message_index) = args.thread_root_message_index {
-            if !runtime_state.data.events.is_message_accessible_by_index(
-                participant.min_visible_event_index(),
-                None,
-                root_message_index,
-            ) {
+            if !runtime_state
+                .data
+                .events
+                .is_accessible(participant.min_visible_event_index(), None, root_message_index.into())
+            {
                 return ThreadMessageNotFound;
             }
         }
 
         let sender = participant.user_id;
+        let min_visible_event_index = participant.min_visible_event_index();
         let user_being_replied_to = args
             .replies_to
             .as_ref()
-            .and_then(|r| get_user_being_replied_to(r, args.thread_root_message_index, runtime_state));
+            .and_then(|r| get_user_being_replied_to(r, min_visible_event_index, args.thread_root_message_index, runtime_state));
 
         let push_message_args = PushMessageArgs {
             sender,
@@ -108,13 +109,14 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
             runtime_state
                 .data
                 .events
-                .main()
-                .message_internal_by_message_index(root_message_index)
+                .visible_main_events_reader(min_visible_event_index)
+                .message_internal(root_message_index.into())
+                .cloned()
         }) {
             notification_recipients.insert(thread_root_message.sender);
 
-            if let Some(thread_summary) = &thread_root_message.thread_summary {
-                thread_participants = Some(thread_summary.participant_ids.as_slice());
+            if let Some(thread_summary) = thread_root_message.thread_summary {
+                thread_participants = Some(thread_summary.participant_ids);
 
                 let is_first_reply = thread_summary.reply_count == 1;
                 if is_first_reply {
@@ -193,14 +195,16 @@ fn register_jobs_if_required(
 
 fn get_user_being_replied_to(
     replies_to: &GroupReplyContext,
+    min_visible_event_index: EventIndex,
     thread_root_message_index: Option<MessageIndex>,
     runtime_state: &RuntimeState,
 ) -> Option<UserId> {
-    let events = runtime_state.data.events.get(thread_root_message_index)?;
+    let events_reader = runtime_state
+        .data
+        .events
+        .events_reader(min_visible_event_index, thread_root_message_index)?;
 
-    if let Some(ChatEventInternal::Message(message)) = events.get(replies_to.event_index).map(|e| &e.event) {
-        Some(message.sender)
-    } else {
-        None
-    }
+    events_reader
+        .message_internal(replies_to.event_index.into())
+        .map(|message| message.sender)
 }
