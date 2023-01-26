@@ -7,7 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Added `disappears_at` to events ([#3021](https://github.com/open-ic/open-chat/pull/3021))
+- Added `disappears_at` to events ([#3021](https://github.com/open-ic/open-chat/pull/3021)) (website must be released first)
 
 ### Changed
 
