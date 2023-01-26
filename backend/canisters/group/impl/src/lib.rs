@@ -21,6 +21,7 @@ use utils::memory;
 use utils::regular_jobs::RegularJobs;
 use utils::time::{DAY_IN_MS, HOUR_IN_MS};
 
+mod activity_notifications;
 mod guards;
 mod lifecycle;
 mod model;
