@@ -24,7 +24,7 @@ async fn upgrade_group_canister_wasm(args: Args) -> Response {
     let result = futures::future::join_all(futures).await;
 
     if let Some(first_error) = result.into_iter().filter_map(|res| res.err()).next() {
-        InternalError(format!("{:?}", first_error))
+        InternalError(format!("{first_error:?}"))
     } else {
         mutate_state(|state| {
             state.data.group_canister_wasm = args.wasm;

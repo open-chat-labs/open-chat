@@ -245,7 +245,7 @@ impl Data {
         self.ledger_canister_ids
             .get(token)
             .copied()
-            .unwrap_or_else(|| panic!("Unable to find ledger canister for token '{:?}'", token))
+            .unwrap_or_else(|| panic!("Unable to find ledger canister for token '{token:?}'"))
     }
 }
 
