@@ -30,7 +30,7 @@ mod nns {
                 GetBallotsResult::ProposalNotFound => return ProposalNotFound,
                 GetBallotsResult::ProposalNotAcceptingVotes => return ProposalNotAcceptingVotes,
             },
-            Err(error) => return InternalError(format!("{:?}", error)),
+            Err(error) => return InternalError(format!("{error:?}")),
         };
 
         let vote_futures: Vec<_> = ballots
@@ -42,7 +42,7 @@ mod nns {
         let vote_results = futures::future::join_all(vote_futures).await;
 
         if let Some(first_error) = vote_results.into_iter().filter_map(|res| res.err()).next() {
-            InternalError(format!("{:?}", first_error))
+            InternalError(format!("{first_error:?}"))
         } else {
             Success
         }
@@ -68,7 +68,7 @@ mod sns {
         {
             Ok(n) if n.is_empty() => return NoEligibleNeurons,
             Ok(n) => n,
-            Err(error) => return InternalError(format!("{:?}", error)),
+            Err(error) => return InternalError(format!("{error:?}")),
         };
 
         let vote_futures: Vec<_> = neuron_ids
@@ -79,7 +79,7 @@ mod sns {
         let vote_results = futures::future::join_all(vote_futures).await;
 
         if let Some(first_error) = vote_results.into_iter().filter_map(|res| res.err()).next() {
-            InternalError(format!("{:?}", first_error))
+            InternalError(format!("{first_error:?}"))
         } else {
             Success
         }
