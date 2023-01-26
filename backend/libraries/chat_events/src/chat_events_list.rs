@@ -50,7 +50,13 @@ impl From<ChatEventsListOld> for ChatEventsList {
 }
 
 impl ChatEventsList {
-    pub(crate) fn push_event(&mut self, event: ChatEventInternal, correlation_id: u64, now: TimestampMillis) -> EventIndex {
+    pub(crate) fn push_event(
+        &mut self,
+        event: ChatEventInternal,
+        correlation_id: u64,
+        disappears_at: Option<TimestampMillis>,
+        now: TimestampMillis,
+    ) -> EventIndex {
         let event_index = self.next_event_index();
         if let ChatEventInternal::Message(m) = &event {
             match self.message_id_map.entry(m.message_id) {
@@ -67,6 +73,7 @@ impl ChatEventsList {
                 index: event_index,
                 timestamp: now,
                 correlation_id,
+                disappears_at,
                 event,
             },
         );
@@ -153,6 +160,7 @@ impl ChatEventsList {
         self.latest_message_index.map_or(MessageIndex::default(), |m| m.incr())
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub(crate) fn update_thread_summary(
         &mut self,
         thread_root_message_index: MessageIndex,
@@ -160,6 +168,7 @@ impl ChatEventsList {
         latest_thread_message_index_if_updated: Option<MessageIndex>,
         latest_event_index: EventIndex,
         correlation_id: u64,
+        disappears_at: Option<TimestampMillis>,
         now: TimestampMillis,
     ) {
         // If the current latest event is a `ThreadUpdated` event for the same thread then update
@@ -184,6 +193,7 @@ impl ChatEventsList {
                     latest_thread_message_index_if_updated,
                 })),
                 correlation_id,
+                disappears_at,
                 now,
             );
         }
@@ -337,6 +347,7 @@ pub trait Reader {
                 index: e.index,
                 timestamp: e.timestamp,
                 correlation_id: e.correlation_id,
+                disappears_at: e.disappears_at,
                 event: m,
             })
     }
@@ -451,6 +462,7 @@ pub trait Reader {
             index: event.index,
             timestamp: event.timestamp,
             correlation_id: event.correlation_id,
+            disappears_at: event.disappears_at,
             event: event_data,
         }
     }
@@ -588,6 +600,7 @@ fn try_into_message_event(
         index: event.index,
         timestamp: event.timestamp,
         correlation_id: event.correlation_id,
+        disappears_at: event.disappears_at,
         event: message.hydrate(my_user_id),
     })
 }

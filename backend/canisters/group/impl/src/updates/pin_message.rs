@@ -4,7 +4,7 @@ use canister_tracing_macros::trace;
 use chat_events::ChatEventInternal;
 use group_canister::pin_message_v2::{Response::*, *};
 use ic_cdk_macros::update;
-use types::{EventResult, MessagePinned};
+use types::MessagePinned;
 
 #[update]
 #[trace]
@@ -41,7 +41,7 @@ fn pin_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
 
             runtime_state.data.pinned_messages.insert(index, args.message_index);
 
-            let event_index = runtime_state.data.events.push_main_event(
+            let push_event_result = runtime_state.data.events.push_main_event(
                 ChatEventInternal::MessagePinned(Box::new(MessagePinned {
                     message_index: args.message_index,
                     pinned_by: participant.user_id,
@@ -54,10 +54,7 @@ fn pin_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
 
             handle_activity_notification(runtime_state);
 
-            Success(EventResult {
-                index: event_index,
-                timestamp: now,
-            })
+            Success(push_event_result)
         } else {
             NoChange
         }
