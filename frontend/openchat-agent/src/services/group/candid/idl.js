@@ -668,16 +668,6 @@ export const idlFactory = ({ IDL }) => {
     'correlation_id' : IDL.Nat64,
     'message_index' : MessageIndex,
   });
-  const PinMessageResponse = IDL.Variant({
-    'MessageIndexOutOfRange' : IDL.Null,
-    'MessageNotFound' : IDL.Null,
-    'NoChange' : IDL.Null,
-    'CallerNotInGroup' : IDL.Null,
-    'ChatFrozen' : IDL.Null,
-    'NotAuthorized' : IDL.Null,
-    'Success' : EventIndex,
-    'UserSuspended' : IDL.Null,
-  });
   const EventResult = IDL.Record({
     'timestamp' : TimestampMillis,
     'index' : EventIndex,
@@ -1177,7 +1167,6 @@ export const idlFactory = ({ IDL }) => {
         [MessagesByMessageIndexResponse],
         ['query'],
       ),
-    'pin_message' : IDL.Func([PinMessageArgs], [PinMessageResponse], []),
     'pin_message_v2' : IDL.Func([PinMessageArgs], [PinMessageV2Response], []),
     'public_summary' : IDL.Func(
         [PublicSummaryArgs],

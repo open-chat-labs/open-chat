@@ -361,18 +361,6 @@ type PinMessageArgs =
         correlation_id: nat64;
     };
 
-type PinMessageResponse =
-    variant {
-        Success: EventIndex;
-        NoChange;
-        MessageIndexOutOfRange;
-        NotAuthorized;
-        CallerNotInGroup;
-        MessageNotFound;
-        UserSuspended;
-        ChatFrozen;
-    };
-
 type PinMessageV2Response =
     variant {
         Success: EventResult;
@@ -682,7 +670,6 @@ service: {
     unblock_user: (UnblockUserArgs) -> (UnblockUserResponse); // public only
     remove_participant: (RemoveParticipantArgs) -> (RemoveParticipantResponse);
     update_group_v2: (UpdateGroupV2Args) -> (UpdateGroupV2Response);
-    pin_message: (PinMessageArgs) -> (PinMessageResponse);
     pin_message_v2: (PinMessageArgs) -> (PinMessageV2Response);
     unpin_message: (UnpinMessageArgs) -> (UnpinMessageResponse);
     change_role: (ChangeRoleArgs) -> (ChangeRoleResponse);
