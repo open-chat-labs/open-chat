@@ -798,14 +798,6 @@ export interface PinMessageArgs {
   'correlation_id' : bigint,
   'message_index' : MessageIndex,
 }
-export type PinMessageResponse = { 'MessageIndexOutOfRange' : null } |
-  { 'MessageNotFound' : null } |
-  { 'NoChange' : null } |
-  { 'CallerNotInGroup' : null } |
-  { 'ChatFrozen' : null } |
-  { 'NotAuthorized' : null } |
-  { 'Success' : EventIndex } |
-  { 'UserSuspended' : null };
 export type PinMessageV2Response = { 'MessageIndexOutOfRange' : null } |
   { 'MessageNotFound' : null } |
   { 'NoChange' : null } |
@@ -1262,7 +1254,6 @@ export interface _SERVICE {
     [MessagesByMessageIndexArgs],
     MessagesByMessageIndexResponse
   >,
-  'pin_message' : ActorMethod<[PinMessageArgs], PinMessageResponse>,
   'pin_message_v2' : ActorMethod<[PinMessageArgs], PinMessageV2Response>,
   'public_summary' : ActorMethod<[PublicSummaryArgs], PublicSummaryResponse>,
   'register_poll_vote' : ActorMethod<

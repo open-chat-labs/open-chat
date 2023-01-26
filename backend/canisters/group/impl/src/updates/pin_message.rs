@@ -8,23 +8,6 @@ use types::{EventResult, MessagePinned};
 
 #[update]
 #[trace]
-fn pin_message(args: Args) -> group_canister::pin_message::Response {
-    run_regular_jobs();
-
-    match mutate_state(|state| pin_message_impl(args, state)) {
-        Response::CallerNotInGroup => group_canister::pin_message::Response::CallerNotInGroup,
-        Response::ChatFrozen => group_canister::pin_message::Response::ChatFrozen,
-        Response::MessageIndexOutOfRange => group_canister::pin_message::Response::MessageIndexOutOfRange,
-        Response::MessageNotFound => group_canister::pin_message::Response::MessageNotFound,
-        Response::NoChange => group_canister::pin_message::Response::NoChange,
-        Response::NotAuthorized => group_canister::pin_message::Response::NotAuthorized,
-        Response::UserSuspended => group_canister::pin_message::Response::UserSuspended,
-        Response::Success(er) => group_canister::pin_message::Response::Success(er.index),
-    }
-}
-
-#[update]
-#[trace]
 fn pin_message_v2(args: Args) -> Response {
     run_regular_jobs();
 
