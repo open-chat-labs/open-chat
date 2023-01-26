@@ -34,7 +34,7 @@ async fn send_message(mut args: Args) -> Response {
                 Ok(local_user_index_canister::c2c_lookup_user::Response::Success(result)) if result.is_bot => UserType::Bot,
                 Ok(local_user_index_canister::c2c_lookup_user::Response::Success(_)) => UserType::User,
                 Ok(local_user_index_canister::c2c_lookup_user::Response::UserNotFound) => return RecipientNotFound,
-                Err(error) => return InternalError(format!("{:?}", error)),
+                Err(error) => return InternalError(format!("{error:?}")),
             }
         }
     };
