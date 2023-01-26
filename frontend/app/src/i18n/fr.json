@@ -471,7 +471,8 @@
         "icp": "Ordinateur Internet",
         "btc": "Bitcoin",
         "chat": "OpenChat",
-        "sns1": "SNS-1"
+        "sns1": "SNS-1",
+        "max": "Max"
     },
     "cryptoAccount": {
         "manage": "Faire en sorte",

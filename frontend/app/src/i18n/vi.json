@@ -472,7 +472,8 @@
         "icp": "Máy tính Internet",
         "btc": "Bitcoin",
         "chat": "trò chuyện mở",
-        "sns1": "SNS-1"
+        "sns1": "SNS-1",
+        "max": "tối đa"
     },
     "cryptoAccount": {
         "manage": "Quản lý",
