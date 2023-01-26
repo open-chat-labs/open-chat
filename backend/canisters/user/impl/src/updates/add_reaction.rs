@@ -37,7 +37,7 @@ fn add_reaction_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
             correlation_id: args.correlation_id,
             now,
         }) {
-            AddRemoveReactionResult::Success(e) => {
+            AddRemoveReactionResult::Success(r) => {
                 ic_cdk::spawn(add_reaction_on_recipients_canister(
                     args.user_id.into(),
                     args.message_id,
@@ -45,7 +45,7 @@ fn add_reaction_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
                     args.username,
                     args.correlation_id,
                 ));
-                Success(e)
+                SuccessV2(r)
             }
             AddRemoveReactionResult::NoChange => NoChange,
             AddRemoveReactionResult::MessageNotFound => MessageNotFound,

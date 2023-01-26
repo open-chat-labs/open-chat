@@ -209,6 +209,7 @@ fn send_message_impl(
             event_index: message_event.index,
             message_index: message_event.event.message_index,
             timestamp: now,
+            disappears_at: message_event.disappears_at,
             transfer,
         })
     } else {
@@ -217,6 +218,7 @@ fn send_message_impl(
             event_index: message_event.index,
             message_index: message_event.event.message_index,
             timestamp: now,
+            disappears_at: message_event.disappears_at,
         })
     }
 }

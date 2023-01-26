@@ -94,6 +94,7 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
 
         let event_index = message_event.index;
         let message_index = message_event.event.message_index;
+        let disappears_at = message_event.disappears_at;
 
         let mut mentions: HashSet<_> = args
             .mentioned
@@ -168,6 +169,7 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
             event_index,
             message_index,
             timestamp: now,
+            disappears_at,
         })
     } else {
         CallerNotInGroup

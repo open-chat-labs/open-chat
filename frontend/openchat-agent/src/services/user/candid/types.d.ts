@@ -15,7 +15,8 @@ export type AddReactionResponse = { 'MessageNotFound' : null } |
   { 'ChatNotFound' : null } |
   { 'Success' : EventIndex } |
   { 'UserSuspended' : null } |
-  { 'InvalidReaction' : null };
+  { 'InvalidReaction' : null } |
+  { 'SuccessV2' : PushEventResult };
 export interface AddRecommendedGroupExclusionsArgs {
   'duration' : [] | [Milliseconds],
   'groups' : Array<ChatId>,
@@ -116,6 +117,7 @@ export type ChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'AvatarChanged' : AvatarChanged } |
   { 'ParticipantsAdded' : ParticipantsAdded };
 export interface ChatEventWrapper {
+  'disappears_at' : [] | [TimestampMillis],
   'event' : ChatEvent,
   'timestamp' : TimestampMillis,
   'index' : EventIndex,
@@ -237,6 +239,7 @@ export type DeletedMessageResponse = { 'MessageNotFound' : null } |
   { 'MessageNotDeleted' : null };
 export type DirectChatCreated = {};
 export interface DirectChatEventWrapper {
+  'disappears_at' : [] | [TimestampMillis],
   'event' : ChatEvent,
   'timestamp' : TimestampMillis,
   'index' : EventIndex,
@@ -292,10 +295,6 @@ export type EditMessageResponse = { 'MessageNotFound' : null } |
   { 'UserSuspended' : null } |
   { 'UserBlocked' : null };
 export type EventIndex = number;
-export interface EventResult {
-  'timestamp' : TimestampMillis,
-  'index' : EventIndex,
-}
 export interface EventsArgs {
   'latest_client_event_index' : [] | [EventIndex],
   'user_id' : UserId,
@@ -659,6 +658,7 @@ export type MessageContent = { 'Giphy' : GiphyContent } |
   { 'Video' : VideoContent } |
   { 'Deleted' : DeletedContent };
 export interface MessageEventWrapper {
+  'disappears_at' : [] | [TimestampMillis],
   'event' : Message,
   'timestamp' : TimestampMillis,
   'index' : EventIndex,
@@ -887,6 +887,11 @@ export interface PublicProfile {
 }
 export type PublicProfileArgs = {};
 export type PublicProfileResponse = { 'Success' : PublicProfile };
+export interface PushEventResult {
+  'disappears_at' : [] | [TimestampMillis],
+  'timestamp' : TimestampMillis,
+  'index' : EventIndex,
+}
 export type RegistrationFee = { 'ICP' : ICPRegistrationFee } |
   { 'Cycles' : CyclesRegistrationFee };
 export interface RelinquishGroupSuperAdminArgs {
@@ -908,7 +913,8 @@ export type RemoveReactionResponse = { 'MessageNotFound' : null } |
   { 'NoChange' : null } |
   { 'ChatNotFound' : null } |
   { 'Success' : EventIndex } |
-  { 'UserSuspended' : null };
+  { 'UserSuspended' : null } |
+  { 'SuccessV2' : PushEventResult };
 export interface ReplyContext {
   'chat_id_if_other' : [] | [ChatId],
   'event_index' : EventIndex,
@@ -948,6 +954,7 @@ export type SendMessageResponse = { 'TextTooLong' : number } |
   { 'TransferLimitExceeded' : bigint } |
   {
     'TransferSuccessV2' : {
+      'disappears_at' : [] | [TimestampMillis],
       'timestamp' : TimestampMillis,
       'chat_id' : ChatId,
       'event_index' : EventIndex,
@@ -958,6 +965,7 @@ export type SendMessageResponse = { 'TextTooLong' : number } |
   { 'TransferCannotBeZero' : null } |
   {
     'Success' : {
+      'disappears_at' : [] | [TimestampMillis],
       'timestamp' : TimestampMillis,
       'chat_id' : ChatId,
       'event_index' : EventIndex,
@@ -1098,6 +1106,7 @@ export type TransferCryptoWithinGroupResponse = { 'TextTooLong' : number } |
   { 'TransferCannotBeZero' : null } |
   {
     'Success' : {
+      'disappears_at' : [] | [TimestampMillis],
       'timestamp' : TimestampMillis,
       'event_index' : EventIndex,
       'transfer' : CompletedCryptoTransaction,

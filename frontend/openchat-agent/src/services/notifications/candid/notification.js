@@ -5,6 +5,7 @@ export const Notification = IDL.Variant({
     'username' : IDL.Text,
     'them' : IDL.Principal,
     'message' : IDL.Record({
+      'disappears_at' : IDL.Opt(IDL.Nat64),
       'event' : IDL.Record({
         'forwarded' : IDL.Bool,
         'content' : IDL.Variant({
@@ -325,6 +326,7 @@ export const Notification = IDL.Variant({
   'DirectMessageNotification' : IDL.Record({
     'sender' : IDL.Principal,
     'message' : IDL.Record({
+      'disappears_at' : IDL.Opt(IDL.Nat64),
       'event' : IDL.Record({
         'forwarded' : IDL.Bool,
         'content' : IDL.Variant({
@@ -648,6 +650,7 @@ export const Notification = IDL.Variant({
     ),
     'sender' : IDL.Principal,
     'message' : IDL.Record({
+      'disappears_at' : IDL.Opt(IDL.Nat64),
       'event' : IDL.Record({
         'forwarded' : IDL.Bool,
         'content' : IDL.Variant({
@@ -971,6 +974,7 @@ export const Notification = IDL.Variant({
     'added_by_name' : IDL.Text,
     'added_by' : IDL.Principal,
     'message' : IDL.Record({
+      'disappears_at' : IDL.Opt(IDL.Nat64),
       'event' : IDL.Record({
         'forwarded' : IDL.Bool,
         'content' : IDL.Variant({

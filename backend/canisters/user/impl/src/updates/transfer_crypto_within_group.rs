@@ -49,6 +49,7 @@ async fn transfer_crypto_within_group_v2(args: Args) -> Response {
                 event_index: r.event_index,
                 message_index: r.message_index,
                 timestamp: r.timestamp,
+                disappears_at: r.disappears_at,
                 transfer: completed_transaction,
             }),
             group_canister::send_message::Response::CallerNotInGroup => CallerNotInGroup(Some(completed_transaction)),

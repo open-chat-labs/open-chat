@@ -18,6 +18,7 @@ type SendMessageResponse =
             message_index: MessageIndex;
             event_index: EventIndex;
             timestamp: TimestampMillis;
+            disappears_at: opt TimestampMillis;
         };
         MessageEmpty;
         TextTooLong: nat32;
@@ -113,6 +114,7 @@ type AddReactionArgs =
 type AddReactionResponse =
     variant {
         Success: EventIndex;
+        SuccessV2: PushEventResult;
         NoChange;
         InvalidReaction;
         MessageNotFound;
@@ -133,6 +135,7 @@ type RemoveReactionArgs =
 type RemoveReactionResponse =
     variant {
         Success: EventIndex;
+        SuccessV2: PushEventResult;
         NoChange;
         MessageNotFound;
         CallerNotInGroup;
@@ -363,7 +366,7 @@ type PinMessageArgs =
 
 type PinMessageV2Response =
     variant {
-        Success: EventResult;
+        Success: PushEventResult;
         NoChange;
         MessageIndexOutOfRange;
         NotAuthorized;
@@ -382,6 +385,7 @@ type UnpinMessageArgs =
 type UnpinMessageResponse =
     variant {
         Success: EventIndex;
+        SuccessV2: PushEventResult;
         NoChange;
         NotAuthorized;
         CallerNotInGroup;

@@ -12,6 +12,12 @@ export const idlFactory = ({ IDL }) => {
     'reaction' : IDL.Text,
   });
   const EventIndex = IDL.Nat32;
+  const TimestampMillis = IDL.Nat64;
+  const PushEventResult = IDL.Record({
+    'disappears_at' : IDL.Opt(TimestampMillis),
+    'timestamp' : TimestampMillis,
+    'index' : EventIndex,
+  });
   const AddReactionResponse = IDL.Variant({
     'MessageNotFound' : IDL.Null,
     'NoChange' : IDL.Null,
@@ -19,6 +25,7 @@ export const idlFactory = ({ IDL }) => {
     'Success' : EventIndex,
     'UserSuspended' : IDL.Null,
     'InvalidReaction' : IDL.Null,
+    'SuccessV2' : PushEventResult,
   });
   const Milliseconds = IDL.Nat64;
   const ChatId = CanisterId;
@@ -175,7 +182,6 @@ export const idlFactory = ({ IDL }) => {
     'total' : TotalPollVotes,
     'user' : IDL.Vec(IDL.Nat32),
   });
-  const TimestampMillis = IDL.Nat64;
   const PollConfig = IDL.Record({
     'allow_multiple_votes_per_user' : IDL.Bool,
     'text' : IDL.Opt(IDL.Text),
@@ -607,6 +613,7 @@ export const idlFactory = ({ IDL }) => {
     'ParticipantsAdded' : ParticipantsAdded,
   });
   const ChatEventWrapper = IDL.Record({
+    'disappears_at' : IDL.Opt(TimestampMillis),
     'event' : ChatEvent,
     'timestamp' : TimestampMillis,
     'index' : EventIndex,
@@ -679,6 +686,7 @@ export const idlFactory = ({ IDL }) => {
     'reactions' : IDL.Nat64,
   });
   const MessageEventWrapper = IDL.Record({
+    'disappears_at' : IDL.Opt(TimestampMillis),
     'event' : Message,
     'timestamp' : TimestampMillis,
     'index' : EventIndex,
@@ -868,6 +876,7 @@ export const idlFactory = ({ IDL }) => {
     'ChatNotFound' : IDL.Null,
     'Success' : EventIndex,
     'UserSuspended' : IDL.Null,
+    'SuccessV2' : PushEventResult,
   });
   const SearchMessagesArgs = IDL.Record({
     'max_results' : IDL.Nat8,
@@ -913,6 +922,7 @@ export const idlFactory = ({ IDL }) => {
     'TextTooLong' : IDL.Nat32,
     'TransferLimitExceeded' : IDL.Nat,
     'TransferSuccessV2' : IDL.Record({
+      'disappears_at' : IDL.Opt(TimestampMillis),
       'timestamp' : TimestampMillis,
       'chat_id' : ChatId,
       'event_index' : EventIndex,
@@ -921,6 +931,7 @@ export const idlFactory = ({ IDL }) => {
     }),
     'TransferCannotBeZero' : IDL.Null,
     'Success' : IDL.Record({
+      'disappears_at' : IDL.Opt(TimestampMillis),
       'timestamp' : TimestampMillis,
       'chat_id' : ChatId,
       'event_index' : EventIndex,
@@ -984,6 +995,7 @@ export const idlFactory = ({ IDL }) => {
     'ChatFrozen' : IDL.Null,
     'TransferCannotBeZero' : IDL.Null,
     'Success' : IDL.Record({
+      'disappears_at' : IDL.Opt(TimestampMillis),
       'timestamp' : TimestampMillis,
       'event_index' : EventIndex,
       'transfer' : CompletedCryptoTransaction,
