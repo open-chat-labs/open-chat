@@ -1,5 +1,5 @@
+use crate::activity_notifications::handle_activity_notification;
 use crate::timer_job_types::EndPollJob;
-use crate::updates::handle_activity_notification;
 use crate::{mutate_state, run_regular_jobs, RuntimeState, TimerJob};
 use canister_api_macros::update_candid_and_msgpack;
 use canister_tracing_macros::trace;
