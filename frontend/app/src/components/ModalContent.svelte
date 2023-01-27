@@ -1,7 +1,7 @@
 <script lang="ts">
     import { createEventDispatcher, onMount, tick } from "svelte";
     import { fade } from "svelte/transition";
-    import Link from "./Link.svelte";
+    import Button from "./Button.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import { _ } from "svelte-i18n";
     import HoverIcon from "./HoverIcon.svelte";
@@ -94,7 +94,9 @@
     {#if !hideFooter}
         <div class="footer" class:rtl={$rtlStore} class:compact={compactFooter}>
             <slot name="footer">
-                <Link on:click={onClose}>Close</Link>
+                <Button on:click={onClose} small={!$mobileWidth} tiny={$mobileWidth}>
+                    {$_("close")}
+                </Button>
             </slot>
         </div>
     {/if}

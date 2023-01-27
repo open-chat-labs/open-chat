@@ -159,7 +159,15 @@
 </script>
 
 {#if user}
-    <CurrentUser on:showHomePage on:logout on:whatsHot on:showFaq {user} on:profile on:newGroup />
+    <CurrentUser
+        on:wallet
+        on:showHomePage
+        on:logout
+        on:whatsHot
+        on:showFaq
+        {user}
+        on:profile
+        on:newGroup />
 
     <Search {searching} {searchTerm} on:searchEntered={onSearchEntered} />
 
