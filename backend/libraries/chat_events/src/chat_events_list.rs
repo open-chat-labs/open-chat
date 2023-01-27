@@ -697,9 +697,11 @@ mod tests {
     #[test]
     fn iter_skips_expired() {
         let mut events = setup_events(Some(2000)); // These will expire at 2000
-        events.set_events_time_to_live(Some(1000));
+        let user_id = Principal::from_slice(&[1]).into();
+
+        events.set_events_time_to_live(user_id, Some(1000), 500);
         push_events(&mut events, 500); // These will expire at 1500
-        events.set_events_time_to_live(Some(1500));
+        events.set_events_time_to_live(user_id, Some(1500), 1000);
         push_events(&mut events, 1000); // These will expire at 2500
 
         let group1 = (0u32..=100).map(EventIndex::from).collect_vec();

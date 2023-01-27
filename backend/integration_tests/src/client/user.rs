@@ -79,6 +79,7 @@ pub mod happy_path {
                 permissions: None,
                 rules: GroupRules::default(),
                 subtype: None,
+                events_ttl: None,
             },
         );
 
