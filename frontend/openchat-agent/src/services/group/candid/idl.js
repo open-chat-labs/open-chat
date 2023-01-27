@@ -543,6 +543,11 @@ export const idlFactory = ({ IDL }) => {
     'old_role' : Role,
     'new_role' : Role,
   });
+  const Milliseconds = IDL.Nat64;
+  const EventsTimeToLiveUpdated = IDL.Record({
+    'new_ttl' : IDL.Opt(Milliseconds),
+    'updated_by' : UserId,
+  });
   const ProposalUpdated = IDL.Record({
     'event_index' : EventIndex,
     'message_index' : MessageIndex,
@@ -595,6 +600,7 @@ export const idlFactory = ({ IDL }) => {
     'MessageUndeleted' : UpdatedMessage,
     'RoleChanged' : RoleChanged,
     'PollVoteDeleted' : UpdatedMessage,
+    'EventsTimeToLiveUpdated' : EventsTimeToLiveUpdated,
     'ProposalsUpdated' : ProposalsUpdated,
     'OwnershipTransferred' : OwnershipTransferred,
     'DirectChatCreated' : DirectChatCreated,
@@ -1083,6 +1089,11 @@ export const idlFactory = ({ IDL }) => {
     'reply_in_thread' : IDL.Opt(PermissionRole),
     'react_to_messages' : IDL.Opt(PermissionRole),
   });
+  const EventsTimeToLiveUpdate = IDL.Variant({
+    'NoChange' : IDL.Null,
+    'SetToNone' : IDL.Null,
+    'SetToSome' : Milliseconds,
+  });
   const Avatar = IDL.Record({
     'id' : IDL.Nat,
     'data' : IDL.Vec(IDL.Nat8),
@@ -1097,6 +1108,7 @@ export const idlFactory = ({ IDL }) => {
     'permissions' : IDL.Opt(OptionalGroupPermissions),
     'name' : IDL.Opt(IDL.Text),
     'description' : IDL.Opt(IDL.Text),
+    'events_ttl' : EventsTimeToLiveUpdate,
     'correlation_id' : IDL.Nat64,
     'rules' : IDL.Opt(GroupRules),
     'avatar' : AvatarUpdate,
