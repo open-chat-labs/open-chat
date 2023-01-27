@@ -31,7 +31,7 @@ fn c2c_freeze_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Respon
             index: push_event_result.index,
             timestamp: now,
             correlation_id: 0,
-            disappears_at: push_event_result.disappears_at,
+            expires_at: push_event_result.expires_at,
             event: ChatFrozen {
                 frozen_by: args.caller,
                 reason: args.reason,

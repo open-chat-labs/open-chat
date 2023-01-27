@@ -18,7 +18,7 @@ type SendMessageResponse =
             message_index: MessageIndex;
             event_index: EventIndex;
             timestamp: TimestampMillis;
-            disappears_at: opt TimestampMillis;
+            expires_at: opt TimestampMillis;
         };
         MessageEmpty;
         TextTooLong: nat32;
