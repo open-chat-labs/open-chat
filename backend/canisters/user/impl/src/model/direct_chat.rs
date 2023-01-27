@@ -2,7 +2,8 @@ use crate::model::unread_message_index_map::UnreadMessageIndexMap;
 use chat_events::{ChatEvents, Reader};
 use serde::{Deserialize, Serialize};
 use types::{
-    DirectChatSummary, DirectChatSummaryUpdates, MessageId, MessageIndex, Milliseconds, TimestampMillis, Timestamped, UserId,
+    DirectChatSummary, DirectChatSummaryUpdates, MessageId, MessageIndex, Milliseconds, OptionUpdate, TimestampMillis,
+    Timestamped, UserId,
 };
 use user_canister::c2c_send_messages::SendMessageArgs;
 
@@ -118,6 +119,12 @@ impl DirectChat {
             metrics,
             my_metrics: self.events.user_metrics(&my_user_id, Some(updates_since)).cloned(),
             archived: self.archived.if_set_after(updates_since).copied(),
+            events_ttl: self
+                .events
+                .get_events_time_to_live()
+                .if_set_after(updates_since)
+                .copied()
+                .map_or(OptionUpdate::NoChange, OptionUpdate::from_update),
         }
     }
 }

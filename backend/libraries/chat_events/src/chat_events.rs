@@ -12,6 +12,7 @@ use serde::{Deserialize, Serialize};
 use std::cmp::Reverse;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::{BTreeMap, BinaryHeap, HashMap};
+use types::Timestamped;
 
 #[derive(Serialize, Deserialize)]
 #[serde(from = "ChatEventsOld")]
@@ -23,7 +24,7 @@ pub struct ChatEvents {
     metrics: ChatMetrics,
     per_user_metrics: HashMap<UserId, ChatMetrics>,
     frozen: bool,
-    events_ttl: Option<Milliseconds>,
+    events_ttl: Timestamped<Option<Milliseconds>>,
     event_expiry_dates: BinaryHeap<EventExpiryDate>,
     files_to_delete: BTreeMap<TimestampMillis, Vec<BlobReference>>,
 }
@@ -53,7 +54,7 @@ impl From<ChatEventsOld> for ChatEvents {
             metrics: value.metrics,
             per_user_metrics: value.per_user_metrics,
             frozen: value.frozen,
-            events_ttl: None,
+            events_ttl: Timestamped::default(),
             event_expiry_dates: BinaryHeap::new(),
             files_to_delete: BTreeMap::new(),
         }
@@ -70,7 +71,7 @@ impl ChatEvents {
             metrics: ChatMetrics::default(),
             per_user_metrics: HashMap::new(),
             frozen: false,
-            events_ttl,
+            events_ttl: Timestamped::new(events_ttl, now),
             event_expiry_dates: BinaryHeap::new(),
             files_to_delete: BTreeMap::new(),
         };
@@ -96,7 +97,7 @@ impl ChatEvents {
             metrics: ChatMetrics::default(),
             per_user_metrics: HashMap::new(),
             frozen: false,
-            events_ttl,
+            events_ttl: Timestamped::new(events_ttl, now),
             event_expiry_dates: BinaryHeap::new(),
             files_to_delete: BTreeMap::new(),
         };
@@ -732,13 +733,13 @@ impl ChatEvents {
         }
     }
 
-    pub fn get_events_time_to_live(&self) -> Option<Milliseconds> {
-        self.events_ttl
+    pub fn get_events_time_to_live(&self) -> &Timestamped<Option<Milliseconds>> {
+        &self.events_ttl
     }
 
     pub fn set_events_time_to_live(&mut self, user_id: UserId, events_ttl: Option<Milliseconds>, now: TimestampMillis) {
-        if events_ttl != self.events_ttl {
-            self.events_ttl = events_ttl;
+        if events_ttl != self.events_ttl.value {
+            self.events_ttl = Timestamped::new(events_ttl, now);
             self.push_main_event(
                 ChatEventInternal::EventsTimeToLiveUpdated(Box::new(EventsTimeToLiveUpdated {
                     updated_by: user_id,
@@ -1012,7 +1013,7 @@ impl ChatEvents {
                 .collect();
 
             if affected_events.is_empty() {
-                self.events_ttl.map(|d| now + d)
+                self.events_ttl.value.map(|d| now + d)
             } else {
                 // If this event affects existing events, then this event cannot expire until all of
                 // the events it affects have first expired. So we need to find the max expiry date

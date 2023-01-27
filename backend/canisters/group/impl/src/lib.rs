@@ -120,6 +120,7 @@ impl RuntimeState {
             frozen: data.frozen.value.clone(),
             wasm_version: Version::default(),
             date_last_pinned: data.date_last_pinned,
+            events_ttl: data.events.get_events_time_to_live().value,
         }
     }
 

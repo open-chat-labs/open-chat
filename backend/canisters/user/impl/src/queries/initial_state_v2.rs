@@ -108,5 +108,6 @@ fn hydrate_cached_summary(cached: &GroupCanisterGroupChatSummary, user_details: 
         wasm_version: Version::default(),
         date_last_pinned: cached.date_last_pinned,
         date_read_pinned: user_details.date_read_pinned.value,
+        events_ttl: cached.events_ttl,
     }
 }

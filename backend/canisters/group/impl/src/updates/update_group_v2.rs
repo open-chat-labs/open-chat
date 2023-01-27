@@ -235,7 +235,7 @@ fn commit(my_user_id: UserId, args: Args, runtime_state: &mut RuntimeState) {
     }
 
     if let Some(new_events_ttl) = args.events_ttl.expand() {
-        if new_events_ttl != runtime_state.data.events.get_events_time_to_live() {
+        if new_events_ttl != runtime_state.data.events.get_events_time_to_live().value {
             runtime_state
                 .data
                 .events

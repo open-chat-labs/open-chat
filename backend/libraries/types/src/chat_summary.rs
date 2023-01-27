@@ -1,6 +1,6 @@
 use crate::{
     CanisterId, ChatId, EventIndex, EventWrapper, FrozenGroupInfo, GroupPermissions, Mention, Message, MessageIndex,
-    OptionUpdate, Role, TimestampMillis, UserId, Version, MAX_RETURNED_MENTIONS,
+    Milliseconds, OptionUpdate, Role, TimestampMillis, UserId, Version, MAX_RETURNED_MENTIONS,
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
@@ -44,6 +44,8 @@ pub struct DirectChatSummary {
     pub metrics: ChatMetrics,
     pub my_metrics: ChatMetrics,
     pub archived: bool,
+    #[serde(default)]
+    pub events_ttl: Option<Millisecnds>,
 }
 
 impl DirectChatSummary {
@@ -83,6 +85,8 @@ pub struct GroupChatSummary {
     pub frozen: Option<FrozenGroupInfo>,
     pub date_last_pinned: Option<TimestampMillis>,
     pub date_read_pinned: Option<TimestampMillis>,
+    #[serde(default)]
+    pub events_ttl: Option<Milliseconds>,
 }
 
 impl GroupChatSummary {
@@ -119,6 +123,8 @@ pub struct DirectChatSummaryUpdates {
     pub metrics: Option<ChatMetrics>,
     pub my_metrics: Option<ChatMetrics>,
     pub archived: Option<bool>,
+    #[serde(default)]
+    pub events_ttl: OptionUpdate<Milliseconds>,
 }
 
 #[allow(clippy::large_enum_variant)]
@@ -149,6 +155,8 @@ pub struct GroupChatSummaryUpdates {
     pub frozen: OptionUpdate<FrozenGroupInfo>,
     pub date_last_pinned: Option<TimestampMillis>,
     pub date_read_pinned: Option<TimestampMillis>,
+    #[serde(default)]
+    pub events_ttl: OptionUpdate<Milliseconds>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -166,6 +174,8 @@ pub struct PublicGroupSummary {
     pub owner_id: UserId,
     pub is_public: bool,
     pub frozen: Option<FrozenGroupInfo>,
+    #[serde(default)]
+    pub events_ttl: Option<Milliseconds>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -195,6 +205,8 @@ pub struct GroupCanisterGroupChatSummary {
     pub latest_threads: Vec<GroupCanisterThreadDetails>,
     pub frozen: Option<FrozenGroupInfo>,
     pub date_last_pinned: Option<TimestampMillis>,
+    #[serde(default)]
+    pub events_ttl: Option<Milliseconds>,
 }
 
 impl GroupCanisterGroupChatSummary {
@@ -252,41 +264,7 @@ impl GroupCanisterGroupChatSummary {
             latest_threads,
             frozen: updates.frozen.apply_to(self.frozen),
             date_last_pinned: updates.date_last_pinned.or(self.date_last_pinned),
-        }
-    }
-}
-
-impl From<GroupCanisterGroupChatSummary> for GroupChatSummary {
-    fn from(s: GroupCanisterGroupChatSummary) -> Self {
-        GroupChatSummary {
-            chat_id: s.chat_id,
-            last_updated: s.last_updated,
-            name: s.name,
-            description: s.description,
-            subtype: s.subtype,
-            avatar_id: s.avatar_id,
-            is_public: s.is_public,
-            history_visible_to_new_joiners: s.history_visible_to_new_joiners,
-            min_visible_event_index: s.min_visible_event_index,
-            min_visible_message_index: s.min_visible_message_index,
-            latest_message: s.latest_message,
-            latest_event_index: s.latest_event_index,
-            joined: s.joined,
-            read_by_me_up_to: None,
-            notifications_muted: s.notifications_muted,
-            participant_count: s.participant_count,
-            role: s.role,
-            mentions: s.mentions,
-            wasm_version: s.wasm_version,
-            owner_id: s.owner_id,
-            permissions: s.permissions,
-            metrics: s.metrics,
-            my_metrics: s.my_metrics,
-            latest_threads: s.latest_threads.into_iter().map(|t| t.into()).collect(),
-            archived: false,
-            frozen: s.frozen,
-            date_last_pinned: s.date_last_pinned,
-            date_read_pinned: None,
+            events_ttl: updates.events_ttl.apply_to(self.events_ttl),
         }
     }
 }
@@ -316,38 +294,8 @@ pub struct GroupCanisterGroupChatSummaryUpdates {
     pub notifications_muted: Option<bool>,
     pub frozen: OptionUpdate<FrozenGroupInfo>,
     pub date_last_pinned: Option<TimestampMillis>,
-}
-
-impl From<GroupCanisterGroupChatSummaryUpdates> for GroupChatSummaryUpdates {
-    fn from(s: GroupCanisterGroupChatSummaryUpdates) -> Self {
-        GroupChatSummaryUpdates {
-            chat_id: s.chat_id,
-            last_updated: s.last_updated,
-            name: s.name,
-            description: s.description,
-            subtype: s.subtype,
-            avatar_id: s.avatar_id,
-            latest_message: s.latest_message,
-            latest_event_index: s.latest_event_index,
-            participant_count: s.participant_count,
-            role: s.role,
-            read_by_me_up_to: None,
-            notifications_muted: s.notifications_muted,
-            mentions: s.mentions,
-            wasm_version: s.wasm_version,
-            owner_id: s.owner_id,
-            permissions: s.permissions,
-            affected_events: s.affected_events,
-            metrics: s.metrics,
-            my_metrics: s.my_metrics,
-            is_public: s.is_public,
-            latest_threads: s.latest_threads.into_iter().map(|t| t.into()).collect(),
-            archived: None,
-            frozen: s.frozen,
-            date_last_pinned: s.date_last_pinned,
-            date_read_pinned: None,
-        }
-    }
+    #[serde(default)]
+    pub events_ttl: OptionUpdate<Milliseconds>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug, Default, Clone)]

@@ -7,7 +7,7 @@ use std::cmp::max;
 use std::collections::HashMap;
 use types::{
     EventIndex, EventWrapper, FrozenGroupInfo, GroupCanisterGroupChatSummaryUpdates, GroupPermissions, GroupSubtype, Mention,
-    Message, OptionUpdate, TimestampMillis, UserId, MAX_THREADS_IN_SUMMARY,
+    Message, Milliseconds, OptionUpdate, TimestampMillis, UserId, MAX_THREADS_IN_SUMMARY,
 };
 
 #[query]
@@ -68,6 +68,7 @@ fn summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
             frozen: updates_from_events.frozen,
             wasm_version: None,
             date_last_pinned: updates_from_events.date_last_pinned,
+            events_ttl: updates_from_events.events_ttl,
         };
         Success(SuccessResult { updates })
     } else {
@@ -94,6 +95,7 @@ struct UpdatesFromEvents {
     notifications_muted: Option<bool>,
     frozen: OptionUpdate<FrozenGroupInfo>,
     date_last_pinned: Option<TimestampMillis>,
+    events_ttl: OptionUpdate<Milliseconds>,
 }
 
 fn process_events(
@@ -233,6 +235,11 @@ fn process_events(
             }
             ChatEventInternal::GroupVisibilityChanged(v) => {
                 updates.is_public = Some(v.now_public);
+            }
+            ChatEventInternal::EventsTimeToLiveUpdated(u) => {
+                if !updates.events_ttl.has_update() {
+                    updates.events_ttl = OptionUpdate::from_update(u.new_ttl);
+                }
             }
             _ => {}
         }
