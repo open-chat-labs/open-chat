@@ -471,7 +471,9 @@
         "chooseReceiver": "nhập tên người dùng của người nhận",
         "icp": "Máy tính Internet",
         "btc": "Bitcoin",
-        "chat": "trò chuyện mở"
+        "chat": "trò chuyện mở",
+        "sns1": "SNS-1",
+        "max": "tối đa"
     },
     "cryptoAccount": {
         "manage": "Quản lý",
@@ -515,7 +517,8 @@
         "reactions": "phản ứng",
         "deletedMessages": "tin nhắn đã xóa",
         "reportedMessages": "Tin nhắn được báo cáo",
-        "reportedMessagesInfo": "Tin nhắn do bạn gửi đã bị người khác xóa hoặc báo cáo. Điều này có thể được sử dụng như một dấu hiệu cho thấy bạn không đóng góp tích cực cho cộng đồng."
+        "reportedMessagesInfo": "Tin nhắn do bạn gửi đã bị người khác xóa hoặc báo cáo. Điều này có thể được sử dụng như một dấu hiệu cho thấy bạn không đóng góp tích cực cho cộng đồng.",
+        "cryptoTransfers": "Tin nhắn tiền điện tử"
     },
     "andNMore": "và {n} khác",
     "confirmMakeGroupPrivate": "Bạn có chắc chắn muốn đặt nhóm này ở chế độ riêng tư không? Hiện tại không thể hoàn tác thao tác này!",
@@ -599,7 +602,9 @@
         "filter": "Lọc đề xuất",
         "collapse": "Thu gọn tin nhắn",
         "enableAll": "Cho phép tất cả",
-        "disableAll": "Vô hiệu hóa tất cả"
+        "disableAll": "Vô hiệu hóa tất cả",
+        "readmore": "Đọc thêm",
+        "readless": "Đọc ít hơn"
     },
     "yes": "Đúng",
     "no": "Không",
@@ -673,6 +678,7 @@
     "reason": "Lý do",
     "expandDeletedMessages": "Mở rộng các tin nhắn đã xóa trong cuộc trò chuyện này",
     "revealDeletedMessage": "Tiết lộ tin nhắn",
+    "retryMessage": "Thử lại tin nhắn",
     "lowBandwidth": "Băng thông thấp",
     "loadImage": "Tải hình ảnh",
     "loadGif": "tải gif",

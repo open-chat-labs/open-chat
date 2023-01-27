@@ -114,7 +114,6 @@ import {
     selectedThreadRootMessageIndex,
     clearServerEvents,
     confirmedEventIndexesLoaded,
-    addServerEventsToStores,
     addGroupPreview,
     removeGroupPreview,
     groupPreviewsStore,
@@ -289,6 +288,7 @@ import {
     ThreadRead,
     UpdatesResult,
 } from "openchat-shared";
+import { failedMessagesStore } from "./stores/failedMessages";
 
 const UPGRADE_POLL_INTERVAL = 1000;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -467,6 +467,7 @@ export class OpenChat extends EventTarget {
         this._workerApi.addEventListener("openchat_event", (ev) => this.handleAgentEvent(ev));
         await this._workerApi.ready;
         this._cachePrimer = new CachePrimer(this._workerApi);
+        this.api.loadFailedMessages().then((res) => failedMessagesStore.initialise(res));
         this.api
             .getCurrentUser()
             .then((user) => {
@@ -1181,18 +1182,16 @@ export class OpenChat extends EventTarget {
             return Promise.resolve(false);
         }
 
-        const result = chat.kind === "group_chat"
-            ? this.api.getDeletedGroupMessage(chatId, messageId, threadRootMessageIndex)
-            : this.api.getDeletedDirectMessage(chatId, messageId);
+        const result =
+            chat.kind === "group_chat"
+                ? this.api.getDeletedGroupMessage(chatId, messageId, threadRootMessageIndex)
+                : this.api.getDeletedDirectMessage(chatId, messageId);
 
         return result
             .then((resp) => {
                 const success = resp.kind === "success";
                 if (success) {
-                    localMessageUpdates.markContentRevealed(
-                        messageId.toString(),
-                        resp.content
-                    );
+                    localMessageUpdates.markContentRevealed(messageId.toString(), resp.content);
                 }
                 return success;
             })
@@ -1200,7 +1199,6 @@ export class OpenChat extends EventTarget {
                 this._logger.error("Get deleted message failed: ", err);
                 return false;
             });
-
     }
 
     selectReaction(
@@ -1354,7 +1352,7 @@ export class OpenChat extends EventTarget {
         const userIds = userIdsFromEvents(events);
         await this.updateUserStore(chat.chatId, userIds);
 
-        addServerEventsToStores(chat.chatId, events, undefined);
+        this.addServerEventsToStores(chat.chatId, events, undefined);
 
         makeRtcConnections(this.user.userId, chat, events, this._liveState.userStore);
     }
@@ -1995,7 +1993,7 @@ export class OpenChat extends EventTarget {
         const event = { event: msg, index: nextEventIndex, timestamp: BigInt(Date.now()) };
 
         this.api
-            .sendMessage(chat.kind, chatId, this.user, [], event.event)
+            .sendMessage(chat.kind, chatId, this.user, [], event)
             .then(([resp, msg]) => {
                 if (resp.kind === "success") {
                     this.onSendMessageSuccess(chatId, resp, msg, undefined);
@@ -2008,7 +2006,10 @@ export class OpenChat extends EventTarget {
                         this.user.userId,
                         undefined
                     );
-                    this.dispatchEvent(new SendMessageFailed());
+                    failedMessagesStore.add(chatId, event);
+                    this.dispatchEvent(
+                        new SendMessageFailed(msg.content.kind === "crypto_content")
+                    );
                 }
             })
             .catch((err) => {
@@ -2019,7 +2020,8 @@ export class OpenChat extends EventTarget {
                     this.user.userId,
                     undefined
                 );
-                this.dispatchEvent(new SendMessageFailed());
+                failedMessagesStore.add(chatId, event);
+                this.dispatchEvent(new SendMessageFailed(msg.content.kind === "crypto_content"));
                 this._logger.error("Exception forwarding message", err);
             });
 
@@ -2036,9 +2038,54 @@ export class OpenChat extends EventTarget {
         threadRootMessageIndex: number | undefined
     ) {
         const event = mergeSendMessageResponse(msg, resp);
-        addServerEventsToStores(chatId, [event], threadRootMessageIndex);
+        this.addServerEventsToStores(chatId, [event], threadRootMessageIndex);
         if (threadRootMessageIndex === undefined) {
             updateSummaryWithConfirmedMessage(chatId, event);
+        }
+    }
+
+    private addServerEventsToStores(
+        chatId: string,
+        newEvents: EventWrapper<ChatEvent>[],
+        threadRootMessageIndex: number | undefined
+    ): void {
+        if (newEvents.length === 0) {
+            return;
+        }
+
+        if (!isContiguous(chatId, newEvents)) {
+            return;
+        }
+
+        const key =
+            threadRootMessageIndex === undefined ? chatId : `${chatId}_${threadRootMessageIndex}`;
+
+        for (const event of newEvents) {
+            if (event.event.kind === "message") {
+                if (unconfirmed.delete(key, event.event.messageId)) {
+                    if (threadRootMessageIndex === undefined) {
+                        messagesRead.confirmMessage(
+                            chatId,
+                            event.event.messageIndex,
+                            event.event.messageId
+                        );
+                    } else {
+                        messagesRead.markThreadRead(
+                            chatId,
+                            threadRootMessageIndex,
+                            event.event.messageIndex
+                        );
+                    }
+                }
+            }
+        }
+
+        if (threadRootMessageIndex === undefined) {
+            chatStateStore.updateProp(chatId, "serverEvents", (events) =>
+                mergeServerEvents(events, newEvents)
+            );
+        } else if (key === this._liveState.selectedThreadKey) {
+            threadServerEventsStore.update((events) => mergeServerEvents(events, newEvents));
         }
     }
 
@@ -2049,16 +2096,14 @@ export class OpenChat extends EventTarget {
         threadRootMessageIndex: number | undefined
     ): Promise<boolean> {
         let upToDate = true;
-        const key =
-            threadRootMessageIndex === undefined
-                ? clientChat.chatId
-                : `${clientChat.chatId}_${threadRootMessageIndex}`;
+        const key = this.localMessagesKey(clientChat.chatId, threadRootMessageIndex);
 
         if (threadRootMessageIndex === undefined) {
             upToDate = isUpToDate(clientChat, currentEvents);
         }
 
         unconfirmed.add(key, messageEvent);
+        failedMessagesStore.delete(key, messageEvent.event.messageId);
 
         rtcConnectionsManager.sendMessage(
             [...chatStateStore.getProp(clientChat.chatId, "userIds")],
@@ -2086,6 +2131,119 @@ export class OpenChat extends EventTarget {
         return upToDate;
     }
 
+    private localMessagesKey(chatId: string, threadRootMessageIndex?: number): string {
+        return threadRootMessageIndex === undefined
+            ? chatId
+            : `${chatId}_${threadRootMessageIndex}`;
+    }
+
+    deleteFailedMessage(
+        chatId: string,
+        event: EventWrapper<Message>,
+        threadRootMessageIndex?: number
+    ): Promise<void> {
+        const localKey = this.localMessagesKey(chatId, threadRootMessageIndex);
+        failedMessagesStore.delete(localKey, event.event.messageId);
+        return this.api.deleteFailedMessage(chatId, event.event.messageId, threadRootMessageIndex);
+    }
+
+    async retrySendMessage(
+        chatId: string,
+        event: EventWrapper<Message>,
+        currentEvents: EventWrapper<ChatEvent>[],
+        threadRootMessageIndex?: number
+    ): Promise<void> {
+        const chat = this._liveState.chatSummaries[chatId];
+
+        if (chat === undefined) {
+            return;
+        }
+
+        const localKey = this.localMessagesKey(chatId, threadRootMessageIndex);
+
+        const [nextEventIndex, nextMessageIndex] =
+            threadRootMessageIndex !== undefined
+                ? nextEventAndMessageIndexesForThread(currentEvents)
+                : nextEventAndMessageIndexes();
+
+        // remove the *original* event from the failed store
+        await this.deleteFailedMessage(chatId, event, threadRootMessageIndex);
+
+        // regenerate the indexes for the retry message
+        const retryEvent = {
+            ...event,
+            index: nextEventIndex,
+            timestamp: BigInt(Date.now()),
+            event: {
+                ...event.event,
+                messageIndex: nextMessageIndex,
+            },
+        };
+
+        const canRetry = this.canRetryMessage(retryEvent.event.content);
+
+        // add the *new* event to unconfirmed
+        unconfirmed.add(localKey, retryEvent);
+
+        // TODO - what about mentions?
+        this.api
+            .sendMessage(chat.kind, chat.chatId, this.user, [], retryEvent, threadRootMessageIndex)
+            .then(([resp, msg]) => {
+                if (resp.kind === "success" || resp.kind === "transfer_success") {
+                    this.onSendMessageSuccess(chatId, resp, msg, threadRootMessageIndex);
+                    if (msg.kind === "message" && msg.content.kind === "crypto_content") {
+                        this.refreshAccountBalance(
+                            msg.content.transfer.token,
+                            this.user.cryptoAccount
+                        );
+                    }
+                    if (threadRootMessageIndex !== undefined) {
+                        trackEvent("sent_threaded_message");
+                    } else {
+                        if (chat.kind === "direct_chat") {
+                            trackEvent("sent_direct_message");
+                        } else {
+                            if (chat.public) {
+                                trackEvent("sent_public_group_message");
+                            } else {
+                                trackEvent("sent_private_group_message");
+                            }
+                        }
+                    }
+                    if (msg.repliesTo !== undefined) {
+                        // double counting here which I think is OK since we are limited to string events
+                        trackEvent("replied_to_message");
+                    }
+                } else {
+                    this.removeMessage(
+                        chat.kind,
+                        chatId,
+                        msg.messageId,
+                        this.user.userId,
+                        threadRootMessageIndex
+                    );
+                    failedMessagesStore.add(localKey, retryEvent);
+                    this.dispatchEvent(new SendMessageFailed(!canRetry));
+                }
+            })
+            .catch((err) => {
+                this.removeMessage(
+                    chat.kind,
+                    chatId,
+                    event.event.messageId,
+                    this.user.userId,
+                    threadRootMessageIndex
+                );
+                failedMessagesStore.add(localKey, retryEvent);
+                this._logger.error("Exception sending message", err);
+                this.dispatchEvent(new SendMessageFailed(!canRetry));
+            });
+    }
+
+    private canRetryMessage(content: MessageContent): boolean {
+        return content.kind !== "crypto_content" && content.kind !== "poll_content";
+    }
+
     sendMessageWithAttachment(
         chatId: string,
         currentEvents: EventWrapper<ChatEvent>[],
@@ -2100,6 +2258,8 @@ export class OpenChat extends EventTarget {
         if (chat === undefined) {
             return;
         }
+
+        const localKey = this.localMessagesKey(chatId, threadRootMessageIndex);
 
         if (textContent || fileToAttach) {
             const storageRequired = this.getStorageRequiredForMessage(fileToAttach);
@@ -2122,23 +2282,16 @@ export class OpenChat extends EventTarget {
             );
             const event = { event: msg, index: nextEventIndex, timestamp: BigInt(Date.now()) };
 
+            const canRetry = this.canRetryMessage(msg.content);
+
             this.api
-                .sendMessage(
-                    chat.kind,
-                    chatId,
-                    this.user,
-                    mentioned,
-                    event.event,
-                    threadRootMessageIndex
-                )
+                .sendMessage(chat.kind, chatId, this.user, mentioned, event, threadRootMessageIndex)
                 .then(([resp, msg]) => {
                     if (resp.kind === "success" || resp.kind === "transfer_success") {
                         this.onSendMessageSuccess(chatId, resp, msg, threadRootMessageIndex);
                         if (msg.kind === "message" && msg.content.kind === "crypto_content") {
-                            this.refreshAccountBalance(
-                                msg.content.transfer.token,
-                                this.user.cryptoAccount
-                            );
+                            const token = msg.content.transfer.token;
+                            this.refreshAccountBalance(token, this.user.userId);
                         }
                         if (threadRootMessageIndex !== undefined) {
                             trackEvent("sent_threaded_message");
@@ -2165,7 +2318,10 @@ export class OpenChat extends EventTarget {
                             this.user.userId,
                             threadRootMessageIndex
                         );
-                        this.dispatchEvent(new SendMessageFailed());
+                        if (canRetry) {
+                            failedMessagesStore.add(localKey, event);
+                        }
+                        this.dispatchEvent(new SendMessageFailed(!canRetry));
                     }
                 })
                 .catch((err) => {
@@ -2176,8 +2332,11 @@ export class OpenChat extends EventTarget {
                         this.user.userId,
                         threadRootMessageIndex
                     );
+                    if (canRetry) {
+                        failedMessagesStore.add(localKey, event);
+                    }
                     this._logger.error("Exception sending message", err);
-                    this.dispatchEvent(new SendMessageFailed());
+                    this.dispatchEvent(new SendMessageFailed(!canRetry));
                 });
 
             this.sendMessage(chat, currentEvents, event, threadRootMessageIndex).then(
@@ -2585,8 +2744,8 @@ export class OpenChat extends EventTarget {
         }
     }
 
-    refreshAccountBalance(crypto: Cryptocurrency, account: string): Promise<Tokens> {
-        return this.api.refreshAccountBalance(crypto, account).then((val) => {
+    refreshAccountBalance(crypto: Cryptocurrency, principal: string): Promise<Tokens> {
+        return this.api.refreshAccountBalance(crypto, principal).then((val) => {
             cryptoBalance.set(crypto, val);
             return val;
         });
@@ -2879,7 +3038,7 @@ export class OpenChat extends EventTarget {
             });
         } else {
             localChatSummaryUpdates.markUpdated(chatId, { kind: "group_chat", frozen });
-            addServerEventsToStores(chatId, [event], undefined);
+            this.addServerEventsToStores(chatId, [event], undefined);
         }
     }
 
@@ -3200,6 +3359,7 @@ export class OpenChat extends EventTarget {
     currentChatBlockedUsers = currentChatBlockedUsers;
     chatStateStore = chatStateStore;
     unconfirmed = unconfirmed;
+    failedMessagesStore = failedMessagesStore;
     lastCryptoSent = lastCryptoSent;
     draftThreadMessages = draftThreadMessages;
     translationStore = translationStore;

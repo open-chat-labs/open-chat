@@ -15,7 +15,8 @@ export type AddReactionResponse = { 'MessageNotFound' : null } |
   { 'ChatNotFound' : null } |
   { 'Success' : EventIndex } |
   { 'UserSuspended' : null } |
-  { 'InvalidReaction' : null };
+  { 'InvalidReaction' : null } |
+  { 'SuccessV2' : PushEventResult };
 export interface AddRecommendedGroupExclusionsArgs {
   'duration' : [] | [Milliseconds],
   'groups' : Array<ChatId>,
@@ -116,6 +117,7 @@ export type ChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'AvatarChanged' : AvatarChanged } |
   { 'ParticipantsAdded' : ParticipantsAdded };
 export interface ChatEventWrapper {
+  'disappears_at' : [] | [TimestampMillis],
   'event' : ChatEvent,
   'timestamp' : TimestampMillis,
   'index' : EventIndex,
@@ -143,9 +145,11 @@ export interface ChatMetrics {
   'image_messages' : bigint,
   'replies' : bigint,
   'video_messages' : bigint,
+  'sns1_messages' : bigint,
   'polls' : bigint,
   'proposals' : bigint,
   'reported_messages' : bigint,
+  'ckbtc_messages' : bigint,
   'reactions' : bigint,
 }
 export type ChatSummary = { 'Group' : GroupChatSummary } |
@@ -161,6 +165,9 @@ export interface ConfirmationCodeSms {
   'confirmation_code' : string,
   'phone_number' : string,
 }
+export interface Contact { 'nickname' : [] | [string], 'user_id' : UserId }
+export type ContactsArgs = {};
+export type ContactsResponse = { 'Success' : { 'contacts' : Array<Contact> } };
 export interface CreateGroupArgs {
   'is_public' : boolean,
   'permissions' : [] | [GroupPermissions],
@@ -192,7 +199,9 @@ export interface CryptoContent {
 export type CryptoTransaction = { 'Failed' : FailedCryptoTransaction } |
   { 'Completed' : CompletedCryptoTransaction } |
   { 'Pending' : PendingCryptoTransaction };
-export type Cryptocurrency = { 'InternetComputer' : null };
+export type Cryptocurrency = { 'InternetComputer' : null } |
+  { 'SNS1' : null } |
+  { 'CKBTC' : null };
 export type Cycles = bigint;
 export interface CyclesRegistrationFee {
   'recipient' : Principal,
@@ -230,6 +239,7 @@ export type DeletedMessageResponse = { 'MessageNotFound' : null } |
   { 'MessageNotDeleted' : null };
 export type DirectChatCreated = {};
 export interface DirectChatEventWrapper {
+  'disappears_at' : [] | [TimestampMillis],
   'event' : ChatEvent,
   'timestamp' : TimestampMillis,
   'index' : EventIndex,
@@ -285,10 +295,6 @@ export type EditMessageResponse = { 'MessageNotFound' : null } |
   { 'UserSuspended' : null } |
   { 'UserBlocked' : null };
 export type EventIndex = number;
-export interface EventResult {
-  'timestamp' : TimestampMillis,
-  'index' : EventIndex,
-}
 export interface EventsArgs {
   'latest_client_event_index' : [] | [EventIndex],
   'user_id' : UserId,
@@ -302,13 +308,6 @@ export interface EventsByIndexArgs {
   'latest_client_event_index' : [] | [EventIndex],
   'user_id' : UserId,
   'events' : Uint32Array | number[],
-  'thread_root_message_index' : [] | [MessageIndex],
-}
-export interface EventsRangeArgs {
-  'latest_client_event_index' : [] | [EventIndex],
-  'user_id' : UserId,
-  'to_index' : EventIndex,
-  'from_index' : EventIndex,
   'thread_root_message_index' : [] | [MessageIndex],
 }
 export type EventsResponse = { 'ReplicaNotUpToDate' : EventIndex } |
@@ -659,6 +658,7 @@ export type MessageContent = { 'Giphy' : GiphyContent } |
   { 'Video' : VideoContent } |
   { 'Deleted' : DeletedContent };
 export interface MessageEventWrapper {
+  'disappears_at' : [] | [TimestampMillis],
   'event' : Message,
   'timestamp' : TimestampMillis,
   'index' : EventIndex,
@@ -712,7 +712,7 @@ export type MuteNotificationsResponse = { 'ChatNotFound' : null } |
 export interface NnsCompletedCryptoTransaction {
   'to' : NnsCryptoAccount,
   'fee' : Tokens,
-  'created' : TimestampMillis,
+  'created' : TimestampNanos,
   'token' : Cryptocurrency,
   'transaction_hash' : TransactionHash,
   'block_index' : BlockIndex,
@@ -725,7 +725,7 @@ export type NnsCryptoAccount = { 'Mint' : null } |
 export interface NnsFailedCryptoTransaction {
   'to' : NnsCryptoAccount,
   'fee' : Tokens,
-  'created' : TimestampMillis,
+  'created' : TimestampNanos,
   'token' : Cryptocurrency,
   'transaction_hash' : TransactionHash,
   'from' : NnsCryptoAccount,
@@ -768,6 +768,7 @@ export interface NotificationEnvelope {
   'notification' : Notification,
   'recipients' : Array<UserId>,
 }
+export interface OptionalContact { 'nickname' : TextUpdate, 'user_id' : UserId }
 export interface OwnershipTransferred {
   'old_owner' : UserId,
   'new_owner' : UserId,
@@ -886,6 +887,11 @@ export interface PublicProfile {
 }
 export type PublicProfileArgs = {};
 export type PublicProfileResponse = { 'Success' : PublicProfile };
+export interface PushEventResult {
+  'disappears_at' : [] | [TimestampMillis],
+  'timestamp' : TimestampMillis,
+  'index' : EventIndex,
+}
 export type RegistrationFee = { 'ICP' : ICPRegistrationFee } |
   { 'Cycles' : CyclesRegistrationFee };
 export interface RelinquishGroupSuperAdminArgs {
@@ -907,7 +913,8 @@ export type RemoveReactionResponse = { 'MessageNotFound' : null } |
   { 'NoChange' : null } |
   { 'ChatNotFound' : null } |
   { 'Success' : EventIndex } |
-  { 'UserSuspended' : null };
+  { 'UserSuspended' : null } |
+  { 'SuccessV2' : PushEventResult };
 export interface ReplyContext {
   'chat_id_if_other' : [] | [ChatId],
   'event_index' : EventIndex,
@@ -947,6 +954,7 @@ export type SendMessageResponse = { 'TextTooLong' : number } |
   { 'TransferLimitExceeded' : bigint } |
   {
     'TransferSuccessV2' : {
+      'disappears_at' : [] | [TimestampMillis],
       'timestamp' : TimestampMillis,
       'chat_id' : ChatId,
       'event_index' : EventIndex,
@@ -957,6 +965,7 @@ export type SendMessageResponse = { 'TextTooLong' : number } |
   { 'TransferCannotBeZero' : null } |
   {
     'Success' : {
+      'disappears_at' : [] | [TimestampMillis],
       'timestamp' : TimestampMillis,
       'chat_id' : ChatId,
       'event_index' : EventIndex,
@@ -979,12 +988,18 @@ export interface SetBioArgs { 'text' : string }
 export type SetBioResponse = { 'TooLong' : FieldTooLongResult } |
   { 'Success' : null } |
   { 'UserSuspended' : null };
+export interface SetContactArgs { 'contact' : OptionalContact }
+export type SetContactResponse = { 'NoChange' : null } |
+  { 'NicknameTooLong' : FieldTooLongResult } |
+  { 'Success' : null } |
+  { 'UserSuspended' : null } |
+  { 'NicknameTooShort' : FieldTooShortResult };
 export type SnsAccount = { 'Mint' : null } |
   { 'Account' : Icrc1Account };
 export interface SnsCompletedCryptoTransaction {
   'to' : SnsAccount,
   'fee' : Tokens,
-  'created' : TimestampMillis,
+  'created' : TimestampNanos,
   'token' : Cryptocurrency,
   'transaction_hash' : TransactionHash,
   'block_index' : BlockIndex,
@@ -995,7 +1010,7 @@ export interface SnsCompletedCryptoTransaction {
 export interface SnsFailedCryptoTransaction {
   'to' : SnsAccount,
   'fee' : Tokens,
-  'created' : TimestampMillis,
+  'created' : TimestampNanos,
   'token' : Cryptocurrency,
   'transaction_hash' : TransactionHash,
   'from' : SnsAccount,
@@ -1041,6 +1056,9 @@ export interface Tally {
   'timestamp' : TimestampMillis,
 }
 export interface TextContent { 'text' : string }
+export type TextUpdate = { 'NoChange' : null } |
+  { 'SetToNone' : null } |
+  { 'SetToSome' : string };
 export interface ThreadRead {
   'root_message_index' : MessageIndex,
   'read_up_to' : MessageIndex,
@@ -1088,6 +1106,7 @@ export type TransferCryptoWithinGroupResponse = { 'TextTooLong' : number } |
   { 'TransferCannotBeZero' : null } |
   {
     'Success' : {
+      'disappears_at' : [] | [TimestampMillis],
       'timestamp' : TimestampMillis,
       'event_index' : EventIndex,
       'transfer' : CompletedCryptoTransaction,
@@ -1206,6 +1225,7 @@ export interface _SERVICE {
   >,
   'bio' : ActorMethod<[BioArgs], BioResponse>,
   'block_user' : ActorMethod<[BlockUserArgs], BlockUserResponse>,
+  'contacts' : ActorMethod<[ContactsArgs], ContactsResponse>,
   'create_group' : ActorMethod<[CreateGroupArgs], CreateGroupResponse>,
   'delete_group' : ActorMethod<[DeleteGroupArgs], DeleteGroupResponse>,
   'delete_messages' : ActorMethod<[DeleteMessagesArgs], DeleteMessagesResponse>,
@@ -1213,7 +1233,6 @@ export interface _SERVICE {
   'edit_message' : ActorMethod<[EditMessageArgs], EditMessageResponse>,
   'events' : ActorMethod<[EventsArgs], EventsResponse>,
   'events_by_index' : ActorMethod<[EventsByIndexArgs], EventsResponse>,
-  'events_range' : ActorMethod<[EventsRangeArgs], EventsResponse>,
   'events_window' : ActorMethod<[EventsWindowArgs], EventsResponse>,
   'init_user_principal_migration' : ActorMethod<
     [InitUserPrincipalMigrationArgs],
@@ -1248,6 +1267,7 @@ export interface _SERVICE {
   'send_message' : ActorMethod<[SendMessageArgs], SendMessageResponse>,
   'set_avatar' : ActorMethod<[SetAvatarArgs], SetAvatarResponse>,
   'set_bio' : ActorMethod<[SetBioArgs], SetBioResponse>,
+  'set_contact' : ActorMethod<[SetContactArgs], SetContactResponse>,
   'transfer_crypto_within_group_v2' : ActorMethod<
     [TransferCryptoWithinGroupArgs],
     TransferCryptoWithinGroupResponse

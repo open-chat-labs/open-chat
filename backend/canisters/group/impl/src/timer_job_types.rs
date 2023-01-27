@@ -1,3 +1,4 @@
+use crate::activity_notifications::handle_activity_notification;
 use crate::mutate_state;
 use canister_timer_jobs::Job;
 use serde::{Deserialize, Serialize};
@@ -54,7 +55,9 @@ impl Job for EndPollJob {
             state
                 .data
                 .events
-                .end_poll(self.thread_root_message_index, self.message_index, 0, now)
+                .end_poll(self.thread_root_message_index, self.message_index, 0, now);
+
+            handle_activity_notification(state);
         });
     }
 }

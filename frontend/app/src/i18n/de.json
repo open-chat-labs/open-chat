@@ -470,7 +470,9 @@
         "chooseReceiver": "Geben Sie den Benutzernamen des Empfängers ein",
         "icp": "Internet-Computer",
         "btc": "Bitcoin",
-        "chat": "Chat öffnen"
+        "chat": "Chat öffnen",
+        "sns1": "SNS-1",
+        "max": "max"
     },
     "cryptoAccount": {
         "manage": "Verwalten",
@@ -514,7 +516,8 @@
         "reactions": "Reaktionen",
         "deletedMessages": "gelöschte Nachrichten",
         "reportedMessages": "Gemeldete Nachrichten",
-        "reportedMessagesInfo": "Von Ihnen gesendete Nachrichten, die von anderen gelöscht oder gemeldet wurden. Dies kann als Hinweis darauf verwendet werden, dass Sie keinen positiven Beitrag zur Gemeinschaft leisten."
+        "reportedMessagesInfo": "Von Ihnen gesendete Nachrichten, die von anderen gelöscht oder gemeldet wurden. Dies kann als Hinweis darauf verwendet werden, dass Sie keinen positiven Beitrag zur Gemeinschaft leisten.",
+        "cryptoTransfers": "Krypto-Nachricht"
     },
     "andNMore": ", und {n} mehr",
     "confirmMakeGroupPrivate": "Möchten Sie diese Gruppe auf jeden Fall privat machen? Derzeit kann dieser Vorgang nicht rückgängig gemacht werden!",
@@ -600,7 +603,9 @@
         "filter": "Vorschläge filtern",
         "collapse": "Meldung minimieren",
         "enableAll": "Alle aktivieren",
-        "disableAll": "Alle deaktivieren"
+        "disableAll": "Alle deaktivieren",
+        "readmore": "Weiterlesen",
+        "readless": "Lese weniger"
     },
     "quoteReply": "Antwort zitieren",
     "groupNameTooShort": "Der Gruppenname ist zu kurz",
@@ -672,6 +677,7 @@
     "reason": "Grund",
     "expandDeletedMessages": "Erweitern Sie gelöschte Nachrichten in diesem Chat",
     "revealDeletedMessage": "Nachricht enthüllen",
+    "retryMessage": "Nachricht erneut versuchen",
     "lowBandwidth": "Niedrige Bandbreite",
     "loadImage": "Bild laden",
     "loadGif": "gif laden",

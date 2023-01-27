@@ -544,12 +544,12 @@ export function groupMessagesByDate(events: EventWrapper<Message>[]): EventWrapp
 
 export function getNextEventAndMessageIndexes(
     chat: ChatSummary,
-    unconfirmedMessages: EventWrapper<Message>[]
+    localMessages: EventWrapper<Message>[]
 ): [number, number] {
     let eventIndex = chat.latestEventIndex;
     let messageIndex = chat.latestMessage?.event.messageIndex ?? -1;
-    if (unconfirmedMessages.length > 0) {
-        const lastUnconfirmed = unconfirmedMessages[unconfirmedMessages.length - 1];
+    if (localMessages.length > 0) {
+        const lastUnconfirmed = localMessages[localMessages.length - 1];
         if (lastUnconfirmed.index > eventIndex) {
             eventIndex = lastUnconfirmed.index;
         }
@@ -591,12 +591,16 @@ export function mergeServerEvents(
     newEvents: EventWrapper<ChatEvent>[]
 ): EventWrapper<ChatEvent>[] {
     const merged = distinctBy([...newEvents, ...events], (e) => e.index);
-    merged.sort(sortByIndex);
+    merged.sort(sortByTimestampThenEventIndex);
     return merged;
 }
 
-function sortByIndex(a: EventWrapper<ChatEvent>, b: EventWrapper<ChatEvent>): number {
-    return a.index - b.index;
+function sortByTimestampThenEventIndex(
+    a: EventWrapper<ChatEvent>,
+    b: EventWrapper<ChatEvent>
+): number {
+    if (a.timestamp === b.timestamp) return a.index - b.index;
+    return Number(a.timestamp - b.timestamp);
 }
 
 export function revokeObjectUrls(event?: EventWrapper<ChatEvent>): void {
@@ -950,6 +954,8 @@ export function mergeChatMetrics(a: ChatMetrics, b: ChatMetrics): ChatMetrics {
         cyclesMessages: a.cyclesMessages + b.cyclesMessages,
         edits: a.edits + b.edits,
         icpMessages: a.icpMessages + b.icpMessages,
+        sns1Messages: a.sns1Messages + b.sns1Messages,
+        ckbtcMessages: a.ckbtcMessages + b.ckbtcMessages,
         giphyMessages: a.giphyMessages + b.giphyMessages,
         deletedMessages: a.deletedMessages + b.deletedMessages,
         reportedMessages: a.reportedMessages + b.reportedMessages,
@@ -1069,7 +1075,7 @@ export function mergeEventsAndLocalUpdates(
     const merged = events.map((e) => processEvent(e));
 
     if (unconfirmed.length > 0) {
-        unconfirmed.sort(sortByIndex);
+        unconfirmed.sort(sortByTimestampThenEventIndex);
 
         let anyAdded = false;
         for (const message of unconfirmed) {
@@ -1086,7 +1092,7 @@ export function mergeEventsAndLocalUpdates(
             }
         }
         if (anyAdded) {
-            merged.sort(sortByIndex);
+            merged.sort(sortByTimestampThenEventIndex);
         }
     }
 
@@ -1241,6 +1247,9 @@ export function buildTransactionUrl(content: CryptocurrencyContent): string | un
         return undefined;
     }
     // TODO: Where can we see the transactions for other tokens? In OpenChat I suppose...
+    if (content.transfer.token !== "icp") {
+        return undefined;
+    }
     return `https://dashboard.internetcomputer.org/transaction/${content.transfer.transactionHash}`;
 }
 

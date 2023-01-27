@@ -39,7 +39,8 @@ import type {
     SetBioResponse,
     ToggleMuteNotificationResponse,
     UnpinChatResponse,
-	DeletedDirectMessageResponse,
+    DeletedDirectMessageResponse,
+    EventWrapper,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
@@ -103,11 +104,10 @@ export class UserClient extends CandidService implements IUserClient {
         userId: string,
         identity: Identity,
         config: AgentConfig,
-        db: Database,
+        db: Database
     ): IUserClient {
         return new CachingUserClient(
             db,
-            identity,
             config,
             new UserClient(identity, userId, config)
         );
@@ -121,7 +121,8 @@ export class UserClient extends CandidService implements IUserClient {
         return this.handleQueryResponse(
             () => this.userService.initial_state_v2(args),
             initialStateV2Response,
-            args)
+            args
+        );
     }
 
     @profile("userClient")
@@ -132,7 +133,8 @@ export class UserClient extends CandidService implements IUserClient {
         return this.handleQueryResponse(
             () => this.userService.updates_v2(args),
             getUpdatesV2Response,
-            args)
+            args
+        );
     }
 
     @profile("userClient")
@@ -283,33 +285,33 @@ export class UserClient extends CandidService implements IUserClient {
     sendMessage(
         recipientId: string,
         sender: CreatedUser,
-        message: Message,
+        event: EventWrapper<Message>,
         replyingToChatId?: string,
         threadRootMessageIndex?: number
     ): Promise<[SendMessageResponse, Message]> {
         const dataClient = DataClient.create(this.identity, this.config);
-        const uploadContentPromise = message.forwarded
-            ? dataClient.forwardData(message.content, [this.userId, recipientId])
-            : dataClient.uploadData(message.content, [this.userId, recipientId]);
+        const uploadContentPromise = event.event.forwarded
+            ? dataClient.forwardData(event.event.content, [this.userId, recipientId])
+            : dataClient.uploadData(event.event.content, [this.userId, recipientId]);
 
         return uploadContentPromise.then((content) => {
-            const newContent = content ?? message.content;
+            const newContent = content ?? event.event.content;
             const req: ApiSendMessageArgs = {
                 content: apiMessageContent(newContent),
                 recipient: Principal.fromText(recipientId),
                 sender_name: sender.username,
-                message_id: message.messageId,
+                message_id: event.event.messageId,
                 replies_to: apiOptional(
                     (replyContext) => apiReplyContextArgs(replyContext, replyingToChatId),
-                    message.repliesTo
+                    event.event.repliesTo
                 ),
-                forwarding: message.forwarded,
+                forwarding: event.event.forwarded,
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                 correlation_id: generateUint64(),
             };
             return this.handleResponse(this.userService.send_message(req), (resp) =>
-                sendMessageResponse(resp, message.sender, recipientId)
-            ).then((resp) => [resp, { ...message, content: newContent }]);
+                sendMessageResponse(resp, event.event.sender, recipientId)
+            ).then((resp) => [resp, { ...event.event, content: newContent }]);
         });
     }
 
@@ -318,10 +320,10 @@ export class UserClient extends CandidService implements IUserClient {
         groupId: string,
         recipientId: string,
         sender: CreatedUser,
-        message: Message,
+        event: EventWrapper<Message>,
         threadRootMessageIndex?: number
     ): Promise<[SendMessageResponse, Message]> {
-        const content = apiPendingCryptoContent(message.content as CryptocurrencyContent);
+        const content = apiPendingCryptoContent(event.event.content as CryptocurrencyContent);
 
         const req: ApiTransferCryptoWithinGroupArgs = {
             thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
@@ -329,17 +331,17 @@ export class UserClient extends CandidService implements IUserClient {
             recipient: content.recipient,
             sender_name: sender.username,
             mentioned: [],
-            message_id: message.messageId,
+            message_id: event.event.messageId,
             group_id: Principal.fromText(groupId),
             replies_to: apiOptional(
                 (replyContext) => apiReplyContextArgs(replyContext),
-                message.repliesTo
+                event.event.repliesTo
             ),
             correlation_id: generateUint64(),
         };
         return this.handleResponse(this.userService.transfer_crypto_within_group_v2(req), (resp) =>
-            transferWithinGroupResponse(resp, message.sender, recipientId)
-        ).then((resp) => [resp, message]);
+            transferWithinGroupResponse(resp, event.event.sender, recipientId)
+        ).then((resp) => [resp, event.event]);
     }
 
     @profile("userClient")
@@ -543,7 +545,7 @@ export class UserClient extends CandidService implements IUserClient {
     ): Promise<WithdrawCryptocurrencyResponse> {
         const req = {
             withdrawal: {
-                NNS: apiPendingCryptocurrencyWithdrawal(domain),
+                SNS: apiPendingCryptocurrencyWithdrawal(domain),
             },
         };
         return this.handleResponse(

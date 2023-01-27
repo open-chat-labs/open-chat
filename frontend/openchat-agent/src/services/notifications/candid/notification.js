@@ -5,6 +5,7 @@ export const Notification = IDL.Variant({
     'username' : IDL.Text,
     'them' : IDL.Principal,
     'message' : IDL.Record({
+      'disappears_at' : IDL.Opt(IDL.Nat64),
       'event' : IDL.Record({
         'forwarded' : IDL.Bool,
         'content' : IDL.Variant({
@@ -152,7 +153,11 @@ export const Notification = IDL.Variant({
                   }),
                   'fee' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                   'created' : IDL.Nat64,
-                  'token' : IDL.Variant({ 'InternetComputer' : IDL.Null }),
+                  'token' : IDL.Variant({
+                    'InternetComputer' : IDL.Null,
+                    'SNS1' : IDL.Null,
+                    'CKBTC' : IDL.Null,
+                  }),
                   'transaction_hash' : IDL.Vec(IDL.Nat8),
                   'from' : IDL.Variant({
                     'Mint' : IDL.Null,
@@ -172,7 +177,11 @@ export const Notification = IDL.Variant({
                   }),
                   'fee' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                   'created' : IDL.Nat64,
-                  'token' : IDL.Variant({ 'InternetComputer' : IDL.Null }),
+                  'token' : IDL.Variant({
+                    'InternetComputer' : IDL.Null,
+                    'SNS1' : IDL.Null,
+                    'CKBTC' : IDL.Null,
+                  }),
                   'transaction_hash' : IDL.Vec(IDL.Nat8),
                   'from' : IDL.Variant({
                     'Mint' : IDL.Null,
@@ -194,7 +203,11 @@ export const Notification = IDL.Variant({
                   }),
                   'fee' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                   'created' : IDL.Nat64,
-                  'token' : IDL.Variant({ 'InternetComputer' : IDL.Null }),
+                  'token' : IDL.Variant({
+                    'InternetComputer' : IDL.Null,
+                    'SNS1' : IDL.Null,
+                    'CKBTC' : IDL.Null,
+                  }),
                   'transaction_hash' : IDL.Vec(IDL.Nat8),
                   'block_index' : IDL.Nat64,
                   'from' : IDL.Variant({
@@ -214,7 +227,11 @@ export const Notification = IDL.Variant({
                   }),
                   'fee' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                   'created' : IDL.Nat64,
-                  'token' : IDL.Variant({ 'InternetComputer' : IDL.Null }),
+                  'token' : IDL.Variant({
+                    'InternetComputer' : IDL.Null,
+                    'SNS1' : IDL.Null,
+                    'CKBTC' : IDL.Null,
+                  }),
                   'transaction_hash' : IDL.Vec(IDL.Nat8),
                   'block_index' : IDL.Nat64,
                   'from' : IDL.Variant({
@@ -235,7 +252,11 @@ export const Notification = IDL.Variant({
                     'Account' : IDL.Vec(IDL.Nat8),
                   }),
                   'fee' : IDL.Opt(IDL.Record({ 'e8s' : IDL.Nat64 })),
-                  'token' : IDL.Variant({ 'InternetComputer' : IDL.Null }),
+                  'token' : IDL.Variant({
+                    'InternetComputer' : IDL.Null,
+                    'SNS1' : IDL.Null,
+                    'CKBTC' : IDL.Null,
+                  }),
                   'memo' : IDL.Opt(IDL.Nat64),
                   'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                 }),
@@ -245,7 +266,11 @@ export const Notification = IDL.Variant({
                     'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
                   }),
                   'fee' : IDL.Record({ 'e8s' : IDL.Nat64 }),
-                  'token' : IDL.Variant({ 'InternetComputer' : IDL.Null }),
+                  'token' : IDL.Variant({
+                    'InternetComputer' : IDL.Null,
+                    'SNS1' : IDL.Null,
+                    'CKBTC' : IDL.Null,
+                  }),
                   'memo' : IDL.Opt(IDL.Nat64),
                   'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                 }),
@@ -301,6 +326,7 @@ export const Notification = IDL.Variant({
   'DirectMessageNotification' : IDL.Record({
     'sender' : IDL.Principal,
     'message' : IDL.Record({
+      'disappears_at' : IDL.Opt(IDL.Nat64),
       'event' : IDL.Record({
         'forwarded' : IDL.Bool,
         'content' : IDL.Variant({
@@ -448,7 +474,11 @@ export const Notification = IDL.Variant({
                   }),
                   'fee' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                   'created' : IDL.Nat64,
-                  'token' : IDL.Variant({ 'InternetComputer' : IDL.Null }),
+                  'token' : IDL.Variant({
+                    'InternetComputer' : IDL.Null,
+                    'SNS1' : IDL.Null,
+                    'CKBTC' : IDL.Null,
+                  }),
                   'transaction_hash' : IDL.Vec(IDL.Nat8),
                   'from' : IDL.Variant({
                     'Mint' : IDL.Null,
@@ -468,7 +498,11 @@ export const Notification = IDL.Variant({
                   }),
                   'fee' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                   'created' : IDL.Nat64,
-                  'token' : IDL.Variant({ 'InternetComputer' : IDL.Null }),
+                  'token' : IDL.Variant({
+                    'InternetComputer' : IDL.Null,
+                    'SNS1' : IDL.Null,
+                    'CKBTC' : IDL.Null,
+                  }),
                   'transaction_hash' : IDL.Vec(IDL.Nat8),
                   'from' : IDL.Variant({
                     'Mint' : IDL.Null,
@@ -490,7 +524,11 @@ export const Notification = IDL.Variant({
                   }),
                   'fee' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                   'created' : IDL.Nat64,
-                  'token' : IDL.Variant({ 'InternetComputer' : IDL.Null }),
+                  'token' : IDL.Variant({
+                    'InternetComputer' : IDL.Null,
+                    'SNS1' : IDL.Null,
+                    'CKBTC' : IDL.Null,
+                  }),
                   'transaction_hash' : IDL.Vec(IDL.Nat8),
                   'block_index' : IDL.Nat64,
                   'from' : IDL.Variant({
@@ -510,7 +548,11 @@ export const Notification = IDL.Variant({
                   }),
                   'fee' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                   'created' : IDL.Nat64,
-                  'token' : IDL.Variant({ 'InternetComputer' : IDL.Null }),
+                  'token' : IDL.Variant({
+                    'InternetComputer' : IDL.Null,
+                    'SNS1' : IDL.Null,
+                    'CKBTC' : IDL.Null,
+                  }),
                   'transaction_hash' : IDL.Vec(IDL.Nat8),
                   'block_index' : IDL.Nat64,
                   'from' : IDL.Variant({
@@ -531,7 +573,11 @@ export const Notification = IDL.Variant({
                     'Account' : IDL.Vec(IDL.Nat8),
                   }),
                   'fee' : IDL.Opt(IDL.Record({ 'e8s' : IDL.Nat64 })),
-                  'token' : IDL.Variant({ 'InternetComputer' : IDL.Null }),
+                  'token' : IDL.Variant({
+                    'InternetComputer' : IDL.Null,
+                    'SNS1' : IDL.Null,
+                    'CKBTC' : IDL.Null,
+                  }),
                   'memo' : IDL.Opt(IDL.Nat64),
                   'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                 }),
@@ -541,7 +587,11 @@ export const Notification = IDL.Variant({
                     'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
                   }),
                   'fee' : IDL.Record({ 'e8s' : IDL.Nat64 }),
-                  'token' : IDL.Variant({ 'InternetComputer' : IDL.Null }),
+                  'token' : IDL.Variant({
+                    'InternetComputer' : IDL.Null,
+                    'SNS1' : IDL.Null,
+                    'CKBTC' : IDL.Null,
+                  }),
                   'memo' : IDL.Opt(IDL.Nat64),
                   'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                 }),
@@ -600,6 +650,7 @@ export const Notification = IDL.Variant({
     ),
     'sender' : IDL.Principal,
     'message' : IDL.Record({
+      'disappears_at' : IDL.Opt(IDL.Nat64),
       'event' : IDL.Record({
         'forwarded' : IDL.Bool,
         'content' : IDL.Variant({
@@ -747,7 +798,11 @@ export const Notification = IDL.Variant({
                   }),
                   'fee' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                   'created' : IDL.Nat64,
-                  'token' : IDL.Variant({ 'InternetComputer' : IDL.Null }),
+                  'token' : IDL.Variant({
+                    'InternetComputer' : IDL.Null,
+                    'SNS1' : IDL.Null,
+                    'CKBTC' : IDL.Null,
+                  }),
                   'transaction_hash' : IDL.Vec(IDL.Nat8),
                   'from' : IDL.Variant({
                     'Mint' : IDL.Null,
@@ -767,7 +822,11 @@ export const Notification = IDL.Variant({
                   }),
                   'fee' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                   'created' : IDL.Nat64,
-                  'token' : IDL.Variant({ 'InternetComputer' : IDL.Null }),
+                  'token' : IDL.Variant({
+                    'InternetComputer' : IDL.Null,
+                    'SNS1' : IDL.Null,
+                    'CKBTC' : IDL.Null,
+                  }),
                   'transaction_hash' : IDL.Vec(IDL.Nat8),
                   'from' : IDL.Variant({
                     'Mint' : IDL.Null,
@@ -789,7 +848,11 @@ export const Notification = IDL.Variant({
                   }),
                   'fee' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                   'created' : IDL.Nat64,
-                  'token' : IDL.Variant({ 'InternetComputer' : IDL.Null }),
+                  'token' : IDL.Variant({
+                    'InternetComputer' : IDL.Null,
+                    'SNS1' : IDL.Null,
+                    'CKBTC' : IDL.Null,
+                  }),
                   'transaction_hash' : IDL.Vec(IDL.Nat8),
                   'block_index' : IDL.Nat64,
                   'from' : IDL.Variant({
@@ -809,7 +872,11 @@ export const Notification = IDL.Variant({
                   }),
                   'fee' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                   'created' : IDL.Nat64,
-                  'token' : IDL.Variant({ 'InternetComputer' : IDL.Null }),
+                  'token' : IDL.Variant({
+                    'InternetComputer' : IDL.Null,
+                    'SNS1' : IDL.Null,
+                    'CKBTC' : IDL.Null,
+                  }),
                   'transaction_hash' : IDL.Vec(IDL.Nat8),
                   'block_index' : IDL.Nat64,
                   'from' : IDL.Variant({
@@ -830,7 +897,11 @@ export const Notification = IDL.Variant({
                     'Account' : IDL.Vec(IDL.Nat8),
                   }),
                   'fee' : IDL.Opt(IDL.Record({ 'e8s' : IDL.Nat64 })),
-                  'token' : IDL.Variant({ 'InternetComputer' : IDL.Null }),
+                  'token' : IDL.Variant({
+                    'InternetComputer' : IDL.Null,
+                    'SNS1' : IDL.Null,
+                    'CKBTC' : IDL.Null,
+                  }),
                   'memo' : IDL.Opt(IDL.Nat64),
                   'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                 }),
@@ -840,7 +911,11 @@ export const Notification = IDL.Variant({
                     'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
                   }),
                   'fee' : IDL.Record({ 'e8s' : IDL.Nat64 }),
-                  'token' : IDL.Variant({ 'InternetComputer' : IDL.Null }),
+                  'token' : IDL.Variant({
+                    'InternetComputer' : IDL.Null,
+                    'SNS1' : IDL.Null,
+                    'CKBTC' : IDL.Null,
+                  }),
                   'memo' : IDL.Opt(IDL.Nat64),
                   'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                 }),
@@ -899,6 +974,7 @@ export const Notification = IDL.Variant({
     'added_by_name' : IDL.Text,
     'added_by' : IDL.Principal,
     'message' : IDL.Record({
+      'disappears_at' : IDL.Opt(IDL.Nat64),
       'event' : IDL.Record({
         'forwarded' : IDL.Bool,
         'content' : IDL.Variant({
@@ -1046,7 +1122,11 @@ export const Notification = IDL.Variant({
                   }),
                   'fee' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                   'created' : IDL.Nat64,
-                  'token' : IDL.Variant({ 'InternetComputer' : IDL.Null }),
+                  'token' : IDL.Variant({
+                    'InternetComputer' : IDL.Null,
+                    'SNS1' : IDL.Null,
+                    'CKBTC' : IDL.Null,
+                  }),
                   'transaction_hash' : IDL.Vec(IDL.Nat8),
                   'from' : IDL.Variant({
                     'Mint' : IDL.Null,
@@ -1066,7 +1146,11 @@ export const Notification = IDL.Variant({
                   }),
                   'fee' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                   'created' : IDL.Nat64,
-                  'token' : IDL.Variant({ 'InternetComputer' : IDL.Null }),
+                  'token' : IDL.Variant({
+                    'InternetComputer' : IDL.Null,
+                    'SNS1' : IDL.Null,
+                    'CKBTC' : IDL.Null,
+                  }),
                   'transaction_hash' : IDL.Vec(IDL.Nat8),
                   'from' : IDL.Variant({
                     'Mint' : IDL.Null,
@@ -1088,7 +1172,11 @@ export const Notification = IDL.Variant({
                   }),
                   'fee' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                   'created' : IDL.Nat64,
-                  'token' : IDL.Variant({ 'InternetComputer' : IDL.Null }),
+                  'token' : IDL.Variant({
+                    'InternetComputer' : IDL.Null,
+                    'SNS1' : IDL.Null,
+                    'CKBTC' : IDL.Null,
+                  }),
                   'transaction_hash' : IDL.Vec(IDL.Nat8),
                   'block_index' : IDL.Nat64,
                   'from' : IDL.Variant({
@@ -1108,7 +1196,11 @@ export const Notification = IDL.Variant({
                   }),
                   'fee' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                   'created' : IDL.Nat64,
-                  'token' : IDL.Variant({ 'InternetComputer' : IDL.Null }),
+                  'token' : IDL.Variant({
+                    'InternetComputer' : IDL.Null,
+                    'SNS1' : IDL.Null,
+                    'CKBTC' : IDL.Null,
+                  }),
                   'transaction_hash' : IDL.Vec(IDL.Nat8),
                   'block_index' : IDL.Nat64,
                   'from' : IDL.Variant({
@@ -1129,7 +1221,11 @@ export const Notification = IDL.Variant({
                     'Account' : IDL.Vec(IDL.Nat8),
                   }),
                   'fee' : IDL.Opt(IDL.Record({ 'e8s' : IDL.Nat64 })),
-                  'token' : IDL.Variant({ 'InternetComputer' : IDL.Null }),
+                  'token' : IDL.Variant({
+                    'InternetComputer' : IDL.Null,
+                    'SNS1' : IDL.Null,
+                    'CKBTC' : IDL.Null,
+                  }),
                   'memo' : IDL.Opt(IDL.Nat64),
                   'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                 }),
@@ -1139,7 +1235,11 @@ export const Notification = IDL.Variant({
                     'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
                   }),
                   'fee' : IDL.Record({ 'e8s' : IDL.Nat64 }),
-                  'token' : IDL.Variant({ 'InternetComputer' : IDL.Null }),
+                  'token' : IDL.Variant({
+                    'InternetComputer' : IDL.Null,
+                    'SNS1' : IDL.Null,
+                    'CKBTC' : IDL.Null,
+                  }),
                   'memo' : IDL.Opt(IDL.Nat64),
                   'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                 }),

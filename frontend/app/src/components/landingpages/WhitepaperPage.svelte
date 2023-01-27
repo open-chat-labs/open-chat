@@ -80,7 +80,7 @@
                 >.
             </p>
             <p>
-                OpenChat users can send messages to each other containing tokens such as ICP and BTC
+                OpenChat users can send messages to each other containing tokens such as ICP and ckBTC
                 and so can be used for global remittance.
             </p>
             <p>
@@ -540,7 +540,7 @@
                 unwanted content).
             </p>
             <p>
-                We can also derive a positive signal for a user if they hold tokens (ICP, CHAT, BTC)
+                We can also derive a positive signal for a user if they hold tokens (ICP, CHAT, ckBTC)
                 in their OpenChat account, or even better, neurons.
             </p>
             <HashLinkTarget on:copyUrl={onCopyUrl} id="4-2-2">Rewards</HashLinkTarget>

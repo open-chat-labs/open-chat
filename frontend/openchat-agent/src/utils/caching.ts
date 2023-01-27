@@ -1,6 +1,6 @@
 import { MAX_MESSAGES } from "../constants";
 import { openDB, DBSchema, IDBPDatabase } from "idb";
-import {
+import type {
     ChatEvent,
     ChatStateFull,
     ChatSummary,
@@ -9,17 +9,15 @@ import {
     EventWrapper,
     GroupChatDetails,
     IndexRange,
-    MergedUpdatesResponse,
     Message,
     MessageContent,
     ReplyContext,
     SendMessageResponse,
     SendMessageSuccess,
-    UnsupportedValueError,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 
-const CACHE_VERSION = 57;
+const CACHE_VERSION = 60;
 
 export type Database = Promise<IDBPDatabase<ChatSchema>>;
 
@@ -32,11 +30,6 @@ export interface ChatSchema extends DBSchema {
     chats_v2: {
         key: string;
         value: ChatStateFull;
-    }
-
-    chats: {
-        key: string; // the user's principal as a string
-        value: MergedUpdatesResponse;
     };
 
     chat_events: {
@@ -59,10 +52,30 @@ export interface ChatSchema extends DBSchema {
         key: string;
         value: GroupChatDetails;
     };
+
+    failed_chat_messages: {
+        key: string;
+        value: EnhancedWrapper<Message>;
+    };
+
+    failed_thread_messages: {
+        key: string;
+        value: EnhancedWrapper<Message>;
+    };
 }
 
 function padMessageIndex(i: number): string {
     return i.toString().padStart(10, "0");
+}
+
+export function createFailedCacheKey(
+    chatId: string,
+    messageId: bigint,
+    threadRootMessageIndex?: number
+): string {
+    return threadRootMessageIndex === undefined
+        ? `${chatId}_${messageId}`
+        : `${chatId}_${threadRootMessageIndex}_${messageId}`;
 }
 
 export function createCacheKey(
@@ -84,44 +97,36 @@ export function openCache(principal: Principal): Database {
             if (db.objectStoreNames.contains("thread_events")) {
                 db.deleteObjectStore("thread_events");
             }
-            if (db.objectStoreNames.contains("chats")) {
-                db.deleteObjectStore("chats");
-            }
             if (db.objectStoreNames.contains("chats_v2")) {
                 db.deleteObjectStore("chats_v2");
             }
             if (db.objectStoreNames.contains("group_details")) {
                 db.deleteObjectStore("group_details");
             }
+            if (db.objectStoreNames.contains("failed_chat_messages")) {
+                db.deleteObjectStore("failed_chat_messages");
+            }
+            if (db.objectStoreNames.contains("failed_thread_messages")) {
+                db.deleteObjectStore("failed_thread_messages");
+            }
             const chatEvents = db.createObjectStore("chat_events");
             chatEvents.createIndex("messageIdx", "messageKey");
             const threadEvents = db.createObjectStore("thread_events");
             threadEvents.createIndex("messageIdx", "messageKey");
-            db.createObjectStore("chats");
             db.createObjectStore("chats_v2");
             db.createObjectStore("group_details");
+            db.createObjectStore("failed_chat_messages");
+            db.createObjectStore("failed_thread_messages");
         },
     });
 }
 
-export async function removeCachedChat(
-    db: Database,
-    principal: Principal,
-    chatId: string
-): Promise<void> {
-    const fromCache = await getCachedChats(db, principal);
-    if (fromCache !== undefined) {
-        fromCache.chatSummaries = fromCache.chatSummaries.filter((c) => c.chatId !== chatId);
-        await setCachedChats(db, principal, fromCache);
-    }
-}
-
 export async function openDbAndGetCachedChats(
     principal: Principal
-): Promise<MergedUpdatesResponse | undefined> {
+): Promise<ChatStateFull | undefined> {
     const db = openCache(principal);
     if (db !== undefined) {
-        return getCachedChats(db, principal);
+        return getCachedChatsV2(db, principal);
     }
 }
 
@@ -136,7 +141,7 @@ export async function setCachedChatsV2(
     db: Database,
     principal: Principal,
     chatState: ChatStateFull,
-    affectedEvents: Record<string, number[]>,
+    affectedEvents: Record<string, number[]>
 ): Promise<void> {
     const directChats = chatState.directChats
         .filter((c) => !isUninitialisedDirectChat(c))
@@ -150,8 +155,10 @@ export async function setCachedChatsV2(
         ...chatState,
         directChats,
         groupChats,
-    }
-    const latestMessages = prepareLatestMessagesForCache((directChats as ChatSummary[]).concat(groupChats));
+    };
+    const latestMessages = prepareLatestMessagesForCache(
+        (directChats as ChatSummary[]).concat(groupChats)
+    );
 
     const tx = (await db).transaction(["chats_v2", "chat_events"], "readwrite");
     const chatsStore = tx.objectStore("chats_v2");
@@ -171,92 +178,12 @@ export async function setCachedChatsV2(
     await tx.done;
 }
 
-export async function getCachedChats(
-    db: Database,
-    principal: Principal
-): Promise<MergedUpdatesResponse | undefined> {
-    return await (await db).get("chats", principal.toString());
-}
-
 function isPreviewing(chat: ChatSummary): boolean {
     return chat.kind === "group_chat" && chat.myRole === "previewer";
 }
 
 function isUninitialisedDirectChat(chat: ChatSummary): boolean {
     return chat.kind === "direct_chat" && chat.latestEventIndex < 0;
-}
-
-export async function setCachedChats(
-    db: Database,
-    principal: Principal,
-    data: MergedUpdatesResponse
-): Promise<void> {
-    if (!data.wasUpdated) {
-        return;
-    }
-
-    const latestMessages: Record<string, EnhancedWrapper<Message>> = {};
-
-    // irritating hoop jumping to keep typescript happy here
-    const chatSummaries = data.chatSummaries
-        .filter((c) => !isPreviewing(c) && !isUninitialisedDirectChat(c))
-        .map((c) => {
-            const latestMessage = c.latestMessage
-                ? makeSerialisable(c.latestMessage, c.chatId)
-                : undefined;
-
-            if (latestMessage) {
-                latestMessages[c.chatId] = {
-                    ...latestMessage,
-                    chatId: c.chatId,
-                    messageKey: createCacheKey(c.chatId, latestMessage.event.messageIndex),
-                };
-            }
-
-            if (c.kind === "direct_chat") {
-                return {
-                    ...c,
-                    latestMessage,
-                };
-            }
-
-            if (c.kind === "group_chat") {
-                return {
-                    ...c,
-                    latestMessage,
-                };
-            }
-
-            throw new UnsupportedValueError("Unrecognised chat type", c);
-        });
-
-    const tx = (await db).transaction(["chats", "chat_events"], "readwrite");
-    const chatsStore = tx.objectStore("chats");
-    const eventStore = tx.objectStore("chat_events");
-
-    const promises: Promise<string | void>[] = [
-        chatsStore.put(
-            {
-                wasUpdated: true,
-                chatSummaries,
-                timestamp: data.timestamp,
-                blockedUsers: data.blockedUsers,
-                pinnedChats: data.pinnedChats,
-                avatarIdUpdate: undefined,
-                affectedEvents: {},
-            },
-            principal.toString()
-        ),
-        ...Object.entries(latestMessages).flatMap(([chatId, message]) => [
-            eventStore.put(message, createCacheKey(chatId, message.index)),
-        ]),
-        ...Object.entries(data.affectedEvents)
-            .flatMap(([chatId, indexes]) => indexes.map((i) => createCacheKey(chatId, i)))
-            .map((key) => eventStore.delete(key)),
-    ];
-
-    await Promise.all(promises);
-    await tx.done;
 }
 
 export async function getCachedEventsWindow<T extends ChatEvent>(
@@ -454,6 +381,7 @@ export function mergeSuccessResponses<T extends ChatEvent>(
 function makeSerialisable<T extends ChatEvent>(
     ev: EventWrapper<T>,
     chatId: string,
+    removeBlobs: boolean,
     threadRootMessageIndex?: number
 ): EnhancedWrapper<T> {
     if (ev.event.kind !== "message") return { ...ev, chatId, messageKey: undefined };
@@ -464,10 +392,16 @@ function makeSerialisable<T extends ChatEvent>(
         messageKey: createCacheKey(chatId, ev.event.messageIndex, threadRootMessageIndex),
         event: {
             ...ev.event,
-            content: removeBlobData(ev.event.content),
+            content: removeBlobs ? removeBlobData(ev.event.content) : ev.event.content,
             repliesTo: removeReplyContent(ev.event.repliesTo, chatId),
         },
     };
+}
+
+function dataToBlobUrl(data: Uint8Array, type?: string): string {
+    const options = type ? { type } : undefined;
+    const blob = new Blob([data], options);
+    return URL.createObjectURL(blob);
 }
 
 function removeBlobData(content: MessageContent): MessageContent {
@@ -494,6 +428,71 @@ function removeReplyContent(
     return repliesTo;
 }
 
+export async function removeFailedMessage(
+    db: Database,
+    chatId: string,
+    messageId: bigint,
+    threadRootMessageIndex?: number
+): Promise<void> {
+    const store =
+        threadRootMessageIndex !== undefined ? "failed_thread_messages" : "failed_chat_messages";
+    (await db).delete(store, createFailedCacheKey(chatId, messageId, threadRootMessageIndex));
+}
+
+export async function recordFailedMessage<T extends Message>(
+    db: Database,
+    chatId: string,
+    event: EventWrapper<T>,
+    threadRootMessageIndex?: number
+): Promise<void> {
+    const store =
+        threadRootMessageIndex !== undefined ? "failed_thread_messages" : "failed_chat_messages";
+    (await db).put(
+        store,
+        makeSerialisable<T>(event, chatId, false, threadRootMessageIndex),
+        createFailedCacheKey(chatId, event.event.messageId, threadRootMessageIndex)
+    );
+}
+
+function rebuildBlobUrls(content: MessageContent): MessageContent {
+    if (
+        (content.kind === "image_content" ||
+            content.kind === "file_content" ||
+            content.kind === "audio_content") &&
+        content.blobData !== undefined
+    ) {
+        content.blobUrl = dataToBlobUrl(content.blobData);
+    }
+    if (content.kind === "video_content") {
+        if (content.imageData.blobData !== undefined) {
+            content.imageData.blobUrl = dataToBlobUrl(content.imageData.blobData);
+        }
+        if (content.videoData.blobData !== undefined) {
+            content.videoData.blobUrl = dataToBlobUrl(content.videoData.blobData);
+        }
+    }
+    return content;
+}
+
+export async function loadFailedMessages(
+    db: Database
+): Promise<Record<string, Record<number, EventWrapper<Message>>>> {
+    const chatMessages = await (await db).getAll("failed_chat_messages");
+    const threadMessages = await (await db).getAll("failed_thread_messages");
+    return [...chatMessages, ...threadMessages].reduce((res, ev) => {
+        if (ev.messageKey === undefined) return res;
+
+        // drop the messageId from the key
+        const key = ev.messageKey.split("_").slice(0, -1).join("_");
+        if (res[key] === undefined) {
+            res[key] = {};
+        }
+        ev.event.content = rebuildBlobUrls(ev.event.content);
+        res[key][Number(ev.event.messageId)] = ev;
+        return res;
+    }, {} as Record<string, Record<number, EventWrapper<Message>>>);
+}
+
 export async function setCachedEvents<T extends ChatEvent>(
     db: Database,
     chatId: string,
@@ -510,7 +509,7 @@ export async function setCachedEvents<T extends ChatEvent>(
     await Promise.all(
         resp.events.concat(resp.affectedEvents).map(async (event) => {
             await eventStore.put(
-                makeSerialisable<T>(event, chatId),
+                makeSerialisable<T>(event, chatId, true, threadRootMessageIndex),
                 createCacheKey(chatId, event.index, threadRootMessageIndex)
             );
         })
@@ -521,10 +520,14 @@ export async function setCachedEvents<T extends ChatEvent>(
 export function setCachedMessageFromSendResponse(
     db: Database,
     chatId: string,
+    sentEvent: EventWrapper<Message>,
     threadRootMessageIndex?: number
 ): ([resp, message]: [SendMessageResponse, Message]) => [SendMessageResponse, Message] {
     return ([resp, message]: [SendMessageResponse, Message]) => {
-        if (resp.kind !== "success") return [resp, message];
+        if (resp.kind !== "success") {
+            recordFailedMessage(db, chatId, sentEvent, threadRootMessageIndex);
+            return [resp, message];
+        }
 
         const event = messageToEvent(message, resp);
 
@@ -547,7 +550,10 @@ export async function setCachedMessageIfNotExists(
     });
     const eventStore = tx.objectStore(store);
     if ((await eventStore.count(key)) === 0) {
-        await eventStore.add(makeSerialisable(messageEvent, chatId), key);
+        await eventStore.add(
+            makeSerialisable(messageEvent, chatId, true, threadRootMessageIndex),
+            key
+        );
     }
     await tx.done;
 }
@@ -632,11 +638,13 @@ function makeChatSummarySerializable<T extends ChatSummary>(chat: T): T {
 
     return {
         ...chat,
-        latestMessage: makeSerialisable(chat.latestMessage, chat.chatId)
+        latestMessage: makeSerialisable(chat.latestMessage, chat.chatId, true),
     };
 }
 
-function prepareLatestMessagesForCache(chats: ChatSummary[]): Record<string, EnhancedWrapper<Message>> {
+function prepareLatestMessagesForCache(
+    chats: ChatSummary[]
+): Record<string, EnhancedWrapper<Message>> {
     const latestMessages: Record<string, EnhancedWrapper<Message>> = {};
     for (const { chatId, latestMessage } of chats) {
         if (latestMessage !== undefined) {

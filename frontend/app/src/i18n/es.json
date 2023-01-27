@@ -471,7 +471,9 @@
         "chooseReceiver": "ingrese el nombre de usuario del destinatario",
         "icp": "Internet computadora",
         "btc": "Bitcoin",
-        "chat": "Conversación abierta"
+        "chat": "Conversación abierta",
+        "sns1": "SNS-1",
+        "max": "máx."
     },
     "cryptoAccount": {
         "manage": "Administrar",
@@ -515,7 +517,8 @@
         "reactions": "reacciones",
         "deletedMessages": "Mensajes eliminados",
         "reportedMessages": "Mensajes denunciados",
-        "reportedMessagesInfo": "Mensajes enviados por usted que fueron eliminados o denunciados por otros. Esto puede usarse como una indicación de que no está contribuyendo positivamente a la comunidad."
+        "reportedMessagesInfo": "Mensajes enviados por usted que fueron eliminados o denunciados por otros. Esto puede usarse como una indicación de que no está contribuyendo positivamente a la comunidad.",
+        "cryptoTransfers": "Mensaje criptográfico"
     },
     "andNMore": "y {n} más",
     "confirmMakeGroupPrivate": "¿Definitivamente quieres que este grupo sea privado? ¡Actualmente esta operación no se puede revertir!",
@@ -599,7 +602,9 @@
         "filter": "Filtrar propuestas",
         "collapse": "Ocultar mensaje",
         "enableAll": "Permitirlos todos",
-        "disableAll": "Desactivar todo"
+        "disableAll": "Desactivar todo",
+        "readmore": "Lee mas",
+        "readless": "Leer menos"
     },
     "yes": "Sí",
     "no": "No",
@@ -673,6 +678,7 @@
     "reason": "Razón",
     "expandDeletedMessages": "Expandir mensajes eliminados en este chat",
     "revealDeletedMessage": "Revelar mensaje",
+    "retryMessage": "Mensaje de reintento",
     "lowBandwidth": "Ancho de banda bajo",
     "loadImage": "Cargar imagen",
     "loadGif": "Cargar gif",

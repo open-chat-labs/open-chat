@@ -470,7 +470,9 @@
         "chooseReceiver": "输入接收者的用户名",
         "icp": "上网电脑",
         "btc": "比特币",
-        "chat": "打开聊天"
+        "chat": "打开聊天",
+        "sns1": "社交网络-1",
+        "max": "最大限度"
     },
     "cryptoAccount": {
         "manage": "管理",
@@ -514,7 +516,8 @@
         "reactions": "反应",
         "deletedMessages": "已删除的消息",
         "reportedMessages": "举报信息",
-        "reportedMessagesInfo": "您发送的消息被他人删除或举报。这可能表明您没有为社区做出积极贡献。"
+        "reportedMessagesInfo": "您发送的消息被他人删除或举报。这可能表明您没有为社区做出积极贡献。",
+        "cryptoTransfers": "加密信息"
     },
     "andNMore": ", 和 {n} 更多",
     "confirmMakeGroupPrivate": "您确定要将此群组设为私有吗？目前此操作无法撤消！",
@@ -599,7 +602,9 @@
         "filter": "过滤提案",
         "collapse": "收起消息",
         "enableAll": "全部启用",
-        "disableAll": "禁用所有"
+        "disableAll": "禁用所有",
+        "readmore": "阅读更多",
+        "readless": "少读"
     },
     "quoteReply": "引用",
     "groupNameTooShort": "群组名太短",
@@ -673,6 +678,7 @@
     "reason": "原因",
     "expandDeletedMessages": "展开此聊天中已删除的消息",
     "revealDeletedMessage": "显示消息",
+    "retryMessage": "重试消息",
     "lowBandwidth": "低带宽",
     "loadImage": "载入图片",
     "loadGif": "载入动图",

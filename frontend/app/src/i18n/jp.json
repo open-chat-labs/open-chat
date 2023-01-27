@@ -470,7 +470,9 @@
         "chooseReceiver": "受信者のユーザー名を入力します",
         "icp": "インターネット コンピュータ",
         "btc": "ビットコイン",
-        "chat": "オープンチャット"
+        "chat": "オープンチャット",
+        "sns1": "SNS-1",
+        "max": "マックス"
     },
     "cryptoAccount": {
         "manage": "管理",
@@ -514,7 +516,8 @@
         "reactions": "反応",
         "deletedMessages": "削除されたメッセージ",
         "reportedMessages": "報告されたメッセージ",
-        "reportedMessagesInfo": "あなたが送信したメッセージで、他のユーザーによって削除または報告されたもの。これは、コミュニティに積極的に貢献していないことを示すものとして使用される場合があります。"
+        "reportedMessagesInfo": "あなたが送信したメッセージで、他のユーザーによって削除または報告されたもの。これは、コミュニティに積極的に貢献していないことを示すものとして使用される場合があります。",
+        "cryptoTransfers": "暗号メッセージ"
     },
     "andNMore": "、および{n} more",
     "confirmMakeGroupPrivate": "このグループを絶対に非公開にしますか？現在、この操作を元に戻すことはできません。",
@@ -598,7 +601,9 @@
         "filter": "提案をフィルタリングする",
         "collapse": "メッセージを折りたたむ",
         "enableAll": "全て可能にする",
-        "disableAll": "すべて無効にします"
+        "disableAll": "すべて無効にします",
+        "readmore": "続きを読む",
+        "readless": "もっと読む"
     },
     "yes": "はい",
     "no": "いいえ",
@@ -673,6 +678,7 @@
     "reason": "理由",
     "expandDeletedMessages": "このチャットで削除されたメッセージを展開する",
     "revealDeletedMessage": "メッセージを表示",
+    "retryMessage": "再試行メッセージ",
     "lowBandwidth": "低帯域幅",
     "loadImage": "画像を読み込む",
     "loadGif": "gif を読み込む",

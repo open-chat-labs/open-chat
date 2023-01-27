@@ -3,7 +3,7 @@ use crate::guards::caller_is_owner;
 use crate::timer_job_types::RetrySendingFailedMessagesJob;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState, TimerJob};
 use canister_tracing_macros::trace;
-use chat_events::PushMessageArgs;
+use chat_events::{PushMessageArgs, Reader};
 use ic_cdk_macros::update;
 use tracing::error;
 use types::{
@@ -34,7 +34,7 @@ async fn send_message(mut args: Args) -> Response {
                 Ok(local_user_index_canister::c2c_lookup_user::Response::Success(result)) if result.is_bot => UserType::Bot,
                 Ok(local_user_index_canister::c2c_lookup_user::Response::Success(_)) => UserType::User,
                 Ok(local_user_index_canister::c2c_lookup_user::Response::UserNotFound) => return RecipientNotFound,
-                Err(error) => return InternalError(format!("{:?}", error)),
+                Err(error) => return InternalError(format!("{error:?}")),
             }
         }
     };
@@ -169,8 +169,8 @@ fn send_message_impl(
                         .get(&args.recipient.into())
                         .and_then(|chat| {
                             chat.events
-                                .main()
-                                .message_internal_by_event_index(r.event_index)
+                                .main_events_reader()
+                                .message_internal(r.event_index.into())
                                 .map(|m| m.message_id)
                         })
                         .map(C2CReplyContext::ThisChat)
@@ -209,6 +209,7 @@ fn send_message_impl(
             event_index: message_event.index,
             message_index: message_event.event.message_index,
             timestamp: now,
+            disappears_at: message_event.disappears_at,
             transfer,
         })
     } else {
@@ -217,6 +218,7 @@ fn send_message_impl(
             event_index: message_event.index,
             message_index: message_event.event.message_index,
             timestamp: now,
+            disappears_at: message_event.disappears_at,
         })
     }
 }

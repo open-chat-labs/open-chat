@@ -1,21 +1,7 @@
-// This is a trimmed down version of the full ledger candid file which can be found here -
-// https://github.com/dfinity/ic/blob/0bc8ddde22a237f36c6b6004ad71de7105efa06e/rs/rosetta-api/ledger_canister/ledger.did
+// This is a trimmed down version of the full ICRC1 ledger candid file which can be found here -
+// https://dashboard.internetcomputer.org/canister/zfcdd-tqaaa-aaaaq-aaaga-cai
 
-// Amount of tokens, measured in 10^-8 of a token.
-type Tokens = record {
-     e8s : nat64;
-};
-
-// AccountIdentifier is a 32-byte array.
-// The first 4 bytes is big-endian encoding of a CRC32 checksum of the last 28 bytes.
-type AccountIdentifier = blob;
-
-// Arguments for the `account_balance` call.
-type AccountBalanceArgs = record {
-    account: AccountIdentifier;
-};
-
+type Account = record { owner : principal; subaccount : opt vec nat8 };
 service : {
-  // Returns the amount of Tokens on the specified account.
-  account_balance : (AccountBalanceArgs) -> (Tokens) query;
+  icrc1_balance_of : (Account) -> (nat) query;
 }

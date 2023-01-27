@@ -121,6 +121,7 @@
                         focused={false}
                         {observer}
                         confirmed={true}
+                        failed={false}
                         senderTyping={false}
                         readByMe={true}
                         readByThem={true}
@@ -162,6 +163,7 @@
                             focused={false}
                             {observer}
                             confirmed={true}
+                            failed={false}
                             senderTyping={false}
                             readByMe={true}
                             readByThem={true}

@@ -13,13 +13,13 @@ fn c2c_upgrade_user_canister_wasm(args: Args) -> Response {
 }
 
 fn c2c_upgrade_user_canister_wasm_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    let version = args.user_canister_wasm.version;
+    let version = args.wasm.version;
 
     if !runtime_state.data.test_mode && version < runtime_state.data.user_canister_wasm.version {
         VersionNotHigher
     } else {
         runtime_state.data.canisters_requiring_upgrade.clear();
-        runtime_state.data.user_canister_wasm = args.user_canister_wasm;
+        runtime_state.data.user_canister_wasm = args.wasm;
 
         for user_id in runtime_state
             .data

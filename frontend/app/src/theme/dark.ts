@@ -247,6 +247,13 @@ export function darkTheme(defaultTheme: Theme): Theme {
             },
         },
 
+        vote: {
+            ...defaultTheme.vote,
+            maybe: {
+                color: "#666666",
+            },
+        },
+
         markdown: {
             fg: {
                 color: txt,

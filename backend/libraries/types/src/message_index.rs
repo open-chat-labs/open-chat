@@ -21,3 +21,9 @@ impl From<MessageIndex> for u32 {
         message_index.0
     }
 }
+
+impl From<MessageIndex> for usize {
+    fn from(message_index: MessageIndex) -> Self {
+        message_index.0.try_into().unwrap()
+    }
+}

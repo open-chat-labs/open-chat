@@ -41,6 +41,7 @@
     let tokenChanging = true;
     let balanceWithRefresh: BalanceWithRefresh;
     let receiver: PartialUserSummary | undefined = undefined;
+    let validAmount: boolean = false;
     $: symbol = cryptoLookup[token].symbol;
     $: howToBuyUrl = cryptoLookup[token].howToBuyUrl;
     $: transferFees = cryptoLookup[token].transferFeesE8s;
@@ -49,11 +50,7 @@
         draftAmountE8s > BigInt(0)
             ? $cryptoBalance[token] - draftAmountE8s - transferFees
             : $cryptoBalance[token];
-    $: valid =
-        error === undefined &&
-        draftAmountE8s > BigInt(0) &&
-        receiver !== undefined &&
-        !tokenChanging;
+    $: valid = error === undefined && validAmount && receiver !== undefined && !tokenChanging;
     $: zero = $cryptoBalance[token] <= transferFees && !tokenChanging;
 
     onMount(() => {
@@ -88,20 +85,16 @@
             kind: "crypto_content",
             caption: message === "" ? undefined : message,
             transfer: {
-                token: token,
+                token,
                 kind: "pending",
                 recipient: receiver.userId,
                 amountE8s: draftAmountE8s,
+                feeE8s: transferFees,
             },
         };
         dispatch("sendTransfer", [content, undefined]);
         lastCryptoSent.set(token);
         dispatch("close");
-    }
-
-    function onTokenChanged() {
-        tokenChanging = true;
-        reset();
     }
 
     function cancel() {
@@ -136,16 +129,12 @@
     <ModalContent>
         <span class="header" slot="header">
             <div class="left">
-                {#if process.env.ENABLE_MULTI_CRYPTO}
-                    <div class="main-title">
-                        <div>{$_("tokenTransfer.send")}</div>
-                        <div>
-                            <CryptoSelector bind:token />
-                        </div>
+                <div class="main-title">
+                    <div>{$_("tokenTransfer.send")}</div>
+                    <div>
+                        <CryptoSelector bind:token />
                     </div>
-                {:else}
-                    <div>{$_("tokenTransfer.title", { values: { token: symbol } })}</div>
-                {/if}
+                </div>
             </div>
             <BalanceWithRefresh
                 bind:toppingUp
@@ -182,12 +171,10 @@
                         </div>
                     {/if}
                     <div class="transfer">
-                        <Legend
-                            label={$_("tokenTransfer.amount")}
-                            rules={`${symbol.toUpperCase()}`} />
                         <TokenInput
                             {token}
                             autofocus={!group}
+                            bind:valid={validAmount}
                             maxAmountE8s={maxAmountE8s($cryptoBalance[token])}
                             bind:amountE8s={draftAmountE8s} />
                     </div>

@@ -1,4 +1,4 @@
-use crate::updates::handle_activity_notification;
+use crate::activity_notifications::handle_activity_notification;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use candid::Principal;
 use canister_tracing_macros::trace;

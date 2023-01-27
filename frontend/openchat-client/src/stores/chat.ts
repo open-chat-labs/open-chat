@@ -17,7 +17,6 @@ import { derived, get, Readable, writable, Writable } from "svelte/store";
 import { immutableStore } from "./immutable";
 import {
     getNextEventAndMessageIndexes,
-    mergeServerEvents,
     mergeEventsAndLocalUpdates,
     mergeUnconfirmedIntoSummary,
     mergeChatMetrics,
@@ -32,10 +31,10 @@ import { filteredProposalsStore, resetFilteredProposalsStore } from "./filteredP
 import { createDerivedPropStore, createChatSpecificObjectStore } from "./dataByChatFactory";
 import { localMessageUpdates } from "./localMessageUpdates";
 import type { DraftMessage } from "./draftMessageFactory";
-import { messagesRead } from "./markRead";
 import type { OpenChatAgentWorker } from "../agentWorker";
 import { localChatSummaryUpdates } from "./localChatSummaryUpdates";
 import { setsAreEqual } from "../utils/set";
+import { failedMessagesStore } from "./failedMessages";
 
 export type ChatState = {
     chatId: string;
@@ -181,12 +180,19 @@ export function nextEventAndMessageIndexesForThread(
     );
 }
 
+function sortByIndex(a: EventWrapper<ChatEvent>, b: EventWrapper<ChatEvent>): number {
+    return a.index - b.index;
+}
+
 export function nextEventAndMessageIndexes(): [number, number] {
     const chat = get(selectedServerChatStore);
     if (chat === undefined) {
         return [0, 0];
     }
-    return getNextEventAndMessageIndexes(chat, unconfirmed.getMessages(chat.chatId));
+    return getNextEventAndMessageIndexes(
+        chat,
+        unconfirmed.getMessages(chat.chatId).sort(sortByIndex)
+    );
 }
 
 export const isProposalGroup = derived([selectedChatStore], ([$selectedChat]) => {
@@ -282,13 +288,23 @@ export const chatStateStore = createChatSpecificObjectStore<ChatSpecificState>((
 
 export const threadServerEventsStore: Writable<EventWrapper<ChatEvent>[]> = immutableStore([]);
 export const threadEvents = derived(
-    [threadServerEventsStore, unconfirmed, localMessageUpdates, selectedThreadKey],
-    ([serverEvents, unconf, localUpdates, threadKey]) => {
-        if (threadKey === undefined) return [];
+    [
+        threadServerEventsStore,
+        unconfirmed,
+        localMessageUpdates,
+        selectedThreadKey,
+        failedMessagesStore,
+    ],
+    ([$serverEvents, $unconfirmed, $localUpdates, $threadKey, $failedMessages]) => {
+        if ($threadKey === undefined) return [];
+        const failed = $failedMessages[$threadKey]
+            ? Object.values($failedMessages[$threadKey])
+            : [];
+        const unconfirmed = $unconfirmed[$threadKey]?.messages ?? [];
         return mergeEventsAndLocalUpdates(
-            serverEvents,
-            unconf[threadKey]?.messages ?? [],
-            localUpdates
+            $serverEvents,
+            [...unconfirmed, ...failed],
+            $localUpdates
         );
     }
 );
@@ -484,12 +500,15 @@ export function removeGroupPreview(chatId: string): void {
 }
 
 export const eventsStore: Readable<EventWrapper<ChatEvent>[]> = derived(
-    [serverEventsStore, unconfirmed, localMessageUpdates],
-    ([$serverEventsForSelectedChat, $unconfirmed, $localMessageUpdates]) => {
+    [serverEventsStore, unconfirmed, localMessageUpdates, failedMessagesStore],
+    ([$serverEventsForSelectedChat, $unconfirmed, $localMessageUpdates, $failedMessages]) => {
         const chatId = get(selectedChatId) ?? "";
+        // for the purpose of merging, unconfirmed and failed can be treated the same
+        const failed = $failedMessages[chatId] ? Object.values($failedMessages[chatId]) : [];
+        const unconfirmed = $unconfirmed[chatId]?.messages ?? [];
         return mergeEventsAndLocalUpdates(
             $serverEventsForSelectedChat,
-            $unconfirmed[chatId]?.messages ?? [],
+            [...unconfirmed, ...failed],
             $localMessageUpdates
         );
     }
@@ -516,51 +535,6 @@ export function isContiguous(chatId: string, events: EventWrapper<ChatEvent>[]):
     }
 
     return isContiguous;
-}
-
-export function addServerEventsToStores(
-    chatId: string,
-    newEvents: EventWrapper<ChatEvent>[],
-    threadRootMessageIndex: number | undefined
-): void {
-    if (newEvents.length === 0) {
-        return;
-    }
-
-    if (!isContiguous(chatId, newEvents)) {
-        return;
-    }
-
-    const key =
-        threadRootMessageIndex === undefined ? chatId : `${chatId}_${threadRootMessageIndex}`;
-
-    for (const event of newEvents) {
-        if (event.event.kind === "message") {
-            if (unconfirmed.delete(key, event.event.messageId)) {
-                if (threadRootMessageIndex === undefined) {
-                    messagesRead.confirmMessage(
-                        chatId,
-                        event.event.messageIndex,
-                        event.event.messageId
-                    );
-                } else {
-                    messagesRead.markThreadRead(
-                        chatId,
-                        threadRootMessageIndex,
-                        event.event.messageIndex
-                    );
-                }
-            }
-        }
-    }
-
-    if (threadRootMessageIndex === undefined) {
-        chatStateStore.updateProp(chatId, "serverEvents", (events) =>
-            mergeServerEvents(events, newEvents)
-        );
-    } else if (key === get(selectedThreadKey)) {
-        threadServerEventsStore.update((events) => mergeServerEvents(events, newEvents));
-    }
 }
 
 export function clearServerEvents(chatId: string): void {

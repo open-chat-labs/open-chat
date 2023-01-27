@@ -1,23 +1,19 @@
 use crate::guards::caller_is_controller;
 use crate::{mutate_state, read_state, RuntimeState};
+use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
 use group_index_canister::upgrade_group_canister_wasm::{Response::*, *};
-use ic_cdk_macros::update;
 use tracing::info;
 use types::{CanisterId, Version};
 
-#[update(guard = "caller_is_controller")]
+#[proposal(guard = "caller_is_controller")]
 #[trace]
 async fn upgrade_group_canister_wasm(args: Args) -> Response {
-    let version = args.group_canister_wasm.version;
+    let version = args.wasm.version;
 
     let local_group_index_canisters = match read_state(|state| prepare(version, state)) {
         Ok(canisters) => canisters,
         Err(response) => return response,
-    };
-
-    let args = local_group_index_canister::c2c_upgrade_group_canister_wasm::Args {
-        group_canister_wasm: args.group_canister_wasm.clone(),
     };
 
     let futures: Vec<_> = local_group_index_canisters
@@ -28,10 +24,10 @@ async fn upgrade_group_canister_wasm(args: Args) -> Response {
     let result = futures::future::join_all(futures).await;
 
     if let Some(first_error) = result.into_iter().filter_map(|res| res.err()).next() {
-        InternalError(format!("{:?}", first_error))
+        InternalError(format!("{first_error:?}"))
     } else {
         mutate_state(|state| {
-            state.data.group_canister_wasm = args.group_canister_wasm;
+            state.data.group_canister_wasm = args.wasm;
         });
 
         info!(%version, "Group canister wasm upgraded");

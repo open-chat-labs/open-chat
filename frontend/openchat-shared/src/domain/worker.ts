@@ -10,7 +10,6 @@ import type {
     CreateGroupResponse,
     DeletedDirectMessageResponse,
     DeletedGroupMessageResponse,
-
     DeleteGroupResponse,
     DeleteMessageResponse,
     DirectChatEvent,
@@ -190,7 +189,9 @@ export type WorkerRequest =
     | GetInitialStateV2
     | GetUpdatesV2
     | GetDeletedGroupMessage
-    | GetDeletedDirectMessage;
+    | GetDeletedDirectMessage
+    | LoadFailedMessages
+    | DeleteFailedMessage;
 
 type SetCachedMessageFromNotification = Request<{
     chatId: string;
@@ -296,7 +297,7 @@ type ConfirmPhoneNumber = Request<{
 
 type RefreshAccountBalance = Request<{
     crypto: Cryptocurrency;
-    account: string;
+    principal: string;
 }> & {
     kind: "refreshAccountBalance";
 };
@@ -344,7 +345,7 @@ type GetGroupRules = Request<{
 };
 
 type GetRecommendedGroups = Request<{
-    exclusions: string[]
+    exclusions: string[];
 }> & {
     kind: "getRecommendedGroups";
 };
@@ -425,7 +426,7 @@ type SendMessage = Request<{
     chatId: string;
     user: CreatedUser;
     mentioned: User[];
-    msg: Message;
+    event: EventWrapper<Message>;
     threadRootMessageIndex?: number;
 }> & {
     kind: "sendMessage";
@@ -720,7 +721,7 @@ type GetAllCachedUsers = Request & {
 };
 
 type LastOnline = Request<{
-    userIds: string[]
+    userIds: string[];
 }> & {
     kind: "lastOnline";
 };
@@ -896,7 +897,8 @@ export type WorkerResponse =
     | Response<UpdatesResult>
     | Response<DeletedDirectMessageResponse>
     | Response<DeletedGroupMessageResponse>
-    | Response<undefined>;
+    | Response<undefined>
+    | Response<Record<string, Record<number, EventWrapper<Message>>>>;
 
 type Response<T> = {
     kind: "worker_response";
@@ -932,3 +934,15 @@ export type RelayedUsersLoaded = WorkerEventCommon<{
     subkind: "users_loaded";
     users: PartialUserSummary[];
 }>;
+
+type LoadFailedMessages = Request & {
+    kind: "loadFailedMessages";
+};
+
+type DeleteFailedMessage = Request<{
+    chatId: string;
+    messageId: bigint;
+    threadRootMessageIndex: number | undefined;
+}> & {
+    kind: "deleteFailedMessage";
+};

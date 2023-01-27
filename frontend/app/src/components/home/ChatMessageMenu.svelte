@@ -9,6 +9,7 @@
     import Cancel from "svelte-material-icons/Cancel.svelte";
     import ReplyOutline from "svelte-material-icons/ReplyOutline.svelte";
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
+    import Refresh from "svelte-material-icons/Refresh.svelte";
     import DeleteOffOutline from "svelte-material-icons/DeleteOffOutline.svelte";
     import TranslateIcon from "svelte-material-icons/Translate.svelte";
     import EyeIcon from "svelte-material-icons/Eye.svelte";
@@ -37,6 +38,7 @@
     export let inert: boolean;
     export let publicGroup: boolean;
     export let confirmed: boolean;
+    export let failed: boolean;
     export let canShare: boolean;
     export let me: boolean;
     export let canPin: boolean;
@@ -120,7 +122,15 @@
         dispatch("forward", msg);
     }
 
+    function retrySend() {
+        dispatch("retrySend");
+    }
+
     function deleteMessage() {
+        if (failed) {
+            dispatch("deleteFailedMessage");
+            return;
+        }
         if (!canDelete && user.userId !== msg.sender) return;
         client.deleteMessage(chatId, threadRootMessageIndex, msg.messageId);
     }
@@ -192,7 +202,7 @@
                         <div slot="text">{$_("proposal.collapse")}</div>
                     </MenuItem>
                 {/if}
-                {#if publicGroup && confirmed && !inert}
+                {#if publicGroup && confirmed && !inert && !failed}
                     {#if canShare}
                         <MenuItem on:click={shareMessage}>
                             <ShareIcon
@@ -210,7 +220,7 @@
                         <div slot="text">{$_("copyMessageUrl")}</div>
                     </MenuItem>
                 {/if}
-                {#if confirmed && canPin && !inThread && !inert}
+                {#if confirmed && canPin && !inThread && !inert && !failed}
                     {#if pinned}
                         <MenuItem on:click={unpinMessage}>
                             <PinOff
@@ -226,7 +236,7 @@
                         </MenuItem>
                     {/if}
                 {/if}
-                {#if confirmed && supportsReply && !inert}
+                {#if confirmed && supportsReply && !inert && !failed}
                     {#if canQuoteReply}
                         <MenuItem on:click={() => dispatch("reply")}>
                             <Reply
@@ -243,7 +253,7 @@
                         </MenuItem>
                     {/if}
                 {/if}
-                {#if canForward && !inThread && !inert}
+                {#if canForward && !inThread && !inert && !failed}
                     <MenuItem on:click={forward}>
                         <ForwardIcon
                             size={$iconSize}
@@ -252,7 +262,7 @@
                         <div slot="text">{$_("forward")}</div>
                     </MenuItem>
                 {/if}
-                {#if confirmed && groupChat && !me && !inThread && !isProposal && !inert}
+                {#if confirmed && groupChat && !me && !inThread && !isProposal && !inert && !failed}
                     <MenuItem on:click={() => dispatch("replyPrivately")}>
                         <ReplyOutline
                             size={$iconSize}
@@ -261,13 +271,13 @@
                         <div slot="text">{$_("replyPrivately")}</div>
                     </MenuItem>
                 {/if}
-                {#if confirmed && groupChat && !me && canBlockUser}
+                {#if confirmed && groupChat && !me && canBlockUser && !failed}
                     <MenuItem on:click={blockUser}>
                         <Cancel size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
                         <div slot="text">{$_("blockUser")}</div>
                     </MenuItem>
                 {/if}
-                {#if canEdit && !inert}
+                {#if canEdit && !inert && !failed}
                     <MenuItem on:click={() => dispatch("editMessage")}>
                         <PencilOutline
                             size={$iconSize}
@@ -286,7 +296,7 @@
                             {$_(me ? "deleteMessage" : "deleteMessageAndReport")}
                         </div>
                     </MenuItem>
-                {/if}            
+                {/if}
                 {#if canRevealDeleted}
                     <MenuItem on:click={revealDeletedMessage}>
                         <EyeIcon size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
@@ -302,7 +312,7 @@
                         <div slot="text">{$_("undeleteMessage")}</div>
                     </MenuItem>
                 {/if}
-                {#if translatable}
+                {#if translatable && !failed}
                     {#if translated}
                         <MenuItem on:click={untranslateMessage}>
                             <TranslateOff
@@ -320,6 +330,14 @@
                             <div slot="text">{$_("translateMessage")}</div>
                         </MenuItem>
                     {/if}
+                {/if}
+                {#if failed}
+                    <MenuItem on:click={retrySend}>
+                        <Refresh size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
+                        <div slot="text">
+                            {$_("retryMessage")}
+                        </div>
+                    </MenuItem>
                 {/if}
             </Menu>
         </div>

@@ -13,6 +13,7 @@
     import type { OpenChat } from "openchat-client";
 
     const client = getContext<OpenChat>("client");
+    const user = client.user;
 
     const dispatch = createEventDispatcher();
     const icpDecimals = 2;
@@ -43,7 +44,7 @@
         refreshing = true;
         error = undefined;
         client
-            .refreshAccountBalance(token, client.user.cryptoAccount)
+            .refreshAccountBalance(token, user.userId)
             .then((resp) => {
                 accountBalance = Number(resp.e8s);
                 error = undefined;

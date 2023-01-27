@@ -35,11 +35,12 @@ import type {
     GroupCanisterSummaryResponse,
     GroupCanisterSummaryUpdatesResponse,
     DeletedGroupMessageResponse,
+    EventWrapper,
 } from "openchat-shared";
 
 export interface IGroupClient {
-    summary(): Promise<GroupCanisterSummaryResponse>,
-    summaryUpdates(updatesSince: bigint): Promise<GroupCanisterSummaryUpdatesResponse>,
+    summary(): Promise<GroupCanisterSummaryResponse>;
+    summaryUpdates(updatesSince: bigint): Promise<GroupCanisterSummaryUpdatesResponse>;
     chatEventsByIndex(
         eventIndexes: number[],
         threadRootMessageIndex: number | undefined,
@@ -65,7 +66,7 @@ export interface IGroupClient {
     sendMessage(
         senderName: string,
         mentioned: User[],
-        message: Message,
+        event: EventWrapper<Message>,
         threadRootMessageIndex?: number
     ): Promise<[SendMessageResponse, Message]>;
     editMessage(message: Message, threadRootMessageIndex?: number): Promise<EditMessageResponse>;
@@ -110,7 +111,7 @@ export interface IGroupClient {
     ): Promise<EventsResponse<Message>>;
     getDeletedMessage(
         messageId: bigint,
-        threadRootMessageIndex?: number,
+        threadRootMessageIndex?: number
     ): Promise<DeletedGroupMessageResponse>;
     pinMessage(messageIndex: number): Promise<PinMessageResponse>;
     unpinMessage(messageIndex: number): Promise<UnpinMessageResponse>;
@@ -120,7 +121,11 @@ export interface IGroupClient {
         voteType: "register" | "delete",
         threadRootMessageIndex?: number
     ): Promise<RegisterPollVoteResponse>;
-    searchGroupChat(searchTerm: string, userIds: string[], maxResults: number): Promise<SearchGroupChatResponse>;
+    searchGroupChat(
+        searchTerm: string,
+        userIds: string[],
+        maxResults: number
+    ): Promise<SearchGroupChatResponse>;
     getInviteCode(): Promise<InviteCodeResponse>;
     enableInviteCode(): Promise<EnableInviteCodeResponse>;
     disableInviteCode(): Promise<DisableInviteCodeResponse>;

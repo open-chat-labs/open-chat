@@ -32,7 +32,8 @@ import type {
     UnpinChatResponse,
     InitialStateV2Response,
     UpdatesV2Response,
-	DeletedDirectMessageResponse,
+    DeletedDirectMessageResponse,
+    EventWrapper,
 } from "openchat-shared";
 import type { IUserClient } from "./user.client.interface";
 import {
@@ -41,15 +42,14 @@ import {
     getCachedEventsByIndex,
     getCachedEventsWindow,
     mergeSuccessResponses,
-    removeCachedChat,
+    recordFailedMessage,
+    removeFailedMessage,
     setCachedEvents,
     setCachedMessageFromSendResponse,
 } from "../../utils/caching";
 import { MAX_MISSING } from "../../constants";
 import { profile } from "../common/profiling";
-import type { Identity } from "@dfinity/agent";
 import type { AgentConfig } from "../../config";
-import type { Principal } from "@dfinity/principal";
 
 /**
  * This exists to decorate the user client so that we can provide a write through cache to
@@ -62,15 +62,10 @@ export class CachingUserClient extends EventTarget implements IUserClient {
 
     constructor(
         private db: Database,
-        private identity: Identity,
         private config: AgentConfig,
-        private client: IUserClient,
+        private client: IUserClient
     ) {
         super();
-    }
-
-    private get principal(): Principal {
-        return this.identity.getPrincipal();
     }
 
     private setCachedEvents<T extends ChatEvent>(
@@ -231,25 +226,42 @@ export class CachingUserClient extends EventTarget implements IUserClient {
         groupId: string,
         recipientId: string,
         sender: CreatedUser,
-        message: Message,
+        event: EventWrapper<Message>,
         threadRootMessageIndex?: number
     ): Promise<[SendMessageResponse, Message]> {
+        removeFailedMessage(this.db, this.userId, event.event.messageId, threadRootMessageIndex);
         return this.client
-            .sendGroupICPTransfer(groupId, recipientId, sender, message, threadRootMessageIndex)
-            .then(setCachedMessageFromSendResponse(this.db, groupId, threadRootMessageIndex));
+            .sendGroupICPTransfer(groupId, recipientId, sender, event, threadRootMessageIndex)
+            .then(setCachedMessageFromSendResponse(this.db, groupId, event, threadRootMessageIndex))
+            .catch((err) => {
+                recordFailedMessage(this.db, groupId, event);
+                throw err;
+            });
     }
 
     @profile("userCachingClient")
     sendMessage(
         recipientId: string,
         sender: CreatedUser,
-        message: Message,
+        event: EventWrapper<Message>,
         replyingToChatId?: string,
         threadRootMessageIndex?: number
     ): Promise<[SendMessageResponse, Message]> {
+        removeFailedMessage(this.db, this.userId, event.event.messageId, threadRootMessageIndex);
         return this.client
-            .sendMessage(recipientId, sender, message, replyingToChatId, threadRootMessageIndex)
-            .then(setCachedMessageFromSendResponse(this.db, this.userId, threadRootMessageIndex));
+            .sendMessage(recipientId, sender, event, replyingToChatId, threadRootMessageIndex)
+            .then(
+                setCachedMessageFromSendResponse(
+                    this.db,
+                    this.userId,
+                    event,
+                    threadRootMessageIndex
+                )
+            )
+            .catch((err) => {
+                recordFailedMessage(this.db, this.userId, event, threadRootMessageIndex);
+                throw err;
+            });
     }
 
     blockUser(userId: string): Promise<BlockUserResponse> {
@@ -261,9 +273,6 @@ export class CachingUserClient extends EventTarget implements IUserClient {
     }
 
     leaveGroup(chatId: string): Promise<LeaveGroupResponse> {
-        removeCachedChat(this.db, this.principal, chatId).catch((err) =>
-            this.config.logger.error("Failed to remove chat from cache", err)
-        );
         return this.client.leaveGroup(chatId);
     }
 

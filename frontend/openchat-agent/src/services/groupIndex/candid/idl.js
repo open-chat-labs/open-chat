@@ -186,13 +186,18 @@ export const idlFactory = ({ IDL }) => {
     'Account' : AccountIdentifier,
   });
   const Tokens = IDL.Record({ 'e8s' : IDL.Nat64 });
-  const Cryptocurrency = IDL.Variant({ 'InternetComputer' : IDL.Null });
+  const TimestampNanos = IDL.Nat64;
+  const Cryptocurrency = IDL.Variant({
+    'InternetComputer' : IDL.Null,
+    'SNS1' : IDL.Null,
+    'CKBTC' : IDL.Null,
+  });
   const TransactionHash = IDL.Vec(IDL.Nat8);
   const Memo = IDL.Nat64;
   const NnsFailedCryptoTransaction = IDL.Record({
     'to' : NnsCryptoAccount,
     'fee' : Tokens,
-    'created' : TimestampMillis,
+    'created' : TimestampNanos,
     'token' : Cryptocurrency,
     'transaction_hash' : TransactionHash,
     'from' : NnsCryptoAccount,
@@ -211,7 +216,7 @@ export const idlFactory = ({ IDL }) => {
   const SnsFailedCryptoTransaction = IDL.Record({
     'to' : SnsAccount,
     'fee' : Tokens,
-    'created' : TimestampMillis,
+    'created' : TimestampNanos,
     'token' : Cryptocurrency,
     'transaction_hash' : TransactionHash,
     'from' : SnsAccount,
@@ -227,7 +232,7 @@ export const idlFactory = ({ IDL }) => {
   const NnsCompletedCryptoTransaction = IDL.Record({
     'to' : NnsCryptoAccount,
     'fee' : Tokens,
-    'created' : TimestampMillis,
+    'created' : TimestampNanos,
     'token' : Cryptocurrency,
     'transaction_hash' : TransactionHash,
     'block_index' : BlockIndex,
@@ -238,7 +243,7 @@ export const idlFactory = ({ IDL }) => {
   const SnsCompletedCryptoTransaction = IDL.Record({
     'to' : SnsAccount,
     'fee' : Tokens,
-    'created' : TimestampMillis,
+    'created' : TimestampNanos,
     'token' : Cryptocurrency,
     'transaction_hash' : TransactionHash,
     'block_index' : BlockIndex,
@@ -332,6 +337,7 @@ export const idlFactory = ({ IDL }) => {
     'message_index' : MessageIndex,
   });
   const MessageEventWrapper = IDL.Record({
+    'disappears_at' : IDL.Opt(TimestampMillis),
     'event' : Message,
     'timestamp' : TimestampMillis,
     'index' : EventIndex,

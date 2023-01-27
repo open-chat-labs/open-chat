@@ -7,7 +7,11 @@ pub struct EventIndex(u32);
 
 impl EventIndex {
     pub fn incr(&self) -> EventIndex {
-        EventIndex(self.0 + 1)
+        EventIndex(self.0.saturating_add(1))
+    }
+
+    pub fn decr(&self) -> EventIndex {
+        EventIndex(self.0.saturating_sub(1))
     }
 }
 

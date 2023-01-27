@@ -135,6 +135,7 @@ export class OpenChatAgentWorker extends EventTarget {
                 internetIdentityUrl: this.config.internetIdentityUrl,
                 nfidUrl: this.config.nfidUrl,
                 ledgerCanisterICP: this.config.ledgerCanisterICP,
+                ledgerCanisterSNS1: this.config.ledgerCanisterSNS1,
                 ledgerCanisterBTC: this.config.ledgerCanisterBTC,
                 ledgerCanisterCHAT: this.config.ledgerCanisterCHAT,
                 userGeekApiKey: this.config.userGeekApiKey,
@@ -164,7 +165,7 @@ export class OpenChatAgentWorker extends EventTarget {
                             data.event.chatId,
                             data.event.readByMeUpTo,
                             data.event.threadsRead,
-                            data.event.dateReadPinned,
+                            data.event.dateReadPinned
                         )
                     );
                 }
@@ -265,9 +266,7 @@ export class OpenChatAgentWorker extends EventTarget {
         });
     }
 
-    getUpdatesV2(
-        currentState: ChatStateFull,
-    ): Promise<UpdatesResult> {
+    getUpdatesV2(currentState: ChatStateFull): Promise<UpdatesResult> {
         return this.sendRequest({
             kind: "getUpdatesV2",
             payload: {
@@ -277,9 +276,9 @@ export class OpenChatAgentWorker extends EventTarget {
     }
 
     getDeletedGroupMessage(
-        chatId: string, 
-        messageId: bigint, 
-        threadRootMessageIndex: number | undefined,
+        chatId: string,
+        messageId: bigint,
+        threadRootMessageIndex: number | undefined
     ): Promise<DeletedGroupMessageResponse> {
         return this.sendRequest({
             kind: "getDeletedGroupMessage",
@@ -292,8 +291,8 @@ export class OpenChatAgentWorker extends EventTarget {
     }
 
     getDeletedDirectMessage(
-        userId: string, 
-        messageId: bigint, 
+        userId: string,
+        messageId: bigint
     ): Promise<DeletedDirectMessageResponse> {
         return this.sendRequest({
             kind: "getDeletedDirectMessage",
@@ -388,7 +387,7 @@ export class OpenChatAgentWorker extends EventTarget {
         return this.sendRequest({
             kind: "lastOnline",
             payload: {
-                userIds
+                userIds,
             },
         });
     }
@@ -844,7 +843,7 @@ export class OpenChatAgentWorker extends EventTarget {
         chatId: string,
         user: CreatedUser,
         mentioned: User[],
-        msg: Message,
+        event: EventWrapper<Message>,
         threadRootMessageIndex?: number
     ): Promise<[SendMessageResponse, Message]> {
         return this.sendRequest({
@@ -854,7 +853,7 @@ export class OpenChatAgentWorker extends EventTarget {
                 chatId,
                 user,
                 mentioned,
-                msg,
+                event,
                 threadRootMessageIndex,
             },
         });
@@ -983,7 +982,7 @@ export class OpenChatAgentWorker extends EventTarget {
         return this.sendRequest({
             kind: "getRecommendedGroups",
             payload: {
-                exclusions
+                exclusions,
             },
         });
     }
@@ -1057,12 +1056,12 @@ export class OpenChatAgentWorker extends EventTarget {
         });
     }
 
-    refreshAccountBalance(crypto: Cryptocurrency, account: string): Promise<Tokens> {
+    refreshAccountBalance(crypto: Cryptocurrency, principal: string): Promise<Tokens> {
         return this.sendRequest({
             kind: "refreshAccountBalance",
             payload: {
                 crypto,
-                account,
+                principal,
             },
         });
     }
@@ -1267,11 +1266,32 @@ export class OpenChatAgentWorker extends EventTarget {
         });
     }
 
+    loadFailedMessages(): Promise<Record<string, Record<number, EventWrapper<Message>>>> {
+        return this.sendRequest({
+            kind: "loadFailedMessages",
+            payload: {},
+        });
+    }
+
+    deleteFailedMessage(
+        chatId: string,
+        messageId: bigint,
+        threadRootMessageIndex?: number
+    ): Promise<void> {
+        return this.sendRequest({
+            kind: "deleteFailedMessage",
+            payload: {
+                chatId,
+                messageId,
+                threadRootMessageIndex,
+            },
+        });
+    }
+
     markSuspectedBot(): Promise<void> {
         return this.sendRequest({
             kind: "markSuspectedBot",
-            payload: {
-            },
+            payload: {},
         });
     }
 }

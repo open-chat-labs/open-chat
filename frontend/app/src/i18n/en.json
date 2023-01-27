@@ -230,6 +230,7 @@
     "reply": "Reply",
     "replyPrivately": "Reply privately",
     "deleteMessage": "Delete",
+    "retryMessage": "Retry message",
     "editMessage": "Edit",
     "messageDeleted": "Message deleted by {username} on {timestamp}",
     "deleteFailed": "Unable to delete your message",
@@ -503,7 +504,9 @@
         "done": "refresh and continue",
         "icp": "Internet Computer",
         "btc": "Bitcoin",
-        "chat": "OpenChat"
+        "chat": "OpenChat",
+        "sns1": "SNS-1",
+        "max": "Max"
     },
     "cryptoAccount": {
         "shortBalanceLabel": "Balance",
@@ -547,7 +550,8 @@
         "reactions": "Reactions",
         "deletedMessages": "Deleted messages",
         "reportedMessages": "Reported messages",
-        "reportedMessagesInfo": "Messages sent by you that were deleted or reported by others. This may be used as an indication that you are not contributing positively to the community."
+        "reportedMessagesInfo": "Messages sent by you that were deleted or reported by others. This may be used as an indication that you are not contributing positively to the community.",
+        "cryptoTransfers": "Crypto message"
     },
     "andNMore": ", and {n} more",
     "confirmMakeGroupPrivate": "Do you definitely want to make this group private? Currently this operation cannot be reversed!",
@@ -617,7 +621,9 @@
         "filter": "Filter proposals",
         "collapse": "Collapse message",
         "enableAll": "Enable all",
-        "disableAll": "Disable all"
+        "disableAll": "Disable all",
+        "readmore": "Read more",
+        "readless": "Read less"
     },
     "yes": "Yes",
     "no": "No",
