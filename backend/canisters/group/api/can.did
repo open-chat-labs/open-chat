@@ -359,13 +359,6 @@ type OptionalGroupPermissions =
         reply_in_thread: opt PermissionRole;
     };
 
-type EventsTimeToLiveUpdate =
-    variant {
-        NoChange;
-        SetToNone;
-        SetToSome: Milliseconds;
-    };
-
 type PinMessageArgs =
     record {
         message_index: MessageIndex;

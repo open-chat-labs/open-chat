@@ -153,6 +153,7 @@ type DirectChatSummaryUpdates =
         metrics: opt ChatMetrics;
         my_metrics: opt ChatMetrics;
         archived: opt bool;
+        events_ttl: EventsTimeToLiveUpdate;
     };
 
 type DirectMessageNotification =
@@ -308,6 +309,7 @@ type GroupCanisterGroupChatSummary =
         frozen: opt FrozenGroupInfo;
         wasm_version: Version;
         date_last_pinned: opt TimestampMillis;
+        events_ttl: opt Milliseconds;
     };
 
 type GroupChatSummaryUpdates =
@@ -337,6 +339,7 @@ type GroupChatSummaryUpdates =
         wasm_version: opt Version;
         date_last_pinned: opt TimestampMillis;
         date_read_pinned: opt TimestampMillis;
+        events_ttl: EventsTimeToLiveUpdate;
     };
 
 type GroupCanisterGroupChatSummaryUpdates =
@@ -364,6 +367,7 @@ type GroupCanisterGroupChatSummaryUpdates =
         frozen: FrozenGroupUpdate;
         wasm_version: opt Version;
         date_last_pinned: opt TimestampMillis;
+        events_ttl: EventsTimeToLiveUpdate;
     };
 
 type GroupDescriptionChanged =
@@ -1163,6 +1167,13 @@ type EventsTimeToLiveUpdated =
     record {
         updated_by: UserId;
         new_ttl: opt Milliseconds;
+    };
+
+type EventsTimeToLiveUpdate =
+    variant {
+        NoChange;
+        SetToNone;
+        SetToSome: Milliseconds;
     };
 
 type PushEventResult =
