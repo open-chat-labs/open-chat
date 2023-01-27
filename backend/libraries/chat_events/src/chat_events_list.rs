@@ -1,6 +1,4 @@
-use crate::{
-    ChatEventInternal, EventKey, MessageInternal, ProposalsUpdatedInternal, ThreadUpdatedInternal, UpdatedMessageInternal,
-};
+use crate::{ChatEventInternal, EventKey, MessageInternal, ProposalsUpdatedInternal, UpdatedMessageInternal};
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
@@ -8,8 +6,7 @@ use std::collections::{BTreeMap, HashMap, HashSet};
 use std::ops::Deref;
 use types::{
     ChatEvent, EventIndex, EventWrapper, Mention, MentionInternal, Message, MessageId, MessageIndex, PollEnded,
-    PollVoteRegistered, ProposalUpdated, ProposalsUpdated, PushIfNotContains, ThreadSummary, ThreadUpdated, TimestampMillis,
-    UpdatedMessage, UserId,
+    PollVoteRegistered, ProposalUpdated, ProposalsUpdated, ThreadUpdated, TimestampMillis, UpdatedMessage, UserId,
 };
 
 #[derive(Serialize, Deserialize, Default)]
@@ -19,6 +16,7 @@ pub struct ChatEventsList {
     message_id_map: HashMap<MessageId, EventIndex>,
     message_index_map: BTreeMap<MessageIndex, EventIndex>,
     latest_event_index: Option<EventIndex>,
+    latest_event_timestamp: Option<TimestampMillis>,
     latest_message_index: Option<MessageIndex>,
 }
 
@@ -36,7 +34,9 @@ pub(crate) struct ChatEventsVecOld {
 
 impl From<ChatEventsListOld> for ChatEventsList {
     fn from(value: ChatEventsListOld) -> Self {
-        let latest_event_index = value.events.events.last().map(|e| e.index);
+        let latest_event = value.events.events.last();
+        let latest_event_index = latest_event.map(|e| e.index);
+        let latest_event_timestamp = latest_event.map(|e| e.timestamp);
         let latest_message_index = value.message_index_map.keys().rev().next().copied();
 
         ChatEventsList {
@@ -44,6 +44,7 @@ impl From<ChatEventsListOld> for ChatEventsList {
             message_id_map: value.message_id_map,
             message_index_map: value.message_index_map,
             latest_event_index,
+            latest_event_timestamp,
             latest_message_index,
         }
     }
@@ -78,6 +79,7 @@ impl ChatEventsList {
             },
         );
         self.latest_event_index = Some(event_index);
+        self.latest_event_timestamp = Some(now);
 
         event_index
     }
@@ -86,24 +88,28 @@ impl ChatEventsList {
         &self,
         event_key: EventKey,
         min_visible_event_index: EventIndex,
+        now: TimestampMillis,
     ) -> Option<&EventWrapper<ChatEventInternal>> {
-        let event_index = self.event_index_if_visible(event_key, min_visible_event_index)?;
-
-        self.events_map.get(&event_index)
+        self.event_index(event_key)
+            .filter(|e| *e >= min_visible_event_index)
+            .and_then(|e| self.events_map.get(&e))
+            .filter(|e| !e.is_expired(now))
     }
 
     pub(crate) fn get_mut(
         &mut self,
         event_key: EventKey,
         min_visible_event_index: EventIndex,
+        now: TimestampMillis,
     ) -> Option<&mut EventWrapper<ChatEventInternal>> {
-        let event_index = self.event_index_if_visible(event_key, min_visible_event_index)?;
-
-        self.events_map.get_mut(&event_index)
+        self.event_index(event_key)
+            .filter(|e| *e >= min_visible_event_index)
+            .and_then(|e| self.events_map.get_mut(&e))
+            .filter(|e| !e.is_expired(now))
     }
 
-    pub(crate) fn is_accessible(&self, event_key: EventKey, min_visible_event_index: EventIndex) -> bool {
-        self.event_index_if_visible(event_key, min_visible_event_index).is_some()
+    pub(crate) fn is_accessible(&self, event_key: EventKey, min_visible_event_index: EventIndex, now: TimestampMillis) -> bool {
+        self.get(event_key, min_visible_event_index, now).is_some()
     }
 
     pub(crate) fn iter(
@@ -111,9 +117,10 @@ impl ChatEventsList {
         start: Option<EventKey>,
         ascending: bool,
         min_visible_event_index: EventIndex,
+        now: TimestampMillis,
     ) -> Box<dyn Iterator<Item = &EventWrapper<ChatEventInternal>> + '_> {
         let range = if let Some(start) = start {
-            if let Some(event_index) = self.event_index_if_visible(start, min_visible_event_index) {
+            if let Some(event_index) = self.get(start, min_visible_event_index, now).map(|e| e.index) {
                 if ascending {
                     self.events_map.range(event_index..)
                 } else {
@@ -126,7 +133,7 @@ impl ChatEventsList {
             self.events_map.range(min_visible_event_index..)
         };
 
-        let iter = range.map(|(_, e)| e);
+        let iter = range.map(|(_, e)| e).filter(move |e| !e.is_expired(now));
 
         if ascending {
             Box::new(iter)
@@ -135,13 +142,29 @@ impl ChatEventsList {
         }
     }
 
-    pub(crate) fn event_count_since<F: Fn(&ChatEventInternal) -> bool>(&self, since: TimestampMillis, filter: &F) -> usize {
+    pub(crate) fn event_count_since<F: Fn(&ChatEventInternal) -> bool>(
+        &self,
+        since: TimestampMillis,
+        now: TimestampMillis,
+        filter: &F,
+    ) -> usize {
         self.events_map
             .values()
             .rev()
             .take_while(|e| e.timestamp > since)
-            .filter(|e| filter(&e.event))
+            .filter(|e| !e.is_expired(now) && filter(&e.event))
             .count()
+    }
+
+    pub fn remove_expired_event(&mut self, event_index: EventIndex) -> Option<EventWrapper<ChatEventInternal>> {
+        let event = self.events_map.remove(&event_index)?;
+
+        if let ChatEventInternal::Message(m) = &event.event {
+            self.message_index_map.remove(&m.message_index);
+            self.message_id_map.remove(&m.message_id);
+        }
+
+        Some(event)
     }
 
     pub fn latest_event_index(&self) -> Option<EventIndex> {
@@ -152,6 +175,10 @@ impl ChatEventsList {
         self.latest_message_index
     }
 
+    pub fn latest_event_timestamp(&self) -> Option<TimestampMillis> {
+        self.latest_event_timestamp
+    }
+
     pub fn next_event_index(&self) -> EventIndex {
         self.latest_event_index.map_or(EventIndex::default(), |e| e.incr())
     }
@@ -160,84 +187,12 @@ impl ChatEventsList {
         self.latest_message_index.map_or(MessageIndex::default(), |m| m.incr())
     }
 
-    #[allow(clippy::too_many_arguments)]
-    pub(crate) fn update_thread_summary(
-        &mut self,
-        thread_root_message_index: MessageIndex,
-        user_id: UserId,
-        latest_thread_message_index_if_updated: Option<MessageIndex>,
-        latest_event_index: EventIndex,
-        correlation_id: u64,
-        expires_at: Option<TimestampMillis>,
-        now: TimestampMillis,
-    ) {
-        // If the current latest event is a `ThreadUpdated` event for the same thread then update
-        // that existing event, else push a new event.
-        let mut push_new_event = true;
-        if let Some(latest_event) = self.events_map.values_mut().rev().next() {
-            if let ChatEventInternal::ThreadUpdated(u) = &mut latest_event.event {
-                if u.message_index == thread_root_message_index {
-                    latest_event.timestamp = now;
-                    if let Some(latest_message_index) = latest_thread_message_index_if_updated {
-                        u.latest_thread_message_index_if_updated = Some(latest_message_index);
-                    }
-                    push_new_event = false;
-                }
-            }
-        }
-
-        if push_new_event {
-            self.push_event(
-                ChatEventInternal::ThreadUpdated(Box::new(ThreadUpdatedInternal {
-                    message_index: thread_root_message_index,
-                    latest_thread_message_index_if_updated,
-                })),
-                correlation_id,
-                expires_at,
-                now,
-            );
-        }
-
-        let root_message = self
-            .event_index(thread_root_message_index.into())
-            .and_then(|e| self.events_map.get_mut(&e))
-            .and_then(|e| e.event.as_message_mut())
-            .unwrap_or_else(|| panic!("Root thread message not found with message index {thread_root_message_index:?}"));
-
-        root_message.last_updated = Some(now);
-
-        let mut summary = root_message.thread_summary.get_or_insert_with(ThreadSummary::default);
-        summary.latest_event_index = latest_event_index;
-        summary.latest_event_timestamp = now;
-
-        if latest_thread_message_index_if_updated.is_some() {
-            summary.reply_count += 1;
-            summary.participant_ids.push_if_not_contains(user_id);
-        }
+    pub fn last(&self) -> Option<&EventWrapper<ChatEventInternal>> {
+        self.events_map.values().rev().next()
     }
 
-    pub(crate) fn event_index_if_visible(
-        &self,
-        event_key: EventKey,
-        min_visible_event_index: EventIndex,
-    ) -> Option<EventIndex> {
-        self.event_index(event_key).filter(|e| *e >= min_visible_event_index)
-    }
-
-    pub(crate) fn event_index(&self, event_key: EventKey) -> Option<EventIndex> {
-        match event_key {
-            EventKey::EventIndex(e) => Some(e),
-            EventKey::MessageIndex(m) => self.message_index_map.get(&m).copied(),
-            EventKey::MessageId(m) => self.message_id_map.get(&m).copied(),
-        }
-    }
-
-    pub fn last(&self) -> &EventWrapper<ChatEventInternal> {
-        self.events_map.values().rev().next().unwrap()
-    }
-
-    pub(crate) fn last_mut(&mut self) -> &mut EventWrapper<ChatEventInternal> {
-        self.events_map.values_mut().rev().next().unwrap()
+    pub(crate) fn last_mut(&mut self) -> Option<&mut EventWrapper<ChatEventInternal>> {
+        self.events_map.values_mut().rev().next()
     }
 
     pub fn len(&self) -> usize {
@@ -247,11 +202,20 @@ impl ChatEventsList {
     pub fn is_empty(&self) -> bool {
         self.events_map.is_empty()
     }
+
+    fn event_index(&self, event_key: EventKey) -> Option<EventIndex> {
+        match event_key {
+            EventKey::EventIndex(e) => Some(e),
+            EventKey::MessageIndex(m) => self.message_index_map.get(&m).copied(),
+            EventKey::MessageId(m) => self.message_id_map.get(&m).copied(),
+        }
+    }
 }
 
 pub struct ChatEventsListReader<'r> {
     events_list: &'r ChatEventsList,
     min_visible_event_index: EventIndex,
+    now: TimestampMillis,
 }
 
 impl<'r> Deref for ChatEventsListReader<'r> {
@@ -263,27 +227,32 @@ impl<'r> Deref for ChatEventsListReader<'r> {
 }
 
 impl<'r> ChatEventsListReader<'r> {
-    pub(crate) fn new(events_list: &ChatEventsList) -> ChatEventsListReader {
-        Self::with_min_visible_event_index(events_list, EventIndex::default())
+    pub(crate) fn new(events_list: &ChatEventsList, now: TimestampMillis) -> ChatEventsListReader {
+        Self::with_min_visible_event_index(events_list, EventIndex::default(), now)
     }
 
     pub(crate) fn with_min_visible_event_index(
         events_list: &ChatEventsList,
         min_visible_event_index: EventIndex,
+        now: TimestampMillis,
     ) -> ChatEventsListReader {
         ChatEventsListReader {
             events_list,
             min_visible_event_index,
+            now,
         }
     }
 }
 
 pub trait Reader {
     fn get(&self, event_key: EventKey) -> Option<&EventWrapper<ChatEventInternal>>;
-    fn event_index(&self, event_key: EventKey) -> Option<EventIndex>;
     fn iter(&self, start: Option<EventKey>, ascending: bool)
         -> Box<dyn Iterator<Item = &EventWrapper<ChatEventInternal>> + '_>;
     fn iter_latest_messages(&self, my_user_id: Option<UserId>) -> Box<dyn Iterator<Item = EventWrapper<Message>> + '_>;
+
+    fn event_index(&self, event_key: EventKey) -> Option<EventIndex> {
+        self.get(event_key).map(|e| e.index)
+    }
 
     fn get_by_indexes(&self, event_indexes: &[EventIndex], my_user_id: Option<UserId>) -> Vec<EventWrapper<ChatEvent>> {
         event_indexes
@@ -456,6 +425,7 @@ pub trait Reader {
             ChatEventInternal::GroupInviteCodeChanged(g) => ChatEvent::GroupInviteCodeChanged(*g.clone()),
             ChatEventInternal::ChatFrozen(f) => ChatEvent::ChatFrozen(*f.clone()),
             ChatEventInternal::ChatUnfrozen(u) => ChatEvent::ChatUnfrozen(*u.clone()),
+            ChatEventInternal::EventsTimeToLiveUpdated(u) => ChatEvent::EventsTimeToLiveUpdated(*u.clone()),
         };
 
         EventWrapper {
@@ -561,12 +531,7 @@ pub trait Reader {
 
 impl<'r> Reader for ChatEventsListReader<'r> {
     fn get(&self, event_key: EventKey) -> Option<&EventWrapper<ChatEventInternal>> {
-        self.events_list.get(event_key, self.min_visible_event_index)
-    }
-
-    fn event_index(&self, event_key: EventKey) -> Option<EventIndex> {
-        self.events_list
-            .event_index_if_visible(event_key, self.min_visible_event_index)
+        self.events_list.get(event_key, self.min_visible_event_index, self.now)
     }
 
     fn iter(
@@ -574,7 +539,8 @@ impl<'r> Reader for ChatEventsListReader<'r> {
         start: Option<EventKey>,
         ascending: bool,
     ) -> Box<dyn Iterator<Item = &EventWrapper<ChatEventInternal>> + '_> {
-        self.events_list.iter(start, ascending, self.min_visible_event_index)
+        self.events_list
+            .iter(start, ascending, self.min_visible_event_index, self.now)
     }
 
     fn iter_latest_messages(&self, my_user_id: Option<UserId>) -> Box<dyn Iterator<Item = EventWrapper<Message>> + '_> {
@@ -584,7 +550,7 @@ impl<'r> Reader for ChatEventsListReader<'r> {
                 .values()
                 .copied()
                 .rev()
-                .map_while(|e| self.events_list.get(e.into(), self.min_visible_event_index))
+                .map_while(|e| self.events_list.get(e.into(), self.min_visible_event_index, self.now))
                 .filter_map(move |e| try_into_message_event(e, my_user_id)),
         )
     }
@@ -611,7 +577,7 @@ mod tests {
     use crate::{ChatEvents, PushMessageArgs};
     use candid::Principal;
     use std::mem::size_of;
-    use types::{MessageContentInternal, TextContent};
+    use types::{MessageContentInternal, Milliseconds, TextContent};
 
     #[test]
     fn enum_size() {
@@ -620,9 +586,50 @@ mod tests {
     }
 
     #[test]
+    fn get() {
+        let events = setup_events(None);
+        let events_reader = events.main_events_reader(0);
+
+        let event_by_message_index = events_reader.get(EventKey::MessageIndex(10.into())).unwrap();
+        let event_by_event_index = events_reader.get(event_by_message_index.index.into()).unwrap();
+        let event_by_message_id = events_reader
+            .get(event_by_message_index.event.as_message().unwrap().message_id.into())
+            .unwrap();
+
+        assert_eq!(event_by_message_index.index, event_by_event_index.index);
+        assert_eq!(event_by_message_index.index, event_by_message_id.index);
+    }
+
+    #[test]
+    fn get_before_min_visible_returns_none() {
+        let events = setup_events(None);
+        let events_reader = events.visible_main_events_reader(10.into(), 0);
+
+        assert!(events_reader.get(EventKey::EventIndex(10.into())).is_some());
+        assert!(events_reader.get(EventKey::EventIndex(9.into())).is_none());
+    }
+
+    #[test]
+    fn get_excludes_expired_events() {
+        let events = setup_events(Some(100));
+        let events_reader1 = events.main_events_reader(100);
+        let expires_at = events_reader1
+            .get(EventKey::EventIndex(20.into()))
+            .unwrap()
+            .expires_at
+            .unwrap();
+
+        let events_reader2 = events.main_events_reader(expires_at);
+        assert!(events_reader2.get(EventKey::EventIndex(20.into())).is_some());
+
+        let events_reader3 = events.main_events_reader(expires_at + 1);
+        assert!(events_reader3.get(EventKey::EventIndex(20.into())).is_none());
+    }
+
+    #[test]
     fn scan_ascending_from_start() {
-        let events = setup_events();
-        let events_reader = events.main_events_reader();
+        let events = setup_events(None);
+        let events_reader = events.main_events_reader(0);
 
         let results = events_reader.scan(None, true, usize::MAX, usize::MAX, None);
 
@@ -633,8 +640,8 @@ mod tests {
 
     #[test]
     fn scan_descending_from_end() {
-        let events = setup_events();
-        let events_reader = events.main_events_reader();
+        let events = setup_events(None);
+        let events_reader = events.main_events_reader(0);
 
         let results = events_reader.scan(None, false, usize::MAX, usize::MAX, None);
 
@@ -645,8 +652,8 @@ mod tests {
 
     #[test]
     fn scan_ascending() {
-        let events = setup_events();
-        let events_reader = events.main_events_reader();
+        let events = setup_events(None);
+        let events_reader = events.main_events_reader(0);
 
         let start: MessageIndex = 20.into();
 
@@ -667,8 +674,8 @@ mod tests {
 
     #[test]
     fn scan_descending() {
-        let events = setup_events();
-        let events_reader = events.main_events_reader();
+        let events = setup_events(None);
+        let events_reader = events.main_events_reader(0);
 
         let start = 30.into();
 
@@ -688,9 +695,37 @@ mod tests {
     }
 
     #[test]
+    fn iter_skips_expired() {
+        let mut events = setup_events(Some(2000)); // These will expire at 2000
+        events.set_events_time_to_live(Some(1000));
+        push_events(&mut events, 500); // These will expire at 1500
+        events.set_events_time_to_live(Some(1500));
+        push_events(&mut events, 1000); // These will expire at 2500
+
+        let group1 = (0u32..=100).map(EventIndex::from).collect_vec();
+        let group2 = (101u32..=200).map(EventIndex::from).collect_vec();
+        let group3 = (201u32..=300).map(EventIndex::from).collect_vec();
+
+        let events_reader1 = events.main_events_reader(1250);
+        let expected1 = group1.iter().chain(group2.iter()).chain(group3.iter()).copied().collect_vec();
+        assert_eq!(events_reader1.iter(None, true).map(|e| e.index).collect_vec(), expected1);
+
+        let events_reader2 = events.main_events_reader(1750);
+        let expected2 = group1.iter().chain(group3.iter()).copied().collect_vec();
+        assert_eq!(events_reader2.iter(None, true).map(|e| e.index).collect_vec(), expected2);
+
+        let events_reader3 = events.main_events_reader(2250);
+        let expected3 = group3.clone();
+        assert_eq!(events_reader3.iter(None, true).map(|e| e.index).collect_vec(), expected3);
+
+        let events_reader4 = events.main_events_reader(2750);
+        assert_eq!(events_reader4.iter(None, true).map(|e| e.index).collect_vec(), vec![]);
+    }
+
+    #[test]
     fn window_message_limit() {
-        let events = setup_events();
-        let events_reader = events.main_events_reader();
+        let events = setup_events(None);
+        let events_reader = events.main_events_reader(0);
 
         let start = 30.into();
 
@@ -706,8 +741,8 @@ mod tests {
 
     #[test]
     fn window_event_limit() {
-        let events = setup_events();
-        let events_reader = events.main_events_reader();
+        let events = setup_events(None);
+        let events_reader = events.main_events_reader(0);
 
         let start = 40.into();
 
@@ -720,8 +755,8 @@ mod tests {
 
     #[test]
     fn window_min_visible_event_index() {
-        let events = setup_events();
-        let events_reader = events.visible_main_events_reader(46.into());
+        let events = setup_events(None);
+        let events_reader = events.visible_main_events_reader(46.into(), 0);
 
         let start = 50.into();
 
@@ -732,13 +767,19 @@ mod tests {
         assert_eq!(event_indexes, (46..=70).map(|i| i.into()).collect_vec());
     }
 
-    fn setup_events() -> ChatEvents {
-        let user_id = Principal::from_slice(&[1]).into();
+    fn setup_events(events_ttl: Option<Milliseconds>) -> ChatEvents {
+        let mut events = ChatEvents::new_direct_chat(Principal::from_slice(&[1]).into(), events_ttl, 1);
 
-        let mut events = ChatEvents::new_direct_chat(Principal::from_slice(&[2]).into(), 1);
+        push_events(&mut events, 0);
 
-        for i in 2..50 {
-            let message_id = i.into();
+        events
+    }
+
+    fn push_events(events: &mut ChatEvents, now: TimestampMillis) {
+        let user_id = Principal::from_slice(&[2]).into();
+
+        for i in 0..50 {
+            let message_id = MessageId::from((now + i) as u128);
             events.push_message(PushMessageArgs {
                 sender: user_id,
                 thread_root_message_index: None,
@@ -747,20 +788,18 @@ mod tests {
                     text: "hello".to_owned(),
                 }),
                 replies_to: None,
-                now: i as u64,
+                now,
                 forwarded: false,
-                correlation_id: 0,
+                correlation_id: i,
             });
             events.push_main_event(
                 ChatEventInternal::MessageReactionAdded(Box::new(UpdatedMessageInternal {
                     updated_by: user_id,
                     message_id,
                 })),
-                0,
-                i as u64,
+                i,
+                now,
             );
         }
-
-        events
     }
 }

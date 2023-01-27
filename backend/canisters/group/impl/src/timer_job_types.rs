@@ -34,10 +34,13 @@ impl Job for TimerJob {
 impl Job for HardDeleteMessageContentJob {
     fn execute(&self) {
         mutate_state(|state| {
-            if let Some(content) = state
-                .data
-                .events
-                .remove_deleted_message_content(self.thread_root_message_index, self.message_id)
+            let now = state.env.now();
+
+            if let Some(content) =
+                state
+                    .data
+                    .events
+                    .remove_deleted_message_content(self.thread_root_message_index, self.message_id, now)
             {
                 let files_to_delete = content.blob_references();
                 if !files_to_delete.is_empty() {

@@ -169,7 +169,7 @@ fn send_message_impl(
                         .get(&args.recipient.into())
                         .and_then(|chat| {
                             chat.events
-                                .main_events_reader()
+                                .main_events_reader(now)
                                 .message_internal(r.event_index.into())
                                 .map(|m| m.message_id)
                         })

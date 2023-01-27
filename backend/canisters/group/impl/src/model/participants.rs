@@ -403,12 +403,17 @@ impl ParticipantInternal {
         }
     }
 
-    pub fn most_recent_mentions(&self, since: Option<TimestampMillis>, chat_events: &ChatEvents) -> Vec<Mention> {
+    pub fn most_recent_mentions(
+        &self,
+        since: Option<TimestampMillis>,
+        chat_events: &ChatEvents,
+        now: TimestampMillis,
+    ) -> Vec<Mention> {
         let min_visible_event_index = self.min_visible_event_index();
 
         self.mentions_v2
             .iter_most_recent(since)
-            .filter_map(|m| chat_events.hydrate_mention(min_visible_event_index, m))
+            .filter_map(|m| chat_events.hydrate_mention(min_visible_event_index, m, now))
             .take(MAX_RETURNED_MENTIONS)
             .collect()
     }

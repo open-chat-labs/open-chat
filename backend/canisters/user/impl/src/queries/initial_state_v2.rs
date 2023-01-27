@@ -23,7 +23,7 @@ fn initial_state_impl(args: Args, runtime_state: &RuntimeState) -> Response {
         .data
         .direct_chats
         .iter()
-        .map(|d| d.to_summary(my_user_id))
+        .map(|d| d.to_summary(my_user_id, now))
         .collect();
 
     let disable_cache = args.disable_cache.unwrap_or_default();

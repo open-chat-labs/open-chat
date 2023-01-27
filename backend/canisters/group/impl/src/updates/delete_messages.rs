@@ -2,7 +2,7 @@ use crate::activity_notifications::handle_activity_notification;
 use crate::timer_job_types::HardDeleteMessageContentJob;
 use crate::{mutate_state, run_regular_jobs, RuntimeState, TimerJob};
 use canister_tracing_macros::trace;
-use chat_events::{ChatEventInternal, DeleteMessageResult, DeleteUndeleteMessagesArgs, EventKey, Reader};
+use chat_events::{ChatEventInternal, DeleteMessageResult, DeleteUndeleteMessagesArgs, Reader};
 use group_canister::delete_messages::{Response::*, *};
 use ic_cdk_macros::update;
 use std::collections::HashSet;
@@ -30,15 +30,7 @@ fn delete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
 
         let now = runtime_state.env.now();
         let user_id = participant.user_id;
-
         let min_visible_event_index = participant.min_visible_event_index();
-        if !runtime_state.data.events.are_messages_accessible(
-            min_visible_event_index,
-            args.thread_root_message_index,
-            args.message_ids.iter().copied().map(EventKey::MessageId).collect(),
-        ) {
-            return MessageNotFound;
-        }
 
         let mut my_messages: HashSet<MessageId> = HashSet::new();
 
@@ -47,7 +39,7 @@ fn delete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
                 if let Some((message_index, sender)) = runtime_state
                     .data
                     .events
-                    .visible_main_events_reader(min_visible_event_index)
+                    .visible_main_events_reader(min_visible_event_index, now)
                     .message_internal(message_id.into())
                     .map(|m| (m.message_index, m.sender))
                 {

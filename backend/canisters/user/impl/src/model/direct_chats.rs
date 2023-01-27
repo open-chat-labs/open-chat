@@ -20,10 +20,10 @@ impl DirectChats {
         self.direct_chats.get_mut(chat_id)
     }
 
-    pub fn get_all(&self, updated_since: Option<TimestampMillis>) -> impl Iterator<Item = &DirectChat> {
+    pub fn get_all(&self, updated_since: Option<TimestampMillis>, now: TimestampMillis) -> impl Iterator<Item = &DirectChat> {
         self.direct_chats.values().filter(move |&c| {
             if let Some(updated_since) = updated_since {
-                c.last_updated() > updated_since
+                c.last_updated(now) > updated_since
             } else {
                 true
             }
@@ -51,7 +51,7 @@ impl DirectChats {
 
         let chat: &mut DirectChat = match self.direct_chats.entry(chat_id) {
             Occupied(e) => e.into_mut(),
-            Vacant(e) => e.insert(DirectChat::new(their_user_id, is_bot, args.now)),
+            Vacant(e) => e.insert(DirectChat::new(their_user_id, is_bot, None, args.now)),
         };
 
         let message_event = chat.events.push_message(args);

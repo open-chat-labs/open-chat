@@ -2,7 +2,7 @@ use crate::{read_state, RuntimeState};
 use chat_events::Reader;
 use group_canister::thread_previews::{Response::*, *};
 use ic_cdk_macros::query;
-use types::{EventIndex, MessageIndex, UserId};
+use types::{EventIndex, MessageIndex, TimestampMillis, UserId};
 
 const MAX_PREVIEWED_REPLY_COUNT: usize = 2;
 
@@ -30,6 +30,7 @@ fn thread_previews_impl(args: Args, runtime_state: &RuntimeState) -> Response {
                         participant.user_id,
                         participant.min_visible_event_index(),
                         root_message_index,
+                        now,
                     )
                 })
                 .collect(),
@@ -45,13 +46,20 @@ fn build_thread_preview(
     caller_user_id: UserId,
     min_visible_event_index: EventIndex,
     root_message_index: MessageIndex,
+    now: TimestampMillis,
 ) -> Option<ThreadPreview> {
-    let events_reader = runtime_state.data.events.visible_main_events_reader(min_visible_event_index);
-    let root_message = events_reader.message_event(root_message_index.into(), Some(caller_user_id))?;
-    let thread_events_reader = runtime_state
+    let events_reader = runtime_state
         .data
         .events
-        .events_reader(min_visible_event_index, Some(root_message_index))?;
+        .visible_main_events_reader(min_visible_event_index, now);
+
+    let root_message = events_reader.message_event(root_message_index.into(), Some(caller_user_id))?;
+
+    let thread_events_reader =
+        runtime_state
+            .data
+            .events
+            .events_reader(min_visible_event_index, Some(root_message_index), now)?;
 
     Some(ThreadPreview {
         root_message,

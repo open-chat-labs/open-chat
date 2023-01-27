@@ -8,7 +8,7 @@ use group_canister::send_message::{Response::*, *};
 use std::collections::HashSet;
 use types::{
     ContentValidationError, EventIndex, EventWrapper, GroupMessageNotification, GroupReplyContext, MentionInternal, Message,
-    MessageContent, MessageIndex, Notification, UserId,
+    MessageContent, MessageIndex, Notification, TimestampMillis, UserId,
 };
 
 #[update_candid_and_msgpack]
@@ -61,21 +61,21 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
         }
 
         if let Some(root_message_index) = args.thread_root_message_index {
-            if !runtime_state
-                .data
-                .events
-                .is_accessible(participant.min_visible_event_index(), None, root_message_index.into())
-            {
+            if !runtime_state.data.events.is_accessible(
+                participant.min_visible_event_index(),
+                None,
+                root_message_index.into(),
+                now,
+            ) {
                 return ThreadMessageNotFound;
             }
         }
 
         let sender = participant.user_id;
         let min_visible_event_index = participant.min_visible_event_index();
-        let user_being_replied_to = args
-            .replies_to
-            .as_ref()
-            .and_then(|r| get_user_being_replied_to(r, min_visible_event_index, args.thread_root_message_index, runtime_state));
+        let user_being_replied_to = args.replies_to.as_ref().and_then(|r| {
+            get_user_being_replied_to(r, min_visible_event_index, args.thread_root_message_index, now, runtime_state)
+        });
 
         let push_message_args = PushMessageArgs {
             sender,
@@ -110,7 +110,7 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
             runtime_state
                 .data
                 .events
-                .visible_main_events_reader(min_visible_event_index)
+                .visible_main_events_reader(min_visible_event_index, now)
                 .message_internal(root_message_index.into())
                 .cloned()
         }) {
@@ -199,12 +199,13 @@ fn get_user_being_replied_to(
     replies_to: &GroupReplyContext,
     min_visible_event_index: EventIndex,
     thread_root_message_index: Option<MessageIndex>,
+    now: TimestampMillis,
     runtime_state: &RuntimeState,
 ) -> Option<UserId> {
     let events_reader = runtime_state
         .data
         .events
-        .events_reader(min_visible_event_index, thread_root_message_index)?;
+        .events_reader(min_visible_event_index, thread_root_message_index, now)?;
 
     events_reader
         .message_internal(replies_to.event_index.into())

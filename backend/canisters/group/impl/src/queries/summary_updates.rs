@@ -26,7 +26,8 @@ fn summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
         None => return CallerNotInGroup,
         Some(p) => p,
     };
-    let updates_from_events = process_events(args.updates_since, participant, runtime_state);
+    let now = runtime_state.env.now();
+    let updates_from_events = process_events(args.updates_since, participant, now, runtime_state);
 
     if let Some(last_updated) = updates_from_events.latest_update {
         let updates = GroupCanisterGroupChatSummaryUpdates {
@@ -61,6 +62,7 @@ fn summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
                 participant.threads.iter(),
                 Some(args.updates_since),
                 MAX_THREADS_IN_SUMMARY,
+                now,
             ),
             notifications_muted: updates_from_events.notifications_muted,
             frozen: updates_from_events.frozen,
@@ -97,17 +99,20 @@ struct UpdatesFromEvents {
 fn process_events(
     since: TimestampMillis,
     participant: &ParticipantInternal,
+    now: TimestampMillis,
     runtime_state: &RuntimeState,
 ) -> UpdatesFromEvents {
     let data = &runtime_state.data;
-    let events_reader = data.events.visible_main_events_reader(participant.min_visible_event_index());
+    let events_reader = data
+        .events
+        .visible_main_events_reader(participant.min_visible_event_index(), now);
 
     let mut updates = UpdatesFromEvents {
         // We need to handle this separately because the message may have been sent before 'since' but
         // then subsequently updated after 'since', in this scenario the message would not be picked up
         // during the iteration below.
         latest_message: events_reader.latest_message_event_if_updated(since, Some(participant.user_id)),
-        mentions: participant.most_recent_mentions(Some(since), &data.events),
+        mentions: participant.most_recent_mentions(Some(since), &data.events, now),
         ..Default::default()
     };
 
