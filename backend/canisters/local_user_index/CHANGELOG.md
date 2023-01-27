@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Removed
 
 - Removed code only needed for the previous upgrade ([#3003](https://github.com/open-ic/open-chat/pull/3003))
+- Remove one time fix to user date created ([#2994](https://github.com/open-ic/open-chat/pull/2994))
 
 ## [[2.0.563](https://github.com/open-ic/open-chat/releases/tag/v2.0.563-local_user_index)] - 2022-01-23
 

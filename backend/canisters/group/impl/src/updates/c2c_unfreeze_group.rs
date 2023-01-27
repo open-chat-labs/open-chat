@@ -24,7 +24,7 @@ fn c2c_unfreeze_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Resp
             index: push_event_result.index,
             timestamp: now,
             correlation_id: 0,
-            disappears_at: push_event_result.disappears_at,
+            expires_at: push_event_result.expires_at,
             event: ChatUnfrozen {
                 unfrozen_by: args.caller,
             },

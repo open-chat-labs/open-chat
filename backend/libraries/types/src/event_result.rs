@@ -7,5 +7,5 @@ use std::fmt::Debug;
 pub struct PushEventResult {
     pub index: EventIndex,
     pub timestamp: TimestampMillis,
-    pub disappears_at: Option<TimestampMillis>,
+    pub expires_at: Option<TimestampMillis>,
 }

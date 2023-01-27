@@ -150,11 +150,11 @@ export type ChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'AvatarChanged' : AvatarChanged } |
   { 'ParticipantsAdded' : ParticipantsAdded };
 export interface ChatEventWrapper {
-  'disappears_at' : [] | [TimestampMillis],
   'event' : ChatEvent,
   'timestamp' : TimestampMillis,
   'index' : EventIndex,
   'correlation_id' : bigint,
+  'expires_at' : [] | [TimestampMillis],
 }
 export interface ChatFrozen { 'frozen_by' : UserId, 'reason' : [] | [string] }
 export type ChatId = CanisterId;
@@ -235,11 +235,11 @@ export type DeletedMessageResponse = { 'MessageNotFound' : null } |
   { 'MessageNotDeleted' : null };
 export type DirectChatCreated = {};
 export interface DirectChatEventWrapper {
-  'disappears_at' : [] | [TimestampMillis],
   'event' : ChatEvent,
   'timestamp' : TimestampMillis,
   'index' : EventIndex,
   'correlation_id' : bigint,
+  'expires_at' : [] | [TimestampMillis],
 }
 export interface DirectChatSummary {
   'read_by_them_up_to' : [] | [MessageIndex],
@@ -635,11 +635,11 @@ export type MessageContent = { 'Giphy' : GiphyContent } |
   { 'Video' : VideoContent } |
   { 'Deleted' : DeletedContent };
 export interface MessageEventWrapper {
-  'disappears_at' : [] | [TimestampMillis],
   'event' : Message,
   'timestamp' : TimestampMillis,
   'index' : EventIndex,
   'correlation_id' : bigint,
+  'expires_at' : [] | [TimestampMillis],
 }
 export type MessageId = bigint;
 export type MessageIndex = number;
@@ -873,9 +873,9 @@ export type PublicSummaryResponse = { 'NotAuthorized' : null } |
   { 'Success' : PublicSummarySuccess };
 export interface PublicSummarySuccess { 'summary' : PublicGroupSummary }
 export interface PushEventResult {
-  'disappears_at' : [] | [TimestampMillis],
   'timestamp' : TimestampMillis,
   'index' : EventIndex,
+  'expires_at' : [] | [TimestampMillis],
 }
 export interface RegisterPollVoteArgs {
   'poll_option' : number,
@@ -1010,9 +1010,9 @@ export type SendMessageResponse = { 'TextTooLong' : number } |
   { 'NotAuthorized' : null } |
   {
     'Success' : {
-      'disappears_at' : [] | [TimestampMillis],
       'timestamp' : TimestampMillis,
       'event_index' : EventIndex,
+      'expires_at' : [] | [TimestampMillis],
       'message_index' : MessageIndex,
     }
   } |

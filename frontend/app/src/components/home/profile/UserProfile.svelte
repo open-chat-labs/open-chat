@@ -20,7 +20,6 @@
     import { _, locale } from "svelte-i18n";
     import { iconSize } from "../../../stores/iconSize";
     import {
-        accountSectionOpen,
         advancedSectionOpen,
         appearanceSectionOpen,
         chatsSectionOpen,
@@ -40,7 +39,6 @@
     import ErrorMessage from "../../ErrorMessage.svelte";
     import LinkButton from "../../LinkButton.svelte";
     import ReferUsers from "./ReferUsers.svelte";
-    import Accounts from "./Accounts.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -304,14 +302,6 @@
                 on:change={() => lowBandwidth.toggle()}
                 label={$_("lowBandwidth")}
                 checked={$lowBandwidth} />
-        </CollapsibleCard>
-    </div>
-    <div class="accounts">
-        <CollapsibleCard
-            on:toggle={accountSectionOpen.toggle}
-            open={$accountSectionOpen}
-            headerText={$_("accounts")}>
-            <Accounts />
         </CollapsibleCard>
     </div>
     {#if !readonly}

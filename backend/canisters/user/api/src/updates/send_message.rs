@@ -41,7 +41,7 @@ pub struct SuccessResult {
     pub event_index: EventIndex,
     pub message_index: MessageIndex,
     pub timestamp: TimestampMillis,
-    pub disappears_at: Option<TimestampMillis>,
+    pub expires_at: Option<TimestampMillis>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -50,6 +50,6 @@ pub struct TransferSuccessV2Result {
     pub event_index: EventIndex,
     pub message_index: MessageIndex,
     pub timestamp: TimestampMillis,
-    pub disappears_at: Option<TimestampMillis>,
+    pub expires_at: Option<TimestampMillis>,
     pub transfer: CompletedCryptoTransaction,
 }

@@ -12,12 +12,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Refactor and simplify `chat_events` ([#3013](https://github.com/open-ic/open-chat/pull/3013))
+- Renamed `disappears_at` to `expires_at` ([#3023](https://github.com/open-ic/open-chat/pull/3023))
 
 ### Removed
 
 - Removed code only needed for the previous upgrade ([#3003](https://github.com/open-ic/open-chat/pull/3003))
 - Removed `c2c_send_message` ([#3005](https://github.com/open-ic/open-chat/pull/3005))
 - Removed `events_range` ([#3011](https://github.com/open-ic/open-chat/pull/3011))
+- Remove one time fix to user date created ([#2994](https://github.com/open-ic/open-chat/pull/2994))
 
 ## [[2.0.555](https://github.com/open-ic/open-chat/releases/tag/v2.0.555-user)] - 2022-01-20
 

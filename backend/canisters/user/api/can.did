@@ -19,14 +19,14 @@ type SendMessageResponse =
             event_index: EventIndex;
             message_index: MessageIndex;
             timestamp: TimestampMillis;
-            disappears_at: opt TimestampMillis;
+            expires_at: opt TimestampMillis;
         };
         TransferSuccessV2: record {
             chat_id: ChatId;
             event_index: EventIndex;
             message_index: MessageIndex;
             timestamp: TimestampMillis;
-            disappears_at: opt TimestampMillis;
+            expires_at: opt TimestampMillis;
             transfer: CompletedCryptoTransaction;
         };
         MessageEmpty;
@@ -371,7 +371,7 @@ type TransferCryptoWithinGroupResponse =
             event_index: EventIndex;
             message_index: MessageIndex;
             timestamp: TimestampMillis;
-            disappears_at: opt TimestampMillis;
+            expires_at: opt TimestampMillis;
             transfer: CompletedCryptoTransaction;
         };
         TextTooLong: nat32;

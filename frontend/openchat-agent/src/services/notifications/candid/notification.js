@@ -5,7 +5,6 @@ export const Notification = IDL.Variant({
     'username' : IDL.Text,
     'them' : IDL.Principal,
     'message' : IDL.Record({
-      'disappears_at' : IDL.Opt(IDL.Nat64),
       'event' : IDL.Record({
         'forwarded' : IDL.Bool,
         'content' : IDL.Variant({
@@ -319,6 +318,7 @@ export const Notification = IDL.Variant({
       'timestamp' : IDL.Nat64,
       'index' : IDL.Nat32,
       'correlation_id' : IDL.Nat64,
+      'expires_at' : IDL.Opt(IDL.Nat64),
     }),
     'timestamp' : IDL.Nat64,
     'reaction' : IDL.Text,
@@ -326,7 +326,6 @@ export const Notification = IDL.Variant({
   'DirectMessageNotification' : IDL.Record({
     'sender' : IDL.Principal,
     'message' : IDL.Record({
-      'disappears_at' : IDL.Opt(IDL.Nat64),
       'event' : IDL.Record({
         'forwarded' : IDL.Bool,
         'content' : IDL.Variant({
@@ -640,6 +639,7 @@ export const Notification = IDL.Variant({
       'timestamp' : IDL.Nat64,
       'index' : IDL.Nat32,
       'correlation_id' : IDL.Nat64,
+      'expires_at' : IDL.Opt(IDL.Nat64),
     }),
     'sender_name' : IDL.Text,
     'thread_root_message_index' : IDL.Opt(IDL.Nat32),
@@ -650,7 +650,6 @@ export const Notification = IDL.Variant({
     ),
     'sender' : IDL.Principal,
     'message' : IDL.Record({
-      'disappears_at' : IDL.Opt(IDL.Nat64),
       'event' : IDL.Record({
         'forwarded' : IDL.Bool,
         'content' : IDL.Variant({
@@ -964,6 +963,7 @@ export const Notification = IDL.Variant({
       'timestamp' : IDL.Nat64,
       'index' : IDL.Nat32,
       'correlation_id' : IDL.Nat64,
+      'expires_at' : IDL.Opt(IDL.Nat64),
     }),
     'sender_name' : IDL.Text,
     'chat_id' : IDL.Principal,
@@ -974,7 +974,6 @@ export const Notification = IDL.Variant({
     'added_by_name' : IDL.Text,
     'added_by' : IDL.Principal,
     'message' : IDL.Record({
-      'disappears_at' : IDL.Opt(IDL.Nat64),
       'event' : IDL.Record({
         'forwarded' : IDL.Bool,
         'content' : IDL.Variant({
@@ -1288,6 +1287,7 @@ export const Notification = IDL.Variant({
       'timestamp' : IDL.Nat64,
       'index' : IDL.Nat32,
       'correlation_id' : IDL.Nat64,
+      'expires_at' : IDL.Opt(IDL.Nat64),
     }),
     'timestamp' : IDL.Nat64,
     'chat_id' : IDL.Principal,

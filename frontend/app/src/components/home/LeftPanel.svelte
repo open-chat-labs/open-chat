@@ -1,10 +1,7 @@
 <script lang="ts">
     import Panel from "../Panel.svelte";
     import ChatList from "./ChatList.svelte";
-    import type {
-        GroupSearchResponse,
-        UserSummary,
-    } from "openchat-client";
+    import type { GroupSearchResponse, UserSummary } from "openchat-client";
 
     export let groupSearchResults: Promise<GroupSearchResponse> | undefined = undefined;
     export let userSearchResults: Promise<UserSummary[]> | undefined = undefined;
@@ -32,6 +29,7 @@
             on:unpinChat
             on:archiveChat
             on:unarchiveChat
+            on:wallet
             on:toggleMuteNotifications
             {searchResultsAvailable}
             {searchTerm}
