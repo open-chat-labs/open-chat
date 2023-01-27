@@ -22,7 +22,7 @@ pub struct ChatEvents {
     metrics: ChatMetrics,
     per_user_metrics: HashMap<UserId, ChatMetrics>,
     frozen: bool,
-    events_disappear_after: Option<Milliseconds>,
+    events_expire_after: Option<Milliseconds>,
 }
 
 #[derive(Deserialize)]
@@ -50,7 +50,7 @@ impl From<ChatEventsOld> for ChatEvents {
             metrics: value.metrics,
             per_user_metrics: value.per_user_metrics,
             frozen: value.frozen,
-            events_disappear_after: None,
+            events_expire_after: None,
         }
     }
 }
@@ -65,7 +65,7 @@ impl ChatEvents {
             metrics: ChatMetrics::default(),
             per_user_metrics: HashMap::new(),
             frozen: false,
-            events_disappear_after: None,
+            events_expire_after: None,
         };
 
         events.push_event(None, ChatEventInternal::DirectChatCreated(DirectChatCreated {}), 0, now);
@@ -88,7 +88,7 @@ impl ChatEvents {
             metrics: ChatMetrics::default(),
             per_user_metrics: HashMap::new(),
             frozen: false,
-            events_disappear_after: None,
+            events_expire_after: None,
         };
 
         events.push_event(
@@ -142,7 +142,7 @@ impl ChatEvents {
                 Some(message_index),
                 push_event_result.index,
                 args.correlation_id,
-                push_event_result.disappears_at,
+                push_event_result.expires_at,
                 args.now,
             );
         }
@@ -151,7 +151,7 @@ impl ChatEvents {
             index: push_event_result.index,
             timestamp: args.now,
             correlation_id: args.correlation_id,
-            disappears_at: push_event_result.disappears_at,
+            expires_at: push_event_result.expires_at,
             event: message,
         }
     }
@@ -184,7 +184,7 @@ impl ChatEvents {
                             None,
                             push_event_result.index,
                             args.correlation_id,
-                            self.get_disappears_at_date(false, args.now),
+                            self.expiry_date(false, args.now),
                             args.now,
                         );
                     }
@@ -213,7 +213,7 @@ impl ChatEvents {
                     None,
                     thread_events.last().index,
                     args.correlation_id,
-                    self.get_disappears_at_date(false, args.now),
+                    self.expiry_date(false, args.now),
                     args.now,
                 );
             }
@@ -236,7 +236,7 @@ impl ChatEvents {
                     None,
                     thread_events.last().index,
                     args.correlation_id,
-                    self.get_disappears_at_date(false, args.now),
+                    self.expiry_date(false, args.now),
                     args.now,
                 );
             }
@@ -373,7 +373,7 @@ impl ChatEvents {
                                 None,
                                 push_event_result.index,
                                 args.correlation_id,
-                                self.get_disappears_at_date(false, args.now),
+                                self.expiry_date(false, args.now),
                                 args.now,
                             );
                         }
@@ -545,7 +545,7 @@ impl ChatEvents {
                     None,
                     push_event_result.index,
                     args.correlation_id,
-                    self.get_disappears_at_date(false, args.now),
+                    self.expiry_date(false, args.now),
                     args.now,
                 );
             }
@@ -596,7 +596,7 @@ impl ChatEvents {
                     None,
                     push_event_result.index,
                     args.correlation_id,
-                    self.get_disappears_at_date(false, args.now),
+                    self.expiry_date(false, args.now),
                     args.now,
                 );
             }
@@ -634,7 +634,7 @@ impl ChatEvents {
             panic!("Event type is not valid: {event:?}");
         }
 
-        let disappears_at = self.get_disappears_at_date(thread_root_message_index.is_some(), now);
+        let expires_at = self.expiry_date(thread_root_message_index.is_some(), now);
 
         let events_list = if let Some(root_message_index) = thread_root_message_index {
             self.threads.get_mut(&root_message_index).unwrap()
@@ -653,12 +653,12 @@ impl ChatEvents {
 
         event.add_to_metrics(&mut self.metrics, &mut self.per_user_metrics, deleted_message_sender, now);
 
-        let index = events_list.push_event(event, correlation_id, disappears_at, now);
+        let index = events_list.push_event(event, correlation_id, expires_at, now);
 
         PushEventResult {
             index,
             timestamp: now,
-            disappears_at,
+            expires_at,
         }
     }
 
@@ -882,11 +882,11 @@ impl ChatEvents {
             .and_then(|e| e.event.as_message_mut())
     }
 
-    fn get_disappears_at_date(&self, is_thread_event: bool, now: TimestampMillis) -> Option<TimestampMillis> {
+    fn expiry_date(&self, is_thread_event: bool, now: TimestampMillis) -> Option<TimestampMillis> {
         if is_thread_event {
             None
         } else {
-            self.events_disappear_after.map(|d| now + d)
+            self.events_expire_after.map(|d| now + d)
         }
     }
 }

@@ -14,9 +14,9 @@ export const idlFactory = ({ IDL }) => {
   const EventIndex = IDL.Nat32;
   const TimestampMillis = IDL.Nat64;
   const PushEventResult = IDL.Record({
-    'disappears_at' : IDL.Opt(TimestampMillis),
     'timestamp' : TimestampMillis,
     'index' : EventIndex,
+    'expires_at' : IDL.Opt(TimestampMillis),
   });
   const AddReactionResponse = IDL.Variant({
     'MessageNotFound' : IDL.Null,
@@ -613,11 +613,11 @@ export const idlFactory = ({ IDL }) => {
     'ParticipantsAdded' : ParticipantsAdded,
   });
   const ChatEventWrapper = IDL.Record({
-    'disappears_at' : IDL.Opt(TimestampMillis),
     'event' : ChatEvent,
     'timestamp' : TimestampMillis,
     'index' : EventIndex,
     'correlation_id' : IDL.Nat64,
+    'expires_at' : IDL.Opt(TimestampMillis),
   });
   const EventsSuccessResult = IDL.Record({
     'affected_events' : IDL.Vec(ChatEventWrapper),
@@ -686,11 +686,11 @@ export const idlFactory = ({ IDL }) => {
     'reactions' : IDL.Nat64,
   });
   const MessageEventWrapper = IDL.Record({
-    'disappears_at' : IDL.Opt(TimestampMillis),
     'event' : Message,
     'timestamp' : TimestampMillis,
     'index' : EventIndex,
     'correlation_id' : IDL.Nat64,
+    'expires_at' : IDL.Opt(TimestampMillis),
   });
   const DirectChatSummary = IDL.Record({
     'read_by_them_up_to' : IDL.Opt(MessageIndex),
@@ -922,19 +922,19 @@ export const idlFactory = ({ IDL }) => {
     'TextTooLong' : IDL.Nat32,
     'TransferLimitExceeded' : IDL.Nat,
     'TransferSuccessV2' : IDL.Record({
-      'disappears_at' : IDL.Opt(TimestampMillis),
       'timestamp' : TimestampMillis,
       'chat_id' : ChatId,
       'event_index' : EventIndex,
       'transfer' : CompletedCryptoTransaction,
+      'expires_at' : IDL.Opt(TimestampMillis),
       'message_index' : MessageIndex,
     }),
     'TransferCannotBeZero' : IDL.Null,
     'Success' : IDL.Record({
-      'disappears_at' : IDL.Opt(TimestampMillis),
       'timestamp' : TimestampMillis,
       'chat_id' : ChatId,
       'event_index' : EventIndex,
+      'expires_at' : IDL.Opt(TimestampMillis),
       'message_index' : MessageIndex,
     }),
     'MessageEmpty' : IDL.Null,
@@ -995,10 +995,10 @@ export const idlFactory = ({ IDL }) => {
     'ChatFrozen' : IDL.Null,
     'TransferCannotBeZero' : IDL.Null,
     'Success' : IDL.Record({
-      'disappears_at' : IDL.Opt(TimestampMillis),
       'timestamp' : TimestampMillis,
       'event_index' : EventIndex,
       'transfer' : CompletedCryptoTransaction,
+      'expires_at' : IDL.Opt(TimestampMillis),
       'message_index' : MessageIndex,
     }),
     'RecipientBlocked' : IDL.Null,
