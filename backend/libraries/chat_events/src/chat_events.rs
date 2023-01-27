@@ -2,8 +2,8 @@ use crate::*;
 use ::types::{
     ChatFrozen, ChatId, ChatMetrics, ChatUnfrozen, DeletedBy, DirectChatCreated, EventIndex, EventWrapper,
     GroupCanisterThreadDetails, GroupChatCreated, Mention, MentionInternal, Message, MessageContent, MessageContentInternal,
-    MessageId, MessageIndex, MessageMatch, PollVoteRegistered, PollVotes, ProposalStatusUpdate, Reaction, RegisterVoteResult,
-    ReplyContext, TimestampMillis, UserId, VoteOperation,
+    MessageId, MessageIndex, MessageMatch, Milliseconds, PollVoteRegistered, PollVotes, ProposalStatusUpdate, PushEventResult,
+    Reaction, RegisterVoteResult, ReplyContext, TimestampMillis, UserId, VoteOperation,
 };
 use itertools::Itertools;
 use search::{Document, Query};
@@ -22,6 +22,7 @@ pub struct ChatEvents {
     metrics: ChatMetrics,
     per_user_metrics: HashMap<UserId, ChatMetrics>,
     frozen: bool,
+    events_disappear_after: Option<Milliseconds>,
 }
 
 #[derive(Deserialize)]
@@ -49,6 +50,7 @@ impl From<ChatEventsOld> for ChatEvents {
             metrics: value.metrics,
             per_user_metrics: value.per_user_metrics,
             frozen: value.frozen,
+            events_disappear_after: None,
         }
     }
 }
@@ -63,6 +65,7 @@ impl ChatEvents {
             metrics: ChatMetrics::default(),
             per_user_metrics: HashMap::new(),
             frozen: false,
+            events_disappear_after: None,
         };
 
         events.push_event(None, ChatEventInternal::DirectChatCreated(DirectChatCreated {}), 0, now);
@@ -85,6 +88,7 @@ impl ChatEvents {
             metrics: ChatMetrics::default(),
             per_user_metrics: HashMap::new(),
             frozen: false,
+            events_disappear_after: None,
         };
 
         events.push_event(
@@ -124,7 +128,7 @@ impl ChatEvents {
         };
         let message = message_internal.hydrate(Some(message_internal.sender));
 
-        let event_index = self.push_event(
+        let push_event_result = self.push_event(
             args.thread_root_message_index,
             ChatEventInternal::Message(Box::new(message_internal)),
             args.correlation_id,
@@ -136,16 +140,18 @@ impl ChatEvents {
                 root_message_index,
                 args.sender,
                 Some(message_index),
-                event_index,
+                push_event_result.index,
                 args.correlation_id,
+                push_event_result.disappears_at,
                 args.now,
             );
         }
 
         EventWrapper {
-            index: event_index,
+            index: push_event_result.index,
             timestamp: args.now,
             correlation_id: args.correlation_id,
+            disappears_at: push_event_result.disappears_at,
             event: message,
         }
     }
@@ -161,7 +167,7 @@ impl ChatEvents {
                     message.content = args.content.new_content_into_internal();
                     message.last_updated = Some(args.now);
                     message.last_edited = Some(args.now);
-                    let event_index = self.push_event(
+                    let push_event_result = self.push_event(
                         args.thread_root_message_index,
                         ChatEventInternal::MessageEdited(Box::new(UpdatedMessageInternal {
                             updated_by: args.sender,
@@ -176,8 +182,9 @@ impl ChatEvents {
                             root_message_index,
                             args.sender,
                             None,
-                            event_index,
+                            push_event_result.index,
                             args.correlation_id,
+                            self.get_disappears_at_date(false, args.now),
                             args.now,
                         );
                     }
@@ -206,6 +213,7 @@ impl ChatEvents {
                     None,
                     thread_events.last().index,
                     args.correlation_id,
+                    self.get_disappears_at_date(false, args.now),
                     args.now,
                 );
             }
@@ -228,6 +236,7 @@ impl ChatEvents {
                     None,
                     thread_events.last().index,
                     args.correlation_id,
+                    self.get_disappears_at_date(false, args.now),
                     args.now,
                 );
             }
@@ -354,15 +363,17 @@ impl ChatEvents {
                             })),
                         };
                         let votes = p.hydrate(Some(args.user_id)).votes;
-                        let event_index = self.push_event(args.thread_root_message_index, event, args.correlation_id, args.now);
+                        let push_event_result =
+                            self.push_event(args.thread_root_message_index, event, args.correlation_id, args.now);
 
                         if let Some(root_message_index) = args.thread_root_message_index {
                             self.main.update_thread_summary(
                                 root_message_index,
                                 args.user_id,
                                 None,
-                                event_index,
+                                push_event_result.index,
                                 args.correlation_id,
+                                self.get_disappears_at_date(false, args.now),
                                 args.now,
                             );
                         }
@@ -517,7 +528,7 @@ impl ChatEvents {
 
             message.last_updated = Some(args.now);
 
-            let new_event_index = self.push_event(
+            let push_event_result = self.push_event(
                 args.thread_root_message_index,
                 ChatEventInternal::MessageReactionAdded(Box::new(UpdatedMessageInternal {
                     updated_by: args.user_id,
@@ -532,13 +543,14 @@ impl ChatEvents {
                     root_message_index,
                     args.user_id,
                     None,
-                    new_event_index,
+                    push_event_result.index,
                     args.correlation_id,
+                    self.get_disappears_at_date(false, args.now),
                     args.now,
                 );
             }
 
-            AddRemoveReactionResult::Success(new_event_index)
+            AddRemoveReactionResult::Success(push_event_result)
         } else {
             AddRemoveReactionResult::MessageNotFound
         }
@@ -567,7 +579,7 @@ impl ChatEvents {
 
             message.last_updated = Some(args.now);
 
-            let new_event_index = self.push_event(
+            let push_event_result = self.push_event(
                 args.thread_root_message_index,
                 ChatEventInternal::MessageReactionRemoved(Box::new(UpdatedMessageInternal {
                     updated_by: args.user_id,
@@ -582,13 +594,14 @@ impl ChatEvents {
                     root_message_index,
                     args.user_id,
                     None,
-                    new_event_index,
+                    push_event_result.index,
                     args.correlation_id,
+                    self.get_disappears_at_date(false, args.now),
                     args.now,
                 );
             }
 
-            AddRemoveReactionResult::Success(new_event_index)
+            AddRemoveReactionResult::Success(push_event_result)
         } else {
             AddRemoveReactionResult::MessageNotFound
         }
@@ -601,7 +614,7 @@ impl ChatEvents {
         event: ChatEventInternal,
         correlation_id: u64,
         now: TimestampMillis,
-    ) -> EventIndex {
+    ) -> PushEventResult {
         if self.frozen {
             // We should never hit this because if the chat is frozen it should be handled earlier,
             // this is just here as a safety net.
@@ -621,6 +634,8 @@ impl ChatEvents {
             panic!("Event type is not valid: {event:?}");
         }
 
+        let disappears_at = self.get_disappears_at_date(thread_root_message_index.is_some(), now);
+
         let events_list = if let Some(root_message_index) = thread_root_message_index {
             self.threads.get_mut(&root_message_index).unwrap()
         } else {
@@ -638,7 +653,13 @@ impl ChatEvents {
 
         event.add_to_metrics(&mut self.metrics, &mut self.per_user_metrics, deleted_message_sender, now);
 
-        events_list.push_event(event, correlation_id, now)
+        let index = events_list.push_event(event, correlation_id, disappears_at, now);
+
+        PushEventResult {
+            index,
+            timestamp: now,
+            disappears_at,
+        }
     }
 
     pub fn search_messages(
@@ -678,7 +699,7 @@ impl ChatEvents {
             .collect()
     }
 
-    pub fn push_main_event(&mut self, event: ChatEventInternal, correlation_id: u64, now: TimestampMillis) -> EventIndex {
+    pub fn push_main_event(&mut self, event: ChatEventInternal, correlation_id: u64, now: TimestampMillis) -> PushEventResult {
         self.push_event(None, event, correlation_id, now)
     }
 
@@ -761,8 +782,8 @@ impl ChatEvents {
             .collect()
     }
 
-    pub fn freeze(&mut self, user_id: UserId, reason: Option<String>, now: TimestampMillis) -> EventIndex {
-        let event_index = self.push_event(
+    pub fn freeze(&mut self, user_id: UserId, reason: Option<String>, now: TimestampMillis) -> PushEventResult {
+        let push_event_result = self.push_event(
             None,
             ChatEventInternal::ChatFrozen(Box::new(ChatFrozen {
                 frozen_by: user_id,
@@ -772,10 +793,10 @@ impl ChatEvents {
             now,
         );
         self.frozen = true;
-        event_index
+        push_event_result
     }
 
-    pub fn unfreeze(&mut self, user_id: UserId, now: TimestampMillis) -> EventIndex {
+    pub fn unfreeze(&mut self, user_id: UserId, now: TimestampMillis) -> PushEventResult {
         self.frozen = false;
         self.push_event(
             None,
@@ -859,6 +880,14 @@ impl ChatEvents {
         events_list
             .get_mut(event_key, min_visible_event_index)
             .and_then(|e| e.event.as_message_mut())
+    }
+
+    fn get_disappears_at_date(&self, is_thread_event: bool, now: TimestampMillis) -> Option<TimestampMillis> {
+        if is_thread_event {
+            None
+        } else {
+            self.events_disappear_after.map(|d| now + d)
+        }
     }
 }
 
@@ -988,7 +1017,7 @@ pub struct AddRemoveReactionArgs {
 }
 
 pub enum AddRemoveReactionResult {
-    Success(EventIndex),
+    Success(PushEventResult),
     NoChange,
     MessageNotFound,
 }

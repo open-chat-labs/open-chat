@@ -55,11 +55,11 @@ pub async fn process_new_joiner_reward(
         }
         Ok(Err(error)) => {
             error!(?user_id, ?amount, ?error, "Unable to transfer user reward");
-            mutate_state(|state| update_status(&user_id, NewJoinerRewardStatus::Failed(format!("{:?}", error)), state));
+            mutate_state(|state| update_status(&user_id, NewJoinerRewardStatus::Failed(format!("{error:?}")), state));
         }
         Err(error) => {
             error!(?user_id, ?amount, ?error, "Unable to transfer user reward");
-            mutate_state(|state| update_status(&user_id, NewJoinerRewardStatus::Failed(format!("{:?}", error)), state));
+            mutate_state(|state| update_status(&user_id, NewJoinerRewardStatus::Failed(format!("{error:?}")), state));
         }
     }
 }

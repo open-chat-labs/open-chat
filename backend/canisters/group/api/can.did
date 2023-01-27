@@ -18,6 +18,7 @@ type SendMessageResponse =
             message_index: MessageIndex;
             event_index: EventIndex;
             timestamp: TimestampMillis;
+            disappears_at: opt TimestampMillis;
         };
         MessageEmpty;
         TextTooLong: nat32;
@@ -113,6 +114,7 @@ type AddReactionArgs =
 type AddReactionResponse =
     variant {
         Success: EventIndex;
+        SuccessV2: PushEventResult;
         NoChange;
         InvalidReaction;
         MessageNotFound;
@@ -133,6 +135,7 @@ type RemoveReactionArgs =
 type RemoveReactionResponse =
     variant {
         Success: EventIndex;
+        SuccessV2: PushEventResult;
         NoChange;
         MessageNotFound;
         CallerNotInGroup;
@@ -361,21 +364,9 @@ type PinMessageArgs =
         correlation_id: nat64;
     };
 
-type PinMessageResponse =
-    variant {
-        Success: EventIndex;
-        NoChange;
-        MessageIndexOutOfRange;
-        NotAuthorized;
-        CallerNotInGroup;
-        MessageNotFound;
-        UserSuspended;
-        ChatFrozen;
-    };
-
 type PinMessageV2Response =
     variant {
-        Success: EventResult;
+        Success: PushEventResult;
         NoChange;
         MessageIndexOutOfRange;
         NotAuthorized;
@@ -394,6 +385,7 @@ type UnpinMessageArgs =
 type UnpinMessageResponse =
     variant {
         Success: EventIndex;
+        SuccessV2: PushEventResult;
         NoChange;
         NotAuthorized;
         CallerNotInGroup;
@@ -682,7 +674,6 @@ service: {
     unblock_user: (UnblockUserArgs) -> (UnblockUserResponse); // public only
     remove_participant: (RemoveParticipantArgs) -> (RemoveParticipantResponse);
     update_group_v2: (UpdateGroupV2Args) -> (UpdateGroupV2Response);
-    pin_message: (PinMessageArgs) -> (PinMessageResponse);
     pin_message_v2: (PinMessageArgs) -> (PinMessageV2Response);
     unpin_message: (UnpinMessageArgs) -> (UnpinMessageResponse);
     change_role: (ChangeRoleArgs) -> (ChangeRoleResponse);

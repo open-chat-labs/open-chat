@@ -123,6 +123,7 @@ type DirectChatEventWrapper =
         index: EventIndex;
         timestamp: TimestampMillis;
         correlation_id: nat64;
+        disappears_at: opt TimestampMillis;
         event: ChatEvent;
     };
 
@@ -243,6 +244,7 @@ type ChatEventWrapper =
         index: EventIndex;
         timestamp: TimestampMillis;
         correlation_id: nat64;
+        disappears_at: opt TimestampMillis;
         event: ChatEvent;
     };
 
@@ -426,6 +428,7 @@ type MessageEventWrapper =
         index: EventIndex;
         timestamp: TimestampMillis;
         correlation_id: nat64;
+        disappears_at: opt TimestampMillis;
         event: Message;
     };
 
@@ -1155,8 +1158,9 @@ type ChatUnfrozen =
         unfrozen_by: UserId;
     };
 
-type EventResult =
+type PushEventResult =
     record {
         index: EventIndex;
         timestamp: TimestampMillis;
+        disappears_at: opt TimestampMillis;
     };

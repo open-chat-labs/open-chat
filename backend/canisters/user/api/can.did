@@ -19,12 +19,14 @@ type SendMessageResponse =
             event_index: EventIndex;
             message_index: MessageIndex;
             timestamp: TimestampMillis;
+            disappears_at: opt TimestampMillis;
         };
         TransferSuccessV2: record {
             chat_id: ChatId;
             event_index: EventIndex;
             message_index: MessageIndex;
             timestamp: TimestampMillis;
+            disappears_at: opt TimestampMillis;
             transfer: CompletedCryptoTransaction;
         };
         MessageEmpty;
@@ -103,6 +105,7 @@ type AddReactionArgs =
 type AddReactionResponse =
     variant {
         Success: EventIndex;
+        SuccessV2: PushEventResult;
         NoChange;
         InvalidReaction;
         MessageNotFound;
@@ -122,6 +125,7 @@ type RemoveReactionArgs =
 type RemoveReactionResponse =
     variant {
         Success: EventIndex;
+        SuccessV2: PushEventResult;
         NoChange;
         MessageNotFound;
         ChatNotFound;
@@ -367,6 +371,7 @@ type TransferCryptoWithinGroupResponse =
             event_index: EventIndex;
             message_index: MessageIndex;
             timestamp: TimestampMillis;
+            disappears_at: opt TimestampMillis;
             transfer: CompletedCryptoTransaction;
         };
         TextTooLong: nat32;

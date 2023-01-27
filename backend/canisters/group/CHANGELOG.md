@@ -5,6 +5,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Added `disappears_at` to events ([#3021](https://github.com/open-ic/open-chat/pull/3021)) (website must be released first)
+
+### Changed
+
+- Refactor and simplify `chat_events` ([#3013](https://github.com/open-ic/open-chat/pull/3013))
+- Mark group as active after ending a poll ([#3017](https://github.com/open-ic/open-chat/pull/3017))
+
 ### Removed
 
 - Removed code only needed for the previous upgrade ([#3003](https://github.com/open-ic/open-chat/pull/3003))

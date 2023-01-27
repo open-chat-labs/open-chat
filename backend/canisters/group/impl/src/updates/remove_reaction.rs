@@ -40,9 +40,9 @@ fn remove_reaction_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
             correlation_id: args.correlation_id,
             now,
         }) {
-            AddRemoveReactionResult::Success(e) => {
+            AddRemoveReactionResult::Success(r) => {
                 handle_activity_notification(runtime_state);
-                Success(e)
+                SuccessV2(r)
             }
             AddRemoveReactionResult::NoChange => NoChange,
             AddRemoveReactionResult::MessageNotFound => MessageNotFound,

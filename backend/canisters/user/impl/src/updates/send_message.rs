@@ -34,7 +34,7 @@ async fn send_message(mut args: Args) -> Response {
                 Ok(local_user_index_canister::c2c_lookup_user::Response::Success(result)) if result.is_bot => UserType::Bot,
                 Ok(local_user_index_canister::c2c_lookup_user::Response::Success(_)) => UserType::User,
                 Ok(local_user_index_canister::c2c_lookup_user::Response::UserNotFound) => return RecipientNotFound,
-                Err(error) => return InternalError(format!("{:?}", error)),
+                Err(error) => return InternalError(format!("{error:?}")),
             }
         }
     };
@@ -209,6 +209,7 @@ fn send_message_impl(
             event_index: message_event.index,
             message_index: message_event.event.message_index,
             timestamp: now,
+            disappears_at: message_event.disappears_at,
             transfer,
         })
     } else {
@@ -217,6 +218,7 @@ fn send_message_impl(
             event_index: message_event.index,
             message_index: message_event.event.message_index,
             timestamp: now,
+            disappears_at: message_event.disappears_at,
         })
     }
 }

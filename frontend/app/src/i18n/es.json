@@ -472,7 +472,8 @@
         "icp": "Internet computadora",
         "btc": "Bitcoin",
         "chat": "Conversación abierta",
-        "sns1": "SNS-1"
+        "sns1": "SNS-1",
+        "max": "máx."
     },
     "cryptoAccount": {
         "manage": "Administrar",
