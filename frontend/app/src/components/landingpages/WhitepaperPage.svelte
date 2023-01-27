@@ -584,26 +584,32 @@
                 title="Initial token allocation"
                 originalWidth={730}
                 originalHeight={380}
-                src="https://docs.google.com/spreadsheets/d/e/2PACX-1vTR-Snm-_Eq_UcQ5ClcdjGTLg4UOyvUl04rZXpY1W0n_yLuKJkANs-umrNS4F469qZoI17w1Nci08Sf/pubchart?oid=368502713&amp;format=interactive&amp;w=1000px" />
+                src="https://docs.google.com/spreadsheets/d/e/2PACX-1vQHVsuUj8dXoL4nm2IOpy71_I-JPhprdlkdKiztWFyN4kLxXhhaFZMfG6dY5zGzwW_bQiP5OyDN2wU_/pubchart?oid=193426735&format=interactive" />
             <HashLinkTarget on:copyUrl={onCopyUrl} id="5-1-1"
-                >NNS controlled (yellow)</HashLinkTarget>
+                >Decentralization sale (yellow)</HashLinkTarget>
             <p>
-                The NNS will initially be allocated 29% of the total supply of CHAT tokens. 20% will
-                be immediately put up for sale to decentralize the governance and raise funds. The
-                remaining 9% will be held in reserve until some future time when there would be a
-                subsequent NNS proposal to either sell the reserve or burn it.
+                25% of the total supply will be put up for sale to decentralize the governance 
+                and raise funds for the SNS. The maximum that can be raised will be configured 
+                to 1,000,000 ICP and the minimum to 500,000 ICP.
             </p>
-
-            <p class="blurb">
+            <p>
+                We are asking for 333,333 ICP from the Community Fund (CF) and so hope to raise
+                the remaining 666,667 ICP from decentralization sale participants.
+            </p>
+            <p>
                 Participants in the decentralization sale will deposit ICP into the SNS and once the
                 sale has completed they will receive the same proportion of CHAT tokens as their
                 share of the ICP deposited. Each participant will receive their CHAT as a basket of
-                13 equal value neurons. The first neuron will have a zero dissolve delay and so be
-                immediately disbursable to liquid CHAT tokens. Each subsequent neuron will have a
-                dissolve delay one month greater than the previous, so from 1-12 months.
+                5 equal value neurons. The first neuron will have a zero dissolve delay and so be
+                immediately disbursable to liquid CHAT tokens. The other neurons will have dissolve
+                delays of 3 months, 6 months, 9 months and 12 months respectively.
+            </p>
+            <p>
+                Each Community Fund participant will also receive their share of tokens as a basket 
+                of 5 neurons with the same configuration.
             </p>
             <HashLinkTarget on:copyUrl={onCopyUrl} id="5-1-2"
-                >Founders and funders (pink)</HashLinkTarget>
+                >Founders and funders (purple)</HashLinkTarget>
             <p>
                 OpenChat has been built by a team of 3 developers since January 2021 and has
                 received seed funding from the <ExternalLink href="https://dfinity.org/"
@@ -971,7 +977,7 @@
             </ul>
             <p>
                 The full model used to plot this graph can be found in <ExternalLink
-                    href="https://docs.google.com/spreadsheets/d/1-LuBsCXxXdpia0-CDEY5eFveczp3eQdM3BponEX3Tq0/edit#gid=1167954061"
+                    href="https://docs.google.com/spreadsheets/d/17iPPf3BgI2QKEXwK0lJYHlJmgPZtNvBxO8cgZfjZz8o"
                     >this spreadsheet</ExternalLink
                 >.
             </p>
