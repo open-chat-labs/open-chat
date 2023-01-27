@@ -45,7 +45,7 @@ pub struct DirectChatSummary {
     pub my_metrics: ChatMetrics,
     pub archived: bool,
     #[serde(default)]
-    pub events_ttl: Option<Millisecnds>,
+    pub events_ttl: Option<Milliseconds>,
 }
 
 impl DirectChatSummary {

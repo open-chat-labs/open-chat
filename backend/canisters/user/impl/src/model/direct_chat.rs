@@ -90,6 +90,7 @@ impl DirectChat {
             metrics: self.events.metrics().clone(),
             my_metrics: self.events.user_metrics(&my_user_id, None).cloned().unwrap_or_default(),
             archived: self.archived.value,
+            events_ttl: self.events.get_events_time_to_live().value,
         }
     }
 
