@@ -320,6 +320,7 @@ type UpdateGroupV2Args =
         rules: opt GroupRules;
         avatar: AvatarUpdate;
         permissions: opt OptionalGroupPermissions;
+        events_ttl: EventsTimeToLiveUpdate;
         correlation_id: nat64;
     };
 
@@ -356,6 +357,13 @@ type OptionalGroupPermissions =
         send_messages: opt PermissionRole;
         react_to_messages: opt PermissionRole;
         reply_in_thread: opt PermissionRole;
+    };
+
+type EventsTimeToLiveUpdate =
+    variant {
+        NoChange;
+        SetToNone;
+        SetToSome: Milliseconds;
     };
 
 type PinMessageArgs =

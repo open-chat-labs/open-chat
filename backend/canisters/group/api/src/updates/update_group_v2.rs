@@ -4,7 +4,7 @@ use types::{
     Avatar, FieldTooLongResult, FieldTooShortResult, GroupRules, Milliseconds, OptionUpdate, OptionalGroupPermissions,
 };
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Debug, Default)]
 pub struct Args {
     pub name: Option<String>,
     pub description: Option<String>,

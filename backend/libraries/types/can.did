@@ -237,6 +237,7 @@ type ChatEvent =
         GroupRulesChanged: GroupRulesChanged;
         ChatFrozen: ChatFrozen;
         ChatUnfrozen: ChatUnfrozen;
+        EventsTimeToLiveUpdated: EventsTimeToLiveUpdated;
     };
 
 type ChatEventWrapper =
@@ -1156,6 +1157,12 @@ type ChatFrozen =
 type ChatUnfrozen =
     record {
         unfrozen_by: UserId;
+    };
+
+type EventsTimeToLiveUpdated =
+    record {
+        updated_by: UserId;
+        new_ttl: opt Milliseconds;
     };
 
 type PushEventResult =

@@ -22,6 +22,7 @@ generate_update_call!(remove_reaction);
 generate_update_call!(send_message);
 generate_update_call!(undelete_messages);
 generate_update_call!(unpin_message);
+generate_update_call!(update_group_v2);
 
 pub mod happy_path {
     use crate::rng::random_message_id;
