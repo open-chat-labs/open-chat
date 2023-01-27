@@ -2,11 +2,12 @@ use crate::activity_notifications::handle_activity_notification;
 use crate::mutate_state;
 use canister_timer_jobs::Job;
 use serde::{Deserialize, Serialize};
-use types::{MessageId, MessageIndex};
+use types::{BlobReference, MessageId, MessageIndex};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum TimerJob {
     HardDeleteMessageContent(HardDeleteMessageContentJob),
+    DeleteFileReferences(DeleteFileReferencesJob),
     EndPoll(EndPollJob),
 }
 
@@ -14,6 +15,11 @@ pub enum TimerJob {
 pub struct HardDeleteMessageContentJob {
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_id: MessageId,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+pub struct DeleteFileReferencesJob {
+    pub files: Vec<BlobReference>,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -26,6 +32,7 @@ impl Job for TimerJob {
     fn execute(&self) {
         match self {
             TimerJob::HardDeleteMessageContent(job) => job.execute(),
+            TimerJob::DeleteFileReferences(job) => job.execute(),
             TimerJob::EndPoll(job) => job.execute(),
         }
     }
@@ -44,10 +51,24 @@ impl Job for HardDeleteMessageContentJob {
             {
                 let files_to_delete = content.blob_references();
                 if !files_to_delete.is_empty() {
+                    // If there was already a job queued up to delete these files, cancel it
+                    state.data.timer_jobs.cancel_jobs(|job| {
+                        if let TimerJob::DeleteFileReferences(j) = job {
+                            j.files.iter().all(|f| files_to_delete.contains(f))
+                        } else {
+                            false
+                        }
+                    });
                     ic_cdk::spawn(open_storage_bucket_client::delete_files(files_to_delete));
                 }
             }
         });
+    }
+}
+
+impl Job for DeleteFileReferencesJob {
+    fn execute(&self) {
+        ic_cdk::spawn(open_storage_bucket_client::delete_files(self.files.clone()));
     }
 }
 

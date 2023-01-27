@@ -388,7 +388,7 @@ pub struct DeletedBy {
     pub timestamp: TimestampMillis,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct BlobReference {
     pub canister_id: CanisterId,
     pub blob_id: u128,

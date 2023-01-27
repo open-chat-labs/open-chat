@@ -2,7 +2,7 @@ use crate::updates::send_message::send_to_recipients_canister;
 use crate::{mutate_state, read_state};
 use canister_timer_jobs::Job;
 use serde::{Deserialize, Serialize};
-use types::{ChatId, MessageContent, MessageId, MessageIndex, UserId};
+use types::{BlobReference, ChatId, MessageContent, MessageId, MessageIndex, UserId};
 use user_canister::c2c_send_messages;
 use user_canister::c2c_send_messages::SendMessageArgs;
 
@@ -11,6 +11,7 @@ pub enum TimerJob {
     RetrySendingFailedMessage(Box<RetrySendingFailedMessageJob>),
     RetrySendingFailedMessages(Box<RetrySendingFailedMessagesJob>),
     HardDeleteMessageContent(Box<HardDeleteMessageContentJob>),
+    DeleteFileReferences(DeleteFileReferencesJob),
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -34,12 +35,18 @@ pub struct HardDeleteMessageContentJob {
     pub delete_files: bool,
 }
 
+#[derive(Serialize, Deserialize, Clone)]
+pub struct DeleteFileReferencesJob {
+    pub files: Vec<BlobReference>,
+}
+
 impl Job for TimerJob {
     fn execute(&self) {
         match self {
             TimerJob::RetrySendingFailedMessage(job) => job.execute(),
             TimerJob::RetrySendingFailedMessages(job) => job.execute(),
             TimerJob::HardDeleteMessageContent(job) => job.execute(),
+            TimerJob::DeleteFileReferences(job) => job.execute(),
         }
     }
 }
@@ -94,11 +101,25 @@ impl Job for HardDeleteMessageContentJob {
                 if self.delete_files {
                     let files_to_delete = content.blob_references();
                     if !files_to_delete.is_empty() {
+                        // If there was already a job queued up to delete these files, cancel it
+                        state.data.timer_jobs.cancel_jobs(|job| {
+                            if let TimerJob::DeleteFileReferences(j) = job {
+                                j.files.iter().all(|f| files_to_delete.contains(f))
+                            } else {
+                                false
+                            }
+                        });
                         ic_cdk::spawn(open_storage_bucket_client::delete_files(files_to_delete));
                     }
                 }
             }
         });
+    }
+}
+
+impl Job for DeleteFileReferencesJob {
+    fn execute(&self) {
+        ic_cdk::spawn(open_storage_bucket_client::delete_files(self.files.clone()));
     }
 }
 

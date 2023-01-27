@@ -1,6 +1,6 @@
 use crate::*;
 use ::types::{
-    BlobReference, ChatFrozen, ChatId, ChatMetrics, ChatUnfrozen, DeletedBy, DirectChatCreated, EventIndex, EventWrapper,
+    ChatFrozen, ChatId, ChatMetrics, ChatUnfrozen, DeletedBy, DirectChatCreated, EventIndex, EventWrapper,
     EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupChatCreated, Mention, MentionInternal, Message, MessageContent,
     MessageContentInternal, MessageId, MessageIndex, MessageMatch, Milliseconds, PollVoteRegistered, PollVotes,
     ProposalStatusUpdate, PushEventResult, PushIfNotContains, Reaction, RegisterVoteResult, ReplyContext, ThreadSummary,
@@ -11,7 +11,7 @@ use search::{Document, Query};
 use serde::{Deserialize, Serialize};
 use std::cmp::Reverse;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
-use std::collections::{BTreeMap, BinaryHeap, HashMap};
+use std::collections::{BinaryHeap, HashMap};
 use types::Timestamped;
 
 #[derive(Serialize, Deserialize)]
@@ -25,8 +25,7 @@ pub struct ChatEvents {
     per_user_metrics: HashMap<UserId, ChatMetrics>,
     frozen: bool,
     events_ttl: Timestamped<Option<Milliseconds>>,
-    event_expiry_dates: BinaryHeap<EventExpiryDate>,
-    files_to_delete: BTreeMap<TimestampMillis, Vec<BlobReference>>,
+    event_expiry_dates: BinaryHeap<Reverse<EventExpiryDate>>,
 }
 
 #[derive(Deserialize)]
@@ -56,7 +55,6 @@ impl From<ChatEventsOld> for ChatEvents {
             frozen: value.frozen,
             events_ttl: Timestamped::default(),
             event_expiry_dates: BinaryHeap::new(),
-            files_to_delete: BTreeMap::new(),
         }
     }
 }
@@ -73,7 +71,6 @@ impl ChatEvents {
             frozen: false,
             events_ttl: Timestamped::new(events_ttl, now),
             event_expiry_dates: BinaryHeap::new(),
-            files_to_delete: BTreeMap::new(),
         };
 
         events.push_event(None, ChatEventInternal::DirectChatCreated(DirectChatCreated {}), 0, now);
@@ -99,7 +96,6 @@ impl ChatEvents {
             frozen: false,
             events_ttl: Timestamped::new(events_ttl, now),
             event_expiry_dates: BinaryHeap::new(),
-            files_to_delete: BTreeMap::new(),
         };
 
         events.push_event(
@@ -721,7 +717,8 @@ impl ChatEvents {
         let event_index = events_list.push_event(event, correlation_id, expires_at, now);
 
         if let Some(timestamp) = expires_at {
-            self.event_expiry_dates.push(EventExpiryDate { timestamp, event_index })
+            self.event_expiry_dates
+                .push(Reverse(EventExpiryDate { timestamp, event_index }))
         }
 
         self.remove_expired_events(now);
@@ -896,21 +893,16 @@ impl ChatEvents {
         )
     }
 
-    pub fn remove_expired_events(&mut self, now: TimestampMillis) {
+    fn remove_expired_events(&mut self, now: TimestampMillis) {
         while let Some(next) = self
             .event_expiry_dates
             .peek()
-            .map_or(false, |e| e.timestamp < now)
-            .then(|| self.event_expiry_dates.pop().unwrap())
+            .map_or(false, |e| e.0.timestamp < now)
+            .then(|| self.event_expiry_dates.pop().unwrap().0)
         {
             if let Some(event) = self.main.remove_expired_event(next.event_index) {
                 if let ChatEventInternal::Message(m) = event.event {
                     self.threads.remove(&m.message_index);
-
-                    let files_to_delete = m.content.blob_references();
-                    if !files_to_delete.is_empty() {
-                        self.files_to_delete.insert(now, files_to_delete);
-                    }
                 }
             }
         }

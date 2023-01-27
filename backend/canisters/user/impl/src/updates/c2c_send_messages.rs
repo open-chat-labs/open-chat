@@ -1,12 +1,14 @@
 use crate::guards::caller_is_known_bot;
+use crate::timer_job_types::{DeleteFileReferencesJob, TimerJob};
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update_msgpack;
+use canister_timer_jobs::TimerJobs;
 use canister_tracing_macros::trace;
 use chat_events::{PushMessageArgs, Reader};
 use ic_cdk_macros::update;
 use types::{
-    CanisterId, DirectMessageNotification, MessageContent, MessageId, MessageIndex, Notification, ReplyContext,
-    TimestampMillis, UserId,
+    BlobReference, CanisterId, DirectMessageNotification, EventWrapper, Message, MessageContent, MessageId, MessageIndex,
+    Notification, ReplyContext, TimestampMillis, UserId,
 };
 use user_canister::c2c_send_messages::{Response::*, *};
 
@@ -159,6 +161,8 @@ pub(crate) fn handle_message_impl(
     runtime_state: &mut RuntimeState,
 ) -> Response {
     let replies_to = convert_reply_context(args.replies_to, sender, args.now, runtime_state);
+    let content = args.content.new_content_into_internal();
+    let files = content.blob_references();
 
     let push_message_args = PushMessageArgs {
         thread_root_message_index: None,
@@ -166,7 +170,7 @@ pub(crate) fn handle_message_impl(
             .message_id
             .unwrap_or_else(|| MessageId::generate(|| runtime_state.env.random_u32())),
         sender,
-        content: args.content.new_content_into_internal(),
+        content,
         replies_to,
         forwarded: args.forwarding,
         correlation_id: args.correlation_id,
@@ -178,6 +182,8 @@ pub(crate) fn handle_message_impl(
             .data
             .direct_chats
             .push_message(false, sender, args.sender_message_index, push_message_args, args.is_bot);
+
+    register_timer_jobs(&message_event, files, args.now, &mut runtime_state.data.timer_jobs);
 
     if let Some(chat) = runtime_state.data.direct_chats.get_mut(&sender.into()) {
         if args.is_bot {
@@ -223,5 +229,22 @@ fn convert_reply_context(
             chat_id_if_other: Some(chat_id),
             event_index,
         }),
+    }
+}
+
+fn register_timer_jobs(
+    message_event: &EventWrapper<Message>,
+    file_references: Vec<BlobReference>,
+    now: TimestampMillis,
+    timer_jobs: &mut TimerJobs<TimerJob>,
+) {
+    if !file_references.is_empty() {
+        if let Some(expiry) = message_event.expires_at {
+            timer_jobs.enqueue_job(
+                TimerJob::DeleteFileReferences(DeleteFileReferencesJob { files: file_references }),
+                expiry,
+                now,
+            );
+        }
     }
 }
