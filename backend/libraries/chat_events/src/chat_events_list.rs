@@ -705,8 +705,8 @@ mod tests {
         push_events(&mut events, 1000); // These will expire at 2500
 
         let group1 = (0u32..=100).map(EventIndex::from).collect_vec();
-        let group2 = (101u32..=200).map(EventIndex::from).collect_vec();
-        let group3 = (201u32..=300).map(EventIndex::from).collect_vec();
+        let group2 = (101u32..=201).map(EventIndex::from).collect_vec();
+        let group3 = (202u32..=302).map(EventIndex::from).collect_vec();
 
         let events_reader1 = events.main_events_reader(1250);
         let expected1 = group1.iter().chain(group2.iter()).chain(group3.iter()).copied().collect_vec();
