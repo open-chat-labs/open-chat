@@ -35,6 +35,7 @@ fn disappearing_messages_in_group_chats() {
     );
 
     env.advance_time(Duration::from_millis(2000));
+    env.tick();
 
     assert!(
         client::group::happy_path::events_by_index(&env, &user1, group_id, vec![send_message_response1.event_index])
@@ -56,6 +57,7 @@ fn disappearing_messages_in_group_chats() {
     let send_message_response2 = client::group::happy_path::send_text_message(&mut env, &user1, group_id, "xyz", None);
 
     env.advance_time(Duration::from_secs(100000));
+    env.tick();
 
     assert!(
         client::group::happy_path::events_by_index(&env, &user1, group_id, vec![send_message_response2.event_index])
