@@ -56,7 +56,6 @@ impl<T: CandidType + Into<u32>> CandidType for RangeSet<T> {
         S: Serializer,
     {
         let vec: Vec<Range> = self.into();
-
         vec.idl_serialize(serializer)
     }
 }
@@ -67,7 +66,6 @@ impl<T: Into<u32>> Serialize for RangeSet<T> {
         S: serde::Serializer,
     {
         let vec: Vec<Range> = self.into();
-
         vec.serialize(serializer)
     }
 }
@@ -78,7 +76,6 @@ impl<'de, T: From<u32>> Deserialize<'de> for RangeSet<T> {
         D: Deserializer<'de>,
     {
         let vec: Vec<Range> = Vec::deserialize(deserializer)?;
-
         Ok(vec.into())
     }
 }
