@@ -43,6 +43,8 @@
     import InitialGroupMessage from "./InitialGroupMessage.svelte";
     import { pathParams } from "../../stores/routing";
     import { push } from "svelte-spa-router";
+    import { now } from "../../stores/time";
+    import { fade } from "svelte/transition";
 
     // todo - these thresholds need to be relative to screen height otherwise things get screwed up on (relatively) tall screens
     const MESSAGE_LOAD_THRESHOLD = 400;
@@ -446,8 +448,15 @@
 
     $: expandedDeletedMessages = client.expandedDeletedMessages;
 
+    $: nonExpiredEvents = events.filter((e) => $now - Number(e.timestamp) < 1000 * 30);
+
     $: groupedEvents = client
-        .groupEvents(events, user.userId, $expandedDeletedMessages, groupInner(filteredProposals))
+        .groupEvents(
+            nonExpiredEvents,
+            user.userId,
+            $expandedDeletedMessages,
+            groupInner(filteredProposals)
+        )
         .reverse();
 
     $: {

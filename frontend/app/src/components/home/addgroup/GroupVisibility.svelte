@@ -10,6 +10,11 @@
     export let candidateGroup: CandidateGroupChat;
     export let originalGroup: CandidateGroupChat;
     export let editing: boolean;
+    const durations: Duration[] = ["oneHour", "oneDay", "oneWeek"];
+    type Duration = "oneHour" | "oneDay" | "oneWeek";
+    let selectedDuration: Duration = "oneDay";
+
+    let disappearing = false;
 
     $: canMakePrivate =
         candidateGroup.chatId !== undefined
@@ -81,6 +86,30 @@
     </Checkbox>
 </div>
 
+<div class="section">
+    <Checkbox
+        id="disappearing"
+        label={"Disappearing Messages"}
+        on:change={() => (disappearing = !disappearing)}
+        align={"start"}
+        checked={disappearing}>
+        <div class="section-title">Disappearing Messages</div>
+        {#if disappearing}
+            <div class="info disappearing">
+                {#each durations as d}
+                    <Radio
+                        on:change={() => (selectedDuration = d)}
+                        value={d}
+                        checked={selectedDuration === d}
+                        id={`duration_${d}`}
+                        label={$_(`poll.${d}`)}
+                        group={"disappear_duration"} />
+                {/each}
+            </div>
+        {/if}
+    </Checkbox>
+</div>
+
 <style type="text/scss">
     .section {
         padding: $sp4 0;
@@ -90,6 +119,10 @@
     .info {
         @include font(book, normal, fs-80, 28);
         color: var(--txt-light);
+
+        &.disappearing {
+            @include font(book, normal, fs-80, 22);
+        }
     }
 
     .section-title {

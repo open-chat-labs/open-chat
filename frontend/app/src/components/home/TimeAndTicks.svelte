@@ -6,6 +6,7 @@
     import AlertCircleOutline from "svelte-material-icons/AlertCircleOutline.svelte";
     import CheckCircle from "svelte-material-icons/CheckCircle.svelte";
     import Pin from "svelte-material-icons/Pin.svelte";
+    import DisappearsAt from "./DisappearsAt.svelte";
     import { rtlStore } from "../../stores/rtl";
     import { _ } from "svelte-i18n";
     import type { OpenChat } from "openchat-client";
@@ -25,6 +26,7 @@
     export let dateFormatter: (date: Date) => string = client.toShortTimeString;
     export let deleted: boolean;
     export let undeleting: boolean;
+    export let expiry: bigint | undefined = BigInt(Date.now() + 1000 * 30);
 
     let iconColor = "#ffffff";
     let pinnedColor = crypto || me || fill ? "#ffffff" : "var(--txt)";
@@ -42,6 +44,11 @@
             <div class="confirming" />
         {/if}
     {:else}
+        {#if expiry !== undefined && confirmed}
+            <div class="disappears">
+                <DisappearsAt {timestamp} {expiry} />
+            </div>
+        {/if}
         {#if me}
             {#if confirmed}
                 <CheckCircle size={"0.9em"} color={iconColor} />
@@ -76,6 +83,7 @@
         align-items: center;
         float: right;
         margin-top: 7px;
+        gap: 5px;
         pointer-events: none;
 
         @include mobile() {
@@ -87,12 +95,16 @@
             float: left;
         }
 
+        .disappears {
+            pointer-events: all;
+        }
+
         .time {
-            margin: $sp1 $sp2 0 $sp3;
+            margin: $sp1 0 0 $sp3;
         }
 
         &.rtl .time {
-            margin: $sp1 $sp3 0 $sp2;
+            margin: $sp1 $sp3 0 0;
         }
 
         &.fill {

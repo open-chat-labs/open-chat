@@ -21,7 +21,6 @@
     .radio {
         display: flex;
         align-items: center;
-        margin-bottom: 10px;
         cursor: pointer;
         gap: $sp4;
 

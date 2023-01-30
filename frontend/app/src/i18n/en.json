@@ -680,5 +680,6 @@
     "deleteMessageAndReport": "Delete and report",
     "reason": "Reason",
     "expandDeletedMessages": "Expand deleted messages in this chat",
-    "revealDeletedMessage": "Reveal message"
+    "revealDeletedMessage": "Reveal message",
+    "disappearsIn": "Disappears {time}"
 }
