@@ -618,12 +618,12 @@
                 >. 
             </p> 
             <p>
-                Each founding developer will receive a share of 5% of the CHAT tokens as a basket 
+                Each founding developer will receive 5% of the CHAT tokens as a basket 
                 of 5 equal value neurons all with a dissolve delay of 1 month but with an 
                 additional "vesting period" of 0, 1, 2, 3, and 4 years respectively.
             </p> 
             <p>    
-                DFINITY will receive a share of 8% of the CHAT tokens as a basket of 4 equal 
+                DFINITY will receive 8% of the CHAT tokens as a basket of 4 equal 
                 neurons each with a dissolve delay of 1 month and with "vesting periods" of 6, 12, 
                 18, and 24 months respectively.
             </p>
