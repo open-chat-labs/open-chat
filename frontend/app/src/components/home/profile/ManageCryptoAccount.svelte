@@ -25,6 +25,7 @@
     const client = getContext<OpenChat>("client");
     const user = client.user;
 
+    $: account = token === "icp" ? user.cryptoAccount : user.userId;
     $: cryptoBalance = client.cryptoBalance;
 
     let error: string | undefined = undefined;
@@ -40,7 +41,7 @@
         validAmount &&
         amountToWithdrawE8s > BigInt(0) &&
         targetAccount !== "" &&
-        targetAccount !== user.userId;
+        targetAccount !== account;
 
     $: transferFees = cryptoLookup[token].transferFeesE8s;
     $: symbol = cryptoLookup[token].symbol;
