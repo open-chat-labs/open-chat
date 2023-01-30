@@ -17,10 +17,13 @@ fn deleted_message_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     };
 
     if let Some(min_visible_event_index) = runtime_state.data.min_visible_event_index(caller, None) {
-        if let Some(events_reader) = runtime_state
-            .data
-            .events
-            .events_reader(min_visible_event_index, args.thread_root_message_index)
+        let now = runtime_state.env.now();
+
+        if let Some(events_reader) =
+            runtime_state
+                .data
+                .events
+                .events_reader(min_visible_event_index, args.thread_root_message_index, now)
         {
             if let Some(message) = events_reader.message_internal(args.message_id.into()) {
                 if let Some(deleted_by) = &message.deleted_by {

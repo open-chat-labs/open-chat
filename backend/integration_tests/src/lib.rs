@@ -7,6 +7,7 @@ use types::{CanisterId, UserId};
 mod client;
 mod delete_group_tests;
 mod delete_message_tests;
+mod disappearing_message_tests;
 mod freeze_group_tests;
 mod join_group_tests;
 mod last_online_date_tests;

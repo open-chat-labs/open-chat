@@ -320,6 +320,7 @@ type UpdateGroupV2Args =
         rules: opt GroupRules;
         avatar: AvatarUpdate;
         permissions: opt OptionalGroupPermissions;
+        events_ttl: EventsTimeToLiveUpdate;
         correlation_id: nat64;
     };
 

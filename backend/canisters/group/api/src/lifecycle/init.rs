@@ -14,6 +14,7 @@ pub struct Args {
     pub permissions: Option<GroupPermissions>,
     pub created_by_principal: Principal,
     pub created_by_user_id: UserId,
+    pub events_ttl: Option<Milliseconds>,
     pub mark_active_duration: Milliseconds,
     pub user_index_canister_id: CanisterId,
     pub local_user_index_canister_id: CanisterId,

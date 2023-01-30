@@ -65,12 +65,13 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
         return Err(UserSuspended);
     }
 
-    let min_visible_even_index = participant.min_visible_event_index();
+    let now = runtime_state.env.now();
+    let min_visible_event_index = participant.min_visible_event_index();
 
     if let Some(proposal) = runtime_state
         .data
         .events
-        .visible_main_events_reader(min_visible_even_index)
+        .visible_main_events_reader(min_visible_event_index, now)
         .message_internal(args.message_index.into())
         .and_then(|m| if let MessageContentInternal::GovernanceProposal(p) = &m.content { Some(p) } else { None })
     {
@@ -94,15 +95,16 @@ fn commit(user_id: UserId, args: Args, runtime_state: &mut RuntimeState) -> Resp
         Some(p) => p,
         None => return CallerNotInGroup,
     };
+
+    let now = runtime_state.env.now();
     let min_visible_event_index = participant.min_visible_event_index();
 
     match runtime_state
         .data
         .events
-        .record_proposal_vote(user_id, min_visible_event_index, args.message_index, args.adopt)
+        .record_proposal_vote(user_id, min_visible_event_index, args.message_index, args.adopt, now)
     {
         RecordProposalVoteResult::Success => {
-            let now = runtime_state.env.now();
             let votes = participant.proposal_votes.entry(now).or_default();
             if !votes.contains(&args.message_index) {
                 votes.push(args.message_index);

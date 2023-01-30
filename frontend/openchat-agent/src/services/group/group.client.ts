@@ -39,6 +39,7 @@ import {
     GroupCanisterSummaryUpdatesResponse,
     DeletedGroupMessageResponse,
     EventWrapper,
+    OptionUpdate,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
@@ -86,6 +87,7 @@ import { identity, mergeGroupChatDetails } from "../../utils/chat";
 import { MAX_EVENTS, MAX_MESSAGES } from "../../constants";
 import { profile } from "../common/profiling";
 import { publicSummaryResponse } from "../common/publicSummaryMapper";
+import { apiOptionUpdate } from "../../utils/mapping";
 import { generateUint64 } from "../../utils/rng";
 import type { AgentConfig } from "../../config";
 
@@ -324,7 +326,8 @@ export class GroupClient extends CandidService implements IGroupClient {
         description?: string,
         rules?: GroupRules,
         permissions?: Partial<GroupPermissions>,
-        avatar?: Uint8Array
+        avatar?: Uint8Array,
+        eventsTimeToLiveMs?: OptionUpdate<bigint>,
     ): Promise<UpdateGroupResponse> {
         return this.handleResponse(
             this.groupService.update_group_v2({
@@ -342,6 +345,7 @@ export class GroupClient extends CandidService implements IGroupClient {
                           },
                 permissions: apiOptional(apiOptionalGroupPermissions, permissions),
                 rules: apiOptional(apiGroupRules, rules),
+                events_ttl: apiOptionUpdate(identity, eventsTimeToLiveMs),
                 correlation_id: generateUint64(),
             }),
             updateGroupResponse

@@ -15,6 +15,15 @@ export function optionUpdate<A, B>(
     throw new UnsupportedValueError("Unexpected ApiOptionUpdate type returned", candid);
 }
 
+export function apiOptionUpdate<A, B>(
+    mapper: (a: A) => B,
+    domain: OptionUpdate<A>
+): ApiOptionUpdate<B> {
+    if (domain === undefined) return { NoChange: null };
+    if (domain === "set_to_none") return { SetToNone: null };
+    return { SetToSome: mapper(domain.value) };
+}
+
 export function applyOptionUpdate<T>(
     original: T | undefined,
     update: OptionUpdate<T>

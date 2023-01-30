@@ -22,6 +22,11 @@ impl<T> Timestamped<T> {
             None
         }
     }
+
+    pub fn update<F: FnOnce(&mut T)>(&mut self, update_fn: F, now: TimestampMillis) {
+        update_fn(&mut self.value);
+        self.timestamp = now;
+    }
 }
 
 impl<T: Default> Default for Timestamped<T> {

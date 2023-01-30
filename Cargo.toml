@@ -113,6 +113,7 @@ quote = "1.0.21"
 rand = "0.8.5"
 rand_chacha = "0.3.1"
 rand_core = "0.6.4"
+range-set = "0.0.9"
 regex = "1.6.0"
 rmp-serde = "1.1.1"
 serde = "1.0.145"
@@ -143,3 +144,4 @@ ic-cdk = { git = "https://github.com/hpeebles/cdk-rs", rev = "f758bf78e6ec18850e
 ic-cdk-macros = { git = "https://github.com/hpeebles/cdk-rs", rev = "f758bf78e6ec18850e6d023c4f60586376d24885" }
 ic-ledger-types = { git = "https://github.com/hpeebles/cdk-rs", rev = "f758bf78e6ec18850e6d023c4f60586376d24885" }
 ic-stable-structures = { git = "https://github.com/hpeebles/stable-structures", rev = "986e0d8531cd152d5da747b760b099f1d4f16136" }
+range-set = { git = "https://github.com/hpeebles/range-set", rev = "d776de4e38b9d7bf755910da5513c2d8c107bf7e" }

@@ -1,7 +1,7 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::{mutate_state, run_regular_jobs, RuntimeState, TimerJob};
 use canister_tracing_macros::trace;
-use chat_events::{DeleteUndeleteMessagesArgs, EventKey, Reader, UndeleteMessageResult};
+use chat_events::{DeleteUndeleteMessagesArgs, Reader, UndeleteMessageResult};
 use group_canister::undelete_messages::{Response::*, *};
 use ic_cdk_macros::update;
 use std::collections::HashSet;
@@ -29,14 +29,6 @@ fn undelete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Respo
         let user_id = participant.user_id;
         let min_visible_event_index = participant.min_visible_event_index();
 
-        if !runtime_state.data.events.are_messages_accessible(
-            min_visible_event_index,
-            args.thread_root_message_index,
-            args.message_ids.iter().copied().map(EventKey::MessageId).collect(),
-        ) {
-            return MessageNotFound;
-        }
-
         let results = runtime_state.data.events.undelete_messages(DeleteUndeleteMessagesArgs {
             caller: user_id,
             is_admin: participant.role.can_delete_messages(&runtime_state.data.permissions),
@@ -50,7 +42,7 @@ fn undelete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Respo
         let events_reader = runtime_state
             .data
             .events
-            .events_reader(min_visible_event_index, args.thread_root_message_index)
+            .events_reader(min_visible_event_index, args.thread_root_message_index, now)
             .unwrap();
 
         let mut message_ids = HashSet::new();

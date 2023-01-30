@@ -130,6 +130,7 @@ pub(crate) fn send_message(content: MessageContent, mute_notification: bool, run
         forwarding: false,
         correlation_id: 0,
         is_bot: true,
+        now: runtime_state.env.now(),
     };
 
     handle_message_impl(OPENCHAT_BOT_USER_ID, args, mute_notification, runtime_state);

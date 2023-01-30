@@ -18,8 +18,9 @@ fn selected_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     };
 
     let min_visible_event_index = participant.min_visible_event_index();
+    let now = runtime_state.env.now();
     let data = &runtime_state.data;
-    let events_reader = data.events.visible_main_events_reader(min_visible_event_index);
+    let events_reader = data.events.visible_main_events_reader(min_visible_event_index, now);
     let latest_event_index = events_reader.latest_event_index().unwrap();
 
     if latest_event_index <= args.updates_since {

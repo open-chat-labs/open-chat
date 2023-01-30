@@ -1352,6 +1352,14 @@ function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {
         };
     }
 
+    if ("EventsTimeToLiveUpdated" in candid) {
+        return {
+            kind: "events_ttl_updated",
+            updatedBy: candid.EventsTimeToLiveUpdated.updated_by.toString(),
+            newTimeToLive: optional(candid.EventsTimeToLiveUpdated.new_ttl, identity)
+        }
+    }
+
     throw new UnsupportedValueError("Unexpected ApiEventWrapper type received", candid);
 }
 

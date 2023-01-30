@@ -1,14 +1,15 @@
 use crate::activity_notifications::handle_activity_notification;
-use crate::timer_job_types::EndPollJob;
-use crate::{mutate_state, run_regular_jobs, RuntimeState, TimerJob};
+use crate::timer_job_types::{DeleteFileReferencesJob, EndPollJob};
+use crate::{mutate_state, run_regular_jobs, Data, RuntimeState, TimerJob};
 use canister_api_macros::update_candid_and_msgpack;
+use canister_timer_jobs::TimerJobs;
 use canister_tracing_macros::trace;
 use chat_events::{PushMessageArgs, Reader};
 use group_canister::send_message::{Response::*, *};
 use std::collections::HashSet;
 use types::{
-    ContentValidationError, EventIndex, EventWrapper, GroupMessageNotification, GroupReplyContext, MentionInternal, Message,
-    MessageContent, MessageIndex, Notification, UserId,
+    BlobReference, ContentValidationError, EventIndex, EventWrapper, GroupMessageNotification, GroupReplyContext,
+    MentionInternal, Message, MessageContent, MessageIndex, Notification, TimestampMillis, UserId,
 };
 
 #[update_candid_and_msgpack]
@@ -61,27 +62,35 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
         }
 
         if let Some(root_message_index) = args.thread_root_message_index {
-            if !runtime_state
-                .data
-                .events
-                .is_accessible(participant.min_visible_event_index(), None, root_message_index.into())
-            {
+            if !runtime_state.data.events.is_accessible(
+                participant.min_visible_event_index(),
+                None,
+                root_message_index.into(),
+                now,
+            ) {
                 return ThreadMessageNotFound;
             }
         }
 
         let sender = participant.user_id;
         let min_visible_event_index = participant.min_visible_event_index();
-        let user_being_replied_to = args
-            .replies_to
-            .as_ref()
-            .and_then(|r| get_user_being_replied_to(r, min_visible_event_index, args.thread_root_message_index, runtime_state));
+        let user_being_replied_to = args.replies_to.as_ref().and_then(|r| {
+            get_user_being_replied_to(
+                r,
+                min_visible_event_index,
+                args.thread_root_message_index,
+                now,
+                &runtime_state.data,
+            )
+        });
+        let content = args.content.new_content_into_internal();
+        let files = content.blob_references();
 
         let push_message_args = PushMessageArgs {
             sender,
             thread_root_message_index: args.thread_root_message_index,
             message_id: args.message_id,
-            content: args.content.new_content_into_internal(),
+            content,
             replies_to: args.replies_to.map(|r| r.into()),
             forwarded: args.forwarding,
             correlation_id: args.correlation_id,
@@ -90,7 +99,13 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
 
         let message_event = runtime_state.data.events.push_message(push_message_args);
 
-        register_jobs_if_required(args.thread_root_message_index, &message_event, runtime_state);
+        register_timer_jobs(
+            args.thread_root_message_index,
+            &message_event,
+            files,
+            now,
+            &mut runtime_state.data.timer_jobs,
+        );
 
         let event_index = message_event.index;
         let message_index = message_event.event.message_index;
@@ -110,7 +125,7 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
             runtime_state
                 .data
                 .events
-                .visible_main_events_reader(min_visible_event_index)
+                .visible_main_events_reader(min_visible_event_index, now)
                 .message_internal(root_message_index.into())
                 .cloned()
         }) {
@@ -176,20 +191,32 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     }
 }
 
-fn register_jobs_if_required(
+fn register_timer_jobs(
     thread_root_message_index: Option<MessageIndex>,
     message_event: &EventWrapper<Message>,
-    runtime_state: &mut RuntimeState,
+    file_references: Vec<BlobReference>,
+    now: TimestampMillis,
+    timer_jobs: &mut TimerJobs<TimerJob>,
 ) {
     if let MessageContent::Poll(p) = &message_event.event.content {
         if let Some(end_date) = p.config.end_date {
-            runtime_state.data.timer_jobs.enqueue_job(
+            timer_jobs.enqueue_job(
                 TimerJob::EndPoll(EndPollJob {
                     thread_root_message_index,
                     message_index: message_event.event.message_index,
                 }),
                 end_date,
-                runtime_state.env.now(),
+                now,
+            );
+        }
+    }
+
+    if !file_references.is_empty() {
+        if let Some(expiry) = message_event.expires_at {
+            timer_jobs.enqueue_job(
+                TimerJob::DeleteFileReferences(DeleteFileReferencesJob { files: file_references }),
+                expiry,
+                now,
             );
         }
     }
@@ -199,12 +226,12 @@ fn get_user_being_replied_to(
     replies_to: &GroupReplyContext,
     min_visible_event_index: EventIndex,
     thread_root_message_index: Option<MessageIndex>,
-    runtime_state: &RuntimeState,
+    now: TimestampMillis,
+    data: &Data,
 ) -> Option<UserId> {
-    let events_reader = runtime_state
-        .data
+    let events_reader = data
         .events
-        .events_reader(min_visible_event_index, thread_root_message_index)?;
+        .events_reader(min_visible_event_index, thread_root_message_index, now)?;
 
     events_reader
         .message_internal(replies_to.event_index.into())

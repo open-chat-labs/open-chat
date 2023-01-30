@@ -139,6 +139,8 @@ type DirectChatSummary =
         metrics: ChatMetrics;
         my_metrics: ChatMetrics;
         archived: bool;
+        events_ttl: opt Milliseconds;
+        expired_messages: vec MessageIndexRange;
     };
 
 type DirectChatSummaryUpdates =
@@ -153,6 +155,8 @@ type DirectChatSummaryUpdates =
         metrics: opt ChatMetrics;
         my_metrics: opt ChatMetrics;
         archived: opt bool;
+        events_ttl: EventsTimeToLiveUpdate;
+        newly_expired_messages: vec MessageIndexRange;
     };
 
 type DirectMessageNotification =
@@ -237,6 +241,7 @@ type ChatEvent =
         GroupRulesChanged: GroupRulesChanged;
         ChatFrozen: ChatFrozen;
         ChatUnfrozen: ChatUnfrozen;
+        EventsTimeToLiveUpdated: EventsTimeToLiveUpdated;
     };
 
 type ChatEventWrapper =
@@ -278,6 +283,9 @@ type GroupChatSummary =
         wasm_version: Version;
         date_last_pinned: opt TimestampMillis;
         date_read_pinned: opt TimestampMillis;
+        events_ttl: opt Milliseconds;
+        expired_messages: vec MessageIndexRange;
+        next_message_expiry: opt TimestampMillis;
     };
 
 type GroupCanisterGroupChatSummary =
@@ -307,6 +315,9 @@ type GroupCanisterGroupChatSummary =
         frozen: opt FrozenGroupInfo;
         wasm_version: Version;
         date_last_pinned: opt TimestampMillis;
+        events_ttl: opt Milliseconds;
+        expired_messages: vec MessageIndexRange;
+        next_message_expiry: opt TimestampMillis;
     };
 
 type GroupChatSummaryUpdates =
@@ -336,6 +347,9 @@ type GroupChatSummaryUpdates =
         wasm_version: opt Version;
         date_last_pinned: opt TimestampMillis;
         date_read_pinned: opt TimestampMillis;
+        events_ttl: opt Milliseconds;
+        expired_messages: vec MessageIndexRange;
+        next_message_expiry: TimestampUpdate;
     };
 
 type GroupCanisterGroupChatSummaryUpdates =
@@ -363,6 +377,9 @@ type GroupCanisterGroupChatSummaryUpdates =
         frozen: FrozenGroupUpdate;
         wasm_version: opt Version;
         date_last_pinned: opt TimestampMillis;
+        events_ttl: EventsTimeToLiveUpdate;
+        newly_expired_messages: vec MessageIndexRange;
+        next_message_expiry: TimestampUpdate;
     };
 
 type GroupDescriptionChanged =
@@ -398,6 +415,13 @@ type AvatarIdUpdate =
         NoChange;
         SetToNone;
         SetToSome: nat;
+    };
+
+type TimestampUpdate =
+    variant {
+        NoChange;
+        SetToNone;
+        SetToSome: TimestampMillis;
     };
 
 type Mention =
@@ -1158,9 +1182,28 @@ type ChatUnfrozen =
         unfrozen_by: UserId;
     };
 
+type EventsTimeToLiveUpdated =
+    record {
+        updated_by: UserId;
+        new_ttl: opt Milliseconds;
+    };
+
+type EventsTimeToLiveUpdate =
+    variant {
+        NoChange;
+        SetToNone;
+        SetToSome: Milliseconds;
+    };
+
 type PushEventResult =
     record {
         index: EventIndex;
         timestamp: TimestampMillis;
         expires_at: opt TimestampMillis;
+    };
+
+type MessageIndexRange =
+    record {
+        start: MessageIndex;
+        end: MessageIndex;
     };

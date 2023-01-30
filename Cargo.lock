@@ -6269,6 +6269,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "range-set"
+version = "0.0.9"
+source = "git+https://github.com/hpeebles/range-set?rev=d776de4e38b9d7bf755910da5513c2d8c107bf7e#d776de4e38b9d7bf755910da5513c2d8c107bf7e"
+dependencies = [
+ "num-traits",
+ "smallvec",
+]
+
+[[package]]
 name = "rayon"
 version = "1.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7875,6 +7884,7 @@ dependencies = [
  "human_readable",
  "ic-icrc1",
  "ic-ledger-types",
+ "range-set",
  "serde",
  "serde_bytes",
  "serde_json",

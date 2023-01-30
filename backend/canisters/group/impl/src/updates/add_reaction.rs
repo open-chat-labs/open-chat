@@ -73,7 +73,7 @@ fn handle_notification(
     if let Some(message) = runtime_state
         .data
         .events
-        .events_reader(EventIndex::default(), thread_root_message_index)
+        .events_reader(EventIndex::default(), thread_root_message_index, now)
         // We pass in `None` in place of `my_user_id` because we don't want to hydrate
         // the notification with data for the current user (eg. their poll votes).
         .and_then(|events_reader| events_reader.message_event(message_id.into(), None))

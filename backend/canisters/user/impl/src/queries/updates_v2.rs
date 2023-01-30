@@ -16,11 +16,11 @@ fn updates_impl(updates_since: TimestampMillis, runtime_state: &RuntimeState) ->
     let mut direct_chats_added = Vec::new();
     let mut direct_chats_updated = Vec::new();
 
-    for direct_chat in runtime_state.data.direct_chats.get_all(Some(updates_since)) {
+    for direct_chat in runtime_state.data.direct_chats.get_all(Some(updates_since), now) {
         if direct_chat.date_created > updates_since {
-            direct_chats_added.push(direct_chat.to_summary(my_user_id));
+            direct_chats_added.push(direct_chat.to_summary(my_user_id, now));
         } else {
-            direct_chats_updated.push(direct_chat.to_summary_updates(updates_since, my_user_id));
+            direct_chats_updated.push(direct_chat.to_summary_updates(updates_since, my_user_id, now));
         }
     }
 
