@@ -3,7 +3,6 @@ use canister_api_macros::query_msgpack;
 use chat_events::{ChatEventInternal, Reader};
 use group_canister::summary_updates::{Response::*, *};
 use ic_cdk_macros::query;
-use std::cmp::max;
 use std::collections::HashMap;
 use types::{
     EventIndex, EventWrapper, FrozenGroupInfo, GroupCanisterGroupChatSummaryUpdates, GroupPermissions, GroupSubtype, Mention,
@@ -28,11 +27,12 @@ fn summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     };
     let now = runtime_state.env.now();
     let updates_from_events = process_events(args.updates_since, participant, now, runtime_state);
+    let newly_expired_messages = runtime_state.data.events.expired_messages_since(args.updates_since, now);
 
-    if let Some(last_updated) = updates_from_events.latest_update {
+    if updates_from_events.has_updates || !newly_expired_messages.is_empty() {
         let updates = GroupCanisterGroupChatSummaryUpdates {
             chat_id: runtime_state.env.canister_id().into(),
-            last_updated,
+            last_updated: now,
             name: updates_from_events.name,
             description: updates_from_events.description,
             subtype: updates_from_events.subtype,
@@ -69,6 +69,8 @@ fn summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
             wasm_version: None,
             date_last_pinned: updates_from_events.date_last_pinned,
             events_ttl: updates_from_events.events_ttl,
+            newly_expired_messages,
+            next_message_expiry: OptionUpdate::from_update(runtime_state.data.events.next_message_expiry(now)),
         };
         Success(SuccessResult { updates })
     } else {
@@ -78,7 +80,7 @@ fn summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
 
 #[derive(Default)]
 struct UpdatesFromEvents {
-    latest_update: Option<TimestampMillis>,
+    has_updates: bool,
     name: Option<String>,
     description: Option<String>,
     subtype: OptionUpdate<GroupSubtype>,
@@ -119,17 +121,17 @@ fn process_events(
     };
 
     if data.subtype.timestamp > since {
-        updates.latest_update = max(updates.latest_update, Some(data.subtype.timestamp));
+        updates.has_updates = true;
         updates.subtype = OptionUpdate::from_update(data.subtype.value.clone());
     }
 
     if participant.notifications_muted.timestamp > since {
-        updates.latest_update = max(updates.latest_update, Some(participant.notifications_muted.timestamp));
+        updates.has_updates = true;
         updates.notifications_muted = Some(participant.notifications_muted.value);
     }
 
     if data.frozen.timestamp > since {
-        updates.latest_update = max(updates.latest_update, Some(data.frozen.timestamp));
+        updates.has_updates = true;
         updates.frozen = OptionUpdate::from_update(data.frozen.value.clone());
     }
 
@@ -137,7 +139,7 @@ fn process_events(
         .date_last_pinned
         .map_or(false, |date_last_pinned| date_last_pinned > since)
     {
-        updates.latest_update = max(updates.latest_update, data.date_last_pinned);
+        updates.has_updates = true;
         updates.date_last_pinned = data.date_last_pinned;
     }
 
@@ -146,14 +148,8 @@ fn process_events(
         .iter()
         .rev()
         .take_while(|(&t, _)| t > since)
-        .enumerate()
-        .map(|(i, (&t, message_indexes))| {
-            if i == 0 {
-                updates.latest_update = max(updates.latest_update, Some(t));
-            }
-            (t, message_indexes)
-        })
-        .flat_map(|(t, message_indexes)| {
+        .inspect(|_| updates.has_updates = true)
+        .flat_map(|(&t, message_indexes)| {
             message_indexes
                 .iter()
                 .filter_map(|&m| events_reader.event_index(m.into()))
@@ -165,7 +161,7 @@ fn process_events(
     // Iterate through events starting from most recent
     for event_wrapper in events_reader.iter(None, false).take_while(|e| e.timestamp > since) {
         if updates.latest_event_index.is_none() {
-            updates.latest_update = max(updates.latest_update, Some(event_wrapper.timestamp));
+            updates.has_updates = true;
             updates.latest_event_index = Some(event_wrapper.index);
         }
 

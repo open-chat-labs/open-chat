@@ -139,6 +139,8 @@ type DirectChatSummary =
         metrics: ChatMetrics;
         my_metrics: ChatMetrics;
         archived: bool;
+        events_ttl: opt Milliseconds;
+        expired_messages: vec MessageIndexRange;
     };
 
 type DirectChatSummaryUpdates =
@@ -154,6 +156,7 @@ type DirectChatSummaryUpdates =
         my_metrics: opt ChatMetrics;
         archived: opt bool;
         events_ttl: EventsTimeToLiveUpdate;
+        newly_expired_messages: vec MessageIndexRange;
     };
 
 type DirectMessageNotification =
@@ -280,6 +283,9 @@ type GroupChatSummary =
         wasm_version: Version;
         date_last_pinned: opt TimestampMillis;
         date_read_pinned: opt TimestampMillis;
+        events_ttl: opt Milliseconds;
+        expired_messages: vec MessageIndexRange;
+        next_message_expiry: opt TimestampMillis;
     };
 
 type GroupCanisterGroupChatSummary =
@@ -310,6 +316,8 @@ type GroupCanisterGroupChatSummary =
         wasm_version: Version;
         date_last_pinned: opt TimestampMillis;
         events_ttl: opt Milliseconds;
+        expired_messages: vec MessageIndexRange;
+        next_message_expiry: opt TimestampMillis;
     };
 
 type GroupChatSummaryUpdates =
@@ -339,7 +347,9 @@ type GroupChatSummaryUpdates =
         wasm_version: opt Version;
         date_last_pinned: opt TimestampMillis;
         date_read_pinned: opt TimestampMillis;
-        events_ttl: EventsTimeToLiveUpdate;
+        events_ttl: opt Milliseconds;
+        expired_messages: vec MessageIndexRange;
+        next_message_expiry: TimestampUpdate;
     };
 
 type GroupCanisterGroupChatSummaryUpdates =
@@ -368,6 +378,8 @@ type GroupCanisterGroupChatSummaryUpdates =
         wasm_version: opt Version;
         date_last_pinned: opt TimestampMillis;
         events_ttl: EventsTimeToLiveUpdate;
+        newly_expired_messages: vec MessageIndexRange;
+        next_message_expiry: TimestampUpdate;
     };
 
 type GroupDescriptionChanged =
@@ -403,6 +415,13 @@ type AvatarIdUpdate =
         NoChange;
         SetToNone;
         SetToSome: nat;
+    };
+
+type TimestampUpdate =
+    variant {
+        NoChange;
+        SetToNone;
+        SetToSome: TimestampMillis;
     };
 
 type Mention =
@@ -1181,4 +1200,10 @@ type PushEventResult =
         index: EventIndex;
         timestamp: TimestampMillis;
         expires_at: opt TimestampMillis;
+    };
+
+type MessageIndexRange =
+    record {
+        start: MessageIndex;
+        end: MessageIndex;
     };

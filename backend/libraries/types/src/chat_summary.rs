@@ -1,6 +1,6 @@
 use crate::{
     CanisterId, ChatId, EventIndex, EventWrapper, FrozenGroupInfo, GroupPermissions, Mention, Message, MessageIndex,
-    Milliseconds, OptionUpdate, Role, TimestampMillis, UserId, Version, MAX_RETURNED_MENTIONS,
+    Milliseconds, OptionUpdate, RangeSet, Role, TimestampMillis, UserId, Version, MAX_RETURNED_MENTIONS,
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
@@ -46,6 +46,8 @@ pub struct DirectChatSummary {
     pub archived: bool,
     #[serde(default)]
     pub events_ttl: Option<Milliseconds>,
+    #[serde(default)]
+    pub expired_messages: RangeSet<MessageIndex>,
 }
 
 impl DirectChatSummary {
@@ -87,6 +89,10 @@ pub struct GroupChatSummary {
     pub date_read_pinned: Option<TimestampMillis>,
     #[serde(default)]
     pub events_ttl: Option<Milliseconds>,
+    #[serde(default)]
+    pub expired_messages: RangeSet<MessageIndex>,
+    #[serde(default)]
+    pub next_message_expiry: Option<TimestampMillis>,
 }
 
 impl GroupChatSummary {
@@ -125,9 +131,10 @@ pub struct DirectChatSummaryUpdates {
     pub archived: Option<bool>,
     #[serde(default)]
     pub events_ttl: OptionUpdate<Milliseconds>,
+    #[serde(default)]
+    pub newly_expired_messages: RangeSet<MessageIndex>,
 }
 
-#[allow(clippy::large_enum_variant)]
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct GroupChatSummaryUpdates {
     pub chat_id: ChatId,
@@ -157,6 +164,10 @@ pub struct GroupChatSummaryUpdates {
     pub date_read_pinned: Option<TimestampMillis>,
     #[serde(default)]
     pub events_ttl: OptionUpdate<Milliseconds>,
+    #[serde(default)]
+    pub newly_expired_messages: RangeSet<MessageIndex>,
+    #[serde(default)]
+    pub next_message_expiry: OptionUpdate<TimestampMillis>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -207,6 +218,10 @@ pub struct GroupCanisterGroupChatSummary {
     pub date_last_pinned: Option<TimestampMillis>,
     #[serde(default)]
     pub events_ttl: Option<Milliseconds>,
+    #[serde(default)]
+    pub expired_messages: RangeSet<MessageIndex>,
+    #[serde(default)]
+    pub next_message_expiry: Option<TimestampMillis>,
 }
 
 impl GroupCanisterGroupChatSummary {
@@ -265,6 +280,8 @@ impl GroupCanisterGroupChatSummary {
             frozen: updates.frozen.apply_to(self.frozen),
             date_last_pinned: updates.date_last_pinned.or(self.date_last_pinned),
             events_ttl: updates.events_ttl.apply_to(self.events_ttl),
+            expired_messages: self.expired_messages.merge(updates.newly_expired_messages),
+            next_message_expiry: updates.next_message_expiry.apply_to(self.next_message_expiry),
         }
     }
 }
@@ -296,6 +313,10 @@ pub struct GroupCanisterGroupChatSummaryUpdates {
     pub date_last_pinned: Option<TimestampMillis>,
     #[serde(default)]
     pub events_ttl: OptionUpdate<Milliseconds>,
+    #[serde(default)]
+    pub newly_expired_messages: RangeSet<MessageIndex>,
+    #[serde(default)]
+    pub next_message_expiry: OptionUpdate<TimestampMillis>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug, Default, Clone)]

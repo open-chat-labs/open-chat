@@ -1,18 +1,18 @@
+use crate::expiring_events::ExpiringEvents;
 use crate::*;
 use ::types::{
     ChatFrozen, ChatId, ChatMetrics, ChatUnfrozen, DeletedBy, DirectChatCreated, EventIndex, EventWrapper,
     EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupChatCreated, Mention, MentionInternal, Message, MessageContent,
     MessageContentInternal, MessageId, MessageIndex, MessageMatch, Milliseconds, PollVoteRegistered, PollVotes,
-    ProposalStatusUpdate, PushEventResult, PushIfNotContains, Reaction, RegisterVoteResult, ReplyContext, ThreadSummary,
-    TimestampMillis, UserId, VoteOperation,
+    ProposalStatusUpdate, PushEventResult, PushIfNotContains, RangeSet, Reaction, RegisterVoteResult, ReplyContext,
+    ThreadSummary, TimestampMillis, Timestamped, UserId, VoteOperation,
 };
 use itertools::Itertools;
 use search::{Document, Query};
 use serde::{Deserialize, Serialize};
 use std::cmp::Reverse;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
-use std::collections::{BinaryHeap, HashMap};
-use types::Timestamped;
+use std::collections::HashMap;
 
 #[derive(Serialize, Deserialize)]
 #[serde(from = "ChatEventsOld")]
@@ -25,7 +25,7 @@ pub struct ChatEvents {
     per_user_metrics: HashMap<UserId, ChatMetrics>,
     frozen: bool,
     events_ttl: Timestamped<Option<Milliseconds>>,
-    event_expiry_dates: BinaryHeap<Reverse<EventExpiryDate>>,
+    expiring_events: ExpiringEvents,
 }
 
 #[derive(Deserialize)]
@@ -54,7 +54,7 @@ impl From<ChatEventsOld> for ChatEvents {
             per_user_metrics: value.per_user_metrics,
             frozen: value.frozen,
             events_ttl: Timestamped::default(),
-            event_expiry_dates: BinaryHeap::new(),
+            expiring_events: ExpiringEvents::default(),
         }
     }
 }
@@ -70,7 +70,7 @@ impl ChatEvents {
             per_user_metrics: HashMap::new(),
             frozen: false,
             events_ttl: Timestamped::new(events_ttl, now),
-            event_expiry_dates: BinaryHeap::new(),
+            expiring_events: ExpiringEvents::default(),
         };
 
         events.push_event(None, ChatEventInternal::DirectChatCreated(DirectChatCreated {}), 0, now);
@@ -95,7 +95,7 @@ impl ChatEvents {
             per_user_metrics: HashMap::new(),
             frozen: false,
             events_ttl: Timestamped::new(events_ttl, now),
-            event_expiry_dates: BinaryHeap::new(),
+            expiring_events: ExpiringEvents::default(),
         };
 
         events.push_event(
@@ -714,11 +714,11 @@ impl ChatEvents {
 
         event.add_to_metrics(&mut self.metrics, &mut self.per_user_metrics, deleted_message_sender, now);
 
+        let maybe_message_index = event.as_message().map(|m| m.message_index);
         let event_index = events_list.push_event(event, correlation_id, expires_at, now);
 
         if let Some(timestamp) = expires_at {
-            self.event_expiry_dates
-                .push(Reverse(EventExpiryDate { timestamp, event_index }))
+            self.expiring_events.insert(event_index, maybe_message_index, timestamp);
         }
 
         self.remove_expired_events(now);
@@ -893,14 +893,21 @@ impl ChatEvents {
         )
     }
 
+    pub fn next_message_expiry(&self, now: TimestampMillis) -> Option<TimestampMillis> {
+        self.expiring_events.next_message_expiry(now)
+    }
+
+    pub fn expired_messages(&self, now: TimestampMillis) -> RangeSet<MessageIndex> {
+        self.expiring_events.expired_messages(now)
+    }
+
+    pub fn expired_messages_since(&self, since: TimestampMillis, now: TimestampMillis) -> RangeSet<MessageIndex> {
+        self.expiring_events.expired_messages_since(since, now)
+    }
+
     fn remove_expired_events(&mut self, now: TimestampMillis) {
-        while let Some(next) = self
-            .event_expiry_dates
-            .peek()
-            .map_or(false, |e| e.0.timestamp < now)
-            .then(|| self.event_expiry_dates.pop().unwrap().0)
-        {
-            if let Some(event) = self.main.remove_expired_event(next.event_index) {
+        for event_index in self.expiring_events.process_expired_events(now) {
+            if let Some(event) = self.main.remove_expired_event(event_index) {
                 if let ChatEventInternal::Message(m) = event.event {
                     self.threads.remove(&m.message_index);
                 }
@@ -1155,12 +1162,6 @@ pub enum AddRemoveReactionResult {
     Success(PushEventResult),
     NoChange,
     MessageNotFound,
-}
-
-#[derive(Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
-pub struct EventExpiryDate {
-    timestamp: TimestampMillis,
-    event_index: EventIndex,
 }
 
 #[derive(Copy, Clone)]

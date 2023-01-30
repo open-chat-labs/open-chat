@@ -121,6 +121,8 @@ impl RuntimeState {
             wasm_version: Version::default(),
             date_last_pinned: data.date_last_pinned,
             events_ttl: data.events.get_events_time_to_live().value,
+            expired_messages: data.events.expired_messages(now),
+            next_message_expiry: data.events.next_message_expiry(now),
         }
     }
 
