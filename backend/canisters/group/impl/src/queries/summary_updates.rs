@@ -1,4 +1,4 @@
-use crate::{read_state, ParticipantInternal, RuntimeState};
+use crate::{read_state, Data, ParticipantInternal, RuntimeState};
 use canister_api_macros::query_msgpack;
 use chat_events::{ChatEventInternal, Reader};
 use group_canister::summary_updates::{Response::*, *};
@@ -26,7 +26,7 @@ fn summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
         Some(p) => p,
     };
     let now = runtime_state.env.now();
-    let updates_from_events = process_events(args.updates_since, participant, now, runtime_state);
+    let updates_from_events = process_events(args.updates_since, participant, now, &runtime_state.data);
     let newly_expired_messages = runtime_state.data.events.expired_messages_since(args.updates_since, now);
 
     if updates_from_events.has_updates || !newly_expired_messages.is_empty() {
@@ -104,9 +104,8 @@ fn process_events(
     since: TimestampMillis,
     participant: &ParticipantInternal,
     now: TimestampMillis,
-    runtime_state: &RuntimeState,
+    data: &Data,
 ) -> UpdatesFromEvents {
-    let data = &runtime_state.data;
     let events_reader = data
         .events
         .visible_main_events_reader(participant.min_visible_event_index(), now);
@@ -216,8 +215,7 @@ fn process_events(
                 updates.participants_changed = true;
             }
             ChatEventInternal::OwnershipTransferred(ownership) => {
-                let caller = runtime_state.env.caller().into();
-                if ownership.new_owner == caller || ownership.old_owner == caller {
+                if ownership.new_owner == participant.user_id || ownership.old_owner == participant.user_id {
                     updates.role_changed = true;
                 }
                 if updates.owner_id.is_none() {

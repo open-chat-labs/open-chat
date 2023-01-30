@@ -20,7 +20,7 @@ fn selected_initial_impl(runtime_state: &RuntimeState) -> Response {
                 .events
                 .main_events_reader(now)
                 .latest_event_index()
-                .unwrap(),
+                .unwrap_or_default(),
             participants: participants.iter().map(|p| p.into()).collect(),
             blocked_users: participants.blocked(),
             pinned_messages: runtime_state
