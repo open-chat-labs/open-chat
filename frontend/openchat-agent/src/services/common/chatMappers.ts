@@ -1,5 +1,5 @@
 import { Principal } from "@dfinity/principal";
-import { bytesToHexString, identity, optional } from "../../utils/mapping";
+import { bytesToHexString, hexStringToBytes, identity, optional } from "../../utils/mapping";
 import type {
     ApiBlobReference,
     ApiFileContent,
@@ -87,6 +87,7 @@ import {
     type MemberRole,
     type GroupSubtype,
 } from "openchat-shared";
+import type { WithdrawCryptoArgs } from "../user/candid/types";
 
 const E8S_AS_BIGINT = BigInt(100_000_000);
 
@@ -769,34 +770,68 @@ export function apiPendingCryptoContent(domain: CryptocurrencyContent): ApiCrypt
 
 function apiPendingCryptoTransaction(domain: CryptocurrencyTransfer): ApiCryptoTransaction {
     if (domain.kind === "pending") {
-        return {
-            Pending: {
-                SNS: {
-                    token: apiToken(domain.token),
-                    to: {
-                        owner: Principal.fromText(domain.recipient),
-                        subaccount: [],
+        if (domain.token === "icp") {
+            return {
+                Pending: {
+                    NNS: {
+                        token: apiToken(domain.token),
+                        to: {
+                            User: Principal.fromText(domain.recipient),
+                        },
+                        amount: apiICP(domain.amountE8s),
+                        fee: [],
+                        memo: apiOptional(identity, domain.memo),
                     },
-                    amount: apiICP(domain.amountE8s),
-                    fee: apiICP(domain.feeE8s ?? BigInt(0)),
-                    memo: apiOptional(identity, domain.memo),
                 },
-            },
-        };
+            };
+        } else {
+            return {
+                Pending: {
+                    SNS: {
+                        token: apiToken(domain.token),
+                        to: {
+                            owner: Principal.fromText(domain.recipient),
+                            subaccount: [],
+                        },
+                        amount: apiICP(domain.amountE8s),
+                        fee: apiICP(domain.feeE8s ?? BigInt(0)),
+                        memo: apiOptional(identity, domain.memo),
+                    },
+                },
+            };
+        }
     }
     throw new Error("Transaction is not of type 'Pending': " + JSON.stringify(domain));
 }
 
 export function apiPendingCryptocurrencyWithdrawal(
     domain: PendingCryptocurrencyWithdrawal
-): ApiSnsPendingCryptoTransaction {
-    return {
-        token: apiToken(domain.token),
-        to: { owner: Principal.fromText(domain.to), subaccount: [] },
-        amount: apiICP(domain.amountE8s),
-        fee: apiICP(domain.feeE8s ?? BigInt(0)),
-        memo: apiOptional(identity, domain.memo),
-    };
+): WithdrawCryptoArgs {
+    if (domain.token === "icp") {
+        return {
+            withdrawal: {
+                NNS: {
+                    token: apiToken(domain.token),
+                    to: { Account: hexStringToBytes(domain.to) },
+                    amount: apiICP(domain.amountE8s),
+                    fee: [],
+                    memo: apiOptional(identity, domain.memo),
+                }
+            }
+        };
+    } else {
+        return {
+            withdrawal: {
+                SNS: {
+                    token: apiToken(domain.token),
+                    to: { owner: Principal.fromText(domain.to), subaccount: [] },
+                    amount: apiICP(domain.amountE8s),
+                    fee: apiICP(domain.feeE8s ?? BigInt(0)),
+                    memo: apiOptional(identity, domain.memo),
+                },
+            }
+        }
+    }
 }
 
 function apiTextContent(domain: TextContent): ApiTextContent {
