@@ -89,8 +89,8 @@ impl<T: Into<u32>> From<&RangeSet<T>> for Vec<Range> {
             .ranges
             .ranges()
             .map(|r| Range {
-                start: (*r.start()).into(),
-                end: (*r.end()).into(),
+                start: *r.start(),
+                end: *r.end(),
             })
             .collect()
     }

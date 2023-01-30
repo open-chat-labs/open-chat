@@ -67,7 +67,7 @@ impl ExpiringEvents {
     fn take_next_expired_event(&mut self, now: TimestampMillis) -> Option<EventIndex> {
         self.event_expiry_dates
             .first_entry()
-            .filter(|e| (*e.key()).0 < now)
+            .filter(|e| e.key().0 < now)
             .map(|e| e.remove_entry())
             .map(|((_, event_index), _)| event_index)
     }
