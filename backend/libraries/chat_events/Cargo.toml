@@ -8,7 +8,9 @@ edition = "2021"
 
 [dependencies]
 candid = { workspace = true }
+ic-ledger-types = { workspace = true }
 itertools = { workspace = true }
+ledger_utils = { path = "../ledger_utils" }
 search = { path = "../search" }
 serde = { workspace = true }
 types = { path = "../types" }

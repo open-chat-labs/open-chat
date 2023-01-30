@@ -52,7 +52,7 @@ mod nns {
         transaction: types::nns::PendingCryptoTransaction,
         my_user_id: UserId,
         ledger_canister_id: CanisterId,
-        now: TimestampNanos,
+        now_nanos: TimestampNanos,
     ) -> Result<CompletedCryptoTransaction, FailedCryptoTransaction> {
         let memo = transaction.memo.unwrap_or(Memo(0));
         let fee = transaction.fee.unwrap_or(DEFAULT_FEE);
@@ -69,7 +69,9 @@ mod nns {
             fee,
             from_subaccount: None,
             to,
-            created_at_time: Some(Timestamp { timestamp_nanos: now }),
+            created_at_time: Some(Timestamp {
+                timestamp_nanos: now_nanos,
+            }),
         };
 
         let transaction_hash = calculate_transaction_hash(my_user_id, &transfer_args);
@@ -82,7 +84,7 @@ mod nns {
                 from: types::nns::CryptoAccount::Account(from),
                 to: types::nns::CryptoAccount::Account(to),
                 memo,
-                created: now,
+                created: now_nanos,
                 transaction_hash,
                 block_index,
             })),
@@ -103,7 +105,7 @@ mod nns {
                 from: types::nns::CryptoAccount::Account(from),
                 to: types::nns::CryptoAccount::Account(to),
                 memo,
-                created: now,
+                created: now_nanos,
                 transaction_hash,
                 error_message: error,
             })
@@ -119,7 +121,7 @@ mod sns {
         transaction: types::sns::PendingCryptoTransaction,
         my_user_id: UserId,
         ledger_canister_id: CanisterId,
-        now: TimestampNanos,
+        now_nanos: TimestampNanos,
     ) -> Result<CompletedCryptoTransaction, FailedCryptoTransaction> {
         let my_principal = ic_base_types::PrincipalId::from(Principal::from(my_user_id));
         let from = ic_icrc1::Account::from(my_principal);
@@ -128,7 +130,7 @@ mod sns {
             from_subaccount: None,
             to: transaction.to.clone(),
             fee: Some(transaction.fee.e8s().into()),
-            created_at_time: Some(now),
+            created_at_time: Some(now_nanos),
             memo: transaction.memo.map(|m| ic_icrc1::Memo::from(m.0)),
             amount: transaction.amount.e8s().into(),
         };
@@ -140,7 +142,7 @@ mod sns {
                 amount: transaction.amount.e8s(),
                 fee: transaction.fee.e8s(),
             },
-            created_at_time: Some(now),
+            created_at_time: Some(now_nanos),
             memo: args.memo.clone(),
         }
         .hash()
@@ -159,7 +161,7 @@ mod sns {
                 from: types::sns::CryptoAccount::Account(from.clone()),
                 to: types::sns::CryptoAccount::Account(transaction.to.clone()),
                 memo: transaction.memo,
-                created: now,
+                created: now_nanos,
                 transaction_hash,
                 block_index,
             })),
@@ -180,7 +182,7 @@ mod sns {
                 from: types::sns::CryptoAccount::Account(from),
                 to: types::sns::CryptoAccount::Account(transaction.to),
                 memo: transaction.memo,
-                created: now,
+                created: now_nanos,
                 transaction_hash,
                 error_message: error,
             })
