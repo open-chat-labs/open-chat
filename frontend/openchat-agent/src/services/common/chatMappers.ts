@@ -779,7 +779,7 @@ function apiPendingCryptoTransaction(domain: CryptocurrencyTransfer): ApiCryptoT
                             User: Principal.fromText(domain.recipient),
                         },
                         amount: apiICP(domain.amountE8s),
-                        fee: apiOptional(apiICP, domain.feeE8s),
+                        fee: [],
                         memo: apiOptional(identity, domain.memo),
                     },
                 },
@@ -814,7 +814,7 @@ export function apiPendingCryptocurrencyWithdrawal(
                     token: apiToken(domain.token),
                     to: { Account: hexStringToBytes(domain.to) },
                     amount: apiICP(domain.amountE8s),
-                    fee: apiOptional(apiICP, domain.feeE8s),
+                    fee: [],
                     memo: apiOptional(identity, domain.memo),
                 }
             }

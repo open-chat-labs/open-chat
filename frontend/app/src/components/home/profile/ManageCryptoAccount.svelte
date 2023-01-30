@@ -60,7 +60,7 @@
         client
             .withdrawCryptocurrency({
                 kind: "pending",
-                token: token,
+                token,
                 to: targetAccount,
                 amountE8s: amountToWithdrawE8s,
                 feeE8s: transferFees,
