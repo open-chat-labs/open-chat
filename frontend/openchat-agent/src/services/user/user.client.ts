@@ -543,11 +543,7 @@ export class UserClient extends CandidService implements IUserClient {
     withdrawCryptocurrency(
         domain: PendingCryptocurrencyWithdrawal
     ): Promise<WithdrawCryptocurrencyResponse> {
-        const req = {
-            withdrawal: {
-                SNS: apiPendingCryptocurrencyWithdrawal(domain),
-            },
-        };
+        const req = apiPendingCryptocurrencyWithdrawal(domain);
         return this.handleResponse(
             this.userService.withdraw_crypto_v2(req),
             withdrawCryptoResponse
