@@ -81,12 +81,11 @@ impl RuntimeState {
         let min_visible_event_index = participant.min_visible_event_index();
         let min_visible_message_index = participant.min_visible_message_index();
         let main_events_reader = data.events.visible_main_events_reader(min_visible_event_index, now);
-        let latest_event_timestamp = main_events_reader.latest_event_timestamp().unwrap_or_default();
         let latest_event_index = main_events_reader.latest_event_index().unwrap_or_default();
 
         GroupCanisterGroupChatSummary {
             chat_id: self.env.canister_id().into(),
-            last_updated: latest_event_timestamp,
+            last_updated: now,
             name: data.name.clone(),
             description: data.description.clone(),
             subtype: data.subtype.value.clone(),

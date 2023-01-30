@@ -31,6 +31,12 @@ impl<T> RangeSet<T> {
     }
 }
 
+impl<T: From<u32>> RangeSet<T> {
+    pub fn iter(&self) -> impl Iterator<Item = T> + '_ {
+        self.ranges.iter().map(T::from)
+    }
+}
+
 impl<T> Default for RangeSet<T> {
     fn default() -> Self {
         RangeSet {
