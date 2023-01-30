@@ -1,6 +1,6 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::timer_job_types::{DeleteFileReferencesJob, EndPollJob};
-use crate::{mutate_state, run_regular_jobs, RuntimeState, TimerJob};
+use crate::{mutate_state, run_regular_jobs, Data, RuntimeState, TimerJob};
 use canister_api_macros::update_candid_and_msgpack;
 use canister_timer_jobs::TimerJobs;
 use canister_tracing_macros::trace;
@@ -75,7 +75,13 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
         let sender = participant.user_id;
         let min_visible_event_index = participant.min_visible_event_index();
         let user_being_replied_to = args.replies_to.as_ref().and_then(|r| {
-            get_user_being_replied_to(r, min_visible_event_index, args.thread_root_message_index, now, runtime_state)
+            get_user_being_replied_to(
+                r,
+                min_visible_event_index,
+                args.thread_root_message_index,
+                now,
+                &runtime_state.data,
+            )
         });
         let content = args.content.new_content_into_internal();
         let files = content.blob_references();
@@ -221,10 +227,9 @@ fn get_user_being_replied_to(
     min_visible_event_index: EventIndex,
     thread_root_message_index: Option<MessageIndex>,
     now: TimestampMillis,
-    runtime_state: &RuntimeState,
+    data: &Data,
 ) -> Option<UserId> {
-    let events_reader = runtime_state
-        .data
+    let events_reader = data
         .events
         .events_reader(min_visible_event_index, thread_root_message_index, now)?;
 
