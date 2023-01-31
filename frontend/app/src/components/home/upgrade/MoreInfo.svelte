@@ -2,14 +2,15 @@
     import TooltipWrapper from "../../TooltipWrapper.svelte";
     import TooltipPopup from "../../TooltipPopup.svelte";
     import Help from "svelte-material-icons/HelpCircleOutline.svelte";
+    import { rtlStore } from "../../../stores/rtl";
 </script>
 
-<TooltipWrapper alignRight={false} bottomOffset={-4} centreChevron={true}>
+<TooltipWrapper alignRight={!$rtlStore} bottomOffset={-4} centreChevron={true}>
     <div slot="target" on:click class="help">
         <Help />
     </div>
     <div slot="tooltip">
-        <TooltipPopup alignRight={false} textLength={100} longestWord={10}>
+        <TooltipPopup alignRight={!$rtlStore} textLength={100} longestWord={10}>
             <slot />
         </TooltipPopup>
     </div>
