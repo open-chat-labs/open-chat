@@ -10,12 +10,14 @@
 
     let selecting = false;
 
-    $: crypto = cryptoCurrencyList.map(t => ({
-        key: t,
-        symbol: cryptoLookup[t].symbol,
-        name: $_(`tokenTransfer.${t}`),
-        disabled: cryptoLookup[t].disabled,
-    })).filter(token => !token.disabled);
+    $: crypto = cryptoCurrencyList
+        .map((t) => ({
+            key: t,
+            symbol: cryptoLookup[t].symbol,
+            name: $_(`tokenTransfer.${t}`),
+            disabled: cryptoLookup[t].disabled,
+        }))
+        .filter((token) => !token.disabled);
 
     function selectToken(symbol: Cryptocurrency) {
         token = symbol;
@@ -117,7 +119,7 @@
                 background-image: url("../assets/sns1_token.png");
             }
             &.ckbtc {
-                background-image: url("../assets/bitcoin_token.png");
+                background-image: url("../assets/bitcoin_token2.jpeg");
             }
             &.chat {
                 background-image: url("../assets/spinner.svg");

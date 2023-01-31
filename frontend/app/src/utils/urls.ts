@@ -70,10 +70,6 @@ export function copyToClipboard(txt: string): Promise<boolean> {
     });
 }
 
-export function copyUrl(txt: string): Promise<boolean> {
-    return copyToClipboard(`${window.location.origin}${window.location.pathname}#${txt}`);
-}
-
 export function scrollToSection(section: string): number | undefined {
     const matches = /^(\d{1})(?:-(\d{1}))?(?:-(\d{1}))?$/.exec(section);
     if (!matches) {

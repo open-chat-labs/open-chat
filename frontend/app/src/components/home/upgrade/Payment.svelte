@@ -14,6 +14,8 @@
 
     export let accountBalance = 0;
     export let error: string | undefined;
+    export let confirming = false;
+    export let confirmed = false;
 
     const client = getContext<OpenChat>("client");
 
@@ -36,8 +38,6 @@
         },
     ];
 
-    let confirming = false;
-    let confirmed = false;
     let autoRenew = true;
     let selectedOption: Option | undefined = options[2];
 

@@ -14,6 +14,8 @@
     let step: "features" | "payment" = "features";
     let error: string | undefined;
     let accountBalance = 0;
+    let confirming = false;
+    let confirmed = false;
 
     $: cryptoBalance = client.cryptoBalance;
     $: tokenDetails = {
@@ -36,21 +38,23 @@
 <Overlay>
     <ModalContent hideFooter fill>
         <span class="header" slot="header">
-            <div class="title">
-                {#if step === "features"}
-                    {$_("upgrade.featuresTitle")}
-                {:else if step === "payment"}
-                    {$_("upgrade.paymentTitle")}
-                {/if}
-            </div>
-            {#if step === "payment"}
-                <div class="balance">
-                    <BalanceWithRefresh
-                        token={tokenDetails.key}
-                        value={tokenDetails.balance}
-                        on:refreshed={onBalanceRefreshed}
-                        on:error={onBalanceRefreshError} />
+            {#if !confirming && !confirmed}
+                <div class="title">
+                    {#if step === "features"}
+                        {$_("upgrade.featuresTitle")}
+                    {:else if step === "payment"}
+                        {$_("upgrade.paymentTitle")}
+                    {/if}
                 </div>
+                {#if step === "payment"}
+                    <div class="balance">
+                        <BalanceWithRefresh
+                            token={tokenDetails.key}
+                            value={tokenDetails.balance}
+                            on:refreshed={onBalanceRefreshed}
+                            on:error={onBalanceRefreshError} />
+                    </div>
+                {/if}
             {/if}
         </span>
         <span slot="body">
@@ -59,6 +63,8 @@
             {/if}
             {#if step === "payment"}
                 <Payment
+                    bind:confirmed
+                    bind:confirming
                     {error}
                     {accountBalance}
                     on:cancel

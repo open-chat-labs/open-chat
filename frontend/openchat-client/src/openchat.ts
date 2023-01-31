@@ -499,8 +499,7 @@ export class OpenChat extends EventTarget {
     }
 
     isDiamondUser(): boolean {
-        return false;
-        // return this.user.premiumUntil !== undefined && this.user.premiumUntil > Date.now();
+        return this.user.premiumUntil !== undefined && this.user.premiumUntil > Date.now();
     }
 
     onCreatedUser(user: CreatedUser): void {
