@@ -705,6 +705,8 @@
                 <div>1,000,000</div>
                 <div>The minimum ICP to be raised (otherwise sale fails and ICP returned)</div>
                 <div>500,000</div>
+                <div>The ICP to come from the Community Fund</div>
+                <div>333,333</div>
                 <div>Duration of sale (unless maximum ICP raised sooner)</div>
                 <div>2 weeks</div>
                 <div>Minimum number of buyers</div>
