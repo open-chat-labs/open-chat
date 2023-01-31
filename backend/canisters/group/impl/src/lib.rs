@@ -17,13 +17,13 @@ use types::{
     MAX_THREADS_IN_SUMMARY,
 };
 use utils::env::Environment;
-use utils::memory;
 use utils::regular_jobs::RegularJobs;
 use utils::time::{DAY_IN_MS, HOUR_IN_MS};
 
 mod activity_notifications;
 mod guards;
 mod lifecycle;
+mod memory;
 mod model;
 mod new_joiner_rewards;
 mod queries;
@@ -173,7 +173,7 @@ impl RuntimeState {
             .event_count_since(now.saturating_sub(DAY_IN_MS), now, |_| true) as u64;
 
         Metrics {
-            memory_used: memory::used(),
+            memory_used: utils::memory::used(),
             now,
             cycles_balance: self.env.cycles_balance(),
             wasm_version: WASM_VERSION.with(|v| **v.borrow()),
