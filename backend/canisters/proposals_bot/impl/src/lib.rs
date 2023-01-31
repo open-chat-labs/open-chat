@@ -44,6 +44,7 @@ impl RuntimeState {
             wasm_version: WASM_VERSION.with(|v| **v.borrow()),
             git_commit_id: utils::git::git_commit_id().to_string(),
             nervous_systems: self.data.nervous_systems.metrics(),
+            service_principals: self.data.service_owner_principals.iter().copied().collect(),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
@@ -94,6 +95,7 @@ pub struct Metrics {
     pub wasm_version: Version,
     pub git_commit_id: String,
     pub nervous_systems: Vec<NervousSystemMetrics>,
+    pub service_principals: Vec<Principal>,
     pub canister_ids: CanisterIds,
 }
 

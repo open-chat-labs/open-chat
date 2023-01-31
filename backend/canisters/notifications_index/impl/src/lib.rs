@@ -81,6 +81,7 @@ impl RuntimeState {
             git_commit_id: utils::git::git_commit_id().to_string(),
             subscriptions: self.data.subscriptions.total(),
             users: self.data.principal_to_user_id.len() as u64,
+            service_principals: self.data.service_principals.iter().copied().collect(),
             notifications_canister_wasm_version: self.data.notifications_canister_wasm.version,
             notifications_canisters: self
                 .data
@@ -154,6 +155,7 @@ pub struct Metrics {
     pub git_commit_id: String,
     pub subscriptions: u64,
     pub users: u64,
+    pub service_principals: Vec<Principal>,
     pub notifications_canister_wasm_version: Version,
     pub notifications_canisters: Vec<(CanisterId, NotificationsCanister)>,
     pub canister_ids: CanisterIds,
