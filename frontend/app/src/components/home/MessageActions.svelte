@@ -10,11 +10,12 @@
     import TrayPlus from "svelte-material-icons/DotsVertical.svelte";
     import TrayRemove from "svelte-material-icons/Close.svelte";
     import { iconSize } from "../../stores/iconSize";
-    import { createEventDispatcher } from "svelte";
+    import { createEventDispatcher, getContext } from "svelte";
     import { mobileWidth } from "../../stores/screenDimensions";
-    import type { MessageAction, MessageContent } from "openchat-client";
+    import type { MessageAction, MessageContent, OpenChat } from "openchat-client";
 
     const dispatch = createEventDispatcher();
+    const client = getContext<OpenChat>("client");
 
     export let messageAction: MessageAction = undefined;
     export let editing: boolean; // are we in edit mode - if so we must restrict what's available
@@ -49,7 +50,11 @@
     }
 
     function createTokenTransfer() {
-        dispatch("tokenTransfer");
+        if (!client.isDiamondUser()) {
+            dispatch("upgrade");
+        } else {
+            dispatch("tokenTransfer");
+        }
         drawOpen = false;
     }
 
@@ -66,7 +71,11 @@
     }
 
     function createPoll() {
-        dispatch("createPoll");
+        if (!client.isDiamondUser()) {
+            dispatch("upgrade");
+        } else {
+            dispatch("createPoll");
+        }
         drawOpen = false;
     }
 

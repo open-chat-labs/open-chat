@@ -29,7 +29,6 @@ import {
     getFirstUnreadMention,
     getMembersString,
     getMessageContent,
-    getStorageRequiredForMessage,
     groupBySender,
     groupChatFromCandidate,
     groupEvents,
@@ -200,7 +199,6 @@ import {
     ThreadClosed,
     ThreadMessagesLoaded,
     ThreadSelected,
-    UpgradeRequired,
 } from "./events";
 import { LiveState } from "./liveState";
 import { getTypingString } from "./utils/chat";
@@ -498,6 +496,11 @@ export class OpenChat extends EventTarget {
                 }
             });
         this.api.getAllCachedUsers().then((users) => userStore.set(users));
+    }
+
+    isDiamondUser(): boolean {
+        return false;
+        // return this.user.premiumUntil !== undefined && this.user.premiumUntil > Date.now();
     }
 
     onCreatedUser(user: CreatedUser): void {
@@ -1049,7 +1052,6 @@ export class OpenChat extends EventTarget {
     private createMessage = createMessage;
     private findMessageById = findMessageById;
     private getMessageContent = getMessageContent;
-    private getStorageRequiredForMessage = getStorageRequiredForMessage;
     canForward = canForward;
     containsReaction = containsReaction;
     groupEvents = groupEvents;
@@ -2263,12 +2265,6 @@ export class OpenChat extends EventTarget {
         const localKey = this.localMessagesKey(chatId, threadRootMessageIndex);
 
         if (textContent || fileToAttach) {
-            const storageRequired = this.getStorageRequiredForMessage(fileToAttach);
-            if (this._liveState.remainingStorage < storageRequired) {
-                this.dispatchEvent(new UpgradeRequired("explain"));
-                return;
-            }
-
             const [nextEventIndex, nextMessageIndex] =
                 threadRootMessageIndex !== undefined
                     ? nextEventAndMessageIndexesForThread(currentEvents)

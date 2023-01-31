@@ -10,6 +10,8 @@
     export let user: CreatedUser;
     export let qrSize: "default" | "smaller" = "default";
     export let token: Cryptocurrency;
+    export let centered = false;
+    export let border = true;
 
     let account = token === "icp" ? user.cryptoAccount : user.userId;
 
@@ -20,7 +22,7 @@
             return account.slice(0, 10) + "..." + account.slice(account.length - 10);
         }
         return account;
-    }    
+    }
 
     function copy() {
         copyToClipboard(account).then((success) => {
@@ -36,13 +38,13 @@
 </script>
 
 <div class="account-info">
-    <div class="qr-wrapper">
+    <div class="qr-wrapper" class:border>
         <div class="qr" class:smaller={qrSize === "smaller"}>
             <QR text={account} />
         </div>
     </div>
-    <p>{$_("tokenTransfer.yourAccount", { values: { token: symbol } })}</p>
-    <div class="receiver">
+    <p class:centered>{$_("tokenTransfer.yourAccount", { values: { token: symbol } })}</p>
+    <div class="receiver" class:centered>
         <div class="account">
             {collapseAccount(account)}
         </div>
@@ -54,12 +56,15 @@
 
 <style type="text/scss">
     .qr-wrapper {
-        border: 1px solid var(--bd);
         padding: $sp5;
         display: flex;
         justify-content: center;
         width: 100%;
         margin-bottom: $sp4;
+
+        &.border {
+            border: 1px solid var(--bd);
+        }
     }
 
     .qr {
@@ -71,6 +76,10 @@
             width: 120px;
             height: 120px;
         }
+    }
+
+    .centered {
+        text-align: center;
     }
 
     .account-info {
@@ -87,6 +96,10 @@
             @include ellipsis();
             @include font(book, normal, fs-80);
             color: var(--primary);
+        }
+
+        &.centered {
+            justify-content: center;
         }
 
         .copy {

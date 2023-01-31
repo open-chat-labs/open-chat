@@ -303,7 +303,7 @@
                     <GroupDetails {busy} bind:candidateGroup />
                 </div>
                 <div class="visibility" class:visible={step === 1}>
-                    <GroupVisibility {originalGroup} {editing} bind:candidateGroup />
+                    <GroupVisibility on:upgrade {originalGroup} {editing} bind:candidateGroup />
                 </div>
                 <div class="rules" class:visible={step === 2}>
                     <Rules bind:rules={candidateGroup.rules} />

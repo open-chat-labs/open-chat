@@ -1316,6 +1316,7 @@ export class OpenChatAgent extends EventTarget {
     }
 
     refreshAccountBalance(crypto: Cryptocurrency, principal: string): Promise<Tokens> {
+        return Promise.resolve({ e8s: BigInt(123000000) });
         return this._ledgerClients[crypto].accountBalance(principal);
     }
 

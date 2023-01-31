@@ -29,7 +29,7 @@
     let zoomedWidth: number;
     let zoomedHeight: number;
 
-    $: hidden = $lowBandwidth;
+    $: hidden = $lowBandwidth && !draft;
 
     $: zoomable = !draft && !reply && !pinned;
 
@@ -84,7 +84,7 @@
     <div class="img-wrapper">
         {#if hidden}
             <div class="mask">
-                {#if !reply}
+                {#if !reply && !draft}
                     <div class="reveal">
                         <Button on:click={() => (hidden = false)}>{$_("loadImage")}</Button>
                     </div>

@@ -33,7 +33,6 @@
         LoadedMessageWindow,
         LoadedPreviousMessages,
         SentMessage,
-        UpgradeRequired,
         FailedMessages,
     } from "openchat-client";
     import { pop } from "../../utils/transition";
@@ -182,9 +181,6 @@
         }
         if (ev instanceof SentMessage) {
             afterSendMessage(ev.detail);
-        }
-        if (ev instanceof UpgradeRequired) {
-            dispatch("upgrade", ev.detail);
         }
     }
 

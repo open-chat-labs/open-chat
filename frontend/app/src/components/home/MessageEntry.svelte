@@ -75,7 +75,10 @@
     let rangeToReplace: [number, number] | undefined = undefined;
     let isSuperAdmin = client.isSuperAdmin();
     let freezingInProgress = false;
-    let tokens = cryptoCurrencyList.filter(t => !cryptoLookup[t].disabled).map(t => t.toLowerCase()).join('|');
+    let tokens = cryptoCurrencyList
+        .filter((t) => !cryptoLookup[t].disabled)
+        .map((t) => t.toLowerCase())
+        .join("|");
     let tokenMatchRegex = new RegExp(`^\/(${tokens}) *(\d*[.,]?\d*)$`);
 
     // Update this to force a new textbox instance to be created
@@ -87,7 +90,7 @@
     $: isBot = $userStore[userId]?.kind === "bot";
     $: messageIsEmpty = (textContent?.trim() ?? "").length === 0 && fileToAttach === undefined;
     $: isFrozen = client.isFrozen(chat.chatId);
-    $: pollsAllowed = isGroup && !isBot && client.canCreatePolls(chat.chatId);    
+    $: pollsAllowed = isGroup && !isBot && client.canCreatePolls(chat.chatId);
 
     $: {
         if (inp) {
@@ -582,6 +585,7 @@
                 on:tokenTransfer
                 on:attachGif
                 on:createPoll
+                on:upgrade
                 on:clearAttachment
                 on:fileSelected />
         {:else}
