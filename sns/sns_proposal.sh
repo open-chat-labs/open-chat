@@ -21,7 +21,7 @@ check_or_set_dfx_hsm_pin() {
 }
 
 PROPOSAL_TITLE="Proposal to create an SNS-DAO for OpenChat"
-PATH_TO_SUMMARY_FILE=$PWD/summary_file.md
+PATH_TO_SUMMARY_FILE=$PWD/sns_proposal_summary.md
 
 SUMMARY=`cat $PATH_TO_SUMMARY_FILE`
 
