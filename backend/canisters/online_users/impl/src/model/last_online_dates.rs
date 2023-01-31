@@ -7,7 +7,7 @@ use types::{TimestampMillis, UserId};
 #[derive(Serialize, Deserialize)]
 pub struct LastOnlineDates {
     #[serde(skip, default = "init_map")]
-    map: StableBTreeMap<Memory, Principal, TimestampMillis>,
+    map: StableBTreeMap<Principal, TimestampMillis, Memory>,
 }
 
 impl LastOnlineDates {
@@ -20,7 +20,7 @@ impl LastOnlineDates {
     }
 }
 
-fn init_map() -> StableBTreeMap<Memory, Principal, TimestampMillis> {
+fn init_map() -> StableBTreeMap<Principal, TimestampMillis, Memory> {
     let memory = get_last_online_dates_memory();
 
     StableBTreeMap::init(memory)
