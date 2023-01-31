@@ -329,7 +329,7 @@ initial_token_distribution:
      treasury_distribution:
        total_e8s: 5200000000000000 # 52%
      swap_distribution:
-       total_e8s: 2500000000000000  # 25%
-       initial_swap_amount_e8s: 500000000000
+       total_e8s: 2500000000000000 # 25%
+       initial_swap_amount_e8s: 2500000000000000 # 25%
      airdrop_distribution:
        airdrop_neurons: []
