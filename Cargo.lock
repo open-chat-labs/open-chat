@@ -4146,7 +4146,7 @@ checksum = "9c8ded18fe296ff693ba8d8fd9890189ea28df4fc75d8b009523e15918452d8b"
 [[package]]
 name = "ic-stable-structures"
 version = "0.5.0"
-source = "git+https://github.com/hpeebles/stable-structures?rev=b57fba0a5769da2eb3506598021c3d25cb1036b3#b57fba0a5769da2eb3506598021c3d25cb1036b3"
+source = "git+https://github.com/hpeebles/stable-structures?rev=5fb22b3221765acb5fab626217896fb23a52023d#5fb22b3221765acb5fab626217896fb23a52023d"
 dependencies = [
  "candid",
 ]
