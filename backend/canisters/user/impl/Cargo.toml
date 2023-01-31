@@ -34,6 +34,7 @@ ic-icrc1-client = { workspace = true }
 ic-icrc1-client-cdk = { workspace = true }
 ic-ledger-types = { workspace = true }
 ic-ledger-canister-core = { workspace = true }
+ic-stable-structures = { workspace = true }
 itertools = { workspace = true }
 ledger_utils = { path = "../../../libraries/ledger_utils" }
 local_user_index_canister = { path = "../../local_user_index/api" }
@@ -46,6 +47,7 @@ open_storage_bucket_client = { path = "../../../libraries/open_storage_bucket_cl
 search = { path = "../../../libraries/search" }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
+serializer = { workspace = true }
 stable_memory = { workspace = true }
 tracing = { workspace = true }
 types = { path = "../../../libraries/types" }

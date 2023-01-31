@@ -15,6 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Refactor and simplify `chat_events` ([#3013](https://github.com/open-ic/open-chat/pull/3013))
 - Mark group as active after ending a poll ([#3017](https://github.com/open-ic/open-chat/pull/3017))
 - Renamed `disappears_at` to `expires_at` ([#3023](https://github.com/open-ic/open-chat/pull/3023))
+- Use `MemoryManager` so that we can use stable memory at run time ([#3040](https://github.com/open-ic/open-chat/pull/3040))
 
 ### Fixed
 
