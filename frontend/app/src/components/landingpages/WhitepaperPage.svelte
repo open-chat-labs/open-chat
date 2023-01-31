@@ -713,6 +713,8 @@
                 <div>100</div>
                 <div>Minimum ICP per buyer</div>
                 <div>1</div>
+                <div>Maximum ICP per buyer</div>
+                <div>150,000</div>
             </div>
 
             <HashLinkTarget on:copyUrl={onCopyUrl} id="5-3-1">Valuation range</HashLinkTarget>
