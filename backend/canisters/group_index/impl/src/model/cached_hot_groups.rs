@@ -2,7 +2,7 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use tracing::trace;
-use types::{ChatId, EventIndex, EventWrapper, Message, PublicGroupSummary, TimestampMillis, UserId};
+use types::{ChatId, EventIndex, EventWrapper, Message, Milliseconds, PublicGroupSummary, TimestampMillis, UserId};
 
 #[derive(CandidType, Serialize, Deserialize, Default)]
 pub struct CachedHotGroups {
@@ -42,6 +42,8 @@ pub struct CachedPublicGroupSummary {
     pub latest_event_index: EventIndex,
     pub participant_count: u32,
     pub owner_id: UserId,
+    #[serde(default)]
+    pub events_ttl: Option<Milliseconds>,
 }
 
 impl From<PublicGroupSummary> for CachedPublicGroupSummary {
@@ -53,6 +55,7 @@ impl From<PublicGroupSummary> for CachedPublicGroupSummary {
             latest_event_index: summary.latest_event_index,
             participant_count: summary.participant_count,
             owner_id: summary.owner_id,
+            events_ttl: summary.events_ttl,
         }
     }
 }

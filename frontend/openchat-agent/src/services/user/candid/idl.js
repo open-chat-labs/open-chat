@@ -553,6 +553,10 @@ export const idlFactory = ({ IDL }) => {
     'old_role' : Role,
     'new_role' : Role,
   });
+  const EventsTimeToLiveUpdated = IDL.Record({
+    'new_ttl' : IDL.Opt(Milliseconds),
+    'updated_by' : UserId,
+  });
   const ProposalUpdated = IDL.Record({
     'event_index' : EventIndex,
     'message_index' : MessageIndex,
@@ -605,6 +609,7 @@ export const idlFactory = ({ IDL }) => {
     'MessageUndeleted' : UpdatedMessage,
     'RoleChanged' : RoleChanged,
     'PollVoteDeleted' : UpdatedMessage,
+    'EventsTimeToLiveUpdated' : EventsTimeToLiveUpdated,
     'ProposalsUpdated' : ProposalsUpdated,
     'OwnershipTransferred' : OwnershipTransferred,
     'DirectChatCreated' : DirectChatCreated,

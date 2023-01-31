@@ -28,17 +28,18 @@ fn pin_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
             return NotAuthorized;
         }
 
+        let now = runtime_state.env.now();
+        let min_visible_event_index = participant.min_visible_event_index();
+
         if !runtime_state
             .data
             .events
-            .is_accessible(participant.min_visible_event_index(), None, args.message_index.into())
+            .is_accessible(min_visible_event_index, None, args.message_index.into(), now)
         {
             return MessageNotFound;
         }
 
         if let Err(index) = runtime_state.data.pinned_messages.binary_search(&args.message_index) {
-            let now = runtime_state.env.now();
-
             runtime_state.data.pinned_messages.insert(index, args.message_index);
 
             let push_event_result = runtime_state.data.events.push_main_event(

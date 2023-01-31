@@ -18,11 +18,11 @@ use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::canister_event_sync_queue::CanisterEventSyncQueue;
 use utils::env::Environment;
 use utils::event_stream::EventStream;
-use utils::memory;
 use utils::time::{DAY_IN_MS, MINUTE_IN_MS};
 
 mod guards;
 mod lifecycle;
+mod memory;
 mod model;
 mod queries;
 mod updates;
@@ -97,7 +97,7 @@ impl RuntimeState {
     pub fn metrics(&self) -> Metrics {
         let canister_upgrades_metrics = self.data.canisters_requiring_upgrade.metrics();
         Metrics {
-            memory_used: memory::used(),
+            memory_used: utils::memory::used(),
             now: self.env.now(),
             cycles_balance: self.env.cycles_balance(),
             wasm_version: WASM_VERSION.with(|v| **v.borrow()),
@@ -108,6 +108,7 @@ impl RuntimeState {
             canister_upgrades_failed: canister_upgrades_metrics.failed,
             canister_upgrades_pending: canister_upgrades_metrics.pending as u64,
             canister_upgrades_in_progress: canister_upgrades_metrics.in_progress as u64,
+            service_principals: self.data.service_principals.iter().copied().collect(),
             user_wasm_version: self.data.user_canister_wasm.version,
             max_concurrent_canister_upgrades: self.data.max_concurrent_canister_upgrades,
             sms_messages_in_queue: self.data.sms_messages.len() as u32,
@@ -267,6 +268,7 @@ pub struct Metrics {
     pub canister_upgrades_failed: Vec<FailedUpgradeCount>,
     pub canister_upgrades_pending: u64,
     pub canister_upgrades_in_progress: u64,
+    pub service_principals: Vec<Principal>,
     pub user_wasm_version: Version,
     pub max_concurrent_canister_upgrades: usize,
     pub sms_messages_in_queue: u32,

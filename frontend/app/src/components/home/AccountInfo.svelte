@@ -13,8 +13,7 @@
     export let centered = false;
     export let border = true;
 
-    let account = token === "icp" ? user.cryptoAccount : user.userId;
-
+    $: account = token === "icp" ? user.cryptoAccount : user.userId;
     $: symbol = cryptoLookup[token].symbol;
 
     function collapseAccount(account: string) {

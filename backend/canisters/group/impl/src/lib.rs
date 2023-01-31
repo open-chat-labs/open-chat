@@ -17,13 +17,13 @@ use types::{
     MAX_THREADS_IN_SUMMARY,
 };
 use utils::env::Environment;
-use utils::memory;
 use utils::regular_jobs::RegularJobs;
 use utils::time::{DAY_IN_MS, HOUR_IN_MS};
 
 mod activity_notifications;
 mod guards;
 mod lifecycle;
+mod memory;
 mod model;
 mod new_joiner_rewards;
 mod queries;
@@ -76,16 +76,16 @@ impl RuntimeState {
         }
     }
 
-    pub fn summary(&self, participant: &ParticipantInternal) -> GroupCanisterGroupChatSummary {
+    pub fn summary(&self, participant: &ParticipantInternal, now: TimestampMillis) -> GroupCanisterGroupChatSummary {
         let data = &self.data;
         let min_visible_event_index = participant.min_visible_event_index();
         let min_visible_message_index = participant.min_visible_message_index();
-        let main_events_reader = data.events.visible_main_events_reader(min_visible_event_index);
-        let latest_event = main_events_reader.last();
+        let main_events_reader = data.events.visible_main_events_reader(min_visible_event_index, now);
+        let latest_event_index = main_events_reader.latest_event_index().unwrap_or_default();
 
         GroupCanisterGroupChatSummary {
             chat_id: self.env.canister_id().into(),
-            last_updated: latest_event.timestamp,
+            last_updated: now,
             name: data.name.clone(),
             description: data.description.clone(),
             subtype: data.subtype.value.clone(),
@@ -95,11 +95,11 @@ impl RuntimeState {
             min_visible_event_index,
             min_visible_message_index,
             latest_message: main_events_reader.latest_message_event(Some(participant.user_id)),
-            latest_event_index: latest_event.index,
+            latest_event_index,
             joined: participant.date_added,
             participant_count: data.participants.len(),
             role: participant.role,
-            mentions: participant.most_recent_mentions(None, &data.events),
+            mentions: participant.most_recent_mentions(None, &data.events, now),
             owner_id: data.owner_id,
             permissions: data.permissions.clone(),
             notifications_muted: participant.notifications_muted.value,
@@ -114,10 +114,14 @@ impl RuntimeState {
                 participant.threads.iter(),
                 None,
                 MAX_THREADS_IN_SUMMARY,
+                now,
             ),
             frozen: data.frozen.value.clone(),
             wasm_version: Version::default(),
             date_last_pinned: data.date_last_pinned,
+            events_ttl: data.events.get_events_time_to_live().value,
+            expired_messages: data.events.expired_messages(now),
+            next_message_expiry: data.events.next_message_expiry(now),
         }
     }
 
@@ -153,22 +157,24 @@ impl RuntimeState {
         let chat_metrics = self.data.events.metrics();
 
         let now = self.env.now();
-        let messages_in_last_hour = self
+        let messages_in_last_hour = self.data.events.event_count_since(now.saturating_sub(HOUR_IN_MS), now, |e| {
+            matches!(e, ChatEventInternal::Message(_))
+        }) as u64;
+        let messages_in_last_day = self.data.events.event_count_since(now.saturating_sub(DAY_IN_MS), now, |e| {
+            matches!(e, ChatEventInternal::Message(_))
+        }) as u64;
+        let events_in_last_hour = self
             .data
             .events
-            .event_count_since(now.saturating_sub(HOUR_IN_MS), |e| matches!(e, ChatEventInternal::Message(_)))
-            as u64;
-        let messages_in_last_day = self
+            .event_count_since(now.saturating_sub(HOUR_IN_MS), now, |_| true) as u64;
+        let events_in_last_day = self
             .data
             .events
-            .event_count_since(now.saturating_sub(DAY_IN_MS), |e| matches!(e, ChatEventInternal::Message(_)))
-            as u64;
-        let events_in_last_hour = self.data.events.event_count_since(now.saturating_sub(HOUR_IN_MS), |_| true) as u64;
-        let events_in_last_day = self.data.events.event_count_since(now.saturating_sub(DAY_IN_MS), |_| true) as u64;
+            .event_count_since(now.saturating_sub(DAY_IN_MS), now, |_| true) as u64;
 
         Metrics {
-            memory_used: memory::used(),
-            now: self.env.now(),
+            memory_used: utils::memory::used(),
+            now,
             cycles_balance: self.env.cycles_balance(),
             wasm_version: WASM_VERSION.with(|v| **v.borrow()),
             git_commit_id: utils::git::git_commit_id().to_string(),
@@ -257,6 +263,7 @@ impl Data {
         history_visible_to_new_joiners: bool,
         creator_principal: Principal,
         creator_user_id: UserId,
+        events_ttl: Option<Milliseconds>,
         now: TimestampMillis,
         mark_active_duration: Milliseconds,
         group_index_canister_id: CanisterId,
@@ -269,7 +276,7 @@ impl Data {
         permissions: Option<GroupPermissions>,
     ) -> Data {
         let participants = Participants::new(creator_principal, creator_user_id, now);
-        let events = ChatEvents::new_group_chat(chat_id, name.clone(), description.clone(), creator_user_id, now);
+        let events = ChatEvents::new_group_chat(chat_id, name.clone(), description.clone(), creator_user_id, events_ttl, now);
 
         Data {
             is_public,

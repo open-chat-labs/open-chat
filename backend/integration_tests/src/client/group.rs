@@ -7,6 +7,8 @@ generate_query_call!(events_by_index);
 generate_query_call!(public_summary);
 generate_query_call!(selected_initial);
 generate_query_call!(selected_updates);
+generate_query_call!(summary);
+generate_query_call!(summary_updates);
 
 // Updates
 generate_update_call!(add_participants);
@@ -22,12 +24,16 @@ generate_update_call!(remove_reaction);
 generate_update_call!(send_message);
 generate_update_call!(undelete_messages);
 generate_update_call!(unpin_message);
+generate_update_call!(update_group_v2);
 
 pub mod happy_path {
     use crate::rng::random_message_id;
     use crate::User;
     use ic_state_machine_tests::StateMachine;
-    use types::{ChatId, EventIndex, MessageContent, MessageId, MessageIndex, PollVotes, TextContent, UserId, VoteOperation};
+    use types::{
+        ChatId, EventIndex, GroupCanisterGroupChatSummary, GroupCanisterGroupChatSummaryUpdates, MessageContent, MessageId,
+        MessageIndex, PollVotes, TextContent, TimestampMillis, UserId, VoteOperation,
+    };
 
     pub fn add_participants(env: &mut StateMachine, sender: &User, group_chat_id: ChatId, user_ids: Vec<UserId>) {
         let response = super::add_participants(
@@ -124,6 +130,35 @@ pub mod happy_path {
         match response {
             group_canister::events_by_index::Response::Success(result) => result,
             response => panic!("'events_by_index' error: {:?}", response),
+        }
+    }
+
+    pub fn summary(env: &StateMachine, sender: &User, group_chat_id: ChatId) -> GroupCanisterGroupChatSummary {
+        let response = super::summary(env, sender.principal, group_chat_id.into(), &group_canister::summary::Args {});
+
+        match response {
+            group_canister::summary::Response::Success(result) => result.summary,
+            response => panic!("'summary' error: {:?}", response),
+        }
+    }
+
+    pub fn summary_updates(
+        env: &StateMachine,
+        sender: &User,
+        group_chat_id: ChatId,
+        updates_since: TimestampMillis,
+    ) -> Option<GroupCanisterGroupChatSummaryUpdates> {
+        let response = super::summary_updates(
+            env,
+            sender.principal,
+            group_chat_id.into(),
+            &group_canister::summary_updates::Args { updates_since },
+        );
+
+        match response {
+            group_canister::summary_updates::Response::Success(result) => Some(result.updates),
+            group_canister::summary_updates::Response::SuccessNoUpdates => None,
+            response => panic!("'summary_updates' error: {:?}", response),
         }
     }
 }

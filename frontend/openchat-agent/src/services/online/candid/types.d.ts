@@ -72,6 +72,7 @@ export type ChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'MessageUndeleted' : UpdatedMessage } |
   { 'RoleChanged' : RoleChanged } |
   { 'PollVoteDeleted' : UpdatedMessage } |
+  { 'EventsTimeToLiveUpdated' : EventsTimeToLiveUpdated } |
   { 'ProposalsUpdated' : ProposalsUpdated } |
   { 'OwnershipTransferred' : OwnershipTransferred } |
   { 'DirectChatCreated' : DirectChatCreated } |
@@ -188,6 +189,13 @@ export interface DirectReactionAddedNotification {
   'reaction' : string,
 }
 export type EventIndex = number;
+export type EventsTimeToLiveUpdate = { 'NoChange' : null } |
+  { 'SetToNone' : null } |
+  { 'SetToSome' : Milliseconds };
+export interface EventsTimeToLiveUpdated {
+  'new_ttl' : [] | [Milliseconds],
+  'updated_by' : UserId,
+}
 export type FailedCryptoTransaction = { 'NNS' : NnsFailedCryptoTransaction } |
   { 'SNS' : SnsFailedCryptoTransaction };
 export type FallbackRole = { 'Participant' : null } |

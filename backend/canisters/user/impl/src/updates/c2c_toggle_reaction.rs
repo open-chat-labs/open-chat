@@ -74,7 +74,7 @@ fn build_notification(
     }
 
     chat.events
-        .main_events_reader()
+        .main_events_reader(now)
         .message_event(message_id.into(), None)
         .filter(|m| m.event.sender != chat.them)
         .map(|message| {

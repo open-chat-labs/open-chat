@@ -1,11 +1,14 @@
 use crate::guards::caller_is_known_bot;
+use crate::timer_job_types::{DeleteFileReferencesJob, TimerJob};
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update_msgpack;
+use canister_timer_jobs::TimerJobs;
 use canister_tracing_macros::trace;
 use chat_events::{PushMessageArgs, Reader};
 use ic_cdk_macros::update;
 use types::{
-    CanisterId, DirectMessageNotification, MessageContent, MessageId, MessageIndex, Notification, ReplyContext, UserId,
+    BlobReference, CanisterId, DirectMessageNotification, EventWrapper, Message, MessageContent, MessageId, MessageIndex,
+    Notification, ReplyContext, TimestampMillis, UserId,
 };
 use user_canister::c2c_send_messages::{Response::*, *};
 
@@ -30,13 +33,14 @@ async fn c2c_send_messages_impl(args: Args) -> Response {
     };
 
     mutate_state(|state| {
+        let now = state.env.now();
         for message in args.messages {
             // Messages sent c2c can be retried so the same messageId may be received multiple
             // times, so here we skip any messages whose messageId already exists.
             if let Some(chat) = state.data.direct_chats.get(&sender_user_id.into()) {
                 if chat
                     .events
-                    .main_events_reader()
+                    .main_events_reader(now)
                     .message_internal(message.message_id.into())
                     .is_some()
                 {
@@ -55,6 +59,7 @@ async fn c2c_send_messages_impl(args: Args) -> Response {
                     forwarding: message.forwarding,
                     correlation_id: message.correlation_id,
                     is_bot: false,
+                    now,
                 },
                 false,
                 state,
@@ -85,6 +90,7 @@ fn c2c_handle_bot_messages(
     }
 
     mutate_state(|state| {
+        let now = state.env.now();
         for message in args.messages {
             handle_message_impl(
                 sender_user_id,
@@ -97,6 +103,7 @@ fn c2c_handle_bot_messages(
                     forwarding: false,
                     correlation_id: 0,
                     is_bot: true,
+                    now,
                 },
                 false,
                 state,
@@ -115,6 +122,7 @@ pub(crate) struct HandleMessageArgs {
     pub forwarding: bool,
     pub correlation_id: u64,
     pub is_bot: bool,
+    pub now: TimestampMillis,
 }
 
 enum SenderStatus {
@@ -152,8 +160,9 @@ pub(crate) fn handle_message_impl(
     mute_notification: bool,
     runtime_state: &mut RuntimeState,
 ) -> Response {
-    let now = runtime_state.env.now();
-    let replies_to = convert_reply_context(args.replies_to, sender, runtime_state);
+    let replies_to = convert_reply_context(args.replies_to, sender, args.now, runtime_state);
+    let content = args.content.new_content_into_internal();
+    let files = content.blob_references();
 
     let push_message_args = PushMessageArgs {
         thread_root_message_index: None,
@@ -161,11 +170,11 @@ pub(crate) fn handle_message_impl(
             .message_id
             .unwrap_or_else(|| MessageId::generate(|| runtime_state.env.random_u32())),
         sender,
-        content: args.content.new_content_into_internal(),
+        content,
         replies_to,
         forwarded: args.forwarding,
         correlation_id: args.correlation_id,
-        now,
+        now: args.now,
     };
 
     let message_event =
@@ -174,9 +183,11 @@ pub(crate) fn handle_message_impl(
             .direct_chats
             .push_message(false, sender, args.sender_message_index, push_message_args, args.is_bot);
 
+    register_timer_jobs(&message_event, files, args.now, &mut runtime_state.data.timer_jobs);
+
     if let Some(chat) = runtime_state.data.direct_chats.get_mut(&sender.into()) {
         if args.is_bot {
-            chat.mark_read_up_to(message_event.event.message_index, false, now);
+            chat.mark_read_up_to(message_event.event.message_index, false, args.now);
         }
         if !mute_notification && !chat.notifications_muted.value {
             let notification = Notification::DirectMessageNotification(DirectMessageNotification {
@@ -198,6 +209,7 @@ pub(crate) fn handle_message_impl(
 fn convert_reply_context(
     replies_to: Option<C2CReplyContext>,
     sender: UserId,
+    now: TimestampMillis,
     runtime_state: &RuntimeState,
 ) -> Option<ReplyContext> {
     match replies_to? {
@@ -207,7 +219,7 @@ fn convert_reply_context(
                 .data
                 .direct_chats
                 .get(&chat_id)
-                .and_then(|chat| chat.events.main_events_reader().event_index(message_id.into()))
+                .and_then(|chat| chat.events.main_events_reader(now).event_index(message_id.into()))
                 .map(|event_index| ReplyContext {
                     chat_id_if_other: None,
                     event_index,
@@ -217,5 +229,22 @@ fn convert_reply_context(
             chat_id_if_other: Some(chat_id),
             event_index,
         }),
+    }
+}
+
+fn register_timer_jobs(
+    message_event: &EventWrapper<Message>,
+    file_references: Vec<BlobReference>,
+    now: TimestampMillis,
+    timer_jobs: &mut TimerJobs<TimerJob>,
+) {
+    if !file_references.is_empty() {
+        if let Some(expiry) = message_event.expires_at {
+            timer_jobs.enqueue_job(
+                TimerJob::DeleteFileReferences(DeleteFileReferencesJob { files: file_references }),
+                expiry,
+                now,
+            );
+        }
     }
 }

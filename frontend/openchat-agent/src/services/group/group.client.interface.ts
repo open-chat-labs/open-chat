@@ -36,6 +36,7 @@ import type {
     GroupCanisterSummaryUpdatesResponse,
     DeletedGroupMessageResponse,
     EventWrapper,
+    OptionUpdate,
 } from "openchat-shared";
 
 export interface IGroupClient {
@@ -77,7 +78,8 @@ export interface IGroupClient {
         desc?: string,
         rules?: GroupRules,
         permissions?: Partial<GroupPermissions>,
-        avatar?: Uint8Array
+        avatar?: Uint8Array,
+        eventsTimeToLiveMs?: OptionUpdate<bigint>,
     ): Promise<UpdateGroupResponse>;
     addReaction(
         messageId: bigint,

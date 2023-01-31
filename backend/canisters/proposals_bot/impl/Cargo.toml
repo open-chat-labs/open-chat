@@ -22,10 +22,12 @@ group_index_canister_c2c_client = { path = "../../group_index/c2c_client" }
 http_request = { path = "../../../libraries/http_request" }
 ic-cdk = { workspace = true }
 ic-cdk-macros = { workspace = true }
+ic-stable-structures = { workspace = true }
 itertools = { workspace = true }
 msgpack = { path = "../../../libraries/msgpack" }
 proposals_bot_canister = { path = "../api" }
 serde = { workspace = true }
+serializer = { workspace = true }
 sha2 = { workspace = true }
 stable_memory = { workspace = true }
 tracing = { workspace = true }

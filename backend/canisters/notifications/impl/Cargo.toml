@@ -20,10 +20,12 @@ canister_tracing_macros = { workspace = true }
 http_request = { path = "../../../libraries/http_request" }
 ic-cdk = { workspace = true }
 ic-cdk-macros = { workspace = true }
+ic-stable-structures = { workspace = true }
 msgpack = { path = "../../../libraries/msgpack" }
 notifications_canister = { path = "../api" }
 notifications_index_canister = { path = "../../notifications_index/api" }
 serde = { workspace = true }
+serializer = { workspace = true }
 stable_memory = { workspace = true }
 tracing = { workspace = true }
 types = { path = "../../../libraries/types" }

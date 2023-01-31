@@ -11,7 +11,8 @@ fn events_window(args: Args) -> Response {
 
 fn events_window_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     if let Some(chat) = runtime_state.data.direct_chats.get(&args.user_id.into()) {
-        let events_reader = chat.events.main_events_reader();
+        let now = runtime_state.env.now();
+        let events_reader = chat.events.main_events_reader(now);
         let latest_event_index = events_reader.latest_event_index().unwrap();
 
         if args.latest_client_event_index.map_or(false, |e| latest_event_index < e) {

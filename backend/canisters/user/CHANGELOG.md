@@ -8,11 +8,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Added `disappears_at` to events ([#3021](https://github.com/open-ic/open-chat/pull/3021)) (website must be released first)
+- Support disappearing messages ([#3029](https://github.com/open-ic/open-chat/pull/3029)) (website must be released first)
 
 ### Changed
 
 - Refactor and simplify `chat_events` ([#3013](https://github.com/open-ic/open-chat/pull/3013))
 - Renamed `disappears_at` to `expires_at` ([#3023](https://github.com/open-ic/open-chat/pull/3023))
+- Use `MemoryManager` so that we can use stable memory at run time ([#3040](https://github.com/open-ic/open-chat/pull/3040))
+
+### Fixed
+
+- One time job to fix incorrect ICP transaction hashes ([#3035](https://github.com/open-ic/open-chat/pull/3035))
 
 ### Removed
 

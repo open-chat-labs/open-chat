@@ -1,13 +1,12 @@
-use crate::{read_state, ParticipantInternal, RuntimeState};
+use crate::{read_state, Data, ParticipantInternal, RuntimeState};
 use canister_api_macros::query_msgpack;
 use chat_events::{ChatEventInternal, Reader};
 use group_canister::summary_updates::{Response::*, *};
 use ic_cdk_macros::query;
-use std::cmp::max;
 use std::collections::HashMap;
 use types::{
     EventIndex, EventWrapper, FrozenGroupInfo, GroupCanisterGroupChatSummaryUpdates, GroupPermissions, GroupSubtype, Mention,
-    Message, OptionUpdate, TimestampMillis, UserId, MAX_THREADS_IN_SUMMARY,
+    Message, Milliseconds, OptionUpdate, TimestampMillis, UserId, MAX_THREADS_IN_SUMMARY,
 };
 
 #[query]
@@ -26,12 +25,14 @@ fn summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
         None => return CallerNotInGroup,
         Some(p) => p,
     };
-    let updates_from_events = process_events(args.updates_since, participant, runtime_state);
+    let now = runtime_state.env.now();
+    let updates_from_events = process_events(args.updates_since, participant, now, &runtime_state.data);
+    let newly_expired_messages = runtime_state.data.events.expired_messages_since(args.updates_since, now);
 
-    if let Some(last_updated) = updates_from_events.latest_update {
+    if updates_from_events.has_updates || !newly_expired_messages.is_empty() {
         let updates = GroupCanisterGroupChatSummaryUpdates {
             chat_id: runtime_state.env.canister_id().into(),
-            last_updated,
+            last_updated: now,
             name: updates_from_events.name,
             description: updates_from_events.description,
             subtype: updates_from_events.subtype,
@@ -61,11 +62,15 @@ fn summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
                 participant.threads.iter(),
                 Some(args.updates_since),
                 MAX_THREADS_IN_SUMMARY,
+                now,
             ),
             notifications_muted: updates_from_events.notifications_muted,
             frozen: updates_from_events.frozen,
             wasm_version: None,
             date_last_pinned: updates_from_events.date_last_pinned,
+            events_ttl: updates_from_events.events_ttl,
+            newly_expired_messages,
+            next_message_expiry: OptionUpdate::from_update(runtime_state.data.events.next_message_expiry(now)),
         };
         Success(SuccessResult { updates })
     } else {
@@ -75,7 +80,7 @@ fn summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
 
 #[derive(Default)]
 struct UpdatesFromEvents {
-    latest_update: Option<TimestampMillis>,
+    has_updates: bool,
     name: Option<String>,
     description: Option<String>,
     subtype: OptionUpdate<GroupSubtype>,
@@ -92,37 +97,40 @@ struct UpdatesFromEvents {
     notifications_muted: Option<bool>,
     frozen: OptionUpdate<FrozenGroupInfo>,
     date_last_pinned: Option<TimestampMillis>,
+    events_ttl: OptionUpdate<Milliseconds>,
 }
 
 fn process_events(
     since: TimestampMillis,
     participant: &ParticipantInternal,
-    runtime_state: &RuntimeState,
+    now: TimestampMillis,
+    data: &Data,
 ) -> UpdatesFromEvents {
-    let data = &runtime_state.data;
-    let events_reader = data.events.visible_main_events_reader(participant.min_visible_event_index());
+    let events_reader = data
+        .events
+        .visible_main_events_reader(participant.min_visible_event_index(), now);
 
     let mut updates = UpdatesFromEvents {
         // We need to handle this separately because the message may have been sent before 'since' but
         // then subsequently updated after 'since', in this scenario the message would not be picked up
         // during the iteration below.
         latest_message: events_reader.latest_message_event_if_updated(since, Some(participant.user_id)),
-        mentions: participant.most_recent_mentions(Some(since), &data.events),
+        mentions: participant.most_recent_mentions(Some(since), &data.events, now),
         ..Default::default()
     };
 
     if data.subtype.timestamp > since {
-        updates.latest_update = max(updates.latest_update, Some(data.subtype.timestamp));
+        updates.has_updates = true;
         updates.subtype = OptionUpdate::from_update(data.subtype.value.clone());
     }
 
     if participant.notifications_muted.timestamp > since {
-        updates.latest_update = max(updates.latest_update, Some(participant.notifications_muted.timestamp));
+        updates.has_updates = true;
         updates.notifications_muted = Some(participant.notifications_muted.value);
     }
 
     if data.frozen.timestamp > since {
-        updates.latest_update = max(updates.latest_update, Some(data.frozen.timestamp));
+        updates.has_updates = true;
         updates.frozen = OptionUpdate::from_update(data.frozen.value.clone());
     }
 
@@ -130,7 +138,7 @@ fn process_events(
         .date_last_pinned
         .map_or(false, |date_last_pinned| date_last_pinned > since)
     {
-        updates.latest_update = max(updates.latest_update, data.date_last_pinned);
+        updates.has_updates = true;
         updates.date_last_pinned = data.date_last_pinned;
     }
 
@@ -139,14 +147,8 @@ fn process_events(
         .iter()
         .rev()
         .take_while(|(&t, _)| t > since)
-        .enumerate()
-        .map(|(i, (&t, message_indexes))| {
-            if i == 0 {
-                updates.latest_update = max(updates.latest_update, Some(t));
-            }
-            (t, message_indexes)
-        })
-        .flat_map(|(t, message_indexes)| {
+        .inspect(|_| updates.has_updates = true)
+        .flat_map(|(&t, message_indexes)| {
             message_indexes
                 .iter()
                 .filter_map(|&m| events_reader.event_index(m.into()))
@@ -158,7 +160,7 @@ fn process_events(
     // Iterate through events starting from most recent
     for event_wrapper in events_reader.iter(None, false).take_while(|e| e.timestamp > since) {
         if updates.latest_event_index.is_none() {
-            updates.latest_update = max(updates.latest_update, Some(event_wrapper.timestamp));
+            updates.has_updates = true;
             updates.latest_event_index = Some(event_wrapper.index);
         }
 
@@ -213,8 +215,7 @@ fn process_events(
                 updates.participants_changed = true;
             }
             ChatEventInternal::OwnershipTransferred(ownership) => {
-                let caller = runtime_state.env.caller().into();
-                if ownership.new_owner == caller || ownership.old_owner == caller {
+                if ownership.new_owner == participant.user_id || ownership.old_owner == participant.user_id {
                     updates.role_changed = true;
                 }
                 if updates.owner_id.is_none() {
@@ -228,6 +229,11 @@ fn process_events(
             }
             ChatEventInternal::GroupVisibilityChanged(v) => {
                 updates.is_public = Some(v.now_public);
+            }
+            ChatEventInternal::EventsTimeToLiveUpdated(u) => {
+                if !updates.events_ttl.has_update() {
+                    updates.events_ttl = OptionUpdate::from_update(u.new_ttl);
+                }
             }
             _ => {}
         }
