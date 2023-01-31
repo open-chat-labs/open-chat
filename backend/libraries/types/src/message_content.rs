@@ -11,6 +11,20 @@ pub const MAX_TEXT_LENGTH: u32 = 5_000;
 pub const MAX_TEXT_LENGTH_USIZE: usize = MAX_TEXT_LENGTH as usize;
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub enum MessageContentInitial {
+    Text(TextContent),
+    Image(ImageContent),
+    Video(VideoContent),
+    Audio(AudioContent),
+    File(FileContent),
+    Poll(PollContent),
+    Crypto(CryptoContent),
+    Deleted(DeletedBy),
+    Giphy(GiphyContent),
+    GovernanceProposal(ProposalContent),
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum MessageContent {
     Text(TextContent),
     Image(ImageContent),
@@ -48,7 +62,7 @@ pub enum ContentValidationError {
     InvalidTypeForForwarding,
 }
 
-impl MessageContent {
+impl MessageContentInitial {
     // Determines if the content is valid for a new message, this should not be called on existing
     // messages
     pub fn validate_for_new_message(
@@ -59,7 +73,7 @@ impl MessageContent {
     ) -> Result<(), ContentValidationError> {
         if forwarding {
             match self {
-                MessageContent::Poll(_) | MessageContent::Crypto(_) | MessageContent::Deleted(_) => {
+                MessageContentInitial::Poll(_) | MessageContentInitial::Crypto(_) | MessageContentInitial::Deleted(_) => {
                     return Err(ContentValidationError::InvalidTypeForForwarding);
                 }
                 _ => {}
@@ -67,12 +81,12 @@ impl MessageContent {
         }
 
         match self {
-            MessageContent::Poll(p) => {
+            MessageContentInitial::Poll(p) => {
                 if let Err(reason) = p.config.validate(is_direct_chat, now) {
                     return Err(ContentValidationError::InvalidPoll(reason));
                 }
             }
-            MessageContent::Crypto(c) => {
+            MessageContentInitial::Crypto(c) => {
                 if c.transfer.is_zero() {
                     return Err(ContentValidationError::TransferCannotBeZero);
                 } else if c.transfer.exceeds_transfer_limit() {
@@ -85,21 +99,21 @@ impl MessageContent {
         };
 
         let is_empty = match self {
-            MessageContent::Text(t) => t.text.is_empty(),
-            MessageContent::Image(i) => i.blob_reference.is_none(),
-            MessageContent::Video(v) => v.video_blob_reference.is_none(),
-            MessageContent::Audio(a) => a.blob_reference.is_none(),
-            MessageContent::File(f) => f.blob_reference.is_none(),
-            MessageContent::Poll(p) => p.config.options.is_empty(),
-            MessageContent::Deleted(_) => true,
-            MessageContent::Crypto(_) | MessageContent::Giphy(_) | MessageContent::GovernanceProposal(_) => false,
+            MessageContentInitial::Text(t) => t.text.is_empty(),
+            MessageContentInitial::Image(i) => i.blob_reference.is_none(),
+            MessageContentInitial::Video(v) => v.video_blob_reference.is_none(),
+            MessageContentInitial::Audio(a) => a.blob_reference.is_none(),
+            MessageContentInitial::File(f) => f.blob_reference.is_none(),
+            MessageContentInitial::Poll(p) => p.config.options.is_empty(),
+            MessageContentInitial::Deleted(_) => true,
+            MessageContentInitial::Crypto(_) | MessageContentInitial::Giphy(_) | MessageContentInitial::GovernanceProposal(_) => false,
         };
 
         if is_empty {
             Err(ContentValidationError::Empty)
         // Allow GovernanceProposal messages to exceed the max length since they are collapsed on the UI
         // TODO only allow GovernanceProposal messages which are sent by the proposals_bot
-        } else if self.text_length() > MAX_TEXT_LENGTH_USIZE && !matches!(self, MessageContent::GovernanceProposal(_)) {
+        } else if self.text_length() > MAX_TEXT_LENGTH_USIZE && !matches!(self, MessageContentInitial::GovernanceProposal(_)) {
             Err(ContentValidationError::TextTooLong(MAX_TEXT_LENGTH))
         } else {
             Ok(())
@@ -110,20 +124,20 @@ impl MessageContent {
     // set the votes to empty
     pub fn new_content_into_internal(self) -> MessageContentInternal {
         match self {
-            MessageContent::Text(t) => MessageContentInternal::Text(t),
-            MessageContent::Image(i) => MessageContentInternal::Image(i),
-            MessageContent::Video(v) => MessageContentInternal::Video(v),
-            MessageContent::Audio(a) => MessageContentInternal::Audio(a),
-            MessageContent::File(f) => MessageContentInternal::File(f),
-            MessageContent::Poll(p) => MessageContentInternal::Poll(PollContentInternal {
+            MessageContentInitial::Text(t) => MessageContentInternal::Text(t),
+            MessageContentInitial::Image(i) => MessageContentInternal::Image(i),
+            MessageContentInitial::Video(v) => MessageContentInternal::Video(v),
+            MessageContentInitial::Audio(a) => MessageContentInternal::Audio(a),
+            MessageContentInitial::File(f) => MessageContentInternal::File(f),
+            MessageContentInitial::Poll(p) => MessageContentInternal::Poll(PollContentInternal {
                 config: p.config,
                 votes: HashMap::new(),
                 ended: false,
             }),
-            MessageContent::Crypto(c) => MessageContentInternal::Crypto(c),
-            MessageContent::Deleted(d) => MessageContentInternal::Deleted(d),
-            MessageContent::Giphy(g) => MessageContentInternal::Giphy(g),
-            MessageContent::GovernanceProposal(p) => MessageContentInternal::GovernanceProposal(ProposalContentInternal {
+            MessageContentInitial::Crypto(c) => MessageContentInternal::Crypto(c),
+            MessageContentInitial::Deleted(d) => MessageContentInternal::Deleted(d),
+            MessageContentInitial::Giphy(g) => MessageContentInternal::Giphy(g),
+            MessageContentInitial::GovernanceProposal(p) => MessageContentInternal::GovernanceProposal(ProposalContentInternal {
                 governance_canister_id: p.governance_canister_id,
                 proposal: p.proposal,
                 votes: HashMap::new(),
@@ -133,16 +147,50 @@ impl MessageContent {
 
     fn text_length(&self) -> usize {
         match self {
-            MessageContent::Text(t) => t.text.len(),
-            MessageContent::Image(i) => i.caption.as_ref().map_or(0, |t| t.len()),
-            MessageContent::Video(v) => v.caption.as_ref().map_or(0, |t| t.len()),
-            MessageContent::Audio(a) => a.caption.as_ref().map_or(0, |t| t.len()),
-            MessageContent::File(f) => f.caption.as_ref().map_or(0, |t| t.len()),
-            MessageContent::Poll(p) => p.config.text.as_ref().map_or(0, |t| t.len()),
-            MessageContent::Crypto(c) => c.caption.as_ref().map_or(0, |t| t.len()),
-            MessageContent::Deleted(_) => 0,
-            MessageContent::Giphy(g) => g.caption.as_ref().map_or(0, |t| t.len()),
-            MessageContent::GovernanceProposal(p) => p.proposal.summary().len(),
+            MessageContentInitial::Text(t) => t.text.len(),
+            MessageContentInitial::Image(i) => i.caption.as_ref().map_or(0, |t| t.len()),
+            MessageContentInitial::Video(v) => v.caption.as_ref().map_or(0, |t| t.len()),
+            MessageContentInitial::Audio(a) => a.caption.as_ref().map_or(0, |t| t.len()),
+            MessageContentInitial::File(f) => f.caption.as_ref().map_or(0, |t| t.len()),
+            MessageContentInitial::Poll(p) => p.config.text.as_ref().map_or(0, |t| t.len()),
+            MessageContentInitial::Crypto(c) => c.caption.as_ref().map_or(0, |t| t.len()),
+            MessageContentInitial::Deleted(_) => 0,
+            MessageContentInitial::Giphy(g) => g.caption.as_ref().map_or(0, |t| t.len()),
+            MessageContentInitial::GovernanceProposal(p) => p.proposal.summary().len(),
+        }
+    }
+}
+
+impl From<MessageContent> for MessageContentInitial {
+    fn from(content: MessageContent) -> Self {
+        match content {
+            MessageContent::Audio(c) => MessageContentInitial::Audio(c),
+            MessageContent::Crypto(c) => MessageContentInitial::Crypto(c),
+            MessageContent::Deleted(c) => MessageContentInitial::Deleted(c),
+            MessageContent::File(c) => MessageContentInitial::File(c),
+            MessageContent::Giphy(c) => MessageContentInitial::Giphy(c),
+            MessageContent::GovernanceProposal(c) => MessageContentInitial::GovernanceProposal(c),
+            MessageContent::Image(c) => MessageContentInitial::Image(c),
+            MessageContent::Poll(c) => MessageContentInitial::Poll(c),
+            MessageContent::Text(c) => MessageContentInitial::Text(c),
+            MessageContent::Video(c) => MessageContentInitial::Video(c),
+        }
+    }
+}
+
+impl From<MessageContentInitial> for MessageContent {
+    fn from(content: MessageContentInitial) -> Self {
+        match content {
+            MessageContentInitial::Audio(c) => MessageContent::Audio(c),
+            MessageContentInitial::Crypto(c) => MessageContent::Crypto(c),
+            MessageContentInitial::Deleted(c) => MessageContent::Deleted(c),
+            MessageContentInitial::File(c) => MessageContent::File(c),
+            MessageContentInitial::Giphy(c) => MessageContent::Giphy(c),
+            MessageContentInitial::GovernanceProposal(c) => MessageContent::GovernanceProposal(c),
+            MessageContentInitial::Image(c) => MessageContent::Image(c),
+            MessageContentInitial::Poll(c) => MessageContent::Poll(c),
+            MessageContentInitial::Text(c) => MessageContent::Text(c),
+            MessageContentInitial::Video(c) => MessageContent::Video(c),
         }
     }
 }

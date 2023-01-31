@@ -60,7 +60,7 @@ pub mod happy_path {
         group_chat_id: ChatId,
         text: impl ToString,
         message_id: Option<MessageId>,
-    ) -> group_canister::send_message::SuccessResult {
+    ) -> group_canister::send_message_v2::SuccessResult {
         let response = super::send_message(
             env,
             sender.principal,
