@@ -22,6 +22,7 @@ pub enum MessageContent {
     Deleted(DeletedBy),
     Giphy(GiphyContent),
     GovernanceProposal(ProposalContent),
+    Prize(PrizeContent),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -377,6 +378,13 @@ pub enum RegisterVoteResult {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct CryptoContent {
+    pub recipient: UserId,
+    pub transfer: CryptoTransaction,
+    pub caption: Option<String>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct PrizeContent {
     pub recipient: UserId,
     pub transfer: CryptoTransaction,
     pub caption: Option<String>,
