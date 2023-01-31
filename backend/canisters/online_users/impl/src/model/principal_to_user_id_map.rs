@@ -12,7 +12,7 @@ pub struct PrincipalToUserIdMap {
 
 impl PrincipalToUserIdMap {
     pub fn add(&mut self, principal: Principal, user_id: UserId) {
-        self.map.insert(principal, user_id.into()).unwrap();
+        self.map.insert(principal, user_id.into());
     }
 
     pub fn get(&self, principal: &Principal) -> Option<UserId> {
