@@ -1,8 +1,8 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use types::{
-    ChatId, CompletedCryptoTransaction, EventIndex, InvalidPollReason, MessageId, MessageIndex, ReplyContext,
-    TimestampMillis, UserId, MessageContentInitial,
+    ChatId, CompletedCryptoTransaction, EventIndex, InvalidPollReason, MessageContentInitial, MessageId, MessageIndex,
+    ReplyContext, TimestampMillis, UserId,
 };
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

@@ -107,7 +107,9 @@ impl MessageContentInitial {
             MessageContentInitial::File(f) => f.blob_reference.is_none(),
             MessageContentInitial::Poll(p) => p.config.options.is_empty(),
             MessageContentInitial::Deleted(_) => true,
-            MessageContentInitial::Crypto(_) | MessageContentInitial::Giphy(_) | MessageContentInitial::GovernanceProposal(_) => false,
+            MessageContentInitial::Crypto(_)
+            | MessageContentInitial::Giphy(_)
+            | MessageContentInitial::GovernanceProposal(_) => false,
         };
 
         if is_empty {
@@ -138,11 +140,13 @@ impl MessageContentInitial {
             MessageContentInitial::Crypto(c) => MessageContentInternal::Crypto(c),
             MessageContentInitial::Deleted(d) => MessageContentInternal::Deleted(d),
             MessageContentInitial::Giphy(g) => MessageContentInternal::Giphy(g),
-            MessageContentInitial::GovernanceProposal(p) => MessageContentInternal::GovernanceProposal(ProposalContentInternal {
-                governance_canister_id: p.governance_canister_id,
-                proposal: p.proposal,
-                votes: HashMap::new(),
-            }),
+            MessageContentInitial::GovernanceProposal(p) => {
+                MessageContentInternal::GovernanceProposal(ProposalContentInternal {
+                    governance_canister_id: p.governance_canister_id,
+                    proposal: p.proposal,
+                    votes: HashMap::new(),
+                })
+            }
         }
     }
 

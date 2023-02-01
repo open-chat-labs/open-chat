@@ -9,7 +9,7 @@ use group_canister::send_message_v2::{Response::*, *};
 use std::collections::HashSet;
 use types::{
     BlobReference, ContentValidationError, EventIndex, EventWrapper, GroupMessageNotification, GroupReplyContext,
-    MentionInternal, Message, MessageContent, MessageIndex, Notification, TimestampMillis, UserId, MessageContentInitial,
+    MentionInternal, Message, MessageContent, MessageContentInitial, MessageIndex, Notification, TimestampMillis, UserId,
 };
 
 #[update_candid_and_msgpack]

@@ -2,9 +2,9 @@ use crate::expiring_events::ExpiringEvents;
 use crate::*;
 use ::types::{
     ChatFrozen, ChatId, ChatMetrics, ChatUnfrozen, DeletedBy, DirectChatCreated, EventIndex, EventWrapper,
-    EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupChatCreated, Mention, MentionInternal, Message, MessageContentInitial,
-    MessageContentInternal, MessageId, MessageIndex, MessageMatch, Milliseconds, PollVoteRegistered, PollVotes,
-    ProposalStatusUpdate, PushEventResult, PushIfNotContains, RangeSet, Reaction, RegisterVoteResult, ReplyContext,
+    EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupChatCreated, Mention, MentionInternal, Message,
+    MessageContentInitial, MessageContentInternal, MessageId, MessageIndex, MessageMatch, Milliseconds, PollVoteRegistered,
+    PollVotes, ProposalStatusUpdate, PushEventResult, PushIfNotContains, RangeSet, Reaction, RegisterVoteResult, ReplyContext,
     ThreadSummary, TimestampMillis, Timestamped, UserId, VoteOperation,
 };
 use itertools::Itertools;

@@ -1,6 +1,8 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{EventIndex, GroupReplyContext, InvalidPollReason, MessageContentInitial, MessageId, MessageIndex, TimestampMillis, User};
+use types::{
+    EventIndex, GroupReplyContext, InvalidPollReason, MessageContentInitial, MessageId, MessageIndex, TimestampMillis, User,
+};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
