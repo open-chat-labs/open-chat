@@ -16,8 +16,6 @@
 
     let hoveredIndex: number | undefined;
     let rendered = false;
-    let cryptoMessages = stats.icpMessages + stats.sns1Messages + stats.ckbtcMessages;
-
     let previousStats: ChatMetrics | undefined = undefined;
     let totalMessages = 0;
     let textPerc = writable(12.5);
@@ -28,6 +26,8 @@
     let pollPerc = writable(12.5);
     let cryptoPerc = writable(12.5);
     let giphyPerc = writable(12.5);
+
+    $: cryptoMessages = stats.icpMessages + stats.sns1Messages + stats.ckbtcMessages;
 
     $: {
         if (previousStats === undefined || !client.metricsEqual(stats, previousStats)) {
