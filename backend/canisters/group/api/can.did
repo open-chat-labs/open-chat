@@ -430,6 +430,7 @@ type RegisterProposalVoteResponse =
 type ClaimPrizeArgs =
     record {
         message_id: MessageId;
+        correlation_id: nat64;
     };
 
 type ClaimPrizeResponse =

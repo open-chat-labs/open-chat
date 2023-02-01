@@ -15,6 +15,7 @@ pub mod c2c_unfreeze_group;
 pub mod c2c_update_proposals;
 pub mod c2c_update_user_principal;
 pub mod change_role;
+pub mod claim_prize;
 pub mod delete_messages;
 pub mod disable_invite_code;
 pub mod edit_message;
