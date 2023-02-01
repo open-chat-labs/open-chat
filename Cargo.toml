@@ -97,7 +97,7 @@ ic-icrc1-client = { git = "https://github.com/dfinity/ic", rev = "b5a1a8c0e00521
 ic-icrc1-client-cdk = { git = "https://github.com/dfinity/ic", rev = "b5a1a8c0e005216f2d945f538fc27163bafc3bf7" }
 ic-ledger-types = "0.2.0"
 ic-ledger-canister-core = { git = "https://github.com/dfinity/ic", rev = "b5a1a8c0e005216f2d945f538fc27163bafc3bf7" }
-ic-stable-structures = "0.3.0"
+ic-stable-structures = "0.5.0"
 ic-state-machine-tests = { git = "https://github.com/dfinity/ic", rev = "b5a1a8c0e005216f2d945f538fc27163bafc3bf7" }
 ic-utils = "0.22.0"
 itertools = "0.10.5"
@@ -143,5 +143,5 @@ candid_derive = { git = "https://github.com/hpeebles/candid", rev = "bc66c9eb437
 ic-cdk = { git = "https://github.com/hpeebles/cdk-rs", rev = "f758bf78e6ec18850e6d023c4f60586376d24885" }
 ic-cdk-macros = { git = "https://github.com/hpeebles/cdk-rs", rev = "f758bf78e6ec18850e6d023c4f60586376d24885" }
 ic-ledger-types = { git = "https://github.com/hpeebles/cdk-rs", rev = "f758bf78e6ec18850e6d023c4f60586376d24885" }
-ic-stable-structures = { git = "https://github.com/hpeebles/stable-structures", rev = "986e0d8531cd152d5da747b760b099f1d4f16136" }
+ic-stable-structures = { git = "https://github.com/hpeebles/stable-structures", rev = "5fb22b3221765acb5fab626217896fb23a52023d" }
 range-set = { git = "https://github.com/hpeebles/range-set", rev = "d776de4e38b9d7bf755910da5513c2d8c107bf7e" }
