@@ -10,6 +10,7 @@ import type {
     ApiMessage,
     ApiTextContent,
     ApiReplyContext,
+    ApiPrizeContent,
     ApiUpdatedMessage,
     ApiDeletedContent,
     ApiCryptoContent,
@@ -39,6 +40,7 @@ import type {
     ApiChatMetrics,
     ApiGroupSubtype,
     ApiRole,
+    ApiPrizeWinnerContent,
 } from "../user/candid/idl";
 import type {
     ApiListNervousSystemFunctionsResponse,
@@ -86,6 +88,8 @@ import {
     UnsupportedValueError,
     type MemberRole,
     type GroupSubtype,
+    PrizeContent,
+    PrizeWinnerContent,
 } from "openchat-shared";
 import type { WithdrawCryptoArgs } from "../user/candid/types";
 
@@ -157,7 +161,33 @@ export function messageContent(candid: ApiMessageContent, sender: string): Messa
     if ("GovernanceProposal" in candid) {
         return proposalContent(candid.GovernanceProposal);
     }
+    if ("Prize" in candid) {
+        return prizeContent(candid.Prize);
+    }
+    if ("PrizeWinner" in candid) {
+        return prizeWinnerContent(candid.PrizeWinner);
+    }
     throw new UnsupportedValueError("Unexpected ApiMessageContent type received", candid);
+}
+
+function prizeWinnerContent(candid: ApiPrizeWinnerContent): PrizeWinnerContent {
+    return {
+        kind: "prize_winner_content",
+        token: token(candid.token),
+        prizeMessageIndex: candid.prize_message,
+        amountE8s: candid.amount.e8s,
+    };
+}
+
+function prizeContent(candid: ApiPrizeContent): PrizeContent {
+    return {
+        kind: "prize_content",
+        prizesRemaining: candid.prizes_remaining,
+        winners: candid.winners.map((u) => u.toString()),
+        token: token(candid.token),
+        endDate: candid.end_date,
+        caption: optional(candid.caption, identity),
+    };
 }
 
 export function apiUser(domain: User): ApiUser {
@@ -338,9 +368,12 @@ export function token(candid: ApiCryptocurrency): Cryptocurrency {
 
 export function apiToken(token: Cryptocurrency): ApiCryptocurrency {
     switch (token) {
-        case "icp": return { InternetComputer: null };
-        case "sns1": return { SNS1: null };
-        case "ckbtc": return { CKBTC: null };
+        case "icp":
+            return { InternetComputer: null };
+        case "sns1":
+            return { SNS1: null };
+        case "ckbtc":
+            return { CKBTC: null };
     }
     throw new Error(`Unexpected Cryptocurrency type received - ${token}`);
 }
@@ -631,6 +664,12 @@ export function apiMessageContent(domain: MessageContent): ApiMessageContent {
         case "proposal_content":
             return { GovernanceProposal: apiProposalContent(domain) };
 
+        case "prize_content":
+            throw new Error("Incorrectly attempting to send prize content to the server");
+
+        case "prize_winner_content":
+            throw new Error("Incorrectly attempting to send prize winner content to the server");
+
         case "placeholder_content":
             throw new Error("Incorrectly attempting to send placeholder content to the server");
     }
@@ -816,8 +855,8 @@ export function apiPendingCryptocurrencyWithdrawal(
                     amount: apiICP(domain.amountE8s),
                     fee: [],
                     memo: apiOptional(identity, domain.memo),
-                }
-            }
+                },
+            },
         };
     } else {
         return {
@@ -829,8 +868,8 @@ export function apiPendingCryptocurrencyWithdrawal(
                     fee: apiICP(domain.feeE8s ?? BigInt(0)),
                     memo: apiOptional(identity, domain.memo),
                 },
-            }
-        }
+            },
+        };
     }
 }
 

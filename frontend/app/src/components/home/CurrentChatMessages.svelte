@@ -446,8 +446,15 @@
 
     $: expandedDeletedMessages = client.expandedDeletedMessages;
 
+    $: hackedEvents = [...events, createPrizeEvent(), createPrizeWinnerEvent()];
+
     $: groupedEvents = client
-        .groupEvents(events, user.userId, $expandedDeletedMessages, groupInner(filteredProposals))
+        .groupEvents(
+            hackedEvents,
+            user.userId,
+            $expandedDeletedMessages,
+            groupInner(filteredProposals)
+        )
         .reverse();
 
     $: {
@@ -461,6 +468,54 @@
                 initialised = true;
             }
         }
+    }
+
+    function createPrizeEvent(): EventWrapper<ChatEventType> {
+        return {
+            timestamp: BigInt(Date.now()),
+            index: 464654654654654,
+            event: {
+                kind: "message",
+                content: {
+                    kind: "prize_content",
+                    prizesRemaining: 10,
+                    winners: [],
+                    token: "ckbtc",
+                    endDate: BigInt(Date.now() + 1000 * 60 * 60 * 24),
+                    caption: "Get your free shitcoin here",
+                },
+                sender: "wxns6-qiaaa-aaaaa-aaaqa-cai",
+                messageId: BigInt(264646640654654),
+                messageIndex: 0,
+                reactions: [],
+                edited: false,
+                forwarded: false,
+                deleted: false,
+            },
+        };
+    }
+
+    function createPrizeWinnerEvent(): EventWrapper<ChatEventType> {
+        return {
+            timestamp: BigInt(Date.now()),
+            index: 464654654654654464,
+            event: {
+                kind: "message",
+                content: {
+                    kind: "prize_winner_content",
+                    token: "ckbtc",
+                    prizeMessageIndex: 0,
+                    amountE8s: BigInt(16546574646),
+                },
+                sender: "wxns6-qiaaa-aaaaa-aaaqa-cai",
+                messageId: BigInt(2646466406546545),
+                messageIndex: 1,
+                reactions: [],
+                edited: false,
+                forwarded: false,
+                deleted: false,
+            },
+        };
     }
 
     function setIfInsideFromBottomThreshold() {

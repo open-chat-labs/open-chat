@@ -593,6 +593,22 @@ type ImageContent =
         blob_reference: opt BlobReference;
     };
 
+type PrizeContent =
+    record {
+        prizes_remaining: nat32;
+        winners: vec UserId;
+        token: Cryptocurrency;
+        end_date: TimestampMillis;
+        caption: opt text;
+    };
+
+type PrizeWinnerContent =
+    record {
+        token: Cryptocurrency;
+        amount: Tokens;
+        prize_message: MessageIndex;
+    };
+
 type IndexedNotification =
     record {
         index: nat64;
@@ -621,6 +637,8 @@ type MessageContent =
         Deleted: DeletedContent;
         Giphy: GiphyContent;
         GovernanceProposal: ProposalContent;
+        Prize: PrizeContent;
+        PrizeWinner: PrizeWinnerContent;
     };
 
 type UpdatedMessage =

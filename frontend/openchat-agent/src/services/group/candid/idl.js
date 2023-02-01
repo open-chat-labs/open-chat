@@ -170,6 +170,18 @@ export const idlFactory = ({ IDL }) => {
     'caption' : IDL.Opt(IDL.Text),
     'width' : IDL.Nat32,
   });
+  const Cryptocurrency = IDL.Variant({
+    'InternetComputer' : IDL.Null,
+    'SNS1' : IDL.Null,
+    'CKBTC' : IDL.Null,
+  });
+  const PrizeContent = IDL.Record({
+    'token' : Cryptocurrency,
+    'end_date' : TimestampMillis,
+    'prizes_remaining' : IDL.Nat32,
+    'caption' : IDL.Opt(IDL.Text),
+    'winners' : IDL.Vec(UserId),
+  });
   const ProposalId = IDL.Nat64;
   const ProposalDecisionStatus = IDL.Variant({
     'Failed' : IDL.Null,
@@ -227,6 +239,12 @@ export const idlFactory = ({ IDL }) => {
     'governance_canister_id' : CanisterId,
     'proposal' : Proposal,
   });
+  const Tokens = IDL.Record({ 'e8s' : IDL.Nat64 });
+  const PrizeWinnerContent = IDL.Record({
+    'token' : Cryptocurrency,
+    'prize_message' : MessageIndex,
+    'amount' : Tokens,
+  });
   const AudioContent = IDL.Record({
     'mime_type' : IDL.Text,
     'blob_reference' : IDL.Opt(BlobReference),
@@ -237,13 +255,7 @@ export const idlFactory = ({ IDL }) => {
     'Mint' : IDL.Null,
     'Account' : AccountIdentifier,
   });
-  const Tokens = IDL.Record({ 'e8s' : IDL.Nat64 });
   const TimestampNanos = IDL.Nat64;
-  const Cryptocurrency = IDL.Variant({
-    'InternetComputer' : IDL.Null,
-    'SNS1' : IDL.Null,
-    'CKBTC' : IDL.Null,
-  });
   const TransactionHash = IDL.Vec(IDL.Nat8);
   const Memo = IDL.Nat64;
   const NnsFailedCryptoTransaction = IDL.Record({
@@ -358,7 +370,9 @@ export const idlFactory = ({ IDL }) => {
     'Poll' : PollContent,
     'Text' : TextContent,
     'Image' : ImageContent,
+    'Prize' : PrizeContent,
     'GovernanceProposal' : ProposalContent,
+    'PrizeWinner' : PrizeWinnerContent,
     'Audio' : AudioContent,
     'Crypto' : CryptoContent,
     'Video' : VideoContent,
@@ -939,6 +953,10 @@ export const idlFactory = ({ IDL }) => {
     'mentioned_by' : UserId,
     'message_index' : MessageIndex,
   });
+  const MessageIndexRange = IDL.Record({
+    'end' : MessageIndex,
+    'start' : MessageIndex,
+  });
   const GroupCanisterGroupChatSummary = IDL.Record({
     'is_public' : IDL.Bool,
     'permissions' : GroupPermissions,
@@ -951,10 +969,12 @@ export const idlFactory = ({ IDL }) => {
     'wasm_version' : Version,
     'notifications_muted' : IDL.Bool,
     'description' : IDL.Text,
+    'events_ttl' : IDL.Opt(Milliseconds),
     'last_updated' : TimestampMillis,
     'owner_id' : UserId,
     'joined' : TimestampMillis,
     'avatar_id' : IDL.Opt(IDL.Nat),
+    'next_message_expiry' : IDL.Opt(TimestampMillis),
     'latest_threads' : IDL.Vec(GroupCanisterThreadDetails),
     'frozen' : IDL.Opt(FrozenGroupInfo),
     'latest_event_index' : EventIndex,
@@ -962,6 +982,7 @@ export const idlFactory = ({ IDL }) => {
     'min_visible_message_index' : MessageIndex,
     'mentions' : IDL.Vec(Mention),
     'chat_id' : ChatId,
+    'expired_messages' : IDL.Vec(MessageIndexRange),
     'participant_count' : IDL.Nat32,
     'my_metrics' : ChatMetrics,
     'latest_message' : IDL.Opt(MessageEventWrapper),
@@ -976,10 +997,20 @@ export const idlFactory = ({ IDL }) => {
     'SetToNone' : IDL.Null,
     'SetToSome' : GroupSubtype,
   });
+  const EventsTimeToLiveUpdate = IDL.Variant({
+    'NoChange' : IDL.Null,
+    'SetToNone' : IDL.Null,
+    'SetToSome' : Milliseconds,
+  });
   const AvatarIdUpdate = IDL.Variant({
     'NoChange' : IDL.Null,
     'SetToNone' : IDL.Null,
     'SetToSome' : IDL.Nat,
+  });
+  const TimestampUpdate = IDL.Variant({
+    'NoChange' : IDL.Null,
+    'SetToNone' : IDL.Null,
+    'SetToSome' : TimestampMillis,
   });
   const FrozenGroupUpdate = IDL.Variant({
     'NoChange' : IDL.Null,
@@ -998,15 +1029,18 @@ export const idlFactory = ({ IDL }) => {
     'affected_events' : IDL.Vec(EventIndex),
     'notifications_muted' : IDL.Opt(IDL.Bool),
     'description' : IDL.Opt(IDL.Text),
+    'events_ttl' : EventsTimeToLiveUpdate,
     'last_updated' : TimestampMillis,
     'owner_id' : IDL.Opt(UserId),
     'avatar_id' : AvatarIdUpdate,
+    'next_message_expiry' : TimestampUpdate,
     'latest_threads' : IDL.Vec(GroupCanisterThreadDetails),
     'frozen' : FrozenGroupUpdate,
     'latest_event_index' : IDL.Opt(EventIndex),
     'mentions' : IDL.Vec(Mention),
     'chat_id' : ChatId,
     'affected_events_v2' : IDL.Vec(IDL.Tuple(EventIndex, TimestampMillis)),
+    'newly_expired_messages' : IDL.Vec(MessageIndexRange),
     'participant_count' : IDL.Opt(IDL.Nat32),
     'my_metrics' : IDL.Opt(ChatMetrics),
     'latest_message' : IDL.Opt(MessageEventWrapper),
@@ -1088,11 +1122,6 @@ export const idlFactory = ({ IDL }) => {
     'pin_messages' : IDL.Opt(PermissionRole),
     'reply_in_thread' : IDL.Opt(PermissionRole),
     'react_to_messages' : IDL.Opt(PermissionRole),
-  });
-  const EventsTimeToLiveUpdate = IDL.Variant({
-    'NoChange' : IDL.Null,
-    'SetToNone' : IDL.Null,
-    'SetToSome' : Milliseconds,
   });
   const Avatar = IDL.Record({
     'id' : IDL.Nat,

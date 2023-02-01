@@ -224,6 +224,7 @@ function addCaption(caption: string | undefined, content: MessageContent): Messa
         content.kind !== "placeholder_content" &&
         content.kind !== "poll_content" &&
         content.kind !== "proposal_content" &&
+        content.kind !== "prize_winner_content" &&
         content.kind !== "crypto_content"
         ? { ...content, caption }
         : content;

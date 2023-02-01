@@ -197,8 +197,10 @@ export interface DirectChatSummary {
   'metrics' : ChatMetrics,
   'them' : UserId,
   'notifications_muted' : boolean,
+  'events_ttl' : [] | [Milliseconds],
   'latest_event_index' : EventIndex,
   'read_by_me_up_to' : [] | [MessageIndex],
+  'expired_messages' : Array<MessageIndexRange>,
   'archived' : boolean,
   'my_metrics' : ChatMetrics,
   'latest_message' : MessageEventWrapper,
@@ -208,9 +210,11 @@ export interface DirectChatSummaryUpdates {
   'metrics' : [] | [ChatMetrics],
   'affected_events' : Uint32Array | number[],
   'notifications_muted' : [] | [boolean],
+  'events_ttl' : EventsTimeToLiveUpdate,
   'latest_event_index' : [] | [EventIndex],
   'read_by_me_up_to' : [] | [MessageIndex],
   'chat_id' : ChatId,
+  'newly_expired_messages' : Array<MessageIndexRange>,
   'archived' : [] | [boolean],
   'my_metrics' : [] | [ChatMetrics],
   'latest_message' : [] | [MessageEventWrapper],
@@ -291,10 +295,12 @@ export interface GroupCanisterGroupChatSummary {
   'wasm_version' : Version,
   'notifications_muted' : boolean,
   'description' : string,
+  'events_ttl' : [] | [Milliseconds],
   'last_updated' : TimestampMillis,
   'owner_id' : UserId,
   'joined' : TimestampMillis,
   'avatar_id' : [] | [bigint],
+  'next_message_expiry' : [] | [TimestampMillis],
   'latest_threads' : Array<GroupCanisterThreadDetails>,
   'frozen' : [] | [FrozenGroupInfo],
   'latest_event_index' : EventIndex,
@@ -302,6 +308,7 @@ export interface GroupCanisterGroupChatSummary {
   'min_visible_message_index' : MessageIndex,
   'mentions' : Array<Mention>,
   'chat_id' : ChatId,
+  'expired_messages' : Array<MessageIndexRange>,
   'participant_count' : number,
   'my_metrics' : ChatMetrics,
   'latest_message' : [] | [MessageEventWrapper],
@@ -318,15 +325,18 @@ export interface GroupCanisterGroupChatSummaryUpdates {
   'affected_events' : Uint32Array | number[],
   'notifications_muted' : [] | [boolean],
   'description' : [] | [string],
+  'events_ttl' : EventsTimeToLiveUpdate,
   'last_updated' : TimestampMillis,
   'owner_id' : [] | [UserId],
   'avatar_id' : AvatarIdUpdate,
+  'next_message_expiry' : TimestampUpdate,
   'latest_threads' : Array<GroupCanisterThreadDetails>,
   'frozen' : FrozenGroupUpdate,
   'latest_event_index' : [] | [EventIndex],
   'mentions' : Array<Mention>,
   'chat_id' : ChatId,
   'affected_events_v2' : Array<[EventIndex, TimestampMillis]>,
+  'newly_expired_messages' : Array<MessageIndexRange>,
   'participant_count' : [] | [number],
   'my_metrics' : [] | [ChatMetrics],
   'latest_message' : [] | [MessageEventWrapper],
@@ -354,10 +364,12 @@ export interface GroupChatSummary {
   'wasm_version' : Version,
   'notifications_muted' : boolean,
   'description' : string,
+  'events_ttl' : [] | [Milliseconds],
   'last_updated' : TimestampMillis,
   'owner_id' : UserId,
   'joined' : TimestampMillis,
   'avatar_id' : [] | [bigint],
+  'next_message_expiry' : [] | [TimestampMillis],
   'latest_threads' : Array<ThreadSyncDetails>,
   'frozen' : [] | [FrozenGroupInfo],
   'latest_event_index' : EventIndex,
@@ -367,6 +379,7 @@ export interface GroupChatSummary {
   'mentions' : Array<Mention>,
   'chat_id' : ChatId,
   'date_read_pinned' : [] | [TimestampMillis],
+  'expired_messages' : Array<MessageIndexRange>,
   'archived' : boolean,
   'participant_count' : number,
   'my_metrics' : ChatMetrics,
@@ -384,9 +397,11 @@ export interface GroupChatSummaryUpdates {
   'affected_events' : Uint32Array | number[],
   'notifications_muted' : [] | [boolean],
   'description' : [] | [string],
+  'events_ttl' : [] | [Milliseconds],
   'last_updated' : TimestampMillis,
   'owner_id' : [] | [UserId],
   'avatar_id' : AvatarIdUpdate,
+  'next_message_expiry' : TimestampUpdate,
   'latest_threads' : Array<ThreadSyncDetails>,
   'frozen' : FrozenGroupUpdate,
   'latest_event_index' : [] | [EventIndex],
@@ -394,6 +409,7 @@ export interface GroupChatSummaryUpdates {
   'mentions' : Array<Mention>,
   'chat_id' : ChatId,
   'date_read_pinned' : [] | [TimestampMillis],
+  'expired_messages' : Array<MessageIndexRange>,
   'archived' : [] | [boolean],
   'participant_count' : [] | [number],
   'my_metrics' : [] | [ChatMetrics],
@@ -523,7 +539,9 @@ export type MessageContent = { 'Giphy' : GiphyContent } |
   { 'Poll' : PollContent } |
   { 'Text' : TextContent } |
   { 'Image' : ImageContent } |
+  { 'Prize' : PrizeContent } |
   { 'GovernanceProposal' : ProposalContent } |
+  { 'PrizeWinner' : PrizeWinnerContent } |
   { 'Audio' : AudioContent } |
   { 'Crypto' : CryptoContent } |
   { 'Video' : VideoContent } |
@@ -537,6 +555,10 @@ export interface MessageEventWrapper {
 }
 export type MessageId = bigint;
 export type MessageIndex = number;
+export interface MessageIndexRange {
+  'end' : MessageIndex,
+  'start' : MessageIndex,
+}
 export interface MessageMatch {
   'content' : MessageContent,
   'sender' : UserId,
@@ -683,6 +705,18 @@ export interface PollEnded {
 export interface PollVotes {
   'total' : TotalPollVotes,
   'user' : Uint32Array | number[],
+}
+export interface PrizeContent {
+  'token' : Cryptocurrency,
+  'end_date' : TimestampMillis,
+  'prizes_remaining' : number,
+  'caption' : [] | [string],
+  'winners' : Array<UserId>,
+}
+export interface PrizeWinnerContent {
+  'token' : Cryptocurrency,
+  'prize_message' : MessageIndex,
+  'amount' : Tokens,
 }
 export type Proposal = { 'NNS' : NnsProposal } |
   { 'SNS' : SnsProposal };
@@ -890,6 +924,9 @@ export interface ThreadUpdated {
 }
 export type TimestampMillis = bigint;
 export type TimestampNanos = bigint;
+export type TimestampUpdate = { 'NoChange' : null } |
+  { 'SetToNone' : null } |
+  { 'SetToSome' : TimestampMillis };
 export interface Tokens { 'e8s' : bigint }
 export type TotalPollVotes = { 'Anonymous' : Array<[number, number]> } |
   { 'Visible' : Array<[number, Array<UserId>]> } |

@@ -28,6 +28,8 @@ import {
     GiphyContent,
     GiphyImageVariant,
     ProposalContent,
+    PrizeContent,
+    PrizeWinnerContent,
     Proposal,
     PollContent,
     PollVotes,
@@ -166,6 +168,8 @@ export {
     WithdrawCryptoResponse as ApiWithdrawCryptoResponse,
     TransferCryptoWithinGroupResponse as ApiTransferCryptoWithinGroupResponse,
     TransferCryptoWithinGroupArgs as ApiTransferCryptoWithinGroupArgs,
+    PrizeContent as ApiPrizeContent,
+    PrizeWinnerContent as ApiPrizeWinnerContent,
     GiphyContent as ApiGiphyContent,
     GiphyImageVariant as ApiGiphyImageVariant,
     ChatMetrics as ApiChatMetrics,
@@ -185,7 +189,7 @@ export {
     GroupSubtypeUpdate as ApiGroupSubtypeUpdate,
     ArchiveChatResponse as ApiArchiveChatResponse,
     Icrc1Account as ApiIcrc1Account,
-    DeletedMessageResponse as ApiDeletedDirectMessageResponse
+    DeletedMessageResponse as ApiDeletedDirectMessageResponse,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

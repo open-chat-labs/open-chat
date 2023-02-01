@@ -118,6 +118,18 @@ export const idlFactory = ({ IDL }) => {
     'caption' : IDL.Opt(IDL.Text),
     'width' : IDL.Nat32,
   });
+  const Cryptocurrency = IDL.Variant({
+    'InternetComputer' : IDL.Null,
+    'SNS1' : IDL.Null,
+    'CKBTC' : IDL.Null,
+  });
+  const PrizeContent = IDL.Record({
+    'token' : Cryptocurrency,
+    'end_date' : TimestampMillis,
+    'prizes_remaining' : IDL.Nat32,
+    'caption' : IDL.Opt(IDL.Text),
+    'winners' : IDL.Vec(UserId),
+  });
   const ProposalId = IDL.Nat64;
   const ProposalDecisionStatus = IDL.Variant({
     'Failed' : IDL.Null,
@@ -175,6 +187,13 @@ export const idlFactory = ({ IDL }) => {
     'governance_canister_id' : CanisterId,
     'proposal' : Proposal,
   });
+  const MessageIndex = IDL.Nat32;
+  const Tokens = IDL.Record({ 'e8s' : IDL.Nat64 });
+  const PrizeWinnerContent = IDL.Record({
+    'token' : Cryptocurrency,
+    'prize_message' : MessageIndex,
+    'amount' : Tokens,
+  });
   const AudioContent = IDL.Record({
     'mime_type' : IDL.Text,
     'blob_reference' : IDL.Opt(BlobReference),
@@ -185,13 +204,7 @@ export const idlFactory = ({ IDL }) => {
     'Mint' : IDL.Null,
     'Account' : AccountIdentifier,
   });
-  const Tokens = IDL.Record({ 'e8s' : IDL.Nat64 });
   const TimestampNanos = IDL.Nat64;
-  const Cryptocurrency = IDL.Variant({
-    'InternetComputer' : IDL.Null,
-    'SNS1' : IDL.Null,
-    'CKBTC' : IDL.Null,
-  });
   const TransactionHash = IDL.Vec(IDL.Nat8);
   const Memo = IDL.Nat64;
   const NnsFailedCryptoTransaction = IDL.Record({
@@ -306,7 +319,9 @@ export const idlFactory = ({ IDL }) => {
     'Poll' : PollContent,
     'Text' : TextContent,
     'Image' : ImageContent,
+    'Prize' : PrizeContent,
     'GovernanceProposal' : ProposalContent,
+    'PrizeWinner' : PrizeWinnerContent,
     'Audio' : AudioContent,
     'Crypto' : CryptoContent,
     'Video' : VideoContent,
@@ -323,7 +338,6 @@ export const idlFactory = ({ IDL }) => {
     'chat_id_if_other' : IDL.Opt(ChatId),
     'event_index' : EventIndex,
   });
-  const MessageIndex = IDL.Nat32;
   const Message = IDL.Record({
     'forwarded' : IDL.Bool,
     'content' : MessageContent,

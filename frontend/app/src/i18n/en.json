@@ -533,6 +533,7 @@
     "failedToShareMessage": "Unable to share this message",
     "backToResults": "back",
     "giphyMessage": "Giphy message",
+    "prizeMessage": "Prize message",
     "share": "Share",
     "stats": {
         "userStats": "User stats",
