@@ -13,14 +13,6 @@ fn edit_message(args: group_canister::edit_message::Args) -> Response {
     mutate_state(|state| edit_message_impl(args.into(), state))
 }
 
-#[update]
-#[trace]
-fn edit_message_v2(args: Args) -> Response {
-    run_regular_jobs();
-
-    mutate_state(|state| edit_message_impl(args, state))
-}
-
 fn edit_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     if runtime_state.data.is_frozen() {
         return ChatFrozen;

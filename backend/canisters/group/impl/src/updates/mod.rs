@@ -16,7 +16,7 @@ mod c2c_update_user_principal;
 mod change_role;
 mod delete_messages;
 mod disable_invite_code;
-mod edit_message_v2;
+mod edit_message;
 mod enable_invite_code;
 mod make_private;
 mod pin_message;

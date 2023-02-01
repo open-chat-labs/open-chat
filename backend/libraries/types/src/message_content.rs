@@ -159,7 +159,7 @@ impl MessageContentInitial {
                 })
             }
             MessageContentInitial::Prize(p) => MessageContentInternal::Prize(PrizeContentInternal {
-                prizes: p.prizes,
+                prizes_remaining: p.prizes,
                 winners: Vec::new(),
                 token: p.token,
                 end_date: p.end_date,
@@ -217,7 +217,7 @@ impl From<MessageContentInitial> for MessageContent {
             MessageContentInitial::Text(c) => MessageContent::Text(c),
             MessageContentInitial::Video(c) => MessageContent::Video(c),
             MessageContentInitial::Prize(c) => MessageContent::Prize(PrizeContent {
-                prizes: c.prizes.len() as u32,
+                prizes_remaining: c.prizes.len() as u32,
                 winners: Vec::new(),
                 token: c.token,
                 end_date: c.end_date,
@@ -245,7 +245,7 @@ impl MessageContentInternal {
                 my_vote: my_user_id.and_then(|u| p.votes.get(&u)).copied(),
             }),
             MessageContentInternal::Prize(p) => MessageContent::Prize(PrizeContent {
-                prizes: p.prizes.len() as u32,
+                prizes_remaining: p.prizes_remaining.len() as u32,
                 winners: p.winners.clone(),
                 token: p.token,
                 end_date: p.end_date,
@@ -480,7 +480,7 @@ pub struct PrizeContentInitial {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct PrizeContentInternal {
-    pub prizes: Vec<Tokens>,
+    pub prizes_remaining: Vec<Tokens>,
     pub winners: Vec<UserId>,
     pub token: Cryptocurrency,
     pub end_date: TimestampMillis,
@@ -489,7 +489,7 @@ pub struct PrizeContentInternal {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct PrizeContent {
-    pub prizes: u32,
+    pub prizes_remaining: u32,
     pub winners: Vec<UserId>,
     pub token: Cryptocurrency,
     pub end_date: TimestampMillis,

@@ -75,6 +75,7 @@ type ChatMetrics =
         ckbtc_messages: nat64;
         deleted_messages: nat64;
         giphy_messages: nat64;
+        prize_messages: nat64;
         replies: nat64;
         edits: nat64;
         reactions: nat64;
@@ -1226,8 +1227,17 @@ type MessageIndexRange =
 
 type PrizeContentInitial =
     record {
+        prizes: vec Tokens;
+        token: Cryptocurrency;
+        end_date: TimestampMillis;
+        caption: opt text;
     };
 
 type PrizeContent =
     record {
+        prizes_remaining: nat32;
+        winners: vec UserId;
+        token: Cryptocurrency;
+        end_date: TimestampMillis;
+        caption: opt text;
     };
