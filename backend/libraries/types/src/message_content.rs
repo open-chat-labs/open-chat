@@ -1,8 +1,10 @@
 use crate::polls::{InvalidPollReason, PollConfig, PollVotes};
 use crate::{
-    CanisterId, CryptoTransaction, ProposalContent, ProposalContentInternal, TimestampMillis, TotalVotes, UserId, VoteOperation,
+    CanisterId, CryptoTransaction, Cryptocurrency, ProposalContent, ProposalContentInternal, TimestampMillis, TotalVotes,
+    UserId, VoteOperation,
 };
 use candid::CandidType;
+use ic_ledger_types::Tokens;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt::{Debug, Formatter};
@@ -22,6 +24,7 @@ pub enum MessageContentInitial {
     Deleted(DeletedBy),
     Giphy(GiphyContent),
     GovernanceProposal(ProposalContent),
+    Prize(PrizeContentInitial),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -51,6 +54,7 @@ pub enum MessageContentInternal {
     Deleted(DeletedBy),
     Giphy(GiphyContent),
     GovernanceProposal(ProposalContentInternal),
+    Prize(PrizeContentInternal),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -61,6 +65,7 @@ pub enum ContentValidationError {
     TransferCannotBeZero,
     TransferLimitExceeded(u128),
     InvalidTypeForForwarding,
+    PrizeEndDateInThePast,
 }
 
 impl MessageContentInitial {
@@ -96,6 +101,11 @@ impl MessageContentInitial {
                     ));
                 }
             }
+            MessageContentInitial::Prize(p) => {
+                if p.end_date <= now {
+                    return Err(ContentValidationError::PrizeEndDateInThePast);
+                }
+            }
             _ => {}
         };
 
@@ -106,6 +116,7 @@ impl MessageContentInitial {
             MessageContentInitial::Audio(a) => a.blob_reference.is_none(),
             MessageContentInitial::File(f) => f.blob_reference.is_none(),
             MessageContentInitial::Poll(p) => p.config.options.is_empty(),
+            MessageContentInitial::Prize(p) => p.prizes.is_empty(),
             MessageContentInitial::Deleted(_) => true,
             MessageContentInitial::Crypto(_)
             | MessageContentInitial::Giphy(_)
@@ -147,6 +158,13 @@ impl MessageContentInitial {
                     votes: HashMap::new(),
                 })
             }
+            MessageContentInitial::Prize(p) => MessageContentInternal::Prize(PrizeContentInternal {
+                prizes: p.prizes,
+                winners: Vec::new(),
+                token: p.token,
+                end_date: p.end_date,
+                caption: p.caption,
+            }),
         }
     }
 
@@ -162,6 +180,7 @@ impl MessageContentInitial {
             MessageContentInitial::Deleted(_) => 0,
             MessageContentInitial::Giphy(g) => g.caption.as_ref().map_or(0, |t| t.len()),
             MessageContentInitial::GovernanceProposal(p) => p.proposal.summary().len(),
+            MessageContentInitial::Prize(p) => p.caption.as_ref().map_or(0, |t| t.len()),
         }
     }
 }
@@ -179,6 +198,7 @@ impl From<MessageContent> for MessageContentInitial {
             MessageContent::Poll(c) => MessageContentInitial::Poll(c),
             MessageContent::Text(c) => MessageContentInitial::Text(c),
             MessageContent::Video(c) => MessageContentInitial::Video(c),
+            MessageContent::Prize(_) => panic!("Cannot convert output prize to initial prize"),
         }
     }
 }
@@ -196,6 +216,13 @@ impl From<MessageContentInitial> for MessageContent {
             MessageContentInitial::Poll(c) => MessageContent::Poll(c),
             MessageContentInitial::Text(c) => MessageContent::Text(c),
             MessageContentInitial::Video(c) => MessageContent::Video(c),
+            MessageContentInitial::Prize(c) => MessageContent::Prize(PrizeContent {
+                prizes: c.prizes.len() as u32,
+                winners: Vec::new(),
+                token: c.token,
+                end_date: c.end_date,
+                caption: c.caption,
+            }),
         }
     }
 }
@@ -216,6 +243,13 @@ impl MessageContentInternal {
                 governance_canister_id: p.governance_canister_id,
                 proposal: p.proposal.clone(),
                 my_vote: my_user_id.and_then(|u| p.votes.get(&u)).copied(),
+            }),
+            MessageContentInternal::Prize(p) => MessageContent::Prize(PrizeContent {
+                prizes: p.prizes.len() as u32,
+                winners: p.winners.clone(),
+                token: p.token,
+                end_date: p.end_date,
+                caption: p.caption.clone(),
             }),
         }
     }
@@ -252,7 +286,8 @@ impl MessageContentInternal {
             | MessageContentInternal::Crypto(_)
             | MessageContentInternal::Deleted(_)
             | MessageContentInternal::Giphy(_)
-            | MessageContentInternal::GovernanceProposal(_) => {}
+            | MessageContentInternal::GovernanceProposal(_)
+            | MessageContentInternal::Prize(_) => {}
         }
 
         references
@@ -436,9 +471,28 @@ pub struct CryptoContent {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct PrizeContentInitial {
+    pub prizes: Vec<Tokens>,
+    pub token: Cryptocurrency,
+    pub end_date: TimestampMillis,
+    pub caption: Option<String>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct PrizeContentInternal {
+    pub prizes: Vec<Tokens>,
+    pub winners: Vec<UserId>,
+    pub token: Cryptocurrency,
+    pub end_date: TimestampMillis,
+    pub caption: Option<String>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct PrizeContent {
-    pub recipient: UserId,
-    pub transfer: CryptoTransaction,
+    pub prizes: u32,
+    pub winners: Vec<UserId>,
+    pub token: Cryptocurrency,
+    pub end_date: TimestampMillis,
     pub caption: Option<String>,
 }
 

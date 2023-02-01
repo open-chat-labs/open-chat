@@ -352,6 +352,10 @@ impl MessageInternal {
                     incr(&mut metrics.proposals);
                     incr(&mut sender_metrics.proposals);
                 }
+                MessageContentInternal::Prize(_) => {
+                    incr(&mut metrics.prize_messages);
+                    incr(&mut sender_metrics.prize_messages);
+                }
             }
 
             for user_id in self.reactions.iter().flat_map(|(_, u)| u.iter()) {

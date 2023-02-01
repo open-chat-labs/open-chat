@@ -54,6 +54,10 @@ impl From<&MessageContentInternal> for Document {
                 document.add_field(p.proposal.summary().to_string(), 1.0);
             }
             MessageContentInternal::Deleted(_) => {}
+            MessageContentInternal::Prize(c) => {
+                document.add_field(c.token.token_symbol(), 1.0);
+                try_add_caption(&mut document, c.caption.as_ref())
+            }
         }
 
         document

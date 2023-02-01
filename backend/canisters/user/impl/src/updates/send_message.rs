@@ -108,6 +108,10 @@ fn validate_request(args: &Args, runtime_state: &RuntimeState) -> ValidateReques
 
     let now = runtime_state.env.now();
 
+    if matches!(args.content, MessageContentInitial::Prize(_)) {
+        return ValidateRequestResult::Invalid(InvalidRequest("Cannot send a prize message in a direct chat".to_string()));
+    }
+
     if let Err(error) = args.content.validate_for_new_message(true, args.forwarding, now) {
         ValidateRequestResult::Invalid(match error {
             ContentValidationError::Empty => MessageEmpty,
@@ -118,6 +122,7 @@ fn validate_request(args: &Args, runtime_state: &RuntimeState) -> ValidateReques
             ContentValidationError::InvalidTypeForForwarding => {
                 InvalidRequest("Cannot forward this type of message".to_string())
             }
+            ContentValidationError::PrizeEndDateInThePast => unreachable!(),
         })
     } else if args.recipient == runtime_state.env.canister_id().into() {
         ValidateRequestResult::Valid(UserType::_Self)

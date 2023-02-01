@@ -52,6 +52,7 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
                 ContentValidationError::InvalidTypeForForwarding => {
                     InvalidRequest("Cannot forward this type of message".to_string())
                 }
+                ContentValidationError::PrizeEndDateInThePast => InvalidRequest("Prize ended in the past".to_string()),
             };
         }
 
