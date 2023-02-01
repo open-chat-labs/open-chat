@@ -11,8 +11,6 @@ use utils::env::canister::CanisterEnv;
 #[post_upgrade]
 #[trace]
 fn post_upgrade(args: Args) {
-    ic_cdk::setup();
-
     let env = Box::new(CanisterEnv::new());
 
     let (data, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>) =

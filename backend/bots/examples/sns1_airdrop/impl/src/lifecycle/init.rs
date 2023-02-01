@@ -9,7 +9,6 @@ use utils::env::canister::CanisterEnv;
 #[init]
 #[trace]
 fn init(args: Args) {
-    ic_cdk::setup();
     canister_logger::init(args.test_mode);
 
     let env = Box::new(CanisterEnv::new());
