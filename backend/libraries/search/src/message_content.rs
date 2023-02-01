@@ -58,6 +58,9 @@ impl From<&MessageContentInternal> for Document {
                 document.add_field(c.token.token_symbol(), 1.0);
                 try_add_caption(&mut document, c.caption.as_ref())
             }
+            MessageContentInternal::PrizeWinner(c) => {
+                document.add_field(c.token.token_symbol(), 1.0);
+            }
         }
 
         document

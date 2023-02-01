@@ -1,7 +1,7 @@
 use crate::polls::{InvalidPollReason, PollConfig, PollVotes};
 use crate::{
-    CanisterId, CryptoTransaction, Cryptocurrency, ProposalContent, ProposalContentInternal, TimestampMillis, TotalVotes,
-    UserId, VoteOperation,
+    CanisterId, CryptoTransaction, Cryptocurrency, MessageIndex, ProposalContent, ProposalContentInternal, TimestampMillis,
+    TotalVotes, UserId, VoteOperation,
 };
 use candid::CandidType;
 use ic_ledger_types::Tokens;
@@ -40,6 +40,7 @@ pub enum MessageContent {
     Giphy(GiphyContent),
     GovernanceProposal(ProposalContent),
     Prize(PrizeContent),
+    PrizeWinner(PrizeWinnerContent),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -55,6 +56,7 @@ pub enum MessageContentInternal {
     Giphy(GiphyContent),
     GovernanceProposal(ProposalContentInternal),
     Prize(PrizeContentInternal),
+    PrizeWinner(PrizeWinnerContent),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -199,6 +201,7 @@ impl From<MessageContent> for MessageContentInitial {
             MessageContent::Text(c) => MessageContentInitial::Text(c),
             MessageContent::Video(c) => MessageContentInitial::Video(c),
             MessageContent::Prize(_) => panic!("Cannot convert output prize to initial prize"),
+            MessageContent::PrizeWinner(_) => panic!("Cannot send a prize winner message"),
         }
     }
 }
@@ -239,6 +242,7 @@ impl MessageContentInternal {
             MessageContentInternal::Crypto(c) => MessageContent::Crypto(c.clone()),
             MessageContentInternal::Deleted(d) => MessageContent::Deleted(d.clone()),
             MessageContentInternal::Giphy(g) => MessageContent::Giphy(g.clone()),
+            MessageContentInternal::PrizeWinner(c) => MessageContent::PrizeWinner(c.clone()),
             MessageContentInternal::GovernanceProposal(p) => MessageContent::GovernanceProposal(ProposalContent {
                 governance_canister_id: p.governance_canister_id,
                 proposal: p.proposal.clone(),
@@ -287,7 +291,8 @@ impl MessageContentInternal {
             | MessageContentInternal::Deleted(_)
             | MessageContentInternal::Giphy(_)
             | MessageContentInternal::GovernanceProposal(_)
-            | MessageContentInternal::Prize(_) => {}
+            | MessageContentInternal::Prize(_)
+            | MessageContentInternal::PrizeWinner(_) => {}
         }
 
         references
@@ -494,6 +499,13 @@ pub struct PrizeContent {
     pub token: Cryptocurrency,
     pub end_date: TimestampMillis,
     pub caption: Option<String>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct PrizeWinnerContent {
+    pub token: Cryptocurrency,
+    pub amount: Tokens,
+    pub prize_message: MessageIndex,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

@@ -336,6 +336,8 @@ pub struct ChatMetrics {
     pub giphy_messages: u64,
     #[serde(default)]
     pub prize_messages: u64,
+    #[serde(default)]
+    pub prize_winner_messages: u64,
     pub replies: u64,
     pub edits: u64,
     pub reactions: u64,
@@ -360,6 +362,7 @@ impl ChatMetrics {
         self.deleted_messages += other.deleted_messages;
         self.giphy_messages += other.giphy_messages;
         self.prize_messages += other.prize_messages;
+        self.prize_winner_messages += other.prize_winner_messages;
         self.replies += other.replies;
         self.edits += other.edits;
         self.reactions += other.reactions;

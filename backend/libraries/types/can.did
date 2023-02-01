@@ -76,6 +76,7 @@ type ChatMetrics =
         deleted_messages: nat64;
         giphy_messages: nat64;
         prize_messages: nat64;
+        prize_winner_messages: nat64;
         replies: nat64;
         edits: nat64;
         reactions: nat64;
@@ -638,6 +639,7 @@ type MessageContent =
         Giphy: GiphyContent;
         GovernanceProposal: ProposalContent;
         Prize: PrizeContent;
+        PrizeWinner: PrizeWinnerContent;
     };
 
 type UpdatedMessage =
@@ -1240,4 +1242,11 @@ type PrizeContent =
         token: Cryptocurrency;
         end_date: TimestampMillis;
         caption: opt text;
+    };
+
+type PrizeWinnerContent =
+    record {
+        token: Cryptocurrency;
+        amount: Tokens;
+        prize_message: MessageIndex;
     };
