@@ -427,6 +427,22 @@ type RegisterProposalVoteResponse =
         InternalError: text;
     };
 
+type ClaimPrizeArgs =
+    record {
+        message_id: MessageId;
+    };
+
+type ClaimPrizeResponse =
+    variant {
+        Success;
+        CallerNotInGroup;
+        UserSuspended;
+        ChatFrozen;
+        MessageNotFound;
+        AlreadyClaimed;
+        InternalError: text;
+    };
+
 type MakePrivateArgs =
     record {
         correlation_id: nat64;
@@ -708,6 +724,7 @@ service: {
     add_reaction: (AddReactionArgs) -> (AddReactionResponse);
     remove_reaction: (RemoveReactionArgs) -> (RemoveReactionResponse);
     register_proposal_vote: (RegisterProposalVoteArgs) -> (RegisterProposalVoteResponse);
+    claim_prize: (ClaimPrizeArgs) -> (ClaimPrizeResponse);
 
     summary: (SummaryArgs) -> (SummaryResponse) query;
     summary_updates: (SummaryUpdatesArgs) -> (SummaryUpdatesResponse) query;
