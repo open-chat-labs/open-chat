@@ -7,8 +7,8 @@ use chat_events::{PushMessageArgs, Reader};
 use ic_cdk_macros::update;
 use tracing::error;
 use types::{
-    CanisterId, CompletedCryptoTransaction, ContentValidationError, CryptoTransaction, MessageId, MessageIndex,
-    UserId, MessageContentInitial,
+    CanisterId, CompletedCryptoTransaction, ContentValidationError, CryptoTransaction, MessageContentInitial, MessageId,
+    MessageIndex, UserId,
 };
 use user_canister::c2c_send_messages;
 use user_canister::c2c_send_messages::{C2CReplyContext, SendMessageArgs};

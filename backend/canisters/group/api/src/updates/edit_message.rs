@@ -19,6 +19,6 @@ impl From<Args> for crate::edit_message_v2::Args {
             message_id: args.message_id,
             content: args.content.into(),
             correlation_id: args.correlation_id,
-        }        
+        }
     }
 }

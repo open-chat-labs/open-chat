@@ -27,6 +27,6 @@ impl From<Args> for crate::send_message_v2::Args {
             replies_to: args.replies_to,
             forwarding: args.forwarding,
             correlation_id: args.correlation_id,
-        }        
+        }
     }
 }
