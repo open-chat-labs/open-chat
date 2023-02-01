@@ -5261,7 +5261,6 @@ dependencies = [
  "notifications_index_canister",
  "serde",
  "serializer",
- "stable_memory",
  "tracing",
  "types 0.1.0",
  "user_index_canister",
