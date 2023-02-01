@@ -31,6 +31,18 @@ type SendMessageResponse =
         ChatFrozen;
     };
 
+type SendMessageV2Args =
+    record {
+        message_id: MessageId;
+        thread_root_message_index: opt MessageIndex;
+        content: MessageContentInitial;
+        sender_name: text;
+        replies_to: opt GroupReplyContext;
+        mentioned: vec User;
+        forwarding: bool;
+        correlation_id: nat64;
+    };
+
 type EditMessageArgs =
     record {
         thread_root_message_index: opt MessageIndex;
@@ -688,6 +700,7 @@ service: {
 
     // Regular users
     send_message: (SendMessageArgs) -> (SendMessageResponse);
+    send_message_v2: (SendMessageV2Args) -> (SendMessageResponse);
     edit_message: (EditMessageArgs) -> (EditMessageResponse);
     delete_messages: (DeleteMessagesArgs) -> (DeleteMessagesResponse);
     undelete_messages: (UndeleteMessagesArgs) -> (UndeleteMessagesResponse);

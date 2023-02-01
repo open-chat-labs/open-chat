@@ -609,6 +609,21 @@ type InvalidPollReason =
         PollsNotValidForDirectChats;
     };
 
+type MessageContentInitial =
+    variant {
+        Text: TextContent;
+        Image: ImageContent;
+        Video: VideoContent;
+        Audio: AudioContent;
+        File: FileContent;
+        Poll: PollContent;
+        Crypto: CryptoContent;
+        Deleted: DeletedContent;
+        Giphy: GiphyContent;
+        GovernanceProposal: ProposalContent;
+        Prize: PrizeContentInitial;
+    };
+
 type MessageContent =
     variant {
         Text: TextContent;
@@ -621,6 +636,7 @@ type MessageContent =
         Deleted: DeletedContent;
         Giphy: GiphyContent;
         GovernanceProposal: ProposalContent;
+        Prize: PrizeContent;
     };
 
 type UpdatedMessage =
@@ -1206,4 +1222,12 @@ type MessageIndexRange =
     record {
         start: MessageIndex;
         end: MessageIndex;
+    };
+
+type PrizeContentInitial =
+    record {
+    };
+
+type PrizeContent =
+    record {
     };
