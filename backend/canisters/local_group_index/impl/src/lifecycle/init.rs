@@ -12,7 +12,6 @@ const CANISTER_POOL_TARGET_SIZE: u16 = 20;
 #[init]
 #[trace]
 fn init(args: Args) {
-    ic_cdk::setup();
     canister_logger::init(args.test_mode);
     init_cycles_dispenser_client(args.cycles_dispenser_canister_id);
 
