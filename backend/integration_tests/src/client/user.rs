@@ -36,7 +36,7 @@ pub mod happy_path {
         recipient: UserId,
         text: impl ToString,
         message_id: Option<MessageId>,
-    ) -> user_canister::send_message::SuccessResult {
+    ) -> user_canister::send_message_v2::SuccessResult {
         let response = super::send_message(
             env,
             sender.principal,

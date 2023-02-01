@@ -26,6 +26,7 @@ http_request = { path = "../../../libraries/http_request" }
 ic-cdk = { workspace = true, features = ["timers"] }
 ic-cdk-macros = { workspace = true }
 ic-ledger-types = { workspace = true }
+ic-stable-structures = { workspace = true }
 itertools = { workspace = true }
 lazy_static = { workspace = true }
 ledger_utils = { path = "../../../libraries/ledger_utils" }
@@ -40,6 +41,7 @@ regex = { workspace = true }
 search = { path = "../../../libraries/search" }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
+serializer = { workspace = true }
 stable_memory = { workspace = true }
 tracing = { workspace = true }
 types = { path = "../../../libraries/types" }

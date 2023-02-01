@@ -2,7 +2,7 @@ use crate::expiring_events::ExpiringEvents;
 use crate::*;
 use ::types::{
     ChatFrozen, ChatId, ChatMetrics, ChatUnfrozen, DeletedBy, DirectChatCreated, EventIndex, EventWrapper,
-    EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupChatCreated, Mention, MentionInternal, Message, MessageContent,
+    EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupChatCreated, Mention, MentionInternal, Message, MessageContentInitial,
     MessageContentInternal, MessageId, MessageIndex, MessageMatch, Milliseconds, PollVoteRegistered, PollVotes,
     ProposalStatusUpdate, PushEventResult, PushIfNotContains, RangeSet, Reaction, RegisterVoteResult, ReplyContext,
     ThreadSummary, TimestampMillis, Timestamped, UserId, VoteOperation,
@@ -1062,7 +1062,7 @@ pub struct EditMessageArgs {
     pub min_visible_event_index: EventIndex,
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_id: MessageId,
-    pub content: MessageContent,
+    pub content: MessageContentInitial,
     pub correlation_id: u64,
     pub now: TimestampMillis,
 }

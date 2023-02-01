@@ -2,12 +2,20 @@ use crate::activity_notifications::handle_activity_notification;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use chat_events::{EditMessageArgs, EditMessageResult};
-use group_canister::edit_message::{Response::*, *};
+use group_canister::edit_message_v2::{Response::*, *};
 use ic_cdk_macros::update;
 
 #[update]
 #[trace]
-fn edit_message(args: Args) -> Response {
+fn edit_message(args: group_canister::edit_message::Args) -> Response {
+    run_regular_jobs();
+
+    mutate_state(|state| edit_message_impl(args.into(), state))
+}
+
+#[update]
+#[trace]
+fn edit_message_v2(args: Args) -> Response {
     run_regular_jobs();
 
     mutate_state(|state| edit_message_impl(args, state))

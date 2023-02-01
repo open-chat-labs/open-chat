@@ -7,12 +7,12 @@ use chat_events::{PushMessageArgs, Reader};
 use ic_cdk_macros::update;
 use tracing::error;
 use types::{
-    CanisterId, CompletedCryptoTransaction, ContentValidationError, CryptoTransaction, MessageContent, MessageId, MessageIndex,
-    UserId,
+    CanisterId, CompletedCryptoTransaction, ContentValidationError, CryptoTransaction, MessageId, MessageIndex,
+    UserId, MessageContentInitial,
 };
 use user_canister::c2c_send_messages;
 use user_canister::c2c_send_messages::{C2CReplyContext, SendMessageArgs};
-use user_canister::send_message::{Response::*, *};
+use user_canister::send_message_v2::{Response::*, *};
 use utils::consts::OPENCHAT_BOT_USER_ID;
 use utils::time::{MINUTE_IN_MS, SECOND_IN_MS};
 
@@ -20,8 +20,10 @@ use utils::time::{MINUTE_IN_MS, SECOND_IN_MS};
 // and then update the message content to contain the completed transfer.
 #[update(guard = "caller_is_owner")]
 #[trace]
-async fn send_message(mut args: Args) -> Response {
+async fn send_message(args: user_canister::send_message::Args) -> Response {
     run_regular_jobs();
+
+    let mut args: Args = args.into();
 
     let user_type = match read_state(|state| validate_request(&args, state)) {
         ValidateRequestResult::Valid(t) => t,
@@ -42,7 +44,7 @@ async fn send_message(mut args: Args) -> Response {
     let mut completed_transfer = None;
     // If the message includes a pending cryptocurrency transfer, we process that and then update
     // the message to contain the completed transfer.
-    if let MessageContent::Crypto(c) = &mut args.content {
+    if let MessageContentInitial::Crypto(c) = &mut args.content {
         if user_type.is_self() {
             return InvalidRequest("Cannot send crypto to yourself".to_string());
         }
@@ -158,7 +160,7 @@ fn send_message_impl(
         let send_message_args = SendMessageArgs {
             message_id: args.message_id,
             sender_message_index: message_event.event.message_index,
-            content: args.content,
+            content: args.content.into(),
             replies_to: args.replies_to.and_then(|r| {
                 if let Some(chat_id) = r.chat_id_if_other {
                     Some(C2CReplyContext::OtherChat(chat_id, r.event_index))
@@ -268,11 +270,12 @@ async fn send_to_bot_canister(recipient: UserId, message_index: MessageIndex, ar
             mutate_state(|state| {
                 let now = state.env.now();
                 for message in result.messages {
+                    let content: MessageContentInitial = message.content.into();
                     let push_message_args = PushMessageArgs {
                         sender: recipient,
                         thread_root_message_index: None,
                         message_id: MessageId::generate(|| state.env.random_u32()),
-                        content: message.content.new_content_into_internal(),
+                        content: content.new_content_into_internal(),
                         replies_to: None,
                         forwarded: false,
                         correlation_id: 0,

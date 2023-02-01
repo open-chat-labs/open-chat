@@ -16,7 +16,6 @@ use std::collections::{HashMap, HashSet};
 use std::ops::Deref;
 use types::{Avatar, CanisterId, ChatId, Cryptocurrency, Cycles, Notification, TimestampMillis, Timestamped, UserId, Version};
 use utils::env::Environment;
-use utils::memory;
 use utils::regular_jobs::RegularJobs;
 
 mod crypto;
@@ -24,6 +23,7 @@ mod governance_clients;
 mod group_summaries;
 mod guards;
 mod lifecycle;
+mod memory;
 mod model;
 mod openchat_bot;
 mod queries;
@@ -93,7 +93,7 @@ impl RuntimeState {
     pub fn metrics(&self) -> Metrics {
         let chat_metrics = self.data.direct_chats.metrics();
         Metrics {
-            memory_used: memory::used(),
+            memory_used: utils::memory::used(),
             now: self.env.now(),
             cycles_balance: self.env.cycles_balance(),
             wasm_version: WASM_VERSION.with(|v| **v.borrow()),
