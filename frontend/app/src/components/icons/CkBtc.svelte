@@ -6,10 +6,10 @@
 <style type="text/scss">
     :root {
         // --face: #be9d66;
-        --face: #f79413;
+        --face: var(--prize);
         --lowlight: #111;
         // --side: #896c3b;
-        --side: #f79413;
+        --side: var(--prize);
         --side-dark: #120e08;
         --coin-size: 9rem;
         --coin-face: url("../assets/ckbtc_nobackground.svg");
@@ -33,7 +33,7 @@
         width: var(--coin-size);
         border-radius: 50%;
         // background-color: var(--face);
-        animation: spin 1s linear infinite;
+        animation: spin 2s linear infinite;
         background-image: var(--coin-face);
         background-size: 100% 100%;
         background-position: center;

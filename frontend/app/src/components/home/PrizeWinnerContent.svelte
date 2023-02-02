@@ -46,6 +46,7 @@
 <style type="text/scss">
     :global(.winner-coin) {
         --coin-size: 5em;
+        --side: #b76a06;
     }
     .msg {
         cursor: pointer;
