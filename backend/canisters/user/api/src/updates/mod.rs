@@ -36,6 +36,7 @@ pub mod relinquish_group_super_admin;
 pub mod remove_reaction;
 pub mod send_message;
 pub mod send_message_v2;
+pub mod send_message_with_transfer_to_group;
 pub mod set_avatar;
 pub mod set_bio;
 pub mod set_contact;

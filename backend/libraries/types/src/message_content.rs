@@ -163,14 +163,14 @@ impl MessageContentInitial {
             MessageContentInitial::Prize(p) => MessageContentInternal::Prize(PrizeContentInternal {
                 prizes_remaining: p.prizes,
                 winners: Vec::new(),
-                token: p.token,
+                transfer: p.transfer,
                 end_date: p.end_date,
                 caption: p.caption,
             }),
         }
     }
 
-    fn text_length(&self) -> usize {
+    pub fn text_length(&self) -> usize {
         match self {
             MessageContentInitial::Text(t) => t.text.len(),
             MessageContentInitial::Image(i) => i.caption.as_ref().map_or(0, |t| t.len()),
@@ -222,7 +222,7 @@ impl From<MessageContentInitial> for MessageContent {
             MessageContentInitial::Prize(c) => MessageContent::Prize(PrizeContent {
                 prizes_remaining: c.prizes.len() as u32,
                 winners: Vec::new(),
-                token: c.token,
+                token: c.transfer.token(),
                 end_date: c.end_date,
                 caption: c.caption,
             }),
@@ -251,7 +251,7 @@ impl MessageContentInternal {
             MessageContentInternal::Prize(p) => MessageContent::Prize(PrizeContent {
                 prizes_remaining: p.prizes_remaining.len() as u32,
                 winners: p.winners.clone(),
-                token: p.token,
+                token: p.transfer.token(),
                 end_date: p.end_date,
                 caption: p.caption.clone(),
             }),
@@ -478,7 +478,7 @@ pub struct CryptoContent {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct PrizeContentInitial {
     pub prizes: Vec<Tokens>,
-    pub token: Cryptocurrency,
+    pub transfer: CryptoTransaction,
     pub end_date: TimestampMillis,
     pub caption: Option<String>,
 }
@@ -487,7 +487,7 @@ pub struct PrizeContentInitial {
 pub struct PrizeContentInternal {
     pub prizes_remaining: Vec<Tokens>,
     pub winners: Vec<UserId>,
-    pub token: Cryptocurrency,
+    pub transfer: CryptoTransaction,
     pub end_date: TimestampMillis,
     pub caption: Option<String>,
 }
@@ -504,6 +504,7 @@ pub struct PrizeContent {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct PrizeWinnerContent {
     pub token: Cryptocurrency,
+    pub winner: UserId,
     pub amount: Tokens,
     pub prize_message: MessageIndex,
 }

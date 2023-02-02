@@ -1232,7 +1232,7 @@ type MessageIndexRange =
 type PrizeContentInitial =
     record {
         prizes: vec Tokens;
-        token: Cryptocurrency;
+        transfer: CryptoTransaction;
         end_date: TimestampMillis;
         caption: opt text;
     };
@@ -1249,6 +1249,7 @@ type PrizeContent =
 type PrizeWinnerContent =
     record {
         token: Cryptocurrency;
+        winner: UserId;
         amount: Tokens;
         prize_message: MessageIndex;
     };
