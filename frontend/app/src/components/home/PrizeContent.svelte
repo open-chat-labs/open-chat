@@ -7,6 +7,7 @@
     import { getContext } from "svelte";
     import { Confetti } from "svelte-confetti";
     import { rtlStore } from "../../stores/rtl";
+    import { now } from "../../stores/time";
     import CkBtc from "../icons/CkBtc.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -16,10 +17,13 @@
     $: total = content.prizesRemaining + content.winners.length;
     $: percentage = (content.winners.length / total) * 100;
     $: claimedByYou = content.winners.includes(client.user.userId);
-    $: disabled = claimedByYou || content.prizesRemaining <= 0;
-
+    $: finished = $now >= Number(content.endDate);
+    $: disabled = finished || claimedByYou || content.prizesRemaining <= 0;
+    $: timeRemaining = finished
+        ? $_("prizes.finished")
+        : client.formatTimeRemaining($now, Number(content.endDate));
     let progressWidth = 0;
-    let source = "../assets/ckbtc_large.jpeg";
+    // let source = "../assets/ckbtc_large.jpeg";
     let claiming = false;
 
     function claim() {
@@ -39,7 +43,7 @@
     <div class="top">
         <div class="countdown" class:rtl={$rtlStore}>
             <Clock size={"1em"} color={"#ffffff"} />
-            <span>{$_("prizes.timeleft", { values: { time: "00:00:10" } })}</span>
+            <span>{timeRemaining}</span>
         </div>
         <!-- <img class="image" alt="ckBTC logo" src={source} /> -->
 
@@ -72,7 +76,11 @@
 
             <ButtonGroup align="fill">
                 <Button loading={claiming} on:click={claim} {disabled} hollow
-                    >{claimedByYou ? $_("prizes.claimed") : $_("prizes.claim")}</Button>
+                    >{claimedByYou
+                        ? $_("prizes.claimed")
+                        : finished
+                        ? $_("prizes.finished")
+                        : $_("prizes.claim")}</Button>
             </ButtonGroup>
         </div>
     </div>

@@ -684,9 +684,9 @@
     "revealDeletedMessage": "Reveal message",
     "wallet": "Wallet",
     "prizes": {
-        "timeleft": "{time} left",
         "click": "Click the button below for a chance to win a prize.",
         "claim": "Claim",
-        "claimed": "Success!"
+        "claimed": "Success!",
+        "finished": "Finished"
     }
 }
