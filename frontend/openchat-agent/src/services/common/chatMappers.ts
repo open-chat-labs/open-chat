@@ -174,6 +174,7 @@ function prizeWinnerContent(candid: ApiPrizeWinnerContent): PrizeWinnerContent {
     return {
         kind: "prize_winner_content",
         token: token(candid.token),
+        recipient: candid.recipient.toString(),
         prizeMessageIndex: candid.prize_message,
         amountE8s: candid.amount.e8s,
     };

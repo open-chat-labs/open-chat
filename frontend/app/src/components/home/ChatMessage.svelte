@@ -440,6 +440,7 @@
                 edited={msg.edited}
                 height={mediaCalculatedHeight}
                 on:registerVote={registerVote}
+                on:goToMessageIndex
                 on:expandMessage />
 
             {#if !inert && !isPrize}

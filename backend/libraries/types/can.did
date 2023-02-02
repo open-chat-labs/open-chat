@@ -606,6 +606,7 @@ type PrizeWinnerContent =
     record {
         token: Cryptocurrency;
         amount: Tokens;
+        recipient: UserId;
         prize_message: MessageIndex;
     };
 

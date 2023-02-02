@@ -242,6 +242,7 @@ export const idlFactory = ({ IDL }) => {
   const Tokens = IDL.Record({ 'e8s' : IDL.Nat64 });
   const PrizeWinnerContent = IDL.Record({
     'token' : Cryptocurrency,
+    'recipient' : UserId,
     'prize_message' : MessageIndex,
     'amount' : Tokens,
   });

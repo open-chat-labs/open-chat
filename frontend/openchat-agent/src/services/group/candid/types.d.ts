@@ -869,6 +869,7 @@ export interface PrizeContent {
 }
 export interface PrizeWinnerContent {
   'token' : Cryptocurrency,
+  'recipient' : UserId,
   'prize_message' : MessageIndex,
   'amount' : Tokens,
 }

@@ -687,6 +687,7 @@
         "click": "Click the button below for a chance to win a prize.",
         "claim": "Claim",
         "claimed": "Success!",
-        "finished": "Finished"
+        "finished": "Finished",
+        "winner": "**{recipient}** won **{amount}** {token}"
     }
 }
