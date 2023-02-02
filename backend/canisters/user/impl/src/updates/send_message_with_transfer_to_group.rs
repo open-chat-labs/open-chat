@@ -20,7 +20,7 @@ async fn transfer_crypto_within_group_v2(
 #[update(guard = "caller_is_owner")]
 #[trace]
 async fn send_message_with_transfer_to_group(args: Args) -> Response {
-    send_message_to_group_impl(args).await
+    send_message_with_transfer_to_group_impl(args).await
 }
 
 async fn send_message_with_transfer_to_group_impl(args: Args) -> Response {
