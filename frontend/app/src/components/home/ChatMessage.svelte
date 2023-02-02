@@ -106,6 +106,7 @@
     $: threadSummary = msg.thread;
     $: msgUrl = `/#/${chatId}/${msg.messageIndex}?open=true`;
     $: isProposal = msg.content.kind === "proposal_content";
+    $: isPrize = msg.content.kind === "prize_content";
     $: inert = msg.content.kind === "deleted_content" || collapsed;
     $: undeletingMessagesStore = client.undeletingMessagesStore;
     $: undeleting = $undeletingMessagesStore.has(msg.messageId);
@@ -384,7 +385,7 @@
             class:proposal={isProposal && !inert}
             class:thread={inThread}
             class:rtl={$rtlStore}>
-            {#if first && !isProposal}
+            {#if first && !isProposal && !isPrize}
                 <div class="sender" class:fill class:rtl={$rtlStore}>
                     <Link underline={"never"} on:click={openUserProfile}>
                         <h4 class="username" class:fill class:crypto>{username}</h4>
@@ -441,7 +442,7 @@
                 on:registerVote={registerVote}
                 on:expandMessage />
 
-            {#if !inert}
+            {#if !inert && !isPrize}
                 <TimeAndTicks
                     {pinned}
                     {fill}

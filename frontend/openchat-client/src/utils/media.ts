@@ -124,6 +124,10 @@ export function fillMessage(msg: Message): boolean {
         return false;
     }
 
+    if (msg.content.kind === "prize_content") {
+        return true;
+    }
+
     if (
         msg.content.kind === "image_content" ||
         msg.content.kind === "video_content" ||

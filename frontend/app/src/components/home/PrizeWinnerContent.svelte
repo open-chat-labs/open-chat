@@ -1,7 +1,5 @@
 <script lang="ts">
+    import CkBtc from "../icons/CkBtc.svelte";
 </script>
 
-<h1>Prize winner content</h1>
-
-<style type="text/scss">
-</style>
+<h1>Prize winners</h1>

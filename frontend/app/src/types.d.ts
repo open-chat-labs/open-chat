@@ -27,6 +27,8 @@ declare module "intl-tel-input/build/js/utils";
 
 declare module "svelte-qr";
 
+declare module "svelte-confetti";
+
 declare namespace svelte.JSX {
     interface HTMLAttributes<T> {
         onleftswipe?: any;

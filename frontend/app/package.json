@@ -97,6 +97,7 @@
         "rollbar": "^2.24.1",
         "sirv-cli": "^1.0.14",
         "smoothscroll": "^0.4.0",
+        "svelte-confetti": "^1.2.2",
         "svelte-easy-crop": "^1.0.7",
         "svelte-i18n": "^3.4.0",
         "svelte-material-icons": "^1.0.3",
