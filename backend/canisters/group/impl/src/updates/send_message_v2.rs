@@ -9,7 +9,7 @@ use group_canister::send_message_v2::{Response::*, *};
 use std::collections::HashSet;
 use types::{
     BlobReference, ContentValidationError, EventIndex, EventWrapper, GroupMessageNotification, GroupReplyContext,
-    MentionInternal, Message, MessageContent, MessageContentInitial, MessageIndex, Notification, TimestampMillis, UserId,
+    MentionInternal, Message, MessageContent, MessageContentInitial, MessageIndex, Notification, TimestampMillis, UserId, CryptoTransaction,
 };
 
 #[update_candid_and_msgpack]
@@ -54,6 +54,16 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
                 }
                 ContentValidationError::PrizeEndDateInThePast => InvalidRequest("Prize ended in the past".to_string()),
             };
+        }
+
+        if let Some(transfer) = match &args.content {
+            MessageContentInitial::Crypto(c) => Some(&c.transfer),
+            MessageContentInitial::Prize(c) => Some(&c.transfer),
+            _ => None
+        } {
+            if !matches!(transfer, CryptoTransaction::Completed(_)) {
+                return InvalidRequest("The crypto transaction must be completed".to_string());
+            }
         }
 
         let permissions = &runtime_state.data.permissions;
