@@ -1,14 +1,13 @@
 <script lang="ts">
+    export let shadow = false;
 </script>
 
-<div class="coin" />
+<div class:shadow class="coin" />
 
 <style type="text/scss">
     :root {
-        // --face: #be9d66;
         --face: var(--prize);
         --lowlight: #111;
-        // --side: #896c3b;
         --side: var(--prize);
         --side-dark: #120e08;
         --coin-size: 9rem;
@@ -23,6 +22,18 @@
         flex-direction: column;
         justify-content: center;
         align-items: center;
+        border-radius: 50% 50% 0% 0% / 60% 60% 0% 0%;
+
+        &.shadow::after {
+            content: "";
+            position: absolute;
+            bottom: 9px;
+            left: 35%;
+            right: 35%;
+            height: 20px;
+            border-radius: 50%;
+            background-color: rgba(0, 0, 0, 0.1);
+        }
     }
 
     .coin::before {
@@ -39,8 +50,6 @@
         background-position: center;
         background-blend-mode: overlay;
     }
-
-    /* animation definitions */
 
     @keyframes spin {
         0% {

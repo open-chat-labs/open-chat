@@ -47,6 +47,7 @@
     :global(.winner-coin) {
         --coin-size: 5em;
         --side: #b76a06;
+        // --coin-face: url("../assets/sns1_large.png");
     }
     .msg {
         cursor: pointer;

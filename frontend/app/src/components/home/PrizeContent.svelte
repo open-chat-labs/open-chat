@@ -46,8 +46,9 @@
             <span>{timeRemaining}</span>
         </div>
         <!-- <img class="image" alt="ckBTC logo" src={source} /> -->
-
-        <CkBtc />
+        <div class="prize-coin">
+            <CkBtc shadow />
+        </div>
     </div>
     <div class="bottom">
         {#if content.caption !== undefined}
@@ -92,11 +93,16 @@
         min-height: 45px !important;
         min-width: unset !important;
     }
+    :global(.prize-coin) {
+        // --coin-face: url("../assets/sns1_large.png");
+    }
     .top {
         position: relative;
         padding: 30px 0 30px 0;
         display: flex;
+        flex-direction: column;
         justify-content: center;
+        align-items: center;
         background: radial-gradient(circle, rgba(238, 31, 122, 1) 0%, rgba(59, 12, 190, 1) 80%);
     }
     .countdown {
