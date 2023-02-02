@@ -88,7 +88,7 @@
 
 <style type="text/scss">
     :global(.claim button) {
-        border: 1px solid #f79413 !important;
+        border: 1px solid var(--prize) !important;
         min-height: 45px !important;
         min-width: unset !important;
     }

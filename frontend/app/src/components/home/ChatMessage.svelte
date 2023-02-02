@@ -107,6 +107,7 @@
     $: msgUrl = `/#/${chatId}/${msg.messageIndex}?open=true`;
     $: isProposal = msg.content.kind === "proposal_content";
     $: isPrize = msg.content.kind === "prize_content";
+    $: isPrizeWinner = msg.content.kind === "prize_winner_content";
     $: inert = msg.content.kind === "deleted_content" || collapsed;
     $: undeletingMessagesStore = client.undeletingMessagesStore;
     $: undeleting = $undeletingMessagesStore.has(msg.messageId);
@@ -382,6 +383,7 @@
             class:readByMe
             class:crypto
             class:failed
+            class:prizeWinner={isPrizeWinner}
             class:proposal={isProposal && !inert}
             class:thread={inThread}
             class:rtl={$rtlStore}>
@@ -810,6 +812,10 @@
 
         &.failed {
             background-color: var(--error);
+        }
+
+        &.prizeWinner {
+            background-color: var(--prize);
         }
     }
 

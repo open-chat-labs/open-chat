@@ -1,3 +1,6 @@
+<script lang="ts">
+</script>
+
 <div class="coin" />
 
 <style type="text/scss">
