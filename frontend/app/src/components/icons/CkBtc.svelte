@@ -27,12 +27,12 @@
         &.shadow::after {
             content: "";
             position: absolute;
-            bottom: 9px;
-            left: 35%;
-            right: 35%;
-            height: 20px;
+            bottom: 5px;
+            left: 30%;
+            right: 30%;
+            height: 30px;
             border-radius: 50%;
-            background-color: rgba(0, 0, 0, 0.1);
+            background: radial-gradient(rgba(0, 0, 0, 0.2), transparent 60%);
         }
     }
 
