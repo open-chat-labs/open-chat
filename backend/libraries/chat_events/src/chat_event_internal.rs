@@ -342,6 +342,10 @@ impl MessageInternal {
                         incr(&mut metrics.ckbtc_messages);
                         incr(&mut sender_metrics.ckbtc_messages);
                     }
+                    Cryptocurrency::CHAT => {
+                        incr(&mut metrics.chat_messages);
+                        incr(&mut sender_metrics.chat_messages);
+                    }
                 },
                 MessageContentInternal::Deleted(_) => {}
                 MessageContentInternal::Giphy(_) => {

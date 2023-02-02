@@ -9,6 +9,7 @@ pub enum Cryptocurrency {
     InternetComputer,
     SNS1,
     CKBTC,
+    CHAT,
 }
 
 impl Cryptocurrency {
@@ -17,6 +18,7 @@ impl Cryptocurrency {
             Cryptocurrency::InternetComputer => "ICP".to_string(),
             Cryptocurrency::SNS1 => "SNS1".to_string(),
             Cryptocurrency::CKBTC => "ckBTC".to_string(),
+            Cryptocurrency::CHAT => "CHAT".to_string(),
         }
     }
 
@@ -25,6 +27,7 @@ impl Cryptocurrency {
             Cryptocurrency::InternetComputer => 8,
             Cryptocurrency::SNS1 => 8,
             Cryptocurrency::CKBTC => 8,
+            Cryptocurrency::CHAT => 8,
         }
     }
 
@@ -33,6 +36,16 @@ impl Cryptocurrency {
             Cryptocurrency::InternetComputer => (50 * E8S_PER_TOKEN).into(),
             Cryptocurrency::SNS1 => (10 * E8S_PER_TOKEN).into(),
             Cryptocurrency::CKBTC => (E8S_PER_TOKEN / 100).into(),
+            Cryptocurrency::CHAT => (1_000 * E8S_PER_TOKEN).into(),
+        }
+    }
+
+    pub fn fee(&self) -> u128 {
+        match self {
+            Cryptocurrency::InternetComputer => 10_000,
+            Cryptocurrency::SNS1 => 1_000,
+            Cryptocurrency::CKBTC => 10,
+            Cryptocurrency::CHAT => 100_000,
         }
     }
 }
