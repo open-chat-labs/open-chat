@@ -365,7 +365,19 @@ type TransferCryptoWithinGroupArgs =
         correlation_id: nat64;
     };
 
-type TransferCryptoWithinGroupResponse =
+type SendMessageWithTransferToGroupArgs =
+    record {
+        group_id: ChatId;
+        thread_root_message_index: opt MessageIndex;
+        message_id: MessageId;
+        content: MessageContentInitial;
+        sender_name: text;
+        replies_to: opt GroupReplyContext;
+        mentioned: vec User;
+        correlation_id: nat64;
+    };
+
+type SendMessageWithTransferToGroupResponse =
     variant {
         Success: record {
             event_index: EventIndex;
@@ -693,7 +705,8 @@ service: {
     add_recommended_group_exclusions: (AddRecommendedGroupExclusionsArgs) -> (AddRecommendedGroupExclusionsResponse);
     set_bio: (SetBioArgs) -> (SetBioResponse);
     set_contact: (SetContactArgs) -> (SetContactResponse);
-    transfer_crypto_within_group_v2: (TransferCryptoWithinGroupArgs) -> (TransferCryptoWithinGroupResponse);
+    send_message_with_transfer_to_group: (SendMessageWithTransferToGroupArgs) -> (SendMessageWithTransferToGroupResponse);
+    transfer_crypto_within_group_v2: (TransferCryptoWithinGroupArgs) -> (SendMessageWithTransferToGroupResponse);
     withdraw_crypto_v2: (WithdrawCryptoArgs) -> (WithdrawCryptoResponse);
     pin_chat: (PinChatRequest) -> (PinChatResponse);
     unpin_chat: (UnpinChatRequest) -> (UnpinChatResponse);

@@ -5,14 +5,14 @@ use chat_events::{EditMessageArgs, EditMessageResult};
 use ic_cdk_macros::update;
 use types::{CanisterId, EventIndex, MessageContent, MessageId};
 use user_canister::c2c_edit_message;
-use user_canister::edit_message::{Response::*, *};
+use user_canister::edit_message_v2::{Response::*, *};
 
 #[update(guard = "caller_is_owner")]
 #[trace]
-fn edit_message(args: Args) -> Response {
+fn edit_message(args: user_canister::edit_message::Args) -> Response {
     run_regular_jobs();
 
-    mutate_state(|state| edit_message_impl(args, state))
+    mutate_state(|state| edit_message_impl(args.into(), state))
 }
 
 fn edit_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
@@ -41,7 +41,7 @@ fn edit_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
                 ic_cdk::spawn(edit_on_recipients_canister(
                     args.user_id.into(),
                     args.message_id,
-                    args.content,
+                    args.content.into(),
                     args.correlation_id,
                 ));
                 Success

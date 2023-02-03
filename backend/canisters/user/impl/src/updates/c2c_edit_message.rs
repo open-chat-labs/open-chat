@@ -28,7 +28,7 @@ fn c2c_edit_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Respon
             min_visible_event_index: EventIndex::default(),
             thread_root_message_index: None,
             message_id: args.message_id,
-            content: args.content,
+            content: args.content.into(),
             correlation_id: args.correlation_id,
             now,
         };
