@@ -38,8 +38,8 @@ proposal_reject_cost_e8s: 1000000000
 # The minimum amount of SNS Token e8s an SNS Ledger account must have to stake a neuron.
 # Default value = 100000000
 #
-# 5 Tokens
-neuron_minimum_stake_e8s: 500000000
+# 4 Tokens
+neuron_minimum_stake_e8s: 400000000
 #
 # The minimum dissolve_delay in seconds a neuron must have to be able to cast votes on proposals.
 # Default value = 15778800

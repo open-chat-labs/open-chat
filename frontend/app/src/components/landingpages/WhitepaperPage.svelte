@@ -677,7 +677,7 @@
                 <div>Number of CHAT tokens that a rejected proposal costs the proposer</div>
                 <div>10</div>
                 <div>Minimum number of CHAT tokens that can be staked in a neuron</div>
-                <div>5</div>
+                <div>4</div>
                 <div>Maximum voting period for a proposal</div>
                 <div>4 days</div>
                 <div>Proportion of voting power needed for a proposal to be accepted</div>
