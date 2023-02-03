@@ -1,7 +1,7 @@
 {
     "name": "openchat-push",
     "version": "1.0.0",
-    "description": "Typescript library for interacting with the OpenChat backend",
+    "description": "Service worker for handling the push notifications",
     "main": "lib/index.js",
     "scripts": {
         "build": "./bin/portable-webpack",
