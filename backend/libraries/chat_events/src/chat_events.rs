@@ -662,14 +662,11 @@ impl ChatEvents {
         ReservePrizeResult::MessageNotFound
     }
 
-    pub fn claim_prize(
-        &mut self,
-        message_id: MessageId,
-        min_visible_event_index: EventIndex,
-        winner: UserId,
-        now: TimestampMillis,
-    ) -> ClaimPrizeResult {
-        if let Some(event) = self.main.get_mut(message_id.into(), min_visible_event_index, now) {
+    pub fn claim_prize(&mut self, message_id: MessageId, winner: UserId, now: TimestampMillis) -> ClaimPrizeResult {
+        if let Some(event) = self
+            .main
+            .get_mut(message_id.into(), EventIndex::default(), TimestampMillis::default())
+        {
             if let ChatEventInternal::Message(message) = &mut event.event {
                 if let MessageContentInternal::Prize(content) = &mut message.content {
                     // Remove the reservation
@@ -691,12 +688,14 @@ impl ChatEvents {
     pub fn unreserve_prize(
         &mut self,
         message_id: MessageId,
-        min_visible_event_index: EventIndex,
         user_id: UserId,
         amount: Tokens,
         now: TimestampMillis,
     ) -> UnreservePrizeResult {
-        if let Some(event) = self.main.get_mut(message_id.into(), min_visible_event_index, now) {
+        if let Some(event) = self
+            .main
+            .get_mut(message_id.into(), EventIndex::default(), TimestampMillis::default())
+        {
             if let ChatEventInternal::Message(message) = &mut event.event {
                 if let MessageContentInternal::Prize(content) = &mut message.content {
                     // Remove the reservation

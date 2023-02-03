@@ -9,8 +9,8 @@ use ic_ledger_types::Tokens;
 use ledger_utils::{nns, sns};
 use types::nns::UserOrAccount;
 use types::{
-    CanisterId, CryptoTransaction, Cryptocurrency, GroupMessageNotification, MessageContentInternal, Notification,
-    PendingCryptoTransaction, PrizeWinnerContentInternal, TimestampNanos,
+    CanisterId, CryptoTransaction, Cryptocurrency, GroupMessageNotification, MessageContentInternal, MessageId, Notification,
+    PendingCryptoTransaction, PrizeWinnerContentInternal, TimestampNanos, UserId,
 };
 use utils::consts::{OPENCHAT_BOT_USERNAME, OPENCHAT_BOT_USER_ID};
 
@@ -51,7 +51,7 @@ async fn claim_prize(args: Args) -> Response {
         Ok(completed_transaction) => {
             // Claim the prize and send a message to the group
             let transaction = CryptoTransaction::Completed(completed_transaction.clone());
-            if let Some(error_message) = mutate_state(|state| commit(args, transaction, state)) {
+            if let Some(error_message) = mutate_state(|state| commit(args, prepare_result.user_id, transaction, state)) {
                 FailedAfterTransfer(error_message, completed_transaction)
             } else {
                 Success
@@ -59,7 +59,8 @@ async fn claim_prize(args: Args) -> Response {
         }
         Err(failed_transaction) => {
             // Rollback the prize reservation
-            let error_message = mutate_state(|state| rollback(args, failed_transaction.amount(), state));
+            let error_message =
+                mutate_state(|state| rollback(args, prepare_result.user_id, failed_transaction.amount(), state));
             TransferFailed(error_message, failed_transaction)
         }
     }
@@ -70,6 +71,7 @@ struct PrepareResult {
     pub group: CanisterId,
     pub ledger_canister_id: CanisterId,
     pub now_nanos: TimestampNanos,
+    pub user_id: UserId,
 }
 
 fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareResult, Box<Response>> {
@@ -127,84 +129,61 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareResult, Box<R
             ledger_canister_id: state.data.ledger_canister_id(&transaction.token()),
             now_nanos: state.env.now_nanos(),
             transaction,
+            user_id,
         })
     } else {
         Err(Box::new(CallerNotInGroup))
     }
 }
 
-fn commit(args: Args, transaction: CryptoTransaction, state: &mut RuntimeState) -> Option<String> {
-    let caller = state.env.caller();
+fn commit(args: Args, winner: UserId, transaction: CryptoTransaction, state: &mut RuntimeState) -> Option<String> {
+    let now = state.env.now();
+    match state.data.events.claim_prize(args.message_id, winner, now) {
+        chat_events::ClaimPrizeResult::Success(message_index) => {
+            // Push a PrizeWinnerContent message to the group from the OpenChatBot
+            let message_event = state.data.events.push_message(PushMessageArgs {
+                sender: OPENCHAT_BOT_USER_ID,
+                thread_root_message_index: None,
+                message_id: MessageId::generate(|| state.env.random_u32()),
+                content: MessageContentInternal::PrizeWinner(PrizeWinnerContentInternal {
+                    prize_message: message_index,
+                    transaction,
+                    winner,
+                }),
+                replies_to: None,
+                forwarded: false,
+                correlation_id: args.correlation_id,
+                now,
+            });
 
-    if let Some(participant) = state.data.participants.get_by_principal(&caller) {
-        let now = state.env.now();
-        let min_visible_event_index = participant.min_visible_event_index();
+            // Send a notification to group participants
+            let notification_recipients = state.data.participants.users_to_notify(None).into_iter().collect();
 
-        match state
-            .data
-            .events
-            .claim_prize(args.message_id, min_visible_event_index, participant.user_id, now)
-        {
-            chat_events::ClaimPrizeResult::Success(message_index) => {
-                // Push a PrizeWinnerContent message to the group from the OpenChatBot
-                let message_event = state.data.events.push_message(PushMessageArgs {
-                    sender: OPENCHAT_BOT_USER_ID,
-                    thread_root_message_index: None,
-                    message_id: args.message_id,
-                    content: MessageContentInternal::PrizeWinner(PrizeWinnerContentInternal {
-                        prize_message: message_index,
-                        transaction,
-                        winner: participant.user_id,
-                    }),
-                    replies_to: None,
-                    forwarded: false,
-                    correlation_id: args.correlation_id,
-                    now,
-                });
+            let notification = Notification::GroupMessageNotification(GroupMessageNotification {
+                chat_id: state.env.canister_id().into(),
+                thread_root_message_index: None,
+                group_name: state.data.name.clone(),
+                sender: OPENCHAT_BOT_USER_ID,
+                sender_name: OPENCHAT_BOT_USERNAME.to_string(),
+                message: message_event,
+                mentioned: Vec::new(),
+            });
 
-                // Send a notification to the group
-                let notification_recipients = state.data.participants.users_to_notify(None).into_iter().collect();
+            state.push_notification(notification_recipients, notification);
 
-                let notification = Notification::GroupMessageNotification(GroupMessageNotification {
-                    chat_id: state.env.canister_id().into(),
-                    thread_root_message_index: None,
-                    group_name: state.data.name.clone(),
-                    sender: OPENCHAT_BOT_USER_ID,
-                    sender_name: OPENCHAT_BOT_USERNAME.to_string(),
-                    message: message_event,
-                    mentioned: Vec::new(),
-                });
-
-                state.push_notification(notification_recipients, notification);
-
-                handle_activity_notification(state);
-                None
-            }
-            chat_events::ClaimPrizeResult::MessageNotFound => Some("MessageNotFound".to_string()),
-            chat_events::ClaimPrizeResult::ReservationNotFound => Some("ReservationNotFound".to_string()),
+            handle_activity_notification(state);
+            None
         }
-    } else {
-        Some("CallerNotInGroup".to_string())
+        chat_events::ClaimPrizeResult::MessageNotFound => Some("MessageNotFound".to_string()),
+        chat_events::ClaimPrizeResult::ReservationNotFound => Some("ReservationNotFound".to_string()),
     }
 }
 
-fn rollback(args: Args, amount: Tokens, state: &mut RuntimeState) -> String {
-    let caller = state.env.caller();
-
-    if let Some(participant) = state.data.participants.get_by_principal(&caller) {
-        let now = state.env.now();
-        let min_visible_event_index = participant.min_visible_event_index();
-
-        match state
-            .data
-            .events
-            .unreserve_prize(args.message_id, min_visible_event_index, participant.user_id, amount, now)
-        {
-            chat_events::UnreservePrizeResult::Success => "prize reservation cancelled".to_string(),
-            chat_events::UnreservePrizeResult::MessageNotFound => "prize message not found".to_string(),
-            chat_events::UnreservePrizeResult::ReservationNotFound => "prize reservation not found".to_string(),
-        }
-    } else {
-        "caller not in group".to_string()
+fn rollback(args: Args, user_id: UserId, amount: Tokens, state: &mut RuntimeState) -> String {
+    let now = state.env.now();
+    match state.data.events.unreserve_prize(args.message_id, user_id, amount, now) {
+        chat_events::UnreservePrizeResult::Success => "prize reservation cancelled".to_string(),
+        chat_events::UnreservePrizeResult::MessageNotFound => "prize message not found".to_string(),
+        chat_events::UnreservePrizeResult::ReservationNotFound => "prize reservation not found".to_string(),
     }
 }
