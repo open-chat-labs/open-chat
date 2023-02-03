@@ -29,7 +29,6 @@ proposals_bot_canister = { path = "../api" }
 serde = { workspace = true }
 serializer = { workspace = true }
 sha2 = { workspace = true }
-stable_memory = { workspace = true }
 tracing = { workspace = true }
 types = { path = "../../../libraries/types" }
 utils = { path = "../../../libraries/utils" }

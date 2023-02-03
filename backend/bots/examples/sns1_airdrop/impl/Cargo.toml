@@ -26,7 +26,6 @@ serde_bytes = { workspace = true }
 serde_json = { workspace = true }
 serializer = { workspace = true }
 sns1_airdrop = { path = "../api" }
-stable_memory = { workspace = true }
 tracing = { workspace = true }
 types = { path = "../../../../libraries/types" }
 user_canister = { path = "../../../../canisters/user/api" }
