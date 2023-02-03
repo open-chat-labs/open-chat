@@ -31,8 +31,8 @@ pub mod happy_path {
     use crate::User;
     use ic_state_machine_tests::StateMachine;
     use types::{
-        ChatId, EventIndex, GroupCanisterGroupChatSummary, GroupCanisterGroupChatSummaryUpdates, MessageId,
-        MessageIndex, PollVotes, TextContent, TimestampMillis, UserId, VoteOperation, MessageContentInitial,
+        ChatId, EventIndex, GroupCanisterGroupChatSummary, GroupCanisterGroupChatSummaryUpdates, MessageContentInitial,
+        MessageId, MessageIndex, PollVotes, TextContent, TimestampMillis, UserId, VoteOperation,
     };
 
     pub fn add_participants(env: &mut StateMachine, sender: &User, group_chat_id: ChatId, user_ids: Vec<UserId>) {

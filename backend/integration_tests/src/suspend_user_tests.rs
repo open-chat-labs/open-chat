@@ -2,7 +2,7 @@ use crate::client;
 use crate::rng::random_message_id;
 use crate::setup::{return_env, setup_env, TestEnv};
 use std::time::Duration;
-use types::{MessageContent, TextContent, MessageContentInitial};
+use types::{MessageContent, MessageContentInitial, TextContent};
 
 #[test]
 fn suspend_user() {

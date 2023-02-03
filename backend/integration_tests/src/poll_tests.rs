@@ -5,7 +5,9 @@ use ic_state_machine_tests::StateMachine;
 use itertools::Itertools;
 use std::collections::HashMap;
 use std::time::{Duration, SystemTime};
-use types::{CanisterId, ChatEvent, ChatId, PollConfig, PollContent, PollVotes, TotalVotes, MessageContentInitial, MessageContent};
+use types::{
+    CanisterId, ChatEvent, ChatId, MessageContent, MessageContentInitial, PollConfig, PollContent, PollVotes, TotalVotes,
+};
 
 #[test]
 fn allow_multiple_votes_per_user() {
