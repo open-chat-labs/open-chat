@@ -65,7 +65,7 @@ impl RewardCodes {
                                 timestamp_nanos: now * 1000 * 1000,
                             }),
                         };
-                        let transaction_hash = calculate_transaction_hash(self.this_canister_id.into(), &transfer_args);
+                        let transaction_hash = calculate_transaction_hash(self.this_canister_id, &transfer_args);
 
                         c.claimed_by = Some((user_id, transaction_hash, now));
                         e.insert(code);

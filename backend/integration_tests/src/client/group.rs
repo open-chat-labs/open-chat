@@ -21,7 +21,7 @@ generate_update_call!(enable_invite_code);
 generate_update_call!(register_poll_vote);
 generate_update_call!(remove_participant);
 generate_update_call!(remove_reaction);
-generate_update_call!(send_message);
+generate_update_call!(send_message_v2);
 generate_update_call!(undelete_messages);
 generate_update_call!(unpin_message);
 generate_update_call!(update_group_v2);
@@ -31,8 +31,8 @@ pub mod happy_path {
     use crate::User;
     use ic_state_machine_tests::StateMachine;
     use types::{
-        ChatId, EventIndex, GroupCanisterGroupChatSummary, GroupCanisterGroupChatSummaryUpdates, MessageContent, MessageId,
-        MessageIndex, PollVotes, TextContent, TimestampMillis, UserId, VoteOperation,
+        ChatId, EventIndex, GroupCanisterGroupChatSummary, GroupCanisterGroupChatSummaryUpdates, MessageContentInitial,
+        MessageId, MessageIndex, PollVotes, TextContent, TimestampMillis, UserId, VoteOperation,
     };
 
     pub fn add_participants(env: &mut StateMachine, sender: &User, group_chat_id: ChatId, user_ids: Vec<UserId>) {
@@ -60,15 +60,15 @@ pub mod happy_path {
         group_chat_id: ChatId,
         text: impl ToString,
         message_id: Option<MessageId>,
-    ) -> group_canister::send_message::SuccessResult {
-        let response = super::send_message(
+    ) -> group_canister::send_message_v2::SuccessResult {
+        let response = super::send_message_v2(
             env,
             sender.principal,
             group_chat_id.into(),
-            &group_canister::send_message::Args {
+            &group_canister::send_message_v2::Args {
                 thread_root_message_index: None,
                 message_id: message_id.unwrap_or_else(|| random_message_id()),
-                content: MessageContent::Text(TextContent { text: text.to_string() }),
+                content: MessageContentInitial::Text(TextContent { text: text.to_string() }),
                 sender_name: sender.username(),
                 replies_to: None,
                 mentioned: Vec::new(),

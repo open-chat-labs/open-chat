@@ -342,6 +342,10 @@ impl MessageInternal {
                         incr(&mut metrics.ckbtc_messages);
                         incr(&mut sender_metrics.ckbtc_messages);
                     }
+                    Cryptocurrency::CHAT => {
+                        incr(&mut metrics.chat_messages);
+                        incr(&mut sender_metrics.chat_messages);
+                    }
                 },
                 MessageContentInternal::Deleted(_) => {}
                 MessageContentInternal::Giphy(_) => {
@@ -351,6 +355,14 @@ impl MessageInternal {
                 MessageContentInternal::GovernanceProposal(_) => {
                     incr(&mut metrics.proposals);
                     incr(&mut sender_metrics.proposals);
+                }
+                MessageContentInternal::Prize(_) => {
+                    incr(&mut metrics.prize_messages);
+                    incr(&mut sender_metrics.prize_messages);
+                }
+                MessageContentInternal::PrizeWinner(_) => {
+                    incr(&mut metrics.prize_winner_messages);
+                    incr(&mut sender_metrics.prize_winner_messages);
                 }
             }
 
