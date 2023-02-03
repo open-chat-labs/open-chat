@@ -441,7 +441,10 @@ type ClaimPrizeResponse =
         ChatFrozen;
         MessageNotFound;
         AlreadyClaimed;
-        InternalError: text;
+        PrizeFullyClaimed;
+        PrizeEnded;
+        TransferFailed: record { text; FailedCryptoTransaction; };
+        FailedAfterTransfer: record { text; CompletedCryptoTransaction; };
     };
 
 type MakePrivateArgs =

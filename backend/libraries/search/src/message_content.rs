@@ -55,11 +55,11 @@ impl From<&MessageContentInternal> for Document {
             }
             MessageContentInternal::Deleted(_) => {}
             MessageContentInternal::Prize(c) => {
-                document.add_field(c.transfer.token().token_symbol(), 1.0);
+                document.add_field(c.transaction.token().token_symbol(), 1.0);
                 try_add_caption(&mut document, c.caption.as_ref())
             }
             MessageContentInternal::PrizeWinner(c) => {
-                document.add_field(c.token.token_symbol(), 1.0);
+                document.add_field(c.transaction.token().token_symbol(), 1.0);
             }
         }
 

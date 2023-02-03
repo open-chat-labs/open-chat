@@ -240,6 +240,9 @@ fn register_timer_jobs(
             );
         }
     }
+
+    // TODO: If this is a prize message then set a timer to transfer
+    // the balance of any remaining prizes to the original sender
 }
 
 fn get_user_being_replied_to(

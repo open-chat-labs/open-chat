@@ -10,11 +10,12 @@ use chat_events::{ChatEventInternal, ChatEvents, Reader};
 use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
+use std::collections::HashMap;
 use std::ops::Deref;
 use types::{
-    Avatar, CanisterId, ChatId, Cycles, EventIndex, FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupPermissions,
-    GroupRules, GroupSubtype, MessageIndex, Milliseconds, Notification, TimestampMillis, Timestamped, UserId, Version,
-    MAX_THREADS_IN_SUMMARY,
+    Avatar, CanisterId, ChatId, Cryptocurrency, Cycles, EventIndex, FrozenGroupInfo, GroupCanisterGroupChatSummary,
+    GroupPermissions, GroupRules, GroupSubtype, MessageIndex, Milliseconds, Notification, TimestampMillis, Timestamped, UserId,
+    Version, MAX_THREADS_IN_SUMMARY,
 };
 use utils::env::Environment;
 use utils::regular_jobs::RegularJobs;
@@ -142,7 +143,7 @@ impl RuntimeState {
                     ic_cdk::spawn(process_new_joiner_reward(
                         self.env.canister_id(),
                         args.user_id,
-                        self.data.ledger_canister_id,
+                        self.data.ledger_canister_id(&Cryptocurrency::InternetComputer),
                         amount,
                         args.now,
                     ));
@@ -213,7 +214,7 @@ impl RuntimeState {
                 local_user_index: self.data.local_user_index_canister_id,
                 local_group_index: self.data.local_group_index_canister_id,
                 notifications: self.data.notifications_canister_id,
-                icp_ledger: self.data.ledger_canister_id,
+                icp_ledger: self.data.ledger_canister_id(&Cryptocurrency::InternetComputer),
             },
         }
     }
@@ -237,7 +238,8 @@ struct Data {
     pub user_index_canister_id: CanisterId,
     pub local_user_index_canister_id: CanisterId,
     pub notifications_canister_id: CanisterId,
-    pub ledger_canister_id: CanisterId,
+    #[serde(default = "init_ledger_canister_ids")]
+    pub ledger_canister_ids: HashMap<Cryptocurrency, CanisterId>,
     pub activity_notification_state: ActivityNotificationState,
     pub pinned_messages: Vec<MessageIndex>,
     pub test_mode: bool,
@@ -249,6 +251,23 @@ struct Data {
     pub frozen: Timestamped<Option<FrozenGroupInfo>>,
     pub timer_jobs: TimerJobs<TimerJob>,
     pub date_last_pinned: Option<TimestampMillis>,
+}
+
+fn init_ledger_canister_ids() -> HashMap<Cryptocurrency, CanisterId> {
+    HashMap::from([
+        (
+            Cryptocurrency::InternetComputer,
+            Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap(),
+        ),
+        (
+            Cryptocurrency::SNS1,
+            Principal::from_text("zfcdd-tqaaa-aaaaq-aaaga-cai").unwrap(),
+        ),
+        (
+            Cryptocurrency::CKBTC,
+            Principal::from_text("mxzaz-hqaaa-aaaar-qaada-cai").unwrap(),
+        ),
+    ])
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -296,7 +315,7 @@ impl Data {
             user_index_canister_id,
             local_user_index_canister_id,
             notifications_canister_id,
-            ledger_canister_id,
+            ledger_canister_ids: [(Cryptocurrency::InternetComputer, ledger_canister_id)].into_iter().collect(),
             activity_notification_state: ActivityNotificationState::new(now),
             pinned_messages: Vec::new(),
             test_mode,
@@ -338,6 +357,13 @@ impl Data {
 
     pub fn is_frozen(&self) -> bool {
         self.frozen.is_some()
+    }
+
+    pub fn ledger_canister_id(&self, token: &Cryptocurrency) -> CanisterId {
+        self.ledger_canister_ids
+            .get(token)
+            .copied()
+            .unwrap_or_else(|| panic!("Unable to find ledger canister for token '{token:?}'"))
     }
 }
 

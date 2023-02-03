@@ -7,12 +7,14 @@ use ::types::{
     PollVotes, ProposalStatusUpdate, PushEventResult, PushIfNotContains, RangeSet, Reaction, RegisterVoteResult, ReplyContext,
     ThreadSummary, TimestampMillis, Timestamped, UserId, VoteOperation,
 };
+use ic_ledger_types::Tokens;
 use itertools::Itertools;
 use search::{Document, Query};
 use serde::{Deserialize, Serialize};
 use std::cmp::Reverse;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
+use types::Cryptocurrency;
 
 #[derive(Serialize, Deserialize)]
 #[serde(from = "ChatEventsOld")]
@@ -623,6 +625,93 @@ impl ChatEvents {
         }
     }
 
+    pub fn reserve_prize(
+        &mut self,
+        message_id: MessageId,
+        min_visible_event_index: EventIndex,
+        user_id: UserId,
+        now: TimestampMillis,
+    ) -> ReservePrizeResult {
+        if let Some(event) = self.main.get_mut(message_id.into(), min_visible_event_index, now) {
+            if let ChatEventInternal::Message(message) = &mut event.event {
+                if let MessageContentInternal::Prize(content) = &mut message.content {
+                    if content.end_date < now {
+                        return ReservePrizeResult::PrizeEnded;
+                    }
+
+                    if content.prizes_remaining.is_empty() {
+                        return ReservePrizeResult::PrizeFullyClaimed;
+                    }
+
+                    if content.winners.contains(&user_id) || content.reservations.contains(&user_id) {
+                        return ReservePrizeResult::AlreadyClaimed;
+                    }
+
+                    // Pop the last prize and reserve it
+                    let amount = content.prizes_remaining.pop().expect("some prizes_remaining");
+                    content.reservations.insert(user_id);
+
+                    let token = content.transaction.token();
+
+                    return ReservePrizeResult::Success(token, amount);
+                }
+            }
+        }
+
+        ReservePrizeResult::MessageNotFound
+    }
+
+    pub fn claim_prize(
+        &mut self,
+        message_id: MessageId,
+        min_visible_event_index: EventIndex,
+        winner: UserId,
+        now: TimestampMillis,
+    ) -> ClaimPrizeResult {
+        if let Some(event) = self.main.get_mut(message_id.into(), min_visible_event_index, now) {
+            if let ChatEventInternal::Message(message) = &mut event.event {
+                if let MessageContentInternal::Prize(content) = &mut message.content {
+                    // Remove the reservation
+                    if content.reservations.remove(&winner) {
+                        // Add the user to winners list
+                        content.winners.insert(winner);
+                        return ClaimPrizeResult::Success(message.message_index);
+                    } else {
+                        return ClaimPrizeResult::ReservationNotFound;
+                    }
+                }
+            }
+        }
+
+        ClaimPrizeResult::MessageNotFound
+    }
+
+    pub fn unreserve_prize(
+        &mut self,
+        message_id: MessageId,
+        min_visible_event_index: EventIndex,
+        user_id: UserId,
+        amount: Tokens,
+        now: TimestampMillis,
+    ) -> UnreservePrizeResult {
+        if let Some(event) = self.main.get_mut(message_id.into(), min_visible_event_index, now) {
+            if let ChatEventInternal::Message(message) = &mut event.event {
+                if let MessageContentInternal::Prize(content) = &mut message.content {
+                    // Remove the reservation
+                    if content.reservations.remove(&user_id) {
+                        // Put the prize back
+                        content.prizes_remaining.push(amount);
+                        return UnreservePrizeResult::Success;
+                    } else {
+                        return UnreservePrizeResult::ReservationNotFound;
+                    }
+                }
+            }
+        }
+
+        UnreservePrizeResult::MessageNotFound
+    }
+
     fn update_thread_summary(
         &mut self,
         thread_root_message_index: MessageIndex,
@@ -1169,6 +1258,26 @@ pub enum AddRemoveReactionResult {
     Success(PushEventResult),
     NoChange,
     MessageNotFound,
+}
+
+pub enum ReservePrizeResult {
+    Success(Cryptocurrency, Tokens),
+    MessageNotFound,
+    AlreadyClaimed,
+    PrizeFullyClaimed,
+    PrizeEnded,
+}
+
+pub enum ClaimPrizeResult {
+    Success(MessageIndex),
+    MessageNotFound,
+    ReservationNotFound,
+}
+
+pub enum UnreservePrizeResult {
+    Success,
+    MessageNotFound,
+    ReservationNotFound,
 }
 
 #[derive(Copy, Clone)]

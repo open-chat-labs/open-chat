@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::MessageId;
+use types::{CompletedCryptoTransaction, FailedCryptoTransaction, MessageId};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -16,5 +16,8 @@ pub enum Response {
     ChatFrozen,
     MessageNotFound,
     AlreadyClaimed,
-    InternalError(String),
+    PrizeFullyClaimed,
+    PrizeEnded,
+    TransferFailed(String, FailedCryptoTransaction),
+    FailedAfterTransfer(String, CompletedCryptoTransaction),
 }

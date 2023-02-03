@@ -1,5 +1,6 @@
 use crate::{TimestampNanos, UserId};
 use candid::{CandidType, Principal};
+use ic_ledger_types::Tokens;
 use serde::{Deserialize, Serialize};
 
 const E8S_PER_TOKEN: u64 = 100_000_000;
@@ -155,6 +156,13 @@ impl FailedCryptoTransaction {
         match self {
             FailedCryptoTransaction::NNS(t) => &t.error_message,
             FailedCryptoTransaction::SNS(t) => &t.error_message,
+        }
+    }
+
+    pub fn amount(&self) -> Tokens {
+        match self {
+            FailedCryptoTransaction::NNS(t) => t.amount,
+            FailedCryptoTransaction::SNS(t) => t.amount,
         }
     }
 }

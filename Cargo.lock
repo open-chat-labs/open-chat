@@ -2269,8 +2269,10 @@ dependencies = [
  "group_index_canister",
  "group_index_canister_c2c_client",
  "http_request",
+ "ic-base-types",
  "ic-cdk",
  "ic-cdk-macros",
+ "ic-icrc1",
  "ic-ledger-types",
  "ic-stable-structures 0.5.0",
  "itertools",
@@ -4769,6 +4771,11 @@ name = "ledger_utils"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "ic-base-types",
+ "ic-icrc1",
+ "ic-icrc1-client",
+ "ic-icrc1-client-cdk",
+ "ic-ledger-canister-core",
  "ic-ledger-types",
  "serde",
  "serde_cbor",

@@ -1240,6 +1240,7 @@ type PrizeContentInitial =
 type PrizeContent =
     record {
         prizes_remaining: nat32;
+        prizes_pending: nat32;
         winners: vec UserId;
         token: Cryptocurrency;
         end_date: TimestampMillis;

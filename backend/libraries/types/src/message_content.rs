@@ -6,7 +6,7 @@ use crate::{
 use candid::CandidType;
 use ic_ledger_types::Tokens;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fmt::{Debug, Formatter};
 
 pub const MAX_TEXT_LENGTH: u32 = 5_000;
@@ -56,7 +56,7 @@ pub enum MessageContentInternal {
     Giphy(GiphyContent),
     GovernanceProposal(ProposalContentInternal),
     Prize(PrizeContentInternal),
-    PrizeWinner(PrizeWinnerContent),
+    PrizeWinner(PrizeWinnerContentInternal),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -162,10 +162,11 @@ impl MessageContentInitial {
             }
             MessageContentInitial::Prize(p) => MessageContentInternal::Prize(PrizeContentInternal {
                 prizes_remaining: p.prizes,
-                winners: Vec::new(),
-                transfer: p.transfer,
+                winners: HashSet::new(),
                 end_date: p.end_date,
                 caption: p.caption,
+                reservations: HashSet::new(),
+                transaction: p.transfer,
             }),
         }
     }
@@ -225,6 +226,7 @@ impl From<MessageContentInitial> for MessageContent {
                 token: c.transfer.token(),
                 end_date: c.end_date,
                 caption: c.caption,
+                prizes_pending: 0,
             }),
         }
     }
@@ -242,7 +244,12 @@ impl MessageContentInternal {
             MessageContentInternal::Crypto(c) => MessageContent::Crypto(c.clone()),
             MessageContentInternal::Deleted(d) => MessageContent::Deleted(d.clone()),
             MessageContentInternal::Giphy(g) => MessageContent::Giphy(g.clone()),
-            MessageContentInternal::PrizeWinner(c) => MessageContent::PrizeWinner(c.clone()),
+            MessageContentInternal::PrizeWinner(c) => MessageContent::PrizeWinner(PrizeWinnerContent {
+                token: c.transaction.token(),
+                winner: c.winner,
+                amount: Tokens::from_e8s(c.transaction.units() as u64),
+                prize_message: c.prize_message,
+            }),
             MessageContentInternal::GovernanceProposal(p) => MessageContent::GovernanceProposal(ProposalContent {
                 governance_canister_id: p.governance_canister_id,
                 proposal: p.proposal.clone(),
@@ -250,10 +257,11 @@ impl MessageContentInternal {
             }),
             MessageContentInternal::Prize(p) => MessageContent::Prize(PrizeContent {
                 prizes_remaining: p.prizes_remaining.len() as u32,
-                winners: p.winners.clone(),
-                token: p.transfer.token(),
+                winners: p.winners.iter().copied().collect(),
+                token: p.transaction.token(),
                 end_date: p.end_date,
                 caption: p.caption.clone(),
+                prizes_pending: p.reservations.len() as u32,
             }),
         }
     }
@@ -486,8 +494,9 @@ pub struct PrizeContentInitial {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct PrizeContentInternal {
     pub prizes_remaining: Vec<Tokens>,
-    pub winners: Vec<UserId>,
-    pub transfer: CryptoTransaction,
+    pub reservations: HashSet<UserId>,
+    pub winners: HashSet<UserId>,
+    pub transaction: CryptoTransaction,
     pub end_date: TimestampMillis,
     pub caption: Option<String>,
 }
@@ -495,10 +504,18 @@ pub struct PrizeContentInternal {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct PrizeContent {
     pub prizes_remaining: u32,
+    pub prizes_pending: u32,
     pub winners: Vec<UserId>,
     pub token: Cryptocurrency,
     pub end_date: TimestampMillis,
     pub caption: Option<String>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct PrizeWinnerContentInternal {
+    pub transaction: CryptoTransaction,
+    pub winner: UserId,
+    pub prize_message: MessageIndex,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
