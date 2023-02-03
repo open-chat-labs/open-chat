@@ -5,7 +5,7 @@ use ic_state_machine_tests::StateMachine;
 use itertools::Itertools;
 use std::collections::HashMap;
 use std::time::{Duration, SystemTime};
-use types::{CanisterId, ChatEvent, ChatId, MessageContent, PollConfig, PollContent, PollVotes, TotalVotes};
+use types::{CanisterId, ChatEvent, ChatId, PollConfig, PollContent, PollVotes, TotalVotes, MessageContentInitial, MessageContent};
 
 #[test]
 fn allow_multiple_votes_per_user() {
@@ -120,14 +120,14 @@ fn polls_ended_correctly() {
         allow_multiple_votes_per_user: false,
     };
 
-    let create_poll_result2 = client::group::send_message(
+    let create_poll_result2 = client::group::send_message_v2(
         &mut env,
         user1.principal,
         group.into(),
-        &group_canister::send_message::Args {
+        &group_canister::send_message_v2::Args {
             thread_root_message_index: None,
             message_id: random_message_id(),
-            content: MessageContent::Poll(PollContent {
+            content: MessageContentInitial::Poll(PollContent {
                 config: poll_config2,
                 votes: PollVotes {
                     total: TotalVotes::Anonymous(HashMap::default()),
@@ -243,14 +243,14 @@ fn init_test_data(env: &mut StateMachine, user_index: CanisterId, poll_config: P
     let group = client::user::happy_path::create_group(env, &user1, "TEST_NAME", false, false);
     client::group::happy_path::add_participants(env, &user1, group, vec![user2.user_id]);
 
-    let create_poll_result = client::group::send_message(
+    let create_poll_result = client::group::send_message_v2(
         env,
         user1.principal,
         group.into(),
-        &group_canister::send_message::Args {
+        &group_canister::send_message_v2::Args {
             thread_root_message_index: None,
             message_id: random_message_id(),
-            content: MessageContent::Poll(PollContent {
+            content: MessageContentInitial::Poll(PollContent {
                 config: poll_config,
                 votes: PollVotes {
                     total: TotalVotes::Anonymous(HashMap::default()),

@@ -2,7 +2,7 @@ use crate::client;
 use crate::rng::random_message_id;
 use crate::setup::{return_env, setup_env, TestEnv};
 use std::time::Duration;
-use types::{MessageContent, TextContent};
+use types::{MessageContent, TextContent, MessageContentInitial};
 
 #[test]
 fn suspend_user() {
@@ -62,15 +62,15 @@ fn suspend_user() {
         user_canister::send_message::Response::UserSuspended
     ));
 
-    let group_message_response1 = client::group::send_message(
+    let group_message_response1 = client::group::send_message_v2(
         &mut env,
         user1.principal,
         group.into(),
-        &group_canister::send_message::Args {
+        &group_canister::send_message_v2::Args {
             thread_root_message_index: None,
             message_id: random_message_id(),
             sender_name: user1.username(),
-            content: MessageContent::Text(TextContent { text: "123".to_string() }),
+            content: MessageContentInitial::Text(TextContent { text: "123".to_string() }),
             replies_to: None,
             mentioned: Vec::new(),
             forwarding: false,
@@ -114,15 +114,15 @@ fn suspend_user() {
         user_canister::send_message::Response::Success(_)
     ));
 
-    let group_message_response2 = client::group::send_message(
+    let group_message_response2 = client::group::send_message_v2(
         &mut env,
         user1.principal,
         group.into(),
-        &group_canister::send_message::Args {
+        &group_canister::send_message_v2::Args {
             thread_root_message_index: None,
             message_id: random_message_id(),
             sender_name: user1.username(),
-            content: MessageContent::Text(TextContent { text: "123".to_string() }),
+            content: MessageContentInitial::Text(TextContent { text: "123".to_string() }),
             replies_to: None,
             mentioned: Vec::new(),
             forwarding: false,

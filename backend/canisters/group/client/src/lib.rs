@@ -18,5 +18,5 @@ generate_update_call!(pin_message_v2);
 generate_update_call!(register_poll_vote);
 generate_update_call!(remove_participant);
 generate_update_call!(remove_reaction);
-generate_update_call!(send_message);
+generate_update_call!(send_message_v2);
 generate_update_call!(unpin_message);
