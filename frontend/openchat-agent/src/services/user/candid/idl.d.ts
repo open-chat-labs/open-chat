@@ -77,7 +77,7 @@ import {
     GroupPermissions,
     PermissionRole,
     WithdrawCryptoResponse,
-    TransferCryptoWithinGroupResponse,
+    SendMessageWithTransferToGroupResponse,
     TransferCryptoWithinGroupArgs,
     ChatMetrics,
     Cryptocurrency,
@@ -190,6 +190,7 @@ export {
     ArchiveChatResponse as ApiArchiveChatResponse,
     Icrc1Account as ApiIcrc1Account,
     DeletedMessageResponse as ApiDeletedDirectMessageResponse,
+    SendMessageWithTransferToGroupResponse as ApiSendMessageWithTransferToGroupResponse,
 };
 
 export const idlFactory: IDL.InterfaceFactory;
