@@ -1,7 +1,7 @@
 use crate::expiring_events::ExpiringEvents;
 use crate::*;
 use ::types::{
-    ChatFrozen, ChatId, ChatMetrics, ChatUnfrozen, DeletedBy, DirectChatCreated, EventIndex, EventWrapper,
+    ChatFrozen, ChatId, ChatMetrics, ChatUnfrozen, Cryptocurrency, DeletedBy, DirectChatCreated, EventIndex, EventWrapper,
     EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupChatCreated, Mention, MentionInternal, Message,
     MessageContentInitial, MessageContentInternal, MessageId, MessageIndex, MessageMatch, Milliseconds, PollVoteRegistered,
     PollVotes, ProposalStatusUpdate, PushEventResult, PushIfNotContains, RangeSet, Reaction, RegisterVoteResult, ReplyContext,
@@ -14,7 +14,6 @@ use serde::{Deserialize, Serialize};
 use std::cmp::Reverse;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
-use types::Cryptocurrency;
 
 #[derive(Serialize, Deserialize)]
 #[serde(from = "ChatEventsOld")]
