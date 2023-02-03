@@ -174,7 +174,7 @@ function prizeWinnerContent(candid: ApiPrizeWinnerContent): PrizeWinnerContent {
     return {
         kind: "prize_winner_content",
         token: token(candid.token),
-        recipient: candid.recipient.toString(),
+        winner: candid.winner.toString(),
         prizeMessageIndex: candid.prize_message,
         amountE8s: candid.amount.e8s,
     };
@@ -364,6 +364,7 @@ export function token(candid: ApiCryptocurrency): Cryptocurrency {
     if ("InternetComputer" in candid) return "icp";
     if ("SNS1" in candid) return "sns1";
     if ("CKBTC" in candid) return "ckbtc";
+    if ("CHAT" in candid) return "chat";
     throw new UnsupportedValueError("Unexpected ApiCryptocurrency type received", candid);
 }
 

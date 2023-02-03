@@ -142,7 +142,7 @@ export interface GiphyContent {
 export interface PrizeWinnerContent {
     kind: "prize_winner_content";
     token: Cryptocurrency;
-    recipient: string;
+    winner: string;
     prizeMessageIndex: number;
     amountE8s: bigint;
 }

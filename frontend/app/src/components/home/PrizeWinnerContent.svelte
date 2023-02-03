@@ -14,7 +14,7 @@
     $: userStore = client.userStore;
     $: symbol = cryptoLookup[content.token].symbol;
     $: amount = client.formatTokens(content.amountE8s, 0);
-    $: recipient = `${username(content.recipient)}`;
+    $: winner = `${username(content.winner)}`;
 
     function username(userId: string): string {
         return userId === user.userId
@@ -39,7 +39,7 @@
     </div>
     <div class="label">
         <Markdown
-            text={$_("prizes.winner", { values: { recipient, amount, token: symbol } })}
+            text={$_("prizes.winner", { values: { recipient: winner, amount, token: symbol } })}
             oneLine={true}
             suppressLinks={true} />
     </div>
