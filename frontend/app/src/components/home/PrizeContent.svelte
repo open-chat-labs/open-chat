@@ -88,13 +88,20 @@
 </div>
 
 <style type="text/scss">
+    $accent: var(--prize);
+
     :global(.claim button) {
-        border: 1px solid var(--prize) !important;
+        &:not(.disabled) {
+            border: 1px solid $accent !important;
+        }
         min-height: 45px !important;
         min-width: unset !important;
-    }
-    :global(.prize-coin) {
-        // --coin-face: url("../assets/sns1_large.png");
+
+        &:not(.disabled):hover,
+        &.loading {
+            background-color: $accent;
+            color: var(--button-txt);
+        }
     }
     .top {
         position: relative;

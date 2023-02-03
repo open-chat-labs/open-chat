@@ -45,7 +45,7 @@
 
 <style type="text/scss">
     :global(.winner-coin) {
-        --coin-size: 5em;
+        --coin-size: 4em;
         --side: #b76a06;
         // --coin-face: url("../assets/sns1_large.png");
     }
@@ -61,13 +61,13 @@
 
         .winner-coin {
             margin-top: -45px;
-            margin-bottom: -40px;
+            margin-bottom: -34px;
             align-self: center;
             animation: bob 3s linear infinite;
         }
 
         .lid {
-            width: 110px;
+            width: 90px;
             height: auto;
             align-self: flex-end;
             position: relative;
@@ -76,7 +76,7 @@
         }
 
         .box {
-            width: 150px;
+            width: 130px;
             height: auto;
             align-self: center;
         }
@@ -96,13 +96,13 @@
 
     @keyframes weave {
         0% {
-            transform: translateX(3px) translateY(0);
+            transform: translateX(2px) translateY(0);
         }
         50% {
-            transform: translateX(10px) translateY(-5px);
+            transform: translateX(8px) translateY(-5px);
         }
         100% {
-            transform: translateX(3px) translateY(0);
+            transform: translateX(2px) translateY(0);
         }
     }
 </style>
