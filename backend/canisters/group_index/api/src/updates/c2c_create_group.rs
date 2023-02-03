@@ -12,6 +12,7 @@ pub struct Args {
     pub avatar: Option<Avatar>,
     pub history_visible_to_new_joiners: bool,
     pub permissions: Option<GroupPermissions>,
+    #[serde(default)]
     pub events_ttl: Option<Milliseconds>,
 }
 
