@@ -17,7 +17,13 @@ export async function subscribeToNotifications(
 ): Promise<boolean> {
     if (!notificationsSupported) return false;
 
-    await unregisterOldServiceWorker();
+    // Register a service worker if it hasn't already been done
+    const registration = await registerServiceWorker();
+    if (registration == null) {
+        return false;
+    }
+    // Ensure the service worker is updated to the latest version
+    registration.update();
 
     navigator.serviceWorker.addEventListener("message", (event) => {
         if (event.data.type === "NOTIFICATION_RECEIVED") {
@@ -41,16 +47,6 @@ export async function subscribeToNotifications(
     });
 
     return true;
-}
-
-// TODO this can be removed once we are sure that no-one still have the old service worker
-async function unregisterOldServiceWorker() {
-    const regs = await navigator.serviceWorker.getRegistrations();
-    regs.forEach((reg) => {
-        if (reg.scope.includes("_/raw")) {
-            reg.unregister();
-        }
-    });
 }
 
 export const notificationsSupported = supported();
@@ -88,6 +84,20 @@ export async function closeNotifications(
                 notification.close();
             }
         }
+    }
+}
+
+async function registerServiceWorker(): Promise<ServiceWorkerRegistration | undefined> {
+    // Does the browser have all the support needed for web push
+    if (!notificationsSupported) {
+        return undefined;
+    }
+
+    try {
+        return await navigator.serviceWorker.register("process.env.WEBPUSH_SERVICE_WORKER_PATH");
+    } catch (e) {
+        console.log(e);
+        return undefined;
     }
 }
 
@@ -161,5 +171,5 @@ export async function unsubscribeNotifications(client: OpenChat): Promise<void> 
 async function getRegistration(): Promise<ServiceWorkerRegistration | undefined> {
     if (!notificationsSupported) return undefined;
 
-    return await navigator.serviceWorker.getRegistration("sw.js");
+    return await navigator.serviceWorker.getRegistration("process.env.WEBPUSH_SERVICE_WORKER_PATH");
 }
