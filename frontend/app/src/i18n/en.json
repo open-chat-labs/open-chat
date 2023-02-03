@@ -688,6 +688,7 @@
         "claim": "Claim",
         "claimed": "Success!",
         "finished": "Finished",
-        "winner": "**{recipient}** won **{amount}** {token}"
+        "winner": "**{recipient}** won **{amount}** {token}",
+        "claimFailed": "Sorry your claim was unsuccessfull! Better luck next time. "
     }
 }

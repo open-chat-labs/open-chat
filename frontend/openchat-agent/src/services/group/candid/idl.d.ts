@@ -62,6 +62,7 @@ import {
     GroupSubtype,
     Mention,
     DeletedMessageResponse,
+    ClaimPrizeResponse,
 } from "./types";
 export {
     _SERVICE as GroupService,
@@ -126,6 +127,7 @@ export {
     GroupSubtype as ApiGroupSubtype,
     Mention as ApiMention,
     DeletedMessageResponse as ApiDeletedGroupMessageResponse,
+    ClaimPrizeResponse as ApiClaimPrizeResponse,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

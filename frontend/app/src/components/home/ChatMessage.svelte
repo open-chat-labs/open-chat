@@ -815,7 +815,7 @@
         }
 
         &.prizeWinner {
-            background-color: var(--prize);
+            // background-color: var(--prize);
         }
     }
 

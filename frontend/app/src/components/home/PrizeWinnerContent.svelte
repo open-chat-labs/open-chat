@@ -37,10 +37,12 @@
         </div>
         <img class="box" src={"../assets/box.png"} />
     </div>
-    <Markdown
-        text={$_("prizes.winner", { values: { recipient, amount, token: symbol } })}
-        oneLine={true}
-        suppressLinks={true} />
+    <div class="label">
+        <Markdown
+            text={$_("prizes.winner", { values: { recipient, amount, token: symbol } })}
+            oneLine={true}
+            suppressLinks={true} />
+    </div>
 </div>
 
 <style type="text/scss">
@@ -52,6 +54,10 @@
     .msg {
         cursor: pointer;
         text-align: center;
+    }
+
+    .label {
+        @include font(book, normal, fs-100, 28);
     }
 
     .graphic {

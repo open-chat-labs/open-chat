@@ -133,8 +133,10 @@ export interface ChatMessagesRead {
   'date_read_pinned' : [] | [TimestampMillis],
 }
 export interface ChatMetrics {
+  'prize_winner_messages' : bigint,
   'audio_messages' : bigint,
   'cycles_messages' : bigint,
+  'chat_messages' : bigint,
   'edits' : bigint,
   'icp_messages' : bigint,
   'last_active' : TimestampMillis,
@@ -152,6 +154,7 @@ export interface ChatMetrics {
   'reported_messages' : bigint,
   'ckbtc_messages' : bigint,
   'reactions' : bigint,
+  'prize_messages' : bigint,
 }
 export type ChatSummary = { 'Group' : GroupChatSummary } |
   { 'Direct' : DirectChatSummary };
@@ -201,6 +204,7 @@ export type CryptoTransaction = { 'Failed' : FailedCryptoTransaction } |
   { 'Completed' : CompletedCryptoTransaction } |
   { 'Pending' : PendingCryptoTransaction };
 export type Cryptocurrency = { 'InternetComputer' : null } |
+  { 'CHAT' : null } |
   { 'SNS1' : null } |
   { 'CKBTC' : null };
 export type Cycles = bigint;
@@ -683,6 +687,17 @@ export type MessageContent = { 'Giphy' : GiphyContent } |
   { 'Crypto' : CryptoContent } |
   { 'Video' : VideoContent } |
   { 'Deleted' : DeletedContent };
+export type MessageContentInitial = { 'Giphy' : GiphyContent } |
+  { 'File' : FileContent } |
+  { 'Poll' : PollContent } |
+  { 'Text' : TextContent } |
+  { 'Image' : ImageContent } |
+  { 'Prize' : PrizeContentInitial } |
+  { 'GovernanceProposal' : ProposalContent } |
+  { 'Audio' : AudioContent } |
+  { 'Crypto' : CryptoContent } |
+  { 'Video' : VideoContent } |
+  { 'Deleted' : DeletedContent };
 export interface MessageEventWrapper {
   'event' : Message,
   'timestamp' : TimestampMillis,
@@ -873,12 +888,19 @@ export interface PrizeContent {
   'token' : Cryptocurrency,
   'end_date' : TimestampMillis,
   'prizes_remaining' : number,
+  'prizes_pending' : number,
   'caption' : [] | [string],
   'winners' : Array<UserId>,
 }
+export interface PrizeContentInitial {
+  'end_date' : TimestampMillis,
+  'caption' : [] | [string],
+  'prizes' : Array<Tokens>,
+  'transfer' : CryptoTransaction,
+}
 export interface PrizeWinnerContent {
   'token' : Cryptocurrency,
-  'recipient' : UserId,
+  'winner' : UserId,
   'prize_message' : MessageIndex,
   'amount' : Tokens,
 }
@@ -1023,6 +1045,38 @@ export type SendMessageResponse = { 'TextTooLong' : number } |
   { 'TransferFailed' : string } |
   { 'InternalError' : string } |
   { 'RecipientNotFound' : null };
+export interface SendMessageWithTransferToGroupArgs {
+  'content' : MessageContentInitial,
+  'mentioned' : Array<User>,
+  'group_id' : ChatId,
+  'sender_name' : string,
+  'correlation_id' : bigint,
+  'message_id' : MessageId,
+  'replies_to' : [] | [GroupReplyContext],
+  'thread_root_message_index' : [] | [MessageIndex],
+}
+export type SendMessageWithTransferToGroupResponse = {
+    'TextTooLong' : number
+  } |
+  { 'TransferLimitExceeded' : bigint } |
+  { 'CallerNotInGroup' : [] | [CompletedCryptoTransaction] } |
+  { 'ChatFrozen' : null } |
+  { 'TransferCannotBeZero' : null } |
+  {
+    'Success' : {
+      'timestamp' : TimestampMillis,
+      'event_index' : EventIndex,
+      'transfer' : CompletedCryptoTransaction,
+      'expires_at' : [] | [TimestampMillis],
+      'message_index' : MessageIndex,
+    }
+  } |
+  { 'RecipientBlocked' : null } |
+  { 'UserSuspended' : null } |
+  { 'InvalidRequest' : string } |
+  { 'TransferFailed' : string } |
+  { 'InternalError' : [string, CompletedCryptoTransaction] } |
+  { 'CryptocurrencyNotSupported' : Cryptocurrency };
 export interface SetAvatarArgs { 'avatar' : [] | [Avatar] }
 export type SetAvatarResponse = { 'AvatarTooBig' : FieldTooLongResult } |
   { 'Success' : null } |
@@ -1145,26 +1199,6 @@ export interface TransferCryptoWithinGroupArgs {
   'replies_to' : [] | [GroupReplyContext],
   'thread_root_message_index' : [] | [MessageIndex],
 }
-export type TransferCryptoWithinGroupResponse = { 'TextTooLong' : number } |
-  { 'TransferLimitExceeded' : bigint } |
-  { 'CallerNotInGroup' : [] | [CompletedCryptoTransaction] } |
-  { 'ChatFrozen' : null } |
-  { 'TransferCannotBeZero' : null } |
-  {
-    'Success' : {
-      'timestamp' : TimestampMillis,
-      'event_index' : EventIndex,
-      'transfer' : CompletedCryptoTransaction,
-      'expires_at' : [] | [TimestampMillis],
-      'message_index' : MessageIndex,
-    }
-  } |
-  { 'RecipientBlocked' : null } |
-  { 'UserSuspended' : null } |
-  { 'InvalidRequest' : string } |
-  { 'TransferFailed' : string } |
-  { 'InternalError' : [string, CompletedCryptoTransaction] } |
-  { 'CryptocurrencyNotSupported' : Cryptocurrency };
 export interface UnArchiveChatArgs { 'chat_id' : ChatId }
 export type UnArchiveChatResponse = { 'ChatNotFound' : null } |
   { 'Success' : null };
@@ -1311,12 +1345,16 @@ export interface _SERVICE {
   'remove_reaction' : ActorMethod<[RemoveReactionArgs], RemoveReactionResponse>,
   'search_messages' : ActorMethod<[SearchMessagesArgs], SearchMessagesResponse>,
   'send_message' : ActorMethod<[SendMessageArgs], SendMessageResponse>,
+  'send_message_with_transfer_to_group' : ActorMethod<
+    [SendMessageWithTransferToGroupArgs],
+    SendMessageWithTransferToGroupResponse
+  >,
   'set_avatar' : ActorMethod<[SetAvatarArgs], SetAvatarResponse>,
   'set_bio' : ActorMethod<[SetBioArgs], SetBioResponse>,
   'set_contact' : ActorMethod<[SetContactArgs], SetContactResponse>,
   'transfer_crypto_within_group_v2' : ActorMethod<
     [TransferCryptoWithinGroupArgs],
-    TransferCryptoWithinGroupResponse
+    SendMessageWithTransferToGroupResponse
   >,
   'unarchive_chat' : ActorMethod<[UnArchiveChatArgs], UnArchiveChatResponse>,
   'unblock_user' : ActorMethod<[UnblockUserArgs], UnblockUserResponse>,

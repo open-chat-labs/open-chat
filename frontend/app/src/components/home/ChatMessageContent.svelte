@@ -57,7 +57,7 @@
 {:else if content.kind === "placeholder_content"}
     <PlaceholderContent />
 {:else if content.kind === "prize_content"}
-    <PrizeContent {content} />
+    <PrizeContent {chatId} {messageId} {content} />
 {:else if content.kind === "prize_winner_content"}
     <PrizeWinnerContent on:goToMessageIndex {content} />
 {:else if content.kind === "poll_content"}

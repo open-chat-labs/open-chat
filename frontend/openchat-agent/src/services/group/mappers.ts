@@ -40,6 +40,7 @@ import type {
     ApiGroupSubtype,
     ApiMention,
     ApiDeletedGroupMessageResponse,
+    ApiClaimPrizeResponse,
 } from "./candid/idl";
 import {
     EventsResponse,
@@ -86,6 +87,7 @@ import {
     GroupSubtype,
     Mention,
     DeletedGroupMessageResponse,
+    ClaimPrizeResponse,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import {
@@ -122,14 +124,53 @@ export function apiRole(role: MemberRole): ApiRole | undefined {
     }
 }
 
-export function summaryResponse(candid: ApiGroupCanisterSummaryResponse): GroupCanisterSummaryResponse {
+export function claimPrizeResponse(candid: ApiClaimPrizeResponse): ClaimPrizeResponse {
+    if ("PrizeFullyClaimed" in candid) {
+        return { kind: "prize_fully_claimed" };
+    }
+    if ("MessageNotFound" in candid) {
+        return { kind: "message_not_found" };
+    }
+    if ("CallerNotInGroup" in candid) {
+        return { kind: "caller_not_in_group" };
+    }
+    if ("ChatFrozen" in candid) {
+        return { kind: "chat_frozen" };
+    }
+    if ("AlreadyClaimed" in candid) {
+        return { kind: "already_claimed" };
+    }
+    if ("Success" in candid) {
+        return { kind: "success" };
+    }
+    if ("UserSuspended" in candid) {
+        return { kind: "user_suspended" };
+    }
+    if ("PrizeEnded" in candid) {
+        return { kind: "prize_ended" };
+    }
+    if ("FailedAfterTransfer" in candid) {
+        return { kind: "failed_after_transfer" };
+    }
+    if ("TransferFailed" in candid) {
+        return { kind: "transfer_failed" };
+    }
+    throw new UnsupportedValueError("Unexpected ApiClaimPrizeResponse type received", candid);
+}
+
+export function summaryResponse(
+    candid: ApiGroupCanisterSummaryResponse
+): GroupCanisterSummaryResponse {
     if ("Success" in candid) {
         return groupChatSummary(candid.Success.summary);
     }
     if ("CallerNotInGroup" in candid) {
         return { kind: "caller_not_in_group" };
     }
-    throw new UnsupportedValueError("Unexpected ApiGroupCanisterSummaryResponse type received", candid);
+    throw new UnsupportedValueError(
+        "Unexpected ApiGroupCanisterSummaryResponse type received",
+        candid
+    );
 }
 
 function groupChatSummary(candid: ApiGroupCanisterGroupChatSummary): GroupCanisterGroupChatSummary {
@@ -158,10 +199,12 @@ function groupChatSummary(candid: ApiGroupCanisterGroupChatSummary): GroupCanist
         latestThreads: candid.latest_threads.map(threadDetails),
         frozen: candid.frozen.length > 0,
         dateLastPinned: optional(candid.date_last_pinned, identity),
-    }
+    };
 }
 
-export function summaryUpdatesResponse(candid: ApiGroupCanisterSummaryUpdatesResponse): GroupCanisterSummaryUpdatesResponse {
+export function summaryUpdatesResponse(
+    candid: ApiGroupCanisterSummaryUpdatesResponse
+): GroupCanisterSummaryUpdatesResponse {
     if ("Success" in candid) {
         return groupChatSummaryUpdates(candid.Success.updates);
     }
@@ -171,10 +214,15 @@ export function summaryUpdatesResponse(candid: ApiGroupCanisterSummaryUpdatesRes
     if ("CallerNotInGroup" in candid) {
         return { kind: "caller_not_in_group" };
     }
-    throw new UnsupportedValueError("Unexpected ApiGroupCanisterSummaryUpdatesResponse type received", candid);
+    throw new UnsupportedValueError(
+        "Unexpected ApiGroupCanisterSummaryUpdatesResponse type received",
+        candid
+    );
 }
 
-function groupChatSummaryUpdates(candid: ApiGroupCanisterGroupChatSummaryUpdates): GroupCanisterGroupChatSummaryUpdates {
+function groupChatSummaryUpdates(
+    candid: ApiGroupCanisterGroupChatSummaryUpdates
+): GroupCanisterGroupChatSummaryUpdates {
     return {
         chatId: candid.chat_id.toString(),
         lastUpdated: candid.last_updated,
@@ -197,7 +245,7 @@ function groupChatSummaryUpdates(candid: ApiGroupCanisterGroupChatSummaryUpdates
         frozen: optionUpdate(candid.frozen, (_) => true),
         affectedEvents: [...candid.affected_events],
         dateLastPinned: optional(candid.date_last_pinned, identity),
-    }
+    };
 }
 
 function threadDetails(candid: ApiGroupCanisterThreadDetails): GroupCanisterThreadDetails {
@@ -206,7 +254,7 @@ function threadDetails(candid: ApiGroupCanisterThreadDetails): GroupCanisterThre
         lastUpdated: candid.last_updated,
         latestEventIndex: candid.latest_event,
         latestMessageIndex: candid.latest_message,
-    }
+    };
 }
 
 function mention(candid: ApiMention): Mention {
@@ -413,14 +461,16 @@ export function deleteMessageResponse(candid: ApiDeleteMessageResponse): DeleteM
     throw new UnsupportedValueError("Unexpected ApiDeleteMessageResponse type received", candid);
 }
 
-export function undeleteMessageResponse(candid: ApiUndeleteMessageResponse): UndeleteMessageResponse {
+export function undeleteMessageResponse(
+    candid: ApiUndeleteMessageResponse
+): UndeleteMessageResponse {
     if ("Success" in candid) {
         if (candid.Success.messages.length == 0) {
             return { kind: "internal_error" };
         } else {
             return {
                 kind: "success",
-                message: message(candid.Success.messages[0])
+                message: message(candid.Success.messages[0]),
             };
         }
     }
@@ -688,7 +738,7 @@ export function addMembersResponse(candid: ApiAddParticipantsResponse): AddMembe
     }
     if ("UserSuspended" in candid) {
         return {
-            kind: "user_suspended"
+            kind: "user_suspended",
         };
     }
     if ("ChatFrozen" in candid) {
@@ -697,7 +747,9 @@ export function addMembersResponse(candid: ApiAddParticipantsResponse): AddMembe
     throw new UnsupportedValueError("Unexpected ApiAddParticipantsResponse type received", candid);
 }
 
-export function deletedMessageResponse(candid: ApiDeletedGroupMessageResponse): DeletedGroupMessageResponse {
+export function deletedMessageResponse(
+    candid: ApiDeletedGroupMessageResponse
+): DeletedGroupMessageResponse {
     if ("Success" in candid) {
         return {
             kind: "success",
@@ -719,7 +771,10 @@ export function deletedMessageResponse(candid: ApiDeletedGroupMessageResponse): 
     if ("MessageHardDeleted" in candid) {
         return { kind: "message_hard_deleted" };
     }
-    throw new UnsupportedValueError("Unexpected ApiDeletedGroupMessageResponse type received", candid);
+    throw new UnsupportedValueError(
+        "Unexpected ApiDeletedGroupMessageResponse type received",
+        candid
+    );
 }
 
 export function pinMessageResponse(candid: ApiPinMessageResponse): PinMessageResponse {
@@ -944,7 +999,7 @@ export function enableInviteCodeResponse(
     }
     if ("UserSuspended" in candid) {
         return {
-            kind: "user_suspended"
+            kind: "user_suspended",
         };
     }
     if ("ChatFrozen" in candid) {
@@ -1040,7 +1095,7 @@ export function resetInviteCodeResponse(
     }
     if ("UserSuspended" in candid) {
         return {
-            kind: "user_suspended"
+            kind: "user_suspended",
         };
     }
     if ("ChatFrozen" in candid) {
@@ -1341,7 +1396,7 @@ function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {
         return {
             kind: "chat_frozen",
             frozenBy: candid.ChatFrozen.frozen_by.toString(),
-            reason: optional(candid.ChatFrozen.reason, identity)
+            reason: optional(candid.ChatFrozen.reason, identity),
         };
     }
 
@@ -1356,8 +1411,8 @@ function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {
         return {
             kind: "events_ttl_updated",
             updatedBy: candid.EventsTimeToLiveUpdated.updated_by.toString(),
-            newTimeToLive: optional(candid.EventsTimeToLiveUpdated.new_ttl, identity)
-        }
+            newTimeToLive: optional(candid.EventsTimeToLiveUpdated.new_ttl, identity),
+        };
     }
 
     throw new UnsupportedValueError("Unexpected ApiEventWrapper type received", candid);

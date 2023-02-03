@@ -191,7 +191,8 @@ export type WorkerRequest =
     | GetDeletedGroupMessage
     | GetDeletedDirectMessage
     | LoadFailedMessages
-    | DeleteFailedMessage;
+    | DeleteFailedMessage
+    | ClaimPrize;
 
 type SetCachedMessageFromNotification = Request<{
     chatId: string;
@@ -945,4 +946,11 @@ type DeleteFailedMessage = Request<{
     threadRootMessageIndex: number | undefined;
 }> & {
     kind: "deleteFailedMessage";
+};
+
+type ClaimPrize = Request<{
+    chatId: string;
+    messageId: bigint;
+}> & {
+    kind: "claimPrize";
 };

@@ -3337,6 +3337,21 @@ export class OpenChat extends EventTarget {
         }
     }
 
+    claimPrize(chatId: string, messageId: bigint): Promise<boolean> {
+        return this.api
+            .claimPrize(chatId, messageId)
+            .then((resp) => {
+                if (resp.kind !== "success") {
+                    return false;
+                }
+                return true;
+            })
+            .catch((err) => {
+                this._logger.error("Claiming prize failed", err);
+                return false;
+            });
+    }
+
     /**
      * Reactive state provided in the form of svelte stores
      */

@@ -96,8 +96,10 @@ export interface ChatEventWrapper {
 export interface ChatFrozen { 'frozen_by' : UserId, 'reason' : [] | [string] }
 export type ChatId = CanisterId;
 export interface ChatMetrics {
+  'prize_winner_messages' : bigint,
   'audio_messages' : bigint,
   'cycles_messages' : bigint,
+  'chat_messages' : bigint,
   'edits' : bigint,
   'icp_messages' : bigint,
   'last_active' : TimestampMillis,
@@ -115,6 +117,7 @@ export interface ChatMetrics {
   'reported_messages' : bigint,
   'ckbtc_messages' : bigint,
   'reactions' : bigint,
+  'prize_messages' : bigint,
 }
 export type ChatSummary = { 'Group' : GroupChatSummary } |
   { 'Direct' : DirectChatSummary };
@@ -153,6 +156,7 @@ export type CryptoTransaction = { 'Failed' : FailedCryptoTransaction } |
   { 'Completed' : CompletedCryptoTransaction } |
   { 'Pending' : PendingCryptoTransaction };
 export type Cryptocurrency = { 'InternetComputer' : null } |
+  { 'CHAT' : null } |
   { 'SNS1' : null } |
   { 'CKBTC' : null };
 export type CurrentUserArgs = {};
@@ -546,6 +550,17 @@ export type MessageContent = { 'Giphy' : GiphyContent } |
   { 'Crypto' : CryptoContent } |
   { 'Video' : VideoContent } |
   { 'Deleted' : DeletedContent };
+export type MessageContentInitial = { 'Giphy' : GiphyContent } |
+  { 'File' : FileContent } |
+  { 'Poll' : PollContent } |
+  { 'Text' : TextContent } |
+  { 'Image' : ImageContent } |
+  { 'Prize' : PrizeContentInitial } |
+  { 'GovernanceProposal' : ProposalContent } |
+  { 'Audio' : AudioContent } |
+  { 'Crypto' : CryptoContent } |
+  { 'Video' : VideoContent } |
+  { 'Deleted' : DeletedContent };
 export interface MessageEventWrapper {
   'event' : Message,
   'timestamp' : TimestampMillis,
@@ -710,12 +725,19 @@ export interface PrizeContent {
   'token' : Cryptocurrency,
   'end_date' : TimestampMillis,
   'prizes_remaining' : number,
+  'prizes_pending' : number,
   'caption' : [] | [string],
   'winners' : Array<UserId>,
 }
+export interface PrizeContentInitial {
+  'end_date' : TimestampMillis,
+  'caption' : [] | [string],
+  'prizes' : Array<Tokens>,
+  'transfer' : CryptoTransaction,
+}
 export interface PrizeWinnerContent {
   'token' : Cryptocurrency,
-  'recipient' : UserId,
+  'winner' : UserId,
   'prize_message' : MessageIndex,
   'amount' : Tokens,
 }

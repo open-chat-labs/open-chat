@@ -120,6 +120,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const Cryptocurrency = IDL.Variant({
     'InternetComputer' : IDL.Null,
+    'CHAT' : IDL.Null,
     'SNS1' : IDL.Null,
     'CKBTC' : IDL.Null,
   });
@@ -127,6 +128,7 @@ export const idlFactory = ({ IDL }) => {
     'token' : Cryptocurrency,
     'end_date' : TimestampMillis,
     'prizes_remaining' : IDL.Nat32,
+    'prizes_pending' : IDL.Nat32,
     'caption' : IDL.Opt(IDL.Text),
     'winners' : IDL.Vec(UserId),
   });
@@ -191,7 +193,7 @@ export const idlFactory = ({ IDL }) => {
   const Tokens = IDL.Record({ 'e8s' : IDL.Nat64 });
   const PrizeWinnerContent = IDL.Record({
     'token' : Cryptocurrency,
-    'recipient' : UserId,
+    'winner' : UserId,
     'prize_message' : MessageIndex,
     'amount' : Tokens,
   });

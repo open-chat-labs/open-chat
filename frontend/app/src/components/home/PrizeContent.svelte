@@ -9,10 +9,14 @@
     import { rtlStore } from "../../stores/rtl";
     import { now } from "../../stores/time";
     import CkBtc from "../icons/CkBtc.svelte";
+    import { toastStore } from "../../stores/toast";
+    import { claimsStore } from "../../stores/claims";
 
     const client = getContext<OpenChat>("client");
 
     export let content: PrizeContent;
+    export let chatId: string;
+    export let messageId: bigint;
 
     $: total = content.prizesRemaining + content.winners.length;
     $: percentage = (content.winners.length / total) * 100;
@@ -24,18 +28,23 @@
         : client.formatTimeRemaining($now, Number(content.endDate));
     let progressWidth = 0;
     // let source = "../assets/ckbtc_large.jpeg";
-    let claiming = false;
 
     function claim() {
-        claiming = true;
-        window.setTimeout(() => {
-            claiming = false;
-            content = {
-                ...content,
-                winners: [...content.winners, client.user.userId],
-                prizesRemaining: content.prizesRemaining - 1,
-            };
-        }, 2000);
+        claimsStore.add(messageId);
+        client
+            .claimPrize(chatId, messageId)
+            .then((success) => {
+                if (success) {
+                    content = {
+                        ...content,
+                        winners: [...content.winners, client.user.userId],
+                        prizesRemaining: content.prizesRemaining - 1,
+                    };
+                } else {
+                    toastStore.showFailureToast("prizes.claimFailed");
+                }
+            })
+            .finally(() => claimsStore.delete(messageId));
     }
 </script>
 
@@ -76,7 +85,7 @@
             {/if}
 
             <ButtonGroup align="fill">
-                <Button loading={claiming} on:click={claim} {disabled} hollow
+                <Button loading={$claimsStore.has(messageId)} on:click={claim} {disabled} hollow
                     >{claimedByYou
                         ? $_("prizes.claimed")
                         : finished

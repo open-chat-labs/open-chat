@@ -206,6 +206,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const Cryptocurrency = IDL.Variant({
     'InternetComputer' : IDL.Null,
+    'CHAT' : IDL.Null,
     'SNS1' : IDL.Null,
     'CKBTC' : IDL.Null,
   });
@@ -213,6 +214,7 @@ export const idlFactory = ({ IDL }) => {
     'token' : Cryptocurrency,
     'end_date' : TimestampMillis,
     'prizes_remaining' : IDL.Nat32,
+    'prizes_pending' : IDL.Nat32,
     'caption' : IDL.Opt(IDL.Text),
     'winners' : IDL.Vec(UserId),
   });
@@ -276,7 +278,7 @@ export const idlFactory = ({ IDL }) => {
   const Tokens = IDL.Record({ 'e8s' : IDL.Nat64 });
   const PrizeWinnerContent = IDL.Record({
     'token' : Cryptocurrency,
-    'recipient' : UserId,
+    'winner' : UserId,
     'prize_message' : MessageIndex,
     'amount' : Tokens,
   });
@@ -685,8 +687,10 @@ export const idlFactory = ({ IDL }) => {
     'archived' : IDL.Bool,
   });
   const ChatMetrics = IDL.Record({
+    'prize_winner_messages' : IDL.Nat64,
     'audio_messages' : IDL.Nat64,
     'cycles_messages' : IDL.Nat64,
+    'chat_messages' : IDL.Nat64,
     'edits' : IDL.Nat64,
     'icp_messages' : IDL.Nat64,
     'last_active' : TimestampMillis,
@@ -704,6 +708,7 @@ export const idlFactory = ({ IDL }) => {
     'reported_messages' : IDL.Nat64,
     'ckbtc_messages' : IDL.Nat64,
     'reactions' : IDL.Nat64,
+    'prize_messages' : IDL.Nat64,
   });
   const MessageIndexRange = IDL.Record({
     'end' : MessageIndex,
@@ -975,6 +980,57 @@ export const idlFactory = ({ IDL }) => {
     'InternalError' : IDL.Text,
     'RecipientNotFound' : IDL.Null,
   });
+  const PrizeContentInitial = IDL.Record({
+    'end_date' : TimestampMillis,
+    'caption' : IDL.Opt(IDL.Text),
+    'prizes' : IDL.Vec(Tokens),
+    'transfer' : CryptoTransaction,
+  });
+  const MessageContentInitial = IDL.Variant({
+    'Giphy' : GiphyContent,
+    'File' : FileContent,
+    'Poll' : PollContent,
+    'Text' : TextContent,
+    'Image' : ImageContent,
+    'Prize' : PrizeContentInitial,
+    'GovernanceProposal' : ProposalContent,
+    'Audio' : AudioContent,
+    'Crypto' : CryptoContent,
+    'Video' : VideoContent,
+    'Deleted' : DeletedContent,
+  });
+  const User = IDL.Record({ 'username' : IDL.Text, 'user_id' : UserId });
+  const GroupReplyContext = IDL.Record({ 'event_index' : EventIndex });
+  const SendMessageWithTransferToGroupArgs = IDL.Record({
+    'content' : MessageContentInitial,
+    'mentioned' : IDL.Vec(User),
+    'group_id' : ChatId,
+    'sender_name' : IDL.Text,
+    'correlation_id' : IDL.Nat64,
+    'message_id' : MessageId,
+    'replies_to' : IDL.Opt(GroupReplyContext),
+    'thread_root_message_index' : IDL.Opt(MessageIndex),
+  });
+  const SendMessageWithTransferToGroupResponse = IDL.Variant({
+    'TextTooLong' : IDL.Nat32,
+    'TransferLimitExceeded' : IDL.Nat,
+    'CallerNotInGroup' : IDL.Opt(CompletedCryptoTransaction),
+    'ChatFrozen' : IDL.Null,
+    'TransferCannotBeZero' : IDL.Null,
+    'Success' : IDL.Record({
+      'timestamp' : TimestampMillis,
+      'event_index' : EventIndex,
+      'transfer' : CompletedCryptoTransaction,
+      'expires_at' : IDL.Opt(TimestampMillis),
+      'message_index' : MessageIndex,
+    }),
+    'RecipientBlocked' : IDL.Null,
+    'UserSuspended' : IDL.Null,
+    'InvalidRequest' : IDL.Text,
+    'TransferFailed' : IDL.Text,
+    'InternalError' : IDL.Tuple(IDL.Text, CompletedCryptoTransaction),
+    'CryptocurrencyNotSupported' : Cryptocurrency,
+  });
   const SetAvatarArgs = IDL.Record({ 'avatar' : IDL.Opt(Avatar) });
   const SetAvatarResponse = IDL.Variant({
     'AvatarTooBig' : FieldTooLongResult,
@@ -1004,8 +1060,6 @@ export const idlFactory = ({ IDL }) => {
     'UserSuspended' : IDL.Null,
     'NicknameTooShort' : FieldTooShortResult,
   });
-  const User = IDL.Record({ 'username' : IDL.Text, 'user_id' : UserId });
-  const GroupReplyContext = IDL.Record({ 'event_index' : EventIndex });
   const TransferCryptoWithinGroupArgs = IDL.Record({
     'content' : CryptoContent,
     'recipient' : UserId,
@@ -1016,26 +1070,6 @@ export const idlFactory = ({ IDL }) => {
     'message_id' : MessageId,
     'replies_to' : IDL.Opt(GroupReplyContext),
     'thread_root_message_index' : IDL.Opt(MessageIndex),
-  });
-  const TransferCryptoWithinGroupResponse = IDL.Variant({
-    'TextTooLong' : IDL.Nat32,
-    'TransferLimitExceeded' : IDL.Nat,
-    'CallerNotInGroup' : IDL.Opt(CompletedCryptoTransaction),
-    'ChatFrozen' : IDL.Null,
-    'TransferCannotBeZero' : IDL.Null,
-    'Success' : IDL.Record({
-      'timestamp' : TimestampMillis,
-      'event_index' : EventIndex,
-      'transfer' : CompletedCryptoTransaction,
-      'expires_at' : IDL.Opt(TimestampMillis),
-      'message_index' : MessageIndex,
-    }),
-    'RecipientBlocked' : IDL.Null,
-    'UserSuspended' : IDL.Null,
-    'InvalidRequest' : IDL.Text,
-    'TransferFailed' : IDL.Text,
-    'InternalError' : IDL.Tuple(IDL.Text, CompletedCryptoTransaction),
-    'CryptocurrencyNotSupported' : Cryptocurrency,
   });
   const UnArchiveChatArgs = IDL.Record({ 'chat_id' : ChatId });
   const UnArchiveChatResponse = IDL.Variant({
@@ -1205,12 +1239,17 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'send_message' : IDL.Func([SendMessageArgs], [SendMessageResponse], []),
+    'send_message_with_transfer_to_group' : IDL.Func(
+        [SendMessageWithTransferToGroupArgs],
+        [SendMessageWithTransferToGroupResponse],
+        [],
+      ),
     'set_avatar' : IDL.Func([SetAvatarArgs], [SetAvatarResponse], []),
     'set_bio' : IDL.Func([SetBioArgs], [SetBioResponse], []),
     'set_contact' : IDL.Func([SetContactArgs], [SetContactResponse], []),
     'transfer_crypto_within_group_v2' : IDL.Func(
         [TransferCryptoWithinGroupArgs],
-        [TransferCryptoWithinGroupResponse],
+        [SendMessageWithTransferToGroupResponse],
         [],
       ),
     'unarchive_chat' : IDL.Func(

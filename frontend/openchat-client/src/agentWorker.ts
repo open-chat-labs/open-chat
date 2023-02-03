@@ -90,6 +90,7 @@ import {
     UpdatesResult,
     DeletedGroupMessageResponse,
     DeletedDirectMessageResponse,
+    ClaimPrizeResponse,
 } from "openchat-shared";
 import type { OpenChatConfig } from "./config";
 import { v4 } from "uuid";
@@ -1292,6 +1293,16 @@ export class OpenChatAgentWorker extends EventTarget {
         return this.sendRequest({
             kind: "markSuspectedBot",
             payload: {},
+        });
+    }
+
+    claimPrize(chatId: string, messageId: bigint): Promise<ClaimPrizeResponse> {
+        return this.sendRequest({
+            kind: "claimPrize",
+            payload: {
+                chatId,
+                messageId,
+            },
         });
     }
 }

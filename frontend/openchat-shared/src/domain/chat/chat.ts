@@ -1622,3 +1622,15 @@ export type UnfreezeGroupResponse =
     | "internal_error";
 
 export type MarkPinnedMessagesReadResponse = "success" | "chat_frozen";
+
+export type ClaimPrizeResponse =
+    | CallerNotInGroup
+    | { kind: "message_not_found" }
+    | { kind: "chat_frozen" }
+    | { kind: "already_claimed" }
+    | { kind: "success" }
+    | { kind: "user_suspended" }
+    | { kind: "prize_ended" }
+    | { kind: "prize_fully_claimed" }
+    | { kind: "failed_after_transfer" }
+    | { kind: "transfer_failed" };
