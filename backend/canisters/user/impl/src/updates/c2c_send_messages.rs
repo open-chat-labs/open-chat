@@ -162,8 +162,8 @@ pub(crate) fn handle_message_impl(
     runtime_state: &mut RuntimeState,
 ) -> Response {
     let replies_to = convert_reply_context(args.replies_to, sender, args.now, runtime_state);
-    let content: MessageContentInitial = args.content.into();
-    let content = content.new_content_into_internal();
+    let initial_content: MessageContentInitial = args.content.into();
+    let content = initial_content.new_content_into_internal();
     let files = content.blob_references();
 
     let push_message_args = PushMessageArgs {

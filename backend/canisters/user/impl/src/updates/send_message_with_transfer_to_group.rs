@@ -86,6 +86,7 @@ async fn send_message_with_transfer_to_group_impl(args: Args) -> Response {
             | group_canister::send_message::Response::InvalidRequest(_)
             | group_canister::send_message::Response::TextTooLong(_) => unreachable!(),
         },
+        // TODO: We should retry sending the message
         Err(error) => InternalError(format!("{error:?}"), completed_transaction),
     }
 }

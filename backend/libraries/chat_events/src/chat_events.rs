@@ -650,6 +650,7 @@ impl ChatEvents {
                     // Pop the last prize and reserve it
                     let amount = content.prizes_remaining.pop().expect("some prizes_remaining");
                     content.reservations.insert(user_id);
+                    message.last_updated = Some(now);
 
                     let token = content.transaction.token();
 
@@ -675,6 +676,7 @@ impl ChatEvents {
                     if content.reservations.remove(&winner) {
                         // Add the user to winners list
                         content.winners.insert(winner);
+                        message.last_updated = Some(now);
                         return ClaimPrizeResult::Success(message.message_index);
                     } else {
                         return ClaimPrizeResult::ReservationNotFound;
@@ -701,6 +703,7 @@ impl ChatEvents {
                     if content.reservations.remove(&user_id) {
                         // Put the prize back
                         content.prizes_remaining.push(amount);
+                        message.last_updated = Some(now);
                         return UnreservePrizeResult::Success;
                     } else {
                         return UnreservePrizeResult::ReservationNotFound;
