@@ -1,7 +1,6 @@
 [package]
 name = "notification_pusher_aws"
 version = "0.1.0"
-authors = ["Hamish Peebles <hamishpeebles@gmail.com>", "Matt Grogan <megrogan@gmail.com>", "Julian Jelfs <julian.jelfs@gmail.com>"]
 edition = "2021"
 
 [dependencies]
