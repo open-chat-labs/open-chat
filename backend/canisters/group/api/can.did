@@ -31,6 +31,18 @@ type SendMessageResponse =
         ChatFrozen;
     };
 
+type SendMessageV2Args =
+    record {
+        message_id: MessageId;
+        thread_root_message_index: opt MessageIndex;
+        content: MessageContentInitial;
+        sender_name: text;
+        replies_to: opt GroupReplyContext;
+        mentioned: vec User;
+        forwarding: bool;
+        correlation_id: nat64;
+    };
+
 type EditMessageArgs =
     record {
         thread_root_message_index: opt MessageIndex;
@@ -415,6 +427,26 @@ type RegisterProposalVoteResponse =
         InternalError: text;
     };
 
+type ClaimPrizeArgs =
+    record {
+        message_id: MessageId;
+        correlation_id: nat64;
+    };
+
+type ClaimPrizeResponse =
+    variant {
+        Success;
+        CallerNotInGroup;
+        UserSuspended;
+        ChatFrozen;
+        MessageNotFound;
+        AlreadyClaimed;
+        PrizeFullyClaimed;
+        PrizeEnded;
+        TransferFailed: record { text; FailedCryptoTransaction; };
+        FailedAfterTransfer: record { text; CompletedCryptoTransaction; };
+    };
+
 type MakePrivateArgs =
     record {
         correlation_id: nat64;
@@ -688,6 +720,7 @@ service: {
 
     // Regular users
     send_message: (SendMessageArgs) -> (SendMessageResponse);
+    send_message_v2: (SendMessageV2Args) -> (SendMessageResponse);
     edit_message: (EditMessageArgs) -> (EditMessageResponse);
     delete_messages: (DeleteMessagesArgs) -> (DeleteMessagesResponse);
     undelete_messages: (UndeleteMessagesArgs) -> (UndeleteMessagesResponse);
@@ -695,6 +728,7 @@ service: {
     add_reaction: (AddReactionArgs) -> (AddReactionResponse);
     remove_reaction: (RemoveReactionArgs) -> (RemoveReactionResponse);
     register_proposal_vote: (RegisterProposalVoteArgs) -> (RegisterProposalVoteResponse);
+    claim_prize: (ClaimPrizeArgs) -> (ClaimPrizeResponse);
 
     summary: (SummaryArgs) -> (SummaryResponse) query;
     summary_updates: (SummaryUpdatesArgs) -> (SummaryUpdatesResponse) query;

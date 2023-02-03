@@ -74,7 +74,7 @@ impl ChatEventsList {
                                     timestamp_nanos: t.created,
                                 }),
                             };
-                            let transaction_hash = calculate_transaction_hash(m.sender, &transfer_args);
+                            let transaction_hash = calculate_transaction_hash(m.sender.into(), &transfer_args);
                             c.transfer =
                                 CryptoTransaction::Completed(CompletedCryptoTransaction::NNS(nns::CompletedCryptoTransaction {
                                     token: Cryptocurrency::InternetComputer,
@@ -424,6 +424,13 @@ pub trait Reader {
                 .copied()
                 .filter_map(|p| self.event_index(p.into()))
                 .collect(),
+            ChatEventInternal::Message(m) => {
+                if let MessageContentInternal::PrizeWinner(content) = &m.content {
+                    option_to_vec(self.event_index(content.prize_message.into()))
+                } else {
+                    vec![]
+                }
+            }
             _ => vec![],
         }
     }

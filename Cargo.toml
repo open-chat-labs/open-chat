@@ -76,10 +76,10 @@ aws-sdk-pinpoint = "0.19.0"
 aws-types = "0.49.0"
 base64 = "0.13.0"
 candid = "0.8.3"
-canister_logger = { git = "https://github.com/open-ic/ic-utils", rev = "2656695f78e5234be04561d353da7b057b11d553" }
-canister_state_macros = { git = "https://github.com/open-ic/ic-utils", rev = "2656695f78e5234be04561d353da7b057b11d553" }
-canister_timer_jobs = { git = "https://github.com/open-ic/ic-utils", rev = "2656695f78e5234be04561d353da7b057b11d553" }
-canister_tracing_macros = { git = "https://github.com/open-ic/ic-utils", rev = "2656695f78e5234be04561d353da7b057b11d553" }
+canister_logger = { git = "https://github.com/open-ic/ic-utils", rev = "2328657cbb1023fb251ee7faca4f4d313f25755f" }
+canister_state_macros = { git = "https://github.com/open-ic/ic-utils", rev = "2328657cbb1023fb251ee7faca4f4d313f25755f" }
+canister_timer_jobs = { git = "https://github.com/open-ic/ic-utils", rev = "2328657cbb1023fb251ee7faca4f4d313f25755f" }
+canister_tracing_macros = { git = "https://github.com/open-ic/ic-utils", rev = "2328657cbb1023fb251ee7faca4f4d313f25755f" }
 captcha = { git = "https://github.com/nmattia/captcha", rev = "fb3fe931c20b8577bf02070ae6b8c0ca2f442427", default-features = false }
 clap = "3.0.14"
 cycles_dispenser_client = { git = "https://github.com/open-ic/cycles-dispenser", rev = "c65b84be6663b82ff1387523f89aa7fa98b46eb7" }
@@ -121,8 +121,8 @@ serde_bytes = "0.11.7"
 serde_cbor = "0.11.2"
 serde_json = "1.0.86"
 sha2 = "0.10.6"
-serializer = { git = "https://github.com/open-ic/ic-utils", rev = "2656695f78e5234be04561d353da7b057b11d553" }
-stable_memory = { git = "https://github.com/open-ic/ic-utils", rev = "2656695f78e5234be04561d353da7b057b11d553" }
+serializer = { git = "https://github.com/open-ic/ic-utils", rev = "2328657cbb1023fb251ee7faca4f4d313f25755f" }
+stable_memory = { git = "https://github.com/open-ic/ic-utils", rev = "2328657cbb1023fb251ee7faca4f4d313f25755f" }
 syn = "1.0.102"
 test-case = "2.2.2"
 tokio = "1.21.2"

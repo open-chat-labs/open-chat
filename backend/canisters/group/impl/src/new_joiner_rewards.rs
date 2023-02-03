@@ -29,7 +29,7 @@ pub async fn process_new_joiner_reward(
             timestamp_nanos: now * 1000 * 1000,
         }),
     };
-    let transaction_hash = calculate_transaction_hash(this_canister_id.into(), &transfer_args);
+    let transaction_hash = calculate_transaction_hash(this_canister_id, &transfer_args);
 
     match ic_ledger_types::transfer(ledger_canister_id, transfer_args).await {
         Ok(Ok(block_index)) => {

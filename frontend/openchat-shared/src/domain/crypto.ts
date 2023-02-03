@@ -33,14 +33,14 @@ export const cryptoLookup: Record<Cryptocurrency, CryptocurrencyDetails> = {
     ckbtc: {
         symbol: "ckBTC",
         name: "Chain-key Bitcoin",
-        transferFeesE8s: BigInt(10_000),
+        transferFeesE8s: BigInt(10),
         howToBuyUrl: "https://www.finder.com/uk/how-to-buy-bitcoin",
         disabled: true,
     },
     chat: {
         symbol: "CHAT",
         name: "OpenChat",
-        transferFeesE8s: BigInt(10_000),
+        transferFeesE8s: BigInt(100_000),
         howToBuyUrl: "https://oc.app/#/?faq=chat_account",
         disabled: true,
     },
