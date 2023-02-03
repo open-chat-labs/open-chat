@@ -684,5 +684,14 @@
     "loadGif": "Cargar gif",
     "showTweet": "Mostrar tuit",
     "showVideo": "mostrar vídeo",
-    "wallet": "Cartera"
+    "wallet": "Cartera",
+    "prizeMessage": "mensaje de premio",
+    "prizes": {
+        "click": "Haga clic en el botón de abajo para tener la oportunidad de ganar un premio.",
+        "claim": "Reclamar",
+        "claimed": "¡Éxito!",
+        "finished": "Acabado",
+        "winner": "**{recipient}** ganó **{amount}** {token}",
+        "claimFailed": "¡Lo sentimos, su reclamo no tuvo éxito! Mejor suerte la próxima vez."
+    }
 }

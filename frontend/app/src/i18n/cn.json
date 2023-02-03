@@ -684,5 +684,14 @@
     "loadGif": "载入动图",
     "showTweet": "显示推文",
     "showVideo": "显示视频",
-    "wallet": "钱包"
+    "wallet": "钱包",
+    "prizeMessage": "有奖留言",
+    "prizes": {
+        "click": "点击下方按钮即有机会赢取奖品。",
+        "claim": "宣称",
+        "claimed": "成功！",
+        "finished": "完成的",
+        "winner": "**{recipient}** 赢了 **{amount}** {token}",
+        "claimFailed": "抱歉，您的索赔未成功！祝你下次好运。"
+    }
 }

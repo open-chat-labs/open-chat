@@ -684,5 +684,14 @@
     "loadGif": "tải gif",
     "showTweet": "Hiển thị tweet",
     "showVideo": "Hiển thị video",
-    "wallet": "Cái ví"
+    "wallet": "Cái ví",
+    "prizeMessage": "tin nhắn giải thưởng",
+    "prizes": {
+        "click": "Nhấp vào nút bên dưới để có cơ hội giành giải thưởng.",
+        "claim": "Yêu cầu",
+        "claimed": "Sự thành công!",
+        "finished": "Hoàn thành",
+        "winner": "**{recipient}** đã thắng **{amount}** {token}",
+        "claimFailed": "Rất tiếc, khiếu nại của bạn không thành công! Chúc may mắn lần sau."
+    }
 }

@@ -684,5 +684,14 @@
     "loadGif": "gif を読み込む",
     "showTweet": "ツイートを表示",
     "showVideo": "ビデオを表示",
-    "wallet": "財布"
+    "wallet": "財布",
+    "prizeMessage": "賞品メッセージ",
+    "prizes": {
+        "click": "下のボタンをクリックして、賞品を獲得するチャンスを手に入れましょう。",
+        "claim": "請求",
+        "claimed": "成功！",
+        "finished": "終了した",
+        "winner": "**{recipient}** 勝った **{amount}** {token}",
+        "claimFailed": "申し訳ありませんが、あなたの申し立ては失敗しました!次回は頑張ってください。"
+    }
 }

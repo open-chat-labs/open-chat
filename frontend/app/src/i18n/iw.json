@@ -681,5 +681,14 @@
     "loadGif": "טען gif",
     "showTweet": "הצג ציוץ",
     "showVideo": "הצג וידאו",
-    "wallet": "ארנק"
+    "wallet": "ארנק",
+    "prizeMessage": "הודעת פרס",
+    "prizes": {
+        "click": "לחץ על הכפתור למטה כדי לקבל הזדמנות לזכות בפרס.",
+        "claim": "תְבִיעָה",
+        "claimed": "הַצלָחָה!",
+        "finished": "גָמוּר",
+        "winner": "**{recipient}** זכה **{amount}** {token}",
+        "claimFailed": "מצטער שהטענה שלך לא צלחה! בהצלחה בפעם הבאה."
+    }
 }

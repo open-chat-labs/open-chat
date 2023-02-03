@@ -683,5 +683,14 @@
     "loadGif": "gif laden",
     "showTweet": "Tweet anzeigen",
     "showVideo": "Videos zeigen",
-    "wallet": "Geldbörse"
+    "wallet": "Geldbörse",
+    "prizeMessage": "Gewinnnachricht",
+    "prizes": {
+        "click": "Klicken Sie auf die Schaltfläche unten, um einen Preis zu gewinnen.",
+        "claim": "Anspruch",
+        "claimed": "Erfolg!",
+        "finished": "Fertig bearbeitet",
+        "winner": "**{recipient}** hat gewonnen **{amount}** {token}",
+        "claimFailed": "Entschuldigung, Ihre Reklamation war erfolglos! Mehr Glück beim nächsten Mal."
+    }
 }

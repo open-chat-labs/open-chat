@@ -683,5 +683,14 @@
     "loadGif": "Carica gif",
     "showTweet": "Mostra tweet",
     "showVideo": "Mostra filmato",
-    "wallet": "Portafoglio"
+    "wallet": "Portafoglio",
+    "prizeMessage": "Messaggio premio",
+    "prizes": {
+        "click": "Fai clic sul pulsante in basso per avere la possibilità di vincere un premio.",
+        "claim": "Reclamo",
+        "claimed": "Successo!",
+        "finished": "Finito",
+        "winner": "**{recipient}** ha vinto **{amount}** {token}",
+        "claimFailed": "Ci dispiace che il tuo reclamo non abbia avuto successo! La prossima volta sarai più fortunato."
+    }
 }
