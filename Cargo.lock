@@ -2367,6 +2367,46 @@ dependencies = [
 ]
 
 [[package]]
+name = "group_prize_bot"
+version = "0.1.0"
+dependencies = [
+ "bot_api",
+ "candid",
+ "candid_gen 0.1.0",
+ "serde",
+ "types 0.1.0",
+ "user_canister",
+ "user_index_canister",
+]
+
+[[package]]
+name = "group_prize_bot_impl"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "canister_api_macros",
+ "canister_logger",
+ "canister_state_macros 0.1.0 (git+https://github.com/open-ic/ic-utils?rev=2328657cbb1023fb251ee7faca4f4d313f25755f)",
+ "canister_tracing_macros",
+ "group_prize_bot",
+ "http_request",
+ "ic-cdk",
+ "ic-cdk-macros",
+ "ic-stable-structures 0.5.0",
+ "msgpack",
+ "serde",
+ "serde_bytes",
+ "serde_json",
+ "serializer",
+ "tracing",
+ "types 0.1.0",
+ "user_canister",
+ "user_index_canister",
+ "user_index_canister_c2c_client",
+ "utils 0.1.0",
+]
+
+[[package]]
 name = "h2"
 version = "0.3.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"

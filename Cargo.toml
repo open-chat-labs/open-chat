@@ -2,6 +2,8 @@
 members = [
     "backend/bots/api",
     "backend/bots/c2c_client",
+    "backend/bots/examples/group_prize_bot/api",
+    "backend/bots/examples/group_prize_bot/impl",
     "backend/bots/examples/icp_dispenser/api",
     "backend/bots/examples/icp_dispenser/impl",
     "backend/bots/examples/sns1_airdrop/api",

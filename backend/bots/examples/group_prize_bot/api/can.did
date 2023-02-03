@@ -1,0 +1,94 @@
+type CanisterId = principal;
+type Cycles = nat;
+type UserId = principal;
+
+type RegisterBotArgs =
+    record {
+        username: text;
+        token: Cryptocurrency;
+        ledger_canister_id: CanisterId;
+        max_prize_per_messge: nat;
+        min_prize_per_messge: nat;
+        max_individual_prize: nat;
+        min_individual_prize: nat;
+        end_date: TimestampMillis;   
+        groups: vec CanisterId;
+    };
+
+type RegisterBotResponse =
+    variant {
+        Success;
+        AlreadyRegistered;
+        UserLimitReached;
+        UsernameTaken;
+        UsernameInvalid;
+        UsernameTooShort: nat16;
+        UsernameTooLong: nat16;
+        InsufficientCyclesProvided: Cycles;
+        InternalError: text;
+    };
+
+type Avatar =
+    record {
+        id: nat;
+        mime_type: text;
+        data: blob;
+    };
+
+type FieldTooLongResult =
+    record {
+        length_provided: nat32;
+        max_length: nat32;
+    };
+
+type SetAvatarArgs =
+    record {
+        avatar: opt Avatar;
+    };
+
+type SetAvatarResponse =
+    variant {
+        Success;
+        AvatarTooBig: FieldTooLongResult;
+    };
+
+type AddGroupsArgs =
+    record {
+        groups: vec CanisterId;
+    };
+
+type AddGroupsResponse =
+    variant {
+        Success;
+    };
+
+type MarkCompletedArgs =
+    record {
+    };
+
+type MarkCompletedResponse =
+    variant {
+        Success;
+    };
+
+type InitArgs =
+    record {
+        user_index_canister_id: CanisterId;
+        admins: vec principal;
+        wasm_version: Version;
+        test_mode: bool;
+    };
+
+type Version =
+    record {
+        major: nat32;
+        minor: nat32;
+        patch: nat32;
+    };
+
+service: (InitArgs) -> {
+    register_bot: (RegisterBotArgs) -> (RegisterBotResponse);
+    set_avatar: (SetAvatarArgs) -> (SetAvatarResponse);
+    add_groups: (AddGroupsArgs) -> (AddGroupsResponse);
+    mark_completed: (MarkCompletedArgs) -> (MarkCompletedResponse);
+}
