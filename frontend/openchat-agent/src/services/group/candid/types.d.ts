@@ -904,10 +904,9 @@ export interface PrizeContentInitial {
   'transfer' : CryptoTransaction,
 }
 export interface PrizeWinnerContent {
-  'token' : Cryptocurrency,
+  'transaction' : CompletedCryptoTransaction,
   'winner' : UserId,
   'prize_message' : MessageIndex,
-  'amount' : Tokens,
 }
 export type Proposal = { 'NNS' : NnsProposal } |
   { 'SNS' : SnsProposal };

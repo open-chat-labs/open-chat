@@ -31,6 +31,7 @@ import {
     Cryptocurrency,
     cryptoLookup,
     LocalPollVote,
+    CryptocurrencyTransfer,
 } from "openchat-shared";
 import { UnsupportedValueError, getContentAsText, eventIsVisible } from "openchat-shared";
 import { distinctBy, groupWhile } from "../utils/list";
@@ -1241,23 +1242,23 @@ export function findMessageById(
 
 export function buildTransactionLink(
     formatter: MessageFormatter,
-    content: CryptocurrencyContent
+    transfer: CryptocurrencyTransfer
 ): string | undefined {
-    const url = buildTransactionUrl(content);
+    const url = buildTransactionUrl(transfer);
     return url !== undefined
         ? formatter("tokenTransfer.viewTransaction", { values: { url } })
         : undefined;
 }
 
-export function buildTransactionUrl(content: CryptocurrencyContent): string | undefined {
-    if (content.transfer.kind !== "completed") {
+export function buildTransactionUrl(transfer: CryptocurrencyTransfer): string | undefined {
+    if (transfer.kind !== "completed") {
         return undefined;
     }
     // TODO: Where can we see the transactions for other tokens? In OpenChat I suppose...
-    if (content.transfer.token !== "icp") {
+    if (transfer.token !== "icp") {
         return undefined;
     }
-    return `https://dashboard.internetcomputer.org/transaction/${content.transfer.transactionHash}`;
+    return `https://dashboard.internetcomputer.org/transaction/${transfer.transactionHash}`;
 }
 
 export function buildCryptoTransferText(

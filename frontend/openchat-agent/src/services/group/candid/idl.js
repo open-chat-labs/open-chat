@@ -328,10 +328,9 @@ export const idlFactory = ({ IDL }) => {
     'proposal' : Proposal,
   });
   const PrizeWinnerContent = IDL.Record({
-    'token' : Cryptocurrency,
+    'transaction' : CompletedCryptoTransaction,
     'winner' : UserId,
     'prize_message' : MessageIndex,
-    'amount' : Tokens,
   });
   const AudioContent = IDL.Record({
     'mime_type' : IDL.Text,

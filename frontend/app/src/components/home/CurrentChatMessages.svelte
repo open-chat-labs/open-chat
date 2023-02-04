@@ -446,10 +446,47 @@
 
     $: expandedDeletedMessages = client.expandedDeletedMessages;
 
+    $: hackedEvents = [...events, createPrizeWinnerEvent()];
     $: groupedEvents = client
-        .groupEvents(events, user.userId, $expandedDeletedMessages, groupInner(filteredProposals))
+        .groupEvents(
+            hackedEvents,
+            user.userId,
+            $expandedDeletedMessages,
+            groupInner(filteredProposals)
+        )
         .reverse();
 
+    function createPrizeWinnerEvent(): EventWrapper<ChatEventType> {
+        return {
+            timestamp: BigInt(Date.now()),
+            index: 464654654654654464,
+            event: {
+                kind: "message",
+                content: {
+                    kind: "prize_winner_content",
+                    transaction: {
+                        kind: "completed",
+                        token: "ckbtc",
+                        recipient: "wxns6-qiaaa-aaaaa-aaaqa-cai",
+                        sender: "",
+                        amountE8s: BigInt(1654657),
+                        feeE8s: BigInt(0),
+                        memo: BigInt(0),
+                        blockIndex: BigInt(0),
+                        transactionHash: "whatever",
+                    },
+                    prizeMessageIndex: 0,
+                },
+                sender: "wxns6-qiaaa-aaaaa-aaaqa-cai",
+                messageId: BigInt(2646466406546545),
+                messageIndex: 1,
+                reactions: [],
+                edited: false,
+                forwarded: false,
+                deleted: false,
+            },
+        };
+    }
     $: {
         if (chat.chatId !== currentChatId) {
             currentChatId = chat.chatId;

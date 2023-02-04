@@ -165,18 +165,17 @@ export function messageContent(candid: ApiMessageContent, sender: string): Messa
         return prizeContent(candid.Prize);
     }
     if ("PrizeWinner" in candid) {
-        return prizeWinnerContent(candid.PrizeWinner);
+        return prizeWinnerContent(sender, candid.PrizeWinner);
     }
     throw new UnsupportedValueError("Unexpected ApiMessageContent type received", candid);
 }
 
-function prizeWinnerContent(candid: ApiPrizeWinnerContent): PrizeWinnerContent {
+function prizeWinnerContent(senderId: string, candid: ApiPrizeWinnerContent): PrizeWinnerContent {
+    const transfer = "NNS" in candid.transaction ? candid.transaction.NNS : candid.transaction.SNS;
     return {
         kind: "prize_winner_content",
-        token: token(candid.token),
-        winner: candid.winner.toString(),
+        transaction: completedCryptoTransfer(transfer, senderId, candid.winner.toString()),
         prizeMessageIndex: candid.prize_message,
-        amountE8s: candid.amount.e8s,
     };
 }
 

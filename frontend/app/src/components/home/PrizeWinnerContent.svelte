@@ -12,9 +12,10 @@
     export let content: PrizeWinnerContent;
 
     $: userStore = client.userStore;
-    $: symbol = cryptoLookup[content.token].symbol;
-    $: amount = client.formatTokens(content.amountE8s, 0);
-    $: winner = `${username(content.winner)}`;
+    $: symbol = cryptoLookup[content.transaction.token].symbol;
+    $: amount = client.formatTokens(content.transaction.amountE8s, 0);
+    $: winner = `${username(content.transaction.recipient)}`;
+    $: transactionLinkText = client.buildTransactionLink($_, content.transaction);
 
     function username(userId: string): string {
         return userId === user.userId
@@ -43,6 +44,11 @@
             oneLine={true}
             suppressLinks={true} />
     </div>
+    {#if transactionLinkText !== undefined}
+        <div class="link">
+            <Markdown text={transactionLinkText} />
+        </div>
+    {/if}
 </div>
 
 <style type="text/scss">
@@ -58,6 +64,11 @@
 
     .label {
         @include font(book, normal, fs-100, 28);
+    }
+
+    .link {
+        @include font(book, normal, fs-80, 28);
+        color: var(--txt-light);
     }
 
     .graphic {
