@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.578](https://github.com/open-ic/open-chat/releases/tag/v2.0.578-user)] - 2023-02-04
+
 ### Added
 
 - Added `disappears_at` to events ([#3021](https://github.com/open-ic/open-chat/pull/3021)) (website must be released first)
@@ -16,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Refactor and simplify `chat_events` ([#3013](https://github.com/open-ic/open-chat/pull/3013))
 - Renamed `disappears_at` to `expires_at` ([#3023](https://github.com/open-ic/open-chat/pull/3023))
 - Use `MemoryManager` so that we can use stable memory at run time ([#3040](https://github.com/open-ic/open-chat/pull/3040))
+- Increase pinned chats limit ([#2998](https://github.com/open-ic/open-chat/pull/2998))
 
 ### Fixed
 
