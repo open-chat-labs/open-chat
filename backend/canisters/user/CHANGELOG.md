@@ -5,16 +5,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.578](https://github.com/open-ic/open-chat/releases/tag/v2.0.578-user)] - 2023-02-04
+
 ### Added
 
 - Added `disappears_at` to events ([#3021](https://github.com/open-ic/open-chat/pull/3021)) (website must be released first)
 - Support disappearing messages ([#3029](https://github.com/open-ic/open-chat/pull/3029)) (website must be released first)
+- Added support for "prize" messages ([#3044](https://github.com/open-ic/open-chat/pull/3044)) (group must be released first)
 
 ### Changed
 
 - Refactor and simplify `chat_events` ([#3013](https://github.com/open-ic/open-chat/pull/3013))
 - Renamed `disappears_at` to `expires_at` ([#3023](https://github.com/open-ic/open-chat/pull/3023))
 - Use `MemoryManager` so that we can use stable memory at run time ([#3040](https://github.com/open-ic/open-chat/pull/3040))
+- Increase pinned chats limit ([#2998](https://github.com/open-ic/open-chat/pull/2998))
 
 ### Fixed
 
@@ -28,13 +32,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Removed `events_range` ([#3011](https://github.com/open-ic/open-chat/pull/3011))
 - Remove one time fix to user date created ([#2994](https://github.com/open-ic/open-chat/pull/2994))
 
-## [[2.0.555](https://github.com/open-ic/open-chat/releases/tag/v2.0.555-user)] - 2022-01-20
+## [[2.0.555](https://github.com/open-ic/open-chat/releases/tag/v2.0.555-user)] - 2023-01-20
 
 ### Fixed
 
 - Fix bug sending messages from canisters on v2.0.547 to canisters on version v2.0.553 and resend failed messages ([#2995](https://github.com/open-ic/open-chat/pull/2995))
 
-## [[2.0.553](https://github.com/open-ic/open-chat/releases/tag/v2.0.553-user)] - 2022-01-20
+## [[2.0.553](https://github.com/open-ic/open-chat/releases/tag/v2.0.553-user)] - 2023-01-20
 
 ### Added
 
@@ -52,7 +56,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Removed `join_group` since this is now handled via the `local_user_index` canister ([#2966](https://github.com/open-ic/open-chat/pull/2966))
 
-## [[2.0.547](https://github.com/open-ic/open-chat/releases/tag/v2.0.547-user)] - 2022-01-08
+## [[2.0.547](https://github.com/open-ic/open-chat/releases/tag/v2.0.547-user)] - 2023-01-08
 
 ### Added
 
