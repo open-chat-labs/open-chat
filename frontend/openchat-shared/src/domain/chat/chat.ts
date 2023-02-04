@@ -408,6 +408,7 @@ export type LocalMessageUpdates = {
     editedContent?: MessageContent;
     undeletedContent?: MessageContent;
     revealedContent?: MessageContent;
+    prizeContent?: PrizeContent;
     reactions?: LocalReaction[];
     pollVotes?: LocalPollVote[];
     threadSummary?: ThreadSummary;
