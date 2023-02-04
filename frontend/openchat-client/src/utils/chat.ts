@@ -1137,6 +1137,10 @@ function mergeLocalUpdates(
         message.content = localUpdates.revealedContent;
     }
 
+    if (localUpdates?.prizeContent !== undefined) {
+        message.content = localUpdates.prizeContent;
+    }
+
     if (localUpdates?.reactions !== undefined) {
         let reactions = [...message.reactions];
         for (const localReaction of localUpdates.reactions) {

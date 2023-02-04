@@ -32,15 +32,13 @@
     function claim() {
         claimsStore.add(messageId);
         client
-            .claimPrize(chatId, messageId)
+            .claimPrize(chatId, messageId, {
+                ...content,
+                winners: [...content.winners, client.user.userId],
+                prizesRemaining: content.prizesRemaining - 1,
+            })
             .then((success) => {
-                if (success) {
-                    content = {
-                        ...content,
-                        winners: [...content.winners, client.user.userId],
-                        prizesRemaining: content.prizesRemaining - 1,
-                    };
-                } else {
+                if (!success) {
                     toastStore.showFailureToast("prizes.claimFailed");
                 }
             })

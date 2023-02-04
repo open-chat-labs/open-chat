@@ -287,6 +287,7 @@ import {
     MergedUpdatesResponse,
     ThreadRead,
     UpdatesResult,
+    PrizeContent,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 
@@ -3337,14 +3338,16 @@ export class OpenChat extends EventTarget {
         }
     }
 
-    claimPrize(chatId: string, messageId: bigint): Promise<boolean> {
+    claimPrize(chatId: string, messageId: bigint, content: PrizeContent): Promise<boolean> {
         return this.api
             .claimPrize(chatId, messageId)
             .then((resp) => {
                 if (resp.kind !== "success") {
                     return false;
+                } else {
+                    localMessageUpdates.markPrizeClaimed(messageId.toString(), content);
+                    return true;
                 }
-                return true;
             })
             .catch((err) => {
                 this._logger.error("Claiming prize failed", err);
