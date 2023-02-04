@@ -1,7 +1,7 @@
 use crate::polls::{InvalidPollReason, PollConfig, PollVotes};
 use crate::{
-    CanisterId, CryptoTransaction, Cryptocurrency, MessageIndex, ProposalContent, ProposalContentInternal, TimestampMillis,
-    TotalVotes, UserId, VoteOperation,
+    CanisterId, CompletedCryptoTransaction, CryptoTransaction, Cryptocurrency, MessageIndex, ProposalContent,
+    ProposalContentInternal, TimestampMillis, TotalVotes, UserId, VoteOperation,
 };
 use candid::CandidType;
 use ic_ledger_types::Tokens;
@@ -56,7 +56,7 @@ pub enum MessageContentInternal {
     Giphy(GiphyContent),
     GovernanceProposal(ProposalContentInternal),
     Prize(PrizeContentInternal),
-    PrizeWinner(PrizeWinnerContentInternal),
+    PrizeWinner(PrizeWinnerContent),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -244,12 +244,7 @@ impl MessageContentInternal {
             MessageContentInternal::Crypto(c) => MessageContent::Crypto(c.clone()),
             MessageContentInternal::Deleted(d) => MessageContent::Deleted(d.clone()),
             MessageContentInternal::Giphy(g) => MessageContent::Giphy(g.clone()),
-            MessageContentInternal::PrizeWinner(c) => MessageContent::PrizeWinner(PrizeWinnerContent {
-                token: c.transaction.token(),
-                winner: c.winner,
-                amount: Tokens::from_e8s(c.transaction.units() as u64),
-                prize_message: c.prize_message,
-            }),
+            MessageContentInternal::PrizeWinner(c) => MessageContent::PrizeWinner(c.clone()),
             MessageContentInternal::GovernanceProposal(p) => MessageContent::GovernanceProposal(ProposalContent {
                 governance_canister_id: p.governance_canister_id,
                 proposal: p.proposal.clone(),
@@ -512,17 +507,9 @@ pub struct PrizeContent {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct PrizeWinnerContentInternal {
-    pub transaction: CryptoTransaction,
-    pub winner: UserId,
-    pub prize_message: MessageIndex,
-}
-
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct PrizeWinnerContent {
-    pub token: Cryptocurrency,
     pub winner: UserId,
-    pub amount: Tokens,
+    pub transaction: CompletedCryptoTransaction,
     pub prize_message: MessageIndex,
 }
 
