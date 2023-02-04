@@ -9,8 +9,8 @@ use ic_ledger_types::Tokens;
 use ledger_utils::{nns, sns};
 use types::nns::UserOrAccount;
 use types::{
-    CanisterId, CryptoTransaction, Cryptocurrency, GroupMessageNotification, MessageContentInternal, MessageId, Notification,
-    PendingCryptoTransaction, PrizeWinnerContentInternal, TimestampNanos, UserId,
+    CanisterId, CompletedCryptoTransaction, Cryptocurrency, GroupMessageNotification, MessageContentInternal, MessageId,
+    Notification, PendingCryptoTransaction, PrizeWinnerContent, TimestampNanos, UserId,
 };
 use utils::consts::{OPENCHAT_BOT_USERNAME, OPENCHAT_BOT_USER_ID};
 
@@ -50,8 +50,9 @@ async fn claim_prize(args: Args) -> Response {
     match result {
         Ok(completed_transaction) => {
             // Claim the prize and send a message to the group
-            let transaction = CryptoTransaction::Completed(completed_transaction.clone());
-            if let Some(error_message) = mutate_state(|state| commit(args, prepare_result.user_id, transaction, state)) {
+            if let Some(error_message) =
+                mutate_state(|state| commit(args, prepare_result.user_id, completed_transaction.clone(), state))
+            {
                 FailedAfterTransfer(error_message, completed_transaction)
             } else {
                 Success
@@ -136,7 +137,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareResult, Box<R
     }
 }
 
-fn commit(args: Args, winner: UserId, transaction: CryptoTransaction, state: &mut RuntimeState) -> Option<String> {
+fn commit(args: Args, winner: UserId, transaction: CompletedCryptoTransaction, state: &mut RuntimeState) -> Option<String> {
     let now = state.env.now();
     match state.data.events.claim_prize(args.message_id, winner, now) {
         chat_events::ClaimPrizeResult::Success(message_index) => {
@@ -145,10 +146,10 @@ fn commit(args: Args, winner: UserId, transaction: CryptoTransaction, state: &mu
                 sender: OPENCHAT_BOT_USER_ID,
                 thread_root_message_index: None,
                 message_id: MessageId::generate(|| state.env.random_u32()),
-                content: MessageContentInternal::PrizeWinner(PrizeWinnerContentInternal {
-                    prize_message: message_index,
-                    transaction,
+                content: MessageContentInternal::PrizeWinner(PrizeWinnerContent {
                     winner,
+                    transaction,
+                    prize_message: message_index,
                 }),
                 replies_to: None,
                 forwarded: false,
