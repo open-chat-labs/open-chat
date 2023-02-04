@@ -82,14 +82,8 @@ impl CryptoTransaction {
     pub fn token(&self) -> Cryptocurrency {
         match self {
             CryptoTransaction::Pending(p) => p.token(),
-            CryptoTransaction::Completed(c) => match c {
-                CompletedCryptoTransaction::NNS(t) => t.token,
-                CompletedCryptoTransaction::SNS(t) => t.token,
-            },
-            CryptoTransaction::Failed(f) => match f {
-                FailedCryptoTransaction::NNS(t) => t.token,
-                FailedCryptoTransaction::SNS(t) => t.token,
-            },
+            CryptoTransaction::Completed(c) => c.token(),
+            CryptoTransaction::Failed(f) => f.token(),
         }
     }
 
@@ -151,7 +145,23 @@ impl PendingCryptoTransaction {
     }
 }
 
+impl CompletedCryptoTransaction {
+    pub fn token(&self) -> Cryptocurrency {
+        match self {
+            CompletedCryptoTransaction::NNS(t) => t.token,
+            CompletedCryptoTransaction::SNS(t) => t.token,
+        }
+    }
+}
+
 impl FailedCryptoTransaction {
+    pub fn token(&self) -> Cryptocurrency {
+        match self {
+            FailedCryptoTransaction::NNS(t) => t.token,
+            FailedCryptoTransaction::SNS(t) => t.token,
+        }
+    }
+
     pub fn error_message(&self) -> &str {
         match self {
             FailedCryptoTransaction::NNS(t) => &t.error_message,
