@@ -9,6 +9,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Added transaction details to `PrizeWinnerContent` ([#3055](https://github.com/open-ic/open-chat/pull/3055))
 
+### Changed
+
+- Reduce min interval between cycles balance checks ([#3058](https://github.com/open-ic/open-chat/pull/3058))
+
 ## [[2.0.577](https://github.com/open-ic/open-chat/releases/tag/v2.0.577-group)] - 2023-02-03
 
 ### Added
