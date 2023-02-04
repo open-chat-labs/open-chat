@@ -206,7 +206,7 @@ export function undeleteMessageResponse(
 export function addRemoveReactionResponse(
     candid: ApiAddReactionResponse | ApiRemoveReactionResponse
 ): AddRemoveReactionResponse {
-    if ("Success" in candid) {
+    if ("Success" in candid || "SuccessV2" in candid) {
         return "success";
     }
     if ("NoChange" in candid) {
@@ -973,7 +973,7 @@ function formatIcrc1Account(candid: ApiIcrc1Account): string {
 
 export function deletedMessageResponse(candid: ApiDeletedDirectMessageResponse): DeletedDirectMessageResponse {
     if ("Success" in candid) {
-        return { 
+        return {
             kind: "success",
             content: messageContent(candid.Success.content, "unknown"),
         };

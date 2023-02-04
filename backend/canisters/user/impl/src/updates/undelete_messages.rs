@@ -1,9 +1,9 @@
 use crate::guards::caller_is_owner;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
-use chat_events::UndeleteMessageResult;
+use chat_events::{DeleteUndeleteMessagesArgs, Reader, UndeleteMessageResult};
 use ic_cdk_macros::update;
-use types::{CanisterId, MessageId};
+use types::{CanisterId, EventIndex, MessageId};
 use user_canister::c2c_undelete_messages;
 use user_canister::undelete_messages::{Response::*, *};
 
@@ -24,24 +24,26 @@ fn undelete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Respo
         let my_user_id = runtime_state.env.canister_id().into();
         let now = runtime_state.env.now();
 
-        let delete_message_results =
-            chat.events
-                .undelete_messages(my_user_id, false, None, args.message_ids, args.correlation_id, now);
+        let delete_message_results = chat.events.undelete_messages(DeleteUndeleteMessagesArgs {
+            caller: my_user_id,
+            is_admin: false,
+            min_visible_event_index: EventIndex::default(),
+            thread_root_message_index: None,
+            message_ids: args.message_ids,
+            correlation_id: args.correlation_id,
+            now,
+        });
 
         let deleted: Vec<_> = delete_message_results
             .into_iter()
             .filter_map(|(message_id, result)| matches!(result, UndeleteMessageResult::Success).then_some(message_id))
             .collect();
 
-        let chat_events = chat.events.get(args.thread_root_message_index).unwrap();
+        let events_reader = chat.events.main_events_reader(now);
 
         let messages: Vec<_> = deleted
             .iter()
-            .filter_map(|message_id| {
-                chat_events
-                    .message_event_by_message_id(*message_id, Some(my_user_id))
-                    .map(|e| e.event)
-            })
+            .filter_map(|&message_id| events_reader.message(message_id.into(), Some(my_user_id)))
             .collect();
 
         if !deleted.is_empty() {

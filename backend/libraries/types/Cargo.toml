@@ -1,7 +1,6 @@
 [package]
 name = "types"
 version = "0.1.0"
-authors = ["Hamish Peebles <hamishpeebles@gmail.com>", "Matt Grogan <megrogan@gmail.com>", "Julian Jelfs <julian.jelfs@gmail.com>"]
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -11,6 +10,7 @@ candid = { workspace = true }
 human_readable = { path = "../human_readable" }
 ic-icrc1 = { workspace = true }
 ic-ledger-types = { workspace = true }
+range-set = { workspace = true }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
 serde_json = { workspace = true }

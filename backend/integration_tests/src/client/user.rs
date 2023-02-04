@@ -4,7 +4,6 @@ use user_canister::*;
 // Queries
 generate_query_call!(events);
 generate_query_call!(events_by_index);
-generate_query_call!(events_range);
 generate_query_call!(initial_state_v2);
 generate_query_call!(updates_v2);
 
@@ -37,7 +36,7 @@ pub mod happy_path {
         recipient: UserId,
         text: impl ToString,
         message_id: Option<MessageId>,
-    ) -> user_canister::send_message::SuccessResult {
+    ) -> user_canister::send_message_v2::SuccessResult {
         let response = super::send_message(
             env,
             sender.principal,
@@ -80,6 +79,7 @@ pub mod happy_path {
                 permissions: None,
                 rules: GroupRules::default(),
                 subtype: None,
+                events_ttl: None,
             },
         );
 

@@ -471,7 +471,8 @@
         "icp": "インターネット コンピュータ",
         "btc": "ビットコイン",
         "chat": "オープンチャット",
-        "sns1": "SNS-1"
+        "sns1": "SNS-1",
+        "max": "マックス"
     },
     "cryptoAccount": {
         "manage": "管理",
@@ -682,5 +683,6 @@
     "loadImage": "画像を読み込む",
     "loadGif": "gif を読み込む",
     "showTweet": "ツイートを表示",
-    "showVideo": "ビデオを表示"
+    "showVideo": "ビデオを表示",
+    "wallet": "財布"
 }

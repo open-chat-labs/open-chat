@@ -471,7 +471,8 @@
         "icp": "מחשב אינטרנט",
         "btc": "ביטקוין",
         "chat": "OpenChat",
-        "sns1": "SNS-1"
+        "sns1": "SNS-1",
+        "max": "מקסימום"
     },
     "cryptoAccount": {
         "shortBalanceLabel": "איזון",
@@ -679,5 +680,6 @@
     "loadImage": "טען תמונה",
     "loadGif": "טען gif",
     "showTweet": "הצג ציוץ",
-    "showVideo": "הצג וידאו"
+    "showVideo": "הצג וידאו",
+    "wallet": "ארנק"
 }

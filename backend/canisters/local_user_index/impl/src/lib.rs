@@ -6,15 +6,16 @@ use std::cell::RefCell;
 use types::{CanisterId, CanisterWasm, Cycles, TimestampMillis, Timestamped, UserId, Version};
 use user_canister::Event as UserEvent;
 use user_index_canister::Event as UserIndexEvent;
+use utils::canister;
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::canister_event_sync_queue::CanisterEventSyncQueue;
 use utils::consts::CYCLES_REQUIRED_FOR_UPGRADE;
 use utils::env::Environment;
-use utils::{canister, memory};
 
 mod guards;
 mod jobs;
 mod lifecycle;
+mod memory;
 mod model;
 mod queries;
 mod updates;
@@ -61,7 +62,7 @@ impl RuntimeState {
     pub fn metrics(&self) -> Metrics {
         let canister_upgrades_metrics = self.data.canisters_requiring_upgrade.metrics();
         Metrics {
-            memory_used: memory::used(),
+            memory_used: utils::memory::used(),
             now: self.env.now(),
             cycles_balance: self.env.cycles_balance(),
             wasm_version: WASM_VERSION.with(|v| **v.borrow()),

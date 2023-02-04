@@ -10,7 +10,7 @@
         class="meter"
         class:rtl={$rtlStore}
         style={`width: ${percent}%; background-color: ${
-            bg === "button" ? "var(--button-bg)" : "var(--accent)"
+            bg === "button" ? "var(--primary)" : "var(--accent)"
         }`} />
     <div class="label">
         <slot />

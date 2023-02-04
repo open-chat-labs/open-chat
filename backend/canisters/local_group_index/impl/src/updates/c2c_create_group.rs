@@ -74,6 +74,7 @@ fn prepare(args: Args, runtime_state: &mut RuntimeState) -> Result<PrepareOk, Re
         permissions: args.permissions,
         created_by_principal: args.created_by_user_principal,
         created_by_user_id: args.created_by_user_id,
+        events_ttl: args.events_ttl,
         mark_active_duration: MARK_ACTIVE_DURATION,
         wasm_version: canister_wasm.version,
         group_index_canister_id: runtime_state.data.group_index_canister_id,

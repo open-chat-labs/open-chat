@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 use types::{TimestampMillis, Version};
 
-#[derive(Serialize, Deserialize, Default)]
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct NotificationsCanister {
     added: TimestampMillis,
     wasm_version: Version,

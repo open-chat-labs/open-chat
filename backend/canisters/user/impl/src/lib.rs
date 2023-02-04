@@ -16,7 +16,6 @@ use std::collections::{HashMap, HashSet};
 use std::ops::Deref;
 use types::{Avatar, CanisterId, ChatId, Cryptocurrency, Cycles, Notification, TimestampMillis, Timestamped, UserId, Version};
 use utils::env::Environment;
-use utils::memory;
 use utils::regular_jobs::RegularJobs;
 
 mod crypto;
@@ -24,6 +23,7 @@ mod governance_clients;
 mod group_summaries;
 mod guards;
 mod lifecycle;
+mod memory;
 mod model;
 mod openchat_bot;
 mod queries;
@@ -93,7 +93,7 @@ impl RuntimeState {
     pub fn metrics(&self) -> Metrics {
         let chat_metrics = self.data.direct_chats.metrics();
         Metrics {
-            memory_used: memory::used(),
+            memory_used: utils::memory::used(),
             now: self.env.now(),
             cycles_balance: self.env.cycles_balance(),
             wasm_version: WASM_VERSION.with(|v| **v.borrow()),
@@ -113,6 +113,7 @@ impl RuntimeState {
             icp_messages: chat_metrics.icp_messages,
             sns1_messages: chat_metrics.sns1_messages,
             ckbtc_messages: chat_metrics.ckbtc_messages,
+            chat_messages: chat_metrics.chat_messages,
             deleted_messages: chat_metrics.deleted_messages,
             giphy_messages: chat_metrics.giphy_messages,
             replies: chat_metrics.replies,
@@ -245,7 +246,7 @@ impl Data {
         self.ledger_canister_ids
             .get(token)
             .copied()
-            .unwrap_or_else(|| panic!("Unable to find ledger canister for token '{:?}'", token))
+            .unwrap_or_else(|| panic!("Unable to find ledger canister for token '{token:?}'"))
     }
 }
 
@@ -271,6 +272,7 @@ pub struct Metrics {
     pub icp_messages: u64,
     pub sns1_messages: u64,
     pub ckbtc_messages: u64,
+    pub chat_messages: u64,
     pub deleted_messages: u64,
     pub giphy_messages: u64,
     pub replies: u64,

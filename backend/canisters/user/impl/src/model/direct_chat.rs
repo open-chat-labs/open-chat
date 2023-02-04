@@ -1,46 +1,48 @@
 use crate::model::unread_message_index_map::UnreadMessageIndexMap;
-use chat_events::AllChatEvents;
+use chat_events::{ChatEvents, Reader};
 use serde::{Deserialize, Serialize};
-use std::collections::HashSet;
-use types::{DirectChatSummary, DirectChatSummaryUpdates, MessageId, MessageIndex, TimestampMillis, Timestamped, UserId};
+use types::{
+    DirectChatSummary, DirectChatSummaryUpdates, MessageId, MessageIndex, Milliseconds, OptionUpdate, TimestampMillis,
+    Timestamped, UserId,
+};
 use user_canister::c2c_send_messages::SendMessageArgs;
 
 #[derive(Serialize, Deserialize)]
 pub struct DirectChat {
     pub them: UserId,
     pub date_created: TimestampMillis,
-    pub events: AllChatEvents,
+    pub events: ChatEvents,
     pub unread_message_index_map: UnreadMessageIndexMap,
     pub read_by_me_up_to: Timestamped<Option<MessageIndex>>,
     pub read_by_them_up_to: Timestamped<Option<MessageIndex>>,
     pub notifications_muted: Timestamped<bool>,
     pub archived: Timestamped<bool>,
     pub is_bot: bool,
-    pub unconfirmed: HashSet<MessageId>,
-    #[serde(default)]
     pub unconfirmed_v2: Vec<SendMessageArgs>,
 }
 
 impl DirectChat {
-    pub fn new(them: UserId, is_bot: bool, now: TimestampMillis) -> DirectChat {
+    pub fn new(them: UserId, is_bot: bool, events_ttl: Option<Milliseconds>, now: TimestampMillis) -> DirectChat {
         DirectChat {
             them,
             date_created: now,
-            events: AllChatEvents::new_direct_chat(them, now),
+            events: ChatEvents::new_direct_chat(them, events_ttl, now),
             unread_message_index_map: UnreadMessageIndexMap::default(),
             read_by_me_up_to: Timestamped::new(None, now),
             read_by_them_up_to: Timestamped::new(None, now),
             notifications_muted: Timestamped::new(false, now),
             archived: Timestamped::new(false, now),
             is_bot,
-            unconfirmed: HashSet::new(),
             unconfirmed_v2: Vec::new(),
         }
     }
 
-    pub fn last_updated(&self) -> TimestampMillis {
+    pub fn last_updated(&self, now: TimestampMillis) -> TimestampMillis {
         let timestamps = [
-            self.events.main().last().timestamp,
+            self.events
+                .main_events_reader(now)
+                .latest_event_timestamp()
+                .unwrap_or_default(),
             self.read_by_me_up_to.timestamp,
             self.read_by_them_up_to.timestamp,
             self.notifications_muted.timestamp,
@@ -71,22 +73,16 @@ impl DirectChat {
     }
 
     pub fn mark_message_confirmed(&mut self, message_id: MessageId) {
-        self.unconfirmed.remove(&message_id);
         self.unconfirmed_v2.retain(|m| m.message_id != message_id);
     }
 
-    // TODO delete this
-    pub fn get_unconfirmed_messages_old(&self) -> Vec<MessageId> {
-        self.unconfirmed.iter().copied().collect()
-    }
-
-    pub fn to_summary(&self, my_user_id: UserId) -> DirectChatSummary {
-        let chat_events = self.events.main();
+    pub fn to_summary(&self, my_user_id: UserId, now: TimestampMillis) -> DirectChatSummary {
+        let events_reader = self.events.main_events_reader(now);
 
         DirectChatSummary {
             them: self.them,
-            latest_message: chat_events.latest_message(Some(my_user_id)).unwrap(),
-            latest_event_index: chat_events.last().index,
+            latest_message: events_reader.latest_message_event(Some(my_user_id)).unwrap(),
+            latest_event_index: events_reader.latest_event_index().unwrap(),
             date_created: self.date_created,
             read_by_me_up_to: self.read_by_me_up_to.value,
             read_by_them_up_to: self.read_by_them_up_to.value,
@@ -94,19 +90,25 @@ impl DirectChat {
             metrics: self.events.metrics().clone(),
             my_metrics: self.events.user_metrics(&my_user_id, None).cloned().unwrap_or_default(),
             archived: self.archived.value,
+            events_ttl: self.events.get_events_time_to_live().value,
+            expired_messages: self.events.expired_messages(now),
         }
     }
 
-    pub fn to_summary_updates(&self, updates_since: TimestampMillis, my_user_id: UserId) -> DirectChatSummaryUpdates {
-        let chat_events = self.events.main();
+    pub fn to_summary_updates(
+        &self,
+        updates_since: TimestampMillis,
+        my_user_id: UserId,
+        now: TimestampMillis,
+    ) -> DirectChatSummaryUpdates {
+        let events_reader = self.events.main_events_reader(now);
 
-        let latest_message = chat_events.latest_message_if_updated(updates_since, Some(my_user_id));
-        let latest_event = chat_events.last();
-        let has_new_events = latest_event.timestamp > updates_since;
-        let latest_event_index = if has_new_events { Some(latest_event.index) } else { None };
-        let metrics = if has_new_events { Some(self.events.metrics().clone()) } else { None };
+        let has_new_events = events_reader.latest_event_timestamp().map_or(false, |ts| ts > updates_since);
+        let latest_message = events_reader.latest_message_event_if_updated(updates_since, Some(my_user_id));
+        let latest_event_index = if has_new_events { events_reader.latest_event_index() } else { None };
         let notifications_muted = self.notifications_muted.if_set_after(updates_since).copied();
-        let affected_events = chat_events.affected_event_indexes_since(updates_since, 100);
+        let affected_events = events_reader.affected_event_indexes_since(updates_since, 100);
+        let metrics = if has_new_events { Some(self.events.metrics().clone()) } else { None };
 
         DirectChatSummaryUpdates {
             chat_id: self.them.into(),
@@ -119,6 +121,13 @@ impl DirectChat {
             metrics,
             my_metrics: self.events.user_metrics(&my_user_id, Some(updates_since)).cloned(),
             archived: self.archived.if_set_after(updates_since).copied(),
+            events_ttl: self
+                .events
+                .get_events_time_to_live()
+                .if_set_after(updates_since)
+                .copied()
+                .map_or(OptionUpdate::NoChange, OptionUpdate::from_update),
+            newly_expired_messages: self.events.expired_messages_since(updates_since, now),
         }
     }
 }

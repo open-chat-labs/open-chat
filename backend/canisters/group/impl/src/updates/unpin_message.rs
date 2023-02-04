@@ -1,4 +1,4 @@
-use crate::updates::handle_activity_notification;
+use crate::activity_notifications::handle_activity_notification;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use chat_events::ChatEventInternal;
@@ -28,20 +28,20 @@ fn unpin_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response 
             return NotAuthorized;
         }
 
-        if !runtime_state.data.events.is_message_accessible_by_index(
-            participant.min_visible_event_index(),
-            None,
-            args.message_index,
-        ) {
+        let now = runtime_state.env.now();
+
+        if !runtime_state
+            .data
+            .events
+            .is_accessible(participant.min_visible_event_index(), None, args.message_index.into(), now)
+        {
             return MessageNotFound;
         }
 
         if let Ok(index) = runtime_state.data.pinned_messages.binary_search(&args.message_index) {
-            let now = runtime_state.env.now();
-
             runtime_state.data.pinned_messages.remove(index);
 
-            let event_index = runtime_state.data.events.push_main_event(
+            let push_event_result = runtime_state.data.events.push_main_event(
                 ChatEventInternal::MessageUnpinned(Box::new(MessageUnpinned {
                     message_index: args.message_index,
                     unpinned_by: participant.user_id,
@@ -57,7 +57,7 @@ fn unpin_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response 
 
             handle_activity_notification(runtime_state);
 
-            Success(event_index)
+            SuccessV2(push_event_result)
         } else {
             NoChange
         }

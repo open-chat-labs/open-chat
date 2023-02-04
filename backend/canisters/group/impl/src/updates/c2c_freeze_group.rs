@@ -17,7 +17,7 @@ fn c2c_freeze_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Respon
     if runtime_state.data.frozen.is_none() {
         let now = runtime_state.env.now();
 
-        let event_index = runtime_state.data.events.freeze(args.caller, args.reason.clone(), now);
+        let push_event_result = runtime_state.data.events.freeze(args.caller, args.reason.clone(), now);
         runtime_state.data.frozen = Timestamped::new(
             Some(FrozenGroupInfo {
                 timestamp: now,
@@ -27,29 +27,21 @@ fn c2c_freeze_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Respon
             now,
         );
 
+        let event = EventWrapper {
+            index: push_event_result.index,
+            timestamp: now,
+            correlation_id: 0,
+            expires_at: push_event_result.expires_at,
+            event: ChatFrozen {
+                frozen_by: args.caller,
+                reason: args.reason,
+            },
+        };
+
         if args.return_members {
-            SuccessWithMembers(
-                EventWrapper {
-                    index: event_index,
-                    timestamp: now,
-                    correlation_id: 0,
-                    event: ChatFrozen {
-                        frozen_by: args.caller,
-                        reason: args.reason,
-                    },
-                },
-                runtime_state.data.participants.iter().map(|p| p.user_id).collect(),
-            )
+            SuccessWithMembers(event, runtime_state.data.participants.iter().map(|p| p.user_id).collect())
         } else {
-            Success(EventWrapper {
-                index: event_index,
-                timestamp: now,
-                correlation_id: 0,
-                event: ChatFrozen {
-                    frozen_by: args.caller,
-                    reason: args.reason,
-                },
-            })
+            Success(event)
         }
     } else {
         ChatAlreadyFrozen

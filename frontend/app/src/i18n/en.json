@@ -505,7 +505,8 @@
         "icp": "Internet Computer",
         "btc": "Bitcoin",
         "chat": "OpenChat",
-        "sns1": "SNS-1"
+        "sns1": "SNS-1",
+        "max": "Max"
     },
     "cryptoAccount": {
         "shortBalanceLabel": "Balance",
@@ -679,5 +680,6 @@
     "deleteMessageAndReport": "Delete and report",
     "reason": "Reason",
     "expandDeletedMessages": "Expand deleted messages in this chat",
-    "revealDeletedMessage": "Reveal message"
+    "revealDeletedMessage": "Reveal message",
+    "wallet": "Wallet"
 }

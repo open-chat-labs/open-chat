@@ -6,7 +6,6 @@ fn main() {
     generate_candid_method!(user, deleted_message, query);
     generate_candid_method!(user, events, query);
     generate_candid_method!(user, events_by_index, query);
-    generate_candid_method!(user, events_range, query);
     generate_candid_method!(user, events_window, query);
     generate_candid_method!(user, initial_state_v2, query);
     generate_candid_method!(user, messages_by_message_index, query);
@@ -31,6 +30,7 @@ fn main() {
     generate_candid_method!(user, pin_chat, update);
     generate_candid_method!(user, relinquish_group_super_admin, update);
     generate_candid_method!(user, remove_reaction, update);
+    generate_candid_method!(user, send_message_with_transfer_to_group, update);
     generate_candid_method!(user, send_message, update);
     generate_candid_method!(user, set_avatar, update);
     generate_candid_method!(user, set_bio, update);

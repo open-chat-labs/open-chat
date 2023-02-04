@@ -10,6 +10,7 @@ fn main() {
             index: 0.into(),
             timestamp: 0,
             correlation_id: 0,
+            expires_at: None,
             event: Message {
                 message_index: 0.into(),
                 message_id: 0.into(),

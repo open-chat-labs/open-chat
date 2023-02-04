@@ -10,11 +10,11 @@ use types::{CanisterId, CanisterWasm, Cycles, SubscriptionInfo, TimestampMillis,
 use utils::canister::CanistersRequiringUpgrade;
 use utils::canister_event_sync_queue::CanisterEventSyncQueue;
 use utils::env::Environment;
-use utils::memory;
 
 mod guards;
 mod jobs;
 mod lifecycle;
+mod memory;
 mod model;
 mod queries;
 mod updates;
@@ -74,13 +74,21 @@ impl RuntimeState {
 
     pub fn metrics(&self) -> Metrics {
         Metrics {
-            memory_used: memory::used(),
+            memory_used: utils::memory::used(),
             now: self.env.now(),
             cycles_balance: self.env.cycles_balance(),
             wasm_version: WASM_VERSION.with(|v| **v.borrow()),
             git_commit_id: utils::git::git_commit_id().to_string(),
             subscriptions: self.data.subscriptions.total(),
             users: self.data.principal_to_user_id.len() as u64,
+            service_principals: self.data.service_principals.iter().copied().collect(),
+            notifications_canister_wasm_version: self.data.notifications_canister_wasm.version,
+            notifications_canisters: self
+                .data
+                .notifications_canisters
+                .iter()
+                .map(|(k, v)| (*k, v.clone()))
+                .collect(),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
@@ -147,6 +155,9 @@ pub struct Metrics {
     pub git_commit_id: String,
     pub subscriptions: u64,
     pub users: u64,
+    pub service_principals: Vec<Principal>,
+    pub notifications_canister_wasm_version: Version,
+    pub notifications_canisters: Vec<(CanisterId, NotificationsCanister)>,
     pub canister_ids: CanisterIds,
 }
 

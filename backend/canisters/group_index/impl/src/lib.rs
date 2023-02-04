@@ -12,12 +12,12 @@ use std::collections::HashSet;
 use types::{CanisterId, CanisterWasm, Cycles, Milliseconds, TimestampMillis, Timestamped, Version};
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::env::Environment;
-use utils::memory;
 use utils::time::MINUTE_IN_MS;
 
 mod guards;
 mod jobs;
 mod lifecycle;
+mod memory;
 mod model;
 mod queries;
 mod updates;
@@ -51,7 +51,7 @@ impl RuntimeState {
         let canister_upgrades_metrics = self.data.canisters_requiring_upgrade.metrics();
 
         Metrics {
-            memory_used: memory::used(),
+            memory_used: utils::memory::used(),
             now: self.env.now(),
             cycles_balance: self.env.cycles_balance(),
             wasm_version: WASM_VERSION.with(|v| **v.borrow()),
@@ -68,6 +68,7 @@ impl RuntimeState {
             canister_upgrades_failed: canister_upgrades_metrics.failed,
             canister_upgrades_pending: canister_upgrades_metrics.pending as u64,
             canister_upgrades_in_progress: canister_upgrades_metrics.in_progress as u64,
+            service_principals: self.data.service_principals.iter().copied().collect(),
             group_wasm_version: self.data.group_canister_wasm.version,
             local_group_index_wasm_version: self.data.local_group_index_canister_wasm.version,
             local_group_indexes: self.data.local_index_map.iter().map(|(c, i)| (*c, i.clone())).collect(),
@@ -203,6 +204,7 @@ pub struct Metrics {
     pub canister_upgrades_failed: Vec<FailedUpgradeCount>,
     pub canister_upgrades_pending: u64,
     pub canister_upgrades_in_progress: u64,
+    pub service_principals: Vec<Principal>,
     pub group_wasm_version: Version,
     pub local_group_index_wasm_version: Version,
     pub local_group_indexes: Vec<(CanisterId, LocalGroupIndex)>,

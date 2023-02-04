@@ -41,6 +41,7 @@
     let tokenChanging = true;
     let balanceWithRefresh: BalanceWithRefresh;
     let receiver: PartialUserSummary | undefined = undefined;
+    let validAmount: boolean = false;
     $: symbol = cryptoLookup[token].symbol;
     $: howToBuyUrl = cryptoLookup[token].howToBuyUrl;
     $: transferFees = cryptoLookup[token].transferFeesE8s;
@@ -49,11 +50,7 @@
         draftAmountE8s > BigInt(0)
             ? $cryptoBalance[token] - draftAmountE8s - transferFees
             : $cryptoBalance[token];
-    $: valid =
-        error === undefined &&
-        draftAmountE8s > BigInt(0) &&
-        receiver !== undefined &&
-        !tokenChanging;
+    $: valid = error === undefined && validAmount && receiver !== undefined && !tokenChanging;
     $: zero = $cryptoBalance[token] <= transferFees && !tokenChanging;
 
     onMount(() => {
@@ -174,12 +171,10 @@
                         </div>
                     {/if}
                     <div class="transfer">
-                        <Legend
-                            label={$_("tokenTransfer.amount")}
-                            rules={`${symbol.toUpperCase()}`} />
                         <TokenInput
                             {token}
                             autofocus={!group}
+                            bind:valid={validAmount}
                             maxAmountE8s={maxAmountE8s($cryptoBalance[token])}
                             bind:amountE8s={draftAmountE8s} />
                     </div>

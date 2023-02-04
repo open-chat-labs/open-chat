@@ -10,7 +10,7 @@ pub fn sha256(bytes: &[u8]) -> [u8; 32] {
 pub fn sha256_string(bytes: &[u8]) -> String {
     let mut hash_string = String::with_capacity(64);
     for byte in sha256(bytes) {
-        write!(hash_string, "{:02x}", byte).unwrap();
+        write!(hash_string, "{byte:02x}").unwrap();
     }
     hash_string
 }

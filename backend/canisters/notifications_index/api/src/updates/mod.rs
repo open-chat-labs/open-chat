@@ -4,4 +4,5 @@ pub mod push_subscription;
 pub mod remove_subscription;
 pub mod remove_subscriptions;
 pub mod remove_subscriptions_for_user;
+pub mod set_service_principals;
 pub mod upgrade_notifications_canister_wasm;

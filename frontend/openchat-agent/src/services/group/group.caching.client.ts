@@ -39,6 +39,7 @@ import type {
     Logger,
     DeletedGroupMessageResponse,
     EventWrapper,
+    OptionUpdate,
 } from "openchat-shared";
 import type { IGroupClient } from "./group.client.interface";
 import type { IDBPDatabase } from "idb";
@@ -245,9 +246,10 @@ export class CachingGroupClient implements IGroupClient {
         description?: string,
         rules?: GroupRules,
         permissions?: Partial<GroupPermissions>,
-        avatar?: Uint8Array
+        avatar?: Uint8Array,
+        eventsTimeToLiveMs?: OptionUpdate<bigint>,
     ): Promise<UpdateGroupResponse> {
-        return this.client.updateGroup(name, description, rules, permissions, avatar);
+        return this.client.updateGroup(name, description, rules, permissions, avatar, eventsTimeToLiveMs);
     }
 
     addReaction(

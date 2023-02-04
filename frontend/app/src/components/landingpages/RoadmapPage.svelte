@@ -9,8 +9,8 @@
     <CollapsibleCard first open={false}>
         <div class="header" slot="titleSlot">
             <div class="date subtitle">
-                <div class="quarter">Q4</div>
-                <div class="year">2022</div>
+                <div class="quarter">Q1</div>
+                <div class="year">2023</div>
             </div>
             <div class="title">SNS Launch</div>
         </div>
@@ -42,8 +42,8 @@
     <CollapsibleCard open={false}>
         <div class="header" slot="titleSlot">
             <div class="date subtitle">
-                <div class="quarter">Q4</div>
-                <div class="year">2022</div>
+                <div class="quarter">Q1</div>
+                <div class="year">2023</div>
             </div>
             <div class="title">User Rewards</div>
         </div>
@@ -62,32 +62,6 @@
             <p>
                 Rewards can and will be used in all sorts of creative ways only made possible by the
                 unique way that OpenChat is governed.
-            </p>
-        </div>
-    </CollapsibleCard>
-
-    <CollapsibleCard open={false}>
-        <div class="header" slot="titleSlot">
-            <div class="date subtitle">
-                <div class="quarter">Q1</div>
-                <div class="year">2023</div>
-            </div>
-            <div class="title">Integrations</div>
-        </div>
-        <div class="body">
-            <p>
-                We are keen to provide chat functionality as a service to other dApps in the
-                Internet Computer ecosystem.
-            </p>
-            <p>
-                We are currently consulting with many builders in the community to find out how they
-                would like to integrate OpenChat functionality in the future. The appetite is
-                certainly there! We will likely start with simple direct chat functionality before
-                later offering groups and other more advanced features.
-            </p>
-            <p>
-                The OpenChat team will build the apis, libraries and UI components required to make
-                chat integration as seamless as possible.
             </p>
         </div>
     </CollapsibleCard>
@@ -122,6 +96,32 @@
                 as it enables us to easily support its use as an internal communication tool
                 <em>within a corporate setting.</em> In that sense, communities can also be thought of
                 like Slack workspaces.
+            </p>
+        </div>
+    </CollapsibleCard>
+
+    <CollapsibleCard open={false}>
+        <div class="header" slot="titleSlot">
+            <div class="date subtitle">
+                <div class="quarter">Q3</div>
+                <div class="year">2023</div>
+            </div>
+            <div class="title">Integrations</div>
+        </div>
+        <div class="body">
+            <p>
+                We are keen to provide chat functionality as a service to other dApps in the
+                Internet Computer ecosystem.
+            </p>
+            <p>
+                We are currently consulting with many builders in the community to find out how they
+                would like to integrate OpenChat functionality in the future. The appetite is
+                certainly there! We will likely start with simple direct chat functionality before
+                later offering groups and other more advanced features.
+            </p>
+            <p>
+                The OpenChat team will build the apis, libraries and UI components required to make
+                chat integration as seamless as possible.
             </p>
         </div>
     </CollapsibleCard>

@@ -1,12 +1,11 @@
 <script lang="ts">
     import { createEventDispatcher, onMount, tick } from "svelte";
     import { fade } from "svelte/transition";
-    import Link from "./Link.svelte";
+    import Button from "./Button.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import { _ } from "svelte-i18n";
     import HoverIcon from "./HoverIcon.svelte";
     import { rtlStore } from "../stores/rtl";
-    import { iconSize } from "../stores/iconSize";
     import { logger } from "../utils/logging";
     import { mobileWidth } from "../stores/screenDimensions";
 
@@ -37,6 +36,7 @@
                 await tick();
                 calculatePosition();
             }
+            tick().then(() => (actualWidth = divElement?.clientWidth));
         } catch (e: any) {
             logger.error("Failed to open modal", e);
             onClose();
@@ -65,7 +65,6 @@
 
 <div
     bind:this={divElement}
-    bind:clientWidth={actualWidth}
     {style}
     class="modal-content"
     class:square
@@ -95,7 +94,9 @@
     {#if !hideFooter}
         <div class="footer" class:rtl={$rtlStore} class:compact={compactFooter}>
             <slot name="footer">
-                <Link on:click={onClose}>Close</Link>
+                <Button on:click={onClose} small={!$mobileWidth} tiny={$mobileWidth}>
+                    {$_("close")}
+                </Button>
             </slot>
         </div>
     {/if}

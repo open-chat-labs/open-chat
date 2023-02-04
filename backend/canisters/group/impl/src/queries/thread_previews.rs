@@ -1,9 +1,10 @@
 use crate::{read_state, RuntimeState};
+use chat_events::Reader;
 use group_canister::thread_previews::{Response::*, *};
 use ic_cdk_macros::query;
-use types::{EventIndex, MessageIndex, UserId};
+use types::{EventIndex, MessageIndex, TimestampMillis, UserId};
 
-const MAX_PREVIEWED_REPLY_COUNT: u32 = 2;
+const MAX_PREVIEWED_REPLY_COUNT: usize = 2;
 
 #[query]
 fn thread_previews(args: Args) -> Response {
@@ -29,6 +30,7 @@ fn thread_previews_impl(args: Args, runtime_state: &RuntimeState) -> Response {
                         participant.user_id,
                         participant.min_visible_event_index(),
                         root_message_index,
+                        now,
                     )
                 })
                 .collect(),
@@ -44,18 +46,27 @@ fn build_thread_preview(
     caller_user_id: UserId,
     min_visible_event_index: EventIndex,
     root_message_index: MessageIndex,
+    now: TimestampMillis,
 ) -> Option<ThreadPreview> {
-    let all_chat_events = &runtime_state.data.events;
-    let main = all_chat_events.main();
-    let root_message = main.message_event_by_message_index(root_message_index, Some(caller_user_id))?;
-    if root_message.index >= min_visible_event_index {
-        let thread_events = all_chat_events.get(Some(root_message_index))?;
-        return Some(ThreadPreview {
-            root_message,
-            latest_replies: thread_events.latest_messages(MAX_PREVIEWED_REPLY_COUNT, Some(caller_user_id)),
-            total_replies: thread_events.next_message_index().into(),
-        });
-    }
+    let events_reader = runtime_state
+        .data
+        .events
+        .visible_main_events_reader(min_visible_event_index, now);
 
-    None
+    let root_message = events_reader.message_event(root_message_index.into(), Some(caller_user_id))?;
+
+    let thread_events_reader =
+        runtime_state
+            .data
+            .events
+            .events_reader(min_visible_event_index, Some(root_message_index), now)?;
+
+    Some(ThreadPreview {
+        root_message,
+        latest_replies: thread_events_reader
+            .iter_latest_messages(Some(caller_user_id))
+            .take(MAX_PREVIEWED_REPLY_COUNT)
+            .collect(),
+        total_replies: thread_events_reader.next_message_index().into(),
+    })
 }

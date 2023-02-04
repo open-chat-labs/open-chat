@@ -1,6 +1,6 @@
+use crate::activity_notifications::handle_activity_notification;
 use crate::guards::caller_is_local_user_index;
 use crate::model::participants::AddResult;
-use crate::updates::handle_activity_notification;
 use crate::{mutate_state, run_regular_jobs, AddParticipantArgs, RuntimeState};
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
@@ -31,8 +31,9 @@ fn c2c_join_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Response
             min_visible_event_index = EventIndex::default();
             min_visible_message_index = MessageIndex::default();
         } else {
-            min_visible_event_index = runtime_state.data.events.main().last().index.incr();
-            min_visible_message_index = runtime_state.data.events.main().next_message_index();
+            let events_reader = runtime_state.data.events.main_events_reader(now);
+            min_visible_event_index = events_reader.next_event_index();
+            min_visible_message_index = events_reader.next_message_index();
         };
 
         match runtime_state.add_participant(AddParticipantArgs {
@@ -57,7 +58,7 @@ fn c2c_join_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Response
 
                 handle_activity_notification(runtime_state);
 
-                let summary = runtime_state.summary(&participant);
+                let summary = runtime_state.summary(&participant, now);
                 Success(Box::new(summary))
             }
             AddResult::AlreadyInGroup => AlreadyInGroup,

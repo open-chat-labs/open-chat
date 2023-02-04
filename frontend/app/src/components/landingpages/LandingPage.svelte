@@ -1,14 +1,12 @@
 <script lang="ts">
-    import Router, { push, replace } from "svelte-spa-router";
+    import Router from "svelte-spa-router";
+    import { wrap } from "svelte-spa-router/wrap";
     import FeaturesPage from "./FeaturesPage.svelte";
     import HomePage from "./HomePage.svelte";
     import Header from "./Header.svelte";
     import Content from "./Content.svelte";
     import { location } from "svelte-spa-router";
     import { createEventDispatcher, getContext, tick } from "svelte";
-    import RoadmapPage from "./RoadmapPage.svelte";
-    import WhitepaperPage from "./WhitepaperPage.svelte";
-    import ArchitecturePage from "./ArchitecturePage.svelte";
     import type { OpenChat } from "openchat-client";
     import Overlay from "../Overlay.svelte";
     import Register from "../register/Register.svelte";
@@ -56,9 +54,15 @@
                 routes={{
                     "/home": HomePage,
                     "/features": FeaturesPage,
-                    "/roadmap": RoadmapPage,
-                    "/whitepaper": WhitepaperPage,
-                    "/architecture": ArchitecturePage,
+                    "/roadmap": wrap({
+                        asyncComponent: () => import("./RoadmapPage.svelte"),
+                    }),
+                    "/whitepaper": wrap({
+                        asyncComponent: () => import("./WhitepaperPage.svelte"),
+                    }),
+                    "/architecture": wrap({
+                        asyncComponent: () => import("./ArchitecturePage.svelte"),
+                    }),
                     "*": HomePage,
                 }} />
         </Content>

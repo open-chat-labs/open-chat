@@ -22,9 +22,17 @@ const DEBUG = false;
 //workbox config
 registerRoute(
     (route) => {
-        return [/assets\/.*png|jpg|svg|gif/, /main-.*[css|js]$/, /worker.js/].some((re) =>
-            re.test(route.request.url)
-        );
+        return [
+            /assets\/.*png|jpg|svg|gif/,
+            /main-.*[css|js]$/,
+            /ArchitecturePage-.*js$/,
+            /HashLinkTarget-.*js$/,
+            /Headline-.*js$/,
+            /RoadmapPage-.*js$/,
+            /SMSUpgrade-.*js$/,
+            /WhitepaperPage-.*js$/,
+            /worker.js/,
+        ].some((re) => re.test(route.request.url));
     },
     new CustomCacheFirst({
         cacheName: "openchat_cache_first",

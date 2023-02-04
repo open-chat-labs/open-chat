@@ -54,6 +54,8 @@
     import { themeStore } from "../../theme/themes";
     import SuspendedModal from "../SuspendedModal.svelte";
     import NewGroup from "./addgroup/NewGroup.svelte";
+    import Accounts from "./profile/Accounts.svelte";
+    import AccountsModal from "./profile/AccountsModal.svelte";
 
     export let logout: () => void;
 
@@ -87,6 +89,7 @@
         SelectChat,
         Suspended,
         NewGroup,
+        Wallet,
     }
 
     let faqQuestion: Questions | undefined = undefined;
@@ -759,6 +762,10 @@
         );
     }
 
+    function showWallet() {
+        modal = ModalType.Wallet;
+    }
+
     function newGroup() {
         modal = ModalType.NewGroup;
         candidateGroup = {
@@ -873,6 +880,7 @@
             on:newGroup={newGroup}
             on:profile={showProfile}
             on:logout={logout}
+            on:wallet={showWallet}
             on:deleteDirectChat={deleteDirectChat}
             on:pinChat={pinChat}
             on:unpinChat={unpinChat}
@@ -966,7 +974,7 @@
 
 {#if modal !== ModalType.None}
     <Overlay
-        dismissible={modal !== ModalType.SelectChat}
+        dismissible={modal !== ModalType.SelectChat && modal !== ModalType.Wallet}
         alignLeft={modal === ModalType.SelectChat}
         on:close={closeModal}>
         {#if modal === ModalType.Faq}
@@ -980,6 +988,8 @@
             <SuspendedModal on:close={closeModal} />
         {:else if modal === ModalType.NewGroup && candidateGroup !== undefined}
             <NewGroup {candidateGroup} on:close={closeModal} />
+        {:else if modal === ModalType.Wallet}
+            <AccountsModal on:close={closeModal} />
         {/if}
     </Overlay>
 {/if}

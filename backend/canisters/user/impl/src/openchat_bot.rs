@@ -4,11 +4,9 @@ use crate::{mutate_state, RuntimeState, BASIC_GROUP_CREATION_LIMIT, PREMIUM_GROU
 use ic_ledger_types::Tokens;
 use types::{MessageContent, SuspensionDuration, TextContent, UserId};
 use user_canister::{PhoneNumberConfirmed, ReferredUserRegistered, StorageUpgraded, UserSuspended};
-use utils::consts::OPENCHAT_BOT_USER_ID;
+use utils::consts::{OPENCHAT_BOT_USERNAME, OPENCHAT_BOT_USER_ID};
 use utils::format::format_to_decimal_places;
 use utils::time::{DAY_IN_MS, HOUR_IN_MS};
-
-pub const OPENCHAT_BOT_USERNAME: &str = "OpenChatBot";
 
 const WELCOME_MESSAGES: &[&str] = &[
     "Welcome to OpenChat!",
@@ -130,6 +128,7 @@ pub(crate) fn send_message(content: MessageContent, mute_notification: bool, run
         forwarding: false,
         correlation_id: 0,
         is_bot: true,
+        now: runtime_state.env.now(),
     };
 
     handle_message_impl(OPENCHAT_BOT_USER_ID, args, mute_notification, runtime_state);

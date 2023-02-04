@@ -23,7 +23,7 @@ fn initial_state_impl(args: Args, runtime_state: &RuntimeState) -> Response {
         .data
         .direct_chats
         .iter()
-        .map(|d| d.to_summary(my_user_id))
+        .map(|d| d.to_summary(my_user_id, now))
         .collect();
 
     let disable_cache = args.disable_cache.unwrap_or_default();
@@ -108,5 +108,8 @@ fn hydrate_cached_summary(cached: &GroupCanisterGroupChatSummary, user_details: 
         wasm_version: Version::default(),
         date_last_pinned: cached.date_last_pinned,
         date_read_pinned: user_details.date_read_pinned.value,
+        events_ttl: cached.events_ttl,
+        expired_messages: cached.expired_messages.clone(),
+        next_message_expiry: cached.next_message_expiry,
     }
 }

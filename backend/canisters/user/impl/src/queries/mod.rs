@@ -3,7 +3,6 @@ pub mod contacts;
 pub mod deleted_message;
 pub mod events;
 pub mod events_by_index;
-pub mod events_range;
 pub mod events_window;
 pub mod http_request;
 pub mod initial_state_v2;

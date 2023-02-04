@@ -4,6 +4,7 @@
     import Home from "svelte-material-icons/Home.svelte";
     import Avatar from "../Avatar.svelte";
     import Cogs from "svelte-material-icons/Cogs.svelte";
+    import Wallet from "svelte-material-icons/Wallet.svelte";
     import Logout from "svelte-material-icons/Logout.svelte";
     import HoverIcon from "../HoverIcon.svelte";
     import HelpCircleOutline from "svelte-material-icons/HelpCircleOutline.svelte";
@@ -63,6 +64,10 @@
                     <MenuItem on:click={() => dispatch("profile")}>
                         <Cogs size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
                         <span slot="text">{$_("profile.title")}</span>
+                    </MenuItem>
+                    <MenuItem on:click={() => dispatch("wallet")}>
+                        <Wallet size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
+                        <span slot="text">{$_("wallet")}</span>
                     </MenuItem>
                     <MenuItem on:click={() => dispatch("showFaq")}>
                         <HelpCircleOutline

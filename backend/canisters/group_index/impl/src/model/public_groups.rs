@@ -103,6 +103,7 @@ impl PublicGroups {
             owner_id: summary.owner_id,
             is_public: true,
             frozen: None,
+            events_ttl: summary.events_ttl,
             wasm_version: Version::default(),
         })
     }

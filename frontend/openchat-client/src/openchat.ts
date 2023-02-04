@@ -2062,6 +2062,7 @@ export class OpenChat extends EventTarget {
 
         for (const event of newEvents) {
             if (event.event.kind === "message") {
+                failedMessagesStore.delete(key, event.event.messageId);
                 if (unconfirmed.delete(key, event.event.messageId)) {
                     if (threadRootMessageIndex === undefined) {
                         messagesRead.confirmMessage(

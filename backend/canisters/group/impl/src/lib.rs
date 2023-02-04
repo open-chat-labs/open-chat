@@ -6,23 +6,25 @@ use crate::timer_job_types::TimerJob;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
-use chat_events::{AllChatEvents, ChatEventInternal};
+use chat_events::{ChatEventInternal, ChatEvents, Reader};
 use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
+use std::collections::HashMap;
 use std::ops::Deref;
 use types::{
-    Avatar, CanisterId, ChatId, Cycles, EventIndex, FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupPermissions,
-    GroupRules, GroupSubtype, MessageIndex, Milliseconds, Notification, TimestampMillis, Timestamped, UserId, Version,
-    MAX_THREADS_IN_SUMMARY,
+    Avatar, CanisterId, ChatId, Cryptocurrency, Cycles, EventIndex, FrozenGroupInfo, GroupCanisterGroupChatSummary,
+    GroupPermissions, GroupRules, GroupSubtype, MessageIndex, Milliseconds, Notification, TimestampMillis, Timestamped, UserId,
+    Version, MAX_THREADS_IN_SUMMARY,
 };
 use utils::env::Environment;
-use utils::memory;
 use utils::regular_jobs::RegularJobs;
 use utils::time::{DAY_IN_MS, HOUR_IN_MS};
 
+mod activity_notifications;
 mod guards;
 mod lifecycle;
+mod memory;
 mod model;
 mod new_joiner_rewards;
 mod queries;
@@ -45,10 +47,6 @@ struct RuntimeState {
 impl RuntimeState {
     pub fn new(env: Box<dyn Environment>, data: Data, regular_jobs: RegularJobs<Data>) -> RuntimeState {
         RuntimeState { env, data, regular_jobs }
-    }
-
-    pub fn is_caller_participant(&self) -> bool {
-        self.data.participants.get(self.env.caller()).is_some()
     }
 
     pub fn is_caller_user_index(&self) -> bool {
@@ -79,32 +77,30 @@ impl RuntimeState {
         }
     }
 
-    pub fn summary(&self, participant: &ParticipantInternal) -> GroupCanisterGroupChatSummary {
+    pub fn summary(&self, participant: &ParticipantInternal, now: TimestampMillis) -> GroupCanisterGroupChatSummary {
         let data = &self.data;
-        let latest_event = data.events.main().last();
+        let min_visible_event_index = participant.min_visible_event_index();
         let min_visible_message_index = participant.min_visible_message_index();
+        let main_events_reader = data.events.visible_main_events_reader(min_visible_event_index, now);
+        let latest_event_index = main_events_reader.latest_event_index().unwrap_or_default();
 
         GroupCanisterGroupChatSummary {
             chat_id: self.env.canister_id().into(),
-            last_updated: latest_event.timestamp,
+            last_updated: now,
             name: data.name.clone(),
             description: data.description.clone(),
             subtype: data.subtype.value.clone(),
             avatar_id: Avatar::id(&data.avatar),
             is_public: data.is_public,
             history_visible_to_new_joiners: data.history_visible_to_new_joiners,
-            min_visible_event_index: participant.min_visible_event_index(),
+            min_visible_event_index,
             min_visible_message_index,
-            latest_message: data
-                .events
-                .main()
-                .latest_message(Some(participant.user_id))
-                .filter(|m| m.event.message_index >= min_visible_message_index),
-            latest_event_index: latest_event.index,
+            latest_message: main_events_reader.latest_message_event(Some(participant.user_id)),
+            latest_event_index,
             joined: participant.date_added,
             participant_count: data.participants.len(),
             role: participant.role,
-            mentions: participant.most_recent_mentions(None, &data.events),
+            mentions: participant.most_recent_mentions(None, &data.events, now),
             owner_id: data.owner_id,
             permissions: data.permissions.clone(),
             notifications_muted: participant.notifications_muted.value,
@@ -114,10 +110,19 @@ impl RuntimeState {
                 .user_metrics(&participant.user_id, None)
                 .cloned()
                 .unwrap_or_default(),
-            latest_threads: data.events.latest_threads(&participant.threads, None, MAX_THREADS_IN_SUMMARY),
+            latest_threads: data.events.latest_threads(
+                min_visible_event_index,
+                participant.threads.iter(),
+                None,
+                MAX_THREADS_IN_SUMMARY,
+                now,
+            ),
             frozen: data.frozen.value.clone(),
             wasm_version: Version::default(),
             date_last_pinned: data.date_last_pinned,
+            events_ttl: data.events.get_events_time_to_live().value,
+            expired_messages: data.events.expired_messages(now),
+            next_message_expiry: data.events.next_message_expiry(now),
         }
     }
 
@@ -138,7 +143,7 @@ impl RuntimeState {
                     ic_cdk::spawn(process_new_joiner_reward(
                         self.env.canister_id(),
                         args.user_id,
-                        self.data.ledger_canister_id,
+                        self.data.ledger_canister_id(&Cryptocurrency::InternetComputer),
                         amount,
                         args.now,
                     ));
@@ -153,22 +158,24 @@ impl RuntimeState {
         let chat_metrics = self.data.events.metrics();
 
         let now = self.env.now();
-        let messages_in_last_hour = self
+        let messages_in_last_hour = self.data.events.event_count_since(now.saturating_sub(HOUR_IN_MS), now, |e| {
+            matches!(e, ChatEventInternal::Message(_))
+        }) as u64;
+        let messages_in_last_day = self.data.events.event_count_since(now.saturating_sub(DAY_IN_MS), now, |e| {
+            matches!(e, ChatEventInternal::Message(_))
+        }) as u64;
+        let events_in_last_hour = self
             .data
             .events
-            .event_count_since(now.saturating_sub(HOUR_IN_MS), |e| matches!(e, ChatEventInternal::Message(_)))
-            as u64;
-        let messages_in_last_day = self
+            .event_count_since(now.saturating_sub(HOUR_IN_MS), now, |_| true) as u64;
+        let events_in_last_day = self
             .data
             .events
-            .event_count_since(now.saturating_sub(DAY_IN_MS), |e| matches!(e, ChatEventInternal::Message(_)))
-            as u64;
-        let events_in_last_hour = self.data.events.event_count_since(now.saturating_sub(HOUR_IN_MS), |_| true) as u64;
-        let events_in_last_day = self.data.events.event_count_since(now.saturating_sub(DAY_IN_MS), |_| true) as u64;
+            .event_count_since(now.saturating_sub(DAY_IN_MS), now, |_| true) as u64;
 
         Metrics {
-            memory_used: memory::used(),
-            now: self.env.now(),
+            memory_used: utils::memory::used(),
+            now,
             cycles_balance: self.env.cycles_balance(),
             wasm_version: WASM_VERSION.with(|v| **v.borrow()),
             git_commit_id: utils::git::git_commit_id().to_string(),
@@ -187,6 +194,7 @@ impl RuntimeState {
             icp_messages: chat_metrics.icp_messages,
             sns1_messages: chat_metrics.sns1_messages,
             ckbtc_messages: chat_metrics.ckbtc_messages,
+            chat_messages: chat_metrics.chat_messages,
             deleted_messages: chat_metrics.deleted_messages,
             giphy_messages: chat_metrics.giphy_messages,
             replies: chat_metrics.replies,
@@ -206,7 +214,7 @@ impl RuntimeState {
                 local_user_index: self.data.local_user_index_canister_id,
                 local_group_index: self.data.local_group_index_canister_id,
                 notifications: self.data.notifications_canister_id,
-                icp_ledger: self.data.ledger_canister_id,
+                icp_ledger: self.data.ledger_canister_id(&Cryptocurrency::InternetComputer),
             },
         }
     }
@@ -222,7 +230,7 @@ struct Data {
     pub avatar: Option<Avatar>,
     pub history_visible_to_new_joiners: bool,
     pub participants: Participants,
-    pub events: AllChatEvents,
+    pub events: ChatEvents,
     pub date_created: TimestampMillis,
     pub mark_active_duration: Milliseconds,
     pub group_index_canister_id: CanisterId,
@@ -230,7 +238,8 @@ struct Data {
     pub user_index_canister_id: CanisterId,
     pub local_user_index_canister_id: CanisterId,
     pub notifications_canister_id: CanisterId,
-    pub ledger_canister_id: CanisterId,
+    #[serde(default = "init_ledger_canister_ids")]
+    pub ledger_canister_ids: HashMap<Cryptocurrency, CanisterId>,
     pub activity_notification_state: ActivityNotificationState,
     pub pinned_messages: Vec<MessageIndex>,
     pub test_mode: bool,
@@ -242,6 +251,23 @@ struct Data {
     pub frozen: Timestamped<Option<FrozenGroupInfo>>,
     pub timer_jobs: TimerJobs<TimerJob>,
     pub date_last_pinned: Option<TimestampMillis>,
+}
+
+fn init_ledger_canister_ids() -> HashMap<Cryptocurrency, CanisterId> {
+    HashMap::from([
+        (
+            Cryptocurrency::InternetComputer,
+            Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap(),
+        ),
+        (
+            Cryptocurrency::SNS1,
+            Principal::from_text("zfcdd-tqaaa-aaaaq-aaaga-cai").unwrap(),
+        ),
+        (
+            Cryptocurrency::CKBTC,
+            Principal::from_text("mxzaz-hqaaa-aaaar-qaada-cai").unwrap(),
+        ),
+    ])
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -257,6 +283,7 @@ impl Data {
         history_visible_to_new_joiners: bool,
         creator_principal: Principal,
         creator_user_id: UserId,
+        events_ttl: Option<Milliseconds>,
         now: TimestampMillis,
         mark_active_duration: Milliseconds,
         group_index_canister_id: CanisterId,
@@ -269,7 +296,7 @@ impl Data {
         permissions: Option<GroupPermissions>,
     ) -> Data {
         let participants = Participants::new(creator_principal, creator_user_id, now);
-        let events = AllChatEvents::new_group_chat(chat_id, name.clone(), description.clone(), creator_user_id, now);
+        let events = ChatEvents::new_group_chat(chat_id, name.clone(), description.clone(), creator_user_id, events_ttl, now);
 
         Data {
             is_public,
@@ -288,7 +315,7 @@ impl Data {
             user_index_canister_id,
             local_user_index_canister_id,
             notifications_canister_id,
-            ledger_canister_id,
+            ledger_canister_ids: [(Cryptocurrency::InternetComputer, ledger_canister_id)].into_iter().collect(),
             activity_notification_state: ActivityNotificationState::new(now),
             pinned_messages: Vec::new(),
             test_mode,
@@ -331,6 +358,13 @@ impl Data {
     pub fn is_frozen(&self) -> bool {
         self.frozen.is_some()
     }
+
+    pub fn ledger_canister_id(&self, token: &Cryptocurrency) -> CanisterId {
+        self.ledger_canister_ids
+            .get(token)
+            .copied()
+            .unwrap_or_else(|| panic!("Unable to find ledger canister for token '{token:?}'"))
+    }
 }
 
 #[derive(Serialize, Debug)]
@@ -355,6 +389,7 @@ pub struct Metrics {
     pub icp_messages: u64,
     pub sns1_messages: u64,
     pub ckbtc_messages: u64,
+    pub chat_messages: u64,
     pub deleted_messages: u64,
     pub giphy_messages: u64,
     pub replies: u64,

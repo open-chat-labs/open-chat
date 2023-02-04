@@ -12,7 +12,7 @@ async fn remove_governance_canister(args: Args) -> Response {
         if args.delete_group {
             let delete_group_args = group_canister::c2c_delete_group::Args {};
             if let Err(error) = group_canister_c2c_client::c2c_delete_group(chat_id.into(), &delete_group_args).await {
-                return InternalError(format!("{:?}", error));
+                return InternalError(format!("{error:?}"));
             }
         }
 

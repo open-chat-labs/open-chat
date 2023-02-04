@@ -63,13 +63,13 @@ async fn create_group(args: &Args, is_nns: bool) -> Result<ChatId, Response> {
             send_messages: PermissionRole::Admins,
             ..Default::default()
         }),
+        events_ttl: None,
     };
     match group_index_canister_c2c_client::c2c_create_group(group_index_canister_id, &create_group_args).await {
         Ok(group_index_canister::c2c_create_group::Response::Success(result)) => Ok(result.chat_id),
-        Ok(response) => Err(InternalError(format!("Unable to create group: {:?}", response))),
+        Ok(response) => Err(InternalError(format!("Unable to create group: {response:?}"))),
         Err(error) => Err(InternalError(format!(
-            "Error calling 'c2c_create_group' on group_index: {:?}",
-            error
+            "Error calling 'c2c_create_group' on group_index: {error:?}",
         ))),
     }
 }

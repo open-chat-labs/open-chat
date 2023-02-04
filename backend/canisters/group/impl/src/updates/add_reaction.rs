@@ -1,10 +1,10 @@
-use crate::updates::handle_activity_notification;
+use crate::activity_notifications::handle_activity_notification;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
-use chat_events::AddRemoveReactionResult;
+use chat_events::{AddRemoveReactionArgs, AddRemoveReactionResult, Reader};
 use group_canister::add_reaction::{Response::*, *};
 use ic_cdk_macros::update;
-use types::{GroupReactionAddedNotification, Notification, TimestampMillis, UserId};
+use types::{EventIndex, GroupReactionAddedNotification, Notification, TimestampMillis, UserId};
 
 #[update]
 #[trace]
@@ -34,27 +34,21 @@ fn add_reaction_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
 
         let now = runtime_state.env.now();
         let user_id = participant.user_id;
+        let min_visible_event_index = participant.min_visible_event_index();
 
-        if !runtime_state.data.events.is_message_accessible_by_id(
-            participant.min_visible_event_index(),
-            args.thread_root_message_index,
-            args.message_id,
-        ) {
-            return MessageNotFound;
-        }
-
-        match runtime_state.data.events.add_reaction(
+        match runtime_state.data.events.add_reaction(AddRemoveReactionArgs {
             user_id,
-            args.thread_root_message_index,
-            args.message_id,
-            args.reaction.clone(),
-            args.correlation_id,
+            min_visible_event_index,
+            thread_root_message_index: args.thread_root_message_index,
+            message_id: args.message_id,
+            reaction: args.reaction.clone(),
+            correlation_id: args.correlation_id,
             now,
-        ) {
-            AddRemoveReactionResult::Success(e) => {
+        }) {
+            AddRemoveReactionResult::Success(r) => {
                 handle_activity_notification(runtime_state);
                 handle_notification(args, user_id, now, runtime_state);
-                Success(e)
+                SuccessV2(r)
             }
             AddRemoveReactionResult::NoChange => NoChange,
             AddRemoveReactionResult::MessageNotFound => MessageNotFound,
@@ -79,10 +73,10 @@ fn handle_notification(
     if let Some(message) = runtime_state
         .data
         .events
-        .get(thread_root_message_index)
+        .events_reader(EventIndex::default(), thread_root_message_index, now)
         // We pass in `None` in place of `my_user_id` because we don't want to hydrate
         // the notification with data for the current user (eg. their poll votes).
-        .and_then(|chat_events| chat_events.message_event_by_message_id(message_id, None))
+        .and_then(|events_reader| events_reader.message_event(message_id.into(), None))
     {
         if message.event.sender != user_id {
             let notifications_muted = runtime_state

@@ -66,7 +66,7 @@ impl Challenges {
                 }
             }
 
-            ic_cdk::trap(&format!("Could not find a new challenge key after {} tries", MAX_TRIES));
+            ic_cdk::trap(&format!("Could not find a new challenge key after {MAX_TRIES} tries"));
         } else {
             ic_cdk::trap("RNG not initialised");
         }

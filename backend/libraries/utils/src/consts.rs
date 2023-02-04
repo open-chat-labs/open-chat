@@ -8,3 +8,4 @@ pub const CYCLES_REQUIRED_FOR_UPGRADE: Cycles = 80_000_000_000; // 0.08T cycles
 
 // zzyk3-openc-hatbo-tq7my-cai
 pub const OPENCHAT_BOT_USER_ID: UserId = UserId::new(Principal::from_slice(&[228, 104, 142, 9, 133, 211, 135, 217, 129, 1]));
+pub const OPENCHAT_BOT_USERNAME: &str = "OpenChatBot";

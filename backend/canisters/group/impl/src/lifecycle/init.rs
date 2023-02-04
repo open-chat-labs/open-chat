@@ -10,7 +10,6 @@ use utils::env::Environment;
 #[init]
 #[trace]
 fn init(args: Args) {
-    ic_cdk::setup();
     canister_logger::init(args.test_mode);
 
     let env = Box::new(CanisterEnv::new());
@@ -26,6 +25,7 @@ fn init(args: Args) {
         args.history_visible_to_new_joiners,
         args.created_by_principal,
         args.created_by_user_id,
+        args.events_ttl,
         env.now(),
         args.mark_active_duration,
         args.group_index_canister_id,

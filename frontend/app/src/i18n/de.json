@@ -471,7 +471,8 @@
         "icp": "Internet-Computer",
         "btc": "Bitcoin",
         "chat": "Chat öffnen",
-        "sns1": "SNS-1"
+        "sns1": "SNS-1",
+        "max": "max"
     },
     "cryptoAccount": {
         "manage": "Verwalten",
@@ -681,5 +682,6 @@
     "loadImage": "Bild laden",
     "loadGif": "gif laden",
     "showTweet": "Tweet anzeigen",
-    "showVideo": "Videos zeigen"
+    "showVideo": "Videos zeigen",
+    "wallet": "Geldbörse"
 }

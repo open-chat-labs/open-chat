@@ -1,9 +1,9 @@
 use crate::guards::caller_is_owner;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
-use chat_events::AddRemoveReactionResult;
+use chat_events::{AddRemoveReactionArgs, AddRemoveReactionResult};
 use ic_cdk_macros::update;
-use types::{CanisterId, MessageId, Reaction};
+use types::{CanisterId, EventIndex, MessageId, Reaction};
 use user_canister::add_reaction::{Response::*, *};
 use user_canister::c2c_toggle_reaction;
 
@@ -28,15 +28,16 @@ fn add_reaction_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
         let my_user_id = runtime_state.env.canister_id().into();
         let now = runtime_state.env.now();
 
-        match chat.events.add_reaction(
-            my_user_id,
-            None,
-            args.message_id,
-            args.reaction.clone(),
-            args.correlation_id,
+        match chat.events.add_reaction(AddRemoveReactionArgs {
+            user_id: my_user_id,
+            min_visible_event_index: EventIndex::default(),
+            thread_root_message_index: None,
+            message_id: args.message_id,
+            reaction: args.reaction.clone(),
+            correlation_id: args.correlation_id,
             now,
-        ) {
-            AddRemoveReactionResult::Success(e) => {
+        }) {
+            AddRemoveReactionResult::Success(r) => {
                 ic_cdk::spawn(add_reaction_on_recipients_canister(
                     args.user_id.into(),
                     args.message_id,
@@ -44,7 +45,7 @@ fn add_reaction_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
                     args.username,
                     args.correlation_id,
                 ));
-                Success(e)
+                SuccessV2(r)
             }
             AddRemoveReactionResult::NoChange => NoChange,
             AddRemoveReactionResult::MessageNotFound => MessageNotFound,

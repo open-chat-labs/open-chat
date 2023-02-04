@@ -471,7 +471,8 @@
         "icp": "上网电脑",
         "btc": "比特币",
         "chat": "打开聊天",
-        "sns1": "社交网络-1"
+        "sns1": "社交网络-1",
+        "max": "最大限度"
     },
     "cryptoAccount": {
         "manage": "管理",
@@ -682,5 +683,6 @@
     "loadImage": "载入图片",
     "loadGif": "载入动图",
     "showTweet": "显示推文",
-    "showVideo": "显示视频"
+    "showVideo": "显示视频",
+    "wallet": "钱包"
 }

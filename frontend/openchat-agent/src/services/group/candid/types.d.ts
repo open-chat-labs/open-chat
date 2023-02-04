@@ -48,7 +48,8 @@ export type AddReactionResponse = { 'MessageNotFound' : null } |
   { 'NotAuthorized' : null } |
   { 'Success' : EventIndex } |
   { 'UserSuspended' : null } |
-  { 'InvalidReaction' : null };
+  { 'InvalidReaction' : null } |
+  { 'SuccessV2' : PushEventResult };
 export interface AddedToGroupNotification {
   'added_by_name' : string,
   'added_by' : UserId,
@@ -142,6 +143,7 @@ export type ChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'MessageUndeleted' : UpdatedMessage } |
   { 'RoleChanged' : RoleChanged } |
   { 'PollVoteDeleted' : UpdatedMessage } |
+  { 'EventsTimeToLiveUpdated' : EventsTimeToLiveUpdated } |
   { 'ProposalsUpdated' : ProposalsUpdated } |
   { 'OwnershipTransferred' : OwnershipTransferred } |
   { 'DirectChatCreated' : DirectChatCreated } |
@@ -153,6 +155,7 @@ export interface ChatEventWrapper {
   'timestamp' : TimestampMillis,
   'index' : EventIndex,
   'correlation_id' : bigint,
+  'expires_at' : [] | [TimestampMillis],
 }
 export interface ChatFrozen { 'frozen_by' : UserId, 'reason' : [] | [string] }
 export type ChatId = CanisterId;
@@ -237,6 +240,7 @@ export interface DirectChatEventWrapper {
   'timestamp' : TimestampMillis,
   'index' : EventIndex,
   'correlation_id' : bigint,
+  'expires_at' : [] | [TimestampMillis],
 }
 export interface DirectChatSummary {
   'read_by_them_up_to' : [] | [MessageIndex],
@@ -297,10 +301,6 @@ export type EnableInviteCodeResponse = { 'ChatFrozen' : null } |
   { 'Success' : { 'code' : bigint } } |
   { 'UserSuspended' : null };
 export type EventIndex = number;
-export interface EventResult {
-  'timestamp' : TimestampMillis,
-  'index' : EventIndex,
-}
 export interface EventsArgs {
   'latest_client_event_index' : [] | [EventIndex],
   'invite_code' : [] | [bigint],
@@ -316,13 +316,6 @@ export interface EventsByIndexArgs {
   'events' : Uint32Array | number[],
   'thread_root_message_index' : [] | [MessageIndex],
 }
-export interface EventsRangeArgs {
-  'latest_client_event_index' : [] | [EventIndex],
-  'invite_code' : [] | [bigint],
-  'to_index' : EventIndex,
-  'from_index' : EventIndex,
-  'thread_root_message_index' : [] | [MessageIndex],
-}
 export type EventsResponse = { 'ThreadMessageNotFound' : null } |
   { 'ReplicaNotUpToDate' : EventIndex } |
   { 'CallerNotInGroup' : null } |
@@ -331,6 +324,13 @@ export interface EventsSuccessResult {
   'affected_events' : Array<ChatEventWrapper>,
   'events' : Array<ChatEventWrapper>,
   'latest_event_index' : number,
+}
+export type EventsTimeToLiveUpdate = { 'NoChange' : null } |
+  { 'SetToNone' : null } |
+  { 'SetToSome' : Milliseconds };
+export interface EventsTimeToLiveUpdated {
+  'new_ttl' : [] | [Milliseconds],
+  'updated_by' : UserId,
 }
 export interface EventsWindowArgs {
   'latest_client_event_index' : [] | [EventIndex],
@@ -647,6 +647,7 @@ export interface MessageEventWrapper {
   'timestamp' : TimestampMillis,
   'index' : EventIndex,
   'correlation_id' : bigint,
+  'expires_at' : [] | [TimestampMillis],
 }
 export type MessageId = bigint;
 export type MessageIndex = number;
@@ -687,7 +688,7 @@ export type Milliseconds = bigint;
 export interface NnsCompletedCryptoTransaction {
   'to' : NnsCryptoAccount,
   'fee' : Tokens,
-  'created' : TimestampMillis,
+  'created' : TimestampNanos,
   'token' : Cryptocurrency,
   'transaction_hash' : TransactionHash,
   'block_index' : BlockIndex,
@@ -700,7 +701,7 @@ export type NnsCryptoAccount = { 'Mint' : null } |
 export interface NnsFailedCryptoTransaction {
   'to' : NnsCryptoAccount,
   'fee' : Tokens,
-  'created' : TimestampMillis,
+  'created' : TimestampNanos,
   'token' : Cryptocurrency,
   'transaction_hash' : TransactionHash,
   'from' : NnsCryptoAccount,
@@ -805,21 +806,13 @@ export interface PinMessageArgs {
   'correlation_id' : bigint,
   'message_index' : MessageIndex,
 }
-export type PinMessageResponse = { 'MessageIndexOutOfRange' : null } |
-  { 'MessageNotFound' : null } |
-  { 'NoChange' : null } |
-  { 'CallerNotInGroup' : null } |
-  { 'ChatFrozen' : null } |
-  { 'NotAuthorized' : null } |
-  { 'Success' : EventIndex } |
-  { 'UserSuspended' : null };
 export type PinMessageV2Response = { 'MessageIndexOutOfRange' : null } |
   { 'MessageNotFound' : null } |
   { 'NoChange' : null } |
   { 'CallerNotInGroup' : null } |
   { 'ChatFrozen' : null } |
   { 'NotAuthorized' : null } |
-  { 'Success' : EventResult } |
+  { 'Success' : PushEventResult } |
   { 'UserSuspended' : null };
 export type PinnedMessageUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
@@ -887,6 +880,11 @@ export interface PublicSummaryArgs { 'invite_code' : [] | [bigint] }
 export type PublicSummaryResponse = { 'NotAuthorized' : null } |
   { 'Success' : PublicSummarySuccess };
 export interface PublicSummarySuccess { 'summary' : PublicGroupSummary }
+export interface PushEventResult {
+  'timestamp' : TimestampMillis,
+  'index' : EventIndex,
+  'expires_at' : [] | [TimestampMillis],
+}
 export interface RegisterPollVoteArgs {
   'poll_option' : number,
   'operation' : VoteOperation,
@@ -942,7 +940,8 @@ export type RemoveReactionResponse = { 'MessageNotFound' : null } |
   { 'ChatFrozen' : null } |
   { 'NotAuthorized' : null } |
   { 'Success' : EventIndex } |
-  { 'UserSuspended' : null };
+  { 'UserSuspended' : null } |
+  { 'SuccessV2' : PushEventResult };
 export interface ReplyContext {
   'chat_id_if_other' : [] | [ChatId],
   'event_index' : EventIndex,
@@ -1021,6 +1020,7 @@ export type SendMessageResponse = { 'TextTooLong' : number } |
     'Success' : {
       'timestamp' : TimestampMillis,
       'event_index' : EventIndex,
+      'expires_at' : [] | [TimestampMillis],
       'message_index' : MessageIndex,
     }
   } |
@@ -1033,7 +1033,7 @@ export type SnsAccount = { 'Mint' : null } |
 export interface SnsCompletedCryptoTransaction {
   'to' : SnsAccount,
   'fee' : Tokens,
-  'created' : TimestampMillis,
+  'created' : TimestampNanos,
   'token' : Cryptocurrency,
   'transaction_hash' : TransactionHash,
   'block_index' : BlockIndex,
@@ -1044,7 +1044,7 @@ export interface SnsCompletedCryptoTransaction {
 export interface SnsFailedCryptoTransaction {
   'to' : SnsAccount,
   'fee' : Tokens,
-  'created' : TimestampMillis,
+  'created' : TimestampNanos,
   'token' : Cryptocurrency,
   'transaction_hash' : TransactionHash,
   'from' : SnsAccount,
@@ -1175,11 +1175,13 @@ export type UnpinMessageResponse = { 'MessageNotFound' : null } |
   { 'ChatFrozen' : null } |
   { 'NotAuthorized' : null } |
   { 'Success' : EventIndex } |
-  { 'UserSuspended' : null };
+  { 'UserSuspended' : null } |
+  { 'SuccessV2' : PushEventResult };
 export interface UpdateGroupV2Args {
   'permissions' : [] | [OptionalGroupPermissions],
   'name' : [] | [string],
   'description' : [] | [string],
+  'events_ttl' : EventsTimeToLiveUpdate,
   'correlation_id' : bigint,
   'rules' : [] | [GroupRules],
   'avatar' : AvatarUpdate,
@@ -1258,7 +1260,6 @@ export interface _SERVICE {
   >,
   'events' : ActorMethod<[EventsArgs], EventsResponse>,
   'events_by_index' : ActorMethod<[EventsByIndexArgs], EventsResponse>,
-  'events_range' : ActorMethod<[EventsRangeArgs], EventsResponse>,
   'events_window' : ActorMethod<[EventsWindowArgs], EventsResponse>,
   'invite_code' : ActorMethod<[InviteCodeArgs], InviteCodeResponse>,
   'local_user_index' : ActorMethod<
@@ -1270,7 +1271,6 @@ export interface _SERVICE {
     [MessagesByMessageIndexArgs],
     MessagesByMessageIndexResponse
   >,
-  'pin_message' : ActorMethod<[PinMessageArgs], PinMessageResponse>,
   'pin_message_v2' : ActorMethod<[PinMessageArgs], PinMessageV2Response>,
   'public_summary' : ActorMethod<[PublicSummaryArgs], PublicSummaryResponse>,
   'register_poll_vote' : ActorMethod<

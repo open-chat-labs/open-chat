@@ -472,7 +472,8 @@
         "icp": "Máy tính Internet",
         "btc": "Bitcoin",
         "chat": "trò chuyện mở",
-        "sns1": "SNS-1"
+        "sns1": "SNS-1",
+        "max": "tối đa"
     },
     "cryptoAccount": {
         "manage": "Quản lý",
@@ -682,5 +683,6 @@
     "loadImage": "Tải hình ảnh",
     "loadGif": "tải gif",
     "showTweet": "Hiển thị tweet",
-    "showVideo": "Hiển thị video"
+    "showVideo": "Hiển thị video",
+    "wallet": "Cái ví"
 }

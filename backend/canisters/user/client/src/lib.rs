@@ -3,7 +3,6 @@ use user_canister::*;
 
 // Queries
 generate_query_call!(events_by_index);
-generate_query_call!(events_range);
 
 // Updates
 generate_update_call!(add_reaction);

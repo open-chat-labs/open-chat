@@ -25,6 +25,7 @@
     const client = getContext<OpenChat>("client");
     const user = client.user;
 
+    $: account = token === "icp" ? user.cryptoAccount : user.userId;
     $: cryptoBalance = client.cryptoBalance;
 
     let error: string | undefined = undefined;
@@ -32,12 +33,15 @@
     let amountToWithdrawE8s = BigInt(0);
     let withdrawing = false;
     let balanceWithRefresh: BalanceWithRefresh;
+    let validAmount = false;
 
     // make sure that they are not trying to withdraw to the same account - I can see people trying to do that
+
     $: valid =
+        validAmount &&
         amountToWithdrawE8s > BigInt(0) &&
         targetAccount !== "" &&
-        targetAccount !== user.userId;
+        targetAccount !== account;
 
     $: transferFees = cryptoLookup[token].transferFeesE8s;
     $: symbol = cryptoLookup[token].symbol;
@@ -56,7 +60,7 @@
         client
             .withdrawCryptocurrency({
                 kind: "pending",
-                token: token,
+                token,
                 to: targetAccount,
                 amountE8s: amountToWithdrawE8s,
                 feeE8s: transferFees,
@@ -119,11 +123,13 @@
 
                 <h4 class="title">{$_("cryptoAccount.withdraw")}</h4>
 
-                <Legend label={$_("tokenTransfer.amount", { values: { token: symbol } })} />
                 <div class="token-input">
                     <TokenInput
                         {token}
-                        maxAmountE8s={$cryptoBalance[token] - transferFees}
+                        maxAmountE8s={BigInt(
+                            Math.max(0, Number($cryptoBalance[token] - transferFees))
+                        )}
+                        bind:valid={validAmount}
                         bind:amountE8s={amountToWithdrawE8s} />
                 </div>
                 <div class="target">

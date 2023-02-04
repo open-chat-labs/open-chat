@@ -73,8 +73,11 @@ type ChatMetrics =
         icp_messages: nat64;
         sns1_messages: nat64;
         ckbtc_messages: nat64;
+        chat_messages: nat64;
         deleted_messages: nat64;
         giphy_messages: nat64;
+        prize_messages: nat64;
+        prize_winner_messages: nat64;
         replies: nat64;
         edits: nat64;
         reactions: nat64;
@@ -123,6 +126,7 @@ type DirectChatEventWrapper =
         index: EventIndex;
         timestamp: TimestampMillis;
         correlation_id: nat64;
+        expires_at: opt TimestampMillis;
         event: ChatEvent;
     };
 
@@ -138,6 +142,8 @@ type DirectChatSummary =
         metrics: ChatMetrics;
         my_metrics: ChatMetrics;
         archived: bool;
+        events_ttl: opt Milliseconds;
+        expired_messages: vec MessageIndexRange;
     };
 
 type DirectChatSummaryUpdates =
@@ -152,6 +158,8 @@ type DirectChatSummaryUpdates =
         metrics: opt ChatMetrics;
         my_metrics: opt ChatMetrics;
         archived: opt bool;
+        events_ttl: EventsTimeToLiveUpdate;
+        newly_expired_messages: vec MessageIndexRange;
     };
 
 type DirectMessageNotification =
@@ -236,6 +244,7 @@ type ChatEvent =
         GroupRulesChanged: GroupRulesChanged;
         ChatFrozen: ChatFrozen;
         ChatUnfrozen: ChatUnfrozen;
+        EventsTimeToLiveUpdated: EventsTimeToLiveUpdated;
     };
 
 type ChatEventWrapper =
@@ -243,6 +252,7 @@ type ChatEventWrapper =
         index: EventIndex;
         timestamp: TimestampMillis;
         correlation_id: nat64;
+        expires_at: opt TimestampMillis;
         event: ChatEvent;
     };
 
@@ -276,6 +286,9 @@ type GroupChatSummary =
         wasm_version: Version;
         date_last_pinned: opt TimestampMillis;
         date_read_pinned: opt TimestampMillis;
+        events_ttl: opt Milliseconds;
+        expired_messages: vec MessageIndexRange;
+        next_message_expiry: opt TimestampMillis;
     };
 
 type GroupCanisterGroupChatSummary =
@@ -305,6 +318,9 @@ type GroupCanisterGroupChatSummary =
         frozen: opt FrozenGroupInfo;
         wasm_version: Version;
         date_last_pinned: opt TimestampMillis;
+        events_ttl: opt Milliseconds;
+        expired_messages: vec MessageIndexRange;
+        next_message_expiry: opt TimestampMillis;
     };
 
 type GroupChatSummaryUpdates =
@@ -334,6 +350,9 @@ type GroupChatSummaryUpdates =
         wasm_version: opt Version;
         date_last_pinned: opt TimestampMillis;
         date_read_pinned: opt TimestampMillis;
+        events_ttl: opt Milliseconds;
+        expired_messages: vec MessageIndexRange;
+        next_message_expiry: TimestampUpdate;
     };
 
 type GroupCanisterGroupChatSummaryUpdates =
@@ -361,6 +380,9 @@ type GroupCanisterGroupChatSummaryUpdates =
         frozen: FrozenGroupUpdate;
         wasm_version: opt Version;
         date_last_pinned: opt TimestampMillis;
+        events_ttl: EventsTimeToLiveUpdate;
+        newly_expired_messages: vec MessageIndexRange;
+        next_message_expiry: TimestampUpdate;
     };
 
 type GroupDescriptionChanged =
@@ -398,6 +420,13 @@ type AvatarIdUpdate =
         SetToSome: nat;
     };
 
+type TimestampUpdate =
+    variant {
+        NoChange;
+        SetToNone;
+        SetToSome: TimestampMillis;
+    };
+
 type Mention =
     record {
         thread_root_message_index: opt MessageIndex;
@@ -426,6 +455,7 @@ type MessageEventWrapper =
         index: EventIndex;
         timestamp: TimestampMillis;
         correlation_id: nat64;
+        expires_at: opt TimestampMillis;
         event: Message;
     };
 
@@ -582,6 +612,21 @@ type InvalidPollReason =
         PollsNotValidForDirectChats;
     };
 
+type MessageContentInitial =
+    variant {
+        Text: TextContent;
+        Image: ImageContent;
+        Video: VideoContent;
+        Audio: AudioContent;
+        File: FileContent;
+        Poll: PollContent;
+        Crypto: CryptoContent;
+        Deleted: DeletedContent;
+        Giphy: GiphyContent;
+        GovernanceProposal: ProposalContent;
+        Prize: PrizeContentInitial;
+    };
+
 type MessageContent =
     variant {
         Text: TextContent;
@@ -594,6 +639,8 @@ type MessageContent =
         Deleted: DeletedContent;
         Giphy: GiphyContent;
         GovernanceProposal: ProposalContent;
+        Prize: PrizeContent;
+        PrizeWinner: PrizeWinnerContent;
     };
 
 type UpdatedMessage =
@@ -926,6 +973,7 @@ type Cryptocurrency =
         InternetComputer;
         SNS1;
         CKBTC;
+        CHAT;
     };
 
 type CryptoTransaction =
@@ -1155,8 +1203,54 @@ type ChatUnfrozen =
         unfrozen_by: UserId;
     };
 
-type EventResult =
+type EventsTimeToLiveUpdated =
+    record {
+        updated_by: UserId;
+        new_ttl: opt Milliseconds;
+    };
+
+type EventsTimeToLiveUpdate =
+    variant {
+        NoChange;
+        SetToNone;
+        SetToSome: Milliseconds;
+    };
+
+type PushEventResult =
     record {
         index: EventIndex;
         timestamp: TimestampMillis;
+        expires_at: opt TimestampMillis;
+    };
+
+type MessageIndexRange =
+    record {
+        start: MessageIndex;
+        end: MessageIndex;
+    };
+
+type PrizeContentInitial =
+    record {
+        prizes: vec Tokens;
+        transfer: CryptoTransaction;
+        end_date: TimestampMillis;
+        caption: opt text;
+    };
+
+type PrizeContent =
+    record {
+        prizes_remaining: nat32;
+        prizes_pending: nat32;
+        winners: vec UserId;
+        token: Cryptocurrency;
+        end_date: TimestampMillis;
+        caption: opt text;
+    };
+
+type PrizeWinnerContent =
+    record {
+        token: Cryptocurrency;
+        winner: UserId;
+        amount: Tokens;
+        prize_message: MessageIndex;
     };

@@ -1,21 +1,21 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{EventIndex, MessageIndex};
+use types::{MessageContentInitial, MessageId, MessageIndex, UserId};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
-    pub message_index: MessageIndex,
+    pub user_id: UserId,
+    pub thread_root_message_index: Option<MessageIndex>,
+    pub message_id: MessageId,
+    pub content: MessageContentInitial,
     pub correlation_id: u64,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
-    Success(EventIndex),
-    NoChange,
-    MessageIndexOutOfRange,
-    NotAuthorized,
-    CallerNotInGroup,
+    Success,
     MessageNotFound,
+    ChatNotFound,
+    UserBlocked,
     UserSuspended,
-    ChatFrozen,
 }

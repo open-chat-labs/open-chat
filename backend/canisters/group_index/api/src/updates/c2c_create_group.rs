@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{Avatar, ChatId, GroupPermissions, GroupRules, GroupSubtype};
+use types::{Avatar, ChatId, GroupPermissions, GroupRules, GroupSubtype, Milliseconds};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -12,6 +12,8 @@ pub struct Args {
     pub avatar: Option<Avatar>,
     pub history_visible_to_new_joiners: bool,
     pub permissions: Option<GroupPermissions>,
+    #[serde(default)]
+    pub events_ttl: Option<Milliseconds>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

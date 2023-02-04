@@ -1,7 +1,6 @@
 [package]
 name = "icp_dispenser_bot_impl"
 version = "0.1.0"
-authors = ["Hamish Peebles <hamishpeebles@gmail.com>", "Matt Grogan <megrogan@gmail.com>", "Julian Jelfs <julian.jelfs@gmail.com>"]
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -20,12 +19,13 @@ http_request = { path = "../../../../libraries/http_request" }
 ic-cdk = { workspace = true }
 ic-cdk-macros = { workspace = true }
 ic-ledger-types = { workspace = true }
+ic-stable-structures = { workspace = true }
 icp_dispenser_bot = { path = "../api" }
 ledger_utils = { path = "../../../../libraries/ledger_utils" }
 msgpack = { path = "../../../../libraries/msgpack" }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
-stable_memory = { workspace = true }
+serializer = { workspace = true }
 tracing = { workspace = true }
 types = { path = "../../../../libraries/types" }
 user_canister = { path = "../../../../canisters/user/api" }

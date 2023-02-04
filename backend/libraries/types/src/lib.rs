@@ -35,6 +35,7 @@ mod participant;
 mod phone_number;
 mod polls;
 mod proposals;
+mod range_set;
 mod reactions;
 mod registration_fee;
 mod role;
@@ -46,6 +47,7 @@ mod user;
 mod user_summary;
 mod version;
 
+pub use crate::range_set::*;
 pub use avatar::*;
 pub use bots::*;
 pub use canister_upgrade_status::*;
@@ -114,15 +116,4 @@ impl<T: PartialEq> PushIfNotContains<T> for Vec<T> {
             false
         }
     }
-}
-
-use candid::CandidType;
-use serde::{Deserialize, Serialize};
-
-// TODO remove this
-#[derive(CandidType, Serialize, Deserialize)]
-pub struct LogMessage {
-    pub timestamp: TimestampMillis,
-    #[serde(alias = "message")]
-    pub json: String,
 }

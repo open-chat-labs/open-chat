@@ -4,12 +4,13 @@ use std::cmp::max;
 use std::collections::{HashMap, HashSet};
 use std::ops::{Deref, DerefMut};
 use types::{
-    AvatarChanged, ChatFrozen, ChatMetrics, ChatUnfrozen, Cryptocurrency, DeletedBy, DirectChatCreated, GroupChatCreated,
-    GroupDescriptionChanged, GroupInviteCodeChanged, GroupNameChanged, GroupRulesChanged, GroupVisibilityChanged,
-    MessageContentInternal, MessageId, MessageIndex, MessagePinned, MessageUnpinned, OwnershipTransferred,
-    ParticipantAssumesSuperAdmin, ParticipantDismissedAsSuperAdmin, ParticipantJoined, ParticipantLeft,
-    ParticipantRelinquishesSuperAdmin, ParticipantsAdded, ParticipantsRemoved, PermissionsChanged, PollVoteRegistered,
-    Reaction, ReplyContext, RoleChanged, ThreadSummary, TimestampMillis, UserId, UsersBlocked, UsersUnblocked,
+    AvatarChanged, ChatFrozen, ChatMetrics, ChatUnfrozen, Cryptocurrency, DeletedBy, DirectChatCreated,
+    EventsTimeToLiveUpdated, GroupChatCreated, GroupDescriptionChanged, GroupInviteCodeChanged, GroupNameChanged,
+    GroupRulesChanged, GroupVisibilityChanged, Message, MessageContent, MessageContentInternal, MessageId, MessageIndex,
+    MessagePinned, MessageUnpinned, OwnershipTransferred, ParticipantAssumesSuperAdmin, ParticipantDismissedAsSuperAdmin,
+    ParticipantJoined, ParticipantLeft, ParticipantRelinquishesSuperAdmin, ParticipantsAdded, ParticipantsRemoved,
+    PermissionsChanged, PollVoteRegistered, Reaction, ReplyContext, RoleChanged, ThreadSummary, TimestampMillis, UserId,
+    UsersBlocked, UsersUnblocked,
 };
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -49,6 +50,7 @@ pub enum ChatEventInternal {
     ProposalsUpdated(Box<ProposalsUpdatedInternal>),
     ChatFrozen(Box<ChatFrozen>),
     ChatUnfrozen(Box<ChatUnfrozen>),
+    EventsTimeToLiveUpdated(Box<EventsTimeToLiveUpdated>),
 }
 
 impl ChatEventInternal {
@@ -66,6 +68,7 @@ impl ChatEventInternal {
                 | ChatEventInternal::PollVoteDeleted(_)
                 | ChatEventInternal::PollEnded(_)
                 | ChatEventInternal::ThreadUpdated(_)
+                | ChatEventInternal::EventsTimeToLiveUpdated(_)
         )
     }
 
@@ -106,6 +109,7 @@ impl ChatEventInternal {
                 | ChatEventInternal::ProposalsUpdated(_)
                 | ChatEventInternal::ChatFrozen(_)
                 | ChatEventInternal::ChatUnfrozen(_)
+                | ChatEventInternal::EventsTimeToLiveUpdated(_)
         )
     }
 
@@ -227,6 +231,7 @@ impl ChatEventInternal {
             ChatEventInternal::GroupInviteCodeChanged(p) => Some(p.changed_by),
             ChatEventInternal::ChatFrozen(f) => Some(f.frozen_by),
             ChatEventInternal::ChatUnfrozen(u) => Some(u.unfrozen_by),
+            ChatEventInternal::EventsTimeToLiveUpdated(u) => Some(u.updated_by),
             ChatEventInternal::MessageEdited(e)
             | ChatEventInternal::MessageDeleted(e)
             | ChatEventInternal::MessageUndeleted(e)
@@ -257,6 +262,29 @@ pub struct MessageInternal {
 }
 
 impl MessageInternal {
+    pub fn hydrate(&self, my_user_id: Option<UserId>) -> Message {
+        Message {
+            message_index: self.message_index,
+            message_id: self.message_id,
+            sender: self.sender,
+            content: if let Some(deleted_by) = self.deleted_by.clone() {
+                MessageContent::Deleted(deleted_by)
+            } else {
+                self.content.hydrate(my_user_id)
+            },
+            replies_to: self.replies_to.clone(),
+            reactions: self
+                .reactions
+                .iter()
+                .map(|(r, u)| (r.clone(), u.iter().copied().collect()))
+                .collect(),
+            edited: self.last_edited.is_some(),
+            forwarded: self.forwarded,
+            thread_summary: self.thread_summary.clone(),
+            last_updated: self.last_updated,
+        }
+    }
+
     pub fn add_to_metrics(&self, metrics: &mut ChatMetrics, per_user_metrics: &mut HashMap<UserId, ChatMetrics>) {
         let sender_metrics = per_user_metrics.entry(self.sender).or_default();
 
@@ -314,6 +342,10 @@ impl MessageInternal {
                         incr(&mut metrics.ckbtc_messages);
                         incr(&mut sender_metrics.ckbtc_messages);
                     }
+                    Cryptocurrency::CHAT => {
+                        incr(&mut metrics.chat_messages);
+                        incr(&mut sender_metrics.chat_messages);
+                    }
                 },
                 MessageContentInternal::Deleted(_) => {}
                 MessageContentInternal::Giphy(_) => {
@@ -323,6 +355,14 @@ impl MessageInternal {
                 MessageContentInternal::GovernanceProposal(_) => {
                     incr(&mut metrics.proposals);
                     incr(&mut sender_metrics.proposals);
+                }
+                MessageContentInternal::Prize(_) => {
+                    incr(&mut metrics.prize_messages);
+                    incr(&mut sender_metrics.prize_messages);
+                }
+                MessageContentInternal::PrizeWinner(_) => {
+                    incr(&mut metrics.prize_winner_messages);
+                    incr(&mut sender_metrics.prize_winner_messages);
                 }
             }
 

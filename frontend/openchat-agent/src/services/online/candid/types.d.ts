@@ -72,6 +72,7 @@ export type ChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'MessageUndeleted' : UpdatedMessage } |
   { 'RoleChanged' : RoleChanged } |
   { 'PollVoteDeleted' : UpdatedMessage } |
+  { 'EventsTimeToLiveUpdated' : EventsTimeToLiveUpdated } |
   { 'ProposalsUpdated' : ProposalsUpdated } |
   { 'OwnershipTransferred' : OwnershipTransferred } |
   { 'DirectChatCreated' : DirectChatCreated } |
@@ -83,6 +84,7 @@ export interface ChatEventWrapper {
   'timestamp' : TimestampMillis,
   'index' : EventIndex,
   'correlation_id' : bigint,
+  'expires_at' : [] | [TimestampMillis],
 }
 export interface ChatFrozen { 'frozen_by' : UserId, 'reason' : [] | [string] }
 export type ChatId = CanisterId;
@@ -147,6 +149,7 @@ export interface DirectChatEventWrapper {
   'timestamp' : TimestampMillis,
   'index' : EventIndex,
   'correlation_id' : bigint,
+  'expires_at' : [] | [TimestampMillis],
 }
 export interface DirectChatSummary {
   'read_by_them_up_to' : [] | [MessageIndex],
@@ -186,9 +189,12 @@ export interface DirectReactionAddedNotification {
   'reaction' : string,
 }
 export type EventIndex = number;
-export interface EventResult {
-  'timestamp' : TimestampMillis,
-  'index' : EventIndex,
+export type EventsTimeToLiveUpdate = { 'NoChange' : null } |
+  { 'SetToNone' : null } |
+  { 'SetToSome' : Milliseconds };
+export interface EventsTimeToLiveUpdated {
+  'new_ttl' : [] | [Milliseconds],
+  'updated_by' : UserId,
 }
 export type FailedCryptoTransaction = { 'NNS' : NnsFailedCryptoTransaction } |
   { 'SNS' : SnsFailedCryptoTransaction };
@@ -495,6 +501,7 @@ export interface MessageEventWrapper {
   'timestamp' : TimestampMillis,
   'index' : EventIndex,
   'correlation_id' : bigint,
+  'expires_at' : [] | [TimestampMillis],
 }
 export type MessageId = bigint;
 export type MessageIndex = number;
@@ -518,7 +525,7 @@ export type Milliseconds = bigint;
 export interface NnsCompletedCryptoTransaction {
   'to' : NnsCryptoAccount,
   'fee' : Tokens,
-  'created' : TimestampMillis,
+  'created' : TimestampNanos,
   'token' : Cryptocurrency,
   'transaction_hash' : TransactionHash,
   'block_index' : BlockIndex,
@@ -531,7 +538,7 @@ export type NnsCryptoAccount = { 'Mint' : null } |
 export interface NnsFailedCryptoTransaction {
   'to' : NnsCryptoAccount,
   'fee' : Tokens,
-  'created' : TimestampMillis,
+  'created' : TimestampNanos,
   'token' : Cryptocurrency,
   'transaction_hash' : TransactionHash,
   'from' : NnsCryptoAccount,
@@ -679,6 +686,11 @@ export interface PublicGroupSummary {
   'participant_count' : number,
   'latest_message' : [] | [MessageEventWrapper],
 }
+export interface PushEventResult {
+  'timestamp' : TimestampMillis,
+  'index' : EventIndex,
+  'expires_at' : [] | [TimestampMillis],
+}
 export type RegistrationFee = { 'ICP' : ICPRegistrationFee } |
   { 'Cycles' : CyclesRegistrationFee };
 export interface ReplyContext {
@@ -700,7 +712,7 @@ export type SnsAccount = { 'Mint' : null } |
 export interface SnsCompletedCryptoTransaction {
   'to' : SnsAccount,
   'fee' : Tokens,
-  'created' : TimestampMillis,
+  'created' : TimestampNanos,
   'token' : Cryptocurrency,
   'transaction_hash' : TransactionHash,
   'block_index' : BlockIndex,
@@ -711,7 +723,7 @@ export interface SnsCompletedCryptoTransaction {
 export interface SnsFailedCryptoTransaction {
   'to' : SnsAccount,
   'fee' : Tokens,
-  'created' : TimestampMillis,
+  'created' : TimestampNanos,
   'token' : Cryptocurrency,
   'transaction_hash' : TransactionHash,
   'from' : SnsAccount,

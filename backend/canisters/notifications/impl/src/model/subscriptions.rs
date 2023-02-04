@@ -11,10 +11,6 @@ pub struct Subscriptions {
 }
 
 impl Subscriptions {
-    pub fn recalculate_total(&mut self) {
-        self.total = self.subscriptions.values().map(|s| s.len() as u64).sum();
-    }
-
     pub fn get(&self, user_id: &UserId) -> Option<Vec<SubscriptionInfo>> {
         self.subscriptions.get(user_id).cloned()
     }

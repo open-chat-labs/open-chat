@@ -11,15 +11,23 @@
     export let qrSize: "default" | "smaller" = "default";
     export let token: Cryptocurrency;
 
+    $: account = token === "icp" ? user.cryptoAccount : user.userId;
     $: symbol = cryptoLookup[token].symbol;
 
+    function collapseAccount(account: string) {
+        if (account.length > 23) {
+            return account.slice(0, 10) + "..." + account.slice(account.length - 10);
+        }
+        return account;
+    }    
+
     function copy() {
-        copyToClipboard(user.userId).then((success) => {
+        copyToClipboard(account).then((success) => {
             if (success) {
                 toastStore.showSuccessToast("copiedToClipboard");
             } else {
                 toastStore.showFailureToast("failedToCopyToClipboard", {
-                    values: { account: user.userId },
+                    values: { account },
                 });
             }
         });
@@ -29,13 +37,13 @@
 <div class="account-info">
     <div class="qr-wrapper">
         <div class="qr" class:smaller={qrSize === "smaller"}>
-            <QR text={user.userId} />
+            <QR text={account} />
         </div>
     </div>
     <p>{$_("tokenTransfer.yourAccount", { values: { token: symbol } })}</p>
     <div class="receiver">
         <div class="account">
-            {user.userId}
+            {collapseAccount(account)}
         </div>
         <div class="copy" title={$_("copyToClipboard")} on:click={copy}>
             <ContentCopy size={$iconSize} color={"var(--icon-txt)"} />

@@ -7,12 +7,12 @@ use types::{TimestampMillis, UserId};
 #[derive(Serialize, Deserialize)]
 pub struct LastOnlineDates {
     #[serde(skip, default = "init_map")]
-    map: StableBTreeMap<Memory, Principal, TimestampMillis>,
+    map: StableBTreeMap<Principal, TimestampMillis, Memory>,
 }
 
 impl LastOnlineDates {
     pub fn mark_online(&mut self, user_id: UserId, now: TimestampMillis) {
-        self.map.insert(user_id.into(), now).unwrap();
+        self.map.insert(user_id.into(), now);
     }
 
     pub fn get(&self, user_id: UserId) -> Option<TimestampMillis> {
@@ -20,7 +20,7 @@ impl LastOnlineDates {
     }
 }
 
-fn init_map() -> StableBTreeMap<Memory, Principal, TimestampMillis> {
+fn init_map() -> StableBTreeMap<Principal, TimestampMillis, Memory> {
     let memory = get_last_online_dates_memory();
 
     StableBTreeMap::init(memory)
