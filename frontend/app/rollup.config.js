@@ -18,7 +18,7 @@ import postcss from "rollup-plugin-postcss";
 import { sha256 } from "js-sha256";
 import dotenv from "dotenv";
 import replace from "@rollup/plugin-replace";
-import * as fs from "fs";
+import * as fs from "fs-extra";
 import * as path from "path";
 import * as rimraf from "rimraf";
 import assetHeaders from "./.ic-assets.json";
@@ -77,6 +77,7 @@ if (production && !process.env.ROLLBAR_ACCESS_TOKEN) {
 if (production && !process.env.USERGEEK_APIKEY) {
     throw Error("USERGEEK_APIKEY environment variable not set");
 }
+const WEBPUSH_SERVICE_WORKER_PATH = "_/raw/push_sw.js";
 
 console.log("PROD", production);
 console.log("ENV", env);
@@ -98,35 +99,36 @@ function serve() {
     });
 }
 
+function copyFile(fromPath, toPath, file) {
+    const from = path.join(__dirname, fromPath, file);
+    const to = path.join(__dirname, toPath, file);
+    if (fs.existsSync(from)) {
+        console.log("Copying file -> : ", from, to);
+        fs.copySync(from, to, {
+            recursive: true,
+        });
+    }
+}
+
+function cleanExcept(files) {
+    if (fs.existsSync("_temp")) {
+        rimraf.sync(path.join(__dirname, "_temp"));
+    }
+    fs.mkdirSync("_temp");
+    files.forEach((file) => copyFile("build", "_temp", file));
+    rimraf.sync(path.join(__dirname, "build"));
+    fs.mkdirSync("build");
+    files.forEach((file) => copyFile("_temp", "build", file));
+    rimraf.sync(path.join(__dirname, "_temp"));
+}
+
 // this is a bit ridiculous but there we are ...
 function clean() {
     return {
         name: "clean-build",
         renderStart() {
             console.log("cleaning up the build directory");
-            if (fs.existsSync("_temp")) {
-                rimraf.sync(path.join(__dirname, "_temp"));
-            }
-            fs.mkdirSync("_temp");
-            fs.copyFileSync(
-                path.join(__dirname, "build", "worker.js"),
-                path.join(__dirname, "_temp", "worker.js")
-            );
-            fs.copyFileSync(
-                path.join(__dirname, "build", "worker.js.map"),
-                path.join(__dirname, "_temp", "worker.js.map")
-            );
-            rimraf.sync(path.join(__dirname, "build"));
-            fs.mkdirSync("build");
-            fs.copyFileSync(
-                path.join(__dirname, "_temp", "worker.js"),
-                path.join(__dirname, "build", "worker.js")
-            );
-            fs.copyFileSync(
-                path.join(__dirname, "_temp", "worker.js.map"),
-                path.join(__dirname, "build", "worker.js.map")
-            );
-            rimraf.sync(path.join(__dirname, "_temp"));
+            cleanExcept(["worker.js", "worker.js.map", "_/raw/push_sw.js", "_/raw/push_sw.js.map"]);
             if (version) {
                 fs.writeFileSync("build/version", JSON.stringify({ version }));
             }
@@ -223,6 +225,7 @@ export default {
             "process.env.PUBLIC_TRANSLATE_API_KEY": JSON.stringify(
                 process.env.PUBLIC_TRANSLATE_API_KEY
             ),
+            "process.env.WEBPUSH_SERVICE_WORKER_PATH": WEBPUSH_SERVICE_WORKER_PATH,
         }),
 
         html({

@@ -16,7 +16,6 @@ use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
 
 #[derive(Serialize, Deserialize)]
-#[serde(from = "ChatEventsOld")]
 pub struct ChatEvents {
     chat_id: ChatId,
     chat_type: ChatType,
@@ -29,45 +28,7 @@ pub struct ChatEvents {
     expiring_events: ExpiringEvents,
 }
 
-#[derive(Deserialize)]
-struct ChatEventsOld {
-    chat_id: ChatId,
-    main: ChatEventsListOld,
-    threads: HashMap<MessageIndex, ChatEventsListOld>,
-    metrics: ChatMetrics,
-    per_user_metrics: HashMap<UserId, ChatMetrics>,
-    frozen: bool,
-}
-
-impl From<ChatEventsOld> for ChatEvents {
-    fn from(value: ChatEventsOld) -> Self {
-        let is_direct_chat = matches!(
-            value.main.events.events.first().unwrap().event,
-            ChatEventInternal::DirectChatCreated(_)
-        );
-
-        ChatEvents {
-            chat_id: value.chat_id,
-            chat_type: if is_direct_chat { ChatType::Direct } else { ChatType::Group },
-            main: value.main.into(),
-            threads: value.threads.into_iter().map(|(k, v)| (k, v.into())).collect(),
-            metrics: value.metrics,
-            per_user_metrics: value.per_user_metrics,
-            frozen: value.frozen,
-            events_ttl: Timestamped::default(),
-            expiring_events: ExpiringEvents::default(),
-        }
-    }
-}
-
 impl ChatEvents {
-    pub fn fix_icp_transactions(&mut self) {
-        self.main.fix_icp_transactions();
-        for thread_events in self.threads.values_mut() {
-            thread_events.fix_icp_transactions();
-        }
-    }
-
     pub fn new_direct_chat(them: UserId, events_ttl: Option<Milliseconds>, now: TimestampMillis) -> ChatEvents {
         let mut events = ChatEvents {
             chat_id: them.into(),

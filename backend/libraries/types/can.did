@@ -1249,8 +1249,7 @@ type PrizeContent =
 
 type PrizeWinnerContent =
     record {
-        token: Cryptocurrency;
         winner: UserId;
-        amount: Tokens;
+        transaction: CompletedCryptoTransaction;
         prize_message: MessageIndex;
     };

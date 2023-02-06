@@ -93,6 +93,7 @@
         "intl-tel-input": "^17.0.16",
         "md5": "^2.3.0",
         "openchat-client": "*",
+        "openchat-push": "*",
         "peerjs": "^1.3.2",
         "rollbar": "^2.24.1",
         "sirv-cli": "^1.0.14",

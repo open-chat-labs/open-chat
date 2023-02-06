@@ -18,6 +18,7 @@
     "openchat-agent",
     "openchat-shared",
     "openchat-worker",
+    "openchat-push",
     "openchat-sw"
   ],
   "devDependencies": {
