@@ -35,6 +35,7 @@ async fn send_prizes_impl() {
 }
 
 async fn send_next_prize() -> bool {
+    // 1. Try to read the ledger_canister_id and bot_canister_id from runtime state
     let (ledger_canister_id, bot_canister_id) = match read_state(|state| {
         state
             .data
@@ -49,6 +50,7 @@ async fn send_next_prize() -> bool {
         }
     };
 
+    // 2. Call the ledger canister to get the balance
     let balance = match get_balance(ledger_canister_id, bot_canister_id).await {
         Ok(b) => b,
         Err(error_message) => {
@@ -57,6 +59,7 @@ async fn send_next_prize() -> bool {
         }
     };
 
+    // 3. Read a bunch of data from the runtime state, pick a random group and prize
     let (group, prize, token, now_nanos, end_date, bot_name) = match mutate_state(|state| {
         if let Some(group) = state.pick_random_group() {
             if let Some(prize_data) = &mut state.data.prize_data {
@@ -85,8 +88,10 @@ async fn send_next_prize() -> bool {
         None => return false,
     };
 
+    // 4. Transfer the prize funds to the group
+    let amount = prize.iter().sum::<u64>() + (token.fee() as u64) * (prize.len() as u64);
     let completed_transaction =
-        match transfer_prize_funds_to_group(ledger_canister_id, token, group, prize.iter().sum(), now_nanos).await {
+        match transfer_prize_funds_to_group(ledger_canister_id, token, group, amount, now_nanos).await {
             Ok(t) => t,
             Err(error_message) => {
                 error!(
@@ -99,8 +104,10 @@ async fn send_next_prize() -> bool {
             }
         };
 
+    // 5. Generate a random MessageId
     let new_message_id = MessageId::generate(|| mutate_state(|state| state.env.random_u32()));
 
+    // 6. Send the prize message to the group
     if let Err(error_message) =
         send_prize_message_to_group(group, completed_transaction, prize, new_message_id, end_date, bot_name).await
     {
