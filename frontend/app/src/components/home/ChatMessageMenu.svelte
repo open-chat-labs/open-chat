@@ -154,8 +154,8 @@
     }
 
     function translateMessage() {
-        if ($storageStore.byteLimit === 0) {
-            dispatch("upgrade", "premium");
+        if (!client.currentUserIsDiamond()) {
+            dispatch("upgrade");
         } else {
             if (msg.content.kind === "text_content") {
                 const params = new URLSearchParams();

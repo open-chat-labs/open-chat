@@ -29,7 +29,6 @@ import {
     getFirstUnreadMention,
     getMembersString,
     getMessageContent,
-    getStorageRequiredForMessage,
     groupBySender,
     groupChatFromCandidate,
     groupEvents,
@@ -174,8 +173,11 @@ import { findLast, groupBy, groupWhile, toRecord2 } from "./utils/list";
 import {
     audioRecordingMimeType,
     containsSocialVideoLink,
+    DIAMOND_MAX_SIZES,
     fillMessage,
+    FREE_MAX_SIZES,
     isSocialVideoLink,
+    MaxMediaSizes,
     messageContentFromFile,
     twitterLinkRegex,
     youtubeRegex,
@@ -200,7 +202,6 @@ import {
     ThreadClosed,
     ThreadMessagesLoaded,
     ThreadSelected,
-    UpgradeRequired,
 } from "./events";
 import { LiveState } from "./liveState";
 import { getTypingString } from "./utils/chat";
@@ -290,6 +291,7 @@ import {
     PrizeContent,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
+import { t } from "svelte-i18n";
 
 const UPGRADE_POLL_INTERVAL = 1000;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -501,10 +503,23 @@ export class OpenChat extends EventTarget {
         this.api.getAllCachedUsers().then((users) => userStore.set(users));
     }
 
-    isDiamondUser(): boolean {
-        // TODO replace this when we merge with the diamond branch
-        return this._liveState.remainingStorage > 0;
+    currentUserIsDiamond(): boolean {
+        return true;
+        // TODO - how is this defined?
         // return this.user.premiumUntil !== undefined && this.user.premiumUntil > Date.now();
+    }
+
+    userIsDiamond(userId: string): boolean {
+        const user = this._liveState.userStore[userId];
+        if (user === undefined || user.kind === "bot") return false;
+
+        if (userId === this.user.userId) return this.currentUserIsDiamond();
+
+        return user.diamond;
+    }
+
+    maxMediaSizes(): MaxMediaSizes {
+        return this.currentUserIsDiamond() ? DIAMOND_MAX_SIZES : FREE_MAX_SIZES;
     }
 
     onCreatedUser(user: CreatedUser): void {
@@ -1056,7 +1071,6 @@ export class OpenChat extends EventTarget {
     private createMessage = createMessage;
     private findMessageById = findMessageById;
     private getMessageContent = getMessageContent;
-    private getStorageRequiredForMessage = getStorageRequiredForMessage;
     canForward = canForward;
     containsReaction = containsReaction;
     groupEvents = groupEvents;
@@ -1626,7 +1640,9 @@ export class OpenChat extends EventTarget {
 
     clearSelectedChat = clearSelectedChat;
     private mergeKeepingOnlyChanged = mergeKeepingOnlyChanged;
-    messageContentFromFile = messageContentFromFile;
+    messageContentFromFile(file: File): Promise<MessageContent> {
+        return messageContentFromFile(file, this.currentUserIsDiamond());
+    }
     formatFileSize = formatFileSize;
 
     havePermissionsChanged(p1: GroupPermissions, p2: GroupPermissions): boolean {
@@ -2270,12 +2286,6 @@ export class OpenChat extends EventTarget {
         const localKey = this.localMessagesKey(chatId, threadRootMessageIndex);
 
         if (textContent || fileToAttach) {
-            const storageRequired = this.getStorageRequiredForMessage(fileToAttach);
-            if (this._liveState.remainingStorage < storageRequired) {
-                this.dispatchEvent(new UpgradeRequired("explain"));
-                return;
-            }
-
             const [nextEventIndex, nextMessageIndex] =
                 threadRootMessageIndex !== undefined
                     ? nextEventAndMessageIndexesForThread(currentEvents)

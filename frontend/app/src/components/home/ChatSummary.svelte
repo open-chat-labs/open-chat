@@ -47,9 +47,10 @@
 
     function normaliseChatSummary(now: number, chatSummary: ChatSummary, typing: TypersByKey) {
         if (chatSummary.kind === "direct_chat") {
+            const them = $userStore[chatSummary.them];
             return {
-                name: $userStore[chatSummary.them]?.username,
-                avatarUrl: client.userAvatarUrl($userStore[chatSummary.them]),
+                name: `${them?.username}  ${them?.diamond ? "💎" : ""}`,
+                avatarUrl: client.userAvatarUrl(them),
                 userId: chatSummary.them,
                 typing: client.getTypingString($_, $userStore, chatSummary.chatId, typing),
             };
@@ -189,7 +190,8 @@
     $: displayDate = client.getDisplayDate(chatSummary);
     $: blocked = chatSummary.kind === "direct_chat" && $blockedUsers.has(chatSummary.them);
     $: readonly = client.isChatReadOnly(chatSummary.chatId);
-    $: canDelete = (chatSummary.kind === "direct_chat" && chatSummary.latestMessage === undefined) ||
+    $: canDelete =
+        (chatSummary.kind === "direct_chat" && chatSummary.latestMessage === undefined) ||
         (chatSummary.kind === "group_chat" && chatSummary.myRole === "previewer");
     $: pinned = $pinnedChatsStore.includes(chatSummary.chatId);
     $: muted = chatSummary.notificationsMuted;
@@ -217,7 +219,7 @@
                 url={chat.avatarUrl}
                 showStatus={true}
                 userId={chat.userId}
-                size={AvatarSize.Small} />
+                size={AvatarSize.Default} />
         </div>
         <div class="details" class:rtl={$rtlStore}>
             <div class="name-date">

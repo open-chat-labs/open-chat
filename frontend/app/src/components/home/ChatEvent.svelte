@@ -66,6 +66,7 @@
             username: user.username,
             updated: BigInt(0),
             suspended: false,
+            diamond: false,
         };
     }
 

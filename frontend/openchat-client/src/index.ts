@@ -9,7 +9,7 @@ export { FilteredProposals } from "./stores/filteredProposals";
 export { MessageReadState } from "./stores/markRead";
 export { TypersByKey } from "./stores/typing";
 export { immutableStore } from "./stores/immutable";
-export { Dimensions, MAX_AUDIO_SIZE } from "./utils/media";
+export { Dimensions } from "./utils/media";
 export { MessageFormatter } from "./utils/i18n";
 export { createMapStore } from "./stores/mapStore";
 export { createSetStore } from "./stores/setStore";

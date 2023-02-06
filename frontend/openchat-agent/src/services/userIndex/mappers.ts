@@ -18,7 +18,7 @@ import {
     SuspendUserResponse,
     UnsuspendUserResponse,
     SuspensionDetails,
-    SuspensionAction
+    SuspensionAction,
 } from "openchat-shared";
 import type {
     ApiCheckUsernameResponse,
@@ -77,6 +77,7 @@ export function partialUserSummary(
         })),
         updated: timestamp,
         suspended: candid.suspended,
+        diamond: true,
     };
 }
 
@@ -91,6 +92,7 @@ export function userSummary(candid: ApiUserSummary, timestamp: bigint): UserSumm
         })),
         updated: timestamp,
         suspended: candid.suspended,
+        diamond: true,
     };
 }
 
@@ -235,7 +237,7 @@ export function upgradeStorageResponse(candid: ApiUpgradeStorageResponse): Upgra
 
 export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUserResponse {
     if ("Success" in candid) {
-        const r = candid.Success
+        const r = candid.Success;
         console.log("User: ", r);
         const version = r.wasm_version;
         return {
@@ -256,6 +258,8 @@ export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUser
             isSuperAdmin: r.is_super_admin,
             suspensionDetails: optional(r.suspension_details, suspensionDetails),
             isSuspectedBot: r.is_suspected_bot,
+            premiumUntil: undefined,
+            // premiumUntil: Date.now() + 1000 * 60 * 60 * 24 * 31, // TODO - fill in when we have this
         };
     }
 

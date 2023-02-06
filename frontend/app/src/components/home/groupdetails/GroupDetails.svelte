@@ -105,7 +105,7 @@
             open={$groupInfoOpen}
             headerText={$_("group.groupInfo")}>
             <div class="sub-section photo">
-                <Avatar url={avatarSrc} size={AvatarSize.ExtraLarge} />
+                <Avatar url={avatarSrc} size={AvatarSize.Large} />
 
                 <h3 class="group-name">{chat.name}</h3>
                 <p class="members">

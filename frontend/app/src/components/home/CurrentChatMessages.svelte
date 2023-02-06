@@ -33,7 +33,6 @@
         LoadedMessageWindow,
         LoadedPreviousMessages,
         SentMessage,
-        UpgradeRequired,
         FailedMessages,
     } from "openchat-client";
     import { pop } from "../../utils/transition";
@@ -182,9 +181,6 @@
         }
         if (ev instanceof SentMessage) {
             afterSendMessage(ev.detail);
-        }
-        if (ev instanceof UpgradeRequired) {
-            dispatch("upgrade", ev.detail);
         }
     }
 
@@ -700,7 +696,7 @@
                 <Avatar
                     url={client.userAvatarUrl($userStore[chat.them])}
                     userId={chat.them}
-                    size={AvatarSize.ExtraLarge} />
+                    size={AvatarSize.Large} />
             </div>
         {/if}
     {/if}

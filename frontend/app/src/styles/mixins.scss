@@ -482,3 +482,10 @@ $shadow-level-3: 2px 6px 12px 0 rgba(25, 25, 25, 0.55);
     overflow: hidden;
     text-overflow: ellipsis;
 }
+
+@mixin diamond() {
+    &::after {
+        content: "💎";
+        margin-inline-start: 5px;
+    }
+}

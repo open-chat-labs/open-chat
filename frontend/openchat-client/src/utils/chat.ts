@@ -668,25 +668,6 @@ export function groupChatFromCandidate(
     };
 }
 
-export function getStorageRequiredForMessage(content: MessageContent | undefined): number {
-    if (content === undefined) return 0;
-
-    switch (content.kind) {
-        case "audio_content":
-        case "file_content":
-        case "image_content":
-            return content.blobData?.length ?? 0;
-        case "video_content":
-            return (
-                (content.videoData.blobData?.length ?? 0) +
-                (content.imageData.blobData?.length ?? 0)
-            );
-
-        default:
-            return 0;
-    }
-}
-
 function updatePollContent(content: PollContent, votes: LocalPollVote[]): PollContent {
     for (const vote of votes) {
         content = {

@@ -31,9 +31,12 @@
 <SectionHeader border={false}>
     <div class="current-user" class:rtl={$rtlStore} on:click={() => dispatch("profile")}>
         <div class="avatar">
-            <Avatar url={client.userAvatarUrl(user)} userId={user.userId} size={AvatarSize.Small} />
+            <Avatar
+                url={client.userAvatarUrl(user)}
+                userId={user.userId}
+                size={AvatarSize.Default} />
         </div>
-        <h4 class="name">{user.username}</h4>
+        <h4 class:diamond={user.diamond} class="name">{user.username}</h4>
     </div>
     <span class="menu">
         <MenuIcon>
@@ -115,5 +118,9 @@
 
     .menu {
         cursor: pointer;
+    }
+
+    .diamond {
+        @include diamond();
     }
 </style>

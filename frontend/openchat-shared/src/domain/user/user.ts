@@ -15,6 +15,7 @@ export type UserCommon = DataContent & {
     userId: string;
     updated: bigint;
     suspended: boolean;
+    diamond: boolean;
 };
 
 export type UserSummary = UserCommon & {
@@ -61,12 +62,10 @@ export enum UserStatus {
 }
 
 export enum AvatarSize {
-    Miniscule,
     Tiny,
     Small,
-    Medium,
+    Default,
     Large,
-    ExtraLarge,
 }
 
 export type CreateChallengeResponse = Challenge | Throttled;
@@ -115,13 +114,14 @@ export type CreatedUser = {
     isSuperAdmin: boolean;
     suspensionDetails: SuspensionDetails | undefined;
     isSuspectedBot: boolean;
+    premiumUntil?: number;
 };
 
 export type SuspensionDetails = {
-    reason: string,
-    action: SuspensionAction,
-    suspendedBy: string,
-}
+    reason: string;
+    action: SuspensionAction;
+    suspendedBy: string;
+};
 
 export type SuspensionAction = UnsuspendAction | DeleteAction;
 
@@ -214,8 +214,16 @@ export type MigrateUserPrincipalResponse =
     | "internal_error"
     | "migration_not_initialized";
 
-export type SuspendUserResponse = "success" | "user_not_found" | "user_already_suspended" | "internal_error";
+export type SuspendUserResponse =
+    | "success"
+    | "user_not_found"
+    | "user_already_suspended"
+    | "internal_error";
 
-export type UnsuspendUserResponse = "success" | "user_not_found" | "user_not_suspended" | "internal_error";
+export type UnsuspendUserResponse =
+    | "success"
+    | "user_not_found"
+    | "user_not_suspended"
+    | "internal_error";
 
 export type MarkSuspectedBotResponse = "success";

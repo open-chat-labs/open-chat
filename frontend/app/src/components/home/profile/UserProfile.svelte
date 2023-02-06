@@ -179,7 +179,7 @@
                     <Avatar
                         url={client.userAvatarUrl(user)}
                         userId={user.userId}
-                        size={AvatarSize.ExtraLarge} />
+                        size={AvatarSize.Large} />
                 {:else}
                     <EditableAvatar
                         overlayIcon={true}
@@ -310,32 +310,13 @@
                 on:toggle={storageSectionOpen.toggle}
                 open={$storageSectionOpen}
                 headerText={$_("storage")}>
-                {#if $storageStore.byteLimit === 0}
-                    <p class="para">
-                        {$_("noStorageAdvice")}
-                    </p>
-                    <p class="para last">
-                        {$_("chooseUpgrade")}
+                <StorageUsage />
 
-                        <LinkButton underline={"always"} on:click={whySms}>
-                            {$_("tellMeMore")}
-                        </LinkButton>
-                    </p>
+                {#if !client.currentUserIsDiamond()}
                     <ButtonGroup align={"fill"}>
-                        <Button on:click={() => dispatch("upgrade", "sms")} small
-                            >{$_("upgradeBySMS")}</Button>
-                        <Button on:click={() => dispatch("upgrade", "icp")} small
-                            >{$_("upgradeByTransfer")}</Button>
+                        <Button on:click={() => dispatch("upgrade")} small
+                            >{$_("upgrade.button")}</Button>
                     </ButtonGroup>
-                {:else}
-                    <StorageUsage />
-                    {#if $storageStore.byteLimit < ONE_GB}
-                        <p class="para">{$_("chooseTransfer")}</p>
-                        <div class="full-width-btn">
-                            <Button on:click={() => dispatch("upgrade", "icp")} fill={true} small
-                                >{$_("upgradeStorage")}</Button>
-                        </div>
-                    {/if}
                 {/if}
             </CollapsibleCard>
         </div>

@@ -4,7 +4,7 @@
     import { mobileWidth } from "../../stores/screenDimensions";
     import CollapsibleCard from "../CollapsibleCard.svelte";
     import HashLinkTarget from "./HashLinkTarget.svelte";
-    import { copyToClipboard, copyUrl, scrollToSection } from "../../utils/urls";
+    import { copyToClipboard, scrollToSection } from "../../utils/urls";
     import ZoomableImage from "./ZoomableImage.svelte";
     import ExternalLink from "./ExternalLink.svelte";
     import HashLink from "./HashLink.svelte";
@@ -23,7 +23,11 @@
     }
 
     function onCopyUrl(ev: CustomEvent<string>): void {
-        copyToClipboard(`${window.location.origin}/#${$location}?section=${ev.detail}`);
+        copyUrl(ev.detail);
+    }
+
+    function copyUrl(section: string): void {
+        copyToClipboard(`${window.location.origin}/#${$location}?section=${section}`);
     }
 
     $: {

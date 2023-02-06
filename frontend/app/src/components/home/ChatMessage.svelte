@@ -358,7 +358,7 @@
                         <Avatar
                             url={client.userAvatarUrl(sender)}
                             userId={msg.sender}
-                            size={$mobileWidth ? AvatarSize.Tiny : AvatarSize.Small} />
+                            size={$mobileWidth ? AvatarSize.Small : AvatarSize.Default} />
                     </div>
                 {/if}
             </div>
@@ -390,7 +390,13 @@
             {#if first && !isProposal && !isPrize}
                 <div class="sender" class:fill class:rtl={$rtlStore}>
                     <Link underline={"never"} on:click={openUserProfile}>
-                        <h4 class="username" class:fill class:crypto>{username}</h4>
+                        <h4
+                            class="username"
+                            class:fill
+                            class:crypto
+                            class:diamond={sender?.diamond}>
+                            {username}
+                        </h4>
                     </Link>
                     {#if senderTyping}
                         <span class="typing">
@@ -507,6 +513,7 @@
                     on:forward
                     on:reply={reply}
                     on:retrySend
+                    on:upgrade
                     on:deleteFailedMessage
                     on:replyPrivately={replyPrivately}
                     on:editMessage={editMessage} />
@@ -722,6 +729,10 @@
             &.fill,
             &.crypto {
                 color: #fff;
+            }
+
+            &.diamond {
+                @include diamond();
             }
         }
 

@@ -8,8 +8,7 @@
 
 <style type="text/scss">
     .error {
-        @include font(bold, normal, fs-100);
-        text-transform: lowercase;
+        @include font(bold, normal, fs-80);
         color: var(--menu-warn);
         margin-bottom: $sp3;
     }

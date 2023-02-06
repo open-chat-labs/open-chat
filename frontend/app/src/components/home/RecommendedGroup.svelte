@@ -40,7 +40,7 @@
             <div class="avatar">
                 <Avatar
                     url={client.groupAvatarUrl(group)}
-                    size={$mobileWidth ? AvatarSize.Tiny : AvatarSize.Small} />
+                    size={$mobileWidth ? AvatarSize.Small : AvatarSize.Default} />
             </div>
             <div class="group-title-line">
                 <h3 class="group-name">

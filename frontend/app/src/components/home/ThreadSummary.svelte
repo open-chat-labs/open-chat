@@ -46,7 +46,7 @@
                 <Avatar
                     url={client.userAvatarUrl($userStore[participantId])}
                     userId={participantId}
-                    size={AvatarSize.Miniscule} />
+                    size={AvatarSize.Tiny} />
             {/each}
             {#if threadSummary.participantIds.size > 5}
                 <div class="thread-extra">

@@ -32,7 +32,7 @@
     // let source = "../assets/ckbtc_large.jpeg";
 
     function claim() {
-        if (!client.isDiamondUser()) {
+        if (!client.currentUserIsDiamond()) {
             dispatch("upgrade", "premium");
             return;
         }

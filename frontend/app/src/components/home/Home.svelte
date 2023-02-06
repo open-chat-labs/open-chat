@@ -54,7 +54,6 @@
     import { themeStore } from "../../theme/themes";
     import SuspendedModal from "../SuspendedModal.svelte";
     import NewGroup from "./addgroup/NewGroup.svelte";
-    import Accounts from "./profile/Accounts.svelte";
     import AccountsModal from "./profile/AccountsModal.svelte";
 
     export let logout: () => void;
@@ -102,7 +101,7 @@
     let confirmActionEvent: ConfirmActionEvent | undefined;
     let hotGroups: RemoteData<GroupChatSummary[], string> = { kind: "idle" };
     let joining: GroupChatSummary | undefined = undefined;
-    let upgradeStorage: "explain" | "icp" | "sms" | undefined = undefined;
+    let showUpgrade: boolean = false;
     let share: Share = { title: "", text: "", url: "", files: [] };
     let messageToForward: Message | undefined = undefined;
     let creatingThread = false;
@@ -698,8 +697,8 @@
         });
     }
 
-    function upgrade(ev: CustomEvent<"explain" | "icp" | "sms">) {
-        upgradeStorage = ev.detail;
+    function upgrade() {
+        showUpgrade = true;
     }
 
     function onSelectChat(ev: CustomEvent<string>) {
@@ -965,11 +964,8 @@
 
 <Toast />
 
-{#if upgradeStorage && user}
-    <Upgrade
-        step={upgradeStorage}
-        on:showFaqQuestion={showFaqQuestion}
-        on:cancel={() => (upgradeStorage = undefined)} />
+{#if showUpgrade && user}
+    <Upgrade on:showFaqQuestion={showFaqQuestion} on:cancel={() => (showUpgrade = false)} />
 {/if}
 
 {#if modal !== ModalType.None}
@@ -987,7 +983,7 @@
         {:else if modal === ModalType.Suspended}
             <SuspendedModal on:close={closeModal} />
         {:else if modal === ModalType.NewGroup && candidateGroup !== undefined}
-            <NewGroup {candidateGroup} on:close={closeModal} />
+            <NewGroup on:upgrade={upgrade} {candidateGroup} on:close={closeModal} />
         {:else if modal === ModalType.Wallet}
             <AccountsModal on:close={closeModal} />
         {/if}

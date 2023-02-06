@@ -10,7 +10,7 @@
 
 <div class="search-result" class:first={index === 0} on:click>
     <span class="avatar">
-        <Avatar url={avatarUrl} size={AvatarSize.Small} />
+        <Avatar url={avatarUrl} size={AvatarSize.Default} />
     </span>
     <div class="details">
         <slot />

@@ -1,11 +1,5 @@
 import type { EventWrapper, Message } from "openchat-shared";
 
-export class UpgradeRequired extends CustomEvent<"explain" | "icp" | "sms"> {
-    constructor(mode: "explain" | "icp" | "sms") {
-        super("openchat_event", { detail: mode });
-    }
-}
-
 export class LoadedNewMessages extends CustomEvent<boolean> {
     constructor(newLatestMessage: boolean) {
         super("openchat_event", { detail: newLatestMessage });
