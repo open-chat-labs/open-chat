@@ -61,15 +61,6 @@ type JoinGroupsResponse =
         Success;
     };
 
-type MarkCompletedArgs =
-    record {
-    };
-
-type MarkCompletedResponse =
-    variant {
-        Success;
-    };
-
 type InitArgs =
     record {
         user_index_canister_id: CanisterId;
