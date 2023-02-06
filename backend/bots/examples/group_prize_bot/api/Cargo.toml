@@ -1,0 +1,15 @@
+[package]
+name = "group_prize_bot"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+bot_api = { path = "../../../api" }
+candid = { workspace = true }
+candid_gen = { path = "../../../../libraries/candid_gen" }
+serde = { workspace = true }
+user_canister = { path = "../../../../canisters/user/api" }
+user_index_canister = { path = "../../../../canisters/user_index/api" }
+types = { path = "../../../../libraries/types" }
