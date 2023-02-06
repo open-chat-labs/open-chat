@@ -37,7 +37,7 @@ $IC_ADMIN --use-hsm --slot=0 --key-id=01 --pin=$DFX_HSM_PIN \
               --community_fund_investment_e8s 33333300000000 \
               --min-participant-icp-e8s 100000000 \
               --max-participant-icp-e8s 15000000000000 \
-              --swap-due-timestamp-seconds 1209600 \
+              --swap-due-timestamp-seconds 1678104000 \
               --sns-token-e8s 2500000000000000 \
               --target-swap-canister-id zcdfx-6iaaa-aaaaq-aaagq-cai \
               --neuron-basket-count 5 \
