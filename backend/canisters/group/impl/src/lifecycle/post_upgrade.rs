@@ -13,10 +13,8 @@ use utils::env::canister::CanisterEnv;
 fn post_upgrade(args: Args) {
     let env = Box::new(CanisterEnv::new());
 
-    let (mut data, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>) =
+    let (data, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>) =
         deserialize_from_stable_memory(UPGRADE_BUFFER_SIZE).unwrap();
-
-    data.events.fix_icp_transactions();
 
     canister_logger::init_with_logs(data.test_mode, logs, traces);
 

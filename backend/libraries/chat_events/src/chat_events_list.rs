@@ -1,16 +1,12 @@
 use crate::{ChatEventInternal, EventKey, MessageInternal, ProposalsUpdatedInternal, UpdatedMessageInternal};
-use candid::Principal;
-use ic_ledger_types::{AccountIdentifier, Memo, Timestamp, TransferArgs, DEFAULT_SUBACCOUNT};
 use itertools::Itertools;
-use ledger_utils::calculate_transaction_hash;
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::ops::Deref;
 use types::{
-    nns, sns, ChatEvent, CompletedCryptoTransaction, CryptoTransaction, Cryptocurrency, EventIndex, EventWrapper, Mention,
-    MentionInternal, Message, MessageContentInternal, MessageId, MessageIndex, PollEnded, PollVoteRegistered, ProposalUpdated,
-    ProposalsUpdated, ThreadUpdated, TimestampMillis, UpdatedMessage, UserId,
+    ChatEvent, EventIndex, EventWrapper, Mention, MentionInternal, Message, MessageContentInternal, MessageId, MessageIndex,
+    PollEnded, PollVoteRegistered, ProposalUpdated, ProposalsUpdated, ThreadUpdated, TimestampMillis, UpdatedMessage, UserId,
 };
 
 #[derive(Serialize, Deserialize, Default)]
@@ -55,54 +51,6 @@ impl From<ChatEventsListOld> for ChatEventsList {
 }
 
 impl ChatEventsList {
-    pub fn fix_icp_transactions(&mut self) {
-        for event in self.events_map.values_mut() {
-            if let ChatEventInternal::Message(m) = &mut event.event {
-                if let MessageContentInternal::Crypto(c) = &mut m.content {
-                    if let CryptoTransaction::Completed(CompletedCryptoTransaction::SNS(t)) = &c.transfer {
-                        if t.token == Cryptocurrency::InternetComputer {
-                            let memo = t.memo.unwrap_or(Memo(0));
-                            let from = get_account_identifier(&t.from);
-                            let to = get_account_identifier(&t.to);
-                            let transfer_args = TransferArgs {
-                                memo,
-                                amount: t.amount,
-                                fee: t.fee,
-                                from_subaccount: None,
-                                to,
-                                created_at_time: Some(Timestamp {
-                                    timestamp_nanos: t.created,
-                                }),
-                            };
-                            let transaction_hash = calculate_transaction_hash(m.sender.into(), &transfer_args);
-                            c.transfer =
-                                CryptoTransaction::Completed(CompletedCryptoTransaction::NNS(nns::CompletedCryptoTransaction {
-                                    token: Cryptocurrency::InternetComputer,
-                                    amount: t.amount,
-                                    fee: t.fee,
-                                    from: nns::CryptoAccount::Account(from),
-                                    to: nns::CryptoAccount::Account(to),
-                                    memo,
-                                    created: t.created,
-                                    transaction_hash,
-                                    block_index: t.block_index,
-                                }))
-                        }
-                    }
-                }
-            }
-        }
-
-        fn get_account_identifier(account: &sns::CryptoAccount) -> AccountIdentifier {
-            match account {
-                sns::CryptoAccount::Account(a) => {
-                    AccountIdentifier::new(&Principal::from_slice(a.owner.as_slice()), &DEFAULT_SUBACCOUNT)
-                }
-                _ => panic!(),
-            }
-        }
-    }
-
     pub(crate) fn push_event(
         &mut self,
         event: ChatEventInternal,
