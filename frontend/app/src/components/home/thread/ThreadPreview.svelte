@@ -91,7 +91,7 @@
     <CollapsibleCard on:toggle={() => (open = !open)} {open} headerText={$_("userInfoHeader")}>
         <div slot="titleSlot" class="header">
             <div class="avatar">
-                <Avatar url={chatData.avatarUrl} size={AvatarSize.Small} />
+                <Avatar url={chatData.avatarUrl} size={AvatarSize.Default} />
             </div>
             <div class="details">
                 <h4 class="title">

@@ -101,7 +101,7 @@
             </div>
             <div slot="body" class="body" class:modal>
                 <div class="avatar">
-                    <Avatar url={avatarUrl} {userId} size={AvatarSize.ExtraLarge} />
+                    <Avatar url={avatarUrl} {userId} size={AvatarSize.Large} />
                 </div>
                 <h2>{profile.username}</h2>
                 {#if profile.bio.length > 0}

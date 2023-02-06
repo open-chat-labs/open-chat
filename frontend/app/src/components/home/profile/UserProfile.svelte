@@ -179,7 +179,7 @@
                     <Avatar
                         url={client.userAvatarUrl(user)}
                         userId={user.userId}
-                        size={AvatarSize.ExtraLarge} />
+                        size={AvatarSize.Large} />
                 {:else}
                     <EditableAvatar
                         overlayIcon={true}
@@ -312,7 +312,7 @@
                 headerText={$_("storage")}>
                 <StorageUsage />
 
-                {#if !client.isDiamondUser()}
+                {#if !client.currentUserIsDiamond()}
                     <ButtonGroup align={"fill"}>
                         <Button on:click={() => dispatch("upgrade")} small
                             >{$_("upgrade.button")}</Button>

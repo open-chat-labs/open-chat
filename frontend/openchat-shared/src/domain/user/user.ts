@@ -61,12 +61,10 @@ export enum UserStatus {
 }
 
 export enum AvatarSize {
-    Miniscule,
     Tiny,
     Small,
-    Medium,
+    Default,
     Large,
-    ExtraLarge,
 }
 
 export type CreateChallengeResponse = Challenge | Throttled;

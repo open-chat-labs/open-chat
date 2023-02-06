@@ -189,7 +189,8 @@
     $: displayDate = client.getDisplayDate(chatSummary);
     $: blocked = chatSummary.kind === "direct_chat" && $blockedUsers.has(chatSummary.them);
     $: readonly = client.isChatReadOnly(chatSummary.chatId);
-    $: canDelete = (chatSummary.kind === "direct_chat" && chatSummary.latestMessage === undefined) ||
+    $: canDelete =
+        (chatSummary.kind === "direct_chat" && chatSummary.latestMessage === undefined) ||
         (chatSummary.kind === "group_chat" && chatSummary.myRole === "previewer");
     $: pinned = $pinnedChatsStore.includes(chatSummary.chatId);
     $: muted = chatSummary.notificationsMuted;
@@ -217,7 +218,7 @@
                 url={chat.avatarUrl}
                 showStatus={true}
                 userId={chat.userId}
-                size={AvatarSize.Small} />
+                size={AvatarSize.Default} />
         </div>
         <div class="details" class:rtl={$rtlStore}>
             <div class="name-date">

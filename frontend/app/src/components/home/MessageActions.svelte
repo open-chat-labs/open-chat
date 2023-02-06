@@ -68,7 +68,7 @@
     }
 
     function createPoll() {
-        if (!client.isDiamondUser()) {
+        if (!client.currentUserIsDiamond()) {
             dispatch("upgrade");
         } else {
             dispatch("createPoll");

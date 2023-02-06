@@ -27,11 +27,11 @@
     const dispatch = createEventDispatcher();
 
     type NormalisedChat = {
-        id: string,
-        userId: string | undefined,
-        name: string,
-        avatarUrl: string,
-        description: string,
+        id: string;
+        userId: string | undefined;
+        name: string;
+        avatarUrl: string;
+        description: string;
     };
 
     $: {
@@ -39,9 +39,12 @@
             chats = c;
         });
     }
-    $: chats = undefined as (NormalisedChat[] | undefined);
+    $: chats = undefined as NormalisedChat[] | undefined;
 
-    async function normaliseChatSummary(now: number, chatSummary: ChatSummary): Promise<NormalisedChat> {
+    async function normaliseChatSummary(
+        now: number,
+        chatSummary: ChatSummary
+    ): Promise<NormalisedChat> {
         if (chatSummary.kind === "direct_chat") {
             const description = await buildDirectChatDescription(chatSummary, now);
             return {
@@ -61,8 +64,11 @@
         };
     }
 
-    async function buildDirectChatDescription(chat: DirectChatSummary, now: number): Promise<string> {
-        return await client.getUserStatus(chat.them, now) === UserStatus.Online
+    async function buildDirectChatDescription(
+        chat: DirectChatSummary,
+        now: number
+    ): Promise<string> {
+        return (await client.getUserStatus(chat.them, now)) === UserStatus.Online
             ? $_("onlineNow")
             : $_("offline");
     }
@@ -102,7 +108,10 @@
             {#each chats as chat}
                 <div class="row" class:rtl={$rtlStore} on:click={() => selectChat(chat.id)}>
                     <div class="avatar">
-                        <Avatar url={chat.avatarUrl} userId={chat.userId} size={AvatarSize.Small} />
+                        <Avatar
+                            url={chat.avatarUrl}
+                            userId={chat.userId}
+                            size={AvatarSize.Default} />
                     </div>
                     <div class="details">
                         <div class="name">{chat.name}</div>

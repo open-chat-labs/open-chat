@@ -106,7 +106,7 @@
             showStatus={true}
             userId={chat.userId}
             url={chat.avatarUrl}
-            size={AvatarSize.Small} />
+            size={AvatarSize.Default} />
     </div>
     <div class="chat-details">
         <div class="chat-name" title={chat.name}>

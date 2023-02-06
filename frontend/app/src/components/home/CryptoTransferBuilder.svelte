@@ -52,7 +52,7 @@
             : $cryptoBalance[token];
     $: valid = error === undefined && validAmount && receiver !== undefined && !tokenChanging;
     $: zero = $cryptoBalance[token] <= transferFees && !tokenChanging;
-    $: isDiamond = client.isDiamondUser();
+    $: isDiamond = client.currentUserIsDiamond();
 
     onMount(() => {
         // default the receiver to the other user in a direct chat

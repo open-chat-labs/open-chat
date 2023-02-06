@@ -154,7 +154,7 @@
     }
 
     function translateMessage() {
-        if (!client.isDiamondUser()) {
+        if (!client.currentUserIsDiamond()) {
             dispatch("upgrade");
         } else {
             if (msg.content.kind === "text_content") {

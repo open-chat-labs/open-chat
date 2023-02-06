@@ -502,13 +502,23 @@ export class OpenChat extends EventTarget {
         this.api.getAllCachedUsers().then((users) => userStore.set(users));
     }
 
-    isDiamondUser(): boolean {
+    currentUserIsDiamond(): boolean {
         return true;
         // return this.user.premiumUntil !== undefined && this.user.premiumUntil > Date.now();
     }
 
+    userIsDiamond(userId: string): boolean {
+        const user = this._liveState.userStore[userId];
+        if (user === undefined || user.kind === "bot") return false;
+
+        if (userId === this.user.userId) return this.currentUserIsDiamond();
+
+        // TODO pull some property from the user record
+        return true;
+    }
+
     maxMediaSizes(): MaxMediaSizes {
-        return this.isDiamondUser() ? DIAMOND_MAX_SIZES : FREE_MAX_SIZES;
+        return this.currentUserIsDiamond() ? DIAMOND_MAX_SIZES : FREE_MAX_SIZES;
     }
 
     onCreatedUser(user: CreatedUser): void {
@@ -1630,7 +1640,7 @@ export class OpenChat extends EventTarget {
     clearSelectedChat = clearSelectedChat;
     private mergeKeepingOnlyChanged = mergeKeepingOnlyChanged;
     messageContentFromFile(file: File): Promise<MessageContent> {
-        return messageContentFromFile(file, this.isDiamondUser());
+        return messageContentFromFile(file, this.currentUserIsDiamond());
     }
     formatFileSize = formatFileSize;
 

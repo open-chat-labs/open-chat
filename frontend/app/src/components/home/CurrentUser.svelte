@@ -31,7 +31,10 @@
 <SectionHeader border={false}>
     <div class="current-user" class:rtl={$rtlStore} on:click={() => dispatch("profile")}>
         <div class="avatar">
-            <Avatar url={client.userAvatarUrl(user)} userId={user.userId} size={AvatarSize.Small} />
+            <Avatar
+                url={client.userAvatarUrl(user)}
+                userId={user.userId}
+                size={AvatarSize.Default} />
         </div>
         <h4 class="name">{user.username}</h4>
     </div>

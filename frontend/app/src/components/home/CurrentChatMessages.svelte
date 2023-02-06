@@ -696,7 +696,7 @@
                 <Avatar
                     url={client.userAvatarUrl($userStore[chat.them])}
                     userId={chat.them}
-                    size={AvatarSize.ExtraLarge} />
+                    size={AvatarSize.Large} />
             </div>
         {/if}
     {/if}

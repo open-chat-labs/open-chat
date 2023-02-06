@@ -112,7 +112,7 @@
             blocked={member.memberKind === "blocked_member"}
             userId={member.userId}
             url={client.userAvatarUrl(member)}
-            size={AvatarSize.Small} />
+            size={AvatarSize.Default} />
     </span>
     <div class="details">
         <h4 class:blocked={member.memberKind === "blocked_member"}>

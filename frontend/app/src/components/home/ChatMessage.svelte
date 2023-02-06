@@ -356,7 +356,7 @@
                         <Avatar
                             url={client.userAvatarUrl(sender)}
                             userId={msg.sender}
-                            size={$mobileWidth ? AvatarSize.Tiny : AvatarSize.Small} />
+                            size={$mobileWidth ? AvatarSize.Small : AvatarSize.Default} />
                     </div>
                 {/if}
             </div>

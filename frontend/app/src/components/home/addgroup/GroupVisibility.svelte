@@ -13,7 +13,7 @@
     export let originalGroup: CandidateGroupChat;
     export let editing: boolean;
 
-    let diamond = client.isDiamondUser();
+    let diamond = client.currentUserIsDiamond();
 
     $: canMakePrivate =
         candidateGroup.chatId !== undefined
