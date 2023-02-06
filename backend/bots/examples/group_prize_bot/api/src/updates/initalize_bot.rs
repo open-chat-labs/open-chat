@@ -13,7 +13,6 @@ pub struct Args {
     pub min_claimants_per_message: u32,
     pub max_claimants_per_message: u32,
     pub end_date: TimestampMillis,
-    pub groups: Vec<CanisterId>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

@@ -1,6 +1,6 @@
 {
   "canisters": {
-    "sns1_airdrop": {
+    "group_prize_bot": {
       "type": "rust",
       "candid": "api/can.did",
       "package": "group_prize_bot_impl"
@@ -21,12 +21,6 @@
       "type": "persistent"
     },
     "ic_test": {
-      "providers": [
-        "https://ic0.app/"
-      ],
-      "type": "persistent"
-    },
-    "web_test": {
       "providers": [
         "https://ic0.app/"
       ],
