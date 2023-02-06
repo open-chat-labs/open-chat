@@ -708,7 +708,7 @@
                 <div>The ICP to come from the Community Fund</div>
                 <div>333,333</div>
                 <div>End date of sale (unless maximum ICP raised sooner)</div>
-                <div>6th Feb 2023 at 12:00 (noon) GMT</div>
+                <div>6th March 2023 at 12:00 (noon) GMT</div>
                 <div>Minimum number of buyers</div>
                 <div>100</div>
                 <div>Minimum ICP per buyer</div>
