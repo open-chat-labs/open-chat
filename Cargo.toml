@@ -122,6 +122,7 @@ serde = "1.0.145"
 serde_bytes = "0.11.7"
 serde_cbor = "0.11.2"
 serde_json = "1.0.86"
+serde_repr = "0.1.10"
 sha2 = "0.10.6"
 serializer = { git = "https://github.com/open-ic/ic-utils", rev = "2328657cbb1023fb251ee7faca4f4d313f25755f" }
 syn = "1.0.102"

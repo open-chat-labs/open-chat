@@ -11,5 +11,5 @@ candid_gen = { path = "../../../libraries/candid_gen" }
 human_readable = { path = "../../../libraries/human_readable" }
 ic-ledger-types = { workspace = true }
 serde = { workspace = true }
-serde_bytes = "0.11"
+serde_bytes = { workspace = true }
 types = { path = "../../../libraries/types" }

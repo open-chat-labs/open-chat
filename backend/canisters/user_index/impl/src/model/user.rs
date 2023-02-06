@@ -1,11 +1,12 @@
 use crate::model::account_billing::AccountBilling;
+use crate::model::diamond_membership_details::DiamondMembershipDetailsInternal;
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use types::{
     CyclesTopUp, Milliseconds, PartialUserSummary, PhoneNumber, RegistrationFee, TimestampMillis, UserId, UserSummary, Version,
 };
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct User {
     pub principal: Principal,
     pub user_id: UserId,
@@ -23,6 +24,8 @@ pub struct User {
     pub referred_by: Option<UserId>,
     pub is_bot: bool,
     pub suspension_details: Option<SuspensionDetails>,
+    #[serde(default)]
+    pub diamond_membership_details: DiamondMembershipDetailsInternal,
 }
 
 impl User {
@@ -86,10 +89,11 @@ impl User {
             referred_by,
             is_bot,
             suspension_details: None,
+            diamond_membership_details: DiamondMembershipDetailsInternal::default(),
         }
     }
 
-    pub fn to_summary(&self) -> UserSummary {
+    pub fn to_summary(&self, now: TimestampMillis) -> UserSummary {
         UserSummary {
             user_id: self.user_id,
             username: self.username.clone(),
@@ -97,16 +101,18 @@ impl User {
             is_bot: self.is_bot,
             suspended: self.suspension_details.is_some(),
             seconds_since_last_online: 0,
+            diamond_member: self.diamond_membership_details.is_active(now),
         }
     }
 
-    pub fn to_partial_summary(&self) -> PartialUserSummary {
+    pub fn to_partial_summary(&self, now: TimestampMillis) -> PartialUserSummary {
         PartialUserSummary {
             user_id: self.user_id,
             username: Some(self.username.clone()),
             avatar_id: self.avatar_id,
             is_bot: self.is_bot,
             suspended: self.suspension_details.is_some(),
+            diamond_member: self.diamond_membership_details.is_active(now),
         }
     }
 }
@@ -153,6 +159,7 @@ impl Default for User {
             referred_by: None,
             is_bot: false,
             suspension_details: None,
+            diamond_membership_details: DiamondMembershipDetailsInternal::default(),
         }
     }
 }
