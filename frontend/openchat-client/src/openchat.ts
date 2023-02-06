@@ -291,7 +291,6 @@ import {
     PrizeContent,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
-import { t } from "svelte-i18n";
 
 const UPGRADE_POLL_INTERVAL = 1000;
 const MARK_ONLINE_INTERVAL = 61 * 1000;

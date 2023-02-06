@@ -24,6 +24,7 @@ const lookup: UserLookup = {
         username: "a",
         updated: BigInt(0),
         suspended: false,
+        diamond: false,
     },
     b: {
         kind: "user",
@@ -31,6 +32,7 @@ const lookup: UserLookup = {
         username: "b",
         updated: BigInt(0),
         suspended: false,
+        diamond: false,
     },
     xyz: {
         kind: "user",
@@ -38,6 +40,7 @@ const lookup: UserLookup = {
         username: "julian_jelfs",
         updated: BigInt(0),
         suspended: false,
+        diamond: false,
     },
     alpha: {
         kind: "user",
@@ -45,6 +48,7 @@ const lookup: UserLookup = {
         username: "alpha",
         updated: BigInt(0),
         suspended: false,
+        diamond: false,
     },
 };
 
@@ -86,7 +90,14 @@ describe("build username list", () => {
 
 describe("compare username", () => {
     function toUser(username: string | undefined): PartialUserSummary {
-        return { kind: "user", userId: "a", username, updated: BigInt(0), suspended: false };
+        return {
+            kind: "user",
+            userId: "a",
+            username,
+            updated: BigInt(0),
+            suspended: false,
+            diamond: false,
+        };
     }
     test("works with non-null usernames", () => {
         const users = ["zulu", "yanky", "foxtrot", "lima"].map(toUser);

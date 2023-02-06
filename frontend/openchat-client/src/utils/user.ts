@@ -1,15 +1,10 @@
 import type { MessageFormatter } from "./i18n";
-import type {
-    PartialUserSummary,
-    UserLookup,
-    UserSummary,
-    PhoneNumber,
-} from "openchat-shared";
+import type { PartialUserSummary, UserLookup, UserSummary, PhoneNumber } from "openchat-shared";
 
 export function formatLastOnlineDate(
     formatter: MessageFormatter,
     now: number,
-    lastOnline: number,
+    lastOnline: number
 ): string {
     const secondsSinceLastOnline = (now - lastOnline) / 1000;
 
@@ -90,6 +85,7 @@ export function nullUser(username: string): UserSummary {
         username,
         updated: BigInt(0),
         suspended: false,
+        diamond: false,
     };
 }
 
