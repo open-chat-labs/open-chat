@@ -1,15 +1,12 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{
-    ChatId, CompletedCryptoTransaction, CryptoContent, Cryptocurrency, EventIndex, GroupReplyContext, MessageId, MessageIndex,
-    TimestampMillis, User, UserId,
-};
+use types::{ChatId, CryptoContent, GroupReplyContext, MessageId, MessageIndex, User, UserId};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
-    pub message_id: MessageId,
     pub group_id: ChatId,
     pub thread_root_message_index: Option<MessageIndex>,
+    pub message_id: MessageId,
     pub recipient: UserId,
     pub content: CryptoContent,
     pub sender_name: String,
@@ -18,27 +15,19 @@ pub struct Args {
     pub correlation_id: u64,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub enum Response {
-    Success(SuccessResult),
-    TextTooLong(u32),
-    RecipientBlocked,
-    CallerNotInGroup(Option<CompletedCryptoTransaction>),
-    CryptocurrencyNotSupported(Cryptocurrency),
-    InvalidRequest(String),
-    TransferFailed(String),
-    TransferCannotBeZero,
-    TransferLimitExceeded(u128),
-    UserSuspended,
-    ChatFrozen,
-    InternalError(String, CompletedCryptoTransaction),
-}
+pub type Response = crate::send_message_with_transfer_to_group::Response;
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub struct SuccessResult {
-    pub event_index: EventIndex,
-    pub message_index: MessageIndex,
-    pub timestamp: TimestampMillis,
-    pub expires_at: Option<TimestampMillis>,
-    pub transfer: CompletedCryptoTransaction,
+impl From<Args> for crate::send_message_with_transfer_to_group::Args {
+    fn from(args: Args) -> Self {
+        crate::send_message_with_transfer_to_group::Args {
+            group_id: args.group_id,
+            thread_root_message_index: args.thread_root_message_index,
+            message_id: args.message_id,
+            content: types::MessageContentInitial::Crypto(args.content),
+            sender_name: args.sender_name,
+            replies_to: args.replies_to,
+            mentioned: args.mentioned,
+            correlation_id: args.correlation_id,
+        }
+    }
 }

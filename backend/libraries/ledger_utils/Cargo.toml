@@ -1,14 +1,18 @@
 [package]
 name = "ledger_utils"
 version = "0.1.0"
-authors = ["Hamish Peebles <hamishpeebles@gmail.com>", "Matt Grogan <megrogan@gmail.com>", "Julian Jelfs <julian.jelfs@gmail.com>"]
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 candid = { workspace = true }
+ic-base-types = { workspace = true }
+ic-icrc1 = { workspace = true }
+ic-icrc1-client = { workspace = true }
+ic-icrc1-client-cdk = { workspace = true }
 ic-ledger-types = { workspace = true }
+ic-ledger-canister-core = { workspace = true }
 serde = { workspace = true }
 serde_cbor = { workspace = true }
 sha2 = { workspace = true }

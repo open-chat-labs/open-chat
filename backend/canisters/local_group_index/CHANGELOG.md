@@ -5,7 +5,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
-## [[2.0.574](https://github.com/open-ic/open-chat/releases/tag/v2.0.574-local_group_index)] - 2022-02-01
+### Changed
+
+- Deserialize using `MemoryManager` within `post_upgrade` ([#3046](https://github.com/open-ic/open-chat/pull/3046))
+
+## [[2.0.574](https://github.com/open-ic/open-chat/releases/tag/v2.0.574-local_group_index)] - 2023-02-01
 
 ### Added
 
@@ -19,7 +23,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Removed code only needed for the previous upgrade ([#3003](https://github.com/open-ic/open-chat/pull/3003))
 
-## [[2.0.557](https://github.com/open-ic/open-chat/releases/tag/v2.0.557-local_group_index)] - 2022-01-23
+## [[2.0.557](https://github.com/open-ic/open-chat/releases/tag/v2.0.557-local_group_index)] - 2023-01-23
 
 ### Changed
 

@@ -7,8 +7,8 @@ use canister_tracing_macros::trace;
 use chat_events::{PushMessageArgs, Reader};
 use ic_cdk_macros::update;
 use types::{
-    BlobReference, CanisterId, DirectMessageNotification, EventWrapper, Message, MessageContent, MessageId, MessageIndex,
-    Notification, ReplyContext, TimestampMillis, UserId,
+    BlobReference, CanisterId, DirectMessageNotification, EventWrapper, Message, MessageContent, MessageContentInitial,
+    MessageId, MessageIndex, Notification, ReplyContext, TimestampMillis, UserId,
 };
 use user_canister::c2c_send_messages::{Response::*, *};
 
@@ -84,7 +84,8 @@ fn c2c_handle_bot_messages(
     };
 
     for message in args.messages.iter() {
-        if let Err(error) = message.content.validate_for_new_message(true, false, now) {
+        let content: MessageContentInitial = message.content.clone().into();
+        if let Err(error) = content.validate_for_new_message(true, false, now) {
             return user_canister::c2c_handle_bot_messages::Response::ContentValidationError(error);
         }
     }
@@ -161,7 +162,8 @@ pub(crate) fn handle_message_impl(
     runtime_state: &mut RuntimeState,
 ) -> Response {
     let replies_to = convert_reply_context(args.replies_to, sender, args.now, runtime_state);
-    let content = args.content.new_content_into_internal();
+    let initial_content: MessageContentInitial = args.content.into();
+    let content = initial_content.new_content_into_internal();
     let files = content.blob_references();
 
     let push_message_args = PushMessageArgs {

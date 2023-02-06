@@ -73,8 +73,11 @@ type ChatMetrics =
         icp_messages: nat64;
         sns1_messages: nat64;
         ckbtc_messages: nat64;
+        chat_messages: nat64;
         deleted_messages: nat64;
         giphy_messages: nat64;
+        prize_messages: nat64;
+        prize_winner_messages: nat64;
         replies: nat64;
         edits: nat64;
         reactions: nat64;
@@ -609,6 +612,21 @@ type InvalidPollReason =
         PollsNotValidForDirectChats;
     };
 
+type MessageContentInitial =
+    variant {
+        Text: TextContent;
+        Image: ImageContent;
+        Video: VideoContent;
+        Audio: AudioContent;
+        File: FileContent;
+        Poll: PollContent;
+        Crypto: CryptoContent;
+        Deleted: DeletedContent;
+        Giphy: GiphyContent;
+        GovernanceProposal: ProposalContent;
+        Prize: PrizeContentInitial;
+    };
+
 type MessageContent =
     variant {
         Text: TextContent;
@@ -621,6 +639,8 @@ type MessageContent =
         Deleted: DeletedContent;
         Giphy: GiphyContent;
         GovernanceProposal: ProposalContent;
+        Prize: PrizeContent;
+        PrizeWinner: PrizeWinnerContent;
     };
 
 type UpdatedMessage =
@@ -953,6 +973,7 @@ type Cryptocurrency =
         InternetComputer;
         SNS1;
         CKBTC;
+        CHAT;
     };
 
 type CryptoTransaction =
@@ -1206,4 +1227,29 @@ type MessageIndexRange =
     record {
         start: MessageIndex;
         end: MessageIndex;
+    };
+
+type PrizeContentInitial =
+    record {
+        prizes: vec Tokens;
+        transfer: CryptoTransaction;
+        end_date: TimestampMillis;
+        caption: opt text;
+    };
+
+type PrizeContent =
+    record {
+        prizes_remaining: nat32;
+        prizes_pending: nat32;
+        winners: vec UserId;
+        token: Cryptocurrency;
+        end_date: TimestampMillis;
+        caption: opt text;
+    };
+
+type PrizeWinnerContent =
+    record {
+        winner: UserId;
+        transaction: CompletedCryptoTransaction;
+        prize_message: MessageIndex;
     };

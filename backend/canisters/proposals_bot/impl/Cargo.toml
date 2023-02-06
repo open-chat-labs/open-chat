@@ -1,7 +1,6 @@
 [package]
 name = "proposals_bot_canister_impl"
 version = "0.1.0"
-authors = ["Hamish Peebles <hamishpeebles@gmail.com>", "Matt Grogan <megrogan@gmail.com>", "Julian Jelfs <julian.jelfs@gmail.com>"]
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -29,7 +28,6 @@ proposals_bot_canister = { path = "../api" }
 serde = { workspace = true }
 serializer = { workspace = true }
 sha2 = { workspace = true }
-stable_memory = { workspace = true }
 tracing = { workspace = true }
 types = { path = "../../../libraries/types" }
 utils = { path = "../../../libraries/utils" }

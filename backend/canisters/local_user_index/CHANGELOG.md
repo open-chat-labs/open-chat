@@ -5,7 +5,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
-## [[2.0.573](https://github.com/open-ic/open-chat/releases/tag/v2.0.573-local_user_index)] - 2022-02-01
+### Changed
+
+- Deserialize using `MemoryManager` within `post_upgrade` ([#3046](https://github.com/open-ic/open-chat/pull/3046))
+
+## [[2.0.573](https://github.com/open-ic/open-chat/releases/tag/v2.0.573-local_user_index)] - 2023-02-01
 
 ### Changed
 
@@ -16,19 +20,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Removed code only needed for the previous upgrade ([#3003](https://github.com/open-ic/open-chat/pull/3003))
 - Remove one time fix to user date created ([#2994](https://github.com/open-ic/open-chat/pull/2994))
 
-## [[2.0.563](https://github.com/open-ic/open-chat/releases/tag/v2.0.563-local_user_index)] - 2022-01-23
+## [[2.0.563](https://github.com/open-ic/open-chat/releases/tag/v2.0.563-local_user_index)] - 2023-01-23
 
 ### Changed
 
 - Simplify code by using shared `UpgradeCanisterWasmArgs` ([#2990](https://github.com/open-ic/open-chat/pull/2990))
 
-## [[2.0.554](https://github.com/open-ic/open-chat/releases/tag/v2.0.554-local_user_index)] - 2022-01-20
+## [[2.0.554](https://github.com/open-ic/open-chat/releases/tag/v2.0.554-local_user_index)] - 2023-01-20
 
 ### Changed
 
 - Use `canister_logger` and `canister_tracing_macros` from [ic-utils](https://github.com/open-ic/ic-utils) ([#2985](https://github.com/open-ic/open-chat/pull/2985))
 
-## [[2.0.545](https://github.com/open-ic/open-chat/releases/tag/v2.0.545-local_user_index)] - 2022-01-08
+## [[2.0.545](https://github.com/open-ic/open-chat/releases/tag/v2.0.545-local_user_index)] - 2023-01-08
 
 ### Added
 
