@@ -15,6 +15,7 @@ export type UserCommon = DataContent & {
     userId: string;
     updated: bigint;
     suspended: boolean;
+    diamond: boolean;
 };
 
 export type UserSummary = UserCommon & {

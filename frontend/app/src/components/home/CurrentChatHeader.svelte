@@ -51,9 +51,10 @@
 
     function normaliseChatSummary(now: number, chatSummary: ChatSummary, typing: TypersByKey) {
         if (chatSummary.kind === "direct_chat") {
+            const them = $userStore[chatSummary.them];
             return {
-                name: $userStore[chatSummary.them]?.username,
-                avatarUrl: client.userAvatarUrl($userStore[chatSummary.them]),
+                name: `${them?.username}  ${them?.diamond ? "💎" : ""}`,
+                avatarUrl: client.userAvatarUrl(them),
                 userId: chatSummary.them,
                 typing: client.getTypingString($_, $userStore, chatSummary.chatId, typing),
             };

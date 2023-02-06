@@ -387,7 +387,13 @@
             {#if first && !isProposal}
                 <div class="sender" class:fill class:rtl={$rtlStore}>
                     <Link underline={"never"} on:click={openUserProfile}>
-                        <h4 class="username" class:fill class:crypto>{username}</h4>
+                        <h4
+                            class="username"
+                            class:fill
+                            class:crypto
+                            class:diamond={sender?.diamond}>
+                            {username}
+                        </h4>
                     </Link>
                     {#if senderTyping}
                         <span class="typing">
@@ -718,6 +724,10 @@
             &.fill,
             &.crypto {
                 color: #fff;
+            }
+
+            &.diamond {
+                @include diamond();
             }
         }
 

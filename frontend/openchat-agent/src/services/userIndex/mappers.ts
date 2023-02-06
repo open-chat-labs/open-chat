@@ -77,6 +77,7 @@ export function partialUserSummary(
         })),
         updated: timestamp,
         suspended: candid.suspended,
+        diamond: true,
     };
 }
 
@@ -91,6 +92,7 @@ export function userSummary(candid: ApiUserSummary, timestamp: bigint): UserSumm
         })),
         updated: timestamp,
         suspended: candid.suspended,
+        diamond: true,
     };
 }
 

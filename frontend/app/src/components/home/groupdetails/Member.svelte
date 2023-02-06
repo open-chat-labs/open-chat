@@ -115,7 +115,7 @@
             size={AvatarSize.Default} />
     </span>
     <div class="details">
-        <h4 class:blocked={member.memberKind === "blocked_member"}>
+        <h4 class:diamond={member.diamond} class:blocked={member.memberKind === "blocked_member"}>
             <FilteredUsername {searchTerm} username={member.username} {me} />
         </h4>
         <span class="role">
@@ -232,6 +232,10 @@
         align-items: center;
         @include ellipsis();
         @include font(medium, normal, fs-100);
+    }
+
+    .diamond {
+        @include diamond();
     }
 
     .role {

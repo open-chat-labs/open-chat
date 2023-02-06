@@ -47,11 +47,12 @@
     ): Promise<NormalisedChat> {
         if (chatSummary.kind === "direct_chat") {
             const description = await buildDirectChatDescription(chatSummary, now);
+            const them = $userStore[chatSummary.them];
             return {
                 id: chatSummary.chatId,
                 userId: chatSummary.them,
-                name: $userStore[chatSummary.them]?.username ?? "",
-                avatarUrl: client.userAvatarUrl($userStore[chatSummary.them]),
+                name: `${them?.username}  ${them?.diamond ? "💎" : ""}`,
+                avatarUrl: client.userAvatarUrl(them),
                 description,
             };
         }

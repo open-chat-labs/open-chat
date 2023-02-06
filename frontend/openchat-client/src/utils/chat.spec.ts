@@ -80,6 +80,7 @@ function createUser(userId: string, username: string): PartialUserSummary {
         username,
         updated: BigInt(0),
         suspended: false,
+        diamond: false,
     };
 }
 

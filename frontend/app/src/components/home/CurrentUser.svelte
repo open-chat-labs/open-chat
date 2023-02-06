@@ -36,7 +36,7 @@
                 userId={user.userId}
                 size={AvatarSize.Default} />
         </div>
-        <h4 class="name">{user.username}</h4>
+        <h4 class:diamond={user.diamond} class="name">{user.username}</h4>
     </div>
     <span class="menu">
         <MenuIcon>
@@ -118,5 +118,9 @@
 
     .menu {
         cursor: pointer;
+    }
+
+    .diamond {
+        @include diamond();
     }
 </style>
