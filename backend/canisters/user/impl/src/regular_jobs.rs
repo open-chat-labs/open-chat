@@ -2,10 +2,10 @@ use crate::group_summaries::{build_summaries_args, SummariesArgs};
 use crate::{can_borrow_state, mutate_state, CachedGroupSummaries, Data};
 use utils::env::Environment;
 use utils::regular_jobs::{RegularJob, RegularJobs};
-use utils::time::{DAY_IN_MS, HOUR_IN_MS, MINUTE_IN_MS};
+use utils::time::{DAY_IN_MS, MINUTE_IN_MS};
 
 pub(crate) fn build() -> RegularJobs<Data> {
-    let check_cycles_balance = RegularJob::new("Check cycles balance", check_cycles_balance, HOUR_IN_MS);
+    let check_cycles_balance = RegularJob::new("Check cycles balance", check_cycles_balance, 5 * MINUTE_IN_MS);
     let aggregate_direct_chat_metrics = RegularJob::new(
         "Aggregate direct chat metrics",
         aggregate_direct_chat_metrics,

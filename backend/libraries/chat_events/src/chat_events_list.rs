@@ -1,20 +1,15 @@
 use crate::{ChatEventInternal, EventKey, MessageInternal, ProposalsUpdatedInternal, UpdatedMessageInternal};
-use candid::Principal;
-use ic_ledger_types::{AccountIdentifier, Memo, Timestamp, TransferArgs, DEFAULT_SUBACCOUNT};
 use itertools::Itertools;
-use ledger_utils::calculate_transaction_hash;
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::{BTreeMap, HashMap, HashSet};
 use std::ops::Deref;
 use types::{
-    nns, sns, ChatEvent, CompletedCryptoTransaction, CryptoTransaction, Cryptocurrency, EventIndex, EventWrapper, Mention,
-    MentionInternal, Message, MessageContentInternal, MessageId, MessageIndex, PollEnded, PollVoteRegistered, ProposalUpdated,
-    ProposalsUpdated, ThreadUpdated, TimestampMillis, UpdatedMessage, UserId,
+    ChatEvent, EventIndex, EventWrapper, Mention, MentionInternal, Message, MessageContentInternal, MessageId, MessageIndex,
+    PollEnded, PollVoteRegistered, ProposalUpdated, ProposalsUpdated, ThreadUpdated, TimestampMillis, UpdatedMessage, UserId,
 };
 
 #[derive(Serialize, Deserialize, Default)]
-#[serde(from = "ChatEventsListOld")]
 pub struct ChatEventsList {
     events_map: BTreeMap<EventIndex, EventWrapper<ChatEventInternal>>,
     message_id_map: HashMap<MessageId, EventIndex>,
@@ -24,85 +19,7 @@ pub struct ChatEventsList {
     latest_message_index: Option<MessageIndex>,
 }
 
-#[derive(Deserialize)]
-pub(crate) struct ChatEventsListOld {
-    pub events: ChatEventsVecOld,
-    pub message_id_map: HashMap<MessageId, EventIndex>,
-    pub message_index_map: BTreeMap<MessageIndex, EventIndex>,
-}
-
-#[derive(Deserialize)]
-pub(crate) struct ChatEventsVecOld {
-    pub events: Vec<EventWrapper<ChatEventInternal>>,
-}
-
-impl From<ChatEventsListOld> for ChatEventsList {
-    fn from(value: ChatEventsListOld) -> Self {
-        let latest_event = value.events.events.last();
-        let latest_event_index = latest_event.map(|e| e.index);
-        let latest_event_timestamp = latest_event.map(|e| e.timestamp);
-        let latest_message_index = value.message_index_map.keys().rev().next().copied();
-
-        ChatEventsList {
-            events_map: value.events.events.into_iter().map(|e| (e.index, e)).collect(),
-            message_id_map: value.message_id_map,
-            message_index_map: value.message_index_map,
-            latest_event_index,
-            latest_event_timestamp,
-            latest_message_index,
-        }
-    }
-}
-
 impl ChatEventsList {
-    pub fn fix_icp_transactions(&mut self) {
-        for event in self.events_map.values_mut() {
-            if let ChatEventInternal::Message(m) = &mut event.event {
-                if let MessageContentInternal::Crypto(c) = &mut m.content {
-                    if let CryptoTransaction::Completed(CompletedCryptoTransaction::SNS(t)) = &c.transfer {
-                        if t.token == Cryptocurrency::InternetComputer {
-                            let memo = t.memo.unwrap_or(Memo(0));
-                            let from = get_account_identifier(&t.from);
-                            let to = get_account_identifier(&t.to);
-                            let transfer_args = TransferArgs {
-                                memo,
-                                amount: t.amount,
-                                fee: t.fee,
-                                from_subaccount: None,
-                                to,
-                                created_at_time: Some(Timestamp {
-                                    timestamp_nanos: t.created,
-                                }),
-                            };
-                            let transaction_hash = calculate_transaction_hash(m.sender.into(), &transfer_args);
-                            c.transfer =
-                                CryptoTransaction::Completed(CompletedCryptoTransaction::NNS(nns::CompletedCryptoTransaction {
-                                    token: Cryptocurrency::InternetComputer,
-                                    amount: t.amount,
-                                    fee: t.fee,
-                                    from: nns::CryptoAccount::Account(from),
-                                    to: nns::CryptoAccount::Account(to),
-                                    memo,
-                                    created: t.created,
-                                    transaction_hash,
-                                    block_index: t.block_index,
-                                }))
-                        }
-                    }
-                }
-            }
-        }
-
-        fn get_account_identifier(account: &sns::CryptoAccount) -> AccountIdentifier {
-            match account {
-                sns::CryptoAccount::Account(a) => {
-                    AccountIdentifier::new(&Principal::from_slice(a.owner.as_slice()), &DEFAULT_SUBACCOUNT)
-                }
-                _ => panic!(),
-            }
-        }
-    }
-
     pub(crate) fn push_event(
         &mut self,
         event: ChatEventInternal,
