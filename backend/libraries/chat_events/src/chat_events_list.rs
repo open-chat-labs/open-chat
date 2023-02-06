@@ -10,7 +10,6 @@ use types::{
 };
 
 #[derive(Serialize, Deserialize, Default)]
-#[serde(from = "ChatEventsListOld")]
 pub struct ChatEventsList {
     events_map: BTreeMap<EventIndex, EventWrapper<ChatEventInternal>>,
     message_id_map: HashMap<MessageId, EventIndex>,
@@ -18,36 +17,6 @@ pub struct ChatEventsList {
     latest_event_index: Option<EventIndex>,
     latest_event_timestamp: Option<TimestampMillis>,
     latest_message_index: Option<MessageIndex>,
-}
-
-#[derive(Deserialize)]
-pub(crate) struct ChatEventsListOld {
-    pub events: ChatEventsVecOld,
-    pub message_id_map: HashMap<MessageId, EventIndex>,
-    pub message_index_map: BTreeMap<MessageIndex, EventIndex>,
-}
-
-#[derive(Deserialize)]
-pub(crate) struct ChatEventsVecOld {
-    pub events: Vec<EventWrapper<ChatEventInternal>>,
-}
-
-impl From<ChatEventsListOld> for ChatEventsList {
-    fn from(value: ChatEventsListOld) -> Self {
-        let latest_event = value.events.events.last();
-        let latest_event_index = latest_event.map(|e| e.index);
-        let latest_event_timestamp = latest_event.map(|e| e.timestamp);
-        let latest_message_index = value.message_index_map.keys().rev().next().copied();
-
-        ChatEventsList {
-            events_map: value.events.events.into_iter().map(|e| (e.index, e)).collect(),
-            message_id_map: value.message_id_map,
-            message_index_map: value.message_index_map,
-            latest_event_index,
-            latest_event_timestamp,
-            latest_message_index,
-        }
-    }
 }
 
 impl ChatEventsList {
