@@ -43,6 +43,16 @@ impl RuntimeState {
             git_commit_id: utils::git::git_commit_id().to_string(),
         }
     }
+
+    pub fn pick_random_group(&mut self) -> Option<CanisterId> {
+        let num_groups = self.data.groups.len();
+        if num_groups == 0 {
+            return None;
+        }
+        let rnd_group_index = self.env.random_u32() as usize % num_groups;
+        let group_vec: Vec<_> = self.data.groups.iter().copied().collect();
+        Some(group_vec[rnd_group_index])
+    }
 }
 
 #[derive(Serialize, Deserialize)]
@@ -53,6 +63,7 @@ struct Data {
     pub test_mode: bool,
     pub username: String,
     pub prize_data: Option<PrizeData>,
+    pub groups: HashSet<CanisterId>,
     pub transactions: Vec<CompletedCryptoTransaction>,
 }
 
@@ -65,6 +76,7 @@ impl Data {
             test_mode,
             username: "PrizeBot".to_string(),
             prize_data: None,
+            groups: HashSet::new(),
             transactions: Vec::new(),
         }
     }
@@ -79,7 +91,6 @@ pub struct PrizeData {
     pub min_claimants_per_message: u32,
     pub max_claimants_per_message: u32,
     pub end_date: TimestampMillis,
-    pub groups: HashSet<CanisterId>,
 }
 
 #[derive(CandidType, Serialize, Debug)]

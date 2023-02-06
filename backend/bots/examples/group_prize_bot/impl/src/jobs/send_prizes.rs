@@ -8,7 +8,7 @@ use types::{
 };
 
 use crate::{mutate_state, read_state, RuntimeState};
-use std::{collections::HashSet, time::Duration};
+use std::time::Duration;
 
 pub(crate) fn start_job(state: &RuntimeState) {
     if let Some(time_until_next_prize) = time_until_next_prize(state) {
@@ -58,23 +58,27 @@ async fn send_next_prize() -> bool {
     };
 
     let (group, prize, token, now_nanos, end_date, bot_name) = match mutate_state(|state| {
-        if let Some(prize_data) = &mut state.data.prize_data {
-            if let Some(prize) = get_next_prize(balance) {
-                let group = choose_group(&prize_data.groups, state.env.random_u32());
-                return Some((
-                    group,
-                    prize,
-                    prize_data.token,
-                    state.env.now_nanos(),
-                    prize_data.end_date,
-                    state.data.username.clone(),
-                ));
+        if let Some(group) = state.pick_random_group() {
+            if let Some(prize_data) = &mut state.data.prize_data {
+                if let Some(prize) = get_next_prize(balance) {
+                    return Some((
+                        group,
+                        prize,
+                        prize_data.token,
+                        state.env.now_nanos(),
+                        prize_data.end_date,
+                        state.data.username.clone(),
+                    ));
+                } else {
+                    error!("No prize");
+                }
             } else {
-                error!("No prize");
+                error!("Not initialized");
             }
         } else {
-            error!("Not initialized");
+            error!("Not a member of any groups");
         }
+
         None
     }) {
         Some(t) => t,
@@ -121,12 +125,6 @@ fn time_until_next_prize(state: &RuntimeState) -> Option<Duration> {
         trace!("Not initialized");
     }
     None
-}
-
-fn choose_group(groups: &HashSet<CanisterId>, random_32: u32) -> CanisterId {
-    let rnd_group_index = random_32 as usize % groups.len();
-    let group_vec: Vec<_> = groups.iter().copied().collect();
-    group_vec[rnd_group_index]
 }
 
 fn get_next_prize(_balance: u64) -> Option<Vec<u64>> {

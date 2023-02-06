@@ -1,5 +1,3 @@
-use std::collections::HashSet;
-
 use crate::guards::caller_is_admin;
 use crate::{mutate_state, read_state, PrizeData};
 use canister_tracing_macros::trace;
@@ -35,7 +33,6 @@ async fn initialize_bot(args: Args) -> Response {
                         min_claimants_per_message: args.min_claimants_per_message,
                         max_claimants_per_message: args.max_claimants_per_message,
                         end_date: args.end_date,
-                        groups: HashSet::from_iter(args.groups),
                     });
                 });
                 Success

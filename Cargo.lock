@@ -2401,6 +2401,8 @@ dependencies = [
  "ic-ledger-types",
  "ic-stable-structures 0.5.0",
  "ledger_utils",
+ "local_user_index_canister",
+ "local_user_index_canister_c2c_client",
  "msgpack",
  "serde",
  "serde_bytes",

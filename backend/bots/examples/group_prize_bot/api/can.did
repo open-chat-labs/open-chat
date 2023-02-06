@@ -12,7 +12,6 @@ type InitializeBotArgs =
         min_claimants_per_message: nat32;
         max_claimants_per_message: nat32;
         end_date: TimestampMillis;   
-        groups: vec CanisterId;
     };
 
 type InitializeBotResponse =
@@ -52,22 +51,12 @@ type SetAvatarResponse =
         AvatarTooBig: FieldTooLongResult;
     };
 
-type AddGroupsArgs =
+type JoinGroupsArgs =
     record {
-        groups: vec CanisterId;
+        group: CanisterId;
     };
 
-type AddGroupsResponse =
-    variant {
-        Success;
-    };
-
-type RemoveGroupsArgs =
-    record {
-        groups: vec CanisterId;
-    };
-
-type RemoveGroupsResponse =
+type JoinGroupsResponse =
     variant {
         Success;
     };
@@ -99,6 +88,5 @@ type Version =
 service: (InitArgs) -> {
     initialize_bot: (InitializeBotArgs) -> (InitializeBotResponse);
     set_avatar: (SetAvatarArgs) -> (SetAvatarResponse);
-    add_groups: (AddGroupsArgs) -> (AddGroupsResponse);
-    remove_groups: (RemoveGroupsArgs) -> (RemoveGroupsResponse);
+    join_group: (JoinGroupsArgs) -> (JoinGroupsResponse);
 }
