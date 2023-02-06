@@ -2,20 +2,20 @@ type CanisterId = principal;
 type Cycles = nat;
 type UserId = principal;
 
-type RegisterBotArgs =
+type InitializeBotArgs =
     record {
         username: text;
         token: Cryptocurrency;
         ledger_canister_id: CanisterId;
-        max_prize_per_messge: nat;
-        min_prize_per_messge: nat;
-        max_individual_prize: nat;
-        min_individual_prize: nat;
+        min_individual_prize: nat64;
+        max_individual_prize: nat64;
+        min_claimants_per_message: nat32;
+        max_claimants_per_message: nat32;
         end_date: TimestampMillis;   
         groups: vec CanisterId;
     };
 
-type RegisterBotResponse =
+type InitializeBotResponse =
     variant {
         Success;
         AlreadyRegistered;
@@ -62,6 +62,16 @@ type AddGroupsResponse =
         Success;
     };
 
+type RemoveGroupsArgs =
+    record {
+        groups: vec CanisterId;
+    };
+
+type RemoveGroupsResponse =
+    variant {
+        Success;
+    };
+
 type MarkCompletedArgs =
     record {
     };
@@ -87,8 +97,8 @@ type Version =
     };
 
 service: (InitArgs) -> {
-    register_bot: (RegisterBotArgs) -> (RegisterBotResponse);
+    initialize_bot: (InitializeBotArgs) -> (InitializeBotResponse);
     set_avatar: (SetAvatarArgs) -> (SetAvatarResponse);
     add_groups: (AddGroupsArgs) -> (AddGroupsResponse);
-    mark_completed: (MarkCompletedArgs) -> (MarkCompletedResponse);
+    remove_groups: (RemoveGroupsArgs) -> (RemoveGroupsResponse);
 }

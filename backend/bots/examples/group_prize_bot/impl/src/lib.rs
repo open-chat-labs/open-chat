@@ -3,10 +3,11 @@ use canister_state_macros::canister_state;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashSet;
-use types::{Avatar, CanisterId, Cycles, TimestampMillis, Timestamped, Version, Cryptocurrency};
+use types::{Avatar, CanisterId, CompletedCryptoTransaction, Cryptocurrency, Cycles, TimestampMillis, Timestamped, Version};
 use utils::env::Environment;
 
 mod guards;
+mod jobs;
 mod lifecycle;
 mod memory;
 mod queries;
@@ -50,20 +51,9 @@ struct Data {
     pub admins: HashSet<Principal>,
     pub avatar: Timestamped<Option<Avatar>>,
     pub test_mode: bool,
-    pub config: Option<PrizeConfig>,
-}
-
-#[derive(Serialize, Deserialize)]
-struct PrizeConfig {
-    pub bot_name: String,
-    pub token: Cryptocurrency,
-    pub ledger_canister_id: CanisterId,
-    pub max_individual_prize: u128,
-    pub min_individual_prize: u128,
-    pub min_claimants_per_message: u32,
-    pub max_claimants_per_message: u32,
-    pub end_date: TimestampMillis,    
-    pub groups: HashSet<CanisterId>,
+    pub username: String,
+    pub prize_data: Option<PrizeData>,
+    pub transactions: Vec<CompletedCryptoTransaction>,
 }
 
 impl Data {
@@ -73,9 +63,23 @@ impl Data {
             admins,
             avatar: Timestamped::default(),
             test_mode,
-            config: None
+            username: "PrizeBot".to_string(),
+            prize_data: None,
+            transactions: Vec::new(),
         }
     }
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct PrizeData {
+    pub token: Cryptocurrency,
+    pub ledger_canister_id: CanisterId,
+    pub max_individual_prize: u64,
+    pub min_individual_prize: u64,
+    pub min_claimants_per_message: u32,
+    pub max_claimants_per_message: u32,
+    pub end_date: TimestampMillis,
+    pub groups: HashSet<CanisterId>,
 }
 
 #[derive(CandidType, Serialize, Debug)]

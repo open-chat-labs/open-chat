@@ -1,8 +1,8 @@
 use crate::lifecycle::init_state;
 use crate::Data;
 use canister_tracing_macros::trace;
-use ic_cdk_macros::init;
 use group_prize_bot::init::Args;
+use ic_cdk_macros::init;
 use tracing::info;
 use utils::env::canister::CanisterEnv;
 

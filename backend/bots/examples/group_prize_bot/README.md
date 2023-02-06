@@ -5,8 +5,4 @@
 
 ### Register bot
 
-`dfx canister call group_prize_bot register_bot '(record { username = "BitcoinBot" })'`
-
-<!-- ### Add reward codes
-
-`dfx canister call group_prize_bot add_user_ids '(record { user_ids = vec { principal "s55qq-oqaaa-aaaaa-aaakq-cai" } })'` -->
+`dfx canister --network=ic_test call group_prize_bot initialize_bot '(record { username = "BitcoinBot", token = "CKBTC", ledger_canister_id = "mxzaz-hqaaa-aaaar-qaada-cai", min_individual_prize = 5000:nat64, max_individual_prize = 500000:nat64, min_claimants_per_message = 20:nat32, max_claimants_per_message = 100:nat32, end_date = 1677258000000:nat64, groups = vec { principal "j4itr-ryaaa-aaaaf-agzpq-cai", principal "4g7vh-qyaaa-aaaaf-ab2iq-cai"} })'`

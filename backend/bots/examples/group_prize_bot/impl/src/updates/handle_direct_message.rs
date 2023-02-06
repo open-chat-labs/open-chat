@@ -11,14 +11,9 @@ fn handle_direct_message(_args: Args) -> Response {
 }
 
 fn handle_message(state: &mut RuntimeState) -> Response {
-    let (bot_name, text) = if let Some(config) = state.data.config {
-        (config.bot_name.clone(), "Keep an eye out for prize messages in public groups - you've got to be quick to claim a prize!".to_string())
-    } else {
-        ("Unknown".to_string(), "The prize bot is not ready yet".to_string())
-    };
-
+    let text = "Keep an eye out for prize messages in public groups - you've got to be quick to claim a prize!".to_string();
     Success(SuccessResult {
-        bot_name,
+        bot_name: state.data.username.clone(),
         messages: vec![BotMessage {
             content: MessageContent::Text(TextContent { text }),
         }],

@@ -2,8 +2,8 @@ use crate::guards::caller_is_admin;
 use crate::updates::set_avatar::Response::*;
 use crate::{mutate_state, RuntimeState};
 use canister_tracing_macros::trace;
-use ic_cdk_macros::update;
 use group_prize_bot::set_avatar::*;
+use ic_cdk_macros::update;
 use types::{CanisterId, FieldTooLongResult, Timestamped, MAX_AVATAR_SIZE};
 
 #[update(guard = "caller_is_admin")]
