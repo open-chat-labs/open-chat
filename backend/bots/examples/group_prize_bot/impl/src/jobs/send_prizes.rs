@@ -90,19 +90,18 @@ async fn send_next_prize() -> bool {
 
     // 4. Transfer the prize funds to the group
     let amount = prize.iter().sum::<u64>() + (token.fee() as u64) * (prize.len() as u64);
-    let completed_transaction =
-        match transfer_prize_funds_to_group(ledger_canister_id, token, group, amount, now_nanos).await {
-            Ok(t) => t,
-            Err(error_message) => {
-                error!(
-                    ?error_message,
-                    ?ledger_canister_id,
-                    ?group,
-                    "Failed to transfer funds to group"
-                );
-                return false;
-            }
-        };
+    let completed_transaction = match transfer_prize_funds_to_group(ledger_canister_id, token, group, amount, now_nanos).await {
+        Ok(t) => t,
+        Err(error_message) => {
+            error!(
+                ?error_message,
+                ?ledger_canister_id,
+                ?group,
+                "Failed to transfer funds to group"
+            );
+            return false;
+        }
+    };
 
     // 5. Generate a random MessageId
     let new_message_id = MessageId::generate(|| mutate_state(|state| state.env.random_u32()));
@@ -215,7 +214,7 @@ async fn send_prize_message_to_group(
         Ok(response) => match response {
             group_canister::send_message::Response::Success(_) => Ok(()),
             group_canister::send_message::Response::CallerNotInGroup => Err("Bot not in group".to_string()),
-            group_canister::send_message::Response::UserSuspended => Err("Bot suspended in group".to_string()),
+            group_canister::send_message::Response::UserSuspended => Err("Bot suspended".to_string()),
             group_canister::send_message::Response::ChatFrozen => Err("Group frozen".to_string()),
             group_canister::send_message::Response::MessageEmpty
             | group_canister::send_message::Response::InvalidPoll(_)
