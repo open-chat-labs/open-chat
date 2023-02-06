@@ -156,9 +156,6 @@ export async function setCachedChatsV2(
         directChats,
         groupChats,
     };
-    const latestMessages = prepareLatestMessagesForCache(
-        (directChats as ChatSummary[]).concat(groupChats)
-    );
 
     const tx = (await db).transaction(["chats_v2", "chat_events"], "readwrite");
     const chatsStore = tx.objectStore("chats_v2");
@@ -166,9 +163,6 @@ export async function setCachedChatsV2(
 
     const promises = [
         chatsStore.put(stateToCache, principal.toString()),
-        ...Object.entries(latestMessages).flatMap(([chatId, message]) => [
-            eventsStore.put(message, createCacheKey(chatId, message.index)),
-        ]),
         ...Object.entries(affectedEvents)
             .flatMap(([chatId, indexes]) => indexes.map((i) => createCacheKey(chatId, i)))
             .map((key) => eventsStore.delete(key)),
@@ -640,20 +634,4 @@ function makeChatSummarySerializable<T extends ChatSummary>(chat: T): T {
         ...chat,
         latestMessage: makeSerialisable(chat.latestMessage, chat.chatId, true),
     };
-}
-
-function prepareLatestMessagesForCache(
-    chats: ChatSummary[]
-): Record<string, EnhancedWrapper<Message>> {
-    const latestMessages: Record<string, EnhancedWrapper<Message>> = {};
-    for (const { chatId, latestMessage } of chats) {
-        if (latestMessage !== undefined) {
-            latestMessages[chatId] = {
-                ...latestMessage,
-                chatId,
-                messageKey: createCacheKey(chatId, latestMessage.event.messageIndex),
-            };
-        }
-    }
-    return latestMessages;
 }
