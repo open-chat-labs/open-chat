@@ -2290,7 +2290,6 @@ dependencies = [
  "serde",
  "serde_bytes",
  "serializer",
- "stable_memory",
  "tracing",
  "types 0.1.0",
  "user_canister",
@@ -7183,16 +7182,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a8f112729512f8e442d81f95a8a7ddf2b7c6b8a1a6f509a95864142b30cab2d3"
 
 [[package]]
-name = "stable_memory"
-version = "0.1.0"
-source = "git+https://github.com/open-ic/ic-utils?rev=2328657cbb1023fb251ee7faca4f4d313f25755f#2328657cbb1023fb251ee7faca4f4d313f25755f"
-dependencies = [
- "ic-cdk",
- "serde",
- "serializer",
-]
-
-[[package]]
 name = "static_assertions"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -8076,7 +8065,6 @@ dependencies = [
  "serde",
  "serde_bytes",
  "serializer",
- "stable_memory",
  "tracing",
  "types 0.1.0",
  "user_canister",
