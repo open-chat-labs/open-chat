@@ -61,13 +61,6 @@ impl From<ChatEventsOld> for ChatEvents {
 }
 
 impl ChatEvents {
-    pub fn fix_icp_transactions(&mut self) {
-        self.main.fix_icp_transactions();
-        for thread_events in self.threads.values_mut() {
-            thread_events.fix_icp_transactions();
-        }
-    }
-
     pub fn new_direct_chat(them: UserId, events_ttl: Option<Milliseconds>, now: TimestampMillis) -> ChatEvents {
         let mut events = ChatEvents {
             chat_id: them.into(),
