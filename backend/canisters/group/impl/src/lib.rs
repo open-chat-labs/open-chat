@@ -238,7 +238,6 @@ struct Data {
     pub user_index_canister_id: CanisterId,
     pub local_user_index_canister_id: CanisterId,
     pub notifications_canister_id: CanisterId,
-    #[serde(default = "init_ledger_canister_ids")]
     pub ledger_canister_ids: HashMap<Cryptocurrency, CanisterId>,
     pub activity_notification_state: ActivityNotificationState,
     pub pinned_messages: Vec<MessageIndex>,
@@ -251,23 +250,6 @@ struct Data {
     pub frozen: Timestamped<Option<FrozenGroupInfo>>,
     pub timer_jobs: TimerJobs<TimerJob>,
     pub date_last_pinned: Option<TimestampMillis>,
-}
-
-fn init_ledger_canister_ids() -> HashMap<Cryptocurrency, CanisterId> {
-    HashMap::from([
-        (
-            Cryptocurrency::InternetComputer,
-            Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap(),
-        ),
-        (
-            Cryptocurrency::SNS1,
-            Principal::from_text("zfcdd-tqaaa-aaaaq-aaaga-cai").unwrap(),
-        ),
-        (
-            Cryptocurrency::CKBTC,
-            Principal::from_text("mxzaz-hqaaa-aaaar-qaada-cai").unwrap(),
-        ),
-    ])
 }
 
 #[allow(clippy::too_many_arguments)]
