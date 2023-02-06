@@ -3,7 +3,6 @@
     import Microphone from "svelte-material-icons/Microphone.svelte";
     import RadioboxMarked from "svelte-material-icons/RadioboxMarked.svelte";
     import { createEventDispatcher, getContext, onMount } from "svelte";
-    import { MAX_AUDIO_SIZE } from "openchat-client";
     import { toastStore } from "../../stores/toast";
     import type { AudioContent, OpenChat } from "openchat-client";
     import { iconSize } from "../../stores/iconSize";
@@ -65,6 +64,7 @@
                 .then((stream) => {
                     recording = true;
                     const recordedChunks: Blob[] = [];
+                    const maxSizes = client.maxMediaSizes();
                     let totalSize = 0;
                     let truncated = false;
                     percentRecorded = 0;
@@ -73,8 +73,8 @@
                     mediaRecorder.addEventListener("dataavailable", (e) => {
                         if (e.data.size > 0) recordedChunks.push(e.data);
                         totalSize += e.data.size;
-                        percentRecorded = (totalSize / MAX_AUDIO_SIZE) * 100;
-                        if (totalSize >= MAX_AUDIO_SIZE) {
+                        percentRecorded = (totalSize / maxSizes.audio) * 100;
+                        if (totalSize >= maxSizes.audio) {
                             truncated = true;
                             stopRecording();
                         }

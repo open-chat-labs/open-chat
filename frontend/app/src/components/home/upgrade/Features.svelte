@@ -26,12 +26,14 @@
     <div class="header free">{$_("upgrade.free")}</div>
     <div class="header diamond">{$_("upgrade.diamond")}</div>
 
-    <Feature
-        diamondInfo={$_("upgrade.maxMessageLength", { values: { number: "4,000" } })}
-        freeInfo={$_("upgrade.maxMessageLength", { values: { number: "1,000" } })}>
+    <Feature>
         <div slot="title">{$_("upgrade.textMessages")}</div>
-        <div slot="free">{$_("upgrade.freeTextMessages")}</div>
-        <div slot="diamond">{$_("upgrade.diamondTextMessages")}</div>
+        <div slot="free">
+            <Check size={"1em"} color={"limegreen"} />
+        </div>
+        <div slot="diamond">
+            <Check size={"1em"} color={"limegreen"} />
+        </div>
     </Feature>
 
     <Feature>
@@ -106,12 +108,8 @@
 
     <Feature>
         <div slot="title">{$_("upgrade.crypto")}</div>
-        <div slot="free">
-            <Minus size={"1em"} color={"var(--menu-warn)"} />
-        </div>
-        <div slot="diamond">
-            <Check size={"1em"} color={"limegreen"} />
-        </div>
+        <div slot="free">{$_("upgrade.chatAndIcp")}</div>
+        <div slot="diamond">{$_("upgrade.allSupportedTokens")}</div>
     </Feature>
 
     <Feature>

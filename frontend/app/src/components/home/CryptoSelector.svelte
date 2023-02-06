@@ -5,8 +5,12 @@
     import { _ } from "svelte-i18n";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import { iconSize } from "stores/iconSize";
+    import { createEventDispatcher } from "svelte";
+
+    const dispatch = createEventDispatcher();
 
     export let token: Cryptocurrency;
+    export let isDiamond: boolean;
 
     let selecting = false;
 
@@ -16,12 +20,18 @@
             symbol: cryptoLookup[t].symbol,
             name: $_(`tokenTransfer.${t}`),
             disabled: cryptoLookup[t].disabled,
+            requiresUpgrade: cryptoLookup[t].diamond && !isDiamond,
         }))
         .filter((token) => !token.disabled);
 
-    function selectToken(symbol: Cryptocurrency) {
-        token = symbol;
+    function selectToken(symbol: Cryptocurrency, requiresUpgrade: boolean) {
         selecting = false;
+
+        if (requiresUpgrade) {
+            dispatch("upgrade");
+        } else {
+            token = symbol;
+        }
     }
 
     function onKeyDown(ev: KeyboardEvent) {
@@ -43,7 +53,10 @@
 {#if selecting}
     <div transition:fade|local={{ duration: 100 }} class="tokens">
         {#each crypto as token}
-            <div class="token" on:click={() => selectToken(token.key)}>
+            <div
+                class:upgrade={token.requiresUpgrade}
+                class="token"
+                on:click={() => selectToken(token.key, token.requiresUpgrade)}>
                 <div class={`icon ${token.key}`} />
                 <div class="name">
                     {token.name}
@@ -51,6 +64,9 @@
                 <div class="symbol">
                     {token.symbol}
                 </div>
+                {#if token.requiresUpgrade}
+                    <div class="upgrade">💎</div>
+                {/if}
             </div>
         {/each}
     </div>
@@ -124,6 +140,11 @@
             &.chat {
                 background-image: url("../assets/spinner.svg");
             }
+        }
+
+        .upgrade {
+            text-align: end;
+            flex: auto;
         }
     }
 </style>

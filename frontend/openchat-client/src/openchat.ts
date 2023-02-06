@@ -173,8 +173,11 @@ import { findLast, groupBy, groupWhile, toRecord2 } from "./utils/list";
 import {
     audioRecordingMimeType,
     containsSocialVideoLink,
+    DIAMOND_MAX_SIZES,
     fillMessage,
+    FREE_MAX_SIZES,
     isSocialVideoLink,
+    MaxMediaSizes,
     messageContentFromFile,
     twitterLinkRegex,
     youtubeRegex,
@@ -287,6 +290,7 @@ import {
     UpdatesResult,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
+import { t } from "svelte-i18n";
 
 const UPGRADE_POLL_INTERVAL = 1000;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -499,7 +503,12 @@ export class OpenChat extends EventTarget {
     }
 
     isDiamondUser(): boolean {
-        return this.user.premiumUntil !== undefined && this.user.premiumUntil > Date.now();
+        return true;
+        // return this.user.premiumUntil !== undefined && this.user.premiumUntil > Date.now();
+    }
+
+    maxMediaSizes(): MaxMediaSizes {
+        return this.isDiamondUser() ? DIAMOND_MAX_SIZES : FREE_MAX_SIZES;
     }
 
     onCreatedUser(user: CreatedUser): void {
@@ -1620,7 +1629,9 @@ export class OpenChat extends EventTarget {
 
     clearSelectedChat = clearSelectedChat;
     private mergeKeepingOnlyChanged = mergeKeepingOnlyChanged;
-    messageContentFromFile = messageContentFromFile;
+    messageContentFromFile(file: File): Promise<MessageContent> {
+        return messageContentFromFile(file, this.isDiamondUser());
+    }
     formatFileSize = formatFileSize;
 
     havePermissionsChanged(p1: GroupPermissions, p2: GroupPermissions): boolean {

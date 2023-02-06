@@ -476,6 +476,7 @@
         "done": "refresh and continue",
         "icp": "Internet Computer",
         "btc": "Bitcoin",
+        "ckbtc": "ckBitcoin",
         "chat": "OpenChat",
         "sns1": "SNS-1",
         "max": "Max"
@@ -651,10 +652,10 @@
     "wallet": "Wallet",
     "upgrade": {
         "button": "Upgrade",
-        "groupMsg": "To create up to 10 public groups, you must be a diamond user",
-        "featuresTitle": "Upgrade to Diamond",
+        "groupMsg": "To create up to 10 public groups, you must be a Diamond user",
+        "featuresTitle": "💎 Upgrade to Diamond",
         "paymentTitle": "Payment",
-        "congratulations": "You can now enjoy our diamond features!",
+        "congratulations": "You can now enjoy our Diamond features!",
         "feature": "Feature",
         "features": "Features",
         "free": "Free",
@@ -681,7 +682,7 @@
         "publicGroups": "Public groups",
         "diamondPublicGroups": "10",
         "translations": "Translations",
-        "polls": "Polls",
+        "polls": "Create polls",
         "crypto": "Send crypto",
         "customThemes": "Custom themes",
         "comingSoon": "soon",
@@ -696,6 +697,8 @@
         "threeMonths": "Three months",
         "oneYear": "One year",
         "insufficientFunds": "Please ensure that your ICP account contains at least {amount}",
-        "confirm": "Confirm"
+        "confirm": "Confirm",
+        "allSupportedTokens": "All supported tokens",
+        "chatAndIcp": "ICP & CHAT"
     }
 }

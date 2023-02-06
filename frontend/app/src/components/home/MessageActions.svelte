@@ -51,11 +51,7 @@
     }
 
     function createTokenTransfer() {
-        if (!client.isDiamondUser()) {
-            dispatch("upgrade");
-        } else {
-            dispatch("tokenTransfer");
-        }
+        dispatch("tokenTransfer");
         drawOpen = false;
     }
 

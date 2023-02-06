@@ -13,6 +13,7 @@ export type CryptocurrencyDetails = {
     transferFeesE8s: bigint;
     howToBuyUrl: string;
     disabled: boolean;
+    diamond: boolean;
 };
 
 export const cryptoLookup: Record<Cryptocurrency, CryptocurrencyDetails> = {
@@ -22,20 +23,24 @@ export const cryptoLookup: Record<Cryptocurrency, CryptocurrencyDetails> = {
         transferFeesE8s: BigInt(10_000),
         howToBuyUrl: "https://www.finder.com/uk/how-to-buy-internet-computer",
         disabled: false,
+        diamond: false,
     },
     sns1: {
         symbol: "SNS1",
         name: "SNS-1",
         transferFeesE8s: BigInt(1_000),
-        howToBuyUrl: "https://3ezrj-4yaaa-aaaam-abcha-cai.ic0.app/sns/faq#how-do-you-get-sns-tokens",
+        howToBuyUrl:
+            "https://3ezrj-4yaaa-aaaam-abcha-cai.ic0.app/sns/faq#how-do-you-get-sns-tokens",
         disabled: false,
+        diamond: true,
     },
     ckbtc: {
         symbol: "ckBTC",
         name: "Chain-key Bitcoin",
         transferFeesE8s: BigInt(10),
         howToBuyUrl: "https://www.finder.com/uk/how-to-buy-bitcoin",
-        disabled: true,
+        disabled: false,
+        diamond: true,
     },
     chat: {
         symbol: "CHAT",
@@ -43,6 +48,7 @@ export const cryptoLookup: Record<Cryptocurrency, CryptocurrencyDetails> = {
         transferFeesE8s: BigInt(100_000),
         howToBuyUrl: "https://oc.app/#/?faq=chat_account",
         disabled: true,
+        diamond: false,
     },
 };
 
