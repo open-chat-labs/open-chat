@@ -42,7 +42,6 @@ pub struct CachedPublicGroupSummary {
     pub latest_event_index: EventIndex,
     pub participant_count: u32,
     pub owner_id: UserId,
-    #[serde(default)]
     pub events_ttl: Option<Milliseconds>,
 }
 

@@ -2,6 +2,8 @@
 members = [
     "backend/bots/api",
     "backend/bots/c2c_client",
+    "backend/bots/examples/group_prize_bot/api",
+    "backend/bots/examples/group_prize_bot/impl",
     "backend/bots/examples/icp_dispenser/api",
     "backend/bots/examples/icp_dispenser/impl",
     "backend/bots/examples/sns1_airdrop/api",
@@ -122,7 +124,6 @@ serde_cbor = "0.11.2"
 serde_json = "1.0.86"
 sha2 = "0.10.6"
 serializer = { git = "https://github.com/open-ic/ic-utils", rev = "2328657cbb1023fb251ee7faca4f4d313f25755f" }
-stable_memory = { git = "https://github.com/open-ic/ic-utils", rev = "2328657cbb1023fb251ee7faca4f4d313f25755f" }
 syn = "1.0.102"
 test-case = "2.2.2"
 tokio = "1.25.0"

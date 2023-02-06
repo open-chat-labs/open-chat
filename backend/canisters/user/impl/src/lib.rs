@@ -158,7 +158,6 @@ struct Data {
     pub pending_user_principal_migration: Option<Principal>,
     pub suspended: Timestamped<bool>,
     pub timer_jobs: TimerJobs<TimerJob>,
-    #[serde(default)]
     pub contacts: Contacts,
 }
 
