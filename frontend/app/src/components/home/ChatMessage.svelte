@@ -443,6 +443,7 @@
                 height={mediaCalculatedHeight}
                 on:registerVote={registerVote}
                 on:goToMessageIndex
+                on:upgrade
                 on:expandMessage />
 
             {#if !inert && !isPrize}

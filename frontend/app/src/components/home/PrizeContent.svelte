@@ -4,13 +4,15 @@
     import { _ } from "svelte-i18n";
     import Clock from "svelte-material-icons/Clock.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
-    import { getContext } from "svelte";
+    import { createEventDispatcher, getContext } from "svelte";
     import { Confetti } from "svelte-confetti";
     import { rtlStore } from "../../stores/rtl";
     import { now } from "../../stores/time";
     import CkBtc from "../icons/CkBtc.svelte";
     import { toastStore } from "../../stores/toast";
     import { claimsStore } from "../../stores/claims";
+
+    const dispatch = createEventDispatcher();
 
     const client = getContext<OpenChat>("client");
 
@@ -30,6 +32,10 @@
     // let source = "../assets/ckbtc_large.jpeg";
 
     function claim() {
+        if (!client.isDiamondUser()) {
+            dispatch("upgrade", "premium");
+            return;
+        }
         claimsStore.add(messageId);
         client
             .claimPrize(chatId, messageId, {

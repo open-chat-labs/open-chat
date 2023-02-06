@@ -446,41 +446,8 @@
 
     $: expandedDeletedMessages = client.expandedDeletedMessages;
 
-    $: hackedEvents = [...events, createPrizeEvent()];
-
-    function createPrizeEvent(): EventWrapper<ChatEventType> {
-        return {
-            timestamp: BigInt(Date.now()),
-            index: 464654654654654,
-            event: {
-                kind: "message",
-                content: {
-                    kind: "prize_content",
-                    prizesRemaining: 5,
-                    winners: ["a", "b", "c", "d", "e", "f", "g"],
-                    token: "ckbtc",
-                    // endDate: BigInt(Date.now() + 1000 * 60 * 60 * 24),
-                    endDate: BigInt(Date.now() + 1000 * 60),
-                    caption: "OpenChat ckBTC Giveaway!",
-                },
-                sender: "wxns6-qiaaa-aaaaa-aaaqa-cai",
-                messageId: BigInt(264646640654654),
-                messageIndex: 0,
-                reactions: [],
-                edited: false,
-                forwarded: false,
-                deleted: false,
-            },
-        };
-    }
-
     $: groupedEvents = client
-        .groupEvents(
-            hackedEvents,
-            user.userId,
-            $expandedDeletedMessages,
-            groupInner(filteredProposals)
-        )
+        .groupEvents(events, user.userId, $expandedDeletedMessages, groupInner(filteredProposals))
         .reverse();
 
     $: {

@@ -501,6 +501,12 @@ export class OpenChat extends EventTarget {
         this.api.getAllCachedUsers().then((users) => userStore.set(users));
     }
 
+    isDiamondUser(): boolean {
+        // TODO replace this when we merge with the diamond branch
+        return this._liveState.remainingStorage > 0;
+        // return this.user.premiumUntil !== undefined && this.user.premiumUntil > Date.now();
+    }
+
     onCreatedUser(user: CreatedUser): void {
         if (this._identity === undefined) {
             throw new Error("onCreatedUser called before the user's identity has been established");
