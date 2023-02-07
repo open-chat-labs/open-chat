@@ -16,6 +16,6 @@ function intervalStore(duration: number) {
 export const now = intervalStore(60000);
 export const diamondMembership = writable<DiamondMembershipDetails | undefined>(undefined);
 
-export const isDiamond = derived([diamondMembership, now], ([$diamondMembership, $now]) => {
-    return $diamondMembership !== undefined && $diamondMembership.expiresAt > $now;
+export const isDiamond = derived(diamondMembership, ($diamondMembership) => {
+    return $diamondMembership !== undefined && $diamondMembership.expiresAt > Date.now();
 });

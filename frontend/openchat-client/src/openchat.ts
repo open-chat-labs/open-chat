@@ -290,6 +290,7 @@ import {
     UpdatesResult,
     PrizeContent,
     DiamondMembershipDuration,
+    DiamondMembershipDetails,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import { diamondMembership, isDiamond } from "./stores/diamond";
@@ -323,6 +324,7 @@ export class OpenChat extends EventTarget {
     private _lastOnlineDatesPending = new Set<string>();
     private _lastOnlineDatesPromise: Promise<Record<string, number>> | undefined;
     private _cachePrimer: CachePrimer | undefined = undefined;
+    private _membershipCheck: number | undefined;
 
     constructor(private config: OpenChatConfig) {
         super();
@@ -522,7 +524,7 @@ export class OpenChat extends EventTarget {
             throw new Error("onCreatedUser called before the user's identity has been established");
         }
         this._user = user;
-        diamondMembership.set(user.diamondMembership);
+        this.setDiamondMembership(user.diamondMembership);
         const id = this._identity;
         // TODO remove this once the principal migration can be done via the UI
         const principalMigrationNewPrincipal = localStorage.getItem(
@@ -3367,6 +3369,29 @@ export class OpenChat extends EventTarget {
             });
     }
 
+    private setDiamondMembership(details?: DiamondMembershipDetails): void {
+        diamondMembership.set(details);
+        const now = Date.now();
+        if (details !== undefined) {
+            const expiry = Number(details.expiresAt);
+            if (expiry > now) {
+                if (this._membershipCheck !== undefined) {
+                    window.clearInterval(this._membershipCheck);
+                }
+                this._membershipCheck = window.setInterval(() => {
+                    this.api.getCurrentUser().then((user) => {
+                        if (user.kind === "created_user") {
+                            this.setDiamondMembership(user.diamondMembership);
+                        } else {
+                            diamondMembership.set(undefined);
+                        }
+                    });
+                    this._membershipCheck = undefined;
+                }, now - expiry);
+            }
+        }
+    }
+
     payForDiamondMembership(
         token: Cryptocurrency,
         duration: DiamondMembershipDuration,
@@ -3383,7 +3408,7 @@ export class OpenChat extends EventTarget {
                         ...this.user,
                         diamondMembership: resp.details,
                     };
-                    diamondMembership.set(resp.details);
+                    this.setDiamondMembership(resp.details);
                     return true;
                 }
             })
