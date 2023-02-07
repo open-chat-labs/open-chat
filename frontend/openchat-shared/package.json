@@ -21,7 +21,6 @@
         "@dfinity/candid": "^0.14.0",
         "@dfinity/identity": "^0.14.0",
         "@dfinity/principal": "^0.14.0",
-        "@open-ic/open-storage-agent": "^0.1.6",
         "drange": "^2.0.1",
         "idb": "^6.1.5",
         "identicon.js": "^2.3.3",
@@ -61,7 +60,6 @@
             "ts"
         ],
         "moduleNameMapper": {
-            "@open-ic/open-storage-agent": "<rootDir>/src/dummyModule.js",
             "idb": "<rootDir>/src/dummyModule.js",
             "../utils/notifications": "<rootDir>/src/dummyNotifications.js"
         }
