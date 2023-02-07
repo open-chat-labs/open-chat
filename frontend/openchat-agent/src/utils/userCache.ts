@@ -1,5 +1,5 @@
 import { openDB, DBSchema, IDBPDatabase } from "idb";
-import type { DiamondMembershipDetails, UserSummary } from "openchat-shared";
+import type { UserSummary } from "openchat-shared";
 
 const CACHE_VERSION = 3;
 
