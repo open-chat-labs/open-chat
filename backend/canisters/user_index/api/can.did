@@ -178,6 +178,7 @@ type CurrentUserResponse =
             is_super_admin: bool;
             suspension_details: opt SuspensionDetails;
             is_suspected_bot: bool;
+            diamond_membership_details: opt DiamondMembershipDetails;
         };
         UserNotFound;
     };

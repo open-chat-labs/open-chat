@@ -19,6 +19,9 @@ import type {
     SuspendUserResponse,
     UnsuspendUserResponse,
     MarkSuspectedBotResponse,
+    Cryptocurrency,
+    DiamondMembershipDuration,
+    PayForDiamondMembershipResponse,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
@@ -34,7 +37,10 @@ import {
     registerUserResponse,
     upgradeStorageResponse,
     suspendUserResponse,
-    unsuspendUserResponse
+    unsuspendUserResponse,
+    apiCryptocurrency,
+    apiDiamondDuration,
+    payForDiamondMembershipResponse,
 } from "./mappers";
 import { CachingUserIndexClient } from "./userIndex.caching.client";
 import type { IUserIndexClient } from "./userIndex.client.interface";
@@ -208,5 +214,23 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
     @profile("userIndexClient")
     markSuspectedBot(): Promise<MarkSuspectedBotResponse> {
         return this.handleResponse(this.userService.mark_suspected_bot({}), () => "success");
+    }
+
+    @profile("userIndexClient")
+    payForDiamondMembership(
+        token: Cryptocurrency,
+        duration: DiamondMembershipDuration,
+        recurring: boolean,
+        expectedPriceE8s: bigint
+    ): Promise<PayForDiamondMembershipResponse> {
+        return this.handleResponse(
+            this.userService.pay_for_diamond_membership({
+                token: apiCryptocurrency(token),
+                duration: apiDiamondDuration(duration),
+                recurring,
+                expected_price_e8s: expectedPriceE8s,
+            }),
+            payForDiamondMembershipResponse
+        );
     }
 }

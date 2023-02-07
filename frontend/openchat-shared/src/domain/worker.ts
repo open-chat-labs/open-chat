@@ -81,6 +81,8 @@ import type {
     UsersResponse,
     UserSummary,
     UnsuspendUserResponse,
+    DiamondMembershipDuration,
+    PayForDiamondMembershipResponse,
 } from "./user";
 import type {
     GroupSearchResponse,
@@ -192,7 +194,8 @@ export type WorkerRequest =
     | GetDeletedDirectMessage
     | LoadFailedMessages
     | DeleteFailedMessage
-    | ClaimPrize;
+    | ClaimPrize
+    | PayForDiamondMembership;
 
 type SetCachedMessageFromNotification = Request<{
     chatId: string;
@@ -899,7 +902,8 @@ export type WorkerResponse =
     | Response<DeletedDirectMessageResponse>
     | Response<DeletedGroupMessageResponse>
     | Response<undefined>
-    | Response<Record<string, Record<number, EventWrapper<Message>>>>;
+    | Response<Record<string, Record<number, EventWrapper<Message>>>>
+    | Response<PayForDiamondMembershipResponse>;
 
 type Response<T> = {
     kind: "worker_response";
@@ -953,4 +957,13 @@ type ClaimPrize = Request<{
     messageId: bigint;
 }> & {
     kind: "claimPrize";
+};
+
+type PayForDiamondMembership = Request<{
+    token: Cryptocurrency;
+    duration: DiamondMembershipDuration;
+    recurring: boolean;
+    expectedPriceE8s: bigint;
+}> & {
+    kind: "payForDiamondMembership";
 };

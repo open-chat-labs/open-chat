@@ -19,6 +19,9 @@ import type {
     SuspendUserResponse,
     UnsuspendUserResponse,
     MarkSuspectedBotResponse,
+    Cryptocurrency,
+    DiamondMembershipDuration,
+    PayForDiamondMembershipResponse,
 } from "openchat-shared";
 import { groupBy } from "../../utils/list";
 import { profile } from "../common/profiling";
@@ -206,5 +209,14 @@ export class CachingUserIndexClient implements IUserIndexClient {
 
     markSuspectedBot(): Promise<MarkSuspectedBotResponse> {
         return this.client.markSuspectedBot();
+    }
+
+    payForDiamondMembership(
+        token: Cryptocurrency,
+        duration: DiamondMembershipDuration,
+        recurring: boolean,
+        expectedPriceE8s: bigint
+    ): Promise<PayForDiamondMembershipResponse> {
+        return this.client.payForDiamondMembership(token, duration, recurring, expectedPriceE8s);
     }
 }

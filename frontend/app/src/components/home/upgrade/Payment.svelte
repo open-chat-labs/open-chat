@@ -6,11 +6,17 @@
     import Footer from "./Footer.svelte";
     import Loading from "../../Loading.svelte";
     import Congratulations from "./Congratulations.svelte";
-    import { Cryptocurrency, cryptoLookup, E8S_PER_TOKEN } from "openchat-client";
+    import {
+        Cryptocurrency,
+        cryptoLookup,
+        DiamondMembershipDuration,
+        E8S_PER_TOKEN,
+    } from "openchat-client";
     import AccountInfo from "../AccountInfo.svelte";
     import { mobileWidth } from "../../../stores/screenDimensions";
     import type { OpenChat } from "openchat-client";
     import Checkbox from "../../Checkbox.svelte";
+    import { toastStore } from "stores/toast";
 
     export let accountBalance = 0;
     export let error: string | undefined;
@@ -63,12 +69,32 @@
         dispatch("features");
     }
 
+    function selectedDuration(): DiamondMembershipDuration {
+        if (selectedOption?.index === 0) return "one_month";
+        if (selectedOption?.index === 1) return "three_months";
+        if (selectedOption?.index === 2) return "one_year";
+        return "one_month";
+    }
+
+    function expectedPrice(): bigint {
+        if (selectedOption !== undefined) {
+            return BigInt(selectedOption.amount * E8S_PER_TOKEN);
+        }
+        return BigInt(options[0].amount * E8S_PER_TOKEN);
+    }
+
     function confirm() {
         confirming = true;
-        window.setTimeout(() => {
-            confirmed = true;
-            confirming = false;
-        }, 2000);
+        client
+            .payForDiamondMembership(token, selectedDuration(), autoRenew, expectedPrice())
+            .then((success) => {
+                if (success) {
+                    confirmed = true;
+                } else {
+                    toastStore.showFailureToast("upgrade.paymentFailed");
+                }
+            })
+            .finally(() => (confirming = false));
     }
 </script>
 

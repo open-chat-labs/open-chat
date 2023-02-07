@@ -174,6 +174,7 @@ export type CurrentUserResponse = {
       'is_super_admin' : boolean,
       'suspension_details' : [] | [SuspensionDetails],
       'open_storage_limit_bytes' : bigint,
+      'diamond_membership_details' : [] | [DiamondMembershipDetails],
     }
   } |
   { 'UserNotFound' : null };
@@ -187,6 +188,13 @@ export interface DeletedContent {
   'timestamp' : TimestampMillis,
   'deleted_by' : UserId,
 }
+export interface DiamondMembershipDetails {
+  'recurring' : [] | [DiamondMembershipPlanDuration],
+  'expires_at' : TimestampMillis,
+}
+export type DiamondMembershipPlanDuration = { 'OneYear' : null } |
+  { 'ThreeMonths' : null } |
+  { 'OneMonth' : null };
 export type DirectChatCreated = {};
 export interface DirectChatEventWrapper {
   'event' : ChatEvent,
@@ -656,6 +664,7 @@ export interface OwnershipTransferred {
 }
 export interface PartialUserSummary {
   'username' : [] | [string],
+  'diamond_member' : boolean,
   'user_id' : UserId,
   'is_bot' : boolean,
   'avatar_id' : [] | [bigint],
@@ -683,6 +692,28 @@ export interface ParticipantsRemoved {
   'user_ids' : Array<UserId>,
   'removed_by' : UserId,
 }
+export interface PayForDiamondMembershipArgs {
+  'token' : Cryptocurrency,
+  'duration' : DiamondMembershipPlanDuration,
+  'recurring' : boolean,
+  'expected_price_e8s' : bigint,
+}
+export type PayForDiamondMembershipResponse = {
+    'PaymentAlreadyInProgress' : null
+  } |
+  { 'CurrencyNotSupported' : null } |
+  { 'Success' : DiamondMembershipDetails } |
+  { 'PriceMismatch' : null } |
+  { 'TransferFailed' : string } |
+  { 'InternalError' : string } |
+  {
+    'CannotExtend' : {
+      'can_extend_at' : TimestampMillis,
+      'diamond_membership_expires_at' : TimestampMillis,
+    }
+  } |
+  { 'UserNotFound' : null } |
+  { 'InsufficientFunds' : bigint };
 export type PendingCryptoTransaction = { 'NNS' : NnsPendingCryptoTransaction } |
   { 'SNS' : SnsPendingCryptoTransaction };
 export type PermissionRole = { 'Owner' : null } |
@@ -997,6 +1028,7 @@ export type UserResponse = { 'Success' : UserSummary } |
   { 'UserNotFound' : null };
 export interface UserSummary {
   'username' : string,
+  'diamond_member' : boolean,
   'user_id' : UserId,
   'is_bot' : boolean,
   'avatar_id' : [] | [bigint],
@@ -1053,6 +1085,10 @@ export interface _SERVICE {
   'mark_suspected_bot' : ActorMethod<
     [MarkSuspectedBotArgs],
     MarkSuspectedBotResponse
+  >,
+  'pay_for_diamond_membership' : ActorMethod<
+    [PayForDiamondMembershipArgs],
+    PayForDiamondMembershipResponse
   >,
   'register_user' : ActorMethod<[RegisterUserArgs], RegisterUserResponse>,
   'remove_super_admin' : ActorMethod<

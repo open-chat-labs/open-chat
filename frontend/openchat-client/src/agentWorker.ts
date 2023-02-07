@@ -91,6 +91,8 @@ import {
     DeletedGroupMessageResponse,
     DeletedDirectMessageResponse,
     ClaimPrizeResponse,
+    DiamondMembershipDuration,
+    PayForDiamondMembershipResponse,
 } from "openchat-shared";
 import type { OpenChatConfig } from "./config";
 import { v4 } from "uuid";
@@ -1302,6 +1304,23 @@ export class OpenChatAgentWorker extends EventTarget {
             payload: {
                 chatId,
                 messageId,
+            },
+        });
+    }
+
+    payForDiamondMembership(
+        token: Cryptocurrency,
+        duration: DiamondMembershipDuration,
+        recurring: boolean,
+        expectedPriceE8s: bigint
+    ): Promise<PayForDiamondMembershipResponse> {
+        return this.sendRequest({
+            kind: "payForDiamondMembership",
+            payload: {
+                token,
+                duration,
+                recurring,
+                expectedPriceE8s,
             },
         });
     }

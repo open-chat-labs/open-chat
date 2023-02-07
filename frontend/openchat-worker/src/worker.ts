@@ -1245,6 +1245,21 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
                     )
                     .catch(sendError(correlationId));
                 break;
+            case "payForDiamondMembership":
+                agent
+                    .payForDiamondMembership(
+                        payload.token,
+                        payload.duration,
+                        payload.recurring,
+                        payload.expectedPriceE8s
+                    )
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
 
             default:
                 console.debug("WORKER: unknown message kind received: ", kind);

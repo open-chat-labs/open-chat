@@ -289,6 +289,7 @@ import {
     ThreadRead,
     UpdatesResult,
     PrizeContent,
+    DiamondMembershipDuration,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 
@@ -503,9 +504,10 @@ export class OpenChat extends EventTarget {
     }
 
     currentUserIsDiamond(): boolean {
-        return true;
-        // TODO - how is this defined?
-        // return this.user.premiumUntil !== undefined && this.user.premiumUntil > Date.now();
+        return (
+            this.user.diamondMembership !== undefined &&
+            this.user.diamondMembership.expiresAt > Date.now()
+        );
     }
 
     userIsDiamond(userId: string): boolean {
@@ -3366,6 +3368,31 @@ export class OpenChat extends EventTarget {
             })
             .catch((err) => {
                 this._logger.error("Claiming prize failed", err);
+                return false;
+            });
+    }
+
+    payForDiamondMembership(
+        token: Cryptocurrency,
+        duration: DiamondMembershipDuration,
+        recurring: boolean,
+        expectedPriceE8s: bigint
+    ): Promise<boolean> {
+        return this.api
+            .payForDiamondMembership(token, duration, recurring, expectedPriceE8s)
+            .then((resp) => {
+                if (resp.kind !== "success") {
+                    return false;
+                } else {
+                    this._user = {
+                        ...this.user,
+                        diamondMembership: resp.details,
+                    };
+                    return true;
+                }
+            })
+            .catch((err) => {
+                this._logger.error("Paying for diamond membership failed", err);
                 return false;
             });
     }

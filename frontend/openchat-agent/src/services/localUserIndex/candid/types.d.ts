@@ -147,6 +147,13 @@ export interface DeletedContent {
   'timestamp' : TimestampMillis,
   'deleted_by' : UserId,
 }
+export interface DiamondMembershipDetails {
+  'recurring' : [] | [DiamondMembershipPlanDuration],
+  'expires_at' : TimestampMillis,
+}
+export type DiamondMembershipPlanDuration = { 'OneYear' : null } |
+  { 'ThreeMonths' : null } |
+  { 'OneMonth' : null };
 export type DirectChatCreated = {};
 export interface DirectChatEventWrapper {
   'event' : ChatEvent,
@@ -630,6 +637,7 @@ export interface OwnershipTransferred {
 }
 export interface PartialUserSummary {
   'username' : [] | [string],
+  'diamond_member' : boolean,
   'user_id' : UserId,
   'is_bot' : boolean,
   'avatar_id' : [] | [bigint],
@@ -871,6 +879,7 @@ export interface User { 'username' : string, 'user_id' : UserId }
 export type UserId = CanisterId;
 export interface UserSummary {
   'username' : string,
+  'diamond_member' : boolean,
   'user_id' : UserId,
   'is_bot' : boolean,
   'avatar_id' : [] | [bigint],

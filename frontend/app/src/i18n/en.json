@@ -708,6 +708,8 @@
         "insufficientFunds": "Please ensure that your ICP account contains at least {amount}",
         "confirm": "Confirm",
         "allSupportedTokens": "All supported tokens",
-        "chatAndIcp": "ICP & CHAT"
+        "chatAndIcp": "ICP & CHAT",
+        "paymentFailed": "Payment for Diamond membership failed",
+        "upgradeSuccess": "Your payment has been made successfully"
     }
 }

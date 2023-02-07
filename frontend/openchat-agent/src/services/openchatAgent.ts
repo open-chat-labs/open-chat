@@ -135,6 +135,8 @@ import {
     DeletedGroupMessageResponse,
     DeletedDirectMessageResponse,
     ClaimPrizeResponse,
+    DiamondMembershipDuration,
+    PayForDiamondMembershipResponse,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import { applyOptionUpdate } from "../utils/mapping";
@@ -1554,5 +1556,19 @@ export class OpenChatAgent extends EventTarget {
 
     claimPrize(chatId: string, messageId: bigint): Promise<ClaimPrizeResponse> {
         return this.getGroupClient(chatId).claimPrize(messageId);
+    }
+
+    payForDiamondMembership(
+        token: Cryptocurrency,
+        duration: DiamondMembershipDuration,
+        recurring: boolean,
+        expectedPriceE8s: bigint
+    ): Promise<PayForDiamondMembershipResponse> {
+        return this._userIndexClient.payForDiamondMembership(
+            token,
+            duration,
+            recurring,
+            expectedPriceE8s
+        );
     }
 }

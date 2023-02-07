@@ -114,8 +114,15 @@ export type CreatedUser = {
     isSuperAdmin: boolean;
     suspensionDetails: SuspensionDetails | undefined;
     isSuspectedBot: boolean;
-    premiumUntil?: number;
+    diamondMembership?: DiamondMembershipDetails;
 };
+
+export type DiamondMembershipDetails = {
+    recurring?: DiamondMembershipDuration;
+    expiresAt: bigint;
+};
+
+export type DiamondMembershipDuration = "one_month" | "three_months" | "one_year";
 
 export type SuspensionDetails = {
     reason: string;
@@ -227,3 +234,14 @@ export type UnsuspendUserResponse =
     | "internal_error";
 
 export type MarkSuspectedBotResponse = "success";
+
+export type PayForDiamondMembershipResponse =
+    | { kind: "payment_already_in_progress" }
+    | { kind: "currency_not_supported" }
+    | { kind: "success"; details: DiamondMembershipDetails }
+    | { kind: "price_mismatch" }
+    | { kind: "transfer_failed" }
+    | { kind: "internal_error" }
+    | { kind: "cannot_extend" }
+    | { kind: "user_not_found" }
+    | { kind: "insufficient_funds" };
