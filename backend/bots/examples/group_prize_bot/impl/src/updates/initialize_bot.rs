@@ -11,11 +11,18 @@ const BOT_REGISTRATION_FEE: Cycles = 10_000_000_000_000; // 10T
 #[update(guard = "caller_is_admin")]
 #[trace]
 async fn initialize_bot(args: Args) -> Response {
-    let (already_initialized, user_index_canister_id) =
-        read_state(|state| (state.data.prize_data.is_some(), state.data.user_index_canister_id));
+    let (already_initialized, user_index_canister_id, now) = read_state(|state| {
+        (
+            state.data.prize_data.is_some(),
+            state.data.user_index_canister_id,
+            state.env.now(),
+        )
+    });
 
     if already_initialized {
         AlreadyRegistered
+    } else if args.end_date <= now {
+        EndDateInPast
     } else {
         let response: CallResult<(Response,)> =
             ic_cdk::api::call::call_with_payment128(user_index_canister_id, "c2c_register_bot", (&args,), BOT_REGISTRATION_FEE)
@@ -24,14 +31,12 @@ async fn initialize_bot(args: Args) -> Response {
         match response.map(|r| r.0) {
             Ok(Success) => {
                 mutate_state(|state| {
+                    state.data.mean_time_between_prizes = (args.end_date - now) / args.prizes.len() as u64;
                     state.data.username = args.username;
                     state.data.prize_data = Some(PrizeData {
                         token: args.token,
                         ledger_canister_id: args.ledger_canister_id,
-                        max_individual_prize: args.max_individual_prize,
-                        min_individual_prize: args.min_individual_prize,
-                        min_claimants_per_message: args.min_claimants_per_message,
-                        max_claimants_per_message: args.max_claimants_per_message,
+                        prizes: args.prizes,
                         end_date: args.end_date,
                     });
                 });

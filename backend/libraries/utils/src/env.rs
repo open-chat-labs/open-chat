@@ -9,6 +9,7 @@ pub trait Environment {
     fn caller(&self) -> Principal;
     fn canister_id(&self) -> CanisterId;
     fn random_u32(&mut self) -> u32;
+    fn random(&mut self) -> f64;
     fn cycles_balance(&self) -> Cycles;
 
     fn now(&self) -> TimestampMillis {

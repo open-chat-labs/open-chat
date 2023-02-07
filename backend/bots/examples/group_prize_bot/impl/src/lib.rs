@@ -41,6 +41,13 @@ impl RuntimeState {
             cycles_balance: self.env.cycles_balance(),
             wasm_version: WASM_VERSION.with(|v| **v.borrow()),
             git_commit_id: utils::git::git_commit_id().to_string(),
+            mean_time_between_prizes: self.data.mean_time_between_prizes,
+            username: self.data.username.clone(),
+            token: self.data.prize_data.as_ref().map(|p| p.token),
+            ledger_canister_id: self.data.prize_data.as_ref().map(|p| p.ledger_canister_id),
+            end_date: self.data.prize_data.as_ref().map(|p| p.end_date),
+            total_value_sent: self.data.prizes_sent.iter().map(|p| p.transaction.units() as u64).sum(),
+            prizes_sent: self.data.prizes_sent.clone(),
         }
     }
 
@@ -63,8 +70,9 @@ struct Data {
     pub test_mode: bool,
     pub username: String,
     pub prize_data: Option<PrizeData>,
+    pub mean_time_between_prizes: TimestampMillis,
+    pub prizes_sent: Vec<Prize>,
     pub groups: HashSet<CanisterId>,
-    pub transactions: Vec<CompletedCryptoTransaction>,
 }
 
 impl Data {
@@ -76,8 +84,9 @@ impl Data {
             test_mode,
             username: "PrizeBot".to_string(),
             prize_data: None,
+            mean_time_between_prizes: 3_600_000,
+            prizes_sent: Vec::new(),
             groups: HashSet::new(),
-            transactions: Vec::new(),
         }
     }
 }
@@ -86,11 +95,14 @@ impl Data {
 pub struct PrizeData {
     pub token: Cryptocurrency,
     pub ledger_canister_id: CanisterId,
-    pub max_individual_prize: u64,
-    pub min_individual_prize: u64,
-    pub min_claimants_per_message: u32,
-    pub max_claimants_per_message: u32,
+    pub prizes: Vec<Vec<u64>>,
     pub end_date: TimestampMillis,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct Prize {
+    pub group: CanisterId,
+    pub transaction: CompletedCryptoTransaction,
 }
 
 #[derive(CandidType, Serialize, Debug)]
@@ -100,4 +112,11 @@ pub struct Metrics {
     pub cycles_balance: Cycles,
     pub wasm_version: Version,
     pub git_commit_id: String,
+    pub mean_time_between_prizes: TimestampMillis,
+    pub username: String,
+    pub token: Option<Cryptocurrency>,
+    pub ledger_canister_id: Option<CanisterId>,
+    pub end_date: Option<TimestampMillis>,
+    pub total_value_sent: u64,
+    pub prizes_sent: Vec<Prize>,
 }
