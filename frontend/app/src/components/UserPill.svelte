@@ -17,7 +17,7 @@
 
 <div class="user-pill" title={user.username}>
     <div class="avatar">
-        <Avatar url={client.userAvatarUrl(user)} userId={user.userId} size={AvatarSize.Default} />
+        <Avatar url={client.userAvatarUrl(user)} userId={user.userId} size={AvatarSize.Small} />
     </div>
     <span class="username">{`@${user.username}`}</span>
     <span class="close" on:click={deleteUser}>

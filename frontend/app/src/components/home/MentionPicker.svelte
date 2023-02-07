@@ -107,7 +107,7 @@
                     <Avatar
                         url={client.userAvatarUrl($userStore[item.userId])}
                         userId={item.userId}
-                        size={AvatarSize.Default} />
+                        size={AvatarSize.Small} />
                 </div>
                 <div slot="text">
                     {$userStore[item.userId]?.username ?? $_("unknown")}
