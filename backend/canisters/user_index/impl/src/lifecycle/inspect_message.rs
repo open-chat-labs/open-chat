@@ -19,6 +19,7 @@ fn accept_if_valid(runtime_state: &RuntimeState) {
         "confirm_phone_number"
         | "create_canister"
         | "mark_as_online"
+        | "pay_for_diamond_membership"
         | "resend_code"
         | "set_username"
         | "upgrade_storage"

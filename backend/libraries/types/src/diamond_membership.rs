@@ -1,7 +1,6 @@
 use crate::{Milliseconds, TimestampMillis};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use serde_repr::{Deserialize_repr, Serialize_repr};
 
 #[derive(CandidType, Serialize, Deserialize, Debug, Default)]
 pub struct DiamondMembershipDetails {
@@ -9,7 +8,7 @@ pub struct DiamondMembershipDetails {
     pub recurring: Option<DiamondMembershipPlanDuration>,
 }
 
-#[derive(CandidType, Serialize_repr, Deserialize_repr, Clone, Copy, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Copy, Debug)]
 #[repr(u8)]
 pub enum DiamondMembershipPlanDuration {
     OneMonth = 1,
