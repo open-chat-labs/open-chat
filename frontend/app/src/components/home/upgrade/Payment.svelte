@@ -171,7 +171,7 @@
         <Button
             small={!$mobileWidth}
             disabled={confirming || insufficientFunds}
-            loading={confirming}
+            loading={confirming || refreshingBalance}
             on:click={confirm}
             tiny={$mobileWidth}>{$_("upgrade.confirm")}</Button>
     {/if}
