@@ -1,5 +1,3 @@
-use std::time::Duration;
-
 use crate::guards::caller_is_admin;
 use crate::{mutate_state, read_state, PrizeData};
 use canister_tracing_macros::trace;
@@ -33,8 +31,7 @@ async fn initialize_bot(args: Args) -> Response {
         match response.map(|r| r.0) {
             Ok(Success) => {
                 mutate_state(|state| {
-                    state.data.average_time_between_prizes =
-                        Duration::from_millis((args.end_date - now) / args.prizes.len() as u64);
+                    state.data.mean_time_between_prizes = (args.end_date - now) / args.prizes.len() as u64;
                     state.data.username = args.username;
                     state.data.prize_data = Some(PrizeData {
                         token: args.token,
