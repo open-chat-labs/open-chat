@@ -14,5 +14,4 @@ range-set = { workspace = true }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
 serde_json = { workspace = true }
-serde_repr = { workspace = true }
 sha256 = { path = "../sha256" }
