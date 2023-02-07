@@ -45,7 +45,7 @@
     ];
 
     let autoRenew = true;
-    let selectedOption: Option | undefined = options[2];
+    let selectedOption: Option | undefined = options[0];
 
     type Option = {
         index: number;
@@ -133,23 +133,22 @@
                 <div class="smallprint">
                     {$_("upgrade.paymentSmallprint")}
                 </div>
+                {#if insufficientFunds}
+                    <ErrorMessage
+                        >{$_("upgrade.insufficientFunds", {
+                            values: { amount: `${toPay} ICP` },
+                        })}</ErrorMessage>
+                {/if}
+
+                <a rel="noreferrer" class="how-to" href={howToBuyUrl} target="_blank">
+                    {$_("howToBuyToken", { values: { token: symbol.toUpperCase() } })}
+                </a>
+
+                {#if error}
+                    <ErrorMessage>{error}</ErrorMessage>
+                {/if}
             </Checkbox>
         </div>
-
-        {#if insufficientFunds}
-            <ErrorMessage
-                >{$_("upgrade.insufficientFunds", {
-                    values: { amount: `${toPay} ICP` },
-                })}</ErrorMessage>
-        {/if}
-
-        <a rel="noreferrer" class="how-to" href={howToBuyUrl} target="_blank">
-            {$_("howToBuyToken", { values: { token: symbol.toUpperCase() } })}
-        </a>
-
-        {#if error}
-            <ErrorMessage>{error}</ErrorMessage>
-        {/if}
     {/if}
 </div>
 <Footer align={$mobileWidth ? "center" : "end"}>
@@ -212,6 +211,11 @@
                 background-color: var(--txt-light);
             }
         }
+
+        @include mobile() {
+            text-align: center;
+            padding: 12px $sp4;
+        }
     }
 
     .cols {
@@ -228,6 +232,9 @@
         @include font-size(fs-70);
         text-transform: uppercase;
         margin-bottom: $sp3;
+        @include mobile() {
+            margin-bottom: $sp2;
+        }
     }
 
     .price {
@@ -241,5 +248,6 @@
     .smallprint {
         @include font(light, normal, fs-60);
         color: var(--txt-light);
+        margin-bottom: $sp3;
     }
 </style>
