@@ -336,6 +336,30 @@ type MarkSuspectedBotResponse =
         Success;
     };
 
+type PayForDiamondMembershipArgs =
+    record {
+        duration: DiamondMembershipPlanDuration;
+        token: Cryptocurrency;
+        expected_price_e8s: nat64;
+        recurring: bool;
+    };
+
+type PayForDiamondMembershipResponse =
+    variant {
+        Success: DiamondMembershipDetails;
+        CannotExtend: record {
+            diamond_membership_expires_at: TimestampMillis;
+            can_extend_at: TimestampMillis;
+        };
+        CurrencyNotSupported;
+        PriceMismatch;
+        PaymentAlreadyInProgress;
+        UserNotFound;
+        InsufficientFunds: nat64; // Returns the account balance in e8s
+        TransferFailed: text;
+        InternalError: text;
+    };
+
 service: {
     create_challenge : (CreateChallengeArgs) -> (CreateChallengeResponse);
 
@@ -376,6 +400,8 @@ service: {
 
     // Mark the caller as a suspected bot
     mark_suspected_bot: (MarkSuspectedBotArgs) -> (MarkSuspectedBotResponse);
+
+    pay_for_diamond_membership: (PayForDiamondMembershipArgs) -> (PayForDiamondMembershipResponse);
 
     // Only callable by "service principals"
     add_super_admin: (AddSuperAdminArgs) -> (AddSuperAdminResponse);

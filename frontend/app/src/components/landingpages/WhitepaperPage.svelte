@@ -677,7 +677,7 @@
                 <div>Number of CHAT tokens that a rejected proposal costs the proposer</div>
                 <div>10</div>
                 <div>Minimum number of CHAT tokens that can be staked in a neuron</div>
-                <div>5</div>
+                <div>4</div>
                 <div>Maximum voting period for a proposal</div>
                 <div>4 days</div>
                 <div>Proportion of voting power needed for a proposal to be accepted</div>
@@ -707,8 +707,8 @@
                 <div>500,000</div>
                 <div>The ICP to come from the Community Fund</div>
                 <div>333,333</div>
-                <div>Duration of sale (unless maximum ICP raised sooner)</div>
-                <div>2 weeks</div>
+                <div>End date of sale (unless maximum ICP raised sooner)</div>
+                <div>6th March 2023 at 12:00 (noon) GMT</div>
                 <div>Minimum number of buyers</div>
                 <div>100</div>
                 <div>Minimum ICP per buyer</div>

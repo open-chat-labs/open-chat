@@ -1,4 +1,5 @@
 use crate::model::account_billing::AccountCharge;
+use crate::model::diamond_membership_details::DiamondMembershipDetailsInternal;
 use crate::model::user::{PhoneStatus, SuspensionDetails, SuspensionDuration, UnconfirmedPhoneNumber, User};
 use crate::{CONFIRMATION_CODE_EXPIRY_MILLIS, CONFIRMED_PHONE_NUMBER_STORAGE_ALLOWANCE};
 use candid::Principal;
@@ -228,6 +229,10 @@ impl UserMap {
 
     pub fn get_by_username(&self, username: &str) -> Option<&User> {
         self.username_to_user_id.get(username).and_then(|u| self.users.get(u))
+    }
+
+    pub fn diamond_membership_details_mut(&mut self, user_id: &UserId) -> Option<&mut DiamondMembershipDetailsInternal> {
+        self.users.get_mut(user_id).map(|u| &mut u.diamond_membership_details)
     }
 
     pub fn is_valid_caller(&self, caller: Principal) -> bool {
