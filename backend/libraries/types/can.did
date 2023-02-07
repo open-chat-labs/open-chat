@@ -1262,4 +1262,9 @@ type DiamondMembershipDetails =
         recurring: opt DiamondMembershipPlanDuration;
     };
 
-type DiamondMembershipPlanDuration = nat8;
+type DiamondMembershipPlanDuration =
+    variant {
+        OneMonth;
+        ThreeMonths;
+        OneYear;
+    };
