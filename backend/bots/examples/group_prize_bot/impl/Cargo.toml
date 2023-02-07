@@ -19,7 +19,7 @@ group_canister = { path = "../../../../canisters/group/api" }
 group_canister_c2c_client = { path = "../../../../canisters/group/c2c_client" }
 http_request = { path = "../../../../libraries/http_request" }
 ic-base-types = { workspace = true }
-ic-cdk = { workspace = true }
+ic-cdk = { workspace = true, features = ["timers"] }
 ic-cdk-macros = { workspace = true }
 ic-icrc1 = { workspace = true }
 ic-icrc1-client = { workspace = true }
