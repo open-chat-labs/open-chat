@@ -7,7 +7,7 @@ use types::{
 };
 
 use crate::{mutate_state, RuntimeState};
-use std::{time::Duration, cmp};
+use std::{cmp, time::Duration};
 
 pub(crate) fn start_job(_state: &RuntimeState) {
     ic_cdk::timer::set_timer(Duration::from_secs(600), run);
@@ -111,7 +111,7 @@ fn time_until_next_prize(state: &mut RuntimeState) -> Option<Duration> {
     let rnd = state.env.random();
     let avg = state.data.average_time_between_prizes.as_millis() as u64;
     let next = Duration::from_millis(next_time(avg, rnd));
-    
+
     if next > time_remaining {
         error!("Not enough time remaining");
         None
