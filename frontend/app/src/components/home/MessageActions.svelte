@@ -28,7 +28,7 @@
 
     $: useDrawer = (mode == "thread" || $mobileWidth) && !editing;
     $: showActions = !useDrawer || (drawOpen && messageAction === undefined);
-
+    $: isDiamond = client.isDiamond;
     $: iconColour = editing ? "var(--button-txt)" : useDrawer ? "var(--txt)" : "var(--icon-txt)";
 
     export function close() {
@@ -68,7 +68,7 @@
     }
 
     function createPoll() {
-        if (!client.currentUserIsDiamond()) {
+        if (!$isDiamond) {
             dispatch("upgrade");
         } else {
             dispatch("createPoll");

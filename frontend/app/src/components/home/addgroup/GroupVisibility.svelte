@@ -13,7 +13,7 @@
     export let originalGroup: CandidateGroupChat;
     export let editing: boolean;
 
-    let diamond = client.currentUserIsDiamond();
+    $: isDiamond = client.isDiamond;
 
     $: canMakePrivate =
         candidateGroup.chatId !== undefined
@@ -48,7 +48,7 @@
 </div>
 
 <div class="section">
-    {#if !diamond}
+    {#if !$isDiamond}
         <div class="upgrade info">
             <p>
                 {$_("upgrade.groupMsg")}

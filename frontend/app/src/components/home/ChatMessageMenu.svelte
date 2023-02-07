@@ -62,7 +62,7 @@
     $: user = client.user;
     $: inThread = threadRootMessage !== undefined;
     $: translationStore = client.translationStore;
-    $: storageStore = client.storageStore;
+    $: isDiamond = client.isDiamond;
     $: threadRootMessageIndex =
         msg.messageId === threadRootMessage?.messageId
             ? undefined
@@ -154,7 +154,7 @@
     }
 
     function translateMessage() {
-        if (!client.currentUserIsDiamond()) {
+        if (!$isDiamond) {
             dispatch("upgrade");
         } else {
             if (msg.content.kind === "text_content") {

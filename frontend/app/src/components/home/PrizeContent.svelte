@@ -25,6 +25,7 @@
     $: claimedByYou = content.winners.includes(client.user.userId);
     $: finished = $now >= Number(content.endDate);
     $: disabled = finished || claimedByYou || content.prizesRemaining <= 0;
+    $: isDiamond = client.isDiamond;
     $: timeRemaining = finished
         ? $_("prizes.finished")
         : client.formatTimeRemaining($now, Number(content.endDate));
@@ -32,7 +33,7 @@
     // let source = "../assets/ckbtc_large.jpeg";
 
     function claim() {
-        if (!client.currentUserIsDiamond()) {
+        if (!$isDiamond) {
             dispatch("upgrade", "premium");
             return;
         }

@@ -62,7 +62,7 @@
 
     $: userMetrics = client.userMetrics;
     $: notificationStatus = client.notificationStatus;
-    $: storageStore = client.storageStore;
+    $: isDiamond = client.isDiamond;
     $: {
         setLocale(selectedLocale);
     }
@@ -312,7 +312,7 @@
                 headerText={$_("storage")}>
                 <StorageUsage />
 
-                {#if !client.currentUserIsDiamond()}
+                {#if !$isDiamond}
                     <ButtonGroup align={"fill"}>
                         <Button on:click={() => dispatch("upgrade")} small
                             >{$_("upgrade.button")}</Button>

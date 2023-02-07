@@ -292,6 +292,7 @@ import {
     DiamondMembershipDuration,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
+import { diamondMembership, isDiamond } from "./stores/diamond";
 
 const UPGRADE_POLL_INTERVAL = 1000;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -503,24 +504,17 @@ export class OpenChat extends EventTarget {
         this.api.getAllCachedUsers().then((users) => userStore.set(users));
     }
 
-    currentUserIsDiamond(): boolean {
-        return (
-            this.user.diamondMembership !== undefined &&
-            this.user.diamondMembership.expiresAt > Date.now()
-        );
-    }
-
     userIsDiamond(userId: string): boolean {
         const user = this._liveState.userStore[userId];
         if (user === undefined || user.kind === "bot") return false;
 
-        if (userId === this.user.userId) return this.currentUserIsDiamond();
+        if (userId === this.user.userId) return this._liveState.isDiamond;
 
         return user.diamond;
     }
 
     maxMediaSizes(): MaxMediaSizes {
-        return this.currentUserIsDiamond() ? DIAMOND_MAX_SIZES : FREE_MAX_SIZES;
+        return this._liveState.isDiamond ? DIAMOND_MAX_SIZES : FREE_MAX_SIZES;
     }
 
     onCreatedUser(user: CreatedUser): void {
@@ -528,6 +522,7 @@ export class OpenChat extends EventTarget {
             throw new Error("onCreatedUser called before the user's identity has been established");
         }
         this._user = user;
+        diamondMembership.set(user.diamondMembership);
         const id = this._identity;
         // TODO remove this once the principal migration can be done via the UI
         const principalMigrationNewPrincipal = localStorage.getItem(
@@ -1642,7 +1637,7 @@ export class OpenChat extends EventTarget {
     clearSelectedChat = clearSelectedChat;
     private mergeKeepingOnlyChanged = mergeKeepingOnlyChanged;
     messageContentFromFile(file: File): Promise<MessageContent> {
-        return messageContentFromFile(file, this.currentUserIsDiamond());
+        return messageContentFromFile(file, this._liveState.isDiamond);
     }
     formatFileSize = formatFileSize;
 
@@ -3388,6 +3383,7 @@ export class OpenChat extends EventTarget {
                         ...this.user,
                         diamondMembership: resp.details,
                     };
+                    diamondMembership.set(resp.details);
                     return true;
                 }
             })
@@ -3454,4 +3450,5 @@ export class OpenChat extends EventTarget {
     userMetrics = userMetrics;
     threadEvents = threadEvents;
     selectedThreadKey = selectedThreadKey;
+    isDiamond = isDiamond;
 }
