@@ -22,6 +22,7 @@
     export let error: string | undefined;
     export let confirming = false;
     export let confirmed = false;
+    export let refreshingBalance = false;
 
     const client = getContext<OpenChat>("client");
 
@@ -109,7 +110,7 @@
                 {#each options as option}
                     <div
                         class="option"
-                        class:insufficientFunds
+                        class:insufficientFunds={insufficientFunds && !refreshingBalance}
                         class:selected={selectedOption?.index === option.index}
                         on:click={() => (selectedOption = option)}>
                         <p class="duration">{option.duration}</p>
@@ -133,7 +134,7 @@
                 <div class="smallprint">
                     {$_("upgrade.paymentSmallprint")}
                 </div>
-                {#if insufficientFunds}
+                {#if insufficientFunds && !refreshingBalance}
                     <ErrorMessage
                         >{$_("upgrade.insufficientFunds", {
                             values: { amount: `${toPay} ICP` },

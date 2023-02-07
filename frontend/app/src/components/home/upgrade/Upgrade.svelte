@@ -13,9 +13,9 @@
 
     let step: "features" | "payment" = "features";
     let error: string | undefined;
-    let accountBalance = 0;
     let confirming = false;
     let confirmed = false;
+    let refreshingBalance = false;
 
     $: cryptoBalance = client.cryptoBalance;
     $: tokenDetails = {
@@ -25,9 +25,8 @@
         disabled: cryptoLookup[token].disabled,
     };
 
-    function onBalanceRefreshed(ev: CustomEvent<Tokens>) {
+    function onBalanceRefreshed() {
         error = undefined;
-        accountBalance = Number(ev.detail.e8s);
     }
 
     function onBalanceRefreshError(ev: CustomEvent<string>) {
@@ -51,6 +50,7 @@
                         <BalanceWithRefresh
                             token={tokenDetails.key}
                             value={tokenDetails.balance}
+                            bind:refreshing={refreshingBalance}
                             on:refreshed={onBalanceRefreshed}
                             on:error={onBalanceRefreshError} />
                     </div>
@@ -65,8 +65,9 @@
                 <Payment
                     bind:confirmed
                     bind:confirming
+                    bind:refreshingBalance
                     {error}
-                    {accountBalance}
+                    accountBalance={Number(tokenDetails.balance)}
                     on:cancel
                     on:features={() => (step = "features")} />
             {/if}
