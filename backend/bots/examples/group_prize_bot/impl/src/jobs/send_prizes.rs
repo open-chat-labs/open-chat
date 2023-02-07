@@ -1,12 +1,12 @@
+use crate::{mutate_state, RuntimeState};
 use ic_ledger_types::Tokens;
 use ledger_utils::sns;
+use std::{cmp, time::Duration};
 use tracing::{error, trace};
 use types::{
     CanisterId, CompletedCryptoTransaction, CryptoTransaction, Cryptocurrency, MessageContentInitial, MessageId,
     PrizeContentInitial, TimestampMillis, TimestampNanos,
 };
-use crate::{mutate_state, RuntimeState};
-use std::{cmp, time::Duration};
 
 pub(crate) fn start_job(_state: &RuntimeState) {
     ic_cdk::timer::set_timer(Duration::from_secs(600), run);
