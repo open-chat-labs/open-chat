@@ -7,6 +7,7 @@ pub struct TestEnv {
     pub caller: Principal,
     pub canister_id: Principal,
     pub random_u32: u32,
+    pub random: f64,
     pub cycles_balance: Cycles,
 }
 
@@ -27,6 +28,10 @@ impl Environment for TestEnv {
         self.random_u32
     }
 
+    fn random(&mut self) -> f64 {
+        self.random
+    }
+
     fn cycles_balance(&self) -> Cycles {
         self.cycles_balance
     }
@@ -39,6 +44,7 @@ impl Default for TestEnv {
             caller: Principal::from_slice(&[1]),
             canister_id: Principal::from_slice(&[1, 2, 3]),
             random_u32: 1,
+            random: 0.5,
             cycles_balance: 1_000_000_000_000,
         }
     }

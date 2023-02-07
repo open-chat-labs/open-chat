@@ -1,19 +1,15 @@
-use candid::Principal;
+use crate::{mutate_state, RuntimeState};
 use ic_ledger_types::Tokens;
 use ledger_utils::sns;
+use std::{cmp, time::Duration};
 use tracing::{error, trace};
 use types::{
     CanisterId, CompletedCryptoTransaction, CryptoTransaction, Cryptocurrency, MessageContentInitial, MessageId,
     PrizeContentInitial, TimestampMillis, TimestampNanos,
 };
 
-use crate::{mutate_state, read_state, RuntimeState};
-use std::time::Duration;
-
-pub(crate) fn start_job(state: &RuntimeState) {
-    if let Some(time_until_next_prize) = time_until_next_prize(state) {
-        ic_cdk::timer::set_timer(time_until_next_prize, run);
-    }
+pub(crate) fn start_job(_state: &RuntimeState) {
+    ic_cdk::timer::set_timer(Duration::from_secs(600), run);
 }
 
 fn run() {
@@ -29,51 +25,28 @@ async fn send_prizes_impl() {
         trace!("Send prize failed");
     }
 
-    if let Some(time_until_next_prize) = read_state(time_until_next_prize) {
+    if let Some(time_until_next_prize) = mutate_state(time_until_next_prize) {
         ic_cdk::timer::set_timer(time_until_next_prize, run);
     }
 }
 
 async fn send_next_prize() -> bool {
-    // 1. Try to read the ledger_canister_id and bot_canister_id from runtime state
-    let (ledger_canister_id, bot_canister_id) = match read_state(|state| {
-        state
-            .data
-            .prize_data
-            .as_ref()
-            .map(|prize_data| (prize_data.ledger_canister_id, state.env.canister_id()))
-    }) {
-        Some(ids) => ids,
-        None => {
-            error!("Not initialized");
-            return false;
-        }
-    };
-
-    // 2. Call the ledger canister to get the balance
-    let balance = match get_balance(ledger_canister_id, bot_canister_id).await {
-        Ok(b) => b,
-        Err(error_message) => {
-            error!(?error_message, ?ledger_canister_id, ?bot_canister_id, "Failed to get balance");
-            return false;
-        }
-    };
-
-    // 3. Read a bunch of data from the runtime state, pick a random group and prize
-    let (group, prize, token, now_nanos, end_date, bot_name) = match mutate_state(|state| {
+    // 1. Read a bunch of data from the runtime state, pick a random group and prize
+    let (ledger_canister_id, group, token, prize, end_date, now_nanos, bot_name) = match mutate_state(|state| {
         if let Some(group) = state.pick_random_group() {
             if let Some(prize_data) = &mut state.data.prize_data {
-                if let Some(prize) = get_next_prize(balance) {
+                if let Some(prize) = prize_data.prizes.pop() {
                     return Some((
+                        prize_data.ledger_canister_id,
                         group,
-                        prize,
                         prize_data.token,
-                        state.env.now_nanos(),
+                        prize,
                         prize_data.end_date,
+                        state.env.now_nanos(),
                         state.data.username.clone(),
                     ));
                 } else {
-                    error!("No prize");
+                    error!("No prizes left");
                 }
             } else {
                 error!("Not initialized");
@@ -88,7 +61,7 @@ async fn send_next_prize() -> bool {
         None => return false,
     };
 
-    // 4. Transfer the prize funds to the group
+    // 2. Transfer the prize funds to the group
     let amount = prize.iter().sum::<u64>() + (token.fee() as u64) * (prize.len() as u64);
     let completed_transaction = match transfer_prize_funds_to_group(ledger_canister_id, token, group, amount, now_nanos).await {
         Ok(t) => t,
@@ -103,12 +76,12 @@ async fn send_next_prize() -> bool {
         }
     };
 
-    // 5. Generate a random MessageId
+    // 3. Generate a random MessageId
     let new_message_id = MessageId::generate(|| mutate_state(|state| state.env.random_u32()));
 
-    // 6. Send the prize message to the group
+    // 4. Send the prize message to the group
     if let Err(error_message) =
-        send_prize_message_to_group(group, completed_transaction, prize, new_message_id, end_date, bot_name).await
+        send_prize_message_to_group(group, completed_transaction, prize, end_date, new_message_id, bot_name).await
     {
         error!(?error_message, ?group, "Failed to send prize message to group");
         return false;
@@ -117,43 +90,39 @@ async fn send_next_prize() -> bool {
     true
 }
 
-fn time_until_next_prize(state: &RuntimeState) -> Option<Duration> {
-    if let Some(prize_data) = &state.data.prize_data {
-        if prize_data.end_date + 3_600_000 < state.env.now() {
-            // TODO
-            // Currently hardcoded to 2 hours
-            let duration = 1000 * 3600 * 2;
-            return Some(Duration::from_millis(duration));
-        } else {
-            trace!("Not enought time left");
+fn time_until_next_prize(state: &mut RuntimeState) -> Option<Duration> {
+    let now = state.env.now();
+    let time_remaining = Duration::from_millis(match &state.data.prize_data {
+        Some(prize_data) => {
+            if prize_data.end_date > now {
+                prize_data.end_date - now
+            } else {
+                error!("Out of time");
+                return None;
+            }
         }
+        None => {
+            error!("Not initialized");
+            return None;
+        }
+    });
+
+    let rnd = state.env.random();
+    let avg = state.data.average_time_between_prizes.as_millis() as u64;
+    let next = Duration::from_millis(next_time(avg, rnd));
+
+    if next > time_remaining {
+        error!("Not enough time remaining");
+        None
     } else {
-        trace!("Not initialized");
+        Some(next)
     }
-    None
 }
 
-fn get_next_prize(_balance: u64) -> Option<Vec<u64>> {
-    // TODO
-    // 50 lots of 0.0001 tokens
-    Some(vec![10_000; 50])
-}
-
-async fn get_balance(ledger_canister_id: CanisterId, principal: Principal) -> Result<u64, String> {
-    let principal = ic_base_types::PrincipalId::from(principal);
-
-    let client = ic_icrc1_client::ICRC1Client {
-        ledger_canister_id,
-        runtime: ic_icrc1_client_cdk::CdkRuntime,
-    };
-
-    client
-        .balance_of(ic_icrc1::Account {
-            owner: principal,
-            subaccount: None,
-        })
-        .await
-        .map_err(|(_, message)| message)
+// Use the inverse exponential function to calculate the next time but
+// cap the maximum next time at 5x the average
+fn next_time(avg: TimestampMillis, rnd: f64) -> TimestampMillis {
+    cmp::min((-1.0 * avg as f64 * f64::ln(rnd)) as u64, 5 * avg)
 }
 
 async fn transfer_prize_funds_to_group(
@@ -187,13 +156,13 @@ async fn transfer_prize_funds_to_group(
 async fn send_prize_message_to_group(
     group: CanisterId,
     completed_transaction: CompletedCryptoTransaction,
-    prizes: Vec<u64>,
-    message_id: MessageId,
+    prize: Vec<u64>,
     end_date: TimestampMillis,
+    message_id: MessageId,
     bot_name: String,
 ) -> Result<(), String> {
     let content = MessageContentInitial::Prize(PrizeContentInitial {
-        prizes: prizes.iter().map(|p| Tokens::from_e8s(*p)).collect(),
+        prizes: prize.iter().map(|p| Tokens::from_e8s(*p)).collect(),
         transfer: CryptoTransaction::Completed(completed_transaction.clone()),
         end_date,
         caption: None,

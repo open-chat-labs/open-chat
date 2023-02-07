@@ -1,8 +1,8 @@
 use candid::{CandidType, Principal};
 use canister_state_macros::canister_state;
 use serde::{Deserialize, Serialize};
-use std::cell::RefCell;
 use std::collections::HashSet;
+use std::{cell::RefCell, time::Duration};
 use types::{Avatar, CanisterId, CompletedCryptoTransaction, Cryptocurrency, Cycles, TimestampMillis, Timestamped, Version};
 use utils::env::Environment;
 
@@ -63,6 +63,7 @@ struct Data {
     pub test_mode: bool,
     pub username: String,
     pub prize_data: Option<PrizeData>,
+    pub average_time_between_prizes: Duration,
     pub groups: HashSet<CanisterId>,
     pub transactions: Vec<CompletedCryptoTransaction>,
 }
@@ -76,6 +77,7 @@ impl Data {
             test_mode,
             username: "PrizeBot".to_string(),
             prize_data: None,
+            average_time_between_prizes: Duration::from_secs(3600),
             groups: HashSet::new(),
             transactions: Vec::new(),
         }
@@ -86,10 +88,7 @@ impl Data {
 pub struct PrizeData {
     pub token: Cryptocurrency,
     pub ledger_canister_id: CanisterId,
-    pub max_individual_prize: u64,
-    pub min_individual_prize: u64,
-    pub min_claimants_per_message: u32,
-    pub max_claimants_per_message: u32,
+    pub prizes: Vec<Vec<u64>>,
     pub end_date: TimestampMillis,
 }
 
