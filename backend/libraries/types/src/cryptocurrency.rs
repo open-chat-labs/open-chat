@@ -152,6 +152,13 @@ impl CompletedCryptoTransaction {
             CompletedCryptoTransaction::SNS(t) => t.token,
         }
     }
+
+    pub fn units(&self) -> u128 {
+        match self {
+            CompletedCryptoTransaction::NNS(t) => t.amount.e8s().into(),
+            CompletedCryptoTransaction::SNS(t) => t.amount.e8s().into(),
+        }
+    }
 }
 
 impl FailedCryptoTransaction {

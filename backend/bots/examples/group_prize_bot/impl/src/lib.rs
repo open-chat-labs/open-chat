@@ -42,6 +42,11 @@ impl RuntimeState {
             wasm_version: WASM_VERSION.with(|v| **v.borrow()),
             git_commit_id: utils::git::git_commit_id().to_string(),
             mean_time_between_prizes: self.data.mean_time_between_prizes,
+            username: self.data.username.clone(),
+            token: self.data.prize_data.as_ref().map(|p| p.token),
+            ledger_canister_id: self.data.prize_data.as_ref().map(|p| p.ledger_canister_id),
+            end_date: self.data.prize_data.as_ref().map(|p| p.end_date),
+            total_value_sent: self.data.prizes_sent.iter().map(|p| p.transaction.units() as u64).sum(),
             prizes_sent: self.data.prizes_sent.clone(),
         }
     }
@@ -108,5 +113,10 @@ pub struct Metrics {
     pub wasm_version: Version,
     pub git_commit_id: String,
     pub mean_time_between_prizes: TimestampMillis,
+    pub username: String,
+    pub token: Option<Cryptocurrency>,
+    pub ledger_canister_id: Option<CanisterId>,
+    pub end_date: Option<TimestampMillis>,
+    pub total_value_sent: u64,
     pub prizes_sent: Vec<Prize>,
 }
