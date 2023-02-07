@@ -36,7 +36,7 @@ impl Challenges {
         self.rng.is_some()
     }
 
-    pub fn initialise(&mut self, seed: Salt) {
+    pub fn initialise(&mut self, seed: [u8; 32]) {
         self.rng = Some(rand_chacha::ChaCha20Rng::from_seed(seed));
     }
 
