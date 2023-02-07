@@ -5,7 +5,6 @@ use types::{
     CanisterId, CompletedCryptoTransaction, CryptoTransaction, Cryptocurrency, MessageContentInitial, MessageId,
     PrizeContentInitial, TimestampMillis, TimestampNanos,
 };
-
 use crate::{mutate_state, RuntimeState};
 use std::{cmp, time::Duration};
 
@@ -123,7 +122,7 @@ fn time_until_next_prize(state: &mut RuntimeState) -> Option<Duration> {
 // Use the inverse exponential function to calculate the next time but
 // cap the maximum next time at 5x the average
 fn next_time(avg: TimestampMillis, rnd: f64) -> TimestampMillis {
-    cmp::max((-1.0 * avg as f64 * f64::ln(rnd)) as u64, 5 * avg)
+    cmp::min((-1.0 * avg as f64 * f64::ln(rnd)) as u64, 5 * avg)
 }
 
 async fn transfer_prize_funds_to_group(

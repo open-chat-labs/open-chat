@@ -34,7 +34,7 @@ async fn initialize_bot(args: Args) -> Response {
             Ok(Success) => {
                 mutate_state(|state| {
                     state.data.average_time_between_prizes =
-                        Duration::from_millis(((args.end_date - now) / args.prizes.len() as u64) as u64);
+                        Duration::from_millis((args.end_date - now) / args.prizes.len() as u64);
                     state.data.username = args.username;
                     state.data.prize_data = Some(PrizeData {
                         token: args.token,
