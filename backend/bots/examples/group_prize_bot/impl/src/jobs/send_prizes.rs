@@ -1,4 +1,4 @@
-use crate::{mutate_state, RuntimeState};
+use crate::{mutate_state, Prize, RuntimeState};
 use ic_ledger_types::Tokens;
 use ledger_utils::sns;
 use std::{cmp, time::Duration};
@@ -108,8 +108,8 @@ fn time_until_next_prize(state: &mut RuntimeState) -> Option<Duration> {
     });
 
     let rnd = state.env.random();
-    let avg = state.data.average_time_between_prizes.as_millis() as u64;
-    let next = Duration::from_millis(next_time(avg, rnd));
+    let mean = state.data.mean_time_between_prizes;
+    let next = Duration::from_millis(next_time(mean, rnd));
 
     if next > time_remaining {
         error!("Not enough time remaining");
@@ -120,9 +120,9 @@ fn time_until_next_prize(state: &mut RuntimeState) -> Option<Duration> {
 }
 
 // Use the inverse exponential function to calculate the next time but
-// cap the maximum next time at 5x the average
-fn next_time(avg: TimestampMillis, rnd: f64) -> TimestampMillis {
-    cmp::min((-1.0 * avg as f64 * f64::ln(rnd)) as u64, 5 * avg)
+// cap the maximum next time at 5x the mean
+fn next_time(mean: TimestampMillis, rnd: f64) -> TimestampMillis {
+    cmp::min((-1.0 * mean as f64 * f64::ln(rnd)) as u64, 5 * mean)
 }
 
 async fn transfer_prize_funds_to_group(
@@ -146,7 +146,10 @@ async fn transfer_prize_funds_to_group(
 
     match sns::process_transaction(pending_transaction, group, ledger_canister_id, now_nanos).await {
         Ok(completed_transaction) => mutate_state(|state| {
-            state.data.transactions.push(completed_transaction.clone());
+            state.data.prizes_sent.push(Prize {
+                group,
+                transaction: completed_transaction.clone(),
+            });
             Ok(completed_transaction)
         }),
         Err(failed_transaction) => Err(format!("{failed_transaction:?}")),

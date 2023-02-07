@@ -1,8 +1,8 @@
 use candid::{CandidType, Principal};
 use canister_state_macros::canister_state;
 use serde::{Deserialize, Serialize};
+use std::cell::RefCell;
 use std::collections::HashSet;
-use std::{cell::RefCell, time::Duration};
 use types::{Avatar, CanisterId, CompletedCryptoTransaction, Cryptocurrency, Cycles, TimestampMillis, Timestamped, Version};
 use utils::env::Environment;
 
@@ -41,6 +41,8 @@ impl RuntimeState {
             cycles_balance: self.env.cycles_balance(),
             wasm_version: WASM_VERSION.with(|v| **v.borrow()),
             git_commit_id: utils::git::git_commit_id().to_string(),
+            mean_time_between_prizes: self.data.mean_time_between_prizes,
+            prizes_sent: self.data.prizes_sent.clone(),
         }
     }
 
@@ -63,9 +65,9 @@ struct Data {
     pub test_mode: bool,
     pub username: String,
     pub prize_data: Option<PrizeData>,
-    pub average_time_between_prizes: Duration,
+    pub mean_time_between_prizes: TimestampMillis,
+    pub prizes_sent: Vec<Prize>,
     pub groups: HashSet<CanisterId>,
-    pub transactions: Vec<CompletedCryptoTransaction>,
 }
 
 impl Data {
@@ -77,9 +79,9 @@ impl Data {
             test_mode,
             username: "PrizeBot".to_string(),
             prize_data: None,
-            average_time_between_prizes: Duration::from_secs(3600),
+            mean_time_between_prizes: 3_600_000,
+            prizes_sent: Vec::new(),
             groups: HashSet::new(),
-            transactions: Vec::new(),
         }
     }
 }
@@ -92,6 +94,12 @@ pub struct PrizeData {
     pub end_date: TimestampMillis,
 }
 
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct Prize {
+    pub group: CanisterId,
+    pub transaction: CompletedCryptoTransaction,
+}
+
 #[derive(CandidType, Serialize, Debug)]
 pub struct Metrics {
     pub now: TimestampMillis,
@@ -99,4 +107,6 @@ pub struct Metrics {
     pub cycles_balance: Cycles,
     pub wasm_version: Version,
     pub git_commit_id: String,
+    pub mean_time_between_prizes: TimestampMillis,
+    pub prizes_sent: Vec<Prize>,
 }
