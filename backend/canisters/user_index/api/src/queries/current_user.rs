@@ -1,7 +1,7 @@
 use candid::CandidType;
 use ic_ledger_types::AccountIdentifier;
 use serde::{Deserialize, Serialize};
-use types::{CanisterUpgradeStatus, PhoneNumber, TimestampMillis, UserId, Version};
+use types::{CanisterUpgradeStatus, DiamondMembershipDetails, PhoneNumber, TimestampMillis, UserId, Version};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {}
@@ -27,6 +27,7 @@ pub struct SuccessResult {
     pub is_super_admin: bool,
     pub suspension_details: Option<SuspensionDetails>,
     pub is_suspected_bot: bool,
+    pub diamond_membership_details: Option<DiamondMembershipDetails>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

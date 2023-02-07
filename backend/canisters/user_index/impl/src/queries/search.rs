@@ -34,7 +34,7 @@ fn search_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     let results = matches
         .iter()
         .take(args.max_results as usize)
-        .map(|(u, _)| u.to_summary())
+        .map(|(u, _)| u.to_summary(now))
         .collect();
 
     Success(Result {

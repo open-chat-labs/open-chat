@@ -1,5 +1,6 @@
 pub mod account_billing;
 pub mod challenges;
+pub mod diamond_membership_details;
 pub mod local_user_index_map;
 pub mod open_storage_user_sync_queue;
 pub mod set_user_suspended_queue;
