@@ -21,7 +21,7 @@ fn users_impl(args: Args, runtime_state: &RuntimeState) -> Response {
                 .into_iter()
                 .filter_map(|user_id| runtime_state.data.users.get_by_user_id(&user_id))
                 .filter(move |u| u.date_updated > updated_since)
-                .map(|u| u.to_partial_summary())
+                .map(|u| u.to_partial_summary(now))
         })
         .collect();
 

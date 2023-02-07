@@ -5,6 +5,7 @@ use canister_tracing_macros::trace;
 use local_user_index_canister::c2c_notify_events::{Response::*, *};
 use local_user_index_canister::Event;
 use tracing::info;
+use types::{MessageContent, TextContent};
 use user_canister::{
     Event as UserEvent, PhoneNumberConfirmed, ReferredUserRegistered, StorageUpgraded, UserJoinedGroup, UserSuspended,
     UsernameChanged,
@@ -98,6 +99,14 @@ fn handle_event(event: Event, runtime_state: &mut RuntimeState) {
                     as_super_admin: ev.as_super_admin,
                     latest_message_index: ev.latest_message_index,
                 })),
+            );
+        }
+        Event::DiamondMembershipPaymentReceived(ev) => {
+            runtime_state.data.user_event_sync_queue.push(
+                ev.user_id.into(),
+                UserEvent::OpenChatBotMessage(Box::new(MessageContent::Text(TextContent {
+                    text: "Payment received for Diamond membership!".to_string(),
+                }))),
             );
         }
     }

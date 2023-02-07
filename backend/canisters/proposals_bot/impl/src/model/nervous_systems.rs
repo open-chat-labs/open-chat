@@ -63,15 +63,7 @@ impl NervousSystems {
             .values_mut()
             .filter(|n| !n.proposals_to_be_pushed.in_progress)
         {
-            // TODO replace this with `pop_first` once it is stablized
-            if let Some(p) = ns
-                .proposals_to_be_pushed
-                .queue
-                .keys()
-                .next()
-                .cloned()
-                .and_then(|k| ns.proposals_to_be_pushed.queue.remove(&k))
-            {
+            if let Some((_, p)) = ns.proposals_to_be_pushed.queue.pop_first() {
                 ns.proposals_to_be_pushed.in_progress = true;
                 return Some(ProposalToPush {
                     governance_canister_id: ns.governance_canister_id,

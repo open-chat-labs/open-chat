@@ -41,6 +41,8 @@ fn current_user_impl(runtime_state: &RuntimeState) -> Response {
             suspended_by: d.suspended_by,
         });
 
+        let now = runtime_state.env.now();
+
         Success(SuccessResult {
             user_id: u.user_id,
             username: u.username.clone(),
@@ -54,6 +56,7 @@ fn current_user_impl(runtime_state: &RuntimeState) -> Response {
             is_super_admin: runtime_state.data.super_admins.contains(&u.user_id),
             suspension_details,
             is_suspected_bot: runtime_state.data.users.is_suspected_bot(&u.user_id),
+            diamond_membership_details: u.diamond_membership_details.hydrate(now),
         })
     } else {
         UserNotFound

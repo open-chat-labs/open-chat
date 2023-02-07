@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Added `DiamondMembershipPaymentReceived` event type ([#3069](https://github.com/open-ic/open-chat/pull/3069))
+
 ### Changed
 
 - Deserialize using `MemoryManager` within `post_upgrade` ([#3046](https://github.com/open-ic/open-chat/pull/3046))
