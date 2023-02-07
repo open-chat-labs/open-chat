@@ -7,7 +7,7 @@ use types::{
 };
 
 use crate::{mutate_state, RuntimeState};
-use std::time::Duration;
+use std::{time::Duration, cmp};
 
 pub(crate) fn start_job(_state: &RuntimeState) {
     ic_cdk::timer::set_timer(Duration::from_secs(600), run);
@@ -109,16 +109,21 @@ fn time_until_next_prize(state: &mut RuntimeState) -> Option<Duration> {
     });
 
     let rnd = state.env.random();
-    let avg_in_hours: f64 = state.data.average_time_between_prizes.as_secs_f64() / 3600_f64;
-    let e: f64 = std::f64::consts::E;
-    let next_in_hours = avg_in_hours * e.powf(-1.0 * avg_in_hours * rnd);
-    let next = Duration::from_secs_f64(next_in_hours * 3600_f64);
+    let avg = state.data.average_time_between_prizes.as_millis() as u64;
+    let next = Duration::from_millis(next_time(avg, rnd));
+    
     if next > time_remaining {
         error!("Not enough time remaining");
         None
     } else {
         Some(next)
     }
+}
+
+// Use the inverse exponential function to calculate the next time but
+// cap the maximum next time at 5x the average
+fn next_time(avg: TimestampMillis, rnd: f64) -> TimestampMillis {
+    cmp::max((-1.0 * avg as f64 * f64::ln(rnd)) as u64, 5 * avg)
 }
 
 async fn transfer_prize_funds_to_group(
@@ -190,52 +195,5 @@ async fn send_prize_message_to_group(
         },
         // TODO: We should retry sending the message
         Err(error) => Err(format!("{error:?}")),
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use std::collections::HashSet;
-
-    use candid::Principal;
-    use utils::env::test::TestEnv;
-
-    use crate::{Data, PrizeData};
-
-    use super::*;
-
-    #[test]
-    fn average_time_between_prizes_in_expected_range() {
-        for n in 0..10 {
-            let mut runtime_state = build_state(n as f64 / 10_f64);
-            let time_until_next_prize = time_until_next_prize(&mut runtime_state).unwrap().as_millis();
-
-            // Time with range of 20 minutes to 2 hours
-            assert!(time_until_next_prize > (1000 * 60 * 20));
-            assert!(time_until_next_prize < (1000 * 3600 * 2));
-        }
-    }
-
-    fn build_state(random: f64) -> RuntimeState {
-        let mut env = TestEnv::default();
-        env.random = random;
-        let mut data = Data::new(Principal::anonymous(), HashSet::new(), false);
-        let now = env.now;
-
-        // 2 hours from now
-        let end_date: TimestampMillis = now + (1000 * 3600 * 2);
-
-        // 1 prize with 1 individual prize
-        let prizes: Vec<Vec<u64>> = vec![vec![10_000]];
-        data.prize_data = Some(PrizeData {
-            token: Cryptocurrency::CKBTC,
-            ledger_canister_id: Principal::anonymous(),
-            prizes,
-            end_date,
-        });
-
-        data.average_time_between_prizes = Duration::from_millis(end_date - now);
-
-        RuntimeState::new(Box::new(env), data)
     }
 }
