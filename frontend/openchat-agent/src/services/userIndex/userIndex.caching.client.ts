@@ -25,7 +25,12 @@ import type {
 } from "openchat-shared";
 import { groupBy } from "../../utils/list";
 import { profile } from "../common/profiling";
-import { getCachedUsers, setCachedUsers, setUsername } from "../../utils/userCache";
+import {
+    getCachedUsers,
+    setCachedUsers,
+    setUserDiamondStatusToTrue,
+    setUsername,
+} from "../../utils/userCache";
 
 function isUserSummary(user: PartialUserSummary): user is UserSummary {
     return user.username !== undefined;
@@ -212,11 +217,19 @@ export class CachingUserIndexClient implements IUserIndexClient {
     }
 
     payForDiamondMembership(
+        userId: string,
         token: Cryptocurrency,
         duration: DiamondMembershipDuration,
         recurring: boolean,
         expectedPriceE8s: bigint
     ): Promise<PayForDiamondMembershipResponse> {
-        return this.client.payForDiamondMembership(token, duration, recurring, expectedPriceE8s);
+        return this.client
+            .payForDiamondMembership(userId, token, duration, recurring, expectedPriceE8s)
+            .then((res) => {
+                if (res.kind === "success") {
+                    setUserDiamondStatusToTrue(userId);
+                }
+                return res;
+            });
     }
 }

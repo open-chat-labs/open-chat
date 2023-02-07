@@ -2873,13 +2873,7 @@ export class OpenChat extends EventTarget {
         return this.api.setUsername(userId, username).then((resp) => {
             if (resp === "success" && this._user !== undefined) {
                 this._user.username = username;
-                const user = this._liveState.userStore[userId];
-                if (user !== undefined) {
-                    userStore.add({
-                        ...user,
-                        username,
-                    });
-                }
+                this.overwriteUserInStore(userId, (user) => ({ ...user, username }));
             }
             return resp;
         });
@@ -3369,9 +3363,30 @@ export class OpenChat extends EventTarget {
             });
     }
 
+    private overwriteUserInStore(
+        userId: string,
+        updater: (user: PartialUserSummary) => PartialUserSummary | undefined
+    ): void {
+        const user = this._liveState.userStore[userId];
+        if (user !== undefined) {
+            const updated = updater(user);
+            if (updated !== undefined) {
+                userStore.add(updated);
+            }
+        }
+    }
+
+    private updateDiamondStatusInUserStore(now: number, details?: DiamondMembershipDetails): void {
+        const diamond = details !== undefined && Number(details.expiresAt) > now;
+        this.overwriteUserInStore(this.user.userId, (user) =>
+            user.diamond !== diamond ? { ...user, diamond } : undefined
+        );
+    }
+
     private setDiamondMembership(details?: DiamondMembershipDetails): void {
         diamondMembership.set(details);
         const now = Date.now();
+        this.updateDiamondStatusInUserStore(now, details);
         if (details !== undefined) {
             const expiry = Number(details.expiresAt);
             if (expiry > now) {
@@ -3399,7 +3414,7 @@ export class OpenChat extends EventTarget {
         expectedPriceE8s: bigint
     ): Promise<boolean> {
         return this.api
-            .payForDiamondMembership(token, duration, recurring, expectedPriceE8s)
+            .payForDiamondMembership(this.user.userId, token, duration, recurring, expectedPriceE8s)
             .then((resp) => {
                 if (resp.kind !== "success") {
                     return false;

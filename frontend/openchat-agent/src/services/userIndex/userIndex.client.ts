@@ -218,6 +218,7 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
 
     @profile("userIndexClient")
     payForDiamondMembership(
+        _userId: string,
         token: Cryptocurrency,
         duration: DiamondMembershipDuration,
         recurring: boolean,

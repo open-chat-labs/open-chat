@@ -1309,6 +1309,7 @@ export class OpenChatAgentWorker extends EventTarget {
     }
 
     payForDiamondMembership(
+        userId: string,
         token: Cryptocurrency,
         duration: DiamondMembershipDuration,
         recurring: boolean,
@@ -1317,6 +1318,7 @@ export class OpenChatAgentWorker extends EventTarget {
         return this.sendRequest({
             kind: "payForDiamondMembership",
             payload: {
+                userId,
                 token,
                 duration,
                 recurring,

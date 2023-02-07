@@ -41,6 +41,7 @@ export interface IUserIndexClient {
     unsuspendUser(userId: string): Promise<UnsuspendUserResponse>;
     markSuspectedBot(): Promise<MarkSuspectedBotResponse>;
     payForDiamondMembership(
+        userId: string,
         token: Cryptocurrency,
         duration: DiamondMembershipDuration,
         recurring: boolean,

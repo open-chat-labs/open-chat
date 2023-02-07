@@ -1,5 +1,5 @@
 import { openDB, DBSchema, IDBPDatabase } from "idb";
-import type { UserSummary } from "openchat-shared";
+import type { DiamondMembershipDetails, UserSummary } from "openchat-shared";
 
 const CACHE_VERSION = 3;
 
@@ -73,6 +73,19 @@ export async function setUsername(userId: string, username: string): Promise<voi
     const user = await store.get(userId);
     if (user !== undefined) {
         user.username = username;
+        await store.put(user, userId);
+    }
+    await tx.done;
+}
+
+export async function setUserDiamondStatusToTrue(userId: string): Promise<void> {
+    const tx = (await lazyOpenUserCache()).transaction("users", "readwrite", {
+        durability: "relaxed",
+    });
+    const store = tx.objectStore("users");
+    const user = await store.get(userId);
+    if (user !== undefined) {
+        user.diamond = true;
         await store.put(user, userId);
     }
     await tx.done;

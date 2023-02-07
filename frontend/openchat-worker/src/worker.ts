@@ -1248,6 +1248,7 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
             case "payForDiamondMembership":
                 agent
                     .payForDiamondMembership(
+                        payload.userId,
                         payload.token,
                         payload.duration,
                         payload.recurring,

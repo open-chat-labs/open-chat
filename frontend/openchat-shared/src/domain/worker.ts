@@ -960,6 +960,7 @@ type ClaimPrize = Request<{
 };
 
 type PayForDiamondMembership = Request<{
+    userId: string;
     token: Cryptocurrency;
     duration: DiamondMembershipDuration;
     recurring: boolean;
