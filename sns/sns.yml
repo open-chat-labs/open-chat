@@ -16,7 +16,7 @@ transaction_fee_e8s: 100000
 #
 # Example: InternetComputerProtocol
 #
-token_name: OpenChat
+token_name: CHAT
 #
 # The symbol of the token issued by the SNS Ledger.
 # This field has no default, a value must be provided by the user.
@@ -38,8 +38,8 @@ proposal_reject_cost_e8s: 1000000000
 # The minimum amount of SNS Token e8s an SNS Ledger account must have to stake a neuron.
 # Default value = 100000000
 #
-# 5 Tokens
-neuron_minimum_stake_e8s: 500000000
+# 4 Tokens
+neuron_minimum_stake_e8s: 400000000
 #
 # The minimum dissolve_delay in seconds a neuron must have to be able to cast votes on proposals.
 # Default value = 15778800

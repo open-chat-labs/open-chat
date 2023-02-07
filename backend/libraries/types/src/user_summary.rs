@@ -10,6 +10,7 @@ pub struct UserSummary {
     pub is_bot: bool,
     pub suspended: bool,
     pub seconds_since_last_online: u32,
+    pub diamond_member: bool,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -19,4 +20,5 @@ pub struct PartialUserSummary {
     pub avatar_id: Option<u128>,
     pub is_bot: bool,
     pub suspended: bool,
+    pub diamond_member: bool,
 }

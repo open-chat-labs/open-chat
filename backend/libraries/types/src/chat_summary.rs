@@ -44,9 +44,7 @@ pub struct DirectChatSummary {
     pub metrics: ChatMetrics,
     pub my_metrics: ChatMetrics,
     pub archived: bool,
-    #[serde(default)]
     pub events_ttl: Option<Milliseconds>,
-    #[serde(default)]
     pub expired_messages: RangeSet<MessageIndex>,
 }
 
@@ -87,11 +85,8 @@ pub struct GroupChatSummary {
     pub frozen: Option<FrozenGroupInfo>,
     pub date_last_pinned: Option<TimestampMillis>,
     pub date_read_pinned: Option<TimestampMillis>,
-    #[serde(default)]
     pub events_ttl: Option<Milliseconds>,
-    #[serde(default)]
     pub expired_messages: RangeSet<MessageIndex>,
-    #[serde(default)]
     pub next_message_expiry: Option<TimestampMillis>,
 }
 
@@ -129,9 +124,7 @@ pub struct DirectChatSummaryUpdates {
     pub metrics: Option<ChatMetrics>,
     pub my_metrics: Option<ChatMetrics>,
     pub archived: Option<bool>,
-    #[serde(default)]
     pub events_ttl: OptionUpdate<Milliseconds>,
-    #[serde(default)]
     pub newly_expired_messages: RangeSet<MessageIndex>,
 }
 
@@ -162,11 +155,8 @@ pub struct GroupChatSummaryUpdates {
     pub frozen: OptionUpdate<FrozenGroupInfo>,
     pub date_last_pinned: Option<TimestampMillis>,
     pub date_read_pinned: Option<TimestampMillis>,
-    #[serde(default)]
     pub events_ttl: OptionUpdate<Milliseconds>,
-    #[serde(default)]
     pub newly_expired_messages: RangeSet<MessageIndex>,
-    #[serde(default)]
     pub next_message_expiry: OptionUpdate<TimestampMillis>,
 }
 
@@ -185,7 +175,6 @@ pub struct PublicGroupSummary {
     pub owner_id: UserId,
     pub is_public: bool,
     pub frozen: Option<FrozenGroupInfo>,
-    #[serde(default)]
     pub events_ttl: Option<Milliseconds>,
 }
 
@@ -216,11 +205,8 @@ pub struct GroupCanisterGroupChatSummary {
     pub latest_threads: Vec<GroupCanisterThreadDetails>,
     pub frozen: Option<FrozenGroupInfo>,
     pub date_last_pinned: Option<TimestampMillis>,
-    #[serde(default)]
     pub events_ttl: Option<Milliseconds>,
-    #[serde(default)]
     pub expired_messages: RangeSet<MessageIndex>,
-    #[serde(default)]
     pub next_message_expiry: Option<TimestampMillis>,
 }
 
@@ -311,11 +297,8 @@ pub struct GroupCanisterGroupChatSummaryUpdates {
     pub notifications_muted: Option<bool>,
     pub frozen: OptionUpdate<FrozenGroupInfo>,
     pub date_last_pinned: Option<TimestampMillis>,
-    #[serde(default)]
     pub events_ttl: OptionUpdate<Milliseconds>,
-    #[serde(default)]
     pub newly_expired_messages: RangeSet<MessageIndex>,
-    #[serde(default)]
     pub next_message_expiry: OptionUpdate<TimestampMillis>,
 }
 
@@ -332,13 +315,10 @@ pub struct ChatMetrics {
     pub icp_messages: u64,
     pub sns1_messages: u64,
     pub ckbtc_messages: u64,
-    #[serde(default)]
     pub chat_messages: u64,
     pub deleted_messages: u64,
     pub giphy_messages: u64,
-    #[serde(default)]
     pub prize_messages: u64,
-    #[serde(default)]
     pub prize_winner_messages: u64,
     pub replies: u64,
     pub edits: u64,

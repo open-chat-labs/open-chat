@@ -5,13 +5,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Reduce min interval between cycles balance checks ([#3058](https://github.com/open-ic/open-chat/pull/3058))
+- Deserialize using `MemoryManager` within `post_upgrade` ([#3066](https://github.com/open-ic/open-chat/pull/3066))
+- Reduce `MemoryManager` bucket size to 1 wasm page ([#3070](https://github.com/open-ic/open-chat/pull/3070))
+
+### Removed
+
+- Removed one-time code to fix incorrect ICP transaction hashes ([#3063](https://github.com/open-ic/open-chat/pull/3063))
+- Removed one-time code to migrate `chat_events` to the new format ([#3064](https://github.com/open-ic/open-chat/pull/3064))
+
 ## [[2.0.578](https://github.com/open-ic/open-chat/releases/tag/v2.0.578-user)] - 2023-02-04
 
 ### Added
 
-- Added `disappears_at` to events ([#3021](https://github.com/open-ic/open-chat/pull/3021)) (website must be released first)
-- Support disappearing messages ([#3029](https://github.com/open-ic/open-chat/pull/3029)) (website must be released first)
-- Added support for "prize" messages ([#3044](https://github.com/open-ic/open-chat/pull/3044)) (group must be released first)
+- Added `disappears_at` to events ([#3021](https://github.com/open-ic/open-chat/pull/3021))
+- Support disappearing messages ([#3029](https://github.com/open-ic/open-chat/pull/3029))
+- Added support for "prize" messages ([#3044](https://github.com/open-ic/open-chat/pull/3044))
 
 ### Changed
 

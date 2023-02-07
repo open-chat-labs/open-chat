@@ -681,6 +681,7 @@ type PartialUserSummary =
         avatar_id: opt nat;
         is_bot: bool;
         suspended: bool;
+        diamond_member: bool;
     };
 
 type Participant =
@@ -959,6 +960,7 @@ type UserSummary =
         is_bot: bool;
         suspended: bool;
         seconds_since_last_online: nat32;
+        diamond_member: bool;
     };
 
 type Version =
@@ -1252,4 +1254,17 @@ type PrizeWinnerContent =
         winner: UserId;
         transaction: CompletedCryptoTransaction;
         prize_message: MessageIndex;
+    };
+
+type DiamondMembershipDetails =
+    record {
+        expires_at: TimestampMillis;
+        recurring: opt DiamondMembershipPlanDuration;
+    };
+
+type DiamondMembershipPlanDuration =
+    variant {
+        OneMonth;
+        ThreeMonths;
+        OneYear;
     };

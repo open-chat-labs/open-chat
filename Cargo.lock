@@ -2290,7 +2290,6 @@ dependencies = [
  "serde",
  "serde_bytes",
  "serializer",
- "stable_memory",
  "tracing",
  "types 0.1.0",
  "user_canister",
@@ -2361,6 +2360,56 @@ dependencies = [
  "types 0.1.0",
  "user_canister",
  "user_canister_c2c_client",
+ "user_index_canister",
+ "user_index_canister_c2c_client",
+ "utils 0.1.0",
+]
+
+[[package]]
+name = "group_prize_bot"
+version = "0.1.0"
+dependencies = [
+ "bot_api",
+ "candid",
+ "candid_gen 0.1.0",
+ "serde",
+ "types 0.1.0",
+ "user_canister",
+ "user_index_canister",
+]
+
+[[package]]
+name = "group_prize_bot_impl"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "canister_api_macros",
+ "canister_logger",
+ "canister_state_macros 0.1.0 (git+https://github.com/open-ic/ic-utils?rev=2328657cbb1023fb251ee7faca4f4d313f25755f)",
+ "canister_tracing_macros",
+ "group_canister",
+ "group_canister_c2c_client",
+ "group_prize_bot",
+ "http_request",
+ "ic-base-types",
+ "ic-cdk",
+ "ic-cdk-macros",
+ "ic-icrc1",
+ "ic-icrc1-client",
+ "ic-icrc1-client-cdk",
+ "ic-ledger-types",
+ "ic-stable-structures 0.5.0",
+ "ledger_utils",
+ "local_user_index_canister",
+ "local_user_index_canister_c2c_client",
+ "msgpack",
+ "serde",
+ "serde_bytes",
+ "serde_json",
+ "serializer",
+ "tracing",
+ "types 0.1.0",
+ "user_canister",
  "user_index_canister",
  "user_index_canister_c2c_client",
  "utils 0.1.0",
@@ -6815,6 +6864,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "serde_repr"
+version = "0.1.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9a5ec9fa74a20ebbe5d9ac23dac1fc96ba0ecfe9f50f2843b52e537b10fbcb4e"
+dependencies = [
+ "proc-macro2",
+ "quote 1.0.23",
+ "syn 1.0.107",
+]
+
+[[package]]
 name = "serde_tokenstream"
 version = "0.1.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7181,16 +7241,6 @@ name = "stable_deref_trait"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a8f112729512f8e442d81f95a8a7ddf2b7c6b8a1a6f509a95864142b30cab2d3"
-
-[[package]]
-name = "stable_memory"
-version = "0.1.0"
-source = "git+https://github.com/open-ic/ic-utils?rev=2328657cbb1023fb251ee7faca4f4d313f25755f#2328657cbb1023fb251ee7faca4f4d313f25755f"
-dependencies = [
- "ic-cdk",
- "serde",
- "serializer",
-]
 
 [[package]]
 name = "static_assertions"
@@ -7906,6 +7956,7 @@ dependencies = [
  "serde",
  "serde_bytes",
  "serde_json",
+ "serde_repr",
  "sha256",
 ]
 
@@ -8076,7 +8127,6 @@ dependencies = [
  "serde",
  "serde_bytes",
  "serializer",
- "stable_memory",
  "tracing",
  "types 0.1.0",
  "user_canister",
