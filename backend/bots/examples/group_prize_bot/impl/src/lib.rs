@@ -2,7 +2,7 @@ use candid::{CandidType, Principal};
 use canister_state_macros::canister_state;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
-use std::{cell::RefCell, cmp};
+use std::{cell::RefCell, time::Duration};
 use types::{Avatar, CanisterId, CompletedCryptoTransaction, Cryptocurrency, Cycles, TimestampMillis, Timestamped, Version};
 use utils::env::Environment;
 
@@ -53,49 +53,6 @@ impl RuntimeState {
         let group_vec: Vec<_> = self.data.groups.iter().copied().collect();
         Some(group_vec[rnd_group_index])
     }
-
-    pub fn build_random_prize(&mut self, balance: u64) -> Option<Prize> {
-        if let Some(prize_data) = &self.data.prize_data {
-            let mut remaining_balance = balance;
-            // Pick a random number of claimants between min and max using a linear function
-            let min = prize_data.min_claimants_per_message;
-            let max = prize_data.max_claimants_per_message;
-            let rnd = self.env.random_u32();
-            let number_claimants = min + (rnd % (max - min));
-            let mut prizes: Vec<u64> = Vec::new();
-
-            // While the available token balance is positive randomly pick a prize for each claimant
-            // using a power function so that higher prizes are more unlikely
-            for _ in 0..number_claimants {
-                let rnd = self.env.random_u32();
-                let mut prize = self.get_next_individual_prize(prize_data, rnd);
-                prize = cmp::max(prize, remaining_balance);
-                prizes.push(prize);
-                remaining_balance -= prize;
-                if remaining_balance == 0 {
-                    break;
-                }
-            }
-
-            Some(Prize {
-                token: prize_data.token,
-                end_date: prize_data.end_date,
-                prizes,
-            })
-        } else {
-            None
-        }
-    }
-
-    fn get_next_individual_prize(&self, prize_data: &PrizeData, rnd_32: u32) -> u64 {
-        const EXP: f64 = 4.0;
-        const INV_EXP: f64 = 0.25;
-        let min = prize_data.min_individual_prize as f64;
-        let max = prize_data.max_individual_prize as f64;
-        let rnd = rnd_32 as f64 / u32::MAX as f64;
-
-        ((rnd * (max / min).powf(INV_EXP)).powf(EXP) * min) as u64
-    }
 }
 
 #[derive(Serialize, Deserialize)]
@@ -106,6 +63,7 @@ struct Data {
     pub test_mode: bool,
     pub username: String,
     pub prize_data: Option<PrizeData>,
+    pub average_time_between_prizes: Duration,
     pub groups: HashSet<CanisterId>,
     pub transactions: Vec<CompletedCryptoTransaction>,
 }
@@ -119,6 +77,7 @@ impl Data {
             test_mode,
             username: "PrizeBot".to_string(),
             prize_data: None,
+            average_time_between_prizes: Duration::from_secs(3600),
             groups: HashSet::new(),
             transactions: Vec::new(),
         }
@@ -129,17 +88,8 @@ impl Data {
 pub struct PrizeData {
     pub token: Cryptocurrency,
     pub ledger_canister_id: CanisterId,
-    pub min_individual_prize: u64,
-    pub max_individual_prize: u64,
-    pub min_claimants_per_message: u32,
-    pub max_claimants_per_message: u32,
+    pub prizes: Vec<Vec<u64>>,
     pub end_date: TimestampMillis,
-}
-
-pub struct Prize {
-    pub token: Cryptocurrency,
-    pub end_date: TimestampMillis,
-    pub prizes: Vec<u64>,
 }
 
 #[derive(CandidType, Serialize, Debug)]
