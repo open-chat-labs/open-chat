@@ -10,22 +10,16 @@ pub struct CanisterEnv {
 }
 
 impl CanisterEnv {
-    pub fn new() -> Self {
-        CanisterEnv {
-            // Seed the PRNG with the current time.
-            //
-            // This is safe since all replicas are guaranteed to see the same result of
-            // timestamp::now() and it isn't easily predictable from the outside.
-            rng: {
-                let now_millis = time::now_nanos();
-                let mut seed = [0u8; 32];
-                seed[..8].copy_from_slice(&now_millis.to_be_bytes());
-                seed[8..16].copy_from_slice(&now_millis.to_be_bytes());
-                seed[16..24].copy_from_slice(&now_millis.to_be_bytes());
-                seed[24..32].copy_from_slice(&now_millis.to_be_bytes());
-                StdRng::from_seed(seed)
-            },
+    pub fn new_with_seed(seed: [u8; 32]) -> Self {
+        Self {
+            rng: StdRng::from_seed(seed),
         }
+    }
+
+    pub fn new_insecure() -> Self {
+        let mut seed = [0; 32];
+        seed[..8].copy_from_slice(&time::now_nanos().to_ne_bytes());
+        Self::new_with_seed(seed)
     }
 }
 
@@ -52,11 +46,5 @@ impl Environment for CanisterEnv {
 
     fn cycles_balance(&self) -> Cycles {
         ic_cdk::api::canister_balance().into()
-    }
-}
-
-impl Default for CanisterEnv {
-    fn default() -> Self {
-        Self::new()
     }
 }
