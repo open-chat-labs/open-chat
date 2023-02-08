@@ -30,6 +30,7 @@ ledger_utils = { path = "../../../../libraries/ledger_utils" }
 local_user_index_canister = { path = "../../../../canisters/local_user_index/api" }
 local_user_index_canister_c2c_client = { path = "../../../../canisters/local_user_index/c2c_client" }
 msgpack = { path = "../../../../libraries/msgpack" }
+rand = { workspace = true }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
 serde_json = { workspace = true }

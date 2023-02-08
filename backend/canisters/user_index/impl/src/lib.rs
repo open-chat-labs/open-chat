@@ -8,6 +8,7 @@ use candid::Principal;
 use canister_state_macros::canister_state;
 use local_user_index_canister::Event as LocalUserIndexEvent;
 use model::local_user_index_map::LocalUserIndexMap;
+use rand_core::RngCore;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{HashSet, VecDeque};
@@ -90,7 +91,7 @@ impl RuntimeState {
     }
 
     pub fn generate_6_digit_code(&mut self) -> String {
-        let random = self.env.random_u32();
+        let random = self.env.rng().next_u32();
         format!("{:0>6}", random % 1000000)
     }
 

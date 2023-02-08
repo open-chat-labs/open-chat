@@ -35,8 +35,6 @@ notifications_index_canister = { path = "../../notifications_index/api" }
 notifications_index_canister_c2c_client = { path = "../../notifications_index/c2c_client" }
 open_storage_index_canister = { workspace = true }
 open_storage_index_canister_c2c_client = { workspace = true }
-rand = { workspace = true }
-rand_chacha = { workspace = true }
 rand_core = { workspace = true }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
