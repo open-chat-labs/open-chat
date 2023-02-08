@@ -13,5 +13,5 @@ pub fn random_string() -> String {
 }
 
 pub fn random_message_id() -> MessageId {
-    MessageId::generate(|| rand::thread_rng().next_u32())
+    MessageId::generate(rand::thread_rng())
 }

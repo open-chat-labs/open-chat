@@ -145,7 +145,7 @@ fn commit(args: Args, winner: UserId, transaction: CompletedCryptoTransaction, s
             let message_event = state.data.events.push_message(PushMessageArgs {
                 sender: OPENCHAT_BOT_USER_ID,
                 thread_root_message_index: None,
-                message_id: MessageId::generate(|| state.env.random_u32()),
+                message_id: MessageId::generate(state.env.rng()),
                 content: MessageContentInternal::PrizeWinner(PrizeWinnerContent {
                     winner,
                     transaction,

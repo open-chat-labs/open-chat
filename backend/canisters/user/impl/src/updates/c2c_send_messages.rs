@@ -170,7 +170,7 @@ pub(crate) fn handle_message_impl(
         thread_root_message_index: None,
         message_id: args
             .message_id
-            .unwrap_or_else(|| MessageId::generate(|| runtime_state.env.random_u32())),
+            .unwrap_or_else(|| MessageId::generate(runtime_state.env.rng())),
         sender,
         content,
         replies_to,

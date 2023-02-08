@@ -2,7 +2,7 @@ use crate::env::Environment;
 use crate::time;
 use candid::Principal;
 use rand::rngs::StdRng;
-use rand::{Rng, RngCore, SeedableRng};
+use rand::SeedableRng;
 use types::{CanisterId, Cycles, TimestampNanos};
 
 pub struct CanisterEnv {
@@ -10,21 +10,9 @@ pub struct CanisterEnv {
 }
 
 impl CanisterEnv {
-    pub fn new() -> Self {
-        CanisterEnv {
-            // Seed the PRNG with the current time.
-            //
-            // This is safe since all replicas are guaranteed to see the same result of
-            // timestamp::now() and it isn't easily predictable from the outside.
-            rng: {
-                let now_millis = time::now_nanos();
-                let mut seed = [0u8; 32];
-                seed[..8].copy_from_slice(&now_millis.to_be_bytes());
-                seed[8..16].copy_from_slice(&now_millis.to_be_bytes());
-                seed[16..24].copy_from_slice(&now_millis.to_be_bytes());
-                seed[24..32].copy_from_slice(&now_millis.to_be_bytes());
-                StdRng::from_seed(seed)
-            },
+    pub fn new(seed: [u8; 32]) -> Self {
+        Self {
+            rng: StdRng::from_seed(seed),
         }
     }
 }
@@ -42,21 +30,19 @@ impl Environment for CanisterEnv {
         ic_cdk::id()
     }
 
-    fn random_u32(&mut self) -> u32 {
-        self.rng.next_u32()
-    }
-
-    fn random(&mut self) -> f64 {
-        self.rng.gen()
-    }
-
     fn cycles_balance(&self) -> Cycles {
         ic_cdk::api::canister_balance().into()
+    }
+
+    fn rng(&mut self) -> &mut StdRng {
+        &mut self.rng
     }
 }
 
 impl Default for CanisterEnv {
     fn default() -> Self {
-        Self::new()
+        let mut seed = [0; 32];
+        seed[..8].copy_from_slice(&time::now_nanos().to_ne_bytes());
+        Self::new(seed)
     }
 }
