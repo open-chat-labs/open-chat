@@ -2,7 +2,7 @@ use captcha::filters::Wave;
 use rand_chacha::rand_core::{RngCore, SeedableRng};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use types::{Challenge, ChallengeAttempt, ChallengeKey, Salt, TimestampMillis};
+use types::{Challenge, ChallengeAttempt, ChallengeKey, TimestampMillis};
 
 const CAPTCHA_CHALLENGE_LIFETIME_MILLIS: u64 = 5 * 60 * 1000; // 5 minutes
 const MAX_INFLIGHT_CHALLENGES: u32 = 500;
