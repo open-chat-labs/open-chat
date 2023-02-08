@@ -78,7 +78,7 @@ fn send_reward_transferred_message(
     runtime_state.data.events.push_message(PushMessageArgs {
         sender: OPENCHAT_BOT_USER_ID,
         thread_root_message_index: None,
-        message_id: MessageId::generate(|| runtime_state.env.random_u32()),
+        message_id: MessageId::generate(runtime_state.env.rng()),
         content: MessageContentInternal::Crypto(CryptoContent {
             recipient: user_id,
             transfer: CryptoTransaction::Completed(CompletedCryptoTransaction::NNS(transfer)),

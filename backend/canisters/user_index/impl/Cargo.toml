@@ -21,7 +21,7 @@ group_canister = { path = "../../group/api" }
 group_canister_c2c_client = { path = "../../group/c2c_client" }
 http_request = { path = "../../../libraries/http_request" }
 human_readable = { path = "../../../libraries/human_readable" }
-ic-cdk = { workspace = true }
+ic-cdk = { workspace = true, features = ["timers"] }
 ic-cdk-macros = { workspace = true }
 ic-ledger-types = { workspace = true }
 ic-stable-structures = { workspace = true }
@@ -35,8 +35,6 @@ notifications_index_canister = { path = "../../notifications_index/api" }
 notifications_index_canister_c2c_client = { path = "../../notifications_index/c2c_client" }
 open_storage_index_canister = { workspace = true }
 open_storage_index_canister_c2c_client = { workspace = true }
-rand = { workspace = true }
-rand_chacha = { workspace = true }
 rand_core = { workspace = true }
 serde = { workspace = true }
 serde_bytes = { workspace = true }

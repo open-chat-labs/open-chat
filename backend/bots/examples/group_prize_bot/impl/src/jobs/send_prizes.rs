@@ -1,6 +1,7 @@
 use crate::{mutate_state, Prize, RuntimeState};
 use ic_ledger_types::Tokens;
 use ledger_utils::sns;
+use rand::Rng;
 use std::{cmp, time::Duration};
 use tracing::{error, trace};
 use types::{
@@ -83,7 +84,7 @@ async fn send_next_prize() -> bool {
     };
 
     // 3. Generate a random MessageId
-    let new_message_id = MessageId::generate(|| mutate_state(|state| state.env.random_u32()));
+    let new_message_id = mutate_state(|state| MessageId::generate(state.env.rng()));
 
     // 4. Send the prize message to the group
     if let Err(error_message) =
@@ -118,7 +119,7 @@ fn time_until_next_prize(state: &mut RuntimeState) -> Option<Duration> {
         }
     });
 
-    let rnd = state.env.random();
+    let rnd: f64 = state.env.rng().gen();
     let mean = state.data.mean_time_between_prizes;
     let next = Duration::from_millis(next_time(mean, rnd));
 

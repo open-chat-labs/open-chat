@@ -10,6 +10,7 @@ candid = { workspace = true }
 human_readable = { path = "../human_readable" }
 ic-icrc1 = { workspace = true }
 ic-ledger-types = { workspace = true }
+rand_core = { workspace = true }
 range-set = { workspace = true }
 serde = { workspace = true }
 serde_bytes = { workspace = true }

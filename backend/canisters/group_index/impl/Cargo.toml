@@ -21,7 +21,7 @@ group_canister_c2c_client = { path = "../../group/c2c_client" }
 group_index_canister = { path = "../api" }
 http_request = { path = "../../../libraries/http_request" }
 human_readable = { path = "../../../libraries/human_readable" }
-ic-cdk = { workspace = true }
+ic-cdk = { workspace = true, features = ["timers"] }
 ic-cdk-macros = { workspace = true }
 ic-stable-structures = { workspace = true }
 local_group_index_canister = { path = "../../local_group_index/api" }

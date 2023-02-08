@@ -235,6 +235,12 @@ impl UserMap {
         self.users.get_mut(user_id).map(|u| &mut u.diamond_membership_details)
     }
 
+    pub fn mark_updated(&mut self, user_id: &UserId, now: TimestampMillis) {
+        if let Some(user) = self.users.get_mut(user_id) {
+            user.date_updated = now;
+        }
+    }
+
     pub fn is_valid_caller(&self, caller: Principal) -> bool {
         self.principal_to_user_id.contains_key(&caller) || self.users.contains_key(&caller.into())
     }

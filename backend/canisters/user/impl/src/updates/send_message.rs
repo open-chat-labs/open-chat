@@ -279,7 +279,7 @@ async fn send_to_bot_canister(recipient: UserId, message_index: MessageIndex, ar
                     let push_message_args = PushMessageArgs {
                         sender: recipient,
                         thread_root_message_index: None,
-                        message_id: MessageId::generate(|| state.env.random_u32()),
+                        message_id: MessageId::generate(state.env.rng()),
                         content: content.new_content_into_internal(),
                         replies_to: None,
                         forwarded: false,

@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Use `MemoryManager` so that we can use stable memory at run time ([#3040](https://github.com/open-ic/open-chat/pull/3040))
+- Use `raw_rand` to seed rng ([#3076](https://github.com/open-ic/open-chat/pull/3076))
 
 ### Removed
 

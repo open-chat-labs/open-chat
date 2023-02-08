@@ -12,6 +12,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Deserialize using `MemoryManager` within `post_upgrade` ([#3046](https://github.com/open-ic/open-chat/pull/3046))
+- Use `raw_rand` to seed rng ([#3076](https://github.com/open-ic/open-chat/pull/3076))
+- Remove captcha challenge after any attempt ([#3078](https://github.com/open-ic/open-chat/pull/3078))
+- Mark user as updated after taking Diamond membership payment ([#3081](https://github.com/open-ic/open-chat/pull/3081))
 
 ## [[2.0.570](https://github.com/open-ic/open-chat/releases/tag/v2.0.570-user_index)] - 2023-02-01
 

@@ -1,5 +1,6 @@
 use candid::{CandidType, Principal};
 use canister_state_macros::canister_state;
+use rand::RngCore;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashSet;
@@ -58,7 +59,7 @@ impl RuntimeState {
         if num_groups == 0 {
             return None;
         }
-        let rnd_group_index = self.env.random_u32() as usize % num_groups;
+        let rnd_group_index = self.env.rng().next_u32() as usize % num_groups;
         let group_vec: Vec<_> = self.data.groups.iter().copied().collect();
         Some(group_vec[rnd_group_index])
     }
