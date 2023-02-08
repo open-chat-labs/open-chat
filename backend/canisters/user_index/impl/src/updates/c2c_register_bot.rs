@@ -2,6 +2,7 @@ use crate::updates::set_username::{validate_username, UsernameValidationResult};
 use crate::{mutate_state, RuntimeState, USER_LIMIT};
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
+use local_user_index_canister::{Event, UserRegistered};
 use types::{Cycles, UserId, Version};
 use user_index_canister::c2c_register_bot::{Response::*, *};
 
@@ -48,7 +49,18 @@ fn c2c_register_bot_impl(args: Args, runtime_state: &mut RuntimeState) -> Respon
     runtime_state
         .data
         .users
-        .register(caller, user_id, Version::default(), args.username, now, None, true);
+        .register(caller, user_id, Version::default(), args.username.clone(), now, None, true);
+
+    runtime_state.data.push_event_to_all_local_user_indexes(
+        Event::UserRegistered(UserRegistered {
+            user_id,
+            user_principal: caller,
+            username: args.username,
+            is_bot: true,
+            referred_by: None,
+        }),
+        None,
+    );
 
     Success
 }
