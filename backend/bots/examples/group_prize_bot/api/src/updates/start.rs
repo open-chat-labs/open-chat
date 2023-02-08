@@ -9,4 +9,5 @@ pub enum Response {
     Success,
     NotInitialized,
     NoGroupsJoined,
+    EndDateInPast,
 }

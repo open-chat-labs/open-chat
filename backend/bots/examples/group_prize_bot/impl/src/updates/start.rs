@@ -16,10 +16,14 @@ fn start_impl(runtime_state: &mut RuntimeState) -> Response {
         Response::NoGroupsJoined
     } else if let Some(prize_data) = &mut runtime_state.data.prize_data {
         let now = runtime_state.env.now();
-        runtime_state.data.mean_time_between_prizes = (prize_data.end_date - now) / prize_data.prizes.len() as u64;
-        runtime_state.data.started = true;
-        send_prizes::start_job(runtime_state);
-        Response::Success
+        if prize_data.end_date <= now {
+            Response::EndDateInPast
+        } else {
+            runtime_state.data.mean_time_between_prizes = (prize_data.end_date - now) / prize_data.prizes.len() as u64;
+            runtime_state.data.started = true;
+            send_prizes::start_job(runtime_state);
+            Response::Success
+        }
     } else {
         Response::NotInitialized
     }

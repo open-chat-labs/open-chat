@@ -84,6 +84,7 @@ type StartResponse =
         Success;
         NotInitialized;
         NoGroupsJoined;
+        EndDateInPast;
     };
 
 type StopArgs =
