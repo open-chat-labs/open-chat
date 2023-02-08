@@ -16,7 +16,7 @@ async fn join_group(args: Args) -> Response {
         Err(response) => return response,
     };
 
-    // 2. Call the local_use_index to join the group
+    // 2. Call the local_user_index to join the group
     if let Err(response) = call_join_group(group, local_user_index_canister).await {
         return response;
     }
