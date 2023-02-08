@@ -14,7 +14,7 @@ fn init(args: Args) {
     canister_logger::init(args.test_mode);
     init_cycles_dispenser_client(args.cycles_dispenser_canister_id);
 
-    let env = Box::new(CanisterEnv::default());
+    let env = Box::<CanisterEnv>::default();
 
     let data = Data::new(
         args.service_owner_principals.into_iter().collect(),

@@ -13,7 +13,7 @@ use utils::env::Environment;
 fn init(args: Args) {
     canister_logger::init(args.test_mode);
 
-    let env = Box::new(CanisterEnv::default());
+    let env = Box::<CanisterEnv>::default();
 
     let data = Data::new(
         env.canister_id().into(),
