@@ -15,16 +15,14 @@ type InitializeBotArgs =
         username: text;
         token: Cryptocurrency;
         ledger_canister_id: CanisterId;
-        min_individual_prize: nat64;
-        max_individual_prize: nat64;
-        min_claimants_per_message: nat32;
-        max_claimants_per_message: nat32;
+        prizes: vec vec nat64;
         end_date: TimestampMillis;   
     };
 
 type InitializeBotResponse =
     variant {
         Success;
+        EndDateInPast;
         AlreadyRegistered;
         UserLimitReached;
         UsernameTaken;
@@ -67,6 +65,35 @@ type JoinGroupsArgs =
 type JoinGroupsResponse =
     variant {
         Success;
+        AlreadyInGroup;
+        GroupNotFound;
+        GroupNotPublic;
+        ParticipantLimitReached;
+        Blocked;
+        UserSuspended;
+        ChatFrozen;
+        InternalError: text;
+    };
+
+type StartArgs =
+    record {
+    };
+
+type StartResponse =
+    variant {
+        Success;
+        NotInitialized;
+        NoGroupsJoined;
+        EndDateInPast;
+    };
+
+type StopArgs =
+    record {
+    };
+
+type StopResponse =
+    variant {
+        Success;
     };
 
 type InitArgs =
@@ -88,4 +115,6 @@ service: (InitArgs) -> {
     initialize_bot: (InitializeBotArgs) -> (InitializeBotResponse);
     set_avatar: (SetAvatarArgs) -> (SetAvatarResponse);
     join_group: (JoinGroupsArgs) -> (JoinGroupsResponse);
+    start: (StartArgs) -> (StartResponse);
+    stop: (StopArgs) -> (StopResponse);
 }
