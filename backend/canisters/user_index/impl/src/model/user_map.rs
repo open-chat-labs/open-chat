@@ -5,7 +5,7 @@ use crate::{CONFIRMATION_CODE_EXPIRY_MILLIS, CONFIRMED_PHONE_NUMBER_STORAGE_ALLO
 use candid::Principal;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeSet, HashMap, HashSet};
-use types::{CyclesTopUp, Milliseconds, PhoneNumber, TimestampMillis, UserId, Version};
+use types::{CyclesTopUp, DiamondMembershipPlanDuration, Milliseconds, PhoneNumber, TimestampMillis, UserId, Version};
 use utils::case_insensitive_hash_map::CaseInsensitiveHashMap;
 use utils::time::MINUTE_IN_MS;
 
@@ -31,6 +31,15 @@ pub struct UserMap {
 }
 
 impl UserMap {
+    pub fn initialize_diamond_members(&mut self, now: TimestampMillis) {
+        let expires_at = now + DiamondMembershipPlanDuration::OneYear.as_millis();
+
+        for user in self.users.values_mut().filter(|u| u.open_storage_limit_bytes > 0) {
+            user.diamond_membership_details.set_expires_at(expires_at);
+            user.date_updated = now;
+        }
+    }
+
     pub fn does_username_exist(&self, username: &str) -> bool {
         self.username_to_user_id.contains_key(username) || self.reserved_usernames.contains(username)
     }
@@ -233,6 +242,12 @@ impl UserMap {
 
     pub fn diamond_membership_details_mut(&mut self, user_id: &UserId) -> Option<&mut DiamondMembershipDetailsInternal> {
         self.users.get_mut(user_id).map(|u| &mut u.diamond_membership_details)
+    }
+
+    pub fn mark_updated(&mut self, user_id: &UserId, now: TimestampMillis) {
+        if let Some(user) = self.users.get_mut(user_id) {
+            user.date_updated = now;
+        }
     }
 
     pub fn is_valid_caller(&self, caller: Principal) -> bool {
