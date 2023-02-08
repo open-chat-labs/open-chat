@@ -1,6 +1,14 @@
 type CanisterId = principal;
 type Cycles = nat;
 type UserId = principal;
+type TimestampMillis = nat64;
+type Cryptocurrency =
+    variant {
+        InternetComputer;
+        SNS1;
+        CKBTC;
+        CHAT;
+    };
 
 type InitializeBotArgs =
     record {
