@@ -9,8 +9,10 @@ use types::{
     PrizeContentInitial, TimestampMillis, TimestampNanos,
 };
 
-pub(crate) fn start_job(_state: &RuntimeState) {
-    ic_cdk::timer::set_timer(Duration::from_secs(600), run);
+pub(crate) fn start_job(runtime_state: &mut RuntimeState) {
+    if let Some(time_until_next_prize) = time_until_next_prize(runtime_state) {
+        ic_cdk::timer::set_timer(time_until_next_prize, run);
+    }
 }
 
 fn run() {
@@ -34,6 +36,10 @@ async fn send_prizes_impl() {
 async fn send_next_prize() -> bool {
     // 1. Read a bunch of data from the runtime state, pick a random group and prize
     let (ledger_canister_id, group, token, prize, end_date, now_nanos, bot_name) = match mutate_state(|state| {
+        if !state.data.started {
+            error!("Not started");
+            return None;
+        }
         if let Some(group) = state.pick_random_group() {
             if let Some(prize_data) = &mut state.data.prize_data {
                 if let Some(prize) = prize_data.prizes.pop() {
@@ -92,6 +98,11 @@ async fn send_next_prize() -> bool {
 }
 
 fn time_until_next_prize(state: &mut RuntimeState) -> Option<Duration> {
+    if !state.data.started {
+        trace!("Not started");
+        return None;
+    }
+
     let now = state.env.now();
     let time_remaining = Duration::from_millis(match &state.data.prize_data {
         Some(prize_data) => {
