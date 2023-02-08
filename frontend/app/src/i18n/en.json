@@ -657,7 +657,8 @@
         "claimed": "Success!",
         "finished": "Finished",
         "winner": "**{recipient}** won **{amount}** {token}",
-        "claimFailed": "Sorry your claim was unsuccessfull! Better luck next time. "
+        "claimFailed": "Sorry your claim was unsuccessfull! Better luck next time. ",
+        "allClaimed": "Fully claimed"
     },
     "upgrade": {
         "button": "Upgrade",

@@ -1245,6 +1245,17 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
                     )
                     .catch(sendError(correlationId));
                 break;
+            case "claimPrize":
+                agent
+                    .claimPrize(payload.chatId, payload.messageId)
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
             case "payForDiamondMembership":
                 agent
                     .payForDiamondMembership(

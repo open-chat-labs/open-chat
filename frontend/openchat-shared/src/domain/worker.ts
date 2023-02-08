@@ -7,6 +7,7 @@ import type {
     ChangeRoleResponse,
     ChatEvent,
     ChatStateFull,
+    ClaimPrizeResponse,
     CreateGroupResponse,
     DeletedDirectMessageResponse,
     DeletedGroupMessageResponse,
@@ -903,7 +904,8 @@ export type WorkerResponse =
     | Response<DeletedGroupMessageResponse>
     | Response<undefined>
     | Response<Record<string, Record<number, EventWrapper<Message>>>>
-    | Response<PayForDiamondMembershipResponse>;
+    | Response<PayForDiamondMembershipResponse>
+    | Response<ClaimPrizeResponse>;
 
 type Response<T> = {
     kind: "worker_response";

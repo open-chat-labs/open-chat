@@ -18,7 +18,9 @@
     <Intro on:login={login} />
 
     <div class="headline">
-        <h2>OpenChat users can send messages to each other containing tokens like ICP and ckBTC.</h2>
+        <h2>
+            OpenChat users can send messages to each other containing tokens like ICP and ckBTC.
+        </h2>
         <p>
             Soon OpenChat will be governed by its community as a DAO with its own CHAT token. CHAT
             tokens will be given as rewards to users to turbo-charge growth, making a team of

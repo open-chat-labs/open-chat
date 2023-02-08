@@ -3,7 +3,7 @@
     import { cryptoLookup, OpenChat, PrizeWinnerContent } from "openchat-client";
     import { createEventDispatcher, getContext } from "svelte";
     import { _ } from "svelte-i18n";
-    import CkBtc from "../icons/CkBtc.svelte";
+    import CkBtcSmall from "../icons/CkBtcSmall.svelte";
 
     const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
@@ -34,7 +34,7 @@
     <div class="graphic">
         <img class="lid" src={"../assets/lid.png"} />
         <div class="winner-coin">
-            <CkBtc />
+            <CkBtcSmall />
         </div>
         <img class="box" src={"../assets/box.png"} />
     </div>
@@ -52,11 +52,6 @@
 </div>
 
 <style type="text/scss">
-    :global(.winner-coin) {
-        --coin-size: 4em;
-        --side: #b76a06;
-        // --coin-face: url("../assets/sns1_large.png");
-    }
     .msg {
         cursor: pointer;
         text-align: center;

@@ -7,8 +7,8 @@
     import { createEventDispatcher, getContext } from "svelte";
     import { Confetti } from "svelte-confetti";
     import { rtlStore } from "../../stores/rtl";
-    import { now } from "../../stores/time";
-    import CkBtc from "../icons/CkBtc.svelte";
+    import { now500 } from "../../stores/time";
+    import CkBtcLarge from "../icons/CkBtcLarge.svelte";
     import { toastStore } from "../../stores/toast";
     import { claimsStore } from "../../stores/claims";
 
@@ -23,12 +23,13 @@
     $: total = content.prizesRemaining + content.winners.length;
     $: percentage = (content.winners.length / total) * 100;
     $: claimedByYou = content.winners.includes(client.user.userId);
-    $: finished = $now >= Number(content.endDate);
-    $: disabled = finished || claimedByYou || content.prizesRemaining <= 0;
+    $: finished = $now500 >= Number(content.endDate);
+    $: allClaimed = content.prizesRemaining <= 0;
+    $: disabled = finished || claimedByYou || allClaimed;
     $: isDiamond = client.isDiamond;
     $: timeRemaining = finished
         ? $_("prizes.finished")
-        : client.formatTimeRemaining($now, Number(content.endDate));
+        : client.formatTimeRemaining($now500, Number(content.endDate));
     let progressWidth = 0;
     // let source = "../assets/ckbtc_large.jpeg";
 
@@ -57,11 +58,17 @@
     <div class="top">
         <div class="countdown" class:rtl={$rtlStore}>
             <Clock size={"1em"} color={"#ffffff"} />
-            <span>{timeRemaining}</span>
+            <span>
+                {#if allClaimed && !finished}
+                    {$_("prizes.allClaimed")}
+                {:else}
+                    {timeRemaining}
+                {/if}
+            </span>
         </div>
         <!-- <img class="image" alt="ckBTC logo" src={source} /> -->
         <div class="prize-coin">
-            <CkBtc shadow />
+            <CkBtcLarge />
         </div>
     </div>
     <div class="bottom">
@@ -95,6 +102,8 @@
                         ? $_("prizes.claimed")
                         : finished
                         ? $_("prizes.finished")
+                        : allClaimed
+                        ? $_("prizes.allClaimed")
                         : $_("prizes.claim")}</Button>
             </ButtonGroup>
         </div>
@@ -138,6 +147,7 @@
         left: 10px;
         background-color: rgba(0, 0, 0, 0.3);
         padding: $sp2 $sp3;
+        text-transform: lowercase;
 
         &.rtl {
             left: unset;
