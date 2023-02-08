@@ -58,17 +58,10 @@ impl Challenges {
     }
 
     pub fn check(&mut self, attempt: &ChallengeAttempt, now: TimestampMillis) -> bool {
-        if self.test_mode && attempt.key == 0 && attempt.chars == "TEST" {
+        if let Some(solution) = self.inflight.remove(&attempt.key) {
+            !solution.expired(now) && solution.chars == attempt.chars
+        } else if self.test_mode && attempt.key == 0 && attempt.chars == "TEST" {
             return true;
-        }
-
-        if let Some(solution) = self.inflight.get(&attempt.key) {
-            let success = !solution.expired(now) && solution.chars == attempt.chars;
-            if !success {
-                // Remove the failed challenge so it can't be retried
-                self.inflight.remove(&attempt.key);
-            }
-            success
         } else {
             false
         }
