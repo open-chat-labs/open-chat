@@ -85,6 +85,7 @@ fn process_charge(args: Args, user_id: UserId, block_index: BlockIndex, runtime_
         let expires_at = diamond_membership.expires_at().unwrap();
         let result = diamond_membership.hydrate(now).unwrap();
 
+        runtime_state.data.users.mark_updated(&user_id, now);
         runtime_state.data.push_event_to_local_user_index(
             user_id,
             Event::DiamondMembershipPaymentReceived(DiamondMembershipPaymentReceived {
