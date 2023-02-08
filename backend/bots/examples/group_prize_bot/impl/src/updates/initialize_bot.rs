@@ -11,17 +11,9 @@ const BOT_REGISTRATION_FEE: Cycles = 10_000_000_000_000; // 10T
 #[update(guard = "caller_is_admin")]
 #[trace]
 async fn initialize_bot(args: Args) -> Response {
-    let (already_initialized, user_index_canister_id, now) = read_state(|state| {
-        (
-            state.data.prize_data.is_some(),
-            state.data.user_index_canister_id,
-            state.env.now(),
-        )
-    });
+    let (user_index_canister_id, now) = read_state(|state| (state.data.user_index_canister_id, state.env.now()));
 
-    if already_initialized {
-        AlreadyRegistered
-    } else if args.end_date <= now {
+    if args.end_date <= now {
         EndDateInPast
     } else {
         let response: CallResult<(Response,)> =
@@ -29,9 +21,8 @@ async fn initialize_bot(args: Args) -> Response {
                 .await;
 
         match response.map(|r| r.0) {
-            Ok(Success) => {
+            Ok(Success) | Ok(AlreadyRegistered) => {
                 mutate_state(|state| {
-                    state.data.mean_time_between_prizes = (args.end_date - now) / args.prizes.len() as u64;
                     state.data.username = args.username;
                     state.data.prize_data = Some(PrizeData {
                         token: args.token,
