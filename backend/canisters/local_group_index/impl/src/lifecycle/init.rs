@@ -16,7 +16,7 @@ fn init(args: Args) {
     canister_logger::init(args.test_mode);
     init_cycles_dispenser_client(args.cycles_dispenser_canister_id);
 
-    let env = Box::new(CanisterEnv::new_insecure());
+    let env = Box::new(CanisterEnv::default());
     let canister_pool_target_size = if args.test_mode { 3_u16 } else { CANISTER_POOL_TARGET_SIZE };
 
     let data = Data::new(

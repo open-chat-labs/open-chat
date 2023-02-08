@@ -26,7 +26,7 @@ fn reseed_rng() {
 
     async fn reseed_rng_inner() {
         let seed = get_random_seed().await;
-        mutate_state(|state| state.env = Box::new(CanisterEnv::new_with_seed(seed)));
+        mutate_state(|state| state.env = Box::new(CanisterEnv::new(seed)));
         trace!("Successfully reseeded rng");
     }
 }

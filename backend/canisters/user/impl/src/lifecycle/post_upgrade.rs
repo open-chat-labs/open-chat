@@ -13,7 +13,7 @@ use utils::env::canister::CanisterEnv;
 #[post_upgrade]
 #[trace]
 fn post_upgrade(args: Args) {
-    let env = Box::new(CanisterEnv::new_insecure());
+    let env = Box::new(CanisterEnv::default());
 
     let memory = get_upgrades_memory();
     let reader = BufferedReader::new(UPGRADE_BUFFER_SIZE, Reader::new(&memory, 0));
