@@ -36,6 +36,7 @@ impl UserMap {
 
         for user in self.users.values_mut().filter(|u| u.open_storage_limit_bytes > 0) {
             user.diamond_membership_details.set_expires_at(expires_at);
+            user.date_updated = now;
         }
     }
 
