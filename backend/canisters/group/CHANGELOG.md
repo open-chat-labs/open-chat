@@ -5,6 +5,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Use `raw_rand` to seed rng ([#3076](https://github.com/open-ic/open-chat/pull/3076))
+
+## [[2.0.579](https://github.com/open-ic/open-chat/releases/tag/v2.0.579-group)] - 2023-02-06
+
 ### Added
 
 - Added transaction details to `PrizeWinnerContent` ([#3055](https://github.com/open-ic/open-chat/pull/3055))

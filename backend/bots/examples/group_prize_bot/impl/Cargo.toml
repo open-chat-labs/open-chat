@@ -19,7 +19,7 @@ group_canister = { path = "../../../../canisters/group/api" }
 group_canister_c2c_client = { path = "../../../../canisters/group/c2c_client" }
 http_request = { path = "../../../../libraries/http_request" }
 ic-base-types = { workspace = true }
-ic-cdk = { workspace = true }
+ic-cdk = { workspace = true, features = ["timers"] }
 ic-cdk-macros = { workspace = true }
 ic-icrc1 = { workspace = true }
 ic-icrc1-client = { workspace = true }
@@ -30,6 +30,7 @@ ledger_utils = { path = "../../../../libraries/ledger_utils" }
 local_user_index_canister = { path = "../../../../canisters/local_user_index/api" }
 local_user_index_canister_c2c_client = { path = "../../../../canisters/local_user_index/c2c_client" }
 msgpack = { path = "../../../../libraries/msgpack" }
+rand = { workspace = true }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
 serde_json = { workspace = true }
