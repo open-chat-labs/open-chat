@@ -18,4 +18,4 @@
 ### Start / Stop
 
 `dfx canister --network=ic_test call group_prize_bot start '(record {})'`
-`dfx canister --network=ic_test call group_prize_bot top '(record {})'`
+`dfx canister --network=ic_test call group_prize_bot stop '(record {})'`
