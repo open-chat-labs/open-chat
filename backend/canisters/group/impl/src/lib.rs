@@ -214,6 +214,7 @@ impl RuntimeState {
                 local_user_index: self.data.local_user_index_canister_id,
                 local_group_index: self.data.local_group_index_canister_id,
                 notifications: self.data.notifications_canister_id,
+                proposals_bot: self.data.proposals_bot_user_id.into(),
                 icp_ledger: self.data.ledger_canister_id(&Cryptocurrency::InternetComputer),
             },
         }
@@ -239,6 +240,8 @@ struct Data {
     pub local_user_index_canister_id: CanisterId,
     pub notifications_canister_id: CanisterId,
     pub ledger_canister_ids: HashMap<Cryptocurrency, CanisterId>,
+    #[serde(default = "proposals_bot_user_id")]
+    pub proposals_bot_user_id: UserId,
     pub activity_notification_state: ActivityNotificationState,
     pub pinned_messages: Vec<MessageIndex>,
     pub test_mode: bool,
@@ -250,6 +253,10 @@ struct Data {
     pub frozen: Timestamped<Option<FrozenGroupInfo>>,
     pub timer_jobs: TimerJobs<TimerJob>,
     pub date_last_pinned: Option<TimestampMillis>,
+}
+
+fn proposals_bot_user_id() -> UserId {
+    Principal::from_text("iywa7-ayaaa-aaaaf-aemga-cai").unwrap().into()
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -274,6 +281,7 @@ impl Data {
         local_user_index_canister_id: CanisterId,
         notifications_canister_id: CanisterId,
         ledger_canister_id: CanisterId,
+        proposals_bot_user_id: UserId,
         test_mode: bool,
         permissions: Option<GroupPermissions>,
     ) -> Data {
@@ -298,6 +306,7 @@ impl Data {
             local_user_index_canister_id,
             notifications_canister_id,
             ledger_canister_ids: [(Cryptocurrency::InternetComputer, ledger_canister_id)].into_iter().collect(),
+            proposals_bot_user_id,
             activity_notification_state: ActivityNotificationState::new(now),
             pinned_messages: Vec::new(),
             test_mode,
@@ -409,5 +418,6 @@ pub struct CanisterIds {
     pub local_user_index: CanisterId,
     pub local_group_index: CanisterId,
     pub notifications: CanisterId,
+    pub proposals_bot: CanisterId,
     pub icp_ledger: CanisterId,
 }

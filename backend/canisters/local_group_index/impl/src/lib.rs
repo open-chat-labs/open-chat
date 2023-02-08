@@ -1,8 +1,9 @@
+use candid::Principal;
 use canister_state_macros::canister_state;
 use model::local_group_map::LocalGroupMap;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
-use types::{CanisterId, CanisterWasm, Cycles, Milliseconds, TimestampMillis, Timestamped, Version};
+use types::{CanisterId, CanisterWasm, Cycles, Milliseconds, TimestampMillis, Timestamped, UserId, Version};
 use utils::canister;
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::consts::CYCLES_REQUIRED_FOR_UPGRADE;
@@ -72,6 +73,7 @@ impl RuntimeState {
                 group_index: self.data.group_index_canister_id,
                 local_user_index: self.data.local_user_index_canister_id,
                 notifications: self.data.notifications_canister_id,
+                proposals_bot: self.data.proposals_bot_user_id.into(),
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
                 icp_ledger: self.data.ledger_canister_id,
             },
@@ -90,10 +92,16 @@ struct Data {
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub cycles_dispenser_canister_id: CanisterId,
     pub ledger_canister_id: CanisterId,
+    #[serde(default = "proposals_bot_user_id")]
+    pub proposals_bot_user_id: UserId,
     pub canister_pool: canister::Pool,
     pub total_cycles_spent_on_canisters: Cycles,
     pub test_mode: bool,
     pub max_concurrent_canister_upgrades: u32,
+}
+
+fn proposals_bot_user_id() -> UserId {
+    Principal::from_text("iywa7-ayaaa-aaaaf-aemga-cai").unwrap().into()
 }
 
 impl Data {
@@ -106,6 +114,7 @@ impl Data {
         notifications_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
         ledger_canister_id: CanisterId,
+        proposals_bot_user_id: UserId,
         canister_pool_target_size: u16,
         test_mode: bool,
     ) -> Self {
@@ -118,6 +127,7 @@ impl Data {
             notifications_canister_id,
             cycles_dispenser_canister_id,
             ledger_canister_id,
+            proposals_bot_user_id,
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             canister_pool: canister::Pool::new(canister_pool_target_size),
             total_cycles_spent_on_canisters: 0,
@@ -152,6 +162,7 @@ pub struct CanisterIds {
     pub group_index: CanisterId,
     pub local_user_index: CanisterId,
     pub notifications: CanisterId,
+    pub proposals_bot: CanisterId,
     pub cycles_dispenser: CanisterId,
     pub icp_ledger: CanisterId,
 }
