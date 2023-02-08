@@ -4960,6 +4960,7 @@ dependencies = [
 name = "local_user_index_canister_c2c_client"
 version = "0.1.0"
 dependencies = [
+ "candid",
  "canister_client_macros 0.1.0",
  "ic-cdk",
  "local_user_index_canister",
