@@ -3,7 +3,7 @@ use crate::model::diamond_membership_details::DiamondMembershipDetailsInternal;
 use crate::model::user::{PhoneStatus, SuspensionDetails, SuspensionDuration, UnconfirmedPhoneNumber, User};
 use crate::{CONFIRMATION_CODE_EXPIRY_MILLIS, CONFIRMED_PHONE_NUMBER_STORAGE_ALLOWANCE};
 use candid::Principal;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 use std::collections::{BTreeSet, HashMap, HashSet};
 use types::{CyclesTopUp, DiamondMembershipPlanDuration, Milliseconds, PhoneNumber, TimestampMillis, UserId, Version};
 use utils::case_insensitive_hash_map::CaseInsensitiveHashMap;
@@ -24,7 +24,7 @@ pub struct UserMap {
     #[serde(skip)]
     users_with_unconfirmed_phone_numbers: HashSet<UserId>,
     unconfirmed_phone_numbers_last_pruned: TimestampMillis,
-    reserved_usernames: HashSet<String>,
+    reserved_usernames: CaseInsensitiveHashMap<TimestampMillis>,
     #[serde(skip)]
     user_referrals: HashMap<UserId, Vec<UserId>>,
     suspected_bots: BTreeSet<UserId>,
@@ -41,12 +41,29 @@ impl UserMap {
     }
 
     pub fn does_username_exist(&self, username: &str) -> bool {
-        self.username_to_user_id.contains_key(username) || self.reserved_usernames.contains(username)
+        self.username_to_user_id.contains_key(username) || self.reserved_usernames.contains_key(username)
     }
 
-    // Returns true if the username can be reserved or false if the username is taken
-    pub fn reserve_username(&mut self, username: &str) -> bool {
-        !self.username_to_user_id.contains_key(username) && self.reserved_usernames.insert(username.to_string())
+    // Returns true if the username was reserved or false if the username is taken
+    pub fn reserve_username(&mut self, username: &str, now: TimestampMillis) -> bool {
+        // First, remove all usernames which were reserved more than 10 minutes ago
+        let to_remove: Vec<_> = self
+            .reserved_usernames
+            .iter()
+            .filter(|(_, &v)| now.saturating_sub(v) > MINUTE_IN_MS * 10)
+            .map(|(k, _)| k.clone())
+            .collect();
+
+        for key in to_remove {
+            self.reserved_usernames.remove(&key);
+        }
+
+        if !self.does_username_exist(username) {
+            self.reserved_usernames.insert(username, now);
+            true
+        } else {
+            false
+        }
     }
 
     pub fn release_username(&mut self, username: &str) {
@@ -103,7 +120,7 @@ impl UserMap {
                 }
             }
 
-            if username_case_insensitive_changed && self.username_to_user_id.contains_key(username) {
+            if username_case_insensitive_changed && self.does_username_exist(username) {
                 return UpdateUserResult::UsernameTaken;
             }
 
@@ -435,8 +452,25 @@ pub struct ConfirmPhoneNumberSuccess {
 struct UserMapTrimmed {
     users: HashMap<UserId, User>,
     unconfirmed_phone_numbers_last_pruned: TimestampMillis,
-    reserved_usernames: HashSet<String>,
+    #[serde(deserialize_with = "deserialize_reserved_usernames")]
+    reserved_usernames: CaseInsensitiveHashMap<TimestampMillis>,
     suspected_bots: BTreeSet<UserId>,
+}
+
+fn deserialize_reserved_usernames<'de, D: Deserializer<'de>>(
+    deserializer: D,
+) -> Result<CaseInsensitiveHashMap<TimestampMillis>, D::Error> {
+    let set: HashSet<String> = HashSet::deserialize(deserializer)?;
+
+    let now = utils::time::now_millis();
+
+    let mut map = CaseInsensitiveHashMap::default();
+
+    for username in set {
+        map.insert(username.as_str(), now);
+    }
+
+    Ok(map)
 }
 
 impl From<UserMapTrimmed> for UserMap {
