@@ -17,11 +17,11 @@ async fn initialize_bot(args: Args) -> Response {
         EndDateInPast
     } else {
         let response: CallResult<(Response,)> = if args.update_existing {
-            CallResult::Ok((AlreadyRegistered, ))
+            CallResult::Ok((AlreadyRegistered,))
         } else {
             ic_cdk::api::call::call_with_payment128(user_index_canister_id, "c2c_register_bot", (&args,), BOT_REGISTRATION_FEE)
-            .await
-        };            
+                .await
+        };
 
         match response.map(|r| r.0) {
             Ok(Success) | Ok(AlreadyRegistered) => {
