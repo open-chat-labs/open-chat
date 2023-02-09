@@ -3390,9 +3390,9 @@ export class OpenChat extends EventTarget {
             const expiry = Number(details.expiresAt);
             if (expiry > now) {
                 if (this._membershipCheck !== undefined) {
-                    window.clearInterval(this._membershipCheck);
+                    window.clearTimeout(this._membershipCheck);
                 }
-                this._membershipCheck = window.setInterval(() => {
+                this._membershipCheck = window.setTimeout(() => {
                     this.api.getCurrentUser().then((user) => {
                         if (user.kind === "created_user") {
                             this.setDiamondMembership(user.diamondMembership);
