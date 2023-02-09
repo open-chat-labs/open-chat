@@ -3,9 +3,9 @@ use crate::model::diamond_membership_details::DiamondMembershipDetailsInternal;
 use crate::model::user::{PhoneStatus, SuspensionDetails, SuspensionDuration, UnconfirmedPhoneNumber, User};
 use crate::{CONFIRMATION_CODE_EXPIRY_MILLIS, CONFIRMED_PHONE_NUMBER_STORAGE_ALLOWANCE};
 use candid::Principal;
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::{Deserialize, Serialize};
 use std::collections::{BTreeSet, HashMap, HashSet};
-use types::{CyclesTopUp, DiamondMembershipPlanDuration, Milliseconds, PhoneNumber, TimestampMillis, UserId, Version};
+use types::{CyclesTopUp, Milliseconds, PhoneNumber, TimestampMillis, UserId, Version};
 use utils::case_insensitive_hash_map::CaseInsensitiveHashMap;
 use utils::time::MINUTE_IN_MS;
 
@@ -31,15 +31,6 @@ pub struct UserMap {
 }
 
 impl UserMap {
-    pub fn initialize_diamond_members(&mut self, now: TimestampMillis) {
-        let expires_at = now + DiamondMembershipPlanDuration::OneYear.as_millis();
-
-        for user in self.users.values_mut().filter(|u| u.open_storage_limit_bytes > 0) {
-            user.diamond_membership_details.set_expires_at(expires_at);
-            user.date_updated = now;
-        }
-    }
-
     pub fn does_username_exist(&self, username: &str, now: TimestampMillis) -> bool {
         self.username_to_user_id.contains_key(username)
             || self
@@ -459,25 +450,8 @@ pub struct ConfirmPhoneNumberSuccess {
 struct UserMapTrimmed {
     users: HashMap<UserId, User>,
     unconfirmed_phone_numbers_last_pruned: TimestampMillis,
-    #[serde(deserialize_with = "deserialize_reserved_usernames")]
     reserved_usernames: CaseInsensitiveHashMap<TimestampMillis>,
     suspected_bots: BTreeSet<UserId>,
-}
-
-fn deserialize_reserved_usernames<'de, D: Deserializer<'de>>(
-    deserializer: D,
-) -> Result<CaseInsensitiveHashMap<TimestampMillis>, D::Error> {
-    let set: HashSet<String> = HashSet::deserialize(deserializer)?;
-
-    let now = utils::time::now_millis();
-
-    let mut map = CaseInsensitiveHashMap::default();
-
-    for username in set {
-        map.insert(username.as_str(), now);
-    }
-
-    Ok(map)
 }
 
 impl From<UserMapTrimmed> for UserMap {
