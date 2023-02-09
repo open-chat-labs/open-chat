@@ -6,7 +6,7 @@ const LEDGER_CANISTER_ID: &str = "mxzaz-hqaaa-aaaar-qaada-cai";
 const END_DATE: u64 = 1675876516000;
 const E8S_PER_USD: f64 = 4400.0;
 const FEE_E8S: u64 = 10;
-const PRIZE_FUND_E8S: u64 = 99_997_980;
+const PRIZE_FUND_E8S: u64 = 99_996_960;
 const MIN_CLAIMANTS_PER_PRIZE: u32 = 10;
 const MAX_CLAIMANTS_PER_PRIZE: u32 = 50;
 
@@ -92,11 +92,17 @@ mod tests {
     #[test]
     fn generate_messages_total_matches_fund() {
         let messages = generate_messages();
-        let message_fees = (messages.len() as u64) * FEE_E8S;
+        let message_count = messages.len() as u64;
+        println!("messages {message_count}");
+        let message_fees = message_count * FEE_E8S;
         let prizes: Vec<_> = messages.into_iter().flatten().collect();
-        let prize_fees = (prizes.len() as u64) * FEE_E8S;
+        let prize_count = prizes.len() as u64;
+        println!("prizes {prize_count}");
+        let prize_fees = prize_count * FEE_E8S;
         let total_prize_value: u64 = prizes.into_iter().sum();
         let total = total_prize_value + message_fees + prize_fees;
+        let mean = (total_prize_value / prize_count) as u64;
+        println!("mean prize {mean}");
         assert_eq!(total, PRIZE_FUND_E8S)
     }
 }
