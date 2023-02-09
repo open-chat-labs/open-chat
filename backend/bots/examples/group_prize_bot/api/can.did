@@ -17,6 +17,7 @@ type InitializeBotArgs =
         ledger_canister_id: CanisterId;
         prizes: vec vec nat64;
         end_date: TimestampMillis;   
+        update_existing: bool;
     };
 
 type InitializeBotResponse =
