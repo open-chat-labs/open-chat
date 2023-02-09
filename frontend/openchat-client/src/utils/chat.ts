@@ -1119,8 +1119,13 @@ function mergeLocalUpdates(
         message.content = localUpdates.revealedContent;
     }
 
-    if (localUpdates?.prizeContent !== undefined) {
-        message.content = localUpdates.prizeContent;
+    if (localUpdates?.prizeClaimed !== undefined) {
+        if (message.content.kind === "prize_content") {
+            if (!message.content.winners.includes(localUpdates.prizeClaimed)) {
+                message.content.winners.push(localUpdates.prizeClaimed);
+                message.content.prizesRemaining -= 1;
+            }
+        }
     }
 
     if (localUpdates?.reactions !== undefined) {

@@ -3,7 +3,6 @@ import type {
     LocalPollVote,
     LocalReaction,
     MessageContent,
-    PrizeContent,
     ThreadSummary,
 } from "openchat-shared";
 import { mergeThreadSummaries } from "../utils/chat";
@@ -38,8 +37,8 @@ class LocalMessageUpdatesStore extends LocalUpdatesStore<LocalMessageUpdates> {
             reactions: [...(updates?.reactions ?? []), reaction],
         }));
     }
-    markPrizeClaimed(messageId: string, content: PrizeContent): void {
-        this.applyUpdate(messageId, (_) => ({ prizeContent: content }));
+    markPrizeClaimed(messageId: string, userId: string): void {
+        this.applyUpdate(messageId, (_) => ({ prizeClaimed: userId }));
     }
     markPollVote(messageId: string, vote: LocalPollVote): void {
         this.applyUpdate(messageId, (updates) => ({
