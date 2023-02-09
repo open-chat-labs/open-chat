@@ -40,11 +40,7 @@
         }
         claimsStore.add(messageId);
         client
-            .claimPrize(chatId, messageId, {
-                ...content,
-                winners: [...content.winners, client.user.userId],
-                prizesRemaining: content.prizesRemaining - 1,
-            })
+            .claimPrize(chatId, messageId)
             .then((success) => {
                 if (!success) {
                     toastStore.showFailureToast("prizes.claimFailed");
