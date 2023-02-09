@@ -3402,7 +3402,7 @@ export class OpenChat extends EventTarget {
                         }
                     });
                     this._membershipCheck = undefined;
-                }, now - expiry);
+                }, expiry - now);
             }
         }
     }
