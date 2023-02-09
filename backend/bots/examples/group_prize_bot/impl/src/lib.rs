@@ -50,7 +50,7 @@ impl RuntimeState {
             end_date: self.data.prize_data.as_ref().map(|p| p.end_date),
             group_count: self.data.groups.len(),
             total_value_sent: self.data.prizes_sent.iter().map(|p| p.transaction.units() as u64).sum(),
-            prizes_sent: self.data.prizes_sent.clone(),
+            prizes_sent: self.data.prizes_sent.len() as u32,
         }
     }
 
@@ -125,5 +125,5 @@ pub struct Metrics {
     pub end_date: Option<TimestampMillis>,
     pub group_count: usize,
     pub total_value_sent: u64,
-    pub prizes_sent: Vec<Prize>,
+    pub prizes_sent: u32,
 }
