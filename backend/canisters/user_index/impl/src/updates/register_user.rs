@@ -83,7 +83,7 @@ fn prepare(args: &Args, runtime_state: &mut RuntimeState) -> Result<PrepareOk, R
         _ => {}
     };
 
-    if !runtime_state.data.users.reserve_username(&args.username) {
+    if !runtime_state.data.users.reserve_username(&args.username, now) {
         return Err(UsernameTaken);
     }
 
