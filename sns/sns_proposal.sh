@@ -42,5 +42,6 @@ $IC_ADMIN --use-hsm --slot=0 --key-id=01 --pin=$DFX_HSM_PIN \
               --target-swap-canister-id zcdfx-6iaaa-aaaaq-aaagq-cai \
               --neuron-basket-count 5 \
               --neuron-basket-dissolve-delay-interval-seconds 7889400 \
+              --sale-delay-seconds 172800 \
               --proposal-title "$PROPOSAL_TITLE" \
               --summary "$SUMMARY"
