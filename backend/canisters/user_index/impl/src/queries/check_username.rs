@@ -16,7 +16,8 @@ fn check_username_impl(args: Args, runtime_state: &RuntimeState) -> Response {
         _ => {}
     };
 
-    if runtime_state.data.users.does_username_exist(&args.username) {
+    let now = runtime_state.env.now();
+    if runtime_state.data.users.does_username_exist(&args.username, now) {
         return UsernameTaken;
     }
 

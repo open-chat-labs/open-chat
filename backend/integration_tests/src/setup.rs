@@ -96,6 +96,7 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
         user_index_canister_id,
         cycles_dispenser_canister_id,
         ledger_canister_id,
+        proposals_bot_user_id: proposals_bot_canister_id.into(),
         wasm_version: Version::min(),
         test_mode: true,
     };

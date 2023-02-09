@@ -21,10 +21,11 @@ fn c2c_migrate_user_principal_impl(args: Args, runtime_state: &mut RuntimeState)
             MigrationAlreadyInProgress
         } else {
             let old_principal = user.principal;
+            let now = runtime_state.env.now();
 
             let mut clone = user.clone();
             clone.principal = args.new_principal;
-            runtime_state.data.users.update(clone);
+            runtime_state.data.users.update(clone, now);
 
             runtime_state.data.user_principal_migration_queue.push(
                 user_id,

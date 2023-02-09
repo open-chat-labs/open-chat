@@ -14,6 +14,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Deserialize using `MemoryManager` within `post_upgrade` ([#3046](https://github.com/open-ic/open-chat/pull/3046))
 - Use `raw_rand` to seed rng ([#3076](https://github.com/open-ic/open-chat/pull/3076))
 - Remove captcha challenge after any attempt ([#3078](https://github.com/open-ic/open-chat/pull/3078))
+- Mark user as updated after taking Diamond membership payment ([#3081](https://github.com/open-ic/open-chat/pull/3081))
+- Give all verified users 12 months Diamond membership ([#3082](https://github.com/open-ic/open-chat/pull/3082))
+
+### Fixed
+- Fix c2c_register_bot so it queues UserRegistered ([#3086](https://github.com/open-ic/open-chat/pull/3086))
+- Fix username uniqueness check to include reserved usernames ([#3088](https://github.com/open-ic/open-chat/pull/3088))
 
 ## [[2.0.570](https://github.com/open-ic/open-chat/releases/tag/v2.0.570-user_index)] - 2023-02-01
 

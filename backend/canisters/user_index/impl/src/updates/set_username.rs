@@ -16,7 +16,6 @@ fn set_username(args: Args) -> Response {
 
 fn set_username_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
-    let now = runtime_state.env.now();
     let username = args.username;
 
     match validate_username(&username) {
@@ -29,9 +28,9 @@ fn set_username_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     if let Some(user) = runtime_state.data.users.get_by_principal(&caller) {
         let mut user_to_update = user.clone();
         user_to_update.username = username.clone();
-        user_to_update.date_updated = now;
         let user_id = user.user_id;
-        match runtime_state.data.users.update(user_to_update) {
+        let now = runtime_state.env.now();
+        match runtime_state.data.users.update(user_to_update, now) {
             UpdateUserResult::Success => {
                 runtime_state
                     .data

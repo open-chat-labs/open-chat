@@ -41,6 +41,7 @@ fn accept_if_valid(runtime_state: &RuntimeState) {
             "update_permissions" => role.can_change_permissions(permissions),
             "delete_messages"
             | "undelete_messages"
+            | "claim_prize"
             | "edit_message"
             | "put_chunk"
             | "register_poll_vote"

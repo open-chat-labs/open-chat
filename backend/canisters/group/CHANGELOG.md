@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Use `raw_rand` to seed rng ([#3076](https://github.com/open-ic/open-chat/pull/3076))
+- Only allow proposal messages sent by the ProposalsBot ([#3080](https://github.com/open-ic/open-chat/pull/3080))
+- Add "claim_prize" to group inspect_message ([#3084](https://github.com/open-ic/open-chat/pull/3084))
 
 ## [[2.0.579](https://github.com/open-ic/open-chat/releases/tag/v2.0.579-group)] - 2023-02-06
 

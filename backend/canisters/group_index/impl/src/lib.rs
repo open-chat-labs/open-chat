@@ -9,7 +9,7 @@ use model::local_group_index_map::LocalGroupIndexMap;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashSet;
-use types::{CanisterId, CanisterWasm, Cycles, Milliseconds, TimestampMillis, Timestamped, Version};
+use types::{CanisterId, CanisterWasm, Cycles, Milliseconds, TimestampMillis, Timestamped, UserId, Version};
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::env::Environment;
 use utils::time::MINUTE_IN_MS;
@@ -74,6 +74,7 @@ impl RuntimeState {
             local_group_indexes: self.data.local_index_map.iter().map(|(c, i)| (*c, i.clone())).collect(),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
+                proposals_bot: self.data.proposals_bot_user_id.into(),
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
                 icp_ledger: self.data.ledger_canister_id,
             },
@@ -92,12 +93,18 @@ struct Data {
     pub user_index_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
     pub ledger_canister_id: CanisterId,
+    #[serde(default = "proposals_bot_user_id")]
+    pub proposals_bot_user_id: UserId,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub test_mode: bool,
     pub total_cycles_spent_on_canisters: Cycles,
     pub cached_hot_groups: CachedHotGroups,
     pub cached_metrics: CachedMetrics,
     pub local_index_map: LocalGroupIndexMap,
+}
+
+fn proposals_bot_user_id() -> UserId {
+    Principal::from_text("iywa7-ayaaa-aaaaf-aemga-cai").unwrap().into()
 }
 
 impl Data {
@@ -109,6 +116,7 @@ impl Data {
         user_index_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
         ledger_canister_id: CanisterId,
+        proposals_bot_user_id: UserId,
         test_mode: bool,
     ) -> Data {
         Data {
@@ -121,6 +129,7 @@ impl Data {
             user_index_canister_id,
             cycles_dispenser_canister_id,
             ledger_canister_id,
+            proposals_bot_user_id,
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             test_mode,
             total_cycles_spent_on_canisters: 0,
@@ -175,6 +184,7 @@ impl Default for Data {
             user_index_canister_id: Principal::anonymous(),
             cycles_dispenser_canister_id: Principal::anonymous(),
             ledger_canister_id: Principal::anonymous(),
+            proposals_bot_user_id: Principal::anonymous().into(),
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             test_mode: true,
             total_cycles_spent_on_canisters: 0,
@@ -224,6 +234,7 @@ pub struct CachedMetrics {
 #[derive(Serialize, Debug)]
 pub struct CanisterIds {
     pub user_index: CanisterId,
+    pub proposals_bot: CanisterId,
     pub cycles_dispenser: CanisterId,
     pub icp_ledger: CanisterId,
 }
