@@ -42,7 +42,12 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
 
         let now = runtime_state.env.now();
 
-        if let Err(error) = args.content.validate_for_new_message(false, args.forwarding, now) {
+        if let Err(error) = args.content.validate_for_new_group_message(
+            participant.user_id,
+            args.forwarding,
+            runtime_state.data.proposals_bot_user_id,
+            now,
+        ) {
             return match error {
                 ContentValidationError::Empty => MessageEmpty,
                 ContentValidationError::TextTooLong(max_length) => TextTooLong(max_length),
@@ -54,6 +59,9 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
                     InvalidRequest("Cannot forward this type of message".to_string())
                 }
                 ContentValidationError::PrizeEndDateInThePast => InvalidRequest("Prize ended in the past".to_string()),
+                ContentValidationError::UnauthorizedToSendProposalMessages => {
+                    InvalidRequest("User unauthorized to send proposal messages".to_string())
+                }
             };
         }
 

@@ -27,6 +27,7 @@ fn init(args: Args) {
         args.notifications_canister_id,
         args.cycles_dispenser_canister_id,
         args.ledger_canister_id,
+        args.proposals_bot_user_id,
         canister_pool_target_size,
         args.test_mode,
     );

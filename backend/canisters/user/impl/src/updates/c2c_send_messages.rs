@@ -85,7 +85,7 @@ fn c2c_handle_bot_messages(
 
     for message in args.messages.iter() {
         let content: MessageContentInitial = message.content.clone().into();
-        if let Err(error) = content.validate_for_new_message(true, false, now) {
+        if let Err(error) = content.validate_for_new_direct_message(sender_user_id, false, now) {
             return user_canister::c2c_handle_bot_messages::Response::ContentValidationError(error);
         }
     }

@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Deserialize using `MemoryManager` within `post_upgrade` ([#3046](https://github.com/open-ic/open-chat/pull/3046))
 - Use `raw_rand` to seed rng ([#3076](https://github.com/open-ic/open-chat/pull/3076))
+- Pass in the ProposalsBot userId when initializing each Group ([#3080](https://github.com/open-ic/open-chat/pull/3080))
 
 ## [[2.0.574](https://github.com/open-ic/open-chat/releases/tag/v2.0.574-local_group_index)] - 2023-02-01
 
