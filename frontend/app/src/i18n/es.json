@@ -717,6 +717,7 @@
         "allSupportedTokens": "Todos los tokens admitidos",
         "chatAndIcp": "ICP Y CHAT",
         "paymentFailed": "Error en el pago de la membresía Diamond",
-        "upgradeSuccess": "Su pago se ha realizado con éxito"
+        "upgradeSuccess": "Su pago se ha realizado con éxito",
+        "benefits": "💎 Beneficios del Diamante"
     }
 }

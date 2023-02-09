@@ -716,6 +716,7 @@
         "allSupportedTokens": "Tous les jetons pris en charge",
         "chatAndIcp": "PCI & CHAT",
         "paymentFailed": "Échec du paiement de l'abonnement Diamond",
-        "upgradeSuccess": "Votre paiement a été effectué avec succès"
+        "upgradeSuccess": "Votre paiement a été effectué avec succès",
+        "benefits": "💎 Avantages du diamant"
     }
 }

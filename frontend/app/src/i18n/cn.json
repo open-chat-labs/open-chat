@@ -717,6 +717,7 @@
         "allSupportedTokens": "所有支持的令牌",
         "chatAndIcp": "ICP & 聊天",
         "paymentFailed": "钻石会员支付失败",
-        "upgradeSuccess": "您的付款已成功完成"
+        "upgradeSuccess": "您的付款已成功完成",
+        "benefits": "💎 钻石的好处"
     }
 }

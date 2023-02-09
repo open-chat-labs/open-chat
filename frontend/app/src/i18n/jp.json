@@ -717,6 +717,7 @@
         "allSupportedTokens": "サポートされているすべてのトークン",
         "chatAndIcp": "ICP & チャット",
         "paymentFailed": "ダイヤモンド メンバーシップの支払いに失敗しました",
-        "upgradeSuccess": "お支払いは正常に完了しました"
+        "upgradeSuccess": "お支払いは正常に完了しました",
+        "benefits": "💎 ダイヤモンドのメリット"
     }
 }

@@ -10,6 +10,8 @@
 
     const dispatch = createEventDispatcher();
 
+    export let isDiamond: boolean;
+
     function cancel() {
         dispatch("cancel");
     }
@@ -20,8 +22,6 @@
 </script>
 
 <div class="body">
-    <!-- {$_("upgrade.blurb")} -->
-
     <div class="header">{$_("upgrade.feature")}</div>
     <div class="header free">{$_("upgrade.free")}</div>
     <div class="header diamond">{$_("upgrade.diamond")}</div>
@@ -163,9 +163,11 @@
 
 <Footer>
     <Button tiny={$mobileWidth} small={!$mobileWidth} secondary={true} on:click={cancel}
-        >{$_("cancel")}</Button>
-    <Button on:click={upgrade} tiny={$mobileWidth} small={!$mobileWidth}
-        >{$_("upgrade.button")}</Button>
+        >{isDiamond ? $_("close") : $_("cancel")}</Button>
+    {#if !isDiamond}
+        <Button on:click={upgrade} tiny={$mobileWidth} small={!$mobileWidth}
+            >{$_("upgrade.button")}</Button>
+    {/if}
 </Footer>
 
 <style type="text/scss">

@@ -716,6 +716,7 @@
         "allSupportedTokens": "Tutti i token supportati",
         "chatAndIcp": "PIC & CHAT",
         "paymentFailed": "Il pagamento per l'abbonamento Diamond non è andato a buon fine",
-        "upgradeSuccess": "Il tuo pagamento è stato effettuato con successo"
+        "upgradeSuccess": "Il tuo pagamento è stato effettuato con successo",
+        "benefits": "💎 Vantaggi del diamante"
     }
 }

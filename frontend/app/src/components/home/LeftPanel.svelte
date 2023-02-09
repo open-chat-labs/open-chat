@@ -30,6 +30,7 @@
             on:archiveChat
             on:unarchiveChat
             on:wallet
+            on:upgrade
             on:toggleMuteNotifications
             {searchResultsAvailable}
             {searchTerm}
