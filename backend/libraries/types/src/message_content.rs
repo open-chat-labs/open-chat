@@ -68,15 +68,37 @@ pub enum ContentValidationError {
     TransferLimitExceeded(u128),
     InvalidTypeForForwarding,
     PrizeEndDateInThePast,
+    UnauthorizedToSendProposalMessages,
 }
 
 impl MessageContentInitial {
+    pub fn validate_for_new_direct_message(
+        &self,
+        sender: UserId,
+        forwarding: bool,
+        now: TimestampMillis,
+    ) -> Result<(), ContentValidationError> {
+        self.validate_for_new_message(sender, true, forwarding, None, now)
+    }
+
+    pub fn validate_for_new_group_message(
+        &self,
+        sender: UserId,
+        forwarding: bool,
+        proposals_bot_user_id: UserId,
+        now: TimestampMillis,
+    ) -> Result<(), ContentValidationError> {
+        self.validate_for_new_message(sender, false, forwarding, Some(proposals_bot_user_id), now)
+    }
+
     // Determines if the content is valid for a new message, this should not be called on existing
     // messages
-    pub fn validate_for_new_message(
+    fn validate_for_new_message(
         &self,
+        sender: UserId,
         is_direct_chat: bool,
         forwarding: bool,
+        proposals_bot_user_id: Option<UserId>,
         now: TimestampMillis,
     ) -> Result<(), ContentValidationError> {
         if forwarding {
@@ -106,6 +128,11 @@ impl MessageContentInitial {
             MessageContentInitial::Prize(p) => {
                 if p.end_date <= now {
                     return Err(ContentValidationError::PrizeEndDateInThePast);
+                }
+            }
+            MessageContentInitial::GovernanceProposal(_) => {
+                if proposals_bot_user_id.map_or(true, |u| u != sender) {
+                    return Err(ContentValidationError::UnauthorizedToSendProposalMessages);
                 }
             }
             _ => {}

@@ -112,7 +112,8 @@ fn validate_request(args: &Args, runtime_state: &RuntimeState) -> ValidateReques
         return ValidateRequestResult::Invalid(InvalidRequest("Cannot send a prize message in a direct chat".to_string()));
     }
 
-    if let Err(error) = args.content.validate_for_new_message(true, args.forwarding, now) {
+    let my_user_id: UserId = runtime_state.env.canister_id().into();
+    if let Err(error) = args.content.validate_for_new_direct_message(my_user_id, args.forwarding, now) {
         ValidateRequestResult::Invalid(match error {
             ContentValidationError::Empty => MessageEmpty,
             ContentValidationError::TextTooLong(max_length) => TextTooLong(max_length),
@@ -123,8 +124,11 @@ fn validate_request(args: &Args, runtime_state: &RuntimeState) -> ValidateReques
                 InvalidRequest("Cannot forward this type of message".to_string())
             }
             ContentValidationError::PrizeEndDateInThePast => unreachable!(),
+            ContentValidationError::UnauthorizedToSendProposalMessages => {
+                InvalidRequest("User unauthorized to send proposal messages".to_string())
+            }
         })
-    } else if args.recipient == runtime_state.env.canister_id().into() {
+    } else if args.recipient == my_user_id {
         ValidateRequestResult::Valid(UserType::_Self)
     } else if let Some(chat) = runtime_state.data.direct_chats.get(&args.recipient.into()) {
         let user_type = if chat.is_bot { UserType::Bot } else { UserType::User };
