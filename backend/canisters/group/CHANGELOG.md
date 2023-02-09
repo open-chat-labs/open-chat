@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.583](https://github.com/open-ic/open-chat/releases/tag/v2.0.583-group)] - 2023-02-09
+
 ### Changed
 
 - Use `raw_rand` to seed rng ([#3076](https://github.com/open-ic/open-chat/pull/3076))
