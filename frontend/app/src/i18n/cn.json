@@ -662,7 +662,8 @@
         "claimed": "成功！",
         "finished": "完成的",
         "winner": "**{recipient}** 赢了 **{amount}** {token}",
-        "claimFailed": "抱歉，您的索赔未成功！祝你下次好运。"
+        "claimFailed": "抱歉，您的索赔未成功！祝你下次好运。",
+        "allClaimed": "完全认领"
     },
     "upgrade": {
         "blurb": "某些 OpenChat 功能仅适用于高级帐户。您可以通过短信验证电话号码或支付少量 ICP 费用来升级您的帐户。",

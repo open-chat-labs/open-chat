@@ -662,7 +662,8 @@
         "claimed": "¡Éxito!",
         "finished": "Acabado",
         "winner": "**{recipient}** ganó **{amount}** {token}",
-        "claimFailed": "¡Lo sentimos, su reclamo no tuvo éxito! Mejor suerte la próxima vez."
+        "claimFailed": "¡Lo sentimos, su reclamo no tuvo éxito! Mejor suerte la próxima vez.",
+        "allClaimed": "Completamente reclamado"
     },
     "upgrade": {
         "blurb": "Algunas funciones de OpenChat solo están disponibles para cuentas premium. Puede actualizar su cuenta verificando un número de teléfono a través de SMS o pagando una pequeña tarifa de ICP.",

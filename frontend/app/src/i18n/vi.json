@@ -662,7 +662,8 @@
         "claimed": "Sự thành công!",
         "finished": "Hoàn thành",
         "winner": "**{recipient}** đã thắng **{amount}** {token}",
-        "claimFailed": "Rất tiếc, khiếu nại của bạn không thành công! Chúc may mắn lần sau."
+        "claimFailed": "Rất tiếc, khiếu nại của bạn không thành công! Chúc may mắn lần sau.",
+        "allClaimed": "Yêu cầu đầy đủ"
     },
     "upgrade": {
         "blurb": "Một số tính năng của OpenChat chỉ có sẵn cho các tài khoản trả phí. Bạn có thể nâng cấp tài khoản của mình bằng cách xác minh số điện thoại qua SMS hoặc trả một khoản phí ICP nhỏ.",
