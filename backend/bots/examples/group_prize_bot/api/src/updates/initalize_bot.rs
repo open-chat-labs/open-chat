@@ -10,6 +10,7 @@ pub struct Args {
     pub ledger_canister_id: CanisterId,
     pub prizes: Vec<Vec<u64>>,
     pub end_date: TimestampMillis,
+    pub update_existing: bool,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
