@@ -1,9 +1,10 @@
 use crate::updates::set_username::{validate_username, UsernameValidationResult};
-use crate::{mutate_state, RuntimeState, USER_LIMIT};
+use crate::{mutate_state, RuntimeState, ONE_MB, USER_LIMIT};
 use candid::Principal;
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
 use local_user_index_canister::{Event, UserRegistered};
+use open_storage_index_canister::add_or_update_users::UserConfig;
 use types::{CanisterId, UserId, Version};
 use user_index_canister::register_user::{Response::*, *};
 
@@ -132,6 +133,11 @@ fn commit(
         }),
         Some(local_user_index_canister_id),
     );
+
+    runtime_state.data.open_storage_user_sync_queue.push(UserConfig {
+        user_id: caller,
+        byte_limit: 100 * ONE_MB,
+    });
 }
 
 fn rollback(username: &str, runtime_state: &mut RuntimeState) {
