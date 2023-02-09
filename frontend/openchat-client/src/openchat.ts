@@ -304,6 +304,7 @@ const CHAT_UPDATE_IDLE_INTERVAL = ONE_MINUTE_MILLIS;
 const USER_UPDATE_INTERVAL = ONE_MINUTE_MILLIS;
 const ONE_HOUR = 60 * ONE_MINUTE_MILLIS;
 const MAX_USERS_TO_UPDATE_PER_BATCH = 500;
+const MAX_INT32 = Math.pow(2, 31) - 1;
 
 type PinChatResponse =
     | { kind: "success" }
@@ -3390,9 +3391,10 @@ export class OpenChat extends EventTarget {
             const expiry = Number(details.expiresAt);
             if (expiry > now) {
                 if (this._membershipCheck !== undefined) {
-                    window.clearInterval(this._membershipCheck);
+                    window.clearTimeout(this._membershipCheck);
                 }
-                this._membershipCheck = window.setInterval(() => {
+                const interval = expiry - now;
+                this._membershipCheck = window.setTimeout(() => {
                     this.api.getCurrentUser().then((user) => {
                         if (user.kind === "created_user") {
                             this.setDiamondMembership(user.diamondMembership);
@@ -3401,7 +3403,7 @@ export class OpenChat extends EventTarget {
                         }
                     });
                     this._membershipCheck = undefined;
-                }, expiry - now);
+                }, Math.min(MAX_INT32, interval));
             }
         }
     }
