@@ -37,6 +37,10 @@ fn generate_messages() -> Vec<Vec<u64>> {
             let mut prize = generate_prize(&mut rng);
             total += FEE_E8S;
 
+            if total >= PRIZE_FUND_E8S {
+                break;
+            }
+
             if total + prize > PRIZE_FUND_E8S {
                 prize = PRIZE_FUND_E8S - total;
             }
