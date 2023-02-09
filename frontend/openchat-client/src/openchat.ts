@@ -288,7 +288,6 @@ import {
     MergedUpdatesResponse,
     ThreadRead,
     UpdatesResult,
-    PrizeContent,
     DiamondMembershipDuration,
     DiamondMembershipDetails,
 } from "openchat-shared";
@@ -3346,14 +3345,14 @@ export class OpenChat extends EventTarget {
         }
     }
 
-    claimPrize(chatId: string, messageId: bigint, content: PrizeContent): Promise<boolean> {
+    claimPrize(chatId: string, messageId: bigint): Promise<boolean> {
         return this.api
             .claimPrize(chatId, messageId)
             .then((resp) => {
                 if (resp.kind !== "success") {
                     return false;
                 } else {
-                    localMessageUpdates.markPrizeClaimed(messageId.toString(), content);
+                    localMessageUpdates.markPrizeClaimed(messageId.toString(), this.user.userId);
                     return true;
                 }
             })
