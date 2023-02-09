@@ -40,8 +40,12 @@ impl UserMap {
         }
     }
 
-    pub fn does_username_exist(&self, username: &str) -> bool {
-        self.username_to_user_id.contains_key(username) || self.reserved_usernames.contains_key(username)
+    pub fn does_username_exist(&self, username: &str, now: TimestampMillis) -> bool {
+        self.username_to_user_id.contains_key(username)
+            || self
+                .reserved_usernames
+                .get(username)
+                .map_or(false, |&ts| now.saturating_sub(ts) > 10 * MINUTE_IN_MS)
     }
 
     // Returns true if the username was reserved or false if the username is taken
@@ -50,15 +54,15 @@ impl UserMap {
         let to_remove: Vec<_> = self
             .reserved_usernames
             .iter()
-            .filter(|(_, &v)| now.saturating_sub(v) > MINUTE_IN_MS * 10)
-            .map(|(k, _)| k.clone())
+            .filter(|(_, &ts)| now.saturating_sub(ts) > 10 * MINUTE_IN_MS)
+            .map(|(u, _)| u.clone())
             .collect();
 
         for key in to_remove {
             self.reserved_usernames.remove(&key);
         }
 
-        if !self.does_username_exist(username) {
+        if !self.does_username_exist(username, now) {
             self.reserved_usernames.insert(username, now);
             true
         } else {
@@ -92,7 +96,7 @@ impl UserMap {
         }
     }
 
-    pub fn update(&mut self, user: User) -> UpdateUserResult {
+    pub fn update(&mut self, mut user: User, now: TimestampMillis) -> UpdateUserResult {
         let user_id = user.user_id;
 
         if let Some(previous) = self.users.get(&user_id) {
@@ -120,11 +124,13 @@ impl UserMap {
                 }
             }
 
-            if username_case_insensitive_changed && self.does_username_exist(username) {
+            if username_case_insensitive_changed && self.does_username_exist(username, now) {
                 return UpdateUserResult::UsernameTaken;
             }
 
             // Checks are complete, now update the data
+
+            user.date_updated = now;
 
             if principal_changed {
                 self.principal_to_user_id.remove(&previous_principal);
@@ -404,6 +410,7 @@ impl UserMap {
 
     #[cfg(test)]
     pub fn add_test_user(&mut self, user: User) {
+        let date_created = user.date_created;
         self.register(
             user.principal,
             user.user_id,
@@ -413,7 +420,7 @@ impl UserMap {
             None,
             false,
         );
-        self.update(user);
+        self.update(user, date_created);
     }
 }
 
@@ -609,7 +616,7 @@ mod tests {
             updated.username = username2.clone();
             updated.phone_status = PhoneStatus::Confirmed(phone_number2.clone());
 
-            assert!(matches!(user_map.update(updated), UpdateUserResult::Success));
+            assert!(matches!(user_map.update(updated, 3), UpdateUserResult::Success));
 
             assert_eq!(user_map.users.keys().collect_vec(), vec!(&user_id));
             assert_eq!(user_map.phone_number_to_user_id.keys().collect_vec(), vec!(&phone_number2));
@@ -659,7 +666,7 @@ mod tests {
 
         user_map.add_test_user(original);
         user_map.add_test_user(other);
-        assert!(matches!(user_map.update(updated), UpdateUserResult::PhoneNumberTaken));
+        assert!(matches!(user_map.update(updated, 3), UpdateUserResult::PhoneNumberTaken));
     }
 
     #[test]
@@ -702,7 +709,7 @@ mod tests {
 
         user_map.add_test_user(original);
         user_map.add_test_user(other);
-        assert!(matches!(user_map.update(updated), UpdateUserResult::UsernameTaken));
+        assert!(matches!(user_map.update(updated, 3), UpdateUserResult::UsernameTaken));
     }
 
     #[test]
@@ -728,7 +735,7 @@ mod tests {
         user_map.add_test_user(original);
         updated.username = "ABC".to_string();
 
-        assert!(matches!(user_map.update(updated), UpdateUserResult::Success));
+        assert!(matches!(user_map.update(updated, 2), UpdateUserResult::Success));
     }
 
     #[test]
