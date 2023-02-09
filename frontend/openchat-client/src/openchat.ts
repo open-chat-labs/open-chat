@@ -288,7 +288,6 @@ import {
     MergedUpdatesResponse,
     ThreadRead,
     UpdatesResult,
-    PrizeContent,
     DiamondMembershipDuration,
     DiamondMembershipDetails,
 } from "openchat-shared";
