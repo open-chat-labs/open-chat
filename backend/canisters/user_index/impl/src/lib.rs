@@ -34,6 +34,8 @@ const USER_CANISTER_TOP_UP_AMOUNT: Cycles = 100_000_000_000; // 0.1T cycles
 const CONFIRMED_PHONE_NUMBER_STORAGE_ALLOWANCE: u64 = (1024 * 1024 * 1024) / 10; // 0.1 GB
 const CONFIRMATION_CODE_EXPIRY_MILLIS: u64 = 10 * MINUTE_IN_MS; // 10 minutes
 const TIME_UNTIL_SUSPENDED_ACCOUNT_IS_DELETED_MILLIS: Milliseconds = DAY_IN_MS * 90; // 90 days
+const ONE_MB: u64 = 1024 * 1024;
+const ONE_GB: u64 = 1024 * ONE_MB;
 
 thread_local! {
     static WASM_VERSION: RefCell<Timestamped<Version>> = RefCell::default();
