@@ -37,9 +37,11 @@ import type {
     DeletedGroupMessageResponse,
     EventWrapper,
     OptionUpdate,
+    ClaimPrizeResponse,
 } from "openchat-shared";
 
 export interface IGroupClient {
+    claimPrize(messageId: bigint): Promise<ClaimPrizeResponse>;
     summary(): Promise<GroupCanisterSummaryResponse>;
     summaryUpdates(updatesSince: bigint): Promise<GroupCanisterSummaryUpdatesResponse>;
     chatEventsByIndex(
@@ -79,7 +81,7 @@ export interface IGroupClient {
         rules?: GroupRules,
         permissions?: Partial<GroupPermissions>,
         avatar?: Uint8Array,
-        eventsTimeToLiveMs?: OptionUpdate<bigint>,
+        eventsTimeToLiveMs?: OptionUpdate<bigint>
     ): Promise<UpdateGroupResponse>;
     addReaction(
         messageId: bigint,

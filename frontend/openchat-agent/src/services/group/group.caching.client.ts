@@ -40,6 +40,7 @@ import type {
     DeletedGroupMessageResponse,
     EventWrapper,
     OptionUpdate,
+    ClaimPrizeResponse,
 } from "openchat-shared";
 import type { IGroupClient } from "./group.client.interface";
 import type { IDBPDatabase } from "idb";
@@ -100,6 +101,10 @@ export class CachingGroupClient implements IGroupClient {
                     return resp;
                 });
         }
+    }
+
+    claimPrize(messageId: bigint): Promise<ClaimPrizeResponse> {
+        return this.client.claimPrize(messageId);
     }
 
     summary(): Promise<GroupCanisterSummaryResponse> {
@@ -247,9 +252,16 @@ export class CachingGroupClient implements IGroupClient {
         rules?: GroupRules,
         permissions?: Partial<GroupPermissions>,
         avatar?: Uint8Array,
-        eventsTimeToLiveMs?: OptionUpdate<bigint>,
+        eventsTimeToLiveMs?: OptionUpdate<bigint>
     ): Promise<UpdateGroupResponse> {
-        return this.client.updateGroup(name, description, rules, permissions, avatar, eventsTimeToLiveMs);
+        return this.client.updateGroup(
+            name,
+            description,
+            rules,
+            permissions,
+            avatar,
+            eventsTimeToLiveMs
+        );
     }
 
     addReaction(

@@ -160,8 +160,10 @@ export interface ChatEventWrapper {
 export interface ChatFrozen { 'frozen_by' : UserId, 'reason' : [] | [string] }
 export type ChatId = CanisterId;
 export interface ChatMetrics {
+  'prize_winner_messages' : bigint,
   'audio_messages' : bigint,
   'cycles_messages' : bigint,
+  'chat_messages' : bigint,
   'edits' : bigint,
   'icp_messages' : bigint,
   'last_active' : TimestampMillis,
@@ -179,12 +181,27 @@ export interface ChatMetrics {
   'reported_messages' : bigint,
   'ckbtc_messages' : bigint,
   'reactions' : bigint,
+  'prize_messages' : bigint,
 }
 export type ChatSummary = { 'Group' : GroupChatSummary } |
   { 'Direct' : DirectChatSummary };
 export type ChatSummaryUpdates = { 'Group' : GroupChatSummaryUpdates } |
   { 'Direct' : DirectChatSummaryUpdates };
 export interface ChatUnfrozen { 'unfrozen_by' : UserId }
+export interface ClaimPrizeArgs {
+  'correlation_id' : bigint,
+  'message_id' : MessageId,
+}
+export type ClaimPrizeResponse = { 'PrizeFullyClaimed' : null } |
+  { 'MessageNotFound' : null } |
+  { 'CallerNotInGroup' : null } |
+  { 'ChatFrozen' : null } |
+  { 'AlreadyClaimed' : null } |
+  { 'Success' : null } |
+  { 'UserSuspended' : null } |
+  { 'PrizeEnded' : null } |
+  { 'FailedAfterTransfer' : [string, CompletedCryptoTransaction] } |
+  { 'TransferFailed' : [string, FailedCryptoTransaction] };
 export type CompletedCryptoTransaction = {
     'NNS' : NnsCompletedCryptoTransaction
   } |
@@ -202,6 +219,7 @@ export type CryptoTransaction = { 'Failed' : FailedCryptoTransaction } |
   { 'Completed' : CompletedCryptoTransaction } |
   { 'Pending' : PendingCryptoTransaction };
 export type Cryptocurrency = { 'InternetComputer' : null } |
+  { 'CHAT' : null } |
   { 'SNS1' : null } |
   { 'CKBTC' : null };
 export type Cycles = bigint;
@@ -234,6 +252,13 @@ export type DeletedMessageResponse = { 'MessageNotFound' : null } |
   { 'Success' : { 'content' : MessageContent } } |
   { 'MessageHardDeleted' : null } |
   { 'MessageNotDeleted' : null };
+export interface DiamondMembershipDetails {
+  'recurring' : [] | [DiamondMembershipPlanDuration],
+  'expires_at' : TimestampMillis,
+}
+export type DiamondMembershipPlanDuration = { 'OneYear' : null } |
+  { 'ThreeMonths' : null } |
+  { 'OneMonth' : null };
 export type DirectChatCreated = {};
 export interface DirectChatEventWrapper {
   'event' : ChatEvent,
@@ -248,8 +273,10 @@ export interface DirectChatSummary {
   'metrics' : ChatMetrics,
   'them' : UserId,
   'notifications_muted' : boolean,
+  'events_ttl' : [] | [Milliseconds],
   'latest_event_index' : EventIndex,
   'read_by_me_up_to' : [] | [MessageIndex],
+  'expired_messages' : Array<MessageIndexRange>,
   'archived' : boolean,
   'my_metrics' : ChatMetrics,
   'latest_message' : MessageEventWrapper,
@@ -259,9 +286,11 @@ export interface DirectChatSummaryUpdates {
   'metrics' : [] | [ChatMetrics],
   'affected_events' : Uint32Array | number[],
   'notifications_muted' : [] | [boolean],
+  'events_ttl' : EventsTimeToLiveUpdate,
   'latest_event_index' : [] | [EventIndex],
   'read_by_me_up_to' : [] | [MessageIndex],
   'chat_id' : ChatId,
+  'newly_expired_messages' : Array<MessageIndexRange>,
   'archived' : [] | [boolean],
   'my_metrics' : [] | [ChatMetrics],
   'latest_message' : [] | [MessageEventWrapper],
@@ -395,10 +424,12 @@ export interface GroupCanisterGroupChatSummary {
   'wasm_version' : Version,
   'notifications_muted' : boolean,
   'description' : string,
+  'events_ttl' : [] | [Milliseconds],
   'last_updated' : TimestampMillis,
   'owner_id' : UserId,
   'joined' : TimestampMillis,
   'avatar_id' : [] | [bigint],
+  'next_message_expiry' : [] | [TimestampMillis],
   'latest_threads' : Array<GroupCanisterThreadDetails>,
   'frozen' : [] | [FrozenGroupInfo],
   'latest_event_index' : EventIndex,
@@ -406,6 +437,7 @@ export interface GroupCanisterGroupChatSummary {
   'min_visible_message_index' : MessageIndex,
   'mentions' : Array<Mention>,
   'chat_id' : ChatId,
+  'expired_messages' : Array<MessageIndexRange>,
   'participant_count' : number,
   'my_metrics' : ChatMetrics,
   'latest_message' : [] | [MessageEventWrapper],
@@ -422,15 +454,18 @@ export interface GroupCanisterGroupChatSummaryUpdates {
   'affected_events' : Uint32Array | number[],
   'notifications_muted' : [] | [boolean],
   'description' : [] | [string],
+  'events_ttl' : EventsTimeToLiveUpdate,
   'last_updated' : TimestampMillis,
   'owner_id' : [] | [UserId],
   'avatar_id' : AvatarIdUpdate,
+  'next_message_expiry' : TimestampUpdate,
   'latest_threads' : Array<GroupCanisterThreadDetails>,
   'frozen' : FrozenGroupUpdate,
   'latest_event_index' : [] | [EventIndex],
   'mentions' : Array<Mention>,
   'chat_id' : ChatId,
   'affected_events_v2' : Array<[EventIndex, TimestampMillis]>,
+  'newly_expired_messages' : Array<MessageIndexRange>,
   'participant_count' : [] | [number],
   'my_metrics' : [] | [ChatMetrics],
   'latest_message' : [] | [MessageEventWrapper],
@@ -458,10 +493,12 @@ export interface GroupChatSummary {
   'wasm_version' : Version,
   'notifications_muted' : boolean,
   'description' : string,
+  'events_ttl' : [] | [Milliseconds],
   'last_updated' : TimestampMillis,
   'owner_id' : UserId,
   'joined' : TimestampMillis,
   'avatar_id' : [] | [bigint],
+  'next_message_expiry' : [] | [TimestampMillis],
   'latest_threads' : Array<ThreadSyncDetails>,
   'frozen' : [] | [FrozenGroupInfo],
   'latest_event_index' : EventIndex,
@@ -471,6 +508,7 @@ export interface GroupChatSummary {
   'mentions' : Array<Mention>,
   'chat_id' : ChatId,
   'date_read_pinned' : [] | [TimestampMillis],
+  'expired_messages' : Array<MessageIndexRange>,
   'archived' : boolean,
   'participant_count' : number,
   'my_metrics' : ChatMetrics,
@@ -488,9 +526,11 @@ export interface GroupChatSummaryUpdates {
   'affected_events' : Uint32Array | number[],
   'notifications_muted' : [] | [boolean],
   'description' : [] | [string],
+  'events_ttl' : [] | [Milliseconds],
   'last_updated' : TimestampMillis,
   'owner_id' : [] | [UserId],
   'avatar_id' : AvatarIdUpdate,
+  'next_message_expiry' : TimestampUpdate,
   'latest_threads' : Array<ThreadSyncDetails>,
   'frozen' : FrozenGroupUpdate,
   'latest_event_index' : [] | [EventIndex],
@@ -498,6 +538,7 @@ export interface GroupChatSummaryUpdates {
   'mentions' : Array<Mention>,
   'chat_id' : ChatId,
   'date_read_pinned' : [] | [TimestampMillis],
+  'expired_messages' : Array<MessageIndexRange>,
   'archived' : [] | [boolean],
   'participant_count' : [] | [number],
   'my_metrics' : [] | [ChatMetrics],
@@ -637,6 +678,19 @@ export type MessageContent = { 'Giphy' : GiphyContent } |
   { 'Poll' : PollContent } |
   { 'Text' : TextContent } |
   { 'Image' : ImageContent } |
+  { 'Prize' : PrizeContent } |
+  { 'GovernanceProposal' : ProposalContent } |
+  { 'PrizeWinner' : PrizeWinnerContent } |
+  { 'Audio' : AudioContent } |
+  { 'Crypto' : CryptoContent } |
+  { 'Video' : VideoContent } |
+  { 'Deleted' : DeletedContent };
+export type MessageContentInitial = { 'Giphy' : GiphyContent } |
+  { 'File' : FileContent } |
+  { 'Poll' : PollContent } |
+  { 'Text' : TextContent } |
+  { 'Image' : ImageContent } |
+  { 'Prize' : PrizeContentInitial } |
   { 'GovernanceProposal' : ProposalContent } |
   { 'Audio' : AudioContent } |
   { 'Crypto' : CryptoContent } |
@@ -651,6 +705,10 @@ export interface MessageEventWrapper {
 }
 export type MessageId = bigint;
 export type MessageIndex = number;
+export interface MessageIndexRange {
+  'end' : MessageIndex,
+  'start' : MessageIndex,
+}
 export interface MessageMatch {
   'content' : MessageContent,
   'sender' : UserId,
@@ -765,6 +823,7 @@ export interface OwnershipTransferred {
 }
 export interface PartialUserSummary {
   'username' : [] | [string],
+  'diamond_member' : boolean,
   'user_id' : UserId,
   'is_bot' : boolean,
   'avatar_id' : [] | [bigint],
@@ -837,6 +896,25 @@ export interface PollEnded {
 export interface PollVotes {
   'total' : TotalPollVotes,
   'user' : Uint32Array | number[],
+}
+export interface PrizeContent {
+  'token' : Cryptocurrency,
+  'end_date' : TimestampMillis,
+  'prizes_remaining' : number,
+  'prizes_pending' : number,
+  'caption' : [] | [string],
+  'winners' : Array<UserId>,
+}
+export interface PrizeContentInitial {
+  'end_date' : TimestampMillis,
+  'caption' : [] | [string],
+  'prizes' : Array<Tokens>,
+  'transfer' : CryptoTransaction,
+}
+export interface PrizeWinnerContent {
+  'transaction' : CompletedCryptoTransaction,
+  'winner' : UserId,
+  'prize_message' : MessageIndex,
 }
 export type Proposal = { 'NNS' : NnsProposal } |
   { 'SNS' : SnsProposal };
@@ -1028,6 +1106,16 @@ export type SendMessageResponse = { 'TextTooLong' : number } |
   { 'InvalidPoll' : InvalidPollReason } |
   { 'UserSuspended' : null } |
   { 'InvalidRequest' : string };
+export interface SendMessageV2Args {
+  'content' : MessageContentInitial,
+  'mentioned' : Array<User>,
+  'forwarding' : boolean,
+  'sender_name' : string,
+  'correlation_id' : bigint,
+  'message_id' : MessageId,
+  'replies_to' : [] | [GroupReplyContext],
+  'thread_root_message_index' : [] | [MessageIndex],
+}
 export type SnsAccount = { 'Mint' : null } |
   { 'Account' : Icrc1Account };
 export interface SnsCompletedCryptoTransaction {
@@ -1139,6 +1227,9 @@ export interface ThreadUpdated {
 }
 export type TimestampMillis = bigint;
 export type TimestampNanos = bigint;
+export type TimestampUpdate = { 'NoChange' : null } |
+  { 'SetToNone' : null } |
+  { 'SetToSome' : TimestampMillis };
 export interface Tokens { 'e8s' : bigint }
 export type TotalPollVotes = { 'Anonymous' : Array<[number, number]> } |
   { 'Visible' : Array<[number, Array<UserId>]> } |
@@ -1209,6 +1300,7 @@ export interface User { 'username' : string, 'user_id' : UserId }
 export type UserId = CanisterId;
 export interface UserSummary {
   'username' : string,
+  'diamond_member' : boolean,
   'user_id' : UserId,
   'is_bot' : boolean,
   'avatar_id' : [] | [bigint],
@@ -1247,6 +1339,7 @@ export interface _SERVICE {
   'add_reaction' : ActorMethod<[AddReactionArgs], AddReactionResponse>,
   'block_user' : ActorMethod<[BlockUserArgs], BlockUserResponse>,
   'change_role' : ActorMethod<[ChangeRoleArgs], ChangeRoleResponse>,
+  'claim_prize' : ActorMethod<[ClaimPrizeArgs], ClaimPrizeResponse>,
   'delete_messages' : ActorMethod<[DeleteMessagesArgs], DeleteMessagesResponse>,
   'deleted_message' : ActorMethod<[DeletedMessageArgs], DeletedMessageResponse>,
   'disable_invite_code' : ActorMethod<
@@ -1301,6 +1394,7 @@ export interface _SERVICE {
     SelectedUpdatesResponse
   >,
   'send_message' : ActorMethod<[SendMessageArgs], SendMessageResponse>,
+  'send_message_v2' : ActorMethod<[SendMessageV2Args], SendMessageResponse>,
   'summary' : ActorMethod<[SummaryArgs], SummaryResponse>,
   'summary_updates' : ActorMethod<[SummaryUpdatesArgs], SummaryUpdatesResponse>,
   'thread_previews' : ActorMethod<[ThreadPreviewsArgs], ThreadPreviewsResponse>,

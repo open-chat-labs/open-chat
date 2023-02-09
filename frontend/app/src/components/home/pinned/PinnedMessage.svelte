@@ -70,7 +70,7 @@
         <Avatar
             url={client.userAvatarUrl(sender)}
             userId={sender.userId}
-            size={$mobileWidth ? AvatarSize.Tiny : AvatarSize.Small} />
+            size={$mobileWidth ? AvatarSize.Small : AvatarSize.Default} />
     </div>
     <div
         class="message-bubble"

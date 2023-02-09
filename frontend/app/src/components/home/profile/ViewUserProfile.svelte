@@ -39,6 +39,7 @@
     $: joined =
         profile !== undefined ? `${$_("joined")} ${formatDate(profile.created)}` : undefined;
     $: isPremium = profile?.isPremium ?? false;
+    $: diamond = user?.diamond ?? false;
     $: phoneIsVerified = profile?.phoneIsVerified ?? false;
 
     onMount(async () => {
@@ -101,9 +102,9 @@
             </div>
             <div slot="body" class="body" class:modal>
                 <div class="avatar">
-                    <Avatar url={avatarUrl} {userId} size={AvatarSize.ExtraLarge} />
+                    <Avatar url={avatarUrl} {userId} size={AvatarSize.Large} />
                 </div>
-                <h2>{profile.username}</h2>
+                <h2 class:diamond>{profile.username}</h2>
                 {#if profile.bio.length > 0}
                     <p class="bio"><Markdown text={profile.bio} /></p>
                 {/if}
@@ -165,6 +166,10 @@
         h2 {
             @include font(bold, normal, fs-100, 21);
             margin-bottom: $sp3;
+
+            &.diamond {
+                @include diamond();
+            }
         }
 
         .bio {

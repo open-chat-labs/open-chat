@@ -103,7 +103,7 @@
                         showStatus={true}
                         userId={user.userId}
                         url={client.userAvatarUrl(user)}
-                        size={AvatarSize.Small} />
+                        size={AvatarSize.Default} />
                 </span>
                 <h4 class="details">
                     <FilteredUsername

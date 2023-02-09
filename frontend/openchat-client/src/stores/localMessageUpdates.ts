@@ -3,6 +3,7 @@ import type {
     LocalPollVote,
     LocalReaction,
     MessageContent,
+    PrizeContent,
     ThreadSummary,
 } from "openchat-shared";
 import { mergeThreadSummaries } from "../utils/chat";
@@ -10,18 +11,20 @@ import { LocalUpdatesStore } from "./localUpdatesStore";
 
 class LocalMessageUpdatesStore extends LocalUpdatesStore<LocalMessageUpdates> {
     markDeleted(messageId: string, deletedBy: string): void {
-        this.applyUpdate(messageId, (_) => ({ deleted: { deletedBy, timestamp: BigInt(Date.now()) } }));
+        this.applyUpdate(messageId, (_) => ({
+            deleted: { deletedBy, timestamp: BigInt(Date.now()) },
+        }));
     }
     markUndeleted(messageId: string, content?: MessageContent): void {
-        this.applyUpdate(messageId, (_) => ({ 
+        this.applyUpdate(messageId, (_) => ({
             deleted: undefined,
-            undeletedContent: content, 
+            undeletedContent: content,
         }));
     }
     markContentRevealed(messageId: string, content: MessageContent): void {
-        this.applyUpdate(messageId, (_) => ({ 
+        this.applyUpdate(messageId, (_) => ({
             deleted: undefined,
-            revealedContent: content 
+            revealedContent: content,
         }));
     }
     markContentEdited(messageId: string, content: MessageContent): void {
@@ -35,8 +38,13 @@ class LocalMessageUpdatesStore extends LocalUpdatesStore<LocalMessageUpdates> {
             reactions: [...(updates?.reactions ?? []), reaction],
         }));
     }
+    markPrizeClaimed(messageId: string, content: PrizeContent): void {
+        this.applyUpdate(messageId, (_) => ({ prizeContent: content }));
+    }
     markPollVote(messageId: string, vote: LocalPollVote): void {
-        this.applyUpdate(messageId, (updates) => ({ pollVotes: [...(updates?.pollVotes ?? []), vote] }));
+        this.applyUpdate(messageId, (updates) => ({
+            pollVotes: [...(updates?.pollVotes ?? []), vote],
+        }));
     }
     markThreadSummaryUpdated(threadRootMessageId: string, summary: ThreadSummary): void {
         this.applyUpdate(threadRootMessageId, (updates) => {

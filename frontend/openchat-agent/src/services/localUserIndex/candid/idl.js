@@ -29,8 +29,10 @@ export const idlFactory = ({ IDL }) => {
   });
   const TimestampMillis = IDL.Nat64;
   const ChatMetrics = IDL.Record({
+    'prize_winner_messages' : IDL.Nat64,
     'audio_messages' : IDL.Nat64,
     'cycles_messages' : IDL.Nat64,
+    'chat_messages' : IDL.Nat64,
     'edits' : IDL.Nat64,
     'icp_messages' : IDL.Nat64,
     'last_active' : TimestampMillis,
@@ -48,6 +50,7 @@ export const idlFactory = ({ IDL }) => {
     'reported_messages' : IDL.Nat64,
     'ckbtc_messages' : IDL.Nat64,
     'reactions' : IDL.Nat64,
+    'prize_messages' : IDL.Nat64,
   });
   const GovernanceProposalsSubtype = IDL.Record({
     'is_nns' : IDL.Bool,
@@ -72,6 +75,7 @@ export const idlFactory = ({ IDL }) => {
     'minor' : IDL.Nat32,
     'patch' : IDL.Nat32,
   });
+  const Milliseconds = IDL.Nat64;
   const UserId = CanisterId;
   const MessageIndex = IDL.Nat32;
   const GroupCanisterThreadDetails = IDL.Record({
@@ -92,6 +96,10 @@ export const idlFactory = ({ IDL }) => {
     'thread_root_message_index' : IDL.Opt(MessageIndex),
     'mentioned_by' : UserId,
     'message_index' : MessageIndex,
+  });
+  const MessageIndexRange = IDL.Record({
+    'end' : MessageIndex,
+    'start' : MessageIndex,
   });
   const GiphyImageVariant = IDL.Record({
     'url' : IDL.Text,
@@ -146,6 +154,20 @@ export const idlFactory = ({ IDL }) => {
     'thumbnail_data' : IDL.Text,
     'caption' : IDL.Opt(IDL.Text),
     'width' : IDL.Nat32,
+  });
+  const Cryptocurrency = IDL.Variant({
+    'InternetComputer' : IDL.Null,
+    'CHAT' : IDL.Null,
+    'SNS1' : IDL.Null,
+    'CKBTC' : IDL.Null,
+  });
+  const PrizeContent = IDL.Record({
+    'token' : Cryptocurrency,
+    'end_date' : TimestampMillis,
+    'prizes_remaining' : IDL.Nat32,
+    'prizes_pending' : IDL.Nat32,
+    'caption' : IDL.Opt(IDL.Text),
+    'winners' : IDL.Vec(UserId),
   });
   const ProposalId = IDL.Nat64;
   const ProposalDecisionStatus = IDL.Variant({
@@ -204,11 +226,6 @@ export const idlFactory = ({ IDL }) => {
     'governance_canister_id' : CanisterId,
     'proposal' : Proposal,
   });
-  const AudioContent = IDL.Record({
-    'mime_type' : IDL.Text,
-    'blob_reference' : IDL.Opt(BlobReference),
-    'caption' : IDL.Opt(IDL.Text),
-  });
   const AccountIdentifier = IDL.Vec(IDL.Nat8);
   const NnsCryptoAccount = IDL.Variant({
     'Mint' : IDL.Null,
@@ -216,48 +233,9 @@ export const idlFactory = ({ IDL }) => {
   });
   const Tokens = IDL.Record({ 'e8s' : IDL.Nat64 });
   const TimestampNanos = IDL.Nat64;
-  const Cryptocurrency = IDL.Variant({
-    'InternetComputer' : IDL.Null,
-    'SNS1' : IDL.Null,
-    'CKBTC' : IDL.Null,
-  });
   const TransactionHash = IDL.Vec(IDL.Nat8);
-  const Memo = IDL.Nat64;
-  const NnsFailedCryptoTransaction = IDL.Record({
-    'to' : NnsCryptoAccount,
-    'fee' : Tokens,
-    'created' : TimestampNanos,
-    'token' : Cryptocurrency,
-    'transaction_hash' : TransactionHash,
-    'from' : NnsCryptoAccount,
-    'memo' : Memo,
-    'error_message' : IDL.Text,
-    'amount' : Tokens,
-  });
-  const Icrc1Account = IDL.Record({
-    'owner' : IDL.Principal,
-    'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
-  });
-  const SnsAccount = IDL.Variant({
-    'Mint' : IDL.Null,
-    'Account' : Icrc1Account,
-  });
-  const SnsFailedCryptoTransaction = IDL.Record({
-    'to' : SnsAccount,
-    'fee' : Tokens,
-    'created' : TimestampNanos,
-    'token' : Cryptocurrency,
-    'transaction_hash' : TransactionHash,
-    'from' : SnsAccount,
-    'memo' : IDL.Opt(Memo),
-    'error_message' : IDL.Text,
-    'amount' : Tokens,
-  });
-  const FailedCryptoTransaction = IDL.Variant({
-    'NNS' : NnsFailedCryptoTransaction,
-    'SNS' : SnsFailedCryptoTransaction,
-  });
   const BlockIndex = IDL.Nat64;
+  const Memo = IDL.Nat64;
   const NnsCompletedCryptoTransaction = IDL.Record({
     'to' : NnsCryptoAccount,
     'fee' : Tokens,
@@ -268,6 +246,14 @@ export const idlFactory = ({ IDL }) => {
     'from' : NnsCryptoAccount,
     'memo' : Memo,
     'amount' : Tokens,
+  });
+  const Icrc1Account = IDL.Record({
+    'owner' : IDL.Principal,
+    'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+  });
+  const SnsAccount = IDL.Variant({
+    'Mint' : IDL.Null,
+    'Account' : Icrc1Account,
   });
   const SnsCompletedCryptoTransaction = IDL.Record({
     'to' : SnsAccount,
@@ -283,6 +269,42 @@ export const idlFactory = ({ IDL }) => {
   const CompletedCryptoTransaction = IDL.Variant({
     'NNS' : NnsCompletedCryptoTransaction,
     'SNS' : SnsCompletedCryptoTransaction,
+  });
+  const PrizeWinnerContent = IDL.Record({
+    'transaction' : CompletedCryptoTransaction,
+    'winner' : UserId,
+    'prize_message' : MessageIndex,
+  });
+  const AudioContent = IDL.Record({
+    'mime_type' : IDL.Text,
+    'blob_reference' : IDL.Opt(BlobReference),
+    'caption' : IDL.Opt(IDL.Text),
+  });
+  const NnsFailedCryptoTransaction = IDL.Record({
+    'to' : NnsCryptoAccount,
+    'fee' : Tokens,
+    'created' : TimestampNanos,
+    'token' : Cryptocurrency,
+    'transaction_hash' : TransactionHash,
+    'from' : NnsCryptoAccount,
+    'memo' : Memo,
+    'error_message' : IDL.Text,
+    'amount' : Tokens,
+  });
+  const SnsFailedCryptoTransaction = IDL.Record({
+    'to' : SnsAccount,
+    'fee' : Tokens,
+    'created' : TimestampNanos,
+    'token' : Cryptocurrency,
+    'transaction_hash' : TransactionHash,
+    'from' : SnsAccount,
+    'memo' : IDL.Opt(Memo),
+    'error_message' : IDL.Text,
+    'amount' : Tokens,
+  });
+  const FailedCryptoTransaction = IDL.Variant({
+    'NNS' : NnsFailedCryptoTransaction,
+    'SNS' : SnsFailedCryptoTransaction,
   });
   const NnsUserOrAccount = IDL.Variant({
     'User' : UserId,
@@ -335,7 +357,9 @@ export const idlFactory = ({ IDL }) => {
     'Poll' : PollContent,
     'Text' : TextContent,
     'Image' : ImageContent,
+    'Prize' : PrizeContent,
     'GovernanceProposal' : ProposalContent,
+    'PrizeWinner' : PrizeWinnerContent,
     'Audio' : AudioContent,
     'Crypto' : CryptoContent,
     'Video' : VideoContent,
@@ -382,10 +406,12 @@ export const idlFactory = ({ IDL }) => {
     'wasm_version' : Version,
     'notifications_muted' : IDL.Bool,
     'description' : IDL.Text,
+    'events_ttl' : IDL.Opt(Milliseconds),
     'last_updated' : TimestampMillis,
     'owner_id' : UserId,
     'joined' : TimestampMillis,
     'avatar_id' : IDL.Opt(IDL.Nat),
+    'next_message_expiry' : IDL.Opt(TimestampMillis),
     'latest_threads' : IDL.Vec(GroupCanisterThreadDetails),
     'frozen' : IDL.Opt(FrozenGroupInfo),
     'latest_event_index' : EventIndex,
@@ -393,6 +419,7 @@ export const idlFactory = ({ IDL }) => {
     'min_visible_message_index' : MessageIndex,
     'mentions' : IDL.Vec(Mention),
     'chat_id' : ChatId,
+    'expired_messages' : IDL.Vec(MessageIndexRange),
     'participant_count' : IDL.Nat32,
     'my_metrics' : ChatMetrics,
     'latest_message' : IDL.Opt(MessageEventWrapper),

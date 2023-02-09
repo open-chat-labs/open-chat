@@ -12,6 +12,7 @@ export const openChatBotUser: PartialUserSummary = {
     updated: BigInt(0),
     suspended: false,
     blobUrl: OPENCHAT_BOT_AVATAR_URL,
+    diamond: false,
 };
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -26,6 +27,7 @@ export function proposalsBotUser(userId: string): PartialUserSummary {
         updated: BigInt(0),
         suspended: false,
         blobUrl: PROPOSALS_BOT_AVATAR_URL,
+        diamond: false,
     };
 }
 

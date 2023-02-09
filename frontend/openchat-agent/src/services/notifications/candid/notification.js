@@ -65,6 +65,19 @@ export const Notification = IDL.Variant({
             'caption' : IDL.Opt(IDL.Text),
             'width' : IDL.Nat32,
           }),
+          'Prize' : IDL.Record({
+            'token' : IDL.Variant({
+              'InternetComputer' : IDL.Null,
+              'CHAT' : IDL.Null,
+              'SNS1' : IDL.Null,
+              'CKBTC' : IDL.Null,
+            }),
+            'end_date' : IDL.Nat64,
+            'prizes_remaining' : IDL.Nat32,
+            'prizes_pending' : IDL.Nat32,
+            'caption' : IDL.Opt(IDL.Text),
+            'winners' : IDL.Vec(IDL.Principal),
+          }),
           'GovernanceProposal' : IDL.Record({
             'my_vote' : IDL.Opt(IDL.Bool),
             'governance_canister_id' : IDL.Principal,
@@ -133,6 +146,62 @@ export const Notification = IDL.Variant({
               }),
             }),
           }),
+          'PrizeWinner' : IDL.Record({
+            'transaction' : IDL.Variant({
+              'NNS' : IDL.Record({
+                'to' : IDL.Variant({
+                  'Mint' : IDL.Null,
+                  'Account' : IDL.Vec(IDL.Nat8),
+                }),
+                'fee' : IDL.Record({ 'e8s' : IDL.Nat64 }),
+                'created' : IDL.Nat64,
+                'token' : IDL.Variant({
+                  'InternetComputer' : IDL.Null,
+                  'CHAT' : IDL.Null,
+                  'SNS1' : IDL.Null,
+                  'CKBTC' : IDL.Null,
+                }),
+                'transaction_hash' : IDL.Vec(IDL.Nat8),
+                'block_index' : IDL.Nat64,
+                'from' : IDL.Variant({
+                  'Mint' : IDL.Null,
+                  'Account' : IDL.Vec(IDL.Nat8),
+                }),
+                'memo' : IDL.Nat64,
+                'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
+              }),
+              'SNS' : IDL.Record({
+                'to' : IDL.Variant({
+                  'Mint' : IDL.Null,
+                  'Account' : IDL.Record({
+                    'owner' : IDL.Principal,
+                    'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                  }),
+                }),
+                'fee' : IDL.Record({ 'e8s' : IDL.Nat64 }),
+                'created' : IDL.Nat64,
+                'token' : IDL.Variant({
+                  'InternetComputer' : IDL.Null,
+                  'CHAT' : IDL.Null,
+                  'SNS1' : IDL.Null,
+                  'CKBTC' : IDL.Null,
+                }),
+                'transaction_hash' : IDL.Vec(IDL.Nat8),
+                'block_index' : IDL.Nat64,
+                'from' : IDL.Variant({
+                  'Mint' : IDL.Null,
+                  'Account' : IDL.Record({
+                    'owner' : IDL.Principal,
+                    'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                  }),
+                }),
+                'memo' : IDL.Opt(IDL.Nat64),
+                'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
+              }),
+            }),
+            'winner' : IDL.Principal,
+            'prize_message' : IDL.Nat32,
+          }),
           'Audio' : IDL.Record({
             'mime_type' : IDL.Text,
             'blob_reference' : IDL.Opt(
@@ -154,6 +223,7 @@ export const Notification = IDL.Variant({
                   'created' : IDL.Nat64,
                   'token' : IDL.Variant({
                     'InternetComputer' : IDL.Null,
+                    'CHAT' : IDL.Null,
                     'SNS1' : IDL.Null,
                     'CKBTC' : IDL.Null,
                   }),
@@ -178,6 +248,7 @@ export const Notification = IDL.Variant({
                   'created' : IDL.Nat64,
                   'token' : IDL.Variant({
                     'InternetComputer' : IDL.Null,
+                    'CHAT' : IDL.Null,
                     'SNS1' : IDL.Null,
                     'CKBTC' : IDL.Null,
                   }),
@@ -204,6 +275,7 @@ export const Notification = IDL.Variant({
                   'created' : IDL.Nat64,
                   'token' : IDL.Variant({
                     'InternetComputer' : IDL.Null,
+                    'CHAT' : IDL.Null,
                     'SNS1' : IDL.Null,
                     'CKBTC' : IDL.Null,
                   }),
@@ -228,6 +300,7 @@ export const Notification = IDL.Variant({
                   'created' : IDL.Nat64,
                   'token' : IDL.Variant({
                     'InternetComputer' : IDL.Null,
+                    'CHAT' : IDL.Null,
                     'SNS1' : IDL.Null,
                     'CKBTC' : IDL.Null,
                   }),
@@ -253,6 +326,7 @@ export const Notification = IDL.Variant({
                   'fee' : IDL.Opt(IDL.Record({ 'e8s' : IDL.Nat64 })),
                   'token' : IDL.Variant({
                     'InternetComputer' : IDL.Null,
+                    'CHAT' : IDL.Null,
                     'SNS1' : IDL.Null,
                     'CKBTC' : IDL.Null,
                   }),
@@ -267,6 +341,7 @@ export const Notification = IDL.Variant({
                   'fee' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                   'token' : IDL.Variant({
                     'InternetComputer' : IDL.Null,
+                    'CHAT' : IDL.Null,
                     'SNS1' : IDL.Null,
                     'CKBTC' : IDL.Null,
                   }),
@@ -386,6 +461,19 @@ export const Notification = IDL.Variant({
             'caption' : IDL.Opt(IDL.Text),
             'width' : IDL.Nat32,
           }),
+          'Prize' : IDL.Record({
+            'token' : IDL.Variant({
+              'InternetComputer' : IDL.Null,
+              'CHAT' : IDL.Null,
+              'SNS1' : IDL.Null,
+              'CKBTC' : IDL.Null,
+            }),
+            'end_date' : IDL.Nat64,
+            'prizes_remaining' : IDL.Nat32,
+            'prizes_pending' : IDL.Nat32,
+            'caption' : IDL.Opt(IDL.Text),
+            'winners' : IDL.Vec(IDL.Principal),
+          }),
           'GovernanceProposal' : IDL.Record({
             'my_vote' : IDL.Opt(IDL.Bool),
             'governance_canister_id' : IDL.Principal,
@@ -454,6 +542,62 @@ export const Notification = IDL.Variant({
               }),
             }),
           }),
+          'PrizeWinner' : IDL.Record({
+            'transaction' : IDL.Variant({
+              'NNS' : IDL.Record({
+                'to' : IDL.Variant({
+                  'Mint' : IDL.Null,
+                  'Account' : IDL.Vec(IDL.Nat8),
+                }),
+                'fee' : IDL.Record({ 'e8s' : IDL.Nat64 }),
+                'created' : IDL.Nat64,
+                'token' : IDL.Variant({
+                  'InternetComputer' : IDL.Null,
+                  'CHAT' : IDL.Null,
+                  'SNS1' : IDL.Null,
+                  'CKBTC' : IDL.Null,
+                }),
+                'transaction_hash' : IDL.Vec(IDL.Nat8),
+                'block_index' : IDL.Nat64,
+                'from' : IDL.Variant({
+                  'Mint' : IDL.Null,
+                  'Account' : IDL.Vec(IDL.Nat8),
+                }),
+                'memo' : IDL.Nat64,
+                'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
+              }),
+              'SNS' : IDL.Record({
+                'to' : IDL.Variant({
+                  'Mint' : IDL.Null,
+                  'Account' : IDL.Record({
+                    'owner' : IDL.Principal,
+                    'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                  }),
+                }),
+                'fee' : IDL.Record({ 'e8s' : IDL.Nat64 }),
+                'created' : IDL.Nat64,
+                'token' : IDL.Variant({
+                  'InternetComputer' : IDL.Null,
+                  'CHAT' : IDL.Null,
+                  'SNS1' : IDL.Null,
+                  'CKBTC' : IDL.Null,
+                }),
+                'transaction_hash' : IDL.Vec(IDL.Nat8),
+                'block_index' : IDL.Nat64,
+                'from' : IDL.Variant({
+                  'Mint' : IDL.Null,
+                  'Account' : IDL.Record({
+                    'owner' : IDL.Principal,
+                    'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                  }),
+                }),
+                'memo' : IDL.Opt(IDL.Nat64),
+                'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
+              }),
+            }),
+            'winner' : IDL.Principal,
+            'prize_message' : IDL.Nat32,
+          }),
           'Audio' : IDL.Record({
             'mime_type' : IDL.Text,
             'blob_reference' : IDL.Opt(
@@ -475,6 +619,7 @@ export const Notification = IDL.Variant({
                   'created' : IDL.Nat64,
                   'token' : IDL.Variant({
                     'InternetComputer' : IDL.Null,
+                    'CHAT' : IDL.Null,
                     'SNS1' : IDL.Null,
                     'CKBTC' : IDL.Null,
                   }),
@@ -499,6 +644,7 @@ export const Notification = IDL.Variant({
                   'created' : IDL.Nat64,
                   'token' : IDL.Variant({
                     'InternetComputer' : IDL.Null,
+                    'CHAT' : IDL.Null,
                     'SNS1' : IDL.Null,
                     'CKBTC' : IDL.Null,
                   }),
@@ -525,6 +671,7 @@ export const Notification = IDL.Variant({
                   'created' : IDL.Nat64,
                   'token' : IDL.Variant({
                     'InternetComputer' : IDL.Null,
+                    'CHAT' : IDL.Null,
                     'SNS1' : IDL.Null,
                     'CKBTC' : IDL.Null,
                   }),
@@ -549,6 +696,7 @@ export const Notification = IDL.Variant({
                   'created' : IDL.Nat64,
                   'token' : IDL.Variant({
                     'InternetComputer' : IDL.Null,
+                    'CHAT' : IDL.Null,
                     'SNS1' : IDL.Null,
                     'CKBTC' : IDL.Null,
                   }),
@@ -574,6 +722,7 @@ export const Notification = IDL.Variant({
                   'fee' : IDL.Opt(IDL.Record({ 'e8s' : IDL.Nat64 })),
                   'token' : IDL.Variant({
                     'InternetComputer' : IDL.Null,
+                    'CHAT' : IDL.Null,
                     'SNS1' : IDL.Null,
                     'CKBTC' : IDL.Null,
                   }),
@@ -588,6 +737,7 @@ export const Notification = IDL.Variant({
                   'fee' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                   'token' : IDL.Variant({
                     'InternetComputer' : IDL.Null,
+                    'CHAT' : IDL.Null,
                     'SNS1' : IDL.Null,
                     'CKBTC' : IDL.Null,
                   }),
@@ -710,6 +860,19 @@ export const Notification = IDL.Variant({
             'caption' : IDL.Opt(IDL.Text),
             'width' : IDL.Nat32,
           }),
+          'Prize' : IDL.Record({
+            'token' : IDL.Variant({
+              'InternetComputer' : IDL.Null,
+              'CHAT' : IDL.Null,
+              'SNS1' : IDL.Null,
+              'CKBTC' : IDL.Null,
+            }),
+            'end_date' : IDL.Nat64,
+            'prizes_remaining' : IDL.Nat32,
+            'prizes_pending' : IDL.Nat32,
+            'caption' : IDL.Opt(IDL.Text),
+            'winners' : IDL.Vec(IDL.Principal),
+          }),
           'GovernanceProposal' : IDL.Record({
             'my_vote' : IDL.Opt(IDL.Bool),
             'governance_canister_id' : IDL.Principal,
@@ -778,6 +941,62 @@ export const Notification = IDL.Variant({
               }),
             }),
           }),
+          'PrizeWinner' : IDL.Record({
+            'transaction' : IDL.Variant({
+              'NNS' : IDL.Record({
+                'to' : IDL.Variant({
+                  'Mint' : IDL.Null,
+                  'Account' : IDL.Vec(IDL.Nat8),
+                }),
+                'fee' : IDL.Record({ 'e8s' : IDL.Nat64 }),
+                'created' : IDL.Nat64,
+                'token' : IDL.Variant({
+                  'InternetComputer' : IDL.Null,
+                  'CHAT' : IDL.Null,
+                  'SNS1' : IDL.Null,
+                  'CKBTC' : IDL.Null,
+                }),
+                'transaction_hash' : IDL.Vec(IDL.Nat8),
+                'block_index' : IDL.Nat64,
+                'from' : IDL.Variant({
+                  'Mint' : IDL.Null,
+                  'Account' : IDL.Vec(IDL.Nat8),
+                }),
+                'memo' : IDL.Nat64,
+                'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
+              }),
+              'SNS' : IDL.Record({
+                'to' : IDL.Variant({
+                  'Mint' : IDL.Null,
+                  'Account' : IDL.Record({
+                    'owner' : IDL.Principal,
+                    'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                  }),
+                }),
+                'fee' : IDL.Record({ 'e8s' : IDL.Nat64 }),
+                'created' : IDL.Nat64,
+                'token' : IDL.Variant({
+                  'InternetComputer' : IDL.Null,
+                  'CHAT' : IDL.Null,
+                  'SNS1' : IDL.Null,
+                  'CKBTC' : IDL.Null,
+                }),
+                'transaction_hash' : IDL.Vec(IDL.Nat8),
+                'block_index' : IDL.Nat64,
+                'from' : IDL.Variant({
+                  'Mint' : IDL.Null,
+                  'Account' : IDL.Record({
+                    'owner' : IDL.Principal,
+                    'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                  }),
+                }),
+                'memo' : IDL.Opt(IDL.Nat64),
+                'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
+              }),
+            }),
+            'winner' : IDL.Principal,
+            'prize_message' : IDL.Nat32,
+          }),
           'Audio' : IDL.Record({
             'mime_type' : IDL.Text,
             'blob_reference' : IDL.Opt(
@@ -799,6 +1018,7 @@ export const Notification = IDL.Variant({
                   'created' : IDL.Nat64,
                   'token' : IDL.Variant({
                     'InternetComputer' : IDL.Null,
+                    'CHAT' : IDL.Null,
                     'SNS1' : IDL.Null,
                     'CKBTC' : IDL.Null,
                   }),
@@ -823,6 +1043,7 @@ export const Notification = IDL.Variant({
                   'created' : IDL.Nat64,
                   'token' : IDL.Variant({
                     'InternetComputer' : IDL.Null,
+                    'CHAT' : IDL.Null,
                     'SNS1' : IDL.Null,
                     'CKBTC' : IDL.Null,
                   }),
@@ -849,6 +1070,7 @@ export const Notification = IDL.Variant({
                   'created' : IDL.Nat64,
                   'token' : IDL.Variant({
                     'InternetComputer' : IDL.Null,
+                    'CHAT' : IDL.Null,
                     'SNS1' : IDL.Null,
                     'CKBTC' : IDL.Null,
                   }),
@@ -873,6 +1095,7 @@ export const Notification = IDL.Variant({
                   'created' : IDL.Nat64,
                   'token' : IDL.Variant({
                     'InternetComputer' : IDL.Null,
+                    'CHAT' : IDL.Null,
                     'SNS1' : IDL.Null,
                     'CKBTC' : IDL.Null,
                   }),
@@ -898,6 +1121,7 @@ export const Notification = IDL.Variant({
                   'fee' : IDL.Opt(IDL.Record({ 'e8s' : IDL.Nat64 })),
                   'token' : IDL.Variant({
                     'InternetComputer' : IDL.Null,
+                    'CHAT' : IDL.Null,
                     'SNS1' : IDL.Null,
                     'CKBTC' : IDL.Null,
                   }),
@@ -912,6 +1136,7 @@ export const Notification = IDL.Variant({
                   'fee' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                   'token' : IDL.Variant({
                     'InternetComputer' : IDL.Null,
+                    'CHAT' : IDL.Null,
                     'SNS1' : IDL.Null,
                     'CKBTC' : IDL.Null,
                   }),
@@ -1034,6 +1259,19 @@ export const Notification = IDL.Variant({
             'caption' : IDL.Opt(IDL.Text),
             'width' : IDL.Nat32,
           }),
+          'Prize' : IDL.Record({
+            'token' : IDL.Variant({
+              'InternetComputer' : IDL.Null,
+              'CHAT' : IDL.Null,
+              'SNS1' : IDL.Null,
+              'CKBTC' : IDL.Null,
+            }),
+            'end_date' : IDL.Nat64,
+            'prizes_remaining' : IDL.Nat32,
+            'prizes_pending' : IDL.Nat32,
+            'caption' : IDL.Opt(IDL.Text),
+            'winners' : IDL.Vec(IDL.Principal),
+          }),
           'GovernanceProposal' : IDL.Record({
             'my_vote' : IDL.Opt(IDL.Bool),
             'governance_canister_id' : IDL.Principal,
@@ -1102,6 +1340,62 @@ export const Notification = IDL.Variant({
               }),
             }),
           }),
+          'PrizeWinner' : IDL.Record({
+            'transaction' : IDL.Variant({
+              'NNS' : IDL.Record({
+                'to' : IDL.Variant({
+                  'Mint' : IDL.Null,
+                  'Account' : IDL.Vec(IDL.Nat8),
+                }),
+                'fee' : IDL.Record({ 'e8s' : IDL.Nat64 }),
+                'created' : IDL.Nat64,
+                'token' : IDL.Variant({
+                  'InternetComputer' : IDL.Null,
+                  'CHAT' : IDL.Null,
+                  'SNS1' : IDL.Null,
+                  'CKBTC' : IDL.Null,
+                }),
+                'transaction_hash' : IDL.Vec(IDL.Nat8),
+                'block_index' : IDL.Nat64,
+                'from' : IDL.Variant({
+                  'Mint' : IDL.Null,
+                  'Account' : IDL.Vec(IDL.Nat8),
+                }),
+                'memo' : IDL.Nat64,
+                'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
+              }),
+              'SNS' : IDL.Record({
+                'to' : IDL.Variant({
+                  'Mint' : IDL.Null,
+                  'Account' : IDL.Record({
+                    'owner' : IDL.Principal,
+                    'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                  }),
+                }),
+                'fee' : IDL.Record({ 'e8s' : IDL.Nat64 }),
+                'created' : IDL.Nat64,
+                'token' : IDL.Variant({
+                  'InternetComputer' : IDL.Null,
+                  'CHAT' : IDL.Null,
+                  'SNS1' : IDL.Null,
+                  'CKBTC' : IDL.Null,
+                }),
+                'transaction_hash' : IDL.Vec(IDL.Nat8),
+                'block_index' : IDL.Nat64,
+                'from' : IDL.Variant({
+                  'Mint' : IDL.Null,
+                  'Account' : IDL.Record({
+                    'owner' : IDL.Principal,
+                    'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+                  }),
+                }),
+                'memo' : IDL.Opt(IDL.Nat64),
+                'amount' : IDL.Record({ 'e8s' : IDL.Nat64 }),
+              }),
+            }),
+            'winner' : IDL.Principal,
+            'prize_message' : IDL.Nat32,
+          }),
           'Audio' : IDL.Record({
             'mime_type' : IDL.Text,
             'blob_reference' : IDL.Opt(
@@ -1123,6 +1417,7 @@ export const Notification = IDL.Variant({
                   'created' : IDL.Nat64,
                   'token' : IDL.Variant({
                     'InternetComputer' : IDL.Null,
+                    'CHAT' : IDL.Null,
                     'SNS1' : IDL.Null,
                     'CKBTC' : IDL.Null,
                   }),
@@ -1147,6 +1442,7 @@ export const Notification = IDL.Variant({
                   'created' : IDL.Nat64,
                   'token' : IDL.Variant({
                     'InternetComputer' : IDL.Null,
+                    'CHAT' : IDL.Null,
                     'SNS1' : IDL.Null,
                     'CKBTC' : IDL.Null,
                   }),
@@ -1173,6 +1469,7 @@ export const Notification = IDL.Variant({
                   'created' : IDL.Nat64,
                   'token' : IDL.Variant({
                     'InternetComputer' : IDL.Null,
+                    'CHAT' : IDL.Null,
                     'SNS1' : IDL.Null,
                     'CKBTC' : IDL.Null,
                   }),
@@ -1197,6 +1494,7 @@ export const Notification = IDL.Variant({
                   'created' : IDL.Nat64,
                   'token' : IDL.Variant({
                     'InternetComputer' : IDL.Null,
+                    'CHAT' : IDL.Null,
                     'SNS1' : IDL.Null,
                     'CKBTC' : IDL.Null,
                   }),
@@ -1222,6 +1520,7 @@ export const Notification = IDL.Variant({
                   'fee' : IDL.Opt(IDL.Record({ 'e8s' : IDL.Nat64 })),
                   'token' : IDL.Variant({
                     'InternetComputer' : IDL.Null,
+                    'CHAT' : IDL.Null,
                     'SNS1' : IDL.Null,
                     'CKBTC' : IDL.Null,
                   }),
@@ -1236,6 +1535,7 @@ export const Notification = IDL.Variant({
                   'fee' : IDL.Record({ 'e8s' : IDL.Nat64 }),
                   'token' : IDL.Variant({
                     'InternetComputer' : IDL.Null,
+                    'CHAT' : IDL.Null,
                     'SNS1' : IDL.Null,
                     'CKBTC' : IDL.Null,
                   }),

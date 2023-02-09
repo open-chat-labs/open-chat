@@ -106,6 +106,8 @@
     $: threadSummary = msg.thread;
     $: msgUrl = `/#/${chatId}/${msg.messageIndex}?open=true`;
     $: isProposal = msg.content.kind === "proposal_content";
+    $: isPrize = msg.content.kind === "prize_content";
+    $: isPrizeWinner = msg.content.kind === "prize_winner_content";
     $: inert = msg.content.kind === "deleted_content" || collapsed;
     $: undeletingMessagesStore = client.undeletingMessagesStore;
     $: undeleting = $undeletingMessagesStore.has(msg.messageId);
@@ -356,7 +358,7 @@
                         <Avatar
                             url={client.userAvatarUrl(sender)}
                             userId={msg.sender}
-                            size={$mobileWidth ? AvatarSize.Tiny : AvatarSize.Small} />
+                            size={$mobileWidth ? AvatarSize.Small : AvatarSize.Default} />
                     </div>
                 {/if}
             </div>
@@ -381,13 +383,20 @@
             class:readByMe
             class:crypto
             class:failed
+            class:prizeWinner={isPrizeWinner}
             class:proposal={isProposal && !inert}
             class:thread={inThread}
             class:rtl={$rtlStore}>
-            {#if first && !isProposal}
+            {#if first && !isProposal && !isPrize}
                 <div class="sender" class:fill class:rtl={$rtlStore}>
                     <Link underline={"never"} on:click={openUserProfile}>
-                        <h4 class="username" class:fill class:crypto>{username}</h4>
+                        <h4
+                            class="username"
+                            class:fill
+                            class:crypto
+                            class:diamond={sender?.diamond}>
+                            {username}
+                        </h4>
                     </Link>
                     {#if senderTyping}
                         <span class="typing">
@@ -439,9 +448,11 @@
                 edited={msg.edited}
                 height={mediaCalculatedHeight}
                 on:registerVote={registerVote}
+                on:goToMessageIndex
+                on:upgrade
                 on:expandMessage />
 
-            {#if !inert}
+            {#if !inert && !isPrize}
                 <TimeAndTicks
                     {pinned}
                     {fill}
@@ -502,6 +513,7 @@
                     on:forward
                     on:reply={reply}
                     on:retrySend
+                    on:upgrade
                     on:deleteFailedMessage
                     on:replyPrivately={replyPrivately}
                     on:editMessage={editMessage} />
@@ -718,6 +730,10 @@
             &.crypto {
                 color: #fff;
             }
+
+            &.diamond {
+                @include diamond();
+            }
         }
 
         &:not(.readByMe) {
@@ -808,6 +824,10 @@
 
         &.failed {
             background-color: var(--error);
+        }
+
+        &.prizeWinner {
+            // background-color: var(--prize);
         }
     }
 

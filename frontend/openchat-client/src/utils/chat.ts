@@ -31,6 +31,7 @@ import {
     Cryptocurrency,
     cryptoLookup,
     LocalPollVote,
+    CryptocurrencyTransfer,
 } from "openchat-shared";
 import { UnsupportedValueError, getContentAsText, eventIsVisible } from "openchat-shared";
 import { distinctBy, groupWhile } from "../utils/list";
@@ -224,6 +225,7 @@ function addCaption(caption: string | undefined, content: MessageContent): Messa
         content.kind !== "placeholder_content" &&
         content.kind !== "poll_content" &&
         content.kind !== "proposal_content" &&
+        content.kind !== "prize_winner_content" &&
         content.kind !== "crypto_content"
         ? { ...content, caption }
         : content;
@@ -664,25 +666,6 @@ export function groupChatFromCandidate(
         dateLastPinned: undefined,
         dateReadPinned: undefined,
     };
-}
-
-export function getStorageRequiredForMessage(content: MessageContent | undefined): number {
-    if (content === undefined) return 0;
-
-    switch (content.kind) {
-        case "audio_content":
-        case "file_content":
-        case "image_content":
-            return content.blobData?.length ?? 0;
-        case "video_content":
-            return (
-                (content.videoData.blobData?.length ?? 0) +
-                (content.imageData.blobData?.length ?? 0)
-            );
-
-        default:
-            return 0;
-    }
 }
 
 function updatePollContent(content: PollContent, votes: LocalPollVote[]): PollContent {
@@ -1136,6 +1119,10 @@ function mergeLocalUpdates(
         message.content = localUpdates.revealedContent;
     }
 
+    if (localUpdates?.prizeContent !== undefined) {
+        message.content = localUpdates.prizeContent;
+    }
+
     if (localUpdates?.reactions !== undefined) {
         let reactions = [...message.reactions];
         for (const localReaction of localUpdates.reactions) {
@@ -1236,23 +1223,23 @@ export function findMessageById(
 
 export function buildTransactionLink(
     formatter: MessageFormatter,
-    content: CryptocurrencyContent
+    transfer: CryptocurrencyTransfer
 ): string | undefined {
-    const url = buildTransactionUrl(content);
+    const url = buildTransactionUrl(transfer);
     return url !== undefined
         ? formatter("tokenTransfer.viewTransaction", { values: { url } })
         : undefined;
 }
 
-export function buildTransactionUrl(content: CryptocurrencyContent): string | undefined {
-    if (content.transfer.kind !== "completed") {
+export function buildTransactionUrl(transfer: CryptocurrencyTransfer): string | undefined {
+    if (transfer.kind !== "completed") {
         return undefined;
     }
     // TODO: Where can we see the transactions for other tokens? In OpenChat I suppose...
-    if (content.transfer.token !== "icp") {
+    if (transfer.token !== "icp") {
         return undefined;
     }
-    return `https://dashboard.internetcomputer.org/transaction/${content.transfer.transactionHash}`;
+    return `https://dashboard.internetcomputer.org/transaction/${transfer.transactionHash}`;
 }
 
 export function buildCryptoTransferText(

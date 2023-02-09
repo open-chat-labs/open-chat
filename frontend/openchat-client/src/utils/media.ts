@@ -2,11 +2,30 @@ import type { Message, MessageContent } from "openchat-shared";
 import { dataToBlobUrl } from "./blob";
 
 const THUMBNAIL_DIMS = dimensions(30, 30);
-const RESIZE_IMAGE_TO = 800;
-const MAX_IMAGE_SIZE = 1024 * 1024;
-const MAX_VIDEO_SIZE = 1024 * 1024 * 5;
-export const MAX_AUDIO_SIZE = 1024 * 1024;
-const MAX_FILE_SIZE = 1024 * 1024;
+
+export type MaxMediaSizes = {
+    image: number;
+    video: number;
+    audio: number;
+    file: number;
+    resize: number;
+};
+
+export const FREE_MAX_SIZES: MaxMediaSizes = {
+    image: 1024 * 1024,
+    video: 1024 * 1024 * 5,
+    audio: 1024 * 1024,
+    file: 1024 * 1024,
+    resize: 800,
+};
+
+export const DIAMOND_MAX_SIZES: MaxMediaSizes = {
+    image: 1024 * 1024 * 5,
+    video: 1024 * 1024 * 50,
+    audio: 1024 * 1024 * 5,
+    file: 1024 * 1024 * 5,
+    resize: 1000,
+};
 
 export type Dimensions = {
     width: number;
@@ -124,6 +143,10 @@ export function fillMessage(msg: Message): boolean {
         return false;
     }
 
+    if (msg.content.kind === "prize_content") {
+        return true;
+    }
+
     if (
         msg.content.kind === "image_content" ||
         msg.content.kind === "video_content" ||
@@ -138,18 +161,23 @@ export function fillMessage(msg: Message): boolean {
     }
 }
 
-export function resizeImage(blobUrl: string, mimeType: string): Promise<MediaExtract> {
+export function resizeImage(
+    blobUrl: string,
+    mimeType: string,
+    isDiamond: boolean
+): Promise<MediaExtract> {
     // if our image is too big, we'll just create a new version with fixed dimensions
     // there's no very easy way to reduce it to a specific file size
     return new Promise<MediaExtract>((resolve, _) => {
         const img = new Image();
         img.onload = () => {
+            const maxSizes = isDiamond ? DIAMOND_MAX_SIZES : FREE_MAX_SIZES;
             resolve(
                 changeDimensions(
                     img,
                     mimeType,
                     dimensions(img.width, img.height),
-                    dimensions(RESIZE_IMAGE_TO, RESIZE_IMAGE_TO)
+                    dimensions(maxSizes.resize, maxSizes.resize)
                 )
             );
         };
@@ -167,7 +195,10 @@ export function audioRecordingMimeType(): "audio/webm" | "audio/mp4" | undefined
     return undefined;
 }
 
-export async function messageContentFromFile(file: File): Promise<MessageContent> {
+export async function messageContentFromFile(
+    file: File,
+    isDiamond: boolean
+): Promise<MessageContent> {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.readAsArrayBuffer(file);
@@ -181,14 +212,15 @@ export async function messageContentFromFile(file: File): Promise<MessageContent
             const isFile = !(isImage || isVideo);
             let data = e.target.result as ArrayBuffer;
             let content: MessageContent;
+            const maxSizes = isDiamond ? DIAMOND_MAX_SIZES : FREE_MAX_SIZES;
 
-            if (isVideo && data.byteLength > MAX_VIDEO_SIZE) {
+            if (isVideo && data.byteLength > maxSizes.video) {
                 reject("maxVideoSize");
                 return;
-            } else if (isAudio && data.byteLength > MAX_AUDIO_SIZE) {
+            } else if (isAudio && data.byteLength > maxSizes.audio) {
                 reject("maxAudioSize");
                 return;
-            } else if (isFile && data.byteLength > MAX_FILE_SIZE) {
+            } else if (isFile && data.byteLength > maxSizes.file) {
                 reject("maxFileSize");
                 return;
             }
@@ -198,8 +230,8 @@ export async function messageContentFromFile(file: File): Promise<MessageContent
             if (isImage) {
                 const extract = await extractImageThumbnail(blobUrl, mimeType);
 
-                if (data.byteLength > MAX_IMAGE_SIZE) {
-                    data = (await resizeImage(blobUrl, mimeType)).data;
+                if (data.byteLength > maxSizes.image) {
+                    data = (await resizeImage(blobUrl, mimeType, isDiamond)).data;
                 }
 
                 content = {

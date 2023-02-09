@@ -68,6 +68,15 @@ export const idlFactory = ({ IDL }) => {
     'suspended_by' : UserId,
     'reason' : IDL.Text,
   });
+  const DiamondMembershipPlanDuration = IDL.Variant({
+    'OneYear' : IDL.Null,
+    'ThreeMonths' : IDL.Null,
+    'OneMonth' : IDL.Null,
+  });
+  const DiamondMembershipDetails = IDL.Record({
+    'recurring' : IDL.Opt(DiamondMembershipPlanDuration),
+    'expires_at' : TimestampMillis,
+  });
   const CurrentUserResponse = IDL.Variant({
     'Success' : IDL.Record({
       'username' : IDL.Text,
@@ -82,11 +91,38 @@ export const idlFactory = ({ IDL }) => {
       'is_super_admin' : IDL.Bool,
       'suspension_details' : IDL.Opt(SuspensionDetails),
       'open_storage_limit_bytes' : IDL.Nat64,
+      'diamond_membership_details' : IDL.Opt(DiamondMembershipDetails),
     }),
     'UserNotFound' : IDL.Null,
   });
   const MarkSuspectedBotArgs = IDL.Record({});
   const MarkSuspectedBotResponse = IDL.Variant({ 'Success' : IDL.Null });
+  const Cryptocurrency = IDL.Variant({
+    'InternetComputer' : IDL.Null,
+    'CHAT' : IDL.Null,
+    'SNS1' : IDL.Null,
+    'CKBTC' : IDL.Null,
+  });
+  const PayForDiamondMembershipArgs = IDL.Record({
+    'token' : Cryptocurrency,
+    'duration' : DiamondMembershipPlanDuration,
+    'recurring' : IDL.Bool,
+    'expected_price_e8s' : IDL.Nat64,
+  });
+  const PayForDiamondMembershipResponse = IDL.Variant({
+    'PaymentAlreadyInProgress' : IDL.Null,
+    'CurrencyNotSupported' : IDL.Null,
+    'Success' : DiamondMembershipDetails,
+    'PriceMismatch' : IDL.Null,
+    'TransferFailed' : IDL.Text,
+    'InternalError' : IDL.Text,
+    'CannotExtend' : IDL.Record({
+      'can_extend_at' : TimestampMillis,
+      'diamond_membership_expires_at' : TimestampMillis,
+    }),
+    'UserNotFound' : IDL.Null,
+    'InsufficientFunds' : IDL.Nat64,
+  });
   const ChallengeAttempt = IDL.Record({
     'key' : ChallengeKey,
     'chars' : IDL.Text,
@@ -127,6 +163,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const UserSummary = IDL.Record({
     'username' : IDL.Text,
+    'diamond_member' : IDL.Bool,
     'user_id' : UserId,
     'is_bot' : IDL.Bool,
     'avatar_id' : IDL.Opt(IDL.Nat),
@@ -221,6 +258,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const PartialUserSummary = IDL.Record({
     'username' : IDL.Opt(IDL.Text),
+    'diamond_member' : IDL.Bool,
     'user_id' : UserId,
     'is_bot' : IDL.Bool,
     'avatar_id' : IDL.Opt(IDL.Nat),
@@ -261,6 +299,11 @@ export const idlFactory = ({ IDL }) => {
     'mark_suspected_bot' : IDL.Func(
         [MarkSuspectedBotArgs],
         [MarkSuspectedBotResponse],
+        [],
+      ),
+    'pay_for_diamond_membership' : IDL.Func(
+        [PayForDiamondMembershipArgs],
+        [PayForDiamondMembershipResponse],
         [],
       ),
     'register_user' : IDL.Func([RegisterUserArgs], [RegisterUserResponse], []),

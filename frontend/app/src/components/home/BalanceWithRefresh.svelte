@@ -18,8 +18,7 @@
     export let disabled = false;
     export let toppingUp = false;
     export let showTopUp = false;
-
-    let refreshing = false;
+    export let refreshing = false;
 
     onMount(refresh);
 

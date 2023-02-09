@@ -3,7 +3,7 @@ export const allQuestions = [
     "android_app",
     "find_groups",
     "style_messages",
-    "sms_icp",
+    "storage",
     "airdrop",
     "security",
     "send_icp",

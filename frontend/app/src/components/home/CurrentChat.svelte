@@ -231,6 +231,7 @@
         draftAmountE8s={creatingCryptoTransfer.amount}
         defaultReceiver={defaultCryptoTransferReceiver()}
         on:sendTransfer={sendMessageWithContent}
+        on:upgrade
         on:close={() => (creatingCryptoTransfer = undefined)} />
 {/if}
 

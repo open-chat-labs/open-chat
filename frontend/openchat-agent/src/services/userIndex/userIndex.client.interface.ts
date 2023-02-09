@@ -16,6 +16,9 @@ import type {
     SuspendUserResponse,
     UnsuspendUserResponse,
     MarkSuspectedBotResponse,
+    Cryptocurrency,
+    DiamondMembershipDuration,
+    PayForDiamondMembershipResponse,
 } from "openchat-shared";
 
 export interface IUserIndexClient {
@@ -37,4 +40,11 @@ export interface IUserIndexClient {
     suspendUser(userId: string, reason: string): Promise<SuspendUserResponse>;
     unsuspendUser(userId: string): Promise<UnsuspendUserResponse>;
     markSuspectedBot(): Promise<MarkSuspectedBotResponse>;
+    payForDiamondMembership(
+        userId: string,
+        token: Cryptocurrency,
+        duration: DiamondMembershipDuration,
+        recurring: boolean,
+        expectedPriceE8s: bigint
+    ): Promise<PayForDiamondMembershipResponse>;
 }

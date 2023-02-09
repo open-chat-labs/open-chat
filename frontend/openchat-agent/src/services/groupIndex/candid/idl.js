@@ -118,6 +118,20 @@ export const idlFactory = ({ IDL }) => {
     'caption' : IDL.Opt(IDL.Text),
     'width' : IDL.Nat32,
   });
+  const Cryptocurrency = IDL.Variant({
+    'InternetComputer' : IDL.Null,
+    'CHAT' : IDL.Null,
+    'SNS1' : IDL.Null,
+    'CKBTC' : IDL.Null,
+  });
+  const PrizeContent = IDL.Record({
+    'token' : Cryptocurrency,
+    'end_date' : TimestampMillis,
+    'prizes_remaining' : IDL.Nat32,
+    'prizes_pending' : IDL.Nat32,
+    'caption' : IDL.Opt(IDL.Text),
+    'winners' : IDL.Vec(UserId),
+  });
   const ProposalId = IDL.Nat64;
   const ProposalDecisionStatus = IDL.Variant({
     'Failed' : IDL.Null,
@@ -175,11 +189,6 @@ export const idlFactory = ({ IDL }) => {
     'governance_canister_id' : CanisterId,
     'proposal' : Proposal,
   });
-  const AudioContent = IDL.Record({
-    'mime_type' : IDL.Text,
-    'blob_reference' : IDL.Opt(BlobReference),
-    'caption' : IDL.Opt(IDL.Text),
-  });
   const AccountIdentifier = IDL.Vec(IDL.Nat8);
   const NnsCryptoAccount = IDL.Variant({
     'Mint' : IDL.Null,
@@ -187,48 +196,9 @@ export const idlFactory = ({ IDL }) => {
   });
   const Tokens = IDL.Record({ 'e8s' : IDL.Nat64 });
   const TimestampNanos = IDL.Nat64;
-  const Cryptocurrency = IDL.Variant({
-    'InternetComputer' : IDL.Null,
-    'SNS1' : IDL.Null,
-    'CKBTC' : IDL.Null,
-  });
   const TransactionHash = IDL.Vec(IDL.Nat8);
-  const Memo = IDL.Nat64;
-  const NnsFailedCryptoTransaction = IDL.Record({
-    'to' : NnsCryptoAccount,
-    'fee' : Tokens,
-    'created' : TimestampNanos,
-    'token' : Cryptocurrency,
-    'transaction_hash' : TransactionHash,
-    'from' : NnsCryptoAccount,
-    'memo' : Memo,
-    'error_message' : IDL.Text,
-    'amount' : Tokens,
-  });
-  const Icrc1Account = IDL.Record({
-    'owner' : IDL.Principal,
-    'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
-  });
-  const SnsAccount = IDL.Variant({
-    'Mint' : IDL.Null,
-    'Account' : Icrc1Account,
-  });
-  const SnsFailedCryptoTransaction = IDL.Record({
-    'to' : SnsAccount,
-    'fee' : Tokens,
-    'created' : TimestampNanos,
-    'token' : Cryptocurrency,
-    'transaction_hash' : TransactionHash,
-    'from' : SnsAccount,
-    'memo' : IDL.Opt(Memo),
-    'error_message' : IDL.Text,
-    'amount' : Tokens,
-  });
-  const FailedCryptoTransaction = IDL.Variant({
-    'NNS' : NnsFailedCryptoTransaction,
-    'SNS' : SnsFailedCryptoTransaction,
-  });
   const BlockIndex = IDL.Nat64;
+  const Memo = IDL.Nat64;
   const NnsCompletedCryptoTransaction = IDL.Record({
     'to' : NnsCryptoAccount,
     'fee' : Tokens,
@@ -239,6 +209,14 @@ export const idlFactory = ({ IDL }) => {
     'from' : NnsCryptoAccount,
     'memo' : Memo,
     'amount' : Tokens,
+  });
+  const Icrc1Account = IDL.Record({
+    'owner' : IDL.Principal,
+    'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
+  });
+  const SnsAccount = IDL.Variant({
+    'Mint' : IDL.Null,
+    'Account' : Icrc1Account,
   });
   const SnsCompletedCryptoTransaction = IDL.Record({
     'to' : SnsAccount,
@@ -254,6 +232,43 @@ export const idlFactory = ({ IDL }) => {
   const CompletedCryptoTransaction = IDL.Variant({
     'NNS' : NnsCompletedCryptoTransaction,
     'SNS' : SnsCompletedCryptoTransaction,
+  });
+  const MessageIndex = IDL.Nat32;
+  const PrizeWinnerContent = IDL.Record({
+    'transaction' : CompletedCryptoTransaction,
+    'winner' : UserId,
+    'prize_message' : MessageIndex,
+  });
+  const AudioContent = IDL.Record({
+    'mime_type' : IDL.Text,
+    'blob_reference' : IDL.Opt(BlobReference),
+    'caption' : IDL.Opt(IDL.Text),
+  });
+  const NnsFailedCryptoTransaction = IDL.Record({
+    'to' : NnsCryptoAccount,
+    'fee' : Tokens,
+    'created' : TimestampNanos,
+    'token' : Cryptocurrency,
+    'transaction_hash' : TransactionHash,
+    'from' : NnsCryptoAccount,
+    'memo' : Memo,
+    'error_message' : IDL.Text,
+    'amount' : Tokens,
+  });
+  const SnsFailedCryptoTransaction = IDL.Record({
+    'to' : SnsAccount,
+    'fee' : Tokens,
+    'created' : TimestampNanos,
+    'token' : Cryptocurrency,
+    'transaction_hash' : TransactionHash,
+    'from' : SnsAccount,
+    'memo' : IDL.Opt(Memo),
+    'error_message' : IDL.Text,
+    'amount' : Tokens,
+  });
+  const FailedCryptoTransaction = IDL.Variant({
+    'NNS' : NnsFailedCryptoTransaction,
+    'SNS' : SnsFailedCryptoTransaction,
   });
   const NnsUserOrAccount = IDL.Variant({
     'User' : UserId,
@@ -306,7 +321,9 @@ export const idlFactory = ({ IDL }) => {
     'Poll' : PollContent,
     'Text' : TextContent,
     'Image' : ImageContent,
+    'Prize' : PrizeContent,
     'GovernanceProposal' : ProposalContent,
+    'PrizeWinner' : PrizeWinnerContent,
     'Audio' : AudioContent,
     'Crypto' : CryptoContent,
     'Video' : VideoContent,
@@ -323,7 +340,6 @@ export const idlFactory = ({ IDL }) => {
     'chat_id_if_other' : IDL.Opt(ChatId),
     'event_index' : EventIndex,
   });
-  const MessageIndex = IDL.Nat32;
   const Message = IDL.Record({
     'forwarded' : IDL.Bool,
     'content' : MessageContent,

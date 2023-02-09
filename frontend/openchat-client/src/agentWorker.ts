@@ -90,6 +90,9 @@ import {
     UpdatesResult,
     DeletedGroupMessageResponse,
     DeletedDirectMessageResponse,
+    ClaimPrizeResponse,
+    DiamondMembershipDuration,
+    PayForDiamondMembershipResponse,
 } from "openchat-shared";
 import type { OpenChatConfig } from "./config";
 import { v4 } from "uuid";
@@ -1292,6 +1295,35 @@ export class OpenChatAgentWorker extends EventTarget {
         return this.sendRequest({
             kind: "markSuspectedBot",
             payload: {},
+        });
+    }
+
+    claimPrize(chatId: string, messageId: bigint): Promise<ClaimPrizeResponse> {
+        return this.sendRequest({
+            kind: "claimPrize",
+            payload: {
+                chatId,
+                messageId,
+            },
+        });
+    }
+
+    payForDiamondMembership(
+        userId: string,
+        token: Cryptocurrency,
+        duration: DiamondMembershipDuration,
+        recurring: boolean,
+        expectedPriceE8s: bigint
+    ): Promise<PayForDiamondMembershipResponse> {
+        return this.sendRequest({
+            kind: "payForDiamondMembership",
+            payload: {
+                userId,
+                token,
+                duration,
+                recurring,
+                expectedPriceE8s,
+            },
         });
     }
 }

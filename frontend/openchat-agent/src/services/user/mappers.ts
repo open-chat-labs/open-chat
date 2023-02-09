@@ -23,7 +23,7 @@ import type {
     ApiMention,
     ApiSetBioResponse,
     ApiWithdrawCryptoResponse,
-    ApiTransferCryptoWithinGroupResponse,
+    ApiSendMessageWithTransferToGroupResponse,
     ApiPublicProfileResponse,
     ApiPinChatResponse,
     ApiUnpinChatResponse,
@@ -339,7 +339,7 @@ export function editMessageResponse(candid: ApiEditMessageResponse): EditMessage
 }
 
 export function transferWithinGroupResponse(
-    candid: ApiTransferCryptoWithinGroupResponse,
+    candid: ApiSendMessageWithTransferToGroupResponse,
     sender: string,
     recipient: string
 ): SendMessageResponse {
@@ -689,7 +689,9 @@ export function initialStateV2Response(candid: ApiInitialStateV2Response): Initi
             timestamp: result.timestamp,
             directChats: result.direct_chats.map(directChatSummary),
             cacheTimestamp: result.cache_timestamp,
-            cachedGroupChatSummaries: result.cached_group_chat_summaries.map((g) => groupChatSummary(g, false)),
+            cachedGroupChatSummaries: result.cached_group_chat_summaries.map((g) =>
+                groupChatSummary(g, false)
+            ),
             groupChatsAdded: result.group_chats_added.map(userCanisterGroupSummary),
             avatarId: optional(result.avatar_id, identity),
             blockedUsers: result.blocked_users.map((u) => u.toString()),
@@ -706,18 +708,24 @@ export function getUpdatesV2Response(candid: ApiUpdatesV2Response): UpdatesV2Res
             directChatsAdded: candid.Success.direct_chats_added.map(directChatSummary),
             directChatsUpdated: candid.Success.direct_chats_updated.map(directChatSummaryUpdates),
             groupChatsAdded: candid.Success.group_chats_added.map(userCanisterGroupSummary),
-            groupChatsUpdated: candid.Success.group_chats_updated.map(userCanisterGroupSummaryUpdates),
+            groupChatsUpdated: candid.Success.group_chats_updated.map(
+                userCanisterGroupSummaryUpdates
+            ),
             chatsRemoved: candid.Success.chats_removed.map((c) => c.toString()),
             avatarId: optionUpdate(candid.Success.avatar_id, identity),
-            blockedUsers: optional(candid.Success.blocked_users_v2, (b) => b.map((u) => u.toString())),
-            pinnedChats: optional(candid.Success.pinned_chats, (p) => p.map((c) => c.toString()))
-        }
+            blockedUsers: optional(candid.Success.blocked_users_v2, (b) =>
+                b.map((u) => u.toString())
+            ),
+            pinnedChats: optional(candid.Success.pinned_chats, (p) => p.map((c) => c.toString())),
+        };
     }
 
     throw new Error(`Unexpected ApiUpdatesResponse type received: ${candid}`);
 }
 
-function userCanisterGroupSummary(summary: ApiUserCanisterGroupChatSummary): UserCanisterGroupChatSummary {
+function userCanisterGroupSummary(
+    summary: ApiUserCanisterGroupChatSummary
+): UserCanisterGroupChatSummary {
     return {
         chatId: summary.chat_id.toString(),
         readByMeUpTo: optional(summary.read_by_me_up_to, identity),
@@ -730,7 +738,9 @@ function userCanisterGroupSummary(summary: ApiUserCanisterGroupChatSummary): Use
     };
 }
 
-function userCanisterGroupSummaryUpdates(summary: ApiUserCanisterGroupChatSummaryUpdates): UserCanisterGroupChatSummaryUpdates {
+function userCanisterGroupSummaryUpdates(
+    summary: ApiUserCanisterGroupChatSummaryUpdates
+): UserCanisterGroupChatSummaryUpdates {
     return {
         chatId: summary.chat_id.toString(),
         readByMeUpTo: optional(summary.read_by_me_up_to, identity),
@@ -799,9 +809,11 @@ function groupChatSummary(candid: ApiGroupChatSummary, limitReadByMeUpTo = true)
         kind: "group_chat",
         chatId: candid.chat_id.toString(),
         latestMessage,
-        readByMeUpTo: optional(candid.read_by_me_up_to, (r) => limitReadByMeUpTo && latestMessage !== undefined
-            ? Math.min(latestMessage.event.messageIndex, r)
-            : r),
+        readByMeUpTo: optional(candid.read_by_me_up_to, (r) =>
+            limitReadByMeUpTo && latestMessage !== undefined
+                ? Math.min(latestMessage.event.messageIndex, r)
+                : r
+        ),
         name: candid.name,
         description: candid.description,
         public: candid.is_public,
@@ -971,7 +983,9 @@ function formatIcrc1Account(candid: ApiIcrc1Account): string {
     return subaccount !== undefined ? `${owner}:${subaccount}` : owner;
 }
 
-export function deletedMessageResponse(candid: ApiDeletedDirectMessageResponse): DeletedDirectMessageResponse {
+export function deletedMessageResponse(
+    candid: ApiDeletedDirectMessageResponse
+): DeletedDirectMessageResponse {
     if ("Success" in candid) {
         return {
             kind: "success",
@@ -993,5 +1007,8 @@ export function deletedMessageResponse(candid: ApiDeletedDirectMessageResponse):
     if ("MessageHardDeleted" in candid) {
         return { kind: "message_hard_deleted" };
     }
-    throw new UnsupportedValueError("Unexpected ApiDeletedDirectMessageResponse type received", candid);
+    throw new UnsupportedValueError(
+        "Unexpected ApiDeletedDirectMessageResponse type received",
+        candid
+    );
 }

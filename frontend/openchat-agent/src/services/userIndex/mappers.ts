@@ -18,14 +18,21 @@ import {
     SuspendUserResponse,
     UnsuspendUserResponse,
     SuspensionDetails,
-    SuspensionAction
+    SuspensionAction,
+    DiamondMembershipDetails,
+    DiamondMembershipDuration,
+    PayForDiamondMembershipResponse,
+    Cryptocurrency,
 } from "openchat-shared";
 import type {
     ApiCheckUsernameResponse,
     ApiConfirmPhoneNumberResponse,
     ApiCreateChallengeResponse,
     ApiCurrentUserResponse,
+    ApiDiamondMembershipDetails,
+    ApiDiamondMembershipPlanDuration,
     ApiPartialUserSummary,
+    ApiPayForDiamondMembershipResponse,
     ApiPhoneNumber,
     ApiPhoneStatus,
     ApiRegisterUserResponse,
@@ -42,6 +49,7 @@ import type {
     ApiUserSummary,
 } from "./candid/idl";
 import { bytesToHexString, identity, optional } from "../../utils/mapping";
+import type { ApiCryptocurrency } from "../user/candid/idl";
 
 export function userSearchResponse(candid: ApiSearchResponse): UserSummary[] {
     if ("Success" in candid) {
@@ -77,6 +85,7 @@ export function partialUserSummary(
         })),
         updated: timestamp,
         suspended: candid.suspended,
+        diamond: candid.diamond_member,
     };
 }
 
@@ -91,6 +100,7 @@ export function userSummary(candid: ApiUserSummary, timestamp: bigint): UserSumm
         })),
         updated: timestamp,
         suspended: candid.suspended,
+        diamond: candid.diamond_member,
     };
 }
 
@@ -235,7 +245,8 @@ export function upgradeStorageResponse(candid: ApiUpgradeStorageResponse): Upgra
 
 export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUserResponse {
     if ("Success" in candid) {
-        const r = candid.Success
+        const r = candid.Success;
+
         console.log("User: ", r);
         const version = r.wasm_version;
         return {
@@ -256,6 +267,7 @@ export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUser
             isSuperAdmin: r.is_super_admin,
             suspensionDetails: optional(r.suspension_details, suspensionDetails),
             isSuspectedBot: r.is_suspected_bot,
+            diamondMembership: optional(r.diamond_membership_details, diamondMembership),
         };
     }
 
@@ -264,6 +276,28 @@ export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUser
     }
 
     throw new Error(`Unexpected ApiCurrentUserResponse type received: ${candid}`);
+}
+
+function diamondMembership(candid: ApiDiamondMembershipDetails): DiamondMembershipDetails {
+    return {
+        expiresAt: candid.expires_at,
+        recurring: optional(candid.recurring, diamondMembershipDuration),
+    };
+}
+
+function diamondMembershipDuration(
+    candid: ApiDiamondMembershipPlanDuration
+): DiamondMembershipDuration {
+    if ("OneMonth" in candid) {
+        return "one_month";
+    }
+    if ("ThreeMonths" in candid) {
+        return "three_months";
+    }
+    if ("OneYear" in candid) {
+        return "one_year";
+    }
+    throw new Error(`Unexpected ApiDiamondMembershipPlanDuration type received: ${candid}`);
 }
 
 function suspensionDetails(candid: ApiSuspensionDetails): SuspensionDetails {
@@ -394,4 +428,71 @@ export function unsuspendUserResponse(candid: ApiUnsuspendUserResponse): Unsuspe
         return "user_not_suspended";
     }
     throw new UnsupportedValueError("Unexpected ApiSuspendUserResponse type received", candid);
+}
+
+export function payForDiamondMembershipResponse(
+    candid: ApiPayForDiamondMembershipResponse
+): PayForDiamondMembershipResponse {
+    if ("PaymentAlreadyInProgress" in candid) {
+        return { kind: "payment_already_in_progress" };
+    }
+    if ("CurrencyNotSupported" in candid) {
+        return { kind: "currency_not_supported" };
+    }
+    if ("Success" in candid) {
+        return { kind: "success", details: diamondMembership(candid.Success) };
+    }
+    if ("PriceMismatch" in candid) {
+        return { kind: "price_mismatch" };
+    }
+    if ("TransferFailed" in candid) {
+        return { kind: "transfer_failed" };
+    }
+    if ("InternalError" in candid) {
+        return { kind: "internal_error" };
+    }
+    if ("CannotExtend" in candid) {
+        return { kind: "cannot_extend" };
+    }
+    if ("UserNotFound" in candid) {
+        return { kind: "user_not_found" };
+    }
+    if ("InsufficientFunds" in candid) {
+        return { kind: "insufficient_funds" };
+    }
+    throw new UnsupportedValueError(
+        "Unexpected ApiPayForDiamondMembershipResponse type received",
+        candid
+    );
+}
+
+export function apiCryptocurrency(domain: Cryptocurrency): ApiCryptocurrency {
+    if (domain === "icp") {
+        return { InternetComputer: null };
+    }
+    if (domain === "chat") {
+        return { CHAT: null };
+    }
+    if (domain === "ckbtc") {
+        return { CKBTC: null };
+    }
+    if (domain === "sns1") {
+        return { SNS1: null };
+    }
+    throw new UnsupportedValueError("Unexpected Cryptocurrency type received", domain);
+}
+
+export function apiDiamondDuration(
+    domain: DiamondMembershipDuration
+): ApiDiamondMembershipPlanDuration {
+    if (domain === "one_month") {
+        return { OneMonth: null };
+    }
+    if (domain === "three_months") {
+        return { ThreeMonths: null };
+    }
+    if (domain === "one_year") {
+        return { OneYear: null };
+    }
+    throw new UnsupportedValueError("Unexpected DiamondMembershipDuration type received", domain);
 }

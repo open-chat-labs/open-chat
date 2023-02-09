@@ -18,7 +18,9 @@ export type MessageContent =
     | PollContent
     | CryptocurrencyContent
     | GiphyContent
-    | ProposalContent;
+    | ProposalContent
+    | PrizeContent
+    | PrizeWinnerContent;
 
 export type IndexRange = [number, number];
 
@@ -135,6 +137,21 @@ export interface GiphyContent {
     title: string;
     desktop: GiphyImage; //will be "original" from the giphy api
     mobile: GiphyImage; //will be "downsized_large" from the giphy api
+}
+
+export interface PrizeWinnerContent {
+    kind: "prize_winner_content";
+    transaction: CompletedCryptocurrencyTransfer;
+    prizeMessageIndex: number;
+}
+
+export interface PrizeContent {
+    kind: "prize_content";
+    prizesRemaining: number;
+    winners: string[];
+    token: Cryptocurrency;
+    endDate: bigint;
+    caption?: string;
 }
 
 export interface ProposalContent {
@@ -389,6 +406,7 @@ export type LocalMessageUpdates = {
     editedContent?: MessageContent;
     undeletedContent?: MessageContent;
     revealedContent?: MessageContent;
+    prizeContent?: PrizeContent;
     reactions?: LocalReaction[];
     pollVotes?: LocalPollVote[];
     threadSummary?: ThreadSummary;
@@ -1267,7 +1285,7 @@ export type EventsTimeToLiveUpdated = {
     kind: "events_ttl_updated";
     updatedBy: string;
     newTimeToLive: bigint | undefined;
-}
+};
 
 export type SetAvatarResponse = "avatar_too_big" | "success" | "internal_error" | "user_suspended";
 
@@ -1443,9 +1461,9 @@ export type PinMessageResponse =
 
 export type DeletedGroupMessageResponse =
     | {
-        kind: "success";
-        content: MessageContent;
-    }
+          kind: "success";
+          content: MessageContent;
+      }
     | { kind: "caller_not_in_group" }
     | { kind: "not_authorised" }
     | { kind: "message_not_found" }
@@ -1454,9 +1472,9 @@ export type DeletedGroupMessageResponse =
 
 export type DeletedDirectMessageResponse =
     | {
-        kind: "success";
-        content: MessageContent;
-    }
+          kind: "success";
+          content: MessageContent;
+      }
     | { kind: "chat_not_found" }
     | { kind: "not_authorised" }
     | { kind: "message_not_found" }
@@ -1603,3 +1621,15 @@ export type UnfreezeGroupResponse =
     | "internal_error";
 
 export type MarkPinnedMessagesReadResponse = "success" | "chat_frozen";
+
+export type ClaimPrizeResponse =
+    | CallerNotInGroup
+    | { kind: "message_not_found" }
+    | { kind: "chat_frozen" }
+    | { kind: "already_claimed" }
+    | { kind: "success" }
+    | { kind: "user_suspended" }
+    | { kind: "prize_ended" }
+    | { kind: "prize_fully_claimed" }
+    | { kind: "failed_after_transfer" }
+    | { kind: "transfer_failed" };

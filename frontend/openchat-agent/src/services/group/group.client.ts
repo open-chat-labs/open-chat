@@ -40,6 +40,7 @@ import {
     DeletedGroupMessageResponse,
     EventWrapper,
     OptionUpdate,
+    ClaimPrizeResponse,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
@@ -76,6 +77,7 @@ import {
     summaryResponse,
     summaryUpdatesResponse,
     deletedMessageResponse,
+    claimPrizeResponse,
 } from "./mappers";
 import type { IGroupClient } from "./group.client.interface";
 import { CachingGroupClient } from "./group.caching.client";
@@ -285,6 +287,17 @@ export class GroupClient extends CandidService implements IGroupClient {
     }
 
     @profile("groupClient")
+    claimPrize(messageId: bigint): Promise<ClaimPrizeResponse> {
+        return this.handleResponse(
+            this.groupService.claim_prize({
+                correlation_id: generateUint64(),
+                message_id: messageId,
+            }),
+            claimPrizeResponse
+        );
+    }
+
+    @profile("groupClient")
     sendMessage(
         senderName: string,
         mentioned: User[],
@@ -327,7 +340,7 @@ export class GroupClient extends CandidService implements IGroupClient {
         rules?: GroupRules,
         permissions?: Partial<GroupPermissions>,
         avatar?: Uint8Array,
-        eventsTimeToLiveMs?: OptionUpdate<bigint>,
+        eventsTimeToLiveMs?: OptionUpdate<bigint>
     ): Promise<UpdateGroupResponse> {
         return this.handleResponse(
             this.groupService.update_group_v2({

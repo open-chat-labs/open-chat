@@ -3,13 +3,17 @@
     import type { CandidateGroupChat, OpenChat } from "openchat-client";
     import { _ } from "svelte-i18n";
     import Radio from "../../Radio.svelte";
-    import { getContext } from "svelte";
+    import { createEventDispatcher, getContext } from "svelte";
+    import Button from "../../Button.svelte";
 
     const client = getContext<OpenChat>("client");
+    const dispatch = createEventDispatcher();
 
     export let candidateGroup: CandidateGroupChat;
     export let originalGroup: CandidateGroupChat;
     export let editing: boolean;
+
+    $: isDiamond = client.isDiamond;
 
     $: canMakePrivate =
         candidateGroup.chatId !== undefined
@@ -44,22 +48,31 @@
 </div>
 
 <div class="section">
-    <Radio
-        on:change={toggleScope}
-        checked={candidateGroup.isPublic}
-        id={"public"}
-        align={"start"}
-        disabled={editing && !originalGroup.isPublic}
-        group={"group-visibility"}>
-        <div class="section-title">
-            <div class={"img public"} />
-            <p>{$_("group.publicGroup")}</p>
+    {#if !$isDiamond}
+        <div class="upgrade info">
+            <p>
+                {$_("upgrade.groupMsg")}
+            </p>
+            <Button on:click={() => dispatch("upgrade")} tiny>{$_("upgrade.button")}</Button>
         </div>
-        <div class="info">
-            <p>{$_("publicGroupInfo")}</p>
-            <p>{$_("publicGroupUnique")}</p>
-        </div>
-    </Radio>
+    {:else}
+        <Radio
+            on:change={toggleScope}
+            checked={candidateGroup.isPublic}
+            id={"public"}
+            align={"start"}
+            disabled={editing && !originalGroup.isPublic}
+            group={"group-visibility"}>
+            <div class="section-title">
+                <div class={"img public"} />
+                <p>{$_("group.publicGroup")}</p>
+            </div>
+            <div class="info">
+                <p>{$_("publicGroupInfo")}</p>
+                <p>{$_("publicGroupUnique")}</p>
+            </div>
+        </Radio>
+    {/if}
 </div>
 
 <div class="section">
@@ -90,6 +103,15 @@
     .info {
         @include font(book, normal, fs-80, 28);
         color: var(--txt-light);
+
+        &.upgrade {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            margin-left: 34px;
+            gap: $sp3;
+            flex-direction: column;
+        }
     }
 
     .section-title {

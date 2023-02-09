@@ -29,7 +29,6 @@ import {
     getFirstUnreadMention,
     getMembersString,
     getMessageContent,
-    getStorageRequiredForMessage,
     groupBySender,
     groupChatFromCandidate,
     groupEvents,
@@ -174,8 +173,11 @@ import { findLast, groupBy, groupWhile, toRecord2 } from "./utils/list";
 import {
     audioRecordingMimeType,
     containsSocialVideoLink,
+    DIAMOND_MAX_SIZES,
     fillMessage,
+    FREE_MAX_SIZES,
     isSocialVideoLink,
+    MaxMediaSizes,
     messageContentFromFile,
     twitterLinkRegex,
     youtubeRegex,
@@ -200,7 +202,6 @@ import {
     ThreadClosed,
     ThreadMessagesLoaded,
     ThreadSelected,
-    UpgradeRequired,
 } from "./events";
 import { LiveState } from "./liveState";
 import { getTypingString } from "./utils/chat";
@@ -287,8 +288,12 @@ import {
     MergedUpdatesResponse,
     ThreadRead,
     UpdatesResult,
+    PrizeContent,
+    DiamondMembershipDuration,
+    DiamondMembershipDetails,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
+import { diamondMembership, isDiamond } from "./stores/diamond";
 
 const UPGRADE_POLL_INTERVAL = 1000;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -319,6 +324,7 @@ export class OpenChat extends EventTarget {
     private _lastOnlineDatesPending = new Set<string>();
     private _lastOnlineDatesPromise: Promise<Record<string, number>> | undefined;
     private _cachePrimer: CachePrimer | undefined = undefined;
+    private _membershipCheck: number | undefined;
 
     constructor(private config: OpenChatConfig) {
         super();
@@ -500,11 +506,25 @@ export class OpenChat extends EventTarget {
         this.api.getAllCachedUsers().then((users) => userStore.set(users));
     }
 
+    userIsDiamond(userId: string): boolean {
+        const user = this._liveState.userStore[userId];
+        if (user === undefined || user.kind === "bot") return false;
+
+        if (userId === this.user.userId) return this._liveState.isDiamond;
+
+        return user.diamond;
+    }
+
+    maxMediaSizes(): MaxMediaSizes {
+        return this._liveState.isDiamond ? DIAMOND_MAX_SIZES : FREE_MAX_SIZES;
+    }
+
     onCreatedUser(user: CreatedUser): void {
         if (this._identity === undefined) {
             throw new Error("onCreatedUser called before the user's identity has been established");
         }
         this._user = user;
+        this.setDiamondMembership(user.diamondMembership);
         const id = this._identity;
         // TODO remove this once the principal migration can be done via the UI
         const principalMigrationNewPrincipal = localStorage.getItem(
@@ -1049,7 +1069,6 @@ export class OpenChat extends EventTarget {
     private createMessage = createMessage;
     private findMessageById = findMessageById;
     private getMessageContent = getMessageContent;
-    private getStorageRequiredForMessage = getStorageRequiredForMessage;
     canForward = canForward;
     containsReaction = containsReaction;
     groupEvents = groupEvents;
@@ -1619,7 +1638,9 @@ export class OpenChat extends EventTarget {
 
     clearSelectedChat = clearSelectedChat;
     private mergeKeepingOnlyChanged = mergeKeepingOnlyChanged;
-    messageContentFromFile = messageContentFromFile;
+    messageContentFromFile(file: File): Promise<MessageContent> {
+        return messageContentFromFile(file, this._liveState.isDiamond);
+    }
     formatFileSize = formatFileSize;
 
     havePermissionsChanged(p1: GroupPermissions, p2: GroupPermissions): boolean {
@@ -2263,12 +2284,6 @@ export class OpenChat extends EventTarget {
         const localKey = this.localMessagesKey(chatId, threadRootMessageIndex);
 
         if (textContent || fileToAttach) {
-            const storageRequired = this.getStorageRequiredForMessage(fileToAttach);
-            if (this._liveState.remainingStorage < storageRequired) {
-                this.dispatchEvent(new UpgradeRequired("explain"));
-                return;
-            }
-
             const [nextEventIndex, nextMessageIndex] =
                 threadRootMessageIndex !== undefined
                     ? nextEventAndMessageIndexesForThread(currentEvents)
@@ -2858,13 +2873,7 @@ export class OpenChat extends EventTarget {
         return this.api.setUsername(userId, username).then((resp) => {
             if (resp === "success" && this._user !== undefined) {
                 this._user.username = username;
-                const user = this._liveState.userStore[userId];
-                if (user !== undefined) {
-                    userStore.add({
-                        ...user,
-                        username,
-                    });
-                }
+                this.overwriteUserInStore(userId, (user) => ({ ...user, username }));
             }
             return resp;
         });
@@ -3337,6 +3346,93 @@ export class OpenChat extends EventTarget {
         }
     }
 
+    claimPrize(chatId: string, messageId: bigint, content: PrizeContent): Promise<boolean> {
+        return this.api
+            .claimPrize(chatId, messageId)
+            .then((resp) => {
+                if (resp.kind !== "success") {
+                    return false;
+                } else {
+                    localMessageUpdates.markPrizeClaimed(messageId.toString(), content);
+                    return true;
+                }
+            })
+            .catch((err) => {
+                this._logger.error("Claiming prize failed", err);
+                return false;
+            });
+    }
+
+    private overwriteUserInStore(
+        userId: string,
+        updater: (user: PartialUserSummary) => PartialUserSummary | undefined
+    ): void {
+        const user = this._liveState.userStore[userId];
+        if (user !== undefined) {
+            const updated = updater(user);
+            if (updated !== undefined) {
+                userStore.add(updated);
+            }
+        }
+    }
+
+    private updateDiamondStatusInUserStore(now: number, details?: DiamondMembershipDetails): void {
+        const diamond = details !== undefined && Number(details.expiresAt) > now;
+        this.overwriteUserInStore(this.user.userId, (user) =>
+            user.diamond !== diamond ? { ...user, diamond } : undefined
+        );
+    }
+
+    private setDiamondMembership(details?: DiamondMembershipDetails): void {
+        diamondMembership.set(details);
+        const now = Date.now();
+        this.updateDiamondStatusInUserStore(now, details);
+        if (details !== undefined) {
+            const expiry = Number(details.expiresAt);
+            if (expiry > now) {
+                if (this._membershipCheck !== undefined) {
+                    window.clearInterval(this._membershipCheck);
+                }
+                this._membershipCheck = window.setInterval(() => {
+                    this.api.getCurrentUser().then((user) => {
+                        if (user.kind === "created_user") {
+                            this.setDiamondMembership(user.diamondMembership);
+                        } else {
+                            diamondMembership.set(undefined);
+                        }
+                    });
+                    this._membershipCheck = undefined;
+                }, now - expiry);
+            }
+        }
+    }
+
+    payForDiamondMembership(
+        token: Cryptocurrency,
+        duration: DiamondMembershipDuration,
+        recurring: boolean,
+        expectedPriceE8s: bigint
+    ): Promise<boolean> {
+        return this.api
+            .payForDiamondMembership(this.user.userId, token, duration, recurring, expectedPriceE8s)
+            .then((resp) => {
+                if (resp.kind !== "success") {
+                    return false;
+                } else {
+                    this._user = {
+                        ...this.user,
+                        diamondMembership: resp.details,
+                    };
+                    this.setDiamondMembership(resp.details);
+                    return true;
+                }
+            })
+            .catch((err) => {
+                this._logger.error("Paying for diamond membership failed", err);
+                return false;
+            });
+    }
+
     /**
      * Reactive state provided in the form of svelte stores
      */
@@ -3394,4 +3490,5 @@ export class OpenChat extends EventTarget {
     userMetrics = userMetrics;
     threadEvents = threadEvents;
     selectedThreadKey = selectedThreadKey;
+    isDiamond = isDiamond;
 }

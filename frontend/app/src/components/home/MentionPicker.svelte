@@ -28,7 +28,9 @@
     $: maxHeight =
         direction === "down" ? `${3.2 * itemHeight + borderWidth}px` : "calc(var(--vh, 1vh) * 50)";
 
-    $: unblocked = members.filter((m) => !blockedUsers.has(m.userId) && (mentionSelf || m.userId !== user.userId));
+    $: unblocked = members.filter(
+        (m) => !blockedUsers.has(m.userId) && (mentionSelf || m.userId !== user.userId)
+    );
 
     $: reverseLookup = unblocked.reduce((lookup, u) => {
         const user = $userStore[u.userId];
@@ -105,7 +107,7 @@
                     <Avatar
                         url={client.userAvatarUrl($userStore[item.userId])}
                         userId={item.userId}
-                        size={AvatarSize.Tiny} />
+                        size={AvatarSize.Small} />
                 </div>
                 <div slot="text">
                     {$userStore[item.userId]?.username ?? $_("unknown")}

@@ -205,7 +205,7 @@ async function buildShareFromMessage(
             text += content.caption;
         }
 
-        const transactionUrl = buildTransactionUrl(content);
+        const transactionUrl = buildTransactionUrl(content.transfer);
         if (transactionUrl !== undefined) {
             if (text !== undefined) {
                 text += "\n\n";

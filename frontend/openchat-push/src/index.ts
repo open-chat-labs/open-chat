@@ -223,6 +223,14 @@ function extractMessageContent(
         result = {
             text: "TODO - deleted content",
         };
+    } else if (content.kind === "prize_content") {
+        result = {
+            text: content.caption ?? "Prize message",
+        };
+    } else if (content.kind === "prize_winner_content") {
+        result = {
+            text: "Prize winner message",
+        };
     } else if (content.kind === "placeholder_content") {
         result = {
             text: "TODO - placeholder content",

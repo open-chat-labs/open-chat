@@ -17,7 +17,7 @@ import type {
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 
-const CACHE_VERSION = 60;
+const CACHE_VERSION = 61;
 
 export type Database = Promise<IDBPDatabase<ChatSchema>>;
 

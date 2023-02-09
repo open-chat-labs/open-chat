@@ -29,6 +29,9 @@ import {
     UnsuspendUserResponse,
     SuspensionDetails,
     SuspensionAction,
+    DiamondMembershipDetails,
+    DiamondMembershipPlanDuration,
+    PayForDiamondMembershipResponse,
 } from "./types";
 export {
     _SERVICE as UserIndexService,
@@ -59,6 +62,9 @@ export {
     UnsuspendUserResponse as ApiUnsuspendUserResponse,
     SuspensionDetails as ApiSuspensionDetails,
     SuspensionAction as ApiSuspensionAction,
+    DiamondMembershipDetails as ApiDiamondMembershipDetails,
+    DiamondMembershipPlanDuration as ApiDiamondMembershipPlanDuration,
+    PayForDiamondMembershipResponse as ApiPayForDiamondMembershipResponse,
 };
 
 export const idlFactory: IDL.InterfaceFactory;
