@@ -23,10 +23,6 @@ pub struct DiamondMembershipPayment {
 const THREE_MONTHS: Milliseconds = DiamondMembershipPlanDuration::ThreeMonths.as_millis();
 
 impl DiamondMembershipDetailsInternal {
-    pub fn set_expires_at(&mut self, value: TimestampMillis) {
-        self.expires_at = Some(value);
-    }
-
     pub fn expires_at(&self) -> Option<TimestampMillis> {
         self.expires_at
     }

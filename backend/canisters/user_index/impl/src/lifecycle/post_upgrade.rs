@@ -10,7 +10,6 @@ use tracing::info;
 use user_index_canister::post_upgrade::Args;
 use utils::cycles::init_cycles_dispenser_client;
 use utils::env::canister::CanisterEnv;
-use utils::env::Environment;
 
 #[post_upgrade]
 #[trace]
@@ -20,11 +19,9 @@ fn post_upgrade(args: Args) {
     let memory = get_upgrades_memory();
     let reader = BufferedReader::new(UPGRADE_BUFFER_SIZE, Reader::new(&memory, 0));
 
-    let (mut data, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>) = serializer::deserialize(reader).unwrap();
+    let (data, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>) = serializer::deserialize(reader).unwrap();
 
     canister_logger::init_with_logs(data.test_mode, logs, traces);
-
-    data.users.initialize_diamond_members(env.now());
 
     init_cycles_dispenser_client(data.cycles_dispenser_canister_id);
     init_state(env, data, args.wasm_version);
