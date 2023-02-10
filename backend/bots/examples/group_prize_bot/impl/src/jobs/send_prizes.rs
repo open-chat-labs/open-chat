@@ -11,7 +11,7 @@ use types::{
 
 pub(crate) fn start_job(runtime_state: &mut RuntimeState) {
     if let Some(time_until_next_prize) = time_until_next_prize(runtime_state) {
-        ic_cdk::timer::set_timer(time_until_next_prize, run);
+        ic_cdk_timers::set_timer(time_until_next_prize, run);
     }
 }
 
@@ -29,7 +29,7 @@ async fn send_prizes_impl() {
     }
 
     if let Some(time_until_next_prize) = mutate_state(time_until_next_prize) {
-        ic_cdk::timer::set_timer(time_until_next_prize, run);
+        ic_cdk_timers::set_timer(time_until_next_prize, run);
     }
 }
 

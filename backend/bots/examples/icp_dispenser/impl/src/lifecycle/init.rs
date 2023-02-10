@@ -1,11 +1,9 @@
-use crate::lifecycle::{init_state, reseed_rng};
+use crate::lifecycle::{init_env, init_state};
 use crate::Data;
 use canister_tracing_macros::trace;
 use ic_cdk_macros::init;
 use icp_dispenser_bot::init::Args;
-use std::time::Duration;
 use tracing::info;
-use utils::env::canister::CanisterEnv;
 use utils::env::Environment;
 
 #[init]
@@ -13,7 +11,7 @@ use utils::env::Environment;
 fn init(args: Args) {
     canister_logger::init(args.test_mode);
 
-    let env = Box::<CanisterEnv>::default();
+    let env = init_env();
 
     let data = Data::new(
         args.user_index_canister_id,
@@ -23,8 +21,6 @@ fn init(args: Args) {
     );
 
     init_state(env, data, args.wasm_version);
-
-    ic_cdk::timer::set_timer(Duration::default(), reseed_rng);
 
     info!(version = %args.wasm_version, "Initialization complete");
 }

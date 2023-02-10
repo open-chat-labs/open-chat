@@ -1,4 +1,5 @@
 use crate::{mutate_state, Data, RuntimeState, WASM_VERSION};
+use std::time::Duration;
 use tracing::trace;
 use types::{Timestamped, Version};
 use utils::canister::get_random_seed;
@@ -11,6 +12,11 @@ mod post_upgrade;
 mod pre_upgrade;
 
 const UPGRADE_BUFFER_SIZE: usize = 1024 * 1024; // 1MB
+
+fn init_env() -> Box<CanisterEnv> {
+    ic_cdk_timers::set_timer(Duration::default(), reseed_rng);
+    Box::default()
+}
 
 fn init_state(env: Box<dyn Environment>, data: Data, wasm_version: Version) {
     let now = env.now();

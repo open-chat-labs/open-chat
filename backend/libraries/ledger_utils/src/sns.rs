@@ -24,7 +24,7 @@ pub async fn process_transaction(
             from: from.clone(),
             to: transaction.to.clone(),
             amount: transaction.amount.e8s(),
-            fee: transaction.fee.e8s(),
+            fee: Some(transaction.fee.e8s()),
         },
         created_at_time: Some(now_nanos),
         memo: args.memo.clone(),

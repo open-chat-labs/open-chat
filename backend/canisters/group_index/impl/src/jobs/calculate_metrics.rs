@@ -6,7 +6,7 @@ use utils::time::MINUTE_IN_MS;
 const CALCULATE_METRICS_INTERVAL: Milliseconds = 5 * MINUTE_IN_MS;
 
 pub fn start_job() {
-    ic_cdk::timer::set_timer_interval(Duration::from_millis(CALCULATE_METRICS_INTERVAL), run);
+    ic_cdk_timers::set_timer_interval(Duration::from_millis(CALCULATE_METRICS_INTERVAL), run);
 }
 
 fn run() {

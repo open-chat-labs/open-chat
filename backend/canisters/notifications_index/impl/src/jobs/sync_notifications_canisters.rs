@@ -1,5 +1,5 @@
 use crate::{mutate_state, RuntimeState};
-use ic_cdk::timer::TimerId;
+use ic_cdk_timers::TimerId;
 use notifications_index_canister::NotificationsIndexEvent;
 use std::cell::Cell;
 use std::time::Duration;
@@ -15,7 +15,7 @@ pub(crate) fn start_job_if_required(runtime_state: &RuntimeState) -> bool {
         && (!runtime_state.data.notifications_index_event_sync_queue.is_empty()
             || runtime_state.data.notifications_index_event_sync_queue.sync_in_progress())
     {
-        let timer_id = ic_cdk::timer::set_timer_interval(Duration::default(), run);
+        let timer_id = ic_cdk_timers::set_timer_interval(Duration::default(), run);
         TIMER_ID.with(|t| t.set(Some(timer_id)));
         trace!("'sync_notifications_canisters' job started");
         true
@@ -30,7 +30,7 @@ pub fn run() {
             ic_cdk::spawn(process_batch(batch));
         }
     } else if let Some(timer_id) = TIMER_ID.with(|t| t.take()) {
-        ic_cdk::timer::clear_timer(timer_id);
+        ic_cdk_timers::clear_timer(timer_id);
         trace!("'sync_notifications_canisters' job stopped");
     }
 }
