@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use std::cmp::max;
+use std::{cmp::max, collections::HashMap};
 use types::{Cryptocurrency, DiamondMembershipDetails, DiamondMembershipPlanDuration, Milliseconds, TimestampMillis};
 use user_index_canister::pay_for_diamond_membership::CannotExtendResult;
 
@@ -29,6 +29,20 @@ impl DiamondMembershipDetailsInternal {
 
     pub fn is_active(&self, now: TimestampMillis) -> bool {
         self.expires_at.map_or(false, |ts| now < ts)
+    }
+
+    pub fn is_recurring(&self) -> bool {
+        self.recurring
+    }
+
+    pub fn amount_paid(&self) -> HashMap<Cryptocurrency, u128> {
+        let mut paid_by_token: HashMap<Cryptocurrency, u128> = HashMap::new();
+
+        for payment in self.payments.iter() {
+            *paid_by_token.entry(payment.token).or_default() += payment.amount_e8s as u128;
+        }
+
+        paid_by_token
     }
 
     pub fn hydrate(&self, now: TimestampMillis) -> Option<DiamondMembershipDetails> {
