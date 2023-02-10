@@ -78,6 +78,7 @@ fn initialize_upgrade(canister_id: CanisterId, runtime_state: &mut RuntimeState)
         current_wasm_version,
         new_wasm: user_canister_wasm.clone(),
         deposit_cycles_if_needed,
+        drop_stable_memory: true,
         args: user_canister::post_upgrade::Args {
             wasm_version: user_canister_wasm.version,
         },

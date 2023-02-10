@@ -57,6 +57,7 @@ mod upgrade_canisters {
             current_wasm_version,
             new_wasm,
             deposit_cycles_if_needed,
+            drop_stable_memory: false,
             args: local_user_index_canister::post_upgrade::Args { wasm_version },
         })
     }

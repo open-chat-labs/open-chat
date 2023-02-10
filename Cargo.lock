@@ -882,7 +882,7 @@ source = "git+https://github.com/open-ic/ic-utils?rev=3180e06d92f32558fb4ac8be8a
 dependencies = [
  "candid",
  "canister_time",
- "ic0",
+ "ic0 0.18.9 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde",
  "tracing",
  "tracing-attributes",
@@ -899,7 +899,7 @@ name = "canister_time"
 version = "0.1.0"
 source = "git+https://github.com/open-ic/ic-utils?rev=3180e06d92f32558fb4ac8be8a9572c3972df19b#3180e06d92f32558fb4ac8be8a9572c3972df19b"
 dependencies = [
- "ic0",
+ "ic0 0.18.9 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -2919,7 +2919,7 @@ dependencies = [
  "candid",
  "cfg-if 1.0.0",
  "ic-cdk-macros",
- "ic0",
+ "ic0 0.18.9 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde",
  "serde_bytes",
 ]
@@ -2927,12 +2927,11 @@ dependencies = [
 [[package]]
 name = "ic-cdk"
 version = "0.7.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bb6d60ecf5b27833f0fe213ed481dcb6d25219abcfd0582eb8a77b20938aae00"
+source = "git+https://github.com/hpeebles/cdk-rs?rev=22c7af6e6f49c39ea681d8a1006129a950ad8da1#22c7af6e6f49c39ea681d8a1006129a950ad8da1"
 dependencies = [
  "candid",
  "ic-cdk-macros",
- "ic0",
+ "ic0 0.18.9 (git+https://github.com/hpeebles/cdk-rs?rev=22c7af6e6f49c39ea681d8a1006129a950ad8da1)",
  "serde",
  "serde_bytes",
 ]
@@ -2940,7 +2939,7 @@ dependencies = [
 [[package]]
 name = "ic-cdk-macros"
 version = "0.6.8"
-source = "git+https://github.com/hpeebles/cdk-rs?rev=c691102b47515f1b7bd46ceae9261b303f691269#c691102b47515f1b7bd46ceae9261b303f691269"
+source = "git+https://github.com/hpeebles/cdk-rs?rev=22c7af6e6f49c39ea681d8a1006129a950ad8da1#22c7af6e6f49c39ea681d8a1006129a950ad8da1"
 dependencies = [
  "candid",
  "proc-macro2",
@@ -2958,7 +2957,7 @@ checksum = "c400f8048f4f5ba3bd3d5fe9301b9343e8ef2e2749079af8f99d4f317ebbbb14"
 dependencies = [
  "futures",
  "ic-cdk 0.7.0",
- "ic0",
+ "ic0 0.18.9 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde",
  "serde_bytes",
  "slotmap",
@@ -4502,6 +4501,11 @@ name = "ic0"
 version = "0.18.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "978b91fc78de9d2eb0144db717839cde3b35470199ea51aca362cb6310e93dfd"
+
+[[package]]
+name = "ic0"
+version = "0.18.9"
+source = "git+https://github.com/hpeebles/cdk-rs?rev=22c7af6e6f49c39ea681d8a1006129a950ad8da1#22c7af6e6f49c39ea681d8a1006129a950ad8da1"
 
 [[package]]
 name = "ic_bls12_381"

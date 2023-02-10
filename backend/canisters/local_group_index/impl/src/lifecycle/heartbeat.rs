@@ -55,6 +55,7 @@ mod upgrade_canisters {
             current_wasm_version,
             new_wasm: group_canister_wasm.clone(),
             deposit_cycles_if_needed,
+            drop_stable_memory: true,
             args: group_canister::post_upgrade::Args {
                 wasm_version: group_canister_wasm.version,
             },
