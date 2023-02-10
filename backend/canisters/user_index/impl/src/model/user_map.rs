@@ -244,18 +244,16 @@ impl UserMap {
         let mut metrics = DiamondMetrics::default();
         let mut total_raised: HashMap<Cryptocurrency, u128> = HashMap::new();
 
-        for user in self.users.values() {
-            if user.diamond_membership_details.is_active(now) {
-                metrics.total += 1;
-                if user.diamond_membership_details.is_recurring() {
-                    metrics.recurring += 1;
-                }
-                for (token, amount_e8s) in user.diamond_membership_details.amount_paid().iter() {
-                    total_raised
-                        .entry(*token)
-                        .and_modify(|amount_e8s| *amount_e8s += *amount_e8s)
-                        .or_insert(*amount_e8s);
-                }
+        for user in self.users.values().filter(|u| u.diamond_membership_details.is_active(now)) {
+            metrics.total += 1;
+            if user.diamond_membership_details.is_recurring() {
+                metrics.recurring += 1;
+            }
+            for (token, amount_e8s) in user.diamond_membership_details.amount_paid().iter() {
+                total_raised
+                    .entry(*token)
+                    .and_modify(|e_amount_e8s| *e_amount_e8s += *amount_e8s)
+                    .or_insert(*amount_e8s);
             }
         }
 
