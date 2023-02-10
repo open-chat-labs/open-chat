@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Update cdk to v0.7.0 ([#3115](https://github.com/open-ic/open-chat/pull/3115))
+
 ### Removed
 
 - Removed code for upgrading storage and confirming phone number ([#3110](https://github.com/open-ic/open-chat/pull/3110))
