@@ -20,7 +20,7 @@
     export let chatId: string;
     export let messageId: bigint;
 
-    $: total = content.prizesRemaining + content.winners.length;
+    $: total = content.prizesRemaining + content.prizesPending + content.winners.length;
     $: percentage = (content.winners.length / total) * 100;
     $: claimedByYou = content.winners.includes(client.user.userId);
     $: finished = $now500 >= Number(content.endDate);
