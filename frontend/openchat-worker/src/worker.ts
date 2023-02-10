@@ -981,39 +981,6 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
                     .catch(sendError(correlationId));
                 break;
 
-            case "confirmPhoneNumber":
-                agent
-                    .confirmPhoneNumber(payload.code)
-                    .then((response) =>
-                        sendResponse(correlationId, {
-                            response,
-                        })
-                    )
-                    .catch(sendError(correlationId));
-                break;
-
-            case "submitPhoneNumber":
-                agent
-                    .submitPhoneNumber(payload.phoneNumber)
-                    .then((response) =>
-                        sendResponse(correlationId, {
-                            response,
-                        })
-                    )
-                    .catch(sendError(correlationId));
-                break;
-
-            case "upgradeStorage":
-                agent
-                    .upgradeStorage(payload.newLimitBytes)
-                    .then((response) =>
-                        sendResponse(correlationId, {
-                            response,
-                        })
-                    )
-                    .catch(sendError(correlationId));
-                break;
-
             case "threadPreviews":
                 agent
                     .threadPreviews(payload.threadsByChat)

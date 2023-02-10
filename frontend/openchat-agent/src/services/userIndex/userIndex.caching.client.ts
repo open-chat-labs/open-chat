@@ -2,16 +2,11 @@ import type { IUserIndexClient } from "./userIndex.client.interface";
 import type {
     ChallengeAttempt,
     CheckUsernameResponse,
-    ConfirmPhoneNumberResponse,
     CreateChallengeResponse,
     CurrentUserResponse,
     PartialUserSummary,
-    PhoneNumber,
     RegisterUserResponse,
-    ResendCodeResponse,
     SetUsernameResponse,
-    SubmitPhoneNumberResponse,
-    UpgradeStorageResponse,
     UsersArgs,
     UsersResponse,
     UserSummary,
@@ -88,14 +83,6 @@ export class CachingUserIndexClient implements IUserIndexClient {
         return this.client.registerUser(username, challengeAttempt, referredBy);
     }
 
-    confirmPhoneNumber(code: string): Promise<ConfirmPhoneNumberResponse> {
-        return this.client.confirmPhoneNumber(code);
-    }
-
-    resendRegistrationCode(): Promise<ResendCodeResponse> {
-        return this.client.resendRegistrationCode();
-    }
-
     searchUsers(searchTerm: string, maxResults?: number): Promise<UserSummary[]> {
         return this.client.searchUsers(searchTerm, maxResults);
     }
@@ -111,10 +98,6 @@ export class CachingUserIndexClient implements IUserIndexClient {
             }
             return res;
         });
-    }
-
-    submitPhoneNumber(phoneNumber: PhoneNumber): Promise<SubmitPhoneNumberResponse> {
-        return this.client.submitPhoneNumber(phoneNumber);
     }
 
     private buildGetUsersArgs(
@@ -198,10 +181,6 @@ export class CachingUserIndexClient implements IUserIndexClient {
             serverTimestamp: response.serverTimestamp,
             users,
         };
-    }
-
-    upgradeStorage(newLimitBytes: number): Promise<UpgradeStorageResponse> {
-        return this.client.upgradeStorage(newLimitBytes);
     }
 
     suspendUser(userId: string, reason: string): Promise<SuspendUserResponse> {

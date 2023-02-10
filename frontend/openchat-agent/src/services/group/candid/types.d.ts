@@ -206,10 +206,6 @@ export type CompletedCryptoTransaction = {
     'NNS' : NnsCompletedCryptoTransaction
   } |
   { 'SNS' : SnsCompletedCryptoTransaction };
-export interface ConfirmationCodeSms {
-  'confirmation_code' : string,
-  'phone_number' : string,
-}
 export interface CryptoContent {
   'recipient' : UserId,
   'caption' : [] | [string],

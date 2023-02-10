@@ -227,27 +227,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "aws-sdk-pinpoint"
-version = "0.19.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "876a53abb173240467ae3e7399f8ae6d40b5ed33b6626f0ba0077ace6b8c3bbe"
-dependencies = [
- "aws-endpoint",
- "aws-http",
- "aws-sig-auth",
- "aws-smithy-async",
- "aws-smithy-client",
- "aws-smithy-http",
- "aws-smithy-http-tower",
- "aws-smithy-json",
- "aws-smithy-types",
- "aws-types",
- "bytes",
- "http",
- "tower",
-]
-
-[[package]]
 name = "aws-sdk-sso"
 version = "0.19.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7106,60 +7085,6 @@ name = "smallvec"
 version = "1.10.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a507befe795404456341dfab10cef66ead4c041f62b8b11bbb92bffe5d0953e0"
-
-[[package]]
-name = "sms_sender_aws"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "aws-config",
- "aws-sdk-pinpoint",
- "aws-types",
- "candid",
- "dotenv",
- "dynamodb_index_store",
- "index_store",
- "sms_sender_core",
- "tokio",
- "tracing",
- "tracing-subscriber",
- "types 0.1.0",
-]
-
-[[package]]
-name = "sms_sender_cli"
-version = "0.1.0"
-dependencies = [
- "aws-config",
- "candid",
- "dotenv",
- "index_store",
- "sms_sender_aws",
- "sms_sender_core",
- "tokio",
- "tracing",
- "tracing-subscriber",
- "types 0.1.0",
-]
-
-[[package]]
-name = "sms_sender_core"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "candid",
- "futures",
- "garcon",
- "ic-agent",
- "index_store",
- "openssl",
- "serde",
- "tokio",
- "tracing",
- "types 0.1.0",
- "user_index_canister",
- "user_index_canister_client",
-]
 
 [[package]]
 name = "sns1_airdrop"

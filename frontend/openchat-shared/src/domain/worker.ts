@@ -60,22 +60,18 @@ import type {
     ArchiveChatResponse,
     ChallengeAttempt,
     CheckUsernameResponse,
-    ConfirmPhoneNumberResponse,
     CreateChallengeResponse,
     CreatedUser,
     CurrentUserResponse,
     MigrateUserPrincipalResponse,
     PartialUserSummary,
-    PhoneNumber,
     PinChatResponse,
     PublicProfile,
     RegisterUserResponse,
     SetBioResponse,
     SetUsernameResponse,
-    SubmitPhoneNumberResponse,
     SuspendUserResponse,
     UnpinChatResponse,
-    UpgradeStorageResponse,
     User,
     UserLookup,
     UsersArgs,
@@ -168,9 +164,6 @@ export type WorkerRequest =
     | SearchGroupChat
     | SearchDirectChat
     | RefreshAccountBalance
-    | ConfirmPhoneNumber
-    | SubmitPhoneNumber
-    | UpgradeStorage
     | GetThreadPreviews
     | GetUser
     | GetPublicProfile
@@ -280,24 +273,6 @@ type GetThreadPreviews = Request<{
     threadsByChat: Record<string, [ThreadSyncDetails[], number | undefined]>;
 }> & {
     kind: "threadPreviews";
-};
-
-type UpgradeStorage = Request<{
-    newLimitBytes: number;
-}> & {
-    kind: "upgradeStorage";
-};
-
-type SubmitPhoneNumber = Request<{
-    phoneNumber: PhoneNumber;
-}> & {
-    kind: "submitPhoneNumber";
-};
-
-type ConfirmPhoneNumber = Request<{
-    code: string;
-}> & {
-    kind: "confirmPhoneNumber";
 };
 
 type RefreshAccountBalance = Request<{
@@ -834,10 +809,7 @@ export type WorkerResponse =
     | Response<SetUsernameResponse>
     | Response<PublicProfile>
     | Response<PartialUserSummary | undefined>
-    | Response<UpgradeStorageResponse>
     | Response<ThreadPreview[]>
-    | Response<SubmitPhoneNumberResponse>
-    | Response<ConfirmPhoneNumberResponse>
     | Response<Tokens>
     | Response<SearchDirectChatResponse>
     | Response<SearchGroupChatResponse>

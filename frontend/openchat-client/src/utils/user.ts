@@ -1,5 +1,5 @@
 import type { MessageFormatter } from "./i18n";
-import type { PartialUserSummary, UserLookup, UserSummary, PhoneNumber } from "openchat-shared";
+import type { PartialUserSummary, UserLookup, UserSummary } from "openchat-shared";
 
 export function formatLastOnlineDate(
     formatter: MessageFormatter,
@@ -116,8 +116,4 @@ export function groupAvatarUrl<T extends { blobUrl?: string }>(dataContent?: T):
 
 export function userAvatarUrl<T extends { blobUrl?: string }>(dataContent?: T): string {
     return dataContent?.blobUrl ?? "../assets/unknownUserAvatar.svg";
-}
-
-export function phoneNumberToString({ countryCode, number }: PhoneNumber): string {
-    return `(+${countryCode}) ${number}`;
 }

@@ -18,7 +18,6 @@ fn init(args: Args) {
 
     let data = Data::new(
         args.service_principals,
-        args.sms_service_principals,
         args.user_canister_wasm,
         args.local_user_index_canister_wasm,
         args.group_index_canister_id,

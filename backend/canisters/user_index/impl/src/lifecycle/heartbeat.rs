@@ -14,7 +14,6 @@ fn heartbeat() {
     sync_events_to_local_user_index_canisters::run();
     notify_user_principal_migrations::run();
     dismiss_removed_super_admins::run();
-    prune_unconfirmed_phone_numbers::run();
     set_users_suspended::run();
 }
 
@@ -267,19 +266,6 @@ mod dismiss_removed_super_admins {
             error!(?error, ?user_id, ?group_id, "Error calling group::c2c_dismiss_super_admin");
             mutate_state(|state| push_super_admin_to_dismiss(user_id, group_id, state));
         }
-    }
-}
-
-mod prune_unconfirmed_phone_numbers {
-    use super::*;
-
-    pub fn run() {
-        mutate_state(prune_unconfirmed_phone_numbers_impl);
-    }
-
-    fn prune_unconfirmed_phone_numbers_impl(runtime_state: &mut RuntimeState) {
-        let now = runtime_state.env.now();
-        runtime_state.data.users.prune_unconfirmed_phone_numbers_if_required(now);
     }
 }
 

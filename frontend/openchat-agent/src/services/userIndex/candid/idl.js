@@ -15,15 +15,6 @@ export const idlFactory = ({ IDL }) => {
     'UsernameTooLong' : IDL.Nat16,
     'Success' : IDL.Null,
   });
-  const ConfirmPhoneNumberArgs = IDL.Record({ 'confirmation_code' : IDL.Text });
-  const SuccessResult = IDL.Record({ 'open_storage_limit_bytes' : IDL.Nat64 });
-  const ConfirmPhoneNumberResponse = IDL.Variant({
-    'AlreadyClaimed' : IDL.Null,
-    'Success' : SuccessResult,
-    'ConfirmationCodeExpired' : IDL.Null,
-    'ConfirmationCodeIncorrect' : IDL.Null,
-    'UserNotFound' : IDL.Null,
-  });
   const CreateChallengeArgs = IDL.Record({});
   const ChallengeKey = IDL.Nat32;
   const Challenge = IDL.Record({
@@ -35,20 +26,6 @@ export const idlFactory = ({ IDL }) => {
     'Success' : Challenge,
   });
   const CurrentUserArgs = IDL.Record({});
-  const TimestampMillis = IDL.Nat64;
-  const PhoneNumber = IDL.Record({
-    'country_code' : IDL.Nat16,
-    'number' : IDL.Text,
-  });
-  const UnconfirmedPhoneNumberState = IDL.Record({
-    'valid_until' : TimestampMillis,
-    'phone_number' : PhoneNumber,
-  });
-  const PhoneStatus = IDL.Variant({
-    'Unconfirmed' : UnconfirmedPhoneNumberState,
-    'None' : IDL.Null,
-    'Confirmed' : IDL.Null,
-  });
   const Version = IDL.Record({
     'major' : IDL.Nat32,
     'minor' : IDL.Nat32,
@@ -59,6 +36,7 @@ export const idlFactory = ({ IDL }) => {
     'NotRequired' : IDL.Null,
     'InProgress' : IDL.Null,
   });
+  const TimestampMillis = IDL.Nat64;
   const SuspensionAction = IDL.Variant({
     'Unsuspend' : TimestampMillis,
     'Delete' : TimestampMillis,
@@ -80,7 +58,6 @@ export const idlFactory = ({ IDL }) => {
   const CurrentUserResponse = IDL.Variant({
     'Success' : IDL.Record({
       'username' : IDL.Text,
-      'phone_status' : PhoneStatus,
       'wasm_version' : Version,
       'icp_account' : AccountIdentifier,
       'referrals' : IDL.Vec(UserId),
@@ -90,7 +67,6 @@ export const idlFactory = ({ IDL }) => {
       'canister_upgrade_status' : CanisterUpgradeStatus,
       'is_super_admin' : IDL.Bool,
       'suspension_details' : IDL.Opt(SuspensionDetails),
-      'open_storage_limit_bytes' : IDL.Nat64,
       'diamond_membership_details' : IDL.Opt(DiamondMembershipDetails),
     }),
     'UserNotFound' : IDL.Null,
@@ -150,13 +126,6 @@ export const idlFactory = ({ IDL }) => {
     'NotSuperAdmin' : IDL.Null,
     'InternalError' : IDL.Text,
   });
-  const ResendCodeArgs = IDL.Record({});
-  const ResendCodeResponse = IDL.Variant({
-    'PhoneNumberNotSubmitted' : IDL.Null,
-    'Success' : IDL.Null,
-    'PhoneNumberAlreadyConfirmed' : IDL.Null,
-    'UserNotFound' : IDL.Null,
-  });
   const SearchArgs = IDL.Record({
     'max_results' : IDL.Nat8,
     'search_term' : IDL.Text,
@@ -183,14 +152,6 @@ export const idlFactory = ({ IDL }) => {
     'UsernameInvalid' : IDL.Null,
     'UsernameTooLong' : IDL.Nat16,
     'Success' : IDL.Null,
-    'UserNotFound' : IDL.Null,
-  });
-  const SubmitPhoneNumberArgs = IDL.Record({ 'phone_number' : PhoneNumber });
-  const SubmitPhoneNumberResponse = IDL.Variant({
-    'AlreadyRegistered' : IDL.Null,
-    'Success' : IDL.Null,
-    'AlreadyRegisteredByOther' : IDL.Null,
-    'InvalidPhoneNumber' : IDL.Null,
     'UserNotFound' : IDL.Null,
   });
   const SuperAdminsArgs = IDL.Record({});
@@ -221,23 +182,6 @@ export const idlFactory = ({ IDL }) => {
     'UserNotSuspended' : IDL.Null,
     'Success' : IDL.Null,
     'InternalError' : IDL.Text,
-    'UserNotFound' : IDL.Null,
-  });
-  const UpgradeStorageArgs = IDL.Record({
-    'new_storage_limit_bytes' : IDL.Nat64,
-  });
-  const Tokens = IDL.Record({ 'e8s' : IDL.Nat64 });
-  const ICP = Tokens;
-  const UpgradeStorageResponse = IDL.Variant({
-    'SuccessNoChange' : IDL.Null,
-    'Success' : IDL.Null,
-    'PaymentNotFound' : IDL.Null,
-    'PaymentInsufficient' : IDL.Record({
-      'amount_required' : ICP,
-      'account_balance' : ICP,
-    }),
-    'InternalError' : IDL.Text,
-    'StorageLimitExceeded' : IDL.Nat64,
     'UserNotFound' : IDL.Null,
   });
   const UserArgs = IDL.Record({
@@ -281,11 +225,6 @@ export const idlFactory = ({ IDL }) => {
         [CheckUsernameResponse],
         ['query'],
       ),
-    'confirm_phone_number' : IDL.Func(
-        [ConfirmPhoneNumberArgs],
-        [ConfirmPhoneNumberResponse],
-        [],
-      ),
     'create_challenge' : IDL.Func(
         [CreateChallengeArgs],
         [CreateChallengeResponse],
@@ -312,14 +251,8 @@ export const idlFactory = ({ IDL }) => {
         [RemoveSuperAdminResponse],
         [],
       ),
-    'resend_code' : IDL.Func([ResendCodeArgs], [ResendCodeResponse], []),
     'search' : IDL.Func([SearchArgs], [SearchResponse], ['query']),
     'set_username' : IDL.Func([SetUsernameArgs], [SetUsernameResponse], []),
-    'submit_phone_number' : IDL.Func(
-        [SubmitPhoneNumberArgs],
-        [SubmitPhoneNumberResponse],
-        [],
-      ),
     'super_admins' : IDL.Func(
         [SuperAdminsArgs],
         [SuperAdminsResponse],
@@ -334,11 +267,6 @@ export const idlFactory = ({ IDL }) => {
     'unsuspend_user' : IDL.Func(
         [UnsuspendUserArgs],
         [UnsuspendUserResponse],
-        [],
-      ),
-    'upgrade_storage' : IDL.Func(
-        [UpgradeStorageArgs],
-        [UpgradeStorageResponse],
         [],
       ),
     'user' : IDL.Func([UserArgs], [UserResponse], ['query']),

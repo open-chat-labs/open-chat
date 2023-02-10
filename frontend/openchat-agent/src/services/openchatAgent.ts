@@ -52,7 +52,6 @@ import {
     ChangeRoleResponse,
     ChatEvent,
     CheckUsernameResponse,
-    ConfirmPhoneNumberResponse,
     CreateChallengeResponse,
     CreatedUser,
     CreateGroupResponse,
@@ -89,7 +88,6 @@ import {
     MigrateUserPrincipalResponse,
     PartialUserSummary,
     PendingCryptocurrencyWithdrawal,
-    PhoneNumber,
     PinChatResponse,
     PinMessageResponse,
     PublicProfile,
@@ -97,7 +95,6 @@ import {
     RegisterProposalVoteResponse,
     RegisterUserResponse,
     RemoveMemberResponse,
-    ResendCodeResponse,
     ResetInviteCodeResponse,
     SearchDirectChatResponse,
     SearchGroupChatResponse,
@@ -105,7 +102,6 @@ import {
     SetBioResponse,
     SetUsernameResponse,
     StorageStatus,
-    SubmitPhoneNumberResponse,
     SuspendUserResponse,
     ThreadPreview,
     ThreadPreviewsResponse,
@@ -118,7 +114,6 @@ import {
     UnpinMessageResponse,
     UnsupportedValueError,
     UpdateGroupResponse,
-    UpgradeStorageResponse,
     User,
     UserLookup,
     UsersArgs,
@@ -1040,18 +1035,6 @@ export class OpenChatAgent extends EventTarget {
         return this._userIndexClient.getCurrentUser();
     }
 
-    submitPhoneNumber(phoneNumber: PhoneNumber): Promise<SubmitPhoneNumberResponse> {
-        return this._userIndexClient.submitPhoneNumber(phoneNumber);
-    }
-
-    resendRegistrationCode(): Promise<ResendCodeResponse> {
-        return this._userIndexClient.resendRegistrationCode();
-    }
-
-    confirmPhoneNumber(code: string): Promise<ConfirmPhoneNumberResponse> {
-        return this._userIndexClient.confirmPhoneNumber(code);
-    }
-
     checkUsername(username: string): Promise<CheckUsernameResponse> {
         return this._userIndexClient.checkUsername(username);
     }
@@ -1314,10 +1297,6 @@ export class OpenChatAgent extends EventTarget {
 
     getUserStorageLimits(): Promise<StorageStatus> {
         return DataClient.create(this.identity, this.config).storageStatus();
-    }
-
-    upgradeStorage(newLimitBytes: number): Promise<UpgradeStorageResponse> {
-        return this._userIndexClient.upgradeStorage(newLimitBytes);
     }
 
     refreshAccountBalance(crypto: Cryptocurrency, principal: string): Promise<Tokens> {

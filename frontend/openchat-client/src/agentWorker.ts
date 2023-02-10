@@ -64,10 +64,6 @@ import {
     SearchDirectChatResponse,
     Cryptocurrency,
     Tokens,
-    ConfirmPhoneNumberResponse,
-    PhoneNumber,
-    SubmitPhoneNumberResponse,
-    UpgradeStorageResponse,
     ThreadPreview,
     ThreadSyncDetails,
     PartialUserSummary,
@@ -1065,33 +1061,6 @@ export class OpenChatAgentWorker extends EventTarget {
             payload: {
                 crypto,
                 principal,
-            },
-        });
-    }
-
-    confirmPhoneNumber(code: string): Promise<ConfirmPhoneNumberResponse> {
-        return this.sendRequest({
-            kind: "confirmPhoneNumber",
-            payload: {
-                code,
-            },
-        });
-    }
-
-    submitPhoneNumber(phoneNumber: PhoneNumber): Promise<SubmitPhoneNumberResponse> {
-        return this.sendRequest({
-            kind: "submitPhoneNumber",
-            payload: {
-                phoneNumber,
-            },
-        });
-    }
-
-    upgradeStorage(newLimitBytes: number): Promise<UpgradeStorageResponse> {
-        return this.sendRequest({
-            kind: "upgradeStorage",
-            payload: {
-                newLimitBytes,
             },
         });
     }

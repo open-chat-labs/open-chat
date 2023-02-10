@@ -134,16 +134,6 @@ export type CompletedCryptoTransaction = {
     'NNS' : NnsCompletedCryptoTransaction
   } |
   { 'SNS' : SnsCompletedCryptoTransaction };
-export interface ConfirmPhoneNumberArgs { 'confirmation_code' : string }
-export type ConfirmPhoneNumberResponse = { 'AlreadyClaimed' : null } |
-  { 'Success' : SuccessResult } |
-  { 'ConfirmationCodeExpired' : null } |
-  { 'ConfirmationCodeIncorrect' : null } |
-  { 'UserNotFound' : null };
-export interface ConfirmationCodeSms {
-  'confirmation_code' : string,
-  'phone_number' : string,
-}
 export type CreateChallengeArgs = {};
 export type CreateChallengeResponse = { 'Throttled' : null } |
   { 'Success' : Challenge };
@@ -163,7 +153,6 @@ export type CurrentUserArgs = {};
 export type CurrentUserResponse = {
     'Success' : {
       'username' : string,
-      'phone_status' : PhoneStatus,
       'wasm_version' : Version,
       'icp_account' : AccountIdentifier,
       'referrals' : Array<UserId>,
@@ -173,7 +162,6 @@ export type CurrentUserResponse = {
       'canister_upgrade_status' : CanisterUpgradeStatus,
       'is_super_admin' : boolean,
       'suspension_details' : [] | [SuspensionDetails],
-      'open_storage_limit_bytes' : bigint,
       'diamond_membership_details' : [] | [DiamondMembershipDetails],
     }
   } |
@@ -724,10 +712,6 @@ export interface PermissionsChanged {
   'old_permissions' : GroupPermissions,
   'new_permissions' : GroupPermissions,
 }
-export interface PhoneNumber { 'country_code' : number, 'number' : string }
-export type PhoneStatus = { 'Unconfirmed' : UnconfirmedPhoneNumberState } |
-  { 'None' : null } |
-  { 'Confirmed' : null };
 export type PinnedMessageUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : MessageIndex };
@@ -839,11 +823,6 @@ export interface ReplyContext {
   'chat_id_if_other' : [] | [ChatId],
   'event_index' : EventIndex,
 }
-export type ResendCodeArgs = {};
-export type ResendCodeResponse = { 'PhoneNumberNotSubmitted' : null } |
-  { 'Success' : null } |
-  { 'PhoneNumberAlreadyConfirmed' : null } |
-  { 'UserNotFound' : null };
 export type Role = { 'Participant' : null } |
   { 'SuperAdmin' : FallbackRole } |
   { 'Admin' : null } |
@@ -911,12 +890,6 @@ export interface SnsProposal {
   'summary' : string,
   'proposer' : SnsNeuronId,
 }
-export interface SubmitPhoneNumberArgs { 'phone_number' : PhoneNumber }
-export type SubmitPhoneNumberResponse = { 'AlreadyRegistered' : null } |
-  { 'Success' : null } |
-  { 'AlreadyRegisteredByOther' : null } |
-  { 'InvalidPhoneNumber' : null } |
-  { 'UserNotFound' : null };
 export interface Subscription {
   'value' : SubscriptionInfo,
   'last_active' : TimestampMillis,
@@ -926,7 +899,6 @@ export interface SubscriptionInfo {
   'keys' : SubscriptionKeys,
 }
 export interface SubscriptionKeys { 'auth' : string, 'p256dh' : string }
-export interface SuccessResult { 'open_storage_limit_bytes' : bigint }
 export type SuperAdminsArgs = {};
 export type SuperAdminsResponse = { 'Success' : { 'users' : Array<UserId> } };
 export interface SuspectedBotsArgs { 'after' : [] | [UserId], 'count' : number }
@@ -985,19 +957,6 @@ export type TotalPollVotes = { 'Anonymous' : Array<[number, number]> } |
   { 'Visible' : Array<[number, Array<UserId>]> } |
   { 'Hidden' : number };
 export type TransactionHash = Uint8Array | number[];
-export interface TransferCyclesArgs {
-  'recipient' : UserId,
-  'sender' : UserId,
-  'amount' : bigint,
-}
-export type TransferCyclesResponse = { 'BalanceExceeded' : null } |
-  { 'Success' : { 'new_balance' : bigint } } |
-  { 'UserNotFound' : null } |
-  { 'RecipientNotFound' : null };
-export interface UnconfirmedPhoneNumberState {
-  'valid_until' : TimestampMillis,
-  'phone_number' : PhoneNumber,
-}
 export interface UnsuspendUserArgs { 'user_id' : UserId }
 export type UnsuspendUserResponse = { 'UserNotSuspended' : null } |
   { 'Success' : null } |
@@ -1008,16 +967,6 @@ export interface UpdatedMessage {
   'message_id' : MessageId,
   'event_index' : EventIndex,
 }
-export interface UpgradeStorageArgs { 'new_storage_limit_bytes' : bigint }
-export type UpgradeStorageResponse = { 'SuccessNoChange' : null } |
-  { 'Success' : null } |
-  { 'PaymentNotFound' : null } |
-  {
-    'PaymentInsufficient' : { 'amount_required' : ICP, 'account_balance' : ICP }
-  } |
-  { 'InternalError' : string } |
-  { 'StorageLimitExceeded' : bigint } |
-  { 'UserNotFound' : null };
 export interface User { 'username' : string, 'user_id' : UserId }
 export interface UserArgs {
   'username' : [] | [string],
@@ -1073,10 +1022,6 @@ export type VoteOperation = { 'RegisterVote' : null } |
 export interface _SERVICE {
   'add_super_admin' : ActorMethod<[AddSuperAdminArgs], AddSuperAdminResponse>,
   'check_username' : ActorMethod<[CheckUsernameArgs], CheckUsernameResponse>,
-  'confirm_phone_number' : ActorMethod<
-    [ConfirmPhoneNumberArgs],
-    ConfirmPhoneNumberResponse
-  >,
   'create_challenge' : ActorMethod<
     [CreateChallengeArgs],
     CreateChallengeResponse
@@ -1095,18 +1040,12 @@ export interface _SERVICE {
     [RemoveSuperAdminArgs],
     RemoveSuperAdminResponse
   >,
-  'resend_code' : ActorMethod<[ResendCodeArgs], ResendCodeResponse>,
   'search' : ActorMethod<[SearchArgs], SearchResponse>,
   'set_username' : ActorMethod<[SetUsernameArgs], SetUsernameResponse>,
-  'submit_phone_number' : ActorMethod<
-    [SubmitPhoneNumberArgs],
-    SubmitPhoneNumberResponse
-  >,
   'super_admins' : ActorMethod<[SuperAdminsArgs], SuperAdminsResponse>,
   'suspected_bots' : ActorMethod<[SuspectedBotsArgs], SuspectedBotsResponse>,
   'suspend_user' : ActorMethod<[SuspendUserArgs], SuspendUserResponse>,
   'unsuspend_user' : ActorMethod<[UnsuspendUserArgs], UnsuspendUserResponse>,
-  'upgrade_storage' : ActorMethod<[UpgradeStorageArgs], UpgradeStorageResponse>,
   'user' : ActorMethod<[UserArgs], UserResponse>,
   'users' : ActorMethod<[UsersArgs], UsersResponse>,
 }

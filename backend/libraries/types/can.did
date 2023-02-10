@@ -98,12 +98,6 @@ type ChatSummaryUpdates =
         Group: GroupChatSummaryUpdates;
     };
 
-type ConfirmationCodeSms =
-    record {
-         phone_number: text;
-         confirmation_code: text;
-    };
-
 type CryptoContent =
     record {
         recipient: UserId;
