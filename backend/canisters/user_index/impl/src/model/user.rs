@@ -19,7 +19,6 @@ pub struct User {
     pub avatar_id: Option<u128>,
     pub registration_fee: Option<RegistrationFee>,
     pub account_billing: AccountBilling,
-    pub open_storage_limit_bytes: u64,
     pub phone_status: PhoneStatus,
     pub referred_by: Option<UserId>,
     pub is_bot: bool,
@@ -39,27 +38,12 @@ impl User {
     }
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default, Eq, PartialEq)]
 pub enum PhoneStatus {
+    #[default]
     None,
     Unconfirmed(UnconfirmedPhoneNumber),
     Confirmed(PhoneNumber),
-}
-
-impl PhoneStatus {
-    pub fn phone_number(&self) -> Option<&PhoneNumber> {
-        match self {
-            PhoneStatus::None => None,
-            PhoneStatus::Unconfirmed(un) => Some(&un.phone_number),
-            PhoneStatus::Confirmed(pn) => Some(pn),
-        }
-    }
-}
-
-impl Default for PhoneStatus {
-    fn default() -> Self {
-        PhoneStatus::None
-    }
 }
 
 impl User {
@@ -84,7 +68,6 @@ impl User {
             avatar_id: None,
             registration_fee: None,
             account_billing: AccountBilling::default(),
-            open_storage_limit_bytes: 0,
             phone_status: PhoneStatus::None,
             referred_by,
             is_bot,
@@ -154,7 +137,6 @@ impl Default for User {
             avatar_id: None,
             registration_fee: None,
             account_billing: AccountBilling::default(),
-            open_storage_limit_bytes: 0,
             phone_status: PhoneStatus::None,
             referred_by: None,
             is_bot: false,

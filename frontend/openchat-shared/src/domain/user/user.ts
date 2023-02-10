@@ -85,31 +85,19 @@ export type ChallengeAttempt = {
     chars: string;
 };
 
-export type PhoneNumber = {
-    countryCode: number;
-    number: string;
-};
-
 export type CurrentUserResponse = CreatedUser | UserNotFound;
 
 export type UpgradeInProgress = {
     kind: "upgrade_in_progress";
 };
 
-export type PhoneStatus =
-    | { kind: "confirmed" }
-    | { kind: "none" }
-    | { kind: "unconfirmed"; validUntil: number; phoneNumber: PhoneNumber };
-
 export type CreatedUser = {
     kind: "created_user";
     username: string;
     cryptoAccount: string;
-    phoneStatus: PhoneStatus;
     userId: string;
     canisterUpgradeStatus: "required" | "not_required" | "in_progress";
     wasmVersion: Version;
-    openStorageLimitBytes: number;
     referrals: string[];
     isSuperAdmin: boolean;
     suspensionDetails: SuspensionDetails | undefined;
@@ -161,27 +149,6 @@ export type SetUsernameResponse =
     | "username_too_long"
     | "username_invalid";
 
-export type SubmitPhoneNumberResponse =
-    | "success"
-    | "already_registered"
-    | "already_registered_by_other"
-    | "invalid_phone_number"
-    | "user_not_found";
-
-export type ConfirmPhoneNumberResponse =
-    | { kind: "success"; storageLimitBytes: number }
-    | { kind: "already_claimed" }
-    | { kind: "code_incorrect" }
-    | { kind: "code_expired" }
-    | { kind: "not_found" }
-    | { kind: "phone_number_not_submitted" };
-
-export type ResendCodeResponse =
-    | "success"
-    | "phone_number_already_confirmed"
-    | "user_not_found"
-    | "phone_number_not_submitted";
-
 export type InvalidCurrency = { kind: "invalid_currency" };
 
 export type SetBioResponse = "success" | "bio_too_long" | "user_suspended";
@@ -198,15 +165,6 @@ export type RegisterUserResponse =
     | "username_too_long"
     | "username_invalid"
     | "challenge_failed";
-
-export type UpgradeStorageResponse =
-    | { kind: "success_no_change" }
-    | { kind: "success" }
-    | { kind: "payment_not_found" }
-    | { kind: "payment_insufficient"; ammountRequirede8s: number; accountBalancee8s: number }
-    | { kind: "internal_error" }
-    | { kind: "storage_limit_exceeded" }
-    | { kind: "user_not_found" };
 
 export type PinChatResponse = { kind: "success" } | { kind: "pinned_limit_reached"; limit: number };
 

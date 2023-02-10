@@ -8,18 +8,14 @@ use candid::Principal;
 use canister_state_macros::canister_state;
 use local_user_index_canister::Event as LocalUserIndexEvent;
 use model::local_user_index_map::LocalUserIndexMap;
-use rand_core::RngCore;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{HashSet, VecDeque};
-use types::{
-    CanisterId, CanisterWasm, ChatId, ConfirmationCodeSms, Cycles, Milliseconds, TimestampMillis, Timestamped, UserId, Version,
-};
+use types::{CanisterId, CanisterWasm, ChatId, Cycles, Milliseconds, TimestampMillis, Timestamped, UserId, Version};
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::canister_event_sync_queue::CanisterEventSyncQueue;
 use utils::env::Environment;
-use utils::event_stream::EventStream;
-use utils::time::{DAY_IN_MS, MINUTE_IN_MS};
+use utils::time::DAY_IN_MS;
 
 mod guards;
 mod lifecycle;
@@ -31,8 +27,6 @@ mod updates;
 pub const USER_LIMIT: usize = 100_000;
 
 const USER_CANISTER_TOP_UP_AMOUNT: Cycles = 100_000_000_000; // 0.1T cycles
-const CONFIRMED_PHONE_NUMBER_STORAGE_ALLOWANCE: u64 = (1024 * 1024 * 1024) / 10; // 0.1 GB
-const CONFIRMATION_CODE_EXPIRY_MILLIS: u64 = 10 * MINUTE_IN_MS; // 10 minutes
 const TIME_UNTIL_SUSPENDED_ACCOUNT_IS_DELETED_MILLIS: Milliseconds = DAY_IN_MS * 90; // 90 days
 const ONE_MB: u64 = 1024 * 1024;
 const ONE_GB: u64 = 1024 * ONE_MB;
@@ -78,11 +72,6 @@ impl RuntimeState {
         caller == self.data.group_index_canister_id
     }
 
-    pub fn is_caller_sms_service(&self) -> bool {
-        let caller = self.env.caller();
-        self.data.sms_service_principals.contains(&caller)
-    }
-
     pub fn is_caller_super_admin(&self) -> bool {
         let caller = self.env.caller();
         if let Some(user) = self.data.users.get_by_principal(&caller) {
@@ -90,11 +79,6 @@ impl RuntimeState {
         } else {
             false
         }
-    }
-
-    pub fn generate_6_digit_code(&mut self) -> String {
-        let random = self.env.rng().next_u32();
-        format!("{:0>6}", random % 1000000)
     }
 
     pub fn metrics(&self) -> Metrics {
@@ -114,7 +98,6 @@ impl RuntimeState {
             service_principals: self.data.service_principals.iter().copied().collect(),
             user_wasm_version: self.data.user_canister_wasm.version,
             max_concurrent_canister_upgrades: self.data.max_concurrent_canister_upgrades,
-            sms_messages_in_queue: self.data.sms_messages.len() as u32,
             super_admins: self.data.super_admins.len() as u8,
             super_admins_to_dismiss: self.data.super_admins_to_dismiss.len() as u32,
             inflight_challenges: self.data.challenges.count(),
@@ -136,8 +119,6 @@ struct Data {
     pub service_principals: HashSet<Principal>,
     pub user_canister_wasm: CanisterWasm,
     pub local_user_index_canister_wasm: CanisterWasm,
-    pub sms_service_principals: HashSet<Principal>,
-    pub sms_messages: EventStream<ConfirmationCodeSms>,
     pub group_index_canister_id: CanisterId,
     pub notifications_index_canister_id: CanisterId,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
@@ -161,7 +142,6 @@ impl Data {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
         service_principals: Vec<Principal>,
-        sms_service_principals: Vec<Principal>,
         user_canister_wasm: CanisterWasm,
         local_user_index_canister_wasm: CanisterWasm,
         group_index_canister_id: CanisterId,
@@ -190,8 +170,6 @@ impl Data {
             service_principals: service_principals.into_iter().collect(),
             user_canister_wasm,
             local_user_index_canister_wasm,
-            sms_service_principals: sms_service_principals.into_iter().collect(),
-            sms_messages: EventStream::default(),
             group_index_canister_id,
             notifications_index_canister_id,
             cycles_dispenser_canister_id,
@@ -235,8 +213,6 @@ impl Default for Data {
             service_principals: HashSet::new(),
             user_canister_wasm: CanisterWasm::default(),
             local_user_index_canister_wasm: CanisterWasm::default(),
-            sms_service_principals: HashSet::new(),
-            sms_messages: EventStream::default(),
             group_index_canister_id: Principal::anonymous(),
             notifications_index_canister_id: Principal::anonymous(),
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
@@ -274,7 +250,6 @@ pub struct Metrics {
     pub service_principals: Vec<Principal>,
     pub user_wasm_version: Version,
     pub max_concurrent_canister_upgrades: usize,
-    pub sms_messages_in_queue: u32,
     pub super_admins: u8,
     pub super_admins_to_dismiss: u32,
     pub inflight_challenges: u32,

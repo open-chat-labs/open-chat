@@ -55,7 +55,6 @@ import {
     formatLastOnlineDate,
     groupAvatarUrl,
     nullUser,
-    phoneNumberToString,
     userAvatarUrl,
 } from "./utils/user";
 import { rtcConnectionsManager } from "./utils/rtcConnectionsManager";
@@ -251,9 +250,6 @@ import {
     type SearchGroupChatResponse,
     type Cryptocurrency,
     type Tokens,
-    type ConfirmPhoneNumberResponse,
-    type PhoneNumber,
-    type SubmitPhoneNumberResponse,
     type ThreadPreview,
     type UsersArgs,
     type UsersResponse,
@@ -953,7 +949,6 @@ export class OpenChat extends EventTarget {
     showTrace = showTrace;
     userAvatarUrl = userAvatarUrl;
     groupAvatarUrl = groupAvatarUrl;
-    phoneNumberToString = phoneNumberToString;
     updateStorageLimit = updateStorageLimit;
     formatTokens = formatTokens;
     validateTokenInput = validateTokenInput;
@@ -2765,32 +2760,6 @@ export class OpenChat extends EventTarget {
             cryptoBalance.set(crypto, val);
             return val;
         });
-    }
-
-    confirmPhoneNumber(code: string): Promise<ConfirmPhoneNumberResponse> {
-        return this.api.confirmPhoneNumber(code);
-    }
-
-    submitPhoneNumber(phoneNumber: PhoneNumber): Promise<SubmitPhoneNumberResponse> {
-        return this.api.submitPhoneNumber(phoneNumber);
-    }
-
-    upgradeStorage(newLimitBytes: number): Promise<boolean> {
-        return this.api
-            .upgradeStorage(newLimitBytes)
-            .then((resp) => {
-                const success = resp.kind === "success" || resp.kind === "success_no_change";
-                if (success) {
-                    this.updateStorageLimit(newLimitBytes);
-                } else {
-                    this._logger.error("Unable to upgrade storage", resp);
-                }
-                return success;
-            })
-            .catch((err) => {
-                this._logger.error("Unable to upgrade storage", err);
-                return false;
-            });
     }
 
     async threadPreviews(

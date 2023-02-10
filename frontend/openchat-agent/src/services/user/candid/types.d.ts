@@ -165,10 +165,6 @@ export type CompletedCryptoTransaction = {
     'NNS' : NnsCompletedCryptoTransaction
   } |
   { 'SNS' : SnsCompletedCryptoTransaction };
-export interface ConfirmationCodeSms {
-  'confirmation_code' : string,
-  'phone_number' : string,
-}
 export interface Contact { 'nickname' : [] | [string], 'user_id' : UserId }
 export type ContactsArgs = {};
 export type ContactsResponse = { 'Success' : { 'contacts' : Array<Contact> } };
