@@ -39,10 +39,7 @@ impl DiamondMembershipDetailsInternal {
         let mut paid_by_token: HashMap<Cryptocurrency, u128> = HashMap::new();
 
         for payment in self.payments.iter() {
-            paid_by_token
-                .entry(payment.token)
-                .and_modify(|amount_e8s| *amount_e8s += payment.amount_e8s as u128)
-                .or_insert(payment.amount_e8s as u128);
+            *paid_by_token.entry(payment.token).or_default() += payment.amount_e8s as u128;
         }
 
         paid_by_token

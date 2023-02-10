@@ -250,10 +250,7 @@ impl UserMap {
                 metrics.recurring += 1;
             }
             for (token, amount_e8s) in user.diamond_membership_details.amount_paid().iter() {
-                total_raised
-                    .entry(*token)
-                    .and_modify(|e_amount_e8s| *e_amount_e8s += *amount_e8s)
-                    .or_insert(*amount_e8s);
+                *total_raised.entry(*token).or_default() += *amount_e8s;
             }
         }
 
