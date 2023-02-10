@@ -64,6 +64,10 @@
                         <span class="flame" slot="icon">🔥</span>
                         <span slot="text">{$_("whatsHot")}</span>
                     </MenuItem>
+                    <MenuItem on:click={() => dispatch("upgrade")}>
+                        <span class="diamond-icon" slot="icon">💎</span>
+                        <span slot="text">{$_("upgrade.diamond")}</span>
+                    </MenuItem>
                     <MenuItem on:click={() => dispatch("profile")}>
                         <Cogs size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
                         <span slot="text">{$_("profile.title")}</span>
@@ -100,7 +104,8 @@
         margin-right: 0;
     }
 
-    .flame {
+    .flame,
+    .diamond-icon {
         @include font(bold, normal, fs-110);
     }
 

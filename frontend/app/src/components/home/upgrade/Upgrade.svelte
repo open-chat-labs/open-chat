@@ -4,7 +4,7 @@
     import ModalContent from "../../ModalContent.svelte";
     import Features from "./Features.svelte";
     import Payment from "./Payment.svelte";
-    import { Cryptocurrency, cryptoLookup, OpenChat, Tokens } from "openchat-client";
+    import { Cryptocurrency, cryptoLookup, OpenChat } from "openchat-client";
     import { getContext } from "svelte";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
 
@@ -17,6 +17,7 @@
     let confirmed = false;
     let refreshingBalance = false;
 
+    $: isDiamond = client.isDiamond;
     $: cryptoBalance = client.cryptoBalance;
     $: tokenDetails = {
         key: token,
@@ -40,7 +41,11 @@
             {#if !confirming && !confirmed}
                 <div class="title">
                     {#if step === "features"}
-                        {$_("upgrade.featuresTitle")}
+                        {#if $isDiamond}
+                            {$_("upgrade.benefits")}
+                        {:else}
+                            {$_("upgrade.featuresTitle")}
+                        {/if}
                     {:else if step === "payment"}
                         {$_("upgrade.paymentTitle")}
                     {/if}
@@ -59,7 +64,7 @@
         </span>
         <span slot="body">
             {#if step === "features"}
-                <Features on:cancel on:upgrade={() => (step = "payment")} />
+                <Features isDiamond={$isDiamond} on:cancel on:upgrade={() => (step = "payment")} />
             {/if}
             {#if step === "payment"}
                 <Payment

@@ -8,9 +8,7 @@
         ChatSummary as ChatSummaryType,
         GroupMatch,
         GroupSearchResponse,
-        MessageMatch,
         UserSummary,
-        DataContent,
         OpenChat,
     } from "openchat-client";
     import { createEventDispatcher, getContext, onMount, tick } from "svelte";
@@ -40,7 +38,6 @@
     $: selectedChatId = client.selectedChatId;
     $: numberOfThreadsStore = client.numberOfThreadsStore;
     $: chatsLoading = client.chatsLoading;
-    $: chatSummariesStore = client.chatSummariesStore;
     $: messagesRead = client.messagesRead;
     $: chatSummariesListStore = client.chatSummariesListStore;
     $: userStore = client.userStore;
@@ -76,10 +73,6 @@
         closeSearch();
     }
 
-    function loadMessage(msg: MessageMatch): void {
-        dispatch("loadMessage", msg);
-    }
-
     /**
      * All we need to do here is push the route
      * the routing will take care of the rest
@@ -87,22 +80,6 @@
     function selectGroup({ chatId }: GroupMatch): void {
         push(`/${chatId}`);
         closeSearch();
-    }
-
-    function messageMatchDataContent({ chatId, sender }: MessageMatch): DataContent {
-        const chat = $chatSummariesStore[chatId];
-        if (chat === undefined) {
-            return { blobUrl: undefined };
-        }
-        return chat.kind === "group_chat" ? chat : $userStore[sender];
-    }
-
-    function messageMatchTitle({ chatId, sender }: MessageMatch): string {
-        const chat = $chatSummariesStore[chatId];
-        if (chat === undefined) {
-            return "";
-        }
-        return chat.kind === "group_chat" ? chat.name : $userStore[sender].username ?? "";
     }
 
     function closeSearch() {
@@ -167,6 +144,7 @@
         on:showFaq
         {user}
         on:profile
+        on:upgrade
         on:newGroup />
 
     <Search {searching} {searchTerm} on:searchEntered={onSearchEntered} />

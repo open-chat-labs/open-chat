@@ -883,6 +883,7 @@
             on:deleteDirectChat={deleteDirectChat}
             on:pinChat={pinChat}
             on:unpinChat={unpinChat}
+            on:upgrade={upgrade}
             on:archiveChat={onArchiveChat}
             on:unarchiveChat={onUnarchiveChat}
             on:toggleMuteNotifications={toggleMuteNotifications}
