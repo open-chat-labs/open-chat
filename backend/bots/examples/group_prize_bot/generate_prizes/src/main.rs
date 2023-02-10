@@ -3,23 +3,34 @@ use rand::{rngs::ThreadRng, Rng, RngCore};
 const TOKEN: &str = "CKBTC";
 const BOT_NAME: &str = "BitcoinBot";
 const LEDGER_CANISTER_ID: &str = "mxzaz-hqaaa-aaaar-qaada-cai";
-const END_DATE: u64 = 1675876516000;
-const E8S_PER_USD: f64 = 4400.0;
 const FEE_E8S: u64 = 10;
-const PRIZE_FUND_E8S: u64 = 99_996_960;
-const MIN_CLAIMANTS_PER_PRIZE: u32 = 10;
+
+// TEST VALUES
+// const MIN_CLAIMANTS_PER_PRIZE: u32 = 2;
+// const MAX_CLAIMANTS_PER_PRIZE: u32 = 4;
+// const PRIZE_FUND_E8S: u64 = 1000;
+// const END_DATE: u64 = 1676030400000;
+// const E8S_PER_USD: f64 = 20.0;
+// const NETWORK = "ic_test";
+
+// PROD VALUES
+const MIN_CLAIMANTS_PER_PRIZE: u32 = 20;
 const MAX_CLAIMANTS_PER_PRIZE: u32 = 50;
+const PRIZE_FUND_E8S: u64 = 99_996_960;
+const END_DATE: u64 = 1677240000000;
+const E8S_PER_USD: f64 = 2500.0;
+const NETWORK = "ic";
 
 fn main() {
     let messages = generate_messages();
 
-    print!("dfx canister --network=ic_test call group_prize_bot initialize_bot '(record {{ username = \"{BOT_NAME}\"; token = variant {{ {TOKEN} }}; ledger_canister_id = principal \"{LEDGER_CANISTER_ID}\"; end_date = {END_DATE}:nat64; prizes = vec {{");
+    print!("dfx canister --network={{NETWORK}} call group_prize_bot initialize_bot '(record {{ update_existing = false; username = \"{BOT_NAME}\"; token = variant {{ {TOKEN} }}; ledger_canister_id = principal \"{LEDGER_CANISTER_ID}\"; end_date = {END_DATE}:nat64; prizes = vec {{");
 
     for message in messages {
         print_message(message);
     }
 
-    println!("}}}})");
+    println!("}}}})'");
 }
 
 fn generate_messages() -> Vec<Vec<u64>> {
