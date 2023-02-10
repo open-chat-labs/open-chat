@@ -1,5 +1,5 @@
 use crate::{mutate_state, RuntimeState};
-use ic_cdk::timer::TimerId;
+use ic_cdk_timers::TimerId;
 use std::cell::Cell;
 use std::time::Duration;
 use tracing::trace;
@@ -17,7 +17,7 @@ pub(crate) fn start_job_if_required(runtime_state: &RuntimeState) -> bool {
         && (runtime_state.data.canisters_requiring_upgrade.count_pending() > 0
             || runtime_state.data.canisters_requiring_upgrade.count_in_progress() > 0)
     {
-        let timer_id = ic_cdk::timer::set_timer_interval(Duration::from_secs(2), run);
+        let timer_id = ic_cdk_timers::set_timer_interval(Duration::from_secs(2), run);
         TIMER_ID.with(|t| t.set(Some(timer_id)));
         trace!("'upgrade_canisters' job started");
         true
@@ -32,7 +32,7 @@ fn run() {
         GetNextResult::Continue => {}
         GetNextResult::QueueEmpty => {
             if let Some(timer_id) = TIMER_ID.with(|t| t.take()) {
-                ic_cdk::timer::clear_timer(timer_id);
+                ic_cdk_timers::clear_timer(timer_id);
                 trace!("'upgrade_canisters' job stopped");
             }
         }

@@ -1,5 +1,5 @@
 use crate::{mutate_state, RuntimeState};
-use ic_cdk::timer::TimerId;
+use ic_cdk_timers::TimerId;
 use std::cell::Cell;
 use std::time::Duration;
 use tracing::trace;
@@ -14,7 +14,7 @@ pub(crate) fn start_job_if_required(runtime_state: &RuntimeState) -> bool {
     if TIMER_ID.with(|t| t.get().is_none())
         && (!runtime_state.data.user_event_sync_queue.is_empty() || runtime_state.data.user_event_sync_queue.sync_in_progress())
     {
-        let timer_id = ic_cdk::timer::set_timer_interval(Duration::default(), run);
+        let timer_id = ic_cdk_timers::set_timer_interval(Duration::default(), run);
         TIMER_ID.with(|t| t.set(Some(timer_id)));
         trace!("'sync_events_to_user_canisters' job started");
         true
@@ -29,7 +29,7 @@ fn run() {
         NextBatchResult::Continue => {}
         NextBatchResult::QueueEmpty => {
             if let Some(timer_id) = TIMER_ID.with(|t| t.take()) {
-                ic_cdk::timer::clear_timer(timer_id);
+                ic_cdk_timers::clear_timer(timer_id);
                 trace!("'sync_events_to_user_canisters' job stopped");
             }
         }

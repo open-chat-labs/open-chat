@@ -6,7 +6,7 @@ use types::{ChatId, Milliseconds};
 const HOT_GROUPS_REFRESH_INTERVAL: Milliseconds = FIVE_MINUTES_IN_MS;
 
 pub fn start_job() {
-    ic_cdk::timer::set_timer_interval(Duration::from_millis(HOT_GROUPS_REFRESH_INTERVAL), run);
+    ic_cdk_timers::set_timer_interval(Duration::from_millis(HOT_GROUPS_REFRESH_INTERVAL), run);
 }
 
 fn run() {

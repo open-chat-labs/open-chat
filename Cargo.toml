@@ -74,37 +74,38 @@ aws-sdk-dynamodb = "0.19.0"
 aws-types = "0.49.0"
 base64 = "0.13.0"
 candid = "0.8.3"
-canister_logger = { git = "https://github.com/open-ic/ic-utils", rev = "2328657cbb1023fb251ee7faca4f4d313f25755f" }
-canister_state_macros = { git = "https://github.com/open-ic/ic-utils", rev = "2328657cbb1023fb251ee7faca4f4d313f25755f" }
-canister_timer_jobs = { git = "https://github.com/open-ic/ic-utils", rev = "2328657cbb1023fb251ee7faca4f4d313f25755f" }
-canister_tracing_macros = { git = "https://github.com/open-ic/ic-utils", rev = "2328657cbb1023fb251ee7faca4f4d313f25755f" }
+canister_logger = { git = "https://github.com/open-ic/ic-utils", rev = "3180e06d92f32558fb4ac8be8a9572c3972df19b" }
+canister_state_macros = { git = "https://github.com/open-ic/ic-utils", rev = "3180e06d92f32558fb4ac8be8a9572c3972df19b" }
+canister_timer_jobs = { git = "https://github.com/open-ic/ic-utils", rev = "3180e06d92f32558fb4ac8be8a9572c3972df19b" }
+canister_tracing_macros = { git = "https://github.com/open-ic/ic-utils", rev = "3180e06d92f32558fb4ac8be8a9572c3972df19b" }
 captcha = { git = "https://github.com/nmattia/captcha", rev = "fb3fe931c20b8577bf02070ae6b8c0ca2f442427", default-features = false }
 clap = "3.0.14"
-cycles_dispenser_client = { git = "https://github.com/open-ic/cycles-dispenser", rev = "c65b84be6663b82ff1387523f89aa7fa98b46eb7" }
+cycles_dispenser_client = { git = "https://github.com/open-ic/cycles-dispenser", rev = "fedf3fb1f407000aae1390d46769ae9cea0a8b49" }
 dirs = "4.0.0"
 dotenv = "0.15.0"
 futures = "0.3.25"
 garcon = "0.2.3"
 getrandom = "0.2.8"
 ic-agent = "0.22.0"
-ic-base-types = { git = "https://github.com/dfinity/ic", rev = "b5a1a8c0e005216f2d945f538fc27163bafc3bf7" }
-ic-cdk = "0.6.8"
+ic-base-types = { git = "https://github.com/dfinity/ic", rev = "7445081734e6d896d090295967d50710975c4f25" }
+ic-cdk = "0.7.0"
 ic-cdk-macros = "0.6.8"
-ic-icrc1 = { git = "https://github.com/dfinity/ic", rev = "b5a1a8c0e005216f2d945f538fc27163bafc3bf7" }
-ic-icrc1-client = { git = "https://github.com/dfinity/ic", rev = "b5a1a8c0e005216f2d945f538fc27163bafc3bf7" }
-ic-icrc1-client-cdk = { git = "https://github.com/dfinity/ic", rev = "b5a1a8c0e005216f2d945f538fc27163bafc3bf7" }
+ic-cdk-timers = "0.1.0"
+ic-icrc1 = { git = "https://github.com/dfinity/ic", rev = "7445081734e6d896d090295967d50710975c4f25" }
+ic-icrc1-client = { git = "https://github.com/dfinity/ic", rev = "7445081734e6d896d090295967d50710975c4f25" }
+ic-icrc1-client-cdk = { git = "https://github.com/dfinity/ic", rev = "7445081734e6d896d090295967d50710975c4f25" }
 ic-ledger-types = "0.2.0"
-ic-ledger-canister-core = { git = "https://github.com/dfinity/ic", rev = "b5a1a8c0e005216f2d945f538fc27163bafc3bf7" }
+ic-ledger-canister-core = { git = "https://github.com/dfinity/ic", rev = "7445081734e6d896d090295967d50710975c4f25" }
 ic-stable-structures = "0.5.0"
-ic-state-machine-tests = { git = "https://github.com/dfinity/ic", rev = "b5a1a8c0e005216f2d945f538fc27163bafc3bf7" }
+ic-state-machine-tests = { git = "https://github.com/dfinity/ic", rev = "7445081734e6d896d090295967d50710975c4f25" }
 ic-utils = "0.22.0"
 itertools = "0.10.5"
 lazy_static = "1.4.0"
 num-traits = "0.2.15"
-open_storage_bucket_canister = { package = "bucket_canister", git = "https://github.com/open-ic/open-storage", rev = "7b5bd30a029c476d0035bcdb0fdb2987108123ba" }
-open_storage_bucket_canister_c2c_client = { package = "bucket_canister_c2c_client", git = "https://github.com/open-ic/open-storage", rev = "7b5bd30a029c476d0035bcdb0fdb2987108123ba" }
-open_storage_index_canister = { package = "index_canister", git = "https://github.com/open-ic/open-storage", rev = "7b5bd30a029c476d0035bcdb0fdb2987108123ba" }
-open_storage_index_canister_c2c_client = { package = "index_canister_c2c_client", git = "https://github.com/open-ic/open-storage", rev = "7b5bd30a029c476d0035bcdb0fdb2987108123ba" }
+open_storage_bucket_canister = { package = "bucket_canister", git = "https://github.com/open-ic/open-storage", rev = "d460ed0e23221c01978f52db64ab2d4d19936050" }
+open_storage_bucket_canister_c2c_client = { package = "bucket_canister_c2c_client", git = "https://github.com/open-ic/open-storage", rev = "d460ed0e23221c01978f52db64ab2d4d19936050" }
+open_storage_index_canister = { package = "index_canister", git = "https://github.com/open-ic/open-storage", rev = "d460ed0e23221c01978f52db64ab2d4d19936050" }
+open_storage_index_canister_c2c_client = { package = "index_canister_c2c_client", git = "https://github.com/open-ic/open-storage", rev = "d460ed0e23221c01978f52db64ab2d4d19936050" }
 openssl = "0.10.42"
 proc-macro2 = "1.0.50"
 quote = "1.0.21"
@@ -119,7 +120,7 @@ serde_bytes = "0.11.7"
 serde_cbor = "0.11.2"
 serde_json = "1.0.86"
 sha2 = "0.10.6"
-serializer = { git = "https://github.com/open-ic/ic-utils", rev = "2328657cbb1023fb251ee7faca4f4d313f25755f" }
+serializer = { git = "https://github.com/open-ic/ic-utils", rev = "3180e06d92f32558fb4ac8be8a9572c3972df19b" }
 syn = "1.0.102"
 test-case = "2.2.2"
 tokio = "1.25.0"
@@ -137,8 +138,6 @@ debug = false
 [patch.crates-io]
 candid = { git = "https://github.com/hpeebles/candid", rev = "bc66c9eb4373f0312c5874652c87badc5e843f04" }
 candid_derive = { git = "https://github.com/hpeebles/candid", rev = "bc66c9eb4373f0312c5874652c87badc5e843f04" }
-ic-cdk = { git = "https://github.com/hpeebles/cdk-rs", rev = "f758bf78e6ec18850e6d023c4f60586376d24885" }
-ic-cdk-macros = { git = "https://github.com/hpeebles/cdk-rs", rev = "f758bf78e6ec18850e6d023c4f60586376d24885" }
-ic-ledger-types = { git = "https://github.com/hpeebles/cdk-rs", rev = "f758bf78e6ec18850e6d023c4f60586376d24885" }
+ic-cdk-macros = { git = "https://github.com/hpeebles/cdk-rs", rev = "c691102b47515f1b7bd46ceae9261b303f691269" }
 ic-stable-structures = { git = "https://github.com/hpeebles/stable-structures", rev = "5fb22b3221765acb5fab626217896fb23a52023d" }
 range-set = { git = "https://github.com/hpeebles/range-set", rev = "d776de4e38b9d7bf755910da5513c2d8c107bf7e" }
