@@ -8,12 +8,6 @@ pub struct AccountBilling {
     charges: Vec<AccountCharge>,
 }
 
-impl AccountBilling {
-    pub fn add_charge(&mut self, charge: AccountCharge) {
-        self.charges.push(charge);
-    }
-}
-
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct AccountCharge {
     pub amount: ICP,

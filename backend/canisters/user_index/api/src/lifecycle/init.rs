@@ -7,9 +7,6 @@ pub struct Args {
     // Only these principals can call upgrade_user_canister_wasm
     pub service_principals: Vec<Principal>,
 
-    // Only these principals can call pending_sms_messages
-    pub sms_service_principals: Vec<Principal>,
-
     pub user_canister_wasm: CanisterWasm,
     pub local_user_index_canister_wasm: CanisterWasm,
     pub group_index_canister_id: CanisterId,
@@ -19,7 +16,5 @@ pub struct Args {
     pub ledger_canister_id: CanisterId,
     pub proposals_bot_user_id: UserId,
     pub wasm_version: Version,
-
-    // Accepts confirmation code 123456
     pub test_mode: bool,
 }

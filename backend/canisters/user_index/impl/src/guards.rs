@@ -24,14 +24,6 @@ pub fn caller_is_group_index() -> Result<(), String> {
     }
 }
 
-pub fn caller_is_sms_sender() -> Result<(), String> {
-    if read_state(|state| state.is_caller_sms_service()) {
-        Ok(())
-    } else {
-        Err("Caller is not the sms sender".to_string())
-    }
-}
-
 pub fn caller_is_super_admin() -> Result<(), String> {
     if read_state(|state| state.is_caller_super_admin()) {
         Ok(())

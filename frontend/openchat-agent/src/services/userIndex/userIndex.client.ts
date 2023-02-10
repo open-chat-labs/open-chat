@@ -3,17 +3,12 @@ import { Principal } from "@dfinity/principal";
 import { idlFactory, UserIndexService } from "./candid/idl";
 import type {
     CheckUsernameResponse,
-    ConfirmPhoneNumberResponse,
     CurrentUserResponse,
-    SubmitPhoneNumberResponse,
     SetUsernameResponse,
-    PhoneNumber,
-    ResendCodeResponse,
     UsersArgs,
     UsersResponse,
     UserSummary,
     RegisterUserResponse,
-    UpgradeStorageResponse,
     ChallengeAttempt,
     CreateChallengeResponse,
     SuspendUserResponse,
@@ -29,13 +24,9 @@ import {
     setUsernameResponse,
     createChallengeResponse,
     currentUserResponse,
-    submitPhoneNumberResponse,
-    confirmPhoneNumber,
-    resendCodeResponse,
     usersResponse,
     userSearchResponse,
     registerUserResponse,
-    upgradeStorageResponse,
     suspendUserResponse,
     unsuspendUserResponse,
     apiCryptocurrency,
@@ -130,21 +121,6 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
     }
 
     @profile("userIndexClient")
-    upgradeStorage(newLimitBytes: number): Promise<UpgradeStorageResponse> {
-        return this.handleResponse(
-            this.userService.upgrade_storage({
-                new_storage_limit_bytes: BigInt(newLimitBytes),
-            }),
-            upgradeStorageResponse
-        );
-    }
-
-    @profile("userIndexClient")
-    resendRegistrationCode(): Promise<ResendCodeResponse> {
-        return this.handleResponse(this.userService.resend_code({}), resendCodeResponse);
-    }
-
-    @profile("userIndexClient")
     checkUsername(username: string): Promise<CheckUsernameResponse> {
         const args = {
             username: username,
@@ -163,29 +139,6 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
                 username: username,
             }),
             setUsernameResponse
-        );
-    }
-
-    @profile("userIndexClient")
-    submitPhoneNumber(phoneNumber: PhoneNumber): Promise<SubmitPhoneNumberResponse> {
-        return this.handleResponse(
-            this.userService.submit_phone_number({
-                phone_number: {
-                    country_code: phoneNumber.countryCode,
-                    number: phoneNumber.number,
-                },
-            }),
-            submitPhoneNumberResponse
-        );
-    }
-
-    @profile("userIndexClient")
-    confirmPhoneNumber(code: string): Promise<ConfirmPhoneNumberResponse> {
-        return this.handleResponse(
-            this.userService.confirm_phone_number({
-                confirmation_code: code,
-            }),
-            confirmPhoneNumber
         );
     }
 

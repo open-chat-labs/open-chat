@@ -16,14 +16,7 @@ fn accept_if_valid(runtime_state: &RuntimeState) {
     }
 
     let is_valid = match method_name.as_str() {
-        "confirm_phone_number"
-        | "create_canister"
-        | "mark_as_online"
-        | "pay_for_diamond_membership"
-        | "resend_code"
-        | "set_username"
-        | "upgrade_storage"
-        | "mark_suspected_bot" => {
+        "create_canister" | "mark_as_online" | "pay_for_diamond_membership" | "set_username" | "mark_suspected_bot" => {
             let caller = runtime_state.env.caller();
             let is_user = runtime_state.data.users.get_by_principal(&caller).is_some();
             is_user
@@ -37,12 +30,7 @@ fn accept_if_valid(runtime_state: &RuntimeState) {
         | "upgrade_local_user_index_canister_wasm"
         | "mark_local_user_index_full"
         | "suspected_bots" => runtime_state.is_caller_service_principal(),
-        "remove_sms_messages" => runtime_state.is_caller_sms_service(),
-        "create_challenge"
-        | "generate_registration_fee"
-        | "notify_registration_fee_paid"
-        | "register_user"
-        | "submit_phone_number" => true,
+        "create_challenge" | "notify_registration_fee_paid" | "register_user" => true,
         _ => false,
     };
 

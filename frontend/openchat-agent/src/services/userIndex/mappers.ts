@@ -3,16 +3,10 @@ import {
     SetUsernameResponse,
     CurrentUserResponse,
     CreateChallengeResponse,
-    SubmitPhoneNumberResponse,
-    ConfirmPhoneNumberResponse,
-    PhoneNumber,
-    ResendCodeResponse,
     UsersResponse,
     UserSummary,
     PartialUserSummary,
     RegisterUserResponse,
-    PhoneStatus,
-    UpgradeStorageResponse,
     Version,
     UnsupportedValueError,
     SuspendUserResponse,
@@ -26,25 +20,19 @@ import {
 } from "openchat-shared";
 import type {
     ApiCheckUsernameResponse,
-    ApiConfirmPhoneNumberResponse,
     ApiCreateChallengeResponse,
     ApiCurrentUserResponse,
     ApiDiamondMembershipDetails,
     ApiDiamondMembershipPlanDuration,
     ApiPartialUserSummary,
     ApiPayForDiamondMembershipResponse,
-    ApiPhoneNumber,
-    ApiPhoneStatus,
     ApiRegisterUserResponse,
-    ApiResendCodeResponse,
     ApiSearchResponse,
     ApiSetUsernameResponse,
-    ApiSubmitPhoneNumberResponse,
     ApiSuspendUserResponse,
     ApiSuspensionAction,
     ApiSuspensionDetails,
     ApiUnsuspendUserResponse,
-    ApiUpgradeStorageResponse,
     ApiUsersResponse,
     ApiUserSummary,
 } from "./candid/idl";
@@ -104,30 +92,6 @@ export function userSummary(candid: ApiUserSummary, timestamp: bigint): UserSumm
     };
 }
 
-export function submitPhoneNumberResponse(
-    candid: ApiSubmitPhoneNumberResponse
-): SubmitPhoneNumberResponse {
-    if ("Success" in candid) {
-        return "success";
-    }
-    if ("AlreadyRegistered" in candid) {
-        return "already_registered";
-    }
-    if ("AlreadyRegisteredByOther" in candid) {
-        return "already_registered_by_other";
-    }
-    if ("InvalidPhoneNumber" in candid) {
-        return "invalid_phone_number";
-    }
-    if ("UserNotFound" in candid) {
-        return "user_not_found";
-    }
-    throw new UnsupportedValueError(
-        "Unexpected ApiSubmitPhoneNumberResponse type received",
-        candid
-    );
-}
-
 export function createChallengeResponse(
     candid: ApiCreateChallengeResponse
 ): CreateChallengeResponse {
@@ -183,66 +147,6 @@ export function registerUserResponse(candid: ApiRegisterUserResponse): RegisterU
     throw new UnsupportedValueError("Unexpected ApiRegisterUserResponse type received", candid);
 }
 
-export function confirmPhoneNumber(
-    candid: ApiConfirmPhoneNumberResponse
-): ConfirmPhoneNumberResponse {
-    if ("Success" in candid)
-        return {
-            kind: "success",
-            storageLimitBytes: Number(candid.Success.open_storage_limit_bytes),
-        };
-    if ("UserNotFound" in candid) return { kind: "not_found" };
-    if ("AlreadyClaimed" in candid) return { kind: "already_claimed" };
-    if ("ConfirmationCodeExpired" in candid) return { kind: "code_expired" };
-    if ("ConfirmationCodeIncorrect" in candid) return { kind: "code_incorrect" };
-    if ("PhoneNumberNotSubmitted" in candid) {
-        return { kind: "phone_number_not_submitted" };
-    }
-
-    throw new UnsupportedValueError(
-        "Unexpected ApiConfirmPhoneNumberResponse type received",
-        candid
-    );
-}
-
-export function phoneNumber(candid: ApiPhoneNumber): PhoneNumber {
-    return {
-        countryCode: candid.country_code,
-        number: candid.number,
-    };
-}
-
-export function upgradeStorageResponse(candid: ApiUpgradeStorageResponse): UpgradeStorageResponse {
-    if ("SuccessNoChange" in candid) {
-        return { kind: "success_no_change" };
-    }
-    if ("Success" in candid) {
-        return {
-            kind: "success",
-        };
-    }
-    if ("PaymentNotFound" in candid) {
-        return { kind: "payment_not_found" };
-    }
-    if ("PaymentInsufficient" in candid) {
-        return {
-            kind: "payment_insufficient",
-            accountBalancee8s: Number(candid.PaymentInsufficient.account_balance.e8s),
-            ammountRequirede8s: Number(candid.PaymentInsufficient.amount_required.e8s),
-        };
-    }
-    if ("InternalError" in candid) {
-        return { kind: "internal_error" };
-    }
-    if ("StorageLimitExceeded" in candid) {
-        return { kind: "storage_limit_exceeded" };
-    }
-    if ("UserNotFound" in candid) {
-        return { kind: "user_not_found" };
-    }
-    throw new UnsupportedValueError("Unexpected ApiUpgradeStorageResponse type received", candid);
-}
-
 export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUserResponse {
     if ("Success" in candid) {
         const r = candid.Success;
@@ -254,7 +158,6 @@ export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUser
             userId: r.user_id.toString(),
             username: r.username,
             cryptoAccount: bytesToHexString(r.icp_account),
-            phoneStatus: phoneStatus(r.phone_status),
             canisterUpgradeStatus:
                 "Required" in r.canister_upgrade_status
                     ? "required"
@@ -262,7 +165,6 @@ export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUser
                     ? "not_required"
                     : "in_progress",
             wasmVersion: new Version(version.major, version.minor, version.patch),
-            openStorageLimitBytes: Number(r.open_storage_limit_bytes),
             referrals: r.referrals.map((p) => p.toString()),
             isSuperAdmin: r.is_super_admin,
             suspensionDetails: optional(r.suspension_details, suspensionDetails),
@@ -324,23 +226,6 @@ function suspensionAction(candid: ApiSuspensionAction): SuspensionAction {
     throw new Error(`Unexpected ApiSuspensionAction type received: ${candid}`);
 }
 
-export function phoneStatus(candid: ApiPhoneStatus): PhoneStatus {
-    if ("Unconfirmed" in candid) {
-        return {
-            kind: "unconfirmed",
-            validUntil: Number(candid.Unconfirmed.valid_until),
-            phoneNumber: phoneNumber(candid.Unconfirmed.phone_number),
-        };
-    }
-    if ("None" in candid) {
-        return { kind: "none" };
-    }
-    if ("Confirmed" in candid) {
-        return { kind: "confirmed" };
-    }
-    throw new UnsupportedValueError("Unexpected ApiPhoneStatus type received", candid);
-}
-
 export function checkUsernameResponse(candid: ApiCheckUsernameResponse): CheckUsernameResponse {
     if ("Success" in candid) {
         return "success";
@@ -380,22 +265,6 @@ export function setUsernameResponse(candid: ApiSetUsernameResponse): SetUsername
         return "username_invalid";
     }
     throw new UnsupportedValueError("Unexpected ApiSetUsernameResponse type received", candid);
-}
-
-export function resendCodeResponse(candid: ApiResendCodeResponse): ResendCodeResponse {
-    if ("Success" in candid) {
-        return "success";
-    }
-    if ("PhoneNumberAlreadyConfirmed" in candid) {
-        return "phone_number_already_confirmed";
-    }
-    if ("UserNotFound" in candid) {
-        return "user_not_found";
-    }
-    if ("PhoneNumberNotSubmitted" in candid) {
-        return "phone_number_not_submitted";
-    }
-    throw new UnsupportedValueError("Unexpected ApiResendCodeResponse type received", candid);
 }
 
 export function suspendUserResponse(candid: ApiSuspendUserResponse): SuspendUserResponse {
