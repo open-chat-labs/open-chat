@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.587](https://github.com/open-ic/open-chat/releases/tag/v2.0.587-local_user_index)] - 2023-02-10
+
 ### Added
 
 - Added `DiamondMembershipPaymentReceived` event type ([#3069](https://github.com/open-ic/open-chat/pull/3069))
