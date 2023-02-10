@@ -11,7 +11,9 @@ use model::local_user_index_map::LocalUserIndexMap;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{HashSet, VecDeque};
-use types::{CanisterId, CanisterWasm, ChatId, Cycles, Milliseconds, TimestampMillis, Timestamped, UserId, Version};
+use types::{
+    CanisterId, CanisterWasm, ChatId, Cryptocurrency, Cycles, Milliseconds, TimestampMillis, Timestamped, UserId, Version,
+};
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::canister_event_sync_queue::CanisterEventSyncQueue;
 use utils::env::Environment;
@@ -82,6 +84,7 @@ impl RuntimeState {
     }
 
     pub fn metrics(&self) -> Metrics {
+        let now = self.env.now();
         let canister_upgrades_metrics = self.data.canisters_requiring_upgrade.metrics();
         Metrics {
             memory_used: utils::memory::used(),
@@ -91,6 +94,7 @@ impl RuntimeState {
             git_commit_id: utils::git::git_commit_id().to_string(),
             total_cycles_spent_on_canisters: self.data.total_cycles_spent_on_canisters,
             users_created: self.data.users.len() as u64,
+            diamond_users: self.data.users.diamond_metrics(now),
             canister_upgrades_completed: canister_upgrades_metrics.completed,
             canister_upgrades_failed: canister_upgrades_metrics.failed,
             canister_upgrades_pending: canister_upgrades_metrics.pending as u64,
@@ -243,6 +247,7 @@ pub struct Metrics {
     pub git_commit_id: String,
     pub total_cycles_spent_on_canisters: Cycles,
     pub users_created: u64,
+    pub diamond_users: DiamondMetrics,
     pub canister_upgrades_completed: u64,
     pub canister_upgrades_failed: Vec<FailedUpgradeCount>,
     pub canister_upgrades_pending: u64,
@@ -256,6 +261,13 @@ pub struct Metrics {
     pub user_index_events_queue_length: usize,
     pub local_user_indexes: Vec<(CanisterId, LocalUserIndex)>,
     pub canister_ids: CanisterIds,
+}
+
+#[derive(Serialize, Debug, Default)]
+pub struct DiamondMetrics {
+    pub total: u64,
+    pub recurring: u64,
+    pub amount_raised: Vec<(Cryptocurrency, u128)>,
 }
 
 #[derive(Serialize, Debug)]
