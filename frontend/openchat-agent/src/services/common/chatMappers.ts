@@ -183,6 +183,7 @@ function prizeContent(candid: ApiPrizeContent): PrizeContent {
     return {
         kind: "prize_content",
         prizesRemaining: candid.prizes_remaining,
+        prizesPending: candid.prizes_pending,
         winners: candid.winners.map((u) => u.toString()),
         token: token(candid.token),
         endDate: candid.end_date,

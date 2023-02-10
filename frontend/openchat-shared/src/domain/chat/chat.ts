@@ -148,6 +148,7 @@ export interface PrizeWinnerContent {
 export interface PrizeContent {
     kind: "prize_content";
     prizesRemaining: number;
+    prizesPending: number;
     winners: string[];
     token: Cryptocurrency;
     endDate: bigint;
