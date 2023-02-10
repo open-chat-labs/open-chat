@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Removed
+
+- Removed code for upgrading storage and confirming phone number ([#3110](https://github.com/open-ic/open-chat/pull/3110))
+
 ## [[2.0.584](https://github.com/open-ic/open-chat/releases/tag/v2.0.584-user_index)] - 2023-02-09
 
 ### Changed
