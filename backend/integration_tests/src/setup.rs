@@ -75,7 +75,6 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
 
     let user_index_init_args = user_index_canister::init::Args {
         service_principals: vec![controller],
-        sms_service_principals: vec![controller],
         user_canister_wasm,
         local_user_index_canister_wasm,
         group_index_canister_id,

@@ -1124,6 +1124,7 @@ function mergeLocalUpdates(
             if (!message.content.winners.includes(localUpdates.prizeClaimed)) {
                 message.content.winners.push(localUpdates.prizeClaimed);
                 message.content.prizesRemaining -= 1;
+                message.content.prizesPending += 1;
             }
         }
     }
