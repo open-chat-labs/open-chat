@@ -70,6 +70,7 @@ pub async fn install(canister_id: CanisterId, wasm_module: Vec<u8>, wasm_arg: Ve
         canister_id,
         wasm_module,
         arg: wasm_arg,
+        unsafe_drop_stable_memory: None,
     })
     .await
     .map_err(|(code, msg)| {

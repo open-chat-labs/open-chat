@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Update cdk to v0.7.0 ([#3115](https://github.com/open-ic/open-chat/pull/3115))
+- Drop group canister stable memory after upgrade ([#3116](https://github.com/open-ic/open-chat/pull/3116))
 
 ## [[2.0.582](https://github.com/open-ic/open-chat/releases/tag/v2.0.582-local_group_index)] - 2023-02-09
 
