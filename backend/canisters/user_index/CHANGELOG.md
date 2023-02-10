@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.584](https://github.com/open-ic/open-chat/releases/tag/v2.0.584-user_index)] - 2023-02-09
+
 ### Changed
 
 - Push all users to OpenStorage with the new storage limits ([#3104](https://github.com/open-ic/open-chat/pull/3104))
