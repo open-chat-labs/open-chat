@@ -19,6 +19,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Removed one-time code to fix incorrect ICP transaction hashes ([#3063](https://github.com/open-ic/open-chat/pull/3063))
 - Removed one-time code to migrate `chat_events` to the new format ([#3064](https://github.com/open-ic/open-chat/pull/3064))
 
+### Fixed
+
+- Fixed latest message not being returned when getting updates ([#3120](https://github.com/open-ic/open-chat/pull/3120))
+
 ## [[2.0.578](https://github.com/open-ic/open-chat/releases/tag/v2.0.578-user)] - 2023-02-04
 
 ### Added
