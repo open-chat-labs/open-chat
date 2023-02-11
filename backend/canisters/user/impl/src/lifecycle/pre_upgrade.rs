@@ -1,9 +1,8 @@
 use crate::lifecycle::UPGRADE_BUFFER_SIZE;
-use crate::memory::get_upgrades_memory;
 use crate::take_state;
 use canister_tracing_macros::trace;
 use ic_cdk_macros::pre_upgrade;
-use ic_stable_structures::writer::{BufferedWriter, Writer};
+use stable_memory::serialize_to_stable_memory;
 use tracing::info;
 
 #[pre_upgrade]
@@ -17,8 +16,5 @@ fn pre_upgrade() {
 
     let stable_state = (state.data, logs, traces);
 
-    let mut memory = get_upgrades_memory();
-    let writer = BufferedWriter::new(UPGRADE_BUFFER_SIZE, Writer::new(&mut memory, 0));
-
-    serializer::serialize(stable_state, writer).unwrap();
+    serialize_to_stable_memory(stable_state, UPGRADE_BUFFER_SIZE).unwrap();
 }
