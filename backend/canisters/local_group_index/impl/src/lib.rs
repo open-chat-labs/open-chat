@@ -1,9 +1,11 @@
+use crate::reinstall_group::GroupBeingReinstalled;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use model::local_group_map::LocalGroupMap;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
-use types::{CanisterId, CanisterWasm, Cycles, Milliseconds, TimestampMillis, Timestamped, UserId, Version};
+use std::collections::BTreeMap;
+use types::{CanisterId, CanisterWasm, ChatId, Cycles, Milliseconds, TimestampMillis, Timestamped, UserId, Version};
 use utils::canister;
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::consts::CYCLES_REQUIRED_FOR_UPGRADE;
@@ -14,6 +16,7 @@ mod lifecycle;
 mod memory;
 mod model;
 mod queries;
+mod reinstall_group;
 mod updates;
 
 const GROUP_CANISTER_INITIAL_CYCLES_BALANCE: Cycles = CYCLES_REQUIRED_FOR_UPGRADE + GROUP_CANISTER_TOP_UP_AMOUNT; // 0.18T cycles
@@ -98,6 +101,7 @@ struct Data {
     pub total_cycles_spent_on_canisters: Cycles,
     pub test_mode: bool,
     pub max_concurrent_canister_upgrades: u32,
+    pub groups_being_reinstalled: BTreeMap<ChatId, GroupBeingReinstalled>,
 }
 
 fn proposals_bot_user_id() -> UserId {
@@ -133,6 +137,7 @@ impl Data {
             total_cycles_spent_on_canisters: 0,
             test_mode,
             max_concurrent_canister_upgrades: 2,
+            groups_being_reinstalled: BTreeMap::new(),
         }
     }
 }

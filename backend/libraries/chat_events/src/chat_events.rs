@@ -847,6 +847,17 @@ impl ChatEvents {
         self.push_event(None, event, correlation_id, now)
     }
 
+    pub fn push_thread_event(
+        &mut self,
+        thread_root_message_index: MessageIndex,
+        event: ChatEventInternal,
+        correlation_id: u64,
+        now: TimestampMillis,
+    ) -> EventIndex {
+        let events = self.threads.entry(thread_root_message_index).or_default();
+        events.push_event(event, correlation_id, None, now)
+    }
+
     pub fn hydrate_mention(
         &self,
         min_visible_event_index: EventIndex,

@@ -13,7 +13,7 @@ async fn c2c_unfreeze_group(args: Args) -> Response {
     mutate_state(|state| c2c_unfreeze_group_impl(args, state))
 }
 
-fn c2c_unfreeze_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
+pub(crate) fn c2c_unfreeze_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     if runtime_state.data.frozen.is_some() {
         let now = runtime_state.env.now();
 

@@ -253,6 +253,8 @@ struct Data {
     pub frozen: Timestamped<Option<FrozenGroupInfo>>,
     pub timer_jobs: TimerJobs<TimerJob>,
     pub date_last_pinned: Option<TimestampMillis>,
+    #[serde(default)]
+    pub initialized: bool,
 }
 
 fn proposals_bot_user_id() -> UserId {
@@ -284,8 +286,17 @@ impl Data {
         proposals_bot_user_id: UserId,
         test_mode: bool,
         permissions: Option<GroupPermissions>,
+        is_reinstall: bool,
+        date_created_override: Option<TimestampMillis>,
+        invite_code: Option<u64>,
+        invite_code_enabled: bool,
+        frozen: Option<FrozenGroupInfo>,
     ) -> Data {
-        let participants = Participants::new(creator_principal, creator_user_id, now);
+        let participants = if is_reinstall {
+            Participants::default()
+        } else {
+            Participants::new(creator_principal, creator_user_id, now)
+        };
         let events = ChatEvents::new_group_chat(chat_id, name.clone(), description.clone(), creator_user_id, events_ttl, now);
 
         Data {
@@ -298,7 +309,7 @@ impl Data {
             history_visible_to_new_joiners,
             participants,
             events,
-            date_created: now,
+            date_created: date_created_override.unwrap_or(now),
             mark_active_duration,
             group_index_canister_id,
             local_group_index_canister_id,
@@ -312,12 +323,13 @@ impl Data {
             test_mode,
             owner_id: creator_user_id,
             permissions: permissions.unwrap_or_default(),
-            invite_code: None,
-            invite_code_enabled: false,
+            invite_code,
+            invite_code_enabled,
             new_joiner_rewards: None,
-            frozen: Timestamped::default(),
+            frozen: Timestamped::new(frozen, now),
             timer_jobs: TimerJobs::default(),
             date_last_pinned: None,
+            initialized: !is_reinstall,
         }
     }
 

@@ -184,7 +184,7 @@ pub struct UpdatedMessage {
 pub struct PollVoteRegistered {
     pub user_id: UserId,
     pub message_id: MessageId,
-    pub existing_vote_removed: bool,
+    pub existing_vote_removed: bool, // TODO do we need this?
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
