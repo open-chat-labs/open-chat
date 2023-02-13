@@ -149,6 +149,7 @@ pub async fn reinstall_group(group_id: ChatId) -> Result<(), String> {
         .events
         .iter()
         .flat_map(|e| match &e.event {
+            ChatEventInternal::GroupChatCreated(g) => vec![g.created_by],
             ChatEventInternal::ParticipantsAdded(p) => p.user_ids.clone(),
             ChatEventInternal::ParticipantJoined(p) => vec![p.user_id],
             _ => vec![],
@@ -228,6 +229,14 @@ pub async fn reinstall_group(group_id: ChatId) -> Result<(), String> {
     )
     .await
     .map_err(|e| format!("Failed to call 'c2c_initialize_events'. {e:?}"))?;
+
+    // Unfreeze the group
+    group_index_canister_c2c_client::unfreeze_group(
+        group_index,
+        &group_index_canister::unfreeze_group::Args { chat_id: group_id },
+    )
+    .await
+    .map_err(|e| format!("Failed to unfreeze group. {e:?}"))?;
 
     info!(%group_id, "Group reinstalled");
     Ok(())

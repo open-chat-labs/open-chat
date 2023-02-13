@@ -1,6 +1,5 @@
 use crate::guards::caller_is_group_index;
 use crate::timer_job_types::{EndPollJob, HardDeleteMessageContentJob, TimerJob};
-use crate::updates::c2c_unfreeze_group::c2c_unfreeze_group_impl;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use candid::Principal;
 use canister_api_macros::update_msgpack;
@@ -27,7 +26,12 @@ fn c2c_initialize_events_impl(args: Args, runtime_state: &mut RuntimeState) -> R
         panic!("AlreadyInitialized");
     }
 
-    for event in args.events {
+    // Skip the GroupChatCreated event since it has already been added
+    for event in args
+        .events
+        .into_iter()
+        .skip_while(|e| matches!(e.event, ChatEventInternal::GroupChatCreated(_)))
+    {
         let result = runtime_state
             .data
             .events
@@ -219,12 +223,6 @@ fn process_completed_events(user_principals: HashMap<UserId, Principal>, runtime
         }
     }
 
-    c2c_unfreeze_group_impl(
-        group_canister::c2c_unfreeze_group::Args {
-            caller: runtime_state.env.caller().into(),
-        },
-        runtime_state,
-    );
     runtime_state.data.initialized = true;
 }
 

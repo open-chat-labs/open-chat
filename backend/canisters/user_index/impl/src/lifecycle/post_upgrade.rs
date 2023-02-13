@@ -39,20 +39,18 @@ fn post_upgrade(args: Args) {
         let now = state.env.now();
 
         for (index, canister_id) in local_group_indexes.into_iter().enumerate() {
-            let username = format!("GroupUpgradeBot{index}");
-            state.data.users.register(
-                canister_id,
-                canister_id.into(),
-                Version::default(),
-                username.clone(),
-                now,
-                None,
-                true,
-            );
+            let username = format!("GroupUpgradeBot{}", index + 1);
+            let user_id = canister_id.into();
+            state
+                .data
+                .users
+                .register(canister_id, user_id, Version::default(), username.clone(), now, None, true);
+
+            state.data.super_admins.insert(user_id);
 
             state.data.push_event_to_all_local_user_indexes(
                 Event::UserRegistered(UserRegistered {
-                    user_id: canister_id.into(),
+                    user_id,
                     user_principal: canister_id,
                     username,
                     is_bot: true,

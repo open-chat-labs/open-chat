@@ -101,6 +101,7 @@ struct Data {
     pub total_cycles_spent_on_canisters: Cycles,
     pub test_mode: bool,
     pub max_concurrent_canister_upgrades: u32,
+    #[serde(default)]
     pub groups_being_reinstalled: BTreeMap<ChatId, GroupBeingReinstalled>,
 }
 

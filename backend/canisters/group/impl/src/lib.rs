@@ -292,24 +292,28 @@ impl Data {
         invite_code_enabled: bool,
         frozen: Option<FrozenGroupInfo>,
     ) -> Data {
-        let participants = if is_reinstall {
-            Participants::default()
-        } else {
-            Participants::new(creator_principal, creator_user_id, now)
-        };
-        let events = ChatEvents::new_group_chat(chat_id, name.clone(), description.clone(), creator_user_id, events_ttl, now);
+        let date_created = date_created_override.unwrap_or(now);
+        let participants = Participants::new(creator_principal, creator_user_id, date_created);
+        let events = ChatEvents::new_group_chat(
+            chat_id,
+            name.clone(),
+            description.clone(),
+            creator_user_id,
+            events_ttl,
+            date_created,
+        );
 
         Data {
             is_public,
             name,
             description,
             rules,
-            subtype: Timestamped::new(subtype, now),
+            subtype: Timestamped::new(subtype, date_created),
             avatar,
             history_visible_to_new_joiners,
             participants,
             events,
-            date_created: date_created_override.unwrap_or(now),
+            date_created,
             mark_active_duration,
             group_index_canister_id,
             local_group_index_canister_id,
