@@ -139,7 +139,6 @@ debug = false
 [patch.crates-io]
 candid = { git = "https://github.com/hpeebles/candid", rev = "bc66c9eb4373f0312c5874652c87badc5e843f04" }
 candid_derive = { git = "https://github.com/hpeebles/candid", rev = "bc66c9eb4373f0312c5874652c87badc5e843f04" }
-ic-cdk = { git = "https://github.com/hpeebles/cdk-rs", rev = "22c7af6e6f49c39ea681d8a1006129a950ad8da1" }
-ic-cdk-macros = { git = "https://github.com/hpeebles/cdk-rs", rev = "22c7af6e6f49c39ea681d8a1006129a950ad8da1" }
+ic-cdk-macros = { git = "https://github.com/hpeebles/cdk-rs", rev = "c691102b47515f1b7bd46ceae9261b303f691269" }
 ic-stable-structures = { git = "https://github.com/hpeebles/stable-structures", rev = "5fb22b3221765acb5fab626217896fb23a52023d" }
 range-set = { git = "https://github.com/hpeebles/range-set", rev = "d776de4e38b9d7bf755910da5513c2d8c107bf7e" }

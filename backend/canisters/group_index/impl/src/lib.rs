@@ -93,7 +93,6 @@ struct Data {
     pub user_index_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
     pub ledger_canister_id: CanisterId,
-    #[serde(default = "proposals_bot_user_id")]
     pub proposals_bot_user_id: UserId,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub test_mode: bool,
@@ -101,10 +100,6 @@ struct Data {
     pub cached_hot_groups: CachedHotGroups,
     pub cached_metrics: CachedMetrics,
     pub local_index_map: LocalGroupIndexMap,
-}
-
-fn proposals_bot_user_id() -> UserId {
-    Principal::from_text("iywa7-ayaaa-aaaaf-aemga-cai").unwrap().into()
 }
 
 impl Data {
