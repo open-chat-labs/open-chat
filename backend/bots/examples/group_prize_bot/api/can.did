@@ -86,7 +86,10 @@ type LeaveGroupsArgs =
 type LeaveGroupsResponse =
     variant {
         Success;
-        GroupNotFound;
+        CallerNotInGroup;
+        OwnerCannotLeave;
+        UserSuspended;
+        ChatFrozen;
         InternalError: text;
     };
 
