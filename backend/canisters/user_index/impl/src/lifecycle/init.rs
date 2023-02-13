@@ -5,6 +5,7 @@ use ic_cdk_macros::init;
 use tracing::info;
 use user_index_canister::init::Args;
 use utils::cycles::init_cycles_dispenser_client;
+use utils::env::Environment;
 
 #[init]
 #[trace]
@@ -24,7 +25,9 @@ fn init(args: Args) {
         args.open_storage_index_canister_id,
         args.ledger_canister_id,
         args.proposals_bot_user_id,
+        args.local_group_index_canister_ids,
         args.test_mode,
+        env.now(),
     );
 
     init_state(env, data, args.wasm_version);

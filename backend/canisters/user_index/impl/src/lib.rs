@@ -6,7 +6,7 @@ use crate::model::user_map::UserMap;
 use crate::model::user_principal_migration_queue::UserPrincipalMigrationQueue;
 use candid::Principal;
 use canister_state_macros::canister_state;
-use local_user_index_canister::Event as LocalUserIndexEvent;
+use local_user_index_canister::{Event as LocalUserIndexEvent, Event, SuperAdminStatusChanged, UserRegistered};
 use model::local_user_index_map::LocalUserIndexMap;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
@@ -154,23 +154,12 @@ impl Data {
         open_storage_index_canister_id: CanisterId,
         ledger_canister_id: CanisterId,
         proposals_bot_user_id: UserId,
+        local_group_index_canister_ids: Vec<CanisterId>,
         test_mode: bool,
+        now: TimestampMillis,
     ) -> Self {
-        let mut users = UserMap::default();
-
-        // Register the ProposalsBot
-        users.register(
-            proposals_bot_user_id.into(),
-            proposals_bot_user_id,
-            user_canister_wasm.version,
-            "ProposalsBot".to_string(),
-            0,
-            None,
-            true,
-        );
-
-        Data {
-            users,
+        let mut data = Data {
+            users: UserMap::default(),
             service_principals: service_principals.into_iter().collect(),
             user_canister_wasm,
             local_user_index_canister_wasm,
@@ -191,7 +180,25 @@ impl Data {
             max_concurrent_canister_upgrades: 2,
             set_user_suspended_queue: SetUserSuspendedQueue::default(),
             local_index_map: LocalUserIndexMap::default(),
+        };
+
+        // Register the ProposalsBot
+        data.users.register(
+            proposals_bot_user_id.into(),
+            proposals_bot_user_id,
+            Version::default(),
+            "ProposalsBot".to_string(),
+            0,
+            None,
+            true,
+        );
+
+        for (index, canister_id) in local_group_index_canister_ids.into_iter().enumerate() {
+            let username = format!("GroupUpgradeBot{}", index + 1);
+            data.register_super_admin_bot(canister_id, username, now);
         }
+
+        data
     }
 
     pub fn push_event_to_local_user_index(&mut self, user_id: UserId, event: LocalUserIndexEvent) {
@@ -206,6 +213,33 @@ impl Data {
                 self.user_index_event_sync_queue.push(*canister_id, event.clone());
             }
         }
+    }
+
+    fn register_super_admin_bot(&mut self, canister_id: CanisterId, username: String, now: TimestampMillis) {
+        let user_id = canister_id.into();
+        self.users
+            .register(canister_id, user_id, Version::default(), username.clone(), now, None, true);
+
+        self.super_admins.insert(user_id);
+
+        self.push_event_to_all_local_user_indexes(
+            Event::UserRegistered(UserRegistered {
+                user_id,
+                user_principal: canister_id,
+                username,
+                is_bot: true,
+                referred_by: None,
+            }),
+            None,
+        );
+
+        self.push_event_to_all_local_user_indexes(
+            Event::SuperAdminStatusChanged(SuperAdminStatusChanged {
+                user_id,
+                is_super_admin: true,
+            }),
+            None,
+        );
     }
 }
 

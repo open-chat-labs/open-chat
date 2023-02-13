@@ -228,6 +228,11 @@ pub async fn reinstall_group(group_id: ChatId) -> Result<(), String> {
     .await
     .map_err(|e| format!("Failed to unfreeze group. {e:?}"))?;
 
+    // Leave the group
+    group_canister_c2c_client::c2c_leave_group(group_id.into(), &group_canister::c2c_leave_group::Args { correlation_id: 0 })
+        .await
+        .map_err(|e| format!("Failed to leave group. {e:?}"))?;
+
     info!(%group_id, "Group reinstalled");
     Ok(())
 }
