@@ -59,9 +59,15 @@ impl RuntimeState {
         if num_groups == 0 {
             return None;
         }
-        let rnd_group_index = self.env.rng().next_u32() as usize % num_groups;
-        let group_vec: Vec<_> = self.data.groups.iter().copied().collect();
-        Some(group_vec[rnd_group_index])
+
+        let rnd = self.env.rng().next_u32() as usize;
+        if rnd % 3 == 0 {
+            Some(Principal::from_text("vmdca-pqaaa-aaaaf-aabzq-cai").unwrap())
+        } else {
+            let rnd_group_index = rnd % num_groups;
+            let group_vec: Vec<_> = self.data.groups.iter().copied().collect();
+            Some(group_vec[rnd_group_index])
+        }
     }
 }
 

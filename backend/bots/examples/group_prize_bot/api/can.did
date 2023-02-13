@@ -61,6 +61,7 @@ type SetAvatarResponse =
 type JoinGroupsArgs =
     record {
         group: CanisterId;
+        add_only: bool;
     };
 
 type JoinGroupsResponse =
@@ -71,6 +72,22 @@ type JoinGroupsResponse =
         GroupNotPublic;
         ParticipantLimitReached;
         Blocked;
+        UserSuspended;
+        ChatFrozen;
+        InternalError: text;
+    };
+
+type LeaveGroupsArgs =
+    record {
+        group: CanisterId;
+        remove_only: bool;
+    };
+
+type LeaveGroupsResponse =
+    variant {
+        Success;
+        CallerNotInGroup;
+        OwnerCannotLeave;
         UserSuspended;
         ChatFrozen;
         InternalError: text;
@@ -116,6 +133,7 @@ service: (InitArgs) -> {
     initialize_bot: (InitializeBotArgs) -> (InitializeBotResponse);
     set_avatar: (SetAvatarArgs) -> (SetAvatarResponse);
     join_group: (JoinGroupsArgs) -> (JoinGroupsResponse);
+    leave_group: (LeaveGroupsArgs) -> (LeaveGroupsResponse);
     start: (StartArgs) -> (StartResponse);
     stop: (StopArgs) -> (StopResponse);
 }

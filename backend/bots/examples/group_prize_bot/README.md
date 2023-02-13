@@ -11,9 +11,10 @@
 
 `dfx canister --network=ic_test call group_prize_bot initialize_bot '(record { username = "BitcoinBot"; token = variant { CKBTC }; ledger_canister_id = principal "mxzaz-hqaaa-aaaar-qaada-cai"; end_date = 1675876516000:nat64; prizes = vec { vec { 50:nat64; 60:nat64; 70:nat64; 80:nat64 }; vec { 20:nat64; 50:nat64; 50:nat64; 200:nat64 }; vec { 10:nat64; 7:nat64 }; vec { 15:nat64; 23:nat64 }}})'`
 
-### Join group
+### Join / leave group
 
-`dfx canister --network=ic_test call group_prize_bot join_group '(record { group = principal "4g7vh-qyaaa-aaaaf-ab2iq-cai" })'`
+`dfx canister --network=ic_test call group_prize_bot join_group '(record { add_only = false; group = principal "4g7vh-qyaaa-aaaaf-ab2iq-cai" })'`
+`dfx canister --network=ic_test call group_prize_bot leave_group '(record { remove_only = false; group = principal "4g7vh-qyaaa-aaaaf-ab2iq-cai" })'`
 
 ### Start / Stop
 
