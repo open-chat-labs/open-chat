@@ -9,16 +9,18 @@ use types::CanisterId;
 #[update(guard = "caller_is_admin")]
 #[trace]
 async fn join_group(args: Args) -> Response {
-    // 1. Lookup the local_user_index for the given group
-    let group = args.group;
-    let local_user_index_canister = match lookup_local_user_index(group).await {
-        Ok(id) => id,
-        Err(response) => return response,
-    };
+    if !args.add_only {
+        // 1. Lookup the local_user_index for the given group
+        let group = args.group;
+        let local_user_index_canister = match lookup_local_user_index(group).await {
+            Ok(id) => id,
+            Err(response) => return response,
+        };
 
-    // 2. Call the local_user_index to join the group
-    if let Err(response) = call_join_group(group, local_user_index_canister).await {
-        return response;
+        // 2. Call the local_user_index to join the group
+        if let Err(response) = call_join_group(group, local_user_index_canister).await {
+            return response;
+        }
     }
 
     // 3. Update the groups set locally

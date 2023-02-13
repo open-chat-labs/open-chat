@@ -240,7 +240,6 @@ struct Data {
     pub local_user_index_canister_id: CanisterId,
     pub notifications_canister_id: CanisterId,
     pub ledger_canister_ids: HashMap<Cryptocurrency, CanisterId>,
-    #[serde(default = "proposals_bot_user_id")]
     pub proposals_bot_user_id: UserId,
     pub activity_notification_state: ActivityNotificationState,
     pub pinned_messages: Vec<MessageIndex>,
@@ -255,10 +254,6 @@ struct Data {
     pub date_last_pinned: Option<TimestampMillis>,
     #[serde(default)]
     pub initialized: bool,
-}
-
-fn proposals_bot_user_id() -> UserId {
-    Principal::from_text("iywa7-ayaaa-aaaaf-aemga-cai").unwrap().into()
 }
 
 #[allow(clippy::too_many_arguments)]

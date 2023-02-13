@@ -95,7 +95,6 @@ struct Data {
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub cycles_dispenser_canister_id: CanisterId,
     pub ledger_canister_id: CanisterId,
-    #[serde(default = "proposals_bot_user_id")]
     pub proposals_bot_user_id: UserId,
     pub canister_pool: canister::Pool,
     pub total_cycles_spent_on_canisters: Cycles,
@@ -103,10 +102,6 @@ struct Data {
     pub max_concurrent_canister_upgrades: u32,
     #[serde(default)]
     pub groups_being_reinstalled: BTreeMap<ChatId, GroupBeingReinstalled>,
-}
-
-fn proposals_bot_user_id() -> UserId {
-    Principal::from_text("iywa7-ayaaa-aaaaf-aemga-cai").unwrap().into()
 }
 
 impl Data {

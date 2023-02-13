@@ -74,7 +74,6 @@ fn try_get_next(runtime_state: &mut RuntimeState) -> GetNextResult {
         current_wasm_version,
         new_wasm,
         deposit_cycles_if_needed: false,
-        drop_stable_memory: false,
         args: local_group_index_canister::post_upgrade::Args { wasm_version },
     })
 }
