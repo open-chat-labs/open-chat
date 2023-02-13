@@ -1,5 +1,4 @@
 use crate::reinstall_group::GroupBeingReinstalled;
-use candid::Principal;
 use canister_state_macros::canister_state;
 use model::local_group_map::LocalGroupMap;
 use serde::{Deserialize, Serialize};

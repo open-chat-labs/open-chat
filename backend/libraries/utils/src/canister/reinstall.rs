@@ -10,7 +10,6 @@ pub async fn reinstall(canister_id: CanisterId, wasm_module: Vec<u8>, wasm_arg: 
         canister_id,
         wasm_module,
         arg: wasm_arg,
-        unsafe_drop_stable_memory: None,
     })
     .await
     .map_err(|(code, msg)| {

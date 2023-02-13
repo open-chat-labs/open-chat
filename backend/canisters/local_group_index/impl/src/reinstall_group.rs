@@ -349,7 +349,7 @@ async fn send_all_events_to_group(group_id: ChatId) -> Result<(), String> {
                 }
             }
 
-            if batch_size_remaining > 0 {
+            if batch_size_remaining > group.user_principals.len() || (args.events.is_empty() && args.thread_events.is_empty()) {
                 args.user_principals = group.user_principals.clone();
                 args.is_complete = true;
             }
