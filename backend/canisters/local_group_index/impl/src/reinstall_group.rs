@@ -257,7 +257,6 @@ async fn get_group_events(
 ) -> Result<Vec<EventWrapper<ChatEventInternal>>, String> {
     let mut error_count = 0;
     let mut next_event_index = since;
-    let mut latest_event_index = EventIndex::default();
     let mut events = Vec::new();
     loop {
         match group_canister_c2c_client::events(
@@ -275,7 +274,6 @@ async fn get_group_events(
         .await
         {
             Ok(group_canister::events::Response::Success(result)) => {
-                latest_event_index = result.latest_event_index;
                 if let Some(synced_up_to) = result.events.last().map(|e| e.index) {
                     next_event_index = synced_up_to.incr();
                 }

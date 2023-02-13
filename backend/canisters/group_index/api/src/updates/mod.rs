@@ -6,6 +6,7 @@ pub mod c2c_mark_active;
 pub mod c2c_update_group;
 pub mod freeze_group;
 pub mod mark_local_group_index_full;
+pub mod reinstall_group;
 pub mod set_max_concurrent_group_canister_upgrades;
 pub mod set_service_principals;
 pub mod unfreeze_group;

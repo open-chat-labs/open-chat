@@ -6,7 +6,6 @@ use ic_cdk_macros::post_upgrade;
 use stable_memory::deserialize_from_stable_memory;
 use tracing::info;
 use user_canister::post_upgrade::Args;
-use utils::env::canister::CanisterEnv;
 
 #[post_upgrade]
 #[trace]
