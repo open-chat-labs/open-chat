@@ -316,6 +316,7 @@ async fn send_all_events_to_group(group_id: ChatId) -> Result<(), String> {
             user_principals: HashMap::new(),
             is_complete: false,
         };
+        let mut batch_size_remaining = batch_size;
 
         read_state(|state| {
             let group = state
@@ -324,14 +325,31 @@ async fn send_all_events_to_group(group_id: ChatId) -> Result<(), String> {
                 .get(&group_id)
                 .unwrap_or_else(|| panic!("Group data not found. {group_id}"));
 
-            let next_index = group.events.events_synced_up_to.map_or(0usize, |e| e.incr().into());
-            if next_index < group.events.events.len() {
-                for event in group.events.events[next_index..].iter().take(batch_size) {
+            let next_event_index = group.events.events_synced_up_to.map_or(0usize, |e| e.incr().into());
+
+            if next_event_index < group.events.events.len() {
+                for event in group.events.events[next_event_index..].iter().take(batch_size) {
                     args.events.push(event.clone());
                 }
-            } else if group.events.thread_events_synced_up_to.is_none() {
-                args.thread_events = group.events.thread_events.clone();
-            } else {
+                batch_size_remaining = batch_size_remaining.saturating_sub(args.events.len());
+            }
+
+            if batch_size_remaining > 0 {
+                let next_thread_message_index = group
+                    .events
+                    .thread_events_synced_up_to
+                    .map_or(MessageIndex::default(), |m| m.incr());
+
+                for (message_index, events) in group.events.thread_events.range(next_thread_message_index..) {
+                    args.thread_events.insert(*message_index, events.clone());
+                    batch_size_remaining = batch_size_remaining.saturating_sub(events.len());
+                    if batch_size_remaining == 0 {
+                        break;
+                    }
+                }
+            }
+
+            if batch_size_remaining > 0 {
                 args.user_principals = group.user_principals.clone();
                 args.is_complete = true;
             }
