@@ -303,7 +303,8 @@ pub trait Reader {
         since: TimestampMillis,
         my_user_id: Option<UserId>,
     ) -> Option<EventWrapper<Message>> {
-        self.iter_latest_messages(my_user_id).next().filter(|m| m.timestamp > since)
+        self.latest_message_event(my_user_id)
+            .filter(|m| m.event.last_updated.unwrap_or(m.timestamp) > since)
     }
 
     fn affected_event_indexes_since(&self, since: TimestampMillis, max_results: usize) -> Vec<EventIndex> {
