@@ -1,14 +1,18 @@
 use crate::guards::caller_is_group_index;
-use crate::model::participants::Participants;
+use crate::timer_job_types::{EndPollJob, HardDeleteMessageContentJob, TimerJob};
 use crate::updates::c2c_unfreeze_group::c2c_unfreeze_group_impl;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use candid::Principal;
 use canister_api_macros::update_msgpack;
+use canister_timer_jobs::TimerJobs;
 use canister_tracing_macros::trace;
-use chat_events::{ChatEventInternal, Reader};
+use chat_events::{ChatEventInternal, MessageInternal, Reader};
 use group_canister::c2c_initialize_events::{Response::*, *};
 use std::collections::HashMap;
-use types::{EventIndex, GroupPermissions, MessageIndex, PermissionRole, Role, UserId};
+use types::{
+    EventIndex, GroupPermissions, MessageContentInternal, MessageIndex, PermissionRole, Role, TimestampMillis, UserId,
+};
+use utils::time::MINUTE_IN_MS;
 
 #[update_msgpack(guard = "caller_is_group_index")]
 #[trace]
@@ -61,17 +65,20 @@ fn c2c_initialize_events_impl(args: Args, runtime_state: &mut RuntimeState) -> R
 fn process_completed_events(user_principals: HashMap<UserId, Principal>, runtime_state: &mut RuntimeState) {
     let now = runtime_state.env.now();
     let temp_permissions = everything_allowed_permissions();
-    let mut participants = Participants::default();
     let mut next_message_index = MessageIndex::default();
+    let mut threads = Vec::new();
     for event_wrapper in runtime_state.data.events.main_events_reader(now).iter(None, true) {
         match &event_wrapper.event {
             ChatEventInternal::Message(m) => {
-                next_message_index = m.message_index.incr()
-                // TODO check if is poll
+                next_message_index = m.message_index.incr();
+                if m.thread_summary.is_some() {
+                    threads.push(m.message_index);
+                }
+                setup_timer_jobs(m, None, now, &mut runtime_state.data.timer_jobs);
             }
             ChatEventInternal::ParticipantsAdded(p) => {
                 for user_id in p.user_ids.iter() {
-                    participants.add(
+                    runtime_state.data.participants.add(
                         *user_id,
                         get_principal(user_id, &user_principals),
                         event_wrapper.timestamp,
@@ -92,11 +99,11 @@ fn process_completed_events(user_principals: HashMap<UserId, Principal>, runtime
             }
             ChatEventInternal::ParticipantsRemoved(p) => {
                 for user_id in p.user_ids.iter() {
-                    participants.remove(*user_id);
+                    runtime_state.data.participants.remove(*user_id);
                 }
             }
             ChatEventInternal::ParticipantJoined(p) => {
-                participants.add(
+                runtime_state.data.participants.add(
                     p.user_id,
                     get_principal(&p.user_id, &user_principals),
                     event_wrapper.timestamp,
@@ -115,20 +122,20 @@ fn process_completed_events(user_principals: HashMap<UserId, Principal>, runtime
                 );
             }
             ChatEventInternal::ParticipantLeft(p) => {
-                participants.remove(p.user_id);
+                runtime_state.data.participants.remove(p.user_id);
             }
             ChatEventInternal::ParticipantAssumesSuperAdmin(p) => {
-                participants.make_super_admin(&p.user_id);
+                runtime_state.data.participants.make_super_admin(&p.user_id);
             }
             ChatEventInternal::ParticipantDismissedAsSuperAdmin(p) => {
-                participants.dismiss_super_admin(&p.user_id);
+                runtime_state.data.participants.dismiss_super_admin(&p.user_id);
             }
             ChatEventInternal::ParticipantRelinquishesSuperAdmin(p) => {
-                participants.dismiss_super_admin(&p.user_id);
+                runtime_state.data.participants.dismiss_super_admin(&p.user_id);
             }
             ChatEventInternal::RoleChanged(r) => {
                 for user_id in r.user_ids.iter() {
-                    participants.change_role(
+                    runtime_state.data.participants.change_role(
                         get_principal(&r.changed_by, &user_principals),
                         user_id,
                         r.new_role,
@@ -137,7 +144,7 @@ fn process_completed_events(user_principals: HashMap<UserId, Principal>, runtime
                 }
             }
             ChatEventInternal::OwnershipTransferred(o) => {
-                participants.change_role(
+                runtime_state.data.participants.change_role(
                     get_principal(&o.old_owner, &user_principals),
                     &o.new_owner,
                     Role::Owner,
@@ -146,12 +153,12 @@ fn process_completed_events(user_principals: HashMap<UserId, Principal>, runtime
             }
             ChatEventInternal::UsersBlocked(u) => {
                 for user_id in u.user_ids.iter() {
-                    participants.block(*user_id);
+                    runtime_state.data.participants.block(*user_id);
                 }
             }
             ChatEventInternal::UsersUnblocked(u) => {
                 for user_id in u.user_ids.iter() {
-                    participants.unblock(user_id);
+                    runtime_state.data.participants.unblock(user_id);
                 }
             }
             ChatEventInternal::MessagePinned(p) => {
@@ -200,6 +207,18 @@ fn process_completed_events(user_principals: HashMap<UserId, Principal>, runtime
         }
     }
 
+    for thread in threads {
+        if let Some(reader) = runtime_state
+            .data
+            .events
+            .events_reader(EventIndex::default(), Some(thread), now)
+        {
+            for message in reader.iter(None, true).filter_map(|e| e.event.as_message()) {
+                setup_timer_jobs(message, Some(thread), now, &mut runtime_state.data.timer_jobs);
+            }
+        }
+    }
+
     c2c_unfreeze_group_impl(
         group_canister::c2c_unfreeze_group::Args {
             caller: runtime_state.env.caller().into(),
@@ -207,6 +226,39 @@ fn process_completed_events(user_principals: HashMap<UserId, Principal>, runtime
         runtime_state,
     );
     runtime_state.data.initialized = true;
+}
+
+fn setup_timer_jobs(
+    message: &MessageInternal,
+    thread_root_message_index: Option<MessageIndex>,
+    now: TimestampMillis,
+    timer_jobs: &mut TimerJobs<TimerJob>,
+) {
+    match &message.content {
+        MessageContentInternal::Poll(p) if !p.ended => {
+            timer_jobs.enqueue_job(
+                TimerJob::EndPoll(EndPollJob {
+                    thread_root_message_index,
+                    message_index: message.message_index,
+                }),
+                p.config.end_date.unwrap_or(now),
+                now,
+            );
+        }
+        _ => {}
+    };
+    if let Some(deleted_by) = &message.deleted_by {
+        if !matches!(message.content, MessageContentInternal::Deleted(_)) {
+            timer_jobs.enqueue_job(
+                TimerJob::HardDeleteMessageContent(HardDeleteMessageContentJob {
+                    thread_root_message_index,
+                    message_id: message.message_id,
+                }),
+                deleted_by.timestamp + (5 * MINUTE_IN_MS),
+                now,
+            )
+        }
+    }
 }
 
 fn get_principal(user_id: &UserId, map: &HashMap<UserId, Principal>) -> Principal {
