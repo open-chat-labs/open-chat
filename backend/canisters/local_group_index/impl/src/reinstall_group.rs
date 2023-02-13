@@ -7,7 +7,7 @@ use ic_base_types::PrincipalId;
 use ic_ledger_types::Tokens;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, HashMap, HashSet};
 use tracing::info;
 use types::{
     sns, Avatar, ChatEvent, ChatId, CompletedCryptoTransaction, CryptoTransaction, EventIndex, EventWrapper, FrozenGroupInfo,
@@ -204,9 +204,9 @@ pub async fn reinstall_group(group_id: ChatId) -> Result<(), String> {
         state.data.groups_being_reinstalled.insert(
             group_id,
             GroupBeingReinstalled {
-                init_args: init_args.clone(),
-                events: all_events.clone(),
-                user_principals: user_principals.clone(),
+                init_args,
+                events: all_events,
+                user_principals,
             },
         )
     });
@@ -218,17 +218,7 @@ pub async fn reinstall_group(group_id: ChatId) -> Result<(), String> {
         .map_err(|e| format!("Failed to reinstall group. {e:?}"))?;
 
     // Send all events to group
-    group_canister_c2c_client::c2c_initialize_events(
-        group_id.into(),
-        &group_canister::c2c_initialize_events::Args {
-            events: all_events.events,
-            thread_events: all_events.thread_events,
-            user_principals,
-            is_complete: true,
-        },
-    )
-    .await
-    .map_err(|e| format!("Failed to call 'c2c_initialize_events'. {e:?}"))?;
+    send_all_events_to_group(group_id).await?;
 
     // Unfreeze the group
     group_index_canister_c2c_client::unfreeze_group(
@@ -257,7 +247,7 @@ async fn get_all_group_events(group_id: ChatId, since: EventIndex) -> Result<Gro
         })
         .collect();
 
-    let mut thread_events = HashMap::new();
+    let mut thread_events = BTreeMap::new();
     for message_index in threads {
         thread_events.insert(
             message_index,
@@ -315,6 +305,66 @@ async fn get_group_events(
             }
         }
     }
+}
+
+async fn send_all_events_to_group(group_id: ChatId) -> Result<(), String> {
+    let batch_size = 1000;
+    loop {
+        let mut args = group_canister::c2c_initialize_events::Args {
+            events: Vec::new(),
+            thread_events: BTreeMap::new(),
+            user_principals: HashMap::new(),
+            is_complete: false,
+        };
+
+        read_state(|state| {
+            let group = state
+                .data
+                .groups_being_reinstalled
+                .get(&group_id)
+                .unwrap_or_else(|| panic!("Group data not found. {group_id}"));
+
+            let next_index = group.events.events_synced_up_to.map_or(0usize, |e| e.incr().into());
+            if next_index < group.events.events.len() {
+                for event in group.events.events[next_index..].iter().take(batch_size) {
+                    args.events.push(event.clone());
+                }
+            } else if group.events.thread_events_synced_up_to.is_none() {
+                args.thread_events = group.events.thread_events.clone();
+            } else {
+                args.user_principals = group.user_principals.clone();
+                args.is_complete = true;
+            }
+        });
+
+        let events_synced_up_to = args.events.last().map(|e| e.index);
+        let threads_synced_up_to = args.thread_events.last_key_value().map(|(k, _)| *k);
+        let is_complete = args.is_complete;
+
+        group_canister_c2c_client::c2c_initialize_events(group_id.into(), &args)
+            .await
+            .map_err(|e| format!("Failed to call 'c2c_initialize_events'. {e:?}"))?;
+
+        mutate_state(|state| {
+            let group = state
+                .data
+                .groups_being_reinstalled
+                .get_mut(&group_id)
+                .unwrap_or_else(|| panic!("Group data not found. {group_id}"));
+
+            if let Some(e) = events_synced_up_to {
+                group.events.events_synced_up_to = Some(e);
+            }
+            if let Some(m) = threads_synced_up_to {
+                group.events.thread_events_synced_up_to = Some(m);
+            }
+        });
+
+        if is_complete {
+            break;
+        }
+    }
+    Ok(())
 }
 
 fn convert_event(event_wrapper: EventWrapper<ChatEvent>, group_id: ChatId) -> EventWrapper<ChatEventInternal> {
@@ -465,10 +515,10 @@ pub struct GroupBeingReinstalled {
     user_principals: HashMap<UserId, Principal>,
 }
 
-#[derive(Serialize, Deserialize, Clone)]
+#[derive(Serialize, Deserialize)]
 pub struct GroupBeingReinstalledEvents {
     events: Vec<EventWrapper<ChatEventInternal>>,
-    thread_events: HashMap<MessageIndex, Vec<EventWrapper<ChatEventInternal>>>,
+    thread_events: BTreeMap<MessageIndex, Vec<EventWrapper<ChatEventInternal>>>,
     events_synced_up_to: Option<EventIndex>,
-    thread_events_synced_up_to: Option<(MessageIndex, EventIndex)>,
+    thread_events_synced_up_to: Option<MessageIndex>,
 }

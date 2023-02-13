@@ -4,7 +4,7 @@ use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use local_group_index_canister::c2c_upgrade_group_canister_wasm::{Response::*, *};
 use tracing::info;
-use types::CanisterId;
+// use types::CanisterId;
 
 #[update_msgpack(guard = "caller_is_group_index_canister")]
 #[trace]
