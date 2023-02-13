@@ -5,17 +5,14 @@ use types::CanisterId;
 #[derive(CandidType, Deserialize, Serialize, Debug)]
 pub struct Args {
     pub group: CanisterId,
-    pub add_only: bool,
+    pub remove_only: bool,
 }
 
 #[derive(CandidType, Deserialize, Serialize, Debug)]
 pub enum Response {
     Success,
-    AlreadyInGroup,
-    GroupNotFound,
-    GroupNotPublic,
-    ParticipantLimitReached,
-    Blocked,
+    CallerNotInGroup,
+    OwnerCannotLeave,
     UserSuspended,
     ChatFrozen,
     InternalError(String),
