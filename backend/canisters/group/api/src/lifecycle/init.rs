@@ -5,7 +5,7 @@ use types::{
     Version,
 };
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct Args {
     pub is_public: bool,
     pub name: String,

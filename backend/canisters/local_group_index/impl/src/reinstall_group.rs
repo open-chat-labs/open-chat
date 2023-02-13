@@ -7,7 +7,8 @@ use ic_base_types::PrincipalId;
 use ic_ledger_types::Tokens;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
-use std::collections::{BTreeMap, HashMap, HashSet};
+use std::collections::{HashMap, HashSet};
+use tracing::info;
 use types::{
     sns, Avatar, ChatEvent, ChatId, CompletedCryptoTransaction, CryptoTransaction, EventIndex, EventWrapper, FrozenGroupInfo,
     HttpRequest, MessageContent, MessageContentInitial, MessageContentInternal, MessageId, MessageIndex, PollContentInternal,
@@ -202,9 +203,9 @@ pub async fn reinstall_group(group_id: ChatId) -> Result<(), String> {
         state.data.groups_being_reinstalled.insert(
             group_id,
             GroupBeingReinstalled {
-                init_args,
-                events: all_events,
-                user_principals,
+                init_args: init_args.clone(),
+                events: all_events.clone(),
+                user_principals: user_principals.clone(),
             },
         )
     });
@@ -216,6 +217,19 @@ pub async fn reinstall_group(group_id: ChatId) -> Result<(), String> {
         .map_err(|e| format!("Failed to reinstall group. {e:?}"))?;
 
     // Send all events to group
+    group_canister_c2c_client::c2c_initialize_events(
+        group_id.into(),
+        &group_canister::c2c_initialize_events::Args {
+            events: all_events.events,
+            thread_events: all_events.thread_events,
+            user_principals,
+            is_complete: true,
+        },
+    )
+    .await
+    .map_err(|e| format!("Failed to call 'c2c_initialize_events'. {e:?}"))?;
+
+    info!(%group_id, "Group reinstalled");
     Ok(())
 }
 
@@ -234,7 +248,7 @@ async fn get_all_group_events(group_id: ChatId, since: EventIndex) -> Result<Gro
         })
         .collect();
 
-    let mut thread_events = BTreeMap::new();
+    let mut thread_events = HashMap::new();
     for message_index in threads {
         thread_events.insert(
             message_index,
@@ -442,10 +456,10 @@ pub struct GroupBeingReinstalled {
     user_principals: HashMap<UserId, Principal>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct GroupBeingReinstalledEvents {
     events: Vec<EventWrapper<ChatEventInternal>>,
-    thread_events: BTreeMap<MessageIndex, Vec<EventWrapper<ChatEventInternal>>>,
+    thread_events: HashMap<MessageIndex, Vec<EventWrapper<ChatEventInternal>>>,
     events_synced_up_to: Option<EventIndex>,
     thread_events_synced_up_to: Option<(MessageIndex, EventIndex)>,
 }
