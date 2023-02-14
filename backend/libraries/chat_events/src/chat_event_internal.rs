@@ -288,89 +288,70 @@ impl MessageInternal {
     pub fn add_to_metrics(&self, metrics: &mut ChatMetrics, per_user_metrics: &mut HashMap<UserId, ChatMetrics>) {
         let sender_metrics = per_user_metrics.entry(self.sender).or_default();
 
-        if self.deleted_by.is_some() {
-            incr(&mut metrics.deleted_messages);
-            incr(&mut sender_metrics.deleted_messages);
-        } else {
-            if self.replies_to.is_some() {
-                incr(&mut metrics.replies);
-                incr(&mut sender_metrics.replies);
+        if self.replies_to.is_some() {
+            incr(&mut metrics.replies);
+            incr(&mut sender_metrics.replies);
+        }
+
+        match &self.content {
+            MessageContentInternal::Text(_) => {
+                incr(&mut metrics.text_messages);
+                incr(&mut sender_metrics.text_messages);
             }
-
-            match &self.content {
-                MessageContentInternal::Text(_) => {
-                    incr(&mut metrics.text_messages);
-                    incr(&mut sender_metrics.text_messages);
-                }
-                MessageContentInternal::Image(_) => {
-                    incr(&mut metrics.image_messages);
-                    incr(&mut sender_metrics.image_messages);
-                }
-                MessageContentInternal::Video(_) => {
-                    incr(&mut metrics.video_messages);
-                    incr(&mut sender_metrics.video_messages);
-                }
-                MessageContentInternal::Audio(_) => {
-                    incr(&mut metrics.audio_messages);
-                    incr(&mut sender_metrics.audio_messages);
-                }
-                MessageContentInternal::File(_) => {
-                    incr(&mut metrics.file_messages);
-                    incr(&mut sender_metrics.file_messages);
-                }
-                MessageContentInternal::Poll(p) => {
-                    incr(&mut metrics.polls);
-                    incr(&mut sender_metrics.polls);
-
-                    for user_id in p.votes.iter().flat_map(|(_, u)| u.iter()) {
-                        incr(&mut metrics.poll_votes);
-                        if let Some(user_metrics) = per_user_metrics.get_mut(user_id) {
-                            incr(&mut user_metrics.poll_votes);
-                        }
-                    }
-                }
-                MessageContentInternal::Crypto(c) => match c.transfer.token() {
-                    Cryptocurrency::InternetComputer => {
-                        incr(&mut metrics.icp_messages);
-                        incr(&mut sender_metrics.icp_messages);
-                    }
-                    Cryptocurrency::SNS1 => {
-                        incr(&mut metrics.sns1_messages);
-                        incr(&mut sender_metrics.sns1_messages);
-                    }
-                    Cryptocurrency::CKBTC => {
-                        incr(&mut metrics.ckbtc_messages);
-                        incr(&mut sender_metrics.ckbtc_messages);
-                    }
-                    Cryptocurrency::CHAT => {
-                        incr(&mut metrics.chat_messages);
-                        incr(&mut sender_metrics.chat_messages);
-                    }
-                },
-                MessageContentInternal::Deleted(_) => {}
-                MessageContentInternal::Giphy(_) => {
-                    incr(&mut metrics.giphy_messages);
-                    incr(&mut sender_metrics.giphy_messages);
-                }
-                MessageContentInternal::GovernanceProposal(_) => {
-                    incr(&mut metrics.proposals);
-                    incr(&mut sender_metrics.proposals);
-                }
-                MessageContentInternal::Prize(_) => {
-                    incr(&mut metrics.prize_messages);
-                    incr(&mut sender_metrics.prize_messages);
-                }
-                MessageContentInternal::PrizeWinner(_) => {
-                    incr(&mut metrics.prize_winner_messages);
-                    incr(&mut sender_metrics.prize_winner_messages);
-                }
+            MessageContentInternal::Image(_) => {
+                incr(&mut metrics.image_messages);
+                incr(&mut sender_metrics.image_messages);
             }
-
-            for user_id in self.reactions.iter().flat_map(|(_, u)| u.iter()) {
-                incr(&mut metrics.reactions);
-                if let Some(user_metrics) = per_user_metrics.get_mut(user_id) {
-                    incr(&mut user_metrics.reactions);
+            MessageContentInternal::Video(_) => {
+                incr(&mut metrics.video_messages);
+                incr(&mut sender_metrics.video_messages);
+            }
+            MessageContentInternal::Audio(_) => {
+                incr(&mut metrics.audio_messages);
+                incr(&mut sender_metrics.audio_messages);
+            }
+            MessageContentInternal::File(_) => {
+                incr(&mut metrics.file_messages);
+                incr(&mut sender_metrics.file_messages);
+            }
+            MessageContentInternal::Poll(_) => {
+                incr(&mut metrics.polls);
+                incr(&mut sender_metrics.polls);
+            }
+            MessageContentInternal::Crypto(c) => match c.transfer.token() {
+                Cryptocurrency::InternetComputer => {
+                    incr(&mut metrics.icp_messages);
+                    incr(&mut sender_metrics.icp_messages);
                 }
+                Cryptocurrency::SNS1 => {
+                    incr(&mut metrics.sns1_messages);
+                    incr(&mut sender_metrics.sns1_messages);
+                }
+                Cryptocurrency::CKBTC => {
+                    incr(&mut metrics.ckbtc_messages);
+                    incr(&mut sender_metrics.ckbtc_messages);
+                }
+                Cryptocurrency::CHAT => {
+                    incr(&mut metrics.chat_messages);
+                    incr(&mut sender_metrics.chat_messages);
+                }
+            },
+            MessageContentInternal::Deleted(_) => {}
+            MessageContentInternal::Giphy(_) => {
+                incr(&mut metrics.giphy_messages);
+                incr(&mut sender_metrics.giphy_messages);
+            }
+            MessageContentInternal::GovernanceProposal(_) => {
+                incr(&mut metrics.proposals);
+                incr(&mut sender_metrics.proposals);
+            }
+            MessageContentInternal::Prize(_) => {
+                incr(&mut metrics.prize_messages);
+                incr(&mut sender_metrics.prize_messages);
+            }
+            MessageContentInternal::PrizeWinner(_) => {
+                incr(&mut metrics.prize_winner_messages);
+                incr(&mut sender_metrics.prize_winner_messages);
             }
         }
     }
