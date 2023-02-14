@@ -86,8 +86,7 @@ fn can_only_be_called_by_super_admin() {
     let response2 = client::group_index::freeze_group(&mut env, user1.principal, canister_ids.group_index, &freeze_args);
     assert!(
         matches!(response2, group_index_canister::freeze_group::Response::Success(_)),
-        "{:#?}",
-        response2
+        "{response2:#?}",
     );
 
     let unfreeze_args = group_index_canister::unfreeze_group::Args { chat_id: group_id };

@@ -694,7 +694,7 @@ mod tests {
         assert_eq!(events_reader2.iter(None, true).map(|e| e.index).collect_vec(), expected2);
 
         let events_reader3 = events.main_events_reader(2250);
-        let expected3 = group3.clone();
+        let expected3 = group3;
         assert_eq!(events_reader3.iter(None, true).map(|e| e.index).collect_vec(), expected3);
 
         let events_reader4 = events.main_events_reader(2750);

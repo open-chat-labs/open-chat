@@ -338,13 +338,13 @@ mod tests {
         let principal_to_user_id: Vec<_> = user_map
             .principal_to_user_id
             .iter()
-            .map(|(p, u)| (p.clone(), u.clone()))
+            .map(|(p, u)| (*p, *u))
             .sorted_by_key(|(_, u)| *u)
             .collect();
         let username_to_user_id: Vec<_> = user_map
             .username_to_user_id
             .iter()
-            .map(|(name, u)| (name.clone(), u.clone()))
+            .map(|(name, u)| (name.clone(), *u))
             .sorted_by_key(|(_, u)| *u)
             .collect();
 
@@ -400,7 +400,7 @@ mod tests {
         let original = User {
             principal: principal1,
             user_id: user_id1,
-            username: username1.clone(),
+            username: username1,
             date_created: 1,
             date_updated: 1,
             ..Default::default()
@@ -432,8 +432,8 @@ mod tests {
 
         let original = User {
             principal,
-            user_id: user_id,
-            username: username.clone(),
+            user_id,
+            username,
             date_created: 1,
             date_updated: 1,
             ..Default::default()

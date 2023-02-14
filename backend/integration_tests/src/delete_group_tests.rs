@@ -23,8 +23,7 @@ fn delete_group_succeeds() {
 
     assert!(
         matches!(delete_group_response, user_canister::delete_group::Response::Success),
-        "{:?}",
-        delete_group_response
+        "{delete_group_response:?}",
     );
 
     env.tick();
