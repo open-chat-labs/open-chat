@@ -1,4 +1,4 @@
-use crate::guards::caller_is_group_index;
+use crate::guards::caller_is_local_group_index;
 use crate::timer_job_types::{EndPollJob, HardDeleteMessageContentJob, TimerJob};
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use candid::Principal;
@@ -13,7 +13,7 @@ use types::{
 };
 use utils::time::MINUTE_IN_MS;
 
-#[update_msgpack(guard = "caller_is_group_index")]
+#[update_msgpack(guard = "caller_is_local_group_index")]
 #[trace]
 fn c2c_initialize_events(args: Args) -> Response {
     run_regular_jobs();

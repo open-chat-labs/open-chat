@@ -23,3 +23,11 @@ pub fn caller_is_group_index() -> Result<(), String> {
         Err("Caller is not the group_index canister".to_string())
     }
 }
+
+pub fn caller_is_local_group_index() -> Result<(), String> {
+    if read_state(|state| state.is_caller_local_group_index()) {
+        Ok(())
+    } else {
+        Err("Caller is not the local_group_index".to_string())
+    }
+}
