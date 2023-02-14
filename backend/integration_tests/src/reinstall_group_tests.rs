@@ -3,8 +3,10 @@ use crate::setup::{return_env, setup_env, TestEnv};
 use crate::utils::assert_json_eq;
 use crate::{client, rng};
 use group_canister::events::SuccessResult;
+use serde_bytes::ByteBuf;
 use types::{
-    ChatEvent, EventIndex, GroupCanisterGroupChatSummary, GroupReplyContext, MessageContentInitial, Role, TextContent,
+    Avatar, ChatEvent, EventIndex, GroupCanisterGroupChatSummary, GroupReplyContext, MessageContentInitial, OptionUpdate, Role,
+    TextContent,
 };
 
 #[test]
@@ -18,6 +20,20 @@ fn reinstall_group_succeeds() {
     let user = client::user_index::happy_path::register_user(&mut env, canister_ids.user_index);
     let group_name = random_string();
     let group_id = client::user::happy_path::create_group(&mut env, &user, &group_name, false, true);
+
+    client::group::update_group_v2(
+        &mut env,
+        user.principal,
+        group_id.into(),
+        &group_canister::update_group_v2::Args {
+            avatar: OptionUpdate::SetToSome(Avatar {
+                id: 123,
+                mime_type: "abc".to_string(),
+                data: ByteBuf::from(vec![1u8; 128]),
+            }),
+            ..Default::default()
+        },
+    );
 
     for i in 0..20 {
         let new_user = client::user_index::happy_path::register_user(&mut env, canister_ids.user_index);
