@@ -1,9 +1,8 @@
 use candid::Encode;
 use clap::Parser;
 use ic_sns_governance::pb::v1::{proposal, ExecuteGenericNervousSystemFunction, Proposal};
+use std::error::Error;
 use std::fs;
-use std::io::Write;
-use std::{error::Error, io};
 use types::{CanisterWasm, UpgradeCanisterWasmArgs, Version};
 
 /// Builds the binary encoded candid representation of an ExecuteGenericNervousSystemFunction proposal
@@ -35,14 +34,10 @@ pub struct Config {
     pub version: Version,
 }
 
-pub fn run(config: Config) -> Result<(), Box<dyn Error>> {
+pub fn build(config: Config) -> Result<Vec<u8>, Box<dyn Error>> {
     let proposal = create_proposal(config)?;
 
-    let candid_proposal = Encode!(&proposal)?;
-
-    let mut stdout = io::stdout();
-    stdout.write_all(&candid_proposal)?;
-    Ok(())
+    Ok(Encode!(&proposal)?)
 }
 
 fn create_proposal(config: Config) -> Result<Proposal, Box<dyn Error>> {
