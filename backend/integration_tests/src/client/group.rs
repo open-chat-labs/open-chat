@@ -50,7 +50,7 @@ pub mod happy_path {
 
         match response {
             group_canister::add_participants::Response::Success => {}
-            response => panic!("'add_participants' error: {:?}", response),
+            response => panic!("'add_participants' error: {response:?}"),
         }
     }
 
@@ -67,7 +67,7 @@ pub mod happy_path {
             group_chat_id.into(),
             &group_canister::send_message_v2::Args {
                 thread_root_message_index: None,
-                message_id: message_id.unwrap_or_else(|| random_message_id()),
+                message_id: message_id.unwrap_or_else(random_message_id),
                 content: MessageContentInitial::Text(TextContent { text: text.to_string() }),
                 sender_name: sender.username(),
                 replies_to: None,
@@ -79,7 +79,7 @@ pub mod happy_path {
 
         match response {
             group_canister::send_message::Response::Success(result) => result,
-            response => panic!("'send_message' error: {:?}", response),
+            response => panic!("'send_message' error: {response:?}"),
         }
     }
 
@@ -105,7 +105,7 @@ pub mod happy_path {
 
         match response {
             group_canister::register_poll_vote::Response::Success(result) => result,
-            response => panic!("'register_poll_vote' error: {:?}", response),
+            response => panic!("'register_poll_vote' error: {response:?}"),
         }
     }
 
@@ -129,7 +129,7 @@ pub mod happy_path {
 
         match response {
             group_canister::events_by_index::Response::Success(result) => result,
-            response => panic!("'events_by_index' error: {:?}", response),
+            response => panic!("'events_by_index' error: {response:?}"),
         }
     }
 
@@ -138,7 +138,7 @@ pub mod happy_path {
 
         match response {
             group_canister::summary::Response::Success(result) => result.summary,
-            response => panic!("'summary' error: {:?}", response),
+            response => panic!("'summary' error: {response:?}"),
         }
     }
 
@@ -158,7 +158,7 @@ pub mod happy_path {
         match response {
             group_canister::summary_updates::Response::Success(result) => Some(result.updates),
             group_canister::summary_updates::Response::SuccessNoUpdates => None,
-            response => panic!("'summary_updates' error: {:?}", response),
+            response => panic!("'summary_updates' error: {response:?}"),
         }
     }
 }

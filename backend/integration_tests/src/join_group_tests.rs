@@ -35,8 +35,7 @@ fn join_public_group_succeeds() {
             join_group_response,
             local_user_index_canister::join_group::Response::Success(_)
         ),
-        "{:?}",
-        join_group_response
+        "{join_group_response:?}",
     );
 
     env.tick();
@@ -92,8 +91,7 @@ fn join_private_group_using_invite_code_succeeds() {
             join_group_response,
             local_user_index_canister::join_group::Response::Success(_)
         ),
-        "{:?}",
-        join_group_response
+        "{join_group_response:?}",
     );
 
     env.tick();

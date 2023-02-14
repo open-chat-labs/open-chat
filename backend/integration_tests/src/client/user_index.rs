@@ -36,7 +36,7 @@ pub mod happy_path {
 
         match response {
             user_index_canister::current_user::Response::Success(result) => result,
-            response => panic!("'current_user' error: {:?}", response),
+            response => panic!("'current_user' error: {response:?}"),
         }
     }
 
@@ -59,7 +59,7 @@ pub mod happy_path {
 
         match response {
             user_index_canister::register_user::Response::Success(user_id) => User { principal, user_id },
-            response => panic!("'register_user' error: {:?}", response),
+            response => panic!("'register_user' error: {response:?}"),
         }
     }
 }
