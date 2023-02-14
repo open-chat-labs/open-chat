@@ -1,11 +1,11 @@
-use crate::guards::caller_is_group_index;
+use crate::guards::caller_is_group_index_or_local_group_index;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use group_canister::c2c_freeze_group::{Response::*, *};
 use types::{ChatFrozen, EventWrapper, FrozenGroupInfo, Timestamped};
 
-#[update_msgpack(guard = "caller_is_group_index")]
+#[update_msgpack(guard = "caller_is_group_index_or_local_group_index")]
 #[trace]
 async fn c2c_freeze_group(args: Args) -> Response {
     run_regular_jobs();
