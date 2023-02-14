@@ -5,8 +5,8 @@ use crate::{client, rng};
 use group_canister::events::SuccessResult;
 use serde_bytes::ByteBuf;
 use types::{
-    Avatar, ChatEvent, EventIndex, GroupCanisterGroupChatSummary, GroupReplyContext, MessageContentInitial, OptionUpdate, Role,
-    TextContent,
+    Avatar, ChatEvent, EventIndex, GroupCanisterGroupChatSummary, GroupReplyContext, MessageContentInitial, OptionUpdate,
+    Reaction, Role, TextContent,
 };
 
 #[test]
@@ -39,7 +39,8 @@ fn reinstall_group_succeeds() {
         let new_user = client::user_index::happy_path::register_user(&mut env, canister_ids.user_index);
         client::group::happy_path::add_participants(&mut env, &user, group_id, vec![new_user.user_id]);
 
-        client::group::happy_path::send_text_message(&mut env, &new_user, group_id, i, None);
+        let message_id = rng::random_message_id();
+        client::group::happy_path::send_text_message(&mut env, &new_user, group_id, i, Some(message_id));
         client::group::send_message_v2(
             &mut env,
             new_user.principal,
@@ -55,6 +56,21 @@ fn reinstall_group_succeeds() {
                 correlation_id: i.into(),
             },
         );
+
+        if (i % 2) == 0 {
+            client::group::add_reaction(
+                &mut env,
+                user.principal,
+                group_id.into(),
+                &group_canister::add_reaction::Args {
+                    thread_root_message_index: None,
+                    message_id,
+                    reaction: Reaction("x".to_string()),
+                    username: user.username(),
+                    correlation_id: 0,
+                },
+            );
+        }
 
         if (i % 3) == 0 {
             client::group::change_role(
@@ -115,6 +131,20 @@ fn reinstall_group_succeeds() {
                     },
                 );
             }
+        }
+
+        if (i % 11) == 0 {
+            client::group::edit_message(
+                &mut env,
+                user.principal,
+                group_id.into(),
+                &group_canister::edit_message_v2::Args {
+                    thread_root_message_index: None,
+                    message_id,
+                    content: MessageContentInitial::Text(TextContent { text: "321".to_string() }),
+                    correlation_id: 0,
+                },
+            );
         }
     }
 
