@@ -3,7 +3,9 @@ use crate::setup::{return_env, setup_env, TestEnv};
 use crate::utils::assert_json_eq;
 use crate::{client, rng};
 use group_canister::events::SuccessResult;
-use types::{ChatEvent, EventIndex, GroupCanisterGroupChatSummary, GroupReplyContext, MessageContentInitial, TextContent};
+use types::{
+    ChatEvent, EventIndex, GroupCanisterGroupChatSummary, GroupReplyContext, MessageContentInitial, Role, TextContent,
+};
 
 #[test]
 fn reinstall_group_succeeds() {
@@ -39,6 +41,19 @@ fn reinstall_group_succeeds() {
         );
 
         if (i % 3) == 0 {
+            client::group::change_role(
+                &mut env,
+                user.principal,
+                group_id.into(),
+                &group_canister::change_role::Args {
+                    user_id: new_user.user_id,
+                    new_role: Role::Admin,
+                    correlation_id: 0,
+                },
+            );
+        }
+
+        if (i % 5) == 0 {
             client::group::block_user(
                 &mut env,
                 user.principal,
@@ -49,7 +64,7 @@ fn reinstall_group_succeeds() {
                 },
             );
 
-            if (i % 5) == 0 {
+            if (i % 2) == 0 {
                 client::group::unblock_user(
                     &mut env,
                     user.principal,
@@ -62,7 +77,7 @@ fn reinstall_group_succeeds() {
             }
         }
 
-        if (i % 5) == 0 {
+        if (i % 7) == 0 {
             client::group::pin_message_v2(
                 &mut env,
                 user.principal,
