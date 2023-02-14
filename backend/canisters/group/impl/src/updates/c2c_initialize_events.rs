@@ -15,7 +15,7 @@ use utils::time::MINUTE_IN_MS;
 
 #[update_msgpack(guard = "caller_is_group_index")]
 #[trace]
-async fn c2c_initialize_events(args: Args) -> Response {
+fn c2c_initialize_events(args: Args) -> Response {
     run_regular_jobs();
 
     mutate_state(|state| c2c_initialize_events_impl(args, state))
