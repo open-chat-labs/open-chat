@@ -134,7 +134,7 @@ fn reinstall_group_succeeds() {
         }
 
         if (i % 11) == 0 {
-            client::group::edit_message(
+            client::group::edit_message_v2(
                 &mut env,
                 user.principal,
                 group_id.into(),
