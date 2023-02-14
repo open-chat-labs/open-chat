@@ -65,7 +65,7 @@ members = [
     "backend/notification_pusher/aws",
     "backend/notification_pusher/cli",
     "backend/notification_pusher/core",
-    "backend/sns/proposals/build_upgrade_canister_proposal_arg",
+    "backend/sns/proposals/build_upgrade_canister_proposal",
 ]
 
 [workspace.dependencies]

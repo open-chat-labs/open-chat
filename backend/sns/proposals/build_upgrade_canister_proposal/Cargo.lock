@@ -3,5 +3,5 @@
 version = 3
 
 [[package]]
-name = "build_upgrade_canister_proposal_arg"
+name = "build_upgrade_canister_proposal"
 version = "0.1.0"
