@@ -2270,7 +2270,6 @@ dependencies = [
 name = "group_index_canister_c2c_client"
 version = "0.1.0"
 dependencies = [
- "candid",
  "canister_client_macros 0.1.0",
  "group_index_canister",
  "ic-cdk 0.7.0",
