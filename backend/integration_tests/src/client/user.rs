@@ -44,7 +44,7 @@ pub mod happy_path {
             &user_canister::send_message::Args {
                 recipient,
                 thread_root_message_index: None,
-                message_id: message_id.unwrap_or_else(|| random_message_id()),
+                message_id: message_id.unwrap_or_else(random_message_id),
                 sender_name: sender.username(),
                 content: MessageContent::Text(TextContent { text: text.to_string() }),
                 replies_to: None,
@@ -55,7 +55,7 @@ pub mod happy_path {
 
         match response {
             user_canister::send_message::Response::Success(result) => result,
-            response => panic!("'send_message' error: {:?}", response),
+            response => panic!("'send_message' error: {response:?}"),
         }
     }
 
@@ -85,7 +85,7 @@ pub mod happy_path {
 
         match response {
             user_canister::create_group::Response::Success(result) => result.chat_id,
-            response => panic!("'create_group' error: {:?}", response),
+            response => panic!("'create_group' error: {response:?}"),
         }
     }
 
@@ -99,7 +99,7 @@ pub mod happy_path {
 
         match response {
             user_canister::initial_state_v2::Response::Success(result) => result,
-            response => panic!("'initial_state_v2' error: {:?}", response),
+            response => panic!("'initial_state_v2' error: {response:?}"),
         }
     }
 
@@ -129,7 +129,7 @@ pub mod happy_path {
 
         match response {
             user_canister::events::Response::Success(result) => result,
-            response => panic!("'events' error: {:?}", response),
+            response => panic!("'events' error: {response:?}"),
         }
     }
 
@@ -153,7 +153,7 @@ pub mod happy_path {
 
         match response {
             user_canister::events_by_index::Response::Success(result) => result,
-            response => panic!("'events_by_index' error: {:?}", response),
+            response => panic!("'events_by_index' error: {response:?}"),
         }
     }
 }

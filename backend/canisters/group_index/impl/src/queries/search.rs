@@ -79,7 +79,7 @@ mod tests {
         if let Response::Success(result) = response {
             assert_eq!(2, result.matches.len());
         } else {
-            assert!(false);
+            panic!();
         }
     }
 
@@ -97,13 +97,13 @@ mod tests {
 
         if let Response::Success(result) = response {
             assert_eq!(6, result.matches.len());
-            let expected_groups = vec![1, 3, 4, 7, 2, 5];
-            for i in 0..result.matches.len() {
-                let chat_id = Principal::from_slice(&[expected_groups[i]]).into();
+            let expected_groups = vec![1u8, 3, 4, 7, 2, 5];
+            for (i, expected_group) in expected_groups.into_iter().enumerate() {
+                let chat_id = Principal::from_slice(&[expected_group]).into();
                 assert_eq!(result.matches[i].chat_id, chat_id);
             }
         } else {
-            assert!(false);
+            panic!();
         }
     }
 
