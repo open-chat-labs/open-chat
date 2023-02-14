@@ -8055,7 +8055,6 @@ dependencies = [
  "ic-cdk-macros",
  "ic-cdk-timers",
  "ic-ledger-types",
- "ic-stable-structures",
  "itertools",
  "ledger_utils",
  "local_user_index_canister",
