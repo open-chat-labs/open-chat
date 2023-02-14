@@ -65,7 +65,7 @@ fn reinstall_group_succeeds() {
                 &group_canister::add_reaction::Args {
                     thread_root_message_index: None,
                     message_id,
-                    reaction: Reaction("x".to_string()),
+                    reaction: Reaction::new("x".to_string()),
                     username: user.username(),
                     correlation_id: 0,
                 },
