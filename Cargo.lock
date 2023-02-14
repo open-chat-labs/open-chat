@@ -4664,6 +4664,7 @@ dependencies = [
  "rand",
  "serde",
  "serde_bytes",
+ "serde_json",
  "test-case",
  "types 0.1.0",
  "user_canister",
