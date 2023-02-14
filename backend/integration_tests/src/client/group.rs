@@ -60,6 +60,7 @@ pub mod happy_path {
         env: &mut StateMachine,
         sender: &User,
         group_chat_id: ChatId,
+        thread_root_message_index: Option<MessageIndex>,
         text: impl ToString,
         message_id: Option<MessageId>,
     ) -> group_canister::send_message_v2::SuccessResult {
@@ -68,7 +69,7 @@ pub mod happy_path {
             sender.principal,
             group_chat_id.into(),
             &group_canister::send_message_v2::Args {
-                thread_root_message_index: None,
+                thread_root_message_index,
                 message_id: message_id.unwrap_or_else(|| random_message_id()),
                 content: MessageContentInitial::Text(TextContent { text: text.to_string() }),
                 sender_name: sender.username(),

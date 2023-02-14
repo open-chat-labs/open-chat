@@ -158,6 +158,7 @@ fn process_completed_events(user_principals: HashMap<UserId, Principal>, runtime
             ChatEventInternal::UsersBlocked(u) => {
                 for user_id in u.user_ids.iter() {
                     runtime_state.data.participants.block(*user_id);
+                    runtime_state.data.participants.remove(*user_id);
                 }
             }
             ChatEventInternal::UsersUnblocked(u) => {

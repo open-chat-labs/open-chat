@@ -26,7 +26,7 @@ fn disappearing_messages_in_group_chats() {
         },
     );
 
-    let send_message_response1 = client::group::happy_path::send_text_message(&mut env, &user1, group_id, "abc", None);
+    let send_message_response1 = client::group::happy_path::send_text_message(&mut env, &user1, group_id, None, "abc", None);
 
     assert!(
         client::group::happy_path::events_by_index(&env, &user1, group_id, vec![send_message_response1.event_index])
@@ -55,7 +55,7 @@ fn disappearing_messages_in_group_chats() {
         },
     );
 
-    let send_message_response2 = client::group::happy_path::send_text_message(&mut env, &user1, group_id, "xyz", None);
+    let send_message_response2 = client::group::happy_path::send_text_message(&mut env, &user1, group_id, None, "xyz", None);
 
     env.advance_time(Duration::from_secs(100000));
     env.tick();
@@ -94,17 +94,17 @@ fn group_chat_summary_contains_expired_messages() {
         },
     );
 
-    let send_message_response1 = client::group::happy_path::send_text_message(&mut env, &user1, group_id, "abc", None);
+    let send_message_response1 = client::group::happy_path::send_text_message(&mut env, &user1, group_id, None, "abc", None);
     env.advance_time(Duration::from_millis(400));
-    let send_message_response2 = client::group::happy_path::send_text_message(&mut env, &user1, group_id, "def", None);
+    let send_message_response2 = client::group::happy_path::send_text_message(&mut env, &user1, group_id, None, "def", None);
     env.advance_time(Duration::from_millis(400));
-    let send_message_response3 = client::group::happy_path::send_text_message(&mut env, &user1, group_id, "ghi", None);
+    let send_message_response3 = client::group::happy_path::send_text_message(&mut env, &user1, group_id, None, "ghi", None);
     env.advance_time(Duration::from_millis(400));
-    let send_message_response4 = client::group::happy_path::send_text_message(&mut env, &user1, group_id, "jkl", None);
+    let send_message_response4 = client::group::happy_path::send_text_message(&mut env, &user1, group_id, None, "jkl", None);
     env.advance_time(Duration::from_millis(400));
-    let send_message_response5 = client::group::happy_path::send_text_message(&mut env, &user1, group_id, "mno", None);
+    let send_message_response5 = client::group::happy_path::send_text_message(&mut env, &user1, group_id, None, "mno", None);
     env.advance_time(Duration::from_millis(400));
-    let send_message_response6 = client::group::happy_path::send_text_message(&mut env, &user1, group_id, "mno", None);
+    let send_message_response6 = client::group::happy_path::send_text_message(&mut env, &user1, group_id, None, "mno", None);
 
     let summary = client::group::happy_path::summary(&env, &user1, group_id);
     let summary_timestamp = send_message_response6.timestamp;
@@ -131,7 +131,7 @@ fn group_chat_summary_contains_expired_messages() {
             ..Default::default()
         },
     );
-    let send_message_response7 = client::group::happy_path::send_text_message(&mut env, &user1, group_id, "pqr", None);
+    let send_message_response7 = client::group::happy_path::send_text_message(&mut env, &user1, group_id, None, "pqr", None);
     let summary_updates = client::group::happy_path::summary_updates(&env, &user1, group_id, summary_timestamp).unwrap();
 
     assert_eq!(summary_updates.events_ttl.expand(), Some(Some(2000)));

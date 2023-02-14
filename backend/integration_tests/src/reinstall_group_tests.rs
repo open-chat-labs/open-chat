@@ -19,7 +19,7 @@ fn reinstall_group_succeeds() {
 
     let user = client::user_index::happy_path::register_user(&mut env, canister_ids.user_index);
     let group_name = random_string();
-    let group_id = client::user::happy_path::create_group(&mut env, &user, &group_name, false, true);
+    let group_id = client::user::happy_path::create_group(&mut env, &user, &group_name, true, true);
 
     client::group::update_group_v2(
         &mut env,
@@ -35,30 +35,34 @@ fn reinstall_group_succeeds() {
         },
     );
 
-    for i in 0..20 {
+    for i in 0u32..20 {
         let new_user = client::user_index::happy_path::register_user(&mut env, canister_ids.user_index);
-        client::group::happy_path::add_participants(&mut env, &user, group_id, vec![new_user.user_id]);
+        client::local_user_index::happy_path::join_group(&mut env, new_user.principal, canister_ids.local_user_index, group_id);
 
         let message_id = rng::random_message_id();
-        client::group::happy_path::send_text_message(&mut env, &new_user, group_id, i, Some(message_id));
-        client::group::send_message_v2(
+        let send_result = match client::group::send_message_v2(
             &mut env,
-            new_user.principal,
+            user.principal,
             group_id.into(),
             &group_canister::send_message_v2::Args {
-                thread_root_message_index: Some(i.into()),
-                message_id: rng::random_message_id(),
+                thread_root_message_index: None,
+                message_id,
                 content: MessageContentInitial::Text(TextContent { text: i.to_string() }),
-                sender_name: new_user.username(),
+                sender_name: user.username(),
                 replies_to: ((i % 2) == 0).then_some(GroupReplyContext { event_index: 1.into() }),
                 mentioned: Vec::new(),
                 forwarding: (i % 3) == 0,
                 correlation_id: i.into(),
             },
-        );
+        ) {
+            group_canister::send_message_v2::Response::Success(r) => r,
+            _ => panic!(),
+        };
+
+        client::group::happy_path::send_text_message(&mut env, &new_user, group_id, Some(send_result.message_index), i, None);
 
         if (i % 2) == 0 {
-            client::group::add_reaction(
+            let add_reaction_response = client::group::add_reaction(
                 &mut env,
                 user.principal,
                 group_id.into(),
@@ -70,71 +74,14 @@ fn reinstall_group_succeeds() {
                     correlation_id: 0,
                 },
             );
+            assert!(
+                matches!(add_reaction_response, group_canister::add_reaction::Response::SuccessV2(_)),
+                "{add_reaction_response:?}"
+            );
         }
 
         if (i % 3) == 0 {
-            client::group::change_role(
-                &mut env,
-                user.principal,
-                group_id.into(),
-                &group_canister::change_role::Args {
-                    user_id: new_user.user_id,
-                    new_role: Role::Admin,
-                    correlation_id: 0,
-                },
-            );
-        }
-
-        if (i % 5) == 0 {
-            client::group::block_user(
-                &mut env,
-                user.principal,
-                group_id.into(),
-                &group_canister::block_user::Args {
-                    user_id: new_user.user_id,
-                    correlation_id: 0,
-                },
-            );
-
-            if (i % 2) == 0 {
-                client::group::unblock_user(
-                    &mut env,
-                    user.principal,
-                    group_id.into(),
-                    &group_canister::unblock_user::Args {
-                        user_id: new_user.user_id,
-                        correlation_id: 0,
-                    },
-                );
-            }
-        }
-
-        if (i % 7) == 0 {
-            client::group::pin_message_v2(
-                &mut env,
-                user.principal,
-                group_id.into(),
-                &group_canister::pin_message_v2::Args {
-                    message_index: i.into(),
-                    correlation_id: 0,
-                },
-            );
-
-            if (i % 2) == 0 {
-                client::group::unpin_message(
-                    &mut env,
-                    user.principal,
-                    group_id.into(),
-                    &group_canister::unpin_message::Args {
-                        message_index: i.into(),
-                        correlation_id: 0,
-                    },
-                );
-            }
-        }
-
-        if (i % 11) == 0 {
-            client::group::edit_message(
+            let edit_message_response = client::group::edit_message(
                 &mut env,
                 user.principal,
                 group_id.into(),
@@ -145,6 +92,126 @@ fn reinstall_group_succeeds() {
                     correlation_id: 0,
                 },
             );
+            assert!(
+                matches!(edit_message_response, group_canister::edit_message::Response::Success),
+                "{edit_message_response:?}"
+            );
+        }
+
+        if (i % 5) == 0 {
+            let change_role_response = client::group::change_role(
+                &mut env,
+                user.principal,
+                group_id.into(),
+                &group_canister::change_role::Args {
+                    user_id: new_user.user_id,
+                    new_role: Role::Admin,
+                    correlation_id: 0,
+                },
+            );
+            assert!(
+                matches!(change_role_response, group_canister::change_role::Response::Success),
+                "{change_role_response:?}"
+            );
+
+            let delete_message_response = client::group::delete_messages(
+                &mut env,
+                user.principal,
+                group_id.into(),
+                &group_canister::delete_messages::Args {
+                    thread_root_message_index: None,
+                    message_ids: vec![message_id],
+                    correlation_id: 0,
+                },
+            );
+            assert!(
+                matches!(delete_message_response, group_canister::delete_messages::Response::Success),
+                "{delete_message_response:?}"
+            );
+
+            if (i % 2) == 0 {
+                let undelete_message_response = client::group::undelete_messages(
+                    &mut env,
+                    user.principal,
+                    group_id.into(),
+                    &group_canister::undelete_messages::Args {
+                        thread_root_message_index: None,
+                        message_ids: vec![message_id],
+                        correlation_id: 0,
+                    },
+                );
+                assert!(
+                    matches!(
+                        undelete_message_response,
+                        group_canister::undelete_messages::Response::Success(_)
+                    ),
+                    "{undelete_message_response:?}"
+                );
+            }
+        }
+
+        if (i % 7) == 0 {
+            let block_user_response = client::group::block_user(
+                &mut env,
+                user.principal,
+                group_id.into(),
+                &group_canister::block_user::Args {
+                    user_id: new_user.user_id,
+                    correlation_id: 0,
+                },
+            );
+            assert!(
+                matches!(block_user_response, group_canister::block_user::Response::Success),
+                "{block_user_response:?}"
+            );
+
+            if (i % 2) == 0 {
+                let unblock_user_response = client::group::unblock_user(
+                    &mut env,
+                    user.principal,
+                    group_id.into(),
+                    &group_canister::unblock_user::Args {
+                        user_id: new_user.user_id,
+                        correlation_id: 0,
+                    },
+                );
+                assert!(
+                    matches!(unblock_user_response, group_canister::unblock_user::Response::Success),
+                    "{unblock_user_response:?}"
+                );
+            }
+        }
+
+        if (i % 11) == 0 {
+            let pin_message_response = client::group::pin_message_v2(
+                &mut env,
+                user.principal,
+                group_id.into(),
+                &group_canister::pin_message_v2::Args {
+                    message_index: send_result.message_index,
+                    correlation_id: 0,
+                },
+            );
+            assert!(
+                matches!(pin_message_response, group_canister::pin_message_v2::Response::Success(_)),
+                "{pin_message_response:?}"
+            );
+
+            if (i % 2) == 0 {
+                let unpin_message_response = client::group::unpin_message(
+                    &mut env,
+                    user.principal,
+                    group_id.into(),
+                    &group_canister::unpin_message::Args {
+                        message_index: send_result.message_index,
+                        correlation_id: 0,
+                    },
+                );
+                assert!(
+                    matches!(unpin_message_response, group_canister::unpin_message::Response::SuccessV2(_)),
+                    "{unpin_message_response:?}"
+                );
+            }
         }
     }
 
