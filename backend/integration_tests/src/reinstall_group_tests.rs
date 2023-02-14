@@ -5,8 +5,8 @@ use crate::{client, rng};
 use group_canister::events::SuccessResult;
 use serde_bytes::ByteBuf;
 use types::{
-    Avatar, ChatEvent, EventIndex, GroupCanisterGroupChatSummary, GroupReplyContext, MessageContent, MessageContentInitial,
-    OptionUpdate, Reaction, Role, TextContent,
+    Avatar, ChatEvent, ChatMetrics, EventIndex, GroupCanisterGroupChatSummary, GroupReplyContext, MessageContent,
+    MessageContentInitial, OptionUpdate, Reaction, Role, TextContent,
 };
 
 #[test]
@@ -308,7 +308,7 @@ fn validate_summaries(before: GroupCanisterGroupChatSummary, after: GroupCaniste
     assert_eq!(before.role, after.role);
     assert_eq!(before.owner_id, after.owner_id);
     assert_json_eq(before.permissions, after.permissions);
-    assert_json_eq(before.my_metrics, after.my_metrics);
+    validate_my_metrics(before.my_metrics, after.my_metrics);
     assert_json_eq(before.latest_threads, after.latest_threads);
     assert_json_eq(before.frozen, after.frozen);
     assert_eq!(before.date_last_pinned, after.date_last_pinned);
@@ -325,4 +325,32 @@ fn validate_details(
     assert_eq!(before.blocked_users, after.blocked_users);
     assert_eq!(before.pinned_messages, after.pinned_messages);
     assert_json_eq(before.rules, after.rules);
+}
+
+fn validate_my_metrics(before: ChatMetrics, after: ChatMetrics) {
+    // When messages are deleted they are not removed from the metrics, but when we reinstall the
+    // group the deleted messages don't count towards metrics, so the count will be lower by the
+    // number of deleted messages.
+    assert_eq!(before.text_messages, after.text_messages + after.deleted_messages);
+    assert_eq!(before.image_messages, after.image_messages);
+    assert_eq!(before.video_messages, after.video_messages);
+    assert_eq!(before.audio_messages, after.audio_messages);
+    assert_eq!(before.file_messages, after.file_messages);
+    assert_eq!(before.polls, after.polls);
+    assert_eq!(before.poll_votes, after.poll_votes);
+    assert_eq!(before.cycles_messages, after.cycles_messages);
+    assert_eq!(before.icp_messages, after.icp_messages);
+    assert_eq!(before.sns1_messages, after.sns1_messages);
+    assert_eq!(before.ckbtc_messages, after.ckbtc_messages);
+    assert_eq!(before.chat_messages, after.chat_messages);
+    assert_eq!(before.deleted_messages, after.deleted_messages);
+    assert_eq!(before.giphy_messages, after.giphy_messages);
+    assert_eq!(before.prize_messages, after.prize_messages);
+    assert_eq!(before.prize_winner_messages, after.prize_winner_messages);
+    assert_eq!(before.replies, after.replies);
+    assert_eq!(before.edits, after.edits);
+    assert_eq!(before.reactions, after.reactions);
+    assert_eq!(before.proposals, after.proposals);
+    assert_eq!(before.reported_messages, after.reported_messages);
+    assert_eq!(before.last_active, after.last_active);
 }
