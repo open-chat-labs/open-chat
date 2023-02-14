@@ -211,6 +211,8 @@ fn validate_summaries(before: GroupCanisterGroupChatSummary, after: GroupCaniste
     assert_eq!(before.role, after.role);
     assert_eq!(before.owner_id, after.owner_id);
     assert_json_eq(before.permissions, after.permissions);
+    assert_json_eq(before.my_metrics, after.my_metrics);
+    assert_json_eq(before.latest_threads, after.latest_threads);
     assert_json_eq(before.frozen, after.frozen);
     assert_eq!(before.date_last_pinned, after.date_last_pinned);
     assert_eq!(before.events_ttl, after.events_ttl);
