@@ -12,17 +12,27 @@ use tracing::info;
 use types::{
     sns, Avatar, ChatEvent, ChatId, CompletedCryptoTransaction, CryptoTransaction, EventIndex, EventWrapper, FrozenGroupInfo,
     HttpRequest, MessageContent, MessageContentInitial, MessageContentInternal, MessageId, MessageIndex, PollContentInternal,
-    PollVoteRegistered, PrizeContentInternal, ProposalContentInternal, TextContent, TotalVotes, UpdatedMessage, UserId,
+    PollVoteRegistered, PrizeContentInternal, ProposalContentInternal, TextContent, TimestampMillis, TotalVotes,
+    UpdatedMessage, UserId,
 };
 
 pub async fn reinstall_group(group_id: ChatId) -> Result<(), String> {
-    let (this_canister_id, group_index, local_user_index) = read_state(|state| {
-        (
-            state.env.canister_id(),
-            state.data.group_index_canister_id,
-            state.data.local_user_index_canister_id,
-        )
-    });
+    let (this_canister_id, group_index, local_user_index) = mutate_state(|state| {
+        if let Some(g) = state.data.group_being_reinstalled.as_ref().map(|g| g.group_id) {
+            Err(format!("Reinstall already in progress. {g}"))
+        } else {
+            state.data.group_being_reinstalled = Some(GroupBeingReinstalled {
+                group_id,
+                started: state.env.now(),
+                data: None,
+            });
+            Ok((
+                state.env.canister_id(),
+                state.data.group_index_canister_id,
+                state.data.local_user_index_canister_id,
+            ))
+        }
+    })?;
 
     // Join the group as a super admin
     local_user_index_canister_c2c_client::join_group(
@@ -201,15 +211,20 @@ pub async fn reinstall_group(group_id: ChatId) -> Result<(), String> {
 
     // Save everything to this canister's state
     mutate_state(|state| {
-        state.data.groups_being_reinstalled.insert(
-            group_id,
-            GroupBeingReinstalled {
-                init_args,
-                events: all_events,
-                user_principals,
-            },
-        )
-    });
+        let group = state
+            .data
+            .group_being_reinstalled
+            .as_mut()
+            .filter(|g| g.group_id == group_id && g.data.is_none())
+            .ok_or_else(|| format!("Group data not found. {group_id}"))?;
+
+        group.data = Some(GroupBeingReinstalledData {
+            init_args,
+            events: all_events,
+            user_principals,
+        });
+        Ok::<(), String>(())
+    })?;
 
     // Reinstall the group
     let wasm = read_state(|state| state.data.group_canister_wasm.module.clone());
@@ -313,7 +328,7 @@ async fn get_group_events(
 }
 
 async fn send_all_events_to_group(group_id: ChatId) -> Result<(), String> {
-    let batch_size = 1000;
+    let batch_size = 1000usize;
     loop {
         let mut args = group_canister::c2c_initialize_events::Args {
             events: Vec::new(),
@@ -324,28 +339,30 @@ async fn send_all_events_to_group(group_id: ChatId) -> Result<(), String> {
         let mut batch_size_remaining = batch_size;
 
         read_state(|state| {
-            let group = state
+            let group_data = state
                 .data
-                .groups_being_reinstalled
-                .get(&group_id)
-                .unwrap_or_else(|| panic!("Group data not found. {group_id}"));
+                .group_being_reinstalled
+                .as_ref()
+                .filter(|g| g.group_id == group_id)
+                .and_then(|g| g.data.as_ref())
+                .ok_or_else(|| format!("Group data not found. {group_id}"))?;
 
-            let next_event_index = group.events.events_synced_up_to.map_or(0usize, |e| e.incr().into());
+            let next_event_index = group_data.events.events_synced_up_to.map_or(0usize, |e| e.incr().into());
 
-            if next_event_index < group.events.events.len() {
-                for event in group.events.events[next_event_index..].iter().take(batch_size) {
+            if next_event_index < group_data.events.events.len() {
+                for event in group_data.events.events[next_event_index..].iter().take(batch_size) {
                     args.events.push(event.clone());
                 }
                 batch_size_remaining = batch_size_remaining.saturating_sub(args.events.len());
             }
 
             if batch_size_remaining > 0 {
-                let next_thread_message_index = group
+                let next_thread_message_index = group_data
                     .events
                     .thread_events_synced_up_to
                     .map_or(MessageIndex::default(), |m| m.incr());
 
-                for (message_index, events) in group.events.thread_events.range(next_thread_message_index..) {
+                for (message_index, events) in group_data.events.thread_events.range(next_thread_message_index..) {
                     args.thread_events.insert(*message_index, events.clone());
                     batch_size_remaining = batch_size_remaining.saturating_sub(events.len());
                     if batch_size_remaining == 0 {
@@ -354,11 +371,14 @@ async fn send_all_events_to_group(group_id: ChatId) -> Result<(), String> {
                 }
             }
 
-            if batch_size_remaining > group.user_principals.len() || (args.events.is_empty() && args.thread_events.is_empty()) {
-                args.user_principals = group.user_principals.clone();
+            if batch_size_remaining > group_data.user_principals.len()
+                || (args.events.is_empty() && args.thread_events.is_empty())
+            {
+                args.user_principals = group_data.user_principals.clone();
                 args.is_complete = true;
             }
-        });
+            Ok::<(), String>(())
+        })?;
 
         let events_synced_up_to = args.events.last().map(|e| e.index);
         let threads_synced_up_to = args.thread_events.last_key_value().map(|(k, _)| *k);
@@ -369,19 +389,22 @@ async fn send_all_events_to_group(group_id: ChatId) -> Result<(), String> {
             .map_err(|e| format!("Failed to call 'c2c_initialize_events'. {e:?}"))?;
 
         mutate_state(|state| {
-            let group = state
+            let group_data = state
                 .data
-                .groups_being_reinstalled
-                .get_mut(&group_id)
-                .unwrap_or_else(|| panic!("Group data not found. {group_id}"));
+                .group_being_reinstalled
+                .as_mut()
+                .filter(|g| g.group_id == group_id)
+                .and_then(|g| g.data.as_mut())
+                .ok_or_else(|| format!("Group data not found. {group_id}"))?;
 
             if let Some(e) = events_synced_up_to {
-                group.events.events_synced_up_to = Some(e);
+                group_data.events.events_synced_up_to = Some(e);
             }
             if let Some(m) = threads_synced_up_to {
-                group.events.thread_events_synced_up_to = Some(m);
+                group_data.events.thread_events_synced_up_to = Some(m);
             }
-        });
+            Ok::<(), String>(())
+        })?;
 
         if is_complete {
             break;
@@ -533,6 +556,13 @@ fn convert_updated_message(updated_message: UpdatedMessage) -> UpdatedMessageInt
 
 #[derive(Serialize, Deserialize)]
 pub struct GroupBeingReinstalled {
+    group_id: ChatId,
+    started: TimestampMillis,
+    data: Option<GroupBeingReinstalledData>,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct GroupBeingReinstalledData {
     init_args: group_canister::init::Args,
     events: GroupBeingReinstalledEvents,
     user_principals: HashMap<UserId, Principal>,

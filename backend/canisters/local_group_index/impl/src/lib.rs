@@ -3,8 +3,7 @@ use canister_state_macros::canister_state;
 use model::local_group_map::LocalGroupMap;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
-use std::collections::BTreeMap;
-use types::{CanisterId, CanisterWasm, ChatId, Cycles, Milliseconds, TimestampMillis, Timestamped, UserId, Version};
+use types::{CanisterId, CanisterWasm, Cycles, Milliseconds, TimestampMillis, Timestamped, UserId, Version};
 use utils::canister;
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::consts::CYCLES_REQUIRED_FOR_UPGRADE;
@@ -100,7 +99,7 @@ struct Data {
     pub test_mode: bool,
     pub max_concurrent_canister_upgrades: u32,
     #[serde(default)]
-    pub groups_being_reinstalled: BTreeMap<ChatId, GroupBeingReinstalled>,
+    pub group_being_reinstalled: Option<GroupBeingReinstalled>,
 }
 
 impl Data {
@@ -132,7 +131,7 @@ impl Data {
             total_cycles_spent_on_canisters: 0,
             test_mode,
             max_concurrent_canister_upgrades: 2,
-            groups_being_reinstalled: BTreeMap::new(),
+            group_being_reinstalled: None,
         }
     }
 }
