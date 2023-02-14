@@ -75,8 +75,11 @@ fn process_completed_events(user_principals: HashMap<UserId, Principal>, runtime
         match &event_wrapper.event {
             ChatEventInternal::Message(m) => {
                 next_message_index = m.message_index.incr();
-                if m.thread_summary.is_some() {
+                if let Some(thread) = m.thread_summary.as_ref() {
                     threads.push(m.message_index);
+                    for user_id in thread.participant_ids.iter() {
+                        runtime_state.data.participants.add_thread(user_id, m.message_index);
+                    }
                 }
                 setup_timer_jobs(m, None, now, &mut runtime_state.data.timer_jobs);
             }
