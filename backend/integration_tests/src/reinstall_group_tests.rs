@@ -5,8 +5,8 @@ use crate::{client, rng};
 use group_canister::events::SuccessResult;
 use serde_bytes::ByteBuf;
 use types::{
-    Avatar, ChatEvent, EventIndex, GroupCanisterGroupChatSummary, GroupReplyContext, MessageContentInitial, OptionUpdate,
-    Reaction, Role, TextContent,
+    Avatar, ChatEvent, EventIndex, GroupCanisterGroupChatSummary, GroupReplyContext, MessageContent, MessageContentInitial,
+    OptionUpdate, Reaction, Role, TextContent,
 };
 
 #[test]
@@ -134,14 +134,14 @@ fn reinstall_group_succeeds() {
         }
 
         if (i % 11) == 0 {
-            client::group::edit_message_v2(
+            client::group::edit_message(
                 &mut env,
                 user.principal,
                 group_id.into(),
-                &group_canister::edit_message_v2::Args {
+                &group_canister::edit_message::Args {
                     thread_root_message_index: None,
                     message_id,
-                    content: MessageContentInitial::Text(TextContent { text: "321".to_string() }),
+                    content: MessageContent::Text(TextContent { text: "321".to_string() }),
                     correlation_id: 0,
                 },
             );

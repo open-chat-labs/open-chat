@@ -16,7 +16,7 @@ generate_update_call!(add_reaction);
 generate_update_call!(block_user);
 generate_update_call!(change_role);
 generate_update_call!(delete_messages);
-generate_update_call!(edit_message_v2);
+generate_update_call!(edit_message);
 generate_update_call!(enable_invite_code);
 generate_update_call!(pin_message_v2);
 generate_update_call!(register_poll_vote);
