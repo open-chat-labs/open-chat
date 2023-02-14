@@ -1,0 +1,12 @@
+[package]
+name = "build_upgrade_canister_proposal_arg"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+candid = { workspace = true }
+clap = { version = "4.0", features = ["derive"] }
+ic-sns-governance = { workspace = true }
+types = { path = "../../../libraries/types" }

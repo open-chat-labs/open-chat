@@ -65,6 +65,7 @@ members = [
     "backend/notification_pusher/aws",
     "backend/notification_pusher/cli",
     "backend/notification_pusher/core",
+    "backend/sns/proposals/build_upgrade_canister_proposal_arg",
 ]
 
 [workspace.dependencies]
@@ -96,6 +97,7 @@ ic-icrc1-client = { git = "https://github.com/dfinity/ic", rev = "7445081734e6d8
 ic-icrc1-client-cdk = { git = "https://github.com/dfinity/ic", rev = "7445081734e6d896d090295967d50710975c4f25" }
 ic-ledger-types = "0.2.0"
 ic-ledger-canister-core = { git = "https://github.com/dfinity/ic", rev = "7445081734e6d896d090295967d50710975c4f25" }
+ic-sns-governance = { git = "https://github.com/dfinity/ic", rev = "7445081734e6d896d090295967d50710975c4f25" }
 ic-stable-structures = "0.5.0"
 ic-state-machine-tests = { git = "https://github.com/dfinity/ic", rev = "7445081734e6d896d090295967d50710975c4f25" }
 ic-utils = "0.22.0"
