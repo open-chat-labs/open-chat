@@ -84,7 +84,7 @@ mod tests {
 
         let max: Vec<_> = input.iter().cloned().max_n_by(10, |i| *i).collect();
 
-        let mut max_original: Vec<_> = input.clone();
+        let mut max_original: Vec<_> = input;
         max_original.sort();
         max_original.reverse();
         max_original.truncate(10);
@@ -100,7 +100,7 @@ mod tests {
 
         let min: Vec<_> = input.iter().cloned().min_n_by(10, |i| *i).collect();
 
-        let mut min_original: Vec<_> = input.clone();
+        let mut min_original: Vec<_> = input;
         min_original.sort();
         min_original.truncate(10);
 
