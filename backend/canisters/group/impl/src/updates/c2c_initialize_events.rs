@@ -77,7 +77,7 @@ fn process_completed_events(user_principals: HashMap<UserId, Principal>, runtime
                 next_message_index = m.message_index.incr();
                 if let Some(thread) = m.thread_summary.as_ref() {
                     threads.push(m.message_index);
-                    for user_id in thread.participant_ids.iter() {
+                    for user_id in thread.participant_ids.iter().chain([&m.sender]) {
                         runtime_state.data.participants.add_thread(user_id, m.message_index);
                     }
                 }
