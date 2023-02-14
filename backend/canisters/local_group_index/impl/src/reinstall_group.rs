@@ -17,7 +17,7 @@ use types::{
 };
 
 pub async fn reinstall_group(group_id: ChatId) -> Result<(), String> {
-    let (this_canister_id, group_index, local_user_index) = mutate_state(|state| {
+    let (this_canister_id, local_user_index) = mutate_state(|state| {
         if let Some(g) = state.data.group_being_reinstalled.as_ref().map(|g| g.group_id) {
             Err(format!("Reinstall already in progress. {g}"))
         } else {
@@ -26,11 +26,7 @@ pub async fn reinstall_group(group_id: ChatId) -> Result<(), String> {
                 started: state.env.now(),
                 data: None,
             });
-            Ok((
-                state.env.canister_id(),
-                state.data.group_index_canister_id,
-                state.data.local_user_index_canister_id,
-            ))
+            Ok((state.env.canister_id(), state.data.local_user_index_canister_id))
         }
     })?;
 
@@ -70,16 +66,16 @@ pub async fn reinstall_group(group_id: ChatId) -> Result<(), String> {
     .map_err(|e| format!("Failed to send message to group. {e:?}"))?;
 
     // Freeze_group
-    let freeze_group_args = group_index_canister::freeze_group::Args {
-        chat_id: group_id,
+    let freeze_group_args = group_canister::c2c_freeze_group::Args {
+        caller: this_canister_id.into(),
         reason: Some("Group being reinstalled".to_string()),
-        suspend_members: None,
+        return_members: false,
     };
-    let group_frozen_info = match group_index_canister_c2c_client::freeze_group(group_index, &freeze_group_args)
+    let group_frozen_info = match group_canister_c2c_client::c2c_freeze_group(group_id.into(), &freeze_group_args)
         .await
         .map_err(|e| format!("Failed to freeze group. {e:?}"))?
     {
-        group_index_canister::freeze_group::Response::Success(f) => FrozenGroupInfo {
+        group_canister::c2c_freeze_group::Response::Success(f) => FrozenGroupInfo {
             timestamp: f.timestamp,
             frozen_by: this_canister_id.into(),
             reason: freeze_group_args.reason,
@@ -236,9 +232,11 @@ pub async fn reinstall_group(group_id: ChatId) -> Result<(), String> {
     send_all_events_to_group(group_id).await?;
 
     // Unfreeze the group
-    group_index_canister_c2c_client::unfreeze_group(
-        group_index,
-        &group_index_canister::unfreeze_group::Args { chat_id: group_id },
+    group_canister_c2c_client::c2c_unfreeze_group(
+        group_id.into(),
+        &group_canister::c2c_unfreeze_group::Args {
+            caller: this_canister_id.into(),
+        },
     )
     .await
     .map_err(|e| format!("Failed to unfreeze group. {e:?}"))?;
