@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## Added
+
+- Added `c2c_user_principals` for looking up the principals of multiple users at a time ([#3128](https://github.com/open-ic/open-chat/pull/3128))
+
 ## [[2.0.592](https://github.com/open-ic/open-chat/releases/tag/v2.0.592-local_user_index)] - 2023-02-11
 
 ### Changed
