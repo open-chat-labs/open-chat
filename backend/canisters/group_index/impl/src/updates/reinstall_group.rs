@@ -1,11 +1,11 @@
-use crate::guards::caller_is_controller;
+use crate::guards::caller_is_governance_principal;
 use crate::{read_state, RuntimeState};
 use canister_tracing_macros::trace;
 use group_index_canister::reinstall_group::{Response::*, *};
 use ic_cdk_macros::update;
 use types::{CanisterId, ChatId};
 
-#[update(guard = "caller_is_controller")]
+#[update(guard = "caller_is_governance_principal")]
 #[trace]
 async fn reinstall_group(args: Args) -> Response {
     let PrepareResult {
