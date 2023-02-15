@@ -23,13 +23,14 @@ fn accept_if_valid(runtime_state: &RuntimeState) {
         }
         "suspend_user" | "unsuspend_user" => runtime_state.is_caller_super_admin(),
         "add_super_admin"
+        | "set_governance_principals"
         | "remove_super_admin"
         | "set_max_concurrent_user_canister_upgrades"
         | "add_local_user_index_canister"
         | "upgrade_user_canister_wasm"
         | "upgrade_local_user_index_canister_wasm"
         | "mark_local_user_index_full"
-        | "suspected_bots" => runtime_state.is_caller_service_principal(),
+        | "suspected_bots" => runtime_state.is_caller_governance_principal(),
         "create_challenge" | "notify_registration_fee_paid" | "register_user" => true,
         _ => false,
     };

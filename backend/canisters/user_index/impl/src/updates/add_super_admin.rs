@@ -1,4 +1,4 @@
-use crate::guards::caller_is_controller;
+use crate::guards::caller_is_governance_principal;
 use crate::{mutate_state, read_state, RuntimeState};
 use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
@@ -7,7 +7,7 @@ use types::UserId;
 use user_canister::c2c_grant_super_admin;
 use user_index_canister::add_super_admin::{Response::*, *};
 
-#[proposal(guard = "caller_is_controller")]
+#[proposal(guard = "caller_is_governance_principal")]
 #[trace]
 async fn add_super_admin(args: Args) -> Response {
     if read_state(|state| is_already_super_admin(&args.user_id, state)) {

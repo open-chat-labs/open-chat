@@ -1,4 +1,4 @@
-use crate::guards::caller_is_controller;
+use crate::guards::caller_is_governance_principal;
 use crate::{mutate_state, read_state, RuntimeState};
 use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
@@ -6,7 +6,7 @@ use tracing::info;
 use types::{CanisterId, Version};
 use user_index_canister::upgrade_user_canister_wasm::{Response::*, *};
 
-#[proposal(guard = "caller_is_controller")]
+#[proposal(guard = "caller_is_governance_principal")]
 #[trace]
 async fn upgrade_user_canister_wasm(args: Args) -> Response {
     let version = args.wasm.version;

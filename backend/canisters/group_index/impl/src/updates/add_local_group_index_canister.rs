@@ -1,4 +1,4 @@
-use crate::guards::caller_is_controller;
+use crate::guards::caller_is_governance_principal;
 use crate::{mutate_state, read_state, RuntimeState};
 use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
@@ -7,7 +7,7 @@ use tracing::info;
 use types::{CanisterId, CanisterWasm, Version};
 use utils::canister::install;
 
-#[proposal(guard = "caller_is_controller")]
+#[proposal(guard = "caller_is_governance_principal")]
 #[trace]
 async fn add_local_group_index_canister(args: Args) -> Response {
     match read_state(|state| prepare(&args, state)) {
