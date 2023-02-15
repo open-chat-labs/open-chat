@@ -22,7 +22,6 @@ async fn reinstall_group(args: Args) -> Response {
     .await
     {
         Ok(local_group_index_canister::c2c_reinstall_group::Response::Success) => Success,
-        Ok(local_group_index_canister::c2c_reinstall_group::Response::InternalError(error)) => InternalError(error),
         Err(error) => InternalError(format!("{error:?}")),
     }
 }

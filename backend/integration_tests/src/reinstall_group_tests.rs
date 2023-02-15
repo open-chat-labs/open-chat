@@ -1,6 +1,6 @@
 use crate::rng::random_string;
 use crate::setup::{return_env, setup_env, TestEnv};
-use crate::utils::assert_json_eq;
+use crate::utils::{assert_json_eq, tick_many};
 use crate::{client, rng};
 use group_canister::events::SuccessResult;
 use serde_bytes::ByteBuf;
@@ -291,6 +291,8 @@ fn reinstall_group_succeeds() {
         matches!(reinstall_response, group_index_canister::reinstall_group::Response::Success),
         "{reinstall_response:?}"
     );
+    // Because `reinstall_group` doesn't wait for the reinstall to complete
+    tick_many(&mut env, 10);
 
     let events_after = match client::group::events(
         &env,
@@ -367,6 +369,8 @@ fn min_visible_event_index_is_maintained() {
         matches!(reinstall_response, group_index_canister::reinstall_group::Response::Success),
         "{reinstall_response:?}"
     );
+    // Because `reinstall_group` doesn't wait for the reinstall to complete
+    tick_many(&mut env, 10);
 
     let summary_after = client::group::happy_path::summary(&env, &user2, group_id);
 
