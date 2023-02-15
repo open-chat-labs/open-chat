@@ -1,8 +1,11 @@
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
-use types::{Avatar, CanisterId, GroupPermissions, GroupRules, GroupSubtype, Milliseconds, UserId, Version};
+use types::{
+    Avatar, CanisterId, FrozenGroupInfo, GroupPermissions, GroupRules, GroupSubtype, Milliseconds, TimestampMillis, UserId,
+    Version,
+};
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct Args {
     pub is_public: bool,
     pub name: String,
@@ -25,4 +28,9 @@ pub struct Args {
     pub proposals_bot_user_id: UserId,
     pub wasm_version: Version,
     pub test_mode: bool,
+    pub is_reinstall: bool,
+    pub date_created_override: Option<TimestampMillis>,
+    pub invite_code: Option<u64>,
+    pub invite_code_enabled: bool,
+    pub frozen: Option<FrozenGroupInfo>,
 }

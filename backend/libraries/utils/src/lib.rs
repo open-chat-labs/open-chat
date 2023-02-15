@@ -10,6 +10,7 @@ pub mod git;
 pub mod group_validation;
 pub mod iterator_extensions;
 pub mod memory;
+pub mod mentions;
 pub mod regular_jobs;
 pub mod time;
 pub mod timestamped_map;

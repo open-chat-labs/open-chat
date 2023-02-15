@@ -4,6 +4,7 @@ pub mod deleted_message;
 pub mod events;
 pub mod events_by_index;
 pub mod events_window;
+pub mod http_request;
 pub mod invite_code;
 pub mod local_user_index;
 pub mod messages_by_message_index;

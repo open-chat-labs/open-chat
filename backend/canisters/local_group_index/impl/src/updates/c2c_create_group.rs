@@ -86,6 +86,11 @@ fn prepare(args: Args, runtime_state: &mut RuntimeState) -> Result<PrepareOk, Re
         proposals_bot_user_id: runtime_state.data.proposals_bot_user_id,
         avatar: args.avatar,
         test_mode: runtime_state.data.test_mode,
+        is_reinstall: false,
+        date_created_override: None,
+        invite_code: None,
+        invite_code_enabled: false,
+        frozen: None,
     };
 
     Ok(PrepareOk {

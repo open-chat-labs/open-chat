@@ -67,6 +67,7 @@ async fn install_service_canisters_impl(
         ledger_canister_id: canister_ids.nns_ledger,
         proposals_bot_user_id: canister_ids.proposals_bot.into(),
         cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
+        local_group_index_canister_ids: vec![canister_ids.local_group_index],
         wasm_version: version,
         test_mode,
     };

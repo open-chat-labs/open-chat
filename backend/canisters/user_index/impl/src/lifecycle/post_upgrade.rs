@@ -1,6 +1,7 @@
 use crate::lifecycle::{init_env, init_state, UPGRADE_BUFFER_SIZE};
 use crate::memory::get_upgrades_memory;
-use crate::Data;
+use crate::{mutate_state, Data};
+use candid::Principal;
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use ic_cdk_macros::post_upgrade;
@@ -25,4 +26,19 @@ fn post_upgrade(args: Args) {
     init_state(env, data, args.wasm_version);
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
+
+    let local_group_indexes: Vec<_> = ["suaf3-hqaaa-aaaaf-bfyoa-cai", "ainth-qaaaa-aaaar-aaaba-cai"]
+        .into_iter()
+        .map(|str| Principal::from_text(str).unwrap())
+        .collect();
+
+    // Register the local group indexes as super admins
+    mutate_state(|state| {
+        let now = state.env.now();
+
+        for (index, canister_id) in local_group_indexes.into_iter().enumerate() {
+            let username = format!("GroupUpgradeBot{}", index + 1);
+            state.data.register_super_admin_bot(canister_id, username, now);
+        }
+    })
 }

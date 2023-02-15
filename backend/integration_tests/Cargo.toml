@@ -20,6 +20,7 @@ proposals_bot_canister = { path = "../canisters/proposals_bot/api" }
 rand = { workspace = true }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
+serde_json = { workspace = true }
 test-case = { workspace = true }
 types = { path = "../libraries/types" }
 user_canister = { path = "../canisters/user/api" }

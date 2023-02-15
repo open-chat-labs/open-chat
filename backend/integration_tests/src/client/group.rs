@@ -18,10 +18,12 @@ generate_update_call!(change_role);
 generate_update_call!(delete_messages);
 generate_update_call!(edit_message);
 generate_update_call!(enable_invite_code);
+generate_update_call!(pin_message_v2);
 generate_update_call!(register_poll_vote);
 generate_update_call!(remove_participant);
 generate_update_call!(remove_reaction);
 generate_update_call!(send_message_v2);
+generate_update_call!(unblock_user);
 generate_update_call!(undelete_messages);
 generate_update_call!(unpin_message);
 generate_update_call!(update_group_v2);
@@ -58,6 +60,7 @@ pub mod happy_path {
         env: &mut StateMachine,
         sender: &User,
         group_chat_id: ChatId,
+        thread_root_message_index: Option<MessageIndex>,
         text: impl ToString,
         message_id: Option<MessageId>,
     ) -> group_canister::send_message_v2::SuccessResult {
@@ -66,7 +69,7 @@ pub mod happy_path {
             sender.principal,
             group_chat_id.into(),
             &group_canister::send_message_v2::Args {
-                thread_root_message_index: None,
+                thread_root_message_index,
                 message_id: message_id.unwrap_or_else(random_message_id),
                 content: MessageContentInitial::Text(TextContent { text: text.to_string() }),
                 sender_name: sender.username(),
@@ -159,6 +162,24 @@ pub mod happy_path {
             group_canister::summary_updates::Response::Success(result) => Some(result.updates),
             group_canister::summary_updates::Response::SuccessNoUpdates => None,
             response => panic!("'summary_updates' error: {response:?}"),
+        }
+    }
+
+    pub fn selected_initial(
+        env: &StateMachine,
+        sender: &User,
+        group_chat_id: ChatId,
+    ) -> group_canister::selected_initial::SuccessResult {
+        let response = super::selected_initial(
+            env,
+            sender.principal,
+            group_chat_id.into(),
+            &group_canister::selected_initial::Args {},
+        );
+
+        match response {
+            group_canister::selected_initial::Response::Success(result) => result,
+            response => panic!("'selected_initial' error: {response:?}"),
         }
     }
 }

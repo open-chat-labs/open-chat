@@ -4,6 +4,7 @@ use local_user_index_canister::*;
 // Queries
 generate_c2c_call!(c2c_can_push_notifications);
 generate_c2c_call!(c2c_lookup_user);
+generate_c2c_call!(c2c_user_principals);
 
 // Updates
 generate_c2c_call!(c2c_create_user);

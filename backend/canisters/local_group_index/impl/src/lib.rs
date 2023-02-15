@@ -1,3 +1,4 @@
+use crate::reinstall_group::GroupBeingReinstalled;
 use canister_state_macros::canister_state;
 use model::local_group_map::LocalGroupMap;
 use serde::{Deserialize, Serialize};
@@ -13,6 +14,7 @@ mod lifecycle;
 mod memory;
 mod model;
 mod queries;
+mod reinstall_group;
 mod updates;
 
 const GROUP_CANISTER_INITIAL_CYCLES_BALANCE: Cycles = CYCLES_REQUIRED_FOR_UPGRADE + GROUP_CANISTER_TOP_UP_AMOUNT; // 0.18T cycles
@@ -96,6 +98,8 @@ struct Data {
     pub total_cycles_spent_on_canisters: Cycles,
     pub test_mode: bool,
     pub max_concurrent_canister_upgrades: u32,
+    #[serde(default)]
+    pub group_being_reinstalled: Option<GroupBeingReinstalled>,
 }
 
 impl Data {
@@ -127,6 +131,7 @@ impl Data {
             total_cycles_spent_on_canisters: 0,
             test_mode,
             max_concurrent_canister_upgrades: 2,
+            group_being_reinstalled: None,
         }
     }
 }

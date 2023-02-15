@@ -7,6 +7,10 @@ const MAX_REACTION_LENGTH_BYTES: usize = 40;
 pub struct Reaction(String);
 
 impl Reaction {
+    pub fn new(s: String) -> Reaction {
+        Reaction(s)
+    }
+
     pub fn is_valid(&self) -> bool {
         let len = self.0.len();
 

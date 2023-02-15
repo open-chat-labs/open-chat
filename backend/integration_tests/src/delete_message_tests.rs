@@ -74,7 +74,8 @@ fn delete_group_message_succeeds() {
 
     let message_id = random_message_id();
 
-    let send_message_response = client::group::happy_path::send_text_message(&mut env, &user, group, "TEXT", Some(message_id));
+    let send_message_response =
+        client::group::happy_path::send_text_message(&mut env, &user, group, None, "TEXT", Some(message_id));
 
     let delete_messages_response = client::group::delete_messages(
         &mut env,
@@ -206,7 +207,8 @@ fn delete_then_undelete_group_message(delay: bool) {
 
     let message_id = random_message_id();
 
-    let send_message_response = client::group::happy_path::send_text_message(&mut env, &user, group, "TEXT", Some(message_id));
+    let send_message_response =
+        client::group::happy_path::send_text_message(&mut env, &user, group, None, "TEXT", Some(message_id));
 
     let delete_messages_response = client::group::delete_messages(
         &mut env,

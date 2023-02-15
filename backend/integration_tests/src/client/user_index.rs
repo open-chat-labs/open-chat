@@ -12,6 +12,7 @@ generate_query_call!(users);
 // Updates
 generate_update_call!(add_local_user_index_canister);
 generate_update_call!(add_super_admin);
+generate_update_call!(c2c_register_bot);
 generate_update_call!(remove_super_admin);
 generate_update_call!(register_user);
 generate_update_call!(set_username);
