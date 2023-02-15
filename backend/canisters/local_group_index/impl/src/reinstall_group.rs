@@ -246,6 +246,9 @@ pub async fn reinstall_group(group_id: ChatId) -> Result<(), String> {
         .await
         .map_err(|e| format!("Failed to leave group. {e:?}"))?;
 
+    // Reset the `group_being_reinstalled` state
+    mutate_state(|state| state.data.group_being_reinstalled = None);
+
     info!(%group_id, "Group reinstalled");
     Ok(())
 }

@@ -7,7 +7,7 @@ use serde_bytes::ByteBuf;
 use std::time::Duration;
 use types::{
     Avatar, ChatEvent, ChatMetrics, EventIndex, GroupCanisterGroupChatSummary, GroupReplyContext, MessageContent,
-    MessageContentInitial, OptionUpdate, Reaction, Role, TextContent, User,
+    MessageContentInitial, MessageIndex, OptionUpdate, Reaction, Role, TextContent, User,
 };
 
 #[test]
@@ -281,15 +281,15 @@ fn reinstall_group_succeeds() {
     let summary_before = client::group::happy_path::summary(&env, &user, group_id);
     let details_before = client::group::happy_path::selected_initial(&env, &user, group_id);
 
-    let result = client::group_index::reinstall_group(
+    let reinstall_response = client::group_index::reinstall_group(
         &mut env,
         controller,
         canister_ids.group_index,
         &group_index_canister::reinstall_group::Args { group_id },
     );
     assert!(
-        matches!(result, group_index_canister::reinstall_group::Response::Success),
-        "{result:?}"
+        matches!(reinstall_response, group_index_canister::reinstall_group::Response::Success),
+        "{reinstall_response:?}"
     );
 
     let events_after = match client::group::events(
@@ -316,6 +316,63 @@ fn reinstall_group_succeeds() {
     validate_events(events_before, events_after);
     validate_summaries(summary_before, summary_after);
     validate_details(details_before, details_after);
+
+    return_env(TestEnv {
+        env,
+        canister_ids,
+        controller,
+    });
+}
+
+#[test]
+fn min_visible_event_index_is_maintained() {
+    let TestEnv {
+        mut env,
+        canister_ids,
+        controller,
+    } = setup_env();
+
+    let user1 = client::user_index::happy_path::register_user(&mut env, canister_ids.user_index);
+    let user2 = client::user_index::happy_path::register_user(&mut env, canister_ids.user_index);
+    let group_name = random_string();
+    let group_id = client::user::happy_path::create_group(&mut env, &user1, &group_name, false, false);
+
+    for i in 0u32..20 {
+        env.advance_time(Duration::from_secs(1));
+
+        client::group::happy_path::send_text_message(&mut env, &user1, group_id.into(), None, i, None);
+    }
+
+    client::group::add_participants(
+        &mut env,
+        user1.principal,
+        group_id.into(),
+        &group_canister::add_participants::Args {
+            user_ids: vec![user2.user_id],
+            added_by_name: user1.username(),
+            allow_blocked_users: false,
+            correlation_id: 0,
+        },
+    );
+
+    let summary_before = client::group::happy_path::summary(&env, &user2, group_id);
+
+    let reinstall_response = client::group_index::reinstall_group(
+        &mut env,
+        controller,
+        canister_ids.group_index,
+        &group_index_canister::reinstall_group::Args { group_id },
+    );
+    assert!(
+        matches!(reinstall_response, group_index_canister::reinstall_group::Response::Success),
+        "{reinstall_response:?}"
+    );
+
+    let summary_after = client::group::happy_path::summary(&env, &user2, group_id);
+
+    assert!(summary_before.min_visible_event_index > EventIndex::default());
+    assert!(summary_before.min_visible_message_index > MessageIndex::default());
+    validate_summaries(summary_before, summary_after);
 
     return_env(TestEnv {
         env,
