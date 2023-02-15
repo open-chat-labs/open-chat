@@ -1,4 +1,4 @@
-use crate::guards::caller_is_service_owner;
+use crate::guards::caller_is_governance_principal;
 use crate::{mutate_state, read_state, RuntimeState};
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
@@ -7,7 +7,7 @@ use std::fmt::Write;
 use types::{ChatId, GovernanceProposalsSubtype, GroupPermissions, GroupRules, GroupSubtype, PermissionRole};
 
 // dfx --identity openchat canister --network ic call proposals_bot add_governance_canister '(record { governance_canister_id=principal "rrkah-fqaaa-aaaaa-aaaaq-cai"; name="NNS" })'
-#[update(guard = "caller_is_service_owner")]
+#[update(guard = "caller_is_governance_principal")]
 #[trace]
 async fn add_governance_canister(args: Args) -> Response {
     let PrepareResult { is_nns } = match read_state(|state| prepare(&args, state)) {

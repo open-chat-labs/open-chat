@@ -4,6 +4,6 @@ mod push_subscription;
 mod remove_subscription;
 mod remove_subscriptions;
 mod remove_subscriptions_for_user;
-mod set_service_principals;
+mod set_governance_principals;
 mod upgrade_notifications_canister_wasm;
 mod wallet_receive;
