@@ -35,9 +35,9 @@ impl RuntimeState {
         RuntimeState { env, data }
     }
 
-    pub fn is_caller_service_principal(&self) -> bool {
+    pub fn is_caller_governance_principal(&self) -> bool {
         let caller = self.env.caller();
-        self.data.service_principals.contains(&caller)
+        self.data.governance_principals.contains(&caller)
     }
 
     pub fn is_caller_user_index(&self) -> bool {
@@ -81,7 +81,7 @@ impl RuntimeState {
             git_commit_id: utils::git::git_commit_id().to_string(),
             subscriptions: self.data.subscriptions.total(),
             users: self.data.principal_to_user_id.len() as u64,
-            service_principals: self.data.service_principals.iter().copied().collect(),
+            governance_principals: self.data.governance_principals.iter().copied().collect(),
             notifications_canister_wasm_version: self.data.notifications_canister_wasm.version,
             notifications_canisters: self
                 .data
@@ -108,7 +108,8 @@ impl RuntimeState {
 
 #[derive(Serialize, Deserialize)]
 struct Data {
-    pub service_principals: HashSet<Principal>,
+    #[serde(alias = "service_principals")]
+    pub governance_principals: HashSet<Principal>,
     pub notifications_canisters: HashMap<CanisterId, NotificationsCanister>,
     pub push_service_principals: HashSet<Principal>,
     pub user_index_canister_id: CanisterId,
@@ -123,7 +124,7 @@ struct Data {
 
 impl Data {
     pub fn new(
-        service_principals: Vec<Principal>,
+        governance_principals: Vec<Principal>,
         push_service_principals: Vec<Principal>,
         user_index_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
@@ -131,7 +132,7 @@ impl Data {
         test_mode: bool,
     ) -> Data {
         Data {
-            service_principals: service_principals.into_iter().collect(),
+            governance_principals: governance_principals.into_iter().collect(),
             notifications_canisters: HashMap::default(),
             push_service_principals: push_service_principals.into_iter().collect(),
             user_index_canister_id,
@@ -155,7 +156,7 @@ pub struct Metrics {
     pub git_commit_id: String,
     pub subscriptions: u64,
     pub users: u64,
-    pub service_principals: Vec<Principal>,
+    pub governance_principals: Vec<Principal>,
     pub notifications_canister_wasm_version: Version,
     pub notifications_canisters: Vec<(CanisterId, NotificationsCanister)>,
     pub canister_ids: CanisterIds,

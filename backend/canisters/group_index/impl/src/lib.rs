@@ -42,9 +42,9 @@ impl RuntimeState {
         RuntimeState { env, data }
     }
 
-    pub fn is_caller_service_principal(&self) -> bool {
+    pub fn is_caller_governance_principal(&self) -> bool {
         let caller = self.env.caller();
-        self.data.service_principals.contains(&caller)
+        self.data.governance_principals.contains(&caller)
     }
 
     pub fn metrics(&self) -> Metrics {
@@ -68,7 +68,7 @@ impl RuntimeState {
             canister_upgrades_failed: canister_upgrades_metrics.failed,
             canister_upgrades_pending: canister_upgrades_metrics.pending as u64,
             canister_upgrades_in_progress: canister_upgrades_metrics.in_progress as u64,
-            service_principals: self.data.service_principals.iter().copied().collect(),
+            governance_principals: self.data.governance_principals.iter().copied().collect(),
             group_wasm_version: self.data.group_canister_wasm.version,
             local_group_index_wasm_version: self.data.local_group_index_canister_wasm.version,
             local_group_indexes: self.data.local_index_map.iter().map(|(c, i)| (*c, i.clone())).collect(),
@@ -87,7 +87,8 @@ struct Data {
     pub public_groups: PublicGroups,
     pub private_groups: PrivateGroups,
     pub deleted_groups: DeletedGroups,
-    pub service_principals: HashSet<Principal>,
+    #[serde(alias = "service_principals")]
+    pub governance_principals: HashSet<Principal>,
     pub group_canister_wasm: CanisterWasm,
     pub local_group_index_canister_wasm: CanisterWasm,
     pub user_index_canister_id: CanisterId,
@@ -105,7 +106,7 @@ struct Data {
 impl Data {
     #[allow(clippy::too_many_arguments)]
     fn new(
-        service_principals: Vec<Principal>,
+        governance_principals: Vec<Principal>,
         group_canister_wasm: CanisterWasm,
         local_group_index_canister_wasm: CanisterWasm,
         user_index_canister_id: CanisterId,
@@ -118,7 +119,7 @@ impl Data {
             public_groups: PublicGroups::default(),
             private_groups: PrivateGroups::default(),
             deleted_groups: DeletedGroups::default(),
-            service_principals: service_principals.into_iter().collect(),
+            governance_principals: governance_principals.into_iter().collect(),
             group_canister_wasm,
             local_group_index_canister_wasm,
             user_index_canister_id,
@@ -173,7 +174,7 @@ impl Default for Data {
             public_groups: PublicGroups::default(),
             private_groups: PrivateGroups::default(),
             deleted_groups: DeletedGroups::default(),
-            service_principals: HashSet::default(),
+            governance_principals: HashSet::default(),
             group_canister_wasm: CanisterWasm::default(),
             local_group_index_canister_wasm: CanisterWasm::default(),
             user_index_canister_id: Principal::anonymous(),
@@ -197,6 +198,7 @@ pub struct Metrics {
     pub cycles_balance: Cycles,
     pub wasm_version: Version,
     pub git_commit_id: String,
+    pub governance_principals: Vec<Principal>,
     pub total_cycles_spent_on_canisters: Cycles,
     pub public_groups: u32,
     pub private_groups: u64,
@@ -209,7 +211,6 @@ pub struct Metrics {
     pub canister_upgrades_failed: Vec<FailedUpgradeCount>,
     pub canister_upgrades_pending: u64,
     pub canister_upgrades_in_progress: u64,
-    pub service_principals: Vec<Principal>,
     pub group_wasm_version: Version,
     pub local_group_index_wasm_version: Version,
     pub local_group_indexes: Vec<(CanisterId, LocalGroupIndex)>,
