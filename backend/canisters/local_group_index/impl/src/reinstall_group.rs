@@ -223,8 +223,8 @@ pub async fn reinstall_group(group_id: ChatId) -> Result<(), String> {
     })?;
 
     // Reinstall the group
-    let wasm = read_state(|state| state.data.group_canister_wasm.module.clone());
-    utils::canister::reinstall(group_id.into(), wasm, init_args_bytes)
+    let wasm = read_state(|state| state.data.group_canister_wasm.clone());
+    utils::canister::reinstall(group_id.into(), wasm.module, init_args_bytes)
         .await
         .map_err(|e| format!("Failed to reinstall group. {e:?}"))?;
 
@@ -247,7 +247,12 @@ pub async fn reinstall_group(group_id: ChatId) -> Result<(), String> {
         .map_err(|e| format!("Failed to leave group. {e:?}"))?;
 
     // Reset the `group_being_reinstalled` state
-    mutate_state(|state| state.data.group_being_reinstalled = None);
+    mutate_state(|state| {
+        if let Some(group) = state.data.local_groups.get_mut(&group_id) {
+            group.wasm_version = wasm.version;
+        }
+        state.data.group_being_reinstalled = None
+    });
 
     info!(%group_id, "Group reinstalled");
     Ok(())
