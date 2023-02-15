@@ -1,16 +1,19 @@
 use crate::guards::caller_is_local_group_index;
+use crate::model::participants::Participants;
 use crate::timer_job_types::{EndPollJob, HardDeleteMessageContentJob, TimerJob};
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use candid::Principal;
 use canister_api_macros::update_msgpack;
 use canister_timer_jobs::TimerJobs;
 use canister_tracing_macros::trace;
-use chat_events::{ChatEventInternal, MessageInternal, Reader};
+use chat_events::{ChatEventInternal, ChatEventsListReader, MessageInternal, Reader};
 use group_canister::c2c_initialize_events::{Response::*, *};
 use std::collections::HashMap;
 use types::{
-    EventIndex, GroupPermissions, MessageContentInternal, MessageIndex, PermissionRole, Role, TimestampMillis, UserId,
+    EventIndex, GroupPermissions, MentionInternal, MessageContentInternal, MessageIndex, PermissionRole, Role, TimestampMillis,
+    UserId,
 };
+use utils::mentions::extract_mentioned_users;
 use utils::time::MINUTE_IN_MS;
 
 #[update_msgpack(guard = "caller_is_local_group_index")]
@@ -71,17 +74,25 @@ fn process_completed_events(user_principals: HashMap<UserId, Principal>, runtime
     let temp_permissions = everything_allowed_permissions();
     let mut next_message_index = MessageIndex::default();
     let mut threads = Vec::new();
-    for event_wrapper in runtime_state.data.events.main_events_reader(now).iter(None, true) {
+    let main_events_reader = runtime_state.data.events.main_events_reader(now);
+    for event_wrapper in main_events_reader.iter(None, true) {
         match &event_wrapper.event {
             ChatEventInternal::Message(m) => {
-                next_message_index = m.message_index.incr();
                 if let Some(thread) = m.thread_summary.as_ref() {
                     threads.push(m.message_index);
                     for user_id in thread.participant_ids.iter().chain([&m.sender]) {
                         runtime_state.data.participants.add_thread(user_id, m.message_index);
                     }
                 }
+                process_mentions(
+                    None,
+                    m,
+                    event_wrapper.timestamp,
+                    &main_events_reader,
+                    &mut runtime_state.data.participants,
+                );
                 setup_timer_jobs(m, None, now, &mut runtime_state.data.timer_jobs);
+                next_message_index = m.message_index.incr();
             }
             ChatEventInternal::ParticipantsAdded(p) => {
                 for user_id in p.user_ids.iter() {
@@ -215,19 +226,92 @@ fn process_completed_events(user_principals: HashMap<UserId, Principal>, runtime
         }
     }
 
-    for thread in threads {
-        if let Some(reader) = runtime_state
-            .data
-            .events
-            .events_reader(EventIndex::default(), Some(thread), now)
+    for root_message_index in threads {
+        if let Some(events_reader) =
+            runtime_state
+                .data
+                .events
+                .events_reader(EventIndex::default(), Some(root_message_index), now)
         {
-            for message in reader.iter(None, true).filter_map(|e| e.event.as_message()) {
-                setup_timer_jobs(message, Some(thread), now, &mut runtime_state.data.timer_jobs);
+            for event_wrapper in events_reader.iter(None, true) {
+                if let Some(m) = &event_wrapper.event.as_message() {
+                    // The first thread reply counts as a mention for the root message sender
+                    if m.message_index == MessageIndex::default() {
+                        if let Some(user_id) = main_events_reader.message_internal(m.message_index.into()).map(|m| m.sender) {
+                            add_mention(
+                                Some(root_message_index),
+                                MessageIndex::default(),
+                                &user_id,
+                                event_wrapper.timestamp,
+                                &mut runtime_state.data.participants,
+                            );
+                        }
+                    }
+                    process_mentions(
+                        Some(root_message_index),
+                        m,
+                        event_wrapper.timestamp,
+                        &events_reader,
+                        &mut runtime_state.data.participants,
+                    );
+                    setup_timer_jobs(m, Some(root_message_index), now, &mut runtime_state.data.timer_jobs);
+                }
             }
         }
     }
 
     runtime_state.data.initialized = true;
+}
+
+fn process_mentions(
+    thread_root_message_index: Option<MessageIndex>,
+    message: &MessageInternal,
+    timestamp: TimestampMillis,
+    events_reader: &ChatEventsListReader,
+    participants: &mut Participants,
+) {
+    let mut mentioned_users = Vec::new();
+    if let Some(text) = message.content.text() {
+        mentioned_users.extend(extract_mentioned_users(text));
+    }
+
+    if let Some(user_id) = message
+        .replies_to
+        .as_ref()
+        .filter(|r| r.chat_id_if_other.is_none())
+        .and_then(|r| events_reader.message_internal(r.event_index.into()))
+        .map(|m| m.sender)
+    {
+        mentioned_users.push(user_id);
+    }
+
+    for user_id in mentioned_users {
+        add_mention(
+            thread_root_message_index,
+            message.message_index,
+            &user_id,
+            timestamp,
+            participants,
+        );
+    }
+}
+
+fn add_mention(
+    thread_root_message_index: Option<MessageIndex>,
+    message_index: MessageIndex,
+    user_id: &UserId,
+    timestamp: TimestampMillis,
+    participants: &mut Participants,
+) {
+    if let Some(p) = participants.get_by_user_id_mut(user_id) {
+        p.mentions_v2.add(
+            MentionInternal {
+                thread_root_message_index,
+                message_index,
+            },
+            timestamp,
+        );
+    }
 }
 
 fn setup_timer_jobs(

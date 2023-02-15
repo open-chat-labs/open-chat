@@ -4,9 +4,10 @@ use crate::utils::assert_json_eq;
 use crate::{client, rng};
 use group_canister::events::SuccessResult;
 use serde_bytes::ByteBuf;
+use std::time::Duration;
 use types::{
     Avatar, ChatEvent, ChatMetrics, EventIndex, GroupCanisterGroupChatSummary, GroupReplyContext, MessageContent,
-    MessageContentInitial, OptionUpdate, Reaction, Role, TextContent,
+    MessageContentInitial, OptionUpdate, Reaction, Role, TextContent, User,
 };
 
 #[test]
@@ -36,8 +37,12 @@ fn reinstall_group_succeeds() {
     );
 
     for i in 0u32..20 {
+        env.advance_time(Duration::from_secs(1));
+
         let new_user = client::user_index::happy_path::register_user(&mut env, canister_ids.user_index);
         client::local_user_index::happy_path::join_group(&mut env, new_user.principal, canister_ids.local_user_index, group_id);
+
+        env.advance_time(Duration::from_secs(1));
 
         let message_id = rng::random_message_id();
         let send_result = match client::group::send_message_v2(
@@ -59,9 +64,13 @@ fn reinstall_group_succeeds() {
             _ => panic!(),
         };
 
+        env.advance_time(Duration::from_secs(1));
+
         client::group::happy_path::send_text_message(&mut env, &new_user, group_id, Some(send_result.message_index), i, None);
 
         if (i % 2) == 0 {
+            env.advance_time(Duration::from_secs(1));
+
             let add_reaction_response = client::group::add_reaction(
                 &mut env,
                 user.principal,
@@ -81,6 +90,8 @@ fn reinstall_group_succeeds() {
         }
 
         if (i % 3) == 0 {
+            env.advance_time(Duration::from_secs(1));
+
             let edit_message_response = client::group::edit_message(
                 &mut env,
                 user.principal,
@@ -99,6 +110,36 @@ fn reinstall_group_succeeds() {
         }
 
         if (i % 5) == 0 {
+            env.advance_time(Duration::from_secs(1));
+
+            let send_with_mention_response = client::group::send_message_v2(
+                &mut env,
+                new_user.principal,
+                group_id.into(),
+                &group_canister::send_message_v2::Args {
+                    thread_root_message_index: None,
+                    message_id: rng::random_message_id(),
+                    content: MessageContentInitial::Text(TextContent {
+                        text: format!("@UserId({})", user.user_id),
+                    }),
+                    sender_name: new_user.username(),
+                    replies_to: None,
+                    mentioned: vec![User {
+                        user_id: user.user_id,
+                        username: user.username(),
+                    }],
+                    forwarding: false,
+                    correlation_id: 0,
+                },
+            );
+            assert!(
+                matches!(
+                    send_with_mention_response,
+                    group_canister::send_message_v2::Response::Success(_)
+                ),
+                "{send_with_mention_response:?}"
+            );
+
             let change_role_response = client::group::change_role(
                 &mut env,
                 user.principal,
@@ -151,6 +192,8 @@ fn reinstall_group_succeeds() {
         }
 
         if (i % 7) == 0 {
+            env.advance_time(Duration::from_secs(1));
+
             let block_user_response = client::group::block_user(
                 &mut env,
                 user.principal,
@@ -183,6 +226,8 @@ fn reinstall_group_succeeds() {
         }
 
         if (i % 11) == 0 {
+            env.advance_time(Duration::from_secs(1));
+
             let pin_message_response = client::group::pin_message_v2(
                 &mut env,
                 user.principal,
@@ -306,6 +351,7 @@ fn validate_summaries(before: GroupCanisterGroupChatSummary, after: GroupCaniste
     assert_eq!(before.joined, after.joined);
     assert_eq!(before.participant_count, after.participant_count);
     assert_eq!(before.role, after.role);
+    assert_json_eq(before.mentions, after.mentions);
     assert_eq!(before.owner_id, after.owner_id);
     assert_json_eq(before.permissions, after.permissions);
     validate_my_metrics(before.my_metrics, after.my_metrics);
