@@ -10,7 +10,8 @@ use chat_events::{ChatEventInternal, ChatEventsListReader, MessageInternal, Read
 use group_canister::c2c_initialize_events::{Response::*, *};
 use std::collections::HashMap;
 use types::{
-    EventIndex, GroupPermissions, MentionInternal, MessageContentInternal, MessageIndex, Role, TimestampMillis, UserId,
+    EventIndex, GroupPermissions, MentionInternal, MessageContentInternal, MessageIndex, PermissionRole, Role, TimestampMillis,
+    UserId,
 };
 use utils::mentions::extract_mentioned_users;
 use utils::time::MINUTE_IN_MS;
@@ -70,7 +71,10 @@ fn c2c_initialize_events_impl(args: Args, runtime_state: &mut RuntimeState) -> R
 
 fn process_completed_events(user_principals: HashMap<UserId, Principal>, runtime_state: &mut RuntimeState) {
     let now = runtime_state.env.now();
-    let permissive_permissions = GroupPermissions::permissive();
+    let temp_permissions = GroupPermissions {
+        change_roles: PermissionRole::Members,
+        ..Default::default()
+    };
     let mut next_message_index = MessageIndex::default();
     let mut threads = Vec::new();
     let main_events_reader = runtime_state.data.events.main_events_reader(now);
@@ -156,7 +160,7 @@ fn process_completed_events(user_principals: HashMap<UserId, Principal>, runtime
                         get_principal(&r.changed_by, &user_principals),
                         user_id,
                         r.new_role,
-                        &permissive_permissions,
+                        &temp_permissions,
                     );
                 }
             }
@@ -165,7 +169,7 @@ fn process_completed_events(user_principals: HashMap<UserId, Principal>, runtime
                     get_principal(&o.old_owner, &user_principals),
                     &o.new_owner,
                     Role::Owner,
-                    &permissive_permissions,
+                    &temp_permissions,
                 );
             }
             ChatEventInternal::UsersBlocked(u) => {
