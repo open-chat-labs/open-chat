@@ -340,7 +340,7 @@ fn min_visible_event_index_is_maintained() {
     for i in 0u32..20 {
         env.advance_time(Duration::from_secs(1));
 
-        client::group::happy_path::send_text_message(&mut env, &user1, group_id.into(), None, i, None);
+        client::group::happy_path::send_text_message(&mut env, &user1, group_id, None, i, None);
     }
 
     client::group::add_participants(

@@ -179,7 +179,7 @@ pub mod happy_path {
 
         match response {
             group_canister::selected_initial::Response::Success(result) => result,
-            response => panic!("'selected_initial' error: {:?}", response),
+            response => panic!("'selected_initial' error: {response:?}"),
         }
     }
 }
