@@ -14,6 +14,8 @@ fn c2c_reinstall_group(args: Args) -> Response {
 
 async fn c2c_reinstall_group_impl(args: Args) {
     if let Err(error) = reinstall_group(args.group_id).await {
-        error!("Failed to reinstall group. Error: {error}");
+        error!(%args.group_id, "Failed to reinstall group. Error: {error}");
+    } else {
+        tracing::trace!(%args.group_id, "Successfully reinstalled group");
     }
 }
