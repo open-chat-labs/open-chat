@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Update cdk to v0.7.0 ([#3115](https://github.com/open-ic/open-chat/pull/3115))
+- Rename service_principals -> governance_principals ([#3129](https://github.com/open-ic/open-chat/pull/3129))
 
 ### Removed
 

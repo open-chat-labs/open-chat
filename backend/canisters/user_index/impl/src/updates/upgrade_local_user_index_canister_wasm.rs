@@ -1,11 +1,11 @@
-use crate::guards::caller_is_controller;
+use crate::guards::caller_is_governance_principal;
 use crate::{mutate_state, RuntimeState};
 use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
 use tracing::info;
 use user_index_canister::upgrade_local_user_index_canister_wasm::{Response::*, *};
 
-#[proposal(guard = "caller_is_controller")]
+#[proposal(guard = "caller_is_governance_principal")]
 #[trace]
 fn upgrade_local_user_index_canister_wasm(args: Args) -> Response {
     mutate_state(|state| upgrade_local_user_index_canister_wasm_impl(args, state))

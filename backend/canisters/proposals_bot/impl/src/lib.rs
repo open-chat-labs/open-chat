@@ -31,9 +31,9 @@ impl RuntimeState {
         RuntimeState { env, data }
     }
 
-    pub fn is_caller_service_owner(&self) -> bool {
+    pub fn is_caller_governance_principal(&self) -> bool {
         let caller = self.env.caller();
-        self.data.service_owner_principals.contains(&caller)
+        self.data.governance_principals.contains(&caller)
     }
 
     pub fn metrics(&self) -> Metrics {
@@ -44,7 +44,7 @@ impl RuntimeState {
             wasm_version: WASM_VERSION.with(|v| **v.borrow()),
             git_commit_id: utils::git::git_commit_id().to_string(),
             nervous_systems: self.data.nervous_systems.metrics(),
-            service_principals: self.data.service_owner_principals.iter().copied().collect(),
+            governance_principals: self.data.governance_principals.iter().copied().collect(),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
@@ -58,7 +58,8 @@ impl RuntimeState {
 #[derive(Serialize, Deserialize)]
 struct Data {
     pub nervous_systems: NervousSystems,
-    pub service_owner_principals: HashSet<Principal>,
+    #[serde(alias = "service_owner_principals")]
+    pub governance_principals: HashSet<Principal>,
     pub user_index_canister_id: CanisterId,
     pub group_index_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
@@ -68,7 +69,7 @@ struct Data {
 
 impl Data {
     pub fn new(
-        service_owner_principals: HashSet<Principal>,
+        governance_principals: HashSet<Principal>,
         user_index_canister_id: CanisterId,
         group_index_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
@@ -77,7 +78,7 @@ impl Data {
     ) -> Data {
         Data {
             nervous_systems: NervousSystems::default(),
-            service_owner_principals,
+            governance_principals,
             user_index_canister_id,
             group_index_canister_id,
             cycles_dispenser_canister_id,
@@ -95,7 +96,7 @@ pub struct Metrics {
     pub wasm_version: Version,
     pub git_commit_id: String,
     pub nervous_systems: Vec<NervousSystemMetrics>,
-    pub service_principals: Vec<Principal>,
+    pub governance_principals: Vec<Principal>,
     pub canister_ids: CanisterIds,
 }
 

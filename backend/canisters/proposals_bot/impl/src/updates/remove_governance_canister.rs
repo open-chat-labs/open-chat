@@ -1,11 +1,11 @@
-use crate::guards::caller_is_service_owner;
+use crate::guards::caller_is_governance_principal;
 use crate::{mutate_state, read_state};
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
 use proposals_bot_canister::remove_governance_canister::{Response::*, *};
 
 // dfx --identity openchat canister --network ic call proposals_bot remove_governance_canister '(record { governance_canister_id=principal "rrkah-fqaaa-aaaaa-aaaaq-cai"; delete_group=true })'
-#[update(guard = "caller_is_service_owner")]
+#[update(guard = "caller_is_governance_principal")]
 #[trace]
 async fn remove_governance_canister(args: Args) -> Response {
     if let Some(chat_id) = read_state(|state| state.data.nervous_systems.get_chat_id(&args.governance_canister_id)) {

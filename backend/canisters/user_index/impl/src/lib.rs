@@ -59,9 +59,9 @@ impl RuntimeState {
         }
     }
 
-    pub fn is_caller_service_principal(&self) -> bool {
+    pub fn is_caller_governance_principal(&self) -> bool {
         let caller = self.env.caller();
-        self.data.service_principals.contains(&caller)
+        self.data.governance_principals.contains(&caller)
     }
 
     pub fn is_caller_local_user_index_canister(&self) -> bool {
@@ -99,7 +99,7 @@ impl RuntimeState {
             canister_upgrades_failed: canister_upgrades_metrics.failed,
             canister_upgrades_pending: canister_upgrades_metrics.pending as u64,
             canister_upgrades_in_progress: canister_upgrades_metrics.in_progress as u64,
-            service_principals: self.data.service_principals.iter().copied().collect(),
+            governance_principals: self.data.governance_principals.iter().copied().collect(),
             user_wasm_version: self.data.user_canister_wasm.version,
             max_concurrent_canister_upgrades: self.data.max_concurrent_canister_upgrades,
             super_admins: self.data.super_admins.len() as u8,
@@ -120,7 +120,8 @@ impl RuntimeState {
 #[derive(Serialize, Deserialize)]
 struct Data {
     pub users: UserMap,
-    pub service_principals: HashSet<Principal>,
+    #[serde(alias = "service_principals")]
+    pub governance_principals: HashSet<Principal>,
     pub user_canister_wasm: CanisterWasm,
     pub local_user_index_canister_wasm: CanisterWasm,
     pub group_index_canister_id: CanisterId,
@@ -145,7 +146,7 @@ struct Data {
 impl Data {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
-        service_principals: Vec<Principal>,
+        governance_principals: Vec<Principal>,
         user_canister_wasm: CanisterWasm,
         local_user_index_canister_wasm: CanisterWasm,
         group_index_canister_id: CanisterId,
@@ -171,7 +172,7 @@ impl Data {
 
         Data {
             users,
-            service_principals: service_principals.into_iter().collect(),
+            governance_principals: governance_principals.into_iter().collect(),
             user_canister_wasm,
             local_user_index_canister_wasm,
             group_index_canister_id,
@@ -214,7 +215,7 @@ impl Default for Data {
     fn default() -> Data {
         Data {
             users: UserMap::default(),
-            service_principals: HashSet::new(),
+            governance_principals: HashSet::new(),
             user_canister_wasm: CanisterWasm::default(),
             local_user_index_canister_wasm: CanisterWasm::default(),
             group_index_canister_id: Principal::anonymous(),
@@ -252,7 +253,7 @@ pub struct Metrics {
     pub canister_upgrades_failed: Vec<FailedUpgradeCount>,
     pub canister_upgrades_pending: u64,
     pub canister_upgrades_in_progress: u64,
-    pub service_principals: Vec<Principal>,
+    pub governance_principals: Vec<Principal>,
     pub user_wasm_version: Version,
     pub max_concurrent_canister_upgrades: usize,
     pub super_admins: u8,
