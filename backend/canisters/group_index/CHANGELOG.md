@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Added `reinstall_group` for recovering groups which are un-upgradable due to bug in `pre_upgrade` ([#3128](https://github.com/open-ic/open-chat/pull/3128))
+- Added `frozen_groups` to metrics ([#3140](https://github.com/open-ic/open-chat/pull/3140))
 
 ### Changed
 

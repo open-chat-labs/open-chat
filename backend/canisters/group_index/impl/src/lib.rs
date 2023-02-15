@@ -9,7 +9,7 @@ use model::local_group_index_map::LocalGroupIndexMap;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashSet;
-use types::{CanisterId, CanisterWasm, Cycles, Milliseconds, TimestampMillis, Timestamped, UserId, Version};
+use types::{CanisterId, CanisterWasm, ChatId, Cycles, Milliseconds, TimestampMillis, Timestamped, UserId, Version};
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::env::Environment;
 use utils::time::MINUTE_IN_MS;
@@ -64,6 +64,7 @@ impl RuntimeState {
             deleted_public_groups: self.data.cached_metrics.deleted_public_groups,
             deleted_private_groups: self.data.cached_metrics.deleted_private_groups,
             group_deleted_notifications_pending: self.data.cached_metrics.group_deleted_notifications_pending,
+            frozen_groups: self.data.cached_metrics.frozen_groups.clone(),
             canister_upgrades_completed: canister_upgrades_metrics.completed,
             canister_upgrades_failed: canister_upgrades_metrics.failed,
             canister_upgrades_pending: canister_upgrades_metrics.pending as u64,
@@ -155,11 +156,17 @@ impl Data {
             if public_group.has_been_active_since(now) {
                 cached_metrics.active_public_groups += 1;
             }
+            if public_group.frozen() {
+                cached_metrics.frozen_groups.push(public_group.id());
+            }
         }
 
         for private_group in self.private_groups.iter() {
             if private_group.has_been_active_since(now) {
                 cached_metrics.active_private_groups += 1;
+            }
+            if private_group.frozen() {
+                cached_metrics.frozen_groups.push(private_group.id());
             }
         }
 
@@ -207,6 +214,7 @@ pub struct Metrics {
     pub deleted_public_groups: u64,
     pub deleted_private_groups: u64,
     pub group_deleted_notifications_pending: u64,
+    pub frozen_groups: Vec<ChatId>,
     pub canister_upgrades_completed: u64,
     pub canister_upgrades_failed: Vec<FailedUpgradeCount>,
     pub canister_upgrades_pending: u64,
@@ -225,6 +233,8 @@ pub struct CachedMetrics {
     pub deleted_public_groups: u64,
     pub deleted_private_groups: u64,
     pub group_deleted_notifications_pending: u64,
+    #[serde(default)]
+    pub frozen_groups: Vec<ChatId>,
 }
 
 #[derive(Serialize, Debug)]
