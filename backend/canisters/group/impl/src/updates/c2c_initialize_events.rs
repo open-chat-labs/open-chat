@@ -10,8 +10,7 @@ use chat_events::{ChatEventInternal, ChatEventsListReader, MessageInternal, Read
 use group_canister::c2c_initialize_events::{Response::*, *};
 use std::collections::HashMap;
 use types::{
-    EventIndex, GroupPermissions, MentionInternal, MessageContentInternal, MessageIndex, PermissionRole, Role, TimestampMillis,
-    UserId,
+    EventIndex, GroupPermissions, MentionInternal, MessageContentInternal, MessageIndex, Role, TimestampMillis, UserId,
 };
 use utils::mentions::extract_mentioned_users;
 use utils::time::MINUTE_IN_MS;
@@ -71,7 +70,7 @@ fn c2c_initialize_events_impl(args: Args, runtime_state: &mut RuntimeState) -> R
 
 fn process_completed_events(user_principals: HashMap<UserId, Principal>, runtime_state: &mut RuntimeState) {
     let now = runtime_state.env.now();
-    let temp_permissions = everything_allowed_permissions();
+    let permissive_permissions = GroupPermissions::permissive();
     let mut next_message_index = MessageIndex::default();
     let mut threads = Vec::new();
     let main_events_reader = runtime_state.data.events.main_events_reader(now);
@@ -157,7 +156,7 @@ fn process_completed_events(user_principals: HashMap<UserId, Principal>, runtime
                         get_principal(&r.changed_by, &user_principals),
                         user_id,
                         r.new_role,
-                        &temp_permissions,
+                        &permissive_permissions,
                     );
                 }
             }
@@ -166,7 +165,7 @@ fn process_completed_events(user_principals: HashMap<UserId, Principal>, runtime
                     get_principal(&o.old_owner, &user_principals),
                     &o.new_owner,
                     Role::Owner,
-                    &temp_permissions,
+                    &permissive_permissions,
                 );
             }
             ChatEventInternal::UsersBlocked(u) => {
@@ -350,22 +349,4 @@ fn setup_timer_jobs(
 fn get_principal(user_id: &UserId, map: &HashMap<UserId, Principal>) -> Principal {
     *map.get(user_id)
         .unwrap_or_else(|| panic!("Principal not found for user {user_id}"))
-}
-
-fn everything_allowed_permissions() -> GroupPermissions {
-    GroupPermissions {
-        change_permissions: PermissionRole::Members,
-        change_roles: PermissionRole::Members,
-        add_members: PermissionRole::Members,
-        remove_members: PermissionRole::Members,
-        block_users: PermissionRole::Members,
-        delete_messages: PermissionRole::Members,
-        update_group: PermissionRole::Members,
-        pin_messages: PermissionRole::Members,
-        invite_users: PermissionRole::Members,
-        create_polls: PermissionRole::Members,
-        send_messages: PermissionRole::Members,
-        react_to_messages: PermissionRole::Members,
-        reply_in_thread: PermissionRole::Members,
-    }
 }

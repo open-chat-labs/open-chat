@@ -58,6 +58,26 @@ pub struct OptionalGroupPermissions {
     pub reply_in_thread: Option<PermissionRole>,
 }
 
+impl GroupPermissions {
+    pub fn permissive() -> GroupPermissions {
+        GroupPermissions {
+            change_permissions: PermissionRole::Members,
+            change_roles: PermissionRole::Members,
+            add_members: PermissionRole::Members,
+            remove_members: PermissionRole::Members,
+            block_users: PermissionRole::Members,
+            delete_messages: PermissionRole::Members,
+            update_group: PermissionRole::Members,
+            pin_messages: PermissionRole::Members,
+            invite_users: PermissionRole::Members,
+            create_polls: PermissionRole::Members,
+            send_messages: PermissionRole::Members,
+            react_to_messages: PermissionRole::Members,
+            reply_in_thread: PermissionRole::Members,
+        }
+    }
+}
+
 impl Default for GroupPermissions {
     fn default() -> Self {
         GroupPermissions {

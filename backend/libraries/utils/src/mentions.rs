@@ -6,7 +6,7 @@ const START_PATTERN: &str = "UserId(";
 pub fn extract_mentioned_users(str: &str) -> Vec<UserId> {
     let mut mentions = Vec::new();
     for start in str.match_indices(START_PATTERN).map(|(i, _)| i + START_PATTERN.len()) {
-        if let Some(len) = str[start..].find(")") {
+        if let Some(len) = str[start..].find(')') {
             if let Ok(user_id) = Principal::from_text(&str[start..(start + len)]) {
                 mentions.push(user_id.into());
             }
