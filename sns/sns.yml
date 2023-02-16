@@ -238,22 +238,22 @@ initial_token_distribution:
            vesting_period_seconds: 0
          - controller: d7p2s-3a75o-me7bg-siz2w-we2zb-wwoz3-lixwo-ryous-sfrjo-7ql46-vae # Matt
            stake_e8s: 100000000000000 # 1%
-           memo: 0
+           memo: 1
            dissolve_delay_seconds: 2629800 # 1 month
            vesting_period_seconds: 31557600 # 1 year
          - controller: d7p2s-3a75o-me7bg-siz2w-we2zb-wwoz3-lixwo-ryous-sfrjo-7ql46-vae # Matt
            stake_e8s: 100000000000000 # 1%
-           memo: 0
+           memo: 2
            dissolve_delay_seconds: 2629800 # 1 month
            vesting_period_seconds: 63115200 # 2 years
          - controller: d7p2s-3a75o-me7bg-siz2w-we2zb-wwoz3-lixwo-ryous-sfrjo-7ql46-vae # Matt
            stake_e8s: 100000000000000 # 1%
-           memo: 0
+           memo: 3
            dissolve_delay_seconds: 2629800 # 1 month
            vesting_period_seconds: 94672800 # 3 years
          - controller: d7p2s-3a75o-me7bg-siz2w-we2zb-wwoz3-lixwo-ryous-sfrjo-7ql46-vae # Matt
            stake_e8s: 100000000000000 # 1%
-           memo: 0
+           memo: 4
            dissolve_delay_seconds: 2629800 # 1 month
            vesting_period_seconds: 126230400 # 4 years
          - controller: h4a5i-5vcfo-5rusv-fmb6m-vrkia-mjnkc-jpoow-h5mam-nthnm-ldqlr-bqe # Hamish
@@ -263,24 +263,24 @@ initial_token_distribution:
            vesting_period_seconds: 0
          - controller: h4a5i-5vcfo-5rusv-fmb6m-vrkia-mjnkc-jpoow-h5mam-nthnm-ldqlr-bqe # Hamish
            stake_e8s: 100000000000000 # 1%
-           memo: 0
+           memo: 1
            dissolve_delay_seconds: 2629800 # 1 month
            vesting_period_seconds: 31557600 # 1 year
          - controller: h4a5i-5vcfo-5rusv-fmb6m-vrkia-mjnkc-jpoow-h5mam-nthnm-ldqlr-bqe # Hamish
            stake_e8s: 100000000000000 # 1%
-           memo: 0
+           memo: 2
            dissolve_delay_seconds: 2629800 # 1 month
            vesting_period_seconds: 63115200 # 2 years
          - controller: h4a5i-5vcfo-5rusv-fmb6m-vrkia-mjnkc-jpoow-h5mam-nthnm-ldqlr-bqe # Hamish
            stake_e8s: 100000000000000 # 1%
-           memo: 0
+           memo: 3
            dissolve_delay_seconds: 2629800 # 1 month
            vesting_period_seconds: 94672800 # 3 years
          - controller: h4a5i-5vcfo-5rusv-fmb6m-vrkia-mjnkc-jpoow-h5mam-nthnm-ldqlr-bqe # Hamish
            stake_e8s: 100000000000000 # 1%
-           memo: 0           
+           memo: 4
            dissolve_delay_seconds: 2629800 # 1 month
-           vesting_period_seconds: 126230400 # 4 years          
+           vesting_period_seconds: 126230400 # 4 years
          - controller: 6gqvd-k5qgz-juaie-wfe3x-ofbps-cm3nx-kyasl-rizxg-immjj-dot3n-yae # Julian
            stake_e8s: 100000000000000 # 1%
            memo: 0
@@ -288,24 +288,24 @@ initial_token_distribution:
            vesting_period_seconds: 0
          - controller: 6gqvd-k5qgz-juaie-wfe3x-ofbps-cm3nx-kyasl-rizxg-immjj-dot3n-yae # Julian
            stake_e8s: 100000000000000 # 1%
-           memo: 0
+           memo: 1
            dissolve_delay_seconds: 2629800 # 1 month
            vesting_period_seconds: 31557600 # 1 year
          - controller: 6gqvd-k5qgz-juaie-wfe3x-ofbps-cm3nx-kyasl-rizxg-immjj-dot3n-yae # Julian
            stake_e8s: 100000000000000 # 1%
-           memo: 0
+           memo: 2
            dissolve_delay_seconds: 2629800 # 1 month
            vesting_period_seconds: 63115200 # 2 years
          - controller: 6gqvd-k5qgz-juaie-wfe3x-ofbps-cm3nx-kyasl-rizxg-immjj-dot3n-yae # Julian
            stake_e8s: 100000000000000 # 1%
-           memo: 0
+           memo: 3
            dissolve_delay_seconds: 2629800 # 1 month
            vesting_period_seconds: 94672800 # 3 years
          - controller: 6gqvd-k5qgz-juaie-wfe3x-ofbps-cm3nx-kyasl-rizxg-immjj-dot3n-yae # Julian
            stake_e8s: 100000000000000 # 1%
-           memo: 0           
+           memo: 4
            dissolve_delay_seconds: 2629800 # 1 month
-           vesting_period_seconds: 126230400 # 4 years                    
+           vesting_period_seconds: 126230400 # 4 years
          - controller: n2xex-iyaaa-aaaar-qaaeq-cai # DFINITY
            stake_e8s: 200000000000000 # 2%
            memo: 0
@@ -313,17 +313,17 @@ initial_token_distribution:
            vesting_period_seconds: 15778800 # 6 months
          - controller: n2xex-iyaaa-aaaar-qaaeq-cai # DFINITY
            stake_e8s: 200000000000000 # 2%
-           memo: 0
+           memo: 1
            dissolve_delay_seconds: 2629800 # 1 month
            vesting_period_seconds: 31557600 # 12 months
          - controller: n2xex-iyaaa-aaaar-qaaeq-cai # DFINITY
            stake_e8s: 200000000000000 # 2%
-           memo: 0
+           memo: 2
            dissolve_delay_seconds: 2629800 # 1 month
            vesting_period_seconds: 47336400 # 18 months
          - controller: n2xex-iyaaa-aaaar-qaaeq-cai # DFINITY
            stake_e8s: 200000000000000 # 2%
-           memo: 0
+           memo: 3
            dissolve_delay_seconds: 2629800 # 1 month
            vesting_period_seconds: 63115200 # 24 months
      treasury_distribution:
