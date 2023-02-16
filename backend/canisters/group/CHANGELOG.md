@@ -17,6 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Fixed
 
 - Fixed latest message not being returned when getting updates ([#3120](https://github.com/open-ic/open-chat/pull/3120))
+- Fix-up ledger ids ([#3143](https://github.com/open-ic/open-chat/pull/3143))
 
 ## [[2.0.589](https://github.com/open-ic/open-chat/releases/tag/v2.0.589-group)] - 2023-02-10
 

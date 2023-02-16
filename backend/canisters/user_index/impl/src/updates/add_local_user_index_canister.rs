@@ -48,7 +48,6 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
                 group_index_canister_id: runtime_state.data.group_index_canister_id,
                 notifications_canister_id: args.notifications_canister_id,
                 cycles_dispenser_canister_id: runtime_state.data.cycles_dispenser_canister_id,
-                ledger_canister_id: runtime_state.data.ledger_canister_id,
                 test_mode: runtime_state.data.test_mode,
             },
         })

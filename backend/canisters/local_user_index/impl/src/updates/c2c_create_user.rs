@@ -84,7 +84,6 @@ fn prepare(args: &Args, runtime_state: &mut RuntimeState) -> Result<PrepareOk, R
         user_index_canister_id: runtime_state.data.user_index_canister_id,
         local_user_index_canister_id: runtime_state.env.canister_id(),
         notifications_canister_id: runtime_state.data.notifications_canister_id,
-        ledger_canister_id: runtime_state.data.ledger_canister_id,
         wasm_version: canister_wasm.version,
         username: args.username.clone(),
         test_mode: runtime_state.data.test_mode,

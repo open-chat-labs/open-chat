@@ -13,6 +13,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Removed code to initialize `proposals_bot_user_id` value ([#3124](https://github.com/open-ic/open-chat/pull/3124))
 
+### Fixed
+
+- Fix-up ledger ids ([#3143](https://github.com/open-ic/open-chat/pull/3143))
+
 ## [[2.0.588](https://github.com/open-ic/open-chat/releases/tag/v2.0.588-local_group_index)] - 2023-02-10
 
 ### Changed

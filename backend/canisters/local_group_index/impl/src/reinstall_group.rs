@@ -204,7 +204,6 @@ async fn reinstall_group_impl(
         group_index_canister_id: state.data.group_index_canister_id,
         local_group_index_canister_id: this_canister_id,
         notifications_canister_id: state.data.notifications_canister_id,
-        ledger_canister_id: state.data.ledger_canister_id,
         proposals_bot_user_id: state.data.proposals_bot_user_id,
         wasm_version: state.data.group_canister_wasm.version,
         test_mode: state.data.test_mode,

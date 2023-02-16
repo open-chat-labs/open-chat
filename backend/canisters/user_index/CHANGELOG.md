@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Registered each LocalGroupIndex as a bot user ([#3128](https://github.com/open-ic/open-chat/pull/3128))
 - Rename service_principals -> governance_principals ([#3133](https://github.com/open-ic/open-chat/pull/3133))
 
+### Fixed
+
+- Fix-up ledger ids ([#3143](https://github.com/open-ic/open-chat/pull/3143))
+
 ## [[2.0.590](https://github.com/open-ic/open-chat/releases/tag/v2.0.590-user_index)] - 2023-02-10
 
 ### Added

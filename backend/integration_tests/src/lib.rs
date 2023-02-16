@@ -49,5 +49,4 @@ pub struct CanisterIds {
     pub online_users: CanisterId,
     pub proposals_bot: CanisterId,
     pub open_storage_index: CanisterId,
-    pub ledger: CanisterId,
 }

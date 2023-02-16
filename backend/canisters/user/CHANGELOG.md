@@ -9,6 +9,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Stop using `MemoryManager` during `post_upgrade` ([#3130](https://github.com/open-ic/open-chat/pull/3130))
 
+### Fixed
+
+- Fix-up ledger ids ([#3143](https://github.com/open-ic/open-chat/pull/3143))
+
 ## [[2.0.593](https://github.com/open-ic/open-chat/releases/tag/v2.0.593-user)] - 2023-02-11
 
 ### Changed
