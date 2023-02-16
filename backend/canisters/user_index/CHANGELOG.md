@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Support upgrading a filtered set of canisters ([#3145](https://github.com/open-ic/open-chat/pull/3145))
+
 ### Changed
 
 - Registered each LocalGroupIndex as a bot user ([#3128](https://github.com/open-ic/open-chat/pull/3128))

@@ -34,9 +34,9 @@ impl LocalGroupMap {
         }
     }
 
-    // pub fn iter(&self) -> impl Iterator<Item = (&ChatId, &LocalGroup)> {
-    //     self.groups.iter()
-    // }
+    pub fn iter(&self) -> impl Iterator<Item = (&ChatId, &LocalGroup)> {
+        self.groups.iter()
+    }
 
     pub fn len(&self) -> usize {
         self.groups.len()

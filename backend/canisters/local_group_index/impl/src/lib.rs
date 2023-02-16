@@ -67,7 +67,7 @@ impl RuntimeState {
             canister_upgrades_failed: canister_upgrades_metrics.failed,
             canister_upgrades_pending: canister_upgrades_metrics.pending as u64,
             canister_upgrades_in_progress: canister_upgrades_metrics.in_progress as u64,
-            group_wasm_version: self.data.group_canister_wasm.version,
+            group_wasm_version: self.data.group_canister_wasm_for_new_canisters.version,
             max_concurrent_canister_upgrades: self.data.max_concurrent_canister_upgrades,
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
@@ -84,7 +84,10 @@ impl RuntimeState {
 #[derive(Serialize, Deserialize)]
 struct Data {
     pub local_groups: LocalGroupMap,
-    pub group_canister_wasm: CanisterWasm,
+    #[serde(alias = "group_canister_wasm")]
+    pub group_canister_wasm_for_new_canisters: CanisterWasm,
+    #[serde(default)]
+    pub group_canister_wasm_for_upgrades: CanisterWasm,
     pub user_index_canister_id: CanisterId,
     pub local_user_index_canister_id: CanisterId,
     pub group_index_canister_id: CanisterId,
@@ -115,7 +118,8 @@ impl Data {
     ) -> Self {
         Data {
             local_groups: LocalGroupMap::default(),
-            group_canister_wasm,
+            group_canister_wasm_for_new_canisters: group_canister_wasm.clone(),
+            group_canister_wasm_for_upgrades: group_canister_wasm,
             user_index_canister_id,
             local_user_index_canister_id,
             group_index_canister_id,

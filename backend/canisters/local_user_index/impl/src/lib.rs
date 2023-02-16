@@ -75,7 +75,7 @@ impl RuntimeState {
             canister_upgrades_failed: canister_upgrades_metrics.failed,
             canister_upgrades_pending: canister_upgrades_metrics.pending as u64,
             canister_upgrades_in_progress: canister_upgrades_metrics.in_progress as u64,
-            user_wasm_version: self.data.user_canister_wasm.version,
+            user_wasm_version: self.data.user_canister_wasm_for_new_canisters.version,
             max_concurrent_canister_upgrades: self.data.max_concurrent_canister_upgrades,
             user_events_queue_length: self.data.user_event_sync_queue.len(),
             canister_ids: CanisterIds {
@@ -92,7 +92,10 @@ impl RuntimeState {
 struct Data {
     pub local_users: LocalUserMap,
     pub global_users: GlobalUserMap,
-    pub user_canister_wasm: CanisterWasm,
+    #[serde(alias = "user_canister_wasm")]
+    pub user_canister_wasm_for_new_canisters: CanisterWasm,
+    #[serde(default)]
+    pub user_canister_wasm_for_upgrades: CanisterWasm,
     pub user_index_canister_id: CanisterId,
     pub group_index_canister_id: CanisterId,
     pub notifications_canister_id: CanisterId,
@@ -126,7 +129,8 @@ impl Data {
         Data {
             local_users: LocalUserMap::default(),
             global_users: GlobalUserMap::default(),
-            user_canister_wasm,
+            user_canister_wasm_for_new_canisters: user_canister_wasm.clone(),
+            user_canister_wasm_for_upgrades: user_canister_wasm,
             user_index_canister_id,
             group_index_canister_id,
             notifications_canister_id,

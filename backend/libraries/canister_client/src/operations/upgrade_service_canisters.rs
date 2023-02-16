@@ -116,6 +116,8 @@ pub async fn upgrade_local_group_index_canister(
             version,
             module: canister_wasm.module,
         },
+        filter: None,
+        use_for_new_canisters: None,
     };
 
     let response =
@@ -145,6 +147,8 @@ pub async fn upgrade_group_canister(
             version,
             module: canister_wasm.module,
         },
+        filter: None,
+        use_for_new_canisters: None,
     };
 
     let response = group_index_canister_client::upgrade_group_canister_wasm(&agent, &group_index_canister_id, &args)
@@ -165,6 +169,8 @@ pub async fn upgrade_user_canister(identity: BasicIdentity, url: String, user_in
             version,
             module: canister_wasm.module,
         },
+        filter: None,
+        use_for_new_canisters: None,
     };
 
     let response = user_index_canister_client::upgrade_user_canister_wasm(&agent, &user_index_canister_id, &args)
@@ -190,6 +196,8 @@ pub async fn upgrade_local_user_index_canister(
             version,
             module: canister_wasm.module,
         },
+        filter: None,
+        use_for_new_canisters: None,
     };
 
     let response = user_index_canister_client::upgrade_local_user_index_canister_wasm(&agent, &user_index_canister_id, &args)
@@ -218,6 +226,8 @@ pub async fn upgrade_notifications_canister(
             version,
             module: canister_wasm.module,
         },
+        filter: None,
+        use_for_new_canisters: None,
     };
 
     let response = notifications_index_canister_client::upgrade_notifications_canister_wasm(
