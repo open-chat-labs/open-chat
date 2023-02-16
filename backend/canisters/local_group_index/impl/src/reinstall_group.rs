@@ -8,12 +8,11 @@ use ic_ledger_types::Tokens;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use std::collections::{BTreeMap, HashMap, HashSet};
-use tracing::info;
 use types::{
-    sns, Avatar, ChatEvent, ChatId, CompletedCryptoTransaction, CryptoTransaction, EventIndex, EventWrapper, FrozenGroupInfo,
-    HttpRequest, MessageContent, MessageContentInitial, MessageContentInternal, MessageId, MessageIndex, PollContentInternal,
-    PollVoteRegistered, PrizeContentInternal, ProposalContentInternal, TextContent, TimestampMillis, TotalVotes,
-    UpdatedMessage, UserId,
+    sns, Avatar, CanisterId, ChatEvent, ChatId, CompletedCryptoTransaction, CryptoTransaction, EventIndex, EventWrapper,
+    FrozenGroupInfo, HttpRequest, MessageContent, MessageContentInitial, MessageContentInternal, MessageId, MessageIndex,
+    PollContentInternal, PollVoteRegistered, PrizeContentInternal, ProposalContentInternal, TextContent, TimestampMillis,
+    TotalVotes, UpdatedMessage, UserId,
 };
 
 pub async fn reinstall_group(group_id: ChatId) -> Result<(), String> {
@@ -30,9 +29,22 @@ pub async fn reinstall_group(group_id: ChatId) -> Result<(), String> {
         }
     })?;
 
+    let result = reinstall_group_impl(group_id, this_canister_id, local_user_index).await;
+
+    // Reset the `group_being_reinstalled` state
+    mutate_state(|state| state.data.group_being_reinstalled = None);
+
+    result
+}
+
+async fn reinstall_group_impl(
+    group_id: ChatId,
+    this_canister_id: CanisterId,
+    local_user_index_canister_id: CanisterId,
+) -> Result<(), String> {
     // Join the group as a super admin
     local_user_index_canister_c2c_client::join_group(
-        local_user_index,
+        local_user_index_canister_id,
         &local_user_index_canister::join_group::Args {
             chat_id: group_id,
             as_super_admin: true,
@@ -165,7 +177,7 @@ pub async fn reinstall_group(group_id: ChatId) -> Result<(), String> {
     // Get the principal for each user
     let local_user_index_canister::c2c_user_principals::Response::Success(user_principals) =
         local_user_index_canister_c2c_client::c2c_user_principals(
-            local_user_index,
+            local_user_index_canister_id,
             &local_user_index_canister::c2c_user_principals::Args {
                 user_ids: users.into_iter().collect(),
             },
@@ -245,15 +257,6 @@ pub async fn reinstall_group(group_id: ChatId) -> Result<(), String> {
         .await
         .map_err(|e| format!("Failed to leave group. {e:?}"))?;
 
-    // Reset the `group_being_reinstalled` state
-    mutate_state(|state| {
-        if let Some(group) = state.data.local_groups.get_mut(&group_id) {
-            group.wasm_version = wasm.version;
-        }
-        state.data.group_being_reinstalled = None
-    });
-
-    info!(%group_id, "Group reinstalled");
     Ok(())
 }
 
