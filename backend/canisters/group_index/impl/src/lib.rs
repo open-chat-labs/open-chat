@@ -71,7 +71,7 @@ impl RuntimeState {
             canister_upgrades_in_progress: canister_upgrades_metrics.in_progress as u64,
             governance_principals: self.data.governance_principals.iter().copied().collect(),
             group_wasm_version: self.data.group_canister_wasm.version,
-            local_group_index_wasm_version: self.data.local_group_index_canister_wasm.version,
+            local_group_index_wasm_version: self.data.local_group_index_canister_wasm_for_new_canisters.version,
             local_group_indexes: self.data.local_index_map.iter().map(|(c, i)| (*c, i.clone())).collect(),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
@@ -90,7 +90,10 @@ struct Data {
     #[serde(alias = "service_principals")]
     pub governance_principals: HashSet<Principal>,
     pub group_canister_wasm: CanisterWasm,
-    pub local_group_index_canister_wasm: CanisterWasm,
+    #[serde(alias = "local_group_index_canister_wasm")]
+    pub local_group_index_canister_wasm_for_new_canisters: CanisterWasm,
+    #[serde(default)]
+    pub local_group_index_canister_wasm_for_upgrades: CanisterWasm,
     pub user_index_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
     pub proposals_bot_user_id: UserId,
@@ -119,7 +122,8 @@ impl Data {
             deleted_groups: DeletedGroups::default(),
             governance_principals: governance_principals.into_iter().collect(),
             group_canister_wasm,
-            local_group_index_canister_wasm,
+            local_group_index_canister_wasm_for_new_canisters: local_group_index_canister_wasm.clone(),
+            local_group_index_canister_wasm_for_upgrades: local_group_index_canister_wasm,
             user_index_canister_id,
             cycles_dispenser_canister_id,
             proposals_bot_user_id,
@@ -179,7 +183,8 @@ impl Default for Data {
             deleted_groups: DeletedGroups::default(),
             governance_principals: HashSet::default(),
             group_canister_wasm: CanisterWasm::default(),
-            local_group_index_canister_wasm: CanisterWasm::default(),
+            local_group_index_canister_wasm_for_new_canisters: CanisterWasm::default(),
+            local_group_index_canister_wasm_for_upgrades: CanisterWasm::default(),
             user_index_canister_id: Principal::anonymous(),
             cycles_dispenser_canister_id: Principal::anonymous(),
             proposals_bot_user_id: Principal::anonymous().into(),

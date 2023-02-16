@@ -1,4 +1,4 @@
-use crate::Version;
+use crate::{CanisterId, Version};
 use candid::CandidType;
 use human_readable::ToHumanReadable;
 use serde::{Deserialize, Serialize};
@@ -8,6 +8,9 @@ use std::fmt::{Debug, Formatter};
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct UpgradeCanisterWasmArgs {
     pub wasm: CanisterWasm,
+    pub include: Option<Vec<CanisterId>>,
+    pub exclude: Option<Vec<CanisterId>>,
+    pub use_for_new_canisters: Option<bool>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone)]

@@ -45,7 +45,7 @@ mod upgrade_canisters {
         let chat_id = canister_id.into();
         let group = runtime_state.data.local_groups.get_mut(&chat_id)?;
         let current_wasm_version = group.wasm_version;
-        let group_canister_wasm = &runtime_state.data.group_canister_wasm;
+        let group_canister_wasm = &runtime_state.data.group_canister_wasm_for_upgrades;
         let deposit_cycles_if_needed = ic_cdk::api::canister_balance128() > MIN_CYCLES_BALANCE;
 
         group.set_canister_upgrade_status(true, None);

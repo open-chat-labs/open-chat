@@ -66,7 +66,7 @@ fn try_get_next(runtime_state: &mut RuntimeState) -> GetNextResult {
         }
     };
 
-    let new_wasm = runtime_state.data.local_group_index_canister_wasm.clone();
+    let new_wasm = runtime_state.data.local_group_index_canister_wasm_for_upgrades.clone();
     let wasm_version = new_wasm.version;
 
     GetNextResult::Success(CanisterToUpgrade {

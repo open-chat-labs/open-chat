@@ -39,10 +39,10 @@ struct PrepareResult {
 fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Response> {
     if !runtime_state.data.local_index_map.contains_key(&args.canister_id) {
         Ok(PrepareResult {
-            canister_wasm: runtime_state.data.local_group_index_canister_wasm.clone(),
+            canister_wasm: runtime_state.data.local_group_index_canister_wasm_for_new_canisters.clone(),
             init_args: local_group_index_canister::init::Args {
                 group_canister_wasm: runtime_state.data.group_canister_wasm.clone(),
-                wasm_version: runtime_state.data.local_group_index_canister_wasm.version,
+                wasm_version: runtime_state.data.local_group_index_canister_wasm_for_new_canisters.version,
                 user_index_canister_id: runtime_state.data.user_index_canister_id,
                 local_user_index_canister_id: args.local_user_index_canister_id,
                 group_index_canister_id: runtime_state.env.canister_id(),
