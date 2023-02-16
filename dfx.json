@@ -76,6 +76,36 @@
       "wasm": "backend/canisters/open_storage/index_canister.wasm.gz",
       "candid": "backend/canisters/open_storage/index.init.did",
       "build": ""
+    },
+    "sns_governance": {
+      "build": "",
+      "candid": "sns/candid/sns_governance.did",
+      "type": "custom",
+      "wasm": ""
+    },
+    "sns_index": {
+      "build": "",
+      "candid": "sns/candid/sns_index.did",
+      "type": "custom",
+      "wasm": ""
+    },
+    "sns_ledger": {
+      "build": "",
+      "candid": "sns/candid/sns_ledger.did",
+      "type": "custom",
+      "wasm": ""
+    },
+    "sns_root": {
+      "build": "",
+      "candid": "sns/candid/sns_root.did",
+      "type": "custom",
+      "wasm": ""
+    },
+    "sns_swap": {
+      "build": "",
+      "candid": "sns/candid/sns_swap.did",
+      "type": "custom",
+      "wasm": ""
     }
   },
   "networks": {

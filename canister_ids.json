@@ -43,5 +43,20 @@
     "ic": "6hsbt-vqaaa-aaaaf-aaafq-cai",
     "ic_test": "pfs7b-iqaaa-aaaaf-abs7q-cai",
     "web_test": "xp7uu-xyaaa-aaaaf-aoa6a-cai"
+  },
+  "sns_governance": {
+    "ic_test": "t5cdl-3iaaa-aaaak-qbumq-cai"
+  },
+  "sns_index": {
+    "ic_test": "tubix-naaaa-aaaak-qbuna-cai"
+  },
+  "sns_ledger": {
+    "ic_test": "ttaod-ayaaa-aaaak-qbunq-cai"
+  },
+  "sns_root": {
+    "ic_test": "tgh7o-bqaaa-aaaak-qbuoa-cai"
+  },
+  "sns_swap": {
+    "ic_test": "tbgz2-miaaa-aaaak-qbuoq-cai"
   }
 }
