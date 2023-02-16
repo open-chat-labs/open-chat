@@ -15,7 +15,6 @@ pub struct Args {
     pub group_index_canister_id: CanisterId,
     pub notifications_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
-    pub ledger_canister_id: CanisterId,
     pub proposals_bot_user_id: UserId,
     pub test_mode: bool,
 }

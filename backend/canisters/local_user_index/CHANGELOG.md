@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Fixed
+
+- Fix-up ledger ids ([#3143](https://github.com/open-ic/open-chat/pull/3143))
+
 ## Added
 
 - Added `c2c_user_principals` for looking up the principals of multiple users at a time ([#3128](https://github.com/open-ic/open-chat/pull/3128))

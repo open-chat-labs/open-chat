@@ -23,7 +23,6 @@ fn init(args: Args) {
         args.notifications_index_canister_id,
         args.cycles_dispenser_canister_id,
         args.open_storage_index_canister_id,
-        args.ledger_canister_id,
         args.proposals_bot_user_id,
         args.local_group_index_canister_ids,
         args.test_mode,

@@ -76,7 +76,6 @@ impl RuntimeState {
                 notifications: self.data.notifications_canister_id,
                 proposals_bot: self.data.proposals_bot_user_id.into(),
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
-                icp_ledger: self.data.ledger_canister_id,
             },
         }
     }
@@ -92,7 +91,6 @@ struct Data {
     pub notifications_canister_id: CanisterId,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub cycles_dispenser_canister_id: CanisterId,
-    pub ledger_canister_id: CanisterId,
     pub proposals_bot_user_id: UserId,
     pub canister_pool: canister::Pool,
     pub total_cycles_spent_on_canisters: Cycles,
@@ -111,7 +109,6 @@ impl Data {
         group_index_canister_id: CanisterId,
         notifications_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
-        ledger_canister_id: CanisterId,
         proposals_bot_user_id: UserId,
         canister_pool_target_size: u16,
         test_mode: bool,
@@ -124,7 +121,6 @@ impl Data {
             group_index_canister_id,
             notifications_canister_id,
             cycles_dispenser_canister_id,
-            ledger_canister_id,
             proposals_bot_user_id,
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             canister_pool: canister::Pool::new(canister_pool_target_size),
@@ -163,5 +159,4 @@ pub struct CanisterIds {
     pub notifications: CanisterId,
     pub proposals_bot: CanisterId,
     pub cycles_dispenser: CanisterId,
-    pub icp_ledger: CanisterId,
 }

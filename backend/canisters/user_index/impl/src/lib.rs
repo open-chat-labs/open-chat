@@ -111,7 +111,6 @@ impl RuntimeState {
                 group_index: self.data.group_index_canister_id,
                 notifications_index: self.data.notifications_index_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
-                icp_ledger: self.data.ledger_canister_id,
             },
         }
     }
@@ -133,7 +132,6 @@ struct Data {
     pub open_storage_user_sync_queue: OpenStorageUserSyncQueue,
     pub user_index_event_sync_queue: CanisterEventSyncQueue<LocalUserIndexEvent>,
     pub user_principal_migration_queue: UserPrincipalMigrationQueue,
-    pub ledger_canister_id: CanisterId,
     pub super_admins: HashSet<UserId>,
     pub super_admins_to_dismiss: VecDeque<(UserId, ChatId)>,
     pub test_mode: bool,
@@ -153,7 +151,6 @@ impl Data {
         notifications_index_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
         open_storage_index_canister_id: CanisterId,
-        ledger_canister_id: CanisterId,
         proposals_bot_user_id: UserId,
         local_group_index_canister_ids: Vec<CanisterId>,
         test_mode: bool,
@@ -173,7 +170,6 @@ impl Data {
             open_storage_user_sync_queue: OpenStorageUserSyncQueue::default(),
             user_index_event_sync_queue: CanisterEventSyncQueue::default(),
             user_principal_migration_queue: UserPrincipalMigrationQueue::default(),
-            ledger_canister_id,
             super_admins: HashSet::new(),
             super_admins_to_dismiss: VecDeque::new(),
             test_mode,
@@ -261,7 +257,6 @@ impl Default for Data {
             open_storage_user_sync_queue: OpenStorageUserSyncQueue::default(),
             user_index_event_sync_queue: CanisterEventSyncQueue::default(),
             user_principal_migration_queue: UserPrincipalMigrationQueue::default(),
-            ledger_canister_id: Principal::anonymous(),
             super_admins: HashSet::new(),
             super_admins_to_dismiss: VecDeque::new(),
             test_mode: true,
@@ -310,5 +305,4 @@ pub struct CanisterIds {
     pub group_index: CanisterId,
     pub notifications_index: CanisterId,
     pub cycles_dispenser: CanisterId,
-    pub icp_ledger: CanisterId,
 }

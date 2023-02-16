@@ -242,6 +242,8 @@ struct Data {
     pub user_index_canister_id: CanisterId,
     pub local_user_index_canister_id: CanisterId,
     pub notifications_canister_id: CanisterId,
+    // Remove this after next upgrade
+    #[serde(skip_deserializing, default = "initialize_ledger_ids")]
     pub ledger_canister_ids: HashMap<Cryptocurrency, CanisterId>,
     pub proposals_bot_user_id: UserId,
     pub activity_notification_state: ActivityNotificationState,
@@ -257,6 +259,25 @@ struct Data {
     pub date_last_pinned: Option<TimestampMillis>,
     #[serde(default)]
     pub initialized: bool,
+}
+
+fn initialize_ledger_ids() -> HashMap<Cryptocurrency, CanisterId> {
+    [
+        (
+            Cryptocurrency::InternetComputer,
+            Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap(),
+        ),
+        (
+            Cryptocurrency::SNS1,
+            Principal::from_text("zfcdd-tqaaa-aaaaq-aaaga-cai").unwrap(),
+        ),
+        (
+            Cryptocurrency::CKBTC,
+            Principal::from_text("mxzaz-hqaaa-aaaar-qaada-cai").unwrap(),
+        ),
+    ]
+    .into_iter()
+    .collect()
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -280,7 +301,6 @@ impl Data {
         user_index_canister_id: CanisterId,
         local_user_index_canister_id: CanisterId,
         notifications_canister_id: CanisterId,
-        ledger_canister_id: CanisterId,
         proposals_bot_user_id: UserId,
         test_mode: bool,
         permissions: Option<GroupPermissions>,
@@ -318,7 +338,7 @@ impl Data {
             user_index_canister_id,
             local_user_index_canister_id,
             notifications_canister_id,
-            ledger_canister_ids: [(Cryptocurrency::InternetComputer, ledger_canister_id)].into_iter().collect(),
+            ledger_canister_ids: initialize_ledger_ids(),
             proposals_bot_user_id,
             activity_notification_state: ActivityNotificationState::new(now),
             pinned_messages: Vec::new(),

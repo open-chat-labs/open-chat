@@ -77,7 +77,6 @@ impl RuntimeState {
                 user_index: self.data.user_index_canister_id,
                 proposals_bot: self.data.proposals_bot_user_id.into(),
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
-                icp_ledger: self.data.ledger_canister_id,
             },
         }
     }
@@ -94,7 +93,6 @@ struct Data {
     pub local_group_index_canister_wasm: CanisterWasm,
     pub user_index_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
-    pub ledger_canister_id: CanisterId,
     pub proposals_bot_user_id: UserId,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub test_mode: bool,
@@ -112,7 +110,6 @@ impl Data {
         local_group_index_canister_wasm: CanisterWasm,
         user_index_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
-        ledger_canister_id: CanisterId,
         proposals_bot_user_id: UserId,
         test_mode: bool,
     ) -> Data {
@@ -125,7 +122,6 @@ impl Data {
             local_group_index_canister_wasm,
             user_index_canister_id,
             cycles_dispenser_canister_id,
-            ledger_canister_id,
             proposals_bot_user_id,
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             test_mode,
@@ -186,7 +182,6 @@ impl Default for Data {
             local_group_index_canister_wasm: CanisterWasm::default(),
             user_index_canister_id: Principal::anonymous(),
             cycles_dispenser_canister_id: Principal::anonymous(),
-            ledger_canister_id: Principal::anonymous(),
             proposals_bot_user_id: Principal::anonymous().into(),
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             test_mode: true,
@@ -242,5 +237,4 @@ pub struct CanisterIds {
     pub user_index: CanisterId,
     pub proposals_bot: CanisterId,
     pub cycles_dispenser: CanisterId,
-    pub icp_ledger: CanisterId,
 }

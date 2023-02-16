@@ -56,7 +56,6 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
     let proposals_bot_canister_id = create_canister(env, None);
     let cycles_dispenser_canister_id = create_canister(env, None);
     let open_storage_index_canister_id = create_canister(env, None);
-    let ledger_canister_id = create_canister(env, None);
 
     let local_user_index_canister_id = create_canister(env, Some(vec![user_index_canister_id]));
     let local_group_index_canister_id = create_canister(env, Some(vec![group_index_canister_id]));
@@ -81,7 +80,6 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
         notifications_index_canister_id,
         cycles_dispenser_canister_id,
         open_storage_index_canister_id,
-        ledger_canister_id,
         proposals_bot_user_id: proposals_bot_canister_id.into(),
         local_group_index_canister_ids: vec![local_group_index_canister_id],
         wasm_version: Version::min(),
@@ -95,7 +93,6 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
         local_group_index_canister_wasm,
         user_index_canister_id,
         cycles_dispenser_canister_id,
-        ledger_canister_id,
         proposals_bot_user_id: proposals_bot_canister_id.into(),
         wasm_version: Version::min(),
         test_mode: true,
@@ -218,6 +215,5 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
         online_users: online_users_canister_id,
         proposals_bot: proposals_bot_canister_id,
         open_storage_index: open_storage_index_canister_id,
-        ledger: ledger_canister_id,
     }
 }
