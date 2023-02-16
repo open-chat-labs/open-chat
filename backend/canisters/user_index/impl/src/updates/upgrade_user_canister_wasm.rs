@@ -4,9 +4,9 @@ use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
 use ic_cdk::api::call::CallResult;
 use tracing::info;
-use types::{CanisterId, CanisterWasm, UpgradeCanisterWasmArgs};
+use types::{CanisterId, CanisterWasm, UpgradeCanisterWasmArgs, UpgradesFilter};
 use user_index_canister::upgrade_user_canister_wasm::{Response::*, *};
-use utils::canister::{build_filter_map, UpgradesFilter};
+use utils::canister::build_filter_map;
 
 #[proposal(guard = "caller_is_governance_principal")]
 #[trace]
@@ -29,8 +29,7 @@ async fn upgrade_user_canister_wasm(args: Args) -> Response {
                 canister_id,
                 UpgradeCanisterWasmArgs {
                     wasm: wasm.clone(),
-                    include: Some(filter.include),
-                    exclude: Some(filter.exclude),
+                    filter: Some(filter),
                     use_for_new_canisters: Some(use_for_new_canisters),
                 },
             )
@@ -65,14 +64,9 @@ fn prepare(args: Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Re
 
     let local_user_index_canister_ids: Vec<_> = runtime_state.data.local_index_map.canisters().copied().collect();
 
-    let local_user_index_canisters = build_filter_map(
-        local_user_index_canister_ids,
-        UpgradesFilter {
-            include: args.include.unwrap_or_default(),
-            exclude: args.exclude.unwrap_or_default(),
-        },
-        |c| runtime_state.data.local_index_map.get_index_canister(&c.into()),
-    );
+    let local_user_index_canisters = build_filter_map(local_user_index_canister_ids, args.filter.unwrap_or_default(), |c| {
+        runtime_state.data.local_index_map.get_index_canister(&c.into())
+    });
 
     Ok(PrepareResult {
         wasm: args.wasm,

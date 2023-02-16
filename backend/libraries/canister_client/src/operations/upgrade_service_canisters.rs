@@ -116,8 +116,7 @@ pub async fn upgrade_local_group_index_canister(
             version,
             module: canister_wasm.module,
         },
-        include: None,
-        exclude: None,
+        filter: None,
         use_for_new_canisters: None,
     };
 
@@ -148,8 +147,7 @@ pub async fn upgrade_group_canister(
             version,
             module: canister_wasm.module,
         },
-        include: None,
-        exclude: None,
+        filter: None,
         use_for_new_canisters: None,
     };
 
@@ -171,8 +169,7 @@ pub async fn upgrade_user_canister(identity: BasicIdentity, url: String, user_in
             version,
             module: canister_wasm.module,
         },
-        include: None,
-        exclude: None,
+        filter: None,
         use_for_new_canisters: None,
     };
 
@@ -199,8 +196,7 @@ pub async fn upgrade_local_user_index_canister(
             version,
             module: canister_wasm.module,
         },
-        include: None,
-        exclude: None,
+        filter: None,
         use_for_new_canisters: None,
     };
 
@@ -230,8 +226,7 @@ pub async fn upgrade_notifications_canister(
             version,
             module: canister_wasm.module,
         },
-        include: None,
-        exclude: None,
+        filter: None,
         use_for_new_canisters: None,
     };
 

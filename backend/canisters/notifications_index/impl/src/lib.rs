@@ -82,7 +82,7 @@ impl RuntimeState {
             subscriptions: self.data.subscriptions.total(),
             users: self.data.principal_to_user_id.len() as u64,
             governance_principals: self.data.governance_principals.iter().copied().collect(),
-            notifications_canister_wasm_version: self.data.notifications_canister_wasm.version,
+            notifications_canister_wasm_version: self.data.notifications_canister_wasm_for_new_canisters.version,
             notifications_canisters: self
                 .data
                 .notifications_canisters
@@ -116,7 +116,10 @@ struct Data {
     pub cycles_dispenser_canister_id: CanisterId,
     pub principal_to_user_id: HashMap<Principal, UserId>,
     pub subscriptions: Subscriptions,
-    pub notifications_canister_wasm: CanisterWasm,
+    #[serde(alias = "notifications_canister_wasm")]
+    pub notifications_canister_wasm_for_new_canisters: CanisterWasm,
+    #[serde(default)]
+    pub notifications_canister_wasm_for_upgrades: CanisterWasm,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub notifications_index_event_sync_queue: CanisterEventSyncQueue<NotificationsIndexEvent>,
     pub test_mode: bool,
@@ -139,7 +142,8 @@ impl Data {
             cycles_dispenser_canister_id,
             principal_to_user_id: HashMap::default(),
             subscriptions: Subscriptions::default(),
-            notifications_canister_wasm,
+            notifications_canister_wasm_for_new_canisters: notifications_canister_wasm.clone(),
+            notifications_canister_wasm_for_upgrades: notifications_canister_wasm,
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             notifications_index_event_sync_queue: CanisterEventSyncQueue::default(),
             test_mode,

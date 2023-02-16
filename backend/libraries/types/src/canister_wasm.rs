@@ -8,8 +8,7 @@ use std::fmt::{Debug, Formatter};
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct UpgradeCanisterWasmArgs {
     pub wasm: CanisterWasm,
-    pub include: Option<Vec<CanisterId>>,
-    pub exclude: Option<Vec<CanisterId>>,
+    pub filter: Option<UpgradesFilter>,
     pub use_for_new_canisters: Option<bool>,
 }
 
@@ -36,6 +35,12 @@ impl Debug for CanisterWasm {
             .field("byte_length", &self.module.len())
             .finish()
     }
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]
+pub struct UpgradesFilter {
+    pub include: Vec<CanisterId>,
+    pub exclude: Vec<CanisterId>,
 }
 
 #[derive(Serialize)]

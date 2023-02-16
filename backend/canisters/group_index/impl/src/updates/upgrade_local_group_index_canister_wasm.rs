@@ -3,6 +3,7 @@ use crate::{mutate_state, RuntimeState};
 use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
 use group_index_canister::upgrade_local_group_index_canister_wasm::{Response::*, *};
+use std::collections::HashSet;
 use tracing::info;
 
 #[proposal(guard = "caller_is_governance_principal")]
@@ -23,14 +24,19 @@ fn upgrade_local_group_index_canister_wasm_impl(args: Args, runtime_state: &mut 
         }
         runtime_state.data.local_group_index_canister_wasm_for_upgrades = args.wasm;
 
+        let filter = args.filter.unwrap_or_default();
+        let include: HashSet<_> = filter.include.into_iter().collect();
+        let include_all = include.is_empty();
+        let exclude: HashSet<_> = filter.exclude.into_iter().collect();
+
         for canister_id in runtime_state
             .data
             .local_index_map
             .iter()
             .filter(|(_, i)| i.wasm_version() != version)
             .map(|(c, _)| c)
-            .filter(|&c| args.include.as_ref().map_or(true, |i| i.contains(c)))
-            .filter(|&c| args.exclude.as_ref().map_or(true, |e| !e.contains(c)))
+            .filter(|c| include_all || include.contains(c))
+            .filter(|c| !exclude.contains(c))
         {
             runtime_state.data.canisters_requiring_upgrade.enqueue(*canister_id);
         }

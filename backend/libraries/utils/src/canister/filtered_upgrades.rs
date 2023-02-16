@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use types::CanisterId;
+use types::{CanisterId, UpgradesFilter};
 
 // Used when upgrading canisters which are 2 levels below in the hierarchy
 // Essentially, user canisters (UserIndex -> LocalUserIndex -> User) and group canisters.
@@ -39,10 +39,4 @@ pub fn build_filter_map<F: Fn(CanisterId) -> Option<CanisterId>>(
     }
 
     map.into_iter().collect()
-}
-
-#[derive(Default)]
-pub struct UpgradesFilter {
-    pub include: Vec<CanisterId>,
-    pub exclude: Vec<CanisterId>,
 }

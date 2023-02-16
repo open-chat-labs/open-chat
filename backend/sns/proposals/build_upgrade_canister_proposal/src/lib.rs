@@ -48,8 +48,7 @@ fn create_proposal(config: Config) -> Result<Proposal, Box<dyn Error>> {
             version: config.version,
             module: wasm_module,
         },
-        include: None,
-        exclude: None,
+        filter: None,
         use_for_new_canisters: None,
     };
 

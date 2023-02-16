@@ -24,9 +24,10 @@ fn c2c_upgrade_group_canister_wasm_impl(args: Args, runtime_state: &mut RuntimeS
         }
         runtime_state.data.group_canister_wasm_for_upgrades = args.wasm;
 
-        let include: HashSet<_> = args.include.unwrap_or_default().into_iter().collect();
+        let filter = args.filter.unwrap_or_default();
+        let include: HashSet<_> = filter.include.into_iter().collect();
         let include_all = include.is_empty();
-        let exclude: HashSet<_> = args.exclude.unwrap_or_default().into_iter().collect();
+        let exclude: HashSet<_> = filter.exclude.into_iter().collect();
 
         for chat_id in runtime_state
             .data
