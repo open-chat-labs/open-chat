@@ -9,7 +9,7 @@ use model::local_group_index_map::LocalGroupIndexMap;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashSet;
-use types::{CanisterId, CanisterWasm, Cycles, Milliseconds, TimestampMillis, Timestamped, UserId, Version};
+use types::{CanisterId, CanisterWasm, ChatId, Cycles, Milliseconds, TimestampMillis, Timestamped, UserId, Version};
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::env::Environment;
 use utils::time::MINUTE_IN_MS;
@@ -42,9 +42,9 @@ impl RuntimeState {
         RuntimeState { env, data }
     }
 
-    pub fn is_caller_service_principal(&self) -> bool {
+    pub fn is_caller_governance_principal(&self) -> bool {
         let caller = self.env.caller();
-        self.data.service_principals.contains(&caller)
+        self.data.governance_principals.contains(&caller)
     }
 
     pub fn metrics(&self) -> Metrics {
@@ -64,11 +64,12 @@ impl RuntimeState {
             deleted_public_groups: self.data.cached_metrics.deleted_public_groups,
             deleted_private_groups: self.data.cached_metrics.deleted_private_groups,
             group_deleted_notifications_pending: self.data.cached_metrics.group_deleted_notifications_pending,
+            frozen_groups: self.data.cached_metrics.frozen_groups.clone(),
             canister_upgrades_completed: canister_upgrades_metrics.completed,
             canister_upgrades_failed: canister_upgrades_metrics.failed,
             canister_upgrades_pending: canister_upgrades_metrics.pending as u64,
             canister_upgrades_in_progress: canister_upgrades_metrics.in_progress as u64,
-            service_principals: self.data.service_principals.iter().copied().collect(),
+            governance_principals: self.data.governance_principals.iter().copied().collect(),
             group_wasm_version: self.data.group_canister_wasm.version,
             local_group_index_wasm_version: self.data.local_group_index_canister_wasm.version,
             local_group_indexes: self.data.local_index_map.iter().map(|(c, i)| (*c, i.clone())).collect(),
@@ -87,13 +88,13 @@ struct Data {
     pub public_groups: PublicGroups,
     pub private_groups: PrivateGroups,
     pub deleted_groups: DeletedGroups,
-    pub service_principals: HashSet<Principal>,
+    #[serde(alias = "service_principals")]
+    pub governance_principals: HashSet<Principal>,
     pub group_canister_wasm: CanisterWasm,
     pub local_group_index_canister_wasm: CanisterWasm,
     pub user_index_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
     pub ledger_canister_id: CanisterId,
-    #[serde(default = "proposals_bot_user_id")]
     pub proposals_bot_user_id: UserId,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub test_mode: bool,
@@ -103,14 +104,10 @@ struct Data {
     pub local_index_map: LocalGroupIndexMap,
 }
 
-fn proposals_bot_user_id() -> UserId {
-    Principal::from_text("iywa7-ayaaa-aaaaf-aemga-cai").unwrap().into()
-}
-
 impl Data {
     #[allow(clippy::too_many_arguments)]
     fn new(
-        service_principals: Vec<Principal>,
+        governance_principals: Vec<Principal>,
         group_canister_wasm: CanisterWasm,
         local_group_index_canister_wasm: CanisterWasm,
         user_index_canister_id: CanisterId,
@@ -123,7 +120,7 @@ impl Data {
             public_groups: PublicGroups::default(),
             private_groups: PrivateGroups::default(),
             deleted_groups: DeletedGroups::default(),
-            service_principals: service_principals.into_iter().collect(),
+            governance_principals: governance_principals.into_iter().collect(),
             group_canister_wasm,
             local_group_index_canister_wasm,
             user_index_canister_id,
@@ -159,11 +156,17 @@ impl Data {
             if public_group.has_been_active_since(now) {
                 cached_metrics.active_public_groups += 1;
             }
+            if public_group.frozen() {
+                cached_metrics.frozen_groups.push(public_group.id());
+            }
         }
 
         for private_group in self.private_groups.iter() {
             if private_group.has_been_active_since(now) {
                 cached_metrics.active_private_groups += 1;
+            }
+            if private_group.frozen() {
+                cached_metrics.frozen_groups.push(private_group.id());
             }
         }
 
@@ -178,7 +181,7 @@ impl Default for Data {
             public_groups: PublicGroups::default(),
             private_groups: PrivateGroups::default(),
             deleted_groups: DeletedGroups::default(),
-            service_principals: HashSet::default(),
+            governance_principals: HashSet::default(),
             group_canister_wasm: CanisterWasm::default(),
             local_group_index_canister_wasm: CanisterWasm::default(),
             user_index_canister_id: Principal::anonymous(),
@@ -202,6 +205,7 @@ pub struct Metrics {
     pub cycles_balance: Cycles,
     pub wasm_version: Version,
     pub git_commit_id: String,
+    pub governance_principals: Vec<Principal>,
     pub total_cycles_spent_on_canisters: Cycles,
     pub public_groups: u32,
     pub private_groups: u64,
@@ -210,11 +214,11 @@ pub struct Metrics {
     pub deleted_public_groups: u64,
     pub deleted_private_groups: u64,
     pub group_deleted_notifications_pending: u64,
+    pub frozen_groups: Vec<ChatId>,
     pub canister_upgrades_completed: u64,
     pub canister_upgrades_failed: Vec<FailedUpgradeCount>,
     pub canister_upgrades_pending: u64,
     pub canister_upgrades_in_progress: u64,
-    pub service_principals: Vec<Principal>,
     pub group_wasm_version: Version,
     pub local_group_index_wasm_version: Version,
     pub local_group_indexes: Vec<(CanisterId, LocalGroupIndex)>,
@@ -229,6 +233,8 @@ pub struct CachedMetrics {
     pub deleted_public_groups: u64,
     pub deleted_private_groups: u64,
     pub group_deleted_notifications_pending: u64,
+    #[serde(default)]
+    pub frozen_groups: Vec<ChatId>,
 }
 
 #[derive(Serialize, Debug)]

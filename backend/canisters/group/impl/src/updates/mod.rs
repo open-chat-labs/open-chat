@@ -5,6 +5,7 @@ mod c2c_assume_super_admin;
 mod c2c_delete_group;
 mod c2c_dismiss_super_admin;
 mod c2c_freeze_group;
+mod c2c_initialize_events;
 mod c2c_join_group;
 mod c2c_leave_group;
 mod c2c_relinquish_super_admin;

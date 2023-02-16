@@ -36,6 +36,11 @@ fn init(args: Args) {
         args.proposals_bot_user_id,
         args.test_mode,
         args.permissions,
+        args.is_reinstall,
+        args.date_created_override,
+        args.invite_code,
+        args.invite_code_enabled,
+        args.frozen,
     );
 
     init_state(env, data, args.wasm_version);

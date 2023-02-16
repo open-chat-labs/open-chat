@@ -5,6 +5,7 @@ use types::CanisterId;
 #[derive(CandidType, Deserialize, Serialize, Debug)]
 pub struct Args {
     pub group: CanisterId,
+    pub add_only: bool,
 }
 
 #[derive(CandidType, Deserialize, Serialize, Debug)]

@@ -23,7 +23,6 @@ mod governance_clients;
 mod group_summaries;
 mod guards;
 mod lifecycle;
-mod memory;
 mod model;
 mod openchat_bot;
 mod queries;

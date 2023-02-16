@@ -12,6 +12,7 @@ generate_query_call!(users);
 // Updates
 generate_update_call!(add_local_user_index_canister);
 generate_update_call!(add_super_admin);
+generate_update_call!(c2c_register_bot);
 generate_update_call!(remove_super_admin);
 generate_update_call!(register_user);
 generate_update_call!(set_username);
@@ -36,7 +37,7 @@ pub mod happy_path {
 
         match response {
             user_index_canister::current_user::Response::Success(result) => result,
-            response => panic!("'current_user' error: {:?}", response),
+            response => panic!("'current_user' error: {response:?}"),
         }
     }
 
@@ -59,7 +60,7 @@ pub mod happy_path {
 
         match response {
             user_index_canister::register_user::Response::Success(user_id) => User { principal, user_id },
-            response => panic!("'register_user' error: {:?}", response),
+            response => panic!("'register_user' error: {response:?}"),
         }
     }
 }

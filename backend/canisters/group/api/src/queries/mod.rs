@@ -1,9 +1,11 @@
+pub mod c2c_events_internal;
 pub mod c2c_summary;
 pub mod c2c_summary_updates;
 pub mod deleted_message;
 pub mod events;
 pub mod events_by_index;
 pub mod events_window;
+pub mod http_request;
 pub mod invite_code;
 pub mod local_user_index;
 pub mod messages_by_message_index;

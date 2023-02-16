@@ -14,6 +14,7 @@ mod last_online_date_tests;
 mod notification_tests;
 mod poll_tests;
 mod register_user_tests;
+mod reinstall_group_tests;
 mod rng;
 mod send_direct_message_tests;
 mod setup;

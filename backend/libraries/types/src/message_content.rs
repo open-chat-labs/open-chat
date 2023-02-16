@@ -288,6 +288,23 @@ impl MessageContentInternal {
         }
     }
 
+    pub fn text(&self) -> Option<&str> {
+        match self {
+            MessageContentInternal::Text(c) => Some(&c.text),
+            MessageContentInternal::Image(c) => c.caption.as_deref(),
+            MessageContentInternal::Video(c) => c.caption.as_deref(),
+            MessageContentInternal::Audio(c) => c.caption.as_deref(),
+            MessageContentInternal::File(c) => c.caption.as_deref(),
+            MessageContentInternal::Poll(c) => c.config.text.as_deref(),
+            MessageContentInternal::Crypto(c) => c.caption.as_deref(),
+            MessageContentInternal::Deleted(_) => None,
+            MessageContentInternal::Giphy(c) => c.caption.as_deref(),
+            MessageContentInternal::GovernanceProposal(c) => Some(c.proposal.title()),
+            MessageContentInternal::Prize(c) => c.caption.as_deref(),
+            MessageContentInternal::PrizeWinner(_) => None,
+        }
+    }
+
     pub fn blob_references(&self) -> Vec<BlobReference> {
         let mut references = Vec::new();
 

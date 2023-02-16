@@ -5,9 +5,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Added `reinstall_group` for recovering groups which are un-upgradable due to bug in `pre_upgrade` ([#3128](https://github.com/open-ic/open-chat/pull/3128))
+- Added `frozen_groups` to metrics ([#3140](https://github.com/open-ic/open-chat/pull/3140))
+
 ### Changed
 
 - Update cdk to v0.7.0 ([#3115](https://github.com/open-ic/open-chat/pull/3115))
+- Rename service_principals -> governance_principals ([#3133](https://github.com/open-ic/open-chat/pull/3133))
+
+### Removed
+
+- Removed code to initialize `proposals_bot_user_id` value ([#3124](https://github.com/open-ic/open-chat/pull/3124))
 
 ## [[2.0.581](https://github.com/open-ic/open-chat/releases/tag/v2.0.581-group_index)] - 2023-02-09
 

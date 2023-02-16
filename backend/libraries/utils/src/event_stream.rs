@@ -110,8 +110,7 @@ mod tests {
 
         assert_eq!(events.len(), 5);
 
-        for i in 0..5 {
-            let indexed_event = &events[i];
+        for (i, indexed_event) in events.iter().enumerate() {
             assert_eq!(indexed_event.index, (i + 1) as u64);
             assert_eq!(indexed_event.value, i as u32);
         }

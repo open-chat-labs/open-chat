@@ -58,8 +58,11 @@ impl RuntimeState {
     }
 
     pub fn is_caller_group_index(&self) -> bool {
-        let caller = self.env.caller();
-        caller == self.data.group_index_canister_id || caller == self.data.local_group_index_canister_id
+        self.env.caller() == self.data.group_index_canister_id
+    }
+
+    pub fn is_caller_local_group_index(&self) -> bool {
+        self.env.caller() == self.data.local_group_index_canister_id
     }
 
     pub fn push_notification(&mut self, recipients: Vec<UserId>, notification: Notification) {
@@ -240,7 +243,6 @@ struct Data {
     pub local_user_index_canister_id: CanisterId,
     pub notifications_canister_id: CanisterId,
     pub ledger_canister_ids: HashMap<Cryptocurrency, CanisterId>,
-    #[serde(default = "proposals_bot_user_id")]
     pub proposals_bot_user_id: UserId,
     pub activity_notification_state: ActivityNotificationState,
     pub pinned_messages: Vec<MessageIndex>,
@@ -253,10 +255,8 @@ struct Data {
     pub frozen: Timestamped<Option<FrozenGroupInfo>>,
     pub timer_jobs: TimerJobs<TimerJob>,
     pub date_last_pinned: Option<TimestampMillis>,
-}
-
-fn proposals_bot_user_id() -> UserId {
-    Principal::from_text("iywa7-ayaaa-aaaaf-aemga-cai").unwrap().into()
+    #[serde(default)]
+    pub initialized: bool,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -284,21 +284,34 @@ impl Data {
         proposals_bot_user_id: UserId,
         test_mode: bool,
         permissions: Option<GroupPermissions>,
+        is_reinstall: bool,
+        date_created_override: Option<TimestampMillis>,
+        invite_code: Option<u64>,
+        invite_code_enabled: bool,
+        frozen: Option<FrozenGroupInfo>,
     ) -> Data {
-        let participants = Participants::new(creator_principal, creator_user_id, now);
-        let events = ChatEvents::new_group_chat(chat_id, name.clone(), description.clone(), creator_user_id, events_ttl, now);
+        let date_created = date_created_override.unwrap_or(now);
+        let participants = Participants::new(creator_principal, creator_user_id, date_created);
+        let events = ChatEvents::new_group_chat(
+            chat_id,
+            name.clone(),
+            description.clone(),
+            creator_user_id,
+            events_ttl,
+            date_created,
+        );
 
         Data {
             is_public,
             name,
             description,
             rules,
-            subtype: Timestamped::new(subtype, now),
+            subtype: Timestamped::new(subtype, date_created),
             avatar,
             history_visible_to_new_joiners,
             participants,
             events,
-            date_created: now,
+            date_created,
             mark_active_duration,
             group_index_canister_id,
             local_group_index_canister_id,
@@ -312,12 +325,13 @@ impl Data {
             test_mode,
             owner_id: creator_user_id,
             permissions: permissions.unwrap_or_default(),
-            invite_code: None,
-            invite_code_enabled: false,
+            invite_code,
+            invite_code_enabled,
             new_joiner_rewards: None,
-            frozen: Timestamped::default(),
+            frozen: Timestamped::new(frozen, now),
             timer_jobs: TimerJobs::default(),
             date_last_pinned: None,
+            initialized: !is_reinstall,
         }
     }
 

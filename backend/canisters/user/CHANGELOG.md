@@ -7,17 +7,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Stop using `MemoryManager` during `post_upgrade` ([#3130](https://github.com/open-ic/open-chat/pull/3130))
+
+## [[2.0.593](https://github.com/open-ic/open-chat/releases/tag/v2.0.593-user)] - 2023-02-11
+
+### Changed
+
 - Reduce min interval between cycles balance checks ([#3058](https://github.com/open-ic/open-chat/pull/3058))
 - Deserialize using `MemoryManager` within `post_upgrade` ([#3066](https://github.com/open-ic/open-chat/pull/3066))
 - Reduce `MemoryManager` bucket size to 1 wasm page ([#3070](https://github.com/open-ic/open-chat/pull/3070))
 - Use `raw_rand` to seed rng ([#3076](https://github.com/open-ic/open-chat/pull/3076))
 - Update cdk to v0.7.0 ([#3115](https://github.com/open-ic/open-chat/pull/3115))
 - Drop stable memory after upgrade ([#3116](https://github.com/open-ic/open-chat/pull/3116))
+- Temporarily stop using `MemoryManager` during `pre_upgrade` ([#3122](https://github.com/open-ic/open-chat/pull/3122))
 
 ### Removed
 
 - Removed one-time code to fix incorrect ICP transaction hashes ([#3063](https://github.com/open-ic/open-chat/pull/3063))
 - Removed one-time code to migrate `chat_events` to the new format ([#3064](https://github.com/open-ic/open-chat/pull/3064))
+
+### Fixed
+
+- Fixed latest message not being returned when getting updates ([#3120](https://github.com/open-ic/open-chat/pull/3120))
 
 ## [[2.0.578](https://github.com/open-ic/open-chat/releases/tag/v2.0.578-user)] - 2023-02-04
 

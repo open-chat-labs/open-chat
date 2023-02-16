@@ -12,7 +12,6 @@ pub struct CanisterToUpgrade<A: CandidType> {
     pub current_wasm_version: Version,
     pub new_wasm: CanisterWasm,
     pub deposit_cycles_if_needed: bool,
-    pub drop_stable_memory: bool,
     pub args: A,
 }
 
@@ -28,7 +27,6 @@ pub async fn upgrade<A: CandidType>(canister_to_upgrade: CanisterToUpgrade<A>) -
         canister_id,
         wasm_module: canister_to_upgrade.new_wasm.module,
         arg: candid::encode_one(canister_to_upgrade.args).unwrap(),
-        unsafe_drop_stable_memory: Some(canister_to_upgrade.drop_stable_memory),
     };
     let mut install_code_response: CallResult<()> = management_canister::main::install_code(install_code_args.clone()).await;
 
