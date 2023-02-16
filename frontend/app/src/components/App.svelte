@@ -85,8 +85,23 @@
         calculateHeight();
         window.addEventListener("orientationchange", calculateHeight);
         window.addEventListener("unhandledrejection", unhandledError);
-        (<any>window).superAdmin = { freezeGroup, unfreezeGroup };
+        (<any>window).superAdmin = { deleteFrozenGroup, freezeGroup, unfreezeGroup };
     });
+
+    function deleteFrozenGroup(chatId: string): void {
+        client
+            .deleteFrozenGroup(chatId)
+            .then((success) => {
+                if (success) {
+                    console.log("Group deleted", chatId);
+                } else {
+                    console.log("Failed to delete frozen group", chatId);
+                }
+            })
+            .catch((e) => {
+                console.log("Failed to delete frozen group", e);
+            });
+    }
 
     function freezeGroup(chatId: string, reason: string | undefined): void {
         client

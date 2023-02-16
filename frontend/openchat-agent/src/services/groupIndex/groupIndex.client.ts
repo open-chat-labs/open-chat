@@ -2,6 +2,7 @@ import type { Identity } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
 import type { AgentConfig } from "../../config";
 import type {
+    DeleteFrozenGroupResponse,
     FilterGroupsResponse,
     FreezeGroupResponse,
     GroupChatSummary,
@@ -12,6 +13,7 @@ import { CandidService } from "../candidService";
 import { idlFactory, GroupIndexService } from "./candid/idl";
 import type { IGroupIndexClient } from "./groupIndex.client.interface";
 import {
+    deleteFrozenGroupResponse,
     filterGroupsResponse,
     freezeGroupResponse,
     groupSearchResponse,
@@ -84,5 +86,11 @@ export class GroupIndexClient extends CandidService implements IGroupIndexClient
         return this.handleResponse(
             this.groupIndexService.unfreeze_group({ chat_id: Principal.fromText(chatId) }),
             unfreezeGroupResponse)
+    }
+
+    deleteFrozenGroup(chatId: string): Promise<DeleteFrozenGroupResponse> {
+        return this.handleResponse(
+            this.groupIndexService.delete_frozen_group({ chat_id: Principal.fromText(chatId) }),
+            deleteFrozenGroupResponse)
     }
 }

@@ -16,14 +16,14 @@ fn accept_if_valid(runtime_state: &RuntimeState) {
     }
 
     let is_valid = match method_name.as_str() {
-        "set_max_concurrent_group_canister_upgrades"
-        | "set_governance_principals"
-        | "add_local_group_index_canister"
+        "add_local_group_index_canister"
+        | "mark_local_group_index_full"
         | "reinstall_group"
+        | "set_governance_principals"
+        | "set_max_concurrent_group_canister_upgrades"
         | "upgrade_group_canister_wasm"
-        | "upgrade_local_group_index_canister_wasm"
-        | "mark_local_group_index_full" => runtime_state.is_caller_governance_principal(),
-        "freeze_group" | "unfreeze_group" => true,
+        | "upgrade_local_group_index_canister_wasm" => runtime_state.is_caller_governance_principal(),
+        "delete_frozen_group" | "freeze_group" | "unfreeze_group" => true,
         _ => false,
     };
 

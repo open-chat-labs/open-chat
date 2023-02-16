@@ -11,6 +11,7 @@ import type {
     CreateGroupResponse,
     DeletedDirectMessageResponse,
     DeletedGroupMessageResponse,
+    DeleteFrozenGroupResponse,
     DeleteGroupResponse,
     DeleteMessageResponse,
     DirectChatEvent,
@@ -179,6 +180,7 @@ export type WorkerRequest =
     | SetCachedMessageFromNotification
     | FreezeGroup
     | UnfreezeGroup
+    | DeleteFrozenGroup
     | SuspendUser
     | UnsuspendUser
     | MarkSuspectedBot
@@ -723,6 +725,12 @@ type UnfreezeGroup = Request<{
     kind: "unfreezeGroup";
 };
 
+type DeleteFrozenGroup = Request<{
+    chatId: string;
+}> & {
+    kind: "deleteFrozenGroup";
+};
+
 type SuspendUser = Request<{
     userId: string;
     reason: string;
@@ -869,6 +877,7 @@ export type WorkerResponse =
     | Response<EventsResponse<ChatEvent>>
     | Response<FreezeGroupResponse>
     | Response<UnfreezeGroupResponse>
+    | Response<DeleteFrozenGroupResponse>
     | Response<SuspendUserResponse>
     | Response<UnsuspendUserResponse>
     | Response<UpdatesResult>

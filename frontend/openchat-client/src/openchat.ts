@@ -2976,6 +2976,16 @@ export class OpenChat extends EventTarget {
             });
     }
 
+    deleteFrozenGroup(chatId: string): Promise<boolean> {
+        return this.api
+            .deleteFrozenGroup(chatId)
+            .then((resp) => resp === "success")
+            .catch((err) => {
+                this._logger.error("Unable to unfreeze group", err);
+                return false;
+            });
+    }
+
     suspendUser(userId: string, reason: string): Promise<boolean> {
         return this.api
             .suspendUser(userId, reason)
