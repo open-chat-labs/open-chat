@@ -10,5 +10,4 @@ set -o allexport
 source .env
 set +o allexport
 
-./access_control/remove-dev-principal-as-top-level-controller.sh
 ./access_control/remove-dev-principal-from-canisters-acl.sh
