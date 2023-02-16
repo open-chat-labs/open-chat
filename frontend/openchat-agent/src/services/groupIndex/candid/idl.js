@@ -1,7 +1,16 @@
 export const idlFactory = ({ IDL }) => {
-  const TimestampMillis = IDL.Nat64;
   const CanisterId = IDL.Principal;
   const ChatId = CanisterId;
+  const DeleteFrozenGroupArgs = IDL.Record({ 'chat_id' : ChatId });
+  const TimestampMillis = IDL.Nat64;
+  const DeleteFrozenGroupResponse = IDL.Variant({
+    'ChatNotFrozenLongEnough' : TimestampMillis,
+    'ChatNotFound' : IDL.Null,
+    'NotAuthorized' : IDL.Null,
+    'Success' : IDL.Null,
+    'ChatNotFrozen' : IDL.Null,
+    'InternalError' : IDL.Text,
+  });
   const FilterGroupsArgs = IDL.Record({
     'active_since' : IDL.Opt(TimestampMillis),
     'chat_ids' : IDL.Vec(ChatId),
@@ -409,6 +418,11 @@ export const idlFactory = ({ IDL }) => {
     'InternalError' : IDL.Text,
   });
   return IDL.Service({
+    'delete_frozen_group' : IDL.Func(
+        [DeleteFrozenGroupArgs],
+        [DeleteFrozenGroupResponse],
+        [],
+      ),
     'filter_groups' : IDL.Func(
         [FilterGroupsArgs],
         [FilterGroupsResponse],

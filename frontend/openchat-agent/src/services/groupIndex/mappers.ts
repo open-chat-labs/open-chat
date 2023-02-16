@@ -6,8 +6,16 @@ import type {
     GroupSearchResponse,
     UnfreezeGroupResponse
 } from "openchat-shared";
-import type { ApiFilterGroupsResponse, ApiFreezeGroupResponse, ApiGroupMatch, ApiRecommendedGroupsResponse, ApiSearchResponse, ApiUnfreezeGroupResponse } from "./candid/idl";
-import { GroupChatSummary, UnsupportedValueError } from "openchat-shared";
+import type {
+    ApiDeleteFrozenGroupResponse,
+    ApiFilterGroupsResponse,
+    ApiFreezeGroupResponse,
+    ApiGroupMatch,
+    ApiRecommendedGroupsResponse,
+    ApiSearchResponse,
+    ApiUnfreezeGroupResponse,
+} from "./candid/idl";
+import { DeleteFrozenGroupResponse, GroupChatSummary, UnsupportedValueError } from "openchat-shared";
 import { publicGroupSummary } from "../common/publicSummaryMapper";
 
 export function filterGroupsResponse(candid: ApiFilterGroupsResponse): FilterGroupsResponse {
@@ -95,6 +103,28 @@ export function unfreezeGroupResponse(candid: ApiUnfreezeGroupResponse): Unfreez
         return "internal_error";
     }
     throw new UnsupportedValueError("Unexpected ApiUnfreezeGroupResponse type received", candid);
+}
+
+export function deleteFrozenGroupResponse(candid: ApiDeleteFrozenGroupResponse): DeleteFrozenGroupResponse {
+    if ("Success" in candid) {
+        return "success";
+    }
+    if ("ChatNotFrozen" in candid) {
+        return "chat_not_frozen";
+    }
+    if ("ChatNotFrozenLongEnough" in candid) {
+        return "chat_not_frozen_long_enough";
+    }
+    if ("ChatNotFound" in candid) {
+        return "chat_not_found";
+    }
+    if ("NotAuthorized" in candid) {
+        return "not_authorized";
+    }
+    if ("InternalError" in candid) {
+        return "internal_error";
+    }
+    throw new UnsupportedValueError("Unexpected ApiDeleteFrozenGroupResponse type received", candid);
 }
 
 function groupMatch(candid: ApiGroupMatch): GroupMatch {

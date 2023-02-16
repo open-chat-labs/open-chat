@@ -58,6 +58,7 @@ import {
     Cryptocurrency,
     CurrentUserResponse,
     DataContent,
+    DeleteFrozenGroupResponse,
     DeleteGroupResponse,
     DeleteMessageResponse,
     DirectChatEvent,
@@ -1507,6 +1508,10 @@ export class OpenChatAgent extends EventTarget {
 
     unfreezeGroup(chatId: string): Promise<UnfreezeGroupResponse> {
         return this._groupIndexClient.unfreezeGroup(chatId);
+    }
+
+    deleteFrozenGroup(chatId: string): Promise<DeleteFrozenGroupResponse> {
+        return this._groupIndexClient.deleteFrozenGroup(chatId);
     }
 
     suspendUser(userId: string, reason: string): Promise<SuspendUserResponse> {

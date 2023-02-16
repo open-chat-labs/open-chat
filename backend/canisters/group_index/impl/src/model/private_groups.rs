@@ -92,8 +92,12 @@ impl PrivateGroupInfo {
         self.marked_active_until > since
     }
 
-    pub fn frozen(&self) -> bool {
+    pub fn is_frozen(&self) -> bool {
         self.frozen.is_some()
+    }
+
+    pub fn frozen_info(&self) -> Option<&FrozenGroupInfo> {
+        self.frozen.as_ref()
     }
 
     pub fn set_frozen(&mut self, info: Option<FrozenGroupInfo>) {

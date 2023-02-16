@@ -1,4 +1,11 @@
-import type { FilterGroupsResponse, FreezeGroupResponse, GroupChatSummary, GroupSearchResponse,  UnfreezeGroupResponse } from "openchat-shared";
+import type {
+    DeleteFrozenGroupResponse,
+    FilterGroupsResponse,
+    FreezeGroupResponse,
+    GroupChatSummary,
+    GroupSearchResponse,
+    UnfreezeGroupResponse
+} from "openchat-shared";
 
 export interface IGroupIndexClient {
     filterGroups(chatIds: string[], activeSince: bigint): Promise<FilterGroupsResponse>;
@@ -6,4 +13,5 @@ export interface IGroupIndexClient {
     search(searchTerm: string, maxResults?: number): Promise<GroupSearchResponse>;
     freezeGroup(chatId: string, reason: string | undefined): Promise<FreezeGroupResponse>;
     unfreezeGroup(chatId: string): Promise<UnfreezeGroupResponse>;
+    deleteFrozenGroup(chatId: string): Promise<DeleteFrozenGroupResponse>;
 }
