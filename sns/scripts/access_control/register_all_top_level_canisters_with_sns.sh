@@ -14,7 +14,5 @@ echo "Start registering top level canisters with SNS"
 ./register_proposals_bot.sh
 ./register_user_index.sh
 
-cd ..
-
 echo "Finish registering top level canisters with SNS"
 
