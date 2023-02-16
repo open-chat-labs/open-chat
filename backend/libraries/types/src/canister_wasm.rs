@@ -37,7 +37,7 @@ impl Debug for CanisterWasm {
     }
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default, Eq, PartialEq)]
 pub struct UpgradesFilter {
     pub include: Vec<CanisterId>,
     pub exclude: Vec<CanisterId>,
