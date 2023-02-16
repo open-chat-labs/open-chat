@@ -4,9 +4,9 @@ use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
 use group_index_canister::upgrade_group_canister_wasm::{Response::*, *};
 use ic_cdk::api::call::CallResult;
-use std::collections::HashMap;
 use tracing::info;
 use types::{CanisterId, CanisterWasm, UpgradeCanisterWasmArgs};
+use utils::canister::{build_filter_map, UpgradesFilter};
 
 #[proposal(guard = "caller_is_governance_principal")]
 #[trace]
@@ -55,7 +55,7 @@ async fn upgrade_group_canister_wasm(args: Args) -> Response {
 
 struct PrepareResult {
     wasm: CanisterWasm,
-    local_group_index_canisters: Vec<(CanisterId, Filter)>,
+    local_group_index_canisters: Vec<(CanisterId, UpgradesFilter)>,
 }
 
 fn prepare(args: Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Response> {
@@ -65,39 +65,18 @@ fn prepare(args: Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Re
 
     let local_group_index_canister_ids: Vec<_> = runtime_state.data.local_index_map.canisters().copied().collect();
 
-    let mut map: HashMap<CanisterId, Filter> = HashMap::new();
-
-    let include = args.include.unwrap_or_default();
-    let include_all = include.is_empty();
-    let exclude = args.exclude.unwrap_or_default();
-
-    if include_all {
-        for canister_id in local_group_index_canister_ids {
-            map.insert(canister_id, Filter::default());
-        }
-    } else {
-        for canister_id in include {
-            if local_group_index_canister_ids.contains(&canister_id) {
-                map.entry(canister_id).or_default();
-            } else if let Some(index) = runtime_state.data.local_index_map.get_index_canister(&canister_id.into()) {
-                map.entry(index).or_default().include.push(canister_id);
-            }
-        }
-    }
-
-    for canister_id in exclude {
-        // If the index canister is in the map, remove it
-        if !map.remove(&canister_id) {
-            // Else, find the relevant index canister and add to its exclusion list
-            if let Some(index) = runtime_state.data.local_index_map.get_index_canister(&canister_id.into()) {
-                map.entry(index).and_modify(|e| e.exclude.push(canister_id));
-            }
-        }
-    }
+    let local_group_index_canisters = build_filter_map(
+        local_group_index_canister_ids,
+        UpgradesFilter {
+            include: args.include.unwrap_or_default(),
+            exclude: args.exclude.unwrap_or_default(),
+        },
+        |c| runtime_state.data.local_index_map.get_index_canister(&c.into()),
+    );
 
     Ok(PrepareResult {
         wasm: args.wasm,
-        local_group_index_canisters: map.into_iter().collect(),
+        local_group_index_canisters,
     })
 }
 
@@ -106,10 +85,4 @@ async fn c2c_upgrade_group_canister_wasm(
     args: local_group_index_canister::c2c_upgrade_group_canister_wasm::Args,
 ) -> CallResult<local_group_index_canister::c2c_upgrade_group_canister_wasm::Response> {
     local_group_index_canister_c2c_client::c2c_upgrade_group_canister_wasm(canister_id, &args).await
-}
-
-#[derive(Default)]
-struct Filter {
-    include: Vec<CanisterId>,
-    exclude: Vec<CanisterId>,
 }
