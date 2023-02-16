@@ -139,6 +139,15 @@ export interface CyclesRegistrationFee {
   'valid_until' : TimestampMillis,
   'amount' : Cycles,
 }
+export interface DeleteFrozenGroupArgs { 'chat_id' : ChatId }
+export type DeleteFrozenGroupResponse = {
+    'ChatNotFrozenLongEnough' : TimestampMillis
+  } |
+  { 'ChatNotFound' : null } |
+  { 'NotAuthorized' : null } |
+  { 'Success' : null } |
+  { 'ChatNotFrozen' : null } |
+  { 'InternalError' : string };
 export interface DeletedContent {
   'timestamp' : TimestampMillis,
   'deleted_by' : UserId,
@@ -958,6 +967,10 @@ export interface VideoContent {
 export type VoteOperation = { 'RegisterVote' : null } |
   { 'DeleteVote' : null };
 export interface _SERVICE {
+  'delete_frozen_group' : ActorMethod<
+    [DeleteFrozenGroupArgs],
+    DeleteFrozenGroupResponse
+  >,
   'filter_groups' : ActorMethod<[FilterGroupsArgs], FilterGroupsResponse>,
   'freeze_group' : ActorMethod<[FreezeGroupArgs], FreezeGroupResponse>,
   'recommended_groups' : ActorMethod<

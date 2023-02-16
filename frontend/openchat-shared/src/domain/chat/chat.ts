@@ -1621,6 +1621,14 @@ export type UnfreezeGroupResponse =
     | "not_authorized"
     | "internal_error";
 
+export type DeleteFrozenGroupResponse =
+    | "success"
+    | "chat_not_frozen"
+    | "chat_not_frozen_long_enough"
+    | "chat_not_found"
+    | "not_authorized"
+    | "internal_error";
+
 export type MarkPinnedMessagesReadResponse = "success" | "chat_frozen";
 
 export type ClaimPrizeResponse =

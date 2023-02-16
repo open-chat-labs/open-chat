@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Added `c2c_initialize_events` for recovering groups which are un-upgradable due to bug in `pre_upgrade` ([#3128](https://github.com/open-ic/open-chat/pull/3128))
 - Added `c2c_events_internal` for recovering group events ([#3138](https://github.com/open-ic/open-chat/pull/3138))
+- Added `c2c_name_and_members` which is called by the GroupIndex before deleting the group ([£3144](https://github.com/open-ic/open-chat/pull/3144))
 
 ### Removed
 

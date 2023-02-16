@@ -34,6 +34,7 @@ import {
     UnblockUserResponse,
     BlobReference,
     MakeGroupPrivateResponse,
+    DeleteFrozenGroupResponse,
     DeleteGroupResponse,
     LeaveGroupResponse,
     JoinGroupResponse,
@@ -1213,6 +1214,15 @@ export class OpenChatAgentWorker extends EventTarget {
     unfreezeGroup(chatId: string): Promise<UnfreezeGroupResponse> {
         return this.sendRequest({
             kind: "unfreezeGroup",
+            payload: {
+                chatId,
+            },
+        });
+    }
+
+    deleteFrozenGroup(chatId: string): Promise<DeleteFrozenGroupResponse> {
+        return this.sendRequest({
+            kind: "deleteFrozenGroup",
             payload: {
                 chatId,
             },

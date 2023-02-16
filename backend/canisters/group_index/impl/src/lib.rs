@@ -9,7 +9,9 @@ use model::local_group_index_map::LocalGroupIndexMap;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashSet;
-use types::{CanisterId, CanisterWasm, ChatId, Cycles, Milliseconds, TimestampMillis, Timestamped, UserId, Version};
+use types::{
+    CanisterId, CanisterWasm, ChatId, Cycles, FrozenGroupInfo, Milliseconds, TimestampMillis, Timestamped, UserId, Version,
+};
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::env::Environment;
 use utils::time::MINUTE_IN_MS;
@@ -136,6 +138,13 @@ impl Data {
         }
     }
 
+    pub fn chat_frozen_info(&self, chat_id: &ChatId) -> Option<Option<&FrozenGroupInfo>> {
+        self.public_groups
+            .get(chat_id)
+            .map(|g| g.frozen_info())
+            .or_else(|| self.private_groups.get(chat_id).map(|g| g.frozen_info()))
+    }
+
     pub fn calculate_metrics(&mut self, now: TimestampMillis) {
         // Throttle to once every 5 minutes
         if now < self.cached_metrics.last_run + FIVE_MINUTES_IN_MS {
@@ -156,7 +165,7 @@ impl Data {
             if public_group.has_been_active_since(now) {
                 cached_metrics.active_public_groups += 1;
             }
-            if public_group.frozen() {
+            if public_group.is_frozen() {
                 cached_metrics.frozen_groups.push(public_group.id());
             }
         }
@@ -165,7 +174,7 @@ impl Data {
             if private_group.has_been_active_since(now) {
                 cached_metrics.active_private_groups += 1;
             }
-            if private_group.frozen() {
+            if private_group.is_frozen() {
                 cached_metrics.frozen_groups.push(private_group.id());
             }
         }
@@ -242,4 +251,30 @@ pub struct CanisterIds {
     pub user_index: CanisterId,
     pub proposals_bot: CanisterId,
     pub cycles_dispenser: CanisterId,
+}
+
+enum ValidationError {
+    NotSuperAdmin,
+    InternalError(String),
+}
+
+async fn validate_user_is_super_admin(
+    caller: Principal,
+    user_index_canister_id: CanisterId,
+) -> Result<UserId, ValidationError> {
+    let args = user_index_canister::c2c_lookup_user::Args {
+        user_id_or_principal: caller,
+    };
+
+    match user_index_canister_c2c_client::c2c_lookup_user(user_index_canister_id, &args).await {
+        Ok(user_index_canister::c2c_lookup_user::Response::Success(r)) => {
+            if r.is_super_admin {
+                Ok(r.user_id)
+            } else {
+                Err(ValidationError::NotSuperAdmin)
+            }
+        }
+        Ok(_) => Err(ValidationError::NotSuperAdmin),
+        Err(error) => Err(ValidationError::InternalError(format!("{error:?}"))),
+    }
 }

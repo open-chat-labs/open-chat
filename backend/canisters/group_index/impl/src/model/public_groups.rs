@@ -77,7 +77,7 @@ impl PublicGroups {
         let query = Query::parse(search_term);
 
         self.iter()
-            .filter(|g| !g.frozen())
+            .filter(|g| !g.is_frozen())
             .map(|g| {
                 let document: Document = g.into();
                 let score = document.calculate_score(&query);
@@ -152,7 +152,7 @@ impl PublicGroups {
         let one_day_ago = now - DAY_IN_MS;
 
         self.iter()
-            .filter(|g| !g.frozen() && g.has_been_active_since(one_day_ago))
+            .filter(|g| !g.is_frozen() && g.has_been_active_since(one_day_ago))
             .map(|g| (g, rng.next_u32()))
             .max_n_by(CACHED_HOT_GROUPS_COUNT, |(g, random)| g.calculate_weight(*random, now))
             .map(|(g, _)| g.id)
@@ -248,8 +248,12 @@ impl PublicGroupInfo {
         weighting
     }
 
-    pub fn frozen(&self) -> bool {
+    pub fn is_frozen(&self) -> bool {
         self.frozen.is_some()
+    }
+
+    pub fn frozen_info(&self) -> Option<&FrozenGroupInfo> {
+        self.frozen.as_ref()
     }
 
     pub fn set_frozen(&mut self, info: Option<FrozenGroupInfo>) {

@@ -1,10 +1,13 @@
 use crate::rng::random_string;
 use crate::setup::{return_env, setup_env, TestEnv};
+use crate::utils::tick_many;
 use crate::{client, User};
 use candid::Principal;
 use group_index_canister::freeze_group::SuspensionDetails;
 use ic_state_machine_tests::StateMachine;
+use std::time::Duration;
 use types::{CanisterId, ChatId};
+use utils::time::DAY_IN_MS;
 
 #[test]
 fn freeze_then_unfreeze() {
@@ -195,6 +198,70 @@ fn freeze_and_suspend_users() {
     let user = client::user_index::happy_path::current_user(&env, user2.principal, canister_ids.user_index);
 
     assert!(user.suspension_details.is_some());
+
+    return_env(TestEnv {
+        env,
+        canister_ids,
+        controller,
+    });
+}
+
+#[test]
+fn delete_frozen_group() {
+    let TestEnv {
+        mut env,
+        canister_ids,
+        controller,
+    } = setup_env();
+
+    let TestData { user1, group_id, .. } = init_test_data(&mut env, canister_ids.user_index, controller);
+
+    client::group_index::freeze_group(
+        &mut env,
+        user1.principal,
+        canister_ids.group_index,
+        &group_index_canister::freeze_group::Args {
+            chat_id: group_id,
+            reason: None,
+            suspend_members: None,
+        },
+    );
+
+    env.advance_time(Duration::from_millis(7 * DAY_IN_MS));
+
+    let delete_group_response1 = client::group_index::delete_frozen_group(
+        &mut env,
+        user1.principal,
+        canister_ids.group_index,
+        &group_index_canister::delete_frozen_group::Args { chat_id: group_id },
+    );
+    assert!(
+        matches!(
+            delete_group_response1,
+            group_index_canister::delete_frozen_group::Response::ChatNotFrozenLongEnough(_)
+        ),
+        "{delete_group_response1:?}"
+    );
+
+    env.advance_time(Duration::from_millis(1));
+
+    let delete_group_response2 = client::group_index::delete_frozen_group(
+        &mut env,
+        user1.principal,
+        canister_ids.group_index,
+        &group_index_canister::delete_frozen_group::Args { chat_id: group_id },
+    );
+    assert!(
+        matches!(
+            delete_group_response2,
+            group_index_canister::delete_frozen_group::Response::Success
+        ),
+        "{delete_group_response2:?}"
+    );
+
+    tick_many(&mut env, 5);
+
+    assert!(!env.canister_exists(Principal::from(group_id).as_slice().try_into().unwrap()));
 
     return_env(TestEnv {
         env,

@@ -104,10 +104,26 @@ type UnfreezeGroupResponse =
         InternalError: text;
     };
 
+type DeleteFrozenGroupArgs =
+    record {
+        chat_id: ChatId;
+    };
+
+type DeleteFrozenGroupResponse =
+    variant {
+        Success;
+        ChatNotFrozen;
+        ChatNotFrozenLongEnough: TimestampMillis;
+        ChatNotFound;
+        NotAuthorized;
+        InternalError: text;
+    };
+
 service: {
     filter_groups: (FilterGroupsArgs) -> (FilterGroupsResponse) query;
     recommended_groups: (RecommendedGroupsArgs) -> (RecommendedGroupsResponse) query;
     search: (SearchArgs) -> (SearchResponse) query;
     freeze_group: (FreezeGroupArgs) -> (FreezeGroupResponse);
     unfreeze_group: (UnfreezeGroupArgs) -> (UnfreezeGroupResponse);
+    delete_frozen_group: (DeleteFrozenGroupArgs) -> (DeleteFrozenGroupResponse);
 }
