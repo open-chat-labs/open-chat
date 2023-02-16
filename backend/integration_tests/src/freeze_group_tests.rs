@@ -238,7 +238,7 @@ fn delete_frozen_group() {
     assert!(
         matches!(
             delete_group_response1,
-            group_index_canister::delete_frozen_group::Response::ChatNotFrozenForLongEnough(_)
+            group_index_canister::delete_frozen_group::Response::ChatNotFrozenLongEnough(_)
         ),
         "{delete_group_response1:?}"
     );

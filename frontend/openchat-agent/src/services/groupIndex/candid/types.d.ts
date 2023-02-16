@@ -140,7 +140,9 @@ export interface CyclesRegistrationFee {
   'amount' : Cycles,
 }
 export interface DeleteFrozenGroupArgs { 'chat_id' : ChatId }
-export type DeleteFrozenGroupResponse = { 'ChatNotFrozenLongEnough' : null } |
+export type DeleteFrozenGroupResponse = {
+    'ChatNotFrozenLongEnough' : TimestampMillis
+  } |
   { 'ChatNotFound' : null } |
   { 'NotAuthorized' : null } |
   { 'Success' : null } |

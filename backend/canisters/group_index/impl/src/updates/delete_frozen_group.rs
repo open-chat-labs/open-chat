@@ -59,7 +59,7 @@ fn prepare(chat_id: &ChatId, runtime_state: &RuntimeState) -> Result<PrepareResu
                         local_group_index_canister_id,
                     })
                 } else {
-                    Err(ChatNotFrozenForLongEnough(now + MIN_FROZEN_DURATION_BEFORE_DELETION))
+                    Err(ChatNotFrozenLongEnough(now + MIN_FROZEN_DURATION_BEFORE_DELETION))
                 }
             }
             Some(None) => Err(ChatNotFrozen),

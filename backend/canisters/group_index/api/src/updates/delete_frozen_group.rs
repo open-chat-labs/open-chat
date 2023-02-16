@@ -11,7 +11,7 @@ pub struct Args {
 pub enum Response {
     Success,
     ChatNotFrozen,
-    ChatNotFrozenForLongEnough(TimestampMillis),
+    ChatNotFrozenLongEnough(TimestampMillis),
     ChatNotFound,
     NotAuthorized,
     InternalError(String),
