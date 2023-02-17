@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Added `c2c_reinstall_group` for recovering groups which are un-upgradable due to bug in `pre_upgrade` ([#3128](https://github.com/open-ic/open-chat/pull/3128))
 - Support upgrading a filtered set of canisters ([#3145](https://github.com/open-ic/open-chat/pull/3145))
+- Reinstall groups using heartbeat but stop if any fail ([#3154](https://github.com/open-ic/open-chat/pull/3154))
 
 ### Removed
 
