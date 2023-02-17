@@ -77,7 +77,8 @@ async fn reinstall_group_impl(
             thread_root_message_index: None,
             message_id: mutate_state(|state| MessageId::generate(state.env.rng())),
             content: MessageContentInitial::Text(TextContent {
-                text: "Please wait while this group is reinstalled".to_string(),
+                text: "Please wait while this group is reinstalled. It will be frozen temporarily and unfrozen once complete."
+                    .to_string(),
             }),
             sender_name: "GroupUpgradeBot".to_string(),
             replies_to: None,
