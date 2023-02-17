@@ -51,6 +51,10 @@ mod upgrade_canisters {
         let group_canister_wasm = &runtime_state.data.group_canister_wasm_for_upgrades;
         let deposit_cycles_if_needed = ic_cdk::api::canister_balance128() > MIN_CYCLES_BALANCE;
 
+        if current_wasm_version == group_canister_wasm.version {
+            return None;
+        }
+
         group.set_canister_upgrade_status(true, None);
 
         Some(CanisterToUpgrade {

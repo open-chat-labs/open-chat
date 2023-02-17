@@ -72,6 +72,10 @@ fn initialize_upgrade(canister_id: CanisterId, runtime_state: &mut RuntimeState)
     let user_canister_wasm = &runtime_state.data.user_canister_wasm_for_upgrades;
     let deposit_cycles_if_needed = ic_cdk::api::canister_balance128() > MIN_CYCLES_BALANCE;
 
+    if current_wasm_version == user_canister_wasm.version {
+        return None;
+    }
+
     user.set_canister_upgrade_status(true, None);
 
     Some(CanisterToUpgrade {
