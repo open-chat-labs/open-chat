@@ -34,11 +34,11 @@ fn upgrade_local_group_index_canister_wasm_impl(args: Args, runtime_state: &mut 
             .local_index_map
             .iter()
             .filter(|(_, i)| i.wasm_version() != version)
-            .map(|(c, _)| c)
+            .map(|(c, _)| *c)
             .filter(|c| include_all || include.contains(c))
             .filter(|c| !exclude.contains(c))
         {
-            runtime_state.data.canisters_requiring_upgrade.enqueue(*canister_id);
+            runtime_state.data.canisters_requiring_upgrade.enqueue(canister_id);
         }
         crate::jobs::upgrade_canisters::start_job_if_required(runtime_state);
 
