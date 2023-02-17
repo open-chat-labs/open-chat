@@ -3,24 +3,30 @@ use crate::{mutate_state, read_state, RuntimeState};
 use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
 use group_index_canister::add_local_group_index_canister::{Response::*, *};
+use ic_cdk::api::management_canister::main::CanisterInstallMode;
 use tracing::info;
 use types::{CanisterId, CanisterWasm, Version};
-use utils::canister::install;
+use utils::canister::{install, CanisterToInstall};
 
 #[proposal(guard = "caller_is_governance_principal")]
 #[trace]
 async fn add_local_group_index_canister(args: Args) -> Response {
     match read_state(|state| prepare(&args, state)) {
         Ok(result) => {
-            match install(
-                args.canister_id,
-                result.canister_wasm.module,
-                candid::encode_one(result.init_args).unwrap(),
-            )
+            let wasm_version = result.canister_wasm.version;
+            match install(CanisterToInstall {
+                canister_id: args.canister_id,
+                current_wasm_version: Version::default(),
+                new_wasm: result.canister_wasm,
+                deposit_cycles_if_needed: true,
+                args: result.init_args,
+                mode: CanisterInstallMode::Install,
+                stop_start_canister: false,
+            })
             .await
             {
                 Ok(_) => {
-                    let response = mutate_state(|state| commit(args.canister_id, result.canister_wasm.version, state));
+                    let response = mutate_state(|state| commit(args.canister_id, wasm_version, state));
                     info!(canister_id = %args.canister_id, "local group index canister added");
                     response
                 }
