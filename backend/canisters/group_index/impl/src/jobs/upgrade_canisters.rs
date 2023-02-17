@@ -66,7 +66,7 @@ fn try_get_next(runtime_state: &mut RuntimeState) -> GetNextResult {
         .local_index_map
         .get(&canister_id)
         .map(|c| c.wasm_version())
-        .filter(|v| v != new_wasm_version)
+        .filter(|v| *v != new_wasm_version)
     {
         Some(v) => v,
         None => {
