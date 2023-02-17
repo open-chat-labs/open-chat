@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## Changed
+
+- Consolidate code to install / upgrade canisters ([#3152](https://github.com/open-ic/open-chat/pull/3152))
+
 ## [[2.0.595](https://github.com/open-ic/open-chat/releases/tag/v2.0.595-local_user_index)] - 2023-02-16
 
 ## Added

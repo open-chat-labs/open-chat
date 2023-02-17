@@ -9,6 +9,7 @@ use ic_ledger_types::Tokens;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use std::collections::{BTreeMap, HashMap, HashSet};
+use tracing::{error, info};
 use types::{
     sns, Avatar, CanisterId, ChatEvent, ChatId, CompletedCryptoTransaction, CryptoTransaction, EventIndex, EventWrapper,
     FrozenGroupInfo, HttpRequest, MessageContent, MessageContentInitial, MessageContentInternal, MessageId, MessageIndex,
@@ -33,9 +34,17 @@ pub async fn reinstall_group(group_id: ChatId) -> Result<(), String> {
     })?;
 
     let result = reinstall_group_impl(group_id, this_canister_id, local_user_index).await;
+    if let Err(ref error) = result {
+        // Stop all reinstalls so that we can investigate what happened
+        mutate_state(|state| state.data.max_concurrent_canister_upgrades = 0);
 
-    // Reset the `group_being_reinstalled` state
-    mutate_state(|state| state.data.group_being_reinstalled = None);
+        error!(%group_id, "Failed to reinstall group. Error: {error}");
+    } else {
+        // Reset the `group_being_reinstalled` state
+        mutate_state(|state| state.data.group_being_reinstalled = None);
+
+        info!(%group_id, "Successfully reinstalled group");
+    }
 
     result
 }
