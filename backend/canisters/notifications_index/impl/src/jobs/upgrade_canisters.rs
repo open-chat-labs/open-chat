@@ -6,6 +6,7 @@ use std::time::Duration;
 use tracing::trace;
 use types::{CanisterId, Version};
 use utils::canister::{install, FailedUpgrade};
+use utils::consts::MIN_CYCLES_BALANCE;
 
 type CanisterToUpgrade = utils::canister::CanisterToInstall<notifications_canister::post_upgrade::Args>;
 
@@ -59,8 +60,15 @@ fn try_get_next(runtime_state: &mut RuntimeState) -> GetNextResult {
         None => return GetNextResult::Continue,
     };
 
-    let current_wasm_version = match runtime_state.data.notifications_canisters.get(&canister_id) {
-        Some(canister) => canister.wasm_version(),
+    let new_wasm_version = runtime_state.data.notifications_canister_wasm_for_upgrades.version;
+    let current_wasm_version = match runtime_state
+        .data
+        .notifications_canisters
+        .get(&canister_id)
+        .map(|c| c.wasm_version())
+        .filter(|v| *v != new_wasm_version)
+    {
+        Some(v) => v,
         None => {
             runtime_state.data.canisters_requiring_upgrade.mark_skipped(&canister_id);
             return GetNextResult::Continue;
@@ -68,14 +76,16 @@ fn try_get_next(runtime_state: &mut RuntimeState) -> GetNextResult {
     };
 
     let new_wasm = runtime_state.data.notifications_canister_wasm_for_upgrades.clone();
-    let wasm_version = new_wasm.version;
+    let deposit_cycles_if_needed = ic_cdk::api::canister_balance128() > MIN_CYCLES_BALANCE;
 
     GetNextResult::Success(CanisterToUpgrade {
         canister_id,
         current_wasm_version,
         new_wasm,
-        deposit_cycles_if_needed: false,
-        args: notifications_canister::post_upgrade::Args { wasm_version },
+        deposit_cycles_if_needed,
+        args: notifications_canister::post_upgrade::Args {
+            wasm_version: new_wasm_version,
+        },
         mode: CanisterInstallMode::Upgrade,
         stop_start_canister: true,
     })
