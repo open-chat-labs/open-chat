@@ -99,6 +99,7 @@ fn process_completed_events(user_principals: HashMap<UserId, Principal>, runtime
             }
             ChatEventInternal::ParticipantsAdded(p) => {
                 for user_id in p.user_ids.iter() {
+                    runtime_state.data.participants.unblock(user_id);
                     runtime_state.data.participants.add(
                         *user_id,
                         get_principal(user_id, &user_principals),
