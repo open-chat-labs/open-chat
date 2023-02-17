@@ -5,6 +5,7 @@ use canister_tracing_macros::trace;
 use local_group_index_canister::c2c_upgrade_group_canister_wasm::{Response::*, *};
 use std::collections::HashSet;
 use tracing::info;
+use types::CanisterId;
 
 #[update_msgpack(guard = "caller_is_group_index_canister")]
 #[trace]
@@ -29,16 +30,16 @@ fn c2c_upgrade_group_canister_wasm_impl(args: Args, runtime_state: &mut RuntimeS
         let include_all = include.is_empty();
         let exclude: HashSet<_> = filter.exclude.into_iter().collect();
 
-        for chat_id in runtime_state
+        for canister_id in runtime_state
             .data
             .local_groups
             .iter()
             .filter(|(_, group)| group.wasm_version != version)
-            .filter(|(&user_id, _)| include_all || include.contains(&user_id.into()))
-            .filter(|(&user_id, _)| !exclude.contains(&user_id.into()))
-            .map(|(chat_id, _)| *chat_id)
+            .map(|(chat_id, _)| CanisterId::from(*chat_id))
+            .filter(|c| include_all || include.contains(c))
+            .filter(|c| !exclude.contains(c))
         {
-            runtime_state.data.canisters_requiring_upgrade.enqueue(chat_id.into())
+            runtime_state.data.canisters_requiring_upgrade.enqueue(canister_id)
         }
 
         let canisters_queued_for_upgrade = runtime_state.data.canisters_requiring_upgrade.count_pending();
