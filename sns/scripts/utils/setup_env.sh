@@ -1,5 +1,6 @@
 #!/bin/sh
 
+# Check the necessary environment variables have been set
 if [ -z "${NETWORK}" ]
 then
   echo "Missing environment variable NETWORK"
@@ -20,9 +21,19 @@ then
   echo "Missing environment variable PEM_FILE"
   exit 1
 fi
+if [ -z "${YES_TO_PROPOSALS}" ]
+then
+  echo "Missing environment variable YES_TO_PROPOSALS"
+  exit 1
+fi
 
+# Write the network
 echo $NETWORK
 
+# Set current directory to the directory this script is in
+SCRIPT=$(readlink -f "$0")
+SCRIPT_DIR=$(dirname "$SCRIPT")
+cd $SCRIPT_DIR
+
 # Create the sns_canister_ids.json
-FILE_NAME=''"$NETWORK"'_sns_canister_ids.json'
-./build_sns_canister_ids_json.sh > $FILE_NAME
+./build_sns_canister_ids_json.sh > sns_canister_ids.json
