@@ -40,3 +40,125 @@ pub fn build_filter_map<F: Fn(CanisterId) -> Option<CanisterId>>(
 
     map.into_iter().collect()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use itertools::Itertools;
+
+    #[test]
+    fn include() {
+        let filter1 = UpgradesFilter {
+            include: vec![index_canister_id(1)],
+            exclude: Vec::new(),
+        };
+        let expected1 = vec![(index_canister_id(1), UpgradesFilter::default())];
+
+        let filter2 = UpgradesFilter {
+            include: vec![child_canister_id(1, 2)],
+            exclude: Vec::new(),
+        };
+        let expected2 = vec![(
+            index_canister_id(1),
+            UpgradesFilter {
+                include: vec![child_canister_id(1, 2)],
+                exclude: Vec::new(),
+            },
+        )];
+
+        let filter3 = UpgradesFilter {
+            include: vec![index_canister_id(1), child_canister_id(2, 1)],
+            exclude: Vec::new(),
+        };
+        let expected3 = vec![
+            (index_canister_id(1), UpgradesFilter::default()),
+            (
+                index_canister_id(2),
+                UpgradesFilter {
+                    include: vec![child_canister_id(2, 1)],
+                    exclude: Vec::new(),
+                },
+            ),
+        ];
+
+        run_test(filter1, expected1);
+        run_test(filter2, expected2);
+        run_test(filter3, expected3);
+    }
+
+    #[test]
+    fn exclude() {
+        let filter1 = UpgradesFilter {
+            include: Vec::new(),
+            exclude: vec![index_canister_id(1)],
+        };
+        let expected1 = vec![
+            (index_canister_id(0), UpgradesFilter::default()),
+            (index_canister_id(2), UpgradesFilter::default()),
+        ];
+
+        let filter2 = UpgradesFilter {
+            include: Vec::new(),
+            exclude: vec![child_canister_id(0, 2)],
+        };
+        let expected2 = vec![
+            (
+                index_canister_id(0),
+                UpgradesFilter {
+                    include: Vec::new(),
+                    exclude: vec![child_canister_id(0, 2)],
+                },
+            ),
+            (index_canister_id(1), UpgradesFilter::default()),
+            (index_canister_id(2), UpgradesFilter::default()),
+        ];
+
+        run_test(filter1, expected1);
+        run_test(filter2, expected2);
+    }
+
+    #[test]
+    fn include_and_exclude() {
+        let filter1 = UpgradesFilter {
+            include: vec![index_canister_id(2)],
+            exclude: vec![child_canister_id(2, 0)],
+        };
+        let expected1 = vec![(
+            index_canister_id(2),
+            UpgradesFilter {
+                include: Vec::new(),
+                exclude: vec![child_canister_id(2, 0)],
+            },
+        )];
+
+        run_test(filter1, expected1);
+    }
+
+    fn run_test(filter: UpgradesFilter, expected: Vec<(CanisterId, UpgradesFilter)>) {
+        let map = setup_map();
+        let index_canister_ids: Vec<_> = map.values().unique().copied().collect();
+
+        let mut result = build_filter_map(index_canister_ids, filter, |c| map.get(&c).copied());
+        result.sort_unstable_by_key(|(c, _)| *c);
+
+        assert_eq!(result, expected);
+    }
+
+    fn setup_map() -> HashMap<CanisterId, CanisterId> {
+        let mut map = HashMap::new();
+        for i in 0..3 {
+            for j in 0..3 {
+                map.insert(child_canister_id(i, j), index_canister_id(i));
+            }
+        }
+        map
+    }
+
+    fn index_canister_id(i: u8) -> CanisterId {
+        CanisterId::from_slice(&[i])
+    }
+
+    fn child_canister_id(i: u8, j: u8) -> CanisterId {
+        CanisterId::from_slice(&[i, j])
+    }
+}
