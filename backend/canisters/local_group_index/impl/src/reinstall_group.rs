@@ -77,7 +77,8 @@ async fn reinstall_group_impl(
             thread_root_message_index: None,
             message_id: mutate_state(|state| MessageId::generate(state.env.rng())),
             content: MessageContentInitial::Text(TextContent {
-                text: "Please wait while this group is reinstalled".to_string(),
+                text: "Please wait while this group is reinstalled. It will be frozen temporarily and unfrozen once complete."
+                    .to_string(),
             }),
             sender_name: "GroupUpgradeBot".to_string(),
             replies_to: None,
@@ -324,8 +325,8 @@ async fn get_group_events(
                 thread_root_message_index,
                 start_index: next_event_index,
                 ascending: true,
-                max_messages: 1000,
-                max_events: 1000,
+                max_messages: 2000,
+                max_events: 2000,
                 invite_code: None,
                 latest_client_event_index: None,
             },
@@ -336,7 +337,7 @@ async fn get_group_events(
                 if let Some(synced_up_to) = result.events.last().map(|e| e.index) {
                     next_event_index = synced_up_to.incr();
                 }
-                let complete = result.events.len() < 1000;
+                let complete = result.events.len() < 2000;
                 events.extend(result.events.into_iter().map(|e| convert_event(e, group_id)));
                 if complete {
                     return Ok(events);
@@ -354,7 +355,7 @@ async fn get_group_events(
 }
 
 async fn send_all_events_to_group(group_id: ChatId) -> Result<(), String> {
-    let batch_size = 1000usize;
+    let batch_size = 2000usize;
     loop {
         let mut args = group_canister::c2c_initialize_events::Args {
             events: Vec::new(),

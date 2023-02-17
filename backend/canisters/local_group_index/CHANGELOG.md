@@ -7,6 +7,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Changed
 
+- Increase batch size of getting events during reinstall ([#3161](https://github.com/open-ic/open-chat/pull/3161))
+
+## [[2.0.603](https://github.com/open-ic/open-chat/releases/tag/v2.0.603-local_group_index)] - 2023-02-17
+
+### Changed
+
 - Skip upgrades where new wasm version matches current version ([#3158](https://github.com/open-ic/open-chat/pull/3158))
 
 ## [[2.0.602](https://github.com/open-ic/open-chat/releases/tag/v2.0.602-local_group_index)] - 2023-02-17
