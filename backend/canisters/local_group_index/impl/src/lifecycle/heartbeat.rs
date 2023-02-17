@@ -1,6 +1,7 @@
 use crate::{mutate_state, read_state, RuntimeState, GROUP_CANISTER_INITIAL_CYCLES_BALANCE};
 use ic_cdk::api::management_canister::main::CanisterInstallMode;
 use ic_cdk_macros::heartbeat;
+use std::cmp::min;
 use types::{CanisterId, ChatId, Cycles, CyclesTopUp, Version};
 use utils::canister::{self, FailedUpgrade};
 use utils::consts::{CREATE_CANISTER_CYCLES_FEE, MIN_CYCLES_BALANCE};
@@ -13,6 +14,8 @@ fn heartbeat() {
 
 mod upgrade_canisters {
     use super::*;
+    use crate::reinstall_group::reinstall_group;
+
     type CanisterToUpgrade = canister::CanisterToInstall<group_canister::post_upgrade::Args>;
 
     pub fn run() {
@@ -24,7 +27,8 @@ mod upgrade_canisters {
 
     fn next_batch(runtime_state: &mut RuntimeState) -> Vec<CanisterToUpgrade> {
         let count_in_progress = runtime_state.data.canisters_requiring_upgrade.count_in_progress();
-        let max_concurrent_canister_upgrades = runtime_state.data.max_concurrent_canister_upgrades as usize;
+        // While we are reinstalling groups, limit the max concurrency to 1
+        let max_concurrent_canister_upgrades = min(runtime_state.data.max_concurrent_canister_upgrades as usize, 1);
 
         (0..(max_concurrent_canister_upgrades.saturating_sub(count_in_progress)))
             .map_while(|_| try_get_next(runtime_state))
@@ -73,9 +77,9 @@ mod upgrade_canisters {
         let from_version = canister_to_upgrade.current_wasm_version;
         let to_version = canister_to_upgrade.new_wasm.version;
 
-        match canister::install(canister_to_upgrade).await {
-            Ok(cycles_top_up) => {
-                mutate_state(|state| on_success(canister_id, to_version, cycles_top_up, state));
+        match reinstall_group(canister_to_upgrade.canister_id.into()).await {
+            Ok(_) => {
+                mutate_state(|state| on_success(canister_id, to_version, None, state));
             }
             Err(_) => {
                 mutate_state(|state| on_failure(canister_id, from_version, to_version, state));
