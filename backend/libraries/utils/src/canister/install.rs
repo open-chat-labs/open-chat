@@ -7,26 +7,31 @@ use ic_cdk::api::management_canister::main::{CanisterInstallMode, InstallCodeArg
 use tracing::{error, trace};
 use types::{CanisterId, CanisterWasm, Cycles, Version};
 
-pub struct CanisterToUpgrade<A: CandidType> {
+pub struct CanisterToInstall<A: CandidType> {
     pub canister_id: CanisterId,
     pub current_wasm_version: Version,
     pub new_wasm: CanisterWasm,
     pub deposit_cycles_if_needed: bool,
     pub args: A,
+    pub mode: CanisterInstallMode,
+    pub stop_start_canister: bool,
 }
 
-pub async fn upgrade<A: CandidType>(canister_to_upgrade: CanisterToUpgrade<A>) -> CallResult<Option<Cycles>> {
-    let canister_id = canister_to_upgrade.canister_id;
+pub async fn install<A: CandidType>(canister_to_install: CanisterToInstall<A>) -> CallResult<Option<Cycles>> {
+    let canister_id = canister_to_install.canister_id;
+    let mode = canister_to_install.mode;
 
-    trace!(%canister_id, "Canister upgrade starting");
+    trace!(%canister_id, ?mode, "Canister install starting");
 
-    canister::stop(canister_id).await?;
+    if canister_to_install.stop_start_canister {
+        canister::stop(canister_id).await?;
+    }
 
     let install_code_args = InstallCodeArgument {
-        mode: CanisterInstallMode::Upgrade,
+        mode,
         canister_id,
-        wasm_module: canister_to_upgrade.new_wasm.module,
-        arg: candid::encode_one(canister_to_upgrade.args).unwrap(),
+        wasm_module: canister_to_install.new_wasm.module,
+        arg: candid::encode_one(canister_to_install.args).unwrap(),
     };
     let mut install_code_response: CallResult<()> = management_canister::main::install_code(install_code_args.clone()).await;
 
@@ -34,7 +39,7 @@ pub async fn upgrade<A: CandidType>(canister_to_upgrade: CanisterToUpgrade<A>) -
     let mut error = None;
     let mut attempt = 0;
     while let ShouldDepositAndRetry::Yes(cycles) =
-        should_deposit_cycles_and_retry(&install_code_response, canister_to_upgrade.deposit_cycles_if_needed, attempt)
+        should_deposit_cycles_and_retry(&install_code_response, canister_to_install.deposit_cycles_if_needed, attempt)
     {
         if canister::deposit_cycles(canister_id, cycles).await.is_ok() {
             cycles_used = Some(cycles_used.unwrap_or_default() + cycles);
@@ -48,8 +53,9 @@ pub async fn upgrade<A: CandidType>(canister_to_upgrade: CanisterToUpgrade<A>) -
     if let Err((code, msg)) = install_code_response {
         error!(
             %canister_id,
-            from_wasm_version = %canister_to_upgrade.current_wasm_version,
-            to_wasm_version = %canister_to_upgrade.new_wasm.version,
+            ?mode,
+            from_wasm_version = %canister_to_install.current_wasm_version,
+            to_wasm_version = %canister_to_install.new_wasm.version,
             error_code = code as u8,
             error_message = msg.as_str(),
             "Error calling 'install_code'"
@@ -57,16 +63,18 @@ pub async fn upgrade<A: CandidType>(canister_to_upgrade: CanisterToUpgrade<A>) -
         error = Some((code, msg));
     }
 
-    // Call 'start canister' regardless of if 'install_code' succeeded or not.
-    if let Err((code, msg)) = canister::start(canister_id).await {
-        error = error.or(Some((code, msg)));
+    if canister_to_install.stop_start_canister {
+        // Call 'start canister' regardless of if 'install_code' succeeded or not.
+        if let Err((code, msg)) = canister::start(canister_id).await {
+            error = error.or(Some((code, msg)));
+        }
     }
 
     if let Some(error) = error {
-        error!(%canister_id, "Canister upgrade failed");
+        error!(%canister_id, ?mode, "Canister install failed");
         Err(error)
     } else {
-        trace!(%canister_id, "Canister upgrade completed");
+        trace!(%canister_id, ?mode, "Canister install completed");
         Ok(cycles_used)
     }
 }

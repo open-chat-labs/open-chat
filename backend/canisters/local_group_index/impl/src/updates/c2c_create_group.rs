@@ -17,11 +17,12 @@ async fn c2c_create_group(args: Args) -> Response {
         Ok(ok) => ok,
     };
 
-    let wasm_arg = candid::encode_one(prepare_ok.init_canister_args).unwrap();
+    let wasm_version = prepare_ok.canister_wasm.version;
+
     match canister::create_and_install(
         prepare_ok.canister_id,
-        prepare_ok.canister_wasm.module,
-        wasm_arg,
+        prepare_ok.canister_wasm,
+        prepare_ok.init_canister_args,
         prepare_ok.cycles_to_use,
         on_canister_created,
     )
@@ -29,7 +30,7 @@ async fn c2c_create_group(args: Args) -> Response {
     {
         Ok(canister_id) => {
             let chat_id = canister_id.into();
-            mutate_state(|state| commit(chat_id, prepare_ok.canister_wasm.version, state));
+            mutate_state(|state| commit(chat_id, wasm_version, state));
             Success(SuccessResult { chat_id })
         }
         Err(error) => {

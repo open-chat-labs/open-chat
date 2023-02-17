@@ -1,6 +1,7 @@
 use crate::{mutate_state, read_state, RuntimeState, GROUP_CANISTER_INITIAL_CYCLES_BALANCE};
+use ic_cdk::api::management_canister::main::CanisterInstallMode;
 use ic_cdk_macros::heartbeat;
-use types::{CanisterId, Cycles, CyclesTopUp, Version};
+use types::{CanisterId, ChatId, Cycles, CyclesTopUp, Version};
 use utils::canister::{self, FailedUpgrade};
 use utils::consts::{CREATE_CANISTER_CYCLES_FEE, MIN_CYCLES_BALANCE};
 
@@ -11,10 +12,8 @@ fn heartbeat() {
 }
 
 mod upgrade_canisters {
-    use types::ChatId;
-
     use super::*;
-    type CanisterToUpgrade = utils::canister::CanisterToUpgrade<group_canister::post_upgrade::Args>;
+    type CanisterToUpgrade = canister::CanisterToInstall<group_canister::post_upgrade::Args>;
 
     pub fn run() {
         let canisters_to_upgrade = mutate_state(next_batch);
@@ -58,6 +57,8 @@ mod upgrade_canisters {
             args: group_canister::post_upgrade::Args {
                 wasm_version: group_canister_wasm.version,
             },
+            mode: CanisterInstallMode::Upgrade,
+            stop_start_canister: true,
         })
     }
 
@@ -72,7 +73,7 @@ mod upgrade_canisters {
         let from_version = canister_to_upgrade.current_wasm_version;
         let to_version = canister_to_upgrade.new_wasm.version;
 
-        match canister::upgrade(canister_to_upgrade).await {
+        match canister::install(canister_to_upgrade).await {
             Ok(cycles_top_up) => {
                 mutate_state(|state| on_success(canister_id, to_version, cycles_top_up, state));
             }

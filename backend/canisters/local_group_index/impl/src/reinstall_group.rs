@@ -4,16 +4,19 @@ use chat_events::{
     ChatEventInternal, MessageInternal, ProposalsUpdatedInternal, ThreadUpdatedInternal, UpdatedMessageInternal,
 };
 use ic_base_types::PrincipalId;
+use ic_cdk::api::management_canister::main::CanisterInstallMode;
 use ic_ledger_types::Tokens;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use std::collections::{BTreeMap, HashMap, HashSet};
 use types::{
-    sns, Avatar, CanisterId, CanisterWasm, ChatEvent, ChatId, CompletedCryptoTransaction, CryptoTransaction, EventIndex,
-    EventWrapper, FrozenGroupInfo, HttpRequest, MessageContent, MessageContentInitial, MessageContentInternal, MessageId,
-    MessageIndex, PollContentInternal, PollVoteRegistered, PrizeContentInternal, ProposalContentInternal, TextContent,
-    TimestampMillis, TotalVotes, UpdatedMessage, UserId,
+    sns, Avatar, CanisterId, ChatEvent, ChatId, CompletedCryptoTransaction, CryptoTransaction, EventIndex, EventWrapper,
+    FrozenGroupInfo, HttpRequest, MessageContent, MessageContentInitial, MessageContentInternal, MessageId, MessageIndex,
+    PollContentInternal, PollVoteRegistered, PrizeContentInternal, ProposalContentInternal, TextContent, TimestampMillis,
+    TotalVotes, UpdatedMessage, UserId, Version,
 };
+
+type CanisterToReinstall = utils::canister::CanisterToInstall<group_canister::init::Args>;
 
 pub async fn reinstall_group(group_id: ChatId) -> Result<(), String> {
     let (this_canister_id, local_user_index) = mutate_state(|state| {
@@ -214,10 +217,8 @@ async fn reinstall_group_impl(
         frozen: Some(group_frozen_info),
     });
 
-    let init_args_bytes = candid::encode_one(&init_args).unwrap();
-
-    // Save everything to this canister's state and return the wasm
-    let wasm = mutate_state(|state| {
+    // Save everything to this canister's state
+    let reinstall_args = mutate_state(|state| {
         let group = state
             .data
             .group_being_reinstalled
@@ -226,16 +227,24 @@ async fn reinstall_group_impl(
             .ok_or_else(|| format!("Group data not found. {group_id}"))?;
 
         group.data = Some(GroupBeingReinstalledData {
-            init_args,
+            init_args: init_args.clone(),
             events: all_events,
             user_principals,
         });
-        let wasm = state.data.group_canister_wasm_for_upgrades.clone();
-        Ok::<CanisterWasm, String>(wasm)
+        let args = CanisterToReinstall {
+            canister_id: group_id.into(),
+            current_wasm_version: Version::default(),
+            new_wasm: state.data.group_canister_wasm_for_upgrades.clone(),
+            deposit_cycles_if_needed: true,
+            args: init_args,
+            mode: CanisterInstallMode::Reinstall,
+            stop_start_canister: false,
+        };
+        Ok::<CanisterToReinstall, String>(args)
     })?;
 
     // Reinstall the group
-    utils::canister::reinstall(group_id.into(), wasm.module, init_args_bytes)
+    utils::canister::install(reinstall_args)
         .await
         .map_err(|e| format!("Failed to reinstall group. {e:?}"))?;
 

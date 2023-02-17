@@ -2,25 +2,31 @@ use crate::guards::caller_is_governance_principal;
 use crate::{mutate_state, read_state, NotificationsCanister, RuntimeState};
 use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
+use ic_cdk::api::management_canister::main::CanisterInstallMode;
 use notifications_index_canister::add_notifications_canister::{Response::*, *};
 use notifications_index_canister::{NotificationsIndexEvent, SubscriptionAdded};
 use std::collections::hash_map::Entry::Vacant;
 use types::{CanisterId, CanisterWasm, Version};
-use utils::canister::install;
+use utils::canister::{install, CanisterToInstall};
 
 #[proposal(guard = "caller_is_governance_principal")]
 #[trace]
 async fn add_notifications_canister(args: Args) -> Response {
     match read_state(|state| prepare(args.canister_id, args.authorizers, state)) {
         Ok(result) => {
-            match install(
-                args.canister_id,
-                result.canister_wasm.module,
-                candid::encode_one(result.init_args).unwrap(),
-            )
+            let wasm_version = result.canister_wasm.version;
+            match install(CanisterToInstall {
+                canister_id: args.canister_id,
+                current_wasm_version: Version::default(),
+                new_wasm: result.canister_wasm,
+                deposit_cycles_if_needed: true,
+                args: result.init_args,
+                mode: CanisterInstallMode::Install,
+                stop_start_canister: false,
+            })
             .await
             {
-                Ok(_) => mutate_state(|state| commit(args.canister_id, result.canister_wasm.version, state)),
+                Ok(_) => mutate_state(|state| commit(args.canister_id, wasm_version, state)),
                 Err(error) => InternalError(format!("{error:?}")),
             }
         }

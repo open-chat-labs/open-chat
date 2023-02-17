@@ -19,11 +19,12 @@ async fn c2c_create_user(args: Args) -> Response {
         Ok(ok) => ok,
     };
 
-    let wasm_arg = candid::encode_one(prepare_ok.init_canister_args).unwrap();
+    let wasm_version = prepare_ok.canister_wasm.version;
+
     match canister::create_and_install(
         prepare_ok.canister_id,
-        prepare_ok.canister_wasm.module,
-        wasm_arg,
+        prepare_ok.canister_wasm,
+        prepare_ok.init_canister_args,
         prepare_ok.cycles_to_use,
         on_canister_created,
     )
@@ -31,16 +32,7 @@ async fn c2c_create_user(args: Args) -> Response {
     {
         Ok(canister_id) => {
             let user_id = canister_id.into();
-            mutate_state(|state| {
-                commit(
-                    args.principal,
-                    args.username,
-                    args.referred_by,
-                    prepare_ok.canister_wasm.version,
-                    user_id,
-                    state,
-                )
-            });
+            mutate_state(|state| commit(args.principal, args.username, args.referred_by, wasm_version, user_id, state));
             Success(user_id)
         }
         Err(error) => {

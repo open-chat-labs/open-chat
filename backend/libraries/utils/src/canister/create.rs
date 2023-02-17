@@ -1,11 +1,10 @@
-use candid::Principal;
+use crate::canister::{install, CanisterToInstall};
+use candid::{CandidType, Principal};
 use ic_cdk::api::call::{CallResult, RejectionCode};
 use ic_cdk::api::management_canister;
-use ic_cdk::api::management_canister::main::{
-    CanisterInstallMode, CanisterSettings, CreateCanisterArgument, InstallCodeArgument,
-};
+use ic_cdk::api::management_canister::main::{CanisterInstallMode, CanisterSettings, CreateCanisterArgument};
 use tracing::error;
-use types::{CanisterId, Cycles};
+use types::{CanisterId, CanisterWasm, Cycles, Version};
 
 #[derive(Debug)]
 pub enum CreateAndInstallError {
@@ -13,10 +12,10 @@ pub enum CreateAndInstallError {
     InstallFailed(CanisterId, RejectionCode, String),
 }
 
-pub async fn create_and_install(
+pub async fn create_and_install<A: CandidType>(
     existing_canister_id: Option<CanisterId>,
-    wasm_module: Vec<u8>,
-    wasm_arg: Vec<u8>,
+    wasm: CanisterWasm,
+    init_args: A,
     cycles_to_use: Cycles,
     on_canister_created: fn(Cycles) -> (),
 ) -> Result<CanisterId, CreateAndInstallError> {
@@ -33,7 +32,17 @@ pub async fn create_and_install(
         },
     };
 
-    match install(canister_id, wasm_module, wasm_arg).await {
+    match install(CanisterToInstall {
+        canister_id,
+        current_wasm_version: Version::default(),
+        new_wasm: wasm,
+        deposit_cycles_if_needed: true,
+        args: init_args,
+        mode: CanisterInstallMode::Install,
+        stop_start_canister: false,
+    })
+    .await
+    {
         Ok(_) => Ok(canister_id),
         Err((code, msg)) => Err(CreateAndInstallError::InstallFailed(canister_id, code, msg)),
     }
@@ -62,23 +71,4 @@ pub async fn create(cycles_to_use: Cycles) -> CallResult<Principal> {
             Err((code, msg))
         }
     }
-}
-
-pub async fn install(canister_id: CanisterId, wasm_module: Vec<u8>, wasm_arg: Vec<u8>) -> CallResult<()> {
-    management_canister::main::install_code(InstallCodeArgument {
-        mode: CanisterInstallMode::Install,
-        canister_id,
-        wasm_module,
-        arg: wasm_arg,
-    })
-    .await
-    .map_err(|(code, msg)| {
-        error!(
-            %canister_id,
-            error_code = code as u8,
-            error_message = msg.as_str(),
-            "Error calling install_code"
-        );
-        (code, msg)
-    })
 }
