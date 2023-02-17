@@ -9,6 +9,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Consolidate code to install / upgrade canisters ([#3152](https://github.com/open-ic/open-chat/pull/3152))
 
+## Removed
+
+- Remove one time code to set up `GroupUpgradeBot` users  ([#3159](https://github.com/open-ic/open-chat/pull/3159))
+
 ## [[2.0.594](https://github.com/open-ic/open-chat/releases/tag/v2.0.594-user_index)] - 2023-02-16
 
 ### Added
