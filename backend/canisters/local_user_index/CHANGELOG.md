@@ -5,10 +5,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.595](https://github.com/open-ic/open-chat/releases/tag/v2.0.595-local_user_index)] - 2023-02-16
+
 ## Added
 
 - Added `c2c_user_principals` for looking up the principals of multiple users at a time ([#3128](https://github.com/open-ic/open-chat/pull/3128))
 - Support upgrading a filtered set of canisters ([#3145](https://github.com/open-ic/open-chat/pull/3145))
+
+### Fixed
+
+- Fix-up ledger ids ([#3143](https://github.com/open-ic/open-chat/pull/3143))
 
 ## [[2.0.592](https://github.com/open-ic/open-chat/releases/tag/v2.0.592-local_user_index)] - 2023-02-11
 
@@ -16,10 +22,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Update cdk to v0.7.0 ([#3115](https://github.com/open-ic/open-chat/pull/3115))
 - Drop user canister stable memory after upgrade ([#3116](https://github.com/open-ic/open-chat/pull/3116))
-
-### Fixed
-
-- Fix-up ledger ids ([#3143](https://github.com/open-ic/open-chat/pull/3143))
 
 ## [[2.0.587](https://github.com/open-ic/open-chat/releases/tag/v2.0.587-local_user_index)] - 2023-02-10
 
