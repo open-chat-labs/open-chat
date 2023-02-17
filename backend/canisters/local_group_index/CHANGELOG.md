@@ -11,6 +11,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Support upgrading a filtered set of canisters ([#3145](https://github.com/open-ic/open-chat/pull/3145))
 - Reinstall groups using heartbeat but stop if any fail ([#3154](https://github.com/open-ic/open-chat/pull/3154))
 
+### Changed
+
+- Consolidate code to install / upgrade canisters ([#3152](https://github.com/open-ic/open-chat/pull/3152))
+
 ### Removed
 
 - Removed code to initialize `proposals_bot_user_id` value ([#3124](https://github.com/open-ic/open-chat/pull/3124))
