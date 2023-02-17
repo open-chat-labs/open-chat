@@ -48,7 +48,7 @@ mod upgrade_canisters {
             }
         };
 
-        let new_wasm = runtime_state.data.local_user_index_canister_wasm.clone();
+        let new_wasm = runtime_state.data.local_user_index_canister_wasm_for_upgrades.clone();
         let wasm_version = new_wasm.version;
         let deposit_cycles_if_needed = ic_cdk::api::canister_balance128() > MIN_CYCLES_BALANCE;
 

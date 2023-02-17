@@ -77,7 +77,7 @@ fn prepare(args: &Args, runtime_state: &mut RuntimeState) -> Result<PrepareOk, R
     };
 
     let canister_id = runtime_state.data.canister_pool.pop();
-    let canister_wasm = runtime_state.data.user_canister_wasm.clone();
+    let canister_wasm = runtime_state.data.user_canister_wasm_for_new_canisters.clone();
     let init_canister_args = InitUserCanisterArgs {
         owner: args.principal,
         group_index_canister_id: runtime_state.data.group_index_canister_id,

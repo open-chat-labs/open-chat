@@ -40,13 +40,13 @@ fn prepare(
 ) -> Result<PrepareResult, Response> {
     if !runtime_state.data.notifications_canisters.contains_key(&canister_id) {
         Ok(PrepareResult {
-            canister_wasm: runtime_state.data.notifications_canister_wasm.clone(),
+            canister_wasm: runtime_state.data.notifications_canister_wasm_for_new_canisters.clone(),
             init_args: notifications_canister::init::Args {
                 notifications_index_canister_id: runtime_state.env.canister_id(),
                 push_service_principals: runtime_state.data.push_service_principals.iter().copied().collect(),
                 authorizers,
                 cycles_dispenser_canister_id: runtime_state.data.cycles_dispenser_canister_id,
-                wasm_version: runtime_state.data.notifications_canister_wasm.version,
+                wasm_version: runtime_state.data.notifications_canister_wasm_for_new_canisters.version,
                 test_mode: runtime_state.data.test_mode,
             },
         })
