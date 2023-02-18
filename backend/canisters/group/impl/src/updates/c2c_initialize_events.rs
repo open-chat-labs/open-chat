@@ -9,6 +9,7 @@ use canister_tracing_macros::trace;
 use chat_events::{ChatEventInternal, ChatEventsListReader, MessageInternal, Reader};
 use group_canister::c2c_initialize_events::{Response::*, *};
 use std::collections::HashMap;
+use tracing::error;
 use types::{
     EventIndex, GroupPermissions, MentionInternal, MessageContentInternal, MessageIndex, PermissionRole, Role, TimestampMillis,
     UserId,
@@ -352,6 +353,10 @@ fn setup_timer_jobs(
 }
 
 fn get_principal(user_id: &UserId, map: &HashMap<UserId, Principal>) -> Principal {
-    *map.get(user_id)
-        .unwrap_or_else(|| panic!("Principal not found for user {user_id}"))
+    map.get(user_id).copied().unwrap_or_else(|| {
+        // We temporarily had a bug where users registered on the test OC setup could join groups on
+        // the production OC setup. For those users we won't be able to find the principal
+        error!("Principal not found for user {user_id}");
+        Principal::from(*user_id)
+    })
 }
