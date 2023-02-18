@@ -1,0 +1,32 @@
+on:
+  pull_request:
+  merge_group:
+    branches:
+      - master
+
+name: Build wasms and run integration tests
+
+jobs:
+  build_canister_wasms:
+    name: build canister wasms
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: docker/build-push-action@v4
+
+  integration_tests:
+    name: run integration tests
+    needs: build_canister_wasms
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+      - uses: Swatinem/rust-cache@v1
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+      - run: ./scripts/run-integration-tests.sh false
+
