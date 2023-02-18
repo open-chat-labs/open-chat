@@ -5,11 +5,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Fixed
+
+- Handle the invalid users who joined groups before we had a check in place ([#3162](https://github.com/open-ic/open-chat/pull/3162))
+
+## [[2.0.604](https://github.com/open-ic/open-chat/releases/tag/v2.0.604-group)] - 2023-02-17
+
 ### Added
 
 - Added `c2c_initialize_events` for recovering groups which are un-upgradable due to bug in `pre_upgrade` ([#3128](https://github.com/open-ic/open-chat/pull/3128))
 - Added `c2c_events_internal` for recovering group events ([#3138](https://github.com/open-ic/open-chat/pull/3138))
-- Added `c2c_name_and_members` which is called by the GroupIndex before deleting the group ([£3144](https://github.com/open-ic/open-chat/pull/3144))
+- Added `c2c_name_and_members` which is called by the GroupIndex before deleting the group ([#3144](https://github.com/open-ic/open-chat/pull/3144))
 
 ### Removed
 
