@@ -1,10 +1,13 @@
 use crate::lifecycle::{init_env, init_state, UPGRADE_BUFFER_SIZE};
-use crate::Data;
+use crate::{mutate_state, Data};
+use candid::Principal;
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use ic_cdk_macros::post_upgrade;
 use stable_memory::deserialize_from_stable_memory;
+use std::time::Duration;
 use tracing::info;
+use types::ChatId;
 use user_canister::post_upgrade::Args;
 
 #[post_upgrade]
@@ -20,4 +23,34 @@ fn post_upgrade(args: Args) {
     init_state(env, data, args.wasm_version);
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
+
+    mutate_state(|state| {
+        let now = state.env.now();
+        let chat_id: ChatId = Principal::from_text("vfaj4-zyaaa-aaaaf-aabya-cai").unwrap().into();
+        if state.data.group_chats.remove(chat_id, now).is_some() {
+            if let Some(c) = state.data.cached_group_summaries.as_mut() {
+                c.remove_group(&chat_id)
+            }
+        }
+        ic_cdk_timers::set_timer(Duration::default(), move || ic_cdk::spawn(join_group(chat_id)));
+    });
+}
+
+async fn join_group(chat_id: ChatId) {
+    let local_user_index_canister_id =
+        match group_canister_c2c_client::local_user_index(chat_id.into(), &group_canister::local_user_index::Args {}).await {
+            Ok(group_canister::local_user_index::Response::Success(c)) => c,
+            _ => return,
+        };
+
+    let _ = local_user_index_canister_c2c_client::join_group(
+        local_user_index_canister_id,
+        &local_user_index_canister::join_group::Args {
+            chat_id,
+            as_super_admin: false,
+            invite_code: None,
+            correlation_id: 0,
+        },
+    )
+    .await;
 }
