@@ -13,6 +13,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - uses: docker/build-push-action@v4
+        with:
+          build-args: git_commit_id=$GITHUB_SHA
 
   integration_tests:
     name: run integration tests
