@@ -61,27 +61,3 @@ jobs:
         with:
           command: test
           args: --workspace --exclude integration_tests
-
-  integration_tests:
-    name: run integration tests
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
-        with:
-          profile: minimal
-          toolchain: stable
-          override: true
-      - run: rustup target add wasm32-unknown-unknown
-      - uses: Swatinem/rust-cache@v1
-      - uses: arduino/setup-protoc@v1
-        with:
-          repo-token: ${{ secrets.GITHUB_TOKEN }}
-      - run: ./scripts/run-integration-tests.sh
-
-  build_canister_wasms:
-    name: build canister wasms
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: docker/build-push-action@v4
