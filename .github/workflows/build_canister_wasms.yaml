@@ -1,0 +1,18 @@
+on:
+  push:
+    branches:
+      - master
+
+name: Build canister wasms
+
+jobs:
+  build_canister_wasms:
+    name: build canister wasms
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: ./scripts/docker-build.sh
+      - uses: actions/upload-artifact@master
+        with:
+          name: wasms
+          path: wasms
