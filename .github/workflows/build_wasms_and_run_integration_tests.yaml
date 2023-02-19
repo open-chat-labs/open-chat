@@ -15,12 +15,21 @@ jobs:
       - uses: docker/build-push-action@v4
         with:
           build-args: git_commit_id=$GITHUB_SHA
+      - uses: actions/upload-artifact@master
+        with:
+          name: wasms
+          path: wasms
+          retention-days: 30
 
   integration_tests:
     name: run integration tests
     needs: build_canister_wasms
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/download-artifact@v3
+        with:
+          name: wasms
+          path: wasms
       - uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1
         with:
