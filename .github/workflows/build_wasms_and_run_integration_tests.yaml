@@ -24,11 +24,6 @@ jobs:
     needs: build_canister_wasms
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/download-artifact@v3
-        with:
-          name: wasms
-          path: wasms
-      - run: ls -l wasms
       - uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1
         with:
@@ -38,5 +33,9 @@ jobs:
       - uses: Swatinem/rust-cache@v1
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
+      - uses: actions/download-artifact@v3
+        with:
+          name: wasms
+          path: wasms
       - run: ./scripts/run-integration-tests.sh false
 
