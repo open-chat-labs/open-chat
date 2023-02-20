@@ -5,6 +5,10 @@ on:
 
 name: Push canister wasms
 
+permissions:
+  id-token: write
+  contents: read
+  
 jobs:
   push_canister_wasms:
     name: Push canister wasms
