@@ -12,7 +12,7 @@ export const mobileOperatingSystem = getMobileOperatingSystem();
  *
  * @returns {String}
  */
-function getMobileOperatingSystem(): string {
+function getMobileOperatingSystem(): "iOS" | "Android" | "Windows Phone" | "unknown" {
     if (process.env.NODE_ENV === "test") {
         return "unknown";
     }
