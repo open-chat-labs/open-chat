@@ -96,6 +96,7 @@
     let insideFromBottomThreshold: boolean = true;
     let morePrevAvailable = false;
     let previousScrollHeight: number | undefined = undefined;
+    let interrupt = false;
 
     onMount(() => {
         const options = {
@@ -157,7 +158,9 @@
             if (messagesDiv) {
                 expectedScrollTop = undefined;
                 const diff = (messagesDiv?.scrollHeight ?? 0) - ev.detail.scrollHeight;
-                messagesDiv.scrollTo({ top: ev.detail.scrollTop - diff, behavior: "auto" });
+                interruptScroll(() => {
+                    messagesDiv?.scrollTo({ top: ev.detail.scrollTop - diff, behavior: "auto" });
+                });
             }
         });
     }
@@ -192,14 +195,27 @@
     });
 
     function scrollBottom(behavior: ScrollBehavior = "auto") {
-        messagesDiv?.scrollTo({
-            top: 0,
-            behavior,
+        interruptScroll(() => {
+            messagesDiv?.scrollTo({
+                top: 0,
+                behavior,
+            });
         });
     }
 
+    // this *looks* crazy - but the idea is that before we programmatically scroll the messages div
+    // we set the overflow to hidden. This has the effect of immediately halting any momentum scrolling
+    // on iOS which prevents the screen going black.
+    function interruptScroll(fn: () => void): void {
+        interrupt = true;
+        fn();
+        window.setTimeout(() => (interrupt = false), 10);
+    }
+
     function scrollToElement(element: Element | null, behavior: ScrollBehavior = "auto") {
-        element?.scrollIntoView({ behavior, block: "center" });
+        interruptScroll(() => {
+            element?.scrollIntoView({ behavior, block: "center" });
+        });
     }
 
     function scrollToMention(mention: Mention | undefined) {
@@ -288,7 +304,9 @@
 
         if (scrollLeapDetected()) {
             console.log("scroll: position has leapt unacceptably", messagesDiv?.scrollTop);
-            messagesDiv?.scrollTo({ top: expectedScrollTop, behavior: "auto" }); // this should trigger another call to onScroll
+            interruptScroll(() => {
+                messagesDiv?.scrollTo({ top: expectedScrollTop, behavior: "auto" }); // this should trigger another call to onScroll
+            });
             expectedScrollTop = undefined;
             return;
         } else {
@@ -404,11 +422,20 @@
                 if (newLatestMessage && insideFromBottomThreshold) {
                     // only scroll if we are now within threshold from the bottom
                     scrollBottom("smooth");
-                } else if (messagesDiv?.scrollTop === 0 && previousScrollHeight !== undefined) {
-                    const clientHeightChange = messagesDiv.scrollHeight - previousScrollHeight;
-                    if (clientHeightChange > 0) {
-                        messagesDiv.scrollTop = -clientHeightChange;
-                        console.log("scrollTop updated from 0 to " + messagesDiv.scrollTop);
+                } else if (insideFromBottomThreshold && previousScrollHeight !== undefined) {
+                    // if we are still inside the bottom threshold after loading new events
+                    // we take this to mean that the scroll position has not been adjusted automatically
+                    // chrome *does*, iOS does not - still not perfect on iOS, but it's an improvement
+                    if (messagesDiv !== undefined) {
+                        const clientHeightChange = messagesDiv.scrollHeight - previousScrollHeight;
+                        if (clientHeightChange > 0) {
+                            interruptScroll(() => {
+                                if (messagesDiv !== undefined) {
+                                    messagesDiv.scrollTop = -clientHeightChange;
+                                    console.log("scrollTop updated to " + messagesDiv.scrollTop);
+                                }
+                            });
+                        }
                     }
                 }
             })
@@ -629,6 +656,7 @@
     bind:this={messagesDiv}
     bind:clientHeight={messagesDivHeight}
     class="chat-messages"
+    class:interrupt
     on:scroll={onScroll}
     id="chat-messages">
     {#each groupedEvents as dayGroup, _di (dateGroupKey(dayGroup))}
@@ -799,6 +827,10 @@
     .chat-messages {
         @include message-list();
         background-color: var(--currentChat-msgs-bg);
+
+        &.interrupt {
+            overflow-y: hidden;
+        }
     }
 
     .big-avatar {
