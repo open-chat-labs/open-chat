@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.596](https://github.com/open-ic/open-chat/releases/tag/v2.0.596-user)] - 2023-02-16
+
 ### Changed
 
 - Stop using `MemoryManager` during `post_upgrade` ([#3130](https://github.com/open-ic/open-chat/pull/3130))
