@@ -3241,7 +3241,7 @@ export class OpenChat extends EventTarget {
         const response = await this.api.getInitialStateV2();
 
         const featureRequestsChatId = "vfaj4-zyaaa-aaaaf-aabya-cai";
-        const featureRequestsGroup = response.state.groupChats.find((g) => g.chatId == featureRequestsChatId);
+        const featureRequestsGroup = response.state.groupChats.find((g) => g.chatId === featureRequestsChatId);
         if (featureRequestsGroup !== undefined && featureRequestsGroup.joined < BigInt(1676715563224)) {
             this.leaveGroup(featureRequestsChatId).then((res) => {
                 if (res === "success") {
