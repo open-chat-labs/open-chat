@@ -3,6 +3,7 @@
 # Deploys everything needed to test OpenChat locally (OpenChat, OpenStorage and the NNS canisters)
 
 IDENTITY=${1:-default}
+WASM_SRC=${2:-latest}
 
 SCRIPT=$(readlink -f "$0")
 SCRIPT_DIR=$(dirname "$SCRIPT")
@@ -27,4 +28,4 @@ dfx --identity $IDENTITY canister create --no-wallet --with-cycles 1000000000000
 dfx --identity $IDENTITY canister create --no-wallet --with-cycles 1000000000000000 open_storage_index
 
 # Install the OpenChat canisters
-./scripts/deploy.sh local http://127.0.0.1:8080/ $IDENTITY $NNS_GOVERNANCE_CANISTER_ID $NNS_LEDGER_CANISTER_ID $NNS_CMC_CANISTER_ID true
+./scripts/deploy.sh local http://127.0.0.1:8080/ $IDENTITY $WASM_SRC $NNS_GOVERNANCE_CANISTER_ID $NNS_LEDGER_CANISTER_ID $NNS_CMC_CANISTER_ID true
