@@ -1,62 +1,78 @@
 {
-  "user_index": {
-    "ic": "4bkt6-4aaaa-aaaaf-aaaiq-cai",
-    "ic_test": "7njde-waaaa-aaaaf-ab2ca-cai"
-  },
-  "group_index": {
-    "ic": "4ijyc-kiaaa-aaaaf-aaaja-cai",
-    "ic_test": "7kifq-3yaaa-aaaaf-ab2cq-cai"
-  },
-  "notifications_index": {
-    "ic": "4glvk-ryaaa-aaaaf-aaaia-cai",
-    "ic_test": "7ekiy-aiaaa-aaaaf-ab2dq-cai"
-  },
-  "local_user_index": {
-    "ic": "nq4qv-wqaaa-aaaaf-bhdgq-cai",
-    "ic_test": "pecvb-tqaaa-aaaaf-bhdiq-cai"
-  },
-  "local_group_index": {
-    "ic": "suaf3-hqaaa-aaaaf-bfyoa-cai",
-    "ic_test": "sbhuw-gyaaa-aaaaf-bfynq-cai"
-  },
-  "notifications": {
-    "ic": "dobi3-tyaaa-aaaaf-adnna-cai",
-    "ic_test": "dhcdh-fqaaa-aaaaf-adnmq-cai"
-  },
-  "online_users": {
-    "ic": "3vlw6-fiaaa-aaaaf-aaa3a-cai",
-    "ic_test": "7dlom-nqaaa-aaaaf-ab2da-cai"
-  },
-  "proposals_bot": {
-    "ic": "iywa7-ayaaa-aaaaf-aemga-cai",
-    "ic_test": "qu3kn-6qaaa-aaaaf-ahn7q-cai"
-  },
   "cycles_dispenser": {
+    "benchmarklarge": "ijcbo-hiaaa-aaaab-aaaea-cai",
     "ic": "gonut-hqaaa-aaaaf-aby7a-cai",
     "ic_test": "mq2tp-baaaa-aaaaf-aucva-cai"
   },
+  "group_index": {
+    "benchmarklarge": "jwksz-eqaaa-aaaab-aaaaq-cai",
+    "ic": "4ijyc-kiaaa-aaaaf-aaaja-cai",
+    "ic_test": "7kifq-3yaaa-aaaaf-ab2cq-cai"
+  },
+  "local_group_index": {
+    "benchmarklarge": "jnpo4-6iaaa-aaaab-aaaca-cai",
+    "ic": "suaf3-hqaaa-aaaaf-bfyoa-cai",
+    "ic_test": "sbhuw-gyaaa-aaaaf-bfynq-cai"
+  },
+  "local_user_index": {
+    "benchmarklarge": "jyi7r-7aaaa-aaaab-aaabq-cai",
+    "ic": "nq4qv-wqaaa-aaaaf-bhdgq-cai",
+    "ic_test": "pecvb-tqaaa-aaaaf-bhdiq-cai"
+  },
+  "notifications": {
+    "benchmarklarge": "jkoii-tqaaa-aaaab-aaacq-cai",
+    "ic": "dobi3-tyaaa-aaaaf-adnna-cai",
+    "ic_test": "dhcdh-fqaaa-aaaaf-adnmq-cai"
+  },
+  "notifications_index": {
+    "benchmarklarge": "j7jzf-syaaa-aaaab-aaaba-cai",
+    "ic": "4glvk-ryaaa-aaaaf-aaaia-cai",
+    "ic_test": "7ekiy-aiaaa-aaaaf-ab2dq-cai"
+  },
+  "online_users": {
+    "benchmarklarge": "jdndu-fyaaa-aaaab-aaada-cai",
+    "ic": "3vlw6-fiaaa-aaaaf-aaa3a-cai",
+    "ic_test": "7dlom-nqaaa-aaaaf-ab2da-cai"
+  },
   "open_storage_index": {
+    "benchmarklarge": "iodh2-kqaaa-aaaab-aaaeq-cai",
     "ic": "rturd-qaaaa-aaaaf-aabaq-cai",
     "ic_test": "6jemw-paaaa-aaaaf-ab2ea-cai"
   },
-  "website": {
-    "ic": "6hsbt-vqaaa-aaaaf-aaafq-cai",
-    "ic_test": "pfs7b-iqaaa-aaaaf-abs7q-cai",
-    "web_test": "xp7uu-xyaaa-aaaaf-aoa6a-cai"
+  "proposals_bot": {
+    "benchmarklarge": "jemfa-iaaaa-aaaab-aaadq-cai",
+    "ic": "iywa7-ayaaa-aaaaf-aemga-cai",
+    "ic_test": "qu3kn-6qaaa-aaaaf-ahn7q-cai"
   },
   "sns_governance": {
+    "benchmarklarge": "5a46r-jqaaa-aaaaa-qaadq-cai",
     "ic_test": "t5cdl-3iaaa-aaaak-qbumq-cai"
   },
   "sns_index": {
+    "benchmarklarge": "4dqxx-5iaaa-aaaaa-qaafa-cai",
     "ic_test": "tubix-naaaa-aaaak-qbuna-cai"
   },
   "sns_ledger": {
+    "benchmarklarge": "4ns27-gyaaa-aaaaa-qaaea-cai",
     "ic_test": "ttaod-ayaaa-aaaak-qbunq-cai"
   },
   "sns_root": {
+    "benchmarklarge": "5h5yf-eiaaa-aaaaa-qaada-cai",
     "ic_test": "tgh7o-bqaaa-aaaak-qbuoa-cai"
   },
   "sns_swap": {
+    "benchmarklarge": "4kt4l-laaaa-aaaaa-qaaeq-cai",
     "ic_test": "tbgz2-miaaa-aaaak-qbuoq-cai"
+  },
+  "user_index": {
+    "ic": "4bkt6-4aaaa-aaaaf-aaaiq-cai",
+    "ic_test": "7njde-waaaa-aaaaf-ab2ca-cai",
+    "benchmarklarge": "jrlun-jiaaa-aaaab-aaaaa-cai"
+  },
+  "website": {
+    "benchmarklarge": "k25co-pqaaa-aaaab-aaakq-cai",
+    "ic": "6hsbt-vqaaa-aaaaf-aaafq-cai",
+    "ic_test": "pfs7b-iqaaa-aaaaf-abs7q-cai",
+    "web_test": "xp7uu-xyaaa-aaaaf-aoa6a-cai"
   }
 }

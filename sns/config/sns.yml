@@ -51,7 +51,7 @@ neuron_minimum_dissolve_delay_to_vote_seconds: 2629800
 # to the running sns binary, so an absolute path to the logo file is recommended.
 # Must have less than 341334 characters, roughly 256Kb.
 #
-logo: https://oc.app/apple-touch-icon.png
+logo: ./apple-touch-icon.png
 #
 # Url to the dapp controlled by the SNS project.
 # Must be a string of max length = 512.
