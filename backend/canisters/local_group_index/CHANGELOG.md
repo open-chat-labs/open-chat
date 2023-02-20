@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.605](https://github.com/open-ic/open-chat/releases/tag/v2.0.605-local_group_index)] - 2023-02-17
+
 ### Changed
 
 - Increase batch size of getting events during reinstall ([#3161](https://github.com/open-ic/open-chat/pull/3161))
