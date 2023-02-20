@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Added `payload_text_rendering` to SNS proposals ([#3175](https://github.com/open-ic/open-chat/pull/3175))
+
 ## [[2.0.606](https://github.com/open-ic/open-chat/releases/tag/v2.0.606-group)] - 2023-02-20
 
 ### Fixed
