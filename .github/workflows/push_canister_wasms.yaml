@@ -28,4 +28,4 @@ jobs:
       - name: Update latest commit Id
         run: |
           echo ${GITHUB_SHA} > latest
-          aws s3 cp latest s3://openchat-canister-wasms/latest
+          aws s3 mv latest s3://openchat-canister-wasms/latest
