@@ -196,68 +196,58 @@ async fn install_service_canisters_impl(
     )
     .await;
 
-    let user_canister_wasm = get_canister_wasm(CanisterName::User, Version::min());
-    let local_user_index_canister_wasm = get_canister_wasm(CanisterName::LocalUserIndex, version);
+    let user_canister_wasm = get_canister_wasm(CanisterName::User, version);
     let group_canister_wasm = get_canister_wasm(CanisterName::Group, version);
     let local_group_index_canister_wasm = get_canister_wasm(CanisterName::LocalGroupIndex, version);
+    let local_user_index_canister_wasm = get_canister_wasm(CanisterName::LocalUserIndex, version);
     let notifications_canister_wasm = get_canister_wasm(CanisterName::Notifications, version);
 
-    user_index_canister_client::upgrade_local_user_index_canister_wasm(
-        agent,
-        &canister_ids.user_index,
-        &user_index_canister::upgrade_local_user_index_canister_wasm::Args {
-            wasm: local_user_index_canister_wasm,
-            filter: None,
-            use_for_new_canisters: None,
-        },
-    )
-    .await
-    .unwrap();
-
-    user_index_canister_client::upgrade_user_canister_wasm(
-        agent,
-        &canister_ids.user_index,
-        &user_index_canister::upgrade_user_canister_wasm::Args {
-            wasm: user_canister_wasm,
-            filter: None,
-            use_for_new_canisters: None,
-        },
-    )
-    .await
-    .unwrap();
-
-    group_index_canister_client::upgrade_local_group_index_canister_wasm(
-        agent,
-        &canister_ids.group_index,
-        &group_index_canister::upgrade_local_group_index_canister_wasm::Args {
-            wasm: local_group_index_canister_wasm,
-            filter: None,
-            use_for_new_canisters: None,
-        },
-    )
-    .await
-    .unwrap();
-
-    group_index_canister_client::upgrade_group_canister_wasm(
-        agent,
-        &canister_ids.group_index,
-        &group_index_canister::upgrade_group_canister_wasm::Args {
-            wasm: group_canister_wasm,
-            filter: None,
-            use_for_new_canisters: None,
-        },
-    )
-    .await
-    .unwrap();
-
-    notifications_index_canister_client::upgrade_notifications_canister_wasm(
-        agent,
-        &canister_ids.group_index,
-        &notifications_index_canister::upgrade_notifications_canister_wasm::Args {
-            wasm: notifications_canister_wasm,
-            filter: None,
-            use_for_new_canisters: None,
-        },
+    futures::future::try_join5(
+        user_index_canister_client::upgrade_local_user_index_canister_wasm(
+            agent,
+            &canister_ids.user_index,
+            &user_index_canister::upgrade_local_user_index_canister_wasm::Args {
+                wasm: local_user_index_canister_wasm,
+                filter: None,
+                use_for_new_canisters: None,
+            },
+        ),
+        user_index_canister_client::upgrade_user_canister_wasm(
+            agent,
+            &canister_ids.user_index,
+            &user_index_canister::upgrade_user_canister_wasm::Args {
+                wasm: user_canister_wasm,
+                filter: None,
+                use_for_new_canisters: None,
+            },
+        ),
+        group_index_canister_client::upgrade_local_group_index_canister_wasm(
+            agent,
+            &canister_ids.group_index,
+            &group_index_canister::upgrade_local_group_index_canister_wasm::Args {
+                wasm: local_group_index_canister_wasm,
+                filter: None,
+                use_for_new_canisters: None,
+            },
+        ),
+        group_index_canister_client::upgrade_group_canister_wasm(
+            agent,
+            &canister_ids.group_index,
+            &group_index_canister::upgrade_group_canister_wasm::Args {
+                wasm: group_canister_wasm,
+                filter: None,
+                use_for_new_canisters: None,
+            },
+        ),
+        notifications_index_canister_client::upgrade_notifications_canister_wasm(
+            agent,
+            &canister_ids.notifications_index,
+            &notifications_index_canister::upgrade_notifications_canister_wasm::Args {
+                wasm: notifications_canister_wasm,
+                filter: None,
+                use_for_new_canisters: None,
+            },
+        ),
     )
     .await
     .unwrap();

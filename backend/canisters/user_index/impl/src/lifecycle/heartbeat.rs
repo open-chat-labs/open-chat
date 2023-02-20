@@ -41,8 +41,15 @@ mod upgrade_canisters {
     fn try_get_next(runtime_state: &mut RuntimeState) -> Option<CanisterToUpgrade> {
         let canister_id = runtime_state.data.canisters_requiring_upgrade.try_take_next()?;
 
-        let current_wasm_version = match runtime_state.data.local_index_map.get(&canister_id) {
-            Some(local_user_index) => local_user_index.wasm_version(),
+        let new_wasm_version = runtime_state.data.local_user_index_canister_wasm_for_upgrades.version;
+        let current_wasm_version = match runtime_state
+            .data
+            .local_index_map
+            .get(&canister_id)
+            .map(|c| c.wasm_version())
+            .filter(|v| *v != new_wasm_version)
+        {
+            Some(v) => v,
             None => {
                 runtime_state.data.canisters_requiring_upgrade.mark_skipped(&canister_id);
                 return None;
@@ -50,7 +57,6 @@ mod upgrade_canisters {
         };
 
         let new_wasm = runtime_state.data.local_user_index_canister_wasm_for_upgrades.clone();
-        let wasm_version = new_wasm.version;
         let deposit_cycles_if_needed = ic_cdk::api::canister_balance128() > MIN_CYCLES_BALANCE;
 
         Some(CanisterToUpgrade {
@@ -58,7 +64,9 @@ mod upgrade_canisters {
             current_wasm_version,
             new_wasm,
             deposit_cycles_if_needed,
-            args: local_user_index_canister::post_upgrade::Args { wasm_version },
+            args: local_user_index_canister::post_upgrade::Args {
+                wasm_version: new_wasm_version,
+            },
             mode: CanisterInstallMode::Upgrade,
             stop_start_canister: true,
         })
