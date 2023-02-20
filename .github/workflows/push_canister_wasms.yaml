@@ -24,4 +24,5 @@ jobs:
         run: ./scripts/docker-build.sh
       - name: Push canister wasms to S3
         run: |
-          aws s3 cp --recursive wasms s3://openchat-canister-wasms
+          aws s3 cp --recursive wasms s3://openchat-canister-wasms/latest
+          aws s3 cp --recursive wasms s3://openchat-canister-wasms/${COMMIT_SHA}
