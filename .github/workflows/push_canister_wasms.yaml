@@ -5,16 +5,16 @@ on:
 
 name: Push canister wasms
 
-permissions:
-  id-token: write
-  contents: read
-  
 jobs:
   push_canister_wasms:
     name: Push canister wasms
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v3
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
@@ -22,6 +22,6 @@ jobs:
           aws-region: us-east-1
       - name: Build canister wasms
         run: ./scripts/docker-build.sh
-      - name: Push wasms to S3
+      - name: Push canister wasms to S3
         run: |
           aws s3 sync . s3://openchat-canister-wasms
