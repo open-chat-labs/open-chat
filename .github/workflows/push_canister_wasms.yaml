@@ -10,7 +10,7 @@ jobs:
     name: Push canister wasms
     runs-on: ubuntu-latest
     steps:
-      - name: actions/checkout@v3
+      - uses: actions/checkout@v3
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
