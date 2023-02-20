@@ -25,7 +25,7 @@ jobs:
       - name: Push canister wasms to S3
         run: |
           aws s3 cp --recursive wasms s3://openchat-canister-wasms/${GITHUB_SHA}
-      - name: Update 'latest'
+      - name: Update latest commit Id
         run: |
           echo ${GITHUB_SHA} > latest
           aws s3 cp --recursive latest s3://openchat-canister-wasms/latest
