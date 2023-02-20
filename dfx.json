@@ -127,6 +127,10 @@
     "web_test": {
       "providers": ["https://ic0.app/"],
       "type": "persistent"
+    },
+    "benchmarklarge": {
+      "providers": ["https://benchmarklarge.testnet.dfinity.network/"],
+      "type": "persistent"
     }
   },
   "version": 1
