@@ -11,6 +11,11 @@ then
   echo "Missing environment variable IDENTITY"
   exit 1
 fi
+if [ -z "${IC_URL}" ]
+then
+  echo "Missing environment variable IC_URL"
+  exit 1
+fi
 if [ -z "${DEVELOPER_NEURON_ID}" ]
 then
   echo "Missing environment variable DEVELOPER_NEURON_ID"
