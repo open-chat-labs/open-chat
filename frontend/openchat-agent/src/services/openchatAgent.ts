@@ -636,14 +636,21 @@ export class OpenChatAgent extends EventTarget {
             }
         });
 
-        const result = await Promise.all(missingMessages);
-        return result.reduce<Record<string, EventWrapper<Message>[]>>((res, [chatId, messages]) => {
-            if (!res[chatId]) {
-                res[chatId] = [];
-            }
-            res[chatId] = res[chatId].concat(messages);
-            return res;
-        }, {});
+        // use waitAll so that a single failure doesn't derail everything
+        const result = await waitAll(missingMessages);
+        if (result.errors.length > 0) {
+            console.error("Some missing indexes could not be resolved: ", result.errors);
+        }
+        return result.success.reduce<Record<string, EventWrapper<Message>[]>>(
+            (res, [chatId, messages]) => {
+                if (!res[chatId]) {
+                    res[chatId] = [];
+                }
+                res[chatId] = res[chatId].concat(messages);
+                return res;
+            },
+            {}
+        );
     }
 
     private rehydrateEvent<T extends ChatEvent>(
@@ -659,7 +666,7 @@ export class OpenChatAgent extends EventTarget {
             let rehydratedReplyContext = undefined;
             if (ev.event.repliesTo && ev.event.repliesTo.kind === "raw_reply_context") {
                 const chatId = ev.event.repliesTo.chatIdIfOther ?? defaultChatId;
-                const messageEvents = missingReplies[chatId];
+                const messageEvents = missingReplies[chatId] ?? [];
                 const idx = ev.event.repliesTo.eventIndex;
                 const msg = messageEvents.find((me) => me.index === idx)?.event;
                 if (msg) {
@@ -676,7 +683,7 @@ export class OpenChatAgent extends EventTarget {
                     };
                 } else {
                     this._logger.error(
-                        "Reply context not found, this should never happen",
+                        "Reply context not found, this should only happen if we failed to load the reply context message",
                         defaultChatId,
                         chatId
                     );
