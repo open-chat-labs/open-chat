@@ -1,0 +1,23 @@
+on:
+  pull_request:
+    branches:
+      - master
+
+name: Push canister wasms
+
+jobs:
+  push_canister_wasms:
+    name: Push canister wasms
+    runs-on: ubuntu-latest
+    steps:
+      - name: actions/checkout@v3
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: arn:aws:iam::253040722768:role/GitHubActions-PushCanisterWasms
+          aws-region: us-east-1
+      - name: Build canister wasms
+        run: ./scripts/docker-build.sh
+      - name: Push wasms to S3
+        run: |
+          aws s3 sync . s3://openchat-canister-wasms
