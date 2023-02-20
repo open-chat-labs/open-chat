@@ -3,6 +3,7 @@
 NETWORK=$1
 IC_URL=$2
 IDENTITY=${3:-default}
+WASM_SRC=${4:-latest}
 
 SCRIPT=$(readlink -f "$0")
 SCRIPT_DIR=$(dirname "$SCRIPT")
