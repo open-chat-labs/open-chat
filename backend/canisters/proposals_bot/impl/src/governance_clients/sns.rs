@@ -149,6 +149,7 @@ pub mod governance_response_types {
                 reward_status,
                 tally: p.latest_tally.map(|t| t.into()).unwrap_or_default(),
                 deadline,
+                payload_text_rendering: p.payload_text_rendering,
                 last_updated: now,
             })
         }
