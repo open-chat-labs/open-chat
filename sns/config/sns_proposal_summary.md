@@ -22,9 +22,8 @@ Total token supply: 100 million CHAT tokens
 
 Initially distributed:
 - 52%: Reserved for the SNS treasury & under control of the OpenChat DAO
-- 16.7%: To be distributed by the NNS run decentralization sale
+- 25%: To be distributed by the NNS run decentralization sale which includes the community fund
 - 15%: Allocated to the OpenChat dev team which vests over 4 years
-- 8.3%: Allocated to the _Community Fund_ during the decentralization sale
 - 8%: Allocated to DFINITY for providing seed funding which vests over 2 years
 
 Ledger transaction fee: 0.001 CHAT tokens
@@ -53,7 +52,7 @@ These parameters can be verified by querying the governance canister's get_nervo
 
 # Decentralization Sale
 
-25% of the total supply of tokens are proposed to be distributed via an SNS decentralization sale. The sale will start when this proposal is accepted and is scheduled to conclude end of day Tuesday 14th March UTC. If the maximum number of ICP configured below is raised before that date the sale will conclude earlier.
+25% of the total supply of tokens are proposed to be distributed via an SNS decentralization sale. The sale will start when this proposal is accepted and is scheduled to conclude midday on Tuesday 14th March UTC. If the maximum number of ICP configured below is raised before that date the sale will conclude earlier.
 
 Sale participation parameters
 
