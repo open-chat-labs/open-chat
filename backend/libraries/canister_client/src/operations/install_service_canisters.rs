@@ -134,7 +134,8 @@ async fn install_service_canisters_impl(
 
     let storage_index_canister_wasm = get_canister_wasm(CanisterName::StorageIndex, version);
     let storage_index_init_args = storage_index_canister::init::Args {
-        service_principals: vec![principal, canister_ids.user_index, canister_ids.group_index],
+        governance_principals: vec![principal],
+        user_controllers: vec![canister_ids.user_index, canister_ids.group_index],
         bucket_canister_wasm: get_canister_wasm(CanisterName::StorageBucket, version),
         cycles_dispenser_config: Some(storage_index_canister::init::CyclesDispenserConfig {
             canister_id: canister_ids.cycles_dispenser,

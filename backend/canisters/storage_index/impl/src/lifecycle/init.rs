@@ -16,7 +16,8 @@ fn init(args: Args) {
 
     let env = init_env();
     let data = Data::new(
-        args.service_principals,
+        args.user_controllers,
+        args.governance_principals,
         args.bucket_canister_wasm,
         args.cycles_dispenser_config,
         args.test_mode,

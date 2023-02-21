@@ -42,9 +42,14 @@ impl RuntimeState {
         RuntimeState { env, data }
     }
 
-    pub fn is_caller_service_principal(&self) -> bool {
+    pub fn is_caller_governance_principal(&self) -> bool {
         let caller = self.env.caller();
-        self.data.service_principals.contains(&caller)
+        self.data.governance_principals.contains(&caller)
+    }
+
+    pub fn is_caller_user_controller(&self) -> bool {
+        let caller = self.env.caller();
+        self.data.user_controllers.contains(&caller)
     }
 
     pub fn is_caller_bucket(&self) -> bool {
@@ -61,6 +66,7 @@ impl RuntimeState {
             now: self.env.now(),
             cycles_balance: self.env.cycles_balance(),
             wasm_version: WASM_VERSION.with(|v| **v.borrow()),
+            governance_principals: self.data.governance_principals.iter().copied().collect(),
             user_count: self.data.users.len() as u64,
             blob_count: file_metrics.blob_count,
             total_blob_bytes: file_metrics.total_blob_bytes,
@@ -79,7 +85,10 @@ impl RuntimeState {
 
 #[derive(Serialize, Deserialize)]
 struct Data {
-    pub service_principals: HashSet<Principal>,
+    #[serde(default = "user_index")]
+    pub user_controllers: HashSet<Principal>,
+    #[serde(alias = "service_principals")]
+    pub governance_principals: HashSet<Principal>,
     pub bucket_canister_wasm: CanisterWasm,
     pub users: HashMap<Principal, UserRecordInternal>,
     pub files: Files,
@@ -90,15 +99,21 @@ struct Data {
     pub test_mode: bool,
 }
 
+fn user_index() -> HashSet<Principal> {
+    HashSet::from_iter([Principal::from_text("4bkt6-4aaaa-aaaaf-aaaiq-cai").unwrap()])
+}
+
 impl Data {
     fn new(
-        service_principals: Vec<Principal>,
+        user_controllers: Vec<Principal>,
+        governance_principals: Vec<Principal>,
         bucket_canister_wasm: CanisterWasm,
         cycles_dispenser_config: Option<CyclesDispenserConfig>,
         test_mode: bool,
     ) -> Data {
         Data {
-            service_principals: service_principals.into_iter().collect(),
+            user_controllers: user_controllers.into_iter().collect(),
+            governance_principals: governance_principals.into_iter().collect(),
             bucket_canister_wasm,
             users: HashMap::new(),
             files: Files::default(),
@@ -195,6 +210,7 @@ pub struct Metrics {
     pub now: TimestampMillis,
     pub cycles_balance: Cycles,
     pub wasm_version: Version,
+    pub governance_principals: Vec<Principal>,
     pub user_count: u64,
     pub blob_count: u64,
     pub total_blob_bytes: u64,
