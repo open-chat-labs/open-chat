@@ -1,20 +1,20 @@
 <script lang="ts">
     import Headline from "./Headline.svelte";
     import BlogSummary from "./blog/BlogSummary.svelte";
+    import { BlogPostInfo, postsBySlug } from "./blog/posts";
+
+    function sortByDate(a: BlogPostInfo, b: BlogPostInfo): number {
+        return a.date.getTime() - b.date.getTime();
+    }
+    $: posts = Object.values(postsBySlug).sort(sortByDate);
 </script>
 
 <div class="blog">
     <Headline>OpenChat blog</Headline>
 
-    <BlogSummary
-        slug={"responsive_design"}
-        posted={new Date()}
-        title="The Importance of Responsive Web Design for Your Website" />
-
-    <BlogSummary
-        slug={"cyber_security"}
-        posted={new Date()}
-        title="Cybersecurity Best Practices: How to Protect Your Business from Cyber Attacks" />
+    {#each posts as post}
+        <BlogSummary slug={post.slug} posted={post.date} title={post.title} />
+    {/each}
 </div>
 
 <style type="text/scss">
