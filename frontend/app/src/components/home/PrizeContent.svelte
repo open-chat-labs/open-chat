@@ -33,20 +33,22 @@
     let progressWidth = 0;
     // let source = "../assets/ckbtc_large.jpeg";
 
-    function claim() {
-        if (!$isDiamond) {
-            dispatch("upgrade", "premium");
-            return;
+    function claim(e: MouseEvent) {
+        if (e.isTrusted) {
+            if (!$isDiamond) {
+                dispatch("upgrade", "premium");
+                return;
+            }
+            claimsStore.add(messageId);
+            client
+                .claimPrize(chatId, messageId)
+                .then((success) => {
+                    if (!success) {
+                        toastStore.showFailureToast("prizes.claimFailed");
+                    }
+                })
+                .finally(() => claimsStore.delete(messageId));
         }
-        claimsStore.add(messageId);
-        client
-            .claimPrize(chatId, messageId)
-            .then((success) => {
-                if (!success) {
-                    toastStore.showFailureToast("prizes.claimFailed");
-                }
-            })
-            .finally(() => claimsStore.delete(messageId));
     }
 </script>
 
