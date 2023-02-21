@@ -33,7 +33,7 @@ ic-admin --nns-url https://nns.ic0.app \
               --secret-key-pem $PEM_FILE_FOR_NEURON_CONTROLLER
               propose-to-open-sns-token-swap \
               --proposer $PROPOSER_NNS_NEURON_ID \
-              --min-participants 100 \
+              --min-participants 1000 \
               --min-icp-e8s 50000000000000 \
               --max-icp-e8s 100000000000000 \
               --community-fund-investment-e8s 33333300000000 \

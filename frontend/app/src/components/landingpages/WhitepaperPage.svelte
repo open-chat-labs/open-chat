@@ -712,8 +712,8 @@
                 <div>333,333</div>
                 <div>End date of sale (unless maximum ICP raised sooner)</div>
                 <div>6th March 2023 at 12:00 (noon) GMT</div>
-                <div>Minimum number of buyers</div>
-                <div>100</div>
+                <div>Minimum number of sale participants</div>
+                <div>1000</div>
                 <div>Minimum ICP per buyer</div>
                 <div>1</div>
                 <div>Maximum ICP per buyer</div>
