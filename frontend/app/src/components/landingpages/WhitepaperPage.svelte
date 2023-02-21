@@ -711,7 +711,7 @@
                 <div>The ICP to come from the Community Fund</div>
                 <div>333,333</div>
                 <div>End date of sale (unless maximum ICP raised sooner)</div>
-                <div>6th March 2023 at 12:00 (noon) GMT</div>
+                <div>14th March 2023 at 12:00 (noon) GMT (TBC)</div>
                 <div>Minimum number of sale participants</div>
                 <div>1000</div>
                 <div>Minimum ICP per buyer</div>
@@ -936,12 +936,12 @@
             </p>
             <p>
                 After the decentralization sale, participants will receive a basket of neurons of
-                varying dissolve delays with only 1/13 being immediately liquid. The voting reward
-                rate, initialized to 5%, is expected to encourage token holders to lock up a certain
+                varying dissolve delays with only 1/5 being immediately liquid. The voting reward
+                rate, initialized to 2.5%, is expected to encourage token holders to lock up a certain
                 proportion of tokens thus, at least temporarily, removing them from the liquid
-                supply. In the case of the seed funders, every neuron has a 1 year vesting period
-                before it can even start dissolving. In the case of the founding dev team, every
-                neuron has a 3 year vesting period.
+                supply. In the case of the seed funders, their neurons have vesting periods from 6-24 
+                momths before they can even start dissolving. In the case of the founding dev team, 
+                the vesting periods are from 0-4 years.
             </p>
             <p>
                 There are various tokenomics parameters which can affect the proportion of CHAT that
