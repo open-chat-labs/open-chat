@@ -21,16 +21,16 @@ impl UserPrincipalMigrationQueue {
         old_principal: Principal,
         new_principal: Principal,
         groups: Vec<ChatId>,
-        open_storage_index_canister_id: CanisterId,
+        storage_index_canister_id: CanisterId,
         notifications_index_canister_id: CanisterId,
     ) {
         self.counts_pending.insert(user_id, groups.len() + 2);
 
         self.queue.push_back((
             user_id,
-            CanisterToNotifyOfUserPrincipalMigration::OpenStorage(
-                open_storage_index_canister_id,
-                open_storage_index_canister::update_user_id::Args {
+            CanisterToNotifyOfUserPrincipalMigration::StorageIndex(
+                storage_index_canister_id,
+                storage_index_canister::update_user_id::Args {
                     old_user_id: old_principal,
                     new_user_id: new_principal,
                 },
@@ -81,7 +81,7 @@ impl UserPrincipalMigrationQueue {
 
 #[derive(Serialize, Deserialize)]
 pub enum CanisterToNotifyOfUserPrincipalMigration {
-    OpenStorage(CanisterId, open_storage_index_canister::update_user_id::Args),
+    StorageIndex(CanisterId, storage_index_canister::update_user_id::Args),
     Notifications(CanisterId, notifications_index_canister::c2c_update_user_principal::Args),
     Group(ChatId, group_canister::c2c_update_user_principal::Args),
 }

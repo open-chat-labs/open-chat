@@ -15,5 +15,5 @@ fn check_cycles_balance(_: &dyn Environment, data: &mut Data) {
 }
 
 fn retry_deleting_files(_: &dyn Environment, _: &mut Data) {
-    open_storage_bucket_client::retry_failed();
+    storage_bucket_client::retry_failed();
 }

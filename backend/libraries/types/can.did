@@ -1,10 +1,12 @@
+type AccessorId = principal;
 type AccountIdentifier = blob;
 type BlockIndex = nat64;
 type CanisterId = principal;
 type ChatId = CanisterId;
 type Cycles = nat;
 type EventIndex = nat32;
-type Tokens = record { e8s: nat64; };
+type FileId = nat;
+type Hash = blob;
 type ICP = Tokens;
 type Memo = nat64;
 type MessageId = nat;
@@ -15,6 +17,7 @@ type ProposalId = nat64;
 type SnsNeuronId = blob;
 type TimestampMillis = nat64;
 type TimestampNanos = nat64;
+type Tokens = record { e8s: nat64; };
 type TransactionHash = blob;
 type UserId = CanisterId;
 

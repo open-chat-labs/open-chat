@@ -52,13 +52,13 @@
     "user": {
       "type": "custom",
       "candid": "backend/canisters/user/api/can.did",
-      "wasm": "wasms/user_canister_impl.wasm",
+      "wasm": "wasms/user_canister_impl.wasm.gz",
       "build": "./scripts/generate-wasm.sh user_canister_impl"
     },
     "group": {
       "type": "custom",
       "candid": "backend/canisters/group/api/can.did",
-      "wasm": "wasms/group_canister_impl.wasm",
+      "wasm": "wasms/group_canister_impl.wasm.gz",
       "build": "./scripts/generate-wasm.sh group_canister_impl"
     },
     "website": {
@@ -71,11 +71,11 @@
       "candid": "backend/canisters/cycles_dispenser/cycles_dispenser.init.did",
       "build": ""
     },
-    "open_storage_index": {
+    "storage_index": {
       "type": "custom",
-      "wasm": "backend/canisters/open_storage/index_canister.wasm.gz",
-      "candid": "backend/canisters/open_storage/index.init.did",
-      "build": ""
+      "candid": "backend/canisters/storage_index/api/can.did",
+      "wasm": "wasms/storage_index_impl.wasm.gz",
+      "build": "./scripts/generate-wasm.sh storage_index_canister_impl"
     },
     "sns_governance": {
       "build": "",

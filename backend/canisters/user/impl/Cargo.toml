@@ -37,12 +37,12 @@ msgpack = { path = "../../../libraries/msgpack" }
 notifications_canister = { path = "../../notifications/api" }
 notifications_canister_c2c_client = { path = "../../notifications/c2c_client" }
 num-traits = "0.2.15"
-open_storage_bucket_client = { path = "../../../libraries/open_storage_bucket_client" }
 search = { path = "../../../libraries/search" }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
 serializer = { workspace = true }
 stable_memory = { workspace = true }
+storage_bucket_client = { path = "../../../libraries/storage_bucket_client" }
 tracing = { workspace = true }
 types = { path = "../../../libraries/types" }
 utils = { path = "../../../libraries/utils" }

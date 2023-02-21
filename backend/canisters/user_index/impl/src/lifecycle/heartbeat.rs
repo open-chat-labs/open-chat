@@ -11,7 +11,7 @@ use utils::time::SECOND_IN_MS;
 #[heartbeat]
 fn heartbeat() {
     upgrade_canisters::run();
-    sync_users_to_open_storage::run();
+    sync_users_to_storage_index::run();
     sync_events_to_local_user_index_canisters::run();
     notify_user_principal_migrations::run();
     dismiss_removed_super_admins::run();
@@ -123,9 +123,9 @@ mod upgrade_canisters {
     }
 }
 
-mod sync_users_to_open_storage {
+mod sync_users_to_storage_index {
     use super::*;
-    use open_storage_index_canister::add_or_update_users::UserConfig;
+    use storage_index_canister::add_or_update_users::UserConfig;
 
     pub fn run() {
         if let Some((canister_id, users)) = mutate_state(next_batch) {
@@ -134,25 +134,25 @@ mod sync_users_to_open_storage {
     }
 
     fn next_batch(runtime_state: &mut RuntimeState) -> Option<(CanisterId, Vec<UserConfig>)> {
-        let users = runtime_state.data.open_storage_user_sync_queue.try_start_sync()?;
+        let users = runtime_state.data.storage_index_user_sync_queue.try_start_sync()?;
 
-        Some((runtime_state.data.open_storage_index_canister_id, users))
+        Some((runtime_state.data.storage_index_canister_id, users))
     }
 
-    async fn sync_users(open_storage_index_canister_id: CanisterId, users: Vec<UserConfig>) {
-        let args = open_storage_index_canister::add_or_update_users::Args { users: users.clone() };
-        match open_storage_index_canister_c2c_client::add_or_update_users(open_storage_index_canister_id, &args).await {
+    async fn sync_users(storage_index_canister_id: CanisterId, users: Vec<UserConfig>) {
+        let args = storage_index_canister::add_or_update_users::Args { users: users.clone() };
+        match storage_index_canister_c2c_client::add_or_update_users(storage_index_canister_id, &args).await {
             Ok(_) => mutate_state(on_success),
             Err(_) => mutate_state(|state| on_failure(users, state)),
         }
     }
 
     fn on_success(runtime_state: &mut RuntimeState) {
-        runtime_state.data.open_storage_user_sync_queue.mark_sync_completed();
+        runtime_state.data.storage_index_user_sync_queue.mark_sync_completed();
     }
 
     fn on_failure(users: Vec<UserConfig>, runtime_state: &mut RuntimeState) {
-        runtime_state.data.open_storage_user_sync_queue.mark_sync_failed(users);
+        runtime_state.data.storage_index_user_sync_queue.mark_sync_failed(users);
     }
 }
 
@@ -227,8 +227,8 @@ mod notify_user_principal_migrations {
 
     async fn notify(user_id: UserId, canister: CanisterToNotifyOfUserPrincipalMigration) {
         let result = match &canister {
-            CanisterToNotifyOfUserPrincipalMigration::OpenStorage(canister_id, args) => {
-                open_storage_index_canister_c2c_client::update_user_id(*canister_id, args)
+            CanisterToNotifyOfUserPrincipalMigration::StorageIndex(canister_id, args) => {
+                storage_index_canister_c2c_client::update_user_id(*canister_id, args)
                     .await
                     .map(|_| ())
             }

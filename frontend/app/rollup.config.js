@@ -45,7 +45,7 @@ if (dfxNetwork) {
         process.env.NOTIFICATIONS_CANISTER = canisters.notifications_index[dfxNetwork];
         process.env.ONLINE_CANISTER = canisters.online_users[dfxNetwork];
         process.env.PROPOSALS_BOT_CANISTER = canisters.proposals_bot[dfxNetwork];
-        process.env.OPEN_STORAGE_INDEX_CANISTER = canisters.open_storage_index[dfxNetwork];
+        process.env.OPEN_STORAGE_INDEX_CANISTER = canisters.storage_index[dfxNetwork];
 
         console.log("UserIndexCanisterId: ", process.env.USER_INDEX_CANISTER);
         console.log("GroupIndexCanisterId: ", process.env.GROUP_INDEX_CANISTER);

@@ -21,6 +21,8 @@ rand = { workspace = true }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
 serde_json = { workspace = true }
+storage_bucket_canister = { path = "../canisters/storage_bucket/api" }
+storage_index_canister = { path = "../canisters/storage_index/api" }
 test-case = { workspace = true }
 types = { path = "../libraries/types" }
 user_canister = { path = "../canisters/user/api" }

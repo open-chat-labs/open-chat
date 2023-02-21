@@ -26,6 +26,12 @@ async fn main() {
         CanisterName::ProposalsBot => {
             upgrade_proposals_bot_canister(identity, opts.url, opts.proposals_bot, opts.version).await
         }
+        CanisterName::StorageBucket => {
+            upgrade_storage_bucket_canister(identity, opts.url, opts.storage_index, opts.version).await
+        }
+        CanisterName::StorageIndex => {
+            upgrade_storage_index_canister(identity, opts.url, opts.storage_index, opts.version).await
+        }
         CanisterName::User => upgrade_user_canister(identity, opts.url, opts.user_index, opts.version).await,
         CanisterName::LocalUserIndex => {
             upgrade_local_user_index_canister(identity, opts.url, opts.user_index, opts.version).await
@@ -43,6 +49,7 @@ struct Opts {
     notifications_index: CanisterId,
     online_users: CanisterId,
     proposals_bot: CanisterId,
+    storage_index: CanisterId,
     canister_to_upgrade: CanisterName,
     version: Version,
 }

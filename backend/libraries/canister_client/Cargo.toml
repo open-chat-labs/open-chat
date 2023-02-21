@@ -22,6 +22,8 @@ notifications_index_canister = { path = "../../canisters/notifications_index/api
 notifications_index_canister_client = { path = "../../canisters/notifications_index/client" }
 proposals_bot_canister = { path = "../../canisters/proposals_bot/api" }
 serde = { workspace = true }
+storage_index_canister = { path = "../../canisters/storage_index/api" }
+storage_index_canister_client = { path = "../../canisters/storage_index/client" }
 types = { path = "../types" }
 user_canister = { path = "../../canisters/user/api" }
 user_index_canister = { path = "../../canisters/user_index/api" }
