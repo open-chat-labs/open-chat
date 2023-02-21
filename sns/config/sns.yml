@@ -231,79 +231,104 @@ initial_token_distribution:
    FractionalDeveloperVotingPower:
      developer_distribution:
        developer_neurons:
-         - controller: d7p2s-3a75o-me7bg-siz2w-we2zb-wwoz3-lixwo-ryous-sfrjo-7ql46-vae # Matt
-           stake_e8s: 100000000000000 # 1%
+         - controller: tu45y-p4p3d-b4gg4-gmyy3-rgweo-whsrq-fephi-vshrn-cipca-xdkri-pae # DEV team neuron for making proposals
+           stake_e8s: 20_000_000_000 # 200 CHAT which allows 20 in-flight proposals
            memo: 0
-           dissolve_delay_seconds: 2629800 # 1 month
+           dissolve_delay_seconds: 31557600 # 1 year
            vesting_period_seconds: 0
-         - controller: d7p2s-3a75o-me7bg-siz2w-we2zb-wwoz3-lixwo-ryous-sfrjo-7ql46-vae # Matt
+         - controller: npqv2-jqaaa-aaaar-qaaha-cai # DEV team beacon neuron for communtity to follow. It will follow the 3 personal dev beacon neurons.
+           stake_e8s: 400_000_000 # 4 CHAT which is the mimimum stake
+           memo: 0
+           dissolve_delay_seconds: 31557600 # 1 year
+           vesting_period_seconds: 0
+         - controller: liskq-yvpvq-eo6av-3gaz6-izybe-x74ku-t42w5-si5dq-eitcy-sih4g-lqe # Personal beacon neuron for Matt. All Matt's bigger neurons will follow this one.
+           stake_e8s: 400_000_000 # 4 CHAT which is the mimimum stake
+           memo: 0
+           dissolve_delay_seconds: 31557600 # 1 year
+           vesting_period_seconds: 0
+         - controller: liskq-yvpvq-eo6av-3gaz6-izybe-x74ku-t42w5-si5dq-eitcy-sih4g-lqe # Matt
            stake_e8s: 100000000000000 # 1%
            memo: 1
-           dissolve_delay_seconds: 2629800 # 1 month
-           vesting_period_seconds: 31557600 # 1 year
-         - controller: d7p2s-3a75o-me7bg-siz2w-we2zb-wwoz3-lixwo-ryous-sfrjo-7ql46-vae # Matt
+           dissolve_delay_seconds: 0
+           vesting_period_seconds: 0
+         - controller: liskq-yvpvq-eo6av-3gaz6-izybe-x74ku-t42w5-si5dq-eitcy-sih4g-lqe # Matt
            stake_e8s: 100000000000000 # 1%
            memo: 2
            dissolve_delay_seconds: 2629800 # 1 month
-           vesting_period_seconds: 63115200 # 2 years
-         - controller: d7p2s-3a75o-me7bg-siz2w-we2zb-wwoz3-lixwo-ryous-sfrjo-7ql46-vae # Matt
+           vesting_period_seconds: 31557600 # 1 year
+         - controller: liskq-yvpvq-eo6av-3gaz6-izybe-x74ku-t42w5-si5dq-eitcy-sih4g-lqe # Matt
            stake_e8s: 100000000000000 # 1%
            memo: 3
            dissolve_delay_seconds: 2629800 # 1 month
-           vesting_period_seconds: 94672800 # 3 years
-         - controller: d7p2s-3a75o-me7bg-siz2w-we2zb-wwoz3-lixwo-ryous-sfrjo-7ql46-vae # Matt
+           vesting_period_seconds: 63115200 # 2 years
+         - controller: liskq-yvpvq-eo6av-3gaz6-izybe-x74ku-t42w5-si5dq-eitcy-sih4g-lqe # Matt
            stake_e8s: 100000000000000 # 1%
            memo: 4
+           dissolve_delay_seconds: 2629800 # 1 month
+           vesting_period_seconds: 94672800 # 3 years
+         - controller: liskq-yvpvq-eo6av-3gaz6-izybe-x74ku-t42w5-si5dq-eitcy-sih4g-lqe # Matt
+           stake_e8s: 100000000000000 # 1%
+           memo: 5
            dissolve_delay_seconds: 2629800 # 1 month
            vesting_period_seconds: 126230400 # 4 years
-         - controller: h4a5i-5vcfo-5rusv-fmb6m-vrkia-mjnkc-jpoow-h5mam-nthnm-ldqlr-bqe # Hamish
-           stake_e8s: 100000000000000 # 1%
+         - controller: zeu5w-lsfxj-o4f5b-xl4sg-enqva-ez4wa-2nlbb-ufigi-fwnmv-zrfok-uae # Personal beacon neuron for Hamnish. All Hamish's bigger neurons will follow this one.
+           stake_e8s: 400_000_000 # 4 CHAT which is the mimimum stake
            memo: 0
-           dissolve_delay_seconds: 2629800 # 1 month
+           dissolve_delay_seconds: 31557600 # 1 year
            vesting_period_seconds: 0
-         - controller: h4a5i-5vcfo-5rusv-fmb6m-vrkia-mjnkc-jpoow-h5mam-nthnm-ldqlr-bqe # Hamish
+         - controller: zeu5w-lsfxj-o4f5b-xl4sg-enqva-ez4wa-2nlbb-ufigi-fwnmv-zrfok-uae # Hamish
            stake_e8s: 100000000000000 # 1%
            memo: 1
-           dissolve_delay_seconds: 2629800 # 1 month
-           vesting_period_seconds: 31557600 # 1 year
-         - controller: h4a5i-5vcfo-5rusv-fmb6m-vrkia-mjnkc-jpoow-h5mam-nthnm-ldqlr-bqe # Hamish
+           dissolve_delay_seconds: 0
+           vesting_period_seconds: 0
+         - controller: zeu5w-lsfxj-o4f5b-xl4sg-enqva-ez4wa-2nlbb-ufigi-fwnmv-zrfok-uae # Hamish
            stake_e8s: 100000000000000 # 1%
            memo: 2
            dissolve_delay_seconds: 2629800 # 1 month
-           vesting_period_seconds: 63115200 # 2 years
-         - controller: h4a5i-5vcfo-5rusv-fmb6m-vrkia-mjnkc-jpoow-h5mam-nthnm-ldqlr-bqe # Hamish
+           vesting_period_seconds: 31557600 # 1 year
+         - controller: zeu5w-lsfxj-o4f5b-xl4sg-enqva-ez4wa-2nlbb-ufigi-fwnmv-zrfok-uae # Hamish
            stake_e8s: 100000000000000 # 1%
            memo: 3
            dissolve_delay_seconds: 2629800 # 1 month
-           vesting_period_seconds: 94672800 # 3 years
-         - controller: h4a5i-5vcfo-5rusv-fmb6m-vrkia-mjnkc-jpoow-h5mam-nthnm-ldqlr-bqe # Hamish
+           vesting_period_seconds: 63115200 # 2 years
+         - controller: zeu5w-lsfxj-o4f5b-xl4sg-enqva-ez4wa-2nlbb-ufigi-fwnmv-zrfok-uae # Hamish
            stake_e8s: 100000000000000 # 1%
            memo: 4
+           dissolve_delay_seconds: 2629800 # 1 month
+           vesting_period_seconds: 94672800 # 3 years
+         - controller: zeu5w-lsfxj-o4f5b-xl4sg-enqva-ez4wa-2nlbb-ufigi-fwnmv-zrfok-uae # Hamish
+           stake_e8s: 100000000000000 # 1%
+           memo: 5
            dissolve_delay_seconds: 2629800 # 1 month
            vesting_period_seconds: 126230400 # 4 years
-         - controller: 6gqvd-k5qgz-juaie-wfe3x-ofbps-cm3nx-kyasl-rizxg-immjj-dot3n-yae # Julian
-           stake_e8s: 100000000000000 # 1%
+         - controller: 4s36z-lcydz-e4ts5-nuzlo-h3ksp-uu4fe-xndls-pq6ah-mmv5k-x5rjw-hqe # Personal beacon neuron for Julian. All Julian's bigger neurons will follow this one.
+           stake_e8s: 400_000_000 # 4 CHAT which is the mimimum stake
            memo: 0
-           dissolve_delay_seconds: 2629800 # 1 month
+           dissolve_delay_seconds: 31557600 # 1 year
            vesting_period_seconds: 0
-         - controller: 6gqvd-k5qgz-juaie-wfe3x-ofbps-cm3nx-kyasl-rizxg-immjj-dot3n-yae # Julian
+         - controller: 4s36z-lcydz-e4ts5-nuzlo-h3ksp-uu4fe-xndls-pq6ah-mmv5k-x5rjw-hqe # Julian
            stake_e8s: 100000000000000 # 1%
            memo: 1
-           dissolve_delay_seconds: 2629800 # 1 month
-           vesting_period_seconds: 31557600 # 1 year
-         - controller: 6gqvd-k5qgz-juaie-wfe3x-ofbps-cm3nx-kyasl-rizxg-immjj-dot3n-yae # Julian
+           dissolve_delay_seconds: 0
+           vesting_period_seconds: 0
+         - controller: 4s36z-lcydz-e4ts5-nuzlo-h3ksp-uu4fe-xndls-pq6ah-mmv5k-x5rjw-hqe # Julian
            stake_e8s: 100000000000000 # 1%
            memo: 2
            dissolve_delay_seconds: 2629800 # 1 month
-           vesting_period_seconds: 63115200 # 2 years
-         - controller: 6gqvd-k5qgz-juaie-wfe3x-ofbps-cm3nx-kyasl-rizxg-immjj-dot3n-yae # Julian
+           vesting_period_seconds: 31557600 # 1 year
+         - controller: 4s36z-lcydz-e4ts5-nuzlo-h3ksp-uu4fe-xndls-pq6ah-mmv5k-x5rjw-hqe # Julian
            stake_e8s: 100000000000000 # 1%
            memo: 3
            dissolve_delay_seconds: 2629800 # 1 month
-           vesting_period_seconds: 94672800 # 3 years
-         - controller: 6gqvd-k5qgz-juaie-wfe3x-ofbps-cm3nx-kyasl-rizxg-immjj-dot3n-yae # Julian
+           vesting_period_seconds: 63115200 # 2 years
+         - controller: 4s36z-lcydz-e4ts5-nuzlo-h3ksp-uu4fe-xndls-pq6ah-mmv5k-x5rjw-hqe # Julian
            stake_e8s: 100000000000000 # 1%
            memo: 4
+           dissolve_delay_seconds: 2629800 # 1 month
+           vesting_period_seconds: 94672800 # 3 years
+         - controller: 4s36z-lcydz-e4ts5-nuzlo-h3ksp-uu4fe-xndls-pq6ah-mmv5k-x5rjw-hqe # Julian
+           stake_e8s: 100000000000000 # 1%
+           memo: 5
            dissolve_delay_seconds: 2629800 # 1 month
            vesting_period_seconds: 126230400 # 4 years
          - controller: n2xex-iyaaa-aaaar-qaaeq-cai # DFINITY
