@@ -5,6 +5,8 @@
     import type { OpenChat } from "openchat-client";
     import { location } from "svelte-spa-router";
 
+    export let showBlog: boolean;
+
     const client = getContext<OpenChat>("client");
     $: identityState = client.identityState;
 
@@ -28,6 +30,11 @@
             <Link selected={path === "/architecture"} mode={"menu"} path="architecture"
                 >Architecture</Link>
         </div>
+        {#if showBlog}
+            <div class="menu-item">
+                <Link selected={path === "/blog"} mode={"menu"} path="blog">Blog</Link>
+            </div>
+        {/if}
         {#if $identityState === "logged_in"}
             <Link on:linkClicked={() => dispatch("logout")} mode={"menu"}>Logout</Link>
         {/if}
