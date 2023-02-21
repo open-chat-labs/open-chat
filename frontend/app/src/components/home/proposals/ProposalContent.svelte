@@ -11,6 +11,7 @@
     import { now } from "../../../stores/time";
     import EyeOff from "svelte-material-icons/EyeOff.svelte";
     import Launch from "svelte-material-icons/Launch.svelte";
+    import OpenInNew from "svelte-material-icons/OpenInNew.svelte";
     import { toastStore } from "../../../stores/toast";
     import { logger } from "../../../utils/logging";
     import Overlay from "../../Overlay.svelte";
@@ -22,6 +23,7 @@
     import ProposalVotingProgress from "./ProposalVotingProgress.svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import ProposalProgressLayout from "./ProposalProgressLayout.svelte";
+    import Link from "../../Link.svelte";
 
     const dispatch = createEventDispatcher();
 
@@ -41,6 +43,7 @@
 
     let summaryExpanded = false;
     let showNeuronInfo = false;
+    let showPayload = false;
 
     $: proposalTopicsStore = client.proposalTopicsStore;
     $: isNns = content.proposal.kind === "nns";
@@ -70,6 +73,8 @@
     $: votingDisabled = voteStatus !== undefined || disable;
     $: typeValue = getProposalTopicLabel(content, $proposalTopicsStore);
     $: showFullSummary = proposal.summary.length < 400;
+    $: payload =
+        content.proposal.kind === "sns" ? content.proposal.payloadTextRendering : undefined;
 
     $: {
         if (collapsed) {
@@ -188,16 +193,27 @@
                 on:click={toggleSummary}>
                 <Markdown text={proposal.summary} inline={false} />
             </div>
-            {#if !showFullSummary}
-                <div class="expand" on:click={toggleSummary}>
-                    <div class="label">
-                        {summaryExpanded ? "Read less" : "Read more"}
+            <div class="actions">
+                {#if !showFullSummary}
+                    <div class="expand" on:click={toggleSummary}>
+                        <div class="label">
+                            {summaryExpanded ? $_("proposal.readless") : $_("proposal.readmore")}
+                        </div>
+                        <div class="icon" class:open={summaryExpanded}>
+                            <ChevronDown
+                                viewBox="0 -3 24 24"
+                                size="1.6em"
+                                color="var(--icon-txt)" />
+                        </div>
                     </div>
-                    <div class="icon" class:open={summaryExpanded}>
-                        <ChevronDown viewBox="0 -3 24 24" size="1.6em" color="var(--icon-txt" />
+                {/if}
+                {#if payload !== undefined}
+                    <div class="payload">
+                        <Link>{$_("proposal.payload")}</Link>
+                        <OpenInNew viewBox="0 -3 24 24" size="1.6em" color="var(--icon-txt)" />
                     </div>
-                </div>
-            {/if}
+                {/if}
+            </div>
         {/if}
 
         <ProposalProgressLayout>
@@ -256,6 +272,17 @@
                 {$_("proposal.noEligibleNeuronsMessage")}
                 <br /><br />
                 <div class="value">{user.userId}</div>
+            </div>
+        </ModalContent>
+    </Overlay>
+{/if}
+
+{#if showPayload}
+    <Overlay dismissible>
+        <ModalContent compactFooter on:close={() => (showPayload = false)}>
+            <div slot="header">{$_("proposal.payload")}</div>
+            <div slot="body">
+                {payload}
             </div>
         </ModalContent>
     </Overlay>
@@ -352,12 +379,9 @@
     }
 
     .expand {
-        @include font(book, normal, fs-80);
         font-weight: 700;
         display: flex;
         align-items: center;
-        cursor: pointer;
-        margin-top: $sp3;
 
         .label {
             min-width: 70px;
@@ -370,5 +394,20 @@
                 transform: rotate(180deg);
             }
         }
+    }
+
+    .actions {
+        margin-top: $sp3;
+        cursor: pointer;
+        @include font(book, normal, fs-80);
+        display: flex;
+        align-items: center;
+        gap: $sp4;
+    }
+
+    .payload {
+        display: flex;
+        align-items: center;
+        gap: $sp2;
     }
 </style>

@@ -578,6 +578,7 @@
         "noEligibleNeuronsMessage": "No eligible or linked neurons found. In order to vote on proposals from within OpenChat you must first add your OpenChat user id as a hotkey to any neurons you wish to vote with. Your OpenChat user id is:",
         "proposalNotAceptingVotes": "This proposal is not accepting votes - try reloading the page",
         "proposedBy": "proposed by",
+        "payload": "Payload",
         "topic": "topic",
         "action": "action",
         "votingPeriodRemaining": "Voting period remaining",

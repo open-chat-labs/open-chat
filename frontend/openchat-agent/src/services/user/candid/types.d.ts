@@ -1130,6 +1130,7 @@ export interface SnsProposal {
   'id' : ProposalId,
   'url' : string,
   'status' : ProposalDecisionStatus,
+  'payload_text_rendering' : [] | [string],
   'tally' : Tally,
   'title' : string,
   'created' : TimestampMillis,
