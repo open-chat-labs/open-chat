@@ -25,7 +25,7 @@ then
 fi
 
 PROPOSAL_TITLE="Proposal to create an SNS-DAO for OpenChat"
-SWAP_DUE_TIMESTAMP_SECONDS=1678838400 # 15th March (00:00)
+SWAP_DUE_TIMESTAMP_SECONDS=1678795200 # noon on 14th March
 PATH_TO_SUMMARY_FILE=./sns_proposal_summary.md
 SUMMARY=`cat $PATH_TO_SUMMARY_FILE`
 
