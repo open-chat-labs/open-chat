@@ -29,8 +29,8 @@
 
             <div class="item">
                 <div class="status">
-                    <div class="when">Q4</div>
-                    <div class="year">2022</div>
+                    <div class="when">Q1</div>
+                    <div class="year">2023</div>
                 </div>
                 <div class="title">SNS launch</div>
                 <div class="detail">
@@ -42,8 +42,8 @@
 
             <div class="item">
                 <div class="status">
-                    <div class="when">Q4</div>
-                    <div class="year">2022</div>
+                    <div class="when">Q1</div>
+                    <div class="year">2023</div>
                 </div>
                 <div class="title">User rewards</div>
                 <div class="detail">
@@ -55,7 +55,7 @@
 
             <div class="item">
                 <div class="status">
-                    <div class="when">Q1/2</div>
+                    <div class="when">Q2</div>
                     <div class="year">2023</div>
                 </div>
                 <div class="title">Integrations & Communities</div>
