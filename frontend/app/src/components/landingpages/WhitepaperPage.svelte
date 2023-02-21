@@ -714,11 +714,11 @@
                 <div>End date of sale (unless maximum ICP raised sooner)</div>
                 <div>14th March 2023 at 12:00 (noon) GMT (TBC)</div>
                 <div>Minimum number of sale participants</div>
-                <div>1000</div>
+                <div>500</div>
                 <div>Minimum ICP per buyer</div>
                 <div>1</div>
                 <div>Maximum ICP per buyer</div>
-                <div>150,000</div>
+                <div>100,000</div>
             </div>
 
             <HashLinkTarget on:copyUrl={onCopyUrl} id="5-3-1">Valuation range</HashLinkTarget>
