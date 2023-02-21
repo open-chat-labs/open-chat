@@ -25,6 +25,8 @@ curl -sO https://openchat-canister-wasms.s3.amazonaws.com/$COMMIT_ID/notificatio
 curl -sO https://openchat-canister-wasms.s3.amazonaws.com/$COMMIT_ID/notifications_index_canister_impl.wasm.gz
 curl -sO https://openchat-canister-wasms.s3.amazonaws.com/$COMMIT_ID/online_users_canister_impl.wasm.gz
 curl -sO https://openchat-canister-wasms.s3.amazonaws.com/$COMMIT_ID/proposals_bot_canister_impl.wasm.gz
+curl -sO https://openchat-canister-wasms.s3.amazonaws.com/$COMMIT_ID/storage_bucket_canister_impl.wasm.gz
+curl -sO https://openchat-canister-wasms.s3.amazonaws.com/$COMMIT_ID/storage_index_canister_impl.wasm.gz
 curl -sO https://openchat-canister-wasms.s3.amazonaws.com/$COMMIT_ID/user_canister_impl.wasm.gz
 curl -sO https://openchat-canister-wasms.s3.amazonaws.com/$COMMIT_ID/user_index_canister_impl.wasm.gz
 

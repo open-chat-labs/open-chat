@@ -32,7 +32,7 @@ fn aggregate_direct_chat_metrics(_: &dyn Environment, data: &mut Data) {
 }
 
 fn retry_deleting_files(_: &dyn Environment, _: &mut Data) {
-    open_storage_bucket_client::retry_failed();
+    storage_bucket_client::retry_failed();
 }
 
 fn update_cached_group_summaries(env: &dyn Environment, data: &mut Data) {

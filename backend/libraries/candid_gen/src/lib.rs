@@ -36,11 +36,14 @@ fn get_method_attribute(attrs: AttributeArgs) -> MethodAttribute {
         match value.as_str() {
             "group"
             | "group_index"
+            | "local_group_index"
             | "local_user_index"
             | "notifications"
             | "notifications_index"
             | "online_users"
             | "proposals_bot"
+            | "storage_bucket"
+            | "storage_index"
             | "user"
             | "user_index" => {
                 format!("{value}_canister")
