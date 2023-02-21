@@ -23,6 +23,11 @@ then
   echo "Missing environment variable PEM_FILE"
   exit 1
 fi
+if [ -z "${PROPOSAL_URL}" ]
+then
+  echo "Missing environment variable PROPOSAL_URL"
+  exit 1
+fi
 
 PROPOSAL_TITLE="Proposal to create an SNS-DAO for OpenChat"
 SWAP_DUE_TIMESTAMP_SECONDS=1678795200 # noon on 14th March
@@ -46,4 +51,5 @@ ic-admin --nns-url https://nns.ic0.app \
               --neuron-basket-dissolve-delay-interval-seconds 7889400 \
               --sale-delay-seconds 86400 \
               --proposal-title "$PROPOSAL_TITLE" \
+              --proposal-url "$PROPOSAL_URL" \
               --summary "$SUMMARY"
