@@ -34,7 +34,7 @@ For more information on the initial token allocation please [read here](https://
 # Governance
 
 - Each decentralization sale participant (including the commnity fund) will receive a basket of 5 equal value CHAT neurons with dissolve delays of 0, 3, 6, 9 and 12 months respectively
-- The founding dev team will receive a basket of 5 neurons all with a dissolve delay of 1 month but with vesting periods of 0, 1, 2, 3 and 4 years respectively
+- The founding dev team will receive a basket of 5 neurons, the first with zero dissolve delay, and the rest with a dissolve delay of 1 month but with vesting periods of 1, 2, 3 and 4 years respectively
 - DFINITY will receive a basket of 4 neurons all with a dissolve delay of 1 month but with vesting periods of 6, 12, 18 and 24 months respectively
 
 The governance parameters for OpenChat are proposed to be initially set as:
@@ -62,7 +62,7 @@ Sale participation parameters
 - Max to be raised: 1,000,000 ICP
 - Min to be raised: 500,000 ICP
 - From Communituy Fund: 333,333 ICP
-- Min participants: 100
+- Min participants: 1000
 
 The sale is open to anyone. Participation is via the launchpad in the NNS front end: https://nns.ic0.app/.
 
