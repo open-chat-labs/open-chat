@@ -8,3 +8,4 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Merge OpenStorage into the OpenChat repo ([#3185](https://github.com/open-ic/open-chat/pull/3185))
+- Separate `user_controllers` from `governance_principals` ([#3187](https://github.com/open-ic/open-chat/pull/3187))
