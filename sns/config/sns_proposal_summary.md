@@ -10,7 +10,7 @@ It is fully featured, runs on the Internet Computer blockchain, and is similar t
 
 The OpenChat DAO is being formed to operate and steer the direction of OpenChat as a public good, owned by no-one. Holders of CHAT tokens can stake them as neurons which allow them to make and vote on proposals to change the OpenChat dapp. 
 
-The SNS DAO will hold a treasury of CHAT tokens and ICP which can be used to fund the ongoing development of the dapp and to algorithmically reward users to encourage positive usage and growth. By rewarding contributing users with CHAT tokens and neurons the intention is to build a team of millions of advocates allowing OpenChat to become a viable challenger to centralized big tech competitors.
+The SNS DAO will hold a treasury of CHAT tokens and ICP which can be used to fund the ongoing development of the dapp and to algorithmically reward users to encourage positive usage and growth. The intention is that by rewarding contributing users with CHAT tokens and neurons so they benefit from the long-term success of OpenChat this will foster a large team of advocates.
 
 CHAT tokens will also be used to pay for "diamond" tier membership and other future premium features.
 
