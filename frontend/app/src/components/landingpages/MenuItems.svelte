@@ -28,6 +28,9 @@
             <Link selected={path === "/architecture"} mode={"menu"} path="architecture"
                 >Architecture</Link>
         </div>
+        <div class="menu-item">
+            <Link selected={path === "/blog"} mode={"menu"} path="blog">Blog</Link>
+        </div>
         {#if $identityState === "logged_in"}
             <Link on:linkClicked={() => dispatch("logout")} mode={"menu"}>Logout</Link>
         {/if}

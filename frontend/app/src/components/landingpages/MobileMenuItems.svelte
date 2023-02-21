@@ -52,6 +52,9 @@
             >Architecture</Link>
     </div>
     <div class="menu-item">
+        <Link selected={path === "/blog"} mode={"menu"} path="blog">Blog</Link>
+    </div>
+    <div class="menu-item">
         <Link on:linkClicked={launch} mode={"menu"}>Launch app</Link>
     </div>
     {#if $identityState === "logged_in"}
