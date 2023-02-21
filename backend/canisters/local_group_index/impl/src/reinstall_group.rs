@@ -295,11 +295,16 @@ async fn get_all_group_events(group_id: ChatId, since: EventIndex) -> Result<Gro
         .collect();
 
     let mut thread_events = BTreeMap::new();
-    for message_index in threads {
-        thread_events.insert(
-            message_index,
-            get_group_events(group_id, Some(message_index), EventIndex::default()).await?,
-        );
+    for batch in threads.chunks(20) {
+        let futures = futures::future::try_join_all(batch.iter().copied().map(|m| async move {
+            let events = get_group_events(group_id, Some(m), EventIndex::default()).await;
+            events.map(|e| (m, e))
+        }))
+        .await?;
+
+        for (message_index, events) in futures {
+            thread_events.insert(message_index, events);
+        }
     }
 
     Ok(GroupBeingReinstalledEvents {
