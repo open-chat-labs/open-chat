@@ -5,8 +5,10 @@
     import Menu from "svelte-material-icons/Menu.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import { push } from "svelte-spa-router";
+    import { postsBySlug } from "./blog/posts";
 
     let showMenu = false;
+    $: showBlog = Object.values(postsBySlug).length > 0;
 
     function home() {
         push("/home");
@@ -23,14 +25,18 @@
             <div class="menu-toggle" on:click|stopPropagation={() => (showMenu = !showMenu)}>
                 {#if showMenu}
                     <Close size={"1.6em"} color={"var(--landing-txt)"} />
-                    <MobileMenuItems on:close={() => (showMenu = false)} on:login on:logout />
+                    <MobileMenuItems
+                        {showBlog}
+                        on:close={() => (showMenu = false)}
+                        on:login
+                        on:logout />
                 {:else}
                     <Menu size={"1.6em"} color={"var(--landing-txt)"} />
                 {/if}
             </div>
         {:else}
             <div class="menu">
-                <MenuItems on:login on:logout />
+                <MenuItems {showBlog} on:login on:logout />
             </div>
         {/if}
     </div>
