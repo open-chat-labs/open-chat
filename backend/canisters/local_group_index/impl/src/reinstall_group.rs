@@ -296,7 +296,7 @@ async fn get_all_group_events(group_id: ChatId, since: EventIndex) -> Result<Gro
 
     let mut thread_events = BTreeMap::new();
     for batch in threads.chunks(20) {
-        let futures = futures::future::try_join_all(batch.into_iter().copied().map(|m| async move {
+        let futures = futures::future::try_join_all(batch.iter().copied().map(|m| async move {
             let events = get_group_events(group_id, Some(m), EventIndex::default()).await;
             events.map(|e| (m, e))
         }))
