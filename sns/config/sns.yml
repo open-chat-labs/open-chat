@@ -249,7 +249,7 @@ initial_token_distribution:
          - controller: liskq-yvpvq-eo6av-3gaz6-izybe-x74ku-t42w5-si5dq-eitcy-sih4g-lqe # Matt
            stake_e8s: 100000000000000 # 1%
            memo: 1
-           dissolve_delay_seconds: 2629800 # 1 month
+           dissolve_delay_seconds: 0
            vesting_period_seconds: 0
          - controller: liskq-yvpvq-eo6av-3gaz6-izybe-x74ku-t42w5-si5dq-eitcy-sih4g-lqe # Matt
            stake_e8s: 100000000000000 # 1%
@@ -279,7 +279,7 @@ initial_token_distribution:
          - controller: zeu5w-lsfxj-o4f5b-xl4sg-enqva-ez4wa-2nlbb-ufigi-fwnmv-zrfok-uae # Hamish
            stake_e8s: 100000000000000 # 1%
            memo: 1
-           dissolve_delay_seconds: 2629800 # 1 month
+           dissolve_delay_seconds: 0
            vesting_period_seconds: 0
          - controller: zeu5w-lsfxj-o4f5b-xl4sg-enqva-ez4wa-2nlbb-ufigi-fwnmv-zrfok-uae # Hamish
            stake_e8s: 100000000000000 # 1%
@@ -309,7 +309,7 @@ initial_token_distribution:
          - controller: 4s36z-lcydz-e4ts5-nuzlo-h3ksp-uu4fe-xndls-pq6ah-mmv5k-x5rjw-hqe # Julian
            stake_e8s: 100000000000000 # 1%
            memo: 1
-           dissolve_delay_seconds: 2629800 # 1 month
+           dissolve_delay_seconds: 0
            vesting_period_seconds: 0
          - controller: 4s36z-lcydz-e4ts5-nuzlo-h3ksp-uu4fe-xndls-pq6ah-mmv5k-x5rjw-hqe # Julian
            stake_e8s: 100000000000000 # 1%

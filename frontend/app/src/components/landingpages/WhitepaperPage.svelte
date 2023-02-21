@@ -622,8 +622,9 @@
             </p>
             <p>
                 Each founding developer will receive 5% of the CHAT tokens as a basket of 5 equal
-                value neurons all with a dissolve delay of 1 month but with an additional "vesting
-                period" of 0, 1, 2, 3, and 4 years respectively.
+                value neurons. The first will have zero dissolve delay. The remaining 4 will each 
+                have a dissolve delay of 1 month but with an additional "vesting period" of 1, 2, 
+                3, and 4 years respectively.
             </p>
             <p>
                 DFINITY will receive 8% of the CHAT tokens as a basket of 4 equal neurons each with
@@ -637,8 +638,8 @@
                 OpenChat successful.
             </p>
             <p>
-                As these founder/funder neurons all have a relatively short dissolve delay of 1
-                month which cannot be increased, this ensures a reduced voting power compared to the
+                As these founder/funder neurons have a relatively short dissolve delay of 1 month 
+                which cannot be increased, this ensures a reduced voting power compared to the
                 community so that governance is properly decentralized.
             </p>
             <GoogleChart
