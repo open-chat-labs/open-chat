@@ -38,12 +38,12 @@ ic-admin --nns-url https://nns.ic0.app \
               --secret-key-pem $PEM_FILE_FOR_NEURON_CONTROLLER
               propose-to-open-sns-token-swap \
               --proposer $PROPOSER_NNS_NEURON_ID \
-              --min-participants 1000 \
+              --min-participants 500 \
               --min-icp-e8s 50000000000000 \
               --max-icp-e8s 100000000000000 \
               --community-fund-investment-e8s 33333300000000 \
               --min-participant-icp-e8s 100000000 \
-              --max-participant-icp-e8s 15000000000000 \
+              --max-participant-icp-e8s 10000000000000 \
               --swap-due-timestamp-seconds $SWAP_DUE_TIMESTAMP_SECONDS \
               --sns-token-e8s 2500000000000000 \
               --target-swap-canister-id $TARGET_SWAP_CANISTER_ID \

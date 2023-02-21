@@ -57,11 +57,11 @@ These parameters can be verified by querying the governance canister's get_nervo
 Sale participation parameters
 
 - Min participation: 1 ICP
-- Max participation: 150,000 ICP
+- Max participation: 100,000 ICP
 - Max to be raised: 1,000,000 ICP
 - Min to be raised: 500,000 ICP
 - From Communituy Fund: 333,333 ICP
-- Min participants: 1000
+- Min participants: 500
 
 The sale is open to anyone. Participation is via the launchpad in the NNS front end: https://nns.ic0.app/.
 
