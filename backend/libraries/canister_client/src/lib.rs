@@ -1,7 +1,7 @@
 use candid::{CandidType, Principal};
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
-use types::{CanisterId, CanisterWasm, Cycles, Milliseconds, Version};
+use types::{CanisterId, Cycles, Milliseconds};
 
 pub mod operations;
 pub mod utils;

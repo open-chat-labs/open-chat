@@ -81,7 +81,7 @@ mod upgrade_canisters {
         let from_version = canister_to_upgrade.current_wasm_version;
         let to_version = canister_to_upgrade.new_wasm.version;
 
-        match utils::canister::install(canister_to_upgrade).await {
+        match reinstall_group(canister_to_upgrade.canister_id.into()).await {
             Ok(_) => {
                 mutate_state(|state| on_success(canister_id, to_version, None, state));
             }
