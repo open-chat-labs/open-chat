@@ -74,7 +74,7 @@ Top-level canisters controlled by the [OpenChat SNS root canister](https://dashb
 - 1 UserIndex (4bkt6-4aaaa-aaaaf-aaaiq-cai)
 - 1 GroupIndex (4ijyc-kiaaa-aaaaf-aaaja-cai)
 - 1 NotificationsIndex (4glvk-ryaaa-aaaaf-aaaia-cai)
-- 1 OpenStorageIndex (rturd-qaaaa-aaaaf-aabaq-cai)
+- 1 StorageIndex (rturd-qaaaa-aaaaf-aabaq-cai)
 - 1 OnlineUsers (3vlw6-fiaaa-aaaaf-aaa3a-cai)
 - 1 ProposalsBot (iywa7-ayaaa-aaaaf-aemga-cai)
 - 1 CyclesDispenser (gonut-hqaaa-aaaaf-aby7a-cai)
@@ -83,7 +83,7 @@ Comntrolled by top-level canisters
 - 1 LocalUserIndex per subnet
 - 1 LocalGroupIndex per subnet
 - 1 Notification canister per subnet
-- Several OpenStorageBuckets per subnet
+- Several StorageBuckets per subnet
 - 1 User canister per user
 - 1 Group canister per group
 
