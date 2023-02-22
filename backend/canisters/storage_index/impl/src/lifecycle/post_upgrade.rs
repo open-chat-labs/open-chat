@@ -20,9 +20,10 @@ fn post_upgrade(args: Args) {
 
     canister_logger::init_with_logs(data.test_mode, logs, traces);
 
-    if let Some(config) = &data.cycles_dispenser_config {
-        init_cycles_dispenser_client(config.canister_id, config.min_cycles_balance);
-    }
+    init_cycles_dispenser_client(
+        data.cycles_dispenser_config.canister_id,
+        data.cycles_dispenser_config.min_cycles_balance,
+    );
 
     init_state(env, data, args.wasm_version);
 

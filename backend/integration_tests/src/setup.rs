@@ -6,9 +6,12 @@ use candid::Principal;
 use ic_state_machine_tests::StateMachine;
 use lazy_static::lazy_static;
 use std::sync::Mutex;
-use types::{CanisterId, Version};
+use types::{CanisterId, Cycles, Version};
 
+const T: Cycles = 1_000_000_000_000;
 const NNS_GOVERNANCE_CANISTER_ID: CanisterId = Principal::from_slice(&[0, 0, 0, 0, 0, 0, 0, 1, 1, 1]);
+const NNS_LEDGER_CANISTER_ID: CanisterId = Principal::from_slice(&[0, 0, 0, 0, 0, 0, 0, 2, 1, 1]);
+const NNS_CMC_CANISTER_ID: CanisterId = Principal::from_slice(&[0, 0, 0, 0, 0, 0, 0, 4, 1, 1]);
 
 lazy_static! {
     static ref ENV: Mutex<Vec<TestEnv>> = Mutex::default();
@@ -55,13 +58,14 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
     let notifications_index_canister_id = create_canister(env, None);
     let online_users_canister_id = create_canister(env, None);
     let proposals_bot_canister_id = create_canister(env, None);
-    let cycles_dispenser_canister_id = create_canister(env, None);
     let storage_index_canister_id = create_canister(env, None);
+    let cycles_dispenser_canister_id = create_canister(env, None);
 
     let local_user_index_canister_id = create_canister(env, Some(vec![user_index_canister_id]));
     let local_group_index_canister_id = create_canister(env, Some(vec![group_index_canister_id]));
     let notifications_canister_id = create_canister(env, Some(vec![notifications_index_canister_id]));
 
+    let cycles_dispenser_canister_wasm = wasms::CYCLES_DISPENSER.clone();
     let group_canister_wasm = wasms::GROUP.clone();
     let group_index_canister_wasm = wasms::GROUP_INDEX.clone();
     let local_group_index_canister_wasm = wasms::LOCAL_GROUP_INDEX.clone();
@@ -161,6 +165,33 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
         storage_index_canister_id,
         storage_index_canister_wasm,
         storage_index_init_args,
+    );
+
+    let cycles_dispenser_init_args = cycles_dispenser_canister::init::Args {
+        governance_principals: vec![controller],
+        canisters: vec![
+            user_index_canister_id,
+            group_index_canister_id,
+            notifications_index_canister_id,
+            local_user_index_canister_id,
+            local_group_index_canister_id,
+            notifications_canister_id,
+            online_users_canister_id,
+            proposals_bot_canister_id,
+            storage_index_canister_id,
+        ],
+        max_top_up_amount: 20 * T,
+        min_interval: 5 * 60 * 1000, // 5 minutes
+        min_cycles_balance: 200 * T,
+        icp_burn_amount_e8s: 1_000_000_000, // 10 ICP
+        ledger_canister: NNS_LEDGER_CANISTER_ID,
+        cycles_minting_canister: NNS_CMC_CANISTER_ID,
+    };
+    install_canister(
+        env,
+        cycles_dispenser_canister_id,
+        cycles_dispenser_canister_wasm,
+        cycles_dispenser_init_args,
     );
 
     let add_local_group_index_canister_response = client::group_index::add_local_group_index_canister(

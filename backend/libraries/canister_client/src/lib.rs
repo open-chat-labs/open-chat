@@ -1,7 +1,6 @@
-use candid::{CandidType, Principal};
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
-use types::{CanisterId, Cycles, Milliseconds};
+use types::CanisterId;
 
 pub mod operations;
 pub mod utils;
@@ -20,6 +19,7 @@ pub const USER3_DEFAULT_NAME: &str = "Charlie";
 
 #[derive(Debug)]
 pub enum CanisterName {
+    CyclesDispenser,
     Group,
     GroupIndex,
     LocalGroupIndex,
@@ -39,6 +39,7 @@ impl FromStr for CanisterName {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
+            "cycles_dispenser" => Ok(CanisterName::CyclesDispenser),
             "group" => Ok(CanisterName::Group),
             "group_index" => Ok(CanisterName::GroupIndex),
             "local_group_index" => Ok(CanisterName::LocalGroupIndex),
@@ -59,6 +60,7 @@ impl FromStr for CanisterName {
 impl Display for CanisterName {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let name = match self {
+            CanisterName::CyclesDispenser => "cycles_dispenser",
             CanisterName::Group => "group",
             CanisterName::GroupIndex => "group_index",
             CanisterName::LocalGroupIndex => "local_group_index",
@@ -87,21 +89,9 @@ pub struct CanisterIds {
     pub notifications: CanisterId,
     pub online_users: CanisterId,
     pub proposals_bot: CanisterId,
-    pub cycles_dispenser: CanisterId,
     pub storage_index: CanisterId,
+    pub cycles_dispenser: CanisterId,
     pub nns_governance: CanisterId,
     pub nns_ledger: CanisterId,
     pub nns_cmc: CanisterId,
-}
-
-#[derive(CandidType, Debug)]
-pub struct CyclesDispenserInitArgs {
-    pub admins: Vec<Principal>,
-    pub canisters: Vec<CanisterId>,
-    pub max_top_up_amount: Cycles,
-    pub min_interval: Milliseconds,
-    pub min_cycles_balance: Cycles,
-    pub icp_burn_amount_e8s: u64,
-    pub ledger_canister: CanisterId,
-    pub cycles_minting_canister: CanisterId,
 }
