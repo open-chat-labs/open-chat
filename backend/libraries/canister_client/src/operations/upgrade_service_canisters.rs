@@ -122,6 +122,25 @@ pub async fn upgrade_storage_index_canister(
     println!("Storage index canister upgraded");
 }
 
+pub async fn upgrade_cycles_dispenser_canister(
+    identity: BasicIdentity,
+    url: String,
+    cycles_dispenser_canister_id: CanisterId,
+    version: Version,
+) {
+    upgrade_top_level_canister(
+        identity,
+        url,
+        cycles_dispenser_canister_id,
+        version,
+        cycles_dispenser_canister::post_upgrade::Args { wasm_version: version },
+        CanisterName::CyclesDispenser,
+    )
+    .await;
+
+    println!("Cycles dispenser canister upgraded");
+}
+
 pub async fn upgrade_local_group_index_canister(
     identity: BasicIdentity,
     url: String,

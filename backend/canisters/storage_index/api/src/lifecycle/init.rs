@@ -7,7 +7,7 @@ pub struct Args {
     pub user_controllers: Vec<Principal>,
     pub governance_principals: Vec<Principal>,
     pub bucket_canister_wasm: CanisterWasm,
-    pub cycles_dispenser_config: Option<CyclesDispenserConfig>,
+    pub cycles_dispenser_config: CyclesDispenserConfig,
     pub wasm_version: Version,
     pub test_mode: bool,
 }
