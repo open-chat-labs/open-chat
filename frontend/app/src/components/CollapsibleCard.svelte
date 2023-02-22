@@ -1,15 +1,40 @@
 <script lang="ts">
     import { rtlStore } from "../stores/rtl";
-    import { slide } from "svelte/transition";
-    import { expoInOut } from "svelte/easing";
 
-    import { createEventDispatcher } from "svelte";
+    import { createEventDispatcher, onMount, tick } from "svelte";
     import Arrow from "./Arrow.svelte";
 
     const dispatch = createEventDispatcher();
     export let headerText: string = "";
     export let open = true;
     export let first = false;
+
+    let bodyNode: HTMLDivElement;
+    let openStyle = "";
+    let closedStyle = "";
+    let initialised = false;
+
+    onMount(() => {
+        const open_ = open;
+        open = true;
+        initialised = false;
+        // capturing the computed styles onMount allows us to implement the slide effect properly
+        tick().then(() => {
+            const style = getComputedStyle(bodyNode);
+            const opacity = +style.opacity;
+            const height = parseFloat(style.height);
+            const padding_top = parseFloat(style.paddingTop);
+            const padding_bottom = parseFloat(style.paddingBottom);
+            const margin_top = parseFloat(style.marginTop);
+            const margin_bottom = parseFloat(style.marginBottom);
+            const border_top_width = parseFloat(style.borderTopWidth);
+            const border_bottom_width = parseFloat(style.borderBottomWidth);
+            openStyle = `opacity: ${opacity}; height: ${height}px; padding-top: ${padding_top}px; padding-bottom: ${padding_bottom}px; margin-top: ${margin_top}px; margin-bottom: ${margin_bottom}px; border-top-width: ${border_top_width}px; border-bottom-width: ${border_bottom_width}px`;
+            closedStyle = `opacity: 0; height: 0px; padding-top: 0px; padding-bottom: 0px; margin-top: 0px; margin-bottom: 0px; border-top-width: 0px; border-bottom-width: 0px`;
+            open = open_;
+            window.setTimeout(() => (initialised = true), 100);
+        });
+    });
 
     function toggle() {
         open = !open;
@@ -33,11 +58,14 @@
                     : "var(--collapsible-closed-header-txt)"} />
         </div>
     </div>
-    {#if open}
-        <div transition:slide|local={{ duration: 200, easing: expoInOut }} class="body" class:open>
-            <slot />
-        </div>
-    {/if}
+    <div
+        bind:this={bodyNode}
+        class="body"
+        class:initialised
+        class:open
+        style={open ? openStyle : closedStyle}>
+        <slot />
+    </div>
 </div>
 
 <style type="text/scss">
@@ -74,7 +102,20 @@
     }
 
     .body {
+        $speed: 200ms;
         padding: $sp4 0;
+        pointer-events: none;
+
+        &.initialised {
+            transition: opacity $speed ease-in-out, height $speed ease-in-out,
+                padding-top $speed ease-in-out, padding-bottom $speed ease-in-out,
+                margin-top $speed ease-in-out, margin-bottom $speed ease-in-out,
+                border-top-width $speed ease-in-out, border-bottom-width $speed ease-in-out;
+        }
+
+        &.open {
+            pointer-events: all;
+        }
 
         @include mobile() {
             padding: $sp3 0;
