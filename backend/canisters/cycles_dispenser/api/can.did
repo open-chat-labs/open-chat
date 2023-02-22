@@ -40,19 +40,7 @@ type UpdateConfigResponse =
         Success;
     };
 
-type InitArgs =
-    record {
-        admins: vec principal;
-        canisters: vec CanisterId;
-        max_top_up_amount: Cycles;
-        min_interval: Milliseconds;
-        min_cycles_balance: Cycles;
-        icp_burn_amount_e8s: nat64;
-        ledger_canister: CanisterId;
-        cycles_minting_canister: CanisterId;
-    };
-
-service: (InitArgs) -> {
+service: {
     add_canister: (AddCanisterArgs) -> (AddCanisterResponse);
     c2c_request_cycles: (RequestCyclesArgs) -> (RequestCyclesResponse);
     update_config: (UpdateConfigArgs) -> (UpdateConfigResponse);

@@ -1,9 +1,7 @@
 use crate::{mutate_state, State};
 use candid::CandidType;
 use ic_cdk::api::call::CallResult;
-use ic_ledger_types::{
-    AccountIdentifier, BlockIndex, Memo, Subaccount, Timestamp, Tokens, TransferArgs,
-};
+use ic_ledger_types::{AccountIdentifier, BlockIndex, Memo, Subaccount, Timestamp, Tokens, TransferArgs};
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
 use tracing::{error, info};
@@ -80,10 +78,7 @@ async fn burn_icp(burn_details: BurnIcpDetails) {
             amount: burn_details.amount,
             fee: ic_ledger_types::DEFAULT_FEE,
             from_subaccount: None,
-            to: AccountIdentifier::new(
-                &burn_details.cmc,
-                &Subaccount::from(burn_details.this_canister_id),
-            ),
+            to: AccountIdentifier::new(&burn_details.cmc, &Subaccount::from(burn_details.this_canister_id)),
             created_at_time: Some(Timestamp {
                 timestamp_nanos: burn_details.now * 1_000_000,
             }),
@@ -126,9 +121,7 @@ async fn notify_cmc(notify_details: NotifyTopUpDetails) {
         }
         err => {
             error!(?err, "Failed to notify the CMC");
-            mutate_state(|state| {
-                state.data.cycles_top_up_pending_notification = Some(notify_details.block_index)
-            });
+            mutate_state(|state| state.data.cycles_top_up_pending_notification = Some(notify_details.block_index));
         }
     }
 }
