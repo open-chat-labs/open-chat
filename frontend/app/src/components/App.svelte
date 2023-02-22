@@ -33,7 +33,7 @@
         return new OpenChat({
             icUrl: process.env.IC_URL,
             iiDerivationOrigin: process.env.II_DERIVATION_ORIGIN,
-            openStorageIndexCanister: process.env.OPEN_STORAGE_INDEX_CANISTER!,
+            openStorageIndexCanister: process.env.STORAGE_INDEX_CANISTER!,
             groupIndexCanister: process.env.GROUP_INDEX_CANISTER!,
             notificationsCanister: process.env.NOTIFICATIONS_CANISTER!,
             onlineCanister: process.env.ONLINE_CANISTER!,

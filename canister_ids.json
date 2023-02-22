@@ -34,11 +34,6 @@
     "ic": "3vlw6-fiaaa-aaaaf-aaa3a-cai",
     "ic_test": "7dlom-nqaaa-aaaaf-ab2da-cai"
   },
-  "storage_index": {
-    "benchmarklarge": "iodh2-kqaaa-aaaab-aaaeq-cai",
-    "ic": "rturd-qaaaa-aaaaf-aabaq-cai",
-    "ic_test": "6jemw-paaaa-aaaaf-ab2ea-cai"
-  },
   "proposals_bot": {
     "benchmarklarge": "jemfa-iaaaa-aaaab-aaadq-cai",
     "ic": "iywa7-ayaaa-aaaaf-aemga-cai",
@@ -63,6 +58,11 @@
   "sns_swap": {
     "benchmarklarge": "4kt4l-laaaa-aaaaa-qaaeq-cai",
     "ic_test": "tbgz2-miaaa-aaaak-qbuoq-cai"
+  },
+  "storage_index": {
+    "benchmarklarge": "iodh2-kqaaa-aaaab-aaaeq-cai",
+    "ic": "rturd-qaaaa-aaaaf-aabaq-cai",
+    "ic_test": "6jemw-paaaa-aaaaf-ab2ea-cai"
   },
   "user_index": {
     "ic": "4bkt6-4aaaa-aaaaf-aaaiq-cai",

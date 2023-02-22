@@ -12,6 +12,6 @@ dfx -qq --identity $IDENTITY canister --network $NETWORK update-settings --add-c
 dfx -qq --identity $IDENTITY canister --network $NETWORK update-settings --add-controller $SNS_ROOT_CANISTER_ID online_users
 dfx -qq --identity $IDENTITY canister --network $NETWORK update-settings --add-controller $SNS_ROOT_CANISTER_ID proposals_bot
 dfx -qq --identity $IDENTITY canister --network $NETWORK update-settings --add-controller $SNS_ROOT_CANISTER_ID cycles_dispenser
-dfx -qq --identity $IDENTITY canister --network $NETWORK update-settings --add-controller $SNS_ROOT_CANISTER_ID open_storage_index
+dfx -qq --identity $IDENTITY canister --network $NETWORK update-settings --add-controller $SNS_ROOT_CANISTER_ID storage_index
 
 ./utils/cleanup_env.sh
