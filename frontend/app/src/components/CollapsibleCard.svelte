@@ -29,12 +29,34 @@
             const margin_bottom = parseFloat(style.marginBottom);
             const border_top_width = parseFloat(style.borderTopWidth);
             const border_bottom_width = parseFloat(style.borderBottomWidth);
-            openStyle = `opacity: ${opacity}; height: ${height}px; padding-top: ${padding_top}px; padding-bottom: ${padding_bottom}px; margin-top: ${margin_top}px; margin-bottom: ${margin_bottom}px; border-top-width: ${border_top_width}px; border-bottom-width: ${border_bottom_width}px`;
-            closedStyle = `opacity: 0; height: 0px; padding-top: 0px; padding-bottom: 0px; margin-top: 0px; margin-bottom: 0px; border-top-width: 0px; border-bottom-width: 0px`;
+            openStyle = buildStyle(
+                opacity,
+                height,
+                padding_top,
+                padding_bottom,
+                margin_top,
+                margin_bottom,
+                border_top_width,
+                border_bottom_width
+            );
+            closedStyle = buildStyle(0, 0, 0, 0, 0, 0, 0, 0);
             open = open_;
             window.setTimeout(() => (initialised = true), 100);
         });
     });
+
+    function buildStyle(
+        opacity: number,
+        height: number,
+        padding_top: number,
+        padding_bottom: number,
+        margin_top: number,
+        margin_bottom: number,
+        border_top_width: number,
+        border_bottom_width: number
+    ) {
+        return `opacity: ${opacity}; height: ${height}px; padding-top: ${padding_top}px; padding-bottom: ${padding_bottom}px; margin-top: ${margin_top}px; margin-bottom: ${margin_bottom}px; border-top-width: ${border_top_width}px; border-bottom-width: ${border_bottom_width}px`;
+    }
 
     function toggle() {
         open = !open;
