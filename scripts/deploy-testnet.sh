@@ -26,4 +26,4 @@ dfx --identity $IDENTITY canister create --network $NETWORK --no-wallet --with-c
 dfx --identity $IDENTITY canister create --network $NETWORK --no-wallet --with-cycles 1000000000000000 cycles_dispenser
 
 # Install the OpenChat canisters
-./scripts/deploy.sh $NETWORK $IC_URL $IDENTITY $NNS_GOVERNANCE_CANISTER_ID $NNS_LEDGER_CANISTER_ID $NNS_CMC_CANISTER_ID true
+./scripts/deploy.sh $NETWORK $IC_URL $IDENTITY $WASM_SRC $NNS_GOVERNANCE_CANISTER_ID $NNS_LEDGER_CANISTER_ID $NNS_CMC_CANISTER_ID true
