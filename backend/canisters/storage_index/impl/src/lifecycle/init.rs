@@ -9,10 +9,10 @@ use tracing::info;
 #[trace]
 fn init(args: Args) {
     canister_logger::init(args.test_mode);
-
-    if let Some(config) = &args.cycles_dispenser_config {
-        init_cycles_dispenser_client(config.canister_id, config.min_cycles_balance);
-    }
+    init_cycles_dispenser_client(
+        args.cycles_dispenser_config.canister_id,
+        args.cycles_dispenser_config.min_cycles_balance,
+    );
 
     let env = init_env();
     let data = Data::new(

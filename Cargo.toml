@@ -10,6 +10,8 @@ members = [
     "backend/bots/examples/sns1_airdrop/impl",
     "backend/canister_installer",
     "backend/canister_upgrader",
+    "backend/canisters/cycles_dispenser/api",
+    "backend/canisters/cycles_dispenser/impl",
     "backend/canisters/group/api",
     "backend/canisters/group/c2c_client",
     "backend/canisters/group/client",
@@ -57,6 +59,7 @@ members = [
     "backend/libraries/canister_client",
     "backend/libraries/canister_client_macros",
     "backend/libraries/chat_events",
+    "backend/libraries/cycles_dispenser_client",
     "backend/libraries/dynamodb_index_store",
     "backend/libraries/http_request",
     "backend/libraries/human_readable",
@@ -88,7 +91,6 @@ canister_timer_jobs = { git = "https://github.com/open-ic/ic-utils", rev = "3180
 canister_tracing_macros = { git = "https://github.com/open-ic/ic-utils", rev = "3180e06d92f32558fb4ac8be8a9572c3972df19b" }
 captcha = { git = "https://github.com/nmattia/captcha", rev = "fb3fe931c20b8577bf02070ae6b8c0ca2f442427", default-features = false }
 clap = "3.0.14"
-cycles_dispenser_client = { git = "https://github.com/open-ic/cycles-dispenser", rev = "fedf3fb1f407000aae1390d46769ae9cea0a8b49" }
 dirs = "4.0.0"
 dotenv = "0.15.0"
 futures = "0.3.25"
