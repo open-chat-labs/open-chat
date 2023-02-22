@@ -16,7 +16,7 @@ fn old_files_deleted_when_allocation_exceeded() {
     let user_id = random_principal();
     client::storage_index::happy_path::add_or_update_users(
         &mut env,
-        controller,
+        canister_ids.user_index,
         canister_ids.storage_index,
         vec![UserConfig {
             user_id,

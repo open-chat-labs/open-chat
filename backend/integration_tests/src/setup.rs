@@ -149,7 +149,8 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
     );
 
     let storage_index_init_args = storage_index_canister::init::Args {
-        service_principals: vec![controller, user_index_canister_id, group_index_canister_id],
+        governance_principals: vec![controller],
+        user_controllers: vec![user_index_canister_id, group_index_canister_id],
         bucket_canister_wasm: storage_bucket_canister_wasm,
         cycles_dispenser_config: None,
         wasm_version: Version::min(),
