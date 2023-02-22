@@ -1,5 +1,5 @@
 use crate::utils::{build_ic_agent, get_canister_wasm, install_wasm, set_controllers};
-use crate::{CanisterIds, CanisterName, CyclesDispenserInitArgs};
+use crate::{CanisterIds, CanisterName};
 use candid::Principal;
 use ic_agent::identity::BasicIdentity;
 use ic_agent::{Agent, Identity};
@@ -30,8 +30,8 @@ async fn install_service_canisters_impl(
         set_controllers(management_canister, &canister_ids.notifications_index, controllers.clone()),
         set_controllers(management_canister, &canister_ids.online_users, controllers.clone()),
         set_controllers(management_canister, &canister_ids.proposals_bot, controllers.clone()),
-        set_controllers(management_canister, &canister_ids.cycles_dispenser, controllers.clone()),
-        set_controllers(management_canister, &canister_ids.storage_index, controllers),
+        set_controllers(management_canister, &canister_ids.storage_index, controllers.clone()),
+        set_controllers(management_canister, &canister_ids.cycles_dispenser, controllers),
         set_controllers(
             management_canister,
             &canister_ids.local_user_index,
@@ -110,9 +110,22 @@ async fn install_service_canisters_impl(
         test_mode,
     };
 
+    let storage_index_canister_wasm = get_canister_wasm(CanisterName::StorageIndex, version);
+    let storage_index_init_args = storage_index_canister::init::Args {
+        governance_principals: vec![principal],
+        user_controllers: vec![canister_ids.user_index, canister_ids.group_index],
+        bucket_canister_wasm: get_canister_wasm(CanisterName::StorageBucket, version),
+        cycles_dispenser_config: storage_index_canister::init::CyclesDispenserConfig {
+            canister_id: canister_ids.cycles_dispenser,
+            min_cycles_balance: 200 * T,
+        },
+        wasm_version: version,
+        test_mode,
+    };
+
     let cycles_dispenser_canister_wasm = get_canister_wasm("cycles_dispenser", version);
-    let cycles_dispenser_init_args = CyclesDispenserInitArgs {
-        admins: vec![principal],
+    let cycles_dispenser_init_args = cycles_dispenser_canister::init::Args {
+        governance_principals: vec![principal],
         canisters: vec![
             canister_ids.user_index,
             canister_ids.group_index,
@@ -130,17 +143,6 @@ async fn install_service_canisters_impl(
         icp_burn_amount_e8s: 1_000_000_000, // 10 ICP
         ledger_canister: canister_ids.nns_ledger,
         cycles_minting_canister: canister_ids.nns_cmc,
-    };
-
-    let storage_index_canister_wasm = get_canister_wasm(CanisterName::StorageIndex, version);
-    let storage_index_init_args = storage_index_canister::init::Args {
-        governance_principals: vec![principal],
-        user_controllers: vec![canister_ids.user_index, canister_ids.group_index],
-        bucket_canister_wasm: get_canister_wasm(CanisterName::StorageBucket, version),
-        cycles_dispenser_config: Some(storage_index_canister::init::CyclesDispenserConfig {
-            canister_id: canister_ids.cycles_dispenser,
-            min_cycles_balance: 200 * T,
-        }),
         wasm_version: version,
         test_mode,
     };

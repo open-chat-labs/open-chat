@@ -3,7 +3,7 @@ use crate::model::buckets::{BucketRecord, Buckets};
 use crate::model::files::Files;
 use candid::{CandidType, Principal};
 use canister_state_macros::canister_state;
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use storage_index_canister::init::CyclesDispenserConfig;
@@ -95,8 +95,17 @@ struct Data {
     pub buckets: Buckets,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub total_cycles_spent_on_canisters: Cycles,
-    pub cycles_dispenser_config: Option<CyclesDispenserConfig>,
+    #[serde(deserialize_with = "deserialize_cycles_dispenser_config")]
+    pub cycles_dispenser_config: CyclesDispenserConfig,
     pub test_mode: bool,
+}
+
+fn deserialize_cycles_dispenser_config<'de, D>(deserializer: D) -> Result<CyclesDispenserConfig, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let config: Option<CyclesDispenserConfig> = Option::deserialize(deserializer)?;
+    Ok(config.unwrap())
 }
 
 fn user_index() -> HashSet<Principal> {
@@ -108,7 +117,7 @@ impl Data {
         user_controllers: Vec<Principal>,
         governance_principals: Vec<Principal>,
         bucket_canister_wasm: CanisterWasm,
-        cycles_dispenser_config: Option<CyclesDispenserConfig>,
+        cycles_dispenser_config: CyclesDispenserConfig,
         test_mode: bool,
     ) -> Data {
         Data {
@@ -222,7 +231,7 @@ pub struct Metrics {
     pub bucket_upgrades_in_progress: u64,
     pub bucket_upgrades_failed: Vec<FailedUpgradeCount>,
     pub bucket_canister_wasm: Version,
-    pub cycles_dispenser_config: Option<CyclesDispenserConfig>,
+    pub cycles_dispenser_config: CyclesDispenserConfig,
 }
 
 #[derive(CandidType, Serialize, Debug)]

@@ -8,7 +8,7 @@ edition = "2021"
 [dependencies]
 candid = { workspace = true }
 canister_client_macros = { path = "../canister_client_macros" }
-cycles_dispenser_client = { workspace = true }
+cycles_dispenser_client = { path = "../cycles_dispenser_client" }
 getrandom = { workspace = true, features = ["custom"] }
 ic-cdk = { workspace = true }
 itertools = { workspace = true }

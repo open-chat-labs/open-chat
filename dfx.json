@@ -61,21 +61,21 @@
       "wasm": "wasms/group_canister_impl.wasm.gz",
       "build": "./scripts/generate-wasm.sh group_canister_impl"
     },
-    "website": {
-      "source": ["frontend/app/build", "frontend/app/public"],
-      "type": "assets"
-    },
-    "cycles_dispenser": {
-      "type": "custom",
-      "wasm": "backend/canisters/cycles_dispenser/cycles_dispenser.wasm.gz",
-      "candid": "backend/canisters/cycles_dispenser/cycles_dispenser.init.did",
-      "build": ""
-    },
     "storage_index": {
       "type": "custom",
       "candid": "backend/canisters/storage_index/api/can.did",
-      "wasm": "wasms/storage_index_impl.wasm.gz",
+      "wasm": "wasms/storage_index_canister_impl.wasm.gz",
       "build": "./scripts/generate-wasm.sh storage_index_canister_impl"
+    },
+    "cycles_dispenser": {
+      "type": "custom",
+      "candid": "backend/canisters/cycles_dispenser/api/can.did",
+      "wasm": "wasms/cycles_dispenser_canister_impl.wasm.gz",
+      "build": "./scripts/generate-wasm.sh cycles_dispenser_canister_impl"
+    },
+    "website": {
+      "source": ["frontend/app/build", "frontend/app/public"],
+      "type": "assets"
     },
     "sns_governance": {
       "build": "",

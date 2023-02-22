@@ -698,7 +698,7 @@ name = "bot_api"
 version = "0.1.0"
 dependencies = [
  "serde",
- "types 0.1.0",
+ "types",
  "user_canister",
 ]
 
@@ -712,7 +712,7 @@ dependencies = [
  "ic-cdk 0.7.0",
  "msgpack",
  "tracing",
- "types 0.1.0",
+ "types",
 ]
 
 [[package]]
@@ -787,7 +787,7 @@ dependencies = [
  "candid",
  "clap 4.1.4",
  "ic-sns-governance",
- "types 0.1.0",
+ "types",
 ]
 
 [[package]]
@@ -924,15 +924,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "candid_gen"
-version = "0.1.0"
-source = "git+https://github.com/open-ic/cycles-dispenser?rev=fedf3fb1f407000aae1390d46769ae9cea0a8b49#fedf3fb1f407000aae1390d46769ae9cea0a8b49"
-dependencies = [
- "quote 1.0.23",
- "syn 1.0.107",
-]
-
-[[package]]
 name = "canister_api_macros"
 version = "0.1.0"
 dependencies = [
@@ -949,6 +940,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "canister_client_macros",
+ "cycles_dispenser_canister",
  "dirs",
  "futures",
  "garcon",
@@ -966,7 +958,7 @@ dependencies = [
  "serde",
  "storage_index_canister",
  "storage_index_canister_client",
- "types 0.1.0",
+ "types",
  "user_canister",
  "user_index_canister",
  "user_index_canister_client",
@@ -986,7 +978,7 @@ dependencies = [
  "canister_client",
  "clap 3.2.23",
  "tokio",
- "types 0.1.0",
+ "types",
 ]
 
 [[package]]
@@ -1043,7 +1035,7 @@ dependencies = [
  "canister_client",
  "clap 3.2.23",
  "tokio",
- "types 0.1.0",
+ "types",
 ]
 
 [[package]]
@@ -1108,7 +1100,7 @@ dependencies = [
  "ledger_utils",
  "search",
  "serde",
- "types 0.1.0",
+ "types",
 ]
 
 [[package]]
@@ -1710,26 +1702,46 @@ dependencies = [
 ]
 
 [[package]]
-name = "cycles_dispenser"
+name = "cycles_dispenser_canister"
 version = "0.1.0"
-source = "git+https://github.com/open-ic/cycles-dispenser?rev=fedf3fb1f407000aae1390d46769ae9cea0a8b49#fedf3fb1f407000aae1390d46769ae9cea0a8b49"
 dependencies = [
  "candid",
- "candid_gen 0.1.0 (git+https://github.com/open-ic/cycles-dispenser?rev=fedf3fb1f407000aae1390d46769ae9cea0a8b49)",
+ "candid_gen",
  "serde",
- "types 0.1.0 (git+https://github.com/open-ic/cycles-dispenser?rev=fedf3fb1f407000aae1390d46769ae9cea0a8b49)",
+ "types",
+]
+
+[[package]]
+name = "cycles_dispenser_canister_impl"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "canister_logger",
+ "canister_state_macros",
+ "canister_tracing_macros",
+ "cycles_dispenser_canister",
+ "ic-cdk 0.7.0",
+ "ic-cdk-macros",
+ "ic-cdk-timers",
+ "ic-ledger-types",
+ "serde",
+ "serde_bytes",
+ "serde_json",
+ "stable_memory",
+ "tracing",
+ "types",
+ "utils",
 ]
 
 [[package]]
 name = "cycles_dispenser_client"
 version = "0.1.0"
-source = "git+https://github.com/open-ic/cycles-dispenser?rev=fedf3fb1f407000aae1390d46769ae9cea0a8b49#fedf3fb1f407000aae1390d46769ae9cea0a8b49"
 dependencies = [
- "cycles_dispenser",
+ "cycles_dispenser_canister",
  "ic-cdk 0.7.0",
  "ic-cdk-timers",
  "tracing",
- "types 0.1.0 (git+https://github.com/open-ic/cycles-dispenser?rev=fedf3fb1f407000aae1390d46769ae9cea0a8b49)",
+ "types",
 ]
 
 [[package]]
@@ -2026,7 +2038,7 @@ dependencies = [
  "aws-sdk-dynamodb",
  "aws-types",
  "index_store",
- "types 0.1.0",
+ "types",
 ]
 
 [[package]]
@@ -2493,11 +2505,11 @@ name = "group_canister"
 version = "0.1.0"
 dependencies = [
  "candid",
- "candid_gen 0.1.0",
+ "candid_gen",
  "chat_events",
  "serde",
  "serde_bytes",
- "types 0.1.0",
+ "types",
 ]
 
 [[package]]
@@ -2510,7 +2522,7 @@ dependencies = [
  "ic-cdk 0.7.0",
  "msgpack",
  "tracing",
- "types 0.1.0",
+ "types",
 ]
 
 [[package]]
@@ -2521,7 +2533,7 @@ dependencies = [
  "canister_client_macros",
  "group_canister",
  "ic-agent",
- "types 0.1.0",
+ "types",
 ]
 
 [[package]]
@@ -2563,7 +2575,7 @@ dependencies = [
  "serializer",
  "storage_bucket_client",
  "tracing",
- "types 0.1.0",
+ "types",
  "user_canister",
  "user_canister_c2c_client",
  "utils",
@@ -2574,10 +2586,10 @@ name = "group_index_canister"
 version = "0.1.0"
 dependencies = [
  "candid",
- "candid_gen 0.1.0",
+ "candid_gen",
  "human_readable",
  "serde",
- "types 0.1.0",
+ "types",
 ]
 
 [[package]]
@@ -2589,7 +2601,7 @@ dependencies = [
  "ic-cdk 0.7.0",
  "msgpack",
  "tracing",
- "types 0.1.0",
+ "types",
 ]
 
 [[package]]
@@ -2600,7 +2612,7 @@ dependencies = [
  "canister_client_macros",
  "group_index_canister",
  "ic-agent",
- "types 0.1.0",
+ "types",
 ]
 
 [[package]]
@@ -2630,7 +2642,7 @@ dependencies = [
  "serde",
  "serializer",
  "tracing",
- "types 0.1.0",
+ "types",
  "user_canister",
  "user_canister_c2c_client",
  "user_index_canister",
@@ -2644,9 +2656,9 @@ version = "0.1.0"
 dependencies = [
  "bot_api",
  "candid",
- "candid_gen 0.1.0",
+ "candid_gen",
  "serde",
- "types 0.1.0",
+ "types",
  "user_canister",
  "user_index_canister",
 ]
@@ -2683,7 +2695,7 @@ dependencies = [
  "serde_json",
  "serializer",
  "tracing",
- "types 0.1.0",
+ "types",
  "user_canister",
  "user_index_canister",
  "user_index_canister_c2c_client",
@@ -2852,7 +2864,7 @@ dependencies = [
  "serde",
  "serde_bytes",
  "serde_json",
- "types 0.1.0",
+ "types",
 ]
 
 [[package]]
@@ -5041,10 +5053,10 @@ version = "0.1.0"
 dependencies = [
  "bot_api",
  "candid",
- "candid_gen 0.1.0",
+ "candid_gen",
  "ic-ledger-types",
  "serde",
- "types 0.1.0",
+ "types",
  "user_canister",
  "user_index_canister",
 ]
@@ -5071,7 +5083,7 @@ dependencies = [
  "serde_bytes",
  "serializer",
  "tracing",
- "types 0.1.0",
+ "types",
  "user_canister",
  "user_index_canister",
  "user_index_canister_c2c_client",
@@ -5114,7 +5126,7 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "futures",
- "types 0.1.0",
+ "types",
 ]
 
 [[package]]
@@ -5142,6 +5154,7 @@ name = "integration_tests"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "cycles_dispenser_canister",
  "group_canister",
  "group_index_canister",
  "ic-state-machine-tests",
@@ -5159,7 +5172,7 @@ dependencies = [
  "storage_bucket_canister",
  "storage_index_canister",
  "test-case",
- "types 0.1.0",
+ "types",
  "user_canister",
  "user_index_canister",
  "utils",
@@ -5343,7 +5356,7 @@ dependencies = [
  "serde_cbor",
  "sha2 0.10.6",
  "sha256",
- "types 0.1.0",
+ "types",
 ]
 
 [[package]]
@@ -5417,11 +5430,11 @@ name = "local_group_index_canister"
 version = "0.1.0"
 dependencies = [
  "candid",
- "candid_gen 0.1.0",
+ "candid_gen",
  "ic-ledger-types",
  "serde",
  "serde_bytes",
- "types 0.1.0",
+ "types",
 ]
 
 [[package]]
@@ -5433,7 +5446,7 @@ dependencies = [
  "local_group_index_canister",
  "msgpack",
  "tracing",
- "types 0.1.0",
+ "types",
 ]
 
 [[package]]
@@ -5468,7 +5481,7 @@ dependencies = [
  "serde_json",
  "serializer",
  "tracing",
- "types 0.1.0",
+ "types",
  "utils",
 ]
 
@@ -5477,11 +5490,11 @@ name = "local_user_index_canister"
 version = "0.1.0"
 dependencies = [
  "candid",
- "candid_gen 0.1.0",
+ "candid_gen",
  "ic-ledger-types",
  "serde",
  "serde_bytes",
- "types 0.1.0",
+ "types",
 ]
 
 [[package]]
@@ -5494,7 +5507,7 @@ dependencies = [
  "local_user_index_canister",
  "msgpack",
  "tracing",
- "types 0.1.0",
+ "types",
 ]
 
 [[package]]
@@ -5522,7 +5535,7 @@ dependencies = [
  "serde_json",
  "serializer",
  "tracing",
- "types 0.1.0",
+ "types",
  "user_canister",
  "user_canister_c2c_client",
  "user_index_canister",
@@ -5781,7 +5794,7 @@ dependencies = [
  "tokio",
  "tracing",
  "tracing-subscriber",
- "types 0.1.0",
+ "types",
 ]
 
 [[package]]
@@ -5797,7 +5810,7 @@ dependencies = [
  "tokio",
  "tracing",
  "tracing-subscriber",
- "types 0.1.0",
+ "types",
 ]
 
 [[package]]
@@ -5818,7 +5831,7 @@ dependencies = [
  "serde",
  "tokio",
  "tracing",
- "types 0.1.0",
+ "types",
  "web-push",
 ]
 
@@ -5827,10 +5840,10 @@ name = "notifications_canister"
 version = "0.1.0"
 dependencies = [
  "candid",
- "candid_gen 0.1.0",
+ "candid_gen",
  "notifications_index_canister",
  "serde",
- "types 0.1.0",
+ "types",
 ]
 
 [[package]]
@@ -5842,7 +5855,7 @@ dependencies = [
  "msgpack",
  "notifications_canister",
  "tracing",
- "types 0.1.0",
+ "types",
 ]
 
 [[package]]
@@ -5853,7 +5866,7 @@ dependencies = [
  "canister_client_macros",
  "ic-agent",
  "notifications_canister",
- "types 0.1.0",
+ "types",
 ]
 
 [[package]]
@@ -5877,7 +5890,7 @@ dependencies = [
  "serde",
  "serializer",
  "tracing",
- "types 0.1.0",
+ "types",
  "user_index_canister",
  "user_index_canister_c2c_client",
  "utils",
@@ -5888,10 +5901,10 @@ name = "notifications_index_canister"
 version = "0.1.0"
 dependencies = [
  "candid",
- "candid_gen 0.1.0",
+ "candid_gen",
  "human_readable",
  "serde",
- "types 0.1.0",
+ "types",
 ]
 
 [[package]]
@@ -5903,7 +5916,7 @@ dependencies = [
  "msgpack",
  "notifications_index_canister",
  "tracing",
- "types 0.1.0",
+ "types",
 ]
 
 [[package]]
@@ -5914,7 +5927,7 @@ dependencies = [
  "canister_client_macros",
  "ic-agent",
  "notifications_index_canister",
- "types 0.1.0",
+ "types",
 ]
 
 [[package]]
@@ -5940,7 +5953,7 @@ dependencies = [
  "serde",
  "serializer",
  "tracing",
- "types 0.1.0",
+ "types",
  "user_index_canister",
  "user_index_canister_c2c_client",
  "utils",
@@ -6155,9 +6168,9 @@ name = "online_users_canister"
 version = "0.1.0"
 dependencies = [
  "candid",
- "candid_gen 0.1.0",
+ "candid_gen",
  "serde",
- "types 0.1.0",
+ "types",
 ]
 
 [[package]]
@@ -6168,7 +6181,7 @@ dependencies = [
  "canister_client_macros",
  "ic-agent",
  "online_users_canister",
- "types 0.1.0",
+ "types",
 ]
 
 [[package]]
@@ -6188,7 +6201,7 @@ dependencies = [
  "serde",
  "serializer",
  "tracing",
- "types 0.1.0",
+ "types",
  "user_index_canister",
  "user_index_canister_c2c_client",
  "utils",
@@ -6705,9 +6718,9 @@ name = "proposals_bot_canister"
 version = "0.1.0"
 dependencies = [
  "candid",
- "candid_gen 0.1.0",
+ "candid_gen",
  "serde",
- "types 0.1.0",
+ "types",
 ]
 
 [[package]]
@@ -6734,7 +6747,7 @@ dependencies = [
  "serializer",
  "sha2 0.10.6",
  "tracing",
- "types 0.1.0",
+ "types",
  "utils",
 ]
 
@@ -7464,7 +7477,7 @@ checksum = "1c107b6f4780854c8b126e228ea8869f4d7b71260f962fefb57b996b8959ba6b"
 name = "search"
 version = "0.1.0"
 dependencies = [
- "types 0.1.0",
+ "types",
 ]
 
 [[package]]
@@ -7850,9 +7863,9 @@ version = "0.1.0"
 dependencies = [
  "bot_api",
  "candid",
- "candid_gen 0.1.0",
+ "candid_gen",
  "serde",
- "types 0.1.0",
+ "types",
  "user_canister",
  "user_index_canister",
 ]
@@ -7878,7 +7891,7 @@ dependencies = [
  "serializer",
  "sns1_airdrop",
  "tracing",
- "types 0.1.0",
+ "types",
  "user_canister",
  "user_index_canister",
  "user_index_canister_c2c_client",
@@ -7938,10 +7951,10 @@ name = "storage_bucket_canister"
 version = "0.1.0"
 dependencies = [
  "candid",
- "candid_gen 0.1.0",
+ "candid_gen",
  "serde",
  "serde_bytes",
- "types 0.1.0",
+ "types",
 ]
 
 [[package]]
@@ -7953,7 +7966,7 @@ dependencies = [
  "ic-cdk 0.7.0",
  "storage_bucket_canister",
  "tracing",
- "types 0.1.0",
+ "types",
 ]
 
 [[package]]
@@ -7978,7 +7991,7 @@ dependencies = [
  "storage_index_canister",
  "storage_index_canister_c2c_client",
  "tracing",
- "types 0.1.0",
+ "types",
  "utils",
 ]
 
@@ -7990,7 +8003,7 @@ dependencies = [
  "ic-cdk 0.7.0",
  "storage_bucket_canister",
  "storage_bucket_canister_c2c_client",
- "types 0.1.0",
+ "types",
 ]
 
 [[package]]
@@ -7998,10 +8011,10 @@ name = "storage_index_canister"
 version = "0.1.0"
 dependencies = [
  "candid",
- "candid_gen 0.1.0",
+ "candid_gen",
  "serde",
  "serde_bytes",
- "types 0.1.0",
+ "types",
 ]
 
 [[package]]
@@ -8013,7 +8026,7 @@ dependencies = [
  "ic-cdk 0.7.0",
  "storage_index_canister",
  "tracing",
- "types 0.1.0",
+ "types",
 ]
 
 [[package]]
@@ -8024,7 +8037,7 @@ dependencies = [
  "canister_client_macros",
  "ic-agent",
  "storage_index_canister",
- "types 0.1.0",
+ "types",
 ]
 
 [[package]]
@@ -8049,7 +8062,7 @@ dependencies = [
  "storage_bucket_canister_c2c_client",
  "storage_index_canister",
  "tracing",
- "types 0.1.0",
+ "types",
  "utils",
 ]
 
@@ -8784,16 +8797,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "types"
-version = "0.1.0"
-source = "git+https://github.com/open-ic/cycles-dispenser?rev=fedf3fb1f407000aae1390d46769ae9cea0a8b49#fedf3fb1f407000aae1390d46769ae9cea0a8b49"
-dependencies = [
- "candid",
- "serde",
- "serde_bytes",
-]
-
-[[package]]
 name = "ucd-trie"
 version = "0.1.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -8873,11 +8876,11 @@ name = "user_canister"
 version = "0.1.0"
 dependencies = [
  "candid",
- "candid_gen 0.1.0",
+ "candid_gen",
  "ic-ledger-types",
  "serde",
  "serde_bytes",
- "types 0.1.0",
+ "types",
 ]
 
 [[package]]
@@ -8888,7 +8891,7 @@ dependencies = [
  "ic-cdk 0.7.0",
  "msgpack",
  "tracing",
- "types 0.1.0",
+ "types",
  "user_canister",
 ]
 
@@ -8899,7 +8902,7 @@ dependencies = [
  "candid",
  "canister_client_macros",
  "ic-agent",
- "types 0.1.0",
+ "types",
  "user_canister",
 ]
 
@@ -8941,7 +8944,7 @@ dependencies = [
  "stable_memory",
  "storage_bucket_client",
  "tracing",
- "types 0.1.0",
+ "types",
  "user_canister",
  "user_canister_c2c_client",
  "user_index_canister",
@@ -8954,12 +8957,12 @@ name = "user_index_canister"
 version = "0.1.0"
 dependencies = [
  "candid",
- "candid_gen 0.1.0",
+ "candid_gen",
  "human_readable",
  "ic-ledger-types",
  "serde",
  "serde_bytes",
- "types 0.1.0",
+ "types",
 ]
 
 [[package]]
@@ -8970,7 +8973,7 @@ dependencies = [
  "ic-cdk 0.7.0",
  "msgpack",
  "tracing",
- "types 0.1.0",
+ "types",
  "user_index_canister",
 ]
 
@@ -8981,7 +8984,7 @@ dependencies = [
  "candid",
  "canister_client_macros",
  "ic-agent",
- "types 0.1.0",
+ "types",
  "user_index_canister",
 ]
 
@@ -9021,7 +9024,7 @@ dependencies = [
  "storage_index_canister",
  "storage_index_canister_c2c_client",
  "tracing",
- "types 0.1.0",
+ "types",
  "user_canister",
  "user_canister_c2c_client",
  "user_index_canister",
@@ -9050,7 +9053,7 @@ dependencies = [
  "serde_bytes",
  "sha3",
  "tracing",
- "types 0.1.0",
+ "types",
 ]
 
 [[package]]
