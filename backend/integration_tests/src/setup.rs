@@ -6,6 +6,7 @@ use candid::Principal;
 use ic_state_machine_tests::StateMachine;
 use lazy_static::lazy_static;
 use std::sync::Mutex;
+use storage_index_canister::init::CyclesDispenserConfig;
 use types::{CanisterId, Cycles, Version};
 
 const T: Cycles = 1_000_000_000_000;
@@ -156,7 +157,10 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
         governance_principals: vec![controller],
         user_controllers: vec![user_index_canister_id, group_index_canister_id],
         bucket_canister_wasm: storage_bucket_canister_wasm,
-        cycles_dispenser_config: None,
+        cycles_dispenser_config: CyclesDispenserConfig {
+            canister_id: cycles_dispenser_canister_id,
+            min_cycles_balance: 200 * T,
+        },
         wasm_version: Version::min(),
         test_mode: true,
     };
@@ -186,6 +190,8 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
         icp_burn_amount_e8s: 1_000_000_000, // 10 ICP
         ledger_canister: NNS_LEDGER_CANISTER_ID,
         cycles_minting_canister: NNS_CMC_CANISTER_ID,
+        wasm_version: Version::min(),
+        test_mode: true,
     };
     install_canister(
         env,
