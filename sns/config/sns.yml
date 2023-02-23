@@ -232,17 +232,17 @@ initial_token_distribution:
      developer_distribution:
        developer_neurons:
          - controller: tu45y-p4p3d-b4gg4-gmyy3-rgweo-whsrq-fephi-vshrn-cipca-xdkri-pae # DEV team neuron for making proposals
-           stake_e8s: 20_000_000_000 # 200 CHAT which allows 20 in-flight proposals
+           stake_e8s: 20000000000 # 200 CHAT which allows 20 in-flight proposals
            memo: 0
            dissolve_delay_seconds: 31557600 # 1 year
            vesting_period_seconds: 0
          - controller: npqv2-jqaaa-aaaar-qaaha-cai # DEV team beacon neuron for communtity to follow. It will follow the 3 personal dev beacon neurons.
-           stake_e8s: 400_000_000 # 4 CHAT which is the mimimum stake
+           stake_e8s: 400000000 # 4 CHAT which is the mimimum stake
            memo: 0
            dissolve_delay_seconds: 31557600 # 1 year
            vesting_period_seconds: 0
          - controller: liskq-yvpvq-eo6av-3gaz6-izybe-x74ku-t42w5-si5dq-eitcy-sih4g-lqe # Personal beacon neuron for Matt. All Matt's bigger neurons will follow this one.
-           stake_e8s: 400_000_000 # 4 CHAT which is the mimimum stake
+           stake_e8s: 400000000 # 4 CHAT which is the mimimum stake
            memo: 0
            dissolve_delay_seconds: 31557600 # 1 year
            vesting_period_seconds: 0
@@ -272,7 +272,7 @@ initial_token_distribution:
            dissolve_delay_seconds: 2629800 # 1 month
            vesting_period_seconds: 126230400 # 4 years
          - controller: zeu5w-lsfxj-o4f5b-xl4sg-enqva-ez4wa-2nlbb-ufigi-fwnmv-zrfok-uae # Personal beacon neuron for Hamnish. All Hamish's bigger neurons will follow this one.
-           stake_e8s: 400_000_000 # 4 CHAT which is the mimimum stake
+           stake_e8s: 400000000 # 4 CHAT which is the mimimum stake
            memo: 0
            dissolve_delay_seconds: 31557600 # 1 year
            vesting_period_seconds: 0
@@ -302,7 +302,7 @@ initial_token_distribution:
            dissolve_delay_seconds: 2629800 # 1 month
            vesting_period_seconds: 126230400 # 4 years
          - controller: 4s36z-lcydz-e4ts5-nuzlo-h3ksp-uu4fe-xndls-pq6ah-mmv5k-x5rjw-hqe # Personal beacon neuron for Julian. All Julian's bigger neurons will follow this one.
-           stake_e8s: 400_000_000 # 4 CHAT which is the mimimum stake
+           stake_e8s: 400000000 # 4 CHAT which is the mimimum stake
            memo: 0
            dissolve_delay_seconds: 31557600 # 1 year
            vesting_period_seconds: 0

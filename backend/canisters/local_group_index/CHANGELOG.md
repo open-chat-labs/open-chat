@@ -5,6 +5,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Expose metrics about the current group being reinstalled ([#3194](https://github.com/open-ic/open-chat/pull/3194))
+
+## [[2.0.608](https://github.com/open-ic/open-chat/releases/tag/v2.0.608-local_group_index)] - 2023-02-21
+
 ### Changed
 
 - Speed up reinstalling groups by retrieving threads in batches ([#3177](https://github.com/open-ic/open-chat/pull/3177))
