@@ -571,7 +571,8 @@
         "enableAll": "אפשר הכל",
         "disableAll": "השבת הכל",
         "readmore": "קרא עוד",
-        "readless": "תקרא פחות"
+        "readless": "תקרא פחות",
+        "payload": "מטען"
     },
     "yes": "כן",
     "no": "לא",

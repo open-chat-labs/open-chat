@@ -573,7 +573,8 @@
         "enableAll": "全て可能にする",
         "disableAll": "すべて無効にします",
         "readmore": "続きを読む",
-        "readless": "もっと読む"
+        "readless": "もっと読む",
+        "payload": "ペイロード"
     },
     "yes": "はい",
     "no": "いいえ",

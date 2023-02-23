@@ -574,7 +574,8 @@
         "enableAll": "Permitirlos todos",
         "disableAll": "Desactivar todo",
         "readmore": "Lee mas",
-        "readless": "Leer menos"
+        "readless": "Leer menos",
+        "payload": "Carga útil"
     },
     "yes": "Sí",
     "no": "No",

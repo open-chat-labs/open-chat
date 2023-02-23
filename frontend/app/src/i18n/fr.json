@@ -573,7 +573,8 @@
         "enableAll": "Tout activer",
         "disableAll": "Désactiver tous les",
         "readmore": "Lire la suite",
-        "readless": "Lire moins"
+        "readless": "Lire moins",
+        "payload": "Charge utile"
     },
     "yes": "Oui",
     "no": "Non",

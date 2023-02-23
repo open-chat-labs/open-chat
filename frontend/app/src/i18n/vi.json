@@ -574,7 +574,8 @@
         "enableAll": "Cho phép tất cả",
         "disableAll": "Vô hiệu hóa tất cả",
         "readmore": "Đọc thêm",
-        "readless": "Đọc ít hơn"
+        "readless": "Đọc ít hơn",
+        "payload": "Khối hàng"
     },
     "yes": "Đúng",
     "no": "Không",
