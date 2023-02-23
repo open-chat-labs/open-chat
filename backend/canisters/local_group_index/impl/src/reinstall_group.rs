@@ -607,3 +607,22 @@ pub struct GroupBeingReinstalledEvents {
     events_synced_up_to: Option<EventIndex>,
     thread_events_synced_up_to: Option<MessageIndex>,
 }
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct GroupBeingReinstalledMetrics {
+    group_id: ChatId,
+    started: TimestampMillis,
+    events_synced_up_to: Option<EventIndex>,
+    thread_events_synced_up_to: Option<MessageIndex>,
+}
+
+impl From<&GroupBeingReinstalled> for GroupBeingReinstalledMetrics {
+    fn from(value: &GroupBeingReinstalled) -> Self {
+        GroupBeingReinstalledMetrics {
+            group_id: value.group_id,
+            started: value.started,
+            events_synced_up_to: value.data.as_ref().and_then(|d| d.events.events_synced_up_to),
+            thread_events_synced_up_to: value.data.as_ref().and_then(|d| d.events.thread_events_synced_up_to),
+        }
+    }
+}

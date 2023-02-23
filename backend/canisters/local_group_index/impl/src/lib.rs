@@ -1,4 +1,4 @@
-use crate::reinstall_group::GroupBeingReinstalled;
+use crate::reinstall_group::{GroupBeingReinstalled, GroupBeingReinstalledMetrics};
 use canister_state_macros::canister_state;
 use model::local_group_map::LocalGroupMap;
 use serde::{Deserialize, Serialize};
@@ -77,6 +77,7 @@ impl RuntimeState {
                 proposals_bot: self.data.proposals_bot_user_id.into(),
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
             },
+            group_being_reinstalled: self.data.group_being_reinstalled.as_ref().map(|g| g.into()),
         }
     }
 }
@@ -153,6 +154,7 @@ pub struct Metrics {
     pub group_wasm_version: Version,
     pub max_concurrent_canister_upgrades: u32,
     pub canister_ids: CanisterIds,
+    pub group_being_reinstalled: Option<GroupBeingReinstalledMetrics>,
 }
 
 #[derive(Serialize, Debug)]

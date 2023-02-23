@@ -1,3 +1,4 @@
+use crate::activity_notifications::handle_activity_notification;
 use crate::guards::caller_is_group_index_or_local_group_index;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update_msgpack;
@@ -37,6 +38,8 @@ fn c2c_freeze_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Respon
                 reason: args.reason,
             },
         };
+
+        handle_activity_notification(runtime_state);
 
         if args.return_members {
             SuccessWithMembers(event, runtime_state.data.participants.iter().map(|p| p.user_id).collect())
