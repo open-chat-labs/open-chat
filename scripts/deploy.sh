@@ -18,13 +18,13 @@ cd $SCRIPT_DIR/..
 
 if [ $WASM_SRC = "latest" ]
 then
-    ./scripts/download-canister-wasms.sh
+    ./scripts/download-all-canister-wasms.sh
 elif [ $WASM_SRC = "build" ]
 then
     ./scripts/generate-all-canister-wasms.sh
 elif [ $WASM_SRC != "local" ]
 then
-    ./scripts/download-canister-wasms.sh $4
+    ./scripts/download-all-canister-wasms.sh $4
 fi
 
 USER_INDEX_CANISTER_ID=$(dfx canister --network $NETWORK id user_index)
