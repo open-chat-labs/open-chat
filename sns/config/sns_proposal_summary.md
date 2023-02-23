@@ -63,7 +63,11 @@ Sale participation parameters
 - From Community Fund: 333,333 ICP
 - Min participants: 500
 
-The sale is open to anyone. Participation is via the launchpad in the NNS front end: https://nns.ic0.app/.
+The sale is open to anyone. Participation is either via the launchpad in the NNS front end: https://nns.ic0.app/ or on the command line using [quill](https://github.com/dfinity/quill/).
+
+```
+quill sns new-sale-ticket [OPTIONS] --amount-icp-e8s <AMOUNT_ICP_E8S>.
+```
 
 # The dapp
 
