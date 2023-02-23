@@ -249,6 +249,7 @@ function proposal(candid: ApiProposal): Proposal {
             lastUpdated: Number(p.last_updated),
             created: Number(p.created),
             deadline: Number(p.deadline),
+            payloadTextRendering: optional(p.payload_text_rendering, identity),
         };
     }
     throw new UnsupportedValueError("Unexpected ApiProposal type received", candid);

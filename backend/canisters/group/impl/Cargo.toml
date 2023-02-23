@@ -37,13 +37,13 @@ local_user_index_canister_c2c_client = { path = "../../local_user_index/c2c_clie
 msgpack = { path = "../../../libraries/msgpack" }
 notifications_canister = { path = "../../notifications/api" }
 notifications_canister_c2c_client = { path = "../../notifications/c2c_client" }
-open_storage_bucket_client = { path = "../../../libraries/open_storage_bucket_client" }
 rand = { workspace = true }
 regex = { workspace = true }
 search = { path = "../../../libraries/search" }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
 serializer = { workspace = true }
+storage_bucket_client = { path = "../../../libraries/storage_bucket_client" }
 tracing = { workspace = true }
 types = { path = "../../../libraries/types" }
 user_canister = { path = "../../user/api" }

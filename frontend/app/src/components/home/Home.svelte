@@ -268,6 +268,12 @@
                     modal = ModalType.Faq;
                     replace(removeQueryStringParam(qs, "faq"));
                 }
+
+                const diamond = qs.get("diamond");
+                if (diamond !== null) {
+                    showUpgrade = true;
+                    replace(removeQueryStringParam(qs, "diamond"));
+                }
             }
         }
     }

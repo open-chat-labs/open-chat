@@ -12,7 +12,6 @@
     import Loading from "./Loading.svelte";
     import UpgradeBanner from "./UpgradeBanner.svelte";
     import { mobileOperatingSystem } from "../utils/devices";
-    import { snowing } from "../stores/snow";
     import { themeStore } from "../theme/themes";
     import "../stores/fontSize";
     import Profiler from "./Profiler.svelte";
@@ -25,7 +24,6 @@
         removeQueryStringParam,
     } from "../utils/urls";
     import { logger } from "../utils/logging";
-    import Snow from "./Snow.svelte";
     import LandingPage from "./landingpages/LandingPage.svelte";
 
     let viewPortContent = "width=device-width, initial-scale=1";
@@ -35,7 +33,7 @@
         return new OpenChat({
             icUrl: process.env.IC_URL,
             iiDerivationOrigin: process.env.II_DERIVATION_ORIGIN,
-            openStorageIndexCanister: process.env.OPEN_STORAGE_INDEX_CANISTER!,
+            openStorageIndexCanister: process.env.STORAGE_INDEX_CANISTER!,
             groupIndexCanister: process.env.GROUP_INDEX_CANISTER!,
             notificationsCanister: process.env.NOTIFICATIONS_CANISTER!,
             onlineCanister: process.env.ONLINE_CANISTER!,
@@ -211,10 +209,6 @@
 {/if}
 
 <UpgradeBanner />
-
-{#if $snowing}
-    <Snow />
-{/if}
 
 <svelte:window on:resize={calculateHeight} on:error={unhandledError} />
 

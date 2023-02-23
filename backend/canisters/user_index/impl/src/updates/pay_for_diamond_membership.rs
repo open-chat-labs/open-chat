@@ -4,7 +4,7 @@ use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
 use ic_ledger_types::{BlockIndex, TransferError};
 use local_user_index_canister::{DiamondMembershipPaymentReceived, Event};
-use open_storage_index_canister::add_or_update_users::UserConfig;
+use storage_index_canister::add_or_update_users::UserConfig;
 use tracing::error;
 use types::{Cryptocurrency, DiamondMembershipPlanDuration, UserId, ICP};
 use user_index_canister::pay_for_diamond_membership::{Response::*, *};
@@ -107,7 +107,7 @@ fn process_charge(
                 recurring: args.recurring,
             }),
         );
-        runtime_state.data.open_storage_user_sync_queue.push(UserConfig {
+        runtime_state.data.storage_index_user_sync_queue.push(UserConfig {
             user_id: caller,
             byte_limit: ONE_GB,
         });

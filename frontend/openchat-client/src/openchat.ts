@@ -1724,7 +1724,6 @@ export class OpenChat extends EventTarget {
         }
 
         await this.handleEventsResponse(serverChat, eventsResponse);
-
         // We may have loaded messages which are more recent than what the chat summary thinks is the latest message,
         // if so, we update the chat summary to show the correct latest message.
         const latestMessage = findLast(eventsResponse.events, (e) => e.event.kind === "message");
@@ -3239,6 +3238,25 @@ export class OpenChat extends EventTarget {
 
     private async initialStateV2(): Promise<MergedUpdatesResponse> {
         const response = await this.api.getInitialStateV2();
+
+        const featureRequestsChatId = "vfaj4-zyaaa-aaaaf-aabya-cai";
+        const featureRequestsGroup = response.state.groupChats.find(
+            (g) => g.chatId === featureRequestsChatId
+        );
+        if (
+            featureRequestsGroup !== undefined &&
+            featureRequestsGroup.joined < BigInt(1676715563224)
+        ) {
+            this.leaveGroup(featureRequestsChatId).then((res) => {
+                if (res === "success") {
+                    this.api.getPublicGroupSummary(featureRequestsChatId).then((summary) => {
+                        if (summary !== undefined) {
+                            this.joinGroup(summary);
+                        }
+                    });
+                }
+            });
+        }
 
         return this.handleUpdatesV2Result(response, BigInt(0), undefined);
     }

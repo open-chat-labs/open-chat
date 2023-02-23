@@ -1,12 +1,10 @@
 use crate::utils::{build_ic_agent, get_canister_wasm, install_wasm, set_controllers};
-use crate::{
-    CanisterIds, CanisterName, CyclesDispenserConfig, CyclesDispenserInitArgs, OpenStorageCanisterName, OpenStorageInitArgs,
-};
+use crate::{CanisterIds, CanisterName};
 use candid::Principal;
 use ic_agent::identity::BasicIdentity;
 use ic_agent::{Agent, Identity};
 use ic_utils::interfaces::ManagementCanister;
-use types::{Cycles, Version};
+use types::{CanisterWasm, Cycles, Version};
 
 const T: Cycles = 1_000_000_000_000;
 
@@ -32,8 +30,8 @@ async fn install_service_canisters_impl(
         set_controllers(management_canister, &canister_ids.notifications_index, controllers.clone()),
         set_controllers(management_canister, &canister_ids.online_users, controllers.clone()),
         set_controllers(management_canister, &canister_ids.proposals_bot, controllers.clone()),
-        set_controllers(management_canister, &canister_ids.cycles_dispenser, controllers.clone()),
-        set_controllers(management_canister, &canister_ids.open_storage_index, controllers),
+        set_controllers(management_canister, &canister_ids.storage_index, controllers.clone()),
+        set_controllers(management_canister, &canister_ids.cycles_dispenser, controllers),
         set_controllers(
             management_canister,
             &canister_ids.local_user_index,
@@ -55,15 +53,13 @@ async fn install_service_canisters_impl(
     let version = Version::min();
 
     let user_index_canister_wasm = get_canister_wasm(CanisterName::UserIndex, version);
-    let user_canister_wasm = get_canister_wasm(CanisterName::User, Version::min());
-    let local_user_index_canister_wasm = get_canister_wasm(CanisterName::LocalUserIndex, version);
     let user_index_init_args = user_index_canister::init::Args {
         service_principals: vec![principal],
-        user_canister_wasm,
-        local_user_index_canister_wasm,
+        user_canister_wasm: CanisterWasm::default(),
+        local_user_index_canister_wasm: CanisterWasm::default(),
         group_index_canister_id: canister_ids.group_index,
         notifications_index_canister_id: canister_ids.notifications_index,
-        open_storage_index_canister_id: canister_ids.open_storage_index,
+        storage_index_canister_id: canister_ids.storage_index,
         proposals_bot_user_id: canister_ids.proposals_bot.into(),
         cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
         local_group_index_canister_ids: vec![canister_ids.local_group_index],
@@ -72,12 +68,10 @@ async fn install_service_canisters_impl(
     };
 
     let group_index_canister_wasm = get_canister_wasm(CanisterName::GroupIndex, version);
-    let group_canister_wasm = get_canister_wasm(CanisterName::Group, version);
-    let local_group_index_canister_wasm = get_canister_wasm(CanisterName::LocalGroupIndex, version);
     let group_index_init_args = group_index_canister::init::Args {
         service_principals: vec![principal],
-        group_canister_wasm,
-        local_group_index_canister_wasm,
+        group_canister_wasm: CanisterWasm::default(),
+        local_group_index_canister_wasm: CanisterWasm::default(),
         user_index_canister_id: canister_ids.user_index,
         cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
         proposals_bot_user_id: canister_ids.proposals_bot.into(),
@@ -86,14 +80,13 @@ async fn install_service_canisters_impl(
     };
 
     let notifications_index_canister_wasm = get_canister_wasm(CanisterName::NotificationsIndex, version);
-    let notifications_canister_wasm = get_canister_wasm(CanisterName::Notifications, version);
     let notifications_index_init_args = notifications_index_canister::init::Args {
         service_principals: vec![principal],
         push_service_principals: vec![principal],
         user_index_canister_id: canister_ids.user_index,
         authorizers: vec![canister_ids.user_index, canister_ids.group_index],
         cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
-        notifications_canister_wasm,
+        notifications_canister_wasm: CanisterWasm::default(),
         wasm_version: version,
         test_mode,
     };
@@ -117,9 +110,22 @@ async fn install_service_canisters_impl(
         test_mode,
     };
 
+    let storage_index_canister_wasm = get_canister_wasm(CanisterName::StorageIndex, version);
+    let storage_index_init_args = storage_index_canister::init::Args {
+        governance_principals: vec![principal],
+        user_controllers: vec![canister_ids.user_index, canister_ids.group_index],
+        bucket_canister_wasm: get_canister_wasm(CanisterName::StorageBucket, version),
+        cycles_dispenser_config: storage_index_canister::init::CyclesDispenserConfig {
+            canister_id: canister_ids.cycles_dispenser,
+            min_cycles_balance: 200 * T,
+        },
+        wasm_version: version,
+        test_mode,
+    };
+
     let cycles_dispenser_canister_wasm = get_canister_wasm("cycles_dispenser", version);
-    let cycles_dispenser_init_args = CyclesDispenserInitArgs {
-        admins: vec![principal],
+    let cycles_dispenser_init_args = cycles_dispenser_canister::init::Args {
+        governance_principals: vec![principal],
         canisters: vec![
             canister_ids.user_index,
             canister_ids.group_index,
@@ -129,7 +135,7 @@ async fn install_service_canisters_impl(
             canister_ids.notifications,
             canister_ids.online_users,
             canister_ids.proposals_bot,
-            canister_ids.open_storage_index,
+            canister_ids.storage_index,
         ],
         max_top_up_amount: 20 * T,
         min_interval: 5 * 60 * 1000, // 5 minutes
@@ -137,16 +143,6 @@ async fn install_service_canisters_impl(
         icp_burn_amount_e8s: 1_000_000_000, // 10 ICP
         ledger_canister: canister_ids.nns_ledger,
         cycles_minting_canister: canister_ids.nns_cmc,
-    };
-
-    let open_storage_index_canister_wasm = get_canister_wasm(OpenStorageCanisterName::Index, version);
-    let open_storage_index_init_args = OpenStorageInitArgs {
-        service_principals: vec![principal, canister_ids.user_index, canister_ids.group_index],
-        bucket_canister_wasm: get_canister_wasm(OpenStorageCanisterName::Bucket, version),
-        cycles_dispenser_config: Some(CyclesDispenserConfig {
-            canister_id: canister_ids.cycles_dispenser,
-            min_cycles_balance: 200 * T,
-        }),
         wasm_version: version,
         test_mode,
     };
@@ -194,12 +190,68 @@ async fn install_service_canisters_impl(
         ),
         install_wasm(
             management_canister,
-            &canister_ids.open_storage_index,
-            &open_storage_index_canister_wasm.module,
-            open_storage_index_init_args,
+            &canister_ids.storage_index,
+            &storage_index_canister_wasm.module,
+            storage_index_init_args,
         ),
     )
     .await;
+
+    let user_canister_wasm = get_canister_wasm(CanisterName::User, version);
+    let group_canister_wasm = get_canister_wasm(CanisterName::Group, version);
+    let local_group_index_canister_wasm = get_canister_wasm(CanisterName::LocalGroupIndex, version);
+    let local_user_index_canister_wasm = get_canister_wasm(CanisterName::LocalUserIndex, version);
+    let notifications_canister_wasm = get_canister_wasm(CanisterName::Notifications, version);
+
+    futures::future::try_join5(
+        user_index_canister_client::upgrade_local_user_index_canister_wasm(
+            agent,
+            &canister_ids.user_index,
+            &user_index_canister::upgrade_local_user_index_canister_wasm::Args {
+                wasm: local_user_index_canister_wasm,
+                filter: None,
+                use_for_new_canisters: None,
+            },
+        ),
+        user_index_canister_client::upgrade_user_canister_wasm(
+            agent,
+            &canister_ids.user_index,
+            &user_index_canister::upgrade_user_canister_wasm::Args {
+                wasm: user_canister_wasm,
+                filter: None,
+                use_for_new_canisters: None,
+            },
+        ),
+        group_index_canister_client::upgrade_local_group_index_canister_wasm(
+            agent,
+            &canister_ids.group_index,
+            &group_index_canister::upgrade_local_group_index_canister_wasm::Args {
+                wasm: local_group_index_canister_wasm,
+                filter: None,
+                use_for_new_canisters: None,
+            },
+        ),
+        group_index_canister_client::upgrade_group_canister_wasm(
+            agent,
+            &canister_ids.group_index,
+            &group_index_canister::upgrade_group_canister_wasm::Args {
+                wasm: group_canister_wasm,
+                filter: None,
+                use_for_new_canisters: None,
+            },
+        ),
+        notifications_index_canister_client::upgrade_notifications_canister_wasm(
+            agent,
+            &canister_ids.notifications_index,
+            &notifications_index_canister::upgrade_notifications_canister_wasm::Args {
+                wasm: notifications_canister_wasm,
+                filter: None,
+                use_for_new_canisters: None,
+            },
+        ),
+    )
+    .await
+    .unwrap();
 
     let add_local_group_index_canister_response = group_index_canister_client::add_local_group_index_canister(
         agent,

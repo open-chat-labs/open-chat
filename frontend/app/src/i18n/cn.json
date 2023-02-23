@@ -283,10 +283,10 @@
         "send_icp_a": "将 ICP 作为聊天消息发送时，由 ICP 账本执行转账，这会产生 0.0001 ICP 的强制性费用。这笔费用作为 IC 协议的一部分被烧毁，任何一方都不会收到。",
         "icp_account_q": "我的 ICP 账户如何运作？",
         "icp_account_a": "创建 OpenChat 用户时，我们会自动创建一个 ICP 帐户。此帐户最初将为空。您可以通过将ICP转移到其地址来为帐户充值。如果您不知道如何购买 ICP，[本文](https://www.finder.com/uk/how-to-buy-internet-computer) 可能会对您有所帮助。一旦您的 OpenChat 帐户中有一些 ICP，您就可以通过特殊类型的消息将其直接发送到任何其他 OpenChat 用户的帐户。您还可以使用 OpenChat 帐户中的 ICP 将您的存储空间升级到总共 1GB。如果您想从您的 OpenChat ICP 帐户中提取 ICP，您可以通过转到您的用户配置文件的“帐户”部分并单击“管理”按钮来执行此操作。此屏幕让您可以选择将您的 OpenChat ICP 余额提取到您选择的任何其他地址。",
-        "shortcuts_a": "您可以从消息输入框中使用几个快捷命令。 <br /><br /> `/poll` - 创建一个新的投票 <br /> `/search xyz` - 在当前聊天中搜索术语“xyz” <br />`/gif kittens` - 到搜索小猫 gif <br />`/icp 0.1` - 向某人发送 0.1 ICP <br />`/faq question_id*` - 创建并发布指向特定常见问题解答问题的格式化链接<br /><br /> 接受参数的命令也可以不带参数使用。<br /><br />* 可用的常见问题 ID 为：ios_app、android_app、find_groups、style_messages、sms_icp、airdrop、security、send_icp、icp_account、roadmap、shortcuts",
         "shortcuts_q": "哪些快捷命令可用？",
         "storage_q": "存储如何工作？",
-        "storage_a": "短信占用的空间很小，因此我们花费的成本相对较低。图像通常会占用更多空间并且成本会增加。现在介绍 OpenChat 系统的一些背景知识。每个用户都有自己的容器，其中包含他们直接聊天的所有消息。每个组也有自己的容器，用于保存所有组消息。但是，我们将与消息相关的任何<em>文件</em>数据（例如图像和视频）存储在 <a target=\"_blank\" href=\"https://github.com/open-ic/open-storage \">打开存储</a>。每个用户都有数据滚动限额，当发送消息时，任何文件数据都会超出<em>发件人</em>限额。这也适用于发送给群组的消息，因此没有群组数据限额，只有个人数据。 <br/><br/>每个 OpenChat 用户将获得 0.1GB 的免费存储空间。然后用户可以选择升级到 Diamond 以获得 1GB 的存储空间。当用户达到他们的存储限制时，他们最旧的文件将自动过期并被回收。这意味着用户永远不会用完存储空间。为了最大限度地降低我们的成本，免费套餐用户的文件也将在九十天后回收，无论他们的存储使用情况如何。请注意，消息本身（包括任何标题和图像缩略图）永远不会被删除，因此消息历史记录将得到保留。"
+        "storage_a": "短信占用的空间很小，因此我们花费的成本相对较低。图像通常会占用更多空间并且成本会增加。现在介绍 OpenChat 系统的一些背景知识。每个用户都有自己的容器，其中包含他们直接聊天的所有消息。每个组也有自己的容器，用于保存所有组消息。但是，我们将与消息相关的任何<em>文件</em>数据（例如图像和视频）存储在 <a target=\"_blank\" href=\"https://github.com/open-ic/open-storage \">打开存储</a>。每个用户都有数据滚动限额，当发送消息时，任何文件数据都会超出<em>发件人</em>限额。这也适用于发送给群组的消息，因此没有群组数据限额，只有个人数据。 <br/><br/>每个 OpenChat 用户将获得 0.1GB 的免费存储空间。然后用户可以选择升级到 Diamond 以获得 1GB 的存储空间。当用户达到他们的存储限制时，他们最旧的文件将自动过期并被回收。这意味着用户永远不会用完存储空间。为了最大限度地降低我们的成本，免费套餐用户的文件也将在九十天后回收，无论他们的存储使用情况如何。请注意，消息本身（包括任何标题和图像缩略图）永远不会被删除，因此消息历史记录将得到保留。",
+        "shortcuts_a": "您可以从消息条目输入框中使用多个快捷命令。<br /><br /> `/poll` - 创建一个新的民意调查<br />`/search xyz` - 在当前聊天中搜索术语“xyz”<br /> `/gif kittens` - 搜索小猫 gif<br /> `/icp 0.1` - 向某人发送 0.1 ICP<br /> `/faq question_id*` - 创建并发布指向特定 FAQ 问题的格式化链接<br />`/diamond` - 创建和发布带有钻石会员详细信息的格式化链接<br/><br/>接受参数的命令也可以在没有参数的情况下使用。<br /><br /> * 可用的常见问题 ID 为：ios_app、android_app、find_groups、style_messages、storage、airdrop、security、send_icp、icp_account、roadmap、shortcuts"
     },
     "roadmap": "路线图",
     "roleChanged": "{changedBy} 将 {changed} 的角色从 {oldRole} 更改为 {newRole}",
@@ -574,7 +574,8 @@
         "enableAll": "全部启用",
         "disableAll": "禁用所有",
         "readmore": "阅读更多",
-        "readless": "少读"
+        "readless": "少读",
+        "details": "细节"
     },
     "quoteReply": "引用",
     "groupNameTooShort": "群聊名太短",
@@ -718,6 +719,7 @@
         "chatAndIcp": "ICP & 聊天",
         "paymentFailed": "钻石会员支付失败",
         "upgradeSuccess": "您的付款已成功完成",
-        "benefits": "💎 钻石会员的好处"
+        "benefits": "💎 钻石会员的好处",
+        "message": "💎 告诉我钻石会员"
     }
 }

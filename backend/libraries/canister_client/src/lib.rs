@@ -1,7 +1,6 @@
-use candid::{CandidType, Principal};
 use std::fmt::{Display, Formatter};
 use std::str::FromStr;
-use types::{CanisterId, CanisterWasm, Cycles, Milliseconds, Version};
+use types::CanisterId;
 
 pub mod operations;
 pub mod utils;
@@ -20,15 +19,18 @@ pub const USER3_DEFAULT_NAME: &str = "Charlie";
 
 #[derive(Debug)]
 pub enum CanisterName {
+    CyclesDispenser,
     Group,
-    LocalGroupIndex,
     GroupIndex,
+    LocalGroupIndex,
+    LocalUserIndex,
     Notifications,
     NotificationsIndex,
     OnlineUsers,
     ProposalsBot,
+    StorageBucket,
+    StorageIndex,
     User,
-    LocalUserIndex,
     UserIndex,
 }
 
@@ -37,16 +39,19 @@ impl FromStr for CanisterName {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
+            "cycles_dispenser" => Ok(CanisterName::CyclesDispenser),
             "group" => Ok(CanisterName::Group),
-            "local_group_index" => Ok(CanisterName::LocalGroupIndex),
             "group_index" => Ok(CanisterName::GroupIndex),
+            "local_group_index" => Ok(CanisterName::LocalGroupIndex),
+            "local_user_index" => Ok(CanisterName::LocalUserIndex),
             "notifications" => Ok(CanisterName::Notifications),
             "notifications_index" => Ok(CanisterName::NotificationsIndex),
             "online_users" => Ok(CanisterName::OnlineUsers),
             "proposals_bot" => Ok(CanisterName::ProposalsBot),
+            "storage_bucket" => Ok(CanisterName::StorageBucket),
+            "storage_index" => Ok(CanisterName::StorageIndex),
             "user" => Ok(CanisterName::User),
             "user_index" => Ok(CanisterName::UserIndex),
-            "local_user_index" => Ok(CanisterName::LocalUserIndex),
             _ => Err(format!("Unrecognised canister name: {s}")),
         }
     }
@@ -55,15 +60,18 @@ impl FromStr for CanisterName {
 impl Display for CanisterName {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let name = match self {
+            CanisterName::CyclesDispenser => "cycles_dispenser",
             CanisterName::Group => "group",
-            CanisterName::LocalGroupIndex => "local_group_index",
             CanisterName::GroupIndex => "group_index",
+            CanisterName::LocalGroupIndex => "local_group_index",
+            CanisterName::LocalUserIndex => "local_user_index",
             CanisterName::Notifications => "notifications",
             CanisterName::NotificationsIndex => "notifications_index",
             CanisterName::OnlineUsers => "online_users",
             CanisterName::ProposalsBot => "proposals_bot",
+            CanisterName::StorageBucket => "storage_bucket",
+            CanisterName::StorageIndex => "storage_index",
             CanisterName::User => "user",
-            CanisterName::LocalUserIndex => "local_user_index",
             CanisterName::UserIndex => "user_index",
         };
 
@@ -81,53 +89,9 @@ pub struct CanisterIds {
     pub notifications: CanisterId,
     pub online_users: CanisterId,
     pub proposals_bot: CanisterId,
+    pub storage_index: CanisterId,
     pub cycles_dispenser: CanisterId,
-    pub open_storage_index: CanisterId,
     pub nns_governance: CanisterId,
     pub nns_ledger: CanisterId,
     pub nns_cmc: CanisterId,
-}
-
-#[derive(Debug)]
-pub enum OpenStorageCanisterName {
-    Index,
-    Bucket,
-}
-
-impl Display for OpenStorageCanisterName {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        let name = match self {
-            OpenStorageCanisterName::Index => "index",
-            OpenStorageCanisterName::Bucket => "bucket",
-        };
-
-        f.write_str(name)
-    }
-}
-
-#[derive(CandidType, Debug)]
-pub struct CyclesDispenserInitArgs {
-    pub admins: Vec<Principal>,
-    pub canisters: Vec<CanisterId>,
-    pub max_top_up_amount: Cycles,
-    pub min_interval: Milliseconds,
-    pub min_cycles_balance: Cycles,
-    pub icp_burn_amount_e8s: u64,
-    pub ledger_canister: CanisterId,
-    pub cycles_minting_canister: CanisterId,
-}
-
-#[derive(CandidType, Debug)]
-pub struct OpenStorageInitArgs {
-    pub service_principals: Vec<Principal>,
-    pub bucket_canister_wasm: CanisterWasm,
-    pub cycles_dispenser_config: Option<CyclesDispenserConfig>,
-    pub wasm_version: Version,
-    pub test_mode: bool,
-}
-
-#[derive(CandidType, Debug)]
-pub struct CyclesDispenserConfig {
-    pub canister_id: CanisterId,
-    pub min_cycles_balance: Cycles,
 }

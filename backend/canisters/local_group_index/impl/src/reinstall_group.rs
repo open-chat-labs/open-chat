@@ -295,11 +295,16 @@ async fn get_all_group_events(group_id: ChatId, since: EventIndex) -> Result<Gro
         .collect();
 
     let mut thread_events = BTreeMap::new();
-    for message_index in threads {
-        thread_events.insert(
-            message_index,
-            get_group_events(group_id, Some(message_index), EventIndex::default()).await?,
-        );
+    for batch in threads.chunks(20) {
+        let futures = futures::future::try_join_all(batch.iter().copied().map(|m| async move {
+            let events = get_group_events(group_id, Some(m), EventIndex::default()).await;
+            events.map(|e| (m, e))
+        }))
+        .await?;
+
+        for (message_index, events) in futures {
+            thread_events.insert(message_index, events);
+        }
     }
 
     Ok(GroupBeingReinstalledEvents {
@@ -601,4 +606,23 @@ pub struct GroupBeingReinstalledEvents {
     thread_events: BTreeMap<MessageIndex, Vec<EventWrapper<ChatEventInternal>>>,
     events_synced_up_to: Option<EventIndex>,
     thread_events_synced_up_to: Option<MessageIndex>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct GroupBeingReinstalledMetrics {
+    group_id: ChatId,
+    started: TimestampMillis,
+    events_synced_up_to: Option<EventIndex>,
+    thread_events_synced_up_to: Option<MessageIndex>,
+}
+
+impl From<&GroupBeingReinstalled> for GroupBeingReinstalledMetrics {
+    fn from(value: &GroupBeingReinstalled) -> Self {
+        GroupBeingReinstalledMetrics {
+            group_id: value.group_id,
+            started: value.started,
+            events_synced_up_to: value.data.as_ref().and_then(|d| d.events.events_synced_up_to),
+            thread_events_synced_up_to: value.data.as_ref().and_then(|d| d.events.thread_events_synced_up_to),
+        }
+    }
 }

@@ -6,6 +6,8 @@ pub mod local_user_index;
 pub mod notifications;
 pub mod notifications_index;
 pub mod online_users;
+pub mod storage_bucket;
+pub mod storage_index;
 pub mod user;
 pub mod user_index;
 

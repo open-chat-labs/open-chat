@@ -33,7 +33,7 @@ export function removeQueryStringParam(qs: URLSearchParams, name: string): strin
     return replaceQueryString(qs);
 }
 
-const scrollingRoutes = ["features", "roadmap", "whitepaper", "architecture"];
+const scrollingRoutes = ["features", "roadmap", "whitepaper", "architecture", "blog"];
 const landingPageRoutes = ["home", ...scrollingRoutes];
 
 export function isLandingPageRoute(path: string): boolean {

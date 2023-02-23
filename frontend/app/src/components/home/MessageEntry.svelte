@@ -8,7 +8,6 @@
     import { _ } from "svelte-i18n";
     import Progress from "../Progress.svelte";
     import { iconSize } from "../../stores/iconSize";
-    import { snowing } from "../../stores/snow";
     import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
     import MentionPicker from "./MentionPicker.svelte";
     import EmojiAutocompleter from "./EmojiAutocompleter.svelte";
@@ -284,10 +283,6 @@
             return true;
         }
 
-        if (/snow|xmas|christmas|noel/i.test(txt)) {
-            $snowing = true;
-        }
-
         const searchMatch = txt.match(/^\/search( *(.*))$/);
         if (searchMatch && searchMatch[2] !== undefined) {
             dispatch("searchChat", searchMatch[2]);
@@ -315,6 +310,12 @@
                 }
                 return true;
             }
+        }
+
+        if (/^\/diamond$/.test(txt)) {
+            const url = addQueryStringParam(new URLSearchParams(), "diamond", "");
+            dispatch("sendMessage", [`[${$_("upgrade.message")}](#${url})`, []]);
+            return true;
         }
 
         const tokenMatch = txt.match(tokenMatchRegex);

@@ -182,6 +182,7 @@ export const idlFactory = ({ IDL }) => {
     'id' : ProposalId,
     'url' : IDL.Text,
     'status' : ProposalDecisionStatus,
+    'payload_text_rendering' : IDL.Opt(IDL.Text),
     'tally' : Tally,
     'title' : IDL.Text,
     'created' : TimestampMillis,

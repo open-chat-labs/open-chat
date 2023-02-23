@@ -332,7 +332,7 @@
         "icp_account_q": "How does my ICP account work?",
         "icp_account_a": "When an OpenChat user is created, we automatically create an ICP account. This account will initially be empty. You can top the account up by transfering ICP to its address. If you don't know how to buy ICP, [this article](https://www.finder.com/uk/how-to-buy-internet-computer) may help you. Once you have some ICP in your OpenChat account you will be able to send it directly to the account of any other OpenChat user via a special kind of message. You can also use the ICP from your OpenChat account to upgrade your storage up to 1GB in total. If you would like to withdraw the ICP from your OpenChat ICP account you can do so by going to the Account section of your user profile and clicking the \"Manage\" button. This screen gives you the option to withdraw your OpenChat ICP balance to any other address of your choosing.",
         "shortcuts_q": "Which shortcut commands are available?",
-        "shortcuts_a": "There are several shortcut commands that you can use from the message entry input box. <br /><br /> `/poll` - to create a new poll <br /> `/search xyz` - to search the current chat for the term \"xyz\" <br />`/gif kittens` - to search for kitten gifs <br />`/icp 0.1` - to send 0.1 ICP to someone <br />`/faq question_id*` - to create and post a formatted link to a specific FAQ question <br /><br /> Commands which accept an argument can also be used without the argument.<br /><br />* Available faq question IDs are: ios_app, android_app, find_groups, style_messages, storage, airdrop, security, send_icp, icp_account, roadmap, shortcuts"
+        "shortcuts_a": "There are several shortcut commands that you can use from the message entry input box. <br /><br /> `/poll` - to create a new poll <br /> `/search xyz` - to search the current chat for the term \"xyz\" <br />`/gif kittens` - to search for kitten gifs <br />`/icp 0.1` - to send 0.1 ICP to someone <br />`/faq question_id*` - to create and post a formatted link to a specific FAQ question <br />`/diamond` - to create and post a formatted link with the details of diamond membership <br/> <br/>Commands which accept an argument can also be used without the argument.<br /><br />* Available faq question IDs are: ios_app, android_app, find_groups, style_messages, storage, airdrop, security, send_icp, icp_account, roadmap, shortcuts"
     },
     "pinMessage": "Pin",
     "unpinMessage": "Unpin",
@@ -592,7 +592,8 @@
         "enableAll": "Enable all",
         "disableAll": "Disable all",
         "readmore": "Read more",
-        "readless": "Read less"
+        "readless": "Read less",
+        "details": "Details"
     },
     "yes": "Yes",
     "no": "No",
@@ -665,6 +666,7 @@
         "groupMsg": "To create up to 10 public groups, you must be a Diamond user",
         "featuresTitle": "💎 Upgrade to Diamond",
         "benefits": "💎 Benefits of Diamond",
+        "message": "💎 Tell me about Diamond membership",
         "paymentTitle": "Payment",
         "congratulations": "You can now enjoy our Diamond features!",
         "feature": "Feature",

@@ -18,6 +18,7 @@ mod reinstall_group_tests;
 mod rng;
 mod send_direct_message_tests;
 mod setup;
+mod storage;
 mod suspend_user_tests;
 mod utils;
 mod wasms;
@@ -48,5 +49,5 @@ pub struct CanisterIds {
     pub notifications: CanisterId,
     pub online_users: CanisterId,
     pub proposals_bot: CanisterId,
-    pub open_storage_index: CanisterId,
+    pub storage_index: CanisterId,
 }

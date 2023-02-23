@@ -1,0 +1,32 @@
+[package]
+name = "storage_bucket_canister_impl"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+path = "src/lib.rs"
+crate-type = ["cdylib"]
+
+[dependencies]
+candid = { workspace = true }
+canister_logger = { workspace = true }
+canister_state_macros = { workspace = true }
+canister_tracing_macros = { workspace = true }
+http_request = { path = "../../../libraries/http_request" }
+ic-cdk = { workspace = true }
+ic-cdk-macros = { workspace = true }
+ic-cdk-timers = { workspace = true }
+ic-stable-structures = { workspace = true }
+num-traits = { workspace = true }
+rand = { workspace = true }
+serde = { workspace = true }
+serde_bytes = { workspace = true }
+serializer = { workspace = true }
+storage_bucket_canister = { path = "../api" }
+storage_index_canister = { path = "../../storage_index/api" }
+storage_index_canister_c2c_client = { path = "../../storage_index/c2c_client" }
+tracing = { workspace = true }
+types = { path = "../../../libraries/types" }
+utils = { path = "../../../libraries/utils" }

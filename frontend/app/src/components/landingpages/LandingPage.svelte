@@ -6,7 +6,7 @@
     import Header from "./Header.svelte";
     import Content from "./Content.svelte";
     import { location } from "svelte-spa-router";
-    import { createEventDispatcher, getContext, tick } from "svelte";
+    import { createEventDispatcher, getContext } from "svelte";
     import type { OpenChat } from "openchat-client";
     import Overlay from "../Overlay.svelte";
     import Register from "../register/Register.svelte";
@@ -54,6 +54,12 @@
                 routes={{
                     "/home": HomePage,
                     "/features": FeaturesPage,
+                    "/blog": wrap({
+                        asyncComponent: () => import("./BlogPage.svelte"),
+                    }),
+                    "/blog/:slug": wrap({
+                        asyncComponent: () => import("./BlogPostPage.svelte"),
+                    }),
                     "/roadmap": wrap({
                         asyncComponent: () => import("./RoadmapPage.svelte"),
                     }),
