@@ -23,7 +23,6 @@
     import ProposalVotingProgress from "./ProposalVotingProgress.svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import ProposalProgressLayout from "./ProposalProgressLayout.svelte";
-    import Link from "../../Link.svelte";
 
     const dispatch = createEventDispatcher();
 
@@ -208,9 +207,9 @@
                     </div>
                 {/if}
                 {#if payload !== undefined}
-                    <div class="payload">
-                        <Link>{$_("proposal.payload")}</Link>
-                        <OpenInNew viewBox="0 -3 24 24" size="1.6em" color="var(--icon-txt)" />
+                    <div on:click={() => (showPayload = true)} class="payload">
+                        <span>{$_("proposal.payload")}</span>
+                        <OpenInNew color="var(--icon-txt)" />
                     </div>
                 {/if}
             </div>
@@ -277,12 +276,12 @@
     </Overlay>
 {/if}
 
-{#if showPayload}
+{#if showPayload && payload !== undefined}
     <Overlay dismissible>
         <ModalContent compactFooter on:close={() => (showPayload = false)}>
             <div slot="header">{$_("proposal.payload")}</div>
-            <div slot="body">
-                {payload}
+            <div class="payload-body" slot="body">
+                <Markdown text={payload} inline={false} />
             </div>
         </ModalContent>
     </Overlay>
@@ -409,5 +408,9 @@
         display: flex;
         align-items: center;
         gap: $sp2;
+    }
+
+    .payload-body {
+        word-wrap: break-word;
     }
 </style>
