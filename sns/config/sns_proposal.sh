@@ -39,7 +39,8 @@ MIN_PARTICIPANTS=${MIN_PARTICIPANTS:-500}
 
 PROPOSAL_TITLE="Proposal to create an SNS-DAO for OpenChat"
 SWAP_DUE_TIMESTAMP_SECONDS=1678795200 # noon on 14th March
-PATH_TO_SUMMARY_FILE="$SCRIPT_DIR/sns_proposal_summary.md"
+PATH_TO_SUMMARY_FILE=./sns_proposal_summary.md
+SUMMARY=`cat $PATH_TO_SUMMARY_FILE`
 
 check_or_set_dfx_hsm_pin() {
     VALUE=${DFX_HSM_PIN:-}
@@ -70,8 +71,8 @@ ic-admin --nns-url $NNS_URL \
               --sns-token-e8s 2500000000000000 \
               --target-swap-canister-id $TARGET_SWAP_CANISTER_ID \
               --neuron-basket-count 5 \
-              --neuron-basket-dissolve-delay-interval-seconds 7889400 \
+              --neuron-basket-dissolve-delay-interval-seconds 7884000 \
               --sale-delay-seconds 86400 \
               --proposal-title "$PROPOSAL_TITLE" \
               --proposal-url "$PROPOSAL_URL" \
-              --summary-file "$PATH_TO_SUMMARY_FILE"
+              --summary "$SUMMARY"
