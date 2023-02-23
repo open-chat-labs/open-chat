@@ -4,7 +4,7 @@ SCRIPT=$(readlink -f "$0")
 SCRIPT_DIR=$(dirname "$SCRIPT")
 cd $SCRIPT_DIR/..
 
-GIT_COMMIT_ID=$(git rev-parse HEAD)
+GIT_COMMIT_ID=${GIT_COMMIT_ID:-$(git rev-parse HEAD)}
 
 docker build -t openchat --build-arg git_commit_id=$GIT_COMMIT_ID .
 
