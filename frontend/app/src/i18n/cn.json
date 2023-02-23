@@ -575,7 +575,7 @@
         "disableAll": "禁用所有",
         "readmore": "阅读更多",
         "readless": "少读",
-        "payload": "有效载荷"
+        "details": "细节"
     },
     "quoteReply": "引用",
     "groupNameTooShort": "群聊名太短",

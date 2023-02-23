@@ -208,7 +208,7 @@
                 {/if}
                 {#if payload !== undefined}
                     <div on:click={() => (showPayload = true)} class="payload">
-                        <span>{$_("proposal.payload")}</span>
+                        <span>{$_("proposal.details")}</span>
                         <OpenInNew color="var(--icon-txt)" />
                     </div>
                 {/if}
@@ -279,7 +279,7 @@
 {#if showPayload && payload !== undefined}
     <Overlay dismissible>
         <ModalContent compactFooter on:close={() => (showPayload = false)}>
-            <div slot="header">{$_("proposal.payload")}</div>
+            <div slot="header">{$_("proposal.details")}</div>
             <div class="payload-body" slot="body">
                 <Markdown text={payload} inline={false} />
             </div>
