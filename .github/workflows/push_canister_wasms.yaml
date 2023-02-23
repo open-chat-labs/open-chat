@@ -22,6 +22,8 @@ jobs:
           role-to-assume: arn:aws:iam::253040722768:role/GitHubActions-PushCanisterWasms
           aws-region: us-east-1
       - name: Build canister wasms
+        env:
+          GIT_COMMIT_ID: ${GITHUB_SHA}
         run: ./scripts/docker-build.sh
       - name: Push canister wasms to S3
         run: |
