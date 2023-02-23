@@ -22,7 +22,7 @@ Total token supply: 100 million CHAT tokens
 
 Initially distributed:
 - 52%: Reserved for the SNS treasury & under control of the OpenChat DAO
-- 25%: To be distributed by the NNS run decentralization sale which includes the community fund
+- 25%: To be distributed by the NNS run decentralization sale which includes the Community Fund
 - 15%: Allocated to the OpenChat dev team which vests over 4 years
 - 8%: Allocated to DFINITY for providing seed funding which vests over 2 years
 
@@ -32,7 +32,7 @@ For more information on the initial token allocation please [read here](https://
 
 # Governance
 
-- Each decentralization sale participant (including the commnity fund) will receive their tokens in a basket of 5 equal value CHAT neurons with dissolve delays of 0, 3, 6, 9 and 12 months respectively
+- Each decentralization sale participant (including the Community Fund) will receive their tokens in a basket of 5 equal value CHAT neurons with dissolve delays of 0, 3, 6, 9 and 12 months respectively
 - The founding dev team will receive their tokens in a basket of 5 neurons, the first with zero dissolve delay, and the rest with a dissolve delay of 1 month but with vesting periods of 1, 2, 3 and 4 years respectively
 - DFINITY will receive their tokens in a basket of 4 neurons all with a dissolve delay of 1 month but with vesting periods of 6, 12, 18 and 24 months respectively
 
