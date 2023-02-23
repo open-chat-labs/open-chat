@@ -11,7 +11,7 @@ jobs:
     name: Push canister wasms
     runs-on: ubuntu-latest
     env:
-      GIT_COMMIT_ID=$GITHUB_SHA
+      GIT_COMMIT_ID: $GITHUB_SHA
     permissions:
       id-token: write
       contents: read
