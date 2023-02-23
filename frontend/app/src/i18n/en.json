@@ -592,7 +592,8 @@
         "enableAll": "Enable all",
         "disableAll": "Disable all",
         "readmore": "Read more",
-        "readless": "Read less"
+        "readless": "Read less",
+        "details": "Details"
     },
     "yes": "Yes",
     "no": "No",

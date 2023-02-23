@@ -577,7 +577,8 @@
         "enableAll": "Alle aktivieren",
         "disableAll": "Alle deaktivieren",
         "readmore": "Weiterlesen",
-        "readless": "Lese weniger"
+        "readless": "Lese weniger",
+        "details": "Einzelheiten"
     },
     "quoteReply": "Antwort zitieren",
     "groupNameTooShort": "Der Gruppenname ist zu kurz",

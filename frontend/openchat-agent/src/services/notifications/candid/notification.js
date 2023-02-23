@@ -124,6 +124,7 @@ export const Notification = IDL.Variant({
                   'Adopted' : IDL.Null,
                   'Unspecified' : IDL.Null,
                 }),
+                'payload_text_rendering' : IDL.Opt(IDL.Text),
                 'tally' : IDL.Record({
                   'no' : IDL.Nat64,
                   'yes' : IDL.Nat64,
@@ -520,6 +521,7 @@ export const Notification = IDL.Variant({
                   'Adopted' : IDL.Null,
                   'Unspecified' : IDL.Null,
                 }),
+                'payload_text_rendering' : IDL.Opt(IDL.Text),
                 'tally' : IDL.Record({
                   'no' : IDL.Nat64,
                   'yes' : IDL.Nat64,
@@ -919,6 +921,7 @@ export const Notification = IDL.Variant({
                   'Adopted' : IDL.Null,
                   'Unspecified' : IDL.Null,
                 }),
+                'payload_text_rendering' : IDL.Opt(IDL.Text),
                 'tally' : IDL.Record({
                   'no' : IDL.Nat64,
                   'yes' : IDL.Nat64,
@@ -1318,6 +1321,7 @@ export const Notification = IDL.Variant({
                   'Adopted' : IDL.Null,
                   'Unspecified' : IDL.Null,
                 }),
+                'payload_text_rendering' : IDL.Opt(IDL.Text),
                 'tally' : IDL.Record({
                   'no' : IDL.Nat64,
                   'yes' : IDL.Nat64,
