@@ -42,6 +42,7 @@
     import InitialGroupMessage from "./InitialGroupMessage.svelte";
     import { pathParams } from "../../stores/routing";
     import { push } from "svelte-spa-router";
+    import { isSafari } from "utils/devices";
 
     // todo - these thresholds need to be relative to screen height otherwise things get screwed up on (relatively) tall screens
     const MESSAGE_LOAD_THRESHOLD = 400;
@@ -84,6 +85,9 @@
     let loadingPrev = false;
     let loadingNew = false;
 
+    // we want to track whether the loading was initiated by a scroll event or not
+    let loadingFromScroll = false;
+
     // treat this as if it might be null so we don't get errors when it's unmounted
     let messagesDiv: HTMLDivElement | undefined;
     let messagesDivHeight: number;
@@ -96,6 +100,7 @@
     let insideFromBottomThreshold: boolean = true;
     let morePrevAvailable = false;
     let previousScrollHeight: number | undefined = undefined;
+    let previousScrollTop: number | undefined = undefined;
     let interrupt = false;
 
     onMount(() => {
@@ -169,6 +174,12 @@
         client.retrySendMessage(chat.chatId, ev.detail, events, undefined);
     }
 
+    /**
+     * before update is not reliable. The events have already been updated and rendered when this fires. Don't use it for anything.
+     * Loading new messages is not a fine grained enough event on which to adjust scrolling.
+     * We *only* want to consider adjusting the scroll position when new messages have been loaded in response scrolling by the user (or recursion thereafter)
+     */
+
     function clientEvent(ev: Event): void {
         if (ev instanceof LoadedNewMessages) {
             onLoadedNewMessages(ev.detail);
@@ -187,7 +198,10 @@
         }
     }
 
-    beforeUpdate(() => (previousScrollHeight = messagesDiv?.scrollHeight));
+    beforeUpdate(() => {
+        previousScrollHeight = messagesDiv?.scrollHeight;
+        previousScrollTop = messagesDiv?.scrollTop;
+    });
 
     afterUpdate(() => {
         setIfInsideFromBottomThreshold();
@@ -332,18 +346,7 @@
             return;
         }
 
-        if (shouldLoadPreviousMessages()) {
-            loadingPrev = true;
-            client.loadPreviousMessages(chat.chatId);
-        }
-
-        if (shouldLoadNewMessages()) {
-            // Note - this fires even when we have entered our own message. This *seems* wrong but
-            // it is actually correct because we do want to load our own messages from the server
-            // so that any incorrect indexes are corrected and only the right thing goes in the cache
-            loadingNew = true;
-            client.loadNewMessages(chat.chatId);
-        }
+        loadMoreIfRequired(true);
 
         setIfInsideFromBottomThreshold();
     }
@@ -397,7 +400,7 @@
                 expectedScrollTop = undefined;
                 scrollToMessageIndex(messageIndex, false, true);
             })
-            .then(loadMoreIfRequired);
+            .then(() => loadMoreIfRequired());
     }
 
     export function externalGoToMessage(messageIndex: number): void {
@@ -411,36 +414,42 @@
             .then(() => {
                 expectedScrollTop = messagesDiv?.scrollTop ?? 0;
             })
-            .then(() => (loadingPrev = false))
-            .then(loadMoreIfRequired);
+            .then(() => (loadingFromScroll = loadingPrev = false))
+            .then(() => loadMoreIfRequired());
     }
 
     function onLoadedNewMessages(newLatestMessage: boolean) {
         tick()
             .then(() => {
                 setIfInsideFromBottomThreshold();
-                if (newLatestMessage && insideFromBottomThreshold) {
+                if (
+                    loadingFromScroll &&
+                    isSafari && // unfortunate
+                    insideFromBottomThreshold &&
+                    previousScrollHeight !== undefined &&
+                    previousScrollTop !== undefined &&
+                    messagesDiv !== undefined
+                ) {
+                    // after loading new content below the viewport, chrome, firefox and edge will automatically maintain scroll position
+                    // safari DOES NOT so we need to try to adjust it
+                    const clientHeightChange = messagesDiv.scrollHeight - previousScrollHeight;
+                    if (clientHeightChange > 0) {
+                        // if the height has changed we update the scroll position to whatever it was *before* the render _minus_ the clientHeightChange
+                        interruptScroll(() => {
+                            if (messagesDiv !== undefined) {
+                                messagesDiv.scrollTop =
+                                    (previousScrollTop ?? 0) - clientHeightChange;
+                                console.log("scrollTop updated to " + messagesDiv.scrollTop);
+                            }
+                        });
+                    }
+                } else if (newLatestMessage && insideFromBottomThreshold) {
                     // only scroll if we are now within threshold from the bottom
                     scrollBottom("smooth");
-                } else if (insideFromBottomThreshold && previousScrollHeight !== undefined) {
-                    // if we are still inside the bottom threshold after loading new events
-                    // we take this to mean that the scroll position has not been adjusted automatically
-                    // chrome *does*, iOS does not - still not perfect on iOS, but it's an improvement
-                    if (messagesDiv !== undefined) {
-                        const clientHeightChange = messagesDiv.scrollHeight - previousScrollHeight;
-                        if (clientHeightChange > 0) {
-                            interruptScroll(() => {
-                                if (messagesDiv !== undefined) {
-                                    messagesDiv.scrollTop = -clientHeightChange;
-                                    console.log("scrollTop updated to " + messagesDiv.scrollTop);
-                                }
-                            });
-                        }
-                    }
                 }
             })
-            .then(() => (loadingNew = false))
-            .then(loadMoreIfRequired);
+            .then(() => (loadingFromScroll = loadingNew = false))
+            .then(() => loadMoreIfRequired());
     }
 
     // Checks if a key already exists for this group, if so, that key will be reused so that Svelte is able to match the
@@ -508,13 +517,15 @@
      * Note that both loading new events and loading previous events can themselves trigger more "recursion" if
      * there *still* are not enough visible events 🤯
      */
-    function loadMoreIfRequired() {
+    function loadMoreIfRequired(fromScroll = false) {
         if (shouldLoadNewMessages()) {
             loadingNew = true;
+            loadingFromScroll = fromScroll;
             client.loadNewMessages(chat.chatId);
         }
         if (shouldLoadPreviousMessages()) {
             loadingPrev = true;
+            loadingFromScroll = fromScroll;
             client.loadPreviousMessages(chat.chatId);
         }
     }

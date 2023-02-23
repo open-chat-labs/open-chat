@@ -5,6 +5,7 @@ export const isTouchDevice: boolean =
     ("ontouchstart" in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0);
 
 export const mobileOperatingSystem = getMobileOperatingSystem();
+export const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 
 /**
  * Determine the mobile operating system.
