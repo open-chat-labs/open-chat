@@ -309,7 +309,7 @@ export const threadEvents = derived(
     }
 );
 
-export const serverEventsStore = createDerivedPropStore<ChatSpecificState, "serverEvents">(
+const serverEventsStore = createDerivedPropStore<ChatSpecificState, "serverEvents">(
     chatStateStore,
     "serverEvents",
     () => []

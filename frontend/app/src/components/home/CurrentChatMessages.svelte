@@ -174,12 +174,6 @@
         client.retrySendMessage(chat.chatId, ev.detail, events, undefined);
     }
 
-    /**
-     * before update is not reliable. The events have already been updated and rendered when this fires. Don't use it for anything.
-     * Loading new messages is not a fine grained enough event on which to adjust scrolling.
-     * We *only* want to consider adjusting the scroll position when new messages have been loaded in response scrolling by the user (or recursion thereafter)
-     */
-
     function clientEvent(ev: Event): void {
         if (ev instanceof LoadedNewMessages) {
             onLoadedNewMessages(ev.detail);

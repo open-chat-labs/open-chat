@@ -30,7 +30,6 @@ import {
     selectedThreadRootMessageIndex,
     chatsInitialised,
     chatsLoading,
-    serverEventsStore,
 } from "./stores/chat";
 import { remainingStorage } from "./stores/storage";
 import { userCreatedStore } from "./stores/userCreated";
@@ -47,7 +46,6 @@ export class LiveState {
     selectedChat: ChatSummary | undefined;
     selectedServerChat: ChatSummary | undefined;
     events!: EventWrapper<ChatEvent>[];
-    serverEvents!: EventWrapper<ChatEvent>[];
     selectedAuthProvider!: AuthProvider;
     userCreated!: boolean;
     userStore!: UserLookup;
@@ -84,7 +82,6 @@ export class LiveState {
         groupPreviewsStore.subscribe((data) => (this.groupPreviews = data));
         selectedChatId.subscribe((data) => (this.selectedChatId = data));
         eventsStore.subscribe((data) => (this.events = data));
-        serverEventsStore.subscribe((data) => (this.serverEvents = data));
         selectedChatStore.subscribe((data) => (this.selectedChat = data));
         selectedServerChatStore.subscribe((data) => (this.selectedServerChat = data));
         currentChatReplyingTo.subscribe((data) => (this.currentChatReplyingTo = data));
