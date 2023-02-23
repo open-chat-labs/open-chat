@@ -1,0 +1,13 @@
+[package]
+name = "cycles_dispenser_client"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+cycles_dispenser_canister = { path = "../../canisters/cycles_dispenser/api" }
+ic-cdk = { workspace = true }
+ic-cdk-timers = { workspace = true }
+tracing = { workspace = true }
+types = { path = "../types" }

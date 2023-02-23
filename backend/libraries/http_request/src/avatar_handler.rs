@@ -14,6 +14,7 @@ pub fn get_avatar(requested_avatar_id: Option<u128>, avatar: &Option<Avatar>) ->
                         HeaderField("Cache-Control".to_string(), CACHE_HEADER_VALUE.to_owned()),
                     ],
                     body: Cow::Owned(avatar.data.clone()),
+                    streaming_strategy: None,
                 }
             } else {
                 let location = build_avatar_location(avatar.id);

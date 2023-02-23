@@ -622,8 +622,9 @@
             </p>
             <p>
                 Each founding developer will receive 5% of the CHAT tokens as a basket of 5 equal
-                value neurons all with a dissolve delay of 1 month but with an additional "vesting
-                period" of 0, 1, 2, 3, and 4 years respectively.
+                value neurons. The first will have zero dissolve delay. The remaining 4 will each 
+                have a dissolve delay of 1 month but with an additional "vesting period" of 1, 2, 
+                3, and 4 years respectively.
             </p>
             <p>
                 DFINITY will receive 8% of the CHAT tokens as a basket of 4 equal neurons each with
@@ -637,8 +638,8 @@
                 OpenChat successful.
             </p>
             <p>
-                As these founder/funder neurons all have a relatively short dissolve delay of 1
-                month which cannot be increased, this ensures a reduced voting power compared to the
+                As these founder/funder neurons have a relatively short dissolve delay of 1 month 
+                which cannot be increased, this ensures a reduced voting power compared to the
                 community so that governance is properly decentralized.
             </p>
             <GoogleChart
@@ -711,13 +712,13 @@
                 <div>The ICP to come from the Community Fund</div>
                 <div>333,333</div>
                 <div>End date of sale (unless maximum ICP raised sooner)</div>
-                <div>6th March 2023 at 12:00 (noon) GMT</div>
+                <div>14th March 2023 at 12:00 (noon) GMT (TBC)</div>
                 <div>Minimum number of sale participants</div>
-                <div>1000</div>
+                <div>500</div>
                 <div>Minimum ICP per buyer</div>
                 <div>1</div>
                 <div>Maximum ICP per buyer</div>
-                <div>150,000</div>
+                <div>100,000</div>
             </div>
 
             <HashLinkTarget on:copyUrl={onCopyUrl} id="5-3-1">Valuation range</HashLinkTarget>
@@ -936,12 +937,12 @@
             </p>
             <p>
                 After the decentralization sale, participants will receive a basket of neurons of
-                varying dissolve delays with only 1/13 being immediately liquid. The voting reward
-                rate, initialized to 5%, is expected to encourage token holders to lock up a certain
+                varying dissolve delays with only 1/5 being immediately liquid. The voting reward
+                rate, initialized to 2.5%, is expected to encourage token holders to lock up a certain
                 proportion of tokens thus, at least temporarily, removing them from the liquid
-                supply. In the case of the seed funders, every neuron has a 1 year vesting period
-                before it can even start dissolving. In the case of the founding dev team, every
-                neuron has a 3 year vesting period.
+                supply. In the case of the seed funders, their neurons have vesting periods from 6-24 
+                momths before they can even start dissolving. In the case of the founding dev team, 
+                the vesting periods are from 0-4 years.
             </p>
             <p>
                 There are various tokenomics parameters which can affect the proportion of CHAT that
@@ -1008,29 +1009,7 @@
     }
 
     .list {
-        text-align: left;
-        list-style: none;
-        margin: 0 0 toRem(12) toRem(22);
-        padding: 0;
-        position: relative;
-
-        > li {
-            &:before {
-                position: absolute;
-                content: "\25AA";
-                left: toRem(-25);
-                color: #23a2ee;
-            }
-        }
-
-        ul {
-            margin-top: toRem(8);
-            list-style: disc;
-
-            > li {
-                margin-left: toRem(16);
-            }
-        }
+        @include bullet_list();
     }
 
     .header {

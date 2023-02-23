@@ -245,20 +245,7 @@
     }
 
     .list {
-        text-align: left;
-        list-style: none;
-        margin: 0 0 toRem(12) toRem(22);
-        padding: 0;
-        position: relative;
-
-        > li {
-            &:before {
-                position: absolute;
-                content: "\25AA";
-                left: toRem(-25);
-                color: #23a2ee;
-            }
-        }
+        @include bullet_list();
     }
 
     .body {

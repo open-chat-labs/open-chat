@@ -22,9 +22,8 @@ Total token supply: 100 million CHAT tokens
 
 Initially distributed:
 - 52%: Reserved for the SNS treasury & under control of the OpenChat DAO
-- 16.7%: To be distributed by the NNS run decentralization sale
+- 25%: To be distributed by the NNS run decentralization sale which includes the community fund
 - 15%: Allocated to the OpenChat dev team which vests over 4 years
-- 8.3%: Allocated to the _Community Fund_ during the decentralization sale
 - 8%: Allocated to DFINITY for providing seed funding which vests over 2 years
 
 Ledger transaction fee: 0.001 CHAT tokens
@@ -34,7 +33,7 @@ For more information on the initial token allocation please [read here](https://
 # Governance
 
 - Each decentralization sale participant (including the commnity fund) will receive a basket of 5 equal value CHAT neurons with dissolve delays of 0, 3, 6, 9 and 12 months respectively
-- The founding dev team will receive a basket of 5 neurons all with a dissolve delay of 1 month but with vesting periods of 0, 1, 2, 3 and 4 years respectively
+- The founding dev team will receive a basket of 5 neurons, the first with zero dissolve delay, and the rest with a dissolve delay of 1 month but with vesting periods of 1, 2, 3 and 4 years respectively
 - DFINITY will receive a basket of 4 neurons all with a dissolve delay of 1 month but with vesting periods of 6, 12, 18 and 24 months respectively
 
 The governance parameters for OpenChat are proposed to be initially set as:
@@ -53,16 +52,16 @@ These parameters can be verified by querying the governance canister's get_nervo
 
 # Decentralization Sale
 
-25% of the total supply of tokens are proposed to be distributed via an SNS decentralization sale. The sale will start when this proposal is accepted and is scheduled to conclude end of day Tuesday 14th March UTC. If the maximum number of ICP configured below is raised before that date the sale will conclude earlier.
+25% of the total supply of tokens are proposed to be distributed via an SNS decentralization sale. The sale will start when this proposal is accepted and is scheduled to conclude midday on Tuesday 14th March UTC. If the maximum number of ICP configured below is raised before that date the sale will conclude earlier.
 
 Sale participation parameters
 
 - Min participation: 1 ICP
-- Max participation: 150,000 ICP
+- Max participation: 100,000 ICP
 - Max to be raised: 1,000,000 ICP
 - Min to be raised: 500,000 ICP
 - From Communituy Fund: 333,333 ICP
-- Min participants: 100
+- Min participants: 500
 
 The sale is open to anyone. Participation is via the launchpad in the NNS front end: https://nns.ic0.app/.
 
@@ -75,7 +74,7 @@ Top-level canisters controlled by the [OpenChat SNS root canister](https://dashb
 - 1 UserIndex (4bkt6-4aaaa-aaaaf-aaaiq-cai)
 - 1 GroupIndex (4ijyc-kiaaa-aaaaf-aaaja-cai)
 - 1 NotificationsIndex (4glvk-ryaaa-aaaaf-aaaia-cai)
-- 1 OpenStorageIndex (rturd-qaaaa-aaaaf-aabaq-cai)
+- 1 StorageIndex (rturd-qaaaa-aaaaf-aabaq-cai)
 - 1 OnlineUsers (3vlw6-fiaaa-aaaaf-aaa3a-cai)
 - 1 ProposalsBot (iywa7-ayaaa-aaaaf-aemga-cai)
 - 1 CyclesDispenser (gonut-hqaaa-aaaaf-aby7a-cai)
@@ -84,7 +83,7 @@ Comntrolled by top-level canisters
 - 1 LocalUserIndex per subnet
 - 1 LocalGroupIndex per subnet
 - 1 Notification canister per subnet
-- Several OpenStorageBuckets per subnet
+- Several StorageBuckets per subnet
 - 1 User canister per user
 - 1 Group canister per group
 

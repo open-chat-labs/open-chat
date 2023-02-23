@@ -1,0 +1,13 @@
+[package]
+name = "storage_bucket_client"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+futures = { workspace = true }
+storage_bucket_canister = { path = "../../canisters/storage_bucket/api" }
+storage_bucket_canister_c2c_client = { path = "../../canisters/storage_bucket/c2c_client" }
+ic-cdk = { workspace = true }
+types = { path = "../types" }

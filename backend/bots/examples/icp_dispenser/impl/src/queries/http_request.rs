@@ -35,6 +35,7 @@ fn http_request(request: HttpRequest) -> HttpResponse {
                 HeaderField("Content-Length".to_string(), body.len().to_string()),
             ],
             body: Cow::Owned(ByteBuf::from(body)),
+            streaming_strategy: None,
         }
     }
 

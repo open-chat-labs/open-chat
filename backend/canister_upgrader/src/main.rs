@@ -11,6 +11,9 @@ async fn main() {
     let identity = get_dfx_identity(&opts.controller);
 
     match opts.canister_to_upgrade {
+        CanisterName::CyclesDispenser => {
+            upgrade_cycles_dispenser_canister(identity, opts.url, opts.cycles_dispenser, opts.version).await
+        }
         CanisterName::Group => upgrade_group_canister(identity, opts.url, opts.group_index, opts.version).await,
         CanisterName::LocalGroupIndex => {
             upgrade_local_group_index_canister(identity, opts.url, opts.group_index, opts.version).await
@@ -25,6 +28,12 @@ async fn main() {
         CanisterName::OnlineUsers => upgrade_online_users_canister(identity, opts.url, opts.online_users, opts.version).await,
         CanisterName::ProposalsBot => {
             upgrade_proposals_bot_canister(identity, opts.url, opts.proposals_bot, opts.version).await
+        }
+        CanisterName::StorageBucket => {
+            upgrade_storage_bucket_canister(identity, opts.url, opts.storage_index, opts.version).await
+        }
+        CanisterName::StorageIndex => {
+            upgrade_storage_index_canister(identity, opts.url, opts.storage_index, opts.version).await
         }
         CanisterName::User => upgrade_user_canister(identity, opts.url, opts.user_index, opts.version).await,
         CanisterName::LocalUserIndex => {
@@ -43,6 +52,8 @@ struct Opts {
     notifications_index: CanisterId,
     online_users: CanisterId,
     proposals_bot: CanisterId,
+    storage_index: CanisterId,
+    cycles_dispenser: CanisterId,
     canister_to_upgrade: CanisterName,
     version: Version,
 }

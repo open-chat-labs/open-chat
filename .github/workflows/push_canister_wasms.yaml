@@ -20,6 +20,9 @@ jobs:
         with:
           role-to-assume: arn:aws:iam::253040722768:role/GitHubActions-PushCanisterWasms
           aws-region: us-east-1
+      - name: Set up GIT_COMMIT_ID environment variable
+        run: |
+          echo GIT_COMMIT_ID=$GITHUB_SHA >> $GITHUB_ENV
       - name: Build canister wasms
         run: ./scripts/docker-build.sh
       - name: Push canister wasms to S3

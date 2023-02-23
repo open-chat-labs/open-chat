@@ -1,13 +1,18 @@
 use crate::client::{create_canister, install_canister};
 use crate::rng::random_principal;
+use crate::utils::tick_many;
 use crate::{client, wasms, CanisterIds};
 use candid::Principal;
 use ic_state_machine_tests::StateMachine;
 use lazy_static::lazy_static;
 use std::sync::Mutex;
-use types::{CanisterId, Version};
+use storage_index_canister::init::CyclesDispenserConfig;
+use types::{CanisterId, Cycles, Version};
 
+const T: Cycles = 1_000_000_000_000;
 const NNS_GOVERNANCE_CANISTER_ID: CanisterId = Principal::from_slice(&[0, 0, 0, 0, 0, 0, 0, 1, 1, 1]);
+const NNS_LEDGER_CANISTER_ID: CanisterId = Principal::from_slice(&[0, 0, 0, 0, 0, 0, 0, 2, 1, 1]);
+const NNS_CMC_CANISTER_ID: CanisterId = Principal::from_slice(&[0, 0, 0, 0, 0, 0, 0, 4, 1, 1]);
 
 lazy_static! {
     static ref ENV: Mutex<Vec<TestEnv>> = Mutex::default();
@@ -54,22 +59,25 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
     let notifications_index_canister_id = create_canister(env, None);
     let online_users_canister_id = create_canister(env, None);
     let proposals_bot_canister_id = create_canister(env, None);
+    let storage_index_canister_id = create_canister(env, None);
     let cycles_dispenser_canister_id = create_canister(env, None);
-    let open_storage_index_canister_id = create_canister(env, None);
 
     let local_user_index_canister_id = create_canister(env, Some(vec![user_index_canister_id]));
     let local_group_index_canister_id = create_canister(env, Some(vec![group_index_canister_id]));
     let notifications_canister_id = create_canister(env, Some(vec![notifications_index_canister_id]));
 
+    let cycles_dispenser_canister_wasm = wasms::CYCLES_DISPENSER.clone();
     let group_canister_wasm = wasms::GROUP.clone();
-    let local_group_index_canister_wasm = wasms::LOCAL_GROUP_INDEX.clone();
     let group_index_canister_wasm = wasms::GROUP_INDEX.clone();
+    let local_group_index_canister_wasm = wasms::LOCAL_GROUP_INDEX.clone();
+    let local_user_index_canister_wasm = wasms::LOCAL_USER_INDEX.clone();
     let notifications_canister_wasm = wasms::NOTIFICATIONS.clone();
     let notifications_index_canister_wasm = wasms::NOTIFICATIONS_INDEX.clone();
     let online_users_canister_wasm = wasms::ONLINE_USERS.clone();
     let proposals_bot_canister_wasm = wasms::PROPOSALS_BOT.clone();
+    let storage_bucket_canister_wasm = wasms::STORAGE_BUCKET.clone();
+    let storage_index_canister_wasm = wasms::STORAGE_INDEX.clone();
     let user_canister_wasm = wasms::USER.clone();
-    let local_user_index_canister_wasm = wasms::LOCAL_USER_INDEX.clone();
     let user_index_canister_wasm = wasms::USER_INDEX.clone();
 
     let user_index_init_args = user_index_canister::init::Args {
@@ -79,7 +87,7 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
         group_index_canister_id,
         notifications_index_canister_id,
         cycles_dispenser_canister_id,
-        open_storage_index_canister_id,
+        storage_index_canister_id,
         proposals_bot_user_id: proposals_bot_canister_id.into(),
         local_group_index_canister_ids: vec![local_group_index_canister_id],
         wasm_version: Version::min(),
@@ -145,13 +153,52 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
         proposals_bot_init_args,
     );
 
-    // let open_storage_index_canister_wasm = get_open_storage_canister_wasm(OpenStorageCanisterName::Index, version);
-    // let open_storage_index_init_args = OpenStorageInitArgs {
-    //     service_principals: vec![principal, canister_ids.user_index, canister_ids.group_index],
-    //     bucket_canister_wasm: get_open_storage_canister_wasm(OpenStorageCanisterName::Bucket, version),
-    //     wasm_version: version,
-    //     test_mode,
-    // };
+    let storage_index_init_args = storage_index_canister::init::Args {
+        governance_principals: vec![controller],
+        user_controllers: vec![user_index_canister_id, group_index_canister_id],
+        bucket_canister_wasm: storage_bucket_canister_wasm,
+        cycles_dispenser_config: CyclesDispenserConfig {
+            canister_id: cycles_dispenser_canister_id,
+            min_cycles_balance: 200 * T,
+        },
+        wasm_version: Version::min(),
+        test_mode: true,
+    };
+    install_canister(
+        env,
+        storage_index_canister_id,
+        storage_index_canister_wasm,
+        storage_index_init_args,
+    );
+
+    let cycles_dispenser_init_args = cycles_dispenser_canister::init::Args {
+        governance_principals: vec![controller],
+        canisters: vec![
+            user_index_canister_id,
+            group_index_canister_id,
+            notifications_index_canister_id,
+            local_user_index_canister_id,
+            local_group_index_canister_id,
+            notifications_canister_id,
+            online_users_canister_id,
+            proposals_bot_canister_id,
+            storage_index_canister_id,
+        ],
+        max_top_up_amount: 20 * T,
+        min_interval: 5 * 60 * 1000, // 5 minutes
+        min_cycles_balance: 200 * T,
+        icp_burn_amount_e8s: 1_000_000_000, // 10 ICP
+        ledger_canister: NNS_LEDGER_CANISTER_ID,
+        cycles_minting_canister: NNS_CMC_CANISTER_ID,
+        wasm_version: Version::min(),
+        test_mode: true,
+    };
+    install_canister(
+        env,
+        cycles_dispenser_canister_id,
+        cycles_dispenser_canister_wasm,
+        cycles_dispenser_init_args,
+    );
 
     let add_local_group_index_canister_response = client::group_index::add_local_group_index_canister(
         env,
@@ -205,6 +252,9 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
         "{add_notifications_canister_response:?}"
     );
 
+    // Tick a load of times so that all of the child canisters have time to get installed
+    tick_many(env, 30);
+
     CanisterIds {
         user_index: user_index_canister_id,
         group_index: group_index_canister_id,
@@ -214,6 +264,6 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
         notifications: notifications_canister_id,
         online_users: online_users_canister_id,
         proposals_bot: proposals_bot_canister_id,
-        open_storage_index: open_storage_index_canister_id,
+        storage_index: storage_index_canister_id,
     }
 }

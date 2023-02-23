@@ -18,5 +18,6 @@ pub fn encode_logs(entries: Vec<LogEntry>, since: TimestampMillis) -> HttpRespon
             HeaderField("Content-Length".to_string(), body.len().to_string()),
         ],
         body: Cow::Owned(ByteBuf::from(body)),
+        streaming_strategy: None,
     }
 }

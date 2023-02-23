@@ -1,7 +1,7 @@
 use crate::model::challenges::Challenges;
 use crate::model::local_user_index_map::LocalUserIndex;
-use crate::model::open_storage_user_sync_queue::OpenStorageUserSyncQueue;
 use crate::model::set_user_suspended_queue::SetUserSuspendedQueue;
+use crate::model::storage_index_user_sync_queue::OpenStorageUserSyncQueue;
 use crate::model::user_map::UserMap;
 use crate::model::user_principal_migration_queue::UserPrincipalMigrationQueue;
 use candid::Principal;
@@ -132,8 +132,10 @@ struct Data {
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub total_cycles_spent_on_canisters: Cycles,
     pub cycles_dispenser_canister_id: CanisterId,
-    pub open_storage_index_canister_id: CanisterId,
-    pub open_storage_user_sync_queue: OpenStorageUserSyncQueue,
+    #[serde(alias = "open_storage_index_canister_id")]
+    pub storage_index_canister_id: CanisterId,
+    #[serde(alias = "open_storage_user_sync_queue")]
+    pub storage_index_user_sync_queue: OpenStorageUserSyncQueue,
     pub user_index_event_sync_queue: CanisterEventSyncQueue<LocalUserIndexEvent>,
     pub user_principal_migration_queue: UserPrincipalMigrationQueue,
     pub super_admins: HashSet<UserId>,
@@ -154,7 +156,7 @@ impl Data {
         group_index_canister_id: CanisterId,
         notifications_index_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
-        open_storage_index_canister_id: CanisterId,
+        storage_index_canister_id: CanisterId,
         proposals_bot_user_id: UserId,
         local_group_index_canister_ids: Vec<CanisterId>,
         test_mode: bool,
@@ -171,8 +173,8 @@ impl Data {
             cycles_dispenser_canister_id,
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             total_cycles_spent_on_canisters: 0,
-            open_storage_index_canister_id,
-            open_storage_user_sync_queue: OpenStorageUserSyncQueue::default(),
+            storage_index_canister_id,
+            storage_index_user_sync_queue: OpenStorageUserSyncQueue::default(),
             user_index_event_sync_queue: CanisterEventSyncQueue::default(),
             user_principal_migration_queue: UserPrincipalMigrationQueue::default(),
             super_admins: HashSet::new(),
@@ -259,8 +261,8 @@ impl Default for Data {
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             cycles_dispenser_canister_id: Principal::anonymous(),
             total_cycles_spent_on_canisters: 0,
-            open_storage_index_canister_id: Principal::anonymous(),
-            open_storage_user_sync_queue: OpenStorageUserSyncQueue::default(),
+            storage_index_canister_id: Principal::anonymous(),
+            storage_index_user_sync_queue: OpenStorageUserSyncQueue::default(),
             user_index_event_sync_queue: CanisterEventSyncQueue::default(),
             user_principal_migration_queue: UserPrincipalMigrationQueue::default(),
             super_admins: HashSet::new(),

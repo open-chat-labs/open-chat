@@ -59,7 +59,7 @@ impl Job for HardDeleteMessageContentJob {
                             false
                         }
                     });
-                    ic_cdk::spawn(open_storage_bucket_client::delete_files(files_to_delete));
+                    ic_cdk::spawn(storage_bucket_client::delete_files(files_to_delete));
                 }
             }
         });
@@ -68,7 +68,7 @@ impl Job for HardDeleteMessageContentJob {
 
 impl Job for DeleteFileReferencesJob {
     fn execute(&self) {
-        ic_cdk::spawn(open_storage_bucket_client::delete_files(self.files.clone()));
+        ic_cdk::spawn(storage_bucket_client::delete_files(self.files.clone()));
     }
 }
 

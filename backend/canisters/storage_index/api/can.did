@@ -1,0 +1,149 @@
+import "../../../libraries/types/can.did";
+
+type AddBucketCanisterArgs =
+    record {
+        canister_id: CanisterId;
+    };
+
+type AddBucketCanisterResponse =
+    variant {
+        Success;
+        BucketAlreadyAdded;
+        InternalError: text;
+    };
+
+type AddOrUpdateUsersArgs =
+    record {
+        users: vec UserConfig;
+    };
+
+type UserConfig =
+    record {
+        user_id: UserId;
+        byte_limit: nat64;
+    };
+
+type AddOrUpdateUsersResponse =
+    variant {
+        Success;
+    };
+
+type RemoveUserArgs =
+    record {
+        user_id: UserId;
+    };
+
+type RemoveUserResponse = 
+    variant {
+        Success;
+    };
+
+type RemoveAccessorArgs =
+    record {
+        accessor_id: AccessorId;
+    };
+
+type RemoveAccessorResponse = 
+    variant {
+        Success;
+    };
+
+type SetBucketFullArgs =
+    record {
+        bucket: CanisterId;
+        full: bool;
+    };
+
+type SetBucketFullResponse =
+    variant {
+        Success;
+    };
+
+type UpdateUserIdArgs =
+    record {
+        old_user_id: UserId;
+        new_user_id: UserId;
+    };
+
+type UpdateUserIdResponse =
+    variant {
+        Success;
+        UserNotFound;
+        UserIdAlreadyExists;
+    };
+
+type AllocatedBucketArgs =
+    record {
+        file_hash: Hash;
+        file_size: nat64;
+        file_id_seed: opt nat;
+    };
+
+type AllocatedBucketResponse =
+    variant {
+        Success: AllocatedBucketSuccessResult;
+        AllowanceExceeded: ProjectedAllowance;
+        UserNotFound;
+        BucketUnavailable;
+    };
+
+type AllocatedBucketSuccessResult =
+    record {
+        canister_id: CanisterId;
+        file_id: FileId;
+        chunk_size: nat32;
+        byte_limit: nat64;
+        bytes_used: nat64;
+        bytes_used_after_upload: nat64;
+        projected_allowance: ProjectedAllowance;
+    };
+
+type ProjectedAllowance =
+    record {
+        byte_limit: nat64;
+        bytes_used: nat64;
+        bytes_used_after_upload: nat64;
+        bytes_used_after_operation: nat64;
+    };
+
+type CanForwardArgs =
+    record {
+        file_hash: Hash;
+        file_size: nat64;
+    };
+
+type CanForwardResponse =
+    variant {
+        Success: ProjectedAllowance;
+        AllowanceExceeded: ProjectedAllowance;
+        UserNotFound;
+    };
+
+type UserArgs =
+    record {
+    };
+
+type UserResponse = 
+    variant {
+        Success: UserRecord;
+        UserNotFound;
+    };
+
+type UserRecord = 
+    record {
+        byte_limit: nat64;
+        bytes_used: nat64;
+    };
+
+service: {
+    add_bucket_canister: (AddBucketCanisterArgs) -> (AddBucketCanisterResponse);
+    add_or_update_users: (AddOrUpdateUsersArgs) -> (AddOrUpdateUsersResponse);
+    remove_user: (RemoveUserArgs) -> (RemoveUserResponse);
+    remove_accessor: (RemoveAccessorArgs) -> (RemoveAccessorResponse);
+    set_bucket_full: (SetBucketFullArgs) -> (SetBucketFullResponse);
+    update_user_id: (UpdateUserIdArgs) -> (UpdateUserIdResponse);
+
+    allocated_bucket_v2: (AllocatedBucketArgs) -> (AllocatedBucketResponse) query;
+    can_forward: (CanForwardArgs) -> (CanForwardResponse) query;
+    user: (UserArgs) -> (UserResponse) query;
+}

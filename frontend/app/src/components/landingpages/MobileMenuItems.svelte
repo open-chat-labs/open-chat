@@ -8,6 +8,8 @@
     const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
 
+    export let showBlog: boolean;
+
     $: identityState = client.identityState;
     $: selectedAuthProviderStore = client.selectedAuthProviderStore;
     $: path = $location;
@@ -51,6 +53,11 @@
         <Link selected={path === "/architecture"} mode={"menu"} path="architecture"
             >Architecture</Link>
     </div>
+    {#if showBlog}
+        <div class="menu-item">
+            <Link selected={path === "/blog"} mode={"menu"} path="blog">Blog</Link>
+        </div>
+    {/if}
     <div class="menu-item">
         <Link on:linkClicked={launch} mode={"menu"}>Launch app</Link>
     </div>

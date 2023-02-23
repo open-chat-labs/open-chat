@@ -9,6 +9,8 @@ export function routes(logout: () => Promise<void>): any {
         "/home": LandingPage,
         "/features": LandingPage,
         "/roadmap": LandingPage,
+        "/blog": LandingPage,
+        "/blog/*": LandingPage,
         "/whitepaper": LandingPage,
         "/architecture": LandingPage,
         "/:chatId?/:messageIndex?/:threadMessageIndex?": wrap({

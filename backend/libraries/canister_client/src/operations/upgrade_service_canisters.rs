@@ -103,6 +103,44 @@ pub async fn upgrade_proposals_bot_canister(
     println!("Proposals bot canister upgraded");
 }
 
+pub async fn upgrade_storage_index_canister(
+    identity: BasicIdentity,
+    url: String,
+    storage_index_canister_id: CanisterId,
+    version: Version,
+) {
+    upgrade_top_level_canister(
+        identity,
+        url,
+        storage_index_canister_id,
+        version,
+        storage_index_canister::post_upgrade::Args { wasm_version: version },
+        CanisterName::StorageIndex,
+    )
+    .await;
+
+    println!("Storage index canister upgraded");
+}
+
+pub async fn upgrade_cycles_dispenser_canister(
+    identity: BasicIdentity,
+    url: String,
+    cycles_dispenser_canister_id: CanisterId,
+    version: Version,
+) {
+    upgrade_top_level_canister(
+        identity,
+        url,
+        cycles_dispenser_canister_id,
+        version,
+        cycles_dispenser_canister::post_upgrade::Args { wasm_version: version },
+        CanisterName::CyclesDispenser,
+    )
+    .await;
+
+    println!("Cycles dispenser canister upgraded");
+}
+
 pub async fn upgrade_local_group_index_canister(
     identity: BasicIdentity,
     url: String,
@@ -245,6 +283,36 @@ pub async fn upgrade_notifications_canister(
         panic!("{response:?}");
     }
     println!("Notifications canister wasm upgraded to version {version}");
+}
+
+pub async fn upgrade_storage_bucket_canister(
+    identity: BasicIdentity,
+    url: String,
+    storage_index_canister_id: CanisterId,
+    version: Version,
+) {
+    let agent = build_ic_agent(url, identity).await;
+    let canister_wasm = get_canister_wasm(CanisterName::StorageBucket, version);
+    let args = UpgradeCanisterWasmArgs {
+        wasm: CanisterWasm {
+            version,
+            module: canister_wasm.module,
+        },
+        filter: None,
+        use_for_new_canisters: None,
+    };
+
+    let response = storage_index_canister_client::upgrade_bucket_canister_wasm(&agent, &storage_index_canister_id, &args)
+        .await
+        .unwrap();
+
+    if !matches!(
+        response,
+        storage_index_canister::upgrade_bucket_canister_wasm::Response::Success
+    ) {
+        panic!("{response:?}");
+    }
+    println!("Storage bucket canister wasm upgraded to version {version}");
 }
 
 async fn upgrade_top_level_canister<A: CandidType + Send + Sync>(
