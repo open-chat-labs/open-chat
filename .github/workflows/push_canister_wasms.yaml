@@ -23,7 +23,7 @@ jobs:
           aws-region: us-east-1
       - name: Build canister wasms
         env:
-          GIT_COMMIT_ID: ${GITHUB_SHA}
+          GIT_COMMIT_ID: ${{GITHUB_SHA}}
         run: ./scripts/docker-build.sh
       - name: Push canister wasms to S3
         run: |
