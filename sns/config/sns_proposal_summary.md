@@ -73,7 +73,7 @@ quill sns new-sale-ticket [OPTIONS] --amount-icp-e8s <AMOUNT_ICP_E8S>.
 
 The OpenChat dapp consists of a set of canister smart contracts:
 
-Top-level canisters controlled by the [OpenChat SNS root canister](https://dashboard.internetcomputer.org/canister/2ouva-viaaa-aaaaq-aaamq-cai)
+Top-level canisters controlled by the [OpenChat SNS root canister](https://dashboard.internetcomputer.org/canister/3e3x2-xyaaa-aaaaq-aaalq-cai)
 - 1 Website asset canister (6hsbt-vqaaa-aaaaf-aaafq-cai)
 - 1 UserIndex (4bkt6-4aaaa-aaaaf-aaaiq-cai)
 - 1 GroupIndex (4ijyc-kiaaa-aaaaf-aaaja-cai)
