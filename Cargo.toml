@@ -9,6 +9,7 @@ members = [
     "backend/bots/examples/sns1_airdrop/api",
     "backend/bots/examples/sns1_airdrop/impl",
     "backend/canister_installer",
+    "backend/canister_upgrade_proposal_builder",
     "backend/canister_upgrader",
     "backend/canisters/cycles_dispenser/api",
     "backend/canisters/cycles_dispenser/impl",
@@ -75,7 +76,6 @@ members = [
     "backend/notification_pusher/aws",
     "backend/notification_pusher/cli",
     "backend/notification_pusher/core",
-    "sns/scripts/proposals/build_upgrade_canister_proposal",
 ]
 
 [workspace.dependencies]

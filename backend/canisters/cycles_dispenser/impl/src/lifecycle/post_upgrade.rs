@@ -15,7 +15,7 @@ fn post_upgrade(args: Args) {
     let (data, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>) =
         deserialize_from_stable_memory(UPGRADE_BUFFER_SIZE).unwrap();
 
-    canister_logger::init_with_logs(false, logs, traces);
+    canister_logger::init_with_logs(data.test_mode, logs, traces);
 
     init_state(env, data, args.wasm_version);
 

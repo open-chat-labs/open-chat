@@ -1,4 +1,5 @@
 use crate::guards::caller_is_local_user_index;
+use crate::updates::leave_group;
 use crate::{mutate_state, openchat_bot, RuntimeState, PREMIUM_GROUP_CREATION_LIMIT};
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
@@ -49,6 +50,10 @@ fn process_event(event: Event, runtime_state: &mut RuntimeState) {
         Event::OpenChatBotMessage(content) => openchat_bot::send_message(*content, false, runtime_state),
         Event::UserJoinedGroup(ev) => {
             let now = runtime_state.env.now();
+
+            // Temporary hack
+            // TODO remove this
+            leave_group::commit(ev.chat_id, runtime_state);
 
             runtime_state
                 .data

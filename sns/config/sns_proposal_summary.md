@@ -33,7 +33,7 @@ For more information on the initial token allocation please [read here](https://
 # Governance
 
 - Each decentralization sale participant (including the Community Fund) will receive their tokens in a basket of 5 equal value CHAT neurons with dissolve delays of 0, 3, 6, 9 and 12 months respectively
-- The founding dev team will receive their tokens in a basket of 5 neurons, the first with zero dissolve delay, and the rest with a dissolve delay of 1 month but with vesting periods of 1, 2, 3 and 4 years respectively
+- The founding dev team will receive their tokens in a basket of 5 neurons, each with a 1 month dissolve delay, but with vesting periods of 1, 2, 3 and 4 years respectively
 - DFINITY will receive their tokens in a basket of 4 neurons all with a dissolve delay of 1 month but with vesting periods of 6, 12, 18 and 24 months respectively
 
 The governance parameters for OpenChat are proposed to be initially set as:
