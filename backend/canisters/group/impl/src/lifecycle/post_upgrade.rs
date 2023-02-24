@@ -7,6 +7,7 @@ use canister_tracing_macros::trace;
 use group_canister::post_upgrade::Args;
 use ic_cdk_macros::post_upgrade;
 use ic_stable_structures::reader::{BufferedReader, Reader};
+use std::time::Duration;
 use tracing::info;
 
 #[post_upgrade]
@@ -25,9 +26,11 @@ fn post_upgrade(args: Args) {
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
 
-    // TODO remove this
-    mutate_state(|state| {
-        state.data.participants.update_all_muted_dates(state.env.now());
-        handle_activity_notification(state);
+    ic_cdk_timers::set_timer(Duration::default(), || {
+        // TODO remove this
+        mutate_state(|state| {
+            state.data.participants.update_all_muted_dates(state.env.now());
+            handle_activity_notification(state);
+        });
     });
 }
