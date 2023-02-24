@@ -1,5 +1,5 @@
-use build_upgrade_canister_proposal::build;
-use build_upgrade_canister_proposal::Config;
+use canister_upgrade_proposal_builder::build;
+use canister_upgrade_proposal_builder::Config;
 use clap::Parser;
 use std::io;
 use std::io::Write;
