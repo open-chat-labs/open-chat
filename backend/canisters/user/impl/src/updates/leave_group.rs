@@ -37,7 +37,7 @@ async fn leave_group(args: Args) -> Response {
     }
 }
 
-fn commit(chat_id: ChatId, runtime_state: &mut RuntimeState) {
+pub(crate) fn commit(chat_id: ChatId, runtime_state: &mut RuntimeState) {
     let now = runtime_state.env.now();
 
     runtime_state.data.group_chats.remove(chat_id, now);

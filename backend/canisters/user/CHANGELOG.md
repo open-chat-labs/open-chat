@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Fixed
+
+- Rejoin 'Feature Requests' group if user was a member before it was reinstalled ([#3163](https://github.com/open-ic/open-chat/pull/3163))
+
 ## [[2.0.596](https://github.com/open-ic/open-chat/releases/tag/v2.0.596-user)] - 2023-02-16
 
 ### Changed
