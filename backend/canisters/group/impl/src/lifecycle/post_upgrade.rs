@@ -1,7 +1,6 @@
-use crate::activity_notifications::handle_activity_notification;
 use crate::lifecycle::{init_env, init_state, UPGRADE_BUFFER_SIZE};
 use crate::memory::get_upgrades_memory;
-use crate::{mutate_state, Data};
+use crate::Data;
 use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use group_canister::post_upgrade::Args;
@@ -24,10 +23,4 @@ fn post_upgrade(args: Args) {
     init_state(env, data, args.wasm_version);
 
     info!(version = %args.wasm_version, "Post-upgrade complete");
-
-    // TODO remove this
-    mutate_state(|state| {
-        state.data.participants.update_all_muted_dates(state.env.now());
-        handle_activity_notification(state);
-    });
 }
