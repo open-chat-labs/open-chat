@@ -1,9 +1,10 @@
 #!/bin/sh
 
-TITLE=$1
-URL=$2
-SUMMARY_PATH=$3
-VERSION=$4
+WASM_SRC=$1
+VERSION=$2
+TITLE=$3
+URL=$4
+SUMMARY_PATH=$5
 
 SUMMARY=`cat $SUMMARY_PATH`
 
@@ -16,4 +17,4 @@ SCRIPT_DIR=$(dirname "$SCRIPT")
 cd $SCRIPT_DIR
 
 # Submit the proposal
-./make_custom_upgrade_canister_proposal.sh "$TITLE" "$URL" "$SUMMARY" "$VERSION" $FUNCTION_ID $CANISTER
+../make_custom_upgrade_canister_proposal.sh $FUNCTION_ID $CANISTER $WASM_SRC "$VERSION" "$TITLE" "$URL" "$SUMMARY"
