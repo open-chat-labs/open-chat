@@ -56,7 +56,7 @@ struct UserDetails {
 
 fn user_details(runtime_state: &RuntimeState) -> UserDetails {
     let caller = runtime_state.env.caller();
-    let user = runtime_state.data.global_users.get_by_principal(&caller).unwrap();
+    let user = runtime_state.data.global_users.get(&caller).unwrap();
 
     UserDetails {
         user_id: user.user_id,
