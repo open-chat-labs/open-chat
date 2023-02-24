@@ -48,7 +48,7 @@ Voting Rewards: 2.5% of CHAT token supply minted annually
 - Max age for age bonus: 6 months
 - Max age bonus: 1.25x
 
-These parameters can be verified by querying the governance canister's get_nervous_system_parameters method at https://dashboard.internetcomputer.org/canister/<INSERT_GOVERNANCE_CANISTER_ID>
+These parameters can be verified by querying the governance canister's get_nervous_system_parameters method at https://dashboard.internetcomputer.org/canister/2jvtu-yqaaa-aaaaq-aaama-cai
 
 # Decentralization Sale
 
@@ -73,7 +73,7 @@ quill sns new-sale-ticket [OPTIONS] --amount-icp-e8s <AMOUNT_ICP_E8S>.
 
 The OpenChat dapp consists of a set of canister smart contracts:
 
-Top-level canisters controlled by the [OpenChat SNS root canister](https://dashboard.internetcomputer.org/canister/<INSERT_ROOT_CANISTER_ID>)
+Top-level canisters controlled by the [OpenChat SNS root canister](https://dashboard.internetcomputer.org/canister/2ouva-viaaa-aaaaq-aaamq-cai)
 - 1 Website asset canister (6hsbt-vqaaa-aaaaf-aaafq-cai)
 - 1 UserIndex (4bkt6-4aaaa-aaaaf-aaaiq-cai)
 - 1 GroupIndex (4ijyc-kiaaa-aaaaf-aaaja-cai)
