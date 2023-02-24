@@ -88,7 +88,7 @@ impl RuntimeState {
 struct Data {
     #[serde(alias = "service_principals")]
     pub governance_principals: HashSet<Principal>,
-    #[serde(skip_deserializing, default = "user_index")]
+    #[serde(default = "user_index")]
     pub user_controllers: HashSet<Principal>,
     pub bucket_canister_wasm: CanisterWasm,
     pub users: HashMap<Principal, UserRecordInternal>,
