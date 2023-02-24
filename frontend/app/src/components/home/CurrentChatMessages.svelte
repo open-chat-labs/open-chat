@@ -287,15 +287,32 @@
 
     function shouldLoadPreviousMessages() {
         morePrevAvailable = client.morePreviousMessagesAvailable(chat.chatId);
-        return !loadingPrev && calculateFromTop() < MESSAGE_LOAD_THRESHOLD && morePrevAvailable;
+        const insideLoadThreshold = calculateFromTop() < MESSAGE_LOAD_THRESHOLD;
+        const result = !loadingPrev && insideLoadThreshold && morePrevAvailable;
+        if (result) {
+            console.debug(
+                "SCROLL: shouldLoadPreviousMessages [loadingPrev] [insideLoadThreshold] [morePrevAvailable]",
+                loadingPrev,
+                insideLoadThreshold,
+                morePrevAvailable
+            );
+        }
+        return result;
     }
 
     function shouldLoadNewMessages() {
-        return (
-            !loadingNew &&
-            calculateFromBottom() < MESSAGE_LOAD_THRESHOLD &&
-            client.moreNewMessagesAvailable(chat.chatId)
-        );
+        const insideLoadThreshold = calculateFromBottom() < MESSAGE_LOAD_THRESHOLD;
+        const moreNewMessages = client.moreNewMessagesAvailable(chat.chatId);
+        const result = !loadingNew && insideLoadThreshold && moreNewMessages;
+        if (result) {
+            console.debug(
+                "SCROLL: shouldLoadNewMesages [loadingNew] [insideLoadThreshold] [moreNewMessages]",
+                loadingNew,
+                insideLoadThreshold,
+                moreNewMessages
+            );
+        }
+        return result;
     }
 
     let expectedScrollTop: number | undefined = undefined;
@@ -311,7 +328,7 @@
         if (!initialised) return;
 
         if (scrollLeapDetected()) {
-            console.log("scroll: position has leapt unacceptably", messagesDiv?.scrollTop);
+            console.debug("SCROLL: position has leapt unacceptably", messagesDiv?.scrollTop);
             interruptScroll(() => {
                 messagesDiv?.scrollTo({ top: expectedScrollTop, behavior: "auto" }); // this should trigger another call to onScroll
             });
@@ -433,7 +450,18 @@
                             if (messagesDiv !== undefined) {
                                 messagesDiv.scrollTop =
                                     (previousScrollTop ?? 0) - clientHeightChange;
-                                console.log("scrollTop updated to " + messagesDiv.scrollTop);
+                                console.debug(
+                                    "SCROLL: scrollTop updated to " + messagesDiv.scrollTop
+                                );
+
+                                // since we have adjusted scrollTop, we *also* need to re-evaluate whether we are inside the bottom threshold
+                                setIfInsideFromBottomThreshold();
+
+                                console.debug(
+                                    "SCROLL: [insideFromBottomThreshold] [shouldLoadNewMessages] ",
+                                    insideFromBottomThreshold,
+                                    shouldLoadNewMessages()
+                                );
                             }
                         });
                     }
