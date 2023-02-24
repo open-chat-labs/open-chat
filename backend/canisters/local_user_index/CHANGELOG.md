@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Consolidate code to install / upgrade canisters ([#3152](https://github.com/open-ic/open-chat/pull/3152))
 - Skip upgrades where new wasm version matches current version ([#3158](https://github.com/open-ic/open-chat/pull/3158))
-- Allow users or user canisters to pass the `is_caller_openchat_user` guard ([#3163](https://github.com/open-ic/open-chat/pull/3163))
+- Allow both users and user canisters to pass the `is_caller_openchat_user` guard ([#3163](https://github.com/open-ic/open-chat/pull/3163))
 
 ## [[2.0.595](https://github.com/open-ic/open-chat/releases/tag/v2.0.595-local_user_index)] - 2023-02-16
 
