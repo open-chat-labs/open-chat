@@ -781,16 +781,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "build_upgrade_canister_proposal"
-version = "0.1.0"
-dependencies = [
- "candid",
- "clap 4.1.4",
- "ic-sns-governance",
- "types",
-]
-
-[[package]]
 name = "bumpalo"
 version = "3.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1026,6 +1016,16 @@ dependencies = [
  "proc-macro2",
  "quote 1.0.23",
  "syn 1.0.107",
+]
+
+[[package]]
+name = "canister_upgrade_proposal_builder"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "clap 4.1.4",
+ "ic-sns-governance",
+ "types",
 ]
 
 [[package]]
