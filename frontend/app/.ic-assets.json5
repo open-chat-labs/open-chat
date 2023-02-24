@@ -1,0 +1,26 @@
+[
+    {
+        match: "**/*",
+        headers: {
+            "Permissions-Policy": "accelerometer=(), ambient-light-sensor=(), autoplay=*, battery=(), camera=*, cross-origin-isolated=(), display-capture=(), document-domain=(), encrypted-media=(), execution-while-not-rendered=(), execution-while-out-of-viewport=(), fullscreen=*, geolocation=(), gyroscope=(), keyboard-map=(), magnetometer=(), microphone=*, midi=(), navigation-override=(), payment=(), picture-in-picture=(), publickey-credentials-get=(), screen-wake-lock=(), sync-xhr=(), usb=(), web-share=*, xr-spatial-tracking=(), clipboard-read=*, clipboard-write=*, idle-detection=*",
+            "X-Frame-Options": "DENY",
+            "Referrer-Policy": "same-origin",
+            "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
+            "X-Content-Type-Options": "nosniff",
+            "X-XSS-Protection": "1; mode=block",
+        },
+        allow_raw_access: false,
+    },
+    {
+        match: "*.js",
+        headers: {
+            "Cache-Control": "max-age=31536000, immutable",
+        },
+    },
+    {
+        match: "*.css",
+        headers: {
+            "Cache-Control": "max-age=31536000, immutable",
+        },
+    },
+]
