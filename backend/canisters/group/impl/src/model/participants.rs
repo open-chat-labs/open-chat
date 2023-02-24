@@ -21,13 +21,6 @@ pub struct Participants {
 
 #[allow(clippy::too_many_arguments)]
 impl Participants {
-    // TODO remove this
-    pub fn update_all_muted_dates(&mut self, now: TimestampMillis) {
-        for user in self.by_principal.values_mut() {
-            user.notifications_muted.timestamp = now;
-        }
-    }
-
     pub fn new(creator_principal: Principal, creator_user_id: UserId, now: TimestampMillis) -> Participants {
         let participant = ParticipantInternal {
             user_id: creator_user_id,
