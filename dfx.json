@@ -131,6 +131,10 @@
     "benchmarklarge": {
       "providers": ["https://benchmarklarge.testnet.dfinity.network/"],
       "type": "persistent"
+    },
+    "large03": {
+      "providers": ["https://large03.testnet.dfinity.network/"],
+      "type": "persistent"
     }
   },
   "version": 1
