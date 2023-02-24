@@ -9,7 +9,6 @@ use std::time::Duration;
 use tracing::info;
 use types::ChatId;
 use user_canister::post_upgrade::Args;
-use crate::updates::leave_group;
 
 #[post_upgrade]
 #[trace]
