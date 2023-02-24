@@ -22,7 +22,6 @@ import replace from "@rollup/plugin-replace";
 import * as fs from "fs-extra";
 import * as path from "path";
 import * as rimraf from "rimraf";
-import assetHeaders from "./.ic-assets.json";
 
 dotenv.config();
 
@@ -133,7 +132,6 @@ function clean() {
             if (version) {
                 fs.writeFileSync("build/version", JSON.stringify({ version }));
             }
-            fs.writeFileSync("build/.ic-assets.json", JSON.stringify(assetHeaders));
             const iiAlternativeOrigins = process.env.II_ALTERNATIVE_ORIGINS;
             if (iiAlternativeOrigins !== undefined) {
                 fs.mkdirSync("build/.well-known");
@@ -144,6 +142,7 @@ function clean() {
                     })
                 );
             }
+            copyFile(".", "build", ".ic-assets.json5");
         },
     };
 }
@@ -245,7 +244,7 @@ export default {
                     `var parcelRequire;`,
                 ];
                 const cspHashValues = inlineScripts.map(generateCspHashValue);
-                let csp = `script-src 'self' 'unsafe-eval' https://api.rollbar.com/api/ https://platform.twitter.com/ https://www.googletagmanager.com/ ${cspHashValues.join(
+                let csp = `style-src * 'unsafe-inline'; style-src-elem * 'unsafe-inline';font-src *;object-src 'none';base-uri 'self'; form-action 'self';upgrade-insecure-requests; script-src 'self' 'unsafe-eval' https://api.rollbar.com/api/ https://platform.twitter.com/ https://www.googletagmanager.com/ ${cspHashValues.join(
                     " "
                 )}`;
                 if (!production) {
