@@ -244,9 +244,17 @@ export default {
                     `var parcelRequire;`,
                 ];
                 const cspHashValues = inlineScripts.map(generateCspHashValue);
-                let csp = `style-src * 'unsafe-inline'; style-src-elem * 'unsafe-inline';font-src *;object-src 'none';base-uri 'self'; form-action 'self';upgrade-insecure-requests; script-src 'self' 'unsafe-eval' https://api.rollbar.com/api/ https://platform.twitter.com/ https://www.googletagmanager.com/ ${cspHashValues.join(
-                    " "
-                )}`;
+                let csp = `
+                    style-src * 'unsafe-inline'; 
+                    style-src-elem * 'unsafe-inline';
+                    font-src 'self' https://fonts.gstatic.com/;
+                    object-src 'none';
+                    base-uri 'self';
+                    form-action 'self';
+                    upgrade-insecure-requests;
+                    script-src 'self' 'unsafe-eval' https://api.rollbar.com/api/ https://platform.twitter.com/ https://www.googletagmanager.com/ ${cspHashValues.join(
+                        " "
+                    )}`;
                 if (!production) {
                     csp += " http://localhost:* http://127.0.0.1:*";
                 }
