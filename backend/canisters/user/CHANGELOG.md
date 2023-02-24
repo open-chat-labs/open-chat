@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add CHAT ledger to user and group canisters ([#3222](https://github.com/open-ic/open-chat/pull/3222))
+
 ### Fixed
 
 - Rejoin 'Feature Requests' group if user was a member before it was reinstalled ([#3163](https://github.com/open-ic/open-chat/pull/3163))
