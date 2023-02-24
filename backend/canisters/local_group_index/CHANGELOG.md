@@ -9,6 +9,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Expose metrics about the current group being reinstalled ([#3194](https://github.com/open-ic/open-chat/pull/3194))
 
+### Changed
+
+- Use `c2c_events_internal` when reinstalling groups ([#3216](https://github.com/open-ic/open-chat/pull/3216))
+
 ## [[2.0.608](https://github.com/open-ic/open-chat/releases/tag/v2.0.608-local_group_index)] - 2023-02-21
 
 ### Changed

@@ -1,20 +1,14 @@
 use crate::{mutate_state, read_state, MARK_ACTIVE_DURATION};
 use candid::Principal;
-use chat_events::{
-    ChatEventInternal, MessageInternal, ProposalsUpdatedInternal, ThreadUpdatedInternal, UpdatedMessageInternal,
-};
-use ic_base_types::PrincipalId;
+use chat_events::ChatEventInternal;
 use ic_cdk::api::management_canister::main::CanisterInstallMode;
-use ic_ledger_types::Tokens;
 use serde::{Deserialize, Serialize};
 use serde_bytes::ByteBuf;
 use std::collections::{BTreeMap, HashMap, HashSet};
 use tracing::{error, info};
 use types::{
-    sns, Avatar, CanisterId, ChatEvent, ChatId, CompletedCryptoTransaction, CryptoTransaction, EventIndex, EventWrapper,
-    FrozenGroupInfo, HttpRequest, MessageContent, MessageContentInitial, MessageContentInternal, MessageId, MessageIndex,
-    PollContentInternal, PollVoteRegistered, PrizeContentInternal, ProposalContentInternal, TextContent, TimestampMillis,
-    TotalVotes, UpdatedMessage, UserId, Version,
+    Avatar, CanisterId, ChatId, EventIndex, EventWrapper, FrozenGroupInfo, HttpRequest, MessageContentInitial, MessageId,
+    MessageIndex, TextContent, TimestampMillis, UserId, Version,
 };
 
 type CanisterToReinstall = utils::canister::CanisterToInstall<group_canister::init::Args>;
@@ -41,7 +35,13 @@ pub async fn reinstall_group(group_id: ChatId) -> Result<(), String> {
         error!(%group_id, "Failed to reinstall group. Error: {error}");
     } else {
         // Reset the `group_being_reinstalled` state
-        mutate_state(|state| state.data.group_being_reinstalled = None);
+        mutate_state(|state| {
+            let new_wasm_version = state.data.group_canister_wasm_for_upgrades.version;
+            if let Some(group) = state.data.local_groups.get_mut(&group_id) {
+                group.set_canister_upgrade_status(false, Some(new_wasm_version));
+            }
+            state.data.group_being_reinstalled = None;
+        });
 
         info!(%group_id, "Successfully reinstalled group");
     }
@@ -324,26 +324,22 @@ async fn get_group_events(
     let mut next_event_index = since;
     let mut events = Vec::new();
     loop {
-        match group_canister_c2c_client::events(
+        match group_canister_c2c_client::c2c_events_internal(
             group_id.into(),
-            &group_canister::events::Args {
+            &group_canister::c2c_events_internal::Args {
                 thread_root_message_index,
                 start_index: next_event_index,
-                ascending: true,
-                max_messages: 2000,
                 max_events: 2000,
-                invite_code: None,
-                latest_client_event_index: None,
             },
         )
         .await
         {
-            Ok(group_canister::events::Response::Success(result)) => {
+            Ok(group_canister::c2c_events_internal::Response::Success(result)) => {
                 if let Some(synced_up_to) = result.events.last().map(|e| e.index) {
                     next_event_index = synced_up_to.incr();
                 }
                 let complete = result.events.len() < 2000;
-                events.extend(result.events.into_iter().map(|e| convert_event(e, group_id)));
+                events.extend(result.events);
                 if complete {
                     return Ok(events);
                 }
@@ -443,147 +439,6 @@ async fn send_all_events_to_group(group_id: ChatId) -> Result<(), String> {
         }
     }
     Ok(())
-}
-
-fn convert_event(event_wrapper: EventWrapper<ChatEvent>, group_id: ChatId) -> EventWrapper<ChatEventInternal> {
-    let event = match event_wrapper.event {
-        ChatEvent::Message(m) => {
-            let deleted_by = match &m.content {
-                MessageContent::Deleted(d) => Some(d.clone()),
-                _ => None,
-            };
-            ChatEventInternal::Message(Box::new(MessageInternal {
-                message_index: m.message_index,
-                message_id: m.message_id,
-                sender: m.sender,
-                content: convert_message_content(m.content, group_id),
-                replies_to: m.replies_to,
-                reactions: m.reactions.into_iter().map(|(r, u)| (r, u.into_iter().collect())).collect(),
-                last_updated: m.last_updated,
-                last_edited: m.edited.then_some(m.last_updated.unwrap_or(event_wrapper.timestamp)),
-                deleted_by,
-                thread_summary: m.thread_summary,
-                forwarded: m.forwarded,
-            }))
-        }
-        ChatEvent::GroupChatCreated(g) => ChatEventInternal::GroupChatCreated(Box::new(g)),
-        ChatEvent::DirectChatCreated(d) => ChatEventInternal::DirectChatCreated(d),
-        ChatEvent::GroupNameChanged(n) => ChatEventInternal::GroupNameChanged(Box::new(n)),
-        ChatEvent::GroupDescriptionChanged(d) => ChatEventInternal::GroupDescriptionChanged(Box::new(d)),
-        ChatEvent::GroupRulesChanged(r) => ChatEventInternal::GroupRulesChanged(Box::new(r)),
-        ChatEvent::AvatarChanged(a) => ChatEventInternal::AvatarChanged(Box::new(a)),
-        ChatEvent::OwnershipTransferred(o) => ChatEventInternal::OwnershipTransferred(Box::new(o)),
-        ChatEvent::ParticipantsAdded(p) => ChatEventInternal::ParticipantsAdded(Box::new(p)),
-        ChatEvent::ParticipantsRemoved(p) => ChatEventInternal::ParticipantsRemoved(Box::new(p)),
-        ChatEvent::ParticipantJoined(p) => ChatEventInternal::ParticipantJoined(Box::new(p)),
-        ChatEvent::ParticipantLeft(p) => ChatEventInternal::ParticipantLeft(Box::new(p)),
-        ChatEvent::ParticipantAssumesSuperAdmin(p) => ChatEventInternal::ParticipantAssumesSuperAdmin(Box::new(p)),
-        ChatEvent::ParticipantDismissedAsSuperAdmin(p) => ChatEventInternal::ParticipantDismissedAsSuperAdmin(Box::new(p)),
-        ChatEvent::ParticipantRelinquishesSuperAdmin(p) => ChatEventInternal::ParticipantRelinquishesSuperAdmin(Box::new(p)),
-        ChatEvent::RoleChanged(r) => ChatEventInternal::RoleChanged(Box::new(r)),
-        ChatEvent::UsersBlocked(u) => ChatEventInternal::UsersBlocked(Box::new(u)),
-        ChatEvent::UsersUnblocked(u) => ChatEventInternal::UsersUnblocked(Box::new(u)),
-        ChatEvent::MessageEdited(m) => ChatEventInternal::MessageEdited(Box::new(convert_updated_message(m))),
-        ChatEvent::MessageDeleted(m) => ChatEventInternal::MessageDeleted(Box::new(convert_updated_message(m))),
-        ChatEvent::MessageUndeleted(m) => ChatEventInternal::MessageUndeleted(Box::new(convert_updated_message(m))),
-        ChatEvent::MessageReactionAdded(m) => ChatEventInternal::MessageReactionAdded(Box::new(convert_updated_message(m))),
-        ChatEvent::MessageReactionRemoved(m) => ChatEventInternal::MessageReactionRemoved(Box::new(convert_updated_message(m))),
-        ChatEvent::MessagePinned(m) => ChatEventInternal::MessagePinned(Box::new(m)),
-        ChatEvent::MessageUnpinned(m) => ChatEventInternal::MessageUnpinned(Box::new(m)),
-        ChatEvent::PollVoteRegistered(v) => ChatEventInternal::PollVoteRegistered(Box::new(PollVoteRegistered {
-            user_id: v.updated_by,
-            message_id: v.message_id,
-            existing_vote_removed: false,
-        })),
-        ChatEvent::PollVoteDeleted(v) => ChatEventInternal::PollVoteDeleted(Box::new(convert_updated_message(v))),
-        ChatEvent::PollEnded(p) => ChatEventInternal::PollEnded(Box::new(p.message_index)),
-        ChatEvent::PermissionsChanged(p) => ChatEventInternal::PermissionsChanged(Box::new(p)),
-        ChatEvent::GroupVisibilityChanged(v) => ChatEventInternal::GroupVisibilityChanged(Box::new(v)),
-        ChatEvent::GroupInviteCodeChanged(i) => ChatEventInternal::GroupInviteCodeChanged(Box::new(i)),
-        ChatEvent::ThreadUpdated(t) => ChatEventInternal::ThreadUpdated(Box::new(ThreadUpdatedInternal {
-            message_index: t.message_index,
-            latest_thread_message_index_if_updated: t.latest_thread_message_index_if_updated,
-        })),
-        ChatEvent::ProposalsUpdated(u) => ChatEventInternal::ProposalsUpdated(Box::new(ProposalsUpdatedInternal {
-            proposals: u.proposals.into_iter().map(|p| p.message_index).collect(),
-        })),
-        ChatEvent::ChatFrozen(c) => ChatEventInternal::ChatFrozen(Box::new(c)),
-        ChatEvent::ChatUnfrozen(c) => ChatEventInternal::ChatUnfrozen(Box::new(c)),
-        ChatEvent::EventsTimeToLiveUpdated(t) => ChatEventInternal::EventsTimeToLiveUpdated(Box::new(t)),
-    };
-
-    EventWrapper {
-        index: event_wrapper.index,
-        timestamp: event_wrapper.timestamp,
-        correlation_id: event_wrapper.correlation_id,
-        expires_at: event_wrapper.expires_at,
-        event,
-    }
-}
-
-fn convert_message_content(content: MessageContent, group_id: ChatId) -> MessageContentInternal {
-    match content {
-        MessageContent::Text(t) => MessageContentInternal::Text(t),
-        MessageContent::Image(i) => MessageContentInternal::Image(i),
-        MessageContent::Video(v) => MessageContentInternal::Video(v),
-        MessageContent::Audio(a) => MessageContentInternal::Audio(a),
-        MessageContent::File(f) => MessageContentInternal::File(f),
-        MessageContent::Poll(p) => MessageContentInternal::Poll(PollContentInternal {
-            config: p.config,
-            votes: match p.votes.total {
-                TotalVotes::Visible(v) => v,
-                TotalVotes::Anonymous(v) if p.ended => v
-                    .into_iter()
-                    // We don't know the userIds but we can keep the counts correct by inserting dummy principals
-                    .map(|(k, count)| {
-                        (
-                            k,
-                            (0..count).map(|i| Principal::from_slice(&i.to_be_bytes()).into()).collect(),
-                        )
-                    })
-                    .collect(),
-                _ => HashMap::new(),
-            },
-            ended: p.ended,
-        }),
-        MessageContent::Crypto(c) => MessageContentInternal::Crypto(c),
-        MessageContent::Deleted(d) => MessageContentInternal::Deleted(d),
-        MessageContent::Giphy(g) => MessageContentInternal::Giphy(g),
-        MessageContent::GovernanceProposal(p) => MessageContentInternal::GovernanceProposal(ProposalContentInternal {
-            governance_canister_id: p.governance_canister_id,
-            proposal: p.proposal,
-            votes: HashMap::new(),
-        }),
-        MessageContent::Prize(p) => MessageContentInternal::Prize(PrizeContentInternal {
-            prizes_remaining: Vec::new(),
-            reservations: HashSet::new(),
-            winners: p.winners.into_iter().collect(),
-            transaction: CryptoTransaction::Completed(CompletedCryptoTransaction::SNS(sns::CompletedCryptoTransaction {
-                token: p.token,
-                amount: Tokens::ZERO,
-                fee: Tokens::ZERO,
-                from: sns::CryptoAccount::Account(
-                    // Group prize bot
-                    PrincipalId(Principal::from_text("neggc-nqaaa-aaaar-ad5nq-cai").unwrap()).into(),
-                ),
-                to: sns::CryptoAccount::Account(PrincipalId(group_id.into()).into()),
-                memo: None,
-                created: 0,
-                transaction_hash: [0; 32],
-                block_index: 0,
-            })),
-            end_date: p.end_date,
-            caption: p.caption,
-        }),
-        MessageContent::PrizeWinner(p) => MessageContentInternal::PrizeWinner(p),
-    }
-}
-
-fn convert_updated_message(updated_message: UpdatedMessage) -> UpdatedMessageInternal {
-    UpdatedMessageInternal {
-        updated_by: updated_message.updated_by,
-        message_id: updated_message.message_id,
-    }
 }
 
 #[derive(Serialize, Deserialize)]
