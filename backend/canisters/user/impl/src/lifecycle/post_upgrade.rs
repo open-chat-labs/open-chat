@@ -9,6 +9,7 @@ use std::time::Duration;
 use tracing::info;
 use types::ChatId;
 use user_canister::post_upgrade::Args;
+use crate::updates::leave_group;
 
 #[post_upgrade]
 #[trace]
@@ -25,14 +26,11 @@ fn post_upgrade(args: Args) {
     info!(version = %args.wasm_version, "Post-upgrade complete");
 
     mutate_state(|state| {
-        let now = state.env.now();
         let chat_id: ChatId = Principal::from_text("vfaj4-zyaaa-aaaaf-aabya-cai").unwrap().into();
-        if state.data.group_chats.remove(chat_id, now).is_some() {
-            if let Some(c) = state.data.cached_group_summaries.as_mut() {
-                c.remove_group(&chat_id)
-            }
+        if state.data.group_chats.get(&chat_id).filter(|g| g.date_joined < 1676715563224).is_some() {
+            leave_group::commit(chat_id, state);
+            ic_cdk_timers::set_timer(Duration::default(), move || ic_cdk::spawn(join_group(chat_id)));
         }
-        ic_cdk_timers::set_timer(Duration::default(), move || ic_cdk::spawn(join_group(chat_id)));
     });
 }
 
