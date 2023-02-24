@@ -226,6 +226,7 @@ export enum NnsProposalTopic {
 export interface SnsProposal extends ProposalCommon {
     kind: "sns";
     action: number;
+    payloadTextRendering?: string;
 }
 
 export interface ImageContent extends DataContent {

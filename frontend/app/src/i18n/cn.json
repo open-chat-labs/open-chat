@@ -574,7 +574,8 @@
         "enableAll": "全部启用",
         "disableAll": "禁用所有",
         "readmore": "阅读更多",
-        "readless": "少读"
+        "readless": "少读",
+        "details": "细节"
     },
     "quoteReply": "引用",
     "groupNameTooShort": "群聊名太短",
