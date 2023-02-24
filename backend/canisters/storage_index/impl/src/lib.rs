@@ -67,6 +67,7 @@ impl RuntimeState {
             cycles_balance: self.env.cycles_balance(),
             wasm_version: WASM_VERSION.with(|v| **v.borrow()),
             governance_principals: self.data.governance_principals.iter().copied().collect(),
+            user_controllers: self.data.user_controllers.iter().copied().collect(),
             user_count: self.data.users.len() as u64,
             blob_count: file_metrics.blob_count,
             total_blob_bytes: file_metrics.total_blob_bytes,
@@ -85,10 +86,10 @@ impl RuntimeState {
 
 #[derive(Serialize, Deserialize)]
 struct Data {
-    #[serde(default = "user_index")]
-    pub user_controllers: HashSet<Principal>,
     #[serde(alias = "service_principals")]
     pub governance_principals: HashSet<Principal>,
+    #[serde(skip_deserializing, default = "user_index")]
+    pub user_controllers: HashSet<Principal>,
     pub bucket_canister_wasm: CanisterWasm,
     pub users: HashMap<Principal, UserRecordInternal>,
     pub files: Files,
@@ -220,6 +221,7 @@ pub struct Metrics {
     pub cycles_balance: Cycles,
     pub wasm_version: Version,
     pub governance_principals: Vec<Principal>,
+    pub user_controllers: Vec<Principal>,
     pub user_count: u64,
     pub blob_count: u64,
     pub total_blob_bytes: u64,
