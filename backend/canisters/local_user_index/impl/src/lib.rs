@@ -56,7 +56,7 @@ impl RuntimeState {
 
     pub fn is_caller_openchat_user(&self) -> bool {
         let caller = self.env.caller();
-        self.data.global_users.get_by_principal(&caller).is_some()
+        self.data.global_users.get(&caller).is_some()
     }
 
     pub fn metrics(&self) -> Metrics {

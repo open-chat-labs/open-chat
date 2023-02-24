@@ -28,7 +28,6 @@ fn post_upgrade(args: Args) {
     mutate_state(|state| {
         let chat_id: ChatId = Principal::from_text("vfaj4-zyaaa-aaaaf-aabya-cai").unwrap().into();
         if state.data.group_chats.get(&chat_id).filter(|g| g.date_joined < 1676715563224).is_some() {
-            leave_group::commit(chat_id, state);
             ic_cdk_timers::set_timer(Duration::default(), move || ic_cdk::spawn(join_group(chat_id)));
         }
     });
