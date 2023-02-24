@@ -176,6 +176,10 @@ fn initialize_ledger_ids() -> HashMap<Cryptocurrency, CanisterId> {
             Cryptocurrency::CKBTC,
             Principal::from_text("mxzaz-hqaaa-aaaar-qaada-cai").unwrap(),
         ),
+        (
+            Cryptocurrency::CHAT,
+            Principal::from_text("2ouva-viaaa-aaaaq-aaamq-cai").unwrap(),
+        ),
     ]
     .into_iter()
     .collect()
