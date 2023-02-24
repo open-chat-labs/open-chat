@@ -435,10 +435,7 @@ fn validate_details(
 }
 
 fn validate_my_metrics(before: ChatMetrics, after: ChatMetrics) {
-    // When messages are deleted they are not removed from the metrics, but when we reinstall the
-    // group the deleted messages don't count towards metrics, so the count will be lower by the
-    // number of deleted messages.
-    assert_eq!(before.text_messages, after.text_messages + after.deleted_messages);
+    assert_eq!(before.text_messages, after.text_messages);
     assert_eq!(before.image_messages, after.image_messages);
     assert_eq!(before.video_messages, after.video_messages);
     assert_eq!(before.audio_messages, after.audio_messages);
