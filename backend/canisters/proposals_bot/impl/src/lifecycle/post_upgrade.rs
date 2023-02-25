@@ -58,7 +58,7 @@ async fn get_openchat_proposal_payloads() {
                     message_id: nervous_system.active_proposals.get(&p.id()).unwrap().1,
                     content: MessageContent::GovernanceProposal(ProposalContent {
                         governance_canister_id,
-                        proposal: p.clone(),
+                        proposal: p,
                         my_vote: None,
                     }),
                     correlation_id: 0,
