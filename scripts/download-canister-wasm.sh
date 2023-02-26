@@ -5,11 +5,16 @@ SCRIPT_DIR=$(dirname "$SCRIPT")
 cd $SCRIPT_DIR/..
 
 CANISTER_NAME=$1
-COMMIT_ID=$2
+WASM_SRC=$2 # WASM_SRC is either empty, "latest", "prod" or the commit Id
 
-if [ -z "$COMMIT_ID" ]
+if [ -z "$WASM_SRC" ] || [ $WASM_SRC = "latest" ]
 then
   COMMIT_ID=$(curl -s https://openchat-canister-wasms.s3.amazonaws.com/latest)
+elif [ $WASM_SRC = "prod" ]
+then
+  COMMIT_ID=$(jq -r .$CANISTER_NAME ./canister_commit_ids.json)
+else
+  COMMIT_ID=$WASM_SRC
 fi
 
 echo "Downloading $CANISTER_NAME wasm at commit $COMMIT_ID"
