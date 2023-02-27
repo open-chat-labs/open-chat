@@ -42,6 +42,7 @@ fn commit(user_id: UserId, groups: Vec<ChatId>, runtime_state: &mut RuntimeState
             })
             .collect(),
     );
+    crate::jobs::set_users_suspended::start_job_if_required(runtime_state);
 
     runtime_state.data.users.unsuspend_user(&user_id);
 }

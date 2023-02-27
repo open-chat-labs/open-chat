@@ -73,6 +73,7 @@ fn commit(
             })
             .collect(),
     );
+    crate::jobs::set_users_suspended::start_job_if_required(runtime_state);
 
     runtime_state
         .data

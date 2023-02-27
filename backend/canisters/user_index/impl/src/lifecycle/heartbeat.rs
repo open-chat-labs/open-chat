@@ -3,7 +3,6 @@ use group_canister::c2c_dismiss_super_admin;
 use ic_cdk_macros::heartbeat;
 use tracing::error;
 use types::{CanisterId, ChatId, UserId};
-use utils::time::SECOND_IN_MS;
 
 #[heartbeat]
 fn heartbeat() {
@@ -11,7 +10,6 @@ fn heartbeat() {
     sync_events_to_local_user_index_canisters::run();
     notify_user_principal_migrations::run();
     dismiss_removed_super_admins::run();
-    set_users_suspended::run();
 }
 
 mod sync_users_to_storage_index {
@@ -167,73 +165,6 @@ mod dismiss_removed_super_admins {
         if let Err(error) = group_canister_c2c_client::c2c_dismiss_super_admin(group_id.into(), &c2c_args).await {
             error!(?error, ?user_id, ?group_id, "Error calling group::c2c_dismiss_super_admin");
             mutate_state(|state| push_super_admin_to_dismiss(user_id, group_id, state));
-        }
-    }
-}
-
-mod set_users_suspended {
-    use super::*;
-    use crate::model::set_user_suspended_queue::{SetUserSuspendedInGroup, SetUserSuspendedType};
-    use crate::updates::suspend_user::suspend_user_impl;
-    use crate::updates::unsuspend_user::unsuspend_user_impl;
-
-    const MAX_BATCH_SIZE: usize = 10;
-
-    pub fn run() {
-        let batch = mutate_state(next_batch);
-        if !batch.is_empty() {
-            ic_cdk::spawn(process_batch(batch));
-        }
-    }
-
-    fn next_batch(runtime_state: &mut RuntimeState) -> Vec<SetUserSuspendedType> {
-        let now = runtime_state.env.now();
-
-        (0..MAX_BATCH_SIZE)
-            .map_while(|_| runtime_state.data.set_user_suspended_queue.take_next_due(now))
-            .collect()
-    }
-
-    async fn process_batch(batch: Vec<SetUserSuspendedType>) {
-        let futures: Vec<_> = batch.into_iter().map(process_single).collect();
-
-        futures::future::join_all(futures).await;
-    }
-
-    async fn process_single(value: SetUserSuspendedType) {
-        match value {
-            SetUserSuspendedType::User(details) => {
-                suspend_user_impl(details.user_id, details.duration, details.reason, details.suspended_by).await;
-            }
-            SetUserSuspendedType::Unsuspend(user_id) => {
-                unsuspend_user_impl(user_id).await;
-            }
-            SetUserSuspendedType::Group(SetUserSuspendedInGroup {
-                user_id,
-                group,
-                suspended,
-                attempt,
-            }) => {
-                let args = group_canister::c2c_set_user_suspended::Args { user_id, suspended };
-                if group_canister_c2c_client::c2c_set_user_suspended(group.into(), &args)
-                    .await
-                    .is_err()
-                    && attempt < 10
-                {
-                    mutate_state(|state| {
-                        let now = state.env.now();
-                        state.data.set_user_suspended_queue.schedule(
-                            vec![SetUserSuspendedType::Group(SetUserSuspendedInGroup {
-                                user_id,
-                                group,
-                                suspended,
-                                attempt: attempt + 1,
-                            })],
-                            now + (10 * SECOND_IN_MS), // Try again in 10 seconds
-                        );
-                    });
-                }
-            }
         }
     }
 }

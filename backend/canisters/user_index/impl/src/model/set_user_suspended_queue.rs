@@ -48,6 +48,10 @@ impl SetUserSuspendedQueue {
         self.enqueue_internal(values, due);
     }
 
+    pub fn is_empty(&self) -> bool {
+        self.queue.is_empty()
+    }
+
     fn enqueue_internal(&mut self, values: Vec<SetUserSuspendedType>, due: TimestampMillis) {
         self.queue.entry(due).or_default().extend(values);
     }
