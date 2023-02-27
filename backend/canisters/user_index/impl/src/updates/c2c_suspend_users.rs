@@ -27,5 +27,6 @@ fn c2c_suspend_users_impl(args: Args, runtime_state: &mut RuntimeState) -> Respo
             })
             .collect(),
     );
+    crate::jobs::set_users_suspended::start_job_if_required(runtime_state);
     Success
 }

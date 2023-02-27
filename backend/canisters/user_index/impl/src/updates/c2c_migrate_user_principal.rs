@@ -35,6 +35,7 @@ fn c2c_migrate_user_principal_impl(args: Args, runtime_state: &mut RuntimeState)
                 runtime_state.data.storage_index_canister_id,
                 runtime_state.data.notifications_index_canister_id,
             );
+            crate::jobs::notify_user_principal_migrations::start_job_if_required(runtime_state);
 
             Success
         }

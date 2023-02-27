@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Consolidate code to install / upgrade canisters ([#3152](https://github.com/open-ic/open-chat/pull/3152))
 - Skip upgrades where new wasm version matches current version ([#3158](https://github.com/open-ic/open-chat/pull/3158))
 - Upgrade LocalUserIndex canisters using a timer job rather than heartbeat ([#3229](https://github.com/open-ic/open-chat/pull/3229))
+- Switch to using canister timers instead of heartbeat ([#3230](https://github.com/open-ic/open-chat/pull/3230))
 
 ## Removed
 

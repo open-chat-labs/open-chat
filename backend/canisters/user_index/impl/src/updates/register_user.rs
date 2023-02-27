@@ -133,11 +133,13 @@ fn commit(
         }),
         Some(local_user_index_canister_id),
     );
+    crate::jobs::sync_events_to_local_user_index_canisters::start_job_if_required(runtime_state);
 
     runtime_state.data.storage_index_user_sync_queue.push(UserConfig {
         user_id: caller,
         byte_limit: 100 * ONE_MB,
     });
+    crate::jobs::sync_users_to_storage_index::start_job_if_required(runtime_state);
 }
 
 fn rollback(username: &str, runtime_state: &mut RuntimeState) {
