@@ -20,6 +20,7 @@ use utils::env::Environment;
 use utils::time::DAY_IN_MS;
 
 mod guards;
+mod jobs;
 mod lifecycle;
 mod memory;
 mod model;
