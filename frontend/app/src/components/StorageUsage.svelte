@@ -24,7 +24,7 @@
     <div class="storage-progress">
         <Progress bg={"accent"} percent={$percentageStorageUsed} />
     </div>
-    <div class="row">
+    <div class="row used">
         <span class="usage">
             {$_("storageUsed", {
                 values: {
@@ -41,6 +41,10 @@
         display: flex;
         justify-content: space-between;
         margin: $sp3 0;
+
+        &.used {
+            margin-bottom: $sp4;
+        }
     }
 
     .current {

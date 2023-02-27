@@ -18,7 +18,6 @@
     "currentLimit": "Текущий лимит хранилища составляет {limit} ГБ, а баланс вашего аккаунта – {balance} ICP.",
     "newLimit": "{limit} / 1GB",
     "chooseAStorageLevel": "Выберете уровень хранилища, максимально до 1GB",
-    "currentUsage": "Текущее использование",
     "percLeft": "{perc}% осталось",
     "storageUsed": "{used}GB использовано из {limit}GB",
     "insufficientStorage": "Недостаточно памяти",

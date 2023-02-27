@@ -1,6 +1,6 @@
 <script lang="ts">
     import SectionHeader from "../../SectionHeader.svelte";
-    import { PartialUserSummary, OpenChat, ONE_GB, AvatarSize } from "openchat-client";
+    import { PartialUserSummary, OpenChat, AvatarSize } from "openchat-client";
     import Close from "svelte-material-icons/Close.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
     import StorageUsage from "../../StorageUsage.svelte";
@@ -37,7 +37,6 @@
     import { toastStore } from "../../../stores/toast";
     import { logger } from "../../../utils/logging";
     import ErrorMessage from "../../ErrorMessage.svelte";
-    import LinkButton from "../../LinkButton.svelte";
     import ReferUsers from "./ReferUsers.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -63,6 +62,7 @@
     $: userMetrics = client.userMetrics;
     $: notificationStatus = client.notificationStatus;
     $: isDiamond = client.isDiamond;
+    $: canExtendDiamond = client.canExtendDiamond;
     $: {
         setLocale(selectedLocale);
     }
@@ -74,10 +74,6 @@
             originalBio = userbio = bio;
         });
     });
-
-    function whySms() {
-        dispatch("showFaqQuestion", "sms_icp");
-    }
 
     function saveUser() {
         saving = true;
@@ -309,13 +305,22 @@
             <CollapsibleCard
                 on:toggle={storageSectionOpen.toggle}
                 open={$storageSectionOpen}
-                headerText={$_("storage")}>
+                headerText={$_("upgrade.membership")}>
                 <StorageUsage />
 
                 {#if !$isDiamond}
                     <ButtonGroup align={"fill"}>
                         <Button on:click={() => dispatch("upgrade")} small
                             >{$_("upgrade.button")}</Button>
+                    </ButtonGroup>
+                {:else}
+                    <p class="expiry">{$_("upgrade.expiresIn", { values: { time: "3 weeks" } })}</p>
+                    <ButtonGroup align={"fill"}>
+                        <Button
+                            title={!$canExtendDiamond ? $_("upgrade.cannotExtend") : undefined}
+                            disabled={!$canExtendDiamond}
+                            on:click={() => dispatch("upgrade")}
+                            small>{$_("upgrade.extend")}</Button>
                     </ButtonGroup>
                 {/if}
             </CollapsibleCard>
@@ -417,6 +422,10 @@
         @include mobile() {
             padding: 0 $sp3;
         }
+    }
+
+    .expiry {
+        margin-bottom: $sp3;
     }
 
     .close {

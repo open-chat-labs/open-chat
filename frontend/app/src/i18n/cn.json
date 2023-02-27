@@ -249,7 +249,6 @@
     "currentLimit": "您当前的存储限制为 {limit}GB，您的帐户余额为 {balance} ICP。",
     "newLimit": "{limit} / 1GB",
     "chooseAStorageLevel": "选择最大为 1GB 的存储级别",
-    "currentUsage": "当前使用情况",
     "percLeft": "还剩 {perc}%",
     "storageUsed": "{used}GB 已用 {limit}GB",
     "insufficientStorage": "存储空间不足",

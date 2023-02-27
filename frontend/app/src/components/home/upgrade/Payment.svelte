@@ -23,6 +23,8 @@
     export let confirming = false;
     export let confirmed = false;
     export let refreshingBalance = false;
+    export let isDiamond: boolean;
+    export let canExtend: boolean;
 
     const client = getContext<OpenChat>("client");
 

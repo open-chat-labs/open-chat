@@ -18,7 +18,6 @@
     "currentLimit": "Il tuo attuale limite di archiviazione è {limit}GB e il saldo del tuo account è {balance} ICP.",
     "newLimit": "{limit} / 1 GB",
     "chooseAStorageLevel": "Scegli un livello di archiviazione fino a un massimo di 1 GB",
-    "currentUsage": "Utilizzo attuale",
     "percLeft": "{perc}% rimanenti",
     "storageUsed": "{used}GB utilizzati di {limit}GB",
     "insufficientStorage": "Spazio insufficiente",

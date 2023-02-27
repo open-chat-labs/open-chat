@@ -23,6 +23,8 @@
 
     export let user: PartialUserSummary;
 
+    $: canExtendDiamond = client.canExtendDiamond;
+
     function newGroup() {
         dispatch("newGroup");
     }
@@ -66,7 +68,10 @@
                     </MenuItem>
                     <MenuItem on:click={() => dispatch("upgrade")}>
                         <span class="diamond-icon" slot="icon">💎</span>
-                        <span slot="text">{$_("upgrade.diamond")}</span>
+                        <span slot="text"
+                            >{$canExtendDiamond
+                                ? $_("upgrade.extend")
+                                : $_("upgrade.diamond")}</span>
                     </MenuItem>
                     <MenuItem on:click={() => dispatch("profile")}>
                         <Cogs size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />

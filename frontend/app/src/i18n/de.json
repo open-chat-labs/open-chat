@@ -18,7 +18,6 @@
     "currentLimit": "Ihr aktuelles Speicherlimit beträgt {limit} GB und Ihr Kontostand beträgt {balance} ICP.",
     "newLimit": "{limit} / 1 GB",
     "chooseAStorageLevel": "Wählen Sie ein Speicherlimit bis maximal 1 GB",
-    "currentUsage": "Aktuelle Nutzung",
     "percLeft": "{min} % übrig",
     "storageUsed": "{used}GB verwendet von {limit}GB",
     "insufficientStorage": "Unzureichender Speicherplatz",

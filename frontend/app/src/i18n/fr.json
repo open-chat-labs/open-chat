@@ -18,7 +18,6 @@
     "currentLimit": "Votre limite de stockage actuelle est de {limit} Go et le solde de votre compte est de {balance} ICP.",
     "newLimit": "{limit} / 1 Go",
     "chooseAStorageLevel": "Choisissez un niveau de stockage jusqu'à un maximum de 1 Go",
-    "currentUsage": "Utilisation actuelle",
     "percLeft": "{min} % restants",
     "storageUsed": "{used} Go utilisés sur {limit} Go",
     "insufficientStorage": "Espace insuffisant",

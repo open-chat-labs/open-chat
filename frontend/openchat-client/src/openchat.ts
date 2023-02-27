@@ -288,7 +288,7 @@ import {
     DiamondMembershipDetails,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
-import { diamondMembership, isDiamond } from "./stores/diamond";
+import { canExtendDiamond, diamondMembership, isDiamond } from "./stores/diamond";
 
 const UPGRADE_POLL_INTERVAL = 1000;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -3489,4 +3489,5 @@ export class OpenChat extends EventTarget {
     threadEvents = threadEvents;
     selectedThreadKey = selectedThreadKey;
     isDiamond = isDiamond;
+    canExtendDiamond = canExtendDiamond;
 }

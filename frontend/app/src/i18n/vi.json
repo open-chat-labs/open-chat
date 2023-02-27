@@ -15,7 +15,6 @@
     "currentLimit": "Giới hạn lưu trữ của bạn là {limit}MB",
     "newLimit": "{limit} / 1GB",
     "chooseAStorageLevel": "Chọn mức lưu trữ, tối đa 1GB",
-    "currentUsage": "Mức sử dụng hiện tại",
     "percLeft": "Còn lại {perc}%",
     "mbUsed": "Đã sử dụng {used}MB trong {limit}MB",
     "insufficientStorage": "Không đủ dung lượng lưu trữ",

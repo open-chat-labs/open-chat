@@ -18,7 +18,6 @@
     "currentLimit": "מגבלת האחסון הנוכחית שלך היא {limit}GB ויתרת החשבון שלך היא {balance} ICP.",
     "newLimit": "{limit} / 1GB",
     "chooseAStorageLevel": "בחר רמת אחסון של עד 1GB לכל היותר",
-    "currentUsage": "שימוש נוכחי",
     "percLeft": "נותרו {perc}%",
     "storageUsed": "{used}GB בשימוש של {limit}GB",
     "insufficientStorage": "אין מספיק שטח אחסון",

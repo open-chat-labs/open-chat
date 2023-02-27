@@ -25,7 +25,7 @@
     "currentLimit": "Your current storage limit is {limit}GB and your account balance is {balance} ICP.",
     "newLimit": "{limit} / 1GB",
     "chooseAStorageLevel": "Choose a storage level up to a maximum of 1GB",
-    "currentUsage": "Current Usage",
+    "currentUsage": "Current Storage Usage",
     "percLeft": "{perc}% left",
     "storageUsed": "{used}GB used of {limit}GB",
     "insufficientStorage": "Insufficient storage",
@@ -665,6 +665,9 @@
         "button": "Upgrade",
         "groupMsg": "To create up to 10 public groups, you must be a Diamond user",
         "featuresTitle": "💎 Upgrade to Diamond",
+        "extend": "Extend Diamond",
+        "extendShort": "Extend",
+        "membership": "Membership",
         "benefits": "💎 Benefits of Diamond",
         "message": "💎 Tell me about Diamond membership",
         "paymentTitle": "Payment",
@@ -714,6 +717,8 @@
         "allSupportedTokens": "All supported tokens",
         "chatAndIcp": "ICP & CHAT",
         "paymentFailed": "Payment for Diamond membership failed",
-        "upgradeSuccess": "Your payment has been made successfully"
+        "upgradeSuccess": "Your payment has been made successfully",
+        "expiresIn": "Your diamond membership expires in {time}",
+        "cannotExtend": "You can only extend your membership within three months of expiry"
     }
 }

@@ -18,7 +18,6 @@
     "currentLimit": "現在のストレージ制限は{limit} GBで、アカウントの残高は{balance} ICPです。",
     "newLimit": "{limit} / 1GB",
     "chooseAStorageLevel": "最大1GBまでのストレージレベルを選択",
-    "currentUsage": "現在の使用状況",
     "percLeft": "残り{perc}%",
     "storageUsed": "{limit}GBのうち{used}GBを使用",
     "insufficientStorage": "ストレージ不足",

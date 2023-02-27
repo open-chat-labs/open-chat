@@ -15,7 +15,6 @@
     "currentLimit": "Su límite de almacenamiento actual es {limit} GB y el saldo de su cuenta es {balance} ICP.",
     "newLimit": "{limit} / 1GB",
     "chooseAStorageLevel": "Elije un nivel de almacenamiento máximo hasta de 1GB",
-    "currentUsage": "Uso actual",
     "percLeft": "{perc}% restante",
     "insufficientStorage": "Espacio insuficiente",
     "chooseUpgrade": "Puedes reclamar 100MB de almacenamiento gratuito al recibir un código de verificación por SMS, o puede pagar por 1GB de almacenamiento a través de una transferencia de ICP.",
