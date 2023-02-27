@@ -11,6 +11,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Push activity notification when (un)freezing a group ([#3195](https://github.com/open-ic/open-chat/pull/3195))
 - Add CHAT ledger to user and group canisters ([#3222](https://github.com/open-ic/open-chat/pull/3222))
 
+### Fixed
+
+- Set all `notifications_muted` dates to `now` to fix data inconsistency ([#3227](https://github.com/open-ic/open-chat/pull/3227))
+
 ## [[2.0.606](https://github.com/open-ic/open-chat/releases/tag/v2.0.606-group)] - 2023-02-20
 
 ### Fixed
