@@ -26,21 +26,28 @@ pub(crate) fn start_job_if_required(runtime_state: &RuntimeState) -> bool {
 }
 
 fn run() {
-    let batch = mutate_state(next_batch);
-    if !batch.is_empty() {
-        ic_cdk::spawn(process_batch(batch));
+    if let Some(batch) = mutate_state(next_batch) {
+        if !batch.is_empty() {
+            ic_cdk::spawn(process_batch(batch));
+        }
     } else if let Some(timer_id) = TIMER_ID.with(|t| t.take()) {
         ic_cdk_timers::clear_timer(timer_id);
         trace!("'set_users_suspended' job stopped");
     }
 }
 
-fn next_batch(runtime_state: &mut RuntimeState) -> Vec<SetUserSuspendedType> {
-    let now = runtime_state.env.now();
+fn next_batch(runtime_state: &mut RuntimeState) -> Option<Vec<SetUserSuspendedType>> {
+    if runtime_state.data.set_user_suspended_queue.is_empty() {
+        None
+    } else {
+        let now = runtime_state.env.now();
 
-    (0..MAX_BATCH_SIZE)
-        .map_while(|_| runtime_state.data.set_user_suspended_queue.take_next_due(now))
-        .collect()
+        Some(
+            (0..MAX_BATCH_SIZE)
+                .map_while(|_| runtime_state.data.set_user_suspended_queue.take_next_due(now))
+                .collect(),
+        )
+    }
 }
 
 async fn process_batch(batch: Vec<SetUserSuspendedType>) {

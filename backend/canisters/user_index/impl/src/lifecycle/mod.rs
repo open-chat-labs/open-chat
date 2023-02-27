@@ -6,7 +6,6 @@ use utils::canister::get_random_seed;
 use utils::env::canister::CanisterEnv;
 use utils::env::Environment;
 
-mod heartbeat;
 mod init;
 mod inspect_message;
 mod post_upgrade;

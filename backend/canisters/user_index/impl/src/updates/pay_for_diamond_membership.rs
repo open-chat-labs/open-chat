@@ -111,6 +111,8 @@ fn process_charge(
             user_id: caller,
             byte_limit: ONE_GB,
         });
+        crate::jobs::sync_events_to_local_user_index_canisters::start_job_if_required(runtime_state);
+        crate::jobs::sync_users_to_storage_index::start_job_if_required(runtime_state);
         Success(result)
     } else {
         error!(%user_id, "Diamond membership payment taken, but user no longer exists");

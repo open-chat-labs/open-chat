@@ -1,17 +1,17 @@
-use tracing::{error, trace};
-use group_canister::c2c_dismiss_super_admin;
-use types::{ChatId, UserId};
 use crate::{mutate_state, RuntimeState};
+use group_canister::c2c_dismiss_super_admin;
+use ic_cdk_timers::TimerId;
 use std::cell::Cell;
 use std::time::Duration;
-use ic_cdk_timers::TimerId;
+use tracing::{error, trace};
+use types::{ChatId, UserId};
 
 thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
 }
 
 pub(crate) fn start_job_if_required(runtime_state: &RuntimeState) -> bool {
-    if TIMER_ID.with(|t| t.get().is_none()) && !runtime_state.data.set_user_suspended_queue.is_empty() {
+    if TIMER_ID.with(|t| t.get().is_none()) && !runtime_state.data.super_admins_to_dismiss.is_empty() {
         let timer_id = ic_cdk_timers::set_timer_interval(Duration::default(), run);
         TIMER_ID.with(|t| t.set(Some(timer_id)));
         trace!("'dismiss_super_admins' job started");

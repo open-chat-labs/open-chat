@@ -98,4 +98,5 @@ fn commit(
             suspended_by,
         }),
     );
+    crate::jobs::sync_events_to_local_user_index_canisters::start_job_if_required(runtime_state);
 }

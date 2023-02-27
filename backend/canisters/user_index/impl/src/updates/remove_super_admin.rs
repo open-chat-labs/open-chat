@@ -44,4 +44,5 @@ fn commit(user_id: &UserId, groups_to_dismiss_user_from: Vec<ChatId>, runtime_st
         }),
         None,
     );
+    crate::jobs::sync_events_to_local_user_index_canisters::start_job_if_required(runtime_state);
 }

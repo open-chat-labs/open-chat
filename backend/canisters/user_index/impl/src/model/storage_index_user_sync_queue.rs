@@ -45,4 +45,8 @@ impl OpenStorageUserSyncQueue {
         self.users_to_retry = Some(users);
         self.sync_in_progress = false;
     }
+
+    pub fn is_empty(&self) -> bool {
+        self.users.is_empty()
+    }
 }

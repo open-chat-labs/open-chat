@@ -18,6 +18,7 @@ fn set_max_concurrent_user_canister_upgrades_impl(args: Args, runtime_state: &mu
         Event::MaxConcurrentCanisterUpgradesChanged(MaxConcurrentCanisterUpgradesChanged { value: args.value }),
         None,
     );
+    crate::jobs::sync_events_to_local_user_index_canisters::start_job_if_required(runtime_state);
 
     info!("Max concurrent canister upgrades set to {}", args.value);
     Success
