@@ -16,14 +16,19 @@ then
   echo "Missing environment variable IC_URL"
   exit 1
 fi
-if [ -z "${DEVELOPER_NEURON_ID}" ]
+if [ -z "${PROPOSER_NEURON_ID}" ]
 then
-  echo "Missing environment variable DEVELOPER_NEURON_ID"
+  echo "Missing environment variable PROPOSER_NEURON_ID"
   exit 1
 fi
 if [ -z "${PEM_FILE}" ]
 then
   echo "Missing environment variable PEM_FILE"
+  exit 1
+fi
+if [ -z "${WASM_FOLDER}" ]
+then
+  echo "Missing environment variable WASM_FOLDER"
   exit 1
 fi
 if [ -z "${YES_TO_PROPOSALS}" ]
@@ -33,7 +38,7 @@ then
 fi
 
 # Write the network
-echo $NETWORK
+echo NETWORK=$NETWORK
 
 # Set current directory to the directory this script is in
 SCRIPT=$(readlink -f "$0")
