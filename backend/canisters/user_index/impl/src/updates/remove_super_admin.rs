@@ -35,6 +35,7 @@ fn commit(user_id: &UserId, groups_to_dismiss_user_from: Vec<ChatId>, runtime_st
     for group_id in groups_to_dismiss_user_from {
         runtime_state.data.super_admins_to_dismiss.push_back((*user_id, group_id));
     }
+    crate::jobs::dismiss_super_admins::start_job_if_required(runtime_state);
 
     runtime_state.data.push_event_to_all_local_user_indexes(
         Event::SuperAdminStatusChanged(SuperAdminStatusChanged {

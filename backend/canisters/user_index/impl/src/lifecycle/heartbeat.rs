@@ -1,15 +1,12 @@
 use crate::{mutate_state, RuntimeState};
-use group_canister::c2c_dismiss_super_admin;
 use ic_cdk_macros::heartbeat;
-use tracing::error;
-use types::{CanisterId, ChatId, UserId};
+use types::{CanisterId, UserId};
 
 #[heartbeat]
 fn heartbeat() {
     sync_users_to_storage_index::run();
     sync_events_to_local_user_index_canisters::run();
     notify_user_principal_migrations::run();
-    dismiss_removed_super_admins::run();
 }
 
 mod sync_users_to_storage_index {
@@ -137,34 +134,5 @@ mod notify_user_principal_migrations {
             Ok(_) => state.data.user_principal_migration_queue.mark_success(user_id),
             Err(_) => state.data.user_principal_migration_queue.mark_failure(user_id, canister),
         });
-    }
-}
-
-mod dismiss_removed_super_admins {
-    use super::*;
-
-    pub fn run() {
-        if let Some((user_id, group_id)) = mutate_state(pop_super_admin_to_dismiss) {
-            ic_cdk::spawn(dismiss_super_admin(user_id, group_id));
-        }
-    }
-
-    fn pop_super_admin_to_dismiss(runtime_state: &mut RuntimeState) -> Option<(UserId, ChatId)> {
-        runtime_state.data.super_admins_to_dismiss.pop_front()
-    }
-
-    fn push_super_admin_to_dismiss(user_id: UserId, group_id: ChatId, runtime_state: &mut RuntimeState) {
-        runtime_state.data.super_admins_to_dismiss.push_back((user_id, group_id));
-    }
-
-    async fn dismiss_super_admin(user_id: UserId, group_id: ChatId) {
-        let c2c_args = c2c_dismiss_super_admin::Args {
-            user_id,
-            correlation_id: 0,
-        };
-        if let Err(error) = group_canister_c2c_client::c2c_dismiss_super_admin(group_id.into(), &c2c_args).await {
-            error!(?error, ?user_id, ?group_id, "Error calling group::c2c_dismiss_super_admin");
-            mutate_state(|state| push_super_admin_to_dismiss(user_id, group_id, state));
-        }
     }
 }
