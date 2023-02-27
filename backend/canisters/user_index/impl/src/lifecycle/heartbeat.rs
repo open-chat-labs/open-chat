@@ -1,126 +1,17 @@
 use crate::{mutate_state, RuntimeState};
 use group_canister::c2c_dismiss_super_admin;
-use ic_cdk::api::management_canister::main::CanisterInstallMode;
 use ic_cdk_macros::heartbeat;
 use tracing::error;
-use types::{CanisterId, ChatId, Cycles, CyclesTopUp, UserId, Version};
-use utils::canister::{install, FailedUpgrade};
-use utils::consts::MIN_CYCLES_BALANCE;
+use types::{CanisterId, ChatId, UserId};
 use utils::time::SECOND_IN_MS;
 
 #[heartbeat]
 fn heartbeat() {
-    upgrade_canisters::run();
     sync_users_to_storage_index::run();
     sync_events_to_local_user_index_canisters::run();
     notify_user_principal_migrations::run();
     dismiss_removed_super_admins::run();
     set_users_suspended::run();
-}
-
-mod upgrade_canisters {
-    use super::*;
-    type CanisterToUpgrade = utils::canister::CanisterToInstall<local_user_index_canister::post_upgrade::Args>;
-
-    pub fn run() {
-        let chats_to_upgrade = mutate_state(next_batch);
-        if !chats_to_upgrade.is_empty() {
-            ic_cdk::spawn(perform_upgrades(chats_to_upgrade));
-        }
-    }
-
-    fn next_batch(runtime_state: &mut RuntimeState) -> Vec<CanisterToUpgrade> {
-        let count_in_progress = runtime_state.data.canisters_requiring_upgrade.count_in_progress();
-        let max_concurrent_canister_upgrades = runtime_state.data.max_concurrent_canister_upgrades;
-
-        (0..(max_concurrent_canister_upgrades.saturating_sub(count_in_progress)))
-            .map_while(|_| try_get_next(runtime_state))
-            .collect()
-    }
-
-    fn try_get_next(runtime_state: &mut RuntimeState) -> Option<CanisterToUpgrade> {
-        let canister_id = runtime_state.data.canisters_requiring_upgrade.try_take_next()?;
-
-        let new_wasm_version = runtime_state.data.local_user_index_canister_wasm_for_upgrades.version;
-        let current_wasm_version = match runtime_state
-            .data
-            .local_index_map
-            .get(&canister_id)
-            .map(|c| c.wasm_version())
-            .filter(|v| *v != new_wasm_version)
-        {
-            Some(v) => v,
-            None => {
-                runtime_state.data.canisters_requiring_upgrade.mark_skipped(&canister_id);
-                return None;
-            }
-        };
-
-        let new_wasm = runtime_state.data.local_user_index_canister_wasm_for_upgrades.clone();
-        let deposit_cycles_if_needed = ic_cdk::api::canister_balance128() > MIN_CYCLES_BALANCE;
-
-        Some(CanisterToUpgrade {
-            canister_id,
-            current_wasm_version,
-            new_wasm,
-            deposit_cycles_if_needed,
-            args: local_user_index_canister::post_upgrade::Args {
-                wasm_version: new_wasm_version,
-            },
-            mode: CanisterInstallMode::Upgrade,
-            stop_start_canister: true,
-        })
-    }
-
-    async fn perform_upgrades(canisters_to_upgrade: Vec<CanisterToUpgrade>) {
-        let futures: Vec<_> = canisters_to_upgrade.into_iter().map(perform_upgrade).collect();
-
-        futures::future::join_all(futures).await;
-    }
-
-    async fn perform_upgrade(canister_to_upgrade: CanisterToUpgrade) {
-        let canister_id = canister_to_upgrade.canister_id;
-        let from_version = canister_to_upgrade.current_wasm_version;
-        let to_version = canister_to_upgrade.new_wasm.version;
-
-        match install(canister_to_upgrade).await {
-            Ok(cycles_top_up) => {
-                mutate_state(|state| on_success(canister_id, to_version, cycles_top_up, state));
-            }
-            Err(_) => {
-                mutate_state(|state| on_failure(canister_id, from_version, to_version, state));
-            }
-        }
-    }
-
-    fn on_success(canister_id: CanisterId, to_version: Version, top_up: Option<Cycles>, runtime_state: &mut RuntimeState) {
-        let local_user_index = runtime_state
-            .data
-            .local_index_map
-            .get_mut(&canister_id)
-            .expect("Cannot find local_user_index");
-
-        local_user_index.set_wasm_version(to_version);
-
-        let top_up = top_up.map(|c| CyclesTopUp {
-            amount: c,
-            date: runtime_state.env.now(),
-        });
-
-        if let Some(top_up) = top_up {
-            local_user_index.mark_cycles_top_up(top_up);
-        }
-
-        runtime_state.data.canisters_requiring_upgrade.mark_success(&canister_id);
-    }
-
-    fn on_failure(canister_id: CanisterId, from_version: Version, to_version: Version, runtime_state: &mut RuntimeState) {
-        runtime_state.data.canisters_requiring_upgrade.mark_failure(FailedUpgrade {
-            canister_id,
-            from_version,
-            to_version,
-        });
-    }
 }
 
 mod sync_users_to_storage_index {
