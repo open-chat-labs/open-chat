@@ -20,7 +20,7 @@ TITLE=$5
 URL=$6
 SUMMARY=$7
 
-# Download the canister WASM at the given commit commit
+# Download the canister WASM at the given commit
 ./scripts/download-canister-wasm.sh $CANISTER_NAME $COMMIT_ID
 
 if [ "$FUNCTION_ID" -ge "1000" ] ; then
