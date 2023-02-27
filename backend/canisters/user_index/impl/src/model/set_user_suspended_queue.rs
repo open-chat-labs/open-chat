@@ -31,6 +31,10 @@ pub struct SetUserSuspended {
 }
 
 impl SetUserSuspendedQueue {
+    pub fn next_due(&self) -> Option<TimestampMillis> {
+        self.queue.first_key_value().map(|(k, _)| *k)
+    }
+
     pub fn take_next_due(&mut self, now: TimestampMillis) -> Option<SetUserSuspendedType> {
         let (&key, queue) = self.queue.iter_mut().next().filter(|(&k, _)| k < now)?;
         let next = queue.pop_front();
@@ -46,10 +50,6 @@ impl SetUserSuspendedQueue {
 
     pub fn schedule(&mut self, values: Vec<SetUserSuspendedType>, due: TimestampMillis) {
         self.enqueue_internal(values, due);
-    }
-
-    pub fn is_empty(&self) -> bool {
-        self.queue.is_empty()
     }
 
     fn enqueue_internal(&mut self, values: Vec<SetUserSuspendedType>, due: TimestampMillis) {
