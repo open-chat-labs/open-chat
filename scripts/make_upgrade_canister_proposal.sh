@@ -24,8 +24,6 @@ SUMMARY=$7
 ./scripts/download-canister-wasm.sh $CANISTER_NAME $COMMIT_ID
 
 if [ "$FUNCTION_ID" -ge "1000" ] ; then
-    echo "UPGRADE CUSTOM"
-
     # Setup variables
     WASM_FILE="$CANISTER_NAME"_canister_impl.wasm.gz
     WASM_PATH=$WASM_FOLDER/$WASM_FILE
@@ -45,8 +43,6 @@ if [ "$FUNCTION_ID" -ge "1000" ] ; then
 
     rm -f $PROPOSAL_BUILDER_PATH
 else
-    echo "TOP-LEVEL"
-
     # Submit the proposal
     ./sns/scripts/utils/submit_upgrade_proposal.sh $CANISTER_NAME $VERSION "$TITLE" "$URL" "$SUMMARY"
 fi
