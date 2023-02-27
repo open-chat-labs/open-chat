@@ -7,7 +7,7 @@ use tracing::trace;
 use types::{CanisterId, Version};
 use utils::canister::{install, FailedUpgrade};
 
-type CanisterToUpgrade = utils::canister::CanisterToInstall<local_group_index_canister::post_upgrade::Args>;
+type CanisterToUpgrade = utils::canister::CanisterToInstall<local_user_index_canister::post_upgrade::Args>;
 
 thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
@@ -59,7 +59,7 @@ fn try_get_next(runtime_state: &mut RuntimeState) -> GetNextResult {
         None => return GetNextResult::Continue,
     };
 
-    let new_wasm_version = runtime_state.data.local_group_index_canister_wasm_for_upgrades.version;
+    let new_wasm_version = runtime_state.data.local_user_index_canister_wasm_for_upgrades.version;
     let current_wasm_version = match runtime_state
         .data
         .local_index_map
@@ -74,14 +74,14 @@ fn try_get_next(runtime_state: &mut RuntimeState) -> GetNextResult {
         }
     };
 
-    let new_wasm = runtime_state.data.local_group_index_canister_wasm_for_upgrades.clone();
+    let new_wasm = runtime_state.data.local_user_index_canister_wasm_for_upgrades.clone();
 
     GetNextResult::Success(CanisterToUpgrade {
         canister_id,
         current_wasm_version,
         new_wasm,
         deposit_cycles_if_needed: false,
-        args: local_group_index_canister::post_upgrade::Args {
+        args: local_user_index_canister::post_upgrade::Args {
             wasm_version: new_wasm_version,
         },
         mode: CanisterInstallMode::Upgrade,
@@ -105,8 +105,8 @@ async fn perform_upgrade(canister_to_upgrade: CanisterToUpgrade) {
 }
 
 fn on_success(canister_id: CanisterId, to_version: Version, runtime_state: &mut RuntimeState) {
-    if let Some(local_group_index) = runtime_state.data.local_index_map.get_mut(&canister_id) {
-        local_group_index.set_wasm_version(to_version);
+    if let Some(local_user_index) = runtime_state.data.local_index_map.get_mut(&canister_id) {
+        local_user_index.set_wasm_version(to_version);
 
         runtime_state.data.canisters_requiring_upgrade.mark_success(&canister_id);
     }
