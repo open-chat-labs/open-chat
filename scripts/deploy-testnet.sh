@@ -3,7 +3,7 @@
 NETWORK=$1
 IC_URL=$2
 IDENTITY=${3:-default}
-WASM_SRC=${4:-latest}
+WASM_SRC=${4:-latest} # WASM_SRC is either empty, "build", "latest", "prod" or the commit Id
 
 SCRIPT=$(readlink -f "$0")
 SCRIPT_DIR=$(dirname "$SCRIPT")

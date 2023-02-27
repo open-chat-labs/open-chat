@@ -15,5 +15,11 @@ cd $SCRIPT_DIR
 
 TAG=v$VERSION-$CANISTER_NAME
 
-git tag $TAG HEAD
+COMMIT_ID=$(git rev-parse HEAD)
+git tag $TAG $COMMIT_ID
 git push origin tag $TAG
+
+cd ..
+SCRIPT=$(echo "jq '.$CANISTER_NAME = \"$COMMIT_ID\"' canister_commit_ids.json")
+eval $SCRIPT > canister_commit_ids_new.json
+mv canister_commit_ids_new.json canister_commit_ids.json

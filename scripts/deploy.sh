@@ -6,7 +6,7 @@
 NETWORK=$1
 IC_URL=$2
 IDENTITY=$3
-WASM_SRC=$4
+WASM_SRC=$4 # WASM_SRC is either empty, "build", "latest", "prod" or the commit Id
 NNS_GOVERNANCE_CANISTER_ID=$5
 NNS_LEDGER_CANISTER_ID=$6
 NNS_CMC_CANISTER_ID=$7
@@ -16,15 +16,12 @@ SCRIPT=$(readlink -f "$0")
 SCRIPT_DIR=$(dirname "$SCRIPT")
 cd $SCRIPT_DIR/..
 
-if [ $WASM_SRC = "latest" ]
-then
-    ./scripts/download-all-canister-wasms.sh
-elif [ $WASM_SRC = "build" ]
+if [ $WASM_SRC = "build" ]
 then
     ./scripts/generate-all-canister-wasms.sh
 elif [ $WASM_SRC != "local" ]
 then
-    ./scripts/download-all-canister-wasms.sh $4
+    ./scripts/download-all-canister-wasms.sh $WASM_SRC
 fi
 
 USER_INDEX_CANISTER_ID=$(dfx canister --network $NETWORK id user_index)
