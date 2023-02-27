@@ -9,12 +9,12 @@ cd $SCRIPT_DIR
 PROPOSAL=$1
 
 # Make the proposal using quill
-quill sns --canister-ids-file ./sns_canister_ids.json --pem-file $PEM_FILE make-proposal --proposal "$PROPOSAL" $DEVELOPER_NEURON_ID > msg.json
+quill sns --canister-ids-file ./sns_canister_ids.json --pem-file $PEM_FILE make-proposal --proposal "$PROPOSAL" $PROPOSER_NEURON_ID > msg.json
 
 if $YES_TO_PROPOSALS ; then
-    quill send --yes --insecure-local-dev-mode msg.json
+    quill send --yes msg.json
 else
-    quill send --insecure-local-dev-mode msg.json
+    quill send msg.json
 fi
 
 rm -f msg.json

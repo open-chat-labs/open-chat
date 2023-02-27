@@ -61,6 +61,7 @@ fn c2c_register_bot_impl(args: Args, runtime_state: &mut RuntimeState) -> Respon
         }),
         None,
     );
+    crate::jobs::sync_events_to_local_user_index_canisters::start_job_if_required(runtime_state);
 
     Success
 }

@@ -77,6 +77,10 @@ impl UserPrincipalMigrationQueue {
     pub fn mark_failure(&mut self, user_id: UserId, canister: CanisterToNotifyOfUserPrincipalMigration) {
         self.queue.push_back((user_id, canister))
     }
+
+    pub fn is_empty(&self) -> bool {
+        self.queue.is_empty()
+    }
 }
 
 #[derive(Serialize, Deserialize)]

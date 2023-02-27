@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- One time job to delete all frozen groups ([#3228](https://github.com/open-ic/open-chat/pull/3228))
+
 ### Changed
 
 - Skip upgrades where new wasm version matches current version ([#3158](https://github.com/open-ic/open-chat/pull/3158))

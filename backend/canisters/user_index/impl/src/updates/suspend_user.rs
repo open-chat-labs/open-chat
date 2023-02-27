@@ -73,6 +73,7 @@ fn commit(
             })
             .collect(),
     );
+    crate::jobs::set_users_suspended::start_job_if_required(runtime_state);
 
     runtime_state
         .data
@@ -97,4 +98,5 @@ fn commit(
             suspended_by,
         }),
     );
+    crate::jobs::sync_events_to_local_user_index_canisters::start_job_if_required(runtime_state);
 }

@@ -6,7 +6,6 @@ use utils::canister::get_random_seed;
 use utils::env::canister::CanisterEnv;
 use utils::env::Environment;
 
-mod heartbeat;
 mod init;
 mod inspect_message;
 mod post_upgrade;
@@ -23,6 +22,7 @@ fn init_state(env: Box<dyn Environment>, data: Data, wasm_version: Version) {
     let now = env.now();
     let runtime_state = RuntimeState::new(env, data);
 
+    crate::jobs::start(&runtime_state);
     crate::init_state(runtime_state);
     WASM_VERSION.with(|v| *v.borrow_mut() = Timestamped::new(wasm_version, now));
 }
