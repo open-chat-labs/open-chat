@@ -719,6 +719,13 @@
         "paymentFailed": "Error en el pago de la membresía Diamond",
         "upgradeSuccess": "Su pago se ha realizado con éxito",
         "benefits": "💎 Beneficios del Diamante",
-        "message": "💎 Cuéntame sobre la membresía Diamante"
-    }
+        "message": "💎 Cuéntame sobre la membresía Diamante",
+        "extend": "Extender diamante",
+        "extendShort": "Extender",
+        "membership": "Afiliación",
+        "expiryMessage": "Su membresía de diamante caduca {relative}",
+        "extendTo": " Extenderse a",
+        "cannotExtend": "Solo puede extender su membresía dentro de los tres meses posteriores al vencimiento"
+    },
+    "currentUsage": "Uso de almacenamiento actual"
 }

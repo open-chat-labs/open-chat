@@ -84,8 +84,6 @@
                     bind:confirmed
                     bind:confirming
                     bind:refreshingBalance
-                    canExtend={$canExtendDiamond}
-                    isDiamond={$isDiamond}
                     {error}
                     accountBalance={Number(tokenDetails.balance)}
                     on:cancel

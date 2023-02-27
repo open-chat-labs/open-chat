@@ -718,6 +718,13 @@
         "paymentFailed": "Échec du paiement de l'abonnement Diamond",
         "upgradeSuccess": "Votre paiement a été effectué avec succès",
         "benefits": "💎 Avantages du diamant",
-        "message": "💎 Parlez-moi de l'adhésion Diamond"
-    }
+        "message": "💎 Parlez-moi de l'adhésion Diamond",
+        "extend": "Étendre le diamant",
+        "extendShort": "Étendre",
+        "membership": "Adhésion",
+        "expiryMessage": "Votre abonnement Diamond expire le {relative}",
+        "extendTo": " Étendre à",
+        "cannotExtend": "Vous ne pouvez prolonger votre adhésion que dans les trois mois suivant l'expiration"
+    },
+    "currentUsage": "Utilisation actuelle du stockage"
 }

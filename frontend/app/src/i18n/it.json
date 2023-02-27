@@ -718,6 +718,13 @@
         "paymentFailed": "Il pagamento per l'abbonamento Diamond non è andato a buon fine",
         "upgradeSuccess": "Il tuo pagamento è stato effettuato con successo",
         "benefits": "💎 Vantaggi del diamante",
-        "message": "💎 Parlami dell'abbonamento Diamond"
-    }
+        "message": "💎 Parlami dell'abbonamento Diamond",
+        "extend": "Estendi Diamante",
+        "extendShort": "Estendere",
+        "membership": "Adesione",
+        "expiryMessage": "Il tuo abbonamento Diamond scade {relative}",
+        "extendTo": " Estendere a",
+        "cannotExtend": "Puoi estendere la tua iscrizione solo entro tre mesi dalla scadenza"
+    },
+    "currentUsage": "Utilizzo corrente dello spazio di archiviazione"
 }

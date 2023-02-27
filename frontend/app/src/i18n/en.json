@@ -718,7 +718,8 @@
         "chatAndIcp": "ICP & CHAT",
         "paymentFailed": "Payment for Diamond membership failed",
         "upgradeSuccess": "Your payment has been made successfully",
-        "expiresIn": "Your diamond membership expires in {time}",
+        "expiryMessage": "Your diamond membership expires {relative} ",
+        "extendTo": " Extend to ",
         "cannotExtend": "You can only extend your membership within three months of expiry"
     }
 }

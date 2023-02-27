@@ -720,6 +720,13 @@
         "paymentFailed": "Die Zahlung für die Diamond-Mitgliedschaft ist fehlgeschlagen",
         "upgradeSuccess": "Ihre Zahlung wurde erfolgreich durchgeführt",
         "benefits": "💎 Vorteile von Diamant",
-        "message": "💎 Erzählen Sie mir von der Diamond-Mitgliedschaft"
-    }
+        "message": "💎 Erzählen Sie mir von der Diamond-Mitgliedschaft",
+        "extend": "Diamant verlängern",
+        "extendShort": "Erweitern",
+        "membership": "Mitgliedschaft",
+        "expiryMessage": "Ihre Diamond-Mitgliedschaft läuft ab {relative}",
+        "extendTo": " Erweitern",
+        "cannotExtend": "Sie können Ihre Mitgliedschaft nur innerhalb von drei Monaten nach Ablauf verlängern"
+    },
+    "currentUsage": "Aktuelle Speichernutzung"
 }

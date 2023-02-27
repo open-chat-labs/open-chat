@@ -38,6 +38,7 @@
     import { logger } from "../../../utils/logging";
     import ErrorMessage from "../../ErrorMessage.svelte";
     import ReferUsers from "./ReferUsers.svelte";
+    import Expiry from "../upgrade/Expiry.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -314,7 +315,7 @@
                             >{$_("upgrade.button")}</Button>
                     </ButtonGroup>
                 {:else}
-                    <p class="expiry">{$_("upgrade.expiresIn", { values: { time: "3 weeks" } })}</p>
+                    <Expiry />
                     <ButtonGroup align={"fill"}>
                         <Button
                             title={!$canExtendDiamond ? $_("upgrade.cannotExtend") : undefined}

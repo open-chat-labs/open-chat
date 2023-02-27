@@ -716,6 +716,13 @@
         "paymentFailed": "התשלום עבור חברות Diamond נכשל",
         "upgradeSuccess": "התשלום שלך בוצע בהצלחה",
         "benefits": "💎 היתרונות של יהלום",
-        "message": "💎 ספר לי על חברות Diamond"
-    }
+        "message": "💎 ספר לי על חברות Diamond",
+        "extend": "הארכת יהלום",
+        "extendShort": "לְהַאֲרִיך",
+        "membership": "חֲבֵרוּת",
+        "expiryMessage": "מינוי היהלומים שלך יפוג {relative}",
+        "extendTo": " הארך עד",
+        "cannotExtend": "אתה יכול להאריך את החברות שלך רק בתוך שלושה חודשים מיום פקיעת התוקף"
+    },
+    "currentUsage": "שימוש נוכחי באחסון"
 }
