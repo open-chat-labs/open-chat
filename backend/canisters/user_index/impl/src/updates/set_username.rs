@@ -36,6 +36,7 @@ fn set_username_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
                     .data
                     .push_event_to_local_user_index(user_id, Event::UsernameChanged(UsernameChanged { user_id, username }));
 
+                crate::jobs::sync_events_to_local_user_index_canisters::start_job_if_required(runtime_state);
                 Success
             }
             UpdateUserResult::UsernameTaken => UsernameTaken,

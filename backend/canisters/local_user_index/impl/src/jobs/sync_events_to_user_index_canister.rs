@@ -66,6 +66,8 @@ async fn sync_events(canister_id: CanisterId, events: Vec<UserIndexEvent>) {
                 .data
                 .user_index_event_sync_queue
                 .mark_sync_failed_for_canister(canister_id, events);
+
+            start_job_if_required(state);
         });
     }
 
