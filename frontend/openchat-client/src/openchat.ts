@@ -184,7 +184,7 @@ import {
 import { mergeKeepingOnlyChanged } from "./utils/object";
 import { filterWebRtcMessage, parseWebRtcMessage } from "./utils/rtc";
 import { toTitleCase } from "./utils/string";
-import { formatTimeRemaining } from "./utils/time";
+import { formatRelativeTime, formatTimeRemaining } from "./utils/time";
 import { initialiseTracking, startTrackingSession, trackEvent } from "./utils/tracking";
 import { startSwCheckPoller } from "./utils/updateSw";
 import type { OpenChatConfig } from "./config";
@@ -288,7 +288,12 @@ import {
     DiamondMembershipDetails,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
-import { diamondMembership, isDiamond } from "./stores/diamond";
+import {
+    canExtendDiamond,
+    diamondMembership,
+    isDiamond,
+    diamondDurationToMs,
+} from "./stores/diamond";
 
 const UPGRADE_POLL_INTERVAL = 1000;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -509,6 +514,12 @@ export class OpenChat extends EventTarget {
         if (userId === this.user.userId) return this._liveState.isDiamond;
 
         return user.diamond;
+    }
+
+    diamondExpiresIn(now: number, locale: string | null | undefined): string | undefined {
+        if (this._liveState.diamondMembership !== undefined) {
+            return formatRelativeTime(now, locale, this._liveState.diamondMembership.expiresAt);
+        }
     }
 
     maxMediaSizes(): MaxMediaSizes {
@@ -3431,6 +3442,8 @@ export class OpenChat extends EventTarget {
             });
     }
 
+    diamondDuraionToMs = diamondDurationToMs;
+
     /**
      * Reactive state provided in the form of svelte stores
      */
@@ -3489,4 +3502,6 @@ export class OpenChat extends EventTarget {
     threadEvents = threadEvents;
     selectedThreadKey = selectedThreadKey;
     isDiamond = isDiamond;
+    canExtendDiamond = canExtendDiamond;
+    diamondMembership = diamondMembership;
 }

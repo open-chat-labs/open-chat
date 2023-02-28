@@ -17,6 +17,7 @@
     import type { OpenChat } from "openchat-client";
     import Checkbox from "../../Checkbox.svelte";
     import { toastStore } from "stores/toast";
+    import Expiry from "./Expiry.svelte";
 
     export let accountBalance = 0;
     export let error: string | undefined;
@@ -61,6 +62,13 @@
     $: toPay = selectedOption?.amount ?? 0;
     $: insufficientFunds = toPay - icpBalance > 0.0001; //we need to account for the fact that js cannot do maths
     $: howToBuyUrl = cryptoLookup[token].howToBuyUrl;
+    $: selectedDuration = indexToDuration[selectedOption?.index ?? 0] ?? "one_month";
+
+    const indexToDuration: Record<number, DiamondMembershipDuration> = {
+        0: "one_month",
+        1: "three_months",
+        2: "one_year",
+    };
 
     function cancel() {
         dispatch("cancel");
@@ -68,13 +76,6 @@
 
     function features() {
         dispatch("features");
-    }
-
-    function selectedDuration(): DiamondMembershipDuration {
-        if (selectedOption?.index === 0) return "one_month";
-        if (selectedOption?.index === 1) return "three_months";
-        if (selectedOption?.index === 2) return "one_year";
-        return "one_month";
     }
 
     function expectedPrice(): bigint {
@@ -87,7 +88,7 @@
     function confirm() {
         confirming = true;
         client
-            .payForDiamondMembership(token, selectedDuration(), autoRenew, expectedPrice())
+            .payForDiamondMembership(token, selectedDuration, autoRenew, expectedPrice())
             .then((success) => {
                 if (success) {
                     confirmed = true;
@@ -105,6 +106,7 @@
     {:else if confirmed}
         <Congratulations />
     {:else}
+        <Expiry extendBy={selectedDuration} />
         <div class="cols">
             <div class="left">
                 {#each options as option}

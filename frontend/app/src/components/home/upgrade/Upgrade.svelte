@@ -5,7 +5,7 @@
     import Features from "./Features.svelte";
     import Payment from "./Payment.svelte";
     import { Cryptocurrency, cryptoLookup, OpenChat } from "openchat-client";
-    import { getContext } from "svelte";
+    import { getContext, onMount } from "svelte";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -18,6 +18,7 @@
     let refreshingBalance = false;
 
     $: isDiamond = client.isDiamond;
+    $: canExtendDiamond = client.canExtendDiamond;
     $: cryptoBalance = client.cryptoBalance;
     $: tokenDetails = {
         key: token,
@@ -33,6 +34,12 @@
     function onBalanceRefreshError(ev: CustomEvent<string>) {
         error = ev.detail;
     }
+
+    onMount(() => {
+        if ($canExtendDiamond) {
+            step = "payment";
+        }
+    });
 </script>
 
 <Overlay>
@@ -41,7 +48,9 @@
             {#if !confirming && !confirmed}
                 <div class="title">
                     {#if step === "features"}
-                        {#if $isDiamond}
+                        {#if $canExtendDiamond}
+                            {$_("upgrade.extend")}
+                        {:else if $isDiamond}
                             {$_("upgrade.benefits")}
                         {:else}
                             {$_("upgrade.featuresTitle")}
@@ -64,7 +73,11 @@
         </span>
         <span slot="body">
             {#if step === "features"}
-                <Features isDiamond={$isDiamond} on:cancel on:upgrade={() => (step = "payment")} />
+                <Features
+                    canExtend={$canExtendDiamond}
+                    isDiamond={$isDiamond}
+                    on:cancel
+                    on:upgrade={() => (step = "payment")} />
             {/if}
             {#if step === "payment"}
                 <Payment
