@@ -377,8 +377,9 @@ export function apiToken(token: Cryptocurrency): ApiCryptocurrency {
             return { SNS1: null };
         case "ckbtc":
             return { CKBTC: null };
+        case "chat":
+            return { CHAT: null };
     }
-    throw new Error(`Unexpected Cryptocurrency type received - ${token}`);
 }
 
 function cryptoTransfer(
