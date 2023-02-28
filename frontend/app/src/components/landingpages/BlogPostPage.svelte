@@ -22,6 +22,7 @@
 <style type="text/scss">
     .post {
         text-align: left;
+        width: 100%;
         @include lp-content-padding();
         margin-top: toRem(80);
 

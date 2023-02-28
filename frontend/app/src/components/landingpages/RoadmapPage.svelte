@@ -1,6 +1,7 @@
 <script lang="ts">
     import CollapsibleCard from "../CollapsibleCard.svelte";
     import Headline from "./Headline.svelte";
+    import Link from "./Link.svelte";
 </script>
 
 <div class="roadmap">
@@ -96,6 +97,9 @@
                 as it enables us to easily support its use as an internal communication tool
                 <em>within a corporate setting.</em> In that sense, communities can also be thought of
                 like Slack workspaces.
+            </p>
+            <p>
+                <Link path="blog/communities">Read more</Link>
             </p>
         </div>
     </CollapsibleCard>
