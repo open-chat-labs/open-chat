@@ -249,7 +249,6 @@
     "currentLimit": "您当前的存储限制为 {limit}GB，您的帐户余额为 {balance} ICP。",
     "newLimit": "{limit} / 1GB",
     "chooseAStorageLevel": "选择最大为 1GB 的存储级别",
-    "currentUsage": "当前使用情况",
     "percLeft": "还剩 {perc}%",
     "storageUsed": "{used}GB 已用 {limit}GB",
     "insufficientStorage": "存储空间不足",
@@ -720,6 +719,13 @@
         "paymentFailed": "钻石会员支付失败",
         "upgradeSuccess": "您的付款已成功完成",
         "benefits": "💎 钻石会员的好处",
-        "message": "💎 告诉我钻石会员"
-    }
+        "message": "💎 告诉我钻石会员",
+        "extend": "延长钻石",
+        "extendShort": "延长",
+        "membership": "会籍",
+        "expiryMessage": "您的钻石会员资格将于 {relative} 到期",
+        "extendTo": " 延伸到",
+        "cannotExtend": "您只能在到期后三个月内延长您的会员资格"
+    },
+    "currentUsage": "当前存储使用情况"
 }

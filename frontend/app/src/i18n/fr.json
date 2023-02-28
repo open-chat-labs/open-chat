@@ -18,7 +18,6 @@
     "currentLimit": "Votre limite de stockage actuelle est de {limit} Go et le solde de votre compte est de {balance} ICP.",
     "newLimit": "{limit} / 1 Go",
     "chooseAStorageLevel": "Choisissez un niveau de stockage jusqu'à un maximum de 1 Go",
-    "currentUsage": "Utilisation actuelle",
     "percLeft": "{min} % restants",
     "storageUsed": "{used} Go utilisés sur {limit} Go",
     "insufficientStorage": "Espace insuffisant",
@@ -719,6 +718,13 @@
         "paymentFailed": "Échec du paiement de l'abonnement Diamond",
         "upgradeSuccess": "Votre paiement a été effectué avec succès",
         "benefits": "💎 Avantages du diamant",
-        "message": "💎 Parlez-moi de l'adhésion Diamond"
-    }
+        "message": "💎 Parlez-moi de l'adhésion Diamond",
+        "extend": "Étendre le diamant",
+        "extendShort": "Étendre",
+        "membership": "Adhésion",
+        "expiryMessage": "Votre abonnement Diamond expire le {relative}",
+        "extendTo": " Étendre à",
+        "cannotExtend": "Vous ne pouvez prolonger votre adhésion que dans les trois mois suivant l'expiration"
+    },
+    "currentUsage": "Utilisation actuelle du stockage"
 }

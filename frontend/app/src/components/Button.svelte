@@ -7,6 +7,7 @@
     export let tiny: boolean = false;
     export let fill: boolean = false;
     export let hollow: boolean = false;
+    export let title: string | undefined = undefined;
 </script>
 
 <button
@@ -19,6 +20,7 @@
     class:hollow
     {disabled}
     class:secondary
+    {title}
     class:fill>
     {#if !loading}
         <slot />

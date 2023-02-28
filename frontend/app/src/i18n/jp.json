@@ -18,7 +18,6 @@
     "currentLimit": "現在のストレージ制限は{limit} GBで、アカウントの残高は{balance} ICPです。",
     "newLimit": "{limit} / 1GB",
     "chooseAStorageLevel": "最大1GBまでのストレージレベルを選択",
-    "currentUsage": "現在の使用状況",
     "percLeft": "残り{perc}%",
     "storageUsed": "{limit}GBのうち{used}GBを使用",
     "insufficientStorage": "ストレージ不足",
@@ -720,6 +719,13 @@
         "paymentFailed": "ダイヤモンド メンバーシップの支払いに失敗しました",
         "upgradeSuccess": "お支払いは正常に完了しました",
         "benefits": "💎 ダイヤモンドのメリット",
-        "message": "💎 ダイヤモンド会員について教えてください"
-    }
+        "message": "💎 ダイヤモンド会員について教えてください",
+        "extend": "ダイヤモンドを拡張",
+        "extendShort": "拡張する",
+        "membership": "メンバーシップ",
+        "expiryMessage": "あなたのダイヤモンド メンバーシップの有効期限は {relative} です",
+        "extendTo": " にまで及びます",
+        "cannotExtend": "有効期限が切れてから 3 か月以内に限り、メンバーシップを延長できます"
+    },
+    "currentUsage": "現在のストレージ使用量"
 }
