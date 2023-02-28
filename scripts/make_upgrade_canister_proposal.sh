@@ -33,7 +33,7 @@ if [ "$FUNCTION_ID" -ge "1000" ] ; then
 
     # Build the proposal file
     cd $PROPOSAL_BUILDER_FOLDER
-    cargo run --quiet -- --title "$TITLE" --summary "\"$SUMMARY\"" --url "$URL" --function-id $FUNCTION_ID --wasm-path "$WASM_PATH" --version $VERSION > $PROPOSAL_FILE
+    cargo run --quiet -- --title "$TITLE" --summary "$SUMMARY" --url "$URL" --function-id $FUNCTION_ID --wasm-path "$WASM_PATH" --version $VERSION > $PROPOSAL_FILE
 
     # cd back into root of OpenChat repo
     cd $SCRIPT_DIR/..
@@ -46,11 +46,6 @@ else
     # Submit the proposal
     ./sns/scripts/utils/submit_upgrade_proposal.sh $CANISTER_NAME $VERSION "$TITLE" "$URL" "$SUMMARY"
 fi
-
-# Tag the git commit with the version
-TAG=v$VERSION-$CANISTER_NAME
-git tag $TAG $COMMIT_ID
-git push origin tag $TAG
 
 # Update the canister_commit_ids.json locally
 SCRIPT=$(echo "jq '.$CANISTER_NAME = \"$COMMIT_ID\"' canister_commit_ids.json")
