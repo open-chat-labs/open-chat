@@ -30,6 +30,9 @@
 </div>
 
 <style type="text/scss">
+    .blog-image {
+        margin: $sp6 0;
+    }
     .switch {
         display: flex;
         gap: $sp3;

@@ -16,6 +16,10 @@
                 margin-bottom: $sp4;
             }
 
+            section {
+                margin-bottom: $sp5;
+            }
+
             h2 {
                 @include font(bold, normal, fs-160);
                 margin-bottom: $sp4;
