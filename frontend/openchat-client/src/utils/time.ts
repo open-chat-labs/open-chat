@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 export type CountdownData = {
     total: number;
     days: number;
@@ -54,4 +55,40 @@ export function startsInFormatted({
         return "minutes";
     }
     return "seconds";
+}
+
+const defaultFormatter = new Intl.RelativeTimeFormat(undefined, { numeric: "auto" });
+
+const formatters: Record<string, Intl.RelativeTimeFormat> = {
+    en: new Intl.RelativeTimeFormat("en", { numeric: "auto" }),
+};
+
+const timeDivisions = [
+    { amount: 60, name: "seconds" },
+    { amount: 60, name: "minutes" },
+    { amount: 24, name: "hours" },
+    { amount: 7, name: "days" },
+    { amount: 4.34524, name: "weeks" },
+    { amount: 12, name: "months" },
+    { amount: Number.POSITIVE_INFINITY, name: "years" },
+];
+
+export function formatRelativeTime(
+    now: number,
+    locale: string | null | undefined,
+    expiry: bigint
+): string | undefined {
+    let duration = (Number(expiry) - now) / 1000;
+    for (let i = 0; i <= timeDivisions.length; i++) {
+        const division = timeDivisions[i];
+        if (Math.abs(duration) < division.amount) {
+            if (locale && !formatters[locale]) {
+                formatters[locale] = new Intl.RelativeTimeFormat(locale, { numeric: "auto" });
+            }
+            const formatter = locale ? formatters[locale] : defaultFormatter;
+            //@ts-ignore
+            return formatter.format(Math.round(duration), division.name);
+        }
+        duration /= division.amount;
+    }
 }

@@ -11,6 +11,7 @@
     const dispatch = createEventDispatcher();
 
     export let isDiamond: boolean;
+    export let canExtend: boolean;
 
     function cancel() {
         dispatch("cancel");
@@ -167,6 +168,9 @@
     {#if !isDiamond}
         <Button on:click={upgrade} tiny={$mobileWidth} small={!$mobileWidth}
             >{$_("upgrade.button")}</Button>
+    {:else if canExtend}
+        <Button on:click={upgrade} tiny={$mobileWidth} small={!$mobileWidth}
+            >{$_("upgrade.extendShort")}</Button>
     {/if}
 </Footer>
 

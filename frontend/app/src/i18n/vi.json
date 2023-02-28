@@ -15,7 +15,6 @@
     "currentLimit": "Giới hạn lưu trữ của bạn là {limit}MB",
     "newLimit": "{limit} / 1GB",
     "chooseAStorageLevel": "Chọn mức lưu trữ, tối đa 1GB",
-    "currentUsage": "Mức sử dụng hiện tại",
     "percLeft": "Còn lại {perc}%",
     "mbUsed": "Đã sử dụng {used}MB trong {limit}MB",
     "insufficientStorage": "Không đủ dung lượng lưu trữ",
@@ -720,6 +719,13 @@
         "paymentFailed": "Thanh toán cho thành viên Diamond không thành công",
         "upgradeSuccess": "Thanh toán của bạn đã được thực hiện thành công",
         "benefits": "💎 Lợi ích của Kim cương",
-        "message": "💎 Hãy cho tôi biết về tư cách thành viên Kim cương"
-    }
+        "message": "💎 Hãy cho tôi biết về tư cách thành viên Kim cương",
+        "extend": "mở rộng kim cương",
+        "extendShort": "Mở rộng",
+        "membership": "Tư cách thành viên",
+        "expiryMessage": "Tư cách thành viên kim cương của bạn hết hạn {relative}",
+        "extendTo": " Mở rộng đến",
+        "cannotExtend": "Bạn chỉ có thể gia hạn tư cách thành viên của mình trong vòng ba tháng kể từ khi hết hạn"
+    },
+    "currentUsage": "Mức sử dụng bộ nhớ hiện tại"
 }
