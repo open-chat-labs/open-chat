@@ -8,7 +8,7 @@ export II_ALTERNATIVE_ORIGINS=https://test.oc.app
 export LEDGER_CANISTER_ICP=ryjl3-tyaaa-aaaaa-aaaba-cai
 export LEDGER_CANISTER_SNS1=zfcdd-tqaaa-aaaaq-aaaga-cai
 export LEDGER_CANISTER_BTC=mxzaz-hqaaa-aaaar-qaada-cai
-export LEDGER_CANISTER_CHAT=ryjl3-tyaaa-aaaaa-aaaba-cai
+export LEDGER_CANISTER_CHAT=2ouva-viaaa-aaaaq-aaamq-cai
 export BLOB_URL_PATTERN=https://{canisterId}.raw.ic0.app/{blobType}/
 
 npx rollup -c
