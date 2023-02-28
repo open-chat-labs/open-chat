@@ -23,19 +23,19 @@
         </div>
     </div>
     <div class="date">
-        {`Posted on: ${posted.toLocaleDateString()} ${posted.toLocaleTimeString()}`}
+        {`Posted on: ${posted.toLocaleDateString()}`}
     </div>
 </div>
 
 <style type="text/scss">
     .blog-summary {
         padding-bottom: $sp5;
-        border-bottom: 1px solid var(--bd);
+        border-bottom: 1px solid var(--landing-bd);
         margin-bottom: $sp6;
     }
     .date {
         @include font(book, normal, fs-100, 28);
-        color: var(--txt-light);
+        color: var(--landing-txt-light);
     }
     .title {
         @include font(bold, normal, fs-140);
