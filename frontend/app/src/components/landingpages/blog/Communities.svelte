@@ -22,11 +22,11 @@
     </p>
 
     <p>
-        We noticed that large public group started to emerge revolving around certain communities of
-        users that shared some commonality. That commonality could be anything: perhaps they all use
-        the same language, or they all relate to a particular area of interest, or they all relate
-        to a particular <em>project</em>. In this sense, these informal communities are a bit like
-        Discord servers.
+        We noticed that large public groups started to emerge revolving around certain communities
+        of users that shared some commonality. That commonality could be anything: perhaps they all
+        use the same language, or they all relate to a particular area of interest, or they all
+        relate to a particular <em>project</em>. In this sense, these informal communities are a bit
+        like Discord servers.
     </p>
 
     <p>
@@ -141,7 +141,7 @@
     <h2>Migration</h2>
 
     <p>
-        There are many question that remain around how we get from where we are to where we want to
+        There are many questions that remain around how we get from where we are to where we want to
         be. Lots of details will still need to be discussed and decided. What will happen to
         existing public groups? What about private groups and direct chats? In general, our vision
         is that <em>all</em> public groups will be converted to communities. The community can then be
