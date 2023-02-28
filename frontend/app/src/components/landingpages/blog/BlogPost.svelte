@@ -9,11 +9,15 @@
     :global {
         .blog-post {
             padding-bottom: $sp5;
-            border-bottom: 1px solid var(--bd);
+            border-bottom: 1px solid var(--landing-bd);
             margin-bottom: $sp6;
             h1 {
                 @include font(bold, normal, fs-200);
                 margin-bottom: $sp4;
+            }
+
+            section {
+                margin-bottom: $sp5;
             }
 
             h2 {
@@ -24,6 +28,11 @@
             h3 {
                 @include font(bold, normal, fs-120);
                 margin-bottom: $sp4;
+            }
+
+            a {
+                color: var(--landing-txt);
+                text-decoration: underline;
             }
 
             p,

@@ -37,7 +37,7 @@ const scrollingRoutes = ["features", "roadmap", "whitepaper", "architecture", "b
 const landingPageRoutes = ["home", ...scrollingRoutes];
 
 export function isLandingPageRoute(path: string): boolean {
-    return landingPageRoutes.includes(path.slice(1).toLowerCase());
+    return landingPageRoutes.find((r) => path.slice(1).toLowerCase().startsWith(r)) !== undefined;
 }
 
 export function isScrollingRoute(path: string): boolean {

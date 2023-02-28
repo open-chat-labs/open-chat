@@ -1,4 +1,5 @@
 import type { SvelteComponent } from "svelte";
+import Communities from "./Communities.svelte";
 // import ResponsiveDesign from "./ResponsiveDesign.svelte";
 // import Security from "./Security.svelte";
 
@@ -10,12 +11,12 @@ export type BlogPostInfo = {
 };
 
 export const postsBySlug: Record<string, BlogPostInfo> = {
-    // responsive_design: {
-    //     slug: "responsive_design",
-    //     title: "The Importance of Responsive Web Design for Your Website",
-    //     date: new Date(),
-    //     component: ResponsiveDesign,
-    // },
+    communities: {
+        slug: "communities",
+        title: "Communities in depth",
+        date: new Date(2023, 1, 28),
+        component: Communities,
+    },
     // cyber_security: {
     //     slug: "cyber_security",
     //     title: "Cybersecurity Best Practices: How to Protect Your Business from Cyber Attacks",

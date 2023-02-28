@@ -32,7 +32,7 @@
         </div>
         {#if showBlog}
             <div class="menu-item">
-                <Link selected={path === "/blog"} mode={"menu"} path="blog">Blog</Link>
+                <Link selected={path.startsWith("/blog")} mode={"menu"} path="blog">Blog</Link>
             </div>
         {/if}
         {#if $identityState === "logged_in"}
