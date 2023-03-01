@@ -164,22 +164,4 @@ pub mod happy_path {
             response => panic!("'summary_updates' error: {response:?}"),
         }
     }
-
-    pub fn selected_initial(
-        env: &StateMachine,
-        sender: &User,
-        group_chat_id: ChatId,
-    ) -> group_canister::selected_initial::SuccessResult {
-        let response = super::selected_initial(
-            env,
-            sender.principal,
-            group_chat_id.into(),
-            &group_canister::selected_initial::Args {},
-        );
-
-        match response {
-            group_canister::selected_initial::Response::Success(result) => result,
-            response => panic!("'selected_initial' error: {response:?}"),
-        }
-    }
 }

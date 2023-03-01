@@ -257,7 +257,6 @@ struct Data {
     pub frozen: Timestamped<Option<FrozenGroupInfo>>,
     pub timer_jobs: TimerJobs<TimerJob>,
     pub date_last_pinned: Option<TimestampMillis>,
-    pub initialized: bool,
 }
 
 fn initialize_ledger_ids() -> HashMap<Cryptocurrency, CanisterId> {
@@ -307,34 +306,21 @@ impl Data {
         proposals_bot_user_id: UserId,
         test_mode: bool,
         permissions: Option<GroupPermissions>,
-        is_reinstall: bool,
-        date_created_override: Option<TimestampMillis>,
-        invite_code: Option<u64>,
-        invite_code_enabled: bool,
-        frozen: Option<FrozenGroupInfo>,
     ) -> Data {
-        let date_created = date_created_override.unwrap_or(now);
-        let participants = Participants::new(creator_principal, creator_user_id, date_created);
-        let events = ChatEvents::new_group_chat(
-            chat_id,
-            name.clone(),
-            description.clone(),
-            creator_user_id,
-            events_ttl,
-            date_created,
-        );
+        let participants = Participants::new(creator_principal, creator_user_id, now);
+        let events = ChatEvents::new_group_chat(chat_id, name.clone(), description.clone(), creator_user_id, events_ttl, now);
 
         Data {
             is_public,
             name,
             description,
             rules,
-            subtype: Timestamped::new(subtype, date_created),
+            subtype: Timestamped::new(subtype, now),
             avatar,
             history_visible_to_new_joiners,
             participants,
             events,
-            date_created,
+            date_created: now,
             mark_active_duration,
             group_index_canister_id,
             local_group_index_canister_id,
@@ -348,13 +334,12 @@ impl Data {
             test_mode,
             owner_id: creator_user_id,
             permissions: permissions.unwrap_or_default(),
-            invite_code,
-            invite_code_enabled,
+            invite_code: None,
+            invite_code_enabled: false,
             new_joiner_rewards: None,
-            frozen: Timestamped::new(frozen, now),
+            frozen: Timestamped::default(),
             timer_jobs: TimerJobs::default(),
             date_last_pinned: None,
-            initialized: !is_reinstall,
         }
     }
 
