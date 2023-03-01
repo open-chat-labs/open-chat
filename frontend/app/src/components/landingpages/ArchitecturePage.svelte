@@ -2,7 +2,7 @@
     import Headline from "./Headline.svelte";
     import Copy from "svelte-material-icons/ContentCopy.svelte";
     import { mobileWidth } from "../../stores/screenDimensions";
-    import CollapsibleCard from "../IndexableCollapsibleCard.svelte";
+    import CollapsibleCard from "../CollapsibleCard.svelte";
     import HashLinkTarget from "./HashLinkTarget.svelte";
     import { copyToClipboard, scrollToSection } from "../../utils/urls";
     import ZoomableImage from "./ZoomableImage.svelte";
@@ -52,7 +52,7 @@
 <div class="architecture">
     <Headline>Architecture</Headline>
 
-    <CollapsibleCard first open={linked === 1}>
+    <CollapsibleCard transition={false} first open={linked === 1}>
         <div class="header" slot="titleSlot">
             <span class="subtitle">1</span>
             <div class="title">
@@ -79,7 +79,7 @@
         </div>
     </CollapsibleCard>
 
-    <CollapsibleCard open={linked === 2}>
+    <CollapsibleCard transition={false} open={linked === 2}>
         <div class="header" slot="titleSlot">
             <span class="subtitle">2</span>
             <div class="title">
@@ -445,7 +445,7 @@
         </div>
     </CollapsibleCard>
 
-    <CollapsibleCard open={linked === 3}>
+    <CollapsibleCard transition={false} open={linked === 3}>
         <div class="header" slot="titleSlot">
             <span class="subtitle">3</span>
             <div class="title">
@@ -504,7 +504,7 @@
         </div>
     </CollapsibleCard>
 
-    <CollapsibleCard open={linked === 4}>
+    <CollapsibleCard transition={false} open={linked === 4}>
         <div class="header" slot="titleSlot">
             <span class="subtitle">4</span>
             <div class="title">
