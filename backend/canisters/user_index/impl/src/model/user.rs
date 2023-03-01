@@ -23,7 +23,6 @@ pub struct User {
     pub referred_by: Option<UserId>,
     pub is_bot: bool,
     pub suspension_details: Option<SuspensionDetails>,
-    #[serde(default)]
     pub diamond_membership_details: DiamondMembershipDetailsInternal,
 }
 
