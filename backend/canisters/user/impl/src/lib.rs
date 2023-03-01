@@ -147,7 +147,6 @@ struct Data {
     pub avatar: Timestamped<Option<Avatar>>,
     pub test_mode: bool,
     pub is_super_admin: bool,
-    #[serde(alias = "recommended_group_exclusions")]
     pub hot_group_exclusions: HotGroupExclusions,
     pub username: String,
     pub bio: String,
