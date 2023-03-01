@@ -24,10 +24,10 @@ fn accept_if_valid(runtime_state: &RuntimeState) {
         | "upgrade_group_canister_wasm"
         | "upgrade_local_group_index_canister_wasm" => runtime_state.is_caller_governance_principal(),
         "delete_frozen_group"
-        | "freeze_group"
-        | "unfreeze_group"
         | "add_hot_group_exclusion"
-        | "remove_hot_group_exclusion" => true,
+        | "freeze_group"
+        | "remove_hot_group_exclusion"
+        | "unfreeze_group" => true,
         _ => false,
     };
 
