@@ -8,7 +8,6 @@ pub mod c2c_update_group;
 pub mod delete_frozen_group;
 pub mod freeze_group;
 pub mod mark_local_group_index_full;
-pub mod reinstall_group;
 pub mod set_governance_principals;
 pub mod set_max_concurrent_group_canister_upgrades;
 pub mod upgrade_group_canister_wasm;
