@@ -21,10 +21,10 @@ fn accept_if_valid(runtime_state: &RuntimeState) {
             let is_user = runtime_state.data.users.get_by_principal(&caller).is_some();
             is_user
         }
-        "suspend_user" | "unsuspend_user" => runtime_state.is_caller_super_admin(),
-        "add_super_admin"
+        "suspend_user" | "unsuspend_user" => runtime_state.is_caller_platform_moderator(),
+        "add_platform_moderator"
         | "set_governance_principals"
-        | "remove_super_admin"
+        | "remove_platform_moderator"
         | "set_max_concurrent_user_canister_upgrades"
         | "add_local_user_index_canister"
         | "upgrade_user_canister_wasm"

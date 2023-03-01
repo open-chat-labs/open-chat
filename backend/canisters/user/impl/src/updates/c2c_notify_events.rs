@@ -1,5 +1,4 @@
 use crate::guards::caller_is_local_user_index;
-use crate::updates::leave_group;
 use crate::{mutate_state, openchat_bot, RuntimeState, PREMIUM_GROUP_CREATION_LIMIT};
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
@@ -51,16 +50,12 @@ fn process_event(event: Event, runtime_state: &mut RuntimeState) {
         Event::UserJoinedGroup(ev) => {
             let now = runtime_state.env.now();
 
-            // Temporary hack
-            // TODO remove this
-            leave_group::commit(ev.chat_id, runtime_state);
-
             runtime_state
                 .data
                 .group_chats
                 .join(ev.chat_id, ev.as_super_admin, ev.latest_message_index, now);
 
-            runtime_state.data.recommended_group_exclusions.remove(&ev.chat_id, now);
+            runtime_state.data.hot_group_exclusions.remove(&ev.chat_id, now);
         }
     }
 }

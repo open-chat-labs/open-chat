@@ -149,35 +149,35 @@ type SearchResponse =
         }
     };
 
-type AddSuperAdminArgs =
+type AddPlatformModeratorArgs =
     record {
         user_id: UserId;
     };
 
-type AddSuperAdminResponse =
+type AddPlatformModeratorResponse =
     variant {
         Success;
-        AlreadySuperAdmin;
+        AlreadyPlatformModerator;
         InternalError: text;
     };
 
-type RemoveSuperAdminArgs =
+type RemovePlatformModeratorArgs =
     record {
         user_id: UserId;
     };
 
-type RemoveSuperAdminResponse =
+type RemovePlatformModeratorResponse =
     variant {
         Success;
-        NotSuperAdmin;
+        NotPlatformModerator;
         InternalError: text;
     };
 
-type SuperAdminsArgs =
+type PlatformModeratorsArgs =
     record {
     };
 
-type SuperAdminsResponse =
+type PlatformModeratorsResponse =
     variant {
         Success: record {
             users: vec UserId;
@@ -287,13 +287,15 @@ service: {
 
     pay_for_diamond_membership: (PayForDiamondMembershipArgs) -> (PayForDiamondMembershipResponse);
 
-    // Only callable by "service principals"
-    add_super_admin: (AddSuperAdminArgs) -> (AddSuperAdminResponse);
-    remove_super_admin: (RemoveSuperAdminArgs) -> (RemoveSuperAdminResponse);
-    super_admins: (SuperAdminsArgs) -> (SuperAdminsResponse) query;
-    suspected_bots: (SuspectedBotsArgs) -> (SuspectedBotsResponse) query;
+    // List the platform moderators
+    platform_moderators: (PlatformModeratorsArgs) -> (PlatformModeratorsResponse) query;
 
-    // Only callable by "super admins"
+    // Only callable by "service principals"
+    add_platform_moderator: (AddPlatformModeratorArgs) -> (AddPlatformModeratorResponse);
+    remove_platform_moderator: (RemovePlatformModeratorArgs) -> (RemovePlatformModeratorResponse);
+
+    // Only callable by "platform moderators"
     suspend_user: (SuspendUserArgs) -> (SuspendUserResponse);
     unsuspend_user: (UnsuspendUserArgs) -> (UnsuspendUserResponse);
+    suspected_bots: (SuspectedBotsArgs) -> (SuspectedBotsResponse) query;
 }

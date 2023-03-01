@@ -1,7 +1,7 @@
 use crate::model::cached_group_summaries::CachedGroupSummaries;
 use crate::model::direct_chats::DirectChats;
 use crate::model::group_chats::GroupChats;
-use crate::model::recommended_group_exclusions::RecommendedGroupExclusions;
+use crate::model::hot_group_exclusions::HotGroupExclusions;
 use crate::timer_job_types::TimerJob;
 use candid::Principal;
 use canister_state_macros::canister_state;
@@ -147,7 +147,7 @@ struct Data {
     pub avatar: Timestamped<Option<Avatar>>,
     pub test_mode: bool,
     pub is_super_admin: bool,
-    pub recommended_group_exclusions: RecommendedGroupExclusions,
+    pub hot_group_exclusions: HotGroupExclusions,
     pub username: String,
     pub bio: String,
     pub cached_group_summaries: Option<CachedGroupSummaries>,
@@ -210,7 +210,7 @@ impl Data {
             avatar: Timestamped::default(),
             test_mode,
             is_super_admin: false,
-            recommended_group_exclusions: RecommendedGroupExclusions::default(),
+            hot_group_exclusions: HotGroupExclusions::default(),
             username,
             bio: "".to_string(),
             cached_group_summaries: None,

@@ -5,6 +5,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Removed
+
+- Removed code only needed for previous upgrade ([#3248](https://github.com/open-ic/open-chat/pull/3248))
+- Removed all the code around reinstalling groups ([#3253](https://github.com/open-ic/open-chat/pull/3253))
+
 ## [[2.0.618](https://github.com/open-ic/open-chat/releases/tag/v2.0.618-local_group_index)] - 2023-02-28
 
 ### Added

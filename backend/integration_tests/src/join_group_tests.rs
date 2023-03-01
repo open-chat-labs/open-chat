@@ -18,25 +18,7 @@ fn join_public_group_succeeds() {
         group_id,
     } = init_test_data(&mut env, canister_ids.user_index, true);
 
-    let join_group_response = client::local_user_index::join_group(
-        &mut env,
-        user2.principal,
-        canister_ids.local_user_index,
-        &local_user_index_canister::join_group::Args {
-            chat_id: group_id,
-            as_super_admin: false,
-            invite_code: None,
-            correlation_id: 0,
-        },
-    );
-
-    assert!(
-        matches!(
-            join_group_response,
-            local_user_index_canister::join_group::Response::Success(_)
-        ),
-        "{join_group_response:?}",
-    );
+    client::local_user_index::happy_path::join_group(&mut env, user2.principal, canister_ids.local_user_index, group_id);
 
     env.tick();
 

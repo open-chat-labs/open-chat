@@ -5,9 +5,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Removed
+
+- Removed code only needed for previous upgrade ([#3248](https://github.com/open-ic/open-chat/pull/3248)) & ([#3251](https://github.com/open-ic/open-chat/pull/3251))
+
+## [[2.0.622](https://github.com/open-ic/open-chat/releases/tag/v2.0.622-user)] - 2023-03-01
+
 ### Added
 
 - Add CHAT ledger to user and group canisters ([#3222](https://github.com/open-ic/open-chat/pull/3222))
+- Added `hot_group_exclusions` ([#3246](https://github.com/open-ic/open-chat/pull/3246))
 
 ### Fixed
 

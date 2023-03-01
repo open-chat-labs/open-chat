@@ -6,7 +6,7 @@ use crate::model::user_map::UserMap;
 use crate::model::user_principal_migration_queue::UserPrincipalMigrationQueue;
 use candid::Principal;
 use canister_state_macros::canister_state;
-use local_user_index_canister::{Event as LocalUserIndexEvent, Event, SuperAdminStatusChanged, UserRegistered};
+use local_user_index_canister::{Event as LocalUserIndexEvent, SuperAdminStatusChanged, UserRegistered};
 use model::local_user_index_map::LocalUserIndexMap;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
@@ -75,10 +75,10 @@ impl RuntimeState {
         caller == self.data.group_index_canister_id
     }
 
-    pub fn is_caller_super_admin(&self) -> bool {
+    pub fn is_caller_platform_moderator(&self) -> bool {
         let caller = self.env.caller();
         if let Some(user) = self.data.users.get_by_principal(&caller) {
-            self.data.super_admins.contains(&user.user_id)
+            self.data.platform_moderators.contains(&user.user_id)
         } else {
             false
         }
@@ -104,8 +104,8 @@ impl RuntimeState {
             user_wasm_version: self.data.user_canister_wasm.version,
             local_user_index_wasm_version: self.data.local_user_index_canister_wasm_for_new_canisters.version,
             max_concurrent_canister_upgrades: self.data.max_concurrent_canister_upgrades,
-            super_admins: self.data.super_admins.len() as u8,
-            super_admins_to_dismiss: self.data.super_admins_to_dismiss.len() as u32,
+            platform_moderators: self.data.platform_moderators.len() as u8,
+            platform_moderators_to_dismiss: self.data.platform_moderators_to_dismiss.len() as u32,
             inflight_challenges: self.data.challenges.count(),
             user_index_events_queue_length: self.data.user_index_event_sync_queue.len(),
             local_user_indexes: self.data.local_index_map.iter().map(|(c, i)| (*c, i.clone())).collect(),
@@ -121,26 +121,23 @@ impl RuntimeState {
 #[derive(Serialize, Deserialize)]
 struct Data {
     pub users: UserMap,
-    #[serde(alias = "service_principals")]
     pub governance_principals: HashSet<Principal>,
     pub user_canister_wasm: CanisterWasm,
-    #[serde(alias = "local_user_index_canister_wasm")]
     pub local_user_index_canister_wasm_for_new_canisters: CanisterWasm,
-    #[serde(default)]
     pub local_user_index_canister_wasm_for_upgrades: CanisterWasm,
     pub group_index_canister_id: CanisterId,
     pub notifications_index_canister_id: CanisterId,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub total_cycles_spent_on_canisters: Cycles,
     pub cycles_dispenser_canister_id: CanisterId,
-    #[serde(alias = "open_storage_index_canister_id")]
     pub storage_index_canister_id: CanisterId,
-    #[serde(alias = "open_storage_user_sync_queue")]
     pub storage_index_user_sync_queue: OpenStorageUserSyncQueue,
     pub user_index_event_sync_queue: CanisterEventSyncQueue<LocalUserIndexEvent>,
     pub user_principal_migration_queue: UserPrincipalMigrationQueue,
-    pub super_admins: HashSet<UserId>,
-    pub super_admins_to_dismiss: VecDeque<(UserId, ChatId)>,
+    #[serde(alias = "super_admins")]
+    pub platform_moderators: HashSet<UserId>,
+    #[serde(alias = "super_admins_to_dismiss")]
+    pub platform_moderators_to_dismiss: VecDeque<(UserId, ChatId)>,
     pub test_mode: bool,
     pub challenges: Challenges,
     pub max_concurrent_canister_upgrades: usize,
@@ -178,8 +175,8 @@ impl Data {
             storage_index_user_sync_queue: OpenStorageUserSyncQueue::default(),
             user_index_event_sync_queue: CanisterEventSyncQueue::default(),
             user_principal_migration_queue: UserPrincipalMigrationQueue::default(),
-            super_admins: HashSet::new(),
-            super_admins_to_dismiss: VecDeque::new(),
+            platform_moderators: HashSet::new(),
+            platform_moderators_to_dismiss: VecDeque::new(),
             test_mode,
             challenges: Challenges::new(test_mode),
             max_concurrent_canister_upgrades: 2,
@@ -200,7 +197,7 @@ impl Data {
 
         for (index, canister_id) in local_group_index_canister_ids.into_iter().enumerate() {
             let username = format!("GroupUpgradeBot{}", index + 1);
-            data.register_super_admin_bot(canister_id, username, now);
+            data.register_platform_moderator_bot(canister_id, username, now);
         }
 
         data
@@ -220,15 +217,15 @@ impl Data {
         }
     }
 
-    fn register_super_admin_bot(&mut self, canister_id: CanisterId, username: String, now: TimestampMillis) {
+    fn register_platform_moderator_bot(&mut self, canister_id: CanisterId, username: String, now: TimestampMillis) {
         let user_id = canister_id.into();
         self.users
             .register(canister_id, user_id, Version::default(), username.clone(), now, None, true);
 
-        self.super_admins.insert(user_id);
+        self.platform_moderators.insert(user_id);
 
         self.push_event_to_all_local_user_indexes(
-            Event::UserRegistered(UserRegistered {
+            LocalUserIndexEvent::UserRegistered(UserRegistered {
                 user_id,
                 user_principal: canister_id,
                 username,
@@ -239,7 +236,7 @@ impl Data {
         );
 
         self.push_event_to_all_local_user_indexes(
-            Event::SuperAdminStatusChanged(SuperAdminStatusChanged {
+            LocalUserIndexEvent::SuperAdminStatusChanged(SuperAdminStatusChanged {
                 user_id,
                 is_super_admin: true,
             }),
@@ -266,8 +263,8 @@ impl Default for Data {
             storage_index_user_sync_queue: OpenStorageUserSyncQueue::default(),
             user_index_event_sync_queue: CanisterEventSyncQueue::default(),
             user_principal_migration_queue: UserPrincipalMigrationQueue::default(),
-            super_admins: HashSet::new(),
-            super_admins_to_dismiss: VecDeque::new(),
+            platform_moderators: HashSet::new(),
+            platform_moderators_to_dismiss: VecDeque::new(),
             test_mode: true,
             challenges: Challenges::new(true),
             max_concurrent_canister_upgrades: 2,
@@ -295,8 +292,8 @@ pub struct Metrics {
     pub user_wasm_version: Version,
     pub local_user_index_wasm_version: Version,
     pub max_concurrent_canister_upgrades: usize,
-    pub super_admins: u8,
-    pub super_admins_to_dismiss: u32,
+    pub platform_moderators: u8,
+    pub platform_moderators_to_dismiss: u32,
     pub inflight_challenges: u32,
     pub user_index_events_queue_length: usize,
     pub local_user_indexes: Vec<(CanisterId, LocalUserIndex)>,

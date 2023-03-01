@@ -40,7 +40,7 @@ fn current_user_impl(runtime_state: &RuntimeState) -> Response {
             wasm_version: u.wasm_version,
             icp_account: default_ledger_account(u.user_id.into()),
             referrals: runtime_state.data.users.referrals(&u.user_id),
-            is_super_admin: runtime_state.data.super_admins.contains(&u.user_id),
+            is_super_admin: runtime_state.data.platform_moderators.contains(&u.user_id),
             suspension_details,
             is_suspected_bot: runtime_state.data.users.is_suspected_bot(&u.user_id),
             diamond_membership_details: u.diamond_membership_details.hydrate(now),

@@ -1,4 +1,3 @@
-use crate::reinstall_group::{GroupBeingReinstalled, GroupBeingReinstalledMetrics};
 use canister_state_macros::canister_state;
 use model::local_group_map::LocalGroupMap;
 use serde::{Deserialize, Serialize};
@@ -14,7 +13,6 @@ mod lifecycle;
 mod memory;
 mod model;
 mod queries;
-mod reinstall_group;
 mod updates;
 
 const GROUP_CANISTER_INITIAL_CYCLES_BALANCE: Cycles = CYCLES_REQUIRED_FOR_UPGRADE + GROUP_CANISTER_TOP_UP_AMOUNT; // 0.18T cycles
@@ -77,7 +75,6 @@ impl RuntimeState {
                 proposals_bot: self.data.proposals_bot_user_id.into(),
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
             },
-            group_being_reinstalled: self.data.group_being_reinstalled.as_ref().map(|g| g.into()),
         }
     }
 }
@@ -85,9 +82,7 @@ impl RuntimeState {
 #[derive(Serialize, Deserialize)]
 struct Data {
     pub local_groups: LocalGroupMap,
-    #[serde(alias = "group_canister_wasm")]
     pub group_canister_wasm_for_new_canisters: CanisterWasm,
-    #[serde(default)]
     pub group_canister_wasm_for_upgrades: CanisterWasm,
     pub user_index_canister_id: CanisterId,
     pub local_user_index_canister_id: CanisterId,
@@ -100,8 +95,6 @@ struct Data {
     pub total_cycles_spent_on_canisters: Cycles,
     pub test_mode: bool,
     pub max_concurrent_canister_upgrades: u32,
-    #[serde(default)]
-    pub group_being_reinstalled: Option<GroupBeingReinstalled>,
 }
 
 impl Data {
@@ -132,7 +125,6 @@ impl Data {
             total_cycles_spent_on_canisters: 0,
             test_mode,
             max_concurrent_canister_upgrades: 2,
-            group_being_reinstalled: None,
         }
     }
 }
@@ -154,7 +146,6 @@ pub struct Metrics {
     pub group_wasm_version: Version,
     pub max_concurrent_canister_upgrades: u32,
     pub canister_ids: CanisterIds,
-    pub group_being_reinstalled: Option<GroupBeingReinstalledMetrics>,
 }
 
 #[derive(Serialize, Debug)]

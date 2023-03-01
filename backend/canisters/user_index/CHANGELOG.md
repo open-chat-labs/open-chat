@@ -5,16 +5,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Renamed super_admin endpoints to platform_moderator ([#3249](https://github.com/open-ic/open-chat/pull/3249))
+
+### Removed
+
+- Removed code only needed for previous upgrade ([#3248](https://github.com/open-ic/open-chat/pull/3248)) & ([#3251](https://github.com/open-ic/open-chat/pull/3251))
+
 ## [[2.0.615](https://github.com/open-ic/open-chat/releases/tag/v2.0.615-user_index)] - 2023-02-28
 
-## Changed
+### Changed
 
 - Consolidate code to install / upgrade canisters ([#3152](https://github.com/open-ic/open-chat/pull/3152))
 - Skip upgrades where new wasm version matches current version ([#3158](https://github.com/open-ic/open-chat/pull/3158))
 - Upgrade LocalUserIndex canisters using a timer job rather than heartbeat ([#3229](https://github.com/open-ic/open-chat/pull/3229))
 - Switch to using canister timers instead of heartbeat ([#3230](https://github.com/open-ic/open-chat/pull/3230))
 
-## Removed
+### Removed
 
 - Remove one time code to set up `GroupUpgradeBot` users  ([#3159](https://github.com/open-ic/open-chat/pull/3159))
 
