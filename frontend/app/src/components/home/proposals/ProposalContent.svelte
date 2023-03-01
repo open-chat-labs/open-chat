@@ -412,5 +412,6 @@
 
     .payload-body {
         word-wrap: break-word;
+        max-height: 65vh;
     }
 </style>
