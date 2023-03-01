@@ -1,13 +1,13 @@
 use crate::{mutate_state, read_state, validate_user_is_super_admin, RuntimeState, ValidationError};
 use candid::Principal;
 use canister_tracing_macros::trace;
-use group_index_canister::exclude_group_from_hotlist::{Response::*, *};
+use group_index_canister::add_hot_group_exclusion::{Response::*, *};
 use ic_cdk_macros::update;
 use types::{CanisterId, ChatId};
 
 #[update]
 #[trace]
-async fn exclude_group_from_hotlist(args: Args) -> Response {
+async fn add_hot_group_exclusion(args: Args) -> Response {
     let PrepareResult {
         caller,
         user_index_canister_id,
@@ -24,7 +24,31 @@ async fn exclude_group_from_hotlist(args: Args) -> Response {
         Err(ValidationError::InternalError(error)) => return InternalError(error),
     };
 
-    mutate_state(|state| commit(&args.chat_id, state));
+    mutate_state(|state| commit(&args.chat_id, true, state));
+
+    Success
+}
+
+#[update]
+#[trace]
+async fn remove_hot_group_exclusion(args: Args) -> Response {
+    let PrepareResult {
+        caller,
+        user_index_canister_id,
+        ..
+    } = match read_state(|state| prepare(&args.chat_id, state)) {
+        Ok(ok) if !ok.is_excluded => ok,
+        Ok(_) => return ChatAlreadyExcluded,
+        Err(_) => return ChatNotFound,
+    };
+
+    match validate_user_is_super_admin(caller, user_index_canister_id).await {
+        Ok(_) => (),
+        Err(ValidationError::NotSuperAdmin) => return NotAuthorized,
+        Err(ValidationError::InternalError(error)) => return InternalError(error),
+    };
+
+    mutate_state(|state| commit(&args.chat_id, false, state));
 
     Success
 }
@@ -48,9 +72,9 @@ fn prepare(chat_id: &ChatId, runtime_state: &RuntimeState) -> Result<PrepareResu
     }
 }
 
-fn commit(chat_id: &ChatId, runtime_state: &mut RuntimeState) {
+fn commit(chat_id: &ChatId, exclude: bool, runtime_state: &mut RuntimeState) {
     if let Some(group) = runtime_state.data.public_groups.get_mut(chat_id) {
-        group.set_excluded_from_hotlist(true);
+        group.set_excluded_from_hotlist(exclude);
     } else {
         unreachable!();
     }

@@ -26,8 +26,8 @@ fn accept_if_valid(runtime_state: &RuntimeState) {
         "delete_frozen_group"
         | "freeze_group"
         | "unfreeze_group"
-        | "exclude_group_from_hotlist"
-        | "include_group_in_hotlist" => true,
+        | "add_hot_group_exclusion"
+        | "remove_hot_group_exclusion" => true,
         _ => false,
     };
 
