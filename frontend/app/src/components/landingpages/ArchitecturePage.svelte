@@ -2,7 +2,7 @@
     import Headline from "./Headline.svelte";
     import Copy from "svelte-material-icons/ContentCopy.svelte";
     import { mobileWidth } from "../../stores/screenDimensions";
-    import CollapsibleCard from "../CollapsibleCard.svelte";
+    import CollapsibleCard from "../IndexableCollapsibleCard.svelte";
     import HashLinkTarget from "./HashLinkTarget.svelte";
     import { copyToClipboard, scrollToSection } from "../../utils/urls";
     import ZoomableImage from "./ZoomableImage.svelte";

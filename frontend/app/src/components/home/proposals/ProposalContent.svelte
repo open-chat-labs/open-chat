@@ -185,11 +185,7 @@
         </div>
 
         {#if proposal.summary.length > 0}
-            <div
-                class="summary"
-                class:expanded={summaryExpanded}
-                class:full={showFullSummary}
-                on:click={toggleSummary}>
+            <div class="summary" class:expanded={summaryExpanded} class:full={showFullSummary}>
                 <Markdown text={proposal.summary} inline={false} />
             </div>
             <div class="actions">

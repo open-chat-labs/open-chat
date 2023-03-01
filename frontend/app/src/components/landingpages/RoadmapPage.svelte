@@ -1,5 +1,5 @@
 <script lang="ts">
-    import CollapsibleCard from "../CollapsibleCard.svelte";
+    import CollapsibleCard from "../IndexableCollapsibleCard.svelte";
     import Headline from "./Headline.svelte";
     import Link from "./Link.svelte";
 </script>

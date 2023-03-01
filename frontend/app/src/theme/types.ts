@@ -78,6 +78,7 @@ export interface Theme {
     input: {
         bg: string;
         sh: string;
+        accent: string;
     };
 
     members: {
