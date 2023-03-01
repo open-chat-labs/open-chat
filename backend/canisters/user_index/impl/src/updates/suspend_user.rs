@@ -1,4 +1,4 @@
-use crate::guards::caller_is_super_admin;
+use crate::guards::caller_is_platform_moderator;
 use crate::model::set_user_suspended_queue::{SetUserSuspendedInGroup, SetUserSuspendedType};
 use crate::{mutate_state, read_state, RuntimeState};
 use canister_tracing_macros::trace;
@@ -7,7 +7,7 @@ use local_user_index_canister::{Event, UserSuspended};
 use types::{ChatId, Milliseconds, SuspensionDuration, UserId};
 use user_index_canister::suspend_user::{Response::*, *};
 
-#[update(guard = "caller_is_super_admin")]
+#[update(guard = "caller_is_platform_moderator")]
 #[trace]
 async fn suspend_user(args: Args) -> Response {
     let suspended_by = match read_state(|state| prepare(&args.user_id, state)) {

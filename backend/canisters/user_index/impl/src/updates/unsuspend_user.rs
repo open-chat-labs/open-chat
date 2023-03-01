@@ -1,4 +1,4 @@
-use crate::guards::caller_is_super_admin;
+use crate::guards::caller_is_platform_moderator;
 use crate::model::set_user_suspended_queue::{SetUserSuspendedInGroup, SetUserSuspendedType};
 use crate::updates::suspend_user::is_user_suspended;
 use crate::{mutate_state, read_state, RuntimeState};
@@ -7,7 +7,7 @@ use ic_cdk_macros::update;
 use types::{ChatId, UserId};
 use user_index_canister::unsuspend_user::{Response::*, *};
 
-#[update(guard = "caller_is_super_admin")]
+#[update(guard = "caller_is_platform_moderator")]
 #[trace]
 async fn unsuspend_user(args: Args) -> Response {
     match read_state(|state| is_user_suspended(&args.user_id, state)) {
