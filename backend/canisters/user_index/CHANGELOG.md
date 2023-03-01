@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+Renamed super_admin endpoints to platform_moderator ([#3249](https://github.com/open-ic/open-chat/pull/3249))
+
 ## [[2.0.615](https://github.com/open-ic/open-chat/releases/tag/v2.0.615-user_index)] - 2023-02-28
 
 ### Changed
