@@ -6,7 +6,7 @@ use crate::model::user_map::UserMap;
 use crate::model::user_principal_migration_queue::UserPrincipalMigrationQueue;
 use candid::Principal;
 use canister_state_macros::canister_state;
-use local_user_index_canister::{Event as LocalUserIndexEvent, Event, SuperAdminStatusChanged, UserRegistered};
+use local_user_index_canister::{Event as LocalUserIndexEvent, SuperAdminStatusChanged, UserRegistered};
 use model::local_user_index_map::LocalUserIndexMap;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
@@ -225,7 +225,7 @@ impl Data {
         self.platform_moderators.insert(user_id);
 
         self.push_event_to_all_local_user_indexes(
-            Event::UserRegistered(UserRegistered {
+            LocalUserIndexEvent::UserRegistered(UserRegistered {
                 user_id,
                 user_principal: canister_id,
                 username,
@@ -236,7 +236,7 @@ impl Data {
         );
 
         self.push_event_to_all_local_user_indexes(
-            Event::SuperAdminStatusChanged(SuperAdminStatusChanged {
+            LocalUserIndexEvent::SuperAdminStatusChanged(SuperAdminStatusChanged {
                 user_id,
                 is_super_admin: true,
             }),
