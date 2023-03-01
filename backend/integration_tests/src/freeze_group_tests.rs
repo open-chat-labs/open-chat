@@ -63,7 +63,7 @@ fn freeze_then_unfreeze() {
 }
 
 #[test]
-fn can_only_be_called_by_super_admin() {
+fn can_only_be_called_by_platform_moderator() {
     let TestEnv {
         mut env,
         canister_ids,
@@ -274,11 +274,11 @@ fn init_test_data(env: &mut StateMachine, user_index: CanisterId, controller: Pr
     let user1 = client::user_index::happy_path::register_user(env, user_index);
     let user2 = client::user_index::happy_path::register_user(env, user_index);
 
-    client::user_index::add_super_admin(
+    client::user_index::add_platform_moderator(
         env,
         controller,
         user_index,
-        &user_index_canister::add_super_admin::Args { user_id: user1.user_id },
+        &user_index_canister::add_platform_moderator::Args { user_id: user1.user_id },
     );
 
     let group_name = random_string();

@@ -25,7 +25,7 @@ pub fn caller_is_group_index() -> Result<(), String> {
 }
 
 pub fn caller_is_super_admin() -> Result<(), String> {
-    if read_state(|state| state.is_caller_super_admin()) {
+    if read_state(|state| state.is_caller_platform_moderator()) {
         Ok(())
     } else {
         Err("Caller is not a super admin".to_string())
