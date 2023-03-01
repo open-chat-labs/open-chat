@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.621](https://github.com/open-ic/open-chat/releases/tag/v2.0.621-proposals_bot)] - 2023-03-01
+
 ### Added
 
 - Added `payload_text_rendering` to SNS proposals ([#3175](https://github.com/open-ic/open-chat/pull/3175))
