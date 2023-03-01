@@ -1,5 +1,5 @@
+pub mod add_hot_group_exclusions;
 pub mod add_reaction;
-pub mod add_recommended_group_exclusions;
 pub mod archive_chat;
 pub mod assume_group_super_admin;
 pub mod block_user;

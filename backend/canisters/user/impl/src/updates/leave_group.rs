@@ -42,7 +42,7 @@ pub(crate) fn commit(chat_id: ChatId, runtime_state: &mut RuntimeState) {
 
     runtime_state.data.group_chats.remove(chat_id, now);
     runtime_state.data.unpin_chat(&chat_id, now);
-    runtime_state.data.recommended_group_exclusions.add(chat_id, None, now);
+    runtime_state.data.hot_group_exclusions.add(chat_id, None, now);
 
     if let Some(cached_groups) = &mut runtime_state.data.cached_group_summaries {
         cached_groups.remove_group(&chat_id);

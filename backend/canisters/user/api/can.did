@@ -309,13 +309,13 @@ type RelinquishGroupSuperAdminResponse =
         InternalError: text;
     };
 
-type AddRecommendedGroupExclusionsArgs =
+type AddHotGroupExclusionsArgs =
     record {
         groups: vec ChatId;
         duration: opt Milliseconds;
     };
 
-type AddRecommendedGroupExclusionsResponse =
+type AddHotGroupExclusionsResponse =
     variant {
         Success;
     };
@@ -666,6 +666,15 @@ type PublicProfile =
         created: TimestampMillis;
     };
 
+type HotGroupExclusionsArgs =
+    record {
+    };
+
+type HotGroupExclusionsResponse =
+    variant {
+        Success: vec ChatId;
+    };
+
 type DeletedMessageArgs =
     record {
         user_id: UserId;
@@ -702,7 +711,7 @@ service: {
     unmute_notifications: (UnmuteNotificationsArgs) -> (UnmuteNotificationsResponse);
     assume_group_super_admin: (AssumeGroupSuperAdminArgs) -> (AssumeGroupSuperAdminResponse);
     relinquish_group_super_admin: (RelinquishGroupSuperAdminArgs) -> (RelinquishGroupSuperAdminResponse);
-    add_recommended_group_exclusions: (AddRecommendedGroupExclusionsArgs) -> (AddRecommendedGroupExclusionsResponse);
+    add_hot_group_exclusions: (AddHotGroupExclusionsArgs) -> (AddHotGroupExclusionsResponse);
     set_bio: (SetBioArgs) -> (SetBioResponse);
     set_contact: (SetContactArgs) -> (SetContactResponse);
     send_message_with_transfer_to_group: (SendMessageWithTransferToGroupArgs) -> (SendMessageWithTransferToGroupResponse);
@@ -728,4 +737,5 @@ service: {
     bio: (BioArgs) -> (BioResponse) query;
     contacts: (ContactsArgs) -> (ContactsResponse) query;
     public_profile: (PublicProfileArgs) -> (PublicProfileResponse) query;
+    hot_group_exclusions: (HotGroupExclusionsArgs) -> (HotGroupExclusionsResponse) query;
 }
