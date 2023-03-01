@@ -577,7 +577,15 @@
         "disableAll": "Alle deaktivieren",
         "readmore": "Weiterlesen",
         "readless": "Lese weniger",
-        "details": "Einzelheiten"
+        "details": "Einzelheiten",
+        "builtInAction": "Eingebaute Aktionen",
+        "userIndexAction": "Benutzerindexaktionen",
+        "groupIndexAction": "Gruppenindexaktionen",
+        "notificationsAction": "Benachrichtigungsaktionen",
+        "proposalsBotAction": "Vorschläge für Bot-Aktionen",
+        "storageIndexAction": "Speicherindexaktionen",
+        "cyclesDispenserAction": "Zyklen Spenderaktionen",
+        "unknownActionCategory": "Andere Aktionen"
     },
     "quoteReply": "Antwort zitieren",
     "groupNameTooShort": "Der Gruppenname ist zu kurz",

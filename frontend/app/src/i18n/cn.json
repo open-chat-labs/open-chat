@@ -574,7 +574,15 @@
         "disableAll": "禁用所有",
         "readmore": "阅读更多",
         "readless": "少读",
-        "details": "细节"
+        "details": "细节",
+        "builtInAction": "内置动作",
+        "userIndexAction": "用户索引操作",
+        "groupIndexAction": "集团指数行动",
+        "notificationsAction": "通知操作",
+        "proposalsBotAction": "提案机器人操作",
+        "storageIndexAction": "存储索引操作",
+        "cyclesDispenserAction": "循环分配器操作",
+        "unknownActionCategory": "其他行为"
     },
     "quoteReply": "引用",
     "groupNameTooShort": "群聊名太短",

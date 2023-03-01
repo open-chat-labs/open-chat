@@ -573,7 +573,15 @@
         "disableAll": "すべて無効にします",
         "readmore": "続きを読む",
         "readless": "もっと読む",
-        "details": "詳細"
+        "details": "詳細",
+        "builtInAction": "組み込みアクション",
+        "userIndexAction": "ユーザー インデックス アクション",
+        "groupIndexAction": "グループ インデックス アクション",
+        "notificationsAction": "通知アクション",
+        "proposalsBotAction": "提案ボット アクション",
+        "storageIndexAction": "ストレージ インデックス アクション",
+        "cyclesDispenserAction": "サイクル ディスペンサー アクション",
+        "unknownActionCategory": "その他のアクション"
     },
     "yes": "はい",
     "no": "いいえ",

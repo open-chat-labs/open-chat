@@ -574,7 +574,15 @@
         "disableAll": "Vô hiệu hóa tất cả",
         "readmore": "Đọc thêm",
         "readless": "Đọc ít hơn",
-        "details": "Chi tiết"
+        "details": "Chi tiết",
+        "builtInAction": "Hành động tích hợp",
+        "userIndexAction": "Hành động chỉ mục người dùng",
+        "groupIndexAction": "Hành động chỉ mục nhóm",
+        "notificationsAction": "Hành động thông báo",
+        "proposalsBotAction": "Hành động bot đề xuất",
+        "storageIndexAction": "Hành động chỉ mục lưu trữ",
+        "cyclesDispenserAction": "Hành động của bộ phân phối chu kỳ",
+        "unknownActionCategory": "Hành động khác"
     },
     "yes": "Đúng",
     "no": "Không",

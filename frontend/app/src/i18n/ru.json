@@ -573,7 +573,15 @@
         "disableAll": "Отключить все",
         "readmore": "Читать больше",
         "readless": "Читать меньше",
-        "details": "Подробности"
+        "details": "Подробности",
+        "builtInAction": "Встроенные действия",
+        "userIndexAction": "Действия индекса пользователя",
+        "groupIndexAction": "Действия группового индекса",
+        "notificationsAction": "Уведомления Действия",
+        "proposalsBotAction": "Предложения Действия бота",
+        "storageIndexAction": "Действия индекса хранилища",
+        "cyclesDispenserAction": "Действия дозатора циклов",
+        "unknownActionCategory": "Другие действия"
     },
     "yes": "Да",
     "no": "Нет",
