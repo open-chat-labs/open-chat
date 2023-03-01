@@ -6,11 +6,11 @@ use utils::time::DAY_IN_MS;
 const DEFAULT_EXCLUSION_DURATION: Milliseconds = 14 * DAY_IN_MS; // 2 weeks
 
 #[derive(Serialize, Deserialize, Default)]
-pub struct RecommendedGroupExclusions {
+pub struct HotGroupExclusions {
     exclusions: HashMap<ChatId, TimestampMillis>,
 }
 
-impl RecommendedGroupExclusions {
+impl HotGroupExclusions {
     pub fn add(&mut self, chat_id: ChatId, duration: Option<Milliseconds>, now: TimestampMillis) {
         self.prune(now);
 
@@ -24,7 +24,7 @@ impl RecommendedGroupExclusions {
         self.exclusions.remove(chat_id).is_some()
     }
 
-    pub fn _get_all(&self, now: TimestampMillis) -> impl Iterator<Item = &ChatId> {
+    pub fn get_all(&self, now: TimestampMillis) -> impl Iterator<Item = &ChatId> {
         self.exclusions
             .iter()
             .filter(move |(_, &expiry)| expiry > now)
