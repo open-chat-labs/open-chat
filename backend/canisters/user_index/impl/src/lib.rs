@@ -121,21 +121,16 @@ impl RuntimeState {
 #[derive(Serialize, Deserialize)]
 struct Data {
     pub users: UserMap,
-    #[serde(alias = "service_principals")]
     pub governance_principals: HashSet<Principal>,
     pub user_canister_wasm: CanisterWasm,
-    #[serde(alias = "local_user_index_canister_wasm")]
     pub local_user_index_canister_wasm_for_new_canisters: CanisterWasm,
-    #[serde(default)]
     pub local_user_index_canister_wasm_for_upgrades: CanisterWasm,
     pub group_index_canister_id: CanisterId,
     pub notifications_index_canister_id: CanisterId,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub total_cycles_spent_on_canisters: Cycles,
     pub cycles_dispenser_canister_id: CanisterId,
-    #[serde(alias = "open_storage_index_canister_id")]
     pub storage_index_canister_id: CanisterId,
-    #[serde(alias = "open_storage_user_sync_queue")]
     pub storage_index_user_sync_queue: OpenStorageUserSyncQueue,
     pub user_index_event_sync_queue: CanisterEventSyncQueue<LocalUserIndexEvent>,
     pub user_principal_migration_queue: UserPrincipalMigrationQueue,

@@ -92,9 +92,7 @@ impl RuntimeState {
 struct Data {
     pub local_users: LocalUserMap,
     pub global_users: GlobalUserMap,
-    #[serde(alias = "user_canister_wasm")]
     pub user_canister_wasm_for_new_canisters: CanisterWasm,
-    #[serde(default)]
     pub user_canister_wasm_for_upgrades: CanisterWasm,
     pub user_index_canister_id: CanisterId,
     pub group_index_canister_id: CanisterId,

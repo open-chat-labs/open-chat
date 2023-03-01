@@ -58,7 +58,6 @@ impl RuntimeState {
 #[derive(Serialize, Deserialize)]
 struct Data {
     pub nervous_systems: NervousSystems,
-    #[serde(alias = "service_owner_principals")]
     pub governance_principals: HashSet<Principal>,
     pub user_index_canister_id: CanisterId,
     pub group_index_canister_id: CanisterId,
