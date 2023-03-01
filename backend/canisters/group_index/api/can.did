@@ -119,6 +119,35 @@ type DeleteFrozenGroupResponse =
         InternalError: text;
     };
 
+type ExcludeGroupFromHotlistArgs =
+    record {
+        chat_id: ChatId;
+        reason: opt text;
+    };
+
+type ExcludeGroupFromHotlistResponse =
+    variant {
+        Success;
+        ChatAlreadyExcluded,
+        ChatNotFound;
+        NotAuthorized;
+        InternalError: text;
+    };
+
+type IncludeGroupInHotlistArgs =
+    record {
+        chat_id: ChatId;
+    };
+
+type IncludeGroupInHotlistResponse =
+    variant {
+        Success;
+        ChatNotExcluded;
+        ChatNotFound;
+        NotAuthorized;
+        InternalError: text;
+    };
+
 service: {
     filter_groups: (FilterGroupsArgs) -> (FilterGroupsResponse) query;
     recommended_groups: (RecommendedGroupsArgs) -> (RecommendedGroupsResponse) query;
@@ -126,4 +155,6 @@ service: {
     freeze_group: (FreezeGroupArgs) -> (FreezeGroupResponse);
     unfreeze_group: (UnfreezeGroupArgs) -> (UnfreezeGroupResponse);
     delete_frozen_group: (DeleteFrozenGroupArgs) -> (DeleteFrozenGroupResponse);
+    exclude_group_from_hotlist: (ExcludeGroupFromHotlistArgs) -> (ExcludeGroupFromHotlistResponse);
+    include_group_in_hotlist: (IncludeGroupInHotlistArgs) -> (IncludeGroupInHotlistResponse);
 }
