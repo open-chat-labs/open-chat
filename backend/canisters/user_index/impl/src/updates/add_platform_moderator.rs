@@ -5,13 +5,13 @@ use canister_tracing_macros::trace;
 use local_user_index_canister::{Event, SuperAdminStatusChanged};
 use types::UserId;
 use user_canister::c2c_grant_super_admin;
-use user_index_canister::add_super_admin::{Response::*, *};
+use user_index_canister::add_platform_moderator::{Response::*, *};
 
 #[proposal(guard = "caller_is_governance_principal")]
 #[trace]
-async fn add_super_admin(args: Args) -> Response {
-    if read_state(|state| is_already_super_admin(&args.user_id, state)) {
-        return AlreadySuperAdmin;
+async fn add_platform_moderator(args: Args) -> Response {
+    if read_state(|state| is_already_platform_moderator(&args.user_id, state)) {
+        return AlreadyPlatformModerator;
     }
 
     let c2c_args = c2c_grant_super_admin::Args { correlation_id: 0 };
@@ -24,12 +24,12 @@ async fn add_super_admin(args: Args) -> Response {
     }
 }
 
-fn is_already_super_admin(user_id: &UserId, runtime_state: &RuntimeState) -> bool {
-    runtime_state.data.super_admins.contains(user_id)
+fn is_already_platform_moderator(user_id: &UserId, runtime_state: &RuntimeState) -> bool {
+    runtime_state.data.platform_moderators.contains(user_id)
 }
 
 fn commit(user_id: UserId, runtime_state: &mut RuntimeState) {
-    runtime_state.data.super_admins.insert(user_id);
+    runtime_state.data.platform_moderators.insert(user_id);
     runtime_state.data.push_event_to_all_local_user_indexes(
         Event::SuperAdminStatusChanged(SuperAdminStatusChanged {
             user_id,
