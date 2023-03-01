@@ -57,7 +57,6 @@ impl State {
 
 #[derive(Serialize, Deserialize)]
 struct Data {
-    #[serde(alias = "admins")]
     pub governance_principals: HashSet<Principal>,
     pub canisters: Canisters,
     pub max_top_up_amount: Cycles,
@@ -67,7 +66,6 @@ struct Data {
     pub ledger_canister: CanisterId,
     pub cycles_minting_canister: CanisterId,
     pub cycles_top_up_pending_notification: Option<BlockIndex>,
-    #[serde(default)]
     pub test_mode: bool,
 }
 

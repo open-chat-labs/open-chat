@@ -3,7 +3,7 @@ use crate::model::buckets::{BucketRecord, Buckets};
 use crate::model::files::Files;
 use candid::{CandidType, Principal};
 use canister_state_macros::canister_state;
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use storage_index_canister::init::CyclesDispenserConfig;
@@ -86,9 +86,7 @@ impl RuntimeState {
 
 #[derive(Serialize, Deserialize)]
 struct Data {
-    #[serde(alias = "service_principals")]
     pub governance_principals: HashSet<Principal>,
-    #[serde(default = "user_index")]
     pub user_controllers: HashSet<Principal>,
     pub bucket_canister_wasm: CanisterWasm,
     pub users: HashMap<Principal, UserRecordInternal>,
@@ -96,21 +94,8 @@ struct Data {
     pub buckets: Buckets,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub total_cycles_spent_on_canisters: Cycles,
-    #[serde(deserialize_with = "deserialize_cycles_dispenser_config")]
     pub cycles_dispenser_config: CyclesDispenserConfig,
     pub test_mode: bool,
-}
-
-fn deserialize_cycles_dispenser_config<'de, D>(deserializer: D) -> Result<CyclesDispenserConfig, D::Error>
-where
-    D: Deserializer<'de>,
-{
-    let config: Option<CyclesDispenserConfig> = Option::deserialize(deserializer)?;
-    Ok(config.unwrap())
-}
-
-fn user_index() -> HashSet<Principal> {
-    HashSet::from_iter([Principal::from_text("4bkt6-4aaaa-aaaaf-aaaiq-cai").unwrap()])
 }
 
 impl Data {

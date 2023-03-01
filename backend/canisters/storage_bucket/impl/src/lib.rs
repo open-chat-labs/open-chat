@@ -68,7 +68,6 @@ impl RuntimeState {
 
 #[derive(Serialize, Deserialize)]
 struct Data {
-    #[serde(alias = "index_canister_id")]
     storage_index_canister_id: CanisterId,
     users: Users,
     files: Files,

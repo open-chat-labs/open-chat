@@ -85,9 +85,7 @@ impl RuntimeState {
 #[derive(Serialize, Deserialize)]
 struct Data {
     pub local_groups: LocalGroupMap,
-    #[serde(alias = "group_canister_wasm")]
     pub group_canister_wasm_for_new_canisters: CanisterWasm,
-    #[serde(default)]
     pub group_canister_wasm_for_upgrades: CanisterWasm,
     pub user_index_canister_id: CanisterId,
     pub local_user_index_canister_id: CanisterId,
@@ -100,7 +98,6 @@ struct Data {
     pub total_cycles_spent_on_canisters: Cycles,
     pub test_mode: bool,
     pub max_concurrent_canister_upgrades: u32,
-    #[serde(default)]
     pub group_being_reinstalled: Option<GroupBeingReinstalled>,
 }
 

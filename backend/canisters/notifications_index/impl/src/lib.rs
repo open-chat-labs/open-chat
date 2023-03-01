@@ -108,7 +108,6 @@ impl RuntimeState {
 
 #[derive(Serialize, Deserialize)]
 struct Data {
-    #[serde(alias = "service_principals")]
     pub governance_principals: HashSet<Principal>,
     pub notifications_canisters: HashMap<CanisterId, NotificationsCanister>,
     pub push_service_principals: HashSet<Principal>,
@@ -116,9 +115,7 @@ struct Data {
     pub cycles_dispenser_canister_id: CanisterId,
     pub principal_to_user_id: HashMap<Principal, UserId>,
     pub subscriptions: Subscriptions,
-    #[serde(alias = "notifications_canister_wasm")]
     pub notifications_canister_wasm_for_new_canisters: CanisterWasm,
-    #[serde(default)]
     pub notifications_canister_wasm_for_upgrades: CanisterWasm,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub notifications_index_event_sync_queue: CanisterEventSyncQueue<NotificationsIndexEvent>,
