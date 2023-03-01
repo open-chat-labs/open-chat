@@ -5168,7 +5168,6 @@ dependencies = [
  "rand",
  "serde",
  "serde_bytes",
- "serde_json",
  "storage_bucket_canister",
  "storage_index_canister",
  "test-case",
