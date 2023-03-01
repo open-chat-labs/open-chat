@@ -10,11 +10,5 @@ PROPOSAL_PATH=$1
 
 # Make the proposal using quill
 quill sns --canister-ids-file ./sns_canister_ids.json --pem-file $PEM_FILE make-proposal --proposal-path "$PROPOSAL_PATH" $PROPOSER_NEURON_ID > msg.json
-
-if $YES_TO_PROPOSALS ; then
-    quill send --yes msg.json
-else
-    quill send msg.json
-fi
-
+quill send msg.json
 rm -f msg.json

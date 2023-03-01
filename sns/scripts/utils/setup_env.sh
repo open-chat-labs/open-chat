@@ -31,11 +31,6 @@ then
   echo "Missing environment variable WASM_FOLDER"
   exit 1
 fi
-if [ -z "${YES_TO_PROPOSALS}" ]
-then
-  echo "Missing environment variable YES_TO_PROPOSALS"
-  exit 1
-fi
 
 # Write the network
 echo NETWORK=$NETWORK
