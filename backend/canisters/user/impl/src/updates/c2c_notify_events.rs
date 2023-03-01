@@ -60,7 +60,7 @@ fn process_event(event: Event, runtime_state: &mut RuntimeState) {
                 .group_chats
                 .join(ev.chat_id, ev.as_super_admin, ev.latest_message_index, now);
 
-            runtime_state.data.recommended_group_exclusions.remove(&ev.chat_id, now);
+            runtime_state.data.hot_group_exclusions.remove(&ev.chat_id, now);
         }
     }
 }

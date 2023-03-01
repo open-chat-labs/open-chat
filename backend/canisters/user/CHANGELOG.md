@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Add CHAT ledger to user and group canisters ([#3222](https://github.com/open-ic/open-chat/pull/3222))
+- Added `hot_group_exclusions` ([#3246](https://github.com/open-ic/open-chat/pull/3246))
 
 ### Fixed
 
