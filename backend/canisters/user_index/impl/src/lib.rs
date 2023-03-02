@@ -6,7 +6,7 @@ use crate::model::user_map::UserMap;
 use crate::model::user_principal_migration_queue::UserPrincipalMigrationQueue;
 use candid::Principal;
 use canister_state_macros::canister_state;
-use local_user_index_canister::{Event as LocalUserIndexEvent, SuperAdminStatusChanged, UserRegistered};
+use local_user_index_canister::Event as LocalUserIndexEvent;
 use model::local_user_index_map::LocalUserIndexMap;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
@@ -156,9 +156,7 @@ impl Data {
         cycles_dispenser_canister_id: CanisterId,
         storage_index_canister_id: CanisterId,
         proposals_bot_user_id: UserId,
-        local_group_index_canister_ids: Vec<CanisterId>,
         test_mode: bool,
-        now: TimestampMillis,
     ) -> Self {
         let mut data = Data {
             users: UserMap::default(),
@@ -195,11 +193,6 @@ impl Data {
             true,
         );
 
-        for (index, canister_id) in local_group_index_canister_ids.into_iter().enumerate() {
-            let username = format!("GroupUpgradeBot{}", index + 1);
-            data.register_platform_moderator_bot(canister_id, username, now);
-        }
-
         data
     }
 
@@ -215,33 +208,6 @@ impl Data {
                 self.user_index_event_sync_queue.push(*canister_id, event.clone());
             }
         }
-    }
-
-    fn register_platform_moderator_bot(&mut self, canister_id: CanisterId, username: String, now: TimestampMillis) {
-        let user_id = canister_id.into();
-        self.users
-            .register(canister_id, user_id, Version::default(), username.clone(), now, None, true);
-
-        self.platform_moderators.insert(user_id);
-
-        self.push_event_to_all_local_user_indexes(
-            LocalUserIndexEvent::UserRegistered(UserRegistered {
-                user_id,
-                user_principal: canister_id,
-                username,
-                is_bot: true,
-                referred_by: None,
-            }),
-            None,
-        );
-
-        self.push_event_to_all_local_user_indexes(
-            LocalUserIndexEvent::SuperAdminStatusChanged(SuperAdminStatusChanged {
-                user_id,
-                is_super_admin: true,
-            }),
-            None,
-        );
     }
 }
 
