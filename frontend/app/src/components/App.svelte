@@ -23,9 +23,9 @@
         removeQueryStringParam,
     } from "../utils/urls";
     import { logger } from "../utils/logging";
+    import page from "page";
 
     let viewPortContent = "width=device-width, initial-scale=1";
-    let referredBy: string | undefined = undefined;
 
     function createOpenChatClient(): OpenChat {
         return new OpenChat({
@@ -60,21 +60,11 @@
     $: identityState = client.identityState;
     $: landingPage = isLandingPageRoute($location);
 
-    function getReferralCode(): string | undefined {
-        const qs = new URLSearchParams(window.location.search);
-        const qsParam = qs.get("ref") ?? undefined;
-        if (qsParam) {
-            const updatedQs = removeQueryStringParam(qs, "ref");
-            history.replaceState(null, "", updatedQs);
-            localStorage.setItem("openchat_referredby", qsParam);
-            return qsParam;
-        }
-        return localStorage.getItem("openchat_referredby") ?? undefined;
-    }
-
     onMount(() => {
         redirectLandingPageLinksIfNecessary();
-        referredBy = getReferralCode();
+        if (client.captureReferralCode()) {
+            page.replace(removeQueryStringParam("ref"));
+        }
         if (mobileOperatingSystem === "iOS") {
             viewPortContent += ", maximum-scale=1";
         }
@@ -474,9 +464,5 @@
             background-size: 800px;
             background-position: left 0 top toRem(150);
         }
-    }
-    .loading {
-        height: 100vh;
-        width: 100vw;
     }
 </style>

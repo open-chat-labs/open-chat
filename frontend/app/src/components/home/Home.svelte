@@ -265,13 +265,13 @@
                 if (faq !== null) {
                     faqQuestion = faq as Questions;
                     modal = ModalType.Faq;
-                    page.replace(removeQueryStringParam(qs, "faq"));
+                    page.replace(removeQueryStringParam("faq"));
                 }
 
                 const diamond = qs.get("diamond");
                 if (diamond !== null) {
                     showUpgrade = true;
-                    page.replace(removeQueryStringParam(qs, "diamond"));
+                    page.replace(removeQueryStringParam("diamond"));
                 }
             }
         }
@@ -859,7 +859,7 @@
 
     function closeRightPanel() {
         if ($rightPanelHistory.find((panel) => panel.kind === "message_thread_panel")) {
-            page.replace(removeQueryStringParam(new URLSearchParams($querystring), "open"));
+            page.replace(removeQueryStringParam("open"));
         }
         rightPanelHistory.set([]);
     }

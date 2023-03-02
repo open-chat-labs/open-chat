@@ -4,7 +4,7 @@
     import Header from "./Header.svelte";
     import Content from "./Content.svelte";
     import { location, pathParams } from "../../routes";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { getContext } from "svelte";
     import type { CreatedUser, OpenChat } from "openchat-client";
     import Overlay from "../Overlay.svelte";
     import Register from "../register/Register.svelte";
@@ -15,8 +15,6 @@
     import BlogPostPage from "./BlogPostPage.svelte";
 
     const client = getContext<OpenChat>("client");
-
-    export let referredBy: string | undefined = undefined;
 
     $: identityState = client.identityState;
 
@@ -33,7 +31,7 @@
 
 {#if $identityState === "registering"}
     <Overlay dismissible={false}>
-        <Register on:logout={logout} on:createdUser={createdUser} {referredBy} />
+        <Register on:logout={logout} on:createdUser={createdUser} />
     </Overlay>
 {/if}
 
