@@ -1,3 +1,4 @@
+pub mod add_hot_group_exclusion;
 pub mod add_local_group_index_canister;
 pub mod c2c_create_group;
 pub mod c2c_delete_group;
@@ -8,6 +9,7 @@ pub mod delete_frozen_group;
 pub mod freeze_group;
 pub mod mark_local_group_index_full;
 pub mod reinstall_group;
+pub mod remove_hot_group_exclusion;
 pub mod set_governance_principals;
 pub mod set_max_concurrent_group_canister_upgrades;
 pub mod unfreeze_group;
