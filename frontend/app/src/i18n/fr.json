@@ -413,7 +413,7 @@
     "markAllRead": "tout marquer comme lu",
     "publicGroupWithN": "Groupe public avec {number} membre(s)",
     "privateGroupWithN": "Groupe privé avec {number} membre(s)",
-    "groupWithN": "{nombre} membre(s)",
+    "groupWithN": "{number} membre(s)",
     "members": "Membres",
     "addMembers": "Ajouter des membres",
     "removeMemberFailed": "Impossible de supprimer le membre",
