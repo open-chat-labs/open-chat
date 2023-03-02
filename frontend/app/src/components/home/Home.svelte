@@ -208,10 +208,13 @@
     function routeChange(initialised: boolean, pathParams: RouteParams): void {
         // wait until we have loaded the chats
         if (initialised) {
+            // TODO - this is still here *and* it still works.
+            // get rid of it
             if (pathParams.chatId === "threads") {
                 closeThread();
                 client.clearSelectedChat();
                 hotGroups = { kind: "idle" };
+                // TODO - this is pretty gross
             } else if (pathParams.chatId === "share") {
                 const local_qs = new URLSearchParams(window.location.search);
                 const title = local_qs.get("title") ?? "";
@@ -223,7 +226,7 @@
                     url,
                     files: [],
                 };
-                history.replaceState(null, "", "/");
+                page.replace("/");
                 modal = ModalType.SelectChat;
             } else {
                 // if we have something in the chatId url param
