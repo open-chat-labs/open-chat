@@ -971,6 +971,7 @@ export class OpenChat extends EventTarget {
     toDatetimeString = toDatetimeString;
     getContentAsText = getContentAsText;
     groupBySender = groupBySender;
+    groupBy = groupBy;
     getTypingString = getTypingString;
 
     canBlockUsers(chatId: string): boolean {

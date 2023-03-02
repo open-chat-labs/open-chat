@@ -30,7 +30,7 @@
     $size-small: 21px;
 
     :root {
-        --color: var(--primary);
+        --color: var(--input-accent);
     }
 
     // todo - this will have rtl issues at the moment
@@ -44,6 +44,7 @@
         appearance: none;
         background-color: transparent;
         margin: 0;
+        cursor: pointer;
 
         font: inherit;
         color: currentColor;
@@ -100,6 +101,7 @@
     label {
         flex: 1;
         user-select: none;
+        cursor: pointer;
     }
 
     .toggle {

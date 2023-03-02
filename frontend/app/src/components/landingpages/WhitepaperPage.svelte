@@ -41,7 +41,7 @@
 <div class="whitepaper" bind:clientWidth={width}>
     <Headline>OpenChat SNS Whitepaper</Headline>
 
-    <CollapsibleCard first open={linked === 1}>
+    <CollapsibleCard transition={false} first open={linked === 1}>
         <div class="header" slot="titleSlot">
             <span class="subtitle">1</span>
             <div class="title">
@@ -106,7 +106,7 @@
         </div>
     </CollapsibleCard>
 
-    <CollapsibleCard open={linked === 2}>
+    <CollapsibleCard transition={false} open={linked === 2}>
         <div class="header" slot="titleSlot">
             <span class="subtitle">2</span>
             <div class="title">
@@ -184,7 +184,7 @@
         </div>
     </CollapsibleCard>
 
-    <CollapsibleCard open={linked === 3}>
+    <CollapsibleCard transition={false} open={linked === 3}>
         <div class="header" slot="titleSlot">
             <span class="subtitle">3</span>
             <div class="title">
@@ -428,7 +428,7 @@
         </div>
     </CollapsibleCard>
 
-    <CollapsibleCard open={linked === 4}>
+    <CollapsibleCard transition={false} open={linked === 4}>
         <div class="header" slot="titleSlot">
             <span class="subtitle">4</span>
             <div class="title">
@@ -566,7 +566,7 @@
         </div>
     </CollapsibleCard>
 
-    <CollapsibleCard open={linked === 5}>
+    <CollapsibleCard transition={false} open={linked === 5}>
         <div class="header" slot="titleSlot">
             <span class="subtitle">5</span>
             <div class="title">
@@ -622,8 +622,8 @@
             </p>
             <p>
                 Each founding developer will receive 5% of the CHAT tokens as a basket of 5 equal
-                value neurons. Each neuron will have a dissolve delay of 1 month but with an additional 
-                "vesting period" of 0, 1, 2, 3, and 4 years respectively.
+                value neurons. Each neuron will have a dissolve delay of 1 month but with an
+                additional "vesting period" of 0, 1, 2, 3, and 4 years respectively.
             </p>
             <p>
                 DFINITY will receive 8% of the CHAT tokens as a basket of 4 equal neurons each with
@@ -637,8 +637,8 @@
                 OpenChat successful.
             </p>
             <p>
-                As these founder/funder neurons all have a relatively short dissolve delay of 1 month 
-                which cannot be increased, this ensures a reduced voting power compared to the
+                As these founder/funder neurons all have a relatively short dissolve delay of 1
+                month which cannot be increased, this ensures a reduced voting power compared to the
                 community so that governance is properly decentralized.
             </p>
             <GoogleChart
@@ -732,7 +732,7 @@
         </div>
     </CollapsibleCard>
 
-    <CollapsibleCard open={linked === 6}>
+    <CollapsibleCard transition={false} open={linked === 6}>
         <div class="header" slot="titleSlot">
             <span class="subtitle">6</span>
             <div class="title">
@@ -854,7 +854,7 @@
         </div>
     </CollapsibleCard>
 
-    <CollapsibleCard open={linked === 7}>
+    <CollapsibleCard transition={false} open={linked === 7}>
         <div class="header" slot="titleSlot">
             <span class="subtitle">7</span>
             <div class="title">
@@ -937,11 +937,11 @@
             <p>
                 After the decentralization sale, participants will receive a basket of neurons of
                 varying dissolve delays with only 1/5 being immediately liquid. The voting reward
-                rate, initialized to 2.5%, is expected to encourage token holders to lock up a certain
-                proportion of tokens thus, at least temporarily, removing them from the liquid
-                supply. In the case of the seed funders, their neurons have vesting periods from 6-24 
-                momths before they can even start dissolving. In the case of the founding dev team, 
-                the vesting periods are from 0-4 years.
+                rate, initialized to 2.5%, is expected to encourage token holders to lock up a
+                certain proportion of tokens thus, at least temporarily, removing them from the
+                liquid supply. In the case of the seed funders, their neurons have vesting periods
+                from 6-24 momths before they can even start dissolving. In the case of the founding
+                dev team, the vesting periods are from 0-4 years.
             </p>
             <p>
                 There are various tokenomics parameters which can affect the proportion of CHAT that

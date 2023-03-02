@@ -573,7 +573,15 @@
         "disableAll": "Disabilitare tutto",
         "readmore": "Leggi di più",
         "readless": "Leggi di meno",
-        "details": "Dettagli"
+        "details": "Dettagli",
+        "builtInAction": "Azioni incorporate",
+        "userIndexAction": "Azioni indice utenti",
+        "groupIndexAction": "Azioni indice di gruppo",
+        "proposalsBotAction": "Proposte Bot Azioni",
+        "storageIndexAction": "Azioni dell'indice di archiviazione",
+        "cyclesDispenserAction": "Cicli Azioni Dispenser",
+        "unknownActionCategory": "Altre azioni",
+        "notificationsAction": "Notifiche Indice Azioni"
     },
     "yes": "sì",
     "no": "No",
