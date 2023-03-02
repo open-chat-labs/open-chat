@@ -14,7 +14,7 @@ macro_rules! generate_update_call {
             let response = agent
                 .update(canister_id, method_name)
                 .with_arg(candid_args)
-                .call_and_wait(delay())
+                .call_and_wait()
                 .await?;
 
             let result = Decode!(response.as_slice(), $method_name::Response)?;
@@ -121,13 +121,4 @@ macro_rules! generate_candid_c2c_call {
             }
         }
     };
-}
-
-#[cfg(feature = "garcon")]
-// How `Agent` is instructed to wait for update calls.
-pub fn delay() -> garcon::Delay {
-    garcon::Delay::builder()
-        .throttle(std::time::Duration::from_millis(500))
-        .timeout(std::time::Duration::from_secs(60 * 5))
-        .build()
 }
