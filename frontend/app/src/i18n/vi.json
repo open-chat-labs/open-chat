@@ -578,11 +578,11 @@
         "builtInAction": "Hành động tích hợp",
         "userIndexAction": "Hành động chỉ mục người dùng",
         "groupIndexAction": "Hành động chỉ mục nhóm",
-        "notificationsAction": "Hành động thông báo",
         "proposalsBotAction": "Hành động bot đề xuất",
         "storageIndexAction": "Hành động chỉ mục lưu trữ",
         "cyclesDispenserAction": "Hành động của bộ phân phối chu kỳ",
-        "unknownActionCategory": "Hành động khác"
+        "unknownActionCategory": "Hành động khác",
+        "notificationsAction": "Thông báo Chỉ mục Hành động"
     },
     "yes": "Đúng",
     "no": "Không",

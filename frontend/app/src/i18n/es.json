@@ -578,11 +578,11 @@
         "builtInAction": "Acciones integradas",
         "userIndexAction": "Acciones de índice de usuario",
         "groupIndexAction": "Acciones de índice de grupo",
-        "notificationsAction": "Acciones de notificaciones",
         "proposalsBotAction": "Acciones del bot de propuestas",
         "storageIndexAction": "Acciones de índice de almacenamiento",
         "cyclesDispenserAction": "Acciones del dispensador de ciclos",
-        "unknownActionCategory": "Otras acciones"
+        "unknownActionCategory": "Otras acciones",
+        "notificationsAction": "Índice de notificaciones Acciones"
     },
     "yes": "Sí",
     "no": "No",

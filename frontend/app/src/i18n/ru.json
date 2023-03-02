@@ -577,11 +577,11 @@
         "builtInAction": "Встроенные действия",
         "userIndexAction": "Действия индекса пользователя",
         "groupIndexAction": "Действия группового индекса",
-        "notificationsAction": "Уведомления Действия",
         "proposalsBotAction": "Предложения Действия бота",
         "storageIndexAction": "Действия индекса хранилища",
         "cyclesDispenserAction": "Действия дозатора циклов",
-        "unknownActionCategory": "Другие действия"
+        "unknownActionCategory": "Другие действия",
+        "notificationsAction": "Действия индекса уведомлений"
     },
     "yes": "Да",
     "no": "Нет",

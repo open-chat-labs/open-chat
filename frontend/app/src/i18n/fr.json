@@ -577,11 +577,11 @@
         "builtInAction": "Actions intégrées",
         "userIndexAction": "Actions d'index utilisateur",
         "groupIndexAction": "Actions d'index de groupe",
-        "notificationsAction": "Notifications Actions",
         "proposalsBotAction": "Actions du robot de propositions",
         "storageIndexAction": "Actions d'index de stockage",
         "cyclesDispenserAction": "Actions du distributeur de cycles",
-        "unknownActionCategory": "D'autres actions"
+        "unknownActionCategory": "D'autres actions",
+        "notificationsAction": "Notifications Index Actions"
     },
     "yes": "Oui",
     "no": "Non",

@@ -597,7 +597,7 @@
         "builtInAction": "Built In Actions",
         "userIndexAction": "User Index Actions",
         "groupIndexAction": "Group Index Actions",
-        "notificationsAction": "Notifications Actions",
+        "notificationsAction": "Notifications Index Actions",
         "proposalsBotAction": "Proposals Bot Actions",
         "storageIndexAction": "Storage Index Actions",
         "cyclesDispenserAction": "Cycles Dispenser Actions",

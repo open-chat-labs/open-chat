@@ -581,11 +581,11 @@
         "builtInAction": "Eingebaute Aktionen",
         "userIndexAction": "Benutzerindexaktionen",
         "groupIndexAction": "Gruppenindexaktionen",
-        "notificationsAction": "Benachrichtigungsaktionen",
         "proposalsBotAction": "Vorschläge für Bot-Aktionen",
         "storageIndexAction": "Speicherindexaktionen",
         "cyclesDispenserAction": "Zyklen Spenderaktionen",
-        "unknownActionCategory": "Andere Aktionen"
+        "unknownActionCategory": "Andere Aktionen",
+        "notificationsAction": "Indexaktionen für Benachrichtigungen"
     },
     "quoteReply": "Antwort zitieren",
     "groupNameTooShort": "Der Gruppenname ist zu kurz",

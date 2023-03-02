@@ -577,11 +577,11 @@
         "builtInAction": "Azioni incorporate",
         "userIndexAction": "Azioni indice utenti",
         "groupIndexAction": "Azioni indice di gruppo",
-        "notificationsAction": "Notifiche Azioni",
         "proposalsBotAction": "Proposte Bot Azioni",
         "storageIndexAction": "Azioni dell'indice di archiviazione",
         "cyclesDispenserAction": "Cicli Azioni Dispenser",
-        "unknownActionCategory": "Altre azioni"
+        "unknownActionCategory": "Altre azioni",
+        "notificationsAction": "Notifiche Indice Azioni"
     },
     "yes": "sì",
     "no": "No",

@@ -577,11 +577,11 @@
         "builtInAction": "組み込みアクション",
         "userIndexAction": "ユーザー インデックス アクション",
         "groupIndexAction": "グループ インデックス アクション",
-        "notificationsAction": "通知アクション",
         "proposalsBotAction": "提案ボット アクション",
         "storageIndexAction": "ストレージ インデックス アクション",
         "cyclesDispenserAction": "サイクル ディスペンサー アクション",
-        "unknownActionCategory": "その他のアクション"
+        "unknownActionCategory": "その他のアクション",
+        "notificationsAction": "通知インデックス アクション"
     },
     "yes": "はい",
     "no": "いいえ",
