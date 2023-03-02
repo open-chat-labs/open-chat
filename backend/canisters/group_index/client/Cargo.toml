@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 candid = { workspace = true }
-canister_client_macros = { path = "../../../libraries/canister_client_macros", features = ["ingress"] }
+canister_client_macros = { path = "../../../libraries/canister_client_macros" }
 group_index_canister = { path = "../api" }
 ic-agent = { workspace = true }
 types = { path = "../../../libraries/types" }

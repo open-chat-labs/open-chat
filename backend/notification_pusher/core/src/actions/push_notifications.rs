@@ -1,4 +1,5 @@
 use crate::ic_agent::IcAgent;
+use base64::Engine;
 use futures::future;
 use index_store::IndexStore;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
@@ -100,7 +101,7 @@ fn group_notifications_by_user(envelopes: Vec<IndexedEvent<NotificationEnvelope>
     }
 
     for n in envelopes {
-        let base64 = Rc::new(base64::encode(n.value.notification_bytes));
+        let base64 = Rc::new(base64::engine::general_purpose::STANDARD_NO_PAD.encode(n.value.notification_bytes));
         for u in n.value.recipients {
             assign_notification_to_user(&mut grouped_by_user, u, base64.clone());
         }
