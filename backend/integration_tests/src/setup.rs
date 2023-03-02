@@ -89,7 +89,6 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
         cycles_dispenser_canister_id,
         storage_index_canister_id,
         proposals_bot_user_id: proposals_bot_canister_id.into(),
-        local_group_index_canister_ids: vec![local_group_index_canister_id],
         wasm_version: Version::min(),
         test_mode: true,
     };
