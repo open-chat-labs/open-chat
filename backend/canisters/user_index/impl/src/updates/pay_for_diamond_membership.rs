@@ -1,5 +1,5 @@
-use crate::{mutate_state, RuntimeState, ONE_GB};
-use candid::Principal;
+use crate::timer_job_types::{RecurringDiamondMembershipPayment, TimerJob};
+use crate::{mutate_state, read_state, RuntimeState, ONE_GB};
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
 use ic_ledger_types::{BlockIndex, TransferError};
@@ -8,13 +8,25 @@ use storage_index_canister::add_or_update_users::UserConfig;
 use tracing::error;
 use types::{Cryptocurrency, DiamondMembershipPlanDuration, UserId, ICP};
 use user_index_canister::pay_for_diamond_membership::{Response::*, *};
+use utils::time::DAY_IN_MS;
 
 #[update]
 #[trace]
 async fn pay_for_diamond_membership(args: Args) -> Response {
-    let (caller, user_id) = match mutate_state(|state| prepare(&args, state)) {
-        Ok(prepare_result) => prepare_result,
-        Err(response) => return response,
+    let user_id = match read_state(|state| {
+        let caller = state.env.caller();
+        state.data.users.get_by_principal(&caller).map(|u| u.user_id)
+    }) {
+        Some(u) => u,
+        _ => return UserNotFound,
+    };
+
+    pay_for_diamond_membership_impl(args, user_id).await
+}
+
+pub(crate) async fn pay_for_diamond_membership_impl(args: Args, user_id: UserId) -> Response {
+    if let Err(response) = mutate_state(|state| prepare(&args, user_id, state)) {
+        return response;
     };
 
     let c2c_args = user_canister::c2c_charge_user_account::Args {
@@ -24,7 +36,7 @@ async fn pay_for_diamond_membership(args: Args) -> Response {
     let response = match user_canister_c2c_client::c2c_charge_user_account(user_id.into(), &c2c_args).await {
         Ok(result) => match result {
             user_canister::c2c_charge_user_account::Response::Success(block_index) => {
-                mutate_state(|state| process_charge(args, caller, user_id, block_index, state))
+                mutate_state(|state| process_charge(args, user_id, block_index, state))
             }
             user_canister::c2c_charge_user_account::Response::TransferError(error) => process_error(error),
             user_canister::c2c_charge_user_account::Response::InternalError(error) => InternalError(error),
@@ -41,14 +53,7 @@ async fn pay_for_diamond_membership(args: Args) -> Response {
     response
 }
 
-fn prepare(args: &Args, runtime_state: &mut RuntimeState) -> Result<(Principal, UserId), Response> {
-    let caller = runtime_state.env.caller();
-
-    let user_id = match runtime_state.data.users.get_by_principal(&caller) {
-        Some(u) => u.user_id,
-        _ => return Err(UserNotFound),
-    };
-
+fn prepare(args: &Args, user_id: UserId, runtime_state: &mut RuntimeState) -> Result<(), Response> {
     let diamond_membership = runtime_state.data.users.diamond_membership_details_mut(&user_id).unwrap();
     if diamond_membership.payment_in_progress() {
         Err(PaymentAlreadyInProgress)
@@ -60,11 +65,11 @@ fn prepare(args: &Args, runtime_state: &mut RuntimeState) -> Result<(Principal, 
         Err(PriceMismatch)
     } else {
         diamond_membership.set_payment_in_progress(true);
-        Ok((caller, user_id))
+        Ok(())
     }
 }
 
-fn icp_price_e8s(duration: DiamondMembershipPlanDuration) -> u64 {
+pub(crate) fn icp_price_e8s(duration: DiamondMembershipPlanDuration) -> u64 {
     match duration {
         DiamondMembershipPlanDuration::OneMonth => 20_000_000,    // 0.2 ICP
         DiamondMembershipPlanDuration::ThreeMonths => 50_000_000, // 0.5 ICP
@@ -72,13 +77,7 @@ fn icp_price_e8s(duration: DiamondMembershipPlanDuration) -> u64 {
     }
 }
 
-fn process_charge(
-    args: Args,
-    caller: Principal,
-    user_id: UserId,
-    block_index: BlockIndex,
-    runtime_state: &mut RuntimeState,
-) -> Response {
+fn process_charge(args: Args, user_id: UserId, block_index: BlockIndex, runtime_state: &mut RuntimeState) -> Response {
     if let Some(diamond_membership) = runtime_state.data.users.diamond_membership_details_mut(&user_id) {
         let now = runtime_state.env.now();
         diamond_membership.add_payment(
@@ -107,12 +106,24 @@ fn process_charge(
                 recurring: args.recurring,
             }),
         );
-        runtime_state.data.storage_index_user_sync_queue.push(UserConfig {
-            user_id: caller,
-            byte_limit: ONE_GB,
-        });
         crate::jobs::sync_events_to_local_user_index_canisters::start_job_if_required(runtime_state);
-        crate::jobs::sync_users_to_storage_index::start_job_if_required(runtime_state);
+
+        if let Some(user) = runtime_state.data.users.get_by_user_id(&user_id) {
+            runtime_state.data.storage_index_user_sync_queue.push(UserConfig {
+                user_id: user.principal,
+                byte_limit: ONE_GB,
+            });
+            crate::jobs::sync_users_to_storage_index::start_job_if_required(runtime_state);
+        }
+
+        if args.recurring {
+            runtime_state.data.timer_jobs.enqueue_job(
+                TimerJob::RecurringDiamondMembershipPayment(RecurringDiamondMembershipPayment { user_id }),
+                expires_at.saturating_sub(DAY_IN_MS),
+                now,
+            );
+        }
+
         Success(result)
     } else {
         error!(%user_id, "Diamond membership payment taken, but user no longer exists");

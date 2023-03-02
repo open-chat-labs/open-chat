@@ -2,8 +2,8 @@ use candid::Principal;
 use serde::{Deserialize, Serialize};
 use types::nns::CryptoAmount;
 use types::{
-    ChatId, Cryptocurrency, DiamondMembershipPlanDuration, MessageIndex, PhoneNumber, SuspensionDuration, TimestampMillis,
-    UserId,
+    ChatId, Cryptocurrency, DiamondMembershipPlanDuration, MessageContent, MessageIndex, PhoneNumber, SuspensionDuration,
+    TimestampMillis, UserId,
 };
 
 mod lifecycle;
@@ -25,6 +25,7 @@ pub enum Event {
     UserSuspended(UserSuspended),
     UserJoinedGroup(UserJoinedGroup),
     DiamondMembershipPaymentReceived(DiamondMembershipPaymentReceived),
+    OpenChatBotMessage(OpenChatBotMessage),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -96,4 +97,10 @@ pub struct DiamondMembershipPaymentReceived {
     pub block_index: u64,
     pub duration: DiamondMembershipPlanDuration,
     pub recurring: bool,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct OpenChatBotMessage {
+    pub user_id: UserId,
+    pub message: MessageContent,
 }

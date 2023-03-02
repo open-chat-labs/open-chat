@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::{cmp::max, collections::HashMap};
 use types::{Cryptocurrency, DiamondMembershipDetails, DiamondMembershipPlanDuration, Milliseconds, TimestampMillis};
 use user_index_canister::pay_for_diamond_membership::CannotExtendResult;
+use utils::time::DAY_IN_MS;
 
 #[derive(Serialize, Deserialize, Clone, Default)]
 pub struct DiamondMembershipDetailsInternal {
@@ -33,6 +34,14 @@ impl DiamondMembershipDetailsInternal {
 
     pub fn is_recurring(&self) -> bool {
         self.recurring
+    }
+
+    pub fn is_recurring_payment_due(&self, now: TimestampMillis) -> bool {
+        self.recurring
+            && self
+                .expires_at
+                .map(|ts| ts < now.saturating_add(DAY_IN_MS))
+                .unwrap_or_default()
     }
 
     pub fn amount_paid(&self) -> HashMap<Cryptocurrency, u128> {
@@ -100,6 +109,10 @@ impl DiamondMembershipDetailsInternal {
 
     pub fn set_payment_in_progress(&mut self, value: bool) {
         self.payment_in_progress = value;
+    }
+
+    pub fn latest_duration(&self) -> Option<DiamondMembershipPlanDuration> {
+        self.payments.last().map(|p| p.duration)
     }
 
     #[allow(dead_code)]
