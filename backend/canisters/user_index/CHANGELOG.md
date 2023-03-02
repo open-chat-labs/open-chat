@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- APIs to add/remove/list platform operators ([#3264](https://github.com/open-ic/open-chat/pull/3264)) 
+
 ### Changed
 
 - Use `canister_timer_jobs` package to simplify timer jobs ([#3263](https://github.com/open-ic/open-chat/pull/3263)) 
