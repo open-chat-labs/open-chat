@@ -84,6 +84,16 @@ impl RuntimeState {
         }
     }
 
+    #[allow(dead_code)]
+    pub fn is_caller_platform_operator(&self) -> bool {
+        let caller = self.env.caller();
+        if let Some(user) = self.data.users.get_by_principal(&caller) {
+            self.data.platform_operators.contains(&user.user_id)
+        } else {
+            false
+        }
+    }
+
     pub fn metrics(&self) -> Metrics {
         let now = self.env.now();
         let canister_upgrades_metrics = self.data.canisters_requiring_upgrade.metrics();
@@ -106,6 +116,7 @@ impl RuntimeState {
             max_concurrent_canister_upgrades: self.data.max_concurrent_canister_upgrades,
             platform_moderators: self.data.platform_moderators.len() as u8,
             platform_moderators_to_dismiss: self.data.platform_moderators_to_dismiss.len() as u32,
+            platform_operators: self.data.platform_operators.len() as u8,
             inflight_challenges: self.data.challenges.count(),
             user_index_events_queue_length: self.data.user_index_event_sync_queue.len(),
             local_user_indexes: self.data.local_index_map.iter().map(|(c, i)| (*c, i.clone())).collect(),
@@ -136,6 +147,8 @@ struct Data {
     pub user_principal_migration_queue: UserPrincipalMigrationQueue,
     pub platform_moderators: HashSet<UserId>,
     pub platform_moderators_to_dismiss: VecDeque<(UserId, ChatId)>,
+    #[serde(default)]
+    pub platform_operators: HashSet<UserId>,
     pub test_mode: bool,
     pub challenges: Challenges,
     pub max_concurrent_canister_upgrades: usize,
@@ -173,6 +186,7 @@ impl Data {
             user_principal_migration_queue: UserPrincipalMigrationQueue::default(),
             platform_moderators: HashSet::new(),
             platform_moderators_to_dismiss: VecDeque::new(),
+            platform_operators: HashSet::new(),
             test_mode,
             challenges: Challenges::new(test_mode),
             max_concurrent_canister_upgrades: 2,
@@ -229,6 +243,7 @@ impl Default for Data {
             user_principal_migration_queue: UserPrincipalMigrationQueue::default(),
             platform_moderators: HashSet::new(),
             platform_moderators_to_dismiss: VecDeque::new(),
+            platform_operators: HashSet::new(),
             test_mode: true,
             challenges: Challenges::new(true),
             max_concurrent_canister_upgrades: 2,
@@ -258,6 +273,7 @@ pub struct Metrics {
     pub max_concurrent_canister_upgrades: usize,
     pub platform_moderators: u8,
     pub platform_moderators_to_dismiss: u32,
+    pub platform_operators: u8,
     pub inflight_challenges: u32,
     pub user_index_events_queue_length: usize,
     pub local_user_indexes: Vec<(CanisterId, LocalUserIndex)>,

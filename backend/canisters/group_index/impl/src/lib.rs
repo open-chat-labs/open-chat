@@ -264,7 +264,7 @@ async fn validate_user_is_super_admin(
 
     match user_index_canister_c2c_client::c2c_lookup_user(user_index_canister_id, &args).await {
         Ok(user_index_canister::c2c_lookup_user::Response::Success(r)) => {
-            if r.is_super_admin {
+            if r.is_platform_moderator {
                 Ok(r.user_id)
             } else {
                 Err(ValidationError::NotSuperAdmin)

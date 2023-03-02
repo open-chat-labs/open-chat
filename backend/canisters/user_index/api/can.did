@@ -173,11 +173,42 @@ type RemovePlatformModeratorResponse =
         InternalError: text;
     };
 
+type AddPlatformOperatorArgs =
+    record {
+        user_id: UserId;
+    };
+
+type AddPlatformOperatorResponse =
+    variant {
+        Success;
+    };
+
+type RemovePlatformOperatorArgs =
+    record {
+        user_id: UserId;
+    };
+
+type RemovePlatformOperatorResponse =
+    variant {
+        Success;
+    };
+
 type PlatformModeratorsArgs =
     record {
     };
 
 type PlatformModeratorsResponse =
+    variant {
+        Success: record {
+            users: vec UserId;
+        };
+    };
+
+type PlatformOperatorsArgs =
+    record {
+    };
+
+type PlatformOperatorsResponse =
     variant {
         Success: record {
             users: vec UserId;
@@ -287,12 +318,15 @@ service: {
 
     pay_for_diamond_membership: (PayForDiamondMembershipArgs) -> (PayForDiamondMembershipResponse);
 
-    // List the platform moderators
+    // List the platform moderators/operators
     platform_moderators: (PlatformModeratorsArgs) -> (PlatformModeratorsResponse) query;
+    platform_operators: (PlatformOperatorsArgs) -> (PlatformOperatorsResponse) query;
 
     // Only callable by "service principals"
     add_platform_moderator: (AddPlatformModeratorArgs) -> (AddPlatformModeratorResponse);
+    add_platform_operator: (AddPlatformOperatorArgs) -> (AddPlatformOperatorResponse);
     remove_platform_moderator: (RemovePlatformModeratorArgs) -> (RemovePlatformModeratorResponse);
+    remove_platform_operator: (RemovePlatformOperatorArgs) -> (RemovePlatformOperatorResponse);
 
     // Only callable by "platform moderators"
     suspend_user: (SuspendUserArgs) -> (SuspendUserResponse);
