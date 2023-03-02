@@ -1,5 +1,5 @@
 use crate::guards::caller_is_platform_moderator;
-use crate::model::set_user_suspended_queue::{SetUserSuspendedInGroup, SetUserSuspendedType};
+use crate::timer_job_types::{SetUserSuspendedInGroup, TimerJob, UnsuspendUser};
 use crate::{mutate_state, read_state, RuntimeState};
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
@@ -34,13 +34,8 @@ pub(crate) async fn suspend_user_impl(
     }
 }
 
-pub(crate) fn is_user_suspended(user_id: &UserId, runtime_state: &RuntimeState) -> Option<bool> {
-    let user = runtime_state.data.users.get_by_user_id(user_id)?;
-    Some(user.suspension_details.is_some())
-}
-
 fn prepare(user_id: &UserId, runtime_state: &RuntimeState) -> Result<UserId, Response> {
-    match is_user_suspended(user_id, runtime_state) {
+    match runtime_state.data.users.is_user_suspended(user_id) {
         Some(false) => {
             let caller = runtime_state.env.caller();
             Ok(runtime_state.data.users.get_by_principal(&caller).unwrap().user_id)
@@ -59,21 +54,18 @@ fn commit(
     runtime_state: &mut RuntimeState,
 ) {
     let now = runtime_state.env.now();
-
-    runtime_state.data.set_user_suspended_queue.enqueue(
-        groups
-            .into_iter()
-            .map(|g| {
-                SetUserSuspendedType::Group(SetUserSuspendedInGroup {
-                    user_id,
-                    group: g,
-                    suspended: true,
-                    attempt: 0,
-                })
-            })
-            .collect(),
-    );
-    crate::jobs::set_users_suspended::start_job_if_required(runtime_state);
+    for group in groups {
+        runtime_state.data.timer_jobs.enqueue_job(
+            TimerJob::SetUserSuspendedInGroup(SetUserSuspendedInGroup {
+                user_id,
+                group,
+                suspended: true,
+                attempt: 0,
+            }),
+            now,
+            now,
+        );
+    }
 
     runtime_state
         .data
@@ -84,8 +76,8 @@ fn commit(
     if let Some(ms) = duration {
         runtime_state
             .data
-            .set_user_suspended_queue
-            .schedule(vec![SetUserSuspendedType::Unsuspend(user_id)], now + ms);
+            .timer_jobs
+            .enqueue_job(TimerJob::UnsuspendUser(UnsuspendUser { user_id }), now + ms, now);
     }
 
     runtime_state.data.push_event_to_local_user_index(

@@ -204,6 +204,10 @@ impl UserMap {
         }
     }
 
+    pub fn is_user_suspended(&self, user_id: &UserId) -> Option<bool> {
+        self.users.get(user_id).map(|u| u.suspension_details.is_some())
+    }
+
     pub fn search(&self, term: &str) -> impl Iterator<Item = (&User, bool)> {
         self.username_to_user_id
             .search(term)
