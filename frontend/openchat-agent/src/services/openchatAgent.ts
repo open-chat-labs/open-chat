@@ -133,6 +133,8 @@ import {
     ClaimPrizeResponse,
     DiamondMembershipDuration,
     PayForDiamondMembershipResponse,
+    AddHotGroupExclusionResponse,
+    RemoveHotGroupExclusionResponse,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import { applyOptionUpdate } from "../utils/mapping";
@@ -1519,6 +1521,14 @@ export class OpenChatAgent extends EventTarget {
 
     deleteFrozenGroup(chatId: string): Promise<DeleteFrozenGroupResponse> {
         return this._groupIndexClient.deleteFrozenGroup(chatId);
+    }
+
+    addHotGroupExclusion(chatId: string): Promise<AddHotGroupExclusionResponse> {
+        return this._groupIndexClient.addHotGroupExclusion(chatId);
+    }
+
+    removeHotGroupExclusion(chatId: string): Promise<RemoveHotGroupExclusionResponse> {
+        return this._groupIndexClient.removeHotGroupExclusion(chatId);
     }
 
     suspendUser(userId: string, reason: string): Promise<SuspendUserResponse> {

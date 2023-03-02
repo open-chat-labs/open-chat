@@ -510,7 +510,7 @@ export class UserClient extends CandidService implements IUserClient {
     @profile("userClient")
     dismissRecommendation(chatId: string): Promise<void> {
         return this.handleResponse(
-            this.userService.add_recommended_group_exclusions({
+            this.userService.add_hot_group_exclusions({
                 duration: [],
                 groups: [Principal.fromText(chatId)],
             }),

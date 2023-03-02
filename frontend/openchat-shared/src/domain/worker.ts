@@ -181,6 +181,8 @@ export type WorkerRequest =
     | FreezeGroup
     | UnfreezeGroup
     | DeleteFrozenGroup
+    | AddHotGroupExclusion 
+    | RemoveHotGroupExclusion
     | SuspendUser
     | UnsuspendUser
     | MarkSuspectedBot
@@ -731,6 +733,18 @@ type DeleteFrozenGroup = Request<{
     kind: "deleteFrozenGroup";
 };
 
+type AddHotGroupExclusion = Request<{
+    chatId: string;
+}> & {
+    kind: "addHotGroupExclusion";
+};
+
+type RemoveHotGroupExclusion = Request<{
+    chatId: string;
+}> & {
+    kind: "removeHotGroupExclusion";
+};
+
 type SuspendUser = Request<{
     userId: string;
     reason: string;
@@ -878,6 +892,8 @@ export type WorkerResponse =
     | Response<FreezeGroupResponse>
     | Response<UnfreezeGroupResponse>
     | Response<DeleteFrozenGroupResponse>
+    | Response<AddHotGroupExclusion>
+    | Response<RemoveHotGroupExclusion>
     | Response<SuspendUserResponse>
     | Response<UnsuspendUserResponse>
     | Response<UpdatesResult>

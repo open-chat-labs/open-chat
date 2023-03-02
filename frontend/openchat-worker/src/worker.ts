@@ -1164,6 +1164,28 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
                     .catch(sendError(correlationId));
                 break;
 
+            case "addHotGroupExclusion":
+                agent
+                    .addHotGroupExclusion(payload.chatId)
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
+            case "removeHotGroupExclusion":
+                agent
+                    .removeHotGroupExclusion(payload.chatId)
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
             case "suspendUser":
                 agent
                     .suspendUser(payload.userId, payload.reason)

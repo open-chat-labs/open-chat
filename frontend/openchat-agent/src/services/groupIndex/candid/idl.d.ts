@@ -8,6 +8,8 @@ import {
     RecommendedGroupsResponse,
     SearchResponse,
     UnfreezeGroupResponse,
+    AddHotGroupExclusionResponse,
+    RemoveHotGroupExclusionResponse
 } from "./types";
 export {
     _SERVICE as GroupIndexService,
@@ -18,6 +20,8 @@ export {
     RecommendedGroupsResponse as ApiRecommendedGroupsResponse,
     SearchResponse as ApiSearchResponse,
     UnfreezeGroupResponse as ApiUnfreezeGroupResponse,
+    AddHotGroupExclusionResponse as ApiAddHotGroupExclusionResponse,
+    RemoveHotGroupExclusionResponse as ApiRemoveHotGroupExclusionResponse,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

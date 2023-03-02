@@ -1,5 +1,12 @@
 export const idlFactory = ({ IDL }) => {
+  const Milliseconds = IDL.Nat64;
   const CanisterId = IDL.Principal;
+  const ChatId = CanisterId;
+  const AddHotGroupExclusionsArgs = IDL.Record({
+    'duration' : IDL.Opt(Milliseconds),
+    'groups' : IDL.Vec(ChatId),
+  });
+  const AddHotGroupExclusionsResponse = IDL.Variant({ 'Success' : IDL.Null });
   const UserId = CanisterId;
   const MessageId = IDL.Nat;
   const MessageIndex = IDL.Nat32;
@@ -26,15 +33,6 @@ export const idlFactory = ({ IDL }) => {
     'UserSuspended' : IDL.Null,
     'InvalidReaction' : IDL.Null,
     'SuccessV2' : PushEventResult,
-  });
-  const Milliseconds = IDL.Nat64;
-  const ChatId = CanisterId;
-  const AddRecommendedGroupExclusionsArgs = IDL.Record({
-    'duration' : IDL.Opt(Milliseconds),
-    'groups' : IDL.Vec(ChatId),
-  });
-  const AddRecommendedGroupExclusionsResponse = IDL.Variant({
-    'Success' : IDL.Null,
   });
   const ArchiveChatArgs = IDL.Record({ 'chat_id' : ChatId });
   const ArchiveChatResponse = IDL.Variant({
@@ -665,6 +663,10 @@ export const idlFactory = ({ IDL }) => {
     'max_events' : IDL.Nat32,
     'thread_root_message_index' : IDL.Opt(MessageIndex),
   });
+  const HotGroupExclusionsArgs = IDL.Record({});
+  const HotGroupExclusionsResponse = IDL.Variant({
+    'Success' : IDL.Vec(ChatId),
+  });
   const InitUserPrincipalMigrationArgs = IDL.Record({
     'new_principal' : IDL.Principal,
   });
@@ -1155,12 +1157,12 @@ export const idlFactory = ({ IDL }) => {
     'Success' : CompletedCryptoTransaction,
   });
   return IDL.Service({
-    'add_reaction' : IDL.Func([AddReactionArgs], [AddReactionResponse], []),
-    'add_recommended_group_exclusions' : IDL.Func(
-        [AddRecommendedGroupExclusionsArgs],
-        [AddRecommendedGroupExclusionsResponse],
+    'add_hot_group_exclusions' : IDL.Func(
+        [AddHotGroupExclusionsArgs],
+        [AddHotGroupExclusionsResponse],
         [],
       ),
+    'add_reaction' : IDL.Func([AddReactionArgs], [AddReactionResponse], []),
     'archive_chat' : IDL.Func([ArchiveChatArgs], [ArchiveChatResponse], []),
     'assume_group_super_admin' : IDL.Func(
         [AssumeGroupSuperAdminArgs],
@@ -1190,6 +1192,11 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'events_window' : IDL.Func([EventsWindowArgs], [EventsResponse], ['query']),
+    'hot_group_exclusions' : IDL.Func(
+        [HotGroupExclusionsArgs],
+        [HotGroupExclusionsResponse],
+        ['query'],
+      ),
     'init_user_principal_migration' : IDL.Func(
         [InitUserPrincipalMigrationArgs],
         [InitUserPrincipalMigrationResponse],
