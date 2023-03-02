@@ -13,6 +13,7 @@ fi
 
 echo "Downloading wasms"
 
+./download-canister-wasm.sh cycles_dispenser $WASM_SRC
 ./download-canister-wasm.sh group $WASM_SRC
 ./download-canister-wasm.sh group_index $WASM_SRC
 ./download-canister-wasm.sh local_group_index $WASM_SRC
@@ -21,6 +22,8 @@ echo "Downloading wasms"
 ./download-canister-wasm.sh notifications_index $WASM_SRC
 ./download-canister-wasm.sh online_users $WASM_SRC
 ./download-canister-wasm.sh proposals_bot $WASM_SRC
+./download-canister-wasm.sh storage_bucket $WASM_SRC
+./download-canister-wasm.sh storage_index $WASM_SRC
 ./download-canister-wasm.sh user $WASM_SRC
 ./download-canister-wasm.sh user_index $WASM_SRC
 
