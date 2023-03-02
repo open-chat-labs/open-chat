@@ -15,7 +15,7 @@ async fn add_hot_group_exclusion(args: add_hot_group_exclusion::Args) -> add_hot
         user_index_canister_id,
         ..
     } = match read_state(|state| prepare(&args.chat_id, state)) {
-        Ok(ok) if !ok.is_excluded => ok,
+        Ok(result) if !result.is_excluded => result,
         Ok(_) => return ChatAlreadyExcluded,
         Err(_) => return ChatNotFound,
     };
@@ -42,7 +42,7 @@ async fn remove_hot_group_exclusion(args: remove_hot_group_exclusion::Args) -> r
         user_index_canister_id,
         ..
     } = match read_state(|state| prepare(&args.chat_id, state)) {
-        Ok(ok) if !ok.is_excluded => ok,
+        Ok(result) if result.is_excluded => result,
         Ok(_) => return ChatNotExcluded,
         Err(_) => return ChatNotFound,
     };
