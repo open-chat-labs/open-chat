@@ -2,6 +2,8 @@ import { isTouchDevice } from "../utils/devices";
 import { configKeys } from "../utils/config";
 import { createLsBoolStore } from "openchat-client";
 
+export type LsBoolStore = ReturnType<typeof createLsBoolStore>;
+
 export const enterSend = createLsBoolStore(configKeys.enterSend, !isTouchDevice);
 export const lowBandwidth = createLsBoolStore(configKeys.lowBandwidth, false);
 export const userInfoOpen = createLsBoolStore(configKeys.userInfoSection, true);

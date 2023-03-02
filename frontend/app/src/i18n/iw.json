@@ -571,7 +571,15 @@
         "disableAll": "השבת הכל",
         "readmore": "קרא עוד",
         "readless": "תקרא פחות",
-        "details": "פרטים"
+        "details": "פרטים",
+        "builtInAction": "פעולות מובנות",
+        "userIndexAction": "פעולות אינדקס משתמשים",
+        "groupIndexAction": "פעולות אינדקס קבוצתיות",
+        "proposalsBotAction": "הצעות פעולות בוט",
+        "storageIndexAction": "פעולות אינדקס אחסון",
+        "cyclesDispenserAction": "פעולות מתקן מחזורים",
+        "unknownActionCategory": "פעולות אחרות",
+        "notificationsAction": "פעולות אינדקס התראות"
     },
     "yes": "כן",
     "no": "לא",

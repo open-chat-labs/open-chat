@@ -593,7 +593,15 @@
         "disableAll": "Disable all",
         "readmore": "Read more",
         "readless": "Read less",
-        "details": "Details"
+        "details": "Details",
+        "builtInAction": "Built In Actions",
+        "userIndexAction": "User Index Actions",
+        "groupIndexAction": "Group Index Actions",
+        "notificationsAction": "Notifications Index Actions",
+        "proposalsBotAction": "Proposals Bot Actions",
+        "storageIndexAction": "Storage Index Actions",
+        "cyclesDispenserAction": "Cycles Dispenser Actions",
+        "unknownActionCategory": "Other Actions"
     },
     "yes": "Yes",
     "no": "No",

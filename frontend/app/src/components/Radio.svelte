@@ -69,7 +69,7 @@
         border-radius: 50%;
         transform: scale(0);
         transition: 50ms transform ease-in-out;
-        box-shadow: inset 1em 1em var(--primary);
+        box-shadow: inset 1em 1em var(--input-accent);
     }
 
     input[type="radio"]:checked::before {

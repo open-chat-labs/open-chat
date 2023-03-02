@@ -87,6 +87,7 @@ export function lightTheme(): Theme {
         input: {
             bg: textBox,
             sh: "none",
+            accent: orangeAccent,
         },
 
         members: {
