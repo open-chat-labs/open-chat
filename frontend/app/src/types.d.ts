@@ -38,6 +38,6 @@ declare namespace svelte.JSX {
 declare global {
     interface Window {
         twttr: any;
-        superAdmin: any;
+        platformModerator: any;
     }
 }

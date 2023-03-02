@@ -1630,6 +1630,20 @@ export type DeleteFrozenGroupResponse =
     | "not_authorized"
     | "internal_error";
 
+export type AddHotGroupExclusionResponse =
+    | "success"
+    | "chat_already_excluded"
+    | "chat_not_found"
+    | "not_authorized"
+    | "internal_error";
+
+export type RemoveHotGroupExclusionResponse =
+    | "success"
+    | "chat_not_excluded"
+    | "chat_not_found"
+    | "not_authorized"
+    | "internal_error";
+
 export type MarkPinnedMessagesReadResponse = "success" | "chat_frozen";
 
 export type ClaimPrizeResponse =

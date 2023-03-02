@@ -1,17 +1,21 @@
 import { identity, optional } from "../../utils/mapping";
 import type {
+    AddHotGroupExclusionResponse,
     FilterGroupsResponse,
     FreezeGroupResponse,
     GroupMatch,
     GroupSearchResponse,
+    RemoveHotGroupExclusionResponse,
     UnfreezeGroupResponse
 } from "openchat-shared";
 import type {
+    ApiAddHotGroupExclusionResponse,
     ApiDeleteFrozenGroupResponse,
     ApiFilterGroupsResponse,
     ApiFreezeGroupResponse,
     ApiGroupMatch,
     ApiRecommendedGroupsResponse,
+    ApiRemoveHotGroupExclusionResponse,
     ApiSearchResponse,
     ApiUnfreezeGroupResponse,
 } from "./candid/idl";
@@ -125,6 +129,44 @@ export function deleteFrozenGroupResponse(candid: ApiDeleteFrozenGroupResponse):
         return "internal_error";
     }
     throw new UnsupportedValueError("Unexpected ApiDeleteFrozenGroupResponse type received", candid);
+}
+
+export function addHotGroupExclusionResponse(candid: ApiAddHotGroupExclusionResponse): AddHotGroupExclusionResponse {
+    if ("Success" in candid) {
+        return "success";
+    }
+    if ("ChatAlreadyExcluded" in candid) {
+        return "chat_already_excluded";
+    }
+    if ("ChatNotFound" in candid) {
+        return "chat_not_found";
+    }
+    if ("NotAuthorized" in candid) {
+        return "not_authorized";
+    }
+    if ("InternalError" in candid) {
+        return "internal_error";
+    }
+    throw new UnsupportedValueError("Unexpected ApiAddHotGroupExclusionResponse type received", candid);
+}
+
+export function removeHotGroupExclusionResponse(candid: ApiRemoveHotGroupExclusionResponse): RemoveHotGroupExclusionResponse {
+    if ("Success" in candid) {
+        return "success";
+    }
+    if ("ChatNotExcluded" in candid) {
+        return "chat_not_excluded";
+    }
+    if ("ChatNotFound" in candid) {
+        return "chat_not_found";
+    }
+    if ("NotAuthorized" in candid) {
+        return "not_authorized";
+    }
+    if ("InternalError" in candid) {
+        return "internal_error";
+    }
+    throw new UnsupportedValueError("Unexpected ApiRemoveHotGroupExclusionResponse type received", candid);
 }
 
 function groupMatch(candid: ApiGroupMatch): GroupMatch {

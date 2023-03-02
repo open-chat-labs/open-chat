@@ -2996,6 +2996,26 @@ export class OpenChat extends EventTarget {
             });
     }
 
+    addHotGroupExclusion(chatId: string): Promise<boolean> {
+        return this.api
+            .addHotGroupExclusion(chatId)
+            .then((resp) => resp === "success")
+            .catch((err) => {
+                this._logger.error("Unable to add hot group exclusion", err);
+                return false;
+            });
+    }
+
+    removeHotGroupExclusion(chatId: string): Promise<boolean> {
+        return this.api
+            .removeHotGroupExclusion(chatId)
+            .then((resp) => resp === "success")
+            .catch((err) => {
+                this._logger.error("Unable to remove hot group exclusion", err);
+                return false;
+            });
+    }
+
     suspendUser(userId: string, reason: string): Promise<boolean> {
         return this.api
             .suspendUser(userId, reason)
