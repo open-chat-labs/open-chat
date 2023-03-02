@@ -1,7 +1,14 @@
 import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
 
+export type AccessorId = Principal;
 export type AccountIdentifier = Uint8Array | number[];
+export interface AddHotGroupExclusionArgs { 'chat_id' : ChatId }
+export type AddHotGroupExclusionResponse = { 'ChatAlreadyExcluded' : null } |
+  { 'ChatNotFound' : null } |
+  { 'NotAuthorized' : null } |
+  { 'Success' : null } |
+  { 'InternalError' : string };
 export interface AddedToGroupNotification {
   'added_by_name' : string,
   'added_by' : UserId,
@@ -242,6 +249,7 @@ export interface FileContent {
   'blob_reference' : [] | [BlobReference],
   'caption' : [] | [string],
 }
+export type FileId = bigint;
 export interface FilterGroupsArgs {
   'active_since' : [] | [TimestampMillis],
   'chat_ids' : Array<ChatId>,
@@ -501,6 +509,7 @@ export interface GroupVisibilityChanged {
   'changed_by' : UserId,
   'now_public' : boolean,
 }
+export type Hash = Uint8Array | number[];
 export type ICP = Tokens;
 export interface ICPRegistrationFee {
   'recipient' : AccountIdentifier,
@@ -800,6 +809,12 @@ export type RecommendedGroupsResponse = {
   };
 export type RegistrationFee = { 'ICP' : ICPRegistrationFee } |
   { 'Cycles' : CyclesRegistrationFee };
+export interface RemoveHotGroupExclusionArgs { 'chat_id' : ChatId }
+export type RemoveHotGroupExclusionResponse = { 'ChatNotFound' : null } |
+  { 'NotAuthorized' : null } |
+  { 'ChatNotExcluded' : null } |
+  { 'Success' : null } |
+  { 'InternalError' : string };
 export interface ReplyContext {
   'chat_id_if_other' : [] | [ChatId],
   'event_index' : EventIndex,
@@ -968,6 +983,10 @@ export interface VideoContent {
 export type VoteOperation = { 'RegisterVote' : null } |
   { 'DeleteVote' : null };
 export interface _SERVICE {
+  'add_hot_group_exclusion' : ActorMethod<
+    [AddHotGroupExclusionArgs],
+    AddHotGroupExclusionResponse
+  >,
   'delete_frozen_group' : ActorMethod<
     [DeleteFrozenGroupArgs],
     DeleteFrozenGroupResponse
@@ -977,6 +996,10 @@ export interface _SERVICE {
   'recommended_groups' : ActorMethod<
     [RecommendedGroupsArgs],
     RecommendedGroupsResponse
+  >,
+  'remove_hot_group_exclusion' : ActorMethod<
+    [RemoveHotGroupExclusionArgs],
+    RemoveHotGroupExclusionResponse
   >,
   'search' : ActorMethod<[SearchArgs], SearchResponse>,
   'unfreeze_group' : ActorMethod<[UnfreezeGroupArgs], UnfreezeGroupResponse>,
