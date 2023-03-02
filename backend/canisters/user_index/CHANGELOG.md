@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Use `canister_timer_jobs` package to simplify timer jobs ([#3263](https://github.com/open-ic/open-chat/pull/3263)) 
+
 ### Removed
 
 - Removed code only needed for previous upgrade ([#3262](https://github.com/open-ic/open-chat/pull/3262))
