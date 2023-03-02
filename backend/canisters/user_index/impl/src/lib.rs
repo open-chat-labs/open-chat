@@ -134,9 +134,7 @@ struct Data {
     pub storage_index_user_sync_queue: OpenStorageUserSyncQueue,
     pub user_index_event_sync_queue: CanisterEventSyncQueue<LocalUserIndexEvent>,
     pub user_principal_migration_queue: UserPrincipalMigrationQueue,
-    #[serde(alias = "super_admins")]
     pub platform_moderators: HashSet<UserId>,
-    #[serde(alias = "super_admins_to_dismiss")]
     pub platform_moderators_to_dismiss: VecDeque<(UserId, ChatId)>,
     pub test_mode: bool,
     pub challenges: Challenges,

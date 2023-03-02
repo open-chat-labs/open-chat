@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.624](https://github.com/open-ic/open-chat/releases/tag/v2.0.624-group_index)] - 2023-03-02
+
 ### Added
 
 - Add endpoints to add/remove a hot group exclusion ([#3254](https://github.com/open-ic/open-chat/pull/3254))

@@ -174,7 +174,6 @@ pub struct PublicGroupInfo {
     subtype: Option<GroupSubtype>,
     avatar_id: Option<u128>,
     activity: PublicGroupActivity,
-    #[serde(default)]
     exclude_from_hotlist: bool,
 }
 
