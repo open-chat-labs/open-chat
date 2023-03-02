@@ -413,7 +413,7 @@
     "filterMembers": "フィルターメンバー",
     "publicGroupWithN": "{number}メンバーのパブリックグループ",
     "privateGroupWithN": "{number}メンバーのプライベートグループ",
-    "groupWithN": "{番号}メンバー",
+    "groupWithN": "{number}メンバー",
     "members": "メンバー",
     "addMembers": "メンバーを追加する",
     "removeMembersFailed": "メンバーを削除できません",

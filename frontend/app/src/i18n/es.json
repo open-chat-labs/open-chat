@@ -414,7 +414,7 @@
     "filterMembers": "filtrar miembros",
     "publicGroupWithN": "Grupo público con {número} miembro(s)",
     "privateGroupWithN": "Grupo privado con {number} miembro(s)",
-    "groupWithN": "{número} miembro(s)",
+    "groupWithN": "{number} miembro(s)",
     "members": "miembros",
     "addMembers": "Añadir miembros",
     "removeMemberFailed": "No se puede eliminar el miembro",

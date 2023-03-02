@@ -413,7 +413,7 @@
     "filterMembers": "отфильтровать участников",
     "publicGroupWithN": "Открытая группа с участниками: {number}",
     "privateGroupWithN": "Частная группа с участниками: {number}",
-    "groupWithN": "{число} участников",
+    "groupWithN": "{number} участников",
     "members": "Члены",
     "addMembers": "Добавить участников",
     "removeMemberFailed": "Не удалось удалить участника",
