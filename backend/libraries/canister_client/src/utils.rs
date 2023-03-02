@@ -60,7 +60,7 @@ pub async fn set_controllers(
     for controller in controllers {
         request = request.with_controller(controller);
     }
-    request.call_and_wait(delay()).await.expect("Failed to set controllers");
+    request.call_and_wait().await.expect("Failed to set controllers");
 }
 
 pub async fn install_wasm<A: CandidType + Sync + Send>(
@@ -72,7 +72,7 @@ pub async fn install_wasm<A: CandidType + Sync + Send>(
     management_canister
         .install_code(canister_id, wasm_bytes)
         .with_arg(init_args)
-        .call_and_wait(delay())
+        .call_and_wait()
         .await
         .expect("Failed to install wasm");
 }
@@ -96,14 +96,6 @@ pub fn read_file(file_path: PathBuf) -> Vec<u8> {
     let mut bytes = Vec::new();
     file.read_to_end(&mut bytes).expect("Failed to read file");
     bytes
-}
-
-// How `Agent` is instructed to wait for update calls.
-pub fn delay() -> garcon::Delay {
-    garcon::Delay::builder()
-        .throttle(std::time::Duration::from_millis(500))
-        .timeout(std::time::Duration::from_secs(60 * 5))
-        .build()
 }
 
 pub fn is_mainnet(url: &str) -> bool {
