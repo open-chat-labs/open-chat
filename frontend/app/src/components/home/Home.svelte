@@ -32,9 +32,9 @@
     import { getContext, onMount, tick } from "svelte";
     import { rtlStore } from "../../stores/rtl";
     import { mobileWidth, screenWidth, ScreenWidth } from "../../stores/screenDimensions";
-    import { push, replace, querystring } from "svelte-spa-router";
-    import { pathParams } from "../../stores/routing";
-    import type { RouteParams } from "../../stores/routing";
+    import page from "page";
+    import { pathParams } from "../../routes";
+    import type { RouteParams } from "../../routes";
     import { toastStore } from "../../stores/toast";
     import {
         closeNotificationsForChat,
@@ -55,8 +55,7 @@
     import SuspendedModal from "../SuspendedModal.svelte";
     import NewGroup from "./addgroup/NewGroup.svelte";
     import AccountsModal from "./profile/AccountsModal.svelte";
-
-    export let logout: () => void;
+    import { querystring } from "routes";
 
     const client = getContext<OpenChat>("client");
     const user = client.user;
@@ -167,7 +166,7 @@
                 return false;
             });
         } else if (ev instanceof SelectedChatInvalid) {
-            replace("/");
+            page.replace("/");
         }
     }
 
@@ -185,7 +184,7 @@
                     };
                 }
                 if (!(await client.previewChat(chatId))) {
-                    replace("/");
+                    page.replace("/");
                     return;
                 }
             }
@@ -224,7 +223,7 @@
                     url,
                     files: [],
                 };
-                history.replaceState(null, "", "/#/");
+                history.replaceState(null, "", "/");
                 modal = ModalType.SelectChat;
             } else {
                 // if we have something in the chatId url param
@@ -266,13 +265,13 @@
                 if (faq !== null) {
                     faqQuestion = faq as Questions;
                     modal = ModalType.Faq;
-                    replace(removeQueryStringParam(qs, "faq"));
+                    page.replace(removeQueryStringParam(qs, "faq"));
                 }
 
                 const diamond = qs.get("diamond");
                 if (diamond !== null) {
                     showUpgrade = true;
-                    replace(removeQueryStringParam(qs, "diamond"));
+                    page.replace(removeQueryStringParam(qs, "diamond"));
                 }
             }
         }
@@ -420,7 +419,7 @@
             }
         });
         if (ev.detail === $selectedChatId) {
-            push("/");
+            page("/");
         }
     }
 
@@ -478,19 +477,19 @@
     }
 
     function deleteGroup(chatId: string): Promise<void> {
-        push("/");
+        page("/");
         return client.deleteGroup(chatId).then((success) => {
             if (success) {
                 toastStore.showSuccessToast("deleteGroupSuccess");
             } else {
                 toastStore.showFailureToast("deleteGroupFailure");
-                push(`/${chatId}`);
+                page(`/${chatId}`);
             }
         });
     }
 
     function leaveGroup(chatId: string): Promise<void> {
-        push("/");
+        page("/");
 
         client.leaveGroup(chatId).then((resp) => {
             if (resp !== "success") {
@@ -499,7 +498,7 @@
                 } else {
                     toastStore.showFailureToast("failedToLeaveGroup");
                 }
-                push(`/${chatId}`);
+                page(`/${chatId}`);
             }
         });
 
@@ -508,7 +507,7 @@
 
     function deleteDirectChat(ev: CustomEvent<string>) {
         if (ev.detail === $pathParams.chatId) {
-            push("/");
+            page("/");
         }
         tick().then(() => client.removeChat(ev.detail));
     }
@@ -518,7 +517,7 @@
             return c.kind === "direct_chat" && c.them === ev.detail;
         });
         if (chat) {
-            push(`/${chat.chatId}`);
+            page(`/${chat.chatId}`);
         } else {
             createDirectChat(ev.detail);
         }
@@ -528,7 +527,7 @@
         if (ev.detail.chatId === $selectedChatId) {
             currentChatMessages?.externalGoToMessage(ev.detail.messageIndex);
         } else {
-            push(`/${ev.detail.chatId}/${ev.detail.messageIndex}`);
+            page(`/${ev.detail.chatId}/${ev.detail.messageIndex}`);
         }
     }
 
@@ -553,7 +552,7 @@
         currentChatDraftMessage.setTextContent(chatId, "");
         currentChatDraftMessage.setReplyingTo(chatId, ev.detail);
         if (chat) {
-            push(`/${chat.chatId}`);
+            page(`/${chat.chatId}`);
         } else {
             createDirectChat(chatId);
         }
@@ -578,7 +577,7 @@
 
     function showProfile() {
         if ($selectedChatId !== undefined) {
-            replace(`/${$selectedChatId}`);
+            page.replace(`/${$selectedChatId}`);
         }
         rightPanelHistory.set([{ kind: "user_profile" }]);
     }
@@ -591,7 +590,7 @@
         if ($selectedChatId !== undefined) {
             if (ev.initiating) {
                 creatingThread = true;
-                replace(`/${$selectedChatId}`);
+                page.replace(`/${$selectedChatId}`);
             }
             tick().then(() => {
                 rightPanelHistory.set([
@@ -607,7 +606,7 @@
 
     function showGroupDetails() {
         if ($selectedChatId !== undefined) {
-            replace(`/${$selectedChatId}`);
+            page.replace(`/${$selectedChatId}`);
             rightPanelHistory.set([
                 {
                     kind: "group_details",
@@ -618,7 +617,7 @@
 
     function showProposalFilters() {
         if ($selectedChatId !== undefined) {
-            replace(`/${$selectedChatId}`);
+            page.replace(`/${$selectedChatId}`);
             rightPanelHistory.set([
                 {
                     kind: "proposal_filters",
@@ -629,7 +628,7 @@
 
     function showPinned() {
         if ($selectedChatId !== undefined) {
-            replace(`/${$selectedChatId}`);
+            page.replace(`/${$selectedChatId}`);
             rightPanelHistory.set([
                 {
                     kind: "show_pinned",
@@ -673,14 +672,14 @@
                     toastStore.showFailureToast("joinGroupFailed");
                 } else if (select) {
                     hotGroups = { kind: "idle" };
-                    push(`/${group.chatId}`);
+                    page(`/${group.chatId}`);
                 }
             })
             .finally(() => (joining = undefined));
     }
 
     function cancelPreview(ev: CustomEvent<string>) {
-        push("/");
+        page("/");
         tick().then(() => {
             client.removeChat(ev.detail);
         });
@@ -688,7 +687,7 @@
 
     function whatsHot(navigate: boolean = true) {
         if (navigate) {
-            push("/");
+            page("/");
         }
         tick().then(() => {
             hotGroups = { kind: "loading" };
@@ -723,12 +722,12 @@
     }
 
     function forwardToChat(chatId: string) {
-        push(`/${chatId}`);
+        page(`/${chatId}`);
         messageToForwardStore.set(messageToForward);
     }
 
     function shareWithChat(chatId: string) {
-        push(`/${chatId}`);
+        page(`/${chatId}`);
 
         const shareText = share.text ?? "";
         const shareTitle = share.title ?? "";
@@ -845,7 +844,7 @@
     }
 
     function showLandingPageRoute(route: string) {
-        return () => push(route);
+        return () => page(route);
         // return () => (window.location.href = route);
     }
 
@@ -854,13 +853,13 @@
             return false;
         }
 
-        push(`/${chatId}`);
+        page(`/${chatId}`);
         return true;
     }
 
     function closeRightPanel() {
         if ($rightPanelHistory.find((panel) => panel.kind === "message_thread_panel")) {
-            replace(removeQueryStringParam(new URLSearchParams($querystring), "open"));
+            page.replace(removeQueryStringParam(new URLSearchParams($querystring), "open"));
         }
         rightPanelHistory.set([]);
     }
@@ -884,7 +883,7 @@
             on:whatsHot={() => whatsHot(true)}
             on:newGroup={newGroup}
             on:profile={showProfile}
-            on:logout={logout}
+            on:logout={() => client.logout()}
             on:wallet={showWallet}
             on:deleteDirectChat={deleteDirectChat}
             on:pinChat={pinChat}
@@ -901,7 +900,7 @@
             {joining}
             bind:currentChatMessages
             loadingChats={$chatsLoading}
-            on:clearSelection={() => push("/")}
+            on:clearSelection={() => page("/")}
             on:blockUser={blockUser}
             on:unblockUser={unblockUser}
             on:leaveGroup={triggerConfirm}

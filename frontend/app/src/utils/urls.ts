@@ -13,6 +13,7 @@ export const synonymousUrlRegex = new RegExp(`^(${window.location.origin}|${open
 // detect whether the user is on a canister based url of the form https://6hsbt-vqaaa-aaaaf-aaafq-cai.ic0.app/
 export const isCanisterUrl = /https:\/\/.*\.ic0\.app/.test(window.location.origin);
 
+// TODO unhashify this
 function replaceQueryString(qs: URLSearchParams): string {
     const qsStr = [...qs.keys()].length > 0 ? `?${qs}` : "";
     const hash = window.location.hash.replace("#", "");
@@ -56,7 +57,7 @@ export function redirectLandingPageLinksIfNecessary(): void {
 function getRedirectPath(path: string, hash: string): string {
     const match = path.match(/^\/(home|whitepaper|features|roadmap|architecture)/i);
     if (match) {
-        return `/#/${match[1]}${hash !== "" ? `?section=${hash.slice(1)}` : ""}`;
+        return `/${match[1]}${hash !== "" ? `?section=${hash.slice(1)}` : ""}`;
     }
     return path;
 }

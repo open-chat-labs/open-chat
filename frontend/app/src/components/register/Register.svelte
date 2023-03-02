@@ -85,7 +85,7 @@
     }
 
     function clearReferralCode() {
-        history.replaceState(null, "", "/#/");
+        history.replaceState(null, "", "/");
         localStorage.removeItem("openchat_referredby");
     }
 
@@ -181,7 +181,7 @@
 <a
     class="logout"
     role="button"
-    href="/#"
+    href="/"
     on:click|preventDefault|stopPropagation={() => dispatch("logout")}>
     {$_("logout")}
 </a>

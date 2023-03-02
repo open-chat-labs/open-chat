@@ -8,8 +8,7 @@
     } from "openchat-client";
     import { pop } from "../../../utils/transition";
     import { _ } from "svelte-i18n";
-    import { push } from "svelte-spa-router";
-    import { mobileWidth } from "../../../stores/screenDimensions";
+    import page from "page";
     import ChatMessage from "../ChatMessage.svelte";
     import IntersectionObserverComponent from "../IntersectionObserver.svelte";
     import CollapsibleCard from "../../CollapsibleCard.svelte";
@@ -83,7 +82,7 @@
     });
 
     function selectThread() {
-        push(`/${thread.chatId}/${thread.rootMessage.event.messageIndex}?open=true`);
+        page(`/${thread.chatId}/${thread.rootMessage.event.messageIndex}?open=true`);
     }
 </script>
 

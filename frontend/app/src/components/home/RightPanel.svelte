@@ -23,10 +23,11 @@
     import type { Readable } from "svelte/store";
     import { numberOfColumns } from "stores/layout";
     import Thread from "./thread/Thread.svelte";
-    import { replace, querystring } from "svelte-spa-router";
     import ProposalGroupFilters from "./ProposalGroupFilters.svelte";
     import { removeQueryStringParam } from "../../utils/urls";
     import { logger } from "../../utils/logging";
+    import { querystring } from "../../routes";
+    import page from "page";
 
     const dispatch = createEventDispatcher();
 
@@ -125,7 +126,7 @@
 
     function closeThread(_ev: CustomEvent<string>) {
         popHistory();
-        replace(removeQueryStringParam(new URLSearchParams($querystring), "open"));
+        page.replace(removeQueryStringParam(new URLSearchParams($querystring), "open"));
     }
 
     function findMessage(

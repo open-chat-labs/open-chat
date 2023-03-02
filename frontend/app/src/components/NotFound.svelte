@@ -2,23 +2,37 @@
     import Link from "./Link.svelte";
     import ModalPage from "./ModalPage.svelte";
     import { _ } from "svelte-i18n";
-    import { push } from "svelte-spa-router";
+    import page from "page";
+    import { pathContextStore } from "../routes";
+
+    $: console.log("Path content: ", $pathContextStore);
 </script>
 
-<ModalPage bgClass="empty" minHeight="200px">
+<ModalPage bgClass="none" minHeight="200px">
+    <div class="not-found" />
     <div class="content">
         <div>
             <h1 class="msg">404</h1>
-            <Link underline={"always"} on:click={() => push("/")}>{$_("home")}</Link>
+            <Link underline={"always"} on:click={() => page("/")}>{$_("home")}</Link>
         </div>
     </div>
 </ModalPage>
 
 <style type="text/scss">
     .msg {
-        font-weight: bold;
-        font-size: toRem(100);
+        @include font(bold, normal, fs-260);
         text-shadow: 3px 3px #000;
         color: #ffffff;
+    }
+
+    .not-found {
+        background-image: url("../assets/not_found.svg");
+        width: 400px;
+        height: 420px;
+
+        @include mobile() {
+            width: 200px;
+            height: 210px;
+        }
     }
 </style>

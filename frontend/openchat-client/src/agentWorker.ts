@@ -121,7 +121,7 @@ export class OpenChatAgentWorker extends EventTarget {
     constructor(private config: OpenChatConfig) {
         super();
         console.debug("WORKER_CLIENT: loading worker with version: ", config.websiteVersion);
-        this._worker = new Worker(`worker.js?v=${config.websiteVersion}`);
+        this._worker = new Worker(`/worker.js?v=${config.websiteVersion}`);
         const req: Omit<WorkerRequest, "correlationId"> = {
             kind: "init",
             payload: {

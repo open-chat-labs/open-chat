@@ -256,7 +256,7 @@ export function buildMessageUrl(
     messageIndex: number,
     threadRootMessageIndex?: number
 ): string {
-    const chatUrl = `${window.location.origin}/#/${chatId}/`;
+    const chatUrl = `${window.location.origin}/${chatId}/`;
     return threadRootMessageIndex === undefined
         ? `${chatUrl}${messageIndex}`
         : `${chatUrl}${threadRootMessageIndex}/${messageIndex}`;

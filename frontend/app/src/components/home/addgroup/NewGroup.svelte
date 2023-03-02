@@ -19,7 +19,7 @@
     } from "openchat-client";
     import StageHeader from "./StageHeader.svelte";
     import { createEventDispatcher, getContext, tick } from "svelte";
-    import { push } from "svelte-spa-router";
+    import page from "page";
     import AreYouSure from "../../AreYouSure.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -279,7 +279,7 @@
         dispatch("close");
 
         // tick ensure that the new chat will have made its way in to the chat list by the time we arrive at the route
-        tick().then(() => push(url)); // trigger the selection of the chat
+        tick().then(() => page(url)); // trigger the selection of the chat
     }
 
     function changeStep(ev: CustomEvent<number>) {

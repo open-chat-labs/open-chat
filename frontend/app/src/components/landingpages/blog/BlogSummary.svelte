@@ -11,7 +11,7 @@
     $: copySize = $mobileWidth ? "14px" : "16px";
 
     function copyUrl(): void {
-        copyToClipboard(`${window.location.origin}/#/blog/${slug}`);
+        copyToClipboard(`${window.location.origin}/blog/${slug}`);
     }
 </script>
 

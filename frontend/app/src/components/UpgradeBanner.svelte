@@ -59,7 +59,7 @@
         <div class="inner">
             <span class="message">{$_("updateRequired", { values: { countdown } })}</span>
             <span class="update-now">
-                <a href="/#" on:click|preventDefault={() => window.location.reload()}
+                <a href="/" on:click|preventDefault={() => window.location.reload()}
                     >{$_("updateNow")}</a>
             </span>
         </div>

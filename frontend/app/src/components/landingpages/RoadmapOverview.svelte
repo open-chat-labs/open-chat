@@ -2,11 +2,11 @@
     import Section from "./Section.svelte";
     import Link from "./Link.svelte";
     import ArrowLink from "../ArrowLink.svelte";
-    import { push } from "svelte-spa-router";
+    import page from "page";
 </script>
 
 <Section id={"roadmap"}>
-    <div class="roadmap" on:click={() => push("/roadmap")}>
+    <div class="roadmap" on:click={() => page("/roadmap")}>
         <div class="header">
             <h2 class="title">Roadmap</h2>
             <div class="features">

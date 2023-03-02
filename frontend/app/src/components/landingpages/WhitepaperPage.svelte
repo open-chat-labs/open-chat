@@ -9,7 +9,7 @@
     import GoogleChart from "./GoogleChart.svelte";
     import HashLinkTarget from "./HashLinkTarget.svelte";
     import { copyToClipboard, scrollToSection } from "../../utils/urls";
-    import { location, querystring } from "svelte-spa-router";
+    import { location, querystring } from "../../routes";
 
     let width = 0;
     let linked: number | undefined = undefined;
@@ -24,7 +24,7 @@
     }
 
     function copyUrl(section: string): void {
-        copyToClipboard(`${window.location.origin}/#${$location}?section=${section}`);
+        copyToClipboard(`${window.location.origin}${$location}?section=${section}`);
     }
 
     $: {
@@ -622,8 +622,8 @@
             </p>
             <p>
                 Each founding developer will receive 5% of the CHAT tokens as a basket of 5 equal
-                value neurons. Each neuron will have a dissolve delay of 1 month but with an additional 
-                "vesting period" of 0, 1, 2, 3, and 4 years respectively.
+                value neurons. Each neuron will have a dissolve delay of 1 month but with an
+                additional "vesting period" of 0, 1, 2, 3, and 4 years respectively.
             </p>
             <p>
                 DFINITY will receive 8% of the CHAT tokens as a basket of 4 equal neurons each with
@@ -637,8 +637,8 @@
                 OpenChat successful.
             </p>
             <p>
-                As these founder/funder neurons all have a relatively short dissolve delay of 1 month 
-                which cannot be increased, this ensures a reduced voting power compared to the
+                As these founder/funder neurons all have a relatively short dissolve delay of 1
+                month which cannot be increased, this ensures a reduced voting power compared to the
                 community so that governance is properly decentralized.
             </p>
             <GoogleChart
@@ -937,11 +937,11 @@
             <p>
                 After the decentralization sale, participants will receive a basket of neurons of
                 varying dissolve delays with only 1/5 being immediately liquid. The voting reward
-                rate, initialized to 2.5%, is expected to encourage token holders to lock up a certain
-                proportion of tokens thus, at least temporarily, removing them from the liquid
-                supply. In the case of the seed funders, their neurons have vesting periods from 6-24 
-                momths before they can even start dissolving. In the case of the founding dev team, 
-                the vesting periods are from 0-4 years.
+                rate, initialized to 2.5%, is expected to encourage token holders to lock up a
+                certain proportion of tokens thus, at least temporarily, removing them from the
+                liquid supply. In the case of the seed funders, their neurons have vesting periods
+                from 6-24 momths before they can even start dissolving. In the case of the founding
+                dev team, the vesting periods are from 0-4 years.
             </p>
             <p>
                 There are various tokenomics parameters which can affect the proportion of CHAT that
