@@ -11,10 +11,8 @@ use local_user_index_canister::Event as LocalUserIndexEvent;
 use model::local_user_index_map::LocalUserIndexMap;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
-use std::collections::{HashSet, VecDeque};
-use types::{
-    CanisterId, CanisterWasm, ChatId, Cryptocurrency, Cycles, Milliseconds, TimestampMillis, Timestamped, UserId, Version,
-};
+use std::collections::HashSet;
+use types::{CanisterId, CanisterWasm, Cryptocurrency, Cycles, Milliseconds, TimestampMillis, Timestamped, UserId, Version};
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::canister_event_sync_queue::CanisterEventSyncQueue;
 use utils::env::Environment;
@@ -107,7 +105,6 @@ impl RuntimeState {
             local_user_index_wasm_version: self.data.local_user_index_canister_wasm_for_new_canisters.version,
             max_concurrent_canister_upgrades: self.data.max_concurrent_canister_upgrades,
             platform_moderators: self.data.platform_moderators.len() as u8,
-            platform_moderators_to_dismiss: self.data.platform_moderators_to_dismiss.len() as u32,
             inflight_challenges: self.data.challenges.count(),
             user_index_events_queue_length: self.data.user_index_event_sync_queue.len(),
             local_user_indexes: self.data.local_index_map.iter().map(|(c, i)| (*c, i.clone())).collect(),
@@ -137,7 +134,6 @@ struct Data {
     pub user_index_event_sync_queue: CanisterEventSyncQueue<LocalUserIndexEvent>,
     pub user_principal_migration_queue: UserPrincipalMigrationQueue,
     pub platform_moderators: HashSet<UserId>,
-    pub platform_moderators_to_dismiss: VecDeque<(UserId, ChatId)>,
     pub test_mode: bool,
     pub challenges: Challenges,
     pub max_concurrent_canister_upgrades: usize,
@@ -175,7 +171,6 @@ impl Data {
             user_index_event_sync_queue: CanisterEventSyncQueue::default(),
             user_principal_migration_queue: UserPrincipalMigrationQueue::default(),
             platform_moderators: HashSet::new(),
-            platform_moderators_to_dismiss: VecDeque::new(),
             test_mode,
             challenges: Challenges::new(test_mode),
             max_concurrent_canister_upgrades: 2,
@@ -231,7 +226,6 @@ impl Default for Data {
             user_index_event_sync_queue: CanisterEventSyncQueue::default(),
             user_principal_migration_queue: UserPrincipalMigrationQueue::default(),
             platform_moderators: HashSet::new(),
-            platform_moderators_to_dismiss: VecDeque::new(),
             test_mode: true,
             challenges: Challenges::new(true),
             max_concurrent_canister_upgrades: 2,
@@ -260,7 +254,6 @@ pub struct Metrics {
     pub local_user_index_wasm_version: Version,
     pub max_concurrent_canister_upgrades: usize,
     pub platform_moderators: u8,
-    pub platform_moderators_to_dismiss: u32,
     pub inflight_challenges: u32,
     pub user_index_events_queue_length: usize,
     pub local_user_indexes: Vec<(CanisterId, LocalUserIndex)>,
