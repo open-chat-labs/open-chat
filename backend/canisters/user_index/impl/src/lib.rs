@@ -1,11 +1,12 @@
 use crate::model::challenges::Challenges;
 use crate::model::local_user_index_map::LocalUserIndex;
-use crate::model::set_user_suspended_queue::SetUserSuspendedQueue;
 use crate::model::storage_index_user_sync_queue::OpenStorageUserSyncQueue;
 use crate::model::user_map::UserMap;
 use crate::model::user_principal_migration_queue::UserPrincipalMigrationQueue;
+use crate::timer_job_types::TimerJob;
 use candid::Principal;
 use canister_state_macros::canister_state;
+use canister_timer_jobs::TimerJobs;
 use local_user_index_canister::Event as LocalUserIndexEvent;
 use model::local_user_index_map::LocalUserIndexMap;
 use serde::{Deserialize, Serialize};
@@ -25,6 +26,7 @@ mod lifecycle;
 mod memory;
 mod model;
 mod queries;
+mod timer_job_types;
 mod updates;
 
 pub const USER_LIMIT: usize = 100_000;
@@ -139,8 +141,9 @@ struct Data {
     pub test_mode: bool,
     pub challenges: Challenges,
     pub max_concurrent_canister_upgrades: usize,
-    pub set_user_suspended_queue: SetUserSuspendedQueue,
     pub local_index_map: LocalUserIndexMap,
+    #[serde(default)]
+    pub timer_jobs: TimerJobs<TimerJob>,
 }
 
 impl Data {
@@ -176,8 +179,8 @@ impl Data {
             test_mode,
             challenges: Challenges::new(test_mode),
             max_concurrent_canister_upgrades: 2,
-            set_user_suspended_queue: SetUserSuspendedQueue::default(),
             local_index_map: LocalUserIndexMap::default(),
+            timer_jobs: TimerJobs::default(),
         };
 
         // Register the ProposalsBot
@@ -232,8 +235,8 @@ impl Default for Data {
             test_mode: true,
             challenges: Challenges::new(true),
             max_concurrent_canister_upgrades: 2,
-            set_user_suspended_queue: SetUserSuspendedQueue::default(),
             local_index_map: LocalUserIndexMap::default(),
+            timer_jobs: TimerJobs::default(),
         }
     }
 }

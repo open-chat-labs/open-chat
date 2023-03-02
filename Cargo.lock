@@ -9028,6 +9028,7 @@ dependencies = [
  "canister_api_macros",
  "canister_logger",
  "canister_state_macros",
+ "canister_timer_jobs",
  "canister_tracing_macros",
  "captcha",
  "futures",
