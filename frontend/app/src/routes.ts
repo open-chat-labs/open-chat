@@ -4,7 +4,6 @@ export const notFound = writable(false);
 
 export const pathContextStore = writable<PageJS.Context | undefined>(undefined);
 
-// TODO we need this to emulate what the old router provided here
 export const location = derived(pathContextStore, ($store) => {
     return $store ? $store.path : "";
 });

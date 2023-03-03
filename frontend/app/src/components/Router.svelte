@@ -1,20 +1,14 @@
 <script lang="ts">
-    import { getContext, onDestroy, onMount, SvelteComponent } from "svelte";
+    import { onDestroy, onMount, SvelteComponent } from "svelte";
     import page from "page";
     import Home from "./home/HomeRoute.svelte";
     import LandingPage from "./landingpages/LandingPage.svelte";
     import NotFound from "./NotFound.svelte";
     import { pathContextStore, notFound } from "../routes";
-    import type { OpenChat } from "openchat-client";
-
-    const client = getContext<OpenChat>("client");
-
-    $: identityState = client.identityState;
 
     let route: typeof SvelteComponent | undefined = undefined;
 
     onMount(() => {
-        console.log("ROUTING: Mounting router should only happen once", $identityState);
         page("/home", parsePathParams, () => (route = LandingPage));
         page("/features", parsePathParams, () => (route = LandingPage));
         page("/roadmap", parsePathParams, () => (route = LandingPage));
@@ -53,7 +47,6 @@
 
     function parsePathParams(ctx: PageJS.Context, next: () => any) {
         notFound.set(false);
-        console.log("ROUTING: Route context: ", ctx);
         pathContextStore.set(ctx);
         scrollToTop();
         next();

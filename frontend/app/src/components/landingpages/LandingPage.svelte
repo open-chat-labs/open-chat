@@ -22,8 +22,6 @@
     function createdUser(ev: CustomEvent<CreatedUser>) {
         client.onCreatedUser(ev.detail);
     }
-
-    $: console.log("LP Route: ", $location, $pathParams);
 </script>
 
 {#if $identityState === "registering"}

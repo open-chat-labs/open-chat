@@ -3,9 +3,6 @@
     import ModalPage from "./ModalPage.svelte";
     import { _ } from "svelte-i18n";
     import page from "page";
-    import { pathContextStore } from "../routes";
-
-    $: console.log("Path content: ", $pathContextStore);
 </script>
 
 <ModalPage bgClass="none" minHeight="200px">
