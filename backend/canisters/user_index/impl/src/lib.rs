@@ -27,7 +27,7 @@ mod queries;
 mod timer_job_types;
 mod updates;
 
-pub const USER_LIMIT: usize = 100_000;
+pub const USER_LIMIT: usize = 150_000;
 
 const USER_CANISTER_TOP_UP_AMOUNT: Cycles = 100_000_000_000; // 0.1T cycles
 const TIME_UNTIL_SUSPENDED_ACCOUNT_IS_DELETED_MILLIS: Milliseconds = DAY_IN_MS * 90; // 90 days
