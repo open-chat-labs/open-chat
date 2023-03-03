@@ -377,7 +377,6 @@
     }
 
     function doGoToMessageIndex(index: number): void {
-        // TODO - replaces push
         page(`/${chat.chatId}`);
         scrollToMessageIndex(index, false);
     }
