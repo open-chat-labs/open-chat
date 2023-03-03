@@ -5,7 +5,7 @@ export const notFound = writable(false);
 export const pathContextStore = writable<PageJS.Context | undefined>(undefined);
 
 export const location = derived(pathContextStore, ($store) => {
-    return $store ? $store.path : "";
+    return $store ? $store.routePath : "";
 });
 
 export const querystring = derived(pathContextStore, ($store) => {
