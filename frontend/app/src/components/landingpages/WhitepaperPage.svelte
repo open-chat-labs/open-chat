@@ -41,7 +41,7 @@
 <div class="whitepaper" bind:clientWidth={width}>
     <Headline>OpenChat SNS Whitepaper</Headline>
 
-    <CollapsibleCard first open={linked === 1}>
+    <CollapsibleCard transition={false} first open={linked === 1}>
         <div class="header" slot="titleSlot">
             <span class="subtitle">1</span>
             <div class="title">
@@ -106,7 +106,7 @@
         </div>
     </CollapsibleCard>
 
-    <CollapsibleCard open={linked === 2}>
+    <CollapsibleCard transition={false} open={linked === 2}>
         <div class="header" slot="titleSlot">
             <span class="subtitle">2</span>
             <div class="title">
@@ -184,7 +184,7 @@
         </div>
     </CollapsibleCard>
 
-    <CollapsibleCard open={linked === 3}>
+    <CollapsibleCard transition={false} open={linked === 3}>
         <div class="header" slot="titleSlot">
             <span class="subtitle">3</span>
             <div class="title">
@@ -428,7 +428,7 @@
         </div>
     </CollapsibleCard>
 
-    <CollapsibleCard open={linked === 4}>
+    <CollapsibleCard transition={false} open={linked === 4}>
         <div class="header" slot="titleSlot">
             <span class="subtitle">4</span>
             <div class="title">
@@ -566,7 +566,7 @@
         </div>
     </CollapsibleCard>
 
-    <CollapsibleCard open={linked === 5}>
+    <CollapsibleCard transition={false} open={linked === 5}>
         <div class="header" slot="titleSlot">
             <span class="subtitle">5</span>
             <div class="title">
@@ -732,7 +732,7 @@
         </div>
     </CollapsibleCard>
 
-    <CollapsibleCard open={linked === 6}>
+    <CollapsibleCard transition={false} open={linked === 6}>
         <div class="header" slot="titleSlot">
             <span class="subtitle">6</span>
             <div class="title">
@@ -854,7 +854,7 @@
         </div>
     </CollapsibleCard>
 
-    <CollapsibleCard open={linked === 7}>
+    <CollapsibleCard transition={false} open={linked === 7}>
         <div class="header" slot="titleSlot">
             <span class="subtitle">7</span>
             <div class="title">

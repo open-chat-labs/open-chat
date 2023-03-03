@@ -5,6 +5,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- APIs to add/remove/list platform operators ([#3264](https://github.com/open-ic/open-chat/pull/3264)) 
+
+### Changed
+
+- Use `canister_timer_jobs` package to simplify timer jobs ([#3263](https://github.com/open-ic/open-chat/pull/3263)) 
+
+### Removed
+
+- Removed code only needed for previous upgrade ([#3262](https://github.com/open-ic/open-chat/pull/3262))
+
+## [[2.0.623](https://github.com/open-ic/open-chat/releases/tag/v2.0.623-user_index)] - 2023-03-02
+
 ### Changed
 
 - Renamed super_admin endpoints to platform_moderator ([#3249](https://github.com/open-ic/open-chat/pull/3249))
@@ -12,6 +26,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Removed
 
 - Removed code only needed for previous upgrade ([#3248](https://github.com/open-ic/open-chat/pull/3248)) & ([#3251](https://github.com/open-ic/open-chat/pull/3251))
+- Revert code to register each LocalGroupIndex as a user ([#3255](https://github.com/open-ic/open-chat/pull/3255))
 
 ## [[2.0.615](https://github.com/open-ic/open-chat/releases/tag/v2.0.615-user_index)] - 2023-02-28
 

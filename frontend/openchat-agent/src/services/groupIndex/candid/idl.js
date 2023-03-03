@@ -1,6 +1,14 @@
 export const idlFactory = ({ IDL }) => {
   const CanisterId = IDL.Principal;
   const ChatId = CanisterId;
+  const AddHotGroupExclusionArgs = IDL.Record({ 'chat_id' : ChatId });
+  const AddHotGroupExclusionResponse = IDL.Variant({
+    'ChatAlreadyExcluded' : IDL.Null,
+    'ChatNotFound' : IDL.Null,
+    'NotAuthorized' : IDL.Null,
+    'Success' : IDL.Null,
+    'InternalError' : IDL.Text,
+  });
   const DeleteFrozenGroupArgs = IDL.Record({ 'chat_id' : ChatId });
   const TimestampMillis = IDL.Nat64;
   const DeleteFrozenGroupResponse = IDL.Variant({
@@ -387,6 +395,14 @@ export const idlFactory = ({ IDL }) => {
   const RecommendedGroupsResponse = IDL.Variant({
     'Success' : IDL.Record({ 'groups' : IDL.Vec(PublicGroupSummary) }),
   });
+  const RemoveHotGroupExclusionArgs = IDL.Record({ 'chat_id' : ChatId });
+  const RemoveHotGroupExclusionResponse = IDL.Variant({
+    'ChatNotFound' : IDL.Null,
+    'NotAuthorized' : IDL.Null,
+    'ChatNotExcluded' : IDL.Null,
+    'Success' : IDL.Null,
+    'InternalError' : IDL.Text,
+  });
   const SearchArgs = IDL.Record({
     'max_results' : IDL.Nat8,
     'search_term' : IDL.Text,
@@ -419,6 +435,11 @@ export const idlFactory = ({ IDL }) => {
     'InternalError' : IDL.Text,
   });
   return IDL.Service({
+    'add_hot_group_exclusion' : IDL.Func(
+        [AddHotGroupExclusionArgs],
+        [AddHotGroupExclusionResponse],
+        [],
+      ),
     'delete_frozen_group' : IDL.Func(
         [DeleteFrozenGroupArgs],
         [DeleteFrozenGroupResponse],
@@ -434,6 +455,11 @@ export const idlFactory = ({ IDL }) => {
         [RecommendedGroupsArgs],
         [RecommendedGroupsResponse],
         ['query'],
+      ),
+    'remove_hot_group_exclusion' : IDL.Func(
+        [RemoveHotGroupExclusionArgs],
+        [RemoveHotGroupExclusionResponse],
+        [],
       ),
     'search' : IDL.Func([SearchArgs], [SearchResponse], ['query']),
     'unfreeze_group' : IDL.Func(

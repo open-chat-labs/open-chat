@@ -1,11 +1,14 @@
 import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
 
+export type AccessorId = Principal;
 export type AccountIdentifier = Uint8Array | number[];
-export interface AddSuperAdminArgs { 'user_id' : UserId }
-export type AddSuperAdminResponse = { 'Success' : null } |
-  { 'InternalError' : string } |
-  { 'AlreadySuperAdmin' : null };
+export interface AddPlatformModeratorArgs { 'user_id' : UserId }
+export type AddPlatformModeratorResponse = {
+    'AlreadyPlatformModerator' : null
+  } |
+  { 'Success' : null } |
+  { 'InternalError' : string };
 export interface AddedToGroupNotification {
   'added_by_name' : string,
   'added_by' : UserId,
@@ -259,6 +262,7 @@ export interface FileContent {
   'blob_reference' : [] | [BlobReference],
   'caption' : [] | [string],
 }
+export type FileId = bigint;
 export interface FrozenGroupInfo {
   'timestamp' : TimestampMillis,
   'frozen_by' : UserId,
@@ -484,6 +488,7 @@ export interface GroupVisibilityChanged {
   'changed_by' : UserId,
   'now_public' : boolean,
 }
+export type Hash = Uint8Array | number[];
 export type ICP = Tokens;
 export interface ICPRegistrationFee {
   'recipient' : AccountIdentifier,
@@ -715,6 +720,10 @@ export interface PermissionsChanged {
 export type PinnedMessageUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : MessageIndex };
+export type PlatformModeratorsArgs = {};
+export type PlatformModeratorsResponse = {
+    'Success' : { 'users' : Array<UserId> }
+  };
 export interface PollConfig {
   'allow_multiple_votes_per_user' : boolean,
   'text' : [] | [string],
@@ -815,9 +824,9 @@ export type RegisterUserResponse = { 'UsernameTaken' : null } |
   { 'CyclesBalanceTooLow' : null };
 export type RegistrationFee = { 'ICP' : ICPRegistrationFee } |
   { 'Cycles' : CyclesRegistrationFee };
-export interface RemoveSuperAdminArgs { 'user_id' : UserId }
-export type RemoveSuperAdminResponse = { 'Success' : null } |
-  { 'NotSuperAdmin' : null } |
+export interface RemovePlatformModeratorArgs { 'user_id' : UserId }
+export type RemovePlatformModeratorResponse = { 'Success' : null } |
+  { 'NotPlatformModerator' : null } |
   { 'InternalError' : string };
 export interface ReplyContext {
   'chat_id_if_other' : [] | [ChatId],
@@ -900,8 +909,6 @@ export interface SubscriptionInfo {
   'keys' : SubscriptionKeys,
 }
 export interface SubscriptionKeys { 'auth' : string, 'p256dh' : string }
-export type SuperAdminsArgs = {};
-export type SuperAdminsResponse = { 'Success' : { 'users' : Array<UserId> } };
 export interface SuspectedBotsArgs { 'after' : [] | [UserId], 'count' : number }
 export type SuspectedBotsResponse = { 'Success' : { 'users' : Array<UserId> } };
 export interface SuspendUserArgs {
@@ -1021,7 +1028,10 @@ export interface VideoContent {
 export type VoteOperation = { 'RegisterVote' : null } |
   { 'DeleteVote' : null };
 export interface _SERVICE {
-  'add_super_admin' : ActorMethod<[AddSuperAdminArgs], AddSuperAdminResponse>,
+  'add_platform_moderator' : ActorMethod<
+    [AddPlatformModeratorArgs],
+    AddPlatformModeratorResponse
+  >,
   'check_username' : ActorMethod<[CheckUsernameArgs], CheckUsernameResponse>,
   'create_challenge' : ActorMethod<
     [CreateChallengeArgs],
@@ -1036,14 +1046,17 @@ export interface _SERVICE {
     [PayForDiamondMembershipArgs],
     PayForDiamondMembershipResponse
   >,
+  'platform_moderators' : ActorMethod<
+    [PlatformModeratorsArgs],
+    PlatformModeratorsResponse
+  >,
   'register_user' : ActorMethod<[RegisterUserArgs], RegisterUserResponse>,
-  'remove_super_admin' : ActorMethod<
-    [RemoveSuperAdminArgs],
-    RemoveSuperAdminResponse
+  'remove_platform_moderator' : ActorMethod<
+    [RemovePlatformModeratorArgs],
+    RemovePlatformModeratorResponse
   >,
   'search' : ActorMethod<[SearchArgs], SearchResponse>,
   'set_username' : ActorMethod<[SetUsernameArgs], SetUsernameResponse>,
-  'super_admins' : ActorMethod<[SuperAdminsArgs], SuperAdminsResponse>,
   'suspected_bots' : ActorMethod<[SuspectedBotsArgs], SuspectedBotsResponse>,
   'suspend_user' : ActorMethod<[SuspendUserArgs], SuspendUserResponse>,
   'unsuspend_user' : ActorMethod<[UnsuspendUserArgs], UnsuspendUserResponse>,

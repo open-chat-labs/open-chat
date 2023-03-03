@@ -1,9 +1,11 @@
 import type {
+    AddHotGroupExclusionResponse,
     DeleteFrozenGroupResponse,
     FilterGroupsResponse,
     FreezeGroupResponse,
     GroupChatSummary,
     GroupSearchResponse,
+    RemoveHotGroupExclusionResponse,
     UnfreezeGroupResponse
 } from "openchat-shared";
 
@@ -14,4 +16,6 @@ export interface IGroupIndexClient {
     freezeGroup(chatId: string, reason: string | undefined): Promise<FreezeGroupResponse>;
     unfreezeGroup(chatId: string): Promise<UnfreezeGroupResponse>;
     deleteFrozenGroup(chatId: string): Promise<DeleteFrozenGroupResponse>;
+    addHotGroupExclusion(chatId: string): Promise<AddHotGroupExclusionResponse>;
+    removeHotGroupExclusion(chatId: string): Promise<RemoveHotGroupExclusionResponse>;
 }

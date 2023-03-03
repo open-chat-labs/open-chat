@@ -1,7 +1,13 @@
 import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
 
+export type AccessorId = Principal;
 export type AccountIdentifier = Uint8Array | number[];
+export interface AddHotGroupExclusionsArgs {
+  'duration' : [] | [Milliseconds],
+  'groups' : Array<ChatId>,
+}
+export type AddHotGroupExclusionsResponse = { 'Success' : null };
 export interface AddReactionArgs {
   'username' : string,
   'user_id' : UserId,
@@ -17,11 +23,6 @@ export type AddReactionResponse = { 'MessageNotFound' : null } |
   { 'UserSuspended' : null } |
   { 'InvalidReaction' : null } |
   { 'SuccessV2' : PushEventResult };
-export interface AddRecommendedGroupExclusionsArgs {
-  'duration' : [] | [Milliseconds],
-  'groups' : Array<ChatId>,
-}
-export type AddRecommendedGroupExclusionsResponse = { 'Success' : null };
 export interface AddedToGroupNotification {
   'added_by_name' : string,
   'added_by' : UserId,
@@ -364,6 +365,7 @@ export interface FileContent {
   'blob_reference' : [] | [BlobReference],
   'caption' : [] | [string],
 }
+export type FileId = bigint;
 export interface FrozenGroupInfo {
   'timestamp' : TimestampMillis,
   'frozen_by' : UserId,
@@ -589,6 +591,9 @@ export interface GroupVisibilityChanged {
   'changed_by' : UserId,
   'now_public' : boolean,
 }
+export type Hash = Uint8Array | number[];
+export type HotGroupExclusionsArgs = {};
+export type HotGroupExclusionsResponse = { 'Success' : Array<ChatId> };
 export type ICP = Tokens;
 export interface ICPRegistrationFee {
   'recipient' : AccountIdentifier,
@@ -1298,11 +1303,11 @@ export type WithdrawCryptoResponse = { 'CurrencyNotSupported' : null } |
   { 'TransactionFailed' : FailedCryptoTransaction } |
   { 'Success' : CompletedCryptoTransaction };
 export interface _SERVICE {
-  'add_reaction' : ActorMethod<[AddReactionArgs], AddReactionResponse>,
-  'add_recommended_group_exclusions' : ActorMethod<
-    [AddRecommendedGroupExclusionsArgs],
-    AddRecommendedGroupExclusionsResponse
+  'add_hot_group_exclusions' : ActorMethod<
+    [AddHotGroupExclusionsArgs],
+    AddHotGroupExclusionsResponse
   >,
+  'add_reaction' : ActorMethod<[AddReactionArgs], AddReactionResponse>,
   'archive_chat' : ActorMethod<[ArchiveChatArgs], ArchiveChatResponse>,
   'assume_group_super_admin' : ActorMethod<
     [AssumeGroupSuperAdminArgs],
@@ -1319,6 +1324,10 @@ export interface _SERVICE {
   'events' : ActorMethod<[EventsArgs], EventsResponse>,
   'events_by_index' : ActorMethod<[EventsByIndexArgs], EventsResponse>,
   'events_window' : ActorMethod<[EventsWindowArgs], EventsResponse>,
+  'hot_group_exclusions' : ActorMethod<
+    [HotGroupExclusionsArgs],
+    HotGroupExclusionsResponse
+  >,
   'init_user_principal_migration' : ActorMethod<
     [InitUserPrincipalMigrationArgs],
     InitUserPrincipalMigrationResponse

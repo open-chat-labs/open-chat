@@ -5,6 +5,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Rename is_super_admin to is_platform_operator in c2c_lookup_user ([#3264](https://github.com/open-ic/open-chat/pull/3264)) 
+
+### Removed
+
+- Removed code only needed for previous upgrade ([#3262](https://github.com/open-ic/open-chat/pull/3262))
+  
+## [[2.0.624](https://github.com/open-ic/open-chat/releases/tag/v2.0.624-group_index)] - 2023-03-02
+
+### Added
+
+- Add endpoints to add/remove a hot group exclusion ([#3254](https://github.com/open-ic/open-chat/pull/3254))
+
 ### Removed
 
 - Removed code only needed for previous upgrade ([#3248](https://github.com/open-ic/open-chat/pull/3248)) & ([#3251](https://github.com/open-ic/open-chat/pull/3251))

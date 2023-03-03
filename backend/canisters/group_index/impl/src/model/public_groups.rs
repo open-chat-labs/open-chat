@@ -152,7 +152,7 @@ impl PublicGroups {
         let one_day_ago = now - DAY_IN_MS;
 
         self.iter()
-            .filter(|g| !g.is_frozen() && g.has_been_active_since(one_day_ago))
+            .filter(|g| !g.is_frozen() && g.has_been_active_since(one_day_ago) && !g.exclude_from_hotlist)
             .map(|g| (g, rng.next_u32()))
             .max_n_by(CACHED_HOT_GROUPS_COUNT, |(g, random)| g.calculate_weight(*random, now))
             .map(|(g, _)| g.id)
@@ -174,6 +174,7 @@ pub struct PublicGroupInfo {
     subtype: Option<GroupSubtype>,
     avatar_id: Option<u128>,
     activity: PublicGroupActivity,
+    exclude_from_hotlist: bool,
 }
 
 pub enum UpdateGroupResult {
@@ -202,6 +203,7 @@ impl PublicGroupInfo {
             marked_active_until: now + MARK_ACTIVE_DURATION,
             activity: PublicGroupActivity::default(),
             frozen: None,
+            exclude_from_hotlist: false,
         }
     }
 
@@ -258,6 +260,14 @@ impl PublicGroupInfo {
 
     pub fn set_frozen(&mut self, info: Option<FrozenGroupInfo>) {
         self.frozen = info;
+    }
+
+    pub fn is_excluded_from_hotlist(&self) -> bool {
+        self.exclude_from_hotlist
+    }
+
+    pub fn set_excluded_from_hotlist(&mut self, exclude: bool) {
+        self.exclude_from_hotlist = exclude;
     }
 }
 

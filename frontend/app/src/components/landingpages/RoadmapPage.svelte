@@ -7,7 +7,7 @@
 <div class="roadmap">
     <Headline>OpenChat Roadmap</Headline>
 
-    <CollapsibleCard first open={false}>
+    <CollapsibleCard transition={false} first open={false}>
         <div class="header" slot="titleSlot">
             <div class="date subtitle">
                 <div class="quarter">Q1</div>
@@ -40,7 +40,7 @@
         </div>
     </CollapsibleCard>
 
-    <CollapsibleCard open={false}>
+    <CollapsibleCard transition={false} open={false}>
         <div class="header" slot="titleSlot">
             <div class="date subtitle">
                 <div class="quarter">Q1</div>
@@ -67,7 +67,7 @@
         </div>
     </CollapsibleCard>
 
-    <CollapsibleCard open={false}>
+    <CollapsibleCard transition={false} open={false}>
         <div class="header" slot="titleSlot">
             <div class="date subtitle">
                 <div class="quarter">Q2</div>
@@ -104,7 +104,7 @@
         </div>
     </CollapsibleCard>
 
-    <CollapsibleCard open={false}>
+    <CollapsibleCard transition={false} open={false}>
         <div class="header" slot="titleSlot">
             <div class="date subtitle">
                 <div class="quarter">Q3</div>
@@ -130,7 +130,7 @@
         </div>
     </CollapsibleCard>
 
-    <CollapsibleCard open={false}>
+    <CollapsibleCard transition={false} open={false}>
         <div class="header" slot="titleSlot">
             <div class="date subtitle future">Future</div>
             <div class="title">Voice & Video</div>
@@ -146,7 +146,7 @@
         </div>
     </CollapsibleCard>
 
-    <CollapsibleCard open={false}>
+    <CollapsibleCard transition={false} open={false}>
         <div class="header" slot="titleSlot">
             <div class="date subtitle future">Future</div>
             <div class="title">Native Apps</div>
@@ -178,7 +178,7 @@
         </div>
     </CollapsibleCard>
 
-    <CollapsibleCard open={false}>
+    <CollapsibleCard transition={false} open={false}>
         <div class="header" slot="titleSlot">
             <div class="date subtitle future">Future</div>
             <div class="title">End to end encryption</div>
@@ -196,7 +196,7 @@
         </div>
     </CollapsibleCard>
 
-    <CollapsibleCard open={false}>
+    <CollapsibleCard transition={false} open={false}>
         <div class="header" slot="titleSlot">
             <div class="date subtitle future">Future</div>
             <div class="title">Other Features</div>

@@ -1,19 +1,18 @@
 use crate::model::challenges::Challenges;
 use crate::model::local_user_index_map::LocalUserIndex;
-use crate::model::set_user_suspended_queue::SetUserSuspendedQueue;
 use crate::model::storage_index_user_sync_queue::OpenStorageUserSyncQueue;
 use crate::model::user_map::UserMap;
 use crate::model::user_principal_migration_queue::UserPrincipalMigrationQueue;
+use crate::timer_job_types::TimerJob;
 use candid::Principal;
 use canister_state_macros::canister_state;
-use local_user_index_canister::{Event as LocalUserIndexEvent, SuperAdminStatusChanged, UserRegistered};
+use canister_timer_jobs::TimerJobs;
+use local_user_index_canister::Event as LocalUserIndexEvent;
 use model::local_user_index_map::LocalUserIndexMap;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
-use std::collections::{HashSet, VecDeque};
-use types::{
-    CanisterId, CanisterWasm, ChatId, Cryptocurrency, Cycles, Milliseconds, TimestampMillis, Timestamped, UserId, Version,
-};
+use std::collections::HashSet;
+use types::{CanisterId, CanisterWasm, Cryptocurrency, Cycles, Milliseconds, TimestampMillis, Timestamped, UserId, Version};
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::canister_event_sync_queue::CanisterEventSyncQueue;
 use utils::env::Environment;
@@ -25,6 +24,7 @@ mod lifecycle;
 mod memory;
 mod model;
 mod queries;
+mod timer_job_types;
 mod updates;
 
 pub const USER_LIMIT: usize = 100_000;
@@ -84,6 +84,16 @@ impl RuntimeState {
         }
     }
 
+    #[allow(dead_code)]
+    pub fn is_caller_platform_operator(&self) -> bool {
+        let caller = self.env.caller();
+        if let Some(user) = self.data.users.get_by_principal(&caller) {
+            self.data.platform_operators.contains(&user.user_id)
+        } else {
+            false
+        }
+    }
+
     pub fn metrics(&self) -> Metrics {
         let now = self.env.now();
         let canister_upgrades_metrics = self.data.canisters_requiring_upgrade.metrics();
@@ -105,7 +115,7 @@ impl RuntimeState {
             local_user_index_wasm_version: self.data.local_user_index_canister_wasm_for_new_canisters.version,
             max_concurrent_canister_upgrades: self.data.max_concurrent_canister_upgrades,
             platform_moderators: self.data.platform_moderators.len() as u8,
-            platform_moderators_to_dismiss: self.data.platform_moderators_to_dismiss.len() as u32,
+            platform_operators: self.data.platform_operators.len() as u8,
             inflight_challenges: self.data.challenges.count(),
             user_index_events_queue_length: self.data.user_index_event_sync_queue.len(),
             local_user_indexes: self.data.local_index_map.iter().map(|(c, i)| (*c, i.clone())).collect(),
@@ -134,15 +144,15 @@ struct Data {
     pub storage_index_user_sync_queue: OpenStorageUserSyncQueue,
     pub user_index_event_sync_queue: CanisterEventSyncQueue<LocalUserIndexEvent>,
     pub user_principal_migration_queue: UserPrincipalMigrationQueue,
-    #[serde(alias = "super_admins")]
     pub platform_moderators: HashSet<UserId>,
-    #[serde(alias = "super_admins_to_dismiss")]
-    pub platform_moderators_to_dismiss: VecDeque<(UserId, ChatId)>,
+    #[serde(default)]
+    pub platform_operators: HashSet<UserId>,
     pub test_mode: bool,
     pub challenges: Challenges,
     pub max_concurrent_canister_upgrades: usize,
-    pub set_user_suspended_queue: SetUserSuspendedQueue,
     pub local_index_map: LocalUserIndexMap,
+    #[serde(default)]
+    pub timer_jobs: TimerJobs<TimerJob>,
 }
 
 impl Data {
@@ -156,9 +166,7 @@ impl Data {
         cycles_dispenser_canister_id: CanisterId,
         storage_index_canister_id: CanisterId,
         proposals_bot_user_id: UserId,
-        local_group_index_canister_ids: Vec<CanisterId>,
         test_mode: bool,
-        now: TimestampMillis,
     ) -> Self {
         let mut data = Data {
             users: UserMap::default(),
@@ -176,12 +184,12 @@ impl Data {
             user_index_event_sync_queue: CanisterEventSyncQueue::default(),
             user_principal_migration_queue: UserPrincipalMigrationQueue::default(),
             platform_moderators: HashSet::new(),
-            platform_moderators_to_dismiss: VecDeque::new(),
+            platform_operators: HashSet::new(),
             test_mode,
             challenges: Challenges::new(test_mode),
             max_concurrent_canister_upgrades: 2,
-            set_user_suspended_queue: SetUserSuspendedQueue::default(),
             local_index_map: LocalUserIndexMap::default(),
+            timer_jobs: TimerJobs::default(),
         };
 
         // Register the ProposalsBot
@@ -194,11 +202,6 @@ impl Data {
             None,
             true,
         );
-
-        for (index, canister_id) in local_group_index_canister_ids.into_iter().enumerate() {
-            let username = format!("GroupUpgradeBot{}", index + 1);
-            data.register_platform_moderator_bot(canister_id, username, now);
-        }
 
         data
     }
@@ -215,33 +218,6 @@ impl Data {
                 self.user_index_event_sync_queue.push(*canister_id, event.clone());
             }
         }
-    }
-
-    fn register_platform_moderator_bot(&mut self, canister_id: CanisterId, username: String, now: TimestampMillis) {
-        let user_id = canister_id.into();
-        self.users
-            .register(canister_id, user_id, Version::default(), username.clone(), now, None, true);
-
-        self.platform_moderators.insert(user_id);
-
-        self.push_event_to_all_local_user_indexes(
-            LocalUserIndexEvent::UserRegistered(UserRegistered {
-                user_id,
-                user_principal: canister_id,
-                username,
-                is_bot: true,
-                referred_by: None,
-            }),
-            None,
-        );
-
-        self.push_event_to_all_local_user_indexes(
-            LocalUserIndexEvent::SuperAdminStatusChanged(SuperAdminStatusChanged {
-                user_id,
-                is_super_admin: true,
-            }),
-            None,
-        );
     }
 }
 
@@ -264,12 +240,12 @@ impl Default for Data {
             user_index_event_sync_queue: CanisterEventSyncQueue::default(),
             user_principal_migration_queue: UserPrincipalMigrationQueue::default(),
             platform_moderators: HashSet::new(),
-            platform_moderators_to_dismiss: VecDeque::new(),
+            platform_operators: HashSet::new(),
             test_mode: true,
             challenges: Challenges::new(true),
             max_concurrent_canister_upgrades: 2,
-            set_user_suspended_queue: SetUserSuspendedQueue::default(),
             local_index_map: LocalUserIndexMap::default(),
+            timer_jobs: TimerJobs::default(),
         }
     }
 }
@@ -293,7 +269,7 @@ pub struct Metrics {
     pub local_user_index_wasm_version: Version,
     pub max_concurrent_canister_upgrades: usize,
     pub platform_moderators: u8,
-    pub platform_moderators_to_dismiss: u32,
+    pub platform_operators: u8,
     pub inflight_challenges: u32,
     pub user_index_events_queue_length: usize,
     pub local_user_indexes: Vec<(CanisterId, LocalUserIndex)>,

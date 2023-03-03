@@ -2,22 +2,26 @@ import type { Identity } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
 import type { AgentConfig } from "../../config";
 import type {
+    AddHotGroupExclusionResponse,
     DeleteFrozenGroupResponse,
     FilterGroupsResponse,
     FreezeGroupResponse,
     GroupChatSummary,
     GroupSearchResponse,
+    RemoveHotGroupExclusionResponse,
     UnfreezeGroupResponse
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import { idlFactory, GroupIndexService } from "./candid/idl";
 import type { IGroupIndexClient } from "./groupIndex.client.interface";
 import {
+    addHotGroupExclusionResponse,
     deleteFrozenGroupResponse,
     filterGroupsResponse,
     freezeGroupResponse,
     groupSearchResponse,
     recommendedGroupsResponse,
+    removeHotGroupExclusionResponse,
     unfreezeGroupResponse
 } from "./mappers";
 import { apiOptional } from "../common/chatMappers";
@@ -92,5 +96,17 @@ export class GroupIndexClient extends CandidService implements IGroupIndexClient
         return this.handleResponse(
             this.groupIndexService.delete_frozen_group({ chat_id: Principal.fromText(chatId) }),
             deleteFrozenGroupResponse)
+    }
+
+    addHotGroupExclusion(chatId: string): Promise<AddHotGroupExclusionResponse> {
+        return this.handleResponse(
+            this.groupIndexService.add_hot_group_exclusion({ chat_id: Principal.fromText(chatId) }),
+            addHotGroupExclusionResponse)
+    }
+
+    removeHotGroupExclusion(chatId: string): Promise<RemoveHotGroupExclusionResponse> {
+        return this.handleResponse(
+            this.groupIndexService.remove_hot_group_exclusion({ chat_id: Principal.fromText(chatId) }),
+            removeHotGroupExclusionResponse)
     }
 }

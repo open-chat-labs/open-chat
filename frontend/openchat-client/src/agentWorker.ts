@@ -90,6 +90,8 @@ import {
     ClaimPrizeResponse,
     DiamondMembershipDuration,
     PayForDiamondMembershipResponse,
+    AddHotGroupExclusionResponse,
+    RemoveHotGroupExclusionResponse,
 } from "openchat-shared";
 import type { OpenChatConfig } from "./config";
 import { v4 } from "uuid";
@@ -1214,6 +1216,24 @@ export class OpenChatAgentWorker extends EventTarget {
     unfreezeGroup(chatId: string): Promise<UnfreezeGroupResponse> {
         return this.sendRequest({
             kind: "unfreezeGroup",
+            payload: {
+                chatId,
+            },
+        });
+    }
+
+    addHotGroupExclusion(chatId: string): Promise<AddHotGroupExclusionResponse> {
+        return this.sendRequest({
+            kind: "addHotGroupExclusion",
+            payload: {
+                chatId,
+            },
+        });
+    }
+
+    removeHotGroupExclusion(chatId: string): Promise<RemoveHotGroupExclusionResponse> {
+        return this.sendRequest({
+            kind: "removeHotGroupExclusion",
             payload: {
                 chatId,
             },

@@ -100,6 +100,7 @@ export function darkTheme(defaultTheme: Theme): Theme {
         input: {
             bg: textBlack,
             sh: "inset 0px 2px 4px rgba(0,0,0,0.8)",
+            accent: primary,
         },
 
         members: {

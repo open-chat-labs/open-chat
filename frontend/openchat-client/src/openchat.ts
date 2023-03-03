@@ -972,6 +972,7 @@ export class OpenChat extends EventTarget {
     toDatetimeString = toDatetimeString;
     getContentAsText = getContentAsText;
     groupBySender = groupBySender;
+    groupBy = groupBy;
     getTypingString = getTypingString;
 
     canBlockUsers(chatId: string): boolean {
@@ -3009,6 +3010,26 @@ export class OpenChat extends EventTarget {
             .then((resp) => resp === "success")
             .catch((err) => {
                 this._logger.error("Unable to unfreeze group", err);
+                return false;
+            });
+    }
+
+    addHotGroupExclusion(chatId: string): Promise<boolean> {
+        return this.api
+            .addHotGroupExclusion(chatId)
+            .then((resp) => resp === "success")
+            .catch((err) => {
+                this._logger.error("Unable to add hot group exclusion", err);
+                return false;
+            });
+    }
+
+    removeHotGroupExclusion(chatId: string): Promise<boolean> {
+        return this.api
+            .removeHotGroupExclusion(chatId)
+            .then((resp) => resp === "success")
+            .catch((err) => {
+                this._logger.error("Unable to remove hot group exclusion", err);
                 return false;
             });
     }

@@ -23,8 +23,10 @@ fn accept_if_valid(runtime_state: &RuntimeState) {
         }
         "suspend_user" | "unsuspend_user" => runtime_state.is_caller_platform_moderator(),
         "add_platform_moderator"
+        | "add_platform_operator"
         | "set_governance_principals"
         | "remove_platform_moderator"
+        | "remove_platform_operator"
         | "set_max_concurrent_user_canister_upgrades"
         | "add_local_user_index_canister"
         | "upgrade_user_canister_wasm"

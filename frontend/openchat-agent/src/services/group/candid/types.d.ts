@@ -1,6 +1,7 @@
 import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
 
+export type AccessorId = Principal;
 export type AccountIdentifier = Uint8Array | number[];
 export interface AddParticipantsArgs {
   'allow_blocked_users' : boolean,
@@ -384,6 +385,7 @@ export interface FileContent {
   'blob_reference' : [] | [BlobReference],
   'caption' : [] | [string],
 }
+export type FileId = bigint;
 export interface FrozenGroupInfo {
   'timestamp' : TimestampMillis,
   'frozen_by' : UserId,
@@ -609,6 +611,7 @@ export interface GroupVisibilityChanged {
   'changed_by' : UserId,
   'now_public' : boolean,
 }
+export type Hash = Uint8Array | number[];
 export type ICP = Tokens;
 export interface ICPRegistrationFee {
   'recipient' : AccountIdentifier,

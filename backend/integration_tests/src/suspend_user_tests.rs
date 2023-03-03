@@ -172,7 +172,7 @@ fn suspend_user_for_duration() {
         },
     );
 
-    env.advance_time(Duration::from_millis(1000));
+    env.advance_time(Duration::from_millis(999));
     env.tick();
 
     let user_response1 = client::user_index::happy_path::current_user(&env, user.principal, canister_ids.user_index);

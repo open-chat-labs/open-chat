@@ -1,11 +1,11 @@
 export const idlFactory = ({ IDL }) => {
   const CanisterId = IDL.Principal;
   const UserId = CanisterId;
-  const AddSuperAdminArgs = IDL.Record({ 'user_id' : UserId });
-  const AddSuperAdminResponse = IDL.Variant({
+  const AddPlatformModeratorArgs = IDL.Record({ 'user_id' : UserId });
+  const AddPlatformModeratorResponse = IDL.Variant({
+    'AlreadyPlatformModerator' : IDL.Null,
     'Success' : IDL.Null,
     'InternalError' : IDL.Text,
-    'AlreadySuperAdmin' : IDL.Null,
   });
   const CheckUsernameArgs = IDL.Record({ 'username' : IDL.Text });
   const CheckUsernameResponse = IDL.Variant({
@@ -99,6 +99,10 @@ export const idlFactory = ({ IDL }) => {
     'UserNotFound' : IDL.Null,
     'InsufficientFunds' : IDL.Nat64,
   });
+  const PlatformModeratorsArgs = IDL.Record({});
+  const PlatformModeratorsResponse = IDL.Variant({
+    'Success' : IDL.Record({ 'users' : IDL.Vec(UserId) }),
+  });
   const ChallengeAttempt = IDL.Record({
     'key' : ChallengeKey,
     'chars' : IDL.Text,
@@ -120,10 +124,10 @@ export const idlFactory = ({ IDL }) => {
     'InternalError' : IDL.Text,
     'CyclesBalanceTooLow' : IDL.Null,
   });
-  const RemoveSuperAdminArgs = IDL.Record({ 'user_id' : UserId });
-  const RemoveSuperAdminResponse = IDL.Variant({
+  const RemovePlatformModeratorArgs = IDL.Record({ 'user_id' : UserId });
+  const RemovePlatformModeratorResponse = IDL.Variant({
     'Success' : IDL.Null,
-    'NotSuperAdmin' : IDL.Null,
+    'NotPlatformModerator' : IDL.Null,
     'InternalError' : IDL.Text,
   });
   const SearchArgs = IDL.Record({
@@ -153,10 +157,6 @@ export const idlFactory = ({ IDL }) => {
     'UsernameTooLong' : IDL.Nat16,
     'Success' : IDL.Null,
     'UserNotFound' : IDL.Null,
-  });
-  const SuperAdminsArgs = IDL.Record({});
-  const SuperAdminsResponse = IDL.Variant({
-    'Success' : IDL.Record({ 'users' : IDL.Vec(UserId) }),
   });
   const SuspectedBotsArgs = IDL.Record({
     'after' : IDL.Opt(UserId),
@@ -215,9 +215,9 @@ export const idlFactory = ({ IDL }) => {
     }),
   });
   return IDL.Service({
-    'add_super_admin' : IDL.Func(
-        [AddSuperAdminArgs],
-        [AddSuperAdminResponse],
+    'add_platform_moderator' : IDL.Func(
+        [AddPlatformModeratorArgs],
+        [AddPlatformModeratorResponse],
         [],
       ),
     'check_username' : IDL.Func(
@@ -245,19 +245,19 @@ export const idlFactory = ({ IDL }) => {
         [PayForDiamondMembershipResponse],
         [],
       ),
+    'platform_moderators' : IDL.Func(
+        [PlatformModeratorsArgs],
+        [PlatformModeratorsResponse],
+        ['query'],
+      ),
     'register_user' : IDL.Func([RegisterUserArgs], [RegisterUserResponse], []),
-    'remove_super_admin' : IDL.Func(
-        [RemoveSuperAdminArgs],
-        [RemoveSuperAdminResponse],
+    'remove_platform_moderator' : IDL.Func(
+        [RemovePlatformModeratorArgs],
+        [RemovePlatformModeratorResponse],
         [],
       ),
     'search' : IDL.Func([SearchArgs], [SearchResponse], ['query']),
     'set_username' : IDL.Func([SetUsernameArgs], [SetUsernameResponse], []),
-    'super_admins' : IDL.Func(
-        [SuperAdminsArgs],
-        [SuperAdminsResponse],
-        ['query'],
-      ),
     'suspected_bots' : IDL.Func(
         [SuspectedBotsArgs],
         [SuspectedBotsResponse],

@@ -71,8 +71,23 @@
         calculateHeight();
         window.addEventListener("orientationchange", calculateHeight);
         window.addEventListener("unhandledrejection", unhandledError);
-        (<any>window).superAdmin = { deleteFrozenGroup, freezeGroup, unfreezeGroup };
+        (<any>window).platformModerator = { addHotGroupExclusion, deleteFrozenGroup, freezeGroup, removeHotGroupExclusion, unfreezeGroup };
     });
+
+    function addHotGroupExclusion(chatId: string): void {
+        client
+            .addHotGroupExclusion(chatId)
+            .then((success) => {
+                if (success) {
+                    console.log("Hot group exclusion added", chatId);
+                } else {
+                    console.log("Failed to add hot group exclusion", chatId);
+                }
+            })
+            .catch((e) => {
+                console.log("Failed to add hot group exclusion", e);
+            });
+    }
 
     function deleteFrozenGroup(chatId: string): void {
         client
@@ -101,6 +116,21 @@
             })
             .catch((e) => {
                 console.log("Failed to freeze group", e);
+            });
+    }
+
+    function removeHotGroupExclusion(chatId: string): void {
+        client
+            .removeHotGroupExclusion(chatId)
+            .then((success) => {
+                if (success) {
+                    console.log("Hot group exclusion removed", chatId);
+                } else {
+                    console.log("Failed to remove hot group exclusion", chatId);
+                }
+            })
+            .catch((e) => {
+                console.log("Failed to remove hot group exclusion", e);
             });
     }
 
