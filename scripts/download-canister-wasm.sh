@@ -22,6 +22,6 @@ echo "Downloading $CANISTER_NAME wasm at commit $COMMIT_ID"
 mkdir -p wasms
 cd wasms
 
-curl -sO https://openchat-canister-wasms.s3.amazonaws.com/$COMMIT_ID/${CANISTER_NAME}_canister_impl.wasm.gz
+curl -sO https://openchat-canister-wasms.s3.amazonaws.com/$COMMIT_ID/$CANISTER_NAME.wasm.gz
 
 echo "Wasm downloaded"
