@@ -9,10 +9,7 @@
     import Overlay from "../Overlay.svelte";
     import Register from "../register/Register.svelte";
     import BlogPage from "./BlogPage.svelte";
-    import RoadmapPage from "./RoadmapPage.svelte";
-    import WhitepaperPage from "./WhitepaperPage.svelte";
-    import ArchitecturePage from "./ArchitecturePage.svelte";
-    import BlogPostPage from "./BlogPostPage.svelte";
+    import Loading from "../Loading.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -44,16 +41,40 @@
         <Content>
             {#if $location.startsWith("/blog")}
                 {#if $pathParams.slug !== undefined}
-                    <BlogPostPage slug={$pathParams.slug} />
+                    {#await import("./BlogPostPage.svelte")}
+                        <div class="loading">
+                            <Loading />
+                        </div>
+                    {:then { default: BlogPostPage }}
+                        <BlogPostPage slug={$pathParams.slug} />
+                    {/await}
                 {:else}
                     <BlogPage />
                 {/if}
             {:else if $location.startsWith("/roadmap")}
-                <RoadmapPage />
+                {#await import("./RoadmapPage.svelte")}
+                    <div class="loading">
+                        <Loading />
+                    </div>
+                {:then { default: RoadmapPage }}
+                    <RoadmapPage />
+                {/await}
             {:else if $location.startsWith("/whitepaper")}
-                <WhitepaperPage />
+                {#await import("./WhitepaperPage.svelte")}
+                    <div class="loading">
+                        <Loading />
+                    </div>
+                {:then { default: WhitepaperPage }}
+                    <WhitepaperPage />
+                {/await}
             {:else if $location.startsWith("/architecture")}
-                <ArchitecturePage />
+                {#await import("./ArchitecturePage.svelte")}
+                    <div class="loading">
+                        <Loading />
+                    </div>
+                {:then { default: ArchitecturePage }}
+                    <ArchitecturePage />
+                {/await}
             {:else}
                 <HomePage on:login={() => client.login()} />
             {/if}
@@ -74,5 +95,10 @@
         overflow-x: hidden;
         margin: 0 auto;
         margin-top: toRem(80);
+    }
+
+    .loading {
+        height: calc(100vh - 5rem);
+        width: 100vw;
     }
 </style>
