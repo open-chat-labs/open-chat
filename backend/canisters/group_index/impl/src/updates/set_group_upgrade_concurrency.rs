@@ -1,4 +1,4 @@
-use crate::{read_state, validate_user_is_platform_moderator, ValidationError};
+use crate::{lookup_user, read_state, LookupUserError};
 use canister_tracing_macros::trace;
 use group_index_canister::set_group_upgrade_concurrency::{Response::*, *};
 use ic_cdk_macros::update;
@@ -16,10 +16,10 @@ async fn set_group_upgrade_concurrency(args: Args) -> Response {
         )
     });
 
-    match validate_user_is_platform_moderator(caller, user_index_canister_id).await {
-        Ok(id) => id,
-        Err(ValidationError::NotSuperAdmin) => return NotAuthorized,
-        Err(ValidationError::InternalError(error)) => return InternalError(error),
+    match lookup_user(caller, user_index_canister_id).await {
+        Ok(user) if user.is_platform_operator => (),
+        Ok(_) | Err(LookupUserError::UserNotFound) => return NotAuthorized,
+        Err(LookupUserError::InternalError(error)) => return InternalError(error),
     };
 
     let args = local_group_index_canister::c2c_set_group_upgrade_concurrency::Args { value: args.value };

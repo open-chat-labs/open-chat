@@ -1,5 +1,6 @@
 use crate::{read_state, RuntimeState};
 use canister_api_macros::query_msgpack;
+use types::UserDetails;
 use user_index_canister::c2c_lookup_user::{Response::*, *};
 
 #[query_msgpack]
@@ -12,7 +13,7 @@ fn c2c_lookup_user_impl(args: Args, runtime_state: &RuntimeState) -> Response {
         let is_platform_moderator = runtime_state.data.platform_moderators.contains(&user.user_id);
         let is_platform_operator = runtime_state.data.platform_operators.contains(&user.user_id);
 
-        Success(SuccessResult {
+        Success(UserDetails {
             principal: user.principal,
             user_id: user.user_id,
             is_bot: user.is_bot,
