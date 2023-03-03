@@ -1,9 +1,8 @@
 <script lang="ts">
-    import { params } from "svelte-spa-router";
     import BlogPost from "./blog/BlogPost.svelte";
     import { postsBySlug } from "./blog/posts";
 
-    $: slug = $params ? $params["slug"] : undefined;
+    export let slug: string;
 </script>
 
 <div class="post">

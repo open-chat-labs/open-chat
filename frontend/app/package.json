@@ -34,6 +34,7 @@
         "@types/marked": "^4.0.3",
         "@types/md5": "^2.3.2",
         "@types/node": "^15.14.9",
+        "@types/page": "^1.11.5",
         "@types/uuid": "^8.3.4",
         "@typescript-eslint/eslint-plugin": "^4.33.0",
         "@typescript-eslint/parser": "^4.33.0",
@@ -92,6 +93,7 @@
         "md5": "^2.3.0",
         "openchat-client": "*",
         "openchat-push": "*",
+        "page": "^1.11.6",
         "peerjs": "^1.3.2",
         "rollbar": "^2.24.1",
         "sirv-cli": "^1.0.14",
@@ -101,7 +103,6 @@
         "svelte-i18n": "^3.4.0",
         "svelte-material-icons": "^1.0.3",
         "svelte-qr": "^1.0.0",
-        "svelte-spa-router": "^3.2.0",
         "usergeek-ic-js": "git+https://github.com/julianjelfs/usergeek-ic-js.git",
         "uuid": "^9.0.0"
     }

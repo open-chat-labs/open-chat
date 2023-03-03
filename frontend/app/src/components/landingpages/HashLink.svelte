@@ -1,6 +1,6 @@
 <script lang="ts">
-    import { location } from "svelte-spa-router";
+    import { location } from "../../routes";
     export let id: string;
 </script>
 
-<a href={`/#${$location}?section=${id}`}><slot /></a>
+<a href={`${$location}?section=${id}`}><slot /></a>

@@ -8,7 +8,7 @@
     import ChatMessageContent from "./ChatMessageContent.svelte";
     import { createEventDispatcher, getContext } from "svelte";
     const dispatch = createEventDispatcher();
-    import { push } from "svelte-spa-router";
+    import page from "page";
 
     const client = getContext<OpenChat>("client");
     const currentUser = client.user;
@@ -31,7 +31,7 @@
                 index: repliesTo.messageIndex,
             });
         } else {
-            push(`/${repliesTo.chatId}/${repliesTo.messageIndex}`);
+            page(`/${repliesTo.chatId}/${repliesTo.messageIndex}`);
         }
     }
 

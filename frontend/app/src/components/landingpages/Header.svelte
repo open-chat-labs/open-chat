@@ -4,14 +4,14 @@
     import MobileMenuItems from "./MobileMenuItems.svelte";
     import Menu from "svelte-material-icons/Menu.svelte";
     import Close from "svelte-material-icons/Close.svelte";
-    import { push } from "svelte-spa-router";
+    import page from "page";
     import { postsBySlug } from "./blog/posts";
 
     let showMenu = false;
     $: showBlog = Object.values(postsBySlug).length > 0;
 
     function home() {
-        push("/home");
+        page("/home");
     }
 </script>
 

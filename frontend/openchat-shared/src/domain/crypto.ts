@@ -46,7 +46,7 @@ export const cryptoLookup: Record<Cryptocurrency, CryptocurrencyDetails> = {
         symbol: "CHAT",
         name: "OpenChat",
         transferFeesE8s: BigInt(100_000),
-        howToBuyUrl: "https://oc.app/#/?faq=chat_account",
+        howToBuyUrl: "https://oc.app?faq=chat_account",
         disabled: false,
         diamond: false,
     },

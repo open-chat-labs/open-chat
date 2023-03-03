@@ -34,7 +34,7 @@
     import MessageReaction from "./MessageReaction.svelte";
     import ViewUserProfile from "./profile/ViewUserProfile.svelte";
     import ThreadSummary from "./ThreadSummary.svelte";
-    import { pathParams } from "../../stores/routing";
+    import { pathParams } from "../../routes";
     import { canShareMessage } from "../../utils/share";
     import ChatMessageMenu from "./ChatMessageMenu.svelte";
     import { toastStore } from "../../stores/toast";
@@ -104,7 +104,7 @@
     $: showAvatar = $screenWidth !== ScreenWidth.ExtraExtraSmall;
     $: translated = $translationStore.has(Number(msg.messageId));
     $: threadSummary = msg.thread;
-    $: msgUrl = `/#/${chatId}/${msg.messageIndex}?open=true`;
+    $: msgUrl = `/${chatId}/${msg.messageIndex}?open=true`;
     $: isProposal = msg.content.kind === "proposal_content";
     $: isPrize = msg.content.kind === "prize_content";
     $: isPrizeWinner = msg.content.kind === "prize_winner_content";
