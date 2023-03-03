@@ -290,6 +290,16 @@ type PayForDiamondMembershipResponse =
         InternalError: text;
     };
 
+type SetUserUpgradeConcurrencyArgs =
+    record {
+        value: nat32;
+    };
+
+type SetUserUpgradeConcurrencyResponse =
+    variant {
+        Success;
+    };
+
 service: {
     create_challenge : (CreateChallengeArgs) -> (CreateChallengeResponse);
 
@@ -322,7 +332,7 @@ service: {
     platform_moderators: (PlatformModeratorsArgs) -> (PlatformModeratorsResponse) query;
     platform_operators: (PlatformOperatorsArgs) -> (PlatformOperatorsResponse) query;
 
-    // Only callable by "service principals"
+    // Only callable by SNS governance canister
     add_platform_moderator: (AddPlatformModeratorArgs) -> (AddPlatformModeratorResponse);
     add_platform_operator: (AddPlatformOperatorArgs) -> (AddPlatformOperatorResponse);
     remove_platform_moderator: (RemovePlatformModeratorArgs) -> (RemovePlatformModeratorResponse);
@@ -332,4 +342,7 @@ service: {
     suspend_user: (SuspendUserArgs) -> (SuspendUserResponse);
     unsuspend_user: (UnsuspendUserArgs) -> (UnsuspendUserResponse);
     suspected_bots: (SuspectedBotsArgs) -> (SuspectedBotsResponse) query;
+
+    // Only callable by "platform operators"
+    set_user_upgrade_concurrency: (SetUserUpgradeConcurrencyArgs) -> (SetUserUpgradeConcurrencyResponse);
 }

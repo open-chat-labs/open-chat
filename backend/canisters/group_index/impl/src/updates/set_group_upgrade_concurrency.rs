@@ -1,0 +1,40 @@
+use crate::{read_state, validate_user_is_platform_moderator, ValidationError};
+use canister_tracing_macros::trace;
+use group_index_canister::set_group_upgrade_concurrency::{Response::*, *};
+use ic_cdk_macros::update;
+use tracing::info;
+use types::CanisterId;
+
+#[update]
+#[trace]
+async fn set_group_upgrade_concurrency(args: Args) -> Response {
+    let (caller, user_index_canister_id, local_group_index_canisters) = read_state(|state| {
+        (
+            state.env.caller(),
+            state.data.user_index_canister_id,
+            state.data.local_index_map.canisters().copied().collect::<Vec<CanisterId>>(),
+        )
+    });
+
+    match validate_user_is_platform_moderator(caller, user_index_canister_id).await {
+        Ok(id) => id,
+        Err(ValidationError::NotSuperAdmin) => return NotAuthorized,
+        Err(ValidationError::InternalError(error)) => return InternalError(error),
+    };
+
+    let args = local_group_index_canister::c2c_set_group_upgrade_concurrency::Args { value: args.value };
+
+    let futures: Vec<_> = local_group_index_canisters
+        .into_iter()
+        .map(|canister_id| local_group_index_canister_c2c_client::c2c_set_group_upgrade_concurrency(canister_id, &args))
+        .collect();
+
+    let result = futures::future::join_all(futures).await;
+
+    if let Some(first_error) = result.into_iter().filter_map(|res| res.err()).next() {
+        InternalError(format!("{first_error:?}"))
+    } else {
+        info!(args.value, "Group upgrade concurrency set");
+        Success
+    }
+}

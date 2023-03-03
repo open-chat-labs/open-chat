@@ -254,7 +254,7 @@ enum ValidationError {
     InternalError(String),
 }
 
-async fn validate_user_is_super_admin(
+async fn validate_user_is_platform_moderator(
     caller: Principal,
     user_index_canister_id: CanisterId,
 ) -> Result<UserId, ValidationError> {

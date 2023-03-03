@@ -18,6 +18,7 @@ fn main() {
     generate_candid_method!(user_index, register_user, update);
     generate_candid_method!(user_index, remove_platform_moderator, update);
     generate_candid_method!(user_index, remove_platform_operator, update);
+    generate_candid_method!(user_index, set_user_upgrade_concurrency, update);
     generate_candid_method!(user_index, set_username, update);
     generate_candid_method!(user_index, suspend_user, update);
     generate_candid_method!(user_index, unsuspend_user, update);

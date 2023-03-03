@@ -1,4 +1,4 @@
-use crate::{mutate_state, read_state, validate_user_is_super_admin, RuntimeState, ValidationError};
+use crate::{mutate_state, read_state, validate_user_is_platform_moderator, RuntimeState, ValidationError};
 use candid::Principal;
 use canister_tracing_macros::trace;
 use group_index_canister::{add_hot_group_exclusion, remove_hot_group_exclusion};
@@ -20,7 +20,7 @@ async fn add_hot_group_exclusion(args: add_hot_group_exclusion::Args) -> add_hot
         Err(_) => return ChatNotFound,
     };
 
-    match validate_user_is_super_admin(caller, user_index_canister_id).await {
+    match validate_user_is_platform_moderator(caller, user_index_canister_id).await {
         Ok(_) => (),
         Err(ValidationError::NotSuperAdmin) => return NotAuthorized,
         Err(ValidationError::InternalError(error)) => return InternalError(error),
@@ -47,7 +47,7 @@ async fn remove_hot_group_exclusion(args: remove_hot_group_exclusion::Args) -> r
         Err(_) => return ChatNotFound,
     };
 
-    match validate_user_is_super_admin(caller, user_index_canister_id).await {
+    match validate_user_is_platform_moderator(caller, user_index_canister_id).await {
         Ok(_) => (),
         Err(ValidationError::NotSuperAdmin) => return NotAuthorized,
         Err(ValidationError::InternalError(error)) => return InternalError(error),

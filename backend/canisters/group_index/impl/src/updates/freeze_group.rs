@@ -1,4 +1,4 @@
-use crate::{mutate_state, read_state, validate_user_is_super_admin, RuntimeState, ValidationError};
+use crate::{mutate_state, read_state, validate_user_is_platform_moderator, RuntimeState, ValidationError};
 use candid::Principal;
 use canister_tracing_macros::trace;
 use group_index_canister::{freeze_group, unfreeze_group};
@@ -20,7 +20,7 @@ async fn freeze_group(args: freeze_group::Args) -> freeze_group::Response {
         Err(_) => return ChatNotFound,
     };
 
-    let user_id = match validate_user_is_super_admin(caller, user_index_canister_id).await {
+    let user_id = match validate_user_is_platform_moderator(caller, user_index_canister_id).await {
         Ok(id) => id,
         Err(ValidationError::NotSuperAdmin) => return NotAuthorized,
         Err(ValidationError::InternalError(error)) => return InternalError(error),
@@ -86,7 +86,7 @@ async fn unfreeze_group(args: unfreeze_group::Args) -> unfreeze_group::Response 
         Err(_) => return ChatNotFound,
     };
 
-    let user_id = match validate_user_is_super_admin(caller, user_index_canister_id).await {
+    let user_id = match validate_user_is_platform_moderator(caller, user_index_canister_id).await {
         Ok(id) => id,
         Err(ValidationError::NotSuperAdmin) => return NotAuthorized,
         Err(ValidationError::InternalError(error)) => return InternalError(error),
