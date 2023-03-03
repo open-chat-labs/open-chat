@@ -326,7 +326,7 @@ export class OpenChat extends EventTarget {
     private _lastOnlineDatesPromise: Promise<Record<string, number>> | undefined;
     private _cachePrimer: CachePrimer | undefined = undefined;
     private _membershipCheck: number | undefined;
-    private _referralCode: string | undefined = undefined;
+    private _referredBy: string | undefined = undefined;
 
     constructor(private config: OpenChatConfig) {
         super();
@@ -2667,7 +2667,7 @@ export class OpenChat extends EventTarget {
             localStorage.setItem("openchat_referredby", code);
             captured = true;
         }
-        this._referralCode = localStorage.getItem("openchat_referredby") ?? undefined;
+        this._referredBy = localStorage.getItem("openchat_referredby") ?? undefined;
         return captured;
     }
 
@@ -2675,7 +2675,7 @@ export class OpenChat extends EventTarget {
         username: string,
         challengeAttempt: ChallengeAttempt
     ): Promise<RegisterUserResponse> {
-        return this.api.registerUser(username, challengeAttempt, this._referralCode).then((res) => {
+        return this.api.registerUser(username, challengeAttempt, this._referredBy).then((res) => {
             if (res === "success") {
                 localStorage.removeItem("openchat_referredby");
             }
