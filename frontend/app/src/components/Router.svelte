@@ -23,6 +23,7 @@
         page("/architecture", parsePathParams, () => (route = LandingPage));
         page(
             "/:chatId?/:messageIndex?/:threadMessageIndex?",
+            redirectHashRoutes,
             parsePathParams,
             () => (route = Home)
         );
@@ -40,6 +41,14 @@
             behavior: "auto",
             top: 0,
         });
+    }
+
+    function redirectHashRoutes(ctx: PageJS.Context, next: () => any) {
+        if (ctx.canonicalPath.startsWith("/#/")) {
+            page.redirect(ctx.canonicalPath.slice(2));
+        } else {
+            next();
+        }
     }
 
     function parsePathParams(ctx: PageJS.Context, next: () => any) {
