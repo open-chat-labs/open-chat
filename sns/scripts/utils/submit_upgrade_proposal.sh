@@ -16,7 +16,7 @@ SUMMARY=$5
 TARGET_CANISTER_ID=$(dfx -qq canister --network $NETWORK id $CANISTER_NAME)
 
 # Build the WASM path
-WASM_FILE="$CANISTER_NAME"_canister_impl.wasm.gz
+WASM_FILE=$CANISTER_NAME.wasm.gz
 WASM_PATH=$WASM_FOLDER/$WASM_FILE
 
 # Parse the version string

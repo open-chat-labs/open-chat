@@ -4,74 +4,74 @@
     "user_index": {
       "type": "custom",
       "candid": "backend/canisters/user_index/api/can.did",
-      "wasm": "wasms/user_index_canister_impl.wasm.gz",
-      "build": "./scripts/generate-wasm.sh user_index_canister_impl"
+      "wasm": "wasms/user_index.wasm.gz",
+      "build": "./scripts/generate-wasm.sh user_index"
     },
     "group_index": {
       "type": "custom",
       "candid": "backend/canisters/group_index/api/can.did",
-      "wasm": "wasms/group_index_canister_impl.wasm.gz",
-      "build": "./scripts/generate-wasm.sh group_index_canister_impl"
+      "wasm": "wasms/group_index.wasm.gz",
+      "build": "./scripts/generate-wasm.sh group_index"
     },
     "local_user_index": {
       "type": "custom",
       "candid": "backend/canisters/local_user_index/api/can.did",
-      "wasm": "wasms/local_user_index_canister_impl.wasm.gz",
-      "build": "./scripts/generate-wasm.sh local_user_index_canister_impl"
+      "wasm": "wasms/local_user_index.wasm.gz",
+      "build": "./scripts/generate-wasm.sh local_user_index"
     },
     "local_group_index": {
       "type": "custom",
       "candid": "backend/canisters/local_group_index/api/can.did",
-      "wasm": "wasms/local_group_index_canister_impl.wasm.gz",
-      "build": "./scripts/generate-wasm.sh local_user_group_canister_impl"
+      "wasm": "wasms/local_group_index.wasm.gz",
+      "build": "./scripts/generate-wasm.sh local_user_group"
     },
     "notifications_index": {
       "type": "custom",
       "candid": "backend/canisters/notifications_index/api/can.did",
-      "wasm": "wasms/notifications_index_canister_impl.wasm.gz",
-      "build": "./scripts/generate-wasm.sh notifications_index_canister_impl"
+      "wasm": "wasms/notifications_index.wasm.gz",
+      "build": "./scripts/generate-wasm.sh notifications_index"
     },
     "notifications": {
       "type": "custom",
       "candid": "backend/canisters/notifications/api/can.did",
-      "wasm": "wasms/notifications_canister_impl.wasm.gz",
-      "build": "./scripts/generate-wasm.sh notifications_canister_impl"
+      "wasm": "wasms/notifications.wasm.gz",
+      "build": "./scripts/generate-wasm.sh notifications"
     },
     "online_users": {
       "type": "custom",
       "candid": "backend/canisters/online_users_agg/api/can.did",
-      "wasm": "wasms/online_users_canister_impl.wasm.gz",
-      "build": "./scripts/generate-wasm.sh online_users_canister_impl"
+      "wasm": "wasms/online_users.wasm.gz",
+      "build": "./scripts/generate-wasm.sh online_users"
     },
     "proposals_bot": {
       "type": "custom",
       "candid": "backend/canisters/proposals_bot/api/can.did",
-      "wasm": "wasms/proposals_bot_canister_impl.wasm.gz",
-      "build": "./scripts/generate-wasm.sh proposals_bot_canister_impl"
+      "wasm": "wasms/proposals_bot.wasm.gz",
+      "build": "./scripts/generate-wasm.sh proposals_bot"
     },
     "user": {
       "type": "custom",
       "candid": "backend/canisters/user/api/can.did",
-      "wasm": "wasms/user_canister_impl.wasm.gz",
-      "build": "./scripts/generate-wasm.sh user_canister_impl"
+      "wasm": "wasms/user.wasm.gz",
+      "build": "./scripts/generate-wasm.sh user"
     },
     "group": {
       "type": "custom",
       "candid": "backend/canisters/group/api/can.did",
-      "wasm": "wasms/group_canister_impl.wasm.gz",
-      "build": "./scripts/generate-wasm.sh group_canister_impl"
+      "wasm": "wasms/group.wasm.gz",
+      "build": "./scripts/generate-wasm.sh group"
     },
     "storage_index": {
       "type": "custom",
       "candid": "backend/canisters/storage_index/api/can.did",
-      "wasm": "wasms/storage_index_canister_impl.wasm.gz",
-      "build": "./scripts/generate-wasm.sh storage_index_canister_impl"
+      "wasm": "wasms/storage_index.wasm.gz",
+      "build": "./scripts/generate-wasm.sh storage_index"
     },
     "cycles_dispenser": {
       "type": "custom",
       "candid": "backend/canisters/cycles_dispenser/api/can.did",
-      "wasm": "wasms/cycles_dispenser_canister_impl.wasm.gz",
-      "build": "./scripts/generate-wasm.sh cycles_dispenser_canister_impl"
+      "wasm": "wasms/cycles_dispenser.wasm.gz",
+      "build": "./scripts/generate-wasm.sh cycles_dispenser"
     },
     "website": {
       "source": ["frontend/app/build", "frontend/app/public"],

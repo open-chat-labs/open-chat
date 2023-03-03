@@ -13,7 +13,7 @@ SCRIPT=$(readlink -f "$0")
 SCRIPT_DIR=$(dirname "$SCRIPT")
 cd $SCRIPT_DIR/..
 
-./scripts/generate-wasm.sh ${CANISTER_NAME}_canister_impl
+./scripts/generate-wasm.sh $CANISTER_NAME
 
 USER_INDEX_CANISTER_ID=$(dfx canister --network $NETWORK id user_index)
 GROUP_INDEX_CANISTER_ID=$(dfx canister --network $NETWORK id group_index)
