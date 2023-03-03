@@ -28,6 +28,14 @@ pub fn caller_is_platform_moderator() -> Result<(), String> {
     if read_state(|state| state.is_caller_platform_moderator()) {
         Ok(())
     } else {
-        Err("Caller is not a super admin".to_string())
+        Err("Caller is not a platform moderator".to_string())
+    }
+}
+
+pub fn caller_is_platform_operator() -> Result<(), String> {
+    if read_state(|state| state.is_caller_platform_operator()) {
+        Ok(())
+    } else {
+        Err("Caller is not a platform operator".to_string())
     }
 }

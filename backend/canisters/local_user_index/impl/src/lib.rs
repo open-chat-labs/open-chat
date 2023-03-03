@@ -77,6 +77,7 @@ impl RuntimeState {
             canister_upgrades_in_progress: canister_upgrades_metrics.in_progress as u64,
             user_wasm_version: self.data.user_canister_wasm_for_new_canisters.version,
             max_concurrent_canister_upgrades: self.data.max_concurrent_canister_upgrades,
+            user_upgrade_concurrency: self.data.user_upgrade_concurrency,
             user_events_queue_length: self.data.user_event_sync_queue.len(),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
@@ -105,6 +106,7 @@ struct Data {
     pub user_index_event_sync_queue: CanisterEventSyncQueue<UserIndexEvent>,
     pub test_mode: bool,
     pub max_concurrent_canister_upgrades: u32,
+    pub user_upgrade_concurrency: u32,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -140,6 +142,7 @@ impl Data {
             user_index_event_sync_queue: CanisterEventSyncQueue::default(),
             test_mode,
             max_concurrent_canister_upgrades: 10,
+            user_upgrade_concurrency: 10,
         }
     }
 }
@@ -161,6 +164,7 @@ pub struct Metrics {
     pub canister_upgrades_in_progress: u64,
     pub user_wasm_version: Version,
     pub max_concurrent_canister_upgrades: u32,
+    pub user_upgrade_concurrency: u32,
     pub user_events_queue_length: usize,
     pub canister_ids: CanisterIds,
 }

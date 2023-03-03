@@ -22,6 +22,7 @@ pub enum Event {
     UserRegistered(UserRegistered),
     SuperAdminStatusChanged(SuperAdminStatusChanged),
     MaxConcurrentCanisterUpgradesChanged(MaxConcurrentCanisterUpgradesChanged),
+    UserUpgradeConcurrencyChanged(UserUpgradeConcurrencyChanged),
     UserSuspended(UserSuspended),
     UserJoinedGroup(UserJoinedGroup),
     DiamondMembershipPaymentReceived(DiamondMembershipPaymentReceived),
@@ -66,6 +67,11 @@ pub struct SuperAdminStatusChanged {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct MaxConcurrentCanisterUpgradesChanged {
+    pub value: u32,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct UserUpgradeConcurrencyChanged {
     pub value: u32,
 }
 

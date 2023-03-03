@@ -1,4 +1,4 @@
-use crate::{mutate_state, read_state, validate_user_is_super_admin, RuntimeState, ValidationError};
+use crate::{lookup_user, mutate_state, read_state, LookupUserError, RuntimeState};
 use candid::Principal;
 use canister_tracing_macros::trace;
 use group_index_canister::{freeze_group, unfreeze_group};
@@ -20,10 +20,10 @@ async fn freeze_group(args: freeze_group::Args) -> freeze_group::Response {
         Err(_) => return ChatNotFound,
     };
 
-    let user_id = match validate_user_is_super_admin(caller, user_index_canister_id).await {
-        Ok(id) => id,
-        Err(ValidationError::NotSuperAdmin) => return NotAuthorized,
-        Err(ValidationError::InternalError(error)) => return InternalError(error),
+    let user_id = match lookup_user(caller, user_index_canister_id).await {
+        Ok(user) if user.is_platform_moderator => user.user_id,
+        Ok(_) | Err(LookupUserError::UserNotFound) => return NotAuthorized,
+        Err(LookupUserError::InternalError(error)) => return InternalError(error),
     };
 
     let c2c_args = group_canister::c2c_freeze_group::Args {
@@ -86,10 +86,10 @@ async fn unfreeze_group(args: unfreeze_group::Args) -> unfreeze_group::Response 
         Err(_) => return ChatNotFound,
     };
 
-    let user_id = match validate_user_is_super_admin(caller, user_index_canister_id).await {
-        Ok(id) => id,
-        Err(ValidationError::NotSuperAdmin) => return NotAuthorized,
-        Err(ValidationError::InternalError(error)) => return InternalError(error),
+    let user_id = match lookup_user(caller, user_index_canister_id).await {
+        Ok(user) if user.is_platform_moderator => user.user_id,
+        Ok(_) | Err(LookupUserError::UserNotFound) => return NotAuthorized,
+        Err(LookupUserError::InternalError(error)) => return InternalError(error),
     };
 
     let c2c_args = group_canister::c2c_unfreeze_group::Args { caller: user_id };

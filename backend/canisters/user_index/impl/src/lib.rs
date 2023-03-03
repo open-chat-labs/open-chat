@@ -84,7 +84,6 @@ impl RuntimeState {
         }
     }
 
-    #[allow(dead_code)]
     pub fn is_caller_platform_operator(&self) -> bool {
         let caller = self.env.caller();
         if let Some(user) = self.data.users.get_by_principal(&caller) {

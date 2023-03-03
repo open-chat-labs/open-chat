@@ -25,9 +25,9 @@ mod upgrade_canisters {
 
     fn next_batch(runtime_state: &mut RuntimeState) -> Vec<CanisterToUpgrade> {
         let count_in_progress = runtime_state.data.canisters_requiring_upgrade.count_in_progress();
-        let max_concurrent_canister_upgrades = runtime_state.data.max_concurrent_canister_upgrades as usize;
+        let group_upgrade_concurrency = runtime_state.data.group_upgrade_concurrency as usize;
 
-        (0..(max_concurrent_canister_upgrades.saturating_sub(count_in_progress)))
+        (0..(group_upgrade_concurrency.saturating_sub(count_in_progress)))
             .map_while(|_| try_get_next(runtime_state))
             .collect()
     }

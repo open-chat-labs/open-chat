@@ -147,13 +147,30 @@ type RemoveHotGroupExclusionResponse =
         InternalError: text;
     };
 
+type SetGroupUpgradeConcurrencyArgs =
+    record {
+        value: nat32;
+    };
+
+type SetGroupUpgradeConcurrencyResponse =
+    variant {
+        Success;
+        NotAuthorized;
+        InternalError: text;
+    };
+
 service: {
     filter_groups: (FilterGroupsArgs) -> (FilterGroupsResponse) query;
     recommended_groups: (RecommendedGroupsArgs) -> (RecommendedGroupsResponse) query;
     search: (SearchArgs) -> (SearchResponse) query;
+
+    // Only callable by "platform moderators"
     freeze_group: (FreezeGroupArgs) -> (FreezeGroupResponse);
     unfreeze_group: (UnfreezeGroupArgs) -> (UnfreezeGroupResponse);
     delete_frozen_group: (DeleteFrozenGroupArgs) -> (DeleteFrozenGroupResponse);
     add_hot_group_exclusion: (AddHotGroupExclusionArgs) -> (AddHotGroupExclusionResponse);
     remove_hot_group_exclusion: (RemoveHotGroupExclusionArgs) -> (RemoveHotGroupExclusionResponse);
+
+    // Only callable by "platform operators"
+    set_group_upgrade_concurrency: (SetGroupUpgradeConcurrencyArgs) -> (SetGroupUpgradeConcurrencyResponse);
 }
