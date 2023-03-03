@@ -29,8 +29,7 @@
     let loading = false;
     let confirmReset = false;
 
-    $: link =
-        `${window.location.origin}/#/${group.chatId}` + (!group.public ? `/?code=${code}` : "");
+    $: link = `${window.location.origin}/${group.chatId}` + (!group.public ? `/?code=${code}` : "");
 
     $: spinner = loading && code === undefined;
 

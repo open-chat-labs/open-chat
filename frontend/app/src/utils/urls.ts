@@ -13,24 +13,18 @@ export const synonymousUrlRegex = new RegExp(`^(${window.location.origin}|${open
 // detect whether the user is on a canister based url of the form https://6hsbt-vqaaa-aaaaf-aaafq-cai.ic0.app/
 export const isCanisterUrl = /https:\/\/.*\.ic0\.app/.test(window.location.origin);
 
-function replaceQueryString(qs: URLSearchParams): string {
-    const qsStr = [...qs.keys()].length > 0 ? `?${qs}` : "";
-    const hash = window.location.hash.replace("#", "");
-    const match = hash.match(/.*(\?.*)/);
-    if (match) {
-        return hash.replace(match[1], qsStr);
-    }
-    return hash.startsWith("/") ? `${hash}${qsStr}` : `/${hash}${qsStr}`;
-}
-
-export function addQueryStringParam(qs: URLSearchParams, name: string, val: string): string {
+export function addQueryStringParam(name: string, val: string): string {
+    const path = window.location.pathname;
+    const qs = new URLSearchParams(window.location.search);
     qs.set(name, val);
-    return replaceQueryString(qs);
+    return [...qs.keys()].length > 0 ? `${path}?${qs}` : path;
 }
 
-export function removeQueryStringParam(qs: URLSearchParams, name: string): string {
+export function removeQueryStringParam(name: string): string {
+    const path = window.location.pathname;
+    const qs = new URLSearchParams(window.location.search);
     qs.delete(name);
-    return replaceQueryString(qs);
+    return [...qs.keys()].length > 0 ? `${path}?${qs}` : path;
 }
 
 const scrollingRoutes = ["features", "roadmap", "whitepaper", "architecture", "blog"];
@@ -56,7 +50,7 @@ export function redirectLandingPageLinksIfNecessary(): void {
 function getRedirectPath(path: string, hash: string): string {
     const match = path.match(/^\/(home|whitepaper|features|roadmap|architecture)/i);
     if (match) {
-        return `/#/${match[1]}${hash !== "" ? `?section=${hash.slice(1)}` : ""}`;
+        return `/${match[1]}${hash !== "" ? `?section=${hash.slice(1)}` : ""}`;
     }
     return path;
 }

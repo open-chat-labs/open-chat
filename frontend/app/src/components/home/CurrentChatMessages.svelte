@@ -40,8 +40,8 @@
     import { tooltipStore } from "../../stores/tooltip";
     import { iconSize } from "../../stores/iconSize";
     import InitialGroupMessage from "./InitialGroupMessage.svelte";
-    import { pathParams } from "../../stores/routing";
-    import { push } from "svelte-spa-router";
+    import { pathParams } from "../../routes";
+    import page from "page";
     import { isSafari } from "../../utils/devices";
 
     // todo - these thresholds need to be relative to screen height otherwise things get screwed up on (relatively) tall screens
@@ -377,7 +377,7 @@
     }
 
     function doGoToMessageIndex(index: number): void {
-        push(`/${chat.chatId}`);
+        page(`/${chat.chatId}`);
         scrollToMessageIndex(index, false);
     }
 

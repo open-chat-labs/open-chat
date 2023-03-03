@@ -5,17 +5,10 @@
     import SellingPoints from "./SellingPoints.svelte";
     import BragBox from "./BragBox.svelte";
     import ArrowLink from "../ArrowLink.svelte";
-    import { createEventDispatcher } from "svelte";
-
-    const dispatch = createEventDispatcher();
-
-    function login() {
-        dispatch("routeEvent", "login");
-    }
 </script>
 
 <div class="content">
-    <Intro on:login={login} />
+    <Intro on:login />
 
     <div class="headline">
         <h2>

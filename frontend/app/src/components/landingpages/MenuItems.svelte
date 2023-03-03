@@ -3,7 +3,7 @@
     import Launch from "./Launch.svelte";
     import { createEventDispatcher, getContext } from "svelte";
     import type { OpenChat } from "openchat-client";
-    import { location } from "svelte-spa-router";
+    import { location } from "../../routes";
 
     export let showBlog: boolean;
 

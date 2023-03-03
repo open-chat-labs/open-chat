@@ -4,23 +4,24 @@ This is the proposal for the NNS to create an SNS DAO to govern the [OpenChat da
 
 # Purpose
 
-OpenChat is a decentralized chat app governed by the people for the people. 
+OpenChat is a decentralized chat app governed by the people for the people.
 
-It is fully featured, runs on the Internet Computer blockchain, and is similar in functionality to WhatsApp, Signal and Telegram. It is [open source](https://github.com/dfinity-lab/open-chat) and the code running on any canister smart contract [verifiably links back a particular version](https://oc.app/#/architecture?section=3) of the code. Users can send messages to each other containing tokens such as ICP and ckBTC.
+It is fully featured, runs on the Internet Computer blockchain, and is similar in functionality to WhatsApp, Signal and Telegram. It is [open source](https://github.com/dfinity-lab/open-chat) and the code running on any canister smart contract [verifiably links back a particular version](https://oc.app/architecture?section=3) of the code. Users can send messages to each other containing tokens such as ICP and ckBTC.
 
-The OpenChat DAO is being formed to operate and steer the direction of OpenChat as a public good, owned by no-one. Holders of CHAT tokens can stake them as neurons which allow them to make and vote on proposals to change the OpenChat dapp. 
+The OpenChat DAO is being formed to operate and steer the direction of OpenChat as a public good, owned by no-one. Holders of CHAT tokens can stake them as neurons which allow them to make and vote on proposals to change the OpenChat dapp.
 
 The SNS DAO will hold a treasury of CHAT tokens and ICP which can be used to fund the ongoing development of the dapp and to algorithmically reward users to encourage positive usage and growth. By rewarding contributing users with CHAT tokens and neurons they will benefit from the long-term success of OpenChat. The expectation is this will create a large team of advocates who will promote OpenChat.
 
 CHAT tokens will also be used to pay for "Diamond" tier membership and other future premium features.
 
-For more information on the OpenChat SNS please read the [whitepaper here](https://oc.app/#/whitepaper).
+For more information on the OpenChat SNS please read the [whitepaper here](https://oc.app/whitepaper).
 
 # Proposed Token Distribution
 
 Total token supply: 100 million CHAT tokens
 
 Initially distributed:
+
 - 52%: Reserved for the SNS treasury & under control of the OpenChat DAO
 - 25%: To be distributed by the NNS run decentralization sale which includes the Community Fund
 - 15%: Allocated to the OpenChat dev team which vests over 4 years
@@ -28,7 +29,7 @@ Initially distributed:
 
 Ledger transaction fee: 0.001 CHAT tokens
 
-For more information on the initial token allocation please [read here](https://oc.app/#/whitepaper?section=5).
+For more information on the initial token allocation please [read here](https://oc.app/whitepaper?section=5).
 
 # Governance
 
@@ -70,6 +71,7 @@ The sale is open to anyone. Participation is either via the launchpad in the NNS
 The OpenChat dapp consists of a set of canister smart contracts.
 
 Top-level canisters controlled by the [OpenChat SNS root canister](https://dashboard.internetcomputer.org/canister/3e3x2-xyaaa-aaaaq-aaalq-cai):
+
 - 1 Website asset canister (6hsbt-vqaaa-aaaaf-aaafq-cai)
 - 1 UserIndex (4bkt6-4aaaa-aaaaf-aaaiq-cai)
 - 1 GroupIndex (4ijyc-kiaaa-aaaaf-aaaja-cai)
@@ -80,6 +82,7 @@ Top-level canisters controlled by the [OpenChat SNS root canister](https://dashb
 - 1 CyclesDispenser (gonut-hqaaa-aaaaf-aby7a-cai)
 
 Controlled by top-level canisters:
+
 - 1 LocalUserIndex per subnet
 - 1 LocalGroupIndex per subnet
 - 1 Notification canister per subnet
@@ -87,7 +90,7 @@ Controlled by top-level canisters:
 - 1 User canister per user
 - 1 Group canister per group
 
-For more information please see a description of the architecture [here](https://oc.app/#/architecture).
+For more information please see a description of the architecture [here](https://oc.app/architecture).
 
 # Verification
 
