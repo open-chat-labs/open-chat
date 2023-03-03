@@ -98,5 +98,6 @@
     .loading {
         height: calc(100vh - 5rem);
         width: 100vw;
+        max-width: 1440px;
     }
 </style>
