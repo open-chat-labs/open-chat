@@ -1,18 +1,17 @@
 use crate::client::{create_canister, install_canister};
 use crate::rng::random_principal;
 use crate::utils::tick_many;
-use crate::{client, wasms, CanisterIds};
-use candid::Principal;
+use crate::{client, wasms, CanisterIds, T};
+use candid::{CandidType, Principal};
+use ic_ledger_types::{AccountIdentifier, BlockIndex, Tokens, DEFAULT_SUBACCOUNT};
 use ic_state_machine_tests::StateMachine;
 use lazy_static::lazy_static;
+use std::collections::{HashMap, HashSet};
 use std::sync::Mutex;
 use storage_index_canister::init::CyclesDispenserConfig;
-use types::{CanisterId, Cycles, Version};
+use types::{CanisterId, Version};
 
-const T: Cycles = 1_000_000_000_000;
 const NNS_GOVERNANCE_CANISTER_ID: CanisterId = Principal::from_slice(&[0, 0, 0, 0, 0, 0, 0, 1, 1, 1]);
-const NNS_LEDGER_CANISTER_ID: CanisterId = Principal::from_slice(&[0, 0, 0, 0, 0, 0, 0, 2, 1, 1]);
-const NNS_CMC_CANISTER_ID: CanisterId = Principal::from_slice(&[0, 0, 0, 0, 0, 0, 0, 4, 1, 1]);
 
 lazy_static! {
     static ref ENV: Mutex<Vec<TestEnv>> = Mutex::default();
@@ -54,6 +53,11 @@ fn try_take_existing_env() -> Option<TestEnv> {
 }
 
 fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterIds {
+    let nns_canister_ids: Vec<_> = (0..10).map(|_| create_canister(env, None)).collect();
+
+    let icp_ledger_canister_id = nns_canister_ids[2];
+    let cycles_minting_canister_id = nns_canister_ids[4];
+
     let user_index_canister_id = create_canister(env, None);
     let group_index_canister_id = create_canister(env, None);
     let notifications_index_canister_id = create_canister(env, None);
@@ -67,8 +71,10 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
     let notifications_canister_id = create_canister(env, Some(vec![notifications_index_canister_id]));
 
     let cycles_dispenser_canister_wasm = wasms::CYCLES_DISPENSER.clone();
+    let cycles_minting_canister_wasm = wasms::CYCLES_MINTING_CANISTER.clone();
     let group_canister_wasm = wasms::GROUP.clone();
     let group_index_canister_wasm = wasms::GROUP_INDEX.clone();
+    let icp_ledger_canister_wasm = wasms::ICP_LEDGER.clone();
     let local_group_index_canister_wasm = wasms::LOCAL_GROUP_INDEX.clone();
     let local_user_index_canister_wasm = wasms::LOCAL_USER_INDEX.clone();
     let notifications_canister_wasm = wasms::NOTIFICATIONS.clone();
@@ -187,8 +193,8 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
         min_interval: 5 * 60 * 1000, // 5 minutes
         min_cycles_balance: 200 * T,
         icp_burn_amount_e8s: 1_000_000_000, // 10 ICP
-        ledger_canister: NNS_LEDGER_CANISTER_ID,
-        cycles_minting_canister: NNS_CMC_CANISTER_ID,
+        ledger_canister: icp_ledger_canister_id,
+        cycles_minting_canister: cycles_minting_canister_id,
         wasm_version: Version::min(),
         test_mode: true,
     };
@@ -251,6 +257,29 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
         "{add_notifications_canister_response:?}"
     );
 
+    let minting_account = AccountIdentifier::new(&controller, &DEFAULT_SUBACCOUNT);
+
+    let icp_ledger_init_args = LedgerCanisterInitPayload {
+        minting_account: minting_account.to_string(),
+        initial_values: HashMap::new(),
+        send_whitelist: HashSet::new(),
+        transfer_fee: Some(Tokens::from_e8s(10_000)),
+    };
+    install_canister(env, icp_ledger_canister_id, icp_ledger_canister_wasm, icp_ledger_init_args);
+
+    let cycles_minting_canister_init_args = CyclesMintingCanisterInitPayload {
+        ledger_canister_id: icp_ledger_canister_id,
+        governance_canister_id: CanisterId::anonymous(),
+        minting_account_id: Some(minting_account.to_string()),
+        last_purged_notification: Some(0),
+    };
+    install_canister(
+        env,
+        cycles_minting_canister_id,
+        cycles_minting_canister_wasm,
+        cycles_minting_canister_init_args,
+    );
+
     // Tick a load of times so that all of the child canisters have time to get installed
     tick_many(env, 30);
 
@@ -264,5 +293,24 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
         online_users: online_users_canister_id,
         proposals_bot: proposals_bot_canister_id,
         storage_index: storage_index_canister_id,
+        cycles_dispenser: cycles_dispenser_canister_id,
+        icp_ledger: icp_ledger_canister_id,
+        cycles_minting_canister: cycles_minting_canister_id,
     }
+}
+
+#[derive(CandidType)]
+struct LedgerCanisterInitPayload {
+    minting_account: String,
+    initial_values: HashMap<String, Tokens>,
+    send_whitelist: HashSet<CanisterId>,
+    transfer_fee: Option<Tokens>,
+}
+
+#[derive(CandidType)]
+struct CyclesMintingCanisterInitPayload {
+    ledger_canister_id: CanisterId,
+    governance_canister_id: CanisterId,
+    minting_account_id: Option<String>,
+    last_purged_notification: Option<BlockIndex>,
 }

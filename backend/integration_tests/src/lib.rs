@@ -2,9 +2,10 @@
 
 use crate::utils::principal_to_username;
 use candid::Principal;
-use types::{CanisterId, UserId};
+use types::{CanisterId, Cycles, UserId};
 
 mod client;
+mod cycles_dispenser_tests;
 mod delete_group_tests;
 mod delete_message_tests;
 mod disappearing_message_tests;
@@ -49,4 +50,9 @@ pub struct CanisterIds {
     pub online_users: CanisterId,
     pub proposals_bot: CanisterId,
     pub storage_index: CanisterId,
+    pub cycles_dispenser: CanisterId,
+    pub icp_ledger: CanisterId,
+    pub cycles_minting_canister: CanisterId,
 }
+
+const T: Cycles = 1_000_000_000_000;
