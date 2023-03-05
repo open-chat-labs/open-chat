@@ -9,7 +9,7 @@ export const location = derived(pathContextStore, ($store) => {
 });
 
 export const querystring = derived(pathContextStore, ($store) => {
-    return $store ? $store.querystring : "";
+    return $store ? new URLSearchParams($store.querystring) : new URLSearchParams();
 });
 
 export type RouteParams = {
