@@ -114,7 +114,6 @@
     $: chatsInitialised = client.chatsInitialised;
     $: currentChatDraftMessage = client.currentChatDraftMessage;
     $: chatStateStore = client.chatStateStore;
-    $: qs = new URLSearchParams($querystring);
     $: confirmMessage = getConfirmMessage(confirmActionEvent);
 
     // layout stuff
@@ -176,7 +175,7 @@
         // if this is an unknown chat let's preview it
         if (chat === undefined) {
             if (!(await createDirectChat(chatId))) {
-                const code = qs.get("code");
+                const code = $querystring.get("code");
                 if (code) {
                     client.groupInvite = {
                         chatId,
@@ -216,10 +215,9 @@
                 hotGroups = { kind: "idle" };
                 // TODO - this is pretty gross
             } else if (pathParams.chatId === "share") {
-                const local_qs = new URLSearchParams(window.location.search);
-                const title = local_qs.get("title") ?? "";
-                const text = local_qs.get("text") ?? "";
-                const url = local_qs.get("url") ?? "";
+                const title = $querystring.get("title") ?? "";
+                const text = $querystring.get("text") ?? "";
+                const url = $querystring.get("url") ?? "";
                 share = {
                     title,
                     text,
@@ -264,14 +262,14 @@
                 }
 
                 // regardless of the path params, we *always* check the query string
-                const faq = qs.get("faq");
+                const faq = $querystring.get("faq");
                 if (faq !== null) {
                     faqQuestion = faq as Questions;
                     modal = ModalType.Faq;
                     page.replace(removeQueryStringParam("faq"));
                 }
 
-                const diamond = qs.get("diamond");
+                const diamond = $querystring.get("diamond");
                 if (diamond !== null) {
                     showUpgrade = true;
                     page.replace(removeQueryStringParam("diamond"));

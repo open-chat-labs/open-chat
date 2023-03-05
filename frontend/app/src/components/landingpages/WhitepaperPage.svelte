@@ -28,12 +28,9 @@
     }
 
     $: {
-        if ($querystring !== undefined) {
-            const qs = new URLSearchParams($querystring);
-            const section = qs.get("section");
-            if (section) {
-                linked = scrollToSection(section);
-            }
+        const section = $querystring.get("section");
+        if (section) {
+            linked = scrollToSection(section);
         }
     }
 </script>
