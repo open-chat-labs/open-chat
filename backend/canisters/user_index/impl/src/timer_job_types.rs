@@ -1,17 +1,26 @@
-use crate::mutate_state;
+use crate::updates::pay_for_diamond_membership::{icp_price_e8s, pay_for_diamond_membership_impl};
 use crate::updates::suspend_user::suspend_user_impl;
 use crate::updates::unsuspend_user::unsuspend_user_impl;
+use crate::{mutate_state, read_state};
 use canister_timer_jobs::Job;
+use ic_ledger_types::Tokens;
+use local_user_index_canister::OpenChatBotMessage;
 use serde::{Deserialize, Serialize};
-use types::{ChatId, Milliseconds, UserId};
-use utils::time::SECOND_IN_MS;
+use types::{ChatId, Cryptocurrency, DiamondMembershipPlanDuration, MessageContent, Milliseconds, TextContent, UserId};
+use utils::time::{MINUTE_IN_MS, SECOND_IN_MS};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum TimerJob {
+    RecurringDiamondMembershipPayment(RecurringDiamondMembershipPayment),
     DismissPlatformModerator(DismissPlatformModerator),
     SetUserSuspended(SetUserSuspended),
     SetUserSuspendedInGroup(SetUserSuspendedInGroup),
     UnsuspendUser(UnsuspendUser),
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+pub struct RecurringDiamondMembershipPayment {
+    pub user_id: UserId,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -45,10 +54,77 @@ pub struct UnsuspendUser {
 impl Job for TimerJob {
     fn execute(&self) {
         match self {
+            TimerJob::RecurringDiamondMembershipPayment(job) => job.execute(),
             TimerJob::DismissPlatformModerator(job) => job.execute(),
             TimerJob::SetUserSuspended(job) => job.execute(),
             TimerJob::SetUserSuspendedInGroup(job) => job.execute(),
             TimerJob::UnsuspendUser(job) => job.execute(),
+        }
+    }
+}
+
+impl Job for RecurringDiamondMembershipPayment {
+    fn execute(&self) {
+        if let Some(duration) = read_state(|state| {
+            let now = state.env.now();
+            state
+                .data
+                .users
+                .get_by_user_id(&self.user_id)
+                .map(|u| &u.diamond_membership_details)
+                .filter(|d| d.is_recurring_payment_due(now))
+                .and_then(|d| d.latest_duration())
+        }) {
+            ic_cdk::spawn(pay_for_diamond_membership(self.user_id, duration));
+        }
+
+        async fn pay_for_diamond_membership(user_id: UserId, duration: DiamondMembershipPlanDuration) {
+            use local_user_index_canister::Event as LocalUserIndexEvent;
+            use user_index_canister::pay_for_diamond_membership::*;
+
+            let price_e8s = icp_price_e8s(duration);
+
+            let args = Args {
+                duration,
+                token: Cryptocurrency::InternetComputer,
+                expected_price_e8s: price_e8s,
+                recurring: true,
+            };
+
+            match pay_for_diamond_membership_impl(args, user_id).await {
+                Response::InsufficientFunds(balance) => {
+                    mutate_state(|state| {
+                        state.data.push_event_to_local_user_index(
+                            user_id,
+                            LocalUserIndexEvent::OpenChatBotMessage(OpenChatBotMessage {
+                                user_id,
+                                message: MessageContent::Text(TextContent {
+                                    text: format!(
+                                        "Failed to take payment for Diamond membership due to insufficient funds.\
+Payment amount: {}\
+Balance: {}\
+\
+If you would like to extend your Diamond membership you will need to top up your account and pay manually.",
+                                        Tokens::from_e8s(price_e8s),
+                                        Tokens::from_e8s(balance)
+                                    ),
+                                }),
+                            }),
+                        )
+                    });
+                }
+                Response::InternalError(_) => {
+                    mutate_state(|state| {
+                        let now = state.env.now();
+                        state.data.timer_jobs.enqueue_job(
+                            TimerJob::RecurringDiamondMembershipPayment(RecurringDiamondMembershipPayment { user_id }),
+                            now + 10 * MINUTE_IN_MS,
+                            now,
+                        )
+                    });
+                }
+                _ => {}
+            }
         }
     }
 }

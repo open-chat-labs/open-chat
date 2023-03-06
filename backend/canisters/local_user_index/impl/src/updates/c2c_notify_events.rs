@@ -115,6 +115,12 @@ fn handle_event(event: Event, runtime_state: &mut RuntimeState) {
                 }))),
             );
         }
+        Event::OpenChatBotMessage(ev) => {
+            runtime_state
+                .data
+                .user_event_sync_queue
+                .push(ev.user_id.into(), UserEvent::OpenChatBotMessage(Box::new(ev.message)));
+        }
     }
     crate::jobs::sync_events_to_user_canisters::start_job_if_required(runtime_state);
 }
