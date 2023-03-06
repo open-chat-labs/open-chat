@@ -1,8 +1,11 @@
 use crate::client;
+use crate::client::{start_canister, stop_canister};
 use crate::setup::{setup_env, TestEnv};
 use crate::utils::{now_millis, tick_many};
 use std::time::Duration;
+use test_case::test_case;
 use types::{Cryptocurrency, DiamondMembershipPlanDuration};
+use utils::time::MINUTE_IN_MS;
 
 #[test]
 fn can_upgrade_to_diamond() {
@@ -56,8 +59,9 @@ fn can_upgrade_to_diamond() {
     assert_eq!(new_balance, 1_000_000_000 - 20_000_000);
 }
 
-#[test]
-fn membership_renews_automatically_if_set_to_recurring() {
+#[test_case(false; "without_ledger_error")]
+#[test_case(true; "with_ledger_error")]
+fn membership_renews_automatically_if_set_to_recurring(ledger_error: bool) {
     let TestEnv {
         mut env,
         canister_ids,
@@ -88,7 +92,15 @@ fn membership_renews_automatically_if_set_to_recurring() {
 
     let start_time = now_millis(&env);
     let one_month_millis = DiamondMembershipPlanDuration::OneMonth.as_millis();
-    env.advance_time(Duration::from_millis(one_month_millis));
+    env.advance_time(Duration::from_millis(one_month_millis - (30 * MINUTE_IN_MS)));
+
+    if ledger_error {
+        stop_canister(&mut env, controller, canister_ids.icp_ledger);
+        tick_many(&mut env, 5);
+        start_canister(&mut env, controller, canister_ids.icp_ledger);
+        env.advance_time(Duration::from_millis(15 * MINUTE_IN_MS));
+        tick_many(&mut env, 5);
+    }
 
     tick_many(&mut env, 5);
 
