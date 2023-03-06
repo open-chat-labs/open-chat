@@ -105,8 +105,8 @@ Payment amount: {}\
 Balance: {}\
 \
 If you would like to extend your Diamond membership you will need to top up your account and pay manually.",
-                                        Tokens::from_e8s(price_e8s).to_string(),
-                                        Tokens::from_e8s(balance).to_string()
+                                        Tokens::from_e8s(price_e8s),
+                                        Tokens::from_e8s(balance)
                                     ),
                                 }),
                             }),
