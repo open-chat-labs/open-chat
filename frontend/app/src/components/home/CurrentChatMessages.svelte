@@ -1,22 +1,12 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
-    import {
-        afterUpdate,
-        beforeUpdate,
-        createEventDispatcher,
-        getContext,
-        onMount,
-        tick,
-    } from "svelte";
+    import { createEventDispatcher, getContext, onMount, tick } from "svelte";
     import Avatar from "../Avatar.svelte";
     import ChatEvent from "./ChatEvent.svelte";
     import Robot from "../Robot.svelte";
     import ProposalBot from "../ProposalBot.svelte";
     import { _ } from "svelte-i18n";
-    import ArrowDown from "svelte-material-icons/ArrowDown.svelte";
-    import Fab from "../Fab.svelte";
-    import { rtlStore } from "../../stores/rtl";
     import {
         AvatarSize,
         EventWrapper,
@@ -28,25 +18,13 @@
         OpenChat,
         FilteredProposals,
         MessageReadState,
-        LoadedNewMessages,
-        ChatUpdated,
-        LoadedMessageWindow,
-        LoadedPreviousMessages,
-        SentMessage,
         FailedMessages,
     } from "openchat-client";
-    import { pop } from "../../utils/transition";
-    import { menuStore } from "../../stores/menu";
-    import { tooltipStore } from "../../stores/tooltip";
-    import { iconSize } from "../../stores/iconSize";
     import InitialGroupMessage from "./InitialGroupMessage.svelte";
-    import { pathParams } from "../../routes";
     import page from "page";
-    import { isSafari } from "../../utils/devices";
+    import ChatEventList from "./ChatEventList.svelte";
 
     // todo - these thresholds need to be relative to screen height otherwise things get screwed up on (relatively) tall screens
-    const MESSAGE_LOAD_THRESHOLD = 400;
-    const FROM_BOTTOM_THRESHOLD = 600;
     const MESSAGE_READ_THRESHOLD = 500;
 
     const client = getContext<OpenChat>("client");
@@ -82,26 +60,14 @@
     $: userStore = client.userStore;
     $: showAvatar = initialised && shouldShowAvatar(chat, events[0]?.index);
 
-    let loadingPrev = false;
-    let loadingNew = false;
-
-    // we want to track whether the loading was initiated by a scroll event or not
-    let loadingFromScroll = false;
-
     // treat this as if it might be null so we don't get errors when it's unmounted
+    let chatEventList: ChatEventList | undefined;
     let messagesDiv: HTMLDivElement | undefined;
     let messagesDivHeight: number;
     let initialised = false;
-    let scrollingToMessage = false;
-    let scrollTimer: number | undefined;
     let currentChatId = "";
     let observer: IntersectionObserver;
     let messageReadTimers: Record<number, number> = {};
-    let insideFromBottomThreshold: boolean = true;
-    let morePrevAvailable = false;
-    let previousScrollHeight: number | undefined = undefined;
-    let previousScrollTop: number | undefined = undefined;
-    let interrupt = false;
 
     onMount(() => {
         const options = {
@@ -109,8 +75,6 @@
             rootMargin: "0px",
             threshold: [0.1, 0.2, 0.3, 0.4, 0.5],
         };
-
-        morePrevAvailable = client.morePreviousMessagesAvailable(chat.chatId);
 
         observer = new IntersectionObserver((entries: IntersectionObserverEntry[]) => {
             entries.forEach((entry) => {
@@ -150,22 +114,17 @@
                 }
             });
         }, options);
-
-        client.addEventListener("openchat_event", clientEvent);
-
-        return () => {
-            client.removeEventListener("openchat_event", clientEvent);
-        };
     });
 
     function expandDeletedMessages(ev: CustomEvent<{ scrollTop: number; scrollHeight: number }>) {
         tick().then(() => {
             if (messagesDiv) {
-                expectedScrollTop = undefined;
-                const diff = (messagesDiv?.scrollHeight ?? 0) - ev.detail.scrollHeight;
-                interruptScroll(() => {
-                    messagesDiv?.scrollTo({ top: ev.detail.scrollTop - diff, behavior: "auto" });
-                });
+                // TODO - fix this
+                // expectedScrollTop = undefined;
+                // const diff = (messagesDiv?.scrollHeight ?? 0) - ev.detail.scrollHeight;
+                // interruptScroll(() => {
+                //     messagesDiv?.scrollTo({ top: ev.detail.scrollTop - diff, behavior: "auto" });
+                // });
             }
         });
     }
@@ -174,71 +133,13 @@
         client.retrySendMessage(chat.chatId, ev.detail, events, undefined);
     }
 
-    function clientEvent(ev: Event): void {
-        if (ev instanceof LoadedNewMessages) {
-            onLoadedNewMessages(ev.detail);
-        }
-        if (ev instanceof LoadedPreviousMessages) {
-            onLoadedPreviousMessages();
-        }
-        if (ev instanceof LoadedMessageWindow) {
-            onMessageWindowLoaded(ev.detail);
-        }
-        if (ev instanceof ChatUpdated) {
-            loadMoreIfRequired();
-        }
-        if (ev instanceof SentMessage) {
-            afterSendMessage(ev.detail);
-        }
+    function goToMessageIndex(ev: CustomEvent<{ index: number }>) {
+        doGoToMessageIndex(ev.detail.index);
     }
 
-    beforeUpdate(() => {
-        previousScrollHeight = messagesDiv?.scrollHeight;
-        previousScrollTop = messagesDiv?.scrollTop;
-    });
-
-    afterUpdate(() => {
-        setIfInsideFromBottomThreshold();
-        morePrevAvailable = client.morePreviousMessagesAvailable(chat.chatId);
-    });
-
-    function scrollBottom(behavior: ScrollBehavior = "auto") {
-        interruptScroll(() => {
-            messagesDiv?.scrollTo({
-                top: 0,
-                behavior,
-            });
-        });
-    }
-
-    // this *looks* crazy - but the idea is that before we programmatically scroll the messages div
-    // we set the overflow to hidden. This has the effect of immediately halting any momentum scrolling
-    // on iOS which prevents the screen going black.
-    function interruptScroll(fn: () => void): void {
-        interrupt = true;
-        fn();
-        window.setTimeout(() => (interrupt = false), 10);
-    }
-
-    function scrollToElement(element: Element | null, behavior: ScrollBehavior = "auto") {
-        interruptScroll(() => {
-            element?.scrollIntoView({ behavior, block: "center" });
-        });
-    }
-
-    function scrollToMention(mention: Mention | undefined) {
-        if (mention !== undefined) {
-            scrollToMessageIndex(mention.messageIndex, false);
-        }
-    }
-
-    function findMessageEvent(index: number): EventWrapper<Message> | undefined {
-        return events.find(
-            (ev) =>
-                ev.event.kind === "message" &&
-                ev.event.messageIndex === index &&
-                !failedMessagesStore.contains(chat.chatId, ev.event.messageId)
-        ) as EventWrapper<Message> | undefined;
+    function doGoToMessageIndex(index: number): void {
+        page(`/${chat.chatId}`);
+        chatEventList?.scrollToMessageIndex(index, false);
     }
 
     export function scrollToMessageIndex(
@@ -246,139 +147,7 @@
         preserveFocus: boolean,
         loadWindowIfMissing: boolean = true
     ) {
-        if (index < 0) {
-            client.setFocusMessageIndex(chat.chatId, undefined);
-            return;
-        }
-
-        // set a flag so that we can ignore subsequent scroll events temporarily
-        scrollingToMessage = true;
-        client.setFocusMessageIndex(chat.chatId, index);
-        const element = document.querySelector(`.chat-messages [data-index~='${index}']`);
-        if (element) {
-            // this triggers on scroll which will potentially load some new messages
-            scrollToElement(element);
-            const msgEvent = findMessageEvent(index);
-            if (msgEvent) {
-                if (msgEvent.event.thread !== undefined && $pathParams.open) {
-                    client.openThread(msgEvent.event.messageId, msgEvent.event.messageIndex, false);
-                } else {
-                    client.closeThread();
-                }
-            }
-            if (!preserveFocus) {
-                setTimeout(() => {
-                    client.setFocusMessageIndex(chat.chatId, undefined);
-                }, 200);
-            }
-        } else if (loadWindowIfMissing) {
-            client.loadEventWindow(chat.chatId, index);
-        }
-    }
-
-    function resetScroll() {
-        if ($focusMessageIndex !== undefined) {
-            scrollToMessageIndex($focusMessageIndex, false);
-        }
-        if (!initialised) {
-            initialised = true;
-        }
-    }
-
-    function shouldLoadPreviousMessages() {
-        morePrevAvailable = client.morePreviousMessagesAvailable(chat.chatId);
-        const insideLoadThreshold = calculateFromTop() < MESSAGE_LOAD_THRESHOLD;
-        const result = !loadingPrev && insideLoadThreshold && morePrevAvailable;
-        if (result) {
-            console.debug(
-                "SCROLL: shouldLoadPreviousMessages [loadingPrev] [insideLoadThreshold] [morePrevAvailable]",
-                loadingPrev,
-                insideLoadThreshold,
-                morePrevAvailable
-            );
-        }
-        return result;
-    }
-
-    function shouldLoadNewMessages() {
-        const insideLoadThreshold = calculateFromBottom() < MESSAGE_LOAD_THRESHOLD;
-        const moreNewMessages = client.moreNewMessagesAvailable(chat.chatId);
-        const result = !loadingNew && insideLoadThreshold && moreNewMessages;
-        if (result) {
-            console.debug(
-                "SCROLL: shouldLoadNewMesages [loadingNew] [insideLoadThreshold] [moreNewMessages]",
-                loadingNew,
-                insideLoadThreshold,
-                moreNewMessages
-            );
-        }
-        return result;
-    }
-
-    let expectedScrollTop: number | undefined = undefined;
-
-    function scrollLeapDetected() {
-        return (
-            expectedScrollTop !== undefined &&
-            expectedScrollTop - (messagesDiv?.scrollTop ?? 0) > 500
-        );
-    }
-
-    function onScroll() {
-        if (!initialised) return;
-
-        if (scrollLeapDetected()) {
-            console.debug("SCROLL: position has leapt unacceptably", messagesDiv?.scrollTop);
-            interruptScroll(() => {
-                messagesDiv?.scrollTo({ top: expectedScrollTop, behavior: "auto" }); // this should trigger another call to onScroll
-            });
-            expectedScrollTop = undefined;
-            return;
-        } else {
-            expectedScrollTop = undefined;
-        }
-
-        menuStore.hideMenu();
-        tooltipStore.hide();
-
-        if (scrollingToMessage) {
-            // if we are in the middle of scrolling to a message we have to wait for the scroll to settle
-            // down before we start paying attention to the scroll again
-            // annoyingly there is no scrollEnd event or anything so this, hacky as it is, is the best we can do
-            window.clearTimeout(scrollTimer);
-            scrollTimer = window.setTimeout(() => {
-                scrollingToMessage = false;
-
-                // once the scrolling has settled we need to do a final check to see if we need to
-                // load any more previous messages
-                // the easiest way to do this is to manually call onScroll
-                onScroll();
-            }, 300); // todo this is a magic number and that usually ends badly
-            return;
-        }
-
-        loadMoreIfRequired(true);
-
-        setIfInsideFromBottomThreshold();
-    }
-
-    function calculateFromTop(): number {
-        return messagesDiv
-            ? messagesDiv.scrollHeight - messagesDiv.clientHeight + messagesDiv.scrollTop
-            : 0;
-    }
-
-    function calculateFromBottom(): number {
-        return -(messagesDiv?.scrollTop ?? 0);
-    }
-
-    function goToMessageIndex(ev: CustomEvent<{ index: number }>) {
-        doGoToMessageIndex(ev.detail.index);
-    }
-
-    function doGoToMessageIndex(index: number): void {
-        page(`/${chat.chatId}`);
-        scrollToMessageIndex(index, false);
+        chatEventList?.scrollToMessageIndex(index, preserveFocus, loadWindowIfMissing);
     }
 
     function replyTo(ev: CustomEvent<EnhancedReplyContext>) {
@@ -403,75 +172,8 @@
         }
     }
 
-    function onMessageWindowLoaded(messageIndex: number | undefined) {
-        if (messageIndex === undefined) return;
-        tick()
-            .then(() => (initialised = true))
-            .then(() => {
-                expectedScrollTop = undefined;
-                scrollToMessageIndex(messageIndex, false, true);
-            })
-            .then(() => loadMoreIfRequired());
-    }
-
     export function externalGoToMessage(messageIndex: number): void {
-        onMessageWindowLoaded(messageIndex);
-    }
-
-    function onLoadedPreviousMessages() {
-        tick()
-            .then(() => (initialised = true))
-            .then(resetScroll)
-            .then(() => {
-                expectedScrollTop = messagesDiv?.scrollTop ?? 0;
-            })
-            .then(() => (loadingFromScroll = loadingPrev = false))
-            .then(() => loadMoreIfRequired());
-    }
-
-    function onLoadedNewMessages(newLatestMessage: boolean) {
-        tick()
-            .then(() => {
-                setIfInsideFromBottomThreshold();
-                if (
-                    loadingFromScroll &&
-                    isSafari && // unfortunate
-                    insideFromBottomThreshold &&
-                    previousScrollHeight !== undefined &&
-                    previousScrollTop !== undefined &&
-                    messagesDiv !== undefined
-                ) {
-                    // after loading new content below the viewport, chrome, firefox and edge will automatically maintain scroll position
-                    // safari DOES NOT so we need to try to adjust it
-                    const clientHeightChange = messagesDiv.scrollHeight - previousScrollHeight;
-                    if (clientHeightChange > 0) {
-                        // if the height has changed we update the scroll position to whatever it was *before* the render _minus_ the clientHeightChange
-                        interruptScroll(() => {
-                            if (messagesDiv !== undefined) {
-                                messagesDiv.scrollTop =
-                                    (previousScrollTop ?? 0) - clientHeightChange;
-                                console.debug(
-                                    "SCROLL: scrollTop updated to " + messagesDiv.scrollTop
-                                );
-
-                                // since we have adjusted scrollTop, we *also* need to re-evaluate whether we are inside the bottom threshold
-                                setIfInsideFromBottomThreshold();
-
-                                console.debug(
-                                    "SCROLL: [insideFromBottomThreshold] [shouldLoadNewMessages] ",
-                                    insideFromBottomThreshold,
-                                    shouldLoadNewMessages()
-                                );
-                            }
-                        });
-                    }
-                } else if (newLatestMessage && insideFromBottomThreshold) {
-                    // only scroll if we are now within threshold from the bottom
-                    scrollBottom("smooth");
-                }
-            })
-            .then(() => (loadingFromScroll = loadingNew = false))
-            .then(() => loadMoreIfRequired());
+        chatEventList?.onMessageWindowLoaded(messageIndex);
     }
 
     // Checks if a key already exists for this group, if so, that key will be reused so that Svelte is able to match the
@@ -517,10 +219,6 @@
         }
     }
 
-    function setIfInsideFromBottomThreshold() {
-        insideFromBottomThreshold = calculateFromBottom() < FROM_BOTTOM_THRESHOLD;
-    }
-
     function isMe(evt: EventWrapper<ChatEventType>): boolean {
         if (evt.event.kind === "message") {
             return evt.event.sender === user.userId;
@@ -529,27 +227,6 @@
             return evt.event.created_by === user.userId;
         }
         return false;
-    }
-
-    /**
-     * When we load an event window, it is possible that there are not enough *visible* events
-     * either above the focus message or below the focus message to allow scrolling. If that is the case
-     * we must trigger the loading of more messages (either previous messages or subsequent messages or both)
-     *
-     * Note that both loading new events and loading previous events can themselves trigger more "recursion" if
-     * there *still* are not enough visible events 🤯
-     */
-    function loadMoreIfRequired(fromScroll = false) {
-        if (shouldLoadNewMessages()) {
-            loadingNew = true;
-            loadingFromScroll = fromScroll;
-            client.loadNewMessages(chat.chatId);
-        }
-        if (shouldLoadPreviousMessages()) {
-            loadingPrev = true;
-            loadingFromScroll = fromScroll;
-            client.loadPreviousMessages(chat.chatId);
-        }
     }
 
     function isConfirmed(evt: EventWrapper<ChatEventType>): boolean {
@@ -658,12 +335,6 @@
         return filteredProposals?.isCollapsed(message.messageId, message.content.proposal) ?? false;
     }
 
-    function afterSendMessage(upToDate: boolean) {
-        if (upToDate && calculateFromBottom() < FROM_BOTTOM_THRESHOLD) {
-            tick().then(() => scrollBottom("smooth"));
-        }
-    }
-
     function shouldShowAvatar(
         chat: ChatSummary,
         earliestLoadedEventIndex: number | undefined
@@ -685,13 +356,18 @@
     }
 </script>
 
-<div
-    bind:this={messagesDiv}
-    bind:clientHeight={messagesDivHeight}
-    class="chat-messages"
-    class:interrupt
-    on:scroll={onScroll}
-    id="chat-messages">
+<ChatEventList
+    bind:this={chatEventList}
+    {readonly}
+    {unreadMessages}
+    {firstUnreadMention}
+    {footer}
+    focusMessageIndex={$focusMessageIndex}
+    {events}
+    {chat}
+    bind:initialised
+    bind:messagesDiv
+    bind:messagesDivHeight>
     {#each groupedEvents as dayGroup, _di (dateGroupKey(dayGroup))}
         <div class="day-group">
             <div class="date-label">
@@ -761,36 +437,7 @@
             </div>
         {/if}
     {/if}
-</div>
-{#if !readonly}
-    <div
-        title={$_("goToFirstMention")}
-        class:show={firstUnreadMention !== undefined}
-        class="fab mentions"
-        class:rtl={$rtlStore}>
-        <Fab on:click={() => scrollToMention(firstUnreadMention)}>
-            <div in:pop={{ duration: 1500 }} class="unread">
-                <div class="mention-count">@</div>
-            </div>
-        </Fab>
-    </div>
-{/if}
-<div
-    title={$_("goToLatestMessage")}
-    class:show={!insideFromBottomThreshold || unreadMessages > 0}
-    class="fab to-bottom"
-    class:footer
-    class:rtl={$rtlStore}>
-    <Fab on:click={() => scrollToMessageIndex(chat.latestMessage?.event.messageIndex ?? -1, false)}>
-        {#if unreadMessages > 0}
-            <div in:pop={{ duration: 1500 }} class="unread">
-                <div class="unread-count">{unreadMessages > 999 ? "999+" : unreadMessages}</div>
-            </div>
-        {:else}
-            <ArrowDown size={$iconSize} color={"#fff"} />
-        {/if}
-    </Fab>
-</div>
+</ChatEventList>
 
 <style type="text/scss">
     .day-group {
@@ -809,60 +456,6 @@
             @include font(book, normal, fs-70);
             text-align: center;
             margin-bottom: $sp4;
-        }
-    }
-
-    .unread {
-        color: var(--button-txt);
-        text-align: center;
-        text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.5);
-
-        .unread-count {
-            line-height: 80%;
-        }
-    }
-
-    .fab {
-        transition: opacity ease-in-out 300ms;
-        position: absolute;
-        @include z-index("fab");
-        right: 20px;
-        bottom: 0;
-        opacity: 0;
-        pointer-events: none;
-
-        &.show {
-            opacity: 1;
-            pointer-events: all;
-        }
-
-        &.rtl {
-            left: $sp6;
-            right: unset;
-        }
-    }
-
-    .mentions {
-        bottom: 140px;
-
-        .mention-count {
-            @include font(bold, normal, fs-140);
-        }
-    }
-
-    .to-bottom {
-        bottom: 24px;
-        &.footer {
-            bottom: 80px;
-        }
-    }
-
-    .chat-messages {
-        @include message-list();
-        background-color: var(--currentChat-msgs-bg);
-
-        &.interrupt {
-            overflow-y: hidden;
         }
     }
 

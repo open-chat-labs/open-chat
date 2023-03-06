@@ -1656,7 +1656,10 @@ export class OpenChat extends EventTarget {
         return Object.keys(args).length > 0;
     }
 
-    async loadPreviousMessages(chatId: string): Promise<void> {
+    async loadPreviousMessages(
+        chatId: string,
+        threadRootMessageIndex?: number // TODO make this work for threads
+    ): Promise<void> {
         const serverChat = this._liveState.serverChatSummaries[chatId];
 
         if (serverChat === undefined) {
@@ -1719,7 +1722,10 @@ export class OpenChat extends EventTarget {
         return confirmedLoaded.length > 0 ? confirmedLoaded.index(0) : undefined;
     }
 
-    async loadNewMessages(chatId: string): Promise<boolean> {
+    async loadNewMessages(
+        chatId: string,
+        threadRootMessageIndex?: number // TODO make this work for threads
+    ): Promise<boolean> {
         const serverChat = this._liveState.serverChatSummaries[chatId];
 
         if (serverChat === undefined) {
@@ -1754,7 +1760,10 @@ export class OpenChat extends EventTarget {
         return newLatestMessage;
     }
 
-    morePreviousMessagesAvailable(chatId: string): boolean {
+    morePreviousMessagesAvailable(
+        chatId: string,
+        threadRootMessageIndex?: number // TODO - make this work with threads
+    ): boolean {
         const chat = this._liveState.chatSummaries[chatId];
 
         return (
@@ -1765,7 +1774,10 @@ export class OpenChat extends EventTarget {
         );
     }
 
-    moreNewMessagesAvailable(chatId: string): boolean {
+    moreNewMessagesAvailable(
+        chatId: string,
+        threadRootMessageIndex?: number /* TODO - make this work for threads */
+    ): boolean {
         const serverChat = this._liveState.serverChatSummaries[chatId];
 
         return (

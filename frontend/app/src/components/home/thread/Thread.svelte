@@ -86,6 +86,20 @@
         }
     }
 
+    function createTestMessages(ev: CustomEvent<number>): void {
+        if (process.env.NODE_ENV === "production") return;
+
+        function send(n: number) {
+            if (n === ev.detail) return;
+
+            sendMessageWithAttachment(`Test message ${n}`, [], undefined);
+
+            setTimeout(() => send(n + 1), 500);
+        }
+
+        send(0);
+    }
+
     $: {
         if (rootEvent.event.messageIndex !== previousRootEvent?.event.messageIndex) {
             // this we move into client.openThread
@@ -481,6 +495,7 @@
         on:sendMessage={sendMessage}
         on:attachGif={attachGif}
         on:tokenTransfer={tokenTransfer}
+        on:createTestMessages={createTestMessages}
         on:createPoll={createPoll} />
 {/if}
 
