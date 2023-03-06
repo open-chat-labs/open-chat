@@ -118,7 +118,7 @@
 
     // layout stuff
     $: showRight = $rightPanelHistory.length > 0 || $numberOfColumns === 3;
-    $: floatRightPanel = $numberOfColumns < 3;
+    $: floatRightPanel = !$mobileWidth && $numberOfColumns < 3;
     $: middleSelected = $pathParams.chatId !== undefined || hotGroups.kind !== "idle";
     $: leftSelected = $pathParams.chatId === undefined && hotGroups.kind === "idle";
     $: showMiddle = !$mobileWidth || (middleSelected && !showRight);
