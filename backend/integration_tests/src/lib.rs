@@ -8,6 +8,7 @@ mod client;
 mod cycles_dispenser_tests;
 mod delete_group_tests;
 mod delete_message_tests;
+mod diamond_membership_tests;
 mod disappearing_message_tests;
 mod freeze_group_tests;
 mod join_group_tests;
