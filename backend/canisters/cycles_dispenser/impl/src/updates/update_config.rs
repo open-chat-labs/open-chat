@@ -20,5 +20,8 @@ fn update_config_impl(args: Args, state: &mut State) -> Response {
     if let Some(min_cycles_balance) = args.min_cycles_balance {
         state.data.min_cycles_balance = min_cycles_balance;
     }
+    if let Some(icp_burn_amount) = args.icp_burn_amount {
+        state.data.icp_burn_amount = icp_burn_amount;
+    }
     Success
 }
