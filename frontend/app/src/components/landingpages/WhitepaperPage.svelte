@@ -9,7 +9,7 @@
     import GoogleChart from "./GoogleChart.svelte";
     import HashLinkTarget from "./HashLinkTarget.svelte";
     import { copyToClipboard, scrollToSection } from "../../utils/urls";
-    import { location, querystring } from "svelte-spa-router";
+    import { location, querystring } from "../../routes";
 
     let width = 0;
     let linked: number | undefined = undefined;
@@ -24,16 +24,13 @@
     }
 
     function copyUrl(section: string): void {
-        copyToClipboard(`${window.location.origin}/#${$location}?section=${section}`);
+        copyToClipboard(`${window.location.origin}${$location}?section=${section}`);
     }
 
     $: {
-        if ($querystring !== undefined) {
-            const qs = new URLSearchParams($querystring);
-            const section = qs.get("section");
-            if (section) {
-                linked = scrollToSection(section);
-            }
+        const section = $querystring.get("section");
+        if (section) {
+            linked = scrollToSection(section);
         }
     }
 </script>

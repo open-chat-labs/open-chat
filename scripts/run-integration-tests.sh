@@ -13,4 +13,7 @@ then
     ./scripts/generate-all-canister-wasms.sh
 fi
 
+./scripts/download-nns-canister-wasm.sh icp_ledger ledger-canister_notify-method
+./scripts/download-nns-canister-wasm.sh cycles_minting_canister cycles-minting-canister
+
 cargo test --release --package integration_tests $TESTNAME -- --test-threads $TEST_THREADS

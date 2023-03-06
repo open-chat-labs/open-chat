@@ -1,5 +1,5 @@
 use crate::updates::c2c_delete_group::delete_group;
-use crate::{read_state, validate_user_is_super_admin, RuntimeState, ValidationError};
+use crate::{lookup_user, read_state, LookupUserError, RuntimeState};
 use candid::Principal;
 use canister_tracing_macros::trace;
 use group_index_canister::delete_frozen_group::{Response::*, *};
@@ -21,10 +21,10 @@ async fn delete_frozen_group(args: Args) -> Response {
         Err(response) => return response,
     };
 
-    let user_id = match validate_user_is_super_admin(caller, user_index_canister_id).await {
-        Ok(id) => id,
-        Err(ValidationError::NotSuperAdmin) => return NotAuthorized,
-        Err(ValidationError::InternalError(error)) => return InternalError(error),
+    let user_id = match lookup_user(caller, user_index_canister_id).await {
+        Ok(user) if user.is_platform_moderator => user.user_id,
+        Ok(_) | Err(LookupUserError::UserNotFound) => return NotAuthorized,
+        Err(LookupUserError::InternalError(error)) => return InternalError(error),
     };
 
     let c2c_args = group_canister::c2c_name_and_members::Args {};

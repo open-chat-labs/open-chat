@@ -13,7 +13,7 @@
     } from "openchat-client";
     import { createEventDispatcher, getContext, onMount, tick } from "svelte";
     import SearchResult from "./SearchResult.svelte";
-    import { push } from "svelte-spa-router";
+    import page from "page";
     import NotificationsBar from "./NotificationsBar.svelte";
     import { chatListScroll } from "../../stores/scrollPos";
     import { menuCloser } from "../../actions/closeMenu";
@@ -78,7 +78,7 @@
      * the routing will take care of the rest
      */
     function selectGroup({ chatId }: GroupMatch): void {
-        push(`/${chatId}`);
+        page(`/${chatId}`);
         closeSearch();
     }
 
@@ -88,7 +88,7 @@
 
     function chatSelected(ev: CustomEvent<string>): void {
         chatScrollTop = chatListElement.scrollTop;
-        push(`/${ev.detail}`);
+        page(`/${ev.detail}`);
         closeSearch();
     }
 

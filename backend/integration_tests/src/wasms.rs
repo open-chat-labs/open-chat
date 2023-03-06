@@ -6,8 +6,10 @@ use types::{CanisterWasm, Version};
 
 lazy_static! {
     pub static ref CYCLES_DISPENSER: CanisterWasm = get_canister_wasm("cycles_dispenser");
+    pub static ref CYCLES_MINTING_CANISTER: CanisterWasm = get_canister_wasm("cycles_minting_canister");
     pub static ref GROUP: CanisterWasm = get_canister_wasm("group");
     pub static ref GROUP_INDEX: CanisterWasm = get_canister_wasm("group_index");
+    pub static ref ICP_LEDGER: CanisterWasm = get_canister_wasm("icp_ledger");
     pub static ref LOCAL_GROUP_INDEX: CanisterWasm = get_canister_wasm("local_group_index");
     pub static ref LOCAL_USER_INDEX: CanisterWasm = get_canister_wasm("local_user_index");
     pub static ref NOTIFICATIONS: CanisterWasm = get_canister_wasm("notifications");
@@ -21,7 +23,7 @@ lazy_static! {
 }
 
 fn get_canister_wasm(canister_name: &str) -> CanisterWasm {
-    let module = read_file_from_local_bin(&format!("{canister_name}_canister_impl.wasm.gz"));
+    let module = read_file_from_local_bin(&format!("{canister_name}.wasm.gz"));
 
     CanisterWasm {
         version: Version::min(),

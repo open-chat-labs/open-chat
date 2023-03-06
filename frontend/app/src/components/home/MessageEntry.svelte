@@ -299,22 +299,22 @@
             const faqMatch = txt.match(/^\/faq( *(.*))$/);
             if (faqMatch && faqMatch[2] !== undefined) {
                 if (allQuestions.includes(faqMatch[2] as Questions)) {
-                    const url = addQueryStringParam(new URLSearchParams(), "faq", faqMatch[2]);
+                    const url = addQueryStringParam("faq", faqMatch[2]);
                     dispatch("sendMessage", [
-                        `[🤔 FAQ: ${$_(`faq.${faqMatch[2]}_q`)}](#${url})`,
+                        `[🤔 FAQ: ${$_(`faq.${faqMatch[2]}_q`)}](${url})`,
                         [],
                     ]);
                 } else {
-                    const url = addQueryStringParam(new URLSearchParams(), "faq", "");
-                    dispatch("sendMessage", [`[🤔 FAQs](#${url})`, []]);
+                    const url = addQueryStringParam("faq", "");
+                    dispatch("sendMessage", [`[🤔 FAQs](${url})`, []]);
                 }
                 return true;
             }
         }
 
         if (/^\/diamond$/.test(txt)) {
-            const url = addQueryStringParam(new URLSearchParams(), "diamond", "");
-            dispatch("sendMessage", [`[${$_("upgrade.message")}](#${url})`, []]);
+            const url = addQueryStringParam("diamond", "");
+            dispatch("sendMessage", [`[${$_("upgrade.message")}](${url})`, []]);
             return true;
         }
 

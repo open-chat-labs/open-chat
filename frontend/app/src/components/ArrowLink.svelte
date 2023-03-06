@@ -1,7 +1,7 @@
 <script lang="ts">
     import { createEventDispatcher } from "svelte";
-    import { push } from "svelte-spa-router";
     import Arrow from "./Arrow.svelte";
+    import page from "page";
 
     export let path: string | undefined = undefined;
     export let url: string | undefined = undefined;
@@ -14,7 +14,7 @@
 
     function clickLink(e: MouseEvent) {
         if (path !== undefined) {
-            push(path);
+            page(path);
         }
 
         if (url != undefined) {

@@ -3,7 +3,8 @@
     import { createEventDispatcher, getContext, onMount } from "svelte";
     import InternetIdentityLogo from "./InternetIdentityLogo.svelte";
     import { AuthProvider, OpenChat } from "openchat-client";
-    import { push, location } from "svelte-spa-router";
+    import { location } from "../../routes";
+    import page from "page";
 
     const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
@@ -26,7 +27,7 @@
 
     function launch() {
         if ($identityState === "logged_in") {
-            push("/");
+            page("/");
         } else {
             dispatch("login");
         }

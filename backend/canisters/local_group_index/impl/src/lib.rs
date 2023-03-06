@@ -67,6 +67,7 @@ impl RuntimeState {
             canister_upgrades_in_progress: canister_upgrades_metrics.in_progress as u64,
             group_wasm_version: self.data.group_canister_wasm_for_new_canisters.version,
             max_concurrent_canister_upgrades: self.data.max_concurrent_canister_upgrades,
+            group_upgrade_concurrency: self.data.group_upgrade_concurrency,
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
@@ -95,6 +96,7 @@ struct Data {
     pub total_cycles_spent_on_canisters: Cycles,
     pub test_mode: bool,
     pub max_concurrent_canister_upgrades: u32,
+    pub group_upgrade_concurrency: u32,
 }
 
 impl Data {
@@ -124,7 +126,8 @@ impl Data {
             canister_pool: canister::Pool::new(canister_pool_target_size),
             total_cycles_spent_on_canisters: 0,
             test_mode,
-            max_concurrent_canister_upgrades: 2,
+            max_concurrent_canister_upgrades: 10,
+            group_upgrade_concurrency: 10,
         }
     }
 }
@@ -145,6 +148,7 @@ pub struct Metrics {
     pub canister_upgrades_in_progress: u64,
     pub group_wasm_version: Version,
     pub max_concurrent_canister_upgrades: u32,
+    pub group_upgrade_concurrency: u32,
     pub canister_ids: CanisterIds,
 }
 

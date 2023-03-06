@@ -1746,6 +1746,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "candid_gen",
+ "ic-ledger-types",
  "serde",
  "types",
 ]
@@ -5183,6 +5184,8 @@ dependencies = [
  "cycles_dispenser_canister",
  "group_canister",
  "group_index_canister",
+ "ic-icrc1",
+ "ic-ledger-types",
  "ic-state-machine-tests",
  "itertools",
  "lazy_static",

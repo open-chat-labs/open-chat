@@ -8,10 +8,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - APIs to add/remove/list platform operators ([#3264](https://github.com/open-ic/open-chat/pull/3264)) 
+- Endpoint for platform ops to set user upgrade concurrency ([#3268](https://github.com/open-ic/open-chat/pull/3268))
 
 ### Changed
 
 - Use `canister_timer_jobs` package to simplify timer jobs ([#3263](https://github.com/open-ic/open-chat/pull/3263)) 
+- Increased user limit to 150,000 ([#3267](https://github.com/open-ic/open-chat/pull/3267))
 
 ### Removed
 

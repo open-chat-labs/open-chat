@@ -11,7 +11,7 @@
 <a
     bind:this={anchorElement}
     role="button"
-    href="/#"
+    href="/"
     class={underline}
     class:hover={underline === "hover"}
     on:click|preventDefault|stopPropagation>

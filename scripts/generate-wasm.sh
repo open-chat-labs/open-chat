@@ -4,7 +4,8 @@ SCRIPT=$(readlink -f "$0")
 SCRIPT_DIR=$(dirname "$SCRIPT")
 cd $SCRIPT_DIR/..
 
-PACKAGE=$1
+CANISTER_NAME=$1
+PACKAGE="${CANISTER_NAME}_canister_impl"
 
 if [ -z "${CARGO_HOME}" ]
 then
@@ -33,4 +34,4 @@ ic-cdk-optimizer ./target/wasm32-unknown-unknown/release/$PACKAGE.wasm -o ./targ
 
 echo Compressing wasm
 mkdir -p wasms
-gzip -fckn target/wasm32-unknown-unknown/release/$PACKAGE-opt.wasm > ./wasms/$PACKAGE.wasm.gz
+gzip -fckn target/wasm32-unknown-unknown/release/$PACKAGE-opt.wasm > ./wasms/$CANISTER_NAME.wasm.gz

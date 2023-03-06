@@ -25,7 +25,7 @@ SUMMARY=$7
 
 if [ "$FUNCTION_ID" -ge "1000" ] ; then
     # Setup variables
-    WASM_FILE="$CANISTER_NAME"_canister_impl.wasm.gz
+    WASM_FILE=$CANISTER_NAME.wasm.gz
     WASM_PATH=$WASM_FOLDER/$WASM_FILE
     PROPOSAL_BUILDER_FOLDER=$SCRIPT_DIR/../backend/canister_upgrade_proposal_builder    
     PROPOSAL_FILE=proposal.candid

@@ -11,7 +11,7 @@
     import ArrowLink from "../ArrowLink.svelte";
     import Overlay from "../Overlay.svelte";
     import ModalContent from "../ModalContent.svelte";
-    import { location, querystring } from "svelte-spa-router";
+    import { querystring } from "routes";
 
     let linked: number | undefined = undefined;
     let zooming: { url: string; alt: string } | undefined = undefined;
@@ -27,16 +27,13 @@
     }
 
     function copyUrl(section: string): void {
-        copyToClipboard(`${window.location.origin}/#${$location}?section=${section}`);
+        copyToClipboard(`${window.location.origin}${location}?section=${section}`);
     }
 
     $: {
-        if ($querystring !== undefined) {
-            const qs = new URLSearchParams($querystring);
-            const section = qs.get("section");
-            if (section) {
-                linked = scrollToSection(section);
-            }
+        const section = $querystring.get("section");
+        if (section) {
+            linked = scrollToSection(section);
         }
     }
 </script>

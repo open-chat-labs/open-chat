@@ -17,7 +17,7 @@
 
 <a
     class:menu={mode === "menu"}
-    href={path === undefined ? "" : `#/${path}`}
+    href={path === undefined ? "" : `/${path}`}
     class:selected
     on:click={clickLink}><slot /></a>
 

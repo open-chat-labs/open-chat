@@ -1,7 +1,9 @@
 mod macros;
 
+pub mod cycles_dispenser;
 pub mod group;
 pub mod group_index;
+pub mod icrc1;
 pub mod local_user_index;
 pub mod notifications;
 pub mod notifications_index;
@@ -11,13 +13,14 @@ pub mod storage_index;
 pub mod user;
 pub mod user_index;
 
+use crate::T;
 use candid::{CandidType, Principal};
 use ic_state_machine_tests::{CanisterInstallMode, CanisterSettingsArgs, StateMachine};
 use itertools::Itertools;
 use serde::de::DeserializeOwned;
 use types::{CanisterId, CanisterWasm};
 
-const INIT_CYCLES_BALANCE: u128 = 1_000_000_000_000_000;
+const INIT_CYCLES_BALANCE: u128 = 1_000 * T;
 
 pub fn create_canister(env: &mut StateMachine, controllers: Option<Vec<Principal>>) -> CanisterId {
     let canister_id = env.create_canister_with_cycles(

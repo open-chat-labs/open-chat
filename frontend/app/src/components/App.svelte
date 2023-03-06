@@ -5,17 +5,16 @@
     import "../utils/markdown";
     import { rtlStore } from "../stores/rtl";
     import { _ } from "svelte-i18n";
-    import Router, { location, replace } from "svelte-spa-router";
-    import { routes } from "../routes";
+    import Router from "./Router.svelte";
+    import { location, notFound } from "../routes";
     import SwitchDomain from "./SwitchDomain.svelte";
     import Upgrading from "./upgrading/Upgrading.svelte";
-    import Loading from "./Loading.svelte";
     import UpgradeBanner from "./UpgradeBanner.svelte";
     import { mobileOperatingSystem } from "../utils/devices";
     import { themeStore } from "../theme/themes";
     import "../stores/fontSize";
     import Profiler from "./Profiler.svelte";
-    import { CreatedUser, OpenChat, SessionExpiryError } from "openchat-client";
+    import { OpenChat, SessionExpiryError } from "openchat-client";
     import {
         isCanisterUrl,
         isLandingPageRoute,
@@ -24,10 +23,9 @@
         removeQueryStringParam,
     } from "../utils/urls";
     import { logger } from "../utils/logging";
-    import LandingPage from "./landingpages/LandingPage.svelte";
+    import page from "page";
 
     let viewPortContent = "width=device-width, initial-scale=1";
-    let referredBy: string | undefined = undefined;
 
     function createOpenChatClient(): OpenChat {
         return new OpenChat({
@@ -62,21 +60,11 @@
     $: identityState = client.identityState;
     $: landingPage = isLandingPageRoute($location);
 
-    function getReferralCode(): string | undefined {
-        const qs = new URLSearchParams(window.location.search);
-        const qsParam = qs.get("ref") ?? undefined;
-        if (qsParam) {
-            const updatedQs = removeQueryStringParam(qs, "ref");
-            history.replaceState(null, "", updatedQs);
-            localStorage.setItem("openchat_referredby", qsParam);
-            return qsParam;
-        }
-        return localStorage.getItem("openchat_referredby") ?? undefined;
-    }
-
     onMount(() => {
         redirectLandingPageLinksIfNecessary();
-        referredBy = getReferralCode();
+        if (client.captureReferralCode()) {
+            page.replace(removeQueryStringParam("ref"));
+        }
         if (mobileOperatingSystem === "iOS") {
             viewPortContent += ", maximum-scale=1";
         }
@@ -163,19 +151,16 @@
 
     $: {
         if (
-            landingPage ||
-            $identityState === "requires_login" ||
-            $identityState === "logging_in" ||
-            $identityState === "registering"
+            !$notFound &&
+            (landingPage ||
+                $identityState === "requires_login" ||
+                $identityState === "logging_in" ||
+                $identityState === "registering")
         ) {
             document.body.classList.add("landing-page");
         } else {
             document.body.classList.remove("landing-page");
         }
-    }
-
-    function registeredUser(ev: CustomEvent<CreatedUser>) {
-        client.onCreatedUser(ev.detail);
     }
 
     function calculateHeight() {
@@ -197,8 +182,6 @@
         }
     }
 
-    const allRoutes = routes(() => client.logout());
-
     let isFirefox = navigator.userAgent.indexOf("Firefox") >= 0;
     $: burstPath = $themeStore.name === "dark" ? "../assets/burst_dark" : "../assets/burst_light";
     $: burstUrl = isFirefox ? `${burstPath}.png` : `${burstPath}.svg`;
@@ -218,20 +201,10 @@
 
 {#if isCanisterUrl}
     <SwitchDomain />
-{:else if $identityState === "requires_login" || $identityState === "logging_in" || $identityState === "registering"}
-    <LandingPage
-        {referredBy}
-        on:login={() => client.login()}
-        on:logout={() => client.logout()}
-        on:createdUser={registeredUser} />
-{:else if $identityState === "logged_in"}
-    <Router routes={allRoutes} />
 {:else if $identityState === "upgrading_user" || $identityState === "upgrade_user"}
     <Upgrading />
-{:else}
-    <div class="loading">
-        <Loading />
-    </div>
+{:else if $identityState === "requires_login" || $identityState === "logging_in" || $identityState === "registering" || $identityState === "logged_in" || $identityState === "loading_user"}
+    <Router />
 {/if}
 
 {#if profileTrace}
@@ -521,10 +494,5 @@
             background-size: 800px;
             background-position: left 0 top toRem(150);
         }
-    }
-
-    .loading {
-        height: 100vh;
-        width: 100vw;
     }
 </style>

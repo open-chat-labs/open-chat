@@ -1,5 +1,5 @@
-import { push } from "svelte-spa-router";
 import type { Notification, OpenChat } from "openchat-client";
+import page from "page";
 
 import { isCanisterUrl } from "../utils/urls";
 
@@ -29,7 +29,7 @@ export async function subscribeToNotifications(
         if (event.data.type === "NOTIFICATION_RECEIVED") {
             onNotification(event.data.data as Notification);
         } else if (event.data.type === "NOTIFICATION_CLICKED") {
-            push(`/${event.data.path}`);
+            page(`/${event.data.path}`);
         }
     });
 

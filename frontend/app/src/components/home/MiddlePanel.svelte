@@ -9,7 +9,7 @@
     import CurrentChat from "./CurrentChat.svelte";
     import type { RemoteData } from "../../utils/remoteData";
     import type { GroupChatSummary, OpenChat } from "openchat-client";
-    import { pathParams } from "../../stores/routing";
+    import { pathParams } from "../../routes";
     import { getContext } from "svelte";
 
     const client = getContext<OpenChat>("client");

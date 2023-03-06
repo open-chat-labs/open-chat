@@ -11,12 +11,12 @@ use utils::time::{DAY_IN_MS, HOUR_IN_MS};
 const WELCOME_MESSAGES: &[&str] = &[
     "Welcome to OpenChat!",
     "I am the OpenChat bot. I will send you messages to let you know about events that don't belong to any other chat, such as if crypto has been deposited into your OpenChat account(s) or if you've been removed from a group. In the future you'll be able to ask me questions or send me commands.",
-    "To follow all the software updates to OpenChat, join the [OpenChat Updates](/#/eucat-raaaa-aaaaf-adn7q-cai) group.",
-    "To follow announcements by the OpenChat team, join the [Announcements](/#/kvvn5-aiaaa-aaaaf-aqznq-cai) group.",
-    "To request new features, join the [Feature Requests](/#/vfaj4-zyaaa-aaaaf-aabya-cai) group.",
-    "To report bugs, join the [Bug Reports](/#/sycha-wyaaa-aaaaf-aabka-cai) group.",
-    "To provide feedback in general, join the [Product Feedback](/#/s7dbu-3aaaa-aaaaf-aabkq-cai) group.",
-    "Please keep posts relevant to each group. If you just want to say \"hi\", post in the [OpenChat group](/#/vmdca-pqaaa-aaaaf-aabzq-cai)."];
+    "To follow all the software updates to OpenChat, join the [OpenChat Updates](/eucat-raaaa-aaaaf-adn7q-cai) group.",
+    "To follow announcements by the OpenChat team, join the [Announcements](/kvvn5-aiaaa-aaaaf-aqznq-cai) group.",
+    "To request new features, join the [Feature Requests](/vfaj4-zyaaa-aaaaf-aabya-cai) group.",
+    "To report bugs, join the [Bug Reports](/sycha-wyaaa-aaaaf-aabka-cai) group.",
+    "To provide feedback in general, join the [Product Feedback](/s7dbu-3aaaa-aaaaf-aabkq-cai) group.",
+    "Please keep posts relevant to each group. If you just want to say \"hi\", post in the [OpenChat group](/vmdca-pqaaa-aaaaf-aabzq-cai)."];
 
 pub(crate) fn send_welcome_messages() {
     mutate_state(|state| {
@@ -62,7 +62,7 @@ pub(crate) fn send_phone_number_confirmed_bot_message(event: &PhoneNumberConfirm
     let storage_added = to_gb(event.storage_added);
     let new_group_limit = PREMIUM_GROUP_CREATION_LIMIT.to_string();
     let old_group_limit = BASIC_GROUP_CREATION_LIMIT.to_string();
-    let text = format!("Thank you for [verifying ownership of your phone number](/#/{OPENCHAT_BOT_USER_ID}?faq=sms_icp). This gives you {storage_added} GB of storage allowing you to send and store images, videos, audio and other files. It also entitles you to create {new_group_limit} groups (up from {old_group_limit}).");
+    let text = format!("Thank you for [verifying ownership of your phone number](/{OPENCHAT_BOT_USER_ID}?faq=sms_icp). This gives you {storage_added} GB of storage allowing you to send and store images, videos, audio and other files. It also entitles you to create {new_group_limit} groups (up from {old_group_limit}).");
 
     send_text_message(text, false, runtime_state);
 }
@@ -76,7 +76,7 @@ pub(crate) fn send_storage_ugraded_bot_message(event: &StorageUpgraded, runtime_
     let old_group_limit = BASIC_GROUP_CREATION_LIMIT.to_string();
 
     let text = if event.storage_added == event.new_storage_limit {
-        format!("Thank you for [buying storage](/#/{OPENCHAT_BOT_USER_ID}?faq=sms_icp). You paid {amount_paid} {token} for {storage_added} GB of storage. This will allow you to send and store images, videos, audio and other files. It also entitles you to create {new_group_limit} groups (up from {old_group_limit}).")
+        format!("Thank you for [buying storage](/{OPENCHAT_BOT_USER_ID}?faq=sms_icp). You paid {amount_paid} {token} for {storage_added} GB of storage. This will allow you to send and store images, videos, audio and other files. It also entitles you to create {new_group_limit} groups (up from {old_group_limit}).")
     } else {
         format!("Thank you for buying more storage. You paid {amount_paid} {token} for {storage_added} GB of storage giving you {storage_total} GB in total.")
     };

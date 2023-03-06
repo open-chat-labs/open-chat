@@ -46,10 +46,10 @@ fn next_batch(runtime_state: &mut RuntimeState) -> Option<Vec<CanisterToUpgrade>
     if count_in_progress == 0 && count_pending == 0 {
         None
     } else {
-        let max_concurrent_canister_upgrades = runtime_state.data.max_concurrent_canister_upgrades as usize;
+        let user_upgrade_concurrency = runtime_state.data.user_upgrade_concurrency as usize;
 
         Some(
-            (0..(max_concurrent_canister_upgrades.saturating_sub(count_in_progress)))
+            (0..(user_upgrade_concurrency.saturating_sub(count_in_progress)))
                 .map_while(|_| try_get_next(runtime_state))
                 .collect(),
         )

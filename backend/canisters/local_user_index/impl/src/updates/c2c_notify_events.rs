@@ -1,3 +1,5 @@
+use std::cmp::min;
+
 use crate::guards::caller_is_user_index_canister;
 use crate::{mutate_state, RuntimeState};
 use canister_api_macros::update_msgpack;
@@ -90,6 +92,10 @@ fn handle_event(event: Event, runtime_state: &mut RuntimeState) {
         Event::MaxConcurrentCanisterUpgradesChanged(ev) => {
             runtime_state.data.max_concurrent_canister_upgrades = ev.value;
             info!("Max concurrent canister upgrades set to {}", ev.value);
+        }
+        Event::UserUpgradeConcurrencyChanged(ev) => {
+            runtime_state.data.user_upgrade_concurrency = min(runtime_state.data.max_concurrent_canister_upgrades, ev.value);
+            info!("User upgrade concurrency set to {}", ev.value);
         }
         Event::UserJoinedGroup(ev) => {
             runtime_state.data.user_event_sync_queue.push(
