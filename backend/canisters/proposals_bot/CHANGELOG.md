@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Removed
 
 - Removed code only needed for previous upgrade ([#3248](https://github.com/open-ic/open-chat/pull/3248))
+- Removed one time code to get payloads for OpenChat proposals ([#3278](https://github.com/open-ic/open-chat/pull/3278))
 
 ### Fixed
 
