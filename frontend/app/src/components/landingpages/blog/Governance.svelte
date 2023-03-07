@@ -44,16 +44,16 @@
         Join <Link path="/nsbx4-4iaaa-aaaar-afusa-cai">this group</Link> to view, discuss, and vote on OpenChat SNS proposals.
     </p>
     <p>
-        Anyone who owns a neuron can use it to make proposals although this currently requires knowledge of the command line tools <ExternalLink href="https://github.com/dfinity/sdk">dfx</ExternalLink> and <ExternalLink href="https://github.com/dfinity/sns-quill#submit-a-proposal">quill</ExternalLink>. In time this process should become easier. If a proposal is rejected then 10 CHAT tokens is subtracted from the proposing neuron and burned to discourage spam.
+        Anyone who owns a neuron can use it to make proposals although this currently requires knowledge of the command line tools <ExternalLink href="https://github.com/dfinity/sdk">dfx</ExternalLink> and <ExternalLink href="https://github.com/dfinity/quill/blob/master/docs/cli-reference/sns/quill-sns-make-proposal.md">quill</ExternalLink>. In time this process should become easier. If a proposal is rejected then 10 CHAT tokens is subtracted from the proposing neuron and burned to discourage spam.
     </p>
 </section>
 <section>
     <h2>Voting</h2>
     <p>
-        You can vote to "adopt" or "reject" any proposals with any eligible neurons you own. This allows you take part in the governance of OpenChat and help steer it in a direction of your choosing while also earn voting rewards - see bottom section. To be eligible to vote on a given proposal a neuron must exist and have a dissolve delay of at least 1 month at the time the proposal was made.
+        You can vote to "adopt" or "reject" any proposals with any eligible neurons you own. This allows you take part in the governance of OpenChat and help steer it in a direction of your choosing while also earning voting rewards - see bottom section. To be eligible to vote on a given proposal a neuron must exist and have a dissolve delay of at least 1 month at the time the proposal was made.
     </p>
     <p>
-        For any given proposal, the weight of your vote is calculated as the ratio of the <em>voting power</em> of your neurons compared to all other eligible neurons. Voting power for a neuron is calculated as (stake x dissolve delay bonus x age bonus). The dissolve delay bonus starts at 1 for a neuron with 0 dissolve delay and rises linerarly to 2 for neurons with a dissolve delay of 1 year. The age bonus starts at 1 for neurons with 0 age, climbing to 1.25 for neurons with an age of 6 months. To <em>age</em> a neuron must be kept in the undissolved state but as soon it starts dissolving the age resets to 0. For example if you have a neuron with a stake of 1000 CHAT tokens, a dissolve delay of 1 year, and an age of 6 months its voting power will be 2500.
+        For any given proposal, the weight of your vote is calculated as the ratio of the <em>voting power</em> of your neurons compared to all other eligible neurons. Voting power for a neuron is calculated as (stake x dissolve delay bonus x age bonus). The dissolve delay bonus starts at 1 for a neuron with 0 dissolve delay and rises linerarly to 2 for neurons with a dissolve delay of 1 year. The age bonus starts at 1 for neurons with 0 age, climbing to 1.25 for neurons with an age of 6 months. To <em>age</em> a neuron must be kept in the undissolving state but as soon it starts dissolving the age resets to 0. For example if you have a neuron with a stake of 1000 CHAT tokens, a dissolve delay of 1 year, and an age of 6 months its voting power will be 2500.
     </p>
     <p>
         For a proposal to be adopted the sum of the voting power of the “adopt” votes must exceed the sum of the voting power of the “reject” votes after 4 days or after a period of quiet. Also the “adopt” votes must have at least 3% of the total voting power. The vote will end immediately if either the “adopt” or “reject” votes exceed 50% of available voting power. It is possible to participate in a vote for a proposal if still within the 4 day period even if it has already been resolved. This is so the neuron can still be a beneficiary of voting rewards.        
@@ -62,7 +62,7 @@
 <section>
     <h2>Vote using OpenChat</h2>
     <p>
-        At the time of writing the easiest way to vote is from OpenChat. Coming soon it will also be possible to vote from the NNS dapp. If you took part in the decentralization sale using the NNS dapp your CHAT neurons will be controlled by your <em>NNS dapp principal</em>. Before you can vote on OpenChat you must first configure your <em>OpenChat User Id</em> as a <em>hot-key</em> for your neurons. In the future, if you end up buying more CHAT tokens and staking them into new neurons, remember to add the OpenChat User Id as a hot-key to these neurons too. To find your OpenChat User Id...
+        At the time of writing the easiest way to vote is from within OpenChat. Coming soon it will also be possible to vote from the NNS dapp. If you took part in the decentralization sale using the NNS dapp your CHAT neurons will be controlled by your <em>NNS dapp principal</em>. Before you can vote on OpenChat you must first configure your <em>OpenChat User Id</em> as a <em>hot-key</em> for your neurons. In the future, if you end up buying more CHAT tokens and staking them into new neurons, remember to add the OpenChat User Id as a hot-key to these neurons too. To find your OpenChat User Id...
     </p>
     <ul>
         <li><Link path="/">Launch the app</Link> and open the main menu</li>
