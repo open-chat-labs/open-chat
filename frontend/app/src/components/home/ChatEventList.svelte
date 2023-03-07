@@ -14,6 +14,8 @@
         LoadedNewThreadMessages,
         LoadedThreadMessageWindow,
         ChatUpdated,
+        SentThreadMessage,
+        ThreadSummary,
     } from "openchat-client";
     import { menuStore } from "../../stores/menu";
     import { tooltipStore } from "../../stores/tooltip";
@@ -57,6 +59,7 @@
     let insideFromBottomThreshold: boolean = true;
     let previousScrollHeight: number | undefined = undefined;
     let previousScrollTop: number | undefined = undefined;
+    let user = client.user;
 
     $: failedMessagesStore = client.failedMessagesStore;
     $: threadSummary = threadRootEvent?.event.thread;
@@ -111,33 +114,25 @@
                     console.log("Thread message window loaded: ", events);
                     onMessageWindowLoaded(ev.detail);
                 }
-                // TODO - deal with this
-                // if (ev instanceof SentThreadMessage) {
-                //     afterSendMessage(ev.detail);
-                // }
+                if (ev instanceof SentThreadMessage) {
+                    afterSendThreadMessage(threadRootEvent, ev.detail);
+                }
             }
         });
-        // TODO - what to do about this
-        // we probably need a ThreadUpdated variant
-        // if (ev instanceof ChatUpdated) {
-        //     loadMoreIfRequired();
-        // }
-        // if (ev instanceof SentMessage) {
-        //     afterSendMessage(ev.detail);
-        // }
-
-        // TODO - look at the ThreadSpecific events from Thread.svelte
     }
 
-    // function afterSendThreadMessage(event: EventWrapper<Message>) {
-    //     const summary: ThreadSummary = {
-    //         participantIds: new Set<string>([user.userId]),
-    //         numberOfReplies: event.event.messageIndex + 1,
-    //         latestEventIndex: event.index,
-    //         latestEventTimestamp: event.timestamp,
-    //     };
-    //     client.markThreadSummaryUpdated(rootEvent.event.messageId.toString(), summary);
-    // }
+    function afterSendThreadMessage(
+        rootEvent: EventWrapper<Message>,
+        event: EventWrapper<Message>
+    ) {
+        const summary: ThreadSummary = {
+            participantIds: new Set<string>([user.userId]),
+            numberOfReplies: event.event.messageIndex + 1,
+            latestEventIndex: event.index,
+            latestEventTimestamp: event.timestamp,
+        };
+        client.markThreadSummaryUpdated(rootEvent.event.messageId.toString(), summary);
+    }
 
     function afterSendMessage(upToDate: boolean) {
         if (upToDate && calculateFromBottom() < FROM_BOTTOM_THRESHOLD) {

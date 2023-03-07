@@ -13,7 +13,7 @@
         Cryptocurrency,
         FailedMessages,
     } from "openchat-client";
-    import { getContext, onMount, tick } from "svelte";
+    import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import Loading from "../../Loading.svelte";
     import { derived, readable } from "svelte/store";
@@ -44,8 +44,6 @@
     let messagesDiv: HTMLDivElement | undefined;
     let messagesDivHeight: number;
 
-    let previousRootEvent: EventWrapper<Message> | undefined;
-
     $: currentChatMembers = client.currentChatMembers;
     $: lastCryptoSent = client.lastCryptoSent;
     $: draftThreadMessages = client.draftThreadMessages;
@@ -53,107 +51,6 @@
     $: currentChatBlockedUsers = client.currentChatBlockedUsers;
     $: threadEvents = client.threadEvents;
     $: failedMessagesStore = client.failedMessagesStore;
-
-    $: console.log("Thread events: ", $threadEvents);
-
-    // onMount(() => {
-    //     client.addEventListener("openchat_event", clientEvent);
-    //     return () => {
-    //         client.removeEventListener("openchat_event", clientEvent);
-    //     };
-    // });
-
-    // TODO - handle these in the ChatEventList
-    // or get rid of them
-    // function clientEvent(ev: Event): void {
-    //     if (ev instanceof SentThreadMessage) {
-    //         onSentMessage(ev.detail);
-    //     }
-    //     if (ev instanceof ThreadMessagesLoaded) {
-    //         if (ev.detail && $withinThreshold) {
-    //             scrollBottom();
-    //         }
-    //         tick().then(() => {
-    //             if (focusMessageIndex !== undefined) {
-    //                 goToMessageIndex(focusMessageIndex);
-    //             }
-    //         });
-    //     }
-    // }
-
-    function createTestMessages(ev: CustomEvent<number>): void {
-        if (process.env.NODE_ENV === "production") return;
-
-        function send(n: number) {
-            if (n === ev.detail) return;
-
-            sendMessageWithAttachment(`Test message ${n}`, [], undefined);
-
-            setTimeout(() => send(n + 1), 500);
-        }
-
-        send(0);
-    }
-
-    // TODO - how do we load the data for the thread
-    // should be driven by the routeChange from the home page surely
-    // can't be though because we don't have enough information in the route
-    // to tell whether the target message is a thread
-
-    // $: {
-    //     if (rootEvent.event.messageIndex !== previousRootEvent?.event.messageIndex) {
-    //         // this we move into client.openThread
-    //         previousRootEvent = rootEvent;
-    //         initialised = false;
-    //         if (thread !== undefined) {
-    //             loading = true;
-    //             client
-    //                 .loadPreviousMessages(chat.chatId, rootEvent)
-    //                 // client
-    //                 //     .loadThreadMessages(
-    //                 //         chat.chatId,
-    //                 //         thread,
-    //                 //         [0, thread.latestEventIndex],
-    //                 //         thread.latestEventIndex,
-    //                 //         false,
-    //                 //         threadRootMessageIndex,
-    //                 //         true
-    //                 //     )
-    //                 .finally(() => {
-    //                     loading = false;
-    //                     initialised = true;
-    //                 });
-    //         } else {
-    //             client.clearThreadEvents();
-    //         }
-    //     } else {
-    //         // we haven't changed the thread we are looking at, but the thread's latest index has changed (i.e. an event has been added by someone else)
-    //         if (
-    //             thread !== undefined &&
-    //             thread.latestEventIndex !== previousRootEvent?.event.thread?.latestEventIndex
-    //         ) {
-    //             loading = true;
-    //             client
-    //                 .loadNewMessages(chat.chatId, rootEvent)
-    //                 // client
-    //                 //     .loadThreadMessages(
-    //                 //         chat.chatId,
-    //                 //         thread,
-    //                 //         [0, thread.latestEventIndex],
-    //                 //         (previousRootEvent?.event.thread?.latestEventIndex ?? -1) + 1,
-    //                 //         true,
-    //                 //         threadRootMessageIndex,
-    //                 //         false
-    //                 //     )
-    //                 .finally(() => {
-    //                     loading = false;
-    //                     initialised = true;
-    //                 });
-    //         }
-    //     }
-    // }
-
-    $: thread = rootEvent.event.thread;
     $: threadRootMessageIndex = rootEvent.event.messageIndex;
     $: threadRootMessage = rootEvent.event;
     $: blocked = chat.kind === "direct_chat" && $currentChatBlockedUsers.has(chat.them);
@@ -175,14 +72,18 @@
     $: readonly = client.isChatReadOnly(chat.chatId);
     $: selectedThreadKey = client.selectedThreadKey;
 
-    function onSentMessage(event: EventWrapper<Message>) {
-        const summary: ThreadSummary = {
-            participantIds: new Set<string>([user.userId]),
-            numberOfReplies: event.event.messageIndex + 1,
-            latestEventIndex: event.index,
-            latestEventTimestamp: event.timestamp,
-        };
-        client.markThreadSummaryUpdated(rootEvent.event.messageId.toString(), summary);
+    function createTestMessages(ev: CustomEvent<number>): void {
+        if (process.env.NODE_ENV === "production") return;
+
+        function send(n: number) {
+            if (n === ev.detail) return;
+
+            sendMessageWithAttachment(`Test message ${n}`, [], undefined);
+
+            setTimeout(() => send(n + 1), 500);
+        }
+
+        send(0);
     }
 
     function dateGroupKey(group: EventWrapper<Message>[][]): string {
@@ -474,10 +375,6 @@
 {/if}
 
 <style type="text/scss">
-    .thread-messages {
-        @include message-list();
-    }
-
     .day-group {
         position: relative;
 
@@ -494,29 +391,5 @@
             text-align: center;
             margin-bottom: $sp4;
         }
-    }
-
-    .fab {
-        transition: opacity ease-in-out 300ms;
-        position: absolute;
-        @include z-index("fab");
-        right: 20px;
-        bottom: 0;
-        opacity: 0;
-        pointer-events: none;
-
-        &.show {
-            opacity: 1;
-            pointer-events: all;
-        }
-
-        &.rtl {
-            left: $sp6;
-            right: unset;
-        }
-    }
-
-    .to-bottom {
-        bottom: 80px;
     }
 </style>

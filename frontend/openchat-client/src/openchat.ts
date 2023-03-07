@@ -118,6 +118,7 @@ import {
     isContiguous,
     selectedThreadRootEvent,
     confirmedThreadEventIndexesLoadedStore,
+    isContiguousInThread,
 } from "./stores/chat";
 import { cryptoBalance, lastCryptoSent } from "./stores/crypto";
 import { draftThreadMessages } from "./stores/draftThreadMessages";
@@ -1336,10 +1337,6 @@ export class OpenChat extends EventTarget {
             return undefined;
         }
 
-        // if (selectedThreadKey !== this._liveState.selectedThreadKey) {
-        //     // the selected thread has changed while we were loading the messages
-        //     return;
-        // }
         this.clearThreadEvents();
         const [newEvents, _] = await this.handleThreadEventsResponse(chatId, eventsResponse);
 
@@ -1620,12 +1617,6 @@ export class OpenChat extends EventTarget {
             }
             const [newEvents, _] = await this.handleThreadEventsResponse(chatId, eventsResponse);
 
-            for (const event of newEvents) {
-                if (event.event.kind === "message") {
-                    unconfirmed.delete(selectedThreadKey, event.event.messageId);
-                }
-            }
-
             threadServerEventsStore.update((events) => mergeServerEvents(events, newEvents));
             makeRtcConnections(
                 this.user.userId,
@@ -1662,6 +1653,13 @@ export class OpenChat extends EventTarget {
         const userIds = this.userIdsFromEvents(events);
         await this.updateUserStore(chatId, userIds);
 
+        if (this._liveState.selectedThreadKey !== undefined) {
+            for (const event of events) {
+                if (event.event.kind === "message") {
+                    unconfirmed.delete(this._liveState.selectedThreadKey, event.event.messageId);
+                }
+            }
+        }
         return [events, userIds];
     }
 
@@ -2203,7 +2201,11 @@ export class OpenChat extends EventTarget {
             return;
         }
 
-        if (!isContiguous(chatId, newEvents)) {
+        if (threadRootMessageIndex === undefined && !isContiguous(chatId, newEvents)) {
+            return;
+        }
+
+        if (threadRootMessageIndex !== undefined && !isContiguousInThread(newEvents)) {
             return;
         }
 

@@ -497,27 +497,33 @@ export const eventsStore: Readable<EventWrapper<ChatEvent>[]> = derived(
     }
 );
 
-export function isContiguous(chatId: string, events: EventWrapper<ChatEvent>[]): boolean {
-    const confirmedLoaded = confirmedEventIndexesLoaded(chatId);
-
-    if (confirmedLoaded.length === 0 || events.length === 0) return true;
+function isContiguousInternal(range: DRange, events: EventWrapper<ChatEvent>[]): boolean {
+    if (range.length === 0 || events.length === 0) return true;
 
     const firstIndex = events[0].index;
     const lastIndex = events[events.length - 1].index;
     const contiguousCheck = new DRange(firstIndex - 1, lastIndex + 1);
 
-    const isContiguous = confirmedLoaded.clone().intersect(contiguousCheck).length > 0;
+    const isContiguous = range.clone().intersect(contiguousCheck).length > 0;
 
     if (!isContiguous) {
         console.log(
             "Events in response are not contiguous with the loaded events",
-            confirmedLoaded,
+            range,
             firstIndex,
             lastIndex
         );
     }
 
     return isContiguous;
+}
+
+export function isContiguousInThread(events: EventWrapper<ChatEvent>[]): boolean {
+    return isContiguousInternal(get(confirmedThreadEventIndexesLoadedStore), events);
+}
+
+export function isContiguous(chatId: string, events: EventWrapper<ChatEvent>[]): boolean {
+    return isContiguousInternal(confirmedEventIndexesLoaded(chatId), events);
 }
 
 export function clearServerEvents(chatId: string): void {
