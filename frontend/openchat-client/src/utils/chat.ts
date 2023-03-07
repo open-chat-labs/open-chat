@@ -418,7 +418,7 @@ export function mergeUnconfirmedIntoSummary(
         if (updates !== undefined) {
             latestMessage = {
                 ...latestMessage,
-                event: mergeLocalUpdates(latestMessage.event, updates, undefined),
+                event: mergeLocalUpdates(latestMessage.event, updates, undefined, undefined),
             };
         }
     }

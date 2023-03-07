@@ -295,8 +295,9 @@ export const threadEvents = derived(
         localMessageUpdates,
         selectedThreadKey,
         failedMessagesStore,
+        proposalTallies,
     ],
-    ([$serverEvents, $unconfirmed, $localUpdates, $threadKey, $failedMessages]) => {
+    ([$serverEvents, $unconfirmed, $localUpdates, $threadKey, $failedMessages, $proposalTallies]) => {
         if ($threadKey === undefined) return [];
         const failed = $failedMessages[$threadKey]
             ? Object.values($failedMessages[$threadKey])
@@ -305,7 +306,8 @@ export const threadEvents = derived(
         return mergeEventsAndLocalUpdates(
             $serverEvents,
             [...unconfirmed, ...failed],
-            $localUpdates
+            $localUpdates,
+            $proposalTallies
         );
     }
 );
