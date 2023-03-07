@@ -8,12 +8,11 @@
         EventWrapper,
         Message,
         MessageContent,
-        ThreadSummary,
         User,
         Cryptocurrency,
         FailedMessages,
     } from "openchat-client";
-    import { getContext } from "svelte";
+    import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import Loading from "../../Loading.svelte";
     import { derived, readable } from "svelte/store";
@@ -43,6 +42,7 @@
     let initialised = false;
     let messagesDiv: HTMLDivElement | undefined;
     let messagesDivHeight: number;
+    let previousLatestEventIndex: number | undefined = undefined;
 
     $: currentChatMembers = client.currentChatMembers;
     $: lastCryptoSent = client.lastCryptoSent;
@@ -71,6 +71,22 @@
         .reverse() as EventWrapper<Message>[][][];
     $: readonly = client.isChatReadOnly(chat.chatId);
     $: selectedThreadKey = client.selectedThreadKey;
+    $: thread = rootEvent.event.thread;
+
+    onMount(() => (previousLatestEventIndex = thread?.latestEventIndex));
+
+    $: {
+        if (initialised) {
+            if (
+                thread !== undefined &&
+                previousLatestEventIndex !== undefined &&
+                thread.latestEventIndex > previousLatestEventIndex
+            ) {
+                client.loadNewMessages(chat.chatId, rootEvent);
+                previousLatestEventIndex = thread.latestEventIndex;
+            }
+        }
+    }
 
     function createTestMessages(ev: CustomEvent<number>): void {
         if (process.env.NODE_ENV === "production") return;
@@ -233,7 +249,6 @@
     ) {
         goToMessageIndex(ev.detail.index);
     }
-    $: console.log("Failed: ", $failedMessagesStore, $selectedThreadKey);
 </script>
 
 <PollBuilder
