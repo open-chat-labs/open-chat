@@ -1,6 +1,6 @@
 <script lang="ts">
     import SectionHeader from "../../SectionHeader.svelte";
-    import { PartialUserSummary, OpenChat, ONE_GB, AvatarSize } from "openchat-client";
+    import { PartialUserSummary, OpenChat, AvatarSize } from "openchat-client";
     import Close from "svelte-material-icons/Close.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
     import StorageUsage from "../../StorageUsage.svelte";
@@ -20,11 +20,11 @@
     import { _, locale } from "svelte-i18n";
     import { iconSize } from "../../../stores/iconSize";
     import {
-        accountSectionOpen,
         advancedSectionOpen,
         appearanceSectionOpen,
         chatsSectionOpen,
         enterSend,
+        lowBandwidth,
         referralOpen,
         statsSectionOpen,
         storageSectionOpen,
@@ -37,9 +37,8 @@
     import { toastStore } from "../../../stores/toast";
     import { logger } from "../../../utils/logging";
     import ErrorMessage from "../../ErrorMessage.svelte";
-    import LinkButton from "../../LinkButton.svelte";
     import ReferUsers from "./ReferUsers.svelte";
-    import Accounts from "./Accounts.svelte";
+    import Expiry from "../upgrade/Expiry.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -63,7 +62,8 @@
 
     $: userMetrics = client.userMetrics;
     $: notificationStatus = client.notificationStatus;
-    $: storageStore = client.storageStore;
+    $: isDiamond = client.isDiamond;
+    $: canExtendDiamond = client.canExtendDiamond;
     $: {
         setLocale(selectedLocale);
     }
@@ -75,10 +75,6 @@
             originalBio = userbio = bio;
         });
     });
-
-    function whySms() {
-        dispatch("showFaqQuestion", "sms_icp");
-    }
 
     function saveUser() {
         saving = true;
@@ -177,7 +173,10 @@
             headerText={$_("userInfoHeader")}>
             <div class="avatar">
                 {#if readonly}
-                    <Avatar url={client.userAvatarUrl(user)} size={AvatarSize.ExtraLarge} />
+                    <Avatar
+                        url={client.userAvatarUrl(user)}
+                        userId={user.userId}
+                        size={AvatarSize.Large} />
                 {:else}
                     <EditableAvatar
                         overlayIcon={true}
@@ -294,14 +293,12 @@
                         : $_("enableNotificationsMenu")}
                     checked={$notificationStatus === "granted"} />
             {/if}
-        </CollapsibleCard>
-    </div>
-    <div class="accounts">
-        <CollapsibleCard
-            on:toggle={accountSectionOpen.toggle}
-            open={$accountSectionOpen}
-            headerText={$_("accounts")}>
-            <Accounts />
+            <Toggle
+                id={"low-bandwidth"}
+                small
+                on:change={() => lowBandwidth.toggle()}
+                label={$_("lowBandwidth")}
+                checked={$lowBandwidth} />
         </CollapsibleCard>
     </div>
     {#if !readonly}
@@ -309,33 +306,23 @@
             <CollapsibleCard
                 on:toggle={storageSectionOpen.toggle}
                 open={$storageSectionOpen}
-                headerText={$_("storage")}>
-                {#if $storageStore.byteLimit === 0}
-                    <p class="para">
-                        {$_("noStorageAdvice")}
-                    </p>
-                    <p class="para last">
-                        {$_("chooseUpgrade")}
+                headerText={$_("upgrade.membership")}>
+                <StorageUsage />
 
-                        <LinkButton underline={"always"} on:click={whySms}>
-                            {$_("tellMeMore")}
-                        </LinkButton>
-                    </p>
+                {#if !$isDiamond}
                     <ButtonGroup align={"fill"}>
-                        <Button on:click={() => dispatch("upgrade", "sms")} small
-                            >{$_("upgradeBySMS")}</Button>
-                        <Button on:click={() => dispatch("upgrade", "icp")} small
-                            >{$_("upgradeByTransfer")}</Button>
+                        <Button on:click={() => dispatch("upgrade")} small
+                            >{$_("upgrade.button")}</Button>
                     </ButtonGroup>
                 {:else}
-                    <StorageUsage />
-                    {#if $storageStore.byteLimit < ONE_GB}
-                        <p class="para">{$_("chooseTransfer")}</p>
-                        <div class="full-width-btn">
-                            <Button on:click={() => dispatch("upgrade", "icp")} fill={true} small
-                                >{$_("upgradeStorage")}</Button>
-                        </div>
-                    {/if}
+                    <Expiry />
+                    <ButtonGroup align={"fill"}>
+                        <Button
+                            title={!$canExtendDiamond ? $_("upgrade.cannotExtend") : undefined}
+                            disabled={!$canExtendDiamond}
+                            on:click={() => dispatch("upgrade")}
+                            small>{$_("upgrade.extend")}</Button>
+                    </ButtonGroup>
                 {/if}
             </CollapsibleCard>
         </div>
@@ -414,22 +401,6 @@
         margin-bottom: $sp4;
     }
 
-    .user,
-    .chats,
-    .invite,
-    .accounts,
-    .stats,
-    .appearance,
-    .storage,
-    .advanced {
-        margin-bottom: $sp3;
-        border-bottom: var(--bd);
-    }
-
-    .advanced {
-        margin-bottom: 0;
-    }
-
     .para {
         margin-bottom: $sp4;
         &.last {
@@ -452,6 +423,10 @@
         @include mobile() {
             padding: 0 $sp3;
         }
+    }
+
+    .expiry {
+        margin-bottom: $sp3;
     }
 
     .close {

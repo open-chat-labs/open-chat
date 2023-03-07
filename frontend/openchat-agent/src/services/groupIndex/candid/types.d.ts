@@ -1,7 +1,14 @@
 import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
 
+export type AccessorId = Principal;
 export type AccountIdentifier = Uint8Array | number[];
+export interface AddHotGroupExclusionArgs { 'chat_id' : ChatId }
+export type AddHotGroupExclusionResponse = { 'ChatAlreadyExcluded' : null } |
+  { 'ChatNotFound' : null } |
+  { 'NotAuthorized' : null } |
+  { 'Success' : null } |
+  { 'InternalError' : string };
 export interface AddedToGroupNotification {
   'added_by_name' : string,
   'added_by' : UserId,
@@ -72,6 +79,7 @@ export type ChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'MessageUndeleted' : UpdatedMessage } |
   { 'RoleChanged' : RoleChanged } |
   { 'PollVoteDeleted' : UpdatedMessage } |
+  { 'EventsTimeToLiveUpdated' : EventsTimeToLiveUpdated } |
   { 'ProposalsUpdated' : ProposalsUpdated } |
   { 'OwnershipTransferred' : OwnershipTransferred } |
   { 'DirectChatCreated' : DirectChatCreated } |
@@ -83,12 +91,15 @@ export interface ChatEventWrapper {
   'timestamp' : TimestampMillis,
   'index' : EventIndex,
   'correlation_id' : bigint,
+  'expires_at' : [] | [TimestampMillis],
 }
 export interface ChatFrozen { 'frozen_by' : UserId, 'reason' : [] | [string] }
 export type ChatId = CanisterId;
 export interface ChatMetrics {
+  'prize_winner_messages' : bigint,
   'audio_messages' : bigint,
   'cycles_messages' : bigint,
+  'chat_messages' : bigint,
   'edits' : bigint,
   'icp_messages' : bigint,
   'last_active' : TimestampMillis,
@@ -100,10 +111,13 @@ export interface ChatMetrics {
   'image_messages' : bigint,
   'replies' : bigint,
   'video_messages' : bigint,
+  'sns1_messages' : bigint,
   'polls' : bigint,
   'proposals' : bigint,
   'reported_messages' : bigint,
+  'ckbtc_messages' : bigint,
   'reactions' : bigint,
+  'prize_messages' : bigint,
 }
 export type ChatSummary = { 'Group' : GroupChatSummary } |
   { 'Direct' : DirectChatSummary };
@@ -114,10 +128,6 @@ export type CompletedCryptoTransaction = {
     'NNS' : NnsCompletedCryptoTransaction
   } |
   { 'SNS' : SnsCompletedCryptoTransaction };
-export interface ConfirmationCodeSms {
-  'confirmation_code' : string,
-  'phone_number' : string,
-}
 export interface CryptoContent {
   'recipient' : UserId,
   'caption' : [] | [string],
@@ -126,13 +136,25 @@ export interface CryptoContent {
 export type CryptoTransaction = { 'Failed' : FailedCryptoTransaction } |
   { 'Completed' : CompletedCryptoTransaction } |
   { 'Pending' : PendingCryptoTransaction };
-export type Cryptocurrency = { 'InternetComputer' : null };
+export type Cryptocurrency = { 'InternetComputer' : null } |
+  { 'CHAT' : null } |
+  { 'SNS1' : null } |
+  { 'CKBTC' : null };
 export type Cycles = bigint;
 export interface CyclesRegistrationFee {
   'recipient' : Principal,
   'valid_until' : TimestampMillis,
   'amount' : Cycles,
 }
+export interface DeleteFrozenGroupArgs { 'chat_id' : ChatId }
+export type DeleteFrozenGroupResponse = {
+    'ChatNotFrozenLongEnough' : TimestampMillis
+  } |
+  { 'ChatNotFound' : null } |
+  { 'NotAuthorized' : null } |
+  { 'Success' : null } |
+  { 'ChatNotFrozen' : null } |
+  { 'InternalError' : string };
 export interface DeletedContent {
   'timestamp' : TimestampMillis,
   'deleted_by' : UserId,
@@ -144,12 +166,20 @@ export interface DeletedGroupInfo {
   'deleted_by' : UserId,
   'group_name' : string,
 }
+export interface DiamondMembershipDetails {
+  'recurring' : [] | [DiamondMembershipPlanDuration],
+  'expires_at' : TimestampMillis,
+}
+export type DiamondMembershipPlanDuration = { 'OneYear' : null } |
+  { 'ThreeMonths' : null } |
+  { 'OneMonth' : null };
 export type DirectChatCreated = {};
 export interface DirectChatEventWrapper {
   'event' : ChatEvent,
   'timestamp' : TimestampMillis,
   'index' : EventIndex,
   'correlation_id' : bigint,
+  'expires_at' : [] | [TimestampMillis],
 }
 export interface DirectChatSummary {
   'read_by_them_up_to' : [] | [MessageIndex],
@@ -157,8 +187,10 @@ export interface DirectChatSummary {
   'metrics' : ChatMetrics,
   'them' : UserId,
   'notifications_muted' : boolean,
+  'events_ttl' : [] | [Milliseconds],
   'latest_event_index' : EventIndex,
   'read_by_me_up_to' : [] | [MessageIndex],
+  'expired_messages' : Array<MessageIndexRange>,
   'archived' : boolean,
   'my_metrics' : ChatMetrics,
   'latest_message' : MessageEventWrapper,
@@ -168,9 +200,11 @@ export interface DirectChatSummaryUpdates {
   'metrics' : [] | [ChatMetrics],
   'affected_events' : Uint32Array | number[],
   'notifications_muted' : [] | [boolean],
+  'events_ttl' : EventsTimeToLiveUpdate,
   'latest_event_index' : [] | [EventIndex],
   'read_by_me_up_to' : [] | [MessageIndex],
   'chat_id' : ChatId,
+  'newly_expired_messages' : Array<MessageIndexRange>,
   'archived' : [] | [boolean],
   'my_metrics' : [] | [ChatMetrics],
   'latest_message' : [] | [MessageEventWrapper],
@@ -189,6 +223,13 @@ export interface DirectReactionAddedNotification {
   'reaction' : string,
 }
 export type EventIndex = number;
+export type EventsTimeToLiveUpdate = { 'NoChange' : null } |
+  { 'SetToNone' : null } |
+  { 'SetToSome' : Milliseconds };
+export interface EventsTimeToLiveUpdated {
+  'new_ttl' : [] | [Milliseconds],
+  'updated_by' : UserId,
+}
 export type FailedCryptoTransaction = { 'NNS' : NnsFailedCryptoTransaction } |
   { 'SNS' : SnsFailedCryptoTransaction };
 export type FallbackRole = { 'Participant' : null } |
@@ -208,6 +249,7 @@ export interface FileContent {
   'blob_reference' : [] | [BlobReference],
   'caption' : [] | [string],
 }
+export type FileId = bigint;
 export interface FilterGroupsArgs {
   'active_since' : [] | [TimestampMillis],
   'chat_ids' : Array<ChatId>,
@@ -265,16 +307,19 @@ export interface GroupCanisterGroupChatSummary {
   'permissions' : GroupPermissions,
   'metrics' : ChatMetrics,
   'subtype' : [] | [GroupSubtype],
+  'date_last_pinned' : [] | [TimestampMillis],
   'min_visible_event_index' : EventIndex,
   'name' : string,
   'role' : Role,
   'wasm_version' : Version,
   'notifications_muted' : boolean,
   'description' : string,
+  'events_ttl' : [] | [Milliseconds],
   'last_updated' : TimestampMillis,
   'owner_id' : UserId,
   'joined' : TimestampMillis,
   'avatar_id' : [] | [bigint],
+  'next_message_expiry' : [] | [TimestampMillis],
   'latest_threads' : Array<GroupCanisterThreadDetails>,
   'frozen' : [] | [FrozenGroupInfo],
   'latest_event_index' : EventIndex,
@@ -282,6 +327,7 @@ export interface GroupCanisterGroupChatSummary {
   'min_visible_message_index' : MessageIndex,
   'mentions' : Array<Mention>,
   'chat_id' : ChatId,
+  'expired_messages' : Array<MessageIndexRange>,
   'participant_count' : number,
   'my_metrics' : ChatMetrics,
   'latest_message' : [] | [MessageEventWrapper],
@@ -291,21 +337,25 @@ export interface GroupCanisterGroupChatSummaryUpdates {
   'permissions' : [] | [GroupPermissions],
   'metrics' : [] | [ChatMetrics],
   'subtype' : GroupSubtypeUpdate,
+  'date_last_pinned' : [] | [TimestampMillis],
   'name' : [] | [string],
   'role' : [] | [Role],
   'wasm_version' : [] | [Version],
   'affected_events' : Uint32Array | number[],
   'notifications_muted' : [] | [boolean],
   'description' : [] | [string],
+  'events_ttl' : EventsTimeToLiveUpdate,
   'last_updated' : TimestampMillis,
   'owner_id' : [] | [UserId],
   'avatar_id' : AvatarIdUpdate,
+  'next_message_expiry' : TimestampUpdate,
   'latest_threads' : Array<GroupCanisterThreadDetails>,
   'frozen' : FrozenGroupUpdate,
   'latest_event_index' : [] | [EventIndex],
   'mentions' : Array<Mention>,
   'chat_id' : ChatId,
   'affected_events_v2' : Array<[EventIndex, TimestampMillis]>,
+  'newly_expired_messages' : Array<MessageIndexRange>,
   'participant_count' : [] | [number],
   'my_metrics' : [] | [ChatMetrics],
   'latest_message' : [] | [MessageEventWrapper],
@@ -326,16 +376,19 @@ export interface GroupChatSummary {
   'permissions' : GroupPermissions,
   'metrics' : ChatMetrics,
   'subtype' : [] | [GroupSubtype],
+  'date_last_pinned' : [] | [TimestampMillis],
   'min_visible_event_index' : EventIndex,
   'name' : string,
   'role' : Role,
   'wasm_version' : Version,
   'notifications_muted' : boolean,
   'description' : string,
+  'events_ttl' : [] | [Milliseconds],
   'last_updated' : TimestampMillis,
   'owner_id' : UserId,
   'joined' : TimestampMillis,
   'avatar_id' : [] | [bigint],
+  'next_message_expiry' : [] | [TimestampMillis],
   'latest_threads' : Array<ThreadSyncDetails>,
   'frozen' : [] | [FrozenGroupInfo],
   'latest_event_index' : EventIndex,
@@ -344,6 +397,8 @@ export interface GroupChatSummary {
   'min_visible_message_index' : MessageIndex,
   'mentions' : Array<Mention>,
   'chat_id' : ChatId,
+  'date_read_pinned' : [] | [TimestampMillis],
+  'expired_messages' : Array<MessageIndexRange>,
   'archived' : boolean,
   'participant_count' : number,
   'my_metrics' : ChatMetrics,
@@ -354,21 +409,26 @@ export interface GroupChatSummaryUpdates {
   'permissions' : [] | [GroupPermissions],
   'metrics' : [] | [ChatMetrics],
   'subtype' : GroupSubtypeUpdate,
+  'date_last_pinned' : [] | [TimestampMillis],
   'name' : [] | [string],
   'role' : [] | [Role],
   'wasm_version' : [] | [Version],
   'affected_events' : Uint32Array | number[],
   'notifications_muted' : [] | [boolean],
   'description' : [] | [string],
+  'events_ttl' : [] | [Milliseconds],
   'last_updated' : TimestampMillis,
   'owner_id' : [] | [UserId],
   'avatar_id' : AvatarIdUpdate,
+  'next_message_expiry' : TimestampUpdate,
   'latest_threads' : Array<ThreadSyncDetails>,
   'frozen' : FrozenGroupUpdate,
   'latest_event_index' : [] | [EventIndex],
   'read_by_me_up_to' : [] | [MessageIndex],
   'mentions' : Array<Mention>,
   'chat_id' : ChatId,
+  'date_read_pinned' : [] | [TimestampMillis],
+  'expired_messages' : Array<MessageIndexRange>,
   'archived' : [] | [boolean],
   'participant_count' : [] | [number],
   'my_metrics' : [] | [ChatMetrics],
@@ -449,6 +509,7 @@ export interface GroupVisibilityChanged {
   'changed_by' : UserId,
   'now_public' : boolean,
 }
+export type Hash = Uint8Array | number[];
 export type ICP = Tokens;
 export interface ICPRegistrationFee {
   'recipient' : AccountIdentifier,
@@ -502,6 +563,19 @@ export type MessageContent = { 'Giphy' : GiphyContent } |
   { 'Poll' : PollContent } |
   { 'Text' : TextContent } |
   { 'Image' : ImageContent } |
+  { 'Prize' : PrizeContent } |
+  { 'GovernanceProposal' : ProposalContent } |
+  { 'PrizeWinner' : PrizeWinnerContent } |
+  { 'Audio' : AudioContent } |
+  { 'Crypto' : CryptoContent } |
+  { 'Video' : VideoContent } |
+  { 'Deleted' : DeletedContent };
+export type MessageContentInitial = { 'Giphy' : GiphyContent } |
+  { 'File' : FileContent } |
+  { 'Poll' : PollContent } |
+  { 'Text' : TextContent } |
+  { 'Image' : ImageContent } |
+  { 'Prize' : PrizeContentInitial } |
   { 'GovernanceProposal' : ProposalContent } |
   { 'Audio' : AudioContent } |
   { 'Crypto' : CryptoContent } |
@@ -512,9 +586,14 @@ export interface MessageEventWrapper {
   'timestamp' : TimestampMillis,
   'index' : EventIndex,
   'correlation_id' : bigint,
+  'expires_at' : [] | [TimestampMillis],
 }
 export type MessageId = bigint;
 export type MessageIndex = number;
+export interface MessageIndexRange {
+  'end' : MessageIndex,
+  'start' : MessageIndex,
+}
 export interface MessageMatch {
   'content' : MessageContent,
   'sender' : UserId,
@@ -535,7 +614,7 @@ export type Milliseconds = bigint;
 export interface NnsCompletedCryptoTransaction {
   'to' : NnsCryptoAccount,
   'fee' : Tokens,
-  'created' : TimestampMillis,
+  'created' : TimestampNanos,
   'token' : Cryptocurrency,
   'transaction_hash' : TransactionHash,
   'block_index' : BlockIndex,
@@ -548,7 +627,7 @@ export type NnsCryptoAccount = { 'Mint' : null } |
 export interface NnsFailedCryptoTransaction {
   'to' : NnsCryptoAccount,
   'fee' : Tokens,
-  'created' : TimestampMillis,
+  'created' : TimestampNanos,
   'token' : Cryptocurrency,
   'transaction_hash' : TransactionHash,
   'from' : NnsCryptoAccount,
@@ -597,10 +676,10 @@ export interface OwnershipTransferred {
 }
 export interface PartialUserSummary {
   'username' : [] | [string],
+  'diamond_member' : boolean,
   'user_id' : UserId,
   'is_bot' : boolean,
   'avatar_id' : [] | [bigint],
-  'seconds_since_last_online' : number,
   'suspended' : boolean,
 }
 export interface Participant {
@@ -659,6 +738,25 @@ export interface PollVotes {
   'total' : TotalPollVotes,
   'user' : Uint32Array | number[],
 }
+export interface PrizeContent {
+  'token' : Cryptocurrency,
+  'end_date' : TimestampMillis,
+  'prizes_remaining' : number,
+  'prizes_pending' : number,
+  'caption' : [] | [string],
+  'winners' : Array<UserId>,
+}
+export interface PrizeContentInitial {
+  'end_date' : TimestampMillis,
+  'caption' : [] | [string],
+  'prizes' : Array<Tokens>,
+  'transfer' : CryptoTransaction,
+}
+export interface PrizeWinnerContent {
+  'transaction' : CompletedCryptoTransaction,
+  'winner' : UserId,
+  'prize_message' : MessageIndex,
+}
 export type Proposal = { 'NNS' : NnsProposal } |
   { 'SNS' : SnsProposal };
 export interface ProposalContent {
@@ -697,8 +795,26 @@ export interface PublicGroupSummary {
   'participant_count' : number,
   'latest_message' : [] | [MessageEventWrapper],
 }
+export interface PushEventResult {
+  'timestamp' : TimestampMillis,
+  'index' : EventIndex,
+  'expires_at' : [] | [TimestampMillis],
+}
+export interface RecommendedGroupsArgs {
+  'count' : number,
+  'exclusions' : Array<ChatId>,
+}
+export type RecommendedGroupsResponse = {
+    'Success' : { 'groups' : Array<PublicGroupSummary> }
+  };
 export type RegistrationFee = { 'ICP' : ICPRegistrationFee } |
   { 'Cycles' : CyclesRegistrationFee };
+export interface RemoveHotGroupExclusionArgs { 'chat_id' : ChatId }
+export type RemoveHotGroupExclusionResponse = { 'ChatNotFound' : null } |
+  { 'NotAuthorized' : null } |
+  { 'ChatNotExcluded' : null } |
+  { 'Success' : null } |
+  { 'InternalError' : string };
 export interface ReplyContext {
   'chat_id_if_other' : [] | [ChatId],
   'event_index' : EventIndex,
@@ -724,7 +840,7 @@ export type SnsAccount = { 'Mint' : null } |
 export interface SnsCompletedCryptoTransaction {
   'to' : SnsAccount,
   'fee' : Tokens,
-  'created' : TimestampMillis,
+  'created' : TimestampNanos,
   'token' : Cryptocurrency,
   'transaction_hash' : TransactionHash,
   'block_index' : BlockIndex,
@@ -735,7 +851,7 @@ export interface SnsCompletedCryptoTransaction {
 export interface SnsFailedCryptoTransaction {
   'to' : SnsAccount,
   'fee' : Tokens,
-  'created' : TimestampMillis,
+  'created' : TimestampNanos,
   'token' : Cryptocurrency,
   'transaction_hash' : TransactionHash,
   'from' : SnsAccount,
@@ -755,6 +871,7 @@ export interface SnsProposal {
   'id' : ProposalId,
   'url' : string,
   'status' : ProposalDecisionStatus,
+  'payload_text_rendering' : [] | [string],
   'tally' : Tally,
   'title' : string,
   'created' : TimestampMillis,
@@ -781,6 +898,9 @@ export interface Tally {
   'timestamp' : TimestampMillis,
 }
 export interface TextContent { 'text' : string }
+export type TextUpdate = { 'NoChange' : null } |
+  { 'SetToNone' : null } |
+  { 'SetToSome' : string };
 export interface ThreadSummary {
   'latest_event_timestamp' : TimestampMillis,
   'participant_ids' : Array<UserId>,
@@ -801,6 +921,9 @@ export interface ThreadUpdated {
 }
 export type TimestampMillis = bigint;
 export type TimestampNanos = bigint;
+export type TimestampUpdate = { 'NoChange' : null } |
+  { 'SetToNone' : null } |
+  { 'SetToSome' : TimestampMillis };
 export interface Tokens { 'e8s' : bigint }
 export type TotalPollVotes = { 'Anonymous' : Array<[number, number]> } |
   { 'Visible' : Array<[number, Array<UserId>]> } |
@@ -828,6 +951,7 @@ export interface User { 'username' : string, 'user_id' : UserId }
 export type UserId = CanisterId;
 export interface UserSummary {
   'username' : string,
+  'diamond_member' : boolean,
   'user_id' : UserId,
   'is_bot' : boolean,
   'avatar_id' : [] | [bigint],
@@ -859,8 +983,24 @@ export interface VideoContent {
 export type VoteOperation = { 'RegisterVote' : null } |
   { 'DeleteVote' : null };
 export interface _SERVICE {
+  'add_hot_group_exclusion' : ActorMethod<
+    [AddHotGroupExclusionArgs],
+    AddHotGroupExclusionResponse
+  >,
+  'delete_frozen_group' : ActorMethod<
+    [DeleteFrozenGroupArgs],
+    DeleteFrozenGroupResponse
+  >,
   'filter_groups' : ActorMethod<[FilterGroupsArgs], FilterGroupsResponse>,
   'freeze_group' : ActorMethod<[FreezeGroupArgs], FreezeGroupResponse>,
+  'recommended_groups' : ActorMethod<
+    [RecommendedGroupsArgs],
+    RecommendedGroupsResponse
+  >,
+  'remove_hot_group_exclusion' : ActorMethod<
+    [RemoveHotGroupExclusionArgs],
+    RemoveHotGroupExclusionResponse
+  >,
   'search' : ActorMethod<[SearchArgs], SearchResponse>,
   'unfreeze_group' : ActorMethod<[UnfreezeGroupArgs], UnfreezeGroupResponse>,
 }

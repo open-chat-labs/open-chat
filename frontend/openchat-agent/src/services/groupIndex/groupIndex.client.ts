@@ -1,11 +1,29 @@
 import type { Identity } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
 import type { AgentConfig } from "../../config";
-import type { FreezeGroupResponse, GroupSearchResponse, UnfreezeGroupResponse } from "openchat-shared";
+import type {
+    AddHotGroupExclusionResponse,
+    DeleteFrozenGroupResponse,
+    FilterGroupsResponse,
+    FreezeGroupResponse,
+    GroupChatSummary,
+    GroupSearchResponse,
+    RemoveHotGroupExclusionResponse,
+    UnfreezeGroupResponse
+} from "openchat-shared";
 import { CandidService } from "../candidService";
 import { idlFactory, GroupIndexService } from "./candid/idl";
 import type { IGroupIndexClient } from "./groupIndex.client.interface";
-import { freezeGroupResponse, groupSearchResponse, unfreezeGroupResponse } from "./mappers";
+import {
+    addHotGroupExclusionResponse,
+    deleteFrozenGroupResponse,
+    filterGroupsResponse,
+    freezeGroupResponse,
+    groupSearchResponse,
+    recommendedGroupsResponse,
+    removeHotGroupExclusionResponse,
+    unfreezeGroupResponse
+} from "./mappers";
 import { apiOptional } from "../common/chatMappers";
 import { identity } from "../../utils/mapping";
 
@@ -24,6 +42,30 @@ export class GroupIndexClient extends CandidService implements IGroupIndexClient
 
     static create(identity: Identity, config: AgentConfig): IGroupIndexClient {
         return new GroupIndexClient(identity, config);
+    }
+
+    filterGroups(chatIds: string[], activeSince: bigint): Promise<FilterGroupsResponse> {
+        const args = {
+            chat_ids: chatIds.map((c) => Principal.fromText(c)),
+            active_since: apiOptional(identity, activeSince)
+        };
+        return this.handleQueryResponse(
+            () => this.groupIndexService.filter_groups(args),
+            filterGroupsResponse,
+            args
+        );
+    }
+
+    recommendedGroups(exclusions: string[]): Promise<GroupChatSummary[]> {
+        const args = {
+            count: 30,
+            exclusions: exclusions.map((c) => Principal.fromText(c))
+        };
+        return this.handleQueryResponse(
+            () => this.groupIndexService.recommended_groups(args),
+            recommendedGroupsResponse,
+            args
+        );
     }
 
     search(searchTerm: string, maxResults = 10): Promise<GroupSearchResponse> {
@@ -48,5 +90,23 @@ export class GroupIndexClient extends CandidService implements IGroupIndexClient
         return this.handleResponse(
             this.groupIndexService.unfreeze_group({ chat_id: Principal.fromText(chatId) }),
             unfreezeGroupResponse)
+    }
+
+    deleteFrozenGroup(chatId: string): Promise<DeleteFrozenGroupResponse> {
+        return this.handleResponse(
+            this.groupIndexService.delete_frozen_group({ chat_id: Principal.fromText(chatId) }),
+            deleteFrozenGroupResponse)
+    }
+
+    addHotGroupExclusion(chatId: string): Promise<AddHotGroupExclusionResponse> {
+        return this.handleResponse(
+            this.groupIndexService.add_hot_group_exclusion({ chat_id: Principal.fromText(chatId) }),
+            addHotGroupExclusionResponse)
+    }
+
+    removeHotGroupExclusion(chatId: string): Promise<RemoveHotGroupExclusionResponse> {
+        return this.handleResponse(
+            this.groupIndexService.remove_hot_group_exclusion({ chat_id: Principal.fromText(chatId) }),
+            removeHotGroupExclusionResponse)
     }
 }

@@ -1,59 +1,25 @@
+use crate::activity_notifications::handle_activity_notification;
+use crate::guards::caller_is_local_user_index;
 use crate::model::participants::AddResult;
-use crate::updates::handle_activity_notification;
-use crate::{mutate_state, read_state, run_regular_jobs, AddParticipantArgs, RuntimeState};
-use candid::Principal;
+use crate::{mutate_state, run_regular_jobs, AddParticipantArgs, RuntimeState};
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use chat_events::ChatEventInternal;
-use group_canister::c2c_join_group_v2::{Response::*, *};
-use types::{CanisterId, EventIndex, MessageIndex, ParticipantJoined, UserId};
+use group_canister::c2c_join_group::{Response::*, *};
+use types::{EventIndex, MessageIndex, ParticipantJoined};
 
-// Called via the user's user canister
-#[update_msgpack]
+#[update_msgpack(guard = "caller_is_local_user_index")]
 #[trace]
-async fn c2c_join_group_v2(args: Args) -> Response {
+fn c2c_join_group(args: Args) -> Response {
     run_regular_jobs();
 
-    let PrepareResult {
-        user_id,
-        user_index_canister_id,
-    } = match read_state(prepare) {
-        Ok(ok) => ok,
-        Err(response) => return *response,
-    };
-
-    let c2c_args = user_index_canister::c2c_lookup_principal::Args { user_id };
-    match user_index_canister_c2c_client::c2c_lookup_principal(user_index_canister_id, &c2c_args).await {
-        Ok(user_index_canister::c2c_lookup_principal::Response::Success(r)) => {
-            if args.as_super_admin && !r.is_super_admin {
-                NotSuperAdmin
-            } else {
-                mutate_state(|state| commit(args, user_id, r.principal, state))
-            }
-        }
-        Ok(user_index_canister::c2c_lookup_principal::Response::UserNotFound) => UserNotFound,
-        Err(error) => InternalError(format!("Failed to call 'user_index::c2c_lookup_principal': {error:?}")),
-    }
+    mutate_state(|state| c2c_join_group_impl(args, state))
 }
 
-struct PrepareResult {
-    pub user_id: UserId,
-    pub user_index_canister_id: CanisterId,
-}
-
-fn prepare(runtime_state: &RuntimeState) -> Result<PrepareResult, Box<Response>> {
+fn c2c_join_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     if runtime_state.data.is_frozen() {
-        Err(Box::new(ChatFrozen))
-    } else {
-        Ok(PrepareResult {
-            user_id: runtime_state.env.caller().into(),
-            user_index_canister_id: runtime_state.data.user_index_canister_id,
-        })
-    }
-}
-
-fn commit(args: Args, user_id: UserId, principal: Principal, runtime_state: &mut RuntimeState) -> Response {
-    if args.as_super_admin || runtime_state.data.is_accessible_by_non_member(args.invite_code) {
+        ChatFrozen
+    } else if args.as_super_admin || runtime_state.data.is_accessible_by_non_member(args.invite_code) {
         if let Some(limit) = runtime_state.data.participants.user_limit_reached() {
             return ParticipantLimitReached(limit);
         }
@@ -65,13 +31,14 @@ fn commit(args: Args, user_id: UserId, principal: Principal, runtime_state: &mut
             min_visible_event_index = EventIndex::default();
             min_visible_message_index = MessageIndex::default();
         } else {
-            min_visible_event_index = runtime_state.data.events.main().last().index.incr();
-            min_visible_message_index = runtime_state.data.events.main().next_message_index();
+            let events_reader = runtime_state.data.events.main_events_reader(now);
+            min_visible_event_index = events_reader.next_event_index();
+            min_visible_message_index = events_reader.next_message_index();
         };
 
         match runtime_state.add_participant(AddParticipantArgs {
-            user_id,
-            principal,
+            user_id: args.user_id,
+            principal: args.principal,
             now,
             min_visible_event_index,
             min_visible_message_index,
@@ -80,7 +47,7 @@ fn commit(args: Args, user_id: UserId, principal: Principal, runtime_state: &mut
         }) {
             AddResult::Success(participant) => {
                 let event = ParticipantJoined {
-                    user_id,
+                    user_id: args.user_id,
                     as_super_admin: args.as_super_admin,
                 };
                 runtime_state.data.events.push_main_event(
@@ -91,8 +58,8 @@ fn commit(args: Args, user_id: UserId, principal: Principal, runtime_state: &mut
 
                 handle_activity_notification(runtime_state);
 
-                let summary = runtime_state.summary(&participant);
-                Success(summary)
+                let summary = runtime_state.summary(&participant, now);
+                Success(Box::new(summary))
             }
             AddResult::AlreadyInGroup => AlreadyInGroup,
             AddResult::Blocked => Blocked,

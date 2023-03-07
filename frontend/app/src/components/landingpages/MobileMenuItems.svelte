@@ -3,10 +3,13 @@
     import { createEventDispatcher, getContext, onMount } from "svelte";
     import InternetIdentityLogo from "./InternetIdentityLogo.svelte";
     import { AuthProvider, OpenChat } from "openchat-client";
-    import { push, location } from "svelte-spa-router";
+    import { location } from "../../routes";
+    import page from "page";
 
     const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
+
+    export let showBlog: boolean;
 
     $: identityState = client.identityState;
     $: selectedAuthProviderStore = client.selectedAuthProviderStore;
@@ -24,7 +27,7 @@
 
     function launch() {
         if ($identityState === "logged_in") {
-            push("/");
+            page("/");
         } else {
             dispatch("login");
         }
@@ -51,6 +54,11 @@
         <Link selected={path === "/architecture"} mode={"menu"} path="architecture"
             >Architecture</Link>
     </div>
+    {#if showBlog}
+        <div class="menu-item">
+            <Link selected={path === "/blog"} mode={"menu"} path="blog">Blog</Link>
+        </div>
+    {/if}
     <div class="menu-item">
         <Link on:linkClicked={launch} mode={"menu"}>Launch app</Link>
     </div>

@@ -10,11 +10,13 @@
     import TrayPlus from "svelte-material-icons/DotsVertical.svelte";
     import TrayRemove from "svelte-material-icons/Close.svelte";
     import { iconSize } from "../../stores/iconSize";
-    import { createEventDispatcher } from "svelte";
+    import { rtlStore } from "../../stores/rtl";
+    import { createEventDispatcher, getContext } from "svelte";
     import { mobileWidth } from "../../stores/screenDimensions";
-    import type { MessageAction, MessageContent } from "openchat-client";
+    import type { MessageAction, MessageContent, OpenChat } from "openchat-client";
 
     const dispatch = createEventDispatcher();
+    const client = getContext<OpenChat>("client");
 
     export let messageAction: MessageAction = undefined;
     export let editing: boolean; // are we in edit mode - if so we must restrict what's available
@@ -26,7 +28,7 @@
 
     $: useDrawer = (mode == "thread" || $mobileWidth) && !editing;
     $: showActions = !useDrawer || (drawOpen && messageAction === undefined);
-
+    $: isDiamond = client.isDiamond;
     $: iconColour = editing ? "var(--button-txt)" : useDrawer ? "var(--txt)" : "var(--icon-txt)";
 
     export function close() {
@@ -66,7 +68,11 @@
     }
 
     function createPoll() {
-        dispatch("createPoll");
+        if (!$isDiamond) {
+            dispatch("upgrade");
+        } else {
+            dispatch("createPoll");
+        }
         drawOpen = false;
     }
 
@@ -97,7 +103,7 @@
     </div>
 {/if}
 
-<div class:visible={showActions} class="message-actions" class:useDrawer>
+<div class:visible={showActions} class="message-actions" class:useDrawer class:rtl={$rtlStore}>
     <div class="emoji" on:click|stopPropagation={toggleEmojiPicker}>
         {#if messageAction === "emoji"}
             <HoverIcon>
@@ -186,6 +192,17 @@
                 position: absolute;
                 transition: top 200ms ease-in, opacity 200ms ease-in;
                 @include z-index("action-list");
+            }
+
+            &.rtl {
+                .emoji,
+                .attach,
+                .gif,
+                .send-icp,
+                .poll {
+                    left: unset;
+                    right: toRem(-44);
+                }
             }
 
             &.visible {

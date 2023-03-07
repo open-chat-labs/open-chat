@@ -1,28 +1,52 @@
-use crate::{TimestampMillis, UserId, ICP_TRANSFER_LIMIT};
+use crate::{TimestampNanos, UserId};
 use candid::{CandidType, Principal};
+use ic_ledger_types::Tokens;
 use serde::{Deserialize, Serialize};
+
+const E8S_PER_TOKEN: u64 = 100_000_000;
 
 #[derive(CandidType, Serialize, Deserialize, Copy, Clone, Debug, Eq, PartialEq, Hash)]
 pub enum Cryptocurrency {
     InternetComputer,
+    SNS1,
+    CKBTC,
+    CHAT,
 }
 
 impl Cryptocurrency {
     pub fn token_symbol(&self) -> String {
         match self {
             Cryptocurrency::InternetComputer => "ICP".to_string(),
+            Cryptocurrency::SNS1 => "SNS1".to_string(),
+            Cryptocurrency::CKBTC => "ckBTC".to_string(),
+            Cryptocurrency::CHAT => "CHAT".to_string(),
         }
     }
 
     pub fn decimals(&self) -> usize {
         match self {
             Cryptocurrency::InternetComputer => 8,
+            Cryptocurrency::SNS1 => 8,
+            Cryptocurrency::CKBTC => 8,
+            Cryptocurrency::CHAT => 8,
         }
     }
 
     pub fn transfer_limit(&self) -> u128 {
         match self {
-            Cryptocurrency::InternetComputer => ICP_TRANSFER_LIMIT.e8s().into(),
+            Cryptocurrency::InternetComputer => (50 * E8S_PER_TOKEN).into(),
+            Cryptocurrency::SNS1 => (10 * E8S_PER_TOKEN).into(),
+            Cryptocurrency::CKBTC => (E8S_PER_TOKEN / 100).into(),
+            Cryptocurrency::CHAT => (1_000 * E8S_PER_TOKEN).into(),
+        }
+    }
+
+    pub fn fee(&self) -> u128 {
+        match self {
+            Cryptocurrency::InternetComputer => 10_000,
+            Cryptocurrency::SNS1 => 1_000,
+            Cryptocurrency::CKBTC => 10,
+            Cryptocurrency::CHAT => 100_000,
         }
     }
 }
@@ -58,14 +82,8 @@ impl CryptoTransaction {
     pub fn token(&self) -> Cryptocurrency {
         match self {
             CryptoTransaction::Pending(p) => p.token(),
-            CryptoTransaction::Completed(c) => match c {
-                CompletedCryptoTransaction::NNS(t) => t.token,
-                CompletedCryptoTransaction::SNS(t) => t.token,
-            },
-            CryptoTransaction::Failed(f) => match f {
-                FailedCryptoTransaction::NNS(t) => t.token,
-                FailedCryptoTransaction::SNS(t) => t.token,
-            },
+            CryptoTransaction::Completed(c) => c.token(),
+            CryptoTransaction::Failed(f) => f.token(),
         }
     }
 
@@ -127,11 +145,41 @@ impl PendingCryptoTransaction {
     }
 }
 
+impl CompletedCryptoTransaction {
+    pub fn token(&self) -> Cryptocurrency {
+        match self {
+            CompletedCryptoTransaction::NNS(t) => t.token,
+            CompletedCryptoTransaction::SNS(t) => t.token,
+        }
+    }
+
+    pub fn units(&self) -> u128 {
+        match self {
+            CompletedCryptoTransaction::NNS(t) => t.amount.e8s().into(),
+            CompletedCryptoTransaction::SNS(t) => t.amount.e8s().into(),
+        }
+    }
+}
+
 impl FailedCryptoTransaction {
+    pub fn token(&self) -> Cryptocurrency {
+        match self {
+            FailedCryptoTransaction::NNS(t) => t.token,
+            FailedCryptoTransaction::SNS(t) => t.token,
+        }
+    }
+
     pub fn error_message(&self) -> &str {
         match self {
             FailedCryptoTransaction::NNS(t) => &t.error_message,
             FailedCryptoTransaction::SNS(t) => &t.error_message,
+        }
+    }
+
+    pub fn amount(&self) -> Tokens {
+        match self {
+            FailedCryptoTransaction::NNS(t) => t.amount,
+            FailedCryptoTransaction::SNS(t) => t.amount,
         }
     }
 }
@@ -175,7 +223,7 @@ pub mod nns {
         pub from: CryptoAccount,
         pub to: CryptoAccount,
         pub memo: Memo,
-        pub created: TimestampMillis,
+        pub created: TimestampNanos,
         pub transaction_hash: TransactionHash,
         pub block_index: BlockIndex,
     }
@@ -188,7 +236,7 @@ pub mod nns {
         pub from: CryptoAccount,
         pub to: CryptoAccount,
         pub memo: Memo,
-        pub created: TimestampMillis,
+        pub created: TimestampNanos,
         pub transaction_hash: TransactionHash,
         pub error_message: String,
     }
@@ -222,7 +270,7 @@ pub mod sns {
         pub from: CryptoAccount,
         pub to: CryptoAccount,
         pub memo: Option<Memo>,
-        pub created: TimestampMillis,
+        pub created: TimestampNanos,
         pub transaction_hash: TransactionHash,
         pub block_index: BlockIndex,
     }
@@ -235,7 +283,7 @@ pub mod sns {
         pub from: CryptoAccount,
         pub to: CryptoAccount,
         pub memo: Option<Memo>,
-        pub created: TimestampMillis,
+        pub created: TimestampNanos,
         pub transaction_hash: TransactionHash,
         pub error_message: String,
     }

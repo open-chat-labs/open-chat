@@ -2,10 +2,10 @@ use crate::group_summaries::{build_summaries_args, SummariesArgs};
 use crate::{can_borrow_state, mutate_state, CachedGroupSummaries, Data};
 use utils::env::Environment;
 use utils::regular_jobs::{RegularJob, RegularJobs};
-use utils::time::{DAY_IN_MS, HOUR_IN_MS, MINUTE_IN_MS};
+use utils::time::{DAY_IN_MS, MINUTE_IN_MS};
 
 pub(crate) fn build() -> RegularJobs<Data> {
-    let check_cycles_balance = RegularJob::new("Check cycles balance", check_cycles_balance, HOUR_IN_MS);
+    let check_cycles_balance = RegularJob::new("Check cycles balance", check_cycles_balance, 5 * MINUTE_IN_MS);
     let aggregate_direct_chat_metrics = RegularJob::new(
         "Aggregate direct chat metrics",
         aggregate_direct_chat_metrics,
@@ -24,8 +24,7 @@ pub(crate) fn build() -> RegularJobs<Data> {
 }
 
 fn check_cycles_balance(_: &dyn Environment, data: &mut Data) {
-    let user_index_canister_id = data.user_index_canister_id;
-    utils::cycles::check_cycles_balance(user_index_canister_id);
+    utils::cycles::check_cycles_balance(data.local_user_index_canister_id);
 }
 
 fn aggregate_direct_chat_metrics(_: &dyn Environment, data: &mut Data) {
@@ -33,7 +32,7 @@ fn aggregate_direct_chat_metrics(_: &dyn Environment, data: &mut Data) {
 }
 
 fn retry_deleting_files(_: &dyn Environment, _: &mut Data) {
-    open_storage_bucket_client::retry_failed();
+    storage_bucket_client::retry_failed();
 }
 
 fn update_cached_group_summaries(env: &dyn Environment, data: &mut Data) {
@@ -52,7 +51,6 @@ async fn update_cached_group_summaries_impl(args: SummariesArgs) {
                 let now = state.env.now();
                 state.data.cached_group_summaries = Some(CachedGroupSummaries {
                     groups: summaries
-                        .groups
                         .into_iter()
                         // This ensures we don't cache any groups which have been deleted or the
                         // user has been removed from, which they were members of at the beginning

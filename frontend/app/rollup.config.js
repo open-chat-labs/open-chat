@@ -15,13 +15,13 @@ import json from "@rollup/plugin-json";
 import analyze from "rollup-plugin-analyzer";
 import filesize from "rollup-plugin-filesize";
 import postcss from "rollup-plugin-postcss";
+import autoprefixer from "autoprefixer";
 import { sha256 } from "js-sha256";
 import dotenv from "dotenv";
 import replace from "@rollup/plugin-replace";
-import * as fs from "fs";
+import * as fs from "fs-extra";
 import * as path from "path";
 import * as rimraf from "rimraf";
-import assetHeaders from "./.ic-assets.json";
 
 dotenv.config();
 
@@ -41,17 +41,17 @@ if (dfxNetwork) {
         const canisters = JSON.parse(fs.readFileSync(canisterPath));
         process.env.USER_INDEX_CANISTER = canisters.user_index[dfxNetwork];
         process.env.GROUP_INDEX_CANISTER = canisters.group_index[dfxNetwork];
-        process.env.NOTIFICATIONS_CANISTER = canisters.notifications[dfxNetwork];
-        process.env.ONLINE_CANISTER = canisters.online_users_aggregator[dfxNetwork];
+        process.env.NOTIFICATIONS_CANISTER = canisters.notifications_index[dfxNetwork];
+        process.env.ONLINE_CANISTER = canisters.online_users[dfxNetwork];
         process.env.PROPOSALS_BOT_CANISTER = canisters.proposals_bot[dfxNetwork];
-        process.env.OPEN_STORAGE_INDEX_CANISTER = canisters.open_storage_index[dfxNetwork];
+        process.env.STORAGE_INDEX_CANISTER = canisters.storage_index[dfxNetwork];
 
         console.log("UserIndexCanisterId: ", process.env.USER_INDEX_CANISTER);
         console.log("GroupIndexCanisterId: ", process.env.GROUP_INDEX_CANISTER);
         console.log("NotificationsCanisterId: ", process.env.NOTIFICATIONS_CANISTER);
         console.log("OnlineCanisterId: ", process.env.ONLINE_CANISTER);
         console.log("ProposalsBotCanisterId: ", process.env.PROPOSALS_BOT_CANISTER);
-        console.log("OpenStorageIndex: ", process.env.OPEN_STORAGE_INDEX_CANISTER);
+        console.log("StorageIndex: ", process.env.STORAGE_INDEX_CANISTER);
     } else {
         console.log(
             "Couldn't find canisters JSON at: ",
@@ -77,6 +77,7 @@ if (production && !process.env.ROLLBAR_ACCESS_TOKEN) {
 if (production && !process.env.USERGEEK_APIKEY) {
     throw Error("USERGEEK_APIKEY environment variable not set");
 }
+const WEBPUSH_SERVICE_WORKER_PATH = "_/raw/push_sw.js";
 
 console.log("PROD", production);
 console.log("ENV", env);
@@ -98,39 +99,39 @@ function serve() {
     });
 }
 
+function copyFile(fromPath, toPath, file) {
+    const from = path.join(__dirname, fromPath, file);
+    const to = path.join(__dirname, toPath, file);
+    if (fs.existsSync(from)) {
+        console.log("Copying file -> : ", from, to);
+        fs.copySync(from, to, {
+            recursive: true,
+        });
+    }
+}
+
+function cleanExcept(files) {
+    if (fs.existsSync("_temp")) {
+        rimraf.sync(path.join(__dirname, "_temp"));
+    }
+    fs.mkdirSync("_temp");
+    files.forEach((file) => copyFile("build", "_temp", file));
+    rimraf.sync(path.join(__dirname, "build"));
+    fs.mkdirSync("build");
+    files.forEach((file) => copyFile("_temp", "build", file));
+    rimraf.sync(path.join(__dirname, "_temp"));
+}
+
 // this is a bit ridiculous but there we are ...
 function clean() {
     return {
         name: "clean-build",
         renderStart() {
             console.log("cleaning up the build directory");
-            if (fs.existsSync("_temp")) {
-                rimraf.sync(path.join(__dirname, "_temp"));
-            }
-            fs.mkdirSync("_temp");
-            fs.copyFileSync(
-                path.join(__dirname, "build", "worker.js"),
-                path.join(__dirname, "_temp", "worker.js")
-            );
-            fs.copyFileSync(
-                path.join(__dirname, "build", "worker.js.map"),
-                path.join(__dirname, "_temp", "worker.js.map")
-            );
-            rimraf.sync(path.join(__dirname, "build"));
-            fs.mkdirSync("build");
-            fs.copyFileSync(
-                path.join(__dirname, "_temp", "worker.js"),
-                path.join(__dirname, "build", "worker.js")
-            );
-            fs.copyFileSync(
-                path.join(__dirname, "_temp", "worker.js.map"),
-                path.join(__dirname, "build", "worker.js.map")
-            );
-            rimraf.sync(path.join(__dirname, "_temp"));
+            cleanExcept(["worker.js", "worker.js.map", "_/raw/push_sw.js", "_/raw/push_sw.js.map"]);
             if (version) {
                 fs.writeFileSync("build/version", JSON.stringify({ version }));
             }
-            fs.writeFileSync("build/.ic-assets.json", JSON.stringify(assetHeaders));
             const iiAlternativeOrigins = process.env.II_ALTERNATIVE_ORIGINS;
             if (iiAlternativeOrigins !== undefined) {
                 fs.mkdirSync("build/.well-known");
@@ -141,6 +142,7 @@ function clean() {
                     })
                 );
             }
+            copyFile(".", "build", ".ic-assets.json5");
         },
     };
 }
@@ -173,7 +175,7 @@ export default {
             },
         }),
 
-        postcss({ extract: true }),
+        postcss({ extract: true, plugins: [autoprefixer()] }),
 
         resolve({
             preferBuiltins: false,
@@ -210,19 +212,20 @@ export default {
             "process.env.PROPOSALS_BOT_CANISTER": JSON.stringify(
                 process.env.PROPOSALS_BOT_CANISTER
             ),
-            "process.env.OPEN_STORAGE_INDEX_CANISTER": JSON.stringify(
-                process.env.OPEN_STORAGE_INDEX_CANISTER
+            "process.env.STORAGE_INDEX_CANISTER": JSON.stringify(
+                process.env.STORAGE_INDEX_CANISTER
             ),
             "process.env.LEDGER_CANISTER_ICP": JSON.stringify(process.env.LEDGER_CANISTER_ICP),
+            "process.env.LEDGER_CANISTER_SNS1": JSON.stringify(process.env.LEDGER_CANISTER_SNS1),
             "process.env.LEDGER_CANISTER_BTC": JSON.stringify(process.env.LEDGER_CANISTER_BTC),
             "process.env.LEDGER_CANISTER_CHAT": JSON.stringify(process.env.LEDGER_CANISTER_CHAT),
-            "process.env.ENABLE_MULTI_CRYPTO": process.env.ENABLE_MULTI_CRYPTO,
             "process.env.BLOB_URL_PATTERN": JSON.stringify(process.env.BLOB_URL_PATTERN),
             "process.env.USERGEEK_APIKEY": JSON.stringify(process.env.USERGEEK_APIKEY),
             "process.env.GIPHY_APIKEY": JSON.stringify(process.env.GIPHY_APIKEY),
             "process.env.PUBLIC_TRANSLATE_API_KEY": JSON.stringify(
                 process.env.PUBLIC_TRANSLATE_API_KEY
             ),
+            "process.env.WEBPUSH_SERVICE_WORKER_PATH": WEBPUSH_SERVICE_WORKER_PATH,
         }),
 
         html({
@@ -241,9 +244,17 @@ export default {
                     `var parcelRequire;`,
                 ];
                 const cspHashValues = inlineScripts.map(generateCspHashValue);
-                let csp = `script-src 'self' 'unsafe-eval' https://api.rollbar.com/api/ https://platform.twitter.com/ https://www.googletagmanager.com/ ${cspHashValues.join(
-                    " "
-                )}`;
+                let csp = `
+                    style-src * 'unsafe-inline'; 
+                    style-src-elem * 'unsafe-inline';
+                    font-src 'self' https://fonts.gstatic.com/;
+                    object-src 'none';
+                    base-uri 'self';
+                    form-action 'self';
+                    upgrade-insecure-requests;
+                    script-src 'self' 'unsafe-eval' https://api.rollbar.com/api/ https://platform.twitter.com/ https://www.googletagmanager.com/ ${cspHashValues.join(
+                        " "
+                    )}`;
                 if (!production) {
                     csp += " http://localhost:* http://127.0.0.1:*";
                 }
@@ -266,8 +277,8 @@ export default {
                                 <meta property="og:title" content="OpenChat">
                                 <meta property="og:type" content="website" />
                                 <meta property="og:description" content="OpenChat is a fully featured chat application running end-to-end on the Internet Computer blockchain.">
-                                <meta property="og:image" content="/assets/share-oc-light.png">
-                                <meta name="twitter:image" content="/assets/share-oc-light.png">
+                                <meta property="og:image" content="https://oc.app/assets/share-oc-light.png">
+                                <meta name="twitter:image" content="https://oc.app/assets/share-oc-light.png">
                                 <meta property="og:url" content="https://oc.app">
                                 <meta name="twitter:card" content="summary_large_image">
                                 <meta property="og:site_name" content="OpenChat">
@@ -289,7 +300,7 @@ export default {
                                 <link rel="preconnect" href="https://fonts.googleapis.com" />
                                 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
                                 <link
-                                    href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;700&family=Roboto:wght@200;300;400&display=swap"
+                                    href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700&family=Roboto:wght@200;300;400;700&display=swap"
                                     rel="stylesheet"
                                 />
                                 <script type="module" src="https://platform.twitter.com/widgets.js"></script>

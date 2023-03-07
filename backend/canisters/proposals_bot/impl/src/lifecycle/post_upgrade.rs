@@ -1,47 +1,75 @@
-use crate::lifecycle::{init_logger, init_state, UPGRADE_BUFFER_SIZE};
-use crate::{Data, LOG_MESSAGES};
-use canister_logger::{LogMessage, LogMessagesWrapper};
+use crate::governance_clients::sns::ListProposals;
+use crate::lifecycle::{init_env, init_state, UPGRADE_BUFFER_SIZE};
+use crate::memory::get_upgrades_memory;
+use crate::{governance_clients, read_state, Data};
+use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use ic_cdk_macros::post_upgrade;
+use ic_stable_structures::reader::{BufferedReader, Reader};
 use proposals_bot_canister::post_upgrade::Args;
-use stable_memory::deserialize_from_stable_memory;
+use std::time::Duration;
 use tracing::info;
-use utils::consts::MIN_CYCLES_BALANCE;
-use utils::env::canister::CanisterEnv;
+use types::{CanisterId, MessageContent, Proposal, ProposalContent};
+use utils::cycles::init_cycles_dispenser_client;
 
 #[post_upgrade]
 #[trace]
 fn post_upgrade(args: Args) {
-    ic_cdk::setup();
+    let env = init_env();
 
-    let env = Box::new(CanisterEnv::new());
+    let memory = get_upgrades_memory();
+    let reader = BufferedReader::new(UPGRADE_BUFFER_SIZE, Reader::new(&memory, 0));
 
-    let (data, log_messages, trace_messages, cycles_dispenser_client_state): (Data, Vec<LogMessage>, Vec<LogMessage>, Vec<u8>) =
-        deserialize_from_stable_memory(UPGRADE_BUFFER_SIZE).unwrap();
+    let (data, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>) = serializer::deserialize(reader).unwrap();
 
-    init_logger(data.test_mode);
+    canister_logger::init_with_logs(data.test_mode, logs, traces);
+
+    init_cycles_dispenser_client(data.cycles_dispenser_canister_id);
     init_state(env, data, args.wasm_version);
 
-    if !log_messages.is_empty() || !trace_messages.is_empty() {
-        LOG_MESSAGES.with(|l| rehydrate_log_messages(log_messages, trace_messages, &l.borrow()))
-    }
-
-    cycles_dispenser_client::init_from_bytes(&cycles_dispenser_client_state);
-    cycles_dispenser_client::set_min_cycles_balance(3 * MIN_CYCLES_BALANCE / 2);
-
     info!(version = %args.wasm_version, "Post-upgrade complete");
+
+    ic_cdk_timers::set_timer(Duration::default(), || {
+        ic_cdk::spawn(get_openchat_proposal_payloads());
+    });
 }
 
-fn rehydrate_log_messages(
-    log_messages: Vec<LogMessage>,
-    trace_messages: Vec<LogMessage>,
-    messages_container: &LogMessagesWrapper,
-) {
-    for message in log_messages {
-        messages_container.logs.push(message);
-    }
+async fn get_openchat_proposal_payloads() {
+    let governance_canister_id = CanisterId::from_text("2jvtu-yqaaa-aaaaq-aaama-cai").unwrap();
+    let group_id = read_state(|state| state.data.nervous_systems.get_chat_id(&governance_canister_id)).unwrap();
+    let proposals_response = governance_clients::sns::list_proposals(
+        governance_canister_id,
+        &ListProposals {
+            limit: 30,
+            ..Default::default()
+        },
+    )
+    .await;
 
-    for message in trace_messages {
-        messages_container.traces.push(message);
+    if let Ok(raw_proposals) = proposals_response {
+        let proposals: Vec<Proposal> = raw_proposals.into_iter().filter_map(|p| p.try_into().ok()).collect();
+        let args: Vec<_> = read_state(|state| {
+            let nervous_system = state.data.nervous_systems.get(&governance_canister_id).unwrap();
+
+            proposals
+                .into_iter()
+                .map(|p| group_canister::edit_message::Args {
+                    thread_root_message_index: None,
+                    message_id: nervous_system.active_proposals.get(&p.id()).unwrap().1,
+                    content: MessageContent::GovernanceProposal(ProposalContent {
+                        governance_canister_id,
+                        proposal: p,
+                        my_vote: None,
+                    }),
+                    correlation_id: 0,
+                })
+                .collect()
+        });
+
+        futures::future::join_all(
+            args.iter()
+                .map(|a| group_canister_c2c_client::edit_message(group_id.into(), a)),
+        )
+        .await;
     }
 }

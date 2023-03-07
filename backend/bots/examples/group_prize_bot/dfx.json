@@ -1,0 +1,31 @@
+{
+  "canisters": {
+    "group_prize_bot": {
+      "type": "rust",
+      "candid": "api/can.did",
+      "package": "group_prize_bot_impl"
+    }
+  },
+  "networks": {
+    "local": {
+      "bind": "127.0.0.1:8080",
+      "type": "ephemeral",
+      "replica": {
+        "subnet_type": "system"
+      }
+    },
+    "ic": {
+      "providers": [
+        "https://ic0.app/"
+      ],
+      "type": "persistent"
+    },
+    "ic_test": {
+      "providers": [
+        "https://ic0.app/"
+      ],
+      "type": "persistent"
+    }
+  },
+  "version": 1
+}

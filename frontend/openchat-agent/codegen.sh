@@ -10,11 +10,14 @@ didc bind ../../backend/canisters/group/api/can.did -t js > ./src/services/group
 didc bind ../../backend/canisters/group_index/api/can.did -t ts > ./src/services/groupIndex/candid/types.d.ts
 didc bind ../../backend/canisters/group_index/api/can.did -t js > ./src/services/groupIndex/candid/idl.js
 
-didc bind ../../backend/canisters/notifications/api/can.did -t ts > ./src/services/notifications/candid/types.d.ts
-didc bind ../../backend/canisters/notifications/api/can.did -t js > ./src/services/notifications/candid/idl.js
+didc bind ../../backend/canisters/local_user_index/api/can.did -t ts > ./src/services/localUserIndex/candid/types.d.ts
+didc bind ../../backend/canisters/local_user_index/api/can.did -t js > ./src/services/localUserIndex/candid/idl.js
 
-didc bind ../../backend/canisters/online_users_aggregator/api/can.did -t ts > ./src/services/online/candid/types.d.ts
-didc bind ../../backend/canisters/online_users_aggregator/api/can.did -t js > ./src/services/online/candid/idl.js
+didc bind ../../backend/canisters/notifications_index/api/can.did -t ts > ./src/services/notifications/candid/types.d.ts
+didc bind ../../backend/canisters/notifications_index/api/can.did -t js > ./src/services/notifications/candid/idl.js
+
+didc bind ../../backend/canisters/online_users/api/can.did -t ts > ./src/services/online/candid/types.d.ts
+didc bind ../../backend/canisters/online_users/api/can.did -t js > ./src/services/online/candid/idl.js
 
 didc bind ./src/services/ledger/candid/can.did -t ts > ./src/services/ledger/candid/types.d.ts
 didc bind ./src/services/ledger/candid/can.did -t js > ./src/services/ledger/candid/idl.js

@@ -1,0 +1,35 @@
+[package]
+name = "notifications_index_canister_impl"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+path = "src/lib.rs"
+crate-type = ["cdylib"]
+
+[dependencies]
+candid = { workspace = true }
+canister_api_macros = { path = "../../../libraries/canister_api_macros" }
+canister_logger = { workspace = true }
+canister_state_macros = { workspace = true }
+canister_tracing_macros = { workspace = true }
+futures = { workspace = true }
+http_request = { path = "../../../libraries/http_request" }
+human_readable = { path = "../../../libraries/human_readable" }
+ic-cdk = { workspace = true }
+ic-cdk-macros = { workspace = true }
+ic-cdk-timers = { workspace = true }
+ic-stable-structures = { workspace = true }
+msgpack = { path = "../../../libraries/msgpack" }
+notifications_canister = { path = "../../notifications/api" }
+notifications_canister_c2c_client = { path = "../../notifications/c2c_client" }
+notifications_index_canister = { path = "../api" }
+serde = { workspace = true }
+serializer = { workspace = true }
+tracing = { workspace = true }
+types = { path = "../../../libraries/types" }
+user_index_canister = { path = "../../user_index/api" }
+user_index_canister_c2c_client = { path = "../../user_index/c2c_client" }
+utils = { path = "../../../libraries/utils" }

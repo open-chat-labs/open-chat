@@ -1,75 +1,111 @@
 {
-  "dfx": "0.12.1",
+  "dfx": "0.13.1",
   "canisters": {
     "user_index": {
       "type": "custom",
       "candid": "backend/canisters/user_index/api/can.did",
-      "wasm": "wasms/user_index_canister_impl.wasm.gz",
-      "build": "./scripts/generate-wasm.sh user_index_canister_impl"
+      "wasm": "wasms/user_index.wasm.gz",
+      "build": "./scripts/generate-wasm.sh user_index"
     },
     "group_index": {
       "type": "custom",
       "candid": "backend/canisters/group_index/api/can.did",
-      "wasm": "wasms/group_index_canister_impl.wasm.gz",
-      "build": "./scripts/generate-wasm.sh group_index_canister_impl"
+      "wasm": "wasms/group_index.wasm.gz",
+      "build": "./scripts/generate-wasm.sh group_index"
     },
     "local_user_index": {
       "type": "custom",
       "candid": "backend/canisters/local_user_index/api/can.did",
-      "wasm": "wasms/local_user_index_canister_impl.wasm.gz",
-      "build": "./scripts/generate-wasm.sh local_user_index_canister_impl"
+      "wasm": "wasms/local_user_index.wasm.gz",
+      "build": "./scripts/generate-wasm.sh local_user_index"
     },
     "local_group_index": {
       "type": "custom",
       "candid": "backend/canisters/local_group_index/api/can.did",
-      "wasm": "wasms/local_group_index_canister_impl.wasm.gz",
-      "build": "./scripts/generate-wasm.sh local_user_group_canister_impl"
+      "wasm": "wasms/local_group_index.wasm.gz",
+      "build": "./scripts/generate-wasm.sh local_user_group"
+    },
+    "notifications_index": {
+      "type": "custom",
+      "candid": "backend/canisters/notifications_index/api/can.did",
+      "wasm": "wasms/notifications_index.wasm.gz",
+      "build": "./scripts/generate-wasm.sh notifications_index"
     },
     "notifications": {
       "type": "custom",
       "candid": "backend/canisters/notifications/api/can.did",
-      "wasm": "wasms/notifications_canister_impl.wasm.gz",
-      "build": "./scripts/generate-wasm.sh notifications_canister_impl"
+      "wasm": "wasms/notifications.wasm.gz",
+      "build": "./scripts/generate-wasm.sh notifications"
     },
-    "online_users_aggregator": {
+    "online_users": {
       "type": "custom",
       "candid": "backend/canisters/online_users_agg/api/can.did",
-      "wasm": "wasms/online_users_aggregator_canister_impl.wasm.gz",
-      "build": "./scripts/generate-wasm.sh online_users_aggregator_canister_impl"
+      "wasm": "wasms/online_users.wasm.gz",
+      "build": "./scripts/generate-wasm.sh online_users"
     },
     "proposals_bot": {
       "type": "custom",
       "candid": "backend/canisters/proposals_bot/api/can.did",
-      "wasm": "wasms/proposals_bot_canister_impl.wasm.gz",
-      "build": "./scripts/generate-wasm.sh proposals_bot_canister_impl"
+      "wasm": "wasms/proposals_bot.wasm.gz",
+      "build": "./scripts/generate-wasm.sh proposals_bot"
     },
     "user": {
       "type": "custom",
       "candid": "backend/canisters/user/api/can.did",
-      "wasm": "wasms/user_canister_impl.wasm",
-      "build": "./scripts/generate-wasm.sh user_canister_impl"
+      "wasm": "wasms/user.wasm.gz",
+      "build": "./scripts/generate-wasm.sh user"
     },
     "group": {
       "type": "custom",
       "candid": "backend/canisters/group/api/can.did",
-      "wasm": "wasms/group_canister_impl.wasm",
-      "build": "./scripts/generate-wasm.sh group_canister_impl"
+      "wasm": "wasms/group.wasm.gz",
+      "build": "./scripts/generate-wasm.sh group"
+    },
+    "storage_index": {
+      "type": "custom",
+      "candid": "backend/canisters/storage_index/api/can.did",
+      "wasm": "wasms/storage_index.wasm.gz",
+      "build": "./scripts/generate-wasm.sh storage_index"
+    },
+    "cycles_dispenser": {
+      "type": "custom",
+      "candid": "backend/canisters/cycles_dispenser/api/can.did",
+      "wasm": "wasms/cycles_dispenser.wasm.gz",
+      "build": "./scripts/generate-wasm.sh cycles_dispenser"
     },
     "website": {
       "source": ["frontend/app/build", "frontend/app/public"],
       "type": "assets"
     },
-    "cycles_dispenser": {
+    "sns_governance": {
+      "build": "",
+      "candid": "sns/candid/sns_governance.did",
       "type": "custom",
-      "wasm": "backend/canisters/cycles_dispenser/cycles_dispenser.wasm.gz",
-      "candid": "backend/canisters/cycles_dispenser/cycles_dispenser.init.did",
-      "build": ""
+      "wasm": ""
     },
-    "open_storage_index": {
+    "sns_index": {
+      "build": "",
+      "candid": "sns/candid/sns_index.did",
       "type": "custom",
-      "wasm": "backend/canisters/open_storage/index_canister.wasm.gz",
-      "candid": "backend/canisters/open_storage/index.init.did",
-      "build": ""
+      "wasm": ""
+    },
+    "sns_ledger": {
+      "build": "",
+      "candid": "sns/candid/sns_ledger.did",
+      "type": "custom",
+      "wasm": ""
+    },
+    "sns_root": {
+      "build": "",
+      "candid": "sns/candid/sns_root.did",
+      "type": "custom",
+      "wasm": ""
+    },
+    "sns_swap": {
+      "build": "",
+      "candid": "sns/candid/sns_swap.did",
+      "type": "custom",
+      "wasm": ""
     }
   },
   "networks": {
@@ -90,6 +126,14 @@
     },
     "web_test": {
       "providers": ["https://ic0.app/"],
+      "type": "persistent"
+    },
+    "benchmarklarge": {
+      "providers": ["https://benchmarklarge.testnet.dfinity.network/"],
+      "type": "persistent"
+    },
+    "large03": {
+      "providers": ["https://large03.testnet.dfinity.network/"],
       "type": "persistent"
     }
   },

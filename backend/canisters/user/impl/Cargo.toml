@@ -1,7 +1,6 @@
 [package]
 name = "user_canister_impl"
 version = "0.1.0"
-authors = ["Hamish Peebles <hamishpeebles@gmail.com>", "Matt Grogan <megrogan@gmail.com>", "Julian Jelfs <julian.jelfs@gmail.com>"]
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -15,9 +14,10 @@ bot_api = { path = "../../../bots/api" }
 bot_c2c_client = { path = "../../../bots/c2c_client" }
 candid = { workspace = true }
 canister_api_macros = { path = "../../../libraries/canister_api_macros" }
-canister_logger = { path = "../../../libraries/canister_logger" }
+canister_logger = { workspace = true }
 canister_state_macros = { workspace = true }
-canister_tracing_macros = { path = "../../../libraries/canister_tracing_macros" }
+canister_timer_jobs = { workspace = true }
+canister_tracing_macros = { workspace = true }
 chat_events = { path = "../../../libraries/chat_events" }
 futures = { workspace = true }
 group_canister = { path = "../../group/api" }
@@ -25,26 +25,24 @@ group_canister_c2c_client = { path = "../../group/c2c_client" }
 group_index_canister = { path = "../../group_index/api" }
 group_index_canister_c2c_client = { path = "../../group_index/c2c_client" }
 http_request = { path = "../../../libraries/http_request" }
-ic-base-types = { workspace = true }
 ic-cdk = { workspace = true }
 ic-cdk-macros = { workspace = true }
-ic-icrc1 = { workspace = true }
-ic-icrc1-client = { workspace = true }
-ic-icrc1-client-cdk = { workspace = true }
+ic-cdk-timers = { workspace = true }
 ic-ledger-types = { workspace = true }
-ic-ledger-canister-core = { workspace = true }
 itertools = { workspace = true }
 ledger_utils = { path = "../../../libraries/ledger_utils" }
+local_user_index_canister = { path = "../../local_user_index/api" }
+local_user_index_canister_c2c_client = { path = "../../local_user_index/c2c_client" }
 msgpack = { path = "../../../libraries/msgpack" }
 notifications_canister = { path = "../../notifications/api" }
 notifications_canister_c2c_client = { path = "../../notifications/c2c_client" }
 num-traits = "0.2.15"
-open_storage_bucket_client = { path = "../../../libraries/open_storage_bucket_client" }
 search = { path = "../../../libraries/search" }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
+serializer = { workspace = true }
 stable_memory = { workspace = true }
-timer_jobs = { path = "../../../libraries/timer_jobs" }
+storage_bucket_client = { path = "../../../libraries/storage_bucket_client" }
 tracing = { workspace = true }
 types = { path = "../../../libraries/types" }
 utils = { path = "../../../libraries/utils" }

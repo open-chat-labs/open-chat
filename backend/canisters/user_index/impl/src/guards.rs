@@ -1,10 +1,18 @@
 use crate::read_state;
 
-pub fn caller_is_controller() -> Result<(), String> {
-    if read_state(|state| state.is_caller_service_principal()) {
+pub fn caller_is_governance_principal() -> Result<(), String> {
+    if read_state(|state| state.is_caller_governance_principal()) {
         Ok(())
     } else {
-        Err("Caller is not the canister controller".to_string())
+        Err("Caller is not the governance principal".to_string())
+    }
+}
+
+pub fn caller_is_local_user_index_canister() -> Result<(), String> {
+    if read_state(|state| state.is_caller_local_user_index_canister()) {
+        Ok(())
+    } else {
+        Err("Caller is not a local user index canister".to_string())
     }
 }
 
@@ -16,34 +24,18 @@ pub fn caller_is_group_index() -> Result<(), String> {
     }
 }
 
-pub fn caller_is_notifications_canister() -> Result<(), String> {
-    if read_state(|state| state.is_caller_notifications_canister()) {
+pub fn caller_is_platform_moderator() -> Result<(), String> {
+    if read_state(|state| state.is_caller_platform_moderator()) {
         Ok(())
     } else {
-        Err("Caller is not the notifications canister".to_string())
+        Err("Caller is not a platform moderator".to_string())
     }
 }
 
-pub fn caller_is_sms_sender() -> Result<(), String> {
-    if read_state(|state| state.is_caller_sms_service()) {
+pub fn caller_is_platform_operator() -> Result<(), String> {
+    if read_state(|state| state.is_caller_platform_operator()) {
         Ok(())
     } else {
-        Err("Caller is not the sms sender".to_string())
-    }
-}
-
-pub fn caller_is_online_users_aggregator_canister() -> Result<(), String> {
-    if read_state(|state| state.is_caller_online_users_aggregator_canister()) {
-        Ok(())
-    } else {
-        Err("Caller is not the online users aggregator canister".to_string())
-    }
-}
-
-pub fn caller_is_super_admin() -> Result<(), String> {
-    if read_state(|state| state.is_caller_super_admin()) {
-        Ok(())
-    } else {
-        Err("Caller is not a super admin".to_string())
+        Err("Caller is not a platform operator".to_string())
     }
 }

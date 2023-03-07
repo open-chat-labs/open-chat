@@ -6,14 +6,14 @@ import {
     idlFactory,
     UserService,
 } from "./candid/idl";
-import {
+import type {
+    InitialStateV2Response,
+    UpdatesV2Response,
     EventsResponse,
-    UpdateArgs,
     CandidateGroupChat,
     CreateGroupResponse,
     DeleteGroupResponse,
     DirectChatEvent,
-    MergedUpdatesResponse,
     Message,
     SendMessageResponse,
     BlockUserResponse,
@@ -24,28 +24,23 @@ import {
     AddRemoveReactionResponse,
     DeleteMessageResponse,
     UndeleteMessageResponse,
-    JoinGroupResponse,
     EditMessageResponse,
     MarkReadRequest,
-    GroupChatSummary,
     WithdrawCryptocurrencyResponse,
     CryptocurrencyContent,
     PendingCryptocurrencyWithdrawal,
-    CurrentChatState,
     ArchiveChatResponse,
     BlobReference,
     CreatedUser,
-    GroupInvite,
     MigrateUserPrincipalResponse,
     PinChatResponse,
     PublicProfile,
     SearchDirectChatResponse,
     SetBioResponse,
-    textToCode,
     ToggleMuteNotificationResponse,
     UnpinChatResponse,
-    UserLookup,
-    compareChats,
+    DeletedDirectMessageResponse,
+    EventWrapper,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
@@ -56,12 +51,10 @@ import {
     undeleteMessageResponse,
     editMessageResponse,
     getEventsResponse,
-    getUpdatesResponse,
-    initialStateResponse,
-    joinGroupResponse,
+    getUpdatesV2Response,
+    initialStateV2Response,
     leaveGroupResponse,
     markReadResponse,
-    recommendedGroupsResponse,
     searchDirectChatResponse,
     sendMessageResponse,
     setAvatarResponse,
@@ -75,10 +68,10 @@ import {
     unpinChatResponse,
     migrateUserPrincipal,
     archiveChatResponse,
+    deletedMessageResponse,
 } from "./mappers";
 import type { IUserClient } from "./user.client.interface";
-import { mergeChatUpdates } from "../../utils/chat";
-import { MAX_EVENTS } from "../../constants";
+import { MAX_EVENTS, MAX_MESSAGES } from "../../constants";
 import type { Database } from "../../utils/caching";
 import { CachingUserClient } from "./user.caching.client";
 import {
@@ -111,15 +104,36 @@ export class UserClient extends CandidService implements IUserClient {
         userId: string,
         identity: Identity,
         config: AgentConfig,
-        db: Database,
-        groupInvite: GroupInvite | undefined
+        db: Database
     ): IUserClient {
         return new CachingUserClient(
             db,
-            identity,
             config,
-            new UserClient(identity, userId, config),
-            groupInvite
+            new UserClient(identity, userId, config)
+        );
+    }
+
+    @profile("userClient")
+    getInitialStateV2(): Promise<InitialStateV2Response> {
+        const args = {
+            disable_cache: apiOptional(identity, false),
+        };
+        return this.handleQueryResponse(
+            () => this.userService.initial_state_v2(args),
+            initialStateV2Response,
+            args
+        );
+    }
+
+    @profile("userClient")
+    getUpdatesV2(updatesSince: bigint): Promise<UpdatesV2Response> {
+        const args = {
+            updates_since: updatesSince,
+        };
+        return this.handleQueryResponse(
+            () => this.userService.updates_v2(args),
+            getUpdatesV2Response,
+            args
         );
     }
 
@@ -186,6 +200,7 @@ export class UserClient extends CandidService implements IUserClient {
         const args = {
             thread_root_message_index,
             user_id: Principal.fromText(userId),
+            max_messages: MAX_MESSAGES,
             max_events: MAX_EVENTS,
             mid_point: messageIndex,
             latest_client_event_index: apiOptional(identity, latestClientEventIndex),
@@ -209,6 +224,7 @@ export class UserClient extends CandidService implements IUserClient {
         const args = {
             thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
             user_id: Principal.fromText(userId),
+            max_messages: MAX_MESSAGES,
             max_events: MAX_EVENTS,
             start_index: startIndex,
             ascending: ascending,
@@ -220,82 +236,6 @@ export class UserClient extends CandidService implements IUserClient {
             (resp) => getEventsResponse(this.principal, resp, userId, latestClientEventIndex),
             args
         );
-    }
-
-    @profile("userClient")
-    async getInitialState(
-        _userStore: UserLookup,
-        _selectedChatId?: string
-    ): Promise<MergedUpdatesResponse> {
-        // FIXME - can't access localstorage in a worker
-        // const disableCache =
-        //     localStorage.getItem("openchat_disable_initial_state_cache") === "true";
-        const disableCache = false;
-
-        const resp = await this.handleQueryResponse(
-            () => this.userService.initial_state({ disable_cache: [disableCache] }),
-            initialStateResponse
-        );
-
-        return {
-            wasUpdated: true,
-            chatSummaries: resp.chats.sort(compareChats),
-            timestamp: resp.timestamp,
-            blockedUsers: resp.blockedUsers,
-            pinnedChats: resp.pinnedChats,
-            avatarIdUpdate: undefined,
-            affectedEvents: {},
-        };
-    }
-
-    @profile("userClient")
-    async getUpdates(
-        currentState: CurrentChatState,
-        args: UpdateArgs,
-        _userStore: UserLookup,
-        _selectedChatId?: string
-    ): Promise<MergedUpdatesResponse> {
-        const updatesResponse = await this.handleQueryResponse(
-            () =>
-                this.userService.updates({
-                    updates_since: {
-                        timestamp: args.updatesSince.timestamp,
-                        group_chats: args.updatesSince.groupChats.map((g) => ({
-                            chat_id: Principal.fromText(g.chatId),
-                            updates_since: g.lastUpdated,
-                        })),
-                    },
-                }),
-            getUpdatesResponse,
-            args
-        );
-
-        const anyUpdates =
-            updatesResponse.blockedUsers !== undefined ||
-            updatesResponse.pinnedChats !== undefined ||
-            updatesResponse.chatsUpdated.length > 0 ||
-            updatesResponse.chatsAdded.length > 0 ||
-            updatesResponse.chatsRemoved.size > 0 ||
-            updatesResponse.avatarIdUpdate !== undefined ||
-            updatesResponse.cyclesBalance !== undefined ||
-            updatesResponse.transactions.length > 0;
-
-        return {
-            wasUpdated: anyUpdates,
-            chatSummaries: anyUpdates
-                ? mergeChatUpdates(currentState.chatSummaries, updatesResponse)
-                : currentState.chatSummaries,
-            timestamp: updatesResponse.timestamp,
-            blockedUsers: updatesResponse.blockedUsers ?? currentState.blockedUsers,
-            pinnedChats: updatesResponse.pinnedChats ?? currentState.pinnedChats,
-            avatarIdUpdate: updatesResponse.avatarIdUpdate,
-            affectedEvents: updatesResponse.chatsUpdated.reduce((result, chatSummary) => {
-                if (chatSummary.affectedEvents.length > 0) {
-                    result[chatSummary.chatId] = chatSummary.affectedEvents;
-                }
-                return result;
-            }, {} as Record<string, number[]>),
-        };
     }
 
     @profile("userClient")
@@ -345,33 +285,33 @@ export class UserClient extends CandidService implements IUserClient {
     sendMessage(
         recipientId: string,
         sender: CreatedUser,
-        message: Message,
+        event: EventWrapper<Message>,
         replyingToChatId?: string,
         threadRootMessageIndex?: number
     ): Promise<[SendMessageResponse, Message]> {
         const dataClient = DataClient.create(this.identity, this.config);
-        const uploadContentPromise = message.forwarded
-            ? dataClient.forwardData(message.content, [this.userId, recipientId])
-            : dataClient.uploadData(message.content, [this.userId, recipientId]);
+        const uploadContentPromise = event.event.forwarded
+            ? dataClient.forwardData(event.event.content, [this.userId, recipientId])
+            : dataClient.uploadData(event.event.content, [this.userId, recipientId]);
 
         return uploadContentPromise.then((content) => {
-            const newContent = content ?? message.content;
+            const newContent = content ?? event.event.content;
             const req: ApiSendMessageArgs = {
                 content: apiMessageContent(newContent),
                 recipient: Principal.fromText(recipientId),
                 sender_name: sender.username,
-                message_id: message.messageId,
+                message_id: event.event.messageId,
                 replies_to: apiOptional(
                     (replyContext) => apiReplyContextArgs(replyContext, replyingToChatId),
-                    message.repliesTo
+                    event.event.repliesTo
                 ),
-                forwarding: message.forwarded,
+                forwarding: event.event.forwarded,
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                 correlation_id: generateUint64(),
             };
             return this.handleResponse(this.userService.send_message(req), (resp) =>
-                sendMessageResponse(resp, message.sender, recipientId)
-            ).then((resp) => [resp, { ...message, content: newContent }]);
+                sendMessageResponse(resp, event.event.sender, recipientId)
+            ).then((resp) => [resp, { ...event.event, content: newContent }]);
         });
     }
 
@@ -380,10 +320,10 @@ export class UserClient extends CandidService implements IUserClient {
         groupId: string,
         recipientId: string,
         sender: CreatedUser,
-        message: Message,
+        event: EventWrapper<Message>,
         threadRootMessageIndex?: number
     ): Promise<[SendMessageResponse, Message]> {
-        const content = apiPendingCryptoContent(message.content as CryptocurrencyContent);
+        const content = apiPendingCryptoContent(event.event.content as CryptocurrencyContent);
 
         const req: ApiTransferCryptoWithinGroupArgs = {
             thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
@@ -391,17 +331,17 @@ export class UserClient extends CandidService implements IUserClient {
             recipient: content.recipient,
             sender_name: sender.username,
             mentioned: [],
-            message_id: message.messageId,
+            message_id: event.event.messageId,
             group_id: Principal.fromText(groupId),
             replies_to: apiOptional(
                 (replyContext) => apiReplyContextArgs(replyContext),
-                message.repliesTo
+                event.event.repliesTo
             ),
             correlation_id: generateUint64(),
         };
         return this.handleResponse(this.userService.transfer_crypto_within_group_v2(req), (resp) =>
-            transferWithinGroupResponse(resp, message.sender, recipientId)
-        ).then((resp) => [resp, message]);
+            transferWithinGroupResponse(resp, event.event.sender, recipientId)
+        ).then((resp) => [resp, event.event]);
     }
 
     @profile("userClient")
@@ -436,29 +376,17 @@ export class UserClient extends CandidService implements IUserClient {
     }
 
     @profile("userClient")
-    joinGroup(chatId: string, inviteCode: string | undefined): Promise<JoinGroupResponse> {
-        return this.handleResponse(
-            this.userService.join_group_v2({
-                as_super_admin: false,
-                chat_id: Principal.fromText(chatId),
-                invite_code: apiOptional(textToCode, inviteCode),
-                correlation_id: generateUint64(),
-            }),
-            joinGroupResponse
-        );
-    }
-
-    @profile("userClient")
     markMessagesRead(request: MarkReadRequest): Promise<MarkReadResponse> {
         return this.handleResponse(
             this.userService.mark_read_v2({
-                messages_read: request.map(({ chatId, readUpTo, threads }) => ({
+                messages_read: request.map(({ chatId, readUpTo, threads, dateReadPinned }) => ({
                     chat_id: Principal.fromText(chatId),
                     read_up_to: apiOptional(identity, readUpTo),
                     threads: threads.map((t) => ({
                         root_message_index: t.threadRootMessageIndex,
                         read_up_to: t.readUpTo,
                     })),
+                    date_read_pinned: apiOptional(identity, dateReadPinned),
                 })),
             }),
             markReadResponse
@@ -580,21 +508,9 @@ export class UserClient extends CandidService implements IUserClient {
     }
 
     @profile("userClient")
-    getRecommendedGroups(): Promise<GroupChatSummary[]> {
-        const args = {
-            count: 20,
-        };
-        return this.handleQueryResponse(
-            () => this.userService.recommended_groups(args),
-            recommendedGroupsResponse,
-            args
-        );
-    }
-
-    @profile("userClient")
     dismissRecommendation(chatId: string): Promise<void> {
         return this.handleResponse(
-            this.userService.add_recommended_group_exclusions({
+            this.userService.add_hot_group_exclusions({
                 duration: [],
                 groups: [Principal.fromText(chatId)],
             }),
@@ -627,11 +543,7 @@ export class UserClient extends CandidService implements IUserClient {
     withdrawCryptocurrency(
         domain: PendingCryptocurrencyWithdrawal
     ): Promise<WithdrawCryptocurrencyResponse> {
-        const req = {
-            withdrawal: {
-                NNS: apiPendingCryptocurrencyWithdrawal(domain),
-            },
-        };
+        const req = apiPendingCryptocurrencyWithdrawal(domain);
         return this.handleResponse(
             this.userService.withdraw_crypto_v2(req),
             withdrawCryptoResponse
@@ -693,6 +605,17 @@ export class UserClient extends CandidService implements IUserClient {
         return this.handleResponse(
             this.userService.migrate_user_principal({}),
             migrateUserPrincipal
+        );
+    }
+
+    @profile("userClient")
+    getDeletedMessage(userId: string, messageId: bigint): Promise<DeletedDirectMessageResponse> {
+        return this.handleResponse(
+            this.userService.deleted_message({
+                user_id: Principal.fromText(userId),
+                message_id: messageId,
+            }),
+            deletedMessageResponse
         );
     }
 }

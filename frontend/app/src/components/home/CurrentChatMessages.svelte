@@ -33,18 +33,16 @@
         LoadedMessageWindow,
         LoadedPreviousMessages,
         SentMessage,
-        UpgradeRequired,
+        FailedMessages,
     } from "openchat-client";
     import { pop } from "../../utils/transition";
     import { menuStore } from "../../stores/menu";
     import { tooltipStore } from "../../stores/tooltip";
     import { iconSize } from "../../stores/iconSize";
     import InitialGroupMessage from "./InitialGroupMessage.svelte";
-    import { RelayedEvent, relaySubscribe, relayUnsubscribe } from "../../stores/relay";
-    import { pathParams } from "../../stores/routing";
-    import { push } from "svelte-spa-router";
-    import { copyMessageUrl, shareMessage } from "../../utils/share";
-    import { toastStore } from "../../stores/toast";
+    import { pathParams } from "../../routes";
+    import page from "page";
+    import { isSafari } from "../../utils/devices";
 
     // todo - these thresholds need to be relative to screen height otherwise things get screwed up on (relatively) tall screens
     const MESSAGE_LOAD_THRESHOLD = 400;
@@ -76,6 +74,7 @@
     $: messagesRead = client.messagesRead;
     $: unconfirmedReadByThem = client.unconfirmedReadByThem;
     $: unconfirmed = client.unconfirmed;
+    $: failedMessagesStore = client.failedMessagesStore;
     $: userGroupKeys = client.userGroupKeys;
     $: currentChatDraftMessage = client.currentChatDraftMessage;
     $: focusMessageIndex = client.focusMessageIndex;
@@ -86,6 +85,9 @@
     let loadingPrev = false;
     let loadingNew = false;
 
+    // we want to track whether the loading was initiated by a scroll event or not
+    let loadingFromScroll = false;
+
     // treat this as if it might be null so we don't get errors when it's unmounted
     let messagesDiv: HTMLDivElement | undefined;
     let messagesDivHeight: number;
@@ -95,9 +97,11 @@
     let currentChatId = "";
     let observer: IntersectionObserver;
     let messageReadTimers: Record<number, number> = {};
-    let insideFromBottomThreshold: boolean = false;
+    let insideFromBottomThreshold: boolean = true;
     let morePrevAvailable = false;
     let previousScrollHeight: number | undefined = undefined;
+    let previousScrollTop: number | undefined = undefined;
+    let interrupt = false;
 
     onMount(() => {
         const options = {
@@ -147,43 +151,28 @@
             });
         }, options);
 
-        // this is where we pick up events that may be published from a thread
-        relaySubscribe((event: RelayedEvent) => {
-            if (event.kind === "relayed_delete_message") {
-                doDeleteMessage(event.message);
-            }
-
-            if (event.kind === "relayed_undelete_message") {
-                doUndeleteMessage(event.message);
-            }
-
-            if (event.kind === "relayed_goto_message") {
-                doGoToMessageIndex(event.index);
-            }
-
-            if (event.kind === "relayed_select_reaction") {
-                onSelectReaction(event);
-            }
-
-            if (event.kind === "relayed_register_vote") {
-                client.registerPollVote(
-                    chat.chatId,
-                    undefined,
-                    event.data.messageId,
-                    event.data.messageIndex,
-                    event.data.answerIndex,
-                    event.data.type
-                );
-            }
-        });
-
         client.addEventListener("openchat_event", clientEvent);
 
         return () => {
             client.removeEventListener("openchat_event", clientEvent);
-            relayUnsubscribe();
         };
     });
+
+    function expandDeletedMessages(ev: CustomEvent<{ scrollTop: number; scrollHeight: number }>) {
+        tick().then(() => {
+            if (messagesDiv) {
+                expectedScrollTop = undefined;
+                const diff = (messagesDiv?.scrollHeight ?? 0) - ev.detail.scrollHeight;
+                interruptScroll(() => {
+                    messagesDiv?.scrollTo({ top: ev.detail.scrollTop - diff, behavior: "auto" });
+                });
+            }
+        });
+    }
+
+    function retrySend(ev: CustomEvent<EventWrapper<Message>>): void {
+        client.retrySendMessage(chat.chatId, ev.detail, events, undefined);
+    }
 
     function clientEvent(ev: Event): void {
         if (ev instanceof LoadedNewMessages) {
@@ -201,12 +190,12 @@
         if (ev instanceof SentMessage) {
             afterSendMessage(ev.detail);
         }
-        if (ev instanceof UpgradeRequired) {
-            dispatch("upgrade", ev.detail);
-        }
     }
 
-    beforeUpdate(() => (previousScrollHeight = messagesDiv?.scrollHeight));
+    beforeUpdate(() => {
+        previousScrollHeight = messagesDiv?.scrollHeight;
+        previousScrollTop = messagesDiv?.scrollTop;
+    });
 
     afterUpdate(() => {
         setIfInsideFromBottomThreshold();
@@ -214,14 +203,27 @@
     });
 
     function scrollBottom(behavior: ScrollBehavior = "auto") {
-        messagesDiv?.scrollTo({
-            top: 0,
-            behavior,
+        interruptScroll(() => {
+            messagesDiv?.scrollTo({
+                top: 0,
+                behavior,
+            });
         });
     }
 
+    // this *looks* crazy - but the idea is that before we programmatically scroll the messages div
+    // we set the overflow to hidden. This has the effect of immediately halting any momentum scrolling
+    // on iOS which prevents the screen going black.
+    function interruptScroll(fn: () => void): void {
+        interrupt = true;
+        fn();
+        window.setTimeout(() => (interrupt = false), 10);
+    }
+
     function scrollToElement(element: Element | null, behavior: ScrollBehavior = "auto") {
-        element?.scrollIntoView({ behavior, block: "center" });
+        interruptScroll(() => {
+            element?.scrollIntoView({ behavior, block: "center" });
+        });
     }
 
     function scrollToMention(mention: Mention | undefined) {
@@ -232,7 +234,10 @@
 
     function findMessageEvent(index: number): EventWrapper<Message> | undefined {
         return events.find(
-            (ev) => ev.event.kind === "message" && ev.event.messageIndex === index
+            (ev) =>
+                ev.event.kind === "message" &&
+                ev.event.messageIndex === index &&
+                !failedMessagesStore.contains(chat.chatId, ev.event.messageId)
         ) as EventWrapper<Message> | undefined;
     }
 
@@ -282,15 +287,32 @@
 
     function shouldLoadPreviousMessages() {
         morePrevAvailable = client.morePreviousMessagesAvailable(chat.chatId);
-        return !loadingPrev && calculateFromTop() < MESSAGE_LOAD_THRESHOLD && morePrevAvailable;
+        const insideLoadThreshold = calculateFromTop() < MESSAGE_LOAD_THRESHOLD;
+        const result = !loadingPrev && insideLoadThreshold && morePrevAvailable;
+        if (result) {
+            console.debug(
+                "SCROLL: shouldLoadPreviousMessages [loadingPrev] [insideLoadThreshold] [morePrevAvailable]",
+                loadingPrev,
+                insideLoadThreshold,
+                morePrevAvailable
+            );
+        }
+        return result;
     }
 
     function shouldLoadNewMessages() {
-        return (
-            !loadingNew &&
-            calculateFromBottom() < MESSAGE_LOAD_THRESHOLD &&
-            client.moreNewMessagesAvailable(chat.chatId)
-        );
+        const insideLoadThreshold = calculateFromBottom() < MESSAGE_LOAD_THRESHOLD;
+        const moreNewMessages = client.moreNewMessagesAvailable(chat.chatId);
+        const result = !loadingNew && insideLoadThreshold && moreNewMessages;
+        if (result) {
+            console.debug(
+                "SCROLL: shouldLoadNewMesages [loadingNew] [insideLoadThreshold] [moreNewMessages]",
+                loadingNew,
+                insideLoadThreshold,
+                moreNewMessages
+            );
+        }
+        return result;
     }
 
     let expectedScrollTop: number | undefined = undefined;
@@ -306,8 +328,10 @@
         if (!initialised) return;
 
         if (scrollLeapDetected()) {
-            console.log("scroll: position has leapt unacceptably", messagesDiv?.scrollTop);
-            messagesDiv?.scrollTo({ top: expectedScrollTop, behavior: "auto" }); // this should trigger another call to onScroll
+            console.debug("SCROLL: position has leapt unacceptably", messagesDiv?.scrollTop);
+            interruptScroll(() => {
+                messagesDiv?.scrollTo({ top: expectedScrollTop, behavior: "auto" }); // this should trigger another call to onScroll
+            });
             expectedScrollTop = undefined;
             return;
         } else {
@@ -333,18 +357,7 @@
             return;
         }
 
-        if (shouldLoadPreviousMessages()) {
-            loadingPrev = true;
-            client.loadPreviousMessages(chat.chatId);
-        }
-
-        if (shouldLoadNewMessages()) {
-            // Note - this fires even when we have entered our own message. This *seems* wrong but
-            // it is actually correct because we do want to load our own messages from the server
-            // so that any incorrect indexes are corrected and only the right thing goes in the cache
-            loadingNew = true;
-            client.loadNewMessages(chat.chatId);
-        }
+        loadMoreIfRequired(true);
 
         setIfInsideFromBottomThreshold();
     }
@@ -359,40 +372,12 @@
         return -(messagesDiv?.scrollTop ?? 0);
     }
 
-    function onSelectReaction({ message, reaction }: { message: Message; reaction: string }) {
-        if (!canReact) return;
-
-        const kind = client.containsReaction(user.userId, reaction, message.reactions)
-            ? "remove"
-            : "add";
-
-        client
-            .selectReaction(
-                chat.chatId,
-                user.userId,
-                undefined,
-                message.messageId,
-                reaction,
-                user.username,
-                kind
-            )
-            .then((success) => {
-                if (success && kind === "add") {
-                    client.trackEvent("reacted_to_message");
-                }
-            });
-    }
-
-    function onSelectReactionEv(ev: CustomEvent<{ message: Message; reaction: string }>) {
-        onSelectReaction(ev.detail);
-    }
-
     function goToMessageIndex(ev: CustomEvent<{ index: number }>) {
         doGoToMessageIndex(ev.detail.index);
     }
 
     function doGoToMessageIndex(index: number): void {
-        push(`/${chat.chatId}`);
+        page(`/${chat.chatId}`);
         scrollToMessageIndex(index, false);
     }
 
@@ -403,35 +388,6 @@
 
     function onEditEvent(ev: CustomEvent<EventWrapper<Message>>) {
         currentChatDraftMessage.setEditing(chat.chatId, ev.detail);
-    }
-
-    function onDeleteMessage(ev: CustomEvent<Message>) {
-        doDeleteMessage(ev.detail);
-    }
-
-    function doDeleteMessage(message: Message) {
-        if (!canDelete && user.userId !== message.sender) return;
-
-        client.deleteMessage(chat.chatId, undefined, message.messageId);
-    }
-
-    function onUndeleteMessage(ev: CustomEvent<Message>) {
-        doUndeleteMessage(ev.detail);
-    }
-
-    function doUndeleteMessage(message: Message) {
-        if (
-            message.content.kind !== "deleted_content" ||
-            message.content.deletedBy !== user.userId
-        ) {
-            return;
-        }
-
-        client.undeleteMessage(chat.chatId, undefined, message.messageId).then((success) => {
-            if (!success) {
-                toastStore.showFailureToast("undeleteMessageFailed");
-            }
-        });
     }
 
     function dateGroupKey(group: EventWrapper<ChatEventType>[][]): string {
@@ -447,17 +403,6 @@
         }
     }
 
-    function onBlockUser(ev: CustomEvent<{ userId: string }>) {
-        if (!canBlockUser) return;
-        client.blockUser(chat.chatId, ev.detail.userId).then((success) => {
-            if (success) {
-                toastStore.showSuccessToast("blockUserSucceeded");
-            } else {
-                toastStore.showFailureToast("blockUserFailed");
-            }
-        });
-    }
-
     function onMessageWindowLoaded(messageIndex: number | undefined) {
         if (messageIndex === undefined) return;
         tick()
@@ -466,7 +411,7 @@
                 expectedScrollTop = undefined;
                 scrollToMessageIndex(messageIndex, false, true);
             })
-            .then(loadMoreIfRequired);
+            .then(() => loadMoreIfRequired());
     }
 
     export function externalGoToMessage(messageIndex: number): void {
@@ -480,27 +425,53 @@
             .then(() => {
                 expectedScrollTop = messagesDiv?.scrollTop ?? 0;
             })
-            .then(() => (loadingPrev = false))
-            .then(loadMoreIfRequired);
+            .then(() => (loadingFromScroll = loadingPrev = false))
+            .then(() => loadMoreIfRequired());
     }
 
     function onLoadedNewMessages(newLatestMessage: boolean) {
         tick()
             .then(() => {
                 setIfInsideFromBottomThreshold();
-                if (newLatestMessage && insideFromBottomThreshold) {
-                    // only scroll if we are now within threshold from the bottom
-                    scrollBottom("smooth");
-                } else if (messagesDiv?.scrollTop === 0 && previousScrollHeight !== undefined) {
+                if (
+                    loadingFromScroll &&
+                    isSafari && // unfortunate
+                    insideFromBottomThreshold &&
+                    previousScrollHeight !== undefined &&
+                    previousScrollTop !== undefined &&
+                    messagesDiv !== undefined
+                ) {
+                    // after loading new content below the viewport, chrome, firefox and edge will automatically maintain scroll position
+                    // safari DOES NOT so we need to try to adjust it
                     const clientHeightChange = messagesDiv.scrollHeight - previousScrollHeight;
                     if (clientHeightChange > 0) {
-                        messagesDiv.scrollTop = -clientHeightChange;
-                        console.log("scrollTop updated from 0 to " + messagesDiv.scrollTop);
+                        // if the height has changed we update the scroll position to whatever it was *before* the render _minus_ the clientHeightChange
+                        interruptScroll(() => {
+                            if (messagesDiv !== undefined) {
+                                messagesDiv.scrollTop =
+                                    (previousScrollTop ?? 0) - clientHeightChange;
+                                console.debug(
+                                    "SCROLL: scrollTop updated to " + messagesDiv.scrollTop
+                                );
+
+                                // since we have adjusted scrollTop, we *also* need to re-evaluate whether we are inside the bottom threshold
+                                setIfInsideFromBottomThreshold();
+
+                                console.debug(
+                                    "SCROLL: [insideFromBottomThreshold] [shouldLoadNewMessages] ",
+                                    insideFromBottomThreshold,
+                                    shouldLoadNewMessages()
+                                );
+                            }
+                        });
                     }
+                } else if (newLatestMessage && insideFromBottomThreshold) {
+                    // only scroll if we are now within threshold from the bottom
+                    scrollBottom("smooth");
                 }
             })
-            .then(() => (loadingNew = false))
-            .then(loadMoreIfRequired);
+            .then(() => (loadingFromScroll = loadingNew = false))
+            .then(() => loadMoreIfRequired());
     }
 
     // Checks if a key already exists for this group, if so, that key will be reused so that Svelte is able to match the
@@ -512,13 +483,14 @@
             const sender = first.event.sender;
             prefix = sender + "_";
         }
-        for (const { index } of group) {
-            const key = prefix + index;
+        for (const evt of group) {
+            const key = prefix + (evt.event.kind === "message" ? evt.event.messageId : evt.index);
             if ($userGroupKeys.has(key)) {
                 return key;
             }
         }
-        const firstKey = prefix + first.index;
+        const firstKey =
+            prefix + (first.event.kind === "message" ? first.event.messageId : first.index);
         chatStateStore.updateProp(chat.chatId, "userGroupKeys", (keys) => {
             keys.add(firstKey);
             return keys;
@@ -526,8 +498,10 @@
         return firstKey;
     }
 
+    $: expandedDeletedMessages = client.expandedDeletedMessages;
+
     $: groupedEvents = client
-        .groupEvents(events, user.userId, groupInner(filteredProposals))
+        .groupEvents(events, user.userId, $expandedDeletedMessages, groupInner(filteredProposals))
         .reverse();
 
     $: {
@@ -565,13 +539,15 @@
      * Note that both loading new events and loading previous events can themselves trigger more "recursion" if
      * there *still* are not enough visible events 🤯
      */
-    function loadMoreIfRequired() {
+    function loadMoreIfRequired(fromScroll = false) {
         if (shouldLoadNewMessages()) {
             loadingNew = true;
+            loadingFromScroll = fromScroll;
             client.loadNewMessages(chat.chatId);
         }
         if (shouldLoadPreviousMessages()) {
             loadingPrev = true;
+            loadingFromScroll = fromScroll;
             client.loadPreviousMessages(chat.chatId);
         }
     }
@@ -581,6 +557,13 @@
             return !unconfirmed.contains(chat.chatId, evt.event.messageId);
         }
         return true;
+    }
+
+    function isFailed(_failed: FailedMessages, evt: EventWrapper<ChatEventType>): boolean {
+        if (evt.event.kind === "message") {
+            return failedMessagesStore.contains(chat.chatId, evt.event.messageId);
+        }
+        return false;
     }
 
     function isReadByThem(
@@ -623,50 +606,6 @@
         }
 
         return false;
-    }
-
-    function onPinMessage(ev: CustomEvent<Message>) {
-        if (!canPin) return;
-        client.pinMessage(chat.chatId, ev.detail.messageIndex).then((success) => {
-            if (!success) {
-                toastStore.showFailureToast("pinMessageFailed");
-            }
-        });
-    }
-
-    function onUnpinMessage(ev: CustomEvent<Message>) {
-        if (!canPin) return;
-        client.unpinMessage(chat.chatId, ev.detail.messageIndex).then((success) => {
-            if (!success) {
-                toastStore.showFailureToast("unpinMessageFailed");
-            }
-        });
-    }
-
-    function registerVote(
-        ev: CustomEvent<{
-            messageId: bigint;
-            messageIndex: number;
-            answerIndex: number;
-            type: "register" | "delete";
-        }>
-    ) {
-        client.registerPollVote(
-            chat.chatId,
-            undefined,
-            ev.detail.messageId,
-            ev.detail.messageIndex,
-            ev.detail.answerIndex,
-            ev.detail.type
-        );
-    }
-
-    function onShareMessage(ev: CustomEvent<Message>) {
-        shareMessage($_, user.userId, ev.detail.sender === user.userId, ev.detail);
-    }
-
-    function onCopyMessageUrl(ev: CustomEvent<Message>) {
-        copyMessageUrl(chat.chatId, ev.detail.messageIndex);
     }
 
     function isCollapsed(
@@ -719,10 +658,8 @@
         return filteredProposals?.isCollapsed(message.messageId, message.content.proposal) ?? false;
     }
 
-    function afterSendMessage(jumpingTo: number | undefined) {
-        if (jumpingTo !== undefined && jumpingTo !== null) {
-            onMessageWindowLoaded(jumpingTo);
-        } else {
+    function afterSendMessage(upToDate: boolean) {
+        if (upToDate && calculateFromBottom() < FROM_BOTTOM_THRESHOLD) {
             tick().then(() => scrollBottom("smooth"));
         }
     }
@@ -752,6 +689,7 @@
     bind:this={messagesDiv}
     bind:clientHeight={messagesDivHeight}
     class="chat-messages"
+    class:interrupt
     on:scroll={onScroll}
     id="chat-messages">
     {#each groupedEvents as dayGroup, _di (dateGroupKey(dayGroup))}
@@ -764,8 +702,10 @@
                     <ChatEvent
                         {observer}
                         focused={evt.event.kind === "message" &&
-                            evt.event.messageIndex === $focusMessageIndex}
+                            evt.event.messageIndex === $focusMessageIndex &&
+                            !isFailed($failedMessagesStore, evt)}
                         confirmed={isConfirmed(evt)}
+                        failed={isFailed($failedMessagesStore, evt)}
                         readByThem={isReadByThem(chat, $unconfirmedReadByThem, evt)}
                         readByMe={isReadByMe($messagesRead, evt)}
                         chatId={chat.chatId}
@@ -785,28 +725,21 @@
                         collapsed={isCollapsed(evt, filteredProposals)}
                         supportsEdit={true}
                         supportsReply={true}
-                        inThread={false}
+                        threadRootMessage={undefined}
                         publicGroup={chat.kind === "group_chat" && chat.public}
                         pinned={isPinned($currentChatPinnedMessages, evt)}
                         editing={$currentChatEditingEvent === evt}
                         on:chatWith
                         on:replyTo={replyTo}
                         on:replyPrivatelyTo
-                        on:deleteMessage={onDeleteMessage}
-                        on:undeleteMessage={onUndeleteMessage}
                         on:editEvent={onEditEvent}
                         on:goToMessageIndex={goToMessageIndex}
-                        on:selectReaction={onSelectReactionEv}
-                        on:blockUser={onBlockUser}
-                        on:pinMessage={onPinMessage}
-                        on:unpinMessage={onUnpinMessage}
-                        on:registerVote={registerVote}
-                        on:copyMessageUrl={onCopyMessageUrl}
-                        on:shareMessage={onShareMessage}
                         on:expandMessage={() => toggleMessageExpansion(evt, true)}
                         on:collapseMessage={() => toggleMessageExpansion(evt, false)}
                         on:upgrade
                         on:forward
+                        on:retrySend={retrySend}
+                        on:expandDeletedMessages={expandDeletedMessages}
                         event={evt} />
                 {/each}
             {/each}
@@ -823,7 +756,8 @@
             <div class="big-avatar">
                 <Avatar
                     url={client.userAvatarUrl($userStore[chat.them])}
-                    size={AvatarSize.ExtraLarge} />
+                    userId={chat.them}
+                    size={AvatarSize.Large} />
             </div>
         {/if}
     {/if}
@@ -926,6 +860,10 @@
     .chat-messages {
         @include message-list();
         background-color: var(--currentChat-msgs-bg);
+
+        &.interrupt {
+            overflow-y: hidden;
+        }
     }
 
     .big-avatar {

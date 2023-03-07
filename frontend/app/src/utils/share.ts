@@ -205,7 +205,7 @@ async function buildShareFromMessage(
             text += content.caption;
         }
 
-        const transactionUrl = buildTransactionUrl(content);
+        const transactionUrl = buildTransactionUrl(content.transfer);
         if (transactionUrl !== undefined) {
             if (text !== undefined) {
                 text += "\n\n";
@@ -256,7 +256,7 @@ export function buildMessageUrl(
     messageIndex: number,
     threadRootMessageIndex?: number
 ): string {
-    const chatUrl = `${window.location.origin}/#/${chatId}/`;
+    const chatUrl = `${window.location.origin}/${chatId}/`;
     return threadRootMessageIndex === undefined
         ? `${chatUrl}${messageIndex}`
         : `${chatUrl}${threadRootMessageIndex}/${messageIndex}`;

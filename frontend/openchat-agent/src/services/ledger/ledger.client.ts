@@ -3,8 +3,8 @@ import { idlFactory, LedgerService } from "./candid/idl";
 import { CandidService } from "../candidService";
 import type { ILedgerClient } from "./ledger.client.interface";
 import type { Tokens } from "openchat-shared";
-import { hexStringToBytes, identity } from "../../utils/mapping";
 import type { AgentConfig } from "../../config";
+import { Principal } from "@dfinity/principal";
 
 export class LedgerClient extends CandidService implements ILedgerClient {
     private service: LedgerService;
@@ -19,10 +19,10 @@ export class LedgerClient extends CandidService implements ILedgerClient {
         return new LedgerClient(identity, config, canisterId);
     }
 
-    accountBalance(accountIdentifier: string): Promise<Tokens> {
+    accountBalance(principal: string): Promise<Tokens> {
         return this.handleResponse(
-            this.service.account_balance({ account: hexStringToBytes(accountIdentifier) }),
-            identity
+            this.service.icrc1_balance_of({ owner: Principal.fromText(principal), subaccount: [] }),
+            (e8s) => { return { e8s }; }
         );
     }
 }

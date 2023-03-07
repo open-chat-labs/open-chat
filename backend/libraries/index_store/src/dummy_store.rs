@@ -1,28 +1,32 @@
 use crate::IndexStore;
 use async_trait::async_trait;
 use futures::lock::Mutex;
-use types::Error;
+use std::collections::HashMap;
+use types::{CanisterId, Error};
 
 pub struct DummyStore {
-    index_processed_up_to: Mutex<Option<u64>>,
+    indexes_processed_up_to: Mutex<HashMap<CanisterId, u64>>,
 }
 
 impl DummyStore {
-    pub fn new(initial_index: Option<u64>) -> DummyStore {
+    pub fn new(indexes: HashMap<CanisterId, u64>) -> DummyStore {
         DummyStore {
-            index_processed_up_to: Mutex::new(initial_index),
+            indexes_processed_up_to: Mutex::new(indexes),
         }
     }
 }
 
 #[async_trait]
 impl IndexStore for DummyStore {
-    async fn get(&self) -> Result<Option<u64>, Error> {
-        Ok(*self.index_processed_up_to.lock().await)
+    async fn get(&self, canister_id: CanisterId) -> Result<Option<u64>, Error> {
+        Ok(self.indexes_processed_up_to.lock().await.get(&canister_id).copied())
     }
 
-    async fn set(&self, notification_index: u64) -> Result<(), Error> {
-        *self.index_processed_up_to.lock().await = Some(notification_index);
+    async fn set(&self, canister_id: CanisterId, notification_index: u64) -> Result<(), Error> {
+        self.indexes_processed_up_to
+            .lock()
+            .await
+            .insert(canister_id, notification_index);
         Ok(())
     }
 }

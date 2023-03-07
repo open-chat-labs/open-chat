@@ -69,17 +69,18 @@ const defaultGroupChat: GroupChatSummary = {
     archived: false,
     previewed: false,
     frozen: false,
+    dateLastPinned: undefined,
+    dateReadPinned: undefined,
 };
 
-function createUser(userId: string, username: string, seconds: number): PartialUserSummary {
-    const now = Date.now();
+function createUser(userId: string, username: string): PartialUserSummary {
     return {
         kind: "user",
         userId,
         username,
-        lastOnline: now - seconds * 1000,
         updated: BigInt(0),
         suspended: false,
+        diamond: false,
     };
 }
 
@@ -100,6 +101,7 @@ describe("thread utils", () => {
                             reactions: [],
                             edited: false,
                             forwarded: false,
+                            deleted: false,
                         },
                     },
                 ],
@@ -317,25 +319,25 @@ describe("get members string for group chat", () => {
     const withUnknown = ["a", "b", "x", "d", "z"];
     const withMoreThanSix = ["a", "b", "c", "d", "e", "f", "g", "z"];
     const lookup: UserLookup = {
-        a: createUser("a", "Mr A", 200),
-        b: createUser("b", "Mr B", 20),
-        c: createUser("c", "Mr C", 20),
-        d: createUser("d", "Mr D", 20),
-        e: createUser("e", "Mr E", 10),
-        f: createUser("f", "Mr F", 10),
-        g: createUser("g", "Mr G", 10),
-        z: createUser("z", "Mr Z", 10),
+        a: createUser("a", "Mr A"),
+        b: createUser("b", "Mr B"),
+        c: createUser("c", "Mr C"),
+        d: createUser("d", "Mr D"),
+        e: createUser("e", "Mr E"),
+        f: createUser("f", "Mr F"),
+        g: createUser("g", "Mr G"),
+        z: createUser("z", "Mr Z"),
     };
 
     const user = lookup.z as UserSummary;
 
     test("up to five members get listed", () => {
         const members = getMembersString(user, lookup, withFewerThanSix, "Unknown User", "You");
-        expect(members).toEqual("**Mr B**, **Mr C**, **Mr D**, **You** and **Mr A**");
+        expect(members).toEqual("**Mr A**, **Mr B**, **Mr C**, **Mr D** and **You**");
     });
     test("with unknown users", () => {
         const members = getMembersString(user, lookup, withUnknown, "Unknown User", "You");
-        expect(members).toEqual("**Mr B**, **Mr D**, **You**, **Mr A** and **Unknown User**");
+        expect(members).toEqual("**Mr A**, **Mr B**, **Mr D**, **You** and **Unknown User**");
     });
     test("with more than 5 members", () => {
         const members = getMembersString(user, lookup, withMoreThanSix, "Unknown User", "You");

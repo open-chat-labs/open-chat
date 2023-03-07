@@ -1,5 +1,5 @@
 use crate::{read_state, Data, RuntimeState};
-use chat_events::ChatEventInternal;
+use chat_events::{ChatEventInternal, Reader};
 use group_canister::selected_updates::{Response::*, *};
 use ic_cdk_macros::query;
 use std::collections::HashSet;
@@ -11,12 +11,17 @@ fn selected_updates(args: Args) -> Response {
 }
 
 fn selected_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
-    if !runtime_state.is_caller_participant() {
-        return CallerNotInGroup;
-    }
+    let caller = runtime_state.env.caller();
+    let participant = match runtime_state.data.participants.get(caller) {
+        Some(p) => p,
+        None => return CallerNotInGroup,
+    };
 
+    let min_visible_event_index = participant.min_visible_event_index();
+    let now = runtime_state.env.now();
     let data = &runtime_state.data;
-    let latest_event_index = data.events.main().last().index;
+    let events_reader = data.events.visible_main_events_reader(min_visible_event_index, now);
+    let latest_event_index = events_reader.latest_event_index().unwrap();
 
     if latest_event_index <= args.updates_since {
         return SuccessNoUpdates(latest_event_index);
@@ -39,7 +44,7 @@ fn selected_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     };
 
     // Iterate through the new events starting from most recent
-    for event_wrapper in data.events.main().since(args.updates_since).iter().rev() {
+    for event_wrapper in events_reader.iter(None, false).take_while(|e| e.index > args.updates_since) {
         match &event_wrapper.event {
             ChatEventInternal::OwnershipTransferred(e) => {
                 user_updates_handler.mark_participant_updated(&mut result, e.old_owner, false);

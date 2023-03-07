@@ -1,7 +1,10 @@
 <script lang="ts">
     import { createEventDispatcher, onMount, tick } from "svelte";
     import { fade } from "svelte/transition";
-    import Link from "./Link.svelte";
+    import Button from "./Button.svelte";
+    import Close from "svelte-material-icons/Close.svelte";
+    import { _ } from "svelte-i18n";
+    import HoverIcon from "./HoverIcon.svelte";
     import { rtlStore } from "../stores/rtl";
     import { logger } from "../utils/logging";
     import { mobileWidth } from "../stores/screenDimensions";
@@ -19,6 +22,8 @@
     export let fitToContent: boolean = false;
     export let alignTo: DOMRect | undefined = undefined;
     export let actualWidth: number = 0;
+    export let closeIcon: boolean = false;
+    export let square: boolean = false;
 
     let divElement: HTMLElement;
 
@@ -31,6 +36,7 @@
                 await tick();
                 calculatePosition();
             }
+            tick().then(() => (actualWidth = divElement?.clientWidth));
         } catch (e: any) {
             logger.error("Failed to open modal", e);
             onClose();
@@ -59,9 +65,9 @@
 
 <div
     bind:this={divElement}
-    bind:clientWidth={actualWidth}
     {style}
     class="modal-content"
+    class:square
     class:large
     in:fade={{ duration: fadeDuration, delay: fadeDelay }}
     out:fade={{ duration: fadeDuration }}
@@ -73,6 +79,13 @@
             <h4>
                 <slot name="header" />
             </h4>
+            {#if closeIcon}
+                <span title={$_("close")} class="close" on:click={onClose}>
+                    <HoverIcon>
+                        <Close size={"1em"} color={"var(--icon-txt)"} />
+                    </HoverIcon>
+                </span>
+            {/if}
         </div>
     {/if}
     <div class="body" class:fill>
@@ -81,7 +94,9 @@
     {#if !hideFooter}
         <div class="footer" class:rtl={$rtlStore} class:compact={compactFooter}>
             <slot name="footer">
-                <Link on:click={onClose}>Close</Link>
+                <Button on:click={onClose} small={!$mobileWidth} tiny={$mobileWidth}>
+                    {$_("close")}
+                </Button>
             </slot>
         </div>
     {/if}
@@ -95,6 +110,13 @@
         justify-content: space-between;
         background: var(--modal-bg);
         border: var(--modal-bd);
+        border-radius: $sp4;
+        position: relative;
+
+        &.square {
+            border-radius: $sp3;
+        }
+
         @include mobile() {
             &:not(.fit_to_content) {
                 width: 100%;
@@ -119,16 +141,18 @@
         }
     }
     .header {
-        padding: $sp4;
-        border-bottom: 1px solid var(--bd);
+        @include font(bold, normal, fs-130, 29);
+        padding: $sp4 $sp5;
         @include mobile() {
+            @include font(bold, normal, fs-120, 29);
+            padding: $sp3 $sp4;
             border-radius: $sp4 $sp4 0 0;
         }
     }
 
     .body {
         flex: 1;
-        padding: $sp4;
+        padding: $sp4 $sp5;
         overflow-y: auto;
         @include nice-scrollbar();
 
@@ -137,21 +161,27 @@
         }
 
         @include mobile() {
-            padding: $sp3;
+            padding: $sp3 $sp4;
         }
     }
     .footer {
-        padding: $sp4;
+        padding: $sp4 $sp5 $sp5 $sp5;
         &.compact {
-            padding: $sp3 $sp4;
+            padding: $sp3 $sp4 $sp4 $sp4;
         }
-        border-top: 1px solid var(--bd);
         text-align: right;
         @include mobile() {
+            padding: $sp3 $sp4 $sp4 $sp4;
             border-radius: 0;
         }
         &.rtl {
             text-align: left;
         }
+    }
+
+    .close {
+        position: absolute;
+        top: $sp3;
+        right: $sp3;
     }
 </style>

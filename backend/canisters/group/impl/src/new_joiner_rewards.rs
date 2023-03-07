@@ -29,7 +29,7 @@ pub async fn process_new_joiner_reward(
             timestamp_nanos: now * 1000 * 1000,
         }),
     };
-    let transaction_hash = calculate_transaction_hash(this_canister_id.into(), &transfer_args);
+    let transaction_hash = calculate_transaction_hash(this_canister_id, &transfer_args);
 
     match ic_ledger_types::transfer(ledger_canister_id, transfer_args).await {
         Ok(Ok(block_index)) => {
@@ -55,11 +55,11 @@ pub async fn process_new_joiner_reward(
         }
         Ok(Err(error)) => {
             error!(?user_id, ?amount, ?error, "Unable to transfer user reward");
-            mutate_state(|state| update_status(&user_id, NewJoinerRewardStatus::Failed(format!("{:?}", error)), state));
+            mutate_state(|state| update_status(&user_id, NewJoinerRewardStatus::Failed(format!("{error:?}")), state));
         }
         Err(error) => {
             error!(?user_id, ?amount, ?error, "Unable to transfer user reward");
-            mutate_state(|state| update_status(&user_id, NewJoinerRewardStatus::Failed(format!("{:?}", error)), state));
+            mutate_state(|state| update_status(&user_id, NewJoinerRewardStatus::Failed(format!("{error:?}")), state));
         }
     }
 }
@@ -78,7 +78,7 @@ fn send_reward_transferred_message(
     runtime_state.data.events.push_message(PushMessageArgs {
         sender: OPENCHAT_BOT_USER_ID,
         thread_root_message_index: None,
-        message_id: MessageId::generate(|| runtime_state.env.random_u32()),
+        message_id: MessageId::generate(runtime_state.env.rng()),
         content: MessageContentInternal::Crypto(CryptoContent {
             recipient: user_id,
             transfer: CryptoTransaction::Completed(CompletedCryptoTransaction::NNS(transfer)),

@@ -5,36 +5,33 @@
     import "../utils/markdown";
     import { rtlStore } from "../stores/rtl";
     import { _ } from "svelte-i18n";
-    import Router, { location } from "svelte-spa-router";
-    import { routes } from "../routes";
+    import Router from "./Router.svelte";
+    import { location, notFound } from "../routes";
     import SwitchDomain from "./SwitchDomain.svelte";
     import Upgrading from "./upgrading/Upgrading.svelte";
-    import Loading from "./Loading.svelte";
     import UpgradeBanner from "./UpgradeBanner.svelte";
     import { mobileOperatingSystem } from "../utils/devices";
-    import { snowing } from "../stores/snow";
     import { themeStore } from "../theme/themes";
     import "../stores/fontSize";
     import Profiler from "./Profiler.svelte";
-    import { CreatedUser, OpenChat, SessionExpiryError } from "openchat-client";
+    import { OpenChat, SessionExpiryError } from "openchat-client";
     import {
         isCanisterUrl,
         isLandingPageRoute,
         isScrollingRoute,
         redirectLandingPageLinksIfNecessary,
+        removeQueryStringParam,
     } from "../utils/urls";
     import { logger } from "../utils/logging";
-    import Snow from "./Snow.svelte";
-    import LandingPage from "./landingpages/LandingPage.svelte";
+    import page from "page";
 
     let viewPortContent = "width=device-width, initial-scale=1";
-    let referredBy: string | undefined = undefined;
 
     function createOpenChatClient(): OpenChat {
         return new OpenChat({
             icUrl: process.env.IC_URL,
             iiDerivationOrigin: process.env.II_DERIVATION_ORIGIN,
-            openStorageIndexCanister: process.env.OPEN_STORAGE_INDEX_CANISTER!,
+            openStorageIndexCanister: process.env.STORAGE_INDEX_CANISTER!,
             groupIndexCanister: process.env.GROUP_INDEX_CANISTER!,
             notificationsCanister: process.env.NOTIFICATIONS_CANISTER!,
             onlineCanister: process.env.ONLINE_CANISTER!,
@@ -42,10 +39,10 @@
             internetIdentityUrl: process.env.INTERNET_IDENTITY_URL!,
             nfidUrl: process.env.NFID_URL!,
             ledgerCanisterICP: process.env.LEDGER_CANISTER_ICP!,
+            ledgerCanisterSNS1: process.env.LEDGER_CANISTER_SNS1!,
             ledgerCanisterBTC: process.env.LEDGER_CANISTER_BTC!,
             ledgerCanisterCHAT: process.env.LEDGER_CANISTER_CHAT!,
             userGeekApiKey: process.env.USERGEEK_APIKEY!,
-            enableMultiCrypto: Boolean(process.env.ENABLE_MULTI_CRYPTO),
             blobUrlPattern: process.env.BLOB_URL_PATTERN!,
             proposalBotCanister: process.env.PROPOSALS_BOT_CANISTER!,
             i18nFormatter: $_,
@@ -63,38 +60,107 @@
     $: identityState = client.identityState;
     $: landingPage = isLandingPageRoute($location);
 
-    function getReferralCode(): string | undefined {
-        const qsParam = new URLSearchParams(window.location.search).get("ref") ?? undefined;
-        const lsParam = localStorage.getItem("openchat_referredby") ?? undefined;
-        return qsParam ?? lsParam;
-    }
-
     onMount(() => {
         redirectLandingPageLinksIfNecessary();
-        referredBy = getReferralCode();
+        if (client.captureReferralCode()) {
+            page.replace(removeQueryStringParam("ref"));
+        }
         if (mobileOperatingSystem === "iOS") {
             viewPortContent += ", maximum-scale=1";
         }
         calculateHeight();
         window.addEventListener("orientationchange", calculateHeight);
         window.addEventListener("unhandledrejection", unhandledError);
+        (<any>window).platformModerator = { addHotGroupExclusion, deleteFrozenGroup, freezeGroup, removeHotGroupExclusion, unfreezeGroup };
     });
+
+    function addHotGroupExclusion(chatId: string): void {
+        client
+            .addHotGroupExclusion(chatId)
+            .then((success) => {
+                if (success) {
+                    console.log("Hot group exclusion added", chatId);
+                } else {
+                    console.log("Failed to add hot group exclusion", chatId);
+                }
+            })
+            .catch((e) => {
+                console.log("Failed to add hot group exclusion", e);
+            });
+    }
+
+    function deleteFrozenGroup(chatId: string): void {
+        client
+            .deleteFrozenGroup(chatId)
+            .then((success) => {
+                if (success) {
+                    console.log("Group deleted", chatId);
+                } else {
+                    console.log("Failed to delete frozen group", chatId);
+                }
+            })
+            .catch((e) => {
+                console.log("Failed to delete frozen group", e);
+            });
+    }
+
+    function freezeGroup(chatId: string, reason: string | undefined): void {
+        client
+            .freezeGroup(chatId, reason)
+            .then((success) => {
+                if (success) {
+                    console.log("Group frozen", chatId);
+                } else {
+                    console.log("Failed to freeze group", chatId);
+                }
+            })
+            .catch((e) => {
+                console.log("Failed to freeze group", e);
+            });
+    }
+
+    function removeHotGroupExclusion(chatId: string): void {
+        client
+            .removeHotGroupExclusion(chatId)
+            .then((success) => {
+                if (success) {
+                    console.log("Hot group exclusion removed", chatId);
+                } else {
+                    console.log("Failed to remove hot group exclusion", chatId);
+                }
+            })
+            .catch((e) => {
+                console.log("Failed to remove hot group exclusion", e);
+            });
+    }
+
+    function unfreezeGroup(chatId: string): void {
+        client
+            .unfreezeGroup(chatId)
+            .then((success) => {
+                if (success) {
+                    console.log("Group unfrozen", chatId);
+                } else {
+                    console.log("Failed to unfreeze group", chatId);
+                }
+            })
+            .catch((e) => {
+                console.log("Failed to unfreeze group", e);
+            });
+    }
 
     $: {
         if (
-            landingPage ||
-            $identityState === "requires_login" ||
-            $identityState === "logging_in" ||
-            $identityState === "registering"
+            !$notFound &&
+            (landingPage ||
+                $identityState === "requires_login" ||
+                $identityState === "logging_in" ||
+                $identityState === "registering")
         ) {
             document.body.classList.add("landing-page");
         } else {
             document.body.classList.remove("landing-page");
         }
-    }
-
-    function registeredUser(ev: CustomEvent<CreatedUser>) {
-        client.onCreatedUser(ev.detail);
     }
 
     function calculateHeight() {
@@ -116,8 +182,6 @@
         }
     }
 
-    const allRoutes = routes(() => client.logout());
-
     let isFirefox = navigator.userAgent.indexOf("Firefox") >= 0;
     $: burstPath = $themeStore.name === "dark" ? "../assets/burst_dark" : "../assets/burst_light";
     $: burstUrl = isFirefox ? `${burstPath}.png` : `${burstPath}.svg`;
@@ -137,20 +201,10 @@
 
 {#if isCanisterUrl}
     <SwitchDomain />
-{:else if $identityState === "requires_login" || $identityState === "logging_in" || $identityState === "registering"}
-    <LandingPage
-        {referredBy}
-        on:login={() => client.login()}
-        on:logout={() => client.logout()}
-        on:createdUser={registeredUser} />
-{:else if $identityState === "logged_in"}
-    <Router routes={allRoutes} />
 {:else if $identityState === "upgrading_user" || $identityState === "upgrade_user"}
     <Upgrading />
-{:else}
-    <div class="loading">
-        <Loading />
-    </div>
+{:else if $identityState === "requires_login" || $identityState === "logging_in" || $identityState === "registering" || $identityState === "logged_in" || $identityState === "loading_user"}
+    <Router />
 {/if}
 
 {#if profileTrace}
@@ -158,10 +212,6 @@
 {/if}
 
 <UpgradeBanner />
-
-{#if $snowing}
-    <Snow />
-{/if}
 
 <svelte:window on:resize={calculateHeight} on:error={unhandledError} />
 
@@ -350,6 +400,7 @@
 
         :root {
             --bg: #121212;
+            --prize: #f79413;
         }
 
         body {
@@ -443,10 +494,5 @@
             background-size: 800px;
             background-position: left 0 top toRem(150);
         }
-    }
-
-    .loading {
-        height: 100vh;
-        width: 100vw;
     }
 </style>

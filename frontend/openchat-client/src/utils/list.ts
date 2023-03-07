@@ -20,7 +20,7 @@ export function groupWhile<T>(predicate: (a1: T, a2: T) => boolean, items: T[]):
     return grouped;
 }
 
-export function groupBy<T, K>(items: T[], keySelector: (item: T) => K): Map<K, T[]> {
+export function groupBy<T, K>(items: Iterable<T>, keySelector: (item: T) => K): Map<K, T[]> {
     const grouped = new Map<K, T[]>();
     for (const item of items) {
         const key = keySelector(item);

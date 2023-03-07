@@ -7,28 +7,90 @@
     export let label: string | undefined;
     export let toggle: boolean = false;
     export let small: boolean = false; // only applies to toggles
+    export let align: "center" | "start" = "center";
 </script>
 
-<div class="checkbox" class:toggle class:waiting class:disabled class:rtl={$rtlStore}>
+<div
+    class="checkbox"
+    class:toggle
+    class:waiting
+    class:disabled
+    class:rtl={$rtlStore}
+    class:align-start={align === "start"}>
     <input {id} type="checkbox" bind:checked {disabled} on:change />
-    <label class:small for={id}>{label}</label>
+    <label class:small for={id}>
+        <slot>
+            {label}
+        </slot>
+    </label>
 </div>
 
 <style type="text/scss">
     $size: 32px;
     $size-small: 21px;
 
+    :root {
+        --color: var(--input-accent);
+    }
+
     // todo - this will have rtl issues at the moment
 
     input {
         margin: 0;
         margin-right: toRem(12);
+        width: 1.5em;
+        height: 1.5rem;
+        accent-color: var(--color);
+        appearance: none;
+        background-color: transparent;
+        margin: 0;
+        cursor: pointer;
+
+        font: inherit;
+        color: currentColor;
+        width: 1.15em;
+        height: 1.15em;
+        border: 1px solid currentColor;
+        transform: translateY(-0.075em);
+
+        display: grid;
+        place-content: center;
+    }
+
+    input[type="checkbox"]::before {
+        content: "";
+        width: 0.65em;
+        height: 0.65em;
+        transform: scale(0);
+        transition: 120ms transform ease-in-out;
+        box-shadow: inset 1em 1em var(--color);
+        transform-origin: bottom left;
+        clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+    }
+
+    input[type="checkbox"]:checked::before {
+        transform: scale(1);
+    }
+
+    input[type="checkbox"]:disabled {
+        --color: var(--txt-light);
+        color: var(--txt-light);
+        cursor: not-allowed;
     }
 
     .checkbox {
         display: flex;
         align-items: center;
         cursor: pointer;
+        gap: $sp4;
+
+        &.align-start {
+            align-items: flex-start;
+
+            input {
+                margin-top: 3px;
+            }
+        }
 
         &.rtl input {
             margin-left: toRem(12);
@@ -39,6 +101,7 @@
     label {
         flex: 1;
         user-select: none;
+        cursor: pointer;
     }
 
     .toggle {

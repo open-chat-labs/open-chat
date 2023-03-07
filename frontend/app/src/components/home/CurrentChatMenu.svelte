@@ -19,11 +19,12 @@
     import { iconSize } from "../../stores/iconSize";
     import { _ } from "svelte-i18n";
     import type { ChatSummary, OpenChat } from "openchat-client";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { createEventDispatcher, getContext, onMount } from "svelte";
     import { notificationsSupported } from "../../utils/notifications";
     import { toastStore } from "../../stores/toast";
     import { mobileWidth } from "../../stores/screenDimensions";
     import { rightPanelHistory } from "../../stores/rightPanel";
+    import { rtlStore } from "../../stores/rtl";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -34,6 +35,7 @@
     export let hasPinned: boolean;
     export let unreadMessages: number;
 
+    $: messagesRead = client.messagesRead;
     $: isProposalGroup = client.isProposalGroup;
     $: userId = selectedChatSummary.kind === "direct_chat" ? selectedChatSummary.them : "";
     $: userStore = client.userStore;
@@ -45,6 +47,23 @@
     $: membersSelected = lastState.kind === "show_members";
     $: addMembersSelected = lastState.kind === "add_members";
     $: desktop = !$mobileWidth;
+
+    let hasUnreadPinned = false;
+
+    $: {
+        setUnreadPinned(hasPinned, selectedChatSummary);
+    }
+
+    onMount(() => {
+        return messagesRead.subscribe(() => setUnreadPinned(hasPinned, selectedChatSummary));
+    });
+
+    function setUnreadPinned(hasPinned: boolean, chat: ChatSummary) {
+        hasUnreadPinned =
+            hasPinned &&
+            chat.kind === "group_chat" &&
+            client.unreadPinned(chat.chatId, chat.dateLastPinned);
+    }
 
     function toggleMuteNotifications(mute: boolean) {
         dispatch("toggleMuteNotifications", { chatId: selectedChatSummary.chatId, mute });
@@ -67,7 +86,7 @@
     }
 
     function showMembers() {
-        dispatch("showMembers");
+        dispatch("showMembers", true);
     }
 
     function markAllRead() {
@@ -87,7 +106,7 @@
     }
 
     function addMembers() {
-        dispatch("addMembers");
+        dispatch("addMembers", true);
     }
 
     function leaveGroup() {
@@ -127,39 +146,56 @@
 
 {#if desktop}
     {#if $isProposalGroup}
-        <HoverIcon on:click={showProposalFilters}>
-            <FilterOutline size={$iconSize} color={"var(--icon-txt)"} />
-        </HoverIcon>
+        <span on:click={showProposalFilters}>
+            <HoverIcon>
+                <FilterOutline size={$iconSize} color={"var(--icon-txt)"} />
+            </HoverIcon>
+        </span>
     {/if}
-    <HoverIcon title={$_("searchChat")} on:click={searchChat}>
-        <Magnify size={$iconSize} color={"var(--icon-txt)"} />
-    </HoverIcon>
+    <span on:click={searchChat}>
+        <HoverIcon title={$_("searchChat")}>
+            <Magnify size={$iconSize} color={"var(--icon-txt)"} />
+        </HoverIcon>
+    </span>
 
     {#if hasPinned}
-        <HoverIcon title={$_("showPinned")} on:click={showPinned}>
-            <Pin
-                size={$iconSize}
-                color={pinnedSelected ? "var(--icon-selected)" : "var(--icon-txt)"} />
-        </HoverIcon>
+        <span on:click={showPinned}>
+            <HoverIcon title={$_("showPinned")}>
+                <div
+                    class="pin"
+                    class:unread={!pinnedSelected && hasUnreadPinned}
+                    class:rtl={$rtlStore}>
+                    <Pin
+                        size={$iconSize}
+                        color={pinnedSelected ? "var(--icon-selected)" : "var(--icon-txt)"} />
+                </div>
+            </HoverIcon>
+        </span>
     {/if}
 
     {#if selectedChatSummary.kind === "group_chat"}
-        <HoverIcon title={$_("groupDetails")} on:click={showGroupDetails}>
-            <FileDocument
-                size={$iconSize}
-                color={groupDetailsSelected ? "var(--icon-selected)" : "var(--icon-txt)"} />
-        </HoverIcon>
-        <HoverIcon title={$_("members")} on:click={showMembers}>
-            <AccountMultiple
-                size={$iconSize}
-                color={membersSelected ? "var(--icon-selected)" : "var(--icon-txt)"} />
-        </HoverIcon>
-        {#if client.canAddMembers(selectedChatSummary.chatId)}
-            <HoverIcon title={$_("addMembers")} on:click={addMembers}>
-                <AccountMultiplePlus
+        <span on:click={showGroupDetails}>
+            <HoverIcon title={$_("groupDetails")}>
+                <FileDocument
                     size={$iconSize}
-                    color={addMembersSelected ? "var(--icon-selected)" : "var(--icon-txt)"} />
+                    color={groupDetailsSelected ? "var(--icon-selected)" : "var(--icon-txt)"} />
             </HoverIcon>
+        </span>
+        <span on:click={showMembers}>
+            <HoverIcon title={$_("members")}>
+                <AccountMultiple
+                    size={$iconSize}
+                    color={membersSelected ? "var(--icon-selected)" : "var(--icon-txt)"} />
+            </HoverIcon>
+        </span>
+        {#if client.canAddMembers(selectedChatSummary.chatId)}
+            <span on:click={addMembers}>
+                <HoverIcon title={$_("addMembers")}>
+                    <AccountMultiplePlus
+                        size={$iconSize}
+                        color={addMembersSelected ? "var(--icon-selected)" : "var(--icon-txt)"} />
+                </HoverIcon>
+            </span>
         {/if}
     {/if}
 {/if}
@@ -193,8 +229,10 @@
                             <MenuItem on:click={showPinned}>
                                 <Pin
                                     size={$iconSize}
-                                    color={"var(--icon-inverted-txt)"}
-                                    slot="icon" />
+                                    color={hasUnreadPinned
+                                        ? "var(--icon-selected)"
+                                        : "var(--icon-inverted-txt)"} />
+                                slot="icon" />
                                 <div slot="text">{$_("showPinned")}</div>
                             </MenuItem>
                         {/if}
@@ -353,5 +391,29 @@
 <style type="text/scss">
     .menu {
         flex: 0 0 20px;
+    }
+
+    $dot-size: 9px;
+
+    .pin {
+        position: relative;
+        display: grid;
+        align-content: center;
+
+        &.unread::after {
+            content: "";
+            width: $dot-size;
+            height: $dot-size;
+            background-color: var(--accent);
+            border-radius: 50%;
+            position: absolute;
+            bottom: -$sp2;
+            right: -$sp2;
+        }
+
+        &.unread.rtl::after {
+            left: -$sp2;
+            right: auto;
+        }
     }
 </style>

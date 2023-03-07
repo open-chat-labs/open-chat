@@ -2,64 +2,49 @@
     import Avatar from "./Avatar.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import { createEventDispatcher, getContext } from "svelte";
-    import type { OpenChat, UserSummary } from "openchat-client";
-    import { AvatarSize, UserStatus } from "openchat-client";
+    import type { OpenChat, PartialUserSummary } from "openchat-client";
+    import { AvatarSize } from "openchat-client";
     const dispatch = createEventDispatcher();
 
     const client = getContext<OpenChat>("client");
 
-    export let mode: "add" | "edit";
-    export let user: UserSummary;
+    export let user: PartialUserSummary;
 
     function deleteUser() {
         dispatch("deleteUser", user);
     }
 </script>
 
-<div class="pill" class:add={mode === "add"} class:edit={mode === "edit"}>
+<div class="user-pill" title={user.username}>
     <div class="avatar">
-        <Avatar url={client.userAvatarUrl(user)} status={UserStatus.None} size={AvatarSize.Small} />
+        <Avatar url={client.userAvatarUrl(user)} userId={user.userId} size={AvatarSize.Small} />
     </div>
-    <div class="username">{user.username}</div>
-    <div on:click={deleteUser} class="delete">
-        <Close size={"1em"} color={"#fff"} />
-    </div>
+    <span class="username">{`@${user.username}`}</span>
+    <span class="close" on:click={deleteUser}>
+        <Close size={"1.2em"} color={"var(--button-txt)"} />
+    </span>
 </div>
 
 <style type="text/scss">
-    .pill {
-        position: relative;
-        margin-bottom: $sp4;
-        margin-right: $sp3;
-        display: inline-block;
-        width: 60px;
-
-        &.edit {
-            color: var(--findUser-edit-pill-txt);
-        }
-
-        &.add {
-            color: var(--findUser-add-pill-txt);
-        }
+    .user-pill {
+        background: var(--button-bg);
+        color: var(--button-txt);
+        display: inline-flex;
+        padding: $sp2 $sp3;
+        align-items: center;
+        border-radius: $sp2;
+        gap: $sp2;
+        @include box-shadow(1);
 
         .username {
-            @include ellipsis();
-            text-align: center;
+            flex: auto;
+            padding: $sp3;
         }
 
-        .delete {
-            position: absolute;
-            top: 0;
-            right: 10px;
+        .close {
             cursor: pointer;
             width: 20px;
-            height: 20px;
-            color: #fff;
-            background-color: var(--accent);
-            border-radius: 50%;
             display: flex;
-            justify-content: center;
-            align-items: center;
         }
     }
 </style>

@@ -3,6 +3,7 @@
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import { now } from "../../stores/time";
+    import type { DirectChatSummary } from "openchat-shared";
 
     const client = getContext<OpenChat>("client");
     export let chat: ChatSummary;
@@ -11,14 +12,24 @@
     $: userId = chat.kind === "direct_chat" ? chat.them : "";
     $: isBot = $userStore[userId]?.kind === "bot";
     $: isSuspended = $userStore[userId]?.suspended ?? false;
+    $: subtext = isSuspended ? $_("accountSuspended") : "";
+    $: checkLastOnline = !isSuspended && !isBot && chat.kind === "direct_chat";
+
+    $: {
+        if (checkLastOnline && chat.kind === "direct_chat") {
+            client.getLastOnlineDate(chat.them, $now).then((lastOnline) => {
+                if (lastOnline !== undefined && lastOnline !== 0) {
+                    subtext = client.formatLastOnlineDate($_, $now, lastOnline);
+                } else {
+                    subtext = "";
+                }
+            });
+        }
+    }
 </script>
 
 {#if chat.kind === "direct_chat"}
-    {isSuspended
-        ? $_("accountSuspended")
-        : isBot
-        ? ""
-        : client.formatLastOnlineDate($_, $now, $userStore[chat.them])}
+    {subtext}
 {:else if chat.kind === "group_chat"}
     <div class="wrapper">
         <div class="visibility">

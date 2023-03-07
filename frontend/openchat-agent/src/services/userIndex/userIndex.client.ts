@@ -3,22 +3,20 @@ import { Principal } from "@dfinity/principal";
 import { idlFactory, UserIndexService } from "./candid/idl";
 import type {
     CheckUsernameResponse,
-    ConfirmPhoneNumberResponse,
     CurrentUserResponse,
-    SubmitPhoneNumberResponse,
     SetUsernameResponse,
-    PhoneNumber,
-    ResendCodeResponse,
     UsersArgs,
     UsersResponse,
     UserSummary,
     RegisterUserResponse,
-    UpgradeStorageResponse,
     ChallengeAttempt,
     CreateChallengeResponse,
     SuspendUserResponse,
     UnsuspendUserResponse,
     MarkSuspectedBotResponse,
+    Cryptocurrency,
+    DiamondMembershipDuration,
+    PayForDiamondMembershipResponse,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
@@ -26,15 +24,14 @@ import {
     setUsernameResponse,
     createChallengeResponse,
     currentUserResponse,
-    submitPhoneNumberResponse,
-    confirmPhoneNumber,
-    resendCodeResponse,
     usersResponse,
     userSearchResponse,
     registerUserResponse,
-    upgradeStorageResponse,
     suspendUserResponse,
-    unsuspendUserResponse
+    unsuspendUserResponse,
+    apiCryptocurrency,
+    apiDiamondDuration,
+    payForDiamondMembershipResponse,
 } from "./mappers";
 import { CachingUserIndexClient } from "./userIndex.caching.client";
 import type { IUserIndexClient } from "./userIndex.client.interface";
@@ -124,21 +121,6 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
     }
 
     @profile("userIndexClient")
-    upgradeStorage(newLimitBytes: number): Promise<UpgradeStorageResponse> {
-        return this.handleResponse(
-            this.userService.upgrade_storage({
-                new_storage_limit_bytes: BigInt(newLimitBytes),
-            }),
-            upgradeStorageResponse
-        );
-    }
-
-    @profile("userIndexClient")
-    resendRegistrationCode(): Promise<ResendCodeResponse> {
-        return this.handleResponse(this.userService.resend_code({}), resendCodeResponse);
-    }
-
-    @profile("userIndexClient")
     checkUsername(username: string): Promise<CheckUsernameResponse> {
         const args = {
             username: username,
@@ -157,29 +139,6 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
                 username: username,
             }),
             setUsernameResponse
-        );
-    }
-
-    @profile("userIndexClient")
-    submitPhoneNumber(phoneNumber: PhoneNumber): Promise<SubmitPhoneNumberResponse> {
-        return this.handleResponse(
-            this.userService.submit_phone_number({
-                phone_number: {
-                    country_code: phoneNumber.countryCode,
-                    number: phoneNumber.number,
-                },
-            }),
-            submitPhoneNumberResponse
-        );
-    }
-
-    @profile("userIndexClient")
-    confirmPhoneNumber(code: string): Promise<ConfirmPhoneNumberResponse> {
-        return this.handleResponse(
-            this.userService.confirm_phone_number({
-                confirmation_code: code,
-            }),
-            confirmPhoneNumber
         );
     }
 
@@ -208,5 +167,24 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
     @profile("userIndexClient")
     markSuspectedBot(): Promise<MarkSuspectedBotResponse> {
         return this.handleResponse(this.userService.mark_suspected_bot({}), () => "success");
+    }
+
+    @profile("userIndexClient")
+    payForDiamondMembership(
+        _userId: string,
+        token: Cryptocurrency,
+        duration: DiamondMembershipDuration,
+        recurring: boolean,
+        expectedPriceE8s: bigint
+    ): Promise<PayForDiamondMembershipResponse> {
+        return this.handleResponse(
+            this.userService.pay_for_diamond_membership({
+                token: apiCryptocurrency(token),
+                duration: apiDiamondDuration(duration),
+                recurring,
+                expected_price_e8s: expectedPriceE8s,
+            }),
+            payForDiamondMembershipResponse
+        );
     }
 }

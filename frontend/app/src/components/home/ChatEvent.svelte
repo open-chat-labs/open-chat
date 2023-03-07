@@ -34,6 +34,7 @@
     export let last: boolean;
     export let me: boolean;
     export let confirmed: boolean;
+    export let failed: boolean;
     export let readByThem: boolean;
     export let readByMe: boolean;
     export let observer: IntersectionObserver;
@@ -49,37 +50,51 @@
     export let canReplyInThread: boolean;
     export let publicGroup: boolean;
     export let editing: boolean;
-    export let inThread: boolean;
     export let supportsEdit: boolean;
     export let supportsReply: boolean;
     export let collapsed: boolean;
+    export let threadRootMessage: Message | undefined;
 
     let userSummary: UserSummary | undefined = undefined;
 
     $: typing = client.typing;
+    $: userStore = client.userStore;
     $: {
         userSummary = {
             kind: "user",
             userId: user.userId,
             username: user.username,
-            lastOnline: Date.now(),
             updated: BigInt(0),
             suspended: false,
+            diamond: false,
         };
     }
 
     function editEvent() {
         dispatch("editEvent", event as EventWrapper<Message>);
     }
+
+    function deleteFailedMessage() {
+        client.deleteFailedMessage(
+            chatId,
+            event as EventWrapper<Message>,
+            threadRootMessage?.messageIndex
+        );
+    }
+
+    function retrySend() {
+        dispatch("retrySend", event as EventWrapper<Message>);
+    }
 </script>
 
 {#if event.event.kind === "message"}
     <ChatMessage
-        senderId={event.event.sender}
+        sender={$userStore[event.event.sender]}
         senderTyping={client.isTyping($typing, event.event.sender, chatId)}
         {focused}
         {observer}
         {confirmed}
+        {failed}
         {readByMe}
         {readByThem}
         {chatId}
@@ -98,7 +113,7 @@
         canStartThread={canReplyInThread}
         {publicGroup}
         {editing}
-        {inThread}
+        {threadRootMessage}
         {supportsEdit}
         {supportsReply}
         {collapsed}
@@ -106,20 +121,13 @@
         on:goToMessageIndex
         on:replyPrivatelyTo
         on:replyTo
-        on:selectReaction
-        on:deleteMessage
-        on:undeleteMessage
-        on:blockUser
-        on:pinMessage
-        on:unpinMessage
-        on:registerVote
+        on:retrySend={retrySend}
         on:editMessage={editEvent}
         on:upgrade
         on:forward
-        on:copyMessageUrl
-        on:shareMessage
         on:expandMessage
         on:collapseMessage
+        on:deleteFailedMessage={deleteFailedMessage}
         eventIndex={event.index}
         timestamp={event.timestamp}
         msg={event.event} />
@@ -143,11 +151,13 @@
         timestamp={event.timestamp} />
 {:else if event.event.kind === "aggregate_common_events"}
     <AggregateCommonEvents
+        {chatId}
         {observer}
         {readByMe}
         user={userSummary}
         joined={event.event.usersJoined}
-        messagesDeleted={event.event.messagesDeleted} />
+        messagesDeleted={event.event.messagesDeleted}
+        on:expandDeletedMessages />
 {:else if event.event.kind === "role_changed"}
     <RoleChangedEvent user={userSummary} event={event.event} timestamp={event.timestamp} />
 {:else if event.event.kind === "users_blocked"}
@@ -211,6 +221,6 @@
     <ChatFrozenEvent user={userSummary} event={event.event} timestamp={event.timestamp} />
 {:else if event.event.kind === "chat_unfrozen"}
     <ChatUnfrozenEvent user={userSummary} event={event.event} timestamp={event.timestamp} />
-{:else if event.event.kind !== "reaction_added" && event.event.kind !== "reaction_removed" && event.event.kind !== "message_pinned" && event.event.kind !== "message_unpinned" && event.event.kind !== "poll_ended" && event.event.kind !== "member_joined" && event.event.kind !== "member_left"}
+{:else if event.event.kind !== "reaction_added" && event.event.kind !== "reaction_removed" && event.event.kind !== "message_pinned" && event.event.kind !== "message_unpinned" && event.event.kind !== "poll_ended" && event.event.kind !== "member_joined" && event.event.kind !== "member_left" && event.event.kind !== "events_ttl_updated"}
     <div>Unexpected event type</div>
 {/if}

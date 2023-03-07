@@ -1,0 +1,104 @@
+import "../../../libraries/types/can.did";
+
+type UploadChunkArgs =
+    record {
+        file_id: FileId;
+        hash: Hash;
+        mime_type: text;
+        accessors: vec AccessorId;
+        chunk_index: nat32;
+        chunk_size: nat32;
+        total_size: nat64;
+        bytes: blob;
+        expiry: opt TimestampMillis;
+    };
+
+type UploadChunkResponse =
+    variant {
+        Success;
+        AllowanceExceeded;
+        FileAlreadyExists;
+        FileTooBig;
+        FileExpired;
+        ChunkAlreadyExists;
+        ChunkIndexTooHigh;
+        ChunkSizeMismatch;
+        Full;
+        HashMismatch;
+        InvalidFileId;
+        UserNotFound;
+    };
+
+type DeleteFileArgs =
+    record {
+        file_id: FileId;
+    };
+
+type DeleteFileResponse =
+    variant {
+        Success;
+        NotAuthorized;
+        NotFound;
+    };
+
+type DeleteFilesArgs =
+    record {
+        file_ids: vec FileId;
+    };
+
+type DeleteFilesResponse =
+    record {
+        success: vec FileId;
+        failures: vec DeleteFileFailure;
+    };
+
+type DeleteFileFailure =
+    record {
+        file_id: FileId;
+        reason: DeleteFileFailureReason;
+    };
+
+type DeleteFileFailureReason =
+    variant {
+        NotAuthorized;
+        NotFound;
+    };
+
+type ForwardFileArgs =
+    record {
+        file_id: FileId;
+        accessors: vec AccessorId;
+    };
+
+type ForwardFileResponse =
+    variant {
+        Success: FileId;
+        NotAuthorized;
+        NotFound;
+    };
+
+type FileInfoArgs =
+    record {
+        file_id: FileId;
+    };
+
+type FileInfoResponse =
+    variant {
+        Success: FileInfoSuccessResult;
+        NotFound;
+    };
+
+type FileInfoSuccessResult =
+    record {
+        is_owner: bool;
+        file_size: nat64;
+        file_hash: Hash;
+    };
+
+service: {
+    upload_chunk_v2: (UploadChunkArgs) -> (UploadChunkResponse);
+    delete_file: (DeleteFileArgs) -> (DeleteFileResponse);
+    delete_files: (DeleteFilesArgs) -> (DeleteFilesResponse);
+    forward_file: (ForwardFileArgs) -> (ForwardFileResponse);
+    file_info: (FileInfoArgs) -> (FileInfoResponse) query;
+}

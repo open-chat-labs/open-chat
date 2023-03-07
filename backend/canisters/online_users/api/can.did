@@ -1,0 +1,32 @@
+import "../../../libraries/types/can.did";
+
+type LastOnlineArgs =
+    record {
+        user_ids: vec UserId;
+    };
+
+type LastOnlineResponse =
+    variant {
+        Success: vec record {
+            user_id: UserId;
+            duration_since_last_online: Milliseconds;
+        };
+    };
+
+type MarkAsOnlineArgs =
+    record {
+    };
+
+type MarkAsOnlineResponse =
+    variant {
+        Success;
+        UserNotFound;
+        InternalError: text;
+    };
+
+service : {
+    last_online: (LastOnlineArgs) -> (LastOnlineResponse) query;
+
+    // Call this regularly to maintain the online status of the user
+    mark_as_online: (MarkAsOnlineArgs) -> (MarkAsOnlineResponse);
+}

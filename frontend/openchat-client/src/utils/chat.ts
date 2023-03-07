@@ -1,4 +1,4 @@
-import { compareUsersOnlineFirst, nullUser } from "./user";
+import { compareUsername, nullUser } from "./user";
 import {
     ChatSummary,
     EventWrapper,
@@ -31,6 +31,7 @@ import {
     Cryptocurrency,
     cryptoLookup,
     LocalPollVote,
+    CryptocurrencyTransfer,
     Tally,
     UnsupportedValueError,
     getContentAsText,
@@ -67,7 +68,7 @@ export function newMessageId(): bigint {
     return BigInt(parseInt(uuidv1().replace(/-/g, ""), 16));
 }
 
-export function upToDate(chat: ChatSummary, events: EventWrapper<ChatEvent>[]): boolean {
+export function isUpToDate(chat: ChatSummary, events: EventWrapper<ChatEvent>[]): boolean {
     return (
         chat.latestMessage === undefined ||
         events[events.length - 1]?.index >= chat.latestEventIndex
@@ -80,7 +81,7 @@ export function getRecentlyActiveUsers(
     maxUsers: number
 ): Set<string> {
     const users = new Set<string>();
-    if (upToDate(chat, events)) {
+    if (isUpToDate(chat, events)) {
         const tenMinsAgo = Date.now() - 10 * 60 * 1000;
 
         for (let i = events.length - 1; i >= 0; i--) {
@@ -164,6 +165,8 @@ export function activeUserIdFromEvent(event: ChatEvent): string | undefined {
             return event.pinnedBy;
         case "message_unpinned":
             return event.unpinnedBy;
+        case "events_ttl_updated":
+            return event.updatedBy;
         case "message_deleted":
         case "message_undeleted":
         case "message_edited":
@@ -211,7 +214,7 @@ export function getMembersString(
     }
     const sorted = memberIds
         .map((id) => userLookup[id] ?? nullUser(unknownUser))
-        .sort(compareUsersFn ?? compareUsersOnlineFirst)
+        .sort(compareUsersFn ?? compareUsername)
         .map((p) => `**${p.userId === user.userId ? you : p.username}**`);
 
     // TODO Improve i18n, don't hardcode 'and'
@@ -226,6 +229,7 @@ function addCaption(caption: string | undefined, content: MessageContent): Messa
         content.kind !== "placeholder_content" &&
         content.kind !== "poll_content" &&
         content.kind !== "proposal_content" &&
+        content.kind !== "prize_winner_content" &&
         content.kind !== "crypto_content"
         ? { ...content, caption }
         : content;
@@ -262,6 +266,7 @@ export function createMessage(
         reactions: [],
         edited: false,
         forwarded: false,
+        deleted: false,
     };
 }
 
@@ -463,16 +468,18 @@ export function groupBySender<T extends ChatEvent>(events: EventWrapper<T>[]): E
 export function groupEvents(
     events: EventWrapper<ChatEvent>[],
     myUserId: string,
+    expandedDeletedMessages: Set<number>,
     groupInner?: (events: EventWrapper<ChatEvent>[]) => EventWrapper<ChatEvent>[][]
 ): EventWrapper<ChatEvent>[][][] {
     return groupWhile(sameDate, events.filter(eventIsVisible))
-        .map((e) => reduceJoinedOrLeft(e, myUserId))
+        .map((e) => reduceJoinedOrLeft(e, myUserId, expandedDeletedMessages))
         .map(groupInner ?? groupBySender);
 }
 
 function reduceJoinedOrLeft(
     events: EventWrapper<ChatEvent>[],
-    myUserId: string
+    myUserId: string,
+    expandedDeletedMessages: Set<number>
 ): EventWrapper<ChatEvent>[] {
     function getLatestAggregateEventIfExists(
         events: EventWrapper<ChatEvent>[]
@@ -486,7 +493,8 @@ function reduceJoinedOrLeft(
         if (
             e.event.kind === "member_joined" ||
             e.event.kind === "member_left" ||
-            (e.event.kind === "message" && messageIsHidden(e.event, myUserId))
+            (e.event.kind === "message" &&
+                messageIsHidden(e.event, myUserId, expandedDeletedMessages))
         ) {
             let agg = getLatestAggregateEventIfExists(previous);
             if (agg === undefined) {
@@ -529,11 +537,11 @@ function reduceJoinedOrLeft(
     }, []);
 }
 
-function messageIsHidden(message: Message, myUserId: string) {
+function messageIsHidden(message: Message, myUserId: string, expandedDeletedMessages: Set<number>) {
     return (
         message.content.kind === "deleted_content" &&
-        message.content.deletedBy !== myUserId &&
         message.sender !== myUserId &&
+        !expandedDeletedMessages.has(message.messageIndex) &&
         message.thread === undefined
     );
 }
@@ -544,12 +552,12 @@ export function groupMessagesByDate(events: EventWrapper<Message>[]): EventWrapp
 
 export function getNextEventAndMessageIndexes(
     chat: ChatSummary,
-    unconfirmedMessages: EventWrapper<Message>[]
+    localMessages: EventWrapper<Message>[]
 ): [number, number] {
     let eventIndex = chat.latestEventIndex;
     let messageIndex = chat.latestMessage?.event.messageIndex ?? -1;
-    if (unconfirmedMessages.length > 0) {
-        const lastUnconfirmed = unconfirmedMessages[unconfirmedMessages.length - 1];
+    if (localMessages.length > 0) {
+        const lastUnconfirmed = localMessages[localMessages.length - 1];
         if (lastUnconfirmed.index > eventIndex) {
             eventIndex = lastUnconfirmed.index;
         }
@@ -591,12 +599,16 @@ export function mergeServerEvents(
     newEvents: EventWrapper<ChatEvent>[]
 ): EventWrapper<ChatEvent>[] {
     const merged = distinctBy([...newEvents, ...events], (e) => e.index);
-    merged.sort(sortByIndex);
+    merged.sort(sortByTimestampThenEventIndex);
     return merged;
 }
 
-function sortByIndex(a: EventWrapper<ChatEvent>, b: EventWrapper<ChatEvent>): number {
-    return a.index - b.index;
+function sortByTimestampThenEventIndex(
+    a: EventWrapper<ChatEvent>,
+    b: EventWrapper<ChatEvent>
+): number {
+    if (a.timestamp === b.timestamp) return a.index - b.index;
+    return Number(a.timestamp - b.timestamp);
 }
 
 export function revokeObjectUrls(event?: EventWrapper<ChatEvent>): void {
@@ -655,26 +667,9 @@ export function groupChatFromCandidate(
         archived: false,
         previewed: false,
         frozen: false,
+        dateLastPinned: undefined,
+        dateReadPinned: undefined,
     };
-}
-
-export function getStorageRequiredForMessage(content: MessageContent | undefined): number {
-    if (content === undefined) return 0;
-
-    switch (content.kind) {
-        case "audio_content":
-        case "file_content":
-        case "image_content":
-            return content.blobData?.length ?? 0;
-        case "video_content":
-            return (
-                (content.videoData.blobData?.length ?? 0) +
-                (content.imageData.blobData?.length ?? 0)
-            );
-
-        default:
-            return 0;
-    }
 }
 
 function updatePollContent(content: PollContent, votes: LocalPollVote[]): PollContent {
@@ -948,6 +943,8 @@ export function mergeChatMetrics(a: ChatMetrics, b: ChatMetrics): ChatMetrics {
         cyclesMessages: a.cyclesMessages + b.cyclesMessages,
         edits: a.edits + b.edits,
         icpMessages: a.icpMessages + b.icpMessages,
+        sns1Messages: a.sns1Messages + b.sns1Messages,
+        ckbtcMessages: a.ckbtcMessages + b.ckbtcMessages,
         giphyMessages: a.giphyMessages + b.giphyMessages,
         deletedMessages: a.deletedMessages + b.deletedMessages,
         reportedMessages: a.reportedMessages + b.reportedMessages,
@@ -1072,7 +1069,7 @@ export function mergeEventsAndLocalUpdates(
     const merged = events.map((e) => processEvent(e));
 
     if (unconfirmed.length > 0) {
-        unconfirmed.sort(sortByIndex);
+        unconfirmed.sort(sortByTimestampThenEventIndex);
 
         let anyAdded = false;
         for (const message of unconfirmed) {
@@ -1089,7 +1086,7 @@ export function mergeEventsAndLocalUpdates(
             }
         }
         if (anyAdded) {
-            merged.sort(sortByIndex);
+            merged.sort(sortByTimestampThenEventIndex);
         }
     }
 
@@ -1107,6 +1104,7 @@ function mergeLocalUpdates(
     if (localUpdates?.deleted !== undefined) {
         return {
             ...message,
+            deleted: true,
             content: {
                 kind: "deleted_content",
                 deletedBy: localUpdates.deleted.deletedBy,
@@ -1124,6 +1122,21 @@ function mergeLocalUpdates(
 
     if (localUpdates?.undeletedContent !== undefined) {
         message.content = localUpdates.undeletedContent;
+        message.deleted = false;
+    }
+
+    if (localUpdates?.revealedContent !== undefined) {
+        message.content = localUpdates.revealedContent;
+    }
+
+    if (localUpdates?.prizeClaimed !== undefined) {
+        if (message.content.kind === "prize_content") {
+            if (!message.content.winners.includes(localUpdates.prizeClaimed)) {
+                message.content.winners.push(localUpdates.prizeClaimed);
+                message.content.prizesRemaining -= 1;
+                message.content.prizesPending += 1;
+            }
+        }
     }
 
     if (localUpdates?.reactions !== undefined) {
@@ -1163,6 +1176,9 @@ function mergeLocalUpdates(
 
             if (replyContextLocalUpdates.editedContent !== undefined) {
                 message.repliesTo.content = replyContextLocalUpdates.editedContent;
+            }
+            if (replyContextLocalUpdates.revealedContent !== undefined) {
+                message.repliesTo.content = replyContextLocalUpdates.revealedContent;
             }
             if (
                 replyContextLocalUpdates.pollVotes !== undefined &&
@@ -1236,20 +1252,23 @@ export function findMessageById(
 
 export function buildTransactionLink(
     formatter: MessageFormatter,
-    content: CryptocurrencyContent
+    transfer: CryptocurrencyTransfer
 ): string | undefined {
-    const url = buildTransactionUrl(content);
+    const url = buildTransactionUrl(transfer);
     return url !== undefined
         ? formatter("tokenTransfer.viewTransaction", { values: { url } })
         : undefined;
 }
 
-export function buildTransactionUrl(content: CryptocurrencyContent): string | undefined {
-    if (content.transfer.kind !== "completed") {
+export function buildTransactionUrl(transfer: CryptocurrencyTransfer): string | undefined {
+    if (transfer.kind !== "completed") {
         return undefined;
     }
     // TODO: Where can we see the transactions for other tokens? In OpenChat I suppose...
-    return `https://dashboard.internetcomputer.org/transaction/${content.transfer.transactionHash}`;
+    if (transfer.token !== "icp") {
+        return undefined;
+    }
+    return `https://dashboard.internetcomputer.org/transaction/${transfer.transactionHash}`;
 }
 
 export function buildCryptoTransferText(

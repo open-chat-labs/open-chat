@@ -14,7 +14,7 @@
 </script>
 
 <div class="timeline-event">
-    <Markdown oneLine={true} suppressLinks={true} {text} />
+    <Markdown suppressLinks {text} />
     <p class="timestamp">
         {`${client.toLongDateString(date)} @ ${client.toShortTimeString(date)}`}
     </p>

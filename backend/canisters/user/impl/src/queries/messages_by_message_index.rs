@@ -1,5 +1,6 @@
 use crate::guards::caller_is_owner;
 use crate::{read_state, RuntimeState};
+use chat_events::Reader;
 use ic_cdk_macros::query;
 use user_canister::messages_by_message_index::{Response::*, *};
 
@@ -11,15 +12,16 @@ fn messages_by_message_index(args: Args) -> Response {
 fn messages_by_message_index_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     if let Some(chat) = runtime_state.data.direct_chats.get(&args.user_id.into()) {
         let my_user_id = runtime_state.env.canister_id().into();
-        let chat_events = chat.events.main();
+        let now = runtime_state.env.now();
+
+        let events_reader = chat.events.main_events_reader(now);
+        let latest_event_index = events_reader.latest_event_index().unwrap();
 
         let messages: Vec<_> = args
             .messages
             .into_iter()
-            .filter_map(|m| chat_events.message_event_by_message_index(m, Some(my_user_id)))
+            .filter_map(|m| events_reader.message_event(m.into(), Some(my_user_id)))
             .collect();
-
-        let latest_event_index = chat_events.last().index;
 
         Success(SuccessResult {
             messages,

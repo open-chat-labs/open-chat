@@ -1,4 +1,4 @@
-use crate::guards::caller_is_service_owner;
+use crate::guards::caller_is_governance_principal;
 use crate::{mutate_state, read_state, RuntimeState};
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
@@ -7,7 +7,7 @@ use std::fmt::Write;
 use types::{ChatId, GovernanceProposalsSubtype, GroupPermissions, GroupRules, GroupSubtype, PermissionRole};
 
 // dfx --identity openchat canister --network ic call proposals_bot add_governance_canister '(record { governance_canister_id=principal "rrkah-fqaaa-aaaaa-aaaaq-cai"; name="NNS" })'
-#[update(guard = "caller_is_service_owner")]
+#[update(guard = "caller_is_governance_principal")]
 #[trace]
 async fn add_governance_canister(args: Args) -> Response {
     let PrepareResult { is_nns } = match read_state(|state| prepare(&args, state)) {
@@ -63,13 +63,13 @@ async fn create_group(args: &Args, is_nns: bool) -> Result<ChatId, Response> {
             send_messages: PermissionRole::Admins,
             ..Default::default()
         }),
+        events_ttl: None,
     };
     match group_index_canister_c2c_client::c2c_create_group(group_index_canister_id, &create_group_args).await {
         Ok(group_index_canister::c2c_create_group::Response::Success(result)) => Ok(result.chat_id),
-        Ok(response) => Err(InternalError(format!("Unable to create group: {:?}", response))),
+        Ok(response) => Err(InternalError(format!("Unable to create group: {response:?}"))),
         Err(error) => Err(InternalError(format!(
-            "Error calling 'c2c_create_group' on group_index: {:?}",
-            error
+            "Error calling 'c2c_create_group' on group_index: {error:?}",
         ))),
     }
 }

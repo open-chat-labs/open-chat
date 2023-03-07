@@ -2,7 +2,7 @@
 
 <script lang="ts">
     import Avatar from "../Avatar.svelte";
-    import { AvatarSize, UserStatus } from "openchat-client";
+    import { AvatarSize } from "openchat-client";
     import type { GroupChatSummary } from "openchat-client";
     import { _ } from "svelte-i18n";
     import { getContext } from "svelte";
@@ -22,10 +22,7 @@
         </div>
     {/if}
     <div class="pop">
-        <Avatar
-            url={client.groupAvatarUrl(group)}
-            status={UserStatus.None}
-            size={AvatarSize.ExtraLarge} />
+        <Avatar url={client.groupAvatarUrl(group)} size={AvatarSize.Large} />
     </div>
     <div>
         {$_(group.public ? "thisIsPublicGroupWithN" : "thisIsPrivateGroupWithN", {

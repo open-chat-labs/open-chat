@@ -2,8 +2,8 @@ use crate::model::direct_chat::DirectChat;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
-use chat_events::AddRemoveReactionResult;
-use types::{DirectReactionAddedNotification, Notification, TimestampMillis, UserId};
+use chat_events::{AddRemoveReactionArgs, AddRemoveReactionResult, Reader};
+use types::{DirectReactionAddedNotification, EventIndex, Notification, TimestampMillis, UserId};
 use user_canister::c2c_toggle_reaction::{Response::*, *};
 
 #[update_msgpack]
@@ -27,12 +27,18 @@ fn c2c_toggle_reaction_impl(args: Args, runtime_state: &mut RuntimeState) -> Res
 
     if let Some(chat) = runtime_state.data.direct_chats.get_mut(&caller.into()) {
         let now = runtime_state.env.now();
+        let add_remove_reaction_args = AddRemoveReactionArgs {
+            user_id: caller,
+            min_visible_event_index: EventIndex::default(),
+            thread_root_message_index: None,
+            message_id: args.message_id,
+            reaction: args.reaction.clone(),
+            correlation_id: args.correlation_id,
+            now,
+        };
 
         if args.added {
-            match chat
-                .events
-                .add_reaction(caller, None, args.message_id, args.reaction.clone(), args.correlation_id, now)
-            {
+            match chat.events.add_reaction(add_remove_reaction_args) {
                 AddRemoveReactionResult::Success(_) => {
                     if let Some((recipients, notification)) = build_notification(args, chat, now) {
                         runtime_state.push_notification(recipients, notification);
@@ -43,10 +49,7 @@ fn c2c_toggle_reaction_impl(args: Args, runtime_state: &mut RuntimeState) -> Res
                 AddRemoveReactionResult::MessageNotFound => MessageNotFound,
             }
         } else {
-            match chat
-                .events
-                .remove_reaction(caller, None, args.message_id, args.reaction, args.correlation_id, now)
-            {
+            match chat.events.remove_reaction(add_remove_reaction_args) {
                 AddRemoveReactionResult::Success(_) | AddRemoveReactionResult::NoChange => Removed,
                 AddRemoveReactionResult::MessageNotFound => MessageNotFound,
             }
@@ -71,8 +74,8 @@ fn build_notification(
     }
 
     chat.events
-        .main()
-        .message_event_by_message_id(message_id, None)
+        .main_events_reader(now)
+        .message_event(message_id.into(), None)
         .filter(|m| m.event.sender != chat.them)
         .map(|message| {
             (

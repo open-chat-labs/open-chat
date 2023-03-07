@@ -7,6 +7,7 @@
     export let tiny: boolean = false;
     export let fill: boolean = false;
     export let hollow: boolean = false;
+    export let title: string | undefined = undefined;
 </script>
 
 <button
@@ -19,6 +20,7 @@
     class:hollow
     {disabled}
     class:secondary
+    {title}
     class:fill>
     {#if !loading}
         <slot />
@@ -36,7 +38,7 @@
         border: none;
         min-height: 45px;
         min-width: 150px;
-        @include font(book, normal, fs-100);
+        @include font(book, normal, fs-100, 20);
 
         &.small {
             padding: $sp2 $sp5;
@@ -76,8 +78,9 @@
         }
 
         &.secondary {
-            background: var(--button-txt);
-            color: var(--button-bg);
+            background: none;
+            color: var(--txt-light);
+            border: 1px solid var(--bd);
         }
 
         &.fill {

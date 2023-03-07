@@ -8,8 +8,8 @@
     import ExternalLink from "./ExternalLink.svelte";
     import GoogleChart from "./GoogleChart.svelte";
     import HashLinkTarget from "./HashLinkTarget.svelte";
-    import { copyToClipboard, copyUrl, scrollToSection } from "../../utils/urls";
-    import { location, querystring } from "svelte-spa-router";
+    import { copyToClipboard, scrollToSection } from "../../utils/urls";
+    import { location, querystring } from "../../routes";
 
     let width = 0;
     let linked: number | undefined = undefined;
@@ -20,16 +20,17 @@
     $: copySize = $mobileWidth ? "14px" : "16px";
 
     function onCopyUrl(ev: CustomEvent<string>): void {
-        copyToClipboard(`${window.location.origin}/#${$location}?section=${ev.detail}`);
+        copyUrl(ev.detail);
+    }
+
+    function copyUrl(section: string): void {
+        copyToClipboard(`${window.location.origin}${$location}?section=${section}`);
     }
 
     $: {
-        if ($querystring !== undefined) {
-            const qs = new URLSearchParams($querystring);
-            const section = qs.get("section");
-            if (section) {
-                linked = scrollToSection(section);
-            }
+        const section = $querystring.get("section");
+        if (section) {
+            linked = scrollToSection(section);
         }
     }
 </script>
@@ -37,7 +38,7 @@
 <div class="whitepaper" bind:clientWidth={width}>
     <Headline>OpenChat SNS Whitepaper</Headline>
 
-    <CollapsibleCard first open={linked === 1}>
+    <CollapsibleCard transition={false} first open={linked === 1}>
         <div class="header" slot="titleSlot">
             <span class="subtitle">1</span>
             <div class="title">
@@ -80,8 +81,8 @@
                 >.
             </p>
             <p>
-                OpenChat users can send messages to each other containing tokens such as ICP and BTC
-                and so can be used for global remittance.
+                OpenChat users can send messages to each other containing tokens such as ICP and
+                ckBTC and so can be used for global remittance.
             </p>
             <p>
                 However, the ground-breaking difference between OpenChat and other similar apps, is
@@ -102,7 +103,7 @@
         </div>
     </CollapsibleCard>
 
-    <CollapsibleCard open={linked === 2}>
+    <CollapsibleCard transition={false} open={linked === 2}>
         <div class="header" slot="titleSlot">
             <span class="subtitle">2</span>
             <div class="title">
@@ -180,7 +181,7 @@
         </div>
     </CollapsibleCard>
 
-    <CollapsibleCard open={linked === 3}>
+    <CollapsibleCard transition={false} open={linked === 3}>
         <div class="header" slot="titleSlot">
             <span class="subtitle">3</span>
             <div class="title">
@@ -195,7 +196,7 @@
             <ul class="list">
                 <li>
                     The OpenChat DAO is being formed to operate and steer the direction of OpenChat
-                    which should be considered a public good, thus owned by no-one.
+                    and can be considered a public good, owned by no-one.
                 </li>
                 <li>
                     The OpenChat DAO and the OpenChat service are fully on-chain with no direct
@@ -232,8 +233,8 @@
                 the sale will be held in an ICP ledger account owned by the SNS governance canister.
             </p>
             <p>
-                At this point the DAO creation is completed and the running OpenChat service should
-                be considered a public good.
+                At this point the DAO creation is completed and the running OpenChat service can be
+                considered a public good.
             </p>
             <HashLinkTarget on:copyUrl={onCopyUrl} id="3-3">Control of the DAO</HashLinkTarget>
             <p>
@@ -288,14 +289,20 @@
                     community DAO. Some examples of custom functions:
                     <ul>
                         <li>
-                            <strong>Buy cycles</strong>. By calling an API on the NNS cycles minting
-                            canister a proposal can burn ICP for cycles to pay for the running of
-                            the dapp.
-                        </li>
-                        <li>
                             <strong>Rolling upgrade</strong>. By calling an upgrade method on an
                             OpenChat canister the proposal can provide a canister WASM + version
                             number and initiate a rolling upgrade of say the User canisters.
+                        </li>
+                        <li>
+                            <strong>Add SNS</strong>. When a new SNS is launched this proposal can
+                            call a method on the proposal_bot canister to create a new group which
+                            syncs proposals from the SNS's governance canister.
+                        </li>
+                        <li>
+                            <strong>Add subnet</strong>. When OpenChat needs to expand on to another
+                            subnet this proposal can be used to call a method on an OpenChat
+                            canister to orchestrate the necessary steps such as installing new
+                            local_user_index, local_group_index and notifications canisters.
                         </li>
                     </ul>
                 </li>
@@ -310,6 +317,10 @@
                         href="https://docs.google.com/document/d/1V4CLsujL9HeZt3eP-LSr3hBS5iGcmNfa17d7ZaVKmLc/edit#heading=h.bn2twif6p6wt"
                         >DEXes</ExternalLink> to create initial liquidity pools to enable trading of
                     CHAT
+                </li>
+                <li>
+                    A proposal to transfer a portion of the ICP to the OpenChat cycles dispenser so
+                    it can pay for ongoing hosting costs.
                 </li>
                 <li>
                     The core dev team will engage with the community and then use a motion proposal
@@ -373,13 +384,13 @@
                 voting rewards are distributed daily and take into account all of the votes that ended
                 on that day. If there are no proposals on a given day the rewards are carried over to
                 the next day. The proportion of total token supply that is generated annually for voting
-                rewards is 5%. In practice, given that much of the supply will not be in voting neurons,
+                rewards is 2.5%. In practice, given that much of the supply will not be in voting neurons,
                 a neuron with a 1 year dissolve delay would expect a voting reward significantly higher
                 than this figure.
             </p>
             <p>
                 Please refer to <ExternalLink
-                    href="https://docs.google.com/document/d/1Ty25xNbXKIs8YiXlmpT8vuPApVzjp1aTJL1WXySOUto/edit#heading=h.rrc8s7i3mbk6"
+                    href="https://internetcomputer.org/docs/current/tokenomics/sns/rewards#voting-rewards"
                     >this document</ExternalLink> for a full description of SNS voting and rewards.
             </p>
             <HashLinkTarget on:copyUrl={onCopyUrl} id="3-5">The power of the DAO</HashLinkTarget>
@@ -414,7 +425,7 @@
         </div>
     </CollapsibleCard>
 
-    <CollapsibleCard open={linked === 4}>
+    <CollapsibleCard transition={false} open={linked === 4}>
         <div class="header" slot="titleSlot">
             <span class="subtitle">4</span>
             <div class="title">
@@ -447,19 +458,10 @@
             <HashLinkTarget on:copyUrl={onCopyUrl} id="4-1">Premium features</HashLinkTarget>
             <p>
                 There are many ways OpenChat could evolve to allow users to spend their CHAT tokens
-                to pay for premium features within the dapp. It is likely the underlying price for
-                premium features will be in CYCLES because these have a stable value (relative to
-                <ExternalLink href="https://en.wikipedia.org/wiki/Special_drawing_rights"
-                    >XDR</ExternalLink
-                >) and then based on the exchange rate of CHAT->ICP (which we can request from
-                DEXes) and the exchange rate of ICP->CYCLES (obtained by calling the cycles minting
-                canister on the NNS subnet) we will provide a dynamic price for features in CHAT
-                tokens.
-            </p>
-            <p>
-                To pay for a feature a user would need to have first deposited CHAT tokens to their
-                OpenChat user canister which acts as a wallet. OpenChat will transfer the payment
-                from the user’s canister to the SNS treasury account and then grant the feature.
+                for premium features within the dapp. To pay for a feature a user would need to have
+                first deposited CHAT tokens to their OpenChat user canister which acts as a wallet.
+                OpenChat will transfer the payment from the user’s canister to the SNS treasury
+                account and then grant the feature.
             </p>
             <HashLinkTarget on:copyUrl={onCopyUrl} id="4-1-1"
                 >Current premium features</HashLinkTarget>
@@ -507,24 +509,22 @@
             <ul class="list">
                 <li>Provide chat functionality to other IC apps with an OpenChat integration</li>
                 <li>Transaction charge on sending tokens as messages</li>
-                <li>Transaction charge to use an integrated token swap service</li>
             </ul>
             <HashLinkTarget on:copyUrl={onCopyUrl} id="4-2">User rewards</HashLinkTarget>
             <p>
                 The design of the user reward system has not been confirmed yet and we will consult
                 with the OpenChat community before finalizing the design and making a proposal to
                 carry it out. This system can of course evolve over time with further proposals.
-                Once it is ready, a proposal will be made to transfer the <HashLink id="5-1-3"
-                    >reserved 38% of the CHAT</HashLink>
-                from the SNS governance canister to the OpenChat root canister where it will be available
-                to OpenChat to algorithmically reward dapp users.
+                Once it is ready, a proposal will be made to transfer some CHAT from the SNS
+                treasury to an OpenChat canister where it will be available to the OpenChat dapp to
+                algorithmically reward users.
             </p>
             <p>
                 There are challenges to creating an effective reward system. The aim is to
                 incentivise usage and growth of OpenChat, and ultimately the value of the CHAT
                 token, by rewarding users who further that goal. One significant hurdle is that with
                 a financial reward there is an incentive for unscrupulous users to try to game the
-                system and “farm” CHAT tokens by creating multiple accounts with spam content. This
+                system and “farm” CHAT tokens by creating multiple accounts to spam content. This
                 challenge is made harder still because any system designed to reward users will,
                 like all OpenChat code, be open source and visible to anyone.
             </p>
@@ -540,8 +540,8 @@
                 unwanted content).
             </p>
             <p>
-                We can also derive a positive signal for a user if they hold tokens (ICP, CHAT, BTC)
-                in their OpenChat account, or even better, neurons.
+                We can also derive a positive signal for a user if they hold tokens (ICP, CHAT,
+                ckBTC) in their OpenChat account, or even better, neurons.
             </p>
             <HashLinkTarget on:copyUrl={onCopyUrl} id="4-2-2">Rewards</HashLinkTarget>
             <p>
@@ -554,8 +554,8 @@
                 sufficient incentive.
             </p>
             <p>
-                If a user qualifies for a reward, CHAT tokens will be transferred from the OpenChat
-                root canister to their OpenChat user canister. Using the dapp the user can then
+                If a user qualifies for a reward, CHAT tokens will be transferred from a designated
+                OpenChat canister to their OpenChat user canister. Using the dapp the user can then
                 access their CHAT tokens and send some to other users, withdraw them to sell on an
                 exchange, or buy premium features. Using the SNS UI users will also be able to stake
                 their CHAT as neurons, take part in OpenChat governance and earn voting rewards.
@@ -563,7 +563,7 @@
         </div>
     </CollapsibleCard>
 
-    <CollapsibleCard open={linked === 5}>
+    <CollapsibleCard transition={false} open={linked === 5}>
         <div class="header" slot="titleSlot">
             <span class="subtitle">5</span>
             <div class="title">
@@ -577,100 +577,93 @@
             <HashLinkTarget on:copyUrl={onCopyUrl} id="5-1"
                 >Initial token allocation</HashLinkTarget>
             <p>
-                The SNS will be initialized with 1 billion CHAT tokens allocated in the following
+                The SNS will be initialized with 100 million CHAT tokens allocated in the following
                 proportions.
             </p>
             <GoogleChart
                 {totalWidth}
                 title="Initial token allocation"
-                originalWidth={730}
-                originalHeight={380}
-                src="https://docs.google.com/spreadsheets/d/e/2PACX-1vTR-Snm-_Eq_UcQ5ClcdjGTLg4UOyvUl04rZXpY1W0n_yLuKJkANs-umrNS4F469qZoI17w1Nci08Sf/pubchart?oid=368502713&amp;format=interactive&amp;w=1000px" />
+                originalWidth={719}
+                originalHeight={371}
+                src="https://docs.google.com/spreadsheets/d/e/2PACX-1vQHVsuUj8dXoL4nm2IOpy71_I-JPhprdlkdKiztWFyN4kLxXhhaFZMfG6dY5zGzwW_bQiP5OyDN2wU_/pubchart?oid=193426735&format=interactive" />
             <HashLinkTarget on:copyUrl={onCopyUrl} id="5-1-1"
-                >NNS controlled (yellow)</HashLinkTarget>
+                >Decentralization sale (yellow)</HashLinkTarget>
             <p>
-                The NNS will initially be allocated 29% of the total supply of CHAT tokens. 20% will
-                be immediately put up for sale to decentralize the governance and raise funds. The
-                remaining 9% will be held in reserve until some future time when there would be a
-                subsequent NNS proposal to either sell the reserve or burn it.
+                25% of the total supply will be put up for sale to decentralize the governance and
+                raise funds for the SNS. The maximum that can be raised will be configured to
+                1,000,000 ICP and the minimum to 500,000 ICP.
             </p>
-
-            <p class="blurb">
+            <p>
+                We are asking for 333,333 ICP from the Community Fund (CF) and so hope to raise the
+                remaining 666,667 ICP from decentralization sale participants.
+            </p>
+            <p>
                 Participants in the decentralization sale will deposit ICP into the SNS and once the
                 sale has completed they will receive the same proportion of CHAT tokens as their
                 share of the ICP deposited. Each participant will receive their CHAT as a basket of
-                13 equal value neurons. The first neuron will have a zero dissolve delay and so be
-                immediately disbursable to liquid CHAT tokens. Each subsequent neuron will have a
-                dissolve delay one month greater than the previous, so from 1-12 months.
+                5 equal value neurons. The first neuron will have a zero dissolve delay and so be
+                immediately disbursable to liquid CHAT tokens. The other neurons will have dissolve
+                delays of 3, 6, 9 and 12 months respectively.
+            </p>
+            <p>
+                Each Community Fund participant will also receive their share of tokens as a basket
+                of 5 neurons with the same configuration.
             </p>
             <HashLinkTarget on:copyUrl={onCopyUrl} id="5-1-2"
-                >Founders and funders (pink)</HashLinkTarget>
+                >Founders and funders (purple)</HashLinkTarget>
             <p>
                 OpenChat has been built by a team of 3 developers since January 2021 and has
                 received seed funding from the <ExternalLink href="https://dfinity.org/"
                     >DFINITY foundation</ExternalLink
-                >. Each of the 3 founding developers will be allocated a share of 4% of the CHAT
-                tokens and the DFINITY foundation will be allocated a share of 6%. As above each
-                party will receive their share as a basket of 13 equal value neurons, the first
-                liquid and the rest with dissolve delays increasing from 1-12 months. However there
-                are two special properties unique to these “founding dev team and seed funder”
-                neurons.
+                >.
             </p>
             <p>
-                Firstly, they are configured so that their voting power is reduced as a proportion
-                of the CHAT sold out of the total reserve for sale. In the case of OpenChat we are
-                selling 20% out of a total sale reserve of 29% so each founding dev team & seed
-                funder neuron will have its voting power reduced by a factor of 20/29 (about 69%).
-                If there was a future sale for a further 5% of the reserve then the voting power of
-                these neurons would increase to 25/29 of the standard value. This is so that the
-                <strong>
-                    voting power of the founding dev team and seed funders is less than the voting
-                    power held by the rest of the community
-                </strong>. It also means the voting rewards of these neurons are reduced in the same
-                proportion, and furthermore, if they are disbursed before all of the reserve has
-                been sold, only that same proportion of liquid CHAT will be given.
+                Each founding developer will receive 5% of the CHAT tokens as a basket of 5 equal
+                value neurons. Each neuron will have a dissolve delay of 1 month but with an
+                additional "vesting period" of 0, 1, 2, 3, and 4 years respectively.
+            </p>
+            <p>
+                DFINITY will receive 8% of the CHAT tokens as a basket of 4 equal neurons each with
+                a dissolve delay of 1 month and with "vesting periods" of 6, 12, 18, and 24 months
+                respectively.
+            </p>
+            <p>
+                If a neuron has a "vesting period" it cannot be touched until the period is over
+                (and that includes increasing the dissolve delay). This ensures that the
+                founders/funders cannot rug-pull investors and provides an ongoing incentive to make
+                OpenChat successful.
+            </p>
+            <p>
+                As these founder/funder neurons all have a relatively short dissolve delay of 1
+                month which cannot be increased, this ensures a reduced voting power compared to the
+                community so that governance is properly decentralized.
             </p>
             <GoogleChart
                 {totalWidth}
                 title="Voting power at genesis"
-                originalWidth={684}
-                originalHeight={380}
-                src="https://docs.google.com/spreadsheets/d/e/2PACX-1vTR-Snm-_Eq_UcQ5ClcdjGTLg4UOyvUl04rZXpY1W0n_yLuKJkANs-umrNS4F469qZoI17w1Nci08Sf/pubchart?oid=479343896&amp;format=interactive" />
-            <p>
-                Secondly, these neurons will have an additional lockup (or vesting) period before
-                they can even start to dissolve (this doesn’t affect the 1st neuron because it is
-                already dissolved). The DFINITY foundation neurons will have a vesting period of 1
-                year and the dev team neurons will have a vesting period of 3 years. This is to
-                ensure that the founding team remains committed to the project in the long term and
-                cannot “rug-pull” community token holders.
-            </p>
+                originalWidth={685}
+                originalHeight={371}
+                src="https://docs.google.com/spreadsheets/d/e/2PACX-1vQHVsuUj8dXoL4nm2IOpy71_I-JPhprdlkdKiztWFyN4kLxXhhaFZMfG6dY5zGzwW_bQiP5OyDN2wU_/pubchart?oid=1082043399&format=interactive" />
             <HashLinkTarget on:copyUrl={onCopyUrl} id="5-1-3">SNS treasury (blue)</HashLinkTarget>
             <p>
                 After the decentralization sale the SNS will be left with a treasury of the
-                remaining 53% of CHAT tokens.
+                remaining 52% of CHAT tokens. The bulk is likely to be used over time to
+                automatically <HashLink id="4-2">reward users</HashLink> who positively contribute and
+                help OpenChat grow. It will also be available to pay community bounties, by SNS proposal,
+                to compensate people who contribute to OpenChat more generally. This could be used for
+                instance to reward 3rd party developers for code contributions.
             </p>
             <p>
-                The bulk, 38% percent, will be used over time to automatically <HashLink id="4-2"
-                    >reward users</HashLink> who positively contribute and help OpenChat grow.
-            </p>
-            <p>
-                13% will be reserved to pay community bounties, by SNS proposal, to compensate
-                people who contribute to OpenChat more generally. This could be used for instance to
-                reward 3rd party developers for code contributions.
-            </p>
-            <p>
-                The remaining 2% will be used to provide initial liquidity pools for DEXes
-                (decentralized exchanges). In order for CHAT tokens to be traded it is necessary to
-                list CHAT on one or more exchanges. The intention is to trade on IC based DEXes. To
-                list CHAT on a DEX implementing an <ExternalLink
+                A small portion, around 2%, will be used to provide initial liquidity pools for
+                DEXes (decentralized exchanges). In order for CHAT tokens to be traded it is
+                necessary to list CHAT on one or more exchanges. The intention is to trade on IC
+                based DEXes. To list CHAT on a DEX implementing an <ExternalLink
                     href="https://academy.binance.com/en/articles/what-is-an-automated-market-maker-amm"
                     >AMM</ExternalLink> it is necessary to provide a liquidity pool of CHAT backed by
                 another token, in our case ICP raised from the decentralization sale. We plan to make
                 CHAT available on several DEXes as and when they are available. For each DEX it will
                 be necessary to create a proposal to transfer some CHAT from the SNS to the DEX, and
-                another proposal to transfer an equal value of ICP from the SNS to the DEX. The plan
-                is to “seed” these DEXes with the 2% of CHAT tokens set aside for this purpose although
-                this might not all happen at once.
+                another proposal to transfer an equal value of ICP from the SNS to the DEX.
             </p>
             <HashLinkTarget on:copyUrl={onCopyUrl} id="5-2"
                 >Initial SNS configuration</HashLinkTarget>
@@ -680,11 +673,11 @@
             </p>
             <div class="tab">
                 <div>Transaction fee in CHAT tokens that must be paid for ledger transfers</div>
-                <div>0.01</div>
+                <div>0.001</div>
                 <div>Number of CHAT tokens that a rejected proposal costs the proposer</div>
-                <div>100</div>
+                <div>10</div>
                 <div>Minimum number of CHAT tokens that can be staked in a neuron</div>
-                <div>100</div>
+                <div>4</div>
                 <div>Maximum voting period for a proposal</div>
                 <div>4 days</div>
                 <div>Proportion of voting power needed for a proposal to be accepted</div>
@@ -700,24 +693,28 @@
                 <div>Maximum age bonus</div>
                 <div>1.25x</div>
                 <div>Percentage of total supply that will be generated annually for rewards</div>
-                <div>5%</div>
+                <div>2.5%</div>
             </div>
             <HashLinkTarget on:copyUrl={onCopyUrl} id="5-3"
                 >SNS decentralization sale configuration</HashLinkTarget>
             <p>The decentralization sale will be configured with the values shown below.</p>
             <div class="tab">
                 <div>The total number of CHAT tokens to be sold</div>
-                <div>200,000,000 (20%)</div>
+                <div>25,000,000 (25%)</div>
                 <div>The maximum ICP to be raised</div>
                 <div>1,000,000</div>
                 <div>The minimum ICP to be raised (otherwise sale fails and ICP returned)</div>
-                <div>100,000</div>
-                <div>Duration of sale (unless maximum ICP raised sooner)</div>
-                <div>2 weeks</div>
-                <div>Minimum number of buyers</div>
-                <div>100</div>
+                <div>500,000</div>
+                <div>The ICP to come from the Community Fund</div>
+                <div>333,333</div>
+                <div>End date of sale (unless maximum ICP raised sooner)</div>
+                <div>14th March 2023 at 12:00 (noon) GMT (TBC)</div>
+                <div>Minimum number of sale participants</div>
+                <div>500</div>
                 <div>Minimum ICP per buyer</div>
                 <div>1</div>
+                <div>Maximum ICP per buyer</div>
+                <div>100,000</div>
             </div>
 
             <HashLinkTarget on:copyUrl={onCopyUrl} id="5-3-1">Valuation range</HashLinkTarget>
@@ -725,14 +722,14 @@
             <p>
                 The reason to impose a maximum target is to give participants a minimum bound on the
                 number of CHAT tokens they will receive for their ICP investment. The lower bound of
-                0.1M ICP and the upper bound of 1M ICP for 20% of the tokens gives the OpenChat DAO
-                an initial total valuation between 0.5M ICP and 5M ICP. For 1 ICP you would receive
-                between 200 -> 2000 CHAT tokens.
+                0.5M ICP and the upper bound of 1M ICP for 25% of the tokens gives the OpenChat DAO
+                an initial total valuation between 2M ICP and 4M ICP. 1 CHAT token would initially
+                be worth between 0.02 -> 0.04 ICP.
             </p>
         </div>
     </CollapsibleCard>
 
-    <CollapsibleCard open={linked === 6}>
+    <CollapsibleCard transition={false} open={linked === 6}>
         <div class="header" slot="titleSlot">
             <span class="subtitle">6</span>
             <div class="title">
@@ -746,41 +743,38 @@
             <p>The SNS will hold a treasury of ICP tokens and CHAT tokens.</p>
             <p>
                 Immediately after the decentralization sale the SNS will have an ICP ledger account
-                with the ICP raised in the sale and a CHAT ledger account with 530M tokens. The plan
+                with the ICP raised in the sale and a CHAT ledger account with 52M tokens. The plan
                 for these CHAT tokens is <HashLink id="5-1-3">described above</HashLink> but the treasury
                 is available to be used by the DAO through proposals as it sees fit.
             </p>
             <p>
                 Soon after the decentralization sale, as and when DEXes are available, proposals
-                will be made to transfer CHAT from the 20M reserve into a handful of AMM liquidity
-                pools alongside proposals to transfer the corresponding value of ICP from the
-                treasury to the AMM liquidity pools. This will enable the trading of CHAT.
+                will be made to transfer CHAT and the corresponding value of ICP from the treasury
+                into a handful of AMM liquidity pools. This will enable the trading of CHAT.
             </p>
             <p>
-                We plan to create a proposal to stake a large portion of ICP, say 80%, as an 8 year
-                neuron. This neuron would participate in NNS voting by following an OpenChat beacon
-                neuron which would seek to influence the ICs agenda to suit the long term interests
-                of the OpenChat DAO. It would also earn voting rewards for the DAO which could be
-                used to cover ongoing costs or build up a reserve. This all depends on whether a
-                small but significant change is made to the IC to allow canisters to control
-                neurons.
+                We plan to create a proposal to stake a large portion of ICP as an 8 year neuron.
+                This neuron would participate in NNS voting by following an OpenChat beacon neuron
+                which would seek to influence the ICs agenda to suit the long term interests of the
+                OpenChat DAO. It would also earn voting rewards for the DAO which could be used to
+                cover ongoing costs or build up a reserve. This all depends on whether a small but
+                significant change is made to the IC to allow canisters to control neurons.
             </p>
             <p>
                 Any liquid ICP in the reserve could be used directly, or the DAO could swap CHAT
-                from the CHAT reserve for ICP at a DEX, and use it to fund expenses such as <HashLink
-                    id="6-1">
-                    cycles for hosting
-                </HashLink>, <HashLink id="6-2">3rd party services</HashLink>, and potentially later
-                for <HashLink id="6-3">paying the development team</HashLink>.
+                from the CHAT reserve for ICP at a DEX, and use it to fund expenses such as
+                <HashLink id="6-1">cycles for hosting</HashLink>, <HashLink id="6-2"
+                    >3rd party services</HashLink
+                >, and later for <HashLink id="6-3">paying the development team</HashLink>.
             </p>
             <HashLinkTarget on:copyUrl={onCopyUrl} id="6-1"
                 >ICP for cycles to fund hosting</HashLinkTarget>
             <p>
-                Initially, proposals will be created to transfer ICP as needed to the account of a
-                designated developer who will use it to buy cycles and top-up the root OpenChat
-                canister. Going forwards, the root OpenChat canister can be programmed to
-                automatically create a proposal when it is below a threshold of cycles to transfer
-                ICP to itself and burn it for cycles to run the dapp.
+                OpenChat has a "cycles dispenser" canister which keeps all the other OpenChat
+                canisters topped up with cycles. It has a treasury of cycles and ICP. When it is
+                runnning low on cycles it will automatically burn some ICP for more cycles using the
+                NNS cycles minting canister. There will be infrequent proposals to transfer a
+                portion of ICP from the SNS treasury to the "cycles dispenser".
             </p>
             <HashLinkTarget on:copyUrl={onCopyUrl} id="6-2">3rd party services</HashLinkTarget>
             <p>
@@ -805,33 +799,59 @@
                     fire and forget HTTP calls directly from IC canisters
                 </li>
                 <li>
-                    Serving the dapp on oc.app (hosted on AWS). Eventually this capability will be
-                    built into the boundary nodes - <ExternalLink
-                        href="https://forum.dfinity.org/t/boundary-node-roadmap/15562"
-                        >see here</ExternalLink>
+                    Rental of the oc.app domain name has been pre-paid for the maximum of 10 years.
+                    Long before this we expect the IC to have an alternative solution.
                 </li>
             </ul>
             <HashLinkTarget on:copyUrl={onCopyUrl} id="6-3"
                 >Pay the development team</HashLinkTarget>
             <p>
-                Initially at least DFINITY will continue to fund the OpenChat development team and
-                thus a core contributor to the OpenChat open source project. DFINITY is expecting to
-                migrate its day to day business from existing web2 chat solutions (i.e. Slack) to
-                using IC based web3 solutions for its needs, and by funding the OpenChat open source
-                project is able to influence the roadmap of the project to help ensure the
-                enterprise features it requires are prioritized. This does not mean that DFINITY is
-                the only contributor, and OpenChat welcomes community contributions.
+                For some short initial period DFINITY will continue to fund the OpenChat development
+                team and thus remain a core contributor to the OpenChat open source project. Once
+                this funding has stopped the OpenChat DAO will need to fund its own development. In
+                this case the development team(s) can make proposals to the SNS to receive ICP for
+                ongoing funding. For example the team could make a proposal each quarter with a
+                development plan and a request for funds.
+            </p>
+
+            <HashLinkTarget on:copyUrl={onCopyUrl} id="6-4"
+                >Mitigation against a 51% Attack</HashLinkTarget>
+            <p>
+                There is a danger that the OpenChat SNS treasury could be the target of an attack.
+                One possible scenario is for an attacker to buy a large proportion of the CHAT
+                tokens in the decentralization sale and immediately increase the dissolve delay of
+                all of their neurons to the maximum 1 year in an attempt to gain > 50% of the SNS
+                voting power. If successful they could force through a proposal to transfer the
+                entire ICP and CHAT treasury to themselves. The Community Fund actually provides a
+                great deal of mitigation against this scenario because it limits the proportion of
+                voting power an attacker would be able to acquire.
             </p>
             <p>
-                At some point it is likely this funding will stop and the OpenChat DAO will need to
-                fund its own development. In this case the development team(s) can make proposals to
-                the SNS to receive ICP for ongoing funding. For example the team could make a
-                proposal each quarter with a development plan and a request for funds.
+                This chart represents a scenario whereby an attacker manages to buy 75% of the
+                available tokens in the decentralization sale which is already extremely unlikely.
             </p>
+            <GoogleChart
+                {totalWidth}
+                title="Initial token allocation"
+                originalWidth={719}
+                originalHeight={371}
+                src="https://docs.google.com/spreadsheets/d/e/2PACX-1vQHVsuUj8dXoL4nm2IOpy71_I-JPhprdlkdKiztWFyN4kLxXhhaFZMfG6dY5zGzwW_bQiP5OyDN2wU_/pubchart?oid=786998007&format=interactive" />
+            <p>
+                If the attacker then increases the dissolve delay of all their neurons to the max
+                this chart shows how much voting power they would be able to acquire. As can be seen
+                the attacker would still fall significantly short of the necessary voting power to
+                gain control with only 43.1%.
+            </p>
+            <GoogleChart
+                {totalWidth}
+                title="Voting power at genesis"
+                originalWidth={685}
+                originalHeight={371}
+                src="https://docs.google.com/spreadsheets/d/e/2PACX-1vQHVsuUj8dXoL4nm2IOpy71_I-JPhprdlkdKiztWFyN4kLxXhhaFZMfG6dY5zGzwW_bQiP5OyDN2wU_/pubchart?oid=1253294553&format=interactive" />
         </div>
     </CollapsibleCard>
 
-    <CollapsibleCard open={linked === 7}>
+    <CollapsibleCard transition={false} open={linked === 7}>
         <div class="header" slot="titleSlot">
             <span class="subtitle">7</span>
             <div class="title">
@@ -844,14 +864,13 @@
         <div class="body">
             <HashLinkTarget on:copyUrl={onCopyUrl} id="7-1">Total supply levers</HashLinkTarget>
             <p>
-                At genesis the total supply of CHAT tokens will be 1B. The supply will increase if
+                At genesis the total supply of CHAT tokens will be 100M. The supply will increase if
                 more tokens are minted and decrease if tokens are burned.
             </p>
             <p>
-                The SNS is configured to generate 5% of the total supply annually to pay voting
-                rewards to participating neurons. This value of 5% could be subsequently changed by
-                proposal. Voting rewards accumulate in participating neurons as <ExternalLink
-                    href="https://wiki.internetcomputer.org/wiki/Maturity_modulation"
+                The SNS is configured to generate 2.5% of the total supply annually to pay voting
+                rewards to participating neurons. Voting rewards accumulate in participating neurons
+                as <ExternalLink href="https://wiki.internetcomputer.org/wiki/Maturity_modulation"
                     >maturity</ExternalLink
                 >. At the point a neuron’s maturity is disbursed it is burned and the corresponding
                 value of CHAT tokens will be minted by the SNS ledger to an account. It is also
@@ -862,43 +881,43 @@
             <HashLinkTarget on:copyUrl={onCopyUrl} id="7-2">Income and outgoings</HashLinkTarget>
             <p>
                 At genesis the SNS will have a treasury of ICP from the decentralization sale and
-                530M CHAT tokens.
+                52M CHAT tokens.
             </p>
             <p>
                 The SNS will receive an income in CHAT tokens from premium features, transaction
                 fees, 3rd party integrations etc. The SNS will also receive an income in ICP from
-                the NNS voting rewards of its large ICP neuron if that goes ahead.
+                the NNS voting rewards of its large ICP neuron assuming that goes ahead.
             </p>
             <p>
                 The SNS will have various outgoings. It will use ICP to pay the OpenChat dapp
-                hosting costs (cycles), 3rd parties for services, and potentially in the future, the
-                core dev team. It will use CHAT to pay user rewards and community bounties.
+                hosting costs (cycles), 3rd parties for services, and at some point soon, the core
+                dev team. It will use CHAT to pay user rewards and community bounties.
             </p>
             <p>
-                In the early years, outgoings will outstrip income and the treasury will largely be
-                used to fund user rewards and community bounties. The expectation is that as income
-                grows over time it will eventually balance outgoings. A higher income would also
-                allow a higher rate of user rewards and bounties to encourage higher growth in users
-                and usage.
+                In the early years, outgoings will outstrip income and the CHAT treasury will
+                largely be used to fund user rewards and community bounties. The expectation is that
+                as income grows over time it will eventually balance outgoings. A higher income
+                would also allow a higher rate of user rewards and bounties to encourage higher
+                growth in users and usage.
             </p>
             <p>
                 As the OpenChat DAO sees fit it can choose to burn CHAT tokens to reduce the total
                 supply. The expectation is that over several years the SNS will be able to afford to
-                burn CHAT at an increasing rate until the burn rate matches the minting rate from
-                voting rewards and the total supply becomes constant.
+                burn CHAT at an increasing rate until the burn rate exceeds the minting rate from
+                voting rewards and the total supply starts decreasing.
             </p>
             <p>
                 The following diagram depicts a projection of the total supply of CHAT over time.
                 For the purposes of this projection it is assumed that the reward rate will remain
-                at a constant 5% and that the burn rate will start at 0.125%, increasing by a factor
-                of 1.5 each year, until it balances the reward rate.
+                at a constant 2.5% and that the burn rate will start at 0.125%, increasing by a
+                factor of 1.37 each year, until it overtakes the reward rate.
             </p>
             <GoogleChart
                 {totalWidth}
                 title="CHAT supply over time"
-                originalWidth={943}
-                originalHeight={582}
-                src="https://docs.google.com/spreadsheets/d/e/2PACX-1vTR-Snm-_Eq_UcQ5ClcdjGTLg4UOyvUl04rZXpY1W0n_yLuKJkANs-umrNS4F469qZoI17w1Nci08Sf/pubchart?oid=285935273&amp;format=interactive" />
+                originalWidth={741}
+                originalHeight={458}
+                src="https://docs.google.com/spreadsheets/d/e/2PACX-1vQHVsuUj8dXoL4nm2IOpy71_I-JPhprdlkdKiztWFyN4kLxXhhaFZMfG6dY5zGzwW_bQiP5OyDN2wU_/pubchart?oid=16731292&format=interactive" />
             <HashLinkTarget on:copyUrl={onCopyUrl} id="7-3">Token price</HashLinkTarget>
             <p>There are various factors that will influence the price of CHAT tokens such as</p>
             <ul class="list">
@@ -914,12 +933,12 @@
             </p>
             <p>
                 After the decentralization sale, participants will receive a basket of neurons of
-                varying dissolve delays with only 1/13 being immediately liquid. The voting reward
-                rate, initialized to 5%, is expected to encourage token holders to lock up a certain
-                proportion of tokens thus, at least temporarily, removing them from the liquid
-                supply. In the case of the seed funders, every neuron has a 1 year vesting period
-                before it can even start dissolving. In the case of the founding dev team, every
-                neuron has a 3 year vesting period.
+                varying dissolve delays with only 1/5 being immediately liquid. The voting reward
+                rate, initialized to 2.5%, is expected to encourage token holders to lock up a
+                certain proportion of tokens thus, at least temporarily, removing them from the
+                liquid supply. In the case of the seed funders, their neurons have vesting periods
+                from 6-24 momths before they can even start dissolving. In the case of the founding
+                dev team, the vesting periods are from 0-4 years.
             </p>
             <p>
                 There are various tokenomics parameters which can affect the proportion of CHAT that
@@ -944,51 +963,12 @@
                 higher to encourage more user growth but in the short term that could negatively
                 impact price by increasing the liquid supply.
             </p>
-            <HashLinkTarget on:copyUrl={onCopyUrl} id="7-4">Voting power over time</HashLinkTarget>
+            <HashLinkTarget on:copyUrl={onCopyUrl} id="7-4">Model</HashLinkTarget>
             <p>
-                The following diagram depicts a projection of the voting power over time segmented
-                by founding dev team & seed funders and the rest of the token holder community. This
-                projection is derived on the basis of the <HashLink id="5-2"
-                    >initial SNS parameter values</HashLink
-                >, the <HashLink id="5-1">initial token distribution</HashLink>, intrinsic
-                properties of founder/funder neurons and some assumptions:
-            </p>
-            <ul class="list">
-                <li>The SNS will distribute 20% of its treasury annually</li>
-                <li>
-                    The dev team and seed funders will keep 92% of their neurons staked for the
-                    period
-                </li>
-                <li>Other CHAT holders will stake 50% of their tokens going forwards</li>
-                <li>The average dissolve delay for a neuron will be 6.5 months</li>
-                <li>
-                    20% of CHAT sold in decentralization sale and the remaining 9% allocated for
-                    sale remains unsold
-                </li>
-                <li>
-                    The founding dev team and seed funders have their voting power reduced as a
-                    proportion of CHAT sold out of total allocation for sale = 20/29 or 69%
-                </li>
-            </ul>
-            <p>
-                The full model used to plot this graph can be found in <ExternalLink
-                    href="https://docs.google.com/spreadsheets/d/1-LuBsCXxXdpia0-CDEY5eFveczp3eQdM3BponEX3Tq0/edit#gid=1167954061"
-                    >this spreadsheet</ExternalLink
-                >.
-            </p>
-            <GoogleChart
-                {totalWidth}
-                title="Voting power over time"
-                originalWidth={813}
-                originalHeight={503}
-                src="https://docs.google.com/spreadsheets/d/e/2PACX-1vTR-Snm-_Eq_UcQ5ClcdjGTLg4UOyvUl04rZXpY1W0n_yLuKJkANs-umrNS4F469qZoI17w1Nci08Sf/pubchart?oid=1816967829&amp;format=interactive" />
-            <p>
-                In the first year the share of voting power held by the community is expected to
-                decrease as it is assumed they will only stake 50% of their tokens going forwards
-                whereas the founding dev team and seed funders expect to keep 92% staked. However,
-                thereafter it is expected that voting power will shift further and further towards
-                the community as more tokens are distributed. Importantly the balance of voting
-                power should always remain in the hands of the wider community.
+                You can <ExternalLink
+                    href="https://docs.google.com/spreadsheets/d/17iPPf3BgI2QKEXwK0lJYHlJmgPZtNvBxO8cgZfjZz8o"
+                    >view the spreadsheet</ExternalLink> we have used to model various aspects of the
+                OpenChat tokenomics which is also the source for the various charts in this document.
             </p>
         </div>
     </CollapsibleCard>
@@ -1025,20 +1005,7 @@
     }
 
     .list {
-        text-align: left;
-        list-style: none;
-        margin: 0 0 toRem(12) toRem(22);
-        padding: 0;
-        position: relative;
-
-        > li {
-            &:before {
-                position: absolute;
-                content: "\25AA";
-                left: toRem(-25);
-                color: #23a2ee;
-            }
-        }
+        @include bullet_list();
     }
 
     .header {

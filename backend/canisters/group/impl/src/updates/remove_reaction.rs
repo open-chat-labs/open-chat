@@ -1,7 +1,7 @@
-use crate::updates::handle_activity_notification;
+use crate::activity_notifications::handle_activity_notification;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
-use chat_events::AddRemoveReactionResult;
+use chat_events::{AddRemoveReactionArgs, AddRemoveReactionResult};
 use group_canister::remove_reaction::{Response::*, *};
 use ic_cdk_macros::update;
 
@@ -29,26 +29,20 @@ fn remove_reaction_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
 
         let now = runtime_state.env.now();
         let user_id = participant.user_id;
+        let min_visible_event_index = participant.min_visible_event_index();
 
-        if !runtime_state.data.events.is_message_accessible_by_id(
-            participant.min_visible_event_index(),
-            args.thread_root_message_index,
-            args.message_id,
-        ) {
-            return MessageNotFound;
-        }
-
-        match runtime_state.data.events.remove_reaction(
+        match runtime_state.data.events.remove_reaction(AddRemoveReactionArgs {
             user_id,
-            args.thread_root_message_index,
-            args.message_id,
-            args.reaction,
-            args.correlation_id,
+            min_visible_event_index,
+            thread_root_message_index: args.thread_root_message_index,
+            message_id: args.message_id,
+            reaction: args.reaction,
+            correlation_id: args.correlation_id,
             now,
-        ) {
-            AddRemoveReactionResult::Success(e) => {
+        }) {
+            AddRemoveReactionResult::Success(r) => {
                 handle_activity_notification(runtime_state);
-                Success(e)
+                SuccessV2(r)
             }
             AddRemoveReactionResult::NoChange => NoChange,
             AddRemoveReactionResult::MessageNotFound => MessageNotFound,

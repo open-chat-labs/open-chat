@@ -1,24 +1,27 @@
 use crate::ic_agent::IcAgent;
-use crate::ic_agent::IcAgentConfig;
+use base64::Engine;
 use futures::future;
 use index_store::IndexStore;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
 use std::rc::Rc;
 use tracing::{error, info};
-use types::{Error, IndexedEvent, NotificationEnvelope, UserId};
+use types::{CanisterId, Error, IndexedEvent, NotificationEnvelope, UserId};
 use web_push::*;
 
 const MAX_PAYLOAD_LENGTH_BYTES: usize = 4 * 1024;
 
 pub async fn run<'a>(
-    config: &'a IcAgentConfig,
+    ic_agent: &IcAgent,
+    index_canister_id: CanisterId,
+    notifications_canister_id: CanisterId,
     index_store: &'a dyn IndexStore,
     vapid_private_pem: &'a str,
 ) -> Result<(), Error> {
-    let ic_agent = IcAgent::build(config).await?;
-    let from_notification_index = index_processed_up_to(&ic_agent, index_store).await? + 1;
-    let ic_response = ic_agent.notifications(from_notification_index).await?;
+    let from_notification_index = index_processed_up_to(ic_agent, notifications_canister_id, index_store).await? + 1;
+    let ic_response = ic_agent
+        .notifications(&notifications_canister_id, from_notification_index)
+        .await?;
 
     if let Some(latest_notification_index) = ic_response.notifications.last().map(|e| e.index) {
         let client = WebPushClient::new()?;
@@ -26,14 +29,14 @@ pub async fn run<'a>(
         let subscriptions_map = ic_response
             .subscriptions
             .into_iter()
-            .map(|(k, v)| (k, v.into_iter().map(convert_subscription_info).collect()))
+            .map(|(k, v)| (k, v.into_iter().map(convert_subscription).collect()))
             .collect();
 
         let subscriptions_to_remove =
             handle_notifications(&client, ic_response.notifications, subscriptions_map, vapid_private_pem).await;
 
-        let future1 = index_store.set(latest_notification_index);
-        let future2 = ic_agent.remove_subscriptions(subscriptions_to_remove);
+        let future1 = index_store.set(notifications_canister_id, latest_notification_index);
+        let future2 = ic_agent.remove_subscriptions(&index_canister_id, subscriptions_to_remove);
 
         let (result1, result2) = futures::future::join(future1, future2).await;
 
@@ -98,7 +101,7 @@ fn group_notifications_by_user(envelopes: Vec<IndexedEvent<NotificationEnvelope>
     }
 
     for n in envelopes {
-        let base64 = Rc::new(base64::encode(n.value.notification_bytes));
+        let base64 = Rc::new(base64::engine::general_purpose::STANDARD_NO_PAD.encode(n.value.notification_bytes));
         for u in n.value.recipients {
             assign_notification_to_user(&mut grouped_by_user, u, base64.clone());
         }
@@ -166,17 +169,21 @@ async fn push_notification_to_user<'a>(
     client.send(message).await.map_err(|e| (e, subscription))
 }
 
-async fn index_processed_up_to(ic_agent: &IcAgent, index_store: &dyn IndexStore) -> Result<u64, Error> {
-    if let Some(index) = index_store.get().await? {
+async fn index_processed_up_to(
+    ic_agent: &IcAgent,
+    notifications_canister_id: CanisterId,
+    index_store: &dyn IndexStore,
+) -> Result<u64, Error> {
+    if let Some(index) = index_store.get(notifications_canister_id).await? {
         Ok(index)
     } else {
-        let index = ic_agent.latest_notifications_index().await?;
-        index_store.set(index).await?;
+        let index = ic_agent.latest_notifications_index(&notifications_canister_id).await?;
+        index_store.set(notifications_canister_id, index).await?;
         Ok(index)
     }
 }
 
-fn convert_subscription_info(value: types::SubscriptionInfo) -> SubscriptionInfo {
+fn convert_subscription(value: types::SubscriptionInfo) -> SubscriptionInfo {
     SubscriptionInfo {
         endpoint: value.endpoint,
         keys: SubscriptionKeys {

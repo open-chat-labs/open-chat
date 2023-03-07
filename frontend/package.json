@@ -3,20 +3,26 @@
   "version": "1.0.0",
   "description": "",
   "scripts": {
+    "build": "turbo run build",
     "build:ci": "turbo run build:ci",
     "deploy:prod_test": "turbo run deploy:prod_test",
     "deploy:prod": "turbo run deploy:prod",
     "deploy:testnet": "turbo run deploy:testnet",
-    "dev": "turbo run dev"
+    "dev": "turbo run dev",
+    "changelog": "auto-changelog --tag-pattern '-website' --file-pattern '^frontend'"
   },
   "author": "julian.jelfs@gmail.com",
   "workspaces": [
     "app",
     "openchat-client",
     "openchat-agent",
-    "openchat-shared"
+    "openchat-shared",
+    "openchat-worker",
+    "openchat-push",
+    "openchat-sw"
   ],
   "devDependencies": {
+    "auto-changelog": "open-ic/auto-changelog#master",
     "turbo": "^1.5.6"
   }
 }

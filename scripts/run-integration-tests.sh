@@ -6,10 +6,14 @@ cd $SCRIPT_DIR/..
 
 BUILD_WASMS=${1:-true}
 TEST_THREADS=${2:-2}
+TESTNAME=$3
 
 if [ $BUILD_WASMS = true ]
 then
     ./scripts/generate-all-canister-wasms.sh
 fi
 
-cargo test --release --package integration_tests -- --test-threads $TEST_THREADS
+./scripts/download-nns-canister-wasm.sh icp_ledger ledger-canister_notify-method
+./scripts/download-nns-canister-wasm.sh cycles_minting_canister cycles-minting-canister
+
+cargo test --release --package integration_tests $TESTNAME -- --test-threads $TEST_THREADS

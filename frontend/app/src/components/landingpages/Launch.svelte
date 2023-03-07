@@ -1,7 +1,7 @@
 <script lang="ts">
     import type { OpenChat } from "openchat-client";
     import { createEventDispatcher, getContext } from "svelte";
-    import { push } from "svelte-spa-router";
+    import page from "page";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -11,14 +11,14 @@
 
     function launch() {
         if ($identityState === "logged_in") {
-            push("/");
+            page("/");
         } else {
             dispatch("login");
         }
     }
 </script>
 
-<div on:click={launch} class="launch">{txt}</div>
+<div role="button" on:click={launch} class="launch">{txt}</div>
 
 <style type="text/scss">
     .launch {

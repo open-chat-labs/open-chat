@@ -19,6 +19,7 @@ describe("mark messages read", () => {
                 reactions: [],
                 edited: false,
                 forwarded: false,
+                deleted: false,
             },
             index: 0,
             timestamp: BigInt(0),
@@ -86,21 +87,21 @@ describe("mark messages read", () => {
             test("synced up with unread", () => {
                 markRead.syncWithServer("abc", undefined, [
                     { threadRootMessageIndex: 1, readUpTo: 3 },
-                ]);
+                ], undefined);
                 const unread = markRead.unreadThreadMessageCount("abc", 1, 5);
                 expect(unread).toEqual(2);
             });
             test("synced up with no unread", () => {
                 markRead.syncWithServer("abc", undefined, [
                     { threadRootMessageIndex: 1, readUpTo: 3 },
-                ]);
+                ], undefined);
                 const unread = markRead.unreadThreadMessageCount("abc", 1, 3);
                 expect(unread).toEqual(0);
             });
             test("up to date only locally", () => {
                 markRead.syncWithServer("abc", undefined, [
                     { threadRootMessageIndex: 1, readUpTo: 3 },
-                ]);
+                ], undefined);
                 markRead.markThreadRead("abc", 1, 5);
                 const unread = markRead.unreadThreadMessageCount("abc", 1, 5);
                 expect(unread).toEqual(0);
@@ -108,7 +109,7 @@ describe("mark messages read", () => {
             test("local ahead of server, still not up to date", () => {
                 markRead.syncWithServer("abc", undefined, [
                     { threadRootMessageIndex: 1, readUpTo: 3 },
-                ]);
+                ], undefined);
                 markRead.markThreadRead("abc", 1, 5);
                 const unread = markRead.unreadThreadMessageCount("abc", 1, 7);
                 expect(unread).toEqual(2);
@@ -120,7 +121,7 @@ describe("mark messages read", () => {
                 markRead.syncWithServer("abc", undefined, [
                     { threadRootMessageIndex: 1, readUpTo: 3 },
                     { threadRootMessageIndex: 2, readUpTo: 5 },
-                ]);
+                ], undefined);
                 const count = markRead.staleThreadCountForChat("abc", threadSyncs);
                 expect(count).toEqual(0);
             });
@@ -128,7 +129,7 @@ describe("mark messages read", () => {
                 markRead.syncWithServer("abc", undefined, [
                     { threadRootMessageIndex: 1, readUpTo: 1 },
                     { threadRootMessageIndex: 2, readUpTo: 5 },
-                ]);
+                ], undefined);
                 const count = markRead.staleThreadCountForChat("abc", threadSyncs);
                 expect(count).toEqual(1);
             });
@@ -136,7 +137,7 @@ describe("mark messages read", () => {
                 markRead.syncWithServer("abc", undefined, [
                     { threadRootMessageIndex: 1, readUpTo: 1 },
                     { threadRootMessageIndex: 2, readUpTo: 5 },
-                ]);
+                ], undefined);
                 markRead.markThreadRead("abc", 1, 2);
                 const count = markRead.staleThreadCountForChat("abc", threadSyncs);
                 expect(count).toEqual(1);
@@ -145,7 +146,7 @@ describe("mark messages read", () => {
                 markRead.syncWithServer("abc", undefined, [
                     { threadRootMessageIndex: 1, readUpTo: 1 },
                     { threadRootMessageIndex: 2, readUpTo: 5 },
-                ]);
+                ], undefined);
                 markRead.markThreadRead("abc", 1, 3);
                 const count = markRead.staleThreadCountForChat("abc", threadSyncs);
                 expect(count).toEqual(0);

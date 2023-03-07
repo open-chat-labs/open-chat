@@ -12,7 +12,7 @@
     export let fadeDelay = 200;
 
     function copyUrl(question: Questions): void {
-        const url = `${window.location.origin}/#/?faq=${question}`;
+        const url = `${window.location.origin}?faq=${question}`;
         navigator.clipboard.writeText(url).then(
             () => {
                 toastStore.showSuccessToast("faqUrlCopiedToClipboard");
@@ -47,14 +47,6 @@
 </ModalContent>
 
 <style type="text/scss">
-    :global(.faq-body .card) {
-        margin-bottom: $sp3;
-
-        &:last-child {
-            margin-bottom: 0;
-        }
-    }
-
     .header {
         display: flex;
         align-items: center;

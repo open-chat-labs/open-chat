@@ -26,29 +26,52 @@
 
     const dispatch = createEventDispatcher();
 
-    $: chats = chatsSummaries.map((c) => normaliseChatSummary($now, c));
+    type NormalisedChat = {
+        id: string;
+        userId: string | undefined;
+        name: string;
+        avatarUrl: string;
+        description: string;
+    };
 
-    function normaliseChatSummary(now: number, chatSummary: ChatSummary) {
+    $: {
+        Promise.all(chatsSummaries.map((c) => normaliseChatSummary($now, c))).then((c) => {
+            chats = c;
+        });
+    }
+    $: chats = undefined as NormalisedChat[] | undefined;
+
+    async function normaliseChatSummary(
+        now: number,
+        chatSummary: ChatSummary
+    ): Promise<NormalisedChat> {
         if (chatSummary.kind === "direct_chat") {
+            const description = await buildDirectChatDescription(chatSummary, now);
+            const them = $userStore[chatSummary.them];
             return {
                 id: chatSummary.chatId,
-                name: $userStore[chatSummary.them]?.username,
-                avatarUrl: client.userAvatarUrl($userStore[chatSummary.them]),
-                description: buildDirectChatDescription(chatSummary, now),
+                userId: chatSummary.them,
+                name: `${them?.username}  ${them?.diamond ? "💎" : ""}`,
+                avatarUrl: client.userAvatarUrl(them),
+                description,
             };
         }
         return {
             id: chatSummary.chatId,
+            userId: undefined,
             name: chatSummary.name,
             avatarUrl: client.groupAvatarUrl(chatSummary),
             description: buildGroupChatDescription(chatSummary),
         };
     }
 
-    function buildDirectChatDescription(chat: DirectChatSummary, now: number): string {
-        return client.getUserStatus(now, $userStore, chat.them) === UserStatus.Offline
-            ? $_("offline")
-            : $_("onlineNow");
+    async function buildDirectChatDescription(
+        chat: DirectChatSummary,
+        now: number
+    ): Promise<string> {
+        return (await client.getUserStatus(chat.them, now)) === UserStatus.Online
+            ? $_("onlineNow")
+            : $_("offline");
     }
 
     function buildGroupChatDescription(group: GroupChatSummary): string {
@@ -79,14 +102,17 @@
             </HoverIcon>
         </span>
     </SectionHeader>
-    {#if chats.length === 0}
+    {#if chatsSummaries.length === 0}
         <div class="no-chats">{$_("noChatsAvailable")}</div>
-    {:else}
+    {:else if chats !== undefined}
         <div class="body">
             {#each chats as chat}
                 <div class="row" class:rtl={$rtlStore} on:click={() => selectChat(chat.id)}>
                     <div class="avatar">
-                        <Avatar url={chat.avatarUrl} size={AvatarSize.Small} />
+                        <Avatar
+                            url={chat.avatarUrl}
+                            userId={chat.userId}
+                            size={AvatarSize.Default} />
                     </div>
                     <div class="details">
                         <div class="name">{chat.name}</div>

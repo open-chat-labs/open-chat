@@ -43,76 +43,6 @@ type RegisterUserResponse =
         ChallengeFailed;
     };
 
-type PhoneNumber =
-    record {
-        country_code: nat16;
-        number: text;
-    };
-
-type SubmitPhoneNumberArgs =
-    record {
-        phone_number: PhoneNumber;
-    };
-
-type SubmitPhoneNumberResponse =
-    variant {
-        Success;
-        AlreadyRegistered;
-        AlreadyRegisteredByOther;
-        InvalidPhoneNumber;
-        UserNotFound;
-    };
-
-type ConfirmPhoneNumberArgs =
-    record {
-        confirmation_code: text;
-    };
-
-type ConfirmPhoneNumberResponse =
-    variant {
-        Success: SuccessResult;
-        ConfirmationCodeIncorrect;
-        ConfirmationCodeExpired;
-        AlreadyClaimed;
-        UserNotFound;
-    };
-
-type SuccessResult =
-    record {
-        open_storage_limit_bytes: nat64;
-    };
-
-type ResendCodeArgs =
-    record {
-    };
-
-type ResendCodeResponse =
-    variant {
-        Success;
-        PhoneNumberNotSubmitted;
-        PhoneNumberAlreadyConfirmed;
-        UserNotFound;
-    };
-
-type UpgradeStorageArgs =
-    record {
-        new_storage_limit_bytes: nat64;
-    };
-
-type UpgradeStorageResponse =
-    variant {
-        Success;
-        SuccessNoChange;
-        PaymentInsufficient: record {
-            account_balance: ICP;
-            amount_required: ICP;
-        };
-        PaymentNotFound;
-        StorageLimitExceeded: nat64; // Returns the storage limit in bytes
-        UserNotFound;
-        InternalError: text;
-    };
-
 type SetUsernameArgs =
     record {
         username: text;
@@ -142,23 +72,6 @@ type CheckUsernameResponse =
         UsernameTooLong: nat16;
     };
 
-type TransferCyclesArgs =
-    record {
-        sender: UserId;
-        recipient: UserId;
-        amount: nat;
-    };
-
-type TransferCyclesResponse =
-    variant {
-        Success: record {
-            new_balance: nat;
-        };
-        UserNotFound;
-        RecipientNotFound;
-        BalanceExceeded;
-    };
-
 type CurrentUserArgs =
     record {
     };
@@ -171,13 +84,12 @@ type CurrentUserResponse =
             canister_upgrade_status: CanisterUpgradeStatus;
             avatar_id: opt nat;
             wasm_version: Version;
-            open_storage_limit_bytes: nat64;
-            phone_status: PhoneStatus;
             icp_account: AccountIdentifier;
             referrals: vec UserId;
             is_super_admin: bool;
             suspension_details: opt SuspensionDetails;
             is_suspected_bot: bool;
+            diamond_membership_details: opt DiamondMembershipDetails;
         };
         UserNotFound;
     };
@@ -193,19 +105,6 @@ type SuspensionAction =
     variant {
         Unsuspend: TimestampMillis;
         Delete: TimestampMillis;
-    };
-
-type PhoneStatus =
-    variant {
-        None;
-        Unconfirmed: UnconfirmedPhoneNumberState;
-        Confirmed;
-    };
-
-type UnconfirmedPhoneNumberState =
-    record {
-        phone_number: PhoneNumber;
-        valid_until: TimestampMillis;
     };
 
 type UserArgs =
@@ -250,35 +149,66 @@ type SearchResponse =
         }
     };
 
-type AddSuperAdminArgs =
+type AddPlatformModeratorArgs =
     record {
         user_id: UserId;
     };
 
-type AddSuperAdminResponse =
+type AddPlatformModeratorResponse =
     variant {
         Success;
-        AlreadySuperAdmin;
+        AlreadyPlatformModerator;
         InternalError: text;
     };
 
-type RemoveSuperAdminArgs =
+type RemovePlatformModeratorArgs =
     record {
         user_id: UserId;
     };
 
-type RemoveSuperAdminResponse =
+type RemovePlatformModeratorResponse =
     variant {
         Success;
-        NotSuperAdmin;
+        NotPlatformModerator;
         InternalError: text;
     };
 
-type SuperAdminsArgs =
+type AddPlatformOperatorArgs =
+    record {
+        user_id: UserId;
+    };
+
+type AddPlatformOperatorResponse =
+    variant {
+        Success;
+    };
+
+type RemovePlatformOperatorArgs =
+    record {
+        user_id: UserId;
+    };
+
+type RemovePlatformOperatorResponse =
+    variant {
+        Success;
+    };
+
+type PlatformModeratorsArgs =
     record {
     };
 
-type SuperAdminsResponse =
+type PlatformModeratorsResponse =
+    variant {
+        Success: record {
+            users: vec UserId;
+        };
+    };
+
+type PlatformOperatorsArgs =
+    record {
+    };
+
+type PlatformOperatorsResponse =
     variant {
         Success: record {
             users: vec UserId;
@@ -336,25 +266,44 @@ type MarkSuspectedBotResponse =
         Success;
     };
 
+type PayForDiamondMembershipArgs =
+    record {
+        duration: DiamondMembershipPlanDuration;
+        token: Cryptocurrency;
+        expected_price_e8s: nat64;
+        recurring: bool;
+    };
+
+type PayForDiamondMembershipResponse =
+    variant {
+        Success: DiamondMembershipDetails;
+        CannotExtend: record {
+            diamond_membership_expires_at: TimestampMillis;
+            can_extend_at: TimestampMillis;
+        };
+        CurrencyNotSupported;
+        PriceMismatch;
+        PaymentAlreadyInProgress;
+        UserNotFound;
+        InsufficientFunds: nat64; // Returns the account balance in e8s
+        TransferFailed: text;
+        InternalError: text;
+    };
+
+type SetUserUpgradeConcurrencyArgs =
+    record {
+        value: nat32;
+    };
+
+type SetUserUpgradeConcurrencyResponse =
+    variant {
+        Success;
+    };
+
 service: {
     create_challenge : (CreateChallengeArgs) -> (CreateChallengeResponse);
 
     register_user: (RegisterUserArgs) -> (RegisterUserResponse);
-
-    // If the current user does not exist, the phone number is valid, and not already in use
-    // then send an SMS with a confirmation code to this phone number
-    submit_phone_number: (SubmitPhoneNumberArgs) -> (SubmitPhoneNumberResponse);
-
-    // Once the user receives a confirmation code by SMS and enters it, call this method to
-    // confirm the code matches and this set the user state as "confirmed"
-    confirm_phone_number: (ConfirmPhoneNumberArgs) -> (ConfirmPhoneNumberResponse);
-
-    // If the user did not receive or enter the confirmation code before it expired then
-    // call this to resend the code
-    resend_code: (ResendCodeArgs) -> (ResendCodeResponse);
-
-    // Increases the user's storage limit in OpenStorage (provided the user has deposited enough ICP)
-    upgrade_storage: (UpgradeStorageArgs) -> (UpgradeStorageResponse);
 
     // This is used to set the initial username and subsequently to change it
     set_username: (SetUsernameArgs) -> (SetUsernameResponse);
@@ -377,13 +326,23 @@ service: {
     // Mark the caller as a suspected bot
     mark_suspected_bot: (MarkSuspectedBotArgs) -> (MarkSuspectedBotResponse);
 
-    // Only callable by "service principals"
-    add_super_admin: (AddSuperAdminArgs) -> (AddSuperAdminResponse);
-    remove_super_admin: (RemoveSuperAdminArgs) -> (RemoveSuperAdminResponse);
-    super_admins: (SuperAdminsArgs) -> (SuperAdminsResponse) query;
-    suspected_bots: (SuspectedBotsArgs) -> (SuspectedBotsResponse) query;
+    pay_for_diamond_membership: (PayForDiamondMembershipArgs) -> (PayForDiamondMembershipResponse);
 
-    // Only callable by "super admins"
+    // List the platform moderators/operators
+    platform_moderators: (PlatformModeratorsArgs) -> (PlatformModeratorsResponse) query;
+    platform_operators: (PlatformOperatorsArgs) -> (PlatformOperatorsResponse) query;
+
+    // Only callable by SNS governance canister
+    add_platform_moderator: (AddPlatformModeratorArgs) -> (AddPlatformModeratorResponse);
+    add_platform_operator: (AddPlatformOperatorArgs) -> (AddPlatformOperatorResponse);
+    remove_platform_moderator: (RemovePlatformModeratorArgs) -> (RemovePlatformModeratorResponse);
+    remove_platform_operator: (RemovePlatformOperatorArgs) -> (RemovePlatformOperatorResponse);
+
+    // Only callable by "platform moderators"
     suspend_user: (SuspendUserArgs) -> (SuspendUserResponse);
     unsuspend_user: (UnsuspendUserArgs) -> (UnsuspendUserResponse);
+    suspected_bots: (SuspectedBotsArgs) -> (SuspectedBotsResponse) query;
+
+    // Only callable by "platform operators"
+    set_user_upgrade_concurrency: (SetUserUpgradeConcurrencyArgs) -> (SetUserUpgradeConcurrencyResponse);
 }

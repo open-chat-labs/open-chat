@@ -32,19 +32,16 @@
             {placeholder}
             bind:value
             class={"textbox"} />
-        {#if maxlength < Number.MAX_VALUE}
-            <div class:near-max={remaining <= 5} class="countdown">{remaining}</div>
-        {/if}
     </div>
+    {#if maxlength < Number.MAX_VALUE}
+        <div class:near-max={remaining <= 5} class="countdown">{value.length}/{maxlength}</div>
+    {/if}
     <slot />
 </div>
 
 <style type="text/scss">
     .outer-wrapper {
         margin-bottom: $sp3;
-        @include mobile() {
-            margin-bottom: $sp3;
-        }
     }
 
     .input-wrapper {
@@ -52,13 +49,12 @@
     }
 
     .countdown {
-        position: absolute;
-        right: 10px;
-        bottom: 11px;
+        text-align: end;
         @include font(light, normal, fs-80);
+        color: var(--txt-light);
 
         &.near-max {
-            color: darkred;
+            color: var(--warn);
         }
     }
 
@@ -66,15 +62,10 @@
         transition: border ease-in-out 300ms;
         display: block;
         width: 100%;
-        padding: $sp4;
-        @include font(book, normal, fs-100);
-        color: var(--txt);
-        background-color: var(--input-bg);
-        border: 1px solid var(--bd);
-        outline: none;
-        border-radius: $sp2;
         resize: vertical;
-        box-shadow: var(--input-sh);
+        margin-bottom: $sp2;
+
+        @include input(normal);
 
         &.invalid {
             border: 1px solid var(--error);

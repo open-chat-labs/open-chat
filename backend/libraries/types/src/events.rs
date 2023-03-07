@@ -1,4 +1,4 @@
-use crate::{EventIndex, GroupPermissions, Message, MessageId, MessageIndex, Role, UserId};
+use crate::{EventIndex, GroupPermissions, Message, MessageId, MessageIndex, Milliseconds, Role, UserId};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
@@ -39,6 +39,7 @@ pub enum ChatEvent {
     ProposalsUpdated(ProposalsUpdated),
     ChatFrozen(ChatFrozen),
     ChatUnfrozen(ChatUnfrozen),
+    EventsTimeToLiveUpdated(EventsTimeToLiveUpdated),
 }
 
 impl ChatEvent {
@@ -183,7 +184,7 @@ pub struct UpdatedMessage {
 pub struct PollVoteRegistered {
     pub user_id: UserId,
     pub message_id: MessageId,
-    pub existing_vote_removed: bool,
+    pub existing_vote_removed: bool, // TODO do we need this?
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -245,6 +246,12 @@ pub struct ChatFrozen {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct ChatUnfrozen {
     pub unfrozen_by: UserId,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct EventsTimeToLiveUpdated {
+    pub updated_by: UserId,
+    pub new_ttl: Option<Milliseconds>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Copy, Clone, Debug)]

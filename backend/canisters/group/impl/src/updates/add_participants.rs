@@ -1,4 +1,4 @@
-use crate::updates::handle_activity_notification;
+use crate::activity_notifications::handle_activity_notification;
 use crate::{mutate_state, read_state, run_regular_jobs, AddParticipantArgs, RuntimeState};
 use candid::Principal;
 use canister_tracing_macros::trace;
@@ -141,9 +141,11 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, B
             return Err(Box::new(NotAuthorized));
         }
 
+        let now = runtime_state.env.now();
+
         Ok(PrepareResult {
             added_by: participant.user_id,
-            latest_message_index: runtime_state.data.events.main().latest_message_index(),
+            latest_message_index: runtime_state.data.events.main_events_reader(now).latest_message_index(),
             users_to_add,
             users_already_in_group,
             users_blocked_from_group,
@@ -167,10 +169,10 @@ fn commit(
     if !runtime_state.data.history_visible_to_new_joiners {
         // If there is only an initial "group created" event then allow these initial
         // participants to see the "group created" event by starting min_visible_* at zero
-        let chat_events = runtime_state.data.events.main();
-        if chat_events.len() > 1 {
-            min_visible_event_index = chat_events.last().index.incr();
-            min_visible_message_index = chat_events.next_message_index();
+        let events_reader = runtime_state.data.events.main_events_reader(now);
+        if events_reader.len() > 1 {
+            min_visible_event_index = events_reader.next_event_index();
+            min_visible_message_index = events_reader.next_message_index();
         }
     };
 

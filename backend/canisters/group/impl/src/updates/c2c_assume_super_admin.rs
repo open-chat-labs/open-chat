@@ -1,5 +1,5 @@
+use crate::activity_notifications::handle_activity_notification;
 use crate::model::participants::MakeSuperAdminResult;
-use crate::updates::handle_activity_notification;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
@@ -15,10 +15,12 @@ async fn c2c_assume_super_admin(args: Args) -> Response {
     let prepare_result = mutate_state(prepare);
     let user_id = prepare_result.user_id;
 
-    let canister_id = prepare_result.user_index_canister_id;
-    let c2c_args = user_index_canister::c2c_lookup_principal::Args { user_id };
-    match user_index_canister_c2c_client::c2c_lookup_principal(canister_id, &c2c_args).await {
-        Ok(user_index_canister::c2c_lookup_principal::Response::Success(r)) if r.is_super_admin => {
+    let canister_id = prepare_result.local_user_index_canister_id;
+    let c2c_args = local_user_index_canister::c2c_lookup_user::Args {
+        user_id_or_principal: user_id.into(),
+    };
+    match local_user_index_canister_c2c_client::c2c_lookup_user(canister_id, &c2c_args).await {
+        Ok(local_user_index_canister::c2c_lookup_user::Response::Success(r)) if r.is_super_admin => {
             mutate_state(|state| commit(user_id, args.correlation_id, state))
         }
         Ok(_) => NotSuperAdmin,
@@ -28,13 +30,13 @@ async fn c2c_assume_super_admin(args: Args) -> Response {
 
 struct PrepareResult {
     pub user_id: UserId,
-    pub user_index_canister_id: CanisterId,
+    pub local_user_index_canister_id: CanisterId,
 }
 
 fn prepare(runtime_state: &mut RuntimeState) -> PrepareResult {
     PrepareResult {
         user_id: runtime_state.env.caller().into(),
-        user_index_canister_id: runtime_state.data.user_index_canister_id,
+        local_user_index_canister_id: runtime_state.data.local_user_index_canister_id,
     }
 }
 

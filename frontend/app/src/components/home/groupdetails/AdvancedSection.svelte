@@ -5,7 +5,6 @@
     import ButtonGroup from "../../ButtonGroup.svelte";
     import type { GroupChatSummary } from "openchat-client";
 
-    export let canMakeGroupPrivate: boolean;
     export let group: GroupChatSummary;
 
     const dispatch = createEventDispatcher();
@@ -20,15 +19,8 @@
             },
         });
     }
-
-    function makeGroupPrivate() {
-        dispatch("makeGroupPrivate", { kind: "makePrivate", chatId: group.chatId });
-    }
 </script>
 
 <ButtonGroup align="start">
     <Button on:click={deleteGroup}>{$_("deleteGroup")}</Button>
-    {#if canMakeGroupPrivate}
-        <Button on:click={makeGroupPrivate}>{$_("makeGroupPrivate")}</Button>
-    {/if}
 </ButtonGroup>

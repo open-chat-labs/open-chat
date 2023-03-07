@@ -1,66 +1,81 @@
 <script lang="ts">
-    import Router, { push, replace } from "svelte-spa-router";
     import FeaturesPage from "./FeaturesPage.svelte";
     import HomePage from "./HomePage.svelte";
     import Header from "./Header.svelte";
     import Content from "./Content.svelte";
-    import { location } from "svelte-spa-router";
-    import { createEventDispatcher, getContext, tick } from "svelte";
-    import RoadmapPage from "./RoadmapPage.svelte";
-    import WhitepaperPage from "./WhitepaperPage.svelte";
-    import ArchitecturePage from "./ArchitecturePage.svelte";
-    import type { OpenChat } from "openchat-client";
+    import { location, pathParams } from "../../routes";
+    import { getContext } from "svelte";
+    import type { CreatedUser, OpenChat } from "openchat-client";
     import Overlay from "../Overlay.svelte";
     import Register from "../register/Register.svelte";
+    import BlogPage from "./BlogPage.svelte";
+    import Loading from "../Loading.svelte";
 
-    const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
-
-    export let referredBy: string | undefined = undefined;
 
     $: identityState = client.identityState;
 
-    function scrollToTop() {
-        window.scrollTo({
-            behavior: "auto",
-            top: 0,
-        });
-    }
-
-    function routeEvent(ev: CustomEvent<string>) {
-        dispatch(ev.detail);
-    }
-
     function logout() {
         client.logout();
+    }
+
+    function createdUser(ev: CustomEvent<CreatedUser>) {
+        client.onCreatedUser(ev.detail);
     }
 </script>
 
 {#if $identityState === "registering"}
     <Overlay dismissible={false}>
-        <Register on:logout on:createdUser {referredBy} />
+        <Register on:logout={logout} on:createdUser={createdUser} />
     </Overlay>
 {/if}
 
 <Header on:login={() => client.login()} on:logout={logout} />
 
 <main class="main">
-    <!-- TODO: this is a bit weird -->
-    {#if $location === "/features"}
+    {#if $location.startsWith("/features")}
         <FeaturesPage />
     {:else}
         <Content>
-            <Router
-                on:routeEvent={routeEvent}
-                on:routeLoaded={scrollToTop}
-                routes={{
-                    "/home": HomePage,
-                    "/features": FeaturesPage,
-                    "/roadmap": RoadmapPage,
-                    "/whitepaper": WhitepaperPage,
-                    "/architecture": ArchitecturePage,
-                    "*": HomePage,
-                }} />
+            {#if $location.startsWith("/blog")}
+                {#if $pathParams.slug !== undefined}
+                    {#await import("./BlogPostPage.svelte")}
+                        <div class="loading">
+                            <Loading />
+                        </div>
+                    {:then { default: BlogPostPage }}
+                        <BlogPostPage slug={$pathParams.slug} />
+                    {/await}
+                {:else}
+                    <BlogPage />
+                {/if}
+            {:else if $location.startsWith("/roadmap")}
+                {#await import("./RoadmapPage.svelte")}
+                    <div class="loading">
+                        <Loading />
+                    </div>
+                {:then { default: RoadmapPage }}
+                    <RoadmapPage />
+                {/await}
+            {:else if $location.startsWith("/whitepaper")}
+                {#await import("./WhitepaperPage.svelte")}
+                    <div class="loading">
+                        <Loading />
+                    </div>
+                {:then { default: WhitepaperPage }}
+                    <WhitepaperPage />
+                {/await}
+            {:else if $location.startsWith("/architecture")}
+                {#await import("./ArchitecturePage.svelte")}
+                    <div class="loading">
+                        <Loading />
+                    </div>
+                {:then { default: ArchitecturePage }}
+                    <ArchitecturePage />
+                {/await}
+            {:else}
+                <HomePage on:login={() => client.login()} />
+            {/if}
         </Content>
     {/if}
 </main>
@@ -78,5 +93,11 @@
         overflow-x: hidden;
         margin: 0 auto;
         margin-top: toRem(80);
+    }
+
+    .loading {
+        height: calc(100vh - 5rem);
+        width: 100vw;
+        max-width: 1440px;
     }
 </style>

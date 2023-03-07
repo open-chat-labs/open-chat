@@ -11,6 +11,7 @@ export type OpenChatConfig = {
     internetIdentityUrl: string;
     nfidUrl: string;
     ledgerCanisterICP: string;
+    ledgerCanisterSNS1: string;
     ledgerCanisterBTC: string;
     ledgerCanisterCHAT: string;
     userGeekApiKey: string;

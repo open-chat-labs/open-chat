@@ -152,9 +152,9 @@
                     mimeType: "video/mp4",
                 },
                 mobile: {
-                    height: Number(selectedGif.images.downsized_large.height),
-                    width: Number(selectedGif.images.downsized_large.width),
-                    url: selectedGif.images.downsized_large.url,
+                    height: Number(selectedGif.images.downsized.height),
+                    width: Number(selectedGif.images.downsized.width),
+                    url: selectedGif.images.downsized.url,
                     mimeType: "image/gif",
                 },
             };

@@ -1,11 +1,9 @@
-import {
+import type {
     EventsResponse,
-    UpdateArgs,
     CandidateGroupChat,
     CreateGroupResponse,
     DeleteGroupResponse,
     DirectChatEvent,
-    MergedUpdatesResponse,
     SendMessageResponse,
     BlockUserResponse,
     UnblockUserResponse,
@@ -16,60 +14,42 @@ import {
     AddRemoveReactionResponse,
     DeleteMessageResponse,
     UndeleteMessageResponse,
-    JoinGroupResponse,
     EditMessageResponse,
     MarkReadRequest,
-    GroupChatSummary,
     WithdrawCryptocurrencyResponse,
     EventsSuccessResult,
     ChatEvent,
     PendingCryptocurrencyWithdrawal,
-    CurrentChatState,
     ArchiveChatResponse,
     BlobReference,
     CreatedUser,
-    GroupInvite,
     MigrateUserPrincipalResponse,
-    missingUserIds,
     PinChatResponse,
     PublicProfile,
     SearchDirectChatResponse,
     SetBioResponse,
     ToggleMuteNotificationResponse,
     UnpinChatResponse,
-    UserLookup,
-    userIdsFromEvents,
-    indexRangeForChat,
-    MessagesReadFromServer,
-    UsersLoaded,
-    compareChats,
+    InitialStateV2Response,
+    UpdatesV2Response,
+    DeletedDirectMessageResponse,
+    EventWrapper,
 } from "openchat-shared";
 import type { IUserClient } from "./user.client.interface";
 import {
     Database,
-    getCachedChats,
     getCachedEvents,
     getCachedEventsByIndex,
     getCachedEventsWindow,
     mergeSuccessResponses,
-    removeCachedChat,
-    setCachedChats,
+    recordFailedMessage,
+    removeFailedMessage,
     setCachedEvents,
     setCachedMessageFromSendResponse,
 } from "../../utils/caching";
-import {
-    getFirstUnreadMessageIndex,
-    threadsReadFromChat,
-    updateArgsFromChats,
-} from "../../utils/chat";
 import { MAX_MISSING } from "../../constants";
 import { profile } from "../common/profiling";
-import { chunk, toRecord } from "../../utils/list";
-import { GroupClient } from "../../services/group/group.client";
-import type { Identity } from "@dfinity/agent";
-import { UserIndexClient } from "../userIndex/userIndex.client";
 import type { AgentConfig } from "../../config";
-import type { Principal } from "@dfinity/principal";
 
 /**
  * This exists to decorate the user client so that we can provide a write through cache to
@@ -82,23 +62,10 @@ export class CachingUserClient extends EventTarget implements IUserClient {
 
     constructor(
         private db: Database,
-        private identity: Identity,
         private config: AgentConfig,
-        private client: IUserClient,
-        private groupInvite: GroupInvite | undefined
+        private client: IUserClient
     ) {
         super();
-    }
-
-    private get principal(): Principal {
-        return this.identity.getPrincipal();
-    }
-
-    private setCachedChats(resp: MergedUpdatesResponse): MergedUpdatesResponse {
-        setCachedChats(this.db, this.principal, resp).catch((err) =>
-            this.config.logger.error("Error setting cached chats", err)
-        );
-        return resp;
     }
 
     private setCachedEvents<T extends ChatEvent>(
@@ -136,6 +103,14 @@ export class CachingUserClient extends EventTarget implements IUserClient {
                     return resp;
                 });
         }
+    }
+
+    getInitialStateV2(): Promise<InitialStateV2Response> {
+        return this.client.getInitialStateV2();
+    }
+
+    getUpdatesV2(updatesSince: bigint): Promise<UpdatesV2Response> {
+        return this.client.getUpdatesV2(updatesSince);
     }
 
     @profile("userCachingClient")
@@ -230,187 +205,6 @@ export class CachingUserClient extends EventTarget implements IUserClient {
         }
     }
 
-    private async primeCaches(
-        cachedResponse: MergedUpdatesResponse | undefined,
-        nextResponse: MergedUpdatesResponse,
-        selectedChatId: string | undefined,
-        userStore: UserLookup
-    ): Promise<void> {
-        const cachedChats =
-            cachedResponse === undefined
-                ? {}
-                : toRecord(cachedResponse.chatSummaries, (c) => c.chatId);
-
-        // FIXME - can't access localstorage in a worker
-        // const limitTo = Number(localStorage.getItem(configKeys.primeCacheLimit) || "50");
-        // const batchSize = Number(localStorage.getItem(configKeys.primeCacheBatchSize) || "5");
-
-        const limitTo = 50;
-        const batchSize = 5;
-
-        const orderedChats = nextResponse.chatSummaries
-            .filter(
-                ({ chatId, latestEventIndex }) =>
-                    chatId !== selectedChatId &&
-                    latestEventIndex >= 0 &&
-                    (cachedChats[chatId] === undefined ||
-                        latestEventIndex > cachedChats[chatId].latestEventIndex)
-            )
-            .sort(compareChats)
-            .slice(0, limitTo);
-
-        for (const batch of chunk(orderedChats, batchSize)) {
-            const eventsPromises = batch.map((chat) => {
-                // horrible having to do this but if we don't the message read tracker will not be in the right state
-
-                this.dispatchEvent(
-                    new MessagesReadFromServer(
-                        chat.chatId,
-                        chat.readByMeUpTo,
-                        threadsReadFromChat(chat)
-                    )
-                );
-
-                const targetMessageIndex = getFirstUnreadMessageIndex(chat);
-                const range = indexRangeForChat(chat);
-
-                // fire and forget an events request that will prime the cache
-                if (chat.kind === "group_chat") {
-                    // this is a bit gross, but I don't want this to leak outside of the caching layer
-                    const inviteCode =
-                        this.groupInvite?.chatId === chat.chatId
-                            ? this.groupInvite.code
-                            : undefined;
-                    const groupClient = GroupClient.create(
-                        chat.chatId,
-                        this.identity,
-                        this.config,
-                        this.db,
-                        inviteCode
-                    );
-
-                    return targetMessageIndex !== undefined
-                        ? groupClient.chatEventsWindow(
-                              range,
-                              targetMessageIndex,
-                              chat.latestEventIndex
-                          )
-                        : groupClient.chatEvents(
-                              range,
-                              chat.latestEventIndex,
-                              false,
-                              undefined,
-                              chat.latestEventIndex
-                          );
-                } else {
-                    return targetMessageIndex !== undefined
-                        ? this.chatEventsWindow(
-                              range,
-                              chat.chatId,
-                              targetMessageIndex,
-                              chat.latestEventIndex
-                          )
-                        : this.chatEvents(
-                              range,
-                              chat.chatId,
-                              chat.latestEventIndex,
-                              false,
-                              undefined,
-                              chat.latestEventIndex
-                          );
-                }
-            });
-
-            if (eventsPromises.length > 0) {
-                await Promise.all(eventsPromises).then((responses) => {
-                    const userIds = responses.reduce((result, next) => {
-                        if (next !== "events_failed") {
-                            for (const userId of userIdsFromEvents(next.events)) {
-                                result.add(userId);
-                            }
-                        }
-                        return result;
-                    }, new Set<string>());
-
-                    const missing = missingUserIds(userStore, userIds);
-                    if (missing.length > 0) {
-                        return UserIndexClient.create(this.identity, this.config)
-                            .getUsers(
-                                {
-                                    userGroups: [
-                                        {
-                                            users: missing,
-                                            updatedSince: BigInt(0),
-                                        },
-                                    ],
-                                },
-                                true
-                            )
-                            .then((val) => {
-                                // update the in-scope user lookup just so we don't do more lookups than we need to
-                                val.users.forEach((user) => {
-                                    userStore[user.userId] = user;
-                                });
-
-                                // also dispatch an event with the users so that they make it into the client store
-                                this.dispatchEvent(new UsersLoaded(val.users));
-                                return val;
-                            });
-                    }
-                });
-            }
-        }
-    }
-
-    @profile("userCachingClient")
-    async getInitialState(
-        userStore: UserLookup,
-        selectedChatId: string | undefined
-    ): Promise<MergedUpdatesResponse> {
-        const cachedChats = await getCachedChats(this.db, this.principal);
-        // if we have cached chats we will rebuild the UpdateArgs from that cached data
-        if (cachedChats) {
-            return this.client
-                .getUpdates(
-                    cachedChats,
-                    updateArgsFromChats(cachedChats.timestamp, cachedChats.chatSummaries),
-                    userStore,
-                    selectedChatId // WARNING: This was left undefined previously - is this correct now
-                )
-                .then((resp) => {
-                    resp.wasUpdated = true;
-                    this.primeCaches(cachedChats, resp, selectedChatId, userStore);
-                    return resp;
-                })
-                .then((resp) => this.setCachedChats(resp));
-        } else {
-            return this.client
-                .getInitialState(userStore, selectedChatId)
-                .then((resp) => {
-                    this.primeCaches(cachedChats, resp, selectedChatId, userStore);
-                    return resp;
-                })
-                .then((resp) => this.setCachedChats(resp));
-        }
-    }
-
-    @profile("userCachingClient")
-    async getUpdates(
-        currentState: CurrentChatState,
-        args: UpdateArgs,
-        userStore: UserLookup,
-        selectedChatId: string | undefined
-    ): Promise<MergedUpdatesResponse> {
-        const cachedChats = await getCachedChats(this.db, this.principal);
-        return this.client
-            .getUpdates(currentState, args, userStore, selectedChatId) // WARNING: This was left undefined previously - is this correct now
-            .then((resp) => {
-                this.primeCaches(cachedChats, resp, selectedChatId, userStore);
-                return resp;
-            })
-            .then((resp) => this.setCachedChats(resp));
-    }
-
     createGroup(group: CandidateGroupChat): Promise<CreateGroupResponse> {
         return this.client.createGroup(group);
     }
@@ -432,25 +226,42 @@ export class CachingUserClient extends EventTarget implements IUserClient {
         groupId: string,
         recipientId: string,
         sender: CreatedUser,
-        message: Message,
+        event: EventWrapper<Message>,
         threadRootMessageIndex?: number
     ): Promise<[SendMessageResponse, Message]> {
+        removeFailedMessage(this.db, this.userId, event.event.messageId, threadRootMessageIndex);
         return this.client
-            .sendGroupICPTransfer(groupId, recipientId, sender, message, threadRootMessageIndex)
-            .then(setCachedMessageFromSendResponse(this.db, groupId, threadRootMessageIndex));
+            .sendGroupICPTransfer(groupId, recipientId, sender, event, threadRootMessageIndex)
+            .then(setCachedMessageFromSendResponse(this.db, groupId, event, threadRootMessageIndex))
+            .catch((err) => {
+                recordFailedMessage(this.db, groupId, event);
+                throw err;
+            });
     }
 
     @profile("userCachingClient")
     sendMessage(
         recipientId: string,
         sender: CreatedUser,
-        message: Message,
+        event: EventWrapper<Message>,
         replyingToChatId?: string,
         threadRootMessageIndex?: number
     ): Promise<[SendMessageResponse, Message]> {
+        removeFailedMessage(this.db, this.userId, event.event.messageId, threadRootMessageIndex);
         return this.client
-            .sendMessage(recipientId, sender, message, replyingToChatId, threadRootMessageIndex)
-            .then(setCachedMessageFromSendResponse(this.db, this.userId, threadRootMessageIndex));
+            .sendMessage(recipientId, sender, event, replyingToChatId, threadRootMessageIndex)
+            .then(
+                setCachedMessageFromSendResponse(
+                    this.db,
+                    this.userId,
+                    event,
+                    threadRootMessageIndex
+                )
+            )
+            .catch((err) => {
+                recordFailedMessage(this.db, this.userId, event, threadRootMessageIndex);
+                throw err;
+            });
     }
 
     blockUser(userId: string): Promise<BlockUserResponse> {
@@ -462,14 +273,7 @@ export class CachingUserClient extends EventTarget implements IUserClient {
     }
 
     leaveGroup(chatId: string): Promise<LeaveGroupResponse> {
-        removeCachedChat(this.db, this.principal, chatId).catch((err) =>
-            this.config.logger.error("Failed to remove chat from cache", err)
-        );
         return this.client.leaveGroup(chatId);
-    }
-
-    joinGroup(chatId: string, inviteCode: string | undefined): Promise<JoinGroupResponse> {
-        return this.client.joinGroup(chatId, inviteCode);
     }
 
     markMessagesRead(request: MarkReadRequest): Promise<MarkReadResponse> {
@@ -536,10 +340,6 @@ export class CachingUserClient extends EventTarget implements IUserClient {
         return this.client.toggleMuteNotifications(chatId, muted);
     }
 
-    getRecommendedGroups(): Promise<GroupChatSummary[]> {
-        return this.client.getRecommendedGroups();
-    }
-
     dismissRecommendation(chatId: string): Promise<void> {
         return this.client.dismissRecommendation(chatId);
     }
@@ -584,5 +384,9 @@ export class CachingUserClient extends EventTarget implements IUserClient {
 
     migrateUserPrincipal(): Promise<MigrateUserPrincipalResponse> {
         return this.client.migrateUserPrincipal();
+    }
+
+    getDeletedMessage(userId: string, messageId: bigint): Promise<DeletedDirectMessageResponse> {
+        return this.client.getDeletedMessage(userId, messageId);
     }
 }

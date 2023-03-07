@@ -1,24 +1,12 @@
 import type { MessageFormatter } from "./i18n";
-import {
-    PartialUserSummary,
-    UserLookup,
-    UserStatus,
-    UserSummary,
-    userStatus,
-    PhoneNumber,
-} from "openchat-shared";
+import type { PartialUserSummary, UserLookup, UserSummary } from "openchat-shared";
 
 export function formatLastOnlineDate(
     formatter: MessageFormatter,
     now: number,
-    user: PartialUserSummary | undefined
+    lastOnline: number
 ): string {
-    const TWO_MINUTES_MS = 120 * 1000;
-    if (user === undefined || now - Number(user.updated) > TWO_MINUTES_MS) {
-        return "";
-    }
-
-    const secondsSinceLastOnline = (now - user.lastOnline) / 1000;
+    const secondsSinceLastOnline = (now - lastOnline) / 1000;
 
     const minutesSinceLastOnline = Math.floor(secondsSinceLastOnline / 60);
 
@@ -95,21 +83,10 @@ export function nullUser(username: string): UserSummary {
         kind: "user",
         userId: "null_user", // this might cause problems if we try to create a Principal from it
         username,
-        lastOnline: 0,
         updated: BigInt(0),
         suspended: false,
+        diamond: false,
     };
-}
-
-export function compareUsersOnlineFirst(u1: PartialUserSummary, u2: PartialUserSummary): number {
-    const now = Date.now();
-    const u1Online = userStatus(now, u1) === UserStatus.Online;
-    const u2Online = userStatus(now, u2) === UserStatus.Online;
-
-    if (u1Online !== u2Online) {
-        return u1Online ? -1 : 1;
-    }
-    return compareUsername(u1, u2);
 }
 
 export function compareUsername(u1: PartialUserSummary, u2: PartialUserSummary): number {
@@ -139,8 +116,4 @@ export function groupAvatarUrl<T extends { blobUrl?: string }>(dataContent?: T):
 
 export function userAvatarUrl<T extends { blobUrl?: string }>(dataContent?: T): string {
     return dataContent?.blobUrl ?? "../assets/unknownUserAvatar.svg";
-}
-
-export function phoneNumberToString({ countryCode, number }: PhoneNumber): string {
-    return `(+${countryCode}) ${number}`;
 }

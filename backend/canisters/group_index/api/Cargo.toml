@@ -1,7 +1,6 @@
 [package]
 name = "group_index_canister"
 version = "0.1.0"
-authors = ["Hamish Peebles <hamishpeebles@gmail.com>", "Matt Grogan <megrogan@gmail.com>", "Julian Jelfs <julian.jelfs@gmail.com>"]
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -9,5 +8,6 @@ edition = "2021"
 [dependencies]
 candid = { workspace = true }
 candid_gen = { path = "../../../libraries/candid_gen" }
+human_readable = { path = "../../../libraries/human_readable" }
 serde = { workspace = true }
 types = { path = "../../../libraries/types" }

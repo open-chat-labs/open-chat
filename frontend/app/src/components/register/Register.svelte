@@ -22,8 +22,6 @@
 
     type RegisterState = Spinning | AwaitingUsername | AwaitingChallengeAttempt;
 
-    export let referredBy: string | undefined;
-
     let state: Writable<RegisterState> = writable({ kind: "awaiting_username" });
     let error: Writable<string | undefined> = writable(undefined);
     let username: Writable<string | undefined> = writable(undefined);
@@ -41,7 +39,7 @@
 
         if (challengeAttempt !== undefined) {
             // The user already has an untried challenge attempt so call register_user
-            registerUser(ev.detail.username, challengeAttempt, referredBy);
+            registerUser(ev.detail.username, challengeAttempt);
         } else if ($challenge === undefined) {
             // The challenge isn't ready yet so wait...
             state.set({ kind: "spinning" });
@@ -51,13 +49,9 @@
         }
     }
 
-    function registerUser(
-        username: string,
-        challengeAttempt: ChallengeAttempt,
-        referredBy: string | undefined
-    ): void {
+    function registerUser(username: string, challengeAttempt: ChallengeAttempt): void {
         state.set({ kind: "spinning" });
-        client.registerUser(username, challengeAttempt, referredBy).then((resp) => {
+        client.registerUser(username, challengeAttempt).then((resp) => {
             state.set({ kind: "awaiting_username" });
             if (resp === "username_taken") {
                 error.set("register.usernameTaken");
@@ -77,16 +71,8 @@
             } else if (resp === "success") {
                 error.set(undefined);
                 loadUser();
-                if (referredBy !== undefined) {
-                    clearReferralCode();
-                }
             }
         });
-    }
-
-    function clearReferralCode() {
-        history.replaceState(null, "", "/#/");
-        localStorage.removeItem("openchat_referredby");
     }
 
     function createChallenge(): void {
@@ -127,7 +113,7 @@
         challenge.set(undefined);
         if ($username !== undefined) {
             // The username has been entered so try to register the user.
-            registerUser($username, challengeAttempt, referredBy);
+            registerUser($username, challengeAttempt);
         } else {
             // The username has not been set so goto the "username" panel.
             state.set({ kind: "awaiting_username" });
@@ -181,7 +167,7 @@
 <a
     class="logout"
     role="button"
-    href="/#"
+    href="/"
     on:click|preventDefault|stopPropagation={() => dispatch("logout")}>
     {$_("logout")}
 </a>
@@ -269,5 +255,6 @@
         text-align: center;
         align-items: center;
         min-height: 250px;
+        color: var(--txt);
     }
 </style>

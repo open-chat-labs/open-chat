@@ -1,24 +1,21 @@
 use crate::model::cached_group_summaries::CachedGroupSummaries;
 use crate::model::direct_chats::DirectChats;
-use crate::model::failed_messages_pending_retry::FailedMessagesPendingRetry;
 use crate::model::group_chats::GroupChats;
-use crate::model::recommended_group_exclusions::RecommendedGroupExclusions;
+use crate::model::hot_group_exclusions::HotGroupExclusions;
 use crate::timer_job_types::TimerJob;
-use candid::{CandidType, Principal};
-use canister_logger::LogMessagesWrapper;
+use candid::Principal;
 use canister_state_macros::canister_state;
+use canister_timer_jobs::TimerJobs;
 use ic_ledger_types::AccountIdentifier;
 use ledger_utils::default_ledger_account;
-use notifications_canister::c2c_push_notification_v2;
+use model::contacts::Contacts;
+use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use std::ops::Deref;
-use timer_jobs::TimerJobs;
 use types::{Avatar, CanisterId, ChatId, Cryptocurrency, Cycles, Notification, TimestampMillis, Timestamped, UserId, Version};
 use utils::env::Environment;
-use utils::memory;
-use utils::rand::get_random_item;
 use utils::regular_jobs::RegularJobs;
 
 mod crypto;
@@ -37,7 +34,6 @@ pub const BASIC_GROUP_CREATION_LIMIT: u32 = 10;
 pub const PREMIUM_GROUP_CREATION_LIMIT: u32 = 25;
 
 thread_local! {
-    static LOG_MESSAGES: RefCell<LogMessagesWrapper> = RefCell::default();
     static WASM_VERSION: RefCell<Timestamped<Version>> = RefCell::default();
 }
 
@@ -62,6 +58,10 @@ impl RuntimeState {
         self.env.caller() == self.data.user_index_canister_id
     }
 
+    pub fn is_caller_local_user_index(&self) -> bool {
+        self.env.caller() == self.data.local_user_index_canister_id
+    }
+
     pub fn is_caller_group_index(&self) -> bool {
         self.env.caller() == self.data.group_index_canister_id
     }
@@ -77,25 +77,22 @@ impl RuntimeState {
     }
 
     pub fn push_notification(&mut self, recipients: Vec<UserId>, notification: Notification) {
-        let random = self.env.random_u32() as usize;
+        let args = c2c_push_notification::Args {
+            recipients,
+            authorizer: Some(self.data.local_user_index_canister_id),
+            notification_bytes: candid::encode_one(notification).unwrap(),
+        };
+        ic_cdk::spawn(push_notification_inner(self.data.notifications_canister_id, args));
 
-        if let Some(canister_id) = get_random_item(&self.data.notifications_canister_ids, random) {
-            let args = c2c_push_notification_v2::Args {
-                recipients,
-                notification_bytes: candid::encode_one(notification).unwrap(),
-            };
-            ic_cdk::spawn(push_notification_inner(*canister_id, args));
-        }
-
-        async fn push_notification_inner(canister_id: CanisterId, args: c2c_push_notification_v2::Args) {
-            let _ = notifications_canister_c2c_client::c2c_push_notification_v2(canister_id, &args).await;
+        async fn push_notification_inner(canister_id: CanisterId, args: c2c_push_notification::Args) {
+            let _ = notifications_canister_c2c_client::c2c_push_notification(canister_id, &args).await;
         }
     }
 
     pub fn metrics(&self) -> Metrics {
         let chat_metrics = self.data.direct_chats.metrics();
         Metrics {
-            memory_used: memory::used(),
+            memory_used: utils::memory::used(),
             now: self.env.now(),
             cycles_balance: self.env.cycles_balance(),
             wasm_version: WASM_VERSION.with(|v| **v.borrow()),
@@ -113,6 +110,9 @@ impl RuntimeState {
             poll_votes: chat_metrics.poll_votes,
             cycles_messages: chat_metrics.cycles_messages,
             icp_messages: chat_metrics.icp_messages,
+            sns1_messages: chat_metrics.sns1_messages,
+            ckbtc_messages: chat_metrics.ckbtc_messages,
+            chat_messages: chat_metrics.chat_messages,
             deleted_messages: chat_metrics.deleted_messages,
             giphy_messages: chat_metrics.giphy_messages,
             replies: chat_metrics.replies,
@@ -120,6 +120,13 @@ impl RuntimeState {
             reactions: chat_metrics.reactions,
             created: self.data.user_created,
             last_active: chat_metrics.last_active,
+            canister_ids: CanisterIds {
+                user_index: self.data.user_index_canister_id,
+                group_index: self.data.group_index_canister_id,
+                local_user_index: self.data.local_user_index_canister_id,
+                notifications: self.data.notifications_canister_id,
+                icp_ledger: self.data.ledger_canister_id(&Cryptocurrency::InternetComputer),
+            },
         }
     }
 }
@@ -131,14 +138,16 @@ struct Data {
     pub group_chats: GroupChats,
     pub blocked_users: Timestamped<HashSet<UserId>>,
     pub user_index_canister_id: CanisterId,
+    pub local_user_index_canister_id: CanisterId,
     pub group_index_canister_id: CanisterId,
-    pub notifications_canister_ids: Vec<CanisterId>,
+    pub notifications_canister_id: CanisterId,
+    // Remove this after next upgrade
+    #[serde(skip_deserializing, default = "initialize_ledger_ids")]
     pub ledger_canister_ids: HashMap<Cryptocurrency, CanisterId>,
     pub avatar: Timestamped<Option<Avatar>>,
     pub test_mode: bool,
-    pub failed_messages_pending_retry: FailedMessagesPendingRetry,
     pub is_super_admin: bool,
-    pub recommended_group_exclusions: RecommendedGroupExclusions,
+    pub hot_group_exclusions: HotGroupExclusions,
     pub username: String,
     pub bio: String,
     pub cached_group_summaries: Option<CachedGroupSummaries>,
@@ -149,8 +158,31 @@ struct Data {
     pub pinned_chats: Timestamped<Vec<ChatId>>,
     pub pending_user_principal_migration: Option<Principal>,
     pub suspended: Timestamped<bool>,
-    #[serde(default)]
     pub timer_jobs: TimerJobs<TimerJob>,
+    pub contacts: Contacts,
+}
+
+fn initialize_ledger_ids() -> HashMap<Cryptocurrency, CanisterId> {
+    [
+        (
+            Cryptocurrency::InternetComputer,
+            Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap(),
+        ),
+        (
+            Cryptocurrency::SNS1,
+            Principal::from_text("zfcdd-tqaaa-aaaaq-aaaga-cai").unwrap(),
+        ),
+        (
+            Cryptocurrency::CKBTC,
+            Principal::from_text("mxzaz-hqaaa-aaaar-qaada-cai").unwrap(),
+        ),
+        (
+            Cryptocurrency::CHAT,
+            Principal::from_text("2ouva-viaaa-aaaaq-aaamq-cai").unwrap(),
+        ),
+    ]
+    .into_iter()
+    .collect()
 }
 
 impl Data {
@@ -158,9 +190,9 @@ impl Data {
     pub fn new(
         owner: Principal,
         user_index_canister_id: CanisterId,
+        local_user_index_canister_id: CanisterId,
         group_index_canister_id: CanisterId,
-        notifications_canister_ids: Vec<CanisterId>,
-        ledger_canister_id: CanisterId,
+        notifications_canister_id: CanisterId,
         username: String,
         test_mode: bool,
         now: TimestampMillis,
@@ -171,14 +203,14 @@ impl Data {
             group_chats: GroupChats::default(),
             blocked_users: Timestamped::default(),
             user_index_canister_id,
+            local_user_index_canister_id,
             group_index_canister_id,
-            notifications_canister_ids,
-            ledger_canister_ids: [(Cryptocurrency::InternetComputer, ledger_canister_id)].into_iter().collect(),
+            notifications_canister_id,
+            ledger_canister_ids: initialize_ledger_ids(),
             avatar: Timestamped::default(),
             test_mode,
-            failed_messages_pending_retry: FailedMessagesPendingRetry::default(),
             is_super_admin: false,
-            recommended_group_exclusions: RecommendedGroupExclusions::default(),
+            hot_group_exclusions: HotGroupExclusions::default(),
             username,
             bio: "".to_string(),
             cached_group_summaries: None,
@@ -190,6 +222,7 @@ impl Data {
             pending_user_principal_migration: None,
             suspended: Timestamped::default(),
             timer_jobs: TimerJobs::default(),
+            contacts: Contacts::default(),
         }
     }
 
@@ -235,11 +268,11 @@ impl Data {
         self.ledger_canister_ids
             .get(token)
             .copied()
-            .unwrap_or_else(|| panic!("Unable to find ledger canister for token '{:?}'", token))
+            .unwrap_or_else(|| panic!("Unable to find ledger canister for token '{token:?}'"))
     }
 }
 
-#[derive(CandidType, Serialize, Debug)]
+#[derive(Serialize, Debug)]
 pub struct Metrics {
     pub now: TimestampMillis,
     pub memory_used: u64,
@@ -259,6 +292,9 @@ pub struct Metrics {
     pub poll_votes: u64,
     pub cycles_messages: u64,
     pub icp_messages: u64,
+    pub sns1_messages: u64,
+    pub ckbtc_messages: u64,
+    pub chat_messages: u64,
     pub deleted_messages: u64,
     pub giphy_messages: u64,
     pub replies: u64,
@@ -266,8 +302,18 @@ pub struct Metrics {
     pub reactions: u64,
     pub created: TimestampMillis,
     pub last_active: TimestampMillis,
+    pub canister_ids: CanisterIds,
 }
 
 fn run_regular_jobs() {
     mutate_state(|state| state.regular_jobs.run(state.env.deref(), &mut state.data));
+}
+
+#[derive(Serialize, Debug)]
+pub struct CanisterIds {
+    pub user_index: CanisterId,
+    pub group_index: CanisterId,
+    pub local_user_index: CanisterId,
+    pub notifications: CanisterId,
+    pub icp_ledger: CanisterId,
 }

@@ -8,7 +8,6 @@
     import { _ } from "svelte-i18n";
     import Progress from "../Progress.svelte";
     import { iconSize } from "../../stores/iconSize";
-    import { snowing } from "../../stores/snow";
     import { ScreenWidth, screenWidth } from "../../stores/screenDimensions";
     import MentionPicker from "./MentionPicker.svelte";
     import EmojiAutocompleter from "./EmojiAutocompleter.svelte";
@@ -26,7 +25,7 @@
         Questions,
         OpenChat,
     } from "openchat-client";
-    import { allQuestions } from "openchat-client";
+    import { allQuestions, cryptoCurrencyList, cryptoLookup } from "openchat-client";
     import Button from "../Button.svelte";
     import { enterSend } from "../../stores/settings";
     import MessageActions from "./MessageActions.svelte";
@@ -75,6 +74,11 @@
     let rangeToReplace: [number, number] | undefined = undefined;
     let isSuperAdmin = client.isSuperAdmin();
     let freezingInProgress = false;
+    let tokens = cryptoCurrencyList
+        .filter((t) => !cryptoLookup[t].disabled)
+        .map((t) => t.toLowerCase())
+        .join("|");
+    let tokenMatchRegex = new RegExp(`^\/(${tokens}) *(\d*[.,]?\d*)$`);
 
     // Update this to force a new textbox instance to be created
     let textboxId = Symbol();
@@ -134,7 +138,7 @@
             ? $_("enterCaption")
             : dragging
             ? $_("dropFile")
-            : $_("whatsOnYourMind");
+            : $_("enterMessage");
 
     export function replaceSelection(text: string) {
         restoreSelection();
@@ -273,8 +277,10 @@
             return true;
         }
 
-        if (/snow|xmas|christmas|noel/.test(txt)) {
-            $snowing = true;
+        const testMsgMatch = txt.match(/^\/test-msg (\d+)/);
+        if (testMsgMatch && testMsgMatch[1] !== undefined) {
+            dispatch("createTestMessages", Number(testMsgMatch[1]));
+            return true;
         }
 
         const searchMatch = txt.match(/^\/search( *(.*))$/);
@@ -293,22 +299,26 @@
             const faqMatch = txt.match(/^\/faq( *(.*))$/);
             if (faqMatch && faqMatch[2] !== undefined) {
                 if (allQuestions.includes(faqMatch[2] as Questions)) {
-                    const url = addQueryStringParam(new URLSearchParams(), "faq", faqMatch[2]);
+                    const url = addQueryStringParam("faq", faqMatch[2]);
                     dispatch("sendMessage", [
-                        `[🤔 FAQ: ${$_(`faq.${faqMatch[2]}_q`)}](#${url})`,
+                        `[🤔 FAQ: ${$_(`faq.${faqMatch[2]}_q`)}](${url})`,
                         [],
                     ]);
                 } else {
-                    const url = addQueryStringParam(new URLSearchParams(), "faq", "");
-                    dispatch("sendMessage", [`[🤔 FAQs](#${url})`, []]);
+                    const url = addQueryStringParam("faq", "");
+                    dispatch("sendMessage", [`[🤔 FAQs](${url})`, []]);
                 }
                 return true;
             }
         }
 
-        const tokenMatch = process.env.ENABLE_MULTI_CRYPTO
-            ? txt.match(/^\/(icp|btc|chat) *(\d*[.,]?\d*)$/)
-            : txt.match(/^\/(icp) *(\d*[.,]?\d*)$/);
+        if (/^\/diamond$/.test(txt)) {
+            const url = addQueryStringParam("diamond", "");
+            dispatch("sendMessage", [`[${$_("upgrade.message")}](${url})`, []]);
+            return true;
+        }
+
+        const tokenMatch = txt.match(tokenMatchRegex);
         if (tokenMatch && tokenMatch[2] !== undefined) {
             dispatch("tokenTransfer", {
                 token: tokenMatch[1],
@@ -332,7 +342,7 @@
         inp.textContent = "";
         dispatch("setTextContent", undefined);
 
-        messageActions.close();
+        messageActions?.close();
         dispatch("stopTyping");
 
         // After sending a message we must force a new textbox instance to be created, otherwise on iPhone the
@@ -576,6 +586,7 @@
                 on:tokenTransfer
                 on:attachGif
                 on:createPoll
+                on:upgrade
                 on:clearAttachment
                 on:fileSelected />
         {:else}

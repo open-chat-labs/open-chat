@@ -15,7 +15,6 @@
     .button-group {
         display: flex;
         gap: $sp3;
-        align-items: center;
 
         &.start {
             justify-content: flex-start;

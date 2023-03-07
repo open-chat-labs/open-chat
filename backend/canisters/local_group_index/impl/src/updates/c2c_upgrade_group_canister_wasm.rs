@@ -3,6 +3,7 @@ use crate::{mutate_state, RuntimeState};
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use local_group_index_canister::c2c_upgrade_group_canister_wasm::{Response::*, *};
+use std::collections::HashSet;
 use tracing::info;
 use types::CanisterId;
 
@@ -13,25 +14,32 @@ fn c2c_upgrade_group_canister_wasm(args: Args) -> Response {
 }
 
 fn c2c_upgrade_group_canister_wasm_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    let version = args.group_canister_wasm.version;
+    let version = args.wasm.version;
 
-    if !runtime_state.data.test_mode && version < runtime_state.data.group_canister_wasm.version {
+    if !runtime_state.data.test_mode && version < runtime_state.data.group_canister_wasm_for_new_canisters.version {
         VersionNotHigher
     } else {
         runtime_state.data.canisters_requiring_upgrade.clear();
-        runtime_state.data.group_canister_wasm = args.group_canister_wasm;
+        if args.use_for_new_canisters.unwrap_or(true) {
+            runtime_state.data.group_canister_wasm_for_new_canisters = args.wasm.clone();
+        }
+        runtime_state.data.group_canister_wasm_for_upgrades = args.wasm;
 
-        for chat_id in runtime_state
+        let filter = args.filter.unwrap_or_default();
+        let include: HashSet<_> = filter.include.into_iter().collect();
+        let include_all = include.is_empty();
+        let exclude: HashSet<_> = filter.exclude.into_iter().collect();
+
+        for canister_id in runtime_state
             .data
             .local_groups
             .iter()
             .filter(|(_, group)| group.wasm_version != version)
-            .map(|(chat_id, _)| chat_id)
+            .map(|(chat_id, _)| CanisterId::from(*chat_id))
+            .filter(|c| include_all || include.contains(c))
+            .filter(|c| !exclude.contains(c))
         {
-            runtime_state
-                .data
-                .canisters_requiring_upgrade
-                .enqueue(CanisterId::from(*chat_id))
+            runtime_state.data.canisters_requiring_upgrade.enqueue(canister_id)
         }
 
         let canisters_queued_for_upgrade = runtime_state.data.canisters_requiring_upgrade.count_pending();

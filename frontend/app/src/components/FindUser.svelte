@@ -16,6 +16,7 @@
     const client = getContext<OpenChat>("client");
 
     export let mode: "add" | "edit";
+    export let enabled = true;
 
     const dispatch = createEventDispatcher();
     let inp: HTMLInputElement;
@@ -76,6 +77,7 @@
     <input
         bind:this={inp}
         bind:value={searchTerm}
+        disabled={!enabled}
         type="text"
         on:input={onInput}
         placeholder={$_("searchForUsername")} />
@@ -98,9 +100,10 @@
                 <span class="avatar">
                     <Avatar
                         statusBorder={hovering ? "var(--members-hv)" : "transparent"}
+                        showStatus={true}
+                        userId={user.userId}
                         url={client.userAvatarUrl(user)}
-                        status={client.userStatus($now, user)}
-                        size={AvatarSize.Small} />
+                        size={AvatarSize.Default} />
                 </span>
                 <h4 class="details">
                     <FilteredUsername
@@ -123,9 +126,9 @@
         padding: $sp2 $sp4;
         border-radius: $sp2;
 
-        // &.add {
-        //     margin: 0 0 $sp3 0;
-        // }
+        &.add {
+            margin: 0;
+        }
 
         // &.edit {
         //     margin: 0 0 $sp3 0;
@@ -167,6 +170,7 @@
         margin: 0 0 $sp3 0;
         transition: background-color ease-in-out 100ms, border-color ease-in-out 100ms;
         cursor: pointer;
+        gap: 12px;
 
         @include mobile() {
             padding: $sp3 $sp4;

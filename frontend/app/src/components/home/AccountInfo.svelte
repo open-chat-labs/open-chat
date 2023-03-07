@@ -4,27 +4,32 @@
     import { toastStore } from "../../stores/toast";
     import ContentCopy from "svelte-material-icons/ContentCopy.svelte";
     import { iconSize } from "../../stores/iconSize";
-    import type { CreatedUser } from "openchat-client";
+    import { CreatedUser, Cryptocurrency, cryptoLookup } from "openchat-client";
     import { copyToClipboard } from "../../utils/urls";
 
     export let user: CreatedUser;
     export let qrSize: "default" | "smaller" = "default";
+    export let token: Cryptocurrency;
+    export let centered = false;
+    export let border = true;
 
-    let accountSummary = collapseAccount(user.cryptoAccount);
+    $: account = token === "icp" ? user.cryptoAccount : user.userId;
+    $: symbol = cryptoLookup[token].symbol;
+
     function collapseAccount(account: string) {
-        if (account.length > 20) {
+        if (account.length > 23) {
             return account.slice(0, 10) + "..." + account.slice(account.length - 10);
         }
         return account;
     }
 
     function copy() {
-        copyToClipboard(user.cryptoAccount).then((success) => {
+        copyToClipboard(account).then((success) => {
             if (success) {
                 toastStore.showSuccessToast("copiedToClipboard");
             } else {
                 toastStore.showFailureToast("failedToCopyToClipboard", {
-                    values: { account: user.cryptoAccount },
+                    values: { account },
                 });
             }
         });
@@ -32,12 +37,15 @@
 </script>
 
 <div class="account-info">
-    <div class="qr" class:smaller={qrSize === "smaller"}>
-        <QR text={user.cryptoAccount} />
+    <div class="qr-wrapper" class:border>
+        <div class="qr" class:smaller={qrSize === "smaller"}>
+            <QR text={account} />
+        </div>
     </div>
-    <div class="receiver">
+    <p class:centered>{$_("tokenTransfer.yourAccount", { values: { token: symbol } })}</p>
+    <div class="receiver" class:centered>
         <div class="account">
-            {accountSummary}
+            {collapseAccount(account)}
         </div>
         <div class="copy" title={$_("copyToClipboard")} on:click={copy}>
             <ContentCopy size={$iconSize} color={"var(--icon-txt)"} />
@@ -46,6 +54,18 @@
 </div>
 
 <style type="text/scss">
+    .qr-wrapper {
+        padding: $sp5;
+        display: flex;
+        justify-content: center;
+        width: 100%;
+        margin-bottom: $sp4;
+
+        &.border {
+            border: 1px solid var(--bd);
+        }
+    }
+
     .qr {
         background-color: #fff;
         width: 140px;
@@ -57,26 +77,33 @@
         }
     }
 
-    .account-info {
+    .centered {
         text-align: center;
+    }
+
+    .account-info {
         display: flex;
         flex-direction: column;
-        align-items: center;
+        margin-bottom: $sp4;
     }
 
     .receiver {
         display: flex;
         align-items: center;
+        gap: $sp3;
         .account {
             @include ellipsis();
             @include font(book, normal, fs-80);
-            width: 200px;
+            color: var(--primary);
+        }
+
+        &.centered {
+            justify-content: center;
         }
 
         .copy {
             cursor: pointer;
             width: 30px;
         }
-        margin: $sp4 0;
     }
 </style>

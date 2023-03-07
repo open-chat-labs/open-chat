@@ -31,75 +31,75 @@ $font-weights: (
 $font-sizes: (
     fs-50: (
         font-size: toRem(11),
-        line-height: 130%,
+        line-height: 1.3,
     ),
     fs-60: (
         font-size: toRem(12),
-        line-height: 135%,
+        line-height: 1.35,
     ),
     fs-70: (
         font-size: toRem(13),
-        line-height: 140%,
+        line-height: 1.4,
     ),
     fs-80: (
         font-size: toRem(14),
-        line-height: 140%,
+        line-height: 1.4,
     ),
     fs-90: (
         font-size: toRem(15),
-        line-height: 145%,
+        line-height: 1.45,
     ),
     fs-100: (
         font-size: toRem(16),
-        line-height: 150%,
+        line-height: 1.5,
     ),
     fs-110: (
         font-size: toRem(18),
-        line-height: 130%,
+        line-height: 1.3,
     ),
     fs-120: (
         font-size: toRem(20),
-        line-height: 120%,
+        line-height: 1.2,
     ),
     fs-130: (
         font-size: toRem(22),
-        line-height: 120%,
+        line-height: 1.2,
     ),
     fs-140: (
         font-size: toRem(24),
-        line-height: 120%,
+        line-height: 1.2,
     ),
     fs-160: (
         font-size: toRem(28),
-        line-height: 120%,
+        line-height: 1.2,
     ),
     fs-180: (
         font-size: toRem(32),
-        line-height: 120%,
+        line-height: 1.2,
     ),
     fs-200: (
         font-size: toRem(36),
-        line-height: 120%,
+        line-height: 1.2,
     ),
     fs-220: (
         font-size: toRem(40),
-        line-height: 120%,
+        line-height: 1.2,
     ),
     fs-230: (
         font-size: toRem(48),
-        line-height: 120%,
+        line-height: 1.2,
     ),
     fs-240: (
         font-size: toRem(60),
-        line-height: 120%,
+        line-height: 1.2,
     ),
     fs-250: (
         font-size: toRem(70),
-        line-height: 120%,
+        line-height: 1.2,
     ),
     fs-260: (
         font-size: toRem(80),
-        line-height: 120%,
+        line-height: 1.2,
     ),
 );
 
@@ -465,5 +465,176 @@ $shadow-level-3: 2px 6px 12px 0 rgba(25, 25, 25, 0.55);
     padding: 0 toRem(160);
     @include mobile() {
         padding: 0 toRem(24);
+    }
+}
+
+@mixin input($whitespace: nowrap) {
+    padding: $sp3 $sp4;
+    @include font(book, normal, fs-100);
+    color: var(--txt);
+    background-color: var(--input-bg);
+    // border: 1px solid var(--bd);
+    border: 1px solid transparent;
+    border-radius: $sp2;
+    outline: none;
+    box-shadow: var(--input-sh);
+    white-space: $whitespace;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+@mixin diamond() {
+    &::after {
+        content: "💎";
+        margin-inline-start: 5px;
+    }
+}
+
+@mixin make_coin_spokes($spokes, $index) {
+    .spoke:nth-child(#{$index}) {
+        transform: rotateY(90deg) rotateX(math.div(180deg, ($spokes)) * $index);
+    }
+
+    @if $index > 0 {
+        @include make_coin_spokes($spokes, $index - 1);
+    }
+}
+
+@mixin bullet_list() {
+    text-align: left;
+    list-style: none;
+    margin: 0 0 toRem(12) toRem(22);
+    padding: 0;
+    position: relative;
+
+    > li {
+        &:before {
+            position: absolute;
+            content: "\25AA";
+            left: toRem(-25);
+            color: #23a2ee;
+        }
+    }
+
+    ul {
+        margin-top: toRem(8);
+        list-style: disc;
+
+        > li {
+            margin-left: toRem(16);
+        }
+    }
+}
+
+@mixin spinning_coin(
+    $coin_face: url("../assets/ckbtc_nobackground.svg"),
+    $coin_diam: 9rem,
+    $shadow: null
+) {
+    $coin_depth: ($coin_diam * 0.1);
+    $speed: 2s;
+
+    .purse {
+        height: $coin_diam;
+        width: $coin_diam;
+        perspective: 1000;
+        @if $shadow != null {
+            -webkit-box-reflect: below
+                0
+                linear-gradient(
+                    hsla(0, 0%, 100%, 0),
+                    hsla(0, 0%, 100%, 0) 45%,
+                    hsla(0, 0%, 100%, 0.2)
+                );
+        }
+    }
+
+    .coin {
+        height: $coin_diam;
+        width: $coin_diam;
+        position: absolute;
+        transform-style: preserve-3d;
+        transform-origin: 50%;
+        animation: spin_coin $speed infinite;
+        animation-timing-function: linear;
+
+        .front,
+        .back {
+            position: absolute;
+            background-image: $coin_face;
+            height: $coin_diam;
+            width: $coin_diam;
+            border-radius: 50%;
+            background-size: cover;
+        }
+
+        .front {
+            transform: translateZ(math.div($coin_depth, 2));
+        }
+
+        .back {
+            transform: translateZ(math.div($coin_depth, -2)) rotateY(180deg);
+        }
+
+        .side {
+            $facets: 32;
+            $spokes: math.div($facets, 2);
+            $degs: math.sin(math.div(math.$pi, $facets));
+            $facet_length: $coin_diam * $degs;
+
+            transform: translateX(($coin_diam * 0.45));
+            transform-style: preserve-3d;
+            backface-visibility: hidden;
+
+            .spoke {
+                height: ($coin_diam);
+                width: ($coin_depth);
+                position: absolute;
+
+                transform-style: preserve-3d;
+                backface-visibility: hidden;
+
+                // The Facets
+                &:before,
+                &:after {
+                    content: "";
+                    display: block;
+                    height: $facet_length;
+                    width: $coin_depth;
+                    position: absolute;
+                    transform: rotateX((math.div((180deg - (math.div(360, $facets))), 2)));
+
+                    background: hsl(42, 52%, 68%);
+                    background: linear-gradient(
+                        to bottom,
+                        hsl(42, 60%, 75%) 0%,
+                        hsl(42, 60%, 75%) 74%,
+                        hsl(42, 40%, 60%) 75%,
+                        hsl(42, 40%, 60%) 100%
+                    );
+                    background-size: 100% (math.div(($facets * $facet_length), 144));
+                }
+
+                &:before {
+                    transform-origin: top center;
+                }
+
+                &:after {
+                    bottom: 0;
+                    transform-origin: center bottom;
+                }
+            }
+
+            @include make_coin_spokes($spokes, $spokes);
+        }
+    }
+
+    @keyframes spin_coin {
+        from {
+            transform: rotateY(0deg);
+        }
+        to {
+            transform: rotateY(360deg);
+        }
     }
 }

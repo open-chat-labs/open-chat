@@ -3,10 +3,9 @@
     import UserProfile from "./profile/UserProfile.svelte";
     import GroupDetails from "./groupdetails/GroupDetails.svelte";
     import AddMembers from "./groupdetails/AddMembers.svelte";
-    import NewGroup from "./addgroup/AddGroup.controller.svelte";
     import Members from "./groupdetails/Members.svelte";
     import PinnedMessages from "./pinned/PinnedMessages.svelte";
-    import { RightPanelState, rightPanelHistory } from "../../stores/rightPanel";
+    import { rightPanelHistory } from "../../stores/rightPanel";
     import type {
         AddMembersResponse,
         ChatEvent,
@@ -24,10 +23,10 @@
     import type { Readable } from "svelte/store";
     import { numberOfColumns } from "stores/layout";
     import Thread from "./thread/Thread.svelte";
-    import { replace, querystring } from "svelte-spa-router";
     import ProposalGroupFilters from "./ProposalGroupFilters.svelte";
     import { removeQueryStringParam } from "../../utils/urls";
     import { logger } from "../../utils/logging";
+    import page from "page";
 
     const dispatch = createEventDispatcher();
 
@@ -126,7 +125,7 @@
 
     function closeThread(_ev: CustomEvent<string>) {
         popHistory();
-        replace(removeQueryStringParam(new URLSearchParams($querystring), "open"));
+        page.replace(removeQueryStringParam("open"));
     }
 
     function findMessage(
@@ -332,7 +331,7 @@
             on:close={popHistory}
             on:updateGroupRules={updateGroupRules}
             on:deleteGroup
-            on:makeGroupPrivate
+            on:editGroup
             on:chatWith
             on:showMembers />
     {:else if lastState.kind === "add_members"}
@@ -362,6 +361,7 @@
             on:goToMessageIndex={goToMessageIndex}
             chatId={$selectedChatId}
             pinned={$currentChatPinnedMessages}
+            dateLastPinned={$groupChat.dateLastPinned}
             on:close={popHistory} />
     {:else if lastState.kind === "user_profile"}
         <UserProfile
@@ -371,8 +371,6 @@
             {user}
             on:userAvatarSelected
             on:closeProfile={popHistory} />
-    {:else if lastState.kind === "new_group_panel"}
-        <NewGroup {currentUser} on:cancelNewGroup={popHistory} on:groupCreated />
     {:else if threadRootEvent !== undefined && $selectedChatStore !== undefined}
         <Thread
             on:chatWith

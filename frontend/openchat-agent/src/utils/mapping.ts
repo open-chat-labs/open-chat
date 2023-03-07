@@ -15,6 +15,15 @@ export function optionUpdate<A, B>(
     throw new UnsupportedValueError("Unexpected ApiOptionUpdate type returned", candid);
 }
 
+export function apiOptionUpdate<A, B>(
+    mapper: (a: A) => B,
+    domain: OptionUpdate<A>
+): ApiOptionUpdate<B> {
+    if (domain === undefined) return { NoChange: null };
+    if (domain === "set_to_none") return { SetToNone: null };
+    return { SetToSome: mapper(domain.value) };
+}
+
 export function applyOptionUpdate<T>(
     original: T | undefined,
     update: OptionUpdate<T>
@@ -22,6 +31,11 @@ export function applyOptionUpdate<T>(
     if (update === undefined) return original;
     if (update === "set_to_none") return undefined;
     return update.value;
+}
+
+export function mapOptionUpdate<A, B>(original: OptionUpdate<A>, mapper: (a: A) => B): OptionUpdate<B> {
+    if (original === undefined || original === "set_to_none") return original;
+    return { value: mapper(original.value) };
 }
 
 export function identity<T>(x: T): T {

@@ -13,6 +13,10 @@ impl LocalGroupMap {
         self.groups.insert(chat_id, group);
     }
 
+    pub fn delete(&mut self, chat_id: &ChatId) -> bool {
+        self.groups.remove(chat_id).is_some()
+    }
+
     pub fn get(&self, chat_id: &ChatId) -> Option<&LocalGroup> {
         self.groups.get(chat_id)
     }

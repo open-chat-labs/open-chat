@@ -1,7 +1,6 @@
 [package]
 name = "utils"
 version = "0.1.0"
-authors = ["Hamish Peebles <hamishpeebles@gmail.com>", "Matt Grogan <megrogan@gmail.com>", "Julian Jelfs <julian.jelfs@gmail.com>"]
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -9,6 +8,7 @@ edition = "2021"
 [dependencies]
 candid = { workspace = true }
 canister_client_macros = { path = "../canister_client_macros" }
+cycles_dispenser_client = { path = "../cycles_dispenser_client" }
 getrandom = { workspace = true, features = ["custom"] }
 ic-cdk = { workspace = true }
 itertools = { workspace = true }
@@ -16,5 +16,6 @@ msgpack = { path = "../msgpack" }
 rand = { workspace = true }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
+sha3 = { workspace = true }
 tracing = { workspace = true }
 types = { path = "../types" }

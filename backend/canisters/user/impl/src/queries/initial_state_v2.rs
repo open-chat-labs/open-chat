@@ -3,7 +3,7 @@ use crate::model::group_chat::GroupChat;
 use crate::{read_state, RuntimeState, WASM_VERSION};
 use ic_cdk_macros::query;
 use std::collections::HashMap;
-use types::{GroupCanisterGroupChatSummary, GroupChatSummary, ThreadSyncDetails, UserId};
+use types::{GroupCanisterGroupChatSummary, GroupChatSummary, ThreadSyncDetails, UserId, Version};
 use user_canister::initial_state_v2::{Response::*, *};
 
 #[query(guard = "caller_is_owner")]
@@ -23,7 +23,7 @@ fn initial_state_impl(args: Args, runtime_state: &RuntimeState) -> Response {
         .data
         .direct_chats
         .iter()
-        .map(|d| d.to_summary(my_user_id))
+        .map(|d| d.to_summary(my_user_id, now))
         .collect();
 
     let disable_cache = args.disable_cache.unwrap_or_default();
@@ -88,7 +88,6 @@ fn hydrate_cached_summary(cached: &GroupCanisterGroupChatSummary, user_details: 
         participant_count: cached.participant_count,
         role: cached.role,
         mentions: cached.mentions.clone(),
-        wasm_version: cached.wasm_version,
         owner_id: cached.owner_id,
         permissions: cached.permissions.clone(),
         metrics: cached.metrics.clone(),
@@ -106,5 +105,11 @@ fn hydrate_cached_summary(cached: &GroupCanisterGroupChatSummary, user_details: 
             .collect(),
         archived: user_details.archived.value,
         frozen: cached.frozen.clone(),
+        wasm_version: Version::default(),
+        date_last_pinned: cached.date_last_pinned,
+        date_read_pinned: user_details.date_read_pinned.value,
+        events_ttl: cached.events_ttl,
+        expired_messages: cached.expired_messages.clone(),
+        next_message_expiry: cached.next_message_expiry,
     }
 }

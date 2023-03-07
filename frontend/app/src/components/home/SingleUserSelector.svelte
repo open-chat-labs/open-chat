@@ -2,8 +2,8 @@
     import MentionPicker from "./MentionPicker.svelte";
     import { _ } from "svelte-i18n";
     import type { Member, OpenChat, PartialUserSummary } from "openchat-client";
-    import Close from "svelte-material-icons/Close.svelte";
     import { getContext } from "svelte";
+    import UserPill from "../UserPill.svelte";
 
     const client = getContext<OpenChat>("client");
     export let blockedUsers: Set<string>;
@@ -58,12 +58,7 @@
             {members} />
     {/if}
     {#if selectedReceiver !== undefined}
-        <div class="user-pill">
-            <span class="username">{`@${selectedReceiver.username}`}</span>
-            <span class="close" on:click={removeReceiver}>
-                <Close size={"1em"} color={"var(--button-txt)"} />
-            </span>
-        </div>
+        <UserPill on:deleteUser={removeReceiver} user={selectedReceiver} />
     {:else}
         <div class="wrapper" bind:clientHeight={inputHeight}>
             <input
@@ -88,18 +83,8 @@
         transition: border ease-in-out 300ms;
         display: block;
         width: 100%;
-        line-height: 24px;
-        padding: $sp3;
-        height: 40px;
-        @include font(book, normal, fs-100);
-        color: var(--txt);
-        background-color: var(--input-bg);
-        border: 1px solid var(--bd);
-        outline: none;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        border-radius: $sp2;
+
+        @include input();
 
         &.showing-picker {
             border-radius: $sp2 $sp2 0 0;
@@ -108,28 +93,6 @@
 
         &::placeholder {
             color: var(--placeholder);
-        }
-    }
-
-    .user-pill {
-        background: var(--button-bg);
-        color: var(--button-txt);
-        display: inline-flex;
-        padding: 0 $sp2;
-        align-items: center;
-        justify-content: space-between;
-        border-radius: $sp2;
-        gap: $sp3;
-
-        .username {
-            flex: auto;
-            padding: $sp3;
-        }
-
-        .close {
-            cursor: pointer;
-            width: 25px;
-            display: flex;
         }
     }
 </style>

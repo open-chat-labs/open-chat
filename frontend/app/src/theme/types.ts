@@ -15,6 +15,7 @@ export interface Theme {
     bd: string;
 
     error: string;
+    warn: string;
     accent: string;
     accentDarker: string;
     disabledTxt: string;
@@ -77,6 +78,7 @@ export interface Theme {
     input: {
         bg: string;
         sh: string;
+        accent: string;
     };
 
     members: {

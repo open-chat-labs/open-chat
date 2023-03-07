@@ -10,7 +10,7 @@
     import { iconSize } from "../../stores/iconSize";
     import { createEventDispatcher, getContext } from "svelte";
     import Button from "../Button.svelte";
-    import { push } from "svelte-spa-router";
+    import page from "page";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -23,7 +23,7 @@
     }
 
     function previewGroup({ chatId }: GroupChatSummary) {
-        push(`/${chatId}`);
+        page(`/${chatId}`);
     }
 
     function joinGroup(group: GroupChatSummary) {
@@ -40,8 +40,7 @@
             <div class="avatar">
                 <Avatar
                     url={client.groupAvatarUrl(group)}
-                    status={UserStatus.None}
-                    size={$mobileWidth ? AvatarSize.Tiny : AvatarSize.Small} />
+                    size={$mobileWidth ? AvatarSize.Small : AvatarSize.Default} />
             </div>
             <div class="group-title-line">
                 <h3 class="group-name">

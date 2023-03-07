@@ -1,18 +1,18 @@
 [package]
 name = "notification_pusher_core"
 version = "0.1.0"
-authors = ["Hamish Peebles <hamishpeebles@gmail.com>", "Matt Grogan <megrogan@gmail.com>", "Julian Jelfs <julian.jelfs@gmail.com>"]
 edition = "2021"
 
 [dependencies]
 async-trait = { workspace = true }
 base64 = { workspace = true }
 futures = { workspace = true }
-garcon = { workspace = true }
 ic-agent = { workspace = true }
 index_store = { path = "../../libraries/index_store" }
 notifications_canister = { path = "../../canisters/notifications/api" }
 notifications_canister_client = { path = "../../canisters/notifications/client" }
+notifications_index_canister = { path = "../../canisters/notifications_index/api" }
+notifications_index_canister_client = { path = "../../canisters/notifications_index/client" }
 openssl = { workspace = true, features = ["vendored"] }
 serde = { workspace = true }
 tokio = { workspace = true, features = ["macros", "time"] }

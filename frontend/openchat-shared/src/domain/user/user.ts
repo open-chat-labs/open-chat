@@ -10,24 +10,22 @@ export type IdentityState =
     | "upgrading_user"
     | "upgrade_user";
 
-export type UserLastOnline = {
+export type UserCommon = DataContent & {
     kind: "user" | "bot";
     userId: string;
-    lastOnline: number; // timestamp calculated from server response in seconds
     updated: bigint;
     suspended: boolean;
+    diamond: boolean;
 };
 
-export type UserSummary = UserLastOnline &
-    DataContent & {
-        username: string;
-    };
+export type UserSummary = UserCommon & {
+    username: string;
+};
 
 // todo - remember why this exists
-export type PartialUserSummary = UserLastOnline &
-    DataContent & {
-        username?: string;
-    };
+export type PartialUserSummary = UserCommon & {
+    username?: string;
+};
 
 export type UserLookup = Record<string, PartialUserSummary>;
 
@@ -64,12 +62,10 @@ export enum UserStatus {
 }
 
 export enum AvatarSize {
-    Miniscule,
     Tiny,
     Small,
-    Medium,
+    Default,
     Large,
-    ExtraLarge,
 }
 
 export type CreateChallengeResponse = Challenge | Throttled;
@@ -89,42 +85,38 @@ export type ChallengeAttempt = {
     chars: string;
 };
 
-export type PhoneNumber = {
-    countryCode: number;
-    number: string;
-};
-
 export type CurrentUserResponse = CreatedUser | UserNotFound;
 
 export type UpgradeInProgress = {
     kind: "upgrade_in_progress";
 };
 
-export type PhoneStatus =
-    | { kind: "confirmed" }
-    | { kind: "none" }
-    | { kind: "unconfirmed"; validUntil: number; phoneNumber: PhoneNumber };
-
 export type CreatedUser = {
     kind: "created_user";
     username: string;
     cryptoAccount: string;
-    phoneStatus: PhoneStatus;
     userId: string;
     canisterUpgradeStatus: "required" | "not_required" | "in_progress";
     wasmVersion: Version;
-    openStorageLimitBytes: number;
     referrals: string[];
     isSuperAdmin: boolean;
     suspensionDetails: SuspensionDetails | undefined;
     isSuspectedBot: boolean;
+    diamondMembership?: DiamondMembershipDetails;
 };
 
+export type DiamondMembershipDetails = {
+    recurring?: DiamondMembershipDuration;
+    expiresAt: bigint;
+};
+
+export type DiamondMembershipDuration = "one_month" | "three_months" | "one_year";
+
 export type SuspensionDetails = {
-    reason: string,
-    action: SuspensionAction,
-    suspendedBy: string,
-}
+    reason: string;
+    action: SuspensionAction;
+    suspendedBy: string;
+};
 
 export type SuspensionAction = UnsuspendAction | DeleteAction;
 
@@ -157,27 +149,6 @@ export type SetUsernameResponse =
     | "username_too_long"
     | "username_invalid";
 
-export type SubmitPhoneNumberResponse =
-    | "success"
-    | "already_registered"
-    | "already_registered_by_other"
-    | "invalid_phone_number"
-    | "user_not_found";
-
-export type ConfirmPhoneNumberResponse =
-    | { kind: "success"; storageLimitBytes: number }
-    | { kind: "already_claimed" }
-    | { kind: "code_incorrect" }
-    | { kind: "code_expired" }
-    | { kind: "not_found" }
-    | { kind: "phone_number_not_submitted" };
-
-export type ResendCodeResponse =
-    | "success"
-    | "phone_number_already_confirmed"
-    | "user_not_found"
-    | "phone_number_not_submitted";
-
 export type InvalidCurrency = { kind: "invalid_currency" };
 
 export type SetBioResponse = "success" | "bio_too_long" | "user_suspended";
@@ -195,15 +166,6 @@ export type RegisterUserResponse =
     | "username_invalid"
     | "challenge_failed";
 
-export type UpgradeStorageResponse =
-    | { kind: "success_no_change" }
-    | { kind: "success" }
-    | { kind: "payment_not_found" }
-    | { kind: "payment_insufficient"; ammountRequirede8s: number; accountBalancee8s: number }
-    | { kind: "internal_error" }
-    | { kind: "storage_limit_exceeded" }
-    | { kind: "user_not_found" };
-
 export type PinChatResponse = { kind: "success" } | { kind: "pinned_limit_reached"; limit: number };
 
 export type UnpinChatResponse = "success";
@@ -217,8 +179,27 @@ export type MigrateUserPrincipalResponse =
     | "internal_error"
     | "migration_not_initialized";
 
-export type SuspendUserResponse = "success" | "user_not_found" | "user_already_suspended" | "internal_error";
+export type SuspendUserResponse =
+    | "success"
+    | "user_not_found"
+    | "user_already_suspended"
+    | "internal_error";
 
-export type UnsuspendUserResponse = "success" | "user_not_found" | "user_not_suspended" | "internal_error";
+export type UnsuspendUserResponse =
+    | "success"
+    | "user_not_found"
+    | "user_not_suspended"
+    | "internal_error";
 
 export type MarkSuspectedBotResponse = "success";
+
+export type PayForDiamondMembershipResponse =
+    | { kind: "payment_already_in_progress" }
+    | { kind: "currency_not_supported" }
+    | { kind: "success"; details: DiamondMembershipDetails }
+    | { kind: "price_mismatch" }
+    | { kind: "transfer_failed" }
+    | { kind: "internal_error" }
+    | { kind: "cannot_extend" }
+    | { kind: "user_not_found" }
+    | { kind: "insufficient_funds" };

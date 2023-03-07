@@ -1,47 +1,26 @@
-use crate::lifecycle::{init_logger, init_state, UPGRADE_BUFFER_SIZE};
-use crate::{Data, LOG_MESSAGES};
-use canister_logger::{LogMessage, LogMessagesWrapper};
+use crate::lifecycle::{init_env, init_state, UPGRADE_BUFFER_SIZE};
+use crate::memory::get_upgrades_memory;
+use crate::Data;
+use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use group_canister::post_upgrade::Args;
 use ic_cdk_macros::post_upgrade;
-use stable_memory::deserialize_from_stable_memory;
+use ic_stable_structures::reader::{BufferedReader, Reader};
 use tracing::info;
-use utils::env::canister::CanisterEnv;
-use utils::env::Environment;
 
 #[post_upgrade]
 #[trace]
 fn post_upgrade(args: Args) {
-    ic_cdk::setup();
+    let env = init_env();
 
-    let env = Box::new(CanisterEnv::new());
+    let memory = get_upgrades_memory();
+    let reader = BufferedReader::new(UPGRADE_BUFFER_SIZE, Reader::new(&memory, 0));
 
-    let (mut data, log_messages, trace_messages): (Data, Vec<LogMessage>, Vec<LogMessage>) =
-        deserialize_from_stable_memory(UPGRADE_BUFFER_SIZE).unwrap();
+    let (data, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>) = serializer::deserialize(reader).unwrap();
 
-    let now = env.now();
-    data.events.remove_old_deleted_message_content(now);
+    canister_logger::init_with_logs(data.test_mode, logs, traces);
 
-    init_logger(data.test_mode);
     init_state(env, data, args.wasm_version);
 
-    if !log_messages.is_empty() || !trace_messages.is_empty() {
-        LOG_MESSAGES.with(|l| rehydrate_log_messages(log_messages, trace_messages, &l.borrow()))
-    }
-
     info!(version = %args.wasm_version, "Post-upgrade complete");
-}
-
-fn rehydrate_log_messages(
-    log_messages: Vec<LogMessage>,
-    trace_messages: Vec<LogMessage>,
-    messages_container: &LogMessagesWrapper,
-) {
-    for message in log_messages {
-        messages_container.logs.push(message);
-    }
-
-    for message in trace_messages {
-        messages_container.traces.push(message);
-    }
 }

@@ -18,6 +18,7 @@ type SendMessageResponse =
             message_index: MessageIndex;
             event_index: EventIndex;
             timestamp: TimestampMillis;
+            expires_at: opt TimestampMillis;
         };
         MessageEmpty;
         TextTooLong: nat32;
@@ -28,6 +29,18 @@ type SendMessageResponse =
         ThreadMessageNotFound;
         UserSuspended;
         ChatFrozen;
+    };
+
+type SendMessageV2Args =
+    record {
+        message_id: MessageId;
+        thread_root_message_index: opt MessageIndex;
+        content: MessageContentInitial;
+        sender_name: text;
+        replies_to: opt GroupReplyContext;
+        mentioned: vec User;
+        forwarding: bool;
+        correlation_id: nat64;
     };
 
 type EditMessageArgs =
@@ -113,6 +126,7 @@ type AddReactionArgs =
 type AddReactionResponse =
     variant {
         Success: EventIndex;
+        SuccessV2: PushEventResult;
         NoChange;
         InvalidReaction;
         MessageNotFound;
@@ -133,6 +147,7 @@ type RemoveReactionArgs =
 type RemoveReactionResponse =
     variant {
         Success: EventIndex;
+        SuccessV2: PushEventResult;
         NoChange;
         MessageNotFound;
         CallerNotInGroup;
@@ -317,6 +332,7 @@ type UpdateGroupV2Args =
         rules: opt GroupRules;
         avatar: AvatarUpdate;
         permissions: opt OptionalGroupPermissions;
+        events_ttl: EventsTimeToLiveUpdate;
         correlation_id: nat64;
     };
 
@@ -361,9 +377,9 @@ type PinMessageArgs =
         correlation_id: nat64;
     };
 
-type PinMessageResponse =
+type PinMessageV2Response =
     variant {
-        Success: EventIndex;
+        Success: PushEventResult;
         NoChange;
         MessageIndexOutOfRange;
         NotAuthorized;
@@ -382,6 +398,7 @@ type UnpinMessageArgs =
 type UnpinMessageResponse =
     variant {
         Success: EventIndex;
+        SuccessV2: PushEventResult;
         NoChange;
         NotAuthorized;
         CallerNotInGroup;
@@ -408,6 +425,26 @@ type RegisterProposalVoteResponse =
         UserSuspended;
         ChatFrozen;
         InternalError: text;
+    };
+
+type ClaimPrizeArgs =
+    record {
+        message_id: MessageId;
+        correlation_id: nat64;
+    };
+
+type ClaimPrizeResponse =
+    variant {
+        Success;
+        CallerNotInGroup;
+        UserSuspended;
+        ChatFrozen;
+        MessageNotFound;
+        AlreadyClaimed;
+        PrizeFullyClaimed;
+        PrizeEnded;
+        TransferFailed: record { text; FailedCryptoTransaction; };
+        FailedAfterTransfer: record { text; CompletedCryptoTransaction; };
     };
 
 type MakePrivateArgs =
@@ -499,6 +536,7 @@ type EventsArgs =
         thread_root_message_index: opt MessageIndex;
         start_index: EventIndex;
         ascending: bool;
+        max_messages: nat32;
         max_events: nat32;
         invite_code: opt nat64;
         latest_client_event_index: opt EventIndex;
@@ -512,19 +550,11 @@ type EventsByIndexArgs =
         latest_client_event_index: opt EventIndex;
     };
 
-type EventsRangeArgs =
-    record {
-        thread_root_message_index: opt MessageIndex;
-        from_index: EventIndex;
-        to_index: EventIndex;
-        invite_code: opt nat64;
-        latest_client_event_index: opt EventIndex;
-    };
-
 type EventsWindowArgs =
     record {
         thread_root_message_index: opt MessageIndex;
         mid_point: MessageIndex;
+        max_messages: nat32;
         max_events: nat32;
         invite_code: opt nat64;
         latest_client_event_index: opt EventIndex;
@@ -543,6 +573,15 @@ type EventsResponse =
         CallerNotInGroup;
         ThreadMessageNotFound;
         ReplicaNotUpToDate: EventIndex;
+    };
+
+type LocalUserIndexArgs =
+    record {
+    };
+
+type LocalUserIndexResponse =
+    variant {
+        Success: CanisterId;
     };
 
 type MessagesByMessageIndexArgs =
@@ -585,6 +624,24 @@ type ThreadPreview =
         root_message: MessageEventWrapper;
         latest_replies: vec MessageEventWrapper;
         total_replies: nat32;
+    };
+
+type DeletedMessageArgs =
+    record {
+        thread_root_message_index: opt MessageIndex;
+        message_id: MessageId;
+    };
+
+type DeletedMessageResponse =
+    variant {
+        Success: record {
+            content: MessageContent;
+        };
+        CallerNotInGroup;
+        NotAuthorized;
+        MessageNotFound;
+        MessageNotDeleted;
+        MessageHardDeleted;
     };
 
 type SearchMessagesArgs =
@@ -650,7 +707,7 @@ service: {
     unblock_user: (UnblockUserArgs) -> (UnblockUserResponse); // public only
     remove_participant: (RemoveParticipantArgs) -> (RemoveParticipantResponse);
     update_group_v2: (UpdateGroupV2Args) -> (UpdateGroupV2Response);
-    pin_message: (PinMessageArgs) -> (PinMessageResponse);
+    pin_message_v2: (PinMessageArgs) -> (PinMessageV2Response);
     unpin_message: (UnpinMessageArgs) -> (UnpinMessageResponse);
     change_role: (ChangeRoleArgs) -> (ChangeRoleResponse);
     invite_code: (InviteCodeArgs) -> (InviteCodeResponse) query;
@@ -663,6 +720,7 @@ service: {
 
     // Regular users
     send_message: (SendMessageArgs) -> (SendMessageResponse);
+    send_message_v2: (SendMessageV2Args) -> (SendMessageResponse);
     edit_message: (EditMessageArgs) -> (EditMessageResponse);
     delete_messages: (DeleteMessagesArgs) -> (DeleteMessagesResponse);
     undelete_messages: (UndeleteMessagesArgs) -> (UndeleteMessagesResponse);
@@ -670,6 +728,7 @@ service: {
     add_reaction: (AddReactionArgs) -> (AddReactionResponse);
     remove_reaction: (RemoveReactionArgs) -> (RemoveReactionResponse);
     register_proposal_vote: (RegisterProposalVoteArgs) -> (RegisterProposalVoteResponse);
+    claim_prize: (ClaimPrizeArgs) -> (ClaimPrizeResponse);
 
     summary: (SummaryArgs) -> (SummaryResponse) query;
     summary_updates: (SummaryUpdatesArgs) -> (SummaryUpdatesResponse) query;
@@ -678,10 +737,11 @@ service: {
 
     events: (EventsArgs) -> (EventsResponse) query;
     events_by_index: (EventsByIndexArgs) -> (EventsResponse) query;
-    events_range: (EventsRangeArgs) -> (EventsResponse) query;
     events_window: (EventsWindowArgs) -> (EventsResponse) query;
+    local_user_index: (LocalUserIndexArgs) -> (LocalUserIndexResponse) query;
     messages_by_message_index: (MessagesByMessageIndexArgs) -> (MessagesByMessageIndexResponse) query;
     thread_previews: (ThreadPreviewsArgs) -> (ThreadPreviewsResponse) query;
+    deleted_message: (DeletedMessageArgs) -> (DeletedMessageResponse) query;
 
     search_messages: (SearchMessagesArgs) -> (SearchMessagesResponse) query; // Use Tantivy
 

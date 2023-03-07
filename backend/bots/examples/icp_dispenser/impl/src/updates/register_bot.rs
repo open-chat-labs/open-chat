@@ -30,7 +30,7 @@ async fn register_bot(args: Args) -> Response {
                 Success
             }
             Ok(response) => response,
-            Err(error) => InternalError(format!("{:?}", error)),
+            Err(error) => InternalError(format!("{error:?}")),
         }
     }
 }

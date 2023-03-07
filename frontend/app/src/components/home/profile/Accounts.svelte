@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Cryptocurrency, cryptoCurrencyList, OpenChat } from "openchat-client";
+    import { Cryptocurrency, cryptoCurrencyList, cryptoLookup, OpenChat } from "openchat-client";
     import { getContext } from "svelte";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
     import ManageCryptoAccount from "./ManageCryptoAccount.svelte";
@@ -28,10 +28,11 @@
         showManageCryptoAccount = true;
     }
 
-    $: crypto = cryptoCurrencyList.map((t, i) => ({
-        symbol: t,
+    $: crypto = cryptoCurrencyList.map((t) => ({
+        key: t,
+        symbol: cryptoLookup[t].symbol,
         balance: $cryptoBalance[t],
-        disabled: !process.env.ENABLE_MULTI_CRYPTO && i > 0,
+        disabled: cryptoLookup[t].disabled,
     }));
 </script>
 
@@ -49,17 +50,17 @@
     <div />
 
     {#each crypto as token}
-        <div class={`icon ${token.symbol}`} />
+        <div class={`icon ${token.key}`} />
 
         <div class="token">
-            {token.symbol.toUpperCase()}
+            {token.symbol}
             {#if token.disabled}
                 <span class="coming-soon">{$_("cryptoAccount.comingSoon")}</span>
             {/if}
         </div>
         <div class="balance">
             <BalanceWithRefresh
-                token={token.symbol}
+                token={token.key}
                 value={token.balance}
                 disabled={token.disabled}
                 on:refreshed={onBalanceRefreshed}
@@ -67,7 +68,7 @@
         </div>
         <div class="manage">
             {#if !token.disabled}
-                <LinkButton underline={"hover"} on:click={() => showManageCrypto(token.symbol)}
+                <LinkButton underline={"hover"} on:click={() => showManageCrypto(token.key)}
                     >{$_("cryptoAccount.manage")}</LinkButton>
             {/if}
         </div>
@@ -125,8 +126,11 @@
             &.icp {
                 background-image: url("../assets/icp_token.png");
             }
-            &.btc {
-                background-image: url("../assets/bitcoin_token.png");
+            &.sns1 {
+                background-image: url("../assets/sns1_token.png");
+            }
+            &.ckbtc {
+                background-image: url("../assets/bitcoin_token2.jpeg");
             }
             &.chat {
                 background-image: url("../assets/spinner.svg");

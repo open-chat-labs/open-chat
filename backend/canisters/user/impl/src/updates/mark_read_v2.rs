@@ -2,7 +2,7 @@ use crate::guards::caller_is_owner;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
-use types::{ChatId, MessageIndex};
+use types::{ChatId, MessageIndex, Timestamped};
 use user_canister::c2c_mark_read_v2;
 use user_canister::mark_read_v2::{Response::*, *};
 use utils::consts::OPENCHAT_BOT_USER_ID;
@@ -29,9 +29,18 @@ fn mark_read_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
                     .threads_read
                     .insert(thread.root_message_index, thread.read_up_to, now);
             }
+
+            if chat_messages_read.date_read_pinned > group_chat.date_read_pinned.value {
+                group_chat.date_read_pinned = Timestamped::new(chat_messages_read.date_read_pinned, now);
+            }
         } else if let Some(direct_chat) = runtime_state.data.direct_chats.get_mut(&chat_messages_read.chat_id) {
             if let Some(read_up_to) = chat_messages_read.read_up_to {
-                if read_up_to <= direct_chat.events.main().latest_message_index().unwrap_or_default()
+                if read_up_to
+                    <= direct_chat
+                        .events
+                        .main_events_reader(now)
+                        .latest_message_index()
+                        .unwrap_or_default()
                     && direct_chat.mark_read_up_to(read_up_to, true, now)
                     && direct_chat.them != OPENCHAT_BOT_USER_ID
                 {

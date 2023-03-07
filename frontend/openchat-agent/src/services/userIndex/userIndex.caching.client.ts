@@ -2,16 +2,11 @@ import type { IUserIndexClient } from "./userIndex.client.interface";
 import type {
     ChallengeAttempt,
     CheckUsernameResponse,
-    ConfirmPhoneNumberResponse,
     CreateChallengeResponse,
     CurrentUserResponse,
     PartialUserSummary,
-    PhoneNumber,
     RegisterUserResponse,
-    ResendCodeResponse,
     SetUsernameResponse,
-    SubmitPhoneNumberResponse,
-    UpgradeStorageResponse,
     UsersArgs,
     UsersResponse,
     UserSummary,
@@ -19,10 +14,18 @@ import type {
     SuspendUserResponse,
     UnsuspendUserResponse,
     MarkSuspectedBotResponse,
+    Cryptocurrency,
+    DiamondMembershipDuration,
+    PayForDiamondMembershipResponse,
 } from "openchat-shared";
 import { groupBy } from "../../utils/list";
 import { profile } from "../common/profiling";
-import { getCachedUsers, setCachedUsers, setUsername } from "../../utils/userCache";
+import {
+    getCachedUsers,
+    setCachedUsers,
+    setUserDiamondStatusToTrue,
+    setUsername,
+} from "../../utils/userCache";
 
 function isUserSummary(user: PartialUserSummary): user is UserSummary {
     return user.username !== undefined;
@@ -80,14 +83,6 @@ export class CachingUserIndexClient implements IUserIndexClient {
         return this.client.registerUser(username, challengeAttempt, referredBy);
     }
 
-    confirmPhoneNumber(code: string): Promise<ConfirmPhoneNumberResponse> {
-        return this.client.confirmPhoneNumber(code);
-    }
-
-    resendRegistrationCode(): Promise<ResendCodeResponse> {
-        return this.client.resendRegistrationCode();
-    }
-
     searchUsers(searchTerm: string, maxResults?: number): Promise<UserSummary[]> {
         return this.client.searchUsers(searchTerm, maxResults);
     }
@@ -103,10 +98,6 @@ export class CachingUserIndexClient implements IUserIndexClient {
             }
             return res;
         });
-    }
-
-    submitPhoneNumber(phoneNumber: PhoneNumber): Promise<SubmitPhoneNumberResponse> {
-        return this.client.submitPhoneNumber(phoneNumber);
     }
 
     private buildGetUsersArgs(
@@ -192,10 +183,6 @@ export class CachingUserIndexClient implements IUserIndexClient {
         };
     }
 
-    upgradeStorage(newLimitBytes: number): Promise<UpgradeStorageResponse> {
-        return this.client.upgradeStorage(newLimitBytes);
-    }
-
     suspendUser(userId: string, reason: string): Promise<SuspendUserResponse> {
         return this.client.suspendUser(userId, reason);
     }
@@ -206,5 +193,22 @@ export class CachingUserIndexClient implements IUserIndexClient {
 
     markSuspectedBot(): Promise<MarkSuspectedBotResponse> {
         return this.client.markSuspectedBot();
+    }
+
+    payForDiamondMembership(
+        userId: string,
+        token: Cryptocurrency,
+        duration: DiamondMembershipDuration,
+        recurring: boolean,
+        expectedPriceE8s: bigint
+    ): Promise<PayForDiamondMembershipResponse> {
+        return this.client
+            .payForDiamondMembership(userId, token, duration, recurring, expectedPriceE8s)
+            .then((res) => {
+                if (res.kind === "success") {
+                    setUserDiamondStatusToTrue(userId);
+                }
+                return res;
+            });
     }
 }

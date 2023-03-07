@@ -17,6 +17,8 @@ import type {
     GroupChatDetailsResponse,
     UnblockUserResponse,
     GroupChatSummary,
+    GroupCanisterSummaryResponse,
+    GroupCanisterSummaryUpdatesResponse,
     MemberRole,
     PinMessageResponse,
     UnpinMessageResponse,
@@ -35,6 +37,10 @@ import type {
     User,
     SearchGroupChatResponse,
     Logger,
+    DeletedGroupMessageResponse,
+    EventWrapper,
+    OptionUpdate,
+    ClaimPrizeResponse,
 } from "openchat-shared";
 import type { IGroupClient } from "./group.client.interface";
 import type { IDBPDatabase } from "idb";
@@ -46,6 +52,8 @@ import {
     getCachedGroupDetails,
     loadMessagesByMessageIndex,
     mergeSuccessResponses,
+    recordFailedMessage,
+    removeFailedMessage,
     setCachedEvents,
     setCachedGroupDetails,
     setCachedMessageFromSendResponse,
@@ -93,6 +101,18 @@ export class CachingGroupClient implements IGroupClient {
                     return resp;
                 });
         }
+    }
+
+    claimPrize(messageId: bigint): Promise<ClaimPrizeResponse> {
+        return this.client.claimPrize(messageId);
+    }
+
+    summary(): Promise<GroupCanisterSummaryResponse> {
+        return this.client.summary();
+    }
+
+    summaryUpdates(updatesSince: bigint): Promise<GroupCanisterSummaryUpdatesResponse> {
+        return this.client.summaryUpdates(updatesSince);
     }
 
     @profile("groupCachingClient")
@@ -192,12 +212,26 @@ export class CachingGroupClient implements IGroupClient {
     sendMessage(
         senderName: string,
         mentioned: User[],
-        message: Message,
+        event: EventWrapper<Message>,
         threadRootMessageIndex?: number
     ): Promise<[SendMessageResponse, Message]> {
+        // pre-emtively remove the failed message from indexeddb - it will get re-added if anything goes wrong
+        removeFailedMessage(this.db, this.chatId, event.event.messageId, threadRootMessageIndex);
+
         return this.client
-            .sendMessage(senderName, mentioned, message, threadRootMessageIndex)
-            .then(setCachedMessageFromSendResponse(this.db, this.chatId, threadRootMessageIndex));
+            .sendMessage(senderName, mentioned, event, threadRootMessageIndex)
+            .then(
+                setCachedMessageFromSendResponse(
+                    this.db,
+                    this.chatId,
+                    event,
+                    threadRootMessageIndex
+                )
+            )
+            .catch((err) => {
+                recordFailedMessage(this.db, this.chatId, event, threadRootMessageIndex);
+                throw err;
+            });
     }
 
     editMessage(message: Message, threadRootMessageIndex?: number): Promise<EditMessageResponse> {
@@ -217,9 +251,17 @@ export class CachingGroupClient implements IGroupClient {
         description?: string,
         rules?: GroupRules,
         permissions?: Partial<GroupPermissions>,
-        avatar?: Uint8Array
+        avatar?: Uint8Array,
+        eventsTimeToLiveMs?: OptionUpdate<bigint>
     ): Promise<UpdateGroupResponse> {
-        return this.client.updateGroup(name, description, rules, permissions, avatar);
+        return this.client.updateGroup(
+            name,
+            description,
+            rules,
+            permissions,
+            avatar,
+            eventsTimeToLiveMs
+        );
     }
 
     addReaction(
@@ -319,7 +361,7 @@ export class CachingGroupClient implements IGroupClient {
             return resp === "events_failed"
                 ? resp
                 : {
-                      events: [...resp.events],
+                      events: [...fromCache.messageEvents, ...resp.events],
                       affectedEvents: resp.affectedEvents,
                       latestEventIndex: resp.latestEventIndex,
                   };
@@ -329,6 +371,13 @@ export class CachingGroupClient implements IGroupClient {
             affectedEvents: [],
             latestEventIndex: undefined,
         };
+    }
+
+    getDeletedMessage(
+        messageId: bigint,
+        threadRootMessageIndex?: number
+    ): Promise<DeletedGroupMessageResponse> {
+        return this.client.getDeletedMessage(messageId, threadRootMessageIndex);
     }
 
     pinMessage(messageIndex: number): Promise<PinMessageResponse> {
@@ -353,7 +402,11 @@ export class CachingGroupClient implements IGroupClient {
         );
     }
 
-    searchGroupChat(searchTerm: string, userIds: string[], maxResults: number): Promise<SearchGroupChatResponse> {
+    searchGroupChat(
+        searchTerm: string,
+        userIds: string[],
+        maxResults: number
+    ): Promise<SearchGroupChatResponse> {
         return this.client.searchGroupChat(searchTerm, userIds, maxResults);
     }
 
@@ -385,5 +438,9 @@ export class CachingGroupClient implements IGroupClient {
         adopt: boolean
     ): Promise<RegisterProposalVoteResponse> {
         return this.client.registerProposalVote(messageIdx, adopt);
+    }
+
+    localUserIndex(): Promise<string> {
+        return this.client.localUserIndex();
     }
 }

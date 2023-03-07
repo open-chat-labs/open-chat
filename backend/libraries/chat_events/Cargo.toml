@@ -1,14 +1,15 @@
 [package]
 name = "chat_events"
 version = "0.1.0"
-authors = ["Hamish Peebles <hamishpeebles@gmail.com>", "Matt Grogan <megrogan@gmail.com>", "Julian Jelfs <julian.jelfs@gmail.com>"]
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 candid = { workspace = true }
+ic-ledger-types = { workspace = true }
 itertools = { workspace = true }
+ledger_utils = { path = "../ledger_utils" }
 search = { path = "../search" }
 serde = { workspace = true }
 types = { path = "../types" }

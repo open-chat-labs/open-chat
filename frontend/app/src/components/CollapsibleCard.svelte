@@ -10,6 +10,7 @@
     export let headerText: string = "";
     export let open = true;
     export let first = false;
+    export let transition = true;
 
     function toggle() {
         open = !open;
@@ -33,8 +34,17 @@
                     : "var(--collapsible-closed-header-txt)"} />
         </div>
     </div>
-    {#if open}
-        <div transition:slide|local={{ duration: 200, easing: expoInOut }} class="body" class:open>
+    {#if transition}
+        {#if open}
+            <div
+                transition:slide|local={{ duration: 200, easing: expoInOut }}
+                class="body"
+                class:open>
+                <slot />
+            </div>
+        {/if}
+    {:else}
+        <div class="body static" class:open>
             <slot />
         </div>
     {/if}
@@ -50,7 +60,7 @@
     }
 
     .header {
-        padding: toRem(24) 0;
+        padding: toRem(20) 0;
         display: flex;
         cursor: pointer;
         justify-content: space-between;
@@ -78,6 +88,15 @@
 
         @include mobile() {
             padding: $sp3 0;
+        }
+
+        &.static {
+            display: none;
+            pointer-events: none;
+            &.open {
+                pointer-events: all;
+                display: block;
+            }
         }
     }
 </style>

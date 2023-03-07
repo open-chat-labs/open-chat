@@ -1,236 +1,447 @@
 <script lang="ts">
-    import Close from "svelte-material-icons/Close.svelte";
-    import HoverIcon from "../../HoverIcon.svelte";
-    import SectionHeader from "../../SectionHeader.svelte";
     import { _ } from "svelte-i18n";
-    import Avatar from "../../Avatar.svelte";
-    import EditableAvatar from "../../EditableAvatar.svelte";
-    import { AvatarSize, UserStatus } from "openchat-client";
-    import Input from "../../Input.svelte";
-    import TextArea from "../../TextArea.svelte";
+    import ModalContent from "../../ModalContent.svelte";
     import Button from "../../Button.svelte";
-    import Checkbox from "../../Checkbox.svelte";
-    import { createEventDispatcher, getContext } from "svelte";
-    import type { CandidateGroupChat, OpenChat } from "openchat-client";
-    import { iconSize } from "../../../stores/iconSize";
-    import GroupPermissionsEditor from "../GroupPermissionsEditor.svelte";
-    import CollapsibleCard from "../../CollapsibleCard.svelte";
+    import GroupDetails from "./GroupDetails.svelte";
+    import GroupVisibility from "./GroupVisibility.svelte";
     import Rules from "../groupdetails/Rules.svelte";
+    import GroupPermissionsEditor from "../GroupPermissionsEditor.svelte";
+    import GroupPermissionsViewer from "../GroupPermissionsViewer.svelte";
+    import { toastStore } from "../../../stores/toast";
+    import { mobileWidth } from "../../../stores/screenDimensions";
+    import ChooseMembers from "./ChooseMembers.svelte";
+    import {
+        CandidateGroupChat,
+        CreateGroupResponse,
+        OpenChat,
+        UnsupportedValueError,
+        UpdateGroupResponse,
+    } from "openchat-client";
+    import StageHeader from "./StageHeader.svelte";
+    import { createEventDispatcher, getContext, tick } from "svelte";
+    import page from "page";
+    import AreYouSure from "../../AreYouSure.svelte";
 
     const client = getContext<OpenChat>("client");
-
     const dispatch = createEventDispatcher();
     const MIN_LENGTH = 3;
     const MAX_LENGTH = 25;
-    const MAX_DESC_LENGTH = 1024;
 
     export let candidateGroup: CandidateGroupChat;
-    export let busy: boolean;
 
-    let groupInfoOpen = true;
-    let visibilityOpen = true;
-    let groupRulesOpen = true;
-    let permissionsOpen = false;
-
+    let confirming = false;
+    let busy = false;
+    let step = 0;
+    let user = client.user;
+    let actualWidth = 0;
+    let originalGroup = {
+        ...candidateGroup,
+        rules: { ...candidateGroup.rules },
+        permissions: { ...candidateGroup.permissions },
+    };
+    $: editing = candidateGroup.chatId !== undefined;
+    $: padding = $mobileWidth ? 16 : 24; // yes this is horrible
+    $: left = step * (actualWidth - padding);
     $: valid = candidateGroup.name.length > MIN_LENGTH && candidateGroup.name.length <= MAX_LENGTH;
+    $: finalStep = candidateGroup.isPublic ? 3 : 4;
+    $: canEditPermissions =
+        candidateGroup.chatId === undefined
+            ? true
+            : client.canChangePermissions(candidateGroup.chatId);
 
-    function cancel() {
-        dispatch("cancelNewGroup");
+    $: permissionsDirty = client.havePermissionsChanged(
+        originalGroup.permissions,
+        candidateGroup.permissions
+    );
+    $: rulesDirty =
+        editing &&
+        candidateGroup.rules !== undefined &&
+        (candidateGroup.rules.enabled !== originalGroup.rules.enabled ||
+            candidateGroup.rules.text !== originalGroup.rules.text);
+    $: rulesInvalid =
+        candidateGroup.rules !== undefined &&
+        candidateGroup.rules.enabled &&
+        candidateGroup.rules.text.length === 0;
+    $: nameDirty = editing && candidateGroup.name !== originalGroup.name;
+    $: descDirty = editing && candidateGroup.description !== originalGroup.description;
+    $: avatarDirty = editing && candidateGroup.avatar?.blobUrl !== originalGroup.avatar?.blobUrl;
+    $: visDirty = editing && candidateGroup.isPublic !== originalGroup.isPublic;
+    $: infoDirty = nameDirty || descDirty || avatarDirty;
+    $: dirty = infoDirty || rulesDirty || permissionsDirty || visDirty;
+
+    function groupUpdateErrorMessage(resp: UpdateGroupResponse): string | undefined {
+        if (resp === "success") return undefined;
+        if (resp === "unchanged") return undefined;
+        if (resp === "name_too_short") return "groupNameTooShort";
+        if (resp === "name_too_long") return "groupNameTooLong";
+        if (resp === "name_reserved") return "groupNameReserved";
+        if (resp === "desc_too_long") return "groupDescTooLong";
+        if (resp === "name_taken") return "groupAlreadyExists";
+        if (resp === "not_in_group") return "userNotInGroup";
+        if (resp === "internal_error") return "groupUpdateFailed";
+        if (resp === "not_authorised") return "groupUpdateFailed";
+        if (resp === "avatar_too_big") return "avatarTooBig";
+        if (resp === "rules_too_short") return "groupRulesTooShort";
+        if (resp === "rules_too_long") return "groupRulesTooLong";
+        if (resp === "user_suspended") return "userSuspended";
+        if (resp === "chat_frozen") return "chatFrozen";
+        throw new UnsupportedValueError(`Unexpected UpdateGroupResponse type received`, resp);
+    }
+
+    function groupCreationErrorMessage(resp: CreateGroupResponse): string | undefined {
+        if (resp.kind === "success") return undefined;
+        if (resp.kind === "internal_error") return "groupCreationFailed";
+        if (resp.kind === "name_too_short") return "groupNameTooShort";
+        if (resp.kind === "name_too_long") return "groupNameTooLong";
+        if (resp.kind === "name_reserved") return "groupNameReserved";
+        if (resp.kind === "description_too_long") return "groupDescTooLong";
+        if (resp.kind === "group_name_taken") return "groupAlreadyExists";
+        if (resp.kind === "avatar_too_big") return "groupAvatarTooBig";
+        if (resp.kind === "max_groups_created") return "maxGroupsCreated";
+        if (resp.kind === "throttled") return "groupCreationFailed";
+        if (resp.kind === "rules_too_short") return "groupRulesTooShort";
+        if (resp.kind === "rules_too_long") return "groupRulesTooLong";
+        if (resp.kind === "user_suspended") return "userSuspended";
+        throw new UnsupportedValueError(`Unexpected CreateGroupResponse type received`, resp);
+    }
+
+    function optionallyAddMembers(canisterId: string): Promise<void> {
+        if (candidateGroup.members.length === 0) {
+            return Promise.resolve();
+        }
+        return client
+            .addMembers(
+                canisterId,
+                candidateGroup.members.map((m) => m.user.userId),
+                user.username,
+                false
+            )
+            .then((resp) => {
+                if (resp.kind !== "add_members_success") {
+                    Promise.reject("Unable to add members to the new group");
+                }
+            });
+    }
+
+    function updateGroup(yes: boolean = true): Promise<void> {
+        busy = true;
+
+        const makePrivate = visDirty && !candidateGroup.isPublic && originalGroup.isPublic;
+
+        if (makePrivate && !confirming) {
+            confirming = true;
+            return Promise.resolve();
+        }
+
+        if (makePrivate && confirming && !yes) {
+            confirming = false;
+            busy = false;
+            candidateGroup.isPublic = true;
+            return Promise.resolve();
+        }
+
+        confirming = false;
+
+        const p1 = infoDirty ? doUpdateInfo() : Promise.resolve();
+        const p2 = permissionsDirty ? doUpdatePermissions() : Promise.resolve();
+        const p3 = rulesDirty && !rulesInvalid ? doUpdateRules() : Promise.resolve();
+        const p4 = makePrivate ? doMakeGroupPrivate() : Promise.resolve();
+
+        return Promise.all([p1, p2, p3, p4])
+            .then((_) => {
+                return;
+            })
+            .finally(() => {
+                busy = false;
+                dispatch("close");
+            });
+    }
+
+    function doMakeGroupPrivate(): Promise<void> {
+        if (candidateGroup.chatId === undefined) return Promise.resolve();
+
+        return client.makeGroupPrivate(candidateGroup.chatId).then((success) => {
+            if (success) {
+                originalGroup = {
+                    ...originalGroup,
+                    isPublic: candidateGroup.isPublic,
+                };
+            } else {
+                toastStore.showFailureToast("makeGroupPrivateFailed");
+            }
+        });
+    }
+
+    function doUpdatePermissions(): Promise<void> {
+        if (candidateGroup.chatId === undefined) return Promise.resolve();
+
+        return client
+            .updateGroupPermissions(
+                candidateGroup.chatId,
+                originalGroup.permissions,
+                candidateGroup.permissions
+            )
+            .then((success) => {
+                if (success) {
+                    // TODO this doesn't seem to update properly
+                    originalGroup = {
+                        ...originalGroup,
+                        permissions: { ...candidateGroup.permissions },
+                    };
+                } else {
+                    toastStore.showFailureToast("group.permissionsUpdateFailed");
+                }
+            });
+    }
+
+    function doUpdateRules(): Promise<void> {
+        if (candidateGroup.chatId === undefined) return Promise.resolve();
+
+        return client
+            .updateGroupRules(candidateGroup.chatId, candidateGroup.rules)
+            .then((success) => {
+                if (success) {
+                    dispatch("updateGroupRules", {
+                        chatId: candidateGroup.chatId,
+                        rules: candidateGroup.rules,
+                    });
+                } else {
+                    toastStore.showFailureToast("group.rulesUpdateFailed");
+                }
+            });
+    }
+
+    function doUpdateInfo(): Promise<void> {
+        if (candidateGroup.chatId === undefined) return Promise.resolve();
+
+        return client
+            .updateGroup(
+                candidateGroup.chatId,
+                nameDirty ? candidateGroup.name : undefined,
+                descDirty ? candidateGroup.description : undefined,
+                undefined,
+                undefined,
+                avatarDirty ? candidateGroup.avatar?.blobData : undefined
+            )
+            .then((resp) => {
+                const err = groupUpdateErrorMessage(resp);
+                if (err) {
+                    toastStore.showFailureToast(err);
+                } else {
+                    originalGroup = {
+                        ...originalGroup,
+                        ...candidateGroup.avatar,
+                        name: candidateGroup.name,
+                        description: candidateGroup.description,
+                    };
+                }
+            })
+            .catch(() => {
+                toastStore.showFailureToast("groupUpdateFailed");
+            });
     }
 
     function createGroup() {
-        dispatch("createGroup");
+        busy = true;
+
+        client
+            .createGroupChat(user.userId, candidateGroup)
+            .then((resp) => {
+                if (resp.kind !== "success") {
+                    const err = groupCreationErrorMessage(resp);
+                    if (err) toastStore.showFailureToast(err);
+                    step = 0;
+                } else {
+                    return optionallyAddMembers(resp.canisterId)
+                        .then(() => {
+                            onGroupCreated(resp.canisterId);
+                        })
+                        .catch((err) => {
+                            toastStore.showFailureToast("addMembersFailed");
+                            step = 0;
+                        });
+                }
+            })
+            .catch((err) => {
+                toastStore.showFailureToast("groupCreationFailed");
+                step = 0;
+            })
+            .finally(() => (busy = false));
     }
 
-    function toggleScope() {
-        candidateGroup.isPublic = !candidateGroup.isPublic;
-        if (candidateGroup.isPublic) {
-            candidateGroup.historyVisible = true;
+    function onGroupCreated(canisterId: string) {
+        const url = `/${canisterId}`;
+        dispatch("groupCreated", {
+            chatId: canisterId,
+            isPublic: candidateGroup.isPublic,
+            rules: candidateGroup.rules,
+        });
+        dispatch("close");
+
+        // tick ensure that the new chat will have made its way in to the chat list by the time we arrive at the route
+        tick().then(() => page(url)); // trigger the selection of the chat
+    }
+
+    function changeStep(ev: CustomEvent<number>) {
+        if (valid) {
+            step = ev.detail;
         }
-    }
-
-    function groupAvatarSelected(ev: CustomEvent<{ url: string; data: Uint8Array }>) {
-        candidateGroup.avatar = {
-            blobUrl: ev.detail.url,
-            blobData: ev.detail.data,
-        };
     }
 </script>
 
-<SectionHeader flush={true} shadow={true}>
-    <Avatar url={"assets/group.svg"} status={UserStatus.None} size={AvatarSize.Tiny} />
-    <h4>{$_("createNewGroup")}</h4>
-    <span title={$_("close")} class="close" on:click={cancel}>
-        <HoverIcon>
-            <Close size={$iconSize} color={"var(--icon-txt)"} />
-        </HoverIcon>
-    </span>
-</SectionHeader>
+{#if confirming}
+    <AreYouSure message={$_("confirmMakeGroupPrivate")} action={updateGroup} />
+{/if}
 
-<form class="group-form" on:submit|preventDefault={createGroup}>
-    <div class="form-fields">
-        <CollapsibleCard open={groupInfoOpen} headerText={$_("group.groupInfo")}>
-            <div class="sub-section photo">
-                <EditableAvatar
-                    image={client.groupAvatarUrl(candidateGroup.avatar)}
-                    on:imageSelected={groupAvatarSelected} />
-                <p class="photo-legend">{$_("group.addGroupPhoto")}</p>
-            </div>
-            <Input
-                bind:value={candidateGroup.name}
-                minlength={MIN_LENGTH}
-                maxlength={MAX_LENGTH}
-                countdown
-                placeholder={$_("newGroupName")} />
-            <TextArea
-                rows={3}
-                bind:value={candidateGroup.description}
-                maxlength={MAX_DESC_LENGTH}
-                placeholder={$_("newGroupDesc")} />
-        </CollapsibleCard>
-        <CollapsibleCard open={visibilityOpen} headerText={$_("group.visibility")}>
-            <div class="sub-section">
-                <div class="scope">
-                    <span
-                        class="scope-label"
-                        class:selected={!candidateGroup.isPublic}
-                        on:click={() => (candidateGroup.isPublic = false)}
-                        >{$_("group.private")}</span>
-
-                    <Checkbox
-                        id="is-public"
-                        toggle
-                        on:change={toggleScope}
-                        label={$_("group.public")}
-                        checked={candidateGroup.isPublic} />
-
-                    <span
-                        class="scope-label"
-                        class:selected={candidateGroup.isPublic}
-                        on:click={() => (candidateGroup.isPublic = true)}
-                        >{$_("group.public")}</span>
+<ModalContent bind:actualWidth closeIcon on:close>
+    <div class="header" slot="header">{editing ? $_("group.edit") : $_("group.createTitle")}</div>
+    <div class="body" slot="body">
+        <StageHeader {editing} {candidateGroup} enabled={valid} on:step={changeStep} {step} />
+        <div class="wrapper">
+            <div class="sections" style={`left: -${left}px`}>
+                <div class="details" class:visible={step === 0}>
+                    <GroupDetails {busy} bind:candidateGroup />
                 </div>
-                <div class="info">
-                    {#if candidateGroup.isPublic}
-                        <p>{$_("publicGroupInfo")}</p>
-                        <p>{$_("publicGroupUnique")}</p>
+                <div class="visibility" class:visible={step === 1}>
+                    <GroupVisibility on:upgrade {originalGroup} {editing} bind:candidateGroup />
+                </div>
+                <div class="rules" class:visible={step === 2}>
+                    <Rules bind:rules={candidateGroup.rules} />
+                </div>
+                <div class="permissions" class:visible={step === 3}>
+                    {#if canEditPermissions}
+                        <GroupPermissionsEditor
+                            bind:permissions={candidateGroup.permissions}
+                            isPublic={candidateGroup.isPublic} />
                     {:else}
-                        <p>{$_("privateGroupInfo")}</p>
+                        <GroupPermissionsViewer
+                            bind:permissions={candidateGroup.permissions}
+                            isPublic={candidateGroup.isPublic} />
                     {/if}
                 </div>
+                {#if !candidateGroup.isPublic && !editing}
+                    <div class="members" class:visible={step === 4}>
+                        <ChooseMembers bind:candidateGroup {busy} />
+                    </div>
+                {/if}
             </div>
-            <div class="sub-section">
-                <div class="history">
-                    <Checkbox
-                        id="history-visible"
-                        disabled={candidateGroup.isPublic}
-                        on:change={() =>
-                            (candidateGroup.historyVisible = !candidateGroup.historyVisible)}
-                        label={$_("historyVisible")}
-                        checked={candidateGroup.historyVisible} />
-                </div>
-                <div class="info">
-                    {#if candidateGroup.historyVisible}
-                        <p>{$_("historyOnInfo")}</p>
-                    {:else}
-                        <p>{$_("historyOffInfo")}</p>
-                    {/if}
-                </div>
-            </div>
-        </CollapsibleCard>
-        <CollapsibleCard open={groupRulesOpen} headerText={$_("group.groupRules")}>
-            <Rules bind:rules={candidateGroup.rules} />
-        </CollapsibleCard>
-        <CollapsibleCard open={permissionsOpen} headerText={$_("group.permissions.permissions")}>
-            <GroupPermissionsEditor
-                bind:permissions={candidateGroup.permissions}
-                isPublic={candidateGroup.isPublic} />
-        </CollapsibleCard>
+        </div>
     </div>
-</form>
-<div class="cta">
-    <Button on:click={createGroup} fill={true} disabled={!valid || busy} loading={busy}
-        >{$_("submitNewGroup")}</Button>
-</div>
+    <span class="footer" slot="footer">
+        <div class="group-buttons">
+            <div class="back">
+                {#if !editing && step > 0}
+                    <Button
+                        disabled={busy}
+                        small={!$mobileWidth}
+                        tiny={$mobileWidth}
+                        on:click={() => (step = step - 1)}>{$_("group.back")}</Button>
+                {/if}
+            </div>
+            <div class="actions">
+                <Button
+                    disabled={false}
+                    small={!$mobileWidth}
+                    tiny={$mobileWidth}
+                    on:click={() => dispatch("close")}
+                    secondary>{$_("cancel")}</Button>
+
+                {#if editing}
+                    <Button
+                        disabled={!dirty || busy}
+                        loading={busy}
+                        small={!$mobileWidth}
+                        tiny={$mobileWidth}
+                        on:click={() => updateGroup()}>{$_("group.update")}</Button>
+                {:else if step < finalStep}
+                    <Button
+                        disabled={!valid}
+                        small={!$mobileWidth}
+                        tiny={$mobileWidth}
+                        on:click={() => (step = step + 1)}>
+                        {$_("group.next")}
+                    </Button>
+                {:else}
+                    <Button
+                        disabled={busy}
+                        loading={busy}
+                        small={!$mobileWidth}
+                        tiny={$mobileWidth}
+                        on:click={createGroup}>{$_("group.create")}</Button>
+                {/if}
+            </div>
+        </div>
+    </span>
+</ModalContent>
 
 <style type="text/scss">
-    :global(.group-form .form-fields .card) {
-        margin-bottom: $sp3;
-    }
-
-    h4 {
-        flex: 1;
-        padding: 0 $sp4;
-        @include font-size(fs-120);
-    }
-    .close {
-        flex: 0 0 30px;
-    }
-
-    .cta {
-        position: sticky;
-        bottom: 0;
-        height: 57px;
-    }
-
-    .photo {
-        text-align: center;
-    }
-
-    .photo-legend {
-        margin-top: $sp4;
-    }
-
-    .group-form {
-        flex: 1;
-        overflow: auto;
-        overflow-x: hidden;
-        @include nice-scrollbar();
-        padding: $sp3 $sp5 0 $sp5;
+    :global(.group-buttons button:not(.loading)) {
         @include mobile() {
-            padding: $sp3 $sp4 0 $sp4;
+            min-width: 0 !important;
         }
     }
 
-    .sub-section {
-        padding: $sp4 0;
-        // border: 1px solid var(--bd);
-        // border-radius: $sp2;
-        margin-bottom: $sp3;
-        &:last-child {
-            margin-bottom: 0;
-        }
+    :global(.group-buttons .actions button) {
+        height: auto;
     }
 
-    .scope {
+    .footer {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: $sp4;
     }
 
-    .scope-label {
-        @include font(book, normal, fs-140);
-        cursor: pointer;
-        border-bottom: 3px solid transparent;
+    .group-buttons {
+        display: flex;
+        justify-content: space-between;
+        width: 100%;
+        gap: $sp3;
 
-        &.selected {
-            border-bottom: 3px solid var(--button-bg);
+        .back {
+            display: flex;
+        }
+
+        .actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: $sp3;
         }
     }
 
-    .info {
-        @include font(light, normal, fs-90);
+    .wrapper {
+        width: 100%;
+        overflow: hidden;
+        height: 550px;
+        position: relative;
 
-        p {
-            margin-bottom: $sp4;
-            &:last-child {
-                margin-bottom: 0;
-            }
+        @include mobile() {
+            height: 400px;
         }
     }
 
-    .history {
-        margin-bottom: $sp4;
+    .sections {
+        display: flex;
+        transition: left 250ms ease-in-out;
+        position: relative;
+        gap: $sp5;
+        height: 100%;
+        @include mobile() {
+            gap: $sp4;
+        }
+    }
+
+    .details,
+    .visibility,
+    .rules,
+    .members,
+    .permissions {
+        flex: 0 0 100%;
+        visibility: hidden;
+        transition: visibility 250ms ease-in-out;
+        @include nice-scrollbar();
+
+        &.visible {
+            visibility: visible;
+        }
     }
 </style>

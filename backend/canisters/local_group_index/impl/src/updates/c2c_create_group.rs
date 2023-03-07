@@ -17,11 +17,12 @@ async fn c2c_create_group(args: Args) -> Response {
         Ok(ok) => ok,
     };
 
-    let wasm_arg = candid::encode_one(prepare_ok.init_canister_args).unwrap();
+    let wasm_version = prepare_ok.canister_wasm.version;
+
     match canister::create_and_install(
         prepare_ok.canister_id,
-        prepare_ok.canister_wasm.module,
-        wasm_arg,
+        prepare_ok.canister_wasm,
+        prepare_ok.init_canister_args,
         prepare_ok.cycles_to_use,
         on_canister_created,
     )
@@ -29,12 +30,12 @@ async fn c2c_create_group(args: Args) -> Response {
     {
         Ok(canister_id) => {
             let chat_id = canister_id.into();
-            mutate_state(|state| commit(chat_id, prepare_ok.canister_wasm.version, state));
+            mutate_state(|state| commit(chat_id, wasm_version, state));
             Success(SuccessResult { chat_id })
         }
         Err(error) => {
             let mut canister_id = None;
-            if let CreateAndInstallError::InstallFailed((_, id)) = error {
+            if let CreateAndInstallError::InstallFailed(id, ..) = error {
                 canister_id = Some(id);
             }
             mutate_state(|state| rollback(canister_id, state));
@@ -62,7 +63,7 @@ fn prepare(args: Args, runtime_state: &mut RuntimeState) -> Result<PrepareOk, Re
     };
 
     let canister_id = runtime_state.data.canister_pool.pop();
-    let canister_wasm = runtime_state.data.group_canister_wasm.clone();
+    let canister_wasm = runtime_state.data.group_canister_wasm_for_new_canisters.clone();
     let init_canister_args = group_canister::init::Args {
         is_public: args.is_public,
         name: args.name,
@@ -74,11 +75,15 @@ fn prepare(args: Args, runtime_state: &mut RuntimeState) -> Result<PrepareOk, Re
         permissions: args.permissions,
         created_by_principal: args.created_by_user_principal,
         created_by_user_id: args.created_by_user_id,
+        events_ttl: args.events_ttl,
         mark_active_duration: MARK_ACTIVE_DURATION,
         wasm_version: canister_wasm.version,
+        group_index_canister_id: runtime_state.data.group_index_canister_id,
+        local_group_index_canister_id: runtime_state.env.canister_id(),
         user_index_canister_id: runtime_state.data.user_index_canister_id,
-        notifications_canister_ids: runtime_state.data.notifications_canister_ids.clone(),
-        ledger_canister_id: runtime_state.data.ledger_canister_id,
+        local_user_index_canister_id: runtime_state.data.local_user_index_canister_id,
+        notifications_canister_id: runtime_state.data.notifications_canister_id,
+        proposals_bot_user_id: runtime_state.data.proposals_bot_user_id,
         avatar: args.avatar,
         test_mode: runtime_state.data.test_mode,
     };

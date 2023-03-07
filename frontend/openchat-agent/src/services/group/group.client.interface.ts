@@ -32,9 +32,18 @@ import type {
     RegisterProposalVoteResponse,
     GroupRules,
     SearchGroupChatResponse,
+    GroupCanisterSummaryResponse,
+    GroupCanisterSummaryUpdatesResponse,
+    DeletedGroupMessageResponse,
+    EventWrapper,
+    OptionUpdate,
+    ClaimPrizeResponse,
 } from "openchat-shared";
 
 export interface IGroupClient {
+    claimPrize(messageId: bigint): Promise<ClaimPrizeResponse>;
+    summary(): Promise<GroupCanisterSummaryResponse>;
+    summaryUpdates(updatesSince: bigint): Promise<GroupCanisterSummaryUpdatesResponse>;
     chatEventsByIndex(
         eventIndexes: number[],
         threadRootMessageIndex: number | undefined,
@@ -60,7 +69,7 @@ export interface IGroupClient {
     sendMessage(
         senderName: string,
         mentioned: User[],
-        message: Message,
+        event: EventWrapper<Message>,
         threadRootMessageIndex?: number
     ): Promise<[SendMessageResponse, Message]>;
     editMessage(message: Message, threadRootMessageIndex?: number): Promise<EditMessageResponse>;
@@ -71,7 +80,8 @@ export interface IGroupClient {
         desc?: string,
         rules?: GroupRules,
         permissions?: Partial<GroupPermissions>,
-        avatar?: Uint8Array
+        avatar?: Uint8Array,
+        eventsTimeToLiveMs?: OptionUpdate<bigint>
     ): Promise<UpdateGroupResponse>;
     addReaction(
         messageId: bigint,
@@ -103,6 +113,10 @@ export interface IGroupClient {
         messageIndexes: Set<number>,
         latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<Message>>;
+    getDeletedMessage(
+        messageId: bigint,
+        threadRootMessageIndex?: number
+    ): Promise<DeletedGroupMessageResponse>;
     pinMessage(messageIndex: number): Promise<PinMessageResponse>;
     unpinMessage(messageIndex: number): Promise<UnpinMessageResponse>;
     registerPollVote(
@@ -111,7 +125,11 @@ export interface IGroupClient {
         voteType: "register" | "delete",
         threadRootMessageIndex?: number
     ): Promise<RegisterPollVoteResponse>;
-    searchGroupChat(searchTerm: string, userIds: string[], maxResults: number): Promise<SearchGroupChatResponse>;
+    searchGroupChat(
+        searchTerm: string,
+        userIds: string[],
+        maxResults: number
+    ): Promise<SearchGroupChatResponse>;
     getInviteCode(): Promise<InviteCodeResponse>;
     enableInviteCode(): Promise<EnableInviteCodeResponse>;
     disableInviteCode(): Promise<DisableInviteCodeResponse>;
@@ -121,4 +139,5 @@ export interface IGroupClient {
         latestClientThreadUpdate: bigint | undefined
     ): Promise<ThreadPreviewsResponse>;
     registerProposalVote(messageIdx: number, adopt: boolean): Promise<RegisterProposalVoteResponse>;
+    localUserIndex(): Promise<string>;
 }

@@ -1,7 +1,6 @@
 [package]
 name = "local_group_index_canister_impl"
 version = "0.1.0"
-authors = ["Hamish Peebles <hamishpeebles@gmail.com>", "Matt Grogan <megrogan@gmail.com>", "Julian Jelfs <julian.jelfs@gmail.com>"]
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -13,22 +12,31 @@ crate-type = ["cdylib"]
 [dependencies]
 candid = { workspace = true }
 canister_api_macros = { path = "../../../libraries/canister_api_macros" }
-canister_logger = { path = "../../../libraries/canister_logger" }
+canister_logger = { workspace = true }
 canister_state_macros = { workspace = true }
-canister_tracing_macros = { path = "../../../libraries/canister_tracing_macros" }
-futures = { workspace = true }
-http_request = { path = "../../../libraries/http_request" }
-ic-cdk = { workspace = true, features = ["timers"] }
-ic-cdk-macros = { workspace = true }
-ic-ledger-types = { workspace = true }
-ledger_utils = { path = "../../../libraries/ledger_utils" }
-msgpack = { path = "../../../libraries/msgpack" }
-serde = { workspace = true }
-serde_json = { workspace = true }
-stable_memory = { workspace = true }
-tracing = { workspace = true }
-types = { path = "../../../libraries/types" }
+canister_tracing_macros = { workspace = true }
+chat_events = { path = "../../../libraries/chat_events" }
 group_canister = { path = "../../group/api" }
 group_canister_c2c_client = { path = "../../group/c2c_client" }
+group_index_canister = { path = "../../group_index/api" }
+group_index_canister_c2c_client = { path = "../../group_index/c2c_client" }
+futures = { workspace = true }
+http_request = { path = "../../../libraries/http_request" }
+ic-base-types = { workspace = true }
+ic-cdk = { workspace = true }
+ic-cdk-macros = { workspace = true }
+ic-cdk-timers = { workspace = true }
+ic-ledger-types = { workspace = true }
+ic-stable-structures = { workspace = true }
+ledger_utils = { path = "../../../libraries/ledger_utils" }
 local_group_index_canister = { path = "../api" }
+local_user_index_canister = { path = "../../local_user_index/api" }
+local_user_index_canister_c2c_client = { path = "../../local_user_index/c2c_client" }
+msgpack = { path = "../../../libraries/msgpack" }
+serde = { workspace = true }
+serde_bytes = { workspace = true }
+serde_json = { workspace = true }
+serializer = { workspace = true }
+tracing = { workspace = true }
+types = { path = "../../../libraries/types" }
 utils = { path = "../../../libraries/utils" }

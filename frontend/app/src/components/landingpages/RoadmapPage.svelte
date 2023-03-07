@@ -1,16 +1,17 @@
 <script lang="ts">
     import CollapsibleCard from "../CollapsibleCard.svelte";
     import Headline from "./Headline.svelte";
+    import Link from "./Link.svelte";
 </script>
 
 <div class="roadmap">
     <Headline>OpenChat Roadmap</Headline>
 
-    <CollapsibleCard first open={false}>
+    <CollapsibleCard transition={false} first open={false}>
         <div class="header" slot="titleSlot">
             <div class="date subtitle">
-                <div class="quarter">Q4</div>
-                <div class="year">2022</div>
+                <div class="quarter">Q1</div>
+                <div class="year">2023</div>
             </div>
             <div class="title">SNS Launch</div>
         </div>
@@ -39,11 +40,11 @@
         </div>
     </CollapsibleCard>
 
-    <CollapsibleCard open={false}>
+    <CollapsibleCard transition={false} open={false}>
         <div class="header" slot="titleSlot">
             <div class="date subtitle">
-                <div class="quarter">Q4</div>
-                <div class="year">2022</div>
+                <div class="quarter">Q1</div>
+                <div class="year">2023</div>
             </div>
             <div class="title">User Rewards</div>
         </div>
@@ -66,33 +67,7 @@
         </div>
     </CollapsibleCard>
 
-    <CollapsibleCard open={false}>
-        <div class="header" slot="titleSlot">
-            <div class="date subtitle">
-                <div class="quarter">Q1</div>
-                <div class="year">2023</div>
-            </div>
-            <div class="title">Integrations</div>
-        </div>
-        <div class="body">
-            <p>
-                We are keen to provide chat functionality as a service to other dApps in the
-                Internet Computer ecosystem.
-            </p>
-            <p>
-                We are currently consulting with many builders in the community to find out how they
-                would like to integrate OpenChat functionality in the future. The appetite is
-                certainly there! We will likely start with simple direct chat functionality before
-                later offering groups and other more advanced features.
-            </p>
-            <p>
-                The OpenChat team will build the apis, libraries and UI components required to make
-                chat integration as seamless as possible.
-            </p>
-        </div>
-    </CollapsibleCard>
-
-    <CollapsibleCard open={false}>
+    <CollapsibleCard transition={false} open={false}>
         <div class="header" slot="titleSlot">
             <div class="date subtitle">
                 <div class="quarter">Q2</div>
@@ -123,10 +98,39 @@
                 <em>within a corporate setting.</em> In that sense, communities can also be thought of
                 like Slack workspaces.
             </p>
+            <p>
+                <Link path="blog/communities">Read more</Link>
+            </p>
         </div>
     </CollapsibleCard>
 
-    <CollapsibleCard open={false}>
+    <CollapsibleCard transition={false} open={false}>
+        <div class="header" slot="titleSlot">
+            <div class="date subtitle">
+                <div class="quarter">Q3</div>
+                <div class="year">2023</div>
+            </div>
+            <div class="title">Integrations</div>
+        </div>
+        <div class="body">
+            <p>
+                We are keen to provide chat functionality as a service to other dApps in the
+                Internet Computer ecosystem.
+            </p>
+            <p>
+                We are currently consulting with many builders in the community to find out how they
+                would like to integrate OpenChat functionality in the future. The appetite is
+                certainly there! We will likely start with simple direct chat functionality before
+                later offering groups and other more advanced features.
+            </p>
+            <p>
+                The OpenChat team will build the apis, libraries and UI components required to make
+                chat integration as seamless as possible.
+            </p>
+        </div>
+    </CollapsibleCard>
+
+    <CollapsibleCard transition={false} open={false}>
         <div class="header" slot="titleSlot">
             <div class="date subtitle future">Future</div>
             <div class="title">Voice & Video</div>
@@ -142,7 +146,7 @@
         </div>
     </CollapsibleCard>
 
-    <CollapsibleCard open={false}>
+    <CollapsibleCard transition={false} open={false}>
         <div class="header" slot="titleSlot">
             <div class="date subtitle future">Future</div>
             <div class="title">Native Apps</div>
@@ -174,7 +178,7 @@
         </div>
     </CollapsibleCard>
 
-    <CollapsibleCard open={false}>
+    <CollapsibleCard transition={false} open={false}>
         <div class="header" slot="titleSlot">
             <div class="date subtitle future">Future</div>
             <div class="title">End to end encryption</div>
@@ -192,7 +196,7 @@
         </div>
     </CollapsibleCard>
 
-    <CollapsibleCard open={false}>
+    <CollapsibleCard transition={false} open={false}>
         <div class="header" slot="titleSlot">
             <div class="date subtitle future">Future</div>
             <div class="title">Other Features</div>
@@ -209,7 +213,7 @@
             </p>
             <p>Some smaller feature ideas:</p>
             <ul class="list blurb">
-                <li>Send additional tokens as messages, such as BTC, ETH, etc</li>
+                <li>Send additional tokens as messages, such as ckBTC, ckETH, etc</li>
                 <li>Tag groups and search/filter by tag</li>
                 <li>Optionally sync with phone contacts and invite contacts</li>
                 <li>Link previews</li>
@@ -245,20 +249,7 @@
     }
 
     .list {
-        text-align: left;
-        list-style: none;
-        margin: 0 0 toRem(12) toRem(22);
-        padding: 0;
-        position: relative;
-
-        > li {
-            &:before {
-                position: absolute;
-                content: "\25AA";
-                left: toRem(-25);
-                color: #23a2ee;
-            }
-        }
+        @include bullet_list();
     }
 
     .body {

@@ -8,8 +8,8 @@ use serde::{Deserialize, Serialize};
 use std::cmp::Ordering;
 use std::collections::HashMap;
 use types::{
-    ChatId, Cycles, CyclesTopUp, FrozenGroupInfo, GroupMatch, GroupSubtype, Milliseconds, PublicGroupActivity,
-    PublicGroupSummary, TimestampMillis, Version,
+    ChatId, FrozenGroupInfo, GroupMatch, GroupSubtype, Milliseconds, PublicGroupActivity, PublicGroupSummary, TimestampMillis,
+    Version,
 };
 use utils::case_insensitive_hash_map::CaseInsensitiveHashMap;
 use utils::iterator_extensions::IteratorExtensions;
@@ -17,7 +17,8 @@ use utils::time::DAY_IN_MS;
 
 use super::private_groups::PrivateGroupInfo;
 
-#[derive(CandidType, Serialize, Deserialize, Default)]
+#[derive(Serialize, Deserialize, Default)]
+#[serde(from = "PublicGroupsTrimmed")]
 pub struct PublicGroups {
     groups: HashMap<ChatId, PublicGroupInfo>,
     #[serde(skip)]
@@ -26,12 +27,6 @@ pub struct PublicGroups {
 }
 
 impl PublicGroups {
-    pub fn hydrate(&mut self) {
-        for (chat_id, group) in self.groups.iter() {
-            self.name_to_id_map.insert(&group.name, *chat_id);
-        }
-    }
-
     pub fn len(&self) -> usize {
         self.groups.len()
     }
@@ -62,13 +57,11 @@ impl PublicGroups {
             subtype,
             avatar_id,
             now,
-            wasm_version,
-            cycles,
         }: GroupCreatedArgs,
     ) -> bool {
         if self.groups_pending.remove(&name).is_some() {
             self.name_to_id_map.insert(&name, chat_id);
-            let group_info = PublicGroupInfo::new(chat_id, name, description, subtype, avatar_id, now, wasm_version, cycles);
+            let group_info = PublicGroupInfo::new(chat_id, name, description, subtype, avatar_id, now);
             self.groups.insert(chat_id, group_info);
             true
         } else {
@@ -84,7 +77,7 @@ impl PublicGroups {
         let query = Query::parse(search_term);
 
         self.iter()
-            .filter(|g| !g.frozen())
+            .filter(|g| !g.is_frozen())
             .map(|g| {
                 let document: Document = g.into();
                 let score = document.calculate_score(&query);
@@ -107,10 +100,11 @@ impl PublicGroups {
             latest_message: summary.latest_message,
             latest_event_index: summary.latest_event_index,
             participant_count: summary.participant_count,
-            wasm_version: group.wasm_version,
             owner_id: summary.owner_id,
             is_public: true,
             frozen: None,
+            events_ttl: summary.events_ttl,
+            wasm_version: Version::default(),
         })
     }
 
@@ -158,7 +152,7 @@ impl PublicGroups {
         let one_day_ago = now - DAY_IN_MS;
 
         self.iter()
-            .filter(|g| !g.frozen() && g.has_been_active_since(one_day_ago))
+            .filter(|g| !g.is_frozen() && g.has_been_active_since(one_day_ago) && !g.exclude_from_hotlist)
             .map(|g| (g, rng.next_u32()))
             .max_n_by(CACHED_HOT_GROUPS_COUNT, |(g, random)| g.calculate_weight(*random, now))
             .map(|(g, _)| g.id)
@@ -168,18 +162,19 @@ impl PublicGroups {
 
 #[derive(CandidType, Serialize, Deserialize)]
 pub struct PublicGroupInfo {
+    // Fields common to PrivateGroupInfo
     id: ChatId,
+    created: TimestampMillis,
+    marked_active_until: TimestampMillis,
+    frozen: Option<FrozenGroupInfo>,
+
+    // Fields particular to PublicGroupInfo
     name: String,
     description: String,
     subtype: Option<GroupSubtype>,
     avatar_id: Option<u128>,
-    created: TimestampMillis,
-    marked_active_until: TimestampMillis,
     activity: PublicGroupActivity,
-    wasm_version: Version,
-    cycle_top_ups: Vec<CyclesTopUp>,
-    upgrade_in_progress: bool,
-    frozen: Option<FrozenGroupInfo>,
+    exclude_from_hotlist: bool,
 }
 
 pub enum UpdateGroupResult {
@@ -197,8 +192,6 @@ impl PublicGroupInfo {
         subtype: Option<GroupSubtype>,
         avatar_id: Option<u128>,
         now: TimestampMillis,
-        wasm_version: Version,
-        cycles: Cycles,
     ) -> PublicGroupInfo {
         PublicGroupInfo {
             id,
@@ -209,26 +202,13 @@ impl PublicGroupInfo {
             created: now,
             marked_active_until: now + MARK_ACTIVE_DURATION,
             activity: PublicGroupActivity::default(),
-            wasm_version,
-            cycle_top_ups: vec![CyclesTopUp {
-                date: now,
-                amount: cycles,
-            }],
-            upgrade_in_progress: false,
             frozen: None,
+            exclude_from_hotlist: false,
         }
     }
 
     pub fn id(&self) -> ChatId {
         self.id
-    }
-
-    pub fn wasm_version(&self) -> Version {
-        self.wasm_version
-    }
-
-    pub fn set_wasm_version(&mut self, version: Version) {
-        self.wasm_version = version;
     }
 
     pub fn mark_active(&mut self, until: TimestampMillis, activity: PublicGroupActivity) {
@@ -238,18 +218,6 @@ impl PublicGroupInfo {
 
     pub fn has_been_active_since(&self, since: TimestampMillis) -> bool {
         self.marked_active_until > since
-    }
-
-    pub fn mark_cycles_top_up(&mut self, top_up: CyclesTopUp) {
-        self.cycle_top_ups.push(top_up)
-    }
-
-    pub fn upgrade_in_progress(&self) -> bool {
-        self.upgrade_in_progress
-    }
-
-    pub fn set_upgrade_in_progress(&mut self, upgrade_in_progress: bool) {
-        self.upgrade_in_progress = upgrade_in_progress;
     }
 
     pub fn calculate_weight(&self, random: u32, now: TimestampMillis) -> u64 {
@@ -282,12 +250,24 @@ impl PublicGroupInfo {
         weighting
     }
 
-    pub fn frozen(&self) -> bool {
+    pub fn is_frozen(&self) -> bool {
         self.frozen.is_some()
+    }
+
+    pub fn frozen_info(&self) -> Option<&FrozenGroupInfo> {
+        self.frozen.as_ref()
     }
 
     pub fn set_frozen(&mut self, info: Option<FrozenGroupInfo>) {
         self.frozen = info;
+    }
+
+    pub fn is_excluded_from_hotlist(&self) -> bool {
+        self.exclude_from_hotlist
+    }
+
+    pub fn set_excluded_from_hotlist(&mut self, exclude: bool) {
+        self.exclude_from_hotlist = exclude;
     }
 }
 
@@ -318,9 +298,6 @@ impl From<PublicGroupInfo> for PrivateGroupInfo {
             public_group_info.id,
             public_group_info.created,
             public_group_info.marked_active_until,
-            public_group_info.wasm_version,
-            public_group_info.cycle_top_ups,
-            public_group_info.upgrade_in_progress,
         )
     }
 }
@@ -332,8 +309,6 @@ pub struct GroupCreatedArgs {
     pub subtype: Option<GroupSubtype>,
     pub avatar_id: Option<u128>,
     pub now: TimestampMillis,
-    pub wasm_version: Version,
-    pub cycles: Cycles,
 }
 
 #[derive(PartialEq, Eq, Debug)]
@@ -351,5 +326,27 @@ impl PartialOrd for WeightedGroup {
 impl Ord for WeightedGroup {
     fn cmp(&self, other: &Self) -> Ordering {
         self.weighting.cmp(&other.weighting)
+    }
+}
+
+#[derive(Deserialize)]
+struct PublicGroupsTrimmed {
+    groups: HashMap<ChatId, PublicGroupInfo>,
+    groups_pending: CaseInsensitiveHashMap<TimestampMillis>,
+}
+
+impl From<PublicGroupsTrimmed> for PublicGroups {
+    fn from(value: PublicGroupsTrimmed) -> Self {
+        let mut public_groups = PublicGroups {
+            groups: value.groups,
+            groups_pending: value.groups_pending,
+            ..Default::default()
+        };
+
+        for (chat_id, group) in public_groups.groups.iter() {
+            public_groups.name_to_id_map.insert(&group.name, *chat_id);
+        }
+
+        public_groups
     }
 }

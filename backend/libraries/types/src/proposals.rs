@@ -126,6 +126,7 @@ pub struct SnsProposal {
     pub reward_status: ProposalRewardStatus,
     pub tally: Tally,
     pub deadline: TimestampMillis,
+    pub payload_text_rendering: Option<String>,
     pub last_updated: TimestampMillis,
 }
 
@@ -174,7 +175,6 @@ pub struct Tally {
     pub yes: u64,
     pub no: u64,
     pub total: u64,
-    #[serde(default)]
     pub timestamp: TimestampMillis,
 }
 

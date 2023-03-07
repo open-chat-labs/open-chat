@@ -8,10 +8,12 @@
     import PollContent from "./PollContent.svelte";
     import FileContent from "./FileContent.svelte";
     import TextContent from "./TextContent.svelte";
+    import PrizeContent from "./PrizeContent.svelte";
+    import PrizeWinnerContent from "./PrizeWinnerContent.svelte";
     import CryptoContent from "./CryptoContent.svelte";
     import DeletedContent from "./DeletedContent.svelte";
     import PlaceholderContent from "./PlaceholderContent.svelte";
-    import ProposalContent from "./ProposalContent.svelte";
+    import ProposalContent from "./proposals/ProposalContent.svelte";
     import IntersectionObserver from "./IntersectionObserver.svelte";
     import type { MessageContent } from "openchat-client";
     import { _ } from "svelte-i18n";
@@ -54,6 +56,10 @@
     <CryptoContent {senderId} {content} {me} {first} {groupChat} />
 {:else if content.kind === "placeholder_content"}
     <PlaceholderContent />
+{:else if content.kind === "prize_content"}
+    <PrizeContent on:upgrade {chatId} {messageId} {content} />
+{:else if content.kind === "prize_winner_content"}
+    <PrizeWinnerContent on:goToMessageIndex {content} />
 {:else if content.kind === "poll_content"}
     <PollContent {readonly} {me} {content} {myUserId} {senderId} on:registerVote />
 {:else if content.kind === "giphy_content"}

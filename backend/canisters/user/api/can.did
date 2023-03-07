@@ -19,12 +19,14 @@ type SendMessageResponse =
             event_index: EventIndex;
             message_index: MessageIndex;
             timestamp: TimestampMillis;
+            expires_at: opt TimestampMillis;
         };
         TransferSuccessV2: record {
             chat_id: ChatId;
             event_index: EventIndex;
             message_index: MessageIndex;
             timestamp: TimestampMillis;
+            expires_at: opt TimestampMillis;
             transfer: CompletedCryptoTransaction;
         };
         MessageEmpty;
@@ -103,6 +105,7 @@ type AddReactionArgs =
 type AddReactionResponse =
     variant {
         Success: EventIndex;
+        SuccessV2: PushEventResult;
         NoChange;
         InvalidReaction;
         MessageNotFound;
@@ -122,6 +125,7 @@ type RemoveReactionArgs =
 type RemoveReactionResponse =
     variant {
         Success: EventIndex;
+        SuccessV2: PushEventResult;
         NoChange;
         MessageNotFound;
         ChatNotFound;
@@ -138,6 +142,7 @@ type ChatMessagesRead =
         chat_id: ChatId;
         read_up_to: opt MessageIndex;
         threads: vec ThreadRead;
+        date_read_pinned: opt TimestampMillis;
     };
 
 type ThreadRead =
@@ -204,28 +209,6 @@ type CreateGroupResponse =
         RulesTooLong: FieldTooLongResult;
         RulesTooShort: FieldTooShortResult;
         UserSuspended;
-    };
-
-type JoinGroupArgs =
-    record {
-        chat_id: ChatId;
-        as_super_admin: bool;
-        invite_code: opt nat64;
-        correlation_id: nat64;
-    };
-
-type JoinGroupResponse =
-    variant {
-        Success: GroupChatSummary;
-        AlreadyInGroup;
-        Blocked;
-        GroupNotFound;
-        GroupNotPublic;
-        ParticipantLimitReached: nat32;
-        InternalError: text;
-        NotSuperAdmin;
-        UserSuspended;
-        ChatFrozen;
     };
 
 type LeaveGroupArgs =
@@ -326,13 +309,13 @@ type RelinquishGroupSuperAdminResponse =
         InternalError: text;
     };
 
-type AddRecommendedGroupExclusionsArgs =
+type AddHotGroupExclusionsArgs =
     record {
         groups: vec ChatId;
         duration: opt Milliseconds;
     };
 
-type AddRecommendedGroupExclusionsResponse =
+type AddHotGroupExclusionsResponse =
     variant {
         Success;
     };
@@ -349,6 +332,26 @@ type SetBioResponse =
         UserSuspended;
     };
 
+type SetContactArgs =
+    record {
+        contact: OptionalContact;
+    };
+
+type OptionalContact =
+    record {
+        user_id: UserId;
+        nickname: TextUpdate;
+    };
+
+type SetContactResponse =
+    variant {
+        Success;
+        NoChange;
+        NicknameTooLong: FieldTooLongResult;
+        NicknameTooShort: FieldTooShortResult;
+        UserSuspended;
+    };
+
 type TransferCryptoWithinGroupArgs =
     record {
         message_id: MessageId;
@@ -362,12 +365,25 @@ type TransferCryptoWithinGroupArgs =
         correlation_id: nat64;
     };
 
-type TransferCryptoWithinGroupResponse =
+type SendMessageWithTransferToGroupArgs =
+    record {
+        group_id: ChatId;
+        thread_root_message_index: opt MessageIndex;
+        message_id: MessageId;
+        content: MessageContentInitial;
+        sender_name: text;
+        replies_to: opt GroupReplyContext;
+        mentioned: vec User;
+        correlation_id: nat64;
+    };
+
+type SendMessageWithTransferToGroupResponse =
     variant {
         Success: record {
             event_index: EventIndex;
             message_index: MessageIndex;
             timestamp: TimestampMillis;
+            expires_at: opt TimestampMillis;
             transfer: CompletedCryptoTransaction;
         };
         TextTooLong: nat32;
@@ -461,23 +477,9 @@ type MigrateUserPrincipalResponse =
         InternalError: text;
     };
 
-type InitialStateArgs =
+type InitialStateV2Args =
     record {
         disable_cache: opt bool;
-    };
-
-type InitialStateResponse =
-    variant {
-        Success: record {
-            timestamp: TimestampMillis;
-            chats: vec ChatSummary;
-            blocked_users: vec UserId;
-            cycles_balance: Cycles;
-            upgrades_in_progress: vec ChatId;
-            user_canister_wasm_version: Version;
-            pinned_chats: vec ChatId;
-        };
-        InternalError: text;
     };
 
 type InitialStateV2Response =
@@ -502,40 +504,6 @@ type InitialStateV2Response =
             pinned_chats: vec ChatId;
             user_canister_wasm_version: Version;
         };
-    };
-
-type GroupChatUpdatesSince =
-    record {
-        chat_id: ChatId;
-        updates_since: TimestampMillis;
-    };
-
-type UpdatesSince =
-    record {
-        timestamp: TimestampMillis;
-        group_chats: vec GroupChatUpdatesSince;
-    };
-
-type UpdatesArgs =
-    record {
-        updates_since: UpdatesSince;
-    };
-
-type UpdatesResponse =
-    variant {
-        Success: record {
-            timestamp: TimestampMillis;
-            chats_added: vec ChatSummary;
-            chats_updated: vec ChatSummaryUpdates;
-            chats_removed: vec ChatId;
-            cycles_balance: opt Cycles;
-            avatar_id: AvatarIdUpdate;
-            upgrades_in_progress: vec ChatId;
-            user_canister_wasm_version: opt Version;
-            blocked_users_v2: opt vec UserId;
-            pinned_chats: opt vec ChatId;
-        };
-        InternalError: text;
     };
 
 type UpdatesV2Args =
@@ -565,6 +533,7 @@ type UserCanisterGroupChatSummary =
         read_by_me_up_to: opt MessageIndex;
         threads_read: vec record { MessageIndex; MessageIndex };
         archived: bool;
+        date_read_pinned: opt TimestampMillis;
     };
 
 type UserCanisterGroupChatSummaryUpdates =
@@ -573,6 +542,7 @@ type UserCanisterGroupChatSummaryUpdates =
         read_by_me_up_to: opt MessageIndex;
         threads_read: vec record { MessageIndex; MessageIndex };
         archived: opt bool;
+        date_read_pinned: opt TimestampMillis;
     };
 
 type EventsArgs =
@@ -581,6 +551,7 @@ type EventsArgs =
         thread_root_message_index: opt MessageIndex;
         start_index: EventIndex;
         ascending: bool;
+        max_messages: nat32;
         max_events: nat32;
         latest_client_event_index: opt EventIndex;
     };
@@ -593,20 +564,12 @@ type EventsByIndexArgs =
         latest_client_event_index: opt EventIndex;
     };
 
-type EventsRangeArgs =
-    record {
-        user_id: UserId;
-        thread_root_message_index: opt MessageIndex;
-        from_index: EventIndex;
-        to_index: EventIndex;
-        latest_client_event_index: opt EventIndex;
-    };
-
 type EventsWindowArgs =
     record {
         user_id: UserId;
         thread_root_message_index: opt MessageIndex;
         mid_point: MessageIndex;
+        max_messages: nat32;
         max_events: nat32;
         latest_client_event_index: opt EventIndex;
     };
@@ -643,22 +606,6 @@ type MessagesByMessageIndexResponse =
         ReplicaNotUpToDate: EventIndex;
     };
 
-type RecommendedGroupsArgs =
-    record {
-        count: nat8;
-    };
-
-type RecommendedGroupsResponse =
-    variant {
-        Success: RecommendedGroupsSuccessResult;
-        InternalError: text;
-    };
-
-type RecommendedGroupsSuccessResult =
-    record {
-        groups: vec PublicGroupSummary;
-    };
-
 type SearchMessagesArgs =
     record {
         user_id: UserId;
@@ -687,6 +634,21 @@ type BioResponse =
         Success: text;
     };
 
+type ContactsArgs = record {};
+
+type ContactsResponse =
+    variant {
+        Success: record {
+            contacts: vec Contact;
+        };
+    };
+
+type Contact =
+    record {
+        user_id: UserId;
+        nickname: opt text;
+    };
+
 type PublicProfileArgs = record {};
 
 type PublicProfileResponse =
@@ -704,6 +666,33 @@ type PublicProfile =
         created: TimestampMillis;
     };
 
+type HotGroupExclusionsArgs =
+    record {
+    };
+
+type HotGroupExclusionsResponse =
+    variant {
+        Success: vec ChatId;
+    };
+
+type DeletedMessageArgs =
+    record {
+        user_id: UserId;
+        message_id: MessageId;
+    };
+
+type DeletedMessageResponse =
+    variant {
+        Success: record {
+            content: MessageContent;
+        };
+        ChatNotFound;
+        NotAuthorized;
+        MessageNotFound;
+        MessageNotDeleted;
+        MessageHardDeleted;
+    };
+
 service: {
     send_message: (SendMessageArgs) -> (SendMessageResponse);
     edit_message: (EditMessageArgs) -> (EditMessageResponse);
@@ -715,7 +704,6 @@ service: {
     block_user: (BlockUserArgs) -> (BlockUserResponse);
     unblock_user: (UnblockUserArgs) -> (UnblockUserResponse);
     create_group: (CreateGroupArgs) -> (CreateGroupResponse);
-    join_group_v2: (JoinGroupArgs) -> (JoinGroupResponse);
     leave_group: (LeaveGroupArgs) -> (LeaveGroupResponse);
     delete_group: (DeleteGroupArgs) -> (DeleteGroupResponse);
     set_avatar: (SetAvatarArgs) -> (SetAvatarResponse);
@@ -723,9 +711,11 @@ service: {
     unmute_notifications: (UnmuteNotificationsArgs) -> (UnmuteNotificationsResponse);
     assume_group_super_admin: (AssumeGroupSuperAdminArgs) -> (AssumeGroupSuperAdminResponse);
     relinquish_group_super_admin: (RelinquishGroupSuperAdminArgs) -> (RelinquishGroupSuperAdminResponse);
-    add_recommended_group_exclusions: (AddRecommendedGroupExclusionsArgs) -> (AddRecommendedGroupExclusionsResponse);
+    add_hot_group_exclusions: (AddHotGroupExclusionsArgs) -> (AddHotGroupExclusionsResponse);
     set_bio: (SetBioArgs) -> (SetBioResponse);
-    transfer_crypto_within_group_v2: (TransferCryptoWithinGroupArgs) -> (TransferCryptoWithinGroupResponse);
+    set_contact: (SetContactArgs) -> (SetContactResponse);
+    send_message_with_transfer_to_group: (SendMessageWithTransferToGroupArgs) -> (SendMessageWithTransferToGroupResponse);
+    transfer_crypto_within_group_v2: (TransferCryptoWithinGroupArgs) -> (SendMessageWithTransferToGroupResponse);
     withdraw_crypto_v2: (WithdrawCryptoArgs) -> (WithdrawCryptoResponse);
     pin_chat: (PinChatRequest) -> (PinChatResponse);
     unpin_chat: (UnpinChatRequest) -> (UnpinChatResponse);
@@ -737,16 +727,15 @@ service: {
 
     events: (EventsArgs) -> (EventsResponse) query;
     events_by_index: (EventsByIndexArgs) -> (EventsResponse) query;
-    events_range: (EventsRangeArgs) -> (EventsResponse) query;
     events_window: (EventsWindowArgs) -> (EventsResponse) query;
     messages_by_message_index: (MessagesByMessageIndexArgs) -> (MessagesByMessageIndexResponse) query;
+    deleted_message: (DeletedMessageArgs) -> (DeletedMessageResponse) query;
 
-    recommended_groups: (RecommendedGroupsArgs) -> (RecommendedGroupsResponse) query;
-    initial_state: (InitialStateArgs) -> (InitialStateResponse) query;
-    updates: (UpdatesArgs) -> (UpdatesResponse) query;
-    initial_state_v2: (InitialStateArgs) -> (InitialStateV2Response) query;
+    initial_state_v2: (InitialStateV2Args) -> (InitialStateV2Response) query;
     updates_v2: (UpdatesV2Args) -> (UpdatesV2Response) query;
     search_messages: (SearchMessagesArgs) -> (SearchMessagesResponse) query; // Search just the messages of one direct chat
     bio: (BioArgs) -> (BioResponse) query;
+    contacts: (ContactsArgs) -> (ContactsResponse) query;
     public_profile: (PublicProfileArgs) -> (PublicProfileResponse) query;
+    hot_group_exclusions: (HotGroupExclusionsArgs) -> (HotGroupExclusionsResponse) query;
 }

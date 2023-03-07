@@ -19,7 +19,6 @@ fn heartbeat() {
     retrieve_proposals::run();
     push_proposals::run();
     update_proposals::run();
-    cycles_dispenser_client::run();
 }
 
 mod retrieve_proposals {
@@ -91,12 +90,15 @@ mod retrieve_proposals {
             };
 
             let response = governance_clients::sns::list_proposals(governance_canister_id, &list_proposals_args).await?;
-            if response.len() < BATCH_SIZE_LIMIT as usize {
-                return Ok(response);
-            }
-
+            let finished = response.len() < BATCH_SIZE_LIMIT as usize;
             proposals.extend(response);
+
+            if finished {
+                break;
+            }
         }
+
+        Ok(proposals)
     }
 
     fn handle_proposals_response<R: RawProposal>(governance_canister_id: &CanisterId, response: CallResult<Vec<R>>) {

@@ -18,7 +18,9 @@ export type MessageContent =
     | PollContent
     | CryptocurrencyContent
     | GiphyContent
-    | ProposalContent;
+    | ProposalContent
+    | PrizeContent
+    | PrizeWinnerContent;
 
 export type IndexRange = [number, number];
 
@@ -137,6 +139,22 @@ export interface GiphyContent {
     mobile: GiphyImage; //will be "downsized_large" from the giphy api
 }
 
+export interface PrizeWinnerContent {
+    kind: "prize_winner_content";
+    transaction: CompletedCryptocurrencyTransfer;
+    prizeMessageIndex: number;
+}
+
+export interface PrizeContent {
+    kind: "prize_content";
+    prizesRemaining: number;
+    prizesPending: number;
+    winners: string[];
+    token: Cryptocurrency;
+    endDate: bigint;
+    caption?: string;
+}
+
 export interface ProposalContent {
     kind: "proposal_content";
     governanceCanisterId: string;
@@ -209,6 +227,7 @@ export enum NnsProposalTopic {
 export interface SnsProposal extends ProposalCommon {
     kind: "sns";
     action: number;
+    payloadTextRendering?: string;
 }
 
 export interface ImageContent extends DataContent {
@@ -331,6 +350,7 @@ export type Message = {
     reactions: Reaction[];
     edited: boolean;
     forwarded: boolean;
+    deleted: boolean;
     thread?: ThreadSummary;
 };
 
@@ -388,6 +408,8 @@ export type LocalMessageUpdates = {
     };
     editedContent?: MessageContent;
     undeletedContent?: MessageContent;
+    revealedContent?: MessageContent;
+    prizeClaimed?: string;
     reactions?: LocalReaction[];
     pollVotes?: LocalPollVote[];
     threadSummary?: ThreadSummary;
@@ -445,7 +467,8 @@ export type GroupChatEvent =
     | ThreadUpdated
     | ProposalsUpdated
     | ChatFrozenEvent
-    | ChatUnfrozenEvent;
+    | ChatUnfrozenEvent
+    | EventsTimeToLiveUpdated;
 
 export type ChatEvent = GroupChatEvent | DirectChatEvent;
 
@@ -664,18 +687,20 @@ export type EventsSuccessResult<T extends ChatEvent> = {
     latestEventIndex: number | undefined;
 };
 
-export type GroupChatUpdatesSince = {
-    updatesSince: bigint;
-    chatId: string;
+export type UpdatesResult = {
+    state: ChatStateFull;
+    affectedEvents: Record<string, number[]>;
+    anyUpdates: boolean;
+    anyErrors: boolean;
 };
 
-export type UpdatesSince = {
-    groupChats: { lastUpdated: bigint; chatId: string }[];
+export type ChatStateFull = {
     timestamp: bigint;
-};
-
-export type UpdateArgs = {
-    updatesSince: UpdatesSince;
+    directChats: DirectChatSummary[];
+    groupChats: GroupChatSummary[];
+    avatarId: bigint | undefined;
+    blockedUsers: string[];
+    pinnedChats: string[];
 };
 
 export type MergedUpdatesResponse = {
@@ -714,6 +739,45 @@ export type InitialStateResponse = {
     cyclesBalance: bigint;
 };
 
+export type InitialStateV2Response = {
+    timestamp: bigint;
+    directChats: DirectChatSummary[];
+    cacheTimestamp: bigint | undefined;
+    cachedGroupChatSummaries: GroupChatSummary[];
+    groupChatsAdded: UserCanisterGroupChatSummary[];
+    avatarId: bigint | undefined;
+    blockedUsers: string[];
+    pinnedChats: string[];
+};
+
+export type UpdatesV2Response = {
+    timestamp: bigint;
+    directChatsAdded: DirectChatSummary[];
+    directChatsUpdated: DirectChatSummaryUpdates[];
+    groupChatsAdded: UserCanisterGroupChatSummary[];
+    groupChatsUpdated: UserCanisterGroupChatSummaryUpdates[];
+    chatsRemoved: string[];
+    avatarId: OptionUpdate<bigint>;
+    blockedUsers: string[] | undefined;
+    pinnedChats: string[] | undefined;
+};
+
+export type UserCanisterGroupChatSummary = {
+    chatId: string;
+    readByMeUpTo: number | undefined;
+    threadsRead: Record<number, number>;
+    archived: boolean;
+    dateReadPinned: bigint | undefined;
+};
+
+export type UserCanisterGroupChatSummaryUpdates = {
+    chatId: string;
+    readByMeUpTo: number | undefined;
+    threadsRead: Record<number, number>;
+    archived: boolean | undefined;
+    dateReadPinned: bigint | undefined;
+};
+
 export type ChatSummaryUpdates = DirectChatSummaryUpdates | GroupChatSummaryUpdates;
 
 type ChatSummaryUpdatesCommon = {
@@ -748,6 +812,8 @@ export type GroupChatSummaryUpdates = ChatSummaryUpdatesCommon & {
     latestThreads?: ThreadSyncDetailsUpdates[];
     subtype?: GroupSubtypeUpdate;
     frozen?: OptionUpdate<boolean>;
+    dateLastPinned?: bigint;
+    dateReadPinned?: bigint;
 };
 
 export type GroupSubtypeUpdate =
@@ -829,6 +895,7 @@ export type ChatSpecificState = {
     focusMessageIndex?: number;
     userGroupKeys: Set<string>;
     serverEvents: EventWrapper<ChatEvent>[];
+    expandedDeletedMessages: Set<number>;
 };
 
 export type GroupRules = {
@@ -893,7 +960,74 @@ export type GroupChatSummary = DataContent &
         subtype: GroupSubtype;
         previewed: boolean;
         frozen: boolean;
+        dateLastPinned: bigint | undefined;
+        dateReadPinned: bigint | undefined;
     };
+
+export type GroupCanisterSummaryResponse = GroupCanisterGroupChatSummary | CallerNotInGroup;
+
+export type GroupCanisterSummaryUpdatesResponse =
+    | GroupCanisterGroupChatSummaryUpdates
+    | { kind: "success_no_updates" }
+    | CallerNotInGroup;
+
+export type GroupCanisterGroupChatSummary = {
+    chatId: string;
+    lastUpdated: bigint;
+    name: string;
+    description: string;
+    subtype: GroupSubtype;
+    avatarId: bigint | undefined;
+    public: boolean;
+    historyVisibleToNewJoiners: boolean;
+    minVisibleEventIndex: number;
+    minVisibleMessageIndex: number;
+    latestMessage: EventWrapper<Message> | undefined;
+    latestEventIndex: number;
+    joined: bigint;
+    memberCount: number;
+    myRole: MemberRole;
+    mentions: Mention[];
+    ownerId: string;
+    permissions: GroupPermissions;
+    notificationsMuted: boolean;
+    metrics: ChatMetrics;
+    myMetrics: ChatMetrics;
+    latestThreads: GroupCanisterThreadDetails[];
+    frozen: boolean;
+    dateLastPinned: bigint | undefined;
+};
+
+export type GroupCanisterGroupChatSummaryUpdates = {
+    chatId: string;
+    lastUpdated: bigint;
+    name: string | undefined;
+    description: string | undefined;
+    subtype: OptionUpdate<GroupSubtype>;
+    avatarId: OptionUpdate<bigint>;
+    public: boolean | undefined;
+    latestMessage: EventWrapper<Message> | undefined;
+    latestEventIndex: number | undefined;
+    memberCount: number | undefined;
+    myRole: MemberRole | undefined;
+    mentions: Mention[];
+    ownerId: string | undefined;
+    permissions: GroupPermissions | undefined;
+    notificationsMuted: boolean | undefined;
+    metrics: ChatMetrics | undefined;
+    myMetrics: ChatMetrics | undefined;
+    latestThreads: GroupCanisterThreadDetails[];
+    frozen: OptionUpdate<boolean>;
+    affectedEvents: number[];
+    dateLastPinned: bigint | undefined;
+};
+
+export type GroupCanisterThreadDetails = {
+    threadRootMessageIndex: number;
+    lastUpdated: bigint;
+    latestEventIndex: number;
+    latestMessageIndex: number;
+};
 
 export type GroupSubtype = GovernanceProposalsSubtype | undefined;
 
@@ -916,6 +1050,7 @@ export type CandidateMember = {
 };
 
 export type CandidateGroupChat = {
+    chatId?: string;
     name: string;
     description: string;
     rules: GroupRules;
@@ -1149,6 +1284,12 @@ export type ChatUnfrozenEvent = {
     unfrozenBy: string;
 };
 
+export type EventsTimeToLiveUpdated = {
+    kind: "events_ttl_updated";
+    updatedBy: string;
+    newTimeToLive: bigint | undefined;
+};
+
 export type SetAvatarResponse = "avatar_too_big" | "success" | "internal_error" | "user_suspended";
 
 export type ChangeRoleResponse =
@@ -1233,6 +1374,7 @@ export type MarkReadRequest = {
     readUpTo: number | undefined;
     chatId: string;
     threads: ThreadRead[];
+    dateReadPinned: bigint | undefined;
 }[];
 
 export type ThreadRead = {
@@ -1307,14 +1449,40 @@ export type UnpinMessageResponse =
     | "success";
 
 export type PinMessageResponse =
-    | "index_out_of_range"
-    | "no_change"
-    | "caller_not_in_group"
-    | "not_authorised"
-    | "message_not_found"
-    | "user_suspended"
-    | "chat_frozen"
-    | "success";
+    | {
+          kind: "success";
+          eventIndex: number;
+          timestamp: bigint;
+      }
+    | { kind: "index_out_of_range" }
+    | { kind: "no_change" }
+    | { kind: "caller_not_in_group" }
+    | { kind: "not_authorised" }
+    | { kind: "message_not_found" }
+    | UserSuspended
+    | ChatFrozen;
+
+export type DeletedGroupMessageResponse =
+    | {
+          kind: "success";
+          content: MessageContent;
+      }
+    | { kind: "caller_not_in_group" }
+    | { kind: "not_authorised" }
+    | { kind: "message_not_found" }
+    | { kind: "message_not_deleted" }
+    | { kind: "message_hard_deleted" };
+
+export type DeletedDirectMessageResponse =
+    | {
+          kind: "success";
+          content: MessageContent;
+      }
+    | { kind: "chat_not_found" }
+    | { kind: "not_authorised" }
+    | { kind: "message_not_found" }
+    | { kind: "message_not_deleted" }
+    | { kind: "message_hard_deleted" };
 
 export type RegisterPollVoteResponse =
     | "caller_not_in_group"
@@ -1383,6 +1551,8 @@ export type ChatMetrics = {
     cyclesMessages: number;
     edits: number;
     icpMessages: number;
+    sns1Messages: number;
+    ckbtcMessages: number;
     giphyMessages: number;
     deletedMessages: number;
     reportedMessages: number;
@@ -1424,6 +1594,21 @@ export type SnsFunctionType =
     | { kind: "native_nervous_system_function" }
     | { kind: "generic_nervous_system_function" };
 
+export type FilterGroupsResponse = {
+    timestamp: bigint;
+    activeGroups: string[];
+    deletedGroups: DeletedGroupInfo[];
+    upgradesInProgress: string[];
+};
+
+export type DeletedGroupInfo = {
+    id: string;
+    timestamp: bigint;
+    deletedBy: string;
+    groupName: string;
+    public: boolean;
+};
+
 export type FreezeGroupResponse =
     | EventWrapper<ChatFrozenEvent>
     | "chat_already_frozen"
@@ -1437,3 +1622,39 @@ export type UnfreezeGroupResponse =
     | "chat_not_found"
     | "not_authorized"
     | "internal_error";
+
+export type DeleteFrozenGroupResponse =
+    | "success"
+    | "chat_not_frozen"
+    | "chat_not_frozen_long_enough"
+    | "chat_not_found"
+    | "not_authorized"
+    | "internal_error";
+
+export type AddHotGroupExclusionResponse =
+    | "success"
+    | "chat_already_excluded"
+    | "chat_not_found"
+    | "not_authorized"
+    | "internal_error";
+
+export type RemoveHotGroupExclusionResponse =
+    | "success"
+    | "chat_not_excluded"
+    | "chat_not_found"
+    | "not_authorized"
+    | "internal_error";
+
+export type MarkPinnedMessagesReadResponse = "success" | "chat_frozen";
+
+export type ClaimPrizeResponse =
+    | CallerNotInGroup
+    | { kind: "message_not_found" }
+    | { kind: "chat_frozen" }
+    | { kind: "already_claimed" }
+    | { kind: "success" }
+    | { kind: "user_suspended" }
+    | { kind: "prize_ended" }
+    | { kind: "prize_fully_claimed" }
+    | { kind: "failed_after_transfer" }
+    | { kind: "transfer_failed" };

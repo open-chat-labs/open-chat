@@ -1,7 +1,7 @@
-use crate::updates::handle_activity_notification;
+use crate::activity_notifications::handle_activity_notification;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
-use chat_events::RecordProposalVoteResult;
+use chat_events::{Reader, RecordProposalVoteResult};
 use group_canister::register_proposal_vote::{Response::*, *};
 use ic_cdk_macros::update;
 use types::{CanisterId, MessageContentInternal, ProposalId, UserId};
@@ -38,7 +38,7 @@ async fn register_proposal_vote(args: Args) -> Response {
             user_canister::c2c_vote_on_proposal::Response::ProposalNotAcceptingVotes => ProposalNotAcceptingVotes,
             user_canister::c2c_vote_on_proposal::Response::InternalError(error) => InternalError(error),
         },
-        Err(error) => InternalError(format!("{:?}", error)),
+        Err(error) => InternalError(format!("{error:?}")),
     }
 }
 
@@ -65,11 +65,14 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
         return Err(UserSuspended);
     }
 
+    let now = runtime_state.env.now();
+    let min_visible_event_index = participant.min_visible_event_index();
+
     if let Some(proposal) = runtime_state
         .data
         .events
-        .main()
-        .message_internal_by_message_index(args.message_index)
+        .visible_main_events_reader(min_visible_event_index, now)
+        .message_internal(args.message_index.into())
         .and_then(|m| if let MessageContentInternal::GovernanceProposal(p) = &m.content { Some(p) } else { None })
     {
         if let Some(vote) = proposal.votes.get(&participant.user_id) {
@@ -93,13 +96,15 @@ fn commit(user_id: UserId, args: Args, runtime_state: &mut RuntimeState) -> Resp
         None => return CallerNotInGroup,
     };
 
+    let now = runtime_state.env.now();
+    let min_visible_event_index = participant.min_visible_event_index();
+
     match runtime_state
         .data
         .events
-        .record_proposal_vote(user_id, args.message_index, args.adopt)
+        .record_proposal_vote(user_id, min_visible_event_index, args.message_index, args.adopt, now)
     {
         RecordProposalVoteResult::Success => {
-            let now = runtime_state.env.now();
             let votes = participant.proposal_votes.entry(now).or_default();
             if !votes.contains(&args.message_index) {
                 votes.push(args.message_index);

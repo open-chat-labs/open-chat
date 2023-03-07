@@ -1,7 +1,6 @@
 [package]
 name = "notifications_canister"
 version = "0.1.0"
-authors = ["Hamish Peebles <hamishpeebles@gmail.com>", "Matt Grogan <megrogan@gmail.com>", "Julian Jelfs <julian.jelfs@gmail.com>"]
 edition = "2021"
 default-run = "notifications_canister"
 
@@ -14,5 +13,6 @@ path = "src/notification_candid_gen.rs"
 [dependencies]
 candid = { workspace = true }
 candid_gen = { path = "../../../libraries/candid_gen" }
+notifications_index_canister = { path = "../../notifications_index/api" }
 serde = { workspace = true }
 types = { path = "../../../libraries/types" }

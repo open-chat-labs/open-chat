@@ -24,6 +24,10 @@ impl NervousSystems {
         );
     }
 
+    pub fn get(&self, governance_canister_id: &CanisterId) -> Option<&NervousSystem> {
+        self.nervous_systems.get(governance_canister_id)
+    }
+
     pub fn get_chat_id(&self, governance_canister_id: &CanisterId) -> Option<ChatId> {
         self.nervous_systems.get(governance_canister_id).map(|ns| ns.chat_id)
     }
@@ -63,15 +67,7 @@ impl NervousSystems {
             .values_mut()
             .filter(|n| !n.proposals_to_be_pushed.in_progress)
         {
-            // TODO replace this with `pop_first` once it is stablized
-            if let Some(p) = ns
-                .proposals_to_be_pushed
-                .queue
-                .keys()
-                .next()
-                .cloned()
-                .and_then(|k| ns.proposals_to_be_pushed.queue.remove(&k))
-            {
+            if let Some((_, p)) = ns.proposals_to_be_pushed.queue.pop_first() {
                 ns.proposals_to_be_pushed.in_progress = true;
                 return Some(ProposalToPush {
                     governance_canister_id: ns.governance_canister_id,
@@ -187,16 +183,16 @@ impl NervousSystems {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-struct NervousSystem {
-    pub name: String,
-    pub governance_canister_id: CanisterId,
-    pub chat_id: ChatId,
-    pub latest_successful_sync: Option<TimestampMillis>,
-    pub latest_failed_sync: Option<TimestampMillis>,
-    pub latest_successful_proposals_update: Option<TimestampMillis>,
-    pub latest_failed_proposals_update: Option<TimestampMillis>,
-    pub proposals_to_be_pushed: ProposalsToBePushed,
-    pub proposals_to_be_updated: ProposalsToBeUpdated,
+pub struct NervousSystem {
+    name: String,
+    governance_canister_id: CanisterId,
+    chat_id: ChatId,
+    latest_successful_sync: Option<TimestampMillis>,
+    latest_failed_sync: Option<TimestampMillis>,
+    latest_successful_proposals_update: Option<TimestampMillis>,
+    latest_failed_proposals_update: Option<TimestampMillis>,
+    proposals_to_be_pushed: ProposalsToBePushed,
+    proposals_to_be_updated: ProposalsToBeUpdated,
     pub active_proposals: BTreeMap<ProposalId, (Proposal, MessageId)>,
 }
 

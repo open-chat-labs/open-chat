@@ -1,25 +1,37 @@
 <script lang="ts">
-    import { AvatarSize, UserStatus } from "openchat-client";
+    import { AvatarSize, OpenChat, UserStatus } from "openchat-client";
     import { rtlStore } from "../stores/rtl";
+    import { getContext } from "svelte";
+    import { now } from "stores/time";
+
+    const client = getContext<OpenChat>("client");
 
     export let url: string | undefined;
-    export let status: UserStatus = UserStatus.Offline;
-    export let size: AvatarSize = AvatarSize.Medium;
+    export let showStatus: boolean | undefined = false;
+    export let userId: string | undefined = undefined;
+    export let size: AvatarSize = AvatarSize.Default;
     export let blocked: boolean = false;
     export let statusBorder = "white";
+
+    $: userStatus = UserStatus.None;
+    $: {
+        if (showStatus && userId !== undefined) {
+            client.getUserStatus(userId, $now).then((status) => {
+                userStatus = status;
+            });
+        }
+    }
 </script>
 
 <div
     class="avatar"
-    class:miniscule={size === AvatarSize.Miniscule}
     class:tiny={size === AvatarSize.Tiny}
     class:small={size === AvatarSize.Small}
-    class:medium={size === AvatarSize.Medium}
+    class:default={size === AvatarSize.Default}
     class:large={size === AvatarSize.Large}
-    class:extra-large={size === AvatarSize.ExtraLarge}
     class:blocked
     style="background-image: url({url});">
-    {#if status === UserStatus.Online}
+    {#if userStatus === UserStatus.Online}
         <div class:rtl={$rtlStore} class="online" style={`box-shadow: ${statusBorder} 0 0 0 2px`} />
     {/if}
 </div>
@@ -52,32 +64,22 @@
         position: relative;
         margin: 0 auto;
 
-        &.miniscule {
+        &.tiny {
             width: toRem(20);
             height: toRem(20);
         }
 
-        &.tiny {
+        &.small {
             width: toRem(35);
             height: toRem(35);
         }
 
-        &.small {
+        &.default {
             width: toRem(48);
             height: toRem(48);
         }
 
-        &.medium {
-            width: toRem(70);
-            height: toRem(70);
-        }
-
         &.large {
-            width: toRem(100);
-            height: toRem(100);
-        }
-
-        &.extra-large {
             width: toRem(150);
             height: toRem(150);
         }

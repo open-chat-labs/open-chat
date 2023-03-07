@@ -48,7 +48,7 @@
 
     .text {
         text-align: center;
-        @include font(bold, normal, fs-140);
+        @include font(bold, normal, fs-110);
         margin-top: 10px;
     }
 

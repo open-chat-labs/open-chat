@@ -1,21 +1,14 @@
 use crate::model::public_groups::GroupCreatedArgs;
-use crate::{mutate_state, read_state, RuntimeState, GROUP_CANISTER_INITIAL_CYCLES_BALANCE, MARK_ACTIVE_DURATION};
+use crate::{mutate_state, read_state, RuntimeState};
 use candid::Principal;
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use group_index_canister::c2c_create_group::{Response::*, *};
-use types::{Avatar, CanisterId, CanisterWasm, ChatId, Cycles, GroupSubtype, UserId, Version};
-use utils::canister;
-use utils::canister::CreateAndInstallError;
-use utils::consts::{CREATE_CANISTER_CYCLES_FEE, MIN_CYCLES_BALANCE};
+use types::{Avatar, CanisterId, ChatId, GroupSubtype, UserId};
 
 #[update_msgpack]
 #[trace]
 async fn c2c_create_group(args: Args) -> Response {
-    let name = args.name.to_string();
-    let description = args.description.to_string();
-    let subtype = args.subtype.clone();
-    let is_public = args.is_public;
     let avatar_id = Avatar::id(&args.avatar);
 
     let (user_id, principal) = match validate_caller().await {
@@ -23,125 +16,89 @@ async fn c2c_create_group(args: Args) -> Response {
         Err(response) => return response,
     };
 
-    let canister_args = match mutate_state(|state| prepare(args, user_id, principal, state)) {
+    let PrepareResult {
+        local_group_index_canister,
+    } = match mutate_state(|state| prepare(&args.name, args.is_public, state)) {
         Ok(ok) => ok,
         Err(response) => return response,
     };
 
-    let wasm_arg = candid::encode_one(canister_args.init_canister_args).unwrap();
-    let cycles_to_use = canister_args.cycles_to_use;
-    match canister::create_and_install(
-        canister_args.canister_id,
-        canister_args.canister_wasm.module,
-        wasm_arg,
-        cycles_to_use,
-        on_canister_created,
-    )
-    .await
-    {
-        Ok(canister_id) => {
-            let chat_id = canister_id.into();
-            let wasm_version = canister_args.canister_wasm.version;
+    let c2c_create_group_args = local_group_index_canister::c2c_create_group::Args {
+        created_by_user_id: user_id,
+        created_by_user_principal: principal,
+        is_public: args.is_public,
+        name: args.name.clone(),
+        description: args.description.clone(),
+        rules: args.rules,
+        subtype: args.subtype.clone(),
+        avatar: args.avatar,
+        history_visible_to_new_joiners: args.history_visible_to_new_joiners,
+        permissions: args.permissions,
+        events_ttl: args.events_ttl,
+    };
+
+    match local_group_index_canister_c2c_client::c2c_create_group(local_group_index_canister, &c2c_create_group_args).await {
+        Ok(local_group_index_canister::c2c_create_group::Response::Success(result)) => {
             mutate_state(|state| {
                 commit(
                     CommitArgs {
-                        is_public,
-                        chat_id,
-                        name,
-                        description,
-                        subtype,
+                        is_public: args.is_public,
+                        chat_id: result.chat_id,
+                        name: args.name,
+                        description: args.description,
+                        subtype: args.subtype,
                         avatar_id,
-                        wasm_version,
+                        local_group_index_canister,
                     },
                     state,
                 )
             });
-            Success(SuccessResult { chat_id })
+            Success(SuccessResult { chat_id: result.chat_id })
         }
-        Err(error) => {
-            let mut canister_id = None;
-            if let CreateAndInstallError::InstallFailed((_, id)) = error {
-                canister_id = Some(id);
-            }
-
-            mutate_state(|state| rollback(is_public, &name, canister_id, state));
+        Ok(local_group_index_canister::c2c_create_group::Response::CyclesBalanceTooLow) => CyclesBalanceTooLow,
+        Ok(local_group_index_canister::c2c_create_group::Response::InternalError(_)) => InternalError,
+        Err(_) => {
+            mutate_state(|state| rollback(args.is_public, &args.name, state));
             InternalError
         }
     }
-}
-
-struct CreateCanisterArgs {
-    canister_id: Option<CanisterId>,
-    canister_wasm: CanisterWasm,
-    cycles_to_use: Cycles,
-    init_canister_args: group_canister::init::Args,
 }
 
 async fn validate_caller() -> Result<(UserId, Principal), Response> {
     let (caller, user_index_canister_id): (UserId, CanisterId) =
         read_state(|state| (state.env.caller().into(), state.data.user_index_canister_id));
 
-    match user_index_canister_c2c_client::c2c_lookup_principal(
+    match user_index_canister_c2c_client::c2c_lookup_user(
         user_index_canister_id,
-        &user_index_canister::c2c_lookup_principal::Args { user_id: caller },
+        &user_index_canister::c2c_lookup_user::Args {
+            user_id_or_principal: caller.into(),
+        },
     )
     .await
     {
-        Ok(user_index_canister::c2c_lookup_principal::Response::Success(r)) => Ok((caller, r.principal)),
-        Ok(user_index_canister::c2c_lookup_principal::Response::UserNotFound) => Err(UserNotFound),
+        Ok(user_index_canister::c2c_lookup_user::Response::Success(r)) => Ok((caller, r.principal)),
+        Ok(user_index_canister::c2c_lookup_user::Response::UserNotFound) => Err(UserNotFound),
         Err(_) => Err(InternalError),
     }
 }
 
-fn prepare(
-    args: Args,
-    user_id: UserId,
-    principal: Principal,
-    runtime_state: &mut RuntimeState,
-) -> Result<CreateCanisterArgs, Response> {
-    let cycles_to_use = if runtime_state.data.canister_pool.is_empty() {
-        let cycles_required = GROUP_CANISTER_INITIAL_CYCLES_BALANCE + CREATE_CANISTER_CYCLES_FEE;
-        if !utils::cycles::can_spend_cycles(cycles_required, MIN_CYCLES_BALANCE) {
-            return Err(CyclesBalanceTooLow);
-        }
-        cycles_required
-    } else {
-        0
-    };
+struct PrepareResult {
+    pub local_group_index_canister: CanisterId,
+}
 
+fn prepare(name: &str, is_public: bool, runtime_state: &mut RuntimeState) -> Result<PrepareResult, Response> {
     let now = runtime_state.env.now();
 
-    if args.is_public && !runtime_state.data.public_groups.reserve_name(&args.name, now) {
-        Err(NameTaken)
-    } else {
-        let canister_id = runtime_state.data.canister_pool.pop();
-        let canister_wasm = runtime_state.data.group_canister_wasm.clone();
-        let init_canister_args = group_canister::init::Args {
-            is_public: args.is_public,
-            name: args.name,
-            description: args.description,
-            rules: args.rules,
-            subtype: args.subtype,
-            // History is always visible on public groups
-            history_visible_to_new_joiners: args.is_public || args.history_visible_to_new_joiners,
-            permissions: args.permissions,
-            created_by_principal: principal,
-            created_by_user_id: user_id,
-            mark_active_duration: MARK_ACTIVE_DURATION,
-            wasm_version: canister_wasm.version,
-            user_index_canister_id: runtime_state.data.user_index_canister_id,
-            notifications_canister_ids: runtime_state.data.notifications_canister_ids.clone(),
-            ledger_canister_id: runtime_state.data.ledger_canister_id,
-            avatar: args.avatar,
-            test_mode: runtime_state.data.test_mode,
-        };
+    if is_public && !runtime_state.data.public_groups.reserve_name(name, now) {
+        return Err(NameTaken);
+    }
 
-        Ok(CreateCanisterArgs {
-            canister_id,
-            canister_wasm,
-            cycles_to_use,
-            init_canister_args,
+    if let Some(local_group_index_canister) = runtime_state.data.local_index_map.index_for_new_group() {
+        Ok(PrepareResult {
+            local_group_index_canister,
         })
+    } else {
+        Err(InternalError)
     }
 }
 
@@ -152,7 +109,7 @@ struct CommitArgs {
     description: String,
     subtype: Option<GroupSubtype>,
     avatar_id: Option<u128>,
-    wasm_version: Version,
+    local_group_index_canister: CanisterId,
 }
 
 fn commit(args: CommitArgs, runtime_state: &mut RuntimeState) {
@@ -165,29 +122,18 @@ fn commit(args: CommitArgs, runtime_state: &mut RuntimeState) {
             subtype: args.subtype,
             avatar_id: args.avatar_id,
             now,
-            wasm_version: args.wasm_version,
-            cycles: GROUP_CANISTER_INITIAL_CYCLES_BALANCE,
         });
     } else {
-        runtime_state.data.private_groups.handle_group_created(
-            args.chat_id,
-            now,
-            args.wasm_version,
-            GROUP_CANISTER_INITIAL_CYCLES_BALANCE,
-        );
+        runtime_state.data.private_groups.handle_group_created(args.chat_id, now);
     }
+    runtime_state
+        .data
+        .local_index_map
+        .add_group(args.local_group_index_canister, args.chat_id);
 }
 
-fn rollback(is_public: bool, name: &str, canister_id: Option<CanisterId>, runtime_state: &mut RuntimeState) {
+fn rollback(is_public: bool, name: &str, runtime_state: &mut RuntimeState) {
     if is_public {
         runtime_state.data.public_groups.handle_group_creation_failed(name);
     }
-
-    if let Some(canister_id) = canister_id {
-        runtime_state.data.canister_pool.push(canister_id);
-    }
-}
-
-fn on_canister_created(cycles: Cycles) {
-    mutate_state(|state| state.data.total_cycles_spent_on_canisters += cycles);
 }

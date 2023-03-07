@@ -1,7 +1,6 @@
 [package]
 name = "group_index_canister_impl"
 version = "0.1.0"
-authors = ["Hamish Peebles <hamishpeebles@gmail.com>", "Matt Grogan <megrogan@gmail.com>", "Julian Jelfs <julian.jelfs@gmail.com>"]
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -13,22 +12,26 @@ crate-type = ["cdylib"]
 [dependencies]
 candid = { workspace = true }
 canister_api_macros = { path = "../../../libraries/canister_api_macros" }
-canister_logger = { path = "../../../libraries/canister_logger" }
+canister_logger = { workspace = true }
 canister_state_macros = { workspace = true }
-canister_tracing_macros = { path = "../../../libraries/canister_tracing_macros" }
-cycles_dispenser_client = { workspace = true }
+canister_tracing_macros = { workspace = true }
 futures = { workspace = true }
 group_canister = { path = "../../group/api" }
 group_canister_c2c_client = { path = "../../group/c2c_client" }
 group_index_canister = { path = "../api" }
 http_request = { path = "../../../libraries/http_request" }
+human_readable = { path = "../../../libraries/human_readable" }
 ic-cdk = { workspace = true }
 ic-cdk-macros = { workspace = true }
+ic-cdk-timers = { workspace = true }
+ic-stable-structures = { workspace = true }
+local_group_index_canister = { path = "../../local_group_index/api" }
+local_group_index_canister_c2c_client = { path = "../../local_group_index/c2c_client" }
 msgpack = { path = "../../../libraries/msgpack" }
 rand = { workspace = true }
 search = { path = "../../../libraries/search" }
 serde = { workspace = true }
-stable_memory = { workspace = true }
+serializer = { workspace = true }
 tracing = { workspace = true }
 types = { path = "../../../libraries/types" }
 user_canister = { path = "../../user/api" }

@@ -1,10 +1,10 @@
 use crate::guards::caller_is_owner;
-use crate::timer_job_types::RemoveDeletedMessageContentJob;
+use crate::timer_job_types::HardDeleteMessageContentJob;
 use crate::{mutate_state, run_regular_jobs, RuntimeState, TimerJob};
 use canister_tracing_macros::trace;
-use chat_events::DeleteMessageResult;
+use chat_events::{DeleteMessageResult, DeleteUndeleteMessagesArgs};
 use ic_cdk_macros::update;
-use types::{CanisterId, MessageId};
+use types::{CanisterId, EventIndex, MessageId};
 use user_canister::c2c_delete_messages;
 use user_canister::delete_messages::{Response::*, *};
 use utils::time::MINUTE_IN_MS;
@@ -26,9 +26,15 @@ fn delete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
         let my_user_id = runtime_state.env.canister_id().into();
         let now = runtime_state.env.now();
 
-        let delete_message_results =
-            chat.events
-                .delete_messages(my_user_id, false, None, args.message_ids, args.correlation_id, now);
+        let delete_message_results = chat.events.delete_messages(DeleteUndeleteMessagesArgs {
+            caller: my_user_id,
+            is_admin: false,
+            min_visible_event_index: EventIndex::default(),
+            thread_root_message_index: None,
+            message_ids: args.message_ids,
+            correlation_id: args.correlation_id,
+            now,
+        });
 
         let deleted: Vec<_> = delete_message_results
             .into_iter()
@@ -39,12 +45,12 @@ fn delete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
             let remove_deleted_message_content_at = now + (5 * MINUTE_IN_MS);
             for message_id in deleted.iter().copied() {
                 runtime_state.data.timer_jobs.enqueue_job(
-                    TimerJob::RemoveDeletedMessageContent(RemoveDeletedMessageContentJob {
+                    TimerJob::HardDeleteMessageContent(Box::new(HardDeleteMessageContentJob {
                         chat_id: args.user_id.into(),
                         thread_root_message_index: None,
                         message_id,
                         delete_files: true,
-                    }),
+                    })),
                     remove_deleted_message_content_at,
                     now,
                 );
@@ -63,6 +69,7 @@ fn delete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
     }
 }
 
+// TODO retry this if it fails
 async fn delete_on_recipients_canister(canister_id: CanisterId, message_ids: Vec<MessageId>, correlation_id: u64) {
     let args = c2c_delete_messages::Args {
         message_ids,

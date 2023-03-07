@@ -1,5 +1,6 @@
 on:
   pull_request:
+  merge_group:
     branches:
       - master
 
@@ -12,9 +13,10 @@ jobs:
       run:
         working-directory: frontend
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
-          ref: ${{ github.head_ref }}
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.pull_request.head.ref }}
       - uses: actions/setup-node@v1
         with:
           node-version: "16.x"
@@ -26,6 +28,6 @@ jobs:
         run: npm run build:ci
         env:
           NODE_ENV: ci
-          USERGEEK_APIKEY: ${{ secrets.GH_USERGEEK_APIKEY }}
-          ROLLBAR_ACCESS_TOKEN: ${{ secrets.GH_ROLLBAR_ACCESS_TOKEN }}
+          USERGEEK_APIKEY: DUMMY_USERGEEK_APIKEY
+          ROLLBAR_ACCESS_TOKEN: DUMMY_ROLLBAR_ACCESS_TOKEN
           OPENCHAT_WEBSITE_VERSION: $GITHUB_SHA

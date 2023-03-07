@@ -5,20 +5,18 @@ use user_index_canister::*;
 generate_query_call!(check_username);
 generate_query_call!(current_user);
 generate_query_call!(search);
-generate_query_call!(sms_messages);
-generate_query_call!(super_admins);
+generate_query_call!(platform_moderators);
 generate_query_call!(user);
 generate_query_call!(users);
 
 // Updates
-generate_update_call!(add_super_admin);
-generate_update_call!(confirm_phone_number);
-generate_update_call!(remove_sms_messages);
-generate_update_call!(remove_super_admin);
+generate_update_call!(add_local_user_index_canister);
+generate_update_call!(add_platform_moderator);
+generate_update_call!(c2c_register_bot);
+generate_update_call!(pay_for_diamond_membership);
+generate_update_call!(remove_platform_moderator);
 generate_update_call!(register_user);
-generate_update_call!(resend_code);
 generate_update_call!(set_username);
-generate_update_call!(submit_phone_number);
 generate_update_call!(suspend_user);
 generate_update_call!(unsuspend_user);
 generate_update_call!(upgrade_user_canister_wasm);
@@ -40,7 +38,7 @@ pub mod happy_path {
 
         match response {
             user_index_canister::current_user::Response::Success(result) => result,
-            response => panic!("'current_user' error: {:?}", response),
+            response => panic!("'current_user' error: {response:?}"),
         }
     }
 
@@ -63,7 +61,7 @@ pub mod happy_path {
 
         match response {
             user_index_canister::register_user::Response::Success(user_id) => User { principal, user_id },
-            response => panic!("'register_user' error: {:?}", response),
+            response => panic!("'register_user' error: {response:?}"),
         }
     }
 }

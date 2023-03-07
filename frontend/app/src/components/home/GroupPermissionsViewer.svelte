@@ -17,7 +17,7 @@
         members: "group.permissions.allMembers",
     };
 
-    let partitioned = partitionPermissions();
+    $: partitioned = partitionPermissions(permissions);
 
     function filterPermissions([key, _]: PermissionsEntry): boolean {
         if (
@@ -32,7 +32,7 @@
         return true;
     }
 
-    function partitionPermissions(): PermissionsByRole {
+    function partitionPermissions(permissions: GroupPermissions): PermissionsByRole {
         return (Object.entries(permissions) as PermissionsEntry[]).filter(filterPermissions).reduce(
             (dict: PermissionsByRole, [key, val]) => {
                 dict[val].add($_(`group.permissions.${key}`));

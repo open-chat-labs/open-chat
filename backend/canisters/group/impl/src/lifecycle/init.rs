@@ -1,20 +1,17 @@
-use crate::lifecycle::{init_logger, init_state};
+use crate::lifecycle::{init_env, init_state};
 use crate::Data;
 use canister_tracing_macros::trace;
 use group_canister::init::Args;
 use ic_cdk_macros::init;
 use tracing::info;
-use utils::env::canister::CanisterEnv;
 use utils::env::Environment;
 
 #[init]
 #[trace]
 fn init(args: Args) {
-    ic_cdk::setup();
-    init_logger(args.test_mode);
+    canister_logger::init(args.test_mode);
 
-    let env = Box::new(CanisterEnv::new());
-    let group_index_canister_id = env.caller();
+    let env = init_env();
 
     let data = Data::new(
         env.canister_id().into(),
@@ -27,12 +24,15 @@ fn init(args: Args) {
         args.history_visible_to_new_joiners,
         args.created_by_principal,
         args.created_by_user_id,
+        args.events_ttl,
         env.now(),
         args.mark_active_duration,
-        group_index_canister_id,
+        args.group_index_canister_id,
+        args.local_group_index_canister_id,
         args.user_index_canister_id,
-        args.notifications_canister_ids,
-        args.ledger_canister_id,
+        args.local_user_index_canister_id,
+        args.notifications_canister_id,
+        args.proposals_bot_user_id,
         args.test_mode,
         args.permissions,
     );

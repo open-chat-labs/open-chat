@@ -8,7 +8,6 @@
     import SelectChatModal from "../SelectChatModal.svelte";
     import MiddlePanel from "./MiddlePanel.svelte";
     import RightPanel from "./RightPanel.svelte";
-    import { fly } from "svelte/transition";
     import {
         GroupSearchResponse,
         MessageMatch,
@@ -26,22 +25,23 @@
         SendMessageFailed,
         ChatsUpdated,
         Notification,
+        CandidateGroupChat,
+        defaultGroupRules,
     } from "openchat-client";
     import Overlay from "../Overlay.svelte";
     import { getContext, onMount, tick } from "svelte";
     import { rtlStore } from "../../stores/rtl";
     import { mobileWidth, screenWidth, ScreenWidth } from "../../stores/screenDimensions";
-    import { push, replace, querystring } from "svelte-spa-router";
-    import { pathParams } from "../../stores/routing";
-    import type { RouteParams } from "../../stores/routing";
-    import { sineInOut } from "svelte/easing";
+    import page from "page";
+    import { pathParams } from "../../routes";
+    import type { RouteParams } from "../../routes";
     import { toastStore } from "../../stores/toast";
     import {
         closeNotificationsForChat,
         closeNotifications,
         subscribeToNotifications,
     } from "../../utils/notifications";
-    import { filterByChatType, rightPanelHistory, RightPanelState } from "../../stores/rightPanel";
+    import { filterByChatType, rightPanelHistory } from "../../stores/rightPanel";
     import { mapRemoteData } from "../../utils/remoteData";
     import type { RemoteData } from "../../utils/remoteData";
     import Upgrade from "./upgrade/Upgrade.svelte";
@@ -53,17 +53,15 @@
     import type { Share } from "../../utils/share";
     import { themeStore } from "../../theme/themes";
     import SuspendedModal from "../SuspendedModal.svelte";
-
-    export let logout: () => void;
+    import NewGroup from "./addgroup/NewGroup.svelte";
+    import AccountsModal from "./profile/AccountsModal.svelte";
+    import { querystring } from "routes";
 
     const client = getContext<OpenChat>("client");
     const user = client.user;
+    let candidateGroup: CandidateGroupChat | undefined;
 
-    type ConfirmActionEvent =
-        | ConfirmLeaveEvent
-        | ConfirmDeleteEvent
-        | ConfirmMakePrivateEvent
-        | ConfirmRulesEvent;
+    type ConfirmActionEvent = ConfirmLeaveEvent | ConfirmDeleteEvent | ConfirmRulesEvent;
 
     interface ConfirmLeaveEvent {
         kind: "leave";
@@ -74,11 +72,6 @@
         kind: "delete";
         chatId: string;
         doubleCheck: { challenge: string; response: string };
-    }
-
-    interface ConfirmMakePrivateEvent {
-        kind: "makePrivate";
-        chatId: string;
     }
 
     interface ConfirmRulesEvent {
@@ -93,6 +86,8 @@
         Faq,
         SelectChat,
         Suspended,
+        NewGroup,
+        Wallet,
     }
 
     let faqQuestion: Questions | undefined = undefined;
@@ -105,7 +100,7 @@
     let confirmActionEvent: ConfirmActionEvent | undefined;
     let hotGroups: RemoteData<GroupChatSummary[], string> = { kind: "idle" };
     let joining: GroupChatSummary | undefined = undefined;
-    let upgradeStorage: "explain" | "icp" | "sms" | undefined = undefined;
+    let showUpgrade: boolean = false;
     let share: Share = { title: "", text: "", url: "", files: [] };
     let messageToForward: Message | undefined = undefined;
     let creatingThread = false;
@@ -119,35 +114,15 @@
     $: chatsInitialised = client.chatsInitialised;
     $: currentChatDraftMessage = client.currentChatDraftMessage;
     $: chatStateStore = client.chatStateStore;
-    $: qs = new URLSearchParams($querystring);
     $: confirmMessage = getConfirmMessage(confirmActionEvent);
-    $: x = $rtlStore ? -500 : 500;
-    $: rightPanelSlideDuration = $mobileWidth ? 0 : 200;
 
-    /** SHOW LEFT
-     * MobileScreen  |  ChatSelected  |  ShowingRecs  |  ShowLeft
-     * ==========================================================
-     * F             |  -            |  -            |  T
-     * T             |  T            |  -            |  F
-     * T             |  F            |  T            |  F
-     * T             |  F            |  F            |  T
-     */
-    $: showLeft =
-        !$mobileWidth ||
-        ($mobileWidth && $pathParams.chatId === undefined && hotGroups.kind === "idle");
-
-    /** SHOW MIDDLE
-     * SmallScreen  |  ChatSelected  |  ShowingRecs  |  ShowLeft
-     * ==========================================================
-     * F             |  -            |  -            |  T
-     * T             |  T            |  -            |  T
-     * T             |  F            |  T            |  T
-     * T             |  F            |  F            |  F
-     */
-    $: showMiddle =
-        !$mobileWidth ||
-        ($mobileWidth && $pathParams.chatId !== undefined) ||
-        ($mobileWidth && $pathParams.chatId === undefined && hotGroups.kind !== "idle");
+    // layout stuff
+    $: showRight = $rightPanelHistory.length > 0 || $numberOfColumns === 3;
+    $: floatRightPanel = !$mobileWidth && $numberOfColumns < 3;
+    $: middleSelected = $pathParams.chatId !== undefined || hotGroups.kind !== "idle";
+    $: leftSelected = $pathParams.chatId === undefined && hotGroups.kind === "idle";
+    $: showMiddle = !$mobileWidth || (middleSelected && !showRight);
+    $: showLeft = !$mobileWidth || (leftSelected && !showRight);
 
     onMount(() => {
         subscribeToNotifications(client, (n) => client.notificationReceived(n));
@@ -169,7 +144,9 @@
             closeThread();
         } else if (ev instanceof SendMessageFailed) {
             // This can occur either for chat messages or thread messages so we'll just handle it here
-            toastStore.showFailureToast("errorSendingMessage");
+            if (ev.detail) {
+                toastStore.showFailureToast("errorSendingMessage");
+            }
         } else if (ev instanceof ChatsUpdated) {
             closeNotifications((notification: Notification) => {
                 if (
@@ -188,7 +165,7 @@
                 return false;
             });
         } else if (ev instanceof SelectedChatInvalid) {
-            replace("/");
+            page.replace("/");
         }
     }
 
@@ -198,7 +175,7 @@
         // if this is an unknown chat let's preview it
         if (chat === undefined) {
             if (!(await createDirectChat(chatId))) {
-                const code = qs.get("code");
+                const code = $querystring.get("code");
                 if (code) {
                     client.groupInvite = {
                         chatId,
@@ -206,7 +183,7 @@
                     };
                 }
                 if (!(await client.previewChat(chatId))) {
-                    replace("/");
+                    page.replace("/");
                     return;
                 }
             }
@@ -230,22 +207,24 @@
     function routeChange(initialised: boolean, pathParams: RouteParams): void {
         // wait until we have loaded the chats
         if (initialised) {
+            // TODO - this is still here *and* it still works.
+            // get rid of it
             if (pathParams.chatId === "threads") {
                 closeThread();
                 client.clearSelectedChat();
                 hotGroups = { kind: "idle" };
+                // TODO - this is pretty gross
             } else if (pathParams.chatId === "share") {
-                const local_qs = new URLSearchParams(window.location.search);
-                const title = local_qs.get("title") ?? "";
-                const text = local_qs.get("text") ?? "";
-                const url = local_qs.get("url") ?? "";
+                const title = $querystring.get("title") ?? "";
+                const text = $querystring.get("text") ?? "";
+                const url = $querystring.get("url") ?? "";
                 share = {
                     title,
                     text,
                     url,
                     files: [],
                 };
-                history.replaceState(null, "", "/#/");
+                page.replace("/");
                 modal = ModalType.SelectChat;
             } else {
                 // if we have something in the chatId url param
@@ -256,6 +235,7 @@
                 if (pathParams.chatId !== undefined) {
                     // if the chat in the url is different from the chat we already have selected
                     if (pathParams.chatId !== $selectedChatId?.toString()) {
+                        console.log("PathParams: ", pathParams);
                         newChatSelected(pathParams.chatId, pathParams.messageIndex);
                     } else {
                         // if the chat in the url is *the same* as the selected chat
@@ -282,11 +262,17 @@
                 }
 
                 // regardless of the path params, we *always* check the query string
-                const faq = qs.get("faq");
+                const faq = $querystring.get("faq");
                 if (faq !== null) {
                     faqQuestion = faq as Questions;
                     modal = ModalType.Faq;
-                    replace(removeQueryStringParam(qs, "faq"));
+                    page.replace(removeQueryStringParam("faq"));
+                }
+
+                const diamond = $querystring.get("diamond");
+                if (diamond !== null) {
+                    showUpgrade = true;
+                    page.replace(removeQueryStringParam("diamond"));
                 }
             }
         }
@@ -300,9 +286,7 @@
     // statement because we don't want that reactive statement to execute in reponse to changes in rightPanelHistory :puke:
     function filterChatSpecificRightPanelStates() {
         rightPanelHistory.update((history) => {
-            return history.filter(
-                (panel) => panel.kind === "user_profile" || panel.kind === "new_group_panel"
-            );
+            return history.filter((panel) => panel.kind === "user_profile");
         });
     }
 
@@ -311,8 +295,10 @@
             creatingThread = false;
             return;
         }
-        rightPanelHistory.update((history) => {
-            return history.filter((panel) => panel.kind !== "message_thread_panel");
+        tick().then(() => {
+            rightPanelHistory.update((history) => {
+                return history.filter((panel) => panel.kind !== "message_thread_panel");
+            });
         });
     }
 
@@ -338,6 +324,7 @@
 
     function closeModal() {
         modal = ModalType.None;
+        candidateGroup = undefined;
     }
 
     function cancelRecommendations() {
@@ -433,7 +420,7 @@
             }
         });
         if (ev.detail === $selectedChatId) {
-            push("/");
+            page("/");
         }
     }
 
@@ -457,8 +444,6 @@
                 return $_("confirmLeaveGroup");
             case "delete":
                 return $_("irreversible");
-            case "makePrivate":
-                return $_("confirmMakeGroupPrivate");
             case "rules": {
                 return confirmActionEvent.rules;
             }
@@ -485,10 +470,6 @@
                 return deleteGroup(confirmActionEvent.chatId).then((_) => {
                     rightPanelHistory.set([]);
                 });
-            case "makePrivate":
-                return makeGroupPrivate(confirmActionEvent.chatId).then((_) => {
-                    rightPanelHistory.set([]);
-                });
             case "rules":
                 return doJoinGroup(confirmActionEvent.group, confirmActionEvent.select);
             default:
@@ -496,46 +477,38 @@
         }
     }
 
-    function makeGroupPrivate(chatId: string): Promise<void> {
-        return client.makeGroupPrivate(chatId).then((success) => {
-            if (!success) {
-                toastStore.showFailureToast("makeGroupPrivateFailed");
-            }
-        });
-    }
-
     function deleteGroup(chatId: string): Promise<void> {
-        push("/");
+        page("/");
         return client.deleteGroup(chatId).then((success) => {
             if (success) {
                 toastStore.showSuccessToast("deleteGroupSuccess");
             } else {
                 toastStore.showFailureToast("deleteGroupFailure");
-                push(`/${chatId}`);
+                page(`/${chatId}`);
             }
         });
     }
 
     function leaveGroup(chatId: string): Promise<void> {
-        push("/");
+        page("/");
 
-        return client.leaveGroup(chatId).then((resp) => {
-            if (resp === "success") {
-                toastStore.showSuccessToast("leftGroup");
-            } else {
+        client.leaveGroup(chatId).then((resp) => {
+            if (resp !== "success") {
                 if (resp === "owner_cannot_leave") {
                     toastStore.showFailureToast("ownerCantLeave");
                 } else {
                     toastStore.showFailureToast("failedToLeaveGroup");
                 }
-                push(`/${chatId}`);
+                page(`/${chatId}`);
             }
         });
+
+        return Promise.resolve();
     }
 
     function deleteDirectChat(ev: CustomEvent<string>) {
         if (ev.detail === $pathParams.chatId) {
-            push("/");
+            page("/");
         }
         tick().then(() => client.removeChat(ev.detail));
     }
@@ -545,7 +518,7 @@
             return c.kind === "direct_chat" && c.them === ev.detail;
         });
         if (chat) {
-            push(`/${chat.chatId}`);
+            page(`/${chat.chatId}`);
         } else {
             createDirectChat(ev.detail);
         }
@@ -555,15 +528,19 @@
         if (ev.detail.chatId === $selectedChatId) {
             currentChatMessages?.externalGoToMessage(ev.detail.messageIndex);
         } else {
-            push(`/${ev.detail.chatId}/${ev.detail.messageIndex}`);
+            page(`/${ev.detail.chatId}/${ev.detail.messageIndex}`);
         }
     }
 
-    function addMembers() {
+    function addMembers(ev: CustomEvent<boolean>) {
         if ($selectedChatId !== undefined) {
-            rightPanelHistory.update((history) => {
-                return [...history, { kind: "add_members" }];
-            });
+            if (ev.detail) {
+                rightPanelHistory.set([{ kind: "add_members" }]);
+            } else {
+                rightPanelHistory.update((history) => {
+                    return [...history, { kind: "add_members" }];
+                });
+            }
         }
     }
 
@@ -576,7 +553,7 @@
         currentChatDraftMessage.setTextContent(chatId, "");
         currentChatDraftMessage.setReplyingTo(chatId, ev.detail);
         if (chat) {
-            push(`/${chat.chatId}`);
+            page(`/${chat.chatId}`);
         } else {
             createDirectChat(chatId);
         }
@@ -587,17 +564,21 @@
         modal = ModalType.SelectChat;
     }
 
-    function showMembers() {
+    function showMembers(ev: CustomEvent<boolean>) {
         if ($selectedChatId !== undefined) {
-            rightPanelHistory.update((history) => {
-                return [...history, { kind: "show_members" }];
-            });
+            if (ev.detail) {
+                rightPanelHistory.set([{ kind: "show_members" }]);
+            } else {
+                rightPanelHistory.update((history) => {
+                    return [...history, { kind: "show_members" }];
+                });
+            }
         }
     }
 
     function showProfile() {
         if ($selectedChatId !== undefined) {
-            replace(`/${$selectedChatId}`);
+            page.replace(`/${$selectedChatId}`);
         }
         rightPanelHistory.set([{ kind: "user_profile" }]);
     }
@@ -610,21 +591,23 @@
         if ($selectedChatId !== undefined) {
             if (ev.initiating) {
                 creatingThread = true;
-                replace(`/${$selectedChatId}`);
+                page.replace(`/${$selectedChatId}`);
             }
-            rightPanelHistory.set([
-                {
-                    kind: "message_thread_panel",
-                    threadRootMessageIndex: ev.threadRootMessageIndex,
-                    threadRootMessageId: ev.threadRootMessageId,
-                },
-            ]);
+            tick().then(() => {
+                rightPanelHistory.set([
+                    {
+                        kind: "message_thread_panel",
+                        threadRootMessageIndex: ev.threadRootMessageIndex,
+                        threadRootMessageId: ev.threadRootMessageId,
+                    },
+                ]);
+            });
         }
     }
 
     function showGroupDetails() {
         if ($selectedChatId !== undefined) {
-            replace(`/${$selectedChatId}`);
+            page.replace(`/${$selectedChatId}`);
             rightPanelHistory.set([
                 {
                     kind: "group_details",
@@ -635,7 +618,7 @@
 
     function showProposalFilters() {
         if ($selectedChatId !== undefined) {
-            replace(`/${$selectedChatId}`);
+            page.replace(`/${$selectedChatId}`);
             rightPanelHistory.set([
                 {
                     kind: "proposal_filters",
@@ -646,7 +629,7 @@
 
     function showPinned() {
         if ($selectedChatId !== undefined) {
-            replace(`/${$selectedChatId}`);
+            page.replace(`/${$selectedChatId}`);
             rightPanelHistory.set([
                 {
                     kind: "show_pinned",
@@ -690,14 +673,14 @@
                     toastStore.showFailureToast("joinGroupFailed");
                 } else if (select) {
                     hotGroups = { kind: "idle" };
-                    push(`/${group.chatId}`);
+                    page(`/${group.chatId}`);
                 }
             })
             .finally(() => (joining = undefined));
     }
 
     function cancelPreview(ev: CustomEvent<string>) {
-        push("/");
+        page("/");
         tick().then(() => {
             client.removeChat(ev.detail);
         });
@@ -705,7 +688,7 @@
 
     function whatsHot(navigate: boolean = true) {
         if (navigate) {
-            push("/");
+            page("/");
         }
         tick().then(() => {
             hotGroups = { kind: "loading" };
@@ -720,8 +703,8 @@
         });
     }
 
-    function upgrade(ev: CustomEvent<"explain" | "icp" | "sms">) {
-        upgradeStorage = ev.detail;
+    function upgrade() {
+        showUpgrade = true;
     }
 
     function onSelectChat(ev: CustomEvent<string>) {
@@ -740,12 +723,12 @@
     }
 
     function forwardToChat(chatId: string) {
-        push(`/${chatId}`);
+        page(`/${chatId}`);
         messageToForwardStore.set(messageToForward);
     }
 
     function shareWithChat(chatId: string) {
-        push(`/${chatId}`);
+        page(`/${chatId}`);
 
         const shareText = share.text ?? "";
         const shareTitle = share.title ?? "";
@@ -784,8 +767,63 @@
         );
     }
 
+    function showWallet() {
+        modal = ModalType.Wallet;
+    }
+
     function newGroup() {
-        rightPanelHistory.update((history) => [...history, { kind: "new_group_panel" }]);
+        modal = ModalType.NewGroup;
+        candidateGroup = {
+            name: "",
+            description: "",
+            historyVisible: true,
+            isPublic: false,
+            members: [],
+            permissions: {
+                changePermissions: "admins",
+                changeRoles: "admins",
+                addMembers: "admins",
+                removeMembers: "admins",
+                blockUsers: "admins",
+                deleteMessages: "admins",
+                updateGroup: "admins",
+                pinMessages: "admins",
+                inviteUsers: "admins",
+                createPolls: "members",
+                sendMessages: "members",
+                reactToMessages: "members",
+                replyInThread: "members",
+            },
+            rules: {
+                text: defaultGroupRules,
+                enabled: false,
+            },
+        };
+    }
+
+    function editGroup(ev: CustomEvent<{ chat: GroupChatSummary; rules: GroupRules | undefined }>) {
+        modal = ModalType.NewGroup;
+        const { chat, rules } = ev.detail;
+        candidateGroup = {
+            chatId: chat.chatId,
+            name: chat.name,
+            description: chat.description,
+            historyVisible: chat.historyVisibleToNewJoiners,
+            isPublic: chat.public,
+            members: [],
+            permissions: { ...chat.permissions },
+            rules:
+                rules !== undefined
+                    ? { ...rules }
+                    : {
+                          text: defaultGroupRules,
+                          enabled: false,
+                      },
+            avatar: {
+                blobUrl: chat.blobUrl,
+                blobData: chat.blobData,
+            },
+        };
     }
 
     function filterChatSelection(
@@ -807,7 +845,7 @@
     }
 
     function showLandingPageRoute(route: string) {
-        return () => push(route);
+        return () => page(route);
         // return () => (window.location.href = route);
     }
 
@@ -816,14 +854,19 @@
             return false;
         }
 
-        push(`/${chatId}`);
+        page(`/${chatId}`);
         return true;
+    }
+
+    function closeRightPanel() {
+        if ($rightPanelHistory.find((panel) => panel.kind === "message_thread_panel")) {
+            page.replace(removeQueryStringParam("open"));
+        }
+        rightPanelHistory.set([]);
     }
 
     $: bgHeight = $dimensions.height * 0.9;
     $: bgClip = (($dimensions.height - 32) / bgHeight) * 361;
-
-    $: console.log("RPH: ", rightPanelHistory);
 </script>
 
 <main>
@@ -841,10 +884,12 @@
             on:whatsHot={() => whatsHot(true)}
             on:newGroup={newGroup}
             on:profile={showProfile}
-            on:logout={logout}
+            on:logout={() => client.logout()}
+            on:wallet={showWallet}
             on:deleteDirectChat={deleteDirectChat}
             on:pinChat={pinChat}
             on:unpinChat={unpinChat}
+            on:upgrade={upgrade}
             on:archiveChat={onArchiveChat}
             on:unarchiveChat={onUnarchiveChat}
             on:toggleMuteNotifications={toggleMuteNotifications}
@@ -856,7 +901,7 @@
             {joining}
             bind:currentChatMessages
             loadingChats={$chatsLoading}
-            on:clearSelection={() => push("/")}
+            on:clearSelection={() => page("/")}
             on:blockUser={blockUser}
             on:unblockUser={unblockUser}
             on:leaveGroup={triggerConfirm}
@@ -877,7 +922,7 @@
             on:goToMessageIndex={goToMessageIndex}
             on:forward={forwardMessage} />
     {/if}
-    {#if $numberOfColumns === 3}
+    {#if showRight && !floatRightPanel}
         <RightPanel
             on:showFaqQuestion={showFaqQuestion}
             on:userAvatarSelected={userAvatarSelected}
@@ -888,17 +933,14 @@
             on:upgrade={upgrade}
             on:blockUser={blockUser}
             on:deleteGroup={triggerConfirm}
-            on:makeGroupPrivate={triggerConfirm}
+            on:editGroup={editGroup}
             on:groupCreated={groupCreated} />
     {/if}
 </main>
 
-{#if $numberOfColumns === 2 && $rightPanelHistory.length > 0}
-    <Overlay fade={!$mobileWidth}>
-        <div
-            transition:fly={{ x, duration: rightPanelSlideDuration, easing: sineInOut }}
-            class="right-wrapper"
-            class:rtl={$rtlStore}>
+{#if showRight && floatRightPanel}
+    <Overlay on:close={closeRightPanel} dismissible fade={!$mobileWidth}>
+        <div on:click|stopPropagation class="right-wrapper" class:rtl={$rtlStore}>
             <RightPanel
                 on:showFaqQuestion={showFaqQuestion}
                 on:userAvatarSelected={userAvatarSelected}
@@ -909,7 +951,7 @@
                 on:upgrade={upgrade}
                 on:blockUser={blockUser}
                 on:deleteGroup={triggerConfirm}
-                on:makeGroupPrivate={triggerConfirm}
+                on:editGroup={editGroup}
                 on:groupCreated={groupCreated} />
         </div>
     </Overlay>
@@ -929,16 +971,13 @@
 
 <Toast />
 
-{#if upgradeStorage && user}
-    <Upgrade
-        step={upgradeStorage}
-        on:showFaqQuestion={showFaqQuestion}
-        on:cancel={() => (upgradeStorage = undefined)} />
+{#if showUpgrade && user}
+    <Upgrade on:showFaqQuestion={showFaqQuestion} on:cancel={() => (showUpgrade = false)} />
 {/if}
 
 {#if modal !== ModalType.None}
     <Overlay
-        dismissible={modal !== ModalType.SelectChat}
+        dismissible={modal !== ModalType.SelectChat && modal !== ModalType.Wallet}
         alignLeft={modal === ModalType.SelectChat}
         on:close={closeModal}>
         {#if modal === ModalType.Faq}
@@ -950,6 +989,10 @@
                 on:select={onSelectChat} />
         {:else if modal === ModalType.Suspended}
             <SuspendedModal on:close={closeModal} />
+        {:else if modal === ModalType.NewGroup && candidateGroup !== undefined}
+            <NewGroup on:upgrade={upgrade} {candidateGroup} on:close={closeModal} />
+        {:else if modal === ModalType.Wallet}
+            <AccountsModal on:close={closeModal} />
         {/if}
     </Overlay>
 {/if}

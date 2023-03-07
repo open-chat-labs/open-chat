@@ -1,53 +1,58 @@
-use crate::lifecycle::{init_logger, init_state, UPGRADE_BUFFER_SIZE};
-use crate::{Data, LOG_MESSAGES};
-use canister_logger::{LogMessage, LogMessagesWrapper};
+use crate::lifecycle::{init_env, init_state, UPGRADE_BUFFER_SIZE};
+use crate::memory::get_upgrades_memory;
+use crate::timer_job_types::{RecurringDiamondMembershipPayment, TimerJob};
+use crate::{mutate_state, Data};
+use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use ic_cdk_macros::post_upgrade;
-use stable_memory::deserialize_from_stable_memory;
+use ic_stable_structures::reader::{BufferedReader, Reader};
+use std::collections::HashMap;
 use tracing::info;
+use types::Cryptocurrency;
 use user_index_canister::post_upgrade::Args;
-use utils::consts::MIN_CYCLES_BALANCE;
-use utils::env::canister::CanisterEnv;
+use utils::cycles::init_cycles_dispenser_client;
+use utils::time::DAY_IN_MS;
 
 #[post_upgrade]
 #[trace]
 fn post_upgrade(args: Args) {
-    ic_cdk::setup();
+    let env = init_env();
 
-    let env = Box::new(CanisterEnv::new());
+    let memory = get_upgrades_memory();
+    let reader = BufferedReader::new(UPGRADE_BUFFER_SIZE, Reader::new(&memory, 0));
 
-    let (mut data, log_messages, trace_messages, cycles_dispenser_client_state): (
-        Data,
-        Vec<LogMessage>,
-        Vec<LogMessage>,
-        Vec<u8>,
-    ) = deserialize_from_stable_memory(UPGRADE_BUFFER_SIZE).unwrap();
+    let (data, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>) = serializer::deserialize(reader).unwrap();
 
-    data.users.rehydrate();
+    canister_logger::init_with_logs(data.test_mode, logs, traces);
 
-    init_logger(data.test_mode);
+    init_cycles_dispenser_client(data.cycles_dispenser_canister_id);
     init_state(env, data, args.wasm_version);
 
-    if !log_messages.is_empty() || !trace_messages.is_empty() {
-        LOG_MESSAGES.with(|l| rehydrate_log_messages(log_messages, trace_messages, &l.borrow()))
-    }
-
-    cycles_dispenser_client::init_from_bytes(&cycles_dispenser_client_state);
-    cycles_dispenser_client::set_min_cycles_balance(3 * MIN_CYCLES_BALANCE / 2);
-
     info!(version = %args.wasm_version, "Post-upgrade complete");
-}
 
-fn rehydrate_log_messages(
-    log_messages: Vec<LogMessage>,
-    trace_messages: Vec<LogMessage>,
-    messages_container: &LogMessagesWrapper,
-) {
-    for message in log_messages {
-        messages_container.logs.push(message);
-    }
+    mutate_state(|state| {
+        let now = state.env.now();
+        let mut total_raised: HashMap<Cryptocurrency, u128> = HashMap::new();
 
-    for message in trace_messages {
-        messages_container.traces.push(message);
-    }
+        for user in state.data.users.iter() {
+            for payment in user.diamond_membership_details.payments() {
+                state.data.diamond_membership_payment_metrics.manual_payments_taken += 1;
+                *total_raised.entry(payment.token).or_default() += payment.amount_e8s as u128;
+            }
+
+            if user.diamond_membership_details.is_recurring() {
+                if let Some(expiry) = user.diamond_membership_details.expires_at() {
+                    state.data.timer_jobs.enqueue_job(
+                        TimerJob::RecurringDiamondMembershipPayment(RecurringDiamondMembershipPayment {
+                            user_id: user.user_id,
+                        }),
+                        expiry.saturating_sub(DAY_IN_MS),
+                        now,
+                    );
+                }
+            }
+        }
+
+        state.data.diamond_membership_payment_metrics.amount_raised = total_raised.into_iter().collect();
+    })
 }

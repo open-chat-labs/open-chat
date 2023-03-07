@@ -1,9 +1,9 @@
-use crate::{mutate_state, read_state, RuntimeState};
+use crate::{lookup_user, mutate_state, read_state, LookupUserError, RuntimeState};
 use candid::Principal;
 use canister_tracing_macros::trace;
 use group_index_canister::{freeze_group, unfreeze_group};
 use ic_cdk_macros::update;
-use types::{CanisterId, ChatId, FrozenGroupInfo, UserId};
+use types::{CanisterId, ChatId, FrozenGroupInfo};
 
 #[update]
 #[trace]
@@ -20,10 +20,10 @@ async fn freeze_group(args: freeze_group::Args) -> freeze_group::Response {
         Err(_) => return ChatNotFound,
     };
 
-    let user_id = match get_and_validate_user(caller, user_index_canister_id).await {
-        Ok(id) => id,
-        Err(ValidateResult::NotAuthorized) => return NotAuthorized,
-        Err(ValidateResult::InternalError(error)) => return InternalError(error),
+    let user_id = match lookup_user(caller, user_index_canister_id).await {
+        Ok(user) if user.is_platform_moderator => user.user_id,
+        Ok(_) | Err(LookupUserError::UserNotFound) => return NotAuthorized,
+        Err(LookupUserError::InternalError(error)) => return InternalError(error),
     };
 
     let c2c_args = group_canister::c2c_freeze_group::Args {
@@ -86,10 +86,10 @@ async fn unfreeze_group(args: unfreeze_group::Args) -> unfreeze_group::Response 
         Err(_) => return ChatNotFound,
     };
 
-    let user_id = match get_and_validate_user(caller, user_index_canister_id).await {
-        Ok(id) => id,
-        Err(ValidateResult::NotAuthorized) => return NotAuthorized,
-        Err(ValidateResult::InternalError(error)) => return InternalError(error),
+    let user_id = match lookup_user(caller, user_index_canister_id).await {
+        Ok(user) if user.is_platform_moderator => user.user_id,
+        Ok(_) | Err(LookupUserError::UserNotFound) => return NotAuthorized,
+        Err(LookupUserError::InternalError(error)) => return InternalError(error),
     };
 
     let c2c_args = group_canister::c2c_unfreeze_group::Args { caller: user_id };
@@ -110,16 +110,10 @@ struct PrepareResult {
 }
 
 fn prepare(chat_id: &ChatId, runtime_state: &RuntimeState) -> Result<PrepareResult, ()> {
-    if let Some(is_frozen) = runtime_state
-        .data
-        .public_groups
-        .get(chat_id)
-        .map(|g| g.frozen())
-        .or_else(|| runtime_state.data.private_groups.get(chat_id).map(|g| g.frozen()))
-    {
+    if let Some(frozen_info) = runtime_state.data.chat_frozen_info(chat_id) {
         Ok(PrepareResult {
             caller: runtime_state.env.caller(),
-            is_frozen,
+            is_frozen: frozen_info.is_some(),
             user_index_canister_id: runtime_state.data.user_index_canister_id,
         })
     } else {
@@ -135,28 +129,5 @@ fn commit(chat_id: &ChatId, info: Option<FrozenGroupInfo>, runtime_state: &mut R
         chat.set_frozen(info);
     } else {
         unreachable!();
-    }
-}
-
-enum ValidateResult {
-    NotAuthorized,
-    InternalError(String),
-}
-
-async fn get_and_validate_user(caller: Principal, user_index_canister_id: CanisterId) -> Result<UserId, ValidateResult> {
-    let args = user_index_canister::c2c_lookup_user::Args {
-        user_id_or_principal: caller,
-    };
-
-    match user_index_canister_c2c_client::c2c_lookup_user(user_index_canister_id, &args).await {
-        Ok(user_index_canister::c2c_lookup_user::Response::Success(r)) => {
-            if r.is_super_admin {
-                Ok(r.user_id)
-            } else {
-                Err(ValidateResult::NotAuthorized)
-            }
-        }
-        Ok(_) => Err(ValidateResult::NotAuthorized),
-        Err(error) => Err(ValidateResult::InternalError(format!("{error:?}"))),
     }
 }

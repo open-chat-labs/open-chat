@@ -1,6 +1,6 @@
 use crate::model::mentions::Mentions;
 use candid::Principal;
-use chat_events::AllChatEvents;
+use chat_events::ChatEvents;
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::{BTreeMap, HashMap, HashSet};
@@ -146,7 +146,7 @@ impl Participants {
         self.blocked.contains(user_id)
     }
 
-    pub fn users_to_notify(&self, thread_participants: Option<&[UserId]>) -> HashSet<UserId> {
+    pub fn users_to_notify(&self, thread_participants: Option<Vec<UserId>>) -> HashSet<UserId> {
         if let Some(thread_participants) = thread_participants {
             thread_participants
                 .iter()
@@ -403,10 +403,17 @@ impl ParticipantInternal {
         }
     }
 
-    pub fn most_recent_mentions(&self, since: Option<TimestampMillis>, chat_events: &AllChatEvents) -> Vec<Mention> {
+    pub fn most_recent_mentions(
+        &self,
+        since: Option<TimestampMillis>,
+        chat_events: &ChatEvents,
+        now: TimestampMillis,
+    ) -> Vec<Mention> {
+        let min_visible_event_index = self.min_visible_event_index();
+
         self.mentions_v2
             .iter_most_recent(since)
-            .filter_map(|m| chat_events.hydrate_mention(m))
+            .filter_map(|m| chat_events.hydrate_mention(min_visible_event_index, m, now))
             .take(MAX_RETURNED_MENTIONS)
             .collect()
     }

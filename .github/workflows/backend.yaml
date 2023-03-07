@@ -1,5 +1,6 @@
 on:
   pull_request:
+  merge_group:
     branches:
       - master
 
@@ -10,7 +11,10 @@ jobs:
     name: run fmt
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.pull_request.head.ref }}
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
@@ -26,7 +30,7 @@ jobs:
     name: run clippy
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
@@ -34,16 +38,19 @@ jobs:
           override: true
       - run: rustup component add clippy
       - uses: Swatinem/rust-cache@v1
+      - uses: arduino/setup-protoc@v1
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions-rs/cargo@v1
         with:
           command: clippy
-          args: -- -D warnings
+          args: --tests -- -D warnings
 
   unit_tests:
     name: run unit tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
@@ -59,7 +66,7 @@ jobs:
     name: run integration tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: actions-rs/toolchain@v1
         with:
           profile: minimal
@@ -68,4 +75,6 @@ jobs:
       - run: rustup target add wasm32-unknown-unknown
       - uses: Swatinem/rust-cache@v1
       - uses: arduino/setup-protoc@v1
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
       - run: ./scripts/run-integration-tests.sh

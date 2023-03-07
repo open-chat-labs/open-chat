@@ -1,17 +1,31 @@
 use crate::polls::{InvalidPollReason, PollConfig, PollVotes};
 use crate::{
-    CanisterId, CryptoTransaction, ProposalContent, ProposalContentInternal, TimestampMillis, TotalVotes, UserId, VoteOperation,
+    CanisterId, CompletedCryptoTransaction, CryptoTransaction, Cryptocurrency, MessageIndex, ProposalContent,
+    ProposalContentInternal, TimestampMillis, TotalVotes, UserId, VoteOperation,
 };
 use candid::CandidType;
 use ic_ledger_types::Tokens;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fmt::{Debug, Formatter};
 
-const E8S_PER_TOKEN: u64 = 100_000_000;
 pub const MAX_TEXT_LENGTH: u32 = 5_000;
 pub const MAX_TEXT_LENGTH_USIZE: usize = MAX_TEXT_LENGTH as usize;
-pub const ICP_TRANSFER_LIMIT: Tokens = Tokens::from_e8s(10 * E8S_PER_TOKEN);
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub enum MessageContentInitial {
+    Text(TextContent),
+    Image(ImageContent),
+    Video(VideoContent),
+    Audio(AudioContent),
+    File(FileContent),
+    Poll(PollContent),
+    Crypto(CryptoContent),
+    Deleted(DeletedBy),
+    Giphy(GiphyContent),
+    GovernanceProposal(ProposalContent),
+    Prize(PrizeContentInitial),
+}
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum MessageContent {
@@ -25,6 +39,8 @@ pub enum MessageContent {
     Deleted(DeletedBy),
     Giphy(GiphyContent),
     GovernanceProposal(ProposalContent),
+    Prize(PrizeContent),
+    PrizeWinner(PrizeWinnerContent),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -39,6 +55,8 @@ pub enum MessageContentInternal {
     Deleted(DeletedBy),
     Giphy(GiphyContent),
     GovernanceProposal(ProposalContentInternal),
+    Prize(PrizeContentInternal),
+    PrizeWinner(PrizeWinnerContent),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -49,20 +67,43 @@ pub enum ContentValidationError {
     TransferCannotBeZero,
     TransferLimitExceeded(u128),
     InvalidTypeForForwarding,
+    PrizeEndDateInThePast,
+    UnauthorizedToSendProposalMessages,
 }
 
-impl MessageContent {
+impl MessageContentInitial {
+    pub fn validate_for_new_direct_message(
+        &self,
+        sender: UserId,
+        forwarding: bool,
+        now: TimestampMillis,
+    ) -> Result<(), ContentValidationError> {
+        self.validate_for_new_message(sender, true, forwarding, None, now)
+    }
+
+    pub fn validate_for_new_group_message(
+        &self,
+        sender: UserId,
+        forwarding: bool,
+        proposals_bot_user_id: UserId,
+        now: TimestampMillis,
+    ) -> Result<(), ContentValidationError> {
+        self.validate_for_new_message(sender, false, forwarding, Some(proposals_bot_user_id), now)
+    }
+
     // Determines if the content is valid for a new message, this should not be called on existing
     // messages
-    pub fn validate_for_new_message(
+    fn validate_for_new_message(
         &self,
+        sender: UserId,
         is_direct_chat: bool,
         forwarding: bool,
+        proposals_bot_user_id: Option<UserId>,
         now: TimestampMillis,
     ) -> Result<(), ContentValidationError> {
         if forwarding {
             match self {
-                MessageContent::Poll(_) | MessageContent::Crypto(_) | MessageContent::Deleted(_) => {
+                MessageContentInitial::Poll(_) | MessageContentInitial::Crypto(_) | MessageContentInitial::Deleted(_) => {
                     return Err(ContentValidationError::InvalidTypeForForwarding);
                 }
                 _ => {}
@@ -70,12 +111,12 @@ impl MessageContent {
         }
 
         match self {
-            MessageContent::Poll(p) => {
+            MessageContentInitial::Poll(p) => {
                 if let Err(reason) = p.config.validate(is_direct_chat, now) {
                     return Err(ContentValidationError::InvalidPoll(reason));
                 }
             }
-            MessageContent::Crypto(c) => {
+            MessageContentInitial::Crypto(c) => {
                 if c.transfer.is_zero() {
                     return Err(ContentValidationError::TransferCannotBeZero);
                 } else if c.transfer.exceeds_transfer_limit() {
@@ -84,25 +125,38 @@ impl MessageContent {
                     ));
                 }
             }
+            MessageContentInitial::Prize(p) => {
+                if p.end_date <= now {
+                    return Err(ContentValidationError::PrizeEndDateInThePast);
+                }
+            }
+            MessageContentInitial::GovernanceProposal(_) => {
+                if proposals_bot_user_id.map_or(true, |u| u != sender) {
+                    return Err(ContentValidationError::UnauthorizedToSendProposalMessages);
+                }
+            }
             _ => {}
         };
 
         let is_empty = match self {
-            MessageContent::Text(t) => t.text.is_empty(),
-            MessageContent::Image(i) => i.blob_reference.is_none(),
-            MessageContent::Video(v) => v.video_blob_reference.is_none(),
-            MessageContent::Audio(a) => a.blob_reference.is_none(),
-            MessageContent::File(f) => f.blob_reference.is_none(),
-            MessageContent::Poll(p) => p.config.options.is_empty(),
-            MessageContent::Deleted(_) => true,
-            MessageContent::Crypto(_) | MessageContent::Giphy(_) | MessageContent::GovernanceProposal(_) => false,
+            MessageContentInitial::Text(t) => t.text.is_empty(),
+            MessageContentInitial::Image(i) => i.blob_reference.is_none(),
+            MessageContentInitial::Video(v) => v.video_blob_reference.is_none(),
+            MessageContentInitial::Audio(a) => a.blob_reference.is_none(),
+            MessageContentInitial::File(f) => f.blob_reference.is_none(),
+            MessageContentInitial::Poll(p) => p.config.options.is_empty(),
+            MessageContentInitial::Prize(p) => p.prizes.is_empty(),
+            MessageContentInitial::Deleted(_) => true,
+            MessageContentInitial::Crypto(_)
+            | MessageContentInitial::Giphy(_)
+            | MessageContentInitial::GovernanceProposal(_) => false,
         };
 
         if is_empty {
             Err(ContentValidationError::Empty)
         // Allow GovernanceProposal messages to exceed the max length since they are collapsed on the UI
         // TODO only allow GovernanceProposal messages which are sent by the proposals_bot
-        } else if self.text_length() > MAX_TEXT_LENGTH_USIZE && !matches!(self, MessageContent::GovernanceProposal(_)) {
+        } else if self.text_length() > MAX_TEXT_LENGTH_USIZE && !matches!(self, MessageContentInitial::GovernanceProposal(_)) {
             Err(ContentValidationError::TextTooLong(MAX_TEXT_LENGTH))
         } else {
             Ok(())
@@ -113,39 +167,94 @@ impl MessageContent {
     // set the votes to empty
     pub fn new_content_into_internal(self) -> MessageContentInternal {
         match self {
-            MessageContent::Text(t) => MessageContentInternal::Text(t),
-            MessageContent::Image(i) => MessageContentInternal::Image(i),
-            MessageContent::Video(v) => MessageContentInternal::Video(v),
-            MessageContent::Audio(a) => MessageContentInternal::Audio(a),
-            MessageContent::File(f) => MessageContentInternal::File(f),
-            MessageContent::Poll(p) => MessageContentInternal::Poll(PollContentInternal {
+            MessageContentInitial::Text(t) => MessageContentInternal::Text(t),
+            MessageContentInitial::Image(i) => MessageContentInternal::Image(i),
+            MessageContentInitial::Video(v) => MessageContentInternal::Video(v),
+            MessageContentInitial::Audio(a) => MessageContentInternal::Audio(a),
+            MessageContentInitial::File(f) => MessageContentInternal::File(f),
+            MessageContentInitial::Poll(p) => MessageContentInternal::Poll(PollContentInternal {
                 config: p.config,
                 votes: HashMap::new(),
                 ended: false,
             }),
-            MessageContent::Crypto(c) => MessageContentInternal::Crypto(c),
-            MessageContent::Deleted(d) => MessageContentInternal::Deleted(d),
-            MessageContent::Giphy(g) => MessageContentInternal::Giphy(g),
-            MessageContent::GovernanceProposal(p) => MessageContentInternal::GovernanceProposal(ProposalContentInternal {
-                governance_canister_id: p.governance_canister_id,
-                proposal: p.proposal,
-                votes: HashMap::new(),
+            MessageContentInitial::Crypto(c) => MessageContentInternal::Crypto(c),
+            MessageContentInitial::Deleted(d) => MessageContentInternal::Deleted(d),
+            MessageContentInitial::Giphy(g) => MessageContentInternal::Giphy(g),
+            MessageContentInitial::GovernanceProposal(p) => {
+                MessageContentInternal::GovernanceProposal(ProposalContentInternal {
+                    governance_canister_id: p.governance_canister_id,
+                    proposal: p.proposal,
+                    votes: HashMap::new(),
+                })
+            }
+            MessageContentInitial::Prize(p) => MessageContentInternal::Prize(PrizeContentInternal {
+                prizes_remaining: p.prizes,
+                winners: HashSet::new(),
+                end_date: p.end_date,
+                caption: p.caption,
+                reservations: HashSet::new(),
+                transaction: p.transfer,
             }),
         }
     }
 
-    fn text_length(&self) -> usize {
+    pub fn text_length(&self) -> usize {
         match self {
-            MessageContent::Text(t) => t.text.len(),
-            MessageContent::Image(i) => i.caption.as_ref().map_or(0, |t| t.len()),
-            MessageContent::Video(v) => v.caption.as_ref().map_or(0, |t| t.len()),
-            MessageContent::Audio(a) => a.caption.as_ref().map_or(0, |t| t.len()),
-            MessageContent::File(f) => f.caption.as_ref().map_or(0, |t| t.len()),
-            MessageContent::Poll(p) => p.config.text.as_ref().map_or(0, |t| t.len()),
-            MessageContent::Crypto(c) => c.caption.as_ref().map_or(0, |t| t.len()),
-            MessageContent::Deleted(_) => 0,
-            MessageContent::Giphy(g) => g.caption.as_ref().map_or(0, |t| t.len()),
-            MessageContent::GovernanceProposal(p) => p.proposal.summary().len(),
+            MessageContentInitial::Text(t) => t.text.len(),
+            MessageContentInitial::Image(i) => i.caption.as_ref().map_or(0, |t| t.len()),
+            MessageContentInitial::Video(v) => v.caption.as_ref().map_or(0, |t| t.len()),
+            MessageContentInitial::Audio(a) => a.caption.as_ref().map_or(0, |t| t.len()),
+            MessageContentInitial::File(f) => f.caption.as_ref().map_or(0, |t| t.len()),
+            MessageContentInitial::Poll(p) => p.config.text.as_ref().map_or(0, |t| t.len()),
+            MessageContentInitial::Crypto(c) => c.caption.as_ref().map_or(0, |t| t.len()),
+            MessageContentInitial::Deleted(_) => 0,
+            MessageContentInitial::Giphy(g) => g.caption.as_ref().map_or(0, |t| t.len()),
+            MessageContentInitial::GovernanceProposal(p) => p.proposal.summary().len(),
+            MessageContentInitial::Prize(p) => p.caption.as_ref().map_or(0, |t| t.len()),
+        }
+    }
+}
+
+impl From<MessageContent> for MessageContentInitial {
+    fn from(content: MessageContent) -> Self {
+        match content {
+            MessageContent::Audio(c) => MessageContentInitial::Audio(c),
+            MessageContent::Crypto(c) => MessageContentInitial::Crypto(c),
+            MessageContent::Deleted(c) => MessageContentInitial::Deleted(c),
+            MessageContent::File(c) => MessageContentInitial::File(c),
+            MessageContent::Giphy(c) => MessageContentInitial::Giphy(c),
+            MessageContent::GovernanceProposal(c) => MessageContentInitial::GovernanceProposal(c),
+            MessageContent::Image(c) => MessageContentInitial::Image(c),
+            MessageContent::Poll(c) => MessageContentInitial::Poll(c),
+            MessageContent::Text(c) => MessageContentInitial::Text(c),
+            MessageContent::Video(c) => MessageContentInitial::Video(c),
+            MessageContent::Prize(_) => panic!("Cannot convert output prize to initial prize"),
+            MessageContent::PrizeWinner(_) => panic!("Cannot send a prize winner message"),
+        }
+    }
+}
+
+impl From<MessageContentInitial> for MessageContent {
+    fn from(content: MessageContentInitial) -> Self {
+        match content {
+            MessageContentInitial::Audio(c) => MessageContent::Audio(c),
+            MessageContentInitial::Crypto(c) => MessageContent::Crypto(c),
+            MessageContentInitial::Deleted(c) => MessageContent::Deleted(c),
+            MessageContentInitial::File(c) => MessageContent::File(c),
+            MessageContentInitial::Giphy(c) => MessageContent::Giphy(c),
+            MessageContentInitial::GovernanceProposal(c) => MessageContent::GovernanceProposal(c),
+            MessageContentInitial::Image(c) => MessageContent::Image(c),
+            MessageContentInitial::Poll(c) => MessageContent::Poll(c),
+            MessageContentInitial::Text(c) => MessageContent::Text(c),
+            MessageContentInitial::Video(c) => MessageContent::Video(c),
+            MessageContentInitial::Prize(c) => MessageContent::Prize(PrizeContent {
+                prizes_remaining: c.prizes.len() as u32,
+                winners: Vec::new(),
+                token: c.transfer.token(),
+                end_date: c.end_date,
+                caption: c.caption,
+                prizes_pending: 0,
+            }),
         }
     }
 }
@@ -162,11 +271,37 @@ impl MessageContentInternal {
             MessageContentInternal::Crypto(c) => MessageContent::Crypto(c.clone()),
             MessageContentInternal::Deleted(d) => MessageContent::Deleted(d.clone()),
             MessageContentInternal::Giphy(g) => MessageContent::Giphy(g.clone()),
+            MessageContentInternal::PrizeWinner(c) => MessageContent::PrizeWinner(c.clone()),
             MessageContentInternal::GovernanceProposal(p) => MessageContent::GovernanceProposal(ProposalContent {
                 governance_canister_id: p.governance_canister_id,
                 proposal: p.proposal.clone(),
                 my_vote: my_user_id.and_then(|u| p.votes.get(&u)).copied(),
             }),
+            MessageContentInternal::Prize(p) => MessageContent::Prize(PrizeContent {
+                prizes_remaining: p.prizes_remaining.len() as u32,
+                winners: p.winners.iter().copied().collect(),
+                token: p.transaction.token(),
+                end_date: p.end_date,
+                caption: p.caption.clone(),
+                prizes_pending: p.reservations.len() as u32,
+            }),
+        }
+    }
+
+    pub fn text(&self) -> Option<&str> {
+        match self {
+            MessageContentInternal::Text(c) => Some(&c.text),
+            MessageContentInternal::Image(c) => c.caption.as_deref(),
+            MessageContentInternal::Video(c) => c.caption.as_deref(),
+            MessageContentInternal::Audio(c) => c.caption.as_deref(),
+            MessageContentInternal::File(c) => c.caption.as_deref(),
+            MessageContentInternal::Poll(c) => c.config.text.as_deref(),
+            MessageContentInternal::Crypto(c) => c.caption.as_deref(),
+            MessageContentInternal::Deleted(_) => None,
+            MessageContentInternal::Giphy(c) => c.caption.as_deref(),
+            MessageContentInternal::GovernanceProposal(c) => Some(c.proposal.title()),
+            MessageContentInternal::Prize(c) => c.caption.as_deref(),
+            MessageContentInternal::PrizeWinner(_) => None,
         }
     }
 
@@ -202,7 +337,9 @@ impl MessageContentInternal {
             | MessageContentInternal::Crypto(_)
             | MessageContentInternal::Deleted(_)
             | MessageContentInternal::Giphy(_)
-            | MessageContentInternal::GovernanceProposal(_) => {}
+            | MessageContentInternal::GovernanceProposal(_)
+            | MessageContentInternal::Prize(_)
+            | MessageContentInternal::PrizeWinner(_) => {}
         }
 
         references
@@ -386,12 +523,47 @@ pub struct CryptoContent {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct PrizeContentInitial {
+    pub prizes: Vec<Tokens>,
+    pub transfer: CryptoTransaction,
+    pub end_date: TimestampMillis,
+    pub caption: Option<String>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct PrizeContentInternal {
+    pub prizes_remaining: Vec<Tokens>,
+    pub reservations: HashSet<UserId>,
+    pub winners: HashSet<UserId>,
+    pub transaction: CryptoTransaction,
+    pub end_date: TimestampMillis,
+    pub caption: Option<String>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct PrizeContent {
+    pub prizes_remaining: u32,
+    pub prizes_pending: u32,
+    pub winners: Vec<UserId>,
+    pub token: Cryptocurrency,
+    pub end_date: TimestampMillis,
+    pub caption: Option<String>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct PrizeWinnerContent {
+    pub winner: UserId,
+    pub transaction: CompletedCryptoTransaction,
+    pub prize_message: MessageIndex,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct DeletedBy {
     pub deleted_by: UserId,
     pub timestamp: TimestampMillis,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, PartialEq, Eq)]
 pub struct BlobReference {
     pub canister_id: CanisterId,
     pub blob_id: u128,

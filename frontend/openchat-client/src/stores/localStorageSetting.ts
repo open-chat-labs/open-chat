@@ -3,7 +3,7 @@ import { writable } from "svelte/store";
 
 const test = process.env.NODE_ENV === "test";
 
-function boolFromLS(key: string, def: boolean): boolean {
+export function boolFromLS(key: string, def: boolean): boolean {
     if (test) return def;
 
     const val = localStorage.getItem(key);

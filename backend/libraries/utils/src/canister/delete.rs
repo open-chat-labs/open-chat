@@ -1,29 +1,19 @@
-use crate::canister;
-use candid::{CandidType, Principal};
-use ic_cdk::api;
-use serde::{Deserialize, Serialize};
+use ic_cdk::api::call::CallResult;
+use ic_cdk::api::management_canister;
+use ic_cdk::api::management_canister::main::CanisterIdRecord;
 use tracing::error;
 use types::CanisterId;
 
-pub async fn delete(canister_id: CanisterId) -> Result<(), canister::Error> {
-    #[derive(CandidType, Serialize, Deserialize)]
-    struct DeleteArgs {
-        canister_id: Principal,
-    }
-
-    let delete_args = DeleteArgs { canister_id };
-
-    let (_,): ((),) = match api::call::call(Principal::management_canister(), "delete_canister", (delete_args,)).await {
-        Ok(x) => x,
-        Err((code, msg)) => {
+pub async fn delete(canister_id: CanisterId) -> CallResult<()> {
+    management_canister::main::delete_canister(CanisterIdRecord { canister_id })
+        .await
+        .map_err(|(code, msg)| {
             error!(
+                %canister_id,
                 error_code = code as u8,
                 error_message = msg.as_str(),
                 "Error calling delete_canister"
             );
-            return Err(canister::Error { code, msg });
-        }
-    };
-
-    Ok(())
+            (code, msg)
+        })
 }

@@ -1,5 +1,5 @@
 use crate::{ChatId, EventWrapper, Message, MessageIndex, Reaction, TimestampMillis, User, UserId};
-use candid::CandidType;
+use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -64,4 +64,14 @@ pub struct GroupReactionAddedNotification {
     pub message: EventWrapper<Message>,
     pub reaction: Reaction,
     pub timestamp: TimestampMillis,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Debug)]
+pub struct CanPushNotificationsArgs {
+    pub principal: Principal,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Debug)]
+pub enum CanPushNotificationsResponse {
+    Success(bool),
 }

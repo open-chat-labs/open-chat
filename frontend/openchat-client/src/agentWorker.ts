@@ -2,9 +2,6 @@ import {
     CurrentUserResponse,
     WorkerRequest,
     UserLookup,
-    MergedUpdatesResponse,
-    CurrentChatState,
-    UpdateArgs,
     UsersArgs,
     UsersResponse,
     MessagesReadFromServer,
@@ -37,6 +34,7 @@ import {
     UnblockUserResponse,
     BlobReference,
     MakeGroupPrivateResponse,
+    DeleteFrozenGroupResponse,
     DeleteGroupResponse,
     LeaveGroupResponse,
     JoinGroupResponse,
@@ -67,10 +65,6 @@ import {
     SearchDirectChatResponse,
     Cryptocurrency,
     Tokens,
-    ConfirmPhoneNumberResponse,
-    PhoneNumber,
-    SubmitPhoneNumberResponse,
-    UpgradeStorageResponse,
     ThreadPreview,
     ThreadSyncDetails,
     PartialUserSummary,
@@ -89,6 +83,15 @@ import {
     UnfreezeGroupResponse,
     SuspendUserResponse,
     UnsuspendUserResponse,
+    ChatStateFull,
+    UpdatesResult,
+    DeletedGroupMessageResponse,
+    DeletedDirectMessageResponse,
+    ClaimPrizeResponse,
+    DiamondMembershipDuration,
+    PayForDiamondMembershipResponse,
+    AddHotGroupExclusionResponse,
+    RemoveHotGroupExclusionResponse,
     Tally,
 } from "openchat-shared";
 import type { OpenChatConfig } from "./config";
@@ -121,7 +124,7 @@ export class OpenChatAgentWorker extends EventTarget {
     constructor(private config: OpenChatConfig) {
         super();
         console.debug("WORKER_CLIENT: loading worker with version: ", config.websiteVersion);
-        this._worker = new Worker(`worker.js?v=${config.websiteVersion}`);
+        this._worker = new Worker(`/worker.js?v=${config.websiteVersion}`);
         const req: Omit<WorkerRequest, "correlationId"> = {
             kind: "init",
             payload: {
@@ -135,6 +138,7 @@ export class OpenChatAgentWorker extends EventTarget {
                 internetIdentityUrl: this.config.internetIdentityUrl,
                 nfidUrl: this.config.nfidUrl,
                 ledgerCanisterICP: this.config.ledgerCanisterICP,
+                ledgerCanisterSNS1: this.config.ledgerCanisterSNS1,
                 ledgerCanisterBTC: this.config.ledgerCanisterBTC,
                 ledgerCanisterCHAT: this.config.ledgerCanisterCHAT,
                 userGeekApiKey: this.config.userGeekApiKey,
@@ -163,7 +167,8 @@ export class OpenChatAgentWorker extends EventTarget {
                         new MessagesReadFromServer(
                             data.event.chatId,
                             data.event.readByMeUpTo,
-                            data.event.threadsRead
+                            data.event.threadsRead,
+                            data.event.dateReadPinned
                         )
                     );
                 }
@@ -257,32 +262,46 @@ export class OpenChatAgentWorker extends EventTarget {
         });
     }
 
-    getInitialState(
-        userStore: UserLookup,
-        selectedChatId: string | undefined
-    ): Promise<MergedUpdatesResponse> {
+    getInitialStateV2(): Promise<UpdatesResult> {
         return this.sendRequest({
-            kind: "getInitialState",
+            kind: "getInitialStateV2",
+            payload: {},
+        });
+    }
+
+    getUpdatesV2(currentState: ChatStateFull): Promise<UpdatesResult> {
+        return this.sendRequest({
+            kind: "getUpdatesV2",
             payload: {
-                userStore,
-                selectedChatId,
+                currentState,
             },
         });
     }
 
-    getUpdates(
-        currentState: CurrentChatState,
-        args: UpdateArgs,
-        userStore: UserLookup,
-        selectedChatId: string | undefined
-    ): Promise<MergedUpdatesResponse> {
+    getDeletedGroupMessage(
+        chatId: string,
+        messageId: bigint,
+        threadRootMessageIndex: number | undefined
+    ): Promise<DeletedGroupMessageResponse> {
         return this.sendRequest({
-            kind: "getUpdates",
+            kind: "getDeletedGroupMessage",
             payload: {
-                currentState,
-                args,
-                userStore,
-                selectedChatId,
+                chatId,
+                messageId,
+                threadRootMessageIndex,
+            },
+        });
+    }
+
+    getDeletedDirectMessage(
+        userId: string,
+        messageId: bigint
+    ): Promise<DeletedDirectMessageResponse> {
+        return this.sendRequest({
+            kind: "getDeletedDirectMessage",
+            payload: {
+                userId,
+                messageId,
             },
         });
     }
@@ -363,6 +382,15 @@ export class OpenChatAgentWorker extends EventTarget {
             payload: {
                 chatId,
                 previous,
+            },
+        });
+    }
+
+    lastOnline(userIds: string[]): Promise<Record<string, number>> {
+        return this.sendRequest({
+            kind: "lastOnline",
+            payload: {
+                userIds,
             },
         });
     }
@@ -831,7 +859,7 @@ export class OpenChatAgentWorker extends EventTarget {
         chatId: string,
         user: CreatedUser,
         mentioned: User[],
-        msg: Message,
+        event: EventWrapper<Message>,
         threadRootMessageIndex?: number
     ): Promise<[SendMessageResponse, Message]> {
         return this.sendRequest({
@@ -841,7 +869,7 @@ export class OpenChatAgentWorker extends EventTarget {
                 chatId,
                 user,
                 mentioned,
-                msg,
+                event,
                 threadRootMessageIndex,
             },
         });
@@ -966,10 +994,12 @@ export class OpenChatAgentWorker extends EventTarget {
         });
     }
 
-    getRecommendedGroups(): Promise<GroupChatSummary[]> {
+    getRecommendedGroups(exclusions: string[]): Promise<GroupChatSummary[]> {
         return this.sendRequest({
             kind: "getRecommendedGroups",
-            payload: undefined,
+            payload: {
+                exclusions,
+            },
         });
     }
 
@@ -1042,39 +1072,12 @@ export class OpenChatAgentWorker extends EventTarget {
         });
     }
 
-    refreshAccountBalance(crypto: Cryptocurrency, account: string): Promise<Tokens> {
+    refreshAccountBalance(crypto: Cryptocurrency, principal: string): Promise<Tokens> {
         return this.sendRequest({
             kind: "refreshAccountBalance",
             payload: {
                 crypto,
-                account,
-            },
-        });
-    }
-
-    confirmPhoneNumber(code: string): Promise<ConfirmPhoneNumberResponse> {
-        return this.sendRequest({
-            kind: "confirmPhoneNumber",
-            payload: {
-                code,
-            },
-        });
-    }
-
-    submitPhoneNumber(phoneNumber: PhoneNumber): Promise<SubmitPhoneNumberResponse> {
-        return this.sendRequest({
-            kind: "submitPhoneNumber",
-            payload: {
-                phoneNumber,
-            },
-        });
-    }
-
-    upgradeStorage(newLimitBytes: number): Promise<UpgradeStorageResponse> {
-        return this.sendRequest({
-            kind: "upgradeStorage",
-            payload: {
-                newLimitBytes,
+                principal,
             },
         });
     }
@@ -1233,6 +1236,33 @@ export class OpenChatAgentWorker extends EventTarget {
         });
     }
 
+    addHotGroupExclusion(chatId: string): Promise<AddHotGroupExclusionResponse> {
+        return this.sendRequest({
+            kind: "addHotGroupExclusion",
+            payload: {
+                chatId,
+            },
+        });
+    }
+
+    removeHotGroupExclusion(chatId: string): Promise<RemoveHotGroupExclusionResponse> {
+        return this.sendRequest({
+            kind: "removeHotGroupExclusion",
+            payload: {
+                chatId,
+            },
+        });
+    }
+
+    deleteFrozenGroup(chatId: string): Promise<DeleteFrozenGroupResponse> {
+        return this.sendRequest({
+            kind: "deleteFrozenGroup",
+            payload: {
+                chatId,
+            },
+        });
+    }
+
     suspendUser(userId: string, reason: string): Promise<SuspendUserResponse> {
         return this.sendRequest({
             kind: "suspendUser",
@@ -1252,10 +1282,60 @@ export class OpenChatAgentWorker extends EventTarget {
         });
     }
 
+    loadFailedMessages(): Promise<Record<string, Record<number, EventWrapper<Message>>>> {
+        return this.sendRequest({
+            kind: "loadFailedMessages",
+            payload: {},
+        });
+    }
+
+    deleteFailedMessage(
+        chatId: string,
+        messageId: bigint,
+        threadRootMessageIndex?: number
+    ): Promise<void> {
+        return this.sendRequest({
+            kind: "deleteFailedMessage",
+            payload: {
+                chatId,
+                messageId,
+                threadRootMessageIndex,
+            },
+        });
+    }
+
     markSuspectedBot(): Promise<void> {
         return this.sendRequest({
             kind: "markSuspectedBot",
+            payload: {},
+        });
+    }
+
+    claimPrize(chatId: string, messageId: bigint): Promise<ClaimPrizeResponse> {
+        return this.sendRequest({
+            kind: "claimPrize",
             payload: {
+                chatId,
+                messageId,
+            },
+        });
+    }
+
+    payForDiamondMembership(
+        userId: string,
+        token: Cryptocurrency,
+        duration: DiamondMembershipDuration,
+        recurring: boolean,
+        expectedPriceE8s: bigint
+    ): Promise<PayForDiamondMembershipResponse> {
+        return this.sendRequest({
+            kind: "payForDiamondMembership",
+            payload: {
+                userId,
+                token,
+                duration,
+                recurring,
+                expectedPriceE8s,
             },
         });
     }

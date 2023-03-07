@@ -38,7 +38,8 @@ export function darkTheme(defaultTheme: Theme): Theme {
         "txt-light": textBodyDark,
         bd: borderDark,
         error: "#CF6679",
-        accent: "#ff005c",
+        warn: "#f36D28",
+        accent: "#ff2e2e",
         disabledTxt: txtLow,
         primary,
 
@@ -98,7 +99,8 @@ export function darkTheme(defaultTheme: Theme): Theme {
 
         input: {
             bg: textBlack,
-            sh: "none",
+            sh: "inset 0px 2px 4px rgba(0,0,0,0.8)",
+            accent: primary,
         },
 
         members: {
@@ -161,9 +163,9 @@ export function darkTheme(defaultTheme: Theme): Theme {
             bg: blueAccent,
             hv: "#053d5c",
             txt: txt,
-            disabled: textBlack,
+            disabled: textBodyLight,
             spinner: dark60,
-            "disabled-txt": "#999999",
+            "disabled-txt": "#ffffff",
             "disabled-bd": "#999999",
         },
 
@@ -243,6 +245,13 @@ export function darkTheme(defaultTheme: Theme): Theme {
         thread: {
             preview: {
                 bg: "transparent",
+            },
+        },
+
+        vote: {
+            ...defaultTheme.vote,
+            maybe: {
+                color: "#666666",
             },
         },
 

@@ -42,6 +42,10 @@
 </div>
 
 <style type="text/scss">
+    :global(.modal-page a) {
+        color: var(--modalPage-txt);
+    }
+
     :global(.lang select.select) {
         @include font(light, normal, fs-90);
         background-color: transparent;

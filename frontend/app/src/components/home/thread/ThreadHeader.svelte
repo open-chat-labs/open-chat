@@ -52,7 +52,7 @@
             return {
                 title: $mobileWidth ? $userStore[chatSummary.them]?.username : $_("thread.title"),
                 avatarUrl: client.userAvatarUrl($userStore[chatSummary.them]),
-                userStatus: client.getUserStatus(now, $userStore, chatSummary.them),
+                userId: chatSummary.them,
                 subtext,
                 typing: someoneTyping !== undefined,
             };
@@ -61,6 +61,7 @@
             title: $mobileWidth ? chatSummary.name : $_("thread.title"),
             userStatus: UserStatus.None,
             avatarUrl: client.groupAvatarUrl(chatSummary),
+            userId: undefined,
             subtext,
             typing: someoneTyping !== undefined,
         };
@@ -71,9 +72,10 @@
     <div class="avatar">
         <Avatar
             statusBorder={"var(--section-bg)"}
-            status={chat.userStatus}
+            showStatus={true}
+            userId={chat.userId}
             url={chat.avatarUrl}
-            size={AvatarSize.Small} />
+            size={AvatarSize.Default} />
     </div>
     <div class="chat-details">
         <div class="chat-name" title={chat.title}>

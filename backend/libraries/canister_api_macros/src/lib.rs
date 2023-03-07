@@ -4,7 +4,7 @@ use quote::quote;
 use serde::Deserialize;
 use serde_tokenstream::from_tokenstream;
 use std::fmt::Formatter;
-use syn::{parse_macro_input, ItemFn};
+use syn::{parse_macro_input, Block, FnArg, ItemFn, Pat, PatIdent, PatType, Signature};
 
 enum MethodType {
     Update,
@@ -49,14 +49,14 @@ pub fn query_msgpack(attr: TokenStream, item: TokenStream) -> TokenStream {
 }
 
 fn canister_api_method(method_type: MethodType, attr: TokenStream, item: TokenStream, include_candid: bool) -> TokenStream {
-    let input: AttributeInput = from_tokenstream(&attr.into()).unwrap();
+    let attr: AttributeInput = from_tokenstream(&attr.into()).unwrap();
     let item = parse_macro_input!(item as ItemFn);
 
     let method_type = Ident::new(method_type.to_string().as_str(), Span::call_site());
 
-    let name = input.name.unwrap_or_else(|| item.sig.ident.to_string());
-    let guard = input.guard.map(|g| quote! { guard = #g, });
-    let manual_reply = input.manual_reply.then_some(quote! { manual_reply = "true", });
+    let name = attr.name.unwrap_or_else(|| item.sig.ident.to_string());
+    let guard = attr.guard.map(|g| quote! { guard = #g, });
+    let manual_reply = attr.manual_reply.then_some(quote! { manual_reply = "true", });
 
     let msgpack_name = format!("{name}_msgpack");
 
@@ -78,11 +78,77 @@ fn canister_api_method(method_type: MethodType, attr: TokenStream, item: TokenSt
         quote! { #[ic_cdk_macros::#method_type(name = #msgpack_name, #guard #manual_reply #serializer #deserializer)] };
 
     TokenStream::from(quote! {
-        use msgpack::serialize as #serializer_ident;
-        use msgpack::deserialize as #deserializer_ident;
+        use msgpack::serialize_then_unwrap as #serializer_ident;
+        use msgpack::deserialize_then_unwrap as #deserializer_ident;
 
         #candid
         #msgpack
         #item
     })
+}
+
+#[proc_macro_attribute]
+pub fn proposal(attr: TokenStream, item: TokenStream) -> TokenStream {
+    let attr: AttributeInput = from_tokenstream(&attr.into()).unwrap();
+    let original_fn = parse_macro_input!(item as ItemFn);
+
+    let name = attr.name.unwrap_or_else(|| original_fn.sig.ident.to_string());
+    let validate_fn_name = format!("{name}_validate");
+    let guard = attr.guard.map(|g| quote! { guard = #g, });
+    let manual_reply = attr.manual_reply.then_some(quote! { manual_reply = "true", });
+
+    let validate_fn = convert_to_validate_fn(original_fn.clone());
+
+    TokenStream::from(quote! {
+        #[ic_cdk_macros::query(name = #validate_fn_name, #guard #manual_reply)]
+        #validate_fn
+
+        #[ic_cdk_macros::update(name = #name, #guard #manual_reply)]
+        #original_fn
+    })
+}
+
+fn convert_to_validate_fn(original: ItemFn) -> ItemFn {
+    let mut sig = original.sig;
+    let name = format!("{}_validate", sig.ident);
+    sig.ident = Ident::new(&name, Span::call_site());
+    sig.output = syn::parse2(quote!(-> Result<String, String>)).unwrap();
+    sig.asyncness = None;
+
+    let arg_names = get_arg_names(&sig);
+    let args = match arg_names.len() {
+        1 => quote! { #(#arg_names),* },
+        _ => quote! { (#(#arg_names),*) },
+    };
+
+    let block: Block = syn::parse2(quote! {
+        {
+            human_readable::to_human_readable_string(&#args)
+        }
+    })
+    .unwrap();
+
+    ItemFn {
+        attrs: original.attrs,
+        vis: original.vis,
+        sig,
+        block: Box::new(block),
+    }
+}
+
+fn get_arg_names(signature: &Signature) -> Vec<Ident> {
+    signature
+        .inputs
+        .iter()
+        .map(|arg| match arg {
+            FnArg::Receiver(r) => r.self_token.into(),
+            FnArg::Typed(PatType { pat, .. }) => {
+                if let Pat::Ident(PatIdent { ident, .. }) = pat.as_ref() {
+                    ident.clone()
+                } else {
+                    panic!("Unable to determine arg name");
+                }
+            }
+        })
+        .collect()
 }

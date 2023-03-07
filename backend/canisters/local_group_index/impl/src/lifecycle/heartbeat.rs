@@ -1,9 +1,9 @@
 use crate::{mutate_state, read_state, RuntimeState, GROUP_CANISTER_INITIAL_CYCLES_BALANCE};
+use ic_cdk::api::management_canister::main::CanisterInstallMode;
 use ic_cdk_macros::heartbeat;
-use types::{CanisterId, Cycles, CyclesTopUp, Version};
+use types::{CanisterId, ChatId, Cycles, CyclesTopUp, Version};
 use utils::canister::{self, FailedUpgrade};
-use utils::consts::{CREATE_CANISTER_CYCLES_FEE, CYCLES_REQUIRED_FOR_UPGRADE, MIN_CYCLES_BALANCE};
-use utils::cycles::can_spend_cycles;
+use utils::consts::{CREATE_CANISTER_CYCLES_FEE, MIN_CYCLES_BALANCE};
 
 #[heartbeat]
 fn heartbeat() {
@@ -12,10 +12,9 @@ fn heartbeat() {
 }
 
 mod upgrade_canisters {
-    use types::ChatId;
-
     use super::*;
-    type CanisterToUpgrade = utils::canister::CanisterToUpgrade<group_canister::post_upgrade::Args>;
+
+    type CanisterToUpgrade = canister::CanisterToInstall<group_canister::post_upgrade::Args>;
 
     pub fn run() {
         let canisters_to_upgrade = mutate_state(next_batch);
@@ -26,9 +25,9 @@ mod upgrade_canisters {
 
     fn next_batch(runtime_state: &mut RuntimeState) -> Vec<CanisterToUpgrade> {
         let count_in_progress = runtime_state.data.canisters_requiring_upgrade.count_in_progress();
-        let max_concurrent_canister_upgrades = runtime_state.data.max_concurrent_canister_upgrades as usize;
+        let group_upgrade_concurrency = runtime_state.data.group_upgrade_concurrency as usize;
 
-        (0..(max_concurrent_canister_upgrades.saturating_sub(count_in_progress)))
+        (0..(group_upgrade_concurrency.saturating_sub(count_in_progress)))
             .map_while(|_| try_get_next(runtime_state))
             .collect()
     }
@@ -46,24 +45,25 @@ mod upgrade_canisters {
         let chat_id = canister_id.into();
         let group = runtime_state.data.local_groups.get_mut(&chat_id)?;
         let current_wasm_version = group.wasm_version;
-        let group_canister_wasm = &runtime_state.data.group_canister_wasm;
+        let group_canister_wasm = &runtime_state.data.group_canister_wasm_for_upgrades;
+        let deposit_cycles_if_needed = ic_cdk::api::canister_balance128() > MIN_CYCLES_BALANCE;
+
+        if current_wasm_version == group_canister_wasm.version {
+            return None;
+        }
 
         group.set_canister_upgrade_status(true, None);
-
-        let cycles_to_deposit_if_needed = if can_spend_cycles(CYCLES_REQUIRED_FOR_UPGRADE, MIN_CYCLES_BALANCE) {
-            Some(CYCLES_REQUIRED_FOR_UPGRADE)
-        } else {
-            None
-        };
 
         Some(CanisterToUpgrade {
             canister_id,
             current_wasm_version,
             new_wasm: group_canister_wasm.clone(),
-            cycles_to_deposit_if_needed,
+            deposit_cycles_if_needed,
             args: group_canister::post_upgrade::Args {
                 wasm_version: group_canister_wasm.version,
             },
+            mode: CanisterInstallMode::Upgrade,
+            stop_start_canister: true,
         })
     }
 
@@ -78,9 +78,9 @@ mod upgrade_canisters {
         let from_version = canister_to_upgrade.current_wasm_version;
         let to_version = canister_to_upgrade.new_wasm.version;
 
-        match canister::upgrade(canister_to_upgrade).await {
-            Ok(cycles_top_up) => {
-                mutate_state(|state| on_success(canister_id, to_version, cycles_top_up, state));
+        match utils::canister::install(canister_to_upgrade).await {
+            Ok(_) => {
+                mutate_state(|state| on_success(canister_id, to_version, None, state));
             }
             Err(_) => {
                 mutate_state(|state| on_failure(canister_id, from_version, to_version, state));
@@ -116,8 +116,8 @@ mod upgrade_canisters {
     }
 
     fn mark_upgrade_complete(chat_id: ChatId, new_wasm_version: Option<Version>, runtime_state: &mut RuntimeState) {
-        if let Some(user) = runtime_state.data.local_groups.get_mut(&chat_id) {
-            user.set_canister_upgrade_status(false, new_wasm_version);
+        if let Some(group) = runtime_state.data.local_groups.get_mut(&chat_id) {
+            group.set_canister_upgrade_status(false, new_wasm_version);
         }
     }
 }

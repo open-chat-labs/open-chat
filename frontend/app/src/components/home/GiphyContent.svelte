@@ -5,6 +5,9 @@
     import type { GiphyContent } from "openchat-client";
     import ContentCaption from "./ContentCaption.svelte";
     import { mobileWidth } from "../../stores/screenDimensions";
+    import Button from "../Button.svelte";
+    import { _ } from "svelte-i18n";
+    import { lowBandwidth } from "../../stores/settings";
 
     export let content: GiphyContent;
     export let fill: boolean;
@@ -18,6 +21,8 @@
     $: image = $mobileWidth ? content.mobile : content.desktop;
     $: landscape = image.height < image.width;
     $: style = `${height === undefined ? "" : `height: ${height}px;`} max-width: ${image.width}px;`;
+
+    $: hidden = $lowBandwidth;
 </script>
 
 <div class="img-wrapper">
@@ -32,7 +37,16 @@
             title={content.caption ?? content.title}
             class:reply
             class:rtl={$rtlStore} />
-    {:else if $mobileWidth}
+    {:else if $mobileWidth || hidden}
+        {#if hidden && !$mobileWidth}
+            <div class="mask">
+                {#if !reply}
+                    <div class="reveal">
+                        <Button on:click={() => (hidden = false)}>{$_("loadGif")}</Button>
+                    </div>
+                {/if}
+            </div>
+        {/if}
         <img
             class:landscape
             class:fill
@@ -68,6 +82,24 @@
 <style type="text/scss">
     .img-wrapper {
         position: relative;
+    }
+
+    .mask {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        width: 100%;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        background: linear-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.5));
+    }
+
+    .reveal {
+        position: absolute;
+        top: calc(50% - 20px);
+        width: 100%;
+        text-align: center;
     }
 
     .placeholder,

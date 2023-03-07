@@ -18,6 +18,7 @@ export function lightTheme(): Theme {
         label: "Light",
         burst: false,
         mode: "light",
+        warn: "#f36D28",
 
         bg: "linear-gradient(#22A7F2, #5f2583)",
         // bg: "#ffffff",
@@ -86,6 +87,7 @@ export function lightTheme(): Theme {
         input: {
             bg: textBox,
             sh: "none",
+            accent: orangeAccent,
         },
 
         members: {
@@ -244,15 +246,15 @@ export function lightTheme(): Theme {
 
         vote: {
             yes: {
-                color: blueAccent,
+                color: "#4ae97a",
                 hv: "#0d8cd4",
             },
             no: {
-                color: pinkAccent,
+                color: "#ff2e2e",
                 hv: "#ff4fa7",
             },
             maybe: {
-                color: "#666666",
+                color: "#aaaaaa",
             },
         },
 

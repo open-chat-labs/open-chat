@@ -1,42 +1,40 @@
 use crate::model::challenges::Challenges;
-use crate::model::failed_messages_pending_retry::FailedMessagesPendingRetry;
-use crate::model::open_storage_user_sync_queue::OpenStorageUserSyncQueue;
-use crate::model::set_user_suspended_queue::SetUserSuspendedQueue;
+use crate::model::local_user_index_map::LocalUserIndex;
+use crate::model::storage_index_user_sync_queue::OpenStorageUserSyncQueue;
 use crate::model::user_map::UserMap;
 use crate::model::user_principal_migration_queue::UserPrincipalMigrationQueue;
-use candid::{CandidType, Principal};
-use canister_logger::LogMessagesWrapper;
+use crate::timer_job_types::TimerJob;
+use candid::Principal;
 use canister_state_macros::canister_state;
-use model::user_event_sync_queue::UserEventSyncQueue;
+use canister_timer_jobs::TimerJobs;
+use local_user_index_canister::Event as LocalUserIndexEvent;
+use model::local_user_index_map::LocalUserIndexMap;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
-use std::collections::{HashSet, VecDeque};
-use types::{
-    CanisterId, CanisterWasm, ChatId, ConfirmationCodeSms, Cycles, Milliseconds, TimestampMillis, Timestamped, UserId, Version,
-};
+use std::collections::HashSet;
+use types::{CanisterId, CanisterWasm, Cryptocurrency, Cycles, Milliseconds, TimestampMillis, Timestamped, UserId, Version};
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
-use utils::consts::CYCLES_REQUIRED_FOR_UPGRADE;
+use utils::canister_event_sync_queue::CanisterEventSyncQueue;
 use utils::env::Environment;
-use utils::event_stream::EventStream;
-use utils::time::{DAY_IN_MS, MINUTE_IN_MS};
-use utils::{canister, memory};
+use utils::time::DAY_IN_MS;
 
 mod guards;
+mod jobs;
 mod lifecycle;
+mod memory;
 mod model;
 mod queries;
+mod timer_job_types;
 mod updates;
 
-pub const USER_LIMIT: usize = 70_000;
+pub const USER_LIMIT: usize = 150_000;
 
-const USER_CANISTER_INITIAL_CYCLES_BALANCE: Cycles = CYCLES_REQUIRED_FOR_UPGRADE + USER_CANISTER_TOP_UP_AMOUNT; // 0.18T cycles
 const USER_CANISTER_TOP_UP_AMOUNT: Cycles = 100_000_000_000; // 0.1T cycles
-const CONFIRMED_PHONE_NUMBER_STORAGE_ALLOWANCE: u64 = (1024 * 1024 * 1024) / 10; // 0.1 GB
-const CONFIRMATION_CODE_EXPIRY_MILLIS: u64 = 10 * MINUTE_IN_MS; // 10 minutes
 const TIME_UNTIL_SUSPENDED_ACCOUNT_IS_DELETED_MILLIS: Milliseconds = DAY_IN_MS * 90; // 90 days
+const ONE_MB: u64 = 1024 * 1024;
+const ONE_GB: u64 = 1024 * ONE_MB;
 
 thread_local! {
-    static LOG_MESSAGES: RefCell<LogMessagesWrapper> = RefCell::default();
     static WASM_VERSION: RefCell<Timestamped<Version>> = RefCell::default();
 }
 
@@ -62,9 +60,14 @@ impl RuntimeState {
         }
     }
 
-    pub fn is_caller_service_principal(&self) -> bool {
+    pub fn is_caller_governance_principal(&self) -> bool {
         let caller = self.env.caller();
-        self.data.service_principals.contains(&caller)
+        self.data.governance_principals.contains(&caller)
+    }
+
+    pub fn is_caller_local_user_index_canister(&self) -> bool {
+        let caller = self.env.caller();
+        self.data.local_index_map.get(&caller).is_some()
     }
 
     pub fn is_caller_group_index_canister(&self) -> bool {
@@ -72,62 +75,57 @@ impl RuntimeState {
         caller == self.data.group_index_canister_id
     }
 
-    pub fn is_caller_sms_service(&self) -> bool {
-        let caller = self.env.caller();
-        self.data.sms_service_principals.contains(&caller)
-    }
-
-    pub fn is_caller_notifications_canister(&self) -> bool {
-        let caller = self.env.caller();
-        self.data.notifications_canister_ids.contains(&caller)
-    }
-
-    pub fn is_caller_online_users_aggregator_canister(&self) -> bool {
-        let caller = self.env.caller();
-        self.data.online_users_aggregator_canister_ids.contains(&caller)
-    }
-
-    pub fn is_caller_super_admin(&self) -> bool {
+    pub fn is_caller_platform_moderator(&self) -> bool {
         let caller = self.env.caller();
         if let Some(user) = self.data.users.get_by_principal(&caller) {
-            self.data.super_admins.contains(&user.user_id)
+            self.data.platform_moderators.contains(&user.user_id)
         } else {
             false
         }
     }
 
-    pub fn generate_6_digit_code(&mut self) -> String {
-        let random = self.env.random_u32();
-        format!("{:0>6}", random % 1000000)
+    pub fn is_caller_platform_operator(&self) -> bool {
+        let caller = self.env.caller();
+        if let Some(user) = self.data.users.get_by_principal(&caller) {
+            self.data.platform_operators.contains(&user.user_id)
+        } else {
+            false
+        }
     }
 
     pub fn metrics(&self) -> Metrics {
-        let user_metrics = self.data.users.metrics();
+        let now = self.env.now();
         let canister_upgrades_metrics = self.data.canisters_requiring_upgrade.metrics();
         Metrics {
-            memory_used: memory::used(),
+            memory_used: utils::memory::used(),
             now: self.env.now(),
             cycles_balance: self.env.cycles_balance(),
             wasm_version: WASM_VERSION.with(|v| **v.borrow()),
             git_commit_id: utils::git::git_commit_id().to_string(),
             total_cycles_spent_on_canisters: self.data.total_cycles_spent_on_canisters,
-            canisters_in_pool: self.data.canister_pool.len() as u16,
-            users_created: user_metrics.users_created,
-            users_online_5_minutes: user_metrics.users_online_5_minutes,
-            users_online_1_hour: user_metrics.users_online_1_hour,
-            users_online_1_week: user_metrics.users_online_1_week,
-            users_online_1_month: user_metrics.users_online_1_month,
+            users_created: self.data.users.len() as u64,
+            diamond_members: DiamondMembershipMetrics {
+                users: self.data.users.diamond_metrics(now),
+                payments: self.data.diamond_membership_payment_metrics.clone(),
+            },
             canister_upgrades_completed: canister_upgrades_metrics.completed,
             canister_upgrades_failed: canister_upgrades_metrics.failed,
             canister_upgrades_pending: canister_upgrades_metrics.pending as u64,
             canister_upgrades_in_progress: canister_upgrades_metrics.in_progress as u64,
+            governance_principals: self.data.governance_principals.iter().copied().collect(),
             user_wasm_version: self.data.user_canister_wasm.version,
+            local_user_index_wasm_version: self.data.local_user_index_canister_wasm_for_new_canisters.version,
             max_concurrent_canister_upgrades: self.data.max_concurrent_canister_upgrades,
-            sms_messages_in_queue: self.data.sms_messages.len() as u32,
-            super_admins: self.data.super_admins.len() as u8,
-            super_admins_to_dismiss: self.data.super_admins_to_dismiss.len() as u32,
+            platform_moderators: self.data.platform_moderators.len() as u8,
+            platform_operators: self.data.platform_operators.len() as u8,
             inflight_challenges: self.data.challenges.count(),
-            user_events_queue_length: self.data.user_event_sync_queue.len(),
+            user_index_events_queue_length: self.data.user_index_event_sync_queue.len(),
+            local_user_indexes: self.data.local_index_map.iter().map(|(c, i)| (*c, i.clone())).collect(),
+            canister_ids: CanisterIds {
+                group_index: self.data.group_index_canister_id,
+                notifications_index: self.data.notifications_index_canister_id,
+                cycles_dispenser: self.data.cycles_dispenser_canister_id,
+            },
         }
     }
 }
@@ -135,82 +133,95 @@ impl RuntimeState {
 #[derive(Serialize, Deserialize)]
 struct Data {
     pub users: UserMap,
-    pub service_principals: HashSet<Principal>,
+    pub governance_principals: HashSet<Principal>,
     pub user_canister_wasm: CanisterWasm,
-    pub sms_service_principals: HashSet<Principal>,
-    pub sms_messages: EventStream<ConfirmationCodeSms>,
+    pub local_user_index_canister_wasm_for_new_canisters: CanisterWasm,
+    pub local_user_index_canister_wasm_for_upgrades: CanisterWasm,
     pub group_index_canister_id: CanisterId,
-    pub notifications_canister_ids: Vec<CanisterId>,
+    pub notifications_index_canister_id: CanisterId,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
-    pub canister_pool: canister::Pool,
     pub total_cycles_spent_on_canisters: Cycles,
-    pub online_users_aggregator_canister_ids: HashSet<CanisterId>,
-    pub open_storage_index_canister_id: CanisterId,
-    pub open_storage_user_sync_queue: OpenStorageUserSyncQueue,
-    pub user_event_sync_queue: UserEventSyncQueue,
+    pub cycles_dispenser_canister_id: CanisterId,
+    pub storage_index_canister_id: CanisterId,
+    pub storage_index_user_sync_queue: OpenStorageUserSyncQueue,
+    pub user_index_event_sync_queue: CanisterEventSyncQueue<LocalUserIndexEvent>,
     pub user_principal_migration_queue: UserPrincipalMigrationQueue,
-    pub ledger_canister_id: CanisterId,
-    pub failed_messages_pending_retry: FailedMessagesPendingRetry,
-    pub super_admins: HashSet<UserId>,
-    pub super_admins_to_dismiss: VecDeque<(UserId, ChatId)>,
+    pub platform_moderators: HashSet<UserId>,
+    #[serde(default)]
+    pub platform_operators: HashSet<UserId>,
     pub test_mode: bool,
     pub challenges: Challenges,
     pub max_concurrent_canister_upgrades: usize,
-    pub set_user_suspended_queue: SetUserSuspendedQueue,
+    #[serde(default)]
+    pub diamond_membership_payment_metrics: DiamondMembershipPaymentMetrics,
+    pub local_index_map: LocalUserIndexMap,
+    #[serde(default)]
+    pub timer_jobs: TimerJobs<TimerJob>,
 }
 
 impl Data {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
-        service_principals: Vec<Principal>,
-        sms_service_principals: Vec<Principal>,
+        governance_principals: Vec<Principal>,
         user_canister_wasm: CanisterWasm,
+        local_user_index_canister_wasm: CanisterWasm,
         group_index_canister_id: CanisterId,
-        notifications_canister_ids: Vec<CanisterId>,
-        online_users_aggregator_canister_id: CanisterId,
-        open_storage_index_canister_id: CanisterId,
-        ledger_canister_id: CanisterId,
+        notifications_index_canister_id: CanisterId,
+        cycles_dispenser_canister_id: CanisterId,
+        storage_index_canister_id: CanisterId,
         proposals_bot_user_id: UserId,
-        canister_pool_target_size: u16,
         test_mode: bool,
     ) -> Self {
-        let mut users = UserMap::default();
+        let mut data = Data {
+            users: UserMap::default(),
+            governance_principals: governance_principals.into_iter().collect(),
+            user_canister_wasm,
+            local_user_index_canister_wasm_for_new_canisters: local_user_index_canister_wasm.clone(),
+            local_user_index_canister_wasm_for_upgrades: local_user_index_canister_wasm,
+            group_index_canister_id,
+            notifications_index_canister_id,
+            cycles_dispenser_canister_id,
+            canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
+            total_cycles_spent_on_canisters: 0,
+            storage_index_canister_id,
+            storage_index_user_sync_queue: OpenStorageUserSyncQueue::default(),
+            user_index_event_sync_queue: CanisterEventSyncQueue::default(),
+            user_principal_migration_queue: UserPrincipalMigrationQueue::default(),
+            platform_moderators: HashSet::new(),
+            platform_operators: HashSet::new(),
+            test_mode,
+            challenges: Challenges::new(test_mode),
+            max_concurrent_canister_upgrades: 2,
+            diamond_membership_payment_metrics: DiamondMembershipPaymentMetrics::default(),
+            local_index_map: LocalUserIndexMap::default(),
+            timer_jobs: TimerJobs::default(),
+        };
 
         // Register the ProposalsBot
-        users.register(
+        data.users.register(
             proposals_bot_user_id.into(),
             proposals_bot_user_id,
-            user_canister_wasm.version,
+            Version::default(),
             "ProposalsBot".to_string(),
             0,
             None,
             true,
         );
 
-        Data {
-            users,
-            service_principals: service_principals.into_iter().collect(),
-            user_canister_wasm,
-            sms_service_principals: sms_service_principals.into_iter().collect(),
-            sms_messages: EventStream::default(),
-            group_index_canister_id,
-            notifications_canister_ids,
-            online_users_aggregator_canister_ids: HashSet::from([online_users_aggregator_canister_id]),
-            canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
-            canister_pool: canister::Pool::new(canister_pool_target_size),
-            total_cycles_spent_on_canisters: 0,
-            open_storage_index_canister_id,
-            open_storage_user_sync_queue: OpenStorageUserSyncQueue::default(),
-            user_event_sync_queue: UserEventSyncQueue::default(),
-            user_principal_migration_queue: UserPrincipalMigrationQueue::default(),
-            ledger_canister_id,
-            failed_messages_pending_retry: FailedMessagesPendingRetry::default(),
-            super_admins: HashSet::new(),
-            super_admins_to_dismiss: VecDeque::new(),
-            test_mode,
-            challenges: Challenges::new(test_mode),
-            max_concurrent_canister_upgrades: 2,
-            set_user_suspended_queue: SetUserSuspendedQueue::default(),
+        data
+    }
+
+    pub fn push_event_to_local_user_index(&mut self, user_id: UserId, event: LocalUserIndexEvent) {
+        if let Some(canister_id) = self.local_index_map.get_index_canister(&user_id) {
+            self.user_index_event_sync_queue.push(canister_id, event);
+        }
+    }
+
+    pub fn push_event_to_all_local_user_indexes(&mut self, event: LocalUserIndexEvent, except: Option<CanisterId>) {
+        for canister_id in self.local_index_map.canisters() {
+            if except.map_or(true, |id| id != *canister_id) {
+                self.user_index_event_sync_queue.push(*canister_id, event.clone());
+            }
         }
     }
 }
@@ -220,33 +231,32 @@ impl Default for Data {
     fn default() -> Data {
         Data {
             users: UserMap::default(),
-            service_principals: HashSet::new(),
+            governance_principals: HashSet::new(),
             user_canister_wasm: CanisterWasm::default(),
-            sms_service_principals: HashSet::new(),
-            sms_messages: EventStream::default(),
+            local_user_index_canister_wasm_for_new_canisters: CanisterWasm::default(),
+            local_user_index_canister_wasm_for_upgrades: CanisterWasm::default(),
             group_index_canister_id: Principal::anonymous(),
-            notifications_canister_ids: vec![Principal::anonymous()],
+            notifications_index_canister_id: Principal::anonymous(),
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
-            online_users_aggregator_canister_ids: HashSet::new(),
-            canister_pool: canister::Pool::new(5),
+            cycles_dispenser_canister_id: Principal::anonymous(),
             total_cycles_spent_on_canisters: 0,
-            open_storage_index_canister_id: Principal::anonymous(),
-            open_storage_user_sync_queue: OpenStorageUserSyncQueue::default(),
-            user_event_sync_queue: UserEventSyncQueue::default(),
+            storage_index_canister_id: Principal::anonymous(),
+            storage_index_user_sync_queue: OpenStorageUserSyncQueue::default(),
+            user_index_event_sync_queue: CanisterEventSyncQueue::default(),
             user_principal_migration_queue: UserPrincipalMigrationQueue::default(),
-            ledger_canister_id: Principal::anonymous(),
-            failed_messages_pending_retry: FailedMessagesPendingRetry::default(),
-            super_admins: HashSet::new(),
-            super_admins_to_dismiss: VecDeque::new(),
+            platform_moderators: HashSet::new(),
+            platform_operators: HashSet::new(),
             test_mode: true,
             challenges: Challenges::new(true),
             max_concurrent_canister_upgrades: 2,
-            set_user_suspended_queue: SetUserSuspendedQueue::default(),
+            diamond_membership_payment_metrics: DiamondMembershipPaymentMetrics::default(),
+            local_index_map: LocalUserIndexMap::default(),
+            timer_jobs: TimerJobs::default(),
         }
     }
 }
 
-#[derive(CandidType, Serialize, Debug)]
+#[derive(Serialize, Debug)]
 pub struct Metrics {
     pub memory_used: u64,
     pub now: TimestampMillis,
@@ -255,20 +265,46 @@ pub struct Metrics {
     pub git_commit_id: String,
     pub total_cycles_spent_on_canisters: Cycles,
     pub users_created: u64,
-    pub users_online_5_minutes: u32,
-    pub users_online_1_hour: u32,
-    pub users_online_1_week: u32,
-    pub users_online_1_month: u32,
-    pub canisters_in_pool: u16,
+    pub diamond_members: DiamondMembershipMetrics,
     pub canister_upgrades_completed: u64,
     pub canister_upgrades_failed: Vec<FailedUpgradeCount>,
     pub canister_upgrades_pending: u64,
     pub canister_upgrades_in_progress: u64,
+    pub governance_principals: Vec<Principal>,
     pub user_wasm_version: Version,
+    pub local_user_index_wasm_version: Version,
     pub max_concurrent_canister_upgrades: usize,
-    pub sms_messages_in_queue: u32,
-    pub super_admins: u8,
-    pub super_admins_to_dismiss: u32,
+    pub platform_moderators: u8,
+    pub platform_operators: u8,
     pub inflight_challenges: u32,
-    pub user_events_queue_length: usize,
+    pub user_index_events_queue_length: usize,
+    pub local_user_indexes: Vec<(CanisterId, LocalUserIndex)>,
+    pub canister_ids: CanisterIds,
+}
+
+#[derive(Serialize, Debug, Default)]
+pub struct DiamondMembershipMetrics {
+    pub users: DiamondMembershipUserMetrics,
+    pub payments: DiamondMembershipPaymentMetrics,
+}
+
+#[derive(Serialize, Debug, Default)]
+pub struct DiamondMembershipUserMetrics {
+    pub total: u64,
+    pub recurring: u64,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
+pub struct DiamondMembershipPaymentMetrics {
+    pub amount_raised: Vec<(Cryptocurrency, u128)>,
+    pub manual_payments_taken: u64,
+    pub recurring_payments_taken: u64,
+    pub recurring_payments_failed_due_to_insufficient_funds: u64,
+}
+
+#[derive(Serialize, Debug)]
+pub struct CanisterIds {
+    pub group_index: CanisterId,
+    pub notifications_index: CanisterId,
+    pub cycles_dispenser: CanisterId,
 }

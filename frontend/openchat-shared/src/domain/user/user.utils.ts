@@ -1,27 +1,20 @@
 import { ONLINE_THRESHOLD } from "../../constants";
-import { UserLastOnline, UserLookup, UserStatus } from "./user";
+import type { UserLookup } from "./user";
+import { UserStatus } from "./user";
 
-export function userStatus(now: number, user?: UserLastOnline): UserStatus {
-    if (user === undefined) return UserStatus.Offline;
-    const secondsSinceOnline = (now - user.lastOnline) / 1000;
+export function userStatus(lastOnline: number | undefined, now: number): UserStatus {
+    if (lastOnline === undefined || lastOnline === 0) return UserStatus.None;
+    const secondsSinceOnline = (now - lastOnline) / 1000;
     return secondsSinceOnline < ONLINE_THRESHOLD ? UserStatus.Online : UserStatus.Offline;
 }
 
-export function getUserStatus(now: number, users: UserLookup, userId: string): UserStatus {
-    return userStatus(now, users[userId]);
-}
-
-export function userIsOnline(now: number, users: UserLookup, userId: string): boolean {
-    return getUserStatus(now, users, userId) === UserStatus.Online;
-}
-
-export function missingUserIds(userLookup: UserLookup, userIds: Set<string>): string[] {
+export function missingUserIds(userLookup: UserLookup, userIds: Iterable<string>): string[] {
     const missing: string[] = [];
-    userIds.forEach((u) => {
-        if (userLookup[u] === undefined) {
-            missing.push(u);
+    for (const userId of userIds) {
+        if (userLookup[userId] === undefined) {
+            missing.push(userId);
         }
-    });
+    }
     return missing;
 }
 

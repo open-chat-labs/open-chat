@@ -6,6 +6,7 @@ use types::{ChatEvent, EventIndex, EventWrapper, MessageIndex};
 pub struct Args {
     pub thread_root_message_index: Option<MessageIndex>,
     pub mid_point: MessageIndex,
+    pub max_messages: u32,
     pub max_events: u32,
     pub invite_code: Option<u64>,
     pub latest_client_event_index: Option<EventIndex>,

@@ -47,17 +47,18 @@
 
     function normaliseChatSummary(now: number, chatSummary: ChatSummary, typing: TypersByKey) {
         if (chatSummary.kind === "direct_chat") {
+            const them = $userStore[chatSummary.them];
             return {
-                name: $userStore[chatSummary.them]?.username,
-                avatarUrl: client.userAvatarUrl($userStore[chatSummary.them]),
-                userStatus: client.getUserStatus(now, $userStore, chatSummary.them),
+                name: `${them?.username}  ${them?.diamond ? "💎" : ""}`,
+                avatarUrl: client.userAvatarUrl(them),
+                userId: chatSummary.them,
                 typing: client.getTypingString($_, $userStore, chatSummary.chatId, typing),
             };
         }
         return {
             name: chatSummary.name,
-            userStatus: UserStatus.None,
             avatarUrl: client.groupAvatarUrl(chatSummary),
+            userId: undefined,
             typing: client.getTypingString($_, $userStore, chatSummary.chatId, typing),
         };
     }
@@ -189,7 +190,8 @@
     $: displayDate = client.getDisplayDate(chatSummary);
     $: blocked = chatSummary.kind === "direct_chat" && $blockedUsers.has(chatSummary.them);
     $: readonly = client.isChatReadOnly(chatSummary.chatId);
-    $: canDelete = (chatSummary.kind === "direct_chat" && chatSummary.latestMessage === undefined) ||
+    $: canDelete =
+        (chatSummary.kind === "direct_chat" && chatSummary.latestMessage === undefined) ||
         (chatSummary.kind === "group_chat" && chatSummary.myRole === "previewer");
     $: pinned = $pinnedChatsStore.includes(chatSummary.chatId);
     $: muted = chatSummary.notificationsMuted;
@@ -215,8 +217,9 @@
                 statusBorder={selected || hovering ? "var(--chatSummary-hv)" : "transparent"}
                 {blocked}
                 url={chat.avatarUrl}
-                status={chat.userStatus}
-                size={AvatarSize.Small} />
+                showStatus={true}
+                userId={chat.userId}
+                size={AvatarSize.Default} />
         </div>
         <div class="details" class:rtl={$rtlStore}>
             <div class="name-date">

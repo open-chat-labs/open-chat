@@ -1,86 +1,102 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
     import Overlay from "../../Overlay.svelte";
-    import Loading from "../../Loading.svelte";
-    import Reload from "../../Reload.svelte";
     import ModalContent from "../../ModalContent.svelte";
-    import Explain from "./Explain.svelte";
-    import Premium from "./Premium.svelte";
-    import ICPUpgrade from "./ICPUpgrade.svelte";
-    import FaqModal from "../../FaqModal.svelte";
-    import type { Questions } from "openchat-client";
+    import Features from "./Features.svelte";
+    import Payment from "./Payment.svelte";
+    import { Cryptocurrency, cryptoLookup, OpenChat } from "openchat-client";
+    import { getContext, onMount } from "svelte";
+    import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
 
-    const titles: Record<typeof step, string> = {
-        premium: $_("premium.title"),
-        explain: $_("insufficientStorage"),
-        sms: $_("register.requestCode"),
-        icp: $_("upgradeStorage"),
+    const client = getContext<OpenChat>("client");
+    const token: Cryptocurrency = "icp";
+
+    let step: "features" | "payment" = "features";
+    let error: string | undefined;
+    let confirming = false;
+    let confirmed = false;
+    let refreshingBalance = false;
+
+    $: isDiamond = client.isDiamond;
+    $: canExtendDiamond = client.canExtendDiamond;
+    $: cryptoBalance = client.cryptoBalance;
+    $: tokenDetails = {
+        key: token,
+        symbol: cryptoLookup[token].symbol,
+        balance: $cryptoBalance[token],
+        disabled: cryptoLookup[token].disabled,
     };
 
-    export let step: "premium" | "explain" | "icp" | "sms";
-
-    let question: Questions | undefined = undefined;
-
-    function upgradeViaSMS() {
-        step = "sms";
+    function onBalanceRefreshed() {
+        error = undefined;
     }
 
-    function upgradeViaICP() {
-        step = "icp";
+    function onBalanceRefreshError(ev: CustomEvent<string>) {
+        error = ev.detail;
     }
 
-    function showFaqQuestion(ev: CustomEvent<Questions>) {
-        question = ev.detail;
-    }
+    onMount(() => {
+        if ($canExtendDiamond) {
+            step = "payment";
+        }
+    });
 </script>
 
 <Overlay>
-    {#if question !== undefined}
-        <FaqModal
-            fadeDuration={0}
-            fadeDelay={0}
-            {question}
-            on:close={() => (question = undefined)} />
-    {:else}
-        <ModalContent fadeDuration={0} fadeDelay={0} hideFooter={true} fill={true}>
-            <span slot="header">
-                {titles[step]}
-            </span>
-            <span slot="body">
-                {#if step === "premium"}
-                    <Premium
-                        on:cancel
-                        on:upgradeIcp={upgradeViaICP}
-                        on:upgradeSms={upgradeViaSMS} />
+    <ModalContent hideFooter fill>
+        <span class="header" slot="header">
+            {#if !confirming && !confirmed}
+                <div class="title">
+                    {#if step === "features"}
+                        {#if $canExtendDiamond}
+                            {$_("upgrade.extend")}
+                        {:else if $isDiamond}
+                            {$_("upgrade.benefits")}
+                        {:else}
+                            {$_("upgrade.featuresTitle")}
+                        {/if}
+                    {:else if step === "payment"}
+                        {$_("upgrade.paymentTitle")}
+                    {/if}
+                </div>
+                {#if step === "payment"}
+                    <div class="balance">
+                        <BalanceWithRefresh
+                            token={tokenDetails.key}
+                            value={tokenDetails.balance}
+                            bind:refreshing={refreshingBalance}
+                            on:refreshed={onBalanceRefreshed}
+                            on:error={onBalanceRefreshError} />
+                    </div>
                 {/if}
-                {#if step === "explain"}
-                    <Explain
-                        on:showFaqQuestion={showFaqQuestion}
-                        on:cancel
-                        on:upgradeIcp={upgradeViaICP}
-                        on:upgradeSms={upgradeViaSMS} />
-                {/if}
-                {#if step === "icp"}
-                    <ICPUpgrade on:cancel />
-                {/if}
-                {#if step === "sms"}
-                    {#await import("./SMSUpgrade.svelte")}
-                        <div class="loading">
-                            <Loading />
-                        </div>
-                    {:then smsUpgrade}
-                        <svelte:component this={smsUpgrade.default} on:cancel />
-                    {:catch _error}
-                        <Reload>{$_("unableToLoadSMSUpgrade")}</Reload>
-                    {/await}
-                {/if}
-            </span>
-        </ModalContent>
-    {/if}
+            {/if}
+        </span>
+        <span slot="body">
+            {#if step === "features"}
+                <Features
+                    canExtend={$canExtendDiamond}
+                    isDiamond={$isDiamond}
+                    on:cancel
+                    on:upgrade={() => (step = "payment")} />
+            {/if}
+            {#if step === "payment"}
+                <Payment
+                    bind:confirmed
+                    bind:confirming
+                    bind:refreshingBalance
+                    {error}
+                    accountBalance={Number(tokenDetails.balance)}
+                    on:cancel
+                    on:features={() => (step = "features")} />
+            {/if}
+        </span>
+    </ModalContent>
 </Overlay>
 
 <style type="text/scss">
-    .loading {
-        height: 200px;
+    .header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
     }
 </style>

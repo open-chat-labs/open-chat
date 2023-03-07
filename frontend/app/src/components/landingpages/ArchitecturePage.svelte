@@ -4,14 +4,14 @@
     import { mobileWidth } from "../../stores/screenDimensions";
     import CollapsibleCard from "../CollapsibleCard.svelte";
     import HashLinkTarget from "./HashLinkTarget.svelte";
-    import { copyToClipboard, copyUrl, scrollToSection } from "../../utils/urls";
+    import { copyToClipboard, scrollToSection } from "../../utils/urls";
     import ZoomableImage from "./ZoomableImage.svelte";
     import ExternalLink from "./ExternalLink.svelte";
     import HashLink from "./HashLink.svelte";
     import ArrowLink from "../ArrowLink.svelte";
     import Overlay from "../Overlay.svelte";
     import ModalContent from "../ModalContent.svelte";
-    import { location, querystring } from "svelte-spa-router";
+    import { querystring } from "routes";
 
     let linked: number | undefined = undefined;
     let zooming: { url: string; alt: string } | undefined = undefined;
@@ -23,16 +23,17 @@
     }
 
     function onCopyUrl(ev: CustomEvent<string>): void {
-        copyToClipboard(`${window.location.origin}/#${$location}?section=${ev.detail}`);
+        copyUrl(ev.detail);
+    }
+
+    function copyUrl(section: string): void {
+        copyToClipboard(`${window.location.origin}${location}?section=${section}`);
     }
 
     $: {
-        if ($querystring !== undefined) {
-            const qs = new URLSearchParams($querystring);
-            const section = qs.get("section");
-            if (section) {
-                linked = scrollToSection(section);
-            }
+        const section = $querystring.get("section");
+        if (section) {
+            linked = scrollToSection(section);
         }
     }
 </script>
@@ -48,7 +49,7 @@
 <div class="architecture">
     <Headline>Architecture</Headline>
 
-    <CollapsibleCard first open={linked === 1}>
+    <CollapsibleCard transition={false} first open={linked === 1}>
         <div class="header" slot="titleSlot">
             <span class="subtitle">1</span>
             <div class="title">
@@ -75,7 +76,7 @@
         </div>
     </CollapsibleCard>
 
-    <CollapsibleCard open={linked === 2}>
+    <CollapsibleCard transition={false} open={linked === 2}>
         <div class="header" slot="titleSlot">
             <span class="subtitle">2</span>
             <div class="title">
@@ -441,7 +442,7 @@
         </div>
     </CollapsibleCard>
 
-    <CollapsibleCard open={linked === 3}>
+    <CollapsibleCard transition={false} open={linked === 3}>
         <div class="header" slot="titleSlot">
             <span class="subtitle">3</span>
             <div class="title">
@@ -500,7 +501,7 @@
         </div>
     </CollapsibleCard>
 
-    <CollapsibleCard open={linked === 4}>
+    <CollapsibleCard transition={false} open={linked === 4}>
         <div class="header" slot="titleSlot">
             <span class="subtitle">4</span>
             <div class="title">
@@ -656,20 +657,7 @@
     }
 
     .list {
-        text-align: left;
-        list-style: none;
-        margin: 0 0 toRem(12) toRem(22);
-        padding: 0;
-        position: relative;
-
-        > li {
-            &:before {
-                position: absolute;
-                content: "\25AA";
-                left: toRem(-25);
-                color: #23a2ee;
-            }
-        }
+        @include bullet_list();
     }
 
     .code {

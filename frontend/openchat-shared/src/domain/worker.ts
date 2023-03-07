@@ -6,8 +6,12 @@ import type {
     CandidateGroupChat,
     ChangeRoleResponse,
     ChatEvent,
+    ChatStateFull,
+    ClaimPrizeResponse,
     CreateGroupResponse,
-    CurrentChatState,
+    DeletedDirectMessageResponse,
+    DeletedGroupMessageResponse,
+    DeleteFrozenGroupResponse,
     DeleteGroupResponse,
     DeleteMessageResponse,
     DirectChatEvent,
@@ -48,8 +52,8 @@ import type {
     UndeleteMessageResponse,
     UnfreezeGroupResponse,
     UnpinMessageResponse,
-    UpdateArgs,
     UpdateGroupResponse,
+    UpdatesResult,
     WithdrawCryptocurrencyResponse,
 } from "./chat";
 import type { BlobReference, StorageStatus } from "./data/data";
@@ -58,28 +62,26 @@ import type {
     ArchiveChatResponse,
     ChallengeAttempt,
     CheckUsernameResponse,
-    ConfirmPhoneNumberResponse,
     CreateChallengeResponse,
     CreatedUser,
     CurrentUserResponse,
     MigrateUserPrincipalResponse,
     PartialUserSummary,
-    PhoneNumber,
     PinChatResponse,
     PublicProfile,
     RegisterUserResponse,
     SetBioResponse,
     SetUsernameResponse,
-    SubmitPhoneNumberResponse,
     SuspendUserResponse,
     UnpinChatResponse,
-    UpgradeStorageResponse,
     User,
     UserLookup,
     UsersArgs,
     UsersResponse,
     UserSummary,
     UnsuspendUserResponse,
+    DiamondMembershipDuration,
+    PayForDiamondMembershipResponse,
 } from "./user";
 import type {
     GroupSearchResponse,
@@ -150,6 +152,7 @@ export type WorkerRequest =
     | GroupChatEventsByEventIndex
     | DirectChatEventsWindow
     | GroupChatEventsWindow
+    | LastOnline
     | MarkAsOnline
     | GetGroupDetails
     | GetGroupDetailUpdates
@@ -160,14 +163,10 @@ export type WorkerRequest =
     | CreateUserClient
     | Init
     | CurrentUser
-    | GetUpdates
     | SetGroupInvite
     | SearchGroupChat
     | SearchDirectChat
     | RefreshAccountBalance
-    | ConfirmPhoneNumber
-    | SubmitPhoneNumber
-    | UpgradeStorage
     | GetThreadPreviews
     | GetUser
     | GetPublicProfile
@@ -183,10 +182,20 @@ export type WorkerRequest =
     | SetCachedMessageFromNotification
     | FreezeGroup
     | UnfreezeGroup
+    | DeleteFrozenGroup
+    | AddHotGroupExclusion 
+    | RemoveHotGroupExclusion
     | SuspendUser
     | UnsuspendUser
     | MarkSuspectedBot
-    | GetInitialState;
+    | GetInitialStateV2
+    | GetUpdatesV2
+    | GetDeletedGroupMessage
+    | GetDeletedDirectMessage
+    | LoadFailedMessages
+    | DeleteFailedMessage
+    | ClaimPrize
+    | PayForDiamondMembership;
 
 type SetCachedMessageFromNotification = Request<{
     chatId: string;
@@ -272,27 +281,9 @@ type GetThreadPreviews = Request<{
     kind: "threadPreviews";
 };
 
-type UpgradeStorage = Request<{
-    newLimitBytes: number;
-}> & {
-    kind: "upgradeStorage";
-};
-
-type SubmitPhoneNumber = Request<{
-    phoneNumber: PhoneNumber;
-}> & {
-    kind: "submitPhoneNumber";
-};
-
-type ConfirmPhoneNumber = Request<{
-    code: string;
-}> & {
-    kind: "confirmPhoneNumber";
-};
-
 type RefreshAccountBalance = Request<{
     crypto: Cryptocurrency;
-    account: string;
+    principal: string;
 }> & {
     kind: "refreshAccountBalance";
 };
@@ -339,7 +330,9 @@ type GetGroupRules = Request<{
     kind: "getGroupRules";
 };
 
-type GetRecommendedGroups = Request & {
+type GetRecommendedGroups = Request<{
+    exclusions: string[];
+}> & {
     kind: "getRecommendedGroups";
 };
 
@@ -419,7 +412,7 @@ type SendMessage = Request<{
     chatId: string;
     user: CreatedUser;
     mentioned: User[];
-    msg: Message;
+    event: EventWrapper<Message>;
     threadRootMessageIndex?: number;
 }> & {
     kind: "sendMessage";
@@ -720,6 +713,12 @@ type GetAllCachedUsers = Request & {
     kind: "getAllCachedUsers";
 };
 
+type LastOnline = Request<{
+    userIds: string[];
+}> & {
+    kind: "lastOnline";
+};
+
 type MarkAsOnline = Request & {
     kind: "markAsOnline";
 };
@@ -735,6 +734,24 @@ type UnfreezeGroup = Request<{
     chatId: string;
 }> & {
     kind: "unfreezeGroup";
+};
+
+type DeleteFrozenGroup = Request<{
+    chatId: string;
+}> & {
+    kind: "deleteFrozenGroup";
+};
+
+type AddHotGroupExclusion = Request<{
+    chatId: string;
+}> & {
+    kind: "addHotGroupExclusion";
+};
+
+type RemoveHotGroupExclusion = Request<{
+    chatId: string;
+}> & {
+    kind: "removeHotGroupExclusion";
 };
 
 type SuspendUser = Request<{
@@ -774,20 +791,29 @@ type CreateUserClient = Request<{ userId: string }> & {
     kind: "createUserClient";
 };
 
-type GetUpdates = Request<{
-    currentState: CurrentChatState;
-    args: UpdateArgs;
-    userStore: UserLookup;
-    selectedChatId: string | undefined;
+type GetUpdatesV2 = Request<{
+    currentState: ChatStateFull;
 }> & {
-    kind: "getUpdates";
+    kind: "getUpdatesV2";
 };
 
-type GetInitialState = Request<{
-    userStore: UserLookup;
-    selectedChatId: string | undefined;
+type GetInitialStateV2 = Request<Record<string, never>> & {
+    kind: "getInitialStateV2";
+};
+
+type GetDeletedGroupMessage = Request<{
+    chatId: string;
+    messageId: bigint;
+    threadRootMessageIndex: number | undefined;
 }> & {
-    kind: "getInitialState";
+    kind: "getDeletedGroupMessage";
+};
+
+type GetDeletedDirectMessage = Request<{
+    userId: string;
+    messageId: bigint;
+}> & {
+    kind: "getDeletedDirectMessage";
 };
 
 /**
@@ -814,10 +840,7 @@ export type WorkerResponse =
     | Response<SetUsernameResponse>
     | Response<PublicProfile>
     | Response<PartialUserSummary | undefined>
-    | Response<UpgradeStorageResponse>
     | Response<ThreadPreview[]>
-    | Response<SubmitPhoneNumberResponse>
-    | Response<ConfirmPhoneNumberResponse>
     | Response<Tokens>
     | Response<SearchDirectChatResponse>
     | Response<SearchGroupChatResponse>
@@ -865,6 +888,7 @@ export type WorkerResponse =
     | Response<EventsResponse<GroupChatEvent>>
     | Response<EventsResponse<DirectChatEvent>>
     | Response<EventsResponse<GroupChatEvent>>
+    | Response<Record<string, number>>
     | Response<undefined>
     | Response<GroupChatDetailsResponse>
     | Response<GroupChatDetails>
@@ -877,9 +901,18 @@ export type WorkerResponse =
     | Response<EventsResponse<ChatEvent>>
     | Response<FreezeGroupResponse>
     | Response<UnfreezeGroupResponse>
+    | Response<DeleteFrozenGroupResponse>
+    | Response<AddHotGroupExclusion>
+    | Response<RemoveHotGroupExclusion>
     | Response<SuspendUserResponse>
     | Response<UnsuspendUserResponse>
-    | Response<undefined>;
+    | Response<UpdatesResult>
+    | Response<DeletedDirectMessageResponse>
+    | Response<DeletedGroupMessageResponse>
+    | Response<undefined>
+    | Response<Record<string, Record<number, EventWrapper<Message>>>>
+    | Response<PayForDiamondMembershipResponse>
+    | Response<ClaimPrizeResponse>;
 
 type Response<T> = {
     kind: "worker_response";
@@ -905,6 +938,7 @@ export type RelayedMessagesReadFromServer = WorkerEventCommon<{
     chatId: string;
     readByMeUpTo: number | undefined;
     threadsRead: ThreadRead[];
+    dateReadPinned: bigint | undefined;
 }>;
 export type RelayedStorageUpdated = WorkerEventCommon<{
     subkind: "storage_updated";
@@ -914,3 +948,32 @@ export type RelayedUsersLoaded = WorkerEventCommon<{
     subkind: "users_loaded";
     users: PartialUserSummary[];
 }>;
+
+type LoadFailedMessages = Request & {
+    kind: "loadFailedMessages";
+};
+
+type DeleteFailedMessage = Request<{
+    chatId: string;
+    messageId: bigint;
+    threadRootMessageIndex: number | undefined;
+}> & {
+    kind: "deleteFailedMessage";
+};
+
+type ClaimPrize = Request<{
+    chatId: string;
+    messageId: bigint;
+}> & {
+    kind: "claimPrize";
+};
+
+type PayForDiamondMembership = Request<{
+    userId: string;
+    token: Cryptocurrency;
+    duration: DiamondMembershipDuration;
+    recurring: boolean;
+    expectedPriceE8s: bigint;
+}> & {
+    kind: "payForDiamondMembership";
+};

@@ -20,11 +20,8 @@ fn users_impl(args: Args, runtime_state: &RuntimeState) -> Response {
             g.users
                 .into_iter()
                 .filter_map(|user_id| runtime_state.data.users.get_by_user_id(&user_id))
-                .filter(move |u| u.date_updated > updated_since || u.last_online > updated_since)
-                .map(move |u| {
-                    let include_username = u.date_updated > updated_since;
-                    u.to_partial_summary(include_username, now)
-                })
+                .filter(move |u| u.date_updated > updated_since)
+                .map(|u| u.to_partial_summary(now))
         })
         .collect();
 
@@ -57,7 +54,6 @@ mod tests {
             username: "abc".to_string(),
             date_created: env.now,
             date_updated: env.now,
-            last_online: env.now,
             ..Default::default()
         });
         env.now += 1000;
@@ -68,7 +64,6 @@ mod tests {
             username: "def".to_string(),
             date_created: env.now,
             date_updated: env.now,
-            last_online: env.now,
             ..Default::default()
         });
         env.now += 1000;
@@ -79,7 +74,6 @@ mod tests {
             username: "ghi".to_string(),
             date_created: env.now,
             date_updated: env.now,
-            last_online: env.now,
             ..Default::default()
         });
         env.now += 1000;
@@ -100,11 +94,9 @@ mod tests {
 
         assert_eq!(users[0].user_id, user_id1);
         assert_eq!(users[0].username, Some("abc".to_string()));
-        assert_eq!(users[0].seconds_since_last_online, 3);
 
         assert_eq!(users[1].user_id, user_id3);
         assert_eq!(users[1].username, Some("ghi".to_string()));
-        assert_eq!(users[1].seconds_since_last_online, 1);
     }
 
     #[test]
@@ -123,7 +115,6 @@ mod tests {
             username: "abc".to_string(),
             date_created: env.now,
             date_updated: env.now,
-            last_online: env.now,
             ..Default::default()
         });
         env.now += 1000;
@@ -134,7 +125,6 @@ mod tests {
             username: "def".to_string(),
             date_created: env.now,
             date_updated: env.now,
-            last_online: env.now,
             ..Default::default()
         });
         env.now += 1000;
@@ -145,7 +135,6 @@ mod tests {
             username: "ghi".to_string(),
             date_created: env.now,
             date_updated: env.now,
-            last_online: env.now,
             ..Default::default()
         });
         env.now += 1000;
@@ -167,71 +156,5 @@ mod tests {
 
         assert_eq!(users[0].user_id, user_id3);
         assert_eq!(users[0].username, Some("ghi".to_string()));
-        assert_eq!(users[0].seconds_since_last_online, 1);
-    }
-
-    #[test]
-    fn username_skipped_if_not_updated_since_filter_date() {
-        let mut env = TestEnv::default();
-        let mut data = Data::default();
-
-        let user_id1 = Principal::from_slice(&[1, 1]).into();
-        let user_id2 = Principal::from_slice(&[2, 2]).into();
-        let user_id3 = Principal::from_slice(&[3, 3]).into();
-
-        let start = env.now;
-        env.now += 10000;
-
-        data.users.add_test_user(User {
-            principal: Principal::from_slice(&[1]),
-            phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, "1111 111 111".to_owned())),
-            user_id: user_id1,
-            username: "abc".to_string(),
-            date_created: start,
-            date_updated: start,
-            last_online: env.now,
-            ..Default::default()
-        });
-        env.now += 1000;
-        data.users.add_test_user(User {
-            principal: Principal::from_slice(&[2]),
-            phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, "2222 222 222".to_owned())),
-            user_id: user_id2,
-            username: "def".to_string(),
-            date_created: start,
-            date_updated: env.now,
-            last_online: env.now,
-            ..Default::default()
-        });
-        env.now += 1000;
-        data.users.add_test_user(User {
-            principal: Principal::from_slice(&[3]),
-            phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, "3333 333 333".to_owned())),
-            user_id: user_id3,
-            username: "ghi".to_string(),
-            date_created: env.now,
-            date_updated: env.now,
-            last_online: env.now,
-            ..Default::default()
-        });
-        env.now += 1000;
-        let runtime_state = RuntimeState::new(Box::new(env), data);
-
-        let args = Args {
-            user_groups: vec![UserGroup {
-                users: vec![user_id1, user_id2, user_id3],
-                updated_since: start,
-            }],
-        };
-
-        let Success(result) = users_impl(args, &runtime_state);
-
-        let users = result.users.iter().sorted_unstable_by_key(|u| u.user_id).collect_vec();
-
-        assert_eq!(users.len(), 3);
-
-        assert_eq!(users[0].username, None);
-        assert_eq!(users[1].username, Some("def".to_string()));
-        assert_eq!(users[2].username, Some("ghi".to_string()));
     }
 }

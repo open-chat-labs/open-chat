@@ -18,13 +18,15 @@ export class MessagesReadFromServer extends CustomEvent<{
     chatId: string;
     readByMeUpTo: number | undefined;
     threadsRead: ThreadRead[];
+    dateReadPinned: bigint | undefined;
 }> {
-    constructor(chatId: string, readByMeUpTo: number | undefined, threadsRead: ThreadRead[]) {
+    constructor(chatId: string, readByMeUpTo: number | undefined, threadsRead: ThreadRead[], dateReadPinned: bigint | undefined) {
         super("openchat_event", {
             detail: {
                 chatId,
                 readByMeUpTo,
                 threadsRead,
+                dateReadPinned,
             },
         });
     }

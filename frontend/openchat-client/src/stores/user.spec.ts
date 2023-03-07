@@ -8,21 +8,20 @@ describe("overwrite users", () => {
                     kind: "user",
                     userId: "abc",
                     username: "julian_jelfs",
-                    lastOnline: 10,
                     updated: BigInt(0),
                     suspended: false,
+                    diamond: false,
                 },
             },
             {
                 kind: "user",
                 userId: "abc",
-                lastOnline: 20,
                 username: undefined,
                 updated: BigInt(0),
                 suspended: false,
+                diamond: false,
             }
         );
         expect(lookup["abc"].username).toEqual("julian_jelfs");
-        expect(lookup["abc"].lastOnline).toEqual(20);
     });
 });

@@ -2,6 +2,7 @@ import type {
     AuthProvider,
     ChatEvent,
     ChatSummary,
+    DiamondMembershipDetails,
     EnhancedReplyContext,
     EventWrapper,
     GroupChatSummary,
@@ -35,6 +36,7 @@ import { userCreatedStore } from "./stores/userCreated";
 import { userStore } from "./stores/user";
 import { pinnedChatsStore } from "./stores/pinnedChats";
 import { blockedUsers } from "./stores/blockedUsers";
+import { diamondMembership, isDiamond } from "./stores/diamond";
 
 /**
  * Any stores that we reference inside the OpenChat client can be added here so that we always have the up to date current value
@@ -66,6 +68,8 @@ export class LiveState {
     chatsInitialised!: boolean;
     chatsLoading!: boolean;
     blockedUsers!: Set<string>;
+    diamondMembership!: DiamondMembershipDetails | undefined;
+    isDiamond!: boolean;
 
     constructor() {
         remainingStorage.subscribe((data) => (this.remainingStorage = data));
@@ -95,5 +99,7 @@ export class LiveState {
         chatsInitialised.subscribe((data) => (this.chatsInitialised = data));
         chatsLoading.subscribe((data) => (this.chatsLoading = data));
         blockedUsers.subscribe((data) => (this.blockedUsers = data));
+        diamondMembership.subscribe((data) => (this.diamondMembership = data));
+        isDiamond.subscribe((data) => (this.isDiamond = data));
     }
 }

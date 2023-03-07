@@ -13,6 +13,7 @@
     import AccountInfo from "../AccountInfo.svelte";
     import { iconSize } from "../../../stores/iconSize";
     import { toastStore } from "../../../stores/toast";
+    import { mobileWidth } from "../../../stores/screenDimensions";
     import TokenInput from "../TokenInput.svelte";
     import { Cryptocurrency, cryptoLookup } from "openchat-client";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
@@ -24,6 +25,7 @@
     const client = getContext<OpenChat>("client");
     const user = client.user;
 
+    $: account = token === "icp" ? user.cryptoAccount : user.userId;
     $: cryptoBalance = client.cryptoBalance;
 
     let error: string | undefined = undefined;
@@ -31,12 +33,15 @@
     let amountToWithdrawE8s = BigInt(0);
     let withdrawing = false;
     let balanceWithRefresh: BalanceWithRefresh;
+    let validAmount = false;
 
     // make sure that they are not trying to withdraw to the same account - I can see people trying to do that
+
     $: valid =
+        validAmount &&
         amountToWithdrawE8s > BigInt(0) &&
         targetAccount !== "" &&
-        targetAccount !== client.user.cryptoAccount;
+        targetAccount !== account;
 
     $: transferFees = cryptoLookup[token].transferFeesE8s;
     $: symbol = cryptoLookup[token].symbol;
@@ -55,9 +60,10 @@
         client
             .withdrawCryptocurrency({
                 kind: "pending",
-                token: token,
+                token,
                 to: targetAccount,
                 amountE8s: amountToWithdrawE8s,
+                feeE8s: transferFees,
             })
             .then((resp) => {
                 if (resp.kind === "completed") {
@@ -99,9 +105,7 @@
                     bind:this={balanceWithRefresh}
                     {token}
                     value={remainingBalanceE8s}
-                    label={amountToWithdrawE8s > BigInt(0)
-                        ? $_("cryptoAccount.shortRemainingBalanceLabel")
-                        : $_("cryptoAccount.shortBalanceLabel")}
+                    label={$_("cryptoAccount.shortBalanceLabel")}
                     minDecimals={2}
                     bold
                     on:refreshed={onBalanceRefreshed}
@@ -109,7 +113,7 @@
             </span>
             <form class="body" slot="body">
                 <h4 class="title">{$_("cryptoAccount.topUp")}</h4>
-                <AccountInfo qrSize={"smaller"} {user} />
+                <AccountInfo {token} {user} />
 
                 <div class="or">
                     <hr />
@@ -119,10 +123,13 @@
 
                 <h4 class="title">{$_("cryptoAccount.withdraw")}</h4>
 
-                <Legend label={$_("tokenTransfer.amount", { values: { token: symbol } })} />
                 <div class="token-input">
                     <TokenInput
-                        maxAmountE8s={$cryptoBalance[token] - transferFees}
+                        {token}
+                        maxAmountE8s={BigInt(
+                            Math.max(0, Number($cryptoBalance[token] - transferFees))
+                        )}
+                        bind:valid={validAmount}
                         bind:amountE8s={amountToWithdrawE8s} />
                 </div>
                 <div class="target">
@@ -136,25 +143,20 @@
                         {#if !withdrawing}
                             <Send
                                 size={$iconSize}
-                                color={valid ? "var(--accent)" : "var(--icon-txt)"} />
+                                color={valid ? "var(--icon-selected)" : "var(--icon-txt)"} />
                         {/if}
                     </div>
                 </div>
-                <div class="fee">
-                    {$_("tokenTransfer.fee", {
-                        values: { fee: client.formatTokens(transferFees, 0), token: symbol },
-                    })}
-                </div>
+                <a rel="noreferrer" class="how-to" href={howToBuyUrl} target="_blank">
+                    {$_("howToBuyToken", { values: { token: symbol.toUpperCase() } })}
+                </a>
                 {#if error}
                     <ErrorMessage>{$_(error)}</ErrorMessage>
                 {/if}
             </form>
-            <span class="footer" slot="footer">
-                <a class="how-to" href={howToBuyUrl} target="_blank">
-                    {$_("howToBuyToken", { values: { token: symbol } })}
-                </a>
+            <span slot="footer">
                 <ButtonGroup>
-                    <Button tiny={true} secondary={true} on:click={() => (open = false)}
+                    <Button tiny={$mobileWidth} on:click={() => (open = false)}
                         >{$_("close")}</Button>
                 </ButtonGroup>
             </span>
@@ -163,6 +165,10 @@
 {/if}
 
 <style type="text/scss">
+    :global(.target .input-wrapper input) {
+        padding-right: 40px;
+    }
+
     .or {
         display: flex;
         gap: $sp4;
@@ -192,54 +198,41 @@
         }
     }
     .how-to {
-        @include font(light, normal, fs-90);
-        text-decoration: underline;
-        text-decoration-color: var(--accent);
-        text-underline-offset: $sp1;
-        text-decoration-thickness: 2px;
-    }
-    .footer {
-        position: relative;
-        display: flex;
-        align-items: flex-end;
-        justify-content: space-between;
+        margin-top: $sp3;
     }
 
     .body {
         display: flex;
         flex-direction: column;
-        align-items: center;
     }
 
     .token-input {
-        width: 250px;
         margin-bottom: $sp3;
     }
 
     .target {
-        width: 250px;
         margin-bottom: $sp3;
         position: relative;
 
         .send {
             position: absolute !important;
             top: 10px;
-            right: -30px;
+            right: $sp3;
 
             &.valid {
                 cursor: pointer;
             }
 
             &.withdrawing {
-                @include loading-spinner(1em, 0.5em, var(--button-spinner));
+                @include loading-spinner(
+                    1em,
+                    0.5em,
+                    var(--button-spinner),
+                    "../assets/plain-spinner.svg"
+                );
                 top: 21px;
-                right: -16px;
+                right: 20px;
             }
         }
-    }
-    .fee {
-        @include font(light, normal, fs-60);
-        margin-bottom: $sp3;
-        text-transform: lowercase;
     }
 </style>

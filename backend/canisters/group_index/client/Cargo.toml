@@ -1,14 +1,13 @@
 [package]
 name = "group_index_canister_client"
 version = "0.1.0"
-authors = ["Hamish Peebles <hamishpeebles@gmail.com>", "Matt Grogan <megrogan@gmail.com>", "Julian Jelfs <julian.jelfs@gmail.com>"]
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 candid = { workspace = true }
-canister_client_macros = { path = "../../../libraries/canister_client_macros", features = ["ingress"] }
+canister_client_macros = { path = "../../../libraries/canister_client_macros" }
 group_index_canister = { path = "../api" }
 ic-agent = { workspace = true }
 types = { path = "../../../libraries/types" }

@@ -10,6 +10,7 @@ import type {
     ApiMessage,
     ApiTextContent,
     ApiReplyContext,
+    ApiPrizeContent,
     ApiUpdatedMessage,
     ApiDeletedContent,
     ApiCryptoContent,
@@ -36,6 +37,10 @@ import type {
     ApiProposal,
     ApiProposalDecisionStatus,
     ApiProposalRewardStatus,
+    ApiChatMetrics,
+    ApiGroupSubtype,
+    ApiRole,
+    ApiPrizeWinnerContent,
 } from "../user/candid/idl";
 import type {
     ApiGetProposalResponse,
@@ -80,17 +85,24 @@ import {
     type ListNervousSystemFunctionsResponse,
     type NervousSystemFunction,
     type SnsFunctionType,
-    Tally,
+    type ChatMetrics,
+    type Tally,
     UnsupportedValueError,
+    type MemberRole,
+    type GroupSubtype,
+    PrizeContent,
+    PrizeWinnerContent,
 } from "openchat-shared";
+import type { WithdrawCryptoArgs } from "../user/candid/types";
 
 const E8S_AS_BIGINT = BigInt(100_000_000);
 
 export function message(candid: ApiMessage): Message {
     const sender = candid.sender.toString();
+    const content = messageContent(candid.content, sender);
     return {
         kind: "message",
-        content: messageContent(candid.content, sender),
+        content,
         sender,
         repliesTo: optional(candid.replies_to, replyContext),
         messageId: candid.message_id,
@@ -98,6 +110,7 @@ export function message(candid: ApiMessage): Message {
         reactions: reactions(candid.reactions),
         edited: candid.edited,
         forwarded: candid.forwarded,
+        deleted: content.kind === "deleted_content",
         thread: optional(candid.thread_summary, threadSummary),
     };
 }
@@ -150,7 +163,34 @@ export function messageContent(candid: ApiMessageContent, sender: string): Messa
     if ("GovernanceProposal" in candid) {
         return proposalContent(candid.GovernanceProposal);
     }
+    if ("Prize" in candid) {
+        return prizeContent(candid.Prize);
+    }
+    if ("PrizeWinner" in candid) {
+        return prizeWinnerContent(sender, candid.PrizeWinner);
+    }
     throw new UnsupportedValueError("Unexpected ApiMessageContent type received", candid);
+}
+
+function prizeWinnerContent(senderId: string, candid: ApiPrizeWinnerContent): PrizeWinnerContent {
+    const transfer = "NNS" in candid.transaction ? candid.transaction.NNS : candid.transaction.SNS;
+    return {
+        kind: "prize_winner_content",
+        transaction: completedCryptoTransfer(transfer, senderId, candid.winner.toString()),
+        prizeMessageIndex: candid.prize_message,
+    };
+}
+
+function prizeContent(candid: ApiPrizeContent): PrizeContent {
+    return {
+        kind: "prize_content",
+        prizesRemaining: candid.prizes_remaining,
+        prizesPending: candid.prizes_pending,
+        winners: candid.winners.map((u) => u.toString()),
+        token: token(candid.token),
+        endDate: candid.end_date,
+        caption: optional(candid.caption, identity),
+    };
 }
 
 export function apiUser(domain: User): ApiUser {
@@ -213,6 +253,7 @@ function proposal(candid: ApiProposal): Proposal {
             lastUpdated: Number(p.last_updated),
             created: Number(p.created),
             deadline: Number(p.deadline),
+            payloadTextRendering: optional(p.payload_text_rendering, identity),
         };
     }
     throw new UnsupportedValueError("Unexpected ApiProposal type received", candid);
@@ -324,12 +365,25 @@ function cryptoContent(candid: ApiCryptoContent, sender: string): Cryptocurrency
     };
 }
 
-export function token(_candid: ApiCryptocurrency): Cryptocurrency {
-    return "icp";
+export function token(candid: ApiCryptocurrency): Cryptocurrency {
+    if ("InternetComputer" in candid) return "icp";
+    if ("SNS1" in candid) return "sns1";
+    if ("CKBTC" in candid) return "ckbtc";
+    if ("CHAT" in candid) return "chat";
+    throw new UnsupportedValueError("Unexpected ApiCryptocurrency type received", candid);
 }
 
-export function apiToken(_token: Cryptocurrency): ApiCryptocurrency {
-    return { InternetComputer: null };
+export function apiToken(token: Cryptocurrency): ApiCryptocurrency {
+    switch (token) {
+        case "icp":
+            return { InternetComputer: null };
+        case "sns1":
+            return { SNS1: null };
+        case "ckbtc":
+            return { CKBTC: null };
+        case "chat":
+            return { CHAT: null };
+    }
 }
 
 function cryptoTransfer(
@@ -530,6 +584,52 @@ export function permissionRole(candid: ApiPermissionRole): PermissionRole {
     return "members";
 }
 
+export function chatMetrics(candid: ApiChatMetrics): ChatMetrics {
+    return {
+        audioMessages: Number(candid.audio_messages),
+        cyclesMessages: Number(candid.cycles_messages),
+        edits: Number(candid.edits),
+        icpMessages: Number(candid.icp_messages),
+        sns1Messages: Number(candid.sns1_messages),
+        ckbtcMessages: Number(candid.ckbtc_messages),
+        giphyMessages: Number(candid.giphy_messages),
+        deletedMessages: Number(candid.deleted_messages),
+        fileMessages: Number(candid.file_messages),
+        pollVotes: Number(candid.poll_votes),
+        textMessages: Number(candid.text_messages),
+        imageMessages: Number(candid.image_messages),
+        replies: Number(candid.replies),
+        videoMessages: Number(candid.video_messages),
+        polls: Number(candid.polls),
+        reactions: Number(candid.reactions),
+        reportedMessages: Number(candid.reported_messages),
+    };
+}
+
+export function memberRole(candid: ApiRole): MemberRole {
+    if ("Admin" in candid) {
+        return "admin";
+    }
+    if ("Participant" in candid) {
+        return "participant";
+    }
+    if ("Owner" in candid) {
+        return "owner";
+    }
+    if ("SuperAdmin" in candid) {
+        return "super_admin";
+    }
+    throw new UnsupportedValueError("Unexpected ApiRole type received", candid);
+}
+
+export function apiGroupSubtype(subtype: ApiGroupSubtype): GroupSubtype {
+    return {
+        kind: "governance_proposals",
+        isNns: subtype.GovernanceProposals.is_nns,
+        governanceCanisterId: subtype.GovernanceProposals.governance_canister_id.toText(),
+    };
+}
+
 export function apiReplyContextArgs(
     domain: ReplyContext,
     replyingToChatId?: string
@@ -571,6 +671,12 @@ export function apiMessageContent(domain: MessageContent): ApiMessageContent {
 
         case "proposal_content":
             return { GovernanceProposal: apiProposalContent(domain) };
+
+        case "prize_content":
+            throw new Error("Incorrectly attempting to send prize content to the server");
+
+        case "prize_winner_content":
+            throw new Error("Incorrectly attempting to send prize winner content to the server");
 
         case "placeholder_content":
             throw new Error("Incorrectly attempting to send placeholder content to the server");
@@ -711,33 +817,68 @@ export function apiPendingCryptoContent(domain: CryptocurrencyContent): ApiCrypt
 
 function apiPendingCryptoTransaction(domain: CryptocurrencyTransfer): ApiCryptoTransaction {
     if (domain.kind === "pending") {
-        return {
-            Pending: {
-                NNS: {
-                    token: apiToken(domain.token),
-                    to: {
-                        User: Principal.fromText(domain.recipient),
+        if (domain.token === "icp") {
+            return {
+                Pending: {
+                    NNS: {
+                        token: apiToken(domain.token),
+                        to: {
+                            User: Principal.fromText(domain.recipient),
+                        },
+                        amount: apiICP(domain.amountE8s),
+                        fee: [],
+                        memo: apiOptional(identity, domain.memo),
                     },
-                    amount: apiICP(domain.amountE8s),
-                    fee: apiOptional(apiICP, domain.feeE8s),
-                    memo: apiOptional(identity, domain.memo),
                 },
-            },
-        };
+            };
+        } else {
+            return {
+                Pending: {
+                    SNS: {
+                        token: apiToken(domain.token),
+                        to: {
+                            owner: Principal.fromText(domain.recipient),
+                            subaccount: [],
+                        },
+                        amount: apiICP(domain.amountE8s),
+                        fee: apiICP(domain.feeE8s ?? BigInt(0)),
+                        memo: apiOptional(identity, domain.memo),
+                    },
+                },
+            };
+        }
     }
     throw new Error("Transaction is not of type 'Pending': " + JSON.stringify(domain));
 }
 
 export function apiPendingCryptocurrencyWithdrawal(
     domain: PendingCryptocurrencyWithdrawal
-): ApiNnsPendingCryptoTransaction {
-    return {
-        token: apiToken(domain.token),
-        to: { Account: hexStringToBytes(domain.to) },
-        amount: apiICP(domain.amountE8s),
-        fee: apiOptional(apiICP, domain.feeE8s),
-        memo: apiOptional(identity, domain.memo),
-    };
+): WithdrawCryptoArgs {
+    if (domain.token === "icp") {
+        return {
+            withdrawal: {
+                NNS: {
+                    token: apiToken(domain.token),
+                    to: { Account: hexStringToBytes(domain.to) },
+                    amount: apiICP(domain.amountE8s),
+                    fee: [],
+                    memo: apiOptional(identity, domain.memo),
+                },
+            },
+        };
+    } else {
+        return {
+            withdrawal: {
+                SNS: {
+                    token: apiToken(domain.token),
+                    to: { owner: Principal.fromText(domain.to), subaccount: [] },
+                    amount: apiICP(domain.amountE8s),
+                    fee: apiICP(domain.feeE8s ?? BigInt(0)),
+                    memo: apiOptional(identity, domain.memo),
+                },
+            },
+        };
+    }
 }
 
 function apiTextContent(domain: TextContent): ApiTextContent {

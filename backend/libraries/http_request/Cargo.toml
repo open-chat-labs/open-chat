@@ -1,14 +1,13 @@
 [package]
 name = "http_request"
 version = "0.1.0"
-authors = ["Hamish Peebles <hamishpeebles@gmail.com>", "Matt Grogan <megrogan@gmail.com>", "Julian Jelfs <julian.jelfs@gmail.com>"]
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
 candid = { workspace = true }
-canister_logger = { path = "../canister_logger" }
+canister_logger = { workspace = true }
 num-traits = { workspace = true }
 serde = { workspace = true }
 serde_bytes = { workspace = true }

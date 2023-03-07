@@ -1,14 +1,14 @@
 use crate::ic_agent::IcAgent;
-use crate::ic_agent::IcAgentConfig;
 use index_store::IndexStore;
-use types::Error;
+use types::{CanisterId, Error};
 
-pub async fn run(config: &IcAgentConfig, index_store: &dyn IndexStore) -> Result<(), Error> {
-    let ic_agent = IcAgent::build(config).await?;
-    let maybe_notification_index_processed_up_to = index_store.get().await?;
+pub async fn run(ic_agent: &IcAgent, notifications_canister_id: CanisterId, index_store: &dyn IndexStore) -> Result<(), Error> {
+    let maybe_notification_index_processed_up_to = index_store.get(notifications_canister_id).await?;
 
     if let Some(notification_index_processed_up_to) = maybe_notification_index_processed_up_to {
-        ic_agent.remove_notifications(notification_index_processed_up_to).await?;
+        ic_agent
+            .remove_notifications(&notifications_canister_id, notification_index_processed_up_to)
+            .await?;
     }
 
     Ok(())

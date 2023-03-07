@@ -75,6 +75,9 @@ export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Set<string
             case "message_unpinned":
                 userIds.add(e.event.unpinnedBy);
                 break;
+            case "events_ttl_updated":
+                userIds.add(e.event.updatedBy);
+                break;
             case "message_deleted":
             case "message_undeleted":
             case "message_edited":
@@ -128,6 +131,10 @@ export function getContentAsText(formatter: MessageFormatter, content: MessageCo
         text = content.proposal.title;
     } else if (content.kind === "giphy_content") {
         text = captionedContent(formatter("giphyMessage"), content.caption);
+    } else if (content.kind === "prize_content") {
+        text = captionedContent(formatter("prizeMessage"), content.caption);
+    } else if (content.kind === "prize_winner_content") {
+        text = "Prize winner message";
     } else {
         throw new UnsupportedValueError("Unrecognised content type", content);
     }
@@ -173,6 +180,8 @@ export function emptyChatMetrics(): ChatMetrics {
         cyclesMessages: 0,
         edits: 0,
         icpMessages: 0,
+        sns1Messages: 0,
+        ckbtcMessages: 0,
         giphyMessages: 0,
         deletedMessages: 0,
         reportedMessages: 0,

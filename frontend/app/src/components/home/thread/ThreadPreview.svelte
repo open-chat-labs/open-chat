@@ -8,8 +8,7 @@
     } from "openchat-client";
     import { pop } from "../../../utils/transition";
     import { _ } from "svelte-i18n";
-    import { push } from "svelte-spa-router";
-    import { mobileWidth } from "../../../stores/screenDimensions";
+    import page from "page";
     import ChatMessage from "../ChatMessage.svelte";
     import IntersectionObserverComponent from "../IntersectionObserver.svelte";
     import CollapsibleCard from "../../CollapsibleCard.svelte";
@@ -25,6 +24,7 @@
     export let thread: ThreadPreview;
     export let observer: IntersectionObserver;
 
+    $: userStore = client.userStore;
     $: chatSummariesStore = client.chatSummariesStore;
     $: messagesRead = client.messagesRead;
     $: missingMessages = thread.totalReplies - thread.latestReplies.length;
@@ -82,7 +82,7 @@
     });
 
     function selectThread() {
-        push(`/${thread.chatId}/${thread.rootMessage.event.messageIndex}?open=true`);
+        page(`/${thread.chatId}/${thread.rootMessage.event.messageIndex}?open=true`);
     }
 </script>
 
@@ -90,7 +90,7 @@
     <CollapsibleCard on:toggle={() => (open = !open)} {open} headerText={$_("userInfoHeader")}>
         <div slot="titleSlot" class="header">
             <div class="avatar">
-                <Avatar url={chatData.avatarUrl} size={AvatarSize.Small} />
+                <Avatar url={chatData.avatarUrl} size={AvatarSize.Default} />
             </div>
             <div class="details">
                 <h4 class="title">
@@ -116,10 +116,11 @@
             <div class="body">
                 <div class="root-msg">
                     <ChatMessage
-                        senderId={thread.rootMessage.event.sender}
+                        sender={$userStore[thread.rootMessage.event.sender]}
                         focused={false}
                         {observer}
                         confirmed={true}
+                        failed={false}
                         senderTyping={false}
                         readByMe={true}
                         readByThem={true}
@@ -130,7 +131,7 @@
                         first={true}
                         last={true}
                         readonly={true}
-                        inThread={true}
+                        threadRootMessage={thread.rootMessage.event}
                         pinned={false}
                         supportsEdit={false}
                         supportsReply={false}
@@ -157,10 +158,11 @@
                 {#each grouped as userGroup}
                     {#each userGroup as evt, i (evt.event.messageId)}
                         <ChatMessage
-                            senderId={evt.event.sender}
+                            sender={$userStore[evt.event.sender]}
                             focused={false}
                             {observer}
                             confirmed={true}
+                            failed={false}
                             senderTyping={false}
                             readByMe={true}
                             readByThem={true}
@@ -171,7 +173,7 @@
                             first={i === 0}
                             last={i === userGroup.length - 1}
                             readonly={true}
-                            inThread={true}
+                            threadRootMessage={thread.rootMessage.event}
                             pinned={false}
                             supportsEdit={false}
                             supportsReply={false}

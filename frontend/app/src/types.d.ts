@@ -23,9 +23,9 @@ declare module "svelte-easy-crop" {
     export default class Cropper extends SvelteComponentTyped<CropperProps, CropperEvents> {}
 }
 
-declare module "intl-tel-input/build/js/utils";
-
 declare module "svelte-qr";
+
+declare module "svelte-confetti";
 
 declare namespace svelte.JSX {
     interface HTMLAttributes<T> {
@@ -38,5 +38,6 @@ declare namespace svelte.JSX {
 declare global {
     interface Window {
         twttr: any;
+        platformModerator: any;
     }
 }

@@ -4,7 +4,7 @@
     export let disabled: boolean = false;
 </script>
 
-<div class="wrapper" on:click class:compact class:disabled role="button" {title}>
+<div class="wrapper" class:compact class:disabled role="button" {title}>
     <slot />
 </div>
 

@@ -1,20 +1,18 @@
 use candid::{CandidType, Principal};
-use canister_logger::LogMessagesWrapper;
 use canister_state_macros::canister_state;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use types::{Avatar, CanisterId, Cycles, TimestampMillis, Timestamped, UserId, Version};
 use utils::env::Environment;
-use utils::memory;
 
 mod guards;
 mod lifecycle;
+mod memory;
 mod queries;
 mod updates;
 
 thread_local! {
-    static LOG_MESSAGES: RefCell<LogMessagesWrapper> = RefCell::default();
     static WASM_VERSION: RefCell<Timestamped<Version>> = RefCell::default();
 }
 
@@ -37,7 +35,7 @@ impl RuntimeState {
 
     pub fn metrics(&self) -> Metrics {
         Metrics {
-            memory_used: memory::used(),
+            memory_used: utils::memory::used(),
             now: self.env.now(),
             cycles_balance: self.env.cycles_balance(),
             wasm_version: WASM_VERSION.with(|v| **v.borrow()),

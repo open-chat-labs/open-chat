@@ -14,6 +14,7 @@
         Cryptocurrency,
         ThreadMessagesLoaded,
         SentThreadMessage,
+        FailedMessages,
     } from "openchat-client";
     import { getContext, onMount, tick } from "svelte";
     import { _ } from "svelte-i18n";
@@ -25,8 +26,6 @@
     import PollBuilder from "../PollBuilder.svelte";
     import GiphySelector from "../GiphySelector.svelte";
     import CryptoTransferBuilder from "../CryptoTransferBuilder.svelte";
-    import { relayPublish } from "../../../stores/relay";
-    import * as shareFunctions from "../../../utils/share";
     import type { OpenChat } from "openchat-client";
     import { toastStore } from "stores/toast";
     import ChatEvent from "../ChatEvent.svelte";
@@ -57,12 +56,12 @@
     let previousRootEvent: EventWrapper<Message> | undefined;
 
     $: currentChatMembers = client.currentChatMembers;
-    $: selectedChatId = client.selectedChatId;
     $: lastCryptoSent = client.lastCryptoSent;
     $: draftThreadMessages = client.draftThreadMessages;
     $: unconfirmed = client.unconfirmed;
     $: currentChatBlockedUsers = client.currentChatBlockedUsers;
     $: threadEvents = client.threadEvents;
+    $: failedMessagesStore = client.failedMessagesStore;
 
     onMount(() => {
         client.addEventListener("openchat_event", clientEvent);
@@ -140,6 +139,7 @@
 
     $: thread = rootEvent.event.thread;
     $: threadRootMessageIndex = rootEvent.event.messageIndex;
+    $: threadRootMessage = rootEvent.event;
     $: blocked = chat.kind === "direct_chat" && $currentChatBlockedUsers.has(chat.them);
     $: draftMessage = readable(draftThreadMessages.get(threadRootMessageIndex), (set) =>
         draftThreadMessages.subscribe((d) => set(d[threadRootMessageIndex] ?? {}))
@@ -150,8 +150,9 @@
     $: editingEvent = derived(draftMessage, (d) => d.editingEvent);
     $: canSend = client.canReplyInThread(chat.chatId);
     $: canReact = client.canReactToMessages(chat.chatId);
+    $: expandedDeletedMessages = client.expandedDeletedMessages;
     $: messages = client
-        .groupEvents([rootEvent, ...$threadEvents], user.userId)
+        .groupEvents([rootEvent, ...$threadEvents], user.userId, $expandedDeletedMessages)
         .reverse() as EventWrapper<Message>[][][];
     $: readonly = client.isChatReadOnly(chat.chatId);
     $: selectedThreadKey = client.selectedThreadKey;
@@ -200,6 +201,10 @@
 
     function editEvent(ev: EventWrapper<Message>): void {
         draftThreadMessages.setEditing(threadRootMessageIndex, ev);
+    }
+
+    function retrySend(ev: CustomEvent<EventWrapper<Message>>): void {
+        client.retrySendMessage(chat.chatId, ev.detail, $threadEvents, threadRootMessageIndex);
     }
 
     function sendMessageWithAttachment(
@@ -273,88 +278,8 @@
         sendMessageWithAttachment(ev.detail[1], [], ev.detail[0]);
     }
 
-    function registerVote(
-        ev: CustomEvent<{
-            messageIndex: number;
-            messageId: bigint;
-            answerIndex: number;
-            type: "register" | "delete";
-        }>
-    ) {
-        if (ev.detail.messageId === rootEvent.event.messageId) {
-            relayPublish({ kind: "relayed_register_vote", data: ev.detail });
-            return;
-        }
-
-        if ($selectedChatId !== undefined) {
-            client
-                .registerPollVote(
-                    $selectedChatId,
-                    threadRootMessageIndex,
-                    ev.detail.messageId,
-                    ev.detail.messageIndex,
-                    ev.detail.answerIndex,
-                    ev.detail.type
-                )
-                .then((success) => {
-                    if (!success) {
-                        toastStore.showFailureToast("poll.voteFailed");
-                    }
-                });
-        }
-    }
-
-    function onDeleteMessage(ev: CustomEvent<Message>): void {
-        if (ev.detail.messageId === rootEvent.event.messageId) {
-            relayPublish({ kind: "relayed_delete_message", message: ev.detail });
-            return;
-        }
-
-        client.deleteMessage(chat.chatId, threadRootMessageIndex, ev.detail.messageId);
-    }
-
-    function onUndeleteMessage(ev: CustomEvent<Message>): void {
-        if (ev.detail.messageId === rootEvent.event.messageId) {
-            relayPublish({ kind: "relayed_undelete_message", message: ev.detail });
-            return;
-        }
-
-        client.undeleteMessage(chat.chatId, threadRootMessageIndex, ev.detail.messageId);
-    }
-
     function replyTo(ev: CustomEvent<EnhancedReplyContext>) {
         draftThreadMessages.setReplyingTo(threadRootMessageIndex, ev.detail);
-    }
-
-    function onSelectReaction(ev: CustomEvent<{ message: Message; reaction: string }>) {
-        if (ev.detail.message === rootEvent.event) {
-            relayPublish({ kind: "relayed_select_reaction", ...ev.detail });
-            return;
-        }
-
-        if (!canReact) return;
-
-        const { message, reaction } = ev.detail;
-
-        const kind = client.containsReaction(user.userId, reaction, message.reactions)
-            ? "remove"
-            : "add";
-
-        client
-            .selectReaction(
-                chat.chatId,
-                user.userId,
-                threadRootMessageIndex,
-                message.messageId,
-                reaction,
-                user.username,
-                kind
-            )
-            .then((success) => {
-                if (success && kind === "add") {
-                    client.trackEvent("reacted_to_message");
-                }
-            });
     }
 
     function clearFocusIndex() {
@@ -382,10 +307,6 @@
     function onGoToMessageIndex(
         ev: CustomEvent<{ index: number; preserveFocus: boolean; messageId: bigint }>
     ) {
-        if (ev.detail.messageId === rootEvent.event.messageId) {
-            relayPublish({ kind: "relayed_goto_message", ...ev.detail });
-            return;
-        }
         goToMessageIndex(ev.detail.index);
     }
 
@@ -402,14 +323,6 @@
         $fromBottom = calculateFromBottom();
     }
 
-    function shareMessage(ev: CustomEvent<Message>) {
-        shareFunctions.shareMessage($_, user.userId, ev.detail.sender === user.userId, ev.detail);
-    }
-
-    function copyMessageUrl(ev: CustomEvent<Message>) {
-        shareFunctions.copyMessageUrl(chat.chatId, ev.detail.messageIndex, threadRootMessageIndex);
-    }
-
     function defaultCryptoTransferReceiver(): string | undefined {
         return $replyingTo?.sender?.userId;
     }
@@ -421,6 +334,22 @@
             return e.index.toString();
         }
     }
+
+    function isConfirmed(_unconf: unknown, evt: EventWrapper<ChatEventType>): boolean {
+        if (evt.event.kind === "message") {
+            return !unconfirmed.contains($selectedThreadKey ?? "", evt.event.messageId);
+        }
+        return true;
+    }
+
+    function isFailed(_failed: FailedMessages, evt: EventWrapper<ChatEventType>): boolean {
+        if (evt.event.kind === "message") {
+            return failedMessagesStore.contains($selectedThreadKey ?? "", evt.event.messageId);
+        }
+        return false;
+    }
+
+    $: console.log("Failed: ", $failedMessagesStore, $selectedThreadKey);
 </script>
 
 <PollBuilder
@@ -440,6 +369,7 @@
         draftAmountE8s={creatingCryptoTransfer.amount}
         defaultReceiver={defaultCryptoTransferReceiver()}
         on:sendTransfer={sendMessageWithContent}
+        on:upgrade
         on:close={() => (creatingCryptoTransfer = undefined)} />
 {/if}
 
@@ -483,17 +413,15 @@
                             first={i === 0}
                             last={i + 1 === userGroup.length}
                             me={evt.event.sender === user.userId}
-                            confirmed={!unconfirmed.contains(
-                                $selectedThreadKey ?? "",
-                                evt.event.messageId
-                            )}
+                            confirmed={isConfirmed($unconfirmed, evt)}
+                            failed={isFailed($failedMessagesStore, evt)}
                             readByThem
                             readByMe
                             {observer}
                             focused={evt.event.kind === "message" &&
                                 focusMessageIndex === evt.event.messageIndex}
                             {readonly}
-                            inThread
+                            {threadRootMessage}
                             pinned={false}
                             supportsEdit={evt.event.messageId !== rootEvent.event.messageId}
                             supportsReply={evt.event.messageId !== rootEvent.event.messageId}
@@ -511,19 +439,12 @@
                             on:goToMessageIndex={onGoToMessageIndex}
                             on:replyPrivatelyTo
                             on:replyTo={replyTo}
-                            on:selectReaction={onSelectReaction}
-                            on:deleteMessage={onDeleteMessage}
-                            on:undeleteMessage={onUndeleteMessage}
-                            on:blockUser
-                            on:registerVote={registerVote}
                             on:editEvent={() => editEvent(evt)}
-                            on:shareMessage={shareMessage}
-                            on:copyMessageUrl={copyMessageUrl}
                             on:chatWith
                             on:replyTo={replyTo}
                             on:replyPrivatelyTo
-                            on:undeleteMessage={onUndeleteMessage}
                             on:upgrade
+                            on:retrySend={retrySend}
                             on:forward />
                     {/each}
                 {/each}

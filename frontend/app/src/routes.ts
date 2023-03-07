@@ -1,22 +1,38 @@
-import { wrap } from "svelte-spa-router/wrap";
-import Home from "./components/home/HomeRoute.svelte";
-import LandingPage from "./components/landingpages/LandingPage.svelte";
-import NotFound from "./components/NotFound.svelte";
+import { derived, writable } from "svelte/store";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function routes(logout: () => Promise<void>): any {
-    return {
-        "/home": LandingPage,
-        "/features": LandingPage,
-        "/roadmap": LandingPage,
-        "/whitepaper": LandingPage,
-        "/architecture": LandingPage,
-        "/:chatId?/:messageIndex?/:threadMessageIndex?": wrap({
-            component: Home,
-            props: {
-                logout,
-            },
-        }),
-        "*": NotFound,
+export const notFound = writable(false);
+
+export const pathContextStore = writable<PageJS.Context | undefined>(undefined);
+
+export const location = derived(pathContextStore, ($store) => {
+    return $store ? $store.routePath : "";
+});
+
+export const querystring = derived(pathContextStore, ($store) => {
+    return $store ? new URLSearchParams($store.querystring) : new URLSearchParams();
+});
+
+export type RouteParams = {
+    chatId?: string;
+    messageIndex?: number;
+    threadMessageIndex?: number;
+    slug?: string;
+    open: boolean;
+};
+
+export const pathParams = derived(pathContextStore, ($store) => {
+    if ($store === undefined) return {} as RouteParams;
+
+    const $qs = $store.querystring;
+    const $params = $store.params;
+    const params = {
+        chatId: $params["chatId"] || undefined,
+        messageIndex: $params["messageIndex"] ? Number($params["messageIndex"]) : undefined,
+        threadMessageIndex: $params["threadMessageIndex"]
+            ? Number($params["threadMessageIndex"])
+            : undefined,
+        slug: $params["slug"],
+        open: $qs?.includes("open=true") ?? false,
     };
-}
+    return params;
+});

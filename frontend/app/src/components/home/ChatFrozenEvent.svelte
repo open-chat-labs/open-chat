@@ -17,11 +17,13 @@
     $: me = event.frozenBy === user?.userId;
     $: frozenByStr = me ? $_("you") : $userStore[event.frozenBy]?.username ?? $_("unknownUser");
 
-    $: text = $_("chatFrozenBy", {
+    $: chatFrozenByText = $_("chatFrozenBy", {
         values: {
             frozenBy: frozenByStr,
         },
     });
+
+    $: text = event.reason ? `${chatFrozenByText}\n${$_("reason")}: ${event.reason}` : chatFrozenByText;
 </script>
 
 <NonMessageEvent {text} {timestamp} />

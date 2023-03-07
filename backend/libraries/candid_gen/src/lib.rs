@@ -34,7 +34,19 @@ fn get_method_attribute(attrs: AttributeArgs) -> MethodAttribute {
     let canister_name = if let NestedMeta::Meta(Meta::Path(c)) = attrs.get(0).unwrap() {
         let value = c.get_ident().unwrap().to_string();
         match value.as_str() {
-            "group" | "group_index" | "notifications" | "online_users_aggregator" | "proposals_bot" | "user" | "user_index" => {
+            "cycles_dispenser"
+            | "group"
+            | "group_index"
+            | "local_group_index"
+            | "local_user_index"
+            | "notifications"
+            | "notifications_index"
+            | "online_users"
+            | "proposals_bot"
+            | "storage_bucket"
+            | "storage_index"
+            | "user"
+            | "user_index" => {
                 format!("{value}_canister")
             }
             _ => panic!("Unrecognised 'canister_name' value: {value:?}"),

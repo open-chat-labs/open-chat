@@ -69,7 +69,8 @@
     <div class="avatar" on:click={openUserProfile}>
         <Avatar
             url={client.userAvatarUrl(sender)}
-            size={$mobileWidth ? AvatarSize.Tiny : AvatarSize.Small} />
+            userId={sender.userId}
+            size={$mobileWidth ? AvatarSize.Small : AvatarSize.Default} />
     </div>
     <div
         class="message-bubble"

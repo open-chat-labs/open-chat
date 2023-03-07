@@ -9,6 +9,7 @@
         Dimensions,
         MessageContent,
         OpenChat,
+        PartialUserSummary,
     } from "openchat-client";
     import EmojiPicker from "./EmojiPicker.svelte";
     import Avatar from "../Avatar.svelte";
@@ -33,9 +34,10 @@
     import MessageReaction from "./MessageReaction.svelte";
     import ViewUserProfile from "./profile/ViewUserProfile.svelte";
     import ThreadSummary from "./ThreadSummary.svelte";
-    import { pathParams } from "../../stores/routing";
+    import { pathParams } from "../../routes";
     import { canShareMessage } from "../../utils/share";
     import ChatMessageMenu from "./ChatMessageMenu.svelte";
+    import { toastStore } from "../../stores/toast";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -43,7 +45,7 @@
     export let chatId: string;
     export let chatType: "group_chat" | "direct_chat";
     export let user: CreatedUser;
-    export let senderId: string;
+    export let sender: PartialUserSummary | undefined;
     export let msg: Message;
     export let me: boolean;
     export let eventIndex: number;
@@ -51,6 +53,7 @@
     export let first: boolean;
     export let last: boolean;
     export let confirmed: boolean;
+    export let failed: boolean;
     export let readByThem: boolean;
     export let readByMe: boolean;
     export let observer: IntersectionObserver;
@@ -64,11 +67,11 @@
     export let canReact: boolean;
     export let publicGroup: boolean;
     export let editing: boolean;
-    export let inThread: boolean;
     export let canStartThread: boolean;
     export let senderTyping: boolean;
     export let dateFormatter: (date: Date) => string = client.toShortTimeString;
     export let collapsed: boolean = false;
+    export let threadRootMessage: Message | undefined;
 
     // this is not to do with permission - some messages (namely thread root messages) will simply not support replying or editing inside a thread
     export let supportsEdit: boolean;
@@ -83,35 +86,38 @@
     let alignProfileTo: DOMRect | undefined = undefined;
     let crypto = msg.content.kind === "crypto_content";
     let poll = msg.content.kind === "poll_content";
+    let canRevealDeleted = false;
 
+    $: inThread = threadRootMessage !== undefined;
+    $: threadRootMessageIndex =
+        threadRootMessage?.messageId === msg.messageId
+            ? undefined
+            : threadRootMessage?.messageIndex;
     $: translationStore = client.translationStore;
-    $: userStore = client.userStore;
-    $: canEdit = me && supportsEdit && !deleted && !crypto && !poll;
-    $: sender = $userStore[senderId];
-    $: isBot = $userStore[senderId]?.kind === "bot";
+    $: canEdit = me && supportsEdit && !msg.deleted && !crypto && !poll;
+    $: isBot = sender?.kind === "bot";
     $: username = sender?.username;
     $: mediaDimensions = extractDimensions(msg.content);
     $: mediaCalculatedHeight = undefined as number | undefined;
     $: msgBubbleCalculatedWidth = undefined as number | undefined;
-    $: deleted = msg.content.kind === "deleted_content";
     $: fill = client.fillMessage(msg);
     $: showAvatar = $screenWidth !== ScreenWidth.ExtraExtraSmall;
     $: translated = $translationStore.has(Number(msg.messageId));
     $: threadSummary = msg.thread;
-    $: msgUrl = `/#/${chatId}/${msg.messageIndex}?open=true`;
+    $: msgUrl = `/${chatId}/${msg.messageIndex}?open=true`;
     $: isProposal = msg.content.kind === "proposal_content";
-    $: inert = deleted || collapsed;
+    $: isPrize = msg.content.kind === "prize_content";
+    $: isPrizeWinner = msg.content.kind === "prize_winner_content";
+    $: inert = msg.content.kind === "deleted_content" || collapsed;
     $: undeletingMessagesStore = client.undeletingMessagesStore;
     $: undeleting = $undeletingMessagesStore.has(msg.messageId);
+    $: showChatMenu = (!inert || canRevealDeleted) && !readonly;
     $: canUndelete =
-        msg.content.kind === "deleted_content" &&
-        msg.content.deletedBy === user.userId &&
-        $now - Number(msg.content.timestamp) < 5 * 60 * 1000 && // Only allow undeleting for 5 minutes
-        !undeleting;
+        msg.deleted &&
+        msg.content.kind !== "deleted_content" &&
+        (msg.sender !== user.userId || canDelete);
 
     afterUpdate(() => {
-        // console.log("updating ChatMessage component");
-
         if (readByMe && observer && msgElement) {
             observer.unobserve(msgElement);
         }
@@ -125,6 +131,17 @@
         }
 
         recalculateMediaDimensions();
+
+        return now.subscribe((t) => {
+            canRevealDeleted =
+                !undeleting &&
+                msg.content.kind === "deleted_content" &&
+                ((canDelete && msg.content.deletedBy !== msg.sender) ||
+                    (msg.sender === user.userId &&
+                        // Only allow viewing of your own message for 5 minutes after deleting it
+                        (msg.content.deletedBy !== msg.sender ||
+                            t - Number(msg.content.timestamp) < 5 * 60 * 1000)));
+        });
     });
 
     onDestroy(() => {
@@ -134,13 +151,13 @@
     });
 
     function chatWithUser() {
-        dispatch("chatWith", senderId);
+        dispatch("chatWith", msg.sender);
     }
 
     function createReplyContext(): EnhancedReplyContext {
         return {
             kind: "rehydrated_reply_context",
-            senderId,
+            senderId: msg.sender,
             chatId: chatId,
             eventIndex: eventIndex,
             content: msg.content,
@@ -169,6 +186,8 @@
     }
 
     function doubleClickMessage() {
+        if (failed || msg.deleted) return;
+
         if (me) {
             editMessage();
         } else if (confirmed) {
@@ -182,10 +201,25 @@
 
     function toggleReaction(reaction: string) {
         if (canReact) {
-            dispatch("selectReaction", {
-                message: msg,
-                reaction,
-            });
+            const kind = client.containsReaction(user.userId, reaction, msg.reactions)
+                ? "remove"
+                : "add";
+
+            client
+                .selectReaction(
+                    chatId,
+                    user.userId,
+                    threadRootMessageIndex,
+                    msg.messageId,
+                    reaction,
+                    user.username,
+                    kind
+                )
+                .then((success) => {
+                    if (success && kind === "add") {
+                        client.trackEvent("reacted_to_message");
+                    }
+                });
         }
         showEmojiPicker = false;
     }
@@ -255,11 +289,20 @@
     }
 
     function registerVote(ev: CustomEvent<{ answerIndex: number; type: "register" | "delete" }>) {
-        dispatch("registerVote", {
-            ...ev.detail,
-            messageIndex: msg.messageIndex,
-            messageId: msg.messageId,
-        });
+        client
+            .registerPollVote(
+                chatId,
+                threadRootMessageIndex,
+                msg.messageId,
+                msg.messageIndex,
+                ev.detail.answerIndex,
+                ev.detail.type
+            )
+            .then((success) => {
+                if (!success) {
+                    toastStore.showFailureToast("poll.voteFailed");
+                }
+            });
     }
 
     function canShare(): boolean {
@@ -294,7 +337,7 @@
 {#if viewProfile}
     <ViewUserProfile
         alignTo={alignProfileTo}
-        userId={sender.userId}
+        userId={msg.sender}
         chatButton={groupChat}
         on:openDirectChat={chatWithUser}
         on:close={closeUserProfile} />
@@ -305,16 +348,17 @@
         bind:this={msgElement}
         class="message"
         class:me
-        data-index={msg.messageIndex}
-        data-id={msg.messageId}
-        id={`event-${eventIndex}`}>
+        data-index={failed ? "" : msg.messageIndex}
+        data-id={failed ? "" : msg.messageId}
+        id={failed ? "" : `event-${eventIndex}`}>
         {#if showAvatar}
             <div class="avatar-col">
                 {#if first}
                     <div class="avatar" on:click={openUserProfile}>
                         <Avatar
                             url={client.userAvatarUrl(sender)}
-                            size={$mobileWidth ? AvatarSize.Tiny : AvatarSize.Small} />
+                            userId={msg.sender}
+                            size={$mobileWidth ? AvatarSize.Small : AvatarSize.Default} />
                     </div>
                 {/if}
             </div>
@@ -338,13 +382,21 @@
             class:last
             class:readByMe
             class:crypto
+            class:failed
+            class:prizeWinner={isPrizeWinner}
             class:proposal={isProposal && !inert}
             class:thread={inThread}
             class:rtl={$rtlStore}>
-            {#if first && !isProposal}
+            {#if first && !isProposal && !isPrize}
                 <div class="sender" class:fill class:rtl={$rtlStore}>
                     <Link underline={"never"} on:click={openUserProfile}>
-                        <h4 class="username" class:fill class:crypto>{username}</h4>
+                        <h4
+                            class="username"
+                            class:fill
+                            class:crypto
+                            class:diamond={sender?.diamond}>
+                            {username}
+                        </h4>
                     </Link>
                     {#if senderTyping}
                         <span class="typing">
@@ -380,11 +432,11 @@
             {/if}
 
             <ChatMessageContent
+                senderId={msg.sender}
                 {readonly}
                 {fill}
                 {me}
                 {groupChat}
-                {senderId}
                 {chatId}
                 {collapsed}
                 {undeleting}
@@ -396,15 +448,20 @@
                 edited={msg.edited}
                 height={mediaCalculatedHeight}
                 on:registerVote={registerVote}
+                on:goToMessageIndex
+                on:upgrade
                 on:expandMessage />
 
-            {#if !inert}
+            {#if !inert && !isPrize}
                 <TimeAndTicks
                     {pinned}
                     {fill}
                     {timestamp}
                     {me}
                     {confirmed}
+                    {failed}
+                    deleted={msg.deleted}
+                    {undeleting}
                     {readByThem}
                     {crypto}
                     {chatType}
@@ -420,24 +477,26 @@
                 <pre>ReadByUs: {readByMe}</pre>
                 <pre>Pinned: {pinned}</pre>
                 <pre>edited: {msg.edited}</pre>
+                <pre>failed: {failed}</pre>
+                <pre>timestamp: {timestamp}</pre>
                 <pre>thread: {JSON.stringify(msg.thread, null, 4)}</pre>
             {/if}
 
-            {#if (!inert || canUndelete) && !readonly}
+            {#if showChatMenu}
                 <ChatMessageMenu
                     {chatId}
-                    {senderId}
                     {isProposal}
-                    {inert}
+                    inert={msg.deleted || collapsed}
                     {publicGroup}
                     {confirmed}
+                    {failed}
                     canShare={canShare()}
                     {me}
                     {canPin}
                     {pinned}
                     {supportsReply}
                     {canQuoteReply}
-                    {inThread}
+                    {threadRootMessage}
                     {canStartThread}
                     {groupChat}
                     {msg}
@@ -446,23 +505,22 @@
                     {canEdit}
                     {canDelete}
                     {canUndelete}
+                    {canRevealDeleted}
                     {crypto}
                     translatable={msg.content.kind === "text_content"}
                     {translated}
                     on:collapseMessage
-                    on:shareMessage
-                    on:copyMessageUrl
-                    on:pinMessage
                     on:forward
-                    on:unpinMessage
-                    on:deleteMessage
                     on:reply={reply}
+                    on:retrySend
+                    on:upgrade
+                    on:deleteFailedMessage
                     on:replyPrivately={replyPrivately}
                     on:editMessage={editMessage} />
             {/if}
         </div>
 
-        {#if !inert && canReact}
+        {#if !collapsed && !msg.deleted && canReact && !failed}
             <div class="actions">
                 <div class="reaction" on:click={() => (showEmojiPicker = true)}>
                     <HoverIcon>
@@ -503,6 +561,30 @@
 
     $avatar-width: 56px;
     $avatar-width-mob: 43px;
+
+    :global(.message-bubble:hover .menu-icon) {
+        opacity: 1;
+    }
+
+    :global(.message-bubble:hover .menu-icon .wrapper) {
+        background-color: var(--icon-msg-hv);
+    }
+
+    :global(.message-bubble.me:hover .menu-icon .wrapper) {
+        background-color: var(--icon-inverted-hv);
+    }
+
+    :global(.message-bubble.crypto:hover .menu-icon .wrapper) {
+        background-color: rgba(255, 255, 255, 0.3);
+    }
+
+    :global(.me .menu-icon:hover .wrapper) {
+        background-color: var(--icon-inverted-hv);
+    }
+
+    :global(.message-bubble.fill.me:hover .menu-icon .wrapper) {
+        background-color: var(--icon-hv);
+    }
 
     :global(.message .loading) {
         min-height: 100px;
@@ -567,10 +649,6 @@
         flex-wrap: wrap;
         gap: 3px;
 
-        // &.me {
-        //     justify-content: flex-end;
-        // }
-
         &.indent {
             margin-left: $avatar-width;
             @include mobile() {
@@ -583,10 +661,6 @@
         display: flex;
         justify-content: flex-start;
         margin-bottom: $sp2;
-
-        // &.me {
-        //     justify-content: flex-end;
-        // }
 
         .avatar-col {
             flex: 0 0 $avatar-width;
@@ -655,6 +729,10 @@
             &.fill,
             &.crypto {
                 color: #fff;
+            }
+
+            &.diamond {
+                @include diamond();
             }
         }
 
@@ -742,6 +820,14 @@
 
         &.me .forwarded {
             color: var(--currentChat-msg-me-muted);
+        }
+
+        &.failed {
+            background-color: var(--error);
+        }
+
+        &.prizeWinner {
+            // background-color: var(--prize);
         }
     }
 

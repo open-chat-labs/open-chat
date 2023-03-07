@@ -55,6 +55,10 @@ impl GlobalUserMap {
     pub fn is_bot(&self, user_id: &UserId) -> bool {
         self.bots.contains(user_id)
     }
+
+    pub fn len(&self) -> usize {
+        self.user_id_to_principal.len()
+    }
 }
 
 pub struct GlobalUser {

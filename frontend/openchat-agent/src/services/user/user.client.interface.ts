@@ -1,11 +1,9 @@
 import type {
     EventsResponse,
-    UpdateArgs,
     CreateGroupResponse,
     DeleteGroupResponse,
     CandidateGroupChat,
     DirectChatEvent,
-    MergedUpdatesResponse,
     SendMessageResponse,
     BlockUserResponse,
     UnblockUserResponse,
@@ -16,13 +14,10 @@ import type {
     AddRemoveReactionResponse,
     DeleteMessageResponse,
     UndeleteMessageResponse,
-    JoinGroupResponse,
     EditMessageResponse,
     MarkReadRequest,
-    GroupChatSummary,
     PendingCryptocurrencyWithdrawal,
     WithdrawCryptocurrencyResponse,
-    CurrentChatState,
     ArchiveChatResponse,
     BlobReference,
     CreatedUser,
@@ -33,21 +28,16 @@ import type {
     SetBioResponse,
     ToggleMuteNotificationResponse,
     UnpinChatResponse,
-    UserLookup,
+    InitialStateV2Response,
+    UpdatesV2Response,
+    DeletedDirectMessageResponse,
+    EventWrapper,
 } from "openchat-shared";
 
 export interface IUserClient {
     userId: string;
-    getUpdates(
-        currentState: CurrentChatState,
-        args: UpdateArgs,
-        userStore: UserLookup,
-        selectedChatId: string | undefined
-    ): Promise<MergedUpdatesResponse>;
-    getInitialState(
-        userStore: UserLookup,
-        selectedChatId: string | undefined
-    ): Promise<MergedUpdatesResponse>;
+    getInitialStateV2(): Promise<InitialStateV2Response>;
+    getUpdatesV2(updatesSince: bigint): Promise<UpdatesV2Response>;
     chatEventsWindow(
         eventIndexRange: IndexRange,
         userId: string,
@@ -78,7 +68,7 @@ export interface IUserClient {
     sendMessage(
         recipientId: string,
         sender: CreatedUser,
-        message: Message,
+        event: EventWrapper<Message>,
         replyingToChatId?: string,
         threadRootMessageIndex?: number
     ): Promise<[SendMessageResponse, Message]>;
@@ -86,13 +76,12 @@ export interface IUserClient {
         groupId: string,
         recipientId: string,
         sender: CreatedUser,
-        message: Message,
+        event: EventWrapper<Message>,
         threadRootMessageIndex?: number
     ): Promise<[SendMessageResponse, Message]>;
     blockUser(userId: string): Promise<BlockUserResponse>;
     unblockUser(userId: string): Promise<UnblockUserResponse>;
     leaveGroup(chatId: string): Promise<LeaveGroupResponse>;
-    joinGroup(chatId: string, inviteCode: string | undefined): Promise<JoinGroupResponse>;
     markMessagesRead(request: MarkReadRequest): Promise<MarkReadResponse>;
     setAvatar(data: Uint8Array): Promise<BlobReference>;
     addReaction(
@@ -127,7 +116,6 @@ export interface IUserClient {
         chatId: string,
         muted: boolean
     ): Promise<ToggleMuteNotificationResponse>;
-    getRecommendedGroups(): Promise<GroupChatSummary[]>;
     dismissRecommendation(chatId: string): Promise<void>;
     getBio(): Promise<string>;
     getPublicProfile(): Promise<PublicProfile>;
@@ -141,4 +129,5 @@ export interface IUserClient {
     unarchiveChat(chatId: string): Promise<ArchiveChatResponse>;
     initUserPrincipalMigration(newPrincipal: string): Promise<void>;
     migrateUserPrincipal(): Promise<MigrateUserPrincipalResponse>;
+    getDeletedMessage(userId: string, messageId: bigint): Promise<DeletedDirectMessageResponse>;
 }

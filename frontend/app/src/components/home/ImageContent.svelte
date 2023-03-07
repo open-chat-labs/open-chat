@@ -9,6 +9,9 @@
     import Overlay from "../Overlay.svelte";
     import ModalContent from "../ModalContent.svelte";
     import { isTouchDevice } from "../../utils/devices";
+    import { lowBandwidth } from "../../stores/settings";
+    import Button from "../Button.svelte";
+    import { _ } from "svelte-i18n";
 
     export let content: ImageContent;
     export let fill: boolean;
@@ -25,6 +28,8 @@
     let landscape = content.height < content.width;
     let zoomedWidth: number;
     let zoomedHeight: number;
+
+    $: hidden = $lowBandwidth && !draft;
 
     $: zoomable = !draft && !reply && !pinned;
 
@@ -77,6 +82,15 @@
 
 {#if content.blobUrl !== undefined}
     <div class="img-wrapper">
+        {#if hidden}
+            <div class="mask">
+                {#if !reply && !draft}
+                    <div class="reveal">
+                        <Button on:click={() => (hidden = false)}>{$_("loadImage")}</Button>
+                    </div>
+                {/if}
+            </div>
+        {/if}
         <img
             bind:this={imgElement}
             on:click={onClick}
@@ -87,13 +101,13 @@
             class:withCaption
             class:draft
             class:reply
-            class:zoomable
+            class:zoomable={zoomable && !hidden}
             class:rtl={$rtlStore}
             style={height === undefined ? undefined : `height: ${height}px`}
-            src={intersecting ? content.blobUrl : content.thumbnailData}
+            src={intersecting && !hidden ? content.blobUrl : content.thumbnailData}
             alt={content.caption} />
 
-        {#if zoomable}
+        {#if zoomable && !hidden}
             <div class="expand" class:rtl={$rtlStore} class:zoomed={zoom} on:click={toggleZoom}>
                 <ArrowExpand size={"1em"} color={"#fff"} />
             </div>
@@ -135,6 +149,24 @@
 
     .img-wrapper {
         position: relative;
+    }
+
+    .mask {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 100%;
+        width: 100%;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        background: linear-gradient(rgba(0, 0, 0, 0.2), rgba(0, 0, 0, 0.5));
+    }
+
+    .reveal {
+        position: absolute;
+        top: calc(50% - 20px);
+        width: 100%;
+        text-align: center;
     }
 
     .body {

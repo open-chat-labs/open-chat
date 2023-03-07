@@ -16,6 +16,19 @@ type FilterGroupsResponse =
         };
     };
 
+type RecommendedGroupsArgs =
+    record {
+        count: nat8;
+        exclusions: vec ChatId;
+    };
+
+type RecommendedGroupsResponse =
+    variant {
+        Success: record {
+            groups: vec PublicGroupSummary;
+        }
+    };
+
 type DeletedGroupInfo =
     record {
         id: ChatId;
@@ -91,9 +104,73 @@ type UnfreezeGroupResponse =
         InternalError: text;
     };
 
+type DeleteFrozenGroupArgs =
+    record {
+        chat_id: ChatId;
+    };
+
+type DeleteFrozenGroupResponse =
+    variant {
+        Success;
+        ChatNotFrozen;
+        ChatNotFrozenLongEnough: TimestampMillis;
+        ChatNotFound;
+        NotAuthorized;
+        InternalError: text;
+    };
+
+type AddHotGroupExclusionArgs =
+    record {
+        chat_id: ChatId;
+    };
+
+type AddHotGroupExclusionResponse =
+    variant {
+        Success;
+        ChatAlreadyExcluded;
+        ChatNotFound;
+        NotAuthorized;
+        InternalError: text;
+    };
+
+type RemoveHotGroupExclusionArgs =
+    record {
+        chat_id: ChatId;
+    };
+
+type RemoveHotGroupExclusionResponse =
+    variant {
+        Success;
+        ChatNotExcluded;
+        ChatNotFound;
+        NotAuthorized;
+        InternalError: text;
+    };
+
+type SetGroupUpgradeConcurrencyArgs =
+    record {
+        value: nat32;
+    };
+
+type SetGroupUpgradeConcurrencyResponse =
+    variant {
+        Success;
+        NotAuthorized;
+        InternalError: text;
+    };
+
 service: {
     filter_groups: (FilterGroupsArgs) -> (FilterGroupsResponse) query;
+    recommended_groups: (RecommendedGroupsArgs) -> (RecommendedGroupsResponse) query;
     search: (SearchArgs) -> (SearchResponse) query;
+
+    // Only callable by "platform moderators"
     freeze_group: (FreezeGroupArgs) -> (FreezeGroupResponse);
     unfreeze_group: (UnfreezeGroupArgs) -> (UnfreezeGroupResponse);
+    delete_frozen_group: (DeleteFrozenGroupArgs) -> (DeleteFrozenGroupResponse);
+    add_hot_group_exclusion: (AddHotGroupExclusionArgs) -> (AddHotGroupExclusionResponse);
+    remove_hot_group_exclusion: (RemoveHotGroupExclusionArgs) -> (RemoveHotGroupExclusionResponse);
+
+    // Only callable by "platform operators"
+    set_group_upgrade_concurrency: (SetGroupUpgradeConcurrencyArgs) -> (SetGroupUpgradeConcurrencyResponse);
 }

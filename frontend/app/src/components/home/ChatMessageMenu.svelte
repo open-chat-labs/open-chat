@@ -9,8 +9,10 @@
     import Cancel from "svelte-material-icons/Cancel.svelte";
     import ReplyOutline from "svelte-material-icons/ReplyOutline.svelte";
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
+    import Refresh from "svelte-material-icons/Refresh.svelte";
     import DeleteOffOutline from "svelte-material-icons/DeleteOffOutline.svelte";
     import TranslateIcon from "svelte-material-icons/Translate.svelte";
+    import EyeIcon from "svelte-material-icons/Eye.svelte";
     import TranslateOff from "svelte-material-icons/TranslateOff.svelte";
     import ForwardIcon from "svelte-material-icons/Share.svelte";
     import Pin from "svelte-material-icons/Pin.svelte";
@@ -24,25 +26,25 @@
     import { iconSize } from "../../stores/iconSize";
     import { createEventDispatcher, getContext } from "svelte";
     import type { Message, OpenChat } from "openchat-client";
-    import { push } from "svelte-spa-router";
+    import page from "page";
     import { toastStore } from "../../stores/toast";
+    import * as shareFunctions from "../../utils/share";
 
     const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
 
     export let chatId: string;
-    export let senderId: string;
     export let isProposal: boolean;
     export let inert: boolean;
     export let publicGroup: boolean;
     export let confirmed: boolean;
+    export let failed: boolean;
     export let canShare: boolean;
     export let me: boolean;
     export let canPin: boolean;
     export let pinned: boolean;
     export let supportsReply: boolean;
     export let canQuoteReply: boolean;
-    export let inThread: boolean;
     export let canStartThread: boolean;
     export let groupChat: boolean;
     export let canForward: boolean;
@@ -50,16 +52,31 @@
     export let canEdit: boolean;
     export let canDelete: boolean;
     export let canUndelete: boolean;
+    export let canRevealDeleted: boolean;
     export let translatable: boolean;
     export let translated: boolean;
     export let crypto: boolean;
     export let msg: Message;
+    export let threadRootMessage: Message | undefined;
 
+    $: user = client.user;
+    $: inThread = threadRootMessage !== undefined;
     $: translationStore = client.translationStore;
-    $: storageStore = client.storageStore;
+    $: isDiamond = client.isDiamond;
+    $: threadRootMessageIndex =
+        msg.messageId === threadRootMessage?.messageId
+            ? undefined
+            : threadRootMessage?.messageIndex;
 
     function blockUser() {
-        dispatch("blockUser", { userId: senderId });
+        if (!canBlockUser) return;
+        client.blockUser(chatId, msg.sender).then((success) => {
+            if (success) {
+                toastStore.showSuccessToast("blockUserSucceeded");
+            } else {
+                toastStore.showFailureToast("blockUserFailed");
+            }
+        });
     }
 
     function collapseMessage() {
@@ -67,25 +84,35 @@
     }
 
     function shareMessage() {
-        dispatch("shareMessage", msg);
+        shareFunctions.shareMessage($_, user.userId, msg.sender === user.userId, msg);
     }
 
     function copyMessageUrl() {
-        dispatch("copyMessageUrl", msg);
+        shareFunctions.copyMessageUrl(chatId, msg.messageIndex, threadRootMessageIndex);
     }
 
     function pinMessage() {
-        dispatch("pinMessage", msg);
+        if (!canPin || inThread) return;
+        client.pinMessage(chatId, msg.messageIndex).then((success) => {
+            if (!success) {
+                toastStore.showFailureToast("pinMessageFailed");
+            }
+        });
     }
 
     function unpinMessage() {
-        dispatch("unpinMessage", msg);
+        if (!canPin || inThread) return;
+        client.unpinMessage(chatId, msg.messageIndex).then((success) => {
+            if (!success) {
+                toastStore.showFailureToast("unpinMessageFailed");
+            }
+        });
     }
 
     // this is called if we are starting a new thread so we pass undefined as the threadSummary param
     function initiateThread() {
         if (msg.thread !== undefined) {
-            push(`/${chatId}/${msg.messageIndex}`);
+            page(`/${chatId}/${msg.messageIndex}`);
         } else {
             client.openThread(msg.messageId, msg.messageIndex, true);
         }
@@ -95,12 +122,31 @@
         dispatch("forward", msg);
     }
 
+    function retrySend() {
+        dispatch("retrySend");
+    }
+
     function deleteMessage() {
-        dispatch("deleteMessage", msg);
+        if (failed) {
+            dispatch("deleteFailedMessage");
+            return;
+        }
+        if (!canDelete && user.userId !== msg.sender) return;
+        client.deleteMessage(chatId, threadRootMessageIndex, msg.messageId);
     }
 
     function undeleteMessage() {
-        dispatch("undeleteMessage", msg);
+        if (!canUndelete) return;
+        client.undeleteMessage(chatId, threadRootMessageIndex, msg).then((success) => {
+            if (!success) {
+                toastStore.showFailureToast("undeleteMessageFailed");
+            }
+        });
+    }
+
+    function revealDeletedMessage() {
+        if (!canRevealDeleted) return;
+        client.revealDeletedMessage(chatId, msg.messageId, threadRootMessageIndex);
     }
 
     function untranslateMessage() {
@@ -108,8 +154,8 @@
     }
 
     function translateMessage() {
-        if ($storageStore.byteLimit === 0) {
-            dispatch("upgrade", "premium");
+        if (!$isDiamond) {
+            dispatch("upgrade");
         } else {
             if (msg.content.kind === "text_content") {
                 const params = new URLSearchParams();
@@ -156,7 +202,7 @@
                         <div slot="text">{$_("proposal.collapse")}</div>
                     </MenuItem>
                 {/if}
-                {#if publicGroup && confirmed && !inert}
+                {#if publicGroup && confirmed && !inert && !failed}
                     {#if canShare}
                         <MenuItem on:click={shareMessage}>
                             <ShareIcon
@@ -174,7 +220,7 @@
                         <div slot="text">{$_("copyMessageUrl")}</div>
                     </MenuItem>
                 {/if}
-                {#if confirmed && canPin && !inThread && !inert}
+                {#if confirmed && canPin && !inThread && !inert && !failed}
                     {#if pinned}
                         <MenuItem on:click={unpinMessage}>
                             <PinOff
@@ -190,7 +236,7 @@
                         </MenuItem>
                     {/if}
                 {/if}
-                {#if confirmed && supportsReply && !inert}
+                {#if confirmed && supportsReply && !inert && !failed}
                     {#if canQuoteReply}
                         <MenuItem on:click={() => dispatch("reply")}>
                             <Reply
@@ -207,7 +253,7 @@
                         </MenuItem>
                     {/if}
                 {/if}
-                {#if canForward && !inThread && !inert}
+                {#if canForward && !inThread && !inert && !failed}
                     <MenuItem on:click={forward}>
                         <ForwardIcon
                             size={$iconSize}
@@ -216,7 +262,7 @@
                         <div slot="text">{$_("forward")}</div>
                     </MenuItem>
                 {/if}
-                {#if confirmed && groupChat && !me && !inThread && !isProposal && !inert}
+                {#if confirmed && groupChat && !me && !inThread && !isProposal && !inert && !failed}
                     <MenuItem on:click={() => dispatch("replyPrivately")}>
                         <ReplyOutline
                             size={$iconSize}
@@ -224,17 +270,14 @@
                             slot="icon" />
                         <div slot="text">{$_("replyPrivately")}</div>
                     </MenuItem>
-                    {#if canBlockUser}
-                        <MenuItem on:click={blockUser}>
-                            <Cancel
-                                size={$iconSize}
-                                color={"var(--icon-inverted-txt)"}
-                                slot="icon" />
-                            <div slot="text">{$_("blockUser")}</div>
-                        </MenuItem>
-                    {/if}
                 {/if}
-                {#if canEdit && !inert}
+                {#if confirmed && groupChat && !me && canBlockUser && !failed}
+                    <MenuItem on:click={blockUser}>
+                        <Cancel size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
+                        <div slot="text">{$_("blockUser")}</div>
+                    </MenuItem>
+                {/if}
+                {#if canEdit && !inert && !failed}
                     <MenuItem on:click={() => dispatch("editMessage")}>
                         <PencilOutline
                             size={$iconSize}
@@ -254,13 +297,22 @@
                         </div>
                     </MenuItem>
                 {/if}
+                {#if canRevealDeleted}
+                    <MenuItem on:click={revealDeletedMessage}>
+                        <EyeIcon size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
+                        <div slot="text">{$_("revealDeletedMessage")}</div>
+                    </MenuItem>
+                {/if}
                 {#if canUndelete}
                     <MenuItem on:click={undeleteMessage}>
-                        <DeleteOffOutline size={$iconSize} color={"var(--icon-txt)"} slot="icon" />
+                        <DeleteOffOutline
+                            size={$iconSize}
+                            color={"var(--icon-inverted-txt)"}
+                            slot="icon" />
                         <div slot="text">{$_("undeleteMessage")}</div>
                     </MenuItem>
                 {/if}
-                {#if translatable}
+                {#if translatable && !failed}
                     {#if translated}
                         <MenuItem on:click={untranslateMessage}>
                             <TranslateOff
@@ -279,36 +331,20 @@
                         </MenuItem>
                     {/if}
                 {/if}
+                {#if failed}
+                    <MenuItem on:click={retrySend}>
+                        <Refresh size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
+                        <div slot="text">
+                            {$_("retryMessage")}
+                        </div>
+                    </MenuItem>
+                {/if}
             </Menu>
         </div>
     </MenuIcon>
 </div>
 
 <style type="text/scss">
-    :global(.message-bubble:hover .menu-icon) {
-        opacity: 1;
-    }
-
-    :global(.message-bubble:hover .menu-icon .wrapper) {
-        background-color: var(--icon-msg-hv);
-    }
-
-    :global(.message-bubble.me:hover .menu-icon .wrapper) {
-        background-color: var(--icon-inverted-hv);
-    }
-
-    :global(.message-bubble.crypto:hover .menu-icon .wrapper) {
-        background-color: rgba(255, 255, 255, 0.3);
-    }
-
-    :global(.me .menu-icon:hover .wrapper) {
-        background-color: var(--icon-inverted-hv);
-    }
-
-    :global(.message-bubble.fill.me:hover .menu-icon .wrapper) {
-        background-color: var(--icon-hv);
-    }
-
     .menu {
         $offset: -2px;
         position: absolute;

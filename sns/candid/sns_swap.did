@@ -1,0 +1,145 @@
+type BuyerState = record { icp : opt TransferableAmount };
+type CanisterCallError = record { code : opt int32; description : text };
+type CanisterStatusResultV2 = record {
+  controller : principal;
+  status : CanisterStatusType;
+  freezing_threshold : nat;
+  balance : vec record { vec nat8; nat };
+  memory_size : nat;
+  cycles : nat;
+  settings : DefiniteCanisterSettingsArgs;
+  idle_cycles_burned_per_day : nat;
+  module_hash : opt vec nat8;
+};
+type CanisterStatusType = variant { stopped; stopping; running };
+type CfInvestment = record { hotkey_principal : text; nns_neuron_id : nat64 };
+type CfNeuron = record { nns_neuron_id : nat64; amount_icp_e8s : nat64 };
+type CfParticipant = record {
+  hotkey_principal : text;
+  cf_neurons : vec CfNeuron;
+};
+type DefiniteCanisterSettingsArgs = record {
+  controller : principal;
+  freezing_threshold : nat;
+  controllers : vec principal;
+  memory_allocation : nat;
+  compute_allocation : nat;
+};
+type DerivedState = record {
+  sns_tokens_per_icp : float32;
+  buyer_total_icp_e8s : nat64;
+};
+type DirectInvestment = record { buyer_principal : text };
+type Err = record { description : opt text; error_type : opt int32 };
+type ErrorRefundIcpRequest = record { source_principal_id : opt principal };
+type ErrorRefundIcpResponse = record { result : opt Result };
+type FailedUpdate = record {
+  err : opt CanisterCallError;
+  dapp_canister_id : opt principal;
+};
+type FinalizeSwapResponse = record {
+  settle_community_fund_participation_result : opt SettleCommunityFundParticipationResult;
+  error_message : opt text;
+  set_dapp_controllers_result : opt SetDappControllersCallResult;
+  sns_governance_normal_mode_enabled : opt SetModeCallResult;
+  sweep_icp : opt SweepResult;
+  sweep_sns : opt SweepResult;
+  create_neuron : opt SweepResult;
+};
+type GetBuyerStateRequest = record { principal_id : opt principal };
+type GetBuyerStateResponse = record { buyer_state : opt BuyerState };
+type GetBuyersTotalResponse = record { buyers_total : nat64 };
+type GetInitResponse = record { init : opt Init };
+type GetLifecycleResponse = record { lifecycle : opt int32 };
+type GetStateResponse = record { swap : opt Swap; derived : opt DerivedState };
+type GovernanceError = record { error_message : text; error_type : int32 };
+type Init = record {
+  sns_root_canister_id : text;
+  fallback_controller_principal_ids : vec text;
+  neuron_minimum_stake_e8s : opt nat64;
+  nns_governance_canister_id : text;
+  transaction_fee_e8s : opt nat64;
+  icp_ledger_canister_id : text;
+  sns_ledger_canister_id : text;
+  sns_governance_canister_id : text;
+};
+type Investor = variant {
+  CommunityFund : CfInvestment;
+  Direct : DirectInvestment;
+};
+type NeuronAttributes = record { dissolve_delay_seconds : nat64; memo : nat64 };
+type NeuronBasketConstructionParameters = record {
+  dissolve_delay_interval_seconds : nat64;
+  count : nat64;
+};
+type Ok = record { block_height : opt nat64 };
+type OpenRequest = record {
+  cf_participants : vec CfParticipant;
+  params : opt Params;
+  open_sns_token_swap_proposal_id : opt nat64;
+};
+type Params = record {
+  min_participant_icp_e8s : nat64;
+  neuron_basket_construction_parameters : opt NeuronBasketConstructionParameters;
+  max_icp_e8s : nat64;
+  swap_due_timestamp_seconds : nat64;
+  min_participants : nat32;
+  sns_token_e8s : nat64;
+  max_participant_icp_e8s : nat64;
+  min_icp_e8s : nat64;
+};
+type Possibility = variant { Ok : Response; Err : CanisterCallError };
+type Possibility_1 = variant {
+  Ok : SetDappControllersResponse;
+  Err : CanisterCallError;
+};
+type Possibility_2 = variant { Err : CanisterCallError };
+type RefreshBuyerTokensRequest = record { buyer : text };
+type RefreshBuyerTokensResponse = record {
+  icp_accepted_participation_e8s : nat64;
+  icp_ledger_account_balance_e8s : nat64;
+};
+type Response = record { governance_error : opt GovernanceError };
+type Result = variant { Ok : Ok; Err : Err };
+type SetDappControllersCallResult = record { possibility : opt Possibility_1 };
+type SetDappControllersResponse = record { failed_updates : vec FailedUpdate };
+type SetModeCallResult = record { possibility : opt Possibility_2 };
+type SettleCommunityFundParticipationResult = record {
+  possibility : opt Possibility;
+};
+type SnsNeuronRecipe = record {
+  sns : opt TransferableAmount;
+  neuron_attributes : opt NeuronAttributes;
+  investor : opt Investor;
+};
+type Swap = record {
+  neuron_recipes : vec SnsNeuronRecipe;
+  finalize_swap_in_progress : opt bool;
+  cf_participants : vec CfParticipant;
+  init : opt Init;
+  lifecycle : int32;
+  buyers : vec record { text; BuyerState };
+  params : opt Params;
+  open_sns_token_swap_proposal_id : opt nat64;
+};
+type SweepResult = record { failure : nat32; skipped : nat32; success : nat32 };
+type TransferableAmount = record {
+  transfer_start_timestamp_seconds : nat64;
+  amount_e8s : nat64;
+  transfer_success_timestamp_seconds : nat64;
+};
+service : (Init) -> {
+  error_refund_icp : (ErrorRefundIcpRequest) -> (ErrorRefundIcpResponse);
+  finalize_swap : (record {}) -> (FinalizeSwapResponse);
+  get_buyer_state : (GetBuyerStateRequest) -> (GetBuyerStateResponse) query;
+  get_buyers_total : (record {}) -> (GetBuyersTotalResponse);
+  get_canister_status : (record {}) -> (CanisterStatusResultV2);
+  get_init : (record {}) -> (GetInitResponse) query;
+  get_lifecycle : (record {}) -> (GetLifecycleResponse) query;
+  get_state : (record {}) -> (GetStateResponse) query;
+  open : (OpenRequest) -> (record {});
+  refresh_buyer_tokens : (RefreshBuyerTokensRequest) -> (
+      RefreshBuyerTokensResponse,
+    );
+  restore_dapp_controllers : (record {}) -> (SetDappControllersCallResult);
+}

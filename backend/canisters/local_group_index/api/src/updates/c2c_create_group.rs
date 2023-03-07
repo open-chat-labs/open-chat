@@ -1,6 +1,6 @@
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
-use types::{Avatar, ChatId, GroupPermissions, GroupRules, GroupSubtype, UserId};
+use types::{Avatar, ChatId, GroupPermissions, GroupRules, GroupSubtype, Milliseconds, UserId};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -14,14 +14,13 @@ pub struct Args {
     pub avatar: Option<Avatar>,
     pub history_visible_to_new_joiners: bool,
     pub permissions: Option<GroupPermissions>,
+    pub events_ttl: Option<Milliseconds>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
-    NameTaken,
     CyclesBalanceTooLow,
-    UserNotFound,
     InternalError(String),
 }
 

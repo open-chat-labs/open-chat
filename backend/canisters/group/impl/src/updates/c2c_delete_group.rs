@@ -30,8 +30,9 @@ async fn c2c_delete_group(_args: Args) -> Response {
                 InternalError("Group not found in group index".to_string())
             }
             c2c_delete_group::Response::Success => Success,
+            c2c_delete_group::Response::InternalError(error) => InternalError(error),
         },
-        Err(error) => InternalError(format!("{:?}", error)),
+        Err(error) => InternalError(format!("{error:?}")),
     }
 }
 

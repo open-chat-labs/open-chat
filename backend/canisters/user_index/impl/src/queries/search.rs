@@ -182,7 +182,6 @@ mod tests {
         let user = results.users.first().unwrap();
         assert_eq!(user.user_id, Principal::from_slice(&[4, 1]).into());
         assert_eq!(user.username, "hamish");
-        assert_eq!(user.seconds_since_last_online, 5);
     }
 
     fn setup_runtime_state() -> RuntimeState {
@@ -193,17 +192,16 @@ mod tests {
             "Martin", "marcus", "matty", "julian", "hamish", "mohammad", "amar", "muhamMad", "amabcdef",
         ];
 
-        for index in 0..usernames.len() {
+        for (index, username) in usernames.iter().enumerate() {
             let bytes = vec![index as u8, 1];
             let p = Principal::from_slice(&bytes[..]);
 
             data.users.add_test_user(User {
                 principal: p,
                 user_id: p.into(),
-                username: usernames[index].to_string(),
+                username: username.to_string(),
                 date_created: env.now,
                 date_updated: env.now,
-                last_online: env.now,
                 phone_status: PhoneStatus::Confirmed(PhoneNumber::new(44, format!("+44 1111 111 11{index}"))),
                 ..Default::default()
             });

@@ -1,8 +1,11 @@
+pub mod nns;
+pub mod sns;
+
 use candid::{CandidType, Principal};
 use ic_ledger_types::{AccountIdentifier, Memo, Subaccount, Timestamp, Tokens, TransferArgs, DEFAULT_SUBACCOUNT};
 use serde::{Deserialize, Serialize};
-use sha2::{Digest, Sha256};
-use types::{TransactionHash, UserId};
+use sha256::sha256;
+use types::{CanisterId, TransactionHash};
 
 pub fn default_ledger_account(principal: Principal) -> AccountIdentifier {
     AccountIdentifier::new(&principal, &DEFAULT_SUBACCOUNT)
@@ -16,8 +19,8 @@ pub fn convert_to_subaccount(principal: &Principal) -> Subaccount {
     Subaccount(subaccount)
 }
 
-pub fn calculate_transaction_hash(sender: UserId, args: &TransferArgs) -> TransactionHash {
-    let from = default_ledger_account(sender.into());
+pub fn calculate_transaction_hash(sender: CanisterId, args: &TransferArgs) -> TransactionHash {
+    let from = default_ledger_account(sender);
 
     let transaction = Transaction {
         operation: Operation::Transfer {
@@ -65,8 +68,7 @@ struct Transaction {
 
 impl Transaction {
     pub fn hash(&self) -> TransactionHash {
-        let mut hash = Sha256::new();
-        hash.update(&serde_cbor::ser::to_vec_packed(&self).unwrap());
-        hash.finalize().into()
+        let bytes = serde_cbor::ser::to_vec_packed(&self).unwrap();
+        sha256(&bytes)
     }
 }

@@ -4,6 +4,7 @@
     import Home from "svelte-material-icons/Home.svelte";
     import Avatar from "../Avatar.svelte";
     import Cogs from "svelte-material-icons/Cogs.svelte";
+    import Wallet from "svelte-material-icons/Wallet.svelte";
     import Logout from "svelte-material-icons/Logout.svelte";
     import HoverIcon from "../HoverIcon.svelte";
     import HelpCircleOutline from "svelte-material-icons/HelpCircleOutline.svelte";
@@ -22,6 +23,8 @@
 
     export let user: PartialUserSummary;
 
+    $: canExtendDiamond = client.canExtendDiamond;
+
     function newGroup() {
         dispatch("newGroup");
     }
@@ -30,9 +33,12 @@
 <SectionHeader border={false}>
     <div class="current-user" class:rtl={$rtlStore} on:click={() => dispatch("profile")}>
         <div class="avatar">
-            <Avatar url={client.userAvatarUrl(user)} size={AvatarSize.Small} />
+            <Avatar
+                url={client.userAvatarUrl(user)}
+                userId={user.userId}
+                size={AvatarSize.Default} />
         </div>
-        <h4 class="name">{user.username}</h4>
+        <h4 class:diamond={user.diamond} class="name">{user.username}</h4>
     </div>
     <span class="menu">
         <MenuIcon>
@@ -60,9 +66,20 @@
                         <span class="flame" slot="icon">🔥</span>
                         <span slot="text">{$_("whatsHot")}</span>
                     </MenuItem>
+                    <MenuItem on:click={() => dispatch("upgrade")}>
+                        <span class="diamond-icon" slot="icon">💎</span>
+                        <span slot="text"
+                            >{$canExtendDiamond
+                                ? $_("upgrade.extend")
+                                : $_("upgrade.diamond")}</span>
+                    </MenuItem>
                     <MenuItem on:click={() => dispatch("profile")}>
                         <Cogs size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
                         <span slot="text">{$_("profile.title")}</span>
+                    </MenuItem>
+                    <MenuItem on:click={() => dispatch("wallet")}>
+                        <Wallet size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
+                        <span slot="text">{$_("wallet")}</span>
                     </MenuItem>
                     <MenuItem on:click={() => dispatch("showFaq")}>
                         <HelpCircleOutline
@@ -92,7 +109,8 @@
         margin-right: 0;
     }
 
-    .flame {
+    .flame,
+    .diamond-icon {
         @include font(bold, normal, fs-110);
     }
 
@@ -110,5 +128,9 @@
 
     .menu {
         cursor: pointer;
+    }
+
+    .diamond {
+        @include diamond();
     }
 </style>
