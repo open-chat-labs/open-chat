@@ -64,7 +64,7 @@
     $: canSend = client.canReplyInThread(chat.chatId);
     $: canReact = client.canReactToMessages(chat.chatId);
     $: expandedDeletedMessages = client.expandedDeletedMessages;
-    $: atRoot = $threadEvents[0]?.index === 0;
+    $: atRoot = $threadEvents.length === 0 || $threadEvents[0]?.index === 0;
     $: events = atRoot ? [rootEvent, ...$threadEvents] : $threadEvents;
     $: messages = client
         .groupEvents(events, user.userId, $expandedDeletedMessages)
