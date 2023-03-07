@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - APIs to add/remove/list platform operators ([#3264](https://github.com/open-ic/open-chat/pull/3264)) 
 - Endpoint for platform ops to set user upgrade concurrency ([#3268](https://github.com/open-ic/open-chat/pull/3268))
 - Implemented recurring Diamond membership payments ([#3274](https://github.com/open-ic/open-chat/pull/3274))
+- Expose more metrics about Diamond membership payments ([#3276](https://github.com/open-ic/open-chat/pull/3276))
 
 ### Changed
 

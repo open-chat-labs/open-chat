@@ -21,10 +21,10 @@ async fn pay_for_diamond_membership(args: Args) -> Response {
         _ => return UserNotFound,
     };
 
-    pay_for_diamond_membership_impl(args, user_id).await
+    pay_for_diamond_membership_impl(args, user_id, true).await
 }
 
-pub(crate) async fn pay_for_diamond_membership_impl(args: Args, user_id: UserId) -> Response {
+pub(crate) async fn pay_for_diamond_membership_impl(args: Args, user_id: UserId, manual_payment: bool) -> Response {
     if let Err(response) = mutate_state(|state| prepare(&args, user_id, state)) {
         return response;
     };
@@ -36,7 +36,7 @@ pub(crate) async fn pay_for_diamond_membership_impl(args: Args, user_id: UserId)
     let response = match user_canister_c2c_client::c2c_charge_user_account(user_id.into(), &c2c_args).await {
         Ok(result) => match result {
             user_canister::c2c_charge_user_account::Response::Success(block_index) => {
-                mutate_state(|state| process_charge(args, user_id, block_index, state))
+                mutate_state(|state| process_charge(args, user_id, block_index, manual_payment, state))
             }
             user_canister::c2c_charge_user_account::Response::TransferError(error) => process_error(error),
             user_canister::c2c_charge_user_account::Response::InternalError(error) => InternalError(error),
@@ -77,7 +77,13 @@ pub(crate) fn icp_price_e8s(duration: DiamondMembershipPlanDuration) -> u64 {
     }
 }
 
-fn process_charge(args: Args, user_id: UserId, block_index: BlockIndex, runtime_state: &mut RuntimeState) -> Response {
+fn process_charge(
+    args: Args,
+    user_id: UserId,
+    block_index: BlockIndex,
+    manual_payment: bool,
+    runtime_state: &mut RuntimeState,
+) -> Response {
     if let Some(diamond_membership) = runtime_state.data.users.diamond_membership_details_mut(&user_id) {
         let now = runtime_state.env.now();
         diamond_membership.add_payment(
@@ -86,6 +92,7 @@ fn process_charge(args: Args, user_id: UserId, block_index: BlockIndex, runtime_
             block_index,
             args.duration,
             args.recurring,
+            manual_payment,
             now,
         );
 
@@ -122,6 +129,28 @@ fn process_charge(args: Args, user_id: UserId, block_index: BlockIndex, runtime_
                 expires_at.saturating_sub(DAY_IN_MS),
                 now,
             );
+        }
+
+        if manual_payment {
+            runtime_state.data.diamond_membership_payment_metrics.manual_payments_taken += 1;
+        } else {
+            runtime_state.data.diamond_membership_payment_metrics.recurring_payments_taken += 1;
+        }
+        if let Some(amount) = runtime_state
+            .data
+            .diamond_membership_payment_metrics
+            .amount_raised
+            .iter_mut()
+            .find(|(t, _)| *t == args.token)
+            .map(|(_, amount)| amount)
+        {
+            *amount += args.expected_price_e8s as u128;
+        } else {
+            runtime_state
+                .data
+                .diamond_membership_payment_metrics
+                .amount_raised
+                .push((args.token, args.expected_price_e8s as u128));
         }
 
         Success(result)
