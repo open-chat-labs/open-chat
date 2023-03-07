@@ -152,10 +152,6 @@ impl UserMap {
         }
     }
 
-    pub fn is_valid_caller(&self, caller: Principal) -> bool {
-        self.principal_to_user_id.contains_key(&caller) || self.users.contains_key(&caller.into())
-    }
-
     pub fn mark_cycles_top_up(&mut self, user_id: &UserId, top_up: CyclesTopUp) -> bool {
         if let Some(user) = self.users.get_mut(user_id) {
             user.mark_cycles_top_up(top_up);
