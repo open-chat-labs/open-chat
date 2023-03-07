@@ -136,6 +136,22 @@ fn process_charge(
         } else {
             runtime_state.data.diamond_membership_payment_metrics.recurring_payments_taken += 1;
         }
+        if let Some(amount) = runtime_state
+            .data
+            .diamond_membership_payment_metrics
+            .amount_raised
+            .iter_mut()
+            .find(|(t, _)| *t == args.token)
+            .map(|(_, amount)| amount)
+        {
+            *amount += args.expected_price_e8s as u128;
+        } else {
+            runtime_state
+                .data
+                .diamond_membership_payment_metrics
+                .amount_raised
+                .push((args.token, args.expected_price_e8s as u128));
+        }
 
         Success(result)
     } else {
