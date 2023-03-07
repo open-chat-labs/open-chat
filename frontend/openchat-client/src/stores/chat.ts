@@ -312,6 +312,15 @@ export const userGroupKeys = createDerivedPropStore<ChatSpecificState, "userGrou
     () => new Set<string>()
 );
 
+export const confirmedThreadEventIndexesLoadedStore = derived(
+    [threadServerEventsStore],
+    ([serverEvents]) => {
+        const ranges = new DRange();
+        serverEvents.forEach((e) => ranges.add(e.index));
+        return ranges;
+    }
+);
+
 const confirmedEventIndexesLoadedStore = derived([serverEventsStore], ([serverEvents]) => {
     const ranges = new DRange();
     serverEvents.forEach((e) => ranges.add(e.index));

@@ -1,7 +1,7 @@
 /* eslint-disable no-case-declarations */
 import type { Identity } from "@dfinity/agent";
 import { AuthClient } from "@dfinity/auth-client";
-import { writable } from "svelte/store";
+import { get, writable } from "svelte/store";
 import { load } from "@fingerprintjs/botd";
 import {
     buildUserAvatarUrl,
@@ -117,6 +117,7 @@ import {
     groupPreviewsStore,
     isContiguous,
     selectedThreadRootEvent,
+    confirmedThreadEventIndexesLoadedStore,
 } from "./stores/chat";
 import { cryptoBalance, lastCryptoSent } from "./stores/crypto";
 import { draftThreadMessages } from "./stores/draftThreadMessages";
@@ -1647,7 +1648,6 @@ export class OpenChat extends EventTarget {
             } else {
                 this.dispatchEvent(new LoadedPreviousThreadMessages());
             }
-            // this.dispatchEvent(new ThreadMessagesLoaded(ascending));
         }
     }
 
@@ -1800,15 +1800,15 @@ export class OpenChat extends EventTarget {
             return Promise.resolve(false);
         }
 
-        if (threadRootEvent !== undefined) {
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            const thread = threadRootEvent.event.thread!;
+        if (threadRootEvent !== undefined && threadRootEvent.event.thread !== undefined) {
+            const thread = threadRootEvent.event.thread;
+            const [index, ascending] = this.newThreadMessageCriteria(thread);
             return this.loadThreadMessages(
                 chatId,
                 thread,
                 [0, thread.latestEventIndex],
-                (thread.latestEventIndex ?? -1) + 1,
-                true,
+                index,
+                ascending,
                 threadRootEvent.event.messageIndex,
                 false
             ).then(() => false);
@@ -1865,6 +1865,12 @@ export class OpenChat extends EventTarget {
         chatId: string,
         threadRootEvent?: EventWrapper<Message> /* TODO - make this work for threads */
     ): boolean {
+        if (threadRootEvent !== undefined && threadRootEvent.event.thread !== undefined) {
+            return (
+                (this.confirmedThreadUpToEventIndex() ?? -1) <
+                threadRootEvent.event.thread.latestEventIndex
+            );
+        }
         const serverChat = this._liveState.serverChatSummaries[chatId];
 
         return (
@@ -1974,6 +1980,16 @@ export class OpenChat extends EventTarget {
         return eventsPromise.then((resp) => this.handleEventsResponse(serverChat, resp));
     }
 
+    private newThreadMessageCriteria(thread: ThreadSummary): [number, boolean] {
+        const loadedUpTo = this.confirmedThreadUpToEventIndex();
+
+        if (loadedUpTo === undefined) {
+            return [thread.latestEventIndex, false];
+        }
+
+        return [loadedUpTo + 1, true];
+    }
+
     private newMessageCriteria(serverChat: ChatSummary): [number, boolean] | undefined {
         if (serverChat.latestEventIndex < 0) {
             return undefined;
@@ -1989,6 +2005,13 @@ export class OpenChat extends EventTarget {
     }
     private confirmedUpToEventIndex(chatId: string): number | undefined {
         const ranges = confirmedEventIndexesLoaded(chatId).subranges();
+        if (ranges.length > 0) {
+            return ranges[0].high;
+        }
+        return undefined;
+    }
+    private confirmedThreadUpToEventIndex(): number | undefined {
+        const ranges = get(confirmedThreadEventIndexesLoadedStore).subranges();
         if (ranges.length > 0) {
             return ranges[0].high;
         }

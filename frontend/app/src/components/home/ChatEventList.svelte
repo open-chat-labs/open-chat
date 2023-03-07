@@ -14,8 +14,6 @@
         LoadedNewThreadMessages,
         LoadedThreadMessageWindow,
         ChatUpdated,
-        SentThreadMessage,
-        ThreadSummary,
     } from "openchat-client";
     import { menuStore } from "../../stores/menu";
     import { tooltipStore } from "../../stores/tooltip";
@@ -31,7 +29,6 @@
 
     const MESSAGE_LOAD_THRESHOLD = 400;
     const FROM_BOTTOM_THRESHOLD = 600;
-    const MESSAGE_READ_THRESHOLD = 500;
     const client = getContext<OpenChat>("client");
 
     export let rootSelector: string;
