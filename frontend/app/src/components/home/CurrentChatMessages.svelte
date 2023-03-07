@@ -358,11 +358,15 @@
 
 <ChatEventList
     bind:this={chatEventList}
+    rootSelector={"chat-messages"}
+    selectedThreadKey={undefined}
+    threadRootEvent={undefined}
     {readonly}
     {unreadMessages}
     {firstUnreadMention}
     {footer}
     focusMessageIndex={$focusMessageIndex}
+    setFocusMessageIndex={(idx) => client.setFocusMessageIndex(chat.chatId, idx)}
     {events}
     {chat}
     bind:initialised

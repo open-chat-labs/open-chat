@@ -116,6 +116,7 @@ import {
     removeGroupPreview,
     groupPreviewsStore,
     isContiguous,
+    selectedThreadRootEvent,
 } from "./stores/chat";
 import { cryptoBalance, lastCryptoSent } from "./stores/crypto";
 import { draftThreadMessages } from "./stores/draftThreadMessages";
@@ -193,13 +194,15 @@ import {
     ChatUpdated,
     LoadedMessageWindow,
     LoadedNewMessages,
+    LoadedNewThreadMessages,
     LoadedPreviousMessages,
+    LoadedPreviousThreadMessages,
+    LoadedThreadMessageWindow,
     SelectedChatInvalid,
     SendMessageFailed,
     SentMessage,
     SentThreadMessage,
     ThreadClosed,
-    ThreadMessagesLoaded,
     ThreadSelected,
 } from "./events";
 import { LiveState } from "./liveState";
@@ -1313,7 +1316,44 @@ export class OpenChat extends EventTarget {
         return result;
     }
 
-    async loadEventWindow(chatId: string, messageIndex: number): Promise<number | undefined> {
+    private async loadThreadEventWindow(
+        chatId: string,
+        messageIndex: number,
+        threadRootEvent: EventWrapper<Message>
+    ): Promise<number | undefined> {
+        if (threadRootEvent.event.thread === undefined) return undefined;
+
+        const eventsResponse = await this.api.groupChatEventsWindow(
+            [0, threadRootEvent.event.thread.latestEventIndex],
+            chatId,
+            messageIndex,
+            threadRootEvent.event.thread?.latestEventIndex,
+            threadRootEvent.event.messageIndex
+        );
+
+        if (eventsResponse === undefined || eventsResponse === "events_failed") {
+            return undefined;
+        }
+
+        // if (selectedThreadKey !== this._liveState.selectedThreadKey) {
+        //     // the selected thread has changed while we were loading the messages
+        //     return;
+        // }
+        this.clearThreadEvents();
+        const [newEvents, _] = await this.handleThreadEventsResponse(chatId, eventsResponse);
+
+        threadServerEventsStore.set(newEvents);
+
+        this.dispatchEvent(new LoadedThreadMessageWindow(messageIndex));
+
+        return messageIndex;
+    }
+
+    async loadEventWindow(
+        chatId: string,
+        messageIndex: number,
+        threadRootEvent?: EventWrapper<Message>
+    ): Promise<number | undefined> {
         const clientChat = this._liveState.chatSummaries[chatId];
         const serverChat = this._liveState.serverChatSummaries[chatId];
 
@@ -1322,6 +1362,10 @@ export class OpenChat extends EventTarget {
         }
 
         if (messageIndex >= 0) {
+            if (threadRootEvent !== undefined && threadRootEvent.event.thread !== undefined) {
+                return this.loadThreadEventWindow(chatId, messageIndex, threadRootEvent);
+            }
+
             const latestMessageIndex = clientChat.latestMessage?.event.messageIndex ?? 0;
             if (messageIndex > latestMessageIndex) {
                 messageIndex = latestMessageIndex;
@@ -1518,19 +1562,17 @@ export class OpenChat extends EventTarget {
         }
     }
 
-    openThread(
-        threadRootMessageId: bigint,
-        threadRootMessageIndex: number,
-        initiating: boolean
-    ): void {
-        selectedThreadRootMessageIndex.set(threadRootMessageIndex);
-        this.dispatchEvent(
-            new ThreadSelected(threadRootMessageId, threadRootMessageIndex, initiating)
-        );
+    openThread(threadRootEvent: EventWrapper<Message>, initiating: boolean): void {
+        this.clearThreadEvents();
+        selectedThreadRootEvent.set(threadRootEvent);
+        if (!initiating && this._liveState.selectedChatId !== undefined) {
+            this.loadPreviousMessages(this._liveState.selectedChatId, threadRootEvent);
+        }
+        this.dispatchEvent(new ThreadSelected(threadRootEvent, initiating));
     }
 
     closeThread(): void {
-        selectedThreadRootMessageIndex.set(undefined);
+        selectedThreadRootEvent.set(undefined);
         this.dispatchEvent(new ThreadClosed());
     }
 
@@ -1540,7 +1582,6 @@ export class OpenChat extends EventTarget {
 
     async loadThreadMessages(
         chatId: string,
-        rootEvent: EventWrapper<Message>,
         thread: ThreadSummary,
         range: [number, number],
         startIndex: number,
@@ -1576,11 +1617,7 @@ export class OpenChat extends EventTarget {
             if (clearEvents) {
                 threadServerEventsStore.set([]);
             }
-            const [newEvents, _] = await this.handleThreadEventsResponse(
-                chatId,
-                rootEvent,
-                eventsResponse
-            );
+            const [newEvents, _] = await this.handleThreadEventsResponse(chatId, eventsResponse);
 
             for (const event of newEvents) {
                 if (event.event.kind === "message") {
@@ -1605,13 +1642,17 @@ export class OpenChat extends EventTarget {
                     this.markThreadRead(chat.chatId, threadRootMessageIndex, lastLoadedMessageIdx);
                 }
             }
-            this.dispatchEvent(new ThreadMessagesLoaded(ascending));
+            if (ascending) {
+                this.dispatchEvent(new LoadedNewThreadMessages(false));
+            } else {
+                this.dispatchEvent(new LoadedPreviousThreadMessages());
+            }
+            // this.dispatchEvent(new ThreadMessagesLoaded(ascending));
         }
     }
 
     private async handleThreadEventsResponse(
         chatId: string,
-        rootEvent: EventWrapper<Message>,
         resp: EventsResponse<ChatEvent>
     ): Promise<[EventWrapper<ChatEvent>[], Set<string>]> {
         if (resp === "events_failed") return [[], new Set()];
@@ -1619,7 +1660,6 @@ export class OpenChat extends EventTarget {
         const events = resp.events.concat(resp.affectedEvents);
 
         const userIds = this.userIdsFromEvents(events);
-        userIds.add(rootEvent.event.sender);
         await this.updateUserStore(chatId, userIds);
 
         return [events, userIds];
@@ -1656,14 +1696,42 @@ export class OpenChat extends EventTarget {
         return Object.keys(args).length > 0;
     }
 
+    earliestLoadedThreadIndex(): number | undefined {
+        return this._liveState.threadEvents.length === 0
+            ? undefined
+            : this._liveState.threadEvents[0].index;
+    }
+
+    previousThreadMessagesCriteria(thread: ThreadSummary): [number, boolean] {
+        const minLoadedEventIndex = this.earliestLoadedThreadIndex();
+        if (minLoadedEventIndex === undefined) {
+            return [thread.latestEventIndex, false];
+        }
+        return [minLoadedEventIndex - 1, false];
+    }
+
     async loadPreviousMessages(
         chatId: string,
-        threadRootMessageIndex?: number // TODO make this work for threads
+        threadRootEvent?: EventWrapper<Message>
     ): Promise<void> {
         const serverChat = this._liveState.serverChatSummaries[chatId];
 
         if (serverChat === undefined) {
             return Promise.resolve();
+        }
+
+        if (threadRootEvent !== undefined && threadRootEvent.event.thread !== undefined) {
+            const thread = threadRootEvent.event.thread;
+            const [index, ascending] = this.previousThreadMessagesCriteria(thread);
+            return this.loadThreadMessages(
+                chatId,
+                thread,
+                [0, thread.latestEventIndex],
+                index,
+                ascending,
+                threadRootEvent.event.messageIndex,
+                false
+            );
         }
 
         const criteria = this.previousMessagesCriteria(serverChat);
@@ -1724,12 +1792,26 @@ export class OpenChat extends EventTarget {
 
     async loadNewMessages(
         chatId: string,
-        threadRootMessageIndex?: number // TODO make this work for threads
+        threadRootEvent?: EventWrapper<Message>
     ): Promise<boolean> {
         const serverChat = this._liveState.serverChatSummaries[chatId];
 
         if (serverChat === undefined) {
             return Promise.resolve(false);
+        }
+
+        if (threadRootEvent !== undefined) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            const thread = threadRootEvent.event.thread!;
+            return this.loadThreadMessages(
+                chatId,
+                thread,
+                [0, thread.latestEventIndex],
+                (thread.latestEventIndex ?? -1) + 1,
+                true,
+                threadRootEvent.event.messageIndex,
+                false
+            ).then(() => false);
         }
 
         const criteria = this.newMessageCriteria(serverChat);
@@ -1762,8 +1844,13 @@ export class OpenChat extends EventTarget {
 
     morePreviousMessagesAvailable(
         chatId: string,
-        threadRootMessageIndex?: number // TODO - make this work with threads
+        threadRootEvent?: EventWrapper<Message>
     ): boolean {
+        if (threadRootEvent !== undefined) {
+            const earliestIndex = this.earliestLoadedThreadIndex();
+            return earliestIndex === undefined || earliestIndex > 0;
+        }
+
         const chat = this._liveState.chatSummaries[chatId];
 
         return (
@@ -1776,7 +1863,7 @@ export class OpenChat extends EventTarget {
 
     moreNewMessagesAvailable(
         chatId: string,
-        threadRootMessageIndex?: number /* TODO - make this work for threads */
+        threadRootEvent?: EventWrapper<Message> /* TODO - make this work for threads */
     ): boolean {
         const serverChat = this._liveState.serverChatSummaries[chatId];
 
@@ -3554,4 +3641,6 @@ export class OpenChat extends EventTarget {
     isDiamond = isDiamond;
     canExtendDiamond = canExtendDiamond;
     diamondMembership = diamondMembership;
+    selectedThreadRootEvent = selectedThreadRootEvent;
+    selectedThreadRootMessageIndex = selectedThreadRootMessageIndex;
 }

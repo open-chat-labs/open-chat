@@ -36,35 +36,6 @@ import { localChatSummaryUpdates } from "./localChatSummaryUpdates";
 import { setsAreEqual } from "../utils/set";
 import { failedMessagesStore } from "./failedMessages";
 
-export type ChatState = {
-    chatId: string;
-    event: ChatLifecycleEvent;
-};
-
-export type ChatLifecycleEvent =
-    | Nothing
-    | LoadedNewEvents
-    | SendingMessage
-    | ChatUpdated
-    | LoadedEventWindow
-    | LoadedPreviousEvents;
-
-type Nothing = { kind: "nothing" };
-type LoadedNewEvents = { kind: "loaded_new_events"; newLatestMessage: boolean };
-type SendingMessage = {
-    kind: "sending_message";
-    scroll: ScrollBehavior;
-};
-type ChatUpdated = { kind: "chat_updated" };
-type LoadedPreviousEvents = { kind: "loaded_previous_events" };
-type LoadedEventWindow = {
-    kind: "loaded_event_window";
-    focusThreadMessageIndex: number | undefined;
-    messageIndex: number;
-    preserveFocus: boolean;
-    allowRecursion: boolean;
-};
-
 export const currentUserStore = immutableStore<CreatedUser | undefined>(undefined);
 
 // Chats which the current user is a member of
@@ -133,7 +104,10 @@ export const userMetrics = derived([chatSummariesListStore], ([$chats]) => {
 });
 
 export const selectedChatId = writable<string | undefined>(undefined);
-export const selectedThreadRootMessageIndex = writable<number | undefined>(undefined);
+export const selectedThreadRootEvent = writable<EventWrapper<Message> | undefined>(undefined);
+export const selectedThreadRootMessageIndex = derived(selectedThreadRootEvent, ($rootEvent) => {
+    return $rootEvent !== undefined ? $rootEvent.event.messageIndex : undefined;
+});
 export const selectedThreadKey = derived(
     [selectedChatId, selectedThreadRootMessageIndex],
     ([$selectedChatId, $selectedThreadRootMessageIndex]) => {

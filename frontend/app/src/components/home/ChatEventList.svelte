@@ -10,6 +10,12 @@
         SentMessage,
         LoadedNewMessages,
         Mention,
+        LoadedPreviousThreadMessages,
+        LoadedNewThreadMessages,
+        LoadedThreadMessageWindow,
+        ChatUpdated,
+        SentThreadMessage,
+        ThreadSummary,
     } from "openchat-client";
     import { menuStore } from "../../stores/menu";
     import { tooltipStore } from "../../stores/tooltip";
@@ -28,9 +34,9 @@
     const MESSAGE_READ_THRESHOLD = 500;
     const client = getContext<OpenChat>("client");
 
+    export let rootSelector: string;
     export let unreadMessages: number;
     export let chat: ChatSummary;
-    export let threadRootMessageIndex: number | undefined = undefined;
     export let messagesDiv: HTMLDivElement | undefined;
     export let messagesDivHeight: number;
     export let initialised: boolean;
@@ -39,6 +45,9 @@
     export let readonly: boolean;
     export let firstUnreadMention: Mention | undefined;
     export let footer: boolean;
+    export let setFocusMessageIndex: (index: number | undefined) => void;
+    export let selectedThreadKey: string | undefined;
+    export let threadRootEvent: EventWrapper<Message> | undefined;
 
     let interrupt = false;
     let morePrevAvailable = false;
@@ -53,6 +62,7 @@
     let previousScrollTop: number | undefined = undefined;
 
     $: failedMessagesStore = client.failedMessagesStore;
+    $: threadSummary = threadRootEvent?.event.thread;
 
     beforeUpdate(() => {
         previousScrollHeight = messagesDiv?.scrollHeight;
@@ -61,17 +71,11 @@
 
     afterUpdate(() => {
         setIfInsideFromBottomThreshold();
-        morePrevAvailable = client.morePreviousMessagesAvailable(
-            chat.chatId,
-            threadRootMessageIndex
-        );
+        morePrevAvailable = client.morePreviousMessagesAvailable(chat.chatId, threadRootEvent);
     });
 
     onMount(() => {
-        morePrevAvailable = client.morePreviousMessagesAvailable(
-            chat.chatId,
-            threadRootMessageIndex
-        );
+        morePrevAvailable = client.morePreviousMessagesAvailable(chat.chatId, threadRootEvent);
         client.addEventListener("openchat_event", clientEvent);
         return () => {
             client.removeEventListener("openchat_event", clientEvent);
@@ -79,26 +83,64 @@
     });
 
     function clientEvent(ev: Event): void {
-        if (ev instanceof LoadedNewMessages) {
-            onLoadedNewMessages(ev.detail);
-        }
-        if (ev instanceof LoadedPreviousMessages) {
-            onLoadedPreviousMessages();
-        }
-        if (ev instanceof LoadedMessageWindow) {
-            onMessageWindowLoaded(ev.detail);
-        }
+        // TODO this is *such* a code smell
+        // I hate this so much
+        tick().then(() => {
+            if (threadRootEvent === undefined) {
+                if (ev instanceof LoadedNewMessages) {
+                    onLoadedNewMessages(ev.detail);
+                }
+                if (ev instanceof LoadedPreviousMessages) {
+                    onLoadedPreviousMessages();
+                }
+                if (ev instanceof LoadedMessageWindow) {
+                    onMessageWindowLoaded(ev.detail);
+                }
+                if (ev instanceof ChatUpdated) {
+                    loadMoreIfRequired();
+                }
+                if (ev instanceof SentMessage) {
+                    afterSendMessage(ev.detail);
+                }
+            }
+            if (threadRootEvent !== undefined) {
+                if (ev instanceof LoadedNewThreadMessages) {
+                    onLoadedNewMessages(ev.detail);
+                }
+                if (ev instanceof LoadedPreviousThreadMessages) {
+                    onLoadedPreviousMessages();
+                }
+                if (ev instanceof LoadedThreadMessageWindow) {
+                    console.log("Thread message window loaded: ", events);
+                    onMessageWindowLoaded(ev.detail);
+                }
+                // TODO - deal with this
+                // if (ev instanceof SentThreadMessage) {
+                //     afterSendMessage(ev.detail);
+                // }
+            }
+        });
         // TODO - what to do about this
         // we probably need a ThreadUpdated variant
         // if (ev instanceof ChatUpdated) {
         //     loadMoreIfRequired();
         // }
-        if (ev instanceof SentMessage) {
-            afterSendMessage(ev.detail);
-        }
+        // if (ev instanceof SentMessage) {
+        //     afterSendMessage(ev.detail);
+        // }
 
         // TODO - look at the ThreadSpecific events from Thread.svelte
     }
+
+    // function afterSendThreadMessage(event: EventWrapper<Message>) {
+    //     const summary: ThreadSummary = {
+    //         participantIds: new Set<string>([user.userId]),
+    //         numberOfReplies: event.event.messageIndex + 1,
+    //         latestEventIndex: event.index,
+    //         latestEventTimestamp: event.timestamp,
+    //     };
+    //     client.markThreadSummaryUpdated(rootEvent.event.messageId.toString(), summary);
+    // }
 
     function afterSendMessage(upToDate: boolean) {
         if (upToDate && calculateFromBottom() < FROM_BOTTOM_THRESHOLD) {
@@ -126,10 +168,7 @@
     }
 
     function shouldLoadPreviousMessages() {
-        morePrevAvailable = client.morePreviousMessagesAvailable(
-            chat.chatId,
-            threadRootMessageIndex
-        );
+        morePrevAvailable = client.morePreviousMessagesAvailable(chat.chatId, threadRootEvent);
         const insideLoadThreshold = calculateFromTop() < MESSAGE_LOAD_THRESHOLD;
         const result = !loadingPrev && insideLoadThreshold && morePrevAvailable;
         if (result) {
@@ -145,10 +184,7 @@
 
     function shouldLoadNewMessages() {
         const insideLoadThreshold = calculateFromBottom() < MESSAGE_LOAD_THRESHOLD;
-        const moreNewMessages = client.moreNewMessagesAvailable(
-            chat.chatId,
-            threadRootMessageIndex
-        );
+        const moreNewMessages = client.moreNewMessagesAvailable(chat.chatId, threadRootEvent);
         const result = !loadingNew && insideLoadThreshold && moreNewMessages;
         if (result) {
             console.debug(
@@ -165,13 +201,13 @@
         if (shouldLoadNewMessages()) {
             loadingNew = true;
             loadingFromScroll = fromScroll;
-            client.loadNewMessages(chat.chatId, threadRootMessageIndex);
+            client.loadNewMessages(chat.chatId, threadRootEvent);
         }
         if (shouldLoadPreviousMessages()) {
             loadingPrev = true;
             loadingFromScroll = fromScroll;
             console.debug("SCROLL: about to load previous messages");
-            client.loadPreviousMessages(chat.chatId, threadRootMessageIndex);
+            client.loadPreviousMessages(chat.chatId, threadRootEvent);
         }
     }
 
@@ -201,7 +237,7 @@
             (ev) =>
                 ev.event.kind === "message" &&
                 ev.event.messageIndex === index &&
-                !failedMessagesStore.contains(chat.chatId, ev.event.messageId) //TODO threads
+                !failedMessagesStore.contains(selectedThreadKey ?? chat.chatId, ev.event.messageId) //TODO threads
         ) as EventWrapper<Message> | undefined;
     }
 
@@ -211,32 +247,32 @@
         loadWindowIfMissing: boolean = true
     ) {
         if (index < 0) {
-            client.setFocusMessageIndex(chat.chatId, undefined);
+            setFocusMessageIndex(undefined);
             return;
         }
 
         // set a flag so that we can ignore subsequent scroll events temporarily
         scrollingToMessage = true;
-        client.setFocusMessageIndex(chat.chatId, index);
-        const element = document.querySelector(`.chat-messages [data-index~='${index}']`);
+        setFocusMessageIndex(index);
+        const element = document.querySelector(`.${rootSelector} [data-index~='${index}']`);
         if (element) {
             // this triggers on scroll which will potentially load some new messages
             scrollToElement(element);
             const msgEvent = findMessageEvent(index);
-            if (msgEvent) {
+            if (msgEvent && threadRootEvent === undefined) {
                 if (msgEvent.event.thread !== undefined && $pathParams.open) {
-                    client.openThread(msgEvent.event.messageId, msgEvent.event.messageIndex, false);
+                    client.openThread(msgEvent, false);
                 } else {
-                    client.closeThread(); // TODO this isn't going to work inside a thread
+                    client.closeThread();
                 }
             }
             if (!preserveFocus) {
                 setTimeout(() => {
-                    client.setFocusMessageIndex(chat.chatId, undefined);
+                    setFocusMessageIndex(undefined);
                 }, 200);
             }
         } else if (loadWindowIfMissing) {
-            client.loadEventWindow(chat.chatId, index);
+            client.loadEventWindow(chat.chatId, index, threadRootEvent);
         }
     }
 
@@ -365,6 +401,14 @@
 
         setIfInsideFromBottomThreshold();
     }
+
+    function scrollToLast() {
+        if (threadSummary !== undefined) {
+            scrollToMessageIndex(threadSummary.numberOfReplies - 1, false);
+        } else {
+            scrollToMessageIndex(chat.latestMessage?.event.messageIndex ?? -1, false);
+        }
+    }
 </script>
 
 <div
@@ -372,7 +416,7 @@
     bind:clientHeight={messagesDivHeight}
     on:scroll={onScroll}
     class:interrupt
-    class="chat-messages">
+    class={`scrollable-list ${rootSelector}`}>
     <slot />
 </div>
 
@@ -395,7 +439,7 @@
     class="fab to-bottom"
     class:footer
     class:rtl={$rtlStore}>
-    <Fab on:click={() => scrollToMessageIndex(chat.latestMessage?.event.messageIndex ?? -1, false)}>
+    <Fab on:click={scrollToLast}>
         {#if unreadMessages > 0}
             <div in:pop={{ duration: 1500 }} class="unread">
                 <div class="unread-count">{unreadMessages > 999 ? "999+" : unreadMessages}</div>
@@ -407,7 +451,7 @@
 </div>
 
 <style type="text/scss">
-    .chat-messages {
+    .scrollable-list {
         @include message-list();
         background-color: var(--currentChat-msgs-bg);
 

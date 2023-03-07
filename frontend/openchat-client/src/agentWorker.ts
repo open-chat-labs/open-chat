@@ -422,7 +422,8 @@ export class OpenChatAgentWorker extends EventTarget {
         eventIndexRange: IndexRange,
         chatId: string,
         messageIndex: number,
-        latestClientMainEventIndex: number | undefined
+        latestClientMainEventIndex: number | undefined,
+        threadRootMessageIndex?: number
     ): Promise<EventsResponse<GroupChatEvent>> {
         return this.sendRequest({
             kind: "groupChatEventsWindow",
@@ -430,6 +431,7 @@ export class OpenChatAgentWorker extends EventTarget {
                 eventIndexRange,
                 chatId,
                 messageIndex,
+                threadRootMessageIndex,
                 latestClientMainEventIndex,
             },
         });
