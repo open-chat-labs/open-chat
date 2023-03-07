@@ -104,7 +104,10 @@ impl RuntimeState {
             git_commit_id: utils::git::git_commit_id().to_string(),
             total_cycles_spent_on_canisters: self.data.total_cycles_spent_on_canisters,
             users_created: self.data.users.len() as u64,
-            diamond_users: self.data.users.diamond_metrics(now),
+            diamond_members: DiamondMembershipMetrics {
+                users: self.data.users.diamond_metrics(now),
+                payments: self.data.diamond_membership_payment_metrics.clone(),
+            },
             canister_upgrades_completed: canister_upgrades_metrics.completed,
             canister_upgrades_failed: canister_upgrades_metrics.failed,
             canister_upgrades_pending: canister_upgrades_metrics.pending as u64,
@@ -149,6 +152,8 @@ struct Data {
     pub test_mode: bool,
     pub challenges: Challenges,
     pub max_concurrent_canister_upgrades: usize,
+    #[serde(default)]
+    pub diamond_membership_payment_metrics: DiamondMembershipPaymentMetrics,
     pub local_index_map: LocalUserIndexMap,
     #[serde(default)]
     pub timer_jobs: TimerJobs<TimerJob>,
@@ -187,6 +192,7 @@ impl Data {
             test_mode,
             challenges: Challenges::new(test_mode),
             max_concurrent_canister_upgrades: 2,
+            diamond_membership_payment_metrics: DiamondMembershipPaymentMetrics::default(),
             local_index_map: LocalUserIndexMap::default(),
             timer_jobs: TimerJobs::default(),
         };
@@ -243,6 +249,7 @@ impl Default for Data {
             test_mode: true,
             challenges: Challenges::new(true),
             max_concurrent_canister_upgrades: 2,
+            diamond_membership_payment_metrics: DiamondMembershipPaymentMetrics::default(),
             local_index_map: LocalUserIndexMap::default(),
             timer_jobs: TimerJobs::default(),
         }
@@ -258,7 +265,7 @@ pub struct Metrics {
     pub git_commit_id: String,
     pub total_cycles_spent_on_canisters: Cycles,
     pub users_created: u64,
-    pub diamond_users: DiamondMetrics,
+    pub diamond_members: DiamondMembershipMetrics,
     pub canister_upgrades_completed: u64,
     pub canister_upgrades_failed: Vec<FailedUpgradeCount>,
     pub canister_upgrades_pending: u64,
@@ -276,10 +283,23 @@ pub struct Metrics {
 }
 
 #[derive(Serialize, Debug, Default)]
-pub struct DiamondMetrics {
+pub struct DiamondMembershipMetrics {
+    pub users: DiamondMembershipUserMetrics,
+    pub payments: DiamondMembershipPaymentMetrics,
+}
+
+#[derive(Serialize, Debug, Default)]
+pub struct DiamondMembershipUserMetrics {
     pub total: u64,
     pub recurring: u64,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
+pub struct DiamondMembershipPaymentMetrics {
     pub amount_raised: Vec<(Cryptocurrency, u128)>,
+    pub manual_payments_taken: u64,
+    pub recurring_payments_taken: u64,
+    pub recurring_payments_failed_due_to_insufficient_funds: u64,
 }
 
 #[derive(Serialize, Debug)]

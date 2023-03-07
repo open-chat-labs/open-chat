@@ -91,7 +91,7 @@ impl Job for RecurringDiamondMembershipPayment {
                 recurring: true,
             };
 
-            match pay_for_diamond_membership_impl(args, user_id).await {
+            match pay_for_diamond_membership_impl(args, user_id, false).await {
                 Response::InsufficientFunds(balance) => {
                     mutate_state(|state| {
                         state.data.push_event_to_local_user_index(
@@ -110,7 +110,11 @@ If you would like to extend your Diamond membership you will need to top up your
                                     ),
                                 }),
                             }),
-                        )
+                        );
+                        state
+                            .data
+                            .diamond_membership_payment_metrics
+                            .recurring_payments_failed_due_to_insufficient_funds += 1;
                     });
                 }
                 Response::InternalError(_) => {
