@@ -6,7 +6,9 @@ use canister_logger::LogEntry;
 use canister_tracing_macros::trace;
 use ic_cdk_macros::post_upgrade;
 use ic_stable_structures::reader::{BufferedReader, Reader};
+use std::collections::HashMap;
 use tracing::info;
+use types::Cryptocurrency;
 use user_index_canister::post_upgrade::Args;
 use utils::cycles::init_cycles_dispenser_client;
 use utils::time::DAY_IN_MS;
@@ -30,7 +32,14 @@ fn post_upgrade(args: Args) {
 
     mutate_state(|state| {
         let now = state.env.now();
+        let mut total_raised: HashMap<Cryptocurrency, u128> = HashMap::new();
+
         for user in state.data.users.iter() {
+            for payment in user.diamond_membership_details.payments() {
+                state.data.diamond_membership_payment_metrics.manual_payments_taken += 1;
+                *total_raised.entry(payment.token).or_default() += payment.amount_e8s as u128;
+            }
+
             if user.diamond_membership_details.is_recurring() {
                 if let Some(expiry) = user.diamond_membership_details.expires_at() {
                     state.data.timer_jobs.enqueue_job(
@@ -43,5 +52,7 @@ fn post_upgrade(args: Args) {
                 }
             }
         }
+
+        state.data.diamond_membership_payment_metrics.amount_raised = total_raised.into_iter().collect();
     })
 }
