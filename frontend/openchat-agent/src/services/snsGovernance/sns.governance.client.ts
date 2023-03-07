@@ -3,7 +3,7 @@ import type { ListNervousSystemFunctionsResponse, Tally } from "openchat-shared"
 import { idlFactory, SnsGovernanceService } from "./candid/idl";
 import { CandidService } from "../candidService";
 import type { ISnsGovernanceClient } from "./sns.governance.client.interface";
-import { apiOptional, getTallyResponse, nervousSystemFunctions } from "../common/chatMappers";
+import { getTallyResponse, nervousSystemFunctions } from "../common/chatMappers";
 import type { AgentConfig } from "../../config";
 
 export class SnsGovernanceClient extends CandidService implements ISnsGovernanceClient {
@@ -29,10 +29,14 @@ export class SnsGovernanceClient extends CandidService implements ISnsGovernance
 
     getTally(proposalId: bigint): Promise<Tally> {
         const args = {
-            proposal_id: apiOptional((id) => ({ id }), proposalId)
+            include_reward_status: [],
+            before_proposal: [{ id: proposalId + BigInt(1) }] as [{ id: bigint }],
+            limit: 1,
+            exclude_type: [],
+            include_status: [],
         };
         return this.handleQueryResponse(
-            () => this.service.get_proposal(args),
+            () => this.service.list_proposals(args),
             getTallyResponse
         )
     }

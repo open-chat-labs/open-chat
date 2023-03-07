@@ -226,7 +226,7 @@ function proposal(candid: ApiProposal): Proposal {
                 yes: Number(p.tally.yes / E8S_AS_BIGINT),
                 no: Number(p.tally.no / E8S_AS_BIGINT),
                 total: Number(p.tally.total / E8S_AS_BIGINT),
-                timestamp: BigInt(0),
+                timestamp: p.tally.timestamp,
             },
             lastUpdated: Number(p.last_updated),
             created: Number(p.created),
