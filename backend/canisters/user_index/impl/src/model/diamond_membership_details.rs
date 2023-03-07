@@ -75,6 +75,7 @@ impl DiamondMembershipDetailsInternal {
         })
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn add_payment(
         &mut self,
         token: Cryptocurrency,
