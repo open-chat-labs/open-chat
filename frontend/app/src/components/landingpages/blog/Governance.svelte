@@ -226,8 +226,8 @@
         <code>9adf350c7388dfe7277213a5fc8d817c2d5bc6ff6be5870f0d33d9d6dab01fc6</code>
     </p>
     <p> 
-        Having set the beacon neuron to follow the dev team neurons we removed its controller to make 
-        it immutable so everyone can be sure it can never follow other neurons.
+        Having set the beacon neuron to follow the dev team neurons we removed its controller making 
+        it immutable and unable to vote itself.
     </p>
 </section>
 <section>
