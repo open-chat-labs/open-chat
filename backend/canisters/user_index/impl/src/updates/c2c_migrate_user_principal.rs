@@ -1,9 +1,10 @@
+use crate::guards::caller_is_openchat_user;
 use crate::{mutate_state, RuntimeState};
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use user_index_canister::c2c_migrate_user_principal::{Response::*, *};
 
-#[update_msgpack]
+#[update_msgpack(guard = "caller_is_openchat_user")]
 #[trace]
 fn c2c_migrate_user_principal(args: Args) -> Response {
     mutate_state(|state| c2c_migrate_user_principal_impl(args, state))

@@ -8,7 +8,7 @@ fn user(args: Args) -> Response {
 }
 
 fn user_impl(args: Args, runtime_state: &RuntimeState) -> Response {
-    runtime_state.trap_if_caller_not_open_chat_user();
+    runtime_state.trap_if_caller_not_openchat_user();
 
     let mut user = None;
     if let Some(user_id) = args.user_id {

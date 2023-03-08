@@ -12,7 +12,7 @@ fn search(args: Args) -> Response {
 }
 
 fn search_impl(args: Args, runtime_state: &RuntimeState) -> Response {
-    runtime_state.trap_if_caller_not_open_chat_user();
+    runtime_state.trap_if_caller_not_openchat_user();
 
     let caller = runtime_state.env.caller();
     let now = runtime_state.env.now();

@@ -1,5 +1,13 @@
 use crate::read_state;
 
+pub fn caller_is_openchat_user() -> Result<(), String> {
+    if read_state(|state| state.is_caller_openchat_user()) {
+        Ok(())
+    } else {
+        Err("Caller is not an OpenChat user".to_string())
+    }
+}
+
 pub fn caller_is_governance_principal() -> Result<(), String> {
     if read_state(|state| state.is_caller_governance_principal()) {
         Ok(())
