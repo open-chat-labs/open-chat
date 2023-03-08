@@ -18,7 +18,7 @@
     import ModalContent from "../../ModalContent.svelte";
     import { proposalVotes } from "../../../stores/proposalVotes";
     import { createEventDispatcher } from "svelte";
-    import type { OpenChat } from "openchat-client";
+    import { OpenChat, cryptoLookup, tokenByGovernanceCanisterLookup } from "openchat-client";
     import ProposalVoteButton from "./ProposalVoteButton.svelte";
     import ProposalVotingProgress from "./ProposalVotingProgress.svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
@@ -42,7 +42,9 @@
     let summaryExpanded = false;
     let showNeuronInfo = false;
     let showPayload = false;
-
+    
+    $: token = tokenByGovernanceCanisterLookup[content.governanceCanisterId];
+    $: rootCanister = cryptoLookup[token].rootCanister;
     $: proposalTopicsStore = client.proposalTopicsStore;
     $: isNns = content.proposal.kind === "nns";
     $: voteStatus =
@@ -58,10 +60,10 @@
         proposal.status == ProposalDecisionStatus.Unspecified;
     $: proposalUrl = isNns
         ? `${dashboardUrl}/proposal/${proposal.id}`
-        : `${dashboardUrl}/sns/${content.governanceCanisterId}/proposal/${proposal.id}`;
+        : `${dashboardUrl}/sns/${rootCanister}/proposal/${proposal.id}`;
     $: proposerUrl = isNns
         ? `${dashboardUrl}/neuron/${proposal.proposer}`
-        : `${dashboardUrl}/sns/${content.governanceCanisterId}/neuron/${proposal.proposer}`;
+        : `${dashboardUrl}/sns/${rootCanister}/neuron/${proposal.proposer}`;
     $: adoptPercent = round2((100 * proposal.tally.yes) / proposal.tally.total);
     $: rejectPercent = round2((100 * proposal.tally.no) / proposal.tally.total);
     $: votingEnded = proposal.deadline <= $now;
@@ -239,19 +241,11 @@
         </ProposalProgressLayout>
     </div>
     <div class="more" class:rtl={$rtlStore}>
-        {#if isNns}
-            <a href={proposalUrl} rel="noreferrer" target="_blank">{proposal.id}</a>
-        {:else}
-            {proposal.id}
-        {/if}
+        <a href={proposalUrl} rel="noreferrer" target="_blank">{proposal.id}</a>
         <div class="subtitle">
             {typeValue} |
             {$_("proposal.proposedBy")}
-            {#if isNns}
-                <a target="_blank" rel="noreferrer" href={proposerUrl}>{truncatedProposerId()}</a>
-            {:else}
-                {truncatedProposerId()}
-            {/if}
+            <a target="_blank" rel="noreferrer" href={proposerUrl}>{truncatedProposerId()}</a>
         </div>
     </div>
 {/if}
