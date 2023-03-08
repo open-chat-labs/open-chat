@@ -1242,12 +1242,12 @@ export function buildTransactionUrl(transfer: CryptocurrencyTransfer): string | 
         return undefined;
     }
 
-    const snsRootCanister = cryptoLookup[transfer.token].snsRootCanister;
+    const nsRootCanister = cryptoLookup[transfer.token].nsRootCanister;
 
     switch (transfer.token) {
         case "icp": return `https://dashboard.internetcomputer.org/transaction/${transfer.transactionHash}`;
         case "ckbtc": return `https://dashboard.internetcomputer.org/bitcoin/transaction/${transfer.blockIndex}`;
-        default: return `https://dashboard.internetcomputer.org/sns/${snsRootCanister}/transaction/${transfer.blockIndex}`;
+        default: return `https://dashboard.internetcomputer.org/sns/${nsRootCanister}/transaction/${transfer.blockIndex}`;
     }
 }
 
