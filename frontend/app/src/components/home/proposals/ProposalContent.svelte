@@ -38,7 +38,6 @@
     const user = client.user;
 
     const dashboardUrl = "https://dashboard.internetcomputer.org";
-    const nnsDappUrl = "https://nns.ic0.app";
 
     let summaryExpanded = false;
     let showNeuronInfo = false;
@@ -59,12 +58,10 @@
         proposal.status == ProposalDecisionStatus.Unspecified;
     $: proposalUrl = isNns
         ? `${dashboardUrl}/proposal/${proposal.id}`
-        : // TODO FIX THESE SNS LINKS WHEN THEY ARE AVAILABLE
-          `${nnsDappUrl}/sns/${content.governanceCanisterId}/proposal/${proposal.id}`;
+        : `${dashboardUrl}/sns/${content.governanceCanisterId}/proposal/${proposal.id}`;
     $: proposerUrl = isNns
         ? `${dashboardUrl}/neuron/${proposal.proposer}`
-        : // TODO FIX THESE SNS LINKS WHEN THEY ARE AVAILABLE
-          `${nnsDappUrl}/sns/${content.governanceCanisterId}/neuron/${proposal.proposer}`;
+        : `${dashboardUrl}/sns/${content.governanceCanisterId}/neuron/${proposal.proposer}`;
     $: adoptPercent = round2((100 * proposal.tally.yes) / proposal.tally.total);
     $: rejectPercent = round2((100 * proposal.tally.no) / proposal.tally.total);
     $: votingEnded = proposal.deadline <= $now;

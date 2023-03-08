@@ -1241,11 +1241,13 @@ export function buildTransactionUrl(transfer: CryptocurrencyTransfer): string | 
     if (transfer.kind !== "completed") {
         return undefined;
     }
-    // TODO: Where can we see the transactions for other tokens? In OpenChat I suppose...
-    if (transfer.token !== "icp") {
-        return undefined;
+
+    switch (transfer.token) {
+        case "icp": return `https://dashboard.internetcomputer.org/transaction/${transfer.transactionHash}`;
+        case "chat": return `https://dashboard.internetcomputer.org/sns/3e3x2-xyaaa-aaaaq-aaalq-cai/transaction/${transfer.blockIndex}`;
+        case "sns1": return `https://dashboard.internetcomputer.org/sns/zxeu2-7aaaa-aaaaq-aaafa-cai/transaction/${transfer.blockIndex}`;
+        case "ckbtc": return `https://dashboard.internetcomputer.org/bitcoin/transaction/${transfer.blockIndex}`;
     }
-    return `https://dashboard.internetcomputer.org/transaction/${transfer.transactionHash}`;
 }
 
 export function buildCryptoTransferText(
