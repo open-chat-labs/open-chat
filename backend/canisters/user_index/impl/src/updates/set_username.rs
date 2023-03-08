@@ -82,11 +82,11 @@ fn is_username_reserved(username: &str) -> bool {
     let is_bot_like = normalised.ends_with("BOT") || normalised.ends_with("B0T");
 
     if is_bot_like {
-        if normalised == "OPENCHATBOT" {
-            return true;
-        }
-        if normalised.starts_with("SNS") {
-            return true;
+        let reserved_bot_prefixes = vec!["OPENCHAT", "CHAT", "SNS"];
+        for prefix in reserved_bot_prefixes {
+            if normalised.starts_with(prefix) {
+                return true;
+            }
         }
     }
 
