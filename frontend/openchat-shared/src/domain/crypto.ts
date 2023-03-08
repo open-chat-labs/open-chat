@@ -14,7 +14,14 @@ export type CryptocurrencyDetails = {
     howToBuyUrl: string;
     disabled: boolean;
     diamond: boolean;
+    snsRootCanister?: string;
 };
+
+export const tokenByGovernanceCanisterLookup: Record<string, Cryptocurrency> = {
+    "2jvtu-yqaaa-aaaaq-aaama-cai": "chat",
+    "zqfso-syaaa-aaaaq-aaafq-cai": "sns1",
+    "rrkah-fqaaa-aaaaa-aaaaq-cai": "icp"
+}
 
 export const cryptoLookup: Record<Cryptocurrency, CryptocurrencyDetails> = {
     icp: {
@@ -33,6 +40,7 @@ export const cryptoLookup: Record<Cryptocurrency, CryptocurrencyDetails> = {
             "https://3ezrj-4yaaa-aaaam-abcha-cai.ic0.app/sns/faq#how-do-you-get-sns-tokens",
         disabled: false,
         diamond: true,
+        snsRootCanister: "zxeu2-7aaaa-aaaaq-aaafa-cai"
     },
     ckbtc: {
         symbol: "ckBTC",
@@ -49,6 +57,7 @@ export const cryptoLookup: Record<Cryptocurrency, CryptocurrencyDetails> = {
         howToBuyUrl: "https://oc.app?faq=chat_account",
         disabled: false,
         diamond: false,
+        snsRootCanister: "3e3x2-xyaaa-aaaaq-aaalq-cai"
     },
 };
 

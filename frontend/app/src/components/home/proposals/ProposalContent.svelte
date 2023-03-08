@@ -18,7 +18,7 @@
     import ModalContent from "../../ModalContent.svelte";
     import { proposalVotes } from "../../../stores/proposalVotes";
     import { createEventDispatcher } from "svelte";
-    import type { OpenChat } from "openchat-client";
+    import { OpenChat, cryptoLookup, tokenByGovernanceCanisterLookup } from "openchat-client";
     import ProposalVoteButton from "./ProposalVoteButton.svelte";
     import ProposalVotingProgress from "./ProposalVotingProgress.svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
@@ -42,7 +42,9 @@
     let summaryExpanded = false;
     let showNeuronInfo = false;
     let showPayload = false;
-
+    
+    $: token = tokenByGovernanceCanisterLookup[content.governanceCanisterId];
+    $: snsRootCanister = cryptoLookup[token].snsRootCanister;
     $: proposalTopicsStore = client.proposalTopicsStore;
     $: isNns = content.proposal.kind === "nns";
     $: voteStatus =
@@ -58,10 +60,10 @@
         proposal.status == ProposalDecisionStatus.Unspecified;
     $: proposalUrl = isNns
         ? `${dashboardUrl}/proposal/${proposal.id}`
-        : `${dashboardUrl}/sns/${content.governanceCanisterId}/proposal/${proposal.id}`;
+        : `${dashboardUrl}/sns/${snsRootCanister}/proposal/${proposal.id}`;
     $: proposerUrl = isNns
         ? `${dashboardUrl}/neuron/${proposal.proposer}`
-        : `${dashboardUrl}/sns/${content.governanceCanisterId}/neuron/${proposal.proposer}`;
+        : `${dashboardUrl}/sns/${snsRootCanister}/neuron/${proposal.proposer}`;
     $: adoptPercent = round2((100 * proposal.tally.yes) / proposal.tally.total);
     $: rejectPercent = round2((100 * proposal.tally.no) / proposal.tally.total);
     $: votingEnded = proposal.deadline <= $now;
