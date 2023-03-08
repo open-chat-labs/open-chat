@@ -75,7 +75,7 @@
     <p>
         Before working on a substantial new feature or other change to OpenChat the dev team will
         describe their plan as a message in the new <Link path="/n2qig-viaaa-aaaar-ahviq-cai"
-            >OpenChat features</Link> group. For now the group will be read-only for top-level messages
+            >OpenChat Roadmap</Link> group. For now the group will be read-only for top-level messages
         to stop noise but everyone will be able to post in threaded replies to discuss the proposed changes.
     </p>
     <p>
@@ -105,7 +105,7 @@
         the proposal was made.
     </p>
     <p>
-        For any given proposal, the weight of your vote is calculated as the ratio of the <em
+        For any given proposal, your percentage vote contribution is calculated as the ratio of the <em
             >voting power</em>
         of your neurons compared to all other eligible neurons. Voting power for a neuron is calculated
         as (stake x dissolve delay bonus x age bonus). The dissolve delay bonus starts at 1 for a neuron
