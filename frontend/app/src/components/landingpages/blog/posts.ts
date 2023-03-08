@@ -21,7 +21,7 @@ export const postsBySlug: Record<string, BlogPostInfo> = {
     governance: {
         slug: "governance",
         title: "OpenChat Governance",
-        date: new Date(2023, 3, 8),
+        date: new Date(2023, 2, 8),
         component: Governance,
     },
     // cyber_security: {

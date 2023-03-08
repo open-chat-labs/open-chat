@@ -41,7 +41,7 @@
         Join <Link path="/nsbx4-4iaaa-aaaar-afusa-cai">this group</Link> to view, discuss, and vote on OpenChat SNS proposals. Press the filter icon to see the full list of proposal types and to filter by them.
     </p>
     <p>
-        Anyone who owns a neuron can use it to make proposals although this currently requires knowledge of the command line tools <ExternalLink href="https://github.com/dfinity/sdk">dfx</ExternalLink> and <ExternalLink href="https://github.com/dfinity/quill/blob/master/docs/cli-reference/sns/quill-sns-make-proposal.md">quill</ExternalLink>. In time this process should become easier. If a proposal is rejected then 10 CHAT tokens is subtracted from the proposing neuron and burned to discourage spam.
+        Anyone who owns a neuron can use it to make proposals although this currently requires knowledge of the command line tools <ExternalLink href="https://github.com/dfinity/sdk">dfx</ExternalLink> and <ExternalLink href="https://github.com/dfinity/quill/blob/master/docs/cli-reference/sns/quill-sns-make-proposal.md">quill</ExternalLink>. In time this process should become easier. If a proposal is rejected then 10 CHAT tokens are subtracted from the proposing neuron and burned to discourage spam.
     </p>
 </section>
 <section>
