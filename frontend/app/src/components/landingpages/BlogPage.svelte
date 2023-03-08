@@ -4,7 +4,7 @@
     import { BlogPostInfo, postsBySlug } from "./blog/posts";
 
     function sortByDate(a: BlogPostInfo, b: BlogPostInfo): number {
-        return a.date.getTime() - b.date.getTime();
+        return b.date.getTime() - a.date.getTime();
     }
     $: posts = Object.values(postsBySlug).sort(sortByDate);
 </script>
