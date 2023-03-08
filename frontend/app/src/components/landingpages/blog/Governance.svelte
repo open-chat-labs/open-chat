@@ -56,7 +56,7 @@
         <li>Call a custom SNS function for example to add a "platform moderator"</li>
     </ul>
     <p>
-        Join <Link path="/nsbx4-4iaaa-aaaar-afusa-cai">this group</Link> to view, discuss, and vote on
+        Join <Link path="nsbx4-4iaaa-aaaar-afusa-cai">this group</Link> to view, discuss, and vote on
         OpenChat SNS proposals. Press the filter icon to see the full list of proposal types and to filter
         by them.
     </p>
@@ -78,7 +78,7 @@
     <h2>Dev team proposals</h2>
     <p>
         Before working on a substantial new feature or other change to OpenChat the dev team will
-        describe their plan as a message in the new <Link path="/n2qig-viaaa-aaaar-ahviq-cai"
+        describe their plan as a message in the new <Link path="n2qig-viaaa-aaaar-ahviq-cai"
             >OpenChat Roadmap</Link> group. For now the group will be read-only for top-level messages
         to stop noise but everyone will be able to post in threaded replies to discuss the proposed changes.
     </p>
@@ -137,7 +137,7 @@
         To find your OpenChat User Id...
     </p>
     <ul>
-        <li><Link path="/">Launch the app</Link> and open the main menu</li>
+        <li><Link path="">Launch the app</Link> and open the main menu</li>
         <li>Select "profile settings"</li>
         <li>
             At the bottom of the your "profile settings" you should find an "Advanced" section
