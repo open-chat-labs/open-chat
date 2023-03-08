@@ -207,6 +207,10 @@
         do this is to use the catch-all topic. Then you only need to setup a more nuanced following
         scheme on your eldest neuron.
     </p>
+    <BlogScreenshot
+        caption="Setting up following in the NNS"
+        desktopUrl={"../assets/blog/desktop_following.png"}
+        mobileUrl={"../assets/blog/mobile_following.png"} />
 </section>
 <section>
     <h2>Dev team beacon neuron</h2>
@@ -224,10 +228,6 @@
         Having set the beacon neuron to follow the dev team neurons we removed its controller to make 
         it immutable so everyone can be sure it can never follow other neurons.
     </p>
-    <BlogScreenshot
-        caption="Setting up following in the NNS"
-        desktopUrl={"../assets/blog/desktop_following.png"}
-        mobileUrl={"../assets/blog/mobile_following.png"} />
 </section>
 <section>
     <h2>Voting rewards</h2>
