@@ -239,19 +239,11 @@
         </ProposalProgressLayout>
     </div>
     <div class="more" class:rtl={$rtlStore}>
-        {#if isNns}
-            <a href={proposalUrl} rel="noreferrer" target="_blank">{proposal.id}</a>
-        {:else}
-            {proposal.id}
-        {/if}
+        <a href={proposalUrl} rel="noreferrer" target="_blank">{proposal.id}</a>
         <div class="subtitle">
             {typeValue} |
             {$_("proposal.proposedBy")}
-            {#if isNns}
-                <a target="_blank" rel="noreferrer" href={proposerUrl}>{truncatedProposerId()}</a>
-            {:else}
-                {truncatedProposerId()}
-            {/if}
+            <a target="_blank" rel="noreferrer" href={proposerUrl}>{truncatedProposerId()}</a>
         </div>
     </div>
 {/if}
