@@ -69,6 +69,10 @@
         >. In time this process should become easier. If a proposal is rejected then 10 CHAT tokens
         are subtracted from the proposing neuron and burned to discourage spam.
     </p>
+    <BlogScreenshot
+        caption="Governance proposals in OpenChat"
+        desktopUrl={"../assets/blog/desktop_voting.png"}
+        mobileUrl={"../assets/blog/mobile_voting.png"} />
 </section>
 <section>
     <h2>Dev team proposals</h2>
@@ -90,10 +94,6 @@
         improvements/changes on our own initiative without necessarily go through the above procedure.
         Of course all changes to the dapp ulitmately need to be made using upgrade proposals.
     </p>
-    <BlogScreenshot
-        caption="Governance proposals in OpenChat"
-        desktopUrl={"../assets/blog/desktop_voting.png"}
-        mobileUrl={"../assets/blog/mobile_voting.png"} />
 </section>
 <section>
     <h2>Voting</h2>
