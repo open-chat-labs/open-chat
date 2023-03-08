@@ -44,7 +44,7 @@
     let showPayload = false;
     
     $: token = tokenByGovernanceCanisterLookup[content.governanceCanisterId];
-    $: nsRootCanister = cryptoLookup[token].nsRootCanister;
+    $: rootCanister = cryptoLookup[token].rootCanister;
     $: proposalTopicsStore = client.proposalTopicsStore;
     $: isNns = content.proposal.kind === "nns";
     $: voteStatus =
@@ -60,10 +60,10 @@
         proposal.status == ProposalDecisionStatus.Unspecified;
     $: proposalUrl = isNns
         ? `${dashboardUrl}/proposal/${proposal.id}`
-        : `${dashboardUrl}/sns/${nsRootCanister}/proposal/${proposal.id}`;
+        : `${dashboardUrl}/sns/${rootCanister}/proposal/${proposal.id}`;
     $: proposerUrl = isNns
         ? `${dashboardUrl}/neuron/${proposal.proposer}`
-        : `${dashboardUrl}/sns/${nsRootCanister}/neuron/${proposal.proposer}`;
+        : `${dashboardUrl}/sns/${rootCanister}/neuron/${proposal.proposer}`;
     $: adoptPercent = round2((100 * proposal.tally.yes) / proposal.tally.total);
     $: rejectPercent = round2((100 * proposal.tally.no) / proposal.tally.total);
     $: votingEnded = proposal.deadline <= $now;
