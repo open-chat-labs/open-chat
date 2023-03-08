@@ -220,14 +220,9 @@
             >9adf350c7388dfe7277213a5fc8d817c2d5bc6ff6be5870f0d33d9d6dab01fc6</code
         >.
     </p>
-    <p>
-        For the technically minded, the dev team beacon neuron's controller <ExternalLink 
-        href="https://dashboard.internetcomputer.org/canister/npqv2-jqaaa-aaaar-qaaha-cai"
-        >npqv2-jqaaa-aaaar-qaaha-cai</ExternalLink> is a canister on a high security 'fiduciary' 
-        subnet. This canister existed temporarily to set the followees on the neuron and was then 
-        uninstalled and its controller removed so that the canister can never be reinstalled again. 
-        This means the dev team beacon neuron is immutable and can only ever vote by following 
-        the dev team neurons.
+    <p> 
+        Having set the beacon neuron to follow the dev team neurons we removed its controller to make 
+        it immutable so everyone can be sure it can never follow other neurons.
     </p>
     <BlogScreenshot
         caption="Setting up following in the NNS"
