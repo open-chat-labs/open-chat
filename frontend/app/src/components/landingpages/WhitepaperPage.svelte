@@ -351,9 +351,16 @@
                 the OpenChat dapp, or you can configure your neuron to follow another neuron(s) per
                 proposal type, in which case your vote will be implicitly cast when it votes. By
                 default, newly created neurons will have no followees so this would need to be
-                manually configured. There will be at least one neuron pre-configured as a named
-                followee which itself will follow the neurons of the founding dev team. Anyone is
-                able to propose additional named neurons to be added to the SNS.
+                manually configured.                 
+            </p>
+            <p>
+                The dev team will configure a small neuron to be a "beacon" which anyone is welcome 
+                to follow on any topic. This beacon neuron will itself follow the neurons of each 
+                member of the dev team and will implicitly vote when a majority of the dev team vote
+                the same way. The dev team will vote on every proposal so if you are happy to follow
+                their lead you will implicitly participate in every vote and so maximise your voting
+                rewards. After the SNS decentralization sale the dev team will publish their 
+                beacon neuron id.
             </p>
             <p>
                 Each neuron has “voting power” which is calculated as the token value multiplied by
