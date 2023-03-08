@@ -11,6 +11,7 @@ fn c2c_notify_events(args: Args) -> Response {
     mutate_state(|state| c2c_notify_events_impl(args, state))
 }
 
+// TODO remove this once LocalUserIndex has been upgraded
 #[update_msgpack(guard = "caller_is_local_user_index")]
 #[trace]
 fn c2c_notify_user_events(args: Args) -> Response {

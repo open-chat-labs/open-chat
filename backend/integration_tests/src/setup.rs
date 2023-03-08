@@ -53,7 +53,7 @@ fn try_take_existing_env() -> Option<TestEnv> {
 }
 
 fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterIds {
-    let nns_canister_ids: Vec<_> = (0..10).map(|_| create_canister(env, None)).collect();
+    let nns_canister_ids: Vec<_> = (0..10).map(|_| create_canister(env, Some(vec![controller]))).collect();
 
     let icp_ledger_canister_id = nns_canister_ids[2];
     let cycles_minting_canister_id = nns_canister_ids[4];

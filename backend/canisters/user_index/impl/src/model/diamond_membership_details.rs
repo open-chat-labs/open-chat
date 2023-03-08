@@ -1,7 +1,8 @@
 use serde::{Deserialize, Serialize};
-use std::{cmp::max, collections::HashMap};
+use std::cmp::max;
 use types::{Cryptocurrency, DiamondMembershipDetails, DiamondMembershipPlanDuration, Milliseconds, TimestampMillis};
 use user_index_canister::pay_for_diamond_membership::CannotExtendResult;
+use utils::time::DAY_IN_MS;
 
 #[derive(Serialize, Deserialize, Clone, Default)]
 pub struct DiamondMembershipDetailsInternal {
@@ -13,11 +14,17 @@ pub struct DiamondMembershipDetailsInternal {
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct DiamondMembershipPayment {
-    timestamp: TimestampMillis,
-    token: Cryptocurrency,
-    amount_e8s: u64,
-    block_index: u64,
-    duration: DiamondMembershipPlanDuration,
+    pub timestamp: TimestampMillis,
+    pub token: Cryptocurrency,
+    pub amount_e8s: u64,
+    pub block_index: u64,
+    pub duration: DiamondMembershipPlanDuration,
+    #[serde(default = "bool_true")]
+    pub manual_payment: bool,
+}
+
+fn bool_true() -> bool {
+    true
 }
 
 const THREE_MONTHS: Milliseconds = DiamondMembershipPlanDuration::ThreeMonths.as_millis();
@@ -35,14 +42,12 @@ impl DiamondMembershipDetailsInternal {
         self.recurring
     }
 
-    pub fn amount_paid(&self) -> HashMap<Cryptocurrency, u128> {
-        let mut paid_by_token: HashMap<Cryptocurrency, u128> = HashMap::new();
-
-        for payment in self.payments.iter() {
-            *paid_by_token.entry(payment.token).or_default() += payment.amount_e8s as u128;
-        }
-
-        paid_by_token
+    pub fn is_recurring_payment_due(&self, now: TimestampMillis) -> bool {
+        self.recurring
+            && self
+                .expires_at
+                .map(|ts| ts < now.saturating_add(DAY_IN_MS))
+                .unwrap_or_default()
     }
 
     pub fn hydrate(&self, now: TimestampMillis) -> Option<DiamondMembershipDetails> {
@@ -70,6 +75,7 @@ impl DiamondMembershipDetailsInternal {
         })
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn add_payment(
         &mut self,
         token: Cryptocurrency,
@@ -77,6 +83,7 @@ impl DiamondMembershipDetailsInternal {
         block_index: u64,
         duration: DiamondMembershipPlanDuration,
         recurring: bool,
+        manual_payment: bool,
         now: TimestampMillis,
     ) {
         let payment = DiamondMembershipPayment {
@@ -85,6 +92,7 @@ impl DiamondMembershipDetailsInternal {
             amount_e8s,
             block_index,
             duration,
+            manual_payment,
         };
 
         let duration_millis = duration.as_millis();
@@ -100,6 +108,14 @@ impl DiamondMembershipDetailsInternal {
 
     pub fn set_payment_in_progress(&mut self, value: bool) {
         self.payment_in_progress = value;
+    }
+
+    pub fn latest_duration(&self) -> Option<DiamondMembershipPlanDuration> {
+        self.payments.last().map(|p| p.duration)
+    }
+
+    pub fn payments(&self) -> &[DiamondMembershipPayment] {
+        &self.payments
     }
 
     #[allow(dead_code)]

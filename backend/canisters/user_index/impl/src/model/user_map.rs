@@ -1,10 +1,10 @@
 use crate::model::diamond_membership_details::DiamondMembershipDetailsInternal;
 use crate::model::user::{SuspensionDetails, SuspensionDuration, User};
-use crate::DiamondMetrics;
+use crate::DiamondMembershipUserMetrics;
 use candid::Principal;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeSet, HashMap};
-use types::{Cryptocurrency, CyclesTopUp, Milliseconds, TimestampMillis, UserId, Version};
+use types::{CyclesTopUp, Milliseconds, TimestampMillis, UserId, Version};
 use utils::case_insensitive_hash_map::CaseInsensitiveHashMap;
 use utils::time::MINUTE_IN_MS;
 
@@ -152,10 +152,6 @@ impl UserMap {
         }
     }
 
-    pub fn is_valid_caller(&self, caller: Principal) -> bool {
-        self.principal_to_user_id.contains_key(&caller) || self.users.contains_key(&caller.into())
-    }
-
     pub fn mark_cycles_top_up(&mut self, user_id: &UserId, top_up: CyclesTopUp) -> bool {
         if let Some(user) = self.users.get_mut(user_id) {
             user.mark_cycles_top_up(top_up);
@@ -244,21 +240,14 @@ impl UserMap {
         self.suspected_bots.contains(user_id)
     }
 
-    pub fn diamond_metrics(&self, now: TimestampMillis) -> DiamondMetrics {
-        let mut metrics = DiamondMetrics::default();
-        let mut total_raised: HashMap<Cryptocurrency, u128> = HashMap::new();
-
+    pub fn diamond_metrics(&self, now: TimestampMillis) -> DiamondMembershipUserMetrics {
+        let mut metrics = DiamondMembershipUserMetrics::default();
         for user in self.users.values().filter(|u| u.diamond_membership_details.is_active(now)) {
             metrics.total += 1;
             if user.diamond_membership_details.is_recurring() {
                 metrics.recurring += 1;
             }
-            for (token, amount_e8s) in user.diamond_membership_details.amount_paid().iter() {
-                *total_raised.entry(*token).or_default() += *amount_e8s;
-            }
         }
-
-        metrics.amount_raised = total_raised.into_iter().collect();
         metrics
     }
 

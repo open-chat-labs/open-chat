@@ -24,10 +24,6 @@ impl NervousSystems {
         );
     }
 
-    pub fn get(&self, governance_canister_id: &CanisterId) -> Option<&NervousSystem> {
-        self.nervous_systems.get(governance_canister_id)
-    }
-
     pub fn get_chat_id(&self, governance_canister_id: &CanisterId) -> Option<ChatId> {
         self.nervous_systems.get(governance_canister_id).map(|ns| ns.chat_id)
     }

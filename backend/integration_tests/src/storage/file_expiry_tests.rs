@@ -1,10 +1,9 @@
 use crate::client;
 use crate::rng::random_principal;
 use crate::setup::{return_env, setup_env, TestEnv};
-use crate::utils::tick_many;
-use std::time::{Duration, SystemTime};
+use crate::utils::{now_millis, tick_many};
+use std::time::Duration;
 use storage_index_canister::add_or_update_users::UserConfig;
-use types::TimestampMillis;
 
 #[test]
 fn file_is_removed_after_expiry_date() {
@@ -32,7 +31,7 @@ fn file_is_removed_after_expiry_date() {
     let bucket = allocated_bucket_response.canister_id;
     let file_id = allocated_bucket_response.file_id;
 
-    let now: TimestampMillis = env.time().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_millis() as u64;
+    let now = now_millis(&env);
 
     client::storage_bucket::happy_path::upload_file(&mut env, user_id, bucket, file_id, file, Some(now + 1000));
 
