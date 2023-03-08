@@ -1,3 +1,4 @@
+use crate::guards::caller_is_openchat_user;
 use crate::timer_job_types::{RecurringDiamondMembershipPayment, TimerJob};
 use crate::{mutate_state, read_state, RuntimeState, ONE_GB};
 use canister_tracing_macros::trace;
@@ -10,7 +11,7 @@ use types::{Cryptocurrency, DiamondMembershipPlanDuration, UserId, ICP};
 use user_index_canister::pay_for_diamond_membership::{Response::*, *};
 use utils::time::DAY_IN_MS;
 
-#[update]
+#[update(guard = "caller_is_openchat_user")]
 #[trace]
 async fn pay_for_diamond_membership(args: Args) -> Response {
     let user_id = match read_state(|state| {
