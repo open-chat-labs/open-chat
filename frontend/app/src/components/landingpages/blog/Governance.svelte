@@ -219,10 +219,11 @@
         follow on any topic. This beacon neuron will itself follow the neurons of each member of the
         dev team and so will implicitly vote when a majority of the dev team vote the same way. The
         dev team will vote on every proposal so if you are happy to follow their lead you will
-        implicitly participate in every vote and so maximise your voting rewards. The dev team
-        beacon neuron id is <code
-            >9adf350c7388dfe7277213a5fc8d817c2d5bc6ff6be5870f0d33d9d6dab01fc6</code
-        >.
+        implicitly participate in every vote and so maximise your voting rewards.         
+    </p>
+    <p> 
+        The dev team beacon neuron id is<br>
+        <code>9adf350c7388dfe7277213a5fc8d817c2d5bc6ff6be5870f0d33d9d6dab01fc6</code>
     </p>
     <p> 
         Having set the beacon neuron to follow the dev team neurons we removed its controller to make 
