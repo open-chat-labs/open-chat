@@ -207,6 +207,9 @@
         do this is to use the catch-all topic. Then you only need to setup a more nuanced following
         scheme on your eldest neuron.
     </p>
+</section>
+<section>
+    <h2>Dev team beacon neuron</h2>
     <p>
         The dev team have configured a small neuron to be a "beacon" which anyone is welcome to
         follow on any topic. This beacon neuron will itself follow the neurons of each member of the
@@ -216,6 +219,15 @@
         beacon neuron id is <code
             >9adf350c7388dfe7277213a5fc8d817c2d5bc6ff6be5870f0d33d9d6dab01fc6</code
         >.
+    </p>
+    <p>
+        For the technically minded, the dev team beacon neuron's controller <ExternalLink 
+        href="https://dashboard.internetcomputer.org/canister/npqv2-jqaaa-aaaar-qaaha-cai"
+        >npqv2-jqaaa-aaaar-qaaha-cai</ExternalLink> is a canister on a high security 'fiduciary' 
+        subnet. This canister existed temporarily to set the followees on the neuron and was then 
+        uninstalled and its controller removed so that the canister can never be reinstalled again. 
+        This means the dev team beacon neuron is immutable and can only ever vote by following 
+        the dev team neurons.
     </p>
     <BlogScreenshot
         caption="Setting up following in the NNS"
