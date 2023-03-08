@@ -18,11 +18,6 @@
             >What you need to know about SNS DAOs</ExternalLink
         >.
     </p>
-    <p>
-        After that for information specific to OpenChat please read the governance section of the <Link
-            path="/whitepaper?section=3-4">OpenChat SNS Whitepaper</Link
-        >.
-    </p>
 </section>
 <section>
     <h2>Neurons</h2>
@@ -62,7 +57,8 @@
     </ul>
     <p>
         Join <Link path="/nsbx4-4iaaa-aaaar-afusa-cai">this group</Link> to view, discuss, and vote on
-        OpenChat SNS proposals.
+        OpenChat SNS proposals. Press the filter icon to see the full list of proposal types and to filter
+        by them.
     </p>
     <p>
         Anyone who owns a neuron can use it to make proposals although this currently requires
@@ -71,7 +67,28 @@
             href="https://github.com/dfinity/quill/blob/master/docs/cli-reference/sns/quill-sns-make-proposal.md"
             >quill</ExternalLink
         >. In time this process should become easier. If a proposal is rejected then 10 CHAT tokens
-        is subtracted from the proposing neuron and burned to discourage spam.
+        are subtracted from the proposing neuron and burned to discourage spam.
+    </p>
+</section>
+<section>
+    <h2>Dev team proposals</h2>
+    <p>
+        Before working on a substantial new feature or other change to OpenChat the dev team will
+        describe their plan as a message in the new <Link path="/n2qig-viaaa-aaaar-ahviq-cai"
+            >OpenChat features</Link> group. For now the group will be read-only for top-level messages
+        to stop noise but everyone will be able to post in threaded replies to discuss the proposed changes.
+    </p>
+    <p>
+        Having talked through the feature and explored different options we can then use a poll
+        message with the various options and members can vote. Once some sort of consensus has been
+        reached we will make a motion proposal describing the change and the SNS DAO can decide
+        whether we should go ahead with it. Later on when the feature/change has been coded we will
+        make an upgrade proposal for each canister affected.
+    </p>
+    <p>
+        Alongside <em>substantial</em> features/changes the dev team will also work on smaller features/fixes/code
+        improvements/changes on our own initiative without necessarily go through the above procedure.
+        Of course all changes to the dapp ulitmately need to be made using upgrade proposals.
     </p>
     <BlogScreenshot
         caption="Governance proposals in OpenChat"
