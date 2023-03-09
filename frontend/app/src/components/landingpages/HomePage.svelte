@@ -21,7 +21,7 @@
             tech competitors!
         </p>
         <div class="features">
-            <ArrowLink path={"features"} color={"#23A2EE"}>View Features</ArrowLink>
+            <ArrowLink url={"/features"} color={"#23A2EE"}>View Features</ArrowLink>
         </div>
     </div>
 
