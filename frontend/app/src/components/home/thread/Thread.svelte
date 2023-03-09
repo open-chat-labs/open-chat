@@ -38,7 +38,6 @@
     let creatingPoll = false;
     let creatingCryptoTransfer: { token: Cryptocurrency; amount: bigint } | undefined = undefined;
     let selectingGif = false;
-    let loading = false;
     let initialised = false;
     let messagesDiv: HTMLDivElement | undefined;
     let messagesDivHeight: number;
@@ -72,6 +71,7 @@
     $: readonly = client.isChatReadOnly(chat.chatId);
     $: selectedThreadKey = client.selectedThreadKey;
     $: thread = rootEvent.event.thread;
+    $: loading = !initialised && $threadEvents.length === 0;
 
     onMount(() => (previousLatestEventIndex = thread?.latestEventIndex));
 
@@ -295,7 +295,7 @@
     bind:initialised
     bind:messagesDiv
     bind:messagesDivHeight>
-    {#if loading && !initialised}
+    {#if loading}
         <Loading />
     {:else}
         {#each messages as dayGroup, _di (dateGroupKey(dayGroup))}
