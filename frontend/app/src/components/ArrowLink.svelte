@@ -1,14 +1,12 @@
 <script lang="ts">
     import Arrow from "./Arrow.svelte";
 
-    export let url: string | undefined = undefined;
+    export let url: string;
     export let color: string = "#7E52FF";
     export let target: string | undefined = undefined;
-
-    $: href = url === undefined ? "#" : url;
 </script>
 
-<a class="link" {href} {target}>
+<a class="link" href={url} {target}>
     <slot />
     <div class="arrow">
         <Arrow {color} />
