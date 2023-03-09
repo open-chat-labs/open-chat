@@ -10,7 +10,7 @@
         <div class="header">
             <h2 class="title">Roadmap</h2>
             <div class="features">
-                <ArrowLink path={"roadmap"} color={"#23A2EE"}>View Entire Roadmap</ArrowLink>
+                <ArrowLink url={"/roadmap"} color={"#23A2EE"}>View Entire Roadmap</ArrowLink>
             </div>
         </div>
         <div class="grid">
@@ -81,7 +81,7 @@
             </div>
         </div>
 
-        <ArrowLink path={"roadmap"} color={"#23A2EE"}>View Entire Roadmap</ArrowLink>
+        <ArrowLink url={"/roadmap"} color={"#23A2EE"}>View Entire Roadmap</ArrowLink>
     </div>
 </Section>
 
