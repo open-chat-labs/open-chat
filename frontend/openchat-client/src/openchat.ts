@@ -113,6 +113,7 @@ import {
     clearServerEvents,
     confirmedEventIndexesLoaded,
     addGroupPreview,
+    removeUninitializedDirectChat,
     removeGroupPreview,
     groupPreviewsStore,
     isContiguous,
@@ -171,7 +172,7 @@ import {
 } from "./utils/date";
 import formatFileSize from "./utils/fileSize";
 import { calculateMediaDimensions } from "./utils/layout";
-import { findLast, groupBy, groupWhile, toRecord2 } from "./utils/list";
+import { findLast, groupBy, groupWhile, toRecord, toRecord2 } from "./utils/list";
 import {
     audioRecordingMimeType,
     containsSocialVideoLink,
@@ -1674,6 +1675,9 @@ export class OpenChat extends EventTarget {
     }
 
     removeChat(chatId: string): void {
+        if (this._liveState.uninitializedDirectChats[chatId] !== undefined) {
+            removeUninitializedDirectChat(chatId);
+        }
         if (this._liveState.groupPreviews[chatId] !== undefined) {
             removeGroupPreview(chatId);
         }
@@ -3310,12 +3314,15 @@ export class OpenChat extends EventTarget {
                     pinnedChatsStore.set(chatsResponse.pinnedChats);
                 }
 
-                myServerChatSummariesStore.set(
-                    chatsResponse.chatSummaries.reduce<Record<string, ChatSummary>>((rec, chat) => {
-                        rec[chat.chatId] = chat;
-                        return rec;
-                    }, {})
-                );
+                myServerChatSummariesStore.set(toRecord(chatsResponse.chatSummaries, (chat) => chat.chatId));
+
+                if (Object.keys(this._liveState.uninitializedDirectChats).length > 0) {
+                    for (const chat of chatsResponse.chatSummaries) {
+                        if (this._liveState.uninitializedDirectChats[chat.chatId] !== undefined) {
+                            removeUninitializedDirectChat(chat.chatId);
+                        }
+                    }
+                }
 
                 const selectedChatId = this._liveState.selectedChatId;
 

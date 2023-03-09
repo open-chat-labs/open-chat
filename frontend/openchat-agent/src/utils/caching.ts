@@ -143,13 +143,8 @@ export async function setCachedChatsV2(
     chatState: ChatStateFull,
     affectedEvents: Record<string, number[]>
 ): Promise<void> {
-    const directChats = chatState.directChats
-        .filter((c) => !isUninitialisedDirectChat(c))
-        .map(makeChatSummarySerializable);
-
-    const groupChats = chatState.groupChats
-        .filter((c) => !isPreviewing(c))
-        .map(makeChatSummarySerializable);
+    const directChats = chatState.directChats.map(makeChatSummarySerializable);
+    const groupChats = chatState.groupChats.map(makeChatSummarySerializable);
 
     const stateToCache = {
         ...chatState,
@@ -170,14 +165,6 @@ export async function setCachedChatsV2(
 
     await Promise.all(promises);
     await tx.done;
-}
-
-function isPreviewing(chat: ChatSummary): boolean {
-    return chat.kind === "group_chat" && chat.myRole === "previewer";
-}
-
-function isUninitialisedDirectChat(chat: ChatSummary): boolean {
-    return chat.kind === "direct_chat" && chat.latestEventIndex < 0;
 }
 
 export async function getCachedEventsWindow<T extends ChatEvent>(
