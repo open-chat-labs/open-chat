@@ -187,7 +187,7 @@
         follow on that topic vote the same way.
     </p>
     <p>
-        It is possible to configure topic _exclusions_ in a slightly quirky manner. This allows a
+        It is possible to configure topic <em>exclusions</em> in a slightly quirky manner. This allows a
         neuron to follow another on the catch-all topic but exclude certain topics so that the user
         can vote for themselves. For example a reasonable choice might be to follow the OpenChat dev
         team beacon neuron (see below) on the catch-all but exclude motions, token transfers and SNS
