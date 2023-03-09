@@ -92,8 +92,18 @@ export function toRecord<T, K extends string | number | symbol>(
     xs: T[],
     keyFn: (x: T) => K
 ): Record<K, T> {
+    return toRecordFiltered(xs, keyFn, _ => true);
+}
+
+export function toRecordFiltered<T, K extends string | number | symbol>(
+    xs: T[],
+    keyFn: (x: T) => K,
+    filterFn: (x: T) => boolean,
+): Record<K, T> {
     return xs.reduce((rec, x) => {
-        rec[keyFn(x)] = x;
+        if (filterFn(x)) {
+            rec[keyFn(x)] = x;
+        }
         return rec;
     }, {} as Record<K, T>);
 }
