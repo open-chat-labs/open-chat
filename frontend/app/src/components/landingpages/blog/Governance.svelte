@@ -187,7 +187,7 @@
         follow on that topic vote the same way.
     </p>
     <p>
-        It is possible to configure topic exclusions in a slightly quirky manner. This allows a
+        It is possible to configure topic <em>exclusions</em> in a slightly quirky manner. This allows a
         neuron to follow another on the catch-all topic but exclude certain topics so that the user
         can vote for themselves. For example a reasonable choice might be to follow the OpenChat dev
         team beacon neuron (see below) on the catch-all but exclude motions, token transfers and SNS
@@ -195,12 +195,6 @@
             >itself</em> on this topic. This works because the explicit following relationship overrides
         the implicit catch-all and by using your own neuron id you ensure you are following no other
         neuron.
-    </p>
-    <p>
-        <em>CORRECTION TO THE ABOVE PARAGRAPH<br>
-        It is currently possible on the SNS backend for a neuron to follow itself on a topic but 
-        not yet in the NNS dapp which quite reasonably assumed this should not be possible. We have
-        been informed by DFINITY that the NNS dapp will soon be updated to allow this behaviour.</em>
     </p>
     <p>
         Going forwards we hope that rather than every SNS "action" being mapped 1-1 to a topic, the
