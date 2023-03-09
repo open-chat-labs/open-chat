@@ -169,11 +169,11 @@ export class GroupClient extends CandidService implements IGroupClient {
     async chatEventsWindow(
         _eventIndexRange: IndexRange,
         messageIndex: number,
+        threadRootMessageIndex: number | undefined,
         latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<GroupChatEvent>> {
-        const thread_root_message_index: [] = [];
         const args = {
-            thread_root_message_index,
+            thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
             max_messages: MAX_MESSAGES,
             max_events: MAX_EVENTS,
             mid_point: messageIndex,

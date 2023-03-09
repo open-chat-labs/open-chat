@@ -181,7 +181,7 @@ export type WorkerRequest =
     | FreezeGroup
     | UnfreezeGroup
     | DeleteFrozenGroup
-    | AddHotGroupExclusion 
+    | AddHotGroupExclusion
     | RemoveHotGroupExclusion
     | SuspendUser
     | UnsuspendUser
@@ -642,6 +642,7 @@ type GroupChatEventsWindow = Request<{
     chatId: string;
     messageIndex: number;
     latestClientMainEventIndex: number | undefined;
+    threadRootMessageIndex: number | undefined;
 }> & {
     kind: "groupChatEventsWindow";
 };

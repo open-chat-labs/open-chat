@@ -6,6 +6,12 @@ export class LoadedNewMessages extends CustomEvent<boolean> {
     }
 }
 
+export class LoadedNewThreadMessages extends CustomEvent<boolean> {
+    constructor(newLatestMessage: boolean) {
+        super("openchat_event", { detail: newLatestMessage });
+    }
+}
+
 export class SendMessageFailed extends CustomEvent<boolean> {
     constructor(alert: boolean) {
         super("openchat_event", { detail: alert });
@@ -13,6 +19,12 @@ export class SendMessageFailed extends CustomEvent<boolean> {
 }
 
 export class LoadedPreviousMessages extends Event {
+    constructor() {
+        super("openchat_event");
+    }
+}
+
+export class LoadedPreviousThreadMessages extends Event {
     constructor() {
         super("openchat_event");
     }
@@ -27,6 +39,12 @@ export class SentMessage extends CustomEvent<boolean> {
 export class SentThreadMessage extends CustomEvent<EventWrapper<Message>> {
     constructor(event: EventWrapper<Message>) {
         super("openchat_event", { detail: event });
+    }
+}
+
+export class LoadedThreadMessageWindow extends CustomEvent<number> {
+    constructor(messageIndex: number) {
+        super("openchat_event", { detail: messageIndex });
     }
 }
 
@@ -62,12 +80,11 @@ export class ThreadMessagesLoaded extends CustomEvent<boolean> {
 
 export class ThreadSelected extends CustomEvent<{
     initiating: boolean;
-    threadRootMessageId: bigint;
-    threadRootMessageIndex: number;
+    threadRootEvent: EventWrapper<Message>;
 }> {
-    constructor(threadRootMessageId: bigint, threadRootMessageIndex: number, initiating: boolean) {
+    constructor(threadRootEvent: EventWrapper<Message>, initiating: boolean) {
         super("openchat_event", {
-            detail: { threadRootMessageId, initiating, threadRootMessageIndex },
+            detail: { threadRootEvent, initiating },
         });
     }
 }

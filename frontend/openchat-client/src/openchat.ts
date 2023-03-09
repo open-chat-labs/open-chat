@@ -1,7 +1,7 @@
 /* eslint-disable no-case-declarations */
 import type { Identity } from "@dfinity/agent";
 import { AuthClient } from "@dfinity/auth-client";
-import { writable } from "svelte/store";
+import { get, writable } from "svelte/store";
 import { load } from "@fingerprintjs/botd";
 import {
     buildUserAvatarUrl,
@@ -116,6 +116,9 @@ import {
     removeGroupPreview,
     groupPreviewsStore,
     isContiguous,
+    selectedThreadRootEvent,
+    confirmedThreadEventIndexesLoadedStore,
+    isContiguousInThread,
 } from "./stores/chat";
 import { cryptoBalance, lastCryptoSent } from "./stores/crypto";
 import { draftThreadMessages } from "./stores/draftThreadMessages";
@@ -193,13 +196,15 @@ import {
     ChatUpdated,
     LoadedMessageWindow,
     LoadedNewMessages,
+    LoadedNewThreadMessages,
     LoadedPreviousMessages,
+    LoadedPreviousThreadMessages,
+    LoadedThreadMessageWindow,
     SelectedChatInvalid,
     SendMessageFailed,
     SentMessage,
     SentThreadMessage,
     ThreadClosed,
-    ThreadMessagesLoaded,
     ThreadSelected,
 } from "./events";
 import { LiveState } from "./liveState";
@@ -1313,7 +1318,40 @@ export class OpenChat extends EventTarget {
         return result;
     }
 
-    async loadEventWindow(chatId: string, messageIndex: number): Promise<number | undefined> {
+    private async loadThreadEventWindow(
+        chatId: string,
+        messageIndex: number,
+        threadRootEvent: EventWrapper<Message>
+    ): Promise<number | undefined> {
+        if (threadRootEvent.event.thread === undefined) return undefined;
+
+        const eventsResponse = await this.api.groupChatEventsWindow(
+            [0, threadRootEvent.event.thread.latestEventIndex],
+            chatId,
+            messageIndex,
+            threadRootEvent.event.thread?.latestEventIndex,
+            threadRootEvent.event.messageIndex
+        );
+
+        if (eventsResponse === undefined || eventsResponse === "events_failed") {
+            return undefined;
+        }
+
+        this.clearThreadEvents();
+        const [newEvents, _] = await this.handleThreadEventsResponse(chatId, eventsResponse);
+
+        threadServerEventsStore.set(newEvents);
+
+        this.dispatchEvent(new LoadedThreadMessageWindow(messageIndex));
+
+        return messageIndex;
+    }
+
+    async loadEventWindow(
+        chatId: string,
+        messageIndex: number,
+        threadRootEvent?: EventWrapper<Message>
+    ): Promise<number | undefined> {
         const clientChat = this._liveState.chatSummaries[chatId];
         const serverChat = this._liveState.serverChatSummaries[chatId];
 
@@ -1322,6 +1360,10 @@ export class OpenChat extends EventTarget {
         }
 
         if (messageIndex >= 0) {
+            if (threadRootEvent !== undefined && threadRootEvent.event.thread !== undefined) {
+                return this.loadThreadEventWindow(chatId, messageIndex, threadRootEvent);
+            }
+
             const latestMessageIndex = clientChat.latestMessage?.event.messageIndex ?? 0;
             if (messageIndex > latestMessageIndex) {
                 messageIndex = latestMessageIndex;
@@ -1518,19 +1560,17 @@ export class OpenChat extends EventTarget {
         }
     }
 
-    openThread(
-        threadRootMessageId: bigint,
-        threadRootMessageIndex: number,
-        initiating: boolean
-    ): void {
-        selectedThreadRootMessageIndex.set(threadRootMessageIndex);
-        this.dispatchEvent(
-            new ThreadSelected(threadRootMessageId, threadRootMessageIndex, initiating)
-        );
+    openThread(threadRootEvent: EventWrapper<Message>, initiating: boolean): void {
+        this.clearThreadEvents();
+        selectedThreadRootEvent.set(threadRootEvent);
+        if (!initiating && this._liveState.selectedChatId !== undefined) {
+            this.loadPreviousMessages(this._liveState.selectedChatId, threadRootEvent);
+        }
+        this.dispatchEvent(new ThreadSelected(threadRootEvent, initiating));
     }
 
     closeThread(): void {
-        selectedThreadRootMessageIndex.set(undefined);
+        selectedThreadRootEvent.set(undefined);
         this.dispatchEvent(new ThreadClosed());
     }
 
@@ -1540,7 +1580,6 @@ export class OpenChat extends EventTarget {
 
     async loadThreadMessages(
         chatId: string,
-        rootEvent: EventWrapper<Message>,
         thread: ThreadSummary,
         range: [number, number],
         startIndex: number,
@@ -1576,17 +1615,7 @@ export class OpenChat extends EventTarget {
             if (clearEvents) {
                 threadServerEventsStore.set([]);
             }
-            const [newEvents, _] = await this.handleThreadEventsResponse(
-                chatId,
-                rootEvent,
-                eventsResponse
-            );
-
-            for (const event of newEvents) {
-                if (event.event.kind === "message") {
-                    unconfirmed.delete(selectedThreadKey, event.event.messageId);
-                }
-            }
+            const [newEvents, _] = await this.handleThreadEventsResponse(chatId, eventsResponse);
 
             threadServerEventsStore.update((events) => mergeServerEvents(events, newEvents));
             makeRtcConnections(
@@ -1605,13 +1634,16 @@ export class OpenChat extends EventTarget {
                     this.markThreadRead(chat.chatId, threadRootMessageIndex, lastLoadedMessageIdx);
                 }
             }
-            this.dispatchEvent(new ThreadMessagesLoaded(ascending));
+            if (ascending) {
+                this.dispatchEvent(new LoadedNewThreadMessages(false));
+            } else {
+                this.dispatchEvent(new LoadedPreviousThreadMessages());
+            }
         }
     }
 
     private async handleThreadEventsResponse(
         chatId: string,
-        rootEvent: EventWrapper<Message>,
         resp: EventsResponse<ChatEvent>
     ): Promise<[EventWrapper<ChatEvent>[], Set<string>]> {
         if (resp === "events_failed") return [[], new Set()];
@@ -1619,9 +1651,15 @@ export class OpenChat extends EventTarget {
         const events = resp.events.concat(resp.affectedEvents);
 
         const userIds = this.userIdsFromEvents(events);
-        userIds.add(rootEvent.event.sender);
         await this.updateUserStore(chatId, userIds);
 
+        if (this._liveState.selectedThreadKey !== undefined) {
+            for (const event of events) {
+                if (event.event.kind === "message") {
+                    unconfirmed.delete(this._liveState.selectedThreadKey, event.event.messageId);
+                }
+            }
+        }
         return [events, userIds];
     }
 
@@ -1656,11 +1694,42 @@ export class OpenChat extends EventTarget {
         return Object.keys(args).length > 0;
     }
 
-    async loadPreviousMessages(chatId: string): Promise<void> {
+    earliestLoadedThreadIndex(): number | undefined {
+        return this._liveState.threadEvents.length === 0
+            ? undefined
+            : this._liveState.threadEvents[0].index;
+    }
+
+    previousThreadMessagesCriteria(thread: ThreadSummary): [number, boolean] {
+        const minLoadedEventIndex = this.earliestLoadedThreadIndex();
+        if (minLoadedEventIndex === undefined) {
+            return [thread.latestEventIndex, false];
+        }
+        return [minLoadedEventIndex - 1, false];
+    }
+
+    async loadPreviousMessages(
+        chatId: string,
+        threadRootEvent?: EventWrapper<Message>
+    ): Promise<void> {
         const serverChat = this._liveState.serverChatSummaries[chatId];
 
         if (serverChat === undefined) {
             return Promise.resolve();
+        }
+
+        if (threadRootEvent !== undefined && threadRootEvent.event.thread !== undefined) {
+            const thread = threadRootEvent.event.thread;
+            const [index, ascending] = this.previousThreadMessagesCriteria(thread);
+            return this.loadThreadMessages(
+                chatId,
+                thread,
+                [0, thread.latestEventIndex],
+                index,
+                ascending,
+                threadRootEvent.event.messageIndex,
+                false
+            );
         }
 
         const criteria = this.previousMessagesCriteria(serverChat);
@@ -1719,11 +1788,28 @@ export class OpenChat extends EventTarget {
         return confirmedLoaded.length > 0 ? confirmedLoaded.index(0) : undefined;
     }
 
-    async loadNewMessages(chatId: string): Promise<boolean> {
+    async loadNewMessages(
+        chatId: string,
+        threadRootEvent?: EventWrapper<Message>
+    ): Promise<boolean> {
         const serverChat = this._liveState.serverChatSummaries[chatId];
 
         if (serverChat === undefined) {
             return Promise.resolve(false);
+        }
+
+        if (threadRootEvent !== undefined && threadRootEvent.event.thread !== undefined) {
+            const thread = threadRootEvent.event.thread;
+            const [index, ascending] = this.newThreadMessageCriteria(thread);
+            return this.loadThreadMessages(
+                chatId,
+                thread,
+                [0, thread.latestEventIndex],
+                index,
+                ascending,
+                threadRootEvent.event.messageIndex,
+                false
+            ).then(() => false);
         }
 
         const criteria = this.newMessageCriteria(serverChat);
@@ -1754,7 +1840,15 @@ export class OpenChat extends EventTarget {
         return newLatestMessage;
     }
 
-    morePreviousMessagesAvailable(chatId: string): boolean {
+    morePreviousMessagesAvailable(
+        chatId: string,
+        threadRootEvent?: EventWrapper<Message>
+    ): boolean {
+        if (threadRootEvent !== undefined) {
+            const earliestIndex = this.earliestLoadedThreadIndex();
+            return earliestIndex === undefined || earliestIndex > 0;
+        }
+
         const chat = this._liveState.chatSummaries[chatId];
 
         return (
@@ -1765,7 +1859,16 @@ export class OpenChat extends EventTarget {
         );
     }
 
-    moreNewMessagesAvailable(chatId: string): boolean {
+    moreNewMessagesAvailable(
+        chatId: string,
+        threadRootEvent?: EventWrapper<Message> /* TODO - make this work for threads */
+    ): boolean {
+        if (threadRootEvent !== undefined && threadRootEvent.event.thread !== undefined) {
+            return (
+                (this.confirmedThreadUpToEventIndex() ?? -1) <
+                threadRootEvent.event.thread.latestEventIndex
+            );
+        }
         const serverChat = this._liveState.serverChatSummaries[chatId];
 
         return (
@@ -1875,6 +1978,16 @@ export class OpenChat extends EventTarget {
         return eventsPromise.then((resp) => this.handleEventsResponse(serverChat, resp));
     }
 
+    private newThreadMessageCriteria(thread: ThreadSummary): [number, boolean] {
+        const loadedUpTo = this.confirmedThreadUpToEventIndex();
+
+        if (loadedUpTo === undefined) {
+            return [thread.latestEventIndex, false];
+        }
+
+        return [loadedUpTo + 1, true];
+    }
+
     private newMessageCriteria(serverChat: ChatSummary): [number, boolean] | undefined {
         if (serverChat.latestEventIndex < 0) {
             return undefined;
@@ -1890,6 +2003,13 @@ export class OpenChat extends EventTarget {
     }
     private confirmedUpToEventIndex(chatId: string): number | undefined {
         const ranges = confirmedEventIndexesLoaded(chatId).subranges();
+        if (ranges.length > 0) {
+            return ranges[0].high;
+        }
+        return undefined;
+    }
+    private confirmedThreadUpToEventIndex(): number | undefined {
+        const ranges = get(confirmedThreadEventIndexesLoadedStore).subranges();
         if (ranges.length > 0) {
             return ranges[0].high;
         }
@@ -2081,7 +2201,11 @@ export class OpenChat extends EventTarget {
             return;
         }
 
-        if (!isContiguous(chatId, newEvents)) {
+        if (threadRootMessageIndex === undefined && !isContiguous(chatId, newEvents)) {
+            return;
+        }
+
+        if (threadRootMessageIndex !== undefined && !isContiguousInThread(newEvents)) {
             return;
         }
 
@@ -3542,4 +3666,6 @@ export class OpenChat extends EventTarget {
     isDiamond = isDiamond;
     canExtendDiamond = canExtendDiamond;
     diamondMembership = diamondMembership;
+    selectedThreadRootEvent = selectedThreadRootEvent;
+    selectedThreadRootMessageIndex = selectedThreadRootMessageIndex;
 }

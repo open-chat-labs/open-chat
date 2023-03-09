@@ -514,6 +514,7 @@
                     on:reply={reply}
                     on:retrySend
                     on:upgrade
+                    on:initiateThread
                     on:deleteFailedMessage
                     on:replyPrivately={replyPrivately}
                     on:editMessage={editMessage} />
