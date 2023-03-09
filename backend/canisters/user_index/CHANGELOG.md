@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Implemented recurring Diamond membership payments ([#3274](https://github.com/open-ic/open-chat/pull/3274))
 - Expose more metrics about Diamond membership payments ([#3276](https://github.com/open-ic/open-chat/pull/3276))
 - Added `caller_is_openchat_user` guard to a few endpoints ([#3279](https://github.com/open-ic/open-chat/pull/3279))
+- Added endpoints to collect neuron controllers for the initial airdrop ([#3287](https://github.com/open-ic/open-chat/pull/3287))
 
 ### Changed
 

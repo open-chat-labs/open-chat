@@ -11,7 +11,7 @@ use local_user_index_canister::Event as LocalUserIndexEvent;
 use model::local_user_index_map::LocalUserIndexMap;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use types::{CanisterId, CanisterWasm, Cryptocurrency, Cycles, Milliseconds, TimestampMillis, Timestamped, UserId, Version};
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::canister_event_sync_queue::CanisterEventSyncQueue;
@@ -129,6 +129,9 @@ impl RuntimeState {
                 notifications_index: self.data.notifications_index_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
             },
+            users_eligible_for_initial_airdrop: self.data.users.iter().filter(|u| u.is_eligible_for_initial_airdrop()).count()
+                as u32,
+            users_confirmed_for_initial_airdrop: self.data.neuron_controllers_for_initial_airdrop.len() as u32,
         }
     }
 }
@@ -160,6 +163,8 @@ struct Data {
     pub local_index_map: LocalUserIndexMap,
     #[serde(default)]
     pub timer_jobs: TimerJobs<TimerJob>,
+    #[serde(default)]
+    pub neuron_controllers_for_initial_airdrop: HashMap<UserId, Principal>,
 }
 
 impl Data {
@@ -198,6 +203,7 @@ impl Data {
             diamond_membership_payment_metrics: DiamondMembershipPaymentMetrics::default(),
             local_index_map: LocalUserIndexMap::default(),
             timer_jobs: TimerJobs::default(),
+            neuron_controllers_for_initial_airdrop: HashMap::new(),
         };
 
         // Register the ProposalsBot
@@ -255,6 +261,7 @@ impl Default for Data {
             diamond_membership_payment_metrics: DiamondMembershipPaymentMetrics::default(),
             local_index_map: LocalUserIndexMap::default(),
             timer_jobs: TimerJobs::default(),
+            neuron_controllers_for_initial_airdrop: HashMap::new(),
         }
     }
 }
@@ -283,6 +290,8 @@ pub struct Metrics {
     pub user_index_events_queue_length: usize,
     pub local_user_indexes: Vec<(CanisterId, LocalUserIndex)>,
     pub canister_ids: CanisterIds,
+    pub users_eligible_for_initial_airdrop: u32,
+    pub users_confirmed_for_initial_airdrop: u32,
 }
 
 #[derive(Serialize, Debug, Default)]
