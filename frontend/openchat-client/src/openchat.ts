@@ -1674,6 +1674,13 @@ export class OpenChat extends EventTarget {
     }
 
     removeChat(chatId: string): void {
+        if (this._liveState.myServerChatSummaries[chatId] !== undefined) {
+            myServerChatSummariesStore.update((chats) => {
+                const clone = { ...chats };
+                delete clone[chatId];
+                return clone;
+            });
+        }
         if (this._liveState.groupPreviews[chatId] !== undefined) {
             removeGroupPreview(chatId);
         }
