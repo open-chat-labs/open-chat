@@ -1,5 +1,4 @@
 <script lang="ts">
-    import ThreadPreviews from "./thread/ThreadPreviews.svelte";
     import Panel from "../Panel.svelte";
     import Loading from "../Loading.svelte";
     import { fade } from "svelte/transition";
@@ -24,14 +23,11 @@
     $: eventsStore = client.eventsStore;
     $: filteredProposalsStore = client.filteredProposalsStore;
     $: noChat = $pathParams.chatId === undefined;
-    $: showThreads = $pathParams.chatId === "threads";
 </script>
 
 <Panel middle>
     {#if loadingChats || hotGroups.kind === "loading"}
         <Loading />
-    {:else if showThreads}
-        <ThreadPreviews />
     {:else if $selectedChatId === undefined}
         {#if hotGroups.kind === "success"}
             <RecommendedGroups

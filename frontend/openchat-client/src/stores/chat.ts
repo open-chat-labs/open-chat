@@ -36,35 +36,6 @@ import { localChatSummaryUpdates } from "./localChatSummaryUpdates";
 import { setsAreEqual } from "../utils/set";
 import { failedMessagesStore } from "./failedMessages";
 
-export type ChatState = {
-    chatId: string;
-    event: ChatLifecycleEvent;
-};
-
-export type ChatLifecycleEvent =
-    | Nothing
-    | LoadedNewEvents
-    | SendingMessage
-    | ChatUpdated
-    | LoadedEventWindow
-    | LoadedPreviousEvents;
-
-type Nothing = { kind: "nothing" };
-type LoadedNewEvents = { kind: "loaded_new_events"; newLatestMessage: boolean };
-type SendingMessage = {
-    kind: "sending_message";
-    scroll: ScrollBehavior;
-};
-type ChatUpdated = { kind: "chat_updated" };
-type LoadedPreviousEvents = { kind: "loaded_previous_events" };
-type LoadedEventWindow = {
-    kind: "loaded_event_window";
-    focusThreadMessageIndex: number | undefined;
-    messageIndex: number;
-    preserveFocus: boolean;
-    allowRecursion: boolean;
-};
-
 export const currentUserStore = immutableStore<CreatedUser | undefined>(undefined);
 
 // Chats which the current user is a member of
@@ -133,7 +104,10 @@ export const userMetrics = derived([chatSummariesListStore], ([$chats]) => {
 });
 
 export const selectedChatId = writable<string | undefined>(undefined);
-export const selectedThreadRootMessageIndex = writable<number | undefined>(undefined);
+export const selectedThreadRootEvent = writable<EventWrapper<Message> | undefined>(undefined);
+export const selectedThreadRootMessageIndex = derived(selectedThreadRootEvent, ($rootEvent) => {
+    return $rootEvent !== undefined ? $rootEvent.event.messageIndex : undefined;
+});
 export const selectedThreadKey = derived(
     [selectedChatId, selectedThreadRootMessageIndex],
     ([$selectedChatId, $selectedThreadRootMessageIndex]) => {
@@ -338,6 +312,15 @@ export const userGroupKeys = createDerivedPropStore<ChatSpecificState, "userGrou
     () => new Set<string>()
 );
 
+export const confirmedThreadEventIndexesLoadedStore = derived(
+    [threadServerEventsStore],
+    ([serverEvents]) => {
+        const ranges = new DRange();
+        serverEvents.forEach((e) => ranges.add(e.index));
+        return ranges;
+    }
+);
+
 const confirmedEventIndexesLoadedStore = derived([serverEventsStore], ([serverEvents]) => {
     const ranges = new DRange();
     serverEvents.forEach((e) => ranges.add(e.index));
@@ -514,27 +497,33 @@ export const eventsStore: Readable<EventWrapper<ChatEvent>[]> = derived(
     }
 );
 
-export function isContiguous(chatId: string, events: EventWrapper<ChatEvent>[]): boolean {
-    const confirmedLoaded = confirmedEventIndexesLoaded(chatId);
-
-    if (confirmedLoaded.length === 0 || events.length === 0) return true;
+function isContiguousInternal(range: DRange, events: EventWrapper<ChatEvent>[]): boolean {
+    if (range.length === 0 || events.length === 0) return true;
 
     const firstIndex = events[0].index;
     const lastIndex = events[events.length - 1].index;
     const contiguousCheck = new DRange(firstIndex - 1, lastIndex + 1);
 
-    const isContiguous = confirmedLoaded.clone().intersect(contiguousCheck).length > 0;
+    const isContiguous = range.clone().intersect(contiguousCheck).length > 0;
 
     if (!isContiguous) {
         console.log(
             "Events in response are not contiguous with the loaded events",
-            confirmedLoaded,
+            range,
             firstIndex,
             lastIndex
         );
     }
 
     return isContiguous;
+}
+
+export function isContiguousInThread(events: EventWrapper<ChatEvent>[]): boolean {
+    return isContiguousInternal(get(confirmedThreadEventIndexesLoadedStore), events);
+}
+
+export function isContiguous(chatId: string, events: EventWrapper<ChatEvent>[]): boolean {
+    return isContiguousInternal(confirmedEventIndexesLoaded(chatId), events);
 }
 
 export function clearServerEvents(chatId: string): void {

@@ -135,13 +135,15 @@ export class CachingGroupClient implements IGroupClient {
     async chatEventsWindow(
         eventIndexRange: IndexRange,
         messageIndex: number,
+        threadRootMessageIndex: number | undefined,
         latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<GroupChatEvent>> {
         const [cachedEvents, missing, totalMiss] = await getCachedEventsWindow<GroupChatEvent>(
             this.db,
             eventIndexRange,
             this.chatId,
-            messageIndex
+            messageIndex,
+            threadRootMessageIndex
         );
         if (totalMiss || missing.size >= MAX_MISSING) {
             // if we have exceeded the maximum number of missing events, let's just consider it a complete miss and go to the api
@@ -151,8 +153,13 @@ export class CachingGroupClient implements IGroupClient {
                 totalMiss
             );
             return this.client
-                .chatEventsWindow(eventIndexRange, messageIndex, latestClientEventIndex)
-                .then((resp) => this.setCachedEvents(resp));
+                .chatEventsWindow(
+                    eventIndexRange,
+                    messageIndex,
+                    threadRootMessageIndex,
+                    latestClientEventIndex
+                )
+                .then((resp) => this.setCachedEvents(resp, threadRootMessageIndex));
         } else {
             return this.handleMissingEvents(
                 [cachedEvents, missing],
