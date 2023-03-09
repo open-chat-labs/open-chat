@@ -1,32 +1,12 @@
 <script lang="ts">
-    import { createEventDispatcher } from "svelte";
     import Arrow from "./Arrow.svelte";
-    import page from "page";
 
-    export let path: string | undefined = undefined;
-    export let url: string | undefined = undefined;
+    export let url: string;
     export let color: string = "#7E52FF";
     export let target: string | undefined = undefined;
-
-    $: href = path === undefined ? (url === undefined ? "#" : url) : `/${path}`;
-
-    const dispatch = createEventDispatcher();
-
-    function clickLink(e: MouseEvent) {
-        if (path !== undefined) {
-            page(path);
-        }
-
-        if (url != undefined) {
-            return;
-        }
-
-        e.preventDefault();
-        dispatch("linkClicked");
-    }
 </script>
 
-<a class="link" {href} {target} on:click={clickLink}>
+<a class="link" href={url} {target}>
     <slot />
     <div class="arrow">
         <Arrow {color} />
