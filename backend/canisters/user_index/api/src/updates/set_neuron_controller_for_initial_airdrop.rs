@@ -3,12 +3,12 @@ use serde::{Deserialize, Serialize};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
-    pub principals: Vec<Principal>,
+    pub controller: Principal,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success,
-    NotEligible,
+    UserNotEligible,
     UserNotFound,
 }

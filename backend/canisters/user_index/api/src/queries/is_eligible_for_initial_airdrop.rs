@@ -1,14 +1,11 @@
-use candid::{CandidType, Principal};
+use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
-pub struct Args {
-    pub principals: Vec<Principal>,
-}
+pub struct Args {}
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
-    Success,
-    NotEligible,
+    Success(bool),
     UserNotFound,
 }
