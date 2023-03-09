@@ -3,7 +3,8 @@ use crate::model::diamond_membership_details::DiamondMembershipDetailsInternal;
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use types::{
-    CyclesTopUp, Milliseconds, PartialUserSummary, PhoneNumber, RegistrationFee, TimestampMillis, UserId, UserSummary, Version,
+    CanisterId, CyclesTopUp, Milliseconds, PartialUserSummary, PhoneNumber, RegistrationFee, TimestampMillis, UserId,
+    UserSummary, Version,
 };
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -34,6 +35,31 @@ impl User {
 
     pub fn mark_cycles_top_up(&mut self, top_up: CyclesTopUp) {
         self.cycle_top_ups.push(top_up)
+    }
+
+    pub fn is_eligible_for_initial_airdrop(&self) -> bool {
+        let dev_team_user_ids = [
+            UserId::new(CanisterId::from_text("3skqk-iqaaa-aaaaf-aaa3q-cai").unwrap()),
+            UserId::new(CanisterId::from_text("27eue-hyaaa-aaaaf-aaa4a-cai").unwrap()),
+            UserId::new(CanisterId::from_text("2yfsq-kaaaa-aaaaf-aaa4q-cai").unwrap()),
+        ];
+
+        // 2023-02-27 15:56 GMT (the time of this Tweet - https://twitter.com/OpenChat/status/1630235287941988353)
+        const INITIAL_AIRDROP_CUTOFF: TimestampMillis = 1677513360000;
+
+        !dev_team_user_ids.contains(&self.user_id) && self.was_diamond_member_at(INITIAL_AIRDROP_CUTOFF)
+    }
+
+    pub fn was_diamond_member_at(&self, timestamp: TimestampMillis) -> bool {
+        // Users who got 1 year for free
+        if self.diamond_membership_details.payments().is_empty() && self.diamond_membership_details.is_active(timestamp) {
+            return true;
+        }
+
+        self.diamond_membership_details
+            .payments()
+            .iter()
+            .any(|p| p.timestamp < timestamp && timestamp < p.timestamp + p.duration.as_millis())
     }
 }
 
