@@ -197,6 +197,12 @@
         neuron.
     </p>
     <p>
+        <em>CORRECTION TO THE ABOVE PARAGRAPH<br>
+        It is currently possible on the SNS backend for a neuron to follow itself on a topic but 
+        not yet in the NNS dapp which quite reasonably assumed this should not be possible. We have
+        been informed by DFINITY that the NNS dapp will soon be updated to allow this behaviour.</em>
+    </p>
+    <p>
         Going forwards we hope that rather than every SNS "action" being mapped 1-1 to a topic, the
         actions can be grouped into topics. This will make it easier to configure following. We also
         hope it will be possible to have something like "named" neurons in the NNS.
