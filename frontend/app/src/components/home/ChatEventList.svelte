@@ -28,6 +28,7 @@
     import { _ } from "svelte-i18n";
     import { pop } from "../../utils/transition";
     import { iconSize } from "../../stores/iconSize";
+    import { derived, writable } from "svelte/store";
 
     const MESSAGE_LOAD_THRESHOLD = 400;
     const FROM_BOTTOM_THRESHOLD = 600;
@@ -56,10 +57,14 @@
     let expectedScrollTop: number | undefined = undefined;
     let scrollingToMessage = false;
     let scrollTimer: number | undefined;
-    let insideFromBottomThreshold: boolean = true;
     let previousScrollHeight: number | undefined = undefined;
     let previousScrollTop: number | undefined = undefined;
     let user = client.user;
+    const scrollTop = writable<number>(0);
+    const fromBottom = derived(scrollTop, ($scrollTop) => -$scrollTop);
+    const insideBottomThreshold = derived(fromBottom, ($fromBottom) => {
+        return $fromBottom < MESSAGE_LOAD_THRESHOLD;
+    });
 
     $: failedMessagesStore = client.failedMessagesStore;
     $: threadSummary = threadRootEvent?.event.thread;
@@ -70,7 +75,7 @@
     });
 
     afterUpdate(() => {
-        setIfInsideFromBottomThreshold();
+        $scrollTop = messagesDiv?.scrollTop ?? 0;
         morePrevAvailable = client.morePreviousMessagesAvailable(chat.chatId, threadRootEvent);
     });
 
@@ -83,8 +88,6 @@
     });
 
     function clientEvent(ev: Event): void {
-        // TODO this is *such* a code smell
-        // I hate this so much
         tick().then(() => {
             if (threadRootEvent === undefined) {
                 if (ev instanceof LoadedNewMessages) {
@@ -175,14 +178,14 @@
     }
 
     function shouldLoadNewMessages() {
-        const insideLoadThreshold = calculateFromBottom() < MESSAGE_LOAD_THRESHOLD;
-        const moreNewMessages = client.moreNewMessagesAvailable(chat.chatId, threadRootEvent);
-        const result = !loadingNew && insideLoadThreshold && moreNewMessages;
+        const moreNewMessages =
+            $insideBottomThreshold && client.moreNewMessagesAvailable(chat.chatId, threadRootEvent);
+        const result = !loadingNew && moreNewMessages;
         if (result) {
             console.debug(
                 "SCROLL: shouldLoadNewMesages [loadingNew] [insideLoadThreshold] [moreNewMessages]",
                 loadingNew,
-                insideLoadThreshold,
+                $insideBottomThreshold,
                 moreNewMessages
             );
         }
@@ -276,6 +279,7 @@
                 expectedScrollTop = undefined;
                 scrollToMessageIndex(messageIndex, false, true);
             })
+            .then(tick)
             .then(() => loadMoreIfRequired());
     }
 
@@ -288,17 +292,17 @@
                 expectedScrollTop = messagesDiv?.scrollTop ?? 0;
             })
             .then(() => (loadingFromScroll = loadingPrev = false))
+            .then(tick)
             .then(() => loadMoreIfRequired());
     }
 
     function onLoadedNewMessages(newLatestMessage: boolean) {
         tick()
             .then(() => {
-                setIfInsideFromBottomThreshold();
                 if (
                     loadingFromScroll &&
                     isSafari && // unfortunate
-                    insideFromBottomThreshold &&
+                    $insideBottomThreshold &&
                     previousScrollHeight !== undefined &&
                     previousScrollTop !== undefined &&
                     messagesDiv !== undefined
@@ -310,29 +314,27 @@
                         // if the height has changed we update the scroll position to whatever it was *before* the render _minus_ the clientHeightChange
                         interruptScroll(() => {
                             if (messagesDiv !== undefined) {
-                                messagesDiv.scrollTop =
+                                $scrollTop = messagesDiv.scrollTop =
                                     (previousScrollTop ?? 0) - clientHeightChange;
                                 console.debug(
                                     "SCROLL: scrollTop updated to " + messagesDiv.scrollTop
                                 );
 
-                                // since we have adjusted scrollTop, we *also* need to re-evaluate whether we are inside the bottom threshold
-                                setIfInsideFromBottomThreshold();
-
                                 console.debug(
-                                    "SCROLL: [insideFromBottomThreshold] [shouldLoadNewMessages] ",
-                                    insideFromBottomThreshold,
+                                    "SCROLL: [$insideBottomThreshold] [shouldLoadNewMessages] ",
+                                    $insideBottomThreshold,
                                     shouldLoadNewMessages()
                                 );
                             }
                         });
                     }
-                } else if (newLatestMessage && insideFromBottomThreshold) {
+                } else if (newLatestMessage && $insideBottomThreshold) {
                     // only scroll if we are now within threshold from the bottom
                     scrollBottom("smooth");
                 }
             })
             .then(() => (loadingFromScroll = loadingNew = false))
+            .then(tick) // without the tick loadmoreifrequired can run too early and go into a tailspin
             .then(() => loadMoreIfRequired());
     }
 
@@ -341,10 +343,6 @@
             expectedScrollTop !== undefined &&
             expectedScrollTop - (messagesDiv?.scrollTop ?? 0) > 500
         );
-    }
-
-    function setIfInsideFromBottomThreshold() {
-        insideFromBottomThreshold = calculateFromBottom() < FROM_BOTTOM_THRESHOLD;
     }
 
     // this *looks* crazy - but the idea is that before we programmatically scroll the messages div
@@ -358,6 +356,8 @@
 
     function onScroll() {
         if (!initialised) return;
+
+        $scrollTop = messagesDiv?.scrollTop ?? 0;
 
         if (scrollLeapDetected()) {
             console.debug("SCROLL: position has leapt unacceptably", messagesDiv?.scrollTop);
@@ -390,8 +390,6 @@
         }
 
         loadMoreIfRequired(true);
-
-        setIfInsideFromBottomThreshold();
     }
 
     function scrollToLast() {
@@ -427,7 +425,7 @@
 {/if}
 <div
     title={$_("goToLatestMessage")}
-    class:show={!insideFromBottomThreshold || unreadMessages > 0}
+    class:show={!$insideBottomThreshold || unreadMessages > 0}
     class="fab to-bottom"
     class:footer
     class:rtl={$rtlStore}>
