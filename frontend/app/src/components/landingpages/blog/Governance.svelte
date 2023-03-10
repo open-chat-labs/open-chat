@@ -4,7 +4,6 @@
     import BlogScreenshot from "./BlogScreenshot.svelte";
 </script>
 
-<h1>OpenChat governance</h1>
 <section>
     <h2>Introduction</h2>
     <p>

@@ -2,7 +2,6 @@
     import ExternalLink from "../ExternalLink.svelte";
 </script>
 
-<h1>Website releases</h1>
 <section>
     <h2>TLDR;</h2>
     <p>
