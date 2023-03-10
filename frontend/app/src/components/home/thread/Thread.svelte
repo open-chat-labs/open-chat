@@ -71,7 +71,7 @@
     $: readonly = client.isChatReadOnly(chat.chatId);
     $: selectedThreadKey = client.selectedThreadKey;
     $: thread = rootEvent.event.thread;
-    $: loading = !initialised && $threadEvents.length === 0;
+    $: loading = !initialised && $threadEvents.length === 0 && thread !== undefined;
 
     onMount(() => (previousLatestEventIndex = thread?.latestEventIndex));
 
