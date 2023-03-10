@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Switch to using the new `c2c_notify_events` endpoint ([#3283](https://github.com/open-ic/open-chat/pull/3283))
+- Set upgrade concurrency to 10 ([#3302](https://github.com/open-ic/open-chat/pull/3302))
 
 ### Removed
 
