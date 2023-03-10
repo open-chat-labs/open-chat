@@ -6,6 +6,7 @@
 
     export let title: string;
     export let slug: string;
+    export let author: string;
     export let posted: Date;
 
     $: copySize = $mobileWidth ? "14px" : "16px";
@@ -23,7 +24,7 @@
         </div>
     </div>
     <div class="date">
-        {`Posted on: ${posted.toLocaleDateString()}`}
+        {`by ${author}, on ${posted.toLocaleDateString()}`}
     </div>
 </div>
 
