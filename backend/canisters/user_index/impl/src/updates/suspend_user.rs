@@ -80,7 +80,7 @@ fn commit(
             .enqueue_job(TimerJob::UnsuspendUser(UnsuspendUser { user_id }), now + ms, now);
     }
 
-    runtime_state.data.push_event_to_local_user_index(
+    runtime_state.push_event_to_local_user_index(
         user_id,
         Event::UserSuspended(UserSuspended {
             user_id,
@@ -90,5 +90,4 @@ fn commit(
             suspended_by,
         }),
     );
-    crate::jobs::sync_events_to_local_user_index_canisters::start_job_if_required(runtime_state);
 }

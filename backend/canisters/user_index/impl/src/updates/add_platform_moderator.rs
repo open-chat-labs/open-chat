@@ -30,12 +30,11 @@ fn is_already_platform_moderator(user_id: &UserId, runtime_state: &RuntimeState)
 
 fn commit(user_id: UserId, runtime_state: &mut RuntimeState) {
     runtime_state.data.platform_moderators.insert(user_id);
-    runtime_state.data.push_event_to_all_local_user_indexes(
+    runtime_state.push_event_to_all_local_user_indexes(
         Event::SuperAdminStatusChanged(SuperAdminStatusChanged {
             user_id,
             is_super_admin: true,
         }),
         None,
     );
-    crate::jobs::sync_events_to_local_user_index_canisters::start_job_if_required(runtime_state);
 }

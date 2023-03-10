@@ -77,6 +77,8 @@ fn commit(canister_id: CanisterId, wasm_version: Version, runtime_state: &mut Ru
                 }),
             )
         }
+        crate::jobs::sync_events_to_local_user_index_canisters::start_job_if_required(runtime_state);
+
         Success
     } else {
         AlreadyAdded
