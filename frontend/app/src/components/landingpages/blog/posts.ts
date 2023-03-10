@@ -1,8 +1,7 @@
 import type { SvelteComponent } from "svelte";
 import Communities from "./Communities.svelte";
 import Governance from "./Governance.svelte";
-// import ResponsiveDesign from "./ResponsiveDesign.svelte";
-// import Security from "./Security.svelte";
+import WebsiteReleases from "./WebsiteReleases.svelte";
 
 export type BlogPostInfo = {
     slug: string;
@@ -20,14 +19,14 @@ export const postsBySlug: Record<string, BlogPostInfo> = {
     },
     governance: {
         slug: "governance",
-        title: "OpenChat Governance",
+        title: "OpenChat governance",
         date: new Date(2023, 2, 8),
         component: Governance,
     },
-    // cyber_security: {
-    //     slug: "cyber_security",
-    //     title: "Cybersecurity Best Practices: How to Protect Your Business from Cyber Attacks",
-    //     date: new Date(),
-    //     component: Security,
-    // },
+    website_releases: {
+        slug: "website_releases",
+        title: "Website releases",
+        date: new Date(2023, 2, 10),
+        component: WebsiteReleases,
+    },
 };

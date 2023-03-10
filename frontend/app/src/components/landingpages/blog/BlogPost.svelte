@@ -13,7 +13,7 @@
             margin-bottom: $sp6;
             h1 {
                 @include font(bold, normal, fs-200);
-                margin-bottom: $sp4;
+                margin-bottom: $sp5;
             }
 
             section {
