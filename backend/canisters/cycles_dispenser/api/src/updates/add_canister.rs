@@ -1,5 +1,5 @@
 use candid::CandidType;
-use human_readable::ToHumanReadable;
+use human_readable::{HumanReadablePrincipal, ToHumanReadable};
 use serde::{Deserialize, Serialize};
 use types::CanisterId;
 
@@ -16,7 +16,7 @@ pub enum Response {
 
 #[derive(Serialize)]
 pub struct HumanReadableArgs {
-    canister_id: CanisterId,
+    canister_id: HumanReadablePrincipal,
 }
 
 impl ToHumanReadable for Args {
