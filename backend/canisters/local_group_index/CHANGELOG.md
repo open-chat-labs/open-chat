@@ -9,6 +9,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - C2C endpoint for setting group upgrade concurrency ([#3268](https://github.com/open-ic/open-chat/pull/3268))
 
+### Changed
+
+- Set upgrade concurrency to 10 ([#3302](https://github.com/open-ic/open-chat/pull/3302))
+
 ### Removed
 
 - Removed code only needed for previous upgrade ([#3248](https://github.com/open-ic/open-chat/pull/3248))
