@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.631](https://github.com/open-ic/open-chat/releases/tag/v2.0.631-proposals_bot)] - 2023-03-10
+
 ### Fixed
 
 - Temp hack to fix error due to duplicate MessageIds ([#3292](https://github.com/open-ic/open-chat/pull/3292))
