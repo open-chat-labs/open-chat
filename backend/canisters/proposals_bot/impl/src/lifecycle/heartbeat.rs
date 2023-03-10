@@ -178,15 +178,6 @@ mod push_proposals {
                         .mark_proposal_pushed(&governance_canister_id, proposal, message_id);
                 });
             }
-            // TODO remove this after the next upgrade
-            Err((_, msg)) if msg.contains("MessageId already used") => {
-                mutate_state(|state| {
-                    state
-                        .data
-                        .nervous_systems
-                        .mark_proposal_pushed(&governance_canister_id, proposal, message_id);
-                });
-            }
             _ => mutate_state(|state| {
                 state
                     .data
