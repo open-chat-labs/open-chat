@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.632](https://github.com/open-ic/open-chat/releases/tag/v2.0.632-cycles_dispenser)] - 2023-03-10
+
 ### Changed
 
 - Added `icp_burn_amount` to `update_config` args ([#3272](https://github.com/open-ic/open-chat/pull/3272))

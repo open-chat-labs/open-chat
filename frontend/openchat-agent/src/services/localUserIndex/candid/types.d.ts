@@ -497,6 +497,7 @@ export type JoinGroupResponse = { 'Blocked' : null } |
   { 'UserSuspended' : null } |
   { 'NotSuperAdmin' : null } |
   { 'ParticipantLimitReached' : number } |
+  { 'AlreadyInGroupV2' : GroupCanisterGroupChatSummary } |
   { 'InternalError' : string };
 export type Memo = bigint;
 export interface Mention {

@@ -420,6 +420,12 @@ export const idlFactory = ({ IDL }) => {
     'TermTooLong' : IDL.Nat8,
     'InvalidTerm' : IDL.Null,
   });
+  const SetGroupUpgradeConcurrencyArgs = IDL.Record({ 'value' : IDL.Nat32 });
+  const SetGroupUpgradeConcurrencyResponse = IDL.Variant({
+    'NotAuthorized' : IDL.Null,
+    'Success' : IDL.Null,
+    'InternalError' : IDL.Text,
+  });
   const UnfreezeGroupArgs = IDL.Record({ 'chat_id' : ChatId });
   const ChatUnfrozen = IDL.Record({ 'unfrozen_by' : UserId });
   const UnfreezeGroupResponse = IDL.Variant({
@@ -462,6 +468,11 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'search' : IDL.Func([SearchArgs], [SearchResponse], ['query']),
+    'set_group_upgrade_concurrency' : IDL.Func(
+        [SetGroupUpgradeConcurrencyArgs],
+        [SetGroupUpgradeConcurrencyResponse],
+        [],
+      ),
     'unfreeze_group' : IDL.Func(
         [UnfreezeGroupArgs],
         [UnfreezeGroupResponse],

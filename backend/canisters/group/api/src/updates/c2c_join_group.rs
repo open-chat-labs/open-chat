@@ -15,6 +15,7 @@ pub struct Args {
 pub enum Response {
     Success(Box<GroupCanisterGroupChatSummary>),
     AlreadyInGroup,
+    AlreadyInGroupV2(Box<GroupCanisterGroupChatSummary>),
     GroupNotPublic,
     Blocked,
     ParticipantLimitReached(u32),
