@@ -31,8 +31,8 @@
         <li>
             <b>Commit batch</b> whereby a principal with the <em>commit</em> permission calls a method 
             on the asset canister to <em>commit</em> the batch. This method maps the raw data to 
-            asset meta information and validates it with a hash of the data. It then makes this batch
-            live by serving a new root html which references all the latest assets.
+            asset meta information, validates it with a hash of the data, and then starts serving the
+            assets. 
         </li>
     </ul>
     <p>
