@@ -94,7 +94,7 @@ impl Job for RecurringDiamondMembershipPayment {
             match pay_for_diamond_membership_impl(args, user_id, false).await {
                 Response::InsufficientFunds(balance) => {
                     mutate_state(|state| {
-                        state.data.push_event_to_local_user_index(
+                        state.push_event_to_local_user_index(
                             user_id,
                             LocalUserIndexEvent::OpenChatBotMessage(OpenChatBotMessage {
                                 user_id,

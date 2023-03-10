@@ -101,7 +101,7 @@ fn process_charge(
         let result = diamond_membership.hydrate(now).unwrap();
 
         runtime_state.data.users.mark_updated(&user_id, now);
-        runtime_state.data.push_event_to_local_user_index(
+        runtime_state.push_event_to_local_user_index(
             user_id,
             Event::DiamondMembershipPaymentReceived(DiamondMembershipPaymentReceived {
                 user_id,
@@ -114,7 +114,6 @@ fn process_charge(
                 recurring: args.recurring,
             }),
         );
-        crate::jobs::sync_events_to_local_user_index_canisters::start_job_if_required(runtime_state);
 
         if let Some(user) = runtime_state.data.users.get_by_user_id(&user_id) {
             runtime_state.data.storage_index_user_sync_queue.push(UserConfig {

@@ -123,7 +123,7 @@ fn commit(
         .local_index_map
         .add_user(local_user_index_canister_id, user_id);
 
-    runtime_state.data.push_event_to_all_local_user_indexes(
+    runtime_state.push_event_to_all_local_user_indexes(
         Event::UserRegistered(UserRegistered {
             user_id,
             user_principal: caller,
@@ -133,7 +133,6 @@ fn commit(
         }),
         Some(local_user_index_canister_id),
     );
-    crate::jobs::sync_events_to_local_user_index_canisters::start_job_if_required(runtime_state);
 
     runtime_state.data.storage_index_user_sync_queue.push(UserConfig {
         user_id: caller,
