@@ -13,7 +13,7 @@
     <Headline>OpenChat blog</Headline>
 
     {#each posts as post}
-        <BlogSummary slug={post.slug} posted={post.date} title={post.title} />
+        <BlogSummary slug={post.slug} posted={post.date} title={post.title} author={post.author} />
     {/each}
 </div>
 
