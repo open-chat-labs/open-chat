@@ -3,12 +3,16 @@
     import { postsBySlug } from "./blog/posts";
 
     export let slug: string;
+
+    $: post = postsBySlug[slug];
 </script>
 
 <div class="post">
-    {#if slug !== undefined && postsBySlug[slug] !== undefined}
+    {#if slug !== undefined && post !== undefined}
         <BlogPost>
-            <svelte:component this={postsBySlug[slug].component} />
+            <h1>{post.title}</h1>
+            <div class="who_when">by {post.author}, on {post.date.toLocaleDateString()}</div>
+            <svelte:component this={post.component} />
         </BlogPost>
     {:else}
         <div class="not-found">
@@ -27,6 +31,15 @@
 
         @include mobile() {
             margin-top: 0;
+        }
+
+        h1 {
+            @include font(bold, normal, fs-200);
+            margin-bottom: $sp1;
+        }
+
+        .who_when {
+            margin-bottom: $sp5;
         }
     }
 

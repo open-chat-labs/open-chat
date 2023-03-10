@@ -9,6 +9,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Added missing proposal validation functions ([#3298](https://github.com/open-ic/open-chat/pull/3298))
 
+### Removed
+
+- Removed `set_governance_principals` ([#3301](https://github.com/open-ic/open-chat/pull/3301))
+
 ## [[2.0.632](https://github.com/open-ic/open-chat/releases/tag/v2.0.632-cycles_dispenser)] - 2023-03-10
 
 ### Changed

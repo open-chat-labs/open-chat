@@ -11,10 +11,6 @@
             padding-bottom: $sp5;
             border-bottom: 1px solid var(--landing-bd);
             margin-bottom: $sp6;
-            h1 {
-                @include font(bold, normal, fs-200);
-                margin-bottom: $sp4;
-            }
 
             section {
                 margin-bottom: $sp5;
