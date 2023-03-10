@@ -106,7 +106,12 @@ struct Data {
     pub user_index_event_sync_queue: CanisterEventSyncQueue<UserIndexEvent>,
     pub test_mode: bool,
     pub max_concurrent_canister_upgrades: u32,
+    #[serde(default = "ten")]
     pub user_upgrade_concurrency: u32,
+}
+
+fn ten() -> u32 {
+    10
 }
 
 #[derive(Serialize, Deserialize)]
