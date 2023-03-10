@@ -51,7 +51,7 @@ fn c2c_register_bot_impl(args: Args, runtime_state: &mut RuntimeState) -> Respon
         .users
         .register(caller, user_id, Version::default(), args.username.clone(), now, None, true);
 
-    runtime_state.data.push_event_to_all_local_user_indexes(
+    runtime_state.push_event_to_all_local_user_indexes(
         Event::UserRegistered(UserRegistered {
             user_id,
             user_principal: caller,
@@ -61,7 +61,6 @@ fn c2c_register_bot_impl(args: Args, runtime_state: &mut RuntimeState) -> Respon
         }),
         None,
     );
-    crate::jobs::sync_events_to_local_user_index_canisters::start_job_if_required(runtime_state);
 
     Success
 }

@@ -23,6 +23,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Removed code only needed for previous upgrade ([#3262](https://github.com/open-ic/open-chat/pull/3262))
 
+### Fixed
+
+- Ensure job to sync events to local user indexes always runs ([#3295](https://github.com/open-ic/open-chat/pull/3295))
+
 ## [[2.0.623](https://github.com/open-ic/open-chat/releases/tag/v2.0.623-user_index)] - 2023-03-02
 
 ### Changed

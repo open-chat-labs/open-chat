@@ -96,6 +96,22 @@ impl RuntimeState {
         }
     }
 
+    pub fn push_event_to_local_user_index(&mut self, user_id: UserId, event: LocalUserIndexEvent) {
+        if let Some(canister_id) = self.data.local_index_map.get_index_canister(&user_id) {
+            self.data.user_index_event_sync_queue.push(canister_id, event);
+            jobs::sync_events_to_local_user_index_canisters::start_job_if_required(self);
+        }
+    }
+
+    pub fn push_event_to_all_local_user_indexes(&mut self, event: LocalUserIndexEvent, except: Option<CanisterId>) {
+        for canister_id in self.data.local_index_map.canisters() {
+            if except.map_or(true, |id| id != *canister_id) {
+                self.data.user_index_event_sync_queue.push(*canister_id, event.clone());
+            }
+        }
+        jobs::sync_events_to_local_user_index_canisters::start_job_if_required(self);
+    }
+
     pub fn metrics(&self) -> Metrics {
         let now = self.env.now();
         let canister_upgrades_metrics = self.data.canisters_requiring_upgrade.metrics();
@@ -218,20 +234,6 @@ impl Data {
         );
 
         data
-    }
-
-    pub fn push_event_to_local_user_index(&mut self, user_id: UserId, event: LocalUserIndexEvent) {
-        if let Some(canister_id) = self.local_index_map.get_index_canister(&user_id) {
-            self.user_index_event_sync_queue.push(canister_id, event);
-        }
-    }
-
-    pub fn push_event_to_all_local_user_indexes(&mut self, event: LocalUserIndexEvent, except: Option<CanisterId>) {
-        for canister_id in self.local_index_map.canisters() {
-            if except.map_or(true, |id| id != *canister_id) {
-                self.user_index_event_sync_queue.push(*canister_id, event.clone());
-            }
-        }
     }
 }
 
