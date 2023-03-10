@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Event for setting user upgrade concurrency ([#3268](https://github.com/open-ic/open-chat/pull/3268))
 - Added `OpenChatBotMessage` event type ([#3274](https://github.com/open-ic/open-chat/pull/3274))
+- Return group summary if user tries to join group they are already in ([#3296](https://github.com/open-ic/open-chat/pull/3296))
 
 ### Changed
 

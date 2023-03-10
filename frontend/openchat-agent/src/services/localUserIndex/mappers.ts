@@ -14,6 +14,9 @@ export function joinGroupResponse(candid: ApiJoinGroupResponse): JoinGroupRespon
     if ("Success" in candid) {
         return groupChatSummary(candid.Success);
     }
+    if ("AlreadyInGroupV2" in candid) {
+        return groupChatSummary(candid.AlreadyInGroupV2);
+    }
     if ("Blocked" in candid) {
         return { kind: "blocked" };
     }

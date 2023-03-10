@@ -835,6 +835,10 @@ export type SearchResponse = { 'TermTooShort' : number } |
   { 'TermTooLong' : number } |
   { 'InvalidTerm' : null };
 export interface SearchSuccessResult { 'matches' : Array<GroupMatch> }
+export interface SetGroupUpgradeConcurrencyArgs { 'value' : number }
+export type SetGroupUpgradeConcurrencyResponse = { 'NotAuthorized' : null } |
+  { 'Success' : null } |
+  { 'InternalError' : string };
 export type SnsAccount = { 'Mint' : null } |
   { 'Account' : Icrc1Account };
 export interface SnsCompletedCryptoTransaction {
@@ -1002,5 +1006,9 @@ export interface _SERVICE {
     RemoveHotGroupExclusionResponse
   >,
   'search' : ActorMethod<[SearchArgs], SearchResponse>,
+  'set_group_upgrade_concurrency' : ActorMethod<
+    [SetGroupUpgradeConcurrencyArgs],
+    SetGroupUpgradeConcurrencyResponse
+  >,
   'unfreeze_group' : ActorMethod<[UnfreezeGroupArgs], UnfreezeGroupResponse>,
 }
