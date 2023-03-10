@@ -23,7 +23,14 @@
     import { _ } from "svelte-i18n";
     import { rtlStore } from "../../stores/rtl";
     import { now } from "../../stores/time";
-    import { afterUpdate, createEventDispatcher, getContext, onDestroy, onMount } from "svelte";
+    import {
+        afterUpdate,
+        createEventDispatcher,
+        getContext,
+        onDestroy,
+        onMount,
+        tick,
+    } from "svelte";
     import EmoticonLolOutline from "svelte-material-icons/EmoticonLolOutline.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import ForwardIcon from "svelte-material-icons/Share.svelte";
@@ -125,9 +132,13 @@
 
     onMount(() => {
         if (!readByMe) {
-            // todo - leaving this console log here for now just to make sure we are not *over* observing
-            console.log("beginning to observe: ", msg.messageIndex);
-            observer?.observe(msgElement);
+            tick().then(() => {
+                if (observer !== undefined) {
+                    // todo - leaving this console log here for now just to make sure we are not *over* observing
+                    console.log("beginning to observe: ", msg.messageIndex);
+                    observer.observe(msgElement);
+                }
+            });
         }
 
         recalculateMediaDimensions();
