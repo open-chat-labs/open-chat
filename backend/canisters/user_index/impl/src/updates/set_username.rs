@@ -1,3 +1,4 @@
+use crate::guards::caller_is_openchat_user;
 use crate::model::user_map::UpdateUserResult;
 use crate::{mutate_state, RuntimeState};
 use canister_tracing_macros::trace;
@@ -8,7 +9,7 @@ use user_index_canister::set_username::{Response::*, *};
 const MAX_USERNAME_LENGTH: u16 = 25;
 const MIN_USERNAME_LENGTH: u16 = 5;
 
-#[update]
+#[update(guard = "caller_is_openchat_user")]
 #[trace]
 fn set_username(args: Args) -> Response {
     mutate_state(|state| set_username_impl(args, state))
@@ -33,10 +34,8 @@ fn set_username_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
         match runtime_state.data.users.update(user_to_update, now) {
             UpdateUserResult::Success => {
                 runtime_state
-                    .data
                     .push_event_to_local_user_index(user_id, Event::UsernameChanged(UsernameChanged { user_id, username }));
 
-                crate::jobs::sync_events_to_local_user_index_canisters::start_job_if_required(runtime_state);
                 Success
             }
             UpdateUserResult::UsernameTaken => UsernameTaken,

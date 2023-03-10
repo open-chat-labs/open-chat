@@ -1,3 +1,4 @@
+use crate::guards::caller_is_openchat_user;
 use crate::timer_job_types::{RecurringDiamondMembershipPayment, TimerJob};
 use crate::{mutate_state, read_state, RuntimeState, ONE_GB};
 use canister_tracing_macros::trace;
@@ -10,7 +11,7 @@ use types::{Cryptocurrency, DiamondMembershipPlanDuration, UserId, ICP};
 use user_index_canister::pay_for_diamond_membership::{Response::*, *};
 use utils::time::DAY_IN_MS;
 
-#[update]
+#[update(guard = "caller_is_openchat_user")]
 #[trace]
 async fn pay_for_diamond_membership(args: Args) -> Response {
     let user_id = match read_state(|state| {
@@ -100,7 +101,7 @@ fn process_charge(
         let result = diamond_membership.hydrate(now).unwrap();
 
         runtime_state.data.users.mark_updated(&user_id, now);
-        runtime_state.data.push_event_to_local_user_index(
+        runtime_state.push_event_to_local_user_index(
             user_id,
             Event::DiamondMembershipPaymentReceived(DiamondMembershipPaymentReceived {
                 user_id,
@@ -113,7 +114,6 @@ fn process_charge(
                 recurring: args.recurring,
             }),
         );
-        crate::jobs::sync_events_to_local_user_index_canisters::start_job_if_required(runtime_state);
 
         if let Some(user) = runtime_state.data.users.get_by_user_id(&user_id) {
             runtime_state.data.storage_index_user_sync_queue.push(UserConfig {

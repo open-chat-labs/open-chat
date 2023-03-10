@@ -7,7 +7,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Removed
 
+- Removed temp hack only needed for previous upgrade ([#3293](https://github.com/open-ic/open-chat/pull/3293))
+
+## [[2.0.631](https://github.com/open-ic/open-chat/releases/tag/v2.0.631-proposals_bot)] - 2023-03-10
+
+### Fixed
+
+- Temp hack to fix error due to duplicate MessageIds ([#3292](https://github.com/open-ic/open-chat/pull/3292))
+
+## [[2.0.627](https://github.com/open-ic/open-chat/releases/tag/v2.0.627-proposals_bot)] - 2023-03-09
+
+### Removed
+
 - Removed code only needed for previous upgrade ([#3248](https://github.com/open-ic/open-chat/pull/3248))
+- Removed one time code to get payloads for OpenChat proposals ([#3278](https://github.com/open-ic/open-chat/pull/3278))
 
 ### Fixed
 

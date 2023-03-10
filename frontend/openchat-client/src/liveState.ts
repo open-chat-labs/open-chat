@@ -3,6 +3,7 @@ import type {
     ChatEvent,
     ChatSummary,
     DiamondMembershipDetails,
+    DirectChatSummary,
     EnhancedReplyContext,
     EventWrapper,
     GroupChatSummary,
@@ -30,6 +31,7 @@ import {
     selectedThreadRootMessageIndex,
     chatsInitialised,
     chatsLoading,
+    uninitializedDirectChats,
 } from "./stores/chat";
 import { remainingStorage } from "./stores/storage";
 import { userCreatedStore } from "./stores/userCreated";
@@ -54,6 +56,7 @@ export class LiveState {
     serverChatSummaries!: Record<string, ChatSummary>;
     myServerChatSummaries!: Record<string, ChatSummary>;
     chatSummaries!: Record<string, ChatSummary>;
+    uninitializedDirectChats!: Record<string, DirectChatSummary>;
     groupPreviews!: Record<string, GroupChatSummary>;
     selectedChatId: string | undefined;
     pinnedChats!: string[];
@@ -79,6 +82,7 @@ export class LiveState {
         serverChatSummariesStore.subscribe((data) => (this.serverChatSummaries = data));
         myServerChatSummariesStore.subscribe((data) => (this.myServerChatSummaries = data));
         chatSummariesStore.subscribe((data) => (this.chatSummaries = data));
+        uninitializedDirectChats.subscribe((data) => (this.uninitializedDirectChats = data));
         groupPreviewsStore.subscribe((data) => (this.groupPreviews = data));
         selectedChatId.subscribe((data) => (this.selectedChatId = data));
         eventsStore.subscribe((data) => (this.events = data));

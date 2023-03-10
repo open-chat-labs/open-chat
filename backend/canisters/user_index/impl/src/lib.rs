@@ -11,7 +11,7 @@ use local_user_index_canister::Event as LocalUserIndexEvent;
 use model::local_user_index_map::LocalUserIndexMap;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use types::{CanisterId, CanisterWasm, Cryptocurrency, Cycles, Milliseconds, TimestampMillis, Timestamped, UserId, Version};
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::canister_event_sync_queue::CanisterEventSyncQueue;
@@ -51,13 +51,16 @@ impl RuntimeState {
     }
 
     /// Traps if the caller is not an OpenChat user or an OpenChat user's canister
-    pub fn trap_if_caller_not_open_chat_user(&self) {
-        let caller = self.env.caller();
-
-        if !self.data.users.is_valid_caller(caller) {
+    pub fn trap_if_caller_not_openchat_user(&self) {
+        if !self.is_caller_openchat_user() {
             #[cfg(not(test))]
             ic_cdk::trap("Not authorized");
         }
+    }
+
+    pub fn is_caller_openchat_user(&self) -> bool {
+        let caller = self.env.caller();
+        self.data.users.get(&caller).is_some()
     }
 
     pub fn is_caller_governance_principal(&self) -> bool {
@@ -93,6 +96,22 @@ impl RuntimeState {
         }
     }
 
+    pub fn push_event_to_local_user_index(&mut self, user_id: UserId, event: LocalUserIndexEvent) {
+        if let Some(canister_id) = self.data.local_index_map.get_index_canister(&user_id) {
+            self.data.user_index_event_sync_queue.push(canister_id, event);
+            jobs::sync_events_to_local_user_index_canisters::start_job_if_required(self);
+        }
+    }
+
+    pub fn push_event_to_all_local_user_indexes(&mut self, event: LocalUserIndexEvent, except: Option<CanisterId>) {
+        for canister_id in self.data.local_index_map.canisters() {
+            if except.map_or(true, |id| id != *canister_id) {
+                self.data.user_index_event_sync_queue.push(*canister_id, event.clone());
+            }
+        }
+        jobs::sync_events_to_local_user_index_canisters::start_job_if_required(self);
+    }
+
     pub fn metrics(&self) -> Metrics {
         let now = self.env.now();
         let canister_upgrades_metrics = self.data.canisters_requiring_upgrade.metrics();
@@ -126,6 +145,9 @@ impl RuntimeState {
                 notifications_index: self.data.notifications_index_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
             },
+            users_eligible_for_initial_airdrop: self.data.users.iter().filter(|u| u.is_eligible_for_initial_airdrop()).count()
+                as u32,
+            users_confirmed_for_initial_airdrop: self.data.neuron_controllers_for_initial_airdrop.len() as u32,
         }
     }
 }
@@ -157,6 +179,8 @@ struct Data {
     pub local_index_map: LocalUserIndexMap,
     #[serde(default)]
     pub timer_jobs: TimerJobs<TimerJob>,
+    #[serde(default)]
+    pub neuron_controllers_for_initial_airdrop: HashMap<UserId, Principal>,
 }
 
 impl Data {
@@ -195,6 +219,7 @@ impl Data {
             diamond_membership_payment_metrics: DiamondMembershipPaymentMetrics::default(),
             local_index_map: LocalUserIndexMap::default(),
             timer_jobs: TimerJobs::default(),
+            neuron_controllers_for_initial_airdrop: HashMap::new(),
         };
 
         // Register the ProposalsBot
@@ -209,20 +234,6 @@ impl Data {
         );
 
         data
-    }
-
-    pub fn push_event_to_local_user_index(&mut self, user_id: UserId, event: LocalUserIndexEvent) {
-        if let Some(canister_id) = self.local_index_map.get_index_canister(&user_id) {
-            self.user_index_event_sync_queue.push(canister_id, event);
-        }
-    }
-
-    pub fn push_event_to_all_local_user_indexes(&mut self, event: LocalUserIndexEvent, except: Option<CanisterId>) {
-        for canister_id in self.local_index_map.canisters() {
-            if except.map_or(true, |id| id != *canister_id) {
-                self.user_index_event_sync_queue.push(*canister_id, event.clone());
-            }
-        }
     }
 }
 
@@ -252,6 +263,7 @@ impl Default for Data {
             diamond_membership_payment_metrics: DiamondMembershipPaymentMetrics::default(),
             local_index_map: LocalUserIndexMap::default(),
             timer_jobs: TimerJobs::default(),
+            neuron_controllers_for_initial_airdrop: HashMap::new(),
         }
     }
 }
@@ -280,6 +292,8 @@ pub struct Metrics {
     pub user_index_events_queue_length: usize,
     pub local_user_indexes: Vec<(CanisterId, LocalUserIndex)>,
     pub canister_ids: CanisterIds,
+    pub users_eligible_for_initial_airdrop: u32,
+    pub users_confirmed_for_initial_airdrop: u32,
 }
 
 #[derive(Serialize, Debug, Default)]

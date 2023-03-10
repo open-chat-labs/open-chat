@@ -143,13 +143,8 @@ export async function setCachedChatsV2(
     chatState: ChatStateFull,
     affectedEvents: Record<string, number[]>
 ): Promise<void> {
-    const directChats = chatState.directChats
-        .filter((c) => !isUninitialisedDirectChat(c))
-        .map(makeChatSummarySerializable);
-
-    const groupChats = chatState.groupChats
-        .filter((c) => !isPreviewing(c))
-        .map(makeChatSummarySerializable);
+    const directChats = chatState.directChats.map(makeChatSummarySerializable);
+    const groupChats = chatState.groupChats.map(makeChatSummarySerializable);
 
     const stateToCache = {
         ...chatState,
@@ -172,19 +167,12 @@ export async function setCachedChatsV2(
     await tx.done;
 }
 
-function isPreviewing(chat: ChatSummary): boolean {
-    return chat.kind === "group_chat" && chat.myRole === "previewer";
-}
-
-function isUninitialisedDirectChat(chat: ChatSummary): boolean {
-    return chat.kind === "direct_chat" && chat.latestEventIndex < 0;
-}
-
 export async function getCachedEventsWindow<T extends ChatEvent>(
     db: Database,
     eventIndexRange: IndexRange,
     chatId: string,
-    messageIndex: number
+    messageIndex: number,
+    threadRootMessageIndex?: number
 ): Promise<[EventsSuccessResult<T>, Set<number>, boolean]> {
     console.log("cache: window: ", eventIndexRange, messageIndex);
     const start = Date.now();
@@ -192,7 +180,8 @@ export async function getCachedEventsWindow<T extends ChatEvent>(
         db,
         eventIndexRange,
         chatId,
-        messageIndex
+        messageIndex,
+        threadRootMessageIndex
     );
 
     if (!totalMiss && missing.size === 0) {
@@ -208,16 +197,19 @@ async function aggregateEventsWindow<T extends ChatEvent>(
     db: Database,
     [min, max]: IndexRange,
     chatId: string,
-    middleMessageIndex: number
+    middleMessageIndex: number,
+    threadRootMessageIndex?: number
 ): Promise<[EventWrapper<T>[], Set<number>, boolean]> {
     const events: EventWrapper<T>[] = [];
     const resolvedDb = await db;
     const missing = new Set<number>();
 
+    const store = threadRootMessageIndex === undefined ? "chat_events" : "thread_events";
+
     const middleEvent = await resolvedDb.getFromIndex(
-        "chat_events",
+        store,
         "messageIdx",
-        createCacheKey(chatId, middleMessageIndex)
+        createCacheKey(chatId, middleMessageIndex, threadRootMessageIndex)
     );
     const midpoint = middleEvent?.index;
 
@@ -242,15 +234,15 @@ async function aggregateEventsWindow<T extends ChatEvent>(
     console.log("aggregate events window: events from ", lowerBound, " to ", upperBound);
 
     const range = IDBKeyRange.bound(
-        createCacheKey(chatId, lowerBound),
-        createCacheKey(chatId, upperBound)
+        createCacheKey(chatId, lowerBound, threadRootMessageIndex),
+        createCacheKey(chatId, upperBound, threadRootMessageIndex)
     );
 
     for (let i = lowerBound; i <= upperBound; i++) {
         missing.add(i);
     }
 
-    const result = await resolvedDb.getAll("chat_events", range);
+    const result = await resolvedDb.getAll(store, range);
     result.forEach((evt) => {
         missing.delete(evt.index);
         events.push(evt as EnhancedWrapper<T>);

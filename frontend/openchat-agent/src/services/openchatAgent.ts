@@ -459,6 +459,7 @@ export class OpenChatAgent extends EventTarget {
         eventIndexRange: IndexRange,
         chatId: string,
         messageIndex: number,
+        threadRootMessageIndex: number | undefined,
         latestClientMainEventIndex: number | undefined
     ): Promise<EventsResponse<GroupChatEvent>> {
         return this.rehydrateEventResponse(
@@ -467,6 +468,7 @@ export class OpenChatAgent extends EventTarget {
             this.getGroupClient(chatId).chatEventsWindow(
                 eventIndexRange,
                 messageIndex,
+                threadRootMessageIndex,
                 latestClientMainEventIndex
             ),
             undefined,

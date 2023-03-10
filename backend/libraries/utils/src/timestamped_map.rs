@@ -93,7 +93,7 @@ mod tests {
         assert_eq!(map.by_last_updated.len(), 100);
 
         let results: Vec<_> = map.updated_since(90).map(|(i, _)| *i).collect();
-        let expected: Vec<TimestampMillis> = (91..100).into_iter().rev().collect();
+        let expected: Vec<TimestampMillis> = (91..100).rev().collect();
 
         assert_eq!(results, expected);
     }

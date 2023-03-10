@@ -2,6 +2,7 @@ import {
     ChatEvent,
     ChatSpecificState,
     ChatSummary,
+    DirectChatSummary,
     EnhancedReplyContext,
     EventWrapper,
     GroupChatSummary,
@@ -33,51 +34,26 @@ import { localMessageUpdates } from "./localMessageUpdates";
 import type { DraftMessage } from "./draftMessageFactory";
 import type { OpenChatAgentWorker } from "../agentWorker";
 import { localChatSummaryUpdates } from "./localChatSummaryUpdates";
+import { toRecordFiltered } from "../utils/list";
 import { setsAreEqual } from "../utils/set";
 import { failedMessagesStore } from "./failedMessages";
 import { proposalTallies } from "./proposalTallies";
-
-export type ChatState = {
-    chatId: string;
-    event: ChatLifecycleEvent;
-};
-
-export type ChatLifecycleEvent =
-    | Nothing
-    | LoadedNewEvents
-    | SendingMessage
-    | ChatUpdated
-    | LoadedEventWindow
-    | LoadedPreviousEvents;
-
-type Nothing = { kind: "nothing" };
-type LoadedNewEvents = { kind: "loaded_new_events"; newLatestMessage: boolean };
-type SendingMessage = {
-    kind: "sending_message";
-    scroll: ScrollBehavior;
-};
-type ChatUpdated = { kind: "chat_updated" };
-type LoadedPreviousEvents = { kind: "loaded_previous_events" };
-type LoadedEventWindow = {
-    kind: "loaded_event_window";
-    focusThreadMessageIndex: number | undefined;
-    messageIndex: number;
-    preserveFocus: boolean;
-    allowRecursion: boolean;
-};
 
 export const currentUserStore = immutableStore<CreatedUser | undefined>(undefined);
 
 // Chats which the current user is a member of
 export const myServerChatSummariesStore: Writable<Record<string, ChatSummary>> = immutableStore({});
 
+export const uninitializedDirectChats: Writable<Record<string, DirectChatSummary>> = immutableStore({});
+
 // Groups which the current user is previewing
 export const groupPreviewsStore: Writable<Record<string, GroupChatSummary>> = immutableStore({});
 
 export const serverChatSummariesStore: Readable<Record<string, ChatSummary>> = derived(
-    [myServerChatSummariesStore, groupPreviewsStore],
-    ([summaries, previews]) => {
-        return Object.entries<ChatSummary>(previews)
+    [myServerChatSummariesStore, uninitializedDirectChats, groupPreviewsStore],
+    ([summaries, directChats, previews]) => {
+        return Object.entries<ChatSummary>(directChats)
+            .concat(Object.entries(previews))
             .concat(Object.entries(summaries))
             .reduce<Record<string, ChatSummary>>((result, [chatId, summary]) => {
                 result[chatId] = summary;
@@ -134,7 +110,10 @@ export const userMetrics = derived([chatSummariesListStore], ([$chats]) => {
 });
 
 export const selectedChatId = writable<string | undefined>(undefined);
-export const selectedThreadRootMessageIndex = writable<number | undefined>(undefined);
+export const selectedThreadRootEvent = writable<EventWrapper<Message> | undefined>(undefined);
+export const selectedThreadRootMessageIndex = derived(selectedThreadRootEvent, ($rootEvent) => {
+    return $rootEvent !== undefined ? $rootEvent.event.messageIndex : undefined;
+});
 export const selectedThreadKey = derived(
     [selectedChatId, selectedThreadRootMessageIndex],
     ([$selectedChatId, $selectedThreadRootMessageIndex]) => {
@@ -341,6 +320,15 @@ export const userGroupKeys = createDerivedPropStore<ChatSpecificState, "userGrou
     () => new Set<string>()
 );
 
+export const confirmedThreadEventIndexesLoadedStore = derived(
+    [threadServerEventsStore],
+    ([serverEvents]) => {
+        const ranges = new DRange();
+        serverEvents.forEach((e) => ranges.add(e.index));
+        return ranges;
+    }
+);
+
 const confirmedEventIndexesLoadedStore = derived([serverEventsStore], ([serverEvents]) => {
     const ranges = new DRange();
     serverEvents.forEach((e) => ranges.add(e.index));
@@ -462,7 +450,7 @@ export function clearSelectedChat(newSelectedChatId?: string): void {
 }
 
 export function createDirectChat(chatId: string): void {
-    myServerChatSummariesStore.update((chatSummaries) => {
+    uninitializedDirectChats.update((chatSummaries) => {
         return {
             ...chatSummaries,
             [chatId]: {
@@ -491,14 +479,15 @@ export function addGroupPreview(chat: GroupChatSummary): void {
     }));
 }
 
+export function removeUninitializedDirectChat(chatId: string): void {
+    uninitializedDirectChats.update((summaries) => {
+        return toRecordFiltered(Object.values(summaries), (c) => c.chatId, (c) => c.chatId !== chatId);
+    });
+}
+
 export function removeGroupPreview(chatId: string): void {
     groupPreviewsStore.update((summaries) => {
-        return Object.entries(summaries).reduce((agg, [k, v]) => {
-            if (k !== chatId) {
-                agg[k] = v;
-            }
-            return agg;
-        }, {} as Record<string, GroupChatSummary>);
+        return toRecordFiltered(Object.values(summaries), (c) => c.chatId, (c) => c.chatId !== chatId);
     });
 }
 
@@ -518,27 +507,33 @@ export const eventsStore: Readable<EventWrapper<ChatEvent>[]> = derived(
     }
 );
 
-export function isContiguous(chatId: string, events: EventWrapper<ChatEvent>[]): boolean {
-    const confirmedLoaded = confirmedEventIndexesLoaded(chatId);
-
-    if (confirmedLoaded.length === 0 || events.length === 0) return true;
+function isContiguousInternal(range: DRange, events: EventWrapper<ChatEvent>[]): boolean {
+    if (range.length === 0 || events.length === 0) return true;
 
     const firstIndex = events[0].index;
     const lastIndex = events[events.length - 1].index;
     const contiguousCheck = new DRange(firstIndex - 1, lastIndex + 1);
 
-    const isContiguous = confirmedLoaded.clone().intersect(contiguousCheck).length > 0;
+    const isContiguous = range.clone().intersect(contiguousCheck).length > 0;
 
     if (!isContiguous) {
         console.log(
             "Events in response are not contiguous with the loaded events",
-            confirmedLoaded,
+            range,
             firstIndex,
             lastIndex
         );
     }
 
     return isContiguous;
+}
+
+export function isContiguousInThread(events: EventWrapper<ChatEvent>[]): boolean {
+    return isContiguousInternal(get(confirmedThreadEventIndexesLoadedStore), events);
+}
+
+export function isContiguous(chatId: string, events: EventWrapper<ChatEvent>[]): boolean {
+    return isContiguousInternal(confirmedEventIndexesLoaded(chatId), events);
 }
 
 export function clearServerEvents(chatId: string): void {

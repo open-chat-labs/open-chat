@@ -27,6 +27,7 @@
         Notification,
         CandidateGroupChat,
         defaultGroupRules,
+        EventWrapper,
     } from "openchat-client";
     import Overlay from "../Overlay.svelte";
     import { getContext, onMount, tick } from "svelte";
@@ -207,14 +208,7 @@
     function routeChange(initialised: boolean, pathParams: RouteParams): void {
         // wait until we have loaded the chats
         if (initialised) {
-            // TODO - this is still here *and* it still works.
-            // get rid of it
-            if (pathParams.chatId === "threads") {
-                closeThread();
-                client.clearSelectedChat();
-                hotGroups = { kind: "idle" };
-                // TODO - this is pretty gross
-            } else if (pathParams.chatId === "share") {
+            if (pathParams.chatId === "share") {
                 const title = $querystring.get("title") ?? "";
                 const text = $querystring.get("text") ?? "";
                 const url = $querystring.get("url") ?? "";
@@ -583,22 +577,19 @@
         rightPanelHistory.set([{ kind: "user_profile" }]);
     }
 
-    function openThread(ev: {
-        threadRootMessageIndex: number;
-        threadRootMessageId: bigint;
-        initiating: boolean;
-    }) {
+    function openThread(ev: { threadRootEvent: EventWrapper<Message>; initiating: boolean }) {
         if ($selectedChatId !== undefined) {
             if (ev.initiating) {
                 creatingThread = true;
                 page.replace(`/${$selectedChatId}`);
             }
+
             tick().then(() => {
                 rightPanelHistory.set([
                     {
                         kind: "message_thread_panel",
-                        threadRootMessageIndex: ev.threadRootMessageIndex,
-                        threadRootMessageId: ev.threadRootMessageId,
+                        threadRootMessageIndex: ev.threadRootEvent.event.messageIndex,
+                        threadRootMessageId: ev.threadRootEvent.event.messageId,
                     },
                 ]);
             });

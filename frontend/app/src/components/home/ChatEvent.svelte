@@ -85,6 +85,16 @@
     function retrySend() {
         dispatch("retrySend", event as EventWrapper<Message>);
     }
+
+    function initiateThread() {
+        if (event.event.kind === "message") {
+            if (event.event.thread !== undefined) {
+                page(`/${chatId}/${event.event.messageIndex}`);
+            } else {
+                client.openThread(event as EventWrapper<Message>, true);
+            }
+        }
+    }
 </script>
 
 {#if event.event.kind === "message"}
@@ -127,6 +137,7 @@
         on:forward
         on:expandMessage
         on:collapseMessage
+        on:initiateThread={initiateThread}
         on:deleteFailedMessage={deleteFailedMessage}
         eventIndex={event.index}
         timestamp={event.timestamp}

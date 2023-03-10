@@ -1,36 +1,28 @@
 <script lang="ts">
     import ThreadHeader from "./ThreadHeader.svelte";
     import Footer from "../Footer.svelte";
-    import ArrowDown from "svelte-material-icons/ArrowDown.svelte";
-    import {
+    import type {
         ChatSummary,
         ChatEvent as ChatEventType,
         EnhancedReplyContext,
         EventWrapper,
         Message,
         MessageContent,
-        ThreadSummary,
         User,
         Cryptocurrency,
-        ThreadMessagesLoaded,
-        SentThreadMessage,
         FailedMessages,
     } from "openchat-client";
-    import { getContext, onMount, tick } from "svelte";
+    import { getContext, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import Loading from "../../Loading.svelte";
-    import Fab from "../../Fab.svelte";
-    import { iconSize } from "../../../stores/iconSize";
-    import { rtlStore } from "../../../stores/rtl";
-    import { derived, Readable, readable, writable, Writable } from "svelte/store";
+    import { derived, readable } from "svelte/store";
     import PollBuilder from "../PollBuilder.svelte";
     import GiphySelector from "../GiphySelector.svelte";
     import CryptoTransferBuilder from "../CryptoTransferBuilder.svelte";
     import type { OpenChat } from "openchat-client";
     import { toastStore } from "stores/toast";
     import ChatEvent from "../ChatEvent.svelte";
-
-    const FROM_BOTTOM_THRESHOLD = 600;
+    import ChatEventList from "../ChatEventList.svelte";
 
     const client = getContext<OpenChat>("client");
     const user = client.user;
@@ -38,6 +30,7 @@
     export let rootEvent: EventWrapper<Message>;
     export let chat: ChatSummary;
 
+    let chatEventList: ChatEventList | undefined;
     let focusMessageIndex: number | undefined = undefined;
     let observer: IntersectionObserver = new IntersectionObserver(() => {});
     let pollBuilder: PollBuilder;
@@ -45,15 +38,10 @@
     let creatingPoll = false;
     let creatingCryptoTransfer: { token: Cryptocurrency; amount: bigint } | undefined = undefined;
     let selectingGif = false;
-    let loading = false;
     let initialised = false;
     let messagesDiv: HTMLDivElement | undefined;
-    let fromBottom: Writable<number> = writable(0);
-    let withinThreshold: Readable<boolean> = derived([fromBottom], ([$fromBottom]) => {
-        return $fromBottom < FROM_BOTTOM_THRESHOLD;
-    });
-
-    let previousRootEvent: EventWrapper<Message> | undefined;
+    let messagesDivHeight: number;
+    let previousLatestEventIndex: number | undefined = undefined;
 
     $: currentChatMembers = client.currentChatMembers;
     $: lastCryptoSent = client.lastCryptoSent;
@@ -62,82 +50,6 @@
     $: currentChatBlockedUsers = client.currentChatBlockedUsers;
     $: threadEvents = client.threadEvents;
     $: failedMessagesStore = client.failedMessagesStore;
-
-    onMount(() => {
-        client.addEventListener("openchat_event", clientEvent);
-        return () => {
-            client.removeEventListener("openchat_event", clientEvent);
-        };
-    });
-
-    function clientEvent(ev: Event): void {
-        if (ev instanceof SentThreadMessage) {
-            onSentMessage(ev.detail);
-        }
-        if (ev instanceof ThreadMessagesLoaded) {
-            if (ev.detail && $withinThreshold) {
-                scrollBottom();
-            }
-            tick().then(() => {
-                if (focusMessageIndex !== undefined) {
-                    goToMessageIndex(focusMessageIndex);
-                }
-            });
-        }
-    }
-
-    $: {
-        if (rootEvent.event.messageIndex !== previousRootEvent?.event.messageIndex) {
-            // this we move into client.openThread
-            previousRootEvent = rootEvent;
-            initialised = false;
-            if (thread !== undefined) {
-                loading = true;
-                client
-                    .loadThreadMessages(
-                        chat.chatId,
-                        rootEvent,
-                        thread,
-                        [0, thread.latestEventIndex],
-                        thread.latestEventIndex,
-                        false,
-                        threadRootMessageIndex,
-                        true
-                    )
-                    .finally(() => {
-                        loading = false;
-                        initialised = true;
-                    });
-            } else {
-                client.clearThreadEvents();
-            }
-        } else {
-            // we haven't changed the thread we are looking at, but the thread's latest index has changed (i.e. an event has been added by someone else)
-            if (
-                thread !== undefined &&
-                thread.latestEventIndex !== previousRootEvent?.event.thread?.latestEventIndex
-            ) {
-                loading = true;
-                client
-                    .loadThreadMessages(
-                        chat.chatId,
-                        rootEvent,
-                        thread,
-                        [0, thread.latestEventIndex],
-                        (previousRootEvent?.event.thread?.latestEventIndex ?? -1) + 1,
-                        true,
-                        threadRootMessageIndex,
-                        false
-                    )
-                    .finally(() => {
-                        loading = false;
-                        initialised = true;
-                    });
-            }
-        }
-    }
-
-    $: thread = rootEvent.event.thread;
     $: threadRootMessageIndex = rootEvent.event.messageIndex;
     $: threadRootMessage = rootEvent.event;
     $: blocked = chat.kind === "direct_chat" && $currentChatBlockedUsers.has(chat.them);
@@ -151,24 +63,43 @@
     $: canSend = client.canReplyInThread(chat.chatId);
     $: canReact = client.canReactToMessages(chat.chatId);
     $: expandedDeletedMessages = client.expandedDeletedMessages;
+    $: atRoot = $threadEvents.length === 0 || $threadEvents[0]?.index === 0;
+    $: events = atRoot ? [rootEvent, ...$threadEvents] : $threadEvents;
     $: messages = client
-        .groupEvents([rootEvent, ...$threadEvents], user.userId, $expandedDeletedMessages)
+        .groupEvents(events, user.userId, $expandedDeletedMessages)
         .reverse() as EventWrapper<Message>[][][];
     $: readonly = client.isChatReadOnly(chat.chatId);
     $: selectedThreadKey = client.selectedThreadKey;
+    $: thread = rootEvent.event.thread;
+    $: loading = !initialised && $threadEvents.length === 0 && thread !== undefined;
 
-    function onSentMessage(event: EventWrapper<Message>) {
-        const summary: ThreadSummary = {
-            participantIds: new Set<string>([user.userId]),
-            numberOfReplies: event.event.messageIndex + 1,
-            latestEventIndex: event.index,
-            latestEventTimestamp: event.timestamp,
-        };
-        client.markThreadSummaryUpdated(rootEvent.event.messageId.toString(), summary);
+    onMount(() => (previousLatestEventIndex = thread?.latestEventIndex));
+
+    $: {
+        if (initialised) {
+            if (
+                thread !== undefined &&
+                previousLatestEventIndex !== undefined &&
+                thread.latestEventIndex > previousLatestEventIndex
+            ) {
+                client.loadNewMessages(chat.chatId, rootEvent);
+                previousLatestEventIndex = thread.latestEventIndex;
+            }
+        }
     }
 
-    function calculateFromBottom(): number {
-        return -(messagesDiv?.scrollTop ?? 0);
+    function createTestMessages(ev: CustomEvent<number>): void {
+        if (process.env.NODE_ENV === "production") return;
+
+        function send(n: number) {
+            if (n === ev.detail) return;
+
+            sendMessageWithAttachment(`Test message ${n}`, [], undefined);
+
+            setTimeout(() => send(n + 1), 500);
+        }
+
+        send(0);
     }
 
     function dateGroupKey(group: EventWrapper<Message>[][]): string {
@@ -282,47 +213,6 @@
         draftThreadMessages.setReplyingTo(threadRootMessageIndex, ev.detail);
     }
 
-    function clearFocusIndex() {
-        focusMessageIndex = undefined;
-    }
-
-    function goToMessageIndex(index: number) {
-        if (index < 0) {
-            clearFocusIndex();
-            return;
-        }
-
-        focusMessageIndex = index;
-        const element = document.querySelector(`.thread-messages [data-index='${index}']`);
-        if (element) {
-            element.scrollIntoView({ behavior: "smooth", block: "center" });
-            setTimeout(() => {
-                clearFocusIndex();
-            }, 200);
-        } else {
-            console.log(`message index ${index} not found`);
-        }
-    }
-
-    function onGoToMessageIndex(
-        ev: CustomEvent<{ index: number; preserveFocus: boolean; messageId: bigint }>
-    ) {
-        goToMessageIndex(ev.detail.index);
-    }
-
-    function scrollBottom() {
-        tick().then(() => {
-            messagesDiv?.scrollTo({
-                top: 0,
-                behavior: "smooth",
-            });
-        });
-    }
-
-    function onScroll() {
-        $fromBottom = calculateFromBottom();
-    }
-
     function defaultCryptoTransferReceiver(): string | undefined {
         return $replyingTo?.sender?.userId;
     }
@@ -349,7 +239,16 @@
         return false;
     }
 
-    $: console.log("Failed: ", $failedMessagesStore, $selectedThreadKey);
+    function goToMessageIndex(index: number) {
+        focusMessageIndex = index;
+        chatEventList?.scrollToMessageIndex(index, false);
+    }
+
+    function onGoToMessageIndex(
+        ev: CustomEvent<{ index: number; preserveFocus: boolean; messageId: bigint }>
+    ) {
+        goToMessageIndex(ev.detail.index);
+    }
 </script>
 
 <PollBuilder
@@ -373,16 +272,6 @@
         on:close={() => (creatingCryptoTransfer = undefined)} />
 {/if}
 
-<div
-    title={$_("goToLatestMessage")}
-    class:show={!$withinThreshold}
-    class="fab to-bottom"
-    class:rtl={$rtlStore}>
-    <Fab on:click={scrollBottom}>
-        <ArrowDown size={$iconSize} color={"#fff"} />
-    </Fab>
-</div>
-
 <ThreadHeader
     {threadRootMessageIndex}
     on:createPoll={createPoll}
@@ -390,8 +279,23 @@
     {rootEvent}
     chatSummary={chat} />
 
-<div bind:this={messagesDiv} class="thread-messages" on:scroll={onScroll}>
-    {#if loading && !initialised}
+<ChatEventList
+    selectedThreadKey={$selectedThreadKey}
+    threadRootEvent={rootEvent}
+    rootSelector={"thread-messages"}
+    bind:this={chatEventList}
+    {readonly}
+    unreadMessages={0}
+    firstUnreadMention={undefined}
+    setFocusMessageIndex={(idx) => (focusMessageIndex = idx)}
+    footer
+    {focusMessageIndex}
+    {events}
+    {chat}
+    bind:initialised
+    bind:messagesDiv
+    bind:messagesDivHeight>
+    {#if loading}
         <Loading />
     {:else}
         {#each messages as dayGroup, _di (dateGroupKey(dayGroup))}
@@ -451,7 +355,7 @@
             </div>
         {/each}
     {/if}
-</div>
+</ChatEventList>
 
 {#if !readonly}
     <Footer
@@ -481,14 +385,11 @@
         on:sendMessage={sendMessage}
         on:attachGif={attachGif}
         on:tokenTransfer={tokenTransfer}
+        on:createTestMessages={createTestMessages}
         on:createPoll={createPoll} />
 {/if}
 
 <style type="text/scss">
-    .thread-messages {
-        @include message-list();
-    }
-
     .day-group {
         position: relative;
 
@@ -505,29 +406,5 @@
             text-align: center;
             margin-bottom: $sp4;
         }
-    }
-
-    .fab {
-        transition: opacity ease-in-out 300ms;
-        position: absolute;
-        @include z-index("fab");
-        right: 20px;
-        bottom: 0;
-        opacity: 0;
-        pointer-events: none;
-
-        &.show {
-            opacity: 1;
-            pointer-events: all;
-        }
-
-        &.rtl {
-            left: $sp6;
-            right: unset;
-        }
-    }
-
-    .to-bottom {
-        bottom: 80px;
     }
 </style>

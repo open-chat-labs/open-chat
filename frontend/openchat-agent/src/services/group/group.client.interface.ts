@@ -52,6 +52,7 @@ export interface IGroupClient {
     chatEventsWindow(
         eventIndexRange: IndexRange,
         messageIndex: number,
+        threadRootMessageIndex: number | undefined,
         latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<GroupChatEvent>>;
     chatEvents(

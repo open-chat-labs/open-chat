@@ -80,7 +80,7 @@ mod tests {
     fn max_n_by() {
         let mut rng = rand::thread_rng();
 
-        let input: Vec<_> = (0..100).into_iter().map(|_| rng.next_u32()).collect();
+        let input: Vec<_> = (0..100).map(|_| rng.next_u32()).collect();
 
         let max: Vec<_> = input.iter().cloned().max_n_by(10, |i| *i).collect();
 
@@ -96,7 +96,7 @@ mod tests {
     fn min_n_by() {
         let mut rng = rand::thread_rng();
 
-        let input: Vec<_> = (0..100).into_iter().map(|_| rng.next_u32()).collect();
+        let input: Vec<_> = (0..100).map(|_| rng.next_u32()).collect();
 
         let min: Vec<_> = input.iter().cloned().min_n_by(10, |i| *i).collect();
 

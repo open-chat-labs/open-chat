@@ -3,6 +3,7 @@ pub mod c2c_lookup_user;
 pub mod c2c_lookup_user_id;
 pub mod check_username;
 pub mod current_user;
+pub mod is_eligible_for_initial_airdrop;
 pub mod platform_moderators;
 pub mod platform_operators;
 pub mod search;

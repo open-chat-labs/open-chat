@@ -26,7 +26,6 @@
     import { iconSize } from "../../stores/iconSize";
     import { createEventDispatcher, getContext } from "svelte";
     import type { Message, OpenChat } from "openchat-client";
-    import page from "page";
     import { toastStore } from "../../stores/toast";
     import * as shareFunctions from "../../utils/share";
 
@@ -111,11 +110,7 @@
 
     // this is called if we are starting a new thread so we pass undefined as the threadSummary param
     function initiateThread() {
-        if (msg.thread !== undefined) {
-            page(`/${chatId}/${msg.messageIndex}`);
-        } else {
-            client.openThread(msg.messageId, msg.messageIndex, true);
-        }
+        dispatch("initiateThread");
     }
 
     function forward() {

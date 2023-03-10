@@ -548,7 +548,7 @@ impl From<PutChunkArgs> for PendingFile {
             accessors: args.accessors.into_iter().collect(),
             chunk_size: args.chunk_size,
             total_size: args.total_size,
-            remaining_chunks: (0..chunk_count).into_iter().collect(),
+            remaining_chunks: (0..chunk_count).collect(),
             bytes: ByteBuf::from(vec![0; args.total_size as usize]),
             expiry: args.expiry,
         };

@@ -320,6 +320,7 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
                         payload.eventIndexRange,
                         payload.chatId,
                         payload.messageIndex,
+                        payload.threadRootMessageIndex,
                         payload.latestClientMainEventIndex
                     )
                     .then((response) =>
@@ -1166,7 +1167,8 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
                 break;
 
             case "deleteFrozenGroup":
-                agent.deleteFrozenGroup(payload.chatId)
+                agent
+                    .deleteFrozenGroup(payload.chatId)
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,

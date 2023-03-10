@@ -13,11 +13,10 @@ async fn set_user_upgrade_concurrency(args: Args) -> Response {
 }
 
 fn set_user_upgrade_concurrency_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    runtime_state.data.push_event_to_all_local_user_indexes(
+    runtime_state.push_event_to_all_local_user_indexes(
         Event::UserUpgradeConcurrencyChanged(UserUpgradeConcurrencyChanged { value: args.value }),
         None,
     );
-    crate::jobs::sync_events_to_local_user_index_canisters::start_job_if_required(runtime_state);
 
     info!("User upgrade concurrency set to {}", args.value);
     Success

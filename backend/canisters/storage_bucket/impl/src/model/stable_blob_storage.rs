@@ -170,7 +170,7 @@ mod tests {
 
         // We mod with a prime number so that each chunk of bytes is different, this validates that
         // chunk ordering is preserved.
-        let value_in: Vec<_> = (0..10000).into_iter().map(|i| (i % 101) as u8).collect();
+        let value_in: Vec<_> = (0..10000).map(|i| (i % 101) as u8).collect();
 
         stable_storage.insert(hash, value_in.clone());
 
@@ -209,7 +209,7 @@ mod tests {
     }
 
     fn default_hash() -> Hash {
-        let vec: Vec<_> = (0..32).into_iter().collect();
+        let vec: Vec<_> = (0..32).collect();
         Hash::try_from(vec).unwrap()
     }
 }

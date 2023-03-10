@@ -1,10 +1,10 @@
 import "../../../libraries/types/can.did";
 
-type ChallengeKey = nat32;
-
-type CreateChallengeArgs =
+type EmptyArgs =
     record {
     };
+
+type ChallengeKey = nat32;
 
 type CreateChallengeResponse =
     variant {
@@ -70,10 +70,6 @@ type CheckUsernameResponse =
         UsernameInvalid;
         UsernameTooShort: nat16;
         UsernameTooLong: nat16;
-    };
-
-type CurrentUserArgs =
-    record {
     };
 
 type CurrentUserResponse =
@@ -193,10 +189,6 @@ type RemovePlatformOperatorResponse =
         Success;
     };
 
-type PlatformModeratorsArgs =
-    record {
-    };
-
 type PlatformModeratorsResponse =
     variant {
         Success: record {
@@ -300,8 +292,26 @@ type SetUserUpgradeConcurrencyResponse =
         Success;
     };
 
+type IsEligibleForInitialAirdropResponse =
+    variant {
+        Success: bool;
+        UserNotFound;
+    };
+
+type SetNeuronControllerForInitialAirdropArgs =
+    record {
+        controller: principal
+    };
+
+type SetNeuronControllerForInitialAirdropResponse =
+    variant {
+        Success;
+        UserNotEligible;
+        UserNotFound;
+    };
+
 service: {
-    create_challenge : (CreateChallengeArgs) -> (CreateChallengeResponse);
+    create_challenge : (EmptyArgs) -> (CreateChallengeResponse);
 
     register_user: (RegisterUserArgs) -> (RegisterUserResponse);
 
@@ -312,7 +322,7 @@ service: {
     check_username: (CheckUsernameArgs) -> (CheckUsernameResponse) query;
 
     // Gets the user based on the caller principal. The user can be in a variety of states
-    current_user: (CurrentUserArgs) -> (CurrentUserResponse) query;
+    current_user: (EmptyArgs) -> (CurrentUserResponse) query;
 
     // Gets a user by id or username
     user: (UserArgs) -> (UserResponse) query;
@@ -329,7 +339,7 @@ service: {
     pay_for_diamond_membership: (PayForDiamondMembershipArgs) -> (PayForDiamondMembershipResponse);
 
     // List the platform moderators/operators
-    platform_moderators: (PlatformModeratorsArgs) -> (PlatformModeratorsResponse) query;
+    platform_moderators: (EmptyArgs) -> (PlatformModeratorsResponse) query;
     platform_operators: (PlatformOperatorsArgs) -> (PlatformOperatorsResponse) query;
 
     // Only callable by SNS governance canister
@@ -345,4 +355,8 @@ service: {
 
     // Only callable by "platform operators"
     set_user_upgrade_concurrency: (SetUserUpgradeConcurrencyArgs) -> (SetUserUpgradeConcurrencyResponse);
+
+    // Temporary endpoints for the initial airdrop
+    is_eligible_for_initial_airdrop: (EmptyArgs) -> (IsEligibleForInitialAirdropResponse) query;
+    set_neuron_controller_for_initial_airdrop: (SetNeuronControllerForInitialAirdropArgs) -> (SetNeuronControllerForInitialAirdropResponse);
 }
