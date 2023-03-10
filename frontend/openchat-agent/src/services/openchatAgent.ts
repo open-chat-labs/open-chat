@@ -1419,7 +1419,7 @@ export class OpenChatAgent extends EventTarget {
             this.identity,
             this.config,
             snsGovernanceCanisterId
-        ).getTally(proposalId);
+        ).getProposalTally(proposalId);
     }
 
     listNervousSystemFunctions(
