@@ -11,6 +11,7 @@ type JoinGroupArgs =
 type JoinGroupResponse =
     variant {
         Success: GroupCanisterGroupChatSummary;
+        AlreadyInGroupV2: GroupCanisterGroupChatSummary;
         AlreadyInGroup;
         GroupNotFound;
         GroupNotPublic;

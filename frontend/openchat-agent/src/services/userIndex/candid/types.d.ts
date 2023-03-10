@@ -9,6 +9,8 @@ export type AddPlatformModeratorResponse = {
   } |
   { 'Success' : null } |
   { 'InternalError' : string };
+export interface AddPlatformOperatorArgs { 'user_id' : UserId }
+export type AddPlatformOperatorResponse = { 'Success' : null };
 export interface AddedToGroupNotification {
   'added_by_name' : string,
   'added_by' : UserId,
@@ -137,7 +139,6 @@ export type CompletedCryptoTransaction = {
     'NNS' : NnsCompletedCryptoTransaction
   } |
   { 'SNS' : SnsCompletedCryptoTransaction };
-export type CreateChallengeArgs = {};
 export type CreateChallengeResponse = { 'Throttled' : null } |
   { 'Success' : Challenge };
 export interface CryptoContent {
@@ -152,7 +153,6 @@ export type Cryptocurrency = { 'InternetComputer' : null } |
   { 'CHAT' : null } |
   { 'SNS1' : null } |
   { 'CKBTC' : null };
-export type CurrentUserArgs = {};
 export type CurrentUserResponse = {
     'Success' : {
       'username' : string,
@@ -235,6 +235,7 @@ export interface DirectReactionAddedNotification {
   'timestamp' : TimestampMillis,
   'reaction' : string,
 }
+export type EmptyArgs = {};
 export type EventIndex = number;
 export type EventsTimeToLiveUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
@@ -517,6 +518,8 @@ export type InvalidPollReason = { 'DuplicateOptions' : null } |
   { 'OptionTooLong' : number } |
   { 'EndDateInThePast' : null } |
   { 'PollsNotValidForDirectChats' : null };
+export type IsEligibleForInitialAirdropResponse = { 'Success' : boolean } |
+  { 'UserNotFound' : null };
 export type MarkSuspectedBotArgs = {};
 export type MarkSuspectedBotResponse = { 'Success' : null };
 export type Memo = bigint;
@@ -720,8 +723,11 @@ export interface PermissionsChanged {
 export type PinnedMessageUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : MessageIndex };
-export type PlatformModeratorsArgs = {};
 export type PlatformModeratorsResponse = {
+    'Success' : { 'users' : Array<UserId> }
+  };
+export type PlatformOperatorsArgs = {};
+export type PlatformOperatorsResponse = {
     'Success' : { 'users' : Array<UserId> }
   };
 export interface PollConfig {
@@ -828,6 +834,8 @@ export interface RemovePlatformModeratorArgs { 'user_id' : UserId }
 export type RemovePlatformModeratorResponse = { 'Success' : null } |
   { 'NotPlatformModerator' : null } |
   { 'InternalError' : string };
+export interface RemovePlatformOperatorArgs { 'user_id' : UserId }
+export type RemovePlatformOperatorResponse = { 'Success' : null };
 export interface ReplyContext {
   'chat_id_if_other' : [] | [ChatId],
   'event_index' : EventIndex,
@@ -846,6 +854,16 @@ export interface SearchArgs { 'max_results' : number, 'search_term' : string }
 export type SearchResponse = {
     'Success' : { 'timestamp' : TimestampMillis, 'users' : Array<UserSummary> }
   };
+export interface SetNeuronControllerForInitialAirdropArgs {
+  'controller' : Principal,
+}
+export type SetNeuronControllerForInitialAirdropResponse = {
+    'UserNotEligible' : null
+  } |
+  { 'Success' : null } |
+  { 'UserNotFound' : null };
+export interface SetUserUpgradeConcurrencyArgs { 'value' : number }
+export type SetUserUpgradeConcurrencyResponse = { 'Success' : null };
 export interface SetUsernameArgs { 'username' : string }
 export type SetUsernameResponse = { 'UsernameTaken' : null } |
   { 'UsernameTooShort' : number } |
@@ -1032,12 +1050,17 @@ export interface _SERVICE {
     [AddPlatformModeratorArgs],
     AddPlatformModeratorResponse
   >,
-  'check_username' : ActorMethod<[CheckUsernameArgs], CheckUsernameResponse>,
-  'create_challenge' : ActorMethod<
-    [CreateChallengeArgs],
-    CreateChallengeResponse
+  'add_platform_operator' : ActorMethod<
+    [AddPlatformOperatorArgs],
+    AddPlatformOperatorResponse
   >,
-  'current_user' : ActorMethod<[CurrentUserArgs], CurrentUserResponse>,
+  'check_username' : ActorMethod<[CheckUsernameArgs], CheckUsernameResponse>,
+  'create_challenge' : ActorMethod<[EmptyArgs], CreateChallengeResponse>,
+  'current_user' : ActorMethod<[EmptyArgs], CurrentUserResponse>,
+  'is_eligible_for_initial_airdrop' : ActorMethod<
+    [EmptyArgs],
+    IsEligibleForInitialAirdropResponse
+  >,
   'mark_suspected_bot' : ActorMethod<
     [MarkSuspectedBotArgs],
     MarkSuspectedBotResponse
@@ -1046,16 +1069,29 @@ export interface _SERVICE {
     [PayForDiamondMembershipArgs],
     PayForDiamondMembershipResponse
   >,
-  'platform_moderators' : ActorMethod<
-    [PlatformModeratorsArgs],
-    PlatformModeratorsResponse
+  'platform_moderators' : ActorMethod<[EmptyArgs], PlatformModeratorsResponse>,
+  'platform_operators' : ActorMethod<
+    [PlatformOperatorsArgs],
+    PlatformOperatorsResponse
   >,
   'register_user' : ActorMethod<[RegisterUserArgs], RegisterUserResponse>,
   'remove_platform_moderator' : ActorMethod<
     [RemovePlatformModeratorArgs],
     RemovePlatformModeratorResponse
   >,
+  'remove_platform_operator' : ActorMethod<
+    [RemovePlatformOperatorArgs],
+    RemovePlatformOperatorResponse
+  >,
   'search' : ActorMethod<[SearchArgs], SearchResponse>,
+  'set_neuron_controller_for_initial_airdrop' : ActorMethod<
+    [SetNeuronControllerForInitialAirdropArgs],
+    SetNeuronControllerForInitialAirdropResponse
+  >,
+  'set_user_upgrade_concurrency' : ActorMethod<
+    [SetUserUpgradeConcurrencyArgs],
+    SetUserUpgradeConcurrencyResponse
+  >,
   'set_username' : ActorMethod<[SetUsernameArgs], SetUsernameResponse>,
   'suspected_bots' : ActorMethod<[SuspectedBotsArgs], SuspectedBotsResponse>,
   'suspend_user' : ActorMethod<[SuspendUserArgs], SuspendUserResponse>,
