@@ -436,7 +436,7 @@ type GetSnsTallyRequest = Request<{
     snsGovernanceCanisterId: string;
     proposalId: bigint;
 }> & {
-    kind: "getSnsTally";
+    kind: "getSnsProposalTally";
 };
 
 type ListNervousSystemFunctions = Request<{

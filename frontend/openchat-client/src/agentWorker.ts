@@ -812,12 +812,12 @@ export class OpenChatAgentWorker extends EventTarget {
         });
     }
 
-    getSnsTally(
+    getSnsProposalTally(
         snsGovernanceCanisterId: string,
         proposalId: bigint
     ): Promise<Tally> {
         return this.sendRequest({
-            kind: "getSnsTally",
+            kind: "getSnsProposalTally",
             payload: {
                 snsGovernanceCanisterId,
                 proposalId,

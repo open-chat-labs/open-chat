@@ -722,9 +722,9 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
                     .catch(sendError(correlationId));
                 break;
 
-            case "getSnsTally":
+            case "getSnsProposalTally":
                 agent
-                    .getSnsTally(payload.snsGovernanceCanisterId, payload.proposalId)
+                    .getSnsProposalTally(payload.snsGovernanceCanisterId, payload.proposalId)
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,

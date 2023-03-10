@@ -2865,8 +2865,8 @@ export class OpenChat extends EventTarget {
         return this.api.registerProposalVote(chatId, messageIndex, adopt);
     }
 
-    getSnsTally(snsGovernanceCanisterId: string, proposalId: bigint): Promise<Tally> {
-        return this.api.getSnsTally(snsGovernanceCanisterId, proposalId)
+    getSnsProposalTally(snsGovernanceCanisterId: string, proposalId: bigint): Promise<Tally> {
+        return this.api.getSnsProposalTally(snsGovernanceCanisterId, proposalId)
             .then((tally) => {
                 proposalTallies.setTally(snsGovernanceCanisterId, proposalId, tally);
                 return tally;

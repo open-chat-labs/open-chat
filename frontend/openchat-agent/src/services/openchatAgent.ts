@@ -1411,7 +1411,7 @@ export class OpenChatAgent extends EventTarget {
         return userClient.migrateUserPrincipal();
     }
 
-    getSnsTally(
+    getSnsProposalTally(
         snsGovernanceCanisterId: string,
         proposalId: bigint
     ): Promise<Tally> {
