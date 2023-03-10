@@ -18,6 +18,7 @@ canister_tracing_macros = { workspace = true }
 cycles_dispenser_client = { path = "../../../libraries/cycles_dispenser_client" }
 futures = { workspace = true }
 http_request = { path = "../../../libraries/http_request" }
+human_readable = { path = "../../../libraries/human_readable" }
 ic-cdk = { workspace = true }
 ic-cdk-macros = { workspace = true }
 ic-cdk-timers = { workspace = true }

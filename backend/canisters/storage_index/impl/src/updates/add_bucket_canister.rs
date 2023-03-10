@@ -2,14 +2,14 @@ use crate::guards::caller_is_governance_principal;
 use crate::model::buckets::BucketRecord;
 use crate::read_state;
 use crate::{mutate_state, RuntimeState};
+use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
-use ic_cdk_macros::update;
 use storage_index_canister::add_bucket_canister::{Response::*, *};
 use types::{CanisterId, CanisterWasm, Cycles};
 use utils::canister::create_and_install;
 
 // dfx canister --network ic call storage_index add_bucket_canister '(record { canister_id = principal "myzmx-wqaaa-aaaar-ad2ua-cai" })'
-#[update(guard = "caller_is_governance_principal")]
+#[proposal(guard = "caller_is_governance_principal")]
 #[trace]
 async fn add_bucket_canister(args: Args) -> Response {
     let InitBucketArgs { wasm, init_args } = match read_state(|state| prepare(args.canister_id, state)) {
