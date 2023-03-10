@@ -19,7 +19,6 @@ fn accept_if_valid(runtime_state: &RuntimeState) {
         "add_local_group_index_canister"
         | "mark_local_group_index_full"
         | "reinstall_group"
-        | "set_governance_principals"
         | "set_max_concurrent_group_canister_upgrades"
         | "upgrade_group_canister_wasm"
         | "upgrade_local_group_index_canister_wasm" => runtime_state.is_caller_governance_principal(),

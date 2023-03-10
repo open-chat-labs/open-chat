@@ -96,7 +96,12 @@ struct Data {
     pub total_cycles_spent_on_canisters: Cycles,
     pub test_mode: bool,
     pub max_concurrent_canister_upgrades: u32,
+    #[serde(default = "ten")]
     pub group_upgrade_concurrency: u32,
+}
+
+fn ten() -> u32 {
+    10
 }
 
 impl Data {

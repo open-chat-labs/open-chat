@@ -10,7 +10,6 @@ generate_query_call!(user);
 generate_update_call!(add_or_update_users);
 generate_update_call!(remove_accessor);
 generate_update_call!(remove_user);
-generate_update_call!(set_governance_principals);
 generate_update_call!(update_user_id);
 generate_update_call!(upgrade_bucket_canister_wasm);
 

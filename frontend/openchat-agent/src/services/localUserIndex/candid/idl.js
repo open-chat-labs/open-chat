@@ -435,6 +435,7 @@ export const idlFactory = ({ IDL }) => {
     'UserSuspended' : IDL.Null,
     'NotSuperAdmin' : IDL.Null,
     'ParticipantLimitReached' : IDL.Nat32,
+    'AlreadyInGroupV2' : GroupCanisterGroupChatSummary,
     'InternalError' : IDL.Text,
   });
   return IDL.Service({

@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Removed
 
 - Removed code only needed for previous upgrade ([#3248](https://github.com/open-ic/open-chat/pull/3248))
+- Removed `set_governance_principals` ([#3301](https://github.com/open-ic/open-chat/pull/3301))
 
 ## [[2.0.597](https://github.com/open-ic/open-chat/releases/tag/v2.0.597-notifications_index)] - 2023-02-17
 

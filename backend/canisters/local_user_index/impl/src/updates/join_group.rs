@@ -26,7 +26,8 @@ async fn join_group(args: Args) -> Response {
     };
     match group_canister_c2c_client::c2c_join_group(args.chat_id.into(), &c2c_args).await {
         Ok(response) => match response {
-            group_canister::c2c_join_group::Response::Success(s) => {
+            group_canister::c2c_join_group::Response::Success(s)
+            | group_canister::c2c_join_group::Response::AlreadyInGroupV2(s) => {
                 mutate_state(|state| {
                     commit(
                         user_details.user_id,

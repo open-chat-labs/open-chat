@@ -1746,6 +1746,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "candid_gen",
+ "human_readable",
  "ic-ledger-types",
  "serde",
  "types",
@@ -1756,10 +1757,12 @@ name = "cycles_dispenser_canister_impl"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "canister_api_macros",
  "canister_logger",
  "canister_state_macros",
  "canister_tracing_macros",
  "cycles_dispenser_canister",
+ "human_readable",
  "ic-cdk 0.7.3",
  "ic-cdk-macros",
  "ic-cdk-timers",
@@ -6752,6 +6755,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "candid_gen",
+ "human_readable",
  "serde",
  "types",
 ]
@@ -6761,6 +6765,7 @@ name = "proposals_bot_canister_impl"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "canister_api_macros",
  "canister_logger",
  "canister_state_macros",
  "canister_tracing_macros",
@@ -6769,6 +6774,7 @@ dependencies = [
  "group_index_canister",
  "group_index_canister_c2c_client",
  "http_request",
+ "human_readable",
  "ic-cdk 0.7.3",
  "ic-cdk-macros",
  "ic-cdk-timers",
@@ -8033,6 +8039,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "candid_gen",
+ "human_readable",
  "serde",
  "serde_bytes",
  "types",
@@ -8073,6 +8080,7 @@ dependencies = [
  "cycles_dispenser_client",
  "futures",
  "http_request",
+ "human_readable",
  "ic-cdk 0.7.3",
  "ic-cdk-macros",
  "ic-cdk-timers",

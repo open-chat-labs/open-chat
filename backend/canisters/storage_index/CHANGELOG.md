@@ -5,9 +5,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Added missing proposal validation functions ([#3298](https://github.com/open-ic/open-chat/pull/3298))
+
 ### Removed
 
 - Removed code only needed for previous upgrade ([#3248](https://github.com/open-ic/open-chat/pull/3248))
+- Removed `set_governance_principals` ([#3301](https://github.com/open-ic/open-chat/pull/3301))
 
 ### Fixed
 

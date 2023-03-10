@@ -10,7 +10,6 @@ pub mod freeze_group;
 pub mod mark_local_group_index_full;
 pub mod reinstall_group;
 pub mod remove_hot_group_exclusion;
-pub mod set_governance_principals;
 pub mod set_group_upgrade_concurrency;
 pub mod set_max_concurrent_group_canister_upgrades;
 pub mod unfreeze_group;

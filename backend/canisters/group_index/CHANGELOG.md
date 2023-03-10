@@ -8,7 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Endpoint for platform ops to set group upgrade concurrency ([#3268](https://github.com/open-ic/open-chat/pull/3268))
- 
+
 ### Changed
 
 - Rename is_super_admin to is_platform_operator in c2c_lookup_user ([#3264](https://github.com/open-ic/open-chat/pull/3264)) 
@@ -16,7 +16,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Removed
 
 - Removed code only needed for previous upgrade ([#3262](https://github.com/open-ic/open-chat/pull/3262))
-  
+- Removed `set_governance_principals` ([#3301](https://github.com/open-ic/open-chat/pull/3301))
+
 ## [[2.0.624](https://github.com/open-ic/open-chat/releases/tag/v2.0.624-group_index)] - 2023-03-02
 
 ### Added

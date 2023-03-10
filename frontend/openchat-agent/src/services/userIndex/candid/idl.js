@@ -7,6 +7,8 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Null,
     'InternalError' : IDL.Text,
   });
+  const AddPlatformOperatorArgs = IDL.Record({ 'user_id' : UserId });
+  const AddPlatformOperatorResponse = IDL.Variant({ 'Success' : IDL.Null });
   const CheckUsernameArgs = IDL.Record({ 'username' : IDL.Text });
   const CheckUsernameResponse = IDL.Variant({
     'UsernameTaken' : IDL.Null,
@@ -15,7 +17,7 @@ export const idlFactory = ({ IDL }) => {
     'UsernameTooLong' : IDL.Nat16,
     'Success' : IDL.Null,
   });
-  const CreateChallengeArgs = IDL.Record({});
+  const EmptyArgs = IDL.Record({});
   const ChallengeKey = IDL.Nat32;
   const Challenge = IDL.Record({
     'key' : ChallengeKey,
@@ -25,7 +27,6 @@ export const idlFactory = ({ IDL }) => {
     'Throttled' : IDL.Null,
     'Success' : Challenge,
   });
-  const CurrentUserArgs = IDL.Record({});
   const Version = IDL.Record({
     'major' : IDL.Nat32,
     'minor' : IDL.Nat32,
@@ -71,6 +72,10 @@ export const idlFactory = ({ IDL }) => {
     }),
     'UserNotFound' : IDL.Null,
   });
+  const IsEligibleForInitialAirdropResponse = IDL.Variant({
+    'Success' : IDL.Bool,
+    'UserNotFound' : IDL.Null,
+  });
   const MarkSuspectedBotArgs = IDL.Record({});
   const MarkSuspectedBotResponse = IDL.Variant({ 'Success' : IDL.Null });
   const Cryptocurrency = IDL.Variant({
@@ -99,8 +104,11 @@ export const idlFactory = ({ IDL }) => {
     'UserNotFound' : IDL.Null,
     'InsufficientFunds' : IDL.Nat64,
   });
-  const PlatformModeratorsArgs = IDL.Record({});
   const PlatformModeratorsResponse = IDL.Variant({
+    'Success' : IDL.Record({ 'users' : IDL.Vec(UserId) }),
+  });
+  const PlatformOperatorsArgs = IDL.Record({});
+  const PlatformOperatorsResponse = IDL.Variant({
     'Success' : IDL.Record({ 'users' : IDL.Vec(UserId) }),
   });
   const ChallengeAttempt = IDL.Record({
@@ -130,6 +138,8 @@ export const idlFactory = ({ IDL }) => {
     'NotPlatformModerator' : IDL.Null,
     'InternalError' : IDL.Text,
   });
+  const RemovePlatformOperatorArgs = IDL.Record({ 'user_id' : UserId });
+  const RemovePlatformOperatorResponse = IDL.Variant({ 'Success' : IDL.Null });
   const SearchArgs = IDL.Record({
     'max_results' : IDL.Nat8,
     'search_term' : IDL.Text,
@@ -148,6 +158,18 @@ export const idlFactory = ({ IDL }) => {
       'timestamp' : TimestampMillis,
       'users' : IDL.Vec(UserSummary),
     }),
+  });
+  const SetNeuronControllerForInitialAirdropArgs = IDL.Record({
+    'controller' : IDL.Principal,
+  });
+  const SetNeuronControllerForInitialAirdropResponse = IDL.Variant({
+    'UserNotEligible' : IDL.Null,
+    'Success' : IDL.Null,
+    'UserNotFound' : IDL.Null,
+  });
+  const SetUserUpgradeConcurrencyArgs = IDL.Record({ 'value' : IDL.Nat32 });
+  const SetUserUpgradeConcurrencyResponse = IDL.Variant({
+    'Success' : IDL.Null,
   });
   const SetUsernameArgs = IDL.Record({ 'username' : IDL.Text });
   const SetUsernameResponse = IDL.Variant({
@@ -220,19 +242,21 @@ export const idlFactory = ({ IDL }) => {
         [AddPlatformModeratorResponse],
         [],
       ),
+    'add_platform_operator' : IDL.Func(
+        [AddPlatformOperatorArgs],
+        [AddPlatformOperatorResponse],
+        [],
+      ),
     'check_username' : IDL.Func(
         [CheckUsernameArgs],
         [CheckUsernameResponse],
         ['query'],
       ),
-    'create_challenge' : IDL.Func(
-        [CreateChallengeArgs],
-        [CreateChallengeResponse],
-        [],
-      ),
-    'current_user' : IDL.Func(
-        [CurrentUserArgs],
-        [CurrentUserResponse],
+    'create_challenge' : IDL.Func([EmptyArgs], [CreateChallengeResponse], []),
+    'current_user' : IDL.Func([EmptyArgs], [CurrentUserResponse], ['query']),
+    'is_eligible_for_initial_airdrop' : IDL.Func(
+        [EmptyArgs],
+        [IsEligibleForInitialAirdropResponse],
         ['query'],
       ),
     'mark_suspected_bot' : IDL.Func(
@@ -246,8 +270,13 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'platform_moderators' : IDL.Func(
-        [PlatformModeratorsArgs],
+        [EmptyArgs],
         [PlatformModeratorsResponse],
+        ['query'],
+      ),
+    'platform_operators' : IDL.Func(
+        [PlatformOperatorsArgs],
+        [PlatformOperatorsResponse],
         ['query'],
       ),
     'register_user' : IDL.Func([RegisterUserArgs], [RegisterUserResponse], []),
@@ -256,7 +285,22 @@ export const idlFactory = ({ IDL }) => {
         [RemovePlatformModeratorResponse],
         [],
       ),
+    'remove_platform_operator' : IDL.Func(
+        [RemovePlatformOperatorArgs],
+        [RemovePlatformOperatorResponse],
+        [],
+      ),
     'search' : IDL.Func([SearchArgs], [SearchResponse], ['query']),
+    'set_neuron_controller_for_initial_airdrop' : IDL.Func(
+        [SetNeuronControllerForInitialAirdropArgs],
+        [SetNeuronControllerForInitialAirdropResponse],
+        [],
+      ),
+    'set_user_upgrade_concurrency' : IDL.Func(
+        [SetUserUpgradeConcurrencyArgs],
+        [SetUserUpgradeConcurrencyResponse],
+        [],
+      ),
     'set_username' : IDL.Func([SetUsernameArgs], [SetUsernameResponse], []),
     'suspected_bots' : IDL.Func(
         [SuspectedBotsArgs],

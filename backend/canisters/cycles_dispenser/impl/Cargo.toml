@@ -11,10 +11,12 @@ crate-type = ["cdylib"]
 
 [dependencies]
 candid = { workspace = true }
+canister_api_macros = { path = "../../../libraries/canister_api_macros" }
 canister_logger = { workspace = true }
 canister_state_macros = { workspace = true }
 canister_tracing_macros = { workspace = true }
 cycles_dispenser_canister = { path = "../api" }
+human_readable = { path = "../../../libraries/human_readable" }
 ic-cdk = { workspace = true }
 ic-cdk-timers = { workspace = true }
 ic-cdk-macros = { workspace = true }
