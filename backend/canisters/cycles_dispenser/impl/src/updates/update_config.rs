@@ -1,10 +1,10 @@
 use crate::guards::caller_is_governance_principal;
 use crate::{mutate_state, State};
+use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
 use cycles_dispenser_canister::update_config::{Response::*, *};
-use ic_cdk_macros::update;
 
-#[update(guard = "caller_is_governance_principal")]
+#[proposal(guard = "caller_is_governance_principal")]
 #[trace]
 fn update_config(args: Args) -> Response {
     mutate_state(|state| update_config_impl(args, state))

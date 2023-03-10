@@ -1,9 +1,10 @@
 use candid::CandidType;
+use human_readable::HumanReadable;
 use ic_ledger_types::Tokens;
 use serde::{Deserialize, Serialize};
 use types::{Cycles, Milliseconds};
 
-#[derive(CandidType, Serialize, Deserialize, Debug, Default)]
+#[derive(CandidType, Serialize, Deserialize, HumanReadable, Clone, Debug, Default)]
 pub struct Args {
     pub max_top_up_amount: Option<Cycles>,
     pub min_interval: Option<Milliseconds>,
