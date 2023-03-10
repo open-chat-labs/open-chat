@@ -61,7 +61,11 @@ fn c2c_join_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Response
                 let summary = runtime_state.summary(&participant, now);
                 Success(Box::new(summary))
             }
-            AddResult::AlreadyInGroup => AlreadyInGroup,
+            AddResult::AlreadyInGroup => {
+                let participant = runtime_state.data.participants.get_by_principal(&args.principal).unwrap();
+                let summary = runtime_state.summary(participant, now);
+                AlreadyInGroupV2(Box::new(summary))
+            }
             AddResult::Blocked => Blocked,
         }
     } else {

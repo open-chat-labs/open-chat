@@ -53,7 +53,8 @@ async fn call_join_group(group: CanisterId, local_user_index: CanisterId) -> Res
     match local_user_index_canister_c2c_client::join_group(local_user_index, &c2c_args).await {
         Ok(result) => match result {
             local_user_index_canister::join_group::Response::Success(_) => Ok(()),
-            local_user_index_canister::join_group::Response::AlreadyInGroup => Err(AlreadyInGroup),
+            local_user_index_canister::join_group::Response::AlreadyInGroup
+            | local_user_index_canister::join_group::Response::AlreadyInGroupV2(_) => Err(AlreadyInGroup),
             local_user_index_canister::join_group::Response::GroupNotFound => Err(GroupNotFound),
             local_user_index_canister::join_group::Response::GroupNotPublic => Err(GroupNotPublic),
             local_user_index_canister::join_group::Response::ParticipantLimitReached(_) => Err(ParticipantLimitReached),
