@@ -5,10 +5,21 @@ TITLE=$1
 URL=$2
 SUMMARY=$3
 
-TO_PRINCIPAL=$4
-TO_SUBACCOUNT=$5
-MEMO=$6
-AMOUNT_E8S=$7
+TOKEN=$4
+TO_PRINCIPAL=$5
+TO_SUBACCOUNT=$6
+MEMO=$7
+AMOUNT_E8S=$8
+
+if [ $TOKEN = "ICP" ]
+then
+    TREASURY=1
+elif [ $TOKEN = "CHAT" ]
+    TREASURY=2
+else
+    echo "TOKEN not set"
+    exit 1
+fi
 
 # Set current directory to the OC root
 SCRIPT=$(readlink -f "$0")
@@ -22,9 +33,9 @@ set -o allexport; source .env; set +o allexport
 # Build the proposal candid
 PROPOSAL="(record { title=\"$TITLE\"; url=\"$URL\"; summary=\"$SUMMARY\"; action=opt variant {
 TransferSnsTreasuryFunds = record {
-    from_treasury=1:int32;
+    from_treasury=$TREASURY:int32;
     to_principal=opt principal \"$TO_PRINCIPAL\": opt principal;
-    to_subaccount=$TO_SUBACCOUNT: opt Subaccount;
+    to_subaccount=opt record { subaccount = vec { $TO_SUBACCOUNT };
     memo=$MEMO: opt nat64;
     amount_e8s=$AMOUNT_E8S: nat64
 }})"
