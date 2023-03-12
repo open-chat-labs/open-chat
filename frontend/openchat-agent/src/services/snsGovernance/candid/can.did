@@ -1,30 +1,49 @@
 // This is a trimmed down version of the full SNS governance candid file which can be found here -
 // https://github.com/dfinity/ic/blob/master/rs/sns/governance/canister/governance.did
 
-type ListNervousSystemFunctionsResponse = record {
-    reserved_ids : vec nat64;
-    functions : vec NervousSystemFunction;
-};
-
-type NervousSystemFunction = record {
-    id : nat64;
-    name : text;
-    description : opt text;
-    function_type : opt FunctionType;
-};
-
 type FunctionType = variant {
-    NativeNervousSystemFunction : record {};
-    GenericNervousSystemFunction : GenericNervousSystemFunction;
+  NativeNervousSystemFunction : record {};
+  GenericNervousSystemFunction : GenericNervousSystemFunction;
 };
-
 type GenericNervousSystemFunction = record {
-    validator_canister_id : opt principal;
-    target_canister_id : opt principal;
-    validator_method_name : opt text;
-    target_method_name : opt text;
+  validator_canister_id : opt principal;
+  target_canister_id : opt principal;
+  validator_method_name : opt text;
+  target_method_name : opt text;
 };
-
+type GovernanceError = record { error_message : text; error_type : int32 };
+type ListNervousSystemFunctionsResponse = record {
+  reserved_ids : vec nat64;
+  functions : vec NervousSystemFunction;
+};
+type ListProposals = record {
+  include_reward_status : vec int32;
+  before_proposal : opt ProposalId;
+  limit : nat32;
+  exclude_type : vec nat64;
+  include_status : vec int32;
+};
+type ListProposalsResponse = record { proposals : vec ProposalData };
+type NervousSystemFunction = record {
+  id : nat64;
+  name : text;
+  description : opt text;
+  function_type : opt FunctionType;
+};
+type ProposalData = record {
+  id : opt ProposalId;
+  latest_tally : opt Tally;
+};
+type ProposalId = record { id : nat64 };
+type Tally = record {
+  no : nat64;
+  yes : nat64;
+  total : nat64;
+  timestamp_seconds : nat64;
+};
 service : {
-    list_nervous_system_functions : () -> (ListNervousSystemFunctionsResponse) query;
+  list_nervous_system_functions : () -> (
+      ListNervousSystemFunctionsResponse,
+  ) query;
+  list_proposals : (ListProposals) -> (ListProposalsResponse) query;
 }

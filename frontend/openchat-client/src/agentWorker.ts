@@ -92,6 +92,7 @@ import {
     PayForDiamondMembershipResponse,
     AddHotGroupExclusionResponse,
     RemoveHotGroupExclusionResponse,
+    Tally,
 } from "openchat-shared";
 import type { OpenChatConfig } from "./config";
 import { v4 } from "uuid";
@@ -809,6 +810,19 @@ export class OpenChatAgentWorker extends EventTarget {
                 userId,
             },
         });
+    }
+
+    getSnsProposalTally(
+        snsGovernanceCanisterId: string,
+        proposalId: bigint
+    ): Promise<Tally> {
+        return this.sendRequest({
+            kind: "getSnsProposalTally",
+            payload: {
+                snsGovernanceCanisterId,
+                proposalId,
+            }
+        })
     }
 
     listNervousSystemFunctions(

@@ -101,6 +101,9 @@
                 if (resp === "success") {
                     success = true;
                     proposalVotes.insert(mId, adopt ? "adopted" : "rejected");
+                    if (!isNns) {
+                        client.getSnsProposalTally(content.governanceCanisterId, proposal.id);
+                    }
                 } else if (resp === "no_eligible_neurons") {
                     showNeuronInfo = true;
                 } else {

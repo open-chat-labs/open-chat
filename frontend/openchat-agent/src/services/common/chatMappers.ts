@@ -42,11 +42,6 @@ import type {
     ApiRole,
     ApiPrizeWinnerContent,
 } from "../user/candid/idl";
-import type {
-    ApiListNervousSystemFunctionsResponse,
-    ApiNervousSystemFunction,
-    ApiSnsFunctionType,
-} from "../snsGovernance/candid/idl";
 import {
     type Message,
     type ThreadSummary,
@@ -81,9 +76,6 @@ import {
     type GroupPermissions,
     type PermissionRole,
     type PendingCryptocurrencyWithdrawal,
-    type ListNervousSystemFunctionsResponse,
-    type NervousSystemFunction,
-    type SnsFunctionType,
     type ChatMetrics,
     UnsupportedValueError,
     type MemberRole,
@@ -224,6 +216,7 @@ function proposal(candid: ApiProposal): Proposal {
                 yes: Number(p.tally.yes / E8S_AS_BIGINT),
                 no: Number(p.tally.no / E8S_AS_BIGINT),
                 total: Number(p.tally.total / E8S_AS_BIGINT),
+                timestamp: p.tally.timestamp,
             },
             lastUpdated: Number(p.last_updated),
             created: Number(p.created),
@@ -245,6 +238,7 @@ function proposal(candid: ApiProposal): Proposal {
                 yes: Number(p.tally.yes / E8S_AS_BIGINT),
                 no: Number(p.tally.no / E8S_AS_BIGINT),
                 total: Number(p.tally.total / E8S_AS_BIGINT),
+                timestamp: p.tally.timestamp,
             },
             lastUpdated: Number(p.last_updated),
             created: Number(p.created),
@@ -897,30 +891,4 @@ function apiICP(amountE8s: bigint): ApiICP {
     return {
         e8s: amountE8s,
     };
-}
-
-export function nervousSystemFunctions(
-    candid: ApiListNervousSystemFunctionsResponse
-): ListNervousSystemFunctionsResponse {
-    return {
-        reservedIds: [...candid.reserved_ids],
-        functions: candid.functions.map(nervousSystemFunction),
-    };
-}
-
-function nervousSystemFunction(candid: ApiNervousSystemFunction): NervousSystemFunction {
-    return {
-        id: Number(candid.id),
-        name: candid.name,
-        description: optional(candid.description, identity) ?? "",
-        functionType: optional(candid.function_type, snsFunctionType),
-    };
-}
-
-function snsFunctionType(candid: ApiSnsFunctionType): SnsFunctionType {
-    if ("NativeNervousSystemFunction" in candid) {
-        return { kind: "native_nervous_system_function" };
-    } else {
-        return { kind: "generic_nervous_system_function" };
-    }
 }

@@ -135,6 +135,7 @@ import {
     PayForDiamondMembershipResponse,
     AddHotGroupExclusionResponse,
     RemoveHotGroupExclusionResponse,
+    Tally,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import { applyOptionUpdate } from "../utils/mapping";
@@ -1408,6 +1409,17 @@ export class OpenChatAgent extends EventTarget {
     migrateUserPrincipal(userId: string): Promise<MigrateUserPrincipalResponse> {
         const userClient = UserClient.create(userId, this.identity, this.config, this.db);
         return userClient.migrateUserPrincipal();
+    }
+
+    getSnsProposalTally(
+        snsGovernanceCanisterId: string,
+        proposalId: bigint
+    ): Promise<Tally> {
+        return SnsGovernanceClient.create(
+            this.identity,
+            this.config,
+            snsGovernanceCanisterId
+        ).getProposalTally(proposalId);
     }
 
     listNervousSystemFunctions(
