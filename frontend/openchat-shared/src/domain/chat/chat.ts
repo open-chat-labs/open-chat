@@ -182,6 +182,7 @@ export interface Tally {
     yes: number;
     no: number;
     total: number;
+    timestamp: bigint;
 }
 
 export interface NnsProposal extends ProposalCommon {

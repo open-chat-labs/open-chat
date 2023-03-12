@@ -37,6 +37,7 @@ import { localChatSummaryUpdates } from "./localChatSummaryUpdates";
 import { toRecordFiltered } from "../utils/list";
 import { setsAreEqual } from "../utils/set";
 import { failedMessagesStore } from "./failedMessages";
+import { proposalTallies } from "./proposalTallies";
 
 export const currentUserStore = immutableStore<CreatedUser | undefined>(undefined);
 
@@ -273,8 +274,9 @@ export const threadEvents = derived(
         localMessageUpdates,
         selectedThreadKey,
         failedMessagesStore,
+        proposalTallies,
     ],
-    ([$serverEvents, $unconfirmed, $localUpdates, $threadKey, $failedMessages]) => {
+    ([$serverEvents, $unconfirmed, $localUpdates, $threadKey, $failedMessages, $proposalTallies]) => {
         if ($threadKey === undefined) return [];
         const failed = $failedMessages[$threadKey]
             ? Object.values($failedMessages[$threadKey])
@@ -283,7 +285,8 @@ export const threadEvents = derived(
         return mergeEventsAndLocalUpdates(
             $serverEvents,
             [...unconfirmed, ...failed],
-            $localUpdates
+            $localUpdates,
+            $proposalTallies
         );
     }
 );
@@ -489,8 +492,8 @@ export function removeGroupPreview(chatId: string): void {
 }
 
 export const eventsStore: Readable<EventWrapper<ChatEvent>[]> = derived(
-    [serverEventsStore, unconfirmed, localMessageUpdates, failedMessagesStore],
-    ([$serverEventsForSelectedChat, $unconfirmed, $localMessageUpdates, $failedMessages]) => {
+    [serverEventsStore, unconfirmed, localMessageUpdates, failedMessagesStore, proposalTallies],
+    ([$serverEventsForSelectedChat, $unconfirmed, $localMessageUpdates, $failedMessages, $proposalTallies]) => {
         const chatId = get(selectedChatId) ?? "";
         // for the purpose of merging, unconfirmed and failed can be treated the same
         const failed = $failedMessages[chatId] ? Object.values($failedMessages[chatId]) : [];
@@ -498,7 +501,8 @@ export const eventsStore: Readable<EventWrapper<ChatEvent>[]> = derived(
         return mergeEventsAndLocalUpdates(
             $serverEventsForSelectedChat,
             [...unconfirmed, ...failed],
-            $localMessageUpdates
+            $localMessageUpdates,
+            $proposalTallies
         );
     }
 );
