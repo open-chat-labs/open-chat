@@ -1,9 +1,8 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::ChatId;
+use types::{ChatId, Empty};
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub struct Args {}
+pub type Args = Empty;
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
