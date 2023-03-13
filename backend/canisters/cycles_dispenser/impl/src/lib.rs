@@ -45,6 +45,7 @@ impl State {
             git_commit_id: utils::git::git_commit_id().to_string(),
             governance_principals: self.data.governance_principals.iter().copied().collect(),
             canisters: self.data.canisters.metrics(),
+            sns_root_canister: self.data.sns_root_canister,
             max_top_up_amount: self.data.max_top_up_amount,
             min_interval: self.data.min_interval,
             min_cycles_balance: self.data.min_cycles_balance,
@@ -59,6 +60,8 @@ impl State {
 struct Data {
     pub governance_principals: HashSet<Principal>,
     pub canisters: Canisters,
+    #[serde(default = "sns_root_canister")]
+    pub sns_root_canister: Option<CanisterId>,
     pub max_top_up_amount: Cycles,
     pub min_interval: Milliseconds,
     pub min_cycles_balance: Cycles,
@@ -67,6 +70,10 @@ struct Data {
     pub cycles_minting_canister: CanisterId,
     pub cycles_top_up_pending_notification: Option<BlockIndex>,
     pub test_mode: bool,
+}
+
+fn sns_root_canister() -> Option<CanisterId> {
+    Some(CanisterId::from_text("3e3x2-xyaaa-aaaaq-aaalq-cai").unwrap())
 }
 
 impl Data {
@@ -86,6 +93,7 @@ impl Data {
         Data {
             governance_principals: governance_principals.into_iter().collect(),
             canisters: Canisters::new(canisters, now),
+            sns_root_canister: None,
             max_top_up_amount,
             min_interval,
             min_cycles_balance,
@@ -107,6 +115,7 @@ pub struct Metrics {
     pub git_commit_id: String,
     pub governance_principals: Vec<Principal>,
     pub canisters: Vec<CanisterMetrics>,
+    pub sns_root_canister: Option<CanisterId>,
     pub max_top_up_amount: Cycles,
     pub min_interval: Milliseconds,
     pub min_cycles_balance: Cycles,
