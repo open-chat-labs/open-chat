@@ -34,6 +34,7 @@
             openStorageIndexCanister: process.env.STORAGE_INDEX_CANISTER!,
             groupIndexCanister: process.env.GROUP_INDEX_CANISTER!,
             notificationsCanister: process.env.NOTIFICATIONS_CANISTER!,
+            proposalsBotCanister: process.env.PROPOSALS_BOT_CANISTER!,
             onlineCanister: process.env.ONLINE_CANISTER!,
             userIndexCanister: process.env.USER_INDEX_CANISTER!,
             internetIdentityUrl: process.env.INTERNET_IDENTITY_URL!,
@@ -44,7 +45,6 @@
             ledgerCanisterCHAT: process.env.LEDGER_CANISTER_CHAT!,
             userGeekApiKey: process.env.USERGEEK_APIKEY!,
             blobUrlPattern: process.env.BLOB_URL_PATTERN!,
-            proposalBotCanister: process.env.PROPOSALS_BOT_CANISTER!,
             i18nFormatter: $_,
             logger: logger,
             websiteVersion: process.env.OPENCHAT_WEBSITE_VERSION!,
@@ -72,6 +72,7 @@
         window.addEventListener("orientationchange", calculateHeight);
         window.addEventListener("unhandledrejection", unhandledError);
         (<any>window).platformModerator = { addHotGroupExclusion, deleteFrozenGroup, freezeGroup, removeHotGroupExclusion, unfreezeGroup };
+        (<any>window).platformOperator= { updateProposalsGroup };
     });
 
     function addHotGroupExclusion(chatId: string): void {
@@ -146,6 +147,29 @@
             })
             .catch((e) => {
                 console.log("Failed to unfreeze group", e);
+            });
+    }
+
+    function updateProposalsGroup(
+        governanceCanisterId: string, 
+        name?: string,
+        description?: string,
+        avatarUrl?: string): void {
+        client
+            .updateProposalsGroup(
+                governanceCanisterId, 
+                name, 
+                description, 
+                avatarUrl)
+            .then((success) => {
+                if (success) {
+                    console.log("Proposals group updated", governanceCanisterId);
+                } else {
+                    console.log("Failed to update proposals group", governanceCanisterId);
+                }
+            })
+            .catch((e) => {
+                console.log("Failed to update proposals group", e);
             });
     }
 
