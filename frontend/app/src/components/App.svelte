@@ -72,7 +72,7 @@
         window.addEventListener("orientationchange", calculateHeight);
         window.addEventListener("unhandledrejection", unhandledError);
         (<any>window).platformModerator = { addHotGroupExclusion, deleteFrozenGroup, freezeGroup, removeHotGroupExclusion, unfreezeGroup };
-        (<any>window).platformOperator= { updateProposalsGroup };
+        (<any>window).platformOperator = { updateProposalsGroup };
     });
 
     function addHotGroupExclusion(chatId: string): void {
