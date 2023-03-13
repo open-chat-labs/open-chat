@@ -169,17 +169,13 @@ struct Data {
     pub user_index_event_sync_queue: CanisterEventSyncQueue<LocalUserIndexEvent>,
     pub user_principal_migration_queue: UserPrincipalMigrationQueue,
     pub platform_moderators: HashSet<UserId>,
-    #[serde(default)]
     pub platform_operators: HashSet<UserId>,
     pub test_mode: bool,
     pub challenges: Challenges,
     pub max_concurrent_canister_upgrades: usize,
-    #[serde(default)]
     pub diamond_membership_payment_metrics: DiamondMembershipPaymentMetrics,
     pub local_index_map: LocalUserIndexMap,
-    #[serde(default)]
     pub timer_jobs: TimerJobs<TimerJob>,
-    #[serde(default)]
     pub neuron_controllers_for_initial_airdrop: HashMap<UserId, Principal>,
 }
 
