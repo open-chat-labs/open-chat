@@ -93,6 +93,8 @@ import {
     AddHotGroupExclusionResponse,
     RemoveHotGroupExclusionResponse,
     Tally,
+    Avatar,
+    UpdateProposalsGroupResponse,
 } from "openchat-shared";
 import type { OpenChatConfig } from "./config";
 import { v4 } from "uuid";
@@ -144,7 +146,7 @@ export class OpenChatAgentWorker extends EventTarget {
                 userGeekApiKey: this.config.userGeekApiKey,
                 enableMultiCrypto: this.config.enableMultiCrypto,
                 blobUrlPattern: this.config.blobUrlPattern,
-                proposalBotCanister: this.config.proposalBotCanister,
+                proposalsBotCanister: this.config.proposalsBotCanister,
             },
         };
         this.ready = new Promise((resolve) => {
@@ -1338,6 +1340,22 @@ export class OpenChatAgentWorker extends EventTarget {
                 duration,
                 recurring,
                 expectedPriceE8s,
+            },
+        });
+    }
+
+    updateProposalsGroup(
+        governanceCanisterId: string, 
+        name?: string,
+        description?: string,
+        avatar?: Avatar): Promise<UpdateProposalsGroupResponse> {
+        return this.sendRequest({
+            kind: "updateProposalsGroup",
+            payload: {
+                governanceCanisterId,
+                name,
+                description,
+                avatar,
             },
         });
     }

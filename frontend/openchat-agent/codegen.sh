@@ -19,6 +19,9 @@ didc bind ../../backend/canisters/notifications_index/api/can.did -t js > ./src/
 didc bind ../../backend/canisters/online_users/api/can.did -t ts > ./src/services/online/candid/types.d.ts
 didc bind ../../backend/canisters/online_users/api/can.did -t js > ./src/services/online/candid/idl.js
 
+didc bind ../../backend/canisters/proposals_bot/api/can.did -t ts > ./src/services/proposalsBot/candid/types.d.ts
+didc bind ../../backend/canisters/proposals_bot/api/can.did -t js > ./src/services/proposalsBot/candid/idl.js
+
 didc bind ./src/services/ledger/candid/can.did -t ts > ./src/services/ledger/candid/types.d.ts
 didc bind ./src/services/ledger/candid/can.did -t js > ./src/services/ledger/candid/idl.js
 

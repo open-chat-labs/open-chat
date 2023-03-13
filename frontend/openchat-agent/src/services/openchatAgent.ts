@@ -136,10 +136,14 @@ import {
     AddHotGroupExclusionResponse,
     RemoveHotGroupExclusionResponse,
     Tally,
+    Avatar,
+    UpdateProposalsGroupResponse,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import { applyOptionUpdate } from "../utils/mapping";
 import { waitAll } from "../utils/promise";
+import type { IProposalsBotClient } from "./proposalsBot/proposalsBot.client.interface";
+import { ProposalsBotClient } from "./proposalsBot/proposalsBot.client";
 
 export const apiKey = Symbol();
 
@@ -149,6 +153,7 @@ export class OpenChatAgent extends EventTarget {
     private _groupIndexClient: IGroupIndexClient;
     private _userClient?: IUserClient;
     private _notificationClient: INotificationsClient;
+    private _proposalsBotClient: IProposalsBotClient;
     private _ledgerClients: Record<Cryptocurrency, ILedgerClient>;
     private _groupClients: Record<string, IGroupClient>;
     private _groupInvite: GroupInvite | undefined;
@@ -163,6 +168,7 @@ export class OpenChatAgent extends EventTarget {
         this._userIndexClient = UserIndexClient.create(identity, config);
         this._groupIndexClient = GroupIndexClient.create(identity, config);
         this._notificationClient = NotificationsClient.create(identity, config);
+        this._proposalsBotClient = ProposalsBotClient.create(identity, config);
         this._ledgerClients = {
             icp: LedgerClient.create(identity, config, this.config.ledgerCanisterICP),
             sns1: LedgerClient.create(identity, config, this.config.ledgerCanisterSNS1),
@@ -1588,4 +1594,17 @@ export class OpenChatAgent extends EventTarget {
             expectedPriceE8s
         );
     }
+
+    updateProposalsGroup(
+        governanceCanisterId: string, 
+        name?: string,
+        desc?: string,
+        avatar?: Avatar): Promise<UpdateProposalsGroupResponse> {
+            return this._proposalsBotClient.updateGroupDetails(
+                governanceCanisterId,
+                name,
+                desc,
+                avatar
+            );
+        }
 }
