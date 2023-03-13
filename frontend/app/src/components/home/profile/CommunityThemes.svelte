@@ -1,5 +1,5 @@
 <script lang="ts">
-    import Select from "../../Select.svelte";
+    import Radio from "../../Radio.svelte";
     import Legend from "../../Legend.svelte";
     import { _ } from "svelte-i18n";
     import { themeNameStore, saveSeletedTheme, communityThemes } from "../../../theme/themes";
@@ -13,20 +13,27 @@
         });
     });
 
-    function themeSelected() {
-        if (communityThemeName !== "") {
-            saveSeletedTheme(communityThemeName);
-        }
+    function themeSelected(name: string) {
+        communityThemeName = name;
+        saveSeletedTheme(name);
     }
 </script>
 
-<Legend rules={$_("useAtOwnRisk")} label={$_("communityTheme")} />
-<Select on:change={themeSelected} bind:value={communityThemeName}>
-    <option disabled selected value={""}>{$_("selectCommunityTheme")}</option>
+<div class="community-themes">
+    <Legend rules={$_("useAtOwnRisk")} label={$_("communityTheme")} />
     {#each communityThemes as theme}
-        <option value={theme.name}>{theme.label}</option>
+        <Radio
+            on:change={() => themeSelected(theme.name)}
+            value={theme.name}
+            checked={communityThemeName === theme.name}
+            id={`theme_${theme.name}`}
+            label={theme.name}
+            group={"community_themes"} />
     {/each}
-</Select>
+</div>
 
 <style type="text/scss">
+    .community-themes {
+        margin-bottom: $sp4;
+    }
 </style>

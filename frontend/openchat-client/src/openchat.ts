@@ -512,6 +512,26 @@ export class OpenChat extends EventTarget {
                 }
             });
         this.api.getAllCachedUsers().then((users) => userStore.set(users));
+        this.loadUserThemes();
+    }
+
+    /**
+     * This is tricky for a few reasons.
+     * 1) we wish to be able to apply the theme immediately but now we will have to load the user themes before we can apply them
+     *      - we will have to store both the selected theme and the user themes in local storage / indexed db
+     *      - then if you use a new device you would have to select the custom theme again anyway since theme selection is a device
+     *        specific thing. That sort of works
+     * 2) it means that the theme type must be shared with the back end. This gives us the problem of backward compatibility.
+     * What if someone creates a theme and then we change the definition of the theme? We have to make sure that they are always
+     * backward compatible? Make sure all fields are optional and we *must* have a base system theme to fallback to.
+     * But the structure could still change.
+     *
+     * So we need to load from local storage and then update from api as soon as possible.
+     * Are we going to load every time? We need to really or we need some cache invalidation strategy.
+     * Gah - why is everything much more complicated than it appears to be?
+     */
+    private loadUserThemes(): Promise<unknown> {
+        return Promise.resolve();
     }
 
     userIsDiamond(userId: string): boolean {
@@ -3314,7 +3334,9 @@ export class OpenChat extends EventTarget {
                     pinnedChatsStore.set(chatsResponse.pinnedChats);
                 }
 
-                myServerChatSummariesStore.set(toRecord(chatsResponse.chatSummaries, (chat) => chat.chatId));
+                myServerChatSummariesStore.set(
+                    toRecord(chatsResponse.chatSummaries, (chat) => chat.chatId)
+                );
 
                 if (Object.keys(this._liveState.uninitializedDirectChats).length > 0) {
                     for (const chat of chatsResponse.chatSummaries) {

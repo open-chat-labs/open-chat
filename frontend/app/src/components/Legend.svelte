@@ -8,10 +8,12 @@
     {#if rules}
         <span class="rules">({rules})</span>
     {/if}
+    <slot />
 </div>
 
 <style type="text/scss">
     .legend {
+        position: relative;
         margin-bottom: $sp2;
 
         .label {

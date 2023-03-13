@@ -2,6 +2,7 @@
     import SectionHeader from "../../SectionHeader.svelte";
     import { PartialUserSummary, OpenChat, AvatarSize } from "openchat-client";
     import Close from "svelte-material-icons/Close.svelte";
+    import { menuCloser } from "../../../actions/closeMenu";
     import HoverIcon from "../../HoverIcon.svelte";
     import StorageUsage from "../../StorageUsage.svelte";
     import EditableAvatar from "../../EditableAvatar.svelte";
@@ -39,6 +40,7 @@
     import ErrorMessage from "../../ErrorMessage.svelte";
     import ReferUsers from "./ReferUsers.svelte";
     import Expiry from "../upgrade/Expiry.svelte";
+    import MyThemes from "./MyThemes.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -165,7 +167,7 @@
     </span>
 </SectionHeader>
 
-<form class="user-form" on:submit|preventDefault={saveUser}>
+<form use:menuCloser class="user-form" on:submit|preventDefault={saveUser}>
     <div class="user">
         <CollapsibleCard
             on:toggle={userInfoOpen.toggle}
@@ -253,6 +255,7 @@
                             </div>
                         {/each}
                     </div>
+                    <MyThemes />
                     <CommunityThemes />
                 {/if}
             </div>
