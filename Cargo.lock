@@ -6787,6 +6787,8 @@ dependencies = [
  "sha2 0.10.6",
  "tracing",
  "types",
+ "user_index_canister",
+ "user_index_canister_c2c_client",
  "utils",
 ]
 
@@ -9011,6 +9013,7 @@ dependencies = [
 name = "user_index_canister_c2c_client"
 version = "0.1.0"
 dependencies = [
+ "candid",
  "canister_client_macros",
  "ic-cdk 0.7.3",
  "msgpack",
