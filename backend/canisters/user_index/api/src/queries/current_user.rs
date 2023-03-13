@@ -1,10 +1,9 @@
 use candid::CandidType;
 use ic_ledger_types::AccountIdentifier;
 use serde::{Deserialize, Serialize};
-use types::{CanisterUpgradeStatus, DiamondMembershipDetails, TimestampMillis, UserId, Version};
+use types::{CanisterUpgradeStatus, DiamondMembershipDetails, Empty, TimestampMillis, UserId, Version};
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub struct Args {}
+pub type Args = Empty;
 
 #[allow(clippy::large_enum_variant)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]
