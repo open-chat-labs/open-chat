@@ -28,7 +28,29 @@ type RemoveGovernanceCanisterResponse =
         InternalError: text;
     };
 
+type UpdateGroupDetailsArgs =
+    record {
+        governance_canister_id: CanisterId;
+        name: opt text;
+        description: opt text;
+        avatar: AvatarUpdate;
+    };
+
+type UpdateGroupDetailsResponse =
+    variant {
+        Success;
+        NotFound;
+        NotAuthorized;
+        NameTooShort;
+        NameTooLong;
+        NameTaken;
+        DescriptionTooLong;
+        AvatarTooBig;
+        InternalError: text;
+    };
+
 service : {
     add_governance_canister: (AddGovernanceCanisterArgs) -> (AddGovernanceCanisterResponse);
     remove_governance_canister: (RemoveGovernanceCanisterArgs) -> (RemoveGovernanceCanisterResponse);
+    update_group_details: (UpdateGroupDetailsArgs) -> (UpdateGroupDetailsResponse);
 }
