@@ -2,7 +2,10 @@
 
 TITLE="Update CyclesDispenser config"
 SUMMARY="Set the min cycles balance to 1000T and set the ICP burn amount to 50 ICP.
-This means that each time the canister's cycles balance drops below 1000T it will burn 50 ICP into cycles."
+
+This means that each time the canister's cycles balance drops below 1000T it will burn 50 ICP into cycles.
+
+You can see the configuration settings (and general metrics) for the CyclesDispenser [here](https://gonut-hqaaa-aaaaf-aby7a-cai.raw.ic0.app/metrics)"
 
 # Set current directory to the scripts root
 SCRIPT=$(readlink -f "$0")
