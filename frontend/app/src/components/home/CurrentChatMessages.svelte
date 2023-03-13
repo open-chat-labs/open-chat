@@ -118,14 +118,7 @@
 
     function expandDeletedMessages(ev: CustomEvent<{ scrollTop: number; scrollHeight: number }>) {
         tick().then(() => {
-            if (messagesDiv) {
-                // TODO - fix this
-                // expectedScrollTop = undefined;
-                // const diff = (messagesDiv?.scrollHeight ?? 0) - ev.detail.scrollHeight;
-                // interruptScroll(() => {
-                //     messagesDiv?.scrollTo({ top: ev.detail.scrollTop - diff, behavior: "auto" });
-                // });
-            }
+            chatEventList?.adjust(ev.detail.scrollHeight, ev.detail.scrollTop);
         });
     }
 
