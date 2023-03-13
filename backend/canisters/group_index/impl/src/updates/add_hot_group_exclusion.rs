@@ -1,9 +1,10 @@
-use crate::{lookup_user, mutate_state, read_state, LookupUserError, RuntimeState};
+use crate::{mutate_state, read_state, RuntimeState};
 use candid::Principal;
 use canister_tracing_macros::trace;
 use group_index_canister::{add_hot_group_exclusion, remove_hot_group_exclusion};
 use ic_cdk_macros::update;
 use types::{CanisterId, ChatId};
+use user_index_canister_c2c_client::{lookup_user, LookupUserError};
 
 #[update]
 #[trace]

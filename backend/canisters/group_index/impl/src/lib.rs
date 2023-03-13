@@ -10,8 +10,7 @@ use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashSet;
 use types::{
-    CanisterId, CanisterWasm, ChatId, Cycles, FrozenGroupInfo, Milliseconds, TimestampMillis, Timestamped, UserDetails, UserId,
-    Version,
+    CanisterId, CanisterWasm, ChatId, Cycles, FrozenGroupInfo, Milliseconds, TimestampMillis, Timestamped, UserId, Version,
 };
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::env::Environment;
@@ -248,21 +247,4 @@ pub struct CanisterIds {
     pub user_index: CanisterId,
     pub proposals_bot: CanisterId,
     pub cycles_dispenser: CanisterId,
-}
-
-enum LookupUserError {
-    UserNotFound,
-    InternalError(String),
-}
-
-async fn lookup_user(caller: Principal, user_index_canister_id: CanisterId) -> Result<UserDetails, LookupUserError> {
-    let args = user_index_canister::c2c_lookup_user::Args {
-        user_id_or_principal: caller,
-    };
-
-    match user_index_canister_c2c_client::c2c_lookup_user(user_index_canister_id, &args).await {
-        Ok(user_index_canister::c2c_lookup_user::Response::Success(user)) => Ok(user),
-        Ok(_) => Err(LookupUserError::UserNotFound),
-        Err(error) => Err(LookupUserError::InternalError(format!("{error:?}"))),
-    }
 }
