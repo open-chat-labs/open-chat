@@ -51,6 +51,7 @@
 
     let interrupt = false;
     let morePrevAvailable = false;
+    let moreNewAvailable = false;
     let loadingPrev = false;
     let loadingNew = false;
     let loadingFromScroll = false;
@@ -64,17 +65,14 @@
     $: failedMessagesStore = client.failedMessagesStore;
     $: threadSummary = threadRootEvent?.event.thread;
     $: mobileSafari = $mobileWidth && isSafari;
+    // $: mobileSafari = true;
 
     const scrollTop = writable<number>(0);
     const fromBottom = derived(scrollTop, ($scrollTop) => -$scrollTop);
     const insideBottomThreshold = derived(
         [fromBottom, dimensions],
         ([$fromBottom, $dimensions]) => {
-            if (mobileSafari) {
-                return $fromBottom < 1;
-            } else {
-                return $fromBottom < $dimensions.height;
-            }
+            return $fromBottom < $dimensions.height;
         }
     );
     const showGoToBottom = derived(fromBottom, ($fromBottom) => {
@@ -89,10 +87,12 @@
     afterUpdate(() => {
         $scrollTop = messagesDiv?.scrollTop ?? 0;
         morePrevAvailable = client.morePreviousMessagesAvailable(chat.chatId, threadRootEvent);
+        moreNewAvailable = client.moreNewMessagesAvailable(chat.chatId, threadRootEvent);
     });
 
     onMount(() => {
         morePrevAvailable = client.morePreviousMessagesAvailable(chat.chatId, threadRootEvent);
+        moreNewAvailable = client.moreNewMessagesAvailable(chat.chatId, threadRootEvent);
         client.addEventListener("openchat_event", clientEvent);
         return () => {
             client.removeEventListener("openchat_event", clientEvent);
@@ -186,22 +186,30 @@
     }
 
     function shouldLoadNewMessages() {
-        const moreNewMessages =
-            $insideBottomThreshold && client.moreNewMessagesAvailable(chat.chatId, threadRootEvent);
-        const result = !loadingNew && moreNewMessages;
+        moreNewAvailable = client.moreNewMessagesAvailable(chat.chatId, threadRootEvent);
+        const result = !loadingNew && $insideBottomThreshold && moreNewAvailable;
         if (result) {
             console.debug(
                 "SCROLL: shouldLoadNewMesages [loadingNew] [insideLoadThreshold] [moreNewMessages]",
                 loadingNew,
                 $insideBottomThreshold,
-                moreNewMessages
+                moreNewAvailable
             );
         }
         return result;
     }
 
+    // this is used when we load new messages explicitly on request
+    function loadNewMessages() {
+        loadingNew = true;
+        loadingFromScroll = true;
+        previousScrollHeight = messagesDiv?.scrollHeight;
+        previousScrollTop = messagesDiv?.scrollTop;
+        client.loadNewMessages(chat.chatId, threadRootEvent);
+    }
+
     function loadMoreIfRequired(fromScroll = false) {
-        if (shouldLoadNewMessages()) {
+        if (shouldLoadNewMessages() && !mobileSafari) {
             loadingNew = true;
             console.debug(
                 "SCROLL: about to load new messages",
@@ -334,7 +342,7 @@
                 interruptScroll(() => {
                     if (messagesDiv !== undefined) {
                         $scrollTop = messagesDiv.scrollTop =
-                            (previousScrollTop ?? 0) - scrollHeightDiff;
+                            messagesDiv.scrollTop - scrollHeightDiff;
                         console.debug("SCROLL: scrollTop updated to " + messagesDiv.scrollTop);
                     }
                 });
@@ -416,8 +424,17 @@
     bind:this={messagesDiv}
     bind:clientHeight={messagesDivHeight}
     on:scroll={onScroll}
-    class:interrupt={interrupt || (mobileSafari && loadingNew && loadingFromScroll)}
+    class:interrupt
     class={`scrollable-list ${rootSelector}`}>
+    {#if mobileSafari && initialised && moreNewAvailable}
+        <div class:loading={loadingNew} on:click={loadNewMessages} class="more">
+            {#if !loadingNew}
+                <span>
+                    {$_("loadMore")}
+                </span>
+            {/if}
+        </div>
+    {/if}
     <slot />
 </div>
 
@@ -458,6 +475,21 @@
 
         &.interrupt {
             overflow-y: hidden;
+        }
+    }
+
+    .more {
+        flex: 0 0 toRem(80);
+        cursor: pointer;
+        display: grid;
+        align-content: center;
+        background-color: rgba(255, 255, 255, 0.05);
+        @include font(bold, normal, fs-100);
+        text-align: center;
+
+        &.loading {
+            background-color: transparent;
+            @include loading-spinner();
         }
     }
 

@@ -1828,6 +1828,8 @@ export class OpenChat extends EventTarget {
             return false;
         }
 
+        console.log("Events loaded: ", eventsResponse.events);
+
         await this.handleEventsResponse(serverChat, eventsResponse);
         // We may have loaded messages which are more recent than what the chat summary thinks is the latest message,
         // if so, we update the chat summary to show the correct latest message.
@@ -2866,11 +2868,10 @@ export class OpenChat extends EventTarget {
     }
 
     getSnsProposalTally(snsGovernanceCanisterId: string, proposalId: bigint): Promise<Tally> {
-        return this.api.getSnsProposalTally(snsGovernanceCanisterId, proposalId)
-            .then((tally) => {
-                proposalTallies.setTally(snsGovernanceCanisterId, proposalId, tally);
-                return tally;
-            })
+        return this.api.getSnsProposalTally(snsGovernanceCanisterId, proposalId).then((tally) => {
+            proposalTallies.setTally(snsGovernanceCanisterId, proposalId, tally);
+            return tally;
+        });
     }
 
     getRecommendedGroups(): Promise<GroupChatSummary[]> {
@@ -3324,7 +3325,9 @@ export class OpenChat extends EventTarget {
                     pinnedChatsStore.set(chatsResponse.pinnedChats);
                 }
 
-                myServerChatSummariesStore.set(toRecord(chatsResponse.chatSummaries, (chat) => chat.chatId));
+                myServerChatSummariesStore.set(
+                    toRecord(chatsResponse.chatSummaries, (chat) => chat.chatId)
+                );
 
                 if (Object.keys(this._liveState.uninitializedDirectChats).length > 0) {
                     for (const chat of chatsResponse.chatSummaries) {
