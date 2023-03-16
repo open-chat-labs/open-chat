@@ -62,7 +62,6 @@ fn join_private_group_using_invite_code_succeeds() {
         canister_ids.local_user_index,
         &local_user_index_canister::join_group::Args {
             chat_id: group_id,
-            as_super_admin: false,
             invite_code: Some(invite_code),
             correlation_id: 0,
         },

@@ -18,6 +18,5 @@ pub enum Event {
 pub struct UserJoinedGroup {
     pub user_id: UserId,
     pub chat_id: ChatId,
-    pub as_super_admin: bool,
     pub latest_message_index: Option<MessageIndex>,
 }

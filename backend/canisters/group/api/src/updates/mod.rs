@@ -1,15 +1,12 @@
 pub mod add_participants;
 pub mod add_reaction;
 pub mod block_user;
-pub mod c2c_assume_super_admin;
 pub mod c2c_delete_group;
-pub mod c2c_dismiss_super_admin;
 pub mod c2c_end_poll;
 pub mod c2c_freeze_group;
 pub mod c2c_initialize_events;
 pub mod c2c_join_group;
 pub mod c2c_leave_group;
-pub mod c2c_relinquish_super_admin;
 pub mod c2c_set_user_suspended;
 pub mod c2c_toggle_mute_notifications;
 pub mod c2c_unfreeze_group;

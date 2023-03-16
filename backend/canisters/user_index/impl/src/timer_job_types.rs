@@ -12,7 +12,6 @@ use utils::time::{MINUTE_IN_MS, SECOND_IN_MS};
 #[derive(Serialize, Deserialize, Clone)]
 pub enum TimerJob {
     RecurringDiamondMembershipPayment(RecurringDiamondMembershipPayment),
-    DismissPlatformModerator(DismissPlatformModerator),
     SetUserSuspended(SetUserSuspended),
     SetUserSuspendedInGroup(SetUserSuspendedInGroup),
     UnsuspendUser(UnsuspendUser),
@@ -21,13 +20,6 @@ pub enum TimerJob {
 #[derive(Serialize, Deserialize, Clone)]
 pub struct RecurringDiamondMembershipPayment {
     pub user_id: UserId,
-}
-
-#[derive(Serialize, Deserialize, Clone)]
-pub struct DismissPlatformModerator {
-    pub user_id: UserId,
-    pub group_id: ChatId,
-    pub attempt: usize,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -55,7 +47,6 @@ impl Job for TimerJob {
     fn execute(&self) {
         match self {
             TimerJob::RecurringDiamondMembershipPayment(job) => job.execute(),
-            TimerJob::DismissPlatformModerator(job) => job.execute(),
             TimerJob::SetUserSuspended(job) => job.execute(),
             TimerJob::SetUserSuspendedInGroup(job) => job.execute(),
             TimerJob::UnsuspendUser(job) => job.execute(),
@@ -128,37 +119,6 @@ If you would like to extend your Diamond membership you will need to top up your
                     });
                 }
                 _ => {}
-            }
-        }
-    }
-}
-
-impl Job for DismissPlatformModerator {
-    fn execute(&self) {
-        ic_cdk::spawn(dismiss_platform_moderator(self.user_id, self.group_id, self.attempt));
-
-        async fn dismiss_platform_moderator(user_id: UserId, group_id: ChatId, attempt: usize) {
-            let c2c_args = group_canister::c2c_dismiss_super_admin::Args {
-                user_id,
-                correlation_id: 0,
-            };
-            if group_canister_c2c_client::c2c_dismiss_super_admin(group_id.into(), &c2c_args)
-                .await
-                .is_err()
-                && attempt < 10
-            {
-                mutate_state(|state| {
-                    let now = state.env.now();
-                    state.data.timer_jobs.enqueue_job(
-                        TimerJob::DismissPlatformModerator(DismissPlatformModerator {
-                            user_id,
-                            group_id,
-                            attempt: attempt + 1,
-                        }),
-                        now + (30 * SECOND_IN_MS), // Try again in 30 seconds
-                        now,
-                    );
-                });
             }
         }
     }

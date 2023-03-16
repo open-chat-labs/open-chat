@@ -689,10 +689,7 @@ export interface Participant {
 }
 export interface ParticipantAssumesSuperAdmin { 'user_id' : UserId }
 export interface ParticipantDismissedAsSuperAdmin { 'user_id' : UserId }
-export interface ParticipantJoined {
-  'user_id' : UserId,
-  'as_super_admin' : boolean,
-}
+export interface ParticipantJoined { 'user_id' : UserId }
 export interface ParticipantLeft { 'user_id' : UserId }
 export interface ParticipantRelinquishesSuperAdmin { 'user_id' : UserId }
 export interface ParticipantsAdded {
@@ -820,7 +817,6 @@ export interface ReplyContext {
   'event_index' : EventIndex,
 }
 export type Role = { 'Participant' : null } |
-  { 'SuperAdmin' : FallbackRole } |
   { 'Admin' : null } |
   { 'Owner' : null };
 export interface RoleChanged {

@@ -841,10 +841,7 @@ export interface Participant {
 }
 export interface ParticipantAssumesSuperAdmin { 'user_id' : UserId }
 export interface ParticipantDismissedAsSuperAdmin { 'user_id' : UserId }
-export interface ParticipantJoined {
-  'user_id' : UserId,
-  'as_super_admin' : boolean,
-}
+export interface ParticipantJoined { 'user_id' : UserId }
 export interface ParticipantLeft { 'user_id' : UserId }
 export interface ParticipantRelinquishesSuperAdmin { 'user_id' : UserId }
 export interface ParticipantsAdded {
@@ -993,7 +990,6 @@ export interface ReplyContext {
   'event_index' : EventIndex,
 }
 export type Role = { 'Participant' : null } |
-  { 'SuperAdmin' : FallbackRole } |
   { 'Admin' : null } |
   { 'Owner' : null };
 export interface RoleChanged {
@@ -1309,10 +1305,6 @@ export interface _SERVICE {
   >,
   'add_reaction' : ActorMethod<[AddReactionArgs], AddReactionResponse>,
   'archive_chat' : ActorMethod<[ArchiveChatArgs], ArchiveChatResponse>,
-  'assume_group_super_admin' : ActorMethod<
-    [AssumeGroupSuperAdminArgs],
-    AssumeGroupSuperAdminResponse
-  >,
   'bio' : ActorMethod<[BioArgs], BioResponse>,
   'block_user' : ActorMethod<[BlockUserArgs], BlockUserResponse>,
   'contacts' : ActorMethod<[ContactsArgs], ContactsResponse>,
@@ -1352,10 +1344,6 @@ export interface _SERVICE {
   >,
   'pin_chat' : ActorMethod<[PinChatRequest], PinChatResponse>,
   'public_profile' : ActorMethod<[PublicProfileArgs], PublicProfileResponse>,
-  'relinquish_group_super_admin' : ActorMethod<
-    [RelinquishGroupSuperAdminArgs],
-    RelinquishGroupSuperAdminResponse
-  >,
   'remove_reaction' : ActorMethod<[RemoveReactionArgs], RemoveReactionResponse>,
   'search_messages' : ActorMethod<[SearchMessagesArgs], SearchMessagesResponse>,
   'send_message' : ActorMethod<[SendMessageArgs], SendMessageResponse>,

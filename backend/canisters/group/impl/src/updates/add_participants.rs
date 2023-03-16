@@ -190,7 +190,6 @@ fn commit(
             now,
             min_visible_event_index,
             min_visible_message_index,
-            as_super_admin: false,
             mute_notifications: runtime_state.data.is_public,
         });
     }

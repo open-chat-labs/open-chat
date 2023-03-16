@@ -673,10 +673,7 @@ export interface Participant {
 }
 export interface ParticipantAssumesSuperAdmin { 'user_id' : UserId }
 export interface ParticipantDismissedAsSuperAdmin { 'user_id' : UserId }
-export interface ParticipantJoined {
-  'user_id' : UserId,
-  'as_super_admin' : boolean,
-}
+export interface ParticipantJoined { 'user_id' : UserId }
 export interface ParticipantLeft { 'user_id' : UserId }
 export interface ParticipantRelinquishesSuperAdmin { 'user_id' : UserId }
 export interface ParticipantsAdded {
@@ -832,8 +829,7 @@ export type RegistrationFee = { 'ICP' : ICPRegistrationFee } |
   { 'Cycles' : CyclesRegistrationFee };
 export interface RemovePlatformModeratorArgs { 'user_id' : UserId }
 export type RemovePlatformModeratorResponse = { 'Success' : null } |
-  { 'NotPlatformModerator' : null } |
-  { 'InternalError' : string };
+  { 'NotPlatformModerator' : null };
 export interface RemovePlatformOperatorArgs { 'user_id' : UserId }
 export type RemovePlatformOperatorResponse = { 'Success' : null };
 export interface ReplyContext {
@@ -841,7 +837,6 @@ export interface ReplyContext {
   'event_index' : EventIndex,
 }
 export type Role = { 'Participant' : null } |
-  { 'SuperAdmin' : FallbackRole } |
   { 'Admin' : null } |
   { 'Owner' : null };
 export interface RoleChanged {

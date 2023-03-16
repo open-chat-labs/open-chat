@@ -136,7 +136,6 @@ impl RuntimeState {
             args.now,
             args.min_visible_event_index,
             args.min_visible_message_index,
-            args.as_super_admin,
             args.mute_notifications,
         );
 
@@ -429,7 +428,6 @@ struct AddParticipantArgs {
     now: TimestampMillis,
     min_visible_event_index: EventIndex,
     min_visible_message_index: MessageIndex,
-    as_super_admin: bool,
     mute_notifications: bool,
 }
 

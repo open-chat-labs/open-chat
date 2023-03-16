@@ -166,7 +166,7 @@ export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUser
                     : "in_progress",
             wasmVersion: new Version(version.major, version.minor, version.patch),
             referrals: r.referrals.map((p) => p.toString()),
-            isSuperAdmin: r.is_super_admin,
+            isPlatformModerator: r.is_super_admin,
             suspensionDetails: optional(r.suspension_details, suspensionDetails),
             isSuspectedBot: r.is_suspected_bot,
             diamondMembership: optional(r.diamond_membership_details, diamondMembership),

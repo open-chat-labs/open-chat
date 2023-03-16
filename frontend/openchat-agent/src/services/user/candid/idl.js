@@ -39,18 +39,6 @@ export const idlFactory = ({ IDL }) => {
     'ChatNotFound' : IDL.Null,
     'Success' : IDL.Null,
   });
-  const AssumeGroupSuperAdminArgs = IDL.Record({
-    'correlation_id' : IDL.Nat64,
-    'chat_id' : ChatId,
-  });
-  const AssumeGroupSuperAdminResponse = IDL.Variant({
-    'AlreadyOwner' : IDL.Null,
-    'CallerNotInGroup' : IDL.Null,
-    'Success' : IDL.Null,
-    'NotSuperAdmin' : IDL.Null,
-    'InternalError' : IDL.Text,
-    'AlreadySuperAdmin' : IDL.Null,
-  });
   const BioArgs = IDL.Record({});
   const BioResponse = IDL.Variant({ 'Success' : IDL.Text });
   const BlockUserArgs = IDL.Record({ 'user_id' : UserId });
@@ -449,10 +437,7 @@ export const idlFactory = ({ IDL }) => {
     'message_id' : MessageId,
     'event_index' : EventIndex,
   });
-  const ParticipantJoined = IDL.Record({
-    'user_id' : UserId,
-    'as_super_admin' : IDL.Bool,
-  });
+  const ParticipantJoined = IDL.Record({ 'user_id' : UserId });
   const ParticipantAssumesSuperAdmin = IDL.Record({ 'user_id' : UserId });
   const GroupDescriptionChanged = IDL.Record({
     'new_description' : IDL.Text,
@@ -552,13 +537,8 @@ export const idlFactory = ({ IDL }) => {
     'new_name' : IDL.Text,
     'previous_name' : IDL.Text,
   });
-  const FallbackRole = IDL.Variant({
-    'Participant' : IDL.Null,
-    'Admin' : IDL.Null,
-  });
   const Role = IDL.Variant({
     'Participant' : IDL.Null,
-    'SuperAdmin' : FallbackRole,
     'Admin' : IDL.Null,
     'Owner' : IDL.Null,
   });
@@ -889,16 +869,6 @@ export const idlFactory = ({ IDL }) => {
     'phone_is_verified' : IDL.Bool,
   });
   const PublicProfileResponse = IDL.Variant({ 'Success' : PublicProfile });
-  const RelinquishGroupSuperAdminArgs = IDL.Record({
-    'correlation_id' : IDL.Nat64,
-    'chat_id' : ChatId,
-  });
-  const RelinquishGroupSuperAdminResponse = IDL.Variant({
-    'CallerNotInGroup' : IDL.Null,
-    'Success' : IDL.Null,
-    'NotSuperAdmin' : IDL.Null,
-    'InternalError' : IDL.Text,
-  });
   const RemoveReactionArgs = IDL.Record({
     'user_id' : UserId,
     'correlation_id' : IDL.Nat64,
@@ -1164,11 +1134,6 @@ export const idlFactory = ({ IDL }) => {
       ),
     'add_reaction' : IDL.Func([AddReactionArgs], [AddReactionResponse], []),
     'archive_chat' : IDL.Func([ArchiveChatArgs], [ArchiveChatResponse], []),
-    'assume_group_super_admin' : IDL.Func(
-        [AssumeGroupSuperAdminArgs],
-        [AssumeGroupSuperAdminResponse],
-        [],
-      ),
     'bio' : IDL.Func([BioArgs], [BioResponse], ['query']),
     'block_user' : IDL.Func([BlockUserArgs], [BlockUserResponse], []),
     'contacts' : IDL.Func([ContactsArgs], [ContactsResponse], ['query']),
@@ -1229,11 +1194,6 @@ export const idlFactory = ({ IDL }) => {
         [PublicProfileArgs],
         [PublicProfileResponse],
         ['query'],
-      ),
-    'relinquish_group_super_admin' : IDL.Func(
-        [RelinquishGroupSuperAdminArgs],
-        [RelinquishGroupSuperAdminResponse],
-        [],
       ),
     'remove_reaction' : IDL.Func(
         [RemoveReactionArgs],

@@ -166,7 +166,6 @@ type RemovePlatformModeratorResponse =
     variant {
         Success;
         NotPlatformModerator;
-        InternalError: text;
     };
 
 type AddPlatformOperatorArgs =

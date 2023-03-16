@@ -19,7 +19,7 @@ fn c2c_join_group(args: Args) -> Response {
 fn c2c_join_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     if runtime_state.data.is_frozen() {
         ChatFrozen
-    } else if args.as_super_admin || runtime_state.data.is_accessible_by_non_member(args.invite_code) {
+    } else if runtime_state.data.is_accessible_by_non_member(args.invite_code) {
         if let Some(limit) = runtime_state.data.participants.user_limit_reached() {
             return ParticipantLimitReached(limit);
         }
@@ -42,14 +42,10 @@ fn c2c_join_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Response
             now,
             min_visible_event_index,
             min_visible_message_index,
-            as_super_admin: args.as_super_admin,
             mute_notifications: runtime_state.data.is_public,
         }) {
             AddResult::Success(participant) => {
-                let event = ParticipantJoined {
-                    user_id: args.user_id,
-                    as_super_admin: args.as_super_admin,
-                };
+                let event = ParticipantJoined { user_id: args.user_id };
                 runtime_state.data.events.push_main_event(
                     ChatEventInternal::ParticipantJoined(Box::new(event)),
                     args.correlation_id,

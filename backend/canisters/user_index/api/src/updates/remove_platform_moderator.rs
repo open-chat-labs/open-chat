@@ -12,7 +12,6 @@ pub struct Args {
 pub enum Response {
     Success,
     NotPlatformModerator,
-    InternalError(String),
 }
 
 #[derive(Serialize)]

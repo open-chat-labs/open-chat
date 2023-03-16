@@ -3,7 +3,6 @@ use serde::{Deserialize, Serialize};
 
 #[derive(CandidType, Serialize, Deserialize, Copy, Clone, Debug, Eq, PartialEq)]
 pub enum Role {
-    SuperAdmin(FallbackRole),
     Owner,
     Admin,
     Participant,
@@ -91,7 +90,7 @@ impl Role {
     }
 
     pub fn is_admin(&self) -> bool {
-        matches!(self, Role::Admin | Role::SuperAdmin(FallbackRole::Admin))
+        matches!(self, Role::Admin)
     }
 
     pub fn can_change_permissions(&self, permissions: &GroupPermissions) -> bool {
@@ -100,7 +99,6 @@ impl Role {
 
     pub fn can_change_roles(&self, new_role: Role, permissions: &GroupPermissions) -> bool {
         match new_role {
-            Role::SuperAdmin(_) => false,
             Role::Owner => self.has_owner_rights(),
             _ => self.is_permitted(permissions.change_roles),
         }
@@ -183,6 +181,6 @@ impl Role {
     }
 
     fn has_owner_rights(&self) -> bool {
-        matches!(self, Role::Owner | Role::SuperAdmin(_))
+        matches!(self, Role::Owner)
     }
 }

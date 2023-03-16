@@ -76,13 +76,8 @@ export const idlFactory = ({ IDL }) => {
     'CannotBlockSelf' : IDL.Null,
     'CannotBlockUser' : IDL.Null,
   });
-  const FallbackRole = IDL.Variant({
-    'Participant' : IDL.Null,
-    'Admin' : IDL.Null,
-  });
   const Role = IDL.Variant({
     'Participant' : IDL.Null,
-    'SuperAdmin' : FallbackRole,
     'Admin' : IDL.Null,
     'Owner' : IDL.Null,
   });
@@ -446,10 +441,7 @@ export const idlFactory = ({ IDL }) => {
     'message_id' : MessageId,
     'event_index' : EventIndex,
   });
-  const ParticipantJoined = IDL.Record({
-    'user_id' : UserId,
-    'as_super_admin' : IDL.Bool,
-  });
+  const ParticipantJoined = IDL.Record({ 'user_id' : UserId });
   const ParticipantAssumesSuperAdmin = IDL.Record({ 'user_id' : UserId });
   const GroupDescriptionChanged = IDL.Record({
     'new_description' : IDL.Text,

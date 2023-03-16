@@ -3,7 +3,6 @@ export const idlFactory = ({ IDL }) => {
   const ChatId = CanisterId;
   const JoinGroupArgs = IDL.Record({
     'invite_code' : IDL.Opt(IDL.Nat64),
-    'as_super_admin' : IDL.Bool,
     'correlation_id' : IDL.Nat64,
     'chat_id' : ChatId,
   });
@@ -60,13 +59,8 @@ export const idlFactory = ({ IDL }) => {
     'GovernanceProposals' : GovernanceProposalsSubtype,
   });
   const EventIndex = IDL.Nat32;
-  const FallbackRole = IDL.Variant({
-    'Participant' : IDL.Null,
-    'Admin' : IDL.Null,
-  });
   const Role = IDL.Variant({
     'Participant' : IDL.Null,
-    'SuperAdmin' : FallbackRole,
     'Admin' : IDL.Null,
     'Owner' : IDL.Null,
   });
@@ -433,7 +427,6 @@ export const idlFactory = ({ IDL }) => {
     'ChatFrozen' : IDL.Null,
     'Success' : GroupCanisterGroupChatSummary,
     'UserSuspended' : IDL.Null,
-    'NotSuperAdmin' : IDL.Null,
     'ParticipantLimitReached' : IDL.Nat32,
     'AlreadyInGroupV2' : GroupCanisterGroupChatSummary,
     'InternalError' : IDL.Text,
