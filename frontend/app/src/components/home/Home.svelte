@@ -204,8 +204,19 @@
         hotGroups = { kind: "idle" };
     }
 
+    // the currentChatMessages component may not exist straight away
+    async function waitAndScrollToMessageIndex(index: number, preserveFocus: boolean, retries = 0) {
+        console.debug("SCROLL: selecting index", index, currentChatMessages);
+        if (!currentChatMessages && retries < 5) {
+            await tick();
+            waitAndScrollToMessageIndex(index, preserveFocus, retries + 1);
+        } else {
+            currentChatMessages?.scrollToMessageIndex(index, preserveFocus);
+        }
+    }
+
     // extracting to a function to try to control more tightly what this reacts to
-    function routeChange(initialised: boolean, pathParams: RouteParams): void {
+    async function routeChange(initialised: boolean, pathParams: RouteParams): Promise<void> {
         // wait until we have loaded the chats
         if (initialised) {
             if (pathParams.chatId === "share") {
@@ -235,11 +246,7 @@
                         // if the chat in the url is *the same* as the selected chat
                         // *and* if we have a messageIndex specified in the url
                         if (pathParams.messageIndex !== undefined) {
-                            currentChatMessages?.scrollToMessageIndex(
-                                pathParams.messageIndex,
-                                false,
-                                true
-                            );
+                            waitAndScrollToMessageIndex(pathParams.messageIndex, false);
                         }
                     }
                 } else {
@@ -313,7 +320,7 @@
     }
 
     function goToMessageIndex(ev: CustomEvent<{ index: number; preserveFocus: boolean }>) {
-        currentChatMessages?.scrollToMessageIndex(ev.detail.index, ev.detail.preserveFocus);
+        waitAndScrollToMessageIndex(ev.detail.index, ev.detail.preserveFocus);
     }
 
     function closeModal() {

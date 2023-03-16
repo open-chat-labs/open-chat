@@ -65,9 +65,11 @@
     $: expandedDeletedMessages = client.expandedDeletedMessages;
     $: atRoot = $threadEvents.length === 0 || $threadEvents[0]?.index === 0;
     $: events = atRoot ? [rootEvent, ...$threadEvents] : $threadEvents;
-    $: messages = client
-        .groupEvents(events, user.userId, $expandedDeletedMessages)
-        .reverse() as EventWrapper<Message>[][][];
+    $: messages = client.groupEvents(
+        events,
+        user.userId,
+        $expandedDeletedMessages
+    ) as EventWrapper<Message>[][][];
     $: readonly = client.isChatReadOnly(chat.chatId);
     $: selectedThreadKey = client.selectedThreadKey;
     $: thread = rootEvent.event.thread;

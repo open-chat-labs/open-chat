@@ -135,12 +135,9 @@
         chatEventList?.scrollToMessageIndex(index, false);
     }
 
-    export function scrollToMessageIndex(
-        index: number,
-        preserveFocus: boolean,
-        loadWindowIfMissing: boolean = true
-    ) {
-        chatEventList?.scrollToMessageIndex(index, preserveFocus, loadWindowIfMissing);
+    export function scrollToMessageIndex(index: number, preserveFocus: boolean) {
+        console.debug("SCROLL: currentChatMessages: selecting index", index);
+        chatEventList?.scrollToMessageIndex(index, preserveFocus);
     }
 
     function replyTo(ev: CustomEvent<EnhancedReplyContext>) {
@@ -195,9 +192,13 @@
 
     $: expandedDeletedMessages = client.expandedDeletedMessages;
 
-    $: groupedEvents = client
-        .groupEvents(events, user.userId, $expandedDeletedMessages, groupInner(filteredProposals))
-        .reverse();
+    $: groupedEvents = client.groupEvents(
+        events,
+        user.userId,
+        $expandedDeletedMessages,
+        groupInner(filteredProposals)
+    );
+    // .reverse();
 
     $: {
         if (chat.chatId !== currentChatId) {
@@ -365,6 +366,22 @@
     bind:initialised
     bind:messagesDiv
     bind:messagesDivHeight>
+    {#if showAvatar}
+        {#if $isProposalGroup}
+            <ProposalBot />
+        {:else if chat.kind === "group_chat"}
+            <InitialGroupMessage group={chat} noVisibleEvents={events.length === 0} />
+        {:else if client.isOpenChatBot(chat.them)}
+            <Robot />
+        {:else}
+            <div class="big-avatar">
+                <Avatar
+                    url={client.userAvatarUrl($userStore[chat.them])}
+                    userId={chat.them}
+                    size={AvatarSize.Large} />
+            </div>
+        {/if}
+    {/if}
     {#each groupedEvents as dayGroup, _di (dateGroupKey(dayGroup))}
         <div class="day-group">
             <div class="date-label">
@@ -418,22 +435,6 @@
             {/each}
         </div>
     {/each}
-    {#if showAvatar}
-        {#if $isProposalGroup}
-            <ProposalBot />
-        {:else if chat.kind === "group_chat"}
-            <InitialGroupMessage group={chat} noVisibleEvents={events.length === 0} />
-        {:else if client.isOpenChatBot(chat.them)}
-            <Robot />
-        {:else}
-            <div class="big-avatar">
-                <Avatar
-                    url={client.userAvatarUrl($userStore[chat.them])}
-                    userId={chat.them}
-                    size={AvatarSize.Large} />
-            </div>
-        {/if}
-    {/if}
 </ChatEventList>
 
 <style type="text/scss">

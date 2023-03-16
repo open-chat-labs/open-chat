@@ -1,4 +1,4 @@
-import {
+import type {
     ChatEvent,
     ChatMetrics,
     ChatSummary,
@@ -12,14 +12,12 @@ import {
     GroupChatSummaryUpdates,
     GroupSubtype,
     GroupSubtypeUpdate,
-    IndexRange,
     Member,
     Mention,
     Message,
     ThreadRead,
     ThreadSyncDetails,
     ThreadSyncDetailsUpdates,
-    eventIsVisible,
     GroupCanisterGroupChatSummary,
     GroupCanisterGroupChatSummaryUpdates,
     UserCanisterGroupChatSummary,
@@ -32,7 +30,7 @@ import { toRecord } from "./list";
 import { applyOptionUpdate, mapOptionUpdate } from "./mapping";
 import Identicon from "identicon.js";
 import md5 from "md5";
-import { EVENT_PAGE_SIZE, OPENCHAT_BOT_AVATAR_URL, OPENCHAT_BOT_USER_ID } from "../constants";
+import { OPENCHAT_BOT_AVATAR_URL, OPENCHAT_BOT_USER_ID } from "../constants";
 
 // this is used to merge both the overall list of chats with updates and also the list of participants
 // within a group chat
@@ -497,23 +495,6 @@ export function emptyChatMetrics(): ChatMetrics {
         polls: 0,
         reactions: 0,
     };
-}
-
-export function enoughVisibleMessages(
-    ascending: boolean,
-    [minIndex, maxIndex]: IndexRange,
-    events: EventWrapper<ChatEvent>[]
-): boolean {
-    const filtered = events.filter(eventIsVisible);
-    if (filtered.length >= EVENT_PAGE_SIZE) {
-        return true;
-    } else if (ascending) {
-        // if there are no more events then we have enough by definition
-        return events[events.length - 1]?.index >= maxIndex;
-    } else {
-        // if there are no previous events then we have enough by definition
-        return events[0].index <= minIndex;
-    }
 }
 
 export function nextIndex(
