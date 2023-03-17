@@ -683,7 +683,6 @@ export type EventWrapper<T extends ChatEvent> = {
 
 export type EventsSuccessResult<T extends ChatEvent> = {
     events: EventWrapper<T>[];
-    affectedEvents: EventWrapper<T>[];
     latestEventIndex: number | undefined;
 };
 
@@ -1657,7 +1656,7 @@ export type ClaimPrizeResponse =
     | { kind: "prize_ended" }
     | { kind: "prize_fully_claimed" }
     | { kind: "failed_after_transfer" }
-    | { kind: "transfer_failed" };    
+    | { kind: "transfer_failed" };
 
 export type Avatar = {
     mimeType: string;
