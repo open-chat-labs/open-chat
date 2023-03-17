@@ -563,7 +563,6 @@ export async function getEventsResponse(
 
         return {
             events: candid.Success.events.map(event),
-            affectedEvents: candid.Success.affected_events.map(event),
             latestEventIndex,
         };
     }
