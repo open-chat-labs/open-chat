@@ -27,5 +27,6 @@ generate_c2c_call!(c2c_toggle_mute_notifications);
 generate_c2c_call!(c2c_unfreeze_group);
 generate_c2c_call!(c2c_update_proposals);
 generate_c2c_call!(c2c_update_user_principal);
+generate_c2c_call!(change_role);
 generate_c2c_call!(send_message_v2);
 generate_c2c_call!(send_message);
