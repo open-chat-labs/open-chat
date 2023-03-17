@@ -16,6 +16,7 @@ import type {
     SendMessageSuccess,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
+import { toRecord } from "./list";
 
 const CACHE_VERSION = 61;
 
@@ -187,9 +188,6 @@ export async function getCachedEventsWindow<T extends ChatEvent>(
     if (!totalMiss && missing.size === 0) {
         console.log("cache hit: ", events.length, Date.now() - start);
     }
-
-    events.sort((a, b) => a.index - b.index);
-
     return [{ events, affectedEvents: [], latestEventIndex: undefined }, missing, totalMiss];
 }
 
@@ -200,9 +198,7 @@ async function aggregateEventsWindow<T extends ChatEvent>(
     middleMessageIndex: number,
     threadRootMessageIndex?: number
 ): Promise<[EventWrapper<T>[], Set<number>, boolean]> {
-    const events: EventWrapper<T>[] = [];
     const resolvedDb = await db;
-    const missing = new Set<number>();
 
     const store = threadRootMessageIndex === undefined ? "chat_events" : "thread_events";
 
@@ -217,7 +213,7 @@ async function aggregateEventsWindow<T extends ChatEvent>(
         console.log(
             "cache total miss: could not even find the starting event index for the message window"
         );
-        return [[], missing, true];
+        return [[], new Set<number>(), true];
     }
 
     if (min > midpoint) {
@@ -238,21 +234,59 @@ async function aggregateEventsWindow<T extends ChatEvent>(
         createCacheKey(chatId, upperBound, threadRootMessageIndex)
     );
 
-    for (let i = lowerBound; i <= upperBound; i++) {
-        missing.add(i);
+    const result = await resolvedDb.getAll(store, range);
+
+    return processCachedEventsWindow(lowerBound, upperBound, midpoint, result, MAX_MESSAGES) as [
+        EventWrapper<T>[],
+        Set<number>,
+        boolean
+    ];
+}
+
+export function processCachedEventsWindow(
+    lowerbound: number,
+    upperbound: number,
+    midpoint: number,
+    cachedEvents: { index: number; event: { kind: string } }[],
+    maxMessages: number = MAX_MESSAGES
+): [{ index: number; event: { kind: string } }[], Set<number>, false] {
+    const events: { index: number; event: { kind: string } }[] = [];
+    const missing = new Set<number>();
+    let messageCount = 0;
+
+    const cachedEventsMap = toRecord(cachedEvents, (evt) => evt.index);
+
+    function inBounds(idx: number): boolean {
+        return idx >= lowerbound && idx <= upperbound;
     }
 
-    // TODO this needs to be different now we need to start from the middle and go up and down one at a time until we get enough messages *or* we run out of events
+    function processIndex(idx: number) {
+        const cachedEvent = cachedEventsMap[idx];
+        if (cachedEvent === undefined) {
+            if (inBounds(idx)) {
+                missing.add(idx);
+            }
+        } else {
+            if (cachedEvent.event.kind === "message") {
+                messageCount += 1;
+            }
+            events.push(cachedEvent);
+        }
+    }
 
-    const result = await resolvedDb.getAll(store, range);
-    result.forEach((evt) => {
-        missing.delete(evt.index);
-        events.push(evt as EnhancedWrapper<T>);
-    });
+    function loop(forwardIndex: number, backwardIndex: number): undefined {
+        processIndex(forwardIndex);
+        processIndex(backwardIndex);
+        if (messageCount < maxMessages) {
+            if (forwardIndex < upperbound || backwardIndex > lowerbound) {
+                return loop(forwardIndex + 1, backwardIndex - 1);
+            }
+        }
+    }
 
-    console.log("aggregate events window: missing indexes: ", missing);
+    loop(midpoint, midpoint - 1);
 
-    return [events, missing, false];
+    return [events.sort((a, b) => a.index - b.index), missing, false];
 }
 
 // why is this extracted like this with slightly odd looking types?
@@ -261,46 +295,33 @@ export function processCachedEvents(
     lowerbound: number,
     upperbound: number,
     ascending: boolean,
-    cachedEvents: { index: number; event: { kind: string } }[]
+    cachedEvents: { index: number; event: { kind: string } }[],
+    maxMessages: number = MAX_MESSAGES
 ): [{ index: number; event: { kind: string } }[], Set<number>] {
     const events: { index: number; event: { kind: string } }[] = [];
-    let missing = new Set<number>();
+    const missing = new Set<number>();
     let messageCount = 0;
 
-    if (cachedEvents.length === 0) {
-        missing = missingEventIndexes(missing, lowerbound - 1, upperbound + 1);
-    } else {
-        if (!ascending) {
-            cachedEvents.reverse();
-        }
+    const cachedEventsMap = toRecord(cachedEvents, (evt) => evt.index);
 
-        for (let i = 0; i < cachedEvents.length && messageCount <= MAX_MESSAGES; i++) {
-            const prevIndex =
-                cachedEvents[i - 1]?.index ?? (ascending ? lowerbound - 1 : upperbound + 1);
-            const evt = cachedEvents[i];
-            if (evt.event.kind === "message") {
+    function loop(idx: number): undefined {
+        const cachedEvent = cachedEventsMap[idx];
+        if (cachedEvent === undefined) {
+            missing.add(idx);
+        } else {
+            if (cachedEvent.event.kind === "message") {
                 messageCount += 1;
             }
-            missing = missingEventIndexes(
-                missing,
-                Math.min(prevIndex, evt.index),
-                Math.max(prevIndex, evt.index)
-            );
-            events.push(evt);
+            events.push(cachedEvent);
         }
-
-        missing = missingEventIndexes(
-            missing,
-            Math.min(
-                cachedEvents[cachedEvents.length - 1].index,
-                ascending ? upperbound + 1 : lowerbound - 1
-            ),
-            Math.max(
-                cachedEvents[cachedEvents.length - 1].index,
-                ascending ? upperbound + 1 : lowerbound - 1
-            )
-        );
+        if (messageCount < maxMessages) {
+            if (ascending ? idx < upperbound : idx > lowerbound) {
+                return loop(ascending ? idx + 1 : idx - 1);
+            }
+        }
     }
+
+    loop(ascending ? lowerbound : upperbound);
 
     return [events.sort((a, b) => a.index - b.index), missing];
 }
@@ -330,16 +351,6 @@ async function aggregateEvents<T extends ChatEvent>(
         EnhancedWrapper<T>[],
         Set<number>
     ];
-}
-
-function missingEventIndexes(missing: Set<number>, lower: number, higher: number) {
-    if (higher === lower + 1) {
-        return missing;
-    }
-    for (let i = lower + 1; i < higher; i++) {
-        missing.add(i);
-    }
-    return missing;
 }
 
 export async function getCachedMessageByIndex<T extends ChatEvent>(
