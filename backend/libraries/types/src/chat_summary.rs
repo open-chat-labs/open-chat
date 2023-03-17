@@ -9,29 +9,6 @@ use std::collections::HashSet;
 
 pub const MAX_THREADS_IN_SUMMARY: usize = 20;
 
-#[allow(clippy::large_enum_variant)]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub enum ChatSummary {
-    Direct(DirectChatSummary),
-    Group(GroupChatSummary),
-}
-
-impl ChatSummary {
-    pub fn display_date(&self) -> TimestampMillis {
-        match self {
-            ChatSummary::Direct(d) => d.display_date(),
-            ChatSummary::Group(g) => g.display_date(),
-        }
-    }
-
-    pub fn chat_id(&self) -> ChatId {
-        match self {
-            ChatSummary::Direct(d) => d.them.into(),
-            ChatSummary::Group(g) => g.chat_id,
-        }
-    }
-}
-
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct DirectChatSummary {
     pub them: UserId,
