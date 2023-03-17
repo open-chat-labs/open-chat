@@ -55,7 +55,6 @@ import type {
     UpdateGroupResponse,
     UpdatesResult,
     WithdrawCryptocurrencyResponse,
-    Avatar,
 } from "./chat";
 import type { BlobReference, StorageStatus } from "./data/data";
 import type { ToggleMuteNotificationResponse } from "./notifications";
@@ -196,8 +195,7 @@ export type WorkerRequest =
     | LoadFailedMessages
     | DeleteFailedMessage
     | ClaimPrize
-    | PayForDiamondMembership
-    | UpdateProposalsGroup;
+    | PayForDiamondMembership;
 
 type SetCachedMessageFromNotification = Request<{
     chatId: string;
@@ -979,13 +977,4 @@ type PayForDiamondMembership = Request<{
     expectedPriceE8s: bigint;
 }> & {
     kind: "payForDiamondMembership";
-};
-
-type UpdateProposalsGroup = Request<{
-    governanceCanisterId: string;
-    name?: string;
-    description?: string;
-    avatar?: Avatar;
-}> & {
-    kind: "updateProposalsGroup";
 };
