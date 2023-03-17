@@ -28,7 +28,7 @@ pub mod happy_path {
     use crate::rng::random_message_id;
     use crate::User;
     use ic_state_machine_tests::StateMachine;
-    use types::{ChatId, EventIndex, GroupRules, MessageContent, MessageId, TextContent, UserId};
+    use types::{ChatId, EventIndex, EventsResponse, GroupRules, MessageContent, MessageId, TextContent, UserId};
 
     pub fn send_text_message(
         env: &mut StateMachine,
@@ -111,7 +111,7 @@ pub mod happy_path {
         ascending: bool,
         max_messages: u32,
         max_events: u32,
-    ) -> user_canister::events::SuccessResult {
+    ) -> EventsResponse {
         let response = super::events(
             env,
             sender.principal,
@@ -133,12 +133,7 @@ pub mod happy_path {
         }
     }
 
-    pub fn events_by_index(
-        env: &StateMachine,
-        sender: &User,
-        user_id: UserId,
-        events: Vec<EventIndex>,
-    ) -> user_canister::events_by_index::SuccessResult {
+    pub fn events_by_index(env: &StateMachine, sender: &User, user_id: UserId, events: Vec<EventIndex>) -> EventsResponse {
         let response = super::events_by_index(
             env,
             sender.principal,

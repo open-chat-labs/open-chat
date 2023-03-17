@@ -327,7 +327,6 @@ export type EventsResponse = { 'ReplicaNotUpToDate' : EventIndex } |
   { 'ChatNotFound' : null } |
   { 'Success' : EventsSuccessResult };
 export interface EventsSuccessResult {
-  'affected_events' : Array<ChatEventWrapper>,
   'events' : Array<ChatEventWrapper>,
   'latest_event_index' : EventIndex,
 }
