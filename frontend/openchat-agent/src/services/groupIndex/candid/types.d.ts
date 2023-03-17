@@ -354,7 +354,6 @@ export interface GroupCanisterGroupChatSummaryUpdates {
   'latest_event_index' : [] | [EventIndex],
   'mentions' : Array<Mention>,
   'chat_id' : ChatId,
-  'affected_events_v2' : Array<[EventIndex, TimestampMillis]>,
   'newly_expired_messages' : Array<MessageIndexRange>,
   'participant_count' : [] | [number],
   'my_metrics' : [] | [ChatMetrics],

@@ -42,8 +42,8 @@ export const idlFactory = ({ IDL }) => {
     'thread_root_message_index' : IDL.Opt(MessageIndex),
     'reaction' : IDL.Text,
   });
-  const EventIndex = IDL.Nat32;
   const TimestampMillis = IDL.Nat64;
+  const EventIndex = IDL.Nat32;
   const PushEventResult = IDL.Record({
     'timestamp' : TimestampMillis,
     'index' : EventIndex,
@@ -55,7 +55,7 @@ export const idlFactory = ({ IDL }) => {
     'CallerNotInGroup' : IDL.Null,
     'ChatFrozen' : IDL.Null,
     'NotAuthorized' : IDL.Null,
-    'Success' : EventIndex,
+    'Success' : IDL.Null,
     'UserSuspended' : IDL.Null,
     'InvalidReaction' : IDL.Null,
     'SuccessV2' : PushEventResult,
@@ -825,7 +825,7 @@ export const idlFactory = ({ IDL }) => {
     'CallerNotInGroup' : IDL.Null,
     'ChatFrozen' : IDL.Null,
     'NotAuthorized' : IDL.Null,
-    'Success' : EventIndex,
+    'Success' : IDL.Null,
     'UserSuspended' : IDL.Null,
     'SuccessV2' : PushEventResult,
   });
@@ -1089,7 +1089,6 @@ export const idlFactory = ({ IDL }) => {
     'latest_event_index' : IDL.Opt(EventIndex),
     'mentions' : IDL.Vec(Mention),
     'chat_id' : ChatId,
-    'affected_events_v2' : IDL.Vec(IDL.Tuple(EventIndex, TimestampMillis)),
     'newly_expired_messages' : IDL.Vec(MessageIndexRange),
     'participant_count' : IDL.Opt(IDL.Nat32),
     'my_metrics' : IDL.Opt(ChatMetrics),

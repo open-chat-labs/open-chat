@@ -104,7 +104,7 @@ type AddReactionArgs =
 
 type AddReactionResponse =
     variant {
-        Success: EventIndex;
+        Success;
         SuccessV2: PushEventResult;
         NoChange;
         InvalidReaction;
@@ -124,7 +124,7 @@ type RemoveReactionArgs =
 
 type RemoveReactionResponse =
     variant {
-        Success: EventIndex;
+        Success;
         SuccessV2: PushEventResult;
         NoChange;
         MessageNotFound;

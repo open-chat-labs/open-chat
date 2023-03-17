@@ -19,7 +19,7 @@ export interface AddReactionArgs {
 export type AddReactionResponse = { 'MessageNotFound' : null } |
   { 'NoChange' : null } |
   { 'ChatNotFound' : null } |
-  { 'Success' : EventIndex } |
+  { 'Success' : null } |
   { 'UserSuspended' : null } |
   { 'InvalidReaction' : null } |
   { 'SuccessV2' : PushEventResult };
@@ -441,7 +441,6 @@ export interface GroupCanisterGroupChatSummaryUpdates {
   'latest_event_index' : [] | [EventIndex],
   'mentions' : Array<Mention>,
   'chat_id' : ChatId,
-  'affected_events_v2' : Array<[EventIndex, TimestampMillis]>,
   'newly_expired_messages' : Array<MessageIndexRange>,
   'participant_count' : [] | [number],
   'my_metrics' : [] | [ChatMetrics],
@@ -984,7 +983,7 @@ export interface RemoveReactionArgs {
 export type RemoveReactionResponse = { 'MessageNotFound' : null } |
   { 'NoChange' : null } |
   { 'ChatNotFound' : null } |
-  { 'Success' : EventIndex } |
+  { 'Success' : null } |
   { 'UserSuspended' : null } |
   { 'SuccessV2' : PushEventResult };
 export interface ReplyContext {

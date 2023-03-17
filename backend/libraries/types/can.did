@@ -368,7 +368,6 @@ type GroupCanisterGroupChatSummaryUpdates =
         owner_id: opt UserId;
         permissions: opt GroupPermissions;
         affected_events: vec EventIndex;
-        affected_events_v2: vec record { EventIndex; TimestampMillis };
         metrics: opt ChatMetrics;
         my_metrics: opt ChatMetrics;
         is_public: opt bool;

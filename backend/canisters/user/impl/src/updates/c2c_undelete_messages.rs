@@ -27,7 +27,6 @@ fn c2c_undelete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> R
             min_visible_event_index: EventIndex::default(),
             thread_root_message_index: None,
             message_ids: args.message_ids,
-            correlation_id: args.correlation_id,
             now: runtime_state.env.now(),
         });
         Success

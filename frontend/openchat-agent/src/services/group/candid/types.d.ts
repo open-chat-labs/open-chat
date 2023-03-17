@@ -47,7 +47,7 @@ export type AddReactionResponse = { 'MessageNotFound' : null } |
   { 'CallerNotInGroup' : null } |
   { 'ChatFrozen' : null } |
   { 'NotAuthorized' : null } |
-  { 'Success' : EventIndex } |
+  { 'Success' : null } |
   { 'UserSuspended' : null } |
   { 'InvalidReaction' : null } |
   { 'SuccessV2' : PushEventResult };
@@ -461,7 +461,6 @@ export interface GroupCanisterGroupChatSummaryUpdates {
   'latest_event_index' : [] | [EventIndex],
   'mentions' : Array<Mention>,
   'chat_id' : ChatId,
-  'affected_events_v2' : Array<[EventIndex, TimestampMillis]>,
   'newly_expired_messages' : Array<MessageIndexRange>,
   'participant_count' : [] | [number],
   'my_metrics' : [] | [ChatMetrics],
@@ -1015,7 +1014,7 @@ export type RemoveReactionResponse = { 'MessageNotFound' : null } |
   { 'CallerNotInGroup' : null } |
   { 'ChatFrozen' : null } |
   { 'NotAuthorized' : null } |
-  { 'Success' : EventIndex } |
+  { 'Success' : null } |
   { 'UserSuspended' : null } |
   { 'SuccessV2' : PushEventResult };
 export interface ReplyContext {
