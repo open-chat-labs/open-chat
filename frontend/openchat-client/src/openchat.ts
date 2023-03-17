@@ -482,7 +482,7 @@ export class OpenChat extends EventTarget {
         this._workerApi = new OpenChatAgentWorker(this.config);
         this._workerApi.addEventListener("openchat_event", (ev) => this.handleAgentEvent(ev));
         await this._workerApi.ready;
-        // this._cachePrimer = new CachePrimer(this._workerApi);
+        this._cachePrimer = new CachePrimer(this._workerApi);
         this.api.loadFailedMessages().then((res) => failedMessagesStore.initialise(res));
         this.api
             .getCurrentUser()
