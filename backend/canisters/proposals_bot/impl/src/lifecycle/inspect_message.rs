@@ -11,7 +11,6 @@ fn accept_if_valid(runtime_state: &RuntimeState) {
 
     let is_valid = match method_name.as_str() {
         "add_governance_canister" | "remove_governance_canister" => runtime_state.is_caller_governance_principal(),
-        "update_group_details" => true,
         _ => false,
     };
 
