@@ -1,4 +1,4 @@
-use crate::{EventIndex, GroupPermissions, Message, MessageId, MessageIndex, Milliseconds, Role, UserId};
+use crate::{EventIndex, EventWrapper, GroupPermissions, Message, MessageId, MessageIndex, Milliseconds, Role, UserId};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
@@ -58,6 +58,12 @@ impl ChatEvent {
             _ => vec![],
         }
     }
+}
+
+#[derive(CandidType, Serialize, Deserialize, Debug)]
+pub struct EventsResponse {
+    pub events: Vec<EventWrapper<ChatEvent>>,
+    pub latest_event_index: EventIndex,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
