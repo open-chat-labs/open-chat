@@ -3,7 +3,9 @@
 # Extract the args
 TITLE=$1
 URL=$2
-SUMMARY=$3
+SUMMARY_PATH=$3
+
+SUMMARY=$(cat $SUMMARY_PATH)
 
 TOKEN=$4
 TO_PRINCIPAL=$5
@@ -15,6 +17,7 @@ if [ $TOKEN = "ICP" ]
 then
     TREASURY=1
 elif [ $TOKEN = "CHAT" ]
+then
     TREASURY=2
 else
     echo "TOKEN not set"
@@ -37,8 +40,8 @@ TransferSnsTreasuryFunds = record {
     to_principal=opt principal \"$TO_PRINCIPAL\": opt principal;
     to_subaccount=opt record { subaccount = vec { $TO_SUBACCOUNT };
     memo=$MEMO: opt nat64;
-    amount_e8s=$AMOUNT_E8S: nat64
-}})"
+    amount_e8s=$AMOUNT_E8S: nat64;
+}}})"
 
 # Submit the proposal
 ./sns/scripts/utils/submit_proposal.sh "$PROPOSAL"

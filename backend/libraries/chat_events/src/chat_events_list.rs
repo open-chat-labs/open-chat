@@ -494,7 +494,7 @@ mod tests {
     use crate::{ChatEvents, PushMessageArgs};
     use candid::Principal;
     use std::mem::size_of;
-    use types::{GroupNameChanged, MessageContentInternal, Milliseconds, TextContent};
+    use types::{EventsTimeToLiveUpdated, MessageContentInternal, Milliseconds, TextContent};
 
     #[test]
     fn enum_size() {
@@ -712,10 +712,9 @@ mod tests {
                 correlation_id: i,
             });
             events.push_main_event(
-                ChatEventInternal::GroupNameChanged(Box::new(GroupNameChanged {
-                    new_name: format!("{}", i + 1),
-                    previous_name: format!("{i}"),
-                    changed_by: user_id,
+                ChatEventInternal::EventsTimeToLiveUpdated(Box::new(EventsTimeToLiveUpdated {
+                    updated_by: user_id,
+                    new_ttl: Some(i),
                 })),
                 i,
                 now,
