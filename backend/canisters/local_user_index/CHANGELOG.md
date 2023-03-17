@@ -19,6 +19,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Removed
 
 - Removed code only needed for previous upgrade ([#3248](https://github.com/open-ic/open-chat/pull/3248))
+- Removed super_admin role from groups([#3319](https://github.com/open-ic/open-chat/pull/3319))
 
 ## [[2.0.616](https://github.com/open-ic/open-chat/releases/tag/v2.0.616-local_user_index)] - 2023-02-28
 

@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Removed code only needed for previous upgrade ([#3248](https://github.com/open-ic/open-chat/pull/3248)) & ([#3251](https://github.com/open-ic/open-chat/pull/3251))
 - Removed all the code around reinstalling groups ([#3253](https://github.com/open-ic/open-chat/pull/3253))
+- Removed super_admin role from groups([#3319](https://github.com/open-ic/open-chat/pull/3319))
 
 ## [[2.0.619](https://github.com/open-ic/open-chat/releases/tag/v2.0.619-group)] - 2023-02-28
 
