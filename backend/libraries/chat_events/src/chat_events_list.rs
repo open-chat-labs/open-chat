@@ -353,16 +353,6 @@ pub trait Reader {
         }
     }
 
-    fn affected_events(&self, events: &[EventWrapper<ChatEvent>], my_user_id: Option<UserId>) -> Vec<EventWrapper<ChatEvent>> {
-        events
-            .iter()
-            .flat_map(|e| e.event.affected_events())
-            .unique()
-            .filter_map(|e| self.get(e.into()))
-            .map(|e| self.hydrate_event(e, my_user_id))
-            .collect()
-    }
-
     fn hydrate_event(&self, event: &EventWrapper<ChatEventInternal>, my_user_id: Option<UserId>) -> EventWrapper<ChatEvent> {
         let event_data = match &event.event {
             ChatEventInternal::DirectChatCreated(d) => ChatEvent::DirectChatCreated(*d),
