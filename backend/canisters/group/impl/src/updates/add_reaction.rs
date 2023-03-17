@@ -42,13 +42,12 @@ fn add_reaction_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
             thread_root_message_index: args.thread_root_message_index,
             message_id: args.message_id,
             reaction: args.reaction.clone(),
-            correlation_id: args.correlation_id,
             now,
         }) {
-            AddRemoveReactionResult::Success(r) => {
+            AddRemoveReactionResult::Success => {
                 handle_activity_notification(runtime_state);
                 handle_notification(args, user_id, now, runtime_state);
-                SuccessV2(r)
+                Success
             }
             AddRemoveReactionResult::NoChange => NoChange,
             AddRemoveReactionResult::MessageNotFound => MessageNotFound,

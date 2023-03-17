@@ -33,13 +33,12 @@ fn c2c_toggle_reaction_impl(args: Args, runtime_state: &mut RuntimeState) -> Res
             thread_root_message_index: None,
             message_id: args.message_id,
             reaction: args.reaction.clone(),
-            correlation_id: args.correlation_id,
             now,
         };
 
         if args.added {
             match chat.events.add_reaction(add_remove_reaction_args) {
-                AddRemoveReactionResult::Success(_) => {
+                AddRemoveReactionResult::Success => {
                     if let Some((recipients, notification)) = build_notification(args, chat, now) {
                         runtime_state.push_notification(recipients, notification);
                     }
@@ -50,7 +49,7 @@ fn c2c_toggle_reaction_impl(args: Args, runtime_state: &mut RuntimeState) -> Res
             }
         } else {
             match chat.events.remove_reaction(add_remove_reaction_args) {
-                AddRemoveReactionResult::Success(_) | AddRemoveReactionResult::NoChange => Removed,
+                AddRemoveReactionResult::Success | AddRemoveReactionResult::NoChange => Removed,
                 AddRemoveReactionResult::MessageNotFound => MessageNotFound,
             }
         }

@@ -32,7 +32,6 @@ fn c2c_delete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Res
             min_visible_event_index: EventIndex::default(),
             thread_root_message_index: None,
             message_ids: args.message_ids,
-            correlation_id: args.correlation_id,
             now,
         });
 

@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{EventIndex, MessageId, MessageIndex, PushEventResult, Reaction};
+use types::{MessageId, MessageIndex, PushEventResult, Reaction};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -12,7 +12,7 @@ pub struct Args {
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
-    Success(EventIndex),
+    Success,
     SuccessV2(PushEventResult),
     NoChange,
     MessageNotFound,

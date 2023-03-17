@@ -72,7 +72,6 @@ fn delete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
             min_visible_event_index,
             thread_root_message_index: args.thread_root_message_index,
             message_ids: args.message_ids,
-            correlation_id: args.correlation_id,
             now,
         });
 

@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Return group summary if user tries to join group they are already in ([#3296](https://github.com/open-ic/open-chat/pull/3296))
+- Store and use last updated timestamp on each event ([#3326](https://github.com/open-ic/open-chat/pull/3326))
 
 ### Removed
 

@@ -5,7 +5,18 @@ use std::collections::{HashMap, HashSet};
 use types::{
     CanisterId, ChatId, DeletedGroupInfo, GroupCanisterGroupChatSummary, GroupCanisterGroupChatSummaryUpdates, TimestampMillis,
 };
-use user_canister::updates::UpdatesSince;
+
+#[derive(Debug, Default)]
+pub struct UpdatesSince {
+    pub timestamp: TimestampMillis,
+    pub group_chats: Vec<GroupChatUpdatesSince>,
+}
+
+#[derive(Debug)]
+pub struct GroupChatUpdatesSince {
+    pub chat_id: ChatId,
+    pub updates_since: TimestampMillis,
+}
 
 pub(crate) struct SummariesArgs {
     group_index_canister_id: CanisterId,
