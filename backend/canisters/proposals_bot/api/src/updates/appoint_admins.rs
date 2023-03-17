@@ -1,4 +1,4 @@
-use candid::CandidType;
+use candid::{CandidType, Principal};
 use human_readable::{HumanReadablePrincipal, ToHumanReadable};
 use serde::{Deserialize, Serialize};
 use types::{CanisterId, UserId};
@@ -30,7 +30,8 @@ impl ToHumanReadable for Args {
             users: self
                 .users
                 .iter()
-                .map(|u| HumanReadablePrincipal::from(<UserId as Into<CanisterId>>::into(*u)))
+                .copied()
+                .map(|u| HumanReadablePrincipal::from(Principal::from(u)))
                 .collect(),
         }
     }
