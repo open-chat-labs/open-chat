@@ -369,13 +369,11 @@ export class CachingGroupClient implements IGroupClient {
                 ? resp
                 : {
                       events: [...fromCache.messageEvents, ...resp.events],
-                      affectedEvents: resp.affectedEvents,
                       latestEventIndex: resp.latestEventIndex,
                   };
         }
         return {
             events: fromCache.messageEvents,
-            affectedEvents: [],
             latestEventIndex: undefined,
         };
     }
