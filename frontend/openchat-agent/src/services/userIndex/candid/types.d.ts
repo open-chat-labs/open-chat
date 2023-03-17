@@ -829,7 +829,8 @@ export type RegistrationFee = { 'ICP' : ICPRegistrationFee } |
   { 'Cycles' : CyclesRegistrationFee };
 export interface RemovePlatformModeratorArgs { 'user_id' : UserId }
 export type RemovePlatformModeratorResponse = { 'Success' : null } |
-  { 'NotPlatformModerator' : null };
+  { 'NotPlatformModerator' : null } |
+  { 'InternalError' : string };
 export interface RemovePlatformOperatorArgs { 'user_id' : UserId }
 export type RemovePlatformOperatorResponse = { 'Success' : null };
 export interface ReplyContext {

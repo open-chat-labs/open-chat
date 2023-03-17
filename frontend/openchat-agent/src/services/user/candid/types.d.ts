@@ -33,16 +33,6 @@ export interface AddedToGroupNotification {
 export interface ArchiveChatArgs { 'chat_id' : ChatId }
 export type ArchiveChatResponse = { 'ChatNotFound' : null } |
   { 'Success' : null };
-export interface AssumeGroupSuperAdminArgs {
-  'correlation_id' : bigint,
-  'chat_id' : ChatId,
-}
-export type AssumeGroupSuperAdminResponse = { 'AlreadyOwner' : null } |
-  { 'CallerNotInGroup' : null } |
-  { 'Success' : null } |
-  { 'NotSuperAdmin' : null } |
-  { 'InternalError' : string } |
-  { 'AlreadySuperAdmin' : null };
 export interface AudioContent {
   'mime_type' : string,
   'blob_reference' : [] | [BlobReference],
@@ -964,14 +954,6 @@ export interface PushEventResult {
 }
 export type RegistrationFee = { 'ICP' : ICPRegistrationFee } |
   { 'Cycles' : CyclesRegistrationFee };
-export interface RelinquishGroupSuperAdminArgs {
-  'correlation_id' : bigint,
-  'chat_id' : ChatId,
-}
-export type RelinquishGroupSuperAdminResponse = { 'CallerNotInGroup' : null } |
-  { 'Success' : null } |
-  { 'NotSuperAdmin' : null } |
-  { 'InternalError' : string };
 export interface RemoveReactionArgs {
   'user_id' : UserId,
   'correlation_id' : bigint,

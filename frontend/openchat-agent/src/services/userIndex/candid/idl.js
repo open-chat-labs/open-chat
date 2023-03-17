@@ -136,6 +136,7 @@ export const idlFactory = ({ IDL }) => {
   const RemovePlatformModeratorResponse = IDL.Variant({
     'Success' : IDL.Null,
     'NotPlatformModerator' : IDL.Null,
+    'InternalError' : IDL.Text,
   });
   const RemovePlatformOperatorArgs = IDL.Record({ 'user_id' : UserId });
   const RemovePlatformOperatorResponse = IDL.Variant({ 'Success' : IDL.Null });
