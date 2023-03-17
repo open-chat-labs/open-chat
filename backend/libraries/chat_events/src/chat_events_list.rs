@@ -2,11 +2,11 @@ use crate::{ChatEventInternal, EventKey, MessageInternal, ProposalsUpdatedIntern
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
-use std::collections::{BTreeMap, HashMap, HashSet};
+use std::collections::{BTreeMap, HashMap};
 use std::ops::Deref;
 use types::{
-    ChatEvent, EventIndex, EventWrapper, Mention, MentionInternal, Message, MessageContentInternal, MessageId, MessageIndex,
-    PollEnded, PollVoteRegistered, ProposalUpdated, ProposalsUpdated, ThreadUpdated, TimestampMillis, UpdatedMessage, UserId,
+    ChatEvent, EventIndex, EventWrapper, Mention, MentionInternal, Message, MessageId, MessageIndex, PollEnded,
+    PollVoteRegistered, ProposalUpdated, ProposalsUpdated, ThreadUpdated, TimestampMillis, UpdatedMessage, UserId,
 };
 
 #[derive(Serialize, Deserialize, Default)]
@@ -160,10 +160,6 @@ impl ChatEventsList {
         self.events_map.values().rev().next()
     }
 
-    pub(crate) fn last_mut(&mut self) -> Option<&mut EventWrapper<ChatEventInternal>> {
-        self.events_map.values_mut().rev().next()
-    }
-
     pub fn len(&self) -> usize {
         self.events_map.len()
     }
@@ -305,52 +301,6 @@ pub trait Reader {
     ) -> Option<EventWrapper<Message>> {
         self.latest_message_event(my_user_id)
             .filter(|m| m.event.last_updated.unwrap_or(m.timestamp) > since)
-    }
-
-    fn affected_event_indexes_since(&self, since: TimestampMillis, max_results: usize) -> Vec<EventIndex> {
-        let mut affected_events = HashSet::new();
-
-        for EventWrapper { event, .. } in self.iter(None, false).take_while(|e| e.timestamp > since) {
-            for index in self.affected_event_indexes(event) {
-                if affected_events.insert(index) && affected_events.len() == max_results {
-                    break;
-                }
-            }
-        }
-
-        affected_events.into_iter().collect()
-    }
-
-    fn affected_event_indexes(&self, event: &ChatEventInternal) -> Vec<EventIndex> {
-        fn option_to_vec<T>(option: Option<T>) -> Vec<T> {
-            option.map_or(vec![], |v| vec![v])
-        }
-
-        match event {
-            ChatEventInternal::MessageEdited(m) => option_to_vec(self.event_index(m.message_id.into())),
-            ChatEventInternal::MessageDeleted(m) => option_to_vec(self.event_index(m.message_id.into())),
-            ChatEventInternal::MessageUndeleted(m) => option_to_vec(self.event_index(m.message_id.into())),
-            ChatEventInternal::MessageReactionAdded(r) => option_to_vec(self.event_index(r.message_id.into())),
-            ChatEventInternal::MessageReactionRemoved(r) => option_to_vec(self.event_index(r.message_id.into())),
-            ChatEventInternal::PollVoteRegistered(v) => option_to_vec(self.event_index(v.message_id.into())),
-            ChatEventInternal::PollVoteDeleted(v) => option_to_vec(self.event_index(v.message_id.into())),
-            ChatEventInternal::PollEnded(p) => option_to_vec(self.event_index((**p).into())),
-            ChatEventInternal::ThreadUpdated(u) => option_to_vec(self.event_index(u.message_index.into())),
-            ChatEventInternal::ProposalsUpdated(p) => p
-                .proposals
-                .iter()
-                .copied()
-                .filter_map(|p| self.event_index(p.into()))
-                .collect(),
-            ChatEventInternal::Message(m) => {
-                if let MessageContentInternal::PrizeWinner(content) = &m.content {
-                    option_to_vec(self.event_index(content.prize_message.into()))
-                } else {
-                    vec![]
-                }
-            }
-            _ => vec![],
-        }
     }
 
     fn hydrate_event(&self, event: &EventWrapper<ChatEventInternal>, my_user_id: Option<UserId>) -> EventWrapper<ChatEvent> {
@@ -544,7 +494,7 @@ mod tests {
     use crate::{ChatEvents, PushMessageArgs};
     use candid::Principal;
     use std::mem::size_of;
-    use types::{MessageContentInternal, Milliseconds, TextContent};
+    use types::{EventsTimeToLiveUpdated, MessageContentInternal, Milliseconds, TextContent};
 
     #[test]
     fn enum_size() {
@@ -762,9 +712,9 @@ mod tests {
                 correlation_id: i,
             });
             events.push_main_event(
-                ChatEventInternal::MessageReactionAdded(Box::new(UpdatedMessageInternal {
+                ChatEventInternal::EventsTimeToLiveUpdated(Box::new(EventsTimeToLiveUpdated {
                     updated_by: user_id,
-                    message_id,
+                    new_ttl: Some(i),
                 })),
                 i,
                 now,

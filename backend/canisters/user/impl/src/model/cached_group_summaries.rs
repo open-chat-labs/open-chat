@@ -1,6 +1,6 @@
+use crate::group_summaries::{GroupChatUpdatesSince, UpdatesSince};
 use serde::{Deserialize, Serialize};
 use types::{ChatId, GroupCanisterGroupChatSummary, TimestampMillis};
-use user_canister::updates::{GroupChatUpdatesSince, UpdatesSince};
 
 #[derive(Serialize, Deserialize, Default, Clone)]
 pub struct CachedGroupSummaries {
