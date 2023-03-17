@@ -59,7 +59,7 @@ import {
 } from "./utils/user";
 import { rtcConnectionsManager } from "./utils/rtcConnectionsManager";
 import { showTrace } from "./utils/profiling";
-import type { CachePrimer } from "./utils/cachePrimer";
+import { CachePrimer } from "./utils/cachePrimer";
 import { Poller } from "./utils/poller";
 import {
     idbAuthClientStore,
