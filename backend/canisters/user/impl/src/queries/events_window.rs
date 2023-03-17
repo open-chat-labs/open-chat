@@ -31,6 +31,7 @@ fn events_window_impl(args: Args, runtime_state: &RuntimeState) -> Response {
         Success(EventsResponse {
             events,
             latest_event_index,
+            timestamp: now,
         })
     } else {
         ChatNotFound

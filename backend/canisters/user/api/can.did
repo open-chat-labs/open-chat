@@ -578,6 +578,7 @@ type EventsSuccessResult =
     record {
         events: vec ChatEventWrapper;
         latest_event_index: EventIndex;
+        timestamp: TimestampMillis;
     };
 
 type EventsResponse =

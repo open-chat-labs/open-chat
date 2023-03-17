@@ -1,4 +1,6 @@
-use crate::{EventIndex, EventWrapper, GroupPermissions, Message, MessageId, MessageIndex, Milliseconds, Role, UserId};
+use crate::{
+    EventIndex, EventWrapper, GroupPermissions, Message, MessageId, MessageIndex, Milliseconds, Role, TimestampMillis, UserId,
+};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
@@ -46,6 +48,7 @@ pub enum ChatEvent {
 pub struct EventsResponse {
     pub events: Vec<EventWrapper<ChatEvent>>,
     pub latest_event_index: EventIndex,
+    pub timestamp: TimestampMillis,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
