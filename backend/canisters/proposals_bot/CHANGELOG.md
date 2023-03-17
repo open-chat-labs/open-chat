@@ -5,6 +5,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Added appoint_admins endpoint callable by proposal ([#3327](https://github.com/open-ic/open-chat/pull/3327))
+
+### Removed
+
+- Removed update_group_details endpoint callable by platform operators ([#3325](https://github.com/open-ic/open-chat/pull/3325))
+
 ## [[2.0.637](https://github.com/open-ic/open-chat/releases/tag/v2.0.637-proposals_bot)] - 2023-03-17
 
 ### Added
