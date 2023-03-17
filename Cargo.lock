@@ -6788,8 +6788,6 @@ dependencies = [
  "sha2 0.10.6",
  "tracing",
  "types",
- "user_index_canister",
- "user_index_canister_c2c_client",
  "utils",
 ]
 

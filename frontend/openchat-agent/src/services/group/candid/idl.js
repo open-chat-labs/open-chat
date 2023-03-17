@@ -649,7 +649,6 @@ export const idlFactory = ({ IDL }) => {
     'expires_at' : IDL.Opt(TimestampMillis),
   });
   const EventsSuccessResult = IDL.Record({
-    'affected_events' : IDL.Vec(ChatEventWrapper),
     'events' : IDL.Vec(ChatEventWrapper),
     'latest_event_index' : IDL.Nat32,
   });

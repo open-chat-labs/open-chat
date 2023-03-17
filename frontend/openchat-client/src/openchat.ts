@@ -346,7 +346,7 @@ export class OpenChat extends EventTarget {
 
         specialUsers.set({
             [OPENCHAT_BOT_USER_ID]: openChatBotUser,
-            [config.proposalsBotCanister]: proposalsBotUser(config.proposalsBotCanister),
+            [config.proposalBotCanister]: proposalsBotUser(config.proposalBotCanister),
         });
 
         localStorage.removeItem("ic-delegation");
@@ -1009,7 +1009,7 @@ export class OpenChat extends EventTarget {
 
     canSendMessages(chatId: string): boolean {
         return this.chatPredicate(chatId, (chat) =>
-            canSendMessages(chat, this._liveState.userStore, this.config.proposalsBotCanister)
+            canSendMessages(chat, this._liveState.userStore, this.config.proposalBotCanister)
         );
     }
 
@@ -1415,18 +1415,12 @@ export class OpenChat extends EventTarget {
             return;
         }
 
-        // Only include affected events that overlap with already loaded events
-        const confirmedLoaded = confirmedEventIndexesLoaded(chat.chatId);
-        const events = resp.events.concat(
-            resp.affectedEvents.filter((e) => indexIsInRanges(e.index, confirmedLoaded))
-        );
-
-        const userIds = userIdsFromEvents(events);
+        const userIds = userIdsFromEvents(resp.events);
         await this.updateUserStore(chat.chatId, userIds);
 
-        this.addServerEventsToStores(chat.chatId, events, undefined);
+        this.addServerEventsToStores(chat.chatId, resp.events, undefined);
 
-        makeRtcConnections(this.user.userId, chat, events, this._liveState.userStore);
+        makeRtcConnections(this.user.userId, chat, resp.events, this._liveState.userStore);
     }
 
     private async updateUserStore(
@@ -1651,19 +1645,17 @@ export class OpenChat extends EventTarget {
     ): Promise<[EventWrapper<ChatEvent>[], Set<string>]> {
         if (resp === "events_failed") return [[], new Set()];
 
-        const events = resp.events.concat(resp.affectedEvents);
-
-        const userIds = this.userIdsFromEvents(events);
+        const userIds = this.userIdsFromEvents(resp.events);
         await this.updateUserStore(chatId, userIds);
 
         if (this._liveState.selectedThreadKey !== undefined) {
-            for (const event of events) {
+            for (const event of resp.events) {
                 if (event.event.kind === "message") {
                     unconfirmed.delete(this._liveState.selectedThreadKey, event.event.messageId);
                 }
             }
         }
-        return [events, userIds];
+        return [resp.events, userIds];
     }
 
     private lastMessageIndex(events: EventWrapper<ChatEvent>[]): number | undefined {
@@ -2643,7 +2635,6 @@ export class OpenChat extends EventTarget {
 
         await this.handleEventsResponse(clientChat, {
             events: [messageEvent],
-            affectedEvents: [],
             latestEventIndex: undefined,
         });
     }
@@ -3190,39 +3181,6 @@ export class OpenChat extends EventTarget {
                 this._logger.error("Unable to un-suspend user", err);
                 return false;
             });
-    }
-
-    async updateProposalsGroup(
-        governanceCanisterId: string, 
-        name?: string,
-        desc?: string,
-        avatarUrl?: string): Promise<boolean> {
-        try {
-            let avatar = undefined;
-            if (avatarUrl !== undefined) {
-                const file = await fetch(avatarUrl);
-                const mimeType = file.headers.get("Content-Type") ?? "image/jpg";
-                console.log("updateProposalsGroup Avatar mime-type", mimeType);
-                const blob = await file.blob();
-                const data = await blob.arrayBuffer();
-                avatar = {
-                    mimeType,
-                    data: new Uint8Array(data)
-                }
-            }
-    
-            const resp = await this.api
-                .updateProposalsGroup(
-                    governanceCanisterId,
-                    name,
-                    desc,
-                    avatar);
-
-            return resp === "success";
-        } catch (err) {
-            this._logger.error("Unable updateProposalsGroup", err);
-            return false;
-        }
     }
 
     private onChatFrozen(

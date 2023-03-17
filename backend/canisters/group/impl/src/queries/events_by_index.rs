@@ -2,6 +2,7 @@ use crate::{read_state, RuntimeState};
 use chat_events::Reader;
 use group_canister::events_by_index::{Response::*, *};
 use ic_cdk_macros::query;
+use types::EventsResponse;
 
 #[query]
 fn events_by_index(args: Args) -> Response {
@@ -28,11 +29,9 @@ fn events_by_index_impl(args: Args, runtime_state: &RuntimeState) -> Response {
 
             let user_id = runtime_state.data.participants.get(caller).map(|p| p.user_id);
             let events = events_reader.get_by_indexes(&args.events, user_id);
-            let affected_events = events_reader.affected_events(&events, user_id);
 
-            Success(SuccessResult {
+            Success(EventsResponse {
                 events,
-                affected_events,
                 latest_event_index,
             })
         } else {
