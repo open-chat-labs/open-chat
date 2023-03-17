@@ -13,8 +13,6 @@ SCRIPT=$(readlink -f "$0")
 SCRIPT_DIR=$(dirname "$SCRIPT")
 cd $SCRIPT_DIR/..
 
-#pub user_id: UserId,
-
 # add_platform_operator args
 ARGS="(record { user_id=principal \"$USER_ID\" })"
 FUNCTION_ID=1010
