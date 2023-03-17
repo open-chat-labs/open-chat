@@ -27,7 +27,21 @@ type RemoveGovernanceCanisterResponse =
         NotFound;
         InternalError: text;
     };
+
+type AppointAdminsArgs =
+    record {
+        governance_canister_id: CanisterId;
+        users: vec UserId;
+    };
+
+type AppointAdminsResponse =
+    variant {
+        Success;
+        NotFound;
+    };
+
 service : {
     add_governance_canister: (AddGovernanceCanisterArgs) -> (AddGovernanceCanisterResponse);
     remove_governance_canister: (RemoveGovernanceCanisterArgs) -> (RemoveGovernanceCanisterResponse);
+    appoint_admins: (AppointAdminsArgs) -> (AppointAdminsResponse);
 }
