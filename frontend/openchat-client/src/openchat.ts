@@ -346,7 +346,7 @@ export class OpenChat extends EventTarget {
 
         specialUsers.set({
             [OPENCHAT_BOT_USER_ID]: openChatBotUser,
-            [config.proposalsBotCanister]: proposalsBotUser(config.proposalsBotCanister),
+            [config.proposalBotCanister]: proposalsBotUser(config.proposalBotCanister),
         });
 
         localStorage.removeItem("ic-delegation");
@@ -1009,7 +1009,7 @@ export class OpenChat extends EventTarget {
 
     canSendMessages(chatId: string): boolean {
         return this.chatPredicate(chatId, (chat) =>
-            canSendMessages(chat, this._liveState.userStore, this.config.proposalsBotCanister)
+            canSendMessages(chat, this._liveState.userStore, this.config.proposalBotCanister)
         );
     }
 
@@ -3181,39 +3181,6 @@ export class OpenChat extends EventTarget {
                 this._logger.error("Unable to un-suspend user", err);
                 return false;
             });
-    }
-
-    async updateProposalsGroup(
-        governanceCanisterId: string,
-        name?: string,
-        desc?: string,
-        avatarUrl?: string): Promise<boolean> {
-        try {
-            let avatar = undefined;
-            if (avatarUrl !== undefined) {
-                const file = await fetch(avatarUrl);
-                const mimeType = file.headers.get("Content-Type") ?? "image/jpg";
-                console.log("updateProposalsGroup Avatar mime-type", mimeType);
-                const blob = await file.blob();
-                const data = await blob.arrayBuffer();
-                avatar = {
-                    mimeType,
-                    data: new Uint8Array(data)
-                }
-            }
-
-            const resp = await this.api
-                .updateProposalsGroup(
-                    governanceCanisterId,
-                    name,
-                    desc,
-                    avatar);
-
-            return resp === "success";
-        } catch (err) {
-            this._logger.error("Unable updateProposalsGroup", err);
-            return false;
-        }
     }
 
     private onChatFrozen(

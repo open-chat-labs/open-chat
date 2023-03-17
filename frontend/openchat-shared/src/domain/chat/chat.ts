@@ -1657,19 +1657,3 @@ export type ClaimPrizeResponse =
     | { kind: "prize_fully_claimed" }
     | { kind: "failed_after_transfer" }
     | { kind: "transfer_failed" };
-
-export type Avatar = {
-    mimeType: string;
-    data: Uint8Array;
-};
-
-export type UpdateProposalsGroupResponse =
-    | "success"
-    | "not_found"
-    | "not_authorized"
-    | "name_too_short"
-    | "name_too_long"
-    | "name_taken"
-    | "desc_too_long"
-    | "avatar_too_big"
-    | "internal_error";
