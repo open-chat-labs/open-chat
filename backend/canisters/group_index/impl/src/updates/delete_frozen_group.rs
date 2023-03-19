@@ -1,10 +1,11 @@
 use crate::updates::c2c_delete_group::delete_group;
-use crate::{lookup_user, read_state, LookupUserError, RuntimeState};
+use crate::{read_state, RuntimeState};
 use candid::Principal;
 use canister_tracing_macros::trace;
 use group_index_canister::delete_frozen_group::{Response::*, *};
 use ic_cdk_macros::update;
 use types::{CanisterId, ChatId, Milliseconds};
+use user_index_canister_c2c_client::{lookup_user, LookupUserError};
 use utils::time::DAY_IN_MS;
 
 const MIN_FROZEN_DURATION_BEFORE_DELETION: Milliseconds = 7 * DAY_IN_MS;

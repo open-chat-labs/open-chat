@@ -79,7 +79,7 @@ impl Job for EndPollJob {
             state
                 .data
                 .events
-                .end_poll(self.thread_root_message_index, self.message_index, 0, now);
+                .end_poll(self.thread_root_message_index, self.message_index, now);
 
             handle_activity_notification(state);
         });

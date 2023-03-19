@@ -6,7 +6,7 @@
 NETWORK=$1
 IC_URL=$2
 IDENTITY=$3
-WASM_SRC=$4 # WASM_SRC is either empty, "build", "latest", "prod" or the commit Id
+WASM_SRC=$4 # WASM_SRC is either empty, "build", "latest", "local", prod" or the commit Id
 NNS_GOVERNANCE_CANISTER_ID=$5
 NNS_LEDGER_CANISTER_ID=$6
 NNS_CMC_CANISTER_ID=$7

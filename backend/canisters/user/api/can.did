@@ -104,7 +104,7 @@ type AddReactionArgs =
 
 type AddReactionResponse =
     variant {
-        Success: EventIndex;
+        Success;
         SuccessV2: PushEventResult;
         NoChange;
         InvalidReaction;
@@ -124,7 +124,7 @@ type RemoveReactionArgs =
 
 type RemoveReactionResponse =
     variant {
-        Success: EventIndex;
+        Success;
         SuccessV2: PushEventResult;
         NoChange;
         MessageNotFound;
@@ -577,8 +577,8 @@ type EventsWindowArgs =
 type EventsSuccessResult =
     record {
         events: vec ChatEventWrapper;
-        affected_events: vec ChatEventWrapper;
         latest_event_index: EventIndex;
+        timestamp: TimestampMillis;
     };
 
 type EventsResponse =

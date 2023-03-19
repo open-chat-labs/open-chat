@@ -5,10 +5,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Store and use last updated timestamp on each event ([#3326](https://github.com/open-ic/open-chat/pull/3326))
+- Added `timestamp` to `EventsResponse` ([#3329](https://github.com/open-ic/open-chat/pull/3329))
+
 ### Removed
 
 - Removed code only needed for previous upgrade ([#3248](https://github.com/open-ic/open-chat/pull/3248)) & ([#3251](https://github.com/open-ic/open-chat/pull/3251))
 - Removed unused timer job type (`RetrySendingFailedMessage`) ([#3263](https://github.com/open-ic/open-chat/pull/3263))
+- Removed `affected_events` from event responses ([#3322](https://github.com/open-ic/open-chat/pull/3322))
 
 ## [[2.0.622](https://github.com/open-ic/open-chat/releases/tag/v2.0.622-user)] - 2023-03-01
 

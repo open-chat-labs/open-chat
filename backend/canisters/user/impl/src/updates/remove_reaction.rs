@@ -30,17 +30,16 @@ fn remove_reaction_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
             thread_root_message_index: None,
             message_id: args.message_id,
             reaction: args.reaction.clone(),
-            correlation_id: args.correlation_id,
             now,
         }) {
-            AddRemoveReactionResult::Success(r) => {
+            AddRemoveReactionResult::Success => {
                 ic_cdk::spawn(remove_reaction_on_recipients_canister(
                     args.user_id.into(),
                     args.message_id,
                     args.reaction,
                     args.correlation_id,
                 ));
-                SuccessV2(r)
+                Success
             }
             AddRemoveReactionResult::NoChange => NoChange,
             AddRemoveReactionResult::MessageNotFound => MessageNotFound,

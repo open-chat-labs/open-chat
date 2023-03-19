@@ -1,5 +1,6 @@
-use candid::Principal;
+use candid::{CandidType, Principal};
 use ic_ledger_types::Tokens;
+use serde::{Deserialize, Serialize};
 
 mod avatar;
 mod bots;
@@ -108,6 +109,9 @@ pub type ProposalId = u64;
 pub type SnsNeuronId = [u8; 32];
 pub type TimestampMillis = u64;
 pub type TimestampNanos = u64;
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]
+pub struct Empty {}
 
 pub trait PushIfNotContains<T> {
     fn push_if_not_contains(&mut self, item: T) -> bool;

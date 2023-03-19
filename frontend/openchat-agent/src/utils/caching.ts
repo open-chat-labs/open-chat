@@ -188,7 +188,8 @@ export async function getCachedEventsWindow<T extends ChatEvent>(
     if (!totalMiss && missing.size === 0) {
         console.log("cache hit: ", events.length, Date.now() - start);
     }
-    return [{ events, affectedEvents: [], latestEventIndex: undefined }, missing, totalMiss];
+
+    return [{ events, latestEventIndex: undefined }, missing, totalMiss];
 }
 
 async function aggregateEventsWindow<T extends ChatEvent>(
@@ -382,7 +383,7 @@ export async function getCachedEventsByIndex<T extends ChatEvent>(
         })
     );
     const events = returnedEvents.filter((evt) => evt !== undefined) as EventWrapper<T>[];
-    return [{ events, affectedEvents: [], latestEventIndex: undefined }, missing];
+    return [{ events, latestEventIndex: undefined }, missing];
 }
 
 export async function getCachedEvents<T extends ChatEvent>(
@@ -410,7 +411,7 @@ export async function getCachedEvents<T extends ChatEvent>(
         console.log("cache miss: ", missing);
     }
 
-    return [{ events, affectedEvents: [], latestEventIndex: undefined }, missing];
+    return [{ events, latestEventIndex: undefined }, missing];
 }
 
 export function mergeSuccessResponses<T extends ChatEvent>(
@@ -419,7 +420,6 @@ export function mergeSuccessResponses<T extends ChatEvent>(
 ): EventsSuccessResult<T> {
     return {
         events: [...a.events, ...b.events].sort((a, b) => a.index - b.index),
-        affectedEvents: [...a.affectedEvents, ...b.affectedEvents],
         latestEventIndex:
             a.latestEventIndex === undefined && b.latestEventIndex === undefined
                 ? undefined
@@ -557,7 +557,7 @@ export async function setCachedEvents<T extends ChatEvent>(
     });
     const eventStore = tx.objectStore(store);
     await Promise.all(
-        resp.events.concat(resp.affectedEvents).map(async (event) => {
+        resp.events.map(async (event) => {
             await eventStore.put(
                 makeSerialisable<T>(event, chatId, true, threadRootMessageIndex),
                 createCacheKey(chatId, event.index, threadRootMessageIndex)

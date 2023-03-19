@@ -2,6 +2,7 @@ use crate::guards::caller_is_owner;
 use crate::{read_state, RuntimeState};
 use chat_events::Reader;
 use ic_cdk_macros::query;
+use types::EventsResponse;
 use user_canister::events_window::{Response::*, *};
 
 #[query(guard = "caller_is_owner")]
@@ -26,12 +27,11 @@ fn events_window_impl(args: Args, runtime_state: &RuntimeState) -> Response {
             args.max_events as usize,
             Some(my_user_id),
         );
-        let affected_events = events_reader.affected_events(&events, Some(my_user_id));
 
-        Success(SuccessResult {
+        Success(EventsResponse {
             events,
-            affected_events,
             latest_event_index,
+            timestamp: now,
         })
     } else {
         ChatNotFound

@@ -1,7 +1,7 @@
+use crate::incr;
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use std::cmp::max;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 use std::ops::{Deref, DerefMut};
 use types::{
     AvatarChanged, ChatFrozen, ChatMetrics, ChatUnfrozen, Cryptocurrency, DeletedBy, DirectChatCreated,
@@ -58,16 +58,7 @@ impl ChatEventInternal {
         matches!(
             self,
             ChatEventInternal::Message(_)
-                | ChatEventInternal::MessageEdited(_)
-                | ChatEventInternal::MessageDeleted(_)
-                | ChatEventInternal::MessageUndeleted(_)
-                | ChatEventInternal::MessageReactionAdded(_)
-                | ChatEventInternal::MessageReactionRemoved(_)
                 | ChatEventInternal::DirectChatCreated(_)
-                | ChatEventInternal::PollVoteRegistered(_)
-                | ChatEventInternal::PollVoteDeleted(_)
-                | ChatEventInternal::PollEnded(_)
-                | ChatEventInternal::ThreadUpdated(_)
                 | ChatEventInternal::EventsTimeToLiveUpdated(_)
         )
     }
@@ -76,11 +67,6 @@ impl ChatEventInternal {
         matches!(
             self,
             ChatEventInternal::Message(_)
-                | ChatEventInternal::MessageEdited(_)
-                | ChatEventInternal::MessageDeleted(_)
-                | ChatEventInternal::MessageUndeleted(_)
-                | ChatEventInternal::MessageReactionAdded(_)
-                | ChatEventInternal::MessageReactionRemoved(_)
                 | ChatEventInternal::GroupChatCreated(_)
                 | ChatEventInternal::GroupNameChanged(_)
                 | ChatEventInternal::GroupDescriptionChanged(_)
@@ -99,14 +85,9 @@ impl ChatEventInternal {
                 | ChatEventInternal::UsersUnblocked(_)
                 | ChatEventInternal::MessagePinned(_)
                 | ChatEventInternal::MessageUnpinned(_)
-                | ChatEventInternal::PollVoteRegistered(_)
-                | ChatEventInternal::PollVoteDeleted(_)
-                | ChatEventInternal::PollEnded(_)
                 | ChatEventInternal::PermissionsChanged(_)
                 | ChatEventInternal::GroupVisibilityChanged(_)
                 | ChatEventInternal::GroupInviteCodeChanged(_)
-                | ChatEventInternal::ThreadUpdated(_)
-                | ChatEventInternal::ProposalsUpdated(_)
                 | ChatEventInternal::ChatFrozen(_)
                 | ChatEventInternal::ChatUnfrozen(_)
                 | ChatEventInternal::EventsTimeToLiveUpdated(_)
@@ -114,18 +95,7 @@ impl ChatEventInternal {
     }
 
     pub fn is_valid_for_thread(&self) -> bool {
-        matches!(
-            self,
-            ChatEventInternal::Message(_)
-                | ChatEventInternal::MessageEdited(_)
-                | ChatEventInternal::MessageDeleted(_)
-                | ChatEventInternal::MessageUndeleted(_)
-                | ChatEventInternal::MessageReactionAdded(_)
-                | ChatEventInternal::MessageReactionRemoved(_)
-                | ChatEventInternal::PollVoteRegistered(_)
-                | ChatEventInternal::PollVoteDeleted(_)
-                | ChatEventInternal::PollEnded(_)
-        )
+        matches!(self, ChatEventInternal::Message(_))
     }
 
     pub fn as_message(&self) -> Option<&MessageInternal> {
@@ -141,107 +111,6 @@ impl ChatEventInternal {
             Some(m.deref_mut())
         } else {
             None
-        }
-    }
-
-    pub fn add_to_metrics(
-        &self,
-        metrics: &mut ChatMetrics,
-        per_user_metrics: &mut HashMap<UserId, ChatMetrics>,
-        deleted_message_sender: Option<UserId>,
-        timestamp: TimestampMillis,
-    ) {
-        match &self {
-            ChatEventInternal::Message(m) => m.add_to_metrics(metrics, per_user_metrics),
-            ChatEventInternal::MessageEdited(m) => {
-                incr(&mut metrics.edits);
-                incr(&mut per_user_metrics.entry(m.updated_by).or_default().edits);
-            }
-            ChatEventInternal::MessageDeleted(m) => {
-                if let Some(sender) = deleted_message_sender {
-                    if sender != m.updated_by {
-                        incr(&mut metrics.reported_messages);
-                        incr(&mut per_user_metrics.entry(sender).or_default().reported_messages);
-                    }
-                }
-                incr(&mut metrics.deleted_messages);
-                incr(&mut per_user_metrics.entry(m.updated_by).or_default().deleted_messages);
-            }
-            ChatEventInternal::MessageUndeleted(m) => {
-                if let Some(sender) = deleted_message_sender {
-                    if sender != m.updated_by {
-                        decr(&mut metrics.reported_messages);
-                        decr(&mut per_user_metrics.entry(sender).or_default().reported_messages);
-                    }
-                }
-                decr(&mut metrics.deleted_messages);
-                decr(&mut per_user_metrics.entry(m.updated_by).or_default().deleted_messages);
-            }
-            ChatEventInternal::MessageReactionAdded(m) => {
-                incr(&mut metrics.reactions);
-                incr(&mut per_user_metrics.entry(m.updated_by).or_default().reactions);
-            }
-            ChatEventInternal::MessageReactionRemoved(m) => {
-                decr(&mut metrics.reactions);
-                decr(&mut per_user_metrics.entry(m.updated_by).or_default().reactions);
-            }
-            ChatEventInternal::PollVoteRegistered(v) if !v.existing_vote_removed => {
-                incr(&mut metrics.poll_votes);
-                incr(&mut per_user_metrics.entry(v.user_id).or_default().poll_votes);
-            }
-            ChatEventInternal::PollVoteDeleted(v) => {
-                decr(&mut metrics.poll_votes);
-                decr(&mut per_user_metrics.entry(v.updated_by).or_default().poll_votes);
-            }
-            _ => {}
-        }
-
-        metrics.last_active = max(metrics.last_active, timestamp);
-
-        if let Some(user_id) = self.triggered_by() {
-            let user_metrics = per_user_metrics.entry(user_id).or_default();
-            user_metrics.last_active = max(user_metrics.last_active, timestamp);
-        }
-    }
-
-    fn triggered_by(&self) -> Option<UserId> {
-        match self {
-            ChatEventInternal::Message(m) => Some(m.sender),
-            ChatEventInternal::GroupChatCreated(g) => Some(g.created_by),
-            ChatEventInternal::GroupNameChanged(n) => Some(n.changed_by),
-            ChatEventInternal::GroupDescriptionChanged(d) => Some(d.changed_by),
-            ChatEventInternal::GroupRulesChanged(d) => Some(d.changed_by),
-            ChatEventInternal::AvatarChanged(a) => Some(a.changed_by),
-            ChatEventInternal::OwnershipTransferred(o) => Some(o.old_owner),
-            ChatEventInternal::ParticipantsAdded(p) => Some(p.added_by),
-            ChatEventInternal::ParticipantsRemoved(p) => Some(p.removed_by),
-            ChatEventInternal::ParticipantJoined(p) => Some(p.user_id),
-            ChatEventInternal::ParticipantLeft(p) => Some(p.user_id),
-            ChatEventInternal::ParticipantAssumesSuperAdmin(p) => Some(p.user_id),
-            ChatEventInternal::ParticipantDismissedAsSuperAdmin(p) => Some(p.user_id),
-            ChatEventInternal::ParticipantRelinquishesSuperAdmin(p) => Some(p.user_id),
-            ChatEventInternal::RoleChanged(r) => Some(r.changed_by),
-            ChatEventInternal::UsersBlocked(u) => Some(u.blocked_by),
-            ChatEventInternal::UsersUnblocked(u) => Some(u.unblocked_by),
-            ChatEventInternal::MessagePinned(m) => Some(m.pinned_by),
-            ChatEventInternal::MessageUnpinned(m) => Some(m.unpinned_by),
-            ChatEventInternal::PollVoteRegistered(v) => Some(v.user_id),
-            ChatEventInternal::PermissionsChanged(p) => Some(p.changed_by),
-            ChatEventInternal::GroupVisibilityChanged(p) => Some(p.changed_by),
-            ChatEventInternal::GroupInviteCodeChanged(p) => Some(p.changed_by),
-            ChatEventInternal::ChatFrozen(f) => Some(f.frozen_by),
-            ChatEventInternal::ChatUnfrozen(u) => Some(u.unfrozen_by),
-            ChatEventInternal::EventsTimeToLiveUpdated(u) => Some(u.updated_by),
-            ChatEventInternal::MessageEdited(e)
-            | ChatEventInternal::MessageDeleted(e)
-            | ChatEventInternal::MessageUndeleted(e)
-            | ChatEventInternal::MessageReactionAdded(e)
-            | ChatEventInternal::MessageReactionRemoved(e)
-            | ChatEventInternal::PollVoteDeleted(e) => Some(e.updated_by),
-            ChatEventInternal::DirectChatCreated(_)
-            | ChatEventInternal::PollEnded(_)
-            | ChatEventInternal::ProposalsUpdated(_)
-            | ChatEventInternal::ThreadUpdated(_) => None,
         }
     }
 }
@@ -285,73 +154,56 @@ impl MessageInternal {
         }
     }
 
-    pub fn add_to_metrics(&self, metrics: &mut ChatMetrics, per_user_metrics: &mut HashMap<UserId, ChatMetrics>) {
-        let sender_metrics = per_user_metrics.entry(self.sender).or_default();
-
+    pub fn add_to_metrics(&self, metrics: &mut ChatMetrics) {
         if self.replies_to.is_some() {
             incr(&mut metrics.replies);
-            incr(&mut sender_metrics.replies);
         }
 
         match &self.content {
             MessageContentInternal::Text(_) => {
                 incr(&mut metrics.text_messages);
-                incr(&mut sender_metrics.text_messages);
             }
             MessageContentInternal::Image(_) => {
                 incr(&mut metrics.image_messages);
-                incr(&mut sender_metrics.image_messages);
             }
             MessageContentInternal::Video(_) => {
                 incr(&mut metrics.video_messages);
-                incr(&mut sender_metrics.video_messages);
             }
             MessageContentInternal::Audio(_) => {
                 incr(&mut metrics.audio_messages);
-                incr(&mut sender_metrics.audio_messages);
             }
             MessageContentInternal::File(_) => {
                 incr(&mut metrics.file_messages);
-                incr(&mut sender_metrics.file_messages);
             }
             MessageContentInternal::Poll(_) => {
                 incr(&mut metrics.polls);
-                incr(&mut sender_metrics.polls);
             }
             MessageContentInternal::Crypto(c) => match c.transfer.token() {
                 Cryptocurrency::InternetComputer => {
                     incr(&mut metrics.icp_messages);
-                    incr(&mut sender_metrics.icp_messages);
                 }
                 Cryptocurrency::SNS1 => {
                     incr(&mut metrics.sns1_messages);
-                    incr(&mut sender_metrics.sns1_messages);
                 }
                 Cryptocurrency::CKBTC => {
                     incr(&mut metrics.ckbtc_messages);
-                    incr(&mut sender_metrics.ckbtc_messages);
                 }
                 Cryptocurrency::CHAT => {
                     incr(&mut metrics.chat_messages);
-                    incr(&mut sender_metrics.chat_messages);
                 }
             },
             MessageContentInternal::Deleted(_) => {}
             MessageContentInternal::Giphy(_) => {
                 incr(&mut metrics.giphy_messages);
-                incr(&mut sender_metrics.giphy_messages);
             }
             MessageContentInternal::GovernanceProposal(_) => {
                 incr(&mut metrics.proposals);
-                incr(&mut sender_metrics.proposals);
             }
             MessageContentInternal::Prize(_) => {
                 incr(&mut metrics.prize_messages);
-                incr(&mut sender_metrics.prize_messages);
             }
             MessageContentInternal::PrizeWinner(_) => {
                 incr(&mut metrics.prize_winner_messages);
-                incr(&mut sender_metrics.prize_winner_messages);
             }
         }
     }
@@ -372,12 +224,4 @@ pub struct ThreadUpdatedInternal {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct ProposalsUpdatedInternal {
     pub proposals: Vec<MessageIndex>,
-}
-
-fn incr(counter: &mut u64) {
-    *counter = counter.saturating_add(1);
-}
-
-fn decr(counter: &mut u64) {
-    *counter = counter.saturating_sub(1);
 }

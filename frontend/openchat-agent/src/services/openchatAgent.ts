@@ -725,14 +725,11 @@ export class OpenChatAgent extends EventTarget {
         const missing = await this.resolveMissingIndexes(
             chatType,
             currentChatId,
-            resp.events.concat(resp.affectedEvents),
+            resp.events,
             threadRootMessageIndex,
             latestClientEventIndex
         );
         resp.events = resp.events.map((e) => this.rehydrateEvent(e, currentChatId, missing));
-        resp.affectedEvents = resp.affectedEvents.map((e) =>
-            this.rehydrateEvent(e, currentChatId, missing)
-        );
         return resp;
     }
 
