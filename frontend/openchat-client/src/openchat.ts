@@ -1870,10 +1870,7 @@ export class OpenChat extends EventTarget {
         );
     }
 
-    moreNewMessagesAvailable(
-        chatId: string,
-        threadRootEvent?: EventWrapper<Message> /* TODO - make this work for threads */
-    ): boolean {
+    moreNewMessagesAvailable(chatId: string, threadRootEvent?: EventWrapper<Message>): boolean {
         if (threadRootEvent !== undefined && threadRootEvent.event.thread !== undefined) {
             return (
                 (this.confirmedThreadUpToEventIndex() ?? -1) <

@@ -313,10 +313,7 @@
                 interruptScroll(() => {
                     if (messagesDiv !== undefined && previousScrollTop !== undefined) {
                         let adjusted = messagesDiv.scrollTop + scrollHeightDiff;
-                        // Note - logically you would expect this to be adjusted like this:
-                        // let adjusted = messagesDiv.scrollTop + diffDiff;
-                        // But for some reason that doesn't work as well (trust me) :shrug:
-                        // This is still not great on iphone. I would like to know the correlation between scrollHeightDiff and scrollTopDiff
+                        // This is still not great on iphone particularly in the groups that have a high proportion of non-message events
                         messagesDiv.scrollTop = adjusted;
                         console.debug("SCROLL: adjusted: ", {
                             ...keyMeasurements(),
