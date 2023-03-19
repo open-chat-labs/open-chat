@@ -1823,8 +1823,6 @@ export class OpenChat extends EventTarget {
             return false;
         }
 
-        console.log("Events loaded: ", eventsResponse.events);
-
         await this.handleEventsResponse(serverChat, eventsResponse);
         // We may have loaded messages which are more recent than what the chat summary thinks is the latest message,
         // if so, we update the chat summary to show the correct latest message.

@@ -130,7 +130,6 @@
     }
 
     export function scrollToMessageIndex(index: number, preserveFocus: boolean) {
-        console.debug("SCROLL: currentChatMessages: selecting index", index);
         chatEventList?.scrollToMessageIndex(index, preserveFocus);
     }
 
@@ -192,7 +191,6 @@
         $expandedDeletedMessages,
         groupInner(filteredProposals)
     );
-    // .reverse();
 
     $: {
         if (chat.chatId !== currentChatId) {
