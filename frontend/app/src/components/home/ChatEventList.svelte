@@ -284,14 +284,6 @@
         }
     }
 
-    // TODO - come back to this
-    export function adjust(scrollHeight: number, scrollTop: number) {
-        const diff = (messagesDiv?.scrollHeight ?? 0) - scrollHeight;
-        interruptScroll(() => {
-            messagesDiv?.scrollTo({ top: scrollTop - diff, behavior: "auto" });
-        });
-    }
-
     export async function onMessageWindowLoaded(messageIndex: number | undefined) {
         if (messageIndex === undefined) return;
         await tick();
@@ -319,11 +311,12 @@
             // sometimes chrome is *a little* out but it we only want to intervene if if's way off
             if (diffDiff > sensitivityThreshold) {
                 interruptScroll(() => {
-                    if (messagesDiv !== undefined) {
+                    if (messagesDiv !== undefined && previousScrollTop !== undefined) {
                         let adjusted = messagesDiv.scrollTop + scrollHeightDiff;
                         // Note - logically you would expect this to be adjusted like this:
                         // let adjusted = messagesDiv.scrollTop + diffDiff;
                         // But for some reason that doesn't work as well (trust me) :shrug:
+                        // This is still not great on iphone. I would like to know the correlation between scrollHeightDiff and scrollTopDiff
                         messagesDiv.scrollTop = adjusted;
                         console.debug("SCROLL: adjusted: ", {
                             ...keyMeasurements(),

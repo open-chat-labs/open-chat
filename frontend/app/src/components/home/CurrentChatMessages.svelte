@@ -116,12 +116,6 @@
         }, options);
     });
 
-    function expandDeletedMessages(ev: CustomEvent<{ scrollTop: number; scrollHeight: number }>) {
-        tick().then(() => {
-            chatEventList?.adjust(ev.detail.scrollHeight, ev.detail.scrollTop);
-        });
-    }
-
     function retrySend(ev: CustomEvent<EventWrapper<Message>>): void {
         client.retrySendMessage(chat.chatId, ev.detail, events, undefined);
     }
@@ -429,7 +423,6 @@
                         on:upgrade
                         on:forward
                         on:retrySend={retrySend}
-                        on:expandDeletedMessages={expandDeletedMessages}
                         event={evt} />
                 {/each}
             {/each}
