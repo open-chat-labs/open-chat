@@ -30,7 +30,6 @@
     import { dimensions } from "../../stores/screenDimensions";
 
     const FROM_BOTTOM_THRESHOLD = 600;
-    const LOAD_THRESHOLD = 600;
     const client = getContext<OpenChat>("client");
 
     export let rootSelector: string;
@@ -59,6 +58,7 @@
     let previousScrollHeight: number | undefined = undefined;
     let previousScrollTop: number | undefined = undefined;
     let user = client.user;
+    let scrollToBottomAfterLoad = false;
 
     $: failedMessagesStore = client.failedMessagesStore;
     $: threadSummary = threadRootEvent?.event.thread;
@@ -137,7 +137,6 @@
                 onLoadedPreviousMessages(ev.detail);
             }
             if (ev instanceof LoadedThreadMessageWindow) {
-                console.log("Thread message window loaded: ", events);
                 onMessageWindowLoaded(ev.detail);
             }
             if (ev instanceof SentThreadMessage) {
@@ -248,7 +247,7 @@
             (ev) =>
                 ev.event.kind === "message" &&
                 ev.event.messageIndex === index &&
-                !failedMessagesStore.contains(selectedThreadKey ?? chat.chatId, ev.event.messageId) //TODO threads
+                !failedMessagesStore.contains(selectedThreadKey ?? chat.chatId, ev.event.messageId)
         ) as EventWrapper<Message> | undefined;
     }
 
@@ -264,7 +263,6 @@
         const element = document.querySelector(`.${rootSelector} [data-index~='${index}']`);
         if (element) {
             // this triggers on scroll which will potentially load some new messages
-            console.log("SCROLL: target element found - about to scroll");
             scrollToElement(element);
             const msgEvent = findMessageEvent(index);
             if (msgEvent && threadRootEvent === undefined) {
@@ -288,9 +286,13 @@
         if (messageIndex === undefined) return;
         await tick();
         initialised = true;
-        scrollToMessageIndex(messageIndex, false);
-        await tick();
-        loadMoreIfRequired();
+        if (scrollToBottomAfterLoad) {
+            loadIndexThenScrollToBottom(messageIndex);
+        } else {
+            scrollToMessageIndex(messageIndex, false);
+            await tick();
+            loadMoreIfRequired();
+        }
     }
 
     // is there some way to tell that we will have to recurse
@@ -348,7 +350,7 @@
     }
 
     function onScroll() {
-        if (!initialised || loadingPrev) return;
+        if (!initialised || loadingPrev || scrollToBottomAfterLoad) return;
 
         menuStore.hideMenu();
         tooltipStore.hide();
@@ -374,11 +376,22 @@
         loadMoreIfRequired(true);
     }
 
+    async function loadIndexThenScrollToBottom(messageIndex: number) {
+        const element = document.querySelector(`.${rootSelector} [data-index~='${messageIndex}']`);
+        if (element) {
+            await scrollBottom();
+            scrollToBottomAfterLoad = false;
+        } else {
+            scrollToBottomAfterLoad = true;
+            client.loadEventWindow(chat.chatId, messageIndex, threadRootEvent);
+        }
+    }
+
     function scrollToLast() {
         if (threadSummary !== undefined) {
-            scrollToMessageIndex(threadSummary.numberOfReplies - 1, false);
+            loadIndexThenScrollToBottom(threadSummary.numberOfReplies - 1);
         } else {
-            scrollToMessageIndex(chat.latestMessage?.event.messageIndex ?? -1, false);
+            loadIndexThenScrollToBottom(chat.latestMessage?.event.messageIndex ?? -1);
         }
     }
 </script>
