@@ -18,8 +18,8 @@ export const idlFactory = ({ IDL }) => {
     'thread_root_message_index' : IDL.Opt(MessageIndex),
     'reaction' : IDL.Text,
   });
-  const EventIndex = IDL.Nat32;
   const TimestampMillis = IDL.Nat64;
+  const EventIndex = IDL.Nat32;
   const PushEventResult = IDL.Record({
     'timestamp' : TimestampMillis,
     'index' : EventIndex,
@@ -29,7 +29,7 @@ export const idlFactory = ({ IDL }) => {
     'MessageNotFound' : IDL.Null,
     'NoChange' : IDL.Null,
     'ChatNotFound' : IDL.Null,
-    'Success' : EventIndex,
+    'Success' : IDL.Null,
     'UserSuspended' : IDL.Null,
     'InvalidReaction' : IDL.Null,
     'SuccessV2' : PushEventResult,
@@ -620,7 +620,6 @@ export const idlFactory = ({ IDL }) => {
     'expires_at' : IDL.Opt(TimestampMillis),
   });
   const EventsSuccessResult = IDL.Record({
-    'affected_events' : IDL.Vec(ChatEventWrapper),
     'events' : IDL.Vec(ChatEventWrapper),
     'latest_event_index' : EventIndex,
   });
@@ -880,7 +879,7 @@ export const idlFactory = ({ IDL }) => {
     'MessageNotFound' : IDL.Null,
     'NoChange' : IDL.Null,
     'ChatNotFound' : IDL.Null,
-    'Success' : EventIndex,
+    'Success' : IDL.Null,
     'UserSuspended' : IDL.Null,
     'SuccessV2' : PushEventResult,
   });

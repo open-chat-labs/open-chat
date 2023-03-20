@@ -15,7 +15,7 @@ export type AgentConfig = {
     userGeekApiKey: string;
     enableMultiCrypto?: boolean;
     blobUrlPattern: string;
-    proposalsBotCanister: string;
+    proposalBotCanister: string;
     logger: {
         error(message?: unknown, ...optionalParams: unknown[]): void;
     };

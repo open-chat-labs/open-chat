@@ -1,4 +1,4 @@
 mod add_governance_canister;
+mod appoint_admins;
 mod remove_governance_canister;
-mod update_group_details;
 mod wallet_receive;

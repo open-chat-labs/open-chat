@@ -19,7 +19,7 @@ export interface AddReactionArgs {
 export type AddReactionResponse = { 'MessageNotFound' : null } |
   { 'NoChange' : null } |
   { 'ChatNotFound' : null } |
-  { 'Success' : EventIndex } |
+  { 'Success' : null } |
   { 'UserSuspended' : null } |
   { 'InvalidReaction' : null } |
   { 'SuccessV2' : PushEventResult };
@@ -147,10 +147,6 @@ export interface ChatMetrics {
   'reactions' : bigint,
   'prize_messages' : bigint,
 }
-export type ChatSummary = { 'Group' : GroupChatSummary } |
-  { 'Direct' : DirectChatSummary };
-export type ChatSummaryUpdates = { 'Group' : GroupChatSummaryUpdates } |
-  { 'Direct' : DirectChatSummaryUpdates };
 export interface ChatUnfrozen { 'unfrozen_by' : UserId }
 export type CompletedCryptoTransaction = {
     'NNS' : NnsCompletedCryptoTransaction
@@ -317,7 +313,6 @@ export type EventsResponse = { 'ReplicaNotUpToDate' : EventIndex } |
   { 'ChatNotFound' : null } |
   { 'Success' : EventsSuccessResult };
 export interface EventsSuccessResult {
-  'affected_events' : Array<ChatEventWrapper>,
   'events' : Array<ChatEventWrapper>,
   'latest_event_index' : EventIndex,
 }
@@ -432,7 +427,6 @@ export interface GroupCanisterGroupChatSummaryUpdates {
   'latest_event_index' : [] | [EventIndex],
   'mentions' : Array<Mention>,
   'chat_id' : ChatId,
-  'affected_events_v2' : Array<[EventIndex, TimestampMillis]>,
   'newly_expired_messages' : Array<MessageIndexRange>,
   'participant_count' : [] | [number],
   'my_metrics' : [] | [ChatMetrics],
@@ -480,36 +474,6 @@ export interface GroupChatSummary {
   'archived' : boolean,
   'participant_count' : number,
   'my_metrics' : ChatMetrics,
-  'latest_message' : [] | [MessageEventWrapper],
-}
-export interface GroupChatSummaryUpdates {
-  'is_public' : [] | [boolean],
-  'permissions' : [] | [GroupPermissions],
-  'metrics' : [] | [ChatMetrics],
-  'subtype' : GroupSubtypeUpdate,
-  'date_last_pinned' : [] | [TimestampMillis],
-  'name' : [] | [string],
-  'role' : [] | [Role],
-  'wasm_version' : [] | [Version],
-  'affected_events' : Uint32Array | number[],
-  'notifications_muted' : [] | [boolean],
-  'description' : [] | [string],
-  'events_ttl' : [] | [Milliseconds],
-  'last_updated' : TimestampMillis,
-  'owner_id' : [] | [UserId],
-  'avatar_id' : AvatarIdUpdate,
-  'next_message_expiry' : TimestampUpdate,
-  'latest_threads' : Array<ThreadSyncDetails>,
-  'frozen' : FrozenGroupUpdate,
-  'latest_event_index' : [] | [EventIndex],
-  'read_by_me_up_to' : [] | [MessageIndex],
-  'mentions' : Array<Mention>,
-  'chat_id' : ChatId,
-  'date_read_pinned' : [] | [TimestampMillis],
-  'expired_messages' : Array<MessageIndexRange>,
-  'archived' : [] | [boolean],
-  'participant_count' : [] | [number],
-  'my_metrics' : [] | [ChatMetrics],
   'latest_message' : [] | [MessageEventWrapper],
 }
 export interface GroupDescriptionChanged {
@@ -964,7 +928,7 @@ export interface RemoveReactionArgs {
 export type RemoveReactionResponse = { 'MessageNotFound' : null } |
   { 'NoChange' : null } |
   { 'ChatNotFound' : null } |
-  { 'Success' : EventIndex } |
+  { 'Success' : null } |
   { 'UserSuspended' : null } |
   { 'SuccessV2' : PushEventResult };
 export interface ReplyContext {

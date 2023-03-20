@@ -1,1 +1,1 @@
-user_index->local_user_index->group->website->user
+website > group > user

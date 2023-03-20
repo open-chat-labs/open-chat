@@ -9,29 +9,6 @@ use std::collections::HashSet;
 
 pub const MAX_THREADS_IN_SUMMARY: usize = 20;
 
-#[allow(clippy::large_enum_variant)]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub enum ChatSummary {
-    Direct(DirectChatSummary),
-    Group(GroupChatSummary),
-}
-
-impl ChatSummary {
-    pub fn display_date(&self) -> TimestampMillis {
-        match self {
-            ChatSummary::Direct(d) => d.display_date(),
-            ChatSummary::Group(g) => g.display_date(),
-        }
-    }
-
-    pub fn chat_id(&self) -> ChatId {
-        match self {
-            ChatSummary::Direct(d) => d.them.into(),
-            ChatSummary::Group(g) => g.chat_id,
-        }
-    }
-}
-
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct DirectChatSummary {
     pub them: UserId,
@@ -96,22 +73,6 @@ impl GroupChatSummary {
     }
 }
 
-#[allow(clippy::large_enum_variant)]
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub enum ChatSummaryUpdates {
-    Direct(DirectChatSummaryUpdates),
-    Group(GroupChatSummaryUpdates),
-}
-
-impl ChatSummaryUpdates {
-    pub fn chat_id(&self) -> ChatId {
-        match self {
-            ChatSummaryUpdates::Direct(d) => d.chat_id,
-            ChatSummaryUpdates::Group(g) => g.chat_id,
-        }
-    }
-}
-
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct DirectChatSummaryUpdates {
     pub chat_id: ChatId,
@@ -121,43 +82,12 @@ pub struct DirectChatSummaryUpdates {
     pub read_by_them_up_to: Option<MessageIndex>,
     pub notifications_muted: Option<bool>,
     pub affected_events: Vec<EventIndex>,
+    pub updated_events: Vec<(EventIndex, TimestampMillis)>,
     pub metrics: Option<ChatMetrics>,
     pub my_metrics: Option<ChatMetrics>,
     pub archived: Option<bool>,
     pub events_ttl: OptionUpdate<Milliseconds>,
     pub newly_expired_messages: RangeSet<MessageIndex>,
-}
-
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct GroupChatSummaryUpdates {
-    pub chat_id: ChatId,
-    pub last_updated: TimestampMillis,
-    pub name: Option<String>,
-    pub description: Option<String>,
-    pub subtype: OptionUpdate<GroupSubtype>,
-    pub avatar_id: OptionUpdate<u128>,
-    pub latest_message: Option<EventWrapper<Message>>,
-    pub latest_event_index: Option<EventIndex>,
-    pub read_by_me_up_to: Option<MessageIndex>,
-    pub notifications_muted: Option<bool>,
-    pub participant_count: Option<u32>,
-    pub role: Option<Role>,
-    pub mentions: Vec<Mention>,
-    pub wasm_version: Option<Version>,
-    pub owner_id: Option<UserId>,
-    pub permissions: Option<GroupPermissions>,
-    pub affected_events: Vec<EventIndex>,
-    pub metrics: Option<ChatMetrics>,
-    pub my_metrics: Option<ChatMetrics>,
-    pub is_public: Option<bool>,
-    pub latest_threads: Vec<ThreadSyncDetails>,
-    pub archived: Option<bool>,
-    pub frozen: OptionUpdate<FrozenGroupInfo>,
-    pub date_last_pinned: Option<TimestampMillis>,
-    pub date_read_pinned: Option<TimestampMillis>,
-    pub events_ttl: OptionUpdate<Milliseconds>,
-    pub newly_expired_messages: RangeSet<MessageIndex>,
-    pub next_message_expiry: OptionUpdate<TimestampMillis>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -289,7 +219,7 @@ pub struct GroupCanisterGroupChatSummaryUpdates {
     pub owner_id: Option<UserId>,
     pub permissions: Option<GroupPermissions>,
     pub affected_events: Vec<EventIndex>,
-    pub affected_events_v2: Vec<(EventIndex, TimestampMillis)>,
+    pub updated_events: Vec<(Option<MessageIndex>, EventIndex, TimestampMillis)>, // (Thread root message index, event index, timestamp)
     pub metrics: Option<ChatMetrics>,
     pub my_metrics: Option<ChatMetrics>,
     pub is_public: Option<bool>,

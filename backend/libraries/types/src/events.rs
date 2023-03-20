@@ -1,4 +1,6 @@
-use crate::{EventIndex, GroupPermissions, Message, MessageId, MessageIndex, Milliseconds, Role, UserId};
+use crate::{
+    EventIndex, EventWrapper, GroupPermissions, Message, MessageId, MessageIndex, Milliseconds, Role, TimestampMillis, UserId,
+};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
@@ -42,22 +44,11 @@ pub enum ChatEvent {
     EventsTimeToLiveUpdated(EventsTimeToLiveUpdated),
 }
 
-impl ChatEvent {
-    pub fn affected_events(&self) -> Vec<EventIndex> {
-        match self {
-            ChatEvent::MessageEdited(m) => vec![m.event_index],
-            ChatEvent::MessageDeleted(m) => vec![m.event_index],
-            ChatEvent::MessageUndeleted(m) => vec![m.event_index],
-            ChatEvent::MessageReactionAdded(r) => vec![r.event_index],
-            ChatEvent::MessageReactionRemoved(r) => vec![r.event_index],
-            ChatEvent::PollVoteRegistered(v) => vec![v.event_index],
-            ChatEvent::PollVoteDeleted(v) => vec![v.event_index],
-            ChatEvent::PollEnded(p) => vec![p.event_index],
-            ChatEvent::ThreadUpdated(t) => vec![t.event_index],
-            ChatEvent::ProposalsUpdated(pu) => pu.proposals.iter().map(|p| p.event_index).collect(),
-            _ => vec![],
-        }
-    }
+#[derive(CandidType, Serialize, Deserialize, Debug)]
+pub struct EventsResponse {
+    pub events: Vec<EventWrapper<ChatEvent>>,
+    pub latest_event_index: EventIndex,
+    pub timestamp: TimestampMillis,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

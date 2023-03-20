@@ -2,6 +2,7 @@ use crate::{read_state, RuntimeState};
 use chat_events::Reader;
 use group_canister::events::{Response::*, *};
 use ic_cdk_macros::query;
+use types::EventsResponse;
 
 #[query]
 fn events(args: Args) -> Response {
@@ -34,12 +35,11 @@ fn events_impl(args: Args, runtime_state: &RuntimeState) -> Response {
                 args.max_events as usize,
                 user_id,
             );
-            let affected_events = events_reader.affected_events(&events, user_id);
 
-            Success(SuccessResult {
+            Success(EventsResponse {
                 events,
-                affected_events,
                 latest_event_index,
+                timestamp: now,
             })
         } else {
             ThreadMessageNotFound

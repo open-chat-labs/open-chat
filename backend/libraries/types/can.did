@@ -89,18 +89,6 @@ type ChatMetrics =
         last_active: TimestampMillis;
     };
 
-type ChatSummary =
-    variant {
-        Direct: DirectChatSummary;
-        Group: GroupChatSummary;
-    };
-
-type ChatSummaryUpdates =
-    variant {
-        Direct: DirectChatSummaryUpdates;
-        Group: GroupChatSummaryUpdates;
-    };
-
 type CryptoContent =
     record {
         recipient: UserId;
@@ -152,6 +140,7 @@ type DirectChatSummaryUpdates =
         read_by_them_up_to: opt MessageIndex;
         notifications_muted: opt bool;
         affected_events: vec EventIndex;
+        updated_events: vec record { nat32; nat64 };
         metrics: opt ChatMetrics;
         my_metrics: opt ChatMetrics;
         archived: opt bool;
@@ -320,38 +309,6 @@ type GroupCanisterGroupChatSummary =
         next_message_expiry: opt TimestampMillis;
     };
 
-type GroupChatSummaryUpdates =
-    record {
-        chat_id: ChatId;
-        last_updated: TimestampMillis;
-        name: opt text;
-        description: opt text;
-        subtype: GroupSubtypeUpdate;
-        avatar_id: AvatarIdUpdate;
-        latest_message: opt MessageEventWrapper;
-        latest_event_index: opt EventIndex;
-        read_by_me_up_to: opt MessageIndex;
-        notifications_muted: opt bool;
-        participant_count: opt nat32;
-        role: opt Role;
-        mentions: vec Mention;
-        owner_id: opt UserId;
-        permissions: opt GroupPermissions;
-        affected_events: vec EventIndex;
-        metrics: opt ChatMetrics;
-        my_metrics: opt ChatMetrics;
-        is_public: opt bool;
-        latest_threads: vec ThreadSyncDetails;
-        archived: opt bool;
-        frozen: FrozenGroupUpdate;
-        wasm_version: opt Version;
-        date_last_pinned: opt TimestampMillis;
-        date_read_pinned: opt TimestampMillis;
-        events_ttl: opt Milliseconds;
-        expired_messages: vec MessageIndexRange;
-        next_message_expiry: TimestampUpdate;
-    };
-
 type GroupCanisterGroupChatSummaryUpdates =
     record {
         chat_id: ChatId;
@@ -368,7 +325,7 @@ type GroupCanisterGroupChatSummaryUpdates =
         owner_id: opt UserId;
         permissions: opt GroupPermissions;
         affected_events: vec EventIndex;
-        affected_events_v2: vec record { EventIndex; TimestampMillis };
+        updated_events: vec record { opt nat32; nat32; nat64 };
         metrics: opt ChatMetrics;
         my_metrics: opt ChatMetrics;
         is_public: opt bool;

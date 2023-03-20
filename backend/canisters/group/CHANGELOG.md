@@ -8,11 +8,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Return group summary if user tries to join group they are already in ([#3296](https://github.com/open-ic/open-chat/pull/3296))
+- Store and use last updated timestamp on each event ([#3326](https://github.com/open-ic/open-chat/pull/3326))
+- Added `timestamp` to `EventsResponse` ([#3329](https://github.com/open-ic/open-chat/pull/3329))
 
 ### Removed
 
 - Removed code only needed for previous upgrade ([#3248](https://github.com/open-ic/open-chat/pull/3248)) & ([#3251](https://github.com/open-ic/open-chat/pull/3251))
 - Removed all the code around reinstalling groups ([#3253](https://github.com/open-ic/open-chat/pull/3253))
+- Removed `affected_events` from event responses ([#3322](https://github.com/open-ic/open-chat/pull/3322))
 - Removed super_admin role from groups([#3319](https://github.com/open-ic/open-chat/pull/3319))
 
 ## [[2.0.619](https://github.com/open-ic/open-chat/releases/tag/v2.0.619-group)] - 2023-02-28
