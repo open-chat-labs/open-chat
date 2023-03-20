@@ -52,9 +52,7 @@ fn requires_top_up(summary: &CanisterSummary) -> bool {
     cycles < 100 * T
 }
 
-use canister_client_macros::generate_candid_c2c_call;
-
-generate_candid_c2c_call!(get_sns_canisters_summary);
+canister_client::generate_candid_c2c_call!(get_sns_canisters_summary);
 
 pub mod get_sns_canisters_summary {
     use candid::{CandidType, Nat, Principal};
