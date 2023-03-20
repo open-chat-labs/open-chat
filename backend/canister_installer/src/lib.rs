@@ -1,6 +1,5 @@
-use crate::utils::{build_ic_agent, get_canister_wasm, install_wasm, set_controllers};
-use crate::{CanisterIds, CanisterName};
 use candid::Principal;
+use canister_agent_utils::{build_ic_agent, get_canister_wasm, install_wasm, set_controllers, CanisterIds, CanisterName};
 use ic_agent::identity::BasicIdentity;
 use ic_agent::{Agent, Identity};
 use ic_utils::interfaces::ManagementCanister;
