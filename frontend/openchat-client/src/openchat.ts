@@ -3071,13 +3071,10 @@ export class OpenChat extends EventTarget {
             });
     }
 
-    createGroupChat(
-        currentUser: string,
-        candidate: CandidateGroupChat
-    ): Promise<CreateGroupResponse> {
+    createGroupChat(candidate: CandidateGroupChat): Promise<CreateGroupResponse> {
         return this.api.createGroupChat(candidate).then((resp) => {
             if (resp.kind === "success") {
-                const group = groupChatFromCandidate(currentUser, resp.canisterId, candidate);
+                const group = groupChatFromCandidate(resp.canisterId, candidate);
                 localChatSummaryUpdates.markAdded(group);
             }
             return resp;

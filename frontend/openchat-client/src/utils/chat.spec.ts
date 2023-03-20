@@ -39,7 +39,6 @@ const defaultGroupChat: GroupChatSummary = {
     memberCount: 10,
     myRole: "admin",
     mentions: [],
-    ownerId: "some_owner",
     permissions: {
         changePermissions: "admins",
         changeRoles: "admins",

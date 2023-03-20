@@ -49,7 +49,6 @@ export function joinGroupResponse(candid: ApiJoinGroupResponse): JoinGroupRespon
 }
 
 function groupChatSummary(candid: ApiGroupCanisterGroupChatSummary): GroupChatSummary {
-    const ownerId = candid.owner_id.toString();
     const latestMessage = optional(candid.latest_message, (ev) => ({
         index: ev.index,
         timestamp: ev.timestamp,
@@ -77,7 +76,6 @@ function groupChatSummary(candid: ApiGroupCanisterGroupChatSummary): GroupChatSu
         memberCount: candid.participant_count,
         myRole: memberRole(candid.role),
         mentions: [],
-        ownerId,
         permissions: groupPermissions(candid.permissions),
         metrics: chatMetrics(candid.metrics),
         myMetrics: chatMetrics(candid.my_metrics),

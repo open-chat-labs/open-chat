@@ -245,7 +245,7 @@
         busy = true;
 
         client
-            .createGroupChat(user.userId, candidateGroup)
+            .createGroupChat(candidateGroup)
             .then((resp) => {
                 if (resp.kind !== "success") {
                     const err = groupCreationErrorMessage(resp);
