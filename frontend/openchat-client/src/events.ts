@@ -18,15 +18,15 @@ export class SendMessageFailed extends CustomEvent<boolean> {
     }
 }
 
-export class LoadedPreviousMessages extends Event {
-    constructor() {
-        super("openchat_event");
+export class LoadedPreviousMessages extends CustomEvent<boolean> {
+    constructor(initialising: boolean) {
+        super("openchat_event", { detail: initialising });
     }
 }
 
-export class LoadedPreviousThreadMessages extends Event {
-    constructor() {
-        super("openchat_event");
+export class LoadedPreviousThreadMessages extends CustomEvent<boolean> {
+    constructor(initialising: boolean) {
+        super("openchat_event", { detail: initialising });
     }
 }
 

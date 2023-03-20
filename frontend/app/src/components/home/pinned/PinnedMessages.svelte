@@ -50,9 +50,9 @@
                     } else {
                         messages = {
                             kind: "success",
-                            data: client
-                                .groupMessagesByDate(resp.events.sort((a, b) => a.index - b.index))
-                                .reverse(),
+                            data: client.groupMessagesByDate(
+                                resp.events.sort((a, b) => a.index - b.index)
+                            ),
                         };
 
                         if (unread) {
