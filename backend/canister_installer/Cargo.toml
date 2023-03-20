@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-canister_client = { path = "../libraries/canister_client" }
+canister_agent = { path = "../libraries/canister_agent" }
 clap = { workspace = true, features = ["derive"] }
 tokio = { workspace = true, features = ["full"] }
 types = { path = "../libraries/types" }

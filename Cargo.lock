@@ -966,18 +966,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "canister_api_macros"
-version = "0.1.0"
-dependencies = [
- "proc-macro2",
- "quote 1.0.23",
- "serde",
- "serde_tokenstream",
- "syn 1.0.109",
-]
-
-[[package]]
-name = "canister_client"
+name = "canister_agent"
 version = "0.1.0"
 dependencies = [
  "candid",
@@ -1006,6 +995,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "canister_api_macros"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote 1.0.23",
+ "serde",
+ "serde_tokenstream",
+ "syn 1.0.109",
+]
+
+[[package]]
 name = "canister_client_macros"
 version = "0.1.0"
 dependencies = [
@@ -1020,7 +1020,7 @@ dependencies = [
 name = "canister_installer"
 version = "0.1.0"
 dependencies = [
- "canister_client",
+ "canister_agent",
  "clap 3.2.23",
  "tokio",
  "types",
@@ -1087,7 +1087,7 @@ dependencies = [
 name = "canister_upgrader"
 version = "0.1.0"
 dependencies = [
- "canister_client",
+ "canister_agent",
  "clap 3.2.23",
  "tokio",
  "types",
