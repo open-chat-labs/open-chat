@@ -1,5 +1,5 @@
 use candid::Principal;
-use canister_client_macros::*;
+use canister_client::generate_c2c_call;
 use types::{CanisterId, UserDetails};
 use user_index_canister::*;
 

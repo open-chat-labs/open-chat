@@ -1,5 +1,5 @@
 use bot_api::*;
-use canister_client_macros::*;
+use canister_client::generate_c2c_call;
 
 // Queries
 

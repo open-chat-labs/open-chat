@@ -7,7 +7,7 @@ edition = "2021"
 
 [dependencies]
 candid = { workspace = true }
-canister_client_macros = { path = "../../../libraries/canister_client_macros" }
+canister_client = { path = "../../../libraries/canister_client" }
 ic-cdk = { workspace = true }
 storage_bucket_canister = { path = "../api" }
 tracing = { workspace = true }

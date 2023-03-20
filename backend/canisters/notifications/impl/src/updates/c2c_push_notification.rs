@@ -1,7 +1,6 @@
 use crate::{mutate_state, read_state, RuntimeState};
 use candid::Principal;
 use canister_api_macros::update_msgpack;
-use canister_client_macros::generate_c2c_call;
 use canister_tracing_macros::trace;
 use notifications_canister::c2c_push_notification::{Response::*, *};
 use types::{CanPushNotificationsArgs, CanPushNotificationsResponse, CanisterId, NotificationEnvelope, UserId};
@@ -83,4 +82,4 @@ mod c2c_can_push_notifications {
     pub type Response = CanPushNotificationsResponse;
 }
 
-generate_c2c_call!(c2c_can_push_notifications);
+canister_client::generate_c2c_call!(c2c_can_push_notifications);

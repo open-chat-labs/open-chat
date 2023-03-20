@@ -1,4 +1,4 @@
-use canister_client_macros::*;
+use canister_client::generate_c2c_call;
 use user_canister::*;
 
 // Updates
