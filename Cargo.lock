@@ -1008,6 +1008,13 @@ dependencies = [
 [[package]]
 name = "canister_client_macros"
 version = "0.1.0"
+dependencies = [
+ "candid",
+ "ic-cdk 0.7.3",
+ "msgpack",
+ "serde",
+ "tracing",
+]
 
 [[package]]
 name = "canister_installer"

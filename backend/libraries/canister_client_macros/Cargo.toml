@@ -4,3 +4,9 @@ version = "0.1.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+[dependencies]
+candid = { workspace = true }
+ic-cdk = { workspace = true }
+msgpack = { path = "../msgpack" }
+serde = { workspace = true }
+tracing = { workspace = true }
