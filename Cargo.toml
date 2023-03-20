@@ -58,6 +58,7 @@ members = [
     "backend/integration_tests",
     "backend/libraries/canister_agent_utils",
     "backend/libraries/canister_api_macros",
+    "backend/libraries/canister_client",
     "backend/libraries/canister_client_macros",
     "backend/libraries/chat_events",
     "backend/libraries/cycles_dispenser_client",

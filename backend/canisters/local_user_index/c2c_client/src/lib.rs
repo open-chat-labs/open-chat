@@ -1,4 +1,4 @@
-use canister_client_macros::*;
+use canister_client::{generate_c2c_call, generate_candid_c2c_call};
 use local_user_index_canister::*;
 
 // Queries

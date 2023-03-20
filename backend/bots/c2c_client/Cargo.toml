@@ -8,7 +8,7 @@ edition = "2021"
 [dependencies]
 bot_api = { path = "../api" }
 candid = { workspace = true }
-canister_client_macros = { path = "../../libraries/canister_client_macros" }
+canister_client = { path = "../../libraries/canister_client" }
 ic-cdk = { workspace = true }
 msgpack = { path = "../../libraries/msgpack" }
 tracing = { workspace = true }
