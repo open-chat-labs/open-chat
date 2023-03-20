@@ -966,6 +966,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "canister_agent_utils"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "canister_client_macros",
+ "dirs",
+ "ic-agent",
+ "ic-utils 0.23.0",
+ "itertools",
+ "types",
+]
+
+[[package]]
 name = "canister_api_macros"
 version = "0.1.0"
 dependencies = [
@@ -974,35 +987,6 @@ dependencies = [
  "serde",
  "serde_tokenstream",
  "syn 1.0.109",
-]
-
-[[package]]
-name = "canister_client"
-version = "0.1.0"
-dependencies = [
- "candid",
- "canister_client_macros",
- "cycles_dispenser_canister",
- "dirs",
- "futures",
- "group_canister",
- "group_index_canister",
- "group_index_canister_client",
- "ic-agent",
- "ic-utils 0.23.0",
- "itertools",
- "notifications_canister",
- "notifications_index_canister",
- "notifications_index_canister_client",
- "online_users_canister",
- "proposals_bot_canister",
- "serde",
- "storage_index_canister",
- "storage_index_canister_client",
- "types",
- "user_canister",
- "user_index_canister",
- "user_index_canister_client",
 ]
 
 [[package]]
@@ -1020,10 +1004,28 @@ dependencies = [
 name = "canister_installer"
 version = "0.1.0"
 dependencies = [
- "canister_client",
+ "candid",
+ "canister_agent_utils",
  "clap 3.2.23",
+ "cycles_dispenser_canister",
+ "futures",
+ "group_canister",
+ "group_index_canister",
+ "group_index_canister_client",
+ "ic-agent",
+ "ic-utils 0.23.0",
+ "notifications_canister",
+ "notifications_index_canister",
+ "notifications_index_canister_client",
+ "online_users_canister",
+ "proposals_bot_canister",
+ "storage_index_canister",
+ "storage_index_canister_client",
  "tokio",
  "types",
+ "user_canister",
+ "user_index_canister",
+ "user_index_canister_client",
 ]
 
 [[package]]
@@ -1087,10 +1089,27 @@ dependencies = [
 name = "canister_upgrader"
 version = "0.1.0"
 dependencies = [
- "canister_client",
+ "candid",
+ "canister_agent_utils",
  "clap 3.2.23",
+ "cycles_dispenser_canister",
+ "group_canister",
+ "group_index_canister",
+ "group_index_canister_client",
+ "ic-agent",
+ "ic-utils 0.23.0",
+ "notifications_canister",
+ "notifications_index_canister",
+ "notifications_index_canister_client",
+ "online_users_canister",
+ "proposals_bot_canister",
+ "storage_index_canister",
+ "storage_index_canister_client",
  "tokio",
  "types",
+ "user_canister",
+ "user_index_canister",
+ "user_index_canister_client",
 ]
 
 [[package]]

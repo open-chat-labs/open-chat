@@ -1,6 +1,5 @@
-use crate::utils::{build_ic_agent, get_canister_wasm};
-use crate::CanisterName;
 use candid::CandidType;
+use canister_agent_utils::{build_ic_agent, get_canister_wasm, CanisterName};
 use ic_agent::identity::BasicIdentity;
 use ic_utils::call::AsyncCall;
 use ic_utils::interfaces::management_canister::builders::InstallMode;
