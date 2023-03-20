@@ -1,5 +1,5 @@
 [package]
-name = "group_canister_c2c_client"
+name = "canister_client"
 version = "0.1.0"
 edition = "2021"
 
@@ -7,9 +7,7 @@ edition = "2021"
 
 [dependencies]
 candid = { workspace = true }
-canister_client = { path = "../../../libraries/canister_client" }
-group_canister = { path = "../api" }
+canister_client_macros = { path = "../canister_client_macros" }
 ic-cdk = { workspace = true }
-msgpack = { path = "../../../libraries/msgpack" }
+serde = { workspace = true }
 tracing = { workspace = true }
-types = { path = "../../../libraries/types" }

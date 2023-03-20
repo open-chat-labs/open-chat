@@ -758,7 +758,7 @@ version = "0.1.0"
 dependencies = [
  "bot_api",
  "candid",
- "canister_client_macros",
+ "canister_client",
  "ic-cdk 0.7.3",
  "msgpack",
  "tracing",
@@ -970,7 +970,6 @@ name = "canister_agent_utils"
 version = "0.1.0"
 dependencies = [
  "candid",
- "canister_client_macros",
  "dirs",
  "ic-agent",
  "ic-utils 0.23.0",
@@ -987,6 +986,17 @@ dependencies = [
  "serde",
  "serde_tokenstream",
  "syn 1.0.109",
+]
+
+[[package]]
+name = "canister_client"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "canister_client_macros",
+ "ic-cdk 0.7.3",
+ "serde",
+ "tracing",
 ]
 
 [[package]]
@@ -1784,7 +1794,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "canister_api_macros",
- "canister_client_macros",
+ "canister_client",
  "canister_logger",
  "canister_state_macros",
  "canister_tracing_macros",
@@ -2578,7 +2588,7 @@ name = "group_canister_c2c_client"
 version = "0.1.0"
 dependencies = [
  "candid",
- "canister_client_macros",
+ "canister_client",
  "group_canister",
  "ic-cdk 0.7.3",
  "msgpack",
@@ -2591,7 +2601,7 @@ name = "group_canister_client"
 version = "0.1.0"
 dependencies = [
  "candid",
- "canister_client_macros",
+ "canister_client",
  "group_canister",
  "ic-agent",
  "types",
@@ -2657,7 +2667,7 @@ dependencies = [
 name = "group_index_canister_c2c_client"
 version = "0.1.0"
 dependencies = [
- "canister_client_macros",
+ "canister_client",
  "group_index_canister",
  "ic-cdk 0.7.3",
  "msgpack",
@@ -2670,7 +2680,7 @@ name = "group_index_canister_client"
 version = "0.1.0"
 dependencies = [
  "candid",
- "canister_client_macros",
+ "canister_client",
  "group_index_canister",
  "ic-agent",
  "types",
@@ -5499,7 +5509,7 @@ dependencies = [
 name = "local_group_index_canister_c2c_client"
 version = "0.1.0"
 dependencies = [
- "canister_client_macros",
+ "canister_client",
  "ic-cdk 0.7.3",
  "local_group_index_canister",
  "msgpack",
@@ -5560,7 +5570,7 @@ name = "local_user_index_canister_c2c_client"
 version = "0.1.0"
 dependencies = [
  "candid",
- "canister_client_macros",
+ "canister_client",
  "ic-cdk 0.7.3",
  "local_user_index_canister",
  "msgpack",
@@ -5907,7 +5917,7 @@ dependencies = [
 name = "notifications_canister_c2c_client"
 version = "0.1.0"
 dependencies = [
- "canister_client_macros",
+ "canister_client",
  "ic-cdk 0.7.3",
  "msgpack",
  "notifications_canister",
@@ -5920,7 +5930,7 @@ name = "notifications_canister_client"
 version = "0.1.0"
 dependencies = [
  "candid",
- "canister_client_macros",
+ "canister_client",
  "ic-agent",
  "notifications_canister",
  "types",
@@ -5932,7 +5942,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "canister_api_macros",
- "canister_client_macros",
+ "canister_client",
  "canister_logger",
  "canister_state_macros",
  "canister_tracing_macros",
@@ -5968,7 +5978,7 @@ dependencies = [
 name = "notifications_index_canister_c2c_client"
 version = "0.1.0"
 dependencies = [
- "canister_client_macros",
+ "canister_client",
  "ic-cdk 0.7.3",
  "msgpack",
  "notifications_index_canister",
@@ -5981,7 +5991,7 @@ name = "notifications_index_canister_client"
 version = "0.1.0"
 dependencies = [
  "candid",
- "canister_client_macros",
+ "canister_client",
  "ic-agent",
  "notifications_index_canister",
  "types",
@@ -6235,7 +6245,7 @@ name = "online_users_canister_client"
 version = "0.1.0"
 dependencies = [
  "candid",
- "canister_client_macros",
+ "canister_client",
  "ic-agent",
  "online_users_canister",
  "types",
@@ -8016,7 +8026,7 @@ name = "storage_bucket_canister_c2c_client"
 version = "0.1.0"
 dependencies = [
  "candid",
- "canister_client_macros",
+ "canister_client",
  "ic-cdk 0.7.3",
  "storage_bucket_canister",
  "tracing",
@@ -8077,7 +8087,7 @@ name = "storage_index_canister_c2c_client"
 version = "0.1.0"
 dependencies = [
  "candid",
- "canister_client_macros",
+ "canister_client",
  "ic-cdk 0.7.3",
  "storage_index_canister",
  "tracing",
@@ -8089,7 +8099,7 @@ name = "storage_index_canister_client"
 version = "0.1.0"
 dependencies = [
  "candid",
- "canister_client_macros",
+ "canister_client",
  "ic-agent",
  "storage_index_canister",
  "types",
@@ -8956,7 +8966,7 @@ dependencies = [
 name = "user_canister_c2c_client"
 version = "0.1.0"
 dependencies = [
- "canister_client_macros",
+ "canister_client",
  "ic-cdk 0.7.3",
  "msgpack",
  "tracing",
@@ -8969,7 +8979,7 @@ name = "user_canister_client"
 version = "0.1.0"
 dependencies = [
  "candid",
- "canister_client_macros",
+ "canister_client",
  "ic-agent",
  "types",
  "user_canister",
@@ -9039,7 +9049,7 @@ name = "user_index_canister_c2c_client"
 version = "0.1.0"
 dependencies = [
  "candid",
- "canister_client_macros",
+ "canister_client",
  "ic-cdk 0.7.3",
  "msgpack",
  "tracing",
@@ -9052,7 +9062,7 @@ name = "user_index_canister_client"
 version = "0.1.0"
 dependencies = [
  "candid",
- "canister_client_macros",
+ "canister_client",
  "ic-agent",
  "types",
  "user_index_canister",
@@ -9113,7 +9123,7 @@ name = "utils"
 version = "0.1.0"
 dependencies = [
  "candid",
- "canister_client_macros",
+ "canister_client",
  "cycles_dispenser_client",
  "getrandom 0.2.8",
  "ic-cdk 0.7.3",

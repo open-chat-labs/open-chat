@@ -1,4 +1,4 @@
-use canister_client_macros::*;
+use canister_client::generate_update_call;
 use notifications_index_canister::*;
 
 // Queries

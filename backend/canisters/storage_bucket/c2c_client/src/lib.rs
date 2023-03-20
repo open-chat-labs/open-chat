@@ -1,4 +1,4 @@
-use canister_client_macros::*;
+use canister_client::generate_candid_c2c_call;
 use storage_bucket_canister::*;
 
 // Queries
