@@ -89,7 +89,6 @@ fn c2c_join_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Response
         }
 
         response
-
     } else {
         GroupNotPublic
     }

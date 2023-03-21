@@ -24,9 +24,11 @@ async fn remove_participant(args: Args) -> Response {
         group_name: prepare_result.group_name,
         public: prepare_result.public,
     };
-    let response = user_canister_c2c_client::c2c_remove_from_group(args.user_id.into(), &c2c_remove_from_group_args).await;
-    if let Err(error) = response {
-        return InternalError(format!("{error:?}"));
+
+    match user_canister_c2c_client::c2c_remove_from_group(args.user_id.into(), &c2c_remove_from_group_args).await {
+        Ok(c2c_remove_from_group::Response::Success) => (),
+        Ok(c2c_remove_from_group::Response::CannotRemoveUser) => return CannotRemoveUser,
+        Err(error) => return InternalError(format!("{error:?}")),
     }
 
     mutate_state(|state| commit(args, prepare_result.removed_by, state))
