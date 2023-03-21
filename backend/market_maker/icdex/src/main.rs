@@ -4,6 +4,7 @@ use ic_agent::identity::Secp256k1Identity;
 use ic_agent::Agent;
 use icdex_market_maker::ICDex;
 use market_maker_core::{log, Config};
+use std::str::FromStr;
 use std::time::Duration;
 
 pub type Error = Box<dyn std::error::Error + Send + Sync + 'static>;
@@ -29,15 +30,17 @@ async fn main() -> Result<(), Error> {
     let icdex = ICDex::new(agent, dex_canister_id, exchange_client_canister_id);
 
     let config = Config {
-        increment: 50000,
-        order_size: 10000000,
-        min_order_size: 1000000,
-        max_buy_price: 8000000,
-        min_sell_price: 4000000,
-        min_orders_per_direction: 5,
-        max_orders_per_direction: 10,
-        max_orders_to_make_per_iteration: 2,
-        max_orders_to_cancel_per_iteration: 2,
+        increment: dotenv::var("PRICE_INCREMENT").map_or(50000, |s| u64::from_str(&s).unwrap()),
+        order_size: dotenv::var("ORDER_SIZE").map_or(10000000, |s| u64::from_str(&s).unwrap()),
+        min_order_size: dotenv::var("MIN_ORDER_SIZE").map_or(1000000, |s| u64::from_str(&s).unwrap()),
+        max_buy_price: dotenv::var("MAX_BUY_PRICE").map_or(8000000, |s| u64::from_str(&s).unwrap()),
+        min_sell_price: dotenv::var("MIN_SELL_PRICE").map_or(4000000, |s| u64::from_str(&s).unwrap()),
+        min_orders_per_direction: dotenv::var("MIN_ORDERS_PER_DIRECTION").map_or(5, |s| u32::from_str(&s).unwrap()),
+        max_orders_per_direction: dotenv::var("MAX_ORDERS_PER_DIRECTION").map_or(5, |s| u32::from_str(&s).unwrap()),
+        max_orders_to_make_per_iteration: dotenv::var("MAX_ORDERS_TO_MAKE_PER_ITERATION")
+            .map_or(5, |s| u32::from_str(&s).unwrap()),
+        max_orders_to_cancel_per_iteration: dotenv::var("MAX_ORDERS_TO_CANCEL_PER_ITERATION")
+            .map_or(5, |s| u32::from_str(&s).unwrap()),
         iteration_interval: Duration::from_secs(5),
     };
 

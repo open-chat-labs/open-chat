@@ -22,10 +22,10 @@ pub struct Config {
     pub min_order_size: u64,
     pub max_buy_price: u64,
     pub min_sell_price: u64,
-    pub min_orders_per_direction: u64,
-    pub max_orders_per_direction: u64,
-    pub max_orders_to_make_per_iteration: usize,
-    pub max_orders_to_cancel_per_iteration: usize,
+    pub min_orders_per_direction: u32,
+    pub max_orders_per_direction: u32,
+    pub max_orders_to_make_per_iteration: u32,
+    pub max_orders_to_cancel_per_iteration: u32,
     pub iteration_interval: Duration,
 }
 
@@ -67,7 +67,7 @@ async fn run_once<E: Exchange>(exchange: &E, config: &Config) -> Result<(), Stri
         &stats.open_orders,
         Vec::from_iter(required_orders.clone().into_iter().chain(optional_orders)),
         stats.latest_price,
-        config.max_orders_to_cancel_per_iteration,
+        config.max_orders_to_cancel_per_iteration as usize,
         config.increment,
     );
 
@@ -75,7 +75,7 @@ async fn run_once<E: Exchange>(exchange: &E, config: &Config) -> Result<(), Stri
         &stats.open_orders,
         required_orders,
         config.min_order_size,
-        config.max_orders_to_make_per_iteration,
+        config.max_orders_to_make_per_iteration as usize,
         config.increment,
     );
 
@@ -180,7 +180,7 @@ fn build_orders(latest_price: u64, config: &Config) -> (Vec<MakeOrderRequest>, V
     let starting_bid = starting_bid(latest_price, config.increment);
     let starting_ask = starting_ask(latest_price, config.increment);
 
-    let bids = (0..config.max_orders_per_direction)
+    let bids = (0..config.max_orders_per_direction as u64)
         .map(|i| starting_bid.saturating_sub(i * config.increment))
         .take_while(|p| *p > 0)
         .skip_while(|p| *p >= config.max_buy_price)
@@ -190,9 +190,9 @@ fn build_orders(latest_price: u64, config: &Config) -> (Vec<MakeOrderRequest>, V
             amount: config.order_size,
         })
         .enumerate()
-        .map(|(i, o)| (o, (i as u64) < config.min_orders_per_direction));
+        .map(|(i, o)| (o, (i as u32) < config.min_orders_per_direction));
 
-    let asks = (0..config.max_orders_per_direction)
+    let asks = (0..config.max_orders_per_direction as u64)
         .map(|i| starting_ask.saturating_add(i * config.increment))
         .skip_while(|p| *p <= config.min_sell_price)
         .map(|p| MakeOrderRequest {
@@ -201,7 +201,7 @@ fn build_orders(latest_price: u64, config: &Config) -> (Vec<MakeOrderRequest>, V
             amount: config.order_size,
         })
         .enumerate()
-        .map(|(i, o)| (o, (i as u64) < config.min_orders_per_direction));
+        .map(|(i, o)| (o, (i as u32) < config.min_orders_per_direction));
 
     let mut required_orders = Vec::new();
     let mut optional_orders = Vec::new();
