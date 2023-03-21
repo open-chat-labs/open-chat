@@ -1,6 +1,6 @@
 use crate::exchanges::Exchange;
 use crate::guards::caller_is_whitelisted_trader;
-use crate::{read_state, RuntimeState};
+use crate::{mutate_state, read_state, RuntimeState};
 use candid::Principal;
 use canister_tracing_macros::trace;
 use exchange_client_canister::cancel_orders::{Response::*, *};
@@ -14,7 +14,16 @@ async fn cancel_orders(args: Args) -> Response {
         Ok(ok) => (ok.caller, ok.exchange_client),
         Err(response) => return response,
     };
-    exchange_client.cancel_orders(caller, args.orders).await;
+
+    exchange_client.cancel_orders(caller, args.orders.clone()).await;
+
+    mutate_state(|state| {
+        let now = state.env.now();
+        for order in args.orders {
+            state.data.orders_log.log_order_cancelled(args.exchange_id, order, now);
+        }
+    });
+
     Success
 }
 

@@ -1,5 +1,6 @@
 use crate::exchanges::icdex::ICDexClient;
 use crate::exchanges::Exchange;
+use crate::model::orders_log::OrdersLog;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use exchange_client_canister::{ExchangeId, ICDEX_EXCHANGE_ID};
@@ -81,6 +82,7 @@ struct Data {
     pub cycles_dispenser_canister_id: CanisterId,
     pub icp_ledger_canister_id: CanisterId,
     pub chat_ledger_canister_id: CanisterId,
+    pub orders_log: OrdersLog,
     pub test_mode: bool,
 }
 
@@ -98,6 +100,7 @@ impl Data {
             cycles_dispenser_canister_id,
             icp_ledger_canister_id,
             chat_ledger_canister_id,
+            orders_log: OrdersLog::default(),
             test_mode,
         }
     }

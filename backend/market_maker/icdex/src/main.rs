@@ -36,12 +36,12 @@ async fn main() -> Result<(), Error> {
         max_buy_price: dotenv::var("MAX_BUY_PRICE").map_or(8000000, |s| u64::from_str(&s).unwrap()),
         min_sell_price: dotenv::var("MIN_SELL_PRICE").map_or(4000000, |s| u64::from_str(&s).unwrap()),
         min_orders_per_direction: dotenv::var("MIN_ORDERS_PER_DIRECTION").map_or(5, |s| u32::from_str(&s).unwrap()),
-        max_orders_per_direction: dotenv::var("MAX_ORDERS_PER_DIRECTION").map_or(5, |s| u32::from_str(&s).unwrap()),
+        max_orders_per_direction: dotenv::var("MAX_ORDERS_PER_DIRECTION").map_or(10, |s| u32::from_str(&s).unwrap()),
         max_orders_to_make_per_iteration: dotenv::var("MAX_ORDERS_TO_MAKE_PER_ITERATION")
             .map_or(5, |s| u32::from_str(&s).unwrap()),
         max_orders_to_cancel_per_iteration: dotenv::var("MAX_ORDERS_TO_CANCEL_PER_ITERATION")
             .map_or(5, |s| u32::from_str(&s).unwrap()),
-        iteration_interval: Duration::from_secs(5),
+        iteration_interval: Duration::from_secs(10),
     };
 
     log("Initialization complete");

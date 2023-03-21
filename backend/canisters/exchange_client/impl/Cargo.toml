@@ -27,7 +27,9 @@ ic-icrc1-client = { workspace = true }
 ic-icrc1-client-cdk = { workspace = true }
 ic-ledger-types = { workspace = true }
 ic-stable-structures = { workspace = true, features = ["candid"] }
+msgpack = { path = "../../../libraries/msgpack" }
 serde = { workspace = true }
+serde_bytes = { workspace = true }
 serializer = { workspace = true }
 tracing = { workspace = true }
 types = { path = "../../../libraries/types" }
