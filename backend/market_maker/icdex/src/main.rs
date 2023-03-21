@@ -36,8 +36,8 @@ async fn main() -> Result<(), Error> {
         min_sell_price: 4000000,
         min_orders_per_direction: 5,
         max_orders_per_direction: 10,
-        max_orders_to_make_per_iteration: 0,
-        max_orders_to_cancel_per_iteration: 10,
+        max_orders_to_make_per_iteration: 1,
+        max_orders_to_cancel_per_iteration: 1,
         iteration_interval: Duration::from_secs(5),
     };
 

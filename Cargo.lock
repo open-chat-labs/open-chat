@@ -5770,6 +5770,7 @@ dependencies = [
  "futures",
  "itertools",
  "serde",
+ "test-case",
  "tokio",
 ]
 

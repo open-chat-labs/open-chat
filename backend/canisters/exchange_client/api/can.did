@@ -54,21 +54,7 @@ type CancelOrdersResponse =
         NotAuthorized;
     };
 
-type InitArgs =
-    record {
-        governance_principals: vec principal;
-        cycles_dispenser_canister_id: principal;
-        icp_ledger_canister_id: principal;
-        chat_ledger_canister_id: principal;
-        wasm_version: record {
-            major: nat32;
-            minor: nat32;
-            patch: nat32;
-        };
-        test_mode: bool;
-    };
-
-service: (InitArgs) -> {
+service: {
     list_exchanges: (ListExchangesArgs) -> (ListExchangesResponse) query;
     make_orders: (MakeOrdersArgs) -> (MakeOrdersResponse);
     cancel_orders: (CancelOrdersArgs) -> (CancelOrdersResponse);
