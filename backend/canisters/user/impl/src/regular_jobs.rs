@@ -2,7 +2,7 @@ use crate::group_summaries::{build_summaries_args, SummariesArgs};
 use crate::{can_borrow_state, mutate_state, CachedGroupSummaries, Data};
 use utils::env::Environment;
 use utils::regular_jobs::{RegularJob, RegularJobs};
-use utils::time::{DAY_IN_MS, MINUTE_IN_MS};
+use utils::time::{MINUTE_IN_MS, WEEK_IN_MS};
 
 pub(crate) fn build() -> RegularJobs<Data> {
     let check_cycles_balance = RegularJob::new("Check cycles balance", check_cycles_balance, 5 * MINUTE_IN_MS);
@@ -13,7 +13,7 @@ pub(crate) fn build() -> RegularJobs<Data> {
     );
     let retry_deleting_files = RegularJob::new("Retry deleting files", retry_deleting_files, MINUTE_IN_MS);
     let update_cached_group_summaries =
-        RegularJob::new("Update cached group summaries", update_cached_group_summaries, DAY_IN_MS);
+        RegularJob::new("Update cached group summaries", update_cached_group_summaries, WEEK_IN_MS);
 
     RegularJobs::new(vec![
         check_cycles_balance,
