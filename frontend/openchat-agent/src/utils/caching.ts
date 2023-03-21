@@ -1,4 +1,4 @@
-import { MAX_MESSAGES } from "../constants";
+import { MAX_EVENTS, MAX_MESSAGES } from "../constants";
 import { openDB, DBSchema, IDBPDatabase } from "idb";
 import type {
     ChatEvent,
@@ -16,6 +16,7 @@ import type {
     SendMessageSuccess,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
+import { toRecord } from "./list";
 
 const CACHE_VERSION = 61;
 
@@ -188,8 +189,6 @@ export async function getCachedEventsWindow<T extends ChatEvent>(
         console.log("cache hit: ", events.length, Date.now() - start);
     }
 
-    events.sort((a, b) => a.index - b.index);
-
     return [{ events, latestEventIndex: undefined }, missing, totalMiss];
 }
 
@@ -200,9 +199,7 @@ async function aggregateEventsWindow<T extends ChatEvent>(
     middleMessageIndex: number,
     threadRootMessageIndex?: number
 ): Promise<[EventWrapper<T>[], Set<number>, boolean]> {
-    const events: EventWrapper<T>[] = [];
     const resolvedDb = await db;
-    const missing = new Set<number>();
 
     const store = threadRootMessageIndex === undefined ? "chat_events" : "thread_events";
 
@@ -217,7 +214,7 @@ async function aggregateEventsWindow<T extends ChatEvent>(
         console.log(
             "cache total miss: could not even find the starting event index for the message window"
         );
-        return [[], missing, true];
+        return [[], new Set<number>(), true];
     }
 
     if (min > midpoint) {
@@ -227,7 +224,7 @@ async function aggregateEventsWindow<T extends ChatEvent>(
         max = midpoint;
     }
 
-    const half = MAX_MESSAGES / 2;
+    const half = MAX_EVENTS / 2;
     const lowerBound = Math.max(min, midpoint - half);
     const upperBound = Math.min(max, midpoint + half);
 
@@ -238,19 +235,96 @@ async function aggregateEventsWindow<T extends ChatEvent>(
         createCacheKey(chatId, upperBound, threadRootMessageIndex)
     );
 
-    for (let i = lowerBound; i <= upperBound; i++) {
-        missing.add(i);
+    const result = await resolvedDb.getAll(store, range);
+
+    return processCachedEventsWindow(lowerBound, upperBound, midpoint, result, MAX_MESSAGES) as [
+        EventWrapper<T>[],
+        Set<number>,
+        boolean
+    ];
+}
+
+export function processCachedEventsWindow(
+    lowerbound: number,
+    upperbound: number,
+    midpoint: number,
+    cachedEvents: { index: number; event: { kind: string } }[],
+    maxMessages: number = MAX_MESSAGES
+): [{ index: number; event: { kind: string } }[], Set<number>, false] {
+    const events: { index: number; event: { kind: string } }[] = [];
+    const missing = new Set<number>();
+    let messageCount = 0;
+
+    const cachedEventsMap = toRecord(cachedEvents, (evt) => evt.index);
+
+    function inBounds(idx: number): boolean {
+        return idx >= lowerbound && idx <= upperbound;
     }
 
-    const result = await resolvedDb.getAll(store, range);
-    result.forEach((evt) => {
-        missing.delete(evt.index);
-        events.push(evt as EnhancedWrapper<T>);
-    });
+    function processIndex(idx: number) {
+        const cachedEvent = cachedEventsMap[idx];
+        if (cachedEvent === undefined) {
+            if (inBounds(idx)) {
+                missing.add(idx);
+            }
+        } else {
+            if (cachedEvent.event.kind === "message") {
+                messageCount += 1;
+            }
+            events.push(cachedEvent);
+        }
+    }
 
-    console.log("aggregate events window: missing indexes: ", missing);
+    function loop(forwardIndex: number, backwardIndex: number): undefined {
+        processIndex(forwardIndex);
+        processIndex(backwardIndex);
+        if (messageCount < maxMessages) {
+            if (forwardIndex < upperbound || backwardIndex > lowerbound) {
+                return loop(forwardIndex + 1, backwardIndex - 1);
+            }
+        }
+    }
 
-    return [events, missing, false];
+    loop(midpoint, midpoint - 1);
+
+    return [events.sort((a, b) => a.index - b.index), missing, false];
+}
+
+// why is this extracted like this with slightly odd looking types?
+// to make it easier to unit test
+export function processCachedEvents(
+    lowerbound: number,
+    upperbound: number,
+    ascending: boolean,
+    cachedEvents: { index: number; event: { kind: string } }[],
+    maxMessages: number = MAX_MESSAGES
+): [{ index: number; event: { kind: string } }[], Set<number>] {
+    const events: { index: number; event: { kind: string } }[] = [];
+    const missing = new Set<number>();
+    let messageCount = 0;
+
+    const cachedEventsMap = toRecord(cachedEvents, (evt) => evt.index);
+
+    function loop(idx: number): undefined {
+        const cachedEvent = cachedEventsMap[idx];
+        if (cachedEvent === undefined) {
+            missing.add(idx);
+        } else {
+            if (cachedEvent.event.kind === "message") {
+                messageCount += 1;
+            }
+            events.push(cachedEvent);
+        }
+        if (messageCount < maxMessages) {
+            if (ascending ? idx < upperbound : idx > lowerbound) {
+                return loop(ascending ? idx + 1 : idx - 1);
+            }
+        }
+    }
+
+    loop(ascending ? lowerbound : upperbound);
+
+    return [events.sort((a, b) => a.index - b.index), missing];
 }
 
 async function aggregateEvents<T extends ChatEvent>(
@@ -261,32 +335,23 @@ async function aggregateEvents<T extends ChatEvent>(
     ascending: boolean,
     threadRootMessageIndex?: number
 ): Promise<[EnhancedWrapper<T>[], Set<number>]> {
-    const events: EnhancedWrapper<T>[] = [];
     const resolvedDb = await db;
-    const missing = new Set<number>();
-
-    const lowerBound = ascending ? startIndex : Math.max(min, startIndex - MAX_MESSAGES);
-    const upperBound = ascending ? Math.min(max, startIndex + MAX_MESSAGES) : startIndex;
+    const lowerBound = ascending ? startIndex : Math.max(min, startIndex - MAX_EVENTS);
+    const upperBound = ascending ? Math.min(max, startIndex + MAX_EVENTS) : startIndex;
 
     const range = IDBKeyRange.bound(
         createCacheKey(chatId, lowerBound, threadRootMessageIndex),
         createCacheKey(chatId, upperBound, threadRootMessageIndex)
     );
 
-    for (let i = lowerBound; i <= upperBound; i++) {
-        missing.add(i);
-    }
-
     const store = threadRootMessageIndex === undefined ? "chat_events" : "thread_events";
 
     const result = await resolvedDb.getAll(store, range);
-    result.forEach((evt) => {
-        missing.delete(evt.index);
-        events.push(evt as EnhancedWrapper<T>);
-    });
 
-    console.log("aggregate events: missing indexes: ", missing);
-    return [events, missing];
+    return processCachedEvents(lowerBound, upperBound, ascending, result) as [
+        EnhancedWrapper<T>[],
+        Set<number>
+    ];
 }
 
 export async function getCachedMessageByIndex<T extends ChatEvent>(

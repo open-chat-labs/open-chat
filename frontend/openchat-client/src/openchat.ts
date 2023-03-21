@@ -1540,7 +1540,7 @@ export class OpenChat extends EventTarget {
                     this.loadDetails(selectedChat);
                 });
             } else {
-                this.loadPreviousMessages(chatId).then(() => {
+                this.loadPreviousMessages(chatId, undefined, true).then(() => {
                     this.loadDetails(selectedChat);
                 });
             }
@@ -1561,7 +1561,7 @@ export class OpenChat extends EventTarget {
         this.clearThreadEvents();
         selectedThreadRootEvent.set(threadRootEvent);
         if (!initiating && this._liveState.selectedChatId !== undefined) {
-            this.loadPreviousMessages(this._liveState.selectedChatId, threadRootEvent);
+            this.loadPreviousMessages(this._liveState.selectedChatId, threadRootEvent, true);
         }
         this.dispatchEvent(new ThreadSelected(threadRootEvent, initiating));
     }
@@ -1582,7 +1582,8 @@ export class OpenChat extends EventTarget {
         startIndex: number,
         ascending: boolean,
         threadRootMessageIndex: number,
-        clearEvents: boolean
+        clearEvents: boolean,
+        initialLoad = false
     ): Promise<void> {
         const chat = this._liveState.chatSummaries[chatId];
 
@@ -1634,7 +1635,7 @@ export class OpenChat extends EventTarget {
             if (ascending) {
                 this.dispatchEvent(new LoadedNewThreadMessages(false));
             } else {
-                this.dispatchEvent(new LoadedPreviousThreadMessages());
+                this.dispatchEvent(new LoadedPreviousThreadMessages(initialLoad));
             }
         }
     }
@@ -1708,7 +1709,8 @@ export class OpenChat extends EventTarget {
 
     async loadPreviousMessages(
         chatId: string,
-        threadRootEvent?: EventWrapper<Message>
+        threadRootEvent?: EventWrapper<Message>,
+        initialLoad = false
     ): Promise<void> {
         const serverChat = this._liveState.serverChatSummaries[chatId];
 
@@ -1726,7 +1728,8 @@ export class OpenChat extends EventTarget {
                 index,
                 ascending,
                 threadRootEvent.event.messageIndex,
-                false
+                false,
+                initialLoad
             );
         }
 
@@ -1742,7 +1745,7 @@ export class OpenChat extends EventTarget {
 
         await this.handleEventsResponse(serverChat, eventsResponse);
 
-        this.dispatchEvent(new LoadedPreviousMessages());
+        this.dispatchEvent(new LoadedPreviousMessages(initialLoad));
         return;
     }
 
@@ -1857,10 +1860,7 @@ export class OpenChat extends EventTarget {
         );
     }
 
-    moreNewMessagesAvailable(
-        chatId: string,
-        threadRootEvent?: EventWrapper<Message> /* TODO - make this work for threads */
-    ): boolean {
+    moreNewMessagesAvailable(chatId: string, threadRootEvent?: EventWrapper<Message>): boolean {
         if (threadRootEvent !== undefined && threadRootEvent.event.thread !== undefined) {
             return (
                 (this.confirmedThreadUpToEventIndex() ?? -1) <
@@ -2857,11 +2857,10 @@ export class OpenChat extends EventTarget {
     }
 
     getSnsProposalTally(snsGovernanceCanisterId: string, proposalId: bigint): Promise<Tally> {
-        return this.api.getSnsProposalTally(snsGovernanceCanisterId, proposalId)
-            .then((tally) => {
-                proposalTallies.setTally(snsGovernanceCanisterId, proposalId, tally);
-                return tally;
-            })
+        return this.api.getSnsProposalTally(snsGovernanceCanisterId, proposalId).then((tally) => {
+            proposalTallies.setTally(snsGovernanceCanisterId, proposalId, tally);
+            return tally;
+        });
     }
 
     getRecommendedGroups(): Promise<GroupChatSummary[]> {
@@ -3071,13 +3070,10 @@ export class OpenChat extends EventTarget {
             });
     }
 
-    createGroupChat(
-        currentUser: string,
-        candidate: CandidateGroupChat
-    ): Promise<CreateGroupResponse> {
+    createGroupChat(candidate: CandidateGroupChat): Promise<CreateGroupResponse> {
         return this.api.createGroupChat(candidate).then((resp) => {
             if (resp.kind === "success") {
-                const group = groupChatFromCandidate(currentUser, resp.canisterId, candidate);
+                const group = groupChatFromCandidate(resp.canisterId, candidate);
                 localChatSummaryUpdates.markAdded(group);
             }
             return resp;
@@ -3315,7 +3311,9 @@ export class OpenChat extends EventTarget {
                     pinnedChatsStore.set(chatsResponse.pinnedChats);
                 }
 
-                myServerChatSummariesStore.set(toRecord(chatsResponse.chatSummaries, (chat) => chat.chatId));
+                myServerChatSummariesStore.set(
+                    toRecord(chatsResponse.chatSummaries, (chat) => chat.chatId)
+                );
 
                 if (Object.keys(this._liveState.uninitializedDirectChats).length > 0) {
                     for (const chat of chatsResponse.chatSummaries) {

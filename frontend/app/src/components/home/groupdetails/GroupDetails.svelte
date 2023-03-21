@@ -7,7 +7,6 @@
     import CollapsibleCard from "../../CollapsibleCard.svelte";
     import GroupPermissionsViewer from "../GroupPermissionsViewer.svelte";
     import Legend from "../../Legend.svelte";
-    import ViewUserProfile from "../profile/ViewUserProfile.svelte";
     import Markdown from "../Markdown.svelte";
     import {
         groupAdvancedOpen,
@@ -32,30 +31,15 @@
     export let memberCount: number;
     export let rules: GroupRules | undefined;
 
-    $: userStore = client.userStore;
-
-    let viewProfile = false;
-
     // capture a snapshot of the chat as it is right now
-    $: myGroup = currentUser.userId === chat.ownerId;
     $: canEdit = client.canEditGroupDetails(chat.chatId);
     $: canInvite = client.canInviteUsers(chat.chatId);
     $: avatarSrc = client.groupAvatarUrl(chat);
-
-    function openUserProfile() {
-        if (!myGroup) {
-            viewProfile = true;
-        }
-    }
 
     function editGroup() {
         if (canEdit) {
             dispatch("editGroup", { chat, rules });
         }
-    }
-
-    function closeUserProfile() {
-        viewProfile = false;
     }
 
     function clickClose() {
@@ -64,14 +48,6 @@
 
     function showMembers() {
         dispatch("showMembers");
-    }
-
-    function chatWithOwner() {
-        if (!myGroup) {
-            closeUserProfile();
-            dispatch("chatWith", chat.ownerId);
-            dispatch("close");
-        }
     }
 
     function description(chat: GroupChatSummary): string {
@@ -84,13 +60,6 @@
         return description;
     }
 </script>
-
-{#if viewProfile}
-    <ViewUserProfile
-        userId={chat.ownerId}
-        on:openDirectChat={chatWithOwner}
-        on:close={closeUserProfile} />
-{/if}
 
 <GroupDetailsHeader
     {canEdit}
@@ -110,13 +79,6 @@
                 <h3 class="group-name">{chat.name}</h3>
                 <p class="members">
                     {$_("memberCount", { values: { count: memberCount } })}
-                </p>
-                <p class="owned-by" on:click={openUserProfile} class:my-group={myGroup}>
-                    {$_("ownedBy", {
-                        values: {
-                            username: $userStore[chat.ownerId]?.username ?? "unknown",
-                        },
-                    })}
                 </p>
             </div>
 
@@ -238,15 +200,6 @@
 
     .members {
         @include font(light, normal, fs-90);
-    }
-
-    .owned-by {
-        @include font(book, normal, fs-90);
-        cursor: pointer;
-
-        &.my-group {
-            cursor: auto;
-        }
     }
 
     .sub-section {

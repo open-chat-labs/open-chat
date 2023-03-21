@@ -1,97 +1,55 @@
-use std::fmt::{Display, Formatter};
-use std::str::FromStr;
-use types::CanisterId;
+use candid::Principal;
+use ic_cdk::api::call::{CallResult, RejectionCode};
+use std::fmt::Debug;
 
-pub mod operations;
-pub mod utils;
+pub use canister_client_macros::*;
 
-#[allow(dead_code)]
-pub enum TestIdentity {
-    Controller,
-    User1,
-    User2,
-    User3,
+pub async fn make_c2c_call<A, R, S, D, SError: Debug, DError: Debug>(
+    canister_id: Principal,
+    method_name: &str,
+    args: &A,
+    serializer: S,
+    deserializer: D,
+) -> CallResult<R>
+where
+    S: Fn(&A) -> Result<Vec<u8>, SError>,
+    D: Fn(&[u8]) -> Result<R, DError>,
+{
+    let payload_bytes = prepare_request(args, serializer)?;
+
+    tracing::trace!(method_name, %canister_id, "Starting c2c call");
+
+    let response = ic_cdk::api::call::call_raw(canister_id, method_name, &payload_bytes, 0).await;
+
+    process_response(canister_id, method_name, response, deserializer)
 }
 
-pub const USER1_DEFAULT_NAME: &str = "Andy";
-pub const USER2_DEFAULT_NAME: &str = "Bob";
-pub const USER3_DEFAULT_NAME: &str = "Charlie";
+fn prepare_request<S: Fn(&T) -> Result<Vec<u8>, E>, T, E: Debug>(args: &T, serializer: S) -> CallResult<Vec<u8>> {
+    fn map_err<E: Debug>(err: E) -> (RejectionCode, String) {
+        (RejectionCode::CanisterError, format!("Serialization error: {:?}", err))
+    }
 
-#[derive(Debug)]
-pub enum CanisterName {
-    CyclesDispenser,
-    Group,
-    GroupIndex,
-    LocalGroupIndex,
-    LocalUserIndex,
-    Notifications,
-    NotificationsIndex,
-    OnlineUsers,
-    ProposalsBot,
-    StorageBucket,
-    StorageIndex,
-    User,
-    UserIndex,
+    serializer(args).map_err(map_err)
 }
 
-impl FromStr for CanisterName {
-    type Err = String;
+fn process_response<D: Fn(&[u8]) -> Result<T, E>, T, E: Debug>(
+    canister_id: Principal,
+    method_name: &str,
+    response: CallResult<Vec<u8>>,
+    deserializer: D,
+) -> CallResult<T> {
+    fn map_err<E: Debug>(err: E) -> (RejectionCode, String) {
+        (RejectionCode::CanisterError, format!("Deserialization error: {:?}", err))
+    }
 
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "cycles_dispenser" => Ok(CanisterName::CyclesDispenser),
-            "group" => Ok(CanisterName::Group),
-            "group_index" => Ok(CanisterName::GroupIndex),
-            "local_group_index" => Ok(CanisterName::LocalGroupIndex),
-            "local_user_index" => Ok(CanisterName::LocalUserIndex),
-            "notifications" => Ok(CanisterName::Notifications),
-            "notifications_index" => Ok(CanisterName::NotificationsIndex),
-            "online_users" => Ok(CanisterName::OnlineUsers),
-            "proposals_bot" => Ok(CanisterName::ProposalsBot),
-            "storage_bucket" => Ok(CanisterName::StorageBucket),
-            "storage_index" => Ok(CanisterName::StorageIndex),
-            "user" => Ok(CanisterName::User),
-            "user_index" => Ok(CanisterName::UserIndex),
-            _ => Err(format!("Unrecognised canister name: {s}")),
+    match response {
+        Ok(result) => {
+            tracing::trace!(method_name, %canister_id, "Completed c2c call successfully");
+            deserializer(&result).map_err(map_err)
+        }
+        Err((error_code, error_message)) => {
+            tracing::error!(method_name, %canister_id, ?error_code, error_message, "Error calling c2c");
+            Err((error_code, error_message))
         }
     }
-}
-
-impl Display for CanisterName {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        let name = match self {
-            CanisterName::CyclesDispenser => "cycles_dispenser",
-            CanisterName::Group => "group",
-            CanisterName::GroupIndex => "group_index",
-            CanisterName::LocalGroupIndex => "local_group_index",
-            CanisterName::LocalUserIndex => "local_user_index",
-            CanisterName::Notifications => "notifications",
-            CanisterName::NotificationsIndex => "notifications_index",
-            CanisterName::OnlineUsers => "online_users",
-            CanisterName::ProposalsBot => "proposals_bot",
-            CanisterName::StorageBucket => "storage_bucket",
-            CanisterName::StorageIndex => "storage_index",
-            CanisterName::User => "user",
-            CanisterName::UserIndex => "user_index",
-        };
-
-        f.write_str(name)
-    }
-}
-
-#[derive(Debug)]
-pub struct CanisterIds {
-    pub user_index: CanisterId,
-    pub group_index: CanisterId,
-    pub notifications_index: CanisterId,
-    pub local_user_index: CanisterId,
-    pub local_group_index: CanisterId,
-    pub notifications: CanisterId,
-    pub online_users: CanisterId,
-    pub proposals_bot: CanisterId,
-    pub storage_index: CanisterId,
-    pub cycles_dispenser: CanisterId,
-    pub nns_governance: CanisterId,
-    pub nns_ledger: CanisterId,
-    pub nns_cmc: CanisterId,
 }

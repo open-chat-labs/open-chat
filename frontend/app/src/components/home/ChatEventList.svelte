@@ -21,16 +21,14 @@
     import { tooltipStore } from "../../stores/tooltip";
     import { rtlStore } from "../../stores/rtl";
     import { afterUpdate, beforeUpdate, getContext, onMount, tick } from "svelte";
-    import { isSafari } from "../../utils/devices";
     import { pathParams } from "../../routes";
     import ArrowDown from "svelte-material-icons/ArrowDown.svelte";
     import Fab from "../Fab.svelte";
     import { _ } from "svelte-i18n";
     import { pop } from "../../utils/transition";
     import { iconSize } from "../../stores/iconSize";
-    import { derived, writable } from "svelte/store";
+    import { dimensions } from "../../stores/screenDimensions";
 
-    const MESSAGE_LOAD_THRESHOLD = 400;
     const FROM_BOTTOM_THRESHOLD = 600;
     const client = getContext<OpenChat>("client");
 
@@ -51,23 +49,50 @@
 
     let interrupt = false;
     let morePrevAvailable = false;
+    let moreNewAvailable = false;
     let loadingPrev = false;
     let loadingNew = false;
     let loadingFromScroll = false;
-    let expectedScrollTop: number | undefined = undefined;
     let scrollingToMessage = false;
     let scrollTimer: number | undefined;
     let previousScrollHeight: number | undefined = undefined;
     let previousScrollTop: number | undefined = undefined;
     let user = client.user;
-    const scrollTop = writable<number>(0);
-    const fromBottom = derived(scrollTop, ($scrollTop) => -$scrollTop);
-    const insideBottomThreshold = derived(fromBottom, ($fromBottom) => {
-        return $fromBottom < MESSAGE_LOAD_THRESHOLD;
-    });
+    let scrollToBottomAfterLoad = false;
 
     $: failedMessagesStore = client.failedMessagesStore;
     $: threadSummary = threadRootEvent?.event.thread;
+
+    const keyMeasurements = () => ({
+        scrollHeight: messagesDiv!.scrollHeight,
+        clientHeight: messagesDiv!.clientHeight,
+        scrollTop: messagesDiv!.scrollTop,
+        fromBottom: fromBottom(),
+        insideBottomThreshold: insideBottomThreshold(),
+        insideTopThreshold: insideTopThreshold(),
+        loadingNew,
+        loadingPrev,
+        loadingFromScroll,
+        scrollingToMessage,
+    });
+
+    const fromBottom = () => {
+        if (messagesDiv) {
+            const bottom = messagesDiv.scrollHeight - messagesDiv.clientHeight;
+            return bottom - messagesDiv.scrollTop;
+        }
+        return 0;
+    };
+
+    const insideBottomThreshold = () => {
+        return fromBottom() < $dimensions.height;
+    };
+
+    const insideTopThreshold = () => {
+        return (messagesDiv?.scrollTop ?? 0) < $dimensions.height;
+    };
+
+    let showGoToBottom = false;
 
     beforeUpdate(() => {
         previousScrollHeight = messagesDiv?.scrollHeight;
@@ -75,53 +100,49 @@
     });
 
     afterUpdate(() => {
-        $scrollTop = messagesDiv?.scrollTop ?? 0;
-        morePrevAvailable = client.morePreviousMessagesAvailable(chat.chatId, threadRootEvent);
+        showGoToBottom = fromBottom() > FROM_BOTTOM_THRESHOLD;
     });
 
     onMount(() => {
-        morePrevAvailable = client.morePreviousMessagesAvailable(chat.chatId, threadRootEvent);
         client.addEventListener("openchat_event", clientEvent);
         return () => {
             client.removeEventListener("openchat_event", clientEvent);
         };
     });
 
-    function clientEvent(ev: Event): void {
-        tick().then(() => {
-            if (threadRootEvent === undefined) {
-                if (ev instanceof LoadedNewMessages) {
-                    onLoadedNewMessages(ev.detail);
-                }
-                if (ev instanceof LoadedPreviousMessages) {
-                    onLoadedPreviousMessages();
-                }
-                if (ev instanceof LoadedMessageWindow) {
-                    onMessageWindowLoaded(ev.detail);
-                }
-                if (ev instanceof ChatUpdated) {
-                    loadMoreIfRequired();
-                }
-                if (ev instanceof SentMessage) {
-                    afterSendMessage(ev.detail);
-                }
+    async function clientEvent(ev: Event): Promise<void> {
+        await tick();
+        if (threadRootEvent === undefined) {
+            if (ev instanceof LoadedNewMessages) {
+                onLoadedNewMessages(ev.detail);
             }
-            if (threadRootEvent !== undefined) {
-                if (ev instanceof LoadedNewThreadMessages) {
-                    onLoadedNewMessages(ev.detail);
-                }
-                if (ev instanceof LoadedPreviousThreadMessages) {
-                    onLoadedPreviousMessages();
-                }
-                if (ev instanceof LoadedThreadMessageWindow) {
-                    console.log("Thread message window loaded: ", events);
-                    onMessageWindowLoaded(ev.detail);
-                }
-                if (ev instanceof SentThreadMessage) {
-                    afterSendThreadMessage(threadRootEvent, ev.detail);
-                }
+            if (ev instanceof LoadedPreviousMessages) {
+                onLoadedPreviousMessages(ev.detail);
             }
-        });
+            if (ev instanceof LoadedMessageWindow) {
+                onMessageWindowLoaded(ev.detail);
+            }
+            if (ev instanceof ChatUpdated) {
+                loadMoreIfRequired();
+            }
+            if (ev instanceof SentMessage) {
+                afterSendMessage(ev.detail);
+            }
+        }
+        if (threadRootEvent !== undefined) {
+            if (ev instanceof LoadedNewThreadMessages) {
+                onLoadedNewMessages(ev.detail);
+            }
+            if (ev instanceof LoadedPreviousThreadMessages) {
+                onLoadedPreviousMessages(ev.detail);
+            }
+            if (ev instanceof LoadedThreadMessageWindow) {
+                onMessageWindowLoaded(ev.detail);
+            }
+            if (ev instanceof SentThreadMessage) {
+                afterSendThreadMessage(threadRootEvent, ev.detail);
+            }
+        }
     }
 
     function afterSendThreadMessage(
@@ -137,78 +158,72 @@
         client.markThreadSummaryUpdated(rootEvent.event.messageId.toString(), summary);
     }
 
-    function afterSendMessage(upToDate: boolean) {
-        if (upToDate && calculateFromBottom() < FROM_BOTTOM_THRESHOLD) {
-            tick().then(() => scrollBottom("smooth"));
+    async function afterSendMessage(upToDate: boolean) {
+        if (upToDate && insideBottomThreshold()) {
+            scrollBottom("smooth");
         }
     }
 
-    function scrollBottom(behavior: ScrollBehavior = "auto") {
+    async function scrollBottom(behavior: ScrollBehavior = "auto", retries = 0) {
+        if (retries === 3) return;
+
+        await tick();
+
         interruptScroll(() => {
-            messagesDiv?.scrollTo({
-                top: 0,
-                behavior,
-            });
+            if (messagesDiv) {
+                messagesDiv?.scrollTo({
+                    top: messagesDiv.scrollHeight - messagesDiv.clientHeight,
+                    behavior,
+                });
+            }
         });
-    }
 
-    function calculateFromTop(): number {
-        return messagesDiv
-            ? messagesDiv.scrollHeight - messagesDiv.clientHeight + messagesDiv.scrollTop
-            : 0;
-    }
-
-    function calculateFromBottom(): number {
-        return -(messagesDiv?.scrollTop ?? 0);
+        if (fromBottom() > 1) {
+            await scrollBottom(behavior, retries + 1);
+        }
     }
 
     function shouldLoadPreviousMessages() {
         morePrevAvailable = client.morePreviousMessagesAvailable(chat.chatId, threadRootEvent);
-        const insideLoadThreshold = calculateFromTop() < MESSAGE_LOAD_THRESHOLD;
-        const result = !loadingPrev && insideLoadThreshold && morePrevAvailable;
+        const result = !loadingPrev && insideTopThreshold() && morePrevAvailable;
         if (result) {
-            console.debug(
-                "SCROLL: shouldLoadPreviousMessages [loadingPrev] [insideLoadThreshold] [morePrevAvailable]",
-                loadingPrev,
-                insideLoadThreshold,
-                morePrevAvailable
-            );
+            console.debug("SCROLL: shouldLoadPreviousMessages", keyMeasurements());
         }
         return result;
     }
 
     function shouldLoadNewMessages() {
-        const moreNewMessages =
-            $insideBottomThreshold && client.moreNewMessagesAvailable(chat.chatId, threadRootEvent);
-        const result = !loadingNew && moreNewMessages;
+        moreNewAvailable = client.moreNewMessagesAvailable(chat.chatId, threadRootEvent);
+        const result = !loadingNew && insideBottomThreshold() && moreNewAvailable;
         if (result) {
-            console.debug(
-                "SCROLL: shouldLoadNewMesages [loadingNew] [insideLoadThreshold] [moreNewMessages]",
-                loadingNew,
-                $insideBottomThreshold,
-                moreNewMessages
-            );
+            console.debug("SCROLL: shouldLoadNewMesages", keyMeasurements());
         }
         return result;
     }
 
-    function loadMoreIfRequired(fromScroll = false) {
+    function loadMoreIfRequired(fromScroll = false, initialLoad = false) {
         if (shouldLoadNewMessages()) {
             loadingNew = true;
-            loadingFromScroll = fromScroll;
             client.loadNewMessages(chat.chatId, threadRootEvent);
+        } else {
+            loadingNew = false;
         }
         if (shouldLoadPreviousMessages()) {
             loadingPrev = true;
-            loadingFromScroll = fromScroll;
-            console.debug("SCROLL: about to load previous messages");
-            client.loadPreviousMessages(chat.chatId, threadRootEvent);
+            client.loadPreviousMessages(chat.chatId, threadRootEvent, initialLoad);
+        } else {
+            loadingPrev = false;
         }
+        loadingFromScroll = (loadingNew || loadingPrev) && fromScroll;
     }
 
-    function resetScroll() {
+    async function resetScroll(initialLoad: boolean) {
         if (focusMessageIndex !== undefined) {
             scrollToMessageIndex(focusMessageIndex, false);
+        } else {
+            if (initialLoad) {
+                await scrollBottom("auto");
+            }
         }
         if (!initialised) {
             initialised = true;
@@ -232,15 +247,11 @@
             (ev) =>
                 ev.event.kind === "message" &&
                 ev.event.messageIndex === index &&
-                !failedMessagesStore.contains(selectedThreadKey ?? chat.chatId, ev.event.messageId) //TODO threads
+                !failedMessagesStore.contains(selectedThreadKey ?? chat.chatId, ev.event.messageId)
         ) as EventWrapper<Message> | undefined;
     }
 
-    export function scrollToMessageIndex(
-        index: number,
-        preserveFocus: boolean,
-        loadWindowIfMissing: boolean = true
-    ) {
+    export function scrollToMessageIndex(index: number, preserveFocus: boolean) {
         if (index < 0) {
             setFocusMessageIndex(undefined);
             return;
@@ -266,83 +277,67 @@
                     setFocusMessageIndex(undefined);
                 }, 200);
             }
-        } else if (loadWindowIfMissing) {
+        } else {
             client.loadEventWindow(chat.chatId, index, threadRootEvent);
         }
     }
 
-    export function onMessageWindowLoaded(messageIndex: number | undefined) {
+    export async function onMessageWindowLoaded(messageIndex: number | undefined) {
         if (messageIndex === undefined) return;
-        tick()
-            .then(() => (initialised = true))
-            .then(() => {
-                expectedScrollTop = undefined;
-                scrollToMessageIndex(messageIndex, false, true);
-            })
-            .then(tick)
-            .then(() => loadMoreIfRequired());
+        await tick();
+        initialised = true;
+        if (scrollToBottomAfterLoad) {
+            loadIndexThenScrollToBottom(messageIndex);
+        } else {
+            scrollToMessageIndex(messageIndex, false);
+            await tick();
+            loadMoreIfRequired();
+        }
     }
 
-    function onLoadedPreviousMessages() {
-        console.debug("SCROLL: loaded previous messages");
-        tick()
-            .then(() => (initialised = true))
-            .then(resetScroll) // TODO why?
-            .then(() => {
-                expectedScrollTop = messagesDiv?.scrollTop ?? 0;
-            })
-            .then(() => (loadingFromScroll = loadingPrev = false))
-            .then(tick)
-            .then(() => loadMoreIfRequired());
+    // is there some way to tell that we will have to recurse
+    // if the height changes by less than the threshold
+    async function onLoadedPreviousMessages(initialLoad: boolean) {
+        await tick();
+        await resetScroll(initialLoad);
+        if (
+            !initialLoad &&
+            messagesDiv !== undefined &&
+            previousScrollHeight !== undefined &&
+            previousScrollTop !== undefined
+        ) {
+            const sensitivityThreshold = 100;
+            const scrollHeightDiff = messagesDiv.scrollHeight - previousScrollHeight;
+            const scrollTopDiff = messagesDiv.scrollTop - previousScrollTop;
+            const diffDiff = scrollHeightDiff - scrollTopDiff;
+            // sometimes chrome is *a little* out but it we only want to intervene if if's way off
+            if (diffDiff > sensitivityThreshold) {
+                interruptScroll(() => {
+                    if (messagesDiv !== undefined && previousScrollTop !== undefined) {
+                        let adjusted = messagesDiv.scrollTop + scrollHeightDiff;
+                        // This is still not great on iphone particularly in the groups that have a high proportion of non-message events
+                        messagesDiv.scrollTop = adjusted;
+                        console.debug("SCROLL: adjusted: ", {
+                            ...keyMeasurements(),
+                            scrollHeightDiff,
+                            scrollTopDiff,
+                        });
+                    }
+                });
+            }
+        }
+        loadingPrev = false;
+        loadMoreIfRequired(loadingFromScroll, initialLoad);
     }
 
     function onLoadedNewMessages(newLatestMessage: boolean) {
-        tick()
-            .then(() => {
-                if (
-                    loadingFromScroll &&
-                    isSafari && // unfortunate
-                    $insideBottomThreshold &&
-                    previousScrollHeight !== undefined &&
-                    previousScrollTop !== undefined &&
-                    messagesDiv !== undefined
-                ) {
-                    // after loading new content below the viewport, chrome, firefox and edge will automatically maintain scroll position
-                    // safari DOES NOT so we need to try to adjust it
-                    const clientHeightChange = messagesDiv.scrollHeight - previousScrollHeight;
-                    if (clientHeightChange > 0) {
-                        // if the height has changed we update the scroll position to whatever it was *before* the render _minus_ the clientHeightChange
-                        interruptScroll(() => {
-                            if (messagesDiv !== undefined) {
-                                $scrollTop = messagesDiv.scrollTop =
-                                    (previousScrollTop ?? 0) - clientHeightChange;
-                                console.debug(
-                                    "SCROLL: scrollTop updated to " + messagesDiv.scrollTop
-                                );
+        if (newLatestMessage && insideBottomThreshold()) {
+            // only scroll if we are now within threshold from the bottom
+            scrollBottom("smooth");
+        }
 
-                                console.debug(
-                                    "SCROLL: [$insideBottomThreshold] [shouldLoadNewMessages] ",
-                                    $insideBottomThreshold,
-                                    shouldLoadNewMessages()
-                                );
-                            }
-                        });
-                    }
-                } else if (newLatestMessage && $insideBottomThreshold) {
-                    // only scroll if we are now within threshold from the bottom
-                    scrollBottom("smooth");
-                }
-            })
-            .then(() => (loadingFromScroll = loadingNew = false))
-            .then(tick) // without the tick loadmoreifrequired can run too early and go into a tailspin
-            .then(() => loadMoreIfRequired());
-    }
-
-    function scrollLeapDetected() {
-        return (
-            expectedScrollTop !== undefined &&
-            expectedScrollTop - (messagesDiv?.scrollTop ?? 0) > 500
-        );
+        loadingNew = false;
+        loadMoreIfRequired(loadingFromScroll);
     }
 
     // this *looks* crazy - but the idea is that before we programmatically scroll the messages div
@@ -355,20 +350,7 @@
     }
 
     function onScroll() {
-        if (!initialised) return;
-
-        $scrollTop = messagesDiv?.scrollTop ?? 0;
-
-        if (scrollLeapDetected()) {
-            console.debug("SCROLL: position has leapt unacceptably", messagesDiv?.scrollTop);
-            interruptScroll(() => {
-                messagesDiv?.scrollTo({ top: expectedScrollTop, behavior: "auto" }); // this should trigger another call to onScroll
-            });
-            expectedScrollTop = undefined;
-            return;
-        } else {
-            expectedScrollTop = undefined;
-        }
+        if (!initialised || loadingPrev || scrollToBottomAfterLoad) return;
 
         menuStore.hideMenu();
         tooltipStore.hide();
@@ -389,14 +371,27 @@
             return;
         }
 
+        if (loadingFromScroll) return;
+
         loadMoreIfRequired(true);
+    }
+
+    async function loadIndexThenScrollToBottom(messageIndex: number) {
+        const element = document.querySelector(`.${rootSelector} [data-index~='${messageIndex}']`);
+        if (element) {
+            await scrollBottom();
+            scrollToBottomAfterLoad = false;
+        } else {
+            scrollToBottomAfterLoad = true;
+            client.loadEventWindow(chat.chatId, messageIndex, threadRootEvent);
+        }
     }
 
     function scrollToLast() {
         if (threadSummary !== undefined) {
-            scrollToMessageIndex(threadSummary.numberOfReplies - 1, false);
+            loadIndexThenScrollToBottom(threadSummary.numberOfReplies - 1);
         } else {
-            scrollToMessageIndex(chat.latestMessage?.event.messageIndex ?? -1, false);
+            loadIndexThenScrollToBottom(chat.latestMessage?.event.messageIndex ?? -1);
         }
     }
 </script>
@@ -425,12 +420,14 @@
 {/if}
 <div
     title={$_("goToLatestMessage")}
-    class:show={!$insideBottomThreshold || unreadMessages > 0}
+    class:show={showGoToBottom || unreadMessages > 0}
     class="fab to-bottom"
     class:footer
     class:rtl={$rtlStore}>
     <Fab on:click={scrollToLast}>
-        {#if unreadMessages > 0}
+        {#if loadingFromScroll}
+            <div class="spinner" />
+        {:else if unreadMessages > 0}
             <div in:pop={{ duration: 1500 }} class="unread">
                 <div class="unread-count">{unreadMessages > 999 ? "999+" : unreadMessages}</div>
             </div>
@@ -448,6 +445,10 @@
         &.interrupt {
             overflow-y: hidden;
         }
+    }
+
+    .spinner {
+        @include loading-spinner(1em, 0.5em, var(--button-spinner), "../assets/plain-spinner.svg");
     }
 
     .fab {

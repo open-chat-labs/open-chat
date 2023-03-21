@@ -1,4 +1,4 @@
-import {
+import type {
     ChatEvent,
     ChatMetrics,
     ChatSummary,
@@ -12,14 +12,12 @@ import {
     GroupChatSummaryUpdates,
     GroupSubtype,
     GroupSubtypeUpdate,
-    IndexRange,
     Member,
     Mention,
     Message,
     ThreadRead,
     ThreadSyncDetails,
     ThreadSyncDetailsUpdates,
-    eventIsVisible,
     GroupCanisterGroupChatSummary,
     GroupCanisterGroupChatSummaryUpdates,
     UserCanisterGroupChatSummary,
@@ -32,7 +30,7 @@ import { toRecord } from "./list";
 import { applyOptionUpdate, mapOptionUpdate } from "./mapping";
 import Identicon from "identicon.js";
 import md5 from "md5";
-import { EVENT_PAGE_SIZE, OPENCHAT_BOT_AVATAR_URL, OPENCHAT_BOT_USER_ID } from "../constants";
+import { OPENCHAT_BOT_AVATAR_URL, OPENCHAT_BOT_USER_ID } from "../constants";
 
 // this is used to merge both the overall list of chats with updates and also the list of participants
 // within a group chat
@@ -128,7 +126,6 @@ function mergeUpdatedGroupChat(
         memberCount: updatedChat.memberCount ?? chat.memberCount,
         myRole: updatedChat.myRole ?? (chat.myRole === "previewer" ? "participant" : chat.myRole),
         mentions: mergeMentions(chat.mentions, updatedChat.mentions),
-        ownerId: updatedChat.ownerId ?? chat.ownerId,
         permissions: updatedChat.permissions ?? chat.permissions,
         metrics: updatedChat.metrics ?? chat.metrics,
         myMetrics: updatedChat.myMetrics ?? chat.myMetrics,
@@ -311,7 +308,6 @@ export function mergeGroupChatUpdates(
             lastUpdated: g?.lastUpdated ?? c.lastUpdated,
             memberCount: g?.memberCount ?? c.memberCount,
             mentions: g === undefined ? c.mentions : [...g.mentions, ...c.mentions],
-            ownerId: g?.ownerId ?? c.ownerId,
             public: g?.public ?? c.public,
             myRole: g?.myRole ?? c.myRole,
             permissions: g?.permissions ?? c.permissions,
@@ -361,7 +357,6 @@ export function mergeGroupChats(
             lastUpdated: g.lastUpdated,
             memberCount: g.memberCount,
             mentions: g.mentions,
-            ownerId: g.ownerId,
             public: g.public,
             myRole: g.myRole,
             permissions: g.permissions,
@@ -497,23 +492,6 @@ export function emptyChatMetrics(): ChatMetrics {
         polls: 0,
         reactions: 0,
     };
-}
-
-export function enoughVisibleMessages(
-    ascending: boolean,
-    [minIndex, maxIndex]: IndexRange,
-    events: EventWrapper<ChatEvent>[]
-): boolean {
-    const filtered = events.filter(eventIsVisible);
-    if (filtered.length >= EVENT_PAGE_SIZE) {
-        return true;
-    } else if (ascending) {
-        // if there are no more events then we have enough by definition
-        return events[events.length - 1]?.index >= maxIndex;
-    } else {
-        // if there are no previous events then we have enough by definition
-        return events[0].index <= minIndex;
-    }
 }
 
 export function nextIndex(

@@ -805,7 +805,6 @@ export type GroupChatSummaryUpdates = ChatSummaryUpdatesCommon & {
     memberCount?: number;
     myRole?: MemberRole;
     mentions: Mention[];
-    ownerId?: string;
     permissions?: GroupPermissions;
     public?: boolean;
     latestThreads?: ThreadSyncDetailsUpdates[];
@@ -950,7 +949,6 @@ export type GroupChatSummary = DataContent &
         lastUpdated: bigint;
         memberCount: number;
         mentions: Mention[];
-        ownerId: string;
         public: boolean;
         myRole: MemberRole;
         permissions: GroupPermissions;
@@ -987,7 +985,6 @@ export type GroupCanisterGroupChatSummary = {
     memberCount: number;
     myRole: MemberRole;
     mentions: Mention[];
-    ownerId: string;
     permissions: GroupPermissions;
     notificationsMuted: boolean;
     metrics: ChatMetrics;
@@ -1010,7 +1007,6 @@ export type GroupCanisterGroupChatSummaryUpdates = {
     memberCount: number | undefined;
     myRole: MemberRole | undefined;
     mentions: Mention[];
-    ownerId: string | undefined;
     permissions: GroupPermissions | undefined;
     notificationsMuted: boolean | undefined;
     metrics: ChatMetrics | undefined;

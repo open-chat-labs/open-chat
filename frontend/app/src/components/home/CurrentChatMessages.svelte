@@ -116,19 +116,6 @@
         }, options);
     });
 
-    function expandDeletedMessages(ev: CustomEvent<{ scrollTop: number; scrollHeight: number }>) {
-        tick().then(() => {
-            if (messagesDiv) {
-                // TODO - fix this
-                // expectedScrollTop = undefined;
-                // const diff = (messagesDiv?.scrollHeight ?? 0) - ev.detail.scrollHeight;
-                // interruptScroll(() => {
-                //     messagesDiv?.scrollTo({ top: ev.detail.scrollTop - diff, behavior: "auto" });
-                // });
-            }
-        });
-    }
-
     function retrySend(ev: CustomEvent<EventWrapper<Message>>): void {
         client.retrySendMessage(chat.chatId, ev.detail, events, undefined);
     }
@@ -142,12 +129,8 @@
         chatEventList?.scrollToMessageIndex(index, false);
     }
 
-    export function scrollToMessageIndex(
-        index: number,
-        preserveFocus: boolean,
-        loadWindowIfMissing: boolean = true
-    ) {
-        chatEventList?.scrollToMessageIndex(index, preserveFocus, loadWindowIfMissing);
+    export function scrollToMessageIndex(index: number, preserveFocus: boolean) {
+        chatEventList?.scrollToMessageIndex(index, preserveFocus);
     }
 
     function replyTo(ev: CustomEvent<EnhancedReplyContext>) {
@@ -202,9 +185,12 @@
 
     $: expandedDeletedMessages = client.expandedDeletedMessages;
 
-    $: groupedEvents = client
-        .groupEvents(events, user.userId, $expandedDeletedMessages, groupInner(filteredProposals))
-        .reverse();
+    $: groupedEvents = client.groupEvents(
+        events,
+        user.userId,
+        $expandedDeletedMessages,
+        groupInner(filteredProposals)
+    );
 
     $: {
         if (chat.chatId !== currentChatId) {
@@ -372,6 +358,22 @@
     bind:initialised
     bind:messagesDiv
     bind:messagesDivHeight>
+    {#if showAvatar}
+        {#if $isProposalGroup}
+            <ProposalBot />
+        {:else if chat.kind === "group_chat"}
+            <InitialGroupMessage group={chat} noVisibleEvents={events.length === 0} />
+        {:else if client.isOpenChatBot(chat.them)}
+            <Robot />
+        {:else}
+            <div class="big-avatar">
+                <Avatar
+                    url={client.userAvatarUrl($userStore[chat.them])}
+                    userId={chat.them}
+                    size={AvatarSize.Large} />
+            </div>
+        {/if}
+    {/if}
     {#each groupedEvents as dayGroup, _di (dateGroupKey(dayGroup))}
         <div class="day-group">
             <div class="date-label">
@@ -419,28 +421,11 @@
                         on:upgrade
                         on:forward
                         on:retrySend={retrySend}
-                        on:expandDeletedMessages={expandDeletedMessages}
                         event={evt} />
                 {/each}
             {/each}
         </div>
     {/each}
-    {#if showAvatar}
-        {#if $isProposalGroup}
-            <ProposalBot />
-        {:else if chat.kind === "group_chat"}
-            <InitialGroupMessage group={chat} noVisibleEvents={events.length === 0} />
-        {:else if client.isOpenChatBot(chat.them)}
-            <Robot />
-        {:else}
-            <div class="big-avatar">
-                <Avatar
-                    url={client.userAvatarUrl($userStore[chat.them])}
-                    userId={chat.them}
-                    size={AvatarSize.Large} />
-            </div>
-        {/if}
-    {/if}
 </ChatEventList>
 
 <style type="text/scss">

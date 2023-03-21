@@ -2,7 +2,7 @@
 
 <script lang="ts">
     import type { OpenChat, UserLookup, UserSummary } from "openchat-client";
-    import { afterUpdate, createEventDispatcher, getContext, onDestroy, onMount } from "svelte";
+    import { afterUpdate, getContext, onDestroy, onMount } from "svelte";
     import { _ } from "svelte-i18n";
     import Markdown from "./Markdown.svelte";
 
@@ -15,7 +15,6 @@
 
     let deletedMessagesElement: HTMLElement;
 
-    const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
 
     $: userStore = client.userStore;
@@ -74,11 +73,7 @@
     }
 
     function expandDeletedMessages() {
-        const chatMessages = document.getElementById("chat-messages");
-        const scrollTop = chatMessages?.scrollTop ?? 0;
-        const scrollHeight = chatMessages?.scrollHeight ?? 0;
         client.expandDeletedMessages(chatId, new Set(messagesDeleted));
-        dispatch("expandDeletedMessages", { scrollTop, scrollHeight });
     }
 </script>
 

@@ -1,6 +1,5 @@
-use canister_client::operations::install_service_canisters;
-use canister_client::utils::get_dfx_identity;
-use canister_client::CanisterIds;
+use canister_agent_utils::{get_dfx_identity, CanisterIds};
+use canister_installer::install_service_canisters;
 use clap::Parser;
 use types::CanisterId;
 

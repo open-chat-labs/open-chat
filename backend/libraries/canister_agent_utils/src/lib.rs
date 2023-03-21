@@ -1,35 +1,99 @@
-use crate::TestIdentity;
 use candid::{CandidType, Principal};
 use ic_agent::agent::http_transport::ReqwestHttpReplicaV2Transport;
 use ic_agent::identity::BasicIdentity;
 use ic_agent::Agent;
 use ic_utils::interfaces::ManagementCanister;
 use itertools::Itertools;
+use std::fmt::{Display, Formatter};
 use std::fs::File;
 use std::io::Read;
 use std::path::{Path, PathBuf};
+use std::str::FromStr;
 use types::{CanisterId, CanisterWasm, Version};
 
-const CONTROLLER_PEM: &str = include_str!("../keys/controller.pem");
-const USER1_PEM: &str = include_str!("../keys/user1.pem");
-const USER2_PEM: &str = include_str!("../keys/user2.pem");
-const USER3_PEM: &str = include_str!("../keys/user3.pem");
+#[derive(Debug)]
+pub enum CanisterName {
+    CyclesDispenser,
+    Group,
+    GroupIndex,
+    LocalGroupIndex,
+    LocalUserIndex,
+    Notifications,
+    NotificationsIndex,
+    OnlineUsers,
+    ProposalsBot,
+    StorageBucket,
+    StorageIndex,
+    User,
+    UserIndex,
+}
+
+impl FromStr for CanisterName {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "cycles_dispenser" => Ok(CanisterName::CyclesDispenser),
+            "group" => Ok(CanisterName::Group),
+            "group_index" => Ok(CanisterName::GroupIndex),
+            "local_group_index" => Ok(CanisterName::LocalGroupIndex),
+            "local_user_index" => Ok(CanisterName::LocalUserIndex),
+            "notifications" => Ok(CanisterName::Notifications),
+            "notifications_index" => Ok(CanisterName::NotificationsIndex),
+            "online_users" => Ok(CanisterName::OnlineUsers),
+            "proposals_bot" => Ok(CanisterName::ProposalsBot),
+            "storage_bucket" => Ok(CanisterName::StorageBucket),
+            "storage_index" => Ok(CanisterName::StorageIndex),
+            "user" => Ok(CanisterName::User),
+            "user_index" => Ok(CanisterName::UserIndex),
+            _ => Err(format!("Unrecognised canister name: {s}")),
+        }
+    }
+}
+
+impl Display for CanisterName {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        let name = match self {
+            CanisterName::CyclesDispenser => "cycles_dispenser",
+            CanisterName::Group => "group",
+            CanisterName::GroupIndex => "group_index",
+            CanisterName::LocalGroupIndex => "local_group_index",
+            CanisterName::LocalUserIndex => "local_user_index",
+            CanisterName::Notifications => "notifications",
+            CanisterName::NotificationsIndex => "notifications_index",
+            CanisterName::OnlineUsers => "online_users",
+            CanisterName::ProposalsBot => "proposals_bot",
+            CanisterName::StorageBucket => "storage_bucket",
+            CanisterName::StorageIndex => "storage_index",
+            CanisterName::User => "user",
+            CanisterName::UserIndex => "user_index",
+        };
+
+        f.write_str(name)
+    }
+}
+
+#[derive(Debug)]
+pub struct CanisterIds {
+    pub user_index: CanisterId,
+    pub group_index: CanisterId,
+    pub notifications_index: CanisterId,
+    pub local_user_index: CanisterId,
+    pub local_group_index: CanisterId,
+    pub notifications: CanisterId,
+    pub online_users: CanisterId,
+    pub proposals_bot: CanisterId,
+    pub storage_index: CanisterId,
+    pub cycles_dispenser: CanisterId,
+    pub nns_governance: CanisterId,
+    pub nns_ledger: CanisterId,
+    pub nns_cmc: CanisterId,
+}
 
 pub fn get_dfx_identity(name: &str) -> BasicIdentity {
     let home_dir = dirs::home_dir().expect("Failed to get home directory");
     let pem_file_path = home_dir.join(Path::new(&format!(".config/dfx/identity/{name}/identity.pem")));
     BasicIdentity::from_pem_file(pem_file_path).expect("Failed to create identity")
-}
-
-pub fn build_identity(identity: TestIdentity) -> BasicIdentity {
-    let pem = match identity {
-        TestIdentity::Controller => CONTROLLER_PEM,
-        TestIdentity::User1 => USER1_PEM,
-        TestIdentity::User2 => USER2_PEM,
-        TestIdentity::User3 => USER3_PEM,
-    };
-
-    BasicIdentity::from_pem(pem.as_bytes()).expect("Failed to create identity")
 }
 
 pub async fn build_ic_agent(url: String, identity: BasicIdentity) -> Agent {

@@ -795,7 +795,6 @@ function mention(candid: ApiMention): Mention {
 }
 
 function groupChatSummary(candid: ApiGroupChatSummary, limitReadByMeUpTo = true): GroupChatSummary {
-    const ownerId = candid.owner_id.toString();
     const latestMessage = optional(candid.latest_message, (ev) => ({
         index: ev.index,
         timestamp: ev.timestamp,
@@ -829,7 +828,6 @@ function groupChatSummary(candid: ApiGroupChatSummary, limitReadByMeUpTo = true)
         mentions: candid.mentions
             .filter((m) => m.thread_root_message_index.length === 0)
             .map(mention),
-        ownerId,
         permissions: groupPermissions(candid.permissions),
         metrics: chatMetrics(candid.metrics),
         myMetrics: chatMetrics(candid.my_metrics),

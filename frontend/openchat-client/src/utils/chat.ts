@@ -635,7 +635,6 @@ export function serialiseMessageForRtc(messageEvent: EventWrapper<Message>): Eve
 }
 
 export function groupChatFromCandidate(
-    userId: string,
     chatId: string,
     candidate: CandidateGroupChat
 ): GroupChatSummary {
@@ -658,7 +657,6 @@ export function groupChatFromCandidate(
         myRole: "owner",
         mentions: [],
         ...candidate.avatar,
-        ownerId: userId,
         permissions: candidate.permissions,
         metrics: emptyChatMetrics(),
         myMetrics: emptyChatMetrics(),

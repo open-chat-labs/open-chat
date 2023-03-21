@@ -55,32 +55,15 @@ macro_rules! generate_c2c_call {
             args: &$method_name::Args,
         ) -> ic_cdk::api::call::CallResult<$method_name::Response> {
             let method_name = concat!(stringify!($method_name), "_msgpack");
-            let payload_bytes = msgpack::serialize(args).map_err(|e| {
-                (
-                    ic_cdk::api::call::RejectionCode::CanisterError,
-                    format!("Serialization error: {:?}", e),
-                )
-            })?;
 
-            tracing::trace!(method_name, %canister_id, "Starting c2c call");
-
-            let result = ic_cdk::api::call::call_raw(canister_id, method_name, &payload_bytes, 0).await;
-
-            match result {
-                Ok(response) => {
-                    tracing::trace!(method_name, %canister_id, "Completed c2c call successfully");
-                    msgpack::deserialize(&response).map_err(|e| {
-                        (
-                            ic_cdk::api::call::RejectionCode::CanisterError,
-                            format!("Deserialization error: {:?}", e),
-                        )
-                    })
-                },
-                Err((error_code, error_message)) => {
-                    tracing::error!(method_name, %canister_id, ?error_code, error_message, "Error calling c2c");
-                    Err((error_code, error_message))
-                }
-            }
+            canister_client::make_c2c_call(
+                canister_id,
+                method_name,
+                args,
+                |r| msgpack::serialize(r),
+                |r| msgpack::deserialize(r),
+            )
+            .await
         }
     };
 }
@@ -93,32 +76,15 @@ macro_rules! generate_candid_c2c_call {
             args: &$method_name::Args,
         ) -> ic_cdk::api::call::CallResult<$method_name::Response> {
             let method_name = stringify!($method_name);
-            let payload_bytes = candid::encode_one(args).map_err(|e| {
-                (
-                    ic_cdk::api::call::RejectionCode::CanisterError,
-                    format!("Serialization error: {:?}", e),
-                )
-            })?;
 
-            tracing::trace!(method_name, %canister_id, "Starting c2c call");
-
-            let result = ic_cdk::api::call::call_raw(canister_id, method_name, &payload_bytes, 0).await;
-
-            match result {
-                Ok(response) => {
-                    tracing::trace!(method_name, %canister_id, "Completed c2c call successfully");
-                    candid::decode_one(&response).map_err(|e| {
-                        (
-                            ic_cdk::api::call::RejectionCode::CanisterError,
-                            format!("Deserialization error: {:?}", e),
-                        )
-                    })
-                },
-                Err((error_code, error_message)) => {
-                    tracing::error!(method_name, %canister_id, ?error_code, error_message, "Error calling c2c");
-                    Err((error_code, error_message))
-                }
-            }
+            canister_client::make_c2c_call(
+                canister_id,
+                method_name,
+                args,
+                |r| candid::encode_one(r),
+                |r| candid::decode_one(r),
+            )
+            .await
         }
     };
 }
