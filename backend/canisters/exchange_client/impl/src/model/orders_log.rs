@@ -1,4 +1,5 @@
 use crate::memory::{get_orders_log_data_memory, get_orders_log_index_memory, Memory};
+use candid::Principal;
 use exchange_client_canister::{CancelOrderRequest, ExchangeId, MakeOrderRequest};
 use ic_stable_structures::{StableLog, Storable};
 use msgpack::{deserialize_then_unwrap, serialize_then_unwrap};
@@ -14,12 +15,24 @@ pub struct OrdersLog {
 }
 
 impl OrdersLog {
-    pub fn log_order_made(&mut self, exchange_id: ExchangeId, order: MakeOrderRequest, now: TimestampMillis) {
-        self.log(Action::OrderMade(order), exchange_id, now);
+    pub fn log_order_made(
+        &mut self,
+        caller: Principal,
+        exchange_id: ExchangeId,
+        order: MakeOrderRequest,
+        now: TimestampMillis,
+    ) {
+        self.log(caller, exchange_id, Action::OrderMade(order), now);
     }
 
-    pub fn log_order_cancelled(&mut self, exchange_id: ExchangeId, order: CancelOrderRequest, now: TimestampMillis) {
-        self.log(Action::OrderCancelled(order), exchange_id, now);
+    pub fn log_order_cancelled(
+        &mut self,
+        caller: Principal,
+        exchange_id: ExchangeId,
+        order: CancelOrderRequest,
+        now: TimestampMillis,
+    ) {
+        self.log(caller, exchange_id, Action::OrderCancelled(order), now);
     }
 
     pub fn iter(&self) -> impl Iterator<Item = LogEntry> + '_ {
@@ -30,10 +43,11 @@ impl OrdersLog {
         self.log.len()
     }
 
-    fn log(&mut self, action: Action, exchange_id: ExchangeId, now: TimestampMillis) {
+    fn log(&mut self, caller: Principal, exchange_id: ExchangeId, action: Action, now: TimestampMillis) {
         self.log
             .append(&LogEntry {
                 timestamp: now,
+                caller,
                 exchange_id,
                 action,
             })
@@ -57,6 +71,7 @@ impl Default for OrdersLog {
 #[derive(Serialize, Deserialize)]
 pub struct LogEntry {
     timestamp: TimestampMillis,
+    caller: Principal,
     exchange_id: ExchangeId,
     action: Action,
 }
@@ -80,6 +95,7 @@ impl Storable for LogEntry {
 impl Display for LogEntry {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let timestamp = self.timestamp;
+        let caller = self.caller;
         let exchange_id = self.exchange_id;
 
         let msg = match &self.action {
@@ -95,6 +111,6 @@ impl Display for LogEntry {
             }
         };
 
-        write!(f, "{timestamp} ExchangeId: {exchange_id}. {msg}")
+        write!(f, "{timestamp} Caller: {caller}. ExchangeId: {exchange_id}. {msg}")
     }
 }

@@ -20,7 +20,10 @@ async fn cancel_orders(args: Args) -> Response {
     mutate_state(|state| {
         let now = state.env.now();
         for order in args.orders {
-            state.data.orders_log.log_order_cancelled(args.exchange_id, order, now);
+            state
+                .data
+                .orders_log
+                .log_order_cancelled(caller, args.exchange_id, order, now);
         }
     });
 
