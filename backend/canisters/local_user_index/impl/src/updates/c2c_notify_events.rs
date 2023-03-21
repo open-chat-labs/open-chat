@@ -87,7 +87,10 @@ fn handle_event(event: Event, runtime_state: &mut RuntimeState) {
             }
         }
         Event::SuperAdminStatusChanged(ev) => {
-            runtime_state.data.global_users.set_super_admin(ev.user_id, ev.is_super_admin);
+            runtime_state
+                .data
+                .global_users
+                .set_platform_moderator(ev.user_id, ev.is_super_admin);
         }
         Event::MaxConcurrentCanisterUpgradesChanged(ev) => {
             runtime_state.data.max_concurrent_canister_upgrades = ev.value;

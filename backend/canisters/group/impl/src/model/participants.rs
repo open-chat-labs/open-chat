@@ -207,15 +207,18 @@ impl Participants {
         user_id: &UserId,
         new_role: Role,
         permissions: &GroupPermissions,
+        is_platform_moderator: bool,
     ) -> ChangeRoleResult {
         // Is the caller authorized to change the user to this role
         let caller_id = match self.get_by_principal(&caller) {
             Some(p) => {
-                if p.suspended.value {
-                    return ChangeRoleResult::UserSuspended;
-                }
-                if !p.role.can_change_roles(new_role, permissions) {
-                    return ChangeRoleResult::NotAuthorized;
+                if !is_platform_moderator {
+                    if p.suspended.value {
+                        return ChangeRoleResult::UserSuspended;
+                    }
+                    if !p.role.can_change_roles(new_role, permissions) {
+                        return ChangeRoleResult::NotAuthorized;
+                    }
                 }
                 p.user_id
             }

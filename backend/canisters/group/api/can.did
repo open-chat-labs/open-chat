@@ -268,6 +268,7 @@ type ChangeRoleResponse =
         Invalid;
         UserSuspended;
         ChatFrozen;
+        InternalError: text;
     };
 
 type InviteCodeArgs =

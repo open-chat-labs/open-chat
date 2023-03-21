@@ -2649,6 +2649,8 @@ dependencies = [
  "types",
  "user_canister",
  "user_canister_c2c_client",
+ "user_index_canister",
+ "user_index_canister_c2c_client",
  "utils",
 ]
 

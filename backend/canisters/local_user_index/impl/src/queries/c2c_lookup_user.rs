@@ -13,7 +13,7 @@ fn c2c_lookup_user_impl(args: Args, runtime_state: &RuntimeState) -> Response {
             principal: user.principal,
             user_id: user.user_id,
             is_bot: user.is_bot,
-            is_super_admin: user.is_super_admin,
+            is_super_admin: user.is_platform_moderator,
         })
     } else {
         UserNotFound

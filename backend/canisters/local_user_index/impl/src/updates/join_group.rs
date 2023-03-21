@@ -57,7 +57,7 @@ fn user_details(runtime_state: &RuntimeState) -> UserDetails {
     UserDetails {
         user_id: user.user_id,
         principal: user.principal,
-        is_platform_moderator: user.is_super_admin,
+        is_platform_moderator: user.is_platform_moderator,
     }
 }
 
