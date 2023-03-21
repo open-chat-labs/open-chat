@@ -29,7 +29,7 @@ async fn main() -> Result<(), Error> {
     let icdex = ICDex::new(agent, dex_canister_id, exchange_client_canister_id);
 
     let config = Config {
-        increment: 100000,
+        increment: 50000,
         order_size: 10000000,
         min_order_size: 1000000,
         max_buy_price: 8000000,
