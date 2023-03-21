@@ -5,6 +5,7 @@ use exchange_client_canister::cancel_orders::Args as CancelOrdersArgs;
 use exchange_client_canister::make_orders::Args as MakeOrdersArgs;
 use exchange_client_canister::{CancelOrderRequest, MakeOrderRequest, OrderType, ICDEX_EXCHANGE_ID};
 use ic_agent::Agent;
+use ic_ledger_types::{AccountIdentifier, Subaccount};
 use market_maker_core::{Exchange, Order, Stats};
 use serde::de::DeserializeOwned;
 use serde::Deserialize;
@@ -15,14 +16,18 @@ pub struct ICDex {
     agent: Agent,
     dex_canister_id: Principal,
     trader_canister_id: Principal,
+    agent_principal: Principal,
 }
 
 impl ICDex {
     pub fn new(agent: Agent, dex_canister_id: Principal, trader_canister_id: Principal) -> Self {
+        let agent_principal = agent.get_principal().unwrap();
+
         ICDex {
             agent,
             dex_canister_id,
             trader_canister_id,
+            agent_principal,
         }
     }
 
@@ -33,11 +38,13 @@ impl ICDex {
     }
 
     async fn open_orders(&self) -> Result<Vec<Order>, String> {
+        let account = AccountIdentifier::new(&self.trader_canister_id, &Subaccount::from(self.agent_principal));
+
         let orders: TrieList = query(
             &self.agent,
             &self.dex_canister_id,
             "pending",
-            (self.trader_canister_id.to_string(), Option::<Nat>::None, Option::<Nat>::None),
+            (account.to_string(), Option::<Nat>::None, Option::<Nat>::None),
         )
         .await?;
 

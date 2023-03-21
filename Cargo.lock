@@ -5145,6 +5145,7 @@ dependencies = [
  "exchange_client_canister_client",
  "hex",
  "ic-agent",
+ "ic-ledger-types",
  "market_maker_core",
  "serde",
  "tokio",

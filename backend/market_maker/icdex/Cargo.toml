@@ -13,6 +13,7 @@ exchange_client_canister = { path = "../../canisters/exchange_client/api" }
 exchange_client_canister_client = { path = "../../canisters/exchange_client/client" }
 hex = { workspace = true }
 ic-agent = { workspace = true }
+ic-ledger-types = { workspace = true }
 market_maker_core = { path = "../core" }
 serde = { workspace = true }
 tokio = { workspace = true, features = ["macros"] }
