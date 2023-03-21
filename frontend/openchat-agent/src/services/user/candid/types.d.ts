@@ -33,16 +33,6 @@ export interface AddedToGroupNotification {
 export interface ArchiveChatArgs { 'chat_id' : ChatId }
 export type ArchiveChatResponse = { 'ChatNotFound' : null } |
   { 'Success' : null };
-export interface AssumeGroupSuperAdminArgs {
-  'correlation_id' : bigint,
-  'chat_id' : ChatId,
-}
-export type AssumeGroupSuperAdminResponse = { 'AlreadyOwner' : null } |
-  { 'CallerNotInGroup' : null } |
-  { 'Success' : null } |
-  { 'NotSuperAdmin' : null } |
-  { 'InternalError' : string } |
-  { 'AlreadySuperAdmin' : null };
 export interface AudioContent {
   'mime_type' : string,
   'blob_reference' : [] | [BlobReference],
@@ -805,10 +795,7 @@ export interface Participant {
 }
 export interface ParticipantAssumesSuperAdmin { 'user_id' : UserId }
 export interface ParticipantDismissedAsSuperAdmin { 'user_id' : UserId }
-export interface ParticipantJoined {
-  'user_id' : UserId,
-  'as_super_admin' : boolean,
-}
+export interface ParticipantJoined { 'user_id' : UserId }
 export interface ParticipantLeft { 'user_id' : UserId }
 export interface ParticipantRelinquishesSuperAdmin { 'user_id' : UserId }
 export interface ParticipantsAdded {
@@ -931,14 +918,6 @@ export interface PushEventResult {
 }
 export type RegistrationFee = { 'ICP' : ICPRegistrationFee } |
   { 'Cycles' : CyclesRegistrationFee };
-export interface RelinquishGroupSuperAdminArgs {
-  'correlation_id' : bigint,
-  'chat_id' : ChatId,
-}
-export type RelinquishGroupSuperAdminResponse = { 'CallerNotInGroup' : null } |
-  { 'Success' : null } |
-  { 'NotSuperAdmin' : null } |
-  { 'InternalError' : string };
 export interface RemoveReactionArgs {
   'user_id' : UserId,
   'correlation_id' : bigint,
@@ -957,7 +936,6 @@ export interface ReplyContext {
   'event_index' : EventIndex,
 }
 export type Role = { 'Participant' : null } |
-  { 'SuperAdmin' : FallbackRole } |
   { 'Admin' : null } |
   { 'Owner' : null };
 export interface RoleChanged {
@@ -1273,10 +1251,6 @@ export interface _SERVICE {
   >,
   'add_reaction' : ActorMethod<[AddReactionArgs], AddReactionResponse>,
   'archive_chat' : ActorMethod<[ArchiveChatArgs], ArchiveChatResponse>,
-  'assume_group_super_admin' : ActorMethod<
-    [AssumeGroupSuperAdminArgs],
-    AssumeGroupSuperAdminResponse
-  >,
   'bio' : ActorMethod<[BioArgs], BioResponse>,
   'block_user' : ActorMethod<[BlockUserArgs], BlockUserResponse>,
   'contacts' : ActorMethod<[ContactsArgs], ContactsResponse>,
@@ -1316,10 +1290,6 @@ export interface _SERVICE {
   >,
   'pin_chat' : ActorMethod<[PinChatRequest], PinChatResponse>,
   'public_profile' : ActorMethod<[PublicProfileArgs], PublicProfileResponse>,
-  'relinquish_group_super_admin' : ActorMethod<
-    [RelinquishGroupSuperAdminArgs],
-    RelinquishGroupSuperAdminResponse
-  >,
   'remove_reaction' : ActorMethod<[RemoveReactionArgs], RemoveReactionResponse>,
   'search_messages' : ActorMethod<[SearchMessagesArgs], SearchMessagesResponse>,
   'send_message' : ActorMethod<[SendMessageArgs], SendMessageResponse>,
