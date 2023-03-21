@@ -288,7 +288,7 @@
                         <div slot="text">{$_("markAllRead")}</div>
                     </MenuItem>
 
-                    {#if client.user.isSuperAdmin}
+                    {#if client.user.isPlatformModerator}
                         {#if client.isFrozen(selectedChatSummary.chatId)}
                             <MenuItem warning on:click={unfreezeGroup}>
                                 <TickIcon size={$iconSize} color={"var(--menu-warn"} slot="icon" />
@@ -363,7 +363,7 @@
                             <div slot="text">{$_("blockUser")}</div>
                         </MenuItem>
                     {/if}
-                    {#if client.user.isSuperAdmin}
+                    {#if client.user.isPlatformModerator}
                         {#if isSuspended}
                             <MenuItem on:click={unsuspendUser}>
                                 <TickIcon

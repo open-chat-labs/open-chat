@@ -99,7 +99,7 @@ export type CreatedUser = {
     canisterUpgradeStatus: "required" | "not_required" | "in_progress";
     wasmVersion: Version;
     referrals: string[];
-    isSuperAdmin: boolean;
+    isPlatformModerator: boolean;
     suspensionDetails: SuspensionDetails | undefined;
     isSuspectedBot: boolean;
     diamondMembership?: DiamondMembershipDetails;

@@ -7,12 +7,12 @@ pub use canister_client_macros::*;
 pub async fn make_c2c_call<A, R, S, D, SError: Debug, DError: Debug>(
     canister_id: Principal,
     method_name: &str,
-    args: &A,
+    args: A,
     serializer: S,
     deserializer: D,
 ) -> CallResult<R>
 where
-    S: Fn(&A) -> Result<Vec<u8>, SError>,
+    S: Fn(A) -> Result<Vec<u8>, SError>,
     D: Fn(&[u8]) -> Result<R, DError>,
 {
     let payload_bytes = prepare_request(args, serializer)?;
@@ -24,7 +24,7 @@ where
     process_response(canister_id, method_name, response, deserializer)
 }
 
-fn prepare_request<S: Fn(&T) -> Result<Vec<u8>, E>, T, E: Debug>(args: &T, serializer: S) -> CallResult<Vec<u8>> {
+fn prepare_request<S: Fn(T) -> Result<Vec<u8>, E>, T, E: Debug>(args: T, serializer: S) -> CallResult<Vec<u8>> {
     fn map_err<E: Debug>(err: E) -> (RejectionCode, String) {
         (RejectionCode::CanisterError, format!("Serialization error: {:?}", err))
     }
