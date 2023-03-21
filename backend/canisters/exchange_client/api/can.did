@@ -1,0 +1,75 @@
+type ListExchangesArgs =
+    record {};
+
+type ListExchangesResponse =
+    record {
+        exchanges: vec ExchangeInfo;
+    };
+
+type ExchangeInfo =
+    record {
+        id: nat32;
+        name: text;
+    };
+
+type MakeOrdersArgs =
+    record {
+        exchange_id: nat32;
+        orders: vec MakeOrderRequest;
+    };
+
+type MakeOrderRequest =
+    record {
+        order_type: OrderType;
+        price: nat64;
+        amount: nat64;
+    };
+
+type OrderType =
+    variant {
+        Bid;
+        Ask;
+    };
+
+type MakeOrdersResponse =
+    variant {
+        Success;
+        NotAuthorized;
+    };
+
+type CancelOrdersArgs =
+    record {
+        exchange_id: nat32;
+        orders: vec CancelOrderRequest;
+    };
+
+type CancelOrderRequest =
+    record {
+        id: text;
+    };
+
+type CancelOrdersResponse =
+    variant {
+        Success;
+        NotAuthorized;
+    };
+
+type InitArgs =
+    record {
+        governance_principals: vec principal;
+        cycles_dispenser_canister_id: principal;
+        icp_ledger_canister_id: principal;
+        chat_ledger_canister_id: principal;
+        wasm_version: record {
+            major: nat32;
+            minor: nat32;
+            patch: nat32;
+        };
+        test_mode: bool;
+    };
+
+service: (InitArgs) -> {
+    list_exchanges: (ListExchangesArgs) -> (ListExchangesResponse) query;
+    make_orders: (MakeOrdersArgs) -> (MakeOrdersResponse);
+    cancel_orders: (CancelOrdersArgs) -> (CancelOrdersResponse);
+}

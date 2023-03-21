@@ -22,6 +22,7 @@ ONLINE_USERS_CANISTER_ID=$(dfx canister --network $NETWORK id online_users)
 PROPOSALS_BOT_CANISTER_ID=$(dfx canister --network $NETWORK id proposals_bot)
 STORAGE_INDEX_CANISTER_ID=$(dfx canister --network $NETWORK id storage_index)
 CYCLES_DISPENSER_CANISTER_ID=$(dfx canister --network $NETWORK id cycles_dispenser)
+EXCHANGE_CLIENT_CANISTER_ID=$(dfx canister --network $NETWORK id exchange_client)
 
 cargo run \
   --manifest-path backend/canister_upgrader/Cargo.toml \
@@ -34,5 +35,6 @@ cargo run \
   $PROPOSALS_BOT_CANISTER_ID \
   $STORAGE_INDEX_CANISTER_ID \
   $CYCLES_DISPENSER_CANISTER_ID \
+  $EXCHANGE_CLIENT_CANISTER_ID \
   $CANISTER_NAME \
   $VERSION \

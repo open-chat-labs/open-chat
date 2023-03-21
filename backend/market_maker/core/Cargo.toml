@@ -1,0 +1,16 @@
+[package]
+name = "market_maker_core"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+async-trait = { workspace = true }
+candid = { workspace = true }
+chrono = { workspace = true }
+exchange_client_canister = { path = "../../canisters/exchange_client/api" }
+futures = { workspace = true }
+itertools = { workspace = true }
+serde = { workspace = true }
+tokio = { workspace = true, features = ["time"] }
