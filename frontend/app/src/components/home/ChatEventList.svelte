@@ -39,8 +39,6 @@
     export let messagesDivHeight: number;
     export let initialised: boolean;
     export let events: EventWrapper<ChatEventType>[];
-    // TODO - I'm not sure we even need this now
-    export let focusMessageIndex: number | undefined = undefined;
     export let readonly: boolean;
     export let firstUnreadMention: Mention | undefined;
     export let footer: boolean;

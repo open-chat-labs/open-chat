@@ -291,7 +291,6 @@
     firstUnreadMention={undefined}
     setFocusMessageIndex={(idx) => (focusMessageIndex = idx)}
     footer
-    {focusMessageIndex}
     {events}
     {chat}
     bind:initialised
