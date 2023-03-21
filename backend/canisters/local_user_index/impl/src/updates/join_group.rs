@@ -18,6 +18,7 @@ async fn join_group(args: Args) -> Response {
         principal: user_details.principal,
         invite_code: args.invite_code,
         correlation_id: args.correlation_id,
+        is_platform_moderator: user_details.is_platform_moderator,
     };
     match group_canister_c2c_client::c2c_join_group(args.chat_id.into(), &c2c_args).await {
         Ok(response) => match response {
@@ -46,6 +47,7 @@ async fn join_group(args: Args) -> Response {
 struct UserDetails {
     user_id: UserId,
     principal: Principal,
+    is_platform_moderator: bool,
 }
 
 fn user_details(runtime_state: &RuntimeState) -> UserDetails {
@@ -55,6 +57,7 @@ fn user_details(runtime_state: &RuntimeState) -> UserDetails {
     UserDetails {
         user_id: user.user_id,
         principal: user.principal,
+        is_platform_moderator: user.is_super_admin,
     }
 }
 
