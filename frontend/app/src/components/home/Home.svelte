@@ -207,8 +207,9 @@
     // the currentChatMessages component may not exist straight away
     async function waitAndScrollToMessageIndex(index: number, preserveFocus: boolean, retries = 0) {
         if (!currentChatMessages && retries < 5) {
-            await tick();
-            waitAndScrollToMessageIndex(index, preserveFocus, retries + 1);
+            window.requestAnimationFrame(() =>
+                waitAndScrollToMessageIndex(index, preserveFocus, retries + 1)
+            );
         } else {
             currentChatMessages?.scrollToMessageIndex(index, preserveFocus);
         }
