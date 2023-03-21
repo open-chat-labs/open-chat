@@ -60,13 +60,8 @@ export const idlFactory = ({ IDL }) => {
     'GovernanceProposals' : GovernanceProposalsSubtype,
   });
   const EventIndex = IDL.Nat32;
-  const FallbackRole = IDL.Variant({
-    'Participant' : IDL.Null,
-    'Admin' : IDL.Null,
-  });
   const Role = IDL.Variant({
     'Participant' : IDL.Null,
-    'SuperAdmin' : FallbackRole,
     'Admin' : IDL.Null,
     'Owner' : IDL.Null,
   });
@@ -433,7 +428,6 @@ export const idlFactory = ({ IDL }) => {
     'ChatFrozen' : IDL.Null,
     'Success' : GroupCanisterGroupChatSummary,
     'UserSuspended' : IDL.Null,
-    'NotSuperAdmin' : IDL.Null,
     'ParticipantLimitReached' : IDL.Nat32,
     'AlreadyInGroupV2' : GroupCanisterGroupChatSummary,
     'InternalError' : IDL.Text,
