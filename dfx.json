@@ -73,6 +73,12 @@
       "wasm": "wasms/cycles_dispenser.wasm.gz",
       "build": "./scripts/generate-wasm.sh cycles_dispenser"
     },
+    "exchange_client": {
+      "type": "custom",
+      "candid": "backend/canisters/exchange_client/api/can.did",
+      "wasm": "wasms/exchange_client.wasm.gz",
+      "build": "./scripts/generate-wasm.sh exchange_client"
+    },
     "website": {
       "source": ["frontend/app/build", "frontend/app/public"],
       "type": "assets"
