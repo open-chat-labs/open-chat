@@ -1,4 +1,5 @@
 use crate::activity_notifications::handle_activity_notification;
+use crate::model::participants::RemoveResult;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use chat_events::ChatEventInternal;
@@ -28,9 +29,7 @@ async fn remove_participant(args: Args) -> Response {
         return InternalError(format!("{error:?}"));
     }
 
-    mutate_state(|state| commit(args, prepare_result.removed_by, state));
-
-    Success
+    mutate_state(|state| commit(args, prepare_result.removed_by, state))
 }
 
 struct PrepareResult {
@@ -73,10 +72,12 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
     }
 }
 
-fn commit(Args { user_id, correlation_id }: Args, removed_by: UserId, runtime_state: &mut RuntimeState) {
+fn commit(Args { user_id, correlation_id }: Args, removed_by: UserId, runtime_state: &mut RuntimeState) -> Response {
     let now = runtime_state.env.now();
 
-    runtime_state.data.participants.remove(user_id);
+    if matches!(runtime_state.data.participants.remove(user_id), RemoveResult::LastOwner) {
+        return CannotRemoveUser;
+    }
 
     let event = ParticipantsRemoved {
         user_ids: vec![user_id],
@@ -89,4 +90,6 @@ fn commit(Args { user_id, correlation_id }: Args, removed_by: UserId, runtime_st
         .push_main_event(ChatEventInternal::ParticipantsRemoved(Box::new(event)), correlation_id, now);
 
     handle_activity_notification(runtime_state);
+
+    Success
 }

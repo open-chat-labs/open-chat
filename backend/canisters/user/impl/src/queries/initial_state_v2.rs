@@ -88,7 +88,6 @@ fn hydrate_cached_summary(cached: &GroupCanisterGroupChatSummary, user_details: 
         participant_count: cached.participant_count,
         role: cached.role,
         mentions: cached.mentions.clone(),
-        owner_id: cached.owner_id,
         permissions: cached.permissions.clone(),
         metrics: cached.metrics.clone(),
         my_metrics: cached.my_metrics.clone(),

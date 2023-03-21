@@ -1,4 +1,5 @@
 use crate::activity_notifications::handle_activity_notification;
+use crate::model::participants::RemoveResult;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use chat_events::ChatEventInternal;
@@ -30,9 +31,7 @@ async fn block_user(args: Args) -> Response {
         }
     }
 
-    mutate_state(|state| commit(args, prepare_result.my_user_id, state));
-
-    Success
+    mutate_state(|state| commit(args, prepare_result.my_user_id, state))
 }
 
 struct PrepareResult {
@@ -84,12 +83,15 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
     }
 }
 
-fn commit(Args { user_id, correlation_id }: Args, blocked_by: UserId, runtime_state: &mut RuntimeState) {
+fn commit(Args { user_id, correlation_id }: Args, blocked_by: UserId, runtime_state: &mut RuntimeState) -> Response {
     if !runtime_state.data.participants.is_blocked(&user_id) {
         let now = runtime_state.env.now();
 
+        if matches!(runtime_state.data.participants.remove(user_id), RemoveResult::LastOwner) {
+            return CannotBlockUser;
+        }
+
         runtime_state.data.participants.block(user_id);
-        runtime_state.data.participants.remove(user_id);
 
         let event = UsersBlocked {
             user_ids: vec![user_id],
@@ -103,4 +105,6 @@ fn commit(Args { user_id, correlation_id }: Args, blocked_by: UserId, runtime_st
 
         handle_activity_notification(runtime_state);
     }
+
+    Success
 }

@@ -6,7 +6,7 @@ use canister_tracing_macros::trace;
 use chat_events::ChatEventInternal;
 use group_canister::change_role::*;
 use ic_cdk_macros::update;
-use types::{OwnershipTransferred, RoleChanged};
+use types::RoleChanged;
 
 #[update]
 #[trace]
@@ -29,24 +29,15 @@ fn change_role_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
             .participants
             .change_role(caller, &args.user_id, args.new_role, &runtime_state.data.permissions)
         {
-            ChangeRoleResult::Success(r) => match r.prev_owner_id {
-                Some(old_owner) => {
-                    let event = OwnershipTransferred {
-                        old_owner,
-                        new_owner: args.user_id,
-                    };
-                    ChatEventInternal::OwnershipTransferred(Box::new(event))
-                }
-                None => {
-                    let event = RoleChanged {
-                        user_ids: vec![args.user_id],
-                        old_role: r.prev_role,
-                        new_role: args.new_role,
-                        changed_by: r.caller_id,
-                    };
-                    ChatEventInternal::RoleChanged(Box::new(event))
-                }
-            },
+            ChangeRoleResult::Success(r) => {
+                let event = RoleChanged {
+                    user_ids: vec![args.user_id],
+                    old_role: r.prev_role,
+                    new_role: args.new_role,
+                    changed_by: r.caller_id,
+                };
+                ChatEventInternal::RoleChanged(Box::new(event))
+            }
             ChangeRoleResult::NotAuthorized => return NotAuthorized,
             ChangeRoleResult::Invalid => return Invalid,
             ChangeRoleResult::UserNotInGroup => return UserNotInGroup,

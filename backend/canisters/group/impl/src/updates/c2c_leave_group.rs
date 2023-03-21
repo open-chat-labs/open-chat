@@ -1,4 +1,5 @@
 use crate::activity_notifications::handle_activity_notification;
+use crate::model::participants::RemoveResult;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
@@ -31,11 +32,10 @@ fn c2c_leave_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
     if participant.suspended.value {
         return UserSuspended;
     }
-    if participant.role.is_owner() {
+
+    if matches!(runtime_state.data.participants.remove(caller), RemoveResult::LastOwner) {
         return OwnerCannotLeave;
     }
-
-    runtime_state.data.participants.remove(caller);
 
     let event = ParticipantLeft { user_id: caller };
 
