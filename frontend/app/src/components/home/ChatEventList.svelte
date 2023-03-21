@@ -27,9 +27,10 @@
     import { _ } from "svelte-i18n";
     import { pop } from "../../utils/transition";
     import { iconSize } from "../../stores/iconSize";
-    import { dimensions } from "../../stores/screenDimensions";
+    // import { dimensions } from "../../stores/screenDimensions";
 
     const FROM_BOTTOM_THRESHOLD = 600;
+    const LOADING_THRESHOLD = 400;
     const client = getContext<OpenChat>("client");
 
     export let rootSelector: string;
@@ -74,6 +75,7 @@
         loadingPrev,
         loadingFromScroll,
         scrollingToMessage,
+        eventCount: events.length,
     });
 
     const fromBottom = () => {
@@ -85,11 +87,13 @@
     };
 
     const insideBottomThreshold = () => {
-        return fromBottom() < $dimensions.height;
+        // return fromBottom() < $dimensions.height;
+        return fromBottom() < LOADING_THRESHOLD;
     };
 
     const insideTopThreshold = () => {
-        return (messagesDiv?.scrollTop ?? 0) < $dimensions.height;
+        // return (messagesDiv?.scrollTop ?? 0) < $dimensions.height;
+        return (messagesDiv?.scrollTop ?? 0) < LOADING_THRESHOLD;
     };
 
     let showGoToBottom = false;
@@ -171,6 +175,7 @@
 
         interruptScroll(() => {
             if (messagesDiv) {
+                scrollingToMessage = true;
                 messagesDiv?.scrollTo({
                     top: messagesDiv.scrollHeight - messagesDiv.clientHeight,
                     behavior,
@@ -205,6 +210,7 @@
         if (shouldLoadNewMessages()) {
             loadingNew = true;
             client.loadNewMessages(chat.chatId, threadRootEvent);
+            return; // make sure that we don't load previous and new at the same time
         } else {
             loadingNew = false;
         }
@@ -251,6 +257,10 @@
         ) as EventWrapper<Message> | undefined;
     }
 
+    // TODO - need to make this return a promise that *only* resolves once all recursion is complete
+
+    // TODO - confirm whether programmatic scroll causes onScroll to fire and whether it fires synchronously and how many times it fires
+    // programmatic scroll included setting scrollTop and / or scroll to bottom and / scroll to element
     export function scrollToMessageIndex(index: number, preserveFocus: boolean) {
         if (index < 0) {
             setFocusMessageIndex(undefined);
@@ -381,6 +391,7 @@
         if (element) {
             await scrollBottom();
             scrollToBottomAfterLoad = false;
+            // TODO - we probably need a load more if required here
         } else {
             scrollToBottomAfterLoad = true;
             client.loadEventWindow(chat.chatId, messageIndex, threadRootEvent);
