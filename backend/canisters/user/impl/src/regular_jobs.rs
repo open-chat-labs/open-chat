@@ -1,5 +1,6 @@
 use crate::group_summaries::{build_summaries_args, SummariesArgs};
 use crate::{can_borrow_state, mutate_state, CachedGroupSummaries, Data};
+use tracing::{error, info};
 use utils::env::Environment;
 use utils::regular_jobs::{RegularJob, RegularJobs};
 use utils::time::{MINUTE_IN_MS, WEEK_IN_MS};
@@ -42,13 +43,13 @@ fn update_cached_group_summaries(env: &dyn Environment, data: &mut Data) {
 }
 
 async fn update_cached_group_summaries_impl(args: SummariesArgs) {
+    let start = args.now;
     if let Ok(summaries) = crate::group_summaries::summaries(args).await {
         // We need this check because the call to `summaries` may have been synchronous in which
         // case we still hold the borrow on `data` which was passed into
         // `update_cached_group_summaries`.
         if can_borrow_state() {
             mutate_state(|state| {
-                let now = state.env.now();
                 state.data.cached_group_summaries = Some(CachedGroupSummaries {
                     groups: summaries
                         .into_iter()
@@ -57,9 +58,12 @@ async fn update_cached_group_summaries_impl(args: SummariesArgs) {
                         // of this async operation.
                         .filter(|g| state.data.group_chats.exists(&g.chat_id))
                         .collect(),
-                    timestamp: now,
+                    timestamp: start,
                 });
+                info!("Group summaries cache updated");
             });
         }
+    } else {
+        error!("Failed to update group summaries cache");
     }
 }

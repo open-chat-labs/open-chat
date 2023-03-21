@@ -23,7 +23,7 @@ pub(crate) struct SummariesArgs {
     group_index_canister_id: CanisterId,
     group_chat_ids: Vec<ChatId>,
     cached_group_summaries: Option<CachedGroupSummaries>,
-    now: TimestampMillis,
+    pub now: TimestampMillis,
 }
 
 pub(crate) struct UpdatesArgs {
@@ -173,11 +173,8 @@ mod c2c {
                 .map(|chat_id| group_canister_c2c_client::c2c_summary(chat_id.into(), &args))
                 .collect();
 
-            let responses: CallResult<Vec<group_canister::summary::Response>> =
-                futures::future::join_all(futures).await.into_iter().collect();
-
             // Exit if any failed, this ensures we never miss any updates
-            for response in responses? {
+            for response in futures::future::try_join_all(futures).await? {
                 if let group_canister::summary::Response::Success(result) = response {
                     summaries.push(result.summary);
                 }
@@ -210,11 +207,8 @@ mod c2c {
                 })
                 .collect();
 
-            let responses: CallResult<Vec<group_canister::summary_updates::Response>> =
-                futures::future::join_all(futures).await.into_iter().collect();
-
             // Exit if any failed, this ensures we never miss any updates
-            for response in responses? {
+            for response in futures::future::try_join_all(futures).await? {
                 if let group_canister::summary_updates::Response::Success(result) = response {
                     summary_updates.push(result.updates);
                 }
