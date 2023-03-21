@@ -79,14 +79,16 @@ impl ICDexClient {
         // Convert the price per whole CHAT into the price per `unit_size` of CHAT
         let price = (order.price * self.unit_size / 100000000).into();
 
-        let args: (
+        type TradeArgs = (
             OrderPrice,
             ICDexOrderType,
             Option<u128>,
             Option<Nat>,
             Option<[u8; 32]>,
             Option<Vec<u8>>,
-        ) = (
+        );
+
+        let args: TradeArgs = (
             OrderPrice { price, quantity },
             ICDexOrderType::Limit,
             None,
