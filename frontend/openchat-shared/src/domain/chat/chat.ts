@@ -835,7 +835,7 @@ export type ThreadSyncDetails = {
     latestMessageIndex: number;
 };
 
-export type MemberRole = "admin" | "participant" | "owner" | "super_admin" | "previewer";
+export type MemberRole = "admin" | "participant" | "owner" | "previewer";
 
 export type Member = {
     role: MemberRole;

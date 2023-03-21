@@ -72,7 +72,7 @@
     let messageEntryHeight: number;
     let messageActions: MessageActions;
     let rangeToReplace: [number, number] | undefined = undefined;
-    let isSuperAdmin = client.isSuperAdmin();
+    let isPlatformModerator = client.isPlatformModerator();
     let freezingInProgress = false;
     let tokens = cryptoCurrencyList
         .filter((t) => !cryptoLookup[t].disabled)
@@ -499,7 +499,7 @@
         </div>
     {:else if preview}
         <div class="preview">
-            {#if isSuperAdmin}
+            {#if isPlatformModerator}
                 {#if isFrozen}
                     <Button
                         loading={freezingInProgress}

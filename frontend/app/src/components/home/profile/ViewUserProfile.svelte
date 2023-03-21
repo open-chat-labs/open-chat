@@ -119,7 +119,7 @@
                     <div class="right">
                         {joined}
                     </div>
-                    {#if client.user.isSuperAdmin}
+                    {#if client.user.isPlatformModerator}
                         {#if isPremium}
                             <p class="left">PREMIUM</p>
                         {/if}
