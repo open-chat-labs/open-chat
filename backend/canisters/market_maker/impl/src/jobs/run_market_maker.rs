@@ -58,6 +58,7 @@ async fn run_single(exchange_client: Box<dyn Exchange>, config: Config) -> CallR
         &state.open_orders,
         required_orders,
         config.min_order_size,
+        state.latest_price,
         config.max_orders_to_make_per_iteration as usize,
         config.price_increment,
     );
@@ -79,6 +80,7 @@ fn calculate_orders_to_make(
     open_orders: &[Order],
     target_orders: Vec<MakeOrderRequest>,
     min_order_size: u64,
+    latest_price: u64,
     max_orders_to_make: usize,
     increment: u64,
 ) -> Vec<MakeOrderRequest> {
@@ -106,8 +108,8 @@ fn calculate_orders_to_make(
 
     bids_to_make
         .into_values()
-        .rev()
-        .interleave(asks_to_make.into_values())
+        .chain(asks_to_make.into_values())
+        .sorted_unstable_by_key(|o| latest_price.abs_diff(o.price))
         .take(max_orders_to_make)
         .collect()
 }
@@ -149,11 +151,9 @@ fn calculate_orders_to_cancel(
         };
     }
 
-    bids.sort_unstable_by_key(|b| Reverse(b.price));
-    asks.sort_unstable_by_key(|a| a.price);
-
     bids.iter()
-        .interleave(asks.iter())
+        .chain(asks.iter())
+        .sorted_unstable_by_key(|o| Reverse(latest_price.abs_diff(o.price)))
         .take(max_orders_to_cancel)
         .map(|o| CancelOrderRequest { id: o.id.clone() })
         .collect()
