@@ -7,7 +7,7 @@ use canister_tracing_macros::trace;
 use chat_events::ChatEventInternal;
 use group_canister::change_role::*;
 use ic_cdk_macros::update;
-use types::{Role, RoleChanged, CanisterId};
+use types::{CanisterId, Role, RoleChanged};
 use user_index_canister_c2c_client::{lookup_user, LookupUserError};
 
 #[update]
@@ -15,7 +15,11 @@ use user_index_canister_c2c_client::{lookup_user, LookupUserError};
 async fn change_role(args: Args) -> Response {
     run_regular_jobs();
 
-    let PrepareResult {caller, user_index_canister_id, is_caller_owner} = match read_state(prepare) {
+    let PrepareResult {
+        caller,
+        user_index_canister_id,
+        is_caller_owner,
+    } = match read_state(prepare) {
         Ok(result) => result,
         Err(response) => return response,
     };
@@ -35,15 +39,15 @@ async fn change_role(args: Args) -> Response {
 struct PrepareResult {
     caller: Principal,
     user_index_canister_id: CanisterId,
-    is_caller_owner: bool,   
+    is_caller_owner: bool,
 }
 
 fn prepare(state: &RuntimeState) -> Result<PrepareResult, Response> {
     let caller = state.env.caller();
     if let Some(participant) = state.data.participants.get(caller) {
-        Ok(PrepareResult { 
-            caller, 
-            user_index_canister_id: state.data.user_index_canister_id, 
+        Ok(PrepareResult {
+            caller,
+            user_index_canister_id: state.data.user_index_canister_id,
             is_caller_owner: participant.role.is_owner(),
         })
     } else {
