@@ -144,14 +144,6 @@ impl Role {
         self.is_permitted(permissions.reply_in_thread)
     }
 
-    pub fn can_be_removed(&self) -> bool {
-        !self.has_owner_rights()
-    }
-
-    pub fn can_leave(&self) -> bool {
-        !self.is_owner()
-    }
-
     pub fn can_delete_group(&self) -> bool {
         self.has_owner_rights()
     }
