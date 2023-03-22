@@ -114,7 +114,8 @@ export type ChangeRoleResponse = { 'Invalid' : null } |
   { 'ChatFrozen' : null } |
   { 'NotAuthorized' : null } |
   { 'Success' : null } |
-  { 'UserSuspended' : null };
+  { 'UserSuspended' : null } |
+  { 'InternalError' : string };
 export type ChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'ParticipantJoined' : ParticipantJoined } |
   { 'ParticipantAssumesSuperAdmin' : ParticipantAssumesSuperAdmin } |
@@ -487,7 +488,6 @@ export interface GroupChatSummary {
   'description' : string,
   'events_ttl' : [] | [Milliseconds],
   'last_updated' : TimestampMillis,
-  'owner_id' : UserId,
   'joined' : TimestampMillis,
   'avatar_id' : [] | [bigint],
   'next_message_expiry' : [] | [TimestampMillis],
@@ -906,7 +906,6 @@ export interface PublicGroupSummary {
   'wasm_version' : Version,
   'description' : string,
   'last_updated' : TimestampMillis,
-  'owner_id' : UserId,
   'avatar_id' : [] | [bigint],
   'frozen' : [] | [FrozenGroupInfo],
   'latest_event_index' : EventIndex,
