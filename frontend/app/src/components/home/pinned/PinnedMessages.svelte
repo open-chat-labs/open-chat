@@ -133,7 +133,7 @@
 <style type="text/scss">
     h4 {
         flex: 1;
-        margin: 0;
+        margin: 0 $sp3;
         @include font-size(fs-120);
     }
     .close {

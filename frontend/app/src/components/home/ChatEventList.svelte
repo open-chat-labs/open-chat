@@ -27,6 +27,7 @@
     import { _ } from "svelte-i18n";
     import { pop } from "../../utils/transition";
     import { iconSize } from "../../stores/iconSize";
+    import { eventListScrollTop } from "../../stores/scrollPos";
 
     const FROM_BOTTOM_THRESHOLD = 600;
     const LOADING_THRESHOLD = 400;
@@ -45,6 +46,7 @@
     export let setFocusMessageIndex: (index: number | undefined) => void;
     export let selectedThreadKey: string | undefined;
     export let threadRootEvent: EventWrapper<Message> | undefined;
+    export let maintainScroll: boolean;
 
     let interrupt = false;
     let morePrevAvailable = false;
@@ -97,6 +99,15 @@
     });
 
     onMount(() => {
+        if (messagesDiv !== undefined && $eventListScrollTop !== undefined && maintainScroll) {
+            interruptScroll(() => {
+                if (messagesDiv !== undefined && $eventListScrollTop !== undefined) {
+                    initialised = true;
+                    messagesDiv.scrollTop = $eventListScrollTop;
+                }
+            });
+        }
+
         client.addEventListener("openchat_event", clientEvent);
         return () => {
             client.removeEventListener("openchat_event", clientEvent);
@@ -149,6 +160,7 @@
             latestEventTimestamp: event.timestamp,
         };
         client.markThreadSummaryUpdated(rootEvent.event.messageId.toString(), summary);
+        afterSendMessage(true);
     }
 
     async function afterSendMessage(upToDate: boolean) {
@@ -351,6 +363,9 @@
     }
 
     function onUserScroll() {
+        if (maintainScroll) {
+            $eventListScrollTop = messagesDiv?.scrollTop;
+        }
         menuStore.hideMenu();
         tooltipStore.hide();
 
