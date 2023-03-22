@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Support multiple group owners ([#3337](https://github.com/open-ic/open-chat/pull/3337))
+- Platform mods can become owners of public groups ([#3340](https://github.com/open-ic/open-chat/pull/3340))
 
 ### Removed
 
