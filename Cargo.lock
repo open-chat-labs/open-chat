@@ -1018,6 +1018,7 @@ dependencies = [
  "canister_agent_utils",
  "clap 3.2.23",
  "cycles_dispenser_canister",
+ "exchange_client_canister",
  "futures",
  "group_canister",
  "group_index_canister",
@@ -1103,6 +1104,7 @@ dependencies = [
  "canister_agent_utils",
  "clap 3.2.23",
  "cycles_dispenser_canister",
+ "exchange_client_canister",
  "group_canister",
  "group_index_canister",
  "group_index_canister_client",
@@ -1189,9 +1191,9 @@ dependencies = [
 
 [[package]]
 name = "chrono"
-version = "0.4.23"
+version = "0.4.24"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "16b0a3d9ed01224b22057780a37bb8c5dbfe1be8ba48678e7bf57ec4b385411f"
+checksum = "4e3c5919066adf22df73762e50cffcde3a758f2a848b113b586d1f86728b673b"
 dependencies = [
  "iana-time-zone",
  "js-sys",
@@ -2288,6 +2290,57 @@ dependencies = [
  "once_cell",
  "serde",
  "serde_json",
+]
+
+[[package]]
+name = "exchange_client_canister"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "candid_gen",
+ "serde",
+ "types",
+]
+
+[[package]]
+name = "exchange_client_canister_client"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "canister_client_macros",
+ "exchange_client_canister",
+ "ic-agent",
+ "types",
+]
+
+[[package]]
+name = "exchange_client_canister_impl"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "candid",
+ "canister_client",
+ "canister_logger",
+ "canister_state_macros",
+ "canister_tracing_macros",
+ "exchange_client_canister",
+ "hex",
+ "http_request",
+ "ic-cdk 0.7.3",
+ "ic-cdk-macros",
+ "ic-cdk-timers",
+ "ic-icrc1",
+ "ic-icrc1-client",
+ "ic-icrc1-client-cdk",
+ "ic-ledger-types",
+ "ic-stable-structures",
+ "msgpack",
+ "serde",
+ "serde_bytes",
+ "serializer",
+ "tracing",
+ "types",
+ "utils",
 ]
 
 [[package]]
@@ -5084,6 +5137,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "icdex_market_maker"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "candid",
+ "dotenv",
+ "exchange_client_canister",
+ "exchange_client_canister_client",
+ "hex",
+ "ic-agent",
+ "ic-ledger-types",
+ "market_maker_core",
+ "serde",
+ "tokio",
+]
+
+[[package]]
 name = "icp-ledger"
 version = "0.8.0"
 source = "git+https://github.com/dfinity/ic?rev=7445081734e6d896d090295967d50710975c4f25#7445081734e6d896d090295967d50710975c4f25"
@@ -5691,6 +5761,21 @@ name = "maplit"
 version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3e2e65a1a2e43cfcb47a895c4c8b10d1f4a61097f9f254f183aee60cad9c651d"
+
+[[package]]
+name = "market_maker_core"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "candid",
+ "chrono",
+ "exchange_client_canister",
+ "futures",
+ "itertools",
+ "serde",
+ "test-case",
+ "tokio",
+]
 
 [[package]]
 name = "matchit"

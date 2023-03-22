@@ -1078,8 +1078,8 @@ export class OpenChat extends EventTarget {
         return chat !== undefined && predicate(chat);
     }
 
-    isSuperAdmin(): boolean {
-        return this.user.isSuperAdmin;
+    isPlatformModerator(): boolean {
+        return this.user.isPlatformModerator;
     }
 
     private createMessage = createMessage;

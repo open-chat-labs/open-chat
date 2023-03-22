@@ -14,6 +14,7 @@ use types::{CanisterId, CanisterWasm, Version};
 #[derive(Debug)]
 pub enum CanisterName {
     CyclesDispenser,
+    ExchangeClient,
     Group,
     GroupIndex,
     LocalGroupIndex,
@@ -34,6 +35,7 @@ impl FromStr for CanisterName {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "cycles_dispenser" => Ok(CanisterName::CyclesDispenser),
+            "exchange_client" => Ok(CanisterName::ExchangeClient),
             "group" => Ok(CanisterName::Group),
             "group_index" => Ok(CanisterName::GroupIndex),
             "local_group_index" => Ok(CanisterName::LocalGroupIndex),
@@ -55,6 +57,7 @@ impl Display for CanisterName {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let name = match self {
             CanisterName::CyclesDispenser => "cycles_dispenser",
+            CanisterName::ExchangeClient => "exchange_client",
             CanisterName::Group => "group",
             CanisterName::GroupIndex => "group_index",
             CanisterName::LocalGroupIndex => "local_group_index",
@@ -85,6 +88,7 @@ pub struct CanisterIds {
     pub proposals_bot: CanisterId,
     pub storage_index: CanisterId,
     pub cycles_dispenser: CanisterId,
+    pub exchange_client: CanisterId,
     pub nns_governance: CanisterId,
     pub nns_ledger: CanisterId,
     pub nns_cmc: CanisterId,

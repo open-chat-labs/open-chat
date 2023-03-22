@@ -606,9 +606,6 @@ export function memberRole(candid: ApiRole): MemberRole {
     if ("Owner" in candid) {
         return "owner";
     }
-    if ("SuperAdmin" in candid) {
-        return "super_admin";
-    }
     throw new UnsupportedValueError("Unexpected ApiRole type received", candid);
 }
 

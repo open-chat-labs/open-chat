@@ -310,8 +310,12 @@ export class MessageReadTracker {
                 }
             });
 
-            if ((dateReadPinned ?? BigInt(0)) > (state.dateReadPinned ?? BigInt(0))) {
-                state.dateReadPinned = dateReadPinned;
+            if (
+                dateReadPinned !== undefined &&
+                state.dateReadPinned !== undefined &&
+                state.dateReadPinned <= dateReadPinned
+            ) {
+                state.dateReadPinned = undefined;
             }
         }
         this.publish();

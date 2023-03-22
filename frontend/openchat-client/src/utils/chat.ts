@@ -769,8 +769,6 @@ export function canChangeRoles(
     }
 
     switch (newRole) {
-        case "super_admin":
-            return false;
         case "owner":
             return hasOwnerRights(chat.myRole);
         default:
@@ -917,7 +915,7 @@ export function canMakeGroupPrivate(chat: ChatSummary): boolean {
 }
 
 function hasOwnerRights(role: MemberRole): boolean {
-    return role === "owner" || role === "super_admin";
+    return role === "owner";
 }
 
 function isPermitted(role: MemberRole, permissionRole: PermissionRole): boolean {

@@ -56,13 +56,9 @@ macro_rules! generate_c2c_call {
         ) -> ic_cdk::api::call::CallResult<$method_name::Response> {
             let method_name = concat!(stringify!($method_name), "_msgpack");
 
-            canister_client::make_c2c_call(
-                canister_id,
-                method_name,
-                args,
-                |r| msgpack::serialize(r),
-                |r| msgpack::deserialize(r),
-            )
+            canister_client::make_c2c_call(canister_id, method_name, args, msgpack::serialize, |r| {
+                msgpack::deserialize(r)
+            })
             .await
         }
     };
@@ -77,13 +73,9 @@ macro_rules! generate_candid_c2c_call {
         ) -> ic_cdk::api::call::CallResult<$method_name::Response> {
             let method_name = stringify!($method_name);
 
-            canister_client::make_c2c_call(
-                canister_id,
-                method_name,
-                args,
-                |r| candid::encode_one(r),
-                |r| candid::decode_one(r),
-            )
+            canister_client::make_c2c_call(canister_id, method_name, (args,), candid::encode_args, |r| {
+                candid::decode_one(r)
+            })
             .await
         }
     };
