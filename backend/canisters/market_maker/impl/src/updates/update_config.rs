@@ -20,20 +20,30 @@ async fn update_config(args: Args) -> Response {
 
 fn update_config_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     if let Some(config) = runtime_state.data.exchange_config.get_mut(&args.exchange_id) {
-        args.enabled.map(|x| config.enabled = x);
-        args.price_increment.map(|x| config.price_increment = x);
-        args.order_size.map(|x| config.order_size = x);
-        args.min_order_size.map(|x| config.min_order_size = x);
-        args.max_buy_price.map(|x| config.max_buy_price = x);
-        args.min_sell_price.map(|x| config.min_sell_price = x);
-        args.min_orders_per_direction.map(|x| config.min_orders_per_direction = x);
-        args.max_orders_per_direction.map(|x| config.max_orders_per_direction = x);
-        args.max_orders_to_make_per_iteration
-            .map(|x| config.max_orders_to_make_per_iteration = x);
-        args.max_orders_to_cancel_per_iteration
-            .map(|x| config.max_orders_to_cancel_per_iteration = x);
+        update_if_some(args.enabled, &mut config.enabled);
+        update_if_some(args.price_increment, &mut config.price_increment);
+        update_if_some(args.order_size, &mut config.order_size);
+        update_if_some(args.min_order_size, &mut config.min_order_size);
+        update_if_some(args.max_buy_price, &mut config.max_buy_price);
+        update_if_some(args.min_sell_price, &mut config.min_sell_price);
+        update_if_some(args.min_orders_per_direction, &mut config.min_orders_per_direction);
+        update_if_some(args.max_orders_per_direction, &mut config.max_orders_per_direction);
+        update_if_some(
+            args.max_orders_to_make_per_iteration,
+            &mut config.max_orders_to_make_per_iteration,
+        );
+        update_if_some(
+            args.max_orders_to_cancel_per_iteration,
+            &mut config.max_orders_to_cancel_per_iteration,
+        );
         Success
     } else {
         ExchangeNotFound
+    }
+}
+
+fn update_if_some<T>(input: Option<T>, target: &mut T) {
+    if let Some(value) = input {
+        *target = value;
     }
 }
