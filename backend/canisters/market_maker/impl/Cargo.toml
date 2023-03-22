@@ -25,7 +25,6 @@ ic-cdk-timers = { workspace = true }
 ic-icrc1 = { workspace = true }
 ic-icrc1-client = { workspace = true }
 ic-icrc1-client-cdk = { workspace = true }
-ic-ledger-types = { workspace = true }
 ic-stable-structures = { workspace = true, features = ["candid"] }
 itertools = { workspace = true }
 market_maker_canister = { path = "../api" }

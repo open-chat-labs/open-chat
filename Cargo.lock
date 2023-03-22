@@ -5734,7 +5734,6 @@ dependencies = [
  "ic-icrc1",
  "ic-icrc1-client",
  "ic-icrc1-client-cdk",
- "ic-ledger-types",
  "ic-stable-structures",
  "itertools",
  "market_maker_canister",
