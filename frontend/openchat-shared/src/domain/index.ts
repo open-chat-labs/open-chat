@@ -7,6 +7,7 @@ export * from "./auth";
 export * from "./faq";
 export * from "./crypto";
 export * from "./giphy";
+export * from "./marketMaker";
 export * from "./notifications";
 export * from "./webrtc/webrtc";
 export * from "./search/search";

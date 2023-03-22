@@ -57,6 +57,7 @@ import type {
     WithdrawCryptocurrencyResponse,
 } from "./chat";
 import type { BlobReference, StorageStatus } from "./data/data";
+import type { UpdateMarketMakerConfigArgs, UpdateMarketMakerConfigResponse } from "./marketMaker";
 import type { ToggleMuteNotificationResponse } from "./notifications";
 import type {
     ArchiveChatResponse,
@@ -195,7 +196,8 @@ export type WorkerRequest =
     | LoadFailedMessages
     | DeleteFailedMessage
     | ClaimPrize
-    | PayForDiamondMembership;
+    | PayForDiamondMembership
+    | UpdateMarketMakerConfig;
 
 type SetCachedMessageFromNotification = Request<{
     chatId: string;
@@ -913,7 +915,8 @@ export type WorkerResponse =
     | Response<undefined>
     | Response<Record<string, Record<number, EventWrapper<Message>>>>
     | Response<PayForDiamondMembershipResponse>
-    | Response<ClaimPrizeResponse>;
+    | Response<ClaimPrizeResponse>
+    | Response<UpdateMarketMakerConfigResponse>;
 
 type Response<T> = {
     kind: "worker_response";
@@ -977,4 +980,8 @@ type PayForDiamondMembership = Request<{
     expectedPriceE8s: bigint;
 }> & {
     kind: "payForDiamondMembership";
+};
+
+type UpdateMarketMakerConfig = Request<UpdateMarketMakerConfigArgs> & {
+    kind: "updateMarketMakerConfig";
 };

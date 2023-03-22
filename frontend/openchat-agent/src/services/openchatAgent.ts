@@ -26,6 +26,8 @@ import type { ILedgerClient } from "./ledger/ledger.client.interface";
 import { LedgerClient } from "./ledger/ledger.client";
 import type { IGroupIndexClient } from "./groupIndex/groupIndex.client.interface";
 import { GroupIndexClient } from "./groupIndex/groupIndex.client";
+import type { IMarketMakerClient } from "./marketMaker/marketMaker.client.interface";
+import { MarketMakerClient } from "./marketMaker/marketMaker.client";
 import { toRecord } from "../utils/list";
 import { measure } from "./common/profiling";
 import {
@@ -136,6 +138,8 @@ import {
     AddHotGroupExclusionResponse,
     RemoveHotGroupExclusionResponse,
     Tally,
+    UpdateMarketMakerConfigArgs,
+    UpdateMarketMakerConfigResponse,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import { applyOptionUpdate } from "../utils/mapping";
@@ -149,6 +153,7 @@ export class OpenChatAgent extends EventTarget {
     private _groupIndexClient: IGroupIndexClient;
     private _userClient?: IUserClient;
     private _notificationClient: INotificationsClient;
+    private _marketMakerClient: IMarketMakerClient;
     private _ledgerClients: Record<Cryptocurrency, ILedgerClient>;
     private _groupClients: Record<string, IGroupClient>;
     private _groupInvite: GroupInvite | undefined;
@@ -163,6 +168,7 @@ export class OpenChatAgent extends EventTarget {
         this._userIndexClient = UserIndexClient.create(identity, config);
         this._groupIndexClient = GroupIndexClient.create(identity, config);
         this._notificationClient = NotificationsClient.create(identity, config);
+        this._marketMakerClient = MarketMakerClient.create(identity, config);
         this._ledgerClients = {
             icp: LedgerClient.create(identity, config, this.config.ledgerCanisterICP),
             sns1: LedgerClient.create(identity, config, this.config.ledgerCanisterSNS1),
@@ -1584,5 +1590,11 @@ export class OpenChatAgent extends EventTarget {
             recurring,
             expectedPriceE8s
         );
+    }
+
+    updateMarketMakerConfig(
+        config: UpdateMarketMakerConfigArgs
+    ): Promise<UpdateMarketMakerConfigResponse> {
+        return this._marketMakerClient.updateConfig(config);
     }
 }

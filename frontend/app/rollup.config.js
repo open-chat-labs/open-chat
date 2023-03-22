@@ -45,6 +45,7 @@ if (dfxNetwork) {
         process.env.ONLINE_CANISTER = canisters.online_users[dfxNetwork];
         process.env.PROPOSALS_BOT_CANISTER = canisters.proposals_bot[dfxNetwork];
         process.env.STORAGE_INDEX_CANISTER = canisters.storage_index[dfxNetwork];
+        process.env.MARKET_MAKER_CANISTER = canisters.market_maker[dfxNetwork];
 
         console.log("UserIndexCanisterId: ", process.env.USER_INDEX_CANISTER);
         console.log("GroupIndexCanisterId: ", process.env.GROUP_INDEX_CANISTER);
@@ -52,6 +53,7 @@ if (dfxNetwork) {
         console.log("OnlineCanisterId: ", process.env.ONLINE_CANISTER);
         console.log("ProposalsBotCanisterId: ", process.env.PROPOSALS_BOT_CANISTER);
         console.log("StorageIndex: ", process.env.STORAGE_INDEX_CANISTER);
+        console.log("MarketMaker: ", process.env.MARKET_MAKER_CANISTER);
     } else {
         console.log(
             "Couldn't find canisters JSON at: ",
@@ -214,6 +216,9 @@ export default {
             ),
             "process.env.STORAGE_INDEX_CANISTER": JSON.stringify(
                 process.env.STORAGE_INDEX_CANISTER
+            ),
+            "process.env.MARKET_MAKER_CANISTER": JSON.stringify(
+                process.env.MARKET_MAKER_CANISTER
             ),
             "process.env.LEDGER_CANISTER_ICP": JSON.stringify(process.env.LEDGER_CANISTER_ICP),
             "process.env.LEDGER_CANISTER_SNS1": JSON.stringify(process.env.LEDGER_CANISTER_SNS1),

@@ -7,6 +7,7 @@ use std::cmp::Reverse;
 use std::collections::btree_map::Entry::Occupied;
 use std::collections::{BTreeMap, HashSet};
 use std::time::Duration;
+use tracing::trace;
 use types::Milliseconds;
 use utils::time::MINUTE_IN_MS;
 
@@ -38,6 +39,9 @@ async fn run_async(exchanges: Vec<(Box<dyn Exchange>, Config)>) {
 }
 
 async fn run_single(exchange_client: Box<dyn Exchange>, config: Config) -> CallResult<()> {
+    let exchange_id = exchange_client.exchange_id();
+    trace!(%exchange_id, "Running market maker");
+
     let state = exchange_client.market_state().await?;
 
     let (required_orders, optional_orders) = build_orders(state.latest_price, &config);
@@ -58,12 +62,16 @@ async fn run_single(exchange_client: Box<dyn Exchange>, config: Config) -> CallR
         config.price_increment,
     );
 
+    let orders_made = orders_to_make.len();
+    let orders_cancelled = orders_to_cancel.len();
+
     futures::future::try_join(
         exchange_client.make_orders(orders_to_make),
         exchange_client.cancel_orders(orders_to_cancel),
     )
     .await?;
 
+    trace!(%exchange_id, orders_made, orders_cancelled, "Market maker ran successfully");
     Ok(())
 }
 

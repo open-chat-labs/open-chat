@@ -148,6 +148,10 @@ impl ICDexClient {
 
 #[async_trait]
 impl Exchange for ICDexClient {
+    fn exchange_id(&self) -> ExchangeId {
+        ICDEX_EXCHANGE_ID
+    }
+
     async fn market_state(&self) -> CallResult<MarketState> {
         let (latest_price, open_orders) = futures::future::try_join(self.latest_price(), self.open_orders()).await?;
 
