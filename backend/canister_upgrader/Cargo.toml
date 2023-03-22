@@ -10,12 +10,12 @@ candid = { workspace = true }
 canister_agent_utils = { path = "../libraries/canister_agent_utils" }
 clap = { workspace = true, features = ["derive"] }
 cycles_dispenser_canister = { path = "../canisters/cycles_dispenser/api" }
-exchange_client_canister = { path = "../canisters/exchange_client/api" }
 group_canister = { path = "../canisters/group/api" }
 group_index_canister = { path = "../canisters/group_index/api" }
 group_index_canister_client = { path = "../canisters/group_index/client" }
 ic-agent = { workspace = true }
 ic-utils = { workspace = true }
+market_maker_canister = { path = "../canisters/market_maker/api" }
 notifications_canister = { path = "../canisters/notifications/api" }
 notifications_index_canister = { path = "../canisters/notifications_index/api" }
 notifications_index_canister_client = { path = "../canisters/notifications_index/client" }

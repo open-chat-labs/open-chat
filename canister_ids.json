@@ -5,10 +5,6 @@
     "ic_test": "mq2tp-baaaa-aaaaf-aucva-cai",
     "large03": "ihamg-4yaaa-aaaab-aaafa-cai"
   },
-  "exchange_client": {
-    "ic": "r2pvs-tyaaa-aaaar-ajcwq-cai",
-    "ic_test": "6qpog-pyaaa-aaaar-aikyq-cai"
-  },
   "group_index": {
     "benchmarklarge": "jwksz-eqaaa-aaaab-aaaaq-cai",
     "ic": "4ijyc-kiaaa-aaaaf-aaaja-cai",
@@ -26,6 +22,10 @@
     "ic": "nq4qv-wqaaa-aaaaf-bhdgq-cai",
     "ic_test": "pecvb-tqaaa-aaaaf-bhdiq-cai",
     "large03": "jnpo4-6iaaa-aaaab-aaaca-cai"
+  },
+  "market_maker": {
+    "ic": "r2pvs-tyaaa-aaaar-ajcwq-cai",
+    "ic_test": "6qpog-pyaaa-aaaar-aikyq-cai"
   },
   "notifications": {
     "benchmarklarge": "jkoii-tqaaa-aaaab-aaacq-cai",

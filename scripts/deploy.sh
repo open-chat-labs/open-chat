@@ -34,7 +34,7 @@ ONLINE_USERS_CANISTER_ID=$(dfx canister --network $NETWORK id online_users)
 PROPOSALS_BOT_CANISTER_ID=$(dfx canister --network $NETWORK id proposals_bot)
 STORAGE_INDEX_CANISTER_ID=$(dfx canister --network $NETWORK id storage_index)
 CYCLES_DISPENSER_CANISTER_ID=$(dfx canister --network $NETWORK id cycles_dispenser)
-EXCHANGE_CLIENT_CANISTER_ID=$(dfx canister --network $NETWORK id exchange_client)
+MARKET_MAKER_CANISTER_ID=$(dfx canister --network $NETWORK id market_maker)
 
 cargo run \
   --manifest-path backend/canister_installer/Cargo.toml \
@@ -51,7 +51,7 @@ cargo run \
   $PROPOSALS_BOT_CANISTER_ID \
   $STORAGE_INDEX_CANISTER_ID \
   $CYCLES_DISPENSER_CANISTER_ID \
-  $EXCHANGE_CLIENT_CANISTER_ID \
+  $MARKET_MAKER_CANISTER_ID \
   $NNS_GOVERNANCE_CANISTER_ID \
   $NNS_LEDGER_CANISTER_ID \
   $NNS_CMC_CANISTER_ID \
