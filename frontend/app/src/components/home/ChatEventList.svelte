@@ -210,7 +210,7 @@
 
     function scrollToMention(mention: Mention | undefined) {
         if (mention !== undefined) {
-            scrollToMessageIndex(mention.messageIndex, false);
+            scrollToMessageIndex(chat.chatId, mention.messageIndex, false);
         }
     }
 
@@ -248,9 +248,13 @@
     }
 
     export async function scrollToMessageIndex(
+        chatId: string,
         index: number,
         preserveFocus: boolean
     ): Promise<void> {
+        // it is possible for the chat to change while this function is recursing so double check
+        if (chatId !== chat.chatId) return Promise.resolve();
+
         if (index < 0) {
             setFocusMessageIndex(undefined);
             return Promise.resolve();
@@ -264,7 +268,7 @@
             await scrollToElement(element);
             checkIfTargetMessageHasAThread(index);
             if (await loadMoreIfRequired(false, true)) {
-                return scrollToMessageIndex(index, preserveFocus);
+                return scrollToMessageIndex(chatId, index, preserveFocus);
             } else {
                 if (!preserveFocus) {
                     window.setTimeout(() => {
@@ -275,8 +279,8 @@
                 return Promise.resolve();
             }
         } else {
-            await client.loadEventWindow(chat.chatId, index, threadRootEvent);
-            return scrollToMessageIndex(index, preserveFocus);
+            await client.loadEventWindow(chatId, index, threadRootEvent);
+            return scrollToMessageIndex(chatId, index, preserveFocus);
         }
     }
 
@@ -287,7 +291,7 @@
         if (messageIndex === undefined || initialLoad === false) return;
         await tick();
         initialised = true;
-        await scrollToMessageIndex(messageIndex, false);
+        await scrollToMessageIndex(chat.chatId, messageIndex, false);
     }
 
     async function onLoadedPreviousMessages(initialLoad: boolean) {
@@ -356,7 +360,7 @@
     }
 
     async function loadIndexThenScrollToBottom(messageIndex: number) {
-        await scrollToMessageIndex(messageIndex, false);
+        await scrollToMessageIndex(chat.chatId, messageIndex, false);
         await scrollBottom();
     }
 
