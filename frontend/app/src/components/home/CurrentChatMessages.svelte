@@ -347,6 +347,7 @@
     rootSelector={"chat-messages"}
     selectedThreadKey={undefined}
     threadRootEvent={undefined}
+    maintainScroll
     {readonly}
     {unreadMessages}
     {firstUnreadMention}
