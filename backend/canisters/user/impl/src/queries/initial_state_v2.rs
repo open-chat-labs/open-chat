@@ -74,14 +74,16 @@ fn hydrate_cached_summary(cached: &GroupCanisterGroupChatSummary, user_details: 
         threads.insert(thread.root_message_index, ThreadSyncDetails::from(thread));
     }
     for (&root_message_index, read_up_to) in user_details.threads_read.iter() {
-        let thread = threads.entry(root_message_index).or_insert(ThreadSyncDetails {
-            root_message_index,
-            latest_event: None,
-            latest_message: None,
-            read_up_to: None,
-            last_updated: 0,
-        });
-        thread.read_up_to = Some(read_up_to.value);
+        threads
+            .entry(root_message_index)
+            .or_insert(ThreadSyncDetails {
+                root_message_index,
+                latest_event: None,
+                latest_message: None,
+                read_up_to: None,
+                last_updated: 0,
+            })
+            .read_up_to = Some(read_up_to.value);
     }
 
     GroupChatSummary {
