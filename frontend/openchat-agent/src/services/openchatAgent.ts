@@ -136,6 +136,8 @@ import {
     AddHotGroupExclusionResponse,
     RemoveHotGroupExclusionResponse,
     Tally,
+    SetGroupUpgradeConcurrencyResponse,
+    SetUserUpgradeConcurrencyResponse,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import { applyOptionUpdate } from "../utils/mapping";
@@ -1584,5 +1586,13 @@ export class OpenChatAgent extends EventTarget {
             recurring,
             expectedPriceE8s
         );
+    }
+
+    setGroupUpgradeConcurrency(value: number): Promise<SetGroupUpgradeConcurrencyResponse> {
+        return this._groupIndexClient.setGroupUpgradeConcurrency(value);
+    }
+
+    setUserUpgradeConcurrency(value: number): Promise<SetUserUpgradeConcurrencyResponse> {
+        return this._userIndexClient.setUserUpgradeConcurrency(value);
     }
 }

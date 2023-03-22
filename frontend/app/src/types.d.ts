@@ -39,5 +39,6 @@ declare global {
     interface Window {
         twttr: any;
         platformModerator: any;
+        platformOperator: any;
     }
 }
