@@ -55,6 +55,7 @@ impl RuntimeState {
             cycles_balance: self.env.cycles_balance(),
             wasm_version: WASM_VERSION.with(|v| **v.borrow()),
             git_commit_id: utils::git::git_commit_id().to_string(),
+            exchanges: self.data.exchange_config.clone(),
             canister_ids: CanisterIds {
                 user_index_canister_id: self.data.user_index_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
@@ -103,6 +104,7 @@ pub struct Metrics {
     pub cycles_balance: Cycles,
     pub wasm_version: Version,
     pub git_commit_id: String,
+    pub exchanges: HashMap<ExchangeId, Config>,
     pub canister_ids: CanisterIds,
 }
 
@@ -120,15 +122,15 @@ pub struct MarketState {
 }
 
 #[derive(Debug)]
-struct Order {
+pub struct Order {
     order_type: OrderType,
     id: String,
     price: u64,
     amount: u64,
 }
 
-#[derive(Serialize, Deserialize, Clone)]
-struct Config {
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct Config {
     enabled: bool,
     price_increment: u64,
     order_size: u64,
