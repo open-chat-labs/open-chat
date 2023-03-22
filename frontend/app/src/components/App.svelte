@@ -84,9 +84,6 @@
                 } else {
                     console.log("Failed to add hot group exclusion", chatId);
                 }
-            })
-            .catch((e) => {
-                console.log("Failed to add hot group exclusion", e);
             });
     }
 
@@ -99,9 +96,6 @@
                 } else {
                     console.log("Failed to delete frozen group", chatId);
                 }
-            })
-            .catch((e) => {
-                console.log("Failed to delete frozen group", e);
             });
     }
 
@@ -114,9 +108,6 @@
                 } else {
                     console.log("Failed to freeze group", chatId);
                 }
-            })
-            .catch((e) => {
-                console.log("Failed to freeze group", e);
             });
     }
 
@@ -129,9 +120,6 @@
                 } else {
                     console.log("Failed to remove hot group exclusion", chatId);
                 }
-            })
-            .catch((e) => {
-                console.log("Failed to remove hot group exclusion", e);
             });
     }
 
@@ -144,9 +132,6 @@
                 } else {
                     console.log("Failed to unfreeze group", chatId);
                 }
-            })
-            .catch((e) => {
-                console.log("Failed to unfreeze group", e);
             });
     }
 
@@ -159,9 +144,6 @@
                 } else {
                     console.log("Failed to set group upgrade concurrency", value);
                 }
-            })
-            .catch((e) => {
-                console.log("Failed to set group upgrade concurrency", e);
             });
     }
 
@@ -174,9 +156,6 @@
                 } else {
                     console.log("Failed to set user upgrade concurrency", value);
                 }
-            })
-            .catch((e) => {
-                console.log("Failed to set user upgrade concurrency", e);
             });        
     }
 
