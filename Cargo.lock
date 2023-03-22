@@ -6872,6 +6872,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "proposal_validation_canister_impl"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "ic-cdk 0.7.3",
+ "ic-cdk-macros",
+]
+
+[[package]]
 name = "proposals_bot_canister"
 version = "0.1.0"
 dependencies = [
