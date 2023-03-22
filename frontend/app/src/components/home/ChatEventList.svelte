@@ -182,13 +182,19 @@
         const loadingPrev = shouldLoadPreviousMessages();
         const loadingNew = shouldLoadNewMessages();
         loadingFromUserScroll = (loadingNew || loadingPrev) && fromScroll;
+        const loadPromises = [];
         if (loadingNew) {
             console.debug("SCROLL: about to load new message");
-            await client.loadNewMessages(chat.chatId, threadRootEvent);
+            loadPromises.push(client.loadNewMessages(chat.chatId, threadRootEvent));
         }
         if (loadingPrev) {
             console.debug("SCROLL: about to load previous message");
-            await client.loadPreviousMessages(chat.chatId, threadRootEvent, initialLoad);
+            loadPromises.push(
+                client.loadPreviousMessages(chat.chatId, threadRootEvent, initialLoad)
+            );
+        }
+        if (loadPromises.length > 0) {
+            await Promise.all(loadPromises);
         }
         return loadingNew || loadingPrev;
     }
