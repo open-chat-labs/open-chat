@@ -197,6 +197,8 @@ export type WorkerRequest =
     | DeleteFailedMessage
     | ClaimPrize
     | PayForDiamondMembership
+    | SetGroupUpgradeConcurrency
+    | SetUserUpgradeConcurrency
     | UpdateMarketMakerConfig;
 
 type SetCachedMessageFromNotification = Request<{
@@ -768,6 +770,18 @@ type UnsuspendUser = Request<{
     userId: string;
 }> & {
     kind: "unsuspendUser";
+};
+
+type SetGroupUpgradeConcurrency = Request<{
+    value: number;
+}> & {
+    kind: "setGroupUpgradeConcurrency";
+};
+
+type SetUserUpgradeConcurrency = Request<{
+    value: number;
+}> & {
+    kind: "setUserUpgradeConcurrency";
 };
 
 type MarkSuspectedBot = Request<void> & {

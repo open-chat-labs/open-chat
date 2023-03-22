@@ -126,11 +126,11 @@
 
     function doGoToMessageIndex(index: number): void {
         page(`/${chat.chatId}`);
-        chatEventList?.scrollToMessageIndex(index, false);
+        chatEventList?.scrollToMessageIndex(chat.chatId, index, false);
     }
 
     export function scrollToMessageIndex(index: number, preserveFocus: boolean) {
-        chatEventList?.scrollToMessageIndex(index, preserveFocus);
+        chatEventList?.scrollToMessageIndex(chat.chatId, index, preserveFocus);
     }
 
     function replyTo(ev: CustomEvent<EnhancedReplyContext>) {

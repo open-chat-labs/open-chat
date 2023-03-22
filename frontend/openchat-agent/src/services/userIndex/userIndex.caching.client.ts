@@ -17,6 +17,7 @@ import type {
     Cryptocurrency,
     DiamondMembershipDuration,
     PayForDiamondMembershipResponse,
+    SetUserUpgradeConcurrencyResponse,
 } from "openchat-shared";
 import { groupBy } from "../../utils/list";
 import { profile } from "../common/profiling";
@@ -210,5 +211,9 @@ export class CachingUserIndexClient implements IUserIndexClient {
                 }
                 return res;
             });
+    }
+
+    setUserUpgradeConcurrency(value: number): Promise<SetUserUpgradeConcurrencyResponse> {
+        return this.client.setUserUpgradeConcurrency(value);
     }
 }

@@ -93,6 +93,8 @@ import {
     AddHotGroupExclusionResponse,
     RemoveHotGroupExclusionResponse,
     Tally,
+    SetGroupUpgradeConcurrencyResponse,
+    SetUserUpgradeConcurrencyResponse,
     UpdateMarketMakerConfigArgs,
     UpdateMarketMakerConfigResponse,
 } from "openchat-shared";
@@ -1283,6 +1285,24 @@ export class OpenChatAgentWorker extends EventTarget {
             kind: "unsuspendUser",
             payload: {
                 userId,
+            },
+        });
+    }
+
+    setGroupUpgradeConcurrency(value: number): Promise<SetGroupUpgradeConcurrencyResponse> {
+        return this.sendRequest({
+            kind: "setGroupUpgradeConcurrency",
+            payload: {
+                value,
+            },
+        });
+    }
+
+    setUserUpgradeConcurrency(value: number): Promise<SetUserUpgradeConcurrencyResponse> {
+        return this.sendRequest({
+            kind: "setUserUpgradeConcurrency",
+            payload: {
+                value,
             },
         });
     }

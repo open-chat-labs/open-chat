@@ -138,6 +138,8 @@ import {
     AddHotGroupExclusionResponse,
     RemoveHotGroupExclusionResponse,
     Tally,
+    SetGroupUpgradeConcurrencyResponse,
+    SetUserUpgradeConcurrencyResponse,
     UpdateMarketMakerConfigArgs,
     UpdateMarketMakerConfigResponse,
 } from "openchat-shared";
@@ -1590,6 +1592,14 @@ export class OpenChatAgent extends EventTarget {
             recurring,
             expectedPriceE8s
         );
+    }
+
+    setGroupUpgradeConcurrency(value: number): Promise<SetGroupUpgradeConcurrencyResponse> {
+        return this._groupIndexClient.setGroupUpgradeConcurrency(value);
+    }
+
+    setUserUpgradeConcurrency(value: number): Promise<SetUserUpgradeConcurrencyResponse> {
+        return this._userIndexClient.setUserUpgradeConcurrency(value);
     }
 
     updateMarketMakerConfig(

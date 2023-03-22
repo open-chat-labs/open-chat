@@ -3188,6 +3188,26 @@ export class OpenChat extends EventTarget {
             });
     }
 
+    setGroupUpgradeConcurrency(value: number): Promise<boolean> {
+        return this.api
+            .setGroupUpgradeConcurrency(value)
+            .then((resp) => resp === "success")
+            .catch((err) => {
+                this._logger.error("Unable to set group upgrade concurrency", err);
+                return false;
+            });
+    }
+
+    setUserUpgradeConcurrency(value: number): Promise<boolean> {
+        return this.api
+            .setUserUpgradeConcurrency(value)
+            .then((resp) => resp === "success")
+            .catch((err) => {
+                this._logger.error("Unable to set user upgrade concurrency", err);
+                return false;
+            });
+    }
+
     private onChatFrozen(
         chatId: string,
         event: EventWrapper<ChatFrozenEvent | ChatUnfrozenEvent>

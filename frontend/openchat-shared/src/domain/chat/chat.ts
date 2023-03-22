@@ -1640,6 +1640,11 @@ export type RemoveHotGroupExclusionResponse =
     | "not_authorized"
     | "internal_error";
 
+export type SetGroupUpgradeConcurrencyResponse =
+    | "success"
+    | "not_authorized"
+    | "internal_error";
+
 export type MarkPinnedMessagesReadResponse = "success" | "chat_frozen";
 
 export type ClaimPrizeResponse =
