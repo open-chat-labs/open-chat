@@ -15,7 +15,7 @@
     import "../stores/fontSize";
     import Profiler from "./Profiler.svelte";
     import { OpenChat, SessionExpiryError } from "openchat-client";
-    import { UpdateMarketMakerConfigArgs } from "openchat-shared";
+    import type { UpdateMarketMakerConfigArgs } from "openchat-shared";
     import {
         isCanisterUrl,
         isLandingPageRoute,
