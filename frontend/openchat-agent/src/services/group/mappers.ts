@@ -653,6 +653,9 @@ export function changeRoleResponse(candid: ApiChangeRoleResponse): ChangeRoleRes
     if ("ChatFrozen" in candid) {
         return "chat_frozen";
     }
+    if ("InternalError" in candid) {
+        return "internal_error";
+    }
     throw new UnsupportedValueError("Unexpected ApiChangeRoleResponse type received", candid);
 }
 

@@ -64,7 +64,8 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
                     public: runtime_state.data.is_public,
                 }),
                 Some(participant_to_remove) => {
-                    if participant_to_remove.role.can_be_removed() {
+                    let owner_count = runtime_state.data.participants.owner_count();
+                    if !participant_to_remove.role.is_owner() || owner_count > 1 {
                         Ok(PrepareResult {
                             my_user_id: participant.user_id,
                             is_blocked_user_participant: true,

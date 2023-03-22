@@ -125,7 +125,7 @@
 
     function closeThread(_ev: CustomEvent<string>) {
         popHistory();
-        page.show(removeQueryStringParam("open"));
+        page.replace(removeQueryStringParam("open"));
     }
 
     function findMessage(
