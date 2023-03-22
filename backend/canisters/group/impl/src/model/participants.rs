@@ -210,7 +210,7 @@ impl Participants {
         is_platform_moderator: bool,
     ) -> ChangeRoleResult {
         // Is the caller authorized to change the user to this role
-        let caller_id = match self.get_by_principal(&caller) {
+        let caller_id = match self.get(caller) {
             Some(p) => {
                 if !is_platform_moderator {
                     if p.suspended.value {
