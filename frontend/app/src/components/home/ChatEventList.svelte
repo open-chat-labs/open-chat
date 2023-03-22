@@ -49,8 +49,6 @@
     let interrupt = false;
     let morePrevAvailable = false;
     let moreNewAvailable = false;
-    let loadingPrev = false;
-    let loadingNew = false;
     let loadingFromUserScroll = false;
     let previousScrollHeight: number | undefined = undefined;
     let previousScrollTop: number | undefined = undefined;
@@ -67,8 +65,6 @@
         fromBottom: fromBottom(),
         insideBottomThreshold: insideBottomThreshold(),
         insideTopThreshold: insideTopThreshold(),
-        loadingNew,
-        loadingPrev,
         loadingFromScroll: loadingFromUserScroll,
         eventCount: events.length,
     });
@@ -174,19 +170,17 @@
 
     function shouldLoadPreviousMessages() {
         morePrevAvailable = client.morePreviousMessagesAvailable(chat.chatId, threadRootEvent);
-        return !loadingPrev && insideTopThreshold() && morePrevAvailable;
+        return insideTopThreshold() && morePrevAvailable;
     }
 
     function shouldLoadNewMessages() {
         moreNewAvailable = client.moreNewMessagesAvailable(chat.chatId, threadRootEvent);
-        return !loadingNew && insideBottomThreshold() && moreNewAvailable;
+        return insideBottomThreshold() && moreNewAvailable;
     }
 
     async function loadMoreIfRequired(fromScroll = false, initialLoad = false): Promise<boolean> {
-        loadingPrev = false;
-        loadingNew = false;
-        loadingNew = shouldLoadNewMessages();
-        loadingPrev = !loadingNew && shouldLoadPreviousMessages();
+        const loadingPrev = shouldLoadPreviousMessages();
+        const loadingNew = shouldLoadNewMessages();
         loadingFromUserScroll = (loadingNew || loadingPrev) && fromScroll;
         if (loadingNew) {
             console.debug("SCROLL: about to load new message");
@@ -319,7 +313,6 @@
                 });
             }
         }
-        loadingPrev = false;
         await loadMoreIfRequired(loadingFromUserScroll, initialLoad);
     }
 
@@ -329,7 +322,6 @@
             await scrollBottom("smooth");
         }
 
-        loadingNew = false;
         await loadMoreIfRequired(loadingFromUserScroll);
     }
 
