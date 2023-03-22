@@ -49,7 +49,7 @@ impl User {
         // 2023-02-27 15:56 GMT (the time of this Tweet - https://twitter.com/OpenChat/status/1630235287941988353)
         const INITIAL_AIRDROP_CUTOFF: TimestampMillis = 1677513360000;
 
-        !DEV_TEAM_USER_IDS.contains(&self.user_id) && self.was_diamond_member_at(INITIAL_AIRDROP_CUTOFF)
+        self.was_diamond_member_at(INITIAL_AIRDROP_CUTOFF) && !DEV_TEAM_USER_IDS.contains(&self.user_id)
     }
 
     pub fn was_diamond_member_at(&self, timestamp: TimestampMillis) -> bool {
