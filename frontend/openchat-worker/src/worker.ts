@@ -1221,6 +1221,28 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
                     .catch(sendError(correlationId));
                 break;
 
+            case "setGroupUpgradeConcurrency":
+                agent
+                    .setGroupUpgradeConcurrency(payload.value)
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
+            case "setUserUpgradeConcurrency":
+                agent
+                    .setUserUpgradeConcurrency(payload.value)
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
             case "markSuspectedBot":
                 agent
                     .markSuspectedBot()

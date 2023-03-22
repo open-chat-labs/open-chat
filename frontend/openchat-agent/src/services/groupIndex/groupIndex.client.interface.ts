@@ -6,6 +6,7 @@ import type {
     GroupChatSummary,
     GroupSearchResponse,
     RemoveHotGroupExclusionResponse,
+    SetGroupUpgradeConcurrencyResponse,
     UnfreezeGroupResponse
 } from "openchat-shared";
 
@@ -18,4 +19,5 @@ export interface IGroupIndexClient {
     deleteFrozenGroup(chatId: string): Promise<DeleteFrozenGroupResponse>;
     addHotGroupExclusion(chatId: string): Promise<AddHotGroupExclusionResponse>;
     removeHotGroupExclusion(chatId: string): Promise<RemoveHotGroupExclusionResponse>;
+    setGroupUpgradeConcurrency(value: number): Promise<SetGroupUpgradeConcurrencyResponse>;
 }

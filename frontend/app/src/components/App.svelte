@@ -72,6 +72,7 @@
         window.addEventListener("orientationchange", calculateHeight);
         window.addEventListener("unhandledrejection", unhandledError);
         (<any>window).platformModerator = { addHotGroupExclusion, deleteFrozenGroup, freezeGroup, removeHotGroupExclusion, unfreezeGroup };
+        (<any>window).platformOperator = { setGroupUpgradeConcurrency, setUserUpgradeConcurrency };
     });
 
     function addHotGroupExclusion(chatId: string): void {
@@ -83,9 +84,6 @@
                 } else {
                     console.log("Failed to add hot group exclusion", chatId);
                 }
-            })
-            .catch((e) => {
-                console.log("Failed to add hot group exclusion", e);
             });
     }
 
@@ -98,9 +96,6 @@
                 } else {
                     console.log("Failed to delete frozen group", chatId);
                 }
-            })
-            .catch((e) => {
-                console.log("Failed to delete frozen group", e);
             });
     }
 
@@ -113,9 +108,6 @@
                 } else {
                     console.log("Failed to freeze group", chatId);
                 }
-            })
-            .catch((e) => {
-                console.log("Failed to freeze group", e);
             });
     }
 
@@ -128,9 +120,6 @@
                 } else {
                     console.log("Failed to remove hot group exclusion", chatId);
                 }
-            })
-            .catch((e) => {
-                console.log("Failed to remove hot group exclusion", e);
             });
     }
 
@@ -143,10 +132,31 @@
                 } else {
                     console.log("Failed to unfreeze group", chatId);
                 }
-            })
-            .catch((e) => {
-                console.log("Failed to unfreeze group", e);
             });
+    }
+
+    function setGroupUpgradeConcurrency(value: number): void {
+        client
+            .setGroupUpgradeConcurrency(value)
+            .then((success) => {
+                if (success) {
+                    console.log("Group upgrade concurrency set", value);
+                } else {
+                    console.log("Failed to set group upgrade concurrency", value);
+                }
+            });
+    }
+
+    function setUserUpgradeConcurrency(value: number): void {
+        client
+            .setUserUpgradeConcurrency(value)
+            .then((success) => {
+                if (success) {
+                    console.log("User upgrade concurrency set", value);
+                } else {
+                    console.log("Failed to set user upgrade concurrency", value);
+                }
+            });        
     }
 
     $: {

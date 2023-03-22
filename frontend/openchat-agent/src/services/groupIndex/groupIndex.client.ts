@@ -9,6 +9,7 @@ import type {
     GroupChatSummary,
     GroupSearchResponse,
     RemoveHotGroupExclusionResponse,
+    SetGroupUpgradeConcurrencyResponse,
     UnfreezeGroupResponse
 } from "openchat-shared";
 import { CandidService } from "../candidService";
@@ -22,6 +23,7 @@ import {
     groupSearchResponse,
     recommendedGroupsResponse,
     removeHotGroupExclusionResponse,
+    setGroupUpgradeConcurrencyResponse,
     unfreezeGroupResponse
 } from "./mappers";
 import { apiOptional } from "../common/chatMappers";
@@ -108,5 +110,11 @@ export class GroupIndexClient extends CandidService implements IGroupIndexClient
         return this.handleResponse(
             this.groupIndexService.remove_hot_group_exclusion({ chat_id: Principal.fromText(chatId) }),
             removeHotGroupExclusionResponse)
+    }
+
+    setGroupUpgradeConcurrency(value: number): Promise<SetGroupUpgradeConcurrencyResponse> {
+        return this.handleResponse(
+            this.groupIndexService.set_group_upgrade_concurrency({ value }),
+            setGroupUpgradeConcurrencyResponse)        
     }
 }
