@@ -1326,7 +1326,8 @@ export class OpenChat extends EventTarget {
     private async loadThreadEventWindow(
         chatId: string,
         messageIndex: number,
-        threadRootEvent: EventWrapper<Message>
+        threadRootEvent: EventWrapper<Message>,
+        initialLoad = false
     ): Promise<number | undefined> {
         if (threadRootEvent.event.thread === undefined) return undefined;
 
@@ -1347,7 +1348,7 @@ export class OpenChat extends EventTarget {
 
         threadServerEventsStore.set(newEvents);
 
-        this.dispatchEvent(new LoadedThreadMessageWindow(messageIndex));
+        this.dispatchEvent(new LoadedThreadMessageWindow(messageIndex, initialLoad));
 
         return messageIndex;
     }
@@ -1355,7 +1356,8 @@ export class OpenChat extends EventTarget {
     async loadEventWindow(
         chatId: string,
         messageIndex: number,
-        threadRootEvent?: EventWrapper<Message>
+        threadRootEvent?: EventWrapper<Message>,
+        initialLoad = false
     ): Promise<number | undefined> {
         const clientChat = this._liveState.chatSummaries[chatId];
         const serverChat = this._liveState.serverChatSummaries[chatId];
@@ -1366,7 +1368,12 @@ export class OpenChat extends EventTarget {
 
         if (messageIndex >= 0) {
             if (threadRootEvent !== undefined && threadRootEvent.event.thread !== undefined) {
-                return this.loadThreadEventWindow(chatId, messageIndex, threadRootEvent);
+                return this.loadThreadEventWindow(
+                    chatId,
+                    messageIndex,
+                    threadRootEvent,
+                    initialLoad
+                );
             }
 
             const latestMessageIndex = clientChat.latestMessage?.event.messageIndex ?? 0;
@@ -1397,7 +1404,7 @@ export class OpenChat extends EventTarget {
 
             await this.handleEventsResponse(clientChat, eventsResponse, false);
 
-            this.dispatchEvent(new LoadedMessageWindow(messageIndex));
+            this.dispatchEvent(new LoadedMessageWindow(messageIndex, initialLoad));
 
             return messageIndex;
         }
@@ -1538,7 +1545,7 @@ export class OpenChat extends EventTarget {
         const { selectedChat, focusMessageIndex } = this._liveState;
         if (selectedChat !== undefined) {
             if (focusMessageIndex !== undefined) {
-                this.loadEventWindow(chatId, focusMessageIndex).then(() => {
+                this.loadEventWindow(chatId, focusMessageIndex, undefined, true).then(() => {
                     this.loadDetails(selectedChat);
                 });
             } else {

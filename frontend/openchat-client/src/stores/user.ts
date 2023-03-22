@@ -4,7 +4,7 @@ import { derived, writable } from "svelte/store";
 export const currentUserKey = Symbol();
 export const OPENCHAT_BOT_USER_ID = "zzyk3-openc-hatbo-tq7my-cai";
 export const OPENCHAT_BOT_USERNAME = "OpenChatBot";
-export const OPENCHAT_BOT_AVATAR_URL = "assets/robot.svg";
+export const OPENCHAT_BOT_AVATAR_URL = "/assets/robot.svg";
 export const openChatBotUser: PartialUserSummary = {
     kind: "bot",
     userId: OPENCHAT_BOT_USER_ID,
@@ -17,7 +17,7 @@ export const openChatBotUser: PartialUserSummary = {
 
 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 export const PROPOSALS_BOT_USERNAME = "ProposalsBot";
-export const PROPOSALS_BOT_AVATAR_URL = "assets/proposal-robot.svg";
+export const PROPOSALS_BOT_AVATAR_URL = "/assets/proposal-robot.svg";
 
 export function proposalsBotUser(userId: string): PartialUserSummary {
     return {

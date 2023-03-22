@@ -42,15 +42,21 @@ export class SentThreadMessage extends CustomEvent<EventWrapper<Message>> {
     }
 }
 
-export class LoadedThreadMessageWindow extends CustomEvent<number> {
-    constructor(messageIndex: number) {
-        super("openchat_event", { detail: messageIndex });
+export class LoadedThreadMessageWindow extends CustomEvent<{
+    messageIndex: number;
+    initialLoad: boolean;
+}> {
+    constructor(messageIndex: number, initialLoad: boolean) {
+        super("openchat_event", { detail: { messageIndex, initialLoad } });
     }
 }
 
-export class LoadedMessageWindow extends CustomEvent<number> {
-    constructor(messageIndex: number) {
-        super("openchat_event", { detail: messageIndex });
+export class LoadedMessageWindow extends CustomEvent<{
+    messageIndex: number;
+    initialLoad: boolean;
+}> {
+    constructor(messageIndex: number, initialLoad: boolean) {
+        super("openchat_event", { detail: { messageIndex, initialLoad } });
     }
 }
 
