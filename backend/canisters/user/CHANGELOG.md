@@ -20,6 +20,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Removed unused timer job type (`RetrySendingFailedMessage`) ([#3263](https://github.com/open-ic/open-chat/pull/3263))
 - Removed `affected_events` from event responses ([#3322](https://github.com/open-ic/open-chat/pull/3322))
 
+### Fixed
+
+- Fix threads incorrectly appearing unread ([#3351](https://github.com/open-ic/open-chat/pull/3351))
+
 ## [[2.0.622](https://github.com/open-ic/open-chat/releases/tag/v2.0.622-user)] - 2023-03-01
 
 ### Added
