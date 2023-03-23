@@ -94,6 +94,7 @@ export const idlFactory = ({ IDL }) => {
     'NotAuthorized' : IDL.Null,
     'Success' : IDL.Null,
     'UserSuspended' : IDL.Null,
+    'InternalError' : IDL.Text,
   });
   const ClaimPrizeArgs = IDL.Record({
     'correlation_id' : IDL.Nat64,
@@ -741,7 +742,6 @@ export const idlFactory = ({ IDL }) => {
     'wasm_version' : Version,
     'description' : IDL.Text,
     'last_updated' : TimestampMillis,
-    'owner_id' : UserId,
     'avatar_id' : IDL.Opt(IDL.Nat),
     'frozen' : IDL.Opt(FrozenGroupInfo),
     'latest_event_index' : EventIndex,

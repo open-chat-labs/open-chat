@@ -57,6 +57,7 @@
     import NewGroup from "./addgroup/NewGroup.svelte";
     import AccountsModal from "./profile/AccountsModal.svelte";
     import { querystring } from "routes";
+    import { eventListScrollTop } from "../../stores/scrollPos";
 
     const client = getContext<OpenChat>("client");
     const user = client.user;
@@ -199,6 +200,7 @@
 
         // if it's a known chat let's select it
         closeNotificationsForChat(chat.chatId);
+        $eventListScrollTop = undefined;
         client.setSelectedChat(chat.chatId, messageIndex);
         resetRightPanel();
         hotGroups = { kind: "idle" };
