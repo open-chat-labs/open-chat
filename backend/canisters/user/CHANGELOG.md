@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Update group chat summary cache in small batches ([#3341](https://github.com/open-ic/open-chat/pull/3341))
+- Don't allow platform moderators to be removed from a group ([#3340](https://github.com/open-ic/open-chat/pull/3340))
 
 ### Removed
 
@@ -20,6 +21,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Removed unused timer job type (`RetrySendingFailedMessage`) ([#3263](https://github.com/open-ic/open-chat/pull/3263))
 - Removed `affected_events` from event responses ([#3322](https://github.com/open-ic/open-chat/pull/3322))
 - Removed super_admin role from groups([#3319](https://github.com/open-ic/open-chat/pull/3319))
+- Remove owner_id from group summary ([#3340](https://github.com/open-ic/open-chat/pull/3340))
 
 ### Fixed
 

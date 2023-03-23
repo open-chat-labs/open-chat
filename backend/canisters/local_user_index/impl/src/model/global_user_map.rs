@@ -7,7 +7,8 @@ use types::UserId;
 pub struct GlobalUserMap {
     user_id_to_principal: HashMap<UserId, Principal>,
     principal_to_user_id: HashMap<Principal, UserId>,
-    super_admins: HashSet<UserId>,
+    #[serde(alias = "super_admins")]
+    platform_moderators: HashSet<UserId>,
     bots: HashSet<UserId>,
 }
 
@@ -21,11 +22,11 @@ impl GlobalUserMap {
         }
     }
 
-    pub fn set_super_admin(&mut self, user_id: UserId, is_super_admin: bool) {
-        if is_super_admin {
-            self.super_admins.insert(user_id);
+    pub fn set_platform_moderator(&mut self, user_id: UserId, is_platform_moderator: bool) {
+        if is_platform_moderator {
+            self.platform_moderators.insert(user_id);
         } else {
-            self.super_admins.remove(&user_id);
+            self.platform_moderators.remove(&user_id);
         }
     }
 
@@ -39,7 +40,7 @@ impl GlobalUserMap {
             user_id: *user_id,
             principal: *principal,
             is_bot: self.bots.contains(user_id),
-            is_super_admin: self.bots.contains(user_id),
+            is_platform_moderator: self.platform_moderators.contains(user_id),
         })
     }
 
@@ -48,7 +49,7 @@ impl GlobalUserMap {
             user_id: *user_id,
             principal: *principal,
             is_bot: self.bots.contains(user_id),
-            is_super_admin: self.bots.contains(user_id),
+            is_platform_moderator: self.platform_moderators.contains(user_id),
         })
     }
 
@@ -65,5 +66,5 @@ pub struct GlobalUser {
     pub user_id: UserId,
     pub principal: Principal,
     pub is_bot: bool,
-    pub is_super_admin: bool,
+    pub is_platform_moderator: bool,
 }

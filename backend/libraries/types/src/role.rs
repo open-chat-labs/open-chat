@@ -98,10 +98,7 @@ impl Role {
     }
 
     pub fn can_change_roles(&self, new_role: Role, permissions: &GroupPermissions) -> bool {
-        match new_role {
-            Role::Owner => self.has_owner_rights(),
-            _ => self.is_permitted(permissions.change_roles),
-        }
+        self.is_same_or_senior(new_role) && self.is_permitted(permissions.change_roles)
     }
 
     pub fn can_add_members(&self, permissions: &GroupPermissions, is_public_group: bool) -> bool {
@@ -112,7 +109,19 @@ impl Role {
         self.is_permitted(permissions.remove_members)
     }
 
+    pub fn can_remove_members_with_role(&self, member_role: Role, permissions: &GroupPermissions) -> bool {
+        self.is_same_or_senior(member_role) && self.is_permitted(permissions.remove_members)
+    }
+
     pub fn can_block_users(&self, permissions: &GroupPermissions) -> bool {
+        self.is_permitted(permissions.block_users)
+    }
+
+    pub fn can_block_users_with_role(&self, user_role: Role, permissions: &GroupPermissions) -> bool {
+        self.is_same_or_senior(user_role) && self.is_permitted(permissions.block_users)
+    }
+
+    pub fn can_unblock_users(&self, permissions: &GroupPermissions) -> bool {
         self.is_permitted(permissions.block_users)
     }
 
@@ -144,14 +153,6 @@ impl Role {
         self.is_permitted(permissions.reply_in_thread)
     }
 
-    pub fn can_be_removed(&self) -> bool {
-        !self.has_owner_rights()
-    }
-
-    pub fn can_leave(&self) -> bool {
-        !self.is_owner()
-    }
-
     pub fn can_delete_group(&self) -> bool {
         self.has_owner_rights()
     }
@@ -173,6 +174,14 @@ impl Role {
             PermissionRole::Owner => self.has_owner_rights(),
             PermissionRole::Admins => self.has_admin_rights(),
             PermissionRole::Members => true,
+        }
+    }
+
+    pub fn is_same_or_senior(&self, role: Role) -> bool {
+        match role {
+            Role::Owner => self.has_owner_rights(),
+            Role::Admin => self.has_admin_rights(),
+            Role::Participant => true,
         }
     }
 

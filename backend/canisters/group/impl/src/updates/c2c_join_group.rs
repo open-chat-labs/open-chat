@@ -6,7 +6,7 @@ use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use chat_events::ChatEventInternal;
 use group_canister::c2c_join_group::{Response::*, *};
-use types::{EventIndex, MessageIndex, ParticipantJoined};
+use types::{EventIndex, MessageIndex, ParticipantJoined, UsersUnblocked};
 
 #[update_msgpack(guard = "caller_is_local_user_index")]
 #[trace]
@@ -36,7 +36,26 @@ fn c2c_join_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Response
             min_visible_message_index = events_reader.next_message_index();
         };
 
-        match runtime_state.add_participant(AddParticipantArgs {
+        // Unblock "platform moderator" if necessary
+        let mut new_event = false;
+        if args.is_platform_moderator && runtime_state.data.participants.is_blocked(&args.user_id) {
+            runtime_state.data.participants.unblock(&args.user_id);
+
+            let event = UsersUnblocked {
+                user_ids: vec![args.user_id],
+                unblocked_by: args.user_id,
+            };
+
+            runtime_state.data.events.push_main_event(
+                ChatEventInternal::UsersUnblocked(Box::new(event)),
+                args.correlation_id,
+                now,
+            );
+
+            new_event = true;
+        }
+
+        let response = match runtime_state.add_participant(AddParticipantArgs {
             user_id: args.user_id,
             principal: args.principal,
             now,
@@ -52,7 +71,7 @@ fn c2c_join_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Response
                     now,
                 );
 
-                handle_activity_notification(runtime_state);
+                new_event = true;
 
                 let summary = runtime_state.summary(&participant, now);
                 Success(Box::new(summary))
@@ -63,7 +82,13 @@ fn c2c_join_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Response
                 AlreadyInGroupV2(Box::new(summary))
             }
             AddResult::Blocked => Blocked,
+        };
+
+        if new_event {
+            handle_activity_notification(runtime_state);
         }
+
+        response
     } else {
         GroupNotPublic
     }

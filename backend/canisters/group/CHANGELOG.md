@@ -11,6 +11,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Store and use last updated timestamp on each event ([#3326](https://github.com/open-ic/open-chat/pull/3326))
 - Added `timestamp` to `EventsResponse` ([#3329](https://github.com/open-ic/open-chat/pull/3329))
 
+### Changed
+
+- Support multiple group owners ([#3340](https://github.com/open-ic/open-chat/pull/3340))
+- Platform mods can become owners of public groups ([#3340](https://github.com/open-ic/open-chat/pull/3340))
+
 ### Removed
 
 - Removed code only needed for previous upgrade ([#3248](https://github.com/open-ic/open-chat/pull/3248)) & ([#3251](https://github.com/open-ic/open-chat/pull/3251))

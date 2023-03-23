@@ -5,6 +5,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Pass is_platform_moderator to group::c2c_join_group ([#3340](https://github.com/open-ic/open-chat/pull/3340))
+
+### Removed
+
+- Remove owner_id from group summary ([#3340](https://github.com/open-ic/open-chat/pull/3340))
+
 ## [[2.0.634](https://github.com/open-ic/open-chat/releases/tag/v2.0.634-local_user_index)] - 2023-03-14
 
 ### Added

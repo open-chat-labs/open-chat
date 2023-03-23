@@ -262,7 +262,6 @@ type GroupChatSummary =
         participant_count: nat32;
         role: Role;
         mentions: vec Mention;
-        owner_id: UserId;
         permissions: GroupPermissions;
         metrics: ChatMetrics;
         my_metrics: ChatMetrics;
@@ -512,7 +511,6 @@ type PublicGroupSummary =
         latest_message: opt MessageEventWrapper;
         latest_event_index: EventIndex;
         participant_count: nat32;
-        owner_id: UserId;
         is_public: bool;
         frozen: opt FrozenGroupInfo;
         wasm_version: Version;
