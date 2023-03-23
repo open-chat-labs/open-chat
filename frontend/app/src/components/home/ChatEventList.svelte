@@ -16,6 +16,8 @@
         ChatUpdated,
         SentThreadMessage,
         ThreadSummary,
+        SendingMessage,
+        SendingThreadMessage,
     } from "openchat-client";
     import { menuStore } from "../../stores/menu";
     import { tooltipStore } from "../../stores/tooltip";
@@ -56,6 +58,7 @@
     let previousScrollTop: number | undefined = undefined;
     let user = client.user;
     let scrollingToMessage = false;
+    let scrollToBottomOnSend = false;
 
     $: failedMessagesStore = client.failedMessagesStore;
     $: threadSummary = threadRootEvent?.event.thread;
@@ -118,7 +121,7 @@
         await tick();
         if (threadRootEvent === undefined) {
             if (ev instanceof LoadedNewMessages && !scrollingToMessage) {
-                onLoadedNewMessages(ev.detail);
+                onLoadedNewMessages();
             }
             if (ev instanceof LoadedPreviousMessages && !scrollingToMessage) {
                 onLoadedPreviousMessages(ev.detail);
@@ -130,12 +133,15 @@
                 loadMoreIfRequired();
             }
             if (ev instanceof SentMessage) {
-                afterSendMessage(ev.detail);
+                afterSendMessage();
+            }
+            if (ev instanceof SendingMessage) {
+                scrollToBottomOnSend = insideBottomThreshold();
             }
         }
         if (threadRootEvent !== undefined) {
             if (ev instanceof LoadedNewThreadMessages && !scrollingToMessage) {
-                onLoadedNewMessages(ev.detail);
+                onLoadedNewMessages();
             }
             if (ev instanceof LoadedPreviousThreadMessages && !scrollingToMessage) {
                 onLoadedPreviousMessages(ev.detail);
@@ -145,6 +151,9 @@
             }
             if (ev instanceof SentThreadMessage) {
                 afterSendThreadMessage(threadRootEvent, ev.detail);
+            }
+            if (ev instanceof SendingThreadMessage) {
+                scrollToBottomOnSend = insideBottomThreshold();
             }
         }
     }
@@ -160,12 +169,16 @@
             latestEventTimestamp: event.timestamp,
         };
         client.markThreadSummaryUpdated(rootEvent.event.messageId.toString(), summary);
-        afterSendMessage(true);
+        afterSendMessage();
     }
 
-    async function afterSendMessage(upToDate: boolean) {
-        if (upToDate && insideBottomThreshold()) {
+    async function afterSendMessage() {
+        if (
+            !client.moreNewMessagesAvailable(chat.chatId, threadRootEvent) &&
+            scrollToBottomOnSend
+        ) {
             await scrollBottom("smooth");
+            scrollToBottomOnSend = false;
         }
     }
 
@@ -338,8 +351,12 @@
         await loadMoreIfRequired(loadingFromUserScroll, initialLoad);
     }
 
-    async function onLoadedNewMessages(newLatestMessage: boolean) {
-        if (newLatestMessage && insideBottomThreshold()) {
+    async function onLoadedNewMessages() {
+        if (
+            !loadingFromUserScroll &&
+            !client.moreNewMessagesAvailable(chat.chatId, threadRootEvent) &&
+            insideBottomThreshold()
+        ) {
             // only scroll if we are now within threshold from the bottom
             await scrollBottom("smooth");
         }

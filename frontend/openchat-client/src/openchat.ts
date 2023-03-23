@@ -45,7 +45,6 @@ import {
     buildTransactionLink,
     buildCryptoTransferText,
     mergeSendMessageResponse,
-    isUpToDate,
     serialiseMessageForRtc,
 } from "./utils/chat";
 import {
@@ -203,6 +202,8 @@ import {
     LoadedPreviousThreadMessages,
     LoadedThreadMessageWindow,
     SelectedChatInvalid,
+    SendingMessage,
+    SendingThreadMessage,
     SendMessageFailed,
     SentMessage,
     SentThreadMessage,
@@ -1640,7 +1641,7 @@ export class OpenChat extends EventTarget {
                 }
             }
             if (ascending) {
-                this.dispatchEvent(new LoadedNewThreadMessages(false));
+                this.dispatchEvent(new LoadedNewThreadMessages());
             } else {
                 this.dispatchEvent(new LoadedPreviousThreadMessages(initialLoad));
             }
@@ -1844,7 +1845,7 @@ export class OpenChat extends EventTarget {
             );
         }
 
-        this.dispatchEvent(new LoadedNewMessages(newLatestMessage));
+        this.dispatchEvent(new LoadedNewMessages());
         return newLatestMessage;
     }
 
@@ -2123,8 +2124,6 @@ export class OpenChat extends EventTarget {
             return;
         }
 
-        const currentEvents = this._liveState.events;
-
         // TODO check storage requirements
 
         const content = { ...msg.content };
@@ -2178,9 +2177,8 @@ export class OpenChat extends EventTarget {
                 this._logger.error("Exception forwarding message", err);
             });
 
-        this.sendMessage(chat, currentEvents, event, undefined).then((upToDate) => {
-            this.dispatchEvent(new SentMessage(upToDate));
-            return upToDate;
+        this.sendMessage(chat, event, undefined).then(() => {
+            this.dispatchEvent(new SentMessage());
         });
     }
 
@@ -2249,16 +2247,10 @@ export class OpenChat extends EventTarget {
 
     private async sendMessage(
         clientChat: ChatSummary,
-        currentEvents: EventWrapper<ChatEvent>[],
         messageEvent: EventWrapper<Message>,
         threadRootMessageIndex: number | undefined
-    ): Promise<boolean> {
-        let upToDate = true;
+    ): Promise<void> {
         const key = this.localMessagesKey(clientChat.chatId, threadRootMessageIndex);
-
-        if (threadRootMessageIndex === undefined) {
-            upToDate = isUpToDate(clientChat, currentEvents);
-        }
 
         unconfirmed.add(key, messageEvent);
         failedMessagesStore.delete(key, messageEvent.event.messageId);
@@ -2286,7 +2278,7 @@ export class OpenChat extends EventTarget {
             currentChatDraftMessage.clear(clientChat.chatId);
         }
 
-        return upToDate;
+        return;
     }
 
     private localMessagesKey(chatId: string, threadRootMessageIndex?: number): string {
@@ -2491,16 +2483,23 @@ export class OpenChat extends EventTarget {
                     this.dispatchEvent(new SendMessageFailed(!canRetry));
                 });
 
-            this.sendMessage(chat, currentEvents, event, threadRootMessageIndex).then(
-                (upToDate) => {
+            if (threadRootMessageIndex !== undefined) {
+                this.dispatchEvent(new SendingThreadMessage());
+            } else {
+                this.dispatchEvent(new SendingMessage());
+            }
+
+            // HACK - we need to defer this very slightly so that we can guarantee that we handle SendingMessage events
+            // *before* the new message is added to the unconfirmed store. Is this nice? No it is not.
+            window.setTimeout(() => {
+                this.sendMessage(chat, event, threadRootMessageIndex).then(() => {
                     if (threadRootMessageIndex !== undefined) {
                         this.dispatchEvent(new SentThreadMessage(event));
                     } else {
-                        this.dispatchEvent(new SentMessage(upToDate));
+                        this.dispatchEvent(new SentMessage());
                     }
-                    return upToDate;
-                }
-            );
+                });
+            }, 0);
         }
     }
 
@@ -2761,20 +2760,34 @@ export class OpenChat extends EventTarget {
         const key =
             threadRootMessageIndex === undefined ? chatId : `${chatId}_${threadRootMessageIndex}`;
 
-        unconfirmed.add(key, {
-            ...message.messageEvent,
-            index: eventIndex,
-            event: {
-                ...message.messageEvent.event,
-                messageIndex,
-            },
-        });
-
-        // since we will only get here if we actually have the thread open
-        // we should mark read up to this message too
         if (threadRootMessageIndex !== undefined) {
-            this.markThreadRead(chatId, threadRootMessageIndex, messageIndex);
+            this.dispatchEvent(new SendingThreadMessage());
+        } else {
+            this.dispatchEvent(new SendingMessage());
         }
+
+        window.setTimeout(() => {
+            unconfirmed.add(key, {
+                ...message.messageEvent,
+                index: eventIndex,
+                event: {
+                    ...message.messageEvent.event,
+                    messageIndex,
+                },
+            });
+
+            if (threadRootMessageIndex !== undefined) {
+                this.dispatchEvent(new SentThreadMessage(message.messageEvent));
+            } else {
+                this.dispatchEvent(new SentMessage());
+            }
+
+            // since we will only get here if we actually have the thread open
+            // we should mark read up to this message too
+            if (threadRootMessageIndex !== undefined) {
+                this.markThreadRead(chatId, threadRootMessageIndex, messageIndex);
+            }
+        }, 0);
     }
 
     checkUsername(username: string): Promise<CheckUsernameResponse> {
