@@ -25,7 +25,7 @@ generate_update_call!(undelete_messages);
 pub mod happy_path {
     use crate::rng::random_message_id;
     use crate::User;
-    use ic_state_machine_tests::StateMachine;
+    use ic_test_state_machine_client::StateMachine;
     use types::{ChatId, EventIndex, EventsResponse, GroupRules, MessageContent, MessageId, TextContent, UserId};
 
     pub fn send_text_message(

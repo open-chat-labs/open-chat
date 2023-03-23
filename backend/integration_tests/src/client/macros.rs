@@ -3,7 +3,7 @@ macro_rules! generate_query_call {
     ($method_name:ident) => {
         #[allow(dead_code)]
         pub fn $method_name(
-            env: &ic_state_machine_tests::StateMachine,
+            env: &ic_test_state_machine_client::StateMachine,
             sender: candid::Principal,
             canister_id: candid::Principal,
             args: &$method_name::Args,
@@ -20,7 +20,7 @@ macro_rules! generate_update_call {
     ($method_name:ident) => {
         #[allow(dead_code)]
         pub fn $method_name(
-            env: &mut ic_state_machine_tests::StateMachine,
+            env: &mut ic_test_state_machine_client::StateMachine,
             sender: candid::Principal,
             canister_id: candid::Principal,
             args: &$method_name::Args,

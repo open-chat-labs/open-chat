@@ -1,6 +1,6 @@
 use crate::client;
 use crate::client::{start_canister, stop_canister};
-use crate::setup::{setup_env, TestEnv};
+use crate::setup::{return_env, setup_env, TestEnv};
 use crate::utils::{now_millis, tick_many};
 use std::time::Duration;
 use test_case::test_case;
@@ -57,6 +57,12 @@ fn can_upgrade_to_diamond() {
 
     let new_balance = client::icrc1::happy_path::balance_of(&env, canister_ids.icp_ledger, user.user_id.into());
     assert_eq!(new_balance, 1_000_000_000 - 20_000_000);
+
+    return_env(TestEnv {
+        env,
+        canister_ids,
+        controller,
+    });
 }
 
 #[test_case(false; "without_ledger_error")]
@@ -113,4 +119,10 @@ fn membership_renews_automatically_if_set_to_recurring(ledger_error: bool) {
 
     let new_balance = client::icrc1::happy_path::balance_of(&env, canister_ids.icp_ledger, user.user_id.into());
     assert_eq!(new_balance, 1_000_000_000 - 40_000_000);
+
+    return_env(TestEnv {
+        env,
+        canister_ids,
+        controller,
+    });
 }

@@ -1,7 +1,7 @@
+use crate::utils::local_bin;
 use lazy_static::lazy_static;
 use std::fs::File;
 use std::io::Read;
-use std::path::PathBuf;
 use types::{CanisterWasm, Version};
 
 lazy_static! {
@@ -32,9 +32,7 @@ fn get_canister_wasm(canister_name: &str) -> CanisterWasm {
 }
 
 fn read_file_from_local_bin(file_name: &str) -> Vec<u8> {
-    let mut file_path =
-        PathBuf::from(std::env::var("CARGO_MANIFEST_DIR").expect("Failed to read CARGO_MANIFEST_DIR env variable"));
-    file_path.push("local-bin");
+    let mut file_path = local_bin();
     file_path.push(file_name);
 
     let mut file = File::open(&file_path).unwrap_or_else(|_| panic!("Failed to open file: {}", file_path.to_str().unwrap()));

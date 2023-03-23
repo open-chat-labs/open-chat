@@ -4,7 +4,7 @@ use crate::utils::tick_many;
 use crate::{client, User};
 use candid::Principal;
 use group_index_canister::freeze_group::SuspensionDetails;
-use ic_state_machine_tests::StateMachine;
+use ic_test_state_machine_client::StateMachine;
 use std::time::Duration;
 use types::{CanisterId, ChatId};
 use utils::time::DAY_IN_MS;

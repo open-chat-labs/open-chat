@@ -1,4 +1,4 @@
-use crate::setup::{setup_env, TestEnv};
+use crate::setup::{return_env, setup_env, TestEnv};
 use crate::utils::tick_many;
 use crate::{client, T};
 use ic_ledger_types::Tokens;
@@ -49,4 +49,10 @@ fn icp_is_burned_into_cycles() {
         "{cycles_balance} {new_cycles_balance} {}",
         canister_ids.cycles_dispenser
     );
+
+    return_env(TestEnv {
+        env,
+        canister_ids,
+        controller,
+    });
 }
