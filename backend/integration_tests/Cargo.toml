@@ -10,9 +10,11 @@ candid = { workspace = true }
 cycles_dispenser_canister = { path = "../canisters/cycles_dispenser/api" }
 group_canister = { path = "../canisters/group/api" }
 group_index_canister = { path = "../canisters/group_index/api" }
+ic-base-types = { workspace = true }
+ic-cdk = { workspace = true }
 ic-icrc1 = { workspace = true }
 ic-ledger-types = { workspace = true }
-ic-state-machine-tests = { workspace = true }
+ic-test-state-machine-client = { workspace = true }
 itertools = { workspace = true }
 lazy_static = { workspace = true }
 local_user_index_canister = { path = "../canisters/local_user_index/api" }
