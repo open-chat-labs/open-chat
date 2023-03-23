@@ -18,6 +18,8 @@
         ThreadSummary,
         SendingMessage,
         SendingThreadMessage,
+        ReactionSelected,
+        ThreadReactionSelected,
     } from "openchat-client";
     import { menuStore } from "../../stores/menu";
     import { tooltipStore } from "../../stores/tooltip";
@@ -138,6 +140,9 @@
             if (ev instanceof SendingMessage) {
                 scrollToBottomOnSend = insideBottomThreshold();
             }
+            if (ev instanceof ReactionSelected) {
+                afterReaction(ev.detail.messageId, ev.detail.kind);
+            }
         }
         if (threadRootEvent !== undefined) {
             if (ev instanceof LoadedNewThreadMessages && !scrollingToMessage) {
@@ -155,6 +160,31 @@
             if (ev instanceof SendingThreadMessage) {
                 scrollToBottomOnSend = insideBottomThreshold();
             }
+            if (ev instanceof ThreadReactionSelected) {
+                afterThreadReaction(ev.detail.messageId, ev.detail.kind);
+            }
+        }
+    }
+
+    async function afterReaction(messageId: bigint, kind: "add" | "remove") {
+        if (
+            !client.moreNewMessagesAvailable(chat.chatId, threadRootEvent) &&
+            chat.latestMessage?.event?.messageId === messageId &&
+            kind === "add" &&
+            insideBottomThreshold()
+        ) {
+            await scrollBottom("smooth");
+        }
+    }
+
+    async function afterThreadReaction(messageId: bigint, kind: "add" | "remove") {
+        if (
+            !client.moreNewMessagesAvailable(chat.chatId, threadRootEvent) &&
+            // chat.latestMessage?.event?.messageId === messageId &&
+            kind === "add" &&
+            insideBottomThreshold()
+        ) {
+            await scrollBottom("smooth");
         }
     }
 

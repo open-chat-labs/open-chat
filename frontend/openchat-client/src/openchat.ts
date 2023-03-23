@@ -201,6 +201,7 @@ import {
     LoadedPreviousMessages,
     LoadedPreviousThreadMessages,
     LoadedThreadMessageWindow,
+    ReactionSelected,
     SelectedChatInvalid,
     SendingMessage,
     SendingThreadMessage,
@@ -208,6 +209,7 @@ import {
     SentMessage,
     SentThreadMessage,
     ThreadClosed,
+    ThreadReactionSelected,
     ThreadSelected,
 } from "./events";
 import { LiveState } from "./liveState";
@@ -1264,6 +1266,12 @@ export class OpenChat extends EventTarget {
                 kind: kind === "add" ? "remove" : "add",
                 userId,
             });
+        }
+
+        if (threadRootMessageIndex === undefined) {
+            this.dispatchEvent(new ReactionSelected(messageId, kind));
+        } else {
+            this.dispatchEvent(new ThreadReactionSelected(messageId, kind));
         }
 
         const result = (
@@ -2660,8 +2668,15 @@ export class OpenChat extends EventTarget {
         message: RemoteUserToggledReaction
     ): void {
         const matchingMessage = this.findMessageById(message.messageId, events);
+        const kind = message.added ? "add" : "remove";
 
         if (matchingMessage !== undefined) {
+            if (message.threadRootMessageIndex === undefined) {
+                this.dispatchEvent(new ReactionSelected(message.messageId, kind));
+            } else {
+                this.dispatchEvent(new ThreadReactionSelected(message.messageId, kind));
+            }
+
             localMessageUpdates.markReaction(message.messageId.toString(), {
                 reaction: message.reaction,
                 kind: message.added ? "add" : "remove",
@@ -3370,6 +3385,7 @@ export class OpenChat extends EventTarget {
                         clearSelectedChat();
                         this.dispatchEvent(new SelectedChatInvalid());
                     } else {
+                        console.debug("XXX: chatsResponse", chatsResponse);
                         chatUpdatedStore.set({
                             affectedEvents: chatsResponse.affectedEvents[selectedChatId] ?? [],
                         });

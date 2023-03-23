@@ -30,6 +30,21 @@ export class LoadedPreviousThreadMessages extends CustomEvent<boolean> {
     }
 }
 
+export class ReactionSelected extends CustomEvent<{ messageId: bigint; kind: "add" | "remove" }> {
+    constructor(messageId: bigint, kind: "add" | "remove") {
+        super("openchat_event", { detail: { messageId, kind } });
+    }
+}
+
+export class ThreadReactionSelected extends CustomEvent<{
+    messageId: bigint;
+    kind: "add" | "remove";
+}> {
+    constructor(messageId: bigint, kind: "add" | "remove") {
+        super("openchat_event", { detail: { messageId, kind } });
+    }
+}
+
 export class SentMessage extends Event {
     constructor() {
         super("openchat_event");
