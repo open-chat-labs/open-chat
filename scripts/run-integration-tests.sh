@@ -14,11 +14,14 @@ then
 fi
 
 cd backend/integration_tests/local-bin
-if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+if [[ "$OSTYPE" = "linux-gnu"* ]]
+then
     PLATFORM=linux
-elif [[ "$OSTYPE" == "darwin"* ]]; then
+elif [[ "$OSTYPE" == "darwin"* ]]
+then
     PLATFORM=darwin
 else
+    echo "OS not supported: $OSTYPE"
     exit 1
 fi
 
