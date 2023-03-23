@@ -396,7 +396,9 @@ function mergeThreads(
 
     return Object.values(threadsRecord).map((t) => {
         const readUpToUpdate = readUpToUpdates[t.threadRootMessageIndex];
-        return readUpToUpdate !== undefined ? { ...t, readUpTo: readUpToUpdate } : t;
+        return readUpToUpdate !== undefined && readUpToUpdate > (t.readUpTo ?? -1)
+            ? { ...t, readUpTo: readUpToUpdate }
+            : t;
     });
 }
 
