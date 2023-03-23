@@ -14,10 +14,10 @@ then
 fi
 
 cd backend/integration_tests/local-bin
-if [[ "$OSTYPE" = "linux-gnu"* ]]
+if [[ "$OSTYPE" = "linux-gnu"* ]] || [[ "$RUNNER_OS" = "Linux "]]
 then
     PLATFORM=linux
-elif [[ "$OSTYPE" == "darwin"* ]]
+elif [[ "$OSTYPE" == "darwin"* ]] || [[ "$RUNNER_OS" = "macOS"]]
 then
     PLATFORM=darwin
 else
