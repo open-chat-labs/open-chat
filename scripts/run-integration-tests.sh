@@ -14,7 +14,18 @@ then
 fi
 
 cd backend/integration_tests/local-bin
-curl -sO https://download.dfinity.systems/ic/d56e4ad49b21e23a3d6c2923493e78ef498a0c1c/binaries/x86_64-darwin/ic-test-state-machine.gz
+if [[ "$OSTYPE" == "linux-gnu"* ]]; then
+    PLATFORM=linux
+elif [[ "$OSTYPE" == "darwin"* ]]; then
+    PLATFORM=darwin
+else
+    exit 1
+fi
+
+echo "Test state machine download starting"
+curl -sO https://download.dfinity.systems/ic/d56e4ad49b21e23a3d6c2923493e78ef498a0c1c/binaries/x86_64-$PLATFORM/ic-test-state-machine.gz
+echo "Test state machine download completed"
+
 gzip -df ic-test-state-machine.gz
 chmod +x ic-test-state-machine
 cd ../../..
