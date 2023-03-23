@@ -17,6 +17,22 @@ pub trait ToHumanReadable {
     fn to_human_readable(&self) -> Self::Target;
 }
 
+impl ToHumanReadable for Principal {
+    type Target = String;
+
+    fn to_human_readable(&self) -> Self::Target {
+        self.to_string()
+    }
+}
+
+impl ToHumanReadable for () {
+    type Target = String;
+
+    fn to_human_readable(&self) -> Self::Target {
+        "".to_string()
+    }
+}
+
 pub struct HumanReadablePrincipal(Principal);
 
 impl From<Principal> for HumanReadablePrincipal {

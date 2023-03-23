@@ -1288,6 +1288,7 @@ export type EventsTimeToLiveUpdated = {
 export type SetAvatarResponse = "avatar_too_big" | "success" | "internal_error" | "user_suspended";
 
 export type ChangeRoleResponse =
+    | "internal_error"
     | "user_not_in_group"
     | "caller_not_in_group"
     | "not_authorised"
@@ -1637,6 +1638,11 @@ export type RemoveHotGroupExclusionResponse =
     | "success"
     | "chat_not_excluded"
     | "chat_not_found"
+    | "not_authorized"
+    | "internal_error";
+
+export type SetGroupUpgradeConcurrencyResponse =
+    | "success"
     | "not_authorized"
     | "internal_error";
 

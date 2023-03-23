@@ -57,6 +57,7 @@
     import NewGroup from "./addgroup/NewGroup.svelte";
     import AccountsModal from "./profile/AccountsModal.svelte";
     import { querystring } from "routes";
+    import { eventListScrollTop } from "../../stores/scrollPos";
 
     const client = getContext<OpenChat>("client");
     const user = client.user;
@@ -199,6 +200,7 @@
 
         // if it's a known chat let's select it
         closeNotificationsForChat(chat.chatId);
+        $eventListScrollTop = undefined;
         client.setSelectedChat(chat.chatId, messageIndex);
         resetRightPanel();
         hotGroups = { kind: "idle" };
@@ -207,8 +209,9 @@
     // the currentChatMessages component may not exist straight away
     async function waitAndScrollToMessageIndex(index: number, preserveFocus: boolean, retries = 0) {
         if (!currentChatMessages && retries < 5) {
-            await tick();
-            waitAndScrollToMessageIndex(index, preserveFocus, retries + 1);
+            window.requestAnimationFrame(() =>
+                waitAndScrollToMessageIndex(index, preserveFocus, retries + 1)
+            );
         } else {
             currentChatMessages?.scrollToMessageIndex(index, preserveFocus);
         }

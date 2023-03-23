@@ -6,6 +6,7 @@ import type {
     GroupMatch,
     GroupSearchResponse,
     RemoveHotGroupExclusionResponse,
+    SetGroupUpgradeConcurrencyResponse,
     UnfreezeGroupResponse
 } from "openchat-shared";
 import type {
@@ -17,6 +18,7 @@ import type {
     ApiRecommendedGroupsResponse,
     ApiRemoveHotGroupExclusionResponse,
     ApiSearchResponse,
+    ApiSetGroupUpgradeConcurrencyResponse,
     ApiUnfreezeGroupResponse,
 } from "./candid/idl";
 import { DeleteFrozenGroupResponse, GroupChatSummary, UnsupportedValueError } from "openchat-shared";
@@ -167,6 +169,19 @@ export function removeHotGroupExclusionResponse(candid: ApiRemoveHotGroupExclusi
         return "internal_error";
     }
     throw new UnsupportedValueError("Unexpected ApiRemoveHotGroupExclusionResponse type received", candid);
+}
+
+export function setGroupUpgradeConcurrencyResponse(candid: ApiSetGroupUpgradeConcurrencyResponse): SetGroupUpgradeConcurrencyResponse {
+    if ("Success" in candid) {
+        return "success";
+    }
+    if ("NotAuthorized" in candid) {
+        return "not_authorized";
+    }
+    if ("InternalError" in candid) {
+        return "internal_error";
+    }
+    throw new UnsupportedValueError("Unexpected ApiSetGroupUpgradeConcurrencyResponse type received", candid);
 }
 
 function groupMatch(candid: ApiGroupMatch): GroupMatch {

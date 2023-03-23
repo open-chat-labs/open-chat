@@ -203,3 +203,5 @@ export type PayForDiamondMembershipResponse =
     | { kind: "cannot_extend" }
     | { kind: "user_not_found" }
     | { kind: "insufficient_funds" };
+
+export type SetUserUpgradeConcurrencyResponse = "success";

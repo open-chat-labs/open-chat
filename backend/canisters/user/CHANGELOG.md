@@ -10,6 +10,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Store and use last updated timestamp on each event ([#3326](https://github.com/open-ic/open-chat/pull/3326))
 - Added `timestamp` to `EventsResponse` ([#3329](https://github.com/open-ic/open-chat/pull/3329))
 
+### Changed
+
+- Update group chat summary cache in small batches ([#3341](https://github.com/open-ic/open-chat/pull/3341))
+
 ### Removed
 
 - Removed code only needed for previous upgrade ([#3248](https://github.com/open-ic/open-chat/pull/3248)) & ([#3251](https://github.com/open-ic/open-chat/pull/3251))
@@ -17,6 +21,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Removed `affected_events` from event responses ([#3322](https://github.com/open-ic/open-chat/pull/3322))
 - Removed super_admin role from groups([#3319](https://github.com/open-ic/open-chat/pull/3319))
 - Remove owner_id from group summary ([#3337](https://github.com/open-ic/open-chat/pull/3337))
+
+### Fixed
+
+- Fix threads incorrectly appearing unread ([#3351](https://github.com/open-ic/open-chat/pull/3351))
 
 ## [[2.0.622](https://github.com/open-ic/open-chat/releases/tag/v2.0.622-user)] - 2023-03-01
 

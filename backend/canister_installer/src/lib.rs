@@ -30,7 +30,8 @@ async fn install_service_canisters_impl(
         set_controllers(management_canister, &canister_ids.online_users, controllers.clone()),
         set_controllers(management_canister, &canister_ids.proposals_bot, controllers.clone()),
         set_controllers(management_canister, &canister_ids.storage_index, controllers.clone()),
-        set_controllers(management_canister, &canister_ids.cycles_dispenser, controllers),
+        set_controllers(management_canister, &canister_ids.cycles_dispenser, controllers.clone()),
+        set_controllers(management_canister, &canister_ids.exchange_client, controllers),
         set_controllers(
             management_canister,
             &canister_ids.local_user_index,
@@ -121,7 +122,7 @@ async fn install_service_canisters_impl(
         test_mode,
     };
 
-    let cycles_dispenser_canister_wasm = get_canister_wasm("cycles_dispenser", version);
+    let cycles_dispenser_canister_wasm = get_canister_wasm(CanisterName::CyclesDispenser, version);
     let cycles_dispenser_init_args = cycles_dispenser_canister::init::Args {
         governance_principals: vec![principal],
         canisters: vec![
@@ -141,6 +142,16 @@ async fn install_service_canisters_impl(
         icp_burn_amount_e8s: 1_000_000_000, // 10 ICP
         ledger_canister: canister_ids.nns_ledger,
         cycles_minting_canister: canister_ids.nns_cmc,
+        wasm_version: version,
+        test_mode,
+    };
+
+    let exchange_client_canister_wasm = get_canister_wasm(CanisterName::ExchangeClient, version);
+    let exchange_client_init_args = exchange_client_canister::init::Args {
+        governance_principals: vec![principal],
+        cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
+        icp_ledger_canister_id: canister_ids.nns_ledger,
+        chat_ledger_canister_id: canister_ids.nns_ledger, // TODO This should be the CHAT ledger
         wasm_version: version,
         test_mode,
     };
@@ -179,7 +190,13 @@ async fn install_service_canisters_impl(
     )
     .await;
 
-    futures::future::join(
+    futures::future::join3(
+        install_wasm(
+            management_canister,
+            &canister_ids.storage_index,
+            &storage_index_canister_wasm.module,
+            storage_index_init_args,
+        ),
         install_wasm(
             management_canister,
             &canister_ids.cycles_dispenser,
@@ -188,9 +205,9 @@ async fn install_service_canisters_impl(
         ),
         install_wasm(
             management_canister,
-            &canister_ids.storage_index,
-            &storage_index_canister_wasm.module,
-            storage_index_init_args,
+            &canister_ids.exchange_client,
+            &exchange_client_canister_wasm.module,
+            exchange_client_init_args,
         ),
     )
     .await;

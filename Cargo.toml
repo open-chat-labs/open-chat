@@ -13,6 +13,9 @@ members = [
     "backend/canister_upgrader",
     "backend/canisters/cycles_dispenser/api",
     "backend/canisters/cycles_dispenser/impl",
+    "backend/canisters/exchange_client/api",
+    "backend/canisters/exchange_client/client",
+    "backend/canisters/exchange_client/impl",
     "backend/canisters/group/api",
     "backend/canisters/group/c2c_client",
     "backend/canisters/group/client",
@@ -38,6 +41,8 @@ members = [
     "backend/canisters/online_users/api",
     "backend/canisters/online_users/client",
     "backend/canisters/online_users/impl",
+    "backend/canisters/proposal_validation/api",
+    "backend/canisters/proposal_validation/impl",
     "backend/canisters/proposals_bot/api",
     "backend/canisters/proposals_bot/impl",
     "backend/canisters/storage_bucket/api",
@@ -74,6 +79,8 @@ members = [
     "backend/libraries/sha256",
     "backend/libraries/types",
     "backend/libraries/utils",
+    "backend/market_maker/core",
+    "backend/market_maker/icdex",
     "backend/notification_pusher/aws",
     "backend/notification_pusher/cli",
     "backend/notification_pusher/core",
@@ -91,11 +98,13 @@ canister_state_macros = { git = "https://github.com/open-ic/ic-utils", rev = "ff
 canister_timer_jobs = { git = "https://github.com/open-ic/ic-utils", rev = "ff68dce73c22afc04a1483239c30be613c0e6d9d" }
 canister_tracing_macros = { git = "https://github.com/open-ic/ic-utils", rev = "ff68dce73c22afc04a1483239c30be613c0e6d9d" }
 captcha = { git = "https://github.com/nmattia/captcha", rev = "fb3fe931c20b8577bf02070ae6b8c0ca2f442427", default-features = false }
+chrono = "0.4.24"
 clap = "3.2.23"
 dirs = "4.0.0"
 dotenv = "0.15.0"
 futures = "0.3.26"
 getrandom = "0.2.8"
+hex = "0.4.3"
 ic-agent = "0.23.0"
 ic-base-types = { git = "https://github.com/dfinity/ic", rev = "7445081734e6d896d090295967d50710975c4f25" }
 ic-cdk = "0.7.3"

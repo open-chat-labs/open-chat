@@ -195,7 +195,9 @@ export type WorkerRequest =
     | LoadFailedMessages
     | DeleteFailedMessage
     | ClaimPrize
-    | PayForDiamondMembership;
+    | PayForDiamondMembership
+    | SetGroupUpgradeConcurrency
+    | SetUserUpgradeConcurrency;
 
 type SetCachedMessageFromNotification = Request<{
     chatId: string;
@@ -766,6 +768,18 @@ type UnsuspendUser = Request<{
     userId: string;
 }> & {
     kind: "unsuspendUser";
+};
+
+type SetGroupUpgradeConcurrency = Request<{
+    value: number;
+}> & {
+    kind: "setGroupUpgradeConcurrency";
+};
+
+type SetUserUpgradeConcurrency = Request<{
+    value: number;
+}> & {
+    kind: "setUserUpgradeConcurrency";
 };
 
 type MarkSuspectedBot = Request<void> & {
