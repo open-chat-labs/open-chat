@@ -7,7 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Removed
 
-- Remove owner_id from cached groups ([#3337](https://github.com/open-ic/open-chat/pull/3337))
+- Remove owner_id from cached groups ([#3340](https://github.com/open-ic/open-chat/pull/3340))
 
 ## [[2.0.629](https://github.com/open-ic/open-chat/releases/tag/v2.0.629-group_index)] - 2023-03-13
 
