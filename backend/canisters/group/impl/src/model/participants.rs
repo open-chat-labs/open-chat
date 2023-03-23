@@ -85,23 +85,31 @@ impl Participants {
         }
     }
 
-    pub fn remove(&mut self, user_id: UserId) -> RemoveResult {
-        match self.user_id_to_principal_map.remove(&user_id) {
-            None => RemoveResult::NotFound,
-            Some(principal) => {
-                if let Some(participant) = self.by_principal.remove(&principal) {
-                    match participant.role {
-                        Role::Owner => {
-                            if self.owner_count == 1 {
-                                return RemoveResult::LastOwner;
-                            }
-                            self.owner_count -= 1
-                        }
-                        Role::Admin => self.admin_count -= 1,
-                        _ => (),
-                    }
+    pub fn remove(&mut self, user_id: UserId) -> Option<ParticipantInternal> {
+        if let Some(principal) = self.user_id_to_principal_map.remove(&user_id) {
+            if let Some(participant) = self.by_principal.remove(&principal) {
+                match participant.role {
+                    Role::Owner => self.owner_count -= 1,
+                    Role::Admin => self.admin_count -= 1,
+                    _ => (),
                 }
-                RemoveResult::Success
+
+                return Some(participant);
+            }
+        }
+
+        None
+    }
+
+    pub fn try_undo_remove(&mut self, principal: Principal, participant: ParticipantInternal) {
+        let user_id = participant.user_id;
+        let role = participant.role;
+        if self.by_principal.insert(principal, participant).is_none() {
+            self.user_id_to_principal_map.insert(user_id, principal);
+            match role {
+                Role::Owner => self.owner_count += 1,
+                Role::Admin => self.admin_count += 1,
+                _ => (),
             }
         }
     }
@@ -137,6 +145,10 @@ impl Participants {
         } else {
             None
         }
+    }
+
+    pub fn get_principal(&self, user_id: &UserId) -> Option<Principal> {
+        self.user_id_to_principal_map.get(user_id).copied()
     }
 
     pub fn get_by_user_id_mut(&mut self, user_id: &UserId) -> Option<&mut ParticipantInternal> {
@@ -284,12 +296,6 @@ pub enum AddResult {
     Success(ParticipantInternal),
     AlreadyInGroup,
     Blocked,
-}
-
-pub enum RemoveResult {
-    Success,
-    LastOwner,
-    NotFound,
 }
 
 pub enum ChangeRoleResult {

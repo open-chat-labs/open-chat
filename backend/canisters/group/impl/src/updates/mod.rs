@@ -1,6 +1,5 @@
 mod add_participants;
 mod add_reaction;
-mod block_user;
 mod c2c_delete_group;
 mod c2c_freeze_group;
 mod c2c_join_group;
