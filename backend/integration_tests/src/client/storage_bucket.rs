@@ -14,7 +14,7 @@ generate_update_call!(upload_chunk_v2);
 pub mod happy_path {
     use crate::utils::tick_many;
     use candid::Principal;
-    use ic_state_machine_tests::StateMachine;
+    use ic_test_state_machine_client::StateMachine;
     use serde_bytes::ByteBuf;
     use types::{CanisterId, FileId, TimestampMillis};
     use utils::hasher::hash_bytes;

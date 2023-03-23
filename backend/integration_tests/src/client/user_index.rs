@@ -26,7 +26,7 @@ pub mod happy_path {
     use crate::utils::principal_to_username;
     use crate::User;
     use candid::Principal;
-    use ic_state_machine_tests::StateMachine;
+    use ic_test_state_machine_client::StateMachine;
     use types::{CanisterId, ChallengeAttempt};
 
     pub fn current_user(

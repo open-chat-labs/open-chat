@@ -8,7 +8,7 @@ generate_update_call!(join_group);
 
 pub mod happy_path {
     use candid::Principal;
-    use ic_state_machine_tests::StateMachine;
+    use ic_test_state_machine_client::StateMachine;
     use types::{CanisterId, ChatId};
 
     pub fn join_group(env: &mut StateMachine, sender: Principal, local_user_index_canister_id: CanisterId, chat_id: ChatId) {
