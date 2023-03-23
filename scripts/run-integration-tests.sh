@@ -8,15 +8,26 @@ BUILD_WASMS=${1:-true}
 TEST_THREADS=${2:-2}
 TESTNAME=$3
 
-cd backend/integration_tests/local-bin
-if [[ "$OSTYPE" == "linux-gnu"* || "$RUNNER_OS" == "Linux" ]]
-then
-    PLATFORM=linux
-elif [[ "$OSTYPE" == "darwin"* || "$RUNNER_OS" == "macOS" ]]
-then
-    PLATFORM=darwin
+if [[ -z "$OSTYPE" ]]; then
+  if [[ "$RUNNER_OS" == "Linux" ]]
+  then
+      PLATFORM=linux
+  elif [[ "$RUNNER_OS" == "macOS" ]]
+  then
+      PLATFORM=darwin
+  fi
 else
-    echo "OS not supported: $OSTYPE. RunnerOS: ${RUNNER_OS}"
+  if [[ "$OSTYPE" == "linux"* ]]
+    then
+        PLATFORM=linux
+    elif [[ "$OSTYPE" == "darwin"* ]]
+    then
+        PLATFORM=darwin
+    fi
+fi
+
+if [[ -z "$PLATFORM" ]]; then
+    echo "OS not supported: ${OSTYPE:-$RUNNER_OS}"
     exit 1
 fi
 
@@ -25,12 +36,12 @@ then
     ./scripts/generate-all-canister-wasms.sh
 fi
 
+cd backend/integration_tests/local-bin
 echo "Test state machine download starting"
 curl -sO https://download.dfinity.systems/ic/d56e4ad49b21e23a3d6c2923493e78ef498a0c1c/binaries/x86_64-$PLATFORM/ic-test-state-machine.gz
-echo "Test state machine download completed"
-
 gzip -df ic-test-state-machine.gz
 chmod +x ic-test-state-machine
+echo "Test state machine download completed"
 cd ../../..
 
 ./scripts/download-nns-canister-wasm.sh icp_ledger ledger-canister_notify-method
