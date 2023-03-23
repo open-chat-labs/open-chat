@@ -26,6 +26,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Cannot remove platform moderators from a group ([#3340](https://github.com/open-ic/open-chat/pull/3340))
 
+### Fixed
+
+- Fix threads incorrectly appearing unread ([#3351](https://github.com/open-ic/open-chat/pull/3351))
+
 ## [[2.0.622](https://github.com/open-ic/open-chat/releases/tag/v2.0.622-user)] - 2023-03-01
 
 ### Added

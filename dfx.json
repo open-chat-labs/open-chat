@@ -43,6 +43,12 @@
       "wasm": "wasms/online_users.wasm.gz",
       "build": "./scripts/generate-wasm.sh online_users"
     },
+    "proposal_validation": {
+      "type": "custom",
+      "candid": "backend/canisters/proposal_validation/api/can.did",
+      "wasm": "wasms/proposal_validation.wasm.gz",
+      "build": "./scripts/generate-wasm.sh proposal_validation"
+    },
     "proposals_bot": {
       "type": "custom",
       "candid": "backend/canisters/proposals_bot/api/can.did",

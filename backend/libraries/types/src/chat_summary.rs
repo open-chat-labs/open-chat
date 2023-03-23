@@ -299,7 +299,7 @@ pub struct ThreadSyncDetails {
     pub last_updated: TimestampMillis,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct GroupCanisterThreadDetails {
     pub root_message_index: MessageIndex,
     pub latest_event: EventIndex,
@@ -307,8 +307,8 @@ pub struct GroupCanisterThreadDetails {
     pub last_updated: TimestampMillis,
 }
 
-impl From<GroupCanisterThreadDetails> for ThreadSyncDetails {
-    fn from(s: GroupCanisterThreadDetails) -> Self {
+impl From<&GroupCanisterThreadDetails> for ThreadSyncDetails {
+    fn from(s: &GroupCanisterThreadDetails) -> Self {
         ThreadSyncDetails {
             root_message_index: s.root_message_index,
             latest_event: Some(s.latest_event),
