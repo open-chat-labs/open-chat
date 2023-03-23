@@ -8,21 +8,21 @@ BUILD_WASMS=${1:-true}
 TEST_THREADS=${2:-2}
 TESTNAME=$3
 
-if [ $BUILD_WASMS = true ]
-then
-    ./scripts/generate-all-canister-wasms.sh
-fi
-
 cd backend/integration_tests/local-bin
-if [[ "$OSTYPE" = "linux-gnu"* ]] || [[ "$RUNNER_OS" = "Linux "]]
+if [[ "$OSTYPE" == "linux-gnu"* || "$RUNNER_OS" == "Linux" ]]
 then
     PLATFORM=linux
-elif [[ "$OSTYPE" == "darwin"* ]] || [[ "$RUNNER_OS" = "macOS"]]
+elif [[ "$OSTYPE" == "darwin"* || "$RUNNER_OS" == "macOS" ]]
 then
     PLATFORM=darwin
 else
     echo "OS not supported: $OSTYPE"
     exit 1
+fi
+
+if [ $BUILD_WASMS = true ]
+then
+    ./scripts/generate-all-canister-wasms.sh
 fi
 
 echo "Test state machine download starting"
