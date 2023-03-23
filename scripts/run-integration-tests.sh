@@ -16,7 +16,7 @@ elif [[ "$OSTYPE" == "darwin"* || "$RUNNER_OS" == "macOS" ]]
 then
     PLATFORM=darwin
 else
-    echo "OS not supported: $OSTYPE"
+    echo "OS not supported: $OSTYPE. RunnerOS: ${RUNNER_OS}"
     exit 1
 fi
 
