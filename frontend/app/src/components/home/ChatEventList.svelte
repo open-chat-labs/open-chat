@@ -351,6 +351,8 @@
         await loadMoreIfRequired(loadingFromUserScroll, initialLoad);
     }
 
+    // TODO this is still not right because the new event we loaded might be non-visible and just carry an
+    // affected event payload to update a previous message
     async function onLoadedNewMessages() {
         if (
             !loadingFromUserScroll &&
