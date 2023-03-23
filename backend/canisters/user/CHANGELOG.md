@@ -13,7 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Update group chat summary cache in small batches ([#3341](https://github.com/open-ic/open-chat/pull/3341))
-- Cannot remove platform moderators from a group ([#3340](https://github.com/open-ic/open-chat/pull/3340))
+- Don't allow platform moderators to be removed from a group ([#3340](https://github.com/open-ic/open-chat/pull/3340))
 
 ### Removed
 
