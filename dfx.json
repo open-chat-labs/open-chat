@@ -43,6 +43,12 @@
       "wasm": "wasms/online_users.wasm.gz",
       "build": "./scripts/generate-wasm.sh online_users"
     },
+    "proposal_validation": {
+      "type": "custom",
+      "candid": "backend/canisters/proposal_validation/api/can.did",
+      "wasm": "wasms/proposal_validation.wasm.gz",
+      "build": "./scripts/generate-wasm.sh proposal_validation"
+    },
     "proposals_bot": {
       "type": "custom",
       "candid": "backend/canisters/proposals_bot/api/can.did",
@@ -72,6 +78,12 @@
       "candid": "backend/canisters/cycles_dispenser/api/can.did",
       "wasm": "wasms/cycles_dispenser.wasm.gz",
       "build": "./scripts/generate-wasm.sh cycles_dispenser"
+    },
+    "exchange_client": {
+      "type": "custom",
+      "candid": "backend/canisters/exchange_client/api/can.did",
+      "wasm": "wasms/exchange_client.wasm.gz",
+      "build": "./scripts/generate-wasm.sh exchange_client"
     },
     "website": {
       "source": ["frontend/app/build", "frontend/app/public"],

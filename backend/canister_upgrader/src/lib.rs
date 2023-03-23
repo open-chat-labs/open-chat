@@ -140,6 +140,25 @@ pub async fn upgrade_cycles_dispenser_canister(
     println!("Cycles dispenser canister upgraded");
 }
 
+pub async fn upgrade_exchange_client_canister(
+    identity: BasicIdentity,
+    url: String,
+    exchange_client_canister_id: CanisterId,
+    version: Version,
+) {
+    upgrade_top_level_canister(
+        identity,
+        url,
+        exchange_client_canister_id,
+        version,
+        exchange_client_canister::post_upgrade::Args { wasm_version: version },
+        CanisterName::ExchangeClient,
+    )
+    .await;
+
+    println!("Exchange client canister upgraded");
+}
+
 pub async fn upgrade_local_group_index_canister(
     identity: BasicIdentity,
     url: String,

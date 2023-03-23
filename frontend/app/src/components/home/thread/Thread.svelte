@@ -243,7 +243,7 @@
 
     function goToMessageIndex(index: number) {
         focusMessageIndex = index;
-        chatEventList?.scrollToMessageIndex(index, false);
+        chatEventList?.scrollToMessageIndex(chat.chatId, index, false);
     }
 
     function onGoToMessageIndex(
@@ -285,13 +285,13 @@
     selectedThreadKey={$selectedThreadKey}
     threadRootEvent={rootEvent}
     rootSelector={"thread-messages"}
+    maintainScroll={false}
     bind:this={chatEventList}
     {readonly}
     unreadMessages={0}
     firstUnreadMention={undefined}
     setFocusMessageIndex={(idx) => (focusMessageIndex = idx)}
     footer
-    {focusMessageIndex}
     {events}
     {chat}
     bind:initialised
@@ -346,7 +346,6 @@
                             on:replyPrivatelyTo
                             on:replyTo={replyTo}
                             on:editEvent={() => editEvent(evt)}
-                            on:chatWith
                             on:replyTo={replyTo}
                             on:replyPrivatelyTo
                             on:upgrade

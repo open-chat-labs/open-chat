@@ -17,6 +17,7 @@ import type {
     Cryptocurrency,
     DiamondMembershipDuration,
     PayForDiamondMembershipResponse,
+    SetUserUpgradeConcurrencyResponse,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
@@ -40,12 +41,12 @@ import { apiOptional } from "../common/chatMappers";
 import type { AgentConfig } from "../../config";
 
 export class UserIndexClient extends CandidService implements IUserIndexClient {
-    private userService: UserIndexService;
+    private userIndexService: UserIndexService;
 
     private constructor(identity: Identity, config: AgentConfig) {
         super(identity);
 
-        this.userService = this.createServiceClient<UserIndexService>(
+        this.userIndexService = this.createServiceClient<UserIndexService>(
             idlFactory,
             config.userIndexCanister,
             config
@@ -59,7 +60,7 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
     @profile("userIndexClient")
     getCurrentUser(): Promise<CurrentUserResponse> {
         return this.handleQueryResponse(
-            () => this.userService.current_user({}),
+            () => this.userIndexService.current_user({}),
             currentUserResponse
         );
     }
@@ -67,7 +68,7 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
     @profile("userIndexClient")
     createChallenge(): Promise<CreateChallengeResponse> {
         return this.handleQueryResponse(
-            () => this.userService.create_challenge({}),
+            () => this.userIndexService.create_challenge({}),
             createChallengeResponse
         );
     }
@@ -79,7 +80,7 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
         referredBy: string | undefined
     ): Promise<RegisterUserResponse> {
         return this.handleResponse(
-            this.userService.register_user({
+            this.userIndexService.register_user({
                 username,
                 challenge_attempt: challengeAttempt,
                 referred_by: apiOptional((userId) => Principal.fromText(userId), referredBy),
@@ -95,7 +96,7 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
             max_results: maxResults,
         };
         return this.handleQueryResponse(
-            () => this.userService.search(args),
+            () => this.userIndexService.search(args),
             userSearchResponse,
             args
         );
@@ -117,7 +118,7 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
                 updated_since: updatedSince,
             })),
         };
-        return this.handleQueryResponse(() => this.userService.users(args), usersResponse, args);
+        return this.handleQueryResponse(() => this.userIndexService.users(args), usersResponse, args);
     }
 
     @profile("userIndexClient")
@@ -126,7 +127,7 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
             username: username,
         };
         return this.handleQueryResponse(
-            () => this.userService.check_username(args),
+            () => this.userIndexService.check_username(args),
             checkUsernameResponse,
             args
         );
@@ -135,7 +136,7 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
     @profile("userIndexClient")
     setUsername(_userId: string, username: string): Promise<SetUsernameResponse> {
         return this.handleResponse(
-            this.userService.set_username({
+            this.userIndexService.set_username({
                 username: username,
             }),
             setUsernameResponse
@@ -145,7 +146,7 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
     @profile("userIndexClient")
     suspendUser(userId: string, reason: string): Promise<SuspendUserResponse> {
         return this.handleResponse(
-            this.userService.suspend_user({
+            this.userIndexService.suspend_user({
                 user_id: Principal.fromText(userId),
                 duration: [],
                 reason,
@@ -157,7 +158,7 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
     @profile("userIndexClient")
     unsuspendUser(userId: string): Promise<UnsuspendUserResponse> {
         return this.handleResponse(
-            this.userService.unsuspend_user({
+            this.userIndexService.unsuspend_user({
                 user_id: Principal.fromText(userId),
             }),
             unsuspendUserResponse
@@ -166,7 +167,7 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
 
     @profile("userIndexClient")
     markSuspectedBot(): Promise<MarkSuspectedBotResponse> {
-        return this.handleResponse(this.userService.mark_suspected_bot({}), () => "success");
+        return this.handleResponse(this.userIndexService.mark_suspected_bot({}), () => "success");
     }
 
     @profile("userIndexClient")
@@ -178,7 +179,7 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
         expectedPriceE8s: bigint
     ): Promise<PayForDiamondMembershipResponse> {
         return this.handleResponse(
-            this.userService.pay_for_diamond_membership({
+            this.userIndexService.pay_for_diamond_membership({
                 token: apiCryptocurrency(token),
                 duration: apiDiamondDuration(duration),
                 recurring,
@@ -186,5 +187,10 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
             }),
             payForDiamondMembershipResponse
         );
+    }
+
+    @profile("userIndexClient")
+    setUserUpgradeConcurrency(value: number): Promise<SetUserUpgradeConcurrencyResponse> {
+        return this.handleResponse(this.userIndexService.set_user_upgrade_concurrency({ value }), () => "success");
     }
 }

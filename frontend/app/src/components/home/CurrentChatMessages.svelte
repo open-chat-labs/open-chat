@@ -126,11 +126,11 @@
 
     function doGoToMessageIndex(index: number): void {
         page(`/${chat.chatId}`);
-        chatEventList?.scrollToMessageIndex(index, false);
+        chatEventList?.scrollToMessageIndex(chat.chatId, index, false);
     }
 
     export function scrollToMessageIndex(index: number, preserveFocus: boolean) {
-        chatEventList?.scrollToMessageIndex(index, preserveFocus);
+        chatEventList?.scrollToMessageIndex(chat.chatId, index, preserveFocus);
     }
 
     function replyTo(ev: CustomEvent<EnhancedReplyContext>) {
@@ -347,11 +347,11 @@
     rootSelector={"chat-messages"}
     selectedThreadKey={undefined}
     threadRootEvent={undefined}
+    maintainScroll
     {readonly}
     {unreadMessages}
     {firstUnreadMention}
     {footer}
-    focusMessageIndex={$focusMessageIndex}
     setFocusMessageIndex={(idx) => client.setFocusMessageIndex(chat.chatId, idx)}
     {events}
     {chat}

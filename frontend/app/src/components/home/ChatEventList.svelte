@@ -27,9 +27,10 @@
     import { _ } from "svelte-i18n";
     import { pop } from "../../utils/transition";
     import { iconSize } from "../../stores/iconSize";
-    import { dimensions } from "../../stores/screenDimensions";
+    import { eventListScrollTop } from "../../stores/scrollPos";
 
     const FROM_BOTTOM_THRESHOLD = 600;
+    const LOADING_THRESHOLD = 400;
     const client = getContext<OpenChat>("client");
 
     export let rootSelector: string;
@@ -39,26 +40,22 @@
     export let messagesDivHeight: number;
     export let initialised: boolean;
     export let events: EventWrapper<ChatEventType>[];
-    export let focusMessageIndex: number | undefined = undefined;
     export let readonly: boolean;
     export let firstUnreadMention: Mention | undefined;
     export let footer: boolean;
     export let setFocusMessageIndex: (index: number | undefined) => void;
     export let selectedThreadKey: string | undefined;
     export let threadRootEvent: EventWrapper<Message> | undefined;
+    export let maintainScroll: boolean;
 
     let interrupt = false;
     let morePrevAvailable = false;
     let moreNewAvailable = false;
-    let loadingPrev = false;
-    let loadingNew = false;
-    let loadingFromScroll = false;
-    let scrollingToMessage = false;
-    let scrollTimer: number | undefined;
+    let loadingFromUserScroll = false;
     let previousScrollHeight: number | undefined = undefined;
     let previousScrollTop: number | undefined = undefined;
     let user = client.user;
-    let scrollToBottomAfterLoad = false;
+    let scrollingToMessage = false;
 
     $: failedMessagesStore = client.failedMessagesStore;
     $: threadSummary = threadRootEvent?.event.thread;
@@ -70,10 +67,8 @@
         fromBottom: fromBottom(),
         insideBottomThreshold: insideBottomThreshold(),
         insideTopThreshold: insideTopThreshold(),
-        loadingNew,
-        loadingPrev,
-        loadingFromScroll,
-        scrollingToMessage,
+        loadingFromScroll: loadingFromUserScroll,
+        eventCount: events.length,
     });
 
     const fromBottom = () => {
@@ -85,11 +80,11 @@
     };
 
     const insideBottomThreshold = () => {
-        return fromBottom() < $dimensions.height;
+        return fromBottom() < LOADING_THRESHOLD;
     };
 
     const insideTopThreshold = () => {
-        return (messagesDiv?.scrollTop ?? 0) < $dimensions.height;
+        return (messagesDiv?.scrollTop ?? 0) < LOADING_THRESHOLD;
     };
 
     let showGoToBottom = false;
@@ -104,6 +99,15 @@
     });
 
     onMount(() => {
+        if (messagesDiv !== undefined && $eventListScrollTop !== undefined && maintainScroll) {
+            interruptScroll(() => {
+                if (messagesDiv !== undefined && $eventListScrollTop !== undefined) {
+                    initialised = true;
+                    messagesDiv.scrollTop = $eventListScrollTop;
+                }
+            });
+        }
+
         client.addEventListener("openchat_event", clientEvent);
         return () => {
             client.removeEventListener("openchat_event", clientEvent);
@@ -113,14 +117,14 @@
     async function clientEvent(ev: Event): Promise<void> {
         await tick();
         if (threadRootEvent === undefined) {
-            if (ev instanceof LoadedNewMessages) {
+            if (ev instanceof LoadedNewMessages && !scrollingToMessage) {
                 onLoadedNewMessages(ev.detail);
             }
-            if (ev instanceof LoadedPreviousMessages) {
+            if (ev instanceof LoadedPreviousMessages && !scrollingToMessage) {
                 onLoadedPreviousMessages(ev.detail);
             }
             if (ev instanceof LoadedMessageWindow) {
-                onMessageWindowLoaded(ev.detail);
+                onMessageWindowLoaded(ev.detail.messageIndex, ev.detail.initialLoad);
             }
             if (ev instanceof ChatUpdated) {
                 loadMoreIfRequired();
@@ -130,14 +134,14 @@
             }
         }
         if (threadRootEvent !== undefined) {
-            if (ev instanceof LoadedNewThreadMessages) {
+            if (ev instanceof LoadedNewThreadMessages && !scrollingToMessage) {
                 onLoadedNewMessages(ev.detail);
             }
-            if (ev instanceof LoadedPreviousThreadMessages) {
+            if (ev instanceof LoadedPreviousThreadMessages && !scrollingToMessage) {
                 onLoadedPreviousMessages(ev.detail);
             }
             if (ev instanceof LoadedThreadMessageWindow) {
-                onMessageWindowLoaded(ev.detail);
+                onMessageWindowLoaded(ev.detail.messageIndex, ev.detail.initialLoad);
             }
             if (ev instanceof SentThreadMessage) {
                 afterSendThreadMessage(threadRootEvent, ev.detail);
@@ -156,20 +160,17 @@
             latestEventTimestamp: event.timestamp,
         };
         client.markThreadSummaryUpdated(rootEvent.event.messageId.toString(), summary);
+        afterSendMessage(true);
     }
 
     async function afterSendMessage(upToDate: boolean) {
         if (upToDate && insideBottomThreshold()) {
-            scrollBottom("smooth");
+            await scrollBottom("smooth");
         }
     }
 
-    async function scrollBottom(behavior: ScrollBehavior = "auto", retries = 0) {
-        if (retries === 3) return;
-
-        await tick();
-
-        interruptScroll(() => {
+    async function scrollBottom(behavior: ScrollBehavior = "auto"): Promise<void> {
+        return interruptScroll(() => {
             if (messagesDiv) {
                 messagesDiv?.scrollTo({
                     top: messagesDiv.scrollHeight - messagesDiv.clientHeight,
@@ -177,53 +178,42 @@
                 });
             }
         });
-
-        if (fromBottom() > 1) {
-            await scrollBottom(behavior, retries + 1);
-        }
     }
 
     function shouldLoadPreviousMessages() {
         morePrevAvailable = client.morePreviousMessagesAvailable(chat.chatId, threadRootEvent);
-        const result = !loadingPrev && insideTopThreshold() && morePrevAvailable;
-        if (result) {
-            console.debug("SCROLL: shouldLoadPreviousMessages", keyMeasurements());
-        }
-        return result;
+        return insideTopThreshold() && morePrevAvailable;
     }
 
     function shouldLoadNewMessages() {
         moreNewAvailable = client.moreNewMessagesAvailable(chat.chatId, threadRootEvent);
-        const result = !loadingNew && insideBottomThreshold() && moreNewAvailable;
-        if (result) {
-            console.debug("SCROLL: shouldLoadNewMesages", keyMeasurements());
-        }
-        return result;
+        return insideBottomThreshold() && moreNewAvailable;
     }
 
-    function loadMoreIfRequired(fromScroll = false, initialLoad = false) {
-        if (shouldLoadNewMessages()) {
-            loadingNew = true;
-            client.loadNewMessages(chat.chatId, threadRootEvent);
-        } else {
-            loadingNew = false;
+    async function loadMoreIfRequired(fromScroll = false, initialLoad = false): Promise<boolean> {
+        const loadingPrev = shouldLoadPreviousMessages();
+        const loadingNew = shouldLoadNewMessages();
+        loadingFromUserScroll = (loadingNew || loadingPrev) && fromScroll;
+        const loadPromises = [];
+        if (loadingNew) {
+            console.debug("SCROLL: about to load new message");
+            loadPromises.push(client.loadNewMessages(chat.chatId, threadRootEvent));
         }
-        if (shouldLoadPreviousMessages()) {
-            loadingPrev = true;
-            client.loadPreviousMessages(chat.chatId, threadRootEvent, initialLoad);
-        } else {
-            loadingPrev = false;
+        if (loadingPrev) {
+            console.debug("SCROLL: about to load previous message");
+            loadPromises.push(
+                client.loadPreviousMessages(chat.chatId, threadRootEvent, initialLoad)
+            );
         }
-        loadingFromScroll = (loadingNew || loadingPrev) && fromScroll;
+        if (loadPromises.length > 0) {
+            await Promise.all(loadPromises);
+        }
+        return loadingNew || loadingPrev;
     }
 
     async function resetScroll(initialLoad: boolean) {
-        if (focusMessageIndex !== undefined) {
-            scrollToMessageIndex(focusMessageIndex, false);
-        } else {
-            if (initialLoad) {
-                await scrollBottom("auto");
-            }
+        if (initialLoad) {
+            await scrollBottom("auto");
         }
         if (!initialised) {
             initialised = true;
@@ -232,12 +222,15 @@
 
     function scrollToMention(mention: Mention | undefined) {
         if (mention !== undefined) {
-            scrollToMessageIndex(mention.messageIndex, false);
+            scrollToMessageIndex(chat.chatId, mention.messageIndex, false);
         }
     }
 
-    function scrollToElement(element: Element | null, behavior: ScrollBehavior = "auto") {
-        interruptScroll(() => {
+    function scrollToElement(
+        element: Element | null,
+        behavior: ScrollBehavior = "auto"
+    ): Promise<void> {
+        return interruptScroll(() => {
             element?.scrollIntoView({ behavior, block: "center" });
         });
     }
@@ -251,52 +244,68 @@
         ) as EventWrapper<Message> | undefined;
     }
 
-    export function scrollToMessageIndex(index: number, preserveFocus: boolean) {
+    function findElementWithMessageIndex(index: number): Element | null {
+        return document.querySelector(`.${rootSelector} [data-index~='${index}']`);
+    }
+
+    function checkIfTargetMessageHasAThread(index: number) {
+        const msgEvent = findMessageEvent(index);
+        if (msgEvent && threadRootEvent === undefined) {
+            if (msgEvent.event.thread !== undefined && $pathParams.open) {
+                client.openThread(msgEvent, false);
+            } else {
+                client.closeThread();
+            }
+        }
+    }
+
+    export async function scrollToMessageIndex(
+        chatId: string,
+        index: number,
+        preserveFocus: boolean
+    ): Promise<void> {
+        // it is possible for the chat to change while this function is recursing so double check
+        if (chatId !== chat.chatId) return Promise.resolve();
+
         if (index < 0) {
             setFocusMessageIndex(undefined);
-            return;
+            return Promise.resolve();
         }
 
-        // set a flag so that we can ignore subsequent scroll events temporarily
         scrollingToMessage = true;
-        setFocusMessageIndex(index);
-        const element = document.querySelector(`.${rootSelector} [data-index~='${index}']`);
+
+        const element = findElementWithMessageIndex(index);
         if (element) {
-            // this triggers on scroll which will potentially load some new messages
-            scrollToElement(element);
-            const msgEvent = findMessageEvent(index);
-            if (msgEvent && threadRootEvent === undefined) {
-                if (msgEvent.event.thread !== undefined && $pathParams.open) {
-                    client.openThread(msgEvent, false);
-                } else {
-                    client.closeThread();
+            setFocusMessageIndex(index);
+            await scrollToElement(element);
+            checkIfTargetMessageHasAThread(index);
+            if (await loadMoreIfRequired(false, true)) {
+                return scrollToMessageIndex(chatId, index, preserveFocus);
+            } else {
+                if (!preserveFocus) {
+                    window.setTimeout(() => {
+                        setFocusMessageIndex(undefined);
+                    }, 200);
                 }
-            }
-            if (!preserveFocus) {
-                setTimeout(() => {
-                    setFocusMessageIndex(undefined);
-                }, 200);
+                scrollingToMessage = false;
+                return Promise.resolve();
             }
         } else {
-            client.loadEventWindow(chat.chatId, index, threadRootEvent);
+            await client.loadEventWindow(chatId, index, threadRootEvent);
+            return scrollToMessageIndex(chatId, index, preserveFocus);
         }
     }
 
-    export async function onMessageWindowLoaded(messageIndex: number | undefined) {
-        if (messageIndex === undefined) return;
+    export async function onMessageWindowLoaded(
+        messageIndex: number | undefined,
+        initialLoad = false
+    ) {
+        if (messageIndex === undefined || initialLoad === false) return;
         await tick();
         initialised = true;
-        if (scrollToBottomAfterLoad) {
-            loadIndexThenScrollToBottom(messageIndex);
-        } else {
-            scrollToMessageIndex(messageIndex, false);
-            await tick();
-            loadMoreIfRequired();
-        }
+        await scrollToMessageIndex(chat.chatId, messageIndex, false);
     }
 
-    // is there some way to tell that we will have to recurse
-    // if the height changes by less than the threshold
     async function onLoadedPreviousMessages(initialLoad: boolean) {
         await tick();
         await resetScroll(initialLoad);
@@ -326,65 +335,48 @@
                 });
             }
         }
-        loadingPrev = false;
-        loadMoreIfRequired(loadingFromScroll, initialLoad);
+        await loadMoreIfRequired(loadingFromUserScroll, initialLoad);
     }
 
-    function onLoadedNewMessages(newLatestMessage: boolean) {
+    async function onLoadedNewMessages(newLatestMessage: boolean) {
         if (newLatestMessage && insideBottomThreshold()) {
             // only scroll if we are now within threshold from the bottom
-            scrollBottom("smooth");
+            await scrollBottom("smooth");
         }
 
-        loadingNew = false;
-        loadMoreIfRequired(loadingFromScroll);
+        await loadMoreIfRequired(loadingFromUserScroll);
     }
 
     // this *looks* crazy - but the idea is that before we programmatically scroll the messages div
     // we set the overflow to hidden. This has the effect of immediately halting any momentum scrolling
     // on iOS which prevents the screen going black.
-    function interruptScroll(fn: () => void): void {
+    // This also provides a robust way to short-circuit the scroll handler when we are programmatically scrolling
+    function interruptScroll(fn: () => void): Promise<void> {
         interrupt = true;
         fn();
-        window.setTimeout(() => (interrupt = false), 10);
+        return new Promise((resolve) => {
+            window.requestAnimationFrame(() => {
+                interrupt = false;
+                resolve();
+            });
+        });
     }
 
-    function onScroll() {
-        if (!initialised || loadingPrev || scrollToBottomAfterLoad) return;
-
+    function onUserScroll() {
+        if (maintainScroll) {
+            $eventListScrollTop = messagesDiv?.scrollTop;
+        }
         menuStore.hideMenu();
         tooltipStore.hide();
 
-        if (scrollingToMessage) {
-            // if we are in the middle of scrolling to a message we have to wait for the scroll to settle
-            // down before we start paying attention to the scroll again
-            // annoyingly there is no scrollEnd event or anything so this, hacky as it is, is the best we can do
-            window.clearTimeout(scrollTimer);
-            scrollTimer = window.setTimeout(() => {
-                scrollingToMessage = false;
-
-                // once the scrolling has settled we need to do a final check to see if we need to
-                // load any more previous messages
-                // the easiest way to do this is to manually call onScroll
-                onScroll();
-            }, 300); // todo this is a magic number and that usually ends badly
-            return;
-        }
-
-        if (loadingFromScroll) return;
+        if (!initialised || interrupt || loadingFromUserScroll) return;
 
         loadMoreIfRequired(true);
     }
 
     async function loadIndexThenScrollToBottom(messageIndex: number) {
-        const element = document.querySelector(`.${rootSelector} [data-index~='${messageIndex}']`);
-        if (element) {
-            await scrollBottom();
-            scrollToBottomAfterLoad = false;
-        } else {
-            scrollToBottomAfterLoad = true;
-            client.loadEventWindow(chat.chatId, messageIndex, threadRootEvent);
-        }
+        await scrollToMessageIndex(chat.chatId, messageIndex, false);
+        await scrollBottom();
     }
 
     function scrollToLast() {
@@ -399,7 +391,7 @@
 <div
     bind:this={messagesDiv}
     bind:clientHeight={messagesDivHeight}
-    on:scroll={onScroll}
+    on:scroll={onUserScroll}
     class:interrupt
     class={`scrollable-list ${rootSelector}`}>
     <slot />
@@ -425,7 +417,7 @@
     class:footer
     class:rtl={$rtlStore}>
     <Fab on:click={scrollToLast}>
-        {#if loadingFromScroll}
+        {#if loadingFromUserScroll}
             <div class="spinner" />
         {:else if unreadMessages > 0}
             <div in:pop={{ duration: 1500 }} class="unread">

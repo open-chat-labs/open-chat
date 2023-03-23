@@ -162,6 +162,7 @@
     });
 
     function chatWithUser() {
+        closeUserProfile();
         dispatch("chatWith", msg.sender);
     }
 

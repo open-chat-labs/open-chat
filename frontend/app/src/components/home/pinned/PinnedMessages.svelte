@@ -3,7 +3,7 @@
     import HoverIcon from "../../HoverIcon.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import type { EventWrapper, Message } from "openchat-client";
-    import { createEventDispatcher, getContext, onMount } from "svelte";
+    import { createEventDispatcher, getContext, onMount, tick } from "svelte";
     import { _ } from "svelte-i18n";
     import { iconSize } from "../../../stores/iconSize";
     import { logger } from "../../../utils/logging";
@@ -20,6 +20,7 @@
     const user = client.user;
 
     let unread: boolean = false;
+    let messagesDiv: HTMLDivElement | undefined;
 
     $: messagesRead = client.messagesRead;
 
@@ -35,6 +36,15 @@
     function chatWith(ev: CustomEvent<string>) {
         dispatch("close");
         dispatch("chatWith", ev.detail);
+    }
+
+    function scrollBottom() {
+        if (messagesDiv !== undefined) {
+            messagesDiv.scrollTo({
+                top: messagesDiv.scrollHeight - messagesDiv.clientHeight,
+                behavior: "auto",
+            });
+        }
     }
 
     function reloadPinned(pinned: Set<number>): void {
@@ -58,6 +68,8 @@
                         if (unread) {
                             client.markPinnedMessagesRead(chatId, dateLastPinned!);
                         }
+
+                        tick().then(scrollBottom);
                     }
                 })
                 .catch((err) => {
@@ -95,7 +107,7 @@
     </span>
 </SectionHeader>
 
-<div class="pinned-messages">
+<div bind:this={messagesDiv} class="pinned-messages">
     {#if messages.kind !== "success"}
         <Loading />
     {:else}
@@ -121,7 +133,7 @@
 <style type="text/scss">
     h4 {
         flex: 1;
-        margin: 0;
+        margin: 0 $sp3;
         @include font-size(fs-120);
     }
     .close {

@@ -5,6 +5,10 @@
     "ic_test": "mq2tp-baaaa-aaaaf-aucva-cai",
     "large03": "ihamg-4yaaa-aaaab-aaafa-cai"
   },
+  "exchange_client": {
+    "ic": "r2pvs-tyaaa-aaaar-ajcwq-cai",
+    "ic_test": "6qpog-pyaaa-aaaar-aikyq-cai"
+  },
   "group_index": {
     "benchmarklarge": "jwksz-eqaaa-aaaab-aaaaq-cai",
     "ic": "4ijyc-kiaaa-aaaaf-aaaja-cai",
@@ -40,6 +44,9 @@
     "ic": "3vlw6-fiaaa-aaaaf-aaa3a-cai",
     "ic_test": "7dlom-nqaaa-aaaaf-ab2da-cai",
     "large03": "jemfa-iaaaa-aaaab-aaadq-cai"
+  },
+  "proposal_validation": {
+    "ic": "wkype-7qaaa-aaaar-ajfyq-cai"
   },
   "proposals_bot": {
     "benchmarklarge": "jemfa-iaaaa-aaaab-aaadq-cai",

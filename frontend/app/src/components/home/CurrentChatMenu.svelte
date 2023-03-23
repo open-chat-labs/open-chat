@@ -231,8 +231,8 @@
                                     size={$iconSize}
                                     color={hasUnreadPinned
                                         ? "var(--icon-selected)"
-                                        : "var(--icon-inverted-txt)"} />
-                                slot="icon" />
+                                        : "var(--icon-inverted-txt)"}
+                                    slot="icon" />
                                 <div slot="text">{$_("showPinned")}</div>
                             </MenuItem>
                         {/if}

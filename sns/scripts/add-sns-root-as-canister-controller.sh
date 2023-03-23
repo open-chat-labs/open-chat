@@ -1,5 +1,10 @@
 #!/bin/sh
 
+# Set current directory to the directory this script is in
+SCRIPT=$(readlink -f "$0")
+SCRIPT_DIR=$(dirname "$SCRIPT")
+cd $SCRIPT_DIR
+
 # Set env variables based on .env file
 set -o allexport; source .env; set +o allexport
 ./utils/setup_env.sh
@@ -13,5 +18,6 @@ dfx -qq --identity $IDENTITY canister --network $NETWORK update-settings --add-c
 dfx -qq --identity $IDENTITY canister --network $NETWORK update-settings --add-controller $SNS_ROOT_CANISTER_ID proposals_bot
 dfx -qq --identity $IDENTITY canister --network $NETWORK update-settings --add-controller $SNS_ROOT_CANISTER_ID cycles_dispenser
 dfx -qq --identity $IDENTITY canister --network $NETWORK update-settings --add-controller $SNS_ROOT_CANISTER_ID storage_index
+dfx -qq --identity $IDENTITY canister --network $NETWORK update-settings --add-controller $SNS_ROOT_CANISTER_ID proposal_validation
 
 ./utils/cleanup_env.sh

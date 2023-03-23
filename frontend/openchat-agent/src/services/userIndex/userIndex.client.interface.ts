@@ -14,6 +14,7 @@ import type {
     Cryptocurrency,
     DiamondMembershipDuration,
     PayForDiamondMembershipResponse,
+    SetUserUpgradeConcurrencyResponse,
 } from "openchat-shared";
 
 export interface IUserIndexClient {
@@ -38,4 +39,5 @@ export interface IUserIndexClient {
         recurring: boolean,
         expectedPriceE8s: bigint
     ): Promise<PayForDiamondMembershipResponse>;
+    setUserUpgradeConcurrency(value: number): Promise<SetUserUpgradeConcurrencyResponse>;
 }
