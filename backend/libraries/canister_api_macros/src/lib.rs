@@ -1,10 +1,10 @@
 use proc_macro::TokenStream;
 use proc_macro2::{Ident, Span};
-use quote::quote;
+use quote::{format_ident, quote};
 use serde::Deserialize;
 use serde_tokenstream::from_tokenstream;
 use std::fmt::Formatter;
-use syn::{parse_macro_input, Block, FnArg, ItemFn, Pat, PatIdent, PatType, Signature};
+use syn::{parse_macro_input, AttributeArgs, Block, FnArg, ItemFn, Meta, NestedMeta, Pat, PatIdent, PatType, Signature};
 
 enum MethodType {
     Update,
@@ -108,6 +108,27 @@ pub fn proposal(attr: TokenStream, item: TokenStream) -> TokenStream {
     })
 }
 
+#[proc_macro]
+pub fn proposal_validation(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as AttributeArgs);
+    let attribute = get_validation_method_attribute(input);
+
+    let their_service_name = format_ident!("{}", attribute.service_name);
+    let their_function_name = format_ident!("{}", attribute.function_name);
+    let our_function_name = format_ident!("{}_{}_validate", attribute.service_name, attribute.function_name);
+
+    let args_type = quote! { #their_service_name::#their_function_name::Args };
+
+    let tokens = quote! {
+        #[ic_cdk_macros::query]
+        fn #our_function_name(args: #args_type) -> Result<String, String> {
+            human_readable::to_human_readable_string(&args)
+        }
+    };
+
+    TokenStream::from(tokens)
+}
+
 fn convert_to_validate_fn(original: ItemFn) -> ItemFn {
     let mut sig = original.sig;
     let name = format!("{}_validate", sig.ident);
@@ -151,4 +172,28 @@ fn get_arg_names(signature: &Signature) -> Vec<Ident> {
             }
         })
         .collect()
+}
+
+fn get_validation_method_attribute(attrs: AttributeArgs) -> ValidationMethodAttribute {
+    let service_name = if let NestedMeta::Meta(Meta::Path(m)) = attrs.get(0).unwrap() {
+        m.get_ident().unwrap().to_string()
+    } else {
+        panic!("Unrecognised 'service_name' value");
+    };
+
+    let function_name = if let NestedMeta::Meta(Meta::Path(m)) = attrs.get(1).unwrap() {
+        m.get_ident().unwrap().to_string()
+    } else {
+        panic!("Unrecognised 'function_name' value");
+    };
+
+    ValidationMethodAttribute {
+        service_name,
+        function_name,
+    }
+}
+
+struct ValidationMethodAttribute {
+    service_name: String,
+    function_name: String,
 }
