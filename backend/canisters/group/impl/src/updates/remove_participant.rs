@@ -55,7 +55,10 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
             match runtime_state.data.participants.get_by_user_id(&args.user_id) {
                 None => Err(UserNotInGroup),
                 Some(participant_to_remove) => {
-                    if participant.role.can_remove_members(participant_to_remove.role, &runtime_state.data.permissions) {
+                    if participant
+                        .role
+                        .can_remove_members_with_role(participant_to_remove.role, &runtime_state.data.permissions)
+                    {
                         let owner_count = runtime_state.data.participants.owner_count();
                         if !participant_to_remove.role.is_owner() || owner_count > 1 {
                             Ok(PrepareResult {
@@ -65,7 +68,7 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
                             })
                         } else {
                             Err(CannotRemoveUser)
-                        }    
+                        }
                     } else {
                         Err(NotAuthorized)
                     }

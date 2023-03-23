@@ -109,7 +109,11 @@ impl Role {
         !is_public_group && self.is_permitted(permissions.add_members)
     }
 
-    pub fn can_remove_members(&self, member_role: Role, permissions: &GroupPermissions) -> bool {
+    pub fn can_remove_members(&self, permissions: &GroupPermissions) -> bool {
+        self.is_permitted(permissions.remove_members)
+    }
+
+    pub fn can_remove_members_with_role(&self, member_role: Role, permissions: &GroupPermissions) -> bool {
         match member_role {
             Role::Owner => self.has_owner_rights(),
             Role::Admin => self.has_admin_rights(),
@@ -117,8 +121,12 @@ impl Role {
         }
     }
 
-    pub fn can_block_users(&self, member_role: Role, permissions: &GroupPermissions) -> bool {
-        match member_role {
+    pub fn can_block_users(&self, permissions: &GroupPermissions) -> bool {
+        self.is_permitted(permissions.block_users)
+    }
+
+    pub fn can_block_users_with_role(&self, user_role: Role, permissions: &GroupPermissions) -> bool {
+        match user_role {
             Role::Owner => self.has_owner_rights(),
             Role::Admin => self.has_admin_rights(),
             _ => self.is_permitted(permissions.block_users),

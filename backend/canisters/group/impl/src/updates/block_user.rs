@@ -64,7 +64,10 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
                     public: runtime_state.data.is_public,
                 }),
                 Some(participant_to_remove) => {
-                    if participant.role.can_block_users(participant_to_remove.role, &runtime_state.data.permissions) {
+                    if participant
+                        .role
+                        .can_block_users_with_role(participant_to_remove.role, &runtime_state.data.permissions)
+                    {
                         let owner_count = runtime_state.data.participants.owner_count();
                         if !participant_to_remove.role.is_owner() || owner_count > 1 {
                             Ok(PrepareResult {
@@ -78,7 +81,7 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
                         }
                     } else {
                         Err(NotAuthorized)
-                    }                 
+                    }
                 }
             }
         }
