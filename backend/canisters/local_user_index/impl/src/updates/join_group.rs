@@ -13,14 +13,9 @@ use user_index_canister::Event as UserIndexEvent;
 async fn join_group(args: Args) -> Response {
     let user_details = read_state(user_details);
 
-    if args.as_super_admin && !user_details.is_super_admin {
-        return NotSuperAdmin;
-    }
-
     let c2c_args = group_canister::c2c_join_group::Args {
         user_id: user_details.user_id,
         principal: user_details.principal,
-        as_super_admin: args.as_super_admin,
         invite_code: args.invite_code,
         correlation_id: args.correlation_id,
     };
@@ -32,7 +27,6 @@ async fn join_group(args: Args) -> Response {
                     commit(
                         user_details.user_id,
                         args.chat_id,
-                        args.as_super_admin,
                         s.latest_message.as_ref().map(|m| m.event.message_index),
                         state,
                     );
@@ -52,7 +46,6 @@ async fn join_group(args: Args) -> Response {
 struct UserDetails {
     user_id: UserId,
     principal: Principal,
-    is_super_admin: bool,
 }
 
 fn user_details(runtime_state: &RuntimeState) -> UserDetails {
@@ -62,23 +55,15 @@ fn user_details(runtime_state: &RuntimeState) -> UserDetails {
     UserDetails {
         user_id: user.user_id,
         principal: user.principal,
-        is_super_admin: user.is_super_admin,
     }
 }
 
-fn commit(
-    user_id: UserId,
-    chat_id: ChatId,
-    as_super_admin: bool,
-    latest_message_index: Option<MessageIndex>,
-    runtime_state: &mut RuntimeState,
-) {
+fn commit(user_id: UserId, chat_id: ChatId, latest_message_index: Option<MessageIndex>, runtime_state: &mut RuntimeState) {
     if runtime_state.data.local_users.get(&user_id).is_some() {
         runtime_state.data.user_event_sync_queue.push(
             user_id.into(),
             UserEvent::UserJoinedGroup(Box::new(user_canister::UserJoinedGroup {
                 chat_id,
-                as_super_admin,
                 latest_message_index,
             })),
         );
@@ -89,7 +74,7 @@ fn commit(
             UserIndexEvent::UserJoinedGroup(user_index_canister::UserJoinedGroup {
                 user_id,
                 chat_id,
-                as_super_admin,
+                as_super_admin: false,
                 latest_message_index,
             }),
         );

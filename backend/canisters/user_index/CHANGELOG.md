@@ -9,6 +9,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Speed up `is_eligible_for_initial_airdrop` check ([#3345](https://github.com/open-ic/open-chat/pull/3345))
 
+### Removed
+
+- Removed super_admin role from groups([#3319](https://github.com/open-ic/open-chat/pull/3319))
+
 ## [[2.0.636](https://github.com/open-ic/open-chat/releases/tag/v2.0.636-user_index)] - 2023-03-14
 
 ### Added

@@ -3,7 +3,6 @@ import "../../../libraries/types/can.did";
 type JoinGroupArgs =
     record {
         chat_id: ChatId;
-        as_super_admin: bool;
         invite_code: opt nat64;
         correlation_id: nat64;
     };
@@ -17,7 +16,6 @@ type JoinGroupResponse =
         GroupNotPublic;
         ParticipantLimitReached: nat32;
         Blocked;
-        NotSuperAdmin;
         UserSuspended;
         ChatFrozen;
         InternalError: text;

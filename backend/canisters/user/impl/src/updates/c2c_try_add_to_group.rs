@@ -20,10 +20,7 @@ fn c2c_try_add_to_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Re
         let chat_id = runtime_state.env.caller().into();
         let now = runtime_state.env.now();
 
-        runtime_state
-            .data
-            .group_chats
-            .join(chat_id, false, args.latest_message_index, now);
+        runtime_state.data.group_chats.join(chat_id, args.latest_message_index, now);
 
         runtime_state.data.hot_group_exclusions.remove(&chat_id, now);
 

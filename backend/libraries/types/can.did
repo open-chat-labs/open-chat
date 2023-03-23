@@ -648,7 +648,6 @@ type Participant =
 type ParticipantJoined =
     record {
         user_id: UserId;
-        as_super_admin: bool;
     };
 
 type ParticipantLeft =
@@ -872,7 +871,6 @@ type CyclesRegistrationFee =
 
 type Role =
     variant {
-        SuperAdmin: FallbackRole;
         Owner;
         Admin;
         Participant;

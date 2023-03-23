@@ -33,7 +33,6 @@ export class LocalUserIndexClient extends CandidService implements ILocalUserInd
     joinGroup(chatId: string, inviteCode: string | undefined): Promise<JoinGroupResponse> {
         return this.handleResponse(this.localUserIndexService.join_group({
             chat_id: Principal.fromText(chatId),
-            as_super_admin: false,
             invite_code: apiOptional(textToCode, inviteCode),
             correlation_id: BigInt(0)
         }), joinGroupResponse);

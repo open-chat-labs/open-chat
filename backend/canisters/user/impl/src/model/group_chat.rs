@@ -9,20 +9,18 @@ pub struct GroupChat {
     pub date_joined: TimestampMillis,
     pub read_by_me_up_to: Timestamped<Option<MessageIndex>>,
     pub last_changed_for_my_data: TimestampMillis,
-    pub is_super_admin: bool,
     pub threads_read: TimestampedMap<MessageIndex, MessageIndex>,
     pub archived: Timestamped<bool>,
     pub date_read_pinned: Timestamped<Option<TimestampMillis>>,
 }
 
 impl GroupChat {
-    pub fn new(chat_id: ChatId, is_super_admin: bool, read_up_to: Option<MessageIndex>, now: TimestampMillis) -> GroupChat {
+    pub fn new(chat_id: ChatId, read_up_to: Option<MessageIndex>, now: TimestampMillis) -> GroupChat {
         GroupChat {
             chat_id,
             date_joined: now,
             read_by_me_up_to: Timestamped::new(read_up_to, now),
             last_changed_for_my_data: now,
-            is_super_admin,
             threads_read: TimestampedMap::default(),
             archived: Timestamped::new(false, now),
             date_read_pinned: Timestamped::new(None, now),

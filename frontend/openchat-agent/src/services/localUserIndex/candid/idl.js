@@ -3,7 +3,6 @@ export const idlFactory = ({ IDL }) => {
   const ChatId = CanisterId;
   const JoinGroupArgs = IDL.Record({
     'invite_code' : IDL.Opt(IDL.Nat64),
-    'as_super_admin' : IDL.Bool,
     'correlation_id' : IDL.Nat64,
     'chat_id' : ChatId,
   });

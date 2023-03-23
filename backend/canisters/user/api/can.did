@@ -279,36 +279,6 @@ type UnmuteNotificationsResponse =
         InternalError: text;
     };
 
-type AssumeGroupSuperAdminArgs =
-    record {
-        chat_id: ChatId;
-        correlation_id: nat64;
-    };
-
-type AssumeGroupSuperAdminResponse =
-    variant {
-        Success;
-        CallerNotInGroup;
-        NotSuperAdmin;
-        AlreadyOwner;
-        AlreadySuperAdmin;
-        InternalError: text;
-    };
-
-type RelinquishGroupSuperAdminArgs =
-    record {
-        chat_id: ChatId;
-        correlation_id: nat64;
-    };
-
-type RelinquishGroupSuperAdminResponse =
-    variant {
-        Success;
-        CallerNotInGroup;
-        NotSuperAdmin;
-        InternalError: text;
-    };
-
 type AddHotGroupExclusionsArgs =
     record {
         groups: vec ChatId;
@@ -709,8 +679,6 @@ service: {
     set_avatar: (SetAvatarArgs) -> (SetAvatarResponse);
     mute_notifications: (MuteNotificationsArgs) -> (MuteNotificationsResponse);
     unmute_notifications: (UnmuteNotificationsArgs) -> (UnmuteNotificationsResponse);
-    assume_group_super_admin: (AssumeGroupSuperAdminArgs) -> (AssumeGroupSuperAdminResponse);
-    relinquish_group_super_admin: (RelinquishGroupSuperAdminArgs) -> (RelinquishGroupSuperAdminResponse);
     add_hot_group_exclusions: (AddHotGroupExclusionsArgs) -> (AddHotGroupExclusionsResponse);
     set_bio: (SetBioArgs) -> (SetBioResponse);
     set_contact: (SetContactArgs) -> (SetContactResponse);
