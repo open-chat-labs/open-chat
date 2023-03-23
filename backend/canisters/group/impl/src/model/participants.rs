@@ -86,24 +86,27 @@ impl Participants {
     }
 
     pub fn remove(&mut self, user_id: UserId) -> RemoveResult {
-        match self.user_id_to_principal_map.remove(&user_id) {
-            None => RemoveResult::NotFound,
-            Some(principal) => {
-                if let Some(participant) = self.by_principal.remove(&principal) {
-                    match participant.role {
-                        Role::Owner => {
-                            if self.owner_count == 1 {
-                                return RemoveResult::LastOwner;
-                            }
-                            self.owner_count -= 1
-                        }
-                        Role::Admin => self.admin_count -= 1,
-                        _ => (),
+        if let Some(participant) = self.get_by_user_id(&user_id) {
+            match participant.role {
+                Role::Owner => {
+                    // Sanity check the user is not the last owner
+                    if self.owner_count == 1 {
+                        return RemoveResult::LastOwner;
                     }
+                    self.owner_count -= 1
                 }
-                RemoveResult::Success
+                Role::Admin => self.admin_count -= 1,
+                _ => (),
             }
+        } else {
+            return RemoveResult::NotFound;
         }
+
+        if let Some(principal) = self.user_id_to_principal_map.remove(&user_id) {
+            self.by_principal.remove(&principal);
+        }
+
+        RemoveResult::Success
     }
 
     pub fn block(&mut self, user_id: UserId) {
