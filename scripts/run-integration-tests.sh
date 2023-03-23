@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 SCRIPT=$(readlink -f "$0")
 SCRIPT_DIR=$(dirname "$SCRIPT")
@@ -8,25 +8,13 @@ BUILD_WASMS=${1:-true}
 TEST_THREADS=${2:-2}
 TESTNAME=$3
 
-if [[ -z "$OSTYPE" ]]; then
-  if [[ "$RUNNER_OS" == "Linux" ]]
-  then
-      PLATFORM=linux
-  elif [[ "$RUNNER_OS" == "macOS" ]]
-  then
-      PLATFORM=darwin
-  fi
+if [[ "$OSTYPE" == "linux-gnu"* || "$RUNNER_OS" == "Linux" ]]
+then
+    PLATFORM=linux
+elif [[ "$OSTYPE" == "darwin"* || "$RUNNER_OS" == "macOS" ]]
+then
+    PLATFORM=darwin
 else
-  if [[ "$OSTYPE" == "linux"* ]]
-    then
-        PLATFORM=linux
-    elif [[ "$OSTYPE" == "darwin"* ]]
-    then
-        PLATFORM=darwin
-    fi
-fi
-
-if [[ -z "$PLATFORM" ]]; then
     echo "OS not supported: ${OSTYPE:-$RUNNER_OS}"
     exit 1
 fi
