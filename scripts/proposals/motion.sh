@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# cd into the scrips folder
+# cd into the scripts folder
 SCRIPT=$(readlink -f "$0")
 SCRIPT_DIR=$(dirname "$SCRIPT")
 cd $SCRIPT_DIR/..
