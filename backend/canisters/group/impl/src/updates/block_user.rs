@@ -55,7 +55,7 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
             Err(UserSuspended)
         } else if participant.user_id == args.user_id {
             Err(CannotBlockSelf)
-        } else if participant.role.can_block_users(&runtime_state.data.permissions) {
+        } else {
             match runtime_state.data.participants.get_by_user_id(&args.user_id) {
                 None => Ok(PrepareResult {
                     my_user_id: participant.user_id,
@@ -64,21 +64,23 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
                     public: runtime_state.data.is_public,
                 }),
                 Some(participant_to_remove) => {
-                    let owner_count = runtime_state.data.participants.owner_count();
-                    if !participant_to_remove.role.is_owner() || owner_count > 1 {
-                        Ok(PrepareResult {
-                            my_user_id: participant.user_id,
-                            is_blocked_user_participant: true,
-                            group_name: runtime_state.data.name.clone(),
-                            public: runtime_state.data.is_public,
-                        })
+                    if participant.role.can_block_users(participant_to_remove.role, &runtime_state.data.permissions) {
+                        let owner_count = runtime_state.data.participants.owner_count();
+                        if !participant_to_remove.role.is_owner() || owner_count > 1 {
+                            Ok(PrepareResult {
+                                my_user_id: participant.user_id,
+                                is_blocked_user_participant: true,
+                                group_name: runtime_state.data.name.clone(),
+                                public: runtime_state.data.is_public,
+                            })
+                        } else {
+                            Err(CannotBlockUser)
+                        }
                     } else {
-                        Err(CannotBlockUser)
-                    }
+                        Err(NotAuthorized)
+                    }                 
                 }
             }
-        } else {
-            Err(NotAuthorized)
         }
     } else {
         Err(CallerNotInGroup)

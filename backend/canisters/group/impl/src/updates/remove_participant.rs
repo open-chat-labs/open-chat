@@ -51,24 +51,26 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
             Err(UserSuspended)
         } else if participant.user_id == args.user_id {
             Err(CannotRemoveSelf)
-        } else if participant.role.can_remove_members(&runtime_state.data.permissions) {
+        } else {
             match runtime_state.data.participants.get_by_user_id(&args.user_id) {
                 None => Err(UserNotInGroup),
                 Some(participant_to_remove) => {
-                    let owner_count = runtime_state.data.participants.owner_count();
-                    if !participant_to_remove.role.is_owner() || owner_count > 1 {
-                        Ok(PrepareResult {
-                            removed_by: participant.user_id,
-                            group_name: runtime_state.data.name.clone(),
-                            public: runtime_state.data.is_public,
-                        })
+                    if participant.role.can_remove_members(participant_to_remove.role, &runtime_state.data.permissions) {
+                        let owner_count = runtime_state.data.participants.owner_count();
+                        if !participant_to_remove.role.is_owner() || owner_count > 1 {
+                            Ok(PrepareResult {
+                                removed_by: participant.user_id,
+                                group_name: runtime_state.data.name.clone(),
+                                public: runtime_state.data.is_public,
+                            })
+                        } else {
+                            Err(CannotRemoveUser)
+                        }    
                     } else {
-                        Err(CannotRemoveUser)
+                        Err(NotAuthorized)
                     }
                 }
             }
-        } else {
-            Err(NotAuthorized)
         }
     } else {
         Err(CallerNotInGroup)

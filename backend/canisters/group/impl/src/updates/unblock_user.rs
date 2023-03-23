@@ -31,7 +31,7 @@ fn unblock_user_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
         let unblocked_by = caller_participant.user_id;
         if unblocked_by == args.user_id {
             CannotUnblockSelf
-        } else if caller_participant.role.can_block_users(&runtime_state.data.permissions) {
+        } else if caller_participant.role.can_unblock_users(&runtime_state.data.permissions) {
             let now = runtime_state.env.now();
 
             runtime_state.data.participants.unblock(&args.user_id);
