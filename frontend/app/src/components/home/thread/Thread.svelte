@@ -31,7 +31,6 @@
     export let chat: ChatSummary;
 
     let chatEventList: ChatEventList | undefined;
-    let focusMessageIndex: number | undefined = undefined;
     let observer: IntersectionObserver = new IntersectionObserver(() => {});
     let pollBuilder: PollBuilder;
     let giphySelector: GiphySelector;
@@ -43,6 +42,7 @@
     let messagesDivHeight: number;
     let previousLatestEventIndex: number | undefined = undefined;
 
+    $: focusMessageIndex = client.focusThreadMessageIndex;
     $: currentChatMembers = client.currentChatMembers;
     $: lastCryptoSent = client.lastCryptoSent;
     $: draftThreadMessages = client.draftThreadMessages;
@@ -242,7 +242,6 @@
     }
 
     function goToMessageIndex(index: number) {
-        focusMessageIndex = index;
         chatEventList?.scrollToMessageIndex(chat.chatId, index, false);
     }
 
@@ -290,7 +289,7 @@
     {readonly}
     unreadMessages={0}
     firstUnreadMention={undefined}
-    setFocusMessageIndex={(idx) => (focusMessageIndex = idx)}
+    setFocusMessageIndex={(idx) => client.setFocusThreadMessageIndex(chat.chatId, idx)}
     footer
     {events}
     {chat}
@@ -325,7 +324,7 @@
                             readByMe
                             {observer}
                             focused={evt.event.kind === "message" &&
-                                focusMessageIndex === evt.event.messageIndex}
+                                $focusMessageIndex === evt.event.messageIndex}
                             {readonly}
                             {threadRootMessage}
                             pinned={false}

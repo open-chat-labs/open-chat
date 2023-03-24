@@ -119,6 +119,7 @@ import {
     selectedThreadRootEvent,
     confirmedThreadEventIndexesLoadedStore,
     isContiguousInThread,
+    focusThreadMessageIndex,
 } from "./stores/chat";
 import { cryptoBalance, lastCryptoSent } from "./stores/crypto";
 import { draftThreadMessages } from "./stores/draftThreadMessages";
@@ -1547,7 +1548,7 @@ export class OpenChat extends EventTarget {
         createDirectChat(chatId);
         return true;
     }
-    setSelectedChat(chatId: string, messageIndex?: number): void {
+    setSelectedChat(chatId: string, messageIndex?: number, threadMessageIndex?: number): void {
         const clientChat = this._liveState.chatSummaries[chatId];
         const serverChat = this._liveState.serverChatSummaries[chatId];
 
@@ -1555,7 +1556,7 @@ export class OpenChat extends EventTarget {
             return;
         }
 
-        setSelectedChat(this.api, clientChat, serverChat, messageIndex);
+        setSelectedChat(this.api, clientChat, serverChat, messageIndex, threadMessageIndex);
 
         const { selectedChat, focusMessageIndex } = this._liveState;
         if (selectedChat !== undefined) {
@@ -1585,7 +1586,16 @@ export class OpenChat extends EventTarget {
         this.clearThreadEvents();
         selectedThreadRootEvent.set(threadRootEvent);
         if (!initiating && this._liveState.selectedChatId !== undefined) {
-            this.loadPreviousMessages(this._liveState.selectedChatId, threadRootEvent, true);
+            if (this._liveState.focusThreadMessageIndex !== undefined) {
+                this.loadEventWindow(
+                    this._liveState.selectedChatId,
+                    this._liveState.focusThreadMessageIndex,
+                    threadRootEvent,
+                    true
+                );
+            } else {
+                this.loadPreviousMessages(this._liveState.selectedChatId, threadRootEvent, true);
+            }
         }
         this.dispatchEvent(new ThreadSelected(threadRootEvent, initiating));
     }
@@ -2665,6 +2675,10 @@ export class OpenChat extends EventTarget {
         chatStateStore.setProp(chatId, "focusMessageIndex", messageIndex);
     }
 
+    setFocusThreadMessageIndex(chatId: string, messageIndex: number | undefined): void {
+        chatStateStore.setProp(chatId, "focusThreadMessageIndex", messageIndex);
+    }
+
     expandDeletedMessages(chatId: string, messageIndexes: Set<number>): void {
         chatStateStore.updateProp(chatId, "expandedDeletedMessages", (data) => {
             return new Set([...messageIndexes, ...data]);
@@ -3694,6 +3708,7 @@ export class OpenChat extends EventTarget {
     blockedUsers = blockedUsers;
     undeletingMessagesStore = undeletingMessagesStore;
     focusMessageIndex = focusMessageIndex;
+    focusThreadMessageIndex = focusThreadMessageIndex;
     expandedDeletedMessages = expandedDeletedMessages;
     userGroupKeys = userGroupKeys;
     unconfirmedReadByThem = unconfirmedReadByThem;
