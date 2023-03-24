@@ -448,6 +448,7 @@ export type InvalidPollReason = { 'DuplicateOptions' : null } |
   { 'PollsNotValidForDirectChats' : null };
 export interface JoinGroupArgs {
   'invite_code' : [] | [bigint],
+  'as_super_admin' : boolean,
   'correlation_id' : bigint,
   'chat_id' : ChatId,
 }
