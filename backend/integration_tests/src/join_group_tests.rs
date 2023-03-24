@@ -1,50 +1,39 @@
+use crate::env::ENV;
 use crate::rng::random_string;
-use crate::setup::{return_env, setup_env, TestEnv};
-use crate::{client, User};
+use crate::{client, TestEnv, User};
 use ic_test_state_machine_client::StateMachine;
+use std::ops::Deref;
 use types::{CanisterId, ChatId};
 
 #[test]
 fn join_public_group_succeeds() {
-    let TestEnv {
-        mut env,
-        canister_ids,
-        controller,
-    } = setup_env();
+    let mut wrapper = ENV.deref().get();
+    let TestEnv { env, canister_ids, .. } = wrapper.env();
 
     let TestData {
         user1: _,
         user2,
         group_id,
-    } = init_test_data(&mut env, canister_ids.user_index, true);
+    } = init_test_data(env, canister_ids.user_index, true);
 
-    client::local_user_index::happy_path::join_group(&mut env, user2.principal, canister_ids.local_user_index, group_id);
+    client::local_user_index::happy_path::join_group(env, user2.principal, canister_ids.local_user_index, group_id);
 
     env.tick();
 
-    let initial_state = client::user::happy_path::initial_state_v2(&env, &user2);
+    let initial_state = client::user::happy_path::initial_state_v2(env, &user2);
 
     assert!(initial_state.group_chats.iter().any(|c| c.chat_id == group_id));
-
-    return_env(TestEnv {
-        env,
-        canister_ids,
-        controller,
-    });
 }
 
 #[test]
 fn join_private_group_using_invite_code_succeeds() {
-    let TestEnv {
-        mut env,
-        canister_ids,
-        controller,
-    } = setup_env();
+    let mut wrapper = ENV.deref().get();
+    let TestEnv { env, canister_ids, .. } = wrapper.env();
 
-    let TestData { user1, user2, group_id } = init_test_data(&mut env, canister_ids.user_index, false);
+    let TestData { user1, user2, group_id } = init_test_data(env, canister_ids.user_index, false);
 
     let invite_code_response = client::group::enable_invite_code(
-        &mut env,
+        env,
         user1.principal,
         group_id.into(),
         &group_canister::enable_invite_code::Args { correlation_id: 0 },
@@ -57,7 +46,7 @@ fn join_private_group_using_invite_code_succeeds() {
     };
 
     let join_group_response = client::local_user_index::join_group(
-        &mut env,
+        env,
         user2.principal,
         canister_ids.local_user_index,
         &local_user_index_canister::join_group::Args {
@@ -77,15 +66,9 @@ fn join_private_group_using_invite_code_succeeds() {
 
     env.tick();
 
-    let initial_state = client::user::happy_path::initial_state_v2(&env, &user2);
+    let initial_state = client::user::happy_path::initial_state_v2(env, &user2);
 
     assert!(initial_state.group_chats.iter().any(|c| c.chat_id == group_id));
-
-    return_env(TestEnv {
-        env,
-        canister_ids,
-        controller,
-    });
 }
 
 fn init_test_data(env: &mut StateMachine, user_index: CanisterId, public: bool) -> TestData {

@@ -304,7 +304,10 @@
     function checkIfTargetMessageHasAThread(index: number) {
         const msgEvent = findMessageEvent(index);
         if (msgEvent && threadRootEvent === undefined) {
-            if (msgEvent.event.thread !== undefined && $pathParams.open) {
+            if (
+                msgEvent.event.thread !== undefined &&
+                ($pathParams.open || $pathParams.threadMessageIndex !== undefined)
+            ) {
                 client.openThread(msgEvent, false);
             } else {
                 client.closeThread();

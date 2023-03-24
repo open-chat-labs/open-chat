@@ -1,36 +1,17 @@
 use crate::client::{create_canister, install_canister};
 use crate::rng::random_principal;
 use crate::utils::{local_bin, tick_many};
-use crate::{client, wasms, CanisterIds, T};
+use crate::{client, wasms, CanisterIds, TestEnv, T};
 use candid::{CandidType, Principal};
 use ic_ledger_types::{AccountIdentifier, BlockIndex, Tokens, DEFAULT_SUBACCOUNT};
 use ic_test_state_machine_client::StateMachine;
-use lazy_static::lazy_static;
 use std::collections::{HashMap, HashSet};
-use std::sync::Mutex;
 use storage_index_canister::init::CyclesDispenserConfig;
 use types::{CanisterId, Version};
 
 const NNS_GOVERNANCE_CANISTER_ID: CanisterId = Principal::from_slice(&[0, 0, 0, 0, 0, 0, 0, 1, 1, 1]);
 
-lazy_static! {
-    static ref ENV: Mutex<Vec<TestEnv>> = Mutex::default();
-}
-
-pub struct TestEnv {
-    pub env: StateMachine,
-    pub canister_ids: CanisterIds,
-    pub controller: Principal,
-}
-
-pub fn setup_env() -> TestEnv {
-    if let Some(env) = try_take_existing_env() {
-        return env;
-    }
-    setup_fresh_env()
-}
-
-pub fn setup_fresh_env() -> TestEnv {
+pub fn setup_new_env() -> TestEnv {
     let mut file_path = local_bin();
     file_path.push("ic-test-state-machine");
     let mut env = StateMachine::new(file_path.to_str().unwrap(), false);
@@ -42,16 +23,6 @@ pub fn setup_fresh_env() -> TestEnv {
         canister_ids,
         controller,
     }
-}
-
-pub fn return_env(env: TestEnv) {
-    if let Ok(mut e) = ENV.try_lock() {
-        e.push(env);
-    }
-}
-
-fn try_take_existing_env() -> Option<TestEnv> {
-    ENV.try_lock().ok().and_then(|mut e| e.pop())
 }
 
 fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterIds {

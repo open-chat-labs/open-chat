@@ -128,7 +128,7 @@ async function showNotification(notification: Notification): Promise<void> {
         icon = content.image ?? icon;
         path =
             notification.threadRootMessageIndex !== undefined
-                ? `${notification.chatId}/${notification.threadRootMessageIndex}?open=true`
+                ? `${notification.chatId}/${notification.threadRootMessageIndex}/${notification.message.event.messageIndex}?open=true`
                 : `${notification.chatId}/${notification.message.event.messageIndex}`;
         tag = notification.threadRootMessageIndex !== undefined ? path : notification.chatId;
         timestamp = Number(notification.message.timestamp);

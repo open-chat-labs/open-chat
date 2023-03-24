@@ -138,8 +138,10 @@
             }
 
             pre {
-                padding: toRem(12);
+                padding: toRem(16);
                 overflow-x: auto;
+                border-radius: toRem(12);
+                border: 1px solid rgba(255, 255, 255, 0.1);
             }
 
             blockquote {

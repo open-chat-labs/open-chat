@@ -1,9 +1,10 @@
+use crate::env::ENV;
 use crate::rng::random_message_id;
-use crate::setup::{return_env, setup_env, TestEnv};
-use crate::{client, User};
+use crate::{client, TestEnv, User};
 use ic_test_state_machine_client::StateMachine;
 use itertools::Itertools;
 use std::collections::HashMap;
+use std::ops::Deref;
 use std::time::{Duration, SystemTime};
 use types::{
     CanisterId, ChatEvent, ChatId, MessageContent, MessageContentInitial, PollConfig, PollContent, PollVotes, TotalVotes,
@@ -11,11 +12,8 @@ use types::{
 
 #[test]
 fn allow_multiple_votes_per_user() {
-    let TestEnv {
-        mut env,
-        canister_ids,
-        controller,
-    } = setup_env();
+    let mut wrapper = ENV.deref().get();
+    let TestEnv { env, canister_ids, .. } = wrapper.env();
 
     let poll_config = PollConfig {
         text: None,
@@ -31,30 +29,21 @@ fn allow_multiple_votes_per_user() {
         user2,
         group,
         create_poll_result,
-    } = init_test_data(&mut env, canister_ids.user_index, poll_config);
+    } = init_test_data(env, canister_ids.user_index, poll_config);
 
     if let group_canister::send_message::Response::Success(r) = create_poll_result {
-        let register_vote_result1 = client::group::happy_path::register_poll_vote(&mut env, &user2, group, r.message_index, 0);
+        let register_vote_result1 = client::group::happy_path::register_poll_vote(env, &user2, group, r.message_index, 0);
         assert_eq!(register_vote_result1.user, vec![0]);
 
-        let register_vote_result2 = client::group::happy_path::register_poll_vote(&mut env, &user2, group, r.message_index, 1);
+        let register_vote_result2 = client::group::happy_path::register_poll_vote(env, &user2, group, r.message_index, 1);
         assert_eq!(register_vote_result2.user.into_iter().sorted().collect_vec(), vec![0, 1]);
     }
-
-    return_env(TestEnv {
-        env,
-        canister_ids,
-        controller,
-    });
 }
 
 #[test]
 fn single_vote_per_user() {
-    let TestEnv {
-        mut env,
-        canister_ids,
-        controller,
-    } = setup_env();
+    let mut wrapper = ENV.deref().get();
+    let TestEnv { env, canister_ids, .. } = wrapper.env();
 
     let poll_config = PollConfig {
         text: None,
@@ -70,30 +59,21 @@ fn single_vote_per_user() {
         user2,
         group,
         create_poll_result,
-    } = init_test_data(&mut env, canister_ids.user_index, poll_config);
+    } = init_test_data(env, canister_ids.user_index, poll_config);
 
     if let group_canister::send_message::Response::Success(r) = create_poll_result {
-        let register_vote_result1 = client::group::happy_path::register_poll_vote(&mut env, &user2, group, r.message_index, 0);
+        let register_vote_result1 = client::group::happy_path::register_poll_vote(env, &user2, group, r.message_index, 0);
         assert_eq!(register_vote_result1.user, vec![0]);
 
-        let register_vote_result2 = client::group::happy_path::register_poll_vote(&mut env, &user2, group, r.message_index, 1);
+        let register_vote_result2 = client::group::happy_path::register_poll_vote(env, &user2, group, r.message_index, 1);
         assert_eq!(register_vote_result2.user.into_iter().sorted().collect_vec(), vec![1]);
     }
-
-    return_env(TestEnv {
-        env,
-        canister_ids,
-        controller,
-    });
 }
 
 #[test]
 fn polls_ended_correctly() {
-    let TestEnv {
-        mut env,
-        canister_ids,
-        controller,
-    } = setup_env();
+    let mut wrapper = ENV.deref().get();
+    let TestEnv { env, canister_ids, .. } = wrapper.env();
 
     let current_time = env.time().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_millis() as u64;
 
@@ -111,7 +91,7 @@ fn polls_ended_correctly() {
         user2,
         group,
         create_poll_result: create_poll_result1,
-    } = init_test_data(&mut env, canister_ids.user_index, poll_config1);
+    } = init_test_data(env, canister_ids.user_index, poll_config1);
 
     let poll_config2 = PollConfig {
         text: None,
@@ -123,7 +103,7 @@ fn polls_ended_correctly() {
     };
 
     let create_poll_result2 = client::group::send_message_v2(
-        &mut env,
+        env,
         user1.principal,
         group.into(),
         &group_canister::send_message_v2::Args {
@@ -146,13 +126,13 @@ fn polls_ended_correctly() {
     );
 
     if let group_canister::send_message::Response::Success(r) = create_poll_result1 {
-        let register_vote_result1 = client::group::happy_path::register_poll_vote(&mut env, &user2, group, r.message_index, 0);
+        let register_vote_result1 = client::group::happy_path::register_poll_vote(env, &user2, group, r.message_index, 0);
         assert!(matches!(register_vote_result1.total, TotalVotes::Hidden(1)));
 
         env.advance_time(Duration::from_millis(999));
         env.tick();
 
-        let event = client::group::happy_path::events_by_index(&env, &user1, group, vec![r.event_index])
+        let event = client::group::happy_path::events_by_index(env, &user1, group, vec![r.event_index])
             .events
             .pop()
             .unwrap();
@@ -171,7 +151,7 @@ fn polls_ended_correctly() {
         env.advance_time(Duration::from_millis(1));
         env.tick();
 
-        let event = client::group::happy_path::events_by_index(&env, &user1, group, vec![r.event_index])
+        let event = client::group::happy_path::events_by_index(env, &user1, group, vec![r.event_index])
             .events
             .pop()
             .unwrap();
@@ -189,13 +169,13 @@ fn polls_ended_correctly() {
     }
 
     if let group_canister::send_message::Response::Success(r) = create_poll_result2 {
-        let register_vote_result2 = client::group::happy_path::register_poll_vote(&mut env, &user2, group, r.message_index, 0);
+        let register_vote_result2 = client::group::happy_path::register_poll_vote(env, &user2, group, r.message_index, 0);
         assert!(matches!(register_vote_result2.total, TotalVotes::Hidden(1)));
 
         env.advance_time(Duration::from_millis(999));
         env.tick();
 
-        let event = client::group::happy_path::events_by_index(&env, &user1, group, vec![r.event_index])
+        let event = client::group::happy_path::events_by_index(env, &user1, group, vec![r.event_index])
             .events
             .pop()
             .unwrap();
@@ -214,7 +194,7 @@ fn polls_ended_correctly() {
         env.advance_time(Duration::from_millis(1));
         env.tick();
 
-        let event = client::group::happy_path::events_by_index(&env, &user1, group, vec![r.event_index])
+        let event = client::group::happy_path::events_by_index(env, &user1, group, vec![r.event_index])
             .events
             .pop()
             .unwrap();
@@ -230,12 +210,6 @@ fn polls_ended_correctly() {
             unreachable!()
         }
     }
-
-    return_env(TestEnv {
-        env,
-        canister_ids,
-        controller,
-    });
 }
 
 fn init_test_data(env: &mut StateMachine, user_index: CanisterId, poll_config: PollConfig) -> TestData {

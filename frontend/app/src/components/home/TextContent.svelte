@@ -36,10 +36,11 @@
     $: text = truncateText($translationStore.get(Number(messageId)) ?? content.text);
     $: socialVideoMatch = content.text.match(client.youtubeRegex());
     $: twitterLinkMatch = text.match(client.twitterLinkRegex());
+    $: containsCodeBlock = content.text.match(/```([\s\S]*)```/);
 </script>
 
 {#if !socialVideoMatch}
-    <Markdown suppressLinks={pinned} {text} />
+    <Markdown inline={!containsCodeBlock} suppressLinks={pinned} {text} />
     {#if edited}
         <span class="edited-msg">({$_("edited")})</span>
     {/if}

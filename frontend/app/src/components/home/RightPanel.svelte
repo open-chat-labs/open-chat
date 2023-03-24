@@ -24,8 +24,9 @@
     import { numberOfColumns } from "stores/layout";
     import Thread from "./thread/Thread.svelte";
     import ProposalGroupFilters from "./ProposalGroupFilters.svelte";
-    import { removeQueryStringParam } from "../../utils/urls";
+    import { removeQueryStringParam, removeThreadMessageIndex } from "../../utils/urls";
     import { logger } from "../../utils/logging";
+    import { pathParams } from "../../routes";
     import page from "page";
 
     const dispatch = createEventDispatcher();
@@ -123,9 +124,16 @@
         }
     }
 
+    function stripThreadFromUrl(path: string) {
+        if ($pathParams.threadMessageIndex !== undefined) {
+            return removeThreadMessageIndex($pathParams.threadMessageIndex, path);
+        }
+        return path;
+    }
+
     function closeThread(_ev: CustomEvent<string>) {
         popHistory();
-        page.replace(removeQueryStringParam("open"));
+        page.replace(stripThreadFromUrl(removeQueryStringParam("open")));
     }
 
     function findMessage(

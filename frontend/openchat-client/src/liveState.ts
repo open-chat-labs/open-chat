@@ -24,6 +24,7 @@ import {
     chatSummariesListStore,
     threadsByChatStore,
     focusMessageIndex,
+    focusThreadMessageIndex,
     threadEvents,
     selectedThreadKey,
     threadsFollowedByMeStore,
@@ -63,6 +64,7 @@ export class LiveState {
     chatSummariesList!: ChatSummary[];
     threadsByChat!: Record<string, ThreadSyncDetails[]>;
     focusMessageIndex: number | undefined;
+    focusThreadMessageIndex: number | undefined;
     threadEvents!: EventWrapper<ChatEvent>[];
     selectedThreadKey: string | undefined;
     threadsFollowedByMe!: Record<string, Set<number>>;
@@ -93,6 +95,7 @@ export class LiveState {
         chatSummariesListStore.subscribe((data) => (this.chatSummariesList = data));
         threadsByChatStore.subscribe((data) => (this.threadsByChat = data));
         focusMessageIndex.subscribe((data) => (this.focusMessageIndex = data));
+        focusThreadMessageIndex.subscribe((data) => (this.focusThreadMessageIndex = data));
         threadEvents.subscribe((data) => (this.threadEvents = data));
         selectedThreadKey.subscribe((data) => (this.selectedThreadKey = data));
         threadsFollowedByMeStore.subscribe((data) => (this.threadsFollowedByMe = data));

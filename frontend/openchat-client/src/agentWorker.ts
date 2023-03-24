@@ -817,17 +817,14 @@ export class OpenChatAgentWorker extends EventTarget {
         });
     }
 
-    getSnsProposalTally(
-        snsGovernanceCanisterId: string,
-        proposalId: bigint
-    ): Promise<Tally> {
+    getSnsProposalTally(snsGovernanceCanisterId: string, proposalId: bigint): Promise<Tally> {
         return this.sendRequest({
             kind: "getSnsProposalTally",
             payload: {
                 snsGovernanceCanisterId,
                 proposalId,
-            }
-        })
+            },
+        });
     }
 
     listNervousSystemFunctions(
