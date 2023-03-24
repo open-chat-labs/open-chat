@@ -1,7 +1,7 @@
 use crate::rng::random_string;
 use crate::setup::{return_env, setup_env, TestEnv};
 use crate::{client, User};
-use ic_state_machine_tests::StateMachine;
+use ic_test_state_machine_client::StateMachine;
 use itertools::Itertools;
 use std::time::Duration;
 use types::{CanisterId, ChatId, OptionUpdate};

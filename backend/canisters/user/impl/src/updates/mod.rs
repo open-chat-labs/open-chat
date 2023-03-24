@@ -1,7 +1,6 @@
 pub mod add_hot_group_exclusions;
 pub mod add_reaction;
 pub mod archive_chat;
-pub mod assume_group_super_admin;
 pub mod block_user;
 pub mod c2c_charge_user_account;
 pub mod c2c_delete_messages;
@@ -28,7 +27,6 @@ pub mod mark_read_v2;
 pub mod migrate_user_principal;
 pub mod mute_notifications;
 pub mod pin_chat;
-pub mod relinquish_group_super_admin;
 pub mod remove_reaction;
 pub mod send_message;
 pub mod send_message_with_transfer_to_group;

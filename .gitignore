@@ -11,3 +11,4 @@ wasms/
 **/*.env_v1
 **/*.pem
 notes.md
+ic-test-state-machine*

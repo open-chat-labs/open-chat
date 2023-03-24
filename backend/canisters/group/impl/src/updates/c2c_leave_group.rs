@@ -31,7 +31,8 @@ fn c2c_leave_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
     if participant.suspended.value {
         return UserSuspended;
     }
-    if participant.role.is_owner() {
+
+    if participant.role.is_owner() && runtime_state.data.participants.owner_count() == 1 {
         return OwnerCannotLeave;
     }
 

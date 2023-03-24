@@ -2,7 +2,7 @@ use crate::rng::random_string;
 use crate::setup::{return_env, setup_env, TestEnv};
 use crate::{client, CanisterIds, User};
 use candid::Principal;
-use ic_state_machine_tests::StateMachine;
+use ic_test_state_machine_client::StateMachine;
 use types::{SubscriptionInfo, SubscriptionKeys};
 
 #[test]

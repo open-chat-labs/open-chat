@@ -13,6 +13,6 @@ fn c2c_grant_super_admin(_args: Args) -> Response {
 }
 
 fn c2c_grant_super_admin_impl(runtime_state: &mut RuntimeState) -> Response {
-    runtime_state.data.is_super_admin = true;
+    runtime_state.data.is_platform_moderator = true;
     Success
 }

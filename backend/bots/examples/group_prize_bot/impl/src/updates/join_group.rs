@@ -45,7 +45,6 @@ async fn lookup_local_user_index(group: CanisterId) -> Result<CanisterId, Respon
 async fn call_join_group(group: CanisterId, local_user_index: CanisterId) -> Result<(), Response> {
     let c2c_args = local_user_index_canister::join_group::Args {
         chat_id: group.into(),
-        as_super_admin: false,
         invite_code: None,
         correlation_id: 0,
     };
@@ -59,7 +58,6 @@ async fn call_join_group(group: CanisterId, local_user_index: CanisterId) -> Res
             local_user_index_canister::join_group::Response::GroupNotPublic => Err(GroupNotPublic),
             local_user_index_canister::join_group::Response::ParticipantLimitReached(_) => Err(ParticipantLimitReached),
             local_user_index_canister::join_group::Response::Blocked => Err(Blocked),
-            local_user_index_canister::join_group::Response::NotSuperAdmin => unreachable!(),
             local_user_index_canister::join_group::Response::UserSuspended => Err(UserSuspended),
             local_user_index_canister::join_group::Response::ChatFrozen => Err(ChatFrozen),
             local_user_index_canister::join_group::Response::InternalError(m) => Err(InternalError(m)),

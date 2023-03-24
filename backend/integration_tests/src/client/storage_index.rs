@@ -16,7 +16,7 @@ generate_update_call!(upgrade_bucket_canister_wasm);
 pub mod happy_path {
     use crate::utils::tick_many;
     use candid::Principal;
-    use ic_state_machine_tests::StateMachine;
+    use ic_test_state_machine_client::StateMachine;
     use storage_index_canister::add_or_update_users::UserConfig;
     use storage_index_canister::user::UserRecord;
     use types::CanisterId;

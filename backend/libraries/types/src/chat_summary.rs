@@ -2,7 +2,7 @@ use crate::{
     CanisterId, ChatId, EventIndex, EventWrapper, FrozenGroupInfo, GroupPermissions, Mention, Message, MessageIndex,
     Milliseconds, OptionUpdate, RangeSet, Role, TimestampMillis, UserId, Version, MAX_RETURNED_MENTIONS,
 };
-use candid::CandidType;
+use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use std::cmp::max;
 use std::collections::HashSet;
@@ -53,7 +53,6 @@ pub struct GroupChatSummary {
     pub role: Role,
     pub mentions: Vec<Mention>,
     pub wasm_version: Version,
-    pub owner_id: UserId,
     pub permissions: GroupPermissions,
     pub metrics: ChatMetrics,
     pub my_metrics: ChatMetrics,
@@ -102,7 +101,6 @@ pub struct PublicGroupSummary {
     pub latest_event_index: EventIndex,
     pub participant_count: u32,
     pub wasm_version: Version,
-    pub owner_id: UserId,
     pub is_public: bool,
     pub frozen: Option<FrozenGroupInfo>,
     pub events_ttl: Option<Milliseconds>,
@@ -127,6 +125,8 @@ pub struct GroupCanisterGroupChatSummary {
     pub role: Role,
     pub mentions: Vec<Mention>,
     pub wasm_version: Version,
+    // TODO: Delete me after the next full release cycles
+    #[serde(default = "anonymous_user")]
     pub owner_id: UserId,
     pub permissions: GroupPermissions,
     pub notifications_muted: bool,
@@ -138,6 +138,10 @@ pub struct GroupCanisterGroupChatSummary {
     pub events_ttl: Option<Milliseconds>,
     pub expired_messages: RangeSet<MessageIndex>,
     pub next_message_expiry: Option<TimestampMillis>,
+}
+
+fn anonymous_user() -> UserId {
+    Principal::anonymous().into()
 }
 
 impl GroupCanisterGroupChatSummary {
@@ -187,7 +191,7 @@ impl GroupCanisterGroupChatSummary {
             role: updates.role.unwrap_or(self.role),
             mentions,
             wasm_version: updates.wasm_version.unwrap_or(self.wasm_version),
-            owner_id: updates.owner_id.unwrap_or(self.owner_id),
+            owner_id: anonymous_user(),
             permissions: updates.permissions.unwrap_or(self.permissions),
             notifications_muted: updates.notifications_muted.unwrap_or(self.notifications_muted),
             metrics: updates.metrics.unwrap_or(self.metrics),
@@ -216,6 +220,8 @@ pub struct GroupCanisterGroupChatSummaryUpdates {
     pub role: Option<Role>,
     pub mentions: Vec<Mention>,
     pub wasm_version: Option<Version>,
+    // TODO: Delete me after the next full release cycles
+    #[serde(default)]
     pub owner_id: Option<UserId>,
     pub permissions: Option<GroupPermissions>,
     pub affected_events: Vec<EventIndex>,
@@ -293,7 +299,7 @@ pub struct ThreadSyncDetails {
     pub last_updated: TimestampMillis,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct GroupCanisterThreadDetails {
     pub root_message_index: MessageIndex,
     pub latest_event: EventIndex,
@@ -301,8 +307,8 @@ pub struct GroupCanisterThreadDetails {
     pub last_updated: TimestampMillis,
 }
 
-impl From<GroupCanisterThreadDetails> for ThreadSyncDetails {
-    fn from(s: GroupCanisterThreadDetails) -> Self {
+impl From<&GroupCanisterThreadDetails> for ThreadSyncDetails {
+    fn from(s: &GroupCanisterThreadDetails) -> Self {
         ThreadSyncDetails {
             root_message_index: s.root_message_index,
             latest_event: Some(s.latest_event),

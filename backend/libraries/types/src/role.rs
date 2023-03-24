@@ -3,7 +3,6 @@ use serde::{Deserialize, Serialize};
 
 #[derive(CandidType, Serialize, Deserialize, Copy, Clone, Debug, Eq, PartialEq)]
 pub enum Role {
-    SuperAdmin(FallbackRole),
     Owner,
     Admin,
     Participant,
@@ -91,7 +90,7 @@ impl Role {
     }
 
     pub fn is_admin(&self) -> bool {
-        matches!(self, Role::Admin | Role::SuperAdmin(FallbackRole::Admin))
+        matches!(self, Role::Admin)
     }
 
     pub fn can_change_permissions(&self, permissions: &GroupPermissions) -> bool {
@@ -99,11 +98,7 @@ impl Role {
     }
 
     pub fn can_change_roles(&self, new_role: Role, permissions: &GroupPermissions) -> bool {
-        match new_role {
-            Role::SuperAdmin(_) => false,
-            Role::Owner => self.has_owner_rights(),
-            _ => self.is_permitted(permissions.change_roles),
-        }
+        self.is_same_or_senior(new_role) && self.is_permitted(permissions.change_roles)
     }
 
     pub fn can_add_members(&self, permissions: &GroupPermissions, is_public_group: bool) -> bool {
@@ -114,7 +109,19 @@ impl Role {
         self.is_permitted(permissions.remove_members)
     }
 
+    pub fn can_remove_members_with_role(&self, member_role: Role, permissions: &GroupPermissions) -> bool {
+        self.is_same_or_senior(member_role) && self.is_permitted(permissions.remove_members)
+    }
+
     pub fn can_block_users(&self, permissions: &GroupPermissions) -> bool {
+        self.is_permitted(permissions.block_users)
+    }
+
+    pub fn can_block_users_with_role(&self, user_role: Role, permissions: &GroupPermissions) -> bool {
+        self.is_same_or_senior(user_role) && self.is_permitted(permissions.block_users)
+    }
+
+    pub fn can_unblock_users(&self, permissions: &GroupPermissions) -> bool {
         self.is_permitted(permissions.block_users)
     }
 
@@ -146,14 +153,6 @@ impl Role {
         self.is_permitted(permissions.reply_in_thread)
     }
 
-    pub fn can_be_removed(&self) -> bool {
-        !self.has_owner_rights()
-    }
-
-    pub fn can_leave(&self) -> bool {
-        !self.is_owner()
-    }
-
     pub fn can_delete_group(&self) -> bool {
         self.has_owner_rights()
     }
@@ -178,11 +177,19 @@ impl Role {
         }
     }
 
+    pub fn is_same_or_senior(&self, role: Role) -> bool {
+        match role {
+            Role::Owner => self.has_owner_rights(),
+            Role::Admin => self.has_admin_rights(),
+            Role::Participant => true,
+        }
+    }
+
     fn has_admin_rights(&self) -> bool {
         matches!(self, Role::Admin) || self.has_owner_rights()
     }
 
     fn has_owner_rights(&self) -> bool {
-        matches!(self, Role::Owner | Role::SuperAdmin(_))
+        matches!(self, Role::Owner)
     }
 }

@@ -69,6 +69,23 @@ fn initial_state_impl(args: Args, runtime_state: &RuntimeState) -> Response {
 }
 
 fn hydrate_cached_summary(cached: &GroupCanisterGroupChatSummary, user_details: &GroupChat) -> GroupChatSummary {
+    let mut threads = HashMap::new();
+    for thread in cached.latest_threads.iter() {
+        threads.insert(thread.root_message_index, ThreadSyncDetails::from(thread));
+    }
+    for (&root_message_index, read_up_to) in user_details.threads_read.iter() {
+        threads
+            .entry(root_message_index)
+            .or_insert(ThreadSyncDetails {
+                root_message_index,
+                latest_event: None,
+                latest_message: None,
+                read_up_to: None,
+                last_updated: 0,
+            })
+            .read_up_to = Some(read_up_to.value);
+    }
+
     GroupChatSummary {
         chat_id: cached.chat_id,
         last_updated: cached.last_updated,
@@ -88,21 +105,10 @@ fn hydrate_cached_summary(cached: &GroupCanisterGroupChatSummary, user_details: 
         participant_count: cached.participant_count,
         role: cached.role,
         mentions: cached.mentions.clone(),
-        owner_id: cached.owner_id,
         permissions: cached.permissions.clone(),
         metrics: cached.metrics.clone(),
         my_metrics: cached.my_metrics.clone(),
-        latest_threads: cached
-            .latest_threads
-            .iter()
-            .map(|t| ThreadSyncDetails {
-                root_message_index: t.root_message_index,
-                latest_event: Some(t.latest_event),
-                latest_message: Some(t.latest_message),
-                read_up_to: user_details.threads_read.get(&t.root_message_index).map(|r| r.value),
-                last_updated: t.last_updated,
-            })
-            .collect(),
+        latest_threads: threads.into_values().collect(),
         archived: user_details.archived.value,
         frozen: cached.frozen.clone(),
         wasm_version: Version::default(),

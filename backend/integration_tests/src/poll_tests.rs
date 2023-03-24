@@ -1,7 +1,7 @@
 use crate::rng::random_message_id;
 use crate::setup::{return_env, setup_env, TestEnv};
 use crate::{client, User};
-use ic_state_machine_tests::StateMachine;
+use ic_test_state_machine_client::StateMachine;
 use itertools::Itertools;
 use std::collections::HashMap;
 use std::time::{Duration, SystemTime};

@@ -5,7 +5,6 @@ use types::{ChatId, GroupCanisterGroupChatSummary};
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub chat_id: ChatId,
-    pub as_super_admin: bool,
     pub invite_code: Option<u64>,
     pub correlation_id: u64,
 }
@@ -19,7 +18,6 @@ pub enum Response {
     GroupNotPublic,
     ParticipantLimitReached(u32),
     Blocked,
-    NotSuperAdmin,
     UserSuspended,
     ChatFrozen,
     InternalError(String),

@@ -21,3 +21,19 @@ pub enum Response {
     UserSuspended,
     ChatFrozen,
 }
+
+impl From<crate::remove_participant::Response> for Response {
+    fn from(response: crate::remove_participant::Response) -> Self {
+        match response {
+            crate::remove_participant::Response::Success => Response::Success,
+            crate::remove_participant::Response::CallerNotInGroup => Response::CallerNotInGroup,
+            crate::remove_participant::Response::CannotRemoveSelf => Response::CannotBlockSelf,
+            crate::remove_participant::Response::CannotRemoveUser => Response::CannotBlockUser,
+            crate::remove_participant::Response::InternalError(e) => Response::InternalError(e),
+            crate::remove_participant::Response::NotAuthorized => Response::NotAuthorized,
+            crate::remove_participant::Response::UserNotInGroup => Response::UserNotInGroup,
+            crate::remove_participant::Response::UserSuspended => Response::UserSuspended,
+            crate::remove_participant::Response::ChatFrozen => Response::ChatFrozen,
+        }
+    }
+}
