@@ -22,7 +22,7 @@ fn icp_is_burned_into_cycles() {
         1_000_000_000_000u64,
     );
 
-    let icp_balance_e8s = client::icrc1::happy_path::balance_of(&env, canister_ids.icp_ledger, canister_ids.cycles_dispenser);
+    let icp_balance_e8s = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, canister_ids.cycles_dispenser);
     let cycles_balance = env.cycle_balance(canister_ids.cycles_dispenser.as_slice().try_into().unwrap());
 
     client::cycles_dispenser::update_config(
@@ -42,7 +42,7 @@ fn icp_is_burned_into_cycles() {
     tick_many(env, 20);
 
     let new_icp_balance_e8s =
-        client::icrc1::happy_path::balance_of(&env, canister_ids.icp_ledger, canister_ids.cycles_dispenser);
+        client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, canister_ids.cycles_dispenser);
     let new_cycles_balance = env.cycle_balance(canister_ids.cycles_dispenser.as_slice().try_into().unwrap());
 
     assert!(new_icp_balance_e8s < icp_balance_e8s);

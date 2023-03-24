@@ -44,10 +44,10 @@ fn old_files_deleted_when_allocation_exceeded() {
     tick_many(env, 10);
 
     assert!(client::storage_bucket::happy_path::file_exists(
-        &env, user_id, bucket1, file_id1
+        env, user_id, bucket1, file_id1
     ));
     assert!(client::storage_bucket::happy_path::file_exists(
-        &env, user_id, bucket2, file_id2
+        env, user_id, bucket2, file_id2
     ));
 
     env.advance_time(Duration::from_millis(1));
@@ -61,13 +61,13 @@ fn old_files_deleted_when_allocation_exceeded() {
     tick_many(env, 10);
 
     assert!(!client::storage_bucket::happy_path::file_exists(
-        &env, user_id, bucket1, file_id1
+        env, user_id, bucket1, file_id1
     ));
     assert!(client::storage_bucket::happy_path::file_exists(
-        &env, user_id, bucket2, file_id2
+        env, user_id, bucket2, file_id2
     ));
     assert!(client::storage_bucket::happy_path::file_exists(
-        &env, user_id, bucket3, file_id3
+        env, user_id, bucket3, file_id3
     ));
 
     env.advance_time(Duration::from_millis(1));
@@ -81,15 +81,15 @@ fn old_files_deleted_when_allocation_exceeded() {
     tick_many(env, 10);
 
     assert!(!client::storage_bucket::happy_path::file_exists(
-        &env, user_id, bucket1, file_id1
+        env, user_id, bucket1, file_id1
     ));
     assert!(!client::storage_bucket::happy_path::file_exists(
-        &env, user_id, bucket2, file_id2
+        env, user_id, bucket2, file_id2
     ));
     assert!(!client::storage_bucket::happy_path::file_exists(
-        &env, user_id, bucket3, file_id3
+        env, user_id, bucket3, file_id3
     ));
     assert!(client::storage_bucket::happy_path::file_exists(
-        &env, user_id, bucket4, file_id4
+        env, user_id, bucket4, file_id4
     ));
 }

@@ -29,7 +29,7 @@ fn file_is_removed_after_expiry_date() {
     let bucket = allocated_bucket_response.canister_id;
     let file_id = allocated_bucket_response.file_id;
 
-    let now = now_millis(&env);
+    let now = now_millis(env);
 
     client::storage_bucket::happy_path::upload_file(env, user_id, bucket, file_id, file, Some(now + 1000));
 

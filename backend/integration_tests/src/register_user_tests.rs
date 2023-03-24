@@ -14,7 +14,7 @@ fn register_users() {
         .collect();
 
     let response = client::user_index::users(
-        &env,
+        env,
         users[0].principal,
         canister_ids.user_index,
         &user_index_canister::users::Args {

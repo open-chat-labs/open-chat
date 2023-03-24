@@ -27,7 +27,7 @@ fn set_then_get_last_online_date_succeeds() {
     env.tick();
 
     let online_users_canister::last_online::Response::Success(users) = client::online_users::last_online(
-        &env,
+        env,
         random_principal(),
         canister_ids.online_users,
         &online_users_canister::last_online::Args {

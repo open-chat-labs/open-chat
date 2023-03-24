@@ -27,7 +27,7 @@ fn can_upgrade_to_diamond() {
         1_000_000_000u64,
     );
 
-    let now = now_millis(&env);
+    let now = now_millis(env);
 
     let diamond_response = client::user_index::pay_for_diamond_membership(
         env,
@@ -93,7 +93,7 @@ fn membership_renews_automatically_if_set_to_recurring(ledger_error: bool) {
         },
     );
 
-    let start_time = now_millis(&env);
+    let start_time = now_millis(env);
     let one_month_millis = DiamondMembershipPlanDuration::OneMonth.as_millis();
     env.advance_time(Duration::from_millis(one_month_millis - (30 * MINUTE_IN_MS)));
 
