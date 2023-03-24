@@ -1,25 +1,27 @@
-use crate::client;
+use crate::env::ENV;
 use crate::rng::random_message_id;
-use crate::setup::{return_env, setup_env, TestEnv};
+use crate::{client, TestEnv};
+use std::ops::Deref;
 use std::time::Duration;
 use types::{MessageContent, MessageContentInitial, TextContent};
 
 #[test]
 fn suspend_user() {
+    let mut wrapper = ENV.deref().get();
     let TestEnv {
-        mut env,
+        env,
         canister_ids,
         controller,
-    } = setup_env();
+    } = wrapper.env();
 
-    let user1 = client::user_index::happy_path::register_user(&mut env, canister_ids.user_index);
-    let user2 = client::user_index::happy_path::register_user(&mut env, canister_ids.user_index);
-    let group = client::user::happy_path::create_group(&mut env, &user1, "SUSPEND_USER_TEST", false, false);
-    let platform_moderator = client::user_index::happy_path::register_user(&mut env, canister_ids.user_index);
+    let user1 = client::user_index::happy_path::register_user(env, canister_ids.user_index);
+    let user2 = client::user_index::happy_path::register_user(env, canister_ids.user_index);
+    let group = client::user::happy_path::create_group(env, &user1, "SUSPEND_USER_TEST", false, false);
+    let platform_moderator = client::user_index::happy_path::register_user(env, canister_ids.user_index);
 
     client::user_index::add_platform_moderator(
-        &mut env,
-        controller,
+        env,
+        *controller,
         canister_ids.user_index,
         &user_index_canister::add_platform_moderator::Args {
             user_id: platform_moderator.user_id,
@@ -27,7 +29,7 @@ fn suspend_user() {
     );
 
     client::user_index::suspend_user(
-        &mut env,
+        env,
         platform_moderator.principal,
         canister_ids.user_index,
         &user_index_canister::suspend_user::Args {
@@ -39,11 +41,11 @@ fn suspend_user() {
 
     env.tick();
 
-    let user_response1 = client::user_index::happy_path::current_user(&env, user1.principal, canister_ids.user_index);
+    let user_response1 = client::user_index::happy_path::current_user(env, user1.principal, canister_ids.user_index);
     assert!(user_response1.suspension_details.is_some());
 
     let direct_message_response1 = client::user::send_message(
-        &mut env,
+        env,
         user1.principal,
         user1.user_id.into(),
         &user_canister::send_message::Args {
@@ -63,7 +65,7 @@ fn suspend_user() {
     ));
 
     let group_message_response1 = client::group::send_message_v2(
-        &mut env,
+        env,
         user1.principal,
         group.into(),
         &group_canister::send_message_v2::Args {
@@ -83,7 +85,7 @@ fn suspend_user() {
     ));
 
     client::user_index::unsuspend_user(
-        &mut env,
+        env,
         platform_moderator.principal,
         canister_ids.user_index,
         &user_index_canister::unsuspend_user::Args { user_id: user1.user_id },
@@ -91,11 +93,11 @@ fn suspend_user() {
 
     env.tick();
 
-    let user_response2 = client::user_index::happy_path::current_user(&env, user1.principal, canister_ids.user_index);
+    let user_response2 = client::user_index::happy_path::current_user(env, user1.principal, canister_ids.user_index);
     assert!(user_response2.suspension_details.is_none());
 
     let direct_message_response2 = client::user::send_message(
-        &mut env,
+        env,
         user1.principal,
         user1.user_id.into(),
         &user_canister::send_message::Args {
@@ -115,7 +117,7 @@ fn suspend_user() {
     ));
 
     let group_message_response2 = client::group::send_message_v2(
-        &mut env,
+        env,
         user1.principal,
         group.into(),
         &group_canister::send_message_v2::Args {
@@ -133,28 +135,23 @@ fn suspend_user() {
         group_message_response2,
         group_canister::send_message::Response::Success(_)
     ));
-
-    return_env(TestEnv {
-        env,
-        canister_ids,
-        controller,
-    });
 }
 
 #[test]
 fn suspend_user_for_duration() {
+    let mut wrapper = ENV.deref().get();
     let TestEnv {
-        mut env,
+        env,
         canister_ids,
         controller,
-    } = setup_env();
+    } = wrapper.env();
 
-    let user = client::user_index::happy_path::register_user(&mut env, canister_ids.user_index);
-    let platform_moderator = client::user_index::happy_path::register_user(&mut env, canister_ids.user_index);
+    let user = client::user_index::happy_path::register_user(env, canister_ids.user_index);
+    let platform_moderator = client::user_index::happy_path::register_user(env, canister_ids.user_index);
 
     client::user_index::add_platform_moderator(
-        &mut env,
-        controller,
+        env,
+        *controller,
         canister_ids.user_index,
         &user_index_canister::add_platform_moderator::Args {
             user_id: platform_moderator.user_id,
@@ -162,7 +159,7 @@ fn suspend_user_for_duration() {
     );
 
     client::user_index::suspend_user(
-        &mut env,
+        env,
         platform_moderator.principal,
         canister_ids.user_index,
         &user_index_canister::suspend_user::Args {
@@ -175,18 +172,12 @@ fn suspend_user_for_duration() {
     env.advance_time(Duration::from_millis(999));
     env.tick();
 
-    let user_response1 = client::user_index::happy_path::current_user(&env, user.principal, canister_ids.user_index);
+    let user_response1 = client::user_index::happy_path::current_user(env, user.principal, canister_ids.user_index);
     assert!(user_response1.suspension_details.is_some());
 
     env.advance_time(Duration::from_millis(1));
     env.tick();
 
-    let user_response2 = client::user_index::happy_path::current_user(&env, user.principal, canister_ids.user_index);
+    let user_response2 = client::user_index::happy_path::current_user(env, user.principal, canister_ids.user_index);
     assert!(user_response2.suspension_details.is_none());
-
-    return_env(TestEnv {
-        env,
-        canister_ids,
-        controller,
-    });
 }

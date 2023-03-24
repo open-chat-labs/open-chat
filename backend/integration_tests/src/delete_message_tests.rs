@@ -1,6 +1,7 @@
-use crate::client;
+use crate::env::ENV;
 use crate::rng::{random_message_id, random_string};
-use crate::setup::{return_env, setup_env, TestEnv};
+use crate::{client, TestEnv};
+use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
 use types::{ChatEvent, MessageContent};
@@ -8,22 +9,19 @@ use utils::time::MINUTE_IN_MS;
 
 #[test]
 fn delete_direct_message_succeeds() {
-    let TestEnv {
-        mut env,
-        canister_ids,
-        controller,
-    } = setup_env();
+    let mut wrapper = ENV.deref().get();
+    let TestEnv { env, canister_ids, .. } = wrapper.env();
 
-    let user1 = client::user_index::happy_path::register_user(&mut env, canister_ids.user_index);
-    let user2 = client::user_index::happy_path::register_user(&mut env, canister_ids.user_index);
+    let user1 = client::user_index::happy_path::register_user(env, canister_ids.user_index);
+    let user2 = client::user_index::happy_path::register_user(env, canister_ids.user_index);
 
     let message_id = random_message_id();
 
     let send_message_response =
-        client::user::happy_path::send_text_message(&mut env, &user1, user2.user_id, "TEXT", Some(message_id));
+        client::user::happy_path::send_text_message(env, &user1, user2.user_id, "TEXT", Some(message_id));
 
     let delete_messages_response = client::user::delete_messages(
-        &mut env,
+        env,
         user1.principal,
         user1.canister(),
         &user_canister::delete_messages::Args {
@@ -39,7 +37,7 @@ fn delete_direct_message_succeeds() {
     ));
 
     let user1_events_response =
-        client::user::happy_path::events_by_index(&env, &user1, user2.user_id, vec![send_message_response.event_index]);
+        client::user::happy_path::events_by_index(env, &user1, user2.user_id, vec![send_message_response.event_index]);
     if let Some(ChatEvent::Message(m)) = user1_events_response.events.first().map(|e| &e.event) {
         assert!(matches!(m.content, MessageContent::Deleted(_)));
     } else {
@@ -47,38 +45,28 @@ fn delete_direct_message_succeeds() {
     }
 
     let user2_events_response =
-        client::user::happy_path::events_by_index(&env, &user2, user1.user_id, vec![send_message_response.event_index]);
+        client::user::happy_path::events_by_index(env, &user2, user1.user_id, vec![send_message_response.event_index]);
     if let Some(ChatEvent::Message(m)) = user2_events_response.events.first().map(|e| &e.event) {
         assert!(matches!(m.content, MessageContent::Deleted(_)));
     } else {
         panic!("Unexpected response from `events_by_index`: {user2_events_response:?}");
     }
-
-    return_env(TestEnv {
-        env,
-        canister_ids,
-        controller,
-    });
 }
 
 #[test]
 fn delete_group_message_succeeds() {
-    let TestEnv {
-        mut env,
-        canister_ids,
-        controller,
-    } = setup_env();
+    let mut wrapper = ENV.deref().get();
+    let TestEnv { env, canister_ids, .. } = wrapper.env();
 
-    let user = client::user_index::happy_path::register_user(&mut env, canister_ids.user_index);
-    let group = client::user::happy_path::create_group(&mut env, &user, &random_string(), true, true);
+    let user = client::user_index::happy_path::register_user(env, canister_ids.user_index);
+    let group = client::user::happy_path::create_group(env, &user, &random_string(), true, true);
 
     let message_id = random_message_id();
 
-    let send_message_response =
-        client::group::happy_path::send_text_message(&mut env, &user, group, None, "TEXT", Some(message_id));
+    let send_message_response = client::group::happy_path::send_text_message(env, &user, group, None, "TEXT", Some(message_id));
 
     let delete_messages_response = client::group::delete_messages(
-        &mut env,
+        env,
         user.principal,
         group.into(),
         &group_canister::delete_messages::Args {
@@ -93,39 +81,30 @@ fn delete_group_message_succeeds() {
     ));
 
     let events_response =
-        client::group::happy_path::events_by_index(&env, &user, group, vec![send_message_response.event_index]);
+        client::group::happy_path::events_by_index(env, &user, group, vec![send_message_response.event_index]);
     if let Some(ChatEvent::Message(m)) = events_response.events.first().map(|e| &e.event) {
         assert!(matches!(m.content, MessageContent::Deleted(_)));
     } else {
         panic!("Unexpected response from `events_by_index`: {events_response:?}");
     }
-
-    return_env(TestEnv {
-        env,
-        canister_ids,
-        controller,
-    });
 }
 
 #[test_case(false; "with_no_delay")]
 #[test_case(true; "with_delay")]
 fn delete_then_undelete_direct_message(delay: bool) {
-    let TestEnv {
-        mut env,
-        canister_ids,
-        controller,
-    } = setup_env();
+    let mut wrapper = ENV.deref().get();
+    let TestEnv { env, canister_ids, .. } = wrapper.env();
 
-    let user1 = client::user_index::happy_path::register_user(&mut env, canister_ids.user_index);
-    let user2 = client::user_index::happy_path::register_user(&mut env, canister_ids.user_index);
+    let user1 = client::user_index::happy_path::register_user(env, canister_ids.user_index);
+    let user2 = client::user_index::happy_path::register_user(env, canister_ids.user_index);
 
     let message_id = random_message_id();
 
     let send_message_response =
-        client::user::happy_path::send_text_message(&mut env, &user1, user2.user_id, "TEXT", Some(message_id));
+        client::user::happy_path::send_text_message(env, &user1, user2.user_id, "TEXT", Some(message_id));
 
     let delete_messages_response = client::user::delete_messages(
-        &mut env,
+        env,
         user1.principal,
         user1.user_id.into(),
         &user_canister::delete_messages::Args {
@@ -146,7 +125,7 @@ fn delete_then_undelete_direct_message(delay: bool) {
     }
 
     let undelete_messages_response = client::user::undelete_messages(
-        &mut env,
+        env,
         user1.principal,
         user1.user_id.into(),
         &user_canister::undelete_messages::Args {
@@ -163,7 +142,7 @@ fn delete_then_undelete_direct_message(delay: bool) {
     }
 
     let events_response1 =
-        client::user::happy_path::events_by_index(&env, &user1, user2.user_id, vec![send_message_response.event_index]);
+        client::user::happy_path::events_by_index(env, &user1, user2.user_id, vec![send_message_response.event_index]);
     if let Some(ChatEvent::Message(m)) = events_response1.events.first().map(|e| &e.event) {
         if delay {
             assert!(matches!(m.content, MessageContent::Deleted(_)));
@@ -175,7 +154,7 @@ fn delete_then_undelete_direct_message(delay: bool) {
     }
 
     let events_response2 =
-        client::user::happy_path::events_by_index(&env, &user2, user1.user_id, vec![send_message_response.event_index]);
+        client::user::happy_path::events_by_index(env, &user2, user1.user_id, vec![send_message_response.event_index]);
     if let Some(ChatEvent::Message(m)) = events_response2.events.first().map(|e| &e.event) {
         if delay {
             assert!(matches!(m.content, MessageContent::Deleted(_)));
@@ -185,33 +164,23 @@ fn delete_then_undelete_direct_message(delay: bool) {
     } else {
         panic!("Unexpected response from `events_by_index`: {events_response2:?}");
     }
-
-    return_env(TestEnv {
-        env,
-        canister_ids,
-        controller,
-    });
 }
 
 #[test_case(false; "with_no_delay")]
 #[test_case(true; "with_delay")]
 fn delete_then_undelete_group_message(delay: bool) {
-    let TestEnv {
-        mut env,
-        canister_ids,
-        controller,
-    } = setup_env();
+    let mut wrapper = ENV.deref().get();
+    let TestEnv { env, canister_ids, .. } = wrapper.env();
 
-    let user = client::user_index::happy_path::register_user(&mut env, canister_ids.user_index);
-    let group = client::user::happy_path::create_group(&mut env, &user, &random_string(), true, true);
+    let user = client::user_index::happy_path::register_user(env, canister_ids.user_index);
+    let group = client::user::happy_path::create_group(env, &user, &random_string(), true, true);
 
     let message_id = random_message_id();
 
-    let send_message_response =
-        client::group::happy_path::send_text_message(&mut env, &user, group, None, "TEXT", Some(message_id));
+    let send_message_response = client::group::happy_path::send_text_message(env, &user, group, None, "TEXT", Some(message_id));
 
     let delete_messages_response = client::group::delete_messages(
-        &mut env,
+        env,
         user.principal,
         group.into(),
         &group_canister::delete_messages::Args {
@@ -231,7 +200,7 @@ fn delete_then_undelete_group_message(delay: bool) {
     }
 
     let undelete_messages_response = client::group::undelete_messages(
-        &mut env,
+        env,
         user.principal,
         group.into(),
         &group_canister::undelete_messages::Args {
@@ -247,7 +216,7 @@ fn delete_then_undelete_group_message(delay: bool) {
     }
 
     let events_response =
-        client::group::happy_path::events_by_index(&env, &user, group, vec![send_message_response.event_index]);
+        client::group::happy_path::events_by_index(env, &user, group, vec![send_message_response.event_index]);
     if let Some(ChatEvent::Message(m)) = events_response.events.first().map(|e| &e.event) {
         if delay {
             assert!(matches!(m.content, MessageContent::Deleted(_)));
@@ -257,10 +226,4 @@ fn delete_then_undelete_group_message(delay: bool) {
     } else {
         panic!("Unexpected response from `events_by_index`: {events_response:?}");
     }
-
-    return_env(TestEnv {
-        env,
-        canister_ids,
-        controller,
-    });
 }

@@ -1,21 +1,19 @@
+use crate::env::ENV;
 use crate::rng::random_string;
-use crate::setup::{return_env, setup_env, TestEnv};
-use crate::{client, User};
+use crate::{client, TestEnv, User};
 use ic_test_state_machine_client::StateMachine;
+use std::ops::Deref;
 use types::{CanisterId, ChatId};
 
 #[test]
 fn delete_group_succeeds() {
-    let TestEnv {
-        mut env,
-        canister_ids,
-        controller,
-    } = setup_env();
+    let mut wrapper = ENV.deref().get();
+    let TestEnv { env, canister_ids, .. } = wrapper.env();
 
-    let TestData { user1, user2, group_id } = init_test_data(&mut env, canister_ids.user_index);
+    let TestData { user1, user2, group_id } = init_test_data(env, canister_ids.user_index);
 
     let delete_group_response = client::user::delete_group(
-        &mut env,
+        env,
         user1.principal,
         user1.canister(),
         &user_canister::delete_group::Args { chat_id: group_id },
@@ -28,15 +26,9 @@ fn delete_group_succeeds() {
 
     env.tick();
 
-    let initial_state = client::user::happy_path::initial_state_v2(&env, &user2);
+    let initial_state = client::user::happy_path::initial_state_v2(env, &user2);
 
     assert!(!initial_state.group_chats.iter().any(|c| c.chat_id == group_id));
-
-    return_env(TestEnv {
-        env,
-        canister_ids,
-        controller,
-    });
 }
 
 fn init_test_data(env: &mut StateMachine, user_index: CanisterId) -> TestData {

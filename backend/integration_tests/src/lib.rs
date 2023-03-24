@@ -2,6 +2,7 @@
 
 use crate::utils::principal_to_username;
 use candid::Principal;
+use ic_test_state_machine_client::StateMachine;
 use types::{CanisterId, Cycles, UserId};
 
 mod client;
@@ -10,6 +11,7 @@ mod delete_group_tests;
 mod delete_message_tests;
 mod diamond_membership_tests;
 mod disappearing_message_tests;
+mod env;
 mod freeze_group_tests;
 mod join_group_tests;
 mod last_online_date_tests;
@@ -23,6 +25,12 @@ mod storage;
 mod suspend_user_tests;
 mod utils;
 mod wasms;
+
+pub struct TestEnv {
+    pub env: StateMachine,
+    pub canister_ids: CanisterIds,
+    pub controller: Principal,
+}
 
 #[derive(Debug)]
 pub struct User {

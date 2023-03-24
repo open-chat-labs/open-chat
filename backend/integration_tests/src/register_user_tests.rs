@@ -1,18 +1,16 @@
-use crate::client;
-use crate::setup::{return_env, setup_env, TestEnv};
+use crate::env::ENV;
+use crate::{client, TestEnv};
+use std::ops::Deref;
 
 #[test]
 fn register_users() {
-    let TestEnv {
-        mut env,
-        canister_ids,
-        controller,
-    } = setup_env();
+    let mut wrapper = ENV.deref().get();
+    let TestEnv { env, canister_ids, .. } = wrapper.env();
 
     let user_count = 5usize;
 
     let users: Vec<_> = (0..user_count)
-        .map(|_| client::user_index::happy_path::register_user(&mut env, canister_ids.user_index))
+        .map(|_| client::user_index::happy_path::register_user(env, canister_ids.user_index))
         .collect();
 
     let response = client::user_index::users(
@@ -29,10 +27,4 @@ fn register_users() {
 
     let user_index_canister::users::Response::Success(result) = response;
     assert_eq!(result.users.len(), user_count);
-
-    return_env(TestEnv {
-        env,
-        canister_ids,
-        controller,
-    });
 }
