@@ -187,7 +187,7 @@ export class GroupClient extends CandidService implements IGroupClient {
                     this.principal,
                     resp,
                     this.chatId,
-                    undefined,
+                    threadRootMessageIndex,
                     latestClientEventIndex
                 ),
             args
