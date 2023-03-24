@@ -215,38 +215,42 @@ impl Participants {
 
     pub fn change_role(
         &mut self,
-        caller: Principal,
-        user_id: &UserId,
+        caller_id: UserId,
+        user_id: UserId,
         new_role: Role,
         permissions: &GroupPermissions,
-        is_platform_moderator: bool,
+        is_caller_platform_moderator: bool,
+        is_user_platform_moderator: bool,
     ) -> ChangeRoleResult {
         // Is the caller authorized to change the user to this role
-        let caller_id = match self.get(caller) {
+        match self.get_by_user_id(&caller_id) {
             Some(p) => {
-                if !is_platform_moderator {
-                    if p.suspended.value {
-                        return ChangeRoleResult::UserSuspended;
-                    }
-                    if !p.role.can_change_roles(new_role, permissions) {
-                        return ChangeRoleResult::NotAuthorized;
-                    }
+                if p.suspended.value {
+                    return ChangeRoleResult::UserSuspended;
                 }
-                p.user_id
+                // Platform moderators can always promote themselves to owner
+                if !(p.role.can_change_roles(new_role, permissions) || (is_caller_platform_moderator && new_role.is_owner())) {
+                    return ChangeRoleResult::NotAuthorized;
+                }
             }
             None => return ChangeRoleResult::CallerNotInGroup,
-        };
+        }
 
         let mut owner_count = self.owner_count;
         let mut admin_count = self.admin_count;
 
-        let member = match self.get_by_user_id_mut(user_id) {
+        let member = match self.get_by_user_id_mut(&user_id) {
             Some(p) => p,
             None => return ChangeRoleResult::UserNotInGroup,
         };
 
+        // Platform moderators cannot be demoted from owner except by themselves
+        if is_user_platform_moderator && member.role.is_owner() && user_id != caller_id {
+            return ChangeRoleResult::NotAuthorized;
+        }
+
         // It is not possible to change the role of the last owner
-        if matches!(member.role, Role::Owner) && owner_count <= 1 {
+        if member.role.is_owner() && owner_count <= 1 {
             return ChangeRoleResult::Invalid;
         }
 

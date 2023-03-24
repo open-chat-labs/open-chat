@@ -25,10 +25,6 @@ fn accept_if_valid(runtime_state: &RuntimeState) {
             "add_participants" => role.can_add_members(permissions, is_public_group) || role.can_unblock_users(permissions),
             "add_reaction" | "remove_reaction" => role.can_react_to_messages(permissions),
             "block_user" => role.can_block_users(permissions),
-            "change_role" => {
-                let (args,) = ic_cdk::api::call::arg_data::<(group_canister::change_role::Args,)>();
-                role.can_change_roles(args.new_role, permissions)
-            }
             "delete_group" => role.can_delete_group(),
             "enable_invite_code" | "disable_invite_code" | "reset_invite_code" => role.can_invite_users(permissions),
             "make_private" => role.can_change_group_visibility(),
@@ -41,6 +37,7 @@ fn accept_if_valid(runtime_state: &RuntimeState) {
             "update_permissions" => role.can_change_permissions(permissions),
             "delete_messages"
             | "undelete_messages"
+            | "change_role"
             | "claim_prize"
             | "edit_message"
             | "put_chunk"
