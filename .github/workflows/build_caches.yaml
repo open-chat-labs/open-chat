@@ -6,8 +6,8 @@ on:
 name: Build caches
 
 jobs:
-  build_debug_cache:
-    name: Build cache (debug + tests)
+  build_all_debug:
+    name: Build all in debug mode
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -18,14 +18,14 @@ jobs:
           override: true
       - uses: Swatinem/rust-cache@v2
         with:
-          shared-key: "build-debug-tests"
+          shared-key: "build-debug"
       - uses: actions-rs/cargo@v1
         with:
           command: build
           args: --tests
 
-  build_release_cache:
-    name: Build cache (release + wasm)
+  build_canister_wasms:
+    name: Build canister wasms
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -37,5 +37,5 @@ jobs:
       - run: rustup target add wasm32-unknown-unknown
       - uses: Swatinem/rust-cache@v2
         with:
-          shared-key: "build-release-wasm"
+          shared-key: "build-wasms"
       - run: ./scripts/generate-all-canister-wasms.sh
