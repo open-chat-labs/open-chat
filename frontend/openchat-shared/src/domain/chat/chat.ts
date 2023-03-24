@@ -891,6 +891,7 @@ export type ChatSpecificState = {
     rules?: GroupRules;
     userIds: Set<string>;
     focusMessageIndex?: number;
+    focusThreadMessageIndex?: number;
     userGroupKeys: Set<string>;
     serverEvents: EventWrapper<ChatEvent>[];
     expandedDeletedMessages: Set<number>;
@@ -1641,10 +1642,7 @@ export type RemoveHotGroupExclusionResponse =
     | "not_authorized"
     | "internal_error";
 
-export type SetGroupUpgradeConcurrencyResponse =
-    | "success"
-    | "not_authorized"
-    | "internal_error";
+export type SetGroupUpgradeConcurrencyResponse = "success" | "not_authorized" | "internal_error";
 
 export type MarkPinnedMessagesReadResponse = "success" | "chat_frozen";
 

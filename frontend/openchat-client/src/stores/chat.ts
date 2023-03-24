@@ -44,7 +44,9 @@ export const currentUserStore = immutableStore<CreatedUser | undefined>(undefine
 // Chats which the current user is a member of
 export const myServerChatSummariesStore: Writable<Record<string, ChatSummary>> = immutableStore({});
 
-export const uninitializedDirectChats: Writable<Record<string, DirectChatSummary>> = immutableStore({});
+export const uninitializedDirectChats: Writable<Record<string, DirectChatSummary>> = immutableStore(
+    {}
+);
 
 // Groups which the current user is previewing
 export const groupPreviewsStore: Writable<Record<string, GroupChatSummary>> = immutableStore({});
@@ -276,7 +278,14 @@ export const threadEvents = derived(
         failedMessagesStore,
         proposalTallies,
     ],
-    ([$serverEvents, $unconfirmed, $localUpdates, $threadKey, $failedMessages, $proposalTallies]) => {
+    ([
+        $serverEvents,
+        $unconfirmed,
+        $localUpdates,
+        $threadKey,
+        $failedMessages,
+        $proposalTallies,
+    ]) => {
         if ($threadKey === undefined) return [];
         const failed = $failedMessages[$threadKey]
             ? Object.values($failedMessages[$threadKey])
@@ -308,6 +317,11 @@ export const focusMessageIndex = createDerivedPropStore<ChatSpecificState, "focu
     "focusMessageIndex",
     () => undefined
 );
+
+export const focusThreadMessageIndex = createDerivedPropStore<
+    ChatSpecificState,
+    "focusThreadMessageIndex"
+>(chatStateStore, "focusThreadMessageIndex", () => undefined);
 
 export const expandedDeletedMessages = createDerivedPropStore<
     ChatSpecificState,
@@ -369,7 +383,8 @@ export function setSelectedChat(
     api: OpenChatAgentWorker,
     clientChat: ChatSummary,
     serverChat: ChatSummary | undefined,
-    messageIndex?: number
+    messageIndex?: number,
+    threadMessageIndex?: number
 ): void {
     // TODO don't think this should be in here really
     if (
@@ -402,6 +417,7 @@ export function setSelectedChat(
     // initialise a bunch of stores
     chatStateStore.clear(clientChat.chatId);
     chatStateStore.setProp(clientChat.chatId, "focusMessageIndex", messageIndex);
+    chatStateStore.setProp(clientChat.chatId, "focusThreadMessageIndex", threadMessageIndex);
     chatStateStore.setProp(clientChat.chatId, "expandedDeletedMessages", new Set());
     chatStateStore.setProp(
         clientChat.chatId,
@@ -481,19 +497,33 @@ export function addGroupPreview(chat: GroupChatSummary): void {
 
 export function removeUninitializedDirectChat(chatId: string): void {
     uninitializedDirectChats.update((summaries) => {
-        return toRecordFiltered(Object.values(summaries), (c) => c.chatId, (c) => c.chatId !== chatId);
+        return toRecordFiltered(
+            Object.values(summaries),
+            (c) => c.chatId,
+            (c) => c.chatId !== chatId
+        );
     });
 }
 
 export function removeGroupPreview(chatId: string): void {
     groupPreviewsStore.update((summaries) => {
-        return toRecordFiltered(Object.values(summaries), (c) => c.chatId, (c) => c.chatId !== chatId);
+        return toRecordFiltered(
+            Object.values(summaries),
+            (c) => c.chatId,
+            (c) => c.chatId !== chatId
+        );
     });
 }
 
 export const eventsStore: Readable<EventWrapper<ChatEvent>[]> = derived(
     [serverEventsStore, unconfirmed, localMessageUpdates, failedMessagesStore, proposalTallies],
-    ([$serverEventsForSelectedChat, $unconfirmed, $localMessageUpdates, $failedMessages, $proposalTallies]) => {
+    ([
+        $serverEventsForSelectedChat,
+        $unconfirmed,
+        $localMessageUpdates,
+        $failedMessages,
+        $proposalTallies,
+    ]) => {
         const chatId = get(selectedChatId) ?? "";
         // for the purpose of merging, unconfirmed and failed can be treated the same
         const failed = $failedMessages[chatId] ? Object.values($failedMessages[chatId]) : [];
