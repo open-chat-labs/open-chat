@@ -1,14 +1,14 @@
 import type { EventWrapper, Message } from "openchat-shared";
 
-export class LoadedNewMessages extends CustomEvent<boolean> {
-    constructor(newLatestMessage: boolean) {
-        super("openchat_event", { detail: newLatestMessage });
+export class LoadedNewMessages extends Event {
+    constructor() {
+        super("openchat_event");
     }
 }
 
-export class LoadedNewThreadMessages extends CustomEvent<boolean> {
-    constructor(newLatestMessage: boolean) {
-        super("openchat_event", { detail: newLatestMessage });
+export class LoadedNewThreadMessages extends Event {
+    constructor() {
+        super("openchat_event");
     }
 }
 
@@ -30,15 +30,42 @@ export class LoadedPreviousThreadMessages extends CustomEvent<boolean> {
     }
 }
 
-export class SentMessage extends CustomEvent<boolean> {
-    constructor(upToDate: boolean) {
-        super("openchat_event", { detail: upToDate });
+export class ReactionSelected extends CustomEvent<{ messageId: bigint; kind: "add" | "remove" }> {
+    constructor(messageId: bigint, kind: "add" | "remove") {
+        super("openchat_event", { detail: { messageId, kind } });
+    }
+}
+
+export class ThreadReactionSelected extends CustomEvent<{
+    messageId: bigint;
+    kind: "add" | "remove";
+}> {
+    constructor(messageId: bigint, kind: "add" | "remove") {
+        super("openchat_event", { detail: { messageId, kind } });
+    }
+}
+
+export class SentMessage extends Event {
+    constructor() {
+        super("openchat_event");
+    }
+}
+
+export class SendingMessage extends Event {
+    constructor() {
+        super("openchat_event");
     }
 }
 
 export class SentThreadMessage extends CustomEvent<EventWrapper<Message>> {
     constructor(event: EventWrapper<Message>) {
         super("openchat_event", { detail: event });
+    }
+}
+
+export class SendingThreadMessage extends Event {
+    constructor() {
+        super("openchat_event");
     }
 }
 

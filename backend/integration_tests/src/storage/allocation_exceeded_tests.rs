@@ -1,21 +1,19 @@
-use crate::client;
+use crate::env::ENV;
 use crate::rng::random_principal;
-use crate::setup::{return_env, setup_env, TestEnv};
 use crate::utils::tick_many;
+use crate::{client, TestEnv};
+use std::ops::Deref;
 use std::time::Duration;
 use storage_index_canister::add_or_update_users::UserConfig;
 
 #[test]
 fn old_files_deleted_when_allocation_exceeded() {
-    let TestEnv {
-        mut env,
-        canister_ids,
-        controller,
-    } = setup_env();
+    let mut wrapper = ENV.deref().get();
+    let TestEnv { env, canister_ids, .. } = wrapper.env();
 
     let user_id = random_principal();
     client::storage_index::happy_path::add_or_update_users(
-        &mut env,
+        env,
         canister_ids.user_index,
         canister_ids.storage_index,
         vec![UserConfig {
@@ -30,74 +28,68 @@ fn old_files_deleted_when_allocation_exceeded() {
     let file4 = vec![4u8; 600];
 
     let allocated_bucket_response1 =
-        client::storage_index::happy_path::allocated_bucket(&env, user_id, canister_ids.storage_index, &file1);
+        client::storage_index::happy_path::allocated_bucket(env, user_id, canister_ids.storage_index, &file1);
     let bucket1 = allocated_bucket_response1.canister_id;
     let file_id1 = allocated_bucket_response1.file_id;
-    client::storage_bucket::happy_path::upload_file(&mut env, user_id, bucket1, file_id1, file1, None);
+    client::storage_bucket::happy_path::upload_file(env, user_id, bucket1, file_id1, file1, None);
 
     env.advance_time(Duration::from_millis(1));
 
     let allocated_bucket_response2 =
-        client::storage_index::happy_path::allocated_bucket(&env, user_id, canister_ids.storage_index, &file2);
+        client::storage_index::happy_path::allocated_bucket(env, user_id, canister_ids.storage_index, &file2);
     let bucket2 = allocated_bucket_response2.canister_id;
     let file_id2 = allocated_bucket_response2.file_id;
-    client::storage_bucket::happy_path::upload_file(&mut env, user_id, bucket2, file_id2, file2, None);
+    client::storage_bucket::happy_path::upload_file(env, user_id, bucket2, file_id2, file2, None);
 
-    tick_many(&mut env, 10);
+    tick_many(env, 10);
 
     assert!(client::storage_bucket::happy_path::file_exists(
-        &env, user_id, bucket1, file_id1
+        env, user_id, bucket1, file_id1
     ));
     assert!(client::storage_bucket::happy_path::file_exists(
-        &env, user_id, bucket2, file_id2
+        env, user_id, bucket2, file_id2
     ));
 
     env.advance_time(Duration::from_millis(1));
 
     let allocated_bucket_response3 =
-        client::storage_index::happy_path::allocated_bucket(&env, user_id, canister_ids.storage_index, &file3);
+        client::storage_index::happy_path::allocated_bucket(env, user_id, canister_ids.storage_index, &file3);
     let bucket3 = allocated_bucket_response3.canister_id;
     let file_id3 = allocated_bucket_response3.file_id;
-    client::storage_bucket::happy_path::upload_file(&mut env, user_id, bucket3, file_id3, file3, None);
+    client::storage_bucket::happy_path::upload_file(env, user_id, bucket3, file_id3, file3, None);
 
-    tick_many(&mut env, 10);
+    tick_many(env, 10);
 
     assert!(!client::storage_bucket::happy_path::file_exists(
-        &env, user_id, bucket1, file_id1
+        env, user_id, bucket1, file_id1
     ));
     assert!(client::storage_bucket::happy_path::file_exists(
-        &env, user_id, bucket2, file_id2
+        env, user_id, bucket2, file_id2
     ));
     assert!(client::storage_bucket::happy_path::file_exists(
-        &env, user_id, bucket3, file_id3
+        env, user_id, bucket3, file_id3
     ));
 
     env.advance_time(Duration::from_millis(1));
 
     let allocated_bucket_response4 =
-        client::storage_index::happy_path::allocated_bucket(&env, user_id, canister_ids.storage_index, &file4);
+        client::storage_index::happy_path::allocated_bucket(env, user_id, canister_ids.storage_index, &file4);
     let bucket4 = allocated_bucket_response4.canister_id;
     let file_id4 = allocated_bucket_response4.file_id;
-    client::storage_bucket::happy_path::upload_file(&mut env, user_id, bucket4, file_id4, file4, None);
+    client::storage_bucket::happy_path::upload_file(env, user_id, bucket4, file_id4, file4, None);
 
-    tick_many(&mut env, 10);
+    tick_many(env, 10);
 
     assert!(!client::storage_bucket::happy_path::file_exists(
-        &env, user_id, bucket1, file_id1
+        env, user_id, bucket1, file_id1
     ));
     assert!(!client::storage_bucket::happy_path::file_exists(
-        &env, user_id, bucket2, file_id2
+        env, user_id, bucket2, file_id2
     ));
     assert!(!client::storage_bucket::happy_path::file_exists(
-        &env, user_id, bucket3, file_id3
+        env, user_id, bucket3, file_id3
     ));
     assert!(client::storage_bucket::happy_path::file_exists(
-        &env, user_id, bucket4, file_id4
+        env, user_id, bucket4, file_id4
     ));
-
-    return_env(TestEnv {
-        env,
-        canister_ids,
-        controller,
-    });
 }

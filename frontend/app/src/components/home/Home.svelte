@@ -171,7 +171,11 @@
         }
     }
 
-    async function newChatSelected(chatId: string, messageIndex?: number): Promise<void> {
+    async function newChatSelected(
+        chatId: string,
+        messageIndex?: number,
+        threadMessageIndex?: number
+    ): Promise<void> {
         let chat = $chatSummariesStore[chatId];
 
         // if this is an unknown chat let's preview it
@@ -201,7 +205,7 @@
         // if it's a known chat let's select it
         closeNotificationsForChat(chat.chatId);
         $eventListScrollTop = undefined;
-        client.setSelectedChat(chat.chatId, messageIndex);
+        client.setSelectedChat(chat.chatId, messageIndex, threadMessageIndex);
         resetRightPanel();
         hotGroups = { kind: "idle" };
     }
@@ -243,7 +247,11 @@
                     // if the chat in the url is different from the chat we already have selected
                     if (pathParams.chatId !== $selectedChatId?.toString()) {
                         console.log("PathParams: ", pathParams);
-                        newChatSelected(pathParams.chatId, pathParams.messageIndex);
+                        newChatSelected(
+                            pathParams.chatId,
+                            pathParams.messageIndex,
+                            pathParams.threadMessageIndex
+                        );
                     } else {
                         // if the chat in the url is *the same* as the selected chat
                         // *and* if we have a messageIndex specified in the url

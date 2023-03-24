@@ -20,6 +20,11 @@ export function addQueryStringParam(name: string, val: string): string {
     return [...qs.keys()].length > 0 ? `${path}?${qs}` : path;
 }
 
+export function removeThreadMessageIndex(threadMessageIndex: number, path: string): string {
+    const re = new RegExp(`(\\/${threadMessageIndex})(\\?.*)?$`);
+    return path.replace(re, "");
+}
+
 export function removeQueryStringParam(name: string): string {
     const path = window.location.pathname;
     const qs = new URLSearchParams(window.location.search);

@@ -16,6 +16,10 @@
         ChatUpdated,
         SentThreadMessage,
         ThreadSummary,
+        SendingMessage,
+        SendingThreadMessage,
+        ReactionSelected,
+        ThreadReactionSelected,
     } from "openchat-client";
     import { menuStore } from "../../stores/menu";
     import { tooltipStore } from "../../stores/tooltip";
@@ -56,6 +60,7 @@
     let previousScrollTop: number | undefined = undefined;
     let user = client.user;
     let scrollingToMessage = false;
+    let scrollToBottomOnSend = false;
 
     $: failedMessagesStore = client.failedMessagesStore;
     $: threadSummary = threadRootEvent?.event.thread;
@@ -118,7 +123,7 @@
         await tick();
         if (threadRootEvent === undefined) {
             if (ev instanceof LoadedNewMessages && !scrollingToMessage) {
-                onLoadedNewMessages(ev.detail);
+                onLoadedNewMessages();
             }
             if (ev instanceof LoadedPreviousMessages && !scrollingToMessage) {
                 onLoadedPreviousMessages(ev.detail);
@@ -130,12 +135,18 @@
                 loadMoreIfRequired();
             }
             if (ev instanceof SentMessage) {
-                afterSendMessage(ev.detail);
+                afterSendMessage();
+            }
+            if (ev instanceof SendingMessage) {
+                scrollToBottomOnSend = insideBottomThreshold();
+            }
+            if (ev instanceof ReactionSelected) {
+                afterReaction(ev.detail.messageId, ev.detail.kind);
             }
         }
         if (threadRootEvent !== undefined) {
             if (ev instanceof LoadedNewThreadMessages && !scrollingToMessage) {
-                onLoadedNewMessages(ev.detail);
+                onLoadedNewMessages();
             }
             if (ev instanceof LoadedPreviousThreadMessages && !scrollingToMessage) {
                 onLoadedPreviousMessages(ev.detail);
@@ -145,6 +156,44 @@
             }
             if (ev instanceof SentThreadMessage) {
                 afterSendThreadMessage(threadRootEvent, ev.detail);
+            }
+            if (ev instanceof SendingThreadMessage) {
+                scrollToBottomOnSend = insideBottomThreshold();
+            }
+            if (ev instanceof ThreadReactionSelected) {
+                afterThreadReaction(ev.detail.messageId, ev.detail.kind);
+            }
+        }
+    }
+
+    async function afterReaction(messageId: bigint, kind: "add" | "remove") {
+        if (
+            !client.moreNewMessagesAvailable(chat.chatId, threadRootEvent) &&
+            chat.latestMessage?.event?.messageId === messageId &&
+            kind === "add" &&
+            insideBottomThreshold()
+        ) {
+            await scrollBottom("smooth");
+        }
+    }
+
+    function findLastMessage(): Message | undefined {
+        for (let i = events.length - 1; i >= 0; i--) {
+            if (events[i].event.kind === "message") {
+                return events[i].event as Message;
+            }
+        }
+    }
+
+    async function afterThreadReaction(messageId: bigint, kind: "add" | "remove") {
+        if (
+            !client.moreNewMessagesAvailable(chat.chatId, threadRootEvent) &&
+            kind === "add" &&
+            insideBottomThreshold()
+        ) {
+            const lastMessage = findLastMessage();
+            if (lastMessage?.messageId === messageId) {
+                await scrollBottom("smooth");
             }
         }
     }
@@ -160,12 +209,16 @@
             latestEventTimestamp: event.timestamp,
         };
         client.markThreadSummaryUpdated(rootEvent.event.messageId.toString(), summary);
-        afterSendMessage(true);
+        afterSendMessage();
     }
 
-    async function afterSendMessage(upToDate: boolean) {
-        if (upToDate && insideBottomThreshold()) {
+    async function afterSendMessage() {
+        if (
+            !client.moreNewMessagesAvailable(chat.chatId, threadRootEvent) &&
+            scrollToBottomOnSend
+        ) {
             await scrollBottom("smooth");
+            scrollToBottomOnSend = false;
         }
     }
 
@@ -251,7 +304,10 @@
     function checkIfTargetMessageHasAThread(index: number) {
         const msgEvent = findMessageEvent(index);
         if (msgEvent && threadRootEvent === undefined) {
-            if (msgEvent.event.thread !== undefined && $pathParams.open) {
+            if (
+                msgEvent.event.thread !== undefined &&
+                ($pathParams.open || $pathParams.threadMessageIndex !== undefined)
+            ) {
                 client.openThread(msgEvent, false);
             } else {
                 client.closeThread();
@@ -338,8 +394,12 @@
         await loadMoreIfRequired(loadingFromUserScroll, initialLoad);
     }
 
-    async function onLoadedNewMessages(newLatestMessage: boolean) {
-        if (newLatestMessage && insideBottomThreshold()) {
+    async function onLoadedNewMessages() {
+        if (
+            !loadingFromUserScroll &&
+            !client.moreNewMessagesAvailable(chat.chatId, threadRootEvent) &&
+            insideBottomThreshold()
+        ) {
             // only scroll if we are now within threshold from the bottom
             await scrollBottom("smooth");
         }
