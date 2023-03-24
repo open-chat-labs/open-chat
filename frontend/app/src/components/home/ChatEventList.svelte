@@ -222,15 +222,20 @@
         }
     }
 
-    async function scrollBottom(behavior: ScrollBehavior = "auto"): Promise<void> {
-        return interruptScroll(() => {
-            if (messagesDiv) {
-                messagesDiv?.scrollTo({
-                    top: messagesDiv.scrollHeight - messagesDiv.clientHeight,
-                    behavior,
-                });
-            }
-        });
+    async function scrollBottom(
+        behavior: ScrollBehavior = "auto",
+        retries: number = 0
+    ): Promise<void> {
+        if (messagesDiv) {
+            messagesDiv?.scrollTo({
+                top: messagesDiv.scrollHeight - messagesDiv.clientHeight,
+                behavior,
+            });
+        }
+        if (retries < 3) {
+            // this weird retry loop appears to be necessary on safari. Three ... is the magic number
+            window.setTimeout(() => scrollBottom(behavior, retries + 1), 0);
+        }
     }
 
     function shouldLoadPreviousMessages() {
