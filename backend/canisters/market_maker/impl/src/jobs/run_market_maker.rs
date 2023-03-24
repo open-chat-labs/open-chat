@@ -5,7 +5,7 @@ use itertools::Itertools;
 use market_maker_canister::{CancelOrderRequest, MakeOrderRequest, OrderType};
 use std::cmp::Reverse;
 use std::collections::btree_map::Entry::Occupied;
-use std::collections::{BTreeMap, HashSet};
+use std::collections::BTreeMap;
 use std::time::Duration;
 use tracing::trace;
 use types::Milliseconds;
@@ -44,15 +44,7 @@ async fn run_single(exchange_client: Box<dyn Exchange>, config: Config) -> CallR
 
     let state = exchange_client.market_state().await?;
 
-    let (required_orders, optional_orders) = build_orders(state.latest_price, &config);
-
-    let orders_to_cancel = calculate_orders_to_cancel(
-        &state.open_orders,
-        Vec::from_iter(required_orders.clone().into_iter().chain(optional_orders)),
-        state.latest_price,
-        config.max_orders_to_cancel_per_iteration as usize,
-        config.price_increment,
-    );
+    let required_orders = build_orders(state.latest_price, &config);
 
     let orders_to_make = calculate_orders_to_make(
         &state.open_orders,
@@ -61,6 +53,13 @@ async fn run_single(exchange_client: Box<dyn Exchange>, config: Config) -> CallR
         state.latest_price,
         config.max_orders_to_make_per_iteration as usize,
         config.price_increment,
+    );
+
+    let orders_to_cancel = calculate_orders_to_cancel(
+        &state.open_orders,
+        state.latest_price,
+        (config.max_orders_per_direction as u64 + 1) * config.price_increment,
+        config.max_orders_to_cancel_per_iteration as usize,
     );
 
     let orders_made = orders_to_make.len();
@@ -116,54 +115,24 @@ fn calculate_orders_to_make(
 
 fn calculate_orders_to_cancel(
     open_orders: &[Order],
-    target_orders: Vec<MakeOrderRequest>,
     latest_price: u64,
+    max_diff_from_latest_price: u64,
     max_orders_to_cancel: usize,
-    increment: u64,
 ) -> Vec<CancelOrderRequest> {
-    let mut target_bid_prices = HashSet::new();
-    let mut target_ask_prices = HashSet::new();
-    for order in target_orders {
-        match order.order_type {
-            OrderType::Bid => target_bid_prices.insert(order.price),
-            OrderType::Ask => target_ask_prices.insert(order.price),
-        };
-    }
-
-    let mut bids = Vec::new();
-    let mut asks = Vec::new();
-    for order in open_orders {
-        match order.order_type {
-            OrderType::Bid => {
-                if order.price < latest_price
-                    && !target_bid_prices.contains(&round_to_nearest_increment(order.price, increment))
-                {
-                    bids.push(order);
-                }
-            }
-            OrderType::Ask => {
-                if order.price > latest_price
-                    && !target_ask_prices.contains(&round_to_nearest_increment(order.price, increment))
-                {
-                    asks.push(order);
-                }
-            }
-        };
-    }
-
-    bids.iter()
-        .chain(asks.iter())
-        .sorted_unstable_by_key(|o| Reverse(latest_price.abs_diff(o.price)))
+    open_orders
+        .iter()
+        .filter(|o| o.price.abs_diff(latest_price) > max_diff_from_latest_price)
+        .sorted_unstable_by_key(|o| Reverse(o.price.abs_diff(latest_price)))
         .take(max_orders_to_cancel)
         .map(|o| CancelOrderRequest { id: o.id.clone() })
         .collect()
 }
 
-fn build_orders(latest_price: u64, config: &Config) -> (Vec<MakeOrderRequest>, Vec<MakeOrderRequest>) {
+fn build_orders(latest_price: u64, config: &Config) -> Vec<MakeOrderRequest> {
     let starting_bid = starting_bid(latest_price, config.price_increment);
     let starting_ask = starting_ask(latest_price, config.price_increment);
 
-    let bids = (0..config.max_orders_per_direction as u64)
+    let bids = (0..config.min_orders_per_direction as u64)
         .map(|i| starting_bid.saturating_sub(i * config.price_increment))
         .take_while(|p| *p > 0)
         .skip_while(|p| *p >= config.max_buy_price)
@@ -171,31 +140,18 @@ fn build_orders(latest_price: u64, config: &Config) -> (Vec<MakeOrderRequest>, V
             order_type: OrderType::Bid,
             price: p,
             amount: config.order_size,
-        })
-        .enumerate()
-        .map(|(i, o)| (o, (i as u32) < config.min_orders_per_direction));
+        });
 
-    let asks = (0..config.max_orders_per_direction as u64)
+    let asks = (0..config.min_orders_per_direction as u64)
         .map(|i| starting_ask.saturating_add(i * config.price_increment))
         .skip_while(|p| *p <= config.min_sell_price)
         .map(|p| MakeOrderRequest {
             order_type: OrderType::Ask,
             price: p,
             amount: config.order_size,
-        })
-        .enumerate()
-        .map(|(i, o)| (o, (i as u32) < config.min_orders_per_direction));
+        });
 
-    let mut required_orders = Vec::new();
-    let mut optional_orders = Vec::new();
-    for (order, required) in bids.chain(asks) {
-        if required {
-            required_orders.push(order);
-        } else {
-            optional_orders.push(order);
-        }
-    }
-    (required_orders, optional_orders)
+    bids.chain(asks).collect()
 }
 
 fn round_to_nearest_increment(original: u64, increment: u64) -> u64 {
@@ -208,4 +164,26 @@ fn starting_bid(latest_price: u64, increment: u64) -> u64 {
 
 fn starting_ask(latest_price: u64, increment: u64) -> u64 {
     (((latest_price - 1) / increment) + 2) * increment
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use test_case::test_case;
+
+    #[test_case(100, 10, 90)]
+    #[test_case(1001, 100, 900)]
+    #[test_case(2999, 10, 2980)]
+    #[test_case(100011, 2, 100008)]
+    fn starting_bid_tests(latest_price: u64, increment: u64, expected: u64) {
+        assert_eq!(starting_bid(latest_price, increment), expected)
+    }
+
+    #[test_case(100, 10, 110)]
+    #[test_case(1001, 100, 1200)]
+    #[test_case(2999, 10, 3010)]
+    #[test_case(100011, 2, 100014)]
+    fn starting_ask_tests(latest_price: u64, increment: u64, expected: u64) {
+        assert_eq!(starting_ask(latest_price, increment), expected)
+    }
 }

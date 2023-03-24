@@ -5741,6 +5741,7 @@ dependencies = [
  "serde",
  "serde_bytes",
  "serializer",
+ "test-case",
  "tracing",
  "types",
  "user_index_canister_c2c_client",

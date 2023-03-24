@@ -36,3 +36,6 @@ tracing = { workspace = true }
 types = { path = "../../../libraries/types" }
 user_index_canister_c2c_client = { path = "../../user_index/c2c_client" }
 utils = { path = "../../../libraries/utils" }
+
+[dev-dependencies]
+test-case = { workspace = true }
