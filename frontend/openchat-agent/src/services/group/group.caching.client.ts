@@ -138,6 +138,18 @@ export class CachingGroupClient implements IGroupClient {
         threadRootMessageIndex: number | undefined,
         latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<GroupChatEvent>> {
+        // HACK - temporary sidestep of cache for thread events
+        if (threadRootMessageIndex !== undefined) {
+            return this.client
+                .chatEventsWindow(
+                    eventIndexRange,
+                    messageIndex,
+                    threadRootMessageIndex,
+                    latestClientEventIndex
+                )
+                .then((resp) => this.setCachedEvents(resp, threadRootMessageIndex));
+        }
+
         const [cachedEvents, missing, totalMiss] = await getCachedEventsWindow<GroupChatEvent>(
             this.db,
             eventIndexRange,
@@ -177,6 +189,18 @@ export class CachingGroupClient implements IGroupClient {
         threadRootMessageIndex: number | undefined,
         latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<GroupChatEvent>> {
+        // HACK - temporary sidestep of cache for thread events
+        if (threadRootMessageIndex !== undefined) {
+            return this.client
+                .chatEvents(
+                    eventIndexRange,
+                    startIndex,
+                    ascending,
+                    threadRootMessageIndex,
+                    latestClientEventIndex
+                )
+                .then((resp) => this.setCachedEvents(resp, threadRootMessageIndex));
+        }
         const [cachedEvents, missing] = await getCachedEvents<GroupChatEvent>(
             this.db,
             eventIndexRange,

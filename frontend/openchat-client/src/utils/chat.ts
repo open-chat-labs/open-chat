@@ -35,7 +35,7 @@ import {
     Tally,
     UnsupportedValueError,
     getContentAsText,
-    eventIsVisible
+    eventIsVisible,
 } from "openchat-shared";
 import { distinctBy, groupWhile } from "../utils/list";
 import { areOnSameDay } from "../utils/date";
@@ -1035,7 +1035,7 @@ export function mergeEventsAndLocalUpdates(
     events: EventWrapper<ChatEvent>[],
     unconfirmed: EventWrapper<Message>[],
     localUpdates: Record<string, LocalMessageUpdates>,
-    proposalTallies: Record<string, Tally>,
+    proposalTallies: Record<string, Tally>
 ): EventWrapper<ChatEvent>[] {
     const eventIndexes = new Set<number>();
 
@@ -1049,11 +1049,21 @@ export function mergeEventsAndLocalUpdates(
                     ? localUpdates[e.event.repliesTo.messageId.toString()]
                     : undefined;
 
-            const tallyUpdate = e.event.content.kind === "proposal_content"
-                ? proposalTallies[tallyKey(e.event.content.governanceCanisterId, e.event.content.proposal.id)]
-                : undefined;
+            const tallyUpdate =
+                e.event.content.kind === "proposal_content"
+                    ? proposalTallies[
+                          tallyKey(
+                              e.event.content.governanceCanisterId,
+                              e.event.content.proposal.id
+                          )
+                      ]
+                    : undefined;
 
-            if (updates !== undefined || replyContextUpdates !== undefined || tallyUpdate !== undefined) {
+            if (
+                updates !== undefined ||
+                replyContextUpdates !== undefined ||
+                tallyUpdate !== undefined
+            ) {
                 return {
                     ...e,
                     event: mergeLocalUpdates(e.event, updates, replyContextUpdates, tallyUpdate),
@@ -1095,7 +1105,12 @@ function mergeLocalUpdates(
     replyContextLocalUpdates: LocalMessageUpdates | undefined,
     tallyUpdate: Tally | undefined
 ): Message {
-    if (localUpdates === undefined && replyContextLocalUpdates === undefined && tallyUpdate === undefined) return message;
+    if (
+        localUpdates === undefined &&
+        replyContextLocalUpdates === undefined &&
+        tallyUpdate === undefined
+    )
+        return message;
 
     if (localUpdates?.deleted !== undefined) {
         return {
@@ -1188,16 +1203,17 @@ function mergeLocalUpdates(
         }
     }
 
-    if (tallyUpdate !== undefined &&
+    if (
+        tallyUpdate !== undefined &&
         message.content.kind === "proposal_content" &&
-        tallyUpdate.timestamp > message.content.proposal.tally.timestamp)
-    {
+        tallyUpdate.timestamp > message.content.proposal.tally.timestamp
+    ) {
         message.content = {
             ...message.content,
             proposal: {
                 ...message.content.proposal,
-                tally: tallyUpdate
-            }
+                tally: tallyUpdate,
+            },
         };
     }
     return message;
@@ -1264,9 +1280,12 @@ export function buildTransactionUrl(transfer: CryptocurrencyTransfer): string | 
     const rootCanister = cryptoLookup[transfer.token].rootCanister;
 
     switch (transfer.token) {
-        case "icp": return `https://dashboard.internetcomputer.org/transaction/${transfer.transactionHash}`;
-        case "ckbtc": return `https://dashboard.internetcomputer.org/bitcoin/transaction/${transfer.blockIndex}`;
-        default: return `https://dashboard.internetcomputer.org/sns/${rootCanister}/transaction/${transfer.blockIndex}`;
+        case "icp":
+            return `https://dashboard.internetcomputer.org/transaction/${transfer.transactionHash}`;
+        case "ckbtc":
+            return `https://dashboard.internetcomputer.org/bitcoin/transaction/${transfer.blockIndex}`;
+        default:
+            return `https://dashboard.internetcomputer.org/sns/${rootCanister}/transaction/${transfer.blockIndex}`;
     }
 }
 
