@@ -3,11 +3,11 @@ on:
     branches:
       - master
 
-name: On push to master
+name: Build caches
 
 jobs:
   build_debug_cache:
-    name: Build (debug + tests)
+    name: Build cache (debug + tests)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -25,7 +25,7 @@ jobs:
           args: --tests
 
   build_release_cache:
-    name: Build (release + wasm)
+    name: Build cache (release + wasm)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -39,28 +39,3 @@ jobs:
         with:
           shared-key: "build-release-wasm"
       - run: ./scripts/generate-all-canister-wasms.sh
-
-
-  push_canister_wasms:
-    name: Push canister wasms
-    runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-      contents: read
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Build canister wasms
-        run: ./scripts/docker-build.sh
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          role-to-assume: arn:aws:iam::253040722768:role/GitHubActions-PushCanisterWasms
-          aws-region: us-east-1
-      - name: Push canister wasms to S3
-        run: |
-          aws s3 cp --recursive wasms s3://openchat-canister-wasms/${GITHUB_SHA}
-      - name: Update latest commit Id
-        run: |
-          echo ${GITHUB_SHA} > latest
-          aws s3 mv latest s3://openchat-canister-wasms/latest
