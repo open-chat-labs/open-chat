@@ -28,8 +28,8 @@ async fn change_role(args: Args) -> Response {
     // Or lookup whether the user is a platform moderator to prevent them being demoted from owner
     let mut is_caller_platform_moderator = false;
     let mut is_user_platform_moderator = false;
-    let lookup_caller = !is_caller_owner && args.new_role.is_owner();
-    let lookup_target = is_caller_owner && is_user_owner;
+    let lookup_caller = !is_caller_owner && args.new_role.is_owner() && caller_id == args.user_id;
+    let lookup_target = is_caller_owner && is_user_owner && caller_id != args.user_id;
 
     if lookup_caller || lookup_target {
         let user_id = if lookup_caller { caller_id } else { args.user_id };
