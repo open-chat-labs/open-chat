@@ -79,6 +79,5 @@ pub struct UserSuspended {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct UserJoinedGroup {
     pub chat_id: ChatId,
-    pub as_super_admin: bool,
     pub latest_message_index: Option<MessageIndex>,
 }

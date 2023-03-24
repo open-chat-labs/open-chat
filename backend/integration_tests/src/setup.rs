@@ -1,10 +1,10 @@
 use crate::client::{create_canister, install_canister};
 use crate::rng::random_principal;
-use crate::utils::tick_many;
+use crate::utils::{local_bin, tick_many};
 use crate::{client, wasms, CanisterIds, T};
 use candid::{CandidType, Principal};
 use ic_ledger_types::{AccountIdentifier, BlockIndex, Tokens, DEFAULT_SUBACCOUNT};
-use ic_state_machine_tests::StateMachine;
+use ic_test_state_machine_client::StateMachine;
 use lazy_static::lazy_static;
 use std::collections::{HashMap, HashSet};
 use std::sync::Mutex;
@@ -31,7 +31,9 @@ pub fn setup_env() -> TestEnv {
 }
 
 pub fn setup_fresh_env() -> TestEnv {
-    let mut env = StateMachine::new();
+    let mut file_path = local_bin();
+    file_path.push("ic-test-state-machine");
+    let mut env = StateMachine::new(file_path.to_str().unwrap(), false);
     let controller = random_principal();
     let canister_ids = install_canisters(&mut env, controller);
 
@@ -53,22 +55,21 @@ fn try_take_existing_env() -> Option<TestEnv> {
 }
 
 fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterIds {
-    let nns_canister_ids: Vec<_> = (0..10).map(|_| create_canister(env, Some(vec![controller]))).collect();
-
+    let nns_canister_ids: Vec<_> = (0..10).map(|_| create_canister(env, controller)).collect();
     let icp_ledger_canister_id = nns_canister_ids[2];
     let cycles_minting_canister_id = nns_canister_ids[4];
 
-    let user_index_canister_id = create_canister(env, None);
-    let group_index_canister_id = create_canister(env, None);
-    let notifications_index_canister_id = create_canister(env, None);
-    let online_users_canister_id = create_canister(env, None);
-    let proposals_bot_canister_id = create_canister(env, None);
-    let storage_index_canister_id = create_canister(env, None);
-    let cycles_dispenser_canister_id = create_canister(env, None);
+    let user_index_canister_id = create_canister(env, controller);
+    let group_index_canister_id = create_canister(env, controller);
+    let notifications_index_canister_id = create_canister(env, controller);
+    let online_users_canister_id = create_canister(env, controller);
+    let proposals_bot_canister_id = create_canister(env, controller);
+    let storage_index_canister_id = create_canister(env, controller);
+    let cycles_dispenser_canister_id = create_canister(env, controller);
 
-    let local_user_index_canister_id = create_canister(env, Some(vec![user_index_canister_id]));
-    let local_group_index_canister_id = create_canister(env, Some(vec![group_index_canister_id]));
-    let notifications_canister_id = create_canister(env, Some(vec![notifications_index_canister_id]));
+    let local_user_index_canister_id = create_canister(env, user_index_canister_id);
+    let local_group_index_canister_id = create_canister(env, group_index_canister_id);
+    let notifications_canister_id = create_canister(env, notifications_index_canister_id);
 
     let cycles_dispenser_canister_wasm = wasms::CYCLES_DISPENSER.clone();
     let cycles_minting_canister_wasm = wasms::CYCLES_MINTING_CANISTER.clone();
@@ -98,7 +99,13 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
         wasm_version: Version::min(),
         test_mode: true,
     };
-    install_canister(env, user_index_canister_id, user_index_canister_wasm, user_index_init_args);
+    install_canister(
+        env,
+        controller,
+        user_index_canister_id,
+        user_index_canister_wasm,
+        user_index_init_args,
+    );
 
     let group_index_init_args = group_index_canister::init::Args {
         service_principals: vec![controller],
@@ -110,7 +117,13 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
         wasm_version: Version::min(),
         test_mode: true,
     };
-    install_canister(env, group_index_canister_id, group_index_canister_wasm, group_index_init_args);
+    install_canister(
+        env,
+        controller,
+        group_index_canister_id,
+        group_index_canister_wasm,
+        group_index_init_args,
+    );
 
     let notifications_index_init_args = notifications_index_canister::init::Args {
         service_principals: vec![controller],
@@ -124,6 +137,7 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
     };
     install_canister(
         env,
+        controller,
         notifications_index_canister_id,
         notifications_index_canister_wasm,
         notifications_index_init_args,
@@ -137,6 +151,7 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
     };
     install_canister(
         env,
+        controller,
         online_users_canister_id,
         online_users_canister_wasm,
         online_users_init_args,
@@ -153,6 +168,7 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
     };
     install_canister(
         env,
+        controller,
         proposals_bot_canister_id,
         proposals_bot_canister_wasm,
         proposals_bot_init_args,
@@ -171,6 +187,7 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
     };
     install_canister(
         env,
+        controller,
         storage_index_canister_id,
         storage_index_canister_wasm,
         storage_index_init_args,
@@ -200,6 +217,7 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
     };
     install_canister(
         env,
+        controller,
         cycles_dispenser_canister_id,
         cycles_dispenser_canister_wasm,
         cycles_dispenser_init_args,
@@ -265,7 +283,13 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
         send_whitelist: HashSet::new(),
         transfer_fee: Some(Tokens::from_e8s(10_000)),
     };
-    install_canister(env, icp_ledger_canister_id, icp_ledger_canister_wasm, icp_ledger_init_args);
+    install_canister(
+        env,
+        controller,
+        icp_ledger_canister_id,
+        icp_ledger_canister_wasm,
+        icp_ledger_init_args,
+    );
 
     let cycles_minting_canister_init_args = CyclesMintingCanisterInitPayload {
         ledger_canister_id: icp_ledger_canister_id,
@@ -275,6 +299,7 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
     };
     install_canister(
         env,
+        controller,
         cycles_minting_canister_id,
         cycles_minting_canister_wasm,
         cycles_minting_canister_init_args,

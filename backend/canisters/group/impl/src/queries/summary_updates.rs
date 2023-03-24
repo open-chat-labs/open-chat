@@ -6,7 +6,7 @@ use ic_cdk_macros::query;
 use std::cmp::max;
 use types::{
     EventIndex, EventWrapper, FrozenGroupInfo, GroupCanisterGroupChatSummaryUpdates, GroupPermissions, GroupSubtype, Mention,
-    Message, MessageIndex, Milliseconds, OptionUpdate, TimestampMillis, UserId, MAX_THREADS_IN_SUMMARY,
+    Message, MessageIndex, Milliseconds, OptionUpdate, TimestampMillis, MAX_THREADS_IN_SUMMARY,
 };
 
 #[query]
@@ -47,7 +47,6 @@ fn summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
             },
             role: if updates_from_events.role_changed { Some(participant.role) } else { None },
             mentions: updates_from_events.mentions,
-            owner_id: updates_from_events.owner_id,
             permissions: updates_from_events.permissions,
             affected_events: updates_from_events
                 .updated_events
@@ -73,6 +72,7 @@ fn summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
             notifications_muted: updates_from_events.notifications_muted,
             frozen: updates_from_events.frozen,
             wasm_version: None,
+            owner_id: None,
             date_last_pinned: updates_from_events.date_last_pinned,
             events_ttl: updates_from_events.events_ttl,
             newly_expired_messages,
@@ -95,7 +95,6 @@ struct UpdatesFromEvents {
     participants_changed: bool,
     role_changed: bool,
     mentions: Vec<Mention>,
-    owner_id: Option<UserId>,
     permissions: Option<GroupPermissions>,
     updated_events: Vec<(Option<MessageIndex>, EventIndex, TimestampMillis)>,
     is_public: Option<bool>,
@@ -216,9 +215,6 @@ fn process_events(
             ChatEventInternal::OwnershipTransferred(ownership) => {
                 if ownership.new_owner == participant.user_id || ownership.old_owner == participant.user_id {
                     updates.role_changed = true;
-                }
-                if updates.owner_id.is_none() {
-                    updates.owner_id = Some(ownership.new_owner);
                 }
             }
             ChatEventInternal::PermissionsChanged(p) => {

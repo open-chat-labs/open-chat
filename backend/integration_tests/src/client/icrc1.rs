@@ -19,10 +19,11 @@ pub mod icrc1_transfer {
 pub mod happy_path {
     use super::*;
     use candid::Principal;
+    use ic_base_types::PrincipalId;
     use ic_icrc1::endpoints::NumTokens;
     use ic_icrc1::Account;
     use ic_ledger_types::BlockIndex;
-    use ic_state_machine_tests::{PrincipalId, StateMachine};
+    use ic_test_state_machine_client::StateMachine;
     use types::CanisterId;
 
     pub fn transfer(

@@ -111,7 +111,7 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, B
 
         let permissions = &runtime_state.data.permissions;
         let can_add_participants = participant.role.can_add_members(permissions, runtime_state.data.is_public);
-        let can_unblock_users = args.allow_blocked_users && participant.role.can_block_users(permissions);
+        let can_unblock_users = args.allow_blocked_users && participant.role.can_unblock_users(permissions);
 
         if !can_add_participants && !can_unblock_users {
             return Err(Box::new(NotAuthorized));
@@ -190,7 +190,6 @@ fn commit(
             now,
             min_visible_event_index,
             min_visible_message_index,
-            as_super_admin: false,
             mute_notifications: runtime_state.data.is_public,
         });
     }

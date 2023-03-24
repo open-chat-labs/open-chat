@@ -104,7 +104,6 @@ impl RuntimeState {
             participant_count: data.participants.len(),
             role: participant.role,
             mentions: participant.most_recent_mentions(None, &data.events, now),
-            owner_id: data.owner_id,
             permissions: data.permissions.clone(),
             notifications_muted: participant.notifications_muted.value,
             metrics: data.events.metrics().clone(),
@@ -122,6 +121,7 @@ impl RuntimeState {
             ),
             frozen: data.frozen.value.clone(),
             wasm_version: Version::default(),
+            owner_id: Principal::anonymous().into(),
             date_last_pinned: data.date_last_pinned,
             events_ttl: data.events.get_events_time_to_live().value,
             expired_messages: data.events.expired_messages(now),
@@ -136,7 +136,6 @@ impl RuntimeState {
             args.now,
             args.min_visible_event_index,
             args.min_visible_message_index,
-            args.as_super_admin,
             args.mute_notifications,
         );
 
@@ -186,6 +185,7 @@ impl RuntimeState {
             date_created: self.data.date_created,
             members: self.data.participants.len(),
             admins: self.data.participants.admin_count(),
+            owners: self.data.participants.owner_count(),
             text_messages: chat_metrics.text_messages,
             image_messages: chat_metrics.image_messages,
             video_messages: chat_metrics.video_messages,
@@ -249,7 +249,6 @@ struct Data {
     pub activity_notification_state: ActivityNotificationState,
     pub pinned_messages: Vec<MessageIndex>,
     pub test_mode: bool,
-    pub owner_id: UserId,
     pub permissions: GroupPermissions,
     pub invite_code: Option<u64>,
     pub invite_code_enabled: bool,
@@ -332,7 +331,6 @@ impl Data {
             activity_notification_state: ActivityNotificationState::new(now),
             pinned_messages: Vec::new(),
             test_mode,
-            owner_id: creator_user_id,
             permissions: permissions.unwrap_or_default(),
             invite_code: None,
             invite_code_enabled: false,
@@ -391,6 +389,7 @@ pub struct Metrics {
     pub date_created: TimestampMillis,
     pub members: u32,
     pub admins: u32,
+    pub owners: u32,
     pub text_messages: u64,
     pub image_messages: u64,
     pub video_messages: u64,
@@ -429,7 +428,6 @@ struct AddParticipantArgs {
     now: TimestampMillis,
     min_visible_event_index: EventIndex,
     min_visible_message_index: MessageIndex,
-    as_super_admin: bool,
     mute_notifications: bool,
 }
 

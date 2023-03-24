@@ -41,6 +41,8 @@ members = [
     "backend/canisters/online_users/api",
     "backend/canisters/online_users/client",
     "backend/canisters/online_users/impl",
+    "backend/canisters/proposal_validation/api",
+    "backend/canisters/proposal_validation/impl",
     "backend/canisters/proposals_bot/api",
     "backend/canisters/proposals_bot/impl",
     "backend/canisters/storage_bucket/api",
@@ -113,7 +115,7 @@ ic-ledger-types = "0.4.2"
 ic-ledger-canister-core = { git = "https://github.com/dfinity/ic", rev = "7445081734e6d896d090295967d50710975c4f25" }
 ic-sns-governance = { git = "https://github.com/dfinity/ic", rev = "7445081734e6d896d090295967d50710975c4f25" }
 ic-stable-structures = "0.5.1"
-ic-state-machine-tests = { git = "https://github.com/dfinity/ic", rev = "7445081734e6d896d090295967d50710975c4f25" }
+ic-test-state-machine-client = { git = "https://github.com/dfinity/test-state-machine-client", rev = "1b16d2dbb0be28e3f8059fc76640d08a923dc65c" }
 ic-utils = "0.23.0"
 itertools = "0.10.5"
 lazy_static = "1.4.0"

@@ -22,6 +22,7 @@ fn accept_if_valid(runtime_state: &RuntimeState) {
             is_user
         }
         "suspend_user" | "unsuspend_user" => runtime_state.is_caller_platform_moderator(),
+        "set_user_upgrade_concurrency" => runtime_state.is_caller_platform_operator(),
         "add_platform_moderator"
         | "add_platform_operator"
         | "remove_platform_moderator"

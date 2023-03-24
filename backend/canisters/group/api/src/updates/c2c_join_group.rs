@@ -6,9 +6,10 @@ use types::{GroupCanisterGroupChatSummary, UserId};
 pub struct Args {
     pub user_id: UserId,
     pub principal: Principal,
-    pub as_super_admin: bool,
     pub invite_code: Option<u64>,
     pub correlation_id: u64,
+    #[serde(default)]
+    pub is_platform_moderator: bool,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

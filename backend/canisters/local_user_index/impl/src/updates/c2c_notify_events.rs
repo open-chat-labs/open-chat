@@ -87,7 +87,10 @@ fn handle_event(event: Event, runtime_state: &mut RuntimeState) {
             }
         }
         Event::SuperAdminStatusChanged(ev) => {
-            runtime_state.data.global_users.set_super_admin(ev.user_id, ev.is_super_admin);
+            runtime_state
+                .data
+                .global_users
+                .set_platform_moderator(ev.user_id, ev.is_super_admin);
         }
         Event::MaxConcurrentCanisterUpgradesChanged(ev) => {
             runtime_state.data.max_concurrent_canister_upgrades = ev.value;
@@ -102,7 +105,6 @@ fn handle_event(event: Event, runtime_state: &mut RuntimeState) {
                 ev.user_id.into(),
                 UserEvent::UserJoinedGroup(Box::new(UserJoinedGroup {
                     chat_id: ev.chat_id,
-                    as_super_admin: ev.as_super_admin,
                     latest_message_index: ev.latest_message_index,
                 })),
             );

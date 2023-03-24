@@ -146,7 +146,8 @@ struct Data {
     pub ledger_canister_ids: HashMap<Cryptocurrency, CanisterId>,
     pub avatar: Timestamped<Option<Avatar>>,
     pub test_mode: bool,
-    pub is_super_admin: bool,
+    #[serde(alias = "is_super_admin")]
+    pub is_platform_moderator: bool,
     pub hot_group_exclusions: HotGroupExclusions,
     pub username: String,
     pub bio: String,
@@ -209,7 +210,7 @@ impl Data {
             ledger_canister_ids: initialize_ledger_ids(),
             avatar: Timestamped::default(),
             test_mode,
-            is_super_admin: false,
+            is_platform_moderator: false,
             hot_group_exclusions: HotGroupExclusions::default(),
             username,
             bio: "".to_string(),

@@ -22,7 +22,7 @@ fn accept_if_valid(runtime_state: &RuntimeState) {
     if let Some(role) = runtime_state.data.participants.get_by_principal(&caller).map(|p| p.role) {
         let is_public_group = runtime_state.data.is_public;
         let is_valid = match method_name.as_str() {
-            "add_participants" => role.can_add_members(permissions, is_public_group) || role.can_block_users(permissions),
+            "add_participants" => role.can_add_members(permissions, is_public_group) || role.can_unblock_users(permissions),
             "add_reaction" | "remove_reaction" => role.can_react_to_messages(permissions),
             "block_user" => role.can_block_users(permissions),
             "change_role" => {
@@ -35,7 +35,7 @@ fn accept_if_valid(runtime_state: &RuntimeState) {
             "pin_message" | "pin_message_v2" => role.can_pin_messages(permissions),
             "remove_participant" => role.can_remove_members(permissions),
             "send_message" => role.can_send_messages(permissions) || role.can_reply_in_thread(permissions),
-            "unblock_user" => role.can_block_users(permissions),
+            "unblock_user" => role.can_unblock_users(permissions),
             "unpin_message" => role.can_pin_messages(permissions),
             "update_group_v2" => role.can_update_group(permissions),
             "update_permissions" => role.can_change_permissions(permissions),
