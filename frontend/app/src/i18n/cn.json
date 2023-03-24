@@ -150,10 +150,6 @@
     "submit": "提交",
     "edited": "已编辑",
     "copyInviteCode": "复制邀请码",
-    "dismissAsAdmin": "解除管理员权限",
-    "dismissAsAdminFailed": "无法解除管理员权限",
-    "makeAdmin": "升级为管理员",
-    "makeAdminFailed": "无法将该用户升级为管理员",
     "searchForUsername": "搜索用户名",
     "startNewChat": "新建聊天",
     "chatWith": "与{username}聊天",
@@ -169,8 +165,6 @@
     "yesterday": "昨天",
     "chatNotFound": "抱歉 - 找不到该群",
     "leftGroup": "您已退出该群聊",
-    "lastAdmin": "您是唯一的管理员，所以退出群聊失败",
-    "ownerCantLeave": "您必须在退出群聊之前转交群主",
     "owner": "群主",
     "admin": "管理员",
     "goToFirstMention": "查看最新未读提及",
@@ -735,5 +729,11 @@
         "extendTo": " 延伸到",
         "cannotExtend": "您只能在到期后三个月内延长您的会员资格"
     },
-    "currentUsage": "当前存储使用情况"
+    "currentUsage": "当前存储使用情况",
+    "promoteTo": "晋升为{role}",
+    "demoteTo": "降级为 {role}",
+    "promoteFailed": "无法提升到 {role}",
+    "demoteFailed": "无法降级到 {role}",
+    "ownerCantLeave": "您必须添加其他所有者才能离开群组",
+    "participant": "成员"
 }

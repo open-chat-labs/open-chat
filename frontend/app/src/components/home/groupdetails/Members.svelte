@@ -105,17 +105,23 @@
 </div>
 
 {#if me !== undefined && me.memberKind === "full_member"}
-    <Member me={true} member={me} />
+    <Member 
+        me
+        member={me} 
+        canPromoteToOwner={me.role !== "owner" && client.isPlatformModerator()}
+        canDemoteToAdmin={me.role === "owner" && client.canChangeRoles(chat.chatId, me.role, "admin")}
+        canDemoteToMember={me.role !== "participant" && client.canChangeRoles(chat.chatId, me.role, "participant")}
+        on:changeRole />
 {/if}
 
 <VirtualList bind:this={membersList} keyFn={(user) => user.userId} items={others} let:item>
     <Member
         me={false}
         member={item}
-        canTransferOwnership={client.canChangeRoles(chat.chatId, item.role, "owner")}
-        canMakeAdmin={client.canChangeRoles(chat.chatId, item.role, "admin")}
-        canDismissAdmin={item.role === "admin" &&
-            client.canChangeRoles(chat.chatId, "admin", "participant")}
+        canPromoteToOwner={item.role !== "owner" && client.canChangeRoles(chat.chatId, item.role, "owner")}
+        canPromoteToAdmin={item.role === "participant" && client.canChangeRoles(chat.chatId, item.role, "admin")}
+        canDemoteToAdmin={item.role === "owner" && client.canChangeRoles(chat.chatId, item.role, "admin")}
+        canDemoteToMember={item.role !== "participant" && client.canChangeRoles(chat.chatId, item.role, "participant")}
         canBlockUser={client.canBlockUsers(chat.chatId)}
         canUnblockUser={client.canUnblockUsers(chat.chatId)}
         canRemoveMember={client.canRemoveMembers(chat.chatId)}
@@ -123,9 +129,7 @@
         on:blockUser
         on:unblockUser
         on:chatWith
-        on:dismissAsAdmin
-        on:makeAdmin
-        on:transferOwnership
+        on:changeRole
         on:removeMember
         on:close={close} />
 </VirtualList>

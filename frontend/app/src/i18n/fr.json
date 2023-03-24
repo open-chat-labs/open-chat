@@ -171,10 +171,6 @@
     "submit": "Soumettre",
     "edited": "édité",
     "copyInviteCode": "Copier le code d'invitation",
-    "dismissAsAdmin": "Rejeter en tant qu'administrateur",
-    "dismissAsAdminFailed": "Impossible de rejeter l'utilisateur en tant qu'administrateur",
-    "makeAdmin": "Faire administrateur",
-    "makeAdminFailed": "Impossible de faire de l'utilisateur un administrateur",
     "searchForUsername": "Rechercher un nom d'utilisateur",
     "startNewChat": "Démarrer une nouvelle conversation",
     "chatWith": "Chattez avec {username}",
@@ -190,8 +186,6 @@
     "yesterday": "Hier",
     "chatNotFound": "Désolé - nous n'avons pas pu trouver le chat sélectionné",
     "leftGroup": "Vous avez réussi à quitter le groupe",
-    "lastAdmin": "Vous ne pouvez pas quitter le groupe car vous êtes le seul administrateur",
-    "ownerCantLeave": "Vous devez transférer la propriété avant de pouvoir quitter le groupe",
     "owner": "propriétaire",
     "admin": "administrateur",
     "goToFirstMention": "Aller à la première mention non lue",
@@ -734,5 +728,11 @@
         "extendTo": " Étendre à",
         "cannotExtend": "Vous ne pouvez prolonger votre adhésion que dans les trois mois suivant l'expiration"
     },
-    "currentUsage": "Utilisation actuelle du stockage"
+    "currentUsage": "Utilisation actuelle du stockage",
+    "promoteTo": "Promouvoir à {role}",
+    "demoteTo": "Rétrograder à {role}",
+    "promoteFailed": "Impossible de promouvoir en {role}",
+    "demoteFailed": "Impossible de rétrograder à {role}",
+    "ownerCantLeave": "Vous devez ajouter un autre propriétaire avant de pouvoir quitter le groupe",
+    "participant": "membre"
 }
