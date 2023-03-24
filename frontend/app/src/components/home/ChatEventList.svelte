@@ -177,14 +177,24 @@
         }
     }
 
+    function findLastMessage(): Message | undefined {
+        for (let i = events.length - 1; i >= 0; i--) {
+            if (events[i].event.kind === "message") {
+                return events[i].event as Message;
+            }
+        }
+    }
+
     async function afterThreadReaction(messageId: bigint, kind: "add" | "remove") {
         if (
             !client.moreNewMessagesAvailable(chat.chatId, threadRootEvent) &&
-            // chat.latestMessage?.event?.messageId === messageId &&
             kind === "add" &&
             insideBottomThreshold()
         ) {
-            await scrollBottom("smooth");
+            const lastMessage = findLastMessage();
+            if (lastMessage?.messageId === messageId) {
+                await scrollBottom("smooth");
+            }
         }
     }
 

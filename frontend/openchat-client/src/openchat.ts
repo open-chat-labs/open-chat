@@ -1239,6 +1239,18 @@ export class OpenChat extends EventTarget {
             });
     }
 
+    private dispatchReactionSelected(
+        threadRootMessageIndex: number | undefined,
+        messageId: bigint,
+        kind: "add" | "remove"
+    ): void {
+        if (threadRootMessageIndex === undefined) {
+            this.dispatchEvent(new ReactionSelected(messageId, kind));
+        } else {
+            this.dispatchEvent(new ThreadReactionSelected(messageId, kind));
+        }
+    }
+
     selectReaction(
         chatId: string,
         userId: string,
@@ -1268,11 +1280,7 @@ export class OpenChat extends EventTarget {
             });
         }
 
-        if (threadRootMessageIndex === undefined) {
-            this.dispatchEvent(new ReactionSelected(messageId, kind));
-        } else {
-            this.dispatchEvent(new ThreadReactionSelected(messageId, kind));
-        }
+        this.dispatchReactionSelected(threadRootMessageIndex, messageId, kind);
 
         const result = (
             chat.kind === "direct_chat"
@@ -2671,11 +2679,7 @@ export class OpenChat extends EventTarget {
         const kind = message.added ? "add" : "remove";
 
         if (matchingMessage !== undefined) {
-            if (message.threadRootMessageIndex === undefined) {
-                this.dispatchEvent(new ReactionSelected(message.messageId, kind));
-            } else {
-                this.dispatchEvent(new ThreadReactionSelected(message.messageId, kind));
-            }
+            this.dispatchReactionSelected(message.threadRootMessageIndex, message.messageId, kind);
 
             localMessageUpdates.markReaction(message.messageId.toString(), {
                 reaction: message.reaction,
@@ -3385,7 +3389,6 @@ export class OpenChat extends EventTarget {
                         clearSelectedChat();
                         this.dispatchEvent(new SelectedChatInvalid());
                     } else {
-                        console.debug("XXX: chatsResponse", chatsResponse);
                         chatUpdatedStore.set({
                             affectedEvents: chatsResponse.affectedEvents[selectedChatId] ?? [],
                         });
