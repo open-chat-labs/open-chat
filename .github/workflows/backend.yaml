@@ -38,6 +38,8 @@ jobs:
           override: true
       - run: rustup component add clippy
       - uses: Swatinem/rust-cache@v1
+        with:
+          shared-key: "build-debug-tests"
       - uses: arduino/setup-protoc@v1
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
@@ -57,6 +59,8 @@ jobs:
           toolchain: stable
           override: true
       - uses: Swatinem/rust-cache@v1
+        with:
+          shared-key: "build-debug-tests"
       - uses: actions-rs/cargo@v1
         with:
           command: test
@@ -74,6 +78,8 @@ jobs:
           override: true
       - run: rustup target add wasm32-unknown-unknown
       - uses: Swatinem/rust-cache@v1
+        with:
+          shared-key: "build-release-wasm"
       - uses: arduino/setup-protoc@v1
         with:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
