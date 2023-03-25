@@ -5,7 +5,7 @@ SHELL ["bash", "-c"]
 ARG git_commit_id
 ARG rust_version=1.68.0
 
-ENV GIT_COMMIT_id=$git_commit_id
+ENV GIT_COMMIT_ID=$git_commit_id
 ENV TZ=UTC
 
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone && \
