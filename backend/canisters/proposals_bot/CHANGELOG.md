@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Only retrieve active proposals ([#3369](https://github.com/open-ic/open-chat/pull/3369))
+
 ## [[2.0.647](https://github.com/open-ic/open-chat/releases/tag/v2.0.647-proposals_bot)] - 2023-03-24
 
 ### Fixed

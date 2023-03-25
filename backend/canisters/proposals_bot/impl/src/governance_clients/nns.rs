@@ -9,9 +9,6 @@ use types::{CanisterId, NnsNeuronId, ProposalId};
 pub const TOPIC_NEURON_MANAGEMENT: i32 = 1;
 pub const TOPIC_EXCHANGE_RATE: i32 = 2;
 
-pub const REWARD_STATUS_ACCEPT_VOTES: i32 = 1;
-pub const REWARD_STATUS_READ_TO_SETTLE: i32 = 2;
-
 pub async fn list_proposals(governance_canister_id: CanisterId, args: &ListProposalInfo) -> CallResult<Vec<ProposalInfo>> {
     let method_name = "list_proposals";
     let response: CallResult<(ListProposalInfoResponse,)> =
