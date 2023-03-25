@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.648](https://github.com/open-ic/open-chat/releases/tag/v2.0.648-local_group_index)] - 2023-02-24
+
 ### Added
 
 - C2C endpoint for setting group upgrade concurrency ([#3268](https://github.com/open-ic/open-chat/pull/3268))

@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.644](https://github.com/open-ic/open-chat/releases/tag/v2.0.644-group)] - 2023-03-24
+
 ### Added
 
 - Return group summary if user tries to join group they are already in ([#3296](https://github.com/open-ic/open-chat/pull/3296))
