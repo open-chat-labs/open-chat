@@ -2,6 +2,9 @@ use candid::CandidType;
 use serde::Deserialize;
 use types::{Proposal, ProposalId, Tally};
 
+pub const REWARD_STATUS_ACCEPT_VOTES: i32 = 1;
+pub const REWARD_STATUS_READY_TO_SETTLE: i32 = 2;
+
 pub trait RawProposal: TryInto<Proposal, Error = &'static str> {
     fn id(&self) -> ProposalId;
 }

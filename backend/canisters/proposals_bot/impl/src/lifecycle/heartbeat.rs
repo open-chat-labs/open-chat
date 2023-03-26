@@ -1,9 +1,7 @@
 use crate::governance_clients;
-use crate::governance_clients::common::RawProposal;
+use crate::governance_clients::common::{RawProposal, REWARD_STATUS_ACCEPT_VOTES, REWARD_STATUS_READY_TO_SETTLE};
 use crate::governance_clients::nns::governance_response_types::ProposalInfo;
-use crate::governance_clients::nns::{
-    ListProposalInfo, REWARD_STATUS_ACCEPT_VOTES, REWARD_STATUS_READ_TO_SETTLE, TOPIC_EXCHANGE_RATE, TOPIC_NEURON_MANAGEMENT,
-};
+use crate::governance_clients::nns::{ListProposalInfo, TOPIC_EXCHANGE_RATE, TOPIC_NEURON_MANAGEMENT};
 use crate::governance_clients::sns::governance_response_types::ProposalData;
 use crate::governance_clients::sns::ListProposals;
 use crate::model::nervous_systems::{ProposalToPush, ProposalsToUpdate};
@@ -57,7 +55,7 @@ mod retrieve_proposals {
                 limit: BATCH_SIZE_LIMIT,
                 before_proposal: proposals.iter().rev().next().and_then(|p| p.id.clone()),
                 exclude_topic: vec![TOPIC_NEURON_MANAGEMENT, TOPIC_EXCHANGE_RATE],
-                include_reward_status: vec![REWARD_STATUS_ACCEPT_VOTES, REWARD_STATUS_READ_TO_SETTLE],
+                include_reward_status: vec![REWARD_STATUS_ACCEPT_VOTES, REWARD_STATUS_READY_TO_SETTLE],
                 ..Default::default()
             };
 
@@ -86,6 +84,7 @@ mod retrieve_proposals {
             let list_proposals_args = ListProposals {
                 limit: BATCH_SIZE_LIMIT,
                 before_proposal: proposals.iter().rev().next().and_then(|p| p.id.clone()),
+                include_reward_status: vec![REWARD_STATUS_ACCEPT_VOTES, REWARD_STATUS_READY_TO_SETTLE],
                 ..Default::default()
             };
 

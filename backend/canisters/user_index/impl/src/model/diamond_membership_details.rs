@@ -19,12 +19,7 @@ pub struct DiamondMembershipPayment {
     pub amount_e8s: u64,
     pub block_index: u64,
     pub duration: DiamondMembershipPlanDuration,
-    #[serde(default = "bool_true")]
     pub manual_payment: bool,
-}
-
-fn bool_true() -> bool {
-    true
 }
 
 const THREE_MONTHS: Milliseconds = DiamondMembershipPlanDuration::ThreeMonths.as_millis();
