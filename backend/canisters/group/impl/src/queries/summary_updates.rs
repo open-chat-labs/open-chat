@@ -72,7 +72,6 @@ fn summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
             notifications_muted: updates_from_events.notifications_muted,
             frozen: updates_from_events.frozen,
             wasm_version: None,
-            owner_id: None,
             date_last_pinned: updates_from_events.date_last_pinned,
             events_ttl: updates_from_events.events_ttl,
             newly_expired_messages,

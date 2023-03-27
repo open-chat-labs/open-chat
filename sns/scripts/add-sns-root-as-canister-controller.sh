@@ -19,5 +19,6 @@ dfx -qq --identity $IDENTITY canister --network $NETWORK update-settings --add-c
 dfx -qq --identity $IDENTITY canister --network $NETWORK update-settings --add-controller $SNS_ROOT_CANISTER_ID cycles_dispenser
 dfx -qq --identity $IDENTITY canister --network $NETWORK update-settings --add-controller $SNS_ROOT_CANISTER_ID storage_index
 dfx -qq --identity $IDENTITY canister --network $NETWORK update-settings --add-controller $SNS_ROOT_CANISTER_ID proposal_validation
+dfx -qq --identity $IDENTITY canister --network $NETWORK update-settings --add-controller $SNS_ROOT_CANISTER_ID market_maker
 
 ./utils/cleanup_env.sh

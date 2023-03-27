@@ -168,10 +168,6 @@
     "submit": "Nộp",
     "edited": "Đã chỉnh sửa",
     "copyInviteCode": "Sao chép mã để mời",
-    "dismissAsAdmin": "Loại bỏ với tư cách Quản Trị Viên",
-    "dismissAsAdminFailed": "Không thể loại bỏ người dùng với tư cách Quản Trị Viên",
-    "makeAdmin": "Thăng cấp Quản Trị Viên",
-    "makeAdminFailed": "Thăng cấp Quản Trị Viên thất bại",
     "searchForUsername": "Tìm kiếm tên người dùng",
     "startNewChat": "Bắt đầu cuộc trò chuyện mới",
     "chatWith": "Trò chuyện với {username}",
@@ -187,8 +183,6 @@
     "yesterday": "Hôm qua",
     "chatNotFound": "Xin lỗi, chúng tôi không thể tìm thấy nội dung cuộc trò chuyện đã chọn",
     "leftGroup": "Bạn đã rời khỏi nhóm",
-    "lastAdmin": "Bạn không thể rời nhóm vì bạn là Quản Trị Viên duy nhất",
-    "ownerCantLeave": "Bạn phải chuyển quyền sở hữu trước khi có thể rời khỏi nhóm",
     "owner": "Chủ",
     "admin": "Quản trị viên",
     "goToFirstMention": "chuyển đến đề cập chưa đọc đầu tiên",
@@ -735,5 +729,11 @@
         "extendTo": " Mở rộng đến",
         "cannotExtend": "Bạn chỉ có thể gia hạn tư cách thành viên của mình trong vòng ba tháng kể từ khi hết hạn"
     },
-    "currentUsage": "Mức sử dụng bộ nhớ hiện tại"
+    "currentUsage": "Mức sử dụng bộ nhớ hiện tại",
+    "promoteTo": "Quảng cáo lên {role}",
+    "demoteTo": "Giảm xuống {role}",
+    "promoteFailed": "Không thể thăng hạng lên {role}",
+    "demoteFailed": "Không thể hạ cấp xuống {role}",
+    "ownerCantLeave": "Bạn phải thêm chủ sở hữu khác trước khi có thể rời khỏi nhóm",
+    "participant": "thành viên"
 }

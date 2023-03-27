@@ -172,10 +172,6 @@
     "submit": "einreichen",
     "edited": "bearbeitet",
     "copyInviteCode": "Einladungscode kopieren",
-    "dismissAsAdmin": "Als Administrator entlassen",
-    "dismissAsAdminFailed": "Benutzer kann nicht als Administrator entlassen werden",
-    "makeAdmin": "Machen Admin",
-    "makeAdminFailed": "Benutzer kann nicht zum Administrator gemacht werden",
     "searchForUsername": "Suchen Sie nach einem Benutzernamen",
     "startNewChat": "Starten Sie einen neuen Chat",
     "chatWith": "Chatten Sie mit {username}",
@@ -191,8 +187,6 @@
     "yesterday": "Gestern",
     "chatNotFound": "Entschuldigung - wir konnten den ausgewählten Chat nicht finden",
     "leftGroup": "Sie haben die Gruppe erfolgreich verlassen",
-    "lastAdmin": "Sie können die Gruppe nicht verlassen, da Sie der einzige Administrator sind",
-    "ownerCantLeave": "Sie müssen die Eigentümerschaft übertragen, bevor Sie die Gruppe verlassen können",
     "owner": "Eigentümer",
     "admin": "Administrator",
     "goToFirstMention": "Gehen Sie zur ersten ungelesenen Erwähnung",
@@ -736,5 +730,11 @@
         "extendTo": " Erweitern",
         "cannotExtend": "Sie können Ihre Mitgliedschaft nur innerhalb von drei Monaten nach Ablauf verlängern"
     },
-    "currentUsage": "Aktuelle Speichernutzung"
+    "currentUsage": "Aktuelle Speichernutzung",
+    "promoteTo": "Heraufstufen zu {role}",
+    "demoteTo": "Zurückstufen auf {role}",
+    "promoteFailed": "Heraufstufen auf {role} nicht möglich",
+    "demoteFailed": "Herabstufung auf {role} nicht möglich",
+    "ownerCantLeave": "Sie müssen einen weiteren Eigentümer hinzufügen, bevor Sie die Gruppe verlassen können",
+    "participant": "Mitglied"
 }

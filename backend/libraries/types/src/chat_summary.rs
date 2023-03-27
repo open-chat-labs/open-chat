@@ -2,7 +2,7 @@ use crate::{
     CanisterId, ChatId, EventIndex, EventWrapper, FrozenGroupInfo, GroupPermissions, Mention, Message, MessageIndex,
     Milliseconds, OptionUpdate, RangeSet, Role, TimestampMillis, UserId, Version, MAX_RETURNED_MENTIONS,
 };
-use candid::{CandidType, Principal};
+use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::cmp::max;
 use std::collections::HashSet;
@@ -125,9 +125,6 @@ pub struct GroupCanisterGroupChatSummary {
     pub role: Role,
     pub mentions: Vec<Mention>,
     pub wasm_version: Version,
-    // TODO: Delete me after the next full release cycles
-    #[serde(default = "anonymous_user")]
-    pub owner_id: UserId,
     pub permissions: GroupPermissions,
     pub notifications_muted: bool,
     pub metrics: ChatMetrics,
@@ -138,10 +135,6 @@ pub struct GroupCanisterGroupChatSummary {
     pub events_ttl: Option<Milliseconds>,
     pub expired_messages: RangeSet<MessageIndex>,
     pub next_message_expiry: Option<TimestampMillis>,
-}
-
-fn anonymous_user() -> UserId {
-    Principal::anonymous().into()
 }
 
 impl GroupCanisterGroupChatSummary {
@@ -191,7 +184,6 @@ impl GroupCanisterGroupChatSummary {
             role: updates.role.unwrap_or(self.role),
             mentions,
             wasm_version: updates.wasm_version.unwrap_or(self.wasm_version),
-            owner_id: anonymous_user(),
             permissions: updates.permissions.unwrap_or(self.permissions),
             notifications_muted: updates.notifications_muted.unwrap_or(self.notifications_muted),
             metrics: updates.metrics.unwrap_or(self.metrics),
@@ -220,9 +212,6 @@ pub struct GroupCanisterGroupChatSummaryUpdates {
     pub role: Option<Role>,
     pub mentions: Vec<Mention>,
     pub wasm_version: Option<Version>,
-    // TODO: Delete me after the next full release cycles
-    #[serde(default)]
-    pub owner_id: Option<UserId>,
     pub permissions: Option<GroupPermissions>,
     pub affected_events: Vec<EventIndex>,
     pub updated_events: Vec<(Option<MessageIndex>, EventIndex, TimestampMillis)>, // (Thread root message index, event index, timestamp)

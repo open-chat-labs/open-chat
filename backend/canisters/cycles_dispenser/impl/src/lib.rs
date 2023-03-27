@@ -60,7 +60,6 @@ impl State {
 struct Data {
     pub governance_principals: HashSet<Principal>,
     pub canisters: Canisters,
-    #[serde(default = "sns_root_canister")]
     pub sns_root_canister: Option<CanisterId>,
     pub max_top_up_amount: Cycles,
     pub min_interval: Milliseconds,
@@ -70,10 +69,6 @@ struct Data {
     pub cycles_minting_canister: CanisterId,
     pub cycles_top_up_pending_notification: Option<BlockIndex>,
     pub test_mode: bool,
-}
-
-fn sns_root_canister() -> Option<CanisterId> {
-    Some(CanisterId::from_text("3e3x2-xyaaa-aaaaq-aaalq-cai").unwrap())
 }
 
 impl Data {

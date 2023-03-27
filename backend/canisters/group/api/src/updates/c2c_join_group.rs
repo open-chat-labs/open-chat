@@ -8,7 +8,6 @@ pub struct Args {
     pub principal: Principal,
     pub invite_code: Option<u64>,
     pub correlation_id: u64,
-    #[serde(default)]
     pub is_platform_moderator: bool,
 }
 

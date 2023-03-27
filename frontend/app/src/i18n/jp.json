@@ -172,10 +172,6 @@
     "submit": "提出",
     "edited": "編集",
     "copyInviteCode": "招待コードをコピー",
-    "dismissAsAdmin": "管理者を解任する",
-    "dismissAsAdminFailed": "管理者としてユーザーを解任できません",
-    "makeAdmin": "管理者にする",
-    "makeAdminFailed": "ユーザーを管理者にすることができません",
     "searchForUsername": "ユーザー名を検索する",
     "startNewChat": "新規チャットを開始する",
     "chatWith": "{username}とチャット",
@@ -191,8 +187,6 @@
     "yesterday": "昨日",
     "chatNotFound": "申し訳ございません - 選択されたチャットが見つかりませんでした",
     "leftGroup": "グループからの退出が完了しました",
-    "lastAdmin": "管理者はあなただけなので、グループから離れることはできません",
-    "ownerCantLeave": "グループから離脱する前に、所有権を譲渡する必要があります",
     "owner": "オーナー",
     "admin": "管理者",
     "goToFirstMention": "最初の未読メンションに移動する",
@@ -735,5 +729,11 @@
         "extendTo": " にまで及びます",
         "cannotExtend": "有効期限が切れてから 3 か月以内に限り、メンバーシップを延長できます"
     },
-    "currentUsage": "現在のストレージ使用量"
+    "currentUsage": "現在のストレージ使用量",
+    "promoteTo": "{role} に昇格",
+    "demoteTo": "{role}に降格",
+    "promoteFailed": "{role} に昇格できません",
+    "demoteFailed": "{role} に降格できません",
+    "ownerCantLeave": "グループを退会するには、別の所有者を追加する必要があります",
+    "participant": "メンバー"
 }

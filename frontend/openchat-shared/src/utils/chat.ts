@@ -7,6 +7,7 @@ import {
     EventWrapper,
     extractUserIdsFromMentions,
     IndexRange,
+    MemberRole,
     MessageContent,
     UnsupportedValueError,
 } from "../domain";
@@ -211,4 +212,14 @@ export function eventIsVisible(ew: EventWrapper<ChatEvent>): boolean {
         ew.event.kind !== "thread_updated" &&
         ew.event.kind !== "proposals_updated"
     );
+}
+
+export function compareRoles(a: MemberRole, b: MemberRole): number {
+    if (a === b) return 0;
+    if (a === "owner") return 1;
+    if (b === "owner") return -1;
+    if (a === "admin") return 1;
+    if (b === "admin") return -1;
+    if (a === "participant") return 1;
+    return -1;
 }

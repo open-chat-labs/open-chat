@@ -167,10 +167,6 @@
     "submit": "Ingresar",
     "edited": "editado",
     "copyInviteCode": "Copiar código de invitación",
-    "dismissAsAdmin": "Remover como administrador",
-    "dismissAsAdminFailed": "No se puede remover al usuario como administrador",
-    "makeAdmin": "Hacer administrador",
-    "makeAdminFailed": "No podemos hacer administrador este usuario",
     "searchForUsername": "Buscar un nombre de usuario",
     "startNewChat": "Iniciar un nuevo chat",
     "chatWith": "Chatear con {username}",
@@ -186,8 +182,6 @@
     "yesterday": "Ayer",
     "chatNotFound": "Lo sentimos, no pudimos encontrar el chat seleccionado",
     "leftGroup": "Has salido del grupo con éxito",
-    "lastAdmin": "No puedes abandonar el grupo ya que eres el único administrador",
-    "ownerCantLeave": "Debes transferir la propiedad antes de poder abandonar el grupo",
     "owner": "dueño",
     "admin": "admin",
     "goToFirstMention": "Ir a la primera mención no leída",
@@ -735,5 +729,11 @@
         "extendTo": " Extenderse a",
         "cannotExtend": "Solo puede extender su membresía dentro de los tres meses posteriores al vencimiento"
     },
-    "currentUsage": "Uso de almacenamiento actual"
+    "currentUsage": "Uso de almacenamiento actual",
+    "promoteTo": "Promocionar a {role}",
+    "demoteTo": "Degradar a {role}",
+    "promoteFailed": "No se puede promocionar a {role}",
+    "demoteFailed": "No se puede degradar a {role}",
+    "ownerCantLeave": "Debes agregar otro propietario antes de poder abandonar el grupo.",
+    "participant": "miembro"
 }
