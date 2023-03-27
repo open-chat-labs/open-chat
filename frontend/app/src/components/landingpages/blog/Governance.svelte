@@ -17,6 +17,10 @@
             >What you need to know about SNS DAOs</ExternalLink
         >.
     </p>
+    <p>
+        The dev team beacon neuron id is<br>
+        <code>9adf350c7388dfe7277213a5fc8d817c2d5bc6ff6be5870f0d33d9d6dab01fc6</code>        
+    </p>
 </section>
 <section>
     <h2>Neurons</h2>
