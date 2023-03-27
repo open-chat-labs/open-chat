@@ -298,6 +298,8 @@ import {
     UpdatesResult,
     DiamondMembershipDuration,
     DiamondMembershipDetails,
+    UpdateMarketMakerConfigArgs,
+    UpdateMarketMakerConfigResponse,
     compareRoles,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
@@ -3672,7 +3674,13 @@ export class OpenChat extends EventTarget {
             });
     }
 
-    diamondDuraionToMs = diamondDurationToMs;
+    updateMarketMakerConfig(
+        config: UpdateMarketMakerConfigArgs
+    ): Promise<UpdateMarketMakerConfigResponse> {
+        return this.api.updateMarketMakerConfig(config);
+    }
+
+    diamondDurationToMs = diamondDurationToMs;
 
     /**
      * Reactive state provided in the form of svelte stores
