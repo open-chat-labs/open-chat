@@ -121,7 +121,6 @@ impl RuntimeState {
             ),
             frozen: data.frozen.value.clone(),
             wasm_version: Version::default(),
-            owner_id: Principal::anonymous().into(),
             date_last_pinned: data.date_last_pinned,
             events_ttl: data.events.get_events_time_to_live().value,
             expired_messages: data.events.expired_messages(now),
@@ -242,8 +241,6 @@ struct Data {
     pub user_index_canister_id: CanisterId,
     pub local_user_index_canister_id: CanisterId,
     pub notifications_canister_id: CanisterId,
-    // Remove this after next upgrade
-    #[serde(skip_deserializing, default = "initialize_ledger_ids")]
     pub ledger_canister_ids: HashMap<Cryptocurrency, CanisterId>,
     pub proposals_bot_user_id: UserId,
     pub activity_notification_state: ActivityNotificationState,

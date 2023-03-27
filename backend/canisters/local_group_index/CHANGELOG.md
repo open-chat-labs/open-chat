@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Removed
+
+- Removed temporary code needed for release ([#3375](https://github.com/open-ic/open-chat/pull/3375))
+  
 ## [[2.0.648](https://github.com/open-ic/open-chat/releases/tag/v2.0.648-local_group_index)] - 2023-02-24
 
 ### Added
