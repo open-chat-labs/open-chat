@@ -1,4 +1,4 @@
-use crate::{ChatId, EventWrapper, Message, MessageIndex, Reaction, TimestampMillis, Timestamped, User, UserId};
+use crate::{ChatId, EventWrapper, Message, MessageIndex, Reaction, TimestampMillis, User, UserId};
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 
