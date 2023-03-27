@@ -18,6 +18,7 @@ echo "Downloading wasms"
 ./download-canister-wasm.sh group_index $WASM_SRC
 ./download-canister-wasm.sh local_group_index $WASM_SRC
 ./download-canister-wasm.sh local_user_index $WASM_SRC
+./download-canister-wasm.sh market_maker $WASM_SRC
 ./download-canister-wasm.sh notifications $WASM_SRC
 ./download-canister-wasm.sh notifications_index $WASM_SRC
 ./download-canister-wasm.sh online_users $WASM_SRC
