@@ -27,7 +27,6 @@ pub struct ChatEvents {
     frozen: bool,
     events_ttl: Timestamped<Option<Milliseconds>>,
     expiring_events: ExpiringEvents,
-    #[serde(default)]
     last_updated_timestamps: LastUpdatedTimestamps,
 }
 
