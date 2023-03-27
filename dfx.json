@@ -79,11 +79,11 @@
       "wasm": "wasms/cycles_dispenser.wasm.gz",
       "build": "./scripts/generate-wasm.sh cycles_dispenser"
     },
-    "exchange_client": {
+    "market_maker": {
       "type": "custom",
-      "candid": "backend/canisters/exchange_client/api/can.did",
-      "wasm": "wasms/exchange_client.wasm.gz",
-      "build": "./scripts/generate-wasm.sh exchange_client"
+      "candid": "backend/canisters/market_maker/api/can.did",
+      "wasm": "wasms/market_maker.wasm.gz",
+      "build": "./scripts/generate-wasm.sh market_maker"
     },
     "website": {
       "source": ["frontend/app/build", "frontend/app/public"],
