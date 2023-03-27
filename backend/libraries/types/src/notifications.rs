@@ -1,4 +1,4 @@
-use crate::{ChatId, EventWrapper, Message, MessageIndex, Reaction, TimestampMillis, User, UserId};
+use crate::{ChatId, EventWrapper, Message, MessageIndex, Reaction, TimestampMillis, Timestamped, User, UserId};
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 
@@ -6,6 +6,8 @@ use serde::{Deserialize, Serialize};
 pub struct NotificationEnvelope {
     pub recipients: Vec<UserId>,
     pub notification_bytes: Vec<u8>,
+    #[serde(default)]
+    pub timestamp: TimestampMillis,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
