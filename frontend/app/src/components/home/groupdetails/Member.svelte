@@ -5,7 +5,6 @@
     import AccountRemoveOutline from "svelte-material-icons/AccountRemoveOutline.svelte";
     import AccountPlusOutline from "svelte-material-icons/AccountPlusOutline.svelte";
     import MinusCircleOutline from "svelte-material-icons/MinusCircleOutline.svelte";
-    import AccountArrowLeftOutline from "svelte-material-icons/AccountArrowLeftOutline.svelte";
     import Cancel from "svelte-material-icons/Cancel.svelte";
     import Avatar from "../../Avatar.svelte";
     import MenuIcon from "../../MenuIcon.svelte";
@@ -15,20 +14,21 @@
     import { _ } from "svelte-i18n";
     import { createEventDispatcher, getContext } from "svelte";
     import { iconSize } from "../../../stores/iconSize";
-    import { now } from "../../../stores/time";
     import ViewUserProfile from "../profile/ViewUserProfile.svelte";
     import type { OpenChat, BlockedMember, FullMember } from "openchat-client";
     import { AvatarSize } from "openchat-client";
     import FilteredUsername from "../../FilteredUsername.svelte";
+    import type { MemberRole } from "openchat-shared";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
     export let me: boolean;
     export let member: FullMember | BlockedMember;
-    export let canDismissAdmin: boolean = false;
-    export let canMakeAdmin: boolean = false;
-    export let canTransferOwnership: boolean = false;
+    export let canPromoteToOwner: boolean = false;
+    export let canPromoteToAdmin: boolean = false;
+    export let canDemoteToAdmin: boolean = false;
+    export let canDemoteToMember: boolean = false;
     export let canRemoveMember: boolean = false;
     export let canBlockUser: boolean = false;
     export let canUnblockUser: boolean = false;
@@ -40,29 +40,30 @@
     let viewProfile = false;
 
     $: showMenu =
-        canDismissAdmin ||
-        canMakeAdmin ||
-        canTransferOwnership ||
+        canPromoteToOwner ||
+        canPromoteToAdmin ||
+        canDemoteToAdmin ||
+        canDemoteToMember ||
         canRemoveMember ||
         canBlockUser ||
         canUnblockUser;
 
     $: isBlocked = member.memberKind === "blocked_member";
 
+    $: ownerText = $_("owner");
+    $: adminText = $_("admin");
+    $: memberText = $_("member");
+
     function removeUser() {
         dispatch("removeMember", member.userId);
     }
 
-    function transferOwnership() {
-        dispatch("transferOwnership", member);
-    }
-
-    function dismissAsAdmin() {
-        dispatch("dismissAsAdmin", member.userId);
-    }
-
-    function makeAdmin() {
-        dispatch("makeAdmin", member.userId);
+    function changeRole(role: MemberRole) {
+        dispatch("changeRole", { 
+            userId: member.userId, 
+            newRole: role, 
+            oldRole: member.role
+        });
     }
 
     function memberSelected() {
@@ -147,22 +148,40 @@
                                 </MenuItem>
                             {/if}
                         {:else}
-                            {#if canDismissAdmin}
-                                <MenuItem on:click={dismissAsAdmin}>
-                                    <AccountRemoveOutline
-                                        size={$iconSize}
-                                        color={"var(--icon-inverted-txt)"}
-                                        slot="icon" />
-                                    <div slot="text">{$_("dismissAsAdmin")}</div>
-                                </MenuItem>
-                            {/if}
-                            {#if canMakeAdmin}
-                                <MenuItem on:click={makeAdmin}>
+                            {#if canPromoteToOwner}
+                                <MenuItem on:click={() => changeRole("owner")}>
                                     <AccountPlusOutline
                                         size={$iconSize}
                                         color={"var(--icon-inverted-txt)"}
                                         slot="icon" />
-                                    <div slot="text">{$_("makeAdmin")}</div>
+                                    <div slot="text">{$_("promoteTo", { values: { role: ownerText } })}</div>
+                                </MenuItem>
+                            {/if}
+                            {#if canPromoteToAdmin}
+                                <MenuItem on:click={() => changeRole("admin")}>
+                                    <AccountPlusOutline
+                                        size={$iconSize}
+                                        color={"var(--icon-inverted-txt)"}
+                                        slot="icon" />
+                                    <div slot="text">{$_("promoteTo", { values: { role: adminText } })}</div>
+                                </MenuItem>
+                            {/if}
+                            {#if canDemoteToAdmin}
+                                <MenuItem on:click={() => changeRole("admin")}>
+                                    <AccountRemoveOutline
+                                        size={$iconSize}
+                                        color={"var(--icon-inverted-txt)"}
+                                        slot="icon" />
+                                    <div slot="text">{$_("demoteTo", { values: { role: adminText } })}</div>
+                                </MenuItem>
+                            {/if}
+                            {#if canDemoteToMember}
+                                <MenuItem on:click={() => changeRole("participant")}>
+                                    <AccountRemoveOutline
+                                        size={$iconSize}
+                                        color={"var(--icon-inverted-txt)"}
+                                        slot="icon" />
+                                    <div slot="text">{$_("demoteTo", { values: { role: memberText } })}</div>
                                 </MenuItem>
                             {/if}
                             {#if canBlockUser}
@@ -181,15 +200,6 @@
                                         color={"var(--icon-inverted-txt)"}
                                         slot="icon" />
                                     <div slot="text">{$_("remove")}</div>
-                                </MenuItem>
-                            {/if}
-                            {#if canTransferOwnership}
-                                <MenuItem on:click={transferOwnership}>
-                                    <AccountArrowLeftOutline
-                                        size={$iconSize}
-                                        color={"var(--icon-inverted-txt)"}
-                                        slot="icon" />
-                                    <div slot="text">{$_("transferOwnership")}</div>
                                 </MenuItem>
                             {/if}
                         {/if}

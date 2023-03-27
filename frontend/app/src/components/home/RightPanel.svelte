@@ -10,7 +10,6 @@
         AddMembersResponse,
         ChatEvent,
         EventWrapper,
-        FullMember,
         GroupChatSummary,
         GroupRules,
         MemberRole,
@@ -21,6 +20,7 @@
     import { toastStore } from "../../stores/toast";
     import { createEventDispatcher, getContext } from "svelte";
     import type { Readable } from "svelte/store";
+    import { _ } from "svelte-i18n";
     import { numberOfColumns } from "stores/layout";
     import Thread from "./thread/Thread.svelte";
     import ProposalGroupFilters from "./ProposalGroupFilters.svelte";
@@ -28,6 +28,7 @@
     import { logger } from "../../utils/logging";
     import { pathParams } from "../../routes";
     import page from "page";
+    import { compareRoles } from "openchat-shared";
 
     const dispatch = createEventDispatcher();
 
@@ -51,15 +52,10 @@
     $: groupChat = selectedChatStore as Readable<GroupChatSummary>;
     $: empty = $rightPanelHistory.length === 0;
 
-    function onDismissAsAdmin(ev: CustomEvent<string>): void {
+    function onChangeRole(ev: CustomEvent<{ userId: string; newRole: MemberRole; oldRole: MemberRole }>): void {
         if ($selectedChatId !== undefined) {
-            dismissAsAdmin($selectedChatId, ev.detail);
-        }
-    }
-
-    function onMakeAdmin(ev: CustomEvent<string>): void {
-        if ($selectedChatId !== undefined) {
-            makeAdmin($selectedChatId, ev.detail);
+            let {userId, newRole, oldRole} = ev.detail;
+            changeRole($selectedChatId, userId, newRole, oldRole);
         }
     }
 
@@ -79,17 +75,6 @@
     function onBlockUser(ev: CustomEvent<{ userId: string }>) {
         if ($selectedChatId !== undefined) {
             client.blockUser($selectedChatId, ev.detail.userId);
-        }
-    }
-
-    async function onTransferOwnership(ev: CustomEvent<FullMember>) {
-        if ($selectedChatId !== undefined) {
-            const success = await transferOwnership($selectedChatId, currentUser.userId, ev.detail);
-            if (success) {
-                toastStore.showSuccessToast("transferOwnershipSucceeded");
-            } else {
-                toastStore.showFailureToast("transferOwnershipFailed");
-            }
         }
     }
 
@@ -145,88 +130,40 @@
         }) as EventWrapper<Message> | undefined;
     }
 
-    function transferOwnershipLocally(chatId: string, me: string, them: string): void {
-        chatStateStore.updateProp(chatId, "members", (ps) =>
-            ps.map((p) => {
-                if (p.userId === them) {
-                    return { ...p, role: "owner" as MemberRole };
-                }
-                if (p.userId === me) {
-                    return { ...p, role: "admin" as MemberRole };
-                }
-                return p;
-            })
-        );
-    }
+    function changeRole(chatId: string, userId: string, newRole: MemberRole, oldRole: MemberRole): Promise<void> {
+        if (newRole === oldRole) return Promise.resolve();
 
-    function undoTransferOwnershipLocally(
-        chatId: string,
-        me: string,
-        them: string,
-        theirRole: MemberRole
-    ): void {
-        chatStateStore.updateProp(chatId, "members", (ps) =>
-            ps.map((p) => {
-                if (p.userId === them) {
-                    return { ...p, role: theirRole };
-                }
-                if (p.userId === me) {
-                    return { ...p, role: "owner" as MemberRole };
-                }
-                return p;
-            })
-        );
-    }
+        let promotion = compareRoles(newRole, oldRole) > 0;
 
-    function transferOwnership(chatId: string, me: string, them: FullMember): Promise<boolean> {
-        transferOwnershipLocally(chatId, me, them.userId);
+        function onError(err: any) {
+            // Revert the local store
+            chatStateStore.updateProp(chatId, "members", (ps) =>
+                ps.map((p) => (p.userId === userId ? { ...p, role: oldRole } : p))
+            );
+
+            let roleText = $_(newRole);
+            let message = $_(promotion ? "promoteFailed" : "demoteFailed", { values: { role: roleText } });
+            if (err) {
+                logger.error(message, err);
+            }
+            toastStore.showFailureToast(message);
+        }
+
+        // Update the local store
+        chatStateStore.updateProp(chatId, "members", (ps) =>
+            ps.map((p) => (p.userId === userId ? { ...p, role: newRole } : p))
+        );
+
+        // Call backend to changeRole
         return client
-            .changeRole(chatId, them.userId, "owner")
+            .changeRole(chatId, userId, newRole)
             .then((resp) => {
                 if (resp !== "success") {
-                    undoTransferOwnershipLocally(chatId, me, them.userId, them.role);
-                    return false;
-                }
-                return true;
-            })
-            .catch((err) => {
-                undoTransferOwnershipLocally(chatId, me, them.userId, them.role);
-                logger.error("Unable to transfer ownership", err);
-                return false;
-            });
-    }
-
-    function dismissAsAdmin(chatId: string, userId: string): Promise<void> {
-        chatStateStore.updateProp(chatId, "members", (ps) =>
-            ps.map((p) => (p.userId === userId ? { ...p, role: "participant" as MemberRole } : p))
-        );
-        return client
-            .changeRole(chatId, userId, "participant")
-            .then((resp) => {
-                if (resp !== "success") {
-                    toastStore.showFailureToast("dismissAsAdminFailed");
+                    onError(undefined);
                 }
             })
             .catch((err) => {
-                logger.error("Unable to dismiss as admin", err);
-                toastStore.showFailureToast("dismissAsAdminFailed");
-            });
-    }
-
-    function makeAdmin(chatId: string, userId: string): Promise<void> {
-        chatStateStore.updateProp(chatId, "members", (ps) =>
-            ps.map((p) => (p.userId === userId ? { ...p, role: "admin" as MemberRole } : p))
-        );
-        return client
-            .changeRole(chatId, userId, "admin")
-            .then((resp) => {
-                if (resp !== "success") {
-                    toastStore.showFailureToast("makeAdminFailed");
-                }
-            })
-            .catch((err) => {
-                logger.error("Unable to make admin", err);
-                toastStore.showFailureToast("makeAdminFailed");
+                onError(err);
             });
     }
 
@@ -357,12 +294,10 @@
             on:close={popHistory}
             on:blockUser={onBlockUser}
             on:unblockUser={unblockUser}
-            on:transferOwnership={onTransferOwnership}
             on:chatWith
             on:addMembers
-            on:dismissAsAdmin={onDismissAsAdmin}
             on:removeMember={onRemoveMember}
-            on:makeAdmin={onMakeAdmin} />
+            on:changeRole={onChangeRole} />
     {:else if lastState.kind === "show_pinned" && $selectedChatId !== undefined}
         <PinnedMessages
             on:chatWith

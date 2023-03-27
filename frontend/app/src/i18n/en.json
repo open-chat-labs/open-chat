@@ -210,11 +210,7 @@
     "submit": "Submit",
     "edited": "edited",
     "copyInviteCode": "Copy invite code",
-    "dismissAsAdmin": "Dismiss as admin",
-    "dismissAsAdminFailed": "Unable to dismiss user as an admin",
     "removeMemberFailed": "Unable to remove member",
-    "makeAdmin": "Make admin",
-    "makeAdminFailed": "Unable to make user an admin",
     "searchForUsername": "Search for a username",
     "startNewChat": "Start a new chat",
     "chatWith": "Chat with {username}",
@@ -234,8 +230,6 @@
     "chatNotFound": "Sorry - we couldn't find the selected chat",
     "leftGroup": "You have successfully left the group",
     "failedToLeaveGroup": "There was an error trying to remove you from the group",
-    "lastAdmin": "You can't leave the group as you are the only admin",
-    "ownerCantLeave": "You must transfer ownership before you can leave the group",
     "owner": "owner",
     "admin": "admin",
     "member": "member",
@@ -729,5 +723,11 @@
         "expiryMessage": "Your diamond membership expires {relative} ",
         "extendTo": " Extend to ",
         "cannotExtend": "You can only extend your membership within three months of expiry"
-    }
+    },
+    "promoteTo": "Promote to {role}",
+    "demoteTo": "Demote to {role}",
+    "promoteFailed": "Unable to promote to {role}",
+    "demoteFailed": "Unable to demote to {role}",
+    "ownerCantLeave": "You must add another owner before you can leave the group",
+    "participant": "member"
 }

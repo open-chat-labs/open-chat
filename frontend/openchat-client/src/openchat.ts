@@ -300,6 +300,7 @@ import {
     DiamondMembershipDetails,
     UpdateMarketMakerConfigArgs,
     UpdateMarketMakerConfigResponse,
+    compareRoles,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -1021,6 +1022,14 @@ export class OpenChat extends EventTarget {
 
     canChangeRoles(chatId: string, currentRole: MemberRole, newRole: MemberRole): boolean {
         return this.chatPredicate(chatId, (chat) => canChangeRoles(chat, currentRole, newRole));
+    }
+
+    canPromote(chatId: string, currentRole: MemberRole, newRole: MemberRole): boolean {
+        return compareRoles(newRole, currentRole) > 0 && this.canChangeRoles(chatId, currentRole, newRole);
+    }
+
+    canDemote(chatId: string, currentRole: MemberRole, newRole: MemberRole): boolean {
+        return compareRoles(newRole, currentRole) < 0 && this.canChangeRoles(chatId, currentRole, newRole);
     }
 
     canUnblockUsers(chatId: string): boolean {

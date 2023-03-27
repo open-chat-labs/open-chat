@@ -184,11 +184,7 @@
     "submit": "שלח",
     "edited": "עָרוּך",
     "copyInviteCode": "העתק את קוד ההזמנה",
-    "dismissAsAdmin": "סגור כמנהל",
-    "dismissAsAdminFailed": "לא ניתן לבטל את המשתמש כמנהל",
     "removeMemberFailed": "לא ניתן להסיר חבר",
-    "makeAdmin": "הפוך למנהל",
-    "makeAdminFailed": "לא ניתן להפוך את המשתמש למנהל",
     "searchForUsername": "חפש שם משתמש",
     "startNewChat": "התחל צ'אט חדש",
     "chatWith": "צ'אט עם {username}",
@@ -204,8 +200,6 @@
     "yesterday": "אתמול",
     "chatNotFound": "מצטערים - לא הצלחנו למצוא את הצ'אט שנבחר",
     "leftGroup": "עזבת בהצלחה את הקבוצה",
-    "lastAdmin": "אתה לא יכול לעזוב את הקבוצה מכיוון שאתה המנהל היחיד",
-    "ownerCantLeave": "עליך להעביר בעלות לפני שתוכל לעזוב את הקבוצה",
     "owner": "בעלים",
     "admin": "אדמין",
     "member": "חבר",
@@ -732,5 +726,11 @@
         "extendTo": " הארך עד",
         "cannotExtend": "אתה יכול להאריך את החברות שלך רק בתוך שלושה חודשים מיום פקיעת התוקף"
     },
-    "currentUsage": "שימוש נוכחי באחסון"
+    "currentUsage": "שימוש נוכחי באחסון",
+    "promoteTo": "קדם ל-{role}",
+    "demoteTo": "הורד ל-{role}",
+    "promoteFailed": "לא ניתן לקדם ל-{role}",
+    "demoteFailed": "לא ניתן לרדת בדרגה ל-{role}",
+    "ownerCantLeave": "עליך להוסיף בעלים נוסף לפני שתוכל לעזוב את הקבוצה",
+    "participant": "חבר"
 }
