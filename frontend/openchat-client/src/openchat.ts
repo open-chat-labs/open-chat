@@ -1365,6 +1365,8 @@ export class OpenChat extends EventTarget {
     ): Promise<number | undefined> {
         if (threadRootEvent.event.thread === undefined) return undefined;
 
+        const threadRootMessageIndex = threadRootEvent.event.messageIndex;
+
         const eventsResponse = await this.api.groupChatEventsWindow(
             [0, threadRootEvent.event.thread.latestEventIndex],
             chatId,
@@ -1378,7 +1380,7 @@ export class OpenChat extends EventTarget {
         }
 
         this.clearThreadEvents();
-        await this.handleThreadEventsResponse(chatId, eventsResponse);
+        await this.handleThreadEventsResponse(chatId, threadRootMessageIndex, eventsResponse);
 
         this.dispatchEvent(new LoadedThreadMessageWindow(messageIndex, initialLoad));
 
@@ -1663,7 +1665,7 @@ export class OpenChat extends EventTarget {
             if (clearEvents) {
                 threadServerEventsStore.set([]);
             }
-            await this.handleThreadEventsResponse(chatId, eventsResponse);
+            await this.handleThreadEventsResponse(chatId, threadRootMessageIndex, eventsResponse);
 
             makeRtcConnections(
                 this.user.userId,
@@ -1691,26 +1693,25 @@ export class OpenChat extends EventTarget {
 
     private async handleThreadEventsResponse(
         chatId: string,
+        threadRootMessageIndex: number,
         resp: EventsResponse<ChatEvent>
     ): Promise<[EventWrapper<ChatEvent>[], Set<string>]> {
         if (resp === "events_failed") return [[], new Set()];
 
+        // check that the thread has not changed
+        if (threadRootMessageIndex !== this._liveState.selectedThreadRootMessageIndex)
+            return [[], new Set()];
+
         const userIds = this.userIdsFromEvents(resp.events);
         await this.updateUserStore(chatId, userIds);
 
-        if (this._liveState.selectedThreadRootMessageIndex !== undefined) {
-            this.addServerEventsToStores(
-                chatId,
-                resp.events,
-                this._liveState.selectedThreadRootMessageIndex
-            );
-        }
+        const key = `${chatId}_${threadRootMessageIndex}`;
 
-        if (this._liveState.selectedThreadKey !== undefined) {
-            for (const event of resp.events) {
-                if (event.event.kind === "message") {
-                    unconfirmed.delete(this._liveState.selectedThreadKey, event.event.messageId);
-                }
+        this.addServerEventsToStores(chatId, resp.events, threadRootMessageIndex);
+
+        for (const event of resp.events) {
+            if (event.event.kind === "message") {
+                unconfirmed.delete(key, event.event.messageId);
             }
         }
         return [resp.events, userIds];
@@ -2062,7 +2063,14 @@ export class OpenChat extends EventTarget {
                           selectedThreadRootMessageIndex,
                           selectedThreadRootEvent?.event?.thread?.latestEventIndex
                       )
-                      .then((resp) => this.handleThreadEventsResponse(serverChat.chatId, resp));
+                      .then((resp) =>
+                          this.handleThreadEventsResponse(
+                              serverChat.chatId,
+                              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                              selectedThreadRootMessageIndex!,
+                              resp
+                          )
+                      );
 
         await Promise.all([chatEventsPromise, threadEventPromise]);
         return;
