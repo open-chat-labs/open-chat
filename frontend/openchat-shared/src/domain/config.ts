@@ -16,6 +16,7 @@ export type AgentConfig = {
     enableMultiCrypto?: boolean;
     blobUrlPattern: string;
     proposalBotCanister: string;
+    marketMakerCanister: string;
     logger: {
         error(message?: unknown, ...optionalParams: unknown[]): void;
     };

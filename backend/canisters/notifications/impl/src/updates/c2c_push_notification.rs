@@ -61,6 +61,7 @@ fn c2c_push_notification_impl(
         runtime_state.data.notifications.add(NotificationEnvelope {
             recipients: filtered_recipients,
             notification_bytes,
+            timestamp: runtime_state.env.now(),
         });
     }
     Success

@@ -15,6 +15,7 @@
     import "../stores/fontSize";
     import Profiler from "./Profiler.svelte";
     import { OpenChat, SessionExpiryError } from "openchat-client";
+    import type { UpdateMarketMakerConfigArgs } from "openchat-shared";
     import {
         isCanisterUrl,
         isLandingPageRoute,
@@ -45,6 +46,7 @@
             userGeekApiKey: process.env.USERGEEK_APIKEY!,
             blobUrlPattern: process.env.BLOB_URL_PATTERN!,
             proposalBotCanister: process.env.PROPOSALS_BOT_CANISTER!,
+            marketMakerCanister: process.env.MARKET_MAKER_CANISTER!,
             i18nFormatter: $_,
             logger: logger,
             websiteVersion: process.env.OPENCHAT_WEBSITE_VERSION!,
@@ -72,7 +74,7 @@
         window.addEventListener("orientationchange", calculateHeight);
         window.addEventListener("unhandledrejection", unhandledError);
         (<any>window).platformModerator = { addHotGroupExclusion, deleteFrozenGroup, freezeGroup, removeHotGroupExclusion, unfreezeGroup };
-        (<any>window).platformOperator = { setGroupUpgradeConcurrency, setUserUpgradeConcurrency };
+        (<any>window).platformOperator = { setGroupUpgradeConcurrency, setUserUpgradeConcurrency, updateMarketMakerConfig };
     });
 
     function addHotGroupExclusion(chatId: string): void {
@@ -157,6 +159,18 @@
                     console.log("Failed to set user upgrade concurrency", value);
                 }
             });        
+    }
+
+    function updateMarketMakerConfig(config: UpdateMarketMakerConfigArgs): void {
+        client
+            .updateMarketMakerConfig(config)
+            .then((resp) => {
+                if (resp === "success") {
+                    console.log("Market maker config updated");
+                } else {
+                    console.log("Failed to update market maker config", resp);
+                }
+            });
     }
 
     $: {

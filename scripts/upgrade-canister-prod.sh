@@ -6,12 +6,13 @@
 IDENTITY=$1
 CANISTER_NAME=$2
 VERSION=$3
+WASM_SRC=$4 # WASM_SRC is either empty, "build", "latest", "local", prod" or the commit Id
 
 SCRIPT=$(readlink -f "$0")
 SCRIPT_DIR=$(dirname "$SCRIPT")
 cd $SCRIPT_DIR
 
-./upgrade-canister.sh ic https://ic0.app/ $IDENTITY $CANISTER_NAME $VERSION
+./upgrade-canister.sh ic https://ic0.app/ $IDENTITY $CANISTER_NAME $VERSION $WASM_SRC
 
 TAG=v$VERSION-$CANISTER_NAME
 
