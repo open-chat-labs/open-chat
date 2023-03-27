@@ -5,6 +5,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Fixed
+
+- Fix bug when joining group on a different subnet ([#3373](https://github.com/open-ic/open-chat/pull/3373))
+
+## [[2.0.643](https://github.com/open-ic/open-chat/releases/tag/v2.0.643-user_index)] - 2023-03-24
+
 ### Changed
 
 - Speed up `is_eligible_for_initial_airdrop` check ([#3345](https://github.com/open-ic/open-chat/pull/3345))
