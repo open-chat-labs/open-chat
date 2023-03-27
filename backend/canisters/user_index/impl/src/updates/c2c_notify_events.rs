@@ -28,6 +28,7 @@ fn handle_event(event: Event, runtime_state: &mut RuntimeState) {
                 LocalUserIndexEvent::UserJoinedGroup(UserJoinedGroup {
                     user_id: ev.user_id,
                     chat_id: ev.chat_id,
+                    as_super_admin: false,
                     latest_message_index: ev.latest_message_index,
                 }),
             );

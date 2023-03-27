@@ -32,6 +32,9 @@ jobs:
           profile: minimal
           toolchain: stable
           override: true
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: "build-debug"
       - name: install didc 0.7.8
         uses: supplypike/setup-bin@v1
         with:
