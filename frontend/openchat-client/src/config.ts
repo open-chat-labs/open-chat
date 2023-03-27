@@ -18,6 +18,7 @@ export type OpenChatConfig = {
     enableMultiCrypto?: boolean;
     blobUrlPattern: string;
     proposalBotCanister: string;
+    marketMakerCanister: string;
     i18nFormatter: MessageFormatter;
     logger: {
         error(message?: unknown, ...optionalParams: unknown[]): void;

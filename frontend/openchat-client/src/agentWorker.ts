@@ -95,6 +95,8 @@ import {
     Tally,
     SetGroupUpgradeConcurrencyResponse,
     SetUserUpgradeConcurrencyResponse,
+    UpdateMarketMakerConfigArgs,
+    UpdateMarketMakerConfigResponse,
 } from "openchat-shared";
 import type { OpenChatConfig } from "./config";
 import { v4 } from "uuid";
@@ -147,6 +149,7 @@ export class OpenChatAgentWorker extends EventTarget {
                 enableMultiCrypto: this.config.enableMultiCrypto,
                 blobUrlPattern: this.config.blobUrlPattern,
                 proposalBotCanister: this.config.proposalBotCanister,
+                marketMakerCanister: this.config.marketMakerCanister,
             },
         };
         this.ready = new Promise((resolve) => {
@@ -1356,6 +1359,15 @@ export class OpenChatAgentWorker extends EventTarget {
                 recurring,
                 expectedPriceE8s,
             },
+        });
+    }
+
+    updateMarketMakerConfig(
+        config: UpdateMarketMakerConfigArgs
+    ): Promise<UpdateMarketMakerConfigResponse> {
+        return this.sendRequest({
+            kind: "updateMarketMakerConfig",
+            payload: config
         });
     }
 }

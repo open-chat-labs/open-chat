@@ -35,11 +35,11 @@ fn get_method_attribute(attrs: AttributeArgs) -> MethodAttribute {
         let value = c.get_ident().unwrap().to_string();
         match value.as_str() {
             "cycles_dispenser"
-            | "exchange_client"
             | "group"
             | "group_index"
             | "local_group_index"
             | "local_user_index"
+            | "market_maker"
             | "notifications"
             | "notifications_index"
             | "online_users"

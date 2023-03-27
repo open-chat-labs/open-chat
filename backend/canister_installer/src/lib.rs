@@ -31,7 +31,7 @@ async fn install_service_canisters_impl(
         set_controllers(management_canister, &canister_ids.proposals_bot, controllers.clone()),
         set_controllers(management_canister, &canister_ids.storage_index, controllers.clone()),
         set_controllers(management_canister, &canister_ids.cycles_dispenser, controllers.clone()),
-        set_controllers(management_canister, &canister_ids.exchange_client, controllers),
+        set_controllers(management_canister, &canister_ids.market_maker, controllers),
         set_controllers(
             management_canister,
             &canister_ids.local_user_index,
@@ -146,9 +146,9 @@ async fn install_service_canisters_impl(
         test_mode,
     };
 
-    let exchange_client_canister_wasm = get_canister_wasm(CanisterName::ExchangeClient, version);
-    let exchange_client_init_args = exchange_client_canister::init::Args {
-        governance_principals: vec![principal],
+    let market_maker_canister_wasm = get_canister_wasm(CanisterName::MarketMaker, version);
+    let market_maker_init_args = market_maker_canister::init::Args {
+        user_index_canister_id: canister_ids.user_index,
         cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
         icp_ledger_canister_id: canister_ids.nns_ledger,
         chat_ledger_canister_id: canister_ids.nns_ledger, // TODO This should be the CHAT ledger
@@ -205,9 +205,9 @@ async fn install_service_canisters_impl(
         ),
         install_wasm(
             management_canister,
-            &canister_ids.exchange_client,
-            &exchange_client_canister_wasm.module,
-            exchange_client_init_args,
+            &canister_ids.market_maker,
+            &market_maker_canister_wasm.module,
+            market_maker_init_args,
         ),
     )
     .await;
