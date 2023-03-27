@@ -30,8 +30,8 @@ import type {
     SetBioResponse,
     ToggleMuteNotificationResponse,
     UnpinChatResponse,
-    InitialStateV2Response,
-    UpdatesV2Response,
+    InitialStateResponse,
+    UpdatesResponse,
     DeletedDirectMessageResponse,
     EventWrapper,
 } from "openchat-shared";
@@ -60,11 +60,7 @@ export class CachingUserClient extends EventTarget implements IUserClient {
         return this.client.userId;
     }
 
-    constructor(
-        private db: Database,
-        private config: AgentConfig,
-        private client: IUserClient
-    ) {
+    constructor(private db: Database, private config: AgentConfig, private client: IUserClient) {
         super();
     }
 
@@ -105,12 +101,12 @@ export class CachingUserClient extends EventTarget implements IUserClient {
         }
     }
 
-    getInitialStateV2(): Promise<InitialStateV2Response> {
-        return this.client.getInitialStateV2();
+    getInitialState(): Promise<InitialStateResponse> {
+        return this.client.getInitialState();
     }
 
-    getUpdatesV2(updatesSince: bigint): Promise<UpdatesV2Response> {
-        return this.client.getUpdatesV2(updatesSince);
+    getUpdates(updatesSince: bigint): Promise<UpdatesResponse> {
+        return this.client.getUpdates(updatesSince);
     }
 
     @profile("userCachingClient")

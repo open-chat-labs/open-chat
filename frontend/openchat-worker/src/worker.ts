@@ -147,9 +147,9 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
                     .catch(sendError(correlationId));
                 break;
 
-            case "getInitialStateV2":
+            case "getInitialState":
                 agent
-                    .getInitialStateV2()
+                    .getInitialState()
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,
@@ -184,9 +184,9 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
                     .catch(sendError(correlationId));
                 break;
 
-            case "getUpdatesV2":
+            case "getUpdates":
                 agent
-                    .getUpdatesV2(payload.currentState)
+                    .getUpdates(payload.currentState)
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,
@@ -1312,7 +1312,7 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
                     .updateMarketMakerConfig(payload)
                     .then((response) =>
                         sendResponse(correlationId, {
-                            response
+                            response,
                         })
                     )
                     .catch(sendError(correlationId));

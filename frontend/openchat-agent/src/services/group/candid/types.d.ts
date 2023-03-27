@@ -282,6 +282,7 @@ export interface DirectChatSummaryUpdates {
   'notifications_muted' : [] | [boolean],
   'events_ttl' : EventsTimeToLiveUpdate,
   'latest_event_index' : [] | [EventIndex],
+  'updated_events' : Array<[number, bigint]>,
   'read_by_me_up_to' : [] | [MessageIndex],
   'chat_id' : ChatId,
   'newly_expired_messages' : Array<MessageIndexRange>,
@@ -345,6 +346,7 @@ export type EventsResponse = { 'ThreadMessageNotFound' : null } |
   { 'Success' : EventsSuccessResult };
 export interface EventsSuccessResult {
   'events' : Array<ChatEventWrapper>,
+  'timestamp' : TimestampMillis,
   'latest_event_index' : number,
 }
 export type EventsTimeToLiveUpdate = { 'NoChange' : null } |
@@ -456,6 +458,7 @@ export interface GroupCanisterGroupChatSummaryUpdates {
   'latest_threads' : Array<GroupCanisterThreadDetails>,
   'frozen' : FrozenGroupUpdate,
   'latest_event_index' : [] | [EventIndex],
+  'updated_events' : Array<[[] | [number], number, bigint]>,
   'mentions' : Array<Mention>,
   'chat_id' : ChatId,
   'newly_expired_messages' : Array<MessageIndexRange>,

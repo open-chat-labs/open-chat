@@ -27,5 +27,6 @@ echo "Downloading wasms"
 ./download-canister-wasm.sh storage_index $WASM_SRC
 ./download-canister-wasm.sh user $WASM_SRC
 ./download-canister-wasm.sh user_index $WASM_SRC
+./download-canister-wasm.sh market_maker $WASM_SRC
 
 echo "Wasms downloaded"

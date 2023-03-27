@@ -14,6 +14,7 @@ import type {
     ReplyContext,
     SendMessageResponse,
     SendMessageSuccess,
+    UpdatedEvent,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import { toRecord } from "./list";
@@ -127,22 +128,22 @@ export async function openDbAndGetCachedChats(
 ): Promise<ChatStateFull | undefined> {
     const db = openCache(principal);
     if (db !== undefined) {
-        return getCachedChatsV2(db, principal);
+        return getCachedChats(db, principal);
     }
 }
 
-export async function getCachedChatsV2(
+export async function getCachedChats(
     db: Database,
     principal: Principal
 ): Promise<ChatStateFull | undefined> {
     return await (await db).get("chats_v2", principal.toString());
 }
 
-export async function setCachedChatsV2(
+export async function setCachedChats(
     db: Database,
     principal: Principal,
     chatState: ChatStateFull,
-    affectedEvents: Record<string, number[]>
+    updatedEvents: Record<string, UpdatedEvent[]>
 ): Promise<void> {
     const directChats = chatState.directChats.map(makeChatSummarySerializable);
     const groupChats = chatState.groupChats.map(makeChatSummarySerializable);
@@ -153,16 +154,21 @@ export async function setCachedChatsV2(
         groupChats,
     };
 
-    const tx = (await db).transaction(["chats_v2", "chat_events"], "readwrite");
+    const tx = (await db).transaction(["chats_v2", "chat_events", "thread_events"], "readwrite");
     const chatsStore = tx.objectStore("chats_v2");
     const eventsStore = tx.objectStore("chat_events");
+    const threadsStore = tx.objectStore("thread_events");
 
-    const promises = [
-        chatsStore.put(stateToCache, principal.toString()),
-        ...Object.entries(affectedEvents)
-            .flatMap(([chatId, indexes]) => indexes.map((i) => createCacheKey(chatId, i)))
-            .map((key) => eventsStore.delete(key)),
-    ];
+    const deleteRequests = Object.entries(updatedEvents).flatMap(([chatId, indexes]) => {
+        return indexes.map((i) => {
+            const key = createCacheKey(chatId, i.eventIndex, i.threadRootMessageIndex);
+            return i.threadRootMessageIndex === undefined
+                ? eventsStore.delete(key)
+                : threadsStore.delete(key);
+        });
+    });
+
+    const promises = [chatsStore.put(stateToCache, principal.toString()), ...deleteRequests];
 
     await Promise.all(promises);
     await tx.done;

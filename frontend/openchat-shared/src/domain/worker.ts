@@ -189,8 +189,8 @@ export type WorkerRequest =
     | SuspendUser
     | UnsuspendUser
     | MarkSuspectedBot
-    | GetInitialStateV2
-    | GetUpdatesV2
+    | GetInitialState
+    | GetUpdates
     | GetDeletedGroupMessage
     | GetDeletedDirectMessage
     | LoadFailedMessages
@@ -808,14 +808,14 @@ type CreateUserClient = Request<{ userId: string }> & {
     kind: "createUserClient";
 };
 
-type GetUpdatesV2 = Request<{
+type GetUpdates = Request<{
     currentState: ChatStateFull;
 }> & {
-    kind: "getUpdatesV2";
+    kind: "getUpdates";
 };
 
-type GetInitialStateV2 = Request<Record<string, never>> & {
-    kind: "getInitialStateV2";
+type GetInitialState = Request<Record<string, never>> & {
+    kind: "getInitialState";
 };
 
 type GetDeletedGroupMessage = Request<{

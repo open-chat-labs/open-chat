@@ -17,8 +17,8 @@ import type {
     ApiSearchDirectChatResponse,
     ApiMessageMatch,
     ApiEditMessageResponse,
-    ApiInitialStateV2Response,
-    ApiUpdatesV2Response,
+    ApiInitialStateResponse,
+    ApiUpdatesResponse,
     ApiRole,
     ApiMention,
     ApiSetBioResponse,
@@ -58,8 +58,8 @@ import {
     DeleteMessageResponse,
     UndeleteMessageResponse,
     EditMessageResponse,
-    InitialStateV2Response,
-    UpdatesV2Response,
+    InitialStateResponse,
+    UpdatesResponse,
     MemberRole,
     Mention,
     GroupChatSummary,
@@ -81,6 +81,7 @@ import {
     UnsupportedValueError,
     DirectChatSummaryUpdates,
     DeletedDirectMessageResponse,
+    UpdatedEvent,
 } from "openchat-shared";
 import { bytesToHexString, identity, optional, optionUpdate } from "../../utils/mapping";
 import {
@@ -668,7 +669,7 @@ function directChatEvent(candid: ApiDirectChatEvent): DirectChatEvent {
     throw new Error(`Unexpected ApiEventWrapper type received: ${JSON.stringify(candid)}`);
 }
 
-export function initialStateV2Response(candid: ApiInitialStateV2Response): InitialStateV2Response {
+export function initialStateResponse(candid: ApiInitialStateResponse): InitialStateResponse {
     if ("Success" in candid) {
         const result = candid.Success;
         return {
@@ -700,7 +701,7 @@ export function initialStateV2Response(candid: ApiInitialStateV2Response): Initi
     throw new Error(`Unexpected ApiUpdatesResponse type received: ${candid}`);
 }
 
-export function getUpdatesV2Response(candid: ApiUpdatesV2Response): UpdatesV2Response {
+export function getUpdatesResponse(candid: ApiUpdatesResponse): UpdatesResponse {
     if ("Success" in candid) {
         return {
             timestamp: candid.Success.timestamp,
@@ -765,10 +766,17 @@ function directChatSummaryUpdates(candid: ApiDirectChatSummaryUpdates): DirectCh
         })),
         latestEventIndex: optional(candid.latest_event_index, identity),
         notificationsMuted: optional(candid.notifications_muted, identity),
-        affectedEvents: [...candid.affected_events],
+        updatedEvents: candid.updated_events.map(updatedEvent),
         metrics: optional(candid.metrics, chatMetrics),
         myMetrics: optional(candid.my_metrics, chatMetrics),
         archived: optional(candid.archived, identity),
+    };
+}
+
+function updatedEvent([eventIndex, timestamp]: [number, bigint]): UpdatedEvent {
+    return {
+        eventIndex,
+        timestamp,
     };
 }
 

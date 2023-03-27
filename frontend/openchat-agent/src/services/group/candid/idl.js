@@ -643,6 +643,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const EventsSuccessResult = IDL.Record({
     'events' : IDL.Vec(ChatEventWrapper),
+    'timestamp' : TimestampMillis,
     'latest_event_index' : IDL.Nat32,
   });
   const EventsResponse = IDL.Variant({
@@ -1079,6 +1080,9 @@ export const idlFactory = ({ IDL }) => {
     'latest_threads' : IDL.Vec(GroupCanisterThreadDetails),
     'frozen' : FrozenGroupUpdate,
     'latest_event_index' : IDL.Opt(EventIndex),
+    'updated_events' : IDL.Vec(
+      IDL.Tuple(IDL.Opt(IDL.Nat32), IDL.Nat32, IDL.Nat64)
+    ),
     'mentions' : IDL.Vec(Mention),
     'chat_id' : ChatId,
     'newly_expired_messages' : IDL.Vec(MessageIndexRange),

@@ -7,8 +7,8 @@ import {
     UserService,
 } from "./candid/idl";
 import type {
-    InitialStateV2Response,
-    UpdatesV2Response,
+    InitialStateResponse,
+    UpdatesResponse,
     EventsResponse,
     CandidateGroupChat,
     CreateGroupResponse,
@@ -51,8 +51,8 @@ import {
     undeleteMessageResponse,
     editMessageResponse,
     getEventsResponse,
-    getUpdatesV2Response,
-    initialStateV2Response,
+    getUpdatesResponse,
+    initialStateResponse,
     leaveGroupResponse,
     markReadResponse,
     searchDirectChatResponse,
@@ -106,33 +106,29 @@ export class UserClient extends CandidService implements IUserClient {
         config: AgentConfig,
         db: Database
     ): IUserClient {
-        return new CachingUserClient(
-            db,
-            config,
-            new UserClient(identity, userId, config)
-        );
+        return new CachingUserClient(db, config, new UserClient(identity, userId, config));
     }
 
     @profile("userClient")
-    getInitialStateV2(): Promise<InitialStateV2Response> {
+    getInitialState(): Promise<InitialStateResponse> {
         const args = {
             disable_cache: apiOptional(identity, false),
         };
         return this.handleQueryResponse(
             () => this.userService.initial_state_v2(args),
-            initialStateV2Response,
+            initialStateResponse,
             args
         );
     }
 
     @profile("userClient")
-    getUpdatesV2(updatesSince: bigint): Promise<UpdatesV2Response> {
+    getUpdates(updatesSince: bigint): Promise<UpdatesResponse> {
         const args = {
             updates_since: updatesSince,
         };
         return this.handleQueryResponse(
             () => this.userService.updates_v2(args),
-            getUpdatesV2Response,
+            getUpdatesResponse,
             args
         );
     }
