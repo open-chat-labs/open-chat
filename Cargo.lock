@@ -899,13 +899,13 @@ dependencies = [
  "canister_agent_utils",
  "clap 3.2.23",
  "cycles_dispenser_canister",
- "exchange_client_canister",
  "futures",
  "group_canister",
  "group_index_canister",
  "group_index_canister_client",
  "ic-agent",
  "ic-utils 0.23.0",
+ "market_maker_canister",
  "notifications_canister",
  "notifications_index_canister",
  "notifications_index_canister_client",
@@ -985,12 +985,12 @@ dependencies = [
  "canister_agent_utils",
  "clap 3.2.23",
  "cycles_dispenser_canister",
- "exchange_client_canister",
  "group_canister",
  "group_index_canister",
  "group_index_canister_client",
  "ic-agent",
  "ic-utils 0.23.0",
+ "market_maker_canister",
  "notifications_canister",
  "notifications_index_canister",
  "notifications_index_canister_client",
@@ -1958,57 +1958,6 @@ checksum = "aa68f1b12764fab894d2755d2518754e71b4fd80ecfb822714a1206c2aab39bf"
 dependencies = [
  "cc",
  "libc",
-]
-
-[[package]]
-name = "exchange_client_canister"
-version = "0.1.0"
-dependencies = [
- "candid",
- "candid_gen",
- "serde",
- "types",
-]
-
-[[package]]
-name = "exchange_client_canister_client"
-version = "0.1.0"
-dependencies = [
- "candid",
- "canister_client_macros",
- "exchange_client_canister",
- "ic-agent",
- "types",
-]
-
-[[package]]
-name = "exchange_client_canister_impl"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "candid",
- "canister_client",
- "canister_logger",
- "canister_state_macros",
- "canister_tracing_macros",
- "exchange_client_canister",
- "hex",
- "http_request",
- "ic-cdk 0.7.3",
- "ic-cdk-macros",
- "ic-cdk-timers",
- "ic-icrc1",
- "ic-icrc1-client",
- "ic-icrc1-client-cdk",
- "ic-ledger-types",
- "ic-stable-structures",
- "msgpack",
- "serde",
- "serde_bytes",
- "serializer",
- "tracing",
- "types",
- "utils",
 ]
 
 [[package]]
@@ -3663,23 +3612,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "icdex_market_maker"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "candid",
- "dotenv",
- "exchange_client_canister",
- "exchange_client_canister_client",
- "hex",
- "ic-agent",
- "ic-ledger-types",
- "market_maker_core",
- "serde",
- "tokio",
-]
-
-[[package]]
 name = "icp-ledger"
 version = "0.8.0"
 source = "git+https://github.com/dfinity/ic?rev=7445081734e6d896d090295967d50710975c4f25#7445081734e6d896d090295967d50710975c4f25"
@@ -4239,18 +4171,57 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3e2e65a1a2e43cfcb47a895c4c8b10d1f4a61097f9f254f183aee60cad9c651d"
 
 [[package]]
-name = "market_maker_core"
+name = "market_maker_canister"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "candid_gen",
+ "serde",
+ "types",
+]
+
+[[package]]
+name = "market_maker_canister_client"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "canister_client",
+ "ic-agent",
+ "market_maker_canister",
+ "types",
+]
+
+[[package]]
+name = "market_maker_canister_impl"
 version = "0.1.0"
 dependencies = [
  "async-trait",
  "candid",
- "chrono",
- "exchange_client_canister",
+ "canister_client",
+ "canister_logger",
+ "canister_state_macros",
+ "canister_tracing_macros",
  "futures",
+ "hex",
+ "http_request",
+ "ic-cdk 0.7.3",
+ "ic-cdk-macros",
+ "ic-cdk-timers",
+ "ic-icrc1",
+ "ic-icrc1-client",
+ "ic-icrc1-client-cdk",
+ "ic-stable-structures",
  "itertools",
+ "market_maker_canister",
+ "msgpack",
  "serde",
+ "serde_bytes",
+ "serializer",
  "test-case",
- "tokio",
+ "tracing",
+ "types",
+ "user_index_canister_c2c_client",
+ "utils",
 ]
 
 [[package]]

@@ -29,7 +29,7 @@
 
     function durationToMs(duration: DiamondMembershipDuration | undefined): number | undefined {
         if (duration !== undefined) {
-            return client.diamondDuraionToMs(duration);
+            return client.diamondDurationToMs(duration);
         }
         return undefined;
     }
