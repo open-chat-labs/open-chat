@@ -280,10 +280,10 @@
         "wallet_a": "创建 OpenChat 用户时，他们会自动拥有一个用于一堆令牌（ICP、CHAT、ckBTC、SNS1）的帐户。该帐户最初是空的，但您可以通过将代币转移到其地址来充值该帐户。一旦您的 OpenChat 钱包中有了一些令牌，您就可以通过一种特殊的消息将它们直接发送到任何其他 OpenChat 用户的帐户。您也可以使用钱包中的ICP（即将CHAT）升级为钻石会员。如果您想提取代币，可以从主菜单打开钱包并单击“管理”按钮。此屏幕为您提供了将代币提取到您选择的任何其他地址的选项。",
         "voting_q": "我如何对提案进行投票？",
         "voting_a": "加入 <a href=\"/nsbx4-4iaaa-aaaar-afusa-cai\">OpenChat proposals group</a> 并阅读<a href=\"/blog/governance\">这篇博文</a>，其中给出了概述OpenChat 治理，并有一个关于投票的分步指南。",
-        "buychat_q": "我如何购买 CHAT 代币？",
-        "buychat_a": "现在你必须先<a target=\"_blank\" href=\"https://www.finder.com/uk/how-to-buy-internet-computer\">购买ICP</a>然后你可以交换在各种去中心化交易所 (DEX) 上聊天。<ul><li><a target=\"_blank\" href=\"https://avjzx-pyaaa-aaaaj-aadmq-cai.raw.ic0.app/ICDex/CHAT/ICP \">ICDex</a></li><li><a target=\"_blank\" href=\"https://info.icpswap.com/swap/pool/details/ne2vj-6yaaa-aaaag-qb3ia-cai\" >ICPSwap</a></li><li><a target=\"_blank\" href=\"https://app.infinityswap.one/tokens/2ouva-viaaa-aaaaq-aaamq-cai\">InfinitySwap</a ></li></ul><br>DFINITY 正在为 ICRC1 添加对 <a target=\"_blank\" href=\"https://www.rosetta-api.org/\">Rosetta API</a> 的支持代币（包括所有 SNS 代币，例如 CHAT），使它们更容易与集中式交易所 (CEX) 集成。一旦发生这种情况，CHAT 很可能可以在 CEX 上进行 ICP 或 USDT 交易。",
         "diamond_q": "什么是钻石会员？",
-        "diamond_a": "您可以升级为钻石会员，以访问 OpenChat 中的额外或增强功能。 <a href=\"?diamond=\">参见此处</a> 进行功能比较和升级。"
+        "diamond_a": "您可以升级为钻石会员，以访问 OpenChat 中的额外或增强功能。 <a href=\"?diamond=\">参见此处</a> 进行功能比较和升级。",
+        "buychat_q": "我如何购买 CHAT 代币？",
+        "buychat_a": "现在你必须先<a target=\"_blank\" href=\"https://www.finder.com/uk/how-to-buy-internet-computer\">购买ICP</a>然后你可以交换在各种去中心化交易所 (DEX) 上聊天。<ul><li><a target=\"_blank\" href=\"https://avjzx-pyaaa-aaaaj-aadmq-cai.raw.ic0.app/ICDex/CHAT/ICP \">ICDex</a></li><li><a target=\"_blank\" href=\"https://info.icpswap.com/swap/pool/details/ne2vj-6yaaa-aaaag-qb3ia-cai\" >ICPSwap</a></li><li><a target=\"_blank\" href=\"https://app.infinityswap.one/tokens/2ouva-viaaa-aaaaq-aaamq-cai\">InfinitySwap</a ></li></ul>DFINITY 正在为 ICRC1 令牌添加对 <a target=\"_blank\" href=\"https://www.rosetta-api.org/\">Rosetta API</a> 的支持（这包括 CHAT），使它们更容易与集中式交易所（CEX）集成。一旦发生这种情况，CHAT 很可能可以在 CEX 上进行 ICP 或 USDT 交易。"
     },
     "roadmap": "路线图",
     "roleChanged": "{changedBy} 将 {changed} 的角色从 {oldRole} 更改为 {newRole}",

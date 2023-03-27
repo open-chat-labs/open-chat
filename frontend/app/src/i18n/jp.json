@@ -281,10 +281,10 @@
         "wallet_a": "OpenChat ユーザーが作成されると、一連のトークン (ICP、CHAT、ckBTC、SNS1) のアカウントが自動的に作成されます。このアカウントは最初は空ですが、トークンをそのアドレスに転送することでアカウントを補充できます。 OpenChat ウォレットにいくつかのトークンがあれば、特別な種類のメッセージを介して他の OpenChat ユーザーのアカウントにトークンを直接送信できます。ウォレットで ICP (まもなく CHAT) を使用して、ダイヤモンド メンバーシップにアップグレードすることもできます。トークンを引き出したい場合は、メイン メニューからウォレットを開き、[管理] ボタンをクリックしてください。この画面では、選択した他のアドレスにトークンを引き出すオプションが表示されます。",
         "voting_q": "提案に投票するにはどうすればよいですか?",
         "voting_a": "<a href=\"/nsbx4-4iaaa-aaaar-afusa-cai\">OpenChat 提案グループ</a>に参加し、<a href=\"/blog/governance\">このブログ投稿</a>を読んで概要を説明しますOpenChat ガバナンスの説明と、投票に関するステップバイステップのガイドがあります。",
-        "buychat_q": "CHAT トークンを購入するにはどうすればよいですか?",
-        "buychat_a": "現時点では、まず <a target=\"_blank\" href=\"https://www.finder.com/uk/how-to-buy-internet-computer\">ICP を購入</a>する必要があります。さまざまな分散型取引所 (DEXes) でのチャット。<ul><li><a target=\"_blank\" href=\"https://avjzx-pyaaa-aaaaj-aadmq-cai.raw.ic0.app/ICDex/CHAT/ICP \">ICDex</a></li><li><a target=\"_blank\" href=\"https://info.icpswap.com/swap/pool/details/ne2vj-6yaaa-aaaag-qb3ia-cai\" >ICPSwap</a></li><li><a target=\"_blank\" href=\"https://app.infinityswap.one/tokens/2ouva-viaa-aaaaq-aaamq-cai\">インフィニティスワップ</a ></li></ul><br>DFINITY は、ICRC1 の <a target=\"_blank\" href=\"https://www.rosetta-api.org/\">Rosetta API</a> のサポートを追加していますトークン (CHAT などのすべての SNS トークンを含む) により、集中型取引所 (CEX) との統合がはるかに容易になります。これが発生すると、ICPまたはUSDTのCEXでの取引にCHATが利用可能になる可能性があります。",
         "diamond_q": "ダイヤモンド会員とは？",
-        "diamond_a": "ダイヤモンド メンバーシップにアップグレードして、OpenChat 内の追加機能または拡張機能にアクセスできます。機能の比較とアップグレードについては、<a href=\"?diamond=\">こちら</a>をご覧ください。"
+        "diamond_a": "ダイヤモンド メンバーシップにアップグレードして、OpenChat 内の追加機能または拡張機能にアクセスできます。機能の比較とアップグレードについては、<a href=\"?diamond=\">こちら</a>をご覧ください。",
+        "buychat_q": "CHAT トークンを購入するにはどうすればよいですか?",
+        "buychat_a": "現時点では、まず <a target=\"_blank\" href=\"https://www.finder.com/uk/how-to-buy-internet-computer\">ICP を購入</a>する必要があります。さまざまな分散型取引所 (DEXes) でのチャット。<ul><li><a target=\"_blank\" href=\"https://avjzx-pyaaa-aaaaj-aadmq-cai.raw.ic0.app/ICDex/CHAT/ICP \">ICDex</a></li><li><a target=\"_blank\" href=\"https://info.icpswap.com/swap/pool/details/ne2vj-6yaaa-aaaag-qb3ia-cai\" >ICPSwap</a></li><li><a target=\"_blank\" href=\"https://app.infinityswap.one/tokens/2ouva-viaa-aaaaq-aaamq-cai\">インフィニティスワップ</a ></li></ul>DFINITY は、ICRC1 トークン (これはCHAT を含む) により、集中型取引所 (CEXes) との統合がはるかに容易になります。これが発生すると、ICPまたはUSDTのCEXでの取引にCHATが利用可能になる可能性があります。"
     },
     "roleChanged": "{changedBy}は、{changed}の役割を{oldRole}から{newRole}に変更しました",
     "yourRoleChanged": "{changedBy}が役割を{oldRole}から{newRole}に変更しました",
