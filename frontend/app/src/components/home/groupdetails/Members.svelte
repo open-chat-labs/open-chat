@@ -109,8 +109,8 @@
         me
         member={me} 
         canPromoteToOwner={me.role !== "owner" && client.isPlatformModerator()}
-        canDemoteToAdmin={me.role === "owner" && client.canChangeRoles(chat.chatId, me.role, "admin")}
-        canDemoteToMember={me.role !== "participant" && client.canChangeRoles(chat.chatId, me.role, "participant")}
+        canDemoteToAdmin={client.canDemote(chat.chatId, me.role, "admin")}
+        canDemoteToMember={client.canDemote(chat.chatId, me.role, "participant")}
         on:changeRole />
 {/if}
 
@@ -118,10 +118,10 @@
     <Member
         me={false}
         member={item}
-        canPromoteToOwner={item.role !== "owner" && client.canChangeRoles(chat.chatId, item.role, "owner")}
-        canPromoteToAdmin={item.role === "participant" && client.canChangeRoles(chat.chatId, item.role, "admin")}
-        canDemoteToAdmin={item.role === "owner" && client.canChangeRoles(chat.chatId, item.role, "admin")}
-        canDemoteToMember={item.role !== "participant" && client.canChangeRoles(chat.chatId, item.role, "participant")}
+        canPromoteToOwner={client.canPromote(chat.chatId, item.role, "owner")}
+        canPromoteToAdmin={client.canPromote(chat.chatId, item.role, "admin")}
+        canDemoteToAdmin={client.canDemote(chat.chatId, item.role, "admin")}
+        canDemoteToMember={client.canDemote(chat.chatId, item.role, "participant")}
         canBlockUser={client.canBlockUsers(chat.chatId)}
         canUnblockUser={client.canUnblockUsers(chat.chatId)}
         canRemoveMember={client.canRemoveMembers(chat.chatId)}

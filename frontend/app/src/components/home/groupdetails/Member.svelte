@@ -58,12 +58,11 @@
         dispatch("removeMember", member.userId);
     }
 
-    function changeRole(role: MemberRole, promotion: boolean) {
+    function changeRole(role: MemberRole) {
         dispatch("changeRole", { 
             userId: member.userId, 
             newRole: role, 
-            oldRole: member.role, 
-            promotion 
+            oldRole: member.role
         });
     }
 
@@ -150,7 +149,7 @@
                             {/if}
                         {:else}
                             {#if canPromoteToOwner}
-                                <MenuItem on:click={() => changeRole("owner", true)}>
+                                <MenuItem on:click={() => changeRole("owner")}>
                                     <AccountPlusOutline
                                         size={$iconSize}
                                         color={"var(--icon-inverted-txt)"}
@@ -159,7 +158,7 @@
                                 </MenuItem>
                             {/if}
                             {#if canPromoteToAdmin}
-                                <MenuItem on:click={() => changeRole("admin", true)}>
+                                <MenuItem on:click={() => changeRole("admin")}>
                                     <AccountPlusOutline
                                         size={$iconSize}
                                         color={"var(--icon-inverted-txt)"}
@@ -168,7 +167,7 @@
                                 </MenuItem>
                             {/if}
                             {#if canDemoteToAdmin}
-                                <MenuItem on:click={() => changeRole("admin", false)}>
+                                <MenuItem on:click={() => changeRole("admin")}>
                                     <AccountRemoveOutline
                                         size={$iconSize}
                                         color={"var(--icon-inverted-txt)"}
@@ -177,7 +176,7 @@
                                 </MenuItem>
                             {/if}
                             {#if canDemoteToMember}
-                                <MenuItem on:click={() => changeRole("participant", false)}>
+                                <MenuItem on:click={() => changeRole("participant")}>
                                     <AccountRemoveOutline
                                         size={$iconSize}
                                         color={"var(--icon-inverted-txt)"}

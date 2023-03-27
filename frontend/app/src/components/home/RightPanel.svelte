@@ -20,7 +20,6 @@
     import { toastStore } from "../../stores/toast";
     import { createEventDispatcher, getContext } from "svelte";
     import type { Readable } from "svelte/store";
-    import { get } from "svelte/store";
     import { _ } from "svelte-i18n";
     import { numberOfColumns } from "stores/layout";
     import Thread from "./thread/Thread.svelte";
@@ -29,6 +28,7 @@
     import { logger } from "../../utils/logging";
     import { pathParams } from "../../routes";
     import page from "page";
+    import { compareRoles } from "openchat-shared";
 
     const dispatch = createEventDispatcher();
 
@@ -52,10 +52,10 @@
     $: groupChat = selectedChatStore as Readable<GroupChatSummary>;
     $: empty = $rightPanelHistory.length === 0;
 
-    function onChangeRole(ev: CustomEvent<{ userId: string; newRole: MemberRole; oldRole: MemberRole; promotion: boolean }>): void {
+    function onChangeRole(ev: CustomEvent<{ userId: string; newRole: MemberRole; oldRole: MemberRole }>): void {
         if ($selectedChatId !== undefined) {
-            let {userId, newRole, oldRole, promotion} = ev.detail;
-            changeRole($selectedChatId, userId, newRole, oldRole, promotion);
+            let {userId, newRole, oldRole} = ev.detail;
+            changeRole($selectedChatId, userId, newRole, oldRole);
         }
     }
 
@@ -130,15 +130,19 @@
         }) as EventWrapper<Message> | undefined;
     }
 
-    function changeRole(chatId: string, userId: string, newRole: MemberRole, oldRole: MemberRole, promotion: boolean): Promise<void> {
+    function changeRole(chatId: string, userId: string, newRole: MemberRole, oldRole: MemberRole): Promise<void> {
+        if (newRole === oldRole) return Promise.resolve();
+
+        let promotion = compareRoles(newRole, oldRole) > 0;
+
         function onError(err: any) {
             // Revert the local store
             chatStateStore.updateProp(chatId, "members", (ps) =>
                 ps.map((p) => (p.userId === userId ? { ...p, role: oldRole } : p))
             );
 
-            let roleText = get(_)(newRole);
-            let message = get(_)(promotion ? "promoteFailed" : "demoteFailed", { values: { role: roleText } });
+            let roleText = $_(newRole);
+            let message = $_(promotion ? "promoteFailed" : "demoteFailed", { values: { role: roleText } });
             if (err) {
                 logger.error(message, err);
             }
