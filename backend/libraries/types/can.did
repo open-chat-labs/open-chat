@@ -294,7 +294,6 @@ type GroupCanisterGroupChatSummary =
         participant_count: nat32;
         role: Role;
         mentions: vec Mention;
-        owner_id: UserId;
         permissions: GroupPermissions;
         notifications_muted: bool;
         metrics: ChatMetrics;
@@ -321,7 +320,6 @@ type GroupCanisterGroupChatSummaryUpdates =
         participant_count: opt nat32;
         role: opt Role;
         mentions: vec Mention;
-        owner_id: opt UserId;
         permissions: opt GroupPermissions;
         affected_events: vec EventIndex;
         updated_events: vec record { opt nat32; nat32; nat64 };

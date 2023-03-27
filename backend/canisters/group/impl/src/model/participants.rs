@@ -17,12 +17,7 @@ pub struct Participants {
     user_id_to_principal_map: HashMap<UserId, Principal>,
     blocked: HashSet<UserId>,
     admin_count: u32,
-    #[serde(default = "initial_owner_count")]
     owner_count: u32,
-}
-
-fn initial_owner_count() -> u32 {
-    1
 }
 
 #[allow(clippy::too_many_arguments)]
