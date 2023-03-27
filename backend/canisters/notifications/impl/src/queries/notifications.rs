@@ -44,5 +44,6 @@ fn add_subscriptions(notifications: Vec<IndexedEvent<NotificationEnvelope>>, run
     SuccessResult {
         notifications: active_notifications,
         subscriptions,
+        timestamp: runtime_state.env.now(),
     }
 }
