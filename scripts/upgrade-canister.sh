@@ -8,12 +8,19 @@ IC_URL=$2
 IDENTITY=$3
 CANISTER_NAME=$4
 VERSION=$5
+WASM_SRC=$6 # WASM_SRC is either empty, "build", "latest", "local", prod" or the commit Id
 
 SCRIPT=$(readlink -f "$0")
 SCRIPT_DIR=$(dirname "$SCRIPT")
 cd $SCRIPT_DIR/..
 
-./scripts/generate-wasm.sh $CANISTER_NAME
+if [[ -z "$WASM_SRC" || $WASM_SRC = "build" ]]
+then
+    ./scripts/generate-wasm.sh $CANISTER_NAME
+elif [ $WASM_SRC != "local" ]
+then
+    ./scripts/download-canister-wasm.sh $CANISTER_NAME $WASM_SRC
+fi
 
 USER_INDEX_CANISTER_ID=$(dfx canister --network $NETWORK id user_index)
 GROUP_INDEX_CANISTER_ID=$(dfx canister --network $NETWORK id group_index)

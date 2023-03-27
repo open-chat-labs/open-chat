@@ -57,7 +57,7 @@ impl RuntimeState {
             git_commit_id: utils::git::git_commit_id().to_string(),
             exchanges: self.data.exchange_config.clone(),
             canister_ids: CanisterIds {
-                user_index_canister_id: self.data.user_index_canister_id,
+                user_index: self.data.user_index_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
                 icp_ledger: self.data.icp_ledger_canister_id,
                 chat_ledger: self.data.chat_ledger_canister_id,
@@ -110,7 +110,7 @@ pub struct Metrics {
 
 #[derive(Serialize, Debug)]
 pub struct CanisterIds {
-    pub user_index_canister_id: CanisterId,
+    pub user_index: CanisterId,
     pub cycles_dispenser: CanisterId,
     pub icp_ledger: CanisterId,
     pub chat_ledger: CanisterId,
