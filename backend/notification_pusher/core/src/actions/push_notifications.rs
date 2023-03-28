@@ -125,6 +125,7 @@ async fn push_notifications_to_user(
             let mut builder = WebPushMessageBuilder::new(subscription)?;
             builder.set_payload(ContentEncoding::Aes128Gcm, notification.as_bytes());
             builder.set_vapid_signature(vapid_signature);
+            builder.set_ttl(3600); // 1 hour
             let message = builder.build()?;
 
             let length = message.payload.as_ref().map_or(0, |p| p.content.len());
