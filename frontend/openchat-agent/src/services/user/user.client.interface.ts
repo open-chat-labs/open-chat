@@ -28,16 +28,16 @@ import type {
     SetBioResponse,
     ToggleMuteNotificationResponse,
     UnpinChatResponse,
-    InitialStateV2Response,
-    UpdatesV2Response,
+    InitialStateResponse,
+    UpdatesResponse,
     DeletedDirectMessageResponse,
     EventWrapper,
 } from "openchat-shared";
 
 export interface IUserClient {
     userId: string;
-    getInitialStateV2(): Promise<InitialStateV2Response>;
-    getUpdatesV2(updatesSince: bigint): Promise<UpdatesV2Response>;
+    getInitialState(): Promise<InitialStateResponse>;
+    getUpdates(updatesSince: bigint): Promise<UpdatesResponse>;
     chatEventsWindow(
         eventIndexRange: IndexRange,
         userId: string,

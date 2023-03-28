@@ -12,6 +12,7 @@ import {
     CreatedUser,
     compareChats,
     emptyChatMetrics,
+    UpdatedEvent,
 } from "openchat-shared";
 import { unconfirmed } from "./unconfirmed";
 import { derived, get, Readable, writable, Writable } from "svelte/store";
@@ -127,7 +128,7 @@ export const selectedThreadKey = derived(
 );
 export const chatsLoading = writable(false);
 export const chatsInitialised = writable(false);
-export const chatUpdatedStore: Writable<{ affectedEvents: number[] } | undefined> =
+export const chatUpdatedStore: Writable<{ updatedEvents: UpdatedEvent[] } | undefined> =
     writable(undefined);
 
 export const selectedServerChatStore = derived(

@@ -621,6 +621,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const EventsSuccessResult = IDL.Record({
     'events' : IDL.Vec(ChatEventWrapper),
+    'timestamp' : TimestampMillis,
     'latest_event_index' : EventIndex,
   });
   const EventsResponse = IDL.Variant({
@@ -1095,6 +1096,7 @@ export const idlFactory = ({ IDL }) => {
     'notifications_muted' : IDL.Opt(IDL.Bool),
     'events_ttl' : EventsTimeToLiveUpdate,
     'latest_event_index' : IDL.Opt(EventIndex),
+    'updated_events' : IDL.Vec(IDL.Tuple(IDL.Nat32, IDL.Nat64)),
     'read_by_me_up_to' : IDL.Opt(MessageIndex),
     'chat_id' : ChatId,
     'newly_expired_messages' : IDL.Vec(MessageIndexRange),

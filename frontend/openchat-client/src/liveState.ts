@@ -7,6 +7,7 @@ import type {
     EnhancedReplyContext,
     EventWrapper,
     GroupChatSummary,
+    Message,
     ThreadSyncDetails,
     UserLookup,
 } from "openchat-shared";
@@ -33,6 +34,8 @@ import {
     chatsInitialised,
     chatsLoading,
     uninitializedDirectChats,
+    confirmedThreadEventIndexesLoadedStore,
+    selectedThreadRootEvent,
 } from "./stores/chat";
 import { remainingStorage } from "./stores/storage";
 import { userCreatedStore } from "./stores/userCreated";
@@ -40,6 +43,7 @@ import { userStore } from "./stores/user";
 import { pinnedChatsStore } from "./stores/pinnedChats";
 import { blockedUsers } from "./stores/blockedUsers";
 import { diamondMembership, isDiamond } from "./stores/diamond";
+import type DRange from "drange";
 
 /**
  * Any stores that we reference inside the OpenChat client can be added here so that we always have the up to date current value
@@ -67,6 +71,7 @@ export class LiveState {
     focusThreadMessageIndex: number | undefined;
     threadEvents!: EventWrapper<ChatEvent>[];
     selectedThreadKey: string | undefined;
+    selectedThreadRootEvent: EventWrapper<Message> | undefined;
     threadsFollowedByMe!: Record<string, Set<number>>;
     currentChatUserIds!: Set<string>;
     selectedThreadRootMessageIndex: number | undefined;
@@ -75,8 +80,12 @@ export class LiveState {
     blockedUsers!: Set<string>;
     diamondMembership!: DiamondMembershipDetails | undefined;
     isDiamond!: boolean;
+    confirmedThreadEventIndexesLoaded!: DRange;
 
     constructor() {
+        confirmedThreadEventIndexesLoadedStore.subscribe(
+            (data) => (this.confirmedThreadEventIndexesLoaded = data)
+        );
         remainingStorage.subscribe((data) => (this.remainingStorage = data));
         userStore.subscribe((data) => (this.userStore = data));
         userCreatedStore.subscribe((data) => (this.userCreated = data));
@@ -98,6 +107,7 @@ export class LiveState {
         focusThreadMessageIndex.subscribe((data) => (this.focusThreadMessageIndex = data));
         threadEvents.subscribe((data) => (this.threadEvents = data));
         selectedThreadKey.subscribe((data) => (this.selectedThreadKey = data));
+        selectedThreadRootEvent.subscribe((data) => (this.selectedThreadRootEvent = data));
         threadsFollowedByMeStore.subscribe((data) => (this.threadsFollowedByMe = data));
         currentChatUserIds.subscribe((data) => (this.currentChatUserIds = data));
         selectedThreadRootMessageIndex.subscribe(
