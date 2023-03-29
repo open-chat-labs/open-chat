@@ -120,12 +120,15 @@ async fn push_notifications_to_user(
     let mut messages = Vec::with_capacity(subscriptions.len());
     for subscription in subscriptions.iter() {
         for notification in notifications.iter() {
-            let sig_builder = VapidSignatureBuilder::from_pem(vapid_private_pem.as_bytes(), subscription)?;
+            let mut sig_builder = VapidSignatureBuilder::from_pem(vapid_private_pem.as_bytes(), subscription)?;
+            sig_builder.add_claim("sub", "https://oc.app");
             let vapid_signature = sig_builder.build()?;
-            let mut builder = WebPushMessageBuilder::new(subscription)?;
-            builder.set_payload(ContentEncoding::Aes128Gcm, notification.as_bytes());
-            builder.set_vapid_signature(vapid_signature);
-            let message = builder.build()?;
+
+            let mut message_builder = WebPushMessageBuilder::new(subscription)?;
+            message_builder.set_payload(ContentEncoding::Aes128Gcm, notification.as_bytes());
+            message_builder.set_vapid_signature(vapid_signature);
+            message_builder.set_ttl(3600); // 1 hour
+            let message = message_builder.build()?;
 
             let length = message.payload.as_ref().map_or(0, |p| p.content.len());
             if length <= MAX_PAYLOAD_LENGTH_BYTES {

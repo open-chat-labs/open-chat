@@ -267,16 +267,16 @@ export class OpenChatAgentWorker extends EventTarget {
         });
     }
 
-    getInitialStateV2(): Promise<UpdatesResult> {
+    getInitialState(): Promise<UpdatesResult> {
         return this.sendRequest({
-            kind: "getInitialStateV2",
+            kind: "getInitialState",
             payload: {},
         });
     }
 
-    getUpdatesV2(currentState: ChatStateFull): Promise<UpdatesResult> {
+    getUpdates(currentState: ChatStateFull): Promise<UpdatesResult> {
         return this.sendRequest({
-            kind: "getUpdatesV2",
+            kind: "getUpdates",
             payload: {
                 currentState,
             },
@@ -1367,7 +1367,7 @@ export class OpenChatAgentWorker extends EventTarget {
     ): Promise<UpdateMarketMakerConfigResponse> {
         return this.sendRequest({
             kind: "updateMarketMakerConfig",
-            payload: config
+            payload: config,
         });
     }
 }

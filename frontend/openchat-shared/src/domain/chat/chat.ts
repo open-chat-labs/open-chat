@@ -688,7 +688,7 @@ export type EventsSuccessResult<T extends ChatEvent> = {
 
 export type UpdatesResult = {
     state: ChatStateFull;
-    affectedEvents: Record<string, number[]>;
+    updatedEvents: Record<string, UpdatedEvent[]>;
     anyUpdates: boolean;
     anyErrors: boolean;
 };
@@ -708,7 +708,7 @@ export type MergedUpdatesResponse = {
     blockedUsers: Set<string>;
     pinnedChats: string[];
     avatarIdUpdate: OptionUpdate<bigint>;
-    affectedEvents: Record<string, number[]>;
+    updatedEvents: Record<string, UpdatedEvent[]>;
     timestamp: bigint;
 };
 
@@ -718,27 +718,7 @@ export type CurrentChatState = {
     pinnedChats: string[];
 };
 
-export type UpdatesResponse = {
-    blockedUsers: Set<string> | undefined;
-    pinnedChats: string[] | undefined;
-    chatsUpdated: ChatSummaryUpdates[];
-    chatsAdded: ChatSummary[];
-    chatsRemoved: Set<string>;
-    avatarIdUpdate: OptionUpdate<bigint>;
-    timestamp: bigint;
-    cyclesBalance?: bigint;
-    transactions: CryptocurrencyTransfer[];
-};
-
 export type InitialStateResponse = {
-    blockedUsers: Set<string>;
-    pinnedChats: string[];
-    chats: ChatSummary[];
-    timestamp: bigint;
-    cyclesBalance: bigint;
-};
-
-export type InitialStateV2Response = {
     timestamp: bigint;
     directChats: DirectChatSummary[];
     cacheTimestamp: bigint | undefined;
@@ -749,7 +729,7 @@ export type InitialStateV2Response = {
     pinnedChats: string[];
 };
 
-export type UpdatesV2Response = {
+export type UpdatesResponse = {
     timestamp: bigint;
     directChatsAdded: DirectChatSummary[];
     directChatsUpdated: DirectChatSummaryUpdates[];
@@ -785,7 +765,7 @@ type ChatSummaryUpdatesCommon = {
     latestEventIndex?: number;
     latestMessage?: EventWrapper<Message>;
     notificationsMuted?: boolean;
-    affectedEvents: number[];
+    updatedEvents: UpdatedEvent[];
     metrics?: ChatMetrics;
     myMetrics?: ChatMetrics;
     archived?: boolean;
@@ -995,6 +975,12 @@ export type GroupCanisterGroupChatSummary = {
     dateLastPinned: bigint | undefined;
 };
 
+export type UpdatedEvent = {
+    eventIndex: number;
+    threadRootMessageIndex?: number;
+    timestamp: bigint;
+};
+
 export type GroupCanisterGroupChatSummaryUpdates = {
     chatId: string;
     lastUpdated: bigint;
@@ -1014,7 +1000,7 @@ export type GroupCanisterGroupChatSummaryUpdates = {
     myMetrics: ChatMetrics | undefined;
     latestThreads: GroupCanisterThreadDetails[];
     frozen: OptionUpdate<boolean>;
-    affectedEvents: number[];
+    updatedEvents: UpdatedEvent[];
     dateLastPinned: bigint | undefined;
 };
 

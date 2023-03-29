@@ -88,6 +88,7 @@ import {
     Mention,
     DeletedGroupMessageResponse,
     ClaimPrizeResponse,
+    UpdatedEvent,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import {
@@ -190,7 +191,9 @@ function groupChatSummary(candid: ApiGroupCanisterGroupChatSummary): GroupCanist
         joined: candid.joined,
         memberCount: candid.participant_count,
         myRole: memberRole(candid.role),
-        mentions: candid.mentions.filter((m) => m.thread_root_message_index.length === 0).map(mention),
+        mentions: candid.mentions
+            .filter((m) => m.thread_root_message_index.length === 0)
+            .map(mention),
         permissions: groupPermissions(candid.permissions),
         notificationsMuted: candid.notifications_muted,
         metrics: chatMetrics(candid.metrics),
@@ -234,15 +237,29 @@ function groupChatSummaryUpdates(
         latestEventIndex: optional(candid.latest_event_index, identity),
         memberCount: optional(candid.participant_count, identity),
         myRole: optional(candid.role, memberRole),
-        mentions: candid.mentions.filter((m) => m.thread_root_message_index.length === 0).map(mention),
+        mentions: candid.mentions
+            .filter((m) => m.thread_root_message_index.length === 0)
+            .map(mention),
         permissions: optional(candid.permissions, groupPermissions),
         notificationsMuted: optional(candid.notifications_muted, identity),
         metrics: optional(candid.metrics, chatMetrics),
         myMetrics: optional(candid.my_metrics, chatMetrics),
         latestThreads: candid.latest_threads.map(threadDetails),
         frozen: optionUpdate(candid.frozen, (_) => true),
-        affectedEvents: [...candid.affected_events],
+        updatedEvents: candid.updated_events.map(updatedEvent),
         dateLastPinned: optional(candid.date_last_pinned, identity),
+    };
+}
+
+function updatedEvent([threadRootMessageIndex, eventIndex, timestamp]: [
+    [] | [number],
+    number,
+    bigint
+]): UpdatedEvent {
+    return {
+        eventIndex,
+        threadRootMessageIndex: optional(threadRootMessageIndex, identity),
+        timestamp,
     };
 }
 

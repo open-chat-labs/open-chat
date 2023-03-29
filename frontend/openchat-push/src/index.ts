@@ -84,7 +84,7 @@ async function handleNotificationClick(event: NotificationEvent): Promise<void> 
             path: event.notification.data.path,
         });
     } else {
-        const urlToOpen = new URL(self.location.origin).href + "#/" + event.notification.data.path;
+        const urlToOpen = new URL(self.location.origin).href + "/" + event.notification.data.path;
         await self.clients.openWindow(urlToOpen);
     }
 }

@@ -4,11 +4,11 @@ import type { IUserClient } from "./user/user.client.interface";
 import type { IGroupClient } from "./group/group.client.interface";
 import {
     Database,
-    getCachedChatsV2,
+    getCachedChats,
     initDb,
     loadFailedMessages,
     removeFailedMessage,
-    setCachedChatsV2,
+    setCachedChats,
     setCachedMessageIfNotExists,
 } from "../utils/caching";
 import { getAllUsers } from "../utils/userCache";
@@ -33,7 +33,7 @@ import { measure } from "./common/profiling";
 import {
     buildBlobUrl,
     buildUserAvatarUrl,
-    getAffectedEvents,
+    getUpdatedEvents,
     isSuccessfulGroupSummaryResponse,
     isSuccessfulGroupSummaryUpdatesResponse,
     mergeDirectChatUpdates,
@@ -852,10 +852,10 @@ export class OpenChatAgent extends EventTarget {
         }));
     }
 
-    async getInitialStateV2(): Promise<UpdatesResult> {
-        const cached = await getCachedChatsV2(this.db, this.principal);
+    async getInitialState(): Promise<UpdatesResult> {
+        const cached = await getCachedChats(this.db, this.principal);
         if (cached !== undefined) {
-            return await this.getUpdatesV2(cached).then((result) => {
+            return await this.getUpdates(cached).then((result) => {
                 return {
                     ...result,
                     anyUpdates: true,
@@ -865,7 +865,7 @@ export class OpenChatAgent extends EventTarget {
 
         let state: ChatStateFull;
         let anyErrors: boolean;
-        const userResponse = await this.userClient.getInitialStateV2();
+        const userResponse = await this.userClient.getInitialState();
         if (userResponse.cacheTimestamp === undefined) {
             const groupPromises = userResponse.groupChatsAdded.map((g) =>
                 this.getGroupClient(g.chatId).summary()
@@ -916,18 +916,18 @@ export class OpenChatAgent extends EventTarget {
                 groupUpdatePromiseResults.errors.length > 0;
         }
 
-        await setCachedChatsV2(this.db, this.principal, state, {});
+        await setCachedChats(this.db, this.principal, state, {});
 
         return await this.hydrateChatState(state).then((s) => ({
             state: s,
-            affectedEvents: {},
+            updatedEvents: {},
             anyUpdates: true,
             anyErrors,
         }));
     }
 
-    async getUpdatesV2(current: ChatStateFull): Promise<UpdatesResult> {
-        const userResponse = await this.userClient.getUpdatesV2(current.timestamp);
+    async getUpdates(current: ChatStateFull): Promise<UpdatesResult> {
+        const userResponse = await this.userClient.getUpdates(current.timestamp);
         const groupChatIds = current.groupChats
             .map((g) => g.chatId)
             .concat(userResponse.groupChatsAdded.map((g) => g.chatId));
@@ -994,16 +994,16 @@ export class OpenChatAgent extends EventTarget {
             blockedUsers: userResponse.blockedUsers ?? current.blockedUsers,
             pinnedChats: userResponse.pinnedChats ?? current.pinnedChats,
         };
-        const affectedEvents = getAffectedEvents(userResponse.directChatsUpdated, groupUpdates);
+        const updatedEvents = getUpdatedEvents(userResponse.directChatsUpdated, groupUpdates);
 
         return await this.hydrateChatState(state).then((s) => {
             if (anyUpdates) {
-                setCachedChatsV2(this.db, this.principal, s, affectedEvents);
+                setCachedChats(this.db, this.principal, s, updatedEvents);
             }
 
             return {
                 state: s,
-                affectedEvents,
+                updatedEvents,
                 anyUpdates,
                 anyErrors,
             };
@@ -1416,10 +1416,7 @@ export class OpenChatAgent extends EventTarget {
         return userClient.migrateUserPrincipal();
     }
 
-    getSnsProposalTally(
-        snsGovernanceCanisterId: string,
-        proposalId: bigint
-    ): Promise<Tally> {
+    getSnsProposalTally(snsGovernanceCanisterId: string, proposalId: bigint): Promise<Tally> {
         return SnsGovernanceClient.create(
             this.identity,
             this.config,
