@@ -8,8 +8,8 @@ use std::rc::Rc;
 use tracing::{error, info};
 use types::{CanisterId, Error, IndexedEvent, NotificationEnvelope, UserId};
 use web_push::{
-    ContentEncoding, SubscriptionInfo, SubscriptionKeys, Urgency, VapidSignatureBuilder, WebPushClient, WebPushError,
-    WebPushMessage, WebPushMessageBuilder,
+    ContentEncoding, PartialVapidSignatureBuilder, SubscriptionInfo, SubscriptionKeys, Urgency, VapidSignature,
+    VapidSignatureBuilder, WebPushClient, WebPushError, WebPushMessage, WebPushMessageBuilder,
 };
 
 const MAX_PAYLOAD_LENGTH_BYTES: usize = 4 * 1024;
@@ -28,6 +28,7 @@ pub async fn run<'a>(
 
     if let Some(latest_notification_index) = ic_response.notifications.last().map(|e| e.index) {
         let client = WebPushClient::new()?;
+        let sig_builder = VapidSignatureBuilder::from_pem_no_sub(vapid_private_pem.as_bytes())?;
 
         let subscriptions_map = ic_response
             .subscriptions
@@ -36,7 +37,7 @@ pub async fn run<'a>(
             .collect();
 
         let subscriptions_to_remove =
-            handle_notifications(&client, ic_response.notifications, subscriptions_map, vapid_private_pem).await;
+            handle_notifications(&client, ic_response.notifications, subscriptions_map, sig_builder).await;
 
         let future1 = index_store.set(notifications_canister_id, latest_notification_index);
         let future2 = ic_agent.remove_subscriptions(&index_canister_id, subscriptions_to_remove);
@@ -54,20 +55,14 @@ async fn handle_notifications(
     client: &WebPushClient,
     envelopes: Vec<IndexedEvent<NotificationEnvelope>>,
     mut subscriptions: HashMap<UserId, Vec<SubscriptionInfo>>,
-    vapid_private_pem: &str,
+    sig_builder: PartialVapidSignatureBuilder,
 ) -> HashMap<UserId, Vec<String>> {
     let grouped_by_user = group_notifications_by_user(envelopes);
 
     let mut futures = Vec::new();
     for (user_id, notifications) in grouped_by_user {
         if let Some(s) = subscriptions.remove(&user_id) {
-            futures.push(push_notifications_to_user(
-                user_id,
-                client,
-                vapid_private_pem,
-                notifications,
-                s,
-            ));
+            futures.push(push_notifications_to_user(user_id, client, &sig_builder, notifications, s));
         }
     }
 
@@ -116,25 +111,16 @@ fn group_notifications_by_user(envelopes: Vec<IndexedEvent<NotificationEnvelope>
 async fn push_notifications_to_user(
     user_id: UserId,
     client: &WebPushClient,
-    vapid_private_pem: &str,
+    sig_builder: &PartialVapidSignatureBuilder,
     notifications: Vec<Rc<String>>,
     subscriptions: Vec<SubscriptionInfo>,
 ) -> Result<(UserId, Vec<String>), Error> {
     let mut messages = Vec::with_capacity(subscriptions.len());
     for subscription in subscriptions.iter() {
+        let vapid_signature = build_vapid_signature(sig_builder.clone(), subscription)?;
+
         for notification in notifications.iter() {
-            let mut sig_builder = VapidSignatureBuilder::from_pem(vapid_private_pem.as_bytes(), subscription)?;
-            sig_builder.add_claim("sub", "https://oc.app");
-            let vapid_signature = sig_builder.build()?;
-
-            let mut message_builder = WebPushMessageBuilder::new(subscription)?;
-            message_builder.set_payload(ContentEncoding::Aes128Gcm, notification.as_bytes());
-            message_builder.set_vapid_signature(vapid_signature);
-            message_builder.set_ttl(3600); // 1 hour
-            message_builder.set_urgency(Urgency::High);
-
-            let message = message_builder.build()?;
-
+            let message = build_web_push_message(notification, subscription, vapid_signature.clone())?;
             let length = message.payload.as_ref().map_or(0, |p| p.content.len());
             if length <= MAX_PAYLOAD_LENGTH_BYTES {
                 messages.push((message, subscription));
@@ -199,6 +185,28 @@ fn convert_subscription(value: types::SubscriptionInfo) -> SubscriptionInfo {
             auth: value.keys.auth,
         },
     }
+}
+
+fn build_vapid_signature(
+    sig_builder: PartialVapidSignatureBuilder,
+    subscription: &SubscriptionInfo,
+) -> Result<VapidSignature, WebPushError> {
+    let mut sig_builder = sig_builder.add_sub_info(subscription);
+    sig_builder.add_claim("sub", "https://oc.app");
+    sig_builder.build()
+}
+
+fn build_web_push_message(
+    notification: &str,
+    subscription: &SubscriptionInfo,
+    vapid_signature: VapidSignature,
+) -> Result<WebPushMessage, WebPushError> {
+    let mut message_builder = WebPushMessageBuilder::new(subscription)?;
+    message_builder.set_payload(ContentEncoding::Aes128Gcm, notification.as_bytes());
+    message_builder.set_vapid_signature(vapid_signature);
+    message_builder.set_ttl(3600); // 1 hour
+    message_builder.set_urgency(Urgency::High);
+    message_builder.build()
 }
 
 #[derive(Debug)]
