@@ -61,7 +61,8 @@ async function handlePushNotification(event: PushEvent): Promise<void> {
     });
 
     // If notifications are disabled or an OC browser window already has the focus then don't show a notification
-    if (await isClientFocused()) {
+    const isClientFocused = windowClients.some((wc) => wc.visibilityState === "visible");
+    if (isClientFocused) {
         return;
     }
     await showNotification(notification);
@@ -172,15 +173,6 @@ async function showNotification(notification: Notification): Promise<void> {
             notification,
         },
     });
-}
-
-async function isClientFocused(): Promise<boolean> {
-    const windowClients = await self.clients.matchAll({
-        type: "window",
-        includeUncontrolled: true,
-    });
-
-    return windowClients.some((wc) => wc.visibilityState === "visible");
 }
 
 function extractMessageContent(
