@@ -77,10 +77,6 @@ addEventListener("message", (event) => {
     }
 });
 
-self.addEventListener("push", (ev: PushEvent) => {
-    console.debug("PUSH: push notification received in the root service worker: ", ev);
-});
-
 // Always install updated SW immediately
 self.addEventListener("install", (ev) => {
     ev.waitUntil(self.skipWaiting().then(() => console.log("SW: skipWaiting promise resolved")));

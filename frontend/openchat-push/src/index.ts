@@ -36,8 +36,6 @@ self.addEventListener("notificationclick", (ev: NotificationEvent) => {
 });
 
 async function handlePushNotification(event: PushEvent): Promise<void> {
-    console.debug("PUSH: received notification in service worker", event);
-
     if (!event.data) return;
 
     const bytes = toUint8Array(event.data.text());
