@@ -7,7 +7,10 @@ use std::collections::HashMap;
 use std::rc::Rc;
 use tracing::{error, info};
 use types::{CanisterId, Error, IndexedEvent, NotificationEnvelope, UserId};
-use web_push::*;
+use web_push::{
+    ContentEncoding, SubscriptionInfo, SubscriptionKeys, Urgency, VapidSignatureBuilder, WebPushClient, WebPushError,
+    WebPushMessage, WebPushMessageBuilder,
+};
 
 const MAX_PAYLOAD_LENGTH_BYTES: usize = 4 * 1024;
 
