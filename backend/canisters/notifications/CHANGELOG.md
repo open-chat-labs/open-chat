@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Expose `push_service_principals` in metrics ([#3389](https://github.com/open-ic/open-chat/pull/3389))
+
 ## [[2.0.650](https://github.com/open-ic/open-chat/releases/tag/v2.0.650-notifications)] - 2023-03-28
 
 ### Changed
