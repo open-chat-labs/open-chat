@@ -50,6 +50,7 @@ impl RuntimeState {
             queued_notifications: self.data.notifications.len() as u32,
             latest_notification_index: self.data.notifications.latest_event_index(),
             subscriptions: self.data.subscriptions.total(),
+            push_service_principals: self.data.push_service_principals.iter().copied().collect(),
             canister_ids: CanisterIds {
                 notifications_index: self.data.notifications_index_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
@@ -99,6 +100,7 @@ pub struct Metrics {
     pub queued_notifications: u32,
     pub latest_notification_index: u64,
     pub subscriptions: u64,
+    pub push_service_principals: Vec<Principal>,
     pub canister_ids: CanisterIds,
 }
 
