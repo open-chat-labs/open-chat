@@ -149,7 +149,7 @@
     }
 
     function translateMessage() {
-        if (!isDiamond) {
+        if (!$isDiamond) {
             dispatch("upgrade");
         } else {
             if (msg.content.kind === "text_content") {
