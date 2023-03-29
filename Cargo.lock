@@ -7077,8 +7077,7 @@ checksum = "1c38c045535d93ec4f0b4defec448e4291638ee608530863b1e2ba115d4fff7f"
 [[package]]
 name = "web-push"
 version = "0.9.3"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "890ba149bd4a7f6a30d7396b5cdbfc9fadb9e1da2ca04fbc62f7b550d842e56e"
+source = "git+https://github.com/hpeebles/rust-web-push?rev=c89ef14d76f4567ebe9dd77a0822a7f89ad66a27#c89ef14d76f4567ebe9dd77a0822a7f89ad66a27"
 dependencies = [
  "base64 0.13.1",
  "chrono",
