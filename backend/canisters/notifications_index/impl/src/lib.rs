@@ -82,6 +82,7 @@ impl RuntimeState {
             subscriptions: self.data.subscriptions.total(),
             users: self.data.principal_to_user_id.len() as u64,
             governance_principals: self.data.governance_principals.iter().copied().collect(),
+            push_service_principals: self.data.push_service_principals.iter().copied().collect(),
             notifications_canister_wasm_version: self.data.notifications_canister_wasm_for_new_canisters.version,
             notifications_canisters: self
                 .data
@@ -158,6 +159,7 @@ pub struct Metrics {
     pub subscriptions: u64,
     pub users: u64,
     pub governance_principals: Vec<Principal>,
+    pub push_service_principals: Vec<Principal>,
     pub notifications_canister_wasm_version: Version,
     pub notifications_canisters: Vec<(CanisterId, NotificationsCanister)>,
     pub canister_ids: CanisterIds,
