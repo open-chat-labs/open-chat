@@ -7,7 +7,6 @@ import { configKeys } from "../utils/config";
 const notificationsSupported =
     "serviceWorker" in navigator && "PushManager" in window && "Notification" in window;
 
-// FIXME - how do we deal with existing values stored in indexeddb
 export const softDisabledStore = createLsBoolStore(configKeys.softDisabled, false);
 
 const browserPermissionStore = writable<NotificationPermission | "pending-init">("pending-init");
@@ -17,14 +16,16 @@ export async function initNotificationStores(): Promise<void> {
         return;
     }
 
+    console.debug("PUSH: initialising notification stores with ", Notification.permission);
+
+    browserPermissionStore.set(Notification.permission);
     if (navigator.permissions) {
         navigator.permissions.query({ name: "notifications" }).then((perm) => {
-            browserPermissionStore.set(permissionStateToNotificationPermission(perm.state));
-            perm.onchange = () =>
+            perm.onchange = () => {
+                console.debug("PUSH: permission status changed to ", perm.state);
                 browserPermissionStore.set(permissionStateToNotificationPermission(perm.state));
+            };
         });
-    } else {
-        browserPermissionStore.set(Notification.permission);
     }
 }
 
@@ -72,16 +73,15 @@ export const notificationStatus = derived(
 );
 
 export async function askForNotificationPermission(): Promise<NotificationPermission> {
-    const result: NotificationPermission = await new Promise(function (resolve, reject) {
-        const permissionResult = Notification.requestPermission(function (res) {
-            resolve(res);
+    return Notification.requestPermission()
+        .then((res) => {
+            console.debug("PUSH: requestPermission result: ", res);
             setSoftDisabled(false);
+            browserPermissionStore.set(res);
+            return res;
+        })
+        .catch((err) => {
+            console.debug("PUSH: requestPermission err: ", err);
+            throw err;
         });
-
-        if (permissionResult) {
-            permissionResult.then(resolve, reject);
-        }
-    });
-
-    return result;
 }

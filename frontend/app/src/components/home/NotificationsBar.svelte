@@ -9,7 +9,7 @@
 
     $: notificationStatus = client.notificationStatus;
 
-    $: console.log("STATUS: ", $notificationStatus);
+    $: console.debug("PUSH STATUS: ", $notificationStatus);
 </script>
 
 {#if $notificationStatus === "prompt"}
