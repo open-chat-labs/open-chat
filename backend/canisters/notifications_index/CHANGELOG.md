@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Skip upgrades where new wasm version matches current version ([#3158](https://github.com/open-ic/open-chat/pull/3158))
+- Expose `push_service_principals` in metrics ([#3389](https://github.com/open-ic/open-chat/pull/3389))
 
 ### Removed
 
