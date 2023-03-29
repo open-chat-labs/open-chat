@@ -163,9 +163,12 @@ async function showNotification(notification: Notification): Promise<void> {
     }
 
     if ("setAppBadge" in navigator) {
+        console.debug("BADGE: setting app badge from service worker");
         /* eslint-disable @typescript-eslint/ban-ts-comment */
         //@ts-ignore
-        navigator.setAppBadge();
+        navigator.setAppBadge(0);
+    } else {
+        console.debug("BADGE: setAppBadge not available");
     }
 
     await self.registration.showNotification(title, {
