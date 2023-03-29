@@ -18,6 +18,10 @@ impl LastOnlineDates {
     pub fn get(&self, user_id: UserId) -> Option<TimestampMillis> {
         self.map.get(&user_id.into())
     }
+
+    pub fn iter(&self) -> impl Iterator<Item = (Principal, TimestampMillis)> + '_ {
+        self.map.iter()
+    }
 }
 
 fn init_map() -> StableBTreeMap<Principal, TimestampMillis, Memory> {
