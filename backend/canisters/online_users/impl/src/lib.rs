@@ -6,6 +6,7 @@ use std::cell::RefCell;
 use types::{CanisterId, Cycles, TimestampMillis, Timestamped, Version};
 use utils::env::Environment;
 
+mod jobs;
 mod lifecycle;
 mod memory;
 mod model;
@@ -38,6 +39,7 @@ impl RuntimeState {
             mark_as_online_count: self.data.mark_as_online_count,
             batches_sent_to_user_index: self.data.batches_sent_to_user_index,
             failed_batches: self.data.failed_batches,
+            active_users: self.data.cached_active_users.clone(),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
@@ -55,6 +57,8 @@ struct Data {
     pub mark_as_online_count: u64,
     pub batches_sent_to_user_index: u64,
     pub failed_batches: u64,
+    #[serde(default)]
+    pub cached_active_users: ActiveUsers,
     pub test_mode: bool,
 }
 
@@ -68,6 +72,7 @@ impl Data {
             mark_as_online_count: 0,
             batches_sent_to_user_index: 0,
             failed_batches: 0,
+            cached_active_users: ActiveUsers::default(),
             test_mode,
         }
     }
@@ -83,7 +88,18 @@ pub struct Metrics {
     pub mark_as_online_count: u64,
     pub batches_sent_to_user_index: u64,
     pub failed_batches: u64,
+    pub active_users: ActiveUsers,
     pub canister_ids: CanisterIds,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, Default)]
+pub struct ActiveUsers {
+    timestamp: TimestampMillis,
+    last_5_minutes: u32,
+    last_hour: u32,
+    last_day: u32,
+    last_7_days: u32,
+    last_30_days: u32,
 }
 
 #[derive(Serialize, Debug)]
