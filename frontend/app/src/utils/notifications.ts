@@ -38,7 +38,6 @@ export async function subscribeToNotifications(
     });
 
     client.notificationStatus.subscribe((status) => {
-        console.debug("PUSH: initial notification status: ", status);
         switch (status) {
             case "granted":
                 trySubscribe(client);
@@ -171,10 +170,8 @@ export async function unsubscribeNotifications(client: OpenChat): Promise<void> 
     console.debug("PUSH: unsubscribing from notifications");
     const registration = await getRegistration();
     if (registration !== undefined) {
-        console.debug("PUSH: found service worker registration");
         const pushSubscription = await registration.pushManager.getSubscription();
         if (pushSubscription) {
-            console.debug("PUSH: found push subscription");
             if (await client.subscriptionExists(extract_p256dh_key(pushSubscription))) {
                 console.debug("PUSH: removing push subscription");
                 await client.removeSubscription(pushSubscription.toJSON());
@@ -185,11 +182,5 @@ export async function unsubscribeNotifications(client: OpenChat): Promise<void> 
 
 async function getRegistration(): Promise<ServiceWorkerRegistration | undefined> {
     if (!notificationsSupported) return undefined;
-
-    console.debug(
-        "PUSH: getting service worker registration from: ",
-        "process.env.WEBPUSH_SERVICE_WORKER_PATH"
-    );
-
     return await navigator.serviceWorker.getRegistration("process.env.WEBPUSH_SERVICE_WORKER_PATH");
 }

@@ -75,13 +75,13 @@ export const notificationStatus = derived(
 export async function askForNotificationPermission(): Promise<NotificationPermission> {
     return Notification.requestPermission()
         .then((res) => {
-            console.debug("PUSH: permission result: ", res);
+            console.debug("PUSH: requestPermission result: ", res);
             setSoftDisabled(false);
             browserPermissionStore.set(res);
             return res;
         })
         .catch((err) => {
-            console.debug("PUSH: permission err (catch): ", err);
+            console.debug("PUSH: requestPermission err: ", err);
             throw err;
         });
 }

@@ -61,8 +61,7 @@
     $: user = client.user;
     $: inThread = threadRootMessage !== undefined;
     $: translationStore = client.translationStore;
-    // $: isDiamond = client.isDiamond;
-    $: isDiamond = true;
+    $: isDiamond = client.isDiamond;
     $: threadRootMessageIndex =
         msg.messageId === threadRootMessage?.messageId
             ? undefined
