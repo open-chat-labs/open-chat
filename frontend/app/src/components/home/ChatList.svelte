@@ -66,6 +66,16 @@
 
     $: {
         document.title = chatsWithUnreadMsgs > 0 ? `OpenChat (${chatsWithUnreadMsgs})` : "OpenChat";
+        if ("setClientBadge" in navigator) {
+            /* eslint-disable @typescript-eslint/ban-ts-comment */
+            //@ts-ignore
+            navigator.setClientBadge(chatsWithUnreadMsgs);
+        }
+        if ("setAppBadge" in navigator) {
+            /* eslint-disable @typescript-eslint/ban-ts-comment */
+            //@ts-ignore
+            navigator.setAppBadge(chatsWithUnreadMsgs);
+        }
     }
 
     function chatWith(userId: string): void {

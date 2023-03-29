@@ -162,6 +162,12 @@ async function showNotification(notification: Notification): Promise<void> {
         existing.forEach((n) => n.close());
     }
 
+    if ("setAppBadge" in navigator) {
+        /* eslint-disable @typescript-eslint/ban-ts-comment */
+        //@ts-ignore
+        navigator.setAppBadge();
+    }
+
     await self.registration.showNotification(title, {
         body,
         icon,
