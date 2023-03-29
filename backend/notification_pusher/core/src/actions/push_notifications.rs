@@ -128,7 +128,14 @@ async fn push_notifications_to_user(
             message_builder.set_payload(ContentEncoding::Aes128Gcm, notification.as_bytes());
             message_builder.set_vapid_signature(vapid_signature);
             message_builder.set_ttl(3600); // 1 hour
-            let message = message_builder.build()?;
+
+            let mut message = message_builder.build()?;
+            message
+                .payload
+                .as_mut()
+                .unwrap()
+                .crypto_headers
+                .push(("Urgency", "high".to_string()));
 
             let length = message.payload.as_ref().map_or(0, |p| p.content.len());
             if length <= MAX_PAYLOAD_LENGTH_BYTES {
