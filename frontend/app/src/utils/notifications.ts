@@ -15,7 +15,10 @@ export async function subscribeToNotifications(
     client: OpenChat,
     onNotification: (notification: Notification) => void
 ): Promise<boolean> {
-    if (!notificationsSupported) return false;
+    if (!notificationsSupported) {
+        console.debug("PUSH: notifications not supported");
+        return false;
+    }
 
     // Register a service worker if it hasn't already been done
     const registration = await registerServiceWorker();
@@ -27,6 +30,7 @@ export async function subscribeToNotifications(
 
     navigator.serviceWorker.addEventListener("message", (event) => {
         if (event.data.type === "NOTIFICATION_RECEIVED") {
+            console.debug("PUSH: received push notification from the service worker", event.data);
             onNotification(event.data.data as Notification);
         } else if (event.data.type === "NOTIFICATION_CLICKED") {
             page(`/${event.data.path}`);
@@ -34,6 +38,7 @@ export async function subscribeToNotifications(
     });
 
     client.notificationStatus.subscribe((status) => {
+        console.debug("PUSH: initial notification status: ", status);
         switch (status) {
             case "granted":
                 trySubscribe(client);
@@ -102,20 +107,25 @@ async function registerServiceWorker(): Promise<ServiceWorkerRegistration | unde
 }
 
 async function trySubscribe(client: OpenChat): Promise<boolean> {
+    console.debug("PUSH: checking user's subscription status");
     const registration = await getRegistration();
     if (registration === undefined) {
+        console.debug("PUSH: couldn't find push notifications service worker");
         return false;
     }
 
     // Check if the user has subscribed already
     let pushSubscription = await registration.pushManager.getSubscription();
     if (pushSubscription) {
+        console.debug("PUSH: found existing push subscription");
         // Check if the subscription has already been pushed to the notifications canister
         if (await client.subscriptionExists(extract_p256dh_key(pushSubscription))) {
+            console.debug("PUSH: subscription exists in the backend");
             return true;
         }
     } else {
         // Subscribe the user to webpush notifications
+        console.debug("PUSH: creating a new subscription");
         pushSubscription = await subscribeUserToPush(registration);
         if (pushSubscription == null) {
             return false;
@@ -124,10 +134,11 @@ async function trySubscribe(client: OpenChat): Promise<boolean> {
 
     // Add the subscription to the user record on the notifications canister
     try {
+        console.debug("PUSH: saving new subscription", pushSubscription, pushSubscription.toJSON());
         await client.pushSubscription(pushSubscription.toJSON());
         return true;
     } catch (e) {
-        console.log("Push subscription failed: ", e);
+        console.log("PUSH: Push subscription failed: ", e);
         return false;
     }
 }
@@ -157,11 +168,15 @@ function extract_p256dh_key(subscription: PushSubscription): string {
 }
 
 export async function unsubscribeNotifications(client: OpenChat): Promise<void> {
+    console.debug("PUSH: unsubscribing from notifications");
     const registration = await getRegistration();
     if (registration !== undefined) {
+        console.debug("PUSH: found service worker registration");
         const pushSubscription = await registration.pushManager.getSubscription();
         if (pushSubscription) {
+            console.debug("PUSH: found push subscription");
             if (await client.subscriptionExists(extract_p256dh_key(pushSubscription))) {
+                console.debug("PUSH: removing push subscription");
                 await client.removeSubscription(pushSubscription.toJSON());
             }
         }
@@ -170,6 +185,11 @@ export async function unsubscribeNotifications(client: OpenChat): Promise<void> 
 
 async function getRegistration(): Promise<ServiceWorkerRegistration | undefined> {
     if (!notificationsSupported) return undefined;
+
+    console.debug(
+        "PUSH: getting service worker registration from: ",
+        "process.env.WEBPUSH_SERVICE_WORKER_PATH"
+    );
 
     return await navigator.serviceWorker.getRegistration("process.env.WEBPUSH_SERVICE_WORKER_PATH");
 }

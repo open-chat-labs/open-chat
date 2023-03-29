@@ -6,7 +6,7 @@ import { Poller } from "../utils/poller";
 
 export async function startSwCheckPoller(): Promise<void> {
     if ("serviceWorker" in navigator) {
-        new Poller(checkServiceWorker, 10000);
+        new Poller(checkServiceWorker, 60000);
     }
 }
 
