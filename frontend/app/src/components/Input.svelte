@@ -33,10 +33,6 @@
         dispatch("change", value);
     };
 
-    export function focus() {
-        inp?.focus();
-    }
-
     export function setValue(text: string) {
         value = text;
     }
