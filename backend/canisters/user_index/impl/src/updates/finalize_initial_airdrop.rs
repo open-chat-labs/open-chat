@@ -1,0 +1,186 @@
+use crate::guards::caller_is_platform_operator;
+use crate::model::initial_airdrop_queue::InitialAirdropEntry;
+use crate::{mutate_state, RuntimeState};
+use candid::Principal;
+use canister_client::make_c2c_call;
+use canister_tracing_macros::trace;
+use ic_base_types::PrincipalId;
+use ic_cdk::api::call::{CallResult, RejectionCode};
+use ic_cdk_macros::update;
+use ic_icrc1::endpoints::TransferArg;
+use ic_icrc1::Account;
+use ic_sns_governance::pb::v1::manage_neuron::claim_or_refresh::{By, MemoAndController};
+use ic_sns_governance::pb::v1::manage_neuron::{ClaimOrRefresh, Command};
+use ic_sns_governance::pb::v1::manage_neuron_response::Command as CommandResponse;
+use ic_sns_governance::pb::v1::{ManageNeuron, ManageNeuronResponse};
+use itertools::Itertools;
+use sha2::{Digest, Sha256};
+use types::{CanisterId, SnsNeuronId};
+use user_index_canister::finalize_initial_airdrop::{Response::*, *};
+
+const MIN_NEURON_STAKE_E8S: u64 = 4_0000_0000;
+
+#[update(guard = "caller_is_platform_operator")]
+#[trace]
+async fn finalize_initial_airdrop(_args: Args) -> Response {
+    let PrepareResult {
+        this_canister_id,
+        governance_canister_id,
+        ledger_canister_id,
+    } = mutate_state(prepare);
+
+    match stake_airdrop_source_neuron(this_canister_id, governance_canister_id, ledger_canister_id).await {
+        Ok(result) => {
+            mutate_state(|state| {
+                finalize_initial_airdrop_impl(result.neuron_id, result.stake_e8s, state);
+            });
+            Success
+        }
+        Err(e) => InternalError(format!("{e:?}")),
+    }
+}
+
+struct PrepareResult {
+    this_canister_id: CanisterId,
+    governance_canister_id: CanisterId,
+    ledger_canister_id: CanisterId,
+}
+
+fn prepare(state: &mut RuntimeState) -> PrepareResult {
+    assert!(!state.data.initial_airdrop_open);
+    assert!(state.data.initial_airdrop_neuron_id.is_none());
+
+    PrepareResult {
+        this_canister_id: state.env.canister_id(),
+        governance_canister_id: state.data.openchat_governance_canister_id,
+        ledger_canister_id: state.data.openchat_ledger_canister_id,
+    }
+}
+
+fn finalize_initial_airdrop_impl(neuron_id: SnsNeuronId, stake_e8s: u64, state: &mut RuntimeState) -> Response {
+    state.data.initial_airdrop_neuron_id = Some(neuron_id);
+
+    let users: Vec<_> = state
+        .data
+        .neuron_controllers_for_initial_airdrop
+        .keys()
+        .filter_map(|u| state.data.users.get_by_user_id(u))
+        .sorted_unstable_by_key(|u| u.date_created)
+        .map(|u| u.user_id)
+        .collect();
+
+    assert!(!users.is_empty());
+
+    let count = users.len() as u64;
+    let fee_e8s = 100000u64;
+    let available_e8s = stake_e8s - (count * fee_e8s);
+
+    let median = available_e8s / count;
+    let max = median + (median / 2);
+    let min = median / 2;
+    let increment = median / (count - 1);
+    let mut remaining_e8s = available_e8s;
+
+    assert!(min > MIN_NEURON_STAKE_E8S);
+
+    for (index, user_id) in users.into_iter().enumerate() {
+        let index = index as u64;
+        let is_last = index == count - 1;
+        let user_stake = if is_last { remaining_e8s } else { max - (index * increment) };
+        remaining_e8s = remaining_e8s.checked_sub(user_stake).unwrap();
+
+        state.data.initial_airdrop_queue.push(InitialAirdropEntry {
+            user_id,
+            neuron_controller: *state.data.neuron_controllers_for_initial_airdrop.get(&user_id).unwrap(),
+            neuron_stake_e8s: user_stake,
+        });
+    }
+
+    crate::jobs::distribute_airdrop_neurons::start_job_if_required(state);
+
+    Success
+}
+
+async fn stake_airdrop_source_neuron(
+    this_canister_id: CanisterId,
+    governance_canister_id: CanisterId,
+    ledger_canister_id: CanisterId,
+) -> CallResult<StakeAirdropNeuronResult> {
+    const MEMO: u64 = 0x504f5244; // == 'DROP'
+
+    let ledger_client = ic_icrc1_client::ICRC1Client {
+        ledger_canister_id,
+        runtime: ic_icrc1_client_cdk::CdkRuntime,
+    };
+    let balance_e8s = ledger_client
+        .balance_of(Account::from(PrincipalId::from(this_canister_id)))
+        .await
+        .map_err(|(code, msg)| (RejectionCode::from(code), msg))?;
+
+    let fee_e8s = 100000;
+    let stake_e8s = balance_e8s.saturating_sub(fee_e8s);
+    let subaccount = compute_neuron_staking_subaccount_bytes(this_canister_id, MEMO);
+
+    assert!(stake_e8s > 0);
+
+    ledger_client
+        .transfer(TransferArg {
+            from_subaccount: None,
+            to: Account {
+                owner: governance_canister_id.into(),
+                subaccount: Some(subaccount),
+            },
+            fee: Some(fee_e8s.into()),
+            created_at_time: None,
+            memo: Some(MEMO.into()),
+            amount: stake_e8s.into(),
+        })
+        .await
+        .map_err(|(code, msg)| (RejectionCode::from(code), msg))?
+        .map_err(|e| (RejectionCode::Unknown, format!("TransferError: {e:?}")))?;
+
+    let neuron_id = claim_neuron(this_canister_id, governance_canister_id, MEMO).await?;
+
+    Ok(StakeAirdropNeuronResult { neuron_id, stake_e8s })
+}
+
+async fn claim_neuron(this_canister_id: CanisterId, governance_canister_id: CanisterId, memo: u64) -> CallResult<SnsNeuronId> {
+    let args = ManageNeuron {
+        subaccount: vec![],
+        command: Some(Command::ClaimOrRefresh(ClaimOrRefresh {
+            by: Some(By::MemoAndController(MemoAndController {
+                controller: Some(this_canister_id.into()),
+                memo,
+            })),
+        })),
+    };
+
+    let response: ManageNeuronResponse =
+        make_c2c_call(governance_canister_id, "manage_neuron", args, candid::encode_one, |r| {
+            candid::decode_one(r)
+        })
+        .await?;
+
+    match response.command.unwrap() {
+        CommandResponse::ClaimOrRefresh(c) => Ok(c.refreshed_neuron_id.unwrap().id.try_into().unwrap()),
+        CommandResponse::Error(e) => Err((RejectionCode::Unknown, format!("{e:?}"))),
+        _ => unreachable!(),
+    }
+}
+
+fn compute_neuron_staking_subaccount_bytes(controller: Principal, nonce: u64) -> [u8; 32] {
+    const DOMAIN: &[u8] = b"neuron-stake";
+    const DOMAIN_LENGTH: [u8; 1] = [0x0c];
+
+    let mut hasher = Sha256::new();
+    hasher.update(&DOMAIN_LENGTH);
+    hasher.update(DOMAIN);
+    hasher.update(controller.as_slice());
+    hasher.update(&nonce.to_be_bytes());
+    hasher.finalize().into()
+}
+
+struct StakeAirdropNeuronResult {
+    neuron_id: SnsNeuronId,
+    stake_e8s: u64,
+}

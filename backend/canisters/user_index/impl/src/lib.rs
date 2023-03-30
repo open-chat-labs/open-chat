@@ -1,4 +1,5 @@
 use crate::model::challenges::Challenges;
+use crate::model::initial_airdrop_queue::InitialAirdropQueue;
 use crate::model::local_user_index_map::LocalUserIndex;
 use crate::model::storage_index_user_sync_queue::OpenStorageUserSyncQueue;
 use crate::model::user_map::UserMap;
@@ -12,7 +13,9 @@ use model::local_user_index_map::LocalUserIndexMap;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
-use types::{CanisterId, CanisterWasm, Cryptocurrency, Cycles, Milliseconds, TimestampMillis, Timestamped, UserId, Version};
+use types::{
+    CanisterId, CanisterWasm, Cryptocurrency, Cycles, Milliseconds, SnsNeuronId, TimestampMillis, Timestamped, UserId, Version,
+};
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::canister_event_sync_queue::CanisterEventSyncQueue;
 use utils::env::Environment;
@@ -177,6 +180,24 @@ struct Data {
     pub local_index_map: LocalUserIndexMap,
     pub timer_jobs: TimerJobs<TimerJob>,
     pub neuron_controllers_for_initial_airdrop: HashMap<UserId, Principal>,
+    #[serde(default)]
+    pub initial_airdrop_open: bool,
+    #[serde(default)]
+    pub initial_airdrop_neuron_id: Option<SnsNeuronId>,
+    #[serde(default)]
+    pub initial_airdrop_queue: InitialAirdropQueue,
+    #[serde(default = "oc_governance_canister")]
+    pub openchat_governance_canister_id: CanisterId,
+    #[serde(default = "oc_ledger_canister")]
+    pub openchat_ledger_canister_id: CanisterId,
+}
+
+fn oc_governance_canister() -> CanisterId {
+    Principal::from_text("2jvtu-yqaaa-aaaaq-aaama-cai").unwrap()
+}
+
+fn oc_ledger_canister() -> CanisterId {
+    Principal::from_text("2ouva-viaaa-aaaaq-aaamq-cai").unwrap()
 }
 
 impl Data {
@@ -216,6 +237,11 @@ impl Data {
             local_index_map: LocalUserIndexMap::default(),
             timer_jobs: TimerJobs::default(),
             neuron_controllers_for_initial_airdrop: HashMap::new(),
+            initial_airdrop_open: false,
+            initial_airdrop_neuron_id: None,
+            initial_airdrop_queue: InitialAirdropQueue::default(),
+            openchat_governance_canister_id: oc_governance_canister(),
+            openchat_ledger_canister_id: oc_ledger_canister(),
         };
 
         // Register the ProposalsBot
@@ -260,6 +286,11 @@ impl Default for Data {
             local_index_map: LocalUserIndexMap::default(),
             timer_jobs: TimerJobs::default(),
             neuron_controllers_for_initial_airdrop: HashMap::new(),
+            initial_airdrop_open: false,
+            initial_airdrop_neuron_id: None,
+            initial_airdrop_queue: InitialAirdropQueue::default(),
+            openchat_governance_canister_id: oc_governance_canister(),
+            openchat_ledger_canister_id: oc_ledger_canister(),
         }
     }
 }

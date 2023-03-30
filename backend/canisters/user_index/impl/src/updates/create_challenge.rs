@@ -5,7 +5,7 @@ use user_index_canister::create_challenge::*;
 
 #[update]
 #[trace]
-async fn create_challenge(_args: Args) -> Response {
+fn create_challenge(_args: Args) -> Response {
     mutate_state(create_challenge_impl)
 }
 
