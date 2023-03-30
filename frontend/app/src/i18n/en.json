@@ -741,6 +741,10 @@
         "pleaseSubmit": "To receive your airdrop, please submit your NNS dApp principal below.",
         "info": "Note that you can repeat this procedure as many times as you like - only the most recently entered principal will be used.",
         "placeholder": "NNS principal...",
-        "submit": "Submit"
+        "submit": "Submit",
+        "success": "Thanks - you have been successfully registered for the airdrop",
+        "failure": "Sorry - we were unable to register you for the airdrop",
+        "showHow": "Show me how",
+        "howTo": "How to find your NNS principal"
     }
 }

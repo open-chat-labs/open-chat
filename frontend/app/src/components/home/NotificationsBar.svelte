@@ -42,6 +42,8 @@
         height: toRem(60);
 
         @include mobile() {
+            padding: $sp4;
+            height: unset;
             margin-bottom: 0;
             text-align: center;
         }
@@ -50,11 +52,14 @@
     .txt {
         @include font(bold, normal, fs-90);
         @include mobile() {
-            margin-bottom: $sp2;
+            margin-bottom: $sp3;
         }
     }
 
     .links {
         @include font(book, italic, fs-90);
+        @include mobile() {
+            @include font-size(fs-100);
+        }
     }
 </style>

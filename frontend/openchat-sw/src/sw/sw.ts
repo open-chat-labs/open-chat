@@ -12,7 +12,7 @@ const DEBUG = false;
 registerRoute(
     (route) => {
         return [
-            /assets\/.*png|jpg|svg|gif/,
+            /assets\/.*png|jpg|svg|gif|mp4/,
             /main-.*[css|js]$/,
             /ArchitecturePage-.*js$/,
             /HashLinkTarget-.*js$/,
