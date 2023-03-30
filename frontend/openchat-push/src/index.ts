@@ -96,7 +96,7 @@ function toUint8Array(base64String: string): Uint8Array {
 
 async function showNotification(notification: Notification): Promise<void> {
     let icon = "/_/raw/icon.png";
-    let title = "OpenChat - ";
+    let title: string;
     let body: string;
     let path: string;
     let tag: string;
@@ -111,7 +111,7 @@ async function showNotification(notification: Notification): Promise<void> {
             notification.message.event.content,
             notification.senderName
         );
-        title += notification.senderName;
+        title = notification.senderName;
         body = content.text;
         icon = content.image ?? icon;
         path = `${notification.sender}/${notification.message.event.messageIndex}`;
@@ -124,7 +124,7 @@ async function showNotification(notification: Notification): Promise<void> {
             notification.senderName,
             notification.mentioned
         );
-        title += notification.groupName;
+        title = notification.groupName;
         body = `${notification.senderName}: ${content.text}`;
         icon = content.image ?? icon;
         path =
@@ -135,20 +135,20 @@ async function showNotification(notification: Notification): Promise<void> {
         timestamp = Number(notification.message.timestamp);
         closeExistingNotifications = true;
     } else if (notification.kind === "direct_reaction") {
-        title += notification.username;
+        title = notification.username;
         body = `${notification.username} reacted '${notification.reaction}' to your message`;
         path = `${notification.them}/${notification.message.event.messageIndex}`;
         tag = path;
         timestamp = Number(notification.timestamp);
     } else if (notification.kind === "group_reaction") {
-        title += notification.groupName;
+        title = notification.groupName;
         body = `${notification.addedByName} reacted '${notification.reaction}' to your message`;
         path = `${notification.chatId}/${notification.message.event.messageIndex}`;
         tag = path;
         timestamp = Number(notification.timestamp);
     } else if (notification.kind === "added_to_group_notification") {
         // TODO Multi language support
-        title += notification.groupName;
+        title = notification.groupName;
         body = `${notification.addedByUsername} added you to the group "${notification.groupName}"`;
         path = notification.chatId;
         tag = path;
