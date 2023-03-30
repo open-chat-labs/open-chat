@@ -17,6 +17,7 @@
     import { iconSize } from "../../stores/iconSize";
     import { AvatarSize, OpenChat, PartialUserSummary } from "openchat-client";
     import SectionHeader from "../SectionHeader.svelte";
+    import { getRegistration } from "utils/notifications";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -24,6 +25,12 @@
     export let user: PartialUserSummary;
 
     $: canExtendDiamond = client.canExtendDiamond;
+
+    function getUnreadCount() {
+        getRegistration().then((reg) => {
+            reg?.active?.postMessage("GETUNREADCOUNT");
+        });
+    }
 
     function newGroup() {
         dispatch("newGroup");
@@ -49,6 +56,9 @@
             </span>
             <span slot="menu">
                 <Menu>
+                    <MenuItem on:click={getUnreadCount}>
+                        <span slot="text">Get Unread</span>
+                    </MenuItem>
                     <MenuItem on:click={() => dispatch("showHomePage")}>
                         <Home size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
                         <span slot="text">{$_("homepage")}</span>

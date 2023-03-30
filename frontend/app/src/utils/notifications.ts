@@ -180,7 +180,7 @@ export async function unsubscribeNotifications(client: OpenChat): Promise<void> 
     }
 }
 
-async function getRegistration(): Promise<ServiceWorkerRegistration | undefined> {
+export async function getRegistration(): Promise<ServiceWorkerRegistration | undefined> {
     if (!notificationsSupported) return undefined;
     return await navigator.serviceWorker.getRegistration("process.env.WEBPUSH_SERVICE_WORKER_PATH");
 }

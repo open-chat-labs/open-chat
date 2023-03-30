@@ -66,39 +66,39 @@
 
     $: {
         document.title = chatsWithUnreadMsgs > 0 ? `OpenChat (${chatsWithUnreadMsgs})` : "OpenChat";
-        if ("setClientBadge" in navigator && "clearClientBadge" in navigator) {
-            console.debug("BADGE: setting client badge: ", chatsWithUnreadMsgs);
+        // if ("setClientBadge" in navigator && "clearClientBadge" in navigator) {
+        //     console.debug("BADGE: setting client badge: ", chatsWithUnreadMsgs);
 
-            if (chatsWithUnreadMsgs > 0) {
-                /* eslint-disable @typescript-eslint/ban-ts-comment */
-                //@ts-ignore
-                navigator.setClientBadge(chatsWithUnreadMsgs);
-            } else {
-                /* eslint-disable @typescript-eslint/ban-ts-comment */
-                //@ts-ignore
-                navigator.clearClientBadge();
-            }
-        } else {
-            console.debug("BADGE: setClientBadge not available");
-        }
-        if ("setAppBadge" in navigator && "clearAppBadge" in navigator) {
-            console.debug("BADGE: setting app badge: ", chatsWithUnreadMsgs);
+        //     if (chatsWithUnreadMsgs > 0) {
+        //         /* eslint-disable @typescript-eslint/ban-ts-comment */
+        //         //@ts-ignore
+        //         navigator.setClientBadge(chatsWithUnreadMsgs);
+        //     } else {
+        //         /* eslint-disable @typescript-eslint/ban-ts-comment */
+        //         //@ts-ignore
+        //         navigator.clearClientBadge();
+        //     }
+        // } else {
+        //     console.debug("BADGE: setClientBadge not available");
+        // }
+        // if ("setAppBadge" in navigator && "clearAppBadge" in navigator) {
+        //     console.debug("BADGE: setting app badge: ", chatsWithUnreadMsgs);
 
-            /* eslint-disable @typescript-eslint/ban-ts-comment */
-            //@ts-ignore
-            navigator.setAppBadge(chatsWithUnreadMsgs);
-            if (chatsWithUnreadMsgs > 0) {
-                /* eslint-disable @typescript-eslint/ban-ts-comment */
-                //@ts-ignore
-                navigator.setAppBadge(chatsWithUnreadMsgs);
-            } else {
-                /* eslint-disable @typescript-eslint/ban-ts-comment */
-                //@ts-ignore
-                navigator.clearAppBadge();
-            }
-        } else {
-            console.debug("BADGE: setAppBadge not available");
-        }
+        //     /* eslint-disable @typescript-eslint/ban-ts-comment */
+        //     //@ts-ignore
+        //     navigator.setAppBadge(chatsWithUnreadMsgs);
+        //     if (chatsWithUnreadMsgs > 0) {
+        //         /* eslint-disable @typescript-eslint/ban-ts-comment */
+        //         //@ts-ignore
+        //         navigator.setAppBadge(chatsWithUnreadMsgs);
+        //     } else {
+        //         /* eslint-disable @typescript-eslint/ban-ts-comment */
+        //         //@ts-ignore
+        //         navigator.clearAppBadge();
+        //     }
+        // } else {
+        //     console.debug("BADGE: setAppBadge not available");
+        // }
     }
 
     function chatWith(userId: string): void {

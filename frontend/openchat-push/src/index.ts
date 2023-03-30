@@ -8,7 +8,10 @@ import {
     Cryptocurrency,
     E8S_PER_TOKEN,
     UnsupportedValueError,
+    EventWrapper,
+    Message,
 } from "openchat-shared";
+import { getUnreadCount } from "./unread";
 
 declare const self: ServiceWorkerGlobalScope;
 
@@ -21,6 +24,36 @@ self.addEventListener("activate", (ev) => {
     // upon activation take control of all clients (tabs & windows)
     ev.waitUntil(self.clients.claim());
     console.debug("PSW: actived");
+});
+
+const dummyMessage: EventWrapper<Message> = {
+    index: 19501,
+    timestamp: BigInt(0),
+    event: {
+        kind: "message",
+        messageId: BigInt(0),
+        messageIndex: 5,
+        sender: "",
+        content: { kind: "placeholder_content" },
+        reactions: [],
+        edited: false,
+        forwarded: false,
+        deleted: false,
+    },
+};
+
+self.addEventListener("message", (ev) => {
+    if (ev.data === "GETUNREADCOUNT") {
+        console.debug("BADGE: GETUNREADCOUNT");
+        getUnreadCount(["made_up_chat_id", dummyMessage], false).then((result) => {
+            console.debug("BADGE: result: ", result);
+            if (result !== undefined) {
+                setAppBadge(result);
+            } else {
+                clearAppBadge();
+            }
+        });
+    }
 });
 
 self.addEventListener("fetch", () => {
@@ -93,6 +126,20 @@ function toUint8Array(base64String: string): Uint8Array {
     return Uint8Array.from(atob(base64String), (c) => c.charCodeAt(0));
 }
 
+// TODO this is probably not sophisticated enough yet (threads etc)
+function extractLatestMessageIndex(
+    notification: Notification
+): [string, EventWrapper<Message>] | undefined {
+    switch (notification.kind) {
+        case "direct_notification":
+            return [notification.sender, notification.message];
+        case "group_notification":
+            return [notification.chatId, notification.message];
+        default:
+            return undefined;
+    }
+}
+
 async function showNotification(notification: Notification): Promise<void> {
     let icon = "/_/raw/icon.png";
     let title = "OpenChat - ";
@@ -162,15 +209,6 @@ async function showNotification(notification: Notification): Promise<void> {
         existing.forEach((n) => n.close());
     }
 
-    if ("setAppBadge" in navigator) {
-        console.debug("BADGE: setting app badge from service worker");
-        /* eslint-disable @typescript-eslint/ban-ts-comment */
-        //@ts-ignore
-        navigator.setAppBadge(0);
-    } else {
-        console.debug("BADGE: setAppBadge not available");
-    }
-
     await self.registration.showNotification(title, {
         body,
         icon,
@@ -181,6 +219,41 @@ async function showNotification(notification: Notification): Promise<void> {
             notification,
         },
     });
+
+    setUnreadMessageCount(notification);
+}
+
+function setAppBadge(n: number) {
+    /* eslint-disable @typescript-eslint/ban-ts-comment */
+    //@ts-ignore
+    navigator.setAppBadge(n);
+}
+
+function clearAppBadge() {
+    /* eslint-disable @typescript-eslint/ban-ts-comment */
+    //@ts-ignore
+    navigator.clearAppBadge(n);
+}
+
+function setUnreadMessageCount(notification: Notification) {
+    const latest = extractLatestMessageIndex(notification);
+    if (latest === undefined) return;
+
+    if ("setAppBadge" in navigator && "clearAppBadge" in navigator) {
+        getUnreadCount(latest)
+            .then((unread) => {
+                if (unread === undefined) {
+                    clearAppBadge();
+                } else {
+                    setAppBadge(unread);
+                }
+            })
+            .catch((err) => {
+                console.error("BADGE: failed to get unread chat count", err);
+            });
+    } else {
+        console.debug("BADGE: setAppBadge not available");
+    }
 }
 
 async function isClientFocused(): Promise<boolean> {
