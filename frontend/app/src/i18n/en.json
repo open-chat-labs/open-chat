@@ -739,7 +739,7 @@
     "airdrop": {
         "register": "Register for airdrop",
         "pleaseSubmit": "To receive your airdrop, please submit your NNS dApp principal below.",
-        "info": "Note that you can repeat this procedure as many times as you like - only the most recently entered principal will be used.",
+        "info": "Don't worry if you make a mistake, you can resubmit a new principal if you need to.",
         "placeholder": "NNS principal...",
         "submit": "Submit",
         "success": "Thanks - you have been successfully registered for the airdrop",
