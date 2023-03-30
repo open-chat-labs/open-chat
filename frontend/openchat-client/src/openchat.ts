@@ -302,7 +302,6 @@ import {
     UpdateMarketMakerConfigResponse,
     UpdatedEvent,
     compareRoles,
-    SetNeuronControllerResponse,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
