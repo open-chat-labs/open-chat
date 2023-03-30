@@ -742,12 +742,12 @@
     "airdrop": {
         "register": "Registrati per l'airdrop",
         "pleaseSubmit": "Per ricevere il tuo airdrop, invia il tuo principal dApp NNS di seguito.",
-        "info": "Non preoccuparti se commetti un errore, puoi inviare un nuovo principal se necessario.",
         "placeholder": "Preside dell'NS...",
         "submit": "Invia",
         "success": "Grazie, sei stato registrato con successo per l'airdrop",
         "failure": "Spiacenti, non siamo riusciti a registrarti per l'airdrop",
         "showHow": "Mostrami come",
-        "howTo": "Come trovare il tuo preside NNS"
+        "howTo": "Come trovare il tuo preside NNS",
+        "info": "Non preoccuparti se commetti un errore, puoi inviare il principale corretto se necessario."
     }
 }

@@ -742,12 +742,12 @@
     "airdrop": {
         "register": "S'inscrire au largage aérien",
         "pleaseSubmit": "Pour recevoir votre airdrop, veuillez soumettre votre principal NNS dApp ci-dessous.",
-        "info": "Ne vous inquiétez pas si vous faites une erreur, vous pouvez soumettre un nouveau principal si nécessaire.",
         "placeholder": "Directeur du NNS...",
         "submit": "Soumettre",
         "success": "Merci - vous avez été enregistré avec succès pour l'airdrop",
         "failure": "Désolé - nous n'avons pas pu vous inscrire pour le largage",
         "showHow": "Me montrer comment",
-        "howTo": "Comment trouver votre directeur NNS"
+        "howTo": "Comment trouver votre directeur NNS",
+        "info": "Ne vous inquiétez pas si vous faites une erreur, vous pouvez soumettre le principal correct si vous en avez besoin."
     }
 }

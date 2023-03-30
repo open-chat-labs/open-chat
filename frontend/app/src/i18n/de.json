@@ -744,12 +744,12 @@
     "airdrop": {
         "register": "Registrieren Sie sich für Airdrop",
         "pleaseSubmit": "Um Ihren Airdrop zu erhalten, reichen Sie bitte unten Ihren NNS dApp-Prinzipal ein.",
-        "info": "Machen Sie sich keine Sorgen, wenn Sie einen Fehler machen, Sie können bei Bedarf einen neuen Auftraggeber einreichen.",
         "placeholder": "NNS-Direktor ...",
         "submit": "Einreichen",
         "success": "Danke - Sie wurden erfolgreich für den Airdrop registriert",
         "failure": "Entschuldigung - wir konnten Sie nicht für den Airdrop registrieren",
         "showHow": "Zeig mir wie",
-        "howTo": "So finden Sie Ihren NNS-Prinzipal"
+        "howTo": "So finden Sie Ihren NNS-Prinzipal",
+        "info": "Machen Sie sich keine Sorgen, wenn Sie einen Fehler machen, Sie können bei Bedarf den richtigen Auftraggeber einreichen."
     }
 }
