@@ -98,8 +98,6 @@ async function defaultHandler(request: Request): Promise<Response> {
         console.error("Invalid referrer: ", request.referrer);
     }
 
-    console.log("SW: version 66");
-
     try {
         console.debug(
             "SW: default handler - signed in falling back to default ic service worker ",

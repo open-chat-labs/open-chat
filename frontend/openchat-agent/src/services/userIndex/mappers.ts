@@ -17,6 +17,7 @@ import {
     DiamondMembershipDuration,
     PayForDiamondMembershipResponse,
     Cryptocurrency,
+    SetNeuronControllerResponse,
 } from "openchat-shared";
 import type {
     ApiCheckUsernameResponse,
@@ -24,10 +25,12 @@ import type {
     ApiCurrentUserResponse,
     ApiDiamondMembershipDetails,
     ApiDiamondMembershipPlanDuration,
+    ApiIsEligibleForInitialAirdropResponse,
     ApiPartialUserSummary,
     ApiPayForDiamondMembershipResponse,
     ApiRegisterUserResponse,
     ApiSearchResponse,
+    ApiSetNeuronControllerForInitialAirdropResponse,
     ApiSetUsernameResponse,
     ApiSuspendUserResponse,
     ApiSuspensionAction,
@@ -145,6 +148,41 @@ export function registerUserResponse(candid: ApiRegisterUserResponse): RegisterU
     }
 
     throw new UnsupportedValueError("Unexpected ApiRegisterUserResponse type received", candid);
+}
+
+export function setNeuronControllerResponse(
+    candid: ApiSetNeuronControllerForInitialAirdropResponse
+): SetNeuronControllerResponse {
+    if ("Success" in candid) {
+        return "success";
+    }
+
+    if ("UserNotFound" in candid) {
+        return "user_not_found";
+    }
+
+    if ("UserNotEligible" in candid) {
+        return "user_not_eligible";
+    }
+
+    throw new Error(
+        `Unexpected ApiSetNeuronControllerForInitialAirdropResponse type received: ${candid}`
+    );
+}
+
+export function isEligibleForInitialAirdropResponse(
+    candid: ApiIsEligibleForInitialAirdropResponse
+): boolean {
+    if ("Success" in candid) {
+        return true;
+        // return candid.Success;
+    }
+
+    if ("UserNotFound" in candid) {
+        return false;
+    }
+
+    throw new Error(`Unexpected ApiIsEligibleForInitialAirdropResponse type received: ${candid}`);
 }
 
 export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUserResponse {

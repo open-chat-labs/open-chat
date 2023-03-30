@@ -24,6 +24,7 @@
     export let user: PartialUserSummary;
 
     $: canExtendDiamond = client.canExtendDiamond;
+    $: eligibleForAirdrop = client.eligibleForInitialAirdrop;
 
     function newGroup() {
         dispatch("newGroup");
@@ -73,6 +74,12 @@
                                 ? $_("upgrade.extend")
                                 : $_("upgrade.diamond")}</span>
                     </MenuItem>
+                    {#if $eligibleForAirdrop}
+                        <MenuItem on:click={() => dispatch("registerForAirdrop")}>
+                            <span class="airdrop" slot="icon">🪂</span>
+                            <span slot="text">{$_("airdrop.register")}</span>
+                        </MenuItem>
+                    {/if}
                     <MenuItem on:click={() => dispatch("profile")}>
                         <Cogs size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
                         <span slot="text">{$_("profile.title")}</span>
@@ -110,6 +117,7 @@
     }
 
     .flame,
+    .airdrop,
     .diamond-icon {
         @include font(bold, normal, fs-110);
     }

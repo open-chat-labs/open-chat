@@ -83,6 +83,7 @@ import type {
     UnsuspendUserResponse,
     DiamondMembershipDuration,
     PayForDiamondMembershipResponse,
+    SetNeuronControllerResponse,
 } from "./user";
 import type {
     GroupSearchResponse,
@@ -199,7 +200,9 @@ export type WorkerRequest =
     | PayForDiamondMembership
     | SetGroupUpgradeConcurrency
     | SetUserUpgradeConcurrency
-    | UpdateMarketMakerConfig;
+    | UpdateMarketMakerConfig
+    | IsEligibleForInitialAirdrop
+    | SetNeuronControllerForAirdrop;
 
 type SetCachedMessageFromNotification = Request<{
     chatId: string;
@@ -930,7 +933,8 @@ export type WorkerResponse =
     | Response<Record<string, Record<number, EventWrapper<Message>>>>
     | Response<PayForDiamondMembershipResponse>
     | Response<ClaimPrizeResponse>
-    | Response<UpdateMarketMakerConfigResponse>;
+    | Response<UpdateMarketMakerConfigResponse>
+    | Response<SetNeuronControllerResponse>;
 
 type Response<T> = {
     kind: "worker_response";
@@ -998,4 +1002,12 @@ type PayForDiamondMembership = Request<{
 
 type UpdateMarketMakerConfig = Request<UpdateMarketMakerConfigArgs> & {
     kind: "updateMarketMakerConfig";
+};
+
+type IsEligibleForInitialAirdrop = Request & {
+    kind: "isEligibleForInitialAirdrop";
+};
+
+type SetNeuronControllerForAirdrop = Request<string> & {
+    kind: "setNeuronControllerForInitialAirdrop";
 };

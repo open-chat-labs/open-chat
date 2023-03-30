@@ -20,3 +20,4 @@ export const groupPermissionsOpen = createLsBoolStore(configKeys.groupPermission
 export const groupStatsOpen = createLsBoolStore(configKeys.groupStatsSection, false);
 export const groupInviteUsersOpen = createLsBoolStore(configKeys.groupInviteUsersSections, false);
 export const groupAdvancedOpen = createLsBoolStore(configKeys.groupAdvancedSection, false);
+export const shownAirdropPrompt = createLsBoolStore(configKeys.shownAirdropPrompt, false);

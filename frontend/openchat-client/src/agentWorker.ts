@@ -97,6 +97,7 @@ import {
     SetUserUpgradeConcurrencyResponse,
     UpdateMarketMakerConfigArgs,
     UpdateMarketMakerConfigResponse,
+    SetNeuronControllerResponse,
 } from "openchat-shared";
 import type { OpenChatConfig } from "./config";
 import { v4 } from "uuid";
@@ -1368,6 +1369,20 @@ export class OpenChatAgentWorker extends EventTarget {
         return this.sendRequest({
             kind: "updateMarketMakerConfig",
             payload: config,
+        });
+    }
+
+    isEligibleForInitialAirdrop(): Promise<boolean> {
+        return this.sendRequest({
+            kind: "isEligibleForInitialAirdrop",
+            payload: {},
+        });
+    }
+
+    setNeuronControllerForInitialAirdrop(principal: string): Promise<SetNeuronControllerResponse> {
+        return this.sendRequest({
+            kind: "setNeuronControllerForInitialAirdrop",
+            payload: principal,
         });
     }
 }

@@ -145,6 +145,7 @@
         {user}
         on:profile
         on:upgrade
+        on:registerForAirdrop
         on:newGroup />
 
     <Search {searching} {searchTerm} on:searchEntered={onSearchEntered} />

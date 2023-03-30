@@ -735,5 +735,12 @@
     "promoteFailed": "Unable to promote to {role}",
     "demoteFailed": "Unable to demote to {role}",
     "ownerCantLeave": "You must add another owner before you can leave the group",
-    "participant": "member"
+    "participant": "member",
+    "airdrop": {
+        "register": "Register for airdrop",
+        "pleaseSubmit": "To receive your airdrop, please submit your NNS dApp principal below.",
+        "info": "Note that you can repeat this procedure as many times as you like - only the most recently entered principal will be used.",
+        "placeholder": "NNS principal...",
+        "submit": "Submit"
+    }
 }

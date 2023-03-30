@@ -205,3 +205,5 @@ export type PayForDiamondMembershipResponse =
     | { kind: "insufficient_funds" };
 
 export type SetUserUpgradeConcurrencyResponse = "success";
+
+export type SetNeuronControllerResponse = "success" | "user_not_found" | "user_not_eligible";
