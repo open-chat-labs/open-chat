@@ -102,7 +102,7 @@
         "svelte-i18n": "^3.4.0",
         "svelte-material-icons": "^1.0.3",
         "svelte-qr": "^1.0.0",
-        "usergeek-ic-js": "git+https://github.com/julianjelfs/usergeek-ic-js.git",
+        "usergeek-ic-js": "git+https://github.com/hpeebles/usergeek-ic-js.git#d00643807272a657cf546d34f5a983c593fc38f5",
         "uuid": "^9.0.0"
     }
 }
