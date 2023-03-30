@@ -22,6 +22,12 @@ didc bind ../../backend/canisters/notifications_index/api/can.did -t js > ./src/
 didc bind ../../backend/canisters/online_users/api/can.did -t ts > ./src/services/online/candid/types.d.ts
 didc bind ../../backend/canisters/online_users/api/can.did -t js > ./src/services/online/candid/idl.js
 
+didc bind ../../backend/canisters/storage_bucket/api/can.did -t ts > ./src/services/storageBucket/candid/types.d.ts
+didc bind ../../backend/canisters/storage_bucket/api/can.did -t js > ./src/services/storageBucket/candid/idl.js
+
+didc bind ../../backend/canisters/storage_index/api/can.did -t ts > ./src/services/storageIndex/candid/types.d.ts
+didc bind ../../backend/canisters/storage_index/api/can.did -t js > ./src/services/storageIndex/candid/idl.js
+
 didc bind ./src/services/ledger/candid/can.did -t ts > ./src/services/ledger/candid/types.d.ts
 didc bind ./src/services/ledger/candid/can.did -t js > ./src/services/ledger/candid/idl.js
 

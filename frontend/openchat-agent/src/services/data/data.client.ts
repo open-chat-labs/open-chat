@@ -1,9 +1,8 @@
-import { HttpAgent } from "@dfinity/agent";
 import type { Identity } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
-import { OpenStorageAgent, UploadFileResponse } from "@open-ic/open-storage-agent";
 import type { IDataClient } from "./data.client.interface";
 import { v1 as uuidv1 } from "uuid";
+import { sha3_256 } from "js-sha3";
 import type { AgentConfig } from "../../config";
 import { buildBlobUrl } from "../../utils/chat";
 import {
@@ -12,29 +11,25 @@ import {
     StoredMediaContent,
     BlobReference,
     StorageUpdated,
+    random128,
+    UploadFileResponse,
+    AllowanceExceeded,
+    ProjectedAllowance,
+    StorageUserNotFound,
 } from "openchat-shared";
+import type { IStorageIndexClient } from "../storageIndex/storageIndex.client.interface";
+import { StorageIndexClient } from "../storageIndex/storageIndex.client";
+import { StorageBucketClient } from "../storageBucket/storageBucket.client";
 
 export class DataClient extends EventTarget implements IDataClient {
-    private openStorageAgent: OpenStorageAgent;
-
     static create(identity: Identity, config: AgentConfig): IDataClient {
-        const host = config.icUrl;
-        const agent = new HttpAgent({ identity, host });
-        const isMainnet = config.icUrl.includes("ic0.app");
-        if (!isMainnet) {
-            agent.fetchRootKey();
-        }
-        const openStorageAgent = new OpenStorageAgent(
-            agent,
-            Principal.fromText(config.openStorageIndexCanister)
-        );
+        const storageIndexClient = StorageIndexClient.create(identity, config);
 
-        return new DataClient(openStorageAgent, config);
+        return new DataClient(identity, config, storageIndexClient);
     }
 
-    constructor(openStorageAgent: OpenStorageAgent, private config: AgentConfig) {
+    private constructor(private identity: Identity, private config: AgentConfig, private storageIndexClient: IStorageIndexClient) {
         super();
-        this.openStorageAgent = openStorageAgent;
     }
 
     static newBlobId(): bigint {
@@ -42,7 +37,7 @@ export class DataClient extends EventTarget implements IDataClient {
     }
 
     storageStatus(): Promise<StorageStatus> {
-        return this.openStorageAgent.user().then((resp) => {
+        return this.storageIndexClient.user().then((resp) => {
             if (resp.kind === "user") {
                 return {
                     byteLimit: Number(resp.byteLimit),
@@ -73,7 +68,9 @@ export class DataClient extends EventTarget implements IDataClient {
             if (content.blobData && content.blobReference === undefined) {
                 const accessorIds = accessorCanisterIds.map((c) => Principal.fromText(c));
 
-                const response = await this.openStorageAgent.uploadFile(
+
+
+                const response = await this.uploadFile(
                     content.mimeType,
                     accessorIds,
                     content.blobData
@@ -104,12 +101,12 @@ export class DataClient extends EventTarget implements IDataClient {
                 const accessorIds = accessorCanisterIds.map((c) => Principal.fromText(c));
 
                 await Promise.all([
-                    this.openStorageAgent.uploadFile(
+                    this.uploadFile(
                         content.mimeType,
                         accessorIds,
                         content.videoData.blobData
                     ),
-                    this.openStorageAgent.uploadFile(
+                    this.uploadFile(
                         "image/jpg",
                         accessorIds,
                         content.imageData.blobData
@@ -179,8 +176,8 @@ export class DataClient extends EventTarget implements IDataClient {
             if (content.blobReference !== undefined) {
                 const accessorIds = accessorCanisterIds.map((c) => Principal.fromText(c));
 
-                const response = await this.openStorageAgent.forwardFile(
-                    Principal.fromText(content.blobReference.canisterId),
+                const response = await this.forwardFile(
+                    content.blobReference.canisterId,
                     content.blobReference.blobId,
                     accessorIds
                 );
@@ -218,13 +215,13 @@ export class DataClient extends EventTarget implements IDataClient {
                 const imageCanisterId = content.imageData.blobReference.canisterId;
 
                 await Promise.all([
-                    this.openStorageAgent.forwardFile(
-                        Principal.fromText(videoCanisterId),
+                    this.forwardFile(
+                        videoCanisterId,
                         content.videoData.blobReference.blobId,
                         accessorIds
                     ),
-                    this.openStorageAgent.forwardFile(
-                        Principal.fromText(imageCanisterId),
+                    this.forwardFile(
+                        imageCanisterId,
                         content.imageData.blobReference.blobId,
                         accessorIds
                     ),
@@ -302,4 +299,127 @@ export class DataClient extends EventTarget implements IDataClient {
             blobId: response.fileId,
         };
     }
+
+    private async uploadFile(
+        mimeType: string,
+        accessors: Array<Principal>,
+        bytes: ArrayBuffer,
+        expiryTimestampMillis?: bigint,
+        onProgress?: (percentComplete: number) => void
+    ): Promise<UploadFileResponse> {
+        const hash = new Uint8Array(hashBytes(bytes));
+        const fileSize = bytes.byteLength;
+
+        const allocatedBucketResponse = await this.storageIndexClient.allocatedBucket(
+            hash,
+            BigInt(fileSize),
+            random128(),
+        );
+
+        if (allocatedBucketResponse.kind !== "success") {
+            // TODO make this better!
+            throw new Error(allocatedBucketResponse.kind);
+        }
+
+        const bucketCanisterId = allocatedBucketResponse.canisterId.toString();
+        const fileId = allocatedBucketResponse.fileId;
+        const chunkSize = allocatedBucketResponse.chunkSize;
+        const chunkCount = Math.ceil(fileSize / chunkSize);
+        const chunkIndexes = [...Array(chunkCount).keys()];
+        const bucketClient = StorageBucketClient.create(this.identity, this.config, bucketCanisterId);
+
+        let chunksCompleted = 0;
+
+        const promises = chunkIndexes.map(async (chunkIndex) => {
+            const start = chunkIndex * chunkSize;
+            const end = Math.min(start + chunkSize, fileSize);
+            const chunkBytes = new Uint8Array(bytes.slice(start, end));
+
+            let attempt = 0;
+
+            while (attempt++ < 5) {
+                try {
+                    const chunkResponse = await bucketClient.uploadChunk(
+                        fileId,
+                        hash,
+                        mimeType,
+                        accessors,
+                        BigInt(fileSize),
+                        chunkSize,
+                        chunkIndex,
+                        chunkBytes,
+                        expiryTimestampMillis
+                    );
+
+                    if (chunkResponse === "success") {
+                        chunksCompleted++;
+                        onProgress?.((100 * chunksCompleted) / chunkCount);
+                        return;
+                    }
+                } catch (e) {
+                    console.log("Error uploading chunk " + chunkIndex, e);
+                }
+            }
+            throw new Error("Failed to upload chunk");
+        });
+
+        await Promise.all(promises);
+
+        return {
+            canisterId: bucketCanisterId,
+            fileId,
+            pathPrefix: "/files/",
+            projectedAllowance: allocatedBucketResponse.projectedAllowance,
+        };
+    }
+
+    private async forwardFile(bucketCanisterId: string, fileId: bigint, accessors: Array<Principal>): Promise<ForwardFileResponse> {
+        const bucketClient = StorageBucketClient.create(this.identity, this.config, bucketCanisterId);
+
+        const fileInfoResponse = await bucketClient.fileInfo(fileId);
+        if (fileInfoResponse.kind === "file_not_found") {
+            return fileInfoResponse;
+        }
+
+        const canForwardResponse = await this.storageIndexClient.canForward(fileInfoResponse.fileHash, fileInfoResponse.fileSize);
+        switch (canForwardResponse.kind) {
+            case "user_not_found":
+            case "allowance_exceeded":
+                return canForwardResponse;
+        }
+
+        const forwardFileResponse = await bucketClient.forwardFile(fileId, accessors);
+        switch (forwardFileResponse.kind) {
+            case "success":
+                return {
+                    kind: "success",
+                    newFileId: forwardFileResponse.newFileId,
+                    projectedAllowance: canForwardResponse.projectedAllowance
+                };
+
+            case "not_authorized":
+            case "file_not_found":
+                return forwardFileResponse;
+        }
+    }
 }
+
+function hashBytes(bytes: ArrayBuffer): ArrayBuffer {
+    const hash = sha3_256.create();
+    hash.update(bytes);
+    return hash.arrayBuffer();
+}
+
+type ForwardFileResponse =
+    | ForwardFileSuccess
+    | AllowanceExceeded
+    | StorageUserNotFound
+    | { kind: "not_authorized" }
+    | { kind: "file_not_found" }
+
+type ForwardFileSuccess = {
+    kind: "success",
+    newFileId: bigint,
+    projectedAllowance: ProjectedAllowance,
+}
+
