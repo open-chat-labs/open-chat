@@ -173,10 +173,10 @@ fn compute_neuron_staking_subaccount_bytes(controller: Principal, nonce: u64) ->
     const DOMAIN_LENGTH: [u8; 1] = [0x0c];
 
     let mut hasher = Sha256::new();
-    hasher.update(&DOMAIN_LENGTH);
+    hasher.update(DOMAIN_LENGTH);
     hasher.update(DOMAIN);
     hasher.update(controller.as_slice());
-    hasher.update(&nonce.to_be_bytes());
+    hasher.update(nonce.to_be_bytes());
     hasher.finalize().into()
 }
 

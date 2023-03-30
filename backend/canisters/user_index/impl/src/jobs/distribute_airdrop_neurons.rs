@@ -33,11 +33,9 @@ pub(crate) fn start_job_if_required(runtime_state: &RuntimeState) -> bool {
 pub fn run() {
     if let Some(args) = mutate_state(try_get_next) {
         ic_cdk::spawn(process_next(args));
-    } else {
-        if let Some(timer_id) = TIMER_ID.with(|t| t.take()) {
-            ic_cdk_timers::clear_timer(timer_id);
-            trace!("'distribute_airdrop_neurons' job stopped");
-        }
+    } else if let Some(timer_id) = TIMER_ID.with(|t| t.take()) {
+        ic_cdk_timers::clear_timer(timer_id);
+        trace!("'distribute_airdrop_neurons' job stopped");
     }
 }
 
