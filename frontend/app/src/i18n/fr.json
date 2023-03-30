@@ -738,5 +738,16 @@
     "promoteFailed": "Impossible de promouvoir en {role}",
     "demoteFailed": "Impossible de rétrograder à {role}",
     "ownerCantLeave": "Vous devez ajouter un autre propriétaire avant de pouvoir quitter le groupe",
-    "participant": "membre"
+    "participant": "membre",
+    "airdrop": {
+        "register": "S'inscrire au largage aérien",
+        "pleaseSubmit": "Pour recevoir votre airdrop, veuillez soumettre votre principal NNS dApp ci-dessous.",
+        "info": "Ne vous inquiétez pas si vous faites une erreur, vous pouvez soumettre un nouveau principal si nécessaire.",
+        "placeholder": "Directeur du NNS...",
+        "submit": "Soumettre",
+        "success": "Merci - vous avez été enregistré avec succès pour l'airdrop",
+        "failure": "Désolé - nous n'avons pas pu vous inscrire pour le largage",
+        "showHow": "Me montrer comment",
+        "howTo": "Comment trouver votre directeur NNS"
+    }
 }

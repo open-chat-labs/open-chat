@@ -739,5 +739,16 @@
     "promoteFailed": "{role} に昇格できません",
     "demoteFailed": "{role} に降格できません",
     "ownerCantLeave": "グループを退会するには、別の所有者を追加する必要があります",
-    "participant": "メンバー"
+    "participant": "メンバー",
+    "airdrop": {
+        "register": "エアドロップに登録する",
+        "pleaseSubmit": "エアドロップを受け取るには、NNS dApp プリンシパルを以下に送信してください。",
+        "info": "間違えても心配しないでください。必要に応じて新しいプリンシパルを送信できます。",
+        "placeholder": "NNSプリンシパル...",
+        "submit": "送信",
+        "success": "ありがとう - エアドロップへの登録が完了しました",
+        "failure": "申し訳ありませんが、エアドロップに登録できませんでした",
+        "showHow": "どうするか教えて",
+        "howTo": "NNS プリンシパルを見つける方法"
+    }
 }

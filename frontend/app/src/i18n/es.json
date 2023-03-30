@@ -739,5 +739,16 @@
     "promoteFailed": "No se puede promocionar a {role}",
     "demoteFailed": "No se puede degradar a {role}",
     "ownerCantLeave": "Debes agregar otro propietario antes de poder abandonar el grupo.",
-    "participant": "miembro"
+    "participant": "miembro",
+    "airdrop": {
+        "register": "Regístrese para lanzamiento aéreo",
+        "pleaseSubmit": "Para recibir su airdrop, envíe su principal de NNS dApp a continuación.",
+        "info": "No se preocupe si comete un error, puede enviar un nuevo director si es necesario.",
+        "placeholder": "directora de NNS...",
+        "submit": "Entregar",
+        "success": "Gracias, te has registrado con éxito en el airdrop.",
+        "failure": "Lo sentimos, no pudimos registrarlo para el airdrop",
+        "showHow": "Muéstrame cómo",
+        "howTo": "Cómo encontrar a su director de NNS"
+    }
 }
