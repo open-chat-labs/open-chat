@@ -162,7 +162,7 @@ async function createAgentAndActor(
     fetchRootKey: boolean
 ): Promise<[HttpAgent, ActorSubclass<_SERVICE>]> {
     const replicaUrl = new URL(url);
-    const agent = new HttpAgent({ host: replicaUrl.toString() });
+    const agent = new HttpAgent({ host: replicaUrl.toString(), retryTimes: 5 });
     if (fetchRootKey) {
         await agent.fetchRootKey();
     }
