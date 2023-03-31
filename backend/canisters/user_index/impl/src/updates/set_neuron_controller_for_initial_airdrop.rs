@@ -13,7 +13,9 @@ fn set_neuron_controller_for_initial_airdrop(args: Args) -> Response {
 fn set_neuron_controller_for_initial_airdrop_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
 
-    if let Some(user) = runtime_state.data.users.get(&caller) {
+    if !runtime_state.data.initial_airdrop_open {
+        AirdropClosed
+    } else if let Some(user) = runtime_state.data.users.get(&caller) {
         if user.is_eligible_for_initial_airdrop() {
             runtime_state
                 .data
