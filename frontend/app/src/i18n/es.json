@@ -749,6 +749,7 @@
         "failure": "Lo sentimos, no pudimos registrarlo para el airdrop",
         "showHow": "Muéstrame cómo",
         "howTo": "Cómo encontrar a su director de NNS",
-        "info": "Si comete un error, puede volver a enviar el principal correcto a través del menú principal."
+        "info": "Si comete un error, puede volver a enviar el principal correcto a través del menú principal.",
+        "back": "Atrás"
     }
 }

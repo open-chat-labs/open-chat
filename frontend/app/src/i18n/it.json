@@ -748,6 +748,7 @@
         "failure": "Spiacenti, non siamo riusciti a registrarti per l'airdrop",
         "showHow": "Mostrami come",
         "howTo": "Come trovare il tuo preside NNS",
-        "info": "Se commetti un errore, puoi inviare nuovamente l'entità corretta tramite il menu principale."
+        "info": "Se commetti un errore, puoi inviare nuovamente l'entità corretta tramite il menu principale.",
+        "back": "Indietro"
     }
 }

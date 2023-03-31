@@ -748,6 +748,7 @@
         "failure": "Désolé - nous n'avons pas pu vous inscrire pour le largage",
         "showHow": "Me montrer comment",
         "howTo": "Comment trouver votre directeur NNS",
-        "info": "Si vous faites une erreur, vous pouvez resoumettre le bon principal via le menu principal."
+        "info": "Si vous faites une erreur, vous pouvez resoumettre le bon principal via le menu principal.",
+        "back": "Dos"
     }
 }

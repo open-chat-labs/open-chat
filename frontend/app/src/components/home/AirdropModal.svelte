@@ -1,6 +1,6 @@
 <script lang="ts">
     import ModalContent from "../ModalContent.svelte";
-    import Overlay from "../Overlay.svelte";
+    import Markdown from "./Markdown.svelte";
     import { _ } from "svelte-i18n";
     import { shownAirdropPrompt } from "../../stores/settings";
     import Input from "../Input.svelte";
@@ -36,71 +36,63 @@
     }
 </script>
 
-{#if showHow}
-    <Overlay>
-        <ModalContent compactFooter fill closeIcon on:close={() => (showHow = false)}>
-            <div slot="header">
-                <h1>{$_("airdrop.howTo")}</h1>
+<ModalContent compactFooter fill closeIcon on:close>
+    <div slot="header">
+        <h1>{$_("airdrop.register")}</h1>
+    </div>
+    <div class="body" class:showHow slot="body">
+        {#if showHow}
+            <video class="how-to" controls>
+                <source src="../assets/airdrop.mp4" />
+            </video>
+        {:else}
+            <p class="para"><Markdown text={$_("airdrop.pleaseSubmit")} /></p>
+            <p class="para">{$_("airdrop.info")}</p>
+            <div class="input">
+                <Input
+                    bind:value={principal}
+                    disabled={busy}
+                    autofocus={true}
+                    minlength={0}
+                    maxlength={63}
+                    countdown={false}
+                    placeholder={$_("airdrop.placeholder")} />
             </div>
-            <div slot="body">
-                <video class="how-to" controls>
-                    <source src="../assets/airdrop.mp4" />
-                </video>
-            </div>
-            <div slot="footer">
+        {/if}
+    </div>
+    <div slot="footer">
+        <ButtonGroup>
+            {#if showHow}
                 <Button
                     on:click={() => (showHow = false)}
                     small={!$mobileWidth}
                     tiny={$mobileWidth}>
-                    {$_("back")}
+                    {$_("airdrop.back")}
                 </Button>
-            </div>
-        </ModalContent>
-    </Overlay>
-{/if}
-
-<ModalContent closeIcon on:close>
-    <div slot="header">
-        <h1>{$_("airdrop.register")}</h1>
-    </div>
-    <div slot="body">
-        <p class="para">{$_("airdrop.pleaseSubmit")}</p>
-        <p class="para">{$_("airdrop.info")}</p>
-        <div class="input">
-            <Input
-                bind:value={principal}
-                disabled={busy}
-                autofocus={true}
-                minlength={0}
-                maxlength={63}
-                countdown={false}
-                placeholder={$_("airdrop.placeholder")} />
-        </div>
-    </div>
-    <div slot="footer">
-        <ButtonGroup>
-            <Button
-                on:click={() => (showHow = true)}
-                small={!$mobileWidth}
-                tiny={$mobileWidth}
-                secondary>
-                {$_("airdrop.showHow")}
-            </Button>
-            <Button
-                on:click={() => dispatch("close")}
-                small={!$mobileWidth}
-                tiny={$mobileWidth}
-                secondary>
-                {$_("cancel")}
-            </Button>
-            <Button
-                disabled={principal.length === 0}
-                on:click={record}
-                loading={busy}
-                small={!$mobileWidth}
-                tiny={$mobileWidth}>
-                {$_("airdrop.submit")}
-            </Button>
+            {:else}
+                <Button
+                    on:click={() => (showHow = true)}
+                    small={!$mobileWidth}
+                    tiny={$mobileWidth}
+                    secondary>
+                    {$_("airdrop.showHow")}
+                </Button>
+                <Button
+                    on:click={() => dispatch("close")}
+                    small={!$mobileWidth}
+                    tiny={$mobileWidth}
+                    secondary>
+                    {$_("cancel")}
+                </Button>
+                <Button
+                    disabled={principal.length === 0}
+                    on:click={record}
+                    loading={busy}
+                    small={!$mobileWidth}
+                    tiny={$mobileWidth}>
+                    {$_("airdrop.submit")}
+                </Button>
+            {/if}
         </ButtonGroup>
     </div>
 </ModalContent>
@@ -109,6 +101,14 @@
     .para,
     .input {
         margin-bottom: $sp5;
+    }
+
+    .body {
+        padding: $sp4 $sp5;
+
+        &.showHow {
+            padding: 0;
+        }
     }
 
     .how-to {

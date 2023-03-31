@@ -738,13 +738,14 @@
     "participant": "member",
     "airdrop": {
         "register": "Register for airdrop",
-        "pleaseSubmit": "To receive your airdrop, please submit your NNS dApp principal below.",
+        "pleaseSubmit": "To receive your airdrop, please submit your [NNS dApp](https://nns.internetcomputer.org) principal below.",
         "info": "If you make a mistake, you can resubmit the correct principal via the main menu.",
         "placeholder": "NNS principal...",
         "submit": "Submit",
         "success": "Thanks - you have been successfully registered for the airdrop",
         "failure": "Sorry - we were unable to register you for the airdrop",
         "showHow": "Show me how",
-        "howTo": "How to find your NNS principal"
+        "howTo": "How to find your NNS principal",
+        "back": "Back"
     }
 }
