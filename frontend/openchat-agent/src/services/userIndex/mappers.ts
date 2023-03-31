@@ -174,8 +174,7 @@ export function isEligibleForInitialAirdropResponse(
     candid: ApiIsEligibleForInitialAirdropResponse
 ): boolean {
     if ("Success" in candid) {
-        return true;
-        // return candid.Success;
+        return candid.Success;
     }
 
     if ("UserNotFound" in candid) {
