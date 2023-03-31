@@ -141,6 +141,8 @@ async fn stake_airdrop_source_neuron(
 
     let neuron_id = claim_neuron(this_canister_id, governance_canister_id, MEMO).await?;
 
+    increase_dissolve_delay(governance_canister_id, neuron_id).await?;
+
     Ok(StakeAirdropNeuronResult { neuron_id, stake_e8s })
 }
 
@@ -163,6 +165,25 @@ async fn claim_neuron(this_canister_id: CanisterId, governance_canister_id: Cani
 
     match response.command.unwrap() {
         CommandResponse::ClaimOrRefresh(c) => Ok(c.refreshed_neuron_id.unwrap().id.try_into().unwrap()),
+        CommandResponse::Error(e) => Err((RejectionCode::Unknown, format!("{e:?}"))),
+        _ => unreachable!(),
+    }
+}
+
+async fn increase_dissolve_delay(governance_canister_id: CanisterId, neuron_id: SnsNeuronId) -> CallResult<()> {
+    let args = ManageNeuron {
+        subaccount: neuron_id.to_vec(),
+        command: Some(Command::increase_dissolve_delay(31536000)),
+    };
+
+    let response: ManageNeuronResponse =
+        make_c2c_call(governance_canister_id, "manage_neuron", args, candid::encode_one, |r| {
+            candid::decode_one(r)
+        })
+        .await?;
+
+    match response.command.unwrap() {
+        CommandResponse::Configure(_) => Ok(_),
         CommandResponse::Error(e) => Err((RejectionCode::Unknown, format!("{e:?}"))),
         _ => unreachable!(),
     }
