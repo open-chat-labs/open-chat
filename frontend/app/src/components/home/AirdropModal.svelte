@@ -42,9 +42,7 @@
     </div>
     <div class="body" class:showHow slot="body">
         {#if showHow}
-            <video class="how-to" controls>
-                <source src="../assets/airdrop.mp4" />
-            </video>
+            <img class="how-to" src="../assets/show_how.gif" />
         {:else}
             <p class="para"><Markdown text={$_("airdrop.pleaseSubmit")} /></p>
             <p class="para">{$_("airdrop.info")}</p>
