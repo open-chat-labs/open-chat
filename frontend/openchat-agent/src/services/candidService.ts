@@ -19,7 +19,7 @@ export abstract class CandidService {
         config: AgentConfig
     ): T {
         const host = config.icUrl;
-        const agent = new HttpAgent({ identity: this.identity, host });
+        const agent = new HttpAgent({ identity: this.identity, host, retryTimes: 5 });
         const isMainnet = config.icUrl.includes("ic0.app");
         if (!isMainnet) {
             agent.fetchRootKey();
