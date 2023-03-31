@@ -10,6 +10,7 @@
     import type { OpenChat } from "openchat-client";
     import { toastStore } from "stores/toast";
     import { mobileWidth } from "../../stores/screenDimensions";
+    import { Confetti } from "svelte-confetti";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -19,6 +20,7 @@
     let busy = false;
     let principal = "";
     let showHow = false;
+    let tada = false;
 
     onMount(() => {
         shownAirdropPrompt.set(true);
@@ -34,7 +36,8 @@
             .then((success) => {
                 if (success) {
                     toastStore.showSuccessToast($_("airdrop.success"));
-                    dispatch("close");
+                    tada = true;
+                    setTimeout(() => dispatch("close"), 2000);
                 } else {
                     toastStore.showFailureToast($_("airdrop.failure"));
                 }
@@ -48,6 +51,11 @@
         <h1>{$_("airdrop.register")}</h1>
     </div>
     <div class="body" class:showHow slot="body">
+        {#if tada}
+            <div class="confetti">
+                <Confetti />
+            </div>
+        {/if}
         {#if showHow}
             <img class="how-to" src="../assets/show_how.gif" />
         {:else}
@@ -112,6 +120,7 @@
 
     .body {
         padding: $sp4 $sp5;
+        position: relative;
 
         &.showHow {
             padding: 0;
@@ -120,5 +129,12 @@
 
     .how-to {
         width: 100%;
+    }
+
+    .confetti {
+        position: absolute;
+        pointer-events: none;
+        top: 50%;
+        left: 50%;
     }
 </style>
