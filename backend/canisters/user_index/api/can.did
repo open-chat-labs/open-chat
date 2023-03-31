@@ -294,7 +294,8 @@ type SetUserUpgradeConcurrencyResponse =
 
 type IsEligibleForInitialAirdropResponse =
     variant {
-        Success: bool;
+        Yes: opt principal;
+        No;
         AirdropClosed;
         UserNotFound;
     };
