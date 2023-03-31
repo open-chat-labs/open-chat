@@ -742,7 +742,6 @@
     "participant": "thành viên",
     "airdrop": {
         "register": "Đăng ký airdrop",
-        "pleaseSubmit": "Để nhận airdrop của bạn, vui lòng gửi tiền gốc NNS dApp của bạn bên dưới.",
         "placeholder": "Hiệu trưởng NNS...",
         "submit": "Nộp",
         "success": "Cảm ơn - bạn đã đăng ký airdrop thành công",
@@ -750,6 +749,7 @@
         "showHow": "Hãy chỉ cho tôi cách",
         "howTo": "Cách tìm hiệu trưởng NNS của bạn",
         "info": "Nếu bạn mắc lỗi, bạn có thể gửi lại tiền gốc chính xác thông qua menu chính.",
-        "back": "Mặt sau"
+        "back": "Mặt sau",
+        "pleaseSubmit": "Để nhận airdrop của bạn, vui lòng gửi tiền gốc [NNS dApp](https://nns.ic0.app) của bạn bên dưới."
     }
 }

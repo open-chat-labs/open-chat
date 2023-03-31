@@ -741,7 +741,6 @@
     "participant": "membre",
     "airdrop": {
         "register": "S'inscrire au largage aérien",
-        "pleaseSubmit": "Pour recevoir votre airdrop, veuillez soumettre votre principal NNS dApp ci-dessous.",
         "placeholder": "Directeur du NNS...",
         "submit": "Soumettre",
         "success": "Merci - vous avez été enregistré avec succès pour l'airdrop",
@@ -749,6 +748,7 @@
         "showHow": "Me montrer comment",
         "howTo": "Comment trouver votre directeur NNS",
         "info": "Si vous faites une erreur, vous pouvez resoumettre le bon principal via le menu principal.",
-        "back": "Dos"
+        "back": "Dos",
+        "pleaseSubmit": "Pour recevoir votre airdrop, veuillez soumettre votre principal [NNS dApp](https://nns.ic0.app) ci-dessous."
     }
 }

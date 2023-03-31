@@ -742,7 +742,6 @@
     "participant": "miembro",
     "airdrop": {
         "register": "Regístrese para lanzamiento aéreo",
-        "pleaseSubmit": "Para recibir su airdrop, envíe su principal de NNS dApp a continuación.",
         "placeholder": "directora de NNS...",
         "submit": "Entregar",
         "success": "Gracias, te has registrado con éxito en el airdrop.",
@@ -750,6 +749,7 @@
         "showHow": "Muéstrame cómo",
         "howTo": "Cómo encontrar a su director de NNS",
         "info": "Si comete un error, puede volver a enviar el principal correcto a través del menú principal.",
-        "back": "Atrás"
+        "back": "Atrás",
+        "pleaseSubmit": "Para recibir su airdrop, envíe su director de [NNS dApp](https://nns.ic0.app) a continuación."
     }
 }

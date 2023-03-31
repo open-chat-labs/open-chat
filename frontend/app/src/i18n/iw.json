@@ -739,7 +739,6 @@
     "participant": "חבר",
     "airdrop": {
         "register": "הרשמה ל-airdrop",
-        "pleaseSubmit": "כדי לקבל את ה-airdrop שלך, אנא שלח את מנהל ה-NNS dApp שלך למטה.",
         "placeholder": "מנהל NNS...",
         "submit": "שלח",
         "success": "תודה - נרשמת בהצלחה ל-airdrop",
@@ -747,6 +746,7 @@
         "showHow": "תראה לי איך",
         "howTo": "כיצד למצוא את מנהל ה-NNS שלך",
         "info": "אם אתה עושה טעות, אתה יכול לשלוח מחדש את המנהל הנכון דרך התפריט הראשי.",
-        "back": "חזור"
+        "back": "חזור",
+        "pleaseSubmit": "כדי לקבל את ה-airdrop שלך, אנא שלח את המנהל שלך [NNS dApp](https://nns.ic0.app) למטה."
     }
 }

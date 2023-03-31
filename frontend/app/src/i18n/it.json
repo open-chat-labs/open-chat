@@ -741,7 +741,6 @@
     "participant": "membro",
     "airdrop": {
         "register": "Registrati per l'airdrop",
-        "pleaseSubmit": "Per ricevere il tuo airdrop, invia il tuo principal dApp NNS di seguito.",
         "placeholder": "Preside dell'NS...",
         "submit": "Invia",
         "success": "Grazie, sei stato registrato con successo per l'airdrop",
@@ -749,6 +748,7 @@
         "showHow": "Mostrami come",
         "howTo": "Come trovare il tuo preside NNS",
         "info": "Se commetti un errore, puoi inviare nuovamente l'entità corretta tramite il menu principale.",
-        "back": "Indietro"
+        "back": "Indietro",
+        "pleaseSubmit": "Per ricevere il tuo airdrop, invia la tua [NNS dApp](https://nns.ic0.app) principale di seguito."
     }
 }

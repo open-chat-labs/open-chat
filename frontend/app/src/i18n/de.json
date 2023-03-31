@@ -743,7 +743,6 @@
     "participant": "Mitglied",
     "airdrop": {
         "register": "Registrieren Sie sich für Airdrop",
-        "pleaseSubmit": "Um Ihren Airdrop zu erhalten, reichen Sie bitte unten Ihren NNS dApp-Prinzipal ein.",
         "placeholder": "NNS-Direktor ...",
         "submit": "Einreichen",
         "success": "Danke - Sie wurden erfolgreich für den Airdrop registriert",
@@ -751,6 +750,7 @@
         "showHow": "Zeig mir wie",
         "howTo": "So finden Sie Ihren NNS-Prinzipal",
         "info": "Wenn Sie einen Fehler machen, können Sie den richtigen Auftraggeber über das Hauptmenü erneut einreichen.",
-        "back": "Zurück"
+        "back": "Zurück",
+        "pleaseSubmit": "Um Ihren Airdrop zu erhalten, reichen Sie bitte unten Ihren [NNS dApp](https://nns.ic0.app)-Prinzipal ein."
     }
 }
