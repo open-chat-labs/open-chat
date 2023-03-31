@@ -14,6 +14,7 @@ pub enum Response {
     AlreadyInGroup,
     GroupNotFound,
     GroupNotPublic,
+    FailedToPassGateCheck(String),
     ParticipantLimitReached,
     Blocked,
     UserSuspended,

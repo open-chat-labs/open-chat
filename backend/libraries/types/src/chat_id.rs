@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use std::fmt::{Debug, Display, Formatter};
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct ChatId(pub(crate) CanisterId);
+pub struct ChatId(CanisterId);
 
 impl From<Principal> for ChatId {
     fn from(principal: Principal) -> Self {
@@ -20,7 +20,7 @@ impl From<ChatId> for CanisterId {
 
 impl From<UserId> for ChatId {
     fn from(user_id: UserId) -> Self {
-        user_id.0.into()
+        Principal::from(user_id).into()
     }
 }
 

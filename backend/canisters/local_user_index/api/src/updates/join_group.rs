@@ -14,6 +14,7 @@ pub enum Response {
     Success(Box<GroupCanisterGroupChatSummary>),
     AlreadyInGroup,
     AlreadyInGroupV2(Box<GroupCanisterGroupChatSummary>),
+    FailedToPassGateCheck(String),
     GroupNotFound,
     GroupNotPublic,
     ParticipantLimitReached(u32),

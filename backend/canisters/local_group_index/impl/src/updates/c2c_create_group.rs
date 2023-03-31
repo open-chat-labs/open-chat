@@ -77,7 +77,6 @@ fn prepare(args: Args, runtime_state: &mut RuntimeState) -> Result<PrepareOk, Re
         created_by_user_id: args.created_by_user_id,
         events_ttl: args.events_ttl,
         mark_active_duration: MARK_ACTIVE_DURATION,
-        wasm_version: canister_wasm.version,
         group_index_canister_id: runtime_state.data.group_index_canister_id,
         local_group_index_canister_id: runtime_state.env.canister_id(),
         user_index_canister_id: runtime_state.data.user_index_canister_id,
@@ -85,6 +84,8 @@ fn prepare(args: Args, runtime_state: &mut RuntimeState) -> Result<PrepareOk, Re
         notifications_canister_id: runtime_state.data.notifications_canister_id,
         proposals_bot_user_id: runtime_state.data.proposals_bot_user_id,
         avatar: args.avatar,
+        gate: None,
+        wasm_version: canister_wasm.version,
         test_mode: runtime_state.data.test_mode,
     };
 

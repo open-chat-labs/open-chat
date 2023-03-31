@@ -2167,6 +2167,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "gated_groups"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "sns_governance_canister",
+ "sns_governance_canister_c2c_client",
+ "types",
+ "user_index_canister",
+ "user_index_canister_c2c_client",
+ "utils",
+]
+
+[[package]]
 name = "generic-array"
 version = "0.14.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2263,6 +2276,7 @@ dependencies = [
  "canister_tracing_macros",
  "chat_events",
  "futures",
+ "gated_groups",
  "group_canister",
  "group_index_canister",
  "group_index_canister_c2c_client",
