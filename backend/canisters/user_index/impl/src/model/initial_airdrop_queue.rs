@@ -29,6 +29,10 @@ impl InitialAirdropQueue {
         self.queue.is_empty()
     }
 
+    pub fn len(&self) -> usize {
+        self.queue.len()
+    }
+
     pub fn mark_failed(&mut self, entry: InitialAirdropEntry) {
         self.failed.push(entry);
     }

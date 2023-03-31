@@ -151,6 +151,7 @@ impl RuntimeState {
             users_eligible_for_initial_airdrop: self.data.users.iter().filter(|u| u.is_eligible_for_initial_airdrop()).count()
                 as u32,
             users_confirmed_for_initial_airdrop: self.data.neuron_controllers_for_initial_airdrop.len() as u32,
+            initial_airdrop_queue_length: self.data.initial_airdrop_queue.len() as u32,
         }
     }
 }
@@ -321,6 +322,7 @@ pub struct Metrics {
     pub canister_ids: CanisterIds,
     pub users_eligible_for_initial_airdrop: u32,
     pub users_confirmed_for_initial_airdrop: u32,
+    pub initial_airdrop_queue_length: u32,
 }
 
 #[derive(Serialize, Debug, Default)]

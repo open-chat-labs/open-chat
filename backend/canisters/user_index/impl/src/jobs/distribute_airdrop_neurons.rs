@@ -51,6 +51,12 @@ fn try_get_next(state: &mut RuntimeState) -> Option<AirdropNeuronArgs> {
 }
 
 async fn process_next(args: AirdropNeuronArgs) {
+    trace!(
+        %args.user_id,
+        %args.neuron_controller,
+        args.neuron_stake_e8s,
+        "Distributing airdrop neuron"
+    );
     let entry = InitialAirdropEntry {
         user_id: args.user_id,
         neuron_controller: args.neuron_controller,

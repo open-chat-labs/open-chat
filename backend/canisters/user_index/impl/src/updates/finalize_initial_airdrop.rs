@@ -183,7 +183,7 @@ async fn increase_dissolve_delay(governance_canister_id: CanisterId, neuron_id: 
         .await?;
 
     match response.command.unwrap() {
-        CommandResponse::Configure(_) => Ok(_),
+        CommandResponse::Configure(_) => Ok(()),
         CommandResponse::Error(e) => Err((RejectionCode::Unknown, format!("{e:?}"))),
         _ => unreachable!(),
     }
