@@ -18,6 +18,7 @@ import {
     PayForDiamondMembershipResponse,
     Cryptocurrency,
     SetNeuronControllerResponse,
+    EligibleForInitialAirdropResponse,
 } from "openchat-shared";
 import type {
     ApiCheckUsernameResponse,
@@ -165,6 +166,10 @@ export function setNeuronControllerResponse(
         return "user_not_eligible";
     }
 
+    if ("AirdropClosed" in candid) {
+        return "airdrop_closed";
+    }
+
     throw new Error(
         `Unexpected ApiSetNeuronControllerForInitialAirdropResponse type received: ${candid}`
     );
@@ -172,15 +177,19 @@ export function setNeuronControllerResponse(
 
 export function isEligibleForInitialAirdropResponse(
     candid: ApiIsEligibleForInitialAirdropResponse
-): boolean {
-    if ("Success" in candid) {
-        return candid.Success;
+): EligibleForInitialAirdropResponse {
+    if ("Yes" in candid) {
+        return { kind: "user_eligible", principal: optional(candid.Yes, (p) => p.toString()) };
     }
-
+    if ("No" in candid) {
+        return { kind: "user_not_eligible" };
+    }
+    if ("AirdropClosed" in candid) {
+        return { kind: "airdrop_closed" };
+    }
     if ("UserNotFound" in candid) {
-        return false;
+        return { kind: "unknown_user" };
     }
-
     throw new Error(`Unexpected ApiIsEligibleForInitialAirdropResponse type received: ${candid}`);
 }
 

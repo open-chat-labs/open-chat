@@ -299,7 +299,6 @@ export interface GroupCanisterGroupChatSummary {
   'description' : string,
   'events_ttl' : [] | [Milliseconds],
   'last_updated' : TimestampMillis,
-  'owner_id' : UserId,
   'joined' : TimestampMillis,
   'avatar_id' : [] | [bigint],
   'next_message_expiry' : [] | [TimestampMillis],
@@ -329,7 +328,6 @@ export interface GroupCanisterGroupChatSummaryUpdates {
   'description' : [] | [string],
   'events_ttl' : EventsTimeToLiveUpdate,
   'last_updated' : TimestampMillis,
-  'owner_id' : [] | [UserId],
   'avatar_id' : AvatarIdUpdate,
   'next_message_expiry' : TimestampUpdate,
   'latest_threads' : Array<GroupCanisterThreadDetails>,
@@ -484,7 +482,9 @@ export type InvalidPollReason = { 'DuplicateOptions' : null } |
   { 'OptionTooLong' : number } |
   { 'EndDateInThePast' : null } |
   { 'PollsNotValidForDirectChats' : null };
-export type IsEligibleForInitialAirdropResponse = { 'Success' : boolean } |
+export type IsEligibleForInitialAirdropResponse = { 'No' : null } |
+  { 'Yes' : [] | [Principal] } |
+  { 'AirdropClosed' : null } |
   { 'UserNotFound' : null };
 export type MarkSuspectedBotArgs = {};
 export type MarkSuspectedBotResponse = { 'Success' : null };
@@ -819,8 +819,9 @@ export interface SetNeuronControllerForInitialAirdropArgs {
   'controller' : Principal,
 }
 export type SetNeuronControllerForInitialAirdropResponse = {
-    'UserNotEligible' : null
+    'AirdropClosed' : null
   } |
+  { 'UserNotEligible' : null } |
   { 'Success' : null } |
   { 'UserNotFound' : null };
 export interface SetUserUpgradeConcurrencyArgs { 'value' : number }

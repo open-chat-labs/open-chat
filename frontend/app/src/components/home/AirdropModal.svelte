@@ -14,11 +14,18 @@
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
+    $: eligibleForInitialAirdrop = client.eligibleForInitialAirdrop;
+
     let busy = false;
     let principal = "";
     let showHow = false;
 
-    onMount(() => shownAirdropPrompt.set(true));
+    onMount(() => {
+        shownAirdropPrompt.set(true);
+        if ($eligibleForInitialAirdrop.kind === "user_eligible") {
+            principal = $eligibleForInitialAirdrop.principal ?? "";
+        }
+    });
 
     function record() {
         busy = true;
@@ -83,7 +90,9 @@
                     {$_("cancel")}
                 </Button>
                 <Button
-                    disabled={principal.length === 0}
+                    disabled={principal.length === 0 ||
+                        ($eligibleForInitialAirdrop.kind === "user_eligible" &&
+                            $eligibleForInitialAirdrop.principal === principal)}
                     on:click={record}
                     loading={busy}
                     small={!$mobileWidth}

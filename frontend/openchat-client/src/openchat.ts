@@ -302,6 +302,7 @@ import {
     UpdateMarketMakerConfigResponse,
     UpdatedEvent,
     compareRoles,
+    EligibleForInitialAirdropResponse,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -3759,7 +3760,9 @@ export class OpenChat extends EventTarget {
     /**
      * Reactive state provided in the form of svelte stores
      */
-    eligibleForInitialAirdrop = writable<boolean>(false);
+    eligibleForInitialAirdrop = writable<EligibleForInitialAirdropResponse>({
+        kind: "user_not_eligible",
+    });
     profileStore = profileStore;
     percentageStorageRemaining = percentageStorageRemaining;
     percentageStorageUsed = percentageStorageUsed;

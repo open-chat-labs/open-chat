@@ -84,6 +84,7 @@ import type {
     DiamondMembershipDuration,
     PayForDiamondMembershipResponse,
     SetNeuronControllerResponse,
+    EligibleForInitialAirdropResponse,
 } from "./user";
 import type {
     GroupSearchResponse,
@@ -934,7 +935,8 @@ export type WorkerResponse =
     | Response<PayForDiamondMembershipResponse>
     | Response<ClaimPrizeResponse>
     | Response<UpdateMarketMakerConfigResponse>
-    | Response<SetNeuronControllerResponse>;
+    | Response<SetNeuronControllerResponse>
+    | Response<EligibleForInitialAirdropResponse>;
 
 type Response<T> = {
     kind: "worker_response";

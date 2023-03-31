@@ -98,6 +98,7 @@ import {
     UpdateMarketMakerConfigArgs,
     UpdateMarketMakerConfigResponse,
     SetNeuronControllerResponse,
+    EligibleForInitialAirdropResponse,
 } from "openchat-shared";
 import type { OpenChatConfig } from "./config";
 import { v4 } from "uuid";
@@ -1372,7 +1373,7 @@ export class OpenChatAgentWorker extends EventTarget {
         });
     }
 
-    isEligibleForInitialAirdrop(): Promise<boolean> {
+    isEligibleForInitialAirdrop(): Promise<EligibleForInitialAirdropResponse> {
         return this.sendRequest({
             kind: "isEligibleForInitialAirdrop",
             payload: {},

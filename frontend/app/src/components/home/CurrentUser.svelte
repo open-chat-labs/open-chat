@@ -74,7 +74,7 @@
                                 ? $_("upgrade.extend")
                                 : $_("upgrade.diamond")}</span>
                     </MenuItem>
-                    {#if $eligibleForAirdrop}
+                    {#if $eligibleForAirdrop.kind === "user_eligible"}
                         <MenuItem on:click={() => dispatch("registerForAirdrop")}>
                             <span class="airdrop" slot="icon">🪂</span>
                             <span slot="text">{$_("airdrop.register")}</span>

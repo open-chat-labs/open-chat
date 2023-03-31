@@ -131,7 +131,7 @@
     $: showLeft = !$mobileWidth || (leftSelected && !showRight);
 
     $: {
-        if ($eligibleForInitialAirdrop && !$shownAirdropPrompt) {
+        if ($eligibleForInitialAirdrop.kind === "user_eligible" && !$shownAirdropPrompt) {
             modal = ModalType.AirdropPrompt;
         }
     }

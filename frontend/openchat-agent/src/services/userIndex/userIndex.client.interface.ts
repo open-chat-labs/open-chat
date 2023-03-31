@@ -16,6 +16,7 @@ import type {
     PayForDiamondMembershipResponse,
     SetUserUpgradeConcurrencyResponse,
     SetNeuronControllerResponse,
+    EligibleForInitialAirdropResponse,
 } from "openchat-shared";
 
 export interface IUserIndexClient {
@@ -41,6 +42,6 @@ export interface IUserIndexClient {
         expectedPriceE8s: bigint
     ): Promise<PayForDiamondMembershipResponse>;
     setUserUpgradeConcurrency(value: number): Promise<SetUserUpgradeConcurrencyResponse>;
-    isEligibleForInitialAirdrop(): Promise<boolean>;
+    isEligibleForInitialAirdrop(): Promise<EligibleForInitialAirdropResponse>;
     setNeuronControllerForInitialAirdrop(principal: string): Promise<SetNeuronControllerResponse>;
 }

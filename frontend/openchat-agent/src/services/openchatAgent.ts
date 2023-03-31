@@ -143,6 +143,7 @@ import {
     UpdateMarketMakerConfigArgs,
     UpdateMarketMakerConfigResponse,
     SetNeuronControllerResponse,
+    EligibleForInitialAirdropResponse,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import { applyOptionUpdate } from "../utils/mapping";
@@ -1606,7 +1607,7 @@ export class OpenChatAgent extends EventTarget {
         return this._marketMakerClient.updateConfig(config);
     }
 
-    isEligibleForInitialAirdrop(): Promise<boolean> {
+    isEligibleForInitialAirdrop(): Promise<EligibleForInitialAirdropResponse> {
         return this._userIndexClient.isEligibleForInitialAirdrop();
     }
 

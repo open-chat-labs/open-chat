@@ -19,6 +19,7 @@ import type {
     PayForDiamondMembershipResponse,
     SetUserUpgradeConcurrencyResponse,
     SetNeuronControllerResponse,
+    EligibleForInitialAirdropResponse,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
@@ -61,7 +62,7 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
     }
 
     @profile("userIndexClient")
-    isEligibleForInitialAirdrop(): Promise<boolean> {
+    isEligibleForInitialAirdrop(): Promise<EligibleForInitialAirdropResponse> {
         return this.handleQueryResponse(
             () => this.userIndexService.is_eligible_for_initial_airdrop({}),
             isEligibleForInitialAirdropResponse
