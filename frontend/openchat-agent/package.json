@@ -17,15 +17,15 @@
     },
     "author": "julian.jelfs@gmail.com",
     "dependencies": {
-        "@dfinity/agent": "^0.14.0",
-        "@dfinity/auth-client": "^0.14.0",
-        "@dfinity/candid": "^0.14.0",
-        "@dfinity/identity": "^0.14.0",
-        "@dfinity/principal": "^0.14.0",
-        "@open-ic/open-storage-agent": "^0.1.10",
+        "@dfinity/agent": "^0.15.4",
+        "@dfinity/auth-client": "^0.15.4",
+        "@dfinity/candid": "^0.15.4",
+        "@dfinity/identity": "^0.15.4",
+        "@dfinity/principal": "^0.15.4",
         "drange": "^2.0.1",
         "idb": "^6.1.5",
         "identicon.js": "^2.3.3",
+        "js-sha3": "^0.8.0",
         "md5": "^2.3.0",
         "uuid": "^9.0.0",
         "openchat-shared": "*",
@@ -67,7 +67,6 @@
             "ts"
         ],
         "moduleNameMapper": {
-            "@open-ic/open-storage-agent": "<rootDir>/src/dummyModule.js",
             "openchat-shared": "<rootDir>/src/dummyModule.js",
             "idb": "<rootDir>/src/dummyModule.js",
             "../utils/notifications": "<rootDir>/src/dummyNotifications.js"
