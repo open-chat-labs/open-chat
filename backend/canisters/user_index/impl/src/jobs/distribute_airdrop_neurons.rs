@@ -79,7 +79,7 @@ async fn airdrop_neuron_to_user(args: AirdropNeuronArgs) -> CallResult<SnsNeuron
             args.source_neuron_id,
             args.neuron_stake_e8s,
         )
-        .await?;
+        .await?
     };
 
     add_all_permissions(args.governance_canister_id, neuron_id, args.neuron_controller).await?;
