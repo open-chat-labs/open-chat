@@ -43,6 +43,7 @@ fn try_get_next(state: &mut RuntimeState) -> Option<AirdropNeuronArgs> {
         user_id: e.user_id,
         neuron_controller: e.neuron_controller,
         neuron_stake_e8s: e.neuron_stake_e8s,
+        is_last: e.is_last,
         this_canister_id: state.env.canister_id(),
         governance_canister_id: state.data.openchat_governance_canister_id,
         source_neuron_id: state.data.initial_airdrop_neuron_id.unwrap(),
@@ -60,6 +61,7 @@ async fn process_next(args: AirdropNeuronArgs) {
         user_id: args.user_id,
         neuron_controller: args.neuron_controller,
         neuron_stake_e8s: args.neuron_stake_e8s,
+        is_last,
     };
     if let Err(error) = airdrop_neuron_to_user(args).await {
         error!(?error, args = ?entry, "Failed to distribute airdrop neuron");
@@ -68,13 +70,17 @@ async fn process_next(args: AirdropNeuronArgs) {
 }
 
 async fn airdrop_neuron_to_user(args: AirdropNeuronArgs) -> CallResult<SnsNeuronId> {
-    let neuron_id = split(
-        args.governance_canister_id,
-        args.neuron_controller,
-        args.source_neuron_id,
-        args.neuron_stake_e8s,
-    )
-    .await?;
+    let neuron_id = if args.is_last {
+        args.source_neuron_id
+    } else {
+        split(
+            args.governance_canister_id,
+            args.neuron_controller,
+            args.source_neuron_id,
+            args.neuron_stake_e8s,
+        )
+        .await?;
+    };
 
     add_all_permissions(args.governance_canister_id, neuron_id, args.neuron_controller).await?;
     remove_all_permissions(args.governance_canister_id, neuron_id, args.this_canister_id).await?;
@@ -155,6 +161,7 @@ struct AirdropNeuronArgs {
     user_id: UserId,
     neuron_controller: Principal,
     neuron_stake_e8s: u64,
+    is_last: bool,
     this_canister_id: CanisterId,
     governance_canister_id: CanisterId,
     source_neuron_id: SnsNeuronId,

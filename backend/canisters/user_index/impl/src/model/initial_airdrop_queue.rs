@@ -14,6 +14,7 @@ pub struct InitialAirdropEntry {
     pub user_id: UserId,
     pub neuron_controller: Principal,
     pub neuron_stake_e8s: u64,
+    pub is_last: bool,
 }
 
 impl InitialAirdropQueue {

@@ -92,6 +92,7 @@ fn finalize_initial_airdrop_impl(neuron_id: SnsNeuronId, stake_e8s: u64, state: 
             user_id,
             neuron_controller: *state.data.neuron_controllers_for_initial_airdrop.get(&user_id).unwrap(),
             neuron_stake_e8s: user_stake,
+            is_last,
         });
     }
 
