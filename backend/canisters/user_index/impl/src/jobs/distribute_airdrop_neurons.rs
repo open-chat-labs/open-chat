@@ -61,7 +61,7 @@ async fn process_next(args: AirdropNeuronArgs) {
         user_id: args.user_id,
         neuron_controller: args.neuron_controller,
         neuron_stake_e8s: args.neuron_stake_e8s,
-        is_last,
+        is_last: args.is_last,
     };
     if let Err(error) = airdrop_neuron_to_user(args).await {
         error!(?error, args = ?entry, "Failed to distribute airdrop neuron");
