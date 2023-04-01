@@ -1,5 +1,5 @@
 use crate::model::challenges::Challenges;
-use crate::model::initial_airdrop_queue::InitialAirdropQueue;
+use crate::model::initial_airdrop_queue::{InitialAirdropEntry, InitialAirdropQueue};
 use crate::model::local_user_index_map::LocalUserIndex;
 use crate::model::storage_index_user_sync_queue::OpenStorageUserSyncQueue;
 use crate::model::user_map::UserMap;
@@ -152,6 +152,7 @@ impl RuntimeState {
                 as u32,
             users_confirmed_for_initial_airdrop: self.data.neuron_controllers_for_initial_airdrop.len() as u32,
             initial_airdrop_queue_length: self.data.initial_airdrop_queue.len() as u32,
+            initial_airdrop_failures: self.data.initial_airdrop_queue.failed().iter().take(10).cloned().collect(),
         }
     }
 }
@@ -323,6 +324,7 @@ pub struct Metrics {
     pub users_eligible_for_initial_airdrop: u32,
     pub users_confirmed_for_initial_airdrop: u32,
     pub initial_airdrop_queue_length: u32,
+    pub initial_airdrop_failures: Vec<InitialAirdropEntry>,
 }
 
 #[derive(Serialize, Debug, Default)]

@@ -9,7 +9,7 @@ pub struct InitialAirdropQueue {
     failed: Vec<InitialAirdropEntry>,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct InitialAirdropEntry {
     pub user_id: UserId,
     pub neuron_controller: Principal,
@@ -35,5 +35,9 @@ impl InitialAirdropQueue {
 
     pub fn mark_failed(&mut self, entry: InitialAirdropEntry) {
         self.failed.push(entry);
+    }
+
+    pub fn failed(&self) -> &[InitialAirdropEntry] {
+        &self.failed
     }
 }
