@@ -6036,6 +6036,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "sns_governance_canister"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "candid_gen",
+ "ic-sns-governance",
+ "serde",
+ "types",
+]
+
+[[package]]
+name = "sns_governance_canister_c2c_client"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "canister_client",
+ "ic-cdk 0.7.3",
+ "sns_governance_canister",
+ "types",
+]
+
+[[package]]
 name = "socket2"
 version = "0.4.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6828,6 +6850,7 @@ dependencies = [
  "ic-cdk-macros",
  "ic-cdk-timers",
  "ic-ledger-types",
+ "ic-sns-governance",
  "itertools",
  "ledger_utils",
  "local_user_index_canister",
@@ -6840,6 +6863,8 @@ dependencies = [
  "serde",
  "serde_bytes",
  "serializer",
+ "sns_governance_canister",
+ "sns_governance_canister_c2c_client",
  "stable_memory",
  "storage_bucket_client",
  "tracing",

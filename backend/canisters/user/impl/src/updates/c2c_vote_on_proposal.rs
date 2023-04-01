@@ -39,10 +39,8 @@ mod nns {
             .map(|(neuron_id, _)| register_vote(governance_canister_id, neuron_id, proposal_id, adopt))
             .collect();
 
-        let vote_results = futures::future::join_all(vote_futures).await;
-
-        if let Some(first_error) = vote_results.into_iter().filter_map(|res| res.err()).next() {
-            InternalError(format!("{first_error:?}"))
+        if let Err(error) = futures::future::try_join_all(vote_futures).await {
+            InternalError(format!("{error:?}"))
         } else {
             Success
         }
@@ -60,6 +58,7 @@ mod nns {
 
 mod sns {
     use super::*;
+    use ic_sns_governance::pb::v1::GovernanceError;
 
     pub async fn vote_on_proposal(governance_canister_id: CanisterId, proposal_id: ProposalId, adopt: bool) -> Response {
         let (canister_id, now) = read_state(|state| (state.env.canister_id(), state.env.now()));
@@ -76,10 +75,8 @@ mod sns {
             .map(|neuron_id| register_vote(governance_canister_id, neuron_id, proposal_id, adopt))
             .collect();
 
-        let vote_results = futures::future::join_all(vote_futures).await;
-
-        if let Some(first_error) = vote_results.into_iter().filter_map(|res| res.err()).next() {
-            InternalError(format!("{first_error:?}"))
+        if let Err(error) = futures::future::try_join_all(vote_futures).await {
+            InternalError(format!("{error:?}"))
         } else {
             Success
         }
@@ -90,7 +87,7 @@ mod sns {
         neuron_id: SnsNeuronId,
         proposal_id: ProposalId,
         adopt: bool,
-    ) -> CallResult<Result<(), crate::governance_clients::sns::GovernanceError>> {
+    ) -> CallResult<Result<(), GovernanceError>> {
         crate::governance_clients::sns::register_vote(governance_canister_id, neuron_id, proposal_id, adopt).await
     }
 }

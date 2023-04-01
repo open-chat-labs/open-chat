@@ -60,6 +60,8 @@ members = [
     "backend/canisters/user_index/c2c_client",
     "backend/canisters/user_index/client",
     "backend/canisters/user_index/impl",
+    "backend/external_canisters/sns_governance/api",
+    "backend/external_canisters/sns_governance/c2c_client",
     "backend/integration_tests",
     "backend/libraries/canister_agent_utils",
     "backend/libraries/canister_api_macros",
