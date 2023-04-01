@@ -9,7 +9,7 @@ pub struct InitialAirdropQueue {
     failed: Vec<InitialAirdropEntry>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct InitialAirdropEntry {
     pub user_id: UserId,
     pub neuron_controller: Principal,

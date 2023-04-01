@@ -8,7 +8,7 @@ use ic_sns_governance::pb::v1::manage_neuron_response::Command as CommandRespons
 use ic_sns_governance::pb::v1::{ManageNeuron, NeuronPermissionList};
 use std::cell::Cell;
 use std::time::Duration;
-use tracing::trace;
+use tracing::{error, trace};
 use types::{CanisterId, SnsNeuronId, UserId};
 use utils::hasher::hash_bytes;
 
@@ -61,7 +61,8 @@ async fn process_next(args: AirdropNeuronArgs) {
         neuron_controller: args.neuron_controller,
         neuron_stake_e8s: args.neuron_stake_e8s,
     };
-    if airdrop_neuron_to_user(args).await.is_err() {
+    if let Err(error) = airdrop_neuron_to_user(args).await {
+        error!(?error, args = ?entry, "Failed to distribute airdrop neuron");
         mutate_state(|state| state.data.initial_airdrop_queue.mark_failed(entry));
     }
 }
