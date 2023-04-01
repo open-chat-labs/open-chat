@@ -1,12 +1,11 @@
 use crate::model::initial_airdrop_queue::InitialAirdropEntry;
 use crate::{mutate_state, RuntimeState};
 use candid::Principal;
-use canister_client::make_c2c_call;
 use ic_cdk::api::call::{CallResult, RejectionCode};
 use ic_cdk_timers::TimerId;
 use ic_sns_governance::pb::v1::manage_neuron::{AddNeuronPermissions, Command, RemoveNeuronPermissions, Split};
 use ic_sns_governance::pb::v1::manage_neuron_response::Command as CommandResponse;
-use ic_sns_governance::pb::v1::{ManageNeuron, ManageNeuronResponse, NeuronPermissionList};
+use ic_sns_governance::pb::v1::{ManageNeuron, NeuronPermissionList};
 use std::cell::Cell;
 use std::time::Duration;
 use tracing::trace;
@@ -98,11 +97,7 @@ async fn split(
         })),
     };
 
-    let response: ManageNeuronResponse =
-        make_c2c_call(governance_canister_id, "manage_neuron", args, candid::encode_one, |r| {
-            candid::decode_one(r)
-        })
-        .await?;
+    let response = sns_governance_canister_c2c_client::manage_neuron(governance_canister_id, &args).await?;
 
     match response.command.unwrap() {
         CommandResponse::Split(s) => Ok(s.created_neuron_id.unwrap().id.try_into().unwrap()),
@@ -122,11 +117,7 @@ async fn add_all_permissions(governance_canister_id: CanisterId, neuron_id: [u8;
         })),
     };
 
-    let response: ManageNeuronResponse =
-        make_c2c_call(governance_canister_id, "manage_neuron", args, candid::encode_one, |r| {
-            candid::decode_one(r)
-        })
-        .await?;
+    let response = sns_governance_canister_c2c_client::manage_neuron(governance_canister_id, &args).await?;
 
     match response.command.unwrap() {
         CommandResponse::AddNeuronPermission(_) => Ok(()),
@@ -150,11 +141,7 @@ async fn remove_all_permissions(
         })),
     };
 
-    let response: ManageNeuronResponse =
-        make_c2c_call(governance_canister_id, "manage_neuron", args, candid::encode_one, |r| {
-            candid::decode_one(r)
-        })
-        .await?;
+    let response = sns_governance_canister_c2c_client::manage_neuron(governance_canister_id, &args).await?;
 
     match response.command.unwrap() {
         CommandResponse::RemoveNeuronPermission(_) => Ok(()),

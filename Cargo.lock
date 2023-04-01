@@ -6954,6 +6954,8 @@ dependencies = [
  "serde_json",
  "serializer",
  "sha2 0.10.6",
+ "sns_governance_canister",
+ "sns_governance_canister_c2c_client",
  "storage_index_canister",
  "storage_index_canister_c2c_client",
  "tracing",

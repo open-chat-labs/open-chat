@@ -2,7 +2,6 @@ use crate::guards::caller_is_platform_operator;
 use crate::model::initial_airdrop_queue::InitialAirdropEntry;
 use crate::{mutate_state, RuntimeState};
 use candid::Principal;
-use canister_client::make_c2c_call;
 use canister_tracing_macros::trace;
 use ic_base_types::PrincipalId;
 use ic_cdk::api::call::{CallResult, RejectionCode};
@@ -12,7 +11,7 @@ use ic_icrc1::Account;
 use ic_sns_governance::pb::v1::manage_neuron::claim_or_refresh::{By, MemoAndController};
 use ic_sns_governance::pb::v1::manage_neuron::{ClaimOrRefresh, Command};
 use ic_sns_governance::pb::v1::manage_neuron_response::Command as CommandResponse;
-use ic_sns_governance::pb::v1::{ManageNeuron, ManageNeuronResponse};
+use ic_sns_governance::pb::v1::ManageNeuron;
 use itertools::Itertools;
 use sha2::{Digest, Sha256};
 use types::{CanisterId, SnsNeuronId};
@@ -157,11 +156,7 @@ async fn claim_neuron(this_canister_id: CanisterId, governance_canister_id: Cani
         })),
     };
 
-    let response: ManageNeuronResponse =
-        make_c2c_call(governance_canister_id, "manage_neuron", args, candid::encode_one, |r| {
-            candid::decode_one(r)
-        })
-        .await?;
+    let response = sns_governance_canister_c2c_client::manage_neuron(governance_canister_id, &args).await?;
 
     match response.command.unwrap() {
         CommandResponse::ClaimOrRefresh(c) => Ok(c.refreshed_neuron_id.unwrap().id.try_into().unwrap()),
@@ -173,14 +168,10 @@ async fn claim_neuron(this_canister_id: CanisterId, governance_canister_id: Cani
 async fn increase_dissolve_delay(governance_canister_id: CanisterId, neuron_id: SnsNeuronId) -> CallResult<()> {
     let args = ManageNeuron {
         subaccount: neuron_id.to_vec(),
-        command: Some(Command::increase_dissolve_delay(31536000)),
+        command: Some(Command::increase_dissolve_delay(31536000)), // 1 year
     };
 
-    let response: ManageNeuronResponse =
-        make_c2c_call(governance_canister_id, "manage_neuron", args, candid::encode_one, |r| {
-            candid::decode_one(r)
-        })
-        .await?;
+    let response = sns_governance_canister_c2c_client::manage_neuron(governance_canister_id, &args).await?;
 
     match response.command.unwrap() {
         CommandResponse::Configure(_) => Ok(()),
