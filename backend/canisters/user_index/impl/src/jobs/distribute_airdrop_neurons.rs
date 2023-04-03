@@ -11,7 +11,6 @@ use std::cell::Cell;
 use std::time::Duration;
 use tracing::{error, trace};
 use types::{CanisterId, SnsNeuronId, UserId};
-use utils::hasher::hash_bytes;
 
 const ALL_PERMISSIONS: [i32; 11] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
