@@ -1,11 +1,9 @@
-use crate::guards::caller_is_platform_operator;
 use crate::model::initial_airdrop_queue::InitialAirdropEntry;
 use crate::{mutate_state, RuntimeState};
 use candid::Principal;
-use canister_tracing_macros::trace;
 use ic_base_types::PrincipalId;
 use ic_cdk::api::call::{CallResult, RejectionCode};
-use ic_cdk_macros::update;
+use ic_cdk_timers::TimerId;
 use ic_icrc1::endpoints::TransferArg;
 use ic_icrc1::Account;
 use ic_sns_governance::pb::v1::manage_neuron::claim_or_refresh::{By, MemoAndController};
@@ -14,14 +12,40 @@ use ic_sns_governance::pb::v1::manage_neuron_response::Command as CommandRespons
 use ic_sns_governance::pb::v1::ManageNeuron;
 use itertools::Itertools;
 use sha2::{Digest, Sha256};
-use types::{CanisterId, SnsNeuronId};
-use user_index_canister::finalize_initial_airdrop::{Response::*, *};
+use std::cell::Cell;
+use std::time::Duration;
+use tracing::{error, trace};
+use types::{CanisterId, SnsNeuronId, TimestampMillis};
 
 const MIN_NEURON_STAKE_E8S: u64 = 4_0000_0000;
+const INITIAL_AIRDROP_CUTOFF: TimestampMillis = 1681516800000; // Saturday, 15 April 2023 00:00:00 UTC
 
-#[update(guard = "caller_is_platform_operator")]
-#[trace]
-async fn finalize_initial_airdrop(_args: Args) -> Response {
+thread_local! {
+    static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
+}
+
+pub(crate) fn start_job_if_required(runtime_state: &RuntimeState) -> bool {
+    if TIMER_ID.with(|t| t.get().is_none()) && runtime_state.data.initial_airdrop_open {
+        let interval = INITIAL_AIRDROP_CUTOFF.saturating_sub(runtime_state.env.now());
+        let timer_id = ic_cdk_timers::set_timer(Duration::from_millis(interval), run);
+        TIMER_ID.with(|t| t.set(Some(timer_id)));
+        trace!("'finalize_initial_airdrop' job started");
+        true
+    } else {
+        false
+    }
+}
+
+pub fn run() {
+    ic_cdk::spawn(finalize_initial_airdrop());
+
+    if let Some(timer_id) = TIMER_ID.with(|t| t.take()) {
+        ic_cdk_timers::clear_timer(timer_id);
+        trace!("'finalize_initial_airdrop' job stopped");
+    }
+}
+
+async fn finalize_initial_airdrop() {
     let PrepareResult {
         this_canister_id,
         governance_canister_id,
@@ -33,9 +57,8 @@ async fn finalize_initial_airdrop(_args: Args) -> Response {
             mutate_state(|state| {
                 finalize_initial_airdrop_impl(result.neuron_id, result.stake_e8s, state);
             });
-            Success
         }
-        Err(e) => InternalError(format!("{e:?}")),
+        Err(error) => error!(?error, "Failed to stake initial airdrop source neuron"),
     }
 }
 
@@ -46,8 +69,10 @@ struct PrepareResult {
 }
 
 fn prepare(state: &mut RuntimeState) -> PrepareResult {
-    assert!(!state.data.initial_airdrop_open);
+    assert!(state.data.initial_airdrop_open);
     assert!(state.data.initial_airdrop_neuron_id.is_none());
+
+    state.data.initial_airdrop_open = false;
 
     PrepareResult {
         this_canister_id: state.env.canister_id(),
@@ -56,7 +81,7 @@ fn prepare(state: &mut RuntimeState) -> PrepareResult {
     }
 }
 
-fn finalize_initial_airdrop_impl(neuron_id: SnsNeuronId, stake_e8s: u64, state: &mut RuntimeState) -> Response {
+fn finalize_initial_airdrop_impl(neuron_id: SnsNeuronId, stake_e8s: u64, state: &mut RuntimeState) {
     state.data.initial_airdrop_neuron_id = Some(neuron_id);
 
     let users: Vec<_> = state
@@ -72,7 +97,8 @@ fn finalize_initial_airdrop_impl(neuron_id: SnsNeuronId, stake_e8s: u64, state: 
 
     let count = users.len() as u64;
     let fee_e8s = 100000u64;
-    let available_e8s = stake_e8s - (count * fee_e8s);
+    // Leave MIN_NEURON_STAKE_E8S in the source neuron
+    let available_e8s = stake_e8s - (count * fee_e8s) - MIN_NEURON_STAKE_E8S;
 
     let median = available_e8s / count;
     let max = median + (median / 2);
@@ -92,13 +118,10 @@ fn finalize_initial_airdrop_impl(neuron_id: SnsNeuronId, stake_e8s: u64, state: 
             user_id,
             neuron_controller: *state.data.neuron_controllers_for_initial_airdrop.get(&user_id).unwrap(),
             neuron_stake_e8s: user_stake,
-            is_last,
         });
     }
 
     crate::jobs::distribute_airdrop_neurons::start_job_if_required(state);
-
-    Success
 }
 
 async fn stake_airdrop_source_neuron(
