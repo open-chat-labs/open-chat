@@ -98,7 +98,7 @@ fn finalize_initial_airdrop_impl(neuron_id: SnsNeuronId, stake_e8s: u64, state: 
     let count = users.len() as u64;
     let fee_e8s = 100000u64;
     // Leave MIN_NEURON_STAKE_E8S in the source neuron
-    let available_e8s = stake_e8s - (count * fee_e8s) - MIN_NEURON_STAKE_E8S;
+    let available_e8s = stake_e8s - MIN_NEURON_STAKE_E8S;
 
     let median = available_e8s / count;
     let max = median + (median / 2);
@@ -106,7 +106,7 @@ fn finalize_initial_airdrop_impl(neuron_id: SnsNeuronId, stake_e8s: u64, state: 
     let increment = median / (count - 1);
     let mut remaining_e8s = available_e8s;
 
-    assert!(min > MIN_NEURON_STAKE_E8S);
+    assert!(min > MIN_NEURON_STAKE_E8S + fee_e8s);
 
     for (index, user_id) in users.into_iter().enumerate() {
         let index = index as u64;
