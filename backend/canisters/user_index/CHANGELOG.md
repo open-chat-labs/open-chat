@@ -7,7 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Added `is_diamond_member` to `c2c_lookup_user`
+- Added `is_diamond_member` to `c2c_lookup_user` ([#3408](https://github.com/open-ic/open-chat/pull/3408))
 
 ### Removed
 
