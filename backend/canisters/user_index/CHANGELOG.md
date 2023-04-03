@@ -7,7 +7,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Added `is_diamond_member` to `c2c_lookup_user`
+- Implement job to distribute initial airdrop neurons ([#3398](https://github.com/open-ic/open-chat/pull/3398))
+- Added `is_diamond_member` to `c2c_lookup_user` ([#3406](https://github.com/open-ic/open-chat/pull/3406))
 
 ### Removed
 

@@ -294,7 +294,9 @@ type SetUserUpgradeConcurrencyResponse =
 
 type IsEligibleForInitialAirdropResponse =
     variant {
-        Success: bool;
+        Yes: opt principal;
+        No;
+        AirdropClosed;
         UserNotFound;
     };
 
@@ -306,6 +308,7 @@ type SetNeuronControllerForInitialAirdropArgs =
 type SetNeuronControllerForInitialAirdropResponse =
     variant {
         Success;
+        AirdropClosed;
         UserNotEligible;
         UserNotFound;
     };

@@ -12,6 +12,7 @@ crate-type = ["cdylib"]
 [dependencies]
 candid = { workspace = true }
 canister_api_macros = { path = "../../../libraries/canister_api_macros" }
+canister_client = { path = "../../../libraries/canister_client" }
 canister_logger = { workspace = true }
 canister_state_macros = { workspace = true }
 canister_timer_jobs = { workspace = true }
@@ -22,10 +23,15 @@ group_canister = { path = "../../group/api" }
 group_canister_c2c_client = { path = "../../group/c2c_client" }
 http_request = { path = "../../../libraries/http_request" }
 human_readable = { path = "../../../libraries/human_readable" }
+ic-base-types = { workspace = true }
 ic-cdk = { workspace = true }
 ic-cdk-macros = { workspace = true }
 ic-cdk-timers = { workspace = true }
+ic-icrc1 = { workspace = true }
+ic-icrc1-client = { workspace = true }
+ic-icrc1-client-cdk = { workspace = true }
 ic-ledger-types = { workspace = true }
+ic-sns-governance = { workspace = true }
 ic-stable-structures = { workspace = true }
 itertools = { workspace = true }
 local_user_index_canister = { path = "../../local_user_index/api" }
@@ -40,6 +46,9 @@ serde = { workspace = true }
 serde_bytes = { workspace = true }
 serde_json = { workspace = true }
 serializer = { workspace = true }
+sha2 = { workspace = true }
+sns_governance_canister = { path = "../../../external_canisters/sns_governance/api" }
+sns_governance_canister_c2c_client = { path = "../../../external_canisters/sns_governance/c2c_client" }
 storage_index_canister = { path = "../../storage_index/api" }
 storage_index_canister_c2c_client = { path = "../../storage_index/c2c_client" }
 tracing = { workspace = true }
