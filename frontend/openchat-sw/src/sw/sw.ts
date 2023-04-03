@@ -12,7 +12,7 @@ const DEBUG = false;
 registerRoute(
     (route) => {
         return [
-            /assets\/.*png|jpg|svg|gif/,
+            /assets\/.*png|jpg|svg|gif|mp4/,
             /main-.*[css|js]$/,
             /ArchitecturePage-.*js$/,
             /HashLinkTarget-.*js$/,
@@ -97,8 +97,6 @@ async function defaultHandler(request: Request): Promise<Response> {
     } catch {
         console.error("Invalid referrer: ", request.referrer);
     }
-
-    console.log("SW: version 66");
 
     try {
         console.debug(

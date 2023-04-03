@@ -32,6 +32,7 @@
             on:wallet
             on:upgrade
             on:toggleMuteNotifications
+            on:registerForAirdrop
             {searchResultsAvailable}
             {searchTerm}
             {searching}

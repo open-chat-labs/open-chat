@@ -58,6 +58,8 @@
     import AccountsModal from "./profile/AccountsModal.svelte";
     import { querystring } from "routes";
     import { eventListScrollTop } from "../../stores/scrollPos";
+    import { shownAirdropPrompt } from "../../stores/settings";
+    import AirdropModal from "./AirdropModal.svelte";
 
     const client = getContext<OpenChat>("client");
     const user = client.user;
@@ -90,6 +92,7 @@
         Suspended,
         NewGroup,
         Wallet,
+        AirdropPrompt,
     }
 
     let faqQuestion: Questions | undefined = undefined;
@@ -117,6 +120,7 @@
     $: currentChatDraftMessage = client.currentChatDraftMessage;
     $: chatStateStore = client.chatStateStore;
     $: confirmMessage = getConfirmMessage(confirmActionEvent);
+    $: eligibleForInitialAirdrop = client.eligibleForInitialAirdrop;
 
     // layout stuff
     $: showRight = $rightPanelHistory.length > 0 || $numberOfColumns === 3;
@@ -125,6 +129,12 @@
     $: leftSelected = $pathParams.chatId === undefined && hotGroups.kind === "idle";
     $: showMiddle = !$mobileWidth || (middleSelected && !showRight);
     $: showLeft = !$mobileWidth || (leftSelected && !showRight);
+
+    $: {
+        if ($eligibleForInitialAirdrop.kind === "user_eligible" && !$shownAirdropPrompt) {
+            modal = ModalType.AirdropPrompt;
+        }
+    }
 
     onMount(() => {
         subscribeToNotifications(client, (n) => client.notificationReceived(n));
@@ -340,6 +350,10 @@
 
     function cancelRecommendations() {
         hotGroups = { kind: "idle" };
+    }
+
+    function registerForAirdrop() {
+        modal = ModalType.AirdropPrompt;
     }
 
     function dismissRecommendation(ev: CustomEvent<string>) {
@@ -901,6 +915,7 @@
             on:archiveChat={onArchiveChat}
             on:unarchiveChat={onUnarchiveChat}
             on:toggleMuteNotifications={toggleMuteNotifications}
+            on:registerForAirdrop={registerForAirdrop}
             on:loadMessage={loadMessage} />
     {/if}
     {#if showMiddle}
@@ -1001,6 +1016,8 @@
             <NewGroup on:upgrade={upgrade} {candidateGroup} on:close={closeModal} />
         {:else if modal === ModalType.Wallet}
             <AccountsModal on:close={closeModal} />
+        {:else if modal === ModalType.AirdropPrompt}
+            <AirdropModal on:close={closeModal} />
         {/if}
     </Overlay>
 {/if}

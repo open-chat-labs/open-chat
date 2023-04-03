@@ -302,6 +302,7 @@ import {
     UpdateMarketMakerConfigResponse,
     UpdatedEvent,
     compareRoles,
+    EligibleForInitialAirdropResponse,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -580,6 +581,10 @@ export class OpenChat extends EventTarget {
             new Poller(() => this.updateUsers(), USER_UPDATE_INTERVAL, USER_UPDATE_INTERVAL);
             initNotificationStores();
             this.api.getUserStorageLimits().then(storageStore.set);
+            this.api.isEligibleForInitialAirdrop().then((eligible) => {
+                console.log("Eligible: ", eligible);
+                this.eligibleForInitialAirdrop.set(eligible);
+            });
             this.identityState.set("logged_in");
             this.initWebRtc();
 
@@ -3729,6 +3734,21 @@ export class OpenChat extends EventTarget {
             });
     }
 
+    setNeuronControllerForInitialAirdrop(principal: string): Promise<boolean> {
+        return this.api
+            .setNeuronControllerForInitialAirdrop(principal)
+            .then((res) => {
+                if (res !== "success") {
+                    console.log("Unable to set neuron controller for airdrop: ", res);
+                }
+                return res === "success";
+            })
+            .catch((err) => {
+                this._logger.error("Unable to set neuron controller for airdrop", err);
+                return false;
+            });
+    }
+
     updateMarketMakerConfig(
         config: UpdateMarketMakerConfigArgs
     ): Promise<UpdateMarketMakerConfigResponse> {
@@ -3740,6 +3760,9 @@ export class OpenChat extends EventTarget {
     /**
      * Reactive state provided in the form of svelte stores
      */
+    eligibleForInitialAirdrop = writable<EligibleForInitialAirdropResponse>({
+        kind: "user_not_eligible",
+    });
     profileStore = profileStore;
     percentageStorageRemaining = percentageStorageRemaining;
     percentageStorageUsed = percentageStorageUsed;
