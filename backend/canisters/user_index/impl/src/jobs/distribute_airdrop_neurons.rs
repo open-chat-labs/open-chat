@@ -6,6 +6,7 @@ use ic_cdk_timers::TimerId;
 use ic_sns_governance::pb::v1::manage_neuron::{AddNeuronPermissions, Command, RemoveNeuronPermissions, Split};
 use ic_sns_governance::pb::v1::manage_neuron_response::Command as CommandResponse;
 use ic_sns_governance::pb::v1::{ManageNeuron, NeuronPermissionList};
+use rand_core::RngCore;
 use std::cell::Cell;
 use std::time::Duration;
 use tracing::{error, trace};
@@ -43,6 +44,7 @@ fn try_get_next(state: &mut RuntimeState) -> Option<AirdropNeuronArgs> {
         user_id: e.user_id,
         neuron_controller: e.neuron_controller,
         neuron_stake_e8s: e.neuron_stake_e8s,
+        memo: state.env.rng().next_u64(),
         this_canister_id: state.env.canister_id(),
         governance_canister_id: state.data.openchat_governance_canister_id,
         source_neuron_id: state.data.initial_airdrop_neuron_id.unwrap(),
@@ -70,9 +72,9 @@ async fn process_next(args: AirdropNeuronArgs) {
 async fn airdrop_neuron_to_user(args: AirdropNeuronArgs) -> CallResult<SnsNeuronId> {
     let neuron_id = split(
         args.governance_canister_id,
-        args.neuron_controller,
         args.source_neuron_id,
         args.neuron_stake_e8s,
+        args.memo,
     )
     .await?;
 
@@ -84,12 +86,10 @@ async fn airdrop_neuron_to_user(args: AirdropNeuronArgs) -> CallResult<SnsNeuron
 
 async fn split(
     governance_canister_id: CanisterId,
-    recipient_principal: Principal,
     source_neuron_id: SnsNeuronId,
     stake_e8s: u64,
+    memo: u64,
 ) -> CallResult<[u8; 32]> {
-    let memo = u64::from_be_bytes(hash_bytes(recipient_principal.as_slice())[..8].try_into().unwrap());
-
     let args = ManageNeuron {
         subaccount: source_neuron_id.to_vec(),
         command: Some(Command::Split(Split {
@@ -155,6 +155,7 @@ struct AirdropNeuronArgs {
     user_id: UserId,
     neuron_controller: Principal,
     neuron_stake_e8s: u64,
+    memo: u64,
     this_canister_id: CanisterId,
     governance_canister_id: CanisterId,
     source_neuron_id: SnsNeuronId,
