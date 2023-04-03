@@ -738,7 +738,7 @@
     "participant": "member",
     "airdrop": {
         "register": "Register for airdrop",
-        "pleaseSubmit": "To receive your airdrop, please submit your [NNS dApp](https://nns.ic0.app) principal below.",
+        "pleaseSubmit": "To receive your airdrop, please submit your [NNS dApp](https://nns.ic0.app) principal below before {cutoff}.",
         "info": "If you make a mistake, you can resubmit the correct principal via the main menu.",
         "placeholder": "NNS principal...",
         "submit": "Submit",

@@ -21,6 +21,7 @@
     let principal = "";
     let showHow = false;
     let tada = false;
+    let cutoffDate = new Date(1681516800000);
 
     onMount(() => {
         shownAirdropPrompt.set(true);
@@ -59,7 +60,12 @@
         {#if showHow}
             <img class="how-to" src="../assets/show_how.gif" />
         {:else}
-            <p class="para"><Markdown text={$_("airdrop.pleaseSubmit")} /></p>
+            <p class="para">
+                <Markdown
+                    text={$_("airdrop.pleaseSubmit", {
+                        values: { cutoff: client.toDatetimeString(cutoffDate) },
+                    })} />
+            </p>
             <p class="para">{$_("airdrop.info")}</p>
             <div class="input">
                 <Input

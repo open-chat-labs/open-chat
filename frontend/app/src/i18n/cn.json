@@ -750,6 +750,6 @@
         "howTo": "如何找到您的 NNS 负责人",
         "info": "如果您输入有误，您可以通过主菜单重新提交正确的委托人。",
         "back": "后退",
-        "pleaseSubmit": "要接收您的空投，请在下方提交您的 [NNS dApp](https://nns.ic0.app) 委托人。"
+        "pleaseSubmit": "要接收您的空投，请在 {cutoff} 之前在下方提交您的 [NNS dApp](https://nns.ic0.app) 委托人。"
     }
 }

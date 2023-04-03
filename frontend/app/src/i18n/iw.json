@@ -747,6 +747,6 @@
         "howTo": "כיצד למצוא את מנהל ה-NNS שלך",
         "info": "אם אתה עושה טעות, אתה יכול לשלוח מחדש את המנהל הנכון דרך התפריט הראשי.",
         "back": "חזור",
-        "pleaseSubmit": "כדי לקבל את ה-airdrop שלך, אנא שלח את המנהל שלך [NNS dApp](https://nns.ic0.app) למטה."
+        "pleaseSubmit": "כדי לקבל את ה-airdrop שלך, אנא שלח את המנהל של [NNS dApp](https://nns.ic0.app) למטה לפני {cutoff}."
     }
 }

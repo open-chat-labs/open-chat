@@ -751,6 +751,6 @@
         "howTo": "So finden Sie Ihren NNS-Prinzipal",
         "info": "Wenn Sie einen Fehler machen, können Sie den richtigen Auftraggeber über das Hauptmenü erneut einreichen.",
         "back": "Zurück",
-        "pleaseSubmit": "Um Ihren Airdrop zu erhalten, reichen Sie bitte unten Ihren [NNS dApp](https://nns.ic0.app)-Prinzipal ein."
+        "pleaseSubmit": "Um Ihren Airdrop zu erhalten, reichen Sie bitte unten vor dem {cutoff} Ihren [NNS dApp](https://nns.ic0.app)-Prinzipal ein."
     }
 }

@@ -750,6 +750,6 @@
         "howTo": "Cómo encontrar a su director de NNS",
         "info": "Si comete un error, puede volver a enviar el principal correcto a través del menú principal.",
         "back": "Atrás",
-        "pleaseSubmit": "Para recibir su airdrop, envíe su director de [NNS dApp](https://nns.ic0.app) a continuación."
+        "pleaseSubmit": "Para recibir su airdrop, envíe su principal [NNS dApp](https://nns.ic0.app) a continuación antes de {cutoff}."
     }
 }
