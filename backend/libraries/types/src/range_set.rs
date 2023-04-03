@@ -18,7 +18,7 @@ impl<T: Into<u32> + From<u32>> RangeSet<T> {
     }
 
     pub fn merge(mut self, other: Self) -> RangeSet<T> {
-        for range in other.ranges.ranges() {
+        for range in other.ranges.as_ref().iter() {
             self.ranges.insert_range(range.clone());
         }
         self
@@ -90,7 +90,8 @@ impl<T: Into<u32>> From<&RangeSet<T>> for Vec<Range> {
     fn from(value: &RangeSet<T>) -> Self {
         value
             .ranges
-            .ranges()
+            .as_ref()
+            .iter()
             .map(|r| Range {
                 start: *r.start(),
                 end: *r.end(),

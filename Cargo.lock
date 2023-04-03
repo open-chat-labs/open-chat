@@ -5298,7 +5298,8 @@ dependencies = [
 [[package]]
 name = "range-set"
 version = "0.0.9"
-source = "git+https://github.com/hpeebles/range-set?rev=d776de4e38b9d7bf755910da5513c2d8c107bf7e#d776de4e38b9d7bf755910da5513c2d8c107bf7e"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6558ccfefeefa880f80c0e957c3748cbcf75c937900eb0604d0f2acc6a84f8dc"
 dependencies = [
  "num-traits",
  "smallvec",
@@ -6032,6 +6033,28 @@ dependencies = [
  "user_index_canister",
  "user_index_canister_c2c_client",
  "utils",
+]
+
+[[package]]
+name = "sns_governance_canister"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "candid_gen",
+ "ic-sns-governance",
+ "serde",
+ "types",
+]
+
+[[package]]
+name = "sns_governance_canister_c2c_client"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "canister_client",
+ "ic-cdk 0.7.3",
+ "sns_governance_canister",
+ "types",
 ]
 
 [[package]]
@@ -6827,6 +6850,7 @@ dependencies = [
  "ic-cdk-macros",
  "ic-cdk-timers",
  "ic-ledger-types",
+ "ic-sns-governance",
  "itertools",
  "ledger_utils",
  "local_user_index_canister",
@@ -6839,6 +6863,8 @@ dependencies = [
  "serde",
  "serde_bytes",
  "serializer",
+ "sns_governance_canister",
+ "sns_governance_canister_c2c_client",
  "stable_memory",
  "storage_bucket_client",
  "tracing",
@@ -6928,6 +6954,11 @@ dependencies = [
  "serde_json",
  "serializer",
  "sha2 0.10.6",
+<<<<<<< HEAD
+=======
+ "sns_governance_canister",
+ "sns_governance_canister_c2c_client",
+>>>>>>> master
  "storage_index_canister",
  "storage_index_canister_c2c_client",
  "tracing",
@@ -7083,8 +7114,9 @@ checksum = "1c38c045535d93ec4f0b4defec448e4291638ee608530863b1e2ba115d4fff7f"
 
 [[package]]
 name = "web-push"
-version = "0.9.3"
-source = "git+https://github.com/hpeebles/rust-web-push?rev=c89ef14d76f4567ebe9dd77a0822a7f89ad66a27#c89ef14d76f4567ebe9dd77a0822a7f89ad66a27"
+version = "0.9.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "182d0950fb8b79e1951e5120093a30138db24e3ca7e34552916ca485cda00020"
 dependencies = [
  "base64 0.13.1",
  "chrono",

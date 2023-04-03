@@ -1,7 +1,8 @@
 use crate::governance_clients::sns::manage_neuron::RegisterVote;
-use candid::{CandidType, Principal};
+use candid::Principal;
 use ic_cdk::api::call::CallResult;
-use serde::Deserialize;
+use ic_sns_governance::pb::v1::neuron::DissolveState;
+use ic_sns_governance::pb::v1::{manage_neuron, manage_neuron_response, GovernanceError};
 use tracing::error;
 use types::{CanisterId, ProposalId, SnsNeuronId, TimestampMillis};
 
@@ -11,21 +12,20 @@ pub async fn list_neurons(
     of_principal: Principal,
     now: TimestampMillis,
 ) -> CallResult<Vec<SnsNeuronId>> {
-    let args = list_neurons::ListNeurons {
+    let args = sns_governance_canister::list_neurons::Args {
         limit,
-        of_principal: Some(of_principal),
+        start_page_at: None,
+        of_principal: Some(of_principal.into()),
     };
 
-    let response: CallResult<(list_neurons::ListNeuronsResponse,)> =
-        ic_cdk::call(governance_canister_id, "list_neurons", (&args,)).await;
+    let response = sns_governance_canister_c2c_client::list_neurons(governance_canister_id, &args).await?;
 
-    let neuron_ids = response?
-        .0
+    let neuron_ids = response
         .neurons
         .into_iter()
-        .filter(|n| n.dissolve_state.as_ref().map_or(false, |d| !d.is_dissolved(now)))
+        .filter(|n| n.dissolve_state.as_ref().map_or(false, |d| !is_dissolved(d, now)))
         .filter_map(|n| n.id)
-        .map(|n| n.id)
+        .filter_map(|n| n.id.try_into().ok())
         .collect();
 
     Ok(neuron_ids)
@@ -37,14 +37,16 @@ pub async fn register_vote(
     proposal_id: ProposalId,
     adopt: bool,
 ) -> CallResult<Result<(), GovernanceError>> {
-    let args = ManageNeuron {
+    let args = sns_governance_canister::manage_neuron::Args {
         subaccount: neuron_id.to_vec(),
         command: Some(manage_neuron::Command::RegisterVote(RegisterVote {
             proposal: Some(proposal_id.into()),
             vote: if adopt { 1 } else { 2 },
         })),
     };
-    let (response,): (ManageNeuronResponse,) = ic_cdk::call(governance_canister_id, "manage_neuron", (&args,)).await?;
+
+    let response = sns_governance_canister_c2c_client::manage_neuron(governance_canister_id, &args).await?;
+
     Ok(match response.command {
         Some(manage_neuron_response::Command::RegisterVote(_)) => Ok(()),
         Some(manage_neuron_response::Command::Error(error)) => Err(error),
@@ -58,109 +60,9 @@ pub async fn register_vote(
     })
 }
 
-mod list_neurons {
-    use super::*;
-
-    #[derive(CandidType, Deserialize)]
-    pub struct ListNeurons {
-        pub limit: u32,
-        pub of_principal: Option<Principal>,
-    }
-
-    #[derive(CandidType, Deserialize)]
-    pub struct ListNeuronsResponse {
-        pub neurons: Vec<Neuron>,
-    }
-
-    #[derive(CandidType, Deserialize)]
-    pub struct Neuron {
-        pub id: Option<WrappedNeuronId>,
-        pub dissolve_state: Option<DissolveState>,
-    }
-
-    #[derive(CandidType, Deserialize)]
-    pub enum DissolveState {
-        WhenDissolvedTimestampSeconds(u64),
-        DissolveDelaySeconds(u64),
-    }
-
-    impl DissolveState {
-        pub fn is_dissolved(&self, now: TimestampMillis) -> bool {
-            match self {
-                DissolveState::WhenDissolvedTimestampSeconds(secs) => *secs * 1000 < now,
-                DissolveState::DissolveDelaySeconds(secs) => *secs == 0,
-            }
-        }
-    }
-}
-
-#[derive(CandidType, Deserialize)]
-pub struct ManageNeuron {
-    pub subaccount: Vec<u8>,
-    pub command: Option<manage_neuron::Command>,
-}
-
-mod manage_neuron {
-    use super::*;
-
-    #[derive(CandidType, Deserialize)]
-    pub struct RegisterVote {
-        pub proposal: Option<WrappedProposalId>,
-        pub vote: i32,
-    }
-
-    #[derive(CandidType, Deserialize)]
-    pub enum Command {
-        RegisterVote(RegisterVote),
-    }
-}
-
-#[derive(CandidType, Deserialize)]
-struct ManageNeuronResponse {
-    pub command: Option<manage_neuron_response::Command>,
-}
-
-mod manage_neuron_response {
-    use super::*;
-
-    #[derive(CandidType, Deserialize, Debug)]
-    pub struct Empty {}
-
-    #[derive(CandidType, Deserialize, Debug)]
-    pub enum Command {
-        Error(GovernanceError),
-        Configure(Empty),
-        Disburse(Empty),
-        Follow(Empty),
-        MakeProposal(Empty),
-        RegisterVote(Empty),
-        Split(Empty),
-        ClaimOrRefresh(Empty),
-        MergeMaturity(Empty),
-        DisburseMaturity(Empty),
-        AddNeuronPermission(Empty),
-        RemoveNeuronPermission(Empty),
-    }
-}
-
-#[derive(CandidType, Deserialize, Debug)]
-pub struct GovernanceError {
-    pub error_type: i32,
-    pub error_message: String,
-}
-
-#[derive(CandidType, Deserialize, Debug)]
-pub struct WrappedNeuronId {
-    pub id: SnsNeuronId,
-}
-
-#[derive(CandidType, Deserialize, Debug)]
-pub struct WrappedProposalId {
-    pub id: ProposalId,
-}
-
-impl From<u64> for WrappedProposalId {
-    fn from(id: u64) -> Self {
-        WrappedProposalId { id }
+fn is_dissolved(state: &DissolveState, now: TimestampMillis) -> bool {
+    match state {
+        DissolveState::WhenDissolvedTimestampSeconds(secs) => *secs * 1000 < now,
+        DissolveState::DissolveDelaySeconds(secs) => *secs == 0,
     }
 }

@@ -60,6 +60,8 @@ members = [
     "backend/canisters/user_index/c2c_client",
     "backend/canisters/user_index/client",
     "backend/canisters/user_index/impl",
+    "backend/external_canisters/sns_governance/api",
+    "backend/external_canisters/sns_governance/c2c_client",
     "backend/integration_tests",
     "backend/libraries/canister_agent_utils",
     "backend/libraries/canister_api_macros",
@@ -143,7 +145,7 @@ tokio = "1.26.0"
 tracing = "0.1.37"
 tracing-attributes = "0.1.23"
 tracing-subscriber = "0.3.16"
-web-push = { version = "0.9.3", default-features = false, features = ["hyper-client"] }
+web-push = { version = "0.9.4", default-features = false, features = ["hyper-client"] }
 
 [profile.release]
 lto = true
@@ -154,5 +156,3 @@ debug = false
 [patch.crates-io]
 ic-cdk-macros = { git = "https://github.com/hpeebles/cdk-rs", rev = "24e36cdf4115ae3a2d0747613833b2b4e0871fe4" }
 ic-stable-structures = { git = "https://github.com/hpeebles/stable-structures", rev = "0816d14cfcc362db995cbc7aec2368a55b462aca" }
-range-set = { git = "https://github.com/hpeebles/range-set", rev = "d776de4e38b9d7bf755910da5513c2d8c107bf7e" }
-web-push = { git = "https://github.com/hpeebles/rust-web-push", rev = "c89ef14d76f4567ebe9dd77a0822a7f89ad66a27" }
