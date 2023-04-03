@@ -13,9 +13,9 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::ops::Deref;
 use types::{
-    Avatar, CanisterId, ChatId, Cryptocurrency, Cycles, EventIndex, FrozenGroupInfo, GroupCanisterGroupChatSummary,
-    GroupPermissions, GroupRules, GroupSubtype, JoinGroupGate, MessageIndex, Milliseconds, Notification, TimestampMillis,
-    Timestamped, UserId, Version, MAX_THREADS_IN_SUMMARY,
+    Avatar, CanisterId, ChatId, Cryptocurrency, Cycles, EventIndex, FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupGate,
+    GroupPermissions, GroupRules, GroupSubtype, MessageIndex, Milliseconds, Notification, TimestampMillis, Timestamped, UserId,
+    Version, MAX_THREADS_IN_SUMMARY,
 };
 use utils::env::Environment;
 use utils::regular_jobs::RegularJobs;
@@ -254,7 +254,7 @@ struct Data {
     pub timer_jobs: TimerJobs<TimerJob>,
     pub date_last_pinned: Option<TimestampMillis>,
     #[serde(default)]
-    pub gate: Option<JoinGroupGate>,
+    pub gate: Option<GroupGate>,
 }
 
 fn initialize_ledger_ids() -> HashMap<Cryptocurrency, CanisterId> {
@@ -304,7 +304,7 @@ impl Data {
         proposals_bot_user_id: UserId,
         test_mode: bool,
         permissions: Option<GroupPermissions>,
-        gate: Option<JoinGroupGate>,
+        gate: Option<GroupGate>,
     ) -> Data {
         let participants = Participants::new(creator_principal, creator_user_id, now);
         let events = ChatEvents::new_group_chat(chat_id, name.clone(), description.clone(), creator_user_id, events_ttl, now);

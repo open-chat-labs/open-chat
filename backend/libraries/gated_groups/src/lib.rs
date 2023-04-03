@@ -1,5 +1,5 @@
 use candid::Principal;
-use types::{CanisterId, JoinGroupGate, SnsNeuronGate, UserId};
+use types::{CanisterId, GroupGate, SnsNeuronGate, UserId};
 use user_index_canister_c2c_client::LookupUserError;
 
 pub enum CheckIfPassesGateResult {
@@ -9,13 +9,13 @@ pub enum CheckIfPassesGateResult {
 }
 
 pub async fn check_if_passes_gate(
-    gate: JoinGroupGate,
+    gate: GroupGate,
     user_id: UserId,
     user_index_canister_id: CanisterId,
 ) -> CheckIfPassesGateResult {
     match gate {
-        JoinGroupGate::DiamondMember => check_diamond_member_gate(user_id, user_index_canister_id).await,
-        JoinGroupGate::SnsNeuron(g) => check_sns_neuron_gate(g, user_id).await,
+        GroupGate::DiamondMember => check_diamond_member_gate(user_id, user_index_canister_id).await,
+        GroupGate::SnsNeuron(g) => check_sns_neuron_gate(g, user_id).await,
     }
 }
 

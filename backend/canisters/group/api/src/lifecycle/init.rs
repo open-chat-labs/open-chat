@@ -1,6 +1,6 @@
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
-use types::{Avatar, CanisterId, GroupPermissions, GroupRules, GroupSubtype, JoinGroupGate, Milliseconds, UserId, Version};
+use types::{Avatar, CanisterId, GroupGate, GroupPermissions, GroupRules, GroupSubtype, Milliseconds, UserId, Version};
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct Args {
@@ -22,7 +22,7 @@ pub struct Args {
     pub local_group_index_canister_id: CanisterId,
     pub notifications_canister_id: CanisterId,
     pub proposals_bot_user_id: UserId,
-    pub gate: Option<JoinGroupGate>,
+    pub gate: Option<GroupGate>,
     pub wasm_version: Version,
     pub test_mode: bool,
 }

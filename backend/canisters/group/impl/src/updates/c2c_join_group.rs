@@ -7,7 +7,7 @@ use canister_tracing_macros::trace;
 use chat_events::ChatEventInternal;
 use gated_groups::{check_if_passes_gate, CheckIfPassesGateResult};
 use group_canister::c2c_join_group::{Response::*, *};
-use types::{CanisterId, EventIndex, JoinGroupGate, MessageIndex, ParticipantJoined, UsersUnblocked};
+use types::{CanisterId, EventIndex, GroupGate, MessageIndex, ParticipantJoined, UsersUnblocked};
 
 #[update_msgpack(guard = "caller_is_local_user_index")]
 #[trace]
@@ -33,7 +33,7 @@ fn is_permitted_to_join(
     invite_code: Option<u64>,
     has_passed_gate: bool,
     runtime_state: &RuntimeState,
-) -> Result<Option<(JoinGroupGate, CanisterId)>, Response> {
+) -> Result<Option<(GroupGate, CanisterId)>, Response> {
     if runtime_state.data.is_frozen() {
         Err(ChatFrozen)
     } else if !runtime_state.data.is_accessible_by_non_member(invite_code) {
