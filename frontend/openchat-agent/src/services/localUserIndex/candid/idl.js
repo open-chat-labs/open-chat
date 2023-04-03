@@ -70,7 +70,6 @@ export const idlFactory = ({ IDL }) => {
     'patch' : IDL.Nat32,
   });
   const Milliseconds = IDL.Nat64;
-  const UserId = CanisterId;
   const MessageIndex = IDL.Nat32;
   const GroupCanisterThreadDetails = IDL.Record({
     'root_message_index' : MessageIndex,
@@ -78,6 +77,7 @@ export const idlFactory = ({ IDL }) => {
     'latest_event' : EventIndex,
     'latest_message' : MessageIndex,
   });
+  const UserId = CanisterId;
   const FrozenGroupInfo = IDL.Record({
     'timestamp' : TimestampMillis,
     'frozen_by' : UserId,
@@ -403,7 +403,6 @@ export const idlFactory = ({ IDL }) => {
     'description' : IDL.Text,
     'events_ttl' : IDL.Opt(Milliseconds),
     'last_updated' : TimestampMillis,
-    'owner_id' : UserId,
     'joined' : TimestampMillis,
     'avatar_id' : IDL.Opt(IDL.Nat),
     'next_message_expiry' : IDL.Opt(TimestampMillis),

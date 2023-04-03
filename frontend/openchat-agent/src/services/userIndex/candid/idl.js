@@ -73,7 +73,9 @@ export const idlFactory = ({ IDL }) => {
     'UserNotFound' : IDL.Null,
   });
   const IsEligibleForInitialAirdropResponse = IDL.Variant({
-    'Success' : IDL.Bool,
+    'No' : IDL.Null,
+    'Yes' : IDL.Opt(IDL.Principal),
+    'AirdropClosed' : IDL.Null,
     'UserNotFound' : IDL.Null,
   });
   const MarkSuspectedBotArgs = IDL.Record({});
@@ -163,6 +165,7 @@ export const idlFactory = ({ IDL }) => {
     'controller' : IDL.Principal,
   });
   const SetNeuronControllerForInitialAirdropResponse = IDL.Variant({
+    'AirdropClosed' : IDL.Null,
     'UserNotEligible' : IDL.Null,
     'Success' : IDL.Null,
     'UserNotFound' : IDL.Null,

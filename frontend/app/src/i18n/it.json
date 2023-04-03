@@ -738,5 +738,17 @@
     "promoteFailed": "Impossibile promuovere a {role}",
     "demoteFailed": "Impossibile retrocedere a {role}",
     "ownerCantLeave": "Devi aggiungere un altro proprietario prima di poter lasciare il gruppo",
-    "participant": "membro"
+    "participant": "membro",
+    "airdrop": {
+        "register": "Registrati per l'airdrop",
+        "placeholder": "Preside dell'NS...",
+        "submit": "Invia",
+        "success": "Grazie, sei stato registrato con successo per l'airdrop",
+        "failure": "Spiacenti, non siamo riusciti a registrarti per l'airdrop",
+        "showHow": "Mostrami come",
+        "howTo": "Come trovare il tuo preside NNS",
+        "info": "Se commetti un errore, puoi inviare nuovamente l'entità corretta tramite il menu principale.",
+        "back": "Indietro",
+        "pleaseSubmit": "Per ricevere il tuo airdrop, invia la tua entità [NNS dApp](https://nns.ic0.app) di seguito prima del giorno {cutoff}."
+    }
 }

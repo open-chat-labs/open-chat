@@ -739,5 +739,17 @@
     "promoteFailed": "无法提升到 {role}",
     "demoteFailed": "无法降级到 {role}",
     "ownerCantLeave": "您必须添加其他所有者才能离开群组",
-    "participant": "成员"
+    "participant": "成员",
+    "airdrop": {
+        "register": "注册空投",
+        "placeholder": "NNS校长...",
+        "submit": "提交",
+        "success": "谢谢 - 您已成功注册空投",
+        "failure": "抱歉 - 我们无法为您注册空投",
+        "showHow": "告诉我怎么做",
+        "howTo": "如何找到您的 NNS 负责人",
+        "info": "如果您输入有误，您可以通过主菜单重新提交正确的委托人。",
+        "back": "后退",
+        "pleaseSubmit": "要接收您的空投，请在 {cutoff} 之前在下方提交您的 [NNS dApp](https://nns.ic0.app) 委托人。"
+    }
 }
