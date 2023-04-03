@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use std::fmt::{Debug, Display, Formatter};
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct UserId(pub(crate) CanisterId);
+pub struct UserId(CanisterId);
 
 impl UserId {
     pub const fn new(canister_id: CanisterId) -> UserId {
@@ -49,4 +49,6 @@ pub struct UserDetails {
     pub is_bot: bool,
     pub is_platform_moderator: bool,
     pub is_platform_operator: bool,
+    #[serde(default)]
+    pub is_diamond_member: bool,
 }
