@@ -54,7 +54,7 @@ async fn call_join_group(group: CanisterId, local_user_index: CanisterId) -> Res
             local_user_index_canister::join_group::Response::Success(_) => Ok(()),
             local_user_index_canister::join_group::Response::AlreadyInGroup
             | local_user_index_canister::join_group::Response::AlreadyInGroupV2(_) => Err(AlreadyInGroup),
-            local_user_index_canister::join_group::Response::FailedToPassGateCheck(msg) => Err(FailedToPassGateCheck(msg)),
+            local_user_index_canister::join_group::Response::GateCheckFailed(reason) => Err(GateCheckFailed(reason)),
             local_user_index_canister::join_group::Response::GroupNotFound => Err(GroupNotFound),
             local_user_index_canister::join_group::Response::GroupNotPublic => Err(GroupNotPublic),
             local_user_index_canister::join_group::Response::ParticipantLimitReached(_) => Err(ParticipantLimitReached),

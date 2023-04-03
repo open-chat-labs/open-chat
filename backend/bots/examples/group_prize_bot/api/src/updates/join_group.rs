@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::CanisterId;
+use types::{CanisterId, GateCheckFailedReason};
 
 #[derive(CandidType, Deserialize, Serialize, Debug)]
 pub struct Args {
@@ -14,7 +14,7 @@ pub enum Response {
     AlreadyInGroup,
     GroupNotFound,
     GroupNotPublic,
-    FailedToPassGateCheck(String),
+    GateCheckFailed(GateCheckFailedReason),
     ParticipantLimitReached,
     Blocked,
     UserSuspended,

@@ -84,7 +84,7 @@ fn prepare(args: Args, runtime_state: &mut RuntimeState) -> Result<PrepareOk, Re
         notifications_canister_id: runtime_state.data.notifications_canister_id,
         proposals_bot_user_id: runtime_state.data.proposals_bot_user_id,
         avatar: args.avatar,
-        gate: None,
+        gate: args.gate,
         wasm_version: canister_wasm.version,
         test_mode: runtime_state.data.test_mode,
     };

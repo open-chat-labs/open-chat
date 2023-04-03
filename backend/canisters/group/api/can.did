@@ -326,6 +326,13 @@ type ResetInviteCodeResponse =
         ChatFrozen;
     };
 
+type GroupGateUpdate =
+    variant {
+        NoChange;
+        SetToNone;
+        SetToSome: GroupGate;
+    };
+
 type UpdateGroupV2Args =
     record {
         name: opt text;
@@ -334,6 +341,7 @@ type UpdateGroupV2Args =
         avatar: AvatarUpdate;
         permissions: opt OptionalGroupPermissions;
         events_ttl: EventsTimeToLiveUpdate;
+        gate: GroupGateUpdate;
         correlation_id: nat64;
     };
 

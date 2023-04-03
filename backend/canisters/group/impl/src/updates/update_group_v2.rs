@@ -9,7 +9,7 @@ use ic_cdk_macros::update;
 use tracing::error;
 use types::{
     Avatar, AvatarChanged, CanisterId, ChatId, FieldTooLongResult, FieldTooShortResult, GroupDescriptionChanged,
-    GroupNameChanged, GroupPermissions, GroupRulesChanged, OptionalGroupPermissions, PermissionsChanged, UserId,
+    GroupNameChanged, GroupPermissions, GroupRulesChanged, OptionalGroupPermissions, PermissionsChanged, Timestamped, UserId,
     MAX_AVATAR_SIZE,
 };
 use utils::group_validation::{validate_name, NameValidationError};
@@ -240,6 +240,12 @@ fn commit(my_user_id: UserId, args: Args, runtime_state: &mut RuntimeState) {
                 .data
                 .events
                 .set_events_time_to_live(my_user_id, new_events_ttl, now);
+        }
+    }
+
+    if let Some(gate) = args.gate.expand() {
+        if runtime_state.data.gate.value != gate {
+            runtime_state.data.gate = Timestamped::new(gate, now);
         }
     }
 

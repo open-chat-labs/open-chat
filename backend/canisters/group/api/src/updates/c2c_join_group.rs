@@ -1,6 +1,6 @@
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
-use types::{GroupCanisterGroupChatSummary, UserId};
+use types::{GateCheckFailedReason, GroupCanisterGroupChatSummary, UserId};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -16,7 +16,7 @@ pub enum Response {
     Success(Box<GroupCanisterGroupChatSummary>),
     AlreadyInGroup,
     AlreadyInGroupV2(Box<GroupCanisterGroupChatSummary>),
-    FailedToPassGateCheck(String),
+    GateCheckFailed(GateCheckFailedReason),
     GroupNotPublic,
     Blocked,
     ParticipantLimitReached(u32),

@@ -1,10 +1,10 @@
 use candid::Principal;
-use types::{CanisterId, GroupGate, SnsNeuronGate, UserId};
+use types::{CanisterId, GateCheckFailedReason, GroupGate, SnsNeuronGate, UserId};
 use user_index_canister_c2c_client::LookupUserError;
 
 pub enum CheckIfPassesGateResult {
     Success,
-    Failed(String),
+    Failed(GateCheckFailedReason),
     InternalError(String),
 }
 
@@ -22,7 +22,7 @@ pub async fn check_if_passes_gate(
 async fn check_diamond_member_gate(user_id: UserId, user_index_canister_id: CanisterId) -> CheckIfPassesGateResult {
     match user_index_canister_c2c_client::lookup_user(user_id.into(), user_index_canister_id).await {
         Ok(user) if user.is_diamond_member => CheckIfPassesGateResult::Success,
-        Ok(_) => CheckIfPassesGateResult::Failed("User is not a Diamond member".to_string()),
+        Ok(_) => CheckIfPassesGateResult::Failed(GateCheckFailedReason::NotDiamondMember),
         Err(error) => {
             let msg = match error {
                 LookupUserError::UserNotFound => "User not found".to_string(),
@@ -41,7 +41,9 @@ async fn check_sns_neuron_gate(gate: SnsNeuronGate, user_id: UserId) -> CheckIfP
     };
 
     match sns_governance_canister_c2c_client::list_neurons(gate.governance_canister_id, &args).await {
-        Ok(response) if response.neurons.is_empty() => CheckIfPassesGateResult::Failed("No neurons found".to_string()),
+        Ok(response) if response.neurons.is_empty() => {
+            CheckIfPassesGateResult::Failed(GateCheckFailedReason::NoSnsNeuronsFound)
+        }
         Ok(response) => {
             let mut valid_neurons = response.neurons;
             if let Some(dd) = gate.min_dissolve_delay {
@@ -50,7 +52,7 @@ async fn check_sns_neuron_gate(gate: SnsNeuronGate, user_id: UserId) -> CheckIfP
             }
 
             if valid_neurons.is_empty() {
-                return CheckIfPassesGateResult::Failed("No neurons found with required dissolve delay".to_string());
+                return CheckIfPassesGateResult::Failed(GateCheckFailedReason::NoSnsNeuronsWithRequiredDissolveDelayFound);
             }
 
             if let Some(stake_required) = gate.min_stake_e8s {
@@ -60,7 +62,7 @@ async fn check_sns_neuron_gate(gate: SnsNeuronGate, user_id: UserId) -> CheckIfP
                     .sum();
 
                 if total_stake < stake_required {
-                    return CheckIfPassesGateResult::Failed("Neuron(s) did not have large enough stake".to_string());
+                    return CheckIfPassesGateResult::Failed(GateCheckFailedReason::NoSnsNeuronsWithRequiredStakeFound);
                 }
             }
 

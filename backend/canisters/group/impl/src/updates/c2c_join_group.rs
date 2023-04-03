@@ -18,7 +18,7 @@ async fn c2c_join_group(args: Args) -> Response {
         Ok(Some((gate, user_index_canister_id))) => {
             match check_if_passes_gate(gate, args.user_id, user_index_canister_id).await {
                 CheckIfPassesGateResult::Success => {}
-                CheckIfPassesGateResult::Failed(msg) => return FailedToPassGateCheck(msg),
+                CheckIfPassesGateResult::Failed(reason) => return GateCheckFailed(reason),
                 CheckIfPassesGateResult::InternalError(error) => return InternalError(error),
             }
         }

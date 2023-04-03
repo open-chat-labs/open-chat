@@ -254,7 +254,7 @@ struct Data {
     pub timer_jobs: TimerJobs<TimerJob>,
     pub date_last_pinned: Option<TimestampMillis>,
     #[serde(default)]
-    pub gate: Option<GroupGate>,
+    pub gate: Timestamped<Option<GroupGate>>,
 }
 
 fn initialize_ledger_ids() -> HashMap<Cryptocurrency, CanisterId> {
@@ -338,7 +338,7 @@ impl Data {
             frozen: Timestamped::default(),
             timer_jobs: TimerJobs::default(),
             date_last_pinned: None,
-            gate,
+            gate: Timestamped::new(gate, now),
         }
     }
 

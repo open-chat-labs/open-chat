@@ -1217,3 +1217,24 @@ type DiamondMembershipPlanDuration =
         ThreeMonths;
         OneYear;
     };
+
+type GroupGate =
+    variant {
+        DiamondMember;
+        SnsNeuron: SnsNeuronGate;
+    };
+
+type SnsNeuronGate =
+    record {
+        governance_canister_id: CanisterId;
+        min_stake_e8s: opt nat64;
+        min_dissolve_delay: opt Milliseconds;
+    };
+
+type GateCheckFailedReason =
+    variant {
+        NotDiamondMember;
+        NoSnsNeuronsFound;
+        NoSnsNeuronsWithRequiredStakeFound;
+        NoSnsNeuronsWithRequiredDissolveDelayFound;
+    };
