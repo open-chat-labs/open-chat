@@ -85,7 +85,8 @@ async function handleNotificationClick(event: NotificationEvent): Promise<void> 
             path: event.notification.data.path,
         });
     } else {
-        const urlToOpen = new URL(self.location.origin).href + "/" + event.notification.data.path;
+        const urlToOpen = `${new URL(self.location.origin)}${event.notification.data.path}`;
+        console.debug("PUSH: notification clicked no open clients. Opening: ", urlToOpen);
         await self.clients.openWindow(urlToOpen);
     }
 }
@@ -163,7 +164,7 @@ async function showNotification(notification: Notification): Promise<void> {
         existing.forEach((n) => n.close());
     }
 
-    await self.registration.showNotification(title, {
+    const toShow = {
         body,
         icon,
         tag,
@@ -172,7 +173,11 @@ async function showNotification(notification: Notification): Promise<void> {
             path,
             notification,
         },
-    });
+    };
+
+    console.debug("PUSH: about to show notification: ", toShow);
+
+    await self.registration.showNotification(title, toShow);
 }
 
 function extractMessageContent(
