@@ -182,7 +182,7 @@ struct Data {
     pub local_index_map: LocalUserIndexMap,
     pub timer_jobs: TimerJobs<TimerJob>,
     pub neuron_controllers_for_initial_airdrop: HashMap<UserId, Principal>,
-    #[serde(default)]
+    #[serde(default = "true_")]
     pub initial_airdrop_open: bool,
     #[serde(default)]
     pub initial_airdrop_neuron_id: Option<SnsNeuronId>,
@@ -192,6 +192,10 @@ struct Data {
     pub openchat_governance_canister_id: CanisterId,
     #[serde(default = "oc_ledger_canister")]
     pub openchat_ledger_canister_id: CanisterId,
+}
+
+fn true_() -> bool {
+    true
 }
 
 fn oc_governance_canister() -> CanisterId {
