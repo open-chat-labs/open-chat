@@ -1,9 +1,5 @@
 use crate::model::challenges::Challenges;
-<<<<<<< HEAD
-use crate::model::initial_airdrop_queue::InitialAirdropQueue;
-=======
 use crate::model::initial_airdrop_queue::{InitialAirdropEntry, InitialAirdropQueue};
->>>>>>> master
 use crate::model::local_user_index_map::LocalUserIndex;
 use crate::model::storage_index_user_sync_queue::OpenStorageUserSyncQueue;
 use crate::model::user_map::UserMap;
@@ -156,10 +152,7 @@ impl RuntimeState {
                 as u32,
             users_confirmed_for_initial_airdrop: self.data.neuron_controllers_for_initial_airdrop.len() as u32,
             initial_airdrop_queue_length: self.data.initial_airdrop_queue.len() as u32,
-<<<<<<< HEAD
-=======
             initial_airdrop_failures: self.data.initial_airdrop_queue.failed().iter().take(10).cloned().collect(),
->>>>>>> master
         }
     }
 }
@@ -189,11 +182,7 @@ struct Data {
     pub local_index_map: LocalUserIndexMap,
     pub timer_jobs: TimerJobs<TimerJob>,
     pub neuron_controllers_for_initial_airdrop: HashMap<UserId, Principal>,
-<<<<<<< HEAD
-    #[serde(default)]
-=======
     #[serde(default = "true_")]
->>>>>>> master
     pub initial_airdrop_open: bool,
     #[serde(default)]
     pub initial_airdrop_neuron_id: Option<SnsNeuronId>,
@@ -205,13 +194,10 @@ struct Data {
     pub openchat_ledger_canister_id: CanisterId,
 }
 
-<<<<<<< HEAD
-=======
 fn true_() -> bool {
     true
 }
 
->>>>>>> master
 fn oc_governance_canister() -> CanisterId {
     Principal::from_text("2jvtu-yqaaa-aaaaq-aaama-cai").unwrap()
 }
@@ -342,10 +328,7 @@ pub struct Metrics {
     pub users_eligible_for_initial_airdrop: u32,
     pub users_confirmed_for_initial_airdrop: u32,
     pub initial_airdrop_queue_length: u32,
-<<<<<<< HEAD
-=======
     pub initial_airdrop_failures: Vec<InitialAirdropEntry>,
->>>>>>> master
 }
 
 #[derive(Serialize, Debug, Default)]
