@@ -1,16 +1,10 @@
 use crate::{read_state, RuntimeState};
-use canister_api_macros::query_msgpack;
 use group_index_canister::recommended_groups::{Response::*, *};
 use ic_cdk_macros::query;
 use std::collections::HashSet;
 
 #[query]
 fn recommended_groups(args: Args) -> Response {
-    read_state(|state| recommended_groups_impl(args, state))
-}
-
-#[query_msgpack]
-fn c2c_recommended_groups(args: Args) -> Response {
     read_state(|state| recommended_groups_impl(args, state))
 }
 
