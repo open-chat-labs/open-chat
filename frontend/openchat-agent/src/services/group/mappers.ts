@@ -1437,6 +1437,13 @@ function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {
         };
     }
 
+    if ("GroupGateUpdated" in candid) {
+        return {
+            kind: "gate_updated",
+            updatedBy: candid.GroupGateUpdated.updated_by.toString(),
+        };
+    }
+
     throw new UnsupportedValueError("Unexpected ApiEventWrapper type received", candid);
 }
 

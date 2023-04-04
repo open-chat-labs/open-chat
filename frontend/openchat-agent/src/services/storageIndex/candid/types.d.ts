@@ -101,6 +101,7 @@ export type ChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'ParticipantDismissedAsSuperAdmin' : ParticipantDismissedAsSuperAdmin } |
   { 'GroupNameChanged' : GroupNameChanged } |
   { 'MessageUndeleted' : UpdatedMessage } |
+  { 'GroupGateUpdated' : GroupGateUpdated } |
   { 'RoleChanged' : RoleChanged } |
   { 'PollVoteDeleted' : UpdatedMessage } |
   { 'EventsTimeToLiveUpdated' : EventsTimeToLiveUpdated } |
@@ -290,6 +291,7 @@ export interface GroupCanisterGroupChatSummary {
   'subtype' : [] | [GroupSubtype],
   'date_last_pinned' : [] | [TimestampMillis],
   'min_visible_event_index' : EventIndex,
+  'gate' : [] | [GroupGate],
   'name' : string,
   'role' : Role,
   'wasm_version' : Version,
@@ -357,6 +359,7 @@ export interface GroupChatSummary {
   'subtype' : [] | [GroupSubtype],
   'date_last_pinned' : [] | [TimestampMillis],
   'min_visible_event_index' : EventIndex,
+  'gate' : [] | [GroupGate],
   'name' : string,
   'role' : Role,
   'wasm_version' : Version,
@@ -389,6 +392,13 @@ export interface GroupDescriptionChanged {
 }
 export type GroupGate = { 'SnsNeuron' : SnsNeuronGate } |
   { 'DiamondMember' : null };
+export type GroupGateUpdate = { 'NoChange' : null } |
+  { 'SetToNone' : null } |
+  { 'SetToSome' : GroupGate };
+export interface GroupGateUpdated {
+  'updated_by' : UserId,
+  'new_gate' : [] | [GroupGate],
+}
 export type GroupInviteCodeChange = { 'Enabled' : null } |
   { 'Disabled' : null } |
   { 'Reset' : null };
@@ -730,6 +740,7 @@ export interface ProposalsUpdated { 'proposals' : Array<ProposalUpdated> }
 export interface PublicGroupSummary {
   'is_public' : boolean,
   'subtype' : [] | [GroupSubtype],
+  'gate' : [] | [GroupGate],
   'name' : string,
   'wasm_version' : Version,
   'description' : string,

@@ -1,5 +1,5 @@
 <script lang="ts">
-    export let value: string = "";
+    export let value: unknown = "";
     export let invalid: boolean = false;
     export let disabled: boolean = false;
     export let margin: boolean = true;

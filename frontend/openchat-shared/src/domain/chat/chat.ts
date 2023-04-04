@@ -3,6 +3,9 @@ import type { PartialUserSummary, UserSummary } from "../user/user";
 import type { OptionUpdate } from "../optionUpdate";
 import type { Cryptocurrency } from "../crypto";
 
+export const Sns1GovernanceCanisterId = "zqfso-syaaa-aaaaq-aaafq-cai";
+export const OpenChatGovernanceCanisterId = "2jvtu-yqaaa-aaaaq-aaama-cai";
+
 export type InternalError = { kind: "internal_error" };
 export type UserSuspended = { kind: "user_suspended" };
 export type CallerNotInGroup = { kind: "caller_not_in_group" };
@@ -467,6 +470,7 @@ export type GroupChatEvent =
     | ThreadUpdated
     | ProposalsUpdated
     | ChatFrozenEvent
+    | GateUpdatedEvent
     | ChatUnfrozenEvent
     | EventsTimeToLiveUpdated;
 
@@ -910,18 +914,33 @@ type ChatSummaryCommon = {
     metrics: ChatMetrics;
     myMetrics: ChatMetrics;
     archived: boolean;
-    gate: GroupChatGate;
 };
 
-export type GroupChatGate = NoGate | SnsNeuronGate | DiamondGate;
+export type GroupGate =
+    | NoGate
+    | Sns1NeuronGate
+    | OpenChatNeuronGate
+    | DiamondGate
+    | NnsNeuronGate
+    | NftGate;
 
 export type NoGate = { kind: "no_gate" };
 
-export type SnsNeuronGate = {
-    kind: "sns_gate";
+export type NnsNeuronGate = { kind: "nns_gate" };
+
+export type NftGate = { kind: "nft_gate" };
+
+type SnsNeuronGate = {
     minStakeE8s?: bigint;
     minDissolveDelay?: bigint;
-    governanceCanisterId: string;
+};
+
+export type Sns1NeuronGate = SnsNeuronGate & {
+    kind: "sns1_gate";
+};
+
+export type OpenChatNeuronGate = SnsNeuronGate & {
+    kind: "openchat_gate";
 };
 
 export type DiamondGate = { kind: "diamond_gate" };
@@ -954,6 +973,7 @@ export type GroupChatSummary = DataContent &
         frozen: boolean;
         dateLastPinned: bigint | undefined;
         dateReadPinned: bigint | undefined;
+        gate: GroupGate;
     };
 
 export type GroupCanisterSummaryResponse = GroupCanisterGroupChatSummary | CallerNotInGroup;
@@ -1055,7 +1075,7 @@ export type CandidateGroupChat = {
     members: CandidateMember[];
     avatar?: DataContent;
     permissions: GroupPermissions;
-    gate: GroupChatGate;
+    gate: GroupGate;
 };
 
 // todo - there are all sorts of error conditions here that we need to deal with but - later
@@ -1274,6 +1294,11 @@ export type ChatFrozenEvent = {
     kind: "chat_frozen";
     frozenBy: string;
     reason: string | undefined;
+};
+
+export type GateUpdatedEvent = {
+    kind: "gate_updated";
+    updatedBy: string;
 };
 
 export type ChatUnfrozenEvent = {

@@ -448,7 +448,14 @@
         "groupRules": "Group rules",
         "rulesUpdateFailed": "Sorry we were unable to update your group rules",
         "getRulesFailed": "Failed to get group rules",
-        "gatedAccess": "Gated access"
+        "chooseGate": "Choose an access gate",
+        "diamondMember": "Diamond membership",
+        "diamondGateInfo": "Only users with Diamond membership will be allowed to join this group",
+        "sns1Holder": "SNS-1 neuron holder",
+        "chatHolder": "CHAT neuron holder",
+        "nnsHolder": "NNS neuron holder (coming soon)",
+        "nftHolder": "NFT holder (coming soon)",
+        "noAccessGate": "Open access"
     },
     "updateNow": "reload now",
     "updateRequired": "A new version of OpenChat is available - reloading in {countdown}s",
@@ -672,7 +679,8 @@
     },
     "upgrade": {
         "button": "Upgrade",
-        "groupMsg": "To create up to 10 public groups, you must be a Diamond user",
+        "groupMsg": "To create up to 10 public groups and to control group access, you must be a Diamond user",
+        "gatingMsg": "To create groups with gated access, you must be a Diamond user",
         "featuresTitle": "💎 Upgrade to Diamond",
         "extend": "Extend Diamond",
         "extendShort": "Extend",

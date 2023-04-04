@@ -537,6 +537,19 @@ export const idlFactory = ({ IDL }) => {
     'new_name' : IDL.Text,
     'previous_name' : IDL.Text,
   });
+  const SnsNeuronGate = IDL.Record({
+    'min_stake_e8s' : IDL.Opt(IDL.Nat64),
+    'min_dissolve_delay' : IDL.Opt(Milliseconds),
+    'governance_canister_id' : CanisterId,
+  });
+  const GroupGate = IDL.Variant({
+    'SnsNeuron' : SnsNeuronGate,
+    'DiamondMember' : IDL.Null,
+  });
+  const GroupGateUpdated = IDL.Record({
+    'updated_by' : UserId,
+    'new_gate' : IDL.Opt(GroupGate),
+  });
   const Role = IDL.Variant({
     'Participant' : IDL.Null,
     'Admin' : IDL.Null,
@@ -602,6 +615,7 @@ export const idlFactory = ({ IDL }) => {
     'ParticipantDismissedAsSuperAdmin' : ParticipantDismissedAsSuperAdmin,
     'GroupNameChanged' : GroupNameChanged,
     'MessageUndeleted' : UpdatedMessage,
+    'GroupGateUpdated' : GroupGateUpdated,
     'RoleChanged' : RoleChanged,
     'PollVoteDeleted' : UpdatedMessage,
     'EventsTimeToLiveUpdated' : EventsTimeToLiveUpdated,
@@ -750,6 +764,7 @@ export const idlFactory = ({ IDL }) => {
     'subtype' : IDL.Opt(GroupSubtype),
     'date_last_pinned' : IDL.Opt(TimestampMillis),
     'min_visible_event_index' : EventIndex,
+    'gate' : IDL.Opt(GroupGate),
     'name' : IDL.Text,
     'role' : Role,
     'wasm_version' : Version,
