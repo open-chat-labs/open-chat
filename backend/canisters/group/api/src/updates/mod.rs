@@ -23,6 +23,7 @@ pub mod make_private;
 pub mod pin_message_v2;
 pub mod register_poll_vote;
 pub mod register_proposal_vote;
+pub mod register_proposal_vote_v2;
 pub mod remove_participant;
 pub mod remove_reaction;
 pub mod reset_invite_code;

@@ -30,6 +30,7 @@ fn main() {
     generate_candid_method!(group, pin_message_v2, update);
     generate_candid_method!(group, register_poll_vote, update);
     generate_candid_method!(group, register_proposal_vote, update);
+    generate_candid_method!(group, register_proposal_vote_v2, update);
     generate_candid_method!(group, remove_participant, update);
     generate_candid_method!(group, remove_reaction, update);
     generate_candid_method!(group, reset_invite_code, update);
