@@ -50,7 +50,6 @@ fn diamond_member_gate_check(is_diamond: bool) {
             DiamondMembershipPlanDuration::OneMonth,
             false,
         );
-        env.tick();
     }
 
     let join_group_response = client::local_user_index::join_group(

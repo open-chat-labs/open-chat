@@ -274,6 +274,7 @@ type GroupChatSummary =
         events_ttl: opt Milliseconds;
         expired_messages: vec MessageIndexRange;
         next_message_expiry: opt TimestampMillis;
+        gate: opt GroupGate;
     };
 
 type GroupCanisterGroupChatSummary =
@@ -305,6 +306,7 @@ type GroupCanisterGroupChatSummary =
         events_ttl: opt Milliseconds;
         expired_messages: vec MessageIndexRange;
         next_message_expiry: opt TimestampMillis;
+        gate: opt GroupGate;
     };
 
 type GroupCanisterGroupChatSummaryUpdates =
@@ -334,6 +336,7 @@ type GroupCanisterGroupChatSummaryUpdates =
         events_ttl: EventsTimeToLiveUpdate;
         newly_expired_messages: vec MessageIndexRange;
         next_message_expiry: TimestampUpdate;
+        gate: GroupGateUpdate;
     };
 
 type GroupDescriptionChanged =
@@ -511,6 +514,7 @@ type PublicGroupSummary =
         participant_count: nat32;
         is_public: bool;
         frozen: opt FrozenGroupInfo;
+        gate: opt GroupGate;
         wasm_version: Version;
     };
 
@@ -1222,6 +1226,13 @@ type GroupGate =
     variant {
         DiamondMember;
         SnsNeuron: SnsNeuronGate;
+    };
+
+type GroupGateUpdate =
+    variant {
+        NoChange;
+        SetToNone;
+        SetToSome: GroupGate;
     };
 
 type SnsNeuronGate =
