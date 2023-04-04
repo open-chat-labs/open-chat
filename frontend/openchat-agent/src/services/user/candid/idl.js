@@ -724,6 +724,15 @@ export const idlFactory = ({ IDL }) => {
   const GroupSubtype = IDL.Variant({
     'GovernanceProposals' : GovernanceProposalsSubtype,
   });
+  const SnsNeuronGate = IDL.Record({
+    'min_stake_e8s' : IDL.Opt(IDL.Nat64),
+    'min_dissolve_delay' : IDL.Opt(Milliseconds),
+    'governance_canister_id' : CanisterId,
+  });
+  const GroupGate = IDL.Variant({
+    'SnsNeuron' : SnsNeuronGate,
+    'DiamondMember' : IDL.Null,
+  });
   const ThreadSyncDetails = IDL.Record({
     'root_message_index' : MessageIndex,
     'last_updated' : TimestampMillis,
@@ -750,6 +759,7 @@ export const idlFactory = ({ IDL }) => {
     'subtype' : IDL.Opt(GroupSubtype),
     'date_last_pinned' : IDL.Opt(TimestampMillis),
     'min_visible_event_index' : EventIndex,
+    'gate' : IDL.Opt(GroupGate),
     'name' : IDL.Text,
     'role' : Role,
     'wasm_version' : Version,
