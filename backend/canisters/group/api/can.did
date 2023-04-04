@@ -326,13 +326,6 @@ type ResetInviteCodeResponse =
         ChatFrozen;
     };
 
-type GroupGateUpdate =
-    variant {
-        NoChange;
-        SetToNone;
-        SetToSome: GroupGate;
-    };
-
 type UpdateGroupV2Args =
     record {
         name: opt text;

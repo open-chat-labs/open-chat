@@ -1,4 +1,4 @@
-use crate::updates::pay_for_diamond_membership::{icp_price_e8s, pay_for_diamond_membership_impl};
+use crate::updates::pay_for_diamond_membership::pay_for_diamond_membership_impl;
 use crate::updates::suspend_user::suspend_user_impl;
 use crate::updates::unsuspend_user::unsuspend_user_impl;
 use crate::{mutate_state, read_state};
@@ -73,7 +73,7 @@ impl Job for RecurringDiamondMembershipPayment {
             use local_user_index_canister::Event as LocalUserIndexEvent;
             use user_index_canister::pay_for_diamond_membership::*;
 
-            let price_e8s = icp_price_e8s(duration);
+            let price_e8s = duration.icp_price_e8s();
 
             let args = Args {
                 duration,

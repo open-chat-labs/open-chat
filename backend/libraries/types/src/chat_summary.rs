@@ -1,5 +1,5 @@
 use crate::{
-    CanisterId, ChatId, EventIndex, EventWrapper, FrozenGroupInfo, GroupPermissions, Mention, Message, MessageIndex,
+    CanisterId, ChatId, EventIndex, EventWrapper, FrozenGroupInfo, GroupGate, GroupPermissions, Mention, Message, MessageIndex,
     Milliseconds, OptionUpdate, RangeSet, Role, TimestampMillis, UserId, Version, MAX_RETURNED_MENTIONS,
 };
 use candid::CandidType;
@@ -104,6 +104,7 @@ pub struct PublicGroupSummary {
     pub is_public: bool,
     pub frozen: Option<FrozenGroupInfo>,
     pub events_ttl: Option<Milliseconds>,
+    pub gate: Option<GroupGate>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -135,6 +136,7 @@ pub struct GroupCanisterGroupChatSummary {
     pub events_ttl: Option<Milliseconds>,
     pub expired_messages: RangeSet<MessageIndex>,
     pub next_message_expiry: Option<TimestampMillis>,
+    pub gate: Option<GroupGate>,
 }
 
 impl GroupCanisterGroupChatSummary {
@@ -194,6 +196,7 @@ impl GroupCanisterGroupChatSummary {
             events_ttl: updates.events_ttl.apply_to(self.events_ttl),
             expired_messages: self.expired_messages.merge(updates.newly_expired_messages),
             next_message_expiry: updates.next_message_expiry.apply_to(self.next_message_expiry),
+            gate: updates.gate.apply_to(self.gate),
         }
     }
 }
@@ -225,6 +228,7 @@ pub struct GroupCanisterGroupChatSummaryUpdates {
     pub events_ttl: OptionUpdate<Milliseconds>,
     pub newly_expired_messages: RangeSet<MessageIndex>,
     pub next_message_expiry: OptionUpdate<TimestampMillis>,
+    pub gate: OptionUpdate<GroupGate>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug, Default, Clone)]

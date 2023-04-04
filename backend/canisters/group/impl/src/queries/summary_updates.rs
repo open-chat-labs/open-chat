@@ -5,8 +5,8 @@ use group_canister::summary_updates::{Response::*, *};
 use ic_cdk_macros::query;
 use std::cmp::max;
 use types::{
-    EventIndex, EventWrapper, FrozenGroupInfo, GroupCanisterGroupChatSummaryUpdates, GroupPermissions, GroupSubtype, Mention,
-    Message, MessageIndex, Milliseconds, OptionUpdate, TimestampMillis, MAX_THREADS_IN_SUMMARY,
+    EventIndex, EventWrapper, FrozenGroupInfo, GroupCanisterGroupChatSummaryUpdates, GroupGate, GroupPermissions, GroupSubtype,
+    Mention, Message, MessageIndex, Milliseconds, OptionUpdate, TimestampMillis, MAX_THREADS_IN_SUMMARY,
 };
 
 #[query]
@@ -76,6 +76,7 @@ fn summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
             events_ttl: updates_from_events.events_ttl,
             newly_expired_messages,
             next_message_expiry: OptionUpdate::from_update(runtime_state.data.events.next_message_expiry(now)),
+            gate: updates_from_events.gate,
         };
         Success(SuccessResult { updates })
     } else {
@@ -101,6 +102,7 @@ struct UpdatesFromEvents {
     frozen: OptionUpdate<FrozenGroupInfo>,
     date_last_pinned: Option<TimestampMillis>,
     events_ttl: OptionUpdate<Milliseconds>,
+    gate: OptionUpdate<GroupGate>,
 }
 
 fn process_events(
@@ -145,6 +147,10 @@ fn process_events(
         .map_or(false, |date_last_pinned| date_last_pinned > since)
     {
         updates.date_last_pinned = data.date_last_pinned;
+    }
+
+    if data.gate.timestamp > since {
+        updates.gate = OptionUpdate::from_update(data.gate.value.clone());
     }
 
     let new_proposal_votes = participant

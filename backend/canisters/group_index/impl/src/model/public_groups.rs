@@ -103,6 +103,7 @@ impl PublicGroups {
             is_public: true,
             frozen: None,
             events_ttl: summary.events_ttl,
+            gate: summary.gate,
             wasm_version: Version::default(),
         })
     }

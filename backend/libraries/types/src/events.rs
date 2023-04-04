@@ -1,5 +1,6 @@
 use crate::{
-    EventIndex, EventWrapper, GroupPermissions, Message, MessageId, MessageIndex, Milliseconds, Role, TimestampMillis, UserId,
+    EventIndex, EventWrapper, GroupGate, GroupPermissions, Message, MessageId, MessageIndex, Milliseconds, Role,
+    TimestampMillis, UserId,
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
@@ -42,6 +43,7 @@ pub enum ChatEvent {
     ChatFrozen(ChatFrozen),
     ChatUnfrozen(ChatUnfrozen),
     EventsTimeToLiveUpdated(EventsTimeToLiveUpdated),
+    GroupGateUpdated(GroupGateUpdated),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -242,6 +244,12 @@ pub struct ChatUnfrozen {
 pub struct EventsTimeToLiveUpdated {
     pub updated_by: UserId,
     pub new_ttl: Option<Milliseconds>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct GroupGateUpdated {
+    pub updated_by: UserId,
+    pub new_gate: Option<GroupGate>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Copy, Clone, Debug)]

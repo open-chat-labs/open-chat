@@ -9,8 +9,8 @@ use ic_cdk_macros::update;
 use tracing::error;
 use types::{
     Avatar, AvatarChanged, CanisterId, ChatId, FieldTooLongResult, FieldTooShortResult, GroupDescriptionChanged,
-    GroupNameChanged, GroupPermissions, GroupRulesChanged, OptionalGroupPermissions, PermissionsChanged, Timestamped, UserId,
-    MAX_AVATAR_SIZE,
+    GroupGateUpdated, GroupNameChanged, GroupPermissions, GroupRulesChanged, OptionalGroupPermissions, PermissionsChanged,
+    Timestamped, UserId, MAX_AVATAR_SIZE,
 };
 use utils::group_validation::{validate_name, NameValidationError};
 
@@ -245,7 +245,16 @@ fn commit(my_user_id: UserId, args: Args, runtime_state: &mut RuntimeState) {
 
     if let Some(gate) = args.gate.expand() {
         if runtime_state.data.gate.value != gate {
-            runtime_state.data.gate = Timestamped::new(gate, now);
+            runtime_state.data.gate = Timestamped::new(gate.clone(), now);
+
+            runtime_state.data.events.push_main_event(
+                ChatEventInternal::GroupGateUpdated(Box::new(GroupGateUpdated {
+                    updated_by: my_user_id,
+                    new_gate: gate,
+                })),
+                args.correlation_id,
+                runtime_state.env.now(),
+            );
         }
     }
 

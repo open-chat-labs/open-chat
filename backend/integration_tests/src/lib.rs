@@ -13,6 +13,7 @@ mod diamond_membership_tests;
 mod disappearing_message_tests;
 mod env;
 mod freeze_group_tests;
+mod gated_group_tests;
 mod join_group_tests;
 mod last_online_date_tests;
 mod notification_tests;
