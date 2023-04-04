@@ -1,5 +1,4 @@
 use crate::{read_state, RuntimeState};
-use canister_api_macros::query_msgpack;
 use group_index_canister::recommended_groups::{Response::*, *};
 use ic_cdk_macros::query;
 use std::collections::HashSet;
