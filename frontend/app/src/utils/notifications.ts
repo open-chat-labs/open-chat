@@ -33,6 +33,10 @@ export async function subscribeToNotifications(
             console.debug("PUSH: received push notification from the service worker", event.data);
             onNotification(event.data.data as Notification);
         } else if (event.data.type === "NOTIFICATION_CLICKED") {
+            console.debug(
+                "PUSH: notification clicked existing client routing to: ",
+                event.data.path
+            );
             page(`/${event.data.path}`);
         }
     });
