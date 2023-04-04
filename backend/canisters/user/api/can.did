@@ -187,6 +187,7 @@ type CreateGroupArgs =
         history_visible_to_new_joiners: bool;
         permissions: opt GroupPermissions;
         rules: GroupRules;
+        gate: opt GroupGate;
     };
 
 type CreateGroupSuccessResult =
