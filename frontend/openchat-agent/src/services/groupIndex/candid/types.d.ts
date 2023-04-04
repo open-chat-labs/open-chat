@@ -77,6 +77,7 @@ export type ChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'ParticipantDismissedAsSuperAdmin' : ParticipantDismissedAsSuperAdmin } |
   { 'GroupNameChanged' : GroupNameChanged } |
   { 'MessageUndeleted' : UpdatedMessage } |
+  { 'GroupGateUpdated' : GroupGateUpdated } |
   { 'RoleChanged' : RoleChanged } |
   { 'PollVoteDeleted' : UpdatedMessage } |
   { 'EventsTimeToLiveUpdated' : EventsTimeToLiveUpdated } |
@@ -414,6 +415,10 @@ export type GroupGate = { 'SnsNeuron' : SnsNeuronGate } |
 export type GroupGateUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : GroupGate };
+export interface GroupGateUpdated {
+  'updated_by' : UserId,
+  'new_gate' : [] | [GroupGate],
+}
 export type GroupInviteCodeChange = { 'Enabled' : null } |
   { 'Disabled' : null } |
   { 'Reset' : null };

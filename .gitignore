@@ -13,4 +13,5 @@ wasms/
 msg.json
 notes.md
 ic-test-state-machine*
+notification.did
 temp.did

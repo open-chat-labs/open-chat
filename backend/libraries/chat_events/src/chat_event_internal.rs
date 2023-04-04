@@ -5,12 +5,12 @@ use std::collections::HashSet;
 use std::ops::{Deref, DerefMut};
 use types::{
     AvatarChanged, ChatFrozen, ChatMetrics, ChatUnfrozen, Cryptocurrency, DeletedBy, DirectChatCreated,
-    EventsTimeToLiveUpdated, GroupChatCreated, GroupDescriptionChanged, GroupInviteCodeChanged, GroupNameChanged,
-    GroupRulesChanged, GroupVisibilityChanged, Message, MessageContent, MessageContentInternal, MessageId, MessageIndex,
-    MessagePinned, MessageUnpinned, OwnershipTransferred, ParticipantAssumesSuperAdmin, ParticipantDismissedAsSuperAdmin,
-    ParticipantJoined, ParticipantLeft, ParticipantRelinquishesSuperAdmin, ParticipantsAdded, ParticipantsRemoved,
-    PermissionsChanged, PollVoteRegistered, Reaction, ReplyContext, RoleChanged, ThreadSummary, TimestampMillis, UserId,
-    UsersBlocked, UsersUnblocked,
+    EventsTimeToLiveUpdated, GroupChatCreated, GroupDescriptionChanged, GroupGateUpdated, GroupInviteCodeChanged,
+    GroupNameChanged, GroupRulesChanged, GroupVisibilityChanged, Message, MessageContent, MessageContentInternal, MessageId,
+    MessageIndex, MessagePinned, MessageUnpinned, OwnershipTransferred, ParticipantAssumesSuperAdmin,
+    ParticipantDismissedAsSuperAdmin, ParticipantJoined, ParticipantLeft, ParticipantRelinquishesSuperAdmin, ParticipantsAdded,
+    ParticipantsRemoved, PermissionsChanged, PollVoteRegistered, Reaction, ReplyContext, RoleChanged, ThreadSummary,
+    TimestampMillis, UserId, UsersBlocked, UsersUnblocked,
 };
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -51,6 +51,7 @@ pub enum ChatEventInternal {
     ChatFrozen(Box<ChatFrozen>),
     ChatUnfrozen(Box<ChatUnfrozen>),
     EventsTimeToLiveUpdated(Box<EventsTimeToLiveUpdated>),
+    GroupGateUpdated(Box<GroupGateUpdated>),
 }
 
 impl ChatEventInternal {
@@ -91,6 +92,7 @@ impl ChatEventInternal {
                 | ChatEventInternal::ChatFrozen(_)
                 | ChatEventInternal::ChatUnfrozen(_)
                 | ChatEventInternal::EventsTimeToLiveUpdated(_)
+                | ChatEventInternal::GroupGateUpdated(_)
         )
     }
 

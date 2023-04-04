@@ -231,6 +231,7 @@ type ChatEvent =
         ChatFrozen: ChatFrozen;
         ChatUnfrozen: ChatUnfrozen;
         EventsTimeToLiveUpdated: EventsTimeToLiveUpdated;
+        GroupGateUpdated: GroupGateUpdated;
     };
 
 type ChatEventWrapper =
@@ -336,7 +337,6 @@ type GroupCanisterGroupChatSummaryUpdates =
         events_ttl: EventsTimeToLiveUpdate;
         newly_expired_messages: vec MessageIndexRange;
         next_message_expiry: TimestampUpdate;
-        gate: GroupGateUpdate;
     };
 
 type GroupDescriptionChanged =
@@ -1233,6 +1233,12 @@ type GroupGateUpdate =
         NoChange;
         SetToNone;
         SetToSome: GroupGate;
+    };
+
+type GroupGateUpdated =
+    record {
+        updated_by: UserId;
+        new_gate: opt GroupGate;
     };
 
 type SnsNeuronGate =
