@@ -96,6 +96,7 @@ import {
     apiOptional,
     apiPermissionRole,
     chatMetrics,
+    groupGate,
     groupPermissions,
     memberRole,
     message,
@@ -202,6 +203,7 @@ function groupChatSummary(candid: ApiGroupCanisterGroupChatSummary): GroupCanist
         latestThreads: candid.latest_threads.map(threadDetails),
         frozen: candid.frozen.length > 0,
         dateLastPinned: optional(candid.date_last_pinned, identity),
+        gate: optional(candid.gate, groupGate) ?? { kind: "no_gate" },
     };
 }
 

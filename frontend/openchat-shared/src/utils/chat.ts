@@ -77,6 +77,7 @@ export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Set<string
                 userIds.add(e.event.unpinnedBy);
                 break;
             case "events_ttl_updated":
+            case "gate_updated":
                 userIds.add(e.event.updatedBy);
                 break;
             case "message_deleted":

@@ -1,13 +1,15 @@
 <script lang="ts">
     import LockOutline from "svelte-material-icons/LockOutline.svelte";
     import Checkbox from "../../Checkbox.svelte";
-    import type { CandidateGroupChat, GroupGate, OpenChat } from "openchat-client";
+    import { CandidateGroupChat, E8S_PER_TOKEN, GroupGate, OpenChat } from "openchat-client";
     import { _ } from "svelte-i18n";
     import Radio from "../../Radio.svelte";
-    import { createEventDispatcher, getContext, onMount } from "svelte";
+    import { afterUpdate, createEventDispatcher, getContext, onMount } from "svelte";
     import Button from "../../Button.svelte";
     import Select from "../../Select.svelte";
     import { iconSize } from "stores/iconSize";
+    import Legend from "../../Legend.svelte";
+    import Input from "../../Input.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -18,10 +20,32 @@
 
     type GateBinding = { index: number; label: string; gate: GroupGate; enabled: boolean };
 
+    let minDissolveDelay = getMinDissolveDelay(originalGroup);
+    let minStake = getMinStake(originalGroup);
+
+    $: invalidDissolveDelay = minDissolveDelay !== "" && isNaN(Number(minDissolveDelay));
+    $: invalidMinStake = minStake !== "" && isNaN(Number(minStake));
+
+    function getMinDissolveDelay(group: CandidateGroupChat): string {
+        if (group.gate.kind === "sns1_gate" || group.gate.kind === "openchat_gate") {
+            return group.gate.minDissolveDelay ? group.gate.minDissolveDelay.toString() : "";
+        }
+        return "";
+    }
+
+    function getMinStake(group: CandidateGroupChat): string {
+        if (group.gate.kind === "sns1_gate" || group.gate.kind === "openchat_gate") {
+            return group.gate.minStakeE8s
+                ? (group.gate.minStakeE8s / E8S_PER_TOKEN).toString()
+                : "";
+        }
+        return "";
+    }
+
     let gates: GateBinding[] = [
         {
             index: 0,
-            label: $_("group.noAccessGate"),
+            label: $_("group.openAccess"),
             gate: { kind: "no_gate" },
             enabled: true,
         },
@@ -63,6 +87,22 @@
         selectedGateIndex = gates.findIndex((g) => candidateGroup.gate.kind === g.gate.kind) ?? 0;
     });
 
+    afterUpdate(() => {
+        if (
+            candidateGroup.gate.kind === "openchat_gate" ||
+            candidateGroup.gate.kind === "sns1_gate"
+        ) {
+            candidateGroup = {
+                ...candidateGroup,
+                gate: {
+                    ...candidateGroup.gate,
+                    minDissolveDelay: !invalidDissolveDelay ? Number(minDissolveDelay) : undefined,
+                    minStakeE8s: !invalidMinStake ? Number(minStake) * E8S_PER_TOKEN : undefined,
+                },
+            };
+        }
+    });
+
     $: isDiamond = client.isDiamond;
 
     $: canMakePrivate =
@@ -70,14 +110,18 @@
             ? client.canMakeGroupPrivate(candidateGroup.chatId)
             : true;
 
-    $: console.log("GATE: ", candidateGroup.gate);
-
     function toggleScope() {
         candidateGroup.isPublic = !candidateGroup.isPublic;
         if (candidateGroup.isPublic) {
             candidateGroup.historyVisible = true;
             candidateGroup.members = [];
         }
+    }
+
+    function updateGate() {
+        candidateGroup.gate = gates[selectedGateIndex]?.gate;
+        minDissolveDelay = "";
+        minStake = "";
     }
 </script>
 
@@ -146,14 +190,37 @@
         </div>
         <div class="section">
             <div class="section-title">{$_("group.chooseGate")}</div>
-            <Select bind:value={selectedGateIndex}>
-                {#each gates as gate}
-                    <option disabled={!gate.enabled} value={gate.index}>{gate.label}</option>
-                {/each}
-            </Select>
+            <div class="choose-gate">
+                <Select margin={false} on:change={updateGate} bind:value={selectedGateIndex}>
+                    {#each gates as gate}
+                        <option disabled={!gate.enabled} value={gate.index}>{gate.label}</option>
+                    {/each}
+                </Select>
+            </div>
             {#if candidateGroup.gate !== undefined}
+                {#if candidateGroup.gate.kind === "openchat_gate" || candidateGroup.gate.kind === "sns1_gate"}
+                    <Legend label={$_("group.minDissolveDelay")} />
+                    <Input
+                        maxlength={100}
+                        placeholder={$_("group.optional")}
+                        invalid={invalidDissolveDelay}
+                        bind:value={minDissolveDelay} />
+
+                    <Legend label={$_("group.minStake")} />
+                    <Input
+                        maxlength={100}
+                        placeholder={$_("group.optional")}
+                        invalid={invalidMinStake}
+                        bind:value={minStake} />
+                {/if}
                 {#if candidateGroup.gate.kind === "diamond_gate"}
                     <div class="info">{$_("group.diamondGateInfo")}</div>
+                {:else if candidateGroup.gate.kind === "openchat_gate"}
+                    <div class="info">{$_("group.chatHolderInfo")}</div>
+                {:else if candidateGroup.gate.kind === "sns1_gate"}
+                    <div class="info">{$_("group.sns1HolderInfo")}</div>
+                {:else if candidateGroup.gate.kind === "no_gate"}
+                    <div class="info">{$_("group.openAccessInfo")}</div>
                 {/if}
             {/if}
         </div>
@@ -176,6 +243,7 @@
     .wrapper {
         display: flex;
         align-items: flex-start;
+        max-width: 85%;
 
         .icon {
             flex: 0 0 toRem(34);
@@ -188,13 +256,21 @@
         .section {
             flex: auto;
         }
+
+        @include mobile() {
+            max-width: unset;
+        }
     }
     .section {
         margin-bottom: $sp6;
     }
 
+    .choose-gate {
+        margin-bottom: $sp3;
+    }
+
     .info {
-        @include font(book, normal, fs-80, 28);
+        @include font(book, normal, fs-80, 22);
         color: var(--txt-light);
 
         &.upgrade {

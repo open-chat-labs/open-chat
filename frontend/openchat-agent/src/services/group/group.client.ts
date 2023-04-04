@@ -41,6 +41,7 @@ import {
     EventWrapper,
     OptionUpdate,
     ClaimPrizeResponse,
+    GroupGate,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
@@ -84,7 +85,7 @@ import type { IGroupClient } from "./group.client.interface";
 import { CachingGroupClient } from "./group.caching.client";
 import type { Database } from "../../utils/caching";
 import { Principal } from "@dfinity/principal";
-import { apiMessageContent, apiOptional, apiUser } from "../common/chatMappers";
+import { apiGroupGate, apiMessageContent, apiOptional, apiUser } from "../common/chatMappers";
 import { DataClient } from "../data/data.client";
 import { identity, mergeGroupChatDetails } from "../../utils/chat";
 import { MAX_EVENTS, MAX_MESSAGES } from "../../constants";
@@ -341,7 +342,8 @@ export class GroupClient extends CandidService implements IGroupClient {
         rules?: GroupRules,
         permissions?: Partial<GroupPermissions>,
         avatar?: Uint8Array,
-        eventsTimeToLiveMs?: OptionUpdate<bigint>
+        eventsTimeToLiveMs?: OptionUpdate<bigint>,
+        gate?: GroupGate
     ): Promise<UpdateGroupResponse> {
         return this.handleResponse(
             this.groupService.update_group_v2({
@@ -361,7 +363,12 @@ export class GroupClient extends CandidService implements IGroupClient {
                 rules: apiOptional(apiGroupRules, rules),
                 events_ttl: apiOptionUpdate(identity, eventsTimeToLiveMs),
                 correlation_id: generateUint64(),
-                gate: apiGateUpdate(),
+                gate:
+                    gate === undefined
+                        ? { NoChange: null }
+                        : gate.kind === "no_gate"
+                        ? { SetToNone: null }
+                        : { SetToSome: apiGroupGate(gate) },
             }),
             updateGroupResponse
         );

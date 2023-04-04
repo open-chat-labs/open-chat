@@ -41,7 +41,6 @@ import type {
     ApiIcrc1Account,
     ApiDirectChatSummaryUpdates,
     ApiDeletedDirectMessageResponse,
-    ApiGroupGate,
 } from "./candid/idl";
 import {
     EventsResponse,
@@ -83,15 +82,13 @@ import {
     DirectChatSummaryUpdates,
     DeletedDirectMessageResponse,
     UpdatedEvent,
-    GroupGate,
-    OpenChatGovernanceCanisterId,
-    Sns1GovernanceCanisterId,
 } from "openchat-shared";
 import { bytesToHexString, identity, optional, optionUpdate } from "../../utils/mapping";
 import {
     apiGroupSubtype,
     chatMetrics,
     completedCryptoTransfer,
+    groupGate,
     groupPermissions,
     message,
     messageContent,
@@ -852,35 +849,6 @@ function groupChatSummary(candid: ApiGroupChatSummary, limitReadByMeUpTo = true)
         dateReadPinned: optional(candid.date_read_pinned, identity),
         gate: optional(candid.gate, groupGate) ?? { kind: "no_gate" },
     };
-}
-
-function groupGate(candid: ApiGroupGate): GroupGate {
-    if ("SnsNeuron" in candid) {
-        const canisterId = candid.SnsNeuron.governance_canister_id.toString();
-        if (canisterId === OpenChatGovernanceCanisterId) {
-            return {
-                kind: "openchat_gate",
-                minDissolveDelay: optional(candid.SnsNeuron.min_dissolve_delay, BigInt),
-                minStakeE8s: optional(candid.SnsNeuron.min_stake_e8s, BigInt),
-            };
-        }
-        if (canisterId === Sns1GovernanceCanisterId) {
-            return {
-                kind: "sns1_gate",
-                minDissolveDelay: optional(candid.SnsNeuron.min_dissolve_delay, BigInt),
-                minStakeE8s: optional(candid.SnsNeuron.min_stake_e8s, BigInt),
-            };
-        }
-        throw new Error(
-            `An SnsNeuron gate was received with an unexpected governance canister id: ${candid.SnsNeuron.governance_canister_id}`
-        );
-    }
-    if ("DiamondMember" in candid) {
-        return {
-            kind: "diamond_gate",
-        };
-    }
-    throw new UnsupportedValueError("Unexpected ApiGroupGate type received", candid);
 }
 
 function threadSyncDetails(candid: ApiThreadSyncDetails): ThreadSyncDetails {

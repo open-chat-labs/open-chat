@@ -931,8 +931,8 @@ export type NnsNeuronGate = { kind: "nns_gate" };
 export type NftGate = { kind: "nft_gate" };
 
 type SnsNeuronGate = {
-    minStakeE8s?: bigint;
-    minDissolveDelay?: bigint;
+    minStakeE8s?: number;
+    minDissolveDelay?: number;
 };
 
 export type Sns1NeuronGate = SnsNeuronGate & {
@@ -1007,6 +1007,7 @@ export type GroupCanisterGroupChatSummary = {
     latestThreads: GroupCanisterThreadDetails[];
     frozen: boolean;
     dateLastPinned: bigint | undefined;
+    gate: GroupGate;
 };
 
 export type UpdatedEvent = {

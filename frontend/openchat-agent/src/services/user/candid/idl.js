@@ -74,6 +74,15 @@ export const idlFactory = ({ IDL }) => {
     'reply_in_thread' : PermissionRole,
     'react_to_messages' : PermissionRole,
   });
+  const SnsNeuronGate = IDL.Record({
+    'min_stake_e8s' : IDL.Opt(IDL.Nat64),
+    'min_dissolve_delay' : IDL.Opt(Milliseconds),
+    'governance_canister_id' : CanisterId,
+  });
+  const GroupGate = IDL.Variant({
+    'SnsNeuron' : SnsNeuronGate,
+    'DiamondMember' : IDL.Null,
+  });
   const GroupRules = IDL.Record({ 'text' : IDL.Text, 'enabled' : IDL.Bool });
   const Avatar = IDL.Record({
     'id' : IDL.Nat,
@@ -83,6 +92,7 @@ export const idlFactory = ({ IDL }) => {
   const CreateGroupArgs = IDL.Record({
     'is_public' : IDL.Bool,
     'permissions' : IDL.Opt(GroupPermissions),
+    'gate' : IDL.Opt(GroupGate),
     'name' : IDL.Text,
     'description' : IDL.Text,
     'history_visible_to_new_joiners' : IDL.Bool,
@@ -536,15 +546,6 @@ export const idlFactory = ({ IDL }) => {
     'changed_by' : UserId,
     'new_name' : IDL.Text,
     'previous_name' : IDL.Text,
-  });
-  const SnsNeuronGate = IDL.Record({
-    'min_stake_e8s' : IDL.Opt(IDL.Nat64),
-    'min_dissolve_delay' : IDL.Opt(Milliseconds),
-    'governance_canister_id' : CanisterId,
-  });
-  const GroupGate = IDL.Variant({
-    'SnsNeuron' : SnsNeuronGate,
-    'DiamondMember' : IDL.Null,
   });
   const GroupGateUpdated = IDL.Record({
     'updated_by' : UserId,

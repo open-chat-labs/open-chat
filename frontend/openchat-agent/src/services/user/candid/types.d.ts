@@ -159,6 +159,7 @@ export type ContactsResponse = { 'Success' : { 'contacts' : Array<Contact> } };
 export interface CreateGroupArgs {
   'is_public' : boolean,
   'permissions' : [] | [GroupPermissions],
+  'gate' : [] | [GroupGate],
   'name' : string,
   'description' : string,
   'history_visible_to_new_joiners' : boolean,

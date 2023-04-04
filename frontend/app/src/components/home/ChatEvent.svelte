@@ -211,6 +211,12 @@
         changedBy={event.event.changedBy}
         property={$_("groupAvatar")}
         timestamp={event.timestamp} />
+{:else if event.event.kind === "gate_updated"}
+    <GroupChangedEvent
+        user={userSummary}
+        changedBy={event.event.updatedBy}
+        property={$_("group.groupGate")}
+        timestamp={event.timestamp} />
 {:else if event.event.kind === "group_visibility_changed"}
     <GroupVisibilityChangedEvent
         user={userSummary}

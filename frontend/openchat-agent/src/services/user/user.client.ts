@@ -75,7 +75,9 @@ import { MAX_EVENTS, MAX_MESSAGES } from "../../constants";
 import type { Database } from "../../utils/caching";
 import { CachingUserClient } from "./user.caching.client";
 import {
+    apiGroupGate,
     apiGroupPermissions,
+    apiMaybeGroupGate,
     apiMessageContent,
     apiOptional,
     apiPendingCryptoContent,
@@ -150,6 +152,7 @@ export class UserClient extends CandidService implements IUserClient {
                 }, group.avatar?.blobData),
                 permissions: [apiGroupPermissions(group.permissions)],
                 rules: apiGroupRules(group.rules),
+                gate: apiMaybeGroupGate(group.gate),
             }),
             createGroupResponse
         );
