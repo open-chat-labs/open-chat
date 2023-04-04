@@ -3,7 +3,6 @@ use group_index_canister::*;
 
 // Queries
 generate_c2c_call!(c2c_filter_groups);
-generate_c2c_call!(c2c_recommended_groups);
 
 // Updates
 generate_c2c_call!(c2c_create_group);
