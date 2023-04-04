@@ -1,14 +1,14 @@
-import {
-    GroupChatSummary,
-    JoinGroupResponse,
-    UnsupportedValueError
-} from "openchat-shared";
-import type {
-    ApiGroupCanisterGroupChatSummary,
-    ApiJoinGroupResponse,
-} from "./candid/idl";
+import { GroupChatSummary, JoinGroupResponse, UnsupportedValueError } from "openchat-shared";
+import type { ApiGroupCanisterGroupChatSummary, ApiJoinGroupResponse } from "./candid/idl";
 import { identity, optional } from "../../utils/mapping";
-import { apiGroupSubtype, chatMetrics, groupPermissions, memberRole, message } from "../common/chatMappers";
+import {
+    apiGroupSubtype,
+    chatMetrics,
+    groupGate,
+    groupPermissions,
+    memberRole,
+    message,
+} from "../common/chatMappers";
 
 export function joinGroupResponse(candid: ApiJoinGroupResponse): JoinGroupResponse {
     if ("Success" in candid) {
@@ -86,5 +86,6 @@ function groupChatSummary(candid: ApiGroupCanisterGroupChatSummary): GroupChatSu
         frozen: candid.frozen.length > 0,
         dateLastPinned: optional(candid.date_last_pinned, identity),
         dateReadPinned: undefined,
+        gate: optional(candid.gate, groupGate) ?? { kind: "no_gate" },
     };
 }

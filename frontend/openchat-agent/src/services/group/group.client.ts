@@ -79,7 +79,6 @@ import {
     summaryUpdatesResponse,
     deletedMessageResponse,
     claimPrizeResponse,
-    apiGateUpdate,
 } from "./mappers";
 import type { IGroupClient } from "./group.client.interface";
 import { CachingGroupClient } from "./group.caching.client";

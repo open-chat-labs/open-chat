@@ -75,7 +75,6 @@ import { MAX_EVENTS, MAX_MESSAGES } from "../../constants";
 import type { Database } from "../../utils/caching";
 import { CachingUserClient } from "./user.caching.client";
 import {
-    apiGroupGate,
     apiGroupPermissions,
     apiMaybeGroupGate,
     apiMessageContent,
