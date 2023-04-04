@@ -336,7 +336,6 @@
         "publicGroup": "Nhóm mở",
         "privateGroup": "Nhóm kín",
         "groupInfo": "Thông tin nhóm",
-        "visibility": "Hiển thị",
         "role": {
             "owner": "Chủ nhân",
             "admins": "Quản trị viên",

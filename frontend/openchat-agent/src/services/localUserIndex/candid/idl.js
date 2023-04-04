@@ -6,6 +6,12 @@ export const idlFactory = ({ IDL }) => {
     'correlation_id' : IDL.Nat64,
     'chat_id' : ChatId,
   });
+  const GateCheckFailedReason = IDL.Variant({
+    'NotDiamondMember' : IDL.Null,
+    'NoSnsNeuronsFound' : IDL.Null,
+    'NoSnsNeuronsWithRequiredDissolveDelayFound' : IDL.Null,
+    'NoSnsNeuronsWithRequiredStakeFound' : IDL.Null,
+  });
   const PermissionRole = IDL.Variant({
     'Owner' : IDL.Null,
     'Admins' : IDL.Null,
@@ -423,6 +429,7 @@ export const idlFactory = ({ IDL }) => {
     'GroupNotFound' : IDL.Null,
     'GroupNotPublic' : IDL.Null,
     'AlreadyInGroup' : IDL.Null,
+    'GateCheckFailed' : GateCheckFailedReason,
     'ChatFrozen' : IDL.Null,
     'Success' : GroupCanisterGroupChatSummary,
     'UserSuspended' : IDL.Null,

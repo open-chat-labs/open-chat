@@ -263,6 +263,10 @@ export interface FrozenGroupInfo {
 export type FrozenGroupUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : FrozenGroupInfo };
+export type GateCheckFailedReason = { 'NotDiamondMember' : null } |
+  { 'NoSnsNeuronsFound' : null } |
+  { 'NoSnsNeuronsWithRequiredDissolveDelayFound' : null } |
+  { 'NoSnsNeuronsWithRequiredStakeFound' : null };
 export interface GiphyContent {
   'title' : string,
   'desktop' : GiphyImageVariant,
@@ -383,6 +387,8 @@ export interface GroupDescriptionChanged {
   'previous_description' : string,
   'changed_by' : UserId,
 }
+export type GroupGate = { 'SnsNeuron' : SnsNeuronGate } |
+  { 'DiamondMember' : null };
 export type GroupInviteCodeChange = { 'Enabled' : null } |
   { 'Disabled' : null } |
   { 'Reset' : null };
@@ -784,6 +790,11 @@ export interface SnsFailedCryptoTransaction {
   'memo' : [] | [Memo],
   'error_message' : string,
   'amount' : Tokens,
+}
+export interface SnsNeuronGate {
+  'min_stake_e8s' : [] | [bigint],
+  'min_dissolve_delay' : [] | [Milliseconds],
+  'governance_canister_id' : CanisterId,
 }
 export type SnsNeuronId = Uint8Array | number[];
 export interface SnsPendingCryptoTransaction {

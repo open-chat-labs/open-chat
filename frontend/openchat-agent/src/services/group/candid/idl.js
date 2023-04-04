@@ -1166,6 +1166,20 @@ export const idlFactory = ({ IDL }) => {
     'reply_in_thread' : IDL.Opt(PermissionRole),
     'react_to_messages' : IDL.Opt(PermissionRole),
   });
+  const SnsNeuronGate = IDL.Record({
+    'min_stake_e8s' : IDL.Opt(IDL.Nat64),
+    'min_dissolve_delay' : IDL.Opt(Milliseconds),
+    'governance_canister_id' : CanisterId,
+  });
+  const GroupGate = IDL.Variant({
+    'SnsNeuron' : SnsNeuronGate,
+    'DiamondMember' : IDL.Null,
+  });
+  const GroupGateUpdate = IDL.Variant({
+    'NoChange' : IDL.Null,
+    'SetToNone' : IDL.Null,
+    'SetToSome' : GroupGate,
+  });
   const Avatar = IDL.Record({
     'id' : IDL.Nat,
     'data' : IDL.Vec(IDL.Nat8),
@@ -1178,6 +1192,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const UpdateGroupV2Args = IDL.Record({
     'permissions' : IDL.Opt(OptionalGroupPermissions),
+    'gate' : GroupGateUpdate,
     'name' : IDL.Opt(IDL.Text),
     'description' : IDL.Opt(IDL.Text),
     'events_ttl' : EventsTimeToLiveUpdate,

@@ -78,6 +78,7 @@ import {
     summaryUpdatesResponse,
     deletedMessageResponse,
     claimPrizeResponse,
+    apiGateUpdate,
 } from "./mappers";
 import type { IGroupClient } from "./group.client.interface";
 import { CachingGroupClient } from "./group.caching.client";
@@ -360,6 +361,7 @@ export class GroupClient extends CandidService implements IGroupClient {
                 rules: apiOptional(apiGroupRules, rules),
                 events_ttl: apiOptionUpdate(identity, eventsTimeToLiveMs),
                 correlation_id: generateUint64(),
+                gate: apiGateUpdate(),
             }),
             updateGroupResponse
         );

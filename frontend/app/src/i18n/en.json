@@ -390,7 +390,7 @@
         "publicGroup": "Public group",
         "privateGroup": "Private group",
         "groupInfo": "Group info",
-        "visibility": "Visibility",
+        "visibility": "Access",
         "role": {
             "owner": "Owner",
             "admins": "Admins",
@@ -447,7 +447,8 @@
         },
         "groupRules": "Group rules",
         "rulesUpdateFailed": "Sorry we were unable to update your group rules",
-        "getRulesFailed": "Failed to get group rules"
+        "getRulesFailed": "Failed to get group rules",
+        "gatedAccess": "Gated access"
     },
     "updateNow": "reload now",
     "updateRequired": "A new version of OpenChat is available - reloading in {countdown}s",

@@ -335,7 +335,6 @@
         "publicGroup": "Gruppo pubblico",
         "privateGroup": "Gruppo privato",
         "groupInfo": "Informazioni sul gruppo",
-        "visibility": "Visibilità",
         "role": {
             "owner": "Proprietario",
             "admins": "Amministratori",

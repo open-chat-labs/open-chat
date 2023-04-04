@@ -910,7 +910,21 @@ type ChatSummaryCommon = {
     metrics: ChatMetrics;
     myMetrics: ChatMetrics;
     archived: boolean;
+    gate: GroupChatGate;
 };
+
+export type GroupChatGate = NoGate | SnsNeuronGate | DiamondGate;
+
+export type NoGate = { kind: "no_gate" };
+
+export type SnsNeuronGate = {
+    kind: "sns_gate";
+    minStakeE8s?: bigint;
+    minDissolveDelay?: bigint;
+    governanceCanisterId: string;
+};
+
+export type DiamondGate = { kind: "diamond_gate" };
 
 export type DirectChatSummary = ChatSummaryCommon & {
     kind: "direct_chat";
@@ -1041,6 +1055,7 @@ export type CandidateGroupChat = {
     members: CandidateMember[];
     avatar?: DataContent;
     permissions: GroupPermissions;
+    gate: GroupChatGate;
 };
 
 // todo - there are all sorts of error conditions here that we need to deal with but - later

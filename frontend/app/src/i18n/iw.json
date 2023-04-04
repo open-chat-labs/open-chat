@@ -347,7 +347,6 @@
         "publicGroup": "קבוצה ציבורית",
         "privateGroup": "קבוצה פרטית",
         "groupInfo": "מידע על הקבוצה",
-        "visibility": "רְאוּת",
         "role": {
             "owner": "בעלים",
             "admins": "מנהלי מערכת",

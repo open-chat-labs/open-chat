@@ -76,6 +76,7 @@
 </div>
 
 <div class="section">
+    u
     <Checkbox
         id="history-visible"
         disabled={candidateGroup.isPublic || editing}
@@ -83,7 +84,26 @@
         label={$_("historyVisible")}
         align={"start"}
         checked={candidateGroup.historyVisible}>
-        <div class="section-title">History visible</div>
+        <div class="section-title">{$_("historyVisible")}</div>
+        <div class="info">
+            {#if candidateGroup.historyVisible}
+                <p>{$_("historyOnInfo")}</p>
+            {:else}
+                <p>{$_("historyOffInfo")}</p>
+            {/if}
+        </div>
+    </Checkbox>
+</div>
+
+<div class="section">
+    <Checkbox
+        id="gated-access"
+        disabled={!isDiamond}
+        on:change={() => (candidateGroup.historyVisible = !candidateGroup.historyVisible)}
+        label={$_("group.gatedAccess")}
+        align={"start"}
+        checked={candidateGroup.gate.kind !== "no_gate"}>
+        <div class="section-title">{$_("group.gatedAccess")}</div>
         <div class="info">
             {#if candidateGroup.historyVisible}
                 <p>{$_("historyOnInfo")}</p>

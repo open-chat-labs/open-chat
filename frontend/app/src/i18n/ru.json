@@ -335,7 +335,6 @@
         "publicGroup": "Публичная группа",
         "privateGroup": "Частная группа",
         "groupInfo": "Информация о группе",
-        "visibility": "Видимость",
         "role": {
             "owner": "Владелец",
             "admins": "Админы",

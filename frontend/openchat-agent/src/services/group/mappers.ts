@@ -41,6 +41,7 @@ import type {
     ApiMention,
     ApiDeletedGroupMessageResponse,
     ApiClaimPrizeResponse,
+    ApiGroupGateUpdate,
 } from "./candid/idl";
 import {
     EventsResponse,
@@ -535,6 +536,11 @@ export function addRemoveReactionResponse(
         "Unexpected ApiAddRemoveReactionResponse type received",
         candid
     );
+}
+
+// TODO fill this in
+export function apiGateUpdate(): ApiGroupGateUpdate {
+    return { NoChange: null };
 }
 
 export function updateGroupResponse(candid: ApiUpdateGroupResponse): UpdateGroupResponse {

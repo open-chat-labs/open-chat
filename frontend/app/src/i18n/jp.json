@@ -335,7 +335,6 @@
         "publicGroup": "公開グループ",
         "privateGroup": "プライベートグループ",
         "groupInfo": "グループ情報",
-        "visibility": "公開範囲",
         "role": {
             "owner": "オーナー",
             "admins": "管理者",

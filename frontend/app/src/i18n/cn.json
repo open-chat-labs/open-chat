@@ -335,7 +335,6 @@
         "publicGroup": "公开群聊",
         "privateGroup": "私有群聊",
         "groupInfo": "群聊信息",
-        "visibility": "可见性",
         "role": {
             "owner": "所有者",
             "admins": "管理员",

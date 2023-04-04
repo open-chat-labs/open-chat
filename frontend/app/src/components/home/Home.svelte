@@ -820,6 +820,7 @@
                 text: defaultGroupRules,
                 enabled: false,
             },
+            gate: { kind: "no_gate" },
         };
     }
 
@@ -845,6 +846,7 @@
                 blobUrl: chat.blobUrl,
                 blobData: chat.blobData,
             },
+            gate: chat.gate,
         };
     }
 
