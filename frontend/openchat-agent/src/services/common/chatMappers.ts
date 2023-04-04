@@ -874,6 +874,10 @@ export function proposalVote(vote: number): boolean | undefined {
     return undefined;
 }
 
+export function apiProposalVote(vote: boolean): number {
+    return vote ? 1 : 2;
+}
+
 function apiTextContent(domain: TextContent): ApiTextContent {
     return {
         text: domain.text,

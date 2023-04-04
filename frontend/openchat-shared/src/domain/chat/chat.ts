@@ -178,6 +178,10 @@ export interface ProposalCommon {
     proposer: string;
 }
 
+export type ManageNeuronResponse =
+    | { kind: "success" }
+    | { kind: "error", type: number, message: string };
+
 export interface Tally {
     yes: number;
     no: number;

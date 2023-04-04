@@ -1,14 +1,38 @@
 import type {
     ApiListNervousSystemFunctionsResponse,
     ApiListProposalsResponse,
+    ApiManageNeuronResponse,
     ApiNervousSystemFunction,
     ApiSnsFunctionType
 } from "./candid/idl";
-import type { ListNervousSystemFunctionsResponse, NervousSystemFunction, ProposalVoteDetails, SnsFunctionType } from "openchat-shared";
+import type {
+    ListNervousSystemFunctionsResponse,
+    ManageNeuronResponse,
+    NervousSystemFunction,
+    ProposalVoteDetails,
+    SnsFunctionType
+} from "openchat-shared";
 import { identity, optional } from "../../utils/mapping";
 import { proposalVote } from "../common/chatMappers";
 
 const E8S_AS_BIGINT = BigInt(100_000_000);
+
+export function manageNeuronResponse(candid: ApiManageNeuronResponse): ManageNeuronResponse {
+    const result = candid.command[0]!;
+    if ("RegisterVote" in result) {
+        return {
+            kind: "success",
+        };
+    }
+    if ("Error" in result) {
+        return {
+            kind: "error",
+            type: result.Error.error_type,
+            message: result.Error.error_message,
+        };
+    }
+    throw new Error(`Unexpected ApiManageNeuronResponse type received: ${candid}`);
+}
 
 export function getProposalVoteDetails(
     candid: ApiListProposalsResponse

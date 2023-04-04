@@ -22,12 +22,31 @@ export const idlFactory = ({ IDL }) => {
   const ListProposalInfoResponse = IDL.Record({
     'proposal_info' : IDL.Vec(ProposalInfo),
   });
+  const RegisterVote = IDL.Record({
+    'vote' : IDL.Int32,
+    'proposal' : IDL.Opt(NeuronId),
+  });
+  const Command = IDL.Variant({ 'RegisterVote' : RegisterVote });
+  const ManageNeuron = IDL.Record({
+    'id' : IDL.Opt(NeuronId),
+    'command' : IDL.Opt(Command),
+  });
+  const GovernanceError = IDL.Record({
+    'error_message' : IDL.Text,
+    'error_type' : IDL.Int32,
+  });
+  const Command_1 = IDL.Variant({
+    'Error' : GovernanceError,
+    'RegisterVote' : IDL.Record({}),
+  });
+  const ManageNeuronResponse = IDL.Record({ 'command' : IDL.Opt(Command_1) });
   return IDL.Service({
     'list_proposals' : IDL.Func(
         [ListProposalInfo],
         [ListProposalInfoResponse],
         ['query'],
       ),
+    'manage_neuron' : IDL.Func([ManageNeuron], [ManageNeuronResponse], []),
   });
 };
 export const init = ({ IDL }) => { return []; };

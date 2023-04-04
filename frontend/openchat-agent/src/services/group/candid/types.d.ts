@@ -951,6 +951,13 @@ export type RegisterProposalVoteResponse = { 'AlreadyVoted' : boolean } |
   { 'UserSuspended' : null } |
   { 'ProposalNotAcceptingVotes' : null } |
   { 'InternalError' : string };
+export type RegisterProposalVoteV2Response = {
+    'ProposalMessageNotFound' : null
+  } |
+  { 'CallerNotInGroup' : null } |
+  { 'ChatFrozen' : null } |
+  { 'Success' : null } |
+  { 'UserSuspended' : null };
 export type RegistrationFee = { 'ICP' : ICPRegistrationFee } |
   { 'Cycles' : CyclesRegistrationFee };
 export interface RemoveParticipantArgs {
@@ -1333,6 +1340,10 @@ export interface _SERVICE {
   'register_proposal_vote' : ActorMethod<
     [RegisterProposalVoteArgs],
     RegisterProposalVoteResponse
+  >,
+  'register_proposal_vote_v2' : ActorMethod<
+    [RegisterProposalVoteArgs],
+    RegisterProposalVoteV2Response
   >,
   'remove_participant' : ActorMethod<
     [RemoveParticipantArgs],

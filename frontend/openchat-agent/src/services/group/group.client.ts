@@ -693,6 +693,20 @@ export class GroupClient extends CandidService implements IGroupClient {
     }
 
     @profile("groupClient")
+    registerProposalVoteV2(
+        messageIdx: number,
+        adopt: boolean
+    ): Promise<RegisterProposalVoteResponse> {
+        return this.handleResponse(
+            this.groupService.register_proposal_vote_v2({
+                adopt,
+                message_index: messageIdx,
+            }),
+            registerProposalVoteResponse
+        );
+    }
+
+    @profile("groupClient")
     localUserIndex(): Promise<string> {
         return this.handleQueryResponse(
             () => this.groupService.local_user_index({}),

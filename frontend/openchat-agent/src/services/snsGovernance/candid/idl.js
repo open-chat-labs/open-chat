@@ -42,6 +42,24 @@ export const idlFactory = ({ IDL }) => {
   const ListProposalsResponse = IDL.Record({
     'proposals' : IDL.Vec(ProposalData),
   });
+  const RegisterVote = IDL.Record({
+    'vote' : IDL.Int32,
+    'proposal' : IDL.Opt(ProposalId),
+  });
+  const Command = IDL.Variant({ 'RegisterVote' : RegisterVote });
+  const ManageNeuron = IDL.Record({
+    'subaccount' : IDL.Vec(IDL.Nat8),
+    'command' : IDL.Opt(Command),
+  });
+  const GovernanceError = IDL.Record({
+    'error_message' : IDL.Text,
+    'error_type' : IDL.Int32,
+  });
+  const Command_1 = IDL.Variant({
+    'Error' : GovernanceError,
+    'RegisterVote' : IDL.Record({}),
+  });
+  const ManageNeuronResponse = IDL.Record({ 'command' : IDL.Opt(Command_1) });
   return IDL.Service({
     'list_nervous_system_functions' : IDL.Func(
         [],
@@ -53,6 +71,7 @@ export const idlFactory = ({ IDL }) => {
         [ListProposalsResponse],
         ['query'],
       ),
+    'manage_neuron' : IDL.Func([ManageNeuron], [ManageNeuronResponse], []),
   });
 };
 export const init = ({ IDL }) => { return []; };
