@@ -31,6 +31,9 @@ didc bind ../../backend/canisters/storage_index/api/can.did -t js > ./src/servic
 didc bind ./src/services/ledger/candid/can.did -t ts > ./src/services/ledger/candid/types.d.ts
 didc bind ./src/services/ledger/candid/can.did -t js > ./src/services/ledger/candid/idl.js
 
+didc bind ./src/services/nnsGovernance/candid/can.did -t ts > ./src/services/nnsGovernance/candid/types.d.ts
+didc bind ./src/services/nnsGovernance/candid/can.did -t js > ./src/services/nnsGovernance/candid/idl.js
+
 didc bind ./src/services/snsGovernance/candid/can.did -t ts > ./src/services/snsGovernance/candid/types.d.ts
 didc bind ./src/services/snsGovernance/candid/can.did -t js > ./src/services/snsGovernance/candid/idl.js
 

@@ -40,6 +40,7 @@ import {
     mergeGroupChats,
     mergeGroupChatUpdates,
 } from "../utils/chat";
+import { NnsGovernanceClient } from "./nnsGovernance/nns.governance.client";
 import { SnsGovernanceClient } from "./snsGovernance/sns.governance.client";
 import type { AgentConfig } from "../config";
 import {
@@ -1420,7 +1421,11 @@ export class OpenChatAgent extends EventTarget {
 
     getProposalVoteDetails(governanceCanisterId: string, proposalId: bigint, isNns: boolean): Promise<ProposalVoteDetails> {
         if (isNns) {
-            throw new Error("TODO!");
+            return NnsGovernanceClient.create(
+                this.identity,
+                this.config,
+                governanceCanisterId
+            ).getProposalVoteDetails(proposalId);
         } else {
             return SnsGovernanceClient.create(
                 this.identity,
