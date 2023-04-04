@@ -9,11 +9,6 @@ fn recommended_groups(args: Args) -> Response {
     read_state(|state| recommended_groups_impl(args, state))
 }
 
-#[query_msgpack]
-fn c2c_recommended_groups(args: Args) -> Response {
-    read_state(|state| recommended_groups_impl(args, state))
-}
-
 fn recommended_groups_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     let exclusions: HashSet<_> = args.exclusions.into_iter().collect();
     let groups = runtime_state
