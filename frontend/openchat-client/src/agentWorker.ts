@@ -92,13 +92,13 @@ import {
     PayForDiamondMembershipResponse,
     AddHotGroupExclusionResponse,
     RemoveHotGroupExclusionResponse,
-    Tally,
     SetGroupUpgradeConcurrencyResponse,
     SetUserUpgradeConcurrencyResponse,
     UpdateMarketMakerConfigArgs,
     UpdateMarketMakerConfigResponse,
     SetNeuronControllerResponse,
     EligibleForInitialAirdropResponse,
+    ProposalVoteDetails,
 } from "openchat-shared";
 import type { OpenChatConfig } from "./config";
 import { v4 } from "uuid";
@@ -819,12 +819,13 @@ export class OpenChatAgentWorker extends EventTarget {
         });
     }
 
-    getSnsProposalTally(snsGovernanceCanisterId: string, proposalId: bigint): Promise<Tally> {
+    getProposalVoteDetails(governanceCanisterId: string, proposalId: bigint, isNns: boolean): Promise<ProposalVoteDetails> {
         return this.sendRequest({
-            kind: "getSnsProposalTally",
+            kind: "getProposalVoteDetails",
             payload: {
-                snsGovernanceCanisterId,
+                governanceCanisterId,
                 proposalId,
+                isNns
             },
         });
     }

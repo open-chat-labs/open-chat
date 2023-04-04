@@ -185,6 +185,18 @@ export interface Tally {
     timestamp: bigint;
 }
 
+export interface Ballot {
+    neuronId: string;
+    vote: boolean | undefined;
+    votingPower: bigint;
+}
+
+export interface ProposalVoteDetails {
+    id: bigint;
+    ballots: Ballot[];
+    latestTally: Tally;
+}
+
 export interface NnsProposal extends ProposalCommon {
     kind: "nns";
     topic: NnsProposalTopic;

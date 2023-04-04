@@ -1,6 +1,7 @@
 import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
 
+export interface Ballot { 'vote' : number, 'voting_power' : bigint }
 export type FunctionType = { 'NativeNervousSystemFunction' : {} } |
   { 'GenericNervousSystemFunction' : GenericNervousSystemFunction };
 export interface GenericNervousSystemFunction {
@@ -33,6 +34,7 @@ export interface NervousSystemFunction {
 }
 export interface ProposalData {
   'id' : [] | [ProposalId],
+  'ballots' : Array<[string, Ballot]>,
   'latest_tally' : [] | [Tally],
 }
 export interface ProposalId { 'id' : bigint }

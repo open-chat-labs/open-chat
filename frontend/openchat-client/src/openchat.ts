@@ -290,7 +290,6 @@ import {
     type Logger,
     type ChatFrozenEvent,
     type ChatUnfrozenEvent,
-    type Tally,
     type UserStatus,
     userStatus,
     MergedUpdatesResponse,
@@ -303,6 +302,7 @@ import {
     UpdatedEvent,
     compareRoles,
     EligibleForInitialAirdropResponse,
+    ProposalVoteDetails,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -2980,10 +2980,10 @@ export class OpenChat extends EventTarget {
         return this.api.registerProposalVote(chatId, messageIndex, adopt);
     }
 
-    getSnsProposalTally(snsGovernanceCanisterId: string, proposalId: bigint): Promise<Tally> {
-        return this.api.getSnsProposalTally(snsGovernanceCanisterId, proposalId).then((tally) => {
-            proposalTallies.setTally(snsGovernanceCanisterId, proposalId, tally);
-            return tally;
+    getProposalVoteDetails(governanceCanisterId: string, proposalId: bigint, isNns: boolean): Promise<ProposalVoteDetails> {
+        return this.api.getProposalVoteDetails(governanceCanisterId, proposalId, isNns).then((resp) => {
+            proposalTallies.setTally(governanceCanisterId, proposalId, resp.latestTally);
+            return resp;
         });
     }
 

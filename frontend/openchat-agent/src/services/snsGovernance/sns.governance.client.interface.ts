@@ -1,6 +1,6 @@
-import type { ListNervousSystemFunctionsResponse, Tally } from "openchat-shared";
+import type { ListNervousSystemFunctionsResponse, ProposalVoteDetails } from "openchat-shared";
 
 export interface ISnsGovernanceClient {
-    getProposalTally(proposalId: bigint): Promise<Tally>;
+    getProposalVoteDetails(proposalId: bigint): Promise<ProposalVoteDetails>;
     listNervousSystemFunctions(): Promise<ListNervousSystemFunctionsResponse>;
 }

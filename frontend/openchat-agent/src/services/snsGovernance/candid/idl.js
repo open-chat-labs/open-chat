@@ -27,6 +27,7 @@ export const idlFactory = ({ IDL }) => {
     'exclude_type' : IDL.Vec(IDL.Nat64),
     'include_status' : IDL.Vec(IDL.Int32),
   });
+  const Ballot = IDL.Record({ 'vote' : IDL.Int32, 'voting_power' : IDL.Nat64 });
   const Tally = IDL.Record({
     'no' : IDL.Nat64,
     'yes' : IDL.Nat64,
@@ -35,6 +36,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const ProposalData = IDL.Record({
     'id' : IDL.Opt(ProposalId),
+    'ballots' : IDL.Vec(IDL.Tuple(IDL.Text, Ballot)),
     'latest_tally' : IDL.Opt(Tally),
   });
   const ListProposalsResponse = IDL.Record({

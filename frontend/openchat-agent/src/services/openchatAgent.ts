@@ -137,13 +137,13 @@ import {
     PayForDiamondMembershipResponse,
     AddHotGroupExclusionResponse,
     RemoveHotGroupExclusionResponse,
-    Tally,
     SetGroupUpgradeConcurrencyResponse,
     SetUserUpgradeConcurrencyResponse,
     UpdateMarketMakerConfigArgs,
     UpdateMarketMakerConfigResponse,
     SetNeuronControllerResponse,
     EligibleForInitialAirdropResponse,
+    ProposalVoteDetails,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import { applyOptionUpdate } from "../utils/mapping";
@@ -1418,12 +1418,16 @@ export class OpenChatAgent extends EventTarget {
         return userClient.migrateUserPrincipal();
     }
 
-    getSnsProposalTally(snsGovernanceCanisterId: string, proposalId: bigint): Promise<Tally> {
-        return SnsGovernanceClient.create(
-            this.identity,
-            this.config,
-            snsGovernanceCanisterId
-        ).getProposalTally(proposalId);
+    getProposalVoteDetails(governanceCanisterId: string, proposalId: bigint, isNns: boolean): Promise<ProposalVoteDetails> {
+        if (isNns) {
+            throw new Error("TODO!");
+        } else {
+            return SnsGovernanceClient.create(
+                this.identity,
+                this.config,
+                governanceCanisterId
+            ).getProposalVoteDetails(proposalId);
+        }
     }
 
     listNervousSystemFunctions(

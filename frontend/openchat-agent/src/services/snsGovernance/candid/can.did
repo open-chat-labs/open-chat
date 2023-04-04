@@ -1,6 +1,10 @@
 // This is a trimmed down version of the full SNS governance candid file which can be found here -
 // https://github.com/dfinity/ic/blob/master/rs/sns/governance/canister/governance.did
 
+type Ballot = record {
+  vote: int32;
+  voting_power: nat64;
+};
 type FunctionType = variant {
   NativeNervousSystemFunction : record {};
   GenericNervousSystemFunction : GenericNervousSystemFunction;
@@ -32,6 +36,7 @@ type NervousSystemFunction = record {
 };
 type ProposalData = record {
   id : opt ProposalId;
+  ballots : vec record { text; Ballot };
   latest_tally : opt Tally;
 };
 type ProposalId = record { id : nat64 };

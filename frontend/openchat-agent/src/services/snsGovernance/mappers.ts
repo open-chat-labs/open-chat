@@ -4,27 +4,36 @@ import type {
     ApiNervousSystemFunction,
     ApiSnsFunctionType
 } from "./candid/idl";
-import type { ListNervousSystemFunctionsResponse, NervousSystemFunction, SnsFunctionType, Tally } from "openchat-shared";
+import type { ListNervousSystemFunctionsResponse, NervousSystemFunction, ProposalVoteDetails, SnsFunctionType } from "openchat-shared";
 import { identity, optional } from "../../utils/mapping";
+import { proposalVote } from "../common/chatMappers";
 
 const E8S_AS_BIGINT = BigInt(100_000_000);
 
-export function getProposalTallyResponse(
+export function getProposalVoteDetails(
     candid: ApiListProposalsResponse
-): Tally {
+): ProposalVoteDetails {
     const proposal = candid.proposals[0];
     if (proposal === undefined) {
         throw new Error("GetProposal returned an empty response");
     }
+        const ballots = proposal.ballots;
         const tally = proposal.latest_tally[0]!;
         return {
-            yes: Number(tally.yes / E8S_AS_BIGINT),
-            no: Number(tally.no / E8S_AS_BIGINT),
-            total: Number(tally.total / E8S_AS_BIGINT),
-            timestamp: tally.timestamp_seconds * BigInt(1000)
+            id: proposal.id[0]!.id,
+            ballots: ballots.map(([n, b]) => ({
+                neuronId: n,
+                vote: proposalVote(b.vote),
+                votingPower: b.voting_power,
+            })),
+            latestTally: {
+                yes: Number(tally.yes / E8S_AS_BIGINT),
+                no: Number(tally.no / E8S_AS_BIGINT),
+                total: Number(tally.total / E8S_AS_BIGINT),
+                timestamp: tally.timestamp_seconds * BigInt(1000)
+            }
         };
 }
-
 
 export function nervousSystemFunctions(
     candid: ApiListNervousSystemFunctionsResponse
