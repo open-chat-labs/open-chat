@@ -691,6 +691,8 @@
             .then((resp) => {
                 if (resp === "blocked") {
                     toastStore.showFailureToast("youreBlocked");
+                } else if (resp === "gate_check_failed") {
+                    toastStore.showFailureToast("group.gateCheckFailed");
                 } else if (resp === "failure") {
                     toastStore.showFailureToast("joinGroupFailed");
                 } else if (select) {

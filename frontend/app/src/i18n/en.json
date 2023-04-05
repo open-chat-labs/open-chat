@@ -462,7 +462,8 @@
         "minDissolveDelay": "Minimum dissolve delay (days)",
         "minStake": "Minimum stake (tokens)",
         "optional": "Optional",
-        "openAccessInfo": "There are no special access requirements to join this group"
+        "openAccessInfo": "There are no special access requirements to join this group",
+        "gateCheckFailed": "Sorry - you have not met the entry requirements for this group"
     },
     "updateNow": "reload now",
     "updateRequired": "A new version of OpenChat is available - reloading in {countdown}s",

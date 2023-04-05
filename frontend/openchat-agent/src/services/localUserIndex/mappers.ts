@@ -1,5 +1,14 @@
-import { GroupChatSummary, JoinGroupResponse, UnsupportedValueError } from "openchat-shared";
-import type { ApiGroupCanisterGroupChatSummary, ApiJoinGroupResponse } from "./candid/idl";
+import {
+    GateCheckFailedReason,
+    GroupChatSummary,
+    JoinGroupResponse,
+    UnsupportedValueError,
+} from "openchat-shared";
+import type {
+    ApiGateCheckFailedReason,
+    ApiGroupCanisterGroupChatSummary,
+    ApiJoinGroupResponse,
+} from "./candid/idl";
 import { identity, optional } from "../../utils/mapping";
 import {
     apiGroupSubtype,
@@ -44,6 +53,25 @@ export function joinGroupResponse(candid: ApiJoinGroupResponse): JoinGroupRespon
     }
     if ("ChatFrozen" in candid) {
         return { kind: "chat_frozen" };
+    }
+    if ("GateCheckFailed" in candid) {
+        return { kind: "gate_check_failed", reason: gateCheckFailedReason(candid.GateCheckFailed) };
+    }
+    throw new UnsupportedValueError("Unexpected ApiJoinGroupResponse type received", candid);
+}
+
+function gateCheckFailedReason(candid: ApiGateCheckFailedReason): GateCheckFailedReason {
+    if ("NotDiamondMember" in candid) {
+        return "not_diamond";
+    }
+    if ("NoSnsNeuronsFound" in candid) {
+        return "no_sns_neuron_found";
+    }
+    if ("NoSnsNeuronsWithRequiredDissolveDelayFound" in candid) {
+        return "dissolve_delay_not_met";
+    }
+    if ("NoSnsNeuronsWithRequiredStakeFound" in candid) {
+        return "min_stake_not_met";
     }
     throw new UnsupportedValueError("Unexpected ApiJoinGroupResponse type received", candid);
 }

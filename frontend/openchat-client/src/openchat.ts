@@ -903,7 +903,9 @@ export class OpenChat extends EventTarget {
             });
     }
 
-    async joinGroup(group: GroupChatSummary): Promise<"success" | "blocked" | "failure"> {
+    async joinGroup(
+        group: GroupChatSummary
+    ): Promise<"success" | "blocked" | "failure" | "gate_check_failed"> {
         return this.api
             .joinGroup(group.chatId)
             .then((resp) => {
@@ -919,6 +921,8 @@ export class OpenChat extends EventTarget {
                 } else {
                     if (resp.kind === "blocked") {
                         return "blocked";
+                    } else if (resp.kind === "gate_check_failed") {
+                        return "gate_check_failed";
                     }
                     return "failure";
                 }

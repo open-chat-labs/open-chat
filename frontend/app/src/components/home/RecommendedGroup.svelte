@@ -11,6 +11,7 @@
     import { createEventDispatcher, getContext } from "svelte";
     import Button from "../Button.svelte";
     import page from "page";
+    import GroupGateIcon from "./GroupGateIcon.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -61,6 +62,9 @@
         </div>
     </div>
     <Footer align="end">
+        <div class="gate">
+            <GroupGateIcon gate={group.gate} />
+        </div>
         {#if !client.isReadOnly()}
             <Button
                 disabled={joining === group}
@@ -135,6 +139,11 @@
         .user-count {
             @include font(light, normal, fs-80);
             color: var(--txt-light);
+        }
+
+        .gate {
+            position: absolute;
+            left: $sp4;
         }
     }
 </style>

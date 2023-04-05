@@ -1291,6 +1291,17 @@ export type ChatFrozen = {
     kind: "chat_frozen";
 };
 
+export type GateCheckFailed = {
+    kind: "gate_check_failed";
+    reason: GateCheckFailedReason;
+};
+
+export type GateCheckFailedReason =
+    | "not_diamond"
+    | "no_sns_neuron_found"
+    | "dissolve_delay_not_met"
+    | "min_stake_not_met";
+
 export type ChatFrozenEvent = {
     kind: "chat_frozen";
     frozenBy: string;
@@ -1390,6 +1401,7 @@ export type JoinGroupResponse =
     | { kind: "already_in_group" }
     | { kind: "not_super_admin" }
     | { kind: "member_limit_reached" }
+    | GateCheckFailed
     | UserSuspended
     | ChatFrozen
     | InternalError;
