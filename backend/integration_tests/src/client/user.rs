@@ -13,6 +13,7 @@ generate_update_call!(block_user);
 generate_update_call!(delete_group);
 generate_update_call!(delete_messages);
 generate_update_call!(edit_message);
+generate_update_call!(clear_message_reminder);
 generate_update_call!(create_group);
 generate_update_call!(leave_group);
 generate_update_call!(mark_read_v2);

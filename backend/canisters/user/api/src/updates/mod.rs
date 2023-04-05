@@ -20,6 +20,7 @@ pub mod c2c_toggle_reaction;
 pub mod c2c_try_add_to_group;
 pub mod c2c_undelete_messages;
 pub mod c2c_vote_on_proposal;
+pub mod clear_message_reminder;
 pub mod create_group;
 pub mod delete_group;
 pub mod delete_messages;

@@ -1,5 +1,6 @@
 use crate::guards::caller_is_owner;
 use crate::timer_job_types::{MessageReminderJob, TimerJob};
+use crate::updates::clear_message_reminder::clear_message_reminder_impl;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
@@ -29,17 +30,9 @@ fn set_message_reminder_impl(args: Args, state: &mut RuntimeState) -> Response {
         });
     }
 
-    let now = state.env.now();
+    clear_message_reminder_impl(args.chat_id, args.thread_root_message_index, args.message_index, state);
 
-    state.data.timer_jobs.cancel_jobs(|j| {
-        if let TimerJob::MessageReminder(job) = j {
-            job.chat_id == args.chat_id
-                && job.thread_root_message_index == args.thread_root_message_index
-                && job.message_index == args.message_index
-        } else {
-            false
-        }
-    });
+    let now = state.env.now();
     state.data.timer_jobs.enqueue_job(
         TimerJob::MessageReminder(MessageReminderJob {
             chat_id: args.chat_id,
