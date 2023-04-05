@@ -18,6 +18,7 @@ fn main() {
     generate_candid_method!(user, add_reaction, update);
     generate_candid_method!(user, archive_chat, update);
     generate_candid_method!(user, block_user, update);
+    generate_candid_method!(user, clear_message_reminder, update);
     generate_candid_method!(user, create_group, update);
     generate_candid_method!(user, delete_group, update);
     generate_candid_method!(user, delete_messages, update);
@@ -34,6 +35,7 @@ fn main() {
     generate_candid_method!(user, set_avatar, update);
     generate_candid_method!(user, set_bio, update);
     generate_candid_method!(user, set_contact, update);
+    generate_candid_method!(user, set_message_reminder, update);
     generate_candid_method!(user, transfer_crypto_within_group_v2, update);
     generate_candid_method!(user, unarchive_chat, update);
     generate_candid_method!(user, unblock_user, update);
