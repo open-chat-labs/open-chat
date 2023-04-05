@@ -724,6 +724,7 @@
         "diamondPrivateGroups": "25",
         "publicGroups": "Public groups",
         "diamondPublicGroups": "10",
+        "gatedGroups": "Gated groups",
         "translations": "Translations",
         "polls": "Create polls",
         "crypto": "Send crypto",
