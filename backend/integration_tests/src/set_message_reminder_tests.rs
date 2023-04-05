@@ -71,7 +71,7 @@ fn set_message_reminder_succeeds() {
 }
 
 #[test]
-fn set_message_reminder_again_clears_original_reminder() {
+fn setting_message_reminder_again_clears_original_reminder() {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
