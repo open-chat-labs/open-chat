@@ -4,7 +4,6 @@ use types::{CanisterId, UserDetails};
 use user_index_canister::*;
 
 // Queries
-generate_c2c_call!(c2c_lookup_principal);
 generate_c2c_call!(c2c_lookup_user);
 generate_c2c_call!(user);
 
