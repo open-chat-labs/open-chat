@@ -322,6 +322,22 @@ type SetContactResponse =
         UserSuspended;
     };
 
+type SetMessageReminderArgs =
+    record {
+        chat_id: ChatId;
+        thread_root_message_index: opt MessageIndex;
+        message_index: MessageIndex;
+        notes: opt text;
+        remind_at: TimestampMillis;
+    };
+
+type SetMessageReminderResponse =
+    variant {
+        Success;
+        NotesTooLong: FieldTooLongResult;
+        UserSuspended;
+    };
+
 type TransferCryptoWithinGroupArgs =
     record {
         message_id: MessageId;
@@ -682,6 +698,7 @@ service: {
     add_hot_group_exclusions: (AddHotGroupExclusionsArgs) -> (AddHotGroupExclusionsResponse);
     set_bio: (SetBioArgs) -> (SetBioResponse);
     set_contact: (SetContactArgs) -> (SetContactResponse);
+    set_message_reminder: (SetMessageReminderArgs) -> (SetMessageReminderResponse);
     send_message_with_transfer_to_group: (SendMessageWithTransferToGroupArgs) -> (SendMessageWithTransferToGroupResponse);
     transfer_crypto_within_group_v2: (TransferCryptoWithinGroupArgs) -> (SendMessageWithTransferToGroupResponse);
     withdraw_crypto_v2: (WithdrawCryptoArgs) -> (WithdrawCryptoResponse);
