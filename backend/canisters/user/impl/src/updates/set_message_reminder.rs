@@ -31,6 +31,15 @@ fn set_message_reminder_impl(args: Args, state: &mut RuntimeState) -> Response {
 
     let now = state.env.now();
 
+    state.data.timer_jobs.cancel_jobs(|j| {
+        if let TimerJob::MessageReminder(job) = j {
+            job.chat_id == args.chat_id
+                && job.thread_root_message_index == args.thread_root_message_index
+                && job.message_index == args.message_index
+        } else {
+            false
+        }
+    });
     state.data.timer_jobs.enqueue_job(
         TimerJob::MessageReminder(MessageReminderJob {
             chat_id: args.chat_id,
