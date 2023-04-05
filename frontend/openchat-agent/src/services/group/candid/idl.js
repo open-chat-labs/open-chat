@@ -563,13 +563,26 @@ export const idlFactory = ({ IDL }) => {
     'new_name' : IDL.Text,
     'previous_name' : IDL.Text,
   });
+  const Milliseconds = IDL.Nat64;
+  const SnsNeuronGate = IDL.Record({
+    'min_stake_e8s' : IDL.Opt(IDL.Nat64),
+    'min_dissolve_delay' : IDL.Opt(Milliseconds),
+    'governance_canister_id' : CanisterId,
+  });
+  const GroupGate = IDL.Variant({
+    'SnsNeuron' : SnsNeuronGate,
+    'DiamondMember' : IDL.Null,
+  });
+  const GroupGateUpdated = IDL.Record({
+    'updated_by' : UserId,
+    'new_gate' : IDL.Opt(GroupGate),
+  });
   const RoleChanged = IDL.Record({
     'user_ids' : IDL.Vec(UserId),
     'changed_by' : UserId,
     'old_role' : Role,
     'new_role' : Role,
   });
-  const Milliseconds = IDL.Nat64;
   const EventsTimeToLiveUpdated = IDL.Record({
     'new_ttl' : IDL.Opt(Milliseconds),
     'updated_by' : UserId,
@@ -624,6 +637,7 @@ export const idlFactory = ({ IDL }) => {
     'ParticipantDismissedAsSuperAdmin' : ParticipantDismissedAsSuperAdmin,
     'GroupNameChanged' : GroupNameChanged,
     'MessageUndeleted' : UpdatedMessage,
+    'GroupGateUpdated' : GroupGateUpdated,
     'RoleChanged' : RoleChanged,
     'PollVoteDeleted' : UpdatedMessage,
     'EventsTimeToLiveUpdated' : EventsTimeToLiveUpdated,
@@ -739,6 +753,7 @@ export const idlFactory = ({ IDL }) => {
   const PublicGroupSummary = IDL.Record({
     'is_public' : IDL.Bool,
     'subtype' : IDL.Opt(GroupSubtype),
+    'gate' : IDL.Opt(GroupGate),
     'name' : IDL.Text,
     'wasm_version' : Version,
     'description' : IDL.Text,
@@ -1007,6 +1022,7 @@ export const idlFactory = ({ IDL }) => {
     'subtype' : IDL.Opt(GroupSubtype),
     'date_last_pinned' : IDL.Opt(TimestampMillis),
     'min_visible_event_index' : EventIndex,
+    'gate' : IDL.Opt(GroupGate),
     'name' : IDL.Text,
     'role' : Role,
     'wasm_version' : Version,
@@ -1166,6 +1182,11 @@ export const idlFactory = ({ IDL }) => {
     'reply_in_thread' : IDL.Opt(PermissionRole),
     'react_to_messages' : IDL.Opt(PermissionRole),
   });
+  const GroupGateUpdate = IDL.Variant({
+    'NoChange' : IDL.Null,
+    'SetToNone' : IDL.Null,
+    'SetToSome' : GroupGate,
+  });
   const Avatar = IDL.Record({
     'id' : IDL.Nat,
     'data' : IDL.Vec(IDL.Nat8),
@@ -1178,6 +1199,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const UpdateGroupV2Args = IDL.Record({
     'permissions' : IDL.Opt(OptionalGroupPermissions),
+    'gate' : GroupGateUpdate,
     'name' : IDL.Opt(IDL.Text),
     'description' : IDL.Opt(IDL.Text),
     'events_ttl' : EventsTimeToLiveUpdate,

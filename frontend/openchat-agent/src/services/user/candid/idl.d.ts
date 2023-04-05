@@ -95,6 +95,7 @@ import {
     ArchiveChatResponse,
     Icrc1Account,
     DeletedMessageResponse,
+    GroupGate,
 } from "./types";
 export {
     _SERVICE as UserService,
@@ -191,6 +192,7 @@ export {
     Icrc1Account as ApiIcrc1Account,
     DeletedMessageResponse as ApiDeletedDirectMessageResponse,
     SendMessageWithTransferToGroupResponse as ApiSendMessageWithTransferToGroupResponse,
+    GroupGate as ApiGroupGate,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

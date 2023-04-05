@@ -691,6 +691,8 @@
             .then((resp) => {
                 if (resp === "blocked") {
                     toastStore.showFailureToast("youreBlocked");
+                } else if (resp === "gate_check_failed") {
+                    toastStore.showFailureToast("group.gateCheckFailed");
                 } else if (resp === "failure") {
                     toastStore.showFailureToast("joinGroupFailed");
                 } else if (select) {
@@ -820,6 +822,7 @@
                 text: defaultGroupRules,
                 enabled: false,
             },
+            gate: { kind: "no_gate" },
         };
     }
 
@@ -845,6 +848,7 @@
                 blobUrl: chat.blobUrl,
                 blobData: chat.blobData,
             },
+            gate: chat.gate,
         };
     }
 

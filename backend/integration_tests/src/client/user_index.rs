@@ -27,7 +27,7 @@ pub mod happy_path {
     use crate::User;
     use candid::Principal;
     use ic_test_state_machine_client::StateMachine;
-    use types::{CanisterId, ChallengeAttempt};
+    use types::{CanisterId, ChallengeAttempt, Cryptocurrency, DiamondMembershipDetails, DiamondMembershipPlanDuration};
 
     pub fn current_user(
         env: &StateMachine,
@@ -62,6 +62,31 @@ pub mod happy_path {
         match response {
             user_index_canister::register_user::Response::Success(user_id) => User { principal, user_id },
             response => panic!("'register_user' error: {response:?}"),
+        }
+    }
+
+    pub fn pay_for_diamond_membership(
+        env: &mut StateMachine,
+        sender: Principal,
+        canister_id: CanisterId,
+        duration: DiamondMembershipPlanDuration,
+        recurring: bool,
+    ) -> DiamondMembershipDetails {
+        let response = super::pay_for_diamond_membership(
+            env,
+            sender,
+            canister_id,
+            &user_index_canister::pay_for_diamond_membership::Args {
+                duration,
+                token: Cryptocurrency::InternetComputer,
+                expected_price_e8s: duration.icp_price_e8s(),
+                recurring,
+            },
+        );
+
+        match response {
+            user_index_canister::pay_for_diamond_membership::Response::Success(result) => result,
+            response => panic!("'pay_for_diamond_membership' error: {response:?}"),
         }
     }
 }

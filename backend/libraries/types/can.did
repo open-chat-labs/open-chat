@@ -231,6 +231,7 @@ type ChatEvent =
         ChatFrozen: ChatFrozen;
         ChatUnfrozen: ChatUnfrozen;
         EventsTimeToLiveUpdated: EventsTimeToLiveUpdated;
+        GroupGateUpdated: GroupGateUpdated;
     };
 
 type ChatEventWrapper =
@@ -274,6 +275,7 @@ type GroupChatSummary =
         events_ttl: opt Milliseconds;
         expired_messages: vec MessageIndexRange;
         next_message_expiry: opt TimestampMillis;
+        gate: opt GroupGate;
     };
 
 type GroupCanisterGroupChatSummary =
@@ -305,6 +307,7 @@ type GroupCanisterGroupChatSummary =
         events_ttl: opt Milliseconds;
         expired_messages: vec MessageIndexRange;
         next_message_expiry: opt TimestampMillis;
+        gate: opt GroupGate;
     };
 
 type GroupCanisterGroupChatSummaryUpdates =
@@ -334,6 +337,7 @@ type GroupCanisterGroupChatSummaryUpdates =
         events_ttl: EventsTimeToLiveUpdate;
         newly_expired_messages: vec MessageIndexRange;
         next_message_expiry: TimestampUpdate;
+        gate: GroupGateUpdate;
     };
 
 type GroupDescriptionChanged =
@@ -511,6 +515,7 @@ type PublicGroupSummary =
         participant_count: nat32;
         is_public: bool;
         frozen: opt FrozenGroupInfo;
+        gate: opt GroupGate;
         wasm_version: Version;
     };
 
@@ -1216,4 +1221,38 @@ type DiamondMembershipPlanDuration =
         OneMonth;
         ThreeMonths;
         OneYear;
+    };
+
+type GroupGate =
+    variant {
+        DiamondMember;
+        SnsNeuron: SnsNeuronGate;
+    };
+
+type GroupGateUpdate =
+    variant {
+        NoChange;
+        SetToNone;
+        SetToSome: GroupGate;
+    };
+
+type GroupGateUpdated =
+    record {
+        updated_by: UserId;
+        new_gate: opt GroupGate;
+    };
+
+type SnsNeuronGate =
+    record {
+        governance_canister_id: CanisterId;
+        min_stake_e8s: opt nat64;
+        min_dissolve_delay: opt Milliseconds;
+    };
+
+type GateCheckFailedReason =
+    variant {
+        NotDiamondMember;
+        NoSnsNeuronsFound;
+        NoSnsNeuronsWithRequiredStakeFound;
+        NoSnsNeuronsWithRequiredDissolveDelayFound;
     };

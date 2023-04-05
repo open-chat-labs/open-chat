@@ -38,6 +38,7 @@ import type {
     EventWrapper,
     OptionUpdate,
     ClaimPrizeResponse,
+    GroupGate,
 } from "openchat-shared";
 
 export interface IGroupClient {
@@ -82,7 +83,8 @@ export interface IGroupClient {
         rules?: GroupRules,
         permissions?: Partial<GroupPermissions>,
         avatar?: Uint8Array,
-        eventsTimeToLiveMs?: OptionUpdate<bigint>
+        eventsTimeToLiveMs?: OptionUpdate<bigint>,
+        gate?: GroupGate
     ): Promise<UpdateGroupResponse>;
     addReaction(
         messageId: bigint,

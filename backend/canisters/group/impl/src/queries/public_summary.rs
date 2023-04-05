@@ -34,6 +34,7 @@ fn public_summary_impl(args: Args, runtime_state: &RuntimeState) -> Response {
         is_public: runtime_state.data.is_public,
         frozen: runtime_state.data.frozen.value.clone(),
         events_ttl: runtime_state.data.events.get_events_time_to_live().value,
+        gate: runtime_state.data.gate.value.clone(),
         wasm_version: Version::default(),
     };
     Success(SuccessResult { summary })

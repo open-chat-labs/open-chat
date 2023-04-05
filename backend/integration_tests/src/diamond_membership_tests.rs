@@ -5,7 +5,7 @@ use crate::{client, TestEnv};
 use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
-use types::{Cryptocurrency, DiamondMembershipPlanDuration};
+use types::DiamondMembershipPlanDuration;
 use utils::time::MINUTE_IN_MS;
 
 #[test]
@@ -29,26 +29,17 @@ fn can_upgrade_to_diamond() {
 
     let now = now_millis(env);
 
-    let diamond_response = client::user_index::pay_for_diamond_membership(
+    let expected_expiry = now + DiamondMembershipPlanDuration::OneMonth.as_millis();
+
+    let diamond_response = client::user_index::happy_path::pay_for_diamond_membership(
         env,
         user.principal,
         canister_ids.user_index,
-        &user_index_canister::pay_for_diamond_membership::Args {
-            duration: DiamondMembershipPlanDuration::OneMonth,
-            token: Cryptocurrency::InternetComputer,
-            expected_price_e8s: 20_000_000,
-            recurring: false,
-        },
+        DiamondMembershipPlanDuration::OneMonth,
+        false,
     );
-
-    let expected_expiry = now + DiamondMembershipPlanDuration::OneMonth.as_millis();
-
-    if let user_index_canister::pay_for_diamond_membership::Response::Success(d) = diamond_response {
-        assert_eq!(d.expires_at, expected_expiry);
-        assert!(d.recurring.is_none());
-    } else {
-        panic!();
-    }
+    assert_eq!(diamond_response.expires_at, expected_expiry);
+    assert!(diamond_response.recurring.is_none());
 
     let user_response = client::user_index::happy_path::current_user(env, user.principal, canister_ids.user_index);
     assert_eq!(
@@ -81,16 +72,12 @@ fn membership_renews_automatically_if_set_to_recurring(ledger_error: bool) {
         1_000_000_000u64,
     );
 
-    client::user_index::pay_for_diamond_membership(
+    client::user_index::happy_path::pay_for_diamond_membership(
         env,
         user.principal,
         canister_ids.user_index,
-        &user_index_canister::pay_for_diamond_membership::Args {
-            duration: DiamondMembershipPlanDuration::OneMonth,
-            token: Cryptocurrency::InternetComputer,
-            expected_price_e8s: 20_000_000,
-            recurring: true,
-        },
+        DiamondMembershipPlanDuration::OneMonth,
+        true,
     );
 
     let start_time = now_millis(env);

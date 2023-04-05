@@ -18,6 +18,7 @@ canister_timer_jobs = { workspace = true }
 canister_tracing_macros = { workspace = true }
 chat_events = { path = "../../../libraries/chat_events" }
 futures = { workspace = true }
+gated_groups = { path = "../../../libraries/gated_groups" }
 group_canister = { path = "../api" }
 group_index_canister = { path = "../../group_index/api" }
 group_index_canister_c2c_client = { path = "../../group_index/c2c_client" }

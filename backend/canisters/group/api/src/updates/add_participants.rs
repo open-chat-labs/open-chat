@@ -29,6 +29,7 @@ pub struct PartialSuccessResult {
     pub users_blocked_from_group: Vec<UserId>,
     pub users_who_blocked_request: Vec<UserId>,
     pub users_not_authorized_to_add: Vec<UserId>,
+    pub users_who_failed_gate_check: Vec<UserId>,
     pub users_suspended: Vec<UserId>,
     pub errors: Vec<UserId>,
 }
@@ -38,6 +39,8 @@ pub struct FailedResult {
     pub users_already_in_group: Vec<UserId>,
     pub users_blocked_from_group: Vec<UserId>,
     pub users_who_blocked_request: Vec<UserId>,
+    pub users_not_authorized_to_add: Vec<UserId>,
+    pub users_who_failed_gate_check: Vec<UserId>,
     pub users_suspended: Vec<UserId>,
     pub errors: Vec<UserId>,
 }

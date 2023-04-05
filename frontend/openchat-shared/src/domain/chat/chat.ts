@@ -3,6 +3,9 @@ import type { PartialUserSummary, UserSummary } from "../user/user";
 import type { OptionUpdate } from "../optionUpdate";
 import type { Cryptocurrency } from "../crypto";
 
+export const Sns1GovernanceCanisterId = "zqfso-syaaa-aaaaq-aaafq-cai";
+export const OpenChatGovernanceCanisterId = "2jvtu-yqaaa-aaaaq-aaama-cai";
+
 export type InternalError = { kind: "internal_error" };
 export type UserSuspended = { kind: "user_suspended" };
 export type CallerNotInGroup = { kind: "caller_not_in_group" };
@@ -396,6 +399,7 @@ export type LocalChatSummaryUpdates = {
               notificationsMuted?: boolean;
               archived?: boolean;
               frozen?: boolean;
+              gate?: GroupGate;
           };
     removedAtTimestamp?: bigint;
     lastUpdated: number;
@@ -467,6 +471,7 @@ export type GroupChatEvent =
     | ThreadUpdated
     | ProposalsUpdated
     | ChatFrozenEvent
+    | GateUpdatedEvent
     | ChatUnfrozenEvent
     | EventsTimeToLiveUpdated;
 
@@ -912,6 +917,35 @@ type ChatSummaryCommon = {
     archived: boolean;
 };
 
+export type GroupGate =
+    | NoGate
+    | Sns1NeuronGate
+    | OpenChatNeuronGate
+    | DiamondGate
+    | NnsNeuronGate
+    | NftGate;
+
+export type NoGate = { kind: "no_gate" };
+
+export type NnsNeuronGate = { kind: "nns_gate" };
+
+export type NftGate = { kind: "nft_gate" };
+
+type SnsNeuronGate = {
+    minStakeE8s?: number;
+    minDissolveDelay?: number;
+};
+
+export type Sns1NeuronGate = SnsNeuronGate & {
+    kind: "sns1_gate";
+};
+
+export type OpenChatNeuronGate = SnsNeuronGate & {
+    kind: "openchat_gate";
+};
+
+export type DiamondGate = { kind: "diamond_gate" };
+
 export type DirectChatSummary = ChatSummaryCommon & {
     kind: "direct_chat";
     them: string;
@@ -940,6 +974,7 @@ export type GroupChatSummary = DataContent &
         frozen: boolean;
         dateLastPinned: bigint | undefined;
         dateReadPinned: bigint | undefined;
+        gate: GroupGate;
     };
 
 export type GroupCanisterSummaryResponse = GroupCanisterGroupChatSummary | CallerNotInGroup;
@@ -973,6 +1008,7 @@ export type GroupCanisterGroupChatSummary = {
     latestThreads: GroupCanisterThreadDetails[];
     frozen: boolean;
     dateLastPinned: bigint | undefined;
+    gate: GroupGate;
 };
 
 export type UpdatedEvent = {
@@ -1041,6 +1077,7 @@ export type CandidateGroupChat = {
     members: CandidateMember[];
     avatar?: DataContent;
     permissions: GroupPermissions;
+    gate: GroupGate;
 };
 
 // todo - there are all sorts of error conditions here that we need to deal with but - later
@@ -1255,10 +1292,26 @@ export type ChatFrozen = {
     kind: "chat_frozen";
 };
 
+export type GateCheckFailed = {
+    kind: "gate_check_failed";
+    reason: GateCheckFailedReason;
+};
+
+export type GateCheckFailedReason =
+    | "not_diamond"
+    | "no_sns_neuron_found"
+    | "dissolve_delay_not_met"
+    | "min_stake_not_met";
+
 export type ChatFrozenEvent = {
     kind: "chat_frozen";
     frozenBy: string;
     reason: string | undefined;
+};
+
+export type GateUpdatedEvent = {
+    kind: "gate_updated";
+    updatedBy: string;
 };
 
 export type ChatUnfrozenEvent = {
@@ -1349,6 +1402,7 @@ export type JoinGroupResponse =
     | { kind: "already_in_group" }
     | { kind: "not_super_admin" }
     | { kind: "member_limit_reached" }
+    | GateCheckFailed
     | UserSuspended
     | ChatFrozen
     | InternalError;

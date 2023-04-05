@@ -13,7 +13,7 @@ use std::cell::RefCell;
 use std::collections::HashMap;
 use std::ops::Deref;
 use types::{
-    Avatar, CanisterId, ChatId, Cryptocurrency, Cycles, EventIndex, FrozenGroupInfo, GroupCanisterGroupChatSummary,
+    Avatar, CanisterId, ChatId, Cryptocurrency, Cycles, EventIndex, FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupGate,
     GroupPermissions, GroupRules, GroupSubtype, MessageIndex, Milliseconds, Notification, TimestampMillis, Timestamped, UserId,
     Version, MAX_THREADS_IN_SUMMARY,
 };
@@ -125,6 +125,7 @@ impl RuntimeState {
             events_ttl: data.events.get_events_time_to_live().value,
             expired_messages: data.events.expired_messages(now),
             next_message_expiry: data.events.next_message_expiry(now),
+            gate: data.gate.value.clone(),
         }
     }
 
@@ -253,6 +254,8 @@ struct Data {
     pub frozen: Timestamped<Option<FrozenGroupInfo>>,
     pub timer_jobs: TimerJobs<TimerJob>,
     pub date_last_pinned: Option<TimestampMillis>,
+    #[serde(default)]
+    pub gate: Timestamped<Option<GroupGate>>,
 }
 
 fn initialize_ledger_ids() -> HashMap<Cryptocurrency, CanisterId> {
@@ -302,6 +305,7 @@ impl Data {
         proposals_bot_user_id: UserId,
         test_mode: bool,
         permissions: Option<GroupPermissions>,
+        gate: Option<GroupGate>,
     ) -> Data {
         let participants = Participants::new(creator_principal, creator_user_id, now);
         let events = ChatEvents::new_group_chat(chat_id, name.clone(), description.clone(), creator_user_id, events_ttl, now);
@@ -335,6 +339,7 @@ impl Data {
             frozen: Timestamped::default(),
             timer_jobs: TimerJobs::default(),
             date_last_pinned: None,
+            gate: Timestamped::new(gate, now),
         }
     }
 

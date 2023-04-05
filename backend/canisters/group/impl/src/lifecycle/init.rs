@@ -35,6 +35,7 @@ fn init(args: Args) {
         args.proposals_bot_user_id,
         args.test_mode,
         args.permissions,
+        args.gate,
     );
 
     init_state(env, data, args.wasm_version);

@@ -7,7 +7,7 @@ use ic_ledger_types::{BlockIndex, TransferError};
 use local_user_index_canister::{DiamondMembershipPaymentReceived, Event};
 use storage_index_canister::add_or_update_users::UserConfig;
 use tracing::error;
-use types::{Cryptocurrency, DiamondMembershipPlanDuration, UserId, ICP};
+use types::{Cryptocurrency, UserId, ICP};
 use user_index_canister::pay_for_diamond_membership::{Response::*, *};
 use utils::time::DAY_IN_MS;
 
@@ -62,19 +62,11 @@ fn prepare(args: &Args, user_id: UserId, runtime_state: &mut RuntimeState) -> Re
         Err(CannotExtend(result))
     } else if args.token != Cryptocurrency::InternetComputer {
         Err(CurrencyNotSupported)
-    } else if args.expected_price_e8s != icp_price_e8s(args.duration) {
+    } else if args.expected_price_e8s != args.duration.icp_price_e8s() {
         Err(PriceMismatch)
     } else {
         diamond_membership.set_payment_in_progress(true);
         Ok(())
-    }
-}
-
-pub(crate) fn icp_price_e8s(duration: DiamondMembershipPlanDuration) -> u64 {
-    match duration {
-        DiamondMembershipPlanDuration::OneMonth => 20_000_000,    // 0.2 ICP
-        DiamondMembershipPlanDuration::ThreeMonths => 50_000_000, // 0.5 ICP
-        DiamondMembershipPlanDuration::OneYear => 150_000_000,    // 1.5 ICP
     }
 }
 

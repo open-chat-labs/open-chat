@@ -31,6 +31,8 @@
     import MessageActions from "./MessageActions.svelte";
     import { addQueryStringParam } from "../../utils/urls";
     import { toastStore } from "../../stores/toast";
+    import GroupGateIcon from "./GroupGateIcon.svelte";
+    import { gatedGroupsEnabled } from "../../utils/features";
 
     const client = getContext<OpenChat>("client");
 
@@ -499,6 +501,11 @@
         </div>
     {:else if preview}
         <div class="preview">
+            {#if chat.kind === "group_chat" && gatedGroupsEnabled}
+                <div class="gate">
+                    <GroupGateIcon gate={chat.gate} />
+                </div>
+            {/if}
             {#if isPlatformModerator}
                 {#if isFrozen}
                     <Button
@@ -669,10 +676,16 @@
     }
 
     .preview {
+        position: relative;
         justify-content: flex-end;
         gap: $sp3;
         @include mobile() {
             justify-content: center;
+        }
+
+        .gate {
+            position: absolute;
+            left: 0;
         }
     }
 

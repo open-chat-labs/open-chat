@@ -303,6 +303,7 @@ import {
     UpdatedEvent,
     compareRoles,
     EligibleForInitialAirdropResponse,
+    GroupGate,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -582,7 +583,7 @@ export class OpenChat extends EventTarget {
             initNotificationStores();
             this.api.getUserStorageLimits().then(storageStore.set);
             this.api.isEligibleForInitialAirdrop().then((eligible) => {
-                console.log("Eligible: ", eligible);
+                console.debug("Eligible: ", eligible);
                 this.eligibleForInitialAirdrop.set(eligible);
             });
             this.identityState.set("logged_in");
@@ -902,7 +903,9 @@ export class OpenChat extends EventTarget {
             });
     }
 
-    async joinGroup(group: GroupChatSummary): Promise<"success" | "blocked" | "failure"> {
+    async joinGroup(
+        group: GroupChatSummary
+    ): Promise<"success" | "blocked" | "failure" | "gate_check_failed"> {
         return this.api
             .joinGroup(group.chatId)
             .then((resp) => {
@@ -918,6 +921,8 @@ export class OpenChat extends EventTarget {
                 } else {
                     if (resp.kind === "blocked") {
                         return "blocked";
+                    } else if (resp.kind === "gate_check_failed") {
+                        return "gate_check_failed";
                     }
                     return "failure";
                 }
@@ -940,7 +945,7 @@ export class OpenChat extends EventTarget {
 
     updateGroupRules(chatId: string, rules: GroupRules | undefined): Promise<boolean> {
         return this.api
-            .updateGroup(chatId, undefined, undefined, rules, undefined, undefined)
+            .updateGroup(chatId, undefined, undefined, rules, undefined, undefined, undefined)
             .then((resp) => resp === "success")
             .catch((err) => {
                 this._logger.error("Update group rules failed: ", err);
@@ -959,7 +964,15 @@ export class OpenChat extends EventTarget {
         );
 
         return this.api
-            .updateGroup(chatId, undefined, undefined, undefined, optionalPermissions, undefined)
+            .updateGroup(
+                chatId,
+                undefined,
+                undefined,
+                undefined,
+                optionalPermissions,
+                undefined,
+                undefined
+            )
             .then((resp) => {
                 if (resp !== "success") {
                     return false;
@@ -3170,10 +3183,21 @@ export class OpenChat extends EventTarget {
         description?: string,
         rules?: GroupRules,
         permissions?: Partial<GroupPermissions>,
-        avatar?: Uint8Array
+        avatar?: Uint8Array,
+        gate?: GroupGate
     ): Promise<UpdateGroupResponse> {
+        console.log(
+            "Updating group: ",
+            chatId,
+            name,
+            description,
+            rules,
+            permissions,
+            avatar,
+            gate
+        );
         return this.api
-            .updateGroup(chatId, name, description, rules, permissions, avatar)
+            .updateGroup(chatId, name, description, rules, permissions, avatar, gate)
             .then((resp) => {
                 if (resp === "success") {
                     localChatSummaryUpdates.markUpdated(chatId, {
@@ -3181,6 +3205,7 @@ export class OpenChat extends EventTarget {
                         name,
                         description,
                         permissions,
+                        gate,
                     });
                 }
                 return resp;

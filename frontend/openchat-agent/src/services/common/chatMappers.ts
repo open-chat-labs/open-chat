@@ -41,6 +41,7 @@ import type {
     ApiGroupSubtype,
     ApiRole,
     ApiPrizeWinnerContent,
+    ApiGroupGate,
 } from "../user/candid/idl";
 import {
     type Message,
@@ -82,6 +83,9 @@ import {
     type GroupSubtype,
     PrizeContent,
     PrizeWinnerContent,
+    GroupGate,
+    OpenChatGovernanceCanisterId,
+    Sns1GovernanceCanisterId,
 } from "openchat-shared";
 import type { WithdrawCryptoArgs } from "../user/candid/types";
 
@@ -775,6 +779,84 @@ function apiAudioContent(domain: AudioContent): ApiAudioContent {
 
 export function apiOptional<D, A>(mapper: (d: D) => A, domain: D | undefined): [] | [A] {
     return domain !== undefined ? [mapper(domain)] : [];
+}
+
+export function apiMaybeGroupGate(domain: GroupGate): [] | [ApiGroupGate] {
+    if (domain.kind === "no_gate") return [];
+    if (domain.kind === "nft_gate") return []; // TODO
+    if (domain.kind === "nns_gate") return []; // TODO
+    if (domain.kind === "diamond_gate") return [{ DiamondMember: null }];
+    if (domain.kind === "openchat_gate")
+        return [
+            {
+                SnsNeuron: {
+                    governance_canister_id: Principal.fromText(OpenChatGovernanceCanisterId),
+                    min_dissolve_delay: apiOptional(BigInt, domain.minDissolveDelay),
+                    min_stake_e8s: apiOptional(BigInt, domain.minStakeE8s),
+                },
+            },
+        ];
+    if (domain.kind === "sns1_gate")
+        return [
+            {
+                SnsNeuron: {
+                    governance_canister_id: Principal.fromText(Sns1GovernanceCanisterId),
+                    min_dissolve_delay: apiOptional(BigInt, domain.minDissolveDelay),
+                    min_stake_e8s: apiOptional(BigInt, domain.minStakeE8s),
+                },
+            },
+        ];
+    return [];
+}
+
+export function apiGroupGate(domain: GroupGate): ApiGroupGate {
+    if (domain.kind === "diamond_gate") return { DiamondMember: null };
+    if (domain.kind === "openchat_gate")
+        return {
+            SnsNeuron: {
+                governance_canister_id: Principal.fromText(OpenChatGovernanceCanisterId),
+                min_dissolve_delay: apiOptional(BigInt, domain.minDissolveDelay),
+                min_stake_e8s: apiOptional(BigInt, domain.minStakeE8s),
+            },
+        };
+    if (domain.kind === "sns1_gate")
+        return {
+            SnsNeuron: {
+                governance_canister_id: Principal.fromText(Sns1GovernanceCanisterId),
+                min_dissolve_delay: apiOptional(BigInt, domain.minDissolveDelay),
+                min_stake_e8s: apiOptional(BigInt, domain.minStakeE8s),
+            },
+        };
+    throw new Error(`Received a domain level group gate that we cannot parse: ${domain}`);
+}
+
+export function groupGate(candid: ApiGroupGate): GroupGate {
+    if ("SnsNeuron" in candid) {
+        const canisterId = candid.SnsNeuron.governance_canister_id.toString();
+        if (canisterId === OpenChatGovernanceCanisterId) {
+            return {
+                kind: "openchat_gate",
+                minDissolveDelay: optional(candid.SnsNeuron.min_dissolve_delay, Number),
+                minStakeE8s: optional(candid.SnsNeuron.min_stake_e8s, Number),
+            };
+        }
+        if (canisterId === Sns1GovernanceCanisterId) {
+            return {
+                kind: "sns1_gate",
+                minDissolveDelay: optional(candid.SnsNeuron.min_dissolve_delay, Number),
+                minStakeE8s: optional(candid.SnsNeuron.min_stake_e8s, Number),
+            };
+        }
+        throw new Error(
+            `An SnsNeuron gate was received with an unexpected governance canister id: ${candid.SnsNeuron.governance_canister_id}`
+        );
+    }
+    if ("DiamondMember" in candid) {
+        return {
+            kind: "diamond_gate",
+        };
+    }
+    throw new UnsupportedValueError("Unexpected ApiGroupGate type received", candid);
 }
 
 function apiBlobReference(domain?: BlobReference): [] | [ApiBlobReference] {

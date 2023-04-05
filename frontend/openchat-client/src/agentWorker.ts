@@ -99,6 +99,7 @@ import {
     UpdateMarketMakerConfigResponse,
     SetNeuronControllerResponse,
     EligibleForInitialAirdropResponse,
+    GroupGate,
 } from "openchat-shared";
 import type { OpenChatConfig } from "./config";
 import { v4 } from "uuid";
@@ -669,7 +670,8 @@ export class OpenChatAgentWorker extends EventTarget {
         desc?: string,
         rules?: GroupRules,
         permissions?: Partial<GroupPermissions>,
-        avatar?: Uint8Array
+        avatar?: Uint8Array,
+        gate?: GroupGate
     ): Promise<UpdateGroupResponse> {
         return this.sendRequest({
             kind: "updateGroup",
@@ -680,6 +682,7 @@ export class OpenChatAgentWorker extends EventTarget {
                 rules,
                 permissions,
                 avatar,
+                gate,
             },
         });
     }

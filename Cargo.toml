@@ -70,6 +70,7 @@ members = [
     "backend/libraries/chat_events",
     "backend/libraries/cycles_dispenser_client",
     "backend/libraries/dynamodb_index_store",
+    "backend/libraries/gated_groups",
     "backend/libraries/http_request",
     "backend/libraries/human_readable",
     "backend/libraries/human_readable_derive",

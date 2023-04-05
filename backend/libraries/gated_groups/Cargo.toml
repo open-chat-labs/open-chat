@@ -1,0 +1,15 @@
+[package]
+name = "gated_groups"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+candid = { workspace = true }
+sns_governance_canister = { path = "../../external_canisters/sns_governance/api" }
+sns_governance_canister_c2c_client = { path = "../../external_canisters/sns_governance/c2c_client" }
+types = { path = "../types" }
+user_index_canister = { path = "../../canisters/user_index/api" }
+user_index_canister_c2c_client = { path = "../../canisters/user_index/c2c_client" }
+utils = { path = "../utils" }

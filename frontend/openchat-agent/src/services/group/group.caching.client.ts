@@ -41,6 +41,7 @@ import type {
     EventWrapper,
     OptionUpdate,
     ClaimPrizeResponse,
+    GroupGate,
 } from "openchat-shared";
 import type { IGroupClient } from "./group.client.interface";
 import type { IDBPDatabase } from "idb";
@@ -259,7 +260,8 @@ export class CachingGroupClient implements IGroupClient {
         rules?: GroupRules,
         permissions?: Partial<GroupPermissions>,
         avatar?: Uint8Array,
-        eventsTimeToLiveMs?: OptionUpdate<bigint>
+        eventsTimeToLiveMs?: OptionUpdate<bigint>,
+        gate?: GroupGate
     ): Promise<UpdateGroupResponse> {
         return this.client.updateGroup(
             name,
@@ -267,7 +269,8 @@ export class CachingGroupClient implements IGroupClient {
             rules,
             permissions,
             avatar,
-            eventsTimeToLiveMs
+            eventsTimeToLiveMs,
+            gate
         );
     }
 

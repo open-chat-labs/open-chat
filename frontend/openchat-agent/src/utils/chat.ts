@@ -334,6 +334,7 @@ export function mergeGroupChatUpdates(
             blobReference: applyOptionUpdate(c.blobReference, blobReferenceUpdate),
             dateLastPinned: g?.dateLastPinned ?? c.dateLastPinned,
             dateReadPinned: u?.dateReadPinned ?? c.dateReadPinned,
+            gate: c.gate, // TODO we'll need to come back to this
         };
     });
 }
@@ -377,6 +378,7 @@ export function mergeGroupChats(
                 g.avatarId !== undefined ? { blobId: g.avatarId, canisterId: g.chatId } : undefined,
             dateLastPinned: g.dateLastPinned,
             dateReadPinned: u?.dateReadPinned,
+            gate: g.gate,
         };
     });
 }

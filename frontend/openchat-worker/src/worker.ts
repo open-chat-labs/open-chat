@@ -586,7 +586,8 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
                         payload.desc,
                         payload.rules,
                         payload.permissions,
-                        payload.avatar
+                        payload.avatar,
+                        payload.gate
                     )
                     .then((response) =>
                         sendResponse(correlationId, {
