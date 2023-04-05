@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Implement 'Gated Groups' ([#3406](https://github.com/open-ic/open-chat/pull/3406))
+
 ### Removed
 
 - Removed `c2c_recommended_groups` ([#3412](https://github.com/open-ic/open-chat/pull/3412))

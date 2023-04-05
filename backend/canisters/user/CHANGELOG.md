@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Added `set_message_reminder` ([#3417](https://github.com/open-ic/open-chat/pull/3417))
+- Implement 'Gated Groups' ([#3406](https://github.com/open-ic/open-chat/pull/3406))
 
 ### Changed
 
