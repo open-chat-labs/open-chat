@@ -220,6 +220,7 @@ type AddParticipantsPartialSuccessResult =
         users_blocked_from_group: vec UserId;
         users_who_blocked_request: vec UserId;
         users_not_authorized_to_add: vec UserId;
+        users_who_failed_gate_check: vec UserId;
         users_suspended: vec UserId;
         errors: vec UserId;
     };
@@ -229,6 +230,8 @@ type AddParticipantsFailedResult =
         users_already_in_group: vec UserId;
         users_blocked_from_group: vec UserId;
         users_who_blocked_request: vec UserId;
+        users_not_authorized_to_add: vec UserId;
+        users_who_failed_gate_check: vec UserId;
         users_suspended: vec UserId;
         errors: vec UserId;
     };
