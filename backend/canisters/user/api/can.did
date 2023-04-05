@@ -334,6 +334,7 @@ type SetMessageReminderArgs =
 type SetMessageReminderResponse =
     variant {
         Success;
+        ReminderDateInThePast;
         NotesTooLong: FieldTooLongResult;
         UserSuspended;
     };

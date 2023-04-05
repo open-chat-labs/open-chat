@@ -22,6 +22,11 @@ fn set_message_reminder_impl(args: Args, state: &mut RuntimeState) -> Response {
         return UserSuspended;
     }
 
+    let now = state.env.now();
+    if args.remind_at <= now {
+        return ReminderDateInThePast;
+    }
+
     let notes_len = args.notes.as_ref().map(|n| n.len()).unwrap_or_default();
     if notes_len > MAX_NOTES_LENGTH {
         return NotesTooLong(FieldTooLongResult {
@@ -32,7 +37,6 @@ fn set_message_reminder_impl(args: Args, state: &mut RuntimeState) -> Response {
 
     clear_message_reminder_impl(args.chat_id, args.thread_root_message_index, args.message_index, state);
 
-    let now = state.env.now();
     state.data.timer_jobs.enqueue_job(
         TimerJob::MessageReminder(MessageReminderJob {
             chat_id: args.chat_id,
