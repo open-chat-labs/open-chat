@@ -1554,13 +1554,6 @@ export class OpenChat extends EventTarget {
     groupMessagesByDate = groupMessagesByDate;
     fillMessage = fillMessage;
     audioRecordingMimeType = audioRecordingMimeType;
-    setCachedMessageFromNotification(
-        chatId: string,
-        threadRootMessageIndex: number | undefined,
-        message: EventWrapper<Message>
-    ): Promise<void> {
-        return this.api.setCachedMessageFromNotification(chatId, threadRootMessageIndex, message);
-    }
     async createDirectChat(chatId: string): Promise<boolean> {
         if (this._liveState.userStore[chatId] === undefined) {
             const user = await this.getUser(chatId);
@@ -2697,7 +2690,7 @@ export class OpenChat extends EventTarget {
             return;
         }
 
-        this.setCachedMessageFromNotification(chatId, threadRootMessageIndex, message);
+        this.api.setCachedMessageFromNotification(chatId, threadRootMessageIndex, message);
 
         Promise.all([
             this.api.rehydrateMessage(
