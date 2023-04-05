@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Removed `c2c_lookup_principal` ([#3414](https://github.com/open-ic/open-chat/pull/3414))
 
-## [[2.0.656](https://github.com/open-ic/open-chat/releases/tag/v2.0.656-user_index)] - TBC
+## [[2.0.656](https://github.com/open-ic/open-chat/releases/tag/v2.0.656-user_index)] - 2023-04-05
 
 ### Added
 
