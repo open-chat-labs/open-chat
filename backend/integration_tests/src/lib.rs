@@ -21,6 +21,7 @@ mod poll_tests;
 mod register_user_tests;
 mod rng;
 mod send_direct_message_tests;
+mod set_message_reminder_tests;
 mod setup;
 mod storage;
 mod suspend_user_tests;

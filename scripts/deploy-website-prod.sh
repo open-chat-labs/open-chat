@@ -17,10 +17,16 @@ fi
 
 npm run --prefix frontend deploy:prod
 
-dfx --identity $IDENTITY deploy --network ic --no-wallet website
-icx-asset --pem ~/.config/dfx/identity/$IDENTITY/identity.pem --replica https://ic0.app/ upload 6hsbt-vqaaa-aaaaf-aaafq-cai /.well-known/ii-alternative-origins=frontend/app/build/.well-known/ii-alternative-origins
+if [ $? -eq 0 ]; then
+    echo "npm deploy script succeeded - proceeding with dfx deploy"
 
-TAG=v$OPENCHAT_WEBSITE_VERSION-website
+    dfx --identity $IDENTITY deploy --network ic --no-wallet website
+    icx-asset --pem ~/.config/dfx/identity/$IDENTITY/identity.pem --replica https://ic0.app/ upload 6hsbt-vqaaa-aaaaf-aaafq-cai /.well-known/ii-alternative-origins=frontend/app/build/.well-known/ii-alternative-origins
 
-git tag $TAG HEAD
-git push origin tag $TAG
+    TAG=v$OPENCHAT_WEBSITE_VERSION-website
+
+    git tag $TAG HEAD
+    git push origin tag $TAG
+else
+  echo "npm run --prefix frontend deploy:prod - failed"
+fi
