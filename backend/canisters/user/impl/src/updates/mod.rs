@@ -33,6 +33,7 @@ pub mod send_message_with_transfer_to_group;
 pub mod set_avatar;
 pub mod set_bio;
 pub mod set_contact;
+pub mod set_message_reminder;
 pub mod unblock_user;
 pub mod undelete_messages;
 pub mod unpin_chat;
