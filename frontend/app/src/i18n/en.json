@@ -459,8 +459,10 @@
         "nnsHolder": "NNS neuron holder (coming soon)",
         "nftHolder": "NFT holder (coming soon)",
         "openAccess": "Open access",
-        "minDissolveDelay": "Minimum dissolve delay (days)",
-        "minStake": "Minimum stake (tokens)",
+        "minDissolveDelay": "Min dissolve delay (days)",
+        "minStake": "Min stake (tokens)",
+        "minDissolveDelayN": "Min dissolve delay {n} days",
+        "minStakeN": "Min stake {n} tokens",
         "optional": "Optional",
         "openAccessInfo": "There are no special access requirements to join this group",
         "gateCheckFailed": "Sorry - you have not met the entry requirements for this group"

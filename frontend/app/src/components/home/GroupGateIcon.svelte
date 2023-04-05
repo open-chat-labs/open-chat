@@ -3,9 +3,30 @@
     import { rtlStore } from "../../stores/rtl";
     import TooltipWrapper from "../TooltipWrapper.svelte";
     import TooltipPopup from "../TooltipPopup.svelte";
-    import type { GroupGate } from "openchat-client";
+    import { E8S_PER_TOKEN, GroupGate } from "openchat-client";
 
     export let gate: GroupGate;
+
+    $: params = formatParams(gate);
+
+    function formatParams(gate: GroupGate): string {
+        const parts = [];
+        if (gate.kind === "openchat_gate" || gate.kind === "sns1_gate") {
+            if (gate.minDissolveDelay) {
+                parts.push(
+                    `${$_("group.minDissolveDelayN", {
+                        values: { n: gate.minDissolveDelay / (24 * 60 * 60 * 1000) },
+                    })}`
+                );
+            }
+            if (gate.minStakeE8s) {
+                parts.push(
+                    `${$_("group.minStakeN", { values: { n: gate.minStakeE8s / E8S_PER_TOKEN } })}`
+                );
+            }
+        }
+        return parts.length > 0 ? ` (${parts.join(", ")})` : "";
+    }
 </script>
 
 {#if gate.kind !== "no_gate"}
@@ -23,7 +44,8 @@
             <div slot="target" class="icon oc" />
             <div slot="tooltip">
                 <TooltipPopup alignRight={!rtlStore}>
-                    {$_("group.chatHolderInfo")}
+                    <p>{`${$_("group.chatHolderInfo")}`}</p>
+                    <p class="params">{params}</p>
                 </TooltipPopup>
             </div>
         </TooltipWrapper>
@@ -32,7 +54,8 @@
             <div slot="target" class="icon sns1" />
             <div slot="tooltip">
                 <TooltipPopup alignRight={!rtlStore}>
-                    {$_("group.sns1HolderInfo")}
+                    <p>{`${$_("group.sns1HolderInfo")}`}</p>
+                    <p class="params">{params}</p>
                 </TooltipPopup>
             </div>
         </TooltipWrapper>
@@ -48,14 +71,19 @@
         background-repeat: no-repeat;
         background-position: top;
         background-size: contain;
+        position: relative;
     }
     .diamond {
-        @include font-size(fs-140);
+        @include font-size(fs-130);
     }
     .oc {
         background-image: url("../assets/spinner.svg");
     }
     .sns1 {
         background-image: url("../assets/sns1_token.png");
+    }
+
+    .params {
+        margin-top: $sp3;
     }
 </style>

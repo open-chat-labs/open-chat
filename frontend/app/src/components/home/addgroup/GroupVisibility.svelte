@@ -28,7 +28,9 @@
 
     function getMinDissolveDelay(group: CandidateGroupChat): string {
         if (group.gate.kind === "sns1_gate" || group.gate.kind === "openchat_gate") {
-            return group.gate.minDissolveDelay ? group.gate.minDissolveDelay.toString() : "";
+            return group.gate.minDissolveDelay
+                ? (group.gate.minDissolveDelay / (24 * 60 * 60 * 1000)).toString()
+                : "";
         }
         return "";
     }
@@ -57,14 +59,14 @@
         },
         {
             index: 2,
-            label: $_("group.sns1Holder"),
-            gate: { kind: "sns1_gate" },
+            label: $_("group.chatHolder"),
+            gate: { kind: "openchat_gate" },
             enabled: true,
         },
         {
             index: 3,
-            label: $_("group.chatHolder"),
-            gate: { kind: "openchat_gate" },
+            label: $_("group.sns1Holder"),
+            gate: { kind: "sns1_gate" },
             enabled: true,
         },
         {
@@ -96,7 +98,9 @@
                 ...candidateGroup,
                 gate: {
                     ...candidateGroup.gate,
-                    minDissolveDelay: !invalidDissolveDelay ? Number(minDissolveDelay) : undefined,
+                    minDissolveDelay: !invalidDissolveDelay
+                        ? Number(minDissolveDelay) * 24 * 60 * 60 * 1000
+                        : undefined,
                     minStakeE8s: !invalidMinStake ? Number(minStake) * E8S_PER_TOKEN : undefined,
                 },
             };
