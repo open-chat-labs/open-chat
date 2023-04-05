@@ -13,4 +13,10 @@ cd $SCRIPT_DIR/..
 
 npm run --prefix frontend deploy:testnet
 
-dfx --identity $IDENTITY deploy --network $DFX_NETWORK --no-wallet --with-cycles 100000000000000 website
+if [ $? -eq 0 ]; then
+    echo "npm deploy script succeeded - proceeding with dfx deploy"
+
+    dfx --identity $IDENTITY deploy --network $DFX_NETWORK --no-wallet --with-cycles 100000000000000 website
+else
+  echo "npm run --prefix frontend deploy:testnet - failed"
+fi
