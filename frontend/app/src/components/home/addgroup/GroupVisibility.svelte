@@ -10,6 +10,7 @@
     import { iconSize } from "stores/iconSize";
     import Legend from "../../Legend.svelte";
     import Input from "../../Input.svelte";
+    import { gatedGroupsEnabled } from "../../../utils/features";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -187,7 +188,7 @@
     </Checkbox>
 </div>
 
-{#if $isDiamond}
+{#if $isDiamond && gatedGroupsEnabled}
     <div class="wrapper">
         <div class="icon">
             <LockOutline size={$iconSize} color={"var(--icon-txt)"} />
@@ -201,31 +202,29 @@
                     {/each}
                 </Select>
             </div>
-            {#if candidateGroup.gate !== undefined}
-                {#if candidateGroup.gate.kind === "openchat_gate" || candidateGroup.gate.kind === "sns1_gate"}
-                    <Legend label={$_("group.minDissolveDelay")} />
-                    <Input
-                        maxlength={100}
-                        placeholder={$_("group.optional")}
-                        invalid={invalidDissolveDelay}
-                        bind:value={minDissolveDelay} />
+            {#if candidateGroup.gate.kind === "openchat_gate" || candidateGroup.gate.kind === "sns1_gate"}
+                <Legend label={$_("group.minDissolveDelay")} />
+                <Input
+                    maxlength={100}
+                    placeholder={$_("group.optional")}
+                    invalid={invalidDissolveDelay}
+                    bind:value={minDissolveDelay} />
 
-                    <Legend label={$_("group.minStake")} />
-                    <Input
-                        maxlength={100}
-                        placeholder={$_("group.optional")}
-                        invalid={invalidMinStake}
-                        bind:value={minStake} />
-                {/if}
-                {#if candidateGroup.gate.kind === "diamond_gate"}
-                    <div class="info">{$_("group.diamondGateInfo")}</div>
-                {:else if candidateGroup.gate.kind === "openchat_gate"}
-                    <div class="info">{$_("group.chatHolderInfo")}</div>
-                {:else if candidateGroup.gate.kind === "sns1_gate"}
-                    <div class="info">{$_("group.sns1HolderInfo")}</div>
-                {:else if candidateGroup.gate.kind === "no_gate"}
-                    <div class="info">{$_("group.openAccessInfo")}</div>
-                {/if}
+                <Legend label={$_("group.minStake")} />
+                <Input
+                    maxlength={100}
+                    placeholder={$_("group.optional")}
+                    invalid={invalidMinStake}
+                    bind:value={minStake} />
+            {/if}
+            {#if candidateGroup.gate.kind === "diamond_gate"}
+                <div class="info">{$_("group.diamondGateInfo")}</div>
+            {:else if candidateGroup.gate.kind === "openchat_gate"}
+                <div class="info">{$_("group.chatHolderInfo")}</div>
+            {:else if candidateGroup.gate.kind === "sns1_gate"}
+                <div class="info">{$_("group.sns1HolderInfo")}</div>
+            {:else if candidateGroup.gate.kind === "no_gate"}
+                <div class="info">{$_("group.openAccessInfo")}</div>
             {/if}
         </div>
     </div>

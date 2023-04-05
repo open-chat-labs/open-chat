@@ -32,6 +32,7 @@
     import { addQueryStringParam } from "../../utils/urls";
     import { toastStore } from "../../stores/toast";
     import GroupGateIcon from "./GroupGateIcon.svelte";
+    import { gatedGroupsEnabled } from "../../utils/features";
 
     const client = getContext<OpenChat>("client");
 
@@ -500,7 +501,7 @@
         </div>
     {:else if preview}
         <div class="preview">
-            {#if chat.kind === "group_chat"}
+            {#if chat.kind === "group_chat" && gatedGroupsEnabled}
                 <div class="gate">
                     <GroupGateIcon gate={chat.gate} />
                 </div>

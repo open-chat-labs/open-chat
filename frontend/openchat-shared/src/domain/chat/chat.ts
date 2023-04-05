@@ -399,6 +399,7 @@ export type LocalChatSummaryUpdates = {
               notificationsMuted?: boolean;
               archived?: boolean;
               frozen?: boolean;
+              gate?: GroupGate;
           };
     removedAtTimestamp?: bigint;
     lastUpdated: number;

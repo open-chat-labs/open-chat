@@ -3,6 +3,7 @@
     import type { GroupGate } from "openchat-client";
     import GroupGateIcon from "../GroupGateIcon.svelte";
     import GroupGateParameters from "./GroupGateParameters.svelte";
+    import { gatedGroupsEnabled } from "../../../utils/features";
 
     export let gate: GroupGate;
     $: showDetails =
@@ -10,7 +11,7 @@
         (gate.minDissolveDelay !== undefined || gate.minStakeE8s !== undefined);
 </script>
 
-{#if gate.kind !== "no_gate"}
+{#if gate.kind !== "no_gate" && gatedGroupsEnabled}
     <div class="wrapper">
         <h4>{$_("group.groupGate")}</h4>
         <div class="gate" class:showDetails>
@@ -38,7 +39,7 @@
         @include font(light, normal, fs-90);
 
         display: flex;
-        gap: $sp3;
+        gap: $sp4;
         align-items: center;
 
         &.showDetails {
