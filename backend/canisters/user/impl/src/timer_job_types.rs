@@ -1,5 +1,5 @@
 use crate::updates::send_message::send_to_recipients_canister;
-use crate::{mutate_state, read_state};
+use crate::{mutate_state, openchat_bot, read_state};
 use canister_timer_jobs::Job;
 use serde::{Deserialize, Serialize};
 use types::{BlobReference, ChatId, MessageId, MessageIndex, UserId};
@@ -10,6 +10,7 @@ pub enum TimerJob {
     RetrySendingFailedMessages(Box<RetrySendingFailedMessagesJob>),
     HardDeleteMessageContent(Box<HardDeleteMessageContentJob>),
     DeleteFileReferences(DeleteFileReferencesJob),
+    MessageReminder(MessageReminderJob),
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -31,12 +32,21 @@ pub struct DeleteFileReferencesJob {
     pub files: Vec<BlobReference>,
 }
 
+#[derive(Serialize, Deserialize, Clone)]
+pub struct MessageReminderJob {
+    pub chat_id: ChatId,
+    pub thread_root_message_index: Option<MessageIndex>,
+    pub message_index: MessageIndex,
+    pub notes: Option<String>,
+}
+
 impl Job for TimerJob {
     fn execute(&self) {
         match self {
             TimerJob::RetrySendingFailedMessages(job) => job.execute(),
             TimerJob::HardDeleteMessageContent(job) => job.execute(),
             TimerJob::DeleteFileReferences(job) => job.execute(),
+            TimerJob::MessageReminder(job) => job.execute(),
         }
     }
 }
@@ -92,5 +102,33 @@ impl Job for HardDeleteMessageContentJob {
 impl Job for DeleteFileReferencesJob {
     fn execute(&self) {
         ic_cdk::spawn(storage_bucket_client::delete_files(self.files.clone()));
+    }
+}
+
+impl Job for MessageReminderJob {
+    fn execute(&self) {
+        let chat_id = self.chat_id;
+        let message_index = self.message_index;
+
+        let url = if let Some(thread_root_message_index) = self.thread_root_message_index {
+            format!("https://oc.app/{chat_id}/{thread_root_message_index}/{message_index}")
+        } else {
+            format!("https://oc.app/{chat_id}/{message_index}")
+        };
+
+        let mut message = format!("You asked me to remind you about [this message]({url})");
+
+        if let Some(notes) = self.notes.clone() {
+            message.push_str(&format!(
+                "
+
+Notes:
+
+{notes}
+"
+            ));
+        }
+
+        mutate_state(|state| openchat_bot::send_text_message(message, false, state));
     }
 }
