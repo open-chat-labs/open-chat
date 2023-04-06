@@ -325,7 +325,8 @@
     export async function scrollToMessageIndex(
         chatId: string,
         index: number,
-        preserveFocus: boolean
+        preserveFocus: boolean,
+        filling: boolean = false
     ): Promise<void> {
         // it is possible for the chat to change while this function is recursing so double check
         if (chatId !== chat.chatId) return Promise.resolve();
@@ -341,9 +342,12 @@
         if (element) {
             setFocusMessageIndex(index);
             await scrollToElement(element);
-            checkIfTargetMessageHasAThread(index);
+            if (!filling) {
+                // if we are not filling in extra events around the target then check if we need to open a thread
+                checkIfTargetMessageHasAThread(index);
+            }
             if (await loadMoreIfRequired(false, true)) {
-                return scrollToMessageIndex(chatId, index, preserveFocus);
+                return scrollToMessageIndex(chatId, index, preserveFocus, true);
             } else {
                 if (!preserveFocus) {
                     window.setTimeout(() => {
