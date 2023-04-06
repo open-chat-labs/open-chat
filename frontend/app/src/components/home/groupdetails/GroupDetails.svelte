@@ -21,6 +21,7 @@
     import InviteUsers from "./InviteUsers.svelte";
     import type { OpenChat, GroupChatSummary, GroupRules } from "openchat-client";
     import { AvatarSize } from "openchat-client";
+    import GroupGateSummary from "./GroupGateSummary.svelte";
 
     const dispatch = createEventDispatcher();
 
@@ -114,6 +115,7 @@
                     {/if}
                 {/if}
             </div>
+            <GroupGateSummary gate={chat.gate} />
         </CollapsibleCard>
         {#if rules !== undefined && rules.enabled}
             <CollapsibleCard
@@ -211,6 +213,7 @@
     }
 
     .info {
+        margin-bottom: $sp4;
         @include font(light, normal, fs-90);
 
         p {

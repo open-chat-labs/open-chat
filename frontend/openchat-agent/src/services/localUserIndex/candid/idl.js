@@ -6,6 +6,12 @@ export const idlFactory = ({ IDL }) => {
     'correlation_id' : IDL.Nat64,
     'chat_id' : ChatId,
   });
+  const GateCheckFailedReason = IDL.Variant({
+    'NotDiamondMember' : IDL.Null,
+    'NoSnsNeuronsFound' : IDL.Null,
+    'NoSnsNeuronsWithRequiredDissolveDelayFound' : IDL.Null,
+    'NoSnsNeuronsWithRequiredStakeFound' : IDL.Null,
+  });
   const PermissionRole = IDL.Variant({
     'Owner' : IDL.Null,
     'Admins' : IDL.Null,
@@ -59,6 +65,16 @@ export const idlFactory = ({ IDL }) => {
     'GovernanceProposals' : GovernanceProposalsSubtype,
   });
   const EventIndex = IDL.Nat32;
+  const Milliseconds = IDL.Nat64;
+  const SnsNeuronGate = IDL.Record({
+    'min_stake_e8s' : IDL.Opt(IDL.Nat64),
+    'min_dissolve_delay' : IDL.Opt(Milliseconds),
+    'governance_canister_id' : CanisterId,
+  });
+  const GroupGate = IDL.Variant({
+    'SnsNeuron' : SnsNeuronGate,
+    'DiamondMember' : IDL.Null,
+  });
   const Role = IDL.Variant({
     'Participant' : IDL.Null,
     'Admin' : IDL.Null,
@@ -69,7 +85,6 @@ export const idlFactory = ({ IDL }) => {
     'minor' : IDL.Nat32,
     'patch' : IDL.Nat32,
   });
-  const Milliseconds = IDL.Nat64;
   const MessageIndex = IDL.Nat32;
   const GroupCanisterThreadDetails = IDL.Record({
     'root_message_index' : MessageIndex,
@@ -396,6 +411,7 @@ export const idlFactory = ({ IDL }) => {
     'subtype' : IDL.Opt(GroupSubtype),
     'date_last_pinned' : IDL.Opt(TimestampMillis),
     'min_visible_event_index' : EventIndex,
+    'gate' : IDL.Opt(GroupGate),
     'name' : IDL.Text,
     'role' : Role,
     'wasm_version' : Version,
@@ -423,6 +439,7 @@ export const idlFactory = ({ IDL }) => {
     'GroupNotFound' : IDL.Null,
     'GroupNotPublic' : IDL.Null,
     'AlreadyInGroup' : IDL.Null,
+    'GateCheckFailed' : GateCheckFailedReason,
     'ChatFrozen' : IDL.Null,
     'Success' : GroupCanisterGroupChatSummary,
     'UserSuspended' : IDL.Null,

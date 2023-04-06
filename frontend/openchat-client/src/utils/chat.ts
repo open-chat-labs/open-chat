@@ -167,6 +167,8 @@ export function activeUserIdFromEvent(event: ChatEvent): string | undefined {
             return event.unpinnedBy;
         case "events_ttl_updated":
             return event.updatedBy;
+        case "gate_updated":
+            return event.updatedBy;
         case "message_deleted":
         case "message_undeleted":
         case "message_edited":
@@ -366,6 +368,10 @@ export function mergeLocalSummaryUpdates(
                         permissions: {
                             ...current.permissions,
                             ...updated.permissions,
+                        },
+                        gate: {
+                            ...current.gate,
+                            ...updated.gate,
                         },
                     };
                 }
@@ -667,6 +673,7 @@ export function groupChatFromCandidate(
         frozen: false,
         dateLastPinned: undefined,
         dateReadPinned: undefined,
+        gate: candidate.gate,
     };
 }
 

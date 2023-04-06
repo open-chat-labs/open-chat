@@ -187,6 +187,7 @@ type CreateGroupArgs =
         history_visible_to_new_joiners: bool;
         permissions: opt GroupPermissions;
         rules: GroupRules;
+        gate: opt GroupGate
     };
 
 type CreateGroupSuccessResult =
@@ -320,6 +321,35 @@ type SetContactResponse =
         NicknameTooLong: FieldTooLongResult;
         NicknameTooShort: FieldTooShortResult;
         UserSuspended;
+    };
+
+type SetMessageReminderArgs =
+    record {
+        chat_id: ChatId;
+        thread_root_message_index: opt MessageIndex;
+        message_index: MessageIndex;
+        notes: opt text;
+        remind_at: TimestampMillis;
+    };
+
+type SetMessageReminderResponse =
+    variant {
+        Success;
+        ReminderDateInThePast;
+        NotesTooLong: FieldTooLongResult;
+        UserSuspended;
+    };
+
+type ClearMessageReminderArgs =
+    record {
+        chat_id: ChatId;
+        thread_root_message_index: opt MessageIndex;
+        message_index: MessageIndex;
+    };
+
+type ClearMessageReminderResponse =
+    variant {
+        Success;
     };
 
 type TransferCryptoWithinGroupArgs =
@@ -682,6 +712,8 @@ service: {
     add_hot_group_exclusions: (AddHotGroupExclusionsArgs) -> (AddHotGroupExclusionsResponse);
     set_bio: (SetBioArgs) -> (SetBioResponse);
     set_contact: (SetContactArgs) -> (SetContactResponse);
+    set_message_reminder: (SetMessageReminderArgs) -> (SetMessageReminderResponse);
+    clear_message_reminder: (ClearMessageReminderArgs) -> (ClearMessageReminderResponse);
     send_message_with_transfer_to_group: (SendMessageWithTransferToGroupArgs) -> (SendMessageWithTransferToGroupResponse);
     transfer_crypto_within_group_v2: (TransferCryptoWithinGroupArgs) -> (SendMessageWithTransferToGroupResponse);
     withdraw_crypto_v2: (WithdrawCryptoArgs) -> (WithdrawCryptoResponse);

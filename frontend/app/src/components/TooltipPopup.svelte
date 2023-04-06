@@ -3,8 +3,8 @@
     import { mobileWidth } from "../stores/screenDimensions";
 
     export let alignRight = false;
-    export let textLength: number;
-    export let longestWord: number;
+    export let textLength: number = 100;
+    export let longestWord: number = 10;
 
     $: maxWidth = calculateMaxWidth(textLength, longestWord, $mobileWidth);
 

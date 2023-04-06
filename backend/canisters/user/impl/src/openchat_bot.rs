@@ -134,6 +134,11 @@ pub(crate) fn send_message(content: MessageContent, mute_notification: bool, run
     handle_message_impl(OPENCHAT_BOT_USER_ID, args, mute_notification, runtime_state);
 }
 
+pub(crate) fn send_text_message(text: String, mute_notification: bool, runtime_state: &mut RuntimeState) {
+    let content = MessageContent::Text(TextContent { text });
+    send_message(content, mute_notification, runtime_state);
+}
+
 fn to_gb(bytes: u64) -> String {
     const BYTES_PER_1GB: u64 = 1024 * 1024 * 1024;
     format_to_decimal_places(bytes as f64 / BYTES_PER_1GB as f64, 2)
@@ -142,11 +147,6 @@ fn to_gb(bytes: u64) -> String {
 fn to_tokens(tokens: Tokens) -> String {
     const E8S_PER_TOKEN: u64 = 100_000_000;
     format_to_decimal_places(tokens.e8s() as f64 / E8S_PER_TOKEN as f64, 8)
-}
-
-fn send_text_message(text: String, mute_notification: bool, runtime_state: &mut RuntimeState) {
-    let content = MessageContent::Text(TextContent { text });
-    send_message(content, mute_notification, runtime_state);
 }
 
 fn bot_chat(runtime_state: &RuntimeState) -> Option<&DirectChat> {

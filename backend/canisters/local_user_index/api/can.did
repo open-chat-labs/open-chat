@@ -12,6 +12,7 @@ type JoinGroupResponse =
         Success: GroupCanisterGroupChatSummary;
         AlreadyInGroupV2: GroupCanisterGroupChatSummary;
         AlreadyInGroup;
+        GateCheckFailed: GateCheckFailedReason;
         GroupNotFound;
         GroupNotPublic;
         ParticipantLimitReached: nat32;

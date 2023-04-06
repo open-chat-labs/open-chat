@@ -63,6 +63,7 @@ import {
     Mention,
     DeletedMessageResponse,
     ClaimPrizeResponse,
+    GroupGateUpdate,
 } from "./types";
 export {
     _SERVICE as GroupService,
@@ -128,6 +129,7 @@ export {
     Mention as ApiMention,
     DeletedMessageResponse as ApiDeletedGroupMessageResponse,
     ClaimPrizeResponse as ApiClaimPrizeResponse,
+    GroupGateUpdate as ApiGroupGateUpdate,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

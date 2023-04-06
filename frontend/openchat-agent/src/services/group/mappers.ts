@@ -41,6 +41,7 @@ import type {
     ApiMention,
     ApiDeletedGroupMessageResponse,
     ApiClaimPrizeResponse,
+    ApiGroupGateUpdate,
 } from "./candid/idl";
 import {
     EventsResponse,
@@ -95,6 +96,7 @@ import {
     apiOptional,
     apiPermissionRole,
     chatMetrics,
+    groupGate,
     groupPermissions,
     memberRole,
     message,
@@ -201,6 +203,7 @@ function groupChatSummary(candid: ApiGroupCanisterGroupChatSummary): GroupCanist
         latestThreads: candid.latest_threads.map(threadDetails),
         frozen: candid.frozen.length > 0,
         dateLastPinned: optional(candid.date_last_pinned, identity),
+        gate: optional(candid.gate, groupGate) ?? { kind: "no_gate" },
     };
 }
 
@@ -535,6 +538,11 @@ export function addRemoveReactionResponse(
         "Unexpected ApiAddRemoveReactionResponse type received",
         candid
     );
+}
+
+// TODO fill this in
+export function apiGateUpdate(): ApiGroupGateUpdate {
+    return { NoChange: null };
 }
 
 export function updateGroupResponse(candid: ApiUpdateGroupResponse): UpdateGroupResponse {
@@ -1428,6 +1436,13 @@ function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {
             kind: "events_ttl_updated",
             updatedBy: candid.EventsTimeToLiveUpdated.updated_by.toString(),
             newTimeToLive: optional(candid.EventsTimeToLiveUpdated.new_ttl, identity),
+        };
+    }
+
+    if ("GroupGateUpdated" in candid) {
+        return {
+            kind: "gate_updated",
+            updatedBy: candid.GroupGateUpdated.updated_by.toString(),
         };
     }
 

@@ -27,4 +27,12 @@ impl DiamondMembershipPlanDuration {
             Self::OneYear => 12 * Self::MONTH_IN_MS,
         }
     }
+
+    pub const fn icp_price_e8s(&self) -> u64 {
+        match self {
+            DiamondMembershipPlanDuration::OneMonth => 20_000_000,    // 0.2 ICP
+            DiamondMembershipPlanDuration::ThreeMonths => 50_000_000, // 0.5 ICP
+            DiamondMembershipPlanDuration::OneYear => 150_000_000,    // 1.5 ICP
+        }
+    }
 }

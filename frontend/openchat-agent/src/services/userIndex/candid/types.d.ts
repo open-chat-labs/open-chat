@@ -82,6 +82,7 @@ export type ChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'ParticipantDismissedAsSuperAdmin' : ParticipantDismissedAsSuperAdmin } |
   { 'GroupNameChanged' : GroupNameChanged } |
   { 'MessageUndeleted' : UpdatedMessage } |
+  { 'GroupGateUpdated' : GroupGateUpdated } |
   { 'RoleChanged' : RoleChanged } |
   { 'PollVoteDeleted' : UpdatedMessage } |
   { 'EventsTimeToLiveUpdated' : EventsTimeToLiveUpdated } |
@@ -269,6 +270,10 @@ export interface FrozenGroupInfo {
 export type FrozenGroupUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : FrozenGroupInfo };
+export type GateCheckFailedReason = { 'NotDiamondMember' : null } |
+  { 'NoSnsNeuronsFound' : null } |
+  { 'NoSnsNeuronsWithRequiredDissolveDelayFound' : null } |
+  { 'NoSnsNeuronsWithRequiredStakeFound' : null };
 export interface GiphyContent {
   'title' : string,
   'desktop' : GiphyImageVariant,
@@ -292,6 +297,7 @@ export interface GroupCanisterGroupChatSummary {
   'subtype' : [] | [GroupSubtype],
   'date_last_pinned' : [] | [TimestampMillis],
   'min_visible_event_index' : EventIndex,
+  'gate' : [] | [GroupGate],
   'name' : string,
   'role' : Role,
   'wasm_version' : Version,
@@ -359,6 +365,7 @@ export interface GroupChatSummary {
   'subtype' : [] | [GroupSubtype],
   'date_last_pinned' : [] | [TimestampMillis],
   'min_visible_event_index' : EventIndex,
+  'gate' : [] | [GroupGate],
   'name' : string,
   'role' : Role,
   'wasm_version' : Version,
@@ -388,6 +395,15 @@ export interface GroupDescriptionChanged {
   'new_description' : string,
   'previous_description' : string,
   'changed_by' : UserId,
+}
+export type GroupGate = { 'SnsNeuron' : SnsNeuronGate } |
+  { 'DiamondMember' : null };
+export type GroupGateUpdate = { 'NoChange' : null } |
+  { 'SetToNone' : null } |
+  { 'SetToSome' : GroupGate };
+export interface GroupGateUpdated {
+  'updated_by' : UserId,
+  'new_gate' : [] | [GroupGate],
 }
 export type GroupInviteCodeChange = { 'Enabled' : null } |
   { 'Disabled' : null } |
@@ -759,6 +775,7 @@ export interface ProposalsUpdated { 'proposals' : Array<ProposalUpdated> }
 export interface PublicGroupSummary {
   'is_public' : boolean,
   'subtype' : [] | [GroupSubtype],
+  'gate' : [] | [GroupGate],
   'name' : string,
   'wasm_version' : Version,
   'description' : string,
@@ -856,6 +873,11 @@ export interface SnsFailedCryptoTransaction {
   'memo' : [] | [Memo],
   'error_message' : string,
   'amount' : Tokens,
+}
+export interface SnsNeuronGate {
+  'min_stake_e8s' : [] | [bigint],
+  'min_dissolve_delay' : [] | [Milliseconds],
+  'governance_canister_id' : CanisterId,
 }
 export type SnsNeuronId = Uint8Array | number[];
 export interface SnsPendingCryptoTransaction {

@@ -3,9 +3,12 @@ use crate::{mutate_state, read_state, run_regular_jobs, AddParticipantArgs, Runt
 use candid::Principal;
 use canister_tracing_macros::trace;
 use chat_events::ChatEventInternal;
+use gated_groups::{check_if_passes_gate, CheckIfPassesGateResult};
 use group_canister::add_participants::{Response::*, *};
 use ic_cdk_macros::update;
-use types::{AddedToGroupNotification, EventIndex, MessageIndex, Notification, ParticipantsAdded, UserId};
+use types::{
+    AddedToGroupNotification, CanisterId, EventIndex, GroupGate, MessageIndex, Notification, ParticipantsAdded, UserId,
+};
 use user_canister::c2c_try_add_to_group;
 
 #[update]
@@ -18,17 +21,39 @@ async fn add_participants(args: Args) -> Response {
         Err(response) => return *response,
     };
 
+    let mut users_to_add = Vec::new();
     let mut users_added = Vec::new();
     let mut users_who_blocked_request = Vec::new();
     let mut users_suspended = Vec::new();
+    let mut users_who_failed_gate_check = Vec::new();
     let mut errors = Vec::new();
-    if !prepare_result.users_to_add.is_empty() {
+
+    if let Some(gate) = prepare_result.gate {
+        let futures: Vec<_> = prepare_result
+            .users_to_add
+            .iter()
+            .map(|u| check_if_passes_gate(gate.clone(), *u, prepare_result.user_index_canister_id))
+            .collect();
+
+        let responses = futures::future::join_all(futures).await;
+
+        for (response, user_id) in responses.into_iter().zip(prepare_result.users_to_add) {
+            match response {
+                CheckIfPassesGateResult::Success => users_to_add.push(user_id),
+                CheckIfPassesGateResult::Failed(_) => users_who_failed_gate_check.push(user_id),
+                CheckIfPassesGateResult::InternalError(_) => errors.push(user_id),
+            };
+        }
+    } else {
+        users_to_add = prepare_result.users_to_add;
+    };
+
+    if !users_to_add.is_empty() {
         let c2c_args = c2c_try_add_to_group::Args {
             added_by: prepare_result.added_by,
             latest_message_index: prepare_result.latest_message_index,
         };
-        let futures: Vec<_> = prepare_result
-            .users_to_add
+        let futures: Vec<_> = users_to_add
             .iter()
             .cloned()
             .map(|u| user_canister_c2c_client::c2c_try_add_to_group(u.into(), &c2c_args))
@@ -36,8 +61,7 @@ async fn add_participants(args: Args) -> Response {
 
         let responses = futures::future::join_all(futures).await;
 
-        for (index, response) in responses.into_iter().enumerate() {
-            let user_id = *prepare_result.users_to_add.get(index).unwrap();
+        for (response, user_id) in responses.into_iter().zip(users_to_add.into_iter()) {
             match response {
                 Ok(result) => match result {
                     c2c_try_add_to_group::Response::Success(r) => users_added.push((user_id, r.principal)),
@@ -71,6 +95,8 @@ async fn add_participants(args: Args) -> Response {
             users_already_in_group: prepare_result.users_already_in_group,
             users_blocked_from_group: prepare_result.users_blocked_from_group,
             users_who_blocked_request,
+            users_not_authorized_to_add: prepare_result.users_not_authorized_to_add,
+            users_who_failed_gate_check,
             users_suspended,
             errors,
         })
@@ -81,6 +107,7 @@ async fn add_participants(args: Args) -> Response {
             users_blocked_from_group: prepare_result.users_blocked_from_group,
             users_who_blocked_request,
             users_not_authorized_to_add: prepare_result.users_not_authorized_to_add,
+            users_who_failed_gate_check,
             users_suspended,
             errors,
         })
@@ -94,6 +121,8 @@ struct PrepareResult {
     users_already_in_group: Vec<UserId>,
     users_blocked_from_group: Vec<UserId>,
     users_not_authorized_to_add: Vec<UserId>,
+    user_index_canister_id: CanisterId,
+    gate: Option<GroupGate>,
 }
 
 fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Box<Response>> {
@@ -150,6 +179,8 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, B
             users_already_in_group,
             users_blocked_from_group,
             users_not_authorized_to_add,
+            user_index_canister_id: runtime_state.data.user_index_canister_id,
+            gate: runtime_state.data.gate.value.clone(),
         })
     } else {
         Err(Box::new(CallerNotInGroup))

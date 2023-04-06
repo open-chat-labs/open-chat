@@ -144,6 +144,7 @@ import {
     UpdateMarketMakerConfigResponse,
     SetNeuronControllerResponse,
     EligibleForInitialAirdropResponse,
+    GroupGate,
     ProposalVoteDetails,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
@@ -355,9 +356,18 @@ export class OpenChatAgent extends EventTarget {
         desc?: string,
         rules?: GroupRules,
         permissions?: Partial<GroupPermissions>,
-        avatar?: Uint8Array
+        avatar?: Uint8Array,
+        gate?: GroupGate
     ): Promise<UpdateGroupResponse> {
-        return this.getGroupClient(chatId).updateGroup(name, desc, rules, permissions, avatar);
+        return this.getGroupClient(chatId).updateGroup(
+            name,
+            desc,
+            rules,
+            permissions,
+            avatar,
+            undefined,
+            gate
+        );
     }
 
     addMembers(

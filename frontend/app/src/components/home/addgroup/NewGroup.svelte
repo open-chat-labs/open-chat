@@ -13,6 +13,7 @@
     import {
         CandidateGroupChat,
         CreateGroupResponse,
+        GroupGate,
         OpenChat,
         UnsupportedValueError,
         UpdateGroupResponse,
@@ -38,6 +39,7 @@
         ...candidateGroup,
         rules: { ...candidateGroup.rules },
         permissions: { ...candidateGroup.permissions },
+        gate: { ...candidateGroup.gate },
     };
     $: editing = candidateGroup.chatId !== undefined;
     $: padding = $mobileWidth ? 16 : 24; // yes this is horrible
@@ -67,7 +69,23 @@
     $: avatarDirty = editing && candidateGroup.avatar?.blobUrl !== originalGroup.avatar?.blobUrl;
     $: visDirty = editing && candidateGroup.isPublic !== originalGroup.isPublic;
     $: infoDirty = nameDirty || descDirty || avatarDirty;
-    $: dirty = infoDirty || rulesDirty || permissionsDirty || visDirty;
+    $: gateDirty = gatesDifferent(candidateGroup.gate, originalGroup.gate);
+    $: dirty = infoDirty || rulesDirty || permissionsDirty || visDirty || gateDirty;
+
+    function gatesDifferent(current: GroupGate, original: GroupGate): boolean {
+        if (current === original) return false;
+        if (current.kind !== original.kind) return true;
+        if (
+            (current.kind === "openchat_gate" || current.kind === "sns1_gate") &&
+            (original.kind === "openchat_gate" || original.kind === "sns1_gate")
+        ) {
+            return (
+                current.minDissolveDelay !== original.minDissolveDelay ||
+                current.minStakeE8s !== original.minStakeE8s
+            );
+        }
+        return false;
+    }
 
     function groupUpdateErrorMessage(resp: UpdateGroupResponse): string | undefined {
         if (resp === "success") return undefined;
@@ -146,8 +164,9 @@
         const p2 = permissionsDirty ? doUpdatePermissions() : Promise.resolve();
         const p3 = rulesDirty && !rulesInvalid ? doUpdateRules() : Promise.resolve();
         const p4 = makePrivate ? doMakeGroupPrivate() : Promise.resolve();
+        const p5 = gateDirty ? doUpdateGate(candidateGroup.gate) : Promise.resolve();
 
-        return Promise.all([p1, p2, p3, p4])
+        return Promise.all([p1, p2, p3, p4, p5])
             .then((_) => {
                 return;
             })
@@ -194,6 +213,35 @@
             });
     }
 
+    function doUpdateGate(gate: GroupGate): Promise<void> {
+        if (candidateGroup.chatId === undefined) return Promise.resolve();
+
+        return client
+            .updateGroup(
+                candidateGroup.chatId,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                undefined,
+                gate
+            )
+            .then((resp) => {
+                const err = groupUpdateErrorMessage(resp);
+                if (err) {
+                    toastStore.showFailureToast(err);
+                } else {
+                    originalGroup = {
+                        ...originalGroup,
+                        ...candidateGroup.gate,
+                    };
+                }
+            })
+            .catch(() => {
+                toastStore.showFailureToast("groupUpdateFailed");
+            });
+    }
+
     function doUpdateRules(): Promise<void> {
         if (candidateGroup.chatId === undefined) return Promise.resolve();
 
@@ -221,7 +269,8 @@
                 descDirty ? candidateGroup.description : undefined,
                 undefined,
                 undefined,
-                avatarDirty ? candidateGroup.avatar?.blobData : undefined
+                avatarDirty ? candidateGroup.avatar?.blobData : undefined,
+                undefined
             )
             .then((resp) => {
                 const err = groupUpdateErrorMessage(resp);

@@ -343,6 +343,7 @@ pub trait Reader {
             ChatEventInternal::ChatFrozen(f) => ChatEvent::ChatFrozen(*f.clone()),
             ChatEventInternal::ChatUnfrozen(u) => ChatEvent::ChatUnfrozen(*u.clone()),
             ChatEventInternal::EventsTimeToLiveUpdated(u) => ChatEvent::EventsTimeToLiveUpdated(*u.clone()),
+            ChatEventInternal::GroupGateUpdated(g) => ChatEvent::GroupGateUpdated(*g.clone()),
         };
 
         EventWrapper {
