@@ -1108,7 +1108,6 @@ export const idlFactory = ({ IDL }) => {
   const DirectChatSummaryUpdates = IDL.Record({
     'read_by_them_up_to' : IDL.Opt(MessageIndex),
     'metrics' : IDL.Opt(ChatMetrics),
-    'affected_events' : IDL.Vec(EventIndex),
     'notifications_muted' : IDL.Opt(IDL.Bool),
     'events_ttl' : EventsTimeToLiveUpdate,
     'latest_event_index' : IDL.Opt(EventIndex),

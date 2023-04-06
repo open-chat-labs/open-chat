@@ -48,12 +48,6 @@ fn summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
             role: if updates_from_events.role_changed { Some(participant.role) } else { None },
             mentions: updates_from_events.mentions,
             permissions: updates_from_events.permissions,
-            affected_events: updates_from_events
-                .updated_events
-                .iter()
-                .filter(|(r, _, _)| r.is_none())
-                .map(|(_, e, _)| *e)
-                .collect(),
             updated_events: updates_from_events.updated_events,
             metrics: Some(runtime_state.data.events.metrics().clone()),
             my_metrics: runtime_state

@@ -127,7 +127,6 @@ impl DirectChat {
             read_by_me_up_to: self.read_by_me_up_to.if_set_after(updates_since).copied().flatten(),
             read_by_them_up_to: self.read_by_them_up_to.if_set_after(updates_since).copied().flatten(),
             notifications_muted,
-            affected_events: updated_events.iter().map(|(e, _)| *e).collect(),
             updated_events,
             metrics,
             my_metrics: self.events.user_metrics(&my_user_id, Some(updates_since)).cloned(),
