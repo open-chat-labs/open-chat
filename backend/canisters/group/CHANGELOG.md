@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Implement 'Gated Groups' ([#3406](https://github.com/open-ic/open-chat/pull/3406))
+- Added `register_proposal_vote_v2` for voting on proposals directly from the frontend ([#3413](https://github.com/open-ic/open-chat/pull/3413))
 
 ### Removed
 
