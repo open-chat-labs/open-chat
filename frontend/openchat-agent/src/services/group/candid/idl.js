@@ -806,6 +806,13 @@ export const idlFactory = ({ IDL }) => {
     'ProposalNotAcceptingVotes' : IDL.Null,
     'InternalError' : IDL.Text,
   });
+  const RegisterProposalVoteV2Response = IDL.Variant({
+    'ProposalMessageNotFound' : IDL.Null,
+    'CallerNotInGroup' : IDL.Null,
+    'ChatFrozen' : IDL.Null,
+    'Success' : IDL.Null,
+    'UserSuspended' : IDL.Null,
+  });
   const RemoveParticipantArgs = IDL.Record({
     'user_id' : UserId,
     'correlation_id' : IDL.Nat64,
@@ -1294,6 +1301,11 @@ export const idlFactory = ({ IDL }) => {
     'register_proposal_vote' : IDL.Func(
         [RegisterProposalVoteArgs],
         [RegisterProposalVoteResponse],
+        [],
+      ),
+    'register_proposal_vote_v2' : IDL.Func(
+        [RegisterProposalVoteArgs],
+        [RegisterProposalVoteV2Response],
         [],
       ),
     'remove_participant' : IDL.Func(

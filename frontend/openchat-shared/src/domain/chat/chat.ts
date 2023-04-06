@@ -181,11 +181,27 @@ export interface ProposalCommon {
     proposer: string;
 }
 
+export type ManageNeuronResponse =
+    | { kind: "success" }
+    | { kind: "error", type: number, message: string };
+
 export interface Tally {
     yes: number;
     no: number;
     total: number;
     timestamp: bigint;
+}
+
+export interface Ballot {
+    neuronId: string;
+    vote: boolean | undefined;
+    votingPower: bigint;
+}
+
+export interface ProposalVoteDetails {
+    id: bigint;
+    ballots: Ballot[];
+    latestTally: Tally;
 }
 
 export interface NnsProposal extends ProposalCommon {

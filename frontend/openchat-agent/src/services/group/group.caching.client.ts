@@ -448,6 +448,13 @@ export class CachingGroupClient implements IGroupClient {
         return this.client.registerProposalVote(messageIdx, adopt);
     }
 
+    registerProposalVoteV2(
+        messageIdx: number,
+        adopt: boolean
+    ): Promise<RegisterProposalVoteResponse> {
+        return this.client.registerProposalVoteV2(messageIdx, adopt);
+    }
+
     localUserIndex(): Promise<string> {
         return this.client.localUserIndex();
     }

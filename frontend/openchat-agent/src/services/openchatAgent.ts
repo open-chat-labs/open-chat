@@ -40,6 +40,7 @@ import {
     mergeGroupChats,
     mergeGroupChatUpdates,
 } from "../utils/chat";
+import { NnsGovernanceClient } from "./nnsGovernance/nns.governance.client";
 import { SnsGovernanceClient } from "./snsGovernance/sns.governance.client";
 import type { AgentConfig } from "../config";
 import {
@@ -137,7 +138,6 @@ import {
     PayForDiamondMembershipResponse,
     AddHotGroupExclusionResponse,
     RemoveHotGroupExclusionResponse,
-    Tally,
     SetGroupUpgradeConcurrencyResponse,
     SetUserUpgradeConcurrencyResponse,
     UpdateMarketMakerConfigArgs,
@@ -145,6 +145,7 @@ import {
     SetNeuronControllerResponse,
     EligibleForInitialAirdropResponse,
     GroupGate,
+    ProposalVoteDetails,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import { applyOptionUpdate } from "../utils/mapping";
@@ -1428,12 +1429,20 @@ export class OpenChatAgent extends EventTarget {
         return userClient.migrateUserPrincipal();
     }
 
-    getSnsProposalTally(snsGovernanceCanisterId: string, proposalId: bigint): Promise<Tally> {
-        return SnsGovernanceClient.create(
-            this.identity,
-            this.config,
-            snsGovernanceCanisterId
-        ).getProposalTally(proposalId);
+    getProposalVoteDetails(governanceCanisterId: string, proposalId: bigint, isNns: boolean): Promise<ProposalVoteDetails> {
+        if (isNns) {
+            return NnsGovernanceClient.create(
+                this.identity,
+                this.config,
+                governanceCanisterId
+            ).getProposalVoteDetails(proposalId);
+        } else {
+            return SnsGovernanceClient.create(
+                this.identity,
+                this.config,
+                governanceCanisterId
+            ).getProposalVoteDetails(proposalId);
+        }
     }
 
     listNervousSystemFunctions(

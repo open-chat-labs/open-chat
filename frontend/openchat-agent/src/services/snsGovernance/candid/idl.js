@@ -27,6 +27,7 @@ export const idlFactory = ({ IDL }) => {
     'exclude_type' : IDL.Vec(IDL.Nat64),
     'include_status' : IDL.Vec(IDL.Int32),
   });
+  const Ballot = IDL.Record({ 'vote' : IDL.Int32, 'voting_power' : IDL.Nat64 });
   const Tally = IDL.Record({
     'no' : IDL.Nat64,
     'yes' : IDL.Nat64,
@@ -35,11 +36,30 @@ export const idlFactory = ({ IDL }) => {
   });
   const ProposalData = IDL.Record({
     'id' : IDL.Opt(ProposalId),
+    'ballots' : IDL.Vec(IDL.Tuple(IDL.Text, Ballot)),
     'latest_tally' : IDL.Opt(Tally),
   });
   const ListProposalsResponse = IDL.Record({
     'proposals' : IDL.Vec(ProposalData),
   });
+  const RegisterVote = IDL.Record({
+    'vote' : IDL.Int32,
+    'proposal' : IDL.Opt(ProposalId),
+  });
+  const Command = IDL.Variant({ 'RegisterVote' : RegisterVote });
+  const ManageNeuron = IDL.Record({
+    'subaccount' : IDL.Vec(IDL.Nat8),
+    'command' : IDL.Opt(Command),
+  });
+  const GovernanceError = IDL.Record({
+    'error_message' : IDL.Text,
+    'error_type' : IDL.Int32,
+  });
+  const Command_1 = IDL.Variant({
+    'Error' : GovernanceError,
+    'RegisterVote' : IDL.Record({}),
+  });
+  const ManageNeuronResponse = IDL.Record({ 'command' : IDL.Opt(Command_1) });
   return IDL.Service({
     'list_nervous_system_functions' : IDL.Func(
         [],
@@ -51,6 +71,7 @@ export const idlFactory = ({ IDL }) => {
         [ListProposalsResponse],
         ['query'],
       ),
+    'manage_neuron' : IDL.Func([ManageNeuron], [ManageNeuronResponse], []),
   });
 };
 export const init = ({ IDL }) => { return []; };

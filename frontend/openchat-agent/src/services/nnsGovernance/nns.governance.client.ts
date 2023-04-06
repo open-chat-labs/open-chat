@@ -1,21 +1,20 @@
 import type { Identity } from "@dfinity/agent";
-import type { ListNervousSystemFunctionsResponse, ManageNeuronResponse, ProposalVoteDetails } from "openchat-shared";
-import { idlFactory, SnsGovernanceService } from "./candid/idl";
+import type { ManageNeuronResponse, ProposalVoteDetails } from "openchat-shared";
+import { idlFactory, NnsGovernanceService } from "./candid/idl";
 import { CandidService } from "../candidService";
-import type { ISnsGovernanceClient } from "./sns.governance.client.interface";
-import { getProposalVoteDetails, manageNeuronResponse, nervousSystemFunctions } from "./mappers";
+import type { INnsGovernanceClient } from "./nns.governance.client.interface";
+import { getProposalVoteDetails, manageNeuronResponse } from "./mappers";
 import type { AgentConfig } from "../../config";
 import { apiOptional, apiProposalVote } from "../common/chatMappers";
 import { identity } from "../../utils/mapping";
-import { toUint8Array } from "../../utils/base64";
 
-export class SnsGovernanceClient extends CandidService implements ISnsGovernanceClient {
-    private service: SnsGovernanceService;
+export class NnsGovernanceClient extends CandidService implements INnsGovernanceClient {
+    private service: NnsGovernanceService;
 
     private constructor(identity: Identity, config: AgentConfig, canisterId: string) {
         super(identity);
 
-        this.service = this.createServiceClient<SnsGovernanceService>(
+        this.service = this.createServiceClient<NnsGovernanceService>(
             idlFactory,
             canisterId,
             config
@@ -26,13 +25,13 @@ export class SnsGovernanceClient extends CandidService implements ISnsGovernance
         identity: Identity,
         config: AgentConfig,
         canisterId: string
-    ): ISnsGovernanceClient {
-        return new SnsGovernanceClient(identity, config, canisterId);
+    ): INnsGovernanceClient {
+        return new NnsGovernanceClient(identity, config, canisterId);
     }
 
     registerVote(neuronId: string, proposalId: bigint, vote: boolean): Promise<ManageNeuronResponse> {
         const args = {
-            subaccount: toUint8Array(neuronId),
+            id: apiOptional(identity, { id: BigInt(neuronId) }),
             command: apiOptional(identity, {
                 RegisterVote: {
                     vote: apiProposalVote(vote),
@@ -49,21 +48,14 @@ export class SnsGovernanceClient extends CandidService implements ISnsGovernance
     getProposalVoteDetails(proposalId: bigint): Promise<ProposalVoteDetails> {
         const args = {
             include_reward_status: [],
-            before_proposal: [{ id: proposalId + BigInt(1) }] as [{ id: bigint }],
+            before_proposal: apiOptional(identity, { id: proposalId + BigInt(1) }),
             limit: 1,
-            exclude_type: [],
+            exclude_topic: [],
             include_status: [],
         };
         return this.handleQueryResponse(
             () => this.service.list_proposals(args),
             getProposalVoteDetails
         )
-    }
-
-    listNervousSystemFunctions(): Promise<ListNervousSystemFunctionsResponse> {
-        return this.handleQueryResponse(
-            () => this.service.list_nervous_system_functions(),
-            nervousSystemFunctions
-        );
     }
 }

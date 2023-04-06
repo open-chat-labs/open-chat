@@ -1,6 +1,17 @@
 // This is a trimmed down version of the full SNS governance candid file which can be found here -
 // https://github.com/dfinity/ic/blob/master/rs/sns/governance/canister/governance.did
 
+type Ballot = record {
+  vote: int32;
+  voting_power: nat64;
+};
+type Command = variant {
+  RegisterVote : RegisterVote;
+};
+type Command_1 = variant {
+  Error : GovernanceError;
+  RegisterVote : record {};
+};
 type FunctionType = variant {
   NativeNervousSystemFunction : record {};
   GenericNervousSystemFunction : GenericNervousSystemFunction;
@@ -24,6 +35,8 @@ type ListProposals = record {
   include_status : vec int32;
 };
 type ListProposalsResponse = record { proposals : vec ProposalData };
+type ManageNeuron = record { subaccount : vec nat8; command : opt Command };
+type ManageNeuronResponse = record { command : opt Command_1 };
 type NervousSystemFunction = record {
   id : nat64;
   name : text;
@@ -32,9 +45,11 @@ type NervousSystemFunction = record {
 };
 type ProposalData = record {
   id : opt ProposalId;
+  ballots : vec record { text; Ballot };
   latest_tally : opt Tally;
 };
 type ProposalId = record { id : nat64 };
+type RegisterVote = record { vote : int32; proposal : opt ProposalId };
 type Tally = record {
   no : nat64;
   yes : nat64;
@@ -46,4 +61,5 @@ service : {
       ListNervousSystemFunctionsResponse,
   ) query;
   list_proposals : (ListProposals) -> (ListProposalsResponse) query;
+  manage_neuron : (ManageNeuron) -> (ManageNeuronResponse);
 }

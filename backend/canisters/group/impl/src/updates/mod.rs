@@ -19,6 +19,7 @@ mod make_private;
 mod pin_message;
 mod register_poll_vote;
 mod register_proposal_vote;
+mod register_proposal_vote_v2;
 mod remove_participant;
 mod remove_reaction;
 mod send_message_v2;

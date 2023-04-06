@@ -432,6 +432,15 @@ type RegisterProposalVoteResponse =
         InternalError: text;
     };
 
+type RegisterProposalVoteV2Response =
+    variant {
+        Success;
+        CallerNotInGroup;
+        ProposalMessageNotFound;
+        UserSuspended;
+        ChatFrozen;
+    };
+
 type ClaimPrizeArgs =
     record {
         message_id: MessageId;
@@ -733,6 +742,7 @@ service: {
     add_reaction: (AddReactionArgs) -> (AddReactionResponse);
     remove_reaction: (RemoveReactionArgs) -> (RemoveReactionResponse);
     register_proposal_vote: (RegisterProposalVoteArgs) -> (RegisterProposalVoteResponse);
+    register_proposal_vote_v2: (RegisterProposalVoteArgs) -> (RegisterProposalVoteV2Response);
     claim_prize: (ClaimPrizeArgs) -> (ClaimPrizeResponse);
 
     summary: (SummaryArgs) -> (SummaryResponse) query;

@@ -1,6 +1,10 @@
 import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
 
+export interface Ballot { 'vote' : number, 'voting_power' : bigint }
+export type Command = { 'RegisterVote' : RegisterVote };
+export type Command_1 = { 'Error' : GovernanceError } |
+  { 'RegisterVote' : {} };
 export type FunctionType = { 'NativeNervousSystemFunction' : {} } |
   { 'GenericNervousSystemFunction' : GenericNervousSystemFunction };
 export interface GenericNervousSystemFunction {
@@ -25,6 +29,11 @@ export interface ListProposals {
   'include_status' : Int32Array | number[],
 }
 export interface ListProposalsResponse { 'proposals' : Array<ProposalData> }
+export interface ManageNeuron {
+  'subaccount' : Uint8Array | number[],
+  'command' : [] | [Command],
+}
+export interface ManageNeuronResponse { 'command' : [] | [Command_1] }
 export interface NervousSystemFunction {
   'id' : bigint,
   'name' : string,
@@ -33,9 +42,14 @@ export interface NervousSystemFunction {
 }
 export interface ProposalData {
   'id' : [] | [ProposalId],
+  'ballots' : Array<[string, Ballot]>,
   'latest_tally' : [] | [Tally],
 }
 export interface ProposalId { 'id' : bigint }
+export interface RegisterVote {
+  'vote' : number,
+  'proposal' : [] | [ProposalId],
+}
 export interface Tally {
   'no' : bigint,
   'yes' : bigint,
@@ -48,4 +62,5 @@ export interface _SERVICE {
     ListNervousSystemFunctionsResponse
   >,
   'list_proposals' : ActorMethod<[ListProposals], ListProposalsResponse>,
+  'manage_neuron' : ActorMethod<[ManageNeuron], ManageNeuronResponse>,
 }
