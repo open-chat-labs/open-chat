@@ -61,6 +61,7 @@
     let user = client.user;
     let scrollingToMessage = false;
     let scrollToBottomOnSend = false;
+    let destroyed = false;
 
     $: failedMessagesStore = client.failedMessagesStore;
     $: threadSummary = threadRootEvent?.event.thread;
@@ -116,6 +117,7 @@
         client.addEventListener("openchat_event", clientEvent);
         return () => {
             client.removeEventListener("openchat_event", clientEvent);
+            destroyed = true;
         };
     });
 
@@ -351,7 +353,8 @@
                 scrollingToMessage = false;
                 return Promise.resolve();
             }
-        } else {
+        } else if (!destroyed) {
+            // make sure that we short-circuit recursion when unmounted otherwise ∞ 💥
             await client.loadEventWindow(chatId, index, threadRootEvent);
             return scrollToMessageIndex(chatId, index, preserveFocus);
         }
