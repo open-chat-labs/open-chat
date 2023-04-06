@@ -139,7 +139,6 @@ type DirectChatSummaryUpdates =
         read_by_me_up_to: opt MessageIndex;
         read_by_them_up_to: opt MessageIndex;
         notifications_muted: opt bool;
-        affected_events: vec EventIndex;
         updated_events: vec record { nat32; nat64 };
         metrics: opt ChatMetrics;
         my_metrics: opt ChatMetrics;
@@ -324,7 +323,6 @@ type GroupCanisterGroupChatSummaryUpdates =
         role: opt Role;
         mentions: vec Mention;
         permissions: opt GroupPermissions;
-        affected_events: vec EventIndex;
         updated_events: vec record { opt nat32; nat32; nat64 };
         metrics: opt ChatMetrics;
         my_metrics: opt ChatMetrics;

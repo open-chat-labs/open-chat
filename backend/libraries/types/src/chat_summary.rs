@@ -80,7 +80,6 @@ pub struct DirectChatSummaryUpdates {
     pub read_by_me_up_to: Option<MessageIndex>,
     pub read_by_them_up_to: Option<MessageIndex>,
     pub notifications_muted: Option<bool>,
-    pub affected_events: Vec<EventIndex>,
     pub updated_events: Vec<(EventIndex, TimestampMillis)>,
     pub metrics: Option<ChatMetrics>,
     pub my_metrics: Option<ChatMetrics>,
@@ -216,7 +215,6 @@ pub struct GroupCanisterGroupChatSummaryUpdates {
     pub mentions: Vec<Mention>,
     pub wasm_version: Option<Version>,
     pub permissions: Option<GroupPermissions>,
-    pub affected_events: Vec<EventIndex>,
     pub updated_events: Vec<(Option<MessageIndex>, EventIndex, TimestampMillis)>, // (Thread root message index, event index, timestamp)
     pub metrics: Option<ChatMetrics>,
     pub my_metrics: Option<ChatMetrics>,
