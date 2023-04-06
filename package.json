@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "qr-scanner": "^1.4.2"
+  }
+}

@@ -10,7 +10,7 @@
     const client = getContext<OpenChat>("client");
 
     let balanceError: string | undefined;
-    let showManageCryptoAccount = false;
+    let manageMode: "none" | "send" | "deposit";
     let selectedCryptoAccount: Cryptocurrency | undefined = undefined;
 
     $: cryptoBalance = client.cryptoBalance;
@@ -23,9 +23,18 @@
         balanceError = ev.detail;
     }
 
-    function showManageCrypto(crypto: Cryptocurrency) {
+    function hideManageModal() {
+        manageMode = "none";
+    }
+
+    function showReceive(crypto: Cryptocurrency) {
         selectedCryptoAccount = crypto;
-        showManageCryptoAccount = true;
+        manageMode = "deposit";
+    }
+
+    function showSend(crypto: Cryptocurrency) {
+        selectedCryptoAccount = crypto;
+        manageMode = "send";
     }
 
     $: crypto = cryptoCurrencyList.map((t) => ({
@@ -36,8 +45,11 @@
     }));
 </script>
 
-{#if showManageCryptoAccount && selectedCryptoAccount !== undefined}
-    <ManageCryptoAccount bind:token={selectedCryptoAccount} bind:open={showManageCryptoAccount} />
+{#if manageMode !== "none" && selectedCryptoAccount !== undefined}
+    <ManageCryptoAccount
+        mode={manageMode}
+        bind:token={selectedCryptoAccount}
+        on:close={hideManageModal} />
 {/if}
 
 <div class="accounts">
@@ -68,8 +80,10 @@
         </div>
         <div class="manage">
             {#if !token.disabled}
-                <LinkButton underline={"hover"} on:click={() => showManageCrypto(token.key)}
-                    >{$_("cryptoAccount.manage")}</LinkButton>
+                <LinkButton underline={"hover"} on:click={() => showSend(token.key)}
+                    >{$_("cryptoAccount.send")}</LinkButton>
+                <LinkButton underline={"hover"} on:click={() => showReceive(token.key)}
+                    >{$_("cryptoAccount.deposit")}</LinkButton>
             {/if}
         </div>
     {/each}
