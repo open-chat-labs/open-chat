@@ -108,7 +108,7 @@ fn calculate_orders_to_make(
     bids_to_make
         .into_values()
         .chain(asks_to_make.into_values())
-        .sorted_unstable_by_key(|o| latest_price.abs_diff(o.price))
+        .sorted_unstable_by_key(|o| Reverse(latest_price.abs_diff(o.price)))
         .take(max_orders_to_make)
         .collect()
 }
