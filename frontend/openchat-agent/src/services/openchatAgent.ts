@@ -492,7 +492,7 @@ export class OpenChatAgent extends EventTarget {
                 threadRootMessageIndex,
                 latestClientMainEventIndex
             ),
-            undefined,
+            threadRootMessageIndex,
             latestClientMainEventIndex
         );
     }
@@ -750,6 +750,7 @@ export class OpenChatAgent extends EventTarget {
             threadRootMessageIndex,
             latestClientEventIndex
         );
+
         resp.events = resp.events.map((e) => this.rehydrateEvent(e, currentChatId, missing));
         return resp;
     }
@@ -1429,7 +1430,11 @@ export class OpenChatAgent extends EventTarget {
         return userClient.migrateUserPrincipal();
     }
 
-    getProposalVoteDetails(governanceCanisterId: string, proposalId: bigint, isNns: boolean): Promise<ProposalVoteDetails> {
+    getProposalVoteDetails(
+        governanceCanisterId: string,
+        proposalId: bigint,
+        isNns: boolean
+    ): Promise<ProposalVoteDetails> {
         if (isNns) {
             return NnsGovernanceClient.create(
                 this.identity,
