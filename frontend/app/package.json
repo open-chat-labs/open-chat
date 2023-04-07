@@ -78,11 +78,11 @@
         "util": "0.12.3"
     },
     "dependencies": {
-        "@dfinity/agent": "^0.15.4",
-        "@dfinity/auth-client": "^0.15.4",
-        "@dfinity/candid": "^0.15.4",
-        "@dfinity/identity": "^0.15.4",
-        "@dfinity/principal": "^0.15.4",
+        "@dfinity/agent": "^0.15.5",
+        "@dfinity/auth-client": "^0.15.5",
+        "@dfinity/candid": "^0.15.5",
+        "@dfinity/identity": "^0.15.5",
+        "@dfinity/principal": "^0.15.5",
         "@fortawesome/free-solid-svg-icons": "^5.15.4",
         "@sveltejs/svelte-virtual-list": "^3.0.1",
         "drange": "^2.0.1",
