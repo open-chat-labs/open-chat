@@ -23,6 +23,7 @@ fn init(args: Args) {
         args.cycles_dispenser_canister_id,
         args.storage_index_canister_id,
         args.proposals_bot_user_id,
+        args.internet_identity_canister_id,
         args.test_mode,
     );
 

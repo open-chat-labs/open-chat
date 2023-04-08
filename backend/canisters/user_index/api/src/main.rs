@@ -13,7 +13,6 @@ fn main() {
 
     generate_candid_method!(user_index, add_platform_moderator, update);
     generate_candid_method!(user_index, add_platform_operator, update);
-    generate_candid_method!(user_index, create_challenge, update);
     generate_candid_method!(user_index, mark_suspected_bot, update);
     generate_candid_method!(user_index, pay_for_diamond_membership, update);
     generate_candid_method!(user_index, register_user, update);

@@ -109,6 +109,11 @@ export function createChallengeResponse(
             pngBase64: candid.Success.png_base64,
         };
     }
+    if ("NotRequired" in candid) {
+        return {
+            kind: "not_required"
+        };
+    }
 
     throw new UnsupportedValueError("Unexpected ApiCreateChallengeResponse type received", candid);
 }
@@ -146,6 +151,10 @@ export function registerUserResponse(candid: ApiRegisterUserResponse): RegisterU
     }
     if ("ChallengeFailed" in candid) {
         return "challenge_failed";
+    }
+    if ("PublicKeyInvalid" in candid) {
+        console.error("PublicKeyInvalid", candid);
+        return "public_key_invalid";
     }
 
     throw new UnsupportedValueError("Unexpected ApiRegisterUserResponse type received", candid);

@@ -1,4 +1,3 @@
-use crate::model::challenges::Challenges;
 use crate::model::initial_airdrop_queue::{InitialAirdropEntry, InitialAirdropQueue};
 use crate::model::local_user_index_map::LocalUserIndex;
 use crate::model::storage_index_user_sync_queue::OpenStorageUserSyncQueue;
@@ -140,13 +139,13 @@ impl RuntimeState {
             max_concurrent_canister_upgrades: self.data.max_concurrent_canister_upgrades,
             platform_moderators: self.data.platform_moderators.len() as u8,
             platform_operators: self.data.platform_operators.len() as u8,
-            inflight_challenges: self.data.challenges.count(),
             user_index_events_queue_length: self.data.user_index_event_sync_queue.len(),
             local_user_indexes: self.data.local_index_map.iter().map(|(c, i)| (*c, i.clone())).collect(),
             canister_ids: CanisterIds {
                 group_index: self.data.group_index_canister_id,
                 notifications_index: self.data.notifications_index_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
+                internet_identity: self.data.internet_identity_canister_id,
             },
             users_eligible_for_initial_airdrop: self.data.users.iter().filter(|u| u.is_eligible_for_initial_airdrop()).count()
                 as u32,
@@ -176,7 +175,6 @@ struct Data {
     pub platform_moderators: HashSet<UserId>,
     pub platform_operators: HashSet<UserId>,
     pub test_mode: bool,
-    pub challenges: Challenges,
     pub max_concurrent_canister_upgrades: usize,
     pub diamond_membership_payment_metrics: DiamondMembershipPaymentMetrics,
     pub local_index_map: LocalUserIndexMap,
@@ -192,6 +190,8 @@ struct Data {
     pub openchat_governance_canister_id: CanisterId,
     #[serde(default = "oc_ledger_canister")]
     pub openchat_ledger_canister_id: CanisterId,
+    #[serde(default = "internet_identity_canister")]
+    pub internet_identity_canister_id: CanisterId,
 }
 
 fn true_() -> bool {
@@ -206,6 +206,10 @@ fn oc_ledger_canister() -> CanisterId {
     Principal::from_text("2ouva-viaaa-aaaaq-aaamq-cai").unwrap()
 }
 
+fn internet_identity_canister() -> CanisterId {
+    Principal::from_text("rdmx6-jaaaa-aaaaa-aaadq-cai").unwrap()
+}
+
 impl Data {
     #[allow(clippy::too_many_arguments)]
     pub fn new(
@@ -217,6 +221,7 @@ impl Data {
         cycles_dispenser_canister_id: CanisterId,
         storage_index_canister_id: CanisterId,
         proposals_bot_user_id: UserId,
+        internet_identity_canister_id: CanisterId,
         test_mode: bool,
     ) -> Self {
         let mut data = Data {
@@ -237,7 +242,6 @@ impl Data {
             platform_moderators: HashSet::new(),
             platform_operators: HashSet::new(),
             test_mode,
-            challenges: Challenges::new(test_mode),
             max_concurrent_canister_upgrades: 2,
             diamond_membership_payment_metrics: DiamondMembershipPaymentMetrics::default(),
             local_index_map: LocalUserIndexMap::default(),
@@ -248,6 +252,7 @@ impl Data {
             initial_airdrop_queue: InitialAirdropQueue::default(),
             openchat_governance_canister_id: oc_governance_canister(),
             openchat_ledger_canister_id: oc_ledger_canister(),
+            internet_identity_canister_id,
         };
 
         // Register the ProposalsBot
@@ -286,7 +291,6 @@ impl Default for Data {
             platform_moderators: HashSet::new(),
             platform_operators: HashSet::new(),
             test_mode: true,
-            challenges: Challenges::new(true),
             max_concurrent_canister_upgrades: 2,
             diamond_membership_payment_metrics: DiamondMembershipPaymentMetrics::default(),
             local_index_map: LocalUserIndexMap::default(),
@@ -297,6 +301,7 @@ impl Default for Data {
             initial_airdrop_queue: InitialAirdropQueue::default(),
             openchat_governance_canister_id: oc_governance_canister(),
             openchat_ledger_canister_id: oc_ledger_canister(),
+            internet_identity_canister_id: internet_identity_canister(),
         }
     }
 }
@@ -321,7 +326,6 @@ pub struct Metrics {
     pub max_concurrent_canister_upgrades: usize,
     pub platform_moderators: u8,
     pub platform_operators: u8,
-    pub inflight_challenges: u32,
     pub user_index_events_queue_length: usize,
     pub local_user_indexes: Vec<(CanisterId, LocalUserIndex)>,
     pub canister_ids: CanisterIds,
@@ -356,4 +360,5 @@ pub struct CanisterIds {
     pub group_index: CanisterId,
     pub notifications_index: CanisterId,
     pub cycles_dispenser: CanisterId,
+    pub internet_identity: CanisterId,
 }

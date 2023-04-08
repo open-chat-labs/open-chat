@@ -26,6 +26,7 @@ export const idlFactory = ({ IDL }) => {
   const CreateChallengeResponse = IDL.Variant({
     'Throttled' : IDL.Null,
     'Success' : Challenge,
+    'NotRequired' : IDL.Null,
   });
   const Version = IDL.Record({
     'major' : IDL.Nat32,
@@ -119,6 +120,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const RegisterUserArgs = IDL.Record({
     'username' : IDL.Text,
+    'public_key' : IDL.Vec(IDL.Nat8),
     'referred_by' : IDL.Opt(UserId),
     'challenge_attempt' : ChallengeAttempt,
   });
@@ -131,6 +133,7 @@ export const idlFactory = ({ IDL }) => {
     'UsernameTooLong' : IDL.Nat16,
     'Success' : UserId,
     'ChallengeFailed' : IDL.Null,
+    'PublicKeyInvalid' : IDL.Text,
     'InternalError' : IDL.Text,
     'CyclesBalanceTooLow' : IDL.Null,
   });

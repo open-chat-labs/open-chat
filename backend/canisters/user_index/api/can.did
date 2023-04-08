@@ -10,6 +10,7 @@ type CreateChallengeResponse =
     variant {
         Success: Challenge;
         Throttled;
+        NotRequired;
     };
 
 type Challenge = record {
@@ -22,6 +23,7 @@ type RegisterUserArgs =
         username: text;
         challenge_attempt: ChallengeAttempt;
         referred_by: opt UserId;
+        public_key: blob;
     };
 
 type ChallengeAttempt = record {
@@ -41,6 +43,7 @@ type RegisterUserResponse =
         CyclesBalanceTooLow;
         InternalError: text;
         ChallengeFailed;
+        PublicKeyInvalid: text;
     };
 
 type SetUsernameArgs =

@@ -98,7 +98,6 @@ canister_logger = { git = "https://github.com/open-ic/ic-utils", rev = "ff68dce7
 canister_state_macros = { git = "https://github.com/open-ic/ic-utils", rev = "ff68dce73c22afc04a1483239c30be613c0e6d9d" }
 canister_timer_jobs = { git = "https://github.com/open-ic/ic-utils", rev = "ff68dce73c22afc04a1483239c30be613c0e6d9d" }
 canister_tracing_macros = { git = "https://github.com/open-ic/ic-utils", rev = "ff68dce73c22afc04a1483239c30be613c0e6d9d" }
-captcha = { git = "https://github.com/nmattia/captcha", rev = "fb3fe931c20b8577bf02070ae6b8c0ca2f442427", default-features = false }
 chrono = "0.4.24"
 clap = "3.2.23"
 dirs = "4.0.0"
@@ -147,6 +146,7 @@ tracing = "0.1.37"
 tracing-attributes = "0.1.23"
 tracing-subscriber = "0.3.16"
 web-push = { version = "0.9.4", default-features = false, features = ["hyper-client"] }
+x509-parser = "0.15.0"
 
 [profile.release]
 lto = true
