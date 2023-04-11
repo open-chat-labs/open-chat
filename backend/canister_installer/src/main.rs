@@ -20,6 +20,7 @@ async fn main() {
         cycles_dispenser: opts.cycles_dispenser,
         market_maker: opts.market_maker,
         nns_governance: opts.nns_governance,
+        nns_internet_identity: opts.nns_internet_identity,
         nns_ledger: opts.nns_ledger,
         nns_cmc: opts.nns_cmc,
     };
@@ -47,6 +48,7 @@ struct Opts {
     cycles_dispenser: CanisterId,
     market_maker: CanisterId,
     nns_governance: CanisterId,
+    nns_internet_identity: CanisterId,
     nns_ledger: CanisterId,
     nns_cmc: CanisterId,
 }

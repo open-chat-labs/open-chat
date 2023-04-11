@@ -137,7 +137,8 @@ export type CompletedCryptoTransaction = {
   } |
   { 'SNS' : SnsCompletedCryptoTransaction };
 export type CreateChallengeResponse = { 'Throttled' : null } |
-  { 'Success' : Challenge };
+  { 'Success' : Challenge } |
+  { 'NotRequired' : null };
 export interface CryptoContent {
   'recipient' : UserId,
   'caption' : [] | [string],
@@ -792,6 +793,7 @@ export interface PushEventResult {
 }
 export interface RegisterUserArgs {
   'username' : string,
+  'public_key' : Uint8Array | number[],
   'referred_by' : [] | [UserId],
   'challenge_attempt' : ChallengeAttempt,
 }
@@ -803,6 +805,7 @@ export type RegisterUserResponse = { 'UsernameTaken' : null } |
   { 'UsernameTooLong' : number } |
   { 'Success' : UserId } |
   { 'ChallengeFailed' : null } |
+  { 'PublicKeyInvalid' : string } |
   { 'InternalError' : string } |
   { 'CyclesBalanceTooLow' : null };
 export type RegistrationFee = { 'ICP' : ICPRegistrationFee } |

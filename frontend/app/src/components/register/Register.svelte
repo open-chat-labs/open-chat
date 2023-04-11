@@ -89,10 +89,17 @@
                     // The user has not submitted a username so goto the "username" panel.
                     state.set({ kind: "awaiting_username" });
                 }
-            } else {
+            } else if (challengeResponse.kind === "throttled") {
                 // Creating a new challenge has failed.
                 // Goto the "username" panel and show the error message.
                 error.set("register.challengeThrottled");
+                state.set({ kind: "awaiting_username" });
+            } else {
+                // Challenge not required so just set it to a dummy value
+                challengeAttempt = {
+                    key: 1,
+                    chars: "1",
+                };
                 state.set({ kind: "awaiting_username" });
             }
         });

@@ -1,15 +1,13 @@
 use crate::client::{create_canister, install_canister};
 use crate::rng::random_principal;
 use crate::utils::{local_bin, tick_many};
-use crate::{client, wasms, CanisterIds, TestEnv, T};
+use crate::{client, wasms, CanisterIds, TestEnv, NNS_GOVERNANCE_CANISTER_ID, NNS_INTERNET_IDENTITY_CANISTER_ID, T};
 use candid::{CandidType, Principal};
 use ic_ledger_types::{AccountIdentifier, BlockIndex, Tokens, DEFAULT_SUBACCOUNT};
 use ic_test_state_machine_client::StateMachine;
 use std::collections::{HashMap, HashSet};
 use storage_index_canister::init::CyclesDispenserConfig;
 use types::{CanisterId, Version};
-
-const NNS_GOVERNANCE_CANISTER_ID: CanisterId = Principal::from_slice(&[0, 0, 0, 0, 0, 0, 0, 1, 1, 1]);
 
 pub fn setup_new_env() -> TestEnv {
     let mut file_path = local_bin();
@@ -67,6 +65,7 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
         cycles_dispenser_canister_id,
         storage_index_canister_id,
         proposals_bot_user_id: proposals_bot_canister_id.into(),
+        internet_identity_canister_id: NNS_INTERNET_IDENTITY_CANISTER_ID,
         wasm_version: Version::min(),
         test_mode: true,
     };
