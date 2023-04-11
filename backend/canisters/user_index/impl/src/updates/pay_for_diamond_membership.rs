@@ -107,6 +107,7 @@ fn process_charge(
                 send_bot_message: true,
             }),
         );
+        crate::jobs::sync_events_to_local_user_index_canisters::start_job_if_required(runtime_state);
 
         if let Some(user) = runtime_state.data.users.get_by_user_id(&user_id) {
             runtime_state.data.storage_index_user_sync_queue.push(UserConfig {
