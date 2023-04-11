@@ -267,6 +267,7 @@ type PayForDiamondMembershipResponse =
 type ReferralMetricsResponse =
     variant {
         Success: record {
+            users_who_referred: nat32;
             users_who_referred_paid_diamond: nat32;
             users_who_referred_unpaid_diamond: nat32;
             users_who_referred_90_percent_unpaid_diamond: nat32;
