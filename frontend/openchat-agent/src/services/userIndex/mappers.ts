@@ -153,7 +153,6 @@ export function registerUserResponse(candid: ApiRegisterUserResponse): RegisterU
         return "challenge_failed";
     }
     if ("PublicKeyInvalid" in candid) {
-        console.error("PublicKeyInvalid", candid);
         return "public_key_invalid";
     }
 
