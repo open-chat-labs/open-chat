@@ -68,7 +68,7 @@ export enum AvatarSize {
     Large,
 }
 
-export type CreateChallengeResponse = Challenge | Throttled;
+export type CreateChallengeResponse = Challenge | Throttled | NotRequired;
 
 export type Challenge = {
     kind: "challenge";
@@ -78,6 +78,10 @@ export type Challenge = {
 
 export type Throttled = {
     kind: "throttled";
+};
+
+export type NotRequired = {
+    kind: "not_required";
 };
 
 export type ChallengeAttempt = {
@@ -164,7 +168,8 @@ export type RegisterUserResponse =
     | "username_too_short"
     | "username_too_long"
     | "username_invalid"
-    | "challenge_failed";
+    | "challenge_failed"
+    | "public_key_invalid";
 
 export type PinChatResponse = { kind: "success" } | { kind: "pinned_limit_reached"; limit: number };
 

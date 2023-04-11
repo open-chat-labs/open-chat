@@ -1,4 +1,4 @@
-import type { Identity } from "@dfinity/agent";
+import type { Identity, SignIdentity } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
 import { idlFactory, UserIndexService } from "./candid/idl";
 import type {
@@ -107,6 +107,7 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
                 username,
                 challenge_attempt: challengeAttempt,
                 referred_by: apiOptional((userId) => Principal.fromText(userId), referredBy),
+                public_key: new Uint8Array((this.identity as SignIdentity).getPublicKey().toDer())
             }),
             registerUserResponse
         );

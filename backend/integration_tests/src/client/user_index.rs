@@ -22,12 +22,12 @@ generate_update_call!(unsuspend_user);
 generate_update_call!(upgrade_user_canister_wasm);
 
 pub mod happy_path {
-    use crate::rng::random_principal;
+    use crate::rng::random_user_principal;
     use crate::utils::principal_to_username;
     use crate::User;
     use candid::Principal;
     use ic_test_state_machine_client::StateMachine;
-    use types::{CanisterId, ChallengeAttempt, Cryptocurrency, DiamondMembershipDetails, DiamondMembershipPlanDuration};
+    use types::{CanisterId, Cryptocurrency, DiamondMembershipDetails, DiamondMembershipPlanDuration};
 
     pub fn current_user(
         env: &StateMachine,
@@ -43,7 +43,7 @@ pub mod happy_path {
     }
 
     pub fn register_user(env: &mut StateMachine, canister_id: CanisterId) -> User {
-        let principal = random_principal();
+        let (principal, public_key) = random_user_principal();
 
         let response = super::register_user(
             env,
@@ -51,11 +51,8 @@ pub mod happy_path {
             canister_id,
             &user_index_canister::register_user::Args {
                 username: principal_to_username(principal),
-                challenge_attempt: ChallengeAttempt {
-                    key: 0,
-                    chars: "TEST".to_string(),
-                },
                 referred_by: None,
+                public_key,
             },
         );
 

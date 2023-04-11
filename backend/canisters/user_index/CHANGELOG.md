@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Removed
 
 - Removed `c2c_lookup_principal` ([#3414](https://github.com/open-ic/open-chat/pull/3414))
+- Remove CAPTCHA and instead verify public key is derived from II canister ([#3426](https://github.com/open-ic/open-chat/pull/3426))
 
 ## [[2.0.656](https://github.com/open-ic/open-chat/releases/tag/v2.0.656-user_index)] - 2023-04-05
 

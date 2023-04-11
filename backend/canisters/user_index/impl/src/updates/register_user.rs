@@ -7,11 +7,13 @@ use local_user_index_canister::{Event, UserRegistered};
 use storage_index_canister::add_or_update_users::UserConfig;
 use types::{CanisterId, UserId, Version};
 use user_index_canister::register_user::{Response::*, *};
+use x509_parser::prelude::FromDer;
+use x509_parser::x509::SubjectPublicKeyInfo;
 
 #[update]
 #[trace]
 async fn register_user(args: Args) -> Response {
-    // Check the challenge
+    // Check the principal is derived from Internet Identity
     // Check the username is valid and doesn't already exist then reserve it
     let PrepareOk {
         local_user_index_canister,
@@ -65,8 +67,8 @@ fn prepare(args: &Args, runtime_state: &mut RuntimeState) -> Result<PrepareOk, R
     let caller = runtime_state.env.caller();
     let now = runtime_state.env.now();
 
-    if !runtime_state.data.challenges.check(&args.challenge_attempt, now) {
-        return Err(ChallengeFailed);
+    if let Err(error) = validate_public_key(caller, &args.public_key, runtime_state.data.internet_identity_canister_id) {
+        return Err(PublicKeyInvalid(error));
     }
 
     if runtime_state.data.users.get_by_principal(&caller).is_some() {
@@ -143,4 +145,21 @@ fn commit(
 
 fn rollback(username: &str, runtime_state: &mut RuntimeState) {
     runtime_state.data.users.release_username(username);
+}
+
+fn validate_public_key(caller: Principal, public_key: &[u8], internet_identity_canister_id: CanisterId) -> Result<(), String> {
+    let key_info = SubjectPublicKeyInfo::from_der(public_key).map_err(|e| format!("{e:?}"))?.1;
+    let canister_id_length = key_info.subject_public_key.data[0];
+
+    let canister_id = CanisterId::from_slice(&key_info.subject_public_key.data[1..=(canister_id_length as usize)]);
+    if canister_id != internet_identity_canister_id {
+        return Err("PublicKey is not derived from the InternetIdentity canister".to_string());
+    }
+
+    let expected_caller = Principal::self_authenticating(public_key);
+    if caller == expected_caller {
+        Ok(())
+    } else {
+        Err("PublicKey does not match caller".to_string())
+    }
 }
