@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { createEventDispatcher, getContext, onMount } from "svelte";
+    import { createEventDispatcher, getContext } from "svelte";
     import TokenInput from "../TokenInput.svelte";
     import { Cryptocurrency, OpenChat, cryptoLookup } from "openchat-client";
     import Input from "../../Input.svelte";
@@ -8,7 +8,7 @@
     import { logger } from "../../../utils/logging";
     import { toastStore } from "../../../stores/toast";
     import { iconSize } from "../../../stores/iconSize";
-    import QrScanner from "qr-scanner";
+    import Scanner from "./Scanner.svelte";
 
     export let token: Cryptocurrency;
     export let amountToWithdrawE8s: bigint;
@@ -20,17 +20,7 @@
     let validAmount = false;
     let targetAccount: string = "";
     let withdrawing = false;
-    let videoElement: HTMLVideoElement;
-    let scanner: QrScanner | undefined;
-
-    onMount(() => {
-        scanner = new QrScanner(videoElement, onScan, {
-            returnDetailedScanResult: true,
-            preferredCamera: "environment",
-            highlightScanRegion: true,
-            highlightCodeOutline: true,
-        });
-    });
+    let scanner: Scanner;
 
     $: account = token === "icp" ? user.cryptoAccount : user.userId;
     $: cryptoBalance = client.cryptoBalance;
@@ -43,14 +33,7 @@
     $: symbol = cryptoLookup[token].symbol;
 
     export function scan() {
-        scanner?.start();
-    }
-
-    function onScan(result: QrScanner.ScanResult) {
-        if (result.data) {
-            targetAccount = result.data;
-            scanner?.stop();
-        }
+        scanner?.scan();
     }
 
     function withdraw() {
@@ -87,7 +70,7 @@
     }
 </script>
 
-<video class="scanner" bind:this={videoElement}> what happens if we put something in here </video>
+<Scanner on:data={(ev) => (targetAccount = ev.detail)} bind:this={scanner} />
 
 <div class="token-input">
     <TokenInput
@@ -113,12 +96,6 @@
 <style type="text/scss">
     :global(.target .input-wrapper input) {
         padding-right: 40px;
-    }
-
-    .scanner {
-        margin-bottom: $sp4;
-        border: 4px dashed var(--bd);
-        border-radius: $sp4;
     }
 
     .token-input {

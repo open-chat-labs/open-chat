@@ -217,9 +217,7 @@ export default {
             "process.env.STORAGE_INDEX_CANISTER": JSON.stringify(
                 process.env.STORAGE_INDEX_CANISTER
             ),
-            "process.env.MARKET_MAKER_CANISTER": JSON.stringify(
-                process.env.MARKET_MAKER_CANISTER
-            ),
+            "process.env.MARKET_MAKER_CANISTER": JSON.stringify(process.env.MARKET_MAKER_CANISTER),
             "process.env.LEDGER_CANISTER_ICP": JSON.stringify(process.env.LEDGER_CANISTER_ICP),
             "process.env.LEDGER_CANISTER_SNS1": JSON.stringify(process.env.LEDGER_CANISTER_SNS1),
             "process.env.LEDGER_CANISTER_BTC": JSON.stringify(process.env.LEDGER_CANISTER_BTC),

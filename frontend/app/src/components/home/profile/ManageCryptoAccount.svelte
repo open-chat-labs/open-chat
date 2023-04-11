@@ -65,7 +65,7 @@
         </span>
         <form class={`body ${mode}`} slot="body">
             {#if mode === "deposit"}
-                <AccountInfo centered {token} {user} />
+                <AccountInfo qrSize={"larger"} centered {token} {user} />
                 <a rel="noreferrer" class="how-to" href={howToBuyUrl} target="_blank">
                     {$_("howToBuyToken", { values: { token: symbol.toUpperCase() } })}
                 </a>

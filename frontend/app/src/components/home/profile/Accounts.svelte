@@ -93,9 +93,17 @@
 {/if}
 
 <style type="text/scss">
+    :global(.manage .link-button) {
+        padding: 0 0 0 $sp3;
+        &:first-child {
+            border-right: 1px solid var(--bd);
+            padding: 0 $sp3 0 0;
+        }
+    }
+
     .accounts {
         display: grid;
-        grid-template-columns: 35px 1fr 1fr 60px;
+        grid-template-columns: 35px 1fr 1fr auto;
         align-items: center;
         row-gap: $sp3;
         margin-bottom: $sp4;
@@ -120,9 +128,10 @@
         }
 
         .manage {
-            text-align: right;
             @include font(light, normal, fs-70);
             color: var(--txt-light);
+            display: flex;
+            padding-left: $sp3;
         }
 
         .coming-soon {
