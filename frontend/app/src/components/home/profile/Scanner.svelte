@@ -56,12 +56,12 @@
             });
     }
 
-    function drawLine(canvas: CanvasRenderingContext2D, begin: Point, end: Point, color: string) {
+    function drawLine(canvas: CanvasRenderingContext2D, begin: Point, end: Point) {
         canvas.beginPath();
         canvas.moveTo(begin.x, begin.y);
         canvas.lineTo(end.x, end.y);
         canvas.lineWidth = 4;
-        canvas.strokeStyle = color;
+        canvas.strokeStyle = "hotpink";
         canvas.stroke();
     }
 
@@ -85,30 +85,14 @@
                     inversionAttempts: "dontInvert",
                 });
                 if (code) {
-                    drawLine(
-                        canvas,
-                        code.location.topLeftCorner,
-                        code.location.topRightCorner,
-                        "#FF3B58"
-                    );
-                    drawLine(
-                        canvas,
-                        code.location.topRightCorner,
-                        code.location.bottomRightCorner,
-                        "#FF3B58"
-                    );
+                    drawLine(canvas, code.location.topLeftCorner, code.location.topRightCorner);
+                    drawLine(canvas, code.location.topRightCorner, code.location.bottomRightCorner);
                     drawLine(
                         canvas,
                         code.location.bottomRightCorner,
-                        code.location.bottomLeftCorner,
-                        "#FF3B58"
+                        code.location.bottomLeftCorner
                     );
-                    drawLine(
-                        canvas,
-                        code.location.bottomLeftCorner,
-                        code.location.topLeftCorner,
-                        "#FF3B58"
-                    );
+                    drawLine(canvas, code.location.bottomLeftCorner, code.location.topLeftCorner);
                     dispatch("data", code.data);
                 } else {
                     requestAnimationFrame(() => checkResult(video));

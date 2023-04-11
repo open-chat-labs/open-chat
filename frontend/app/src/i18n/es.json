@@ -477,7 +477,15 @@
         "shortBalanceLabel": "equilibrio",
         "manageHeader": "Administrar cuenta {symbol}",
         "token": "simbólico",
-        "comingSoon": "(próximamente)"
+        "comingSoon": "(próximamente)",
+        "send": "Enviar",
+        "sendToken": "Enviar {symbol}",
+        "deposit": "Depósito",
+        "depositToken": "Depositar {symbol}",
+        "sendTarget": "Ingrese una dirección para enviar a",
+        "sendSucceeded": "¡Su {symbol} se envió con éxito!",
+        "sendFailed": "Error al enviar {symbol}",
+        "scan": "Escanear código QR"
     },
     "searchChat": "Búsqueda",
     "search": "Búsqueda...",
