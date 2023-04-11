@@ -156,7 +156,7 @@ fn validate_public_key(caller: Principal, public_key: &[u8], internet_identity_c
         return Err("PublicKey is not derived from the InternetIdentity canister".to_string());
     }
 
-    let expected_caller = Principal::self_authenticating(&public_key);
+    let expected_caller = Principal::self_authenticating(public_key);
     if caller == expected_caller {
         Ok(())
     } else {
