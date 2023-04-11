@@ -80,7 +80,7 @@ fn group_chat_summary_contains_expired_messages() {
         controller,
     } = wrapper.env();
 
-    let TestData { user, group_id } = init_test_data(env, &canister_ids, *controller, true);
+    let TestData { user, group_id } = init_test_data(env, canister_ids, *controller, true);
 
     client::group::update_group_v2(
         env,
