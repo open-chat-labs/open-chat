@@ -20,6 +20,8 @@
     const user = client.user;
     const dispatch = createEventDispatcher();
 
+    let scanningUnsupported: boolean = "standalone" in navigator && navigator.standalone;
+
     $: title =
         mode === "deposit"
             ? $_("cryptoAccount.depositToken", { values: { symbol: token.toUpperCase() } })
@@ -76,6 +78,7 @@
                     bind:this={sendCrypto}
                     on:error={(ev) => (error = ev.detail)}
                     on:refreshBalance={() => balanceWithRefresh.refresh()}
+                    {scanningUnsupported}
                     {token}
                     bind:amountToWithdrawE8s />
             {/if}
@@ -85,7 +88,7 @@
         </form>
         <span slot="footer">
             <ButtonGroup>
-                {#if mode === "send"}
+                {#if mode === "send" && !scanningUnsupported}
                     <Button secondary tiny={$mobileWidth} on:click={() => sendCrypto?.scan()}
                         >{$_("cryptoAccount.scan")}</Button>
                 {/if}

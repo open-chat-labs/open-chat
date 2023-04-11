@@ -12,6 +12,7 @@
 
     export let token: Cryptocurrency;
     export let amountToWithdrawE8s: bigint;
+    export let scanningUnsupported: Boolean;
 
     const client = getContext<OpenChat>("client");
     const user = client.user;
@@ -70,7 +71,9 @@
     }
 </script>
 
-<Scanner on:data={(ev) => (targetAccount = ev.detail)} bind:this={scanner} />
+{#if !scanningUnsupported}
+    <Scanner on:data={(ev) => (targetAccount = ev.detail)} bind:this={scanner} />
+{/if}
 
 <div class="token-input">
     <TokenInput
