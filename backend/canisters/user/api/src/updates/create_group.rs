@@ -33,6 +33,7 @@ pub enum Response {
     NameTaken,
     Throttled,
     UserSuspended,
+    UnauthorizedToCreatePublicGroup,
     InternalError,
 }
 

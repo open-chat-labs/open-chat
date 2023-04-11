@@ -103,6 +103,7 @@ pub struct DiamondMembershipPaymentReceived {
     pub block_index: u64,
     pub duration: DiamondMembershipPlanDuration,
     pub recurring: bool,
+    pub send_bot_message: bool,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

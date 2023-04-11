@@ -7,10 +7,9 @@ use canister_tracing_macros::trace;
 use local_user_index_canister::c2c_notify_events::{Response::*, *};
 use local_user_index_canister::Event;
 use tracing::info;
-use types::{MessageContent, TextContent};
 use user_canister::{
-    Event as UserEvent, PhoneNumberConfirmed, ReferredUserRegistered, StorageUpgraded, UserJoinedGroup, UserSuspended,
-    UsernameChanged,
+    DiamondMembershipPaymentReceived, Event as UserEvent, PhoneNumberConfirmed, ReferredUserRegistered, StorageUpgraded,
+    UserJoinedGroup, UserSuspended, UsernameChanged,
 };
 
 #[update_msgpack(guard = "caller_is_user_index_canister")]
@@ -112,9 +111,16 @@ fn handle_event(event: Event, runtime_state: &mut RuntimeState) {
         Event::DiamondMembershipPaymentReceived(ev) => {
             runtime_state.data.user_event_sync_queue.push(
                 ev.user_id.into(),
-                UserEvent::OpenChatBotMessage(Box::new(MessageContent::Text(TextContent {
-                    text: "Payment received for Diamond membership!".to_string(),
-                }))),
+                UserEvent::DiamondMembershipPaymentReceived(Box::new(DiamondMembershipPaymentReceived {
+                    timestamp: ev.timestamp,
+                    expires_at: ev.expires_at,
+                    token: ev.token,
+                    amount_e8s: ev.amount_e8s,
+                    block_index: ev.block_index,
+                    duration: ev.duration,
+                    recurring: ev.recurring,
+                    send_bot_message: ev.send_bot_message,
+                })),
             );
         }
         Event::OpenChatBotMessage(ev) => {

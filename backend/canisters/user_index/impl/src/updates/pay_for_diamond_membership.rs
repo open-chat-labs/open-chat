@@ -104,6 +104,7 @@ fn process_charge(
                 block_index,
                 duration: args.duration,
                 recurring: args.recurring,
+                send_bot_message: true,
             }),
         );
 

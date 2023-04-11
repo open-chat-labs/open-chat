@@ -1,7 +1,10 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use types::{ChatId, MessageContent, MessageIndex, PhoneNumber, SuspensionDuration, TimestampMillis, UserId};
+use types::{
+    ChatId, Cryptocurrency, DiamondMembershipPlanDuration, MessageContent, MessageIndex, PhoneNumber, SuspensionDuration,
+    TimestampMillis, UserId,
+};
 
 mod lifecycle;
 mod queries;
@@ -41,6 +44,7 @@ pub enum Event {
     UserSuspended(Box<UserSuspended>),
     OpenChatBotMessage(Box<MessageContent>),
     UserJoinedGroup(Box<UserJoinedGroup>),
+    DiamondMembershipPaymentReceived(Box<DiamondMembershipPaymentReceived>),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -80,4 +84,16 @@ pub struct UserSuspended {
 pub struct UserJoinedGroup {
     pub chat_id: ChatId,
     pub latest_message_index: Option<MessageIndex>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct DiamondMembershipPaymentReceived {
+    pub timestamp: TimestampMillis,
+    pub expires_at: TimestampMillis,
+    pub token: Cryptocurrency,
+    pub amount_e8s: u64,
+    pub block_index: u64,
+    pub duration: DiamondMembershipPlanDuration,
+    pub recurring: bool,
+    pub send_bot_message: bool,
 }
