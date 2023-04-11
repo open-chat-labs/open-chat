@@ -9,6 +9,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Implement 'Gated Groups' ([#3406](https://github.com/open-ic/open-chat/pull/3406))
 
+### Changed
+
+- Store `diamond_membership_expires_at` in each user canister ([#3428](https://github.com/open-ic/open-chat/pull/3428))
+
 ### Removed
 
 - Removed temporary code needed for release ([#3375](https://github.com/open-ic/open-chat/pull/3375))

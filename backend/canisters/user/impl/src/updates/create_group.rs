@@ -1,5 +1,7 @@
 use crate::guards::caller_is_owner;
-use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
+use crate::{
+    mutate_state, read_state, run_regular_jobs, RuntimeState, BASIC_GROUP_CREATION_LIMIT, PREMIUM_GROUP_CREATION_LIMIT,
+};
 use canister_tracing_macros::trace;
 use group_index_canister::{c2c_create_group, MAX_GROUP_DESCRIPTION_LENGTH, MAX_GROUP_RULES_LENGTH};
 use ic_cdk_macros::update;
@@ -56,10 +58,16 @@ fn prepare(args: Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Re
         false
     }
 
+    let now = runtime_state.env.now();
+    let is_diamond_member = runtime_state.data.is_diamond_member(now);
+    let group_creation_limit = if is_diamond_member { PREMIUM_GROUP_CREATION_LIMIT } else { BASIC_GROUP_CREATION_LIMIT };
+
     if runtime_state.data.suspended.value {
         Err(UserSuspended)
-    } else if let Some(max) = runtime_state.data.max_groups_created() {
-        Err(MaxGroupsCreated(max))
+    } else if !is_diamond_member && args.is_public {
+        Err(UnauthorizedToCreatePublicGroup)
+    } else if runtime_state.data.group_chats.groups_created() >= group_creation_limit {
+        Err(MaxGroupsCreated(group_creation_limit))
     } else if is_throttled() {
         Err(Throttled)
     } else if let Err(error) = validate_name(&args.name, args.is_public) {
@@ -113,8 +121,6 @@ fn prepare(args: Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Re
 }
 
 fn commit(chat_id: ChatId, runtime_state: &mut RuntimeState) {
-    if runtime_state.data.max_groups_created().is_none() {
-        let now = runtime_state.env.now();
-        runtime_state.data.group_chats.create(chat_id, now);
-    }
+    let now = runtime_state.env.now();
+    runtime_state.data.group_chats.create(chat_id, now);
 }
