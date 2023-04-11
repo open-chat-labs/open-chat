@@ -73,6 +73,14 @@
                 {:then { default: ArchitecturePage }}
                     <ArchitecturePage />
                 {/await}
+            {:else if $location.startsWith("/miami")}
+                {#await import("./Miami.svelte")}
+                    <div class="loading">
+                        <Loading />
+                    </div>
+                {:then { default: Miami }}
+                    <Miami on:login={() => client.login()} />
+                {/await}
             {:else}
                 <HomePage on:login={() => client.login()} />
             {/if}

@@ -32,7 +32,7 @@ export function removeQueryStringParam(name: string): string {
     return [...qs.keys()].length > 0 ? `${path}?${qs}` : path;
 }
 
-const scrollingRoutes = ["features", "roadmap", "whitepaper", "architecture", "blog"];
+const scrollingRoutes = ["features", "roadmap", "whitepaper", "architecture", "blog", "miami"];
 const landingPageRoutes = ["home", ...scrollingRoutes];
 
 export function isLandingPageRoute(path: string): boolean {

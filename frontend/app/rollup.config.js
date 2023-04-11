@@ -217,9 +217,7 @@ export default {
             "process.env.STORAGE_INDEX_CANISTER": JSON.stringify(
                 process.env.STORAGE_INDEX_CANISTER
             ),
-            "process.env.MARKET_MAKER_CANISTER": JSON.stringify(
-                process.env.MARKET_MAKER_CANISTER
-            ),
+            "process.env.MARKET_MAKER_CANISTER": JSON.stringify(process.env.MARKET_MAKER_CANISTER),
             "process.env.LEDGER_CANISTER_ICP": JSON.stringify(process.env.LEDGER_CANISTER_ICP),
             "process.env.LEDGER_CANISTER_SNS1": JSON.stringify(process.env.LEDGER_CANISTER_SNS1),
             "process.env.LEDGER_CANISTER_BTC": JSON.stringify(process.env.LEDGER_CANISTER_BTC),
@@ -305,7 +303,7 @@ export default {
                                 <link rel="preconnect" href="https://fonts.googleapis.com" />
                                 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
                                 <link
-                                    href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700&family=Roboto:wght@200;300;400;700&display=swap"
+                                    href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Manrope:wght@400;500;700&family=Roboto:wght@200;300;400;700&display=swap"
                                     rel="stylesheet"
                                 />
                                 <script type="module" src="https://platform.twitter.com/widgets.js"></script>
