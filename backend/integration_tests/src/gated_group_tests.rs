@@ -15,7 +15,7 @@ fn public_group_diamond_member_gate_check(is_diamond: bool) {
         controller,
     } = wrapper.env();
 
-    let user1 = client::user_index::happy_path::register_user(env, canister_ids.user_index);
+    let user1 = client::register_diamond_user(env, canister_ids, *controller);
 
     let group_name = random_string();
 

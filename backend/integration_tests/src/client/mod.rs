@@ -108,6 +108,8 @@ pub fn register_diamond_user(env: &mut StateMachine, canister_ids: &CanisterIds,
         true,
     );
 
+    env.tick();
+
     user
 }
 

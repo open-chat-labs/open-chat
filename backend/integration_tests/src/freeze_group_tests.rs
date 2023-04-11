@@ -259,7 +259,7 @@ fn init_test_data(env: &mut StateMachine, canister_ids: &CanisterIds, controller
 
     let group_name = random_string();
 
-    let group_id = client::user::happy_path::create_group(env, &user2, &group_name, false, false);
+    let group_id = client::user::happy_path::create_group(env, &user2, &group_name, true, true);
 
     TestData {
         user1,
