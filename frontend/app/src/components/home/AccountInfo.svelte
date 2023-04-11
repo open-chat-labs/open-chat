@@ -8,7 +8,7 @@
     import { copyToClipboard } from "../../utils/urls";
 
     export let user: CreatedUser;
-    export let qrSize: "default" | "smaller" = "default";
+    export let qrSize: "default" | "smaller" | "larger" = "default";
     export let token: Cryptocurrency;
     export let centered = false;
     export let border = true;
@@ -38,7 +38,7 @@
 
 <div class="account-info">
     <div class="qr-wrapper" class:border>
-        <div class="qr" class:smaller={qrSize === "smaller"}>
+        <div class="qr" class:smaller={qrSize === "smaller"} class:larger={qrSize === "larger"}>
             <QR text={account} />
         </div>
     </div>
@@ -74,6 +74,11 @@
         &.smaller {
             width: 120px;
             height: 120px;
+        }
+
+        &.larger {
+            width: 180px;
+            height: 180px;
         }
     }
 

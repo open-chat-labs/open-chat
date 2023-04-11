@@ -476,7 +476,15 @@
         "withdrawalFailed": "המשיכה שלך נכשלה!",
         "manageHeader": "נהל חשבון {symbol}",
         "token": "אֲסִימוֹן",
-        "comingSoon": "(בקרוב)"
+        "comingSoon": "(בקרוב)",
+        "send": "לִשְׁלוֹחַ",
+        "sendToken": "שלח {symbol}",
+        "deposit": "לְהַפְקִיד",
+        "depositToken": "הפקדה {symbol}",
+        "sendTarget": "הזן כתובת לשליחה",
+        "sendSucceeded": "ה-{symbol} שלך נשלח בהצלחה!",
+        "sendFailed": "שליחת {symbol} נכשלה",
+        "scan": "סרוק קוד QR"
     },
     "searchChat": "לחפש",
     "search": "לחפש...",

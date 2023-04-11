@@ -476,7 +476,15 @@
         "shortBalanceLabel": "équilibre",
         "manageHeader": "Gérer le compte {symbol}",
         "token": "jeton",
-        "comingSoon": "(Bientôt disponible)"
+        "comingSoon": "(Bientôt disponible)",
+        "send": "Envoyer",
+        "sendToken": "Envoyer {symbol}",
+        "deposit": "Dépôt",
+        "depositToken": "Dépôt {symbol}",
+        "sendTarget": "entrez une adresse à laquelle envoyer",
+        "sendSucceeded": "Votre {symbol} a été envoyé avec succès !",
+        "sendFailed": "Échec de l'envoi de {symbol}",
+        "scan": "Scannez le code QR"
     },
     "searchChat": "Rechercher",
     "search": "Rechercher...",

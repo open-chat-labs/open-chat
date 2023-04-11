@@ -89,6 +89,7 @@
         "emoji-picker-element": "git+https://github.com/hpeebles/emoji-picker-element.git#716e3a30a87e7f7e471f90bebe1af93d90d866ff",
         "idb": "^6.1.5",
         "identicon.js": "^2.3.3",
+        "jsqr-es6": "^1.4.0-1",
         "md5": "^2.3.0",
         "openchat-client": "*",
         "openchat-push": "*",
