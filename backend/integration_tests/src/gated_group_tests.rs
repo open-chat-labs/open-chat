@@ -3,7 +3,7 @@ use crate::rng::random_string;
 use crate::{client, TestEnv};
 use std::ops::Deref;
 use test_case::test_case;
-use types::{DiamondMembershipPlanDuration, GateCheckFailedReason, GroupGate, GroupRules};
+use types::{GateCheckFailedReason, GroupGate, GroupRules};
 
 #[test_case(true; "diamond_member")]
 #[test_case(false; "not_diamond_member")]
@@ -16,7 +16,6 @@ fn public_group_diamond_member_gate_check(is_diamond: bool) {
     } = wrapper.env();
 
     let user1 = client::user_index::happy_path::register_user(env, canister_ids.user_index);
-    let user2 = client::user_index::happy_path::register_user(env, canister_ids.user_index);
 
     let group_name = random_string();
 
@@ -41,16 +40,11 @@ fn public_group_diamond_member_gate_check(is_diamond: bool) {
         response => panic!("'create_group' error: {response:?}"),
     };
 
-    if is_diamond {
-        client::icrc1::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user2.user_id.into(), 1_000_000_000);
-        client::user_index::happy_path::pay_for_diamond_membership(
-            env,
-            user2.principal,
-            canister_ids.user_index,
-            DiamondMembershipPlanDuration::OneMonth,
-            false,
-        );
-    }
+    let user2 = if is_diamond {
+        client::register_diamond_user(env, canister_ids, *controller)
+    } else {
+        client::user_index::happy_path::register_user(env, canister_ids.user_index)
+    };
 
     let join_group_response = client::local_user_index::join_group(
         env,
@@ -86,7 +80,7 @@ fn private_group_diamond_member_gate_check() {
     } = wrapper.env();
 
     let user1 = client::user_index::happy_path::register_user(env, canister_ids.user_index);
-    let user2 = client::user_index::happy_path::register_user(env, canister_ids.user_index);
+    let user2 = client::register_diamond_user(env, canister_ids, *controller);
     let user3 = client::user_index::happy_path::register_user(env, canister_ids.user_index);
 
     let group_name = random_string();
@@ -111,15 +105,6 @@ fn private_group_diamond_member_gate_check() {
         user_canister::create_group::Response::Success(result) => result.chat_id,
         response => panic!("'create_group' error: {response:?}"),
     };
-
-    client::icrc1::happy_path::transfer(env, *controller, canister_ids.icp_ledger, user2.user_id.into(), 1_000_000_000);
-    client::user_index::happy_path::pay_for_diamond_membership(
-        env,
-        user2.principal,
-        canister_ids.user_index,
-        DiamondMembershipPlanDuration::OneMonth,
-        false,
-    );
 
     let add_members_response = client::group::add_participants(
         env,

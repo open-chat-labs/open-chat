@@ -1,9 +1,9 @@
-use crate::T;
+use crate::{CanisterIds, User, T};
 use candid::{CandidType, Principal};
 use ic_cdk::api::management_canister::main::{CanisterInstallMode, InstallCodeArgument};
 use ic_test_state_machine_client::{StateMachine, UserError, WasmResult};
 use serde::de::DeserializeOwned;
-use types::{CanisterId, CanisterWasm};
+use types::{CanisterId, CanisterWasm, DiamondMembershipPlanDuration};
 
 mod macros;
 
@@ -87,6 +87,28 @@ pub fn execute_update<P: CandidType, R: CandidType + DeserializeOwned>(
     payload: &P,
 ) -> R {
     unwrap_response(env.update_call(canister_id, sender, method_name, candid::encode_one(payload).unwrap()))
+}
+
+pub fn register_diamond_user(env: &mut StateMachine, canister_ids: &CanisterIds, controller: Principal) -> User {
+    let user = user_index::happy_path::register_user(env, canister_ids.user_index);
+
+    icrc1::happy_path::transfer(
+        env,
+        controller,
+        canister_ids.icp_ledger,
+        user.user_id.into(),
+        1_000_000_000u64,
+    );
+
+    user_index::happy_path::pay_for_diamond_membership(
+        env,
+        user.principal,
+        canister_ids.user_index,
+        DiamondMembershipPlanDuration::OneMonth,
+        true,
+    );
+
+    user
 }
 
 fn unwrap_response<R: CandidType + DeserializeOwned>(response: Result<WasmResult, UserError>) -> R {

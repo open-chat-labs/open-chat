@@ -1,13 +1,13 @@
 use crate::env::ENV;
 use crate::rng::random_string;
 use crate::utils::tick_many;
-use crate::{client, TestEnv, User};
+use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
 use group_index_canister::freeze_group::SuspensionDetails;
 use ic_test_state_machine_client::StateMachine;
 use std::ops::Deref;
 use std::time::Duration;
-use types::{CanisterId, ChatId};
+use types::ChatId;
 use utils::time::DAY_IN_MS;
 
 #[test]
@@ -19,7 +19,7 @@ fn freeze_then_unfreeze() {
         controller,
     } = wrapper.env();
 
-    let TestData { user1, group_id, .. } = init_test_data(env, canister_ids.user_index, *controller);
+    let TestData { user1, group_id, .. } = init_test_data(env, canister_ids, *controller);
 
     client::group_index::freeze_group(
         env,
@@ -69,7 +69,7 @@ fn can_only_be_called_by_platform_moderator() {
 
     let TestData {
         user1, user2, group_id, ..
-    } = init_test_data(env, canister_ids.user_index, *controller);
+    } = init_test_data(env, canister_ids, *controller);
 
     let freeze_args = group_index_canister::freeze_group::Args {
         chat_id: group_id,
@@ -118,7 +118,7 @@ fn search_excludes_frozen_groups() {
         user2,
         group_id,
         group_name,
-    } = init_test_data(env, canister_ids.user_index, *controller);
+    } = init_test_data(env, canister_ids, *controller);
 
     let search_args = group_index_canister::search::Args {
         search_term: group_name,
@@ -164,7 +164,7 @@ fn freeze_and_suspend_users() {
 
     let TestData {
         user1, user2, group_id, ..
-    } = init_test_data(env, canister_ids.user_index, *controller);
+    } = init_test_data(env, canister_ids, *controller);
 
     client::group_index::freeze_group(
         env,
@@ -196,7 +196,7 @@ fn delete_frozen_group() {
         controller,
     } = wrapper.env();
 
-    let TestData { user1, group_id, .. } = init_test_data(env, canister_ids.user_index, *controller);
+    let TestData { user1, group_id, .. } = init_test_data(env, canister_ids, *controller);
 
     client::group_index::freeze_group(
         env,
@@ -246,20 +246,20 @@ fn delete_frozen_group() {
     assert!(!env.canister_exists(Principal::from(group_id).as_slice().try_into().unwrap()));
 }
 
-fn init_test_data(env: &mut StateMachine, user_index: CanisterId, controller: Principal) -> TestData {
-    let user1 = client::user_index::happy_path::register_user(env, user_index);
-    let user2 = client::user_index::happy_path::register_user(env, user_index);
+fn init_test_data(env: &mut StateMachine, canister_ids: &CanisterIds, controller: Principal) -> TestData {
+    let user1 = client::register_diamond_user(env, canister_ids, controller);
+    let user2 = client::user_index::happy_path::register_user(env, canister_ids.user_index);
 
     client::user_index::add_platform_moderator(
         env,
         controller,
-        user_index,
+        canister_ids.user_index,
         &user_index_canister::add_platform_moderator::Args { user_id: user1.user_id },
     );
 
     let group_name = random_string();
 
-    let group_id = client::user::happy_path::create_group(env, &user2, &group_name, true, true);
+    let group_id = client::user::happy_path::create_group(env, &user2, &group_name, false, false);
 
     TestData {
         user1,
