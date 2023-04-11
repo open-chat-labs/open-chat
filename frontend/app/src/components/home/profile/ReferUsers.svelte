@@ -1,6 +1,6 @@
 <script lang="ts">
     import { createEventDispatcher, getContext } from "svelte";
-    import type { OpenChat } from "openchat-client";
+    import type { OpenChat, UserLookup } from "openchat-client";
     import ShareIcon from "svelte-material-icons/ShareVariant.svelte";
     import CopyIcon from "svelte-material-icons/ContentCopy.svelte";
     import QR from "svelte-qr";
@@ -53,6 +53,15 @@
             dispatch("chatWith", viewedUserId);
         }
     }
+
+    function buildUsername(userStore: UserLookup, userId: string): string {
+        let user = userStore[userId];
+        let username = user?.username ?? $_("unknownUser");
+        if (user.diamond) {
+            username += " 💎";
+        }
+        return username;
+    }
 </script>
 
 <div class="container">
@@ -92,7 +101,7 @@
                                 size={AvatarSize.Default} />
                         </div>
                         <LinkButton underline="hover">
-                            {$userStore[userId]?.username ?? $_("unknownUser")}
+                            {buildUsername($userStore, userId)}
                         </LinkButton>
                     </div>
                 {/each}
