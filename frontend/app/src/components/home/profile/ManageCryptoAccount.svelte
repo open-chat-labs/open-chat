@@ -20,7 +20,8 @@
     const user = client.user;
     const dispatch = createEventDispatcher();
 
-    let scanningUnsupported: boolean = "standalone" in navigator && navigator.standalone;
+    //@ts-ignore
+    let scanningUnsupported = ("standalone" in navigator && navigator.standalone) as boolean;
 
     $: title =
         mode === "deposit"
