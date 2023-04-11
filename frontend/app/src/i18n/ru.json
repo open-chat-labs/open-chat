@@ -476,7 +476,15 @@
         "shortBalanceLabel": "остаток средств",
         "manageHeader": "Управление аккаунтом {symbol}",
         "token": "жетон",
-        "comingSoon": "(вскоре)"
+        "comingSoon": "(вскоре)",
+        "send": "Отправлять",
+        "sendToken": "Отправить {symbol}",
+        "deposit": "Депозит",
+        "depositToken": "Депозит {symbol}",
+        "sendTarget": "введите адрес для отправки",
+        "sendSucceeded": "Ваш {symbol} успешно отправлен!",
+        "sendFailed": "Не удалось отправить {symbol}",
+        "scan": "Сканировать QR-код"
     },
     "searchChat": "Поиск",
     "search": "Поиск...",

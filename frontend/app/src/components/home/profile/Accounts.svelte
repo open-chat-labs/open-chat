@@ -10,7 +10,7 @@
     const client = getContext<OpenChat>("client");
 
     let balanceError: string | undefined;
-    let showManageCryptoAccount = false;
+    let manageMode: "none" | "send" | "deposit";
     let selectedCryptoAccount: Cryptocurrency | undefined = undefined;
 
     $: cryptoBalance = client.cryptoBalance;
@@ -23,9 +23,18 @@
         balanceError = ev.detail;
     }
 
-    function showManageCrypto(crypto: Cryptocurrency) {
+    function hideManageModal() {
+        manageMode = "none";
+    }
+
+    function showReceive(crypto: Cryptocurrency) {
         selectedCryptoAccount = crypto;
-        showManageCryptoAccount = true;
+        manageMode = "deposit";
+    }
+
+    function showSend(crypto: Cryptocurrency) {
+        selectedCryptoAccount = crypto;
+        manageMode = "send";
     }
 
     $: crypto = cryptoCurrencyList.map((t) => ({
@@ -36,8 +45,11 @@
     }));
 </script>
 
-{#if showManageCryptoAccount && selectedCryptoAccount !== undefined}
-    <ManageCryptoAccount bind:token={selectedCryptoAccount} bind:open={showManageCryptoAccount} />
+{#if manageMode !== "none" && selectedCryptoAccount !== undefined}
+    <ManageCryptoAccount
+        mode={manageMode}
+        bind:token={selectedCryptoAccount}
+        on:close={hideManageModal} />
 {/if}
 
 <div class="accounts">
@@ -68,8 +80,10 @@
         </div>
         <div class="manage">
             {#if !token.disabled}
-                <LinkButton underline={"hover"} on:click={() => showManageCrypto(token.key)}
-                    >{$_("cryptoAccount.manage")}</LinkButton>
+                <LinkButton underline={"hover"} on:click={() => showSend(token.key)}
+                    >{$_("cryptoAccount.send")}</LinkButton>
+                <LinkButton underline={"hover"} on:click={() => showReceive(token.key)}
+                    >{$_("cryptoAccount.deposit")}</LinkButton>
             {/if}
         </div>
     {/each}
@@ -79,9 +93,17 @@
 {/if}
 
 <style type="text/scss">
+    :global(.manage .link-button) {
+        padding: 0 0 0 $sp3;
+        &:first-child {
+            border-right: 1px solid var(--bd);
+            padding: 0 $sp3 0 0;
+        }
+    }
+
     .accounts {
         display: grid;
-        grid-template-columns: 35px 1fr 1fr 60px;
+        grid-template-columns: 35px 1fr 1fr auto;
         align-items: center;
         row-gap: $sp3;
         margin-bottom: $sp4;
@@ -106,9 +128,10 @@
         }
 
         .manage {
-            text-align: right;
             @include font(light, normal, fs-70);
             color: var(--txt-light);
+            display: flex;
+            padding-left: $sp3;
         }
 
         .coming-soon {
