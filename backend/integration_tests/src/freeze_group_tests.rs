@@ -248,7 +248,7 @@ fn delete_frozen_group() {
 
 fn init_test_data(env: &mut StateMachine, canister_ids: &CanisterIds, controller: Principal) -> TestData {
     let user1 = client::register_diamond_user(env, canister_ids, controller);
-    let user2 = client::user_index::happy_path::register_user(env, canister_ids.user_index);
+    let user2 = client::register_diamond_user(env, canister_ids, controller);
 
     client::user_index::add_platform_moderator(
         env,

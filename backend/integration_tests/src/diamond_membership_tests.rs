@@ -62,9 +62,10 @@ fn membership_renews_automatically_if_set_to_recurring(ledger_error: bool) {
         controller,
     } = wrapper.env();
 
+    let start_time = now_millis(env);
+
     let user = client::register_diamond_user(env, canister_ids, *controller);
 
-    let start_time = now_millis(env);
     let one_month_millis = DiamondMembershipPlanDuration::OneMonth.as_millis();
     env.advance_time(Duration::from_millis(one_month_millis - (30 * MINUTE_IN_MS)));
 
