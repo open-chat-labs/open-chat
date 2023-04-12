@@ -2,8 +2,9 @@ use crate::updates::send_message::send_to_recipients_canister;
 use crate::{mutate_state, openchat_bot, read_state};
 use canister_timer_jobs::Job;
 use serde::{Deserialize, Serialize};
-use types::{BlobReference, ChatId, MessageId, MessageIndex, UserId};
+use types::{BlobReference, ChatId, EventIndex, MessageContent, MessageId, MessageIndex, TextContent, UserId};
 use user_canister::c2c_send_messages;
+use user_canister::c2c_send_messages::C2CReplyContext;
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum TimerJob {
@@ -36,7 +37,7 @@ pub struct DeleteFileReferencesJob {
 pub struct MessageReminderJob {
     pub chat_id: ChatId,
     pub thread_root_message_index: Option<MessageIndex>,
-    pub message_index: MessageIndex,
+    pub event_index: EventIndex,
     pub notes: Option<String>,
 }
 
@@ -107,16 +108,7 @@ impl Job for DeleteFileReferencesJob {
 
 impl Job for MessageReminderJob {
     fn execute(&self) {
-        let chat_id = self.chat_id;
-        let message_index = self.message_index;
-
-        let url = if let Some(thread_root_message_index) = self.thread_root_message_index {
-            format!("https://oc.app/{chat_id}/{thread_root_message_index}/{message_index}")
-        } else {
-            format!("https://oc.app/{chat_id}/{message_index}")
-        };
-
-        let mut message = format!("You asked me to remind you about [this message]({url})");
+        let mut message = "You asked me to remind you about this message.".to_string();
 
         if let Some(notes) = self.notes.clone() {
             message.push_str(&format!(
@@ -129,6 +121,9 @@ Notes:
             ));
         }
 
-        mutate_state(|state| openchat_bot::send_text_message(message, false, state));
+        let replies_to = C2CReplyContext::OtherChat(self.chat_id, self.event_index);
+        let content = MessageContent::Text(TextContent { text: message });
+
+        mutate_state(|state| openchat_bot::send_message_with_reply(content, Some(replies_to), false, state));
     }
 }
