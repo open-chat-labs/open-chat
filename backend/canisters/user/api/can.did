@@ -328,7 +328,7 @@ type SetMessageReminderArgs =
     record {
         chat_id: ChatId;
         thread_root_message_index: opt MessageIndex;
-        message_index: MessageIndex;
+        event_index: EventIndex;
         notes: opt text;
         remind_at: TimestampMillis;
     };
@@ -345,7 +345,7 @@ type ClearMessageReminderArgs =
     record {
         chat_id: ChatId;
         thread_root_message_index: opt MessageIndex;
-        message_index: MessageIndex;
+        event_index: EventIndex;
     };
 
 type ClearMessageReminderResponse =

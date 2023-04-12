@@ -3,6 +3,7 @@ use crate::updates::c2c_send_messages::{handle_message_impl, HandleMessageArgs};
 use crate::{mutate_state, RuntimeState, BASIC_GROUP_CREATION_LIMIT, PREMIUM_GROUP_CREATION_LIMIT};
 use ic_ledger_types::Tokens;
 use types::{MessageContent, SuspensionDuration, TextContent, UserId};
+use user_canister::c2c_send_messages::C2CReplyContext;
 use user_canister::{PhoneNumberConfirmed, ReferredUserRegistered, StorageUpgraded, UserSuspended};
 use utils::consts::{OPENCHAT_BOT_USERNAME, OPENCHAT_BOT_USER_ID};
 use utils::format::format_to_decimal_places;
@@ -119,12 +120,26 @@ You can appeal this suspension by sending a direct message to the @OpenChat Twit
 }
 
 pub(crate) fn send_message(content: MessageContent, mute_notification: bool, runtime_state: &mut RuntimeState) {
+    send_message_with_reply(content, None, mute_notification, runtime_state)
+}
+
+pub(crate) fn send_text_message(text: String, mute_notification: bool, runtime_state: &mut RuntimeState) {
+    let content = MessageContent::Text(TextContent { text });
+    send_message(content, mute_notification, runtime_state);
+}
+
+pub(crate) fn send_message_with_reply(
+    content: MessageContent,
+    replies_to: Option<C2CReplyContext>,
+    mute_notification: bool,
+    runtime_state: &mut RuntimeState,
+) {
     let args = HandleMessageArgs {
         message_id: None,
         sender_message_index: None,
         sender_name: OPENCHAT_BOT_USERNAME.to_string(),
         content,
-        replies_to: None,
+        replies_to,
         forwarding: false,
         correlation_id: 0,
         is_bot: true,
@@ -132,11 +147,6 @@ pub(crate) fn send_message(content: MessageContent, mute_notification: bool, run
     };
 
     handle_message_impl(OPENCHAT_BOT_USER_ID, args, mute_notification, runtime_state);
-}
-
-pub(crate) fn send_text_message(text: String, mute_notification: bool, runtime_state: &mut RuntimeState) {
-    let content = MessageContent::Text(TextContent { text });
-    send_message(content, mute_notification, runtime_state);
 }
 
 fn to_gb(bytes: u64) -> String {
