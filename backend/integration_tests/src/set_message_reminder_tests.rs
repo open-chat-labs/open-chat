@@ -1,4 +1,5 @@
 use crate::env::ENV;
+use crate::rng::random_string;
 use crate::utils::now_millis;
 use crate::{client, TestEnv};
 use std::ops::Deref;
@@ -15,6 +16,7 @@ fn set_message_reminder_succeeds() {
     let user2 = client::user_index::happy_path::register_user(env, canister_ids.user_index);
 
     let now = now_millis(env);
+    let notes = random_string();
 
     client::user::set_message_reminder(
         env,
@@ -24,7 +26,7 @@ fn set_message_reminder_succeeds() {
             chat_id: user2.user_id.into(),
             thread_root_message_index: None,
             event_index: 10.into(),
-            notes: None,
+            notes: Some(notes.clone()),
             remind_at: now + 1000,
         },
     );
@@ -56,8 +58,11 @@ fn set_message_reminder_succeeds() {
     let latest_bot_message = latest_bot_message_response.events.into_iter().next().unwrap();
 
     if let ChatEvent::Message(m) = latest_bot_message.event {
-        if let MessageContent::Text(t) = m.content {
-            assert_eq!(t.text, format!("You asked me to remind you about this message."));
+        if let MessageContent::MessageReminder(r) = m.content {
+            assert_eq!(r.chat_id, user2.user_id.into());
+            assert_eq!(r.thread_root_message_index, None);
+            assert_eq!(r.event_index, 10.into());
+            assert_eq!(r.notes, Some(notes));
         } else {
             panic!()
         }

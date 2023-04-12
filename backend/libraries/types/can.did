@@ -86,6 +86,7 @@ type ChatMetrics =
         reactions: nat64;
         proposals: nat64;
         reported_messages: nat64;
+        message_reminders: nat64;
         last_active: TimestampMillis;
     };
 
@@ -579,6 +580,8 @@ type MessageContentInitial =
         Giphy: GiphyContent;
         GovernanceProposal: ProposalContent;
         Prize: PrizeContentInitial;
+        MessageReminderCreated: MessageReminderCreated;
+        MessageReminder: MessageReminder;
     };
 
 type MessageContent =
@@ -595,6 +598,8 @@ type MessageContent =
         GovernanceProposal: ProposalContent;
         Prize: PrizeContent;
         PrizeWinner: PrizeWinnerContent;
+        MessageReminderCreated: MessageReminderCreated;
+        MessageReminder: MessageReminder;
     };
 
 type UpdatedMessage =
@@ -1254,4 +1259,21 @@ type GateCheckFailedReason =
         NoSnsNeuronsFound;
         NoSnsNeuronsWithRequiredStakeFound;
         NoSnsNeuronsWithRequiredDissolveDelayFound;
+    };
+
+type MessageReminderCreated =
+    record {
+        remind_at: TimestampMillis;
+        chat_id: ChatId;
+        thread_root_message_index: opt MessageIndex;
+        event_index: EventIndex;
+        notes: opt text;
+    };
+
+type MessageReminder =
+    record {
+        chat_id: ChatId;
+        thread_root_message_index: opt MessageIndex;
+        event_index: EventIndex;
+        notes: opt text;
     };

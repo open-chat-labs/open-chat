@@ -62,6 +62,9 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
                 ContentValidationError::UnauthorizedToSendProposalMessages => {
                     InvalidRequest("User unauthorized to send proposal messages".to_string())
                 }
+                ContentValidationError::Unauthorized => {
+                    InvalidRequest("User unauthorized to send messages of this type".to_string())
+                }
             };
         }
 

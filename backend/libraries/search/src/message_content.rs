@@ -61,6 +61,8 @@ impl From<&MessageContentInternal> for Document {
             MessageContentInternal::PrizeWinner(c) => {
                 document.add_field(c.transaction.token().token_symbol(), 1.0);
             }
+            MessageContentInternal::MessageReminderCreated(r) => try_add_caption(&mut document, r.notes.as_ref()),
+            MessageContentInternal::MessageReminder(r) => try_add_caption(&mut document, r.notes.as_ref()),
         }
 
         document

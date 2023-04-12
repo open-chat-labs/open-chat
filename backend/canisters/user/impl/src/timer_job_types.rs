@@ -2,7 +2,7 @@ use crate::updates::send_message::send_to_recipients_canister;
 use crate::{mutate_state, openchat_bot, read_state};
 use canister_timer_jobs::Job;
 use serde::{Deserialize, Serialize};
-use types::{BlobReference, ChatId, EventIndex, MessageContent, MessageId, MessageIndex, TextContent, UserId};
+use types::{BlobReference, ChatId, EventIndex, MessageContent, MessageId, MessageIndex, MessageReminderContent, UserId};
 use user_canister::c2c_send_messages;
 use user_canister::c2c_send_messages::C2CReplyContext;
 
@@ -109,21 +109,13 @@ impl Job for DeleteFileReferencesJob {
 
 impl Job for MessageReminderJob {
     fn execute(&self) {
-        let mut message = "You asked me to remind you about this message.".to_string();
-
-        if let Some(notes) = self.notes.clone() {
-            message.push_str(&format!(
-                "
-
-Notes:
-
-{notes}
-"
-            ));
-        }
-
         let replies_to = C2CReplyContext::OtherChat(self.chat_id, self.event_index);
-        let content = MessageContent::Text(TextContent { text: message });
+        let content = MessageContent::MessageReminder(MessageReminderContent {
+            chat_id: self.chat_id,
+            thread_root_message_index: self.thread_root_message_index,
+            event_index: self.event_index,
+            notes: self.notes.clone(),
+        });
 
         mutate_state(|state| openchat_bot::send_message_with_reply(content, Some(replies_to), false, state));
     }
