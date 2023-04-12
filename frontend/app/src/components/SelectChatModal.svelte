@@ -17,6 +17,7 @@
     import SectionHeader from "./SectionHeader.svelte";
     import { _ } from "svelte-i18n";
     import { now } from "../stores/time";
+    import { usernameAndIcon } from "openchat-shared";
 
     const client = getContext<OpenChat>("client");
 
@@ -51,7 +52,7 @@
             return {
                 id: chatSummary.chatId,
                 userId: chatSummary.them,
-                name: `${them?.username}  ${them?.diamond ? "💎" : ""}`,
+                name: usernameAndIcon(them),
                 avatarUrl: client.userAvatarUrl(them),
                 description,
             };

@@ -17,6 +17,7 @@
     import { now } from "../../stores/time";
     import ViewUserProfile from "./profile/ViewUserProfile.svelte";
     import SuspendModal from "./SuspendModal.svelte";
+    import { usernameAndIcon } from "openchat-shared";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -53,7 +54,7 @@
         if (chatSummary.kind === "direct_chat") {
             const them = $userStore[chatSummary.them];
             return {
-                name: `${them?.username}  ${them?.diamond ? "💎" : ""}`,
+                name: usernameAndIcon(them),
                 avatarUrl: client.userAvatarUrl(them),
                 userId: chatSummary.them,
                 typing: client.getTypingString($_, $userStore, chatSummary.chatId, typing),

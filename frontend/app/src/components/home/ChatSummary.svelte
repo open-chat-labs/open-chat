@@ -25,6 +25,7 @@
     import Menu from "../Menu.svelte";
     import MenuItem from "../MenuItem.svelte";
     import { notificationsSupported } from "../../utils/notifications";
+    import { usernameAndIcon } from "openchat-shared";
 
     const client = getContext<OpenChat>("client");
     const userId = client.user.userId;
@@ -49,7 +50,7 @@
         if (chatSummary.kind === "direct_chat") {
             const them = $userStore[chatSummary.them];
             return {
-                name: `${them?.username}  ${them?.diamond ? "💎" : ""}`,
+                name: usernameAndIcon(them),
                 avatarUrl: client.userAvatarUrl(them),
                 userId: chatSummary.them,
                 typing: client.getTypingString($_, $userStore, chatSummary.chatId, typing),

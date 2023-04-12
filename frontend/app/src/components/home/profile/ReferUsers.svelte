@@ -13,6 +13,7 @@
     import Avatar from "../../Avatar.svelte";
     import LinkButton from "../../LinkButton.svelte";
     import { canShare, shareLink } from "../../../utils/share";
+    import { usernameAndIcon } from "openchat-shared";
 
     const dispatch = createEventDispatcher();
 
@@ -53,15 +54,6 @@
             dispatch("chatWith", viewedUserId);
         }
     }
-
-    function buildUsername(userStore: UserLookup, userId: string): string {
-        let user = userStore[userId];
-        let username = user?.username ?? $_("unknownUser");
-        if (user.diamond) {
-            username += " 💎";
-        }
-        return username;
-    }
 </script>
 
 <div class="container">
@@ -101,7 +93,7 @@
                                 size={AvatarSize.Default} />
                         </div>
                         <LinkButton underline="hover">
-                            {buildUsername($userStore, userId)}
+                            {usernameAndIcon($userStore[userId])}
                         </LinkButton>
                     </div>
                 {/each}
