@@ -39,6 +39,7 @@ pub struct MessageReminderJob {
     pub thread_root_message_index: Option<MessageIndex>,
     pub event_index: EventIndex,
     pub notes: Option<String>,
+    pub bot_message_id: MessageId,
 }
 
 impl Job for TimerJob {
