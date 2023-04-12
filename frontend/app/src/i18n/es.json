@@ -779,5 +779,6 @@
         "info": "Si comete un error, puede volver a enviar el principal correcto a través del menú principal.",
         "back": "Atrás",
         "pleaseSubmit": "Para recibir su airdrop, envíe su principal [NNS dApp](https://nns.ic0.app) a continuación antes de {cutoff}."
-    }
+    },
+    "unauthorizedToCreatePublicGroup": "No tienes autorización para crear grupos públicos."
 }
