@@ -23,7 +23,7 @@ fn set_message_reminder_succeeds() {
         &user_canister::set_message_reminder::Args {
             chat_id: user2.user_id.into(),
             thread_root_message_index: None,
-            message_index: 10.into(),
+            event_index: 10.into(),
             notes: None,
             remind_at: now + 1000,
         },
@@ -57,14 +57,13 @@ fn set_message_reminder_succeeds() {
 
     if let ChatEvent::Message(m) = latest_bot_message.event {
         if let MessageContent::Text(t) = m.content {
-            let expected_url = format!("https://oc.app/{}/10", user2.user_id);
-            assert_eq!(
-                t.text,
-                format!("You asked me to remind you about [this message]({expected_url})")
-            );
+            assert_eq!(t.text, format!("You asked me to remind you about this message."));
         } else {
             panic!()
         }
+        let replies_to = m.replies_to.unwrap();
+        assert_eq!(replies_to.chat_id_if_other, Some(user2.user_id.into()));
+        assert_eq!(replies_to.event_index, 10.into());
     } else {
         panic!()
     }
@@ -87,7 +86,7 @@ fn setting_message_reminder_again_clears_original_reminder() {
         &user_canister::set_message_reminder::Args {
             chat_id: user2.user_id.into(),
             thread_root_message_index: None,
-            message_index: 10.into(),
+            event_index: 10.into(),
             notes: None,
             remind_at: now + 1000,
         },
@@ -100,7 +99,7 @@ fn setting_message_reminder_again_clears_original_reminder() {
         &user_canister::set_message_reminder::Args {
             chat_id: user2.user_id.into(),
             thread_root_message_index: None,
-            message_index: 10.into(),
+            event_index: 10.into(),
             notes: None,
             remind_at: now + 2000,
         },
@@ -149,7 +148,7 @@ fn clear_message_reminder_succeeds() {
         &user_canister::set_message_reminder::Args {
             chat_id: user2.user_id.into(),
             thread_root_message_index: None,
-            message_index: 10.into(),
+            event_index: 10.into(),
             notes: None,
             remind_at: now + 1000,
         },
@@ -162,7 +161,7 @@ fn clear_message_reminder_succeeds() {
         &user_canister::clear_message_reminder::Args {
             chat_id: user2.user_id.into(),
             thread_root_message_index: None,
-            message_index: 10.into(),
+            event_index: 10.into(),
         },
     );
 

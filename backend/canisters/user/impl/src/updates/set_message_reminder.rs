@@ -35,13 +35,13 @@ fn set_message_reminder_impl(args: Args, state: &mut RuntimeState) -> Response {
         });
     }
 
-    clear_message_reminder_impl(args.chat_id, args.thread_root_message_index, args.message_index, state);
+    clear_message_reminder_impl(args.chat_id, args.thread_root_message_index, args.event_index, state);
 
     state.data.timer_jobs.enqueue_job(
         TimerJob::MessageReminder(MessageReminderJob {
             chat_id: args.chat_id,
             thread_root_message_index: args.thread_root_message_index,
-            message_index: args.message_index,
+            event_index: args.event_index,
             notes: args.notes,
         }),
         args.remind_at,
