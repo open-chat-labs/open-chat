@@ -779,5 +779,6 @@
         "info": "間違えた場合は、メイン メニューから正しいプリンシパルを再送信できます。",
         "back": "戻る",
         "pleaseSubmit": "エアドロップを受け取るには、{cutoff} の前に [NNS dApp](https://nns.ic0.app) プリンシパルを以下に送信してください。"
-    }
+    },
+    "unauthorizedToCreatePublicGroup": "公開グループを作成する権限がありません"
 }

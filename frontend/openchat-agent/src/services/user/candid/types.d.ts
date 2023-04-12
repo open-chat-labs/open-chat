@@ -178,7 +178,8 @@ export type CreateGroupResponse = { 'NameReserved' : null } |
   { 'NameTooLong' : FieldTooLongResult } |
   { 'NameTaken' : null } |
   { 'MaxGroupsCreated' : number } |
-  { 'InternalError' : null };
+  { 'InternalError' : null } |
+  { 'UnauthorizedToCreatePublicGroup' : null };
 export interface CreateGroupSuccessResult { 'chat_id' : ChatId }
 export interface CryptoContent {
   'recipient' : UserId,

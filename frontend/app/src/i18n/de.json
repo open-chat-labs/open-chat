@@ -780,5 +780,6 @@
         "info": "Wenn Sie einen Fehler machen, können Sie den richtigen Auftraggeber über das Hauptmenü erneut einreichen.",
         "back": "Zurück",
         "pleaseSubmit": "Um Ihren Airdrop zu erhalten, reichen Sie bitte unten vor dem {cutoff} Ihren [NNS dApp](https://nns.ic0.app)-Prinzipal ein."
-    }
+    },
+    "unauthorizedToCreatePublicGroup": "Sie sind nicht berechtigt, öffentliche Gruppen zu erstellen"
 }
