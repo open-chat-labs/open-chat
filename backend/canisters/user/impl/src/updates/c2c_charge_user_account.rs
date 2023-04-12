@@ -13,12 +13,8 @@ use utils::consts::SNS_GOVERNANCE_CANISTER_ID;
 async fn c2c_charge_user_account(args: Args) -> Response {
     run_regular_jobs();
 
-    let (sns_governance_ledger_account, ledger_canister_id) = read_state(|state| {
-        (
-            default_ledger_account(SNS_GOVERNANCE_CANISTER_ID),
-            state.data.ledger_canister_id(&Cryptocurrency::InternetComputer),
-        )
-    });
+    let ledger_canister_id = read_state(|state| state.data.ledger_canister_id(&Cryptocurrency::InternetComputer));
+    let sns_treasury_account = default_ledger_account(SNS_GOVERNANCE_CANISTER_ID);
 
     match ic_ledger_types::transfer(
         ledger_canister_id,
@@ -27,7 +23,7 @@ async fn c2c_charge_user_account(args: Args) -> Response {
             amount: args.amount - DEFAULT_FEE,
             fee: DEFAULT_FEE,
             from_subaccount: None,
-            to: sns_governance_ledger_account,
+            to: sns_treasury_account,
             created_at_time: None,
         },
     )
