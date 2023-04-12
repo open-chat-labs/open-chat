@@ -5,6 +5,7 @@ pub mod http_request;
 pub mod is_eligible_for_initial_airdrop;
 pub mod platform_moderators;
 pub mod platform_operators;
+pub mod referral_metrics;
 pub mod search;
 pub mod suspected_bots;
 pub mod user;

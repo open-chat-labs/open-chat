@@ -264,6 +264,19 @@ type PayForDiamondMembershipResponse =
         InternalError: text;
     };
 
+type ReferralMetricsResponse =
+    variant {
+        Success: record {
+            users_who_referred: nat32;
+            users_who_referred_paid_diamond: nat32;
+            users_who_referred_unpaid_diamond: nat32;
+            users_who_referred_90_percent_unpaid_diamond: nat32;
+            referrals_of_paid_diamond: nat32;
+            referrals_of_unpaid_diamond: nat32;
+            icp_raised_by_referrals_to_paid_diamond: nat32;
+        };
+    };
+
 type SetUserUpgradeConcurrencyArgs =
     record {
         value: nat32;
@@ -320,6 +333,7 @@ service: {
     mark_suspected_bot: (MarkSuspectedBotArgs) -> (MarkSuspectedBotResponse);
 
     pay_for_diamond_membership: (PayForDiamondMembershipArgs) -> (PayForDiamondMembershipResponse);
+    referral_metrics: (EmptyArgs) -> (ReferralMetricsResponse) query;
 
     // List the platform moderators/operators
     platform_moderators: (EmptyArgs) -> (PlatformModeratorsResponse) query;
