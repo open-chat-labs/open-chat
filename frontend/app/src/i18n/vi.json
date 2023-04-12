@@ -779,5 +779,6 @@
         "info": "Nếu bạn mắc lỗi, bạn có thể gửi lại tiền gốc chính xác thông qua menu chính.",
         "back": "Mặt sau",
         "pleaseSubmit": "Để nhận airdrop của bạn, vui lòng gửi tiền gốc [NNS dApp](https://nns.ic0.app) của bạn bên dưới trước {cutoff}."
-    }
+    },
+    "unauthorizedToCreatePublicGroup": "Bạn không được phép tạo nhóm công khai"
 }

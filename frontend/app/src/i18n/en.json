@@ -775,5 +775,6 @@
         "showHow": "Show me how",
         "howTo": "How to find your NNS principal",
         "back": "Back"
-    }
+    },
+    "unauthorizedToCreatePublicGroup" : "You are not authorized to create public groups"
 }

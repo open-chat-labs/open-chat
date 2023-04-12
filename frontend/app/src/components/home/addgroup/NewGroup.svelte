@@ -120,6 +120,7 @@
         if (resp.kind === "rules_too_short") return "groupRulesTooShort";
         if (resp.kind === "rules_too_long") return "groupRulesTooLong";
         if (resp.kind === "user_suspended") return "userSuspended";
+        if (resp.kind === "unauthorized_to_create_public_group") return "unauthorizedToCreatePublicGroup";
         throw new UnsupportedValueError(`Unexpected CreateGroupResponse type received`, resp);
     }
 
