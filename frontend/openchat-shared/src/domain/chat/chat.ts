@@ -489,7 +489,8 @@ export type GroupChatEvent =
     | ChatFrozenEvent
     | GateUpdatedEvent
     | ChatUnfrozenEvent
-    | EventsTimeToLiveUpdated;
+    | EventsTimeToLiveUpdated
+    | EmptyEvent;
 
 export type ChatEvent = GroupChatEvent | DirectChatEvent;
 
@@ -1344,6 +1345,10 @@ export type EventsTimeToLiveUpdated = {
     kind: "events_ttl_updated";
     updatedBy: string;
     newTimeToLive: bigint | undefined;
+};
+
+export type EmptyEvent = {
+    kind: "empty";
 };
 
 export type SetAvatarResponse = "avatar_too_big" | "success" | "internal_error" | "user_suspended";

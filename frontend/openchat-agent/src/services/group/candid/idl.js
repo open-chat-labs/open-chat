@@ -610,6 +610,7 @@ export const idlFactory = ({ IDL }) => {
     'added_by' : UserId,
   });
   const ChatEvent = IDL.Variant({
+    'Empty' : IDL.Null,
     'MessageReactionRemoved' : UpdatedMessage,
     'ParticipantJoined' : ParticipantJoined,
     'ParticipantAssumesSuperAdmin' : ParticipantAssumesSuperAdmin,

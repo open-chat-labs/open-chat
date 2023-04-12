@@ -55,7 +55,8 @@ export interface CanisterWasm {
 export interface Challenge { 'key' : ChallengeKey, 'png_base64' : string }
 export interface ChallengeAttempt { 'key' : ChallengeKey, 'chars' : string }
 export type ChallengeKey = number;
-export type ChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
+export type ChatEvent = { 'Empty' : null } |
+  { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'ParticipantJoined' : ParticipantJoined } |
   { 'ParticipantAssumesSuperAdmin' : ParticipantAssumesSuperAdmin } |
   { 'GroupDescriptionChanged' : GroupDescriptionChanged } |
