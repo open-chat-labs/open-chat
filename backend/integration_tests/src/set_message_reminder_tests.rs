@@ -75,68 +75,6 @@ fn set_message_reminder_succeeds() {
 }
 
 #[test]
-fn setting_message_reminder_again_clears_original_reminder() {
-    let mut wrapper = ENV.deref().get();
-    let TestEnv { env, canister_ids, .. } = wrapper.env();
-
-    let user1 = client::user_index::happy_path::register_user(env, canister_ids.user_index);
-    let user2 = client::user_index::happy_path::register_user(env, canister_ids.user_index);
-
-    let now = now_millis(env);
-
-    client::user::set_message_reminder(
-        env,
-        user1.principal,
-        user1.user_id.into(),
-        &user_canister::set_message_reminder::Args {
-            chat_id: user2.user_id.into(),
-            thread_root_message_index: None,
-            event_index: 10.into(),
-            notes: None,
-            remind_at: now + 1000,
-        },
-    );
-
-    client::user::set_message_reminder(
-        env,
-        user1.principal,
-        user1.user_id.into(),
-        &user_canister::set_message_reminder::Args {
-            chat_id: user2.user_id.into(),
-            thread_root_message_index: None,
-            event_index: 10.into(),
-            notes: None,
-            remind_at: now + 2000,
-        },
-    );
-
-    let latest_bot_message_index =
-        client::user::happy_path::events(env, &user1, OPENCHAT_BOT_USER_ID, EventIndex::default(), true, 1000, 1000)
-            .events
-            .last()
-            .unwrap()
-            .index;
-
-    env.advance_time(Duration::from_millis(1999));
-    env.tick();
-
-    assert!(
-        client::user::happy_path::events(env, &user1, OPENCHAT_BOT_USER_ID, latest_bot_message_index.incr(), true, 1, 1)
-            .events
-            .is_empty()
-    );
-
-    env.advance_time(Duration::from_millis(1));
-    env.tick();
-
-    assert!(
-        !client::user::happy_path::events(env, &user1, OPENCHAT_BOT_USER_ID, latest_bot_message_index.incr(), true, 1, 1)
-            .events
-            .is_empty()
-    );
-}
-
-#[test]
 fn clear_message_reminder_succeeds() {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
@@ -146,7 +84,7 @@ fn clear_message_reminder_succeeds() {
 
     let now = now_millis(env);
 
-    client::user::set_message_reminder(
+    let set_message_reminder_response = client::user::set_message_reminder(
         env,
         user1.principal,
         user1.user_id.into(),
@@ -158,16 +96,17 @@ fn clear_message_reminder_succeeds() {
             remind_at: now + 1000,
         },
     );
+    let reminder_id = if let user_canister::set_message_reminder::Response::Success(id) = set_message_reminder_response {
+        id
+    } else {
+        panic!()
+    };
 
     client::user::clear_message_reminder(
         env,
         user1.principal,
         user1.user_id.into(),
-        &user_canister::clear_message_reminder::Args {
-            chat_id: user2.user_id.into(),
-            thread_root_message_index: None,
-            event_index: 10.into(),
-        },
+        &user_canister::clear_message_reminder::Args { reminder_id },
     );
 
     let latest_bot_message_index =

@@ -597,6 +597,7 @@ pub struct PrizeWinnerContent {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct MessageReminderCreatedContent {
+    pub reminder_id: u64,
     pub remind_at: TimestampMillis,
     pub chat_id: ChatId,
     pub thread_root_message_index: Option<MessageIndex>,
@@ -606,6 +607,7 @@ pub struct MessageReminderCreatedContent {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct MessageReminderContent {
+    pub reminder_id: u64,
     pub chat_id: ChatId,
     pub thread_root_message_index: Option<MessageIndex>,
     pub event_index: EventIndex,

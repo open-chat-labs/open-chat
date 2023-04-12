@@ -35,11 +35,11 @@ pub struct DeleteFileReferencesJob {
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct MessageReminderJob {
+    pub reminder_id: u64,
     pub chat_id: ChatId,
     pub thread_root_message_index: Option<MessageIndex>,
     pub event_index: EventIndex,
     pub notes: Option<String>,
-    pub bot_message_id: MessageId,
 }
 
 impl Job for TimerJob {
@@ -111,6 +111,7 @@ impl Job for MessageReminderJob {
     fn execute(&self) {
         let replies_to = C2CReplyContext::OtherChat(self.chat_id, self.event_index);
         let content = MessageContent::MessageReminder(MessageReminderContent {
+            reminder_id: self.reminder_id,
             chat_id: self.chat_id,
             thread_root_message_index: self.thread_root_message_index,
             event_index: self.event_index,

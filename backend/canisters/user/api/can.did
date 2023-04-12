@@ -335,7 +335,7 @@ type SetMessageReminderArgs =
 
 type SetMessageReminderResponse =
     variant {
-        Success;
+        Success: nat64;
         ReminderDateInThePast;
         NotesTooLong: FieldTooLongResult;
         UserSuspended;
@@ -343,9 +343,7 @@ type SetMessageReminderResponse =
 
 type ClearMessageReminderArgs =
     record {
-        chat_id: ChatId;
-        thread_root_message_index: opt MessageIndex;
-        event_index: EventIndex;
+        reminder_id: nat64;
     };
 
 type ClearMessageReminderResponse =
