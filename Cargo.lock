@@ -962,7 +962,7 @@ dependencies = [
 [[package]]
 name = "canister_logger"
 version = "0.1.0"
-source = "git+https://github.com/open-ic/ic-utils?rev=005ba558e4c1ab5fc098ff39139122c31ab00d64#005ba558e4c1ab5fc098ff39139122c31ab00d64"
+source = "git+https://github.com/open-ic/ic-utils?rev=d54cadd47b1ceb325ae3f6bf9ec4e9d9aa6bc72e#d54cadd47b1ceb325ae3f6bf9ec4e9d9aa6bc72e"
 dependencies = [
  "candid",
  "canister_time",
@@ -976,12 +976,12 @@ dependencies = [
 [[package]]
 name = "canister_state_macros"
 version = "0.1.0"
-source = "git+https://github.com/open-ic/ic-utils?rev=005ba558e4c1ab5fc098ff39139122c31ab00d64#005ba558e4c1ab5fc098ff39139122c31ab00d64"
+source = "git+https://github.com/open-ic/ic-utils?rev=d54cadd47b1ceb325ae3f6bf9ec4e9d9aa6bc72e#d54cadd47b1ceb325ae3f6bf9ec4e9d9aa6bc72e"
 
 [[package]]
 name = "canister_time"
 version = "0.1.0"
-source = "git+https://github.com/open-ic/ic-utils?rev=005ba558e4c1ab5fc098ff39139122c31ab00d64#005ba558e4c1ab5fc098ff39139122c31ab00d64"
+source = "git+https://github.com/open-ic/ic-utils?rev=d54cadd47b1ceb325ae3f6bf9ec4e9d9aa6bc72e#d54cadd47b1ceb325ae3f6bf9ec4e9d9aa6bc72e"
 dependencies = [
  "ic0",
 ]
@@ -989,7 +989,7 @@ dependencies = [
 [[package]]
 name = "canister_timer_jobs"
 version = "0.1.0"
-source = "git+https://github.com/open-ic/ic-utils?rev=005ba558e4c1ab5fc098ff39139122c31ab00d64#005ba558e4c1ab5fc098ff39139122c31ab00d64"
+source = "git+https://github.com/open-ic/ic-utils?rev=d54cadd47b1ceb325ae3f6bf9ec4e9d9aa6bc72e#d54cadd47b1ceb325ae3f6bf9ec4e9d9aa6bc72e"
 dependencies = [
  "canister_time",
  "ic-cdk-timers",
@@ -999,7 +999,7 @@ dependencies = [
 [[package]]
 name = "canister_tracing_macros"
 version = "0.1.0"
-source = "git+https://github.com/open-ic/ic-utils?rev=005ba558e4c1ab5fc098ff39139122c31ab00d64#005ba558e4c1ab5fc098ff39139122c31ab00d64"
+source = "git+https://github.com/open-ic/ic-utils?rev=d54cadd47b1ceb325ae3f6bf9ec4e9d9aa6bc72e#d54cadd47b1ceb325ae3f6bf9ec4e9d9aa6bc72e"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -5894,7 +5894,7 @@ dependencies = [
 [[package]]
 name = "serializer"
 version = "0.1.0"
-source = "git+https://github.com/open-ic/ic-utils?rev=005ba558e4c1ab5fc098ff39139122c31ab00d64#005ba558e4c1ab5fc098ff39139122c31ab00d64"
+source = "git+https://github.com/open-ic/ic-utils?rev=d54cadd47b1ceb325ae3f6bf9ec4e9d9aa6bc72e#d54cadd47b1ceb325ae3f6bf9ec4e9d9aa6bc72e"
 dependencies = [
  "rmp-serde",
  "serde",
@@ -6118,7 +6118,7 @@ dependencies = [
 [[package]]
 name = "stable_memory"
 version = "0.1.0"
-source = "git+https://github.com/open-ic/ic-utils?rev=005ba558e4c1ab5fc098ff39139122c31ab00d64#005ba558e4c1ab5fc098ff39139122c31ab00d64"
+source = "git+https://github.com/open-ic/ic-utils?rev=d54cadd47b1ceb325ae3f6bf9ec4e9d9aa6bc72e#d54cadd47b1ceb325ae3f6bf9ec4e9d9aa6bc72e"
 dependencies = [
  "ic-cdk 0.7.3",
  "serde",
