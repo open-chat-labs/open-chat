@@ -756,7 +756,8 @@
         "upgradeSuccess": "Your payment has been made successfully",
         "expiryMessage": "Your diamond membership expires {relative} ",
         "extendTo": " Extend to ",
-        "cannotExtend": "You can only extend your membership within three months of expiry"
+        "cannotExtend": "You can only extend your membership within three months of expiry",
+        "reminders": "Reminders"
     },
     "promoteTo": "Promote to {role}",
     "demoteTo": "Demote to {role}",
