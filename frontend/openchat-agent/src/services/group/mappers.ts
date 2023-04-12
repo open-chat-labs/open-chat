@@ -1446,6 +1446,10 @@ function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {
         };
     }
 
+    if ("Empty" in candid) {
+        return { kind: "empty" };
+    }
+
     throw new UnsupportedValueError("Unexpected ApiEventWrapper type received", candid);
 }
 

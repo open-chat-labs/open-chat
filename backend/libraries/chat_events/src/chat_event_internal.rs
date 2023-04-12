@@ -15,6 +15,7 @@ use types::{
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum ChatEventInternal {
+    Empty,
     Message(Box<MessageInternal>),
     MessageEdited(Box<UpdatedMessageInternal>),
     MessageDeleted(Box<UpdatedMessageInternal>),

@@ -305,6 +305,7 @@ pub trait Reader {
 
     fn hydrate_event(&self, event: &EventWrapper<ChatEventInternal>, my_user_id: Option<UserId>) -> EventWrapper<ChatEvent> {
         let event_data = match &event.event {
+            ChatEventInternal::Empty => ChatEvent::Empty,
             ChatEventInternal::DirectChatCreated(d) => ChatEvent::DirectChatCreated(*d),
             ChatEventInternal::Message(m) => ChatEvent::Message(Box::new(m.hydrate(my_user_id))),
             ChatEventInternal::MessageEdited(m) => ChatEvent::MessageEdited(self.hydrate_updated_message(m)),

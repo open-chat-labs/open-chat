@@ -186,6 +186,7 @@ export function activeUserIdFromEvent(event: ChatEvent): string | undefined {
         case "member_left": // We exclude participant_left events since the user is no longer in the group
         case "chat_frozen":
         case "chat_unfrozen":
+        case "empty":
             return undefined;
         default:
             throw new UnsupportedValueError("Unexpected ChatEvent type received", event);

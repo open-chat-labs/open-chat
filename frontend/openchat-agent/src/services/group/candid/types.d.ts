@@ -116,7 +116,8 @@ export type ChangeRoleResponse = { 'Invalid' : null } |
   { 'Success' : null } |
   { 'UserSuspended' : null } |
   { 'InternalError' : string };
-export type ChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
+export type ChatEvent = { 'Empty' : null } |
+  { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'ParticipantJoined' : ParticipantJoined } |
   { 'ParticipantAssumesSuperAdmin' : ParticipantAssumesSuperAdmin } |
   { 'GroupDescriptionChanged' : GroupDescriptionChanged } |
