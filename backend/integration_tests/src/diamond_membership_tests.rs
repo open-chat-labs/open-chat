@@ -62,25 +62,10 @@ fn membership_renews_automatically_if_set_to_recurring(ledger_error: bool) {
         controller,
     } = wrapper.env();
 
-    let user = client::user_index::happy_path::register_user(env, canister_ids.user_index);
-
-    client::icrc1::happy_path::transfer(
-        env,
-        *controller,
-        canister_ids.icp_ledger,
-        user.user_id.into(),
-        1_000_000_000u64,
-    );
-
-    client::user_index::happy_path::pay_for_diamond_membership(
-        env,
-        user.principal,
-        canister_ids.user_index,
-        DiamondMembershipPlanDuration::OneMonth,
-        true,
-    );
-
     let start_time = now_millis(env);
+
+    let user = client::register_diamond_user(env, canister_ids, *controller);
+
     let one_month_millis = DiamondMembershipPlanDuration::OneMonth.as_millis();
     env.advance_time(Duration::from_millis(one_month_millis - (30 * MINUTE_IN_MS)));
 
