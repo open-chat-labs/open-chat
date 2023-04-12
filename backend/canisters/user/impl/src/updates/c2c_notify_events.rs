@@ -38,7 +38,9 @@ fn process_event(event: Event, runtime_state: &mut RuntimeState) {
         Event::UserSuspended(ev) => {
             openchat_bot::send_user_suspended_message(&ev, runtime_state);
         }
-        Event::OpenChatBotMessage(content) => openchat_bot::send_message(*content, false, runtime_state),
+        Event::OpenChatBotMessage(content) => {
+            openchat_bot::send_message(*content, false, runtime_state);
+        }
         Event::UserJoinedGroup(ev) => {
             let now = runtime_state.env.now();
 
