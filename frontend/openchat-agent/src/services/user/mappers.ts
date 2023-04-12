@@ -524,10 +524,6 @@ export function createGroupResponse(candid: ApiCreateGroupResponse): CreateGroup
         return { kind: "user_suspended" };
     }
 
-    if ("UnauthorizedToCreatePublicGroup" in candid) {
-        return { kind: "unauthorized_to_create_public_group" };
-    }
-
     throw new UnsupportedValueError("Unexpected ApiCreateGroupResponse type received", candid);
 }
 

@@ -128,7 +128,6 @@ export const idlFactory = ({ IDL }) => {
     'NameTaken' : IDL.Null,
     'MaxGroupsCreated' : IDL.Nat32,
     'InternalError' : IDL.Null,
-    'UnauthorizedToCreatePublicGroup' : IDL.Null,
   });
   const DeleteGroupArgs = IDL.Record({ 'chat_id' : ChatId });
   const DeleteGroupResponse = IDL.Variant({
