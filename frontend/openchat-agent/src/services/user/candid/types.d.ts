@@ -149,6 +149,12 @@ export interface ChatMetrics {
   'prize_messages' : bigint,
 }
 export interface ChatUnfrozen { 'unfrozen_by' : UserId }
+export interface ClearMessageReminderArgs {
+  'chat_id' : ChatId,
+  'event_index' : EventIndex,
+  'thread_root_message_index' : [] | [MessageIndex],
+}
+export type ClearMessageReminderResponse = { 'Success' : null };
 export type CompletedCryptoTransaction = {
     'NNS' : NnsCompletedCryptoTransaction
   } |
@@ -1057,6 +1063,19 @@ export type SetContactResponse = { 'NoChange' : null } |
   { 'Success' : null } |
   { 'UserSuspended' : null } |
   { 'NicknameTooShort' : FieldTooShortResult };
+export interface SetMessageReminderArgs {
+  'notes' : [] | [string],
+  'remind_at' : TimestampMillis,
+  'chat_id' : ChatId,
+  'event_index' : EventIndex,
+  'thread_root_message_index' : [] | [MessageIndex],
+}
+export type SetMessageReminderResponse = {
+    'NotesTooLong' : FieldTooLongResult
+  } |
+  { 'Success' : null } |
+  { 'ReminderDateInThePast' : null } |
+  { 'UserSuspended' : null };
 export type SnsAccount = { 'Mint' : null } |
   { 'Account' : Icrc1Account };
 export interface SnsCompletedCryptoTransaction {
@@ -1274,6 +1293,10 @@ export interface _SERVICE {
   'archive_chat' : ActorMethod<[ArchiveChatArgs], ArchiveChatResponse>,
   'bio' : ActorMethod<[BioArgs], BioResponse>,
   'block_user' : ActorMethod<[BlockUserArgs], BlockUserResponse>,
+  'clear_message_reminder' : ActorMethod<
+    [ClearMessageReminderArgs],
+    ClearMessageReminderResponse
+  >,
   'contacts' : ActorMethod<[ContactsArgs], ContactsResponse>,
   'create_group' : ActorMethod<[CreateGroupArgs], CreateGroupResponse>,
   'delete_group' : ActorMethod<[DeleteGroupArgs], DeleteGroupResponse>,
@@ -1321,6 +1344,10 @@ export interface _SERVICE {
   'set_avatar' : ActorMethod<[SetAvatarArgs], SetAvatarResponse>,
   'set_bio' : ActorMethod<[SetBioArgs], SetBioResponse>,
   'set_contact' : ActorMethod<[SetContactArgs], SetContactResponse>,
+  'set_message_reminder' : ActorMethod<
+    [SetMessageReminderArgs],
+    SetMessageReminderResponse
+  >,
   'transfer_crypto_within_group_v2' : ActorMethod<
     [TransferCryptoWithinGroupArgs],
     SendMessageWithTransferToGroupResponse

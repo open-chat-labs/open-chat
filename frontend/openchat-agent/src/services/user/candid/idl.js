@@ -46,6 +46,12 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Null,
     'UserSuspended' : IDL.Null,
   });
+  const ClearMessageReminderArgs = IDL.Record({
+    'chat_id' : ChatId,
+    'event_index' : EventIndex,
+    'thread_root_message_index' : IDL.Opt(MessageIndex),
+  });
+  const ClearMessageReminderResponse = IDL.Variant({ 'Success' : IDL.Null });
   const ContactsArgs = IDL.Record({});
   const Contact = IDL.Record({
     'nickname' : IDL.Opt(IDL.Text),
@@ -1048,6 +1054,19 @@ export const idlFactory = ({ IDL }) => {
     'UserSuspended' : IDL.Null,
     'NicknameTooShort' : FieldTooShortResult,
   });
+  const SetMessageReminderArgs = IDL.Record({
+    'notes' : IDL.Opt(IDL.Text),
+    'remind_at' : TimestampMillis,
+    'chat_id' : ChatId,
+    'event_index' : EventIndex,
+    'thread_root_message_index' : IDL.Opt(MessageIndex),
+  });
+  const SetMessageReminderResponse = IDL.Variant({
+    'NotesTooLong' : FieldTooLongResult,
+    'Success' : IDL.Null,
+    'ReminderDateInThePast' : IDL.Null,
+    'UserSuspended' : IDL.Null,
+  });
   const TransferCryptoWithinGroupArgs = IDL.Record({
     'content' : CryptoContent,
     'recipient' : UserId,
@@ -1152,6 +1171,11 @@ export const idlFactory = ({ IDL }) => {
     'archive_chat' : IDL.Func([ArchiveChatArgs], [ArchiveChatResponse], []),
     'bio' : IDL.Func([BioArgs], [BioResponse], ['query']),
     'block_user' : IDL.Func([BlockUserArgs], [BlockUserResponse], []),
+    'clear_message_reminder' : IDL.Func(
+        [ClearMessageReminderArgs],
+        [ClearMessageReminderResponse],
+        [],
+      ),
     'contacts' : IDL.Func([ContactsArgs], [ContactsResponse], ['query']),
     'create_group' : IDL.Func([CreateGroupArgs], [CreateGroupResponse], []),
     'delete_group' : IDL.Func([DeleteGroupArgs], [DeleteGroupResponse], []),
@@ -1230,6 +1254,11 @@ export const idlFactory = ({ IDL }) => {
     'set_avatar' : IDL.Func([SetAvatarArgs], [SetAvatarResponse], []),
     'set_bio' : IDL.Func([SetBioArgs], [SetBioResponse], []),
     'set_contact' : IDL.Func([SetContactArgs], [SetContactResponse], []),
+    'set_message_reminder' : IDL.Func(
+        [SetMessageReminderArgs],
+        [SetMessageReminderResponse],
+        [],
+      ),
     'transfer_crypto_within_group_v2' : IDL.Func(
         [TransferCryptoWithinGroupArgs],
         [SendMessageWithTransferToGroupResponse],
