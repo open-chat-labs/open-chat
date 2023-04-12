@@ -1110,6 +1110,7 @@ export type CreateGroupResponse =
     | CreateGroupThrottled
     | GroupRulesTooShort
     | GroupRulesTooLong
+    | UnauthorizedToCreatePublicGroup
     | UserSuspended;
 
 export type CreateGroupSuccess = {
@@ -1162,6 +1163,10 @@ export type MaxGroupsCreated = {
 export type CreateGroupThrottled = {
     kind: "throttled";
 };
+
+export type UnauthorizedToCreatePublicGroup = {
+    kind: "unauthorized_to_create_public_group"
+}
 
 export type AddMembersResponse =
     | AddMembersSuccess

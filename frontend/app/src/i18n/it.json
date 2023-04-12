@@ -778,5 +778,6 @@
         "info": "Se commetti un errore, puoi inviare nuovamente l'entità corretta tramite il menu principale.",
         "back": "Indietro",
         "pleaseSubmit": "Per ricevere il tuo airdrop, invia la tua entità [NNS dApp](https://nns.ic0.app) di seguito prima del giorno {cutoff}."
-    }
+    },
+    "unauthorizedToCreatePublicGroup": "Non sei autorizzato a creare gruppi pubblici"
 }
