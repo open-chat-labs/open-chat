@@ -74,7 +74,8 @@ export interface CanisterWasm {
   'version' : Version,
   'module' : Uint8Array | number[],
 }
-export type ChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
+export type ChatEvent = { 'Empty' : null } |
+  { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'ParticipantJoined' : ParticipantJoined } |
   { 'ParticipantAssumesSuperAdmin' : ParticipantAssumesSuperAdmin } |
   { 'GroupDescriptionChanged' : GroupDescriptionChanged } |

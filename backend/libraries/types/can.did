@@ -194,6 +194,7 @@ type GroupChatCreated =
 
 type ChatEvent =
     variant {
+        Empty;
         Message: Message;
         GroupChatCreated: GroupChatCreated;
         DirectChatCreated: DirectChatCreated;
