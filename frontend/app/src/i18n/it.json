@@ -758,7 +758,8 @@
         "cannotExtend": "Puoi estendere la tua iscrizione solo entro tre mesi dalla scadenza",
         "groupMsg": "Per creare fino a 10 gruppi pubblici e per controllare l'accesso ai gruppi, devi essere un utente Diamond",
         "gatingMsg": "Per creare gruppi con accesso controllato, devi essere un utente Diamond",
-        "gatedGroups": "Gruppi recintati"
+        "gatedGroups": "Gruppi recintati",
+        "reminders": "Promemoria"
     },
     "currentUsage": "Utilizzo corrente dello spazio di archiviazione",
     "promoteTo": "Promuovi a {role}",
@@ -779,5 +780,20 @@
         "back": "Indietro",
         "pleaseSubmit": "Per ricevere il tuo airdrop, invia la tua entità [NNS dApp](https://nns.ic0.app) di seguito prima del giorno {cutoff}."
     },
-    "unauthorizedToCreatePublicGroup": "Non sei autorizzato a creare gruppi pubblici"
+    "unauthorizedToCreatePublicGroup": "Non sei autorizzato a creare gruppi pubblici",
+    "reminders": {
+        "optional": "Opzionale",
+        "menu": "Ricordami",
+        "title": "Imposta un promemoria",
+        "note": "Aggiungi una nota",
+        "notePlaceholder": "Ricordami di...",
+        "twentyMinutes": "In 20 minuti",
+        "oneHour": "Tra 1 ora",
+        "threeHours": "Tra 3 ore",
+        "tomorrow": "Domani",
+        "nextWeek": "La prossima settimana",
+        "create": "Creare",
+        "remindAt": "Te lo ricorderò a {datetime}",
+        "success": "Il tuo promemoria è stato impostato correttamente"
+    }
 }

@@ -760,7 +760,8 @@
         "cannotExtend": "Sie können Ihre Mitgliedschaft nur innerhalb von drei Monaten nach Ablauf verlängern",
         "groupMsg": "Um bis zu 10 öffentliche Gruppen zu erstellen und den Gruppenzugriff zu steuern, müssen Sie ein Diamond-Benutzer sein",
         "gatingMsg": "Um Gruppen mit geschlossenem Zugang zu erstellen, müssen Sie ein Diamond-Benutzer sein",
-        "gatedGroups": "Geschlossene Gruppen"
+        "gatedGroups": "Geschlossene Gruppen",
+        "reminders": "Erinnerungen"
     },
     "currentUsage": "Aktuelle Speichernutzung",
     "promoteTo": "Heraufstufen zu {role}",
@@ -781,5 +782,20 @@
         "back": "Zurück",
         "pleaseSubmit": "Um Ihren Airdrop zu erhalten, reichen Sie bitte unten vor dem {cutoff} Ihren [NNS dApp](https://nns.ic0.app)-Prinzipal ein."
     },
-    "unauthorizedToCreatePublicGroup": "Sie sind nicht berechtigt, öffentliche Gruppen zu erstellen"
+    "unauthorizedToCreatePublicGroup": "Sie sind nicht berechtigt, öffentliche Gruppen zu erstellen",
+    "reminders": {
+        "optional": "Optional",
+        "menu": "Erinnere mich",
+        "title": "Legen Sie eine Erinnerung fest",
+        "note": "Füg ein Notiz hinzu",
+        "notePlaceholder": "Erinnere mich an ...",
+        "twentyMinutes": "In 20 Minuten",
+        "oneHour": "In 1 Stunde",
+        "threeHours": "In 3 Stunden",
+        "tomorrow": "Morgen",
+        "nextWeek": "Nächste Woche",
+        "create": "Erstellen",
+        "remindAt": "Ich werde dich um {datetime} daran erinnern",
+        "success": "Ihre Erinnerung wurde erfolgreich eingestellt"
+    }
 }

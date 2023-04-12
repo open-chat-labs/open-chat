@@ -759,7 +759,8 @@
         "cannotExtend": "有効期限が切れてから 3 か月以内に限り、メンバーシップを延長できます",
         "groupMsg": "最大 10 個の公開グループを作成し、グループ アクセスを制御するには、Diamond ユーザーである必要があります",
         "gatingMsg": "アクセスが制限されたグループを作成するには、Diamond ユーザーである必要があります",
-        "gatedGroups": "ゲーテッド グループ"
+        "gatedGroups": "ゲーテッド グループ",
+        "reminders": "リマインダー"
     },
     "currentUsage": "現在のストレージ使用量",
     "promoteTo": "{role} に昇格",
@@ -780,5 +781,20 @@
         "back": "戻る",
         "pleaseSubmit": "エアドロップを受け取るには、{cutoff} の前に [NNS dApp](https://nns.ic0.app) プリンシパルを以下に送信してください。"
     },
-    "unauthorizedToCreatePublicGroup": "公開グループを作成する権限がありません"
+    "unauthorizedToCreatePublicGroup": "公開グループを作成する権限がありません",
+    "reminders": {
+        "optional": "オプション",
+        "menu": "思い出させる",
+        "title": "リマインダーを設定する",
+        "note": "メモを追加",
+        "notePlaceholder": "通知する...",
+        "twentyMinutes": "20分で",
+        "oneHour": "1時間で",
+        "threeHours": "3時間で",
+        "tomorrow": "明日",
+        "nextWeek": "次の週",
+        "create": "作成",
+        "remindAt": "{datetime} でお知らせします",
+        "success": "リマインダーが設定されました"
+    }
 }
