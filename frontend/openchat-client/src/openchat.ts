@@ -2,6 +2,7 @@
 import type { Identity } from "@dfinity/agent";
 import { AuthClient } from "@dfinity/auth-client";
 import { get, writable } from "svelte/store";
+import { _ } from "svelte-i18n";
 import { load } from "@fingerprintjs/botd";
 import {
     buildUserAvatarUrl,
@@ -3772,6 +3773,12 @@ export class OpenChat extends EventTarget {
     ): Promise<UpdateMarketMakerConfigResponse> {
         return this.api.updateMarketMakerConfig(config);
     }
+
+    usernameAndIcon(user?: PartialUserSummary): string {
+        return user !== undefined 
+            ? `${user?.username}  ${user?.diamond ? "💎" : ""}` 
+            : get(_)("unknownUser");
+    }    
 
     diamondDurationToMs = diamondDurationToMs;
 

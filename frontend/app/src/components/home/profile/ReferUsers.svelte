@@ -1,6 +1,6 @@
 <script lang="ts">
     import { createEventDispatcher, getContext } from "svelte";
-    import type { OpenChat, UserLookup } from "openchat-client";
+    import type { OpenChat } from "openchat-client";
     import ShareIcon from "svelte-material-icons/ShareVariant.svelte";
     import CopyIcon from "svelte-material-icons/ContentCopy.svelte";
     import QR from "svelte-qr";
@@ -9,11 +9,10 @@
     import { iconSize } from "../../../stores/iconSize";
     import { toastStore } from "../../../stores/toast";
     import ViewUserProfile from "../profile/ViewUserProfile.svelte";
-    import { AvatarSize, UserStatus } from "openchat-client";
+    import { AvatarSize } from "openchat-client";
     import Avatar from "../../Avatar.svelte";
     import LinkButton from "../../LinkButton.svelte";
     import { canShare, shareLink } from "../../../utils/share";
-    import { usernameAndIcon } from "openchat-shared";
 
     const dispatch = createEventDispatcher();
 
@@ -93,7 +92,7 @@
                                 size={AvatarSize.Default} />
                         </div>
                         <LinkButton underline="hover">
-                            {usernameAndIcon($userStore[userId])}
+                            {client.usernameAndIcon($userStore[userId])}
                         </LinkButton>
                     </div>
                 {/each}

@@ -1,5 +1,5 @@
 import { ONLINE_THRESHOLD } from "../../constants";
-import type { PartialUserSummary, UserLookup } from "./user";
+import type { UserLookup } from "./user";
 import { UserStatus } from "./user";
 
 export function userStatus(lastOnline: number | undefined, now: number): UserStatus {
@@ -22,8 +22,4 @@ const mentionRegex = /@UserId\(([\d\w-]+)\)/g;
 
 export function extractUserIdsFromMentions(text: string): string[] {
     return [...text.matchAll(mentionRegex)].map((m) => m[1]);
-}
-
-export function usernameAndIcon(user: PartialUserSummary): string {
-    return `${user?.username}  ${user?.diamond ? "💎" : ""}`;
 }
