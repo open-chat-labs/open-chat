@@ -65,7 +65,11 @@ pub(crate) fn clear_message_reminder_impl(
                         thread_root_message_index: None,
                         message_id,
                         content: MessageContentInitial::Text(TextContent {
-                            text: format!("~{original_text}~"),
+                            text: format!(
+                                "~{original_text}~\
+\
+Reminder cancelled"
+                            ),
                         }),
                         now,
                     });
