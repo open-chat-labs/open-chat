@@ -776,5 +776,20 @@
         "howTo": "How to find your NNS principal",
         "back": "Back"
     },
-    "unauthorizedToCreatePublicGroup" : "You are not authorized to create public groups"
+    "unauthorizedToCreatePublicGroup": "You are not authorized to create public groups",
+    "reminders": {
+        "optional": "Optional",
+        "menu": "Remind me",
+        "title": "Set a reminder",
+        "note": "Add a note",
+        "notePlaceholder": "Remind me to...",
+        "twentyMinutes": "In 20 minutes",
+        "oneHour": "In 1 hour",
+        "threeHours": "In 3 hours",
+        "tomorrow": "Tomorrow",
+        "nextWeek": "Next week",
+        "create": "Create",
+        "remindAt": "I will remind you at {datetime}",
+        "success": "Your reminder has been successfully set"
+    }
 }

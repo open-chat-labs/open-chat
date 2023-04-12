@@ -34,6 +34,7 @@ import type {
     UpdatesResponse,
     DeletedDirectMessageResponse,
     EventWrapper,
+    SetMessageReminderResponse,
 } from "openchat-shared";
 import type { IUserClient } from "./user.client.interface";
 import {
@@ -384,5 +385,21 @@ export class CachingUserClient extends EventTarget implements IUserClient {
 
     getDeletedMessage(userId: string, messageId: bigint): Promise<DeletedDirectMessageResponse> {
         return this.client.getDeletedMessage(userId, messageId);
+    }
+
+    setMessageReminder(
+        chatId: string,
+        eventIndex: number,
+        remindAt: number,
+        notes?: string,
+        threadRootMessageIndex?: number
+    ): Promise<SetMessageReminderResponse> {
+        return this.client.setMessageReminder(
+            chatId,
+            eventIndex,
+            remindAt,
+            notes,
+            threadRootMessageIndex
+        );
     }
 }

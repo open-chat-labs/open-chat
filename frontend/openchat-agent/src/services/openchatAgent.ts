@@ -146,6 +146,7 @@ import {
     EligibleForInitialAirdropResponse,
     GroupGate,
     ProposalVoteDetails,
+    SetMessageReminderResponse,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import { applyOptionUpdate } from "../utils/mapping";
@@ -1637,5 +1638,21 @@ export class OpenChatAgent extends EventTarget {
 
     setNeuronControllerForInitialAirdrop(principal: string): Promise<SetNeuronControllerResponse> {
         return this._userIndexClient.setNeuronControllerForInitialAirdrop(principal);
+    }
+
+    setMessageReminder(
+        chatId: string,
+        eventIndex: number,
+        remindAt: number,
+        notes?: string,
+        threadRootMessageIndex?: number
+    ): Promise<SetMessageReminderResponse> {
+        return this.userClient.setMessageReminder(
+            chatId,
+            eventIndex,
+            remindAt,
+            notes,
+            threadRootMessageIndex
+        );
     }
 }

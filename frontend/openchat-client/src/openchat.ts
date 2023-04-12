@@ -2986,11 +2986,17 @@ export class OpenChat extends EventTarget {
         return this.api.registerProposalVote(chatId, messageIndex, adopt);
     }
 
-    getProposalVoteDetails(governanceCanisterId: string, proposalId: bigint, isNns: boolean): Promise<ProposalVoteDetails> {
-        return this.api.getProposalVoteDetails(governanceCanisterId, proposalId, isNns).then((resp) => {
-            proposalTallies.setTally(governanceCanisterId, proposalId, resp.latestTally);
-            return resp;
-        });
+    getProposalVoteDetails(
+        governanceCanisterId: string,
+        proposalId: bigint,
+        isNns: boolean
+    ): Promise<ProposalVoteDetails> {
+        return this.api
+            .getProposalVoteDetails(governanceCanisterId, proposalId, isNns)
+            .then((resp) => {
+                proposalTallies.setTally(governanceCanisterId, proposalId, resp.latestTally);
+                return resp;
+            });
     }
 
     getRecommendedGroups(): Promise<GroupChatSummary[]> {
@@ -3763,6 +3769,24 @@ export class OpenChat extends EventTarget {
             })
             .catch((err) => {
                 this._logger.error("Unable to set neuron controller for airdrop", err);
+                return false;
+            });
+    }
+
+    setMessageReminder(
+        chatId: string,
+        eventIndex: number,
+        remindAt: number,
+        notes?: string,
+        threadRootMessageIndex?: number
+    ): Promise<boolean> {
+        return this.api
+            .setMessageReminder(chatId, eventIndex, remindAt, notes, threadRootMessageIndex)
+            .then((res) => {
+                return res === "success";
+            })
+            .catch((err) => {
+                this._logger.error("Unable to set message reminder", err);
                 return false;
             });
     }

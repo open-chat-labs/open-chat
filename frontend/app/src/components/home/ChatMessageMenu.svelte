@@ -15,6 +15,7 @@
     import EyeIcon from "svelte-material-icons/Eye.svelte";
     import TranslateOff from "svelte-material-icons/TranslateOff.svelte";
     import ForwardIcon from "svelte-material-icons/Share.svelte";
+    import Clock from "svelte-material-icons/Clock.svelte";
     import Pin from "svelte-material-icons/Pin.svelte";
     import PinOff from "svelte-material-icons/PinOff.svelte";
     import ShareIcon from "svelte-material-icons/ShareVariant.svelte";
@@ -80,6 +81,14 @@
 
     function collapseMessage() {
         dispatch("collapseMessage");
+    }
+
+    function remindMe() {
+        if (!$isDiamond) {
+            dispatch("upgrade");
+        } else {
+            dispatch("remindMe");
+        }
     }
 
     function shareMessage() {
@@ -213,6 +222,12 @@
                             color={"var(--icon-inverted-txt)"}
                             slot="icon" />
                         <div slot="text">{$_("copyMessageUrl")}</div>
+                    </MenuItem>
+                {/if}
+                {#if confirmed && !inert && !failed}
+                    <MenuItem on:click={remindMe}>
+                        <Clock size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
+                        <div slot="text">{$_("reminders.menu")}</div>
                     </MenuItem>
                 {/if}
                 {#if confirmed && canPin && !inThread && !inert && !failed}

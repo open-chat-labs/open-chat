@@ -45,6 +45,7 @@
     import { canShareMessage } from "../../utils/share";
     import ChatMessageMenu from "./ChatMessageMenu.svelte";
     import { toastStore } from "../../stores/toast";
+    import ReminderBuilder from "./ReminderBuilder.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -94,6 +95,7 @@
     let crypto = msg.content.kind === "crypto_content";
     let poll = msg.content.kind === "poll_content";
     let canRevealDeleted = false;
+    let showRemindMe = false;
 
     $: inThread = threadRootMessage !== undefined;
     $: threadRootMessageIndex =
@@ -325,8 +327,8 @@
 <svelte:window on:resize={recalculateMediaDimensions} />
 
 {#if showEmojiPicker && canReact}
-    <Overlay on:close={() => (showEmojiPicker = false)} dismissible={true}>
-        <ModalContent hideFooter={true} hideHeader={true} fill={true}>
+    <Overlay on:close={() => (showEmojiPicker = false)} dismissible>
+        <ModalContent hideFooter hideHeader fill>
             <span slot="body">
                 <div class="emoji-header">
                     <h4>{$_("chooseReaction")}</h4>
@@ -344,6 +346,14 @@
             <span slot="footer" />
         </ModalContent>
     </Overlay>
+{/if}
+
+{#if showRemindMe}
+    <ReminderBuilder
+        {chatId}
+        {eventIndex}
+        threadRootMessageIndex={threadRootMessage?.messageIndex}
+        on:close={() => (showRemindMe = false)} />
 {/if}
 
 {#if viewProfile}
@@ -529,7 +539,8 @@
                     on:initiateThread
                     on:deleteFailedMessage
                     on:replyPrivately={replyPrivately}
-                    on:editMessage={editMessage} />
+                    on:editMessage={editMessage} 
+                    on:remindMe={() => (showRemindMe = true)} />
             {/if}
         </div>
 

@@ -3,10 +3,8 @@ import {
     _SERVICE,
     ReplyContext,
     ChatSummaryUpdates,
-    GroupChatSummaryUpdates,
     DirectChatSummaryUpdates,
     ChatEventWrapper,
-    CreateGroupArgs,
     CreateGroupResponse,
     DeleteGroupResponse,
     InitialStateV2Response,
@@ -96,6 +94,7 @@ import {
     Icrc1Account,
     DeletedMessageResponse,
     GroupGate,
+    SetMessageReminderResponse,
 } from "./types";
 export {
     _SERVICE as UserService,
@@ -193,6 +192,7 @@ export {
     DeletedMessageResponse as ApiDeletedDirectMessageResponse,
     SendMessageWithTransferToGroupResponse as ApiSendMessageWithTransferToGroupResponse,
     GroupGate as ApiGroupGate,
+    SetMessageReminderResponse as ApiSetMessageReminderResponse,
 };
 
 export const idlFactory: IDL.InterfaceFactory;
