@@ -2,7 +2,7 @@ use crate::model::direct_chat::DirectChat;
 use crate::updates::c2c_send_messages::{handle_message_impl, HandleMessageArgs};
 use crate::{mutate_state, RuntimeState, BASIC_GROUP_CREATION_LIMIT, PREMIUM_GROUP_CREATION_LIMIT};
 use ic_ledger_types::Tokens;
-use types::{MessageContent, SuspensionDuration, TextContent, UserId};
+use types::{EventWrapper, Message, MessageContent, SuspensionDuration, TextContent, UserId};
 use user_canister::c2c_send_messages::C2CReplyContext;
 use user_canister::{PhoneNumberConfirmed, ReferredUserRegistered, StorageUpgraded, UserSuspended};
 use utils::consts::{OPENCHAT_BOT_USERNAME, OPENCHAT_BOT_USER_ID};
@@ -119,13 +119,21 @@ You can appeal this suspension by sending a direct message to the @OpenChat Twit
     send_text_message(text, false, runtime_state);
 }
 
-pub(crate) fn send_message(content: MessageContent, mute_notification: bool, runtime_state: &mut RuntimeState) {
+pub(crate) fn send_message(
+    content: MessageContent,
+    mute_notification: bool,
+    runtime_state: &mut RuntimeState,
+) -> EventWrapper<Message> {
     send_message_with_reply(content, None, mute_notification, runtime_state)
 }
 
-pub(crate) fn send_text_message(text: String, mute_notification: bool, runtime_state: &mut RuntimeState) {
+pub(crate) fn send_text_message(
+    text: String,
+    mute_notification: bool,
+    runtime_state: &mut RuntimeState,
+) -> EventWrapper<Message> {
     let content = MessageContent::Text(TextContent { text });
-    send_message(content, mute_notification, runtime_state);
+    send_message(content, mute_notification, runtime_state)
 }
 
 pub(crate) fn send_message_with_reply(
@@ -133,7 +141,7 @@ pub(crate) fn send_message_with_reply(
     replies_to: Option<C2CReplyContext>,
     mute_notification: bool,
     runtime_state: &mut RuntimeState,
-) {
+) -> EventWrapper<Message> {
     let args = HandleMessageArgs {
         message_id: None,
         sender_message_index: None,
@@ -146,7 +154,7 @@ pub(crate) fn send_message_with_reply(
         now: runtime_state.env.now(),
     };
 
-    handle_message_impl(OPENCHAT_BOT_USER_ID, args, mute_notification, runtime_state);
+    handle_message_impl(OPENCHAT_BOT_USER_ID, args, mute_notification, runtime_state)
 }
 
 fn to_gb(bytes: u64) -> String {

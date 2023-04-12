@@ -1,10 +1,11 @@
 use crate::guards::caller_is_owner;
 use crate::timer_job_types::{MessageReminderJob, TimerJob};
 use crate::updates::clear_message_reminder::clear_message_reminder_impl;
-use crate::{mutate_state, run_regular_jobs, RuntimeState};
+use crate::{mutate_state, openchat_bot, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
-use types::FieldTooLongResult;
+use types::{FieldTooLongResult, MessageContent, TextContent};
+use user_canister::c2c_send_messages::C2CReplyContext;
 use user_canister::set_message_reminder::{Response::*, *};
 
 const MAX_NOTES_LENGTH: usize = 1000;
@@ -37,12 +38,24 @@ fn set_message_reminder_impl(args: Args, state: &mut RuntimeState) -> Response {
 
     clear_message_reminder_impl(args.chat_id, args.thread_root_message_index, args.event_index, state);
 
+    let bot_message_id = openchat_bot::send_message_with_reply(
+        MessageContent::Text(TextContent {
+            text: format!("I will remind you of this message at @DateTime({})", args.remind_at),
+        }),
+        Some(C2CReplyContext::OtherChat(args.chat_id, args.event_index)),
+        true,
+        state,
+    )
+    .event
+    .message_id;
+
     state.data.timer_jobs.enqueue_job(
         TimerJob::MessageReminder(MessageReminderJob {
             chat_id: args.chat_id,
             thread_root_message_index: args.thread_root_message_index,
             event_index: args.event_index,
             notes: args.notes,
+            bot_message_id,
         }),
         args.remind_at,
         now,
