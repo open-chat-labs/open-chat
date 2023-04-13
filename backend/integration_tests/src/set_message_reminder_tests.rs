@@ -59,15 +59,12 @@ fn set_message_reminder_succeeds() {
 
     if let ChatEvent::Message(m) = latest_bot_message.event {
         if let MessageContent::MessageReminder(r) = m.content {
-            assert_eq!(r.chat_id, user2.user_id.into());
-            assert_eq!(r.thread_root_message_index, None);
-            assert_eq!(r.event_index, 10.into());
             assert_eq!(r.notes, Some(notes));
         } else {
             panic!()
         }
         let replies_to = m.replies_to.unwrap();
-        assert_eq!(replies_to.chat_id_if_other, Some(user2.user_id.into()));
+        assert_eq!(replies_to.event_list_if_other, Some((user2.user_id.into(), None)));
         assert_eq!(replies_to.event_index, 10.into());
     } else {
         panic!()
