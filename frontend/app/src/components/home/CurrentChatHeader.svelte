@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { AvatarSize, OpenChat, TypersByKey, UserStatus } from "openchat-client";
+    import { AvatarSize, OpenChat, TypersByKey } from "openchat-client";
     import { mobileWidth } from "../../stores/screenDimensions";
     import CurrentChatMenu from "./CurrentChatMenu.svelte";
     import SectionHeader from "../SectionHeader.svelte";
@@ -53,7 +53,7 @@
         if (chatSummary.kind === "direct_chat") {
             const them = $userStore[chatSummary.them];
             return {
-                name: `${them?.username}  ${them?.diamond ? "💎" : ""}`,
+                name: client.usernameAndIcon(them),
                 avatarUrl: client.userAvatarUrl(them),
                 userId: chatSummary.them,
                 typing: client.getTypingString($_, $userStore, chatSummary.chatId, typing),
