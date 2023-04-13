@@ -706,18 +706,12 @@ export interface MessagePinned {
 }
 export interface MessageReminder {
   'notes' : [] | [string],
-  'chat_id' : ChatId,
   'reminder_id' : bigint,
-  'event_index' : EventIndex,
-  'thread_root_message_index' : [] | [MessageIndex],
 }
 export interface MessageReminderCreated {
   'notes' : [] | [string],
   'remind_at' : TimestampMillis,
-  'chat_id' : ChatId,
   'reminder_id' : bigint,
-  'event_index' : EventIndex,
-  'thread_root_message_index' : [] | [MessageIndex],
 }
 export interface MessageUnpinned {
   'due_to_message_deleted' : boolean,

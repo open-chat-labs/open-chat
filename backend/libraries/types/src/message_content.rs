@@ -1,7 +1,7 @@
 use crate::polls::{InvalidPollReason, PollConfig, PollVotes};
 use crate::{
-    CanisterId, ChatId, CompletedCryptoTransaction, CryptoTransaction, Cryptocurrency, EventIndex, MessageIndex,
-    ProposalContent, ProposalContentInternal, TimestampMillis, TotalVotes, UserId, VoteOperation,
+    CanisterId, CompletedCryptoTransaction, CryptoTransaction, Cryptocurrency, MessageIndex, ProposalContent,
+    ProposalContentInternal, TimestampMillis, TotalVotes, UserId, VoteOperation,
 };
 use candid::{CandidType, Principal};
 use ic_ledger_types::Tokens;
@@ -599,18 +599,12 @@ pub struct PrizeWinnerContent {
 pub struct MessageReminderCreatedContent {
     pub reminder_id: u64,
     pub remind_at: TimestampMillis,
-    pub chat_id: ChatId,
-    pub thread_root_message_index: Option<MessageIndex>,
-    pub event_index: EventIndex,
     pub notes: Option<String>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct MessageReminderContent {
     pub reminder_id: u64,
-    pub chat_id: ChatId,
-    pub thread_root_message_index: Option<MessageIndex>,
-    pub event_index: EventIndex,
     pub notes: Option<String>,
 }
 

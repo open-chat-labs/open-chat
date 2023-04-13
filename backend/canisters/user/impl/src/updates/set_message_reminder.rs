@@ -42,12 +42,13 @@ fn set_message_reminder_impl(args: Args, state: &mut RuntimeState) -> Response {
         MessageContent::MessageReminderCreated(MessageReminderCreatedContent {
             reminder_id,
             remind_at: args.remind_at,
-            chat_id: args.chat_id,
-            thread_root_message_index: args.thread_root_message_index,
-            event_index: args.event_index,
             notes: args.notes.clone(),
         }),
-        Some(C2CReplyContext::OtherChat(args.chat_id, args.event_index)),
+        Some(C2CReplyContext::OtherEventList(
+            args.chat_id,
+            args.thread_root_message_index,
+            args.event_index,
+        )),
         true,
         state,
     );

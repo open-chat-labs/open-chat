@@ -1266,17 +1266,11 @@ type MessageReminderCreated =
     record {
         reminder_id: nat64;
         remind_at: TimestampMillis;
-        chat_id: ChatId;
-        thread_root_message_index: opt MessageIndex;
-        event_index: EventIndex;
         notes: opt text;
     };
 
 type MessageReminder =
     record {
         reminder_id: nat64;
-        chat_id: ChatId;
-        thread_root_message_index: opt MessageIndex;
-        event_index: EventIndex;
         notes: opt text;
     };

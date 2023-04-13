@@ -379,21 +379,14 @@ export const idlFactory = ({ IDL }) => {
     'timestamp' : TimestampMillis,
     'deleted_by' : UserId,
   });
-  const ChatId = CanisterId;
   const MessageReminderCreated = IDL.Record({
     'notes' : IDL.Opt(IDL.Text),
     'remind_at' : TimestampMillis,
-    'chat_id' : ChatId,
     'reminder_id' : IDL.Nat64,
-    'event_index' : EventIndex,
-    'thread_root_message_index' : IDL.Opt(MessageIndex),
   });
   const MessageReminder = IDL.Record({
     'notes' : IDL.Opt(IDL.Text),
-    'chat_id' : ChatId,
     'reminder_id' : IDL.Nat64,
-    'event_index' : EventIndex,
-    'thread_root_message_index' : IDL.Opt(MessageIndex),
   });
   const MessageContent = IDL.Variant({
     'Giphy' : GiphyContent,
@@ -500,6 +493,7 @@ export const idlFactory = ({ IDL }) => {
     'reply_count' : IDL.Nat32,
     'latest_event_index' : EventIndex,
   });
+  const ChatId = CanisterId;
   const ReplyContext = IDL.Record({
     'event_list_if_other' : IDL.Opt(IDL.Tuple(ChatId, IDL.Opt(MessageIndex))),
     'chat_id_if_other' : IDL.Opt(ChatId),

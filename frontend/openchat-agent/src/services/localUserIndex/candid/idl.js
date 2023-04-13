@@ -365,17 +365,11 @@ export const idlFactory = ({ IDL }) => {
   const MessageReminderCreated = IDL.Record({
     'notes' : IDL.Opt(IDL.Text),
     'remind_at' : TimestampMillis,
-    'chat_id' : ChatId,
     'reminder_id' : IDL.Nat64,
-    'event_index' : EventIndex,
-    'thread_root_message_index' : IDL.Opt(MessageIndex),
   });
   const MessageReminder = IDL.Record({
     'notes' : IDL.Opt(IDL.Text),
-    'chat_id' : ChatId,
     'reminder_id' : IDL.Nat64,
-    'event_index' : EventIndex,
-    'thread_root_message_index' : IDL.Opt(MessageIndex),
   });
   const MessageContent = IDL.Variant({
     'Giphy' : GiphyContent,

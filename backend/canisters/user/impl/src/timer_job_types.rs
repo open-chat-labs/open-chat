@@ -109,12 +109,9 @@ impl Job for DeleteFileReferencesJob {
 
 impl Job for MessageReminderJob {
     fn execute(&self) {
-        let replies_to = C2CReplyContext::OtherChat(self.chat_id, self.event_index);
+        let replies_to = C2CReplyContext::OtherEventList(self.chat_id, self.thread_root_message_index, self.event_index);
         let content = MessageContent::MessageReminder(MessageReminderContent {
             reminder_id: self.reminder_id,
-            chat_id: self.chat_id,
-            thread_root_message_index: self.thread_root_message_index,
-            event_index: self.event_index,
             notes: self.notes.clone(),
         });
 
