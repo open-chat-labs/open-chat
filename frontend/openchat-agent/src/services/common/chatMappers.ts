@@ -186,7 +186,7 @@ function messageReminderCreated(candid: ApiMessageReminderCreated): MessageRemin
         notes: optional(candid.notes, identity),
         remindAt: Number(candid.remind_at),
         reminderId: candid.reminder_id,
-        hidden: false, //TODO
+        hidden: candid.hidden,
     };
 }
 
