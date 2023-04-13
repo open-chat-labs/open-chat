@@ -304,6 +304,7 @@ import {
     EligibleForInitialAirdropResponse,
     GroupGate,
     ProposalVoteDetails,
+    MessageReminderCreatedContent,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -2244,7 +2245,6 @@ export class OpenChat extends EventTarget {
             edited: false,
             forwarded: msg.content.kind !== "giphy_content",
             deleted: false,
-            cancelled: false,
         };
         const event = { event: msg, index: nextEventIndex, timestamp: BigInt(Date.now()) };
 
@@ -3792,9 +3792,12 @@ export class OpenChat extends EventTarget {
             });
     }
 
-    cancelMessageReminder(messageId: bigint, reminderId: number): Promise<boolean> {
-        localMessageUpdates.markCancelled(messageId.toString());
-        return this.api.cancelMessageReminder(reminderId).catch((err) => {
+    cancelMessageReminder(
+        messageId: bigint,
+        content: MessageReminderCreatedContent
+    ): Promise<boolean> {
+        localMessageUpdates.markCancelled(messageId.toString(), content);
+        return this.api.cancelMessageReminder(Number(content.reminderId)).catch((err) => {
             localMessageUpdates.revertCancelled(messageId.toString());
             this._logger.error("Unable to cancel message reminder", err);
             return false;

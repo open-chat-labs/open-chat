@@ -110,7 +110,6 @@ export function message(candid: ApiMessage): Message {
         forwarded: candid.forwarded,
         deleted: content.kind === "deleted_content",
         thread: optional(candid.thread_summary, threadSummary),
-        cancelled: false,
     };
 }
 
@@ -187,6 +186,7 @@ function messageReminderCreated(candid: ApiMessageReminderCreated): MessageRemin
         notes: optional(candid.notes, identity),
         remindAt: Number(candid.remind_at),
         reminderId: candid.reminder_id,
+        hidden: false, //TODO
     };
 }
 

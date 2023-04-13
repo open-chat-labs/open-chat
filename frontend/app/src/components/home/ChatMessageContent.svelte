@@ -78,7 +78,7 @@
         {readonly}
         {reply}
         on:expandMessage />
-{:else if content.kind === "message_reminder_created_content"}
+{:else if content.kind === "message_reminder_created_content" && !content.hidden}
     <MessageReminderCreatedContent {content} />
 {:else if content.kind === "message_reminder_content"}
     <MessageReminderContent {content} />

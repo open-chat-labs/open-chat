@@ -20,7 +20,6 @@ describe("mark messages read", () => {
                 edited: false,
                 forwarded: false,
                 deleted: false,
-                cancelled: false,
             },
             index: 0,
             timestamp: BigInt(0),

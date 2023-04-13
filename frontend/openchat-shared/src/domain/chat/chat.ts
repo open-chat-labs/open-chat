@@ -149,6 +149,7 @@ export type MessageReminderCreatedContent = {
     notes?: string;
     remindAt: number;
     reminderId: bigint;
+    hidden: boolean;
 };
 
 export type MessageReminderContent = {
@@ -386,7 +387,6 @@ export type Message = {
     forwarded: boolean;
     deleted: boolean;
     thread?: ThreadSummary;
-    cancelled: boolean;
 };
 
 export type ThreadSummary = {
@@ -443,6 +443,7 @@ export type LocalMessageUpdates = {
         timestamp: bigint;
     };
     editedContent?: MessageContent;
+    cancelledReminder?: MessageContent;
     undeletedContent?: MessageContent;
     revealedContent?: MessageContent;
     prizeClaimed?: string;
@@ -450,7 +451,6 @@ export type LocalMessageUpdates = {
     pollVotes?: LocalPollVote[];
     threadSummary?: ThreadSummary;
     lastUpdated: number;
-    cancelled?: boolean;
 };
 
 export type EventsResponse<T extends ChatEvent> = "events_failed" | EventsSuccessResult<T>;

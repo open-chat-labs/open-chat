@@ -272,7 +272,6 @@ export function createMessage(
         edited: false,
         forwarded: false,
         deleted: false,
-        cancelled: false,
     };
 }
 
@@ -1135,14 +1134,11 @@ function mergeLocalUpdates(
         };
     }
 
-    if (localUpdates?.cancelled !== undefined) {
-        return {
-            ...message,
-            cancelled: true,
-        };
-    }
-
     message = { ...message };
+
+    if (localUpdates?.cancelledReminder !== undefined) {
+        message.content = localUpdates.cancelledReminder;
+    }
 
     if (localUpdates?.editedContent !== undefined) {
         message.content = localUpdates.editedContent;

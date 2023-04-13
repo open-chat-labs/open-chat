@@ -10,6 +10,7 @@
         MessageContent,
         OpenChat,
         PartialUserSummary,
+        MessageReminderCreatedContent,
     } from "openchat-client";
     import EmojiPicker from "./EmojiPicker.svelte";
     import Avatar from "../Avatar.svelte";
@@ -193,14 +194,16 @@
         dispatch("replyPrivatelyTo", createReplyContext());
     }
 
-    function cancelReminder(ev: CustomEvent<number>) {
-        client.cancelMessageReminder(msg.messageId, ev.detail).then((success) => {
-            if (success) {
-                toastStore.showSuccessToast("reminders.cancelSuccess");
-            } else {
-                toastStore.showFailureToast("reminders.cancelFailure");
-            }
-        });
+    function cancelReminder(ev: CustomEvent<MessageReminderCreatedContent>) {
+        client
+            .cancelMessageReminder(msg.messageId, { ...ev.detail, hidden: true })
+            .then((success) => {
+                if (success) {
+                    toastStore.showSuccessToast("reminders.cancelSuccess");
+                } else {
+                    toastStore.showFailureToast("reminders.cancelFailure");
+                }
+            });
     }
 
     function editMessage() {

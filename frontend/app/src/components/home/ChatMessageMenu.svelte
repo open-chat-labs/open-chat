@@ -98,7 +98,7 @@
 
     function cancelReminder() {
         if (msg.content.kind === "message_reminder_created_content") {
-            dispatch("cancelReminder", msg.content.reminderId);
+            dispatch("cancelReminder", msg.content);
         }
     }
 
