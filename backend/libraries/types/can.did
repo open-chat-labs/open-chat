@@ -87,6 +87,7 @@ type ChatMetrics =
         proposals: nat64;
         reported_messages: nat64;
         message_reminders: nat64;
+        custom_type_messages: nat64;
         last_active: TimestampMillis;
     };
 
@@ -583,6 +584,7 @@ type MessageContentInitial =
         Prize: PrizeContentInitial;
         MessageReminderCreated: MessageReminderCreated;
         MessageReminder: MessageReminder;
+        Custom: CustomMessageContent;
     };
 
 type MessageContent =
@@ -601,6 +603,7 @@ type MessageContent =
         PrizeWinner: PrizeWinnerContent;
         MessageReminderCreated: MessageReminderCreated;
         MessageReminder: MessageReminder;
+        Custom: CustomMessageContent;
     };
 
 type UpdatedMessage =
@@ -1273,4 +1276,10 @@ type MessageReminder =
     record {
         reminder_id: nat64;
         notes: opt text;
+    };
+
+type CustomMessageContent =
+    record {
+        kind: text;
+        data: blob;
     };
