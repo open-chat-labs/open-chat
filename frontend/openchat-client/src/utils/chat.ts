@@ -234,6 +234,8 @@ function addCaption(caption: string | undefined, content: MessageContent): Messa
         content.kind !== "poll_content" &&
         content.kind !== "proposal_content" &&
         content.kind !== "prize_winner_content" &&
+        content.kind !== "message_reminder_content" &&
+        content.kind !== "message_reminder_created_content" &&
         content.kind !== "crypto_content"
         ? { ...content, caption }
         : content;
@@ -1113,7 +1115,7 @@ function mergeLocalUpdates(
     localUpdates: LocalMessageUpdates | undefined,
     replyContextLocalUpdates: LocalMessageUpdates | undefined,
     tallyUpdate: Tally | undefined
-): Message | EmptyEvent {
+): Message {
     if (
         localUpdates === undefined &&
         replyContextLocalUpdates === undefined &&
@@ -1130,12 +1132,6 @@ function mergeLocalUpdates(
                 deletedBy: localUpdates.deleted.deletedBy,
                 timestamp: localUpdates.deleted.timestamp,
             },
-        };
-    }
-
-    if (localUpdates?.empty) {
-        return {
-            kind: "empty",
         };
     }
 
