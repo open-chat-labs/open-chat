@@ -273,6 +273,7 @@ export function createMessage(
         edited: false,
         forwarded: false,
         deleted: false,
+        cancelled: false,
     };
 }
 
@@ -1132,6 +1133,13 @@ function mergeLocalUpdates(
                 deletedBy: localUpdates.deleted.deletedBy,
                 timestamp: localUpdates.deleted.timestamp,
             },
+        };
+    }
+
+    if (localUpdates?.cancelled !== undefined) {
+        return {
+            ...message,
+            cancelled: true,
         };
     }
 

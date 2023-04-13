@@ -98,50 +98,52 @@
 </script>
 
 {#if event.event.kind === "message"}
-    <ChatMessage
-        sender={$userStore[event.event.sender]}
-        senderTyping={client.isTyping($typing, event.event.sender, chatId)}
-        {focused}
-        {observer}
-        {confirmed}
-        {failed}
-        {readByMe}
-        {readByThem}
-        {chatId}
-        {chatType}
-        {user}
-        {me}
-        {first}
-        {last}
-        {readonly}
-        {pinned}
-        {canPin}
-        {canBlockUser}
-        {canDelete}
-        canQuoteReply={canSend}
-        {canReact}
-        canStartThread={canReplyInThread}
-        {publicGroup}
-        {editing}
-        {threadRootMessage}
-        {supportsEdit}
-        {supportsReply}
-        {collapsed}
-        on:chatWith
-        on:goToMessageIndex
-        on:replyPrivatelyTo
-        on:replyTo
-        on:retrySend={retrySend}
-        on:editMessage={editEvent}
-        on:upgrade
-        on:forward
-        on:expandMessage
-        on:collapseMessage
-        on:initiateThread={initiateThread}
-        on:deleteFailedMessage={deleteFailedMessage}
-        eventIndex={event.index}
-        timestamp={event.timestamp}
-        msg={event.event} />
+    {#if !event.event.cancelled}
+        <ChatMessage
+            sender={$userStore[event.event.sender]}
+            senderTyping={client.isTyping($typing, event.event.sender, chatId)}
+            {focused}
+            {observer}
+            {confirmed}
+            {failed}
+            {readByMe}
+            {readByThem}
+            {chatId}
+            {chatType}
+            {user}
+            {me}
+            {first}
+            {last}
+            {readonly}
+            {pinned}
+            {canPin}
+            {canBlockUser}
+            {canDelete}
+            canQuoteReply={canSend}
+            {canReact}
+            canStartThread={canReplyInThread}
+            {publicGroup}
+            {editing}
+            {threadRootMessage}
+            {supportsEdit}
+            {supportsReply}
+            {collapsed}
+            on:chatWith
+            on:goToMessageIndex
+            on:replyPrivatelyTo
+            on:replyTo
+            on:retrySend={retrySend}
+            on:editMessage={editEvent}
+            on:upgrade
+            on:forward
+            on:expandMessage
+            on:collapseMessage
+            on:initiateThread={initiateThread}
+            on:deleteFailedMessage={deleteFailedMessage}
+            eventIndex={event.index}
+            timestamp={event.timestamp}
+            msg={event.event} />
+    {/if}
 {:else if event.event.kind === "group_chat_created"}
     <GroupChatCreatedEvent event={event.event} {me} timestamp={event.timestamp} />
 {:else if event.event.kind === "direct_chat_created"}

@@ -194,7 +194,7 @@
     }
 
     function cancelReminder(ev: CustomEvent<number>) {
-        client.cancelMessageReminder(ev.detail).then((success) => {
+        client.cancelMessageReminder(msg.messageId, ev.detail).then((success) => {
             if (success) {
                 toastStore.showSuccessToast("reminders.cancelSuccess");
             } else {

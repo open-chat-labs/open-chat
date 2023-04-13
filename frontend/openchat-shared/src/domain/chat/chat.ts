@@ -386,6 +386,7 @@ export type Message = {
     forwarded: boolean;
     deleted: boolean;
     thread?: ThreadSummary;
+    cancelled: boolean;
 };
 
 export type ThreadSummary = {
@@ -449,6 +450,7 @@ export type LocalMessageUpdates = {
     pollVotes?: LocalPollVote[];
     threadSummary?: ThreadSummary;
     lastUpdated: number;
+    cancelled?: boolean;
 };
 
 export type EventsResponse<T extends ChatEvent> = "events_failed" | EventsSuccessResult<T>;
