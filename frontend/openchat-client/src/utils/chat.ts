@@ -36,7 +36,6 @@ import {
     UnsupportedValueError,
     getContentAsText,
     eventIsVisible,
-    EmptyEvent,
 } from "openchat-shared";
 import { distinctBy, groupWhile } from "../utils/list";
 import { areOnSameDay } from "../utils/date";
