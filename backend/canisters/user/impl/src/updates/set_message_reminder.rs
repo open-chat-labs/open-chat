@@ -38,11 +38,12 @@ fn set_message_reminder_impl(args: Args, state: &mut RuntimeState) -> Response {
 
     let reminder_id = state.env.rng().next_u64();
 
-    openchat_bot::send_message_with_reply(
+    let reminder_created_message_index = openchat_bot::send_message_with_reply(
         MessageContent::MessageReminderCreated(MessageReminderCreatedContent {
             reminder_id,
             remind_at: args.remind_at,
             notes: args.notes.clone(),
+            hidden: false,
         }),
         Some(C2CReplyContext::OtherEventList(
             args.chat_id,
@@ -51,7 +52,9 @@ fn set_message_reminder_impl(args: Args, state: &mut RuntimeState) -> Response {
         )),
         true,
         state,
-    );
+    )
+    .event
+    .message_index;
 
     state.data.timer_jobs.enqueue_job(
         TimerJob::MessageReminder(MessageReminderJob {
@@ -60,6 +63,7 @@ fn set_message_reminder_impl(args: Args, state: &mut RuntimeState) -> Response {
             thread_root_message_index: args.thread_root_message_index,
             event_index: args.event_index,
             notes: args.notes,
+            reminder_created_message_index,
         }),
         args.remind_at,
         now,

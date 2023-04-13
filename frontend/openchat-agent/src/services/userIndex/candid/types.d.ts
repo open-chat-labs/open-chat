@@ -588,6 +588,7 @@ export interface MessageReminder {
   'reminder_id' : bigint,
 }
 export interface MessageReminderCreated {
+  'hidden' : boolean,
   'notes' : [] | [string],
   'remind_at' : TimestampMillis,
   'reminder_id' : bigint,

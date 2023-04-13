@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 use types::{BlobReference, ChatId, EventIndex, MessageContent, MessageId, MessageIndex, MessageReminderContent, UserId};
 use user_canister::c2c_send_messages;
 use user_canister::c2c_send_messages::C2CReplyContext;
+use utils::consts::OPENCHAT_BOT_USER_ID;
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum TimerJob {
@@ -40,6 +41,7 @@ pub struct MessageReminderJob {
     pub thread_root_message_index: Option<MessageIndex>,
     pub event_index: EventIndex,
     pub notes: Option<String>,
+    pub reminder_created_message_index: MessageIndex,
 }
 
 impl Job for TimerJob {
@@ -115,6 +117,13 @@ impl Job for MessageReminderJob {
             notes: self.notes.clone(),
         });
 
-        mutate_state(|state| openchat_bot::send_message_with_reply(content, Some(replies_to), false, state));
+        mutate_state(|state| {
+            if let Some(chat) = state.data.direct_chats.get_mut(&OPENCHAT_BOT_USER_ID.into()) {
+                let now = state.env.now();
+                chat.events
+                    .mark_message_reminder_created_message_hidden(self.reminder_created_message_index, now);
+            }
+            openchat_bot::send_message_with_reply(content, Some(replies_to), false, state)
+        });
     }
 }

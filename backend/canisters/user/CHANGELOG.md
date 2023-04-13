@@ -19,6 +19,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Store `diamond_membership_expires_at` in each user canister ([#3428](https://github.com/open-ic/open-chat/pull/3428))
 - Send message reminders as private replies ([#3431](https://github.com/open-ic/open-chat/pull/3431))
 - Send OpenChat bot message when setting a message reminder ([#3436](https://github.com/open-ic/open-chat/pull/3436))
+- Hide 'reminder created' messages when cancelled or complete ([#3446](https://github.com/open-ic/open-chat/pull/3446))
 
 ### Removed
 
