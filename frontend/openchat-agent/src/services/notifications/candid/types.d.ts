@@ -104,7 +104,6 @@ export interface ChatMetrics {
   'file_messages' : bigint,
   'poll_votes' : bigint,
   'text_messages' : bigint,
-  'message_reminders' : bigint,
   'image_messages' : bigint,
   'replies' : bigint,
   'video_messages' : bigint,
@@ -114,7 +113,6 @@ export interface ChatMetrics {
   'reported_messages' : bigint,
   'ckbtc_messages' : bigint,
   'reactions' : bigint,
-  'custom_type_messages' : bigint,
   'prize_messages' : bigint,
 }
 export interface ChatUnfrozen { 'unfrozen_by' : UserId }

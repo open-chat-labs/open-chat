@@ -46,7 +46,6 @@ export const idlFactory = ({ IDL }) => {
     'file_messages' : IDL.Nat64,
     'poll_votes' : IDL.Nat64,
     'text_messages' : IDL.Nat64,
-    'message_reminders' : IDL.Nat64,
     'image_messages' : IDL.Nat64,
     'replies' : IDL.Nat64,
     'video_messages' : IDL.Nat64,
@@ -56,7 +55,6 @@ export const idlFactory = ({ IDL }) => {
     'reported_messages' : IDL.Nat64,
     'ckbtc_messages' : IDL.Nat64,
     'reactions' : IDL.Nat64,
-    'custom_type_messages' : IDL.Nat64,
     'prize_messages' : IDL.Nat64,
   });
   const GovernanceProposalsSubtype = IDL.Record({
