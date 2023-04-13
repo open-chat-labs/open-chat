@@ -794,7 +794,6 @@
         "tomorrow": "Ngày mai",
         "nextWeek": "Tuần tới",
         "create": "Tạo nên",
-        "remindAt": "Tôi sẽ nhắc bạn lúc {datetime}",
         "success": "Lời nhắc của bạn đã được đặt thành công"
     }
 }

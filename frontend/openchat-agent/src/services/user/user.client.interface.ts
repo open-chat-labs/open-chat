@@ -138,4 +138,5 @@ export interface IUserClient {
         notes?: string,
         threadRootMessageIndex?: number
     ): Promise<SetMessageReminderResponse>;
+    cancelMessageReminder(reminderId: number): Promise<boolean>;
 }

@@ -790,7 +790,12 @@
         "tomorrow": "Tomorrow",
         "nextWeek": "Next week",
         "create": "Create",
-        "remindAt": "I will remind you at {datetime}",
-        "success": "Your reminder has been successfully set"
+        "remindAt": "I will remind you about this message at {datetime}",
+        "youAsked": "You asked me to remind you about this message.",
+        "success": "Your reminder has been successfully set",
+        "failure": "Sorry we were unable to set your reminder",
+        "cancel": "Cancel reminder",
+        "cancelSuccess": "Your reminder has been successfully cancelled",
+        "cancelFailure": "Sorry we were unable to cancel your reminder"
     }
 }

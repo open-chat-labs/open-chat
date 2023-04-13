@@ -638,4 +638,14 @@ export class UserClient extends CandidService implements IUserClient {
             setMessageReminderResponse
         );
     }
+
+    @profile("userClient")
+    cancelMessageReminder(reminderId: number): Promise<boolean> {
+        return this.handleResponse(
+            this.userService.cancel_message_reminder({
+                reminder_id: BigInt(reminderId),
+            }),
+            (_) => true
+        );
+    }
 }

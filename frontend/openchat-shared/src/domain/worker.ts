@@ -206,7 +206,8 @@ export type WorkerRequest =
     | UpdateMarketMakerConfig
     | IsEligibleForInitialAirdrop
     | SetNeuronControllerForAirdrop
-    | SetMessageReminder;
+    | SetMessageReminder
+    | CancelMessageReminder;
 
 type SetCachedMessageFromNotification = Request<{
     chatId: string;
@@ -1028,4 +1029,10 @@ type SetMessageReminder = Request<{
     threadRootMessageIndex?: number;
 }> & {
     kind: "setMessageReminder";
+};
+
+type CancelMessageReminder = Request<{
+    reminderId: number;
+}> & {
+    kind: "cancelMessageReminder";
 };

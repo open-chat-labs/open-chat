@@ -794,7 +794,6 @@
         "tomorrow": "Mañana",
         "nextWeek": "La próxima semana",
         "create": "Crear",
-        "remindAt": "Te lo recordaré en {datetime}",
         "success": "Su recordatorio se ha configurado con éxito"
     }
 }

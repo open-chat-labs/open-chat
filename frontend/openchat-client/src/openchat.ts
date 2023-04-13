@@ -3791,6 +3791,13 @@ export class OpenChat extends EventTarget {
             });
     }
 
+    cancelMessageReminder(reminderId: number): Promise<boolean> {
+        return this.api.cancelMessageReminder(reminderId).catch((err) => {
+            this._logger.error("Unable to cancel message reminder", err);
+            return false;
+        });
+    }
+
     updateMarketMakerConfig(
         config: UpdateMarketMakerConfigArgs
     ): Promise<UpdateMarketMakerConfigResponse> {
@@ -3798,10 +3805,10 @@ export class OpenChat extends EventTarget {
     }
 
     usernameAndIcon(user?: PartialUserSummary): string {
-        return user !== undefined 
-            ? `${user?.username}  ${user?.diamond ? "💎" : ""}` 
+        return user !== undefined
+            ? `${user?.username}  ${user?.diamond ? "💎" : ""}`
             : this.config.i18nFormatter("unknownUser");
-    }    
+    }
 
     diamondDurationToMs = diamondDurationToMs;
 

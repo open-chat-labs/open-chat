@@ -793,7 +793,6 @@
         "tomorrow": "Domani",
         "nextWeek": "La prossima settimana",
         "create": "Creare",
-        "remindAt": "Te lo ricorderò a {datetime}",
         "success": "Il tuo promemoria è stato impostato correttamente"
     }
 }

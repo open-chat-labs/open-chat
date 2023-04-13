@@ -138,6 +138,10 @@ export function getContentAsText(formatter: MessageFormatter, content: MessageCo
         text = captionedContent(formatter("prizeMessage"), content.caption);
     } else if (content.kind === "prize_winner_content") {
         text = "Prize winner message";
+    } else if (content.kind === "message_reminder_content") {
+        text = content.notes ?? "Message reminder";
+    } else if (content.kind === "message_reminder_created_content") {
+        text = content.notes ?? "Message reminder";
     } else {
         throw new UnsupportedValueError("Unrecognised content type", content);
     }

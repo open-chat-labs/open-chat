@@ -193,6 +193,16 @@
         dispatch("replyPrivatelyTo", createReplyContext());
     }
 
+    function cancelReminder(ev: CustomEvent<number>) {
+        client.cancelMessageReminder(ev.detail).then((success) => {
+            if (success) {
+                toastStore.showSuccessToast("reminders.cancelSuccess");
+            } else {
+                toastStore.showFailureToast("reminders.cancelFailure");
+            }
+        });
+    }
+
     function editMessage() {
         if (canEdit) {
             dispatch("editMessage");
@@ -539,7 +549,8 @@
                     on:initiateThread
                     on:deleteFailedMessage
                     on:replyPrivately={replyPrivately}
-                    on:editMessage={editMessage} 
+                    on:editMessage={editMessage}
+                    on:cancelReminder={cancelReminder}
                     on:remindMe={() => (showRemindMe = true)} />
             {/if}
         </div>

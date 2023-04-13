@@ -794,7 +794,6 @@
         "tomorrow": "明日",
         "nextWeek": "次の週",
         "create": "作成",
-        "remindAt": "{datetime} でお知らせします",
         "success": "リマインダーが設定されました"
     }
 }

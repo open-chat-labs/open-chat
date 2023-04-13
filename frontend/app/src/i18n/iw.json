@@ -791,7 +791,6 @@
         "tomorrow": "מָחָר",
         "nextWeek": "שבוע הבא",
         "create": "לִיצוֹר",
-        "remindAt": "אני אזכיר לך ב-{datetime}",
         "success": "התזכורת שלך הוגדרה בהצלחה"
     }
 }

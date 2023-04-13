@@ -1414,4 +1414,13 @@ export class OpenChatAgentWorker extends EventTarget {
             },
         });
     }
+
+    cancelMessageReminder(reminderId: number): Promise<boolean> {
+        return this.sendRequest({
+            kind: "cancelMessageReminder",
+            payload: {
+                reminderId,
+            },
+        });
+    }
 }

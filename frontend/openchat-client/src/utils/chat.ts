@@ -36,6 +36,7 @@ import {
     UnsupportedValueError,
     getContentAsText,
     eventIsVisible,
+    EmptyEvent,
 } from "openchat-shared";
 import { distinctBy, groupWhile } from "../utils/list";
 import { areOnSameDay } from "../utils/date";
@@ -1112,7 +1113,7 @@ function mergeLocalUpdates(
     localUpdates: LocalMessageUpdates | undefined,
     replyContextLocalUpdates: LocalMessageUpdates | undefined,
     tallyUpdate: Tally | undefined
-): Message {
+): Message | EmptyEvent {
     if (
         localUpdates === undefined &&
         replyContextLocalUpdates === undefined &&
@@ -1129,6 +1130,12 @@ function mergeLocalUpdates(
                 deletedBy: localUpdates.deleted.deletedBy,
                 timestamp: localUpdates.deleted.timestamp,
             },
+        };
+    }
+
+    if (localUpdates?.empty) {
+        return {
+            kind: "empty",
         };
     }
 

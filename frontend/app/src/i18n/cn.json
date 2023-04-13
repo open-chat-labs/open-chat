@@ -794,7 +794,6 @@
         "tomorrow": "明天",
         "nextWeek": "下周",
         "create": "创造",
-        "remindAt": "我会在{datetime}提醒你",
         "success": "您的提醒已设置成功"
     }
 }

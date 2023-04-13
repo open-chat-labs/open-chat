@@ -793,7 +793,6 @@
         "tomorrow": "Demain",
         "nextWeek": "La semaine prochaine",
         "create": "Créer",
-        "remindAt": "Je vous rappellerai à {datetime}",
         "success": "Votre rappel a été défini avec succès"
     }
 }

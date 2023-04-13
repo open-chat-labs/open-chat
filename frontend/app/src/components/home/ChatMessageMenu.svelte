@@ -15,7 +15,6 @@
     import EyeIcon from "svelte-material-icons/Eye.svelte";
     import TranslateOff from "svelte-material-icons/TranslateOff.svelte";
     import ForwardIcon from "svelte-material-icons/Share.svelte";
-    import Clock from "svelte-material-icons/Clock.svelte";
     import Pin from "svelte-material-icons/Pin.svelte";
     import PinOff from "svelte-material-icons/PinOff.svelte";
     import ShareIcon from "svelte-material-icons/ShareVariant.svelte";
@@ -29,6 +28,7 @@
     import type { Message, OpenChat } from "openchat-client";
     import { toastStore } from "../../stores/toast";
     import * as shareFunctions from "../../utils/share";
+    import { now } from "../../stores/time";
 
     const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
@@ -59,6 +59,11 @@
     export let msg: Message;
     export let threadRootMessage: Message | undefined;
 
+    $: canRemind =
+        msg.content.kind !== "message_reminder_content" &&
+        msg.content.kind !== "message_reminder_created_content";
+    $: canCancelRemind =
+        msg.content.kind === "message_reminder_created_content" && msg.content.remindAt > $now;
     $: user = client.user;
     $: inThread = threadRootMessage !== undefined;
     $: translationStore = client.translationStore;
@@ -88,6 +93,12 @@
             dispatch("upgrade");
         } else {
             dispatch("remindMe");
+        }
+    }
+
+    function cancelReminder() {
+        if (msg.content.kind === "message_reminder_created_content") {
+            dispatch("cancelReminder", msg.content.reminderId);
         }
     }
 
@@ -224,10 +235,16 @@
                         <div slot="text">{$_("copyMessageUrl")}</div>
                     </MenuItem>
                 {/if}
-                {#if confirmed && !inert && !failed}
+                {#if canRemind && confirmed && !inert && !failed}
                     <MenuItem on:click={remindMe}>
-                        <Clock size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
+                        <span class="emojicon" slot="icon">⏰</span>
                         <div slot="text">{$_("reminders.menu")}</div>
+                    </MenuItem>
+                {/if}
+                {#if canCancelRemind && confirmed && !inert && !failed}
+                    <MenuItem on:click={cancelReminder}>
+                        <span class="emojicon" slot="icon">⏰</span>
+                        <div slot="text">{$_("reminders.cancel")}</div>
                     </MenuItem>
                 {/if}
                 {#if confirmed && canPin && !inThread && !inert && !failed}
@@ -258,7 +275,7 @@
                     {/if}
                     {#if !inThread && canStartThread}
                         <MenuItem on:click={initiateThread}>
-                            <span class="thread" slot="icon">🧵</span>
+                            <span class="emojicon" slot="icon">🧵</span>
                             <div slot="text">{$_("thread.menu")}</div>
                         </MenuItem>
                     {/if}
@@ -365,6 +382,10 @@
             left: $offset;
             right: unset;
         }
+    }
+
+    .emojicon {
+        margin-left: $sp1;
     }
 
     .menu-icon {

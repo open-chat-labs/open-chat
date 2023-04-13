@@ -99,14 +99,15 @@
                 } else {
                     toastStore.showFailureToast("reminders.failure");
                 }
-            }).finally(() => (busy = false));
+            })
+            .finally(() => (busy = false));
     }
 </script>
 
 <Overlay on:close dismissible>
     <ModalContent>
         <span slot="header">
-            <h1>{$_("reminders.title")}</h1>
+            <h1>⏰ {$_("reminders.title")}</h1>
         </span>
         <span slot="body">
             <div class="interval">
@@ -139,8 +140,12 @@
                     small={!$mobileWidth}
                     tiny={$mobileWidth}
                     on:click={() => dispatch("close")}>{$_("cancel")}</Button>
-                <Button disabled={busy} loading={busy} small={!$mobileWidth} tiny={$mobileWidth} on:click={createReminder}
-                    >{$_("reminders.create")}</Button>
+                <Button
+                    disabled={busy}
+                    loading={busy}
+                    small={!$mobileWidth}
+                    tiny={$mobileWidth}
+                    on:click={createReminder}>{$_("reminders.create")}</Button>
             </ButtonGroup>
         </span>
     </ModalContent>

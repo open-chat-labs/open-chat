@@ -1655,4 +1655,8 @@ export class OpenChatAgent extends EventTarget {
             threadRootMessageIndex
         );
     }
+
+    cancelMessageReminder(reminderId: number): Promise<boolean> {
+        return this.userClient.cancelMessageReminder(reminderId);
+    }
 }

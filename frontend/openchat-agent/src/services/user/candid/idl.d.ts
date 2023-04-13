@@ -28,6 +28,8 @@ import {
     ProposalContent,
     PrizeContent,
     PrizeWinnerContent,
+    MessageReminderCreated,
+    MessageReminder,
     Proposal,
     PollContent,
     PollVotes,
@@ -193,6 +195,8 @@ export {
     SendMessageWithTransferToGroupResponse as ApiSendMessageWithTransferToGroupResponse,
     GroupGate as ApiGroupGate,
     SetMessageReminderResponse as ApiSetMessageReminderResponse,
+    MessageReminder as ApiMessageReminder,
+    MessageReminderCreated as ApiMessageReminderCreated,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

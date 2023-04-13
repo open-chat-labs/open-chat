@@ -402,4 +402,8 @@ export class CachingUserClient extends EventTarget implements IUserClient {
             threadRootMessageIndex
         );
     }
+
+    cancelMessageReminder(reminderId: number): Promise<boolean> {
+        return this.client.cancelMessageReminder(reminderId);
+    }
 }
