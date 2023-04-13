@@ -343,6 +343,15 @@ export const idlFactory = ({ IDL }) => {
     'timestamp' : TimestampMillis,
     'deleted_by' : UserId,
   });
+  const MessageReminderCreated = IDL.Record({
+    'notes' : IDL.Opt(IDL.Text),
+    'remind_at' : TimestampMillis,
+    'reminder_id' : IDL.Nat64,
+  });
+  const MessageReminder = IDL.Record({
+    'notes' : IDL.Opt(IDL.Text),
+    'reminder_id' : IDL.Nat64,
+  });
   const MessageContent = IDL.Variant({
     'Giphy' : GiphyContent,
     'File' : FileContent,
@@ -356,6 +365,8 @@ export const idlFactory = ({ IDL }) => {
     'Crypto' : CryptoContent,
     'Video' : VideoContent,
     'Deleted' : DeletedContent,
+    'MessageReminderCreated' : MessageReminderCreated,
+    'MessageReminder' : MessageReminder,
   });
   const ThreadSummary = IDL.Record({
     'latest_event_timestamp' : TimestampMillis,

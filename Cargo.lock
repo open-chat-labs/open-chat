@@ -6891,6 +6891,7 @@ dependencies = [
  "notifications_canister",
  "notifications_canister_c2c_client",
  "num-traits",
+ "rand_core 0.6.4",
  "search",
  "serde",
  "serde_bytes",

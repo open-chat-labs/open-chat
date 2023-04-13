@@ -252,6 +252,7 @@ pub struct ChatMetrics {
     pub reactions: u64,
     pub proposals: u64,
     pub reported_messages: u64,
+    pub message_reminders: u64,
     pub last_active: TimestampMillis,
 }
 

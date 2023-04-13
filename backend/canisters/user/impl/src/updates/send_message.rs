@@ -127,6 +127,9 @@ fn validate_request(args: &Args, runtime_state: &RuntimeState) -> ValidateReques
             ContentValidationError::UnauthorizedToSendProposalMessages => {
                 InvalidRequest("User unauthorized to send proposal messages".to_string())
             }
+            ContentValidationError::Unauthorized => {
+                InvalidRequest("User unauthorized to send messages of this type".to_string())
+            }
         })
     } else if args.recipient == my_user_id {
         ValidateRequestResult::Valid(UserType::_Self)

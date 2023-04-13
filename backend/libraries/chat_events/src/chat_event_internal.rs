@@ -208,6 +208,10 @@ impl MessageInternal {
             MessageContentInternal::PrizeWinner(_) => {
                 incr(&mut metrics.prize_winner_messages);
             }
+            MessageContentInternal::MessageReminderCreated(_) => {}
+            MessageContentInternal::MessageReminder(_) => {
+                incr(&mut metrics.message_reminders);
+            }
         }
     }
 }

@@ -163,6 +163,14 @@ export function messageContent(candid: ApiMessageContent, sender: string): Messa
     if ("PrizeWinner" in candid) {
         return prizeWinnerContent(sender, candid.PrizeWinner);
     }
+    if ("MessageReminderCreated" in candid) {
+        // TODO
+        throw new Error();
+    }
+    if ("MessageReminder" in candid) {
+        // TODO
+        throw new Error();
+    }
     throw new UnsupportedValueError("Unexpected ApiMessageContent type received", candid);
 }
 
