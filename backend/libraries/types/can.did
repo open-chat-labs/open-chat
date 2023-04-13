@@ -1270,6 +1270,7 @@ type MessageReminderCreated =
         reminder_id: nat64;
         remind_at: TimestampMillis;
         notes: opt text;
+        hidden: bool;
     };
 
 type MessageReminder =

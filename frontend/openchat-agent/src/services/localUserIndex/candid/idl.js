@@ -368,6 +368,7 @@ export const idlFactory = ({ IDL }) => {
     'deleted_by' : UserId,
   });
   const MessageReminderCreated = IDL.Record({
+    'hidden' : IDL.Bool,
     'notes' : IDL.Opt(IDL.Text),
     'remind_at' : TimestampMillis,
     'reminder_id' : IDL.Nat64,

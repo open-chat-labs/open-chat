@@ -610,6 +610,7 @@ pub struct MessageReminderCreatedContent {
     pub reminder_id: u64,
     pub remind_at: TimestampMillis,
     pub notes: Option<String>,
+    pub hidden: bool,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
