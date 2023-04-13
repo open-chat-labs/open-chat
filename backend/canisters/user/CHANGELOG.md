@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Implement 'Gated Groups' ([#3406](https://github.com/open-ic/open-chat/pull/3406))
 - Added `Empty` event type ([#3439](https://github.com/open-ic/open-chat/pull/3439))
 - Added new message content types for reminders ([#3440](https://github.com/open-ic/open-chat/pull/3440))
+- Added new `Custom` message content type ([#3445](https://github.com/open-ic/open-chat/pull/3445))
 
 ### Changed
 

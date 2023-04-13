@@ -78,6 +78,10 @@ export const Notification = IDL.Variant({
             'caption' : IDL.Opt(IDL.Text),
             'winners' : IDL.Vec(IDL.Principal),
           }),
+          'Custom' : IDL.Record({
+            'data' : IDL.Vec(IDL.Nat8),
+            'kind' : IDL.Text,
+          }),
           'GovernanceProposal' : IDL.Record({
             'my_vote' : IDL.Opt(IDL.Bool),
             'governance_canister_id' : IDL.Principal,
@@ -368,6 +372,15 @@ export const Notification = IDL.Variant({
           'Deleted' : IDL.Record({
             'timestamp' : IDL.Nat64,
             'deleted_by' : IDL.Principal,
+          }),
+          'MessageReminderCreated' : IDL.Record({
+            'notes' : IDL.Opt(IDL.Text),
+            'remind_at' : IDL.Nat64,
+            'reminder_id' : IDL.Nat64,
+          }),
+          'MessageReminder' : IDL.Record({
+            'notes' : IDL.Opt(IDL.Text),
+            'reminder_id' : IDL.Nat64,
           }),
         }),
         'edited' : IDL.Bool,
@@ -478,6 +491,10 @@ export const Notification = IDL.Variant({
             'caption' : IDL.Opt(IDL.Text),
             'winners' : IDL.Vec(IDL.Principal),
           }),
+          'Custom' : IDL.Record({
+            'data' : IDL.Vec(IDL.Nat8),
+            'kind' : IDL.Text,
+          }),
           'GovernanceProposal' : IDL.Record({
             'my_vote' : IDL.Opt(IDL.Bool),
             'governance_canister_id' : IDL.Principal,
@@ -768,6 +785,15 @@ export const Notification = IDL.Variant({
           'Deleted' : IDL.Record({
             'timestamp' : IDL.Nat64,
             'deleted_by' : IDL.Principal,
+          }),
+          'MessageReminderCreated' : IDL.Record({
+            'notes' : IDL.Opt(IDL.Text),
+            'remind_at' : IDL.Nat64,
+            'reminder_id' : IDL.Nat64,
+          }),
+          'MessageReminder' : IDL.Record({
+            'notes' : IDL.Opt(IDL.Text),
+            'reminder_id' : IDL.Nat64,
           }),
         }),
         'edited' : IDL.Bool,
@@ -881,6 +907,10 @@ export const Notification = IDL.Variant({
             'caption' : IDL.Opt(IDL.Text),
             'winners' : IDL.Vec(IDL.Principal),
           }),
+          'Custom' : IDL.Record({
+            'data' : IDL.Vec(IDL.Nat8),
+            'kind' : IDL.Text,
+          }),
           'GovernanceProposal' : IDL.Record({
             'my_vote' : IDL.Opt(IDL.Bool),
             'governance_canister_id' : IDL.Principal,
@@ -1171,6 +1201,15 @@ export const Notification = IDL.Variant({
           'Deleted' : IDL.Record({
             'timestamp' : IDL.Nat64,
             'deleted_by' : IDL.Principal,
+          }),
+          'MessageReminderCreated' : IDL.Record({
+            'notes' : IDL.Opt(IDL.Text),
+            'remind_at' : IDL.Nat64,
+            'reminder_id' : IDL.Nat64,
+          }),
+          'MessageReminder' : IDL.Record({
+            'notes' : IDL.Opt(IDL.Text),
+            'reminder_id' : IDL.Nat64,
           }),
         }),
         'edited' : IDL.Bool,
@@ -1284,6 +1323,10 @@ export const Notification = IDL.Variant({
             'caption' : IDL.Opt(IDL.Text),
             'winners' : IDL.Vec(IDL.Principal),
           }),
+          'Custom' : IDL.Record({
+            'data' : IDL.Vec(IDL.Nat8),
+            'kind' : IDL.Text,
+          }),
           'GovernanceProposal' : IDL.Record({
             'my_vote' : IDL.Opt(IDL.Bool),
             'governance_canister_id' : IDL.Principal,
@@ -1574,6 +1617,15 @@ export const Notification = IDL.Variant({
           'Deleted' : IDL.Record({
             'timestamp' : IDL.Nat64,
             'deleted_by' : IDL.Principal,
+          }),
+          'MessageReminderCreated' : IDL.Record({
+            'notes' : IDL.Opt(IDL.Text),
+            'remind_at' : IDL.Nat64,
+            'reminder_id' : IDL.Nat64,
+          }),
+          'MessageReminder' : IDL.Record({
+            'notes' : IDL.Opt(IDL.Text),
+            'reminder_id' : IDL.Nat64,
           }),
         }),
         'edited' : IDL.Bool,

@@ -28,6 +28,7 @@ pub enum MessageContentInitial {
     Prize(PrizeContentInitial),
     MessageReminderCreated(MessageReminderCreatedContent),
     MessageReminder(MessageReminderContent),
+    Custom(CustomContent),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -46,6 +47,7 @@ pub enum MessageContent {
     PrizeWinner(PrizeWinnerContent),
     MessageReminderCreated(MessageReminderCreatedContent),
     MessageReminder(MessageReminderContent),
+    Custom(CustomContent),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -64,6 +66,7 @@ pub enum MessageContentInternal {
     PrizeWinner(PrizeWinnerContent),
     MessageReminderCreated(MessageReminderCreatedContent),
     MessageReminder(MessageReminderContent),
+    Custom(CustomContent),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -169,7 +172,8 @@ impl MessageContentInitial {
             | MessageContentInitial::Giphy(_)
             | MessageContentInitial::GovernanceProposal(_)
             | MessageContentInitial::MessageReminderCreated(_)
-            | MessageContentInitial::MessageReminder(_) => false,
+            | MessageContentInitial::MessageReminder(_)
+            | MessageContentInitial::Custom(_) => false,
         };
 
         if is_empty {
@@ -217,6 +221,7 @@ impl MessageContentInitial {
             }),
             MessageContentInitial::MessageReminderCreated(r) => MessageContentInternal::MessageReminderCreated(r),
             MessageContentInitial::MessageReminder(r) => MessageContentInternal::MessageReminder(r),
+            MessageContentInitial::Custom(c) => MessageContentInternal::Custom(c),
         }
     }
 
@@ -233,12 +238,12 @@ impl MessageContentInitial {
             MessageContentInitial::File(f) => opt_string_len(&f.caption),
             MessageContentInitial::Poll(p) => opt_string_len(&p.config.text),
             MessageContentInitial::Crypto(c) => opt_string_len(&c.caption),
-            MessageContentInitial::Deleted(_) => 0,
             MessageContentInitial::Giphy(g) => opt_string_len(&g.caption),
             MessageContentInitial::GovernanceProposal(p) => p.proposal.summary().len(),
             MessageContentInitial::Prize(p) => opt_string_len(&p.caption),
             MessageContentInitial::MessageReminderCreated(r) => opt_string_len(&r.notes),
             MessageContentInitial::MessageReminder(r) => opt_string_len(&r.notes),
+            MessageContentInitial::Deleted(_) | MessageContentInitial::Custom(_) => 0,
         }
     }
 }
@@ -260,6 +265,7 @@ impl From<MessageContent> for MessageContentInitial {
             MessageContent::PrizeWinner(_) => panic!("Cannot send a prize winner message"),
             MessageContent::MessageReminderCreated(r) => MessageContentInitial::MessageReminderCreated(r),
             MessageContent::MessageReminder(r) => MessageContentInitial::MessageReminder(r),
+            MessageContent::Custom(c) => MessageContentInitial::Custom(c),
         }
     }
 }
@@ -287,6 +293,7 @@ impl From<MessageContentInitial> for MessageContent {
             }),
             MessageContentInitial::MessageReminderCreated(r) => MessageContent::MessageReminderCreated(r),
             MessageContentInitial::MessageReminder(r) => MessageContent::MessageReminder(r),
+            MessageContentInitial::Custom(c) => MessageContent::Custom(c),
         }
     }
 }
@@ -319,6 +326,7 @@ impl MessageContentInternal {
             }),
             MessageContentInternal::MessageReminderCreated(r) => MessageContent::MessageReminderCreated(r.clone()),
             MessageContentInternal::MessageReminder(r) => MessageContent::MessageReminder(r.clone()),
+            MessageContentInternal::Custom(c) => MessageContent::Custom(c.clone()),
         }
     }
 
@@ -331,13 +339,14 @@ impl MessageContentInternal {
             MessageContentInternal::File(c) => c.caption.as_deref(),
             MessageContentInternal::Poll(c) => c.config.text.as_deref(),
             MessageContentInternal::Crypto(c) => c.caption.as_deref(),
-            MessageContentInternal::Deleted(_) => None,
             MessageContentInternal::Giphy(c) => c.caption.as_deref(),
             MessageContentInternal::GovernanceProposal(c) => Some(c.proposal.title()),
             MessageContentInternal::Prize(c) => c.caption.as_deref(),
-            MessageContentInternal::PrizeWinner(_) => None,
             MessageContentInternal::MessageReminderCreated(r) => r.notes.as_deref(),
             MessageContentInternal::MessageReminder(r) => r.notes.as_deref(),
+            MessageContentInternal::PrizeWinner(_) | MessageContentInternal::Deleted(_) | MessageContentInternal::Custom(_) => {
+                None
+            }
         }
     }
 
@@ -377,7 +386,8 @@ impl MessageContentInternal {
             | MessageContentInternal::Prize(_)
             | MessageContentInternal::PrizeWinner(_)
             | MessageContentInternal::MessageReminderCreated(_)
-            | MessageContentInternal::MessageReminder(_) => {}
+            | MessageContentInternal::MessageReminder(_)
+            | MessageContentInternal::Custom(_) => {}
         }
 
         references
@@ -606,6 +616,13 @@ pub struct MessageReminderCreatedContent {
 pub struct MessageReminderContent {
     pub reminder_id: u64,
     pub notes: Option<String>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct CustomContent {
+    pub kind: String,
+    #[serde(with = "serde_bytes")]
+    pub data: Vec<u8>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

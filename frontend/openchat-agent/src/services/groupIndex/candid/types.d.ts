@@ -120,6 +120,7 @@ export interface ChatMetrics {
   'reported_messages' : bigint,
   'ckbtc_messages' : bigint,
   'reactions' : bigint,
+  'custom_type_messages' : bigint,
   'prize_messages' : bigint,
 }
 export interface ChatUnfrozen { 'unfrozen_by' : UserId }
@@ -139,6 +140,10 @@ export type Cryptocurrency = { 'InternetComputer' : null } |
   { 'CHAT' : null } |
   { 'SNS1' : null } |
   { 'CKBTC' : null };
+export interface CustomMessageContent {
+  'data' : Uint8Array | number[],
+  'kind' : string,
+}
 export type Cycles = bigint;
 export interface CyclesRegistrationFee {
   'recipient' : Principal,
@@ -544,6 +549,7 @@ export type MessageContent = { 'Giphy' : GiphyContent } |
   { 'Text' : TextContent } |
   { 'Image' : ImageContent } |
   { 'Prize' : PrizeContent } |
+  { 'Custom' : CustomMessageContent } |
   { 'GovernanceProposal' : ProposalContent } |
   { 'PrizeWinner' : PrizeWinnerContent } |
   { 'Audio' : AudioContent } |
@@ -558,6 +564,7 @@ export type MessageContentInitial = { 'Giphy' : GiphyContent } |
   { 'Text' : TextContent } |
   { 'Image' : ImageContent } |
   { 'Prize' : PrizeContentInitial } |
+  { 'Custom' : CustomMessageContent } |
   { 'GovernanceProposal' : ProposalContent } |
   { 'Audio' : AudioContent } |
   { 'Crypto' : CryptoContent } |

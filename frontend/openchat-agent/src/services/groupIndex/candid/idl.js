@@ -159,6 +159,10 @@ export const idlFactory = ({ IDL }) => {
     'caption' : IDL.Opt(IDL.Text),
     'winners' : IDL.Vec(UserId),
   });
+  const CustomMessageContent = IDL.Record({
+    'data' : IDL.Vec(IDL.Nat8),
+    'kind' : IDL.Text,
+  });
   const ProposalId = IDL.Nat64;
   const ProposalDecisionStatus = IDL.Variant({
     'Failed' : IDL.Null,
@@ -359,6 +363,7 @@ export const idlFactory = ({ IDL }) => {
     'Text' : TextContent,
     'Image' : ImageContent,
     'Prize' : PrizeContent,
+    'Custom' : CustomMessageContent,
     'GovernanceProposal' : ProposalContent,
     'PrizeWinner' : PrizeWinnerContent,
     'Audio' : AudioContent,
