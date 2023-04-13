@@ -9,7 +9,7 @@
     import { iconSize } from "../../../stores/iconSize";
     import { toastStore } from "../../../stores/toast";
     import ViewUserProfile from "../profile/ViewUserProfile.svelte";
-    import { AvatarSize, UserStatus } from "openchat-client";
+    import { AvatarSize } from "openchat-client";
     import Avatar from "../../Avatar.svelte";
     import LinkButton from "../../LinkButton.svelte";
     import { canShare, shareLink } from "../../../utils/share";
@@ -92,7 +92,7 @@
                                 size={AvatarSize.Default} />
                         </div>
                         <LinkButton underline="hover">
-                            {$userStore[userId]?.username ?? $_("unknownUser")}
+                            {client.usernameAndIcon($userStore[userId])}
                         </LinkButton>
                     </div>
                 {/each}

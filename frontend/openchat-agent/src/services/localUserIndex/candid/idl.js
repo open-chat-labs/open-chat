@@ -400,6 +400,7 @@ export const idlFactory = ({ IDL }) => {
     'latest_event_index' : EventIndex,
   });
   const ReplyContext = IDL.Record({
+    'event_list_if_other' : IDL.Opt(IDL.Tuple(ChatId, IDL.Opt(MessageIndex))),
     'chat_id_if_other' : IDL.Opt(ChatId),
     'event_index' : EventIndex,
   });

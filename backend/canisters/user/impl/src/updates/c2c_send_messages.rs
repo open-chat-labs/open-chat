@@ -224,11 +224,18 @@ fn convert_reply_context(
                 .and_then(|chat| chat.events.main_events_reader(now).event_index(message_id.into()))
                 .map(|event_index| ReplyContext {
                     chat_id_if_other: None,
+                    event_list_if_other: None,
                     event_index,
                 })
         }
         C2CReplyContext::OtherChat(chat_id, event_index) => Some(ReplyContext {
             chat_id_if_other: Some(chat_id),
+            event_list_if_other: Some((chat_id, None)),
+            event_index,
+        }),
+        C2CReplyContext::OtherEventList(chat_id, thread_root_message_index, event_index) => Some(ReplyContext {
+            chat_id_if_other: Some(chat_id),
+            event_list_if_other: Some((chat_id, thread_root_message_index)),
             event_index,
         }),
     }

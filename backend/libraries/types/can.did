@@ -522,6 +522,7 @@ type PublicGroupSummary =
 type ReplyContext =
     record {
         chat_id_if_other: opt ChatId;
+        event_list_if_other: opt record { ChatId; opt MessageIndex };
         event_index: EventIndex;
     };
 

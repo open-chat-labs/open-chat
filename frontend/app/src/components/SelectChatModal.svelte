@@ -51,7 +51,7 @@
             return {
                 id: chatSummary.chatId,
                 userId: chatSummary.them,
-                name: `${them?.username}  ${them?.diamond ? "💎" : ""}`,
+                name: client.usernameAndIcon(them),
                 avatarUrl: client.userAvatarUrl(them),
                 description,
             };
