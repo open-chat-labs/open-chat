@@ -102,6 +102,7 @@ describe("thread utils", () => {
                             edited: false,
                             forwarded: false,
                             deleted: false,
+                            cancelled: false,
                         },
                     },
                 ],
