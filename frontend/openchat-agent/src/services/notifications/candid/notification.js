@@ -374,6 +374,7 @@ export const Notification = IDL.Variant({
             'deleted_by' : IDL.Principal,
           }),
           'MessageReminderCreated' : IDL.Record({
+            'hidden' : IDL.Bool,
             'notes' : IDL.Opt(IDL.Text),
             'remind_at' : IDL.Nat64,
             'reminder_id' : IDL.Nat64,
@@ -787,6 +788,7 @@ export const Notification = IDL.Variant({
             'deleted_by' : IDL.Principal,
           }),
           'MessageReminderCreated' : IDL.Record({
+            'hidden' : IDL.Bool,
             'notes' : IDL.Opt(IDL.Text),
             'remind_at' : IDL.Nat64,
             'reminder_id' : IDL.Nat64,
@@ -1203,6 +1205,7 @@ export const Notification = IDL.Variant({
             'deleted_by' : IDL.Principal,
           }),
           'MessageReminderCreated' : IDL.Record({
+            'hidden' : IDL.Bool,
             'notes' : IDL.Opt(IDL.Text),
             'remind_at' : IDL.Nat64,
             'reminder_id' : IDL.Nat64,
@@ -1619,6 +1622,7 @@ export const Notification = IDL.Variant({
             'deleted_by' : IDL.Principal,
           }),
           'MessageReminderCreated' : IDL.Record({
+            'hidden' : IDL.Bool,
             'notes' : IDL.Opt(IDL.Text),
             'remind_at' : IDL.Nat64,
             'reminder_id' : IDL.Nat64,
