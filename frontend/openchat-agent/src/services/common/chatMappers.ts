@@ -627,6 +627,7 @@ export function apiReplyContextArgs(
 ): ApiReplyContext {
     return {
         chat_id_if_other: apiOptional((chatId) => Principal.fromText(chatId), replyingToChatId),
+        event_list_if_other: apiOptional((chatId) => [Principal.fromText(chatId), []], replyingToChatId),
         event_index: domain.eventIndex,
     };
 }

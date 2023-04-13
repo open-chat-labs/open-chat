@@ -484,6 +484,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const ChatId = CanisterId;
   const ReplyContext = IDL.Record({
+    'event_list_if_other' : IDL.Opt(IDL.Tuple(ChatId, IDL.Opt(MessageIndex))),
     'chat_id_if_other' : IDL.Opt(ChatId),
     'event_index' : EventIndex,
   });

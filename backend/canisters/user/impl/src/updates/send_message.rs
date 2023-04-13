@@ -171,6 +171,7 @@ fn send_message_impl(
             sender_message_index: message_event.event.message_index,
             content: args.content.into(),
             replies_to: args.replies_to.and_then(|r| {
+                // TODO switch to `event_list_if_other` once all user canisters are upgraded
                 if let Some(chat_id) = r.chat_id_if_other {
                     Some(C2CReplyContext::OtherChat(chat_id, r.event_index))
                 } else {
