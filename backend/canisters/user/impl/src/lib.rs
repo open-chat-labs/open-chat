@@ -6,6 +6,8 @@ use crate::timer_job_types::TimerJob;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
+use ic_ledger_types::AccountIdentifier;
+use ledger_utils::default_ledger_account;
 use model::contacts::Contacts;
 use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
@@ -224,6 +226,10 @@ impl Data {
             contacts: Contacts::default(),
             diamond_membership_expires_at: None,
         }
+    }
+
+    pub fn user_index_ledger_account(&self) -> AccountIdentifier {
+        default_ledger_account(self.user_index_canister_id)
     }
 
     pub fn block_user(&mut self, user_id: UserId, now: TimestampMillis) {
