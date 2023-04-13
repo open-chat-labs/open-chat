@@ -212,6 +212,9 @@ impl MessageInternal {
             MessageContentInternal::MessageReminder(_) => {
                 incr(&mut metrics.message_reminders);
             }
+            MessageContentInternal::Custom(_) => {
+                incr(&mut metrics.custom_type_messages);
+            }
         }
     }
 }

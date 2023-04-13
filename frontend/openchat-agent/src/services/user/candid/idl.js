@@ -217,6 +217,10 @@ export const idlFactory = ({ IDL }) => {
     'caption' : IDL.Opt(IDL.Text),
     'winners' : IDL.Vec(UserId),
   });
+  const CustomMessageContent = IDL.Record({
+    'data' : IDL.Vec(IDL.Nat8),
+    'kind' : IDL.Text,
+  });
   const ProposalId = IDL.Nat64;
   const ProposalDecisionStatus = IDL.Variant({
     'Failed' : IDL.Null,
@@ -416,6 +420,7 @@ export const idlFactory = ({ IDL }) => {
     'Text' : TextContent,
     'Image' : ImageContent,
     'Prize' : PrizeContent,
+    'Custom' : CustomMessageContent,
     'GovernanceProposal' : ProposalContent,
     'PrizeWinner' : PrizeWinnerContent,
     'Audio' : AudioContent,
@@ -722,6 +727,7 @@ export const idlFactory = ({ IDL }) => {
     'reported_messages' : IDL.Nat64,
     'ckbtc_messages' : IDL.Nat64,
     'reactions' : IDL.Nat64,
+    'custom_type_messages' : IDL.Nat64,
     'prize_messages' : IDL.Nat64,
   });
   const MessageIndexRange = IDL.Record({
@@ -997,6 +1003,7 @@ export const idlFactory = ({ IDL }) => {
     'Text' : TextContent,
     'Image' : ImageContent,
     'Prize' : PrizeContentInitial,
+    'Custom' : CustomMessageContent,
     'GovernanceProposal' : ProposalContent,
     'Audio' : AudioContent,
     'Crypto' : CryptoContent,
