@@ -3773,6 +3773,12 @@ export class OpenChat extends EventTarget {
         return this.api.updateMarketMakerConfig(config);
     }
 
+    usernameAndIcon(user?: PartialUserSummary): string {
+        return user !== undefined 
+            ? `${user?.username}  ${user?.diamond ? "💎" : ""}` 
+            : this.config.i18nFormatter("unknownUser");
+    }    
+
     diamondDurationToMs = diamondDurationToMs;
 
     /**
