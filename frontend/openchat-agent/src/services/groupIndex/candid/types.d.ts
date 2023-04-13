@@ -110,6 +110,7 @@ export interface ChatMetrics {
   'file_messages' : bigint,
   'poll_votes' : bigint,
   'text_messages' : bigint,
+  'message_reminders' : bigint,
   'image_messages' : bigint,
   'replies' : bigint,
   'video_messages' : bigint,
@@ -548,7 +549,9 @@ export type MessageContent = { 'Giphy' : GiphyContent } |
   { 'Audio' : AudioContent } |
   { 'Crypto' : CryptoContent } |
   { 'Video' : VideoContent } |
-  { 'Deleted' : DeletedContent };
+  { 'Deleted' : DeletedContent } |
+  { 'MessageReminderCreated' : MessageReminderCreated } |
+  { 'MessageReminder' : MessageReminder };
 export type MessageContentInitial = { 'Giphy' : GiphyContent } |
   { 'File' : FileContent } |
   { 'Poll' : PollContent } |
@@ -559,7 +562,9 @@ export type MessageContentInitial = { 'Giphy' : GiphyContent } |
   { 'Audio' : AudioContent } |
   { 'Crypto' : CryptoContent } |
   { 'Video' : VideoContent } |
-  { 'Deleted' : DeletedContent };
+  { 'Deleted' : DeletedContent } |
+  { 'MessageReminderCreated' : MessageReminderCreated } |
+  { 'MessageReminder' : MessageReminder };
 export interface MessageEventWrapper {
   'event' : Message,
   'timestamp' : TimestampMillis,
@@ -583,6 +588,21 @@ export interface MessageMatch {
 export interface MessagePinned {
   'pinned_by' : UserId,
   'message_index' : MessageIndex,
+}
+export interface MessageReminder {
+  'notes' : [] | [string],
+  'chat_id' : ChatId,
+  'reminder_id' : bigint,
+  'event_index' : EventIndex,
+  'thread_root_message_index' : [] | [MessageIndex],
+}
+export interface MessageReminderCreated {
+  'notes' : [] | [string],
+  'remind_at' : TimestampMillis,
+  'chat_id' : ChatId,
+  'reminder_id' : bigint,
+  'event_index' : EventIndex,
+  'thread_root_message_index' : [] | [MessageIndex],
 }
 export interface MessageUnpinned {
   'due_to_message_deleted' : boolean,

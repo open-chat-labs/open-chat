@@ -343,6 +343,21 @@ export const idlFactory = ({ IDL }) => {
     'timestamp' : TimestampMillis,
     'deleted_by' : UserId,
   });
+  const MessageReminderCreated = IDL.Record({
+    'notes' : IDL.Opt(IDL.Text),
+    'remind_at' : TimestampMillis,
+    'chat_id' : ChatId,
+    'reminder_id' : IDL.Nat64,
+    'event_index' : EventIndex,
+    'thread_root_message_index' : IDL.Opt(MessageIndex),
+  });
+  const MessageReminder = IDL.Record({
+    'notes' : IDL.Opt(IDL.Text),
+    'chat_id' : ChatId,
+    'reminder_id' : IDL.Nat64,
+    'event_index' : EventIndex,
+    'thread_root_message_index' : IDL.Opt(MessageIndex),
+  });
   const MessageContent = IDL.Variant({
     'Giphy' : GiphyContent,
     'File' : FileContent,
@@ -356,6 +371,8 @@ export const idlFactory = ({ IDL }) => {
     'Crypto' : CryptoContent,
     'Video' : VideoContent,
     'Deleted' : DeletedContent,
+    'MessageReminderCreated' : MessageReminderCreated,
+    'MessageReminder' : MessageReminder,
   });
   const ThreadSummary = IDL.Record({
     'latest_event_timestamp' : TimestampMillis,

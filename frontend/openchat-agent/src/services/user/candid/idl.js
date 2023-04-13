@@ -46,12 +46,8 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Null,
     'UserSuspended' : IDL.Null,
   });
-  const ClearMessageReminderArgs = IDL.Record({
-    'chat_id' : ChatId,
-    'event_index' : EventIndex,
-    'thread_root_message_index' : IDL.Opt(MessageIndex),
-  });
-  const ClearMessageReminderResponse = IDL.Variant({ 'Success' : IDL.Null });
+  const CancelMessageReminderArgs = IDL.Record({ 'reminder_id' : IDL.Nat64 });
+  const CancelMessageReminderResponse = IDL.Variant({ 'Success' : IDL.Null });
   const ContactsArgs = IDL.Record({});
   const Contact = IDL.Record({
     'nickname' : IDL.Opt(IDL.Text),
@@ -404,6 +400,21 @@ export const idlFactory = ({ IDL }) => {
     'timestamp' : TimestampMillis,
     'deleted_by' : UserId,
   });
+  const MessageReminderCreated = IDL.Record({
+    'notes' : IDL.Opt(IDL.Text),
+    'remind_at' : TimestampMillis,
+    'chat_id' : ChatId,
+    'reminder_id' : IDL.Nat64,
+    'event_index' : EventIndex,
+    'thread_root_message_index' : IDL.Opt(MessageIndex),
+  });
+  const MessageReminder = IDL.Record({
+    'notes' : IDL.Opt(IDL.Text),
+    'chat_id' : ChatId,
+    'reminder_id' : IDL.Nat64,
+    'event_index' : EventIndex,
+    'thread_root_message_index' : IDL.Opt(MessageIndex),
+  });
   const MessageContent = IDL.Variant({
     'Giphy' : GiphyContent,
     'File' : FileContent,
@@ -417,6 +428,8 @@ export const idlFactory = ({ IDL }) => {
     'Crypto' : CryptoContent,
     'Video' : VideoContent,
     'Deleted' : DeletedContent,
+    'MessageReminderCreated' : MessageReminderCreated,
+    'MessageReminder' : MessageReminder,
   });
   const DeletedMessageResponse = IDL.Variant({
     'MessageNotFound' : IDL.Null,
@@ -704,6 +717,7 @@ export const idlFactory = ({ IDL }) => {
     'file_messages' : IDL.Nat64,
     'poll_votes' : IDL.Nat64,
     'text_messages' : IDL.Nat64,
+    'message_reminders' : IDL.Nat64,
     'image_messages' : IDL.Nat64,
     'replies' : IDL.Nat64,
     'video_messages' : IDL.Nat64,
@@ -993,6 +1007,8 @@ export const idlFactory = ({ IDL }) => {
     'Crypto' : CryptoContent,
     'Video' : VideoContent,
     'Deleted' : DeletedContent,
+    'MessageReminderCreated' : MessageReminderCreated,
+    'MessageReminder' : MessageReminder,
   });
   const User = IDL.Record({ 'username' : IDL.Text, 'user_id' : UserId });
   const GroupReplyContext = IDL.Record({ 'event_index' : EventIndex });
@@ -1064,7 +1080,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const SetMessageReminderResponse = IDL.Variant({
     'NotesTooLong' : FieldTooLongResult,
-    'Success' : IDL.Null,
+    'Success' : IDL.Nat64,
     'ReminderDateInThePast' : IDL.Null,
     'UserSuspended' : IDL.Null,
   });
@@ -1172,9 +1188,9 @@ export const idlFactory = ({ IDL }) => {
     'archive_chat' : IDL.Func([ArchiveChatArgs], [ArchiveChatResponse], []),
     'bio' : IDL.Func([BioArgs], [BioResponse], ['query']),
     'block_user' : IDL.Func([BlockUserArgs], [BlockUserResponse], []),
-    'clear_message_reminder' : IDL.Func(
-        [ClearMessageReminderArgs],
-        [ClearMessageReminderResponse],
+    'cancel_message_reminder' : IDL.Func(
+        [CancelMessageReminderArgs],
+        [CancelMessageReminderResponse],
         [],
       ),
     'contacts' : IDL.Func([ContactsArgs], [ContactsResponse], ['query']),

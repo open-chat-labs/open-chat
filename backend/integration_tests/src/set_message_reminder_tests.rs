@@ -75,7 +75,7 @@ fn set_message_reminder_succeeds() {
 }
 
 #[test]
-fn clear_message_reminder_succeeds() {
+fn cancel_message_reminder_succeeds() {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
@@ -102,11 +102,11 @@ fn clear_message_reminder_succeeds() {
         panic!()
     };
 
-    client::user::clear_message_reminder(
+    client::user::cancel_message_reminder(
         env,
         user1.principal,
         user1.user_id.into(),
-        &user_canister::clear_message_reminder::Args { reminder_id },
+        &user_canister::cancel_message_reminder::Args { reminder_id },
     );
 
     let latest_bot_message_index =

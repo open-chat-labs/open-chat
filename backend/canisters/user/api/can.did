@@ -341,12 +341,12 @@ type SetMessageReminderResponse =
         UserSuspended;
     };
 
-type ClearMessageReminderArgs =
+type CancelMessageReminderArgs =
     record {
         reminder_id: nat64;
     };
 
-type ClearMessageReminderResponse =
+type CancelMessageReminderResponse =
     variant {
         Success;
     };
@@ -712,7 +712,7 @@ service: {
     set_bio: (SetBioArgs) -> (SetBioResponse);
     set_contact: (SetContactArgs) -> (SetContactResponse);
     set_message_reminder: (SetMessageReminderArgs) -> (SetMessageReminderResponse);
-    clear_message_reminder: (ClearMessageReminderArgs) -> (ClearMessageReminderResponse);
+    cancel_message_reminder: (CancelMessageReminderArgs) -> (CancelMessageReminderResponse);
     send_message_with_transfer_to_group: (SendMessageWithTransferToGroupArgs) -> (SendMessageWithTransferToGroupResponse);
     transfer_crypto_within_group_v2: (TransferCryptoWithinGroupArgs) -> (SendMessageWithTransferToGroupResponse);
     withdraw_crypto_v2: (WithdrawCryptoArgs) -> (WithdrawCryptoResponse);
