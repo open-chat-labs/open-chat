@@ -1,106 +1,74 @@
 {
   "cycles_dispenser": {
-    "benchmarklarge": "ijcbo-hiaaa-aaaab-aaaea-cai",
     "ic": "gonut-hqaaa-aaaaf-aby7a-cai",
-    "ic_test": "mq2tp-baaaa-aaaaf-aucva-cai",
-    "large03": "ihamg-4yaaa-aaaab-aaafa-cai"
+    "ic_test": "mq2tp-baaaa-aaaaf-aucva-cai"
   },
   "group_index": {
-    "benchmarklarge": "jwksz-eqaaa-aaaab-aaaaq-cai",
     "ic": "4ijyc-kiaaa-aaaaf-aaaja-cai",
-    "ic_test": "7kifq-3yaaa-aaaaf-ab2cq-cai",
-    "large03": "j7jzf-syaaa-aaaab-aaaba-cai"
+    "ic_test": "7kifq-3yaaa-aaaaf-ab2cq-cai"
   },
   "local_group_index": {
-    "benchmarklarge": "jnpo4-6iaaa-aaaab-aaaca-cai",
     "ic": "suaf3-hqaaa-aaaaf-bfyoa-cai",
-    "ic_test": "sbhuw-gyaaa-aaaaf-bfynq-cai",
-    "large03": "jkoii-tqaaa-aaaab-aaacq-cai"
+    "ic_test": "sbhuw-gyaaa-aaaaf-bfynq-cai"
   },
   "local_user_index": {
-    "benchmarklarge": "jyi7r-7aaaa-aaaab-aaabq-cai",
     "ic": "nq4qv-wqaaa-aaaaf-bhdgq-cai",
-    "ic_test": "pecvb-tqaaa-aaaaf-bhdiq-cai",
-    "large03": "jnpo4-6iaaa-aaaab-aaaca-cai"
+    "ic_test": "pecvb-tqaaa-aaaaf-bhdiq-cai"
   },
   "market_maker": {
     "ic": "r2pvs-tyaaa-aaaar-ajcwq-cai",
     "ic_test": "6qpog-pyaaa-aaaar-aikyq-cai"
   },
   "notifications": {
-    "benchmarklarge": "jkoii-tqaaa-aaaab-aaacq-cai",
     "ic": "dobi3-tyaaa-aaaaf-adnna-cai",
-    "ic_test": "dhcdh-fqaaa-aaaaf-adnmq-cai",
-    "large03": "jdndu-fyaaa-aaaab-aaada-cai"
+    "ic_test": "dhcdh-fqaaa-aaaaf-adnmq-cai"
   },
   "notifications_index": {
-    "benchmarklarge": "j7jzf-syaaa-aaaab-aaaba-cai",
     "ic": "4glvk-ryaaa-aaaaf-aaaia-cai",
-    "ic_test": "7ekiy-aiaaa-aaaaf-ab2dq-cai",
-    "large03": "jyi7r-7aaaa-aaaab-aaabq-cai"
+    "ic_test": "7ekiy-aiaaa-aaaaf-ab2dq-cai"
   },
   "online_users": {
-    "benchmarklarge": "jdndu-fyaaa-aaaab-aaada-cai",
     "ic": "3vlw6-fiaaa-aaaaf-aaa3a-cai",
-    "ic_test": "7dlom-nqaaa-aaaaf-ab2da-cai",
-    "large03": "jemfa-iaaaa-aaaab-aaadq-cai"
+    "ic_test": "7dlom-nqaaa-aaaaf-ab2da-cai"
   },
   "proposal_validation": {
     "ic": "wkype-7qaaa-aaaar-ajfyq-cai"
   },
   "proposals_bot": {
-    "benchmarklarge": "jemfa-iaaaa-aaaab-aaadq-cai",
     "ic": "iywa7-ayaaa-aaaaf-aemga-cai",
-    "ic_test": "qu3kn-6qaaa-aaaaf-ahn7q-cai",
-    "large03": "ijcbo-hiaaa-aaaab-aaaea-cai"
+    "ic_test": "qu3kn-6qaaa-aaaaf-ahn7q-cai"
   },
   "sns_governance": {
-    "benchmarklarge": "5a46r-jqaaa-aaaaa-qaadq-cai",
     "ic": "2jvtu-yqaaa-aaaaq-aaama-cai",
-    "ic_test": "t5cdl-3iaaa-aaaak-qbumq-cai",
-    "large03": "53zcu-tiaaa-aaaaa-qaaba-cai"
+    "ic_test": "t5cdl-3iaaa-aaaak-qbumq-cai"
   },
   "sns_index": {
-    "benchmarklarge": "4dqxx-5iaaa-aaaaa-qaafa-cai",
     "ic": "2awyi-oyaaa-aaaaq-aaanq-cai",
-    "ic_test": "tubix-naaaa-aaaak-qbuna-cai",
-    "large03": "5o6tz-saaaa-aaaaa-qaacq-cai"
+    "ic_test": "tubix-naaaa-aaaak-qbuna-cai"
   },
   "sns_ledger": {
-    "benchmarklarge": "4ns27-gyaaa-aaaaa-qaaea-cai",
     "ic": "2ouva-viaaa-aaaaq-aaamq-cai",
-    "ic_test": "ttaod-ayaaa-aaaak-qbunq-cai",
-    "large03": "54yea-6qaaa-aaaaa-qaabq-cai"
+    "ic_test": "ttaod-ayaaa-aaaak-qbunq-cai"
   },
   "sns_root": {
-    "benchmarklarge": "5h5yf-eiaaa-aaaaa-qaada-cai",
     "ic": "3e3x2-xyaaa-aaaaq-aaalq-cai",
     "ic_test": "tgh7o-bqaaa-aaaak-qbuoa-cai",
-    "large03": "5s2ji-faaaa-aaaaa-qaaaq-cai"
   },
   "sns_swap": {
-    "benchmarklarge": "4kt4l-laaaa-aaaaa-qaaeq-cai",
     "ic": "2hx64-daaaa-aaaaq-aaana-cai",
     "ic_test": "tbgz2-miaaa-aaaak-qbuoq-cai",
-    "large03": "5j7vn-7yaaa-aaaaa-qaaca-cai"
   },
   "storage_index": {
-    "benchmarklarge": "iodh2-kqaaa-aaaab-aaaeq-cai",
     "ic": "rturd-qaaaa-aaaaf-aabaq-cai",
     "ic_test": "6jemw-paaaa-aaaaf-ab2ea-cai",
-    "large03": "iodh2-kqaaa-aaaab-aaaeq-cai"
   },
   "user_index": {
-    "benchmarklarge": "jrlun-jiaaa-aaaab-aaaaa-cai",
     "ic": "4bkt6-4aaaa-aaaaf-aaaiq-cai",
     "ic_test": "7njde-waaaa-aaaaf-ab2ca-cai",
-    "large03": "jwksz-eqaaa-aaaab-aaaaq-cai"
   },
   "website": {
-    "benchmarklarge": "k25co-pqaaa-aaaab-aaakq-cai",
     "ic": "6hsbt-vqaaa-aaaaf-aaafq-cai",
     "ic_test": "pfs7b-iqaaa-aaaaf-abs7q-cai",
-    "large03": "qvhpv-4qaaa-aaaaa-aaagq-cai",
     "web_test": "xp7uu-xyaaa-aaaaf-aoa6a-cai"
   }
 }
