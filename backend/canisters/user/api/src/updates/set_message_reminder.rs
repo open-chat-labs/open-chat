@@ -13,7 +13,7 @@ pub struct Args {
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
-    Success,
+    Success(u64),
     ReminderDateInThePast,
     NotesTooLong(FieldTooLongResult),
     UserSuspended,

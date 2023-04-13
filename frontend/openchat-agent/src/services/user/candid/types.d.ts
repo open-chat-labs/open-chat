@@ -64,6 +64,8 @@ export type BlockIndex = bigint;
 export interface BlockUserArgs { 'user_id' : UserId }
 export type BlockUserResponse = { 'Success' : null } |
   { 'UserSuspended' : null };
+export interface CancelMessageReminderArgs { 'reminder_id' : bigint }
+export type CancelMessageReminderResponse = { 'Success' : null };
 export type CanisterId = Principal;
 export type CanisterUpgradeStatus = { 'NotRequired' : null } |
   { 'InProgress' : null };
@@ -72,7 +74,8 @@ export interface CanisterWasm {
   'version' : Version,
   'module' : Uint8Array | number[],
 }
-export type ChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
+export type ChatEvent = { 'Empty' : null } |
+  { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'ParticipantJoined' : ParticipantJoined } |
   { 'ParticipantAssumesSuperAdmin' : ParticipantAssumesSuperAdmin } |
   { 'GroupDescriptionChanged' : GroupDescriptionChanged } |
@@ -137,6 +140,7 @@ export interface ChatMetrics {
   'file_messages' : bigint,
   'poll_votes' : bigint,
   'text_messages' : bigint,
+  'message_reminders' : bigint,
   'image_messages' : bigint,
   'replies' : bigint,
   'video_messages' : bigint,
@@ -149,12 +153,6 @@ export interface ChatMetrics {
   'prize_messages' : bigint,
 }
 export interface ChatUnfrozen { 'unfrozen_by' : UserId }
-export interface ClearMessageReminderArgs {
-  'chat_id' : ChatId,
-  'event_index' : EventIndex,
-  'thread_root_message_index' : [] | [MessageIndex],
-}
-export type ClearMessageReminderResponse = { 'Success' : null };
 export type CompletedCryptoTransaction = {
     'NNS' : NnsCompletedCryptoTransaction
   } |
@@ -670,7 +668,9 @@ export type MessageContent = { 'Giphy' : GiphyContent } |
   { 'Audio' : AudioContent } |
   { 'Crypto' : CryptoContent } |
   { 'Video' : VideoContent } |
-  { 'Deleted' : DeletedContent };
+  { 'Deleted' : DeletedContent } |
+  { 'MessageReminderCreated' : MessageReminderCreated } |
+  { 'MessageReminder' : MessageReminder };
 export type MessageContentInitial = { 'Giphy' : GiphyContent } |
   { 'File' : FileContent } |
   { 'Poll' : PollContent } |
@@ -681,7 +681,9 @@ export type MessageContentInitial = { 'Giphy' : GiphyContent } |
   { 'Audio' : AudioContent } |
   { 'Crypto' : CryptoContent } |
   { 'Video' : VideoContent } |
-  { 'Deleted' : DeletedContent };
+  { 'Deleted' : DeletedContent } |
+  { 'MessageReminderCreated' : MessageReminderCreated } |
+  { 'MessageReminder' : MessageReminder };
 export interface MessageEventWrapper {
   'event' : Message,
   'timestamp' : TimestampMillis,
@@ -705,6 +707,15 @@ export interface MessageMatch {
 export interface MessagePinned {
   'pinned_by' : UserId,
   'message_index' : MessageIndex,
+}
+export interface MessageReminder {
+  'notes' : [] | [string],
+  'reminder_id' : bigint,
+}
+export interface MessageReminderCreated {
+  'notes' : [] | [string],
+  'remind_at' : TimestampMillis,
+  'reminder_id' : bigint,
 }
 export interface MessageUnpinned {
   'due_to_message_deleted' : boolean,
@@ -954,6 +965,7 @@ export type RemoveReactionResponse = { 'MessageNotFound' : null } |
   { 'UserSuspended' : null } |
   { 'SuccessV2' : PushEventResult };
 export interface ReplyContext {
+  'event_list_if_other' : [] | [[ChatId, [] | [MessageIndex]]],
   'chat_id_if_other' : [] | [ChatId],
   'event_index' : EventIndex,
 }
@@ -1073,7 +1085,7 @@ export interface SetMessageReminderArgs {
 export type SetMessageReminderResponse = {
     'NotesTooLong' : FieldTooLongResult
   } |
-  { 'Success' : null } |
+  { 'Success' : bigint } |
   { 'ReminderDateInThePast' : null } |
   { 'UserSuspended' : null };
 export type SnsAccount = { 'Mint' : null } |
@@ -1293,9 +1305,9 @@ export interface _SERVICE {
   'archive_chat' : ActorMethod<[ArchiveChatArgs], ArchiveChatResponse>,
   'bio' : ActorMethod<[BioArgs], BioResponse>,
   'block_user' : ActorMethod<[BlockUserArgs], BlockUserResponse>,
-  'clear_message_reminder' : ActorMethod<
-    [ClearMessageReminderArgs],
-    ClearMessageReminderResponse
+  'cancel_message_reminder' : ActorMethod<
+    [CancelMessageReminderArgs],
+    CancelMessageReminderResponse
   >,
   'contacts' : ActorMethod<[ContactsArgs], ContactsResponse>,
   'create_group' : ActorMethod<[CreateGroupArgs], CreateGroupResponse>,

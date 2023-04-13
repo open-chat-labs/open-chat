@@ -28,6 +28,7 @@ pub enum Response {
 pub enum C2CReplyContext {
     ThisChat(MessageId),
     OtherChat(ChatId, EventIndex),
+    OtherEventList(ChatId, Option<MessageIndex>, EventIndex),
 }
 
 impl Args {

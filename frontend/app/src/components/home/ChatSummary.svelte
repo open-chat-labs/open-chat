@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { AvatarSize, OpenChat, UserStatus } from "openchat-client";
+    import { AvatarSize, OpenChat } from "openchat-client";
     import type { UserLookup, ChatSummary, TypersByKey } from "openchat-client";
     import Delete from "svelte-material-icons/Delete.svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
@@ -49,7 +49,7 @@
         if (chatSummary.kind === "direct_chat") {
             const them = $userStore[chatSummary.them];
             return {
-                name: `${them?.username}  ${them?.diamond ? "💎" : ""}`,
+                name: client.usernameAndIcon(them),
                 avatarUrl: client.userAvatarUrl(them),
                 userId: chatSummary.them,
                 typing: client.getTypingString($_, $userStore, chatSummary.chatId, typing),

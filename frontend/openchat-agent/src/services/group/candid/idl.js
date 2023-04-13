@@ -379,6 +379,15 @@ export const idlFactory = ({ IDL }) => {
     'timestamp' : TimestampMillis,
     'deleted_by' : UserId,
   });
+  const MessageReminderCreated = IDL.Record({
+    'notes' : IDL.Opt(IDL.Text),
+    'remind_at' : TimestampMillis,
+    'reminder_id' : IDL.Nat64,
+  });
+  const MessageReminder = IDL.Record({
+    'notes' : IDL.Opt(IDL.Text),
+    'reminder_id' : IDL.Nat64,
+  });
   const MessageContent = IDL.Variant({
     'Giphy' : GiphyContent,
     'File' : FileContent,
@@ -392,6 +401,8 @@ export const idlFactory = ({ IDL }) => {
     'Crypto' : CryptoContent,
     'Video' : VideoContent,
     'Deleted' : DeletedContent,
+    'MessageReminderCreated' : MessageReminderCreated,
+    'MessageReminder' : MessageReminder,
   });
   const DeletedMessageResponse = IDL.Variant({
     'MessageNotFound' : IDL.Null,
@@ -484,6 +495,7 @@ export const idlFactory = ({ IDL }) => {
   });
   const ChatId = CanisterId;
   const ReplyContext = IDL.Record({
+    'event_list_if_other' : IDL.Opt(IDL.Tuple(ChatId, IDL.Opt(MessageIndex))),
     'chat_id_if_other' : IDL.Opt(ChatId),
     'event_index' : EventIndex,
   });
@@ -610,6 +622,7 @@ export const idlFactory = ({ IDL }) => {
     'added_by' : UserId,
   });
   const ChatEvent = IDL.Variant({
+    'Empty' : IDL.Null,
     'MessageReactionRemoved' : UpdatedMessage,
     'ParticipantJoined' : ParticipantJoined,
     'ParticipantAssumesSuperAdmin' : ParticipantAssumesSuperAdmin,
@@ -969,6 +982,8 @@ export const idlFactory = ({ IDL }) => {
     'Crypto' : CryptoContent,
     'Video' : VideoContent,
     'Deleted' : DeletedContent,
+    'MessageReminderCreated' : MessageReminderCreated,
+    'MessageReminder' : MessageReminder,
   });
   const SendMessageV2Args = IDL.Record({
     'content' : MessageContentInitial,
@@ -994,6 +1009,7 @@ export const idlFactory = ({ IDL }) => {
     'file_messages' : IDL.Nat64,
     'poll_votes' : IDL.Nat64,
     'text_messages' : IDL.Nat64,
+    'message_reminders' : IDL.Nat64,
     'image_messages' : IDL.Nat64,
     'replies' : IDL.Nat64,
     'video_messages' : IDL.Nat64,

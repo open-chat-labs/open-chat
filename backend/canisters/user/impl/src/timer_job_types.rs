@@ -2,7 +2,7 @@ use crate::updates::send_message::send_to_recipients_canister;
 use crate::{mutate_state, openchat_bot, read_state};
 use canister_timer_jobs::Job;
 use serde::{Deserialize, Serialize};
-use types::{BlobReference, ChatId, EventIndex, MessageContent, MessageId, MessageIndex, TextContent, UserId};
+use types::{BlobReference, ChatId, EventIndex, MessageContent, MessageId, MessageIndex, MessageReminderContent, UserId};
 use user_canister::c2c_send_messages;
 use user_canister::c2c_send_messages::C2CReplyContext;
 
@@ -35,11 +35,11 @@ pub struct DeleteFileReferencesJob {
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct MessageReminderJob {
+    pub reminder_id: u64,
     pub chat_id: ChatId,
     pub thread_root_message_index: Option<MessageIndex>,
     pub event_index: EventIndex,
     pub notes: Option<String>,
-    pub bot_message_id: MessageId,
 }
 
 impl Job for TimerJob {
@@ -109,21 +109,11 @@ impl Job for DeleteFileReferencesJob {
 
 impl Job for MessageReminderJob {
     fn execute(&self) {
-        let mut message = "You asked me to remind you about this message.".to_string();
-
-        if let Some(notes) = self.notes.clone() {
-            message.push_str(&format!(
-                "
-
-Notes:
-
-{notes}
-"
-            ));
-        }
-
-        let replies_to = C2CReplyContext::OtherChat(self.chat_id, self.event_index);
-        let content = MessageContent::Text(TextContent { text: message });
+        let replies_to = C2CReplyContext::OtherEventList(self.chat_id, self.thread_root_message_index, self.event_index);
+        let content = MessageContent::MessageReminder(MessageReminderContent {
+            reminder_id: self.reminder_id,
+            notes: self.notes.clone(),
+        });
 
         mutate_state(|state| openchat_bot::send_message_with_reply(content, Some(replies_to), false, state));
     }
