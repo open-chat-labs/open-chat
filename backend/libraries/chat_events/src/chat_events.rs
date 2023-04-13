@@ -765,6 +765,18 @@ impl ChatEvents {
         events.push_event(event, correlation_id, None, now)
     }
 
+    pub fn mark_message_reminder_created_message_hidden(&mut self, message_index: MessageIndex, now: TimestampMillis) -> bool {
+        if let Some((message, event_index)) = self.message_internal_mut(EventIndex::default(), None, message_index.into(), now)
+        {
+            if let MessageContentInternal::MessageReminderCreated(r) = &mut message.content {
+                r.hidden = true;
+                self.last_updated_timestamps.mark_updated(None, event_index, now);
+                return true;
+            }
+        }
+        false
+    }
+
     pub fn hydrate_mention(
         &self,
         min_visible_event_index: EventIndex,
