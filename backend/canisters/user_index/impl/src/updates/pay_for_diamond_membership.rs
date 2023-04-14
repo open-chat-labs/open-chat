@@ -129,7 +129,7 @@ fn process_charge(
             );
         }
 
-        let mut amount_to_treasury = args.expected_price_e8s - (Cryptocurrency::InternetComputer.fee() as u64);
+        let mut amount_to_treasury = args.expected_price_e8s - (2 * Cryptocurrency::InternetComputer.fee() as u64);
 
         let now_nanos = runtime_state.env.now_nanos();
 
