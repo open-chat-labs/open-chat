@@ -5,7 +5,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
-## [[2.0.658](https://github.com/open-ic/open-chat/releases/tag/v2.0.658-proposals_bot)] - TBD
+## [[2.0.658](https://github.com/open-ic/open-chat/releases/tag/v2.0.658-proposals_bot)] - 2023-04-14
 
 ### Changed
 
