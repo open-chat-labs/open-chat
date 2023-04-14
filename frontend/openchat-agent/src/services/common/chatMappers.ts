@@ -92,6 +92,7 @@ import {
     MessageReminderCreatedContent,
     MessageReminderContent,
     CustomContent,
+    ReplySourceContext,
     // MessageReminderCreatedContent,
     // MessageReminderContent,
 } from "openchat-shared";
@@ -558,6 +559,17 @@ function replyContext(candid: ApiReplyContext): ReplyContext {
         kind: "raw_reply_context",
         eventIndex: candid.event_index,
         chatIdIfOther: optional(candid.chat_id_if_other, (id) => id.toString()),
+        sourceContext: optional(candid.event_list_if_other, replySourceContext),
+    };
+}
+
+function replySourceContext([chatId, maybeThreadRoot]: [
+    Principal,
+    [] | [number]
+]): ReplySourceContext {
+    return {
+        chatId: chatId.toString(),
+        threadRootMessageIndex: optional(maybeThreadRoot, identity),
     };
 }
 

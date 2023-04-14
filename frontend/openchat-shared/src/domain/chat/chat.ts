@@ -359,10 +359,16 @@ export interface FileContent extends DataContent {
 
 export type ReplyContext = RawReplyContext | RehydratedReplyContext;
 
+export type ReplySourceContext = {
+    chatId: string;
+    threadRootMessageIndex?: number;
+};
+
 export type RawReplyContext = {
     kind: "raw_reply_context";
     eventIndex: number;
     chatIdIfOther?: string;
+    sourceContext?: ReplySourceContext;
 };
 
 export type RehydratedReplyContext = {
@@ -375,6 +381,7 @@ export type RehydratedReplyContext = {
     chatId: string;
     edited: boolean;
     isThreadRoot: boolean;
+    sourceContext: ReplySourceContext;
 };
 
 export type EnhancedReplyContext = RehydratedReplyContext & {

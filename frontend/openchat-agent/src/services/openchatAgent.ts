@@ -281,6 +281,7 @@ export class OpenChatAgent extends EventTarget {
             );
         }
         if (chatType === "direct_chat") {
+            // TODO - come back and fix this
             const replyingToChatId =
                 event.event.repliesTo &&
                 event.event.repliesTo.kind === "rehydrated_reply_context" &&
@@ -705,6 +706,9 @@ export class OpenChatAgent extends EventTarget {
                         chatId,
                         edited: msg.edited,
                         isThreadRoot: msg.thread !== undefined,
+                        sourceContext: ev.event.repliesTo.sourceContext ?? {
+                            chatId: defaultChatId,
+                        },
                     };
                 } else {
                     this._logger.error(

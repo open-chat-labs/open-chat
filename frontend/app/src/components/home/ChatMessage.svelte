@@ -181,6 +181,7 @@
             messageIndex: msg.messageIndex,
             edited: msg.edited,
             isThreadRoot: msg.thread !== undefined,
+            sourceContext: { chatId },
         };
     }
 
