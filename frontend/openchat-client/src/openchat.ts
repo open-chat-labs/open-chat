@@ -304,6 +304,7 @@ import {
     EligibleForInitialAirdropResponse,
     GroupGate,
     ProposalVoteDetails,
+    MessageReminderCreatedContent,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -2986,11 +2987,17 @@ export class OpenChat extends EventTarget {
         return this.api.registerProposalVote(chatId, messageIndex, adopt);
     }
 
-    getProposalVoteDetails(governanceCanisterId: string, proposalId: bigint, isNns: boolean): Promise<ProposalVoteDetails> {
-        return this.api.getProposalVoteDetails(governanceCanisterId, proposalId, isNns).then((resp) => {
-            proposalTallies.setTally(governanceCanisterId, proposalId, resp.latestTally);
-            return resp;
-        });
+    getProposalVoteDetails(
+        governanceCanisterId: string,
+        proposalId: bigint,
+        isNns: boolean
+    ): Promise<ProposalVoteDetails> {
+        return this.api
+            .getProposalVoteDetails(governanceCanisterId, proposalId, isNns)
+            .then((resp) => {
+                proposalTallies.setTally(governanceCanisterId, proposalId, resp.latestTally);
+                return resp;
+            });
     }
 
     getRecommendedGroups(): Promise<GroupChatSummary[]> {
@@ -3767,6 +3774,36 @@ export class OpenChat extends EventTarget {
             });
     }
 
+    setMessageReminder(
+        chatId: string,
+        eventIndex: number,
+        remindAt: number,
+        notes?: string,
+        threadRootMessageIndex?: number
+    ): Promise<boolean> {
+        return this.api
+            .setMessageReminder(chatId, eventIndex, remindAt, notes, threadRootMessageIndex)
+            .then((res) => {
+                return res === "success";
+            })
+            .catch((err) => {
+                this._logger.error("Unable to set message reminder", err);
+                return false;
+            });
+    }
+
+    cancelMessageReminder(
+        messageId: bigint,
+        content: MessageReminderCreatedContent
+    ): Promise<boolean> {
+        localMessageUpdates.markCancelled(messageId.toString(), content);
+        return this.api.cancelMessageReminder(content.reminderId).catch((err) => {
+            localMessageUpdates.revertCancelled(messageId.toString());
+            this._logger.error("Unable to cancel message reminder", err);
+            return false;
+        });
+    }
+
     updateMarketMakerConfig(
         config: UpdateMarketMakerConfigArgs
     ): Promise<UpdateMarketMakerConfigResponse> {
@@ -3774,10 +3811,10 @@ export class OpenChat extends EventTarget {
     }
 
     usernameAndIcon(user?: PartialUserSummary): string {
-        return user !== undefined 
-            ? `${user?.username}  ${user?.diamond ? "💎" : ""}` 
+        return user !== undefined
+            ? `${user?.username}  ${user?.diamond ? "💎" : ""}`
             : this.config.i18nFormatter("unknownUser");
-    }    
+    }
 
     diamondDurationToMs = diamondDurationToMs;
 

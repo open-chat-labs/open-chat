@@ -233,6 +233,8 @@ function addCaption(caption: string | undefined, content: MessageContent): Messa
         content.kind !== "poll_content" &&
         content.kind !== "proposal_content" &&
         content.kind !== "prize_winner_content" &&
+        content.kind !== "message_reminder_content" &&
+        content.kind !== "message_reminder_created_content" &&
         content.kind !== "crypto_content"
         ? { ...content, caption }
         : content;
@@ -1133,6 +1135,10 @@ function mergeLocalUpdates(
     }
 
     message = { ...message };
+
+    if (localUpdates?.cancelledReminder !== undefined) {
+        message.content = localUpdates.cancelledReminder;
+    }
 
     if (localUpdates?.editedContent !== undefined) {
         message.content = localUpdates.editedContent;

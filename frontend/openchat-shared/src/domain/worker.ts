@@ -86,6 +86,7 @@ import type {
     PayForDiamondMembershipResponse,
     SetNeuronControllerResponse,
     EligibleForInitialAirdropResponse,
+    SetMessageReminderResponse,
 } from "./user";
 import type {
     GroupSearchResponse,
@@ -204,7 +205,9 @@ export type WorkerRequest =
     | SetUserUpgradeConcurrency
     | UpdateMarketMakerConfig
     | IsEligibleForInitialAirdrop
-    | SetNeuronControllerForAirdrop;
+    | SetNeuronControllerForAirdrop
+    | SetMessageReminder
+    | CancelMessageReminder;
 
 type SetCachedMessageFromNotification = Request<{
     chatId: string;
@@ -444,7 +447,7 @@ type UnpinMessage = Request<{
 type GetProposalVoteDetailsRequest = Request<{
     governanceCanisterId: string;
     proposalId: bigint;
-    isNns: boolean
+    isNns: boolean;
 }> & {
     kind: "getProposalVoteDetails";
 };
@@ -939,7 +942,8 @@ export type WorkerResponse =
     | Response<ClaimPrizeResponse>
     | Response<UpdateMarketMakerConfigResponse>
     | Response<SetNeuronControllerResponse>
-    | Response<EligibleForInitialAirdropResponse>;
+    | Response<EligibleForInitialAirdropResponse>
+    | Response<SetMessageReminderResponse>;
 
 type Response<T> = {
     kind: "worker_response";
@@ -1015,4 +1019,20 @@ type IsEligibleForInitialAirdrop = Request & {
 
 type SetNeuronControllerForAirdrop = Request<string> & {
     kind: "setNeuronControllerForInitialAirdrop";
+};
+
+type SetMessageReminder = Request<{
+    chatId: string;
+    eventIndex: number;
+    remindAt: number;
+    notes?: string;
+    threadRootMessageIndex?: number;
+}> & {
+    kind: "setMessageReminder";
+};
+
+type CancelMessageReminder = Request<{
+    reminderId: bigint;
+}> & {
+    kind: "cancelMessageReminder";
 };

@@ -37,7 +37,6 @@ type SendMessageResponse =
         InvalidRequest: text;
         TransferFailed: text;
         TransferCannotBeZero;
-        TransferLimitExceeded: nat;
         UserSuspended;
         InternalError: text;
     };
@@ -392,7 +391,6 @@ type SendMessageWithTransferToGroupResponse =
         InvalidRequest: text;
         TransferFailed: text;
         TransferCannotBeZero;
-        TransferLimitExceeded: nat;
         UserSuspended;
         ChatFrozen;
         InternalError: record { text; CompletedCryptoTransaction; };

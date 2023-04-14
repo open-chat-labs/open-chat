@@ -100,6 +100,7 @@ import {
     EligibleForInitialAirdropResponse,
     GroupGate,
     ProposalVoteDetails,
+    SetMessageReminderResponse,
 } from "openchat-shared";
 import type { OpenChatConfig } from "./config";
 import { v4 } from "uuid";
@@ -822,13 +823,17 @@ export class OpenChatAgentWorker extends EventTarget {
         });
     }
 
-    getProposalVoteDetails(governanceCanisterId: string, proposalId: bigint, isNns: boolean): Promise<ProposalVoteDetails> {
+    getProposalVoteDetails(
+        governanceCanisterId: string,
+        proposalId: bigint,
+        isNns: boolean
+    ): Promise<ProposalVoteDetails> {
         return this.sendRequest({
             kind: "getProposalVoteDetails",
             payload: {
                 governanceCanisterId,
                 proposalId,
-                isNns
+                isNns,
             },
         });
     }
@@ -1388,6 +1393,34 @@ export class OpenChatAgentWorker extends EventTarget {
         return this.sendRequest({
             kind: "setNeuronControllerForInitialAirdrop",
             payload: principal,
+        });
+    }
+
+    setMessageReminder(
+        chatId: string,
+        eventIndex: number,
+        remindAt: number,
+        notes?: string,
+        threadRootMessageIndex?: number
+    ): Promise<SetMessageReminderResponse> {
+        return this.sendRequest({
+            kind: "setMessageReminder",
+            payload: {
+                chatId,
+                eventIndex,
+                remindAt,
+                notes,
+                threadRootMessageIndex,
+            },
+        });
+    }
+
+    cancelMessageReminder(reminderId: bigint): Promise<boolean> {
+        return this.sendRequest({
+            kind: "cancelMessageReminder",
+            payload: {
+                reminderId,
+            },
         });
     }
 }

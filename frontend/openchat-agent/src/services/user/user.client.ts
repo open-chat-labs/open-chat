@@ -41,6 +41,7 @@ import type {
     UnpinChatResponse,
     DeletedDirectMessageResponse,
     EventWrapper,
+    SetMessageReminderResponse,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
@@ -69,6 +70,7 @@ import {
     migrateUserPrincipal,
     archiveChatResponse,
     deletedMessageResponse,
+    setMessageReminderResponse,
 } from "./mappers";
 import type { IUserClient } from "./user.client.interface";
 import { MAX_EVENTS, MAX_MESSAGES } from "../../constants";
@@ -614,6 +616,36 @@ export class UserClient extends CandidService implements IUserClient {
                 message_id: messageId,
             }),
             deletedMessageResponse
+        );
+    }
+
+    @profile("userClient")
+    setMessageReminder(
+        chatId: string,
+        eventIndex: number,
+        remindAt: number,
+        notes?: string,
+        threadRootMessageIndex?: number
+    ): Promise<SetMessageReminderResponse> {
+        return this.handleResponse(
+            this.userService.set_message_reminder({
+                notes: apiOptional(identity, notes),
+                remind_at: BigInt(remindAt),
+                chat_id: Principal.fromText(chatId),
+                thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
+                event_index: eventIndex,
+            }),
+            setMessageReminderResponse
+        );
+    }
+
+    @profile("userClient")
+    cancelMessageReminder(reminderId: bigint): Promise<boolean> {
+        return this.handleResponse(
+            this.userService.cancel_message_reminder({
+                reminder_id: reminderId,
+            }),
+            (_) => true
         );
     }
 }

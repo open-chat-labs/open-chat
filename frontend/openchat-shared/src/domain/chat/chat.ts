@@ -23,7 +23,9 @@ export type MessageContent =
     | GiphyContent
     | ProposalContent
     | PrizeContent
-    | PrizeWinnerContent;
+    | PrizeWinnerContent
+    | MessageReminderCreatedContent
+    | MessageReminderContent;
 
 export type IndexRange = [number, number];
 
@@ -142,6 +144,20 @@ export interface GiphyContent {
     mobile: GiphyImage; //will be "downsized_large" from the giphy api
 }
 
+export type MessageReminderCreatedContent = {
+    kind: "message_reminder_created_content";
+    notes?: string;
+    remindAt: number;
+    reminderId: bigint;
+    hidden: boolean;
+};
+
+export type MessageReminderContent = {
+    kind: "message_reminder_content";
+    notes?: string;
+    reminderId: bigint;
+};
+
 export interface PrizeWinnerContent {
     kind: "prize_winner_content";
     transaction: CompletedCryptocurrencyTransfer;
@@ -183,7 +199,7 @@ export interface ProposalCommon {
 
 export type ManageNeuronResponse =
     | { kind: "success" }
-    | { kind: "error", type: number, message: string };
+    | { kind: "error"; type: number; message: string };
 
 export interface Tally {
     yes: number;
@@ -427,6 +443,7 @@ export type LocalMessageUpdates = {
         timestamp: bigint;
     };
     editedContent?: MessageContent;
+    cancelledReminder?: MessageContent;
     undeletedContent?: MessageContent;
     revealedContent?: MessageContent;
     prizeClaimed?: string;
@@ -1166,8 +1183,8 @@ export type CreateGroupThrottled = {
 };
 
 export type UnauthorizedToCreatePublicGroup = {
-    kind: "unauthorized_to_create_public_group"
-}
+    kind: "unauthorized_to_create_public_group";
+};
 
 export type AddMembersResponse =
     | AddMembersSuccess

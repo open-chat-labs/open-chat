@@ -178,10 +178,6 @@ export const idlFactory = ({ IDL }) => {
     'caption' : IDL.Opt(IDL.Text),
     'winners' : IDL.Vec(UserId),
   });
-  const CustomMessageContent = IDL.Record({
-    'data' : IDL.Vec(IDL.Nat8),
-    'kind' : IDL.Text,
-  });
   const ProposalId = IDL.Nat64;
   const ProposalDecisionStatus = IDL.Variant({
     'Failed' : IDL.Null,
@@ -365,16 +361,6 @@ export const idlFactory = ({ IDL }) => {
     'timestamp' : TimestampMillis,
     'deleted_by' : UserId,
   });
-  const MessageReminderCreated = IDL.Record({
-    'hidden' : IDL.Bool,
-    'notes' : IDL.Opt(IDL.Text),
-    'remind_at' : TimestampMillis,
-    'reminder_id' : IDL.Nat64,
-  });
-  const MessageReminder = IDL.Record({
-    'notes' : IDL.Opt(IDL.Text),
-    'reminder_id' : IDL.Nat64,
-  });
   const MessageContent = IDL.Variant({
     'Giphy' : GiphyContent,
     'File' : FileContent,
@@ -382,15 +368,12 @@ export const idlFactory = ({ IDL }) => {
     'Text' : TextContent,
     'Image' : ImageContent,
     'Prize' : PrizeContent,
-    'Custom' : CustomMessageContent,
     'GovernanceProposal' : ProposalContent,
     'PrizeWinner' : PrizeWinnerContent,
     'Audio' : AudioContent,
     'Crypto' : CryptoContent,
     'Video' : VideoContent,
     'Deleted' : DeletedContent,
-    'MessageReminderCreated' : MessageReminderCreated,
-    'MessageReminder' : MessageReminder,
   });
   const ThreadSummary = IDL.Record({
     'latest_event_timestamp' : TimestampMillis,

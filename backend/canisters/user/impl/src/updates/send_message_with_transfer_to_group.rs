@@ -136,14 +136,9 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PendingCryptoTra
         _ => return Err(Box::new(InvalidRequest("Message must include a crypto transfer".to_string()))),
     };
 
-    let amount = pending_transaction.units();
-    let limit = pending_transaction.token().transfer_limit();
-
-    if amount == 0 {
-        return Err(Box::new(TransferCannotBeZero));
-    } else if amount > limit {
-        return Err(Box::new(TransferLimitExceeded(limit)));
+    if pending_transaction.units() > 0 {
+        Ok(pending_transaction)
+    } else {
+        Err(Box::new(TransferCannotBeZero))
     }
-
-    Ok(pending_transaction)
 }
