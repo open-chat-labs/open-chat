@@ -756,7 +756,8 @@
         "upgradeSuccess": "Your payment has been made successfully",
         "expiryMessage": "Your diamond membership expires {relative} ",
         "extendTo": " Extend to ",
-        "cannotExtend": "You can only extend your membership within three months of expiry"
+        "cannotExtend": "You can only extend your membership within three months of expiry",
+        "reminders": "Reminders"
     },
     "promoteTo": "Promote to {role}",
     "demoteTo": "Demote to {role}",
@@ -776,5 +777,25 @@
         "howTo": "How to find your NNS principal",
         "back": "Back"
     },
-    "unauthorizedToCreatePublicGroup" : "You are not authorized to create public groups"
+    "unauthorizedToCreatePublicGroup": "You are not authorized to create public groups",
+    "reminders": {
+        "optional": "Optional",
+        "menu": "Remind me",
+        "title": "Set a reminder",
+        "note": "Add a note",
+        "notePlaceholder": "Remind me to...",
+        "twentyMinutes": "In 20 minutes",
+        "oneHour": "In 1 hour",
+        "threeHours": "In 3 hours",
+        "tomorrow": "Tomorrow",
+        "nextWeek": "Next week",
+        "create": "Create",
+        "remindAt": "I will remind you about this message at {datetime}",
+        "youAsked": "You asked me to remind you about this message.",
+        "success": "Your reminder has been successfully set",
+        "failure": "Sorry we were unable to set your reminder",
+        "cancel": "Cancel reminder",
+        "cancelSuccess": "Your reminder has been successfully cancelled",
+        "cancelFailure": "Sorry we were unable to cancel your reminder"
+    }
 }

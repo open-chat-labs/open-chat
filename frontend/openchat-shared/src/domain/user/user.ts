@@ -222,3 +222,9 @@ export type EligibleForInitialAirdropResponse =
     | { kind: "user_not_eligible" }
     | { kind: "airdrop_closed" }
     | UserNotFound;
+
+export type SetMessageReminderResponse =
+    | "notes_too_long"
+    | "success"
+    | "reminder_date_in_past"
+    | "user_suspended";

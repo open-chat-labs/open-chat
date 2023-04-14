@@ -725,7 +725,11 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
 
             case "getProposalVoteDetails":
                 agent
-                    .getProposalVoteDetails(payload.governanceCanisterId, payload.proposalId, payload.isNns)
+                    .getProposalVoteDetails(
+                        payload.governanceCanisterId,
+                        payload.proposalId,
+                        payload.isNns
+                    )
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,
@@ -1333,6 +1337,34 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
             case "setNeuronControllerForInitialAirdrop":
                 agent
                     .setNeuronControllerForInitialAirdrop(payload)
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
+            case "setMessageReminder":
+                agent
+                    .setMessageReminder(
+                        payload.chatId,
+                        payload.eventIndex,
+                        payload.remindAt,
+                        payload.notes,
+                        payload.threadRootMessageIndex
+                    )
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
+            case "cancelMessageReminder":
+                agent
+                    .cancelMessageReminder(payload.reminderId)
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,

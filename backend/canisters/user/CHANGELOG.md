@@ -25,6 +25,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Removed temporary code needed for release ([#3375](https://github.com/open-ic/open-chat/pull/3375))
 - Removed `affected_events` which has been superseded by `updated_events` ([#3419](https://github.com/open-ic/open-chat/pull/3419))
+- Removed transfer limits ([#3457](https://github.com/open-ic/open-chat/pull/3457))
 
 ## [[2.0.645](https://github.com/open-ic/open-chat/releases/tag/v2.0.645-user)] - 2023-03-25
 

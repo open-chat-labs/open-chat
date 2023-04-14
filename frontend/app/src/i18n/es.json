@@ -759,7 +759,8 @@
         "cannotExtend": "Solo puede extender su membresía dentro de los tres meses posteriores al vencimiento",
         "groupMsg": "Para crear hasta 10 grupos públicos y controlar el acceso a los grupos, debe ser un usuario Diamond",
         "gatingMsg": "Para crear grupos con acceso privado, debe ser un usuario Diamond",
-        "gatedGroups": "Grupos cerrados"
+        "gatedGroups": "Grupos cerrados",
+        "reminders": "Recordatorios"
     },
     "currentUsage": "Uso de almacenamiento actual",
     "promoteTo": "Promocionar a {role}",
@@ -780,5 +781,25 @@
         "back": "Atrás",
         "pleaseSubmit": "Para recibir su airdrop, envíe su principal [NNS dApp](https://nns.ic0.app) a continuación antes de {cutoff}."
     },
-    "unauthorizedToCreatePublicGroup": "No tienes autorización para crear grupos públicos."
+    "unauthorizedToCreatePublicGroup": "No tienes autorización para crear grupos públicos.",
+    "reminders": {
+        "optional": "Opcional",
+        "menu": "Recuerdame",
+        "title": "Establecer un recordatorio",
+        "note": "Agrega una nota",
+        "notePlaceholder": "Recuérdame...",
+        "twentyMinutes": "En 20 minutos",
+        "oneHour": "En 1 hora",
+        "threeHours": "En 3 horas",
+        "tomorrow": "Mañana",
+        "nextWeek": "La próxima semana",
+        "create": "Crear",
+        "success": "Su recordatorio se ha configurado con éxito",
+        "remindAt": "Te recordaré este mensaje en {datetime}",
+        "youAsked": "Me pediste que te recordara este mensaje.",
+        "failure": "Lo sentimos, no pudimos configurar su recordatorio",
+        "cancel": "Cancelar recordatorio",
+        "cancelSuccess": "Su recordatorio ha sido cancelado con éxito",
+        "cancelFailure": "Lo sentimos, no pudimos cancelar tu recordatorio."
+    }
 }

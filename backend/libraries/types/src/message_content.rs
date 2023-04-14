@@ -75,7 +75,6 @@ pub enum ContentValidationError {
     TextTooLong(u32),
     InvalidPoll(InvalidPollReason),
     TransferCannotBeZero,
-    TransferLimitExceeded(u128),
     InvalidTypeForForwarding,
     PrizeEndDateInThePast,
     UnauthorizedToSendProposalMessages,
@@ -130,10 +129,6 @@ impl MessageContentInitial {
             MessageContentInitial::Crypto(c) => {
                 if c.transfer.is_zero() {
                     return Err(ContentValidationError::TransferCannotBeZero);
-                } else if c.transfer.exceeds_transfer_limit() {
-                    return Err(ContentValidationError::TransferLimitExceeded(
-                        c.transfer.token().transfer_limit(),
-                    ));
                 }
             }
             MessageContentInitial::Prize(p) => {

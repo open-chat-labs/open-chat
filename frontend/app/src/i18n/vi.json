@@ -759,7 +759,8 @@
         "cannotExtend": "Bạn chỉ có thể gia hạn tư cách thành viên của mình trong vòng ba tháng kể từ khi hết hạn",
         "groupMsg": "Để tạo tối đa 10 nhóm công khai và kiểm soát quyền truy cập nhóm, bạn phải là người dùng Kim cương",
         "gatingMsg": "Để tạo nhóm có quyền truy cập kiểm soát, bạn phải là người dùng Kim cương",
-        "gatedGroups": "nhóm kiểm soát"
+        "gatedGroups": "nhóm kiểm soát",
+        "reminders": "nhắc nhở"
     },
     "currentUsage": "Mức sử dụng bộ nhớ hiện tại",
     "promoteTo": "Quảng cáo lên {role}",
@@ -780,5 +781,25 @@
         "back": "Mặt sau",
         "pleaseSubmit": "Để nhận airdrop của bạn, vui lòng gửi tiền gốc [NNS dApp](https://nns.ic0.app) của bạn bên dưới trước {cutoff}."
     },
-    "unauthorizedToCreatePublicGroup": "Bạn không được phép tạo nhóm công khai"
+    "unauthorizedToCreatePublicGroup": "Bạn không được phép tạo nhóm công khai",
+    "reminders": {
+        "optional": "Không bắt buộc",
+        "menu": "Nhắc nhở tôi",
+        "title": "Đặt một lời nhắc nhở",
+        "note": "Thêm một lưu ý",
+        "notePlaceholder": "Nhắc tôi...",
+        "twentyMinutes": "Trong 20 phút",
+        "oneHour": "Trong 1 giờ",
+        "threeHours": "Trong 3 tiếng",
+        "tomorrow": "Ngày mai",
+        "nextWeek": "Tuần tới",
+        "create": "Tạo nên",
+        "success": "Lời nhắc của bạn đã được đặt thành công",
+        "remindAt": "Tôi sẽ nhắc bạn về tin nhắn này lúc {datetime}",
+        "youAsked": "Bạn yêu cầu tôi nhắc bạn về tin nhắn này.",
+        "failure": "Xin lỗi, chúng tôi không thể đặt lời nhắc của bạn",
+        "cancel": "Hủy lời nhắc",
+        "cancelSuccess": "Lời nhắc của bạn đã được hủy thành công",
+        "cancelFailure": "Xin lỗi, chúng tôi không thể hủy lời nhắc của bạn"
+    }
 }

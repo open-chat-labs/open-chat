@@ -507,29 +507,23 @@ export type MessageContent = { 'Giphy' : GiphyContent } |
   { 'Text' : TextContent } |
   { 'Image' : ImageContent } |
   { 'Prize' : PrizeContent } |
-  { 'Custom' : CustomMessageContent } |
   { 'GovernanceProposal' : ProposalContent } |
   { 'PrizeWinner' : PrizeWinnerContent } |
   { 'Audio' : AudioContent } |
   { 'Crypto' : CryptoContent } |
   { 'Video' : VideoContent } |
-  { 'Deleted' : DeletedContent } |
-  { 'MessageReminderCreated' : MessageReminderCreated } |
-  { 'MessageReminder' : MessageReminder };
+  { 'Deleted' : DeletedContent };
 export type MessageContentInitial = { 'Giphy' : GiphyContent } |
   { 'File' : FileContent } |
   { 'Poll' : PollContent } |
   { 'Text' : TextContent } |
   { 'Image' : ImageContent } |
   { 'Prize' : PrizeContentInitial } |
-  { 'Custom' : CustomMessageContent } |
   { 'GovernanceProposal' : ProposalContent } |
   { 'Audio' : AudioContent } |
   { 'Crypto' : CryptoContent } |
   { 'Video' : VideoContent } |
-  { 'Deleted' : DeletedContent } |
-  { 'MessageReminderCreated' : MessageReminderCreated } |
-  { 'MessageReminder' : MessageReminder };
+  { 'Deleted' : DeletedContent };
 export interface MessageEventWrapper {
   'event' : Message,
   'timestamp' : TimestampMillis,

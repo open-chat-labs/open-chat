@@ -30,7 +30,6 @@ pub enum Response {
     InvalidRequest(String),
     TransferFailed(String),
     TransferCannotBeZero,
-    TransferLimitExceeded(u128),
     UserSuspended,
     InternalError(String),
 }

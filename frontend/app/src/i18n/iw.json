@@ -756,7 +756,8 @@
         "cannotExtend": "אתה יכול להאריך את החברות שלך רק בתוך שלושה חודשים מיום פקיעת התוקף",
         "groupMsg": "כדי ליצור עד 10 קבוצות ציבוריות וכדי לשלוט בגישה לקבוצה, עליך להיות משתמש Diamond",
         "gatingMsg": "כדי ליצור קבוצות עם גישה מגודרת, עליך להיות משתמש Diamond",
-        "gatedGroups": "קבוצות סגורות"
+        "gatedGroups": "קבוצות סגורות",
+        "reminders": "תזכורות"
     },
     "currentUsage": "שימוש נוכחי באחסון",
     "promoteTo": "קדם ל-{role}",
@@ -777,5 +778,25 @@
         "back": "חזור",
         "pleaseSubmit": "כדי לקבל את ה-airdrop שלך, אנא שלח את המנהל של [NNS dApp](https://nns.ic0.app) למטה לפני {cutoff}."
     },
-    "unauthorizedToCreatePublicGroup": "אינך מורשה ליצור קבוצות ציבוריות"
+    "unauthorizedToCreatePublicGroup": "אינך מורשה ליצור קבוצות ציבוריות",
+    "reminders": {
+        "optional": "אופציונאלי",
+        "menu": "הזכר לי",
+        "title": "הגדר תזכורת",
+        "note": "הוסף הערה",
+        "notePlaceholder": "תזכיר לי ל...",
+        "twentyMinutes": "תוך 20 דקות",
+        "oneHour": "בעוד שעה",
+        "threeHours": "תוך 3 שעות",
+        "tomorrow": "מָחָר",
+        "nextWeek": "שבוע הבא",
+        "create": "לִיצוֹר",
+        "success": "התזכורת שלך הוגדרה בהצלחה",
+        "remindAt": "אני אזכיר לך על הודעה זו ב-{datetime}",
+        "youAsked": "ביקשת ממני להזכיר לך את ההודעה הזו.",
+        "failure": "מצטערים שלא הצלחנו להגדיר את התזכורת שלך",
+        "cancel": "בטל תזכורת",
+        "cancelSuccess": "התזכורת שלך בוטלה בהצלחה",
+        "cancelFailure": "מצטערים שלא הצלחנו לבטל את התזכורת שלך"
+    }
 }
