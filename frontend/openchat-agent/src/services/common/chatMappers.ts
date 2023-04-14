@@ -42,6 +42,8 @@ import type {
     ApiRole,
     ApiPrizeWinnerContent,
     ApiGroupGate,
+    ApiMessageReminderCreated,
+    ApiMessageReminder,
 } from "../user/candid/idl";
 import {
     type Message,
@@ -86,6 +88,8 @@ import {
     GroupGate,
     OpenChatGovernanceCanisterId,
     Sns1GovernanceCanisterId,
+    MessageReminderCreatedContent,
+    MessageReminderContent,
 } from "openchat-shared";
 import type { WithdrawCryptoArgs } from "../user/candid/types";
 
@@ -164,18 +168,34 @@ export function messageContent(candid: ApiMessageContent, sender: string): Messa
         return prizeWinnerContent(sender, candid.PrizeWinner);
     }
     if ("MessageReminderCreated" in candid) {
-        // TODO
-        throw new Error();
+        return messageReminderCreated(candid.MessageReminderCreated);
     }
     if ("MessageReminder" in candid) {
-        // TODO
-        throw new Error();
+        return messageReminder(candid.MessageReminder);
     }
     if ("Custom" in candid) {
         // TODO
         throw new Error();
     }
     throw new UnsupportedValueError("Unexpected ApiMessageContent type received", candid);
+}
+
+function messageReminderCreated(candid: ApiMessageReminderCreated): MessageReminderCreatedContent {
+    return {
+        kind: "message_reminder_created_content",
+        notes: optional(candid.notes, identity),
+        remindAt: Number(candid.remind_at),
+        reminderId: candid.reminder_id,
+        hidden: candid.hidden,
+    };
+}
+
+function messageReminder(candid: ApiMessageReminder): MessageReminderContent {
+    return {
+        kind: "message_reminder_content",
+        notes: optional(candid.notes, identity),
+        reminderId: candid.reminder_id,
+    };
 }
 
 function prizeWinnerContent(senderId: string, candid: ApiPrizeWinnerContent): PrizeWinnerContent {
@@ -639,7 +659,10 @@ export function apiReplyContextArgs(
 ): ApiReplyContext {
     return {
         chat_id_if_other: apiOptional((chatId) => Principal.fromText(chatId), replyingToChatId),
-        event_list_if_other: apiOptional((chatId) => [Principal.fromText(chatId), []], replyingToChatId),
+        event_list_if_other: apiOptional(
+            (chatId) => [Principal.fromText(chatId), []],
+            replyingToChatId
+        ),
         event_index: domain.eventIndex,
     };
 }
@@ -684,6 +707,16 @@ export function apiMessageContent(domain: MessageContent): ApiMessageContent {
 
         case "placeholder_content":
             throw new Error("Incorrectly attempting to send placeholder content to the server");
+
+        case "message_reminder_content":
+            throw new Error(
+                "Incorrectly attempting to send message reminder content to the server"
+            );
+
+        case "message_reminder_created_content":
+            throw new Error(
+                "Incorrectly attempting to send message reminder created content to the server"
+            );
     }
 }
 

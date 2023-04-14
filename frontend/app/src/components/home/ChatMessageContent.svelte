@@ -13,6 +13,8 @@
     import CryptoContent from "./CryptoContent.svelte";
     import DeletedContent from "./DeletedContent.svelte";
     import PlaceholderContent from "./PlaceholderContent.svelte";
+    import MessageReminderContent from "./MessageReminderContent.svelte";
+    import MessageReminderCreatedContent from "./MessageReminderCreatedContent.svelte";
     import ProposalContent from "./proposals/ProposalContent.svelte";
     import IntersectionObserver from "./IntersectionObserver.svelte";
     import type { MessageContent } from "openchat-client";
@@ -76,4 +78,8 @@
         {readonly}
         {reply}
         on:expandMessage />
+{:else if content.kind === "message_reminder_created_content" && !content.hidden}
+    <MessageReminderCreatedContent {content} />
+{:else if content.kind === "message_reminder_content"}
+    <MessageReminderContent {content} />
 {/if}

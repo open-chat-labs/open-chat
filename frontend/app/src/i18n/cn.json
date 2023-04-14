@@ -759,7 +759,8 @@
         "cannotExtend": "您只能在到期后三个月内延长您的会员资格",
         "groupMsg": "要创建最多 10 个公共组并控制组访问权限，您必须是 Diamond 用户",
         "gatingMsg": "要创建具有门禁访问权限的群组，您必须是 Diamond 用户",
-        "gatedGroups": "封闭组"
+        "gatedGroups": "封闭组",
+        "reminders": "提醒事项"
     },
     "currentUsage": "当前存储使用情况",
     "promoteTo": "晋升为{role}",
@@ -780,5 +781,25 @@
         "back": "后退",
         "pleaseSubmit": "要接收您的空投，请在 {cutoff} 之前在下方提交您的 [NNS dApp](https://nns.ic0.app) 委托人。"
     },
-    "unauthorizedToCreatePublicGroup": "您无权创建公共组"
+    "unauthorizedToCreatePublicGroup": "您无权创建公共组",
+    "reminders": {
+        "optional": "选修的",
+        "menu": "提醒我",
+        "title": "设置提醒",
+        "note": "添加注释",
+        "notePlaceholder": "提醒我...",
+        "twentyMinutes": "20分钟后",
+        "oneHour": "1小时内",
+        "threeHours": "3小时内",
+        "tomorrow": "明天",
+        "nextWeek": "下周",
+        "create": "创造",
+        "success": "您的提醒已设置成功",
+        "remindAt": "我会在 {datetime} 提醒您这条消息",
+        "youAsked": "你要我提醒你这条消息。",
+        "failure": "抱歉，我们无法设置您的提醒",
+        "cancel": "取消提醒",
+        "cancelSuccess": "您的提醒已成功取消",
+        "cancelFailure": "抱歉，我们无法取消您的提醒"
+    }
 }

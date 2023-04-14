@@ -758,7 +758,8 @@
         "cannotExtend": "Vous ne pouvez prolonger votre adhésion que dans les trois mois suivant l'expiration",
         "groupMsg": "Pour créer jusqu'à 10 groupes publics et contrôler l'accès aux groupes, vous devez être un utilisateur Diamond",
         "gatingMsg": "Pour créer des groupes avec accès sécurisé, vous devez être un utilisateur Diamond",
-        "gatedGroups": "Groupes fermés"
+        "gatedGroups": "Groupes fermés",
+        "reminders": "Rappels"
     },
     "currentUsage": "Utilisation actuelle du stockage",
     "promoteTo": "Promouvoir à {role}",
@@ -779,5 +780,25 @@
         "back": "Dos",
         "pleaseSubmit": "Pour recevoir votre airdrop, veuillez soumettre votre principal [NNS dApp](https://nns.ic0.app) ci-dessous avant le {cutoff}."
     },
-    "unauthorizedToCreatePublicGroup": "Vous n'êtes pas autorisé à créer des groupes publics"
+    "unauthorizedToCreatePublicGroup": "Vous n'êtes pas autorisé à créer des groupes publics",
+    "reminders": {
+        "optional": "Facultatif",
+        "menu": "Rappelle moi",
+        "title": "Fixer un rappel",
+        "note": "Ajouter une note",
+        "notePlaceholder": "Rappelle-moi de...",
+        "twentyMinutes": "Dans 20 Minutes",
+        "oneHour": "Dans 1 heure",
+        "threeHours": "Dans 3 heures",
+        "tomorrow": "Demain",
+        "nextWeek": "La semaine prochaine",
+        "create": "Créer",
+        "success": "Votre rappel a été défini avec succès",
+        "remindAt": "Je vous rappellerai ce message à {datetime}",
+        "youAsked": "Vous m'avez demandé de vous rappeler ce message.",
+        "failure": "Désolé, nous n'avons pas pu définir votre rappel",
+        "cancel": "Annuler le rappel",
+        "cancelSuccess": "Votre rappel a été annulé avec succès",
+        "cancelFailure": "Désolé, nous n'avons pas pu annuler votre rappel"
+    }
 }

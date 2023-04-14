@@ -3,7 +3,6 @@
     import { getContext } from "svelte";
     import { _ } from "svelte-i18n";
     import { now } from "../../stores/time";
-    import type { DirectChatSummary } from "openchat-shared";
 
     const client = getContext<OpenChat>("client");
     export let chat: ChatSummary;

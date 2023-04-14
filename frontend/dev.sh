@@ -17,4 +17,6 @@ pm2 start --name "worker" "npm run dev"
 cd ../openchat-client
 pm2 start --name "client" "npm run dev" 
 cd ../app
-pm2 start --name "app" "npm run dev" 
+
+# we delay the starting of the app process to prevent a race condition
+sleep 10 && pm2 start --name "app" "npm run dev" 
