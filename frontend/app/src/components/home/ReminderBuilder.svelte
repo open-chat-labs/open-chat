@@ -44,6 +44,10 @@
             label: $_("reminders.nextWeek"),
             index: 4,
         },
+        {
+            label: "One Minute",
+            index: 5,
+        },
     ];
 
     $: remindAtMs = deriveRemindAt($now, selectedIntervalIndex);
@@ -64,6 +68,9 @@
         }
         if (interval === 4) {
             return nextWeek(now);
+        }
+        if (interval === 5) {
+            return now + 60 * 1000;
         }
         return now;
     }
