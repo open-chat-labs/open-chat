@@ -1415,7 +1415,7 @@ export class OpenChatAgentWorker extends EventTarget {
         });
     }
 
-    cancelMessageReminder(reminderId: number): Promise<boolean> {
+    cancelMessageReminder(reminderId: bigint): Promise<boolean> {
         return this.sendRequest({
             kind: "cancelMessageReminder",
             payload: {

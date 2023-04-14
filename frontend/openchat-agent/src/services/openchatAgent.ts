@@ -1656,7 +1656,7 @@ export class OpenChatAgent extends EventTarget {
         );
     }
 
-    cancelMessageReminder(reminderId: number): Promise<boolean> {
+    cancelMessageReminder(reminderId: bigint): Promise<boolean> {
         return this.userClient.cancelMessageReminder(reminderId);
     }
 }

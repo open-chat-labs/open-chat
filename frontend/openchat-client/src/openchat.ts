@@ -3797,7 +3797,7 @@ export class OpenChat extends EventTarget {
         content: MessageReminderCreatedContent
     ): Promise<boolean> {
         localMessageUpdates.markCancelled(messageId.toString(), content);
-        return this.api.cancelMessageReminder(Number(content.reminderId)).catch((err) => {
+        return this.api.cancelMessageReminder(content.reminderId).catch((err) => {
             localMessageUpdates.revertCancelled(messageId.toString());
             this._logger.error("Unable to cancel message reminder", err);
             return false;

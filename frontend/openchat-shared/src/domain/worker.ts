@@ -1032,7 +1032,7 @@ type SetMessageReminder = Request<{
 };
 
 type CancelMessageReminder = Request<{
-    reminderId: number;
+    reminderId: bigint;
 }> & {
     kind: "cancelMessageReminder";
 };

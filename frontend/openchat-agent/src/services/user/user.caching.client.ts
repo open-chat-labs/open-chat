@@ -403,7 +403,7 @@ export class CachingUserClient extends EventTarget implements IUserClient {
         );
     }
 
-    cancelMessageReminder(reminderId: number): Promise<boolean> {
+    cancelMessageReminder(reminderId: bigint): Promise<boolean> {
         return this.client.cancelMessageReminder(reminderId);
     }
 }
