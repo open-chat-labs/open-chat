@@ -72,7 +72,6 @@ fn prepare(args: &Args, user_id: UserId, runtime_state: &mut RuntimeState) -> Re
     }
 }
 
-#[allow(unused_parens)]
 fn process_charge(
     args: Args,
     user_id: UserId,
@@ -136,7 +135,8 @@ fn process_charge(
 
         if let Some(share_with) = share_with {
             let amount_to_referrer = args.expected_price_e8s / 2;
-            amount_to_treasury -= (amount_to_referrer + (Cryptocurrency::InternetComputer.fee() as u64));
+            amount_to_treasury -= amount_to_referrer;
+            amount_to_treasury -= Cryptocurrency::InternetComputer.fee() as u64;
 
             runtime_state.queue_payment(PendingPayment {
                 amount: amount_to_referrer,
