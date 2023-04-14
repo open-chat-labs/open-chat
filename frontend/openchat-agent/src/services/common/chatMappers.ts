@@ -42,8 +42,8 @@ import type {
     ApiRole,
     ApiPrizeWinnerContent,
     ApiGroupGate,
-    ApiMessageReminderCreated,
-    ApiMessageReminder,
+    // ApiMessageReminderCreated,
+    // ApiMessageReminder,
 } from "../user/candid/idl";
 import {
     type Message,
@@ -88,8 +88,8 @@ import {
     GroupGate,
     OpenChatGovernanceCanisterId,
     Sns1GovernanceCanisterId,
-    MessageReminderCreatedContent,
-    MessageReminderContent,
+    // MessageReminderCreatedContent,
+    // MessageReminderContent,
 } from "openchat-shared";
 import type { WithdrawCryptoArgs } from "../user/candid/types";
 
@@ -168,10 +168,14 @@ export function messageContent(candid: ApiMessageContent, sender: string): Messa
         return prizeWinnerContent(sender, candid.PrizeWinner);
     }
     if ("MessageReminderCreated" in candid) {
-        return messageReminderCreated(candid.MessageReminderCreated);
+        // TODO
+        // return messageReminderCreated(candid.MessageReminderCreated);
+        throw new Error();
     }
     if ("MessageReminder" in candid) {
-        return messageReminder(candid.MessageReminder);
+        // TODO
+        // return messageReminder(candid.MessageReminder);
+        throw new Error();
     }
     if ("Custom" in candid) {
         // TODO
@@ -180,23 +184,23 @@ export function messageContent(candid: ApiMessageContent, sender: string): Messa
     throw new UnsupportedValueError("Unexpected ApiMessageContent type received", candid);
 }
 
-function messageReminderCreated(candid: ApiMessageReminderCreated): MessageReminderCreatedContent {
-    return {
-        kind: "message_reminder_created_content",
-        notes: optional(candid.notes, identity),
-        remindAt: Number(candid.remind_at),
-        reminderId: candid.reminder_id,
-        hidden: candid.hidden,
-    };
-}
-
-function messageReminder(candid: ApiMessageReminder): MessageReminderContent {
-    return {
-        kind: "message_reminder_content",
-        notes: optional(candid.notes, identity),
-        reminderId: candid.reminder_id,
-    };
-}
+// function messageReminderCreated(candid: ApiMessageReminderCreated): MessageReminderCreatedContent {
+//     return {
+//         kind: "message_reminder_created_content",
+//         notes: optional(candid.notes, identity),
+//         remindAt: Number(candid.remind_at),
+//         reminderId: candid.reminder_id,
+//         hidden: candid.hidden,
+//     };
+// }
+//
+// function messageReminder(candid: ApiMessageReminder): MessageReminderContent {
+//     return {
+//         kind: "message_reminder_content",
+//         notes: optional(candid.notes, identity),
+//         reminderId: candid.reminder_id,
+//     };
+// }
 
 function prizeWinnerContent(senderId: string, candid: ApiPrizeWinnerContent): PrizeWinnerContent {
     const transfer = "NNS" in candid.transaction ? candid.transaction.NNS : candid.transaction.SNS;
