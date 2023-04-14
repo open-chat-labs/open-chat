@@ -119,7 +119,6 @@ fn validate_request(args: &Args, runtime_state: &RuntimeState) -> ValidateReques
             ContentValidationError::TextTooLong(max_length) => TextTooLong(max_length),
             ContentValidationError::InvalidPoll(reason) => InvalidPoll(reason),
             ContentValidationError::TransferCannotBeZero => TransferCannotBeZero,
-            ContentValidationError::TransferLimitExceeded(limit) => TransferLimitExceeded(limit),
             ContentValidationError::InvalidTypeForForwarding => {
                 InvalidRequest("Cannot forward this type of message".to_string())
             }
