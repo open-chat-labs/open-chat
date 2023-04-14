@@ -795,6 +795,12 @@
         "tomorrow": "Morgen",
         "nextWeek": "Nächste Woche",
         "create": "Erstellen",
-        "success": "Ihre Erinnerung wurde erfolgreich eingestellt"
+        "success": "Ihre Erinnerung wurde erfolgreich eingestellt",
+        "remindAt": "Ich werde Sie um {datetime} an diese Nachricht erinnern",
+        "youAsked": "Sie haben mich gebeten, Sie an diese Nachricht zu erinnern.",
+        "failure": "Leider konnten wir Ihre Erinnerung nicht einstellen",
+        "cancel": "Erinnerung abbrechen",
+        "cancelSuccess": "Ihre Erinnerung wurde erfolgreich storniert",
+        "cancelFailure": "Es tut uns leid, dass wir Ihre Erinnerung nicht stornieren konnten"
     }
 }

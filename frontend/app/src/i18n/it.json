@@ -793,6 +793,12 @@
         "tomorrow": "Domani",
         "nextWeek": "La prossima settimana",
         "create": "Creare",
-        "success": "Il tuo promemoria è stato impostato correttamente"
+        "success": "Il tuo promemoria è stato impostato correttamente",
+        "remindAt": "Ti ricorderò di questo messaggio all'indirizzo {datetime}",
+        "youAsked": "Mi hai chiesto di ricordarti di questo messaggio.",
+        "failure": "Spiacenti, non siamo riusciti a impostare il tuo promemoria",
+        "cancel": "Annulla promemoria",
+        "cancelSuccess": "Il tuo promemoria è stato annullato con successo",
+        "cancelFailure": "Spiacenti, non è stato possibile annullare il promemoria"
     }
 }

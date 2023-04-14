@@ -794,6 +794,12 @@
         "tomorrow": "Ngày mai",
         "nextWeek": "Tuần tới",
         "create": "Tạo nên",
-        "success": "Lời nhắc của bạn đã được đặt thành công"
+        "success": "Lời nhắc của bạn đã được đặt thành công",
+        "remindAt": "Tôi sẽ nhắc bạn về tin nhắn này lúc {datetime}",
+        "youAsked": "Bạn yêu cầu tôi nhắc bạn về tin nhắn này.",
+        "failure": "Xin lỗi, chúng tôi không thể đặt lời nhắc của bạn",
+        "cancel": "Hủy lời nhắc",
+        "cancelSuccess": "Lời nhắc của bạn đã được hủy thành công",
+        "cancelFailure": "Xin lỗi, chúng tôi không thể hủy lời nhắc của bạn"
     }
 }

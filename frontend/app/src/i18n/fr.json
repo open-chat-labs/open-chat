@@ -793,6 +793,12 @@
         "tomorrow": "Demain",
         "nextWeek": "La semaine prochaine",
         "create": "Créer",
-        "success": "Votre rappel a été défini avec succès"
+        "success": "Votre rappel a été défini avec succès",
+        "remindAt": "Je vous rappellerai ce message à {datetime}",
+        "youAsked": "Vous m'avez demandé de vous rappeler ce message.",
+        "failure": "Désolé, nous n'avons pas pu définir votre rappel",
+        "cancel": "Annuler le rappel",
+        "cancelSuccess": "Votre rappel a été annulé avec succès",
+        "cancelFailure": "Désolé, nous n'avons pas pu annuler votre rappel"
     }
 }

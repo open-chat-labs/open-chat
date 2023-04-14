@@ -794,6 +794,12 @@
         "tomorrow": "Mañana",
         "nextWeek": "La próxima semana",
         "create": "Crear",
-        "success": "Su recordatorio se ha configurado con éxito"
+        "success": "Su recordatorio se ha configurado con éxito",
+        "remindAt": "Te recordaré este mensaje en {datetime}",
+        "youAsked": "Me pediste que te recordara este mensaje.",
+        "failure": "Lo sentimos, no pudimos configurar su recordatorio",
+        "cancel": "Cancelar recordatorio",
+        "cancelSuccess": "Su recordatorio ha sido cancelado con éxito",
+        "cancelFailure": "Lo sentimos, no pudimos cancelar tu recordatorio."
     }
 }

@@ -29,6 +29,7 @@
     import { toastStore } from "../../stores/toast";
     import * as shareFunctions from "../../utils/share";
     import { now } from "../../stores/time";
+    import { remindersEnabled } from "../../utils/features";
 
     const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
@@ -60,10 +61,13 @@
     export let threadRootMessage: Message | undefined;
 
     $: canRemind =
+        remindersEnabled &&
         msg.content.kind !== "message_reminder_content" &&
         msg.content.kind !== "message_reminder_created_content";
     $: canCancelRemind =
-        msg.content.kind === "message_reminder_created_content" && msg.content.remindAt > $now;
+        remindersEnabled &&
+        msg.content.kind === "message_reminder_created_content" &&
+        msg.content.remindAt > $now;
     $: user = client.user;
     $: inThread = threadRootMessage !== undefined;
     $: translationStore = client.translationStore;

@@ -794,6 +794,12 @@
         "tomorrow": "明天",
         "nextWeek": "下周",
         "create": "创造",
-        "success": "您的提醒已设置成功"
+        "success": "您的提醒已设置成功",
+        "remindAt": "我会在 {datetime} 提醒您这条消息",
+        "youAsked": "你要我提醒你这条消息。",
+        "failure": "抱歉，我们无法设置您的提醒",
+        "cancel": "取消提醒",
+        "cancelSuccess": "您的提醒已成功取消",
+        "cancelFailure": "抱歉，我们无法取消您的提醒"
     }
 }
