@@ -678,12 +678,13 @@ export function apiGroupSubtype(subtype: ApiGroupSubtype): GroupSubtype {
 
 export function apiReplyContextArgs(
     domain: ReplyContext,
-    replyingToChatId?: string
+    replyingToChatId?: string,
+    threadRootMessageIndex?: number
 ): ApiReplyContext {
     return {
         chat_id_if_other: apiOptional((chatId) => Principal.fromText(chatId), replyingToChatId),
         event_list_if_other: apiOptional(
-            (chatId) => [Principal.fromText(chatId), []],
+            (chatId) => [Principal.fromText(chatId), apiOptional(identity, threadRootMessageIndex)],
             replyingToChatId
         ),
         event_index: domain.eventIndex,

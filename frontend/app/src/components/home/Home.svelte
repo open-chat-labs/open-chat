@@ -573,6 +573,8 @@
         const chat = $chatSummariesListStore.find((c) => {
             return c.kind === "direct_chat" && c.them === ev.detail.sender?.userId;
         });
+
+        console.log("ReplyingPrivately: ", ev.detail);
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const chatId = chat?.chatId ?? ev.detail.sender!.userId;
         currentChatDraftMessage.setTextContent(chatId, "");
@@ -954,6 +956,7 @@
             on:showFaqQuestion={showFaqQuestion}
             on:userAvatarSelected={userAvatarSelected}
             on:goToMessageIndex={goToMessageIndex}
+            on:replyPrivatelyTo={replyPrivatelyTo}
             on:addMembers={addMembers}
             on:showMembers={showMembers}
             on:chatWith={chatWith}
@@ -972,6 +975,7 @@
                 on:showFaqQuestion={showFaqQuestion}
                 on:userAvatarSelected={userAvatarSelected}
                 on:goToMessageIndex={goToMessageIndex}
+                on:replyPrivatelyTo={replyPrivatelyTo}
                 on:addMembers={addMembers}
                 on:showMembers={showMembers}
                 on:chatWith={chatWith}

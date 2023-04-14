@@ -281,7 +281,6 @@ export class OpenChatAgent extends EventTarget {
             );
         }
         if (chatType === "direct_chat") {
-            // TODO - come back and fix this
             const replyingToChatId =
                 event.event.repliesTo &&
                 event.event.repliesTo.kind === "rehydrated_reply_context" &&

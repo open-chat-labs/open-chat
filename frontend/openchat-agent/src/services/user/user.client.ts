@@ -302,7 +302,8 @@ export class UserClient extends CandidService implements IUserClient {
                 sender_name: sender.username,
                 message_id: event.event.messageId,
                 replies_to: apiOptional(
-                    (replyContext) => apiReplyContextArgs(replyContext, replyingToChatId),
+                    (replyContext) =>
+                        apiReplyContextArgs(replyContext, replyingToChatId, threadRootMessageIndex),
                     event.event.repliesTo
                 ),
                 forwarding: event.event.forwarded,

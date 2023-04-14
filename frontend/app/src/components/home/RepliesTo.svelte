@@ -24,6 +24,19 @@
     $: me = repliesTo.senderId === currentUser.userId;
     $: isTextContent = repliesTo.content?.kind === "text_content";
 
+    $: console.log("RepliesTo: ", repliesTo.sourceContext);
+
+    function getUrl() {
+        const path = [
+            repliesTo.chatId,
+            repliesTo.sourceContext.threadRootMessageIndex ?? repliesTo.messageIndex,
+        ];
+        if (repliesTo.sourceContext.threadRootMessageIndex !== undefined) {
+            path.push(repliesTo.messageIndex);
+        }
+        return "/" + path.join("/");
+    }
+
     function zoomToMessage() {
         if (repliesTo.chatId === chatId) {
             dispatch("goToMessageIndex", {
@@ -31,7 +44,7 @@
                 index: repliesTo.messageIndex,
             });
         } else {
-            page(`/${repliesTo.chatId}/${repliesTo.messageIndex}`);
+            page(getUrl());
         }
     }
 
