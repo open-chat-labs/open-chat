@@ -34,14 +34,14 @@ fn c2c_notify_user_index_events_impl(args: Args, runtime_state: &mut RuntimeStat
 fn handle_event(event: Event, runtime_state: &mut RuntimeState) {
     match event {
         Event::UsernameChanged(ev) => {
-            runtime_state.data.user_event_sync_queue.push(
-                ev.user_id.into(),
+            runtime_state.push_event_to_user(
+                ev.user_id,
                 UserEvent::UsernameChanged(Box::new(UsernameChanged { username: ev.username })),
             );
         }
         Event::UserSuspended(ev) => {
-            runtime_state.data.user_event_sync_queue.push(
-                ev.user_id.into(),
+            runtime_state.push_event_to_user(
+                ev.user_id,
                 UserEvent::UserSuspended(Box::new(UserSuspended {
                     timestamp: ev.timestamp,
                     duration: ev.duration,
@@ -51,8 +51,8 @@ fn handle_event(event: Event, runtime_state: &mut RuntimeState) {
             );
         }
         Event::PhoneNumberConfirmed(ev) => {
-            runtime_state.data.user_event_sync_queue.push(
-                ev.user_id.into(),
+            runtime_state.push_event_to_user(
+                ev.user_id,
                 UserEvent::PhoneNumberConfirmed(Box::new(PhoneNumberConfirmed {
                     phone_number: ev.phone_number,
                     storage_added: ev.storage_added,
@@ -61,8 +61,8 @@ fn handle_event(event: Event, runtime_state: &mut RuntimeState) {
             );
         }
         Event::StorageUpgraded(ev) => {
-            runtime_state.data.user_event_sync_queue.push(
-                ev.user_id.into(),
+            runtime_state.push_event_to_user(
+                ev.user_id,
                 UserEvent::StorageUpgraded(Box::new(StorageUpgraded {
                     cost: ev.cost,
                     storage_added: ev.storage_added,
@@ -75,8 +75,8 @@ fn handle_event(event: Event, runtime_state: &mut RuntimeState) {
 
             if let Some(referred_by) = ev.referred_by {
                 if runtime_state.data.local_users.get(&referred_by).is_some() {
-                    runtime_state.data.user_event_sync_queue.push(
-                        referred_by.into(),
+                    runtime_state.push_event_to_user(
+                        referred_by,
                         UserEvent::ReferredUserRegistered(Box::new(ReferredUserRegistered {
                             user_id: ev.user_id,
                             username: ev.username,
@@ -100,8 +100,8 @@ fn handle_event(event: Event, runtime_state: &mut RuntimeState) {
             info!("User upgrade concurrency set to {}", ev.value);
         }
         Event::UserJoinedGroup(ev) => {
-            runtime_state.data.user_event_sync_queue.push(
-                ev.user_id.into(),
+            runtime_state.push_event_to_user(
+                ev.user_id,
                 UserEvent::UserJoinedGroup(Box::new(UserJoinedGroup {
                     chat_id: ev.chat_id,
                     latest_message_index: ev.latest_message_index,
@@ -109,8 +109,8 @@ fn handle_event(event: Event, runtime_state: &mut RuntimeState) {
             );
         }
         Event::DiamondMembershipPaymentReceived(ev) => {
-            runtime_state.data.user_event_sync_queue.push(
-                ev.user_id.into(),
+            runtime_state.push_event_to_user(
+                ev.user_id,
                 UserEvent::DiamondMembershipPaymentReceived(Box::new(DiamondMembershipPaymentReceived {
                     timestamp: ev.timestamp,
                     expires_at: ev.expires_at,
@@ -124,11 +124,7 @@ fn handle_event(event: Event, runtime_state: &mut RuntimeState) {
             );
         }
         Event::OpenChatBotMessage(ev) => {
-            runtime_state
-                .data
-                .user_event_sync_queue
-                .push(ev.user_id.into(), UserEvent::OpenChatBotMessage(Box::new(ev.message)));
+            runtime_state.push_event_to_user(ev.user_id, UserEvent::OpenChatBotMessage(Box::new(ev.message)));
         }
     }
-    crate::jobs::sync_events_to_user_canisters::start_job_if_required(runtime_state);
 }
