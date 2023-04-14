@@ -18,16 +18,6 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Null,
   });
   const EmptyArgs = IDL.Record({});
-  const ChallengeKey = IDL.Nat32;
-  const Challenge = IDL.Record({
-    'key' : ChallengeKey,
-    'png_base64' : IDL.Text,
-  });
-  const CreateChallengeResponse = IDL.Variant({
-    'Throttled' : IDL.Null,
-    'Success' : Challenge,
-    'NotRequired' : IDL.Null,
-  });
   const Version = IDL.Record({
     'major' : IDL.Nat32,
     'minor' : IDL.Nat32,
@@ -114,15 +104,21 @@ export const idlFactory = ({ IDL }) => {
   const PlatformOperatorsResponse = IDL.Variant({
     'Success' : IDL.Record({ 'users' : IDL.Vec(UserId) }),
   });
-  const ChallengeAttempt = IDL.Record({
-    'key' : ChallengeKey,
-    'chars' : IDL.Text,
+  const ReferralMetricsResponse = IDL.Variant({
+    'Success' : IDL.Record({
+      'users_who_referred' : IDL.Nat32,
+      'users_who_referred_unpaid_diamond' : IDL.Nat32,
+      'referrals_of_unpaid_diamond' : IDL.Nat32,
+      'icp_raised_by_referrals_to_paid_diamond' : IDL.Nat32,
+      'referrals_of_paid_diamond' : IDL.Nat32,
+      'users_who_referred_paid_diamond' : IDL.Nat32,
+      'users_who_referred_90_percent_unpaid_diamond' : IDL.Nat32,
+    }),
   });
   const RegisterUserArgs = IDL.Record({
     'username' : IDL.Text,
     'public_key' : IDL.Vec(IDL.Nat8),
     'referred_by' : IDL.Opt(UserId),
-    'challenge_attempt' : ChallengeAttempt,
   });
   const RegisterUserResponse = IDL.Variant({
     'UsernameTaken' : IDL.Null,
@@ -132,7 +128,6 @@ export const idlFactory = ({ IDL }) => {
     'UserLimitReached' : IDL.Null,
     'UsernameTooLong' : IDL.Nat16,
     'Success' : UserId,
-    'ChallengeFailed' : IDL.Null,
     'PublicKeyInvalid' : IDL.Text,
     'InternalError' : IDL.Text,
     'CyclesBalanceTooLow' : IDL.Null,
@@ -258,7 +253,6 @@ export const idlFactory = ({ IDL }) => {
         [CheckUsernameResponse],
         ['query'],
       ),
-    'create_challenge' : IDL.Func([EmptyArgs], [CreateChallengeResponse], []),
     'current_user' : IDL.Func([EmptyArgs], [CurrentUserResponse], ['query']),
     'is_eligible_for_initial_airdrop' : IDL.Func(
         [EmptyArgs],
@@ -283,6 +277,11 @@ export const idlFactory = ({ IDL }) => {
     'platform_operators' : IDL.Func(
         [PlatformOperatorsArgs],
         [PlatformOperatorsResponse],
+        ['query'],
+      ),
+    'referral_metrics' : IDL.Func(
+        [EmptyArgs],
+        [ReferralMetricsResponse],
         ['query'],
       ),
     'register_user' : IDL.Func([RegisterUserArgs], [RegisterUserResponse], []),

@@ -25,7 +25,8 @@ export type MessageContent =
     | PrizeContent
     | PrizeWinnerContent
     | MessageReminderCreatedContent
-    | MessageReminderContent;
+    | MessageReminderContent
+    | CustomContent;
 
 export type IndexRange = [number, number];
 
@@ -143,6 +144,12 @@ export interface GiphyContent {
     desktop: GiphyImage; //will be "original" from the giphy api
     mobile: GiphyImage; //will be "downsized_large" from the giphy api
 }
+
+export type CustomContent = {
+    kind: "custom_content";
+    subtype: string;
+    data: unknown;
+};
 
 export type MessageReminderCreatedContent = {
     kind: "message_reminder_created_content";

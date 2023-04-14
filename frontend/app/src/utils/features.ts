@@ -1,4 +1,4 @@
 // a module for feature flag constants
 
-export const gatedGroupsEnabled = false;
-export const remindersEnabled = false;
+export const gatedGroupsEnabled = true;
+export const remindersEnabled = true;
