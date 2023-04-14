@@ -64,8 +64,8 @@ fn prepare(args: Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Re
 
     if runtime_state.data.suspended.value {
         Err(UserSuspended)
-    } else if !is_diamond_member && args.is_public {
-        Err(UnauthorizedToCreatePublicGroup)
+    // } else if !is_diamond_member && args.is_public {
+    //     Err(UnauthorizedToCreatePublicGroup)
     } else if runtime_state.data.group_chats.groups_created() >= group_creation_limit {
         Err(MaxGroupsCreated(group_creation_limit))
     } else if is_throttled() {
