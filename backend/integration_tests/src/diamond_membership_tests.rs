@@ -5,7 +5,8 @@ use crate::{client, TestEnv};
 use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
-use types::DiamondMembershipPlanDuration;
+use types::{DiamondMembershipPlanDuration, Cryptocurrency};
+use utils::consts::SNS_GOVERNANCE_CANISTER_ID;
 use utils::time::MINUTE_IN_MS;
 
 #[test]
@@ -38,6 +39,10 @@ fn can_upgrade_to_diamond() {
         DiamondMembershipPlanDuration::OneMonth,
         false,
     );
+
+    env.advance_time(Duration::from_secs(15));
+    tick_many(env, 10);
+
     assert_eq!(diamond_response.expires_at, expected_expiry);
     assert!(diamond_response.recurring.is_none());
 
@@ -50,6 +55,9 @@ fn can_upgrade_to_diamond() {
 
     let new_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user.user_id.into());
     assert_eq!(new_balance, 1_000_000_000 - 20_000_000);
+
+    let balance_treasury = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, SNS_GOVERNANCE_CANISTER_ID);
+    assert_eq!(balance_treasury, 20_000_000 - (2 * Cryptocurrency::InternetComputer.fee()) as u64);
 }
 
 #[test_case(false; "without_ledger_error")]
@@ -64,7 +72,9 @@ fn membership_renews_automatically_if_set_to_recurring(ledger_error: bool) {
 
     let start_time = now_millis(env);
 
-    let user = client::register_diamond_user(env, canister_ids, *controller);
+    let user = client::user_index::happy_path::register_user(env, canister_ids.user_index);
+
+    client::upgrade_user(&user, env, canister_ids, *controller);
 
     let one_month_millis = DiamondMembershipPlanDuration::OneMonth.as_millis();
     env.advance_time(Duration::from_millis(one_month_millis - (30 * MINUTE_IN_MS)));
@@ -88,4 +98,27 @@ fn membership_renews_automatically_if_set_to_recurring(ledger_error: bool) {
 
     let new_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user.user_id.into());
     assert_eq!(new_balance, 1_000_000_000 - 40_000_000);
+}
+
+#[test]
+fn membership_payment_shared_with_referrer() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let user_a = client::user_index::happy_path::register_user(env, canister_ids.user_index);
+    let user_b = client::user_index::happy_path::register_user_with_referrer(env, canister_ids.user_index, Some(user_a.user_id));
+
+    client::upgrade_user(&user_b, env, canister_ids, *controller);
+
+    tick_many(env, 10);
+
+    let balance_referrer = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user_a.user_id.into());
+    assert_eq!(balance_referrer, 10_000_000);
+
+    let balance_treasury = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, SNS_GOVERNANCE_CANISTER_ID);
+    assert_eq!(balance_treasury, balance_referrer - (3 * Cryptocurrency::InternetComputer.fee()) as u64);
 }
