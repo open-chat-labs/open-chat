@@ -70,7 +70,7 @@ fn commit(user_id: UserId, chat_id: ChatId, latest_message_index: Option<Message
             UserEvent::UserJoinedGroup(Box::new(user_canister::UserJoinedGroup {
                 chat_id,
                 latest_message_index,
-                })),
+            })),
         );
         crate::jobs::sync_events_to_user_canisters::start_job_if_required(runtime_state);
     } else {

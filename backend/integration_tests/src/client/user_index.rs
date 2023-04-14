@@ -42,7 +42,7 @@ pub mod happy_path {
         }
     }
     pub fn register_user(env: &mut StateMachine, canister_id: CanisterId) -> User {
-        return register_user_with_referrer(env, canister_id, None)
+        return register_user_with_referrer(env, canister_id, None);
     }
 
     pub fn register_user_with_referrer(env: &mut StateMachine, canister_id: CanisterId, referred_by: Option<UserId>) -> User {

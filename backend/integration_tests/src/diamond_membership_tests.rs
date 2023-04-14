@@ -5,7 +5,7 @@ use crate::{client, TestEnv};
 use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
-use types::{DiamondMembershipPlanDuration, Cryptocurrency};
+use types::{Cryptocurrency, DiamondMembershipPlanDuration};
 use utils::consts::SNS_GOVERNANCE_CANISTER_ID;
 use utils::time::MINUTE_IN_MS;
 
@@ -57,7 +57,10 @@ fn can_upgrade_to_diamond() {
     assert_eq!(new_balance, 1_000_000_000 - 20_000_000);
 
     let balance_treasury = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, SNS_GOVERNANCE_CANISTER_ID);
-    assert_eq!(balance_treasury, 20_000_000 - (2 * Cryptocurrency::InternetComputer.fee()) as u64);
+    assert_eq!(
+        balance_treasury,
+        20_000_000 - (2 * Cryptocurrency::InternetComputer.fee()) as u64
+    );
 }
 
 #[test_case(false; "without_ledger_error")]
@@ -110,7 +113,8 @@ fn membership_payment_shared_with_referrer() {
     } = wrapper.env();
 
     let user_a = client::user_index::happy_path::register_user(env, canister_ids.user_index);
-    let user_b = client::user_index::happy_path::register_user_with_referrer(env, canister_ids.user_index, Some(user_a.user_id));
+    let user_b =
+        client::user_index::happy_path::register_user_with_referrer(env, canister_ids.user_index, Some(user_a.user_id));
 
     client::upgrade_user(&user_b, env, canister_ids, *controller);
 
@@ -120,5 +124,8 @@ fn membership_payment_shared_with_referrer() {
     assert_eq!(balance_referrer, 10_000_000);
 
     let balance_treasury = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, SNS_GOVERNANCE_CANISTER_ID);
-    assert_eq!(balance_treasury, balance_referrer - (3 * Cryptocurrency::InternetComputer.fee()) as u64);
+    assert_eq!(
+        balance_treasury,
+        balance_referrer - (3 * Cryptocurrency::InternetComputer.fee()) as u64
+    );
 }
