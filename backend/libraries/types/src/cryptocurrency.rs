@@ -52,10 +52,10 @@ impl Cryptocurrency {
 
     pub fn ledger_canister_id(&self) -> CanisterId {
         match self {
-            Cryptocurrency::InternetComputer => Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap().into(),
-            Cryptocurrency::SNS1 => Principal::from_text("zfcdd-tqaaa-aaaaq-aaaga-cai").unwrap().into(),
-            Cryptocurrency::CKBTC => Principal::from_text("mxzaz-hqaaa-aaaar-qaada-cai").unwrap().into(),
-            Cryptocurrency::CHAT => Principal::from_text("2ouva-viaaa-aaaaq-aaamq-cai").unwrap().into(),
+            Cryptocurrency::InternetComputer => Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap(),
+            Cryptocurrency::SNS1 => Principal::from_text("zfcdd-tqaaa-aaaaq-aaaga-cai").unwrap(),
+            Cryptocurrency::CKBTC => Principal::from_text("mxzaz-hqaaa-aaaar-qaada-cai").unwrap(),
+            Cryptocurrency::CHAT => Principal::from_text("2ouva-viaaa-aaaaq-aaamq-cai").unwrap(),
         }
     }
 }
