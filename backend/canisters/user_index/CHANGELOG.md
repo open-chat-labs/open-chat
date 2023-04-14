@@ -12,6 +12,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Store `diamond_membership_expires_at` in each user canister ([#3428](https://github.com/open-ic/open-chat/pull/3428))
+- Share diamond membership payment with referrer ([#3452](https://github.com/open-ic/open-chat/pull/3452))
 
 ### Removed
 

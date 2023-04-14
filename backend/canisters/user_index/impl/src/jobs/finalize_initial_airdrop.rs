@@ -16,6 +16,7 @@ use std::cell::Cell;
 use std::time::Duration;
 use tracing::{error, trace};
 use types::{CanisterId, SnsNeuronId, TimestampMillis};
+use utils::consts::{SNS_GOVERNANCE_CANISTER_ID, SNS_LEDGER_CANISTER_ID};
 
 const MIN_NEURON_STAKE_E8S: u64 = 4_0000_0000;
 const INITIAL_AIRDROP_CUTOFF: TimestampMillis = 1681516800000; // Saturday, 15 April 2023 00:00:00 UTC
@@ -76,8 +77,8 @@ fn prepare(state: &mut RuntimeState) -> PrepareResult {
 
     PrepareResult {
         this_canister_id: state.env.canister_id(),
-        governance_canister_id: state.data.openchat_governance_canister_id,
-        ledger_canister_id: state.data.openchat_ledger_canister_id,
+        governance_canister_id: SNS_GOVERNANCE_CANISTER_ID,
+        ledger_canister_id: SNS_LEDGER_CANISTER_ID,
     }
 }
 

@@ -12,7 +12,7 @@ use model::contacts::Contacts;
 use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 use std::ops::Deref;
 use types::{Avatar, CanisterId, ChatId, Cryptocurrency, Cycles, Notification, TimestampMillis, Timestamped, UserId, Version};
 use utils::env::Environment;
@@ -125,7 +125,7 @@ impl RuntimeState {
                 group_index: self.data.group_index_canister_id,
                 local_user_index: self.data.local_user_index_canister_id,
                 notifications: self.data.notifications_canister_id,
-                icp_ledger: self.data.ledger_canister_id(&Cryptocurrency::InternetComputer),
+                icp_ledger: Cryptocurrency::InternetComputer.ledger_canister_id(),
             },
         }
     }
@@ -141,9 +141,6 @@ struct Data {
     pub local_user_index_canister_id: CanisterId,
     pub group_index_canister_id: CanisterId,
     pub notifications_canister_id: CanisterId,
-    // Remove this after next upgrade
-    #[serde(skip_deserializing, default = "initialize_ledger_ids")]
-    pub ledger_canister_ids: HashMap<Cryptocurrency, CanisterId>,
     pub avatar: Timestamped<Option<Avatar>>,
     pub test_mode: bool,
     #[serde(alias = "is_super_admin")]
@@ -162,29 +159,6 @@ struct Data {
     pub contacts: Contacts,
     #[serde(default)]
     pub diamond_membership_expires_at: Option<TimestampMillis>,
-}
-
-fn initialize_ledger_ids() -> HashMap<Cryptocurrency, CanisterId> {
-    [
-        (
-            Cryptocurrency::InternetComputer,
-            Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap(),
-        ),
-        (
-            Cryptocurrency::SNS1,
-            Principal::from_text("zfcdd-tqaaa-aaaaq-aaaga-cai").unwrap(),
-        ),
-        (
-            Cryptocurrency::CKBTC,
-            Principal::from_text("mxzaz-hqaaa-aaaar-qaada-cai").unwrap(),
-        ),
-        (
-            Cryptocurrency::CHAT,
-            Principal::from_text("2ouva-viaaa-aaaaq-aaamq-cai").unwrap(),
-        ),
-    ]
-    .into_iter()
-    .collect()
 }
 
 impl Data {
@@ -208,7 +182,6 @@ impl Data {
             local_user_index_canister_id,
             group_index_canister_id,
             notifications_canister_id,
-            ledger_canister_ids: initialize_ledger_ids(),
             avatar: Timestamped::default(),
             test_mode,
             is_platform_moderator: false,
@@ -256,13 +229,6 @@ impl Data {
             self.pinned_chats.timestamp = now;
             self.pinned_chats.value.retain(|pinned_chat_id| pinned_chat_id != chat_id);
         }
-    }
-
-    pub fn ledger_canister_id(&self, token: &Cryptocurrency) -> CanisterId {
-        self.ledger_canister_ids
-            .get(token)
-            .copied()
-            .unwrap_or_else(|| panic!("Unable to find ledger canister for token '{token:?}'"))
     }
 
     pub fn is_diamond_member(&self, now: TimestampMillis) -> bool {

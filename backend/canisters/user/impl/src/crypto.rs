@@ -29,7 +29,7 @@ async fn process_transaction_internal(
         }
 
         let my_user_id: UserId = state.env.canister_id().into();
-        let ledger_canister_id = state.data.ledger_canister_id(&transaction.token());
+        let ledger_canister_id = transaction.token().ledger_canister_id();
         let now = state.env.now_nanos();
 
         (my_user_id, ledger_canister_id, now)

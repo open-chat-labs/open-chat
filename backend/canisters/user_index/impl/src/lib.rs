@@ -9,6 +9,7 @@ use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
 use local_user_index_canister::Event as LocalUserIndexEvent;
 use model::local_user_index_map::LocalUserIndexMap;
+use model::pending_payments_queue::{PendingPayment, PendingPaymentsQueue};
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
@@ -114,6 +115,11 @@ impl RuntimeState {
         jobs::sync_events_to_local_user_index_canisters::start_job_if_required(self);
     }
 
+    pub fn queue_payment(&mut self, pending_payment: PendingPayment) {
+        self.data.pending_payments_queue.push(pending_payment);
+        jobs::make_pending_payments::start_job_if_required(self);
+    }
+
     pub fn metrics(&self) -> Metrics {
         let now = self.env.now();
         let canister_upgrades_metrics = self.data.canisters_requiring_upgrade.metrics();
@@ -172,6 +178,8 @@ struct Data {
     pub storage_index_user_sync_queue: OpenStorageUserSyncQueue,
     pub user_index_event_sync_queue: CanisterEventSyncQueue<LocalUserIndexEvent>,
     pub user_principal_migration_queue: UserPrincipalMigrationQueue,
+    #[serde(default)]
+    pub pending_payments_queue: PendingPaymentsQueue,
     pub platform_moderators: HashSet<UserId>,
     pub platform_operators: HashSet<UserId>,
     pub test_mode: bool,
@@ -186,24 +194,12 @@ struct Data {
     pub initial_airdrop_neuron_id: Option<SnsNeuronId>,
     #[serde(default)]
     pub initial_airdrop_queue: InitialAirdropQueue,
-    #[serde(default = "oc_governance_canister")]
-    pub openchat_governance_canister_id: CanisterId,
-    #[serde(default = "oc_ledger_canister")]
-    pub openchat_ledger_canister_id: CanisterId,
     #[serde(default = "internet_identity_canister")]
     pub internet_identity_canister_id: CanisterId,
 }
 
 fn true_() -> bool {
     true
-}
-
-fn oc_governance_canister() -> CanisterId {
-    Principal::from_text("2jvtu-yqaaa-aaaaq-aaama-cai").unwrap()
-}
-
-fn oc_ledger_canister() -> CanisterId {
-    Principal::from_text("2ouva-viaaa-aaaaq-aaamq-cai").unwrap()
 }
 
 fn internet_identity_canister() -> CanisterId {
@@ -239,6 +235,7 @@ impl Data {
             storage_index_user_sync_queue: OpenStorageUserSyncQueue::default(),
             user_index_event_sync_queue: CanisterEventSyncQueue::default(),
             user_principal_migration_queue: UserPrincipalMigrationQueue::default(),
+            pending_payments_queue: PendingPaymentsQueue::default(),
             platform_moderators: HashSet::new(),
             platform_operators: HashSet::new(),
             test_mode,
@@ -250,8 +247,6 @@ impl Data {
             initial_airdrop_open: false,
             initial_airdrop_neuron_id: None,
             initial_airdrop_queue: InitialAirdropQueue::default(),
-            openchat_governance_canister_id: oc_governance_canister(),
-            openchat_ledger_canister_id: oc_ledger_canister(),
             internet_identity_canister_id,
         };
 
@@ -288,6 +283,7 @@ impl Default for Data {
             storage_index_user_sync_queue: OpenStorageUserSyncQueue::default(),
             user_index_event_sync_queue: CanisterEventSyncQueue::default(),
             user_principal_migration_queue: UserPrincipalMigrationQueue::default(),
+            pending_payments_queue: PendingPaymentsQueue::default(),
             platform_moderators: HashSet::new(),
             platform_operators: HashSet::new(),
             test_mode: true,
@@ -299,8 +295,6 @@ impl Default for Data {
             initial_airdrop_open: false,
             initial_airdrop_neuron_id: None,
             initial_airdrop_queue: InitialAirdropQueue::default(),
-            openchat_governance_canister_id: oc_governance_canister(),
-            openchat_ledger_canister_id: oc_ledger_canister(),
             internet_identity_canister_id: internet_identity_canister(),
         }
     }

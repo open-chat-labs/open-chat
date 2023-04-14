@@ -2,6 +2,7 @@ use crate::RuntimeState;
 
 pub mod distribute_airdrop_neurons;
 pub mod finalize_initial_airdrop;
+pub mod make_pending_payments;
 pub mod notify_user_principal_migrations;
 pub mod sync_events_to_local_user_index_canisters;
 pub mod sync_users_to_storage_index;
@@ -14,4 +15,5 @@ pub(crate) fn start(runtime_state: &RuntimeState) {
     sync_events_to_local_user_index_canisters::start_job_if_required(runtime_state);
     sync_users_to_storage_index::start_job_if_required(runtime_state);
     upgrade_canisters::start_job_if_required(runtime_state);
+    make_pending_payments::start_job_if_required(runtime_state);
 }

@@ -11,6 +11,7 @@ use std::cell::Cell;
 use std::time::Duration;
 use tracing::{error, trace};
 use types::{CanisterId, SnsNeuronId, UserId};
+use utils::consts::SNS_GOVERNANCE_CANISTER_ID;
 
 const ALL_PERMISSIONS: [i32; 11] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
@@ -45,7 +46,7 @@ fn try_get_next(state: &mut RuntimeState) -> Option<AirdropNeuronArgs> {
         neuron_stake_e8s: e.neuron_stake_e8s,
         memo: state.env.rng().next_u64(),
         this_canister_id: state.env.canister_id(),
-        governance_canister_id: state.data.openchat_governance_canister_id,
+        governance_canister_id: SNS_GOVERNANCE_CANISTER_ID,
         source_neuron_id: state.data.initial_airdrop_neuron_id.unwrap(),
     })
 }

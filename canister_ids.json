@@ -52,19 +52,19 @@
   },
   "sns_root": {
     "ic": "3e3x2-xyaaa-aaaaq-aaalq-cai",
-    "ic_test": "tgh7o-bqaaa-aaaak-qbuoa-cai",
+    "ic_test": "tgh7o-bqaaa-aaaak-qbuoa-cai"
   },
   "sns_swap": {
     "ic": "2hx64-daaaa-aaaaq-aaana-cai",
-    "ic_test": "tbgz2-miaaa-aaaak-qbuoq-cai",
+    "ic_test": "tbgz2-miaaa-aaaak-qbuoq-cai"
   },
   "storage_index": {
     "ic": "rturd-qaaaa-aaaaf-aabaq-cai",
-    "ic_test": "6jemw-paaaa-aaaaf-ab2ea-cai",
+    "ic_test": "6jemw-paaaa-aaaaf-ab2ea-cai"
   },
   "user_index": {
     "ic": "4bkt6-4aaaa-aaaaf-aaaiq-cai",
-    "ic_test": "7njde-waaaa-aaaaf-ab2ca-cai",
+    "ic_test": "7njde-waaaa-aaaaf-ab2ca-cai"
   },
   "website": {
     "ic": "6hsbt-vqaaa-aaaaf-aaafq-cai",

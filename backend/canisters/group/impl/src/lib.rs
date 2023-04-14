@@ -10,7 +10,6 @@ use chat_events::{ChatEventInternal, ChatEvents, Reader};
 use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
-use std::collections::HashMap;
 use std::ops::Deref;
 use types::{
     Avatar, CanisterId, ChatId, Cryptocurrency, Cycles, EventIndex, FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupGate,
@@ -145,7 +144,7 @@ impl RuntimeState {
                     ic_cdk::spawn(process_new_joiner_reward(
                         self.env.canister_id(),
                         args.user_id,
-                        self.data.ledger_canister_id(&Cryptocurrency::InternetComputer),
+                        Cryptocurrency::InternetComputer.ledger_canister_id(),
                         amount,
                         args.now,
                     ));
@@ -218,7 +217,7 @@ impl RuntimeState {
                 local_group_index: self.data.local_group_index_canister_id,
                 notifications: self.data.notifications_canister_id,
                 proposals_bot: self.data.proposals_bot_user_id.into(),
-                icp_ledger: self.data.ledger_canister_id(&Cryptocurrency::InternetComputer),
+                icp_ledger: Cryptocurrency::InternetComputer.ledger_canister_id(),
             },
         }
     }
@@ -242,7 +241,6 @@ struct Data {
     pub user_index_canister_id: CanisterId,
     pub local_user_index_canister_id: CanisterId,
     pub notifications_canister_id: CanisterId,
-    pub ledger_canister_ids: HashMap<Cryptocurrency, CanisterId>,
     pub proposals_bot_user_id: UserId,
     pub activity_notification_state: ActivityNotificationState,
     pub pinned_messages: Vec<MessageIndex>,
@@ -256,29 +254,6 @@ struct Data {
     pub date_last_pinned: Option<TimestampMillis>,
     #[serde(default)]
     pub gate: Timestamped<Option<GroupGate>>,
-}
-
-fn initialize_ledger_ids() -> HashMap<Cryptocurrency, CanisterId> {
-    [
-        (
-            Cryptocurrency::InternetComputer,
-            Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap(),
-        ),
-        (
-            Cryptocurrency::SNS1,
-            Principal::from_text("zfcdd-tqaaa-aaaaq-aaaga-cai").unwrap(),
-        ),
-        (
-            Cryptocurrency::CKBTC,
-            Principal::from_text("mxzaz-hqaaa-aaaar-qaada-cai").unwrap(),
-        ),
-        (
-            Cryptocurrency::CHAT,
-            Principal::from_text("2ouva-viaaa-aaaaq-aaamq-cai").unwrap(),
-        ),
-    ]
-    .into_iter()
-    .collect()
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -327,7 +302,6 @@ impl Data {
             user_index_canister_id,
             local_user_index_canister_id,
             notifications_canister_id,
-            ledger_canister_ids: initialize_ledger_ids(),
             proposals_bot_user_id,
             activity_notification_state: ActivityNotificationState::new(now),
             pinned_messages: Vec::new(),
@@ -370,13 +344,6 @@ impl Data {
 
     pub fn is_frozen(&self) -> bool {
         self.frozen.is_some()
-    }
-
-    pub fn ledger_canister_id(&self, token: &Cryptocurrency) -> CanisterId {
-        self.ledger_canister_ids
-            .get(token)
-            .copied()
-            .unwrap_or_else(|| panic!("Unable to find ledger canister for token '{token:?}'"))
     }
 }
 
