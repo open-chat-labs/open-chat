@@ -770,7 +770,8 @@ impl ChatEvents {
         {
             if let MessageContentInternal::MessageReminderCreated(r) = &mut message.content {
                 r.hidden = true;
-                self.last_updated_timestamps.mark_updated(None, event_index, now);
+                message.last_updated = Some(now);
+                self.mark_event_updated(None, event_index, now);
                 return true;
             }
         }
