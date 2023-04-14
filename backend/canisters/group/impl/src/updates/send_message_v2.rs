@@ -52,7 +52,7 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
                 ContentValidationError::Empty => MessageEmpty,
                 ContentValidationError::TextTooLong(max_length) => TextTooLong(max_length),
                 ContentValidationError::InvalidPoll(reason) => InvalidPoll(reason),
-                ContentValidationError::TransferCannotBeZero | ContentValidationError::TransferLimitExceeded(_) => {
+                ContentValidationError::TransferCannotBeZero => {
                     unreachable!()
                 }
                 ContentValidationError::InvalidTypeForForwarding => {
