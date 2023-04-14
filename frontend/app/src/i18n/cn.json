@@ -225,9 +225,6 @@
         "userLimitReached": "已达到最大用户数",
         "createUser": "创建用户",
         "bioTooLong": "您的简介太长了",
-        "challengeAttemptFailed": "您输入的值不正确。请尝试新的挑战。",
-        "challengeThrottled": "已经产生了太多的挑战。请稍后再试。",
-        "attemptChallenge": "请输入您看到的字符",
         "closedTitle": "注册暂停",
         "closed": "由于需求量很大，新用户注册暂时关闭。我们很快将扩展到多个子网，然后将能够无限增长！"
     },

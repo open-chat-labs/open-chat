@@ -51,11 +51,9 @@ import {
     BlobReference,
     BlockUserResponse,
     CandidateGroupChat,
-    ChallengeAttempt,
     ChangeRoleResponse,
     ChatEvent,
     CheckUsernameResponse,
-    CreateChallengeResponse,
     CreatedUser,
     CreateGroupResponse,
     Cryptocurrency,
@@ -1316,16 +1314,8 @@ export class OpenChatAgent extends EventTarget {
         return this.userClient.setBio(bio);
     }
 
-    createChallenge(): Promise<CreateChallengeResponse> {
-        return this._userIndexClient.createChallenge();
-    }
-
-    registerUser(
-        username: string,
-        challengeAttempt: ChallengeAttempt,
-        referredBy: string | undefined
-    ): Promise<RegisterUserResponse> {
-        return this._userIndexClient.registerUser(username, challengeAttempt, referredBy);
+    registerUser(username: string, referredBy: string | undefined): Promise<RegisterUserResponse> {
+        return this._userIndexClient.registerUser(username, referredBy);
     }
 
     getUserStorageLimits(): Promise<StorageStatus> {

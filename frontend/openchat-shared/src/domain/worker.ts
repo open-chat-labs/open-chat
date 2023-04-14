@@ -62,9 +62,7 @@ import type { UpdateMarketMakerConfigArgs, UpdateMarketMakerConfigResponse } fro
 import type { ToggleMuteNotificationResponse } from "./notifications";
 import type {
     ArchiveChatResponse,
-    ChallengeAttempt,
     CheckUsernameResponse,
-    CreateChallengeResponse,
     CreatedUser,
     CurrentUserResponse,
     MigrateUserPrincipalResponse,
@@ -117,7 +115,6 @@ export type WorkerRequest =
     | PushSub
     | RemoveSub
     | SubscriptionExists
-    | CreateChallenge
     | RegisterUser
     | EditMessage
     | SendMessage
@@ -398,13 +395,8 @@ type SubscriptionExists = Request<{
     kind: "subscriptionExists";
 };
 
-type CreateChallenge = Request & {
-    kind: "createChallenge";
-};
-
 type RegisterUser = Request<{
     username: string;
-    challengeAttempt: ChallengeAttempt;
     referredBy: string | undefined;
 }> & {
     kind: "registerUser";
@@ -880,7 +872,6 @@ export type WorkerResponse =
     | Response<RemoveMemberResponse>
     | Response<boolean>
     | Response<RegisterUserResponse>
-    | Response<CreateChallengeResponse>
     | Response<EditMessageResponse>
     | Response<[SendMessageResponse, Message]>
     | Response<UnpinMessageResponse>

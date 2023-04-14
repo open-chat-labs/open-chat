@@ -247,9 +247,7 @@ import {
     type RemoteUserSentMessage,
     type CheckUsernameResponse,
     type UserSummary,
-    type ChallengeAttempt,
     type RegisterUserResponse,
-    type CreateChallengeResponse,
     type CurrentUserResponse,
     type AddMembersResponse,
     type RemoveMemberResponse,
@@ -2559,6 +2557,7 @@ export class OpenChat extends EventTarget {
                             trackEvent("replied_to_message");
                         }
                     } else {
+                        console.log("Failed: ", resp);
                         this.removeMessage(
                             chat.kind,
                             chatId,
@@ -2924,20 +2923,13 @@ export class OpenChat extends EventTarget {
         return captured;
     }
 
-    registerUser(
-        username: string,
-        challengeAttempt: ChallengeAttempt
-    ): Promise<RegisterUserResponse> {
-        return this.api.registerUser(username, challengeAttempt, this._referredBy).then((res) => {
+    registerUser(username: string): Promise<RegisterUserResponse> {
+        return this.api.registerUser(username, this._referredBy).then((res) => {
             if (res === "success") {
                 localStorage.removeItem("openchat_referredby");
             }
             return res;
         });
-    }
-
-    createChallenge(): Promise<CreateChallengeResponse> {
-        return this.api.createChallenge();
     }
 
     getCurrentUser(): Promise<CurrentUserResponse> {

@@ -2,7 +2,6 @@ import {
     CheckUsernameResponse,
     SetUsernameResponse,
     CurrentUserResponse,
-    CreateChallengeResponse,
     UsersResponse,
     UserSummary,
     PartialUserSummary,
@@ -22,7 +21,6 @@ import {
 } from "openchat-shared";
 import type {
     ApiCheckUsernameResponse,
-    ApiCreateChallengeResponse,
     ApiCurrentUserResponse,
     ApiDiamondMembershipDetails,
     ApiDiamondMembershipPlanDuration,
@@ -96,28 +94,6 @@ export function userSummary(candid: ApiUserSummary, timestamp: bigint): UserSumm
     };
 }
 
-export function createChallengeResponse(
-    candid: ApiCreateChallengeResponse
-): CreateChallengeResponse {
-    if ("Throttled" in candid) {
-        return { kind: "throttled" };
-    }
-    if ("Success" in candid) {
-        return {
-            kind: "challenge",
-            key: candid.Success.key,
-            pngBase64: candid.Success.png_base64,
-        };
-    }
-    if ("NotRequired" in candid) {
-        return {
-            kind: "not_required"
-        };
-    }
-
-    throw new UnsupportedValueError("Unexpected ApiCreateChallengeResponse type received", candid);
-}
-
 export function registerUserResponse(candid: ApiRegisterUserResponse): RegisterUserResponse {
     if ("UsernameTaken" in candid) {
         return "username_taken";
@@ -148,9 +124,6 @@ export function registerUserResponse(candid: ApiRegisterUserResponse): RegisterU
     }
     if ("CyclesBalanceTooLow" in candid) {
         return "cycles_balance_too_low";
-    }
-    if ("ChallengeFailed" in candid) {
-        return "challenge_failed";
     }
     if ("PublicKeyInvalid" in candid) {
         return "public_key_invalid";

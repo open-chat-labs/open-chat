@@ -282,9 +282,6 @@
         "bioTooLong": "Ihre Biografie ist zu lang",
         "userLimitReached": "Das Benutzerlimit wurde erreicht",
         "createUser": "Benutzer erstellen",
-        "challengeAttemptFailed": "Der eingegebene Wert ist falsch. Bitte versuchen Sie die neue Herausforderung.",
-        "challengeThrottled": "Es wurden zu viele Herausforderungen generiert. Bitte versuchen Sie es später erneut.",
-        "attemptChallenge": "Bitte geben Sie die angezeigten Zeichen ein",
         "closedTitle": "Registrierung pausiert",
         "closed": "Aufgrund der sehr hohen Nachfrage sind die Registrierungen neuer Benutzer vorübergehend geschlossen. Wir werden bald über mehrere Subnetze skalieren und können dann unbegrenzt wachsen!"
     },

@@ -53,8 +53,6 @@ import {
     User,
     EditMessageResponse,
     RegisterUserResponse,
-    ChallengeAttempt,
-    CreateChallengeResponse,
     AddMembersResponse,
     RemoveMemberResponse,
     MemberRole,
@@ -907,25 +905,13 @@ export class OpenChatAgentWorker extends EventTarget {
         });
     }
 
-    registerUser(
-        username: string,
-        challengeAttempt: ChallengeAttempt,
-        referredBy: string | undefined
-    ): Promise<RegisterUserResponse> {
+    registerUser(username: string, referredBy: string | undefined): Promise<RegisterUserResponse> {
         return this.sendRequest({
             kind: "registerUser",
             payload: {
                 username,
-                challengeAttempt,
                 referredBy,
             },
-        });
-    }
-
-    createChallenge(): Promise<CreateChallengeResponse> {
-        return this.sendRequest({
-            kind: "createChallenge",
-            payload: undefined,
         });
     }
 

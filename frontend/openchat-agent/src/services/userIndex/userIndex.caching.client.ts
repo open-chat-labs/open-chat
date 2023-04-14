@@ -1,8 +1,6 @@
 import type { IUserIndexClient } from "./userIndex.client.interface";
 import type {
-    ChallengeAttempt,
     CheckUsernameResponse,
-    CreateChallengeResponse,
     CurrentUserResponse,
     PartialUserSummary,
     RegisterUserResponse,
@@ -74,16 +72,8 @@ export class CachingUserIndexClient implements IUserIndexClient {
         return this.client.getCurrentUser();
     }
 
-    createChallenge(): Promise<CreateChallengeResponse> {
-        return this.client.createChallenge();
-    }
-
-    registerUser(
-        username: string,
-        challengeAttempt: ChallengeAttempt,
-        referredBy: string | undefined
-    ): Promise<RegisterUserResponse> {
-        return this.client.registerUser(username, challengeAttempt, referredBy);
+    registerUser(username: string, referredBy: string | undefined): Promise<RegisterUserResponse> {
+        return this.client.registerUser(username, referredBy);
     }
 
     searchUsers(searchTerm: string, maxResults?: number): Promise<UserSummary[]> {

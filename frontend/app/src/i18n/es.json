@@ -276,9 +276,6 @@
         "userLimitReached": "El usuario ha alcanzado el limite",
         "createUser": "Crear usuario",
         "confirm": "Confirmar",
-        "challengeAttemptFailed": "El valor que ingresó es incorrecto. Prueba el nuevo desafío.",
-        "challengeThrottled": "Se han generado demasiados desafíos. Por favor, inténtelo de nuevo más tarde.",
-        "attemptChallenge": "Por favor escriba los caracteres que ve",
         "closedTitle": "Registro en pausa",
         "closed": "Debido a la gran demanda, los registros de nuevos usuarios están cerrados temporalmente. ¡Pronto escalaremos a través de múltiples subredes y luego podremos crecer indefinidamente!"
     },
