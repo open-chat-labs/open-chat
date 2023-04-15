@@ -20,7 +20,7 @@ thread_local! {
 
 pub(crate) fn start_job_if_required(runtime_state: &RuntimeState) -> bool {
     if TIMER_ID.with(|t| t.get().is_none()) && !runtime_state.data.initial_airdrop_queue.is_empty() {
-        let timer_id = ic_cdk_timers::set_timer_interval(Duration::from_secs(1), run);
+        let timer_id = ic_cdk_timers::set_timer_interval(Duration::from_secs(2), run);
         TIMER_ID.with(|t| t.set(Some(timer_id)));
         trace!("'distribute_airdrop_neurons' job started");
         true
@@ -30,24 +30,42 @@ pub(crate) fn start_job_if_required(runtime_state: &RuntimeState) -> bool {
 }
 
 pub fn run() {
-    if let Some(args) = mutate_state(try_get_next) {
-        ic_cdk::spawn(process_next(args));
-    } else if let Some(timer_id) = TIMER_ID.with(|t| t.take()) {
-        ic_cdk_timers::clear_timer(timer_id);
-        trace!("'distribute_airdrop_neurons' job stopped");
+    match mutate_state(try_get_next) {
+        GetNextResult::Success(args) => {
+            ic_cdk::spawn(process_next(args));
+        }
+        GetNextResult::Continue => {}
+        GetNextResult::QueueEmpty => {
+            if let Some(timer_id) = TIMER_ID.with(|t| t.take()) {
+                ic_cdk_timers::clear_timer(timer_id);
+                trace!("'distribute_airdrop_neurons' job stopped");
+            }
+        }
     }
 }
 
-fn try_get_next(state: &mut RuntimeState) -> Option<AirdropNeuronArgs> {
-    state.data.initial_airdrop_queue.take_next().map(|e| AirdropNeuronArgs {
-        user_id: e.user_id,
-        neuron_controller: e.neuron_controller,
-        neuron_stake_e8s: e.neuron_stake_e8s,
-        memo: state.env.rng().next_u64(),
-        this_canister_id: state.env.canister_id(),
-        governance_canister_id: state.data.openchat_governance_canister_id,
-        source_neuron_id: state.data.initial_airdrop_neuron_id.unwrap(),
-    })
+enum GetNextResult {
+    Success(AirdropNeuronArgs),
+    Continue,
+    QueueEmpty,
+}
+
+fn try_get_next(state: &mut RuntimeState) -> GetNextResult {
+    if !state.data.initial_airdrop_queue.can_start_next() {
+        GetNextResult::Continue
+    } else if let Some(next) = state.data.initial_airdrop_queue.take_next() {
+        GetNextResult::Success(AirdropNeuronArgs {
+            user_id: next.user_id,
+            neuron_controller: next.neuron_controller,
+            neuron_stake_e8s: next.neuron_stake_e8s,
+            memo: state.env.rng().next_u64(),
+            this_canister_id: state.env.canister_id(),
+            governance_canister_id: state.data.openchat_governance_canister_id,
+            source_neuron_id: state.data.initial_airdrop_neuron_id.unwrap(),
+        })
+    } else {
+        GetNextResult::QueueEmpty
+    }
 }
 
 async fn process_next(args: AirdropNeuronArgs) {
@@ -76,6 +94,10 @@ async fn airdrop_neuron_to_user(args: AirdropNeuronArgs) -> CallResult<SnsNeuron
         args.memo,
     )
     .await?;
+
+    // We can start the next one once the split is complete because from that point on the actions
+    // act on a new neuron
+    mutate_state(|state| state.data.initial_airdrop_queue.mark_split_complete());
 
     add_all_permissions(args.governance_canister_id, neuron_id, args.neuron_controller).await?;
     remove_all_permissions(args.governance_canister_id, neuron_id, args.this_canister_id).await?;
