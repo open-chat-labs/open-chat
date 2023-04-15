@@ -87,17 +87,19 @@ async fn process_next(args: AirdropNeuronArgs) {
 }
 
 async fn airdrop_neuron_to_user(args: AirdropNeuronArgs) -> CallResult<SnsNeuronId> {
-    let neuron_id = split(
+    let split_result = split(
         args.governance_canister_id,
         args.source_neuron_id,
         args.neuron_stake_e8s,
         args.memo,
     )
-    .await?;
+    .await;
 
     // We can start the next one once the split is complete because from that point on the actions
     // act on a new neuron
     mutate_state(|state| state.data.initial_airdrop_queue.mark_split_complete());
+
+    let neuron_id = split_result?;
 
     add_all_permissions(args.governance_canister_id, neuron_id, args.neuron_controller).await?;
     remove_all_permissions(args.governance_canister_id, neuron_id, args.this_canister_id).await?;
