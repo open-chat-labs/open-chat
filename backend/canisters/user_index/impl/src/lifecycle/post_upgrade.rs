@@ -19,9 +19,7 @@ fn post_upgrade(args: Args) {
     let memory = get_upgrades_memory();
     let reader = BufferedReader::new(UPGRADE_BUFFER_SIZE, Reader::new(&memory, 0));
 
-    let (mut data, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>) = serializer::deserialize(reader).unwrap();
-
-    data.initial_airdrop_queue.retry_failed();
+    let (data, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>) = serializer::deserialize(reader).unwrap();
 
     // for user in data.users.iter() {
     //     let now = env.now();
