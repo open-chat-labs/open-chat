@@ -40,9 +40,9 @@ fn referral_metrics_impl(runtime_state: &RuntimeState) -> Response {
     let mut user_referrals: Vec<ReferralData> = user_referrals_map.into_values().collect();
     user_referrals.sort_unstable_by_key(|u| Reverse(u.unpaid_diamond));
 
+    let mut users_who_referred: u32 = 0;
     let mut users_who_referred_paid_diamond: u32 = 0;
     let mut users_who_referred_unpaid_diamond: u32 = 0;
-    let mut users_who_referred: u32= 0;
     let mut referrals_of_paid_diamond: u32 = 0;
     let mut referrals_of_unpaid_diamond: u32 = 0;
     let mut referrals_other: u32 = 0;
