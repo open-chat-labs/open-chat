@@ -16,7 +16,6 @@ pub mod remove_platform_moderator;
 pub mod remove_platform_operator;
 pub mod remove_sms_messages;
 pub mod set_max_concurrent_user_canister_upgrades;
-pub mod set_neuron_controller_for_initial_airdrop;
 pub mod set_user_upgrade_concurrency;
 pub mod set_username;
 pub mod suspend_user;

@@ -24,7 +24,6 @@
     export let user: PartialUserSummary;
 
     $: canExtendDiamond = client.canExtendDiamond;
-    $: eligibleForAirdrop = client.eligibleForInitialAirdrop;
 
     function newGroup() {
         dispatch("newGroup");
