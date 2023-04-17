@@ -190,11 +190,13 @@ fn referrer_to_share_payment(user_id: UserId, runtime_state: &RuntimeState) -> O
         let diamond_membership = &user.diamond_membership_details;
 
         if let Some(referred_by) = user.referred_by {
-            let one_year = DiamondMembershipPlanDuration::OneYear.as_millis();
-            let year_from_joined = user.date_created + one_year;
-            let threshold = if diamond_membership.is_active(now) { diamond_membership.expires_at().unwrap() } else { now };
-            if threshold < year_from_joined {
-                return Some(referred_by);
+            if diamond_membership.is_active(now) {
+                let one_year = DiamondMembershipPlanDuration::OneYear.as_millis();
+                let year_from_joined = user.date_created + one_year;
+                let threshold = if diamond_membership.is_active(now) { diamond_membership.expires_at().unwrap() } else { now };
+                if threshold < year_from_joined {
+                    return Some(referred_by);
+                }
             }
         }
     }
