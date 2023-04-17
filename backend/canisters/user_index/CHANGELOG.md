@@ -9,14 +9,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Added `referral_metrics` endpoint ([#3429](https://github.com/open-ic/open-chat/pull/3429))
 
-### Changed
-
-- Store `diamond_membership_expires_at` in each user canister ([#3428](https://github.com/open-ic/open-chat/pull/3428))
-
 ### Removed
 
 - Removed `c2c_lookup_principal` ([#3414](https://github.com/open-ic/open-chat/pull/3414))
 - Remove CAPTCHA and instead verify public key is derived from II canister ([#3426](https://github.com/open-ic/open-chat/pull/3426))
+
+### Fixed
+
+- Ensure only one airdrop neuron is created at a time ([#3458](https://github.com/open-ic/open-chat/pull/3458))
 
 ## [[2.0.656](https://github.com/open-ic/open-chat/releases/tag/v2.0.656-user_index)] - 2023-04-05
 
