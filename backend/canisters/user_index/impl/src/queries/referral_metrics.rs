@@ -40,7 +40,7 @@ fn referral_metrics_impl(runtime_state: &RuntimeState) -> Response {
     let mut user_referrals: Vec<ReferralData> = user_referrals_map.into_values().collect();
     user_referrals.sort_unstable_by_key(|u| Reverse(u.unpaid_diamond));
 
-    let mut users_who_referred_diamond: u32 = 0;
+    let mut users_who_referred: u32 = 0;
     let mut users_who_referred_paid_diamond: u32 = 0;
     let mut users_who_referred_unpaid_diamond: u32 = 0;
     let mut referrals_of_paid_diamond: u32 = 0;
@@ -49,7 +49,7 @@ fn referral_metrics_impl(runtime_state: &RuntimeState) -> Response {
     let mut icp_raised_by_referrals_to_paid_diamond_e8s: u64 = 0;
 
     for data in user_referrals.iter() {
-        users_who_referred_diamond += 1;
+        users_who_referred += 1;
         icp_raised_by_referrals_to_paid_diamond_e8s += data.icp_raised_for_paid_diamond_e8s;
         if data.paid_diamond > 0 {
             users_who_referred_paid_diamond += 1;
@@ -60,7 +60,7 @@ fn referral_metrics_impl(runtime_state: &RuntimeState) -> Response {
             referrals_of_unpaid_diamond += data.unpaid_diamond;
         }
         if data.other > 0 {
-            referrals_other += 1;
+            referrals_other += data.other;
         }
     }
 
@@ -78,7 +78,7 @@ fn referral_metrics_impl(runtime_state: &RuntimeState) -> Response {
     }
 
     Success(ReferralMetrics {
-        users_who_referred_diamond,
+        users_who_referred,
         users_who_referred_paid_diamond,
         users_who_referred_unpaid_diamond,
         users_who_referred_90_percent_unpaid_diamond,

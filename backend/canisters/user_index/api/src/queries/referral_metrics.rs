@@ -11,7 +11,7 @@ pub enum Response {
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct ReferralMetrics {
-    pub users_who_referred_diamond: u32,
+    pub users_who_referred: u32,
     pub users_who_referred_paid_diamond: u32,
     pub users_who_referred_unpaid_diamond: u32,
     pub users_who_referred_90_percent_unpaid_diamond: u32,

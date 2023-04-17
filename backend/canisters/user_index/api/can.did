@@ -273,6 +273,7 @@ type ReferralMetricsResponse =
             users_who_referred_90_percent_unpaid_diamond: nat32;
             referrals_of_paid_diamond: nat32;
             referrals_of_unpaid_diamond: nat32;
+            referrals_other: nat32;
             icp_raised_by_referrals_to_paid_diamond: nat32;
         };
     };
