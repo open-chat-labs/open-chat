@@ -174,7 +174,11 @@ fn send_message_impl(
             content: args.content.into(),
             replies_to: args.replies_to.and_then(|r| {
                 if let Some((chat_id, thread_root_message_index)) = r.event_list_if_other {
-                    Some(C2CReplyContext::OtherEventList(chat_id, thread_root_message_index, r.event_index))
+                    Some(C2CReplyContext::OtherEventList(
+                        chat_id,
+                        thread_root_message_index,
+                        r.event_index,
+                    ))
                 } else {
                     runtime_state
                         .data
