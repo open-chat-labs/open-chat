@@ -73,12 +73,6 @@ export const idlFactory = ({ IDL }) => {
     }),
     'UserNotFound' : IDL.Null,
   });
-  const IsEligibleForInitialAirdropResponse = IDL.Variant({
-    'No' : IDL.Null,
-    'Yes' : IDL.Opt(IDL.Principal),
-    'AirdropClosed' : IDL.Null,
-    'UserNotFound' : IDL.Null,
-  });
   const MarkSuspectedBotArgs = IDL.Record({});
   const MarkSuspectedBotResponse = IDL.Variant({ 'Success' : IDL.Null });
   const Cryptocurrency = IDL.Variant({
@@ -163,15 +157,6 @@ export const idlFactory = ({ IDL }) => {
       'timestamp' : TimestampMillis,
       'users' : IDL.Vec(UserSummary),
     }),
-  });
-  const SetNeuronControllerForInitialAirdropArgs = IDL.Record({
-    'controller' : IDL.Principal,
-  });
-  const SetNeuronControllerForInitialAirdropResponse = IDL.Variant({
-    'AirdropClosed' : IDL.Null,
-    'UserNotEligible' : IDL.Null,
-    'Success' : IDL.Null,
-    'UserNotFound' : IDL.Null,
   });
   const SetUserUpgradeConcurrencyArgs = IDL.Record({ 'value' : IDL.Nat32 });
   const SetUserUpgradeConcurrencyResponse = IDL.Variant({
@@ -260,11 +245,6 @@ export const idlFactory = ({ IDL }) => {
       ),
     'create_challenge' : IDL.Func([EmptyArgs], [CreateChallengeResponse], []),
     'current_user' : IDL.Func([EmptyArgs], [CurrentUserResponse], ['query']),
-    'is_eligible_for_initial_airdrop' : IDL.Func(
-        [EmptyArgs],
-        [IsEligibleForInitialAirdropResponse],
-        ['query'],
-      ),
     'mark_suspected_bot' : IDL.Func(
         [MarkSuspectedBotArgs],
         [MarkSuspectedBotResponse],
@@ -297,11 +277,6 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'search' : IDL.Func([SearchArgs], [SearchResponse], ['query']),
-    'set_neuron_controller_for_initial_airdrop' : IDL.Func(
-        [SetNeuronControllerForInitialAirdropArgs],
-        [SetNeuronControllerForInitialAirdropResponse],
-        [],
-      ),
     'set_user_upgrade_concurrency' : IDL.Func(
         [SetUserUpgradeConcurrencyArgs],
         [SetUserUpgradeConcurrencyResponse],

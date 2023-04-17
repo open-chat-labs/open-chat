@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Removed
+
+- Remove code to handle the initial airdrop ([#3462](https://github.com/open-ic/open-chat/pull/3462))
+
 ### Fixed
 
 - Fix `referral_metrics` endpoint ([#3461](https://github.com/open-ic/open-chat/pull/3461))

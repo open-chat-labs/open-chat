@@ -22,8 +22,6 @@ import {
     DiamondMembershipDetails,
     DiamondMembershipPlanDuration,
     PayForDiamondMembershipResponse,
-    IsEligibleForInitialAirdropResponse,
-    SetNeuronControllerForInitialAirdropResponse,
 } from "./types";
 export {
     _SERVICE as UserIndexService,
@@ -47,8 +45,6 @@ export {
     DiamondMembershipDetails as ApiDiamondMembershipDetails,
     DiamondMembershipPlanDuration as ApiDiamondMembershipPlanDuration,
     PayForDiamondMembershipResponse as ApiPayForDiamondMembershipResponse,
-    IsEligibleForInitialAirdropResponse as ApiIsEligibleForInitialAirdropResponse,
-    SetNeuronControllerForInitialAirdropResponse as ApiSetNeuronControllerForInitialAirdropResponse,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

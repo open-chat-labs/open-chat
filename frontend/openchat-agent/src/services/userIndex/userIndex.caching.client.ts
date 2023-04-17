@@ -18,8 +18,6 @@ import type {
     DiamondMembershipDuration,
     PayForDiamondMembershipResponse,
     SetUserUpgradeConcurrencyResponse,
-    SetNeuronControllerResponse,
-    EligibleForInitialAirdropResponse,
 } from "openchat-shared";
 import { groupBy } from "../../utils/list";
 import { profile } from "../common/profiling";
@@ -217,13 +215,5 @@ export class CachingUserIndexClient implements IUserIndexClient {
 
     setUserUpgradeConcurrency(value: number): Promise<SetUserUpgradeConcurrencyResponse> {
         return this.client.setUserUpgradeConcurrency(value);
-    }
-
-    isEligibleForInitialAirdrop(): Promise<EligibleForInitialAirdropResponse> {
-        return this.client.isEligibleForInitialAirdrop();
-    }
-
-    setNeuronControllerForInitialAirdrop(principal: string): Promise<SetNeuronControllerResponse> {
-        return this.client.setNeuronControllerForInitialAirdrop(principal);
     }
 }

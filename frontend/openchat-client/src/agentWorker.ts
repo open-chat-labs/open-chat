@@ -96,8 +96,6 @@ import {
     SetUserUpgradeConcurrencyResponse,
     UpdateMarketMakerConfigArgs,
     UpdateMarketMakerConfigResponse,
-    SetNeuronControllerResponse,
-    EligibleForInitialAirdropResponse,
     GroupGate,
     ProposalVoteDetails,
     SetMessageReminderResponse,
@@ -1379,20 +1377,6 @@ export class OpenChatAgentWorker extends EventTarget {
         return this.sendRequest({
             kind: "updateMarketMakerConfig",
             payload: config,
-        });
-    }
-
-    isEligibleForInitialAirdrop(): Promise<EligibleForInitialAirdropResponse> {
-        return this.sendRequest({
-            kind: "isEligibleForInitialAirdrop",
-            payload: {},
-        });
-    }
-
-    setNeuronControllerForInitialAirdrop(principal: string): Promise<SetNeuronControllerResponse> {
-        return this.sendRequest({
-            kind: "setNeuronControllerForInitialAirdrop",
-            payload: principal,
         });
     }
 
