@@ -1005,8 +1005,6 @@
             <NewGroup on:upgrade={upgrade} {candidateGroup} on:close={closeModal} />
         {:else if modal === ModalType.Wallet}
             <AccountsModal on:close={closeModal} />
-        {:else if modal === ModalType.AirdropPrompt}
-            <AirdropModal on:close={closeModal} />
         {/if}
     </Overlay>
 {/if}
