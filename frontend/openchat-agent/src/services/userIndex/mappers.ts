@@ -16,20 +16,16 @@ import {
     DiamondMembershipDuration,
     PayForDiamondMembershipResponse,
     Cryptocurrency,
-    SetNeuronControllerResponse,
-    EligibleForInitialAirdropResponse,
 } from "openchat-shared";
 import type {
     ApiCheckUsernameResponse,
     ApiCurrentUserResponse,
     ApiDiamondMembershipDetails,
     ApiDiamondMembershipPlanDuration,
-    ApiIsEligibleForInitialAirdropResponse,
     ApiPartialUserSummary,
     ApiPayForDiamondMembershipResponse,
     ApiRegisterUserResponse,
     ApiSearchResponse,
-    ApiSetNeuronControllerForInitialAirdropResponse,
     ApiSetUsernameResponse,
     ApiSuspendUserResponse,
     ApiSuspensionAction,
@@ -130,48 +126,6 @@ export function registerUserResponse(candid: ApiRegisterUserResponse): RegisterU
     }
 
     throw new UnsupportedValueError("Unexpected ApiRegisterUserResponse type received", candid);
-}
-
-export function setNeuronControllerResponse(
-    candid: ApiSetNeuronControllerForInitialAirdropResponse
-): SetNeuronControllerResponse {
-    if ("Success" in candid) {
-        return "success";
-    }
-
-    if ("UserNotFound" in candid) {
-        return "user_not_found";
-    }
-
-    if ("UserNotEligible" in candid) {
-        return "user_not_eligible";
-    }
-
-    if ("AirdropClosed" in candid) {
-        return "airdrop_closed";
-    }
-
-    throw new Error(
-        `Unexpected ApiSetNeuronControllerForInitialAirdropResponse type received: ${candid}`
-    );
-}
-
-export function isEligibleForInitialAirdropResponse(
-    candid: ApiIsEligibleForInitialAirdropResponse
-): EligibleForInitialAirdropResponse {
-    if ("Yes" in candid) {
-        return { kind: "user_eligible", principal: optional(candid.Yes, (p) => p.toString()) };
-    }
-    if ("No" in candid) {
-        return { kind: "user_not_eligible" };
-    }
-    if ("AirdropClosed" in candid) {
-        return { kind: "airdrop_closed" };
-    }
-    if ("UserNotFound" in candid) {
-        return { kind: "unknown_user" };
-    }
-    throw new Error(`Unexpected ApiIsEligibleForInitialAirdropResponse type received: ${candid}`);
 }
 
 export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUserResponse {

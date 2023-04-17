@@ -82,8 +82,6 @@ import type {
     UnsuspendUserResponse,
     DiamondMembershipDuration,
     PayForDiamondMembershipResponse,
-    SetNeuronControllerResponse,
-    EligibleForInitialAirdropResponse,
     SetMessageReminderResponse,
 } from "./user";
 import type {
@@ -201,8 +199,6 @@ export type WorkerRequest =
     | SetGroupUpgradeConcurrency
     | SetUserUpgradeConcurrency
     | UpdateMarketMakerConfig
-    | IsEligibleForInitialAirdrop
-    | SetNeuronControllerForAirdrop
     | SetMessageReminder
     | CancelMessageReminder;
 
@@ -931,8 +927,6 @@ export type WorkerResponse =
     | Response<PayForDiamondMembershipResponse>
     | Response<ClaimPrizeResponse>
     | Response<UpdateMarketMakerConfigResponse>
-    | Response<SetNeuronControllerResponse>
-    | Response<EligibleForInitialAirdropResponse>
     | Response<SetMessageReminderResponse>;
 
 type Response<T> = {
@@ -1001,14 +995,6 @@ type PayForDiamondMembership = Request<{
 
 type UpdateMarketMakerConfig = Request<UpdateMarketMakerConfigArgs> & {
     kind: "updateMarketMakerConfig";
-};
-
-type IsEligibleForInitialAirdrop = Request & {
-    kind: "isEligibleForInitialAirdrop";
-};
-
-type SetNeuronControllerForAirdrop = Request<string> & {
-    kind: "setNeuronControllerForInitialAirdrop";
 };
 
 type SetMessageReminder = Request<{

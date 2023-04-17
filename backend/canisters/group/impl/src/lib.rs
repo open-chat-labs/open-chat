@@ -254,7 +254,6 @@ struct Data {
     pub frozen: Timestamped<Option<FrozenGroupInfo>>,
     pub timer_jobs: TimerJobs<TimerJob>,
     pub date_last_pinned: Option<TimestampMillis>,
-    #[serde(default)]
     pub gate: Timestamped<Option<GroupGate>>,
 }
 

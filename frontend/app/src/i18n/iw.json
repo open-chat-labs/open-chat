@@ -763,18 +763,6 @@
     "demoteFailed": "לא ניתן לרדת בדרגה ל-{role}",
     "ownerCantLeave": "עליך להוסיף בעלים נוסף לפני שתוכל לעזוב את הקבוצה",
     "participant": "חבר",
-    "airdrop": {
-        "register": "הרשמה ל-airdrop",
-        "placeholder": "מנהל NNS...",
-        "submit": "שלח",
-        "success": "תודה - נרשמת בהצלחה ל-airdrop",
-        "failure": "מצטערים - לא הצלחנו לרשום אותך להורדת האוויר",
-        "showHow": "תראה לי איך",
-        "howTo": "כיצד למצוא את מנהל ה-NNS שלך",
-        "info": "אם אתה עושה טעות, אתה יכול לשלוח מחדש את המנהל הנכון דרך התפריט הראשי.",
-        "back": "חזור",
-        "pleaseSubmit": "כדי לקבל את ה-airdrop שלך, אנא שלח את המנהל של [NNS dApp](https://nns.ic0.app) למטה לפני {cutoff}."
-    },
     "unauthorizedToCreatePublicGroup": "אינך מורשה ליצור קבוצות ציבוריות",
     "reminders": {
         "optional": "אופציונאלי",

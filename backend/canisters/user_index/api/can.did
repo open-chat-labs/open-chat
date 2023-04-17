@@ -273,6 +273,7 @@ type ReferralMetricsResponse =
             users_who_referred_90_percent_unpaid_diamond: nat32;
             referrals_of_paid_diamond: nat32;
             referrals_of_unpaid_diamond: nat32;
+            referrals_other: nat32;
             icp_raised_by_referrals_to_paid_diamond: nat32;
         };
     };
@@ -285,27 +286,6 @@ type SetUserUpgradeConcurrencyArgs =
 type SetUserUpgradeConcurrencyResponse =
     variant {
         Success;
-    };
-
-type IsEligibleForInitialAirdropResponse =
-    variant {
-        Yes: opt principal;
-        No;
-        AirdropClosed;
-        UserNotFound;
-    };
-
-type SetNeuronControllerForInitialAirdropArgs =
-    record {
-        controller: principal
-    };
-
-type SetNeuronControllerForInitialAirdropResponse =
-    variant {
-        Success;
-        AirdropClosed;
-        UserNotEligible;
-        UserNotFound;
     };
 
 service: {
@@ -352,8 +332,4 @@ service: {
 
     // Only callable by "platform operators"
     set_user_upgrade_concurrency: (SetUserUpgradeConcurrencyArgs) -> (SetUserUpgradeConcurrencyResponse);
-
-    // Temporary endpoints for the initial airdrop
-    is_eligible_for_initial_airdrop: (EmptyArgs) -> (IsEligibleForInitialAirdropResponse) query;
-    set_neuron_controller_for_initial_airdrop: (SetNeuronControllerForInitialAirdropArgs) -> (SetNeuronControllerForInitialAirdropResponse);
 }

@@ -766,18 +766,6 @@
     "demoteFailed": "No se puede degradar a {role}",
     "ownerCantLeave": "Debes agregar otro propietario antes de poder abandonar el grupo.",
     "participant": "miembro",
-    "airdrop": {
-        "register": "Regístrese para lanzamiento aéreo",
-        "placeholder": "directora de NNS...",
-        "submit": "Entregar",
-        "success": "Gracias, te has registrado con éxito en el airdrop.",
-        "failure": "Lo sentimos, no pudimos registrarlo para el airdrop",
-        "showHow": "Muéstrame cómo",
-        "howTo": "Cómo encontrar a su director de NNS",
-        "info": "Si comete un error, puede volver a enviar el principal correcto a través del menú principal.",
-        "back": "Atrás",
-        "pleaseSubmit": "Para recibir su airdrop, envíe su principal [NNS dApp](https://nns.ic0.app) a continuación antes de {cutoff}."
-    },
     "unauthorizedToCreatePublicGroup": "No tienes autorización para crear grupos públicos.",
     "reminders": {
         "optional": "Opcional",

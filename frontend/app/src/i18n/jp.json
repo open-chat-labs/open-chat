@@ -766,18 +766,6 @@
     "demoteFailed": "{role} に降格できません",
     "ownerCantLeave": "グループを退会するには、別の所有者を追加する必要があります",
     "participant": "メンバー",
-    "airdrop": {
-        "register": "エアドロップに登録する",
-        "placeholder": "NNSプリンシパル...",
-        "submit": "送信",
-        "success": "ありがとう - エアドロップへの登録が完了しました",
-        "failure": "申し訳ありませんが、エアドロップに登録できませんでした",
-        "showHow": "どうするか教えて",
-        "howTo": "NNS プリンシパルを見つける方法",
-        "info": "間違えた場合は、メイン メニューから正しいプリンシパルを再送信できます。",
-        "back": "戻る",
-        "pleaseSubmit": "エアドロップを受け取るには、{cutoff} の前に [NNS dApp](https://nns.ic0.app) プリンシパルを以下に送信してください。"
-    },
     "unauthorizedToCreatePublicGroup": "公開グループを作成する権限がありません",
     "reminders": {
         "optional": "オプション",

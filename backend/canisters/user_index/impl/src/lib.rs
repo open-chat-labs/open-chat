@@ -1,4 +1,3 @@
-use crate::model::initial_airdrop_queue::{InitialAirdropEntry, InitialAirdropQueue};
 use crate::model::local_user_index_map::LocalUserIndex;
 use crate::model::storage_index_user_sync_queue::OpenStorageUserSyncQueue;
 use crate::model::user_map::UserMap;
@@ -12,11 +11,10 @@ use model::local_user_index_map::LocalUserIndexMap;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
-use types::{
-    CanisterId, CanisterWasm, Cryptocurrency, Cycles, Milliseconds, SnsNeuronId, TimestampMillis, Timestamped, UserId, Version,
-};
+use types::{CanisterId, CanisterWasm, Cryptocurrency, Cycles, Milliseconds, TimestampMillis, Timestamped, UserId, Version};
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::canister_event_sync_queue::CanisterEventSyncQueue;
+use utils::consts::{SNS_GOVERNANCE_CANISTER_ID, SNS_LEDGER_CANISTER_ID};
 use utils::env::Environment;
 use utils::time::DAY_IN_MS;
 
@@ -147,11 +145,6 @@ impl RuntimeState {
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
                 internet_identity: self.data.internet_identity_canister_id,
             },
-            users_eligible_for_initial_airdrop: self.data.users.iter().filter(|u| u.is_eligible_for_initial_airdrop()).count()
-                as u32,
-            users_confirmed_for_initial_airdrop: self.data.neuron_controllers_for_initial_airdrop.len() as u32,
-            initial_airdrop_queue_length: self.data.initial_airdrop_queue.len() as u32,
-            initial_airdrop_failures: self.data.initial_airdrop_queue.failed().iter().take(10).cloned().collect(),
         }
     }
 }
@@ -180,34 +173,9 @@ struct Data {
     pub local_index_map: LocalUserIndexMap,
     pub timer_jobs: TimerJobs<TimerJob>,
     pub neuron_controllers_for_initial_airdrop: HashMap<UserId, Principal>,
-    #[serde(default = "true_")]
-    pub initial_airdrop_open: bool,
-    #[serde(default)]
-    pub initial_airdrop_neuron_id: Option<SnsNeuronId>,
-    #[serde(default)]
-    pub initial_airdrop_queue: InitialAirdropQueue,
-    #[serde(default = "oc_governance_canister")]
     pub openchat_governance_canister_id: CanisterId,
-    #[serde(default = "oc_ledger_canister")]
     pub openchat_ledger_canister_id: CanisterId,
-    #[serde(default = "internet_identity_canister")]
     pub internet_identity_canister_id: CanisterId,
-}
-
-fn true_() -> bool {
-    true
-}
-
-fn oc_governance_canister() -> CanisterId {
-    Principal::from_text("2jvtu-yqaaa-aaaaq-aaama-cai").unwrap()
-}
-
-fn oc_ledger_canister() -> CanisterId {
-    Principal::from_text("2ouva-viaaa-aaaaq-aaamq-cai").unwrap()
-}
-
-fn internet_identity_canister() -> CanisterId {
-    Principal::from_text("rdmx6-jaaaa-aaaaa-aaadq-cai").unwrap()
 }
 
 impl Data {
@@ -247,11 +215,8 @@ impl Data {
             local_index_map: LocalUserIndexMap::default(),
             timer_jobs: TimerJobs::default(),
             neuron_controllers_for_initial_airdrop: HashMap::new(),
-            initial_airdrop_open: false,
-            initial_airdrop_neuron_id: None,
-            initial_airdrop_queue: InitialAirdropQueue::default(),
-            openchat_governance_canister_id: oc_governance_canister(),
-            openchat_ledger_canister_id: oc_ledger_canister(),
+            openchat_governance_canister_id: SNS_GOVERNANCE_CANISTER_ID,
+            openchat_ledger_canister_id: SNS_LEDGER_CANISTER_ID,
             internet_identity_canister_id,
         };
 
@@ -296,12 +261,9 @@ impl Default for Data {
             local_index_map: LocalUserIndexMap::default(),
             timer_jobs: TimerJobs::default(),
             neuron_controllers_for_initial_airdrop: HashMap::new(),
-            initial_airdrop_open: false,
-            initial_airdrop_neuron_id: None,
-            initial_airdrop_queue: InitialAirdropQueue::default(),
-            openchat_governance_canister_id: oc_governance_canister(),
-            openchat_ledger_canister_id: oc_ledger_canister(),
-            internet_identity_canister_id: internet_identity_canister(),
+            openchat_governance_canister_id: SNS_GOVERNANCE_CANISTER_ID,
+            openchat_ledger_canister_id: SNS_LEDGER_CANISTER_ID,
+            internet_identity_canister_id: Principal::anonymous(),
         }
     }
 }
@@ -329,10 +291,6 @@ pub struct Metrics {
     pub user_index_events_queue_length: usize,
     pub local_user_indexes: Vec<(CanisterId, LocalUserIndex)>,
     pub canister_ids: CanisterIds,
-    pub users_eligible_for_initial_airdrop: u32,
-    pub users_confirmed_for_initial_airdrop: u32,
-    pub initial_airdrop_queue_length: u32,
-    pub initial_airdrop_failures: Vec<InitialAirdropEntry>,
 }
 
 #[derive(Serialize, Debug, Default)]

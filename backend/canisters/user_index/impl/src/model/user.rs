@@ -3,17 +3,8 @@ use crate::model::diamond_membership_details::DiamondMembershipDetailsInternal;
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use types::{
-    CanisterId, CyclesTopUp, Milliseconds, PartialUserSummary, PhoneNumber, RegistrationFee, TimestampMillis, UserId,
-    UserSummary, Version,
+    CyclesTopUp, Milliseconds, PartialUserSummary, PhoneNumber, RegistrationFee, TimestampMillis, UserId, UserSummary, Version,
 };
-
-// See `validate_dev_team_user_ids` test at the bottom of this file for validation that these are
-// the correct userIds
-const DEV_TEAM_USER_IDS: [UserId; 3] = [
-    UserId::new(CanisterId::from_slice(&[0, 0, 0, 0, 0, 160, 0, 55, 1, 1])), // 3skqk-iqaaa-aaaaf-aaa3q-cai
-    UserId::new(CanisterId::from_slice(&[0, 0, 0, 0, 0, 160, 0, 56, 1, 1])), // 27eue-hyaaa-aaaaf-aaa4a-cai
-    UserId::new(CanisterId::from_slice(&[0, 0, 0, 0, 0, 160, 0, 57, 1, 1])), // 2yfsq-kaaaa-aaaaf-aaa4q-cai
-];
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct User {
@@ -43,25 +34,6 @@ impl User {
 
     pub fn mark_cycles_top_up(&mut self, top_up: CyclesTopUp) {
         self.cycle_top_ups.push(top_up)
-    }
-
-    pub fn is_eligible_for_initial_airdrop(&self) -> bool {
-        // 2023-02-27 15:56 GMT (the time of this Tweet - https://twitter.com/OpenChat/status/1630235287941988353)
-        const INITIAL_AIRDROP_CUTOFF: TimestampMillis = 1677513360000;
-
-        self.was_diamond_member_at(INITIAL_AIRDROP_CUTOFF) && !DEV_TEAM_USER_IDS.contains(&self.user_id)
-    }
-
-    pub fn was_diamond_member_at(&self, timestamp: TimestampMillis) -> bool {
-        // Users who got 1 year for free
-        if self.diamond_membership_details.payments().is_empty() && self.diamond_membership_details.is_active(timestamp) {
-            return true;
-        }
-
-        self.diamond_membership_details
-            .payments()
-            .iter()
-            .any(|p| p.timestamp < timestamp && timestamp < p.timestamp + p.duration.as_millis())
     }
 }
 
@@ -171,20 +143,4 @@ impl Default for User {
             diamond_membership_details: DiamondMembershipDetailsInternal::default(),
         }
     }
-}
-
-#[test]
-fn validate_dev_team_user_ids() {
-    assert_eq!(
-        CanisterId::from_slice(&[0, 0, 0, 0, 0, 160, 0, 55, 1, 1]),
-        CanisterId::from_text("3skqk-iqaaa-aaaaf-aaa3q-cai").unwrap()
-    );
-    assert_eq!(
-        CanisterId::from_slice(&[0, 0, 0, 0, 0, 160, 0, 56, 1, 1]),
-        CanisterId::from_text("27eue-hyaaa-aaaaf-aaa4a-cai").unwrap()
-    );
-    assert_eq!(
-        CanisterId::from_slice(&[0, 0, 0, 0, 0, 160, 0, 57, 1, 1]),
-        CanisterId::from_text("2yfsq-kaaaa-aaaaf-aaa4q-cai").unwrap()
-    );
 }

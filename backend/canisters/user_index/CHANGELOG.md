@@ -5,6 +5,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Store `diamond_membership_expires_at` in each user canister ([#3428](https://github.com/open-ic/open-chat/pull/3428))
+
+### Removed
+
+- Remove code to handle the initial airdrop ([#3462](https://github.com/open-ic/open-chat/pull/3462))
+
+### Fixed
+
+- Fix `referral_metrics` endpoint ([#3461](https://github.com/open-ic/open-chat/pull/3461))
+
+## [[2.0.661](https://github.com/open-ic/open-chat/releases/tag/v2.0.661-user_index)] - 2023-04-15
+
 ### Added
 
 - Added `referral_metrics` endpoint ([#3429](https://github.com/open-ic/open-chat/pull/3429))
