@@ -97,6 +97,7 @@ import {
     DeletedMessageResponse,
     GroupGate,
     SetMessageReminderResponse,
+    CustomMessageContent,
 } from "./types";
 export {
     _SERVICE as UserService,
@@ -197,6 +198,7 @@ export {
     SetMessageReminderResponse as ApiSetMessageReminderResponse,
     MessageReminder as ApiMessageReminder,
     MessageReminderCreated as ApiMessageReminderCreated,
+    CustomMessageContent as ApiCustomMessageContent,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

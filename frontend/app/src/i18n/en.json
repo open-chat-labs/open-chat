@@ -295,9 +295,6 @@
         "usernameTooLong": "That username is too long",
         "bioTooLong": "Your bio is too long",
         "userLimitReached": "The user limit has been reached",
-        "challengeAttemptFailed": "The value you entered is incorrect. Please try the new challenge.",
-        "challengeThrottled": "Too many challenges have been generated. Please try again later.",
-        "attemptChallenge": "Please type in the characters you see",
         "createUser": "Create user",
         "closedTitle": "Registration paused",
         "closed": "Due to very high demand, new user registrations are temporarily closed. We will soon be scaling across multiple subnets and will then be able to grow indefinitely!"

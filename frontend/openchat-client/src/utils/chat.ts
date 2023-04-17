@@ -235,6 +235,7 @@ function addCaption(caption: string | undefined, content: MessageContent): Messa
         content.kind !== "prize_winner_content" &&
         content.kind !== "message_reminder_content" &&
         content.kind !== "message_reminder_created_content" &&
+        content.kind !== "custom_content" &&
         content.kind !== "crypto_content"
         ? { ...content, caption }
         : content;

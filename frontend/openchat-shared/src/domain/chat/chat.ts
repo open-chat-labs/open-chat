@@ -25,7 +25,8 @@ export type MessageContent =
     | PrizeContent
     | PrizeWinnerContent
     | MessageReminderCreatedContent
-    | MessageReminderContent;
+    | MessageReminderContent
+    | CustomContent;
 
 export type IndexRange = [number, number];
 
@@ -143,6 +144,12 @@ export interface GiphyContent {
     desktop: GiphyImage; //will be "original" from the giphy api
     mobile: GiphyImage; //will be "downsized_large" from the giphy api
 }
+
+export type CustomContent = {
+    kind: "custom_content";
+    subtype: string;
+    data: unknown;
+};
 
 export type MessageReminderCreatedContent = {
     kind: "message_reminder_created_content";
@@ -352,10 +359,29 @@ export interface FileContent extends DataContent {
 
 export type ReplyContext = RawReplyContext | RehydratedReplyContext;
 
+export type MessageContext = {
+    chatId: string;
+    threadRootMessageIndex?: number;
+};
+
+export function messageContextFromString(ctxStr: string): MessageContext {
+    const [chatId, threadRootMessageIndex] = ctxStr.split("_");
+    return {
+        chatId,
+        threadRootMessageIndex: threadRootMessageIndex ? Number(threadRootMessageIndex) : undefined,
+    };
+}
+
+export function messageContextToString(ctx: MessageContext): string {
+    return ctx.threadRootMessageIndex !== undefined
+        ? `${ctx.chatId}_${ctx.threadRootMessageIndex}`
+        : ctx.chatId;
+}
+
 export type RawReplyContext = {
     kind: "raw_reply_context";
     eventIndex: number;
-    chatIdIfOther?: string;
+    sourceContext?: MessageContext;
 };
 
 export type RehydratedReplyContext = {
@@ -365,9 +391,9 @@ export type RehydratedReplyContext = {
     messageId: bigint;
     messageIndex: number;
     eventIndex: number;
-    chatId: string;
     edited: boolean;
     isThreadRoot: boolean;
+    sourceContext: MessageContext;
 };
 
 export type EnhancedReplyContext = RehydratedReplyContext & {

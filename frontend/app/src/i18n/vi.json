@@ -276,9 +276,6 @@
         "bioTooLong": "Tiểu sử của bạn quá dài",
         "userLimitReached": "Số lượng người dùng đã đạt giới hạn",
         "createUser": "Tạo tài khoản",
-        "challengeAttemptFailed": "Giá trị bạn đã nhập không chính xác. Hãy thử thách thức mới.",
-        "challengeThrottled": "Quá nhiều thách thức đã được tạo ra. Vui lòng thử lại sau.",
-        "attemptChallenge": "Vui lòng nhập các ký tự bạn thấy",
         "closedTitle": "Đăng ký bị tạm dừng",
         "closed": "Do nhu cầu rất cao, đăng ký người dùng mới tạm thời bị đóng. Chúng tôi sẽ sớm mở rộng quy mô trên nhiều mạng con và sau đó sẽ có thể phát triển vô tận!"
     },

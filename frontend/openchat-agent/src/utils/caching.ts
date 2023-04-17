@@ -477,7 +477,8 @@ function removeReplyContent(
     if (repliesTo?.kind === "rehydrated_reply_context") {
         return {
             kind: "raw_reply_context",
-            chatIdIfOther: repliesTo.chatId === chatId ? undefined : repliesTo.chatId,
+            sourceContext:
+                repliesTo.sourceContext.chatId === chatId ? undefined : repliesTo.sourceContext,
             eventIndex: repliesTo.eventIndex,
         };
     }

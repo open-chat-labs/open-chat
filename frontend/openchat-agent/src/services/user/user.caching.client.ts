@@ -238,15 +238,14 @@ export class CachingUserClient extends EventTarget implements IUserClient {
 
     @profile("userCachingClient")
     sendMessage(
-        recipientId: string,
+        chatId: string,
         sender: CreatedUser,
         event: EventWrapper<Message>,
-        replyingToChatId?: string,
         threadRootMessageIndex?: number
     ): Promise<[SendMessageResponse, Message]> {
         removeFailedMessage(this.db, this.userId, event.event.messageId, threadRootMessageIndex);
         return this.client
-            .sendMessage(recipientId, sender, event, replyingToChatId, threadRootMessageIndex)
+            .sendMessage(chatId, sender, event, threadRootMessageIndex)
             .then(
                 setCachedMessageFromSendResponse(
                     this.db,
