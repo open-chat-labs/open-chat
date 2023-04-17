@@ -561,6 +561,8 @@ export async function getEventsResponse(
     if ("Success" in candid) {
         const latestEventIndex = candid.Success.latest_event_index;
 
+        console.log("Actual server response: ", candid.Success.events);
+
         await ensureReplicaIsUpToDate(
             principal,
             chatId,

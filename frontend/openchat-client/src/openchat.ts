@@ -572,12 +572,13 @@ export class OpenChat extends EventTarget {
             this.startOnlinePoller();
             startSwCheckPoller();
             this.startSession(id).then(() => this.logout());
-            new Poller(
-                () => this.loadChats(),
-                CHAT_UPDATE_INTERVAL,
-                CHAT_UPDATE_IDLE_INTERVAL,
-                true
-            );
+            this.loadChats();
+            // new Poller(
+            //     () => this.loadChats(),
+            //     CHAT_UPDATE_INTERVAL,
+            //     CHAT_UPDATE_IDLE_INTERVAL,
+            //     true
+            // );
             new Poller(() => this.updateUsers(), USER_UPDATE_INTERVAL, USER_UPDATE_INTERVAL);
             initNotificationStores();
             this.api.getUserStorageLimits().then(storageStore.set);
@@ -2530,6 +2531,8 @@ export class OpenChat extends EventTarget {
 
             const canRetry = this.canRetryMessage(msg.content);
 
+            console.log("Sending message: ", event);
+
             this.api
                 .sendMessage(chat.kind, chatId, this.user, mentioned, event, threadRootMessageIndex)
                 .then(([resp, msg]) => {
@@ -2710,7 +2713,6 @@ export class OpenChat extends EventTarget {
                 serverChat.kind,
                 chatId,
                 message,
-                undefined,
                 serverChat.latestEventIndex
             ),
             this.addMissingUsersFromMessage(message),

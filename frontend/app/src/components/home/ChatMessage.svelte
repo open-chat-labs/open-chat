@@ -173,7 +173,6 @@
         return {
             kind: "rehydrated_reply_context",
             senderId: msg.sender,
-            chatId: chatId,
             eventIndex: eventIndex,
             content: msg.content,
             sender,

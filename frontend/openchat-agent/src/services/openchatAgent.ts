@@ -145,6 +145,8 @@ import {
     GroupGate,
     ProposalVoteDetails,
     SetMessageReminderResponse,
+    messageContextToString,
+    messageContextFromString,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import { applyOptionUpdate } from "../utils/mapping";
@@ -281,19 +283,7 @@ export class OpenChatAgent extends EventTarget {
             );
         }
         if (chatType === "direct_chat") {
-            const replyingToChatId =
-                event.event.repliesTo &&
-                event.event.repliesTo.kind === "rehydrated_reply_context" &&
-                chatId !== event.event.repliesTo.chatId
-                    ? event.event.repliesTo.chatId
-                    : undefined;
-            return this.sendDirectMessage(
-                chatId,
-                user,
-                event,
-                replyingToChatId,
-                threadRootMessageIndex
-            );
+            return this.sendDirectMessage(chatId, user, event, threadRootMessageIndex);
         }
         throw new UnsupportedValueError("Unexpect chat type", chatType);
     }
@@ -322,19 +312,12 @@ export class OpenChatAgent extends EventTarget {
     }
 
     private sendDirectMessage(
-        recipientId: string,
+        chatId: string,
         sender: CreatedUser,
         event: EventWrapper<Message>,
-        replyingToChatId?: string,
         threadRootMessageIndex?: number
     ): Promise<[SendMessageResponse, Message]> {
-        return this.userClient.sendMessage(
-            recipientId,
-            sender,
-            event,
-            replyingToChatId,
-            threadRootMessageIndex
-        );
+        return this.userClient.sendMessage(chatId, sender, event, threadRootMessageIndex);
     }
 
     private editDirectMessage(
@@ -396,7 +379,6 @@ export class OpenChatAgent extends EventTarget {
                 messageIndex,
                 latestClientMainEventIndex
             ),
-            undefined,
             latestClientMainEventIndex
         );
     }
@@ -449,7 +431,6 @@ export class OpenChatAgent extends EventTarget {
                 threadRootMessageIndex,
                 latestClientEventIndex
             ),
-            threadRootMessageIndex,
             latestClientEventIndex
         );
     }
@@ -470,7 +451,6 @@ export class OpenChatAgent extends EventTarget {
                 threadRootMessageIndex,
                 latestClientEventIndex
             ),
-            threadRootMessageIndex,
             latestClientEventIndex
         );
     }
@@ -491,7 +471,6 @@ export class OpenChatAgent extends EventTarget {
                 threadRootMessageIndex,
                 latestClientMainEventIndex
             ),
-            threadRootMessageIndex,
             latestClientMainEventIndex
         );
     }
@@ -514,7 +493,6 @@ export class OpenChatAgent extends EventTarget {
                 threadRootMessageIndex,
                 latestClientEventIndex
             ),
-            threadRootMessageIndex,
             latestClientEventIndex
         );
     }
@@ -534,7 +512,6 @@ export class OpenChatAgent extends EventTarget {
                 threadRootMessageIndex,
                 latestClientEventIndex
             ),
-            threadRootMessageIndex,
             latestClientEventIndex
         );
     }
@@ -595,14 +572,17 @@ export class OpenChatAgent extends EventTarget {
         return events.reduce<Record<string, number[]>>((result, ev) => {
             if (
                 ev.event.kind === "message" &&
+                ev.event.content.kind !== "deleted_content" &&
                 ev.event.repliesTo &&
                 ev.event.repliesTo.kind === "raw_reply_context"
             ) {
-                const chatId = ev.event.repliesTo.chatIdIfOther ?? defaultChatId;
-                if (result[chatId] === undefined) {
-                    result[chatId] = [];
+                const key = ev.event.repliesTo.sourceContext
+                    ? messageContextToString(ev.event.repliesTo.sourceContext)
+                    : defaultChatId;
+                if (result[key] === undefined) {
+                    result[key] = [];
                 }
-                result[chatId].push(ev.event.repliesTo.eventIndex);
+                result[key].push(ev.event.repliesTo.eventIndex);
             }
             return result;
         }, {});
@@ -631,32 +611,36 @@ export class OpenChatAgent extends EventTarget {
         chatType: "direct_chat" | "group_chat",
         currentChatId: string,
         events: EventWrapper<T>[],
-        threadRootMessageIndex: number | undefined,
         latestClientEventIndex: number | undefined
     ): Promise<Record<string, EventWrapper<Message>[]>> {
         const missing = this.findMissingEventIndexesByChat(currentChatId, events);
         const missingMessages: Promise<[string, EventWrapper<Message>[]]>[] = [];
 
         // this looks horrendous but remember these things will *usually* come straight from the cache
-        Object.entries(missing).forEach(([chatId, idxs]) => {
-            if (chatId === currentChatId && chatType === "direct_chat") {
+        Object.entries(missing).forEach(([messageContextStr, idxs]) => {
+            const messageContext = messageContextFromString(messageContextStr);
+            if (messageContext.chatId === currentChatId && chatType === "direct_chat") {
                 missingMessages.push(
                     this.userClient
                         .chatEventsByIndex(
                             idxs,
                             currentChatId,
-                            threadRootMessageIndex,
+                            messageContext.threadRootMessageIndex,
                             latestClientEventIndex
                         )
-                        .then((resp) => this.messagesFromEventsResponse(chatId, resp))
+                        .then((resp) => this.messagesFromEventsResponse(messageContextStr, resp))
                 );
             } else {
                 // it must be a group chat
-                const client = this.getGroupClient(chatId);
+                const client = this.getGroupClient(messageContext.chatId);
                 missingMessages.push(
                     client
-                        .chatEventsByIndex(idxs, threadRootMessageIndex, latestClientEventIndex)
-                        .then((resp) => this.messagesFromEventsResponse(chatId, resp))
+                        .chatEventsByIndex(
+                            idxs,
+                            messageContext.threadRootMessageIndex,
+                            latestClientEventIndex
+                        )
+                        .then((resp) => this.messagesFromEventsResponse(messageContextStr, resp))
                 );
             }
         });
@@ -667,11 +651,11 @@ export class OpenChatAgent extends EventTarget {
             console.error("Some missing indexes could not be resolved: ", result.errors);
         }
         return result.success.reduce<Record<string, EventWrapper<Message>[]>>(
-            (res, [chatId, messages]) => {
-                if (!res[chatId]) {
-                    res[chatId] = [];
+            (res, [key, messages]) => {
+                if (!res[key]) {
+                    res[key] = [];
                 }
-                res[chatId] = res[chatId].concat(messages);
+                res[key] = res[key].concat(messages);
                 return res;
             },
             {}
@@ -689,9 +673,16 @@ export class OpenChatAgent extends EventTarget {
 
             const originalReplyContext = ev.event.repliesTo;
             let rehydratedReplyContext = undefined;
-            if (ev.event.repliesTo && ev.event.repliesTo.kind === "raw_reply_context") {
-                const chatId = ev.event.repliesTo.chatIdIfOther ?? defaultChatId;
-                const messageEvents = missingReplies[chatId] ?? [];
+            if (
+                ev.event.content.kind !== "deleted_content" &&
+                ev.event.repliesTo &&
+                ev.event.repliesTo.kind === "raw_reply_context"
+            ) {
+                const messageContext =
+                    ev.event.repliesTo.sourceContext !== undefined
+                        ? messageContextToString(ev.event.repliesTo.sourceContext)
+                        : defaultChatId;
+                const messageEvents = missingReplies[messageContext] ?? [];
                 const idx = ev.event.repliesTo.eventIndex;
                 const msg = messageEvents.find((me) => me.index === idx)?.event;
                 if (msg) {
@@ -702,7 +693,6 @@ export class OpenChatAgent extends EventTarget {
                         messageId: msg.messageId,
                         messageIndex: msg.messageIndex,
                         eventIndex: idx,
-                        chatId,
                         edited: msg.edited,
                         isThreadRoot: msg.thread !== undefined,
                         sourceContext: ev.event.repliesTo.sourceContext ?? {
@@ -712,8 +702,12 @@ export class OpenChatAgent extends EventTarget {
                 } else {
                     this._logger.error(
                         "Reply context not found, this should only happen if we failed to load the reply context message",
-                        defaultChatId,
-                        chatId
+                        {
+                            chatId: defaultChatId,
+                            messageContext,
+                            messageEvents,
+                            repliesTo: ev.event.repliesTo,
+                        }
                     );
                 }
             }
@@ -736,7 +730,6 @@ export class OpenChatAgent extends EventTarget {
         chatType: "direct_chat" | "group_chat",
         currentChatId: string,
         eventsPromise: Promise<EventsResponse<T>>,
-        threadRootMessageIndex: number | undefined,
         latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<T>> {
         const resp = await eventsPromise;
@@ -745,11 +738,12 @@ export class OpenChatAgent extends EventTarget {
             return resp;
         }
 
+        console.log("EventsResponse: ", resp.events);
+
         const missing = await this.resolveMissingIndexes(
             chatType,
             currentChatId,
             resp.events,
-            threadRootMessageIndex,
             latestClientEventIndex
         );
 
@@ -793,14 +787,12 @@ export class OpenChatAgent extends EventTarget {
         chatType: "direct_chat" | "group_chat",
         chatId: string,
         message: EventWrapper<Message>,
-        threadRootMessageIndex: number | undefined,
         latestClientEventIndex: number | undefined
     ): Promise<EventWrapper<Message>> {
         const missing = await this.resolveMissingIndexes(
             chatType,
             chatId,
             [message],
-            threadRootMessageIndex,
             latestClientEventIndex
         );
         return this.rehydrateEvent(message, chatId, missing);
@@ -1047,7 +1039,6 @@ export class OpenChatAgent extends EventTarget {
                       chat.kind,
                       chat.chatId,
                       chat.latestMessage,
-                      undefined,
                       chat.latestEventIndex
                   )
                 : undefined;
@@ -1341,7 +1332,6 @@ export class OpenChatAgent extends EventTarget {
                 messageIndexes,
                 latestClientEventIndex
             ),
-            undefined,
             latestClientEventIndex
         );
     }
@@ -1515,7 +1505,6 @@ export class OpenChatAgent extends EventTarget {
             "group_chat",
             thread.chatId,
             thread.latestReplies,
-            thread.rootMessage.event.messageIndex,
             thread.rootMessage.event.thread?.latestEventIndex
         );
 
@@ -1523,7 +1512,6 @@ export class OpenChatAgent extends EventTarget {
             "group_chat",
             thread.chatId,
             [thread.rootMessage],
-            undefined,
             latestClientMainEventIndex
         );
 

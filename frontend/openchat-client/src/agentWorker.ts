@@ -483,7 +483,6 @@ export class OpenChatAgentWorker extends EventTarget {
         chatType: "direct_chat" | "group_chat",
         currentChatId: string,
         message: EventWrapper<Message>,
-        threadRootMessageIndex: number | undefined,
         latestClientEventIndex: number | undefined
     ): Promise<EventWrapper<Message>> {
         return this.sendRequest({
@@ -492,7 +491,6 @@ export class OpenChatAgentWorker extends EventTarget {
                 chatType,
                 currentChatId,
                 message,
-                threadRootMessageIndex,
                 latestClientEventIndex,
             },
         });

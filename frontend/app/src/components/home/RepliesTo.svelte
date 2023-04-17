@@ -28,7 +28,7 @@
 
     function getUrl() {
         const path = [
-            repliesTo.chatId,
+            repliesTo.sourceContext.chatId,
             repliesTo.sourceContext.threadRootMessageIndex ?? repliesTo.messageIndex,
         ];
         if (repliesTo.sourceContext.threadRootMessageIndex !== undefined) {
@@ -38,7 +38,7 @@
     }
 
     function zoomToMessage() {
-        if (repliesTo.chatId === chatId) {
+        if (repliesTo.sourceContext.chatId === chatId) {
             dispatch("goToMessageIndex", {
                 messageId,
                 index: repliesTo.messageIndex,

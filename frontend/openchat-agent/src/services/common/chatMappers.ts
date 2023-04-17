@@ -92,9 +92,7 @@ import {
     MessageReminderCreatedContent,
     MessageReminderContent,
     CustomContent,
-    ReplySourceContext,
-    // MessageReminderCreatedContent,
-    // MessageReminderContent,
+    MessageContext,
 } from "openchat-shared";
 import type { WithdrawCryptoArgs } from "../user/candid/types";
 
@@ -558,15 +556,11 @@ function replyContext(candid: ApiReplyContext): ReplyContext {
     return {
         kind: "raw_reply_context",
         eventIndex: candid.event_index,
-        chatIdIfOther: optional(candid.chat_id_if_other, (id) => id.toString()),
         sourceContext: optional(candid.event_list_if_other, replySourceContext),
     };
 }
 
-function replySourceContext([chatId, maybeThreadRoot]: [
-    Principal,
-    [] | [number]
-]): ReplySourceContext {
+function replySourceContext([chatId, maybeThreadRoot]: [Principal, [] | [number]]): MessageContext {
     return {
         chatId: chatId.toString(),
         threadRootMessageIndex: optional(maybeThreadRoot, identity),
@@ -676,19 +670,25 @@ export function apiGroupSubtype(subtype: ApiGroupSubtype): GroupSubtype {
     };
 }
 
-export function apiReplyContextArgs(
-    domain: ReplyContext,
-    replyingToChatId?: string,
-    threadRootMessageIndex?: number
-): ApiReplyContext {
-    return {
-        chat_id_if_other: apiOptional((chatId) => Principal.fromText(chatId), replyingToChatId),
-        event_list_if_other: apiOptional(
-            (chatId) => [Principal.fromText(chatId), apiOptional(identity, threadRootMessageIndex)],
-            replyingToChatId
-        ),
-        event_index: domain.eventIndex,
-    };
+export function apiReplyContextArgs(chatId: string, domain: ReplyContext): ApiReplyContext {
+    if (domain.sourceContext !== undefined && chatId !== domain.sourceContext.chatId) {
+        return {
+            chat_id_if_other: [Principal.fromText(domain.sourceContext.chatId)],
+            event_list_if_other: [
+                [
+                    Principal.fromText(domain.sourceContext.chatId),
+                    apiOptional(identity, domain.sourceContext.threadRootMessageIndex),
+                ],
+            ],
+            event_index: domain.eventIndex,
+        };
+    } else {
+        return {
+            chat_id_if_other: [],
+            event_list_if_other: [],
+            event_index: domain.eventIndex,
+        };
+    }
 }
 
 export function apiMessageContent(domain: MessageContent): ApiMessageContent {
