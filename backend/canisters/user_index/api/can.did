@@ -288,27 +288,6 @@ type SetUserUpgradeConcurrencyResponse =
         Success;
     };
 
-type IsEligibleForInitialAirdropResponse =
-    variant {
-        Yes: opt principal;
-        No;
-        AirdropClosed;
-        UserNotFound;
-    };
-
-type SetNeuronControllerForInitialAirdropArgs =
-    record {
-        controller: principal
-    };
-
-type SetNeuronControllerForInitialAirdropResponse =
-    variant {
-        Success;
-        AirdropClosed;
-        UserNotEligible;
-        UserNotFound;
-    };
-
 service: {
     register_user: (RegisterUserArgs) -> (RegisterUserResponse);
 
@@ -353,8 +332,4 @@ service: {
 
     // Only callable by "platform operators"
     set_user_upgrade_concurrency: (SetUserUpgradeConcurrencyArgs) -> (SetUserUpgradeConcurrencyResponse);
-
-    // Temporary endpoints for the initial airdrop
-    is_eligible_for_initial_airdrop: (EmptyArgs) -> (IsEligibleForInitialAirdropResponse) query;
-    set_neuron_controller_for_initial_airdrop: (SetNeuronControllerForInitialAirdropArgs) -> (SetNeuronControllerForInitialAirdropResponse);
 }

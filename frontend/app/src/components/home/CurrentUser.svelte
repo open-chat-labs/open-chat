@@ -74,12 +74,6 @@
                                 ? $_("upgrade.extend")
                                 : $_("upgrade.diamond")}</span>
                     </MenuItem>
-                    {#if $eligibleForAirdrop.kind === "user_eligible"}
-                        <MenuItem on:click={() => dispatch("registerForAirdrop")}>
-                            <span class="airdrop" slot="icon">🪂</span>
-                            <span slot="text">{$_("airdrop.register")}</span>
-                        </MenuItem>
-                    {/if}
                     <MenuItem on:click={() => dispatch("profile")}>
                         <Cogs size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
                         <span slot="text">{$_("profile.title")}</span>

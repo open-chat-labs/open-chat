@@ -211,18 +211,6 @@ export type PayForDiamondMembershipResponse =
 
 export type SetUserUpgradeConcurrencyResponse = "success";
 
-export type SetNeuronControllerResponse =
-    | "success"
-    | "user_not_found"
-    | "user_not_eligible"
-    | "airdrop_closed";
-
-export type EligibleForInitialAirdropResponse =
-    | { kind: "user_eligible"; principal?: string }
-    | { kind: "user_not_eligible" }
-    | { kind: "airdrop_closed" }
-    | UserNotFound;
-
 export type SetMessageReminderResponse =
     | "notes_too_long"
     | "success"

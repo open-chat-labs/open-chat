@@ -18,8 +18,6 @@ import type {
     DiamondMembershipDuration,
     PayForDiamondMembershipResponse,
     SetUserUpgradeConcurrencyResponse,
-    SetNeuronControllerResponse,
-    EligibleForInitialAirdropResponse,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
@@ -35,8 +33,6 @@ import {
     apiCryptocurrency,
     apiDiamondDuration,
     payForDiamondMembershipResponse,
-    isEligibleForInitialAirdropResponse,
-    setNeuronControllerResponse,
 } from "./mappers";
 import { CachingUserIndexClient } from "./userIndex.caching.client";
 import type { IUserIndexClient } from "./userIndex.client.interface";
@@ -59,25 +55,6 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
 
     static create(identity: Identity, config: AgentConfig): IUserIndexClient {
         return new CachingUserIndexClient(new UserIndexClient(identity, config), config.logger);
-    }
-
-    @profile("userIndexClient")
-    isEligibleForInitialAirdrop(): Promise<EligibleForInitialAirdropResponse> {
-        return this.handleQueryResponse(
-            () => this.userIndexService.is_eligible_for_initial_airdrop({}),
-            isEligibleForInitialAirdropResponse
-        );
-    }
-
-    @profile("userIndexClient")
-    setNeuronControllerForInitialAirdrop(principal: string): Promise<SetNeuronControllerResponse> {
-        return this.handleQueryResponse(
-            () =>
-                this.userIndexService.set_neuron_controller_for_initial_airdrop({
-                    controller: Principal.fromText(principal),
-                }),
-            setNeuronControllerResponse
-        );
     }
 
     @profile("userIndexClient")
