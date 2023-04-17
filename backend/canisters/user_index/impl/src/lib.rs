@@ -287,7 +287,7 @@ impl Default for Data {
             initial_airdrop_queue: InitialAirdropQueue::default(),
             openchat_governance_canister_id: SNS_GOVERNANCE_CANISTER_ID,
             openchat_ledger_canister_id: SNS_LEDGER_CANISTER_ID,
-            internet_identity_canister_id: internet_identity_canister(),
+            internet_identity_canister_id: Principal::anonymous(),
         }
     }
 }
