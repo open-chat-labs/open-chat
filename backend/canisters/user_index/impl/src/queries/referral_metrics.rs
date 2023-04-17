@@ -10,11 +10,11 @@ fn referral_metrics(_args: Args) -> Response {
 }
 
 #[derive(Default)]
-struct ReferralData {
-    paid_diamond: u32,
-    unpaid_diamond: u32,
-    other: u32,
-    icp_raised_for_paid_diamond_e8s: u64,
+pub struct ReferralData {
+    pub paid_diamond: u32,
+    pub unpaid_diamond: u32,
+    pub other: u32,
+    pub icp_raised_for_paid_diamond_e8s: u64,
 }
 
 fn referral_metrics_impl(runtime_state: &RuntimeState) -> Response {

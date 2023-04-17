@@ -9,7 +9,8 @@ use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
 use local_user_index_canister::Event as LocalUserIndexEvent;
 use model::local_user_index_map::LocalUserIndexMap;
-use model::pending_payments_queue::{PendingPayment, PendingPaymentsQueue};
+use model::pending_payments_queue::{PendingPayment, PendingPaymentsQueue, PendingPaymentReason, BackdatedReferralReward};
+use queries::referral_metrics::ReferralData;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
@@ -118,6 +119,43 @@ impl RuntimeState {
     pub fn queue_payment(&mut self, pending_payment: PendingPayment) {
         self.data.pending_payments_queue.push(pending_payment);
         jobs::make_pending_payments::start_job_if_required(self);
+    }
+
+    pub fn queue_backdated_referral_payments(&mut self) {
+        let mut user_referrals_map: HashMap<UserId, ReferralData> = HashMap::new();
+        let now = self.env.now();
+    
+        for user in self.data.users.iter() {
+            if let Some(referred_by) = user.referred_by {
+                let data = user_referrals_map.entry(referred_by).or_default();
+                let icp_raised_for_paid_diamond: u64 =
+                    user.diamond_membership_details.payments().iter().map(|p| p.amount_e8s).sum();
+                if icp_raised_for_paid_diamond > 0 {
+                    data.paid_diamond += 1;
+                    data.icp_raised_for_paid_diamond_e8s += icp_raised_for_paid_diamond;
+                } else if user.diamond_membership_details.is_active(now) {
+                    data.unpaid_diamond += 1;
+                } else {
+                    data.other += 1;
+                }
+            }
+        }
+            
+        for (user_id, data) in user_referrals_map {
+            if data.paid_diamond > 0 || data.unpaid_diamond > 0 {
+                let amount: u64 = data.icp_raised_for_paid_diamond_e8s + (data.unpaid_diamond as u64 * 50_000_000);
+                self.queue_payment(PendingPayment { 
+                    amount, 
+                    currency: Cryptocurrency::InternetComputer, 
+                    timestamp: self.env.now_nanos(), 
+                    recipient: user_id.into(), 
+                    reason: PendingPaymentReason::BackdatedReferralReward(BackdatedReferralReward {
+                        referrals_to_paid_members: data.paid_diamond,
+                        referrals_to_gifted_members: data.unpaid_diamond,
+                    })
+                })
+            }
+        }        
     }
 
     pub fn metrics(&self) -> Metrics {

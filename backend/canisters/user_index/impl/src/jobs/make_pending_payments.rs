@@ -1,4 +1,4 @@
-use crate::model::pending_payments_queue::{PendingPayment, PendingPaymentReason};
+use crate::model::pending_payments_queue::{BackdatedReferralReward, PendingPayment, PendingPaymentReason};
 use crate::LocalUserIndexEvent;
 use crate::{mutate_state, RuntimeState};
 use ic_cdk_timers::TimerId;
@@ -36,10 +36,16 @@ pub fn run() {
 }
 
 async fn process_payment(pending_payment: PendingPayment) {
+    let reason = pending_payment.reason.clone();
     match make_payment(&pending_payment).await {
-        Ok(block_index) => match pending_payment.reason {
+        Ok(block_index) => match reason {
             PendingPaymentReason::Treasury => (),
-            PendingPaymentReason::ReferralReward => mutate_state(|state| inform_referrer(&pending_payment, block_index, state)),
+            PendingPaymentReason::ReferralReward => {
+                mutate_state(|state| inform_referrer(&pending_payment, block_index, None, state))
+            }
+            PendingPaymentReason::BackdatedReferralReward(backdated_data) => {
+                mutate_state(|state| inform_referrer(&pending_payment, block_index, Some(backdated_data), state))
+            }
         },
         Err(_) => {
             mutate_state(|state| state.data.pending_payments_queue.push(pending_payment));
@@ -76,7 +82,12 @@ async fn make_payment(pending_payment: &PendingPayment) -> Result<BlockIndex, ()
     Err(())
 }
 
-fn inform_referrer(pending_payment: &PendingPayment, block_index: BlockIndex, state: &mut RuntimeState) {
+fn inform_referrer(
+    pending_payment: &PendingPayment,
+    block_index: BlockIndex,
+    backdated: Option<BackdatedReferralReward>,
+    state: &mut RuntimeState,
+) {
     let user_id = pending_payment.recipient.into();
     let amount = Tokens::from_e8s(pending_payment.amount);
     let symbol = pending_payment.currency.token_symbol();
@@ -90,13 +101,21 @@ fn inform_referrer(pending_payment: &PendingPayment, block_index: BlockIndex, st
         amount_text = format!("[{}]({})", amount_text, link);
     }
 
+    let message = if let Some(backdated_data) = backdated {
+        format!(
+            "You have received a backdated referral reward of {}. This is because you referred {} Diamond members who paid and {} Diamond members who were given membership for either verifying a phone or buying storage.", 
+            amount_text,
+            backdated_data.referrals_to_paid_members,
+            backdated_data.referrals_to_gifted_members)
+    } else {
+        format!("You have received a referral reward of {}. This is because one of the users you referred has made a Diamond membership payment.", amount_text)
+    };
+
     state.push_event_to_local_user_index(
         user_id,
         LocalUserIndexEvent::OpenChatBotMessage(OpenChatBotMessage {
             user_id,
-            message: MessageContent::Text(TextContent {
-                text: format!("You have received a referral reward of {}. This is because one of the users you referred has made a Diamond membership payment.", amount_text),
-            }),
+            message: MessageContent::Text(TextContent { text: message }),
         }),
     );
 }

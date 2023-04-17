@@ -31,8 +31,15 @@ pub struct PendingPayment {
     pub reason: PendingPaymentReason,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub enum PendingPaymentReason {
     Treasury,
     ReferralReward,
+    BackdatedReferralReward(BackdatedReferralReward),
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+pub struct BackdatedReferralReward {
+    pub referrals_to_paid_members: u32,
+    pub referrals_to_gifted_members: u32,
 }
