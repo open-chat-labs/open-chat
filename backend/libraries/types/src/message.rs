@@ -17,16 +17,9 @@ pub struct Message {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-#[serde(from = "ReplyContextPrevious")]
 pub struct ReplyContext {
     pub chat_id_if_other: Option<ChatId>,
     pub event_list_if_other: Option<(ChatId, Option<MessageIndex>)>,
-    pub event_index: EventIndex,
-}
-
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct ReplyContextPrevious {
-    pub chat_id_if_other: Option<ChatId>,
     pub event_index: EventIndex,
 }
 
@@ -41,16 +34,6 @@ impl From<GroupReplyContext> for ReplyContext {
             chat_id_if_other: None,
             event_list_if_other: None,
             event_index: r.event_index,
-        }
-    }
-}
-
-impl From<ReplyContextPrevious> for ReplyContext {
-    fn from(value: ReplyContextPrevious) -> Self {
-        ReplyContext {
-            chat_id_if_other: value.chat_id_if_other,
-            event_list_if_other: value.chat_id_if_other.map(|c| (c, None)),
-            event_index: value.event_index,
         }
     }
 }
