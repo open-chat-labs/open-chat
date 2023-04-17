@@ -20,7 +20,9 @@ fn init_env() -> Box<CanisterEnv> {
 
 fn init_state(env: Box<dyn Environment>, data: Data, wasm_version: Version) {
     let now = env.now();
-    let runtime_state = RuntimeState::new(env, data);
+    let mut runtime_state = RuntimeState::new(env, data);
+
+    runtime_state.queue_backdated_referral_payments();
 
     crate::jobs::start(&runtime_state);
     crate::init_state(runtime_state);

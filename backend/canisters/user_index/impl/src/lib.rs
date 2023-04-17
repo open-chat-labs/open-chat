@@ -141,7 +141,7 @@ impl RuntimeState {
         for (user_id, data) in user_referrals_map {
             if data.paid_diamond > 0 || data.unpaid_diamond > 0 {
                 let amount: u64 = data.icp_raised_for_paid_diamond_e8s + (data.unpaid_diamond as u64 * 50_000_000);
-                self.queue_payment(PendingPayment { 
+                self.data.pending_payments_queue.push(PendingPayment { 
                     amount, 
                     currency: Cryptocurrency::InternetComputer, 
                     timestamp: self.env.now_nanos(), 
@@ -152,7 +152,9 @@ impl RuntimeState {
                     })
                 })
             }
-        }        
+        }     
+
+        jobs::make_pending_payments::start_job_if_required(self);   
     }
 
     pub fn metrics(&self) -> Metrics {
