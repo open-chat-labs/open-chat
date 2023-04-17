@@ -65,7 +65,7 @@
     <Footer align="end">
         {#if gatedGroupsEnabled}
             <div class="gate">
-                <GroupGateIcon gate={group.gate} />
+                <GroupGateIcon on:upgrade gate={group.gate} />
             </div>
         {/if}
         {#if !client.isReadOnly()}

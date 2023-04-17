@@ -3,11 +3,10 @@
     import { setLocale, supportedLanguages } from "../../i18n/i18n";
     import { _ } from "svelte-i18n";
     import Toast from "../Toast.svelte";
-    import ChallengeComponent from "./Challenge.svelte";
     import EnterUsername from "./EnterUsername.svelte";
-    import { createEventDispatcher, getContext, onMount } from "svelte";
+    import { createEventDispatcher, getContext } from "svelte";
     import { writable, Writable } from "svelte/store";
-    import type { Challenge, ChallengeAttempt, CreatedUser, OpenChat } from "openchat-client";
+    import type { CreatedUser, OpenChat } from "openchat-client";
     import Button from "../Button.svelte";
     import Select from "../Select.svelte";
     import ModalContent from "../ModalContent.svelte";
@@ -18,40 +17,23 @@
 
     type Spinning = { kind: "spinning" };
     type AwaitingUsername = { kind: "awaiting_username" };
-    type AwaitingChallengeAttempt = { kind: "awaiting_challenge_attempt" };
 
-    type RegisterState = Spinning | AwaitingUsername | AwaitingChallengeAttempt;
+    type RegisterState = Spinning | AwaitingUsername;
 
     let state: Writable<RegisterState> = writable({ kind: "awaiting_username" });
     let error: Writable<string | undefined> = writable(undefined);
     let username: Writable<string | undefined> = writable(undefined);
-    let challenge: Writable<Challenge | undefined> = writable(undefined);
-    let challengeAttempt: ChallengeAttempt | undefined = undefined;
     let createdUser: CreatedUser | undefined = undefined;
     let closed: boolean = false;
 
-    onMount(() => {
-        createChallenge();
-    });
-
     function submitUsername(ev: CustomEvent<{ username: string }>) {
         username.set(ev.detail.username);
-
-        if (challengeAttempt !== undefined) {
-            // The user already has an untried challenge attempt so call register_user
-            registerUser(ev.detail.username, challengeAttempt);
-        } else if ($challenge === undefined) {
-            // The challenge isn't ready yet so wait...
-            state.set({ kind: "spinning" });
-        } else {
-            // The challenge is ready so goto the "challenge" panel.
-            state.set({ kind: "awaiting_challenge_attempt" });
-        }
+        registerUser(ev.detail.username);
     }
 
-    function registerUser(username: string, challengeAttempt: ChallengeAttempt): void {
+    function registerUser(username: string): void {
         state.set({ kind: "spinning" });
-        client.registerUser(username, challengeAttempt).then((resp) => {
+        client.registerUser(username).then((resp) => {
             state.set({ kind: "awaiting_username" });
             if (resp === "username_taken") {
                 error.set("register.usernameTaken");
@@ -63,44 +45,11 @@
                 error.set("register.usernameInvalid");
             } else if (resp === "user_limit_reached") {
                 error.set("register.userLimitReached");
-            } else if (resp === "challenge_failed") {
-                error.set("register.challengeAttemptFailed");
-                createChallenge();
             } else if (resp === "internal_error") {
                 error.set("unexpectedError");
             } else if (resp === "success") {
                 error.set(undefined);
                 loadUser();
-            }
-        });
-    }
-
-    function createChallenge(): void {
-        state.set({ kind: "spinning" });
-        challenge.set(undefined);
-        challengeAttempt = undefined;
-        client.createChallenge().then((challengeResponse) => {
-            if (challengeResponse.kind === "challenge") {
-                challenge.set(challengeResponse);
-                if ($username !== undefined) {
-                    // The user has submitted a username so goto the "challenge" panel.
-                    state.set({ kind: "awaiting_challenge_attempt" });
-                } else {
-                    // The user has not submitted a username so goto the "username" panel.
-                    state.set({ kind: "awaiting_username" });
-                }
-            } else if (challengeResponse.kind === "throttled") {
-                // Creating a new challenge has failed.
-                // Goto the "username" panel and show the error message.
-                error.set("register.challengeThrottled");
-                state.set({ kind: "awaiting_username" });
-            } else {
-                // Challenge not required so just set it to a dummy value
-                challengeAttempt = {
-                    key: 1,
-                    chars: "1",
-                };
-                state.set({ kind: "awaiting_username" });
             }
         });
     }
@@ -113,23 +62,6 @@
                 dispatch("createdUser", createdUser);
             }
         });
-    }
-
-    function confirmChallenge(ev: CustomEvent<ChallengeAttempt>) {
-        challengeAttempt = ev.detail;
-        challenge.set(undefined);
-        if ($username !== undefined) {
-            // The username has been entered so try to register the user.
-            registerUser($username, challengeAttempt);
-        } else {
-            // The username has not been set so goto the "username" panel.
-            state.set({ kind: "awaiting_username" });
-        }
-    }
-
-    function cancelChallenge() {
-        challengeAttempt = undefined;
-        state.set({ kind: "awaiting_username" });
     }
 
     let selectedLocale = ($locale as string).substring(0, 2);
@@ -151,12 +83,6 @@
             </div>
         {:else if $state.kind === "spinning"}
             <div class="spinner" />
-        {:else if $state.kind === "awaiting_challenge_attempt"}
-            <ChallengeComponent
-                challenge={$challenge}
-                error={$error}
-                on:confirm={confirmChallenge}
-                on:cancel={cancelChallenge} />
         {:else}
             <div class="subtitle">
                 <div class="logo" />

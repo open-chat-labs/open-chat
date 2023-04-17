@@ -173,7 +173,6 @@
         return {
             kind: "rehydrated_reply_context",
             senderId: msg.sender,
-            chatId: chatId,
             eventIndex: eventIndex,
             content: msg.content,
             sender,
@@ -181,6 +180,7 @@
             messageIndex: msg.messageIndex,
             edited: msg.edited,
             isThreadRoot: msg.thread !== undefined,
+            sourceContext: { chatId, threadRootMessageIndex: threadRootMessage?.messageIndex },
         };
     }
 

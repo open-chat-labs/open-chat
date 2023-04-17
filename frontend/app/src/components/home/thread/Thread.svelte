@@ -346,7 +346,6 @@
                             on:replyTo={replyTo}
                             on:editEvent={() => editEvent(evt)}
                             on:replyTo={replyTo}
-                            on:replyPrivatelyTo
                             on:upgrade
                             on:retrySend={retrySend}
                             on:forward />

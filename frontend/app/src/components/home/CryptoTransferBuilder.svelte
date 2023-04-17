@@ -69,9 +69,7 @@
     }
 
     function maxAmountE8s(balance: bigint): bigint {
-        const maxAvailable = balance - transferFees;
-        const maxAllowed = BigInt(10 * E8S_PER_TOKEN);
-        return maxAvailable > maxAllowed ? maxAllowed : maxAvailable;
+        return balance - transferFees;
     }
 
     function send() {

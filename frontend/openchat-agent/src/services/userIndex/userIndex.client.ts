@@ -9,8 +9,6 @@ import type {
     UsersResponse,
     UserSummary,
     RegisterUserResponse,
-    ChallengeAttempt,
-    CreateChallengeResponse,
     SuspendUserResponse,
     UnsuspendUserResponse,
     MarkSuspectedBotResponse,
@@ -23,7 +21,6 @@ import { CandidService } from "../candidService";
 import {
     checkUsernameResponse,
     setUsernameResponse,
-    createChallengeResponse,
     currentUserResponse,
     usersResponse,
     userSearchResponse,
@@ -66,25 +63,12 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
     }
 
     @profile("userIndexClient")
-    createChallenge(): Promise<CreateChallengeResponse> {
-        return this.handleQueryResponse(
-            () => this.userIndexService.create_challenge({}),
-            createChallengeResponse
-        );
-    }
-
-    @profile("userIndexClient")
-    registerUser(
-        username: string,
-        challengeAttempt: ChallengeAttempt,
-        referredBy: string | undefined
-    ): Promise<RegisterUserResponse> {
+    registerUser(username: string, referredBy: string | undefined): Promise<RegisterUserResponse> {
         return this.handleResponse(
             this.userIndexService.register_user({
                 username,
-                challenge_attempt: challengeAttempt,
                 referred_by: apiOptional((userId) => Principal.fromText(userId), referredBy),
-                public_key: new Uint8Array((this.identity as SignIdentity).getPublicKey().toDer())
+                public_key: new Uint8Array((this.identity as SignIdentity).getPublicKey().toDer()),
             }),
             registerUserResponse
         );

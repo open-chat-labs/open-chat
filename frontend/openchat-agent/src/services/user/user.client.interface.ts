@@ -67,10 +67,9 @@ export interface IUserClient {
         threadRootMessageIndex?: number
     ): Promise<EditMessageResponse>;
     sendMessage(
-        recipientId: string,
+        chatId: string,
         sender: CreatedUser,
         event: EventWrapper<Message>,
-        replyingToChatId?: string,
         threadRootMessageIndex?: number
     ): Promise<[SendMessageResponse, Message]>;
     sendGroupICPTransfer(
