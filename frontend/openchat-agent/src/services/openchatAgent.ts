@@ -149,6 +149,7 @@ import {
 import type { Principal } from "@dfinity/principal";
 import { applyOptionUpdate } from "../utils/mapping";
 import { waitAll } from "../utils/promise";
+import { MessageContextMap } from "src/utils/messageContext";
 
 export const apiKey = Symbol();
 
@@ -566,24 +567,23 @@ export class OpenChatAgent extends EventTarget {
     private findMissingEventIndexesByChat<T extends ChatEvent>(
         defaultChatId: string,
         events: EventWrapper<T>[]
-    ): Record<string, number[]> {
-        return events.reduce<Record<string, number[]>>((result, ev) => {
+    ): MessageContextMap<number> {
+        return events.reduce<MessageContextMap<number>>((result, ev) => {
             if (
                 ev.event.kind === "message" &&
                 ev.event.content.kind !== "deleted_content" &&
                 ev.event.repliesTo &&
                 ev.event.repliesTo.kind === "raw_reply_context"
             ) {
-                const messageContext = ev.event.repliesTo.sourceContext
-                    ? messageContextToString(ev.event.repliesTo.sourceContext)
-                    : defaultChatId;
-                if (result[messageContext] === undefined) {
-                    result[messageContext] = [];
-                }
-                result[messageContext].push(ev.event.repliesTo.eventIndex);
+                result.insert(
+                    ev.event.repliesTo.sourceContext ?? {
+                        chatId: defaultChatId,
+                    },
+                    ev.event.repliesTo.eventIndex
+                );
             }
             return result;
-        }, {});
+        }, new MessageContextMap());
     }
 
     private messagesFromEventsResponse<T extends ChatEvent>(
@@ -610,60 +610,33 @@ export class OpenChatAgent extends EventTarget {
         currentChatId: string,
         events: EventWrapper<T>[],
         latestClientEventIndex: number | undefined
-    ): Promise<Record<string, EventWrapper<Message>[]>> {
-        const missing = this.findMissingEventIndexesByChat(currentChatId, events);
-        const missingMessages: Promise<[string, EventWrapper<Message>[]]>[] = [];
-
-        // this looks horrendous but remember these things will *usually* come straight from the cache
-        Object.entries(missing).forEach(([messageContextStr, idxs]) => {
-            const messageContext = messageContextFromString(messageContextStr);
-            if (messageContext.chatId === currentChatId && chatType === "direct_chat") {
-                missingMessages.push(
-                    this.userClient
+    ): Promise<MessageContextMap<EventWrapper<Message>>> {
+        return this.findMissingEventIndexesByChat(currentChatId, events).asycMap(
+            (key, ctx, idxs) => {
+                if (ctx.chatId === currentChatId && chatType === "direct_chat") {
+                    return this.userClient
                         .chatEventsByIndex(
                             idxs,
                             currentChatId,
-                            messageContext.threadRootMessageIndex,
+                            ctx.threadRootMessageIndex,
                             latestClientEventIndex
                         )
-                        .then((resp) => this.messagesFromEventsResponse(messageContextStr, resp))
-                );
-            } else {
-                // it must be a group chat
-                const client = this.getGroupClient(messageContext.chatId);
-                missingMessages.push(
-                    client
-                        .chatEventsByIndex(
-                            idxs,
-                            messageContext.threadRootMessageIndex,
-                            latestClientEventIndex
-                        )
-                        .then((resp) => this.messagesFromEventsResponse(messageContextStr, resp))
-                );
-            }
-        });
-
-        // use waitAll so that a single failure doesn't derail everything
-        const result = await waitAll(missingMessages);
-        if (result.errors.length > 0) {
-            console.error("Some missing indexes could not be resolved: ", result.errors);
-        }
-        return result.success.reduce<Record<string, EventWrapper<Message>[]>>(
-            (res, [messageContext, messages]) => {
-                if (!res[messageContext]) {
-                    res[messageContext] = [];
+                        .then((resp) => this.messagesFromEventsResponse(key, resp));
+                } else {
+                    // it must be a group chat
+                    const client = this.getGroupClient(ctx.chatId);
+                    return client
+                        .chatEventsByIndex(idxs, ctx.threadRootMessageIndex, latestClientEventIndex)
+                        .then((resp) => this.messagesFromEventsResponse(key, resp));
                 }
-                res[messageContext] = res[messageContext].concat(messages);
-                return res;
-            },
-            {}
+            }
         );
     }
 
     private rehydrateEvent<T extends ChatEvent>(
         ev: EventWrapper<T>,
         defaultChatId: string,
-        missingReplies: Record<string, EventWrapper<Message>[]>
+        missingReplies: MessageContextMap<EventWrapper<Message>>
     ): EventWrapper<T> {
         if (ev.event.kind === "message") {
             const originalContent = ev.event.content;
@@ -676,11 +649,10 @@ export class OpenChatAgent extends EventTarget {
                 ev.event.repliesTo &&
                 ev.event.repliesTo.kind === "raw_reply_context"
             ) {
-                const messageContext =
-                    ev.event.repliesTo.sourceContext !== undefined
-                        ? messageContextToString(ev.event.repliesTo.sourceContext)
-                        : defaultChatId;
-                const messageEvents = missingReplies[messageContext] ?? [];
+                const messageContext = ev.event.repliesTo.sourceContext ?? {
+                    chatId: defaultChatId,
+                };
+                const messageEvents = missingReplies.lookup(messageContext);
                 const idx = ev.event.repliesTo.eventIndex;
                 const msg = messageEvents.find((me) => me.index === idx)?.event;
                 if (msg) {
