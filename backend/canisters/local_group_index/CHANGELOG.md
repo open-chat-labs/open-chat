@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.664](https://github.com/open-ic/open-chat/releases/tag/v2.0.664-local_group_index)] - 2023-04-17
+
 # Added
 
 - Implement 'Gated Groups' ([#3406](https://github.com/open-ic/open-chat/pull/3406))
@@ -12,7 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Removed
 
 - Removed temporary code needed for release ([#3375](https://github.com/open-ic/open-chat/pull/3375))
-  
+
 ## [[2.0.648](https://github.com/open-ic/open-chat/releases/tag/v2.0.648-local_group_index)] - 2023-02-24
 
 ### Added

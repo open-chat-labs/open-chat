@@ -49,6 +49,5 @@ pub struct UserDetails {
     pub is_bot: bool,
     pub is_platform_moderator: bool,
     pub is_platform_operator: bool,
-    #[serde(default)]
     pub is_diamond_member: bool,
 }
