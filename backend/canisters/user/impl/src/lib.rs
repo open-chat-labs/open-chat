@@ -160,7 +160,6 @@ struct Data {
     pub suspended: Timestamped<bool>,
     pub timer_jobs: TimerJobs<TimerJob>,
     pub contacts: Contacts,
-    #[serde(default)]
     pub diamond_membership_expires_at: Option<TimestampMillis>,
 }
 

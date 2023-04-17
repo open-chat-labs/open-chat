@@ -17,6 +17,7 @@ use types::{
 };
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::canister_event_sync_queue::CanisterEventSyncQueue;
+use utils::consts::{SNS_GOVERNANCE_CANISTER_ID, SNS_LEDGER_CANISTER_ID};
 use utils::env::Environment;
 use utils::time::DAY_IN_MS;
 
@@ -186,28 +187,13 @@ struct Data {
     pub initial_airdrop_neuron_id: Option<SnsNeuronId>,
     #[serde(default)]
     pub initial_airdrop_queue: InitialAirdropQueue,
-    #[serde(default = "oc_governance_canister")]
     pub openchat_governance_canister_id: CanisterId,
-    #[serde(default = "oc_ledger_canister")]
     pub openchat_ledger_canister_id: CanisterId,
-    #[serde(default = "internet_identity_canister")]
     pub internet_identity_canister_id: CanisterId,
 }
 
 fn true_() -> bool {
     true
-}
-
-fn oc_governance_canister() -> CanisterId {
-    Principal::from_text("2jvtu-yqaaa-aaaaq-aaama-cai").unwrap()
-}
-
-fn oc_ledger_canister() -> CanisterId {
-    Principal::from_text("2ouva-viaaa-aaaaq-aaamq-cai").unwrap()
-}
-
-fn internet_identity_canister() -> CanisterId {
-    Principal::from_text("rdmx6-jaaaa-aaaaa-aaadq-cai").unwrap()
 }
 
 impl Data {
@@ -250,8 +236,8 @@ impl Data {
             initial_airdrop_open: false,
             initial_airdrop_neuron_id: None,
             initial_airdrop_queue: InitialAirdropQueue::default(),
-            openchat_governance_canister_id: oc_governance_canister(),
-            openchat_ledger_canister_id: oc_ledger_canister(),
+            openchat_governance_canister_id: SNS_GOVERNANCE_CANISTER_ID,
+            openchat_ledger_canister_id: SNS_LEDGER_CANISTER_ID,
             internet_identity_canister_id,
         };
 
@@ -299,9 +285,9 @@ impl Default for Data {
             initial_airdrop_open: false,
             initial_airdrop_neuron_id: None,
             initial_airdrop_queue: InitialAirdropQueue::default(),
-            openchat_governance_canister_id: oc_governance_canister(),
-            openchat_ledger_canister_id: oc_ledger_canister(),
-            internet_identity_canister_id: internet_identity_canister(),
+            openchat_governance_canister_id: SNS_GOVERNANCE_CANISTER_ID,
+            openchat_ledger_canister_id: SNS_LEDGER_CANISTER_ID,
+            internet_identity_canister_id: Principal::anonymous(),
         }
     }
 }

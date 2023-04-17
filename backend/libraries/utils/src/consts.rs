@@ -10,6 +10,7 @@ pub const OPENCHAT_BOT_USER_ID: UserId = UserId::new(Principal::from_slice(&[228
 pub const OPENCHAT_BOT_USERNAME: &str = "OpenChatBot";
 
 pub const SNS_GOVERNANCE_CANISTER_ID: CanisterId = Principal::from_slice(&[0, 0, 0, 0, 2, 0, 0, 24, 1, 1]);
+pub const SNS_LEDGER_CANISTER_ID: CanisterId = Principal::from_slice(&[0, 0, 0, 0, 2, 0, 0, 25, 1, 1]);
 
 #[cfg(test)]
 mod tests {
@@ -20,6 +21,14 @@ mod tests {
         assert_eq!(
             SNS_GOVERNANCE_CANISTER_ID,
             Principal::from_text("2jvtu-yqaaa-aaaaq-aaama-cai").unwrap()
+        );
+    }
+
+    #[test]
+    fn sns_ledger_canister_id() {
+        assert_eq!(
+            SNS_LEDGER_CANISTER_ID,
+            Principal::from_text("2ouva-viaaa-aaaaq-aaamq-cai").unwrap()
         );
     }
 

@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.662](https://github.com/open-ic/open-chat/releases/tag/v2.0.662-group)] - 2023-04-16
+
 ### Added
 
 - Implement 'Gated Groups' ([#3406](https://github.com/open-ic/open-chat/pull/3406))
