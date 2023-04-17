@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.666](https://github.com/open-ic/open-chat/releases/tag/v2.0.666-user_index)] - 2023-04-17
+
 ### Changed
 
 - Store `diamond_membership_expires_at` in each user canister ([#3428](https://github.com/open-ic/open-chat/pull/3428))
