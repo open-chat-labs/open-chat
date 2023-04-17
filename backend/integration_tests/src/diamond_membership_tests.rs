@@ -2,6 +2,7 @@ use crate::client::{start_canister, stop_canister};
 use crate::env::ENV;
 use crate::utils::{now_millis, tick_many};
 use crate::{client, TestEnv};
+use serial_test::serial;
 use std::ops::Deref;
 use std::time::Duration;
 use test_case::test_case;
@@ -10,6 +11,7 @@ use utils::consts::SNS_GOVERNANCE_CANISTER_ID;
 use utils::time::MINUTE_IN_MS;
 
 #[test]
+#[serial]
 fn can_upgrade_to_diamond() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
@@ -65,6 +67,7 @@ fn can_upgrade_to_diamond() {
 
 #[test_case(false; "without_ledger_error")]
 #[test_case(true; "with_ledger_error")]
+#[serial]
 fn membership_renews_automatically_if_set_to_recurring(ledger_error: bool) {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
@@ -104,6 +107,7 @@ fn membership_renews_automatically_if_set_to_recurring(ledger_error: bool) {
 }
 
 #[test]
+#[serial]
 fn membership_payment_shared_with_referrer() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
