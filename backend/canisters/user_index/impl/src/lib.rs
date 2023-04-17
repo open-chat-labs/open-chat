@@ -194,16 +194,12 @@ struct Data {
     pub initial_airdrop_neuron_id: Option<SnsNeuronId>,
     #[serde(default)]
     pub initial_airdrop_queue: InitialAirdropQueue,
-    #[serde(default = "internet_identity_canister")]
+
     pub internet_identity_canister_id: CanisterId,
 }
 
 fn true_() -> bool {
     true
-}
-
-fn internet_identity_canister() -> CanisterId {
-    Principal::from_text("rdmx6-jaaaa-aaaaa-aaadq-cai").unwrap()
 }
 
 impl Data {
@@ -295,7 +291,7 @@ impl Default for Data {
             initial_airdrop_open: false,
             initial_airdrop_neuron_id: None,
             initial_airdrop_queue: InitialAirdropQueue::default(),
-            internet_identity_canister_id: internet_identity_canister(),
+            internet_identity_canister_id: Principal::anonymous(),
         }
     }
 }

@@ -5,6 +5,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Fixed
+
+- Fix `referral_metrics` endpoint ([#3461](https://github.com/open-ic/open-chat/pull/3461))
+
+## [[2.0.661](https://github.com/open-ic/open-chat/releases/tag/v2.0.661-user_index)] - 2023-04-15
+
 ### Added
 
 - Added `referral_metrics` endpoint ([#3429](https://github.com/open-ic/open-chat/pull/3429))
