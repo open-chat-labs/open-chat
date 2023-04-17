@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Removed
+
+- Remove one-time code to sync `diamond_membership_expires_at` with user canisters ([#3467](https://github.com/open-ic/open-chat/pull/3467))
+
 ## [[2.0.666](https://github.com/open-ic/open-chat/releases/tag/v2.0.666-user_index)] - 2023-04-17
 
 ### Changed
