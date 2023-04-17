@@ -13,11 +13,13 @@ fn referral_metrics(_args: Args) -> Response {
 struct ReferralData {
     paid_diamond: u32,
     unpaid_diamond: u32,
+    other: u32,
     icp_raised_for_paid_diamond_e8s: u64,
 }
 
 fn referral_metrics_impl(runtime_state: &RuntimeState) -> Response {
     let mut user_referrals_map: HashMap<UserId, ReferralData> = HashMap::new();
+    let now = runtime_state.env.now();
 
     for user in runtime_state.data.users.iter() {
         if let Some(referred_by) = user.referred_by {
@@ -27,8 +29,10 @@ fn referral_metrics_impl(runtime_state: &RuntimeState) -> Response {
             if icp_raised_for_paid_diamond > 0 {
                 data.paid_diamond += 1;
                 data.icp_raised_for_paid_diamond_e8s += icp_raised_for_paid_diamond;
-            } else {
+            } else if user.diamond_membership_details.is_active(now) {
                 data.unpaid_diamond += 1;
+            } else {
+                data.other += 1;
             }
         }
     }
@@ -41,6 +45,7 @@ fn referral_metrics_impl(runtime_state: &RuntimeState) -> Response {
     let mut users_who_referred_unpaid_diamond: u32 = 0;
     let mut referrals_of_paid_diamond: u32 = 0;
     let mut referrals_of_unpaid_diamond: u32 = 0;
+    let mut referrals_other: u32 = 0;
     let mut icp_raised_by_referrals_to_paid_diamond_e8s: u64 = 0;
 
     for data in user_referrals.iter() {
@@ -53,6 +58,9 @@ fn referral_metrics_impl(runtime_state: &RuntimeState) -> Response {
         if data.unpaid_diamond > 0 {
             users_who_referred_unpaid_diamond += 1;
             referrals_of_unpaid_diamond += data.unpaid_diamond;
+        }
+        if data.other > 0 {
+            referrals_other += data.other;
         }
     }
 
@@ -76,6 +84,7 @@ fn referral_metrics_impl(runtime_state: &RuntimeState) -> Response {
         users_who_referred_90_percent_unpaid_diamond,
         referrals_of_paid_diamond,
         referrals_of_unpaid_diamond,
+        referrals_other,
         icp_raised_by_referrals_to_paid_diamond: (icp_raised_by_referrals_to_paid_diamond_e8s / 100_000_000) as u32,
     })
 }
