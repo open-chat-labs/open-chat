@@ -143,13 +143,11 @@ import {
     GroupGate,
     ProposalVoteDetails,
     SetMessageReminderResponse,
-    messageContextToString,
-    messageContextFromString,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import { applyOptionUpdate } from "../utils/mapping";
 import { waitAll } from "../utils/promise";
-import { MessageContextMap } from "src/utils/messageContext";
+import { MessageContextMap } from "../utils/messageContext";
 
 export const apiKey = Symbol();
 
