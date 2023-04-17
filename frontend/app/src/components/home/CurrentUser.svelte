@@ -110,7 +110,6 @@
     }
 
     .flame,
-    .airdrop,
     .diamond-icon {
         @include font(bold, normal, fs-110);
     }
