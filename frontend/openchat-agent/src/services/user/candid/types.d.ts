@@ -1009,7 +1009,6 @@ export interface SendMessageArgs {
   'thread_root_message_index' : [] | [MessageIndex],
 }
 export type SendMessageResponse = { 'TextTooLong' : number } |
-  { 'TransferLimitExceeded' : bigint } |
   {
     'TransferSuccessV2' : {
       'timestamp' : TimestampMillis,
@@ -1051,7 +1050,6 @@ export interface SendMessageWithTransferToGroupArgs {
 export type SendMessageWithTransferToGroupResponse = {
     'TextTooLong' : number
   } |
-  { 'TransferLimitExceeded' : bigint } |
   { 'CallerNotInGroup' : [] | [CompletedCryptoTransaction] } |
   { 'ChatFrozen' : null } |
   { 'TransferCannotBeZero' : null } |

@@ -965,7 +965,6 @@ export const idlFactory = ({ IDL }) => {
   });
   const SendMessageResponse = IDL.Variant({
     'TextTooLong' : IDL.Nat32,
-    'TransferLimitExceeded' : IDL.Nat,
     'TransferSuccessV2' : IDL.Record({
       'timestamp' : TimestampMillis,
       'chat_id' : ChatId,
@@ -1027,7 +1026,6 @@ export const idlFactory = ({ IDL }) => {
   });
   const SendMessageWithTransferToGroupResponse = IDL.Variant({
     'TextTooLong' : IDL.Nat32,
-    'TransferLimitExceeded' : IDL.Nat,
     'CallerNotInGroup' : IDL.Opt(CompletedCryptoTransaction),
     'ChatFrozen' : IDL.Null,
     'TransferCannotBeZero' : IDL.Null,

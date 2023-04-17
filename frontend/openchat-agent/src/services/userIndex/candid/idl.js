@@ -106,6 +106,7 @@ export const idlFactory = ({ IDL }) => {
       'icp_raised_by_referrals_to_paid_diamond' : IDL.Nat32,
       'referrals_of_paid_diamond' : IDL.Nat32,
       'users_who_referred_paid_diamond' : IDL.Nat32,
+      'referrals_other' : IDL.Nat32,
       'users_who_referred_90_percent_unpaid_diamond' : IDL.Nat32,
     }),
   });

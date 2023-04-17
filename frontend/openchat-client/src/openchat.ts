@@ -572,12 +572,12 @@ export class OpenChat extends EventTarget {
             startSwCheckPoller();
             this.startSession(id).then(() => this.logout());
             this.loadChats();
-            // new Poller(
-            //     () => this.loadChats(),
-            //     CHAT_UPDATE_INTERVAL,
-            //     CHAT_UPDATE_IDLE_INTERVAL,
-            //     true
-            // );
+            new Poller(
+                () => this.loadChats(),
+                CHAT_UPDATE_INTERVAL,
+                CHAT_UPDATE_IDLE_INTERVAL,
+                true
+            );
             new Poller(() => this.updateUsers(), USER_UPDATE_INTERVAL, USER_UPDATE_INTERVAL);
             initNotificationStores();
             this.api.getUserStorageLimits().then(storageStore.set);

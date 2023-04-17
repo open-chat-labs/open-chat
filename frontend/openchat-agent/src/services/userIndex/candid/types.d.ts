@@ -813,6 +813,7 @@ export type ReferralMetricsResponse = {
       'icp_raised_by_referrals_to_paid_diamond' : number,
       'referrals_of_paid_diamond' : number,
       'users_who_referred_paid_diamond' : number,
+      'referrals_other' : number,
       'users_who_referred_90_percent_unpaid_diamond' : number,
     }
   };
