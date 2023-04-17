@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Store `diamond_membership_expires_at` in each user canister ([#3428](https://github.com/open-ic/open-chat/pull/3428))
+
 ### Removed
 
 - Remove code to handle the initial airdrop ([#3462](https://github.com/open-ic/open-chat/pull/3462))
