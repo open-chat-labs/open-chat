@@ -504,10 +504,6 @@ export type InvalidPollReason = { 'DuplicateOptions' : null } |
   { 'OptionTooLong' : number } |
   { 'EndDateInThePast' : null } |
   { 'PollsNotValidForDirectChats' : null };
-export type IsEligibleForInitialAirdropResponse = { 'No' : null } |
-  { 'Yes' : [] | [Principal] } |
-  { 'AirdropClosed' : null } |
-  { 'UserNotFound' : null };
 export type MarkSuspectedBotArgs = {};
 export type MarkSuspectedBotResponse = { 'Success' : null };
 export type Memo = bigint;
@@ -851,15 +847,6 @@ export interface SearchArgs { 'max_results' : number, 'search_term' : string }
 export type SearchResponse = {
     'Success' : { 'timestamp' : TimestampMillis, 'users' : Array<UserSummary> }
   };
-export interface SetNeuronControllerForInitialAirdropArgs {
-  'controller' : Principal,
-}
-export type SetNeuronControllerForInitialAirdropResponse = {
-    'AirdropClosed' : null
-  } |
-  { 'UserNotEligible' : null } |
-  { 'Success' : null } |
-  { 'UserNotFound' : null };
 export interface SetUserUpgradeConcurrencyArgs { 'value' : number }
 export type SetUserUpgradeConcurrencyResponse = { 'Success' : null };
 export interface SetUsernameArgs { 'username' : string }
@@ -1060,10 +1047,6 @@ export interface _SERVICE {
   'check_username' : ActorMethod<[CheckUsernameArgs], CheckUsernameResponse>,
   'create_challenge' : ActorMethod<[EmptyArgs], CreateChallengeResponse>,
   'current_user' : ActorMethod<[EmptyArgs], CurrentUserResponse>,
-  'is_eligible_for_initial_airdrop' : ActorMethod<
-    [EmptyArgs],
-    IsEligibleForInitialAirdropResponse
-  >,
   'mark_suspected_bot' : ActorMethod<
     [MarkSuspectedBotArgs],
     MarkSuspectedBotResponse
@@ -1087,10 +1070,6 @@ export interface _SERVICE {
     RemovePlatformOperatorResponse
   >,
   'search' : ActorMethod<[SearchArgs], SearchResponse>,
-  'set_neuron_controller_for_initial_airdrop' : ActorMethod<
-    [SetNeuronControllerForInitialAirdropArgs],
-    SetNeuronControllerForInitialAirdropResponse
-  >,
   'set_user_upgrade_concurrency' : ActorMethod<
     [SetUserUpgradeConcurrencyArgs],
     SetUserUpgradeConcurrencyResponse

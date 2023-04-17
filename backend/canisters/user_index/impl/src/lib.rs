@@ -1,4 +1,3 @@
-use crate::model::initial_airdrop_queue::{InitialAirdropEntry, InitialAirdropQueue};
 use crate::model::local_user_index_map::LocalUserIndex;
 use crate::model::storage_index_user_sync_queue::OpenStorageUserSyncQueue;
 use crate::model::user_map::UserMap;
@@ -14,9 +13,7 @@ use queries::referral_metrics::ReferralData;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
-use types::{
-    CanisterId, CanisterWasm, Cryptocurrency, Cycles, Milliseconds, SnsNeuronId, TimestampMillis, Timestamped, UserId, Version,
-};
+use types::{CanisterId, CanisterWasm, Cryptocurrency, Cycles, Milliseconds, TimestampMillis, Timestamped, UserId, Version};
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::canister_event_sync_queue::CanisterEventSyncQueue;
 use utils::env::Environment;
@@ -191,11 +188,6 @@ impl RuntimeState {
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
                 internet_identity: self.data.internet_identity_canister_id,
             },
-            users_eligible_for_initial_airdrop: self.data.users.iter().filter(|u| u.is_eligible_for_initial_airdrop()).count()
-                as u32,
-            users_confirmed_for_initial_airdrop: self.data.neuron_controllers_for_initial_airdrop.len() as u32,
-            initial_airdrop_queue_length: self.data.initial_airdrop_queue.len() as u32,
-            initial_airdrop_failures: self.data.initial_airdrop_queue.failed().iter().take(10).cloned().collect(),
         }
     }
 }
@@ -226,18 +218,7 @@ struct Data {
     pub local_index_map: LocalUserIndexMap,
     pub timer_jobs: TimerJobs<TimerJob>,
     pub neuron_controllers_for_initial_airdrop: HashMap<UserId, Principal>,
-    #[serde(default = "true_")]
-    pub initial_airdrop_open: bool,
-    #[serde(default)]
-    pub initial_airdrop_neuron_id: Option<SnsNeuronId>,
-    #[serde(default)]
-    pub initial_airdrop_queue: InitialAirdropQueue,
-
     pub internet_identity_canister_id: CanisterId,
-}
-
-fn true_() -> bool {
-    true
 }
 
 impl Data {
@@ -278,9 +259,6 @@ impl Data {
             local_index_map: LocalUserIndexMap::default(),
             timer_jobs: TimerJobs::default(),
             neuron_controllers_for_initial_airdrop: HashMap::new(),
-            initial_airdrop_open: false,
-            initial_airdrop_neuron_id: None,
-            initial_airdrop_queue: InitialAirdropQueue::default(),
             internet_identity_canister_id,
         };
 
@@ -326,9 +304,6 @@ impl Default for Data {
             local_index_map: LocalUserIndexMap::default(),
             timer_jobs: TimerJobs::default(),
             neuron_controllers_for_initial_airdrop: HashMap::new(),
-            initial_airdrop_open: false,
-            initial_airdrop_neuron_id: None,
-            initial_airdrop_queue: InitialAirdropQueue::default(),
             internet_identity_canister_id: Principal::anonymous(),
         }
     }
@@ -357,10 +332,6 @@ pub struct Metrics {
     pub user_index_events_queue_length: usize,
     pub local_user_indexes: Vec<(CanisterId, LocalUserIndex)>,
     pub canister_ids: CanisterIds,
-    pub users_eligible_for_initial_airdrop: u32,
-    pub users_confirmed_for_initial_airdrop: u32,
-    pub initial_airdrop_queue_length: u32,
-    pub initial_airdrop_failures: Vec<InitialAirdropEntry>,
 }
 
 #[derive(Serialize, Debug, Default)]

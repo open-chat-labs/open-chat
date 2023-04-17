@@ -1,6 +1,5 @@
 pub mod account_billing;
 pub mod diamond_membership_details;
-pub mod initial_airdrop_queue;
 pub mod local_user_index_map;
 pub mod pending_payments_queue;
 pub mod storage_index_user_sync_queue;
