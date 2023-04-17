@@ -21,8 +21,6 @@
 
     $: username = me ? client.toTitleCase($_("you")) : replyingTo.sender?.username ?? "unknownUser";
 
-    $: console.log("Replying to: ", replyingTo);
-
     function cancelReply() {
         dispatch("cancelReply");
     }

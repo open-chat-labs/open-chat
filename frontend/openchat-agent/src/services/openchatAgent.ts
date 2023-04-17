@@ -574,13 +574,13 @@ export class OpenChatAgent extends EventTarget {
                 ev.event.repliesTo &&
                 ev.event.repliesTo.kind === "raw_reply_context"
             ) {
-                const key = ev.event.repliesTo.sourceContext
+                const messageContext = ev.event.repliesTo.sourceContext
                     ? messageContextToString(ev.event.repliesTo.sourceContext)
                     : defaultChatId;
-                if (result[key] === undefined) {
-                    result[key] = [];
+                if (result[messageContext] === undefined) {
+                    result[messageContext] = [];
                 }
-                result[key].push(ev.event.repliesTo.eventIndex);
+                result[messageContext].push(ev.event.repliesTo.eventIndex);
             }
             return result;
         }, {});
@@ -649,11 +649,11 @@ export class OpenChatAgent extends EventTarget {
             console.error("Some missing indexes could not be resolved: ", result.errors);
         }
         return result.success.reduce<Record<string, EventWrapper<Message>[]>>(
-            (res, [key, messages]) => {
-                if (!res[key]) {
-                    res[key] = [];
+            (res, [messageContext, messages]) => {
+                if (!res[messageContext]) {
+                    res[messageContext] = [];
                 }
-                res[key] = res[key].concat(messages);
+                res[messageContext] = res[messageContext].concat(messages);
                 return res;
             },
             {}
@@ -735,8 +735,6 @@ export class OpenChatAgent extends EventTarget {
         if (resp === "events_failed") {
             return resp;
         }
-
-        console.log("EventsResponse: ", resp.events);
 
         const missing = await this.resolveMissingIndexes(
             chatType,

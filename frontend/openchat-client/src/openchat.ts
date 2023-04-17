@@ -2526,8 +2526,6 @@ export class OpenChat extends EventTarget {
 
             const canRetry = this.canRetryMessage(msg.content);
 
-            console.log("Sending message: ", event);
-
             this.api
                 .sendMessage(chat.kind, chatId, this.user, mentioned, event, threadRootMessageIndex)
                 .then(([resp, msg]) => {
@@ -2555,7 +2553,6 @@ export class OpenChat extends EventTarget {
                             trackEvent("replied_to_message");
                         }
                     } else {
-                        console.log("Failed: ", resp);
                         this.removeMessage(
                             chat.kind,
                             chatId,

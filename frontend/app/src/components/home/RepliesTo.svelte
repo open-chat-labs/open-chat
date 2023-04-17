@@ -24,8 +24,6 @@
     $: me = repliesTo.senderId === currentUser.userId;
     $: isTextContent = repliesTo.content?.kind === "text_content";
 
-    $: console.log("RepliesTo: ", repliesTo.sourceContext);
-
     function getUrl() {
         const path = [
             repliesTo.sourceContext.chatId,

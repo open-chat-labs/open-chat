@@ -560,7 +560,6 @@
             return c.kind === "direct_chat" && c.them === ev.detail.sender?.userId;
         });
 
-        console.log("ReplyingPrivately: ", ev.detail);
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const chatId = chat?.chatId ?? ev.detail.sender!.userId;
         currentChatDraftMessage.setTextContent(chatId, "");
