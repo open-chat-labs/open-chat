@@ -43,7 +43,7 @@
 
     $: valid =
         poll.pollAnswers.size >= 2 ||
-        (poll.pollAnswers.size >= 1 && nextAnswer.length > 0 && answerIsValid(nextAnswer));
+        (poll.pollAnswers.size === 1 && nextAnswer.length > 0 && answerIsValid(nextAnswer));
 
     export function resetPoll() {
         selectedDuration = "oneDay";
