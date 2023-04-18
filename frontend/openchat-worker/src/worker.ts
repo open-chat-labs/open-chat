@@ -369,6 +369,7 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
                         payload.chatType,
                         payload.chatId,
                         payload.message,
+                        payload.threadRootMessageIndex,
                         payload.latestClientEventIndex
                     )
                     .then((response) =>

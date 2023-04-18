@@ -680,6 +680,7 @@ type RehydrateMessage = Request<{
     chatType: "direct_chat" | "group_chat";
     chatId: string;
     message: EventWrapper<Message>;
+    threadRootMessageIndex: number | undefined;
     latestClientEventIndex: number | undefined;
 }> & {
     kind: "rehydrateMessage";
