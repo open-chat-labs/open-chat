@@ -144,7 +144,7 @@ impl RuntimeState {
 
         for (user_id, data) in user_referrals_map {
             if data.paid_diamond > 0 || data.unpaid_diamond > 0 {
-                let amount: u64 = data.icp_raised_for_paid_diamond_e8s + (data.unpaid_diamond as u64 * 50_000_000);
+                let amount: u64 = (data.icp_raised_for_paid_diamond_e8s / 2) + (data.unpaid_diamond as u64 * 75_000_000);
                 self.data.pending_payments_queue.push(PendingPayment {
                     amount,
                     currency: Cryptocurrency::InternetComputer,
