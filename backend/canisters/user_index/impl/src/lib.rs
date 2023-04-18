@@ -119,6 +119,10 @@ impl RuntimeState {
     }
 
     pub fn queue_backdated_referral_payments(&mut self) {
+        if self.data.backdated_referral_payments_added {
+            return;
+        }
+
         let mut user_referrals_map: HashMap<UserId, ReferralData> = HashMap::new();
         let now = self.env.now();
 
@@ -157,6 +161,8 @@ impl RuntimeState {
                 })
             }
         }
+
+        self.data.backdated_referral_payments_added = true;
 
         jobs::make_pending_payments::start_job_if_required(self);
     }
@@ -225,6 +231,8 @@ struct Data {
     pub timer_jobs: TimerJobs<TimerJob>,
     pub neuron_controllers_for_initial_airdrop: HashMap<UserId, Principal>,
     pub internet_identity_canister_id: CanisterId,
+    #[serde(default)]
+    pub backdated_referral_payments_added: bool,
 }
 
 impl Data {
@@ -266,6 +274,7 @@ impl Data {
             timer_jobs: TimerJobs::default(),
             neuron_controllers_for_initial_airdrop: HashMap::new(),
             internet_identity_canister_id,
+            backdated_referral_payments_added: false,
         };
 
         // Register the ProposalsBot
@@ -311,6 +320,7 @@ impl Default for Data {
             timer_jobs: TimerJobs::default(),
             neuron_controllers_for_initial_airdrop: HashMap::new(),
             internet_identity_canister_id: Principal::anonymous(),
+            backdated_referral_payments_added: false,
         }
     }
 }
