@@ -12,8 +12,9 @@ export async function ensureReplicaIsUpToDate(
     const chats = await openDbAndGetCachedChats(principal);
     if (chats === undefined) return;
 
-    const chat = chats.directChats.find((c) => c.chatId === chatId)
-        ?? chats.groupChats.find((c) => c.chatId === chatId);
+    const chat =
+        chats.directChats.find((c) => c.chatId === chatId) ??
+        chats.groupChats.find((c) => c.chatId === chatId);
 
     const latestSavedEventIndex = chat?.latestEventIndex;
     if (latestSavedEventIndex === undefined) return;

@@ -19,7 +19,7 @@ import type {
 import type { Principal } from "@dfinity/principal";
 import { toRecord } from "./list";
 
-const CACHE_VERSION = 63;
+const CACHE_VERSION = 64;
 
 export type Database = Promise<IDBPDatabase<ChatSchema>>;
 
