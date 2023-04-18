@@ -10,7 +10,7 @@
     const client = getContext<OpenChat>("client");
 
     let balanceError: string | undefined;
-    let manageMode: "none" | "send" | "deposit";
+    let manageMode: "none" | "withdraw" | "deposit";
     let selectedCryptoAccount: Cryptocurrency | undefined = undefined;
 
     $: cryptoBalance = client.cryptoBalance;
@@ -32,9 +32,9 @@
         manageMode = "deposit";
     }
 
-    function showSend(crypto: Cryptocurrency) {
+    function showWithdraw(crypto: Cryptocurrency) {
         selectedCryptoAccount = crypto;
-        manageMode = "send";
+        manageMode = "withdraw";
     }
 
     $: crypto = cryptoCurrencyList.map((t) => ({
@@ -80,10 +80,10 @@
         </div>
         <div class="manage">
             {#if !token.disabled}
-                <LinkButton underline={"hover"} on:click={() => showSend(token.key)}
-                    >{$_("cryptoAccount.send")}</LinkButton>
                 <LinkButton underline={"hover"} on:click={() => showReceive(token.key)}
                     >{$_("cryptoAccount.deposit")}</LinkButton>
+                <LinkButton underline={"hover"} on:click={() => showWithdraw(token.key)}
+                    >{$_("cryptoAccount.withdraw")}</LinkButton>
             {/if}
         </div>
     {/each}

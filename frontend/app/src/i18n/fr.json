@@ -475,13 +475,13 @@
         "token": "jeton",
         "comingSoon": "(Bientôt disponible)",
         "send": "Envoyer",
-        "sendToken": "Envoyer {symbol}",
         "deposit": "Dépôt",
         "depositToken": "Dépôt {symbol}",
         "sendTarget": "entrez une adresse à laquelle envoyer",
         "sendSucceeded": "Votre {symbol} a été envoyé avec succès !",
         "sendFailed": "Échec de l'envoi de {symbol}",
-        "scan": "Scannez le code QR"
+        "scan": "Scannez le code QR",
+        "withdrawToken": "Retirer {symbol}"
     },
     "searchChat": "Rechercher",
     "search": "Rechercher...",

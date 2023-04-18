@@ -11,10 +11,10 @@
     import { Cryptocurrency, cryptoLookup } from "openchat-client";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
     import type { OpenChat } from "openchat-client";
-    import SendCrypto from "./SendCrypto.svelte";
+    import WithdrawCrypto from "./WithdrawCrypto.svelte";
 
     export let token: Cryptocurrency;
-    export let mode: "send" | "deposit";
+    export let mode: "withdraw" | "deposit";
 
     const client = getContext<OpenChat>("client");
     const user = client.user;
@@ -26,10 +26,10 @@
     $: title =
         mode === "deposit"
             ? $_("cryptoAccount.depositToken", { values: { symbol: token.toUpperCase() } })
-            : $_("cryptoAccount.sendToken", { values: { symbol: token.toUpperCase() } });
+            : $_("cryptoAccount.withdrawToken", { values: { symbol: token.toUpperCase() } });
     $: cryptoBalance = client.cryptoBalance;
 
-    let sendCrypto: SendCrypto;
+    let withdrawCrypto: WithdrawCrypto;
     let error: string | undefined = undefined;
     let amountToWithdrawE8s = BigInt(0);
     let balanceWithRefresh: BalanceWithRefresh;
@@ -74,9 +74,9 @@
                 </a>
             {/if}
 
-            {#if mode === "send"}
-                <SendCrypto
-                    bind:this={sendCrypto}
+            {#if mode === "withdraw"}
+                <WithdrawCrypto
+                    bind:this={withdrawCrypto}
                     on:error={(ev) => (error = ev.detail)}
                     on:refreshBalance={() => balanceWithRefresh.refresh()}
                     {scanningUnsupported}
@@ -89,8 +89,8 @@
         </form>
         <span slot="footer">
             <ButtonGroup>
-                {#if mode === "send" && !scanningUnsupported}
-                    <Button secondary tiny={$mobileWidth} on:click={() => sendCrypto?.scan()}
+                {#if mode === "withdraw" && !scanningUnsupported}
+                    <Button secondary tiny={$mobileWidth} on:click={() => withdrawCrypto?.scan()}
                         >{$_("cryptoAccount.scan")}</Button>
                 {/if}
                 <Button tiny={$mobileWidth} on:click={() => dispatch("close")}

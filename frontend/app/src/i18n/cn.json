@@ -475,13 +475,13 @@
         "token": "代币",
         "comingSoon": "（快来了）",
         "send": "发送",
-        "sendToken": "发送 {symbol}",
         "deposit": "订金",
         "depositToken": "存款 {symbol}",
         "sendTarget": "输入要发送到的地址",
         "sendSucceeded": "您的 {symbol} 已成功发送！",
         "sendFailed": "无法发送 {symbol}",
-        "scan": "扫描二维码"
+        "scan": "扫描二维码",
+        "withdrawToken": "提款 {symbol}"
     },
     "searchChat": "搜索",
     "search": "搜索...",

@@ -476,13 +476,13 @@
         "token": "simbólico",
         "comingSoon": "(próximamente)",
         "send": "Enviar",
-        "sendToken": "Enviar {symbol}",
         "deposit": "Depósito",
         "depositToken": "Depositar {symbol}",
         "sendTarget": "Ingrese una dirección para enviar a",
         "sendSucceeded": "¡Su {symbol} se envió con éxito!",
         "sendFailed": "Error al enviar {symbol}",
-        "scan": "Escanear código QR"
+        "scan": "Escanear código QR",
+        "withdrawToken": "Retirar {symbol}"
     },
     "searchChat": "Búsqueda",
     "search": "Búsqueda...",

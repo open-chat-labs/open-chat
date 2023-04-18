@@ -477,13 +477,13 @@
         "token": "Zeichen",
         "comingSoon": "(kommt bald)",
         "send": "Schicken",
-        "sendToken": "Senden Sie {symbol}",
         "deposit": "Kaution",
         "depositToken": "Einzahlung {symbol}",
         "sendTarget": "Geben Sie eine Adresse ein, an die gesendet werden soll",
         "sendSucceeded": "Ihr {symbol} wurde erfolgreich gesendet!",
         "sendFailed": "Fehler beim Senden von {symbol}",
-        "scan": "QR-Code scannen"
+        "scan": "QR-Code scannen",
+        "withdrawToken": "Zurückziehen {symbol}"
     },
     "searchChat": "Suche",
     "search": "Suche...",
