@@ -556,7 +556,16 @@ function replyContext(candid: ApiReplyContext): ReplyContext {
     return {
         kind: "raw_reply_context",
         eventIndex: candid.event_index,
-        sourceContext: optional(candid.event_list_if_other, replySourceContext),
+        sourceContext:
+            optional(candid.event_list_if_other, replySourceContext) ??
+            optional(candid.chat_id_if_other, replySourceContextLegacy),
+    };
+}
+
+// We still need this for data that doesn't have the new format
+function replySourceContextLegacy(chatId: Principal): MessageContext {
+    return {
+        chatId: chatId.toString(),
     };
 }
 

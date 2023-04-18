@@ -571,7 +571,6 @@ export class OpenChat extends EventTarget {
             this.startOnlinePoller();
             startSwCheckPoller();
             this.startSession(id).then(() => this.logout());
-            this.loadChats();
             new Poller(
                 () => this.loadChats(),
                 CHAT_UPDATE_INTERVAL,
@@ -2705,6 +2704,7 @@ export class OpenChat extends EventTarget {
                 serverChat.kind,
                 chatId,
                 message,
+                undefined,
                 serverChat.latestEventIndex
             ),
             this.addMissingUsersFromMessage(message),
