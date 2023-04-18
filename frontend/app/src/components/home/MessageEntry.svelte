@@ -503,7 +503,7 @@
         <div class="preview">
             {#if chat.kind === "group_chat" && gatedGroupsEnabled}
                 <div class="gate">
-                    <GroupGateIcon gate={chat.gate} />
+                    <GroupGateIcon on:upgrade gate={chat.gate} />
                 </div>
             {/if}
             {#if isPlatformModerator}

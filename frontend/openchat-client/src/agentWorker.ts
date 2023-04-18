@@ -53,8 +53,6 @@ import {
     User,
     EditMessageResponse,
     RegisterUserResponse,
-    ChallengeAttempt,
-    CreateChallengeResponse,
     AddMembersResponse,
     RemoveMemberResponse,
     MemberRole,
@@ -483,7 +481,6 @@ export class OpenChatAgentWorker extends EventTarget {
         chatType: "direct_chat" | "group_chat",
         currentChatId: string,
         message: EventWrapper<Message>,
-        threadRootMessageIndex: number | undefined,
         latestClientEventIndex: number | undefined
     ): Promise<EventWrapper<Message>> {
         return this.sendRequest({
@@ -492,7 +489,6 @@ export class OpenChatAgentWorker extends EventTarget {
                 chatType,
                 currentChatId,
                 message,
-                threadRootMessageIndex,
                 latestClientEventIndex,
             },
         });
@@ -905,25 +901,13 @@ export class OpenChatAgentWorker extends EventTarget {
         });
     }
 
-    registerUser(
-        username: string,
-        challengeAttempt: ChallengeAttempt,
-        referredBy: string | undefined
-    ): Promise<RegisterUserResponse> {
+    registerUser(username: string, referredBy: string | undefined): Promise<RegisterUserResponse> {
         return this.sendRequest({
             kind: "registerUser",
             payload: {
                 username,
-                challengeAttempt,
                 referredBy,
             },
-        });
-    }
-
-    createChallenge(): Promise<CreateChallengeResponse> {
-        return this.sendRequest({
-            kind: "createChallenge",
-            payload: undefined,
         });
     }
 

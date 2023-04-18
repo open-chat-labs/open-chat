@@ -1,7 +1,6 @@
 import type { IDL } from "@dfinity/candid";
 import {
     _SERVICE,
-    CreateChallengeResponse,
     CurrentUserResponse,
     CurrentUserArgs,
     CheckUsernameArgs,
@@ -25,7 +24,6 @@ import {
 } from "./types";
 export {
     _SERVICE as UserIndexService,
-    CreateChallengeResponse as ApiCreateChallengeResponse,
     CurrentUserResponse as ApiCurrentUserResponse,
     CurrentUserArgs as ApiCurrentUserArgs,
     SetUsernameArgs as ApiSetUsernameArgs,

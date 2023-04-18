@@ -96,7 +96,7 @@
     :global(.manage .link-button) {
         padding: 0 0 0 $sp3;
         &:first-child {
-            border-right: 1px solid var(--bd);
+            border-right: 1px solid var(--txt-light);
             padding: 0 $sp3 0 0;
         }
     }

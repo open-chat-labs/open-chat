@@ -247,9 +247,7 @@ import {
     type RemoteUserSentMessage,
     type CheckUsernameResponse,
     type UserSummary,
-    type ChallengeAttempt,
     type RegisterUserResponse,
-    type CreateChallengeResponse,
     type CurrentUserResponse,
     type AddMembersResponse,
     type RemoveMemberResponse,
@@ -573,6 +571,7 @@ export class OpenChat extends EventTarget {
             this.startOnlinePoller();
             startSwCheckPoller();
             this.startSession(id).then(() => this.logout());
+            this.loadChats();
             new Poller(
                 () => this.loadChats(),
                 CHAT_UPDATE_INTERVAL,
@@ -2706,7 +2705,6 @@ export class OpenChat extends EventTarget {
                 serverChat.kind,
                 chatId,
                 message,
-                undefined,
                 serverChat.latestEventIndex
             ),
             this.addMissingUsersFromMessage(message),
@@ -2919,20 +2917,13 @@ export class OpenChat extends EventTarget {
         return captured;
     }
 
-    registerUser(
-        username: string,
-        challengeAttempt: ChallengeAttempt
-    ): Promise<RegisterUserResponse> {
-        return this.api.registerUser(username, challengeAttempt, this._referredBy).then((res) => {
+    registerUser(username: string): Promise<RegisterUserResponse> {
+        return this.api.registerUser(username, this._referredBy).then((res) => {
             if (res === "success") {
                 localStorage.removeItem("openchat_referredby");
             }
             return res;
         });
-    }
-
-    createChallenge(): Promise<CreateChallengeResponse> {
-        return this.api.createChallenge();
     }
 
     getCurrentUser(): Promise<CurrentUserResponse> {

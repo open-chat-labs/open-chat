@@ -4,8 +4,11 @@
     import TooltipWrapper from "../TooltipWrapper.svelte";
     import TooltipPopup from "../TooltipPopup.svelte";
     import { E8S_PER_TOKEN, GroupGate } from "openchat-client";
+    import { createEventDispatcher } from "svelte";
 
     export let gate: GroupGate;
+
+    const dispatch = createEventDispatcher();
 
     $: params = formatParams(gate);
 
@@ -32,7 +35,7 @@
 {#if gate.kind !== "no_gate"}
     {#if gate.kind === "diamond_gate"}
         <TooltipWrapper bottomOffset={-10} alignRight={!rtlStore} centreChevron={true}>
-            <div slot="target" class="diamond">💎</div>
+            <div on:click={() => dispatch("upgrade")} slot="target" class="diamond">💎</div>
             <div slot="tooltip">
                 <TooltipPopup alignRight={!rtlStore}>
                     {$_("group.diamondGateInfo")}
@@ -74,6 +77,7 @@
         position: relative;
     }
     .diamond {
+        cursor: pointer;
         @include font-size(fs-130);
     }
     .oc {

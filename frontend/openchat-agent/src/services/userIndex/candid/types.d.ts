@@ -52,9 +52,6 @@ export interface CanisterWasm {
   'version' : Version,
   'module' : Uint8Array | number[],
 }
-export interface Challenge { 'key' : ChallengeKey, 'png_base64' : string }
-export interface ChallengeAttempt { 'key' : ChallengeKey, 'chars' : string }
-export type ChallengeKey = number;
 export type ChatEvent = { 'Empty' : null } |
   { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'ParticipantJoined' : ParticipantJoined } |
@@ -139,9 +136,6 @@ export type CompletedCryptoTransaction = {
     'NNS' : NnsCompletedCryptoTransaction
   } |
   { 'SNS' : SnsCompletedCryptoTransaction };
-export type CreateChallengeResponse = { 'Throttled' : null } |
-  { 'Success' : Challenge } |
-  { 'NotRequired' : null };
 export interface CryptoContent {
   'recipient' : UserId,
   'caption' : [] | [string],
@@ -333,6 +327,7 @@ export interface GroupCanisterGroupChatSummaryUpdates {
   'metrics' : [] | [ChatMetrics],
   'subtype' : GroupSubtypeUpdate,
   'date_last_pinned' : [] | [TimestampMillis],
+  'gate' : GroupGateUpdate,
   'name' : [] | [string],
   'role' : [] | [Role],
   'wasm_version' : [] | [Version],
@@ -532,23 +527,29 @@ export type MessageContent = { 'Giphy' : GiphyContent } |
   { 'Text' : TextContent } |
   { 'Image' : ImageContent } |
   { 'Prize' : PrizeContent } |
+  { 'Custom' : CustomMessageContent } |
   { 'GovernanceProposal' : ProposalContent } |
   { 'PrizeWinner' : PrizeWinnerContent } |
   { 'Audio' : AudioContent } |
   { 'Crypto' : CryptoContent } |
   { 'Video' : VideoContent } |
-  { 'Deleted' : DeletedContent };
+  { 'Deleted' : DeletedContent } |
+  { 'MessageReminderCreated' : MessageReminderCreated } |
+  { 'MessageReminder' : MessageReminder };
 export type MessageContentInitial = { 'Giphy' : GiphyContent } |
   { 'File' : FileContent } |
   { 'Poll' : PollContent } |
   { 'Text' : TextContent } |
   { 'Image' : ImageContent } |
   { 'Prize' : PrizeContentInitial } |
+  { 'Custom' : CustomMessageContent } |
   { 'GovernanceProposal' : ProposalContent } |
   { 'Audio' : AudioContent } |
   { 'Crypto' : CryptoContent } |
   { 'Video' : VideoContent } |
-  { 'Deleted' : DeletedContent };
+  { 'Deleted' : DeletedContent } |
+  { 'MessageReminderCreated' : MessageReminderCreated } |
+  { 'MessageReminder' : MessageReminder };
 export interface MessageEventWrapper {
   'event' : Message,
   'timestamp' : TimestampMillis,
@@ -804,11 +805,22 @@ export interface PushEventResult {
   'index' : EventIndex,
   'expires_at' : [] | [TimestampMillis],
 }
+export type ReferralMetricsResponse = {
+    'Success' : {
+      'users_who_referred' : number,
+      'users_who_referred_unpaid_diamond' : number,
+      'referrals_of_unpaid_diamond' : number,
+      'icp_raised_by_referrals_to_paid_diamond' : number,
+      'referrals_of_paid_diamond' : number,
+      'users_who_referred_paid_diamond' : number,
+      'referrals_other' : number,
+      'users_who_referred_90_percent_unpaid_diamond' : number,
+    }
+  };
 export interface RegisterUserArgs {
   'username' : string,
   'public_key' : Uint8Array | number[],
   'referred_by' : [] | [UserId],
-  'challenge_attempt' : ChallengeAttempt,
 }
 export type RegisterUserResponse = { 'UsernameTaken' : null } |
   { 'UsernameTooShort' : number } |
@@ -817,7 +829,6 @@ export type RegisterUserResponse = { 'UsernameTaken' : null } |
   { 'UserLimitReached' : null } |
   { 'UsernameTooLong' : number } |
   { 'Success' : UserId } |
-  { 'ChallengeFailed' : null } |
   { 'PublicKeyInvalid' : string } |
   { 'InternalError' : string } |
   { 'CyclesBalanceTooLow' : null };
@@ -1045,7 +1056,6 @@ export interface _SERVICE {
     AddPlatformOperatorResponse
   >,
   'check_username' : ActorMethod<[CheckUsernameArgs], CheckUsernameResponse>,
-  'create_challenge' : ActorMethod<[EmptyArgs], CreateChallengeResponse>,
   'current_user' : ActorMethod<[EmptyArgs], CurrentUserResponse>,
   'mark_suspected_bot' : ActorMethod<
     [MarkSuspectedBotArgs],
@@ -1060,6 +1070,7 @@ export interface _SERVICE {
     [PlatformOperatorsArgs],
     PlatformOperatorsResponse
   >,
+  'referral_metrics' : ActorMethod<[EmptyArgs], ReferralMetricsResponse>,
   'register_user' : ActorMethod<[RegisterUserArgs], RegisterUserResponse>,
   'remove_platform_moderator' : ActorMethod<
     [RemovePlatformModeratorArgs],

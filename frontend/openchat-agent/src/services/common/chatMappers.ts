@@ -42,8 +42,9 @@ import type {
     ApiRole,
     ApiPrizeWinnerContent,
     ApiGroupGate,
-    // ApiMessageReminderCreated,
-    // ApiMessageReminder,
+    ApiMessageReminderCreated,
+    ApiMessageReminder,
+    ApiCustomMessageContent,
 } from "../user/candid/idl";
 import {
     type Message,
@@ -88,8 +89,10 @@ import {
     GroupGate,
     OpenChatGovernanceCanisterId,
     Sns1GovernanceCanisterId,
-    // MessageReminderCreatedContent,
-    // MessageReminderContent,
+    MessageReminderCreatedContent,
+    MessageReminderContent,
+    CustomContent,
+    MessageContext,
 } from "openchat-shared";
 import type { WithdrawCryptoArgs } from "../user/candid/types";
 
@@ -168,39 +171,42 @@ export function messageContent(candid: ApiMessageContent, sender: string): Messa
         return prizeWinnerContent(sender, candid.PrizeWinner);
     }
     if ("MessageReminderCreated" in candid) {
-        // TODO
-        // return messageReminderCreated(candid.MessageReminderCreated);
-        throw new Error();
+        return messageReminderCreated(candid.MessageReminderCreated);
     }
     if ("MessageReminder" in candid) {
-        // TODO
-        // return messageReminder(candid.MessageReminder);
-        throw new Error();
+        return messageReminder(candid.MessageReminder);
     }
     if ("Custom" in candid) {
-        // TODO
-        throw new Error();
+        return customContent(candid.Custom);
     }
     throw new UnsupportedValueError("Unexpected ApiMessageContent type received", candid);
 }
 
-// function messageReminderCreated(candid: ApiMessageReminderCreated): MessageReminderCreatedContent {
-//     return {
-//         kind: "message_reminder_created_content",
-//         notes: optional(candid.notes, identity),
-//         remindAt: Number(candid.remind_at),
-//         reminderId: candid.reminder_id,
-//         hidden: candid.hidden,
-//     };
-// }
-//
-// function messageReminder(candid: ApiMessageReminder): MessageReminderContent {
-//     return {
-//         kind: "message_reminder_content",
-//         notes: optional(candid.notes, identity),
-//         reminderId: candid.reminder_id,
-//     };
-// }
+function customContent(candid: ApiCustomMessageContent): CustomContent {
+    return {
+        kind: "custom_content",
+        subtype: candid.kind,
+        data: candid.data,
+    };
+}
+
+function messageReminderCreated(candid: ApiMessageReminderCreated): MessageReminderCreatedContent {
+    return {
+        kind: "message_reminder_created_content",
+        notes: optional(candid.notes, identity),
+        remindAt: Number(candid.remind_at),
+        reminderId: candid.reminder_id,
+        hidden: candid.hidden,
+    };
+}
+
+function messageReminder(candid: ApiMessageReminder): MessageReminderContent {
+    return {
+        kind: "message_reminder_content",
+        notes: optional(candid.notes, identity),
+        reminderId: candid.reminder_id,
+    };
+}
 
 function prizeWinnerContent(senderId: string, candid: ApiPrizeWinnerContent): PrizeWinnerContent {
     const transfer = "NNS" in candid.transaction ? candid.transaction.NNS : candid.transaction.SNS;
@@ -550,7 +556,14 @@ function replyContext(candid: ApiReplyContext): ReplyContext {
     return {
         kind: "raw_reply_context",
         eventIndex: candid.event_index,
-        chatIdIfOther: optional(candid.chat_id_if_other, (id) => id.toString()),
+        sourceContext: optional(candid.event_list_if_other, replySourceContext),
+    };
+}
+
+function replySourceContext([chatId, maybeThreadRoot]: [Principal, [] | [number]]): MessageContext {
+    return {
+        chatId: chatId.toString(),
+        threadRootMessageIndex: optional(maybeThreadRoot, identity),
     };
 }
 
@@ -657,18 +670,25 @@ export function apiGroupSubtype(subtype: ApiGroupSubtype): GroupSubtype {
     };
 }
 
-export function apiReplyContextArgs(
-    domain: ReplyContext,
-    replyingToChatId?: string
-): ApiReplyContext {
-    return {
-        chat_id_if_other: apiOptional((chatId) => Principal.fromText(chatId), replyingToChatId),
-        event_list_if_other: apiOptional(
-            (chatId) => [Principal.fromText(chatId), []],
-            replyingToChatId
-        ),
-        event_index: domain.eventIndex,
-    };
+export function apiReplyContextArgs(chatId: string, domain: ReplyContext): ApiReplyContext {
+    if (domain.sourceContext !== undefined && chatId !== domain.sourceContext.chatId) {
+        return {
+            chat_id_if_other: [Principal.fromText(domain.sourceContext.chatId)],
+            event_list_if_other: [
+                [
+                    Principal.fromText(domain.sourceContext.chatId),
+                    apiOptional(identity, domain.sourceContext.threadRootMessageIndex),
+                ],
+            ],
+            event_index: domain.eventIndex,
+        };
+    } else {
+        return {
+            chat_id_if_other: [],
+            event_list_if_other: [],
+            event_index: domain.eventIndex,
+        };
+    }
 }
 
 export function apiMessageContent(domain: MessageContent): ApiMessageContent {
@@ -721,7 +741,17 @@ export function apiMessageContent(domain: MessageContent): ApiMessageContent {
             throw new Error(
                 "Incorrectly attempting to send message reminder created content to the server"
             );
+
+        case "custom_content":
+            return { Custom: apiCustomContent(domain) };
     }
+}
+
+function apiCustomContent(domain: CustomContent): ApiCustomMessageContent {
+    return {
+        kind: domain.subtype,
+        data: [], // TODO - we'll come back to this a bit later
+    };
 }
 
 function apiProposalContent(_: ProposalContent): ApiProposalContent {

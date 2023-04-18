@@ -369,7 +369,6 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
                         payload.chatType,
                         payload.chatId,
                         payload.message,
-                        payload.threadRootMessageIndex,
                         payload.latestClientEventIndex
                     )
                     .then((response) =>
@@ -807,18 +806,7 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
 
             case "registerUser":
                 agent
-                    .registerUser(payload.username, payload.challengeAttempt, payload.referredBy)
-                    .then((response) =>
-                        sendResponse(correlationId, {
-                            response,
-                        })
-                    )
-                    .catch(sendError(correlationId));
-                break;
-
-            case "createChallenge":
-                agent
-                    .createChallenge()
+                    .registerUser(payload.username, payload.referredBy)
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,

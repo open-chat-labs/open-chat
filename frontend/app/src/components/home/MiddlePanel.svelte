@@ -35,6 +35,7 @@
                 on:cancelRecommendations
                 on:joinGroup
                 on:recommend
+                on:upgrade
                 on:dismissRecommendation
                 groups={hotGroups.data} />
         {:else if noChat}

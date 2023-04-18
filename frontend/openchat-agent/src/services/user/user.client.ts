@@ -283,34 +283,34 @@ export class UserClient extends CandidService implements IUserClient {
 
     @profile("userClient")
     sendMessage(
-        recipientId: string,
+        chatId: string,
         sender: CreatedUser,
         event: EventWrapper<Message>,
-        replyingToChatId?: string,
         threadRootMessageIndex?: number
     ): Promise<[SendMessageResponse, Message]> {
         const dataClient = DataClient.create(this.identity, this.config);
         const uploadContentPromise = event.event.forwarded
-            ? dataClient.forwardData(event.event.content, [this.userId, recipientId])
-            : dataClient.uploadData(event.event.content, [this.userId, recipientId]);
+            ? dataClient.forwardData(event.event.content, [this.userId, chatId])
+            : dataClient.uploadData(event.event.content, [this.userId, chatId]);
 
         return uploadContentPromise.then((content) => {
             const newContent = content ?? event.event.content;
             const req: ApiSendMessageArgs = {
                 content: apiMessageContent(newContent),
-                recipient: Principal.fromText(recipientId),
+                recipient: Principal.fromText(chatId),
                 sender_name: sender.username,
                 message_id: event.event.messageId,
                 replies_to: apiOptional(
-                    (replyContext) => apiReplyContextArgs(replyContext, replyingToChatId),
+                    (replyContext) => apiReplyContextArgs(chatId, replyContext),
                     event.event.repliesTo
                 ),
                 forwarding: event.event.forwarded,
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                 correlation_id: generateUint64(),
             };
+            console.log("What are we actually sending: ", req);
             return this.handleResponse(this.userService.send_message(req), (resp) =>
-                sendMessageResponse(resp, event.event.sender, recipientId)
+                sendMessageResponse(resp, event.event.sender, chatId)
             ).then((resp) => [resp, { ...event.event, content: newContent }]);
         });
     }
@@ -334,7 +334,7 @@ export class UserClient extends CandidService implements IUserClient {
             message_id: event.event.messageId,
             group_id: Principal.fromText(groupId),
             replies_to: apiOptional(
-                (replyContext) => apiReplyContextArgs(replyContext),
+                (replyContext) => apiReplyContextArgs(groupId, replyContext),
                 event.event.repliesTo
             ),
             correlation_id: generateUint64(),

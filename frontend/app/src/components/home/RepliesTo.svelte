@@ -24,14 +24,25 @@
     $: me = repliesTo.senderId === currentUser.userId;
     $: isTextContent = repliesTo.content?.kind === "text_content";
 
+    function getUrl() {
+        const path = [
+            repliesTo.sourceContext.chatId,
+            repliesTo.sourceContext.threadRootMessageIndex ?? repliesTo.messageIndex,
+        ];
+        if (repliesTo.sourceContext.threadRootMessageIndex !== undefined) {
+            path.push(repliesTo.messageIndex);
+        }
+        return "/" + path.join("/");
+    }
+
     function zoomToMessage() {
-        if (repliesTo.chatId === chatId) {
+        if (repliesTo.sourceContext.chatId === chatId) {
             dispatch("goToMessageIndex", {
                 messageId,
                 index: repliesTo.messageIndex,
             });
         } else {
-            page(`/${repliesTo.chatId}/${repliesTo.messageIndex}`);
+            page(getUrl());
         }
     }
 

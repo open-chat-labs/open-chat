@@ -142,6 +142,8 @@ export function getContentAsText(formatter: MessageFormatter, content: MessageCo
         text = content.notes ?? "Message reminder";
     } else if (content.kind === "message_reminder_created_content") {
         text = content.notes ?? "Message reminder";
+    } else if (content.kind === "custom_content") {
+        text = "custom_content";
     } else {
         throw new UnsupportedValueError("Unrecognised content type", content);
     }

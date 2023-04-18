@@ -248,6 +248,10 @@ function extractMessageContent(
         result = {
             text: content.notes ?? "Reminder",
         };
+    } else if (content.kind === "custom_content") {
+        result = {
+            text: "Custom content",
+        };
     } else {
         throw new UnsupportedValueError(
             "Unexpected message content type received with notification",
