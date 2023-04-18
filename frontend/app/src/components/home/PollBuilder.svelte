@@ -41,7 +41,9 @@
     let selectedDuration: Duration = "oneDay";
     let showSettings = false;
 
-    $: valid = poll.pollAnswers.size >= 2 && nextAnswer.length === 0;
+    $: valid =
+        poll.pollAnswers.size >= 2 ||
+        (poll.pollAnswers.size >= 1 && nextAnswer.length > 0 && answerIsValid(nextAnswer));
 
     export function resetPoll() {
         selectedDuration = "oneDay";
@@ -73,8 +75,10 @@
             answerError = undefined;
             poll.pollAnswers = new Set(poll.pollAnswers.add(nextAnswer));
             nextAnswer = "";
+            return true;
         } else {
             answerError = "poll.invalidAnswer";
+            return false;
         }
     }
 
@@ -105,7 +109,12 @@
         if (selectedDuration === "oneWeek") return BigInt(now + ONE_WEEK);
     }
 
-    function createPollContent(): PollContent {
+    function createPollContent(): PollContent | undefined {
+        if (nextAnswer !== "") {
+            if (!addAnswer()) {
+                return undefined;
+            }
+        }
         return {
             kind: "poll_content",
             votes: {
@@ -125,8 +134,11 @@
     }
 
     function start() {
-        dispatch("sendPoll", [createPollContent(), undefined]);
-        open = false;
+        const poll = createPollContent();
+        if (poll) {
+            dispatch("sendPoll", [poll, undefined]);
+            open = false;
+        }
     }
 </script>
 
