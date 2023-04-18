@@ -1,4 +1,4 @@
-use crate::{TimestampNanos, UserId};
+use crate::{CanisterId, TimestampNanos, UserId};
 use candid::{CandidType, Principal};
 use ic_ledger_types::Tokens;
 use serde::{Deserialize, Serialize};
@@ -36,6 +36,15 @@ impl Cryptocurrency {
             Cryptocurrency::SNS1 => 1_000,
             Cryptocurrency::CKBTC => 10,
             Cryptocurrency::CHAT => 100_000,
+        }
+    }
+
+    pub fn ledger_canister_id(&self) -> CanisterId {
+        match self {
+            Cryptocurrency::InternetComputer => Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap(),
+            Cryptocurrency::SNS1 => Principal::from_text("zfcdd-tqaaa-aaaaq-aaaga-cai").unwrap(),
+            Cryptocurrency::CKBTC => Principal::from_text("mxzaz-hqaaa-aaaar-qaada-cai").unwrap(),
+            Cryptocurrency::CHAT => Principal::from_text("2ouva-viaaa-aaaaq-aaamq-cai").unwrap(),
         }
     }
 }

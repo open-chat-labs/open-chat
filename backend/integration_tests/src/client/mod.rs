@@ -116,6 +116,27 @@ pub fn register_diamond_user(env: &mut StateMachine, canister_ids: &CanisterIds,
     user
 }
 
+pub fn upgrade_user(user: &User, env: &mut StateMachine, canister_ids: &CanisterIds, controller: Principal) {
+    icrc1::happy_path::transfer(
+        env,
+        controller,
+        canister_ids.icp_ledger,
+        user.user_id.into(),
+        1_000_000_000u64,
+    );
+
+    user_index::happy_path::pay_for_diamond_membership(
+        env,
+        user.principal,
+        canister_ids.user_index,
+        DiamondMembershipPlanDuration::OneMonth,
+        true,
+    );
+
+    env.advance_time(Duration::from_secs(15));
+    tick_many(env, 3);
+}
+
 fn unwrap_response<R: CandidType + DeserializeOwned>(response: Result<WasmResult, UserError>) -> R {
     match response.unwrap() {
         WasmResult::Reply(bytes) => candid::decode_one(&bytes).unwrap(),

@@ -25,6 +25,7 @@ proposals_bot_canister = { path = "../canisters/proposals_bot/api" }
 rand = { workspace = true }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
+serial_test = "2.0.0"
 storage_bucket_canister = { path = "../canisters/storage_bucket/api" }
 storage_index_canister = { path = "../canisters/storage_index/api" }
 test-case = { workspace = true }

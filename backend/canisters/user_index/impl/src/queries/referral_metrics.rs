@@ -10,11 +10,11 @@ fn referral_metrics(_args: Args) -> Response {
 }
 
 #[derive(Default)]
-struct ReferralData {
-    paid_diamond: u32,
-    unpaid_diamond: u32,
-    other: u32,
-    icp_raised_for_paid_diamond_e8s: u64,
+pub struct ReferralData {
+    pub paid_diamond: u32,
+    pub unpaid_diamond: u32,
+    pub other: u32,
+    pub icp_raised_for_paid_diamond_e8s: u64,
 }
 
 fn referral_metrics_impl(runtime_state: &RuntimeState) -> Response {
@@ -23,16 +23,20 @@ fn referral_metrics_impl(runtime_state: &RuntimeState) -> Response {
 
     for user in runtime_state.data.users.iter() {
         if let Some(referred_by) = user.referred_by {
-            let data = user_referrals_map.entry(referred_by).or_default();
-            let icp_raised_for_paid_diamond: u64 =
-                user.diamond_membership_details.payments().iter().map(|p| p.amount_e8s).sum();
-            if icp_raised_for_paid_diamond > 0 {
-                data.paid_diamond += 1;
-                data.icp_raised_for_paid_diamond_e8s += icp_raised_for_paid_diamond;
-            } else if user.diamond_membership_details.is_active(now) {
-                data.unpaid_diamond += 1;
-            } else {
-                data.other += 1;
+            if let Some(referrer) = runtime_state.data.users.get_by_user_id(&referred_by) {
+                if referrer.diamond_membership_details.is_active(now) {
+                    let data = user_referrals_map.entry(referred_by).or_default();
+                    let icp_raised_for_paid_diamond: u64 =
+                        user.diamond_membership_details.payments().iter().map(|p| p.amount_e8s).sum();
+                    if icp_raised_for_paid_diamond > 0 {
+                        data.paid_diamond += 1;
+                        data.icp_raised_for_paid_diamond_e8s += icp_raised_for_paid_diamond;
+                    } else if user.diamond_membership_details.is_active(now) {
+                        data.unpaid_diamond += 1;
+                    } else {
+                        data.other += 1;
+                    }
+                }
             }
         }
     }

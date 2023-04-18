@@ -29,6 +29,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Added `referral_metrics` endpoint ([#3429](https://github.com/open-ic/open-chat/pull/3429))
 
+### Changed
+
+- Share diamond membership payment with referrer ([#3452](https://github.com/open-ic/open-chat/pull/3452))
+
 ### Removed
 
 - Removed `c2c_lookup_principal` ([#3414](https://github.com/open-ic/open-chat/pull/3414))

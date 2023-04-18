@@ -135,7 +135,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareResult, Box<R
 
         Ok(PrepareResult {
             group: state.env.canister_id(),
-            ledger_canister_id: state.data.ledger_canister_id(&transaction.token()),
+            ledger_canister_id: transaction.token().ledger_canister_id(),
             now_nanos: state.env.now_nanos(),
             transaction,
             user_id,

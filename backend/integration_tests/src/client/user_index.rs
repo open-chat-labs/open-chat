@@ -27,7 +27,7 @@ pub mod happy_path {
     use crate::User;
     use candid::Principal;
     use ic_test_state_machine_client::StateMachine;
-    use types::{CanisterId, Cryptocurrency, DiamondMembershipDetails, DiamondMembershipPlanDuration};
+    use types::{CanisterId, Cryptocurrency, DiamondMembershipDetails, DiamondMembershipPlanDuration, UserId};
 
     pub fn current_user(
         env: &StateMachine,
@@ -41,8 +41,11 @@ pub mod happy_path {
             response => panic!("'current_user' error: {response:?}"),
         }
     }
-
     pub fn register_user(env: &mut StateMachine, canister_id: CanisterId) -> User {
+        register_user_with_referrer(env, canister_id, None)
+    }
+
+    pub fn register_user_with_referrer(env: &mut StateMachine, canister_id: CanisterId, referred_by: Option<UserId>) -> User {
         let (principal, public_key) = random_user_principal();
 
         let response = super::register_user(
@@ -51,7 +54,7 @@ pub mod happy_path {
             canister_id,
             &user_index_canister::register_user::Args {
                 username: principal_to_username(principal),
-                referred_by: None,
+                referred_by,
                 public_key,
             },
         );

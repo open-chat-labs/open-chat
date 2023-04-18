@@ -59,6 +59,16 @@ impl RuntimeState {
         self.data.global_users.get(&caller).is_some()
     }
 
+    pub fn push_event_to_user(&mut self, user_id: UserId, event: UserEvent) {
+        self.data.user_event_sync_queue.push(user_id.into(), event);
+        jobs::sync_events_to_user_canisters::start_job_if_required(self);
+    }
+
+    pub fn push_event_to_user_index(&mut self, canister_id: CanisterId, event: UserIndexEvent) {
+        self.data.user_index_event_sync_queue.push(canister_id, event);
+        jobs::sync_events_to_user_index_canister::start_job_if_required(self);
+    }
+
     pub fn metrics(&self) -> Metrics {
         let canister_upgrades_metrics = self.data.canisters_requiring_upgrade.metrics();
         Metrics {

@@ -1,4 +1,5 @@
 use crate::guards::caller_is_openchat_user;
+use crate::model::pending_payments_queue::{PendingPayment, PendingPaymentReason};
 use crate::timer_job_types::{RecurringDiamondMembershipPayment, TimerJob};
 use crate::{mutate_state, read_state, RuntimeState, ONE_GB};
 use canister_tracing_macros::trace;
@@ -7,8 +8,9 @@ use ic_ledger_types::{BlockIndex, TransferError};
 use local_user_index_canister::{DiamondMembershipPaymentReceived, Event};
 use storage_index_canister::add_or_update_users::UserConfig;
 use tracing::error;
-use types::{Cryptocurrency, UserId, ICP};
+use types::{Cryptocurrency, DiamondMembershipPlanDuration, UserId, ICP};
 use user_index_canister::pay_for_diamond_membership::{Response::*, *};
+use utils::consts::SNS_GOVERNANCE_CANISTER_ID;
 use utils::time::DAY_IN_MS;
 
 #[update(guard = "caller_is_openchat_user")]
@@ -77,6 +79,8 @@ fn process_charge(
     manual_payment: bool,
     runtime_state: &mut RuntimeState,
 ) -> Response {
+    let share_with = referrer_to_share_payment(user_id, runtime_state);
+
     if let Some(diamond_membership) = runtime_state.data.users.diamond_membership_details_mut(&user_id) {
         let now = runtime_state.env.now();
         diamond_membership.add_payment(
@@ -125,6 +129,32 @@ fn process_charge(
             );
         }
 
+        let mut amount_to_treasury = args.expected_price_e8s - (2 * Cryptocurrency::InternetComputer.fee() as u64);
+
+        let now_nanos = runtime_state.env.now_nanos();
+
+        if let Some(share_with) = share_with {
+            let amount_to_referrer = args.expected_price_e8s / 2;
+            amount_to_treasury -= amount_to_referrer;
+            amount_to_treasury -= Cryptocurrency::InternetComputer.fee() as u64;
+
+            runtime_state.queue_payment(PendingPayment {
+                amount: amount_to_referrer,
+                currency: Cryptocurrency::InternetComputer,
+                timestamp: now_nanos,
+                recipient: share_with.into(),
+                reason: PendingPaymentReason::ReferralReward,
+            });
+        }
+
+        runtime_state.queue_payment(PendingPayment {
+            amount: amount_to_treasury,
+            currency: Cryptocurrency::InternetComputer,
+            timestamp: now_nanos,
+            recipient: SNS_GOVERNANCE_CANISTER_ID,
+            reason: PendingPaymentReason::Treasury,
+        });
+
         if manual_payment {
             runtime_state.data.diamond_membership_payment_metrics.manual_payments_taken += 1;
         } else {
@@ -152,6 +182,28 @@ fn process_charge(
         error!(%user_id, "Diamond membership payment taken, but user no longer exists");
         UserNotFound
     }
+}
+
+fn referrer_to_share_payment(user_id: UserId, runtime_state: &RuntimeState) -> Option<UserId> {
+    if let Some(user) = runtime_state.data.users.get_by_user_id(&user_id) {
+        let now = runtime_state.env.now();
+        let diamond_membership = &user.diamond_membership_details;
+        if let Some(referred_by) = user.referred_by {
+            if let Some(referrer) = runtime_state.data.users.get_by_user_id(&referred_by) {
+                if referrer.diamond_membership_details.is_active(now) {
+                    let one_year = DiamondMembershipPlanDuration::OneYear.as_millis();
+                    let year_from_joined = user.date_created + one_year;
+                    let threshold =
+                        if diamond_membership.is_active(now) { diamond_membership.expires_at().unwrap() } else { now };
+                    if threshold < year_from_joined {
+                        return Some(referred_by);
+                    }
+                }
+            }
+        }
+    }
+
+    None
 }
 
 fn process_error(transfer_error: TransferError) -> Response {

@@ -14,7 +14,7 @@ async fn c2c_charge_user_account(args: Args) -> Response {
     let (user_index_ledger_account, ledger_canister_id) = read_state(|state| {
         (
             state.data.user_index_ledger_account(),
-            state.data.ledger_canister_id(&Cryptocurrency::InternetComputer),
+            Cryptocurrency::InternetComputer.ledger_canister_id(),
         )
     });
 

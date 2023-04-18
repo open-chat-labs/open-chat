@@ -65,8 +65,8 @@ fn user_details(runtime_state: &RuntimeState) -> UserDetails {
 
 fn commit(user_id: UserId, chat_id: ChatId, latest_message_index: Option<MessageIndex>, runtime_state: &mut RuntimeState) {
     if runtime_state.data.local_users.get(&user_id).is_some() {
-        runtime_state.data.user_event_sync_queue.push(
-            user_id.into(),
+        runtime_state.push_event_to_user(
+            user_id,
             UserEvent::UserJoinedGroup(Box::new(user_canister::UserJoinedGroup {
                 chat_id,
                 latest_message_index,
@@ -74,7 +74,7 @@ fn commit(user_id: UserId, chat_id: ChatId, latest_message_index: Option<Message
         );
         crate::jobs::sync_events_to_user_canisters::start_job_if_required(runtime_state);
     } else {
-        runtime_state.data.user_index_event_sync_queue.push(
+        runtime_state.push_event_to_user_index(
             runtime_state.data.user_index_canister_id,
             UserIndexEvent::UserJoinedGroup(user_index_canister::UserJoinedGroup {
                 user_id,
