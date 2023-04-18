@@ -20,8 +20,7 @@ fn can_upgrade_to_diamond() {
         controller,
     } = wrapper.env();
 
-    let initial_treasury_balance =
-        client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, SNS_GOVERNANCE_CANISTER_ID);
+    let init_treasury_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, SNS_GOVERNANCE_CANISTER_ID);
 
     let user = client::user_index::happy_path::register_user(env, canister_ids.user_index);
 
@@ -64,7 +63,7 @@ fn can_upgrade_to_diamond() {
     let treasury_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, SNS_GOVERNANCE_CANISTER_ID);
 
     assert_eq!(
-        treasury_balance - initial_treasury_balance,
+        treasury_balance - init_treasury_balance,
         20_000_000 - (2 * Cryptocurrency::InternetComputer.fee()) as u64
     );
 }
@@ -120,24 +119,29 @@ fn membership_payment_shared_with_referrer() {
         controller,
     } = wrapper.env();
 
-    let initial_treasury_balance =
-        client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, SNS_GOVERNANCE_CANISTER_ID);
-
+    // Register referrer and upgrade to Diamond
     let user_a = client::user_index::happy_path::register_user(env, canister_ids.user_index);
+    client::upgrade_user(&user_a, env, canister_ids, *controller);
+
+    // Register user_b with referral from user_a
     let user_b =
         client::user_index::happy_path::register_user_with_referrer(env, canister_ids.user_index, Some(user_a.user_id));
 
+    // Take a snapshot of the ledger and referrer ICP balances
+    let init_treasury_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, SNS_GOVERNANCE_CANISTER_ID);
+    let init_referrer_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user_a.user_id.into());
+
+    // Upgrade user_b to Diamond
     client::upgrade_user(&user_b, env, canister_ids, *controller);
 
-    tick_many(env, 10);
-
+    // Check the referrer has been credited with half the Diamond payment
     let balance_referrer = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user_a.user_id.into());
-    assert_eq!(balance_referrer, 10_000_000);
+    assert_eq!(balance_referrer - init_referrer_balance, 10_000_000);
 
+    // Check the treasury has received the remainder less the fees
     let treasury_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, SNS_GOVERNANCE_CANISTER_ID);
-
     assert_eq!(
-        treasury_balance - initial_treasury_balance,
-        balance_referrer - (3 * Cryptocurrency::InternetComputer.fee()) as u64
+        treasury_balance - init_treasury_balance,
+        10_000_000 - (3 * Cryptocurrency::InternetComputer.fee()) as u64
     );
 }
