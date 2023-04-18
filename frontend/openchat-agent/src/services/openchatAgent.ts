@@ -632,10 +632,14 @@ export class OpenChatAgent extends EventTarget {
                     )
                     .then((resp) => this.messagesFromEventsResponse(key, resp));
             } else {
-                // it must be a group chat
+                // Note that the latestClientEventIndex relates to the *currentChat*, not necessarily the chat for this messageContext
+                // So only include it if the context matches the current chat
+                // And yes - this is probably trying to tell us something
+                const latestIndex =
+                    ctx.chatId === currentChatId ? latestClientEventIndex : undefined;
                 const client = this.getGroupClient(ctx.chatId);
                 return client
-                    .chatEventsByIndex(idxs, ctx.threadRootMessageIndex, latestClientEventIndex)
+                    .chatEventsByIndex(idxs, ctx.threadRootMessageIndex, latestIndex)
                     .then((resp) => this.messagesFromEventsResponse(key, resp));
             }
         });
