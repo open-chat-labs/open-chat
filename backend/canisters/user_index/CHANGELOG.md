@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Share Diamond membership payment with referrer ([#3452](https://github.com/open-ic/open-chat/pull/3452))
+
 ### Removed
 
 - Remove one-time code to sync `diamond_membership_expires_at` with user canisters ([#3467](https://github.com/open-ic/open-chat/pull/3467))
@@ -28,10 +32,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Added `referral_metrics` endpoint ([#3429](https://github.com/open-ic/open-chat/pull/3429))
-
-### Changed
-
-- Share diamond membership payment with referrer ([#3452](https://github.com/open-ic/open-chat/pull/3452))
 
 ### Removed
 
