@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Use hardcoded ledger ids ([#3452](https://github.com/open-ic/open-chat/pull/3452))
+
 ## [[2.0.662](https://github.com/open-ic/open-chat/releases/tag/v2.0.662-group)] - 2023-04-16
 
 ### Added
