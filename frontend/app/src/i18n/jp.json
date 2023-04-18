@@ -475,13 +475,13 @@
         "token": "トークン",
         "comingSoon": "（近日公開）",
         "send": "送信",
-        "sendToken": "{symbol}を送る",
         "deposit": "デポジット",
         "depositToken": "入金 {symbol}",
         "sendTarget": "送信先アドレスを入力",
         "sendSucceeded": "あなたの {symbol} は正常に送信されました!",
         "sendFailed": "{symbol} の送信に失敗しました",
-        "scan": "QRコードをスキャン"
+        "scan": "QRコードをスキャン",
+        "withdrawToken": "{symbol}を撤回"
     },
     "searchChat": "検索",
     "search": "検索...",

@@ -89,7 +89,7 @@
         maxlength={100}
         placeholder={$_("cryptoAccount.withdrawTarget")} />
 
-    <div class="send" class:valid on:click={withdraw} class:withdrawing>
+    <div class="withdraw" class:valid on:click={withdraw} class:withdrawing>
         {#if !withdrawing}
             <Send size={$iconSize} color={valid ? "var(--icon-selected)" : "var(--icon-txt)"} />
         {/if}
@@ -108,7 +108,7 @@
         margin-bottom: $sp3;
         position: relative;
 
-        .send {
+        .withdraw {
             position: absolute !important;
             top: 10px;
             right: $sp3;

@@ -475,13 +475,13 @@
         "token": "жетон",
         "comingSoon": "(вскоре)",
         "send": "Отправлять",
-        "sendToken": "Отправить {symbol}",
         "deposit": "Депозит",
         "depositToken": "Депозит {symbol}",
         "sendTarget": "введите адрес для отправки",
         "sendSucceeded": "Ваш {symbol} успешно отправлен!",
         "sendFailed": "Не удалось отправить {symbol}",
-        "scan": "Сканировать QR-код"
+        "scan": "Сканировать QR-код",
+        "withdrawToken": "Вывести {symbol}"
     },
     "searchChat": "Поиск",
     "search": "Поиск...",

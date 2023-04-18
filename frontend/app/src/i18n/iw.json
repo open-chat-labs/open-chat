@@ -475,13 +475,13 @@
         "token": "אֲסִימוֹן",
         "comingSoon": "(בקרוב)",
         "send": "לִשְׁלוֹחַ",
-        "sendToken": "שלח {symbol}",
         "deposit": "לְהַפְקִיד",
         "depositToken": "הפקדה {symbol}",
         "sendTarget": "הזן כתובת לשליחה",
         "sendSucceeded": "ה-{symbol} שלך נשלח בהצלחה!",
         "sendFailed": "שליחת {symbol} נכשלה",
-        "scan": "סרוק קוד QR"
+        "scan": "סרוק קוד QR",
+        "withdrawToken": "משיכה {symbol}"
     },
     "searchChat": "לחפש",
     "search": "לחפש...",

@@ -475,13 +475,13 @@
         "token": "gettone",
         "comingSoon": "(Prossimamente)",
         "send": "Inviare",
-        "sendToken": "Invia {symbol}",
         "deposit": "Depositare",
         "depositToken": "Deposita {symbol}",
         "sendTarget": "inserire un indirizzo a cui inviare",
         "sendSucceeded": "Il tuo {symbol} è stato inviato con successo!",
         "sendFailed": "Impossibile inviare {symbol}",
-        "scan": "Scansiona il codice QR"
+        "scan": "Scansiona il codice QR",
+        "withdrawToken": "Preleva {symbol}"
     },
     "searchChat": "Ricerca",
     "search": "Ricerca...",

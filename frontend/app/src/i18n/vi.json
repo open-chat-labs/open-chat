@@ -476,13 +476,13 @@
         "token": "mã thông báo",
         "comingSoon": "(Sắp có)",
         "send": "Gửi",
-        "sendToken": "Gửi {symbol}",
         "deposit": "Tiền gửi",
         "depositToken": "Gửi tiền {symbol}",
         "sendTarget": "nhập địa chỉ để gửi đến",
         "sendSucceeded": "{symbol} của bạn đã được gửi thành công!",
         "sendFailed": "Không thể gửi {symbol}",
-        "scan": "Quét mã QR"
+        "scan": "Quét mã QR",
+        "withdrawToken": "Rút {symbol}"
     },
     "searchChat": "Tìm kiếm",
     "search": "Tìm kiếm...",
