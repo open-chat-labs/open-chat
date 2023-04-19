@@ -8,8 +8,7 @@ use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
 use local_user_index_canister::Event as LocalUserIndexEvent;
 use model::local_user_index_map::LocalUserIndexMap;
-use model::pending_payments_queue::{BackdatedReferralReward, PendingPayment, PendingPaymentReason, PendingPaymentsQueue};
-use queries::referral_metrics::ReferralData;
+use model::pending_payments_queue::{PendingPayment, PendingPaymentsQueue};
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
@@ -118,55 +117,6 @@ impl RuntimeState {
         jobs::make_pending_payments::start_job_if_required(self);
     }
 
-    pub fn queue_backdated_referral_payments(&mut self) {
-        if self.data.backdated_referral_payments_added {
-            return;
-        }
-
-        let mut user_referrals_map: HashMap<UserId, ReferralData> = HashMap::new();
-        let now = self.env.now();
-
-        for user in self.data.users.iter() {
-            if let Some(referred_by) = user.referred_by {
-                if let Some(referrer) = self.data.users.get_by_user_id(&referred_by) {
-                    if referrer.diamond_membership_details.is_active(now) {
-                        let data = user_referrals_map.entry(referred_by).or_default();
-                        let icp_raised_for_paid_diamond: u64 =
-                            user.diamond_membership_details.payments().iter().map(|p| p.amount_e8s).sum();
-                        if icp_raised_for_paid_diamond > 0 {
-                            data.paid_diamond += 1;
-                            data.icp_raised_for_paid_diamond_e8s += icp_raised_for_paid_diamond;
-                        } else if user.diamond_membership_details.is_active(now) {
-                            data.unpaid_diamond += 1;
-                        } else {
-                            data.other += 1;
-                        }
-                    }
-                }
-            }
-        }
-
-        for (user_id, data) in user_referrals_map {
-            if data.paid_diamond > 0 || data.unpaid_diamond > 0 {
-                let amount: u64 = (data.icp_raised_for_paid_diamond_e8s / 2) + (data.unpaid_diamond as u64 * 75_000_000);
-                self.data.pending_payments_queue.push(PendingPayment {
-                    amount,
-                    currency: Cryptocurrency::InternetComputer,
-                    timestamp: self.env.now_nanos(),
-                    recipient: user_id.into(),
-                    reason: PendingPaymentReason::BackdatedReferralReward(BackdatedReferralReward {
-                        referrals_to_paid_members: data.paid_diamond,
-                        referrals_to_gifted_members: data.unpaid_diamond,
-                    }),
-                })
-            }
-        }
-
-        self.data.backdated_referral_payments_added = true;
-
-        jobs::make_pending_payments::start_job_if_required(self);
-    }
-
     pub fn metrics(&self) -> Metrics {
         let now = self.env.now();
         let canister_upgrades_metrics = self.data.canisters_requiring_upgrade.metrics();
@@ -220,7 +170,6 @@ struct Data {
     pub storage_index_user_sync_queue: OpenStorageUserSyncQueue,
     pub user_index_event_sync_queue: CanisterEventSyncQueue<LocalUserIndexEvent>,
     pub user_principal_migration_queue: UserPrincipalMigrationQueue,
-    #[serde(default)]
     pub pending_payments_queue: PendingPaymentsQueue,
     pub platform_moderators: HashSet<UserId>,
     pub platform_operators: HashSet<UserId>,
@@ -231,8 +180,6 @@ struct Data {
     pub timer_jobs: TimerJobs<TimerJob>,
     pub neuron_controllers_for_initial_airdrop: HashMap<UserId, Principal>,
     pub internet_identity_canister_id: CanisterId,
-    #[serde(default)]
-    pub backdated_referral_payments_added: bool,
 }
 
 impl Data {
@@ -274,7 +221,6 @@ impl Data {
             timer_jobs: TimerJobs::default(),
             neuron_controllers_for_initial_airdrop: HashMap::new(),
             internet_identity_canister_id,
-            backdated_referral_payments_added: false,
         };
 
         // Register the ProposalsBot
@@ -320,7 +266,6 @@ impl Default for Data {
             timer_jobs: TimerJobs::default(),
             neuron_controllers_for_initial_airdrop: HashMap::new(),
             internet_identity_canister_id: Principal::anonymous(),
-            backdated_referral_payments_added: false,
         }
     }
 }
