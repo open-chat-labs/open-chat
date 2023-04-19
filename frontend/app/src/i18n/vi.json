@@ -544,7 +544,6 @@
     "unpinMessage": "Bỏ ghim",
     "forward": "Ở đằng trước",
     "referralHeader": "Mời bạn bè / gia đình",
-    "userReferralMessage": "Chia sẻ liên kết này tới OpenChat với bạn bè và gia đình. Đối với mỗi người đăng ký bằng liên kết của bạn và trở thành người dùng đã được xác minh, bạn sẽ nhận được phần thưởng là mã thông báo CHAT (sẽ được xác nhận trong những tuần tới). Bạn có thể tiếp tục và chia sẻ liên kết ngay bây giờ và chúng tôi sẽ truy tặng mã thông báo CHAT khi chúng có sẵn.",
     "userInfoHeader": "Công cộng",
     "thread": {
         "menu": "Trả lời trong chuỗi",
@@ -785,5 +784,6 @@
         "cancel": "Hủy lời nhắc",
         "cancelSuccess": "Lời nhắc của bạn đã được hủy thành công",
         "cancelFailure": "Xin lỗi, chúng tôi không thể hủy lời nhắc của bạn"
-    }
+    },
+    "userReferralMessage": "Chia sẻ liên kết này tới OpenChat với bạn bè và gia đình. Miễn là bản thân bạn là thành viên Kim cương, đối với mỗi người đăng ký bằng liên kết của bạn và tiếp tục trở thành thành viên Kim cương, bạn sẽ nhận được một nửa số tiền thanh toán thành viên mà họ thực hiện trong năm đầu tiên."
 }

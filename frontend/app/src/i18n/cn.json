@@ -542,7 +542,6 @@
     "unpinMessage": "取消固定",
     "forward": "转发",
     "referralHeader": "邀请朋友/家人",
-    "userReferralMessage": "与朋友和家人分享此 OpenChat 链接。对于每个使用您的链接注册并继续成为经过验证的用户的人，您将获得 CHAT 代币奖励（将在未来几周内确认）。您现在可以继续分享链接，一旦 CHAT 代币可用，我们将追溯奖励它们。",
     "userInfoHeader": "公开",
     "thread": {
         "menu": "在线程中回复",
@@ -785,5 +784,6 @@
         "cancel": "取消提醒",
         "cancelSuccess": "您的提醒已成功取消",
         "cancelFailure": "抱歉，我们无法取消您的提醒"
-    }
+    },
+    "userReferralMessage": "与朋友和家人分享此 OpenChat 链接。只要您自己是钻石会员，对于每个通过您的链接注册并继续成为钻石会员的人，您将收到他们第一年支付的会员费的一半。"
 }

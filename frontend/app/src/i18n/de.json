@@ -545,7 +545,6 @@
     "unpinMessage": "Lösen",
     "forward": "Nach vorne",
     "referralHeader": "Freunde/Familie einladen",
-    "userReferralMessage": "Teilen Sie diesen Link zu OpenChat mit Freunden und Familie. Für jede Person, die sich mit Ihrem Link registriert und ein verifizierter Benutzer wird, erhalten Sie eine Belohnung in Form von CHAT-Token (wird in den kommenden Wochen bestätigt). Sie können den Link jetzt teilen und wir vergeben nachträglich CHAT-Token, sobald sie verfügbar sind.",
     "userInfoHeader": "Öffentlichkeit",
     "thread": {
         "menu": "Antwort im Thread",
@@ -786,5 +785,6 @@
         "cancel": "Erinnerung abbrechen",
         "cancelSuccess": "Ihre Erinnerung wurde erfolgreich storniert",
         "cancelFailure": "Es tut uns leid, dass wir Ihre Erinnerung nicht stornieren konnten"
-    }
+    },
+    "userReferralMessage": "Teilen Sie diesen Link zu OpenChat mit Freunden und Familie. Solange Sie selbst Diamond-Mitglied sind, erhalten Sie für jede Person, die sich über Ihren Link registriert und später Diamond-Mitglied wird, die Hälfte ihrer Mitgliedsbeiträge im ersten Jahr."
 }

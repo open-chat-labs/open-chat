@@ -543,7 +543,6 @@
     "unpinMessage": "Sblocca",
     "forward": "Inoltrare",
     "referralHeader": "Invita amici/familiari",
-    "userReferralMessage": "Condividi questo link a OpenChat con amici e familiari. Per ogni persona che si registra con il tuo link e diventa un utente verificato riceverai un premio in token CHAT (da confermare nelle prossime settimane). Puoi andare avanti e condividere il link ora e assegneremo retrospettivamente i token CHAT una volta che saranno disponibili.",
     "userInfoHeader": "Pubblico",
     "thread": {
         "menu": "Rispondi nel thread",
@@ -784,5 +783,6 @@
         "cancel": "Annulla promemoria",
         "cancelSuccess": "Il tuo promemoria è stato annullato con successo",
         "cancelFailure": "Spiacenti, non è stato possibile annullare il promemoria"
-    }
+    },
+    "userReferralMessage": "Condividi questo collegamento a OpenChat con amici e familiari. Finché sei tu stesso un membro Diamond, per ogni persona che si registra con il tuo link e diventa un membro Diamond, riceverai la metà dei pagamenti di iscrizione effettuati durante il loro primo anno."
 }

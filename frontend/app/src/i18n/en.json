@@ -583,7 +583,7 @@
     "linkCopiedToClipboard": "Link copied to clipboard",
     "failedToCopyLinkToClipboard": "Unable to copy link to clipboard",
     "referralHeader": "Invite friends/family",
-    "userReferralMessage": "Share this link to OpenChat with friends and family. For each person who registers with your link and goes on to become a verified user you will receive a reward of CHAT tokens (to be confirmed in coming weeks). You can go ahead and share the link now and we will retrospectively award CHAT tokens once they are available.",
+    "userReferralMessage": "Share this link to OpenChat with friends and family. As long as you are a Diamond member yourself, for each person who registers with your link and goes on to become a Diamond member, you will receive half of the membership payments they make during their first year.",
     "userInfoHeader": "Public",
     "noChatsAvailable": "No chats available!",
     "invitedUsers": "Invited users",
