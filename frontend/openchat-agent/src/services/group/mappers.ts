@@ -251,6 +251,7 @@ function groupChatSummaryUpdates(
         frozen: optionUpdate(candid.frozen, (_) => true),
         updatedEvents: candid.updated_events.map(updatedEvent),
         dateLastPinned: optional(candid.date_last_pinned, identity),
+        gate: optionUpdate(candid.gate, groupGate),
     };
 }
 

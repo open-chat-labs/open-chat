@@ -1098,6 +1098,7 @@ export type GroupCanisterGroupChatSummaryUpdates = {
     frozen: OptionUpdate<boolean>;
     updatedEvents: UpdatedEvent[];
     dateLastPinned: bigint | undefined;
+    gate: OptionUpdate<GroupGate>;
 };
 
 export type GroupCanisterThreadDetails = {

@@ -414,8 +414,7 @@
         "minDissolveDelayN": "最小溶解延迟 {n} 天",
         "minStakeN": "最小质押 {n} 个代币",
         "optional": "选修的",
-        "openAccessInfo": "加入这个群组没有特殊的访问要求",
-        "gateCheckFailed": "抱歉 - 您不符合该组的入学要求"
+        "openAccessInfo": "加入这个群组没有特殊的访问要求"
     },
     "updateNow": "现在重新加载",
     "updateRequired": "新版本的 OpenChat 可用 - 在 {countdown} 秒内重新加载",

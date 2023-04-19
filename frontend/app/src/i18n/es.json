@@ -415,8 +415,7 @@
         "minDissolveDelayN": "Retraso mínimo de disolución {n} días",
         "minStakeN": "Apuesta mínima {n} tokens",
         "optional": "Opcional",
-        "openAccessInfo": "No hay requisitos especiales de acceso para unirse a este grupo",
-        "gateCheckFailed": "Lo sentimos, no has cumplido con los requisitos de entrada para este grupo"
+        "openAccessInfo": "No hay requisitos especiales de acceso para unirse a este grupo"
     },
     "updateNow": "recargar ahora",
     "updateRequired": "Una nueva versión de OpenChat está disponible - recargando en {countdown}s",

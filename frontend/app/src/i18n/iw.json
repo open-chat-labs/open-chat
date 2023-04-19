@@ -426,8 +426,7 @@
         "minDissolveDelayN": "עיכוב פירוק מינימלי {n} ימים",
         "minStakeN": "אסימוני הימור מינימליים של {n}",
         "optional": "אופציונאלי",
-        "openAccessInfo": "אין דרישות גישה מיוחדות כדי להצטרף לקבוצה זו",
-        "gateCheckFailed": "מצטערים - לא עמדת בדרישות הכניסה לקבוצה זו"
+        "openAccessInfo": "אין דרישות גישה מיוחדות כדי להצטרף לקבוצה זו"
     },
     "updateNow": "טען מחדש עכשיו",
     "updateRequired": "גרסה חדשה של OpenChat זמינה - נטען מחדש ב-{countdown}s",

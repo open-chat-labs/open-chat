@@ -416,8 +416,7 @@
         "minDissolveDelayN": "Minimale Auflösungsverzögerung {n} Tage",
         "minStakeN": "Mindesteinsatz {n} Token",
         "optional": "Optional",
-        "openAccessInfo": "Es gibt keine besonderen Zugangsvoraussetzungen, um dieser Gruppe beizutreten",
-        "gateCheckFailed": "Entschuldigung - Sie haben die Zugangsvoraussetzungen für diese Gruppe nicht erfüllt"
+        "openAccessInfo": "Es gibt keine besonderen Zugangsvoraussetzungen, um dieser Gruppe beizutreten"
     },
     "updateNow": "jetzt neu laden",
     "updateRequired": "Eine neue Version von OpenChat ist verfügbar - Neuladen in {countdown}s",

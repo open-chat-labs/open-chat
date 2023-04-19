@@ -413,8 +413,7 @@
         "minDissolveDelayN": "Délai minimum de dissolution {n} jours",
         "minStakeN": "Mise minimale {n} jetons",
         "optional": "Facultatif",
-        "openAccessInfo": "Il n'y a pas d'exigences d'accès particulières pour rejoindre ce groupe",
-        "gateCheckFailed": "Désolé - vous n'avez pas rempli les conditions d'entrée pour ce groupe"
+        "openAccessInfo": "Il n'y a pas d'exigences d'accès particulières pour rejoindre ce groupe"
     },
     "updateNow": "recharger maintenant",
     "updateRequired": "Une nouvelle version d'OpenChat est disponible - rechargement dans {countdown}s",
