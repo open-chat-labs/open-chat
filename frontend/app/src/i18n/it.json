@@ -414,8 +414,7 @@
         "minDissolveDelayN": "Ritardo dissolvenza minimo {n} giorni",
         "minStakeN": "Puntata minima {n} gettoni",
         "optional": "Opzionale",
-        "openAccessInfo": "Non ci sono particolari requisiti di accesso per entrare a far parte di questo gruppo",
-        "gateCheckFailed": "Siamo spiacenti, non hai soddisfatto i requisiti di ammissione per questo gruppo"
+        "openAccessInfo": "Non ci sono particolari requisiti di accesso per entrare a far parte di questo gruppo"
     },
     "updateNow": "ricarica ora",
     "updateRequired": "È disponibile una nuova versione di OpenChat, che si ricarica tra {countdown}s",

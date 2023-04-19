@@ -414,8 +414,7 @@
         "minDissolveDelayN": "最小溶解遅延 {n} 日",
         "minStakeN": "最小ステーク {n} トークン",
         "optional": "オプション",
-        "openAccessInfo": "このグループに参加するための特別なアクセス要件はありません",
-        "gateCheckFailed": "申し訳ありませんが、このグループのエントリー要件を満たしていません"
+        "openAccessInfo": "このグループに参加するための特別なアクセス要件はありません"
     },
     "updateNow": "今すぐリロード",
     "updateRequired": "OpenChatの新しいバージョンが利用可能です-{countdown}でリロード",

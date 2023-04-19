@@ -415,8 +415,7 @@
         "minDissolveDelayN": "Chậm giải thể tối thiểu {n} ngày",
         "minStakeN": "Cổ phần tối thiểu {n} mã thông báo",
         "optional": "Không bắt buộc",
-        "openAccessInfo": "Không có yêu cầu truy cập đặc biệt để tham gia nhóm này",
-        "gateCheckFailed": "Xin lỗi - bạn chưa đáp ứng các yêu cầu đầu vào cho nhóm này"
+        "openAccessInfo": "Không có yêu cầu truy cập đặc biệt để tham gia nhóm này"
     },
     "updateNow": "tải lại ngay bây giờ",
     "updateRequired": "Đã có phiên bản OpenChat mới - tải lại sau {countdown} giây",

@@ -6,6 +6,7 @@
     import { gatedGroupsEnabled } from "../../../utils/features";
 
     export let gate: GroupGate;
+    export let showHeader = true;
     $: showDetails =
         (gate.kind === "sns1_gate" || gate.kind === "openchat_gate") &&
         (gate.minDissolveDelay !== undefined || gate.minStakeE8s !== undefined);
@@ -13,7 +14,9 @@
 
 {#if gate.kind !== "no_gate" && gatedGroupsEnabled}
     <div class="wrapper">
-        <h4>{$_("group.groupGate")}</h4>
+        {#if showHeader}
+            <h4>{$_("group.groupGate")}</h4>
+        {/if}
         <div class="gate" class:showDetails>
             <GroupGateIcon {gate} />
             {#if gate.kind === "diamond_gate"}

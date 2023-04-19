@@ -58,6 +58,7 @@
     import AccountsModal from "./profile/AccountsModal.svelte";
     import { querystring } from "routes";
     import { eventListScrollTop } from "../../stores/scrollPos";
+    import GateCheckFailed from "./groupdetails/GateCheckFailed.svelte";
 
     const client = getContext<OpenChat>("client");
     const user = client.user;
@@ -90,6 +91,7 @@
         Suspended,
         NewGroup,
         Wallet,
+        GateCheckFailed,
     }
 
     let faqQuestion: Questions | undefined = undefined;
@@ -336,6 +338,7 @@
     function closeModal() {
         modal = ModalType.None;
         candidateGroup = undefined;
+        joining = undefined;
     }
 
     function cancelRecommendations() {
@@ -678,16 +681,19 @@
             .then((resp) => {
                 if (resp === "blocked") {
                     toastStore.showFailureToast("youreBlocked");
+                    joining = undefined;
                 } else if (resp === "gate_check_failed") {
-                    toastStore.showFailureToast("group.gateCheckFailed");
+                    modal = ModalType.GateCheckFailed;
                 } else if (resp === "failure") {
                     toastStore.showFailureToast("joinGroupFailed");
+                    joining = undefined;
                 } else if (select) {
                     hotGroups = { kind: "idle" };
+                    joining = undefined;
                     page(`/${group.chatId}`);
                 }
             })
-            .finally(() => (joining = undefined));
+            .catch(() => (joining = undefined));
     }
 
     function cancelPreview(ev: CustomEvent<string>) {
@@ -1004,6 +1010,8 @@
                 on:select={onSelectChat} />
         {:else if modal === ModalType.Suspended}
             <SuspendedModal on:close={closeModal} />
+        {:else if modal === ModalType.GateCheckFailed && joining !== undefined}
+            <GateCheckFailed on:close={closeModal} gate={joining.gate} />
         {:else if modal === ModalType.NewGroup && candidateGroup !== undefined}
             <NewGroup on:upgrade={upgrade} {candidateGroup} on:close={closeModal} />
         {:else if modal === ModalType.Wallet}
