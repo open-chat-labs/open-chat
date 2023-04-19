@@ -544,7 +544,7 @@
     "unpinMessage": "Desprender",
     "forward": "Delantero",
     "referralHeader": "Invitar a amigos/familiares",
-    "userReferralMessage": "Comparta este enlace a OpenChat con amigos y familiares. Por cada persona que se registre con su enlace y se convierta en un usuario verificado, recibirá una recompensa de tokens CHAT (a confirmar en las próximas semanas). Puede continuar y compartir el enlace ahora y otorgaremos tokens de CHAT retrospectivamente una vez que estén disponibles.",
+    "": "Comparta este enlace a OpenChat con amigos y familiares. Por cada persona que se registre con su enlace y se convierta en un usuario verificado, recibirá una recompensa de tokens CHAT (a confirmar en las próximas semanas). Puede continuar y compartir el enlace ahora y otorgaremos tokens de CHAT retrospectivamente una vez que estén disponibles.",
     "userInfoHeader": "Público",
     "thread": {
         "menu": "Responder en hilo",
@@ -785,5 +785,6 @@
         "cancel": "Cancelar recordatorio",
         "cancelSuccess": "Su recordatorio ha sido cancelado con éxito",
         "cancelFailure": "Lo sentimos, no pudimos cancelar tu recordatorio."
-    }
+    },
+    "userReferralMessage": "Comparta este enlace a OpenChat con amigos y familiares. Siempre que usted sea un miembro Diamond, por cada persona que se registre con su enlace y se convierta en miembro Diamond, recibirá la mitad de los pagos de membresía que hagan durante su primer año."
 }

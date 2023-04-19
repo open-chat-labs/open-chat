@@ -543,7 +543,6 @@
     "unpinMessage": "Détacher",
     "forward": "Vers l'avant",
     "referralHeader": "Inviter des amis/famille",
-    "userReferralMessage": "Partagez ce lien vers OpenChat avec vos amis et votre famille. Pour chaque personne qui s'inscrit avec votre lien et devient un utilisateur vérifié, vous recevrez une récompense de jetons CHAT (à confirmer dans les semaines à venir). Vous pouvez continuer et partager le lien maintenant et nous attribuerons rétrospectivement les jetons CHAT une fois qu'ils seront disponibles.",
     "userInfoHeader": "Public",
     "thread": {
         "menu": "Répondre dans le fil",
@@ -784,5 +783,6 @@
         "cancel": "Annuler le rappel",
         "cancelSuccess": "Votre rappel a été annulé avec succès",
         "cancelFailure": "Désolé, nous n'avons pas pu annuler votre rappel"
-    }
+    },
+    "userReferralMessage": "Partagez ce lien vers OpenChat avec vos amis et votre famille. Tant que vous êtes vous-même membre Diamond, pour chaque personne qui s'inscrit avec votre lien et devient membre Diamond, vous recevrez la moitié des paiements d'adhésion qu'elle effectue au cours de sa première année."
 }
