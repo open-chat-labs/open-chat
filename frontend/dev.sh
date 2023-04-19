@@ -3,6 +3,20 @@
 # monitor using: pm2 monit
 # restart individual processes with: pm2 restart [app|dfx] 
 # restart all with: pm2 restart all
+while getopts ":r" opt; do
+  case ${opt} in
+    r )
+      echo "Option -r was passed."
+      pm2 restart all
+      sleep 10 && pm2 restart app
+      exit
+      ;;
+    \? )
+      exit 1
+      ;;
+  esac
+done
+
 cd ..
 pm2 start --name "dfx" "dfx start" 
 cd frontend
