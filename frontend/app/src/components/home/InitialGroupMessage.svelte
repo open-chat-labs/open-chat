@@ -7,6 +7,7 @@
     import { _ } from "svelte-i18n";
     import { getContext } from "svelte";
     import type { OpenChat } from "openchat-client";
+    import Markdown from "./Markdown.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -18,7 +19,7 @@
     <h4 class="welcome">{$_("group.welcome")}{group.name}</h4>
     {#if group.description.length > 0}
         <div>
-            {group.description}
+            <Markdown text={group.description} />
         </div>
     {/if}
     <div class="pop">
