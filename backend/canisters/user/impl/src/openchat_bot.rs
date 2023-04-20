@@ -1,4 +1,3 @@
-use crate::model::direct_chat::DirectChat;
 use crate::updates::c2c_send_messages::{handle_message_impl, HandleMessageArgs};
 use crate::{mutate_state, RuntimeState, BASIC_GROUP_CREATION_LIMIT, PREMIUM_GROUP_CREATION_LIMIT};
 use ic_ledger_types::Tokens;
@@ -9,28 +8,8 @@ use utils::consts::{OPENCHAT_BOT_USERNAME, OPENCHAT_BOT_USER_ID};
 use utils::format::format_to_decimal_places;
 use utils::time::{DAY_IN_MS, HOUR_IN_MS};
 
-const WELCOME_MESSAGES: &[&str] = &[
-    "Welcome to OpenChat!",
-    "I am the OpenChat bot. I will send you messages to let you know about events that don't belong to any other chat, such as if crypto has been deposited into your OpenChat account(s) or if you've been removed from a group. In the future you'll be able to ask me questions or send me commands.",
-    "To follow all the software updates to OpenChat, join the [OpenChat Updates](/eucat-raaaa-aaaaf-adn7q-cai) group.",
-    "To follow announcements by the OpenChat team, join the [Announcements](/kvvn5-aiaaa-aaaaf-aqznq-cai) group.",
-    "To request new features, join the [Feature Requests](/vfaj4-zyaaa-aaaaf-aabya-cai) group.",
-    "To report bugs, join the [Bug Reports](/sycha-wyaaa-aaaaf-aabka-cai) group.",
-    "To provide feedback in general, join the [Product Feedback](/s7dbu-3aaaa-aaaaf-aabkq-cai) group.",
-    "Please keep posts relevant to each group. If you just want to say \"hi\", post in the [OpenChat group](/vmdca-pqaaa-aaaaf-aabzq-cai)."];
-
-pub(crate) fn send_welcome_messages() {
-    mutate_state(|state| {
-        if bot_chat(state).is_none() {
-            for message in WELCOME_MESSAGES.iter() {
-                let content = MessageContent::Text(TextContent {
-                    text: message.to_string(),
-                });
-
-                send_message(content, true, state);
-            }
-        }
-    });
+pub(crate) fn send_welcome_message() {
+    mutate_state(|state| send_text_message("Welcome to OpenChat!".to_string(), true, state));
 }
 
 pub(crate) fn send_group_deleted_message(
@@ -165,8 +144,4 @@ fn to_gb(bytes: u64) -> String {
 fn to_tokens(tokens: Tokens) -> String {
     const E8S_PER_TOKEN: u64 = 100_000_000;
     format_to_decimal_places(tokens.e8s() as f64 / E8S_PER_TOKEN as f64, 8)
-}
-
-fn bot_chat(runtime_state: &RuntimeState) -> Option<&DirectChat> {
-    runtime_state.data.direct_chats.get(&OPENCHAT_BOT_USER_ID.into())
 }
