@@ -3,9 +3,9 @@ use crate::{mutate_state, RuntimeState, ONE_MB, USER_LIMIT};
 use candid::Principal;
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
-use local_user_index_canister::{Event, UserRegistered};
+use local_user_index_canister::{Event, OpenChatBotMessage, UserRegistered};
 use storage_index_canister::add_or_update_users::UserConfig;
-use types::{CanisterId, UserId, Version};
+use types::{CanisterId, MessageContent, TextContent, UserId, Version};
 use user_index_canister::register_user::{Response::*, *};
 use x509_parser::prelude::FromDer;
 use x509_parser::x509::SubjectPublicKeyInfo;
@@ -136,11 +136,42 @@ fn commit(
         Some(local_user_index_canister_id),
     );
 
+    send_welcome_messages(user_id, runtime_state);
+
     runtime_state.data.storage_index_user_sync_queue.push(UserConfig {
         user_id: caller,
         byte_limit: 100 * ONE_MB,
     });
     crate::jobs::sync_users_to_storage_index::start_job_if_required(runtime_state);
+}
+
+fn send_welcome_messages(user_id: UserId, runtime_state: &mut RuntimeState) {
+    const WELCOME_MESSAGES: &[&str] = &[
+        "I am the OpenChat bot. I will send you messages to let you know about events that don't belong to any other chat, \
+            such as if crypto has been deposited into your OpenChat account(s) or if you've been removed from a group. In \
+            the future you'll be able to ask me questions or send me commands.",
+        "\
+- To follow announcements by the OpenChat team, join [Announcements](/kvvn5-aiaaa-aaaaf-aqznq-cai).
+- To ask for help, join [OpenChat Help](/4stss-vaaaa-aaaar-amjda-cai).
+- To follow software updates, join [OpenChat Updates](/eucat-raaaa-aaaaf-adn7q-cai).
+- To request new features, join [Feature Requests](/vfaj4-zyaaa-aaaaf-aabya-cai).
+- To report bugs, join [Bug Reports](/sycha-wyaaa-aaaaf-aabka-cai).
+- To provide feedback in general, join the [Product Feedback](/s7dbu-3aaaa-aaaaf-aabkq-cai).
+- To view, vote on and discuss governance proposals, join [OpenChat Proposals](/nsbx4-4iaaa-aaaar-afusa-cai).
+- To introduce and discuss upcoming proposals, join [OpenChat Roadmap](/n2qig-viaaa-aaaar-ahviq-cai).",
+        "Please keep posts relevant to each group. If you just want to say \"hi\", post in the [OpenChat](/vmdca-pqaaa-aaaaf-aabzq-cai) group."];
+
+    for message in WELCOME_MESSAGES {
+        runtime_state.push_event_to_local_user_index(
+            user_id,
+            Event::OpenChatBotMessage(OpenChatBotMessage {
+                user_id,
+                message: MessageContent::Text(TextContent {
+                    text: message.to_string(),
+                }),
+            }),
+        )
+    }
 }
 
 fn rollback(username: &str, runtime_state: &mut RuntimeState) {
