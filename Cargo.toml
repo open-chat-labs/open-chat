@@ -11,6 +11,8 @@ members = [
     "backend/canister_installer",
     "backend/canister_upgrade_proposal_builder",
     "backend/canister_upgrader",
+    "backend/canisters/community/api",
+    "backend/canisters/community/impl",
     "backend/canisters/cycles_dispenser/api",
     "backend/canisters/cycles_dispenser/impl",
     "backend/canisters/group/api",

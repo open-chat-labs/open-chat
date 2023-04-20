@@ -1,0 +1,28 @@
+[package]
+name = "community_canister_impl"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+path = "src/lib.rs"
+crate-type = ["cdylib"]
+
+[dependencies]
+candid = { workspace = true }
+canister_api_macros = { path = "../../../libraries/canister_api_macros" }
+canister_logger = { workspace = true }
+canister_state_macros = { workspace = true }
+canister_tracing_macros = { workspace = true }
+community_canister = { path = "../api" }
+http_request = { path = "../../../libraries/http_request" }
+ic-cdk = { workspace = true }
+ic-cdk-macros = { workspace = true }
+ic-cdk-timers = { workspace = true }
+ic-stable-structures = { workspace = true }
+serde = { workspace = true }
+serializer = { workspace = true }
+tracing = { workspace = true }
+types = { path = "../../../libraries/types" }
+utils = { path = "../../../libraries/utils" }
