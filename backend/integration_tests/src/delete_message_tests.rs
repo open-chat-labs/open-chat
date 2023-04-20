@@ -59,7 +59,7 @@ fn delete_group_message_succeeds() {
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
     let user = client::user_index::happy_path::register_user(env, canister_ids.user_index);
-    let group = client::user::happy_path::create_group(env, &user, &random_string(), true, true);
+    let group = client::user::happy_path::create_group(env, &user, &random_string(), false, false);
 
     let message_id = random_message_id();
 
@@ -173,7 +173,7 @@ fn delete_then_undelete_group_message(delay: bool) {
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
     let user = client::user_index::happy_path::register_user(env, canister_ids.user_index);
-    let group = client::user::happy_path::create_group(env, &user, &random_string(), true, true);
+    let group = client::user::happy_path::create_group(env, &user, &random_string(), false, false);
 
     let message_id = random_message_id();
 

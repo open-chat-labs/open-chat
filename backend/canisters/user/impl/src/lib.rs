@@ -12,7 +12,7 @@ use model::contacts::Contacts;
 use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 use std::ops::Deref;
 use types::{Avatar, CanisterId, ChatId, Cryptocurrency, Cycles, Notification, TimestampMillis, Timestamped, UserId, Version};
 use utils::env::Environment;
@@ -30,8 +30,8 @@ mod regular_jobs;
 mod timer_job_types;
 mod updates;
 
-pub const BASIC_GROUP_CREATION_LIMIT: u32 = 10;
-pub const PREMIUM_GROUP_CREATION_LIMIT: u32 = 25;
+pub const BASIC_GROUP_CREATION_LIMIT: u32 = 5;
+pub const PREMIUM_GROUP_CREATION_LIMIT: u32 = 40;
 
 thread_local! {
     static WASM_VERSION: RefCell<Timestamped<Version>> = RefCell::default();
@@ -125,7 +125,7 @@ impl RuntimeState {
                 group_index: self.data.group_index_canister_id,
                 local_user_index: self.data.local_user_index_canister_id,
                 notifications: self.data.notifications_canister_id,
-                icp_ledger: self.data.ledger_canister_id(&Cryptocurrency::InternetComputer),
+                icp_ledger: Cryptocurrency::InternetComputer.ledger_canister_id(),
             },
         }
     }
@@ -141,9 +141,6 @@ struct Data {
     pub local_user_index_canister_id: CanisterId,
     pub group_index_canister_id: CanisterId,
     pub notifications_canister_id: CanisterId,
-    // Remove this after next upgrade
-    #[serde(skip_deserializing, default = "initialize_ledger_ids")]
-    pub ledger_canister_ids: HashMap<Cryptocurrency, CanisterId>,
     pub avatar: Timestamped<Option<Avatar>>,
     pub test_mode: bool,
     #[serde(alias = "is_super_admin")]
@@ -152,7 +149,6 @@ struct Data {
     pub username: String,
     pub bio: String,
     pub cached_group_summaries: Option<CachedGroupSummaries>,
-    pub group_creation_limit: u32,
     pub storage_limit: u64,
     pub phone_is_verified: bool,
     pub user_created: TimestampMillis,
@@ -161,29 +157,7 @@ struct Data {
     pub suspended: Timestamped<bool>,
     pub timer_jobs: TimerJobs<TimerJob>,
     pub contacts: Contacts,
-}
-
-fn initialize_ledger_ids() -> HashMap<Cryptocurrency, CanisterId> {
-    [
-        (
-            Cryptocurrency::InternetComputer,
-            Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap(),
-        ),
-        (
-            Cryptocurrency::SNS1,
-            Principal::from_text("zfcdd-tqaaa-aaaaq-aaaga-cai").unwrap(),
-        ),
-        (
-            Cryptocurrency::CKBTC,
-            Principal::from_text("mxzaz-hqaaa-aaaar-qaada-cai").unwrap(),
-        ),
-        (
-            Cryptocurrency::CHAT,
-            Principal::from_text("2ouva-viaaa-aaaaq-aaamq-cai").unwrap(),
-        ),
-    ]
-    .into_iter()
-    .collect()
+    pub diamond_membership_expires_at: Option<TimestampMillis>,
 }
 
 impl Data {
@@ -207,7 +181,6 @@ impl Data {
             local_user_index_canister_id,
             group_index_canister_id,
             notifications_canister_id,
-            ledger_canister_ids: initialize_ledger_ids(),
             avatar: Timestamped::default(),
             test_mode,
             is_platform_moderator: false,
@@ -215,7 +188,6 @@ impl Data {
             username,
             bio: "".to_string(),
             cached_group_summaries: None,
-            group_creation_limit: BASIC_GROUP_CREATION_LIMIT,
             storage_limit: 0,
             phone_is_verified: false,
             user_created: now,
@@ -224,19 +196,12 @@ impl Data {
             suspended: Timestamped::default(),
             timer_jobs: TimerJobs::default(),
             contacts: Contacts::default(),
+            diamond_membership_expires_at: None,
         }
     }
 
     pub fn user_index_ledger_account(&self) -> AccountIdentifier {
         default_ledger_account(self.user_index_canister_id)
-    }
-
-    pub fn max_groups_created(&self) -> Option<u32> {
-        if self.group_chats.groups_created() >= self.group_creation_limit {
-            Some(self.group_creation_limit)
-        } else {
-            None
-        }
     }
 
     pub fn block_user(&mut self, user_id: UserId, now: TimestampMillis) {
@@ -265,11 +230,8 @@ impl Data {
         }
     }
 
-    pub fn ledger_canister_id(&self, token: &Cryptocurrency) -> CanisterId {
-        self.ledger_canister_ids
-            .get(token)
-            .copied()
-            .unwrap_or_else(|| panic!("Unable to find ledger canister for token '{token:?}'"))
+    pub fn is_diamond_member(&self, now: TimestampMillis) -> bool {
+        self.diamond_membership_expires_at.map_or(false, |ts| now < ts)
     }
 }
 

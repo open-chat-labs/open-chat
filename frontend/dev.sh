@@ -3,6 +3,20 @@
 # monitor using: pm2 monit
 # restart individual processes with: pm2 restart [app|dfx] 
 # restart all with: pm2 restart all
+while getopts ":r" opt; do
+  case ${opt} in
+    r )
+      echo "Option -r was passed."
+      pm2 restart all
+      sleep 10 && pm2 restart app
+      exit
+      ;;
+    \? )
+      exit 1
+      ;;
+  esac
+done
+
 cd ..
 pm2 start --name "dfx" "dfx start" 
 cd frontend
@@ -17,4 +31,6 @@ pm2 start --name "worker" "npm run dev"
 cd ../openchat-client
 pm2 start --name "client" "npm run dev" 
 cd ../app
-pm2 start --name "app" "npm run dev" 
+
+# we delay the starting of the app process to prevent a race condition
+sleep 10 && pm2 start --name "app" "npm run dev" 

@@ -248,9 +248,6 @@
         "bioTooLong": "あなたの経歴は長すぎます",
         "userLimitReached": "ユーザー数の上限に達しています",
         "createUser": "ユーザーを作成する",
-        "challengeAttemptFailed": "入力した値が正しくありません。再度やり直してください。",
-        "challengeThrottled": "試行回数が多すぎます。後でもう一度やり直してください。",
-        "attemptChallenge": "表示されている文字を入力してください",
         "closedTitle": "登録を一時停止しました",
         "closed": "大変ご好評につき、新規ユーザー登録を一時的に停止しております。すぐに複数のサブネットにまたがってスケーリングし、その後は無制限に成長できるようになります!"
     },
@@ -417,8 +414,7 @@
         "minDissolveDelayN": "最小溶解遅延 {n} 日",
         "minStakeN": "最小ステーク {n} トークン",
         "optional": "オプション",
-        "openAccessInfo": "このグループに参加するための特別なアクセス要件はありません",
-        "gateCheckFailed": "申し訳ありませんが、このグループのエントリー要件を満たしていません"
+        "openAccessInfo": "このグループに参加するための特別なアクセス要件はありません"
     },
     "updateNow": "今すぐリロード",
     "updateRequired": "OpenChatの新しいバージョンが利用可能です-{countdown}でリロード",
@@ -476,7 +472,15 @@
         "shortBalanceLabel": "残高",
         "manageHeader": "{symbol}アカウントを管理する",
         "token": "トークン",
-        "comingSoon": "（近日公開）"
+        "comingSoon": "（近日公開）",
+        "send": "送信",
+        "deposit": "デポジット",
+        "depositToken": "入金 {symbol}",
+        "sendTarget": "送信先アドレスを入力",
+        "sendSucceeded": "あなたの {symbol} は正常に送信されました!",
+        "sendFailed": "{symbol} の送信に失敗しました",
+        "scan": "QRコードをスキャン",
+        "withdrawToken": "{symbol}を撤回"
     },
     "searchChat": "検索",
     "search": "検索...",
@@ -539,7 +543,6 @@
     "unpinMessage": "ピンを外す",
     "forward": "転送",
     "referralHeader": "友達や家族を招待する",
-    "userReferralMessage": "OpenChatへのこのリンクを友人や家族と共有してください。あなたのリンクに登録し、確認済みのユーザーになるたびに、CHATトークンの報酬を受け取ります（数週間以内に確認されます）。今すぐリンクを共有してください。CHATトークンが利用可能になったら、遡及的に授与します。",
     "userInfoHeader": "公衆",
     "thread": {
         "menu": "スレッドで返信",
@@ -751,7 +754,8 @@
         "cannotExtend": "有効期限が切れてから 3 か月以内に限り、メンバーシップを延長できます",
         "groupMsg": "最大 10 個の公開グループを作成し、グループ アクセスを制御するには、Diamond ユーザーである必要があります",
         "gatingMsg": "アクセスが制限されたグループを作成するには、Diamond ユーザーである必要があります",
-        "gatedGroups": "ゲーテッド グループ"
+        "gatedGroups": "ゲーテッド グループ",
+        "reminders": "リマインダー"
     },
     "currentUsage": "現在のストレージ使用量",
     "promoteTo": "{role} に昇格",
@@ -760,16 +764,26 @@
     "demoteFailed": "{role} に降格できません",
     "ownerCantLeave": "グループを退会するには、別の所有者を追加する必要があります",
     "participant": "メンバー",
-    "airdrop": {
-        "register": "エアドロップに登録する",
-        "placeholder": "NNSプリンシパル...",
-        "submit": "送信",
-        "success": "ありがとう - エアドロップへの登録が完了しました",
-        "failure": "申し訳ありませんが、エアドロップに登録できませんでした",
-        "showHow": "どうするか教えて",
-        "howTo": "NNS プリンシパルを見つける方法",
-        "info": "間違えた場合は、メイン メニューから正しいプリンシパルを再送信できます。",
-        "back": "戻る",
-        "pleaseSubmit": "エアドロップを受け取るには、{cutoff} の前に [NNS dApp](https://nns.ic0.app) プリンシパルを以下に送信してください。"
-    }
+    "unauthorizedToCreatePublicGroup": "公開グループを作成する権限がありません",
+    "reminders": {
+        "optional": "オプション",
+        "menu": "思い出させる",
+        "title": "リマインダーを設定する",
+        "note": "メモを追加",
+        "notePlaceholder": "通知する...",
+        "twentyMinutes": "20分で",
+        "oneHour": "1時間で",
+        "threeHours": "3時間で",
+        "tomorrow": "明日",
+        "nextWeek": "次の週",
+        "create": "作成",
+        "success": "リマインダーが設定されました",
+        "remindAt": "{datetime} でこのメッセージについてお知らせします",
+        "youAsked": "このメッセージについて思い出させるように頼まれました。",
+        "failure": "リマインダーを設定できませんでした",
+        "cancel": "リマインダーをキャンセル",
+        "cancelSuccess": "リマインダーがキャンセルされました",
+        "cancelFailure": "リマインダーをキャンセルできませんでした"
+    },
+    "userReferralMessage": "このリンクを OpenChat で友人や家族と共有してください。あなた自身がダイヤモンド メンバーである限り、あなたのリンクに登録してダイヤモンド メンバーになる 1 人につき、最初の 1 年間のメンバーシップ支払いの半額を受け取ることができます。"
 }

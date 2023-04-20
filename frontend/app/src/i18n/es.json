@@ -276,9 +276,6 @@
         "userLimitReached": "El usuario ha alcanzado el limite",
         "createUser": "Crear usuario",
         "confirm": "Confirmar",
-        "challengeAttemptFailed": "El valor que ingresó es incorrecto. Prueba el nuevo desafío.",
-        "challengeThrottled": "Se han generado demasiados desafíos. Por favor, inténtelo de nuevo más tarde.",
-        "attemptChallenge": "Por favor escriba los caracteres que ve",
         "closedTitle": "Registro en pausa",
         "closed": "Debido a la gran demanda, los registros de nuevos usuarios están cerrados temporalmente. ¡Pronto escalaremos a través de múltiples subredes y luego podremos crecer indefinidamente!"
     },
@@ -418,8 +415,7 @@
         "minDissolveDelayN": "Retraso mínimo de disolución {n} días",
         "minStakeN": "Apuesta mínima {n} tokens",
         "optional": "Opcional",
-        "openAccessInfo": "No hay requisitos especiales de acceso para unirse a este grupo",
-        "gateCheckFailed": "Lo sentimos, no has cumplido con los requisitos de entrada para este grupo"
+        "openAccessInfo": "No hay requisitos especiales de acceso para unirse a este grupo"
     },
     "updateNow": "recargar ahora",
     "updateRequired": "Una nueva versión de OpenChat está disponible - recargando en {countdown}s",
@@ -477,7 +473,15 @@
         "shortBalanceLabel": "equilibrio",
         "manageHeader": "Administrar cuenta {symbol}",
         "token": "simbólico",
-        "comingSoon": "(próximamente)"
+        "comingSoon": "(próximamente)",
+        "send": "Enviar",
+        "deposit": "Depósito",
+        "depositToken": "Depositar {symbol}",
+        "sendTarget": "Ingrese una dirección para enviar a",
+        "sendSucceeded": "¡Su {symbol} se envió con éxito!",
+        "sendFailed": "Error al enviar {symbol}",
+        "scan": "Escanear código QR",
+        "withdrawToken": "Retirar {symbol}"
     },
     "searchChat": "Búsqueda",
     "search": "Búsqueda...",
@@ -540,7 +544,7 @@
     "unpinMessage": "Desprender",
     "forward": "Delantero",
     "referralHeader": "Invitar a amigos/familiares",
-    "userReferralMessage": "Comparta este enlace a OpenChat con amigos y familiares. Por cada persona que se registre con su enlace y se convierta en un usuario verificado, recibirá una recompensa de tokens CHAT (a confirmar en las próximas semanas). Puede continuar y compartir el enlace ahora y otorgaremos tokens de CHAT retrospectivamente una vez que estén disponibles.",
+    "": "Comparta este enlace a OpenChat con amigos y familiares. Por cada persona que se registre con su enlace y se convierta en un usuario verificado, recibirá una recompensa de tokens CHAT (a confirmar en las próximas semanas). Puede continuar y compartir el enlace ahora y otorgaremos tokens de CHAT retrospectivamente una vez que estén disponibles.",
     "userInfoHeader": "Público",
     "thread": {
         "menu": "Responder en hilo",
@@ -751,7 +755,8 @@
         "cannotExtend": "Solo puede extender su membresía dentro de los tres meses posteriores al vencimiento",
         "groupMsg": "Para crear hasta 10 grupos públicos y controlar el acceso a los grupos, debe ser un usuario Diamond",
         "gatingMsg": "Para crear grupos con acceso privado, debe ser un usuario Diamond",
-        "gatedGroups": "Grupos cerrados"
+        "gatedGroups": "Grupos cerrados",
+        "reminders": "Recordatorios"
     },
     "currentUsage": "Uso de almacenamiento actual",
     "promoteTo": "Promocionar a {role}",
@@ -760,16 +765,26 @@
     "demoteFailed": "No se puede degradar a {role}",
     "ownerCantLeave": "Debes agregar otro propietario antes de poder abandonar el grupo.",
     "participant": "miembro",
-    "airdrop": {
-        "register": "Regístrese para lanzamiento aéreo",
-        "placeholder": "directora de NNS...",
-        "submit": "Entregar",
-        "success": "Gracias, te has registrado con éxito en el airdrop.",
-        "failure": "Lo sentimos, no pudimos registrarlo para el airdrop",
-        "showHow": "Muéstrame cómo",
-        "howTo": "Cómo encontrar a su director de NNS",
-        "info": "Si comete un error, puede volver a enviar el principal correcto a través del menú principal.",
-        "back": "Atrás",
-        "pleaseSubmit": "Para recibir su airdrop, envíe su principal [NNS dApp](https://nns.ic0.app) a continuación antes de {cutoff}."
-    }
+    "unauthorizedToCreatePublicGroup": "No tienes autorización para crear grupos públicos.",
+    "reminders": {
+        "optional": "Opcional",
+        "menu": "Recuerdame",
+        "title": "Establecer un recordatorio",
+        "note": "Agrega una nota",
+        "notePlaceholder": "Recuérdame...",
+        "twentyMinutes": "En 20 minutos",
+        "oneHour": "En 1 hora",
+        "threeHours": "En 3 horas",
+        "tomorrow": "Mañana",
+        "nextWeek": "La próxima semana",
+        "create": "Crear",
+        "success": "Su recordatorio se ha configurado con éxito",
+        "remindAt": "Te recordaré este mensaje en {datetime}",
+        "youAsked": "Me pediste que te recordara este mensaje.",
+        "failure": "Lo sentimos, no pudimos configurar su recordatorio",
+        "cancel": "Cancelar recordatorio",
+        "cancelSuccess": "Su recordatorio ha sido cancelado con éxito",
+        "cancelFailure": "Lo sentimos, no pudimos cancelar tu recordatorio."
+    },
+    "userReferralMessage": "Comparta este enlace a OpenChat con amigos y familiares. Siempre que usted sea un miembro Diamond, por cada persona que se registre con su enlace y se convierta en miembro Diamond, recibirá la mitad de los pagos de membresía que hagan durante su primer año."
 }

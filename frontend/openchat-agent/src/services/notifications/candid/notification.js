@@ -78,6 +78,10 @@ export const Notification = IDL.Variant({
             'caption' : IDL.Opt(IDL.Text),
             'winners' : IDL.Vec(IDL.Principal),
           }),
+          'Custom' : IDL.Record({
+            'data' : IDL.Vec(IDL.Nat8),
+            'kind' : IDL.Text,
+          }),
           'GovernanceProposal' : IDL.Record({
             'my_vote' : IDL.Opt(IDL.Bool),
             'governance_canister_id' : IDL.Principal,
@@ -369,6 +373,16 @@ export const Notification = IDL.Variant({
             'timestamp' : IDL.Nat64,
             'deleted_by' : IDL.Principal,
           }),
+          'MessageReminderCreated' : IDL.Record({
+            'hidden' : IDL.Bool,
+            'notes' : IDL.Opt(IDL.Text),
+            'remind_at' : IDL.Nat64,
+            'reminder_id' : IDL.Nat64,
+          }),
+          'MessageReminder' : IDL.Record({
+            'notes' : IDL.Opt(IDL.Text),
+            'reminder_id' : IDL.Nat64,
+          }),
         }),
         'edited' : IDL.Bool,
         'last_updated' : IDL.Opt(IDL.Nat64),
@@ -384,6 +398,9 @@ export const Notification = IDL.Variant({
         'message_id' : IDL.Nat,
         'replies_to' : IDL.Opt(
           IDL.Record({
+            'event_list_if_other' : IDL.Opt(
+              IDL.Tuple(IDL.Principal, IDL.Opt(IDL.Nat32))
+            ),
             'chat_id_if_other' : IDL.Opt(IDL.Principal),
             'event_index' : IDL.Nat32,
           })
@@ -475,6 +492,10 @@ export const Notification = IDL.Variant({
             'caption' : IDL.Opt(IDL.Text),
             'winners' : IDL.Vec(IDL.Principal),
           }),
+          'Custom' : IDL.Record({
+            'data' : IDL.Vec(IDL.Nat8),
+            'kind' : IDL.Text,
+          }),
           'GovernanceProposal' : IDL.Record({
             'my_vote' : IDL.Opt(IDL.Bool),
             'governance_canister_id' : IDL.Principal,
@@ -766,6 +787,16 @@ export const Notification = IDL.Variant({
             'timestamp' : IDL.Nat64,
             'deleted_by' : IDL.Principal,
           }),
+          'MessageReminderCreated' : IDL.Record({
+            'hidden' : IDL.Bool,
+            'notes' : IDL.Opt(IDL.Text),
+            'remind_at' : IDL.Nat64,
+            'reminder_id' : IDL.Nat64,
+          }),
+          'MessageReminder' : IDL.Record({
+            'notes' : IDL.Opt(IDL.Text),
+            'reminder_id' : IDL.Nat64,
+          }),
         }),
         'edited' : IDL.Bool,
         'last_updated' : IDL.Opt(IDL.Nat64),
@@ -781,6 +812,9 @@ export const Notification = IDL.Variant({
         'message_id' : IDL.Nat,
         'replies_to' : IDL.Opt(
           IDL.Record({
+            'event_list_if_other' : IDL.Opt(
+              IDL.Tuple(IDL.Principal, IDL.Opt(IDL.Nat32))
+            ),
             'chat_id_if_other' : IDL.Opt(IDL.Principal),
             'event_index' : IDL.Nat32,
           })
@@ -875,6 +909,10 @@ export const Notification = IDL.Variant({
             'caption' : IDL.Opt(IDL.Text),
             'winners' : IDL.Vec(IDL.Principal),
           }),
+          'Custom' : IDL.Record({
+            'data' : IDL.Vec(IDL.Nat8),
+            'kind' : IDL.Text,
+          }),
           'GovernanceProposal' : IDL.Record({
             'my_vote' : IDL.Opt(IDL.Bool),
             'governance_canister_id' : IDL.Principal,
@@ -1166,6 +1204,16 @@ export const Notification = IDL.Variant({
             'timestamp' : IDL.Nat64,
             'deleted_by' : IDL.Principal,
           }),
+          'MessageReminderCreated' : IDL.Record({
+            'hidden' : IDL.Bool,
+            'notes' : IDL.Opt(IDL.Text),
+            'remind_at' : IDL.Nat64,
+            'reminder_id' : IDL.Nat64,
+          }),
+          'MessageReminder' : IDL.Record({
+            'notes' : IDL.Opt(IDL.Text),
+            'reminder_id' : IDL.Nat64,
+          }),
         }),
         'edited' : IDL.Bool,
         'last_updated' : IDL.Opt(IDL.Nat64),
@@ -1181,6 +1229,9 @@ export const Notification = IDL.Variant({
         'message_id' : IDL.Nat,
         'replies_to' : IDL.Opt(
           IDL.Record({
+            'event_list_if_other' : IDL.Opt(
+              IDL.Tuple(IDL.Principal, IDL.Opt(IDL.Nat32))
+            ),
             'chat_id_if_other' : IDL.Opt(IDL.Principal),
             'event_index' : IDL.Nat32,
           })
@@ -1275,6 +1326,10 @@ export const Notification = IDL.Variant({
             'caption' : IDL.Opt(IDL.Text),
             'winners' : IDL.Vec(IDL.Principal),
           }),
+          'Custom' : IDL.Record({
+            'data' : IDL.Vec(IDL.Nat8),
+            'kind' : IDL.Text,
+          }),
           'GovernanceProposal' : IDL.Record({
             'my_vote' : IDL.Opt(IDL.Bool),
             'governance_canister_id' : IDL.Principal,
@@ -1566,6 +1621,16 @@ export const Notification = IDL.Variant({
             'timestamp' : IDL.Nat64,
             'deleted_by' : IDL.Principal,
           }),
+          'MessageReminderCreated' : IDL.Record({
+            'hidden' : IDL.Bool,
+            'notes' : IDL.Opt(IDL.Text),
+            'remind_at' : IDL.Nat64,
+            'reminder_id' : IDL.Nat64,
+          }),
+          'MessageReminder' : IDL.Record({
+            'notes' : IDL.Opt(IDL.Text),
+            'reminder_id' : IDL.Nat64,
+          }),
         }),
         'edited' : IDL.Bool,
         'last_updated' : IDL.Opt(IDL.Nat64),
@@ -1581,6 +1646,9 @@ export const Notification = IDL.Variant({
         'message_id' : IDL.Nat,
         'replies_to' : IDL.Opt(
           IDL.Record({
+            'event_list_if_other' : IDL.Opt(
+              IDL.Tuple(IDL.Principal, IDL.Opt(IDL.Nat32))
+            ),
             'chat_id_if_other' : IDL.Opt(IDL.Principal),
             'event_index' : IDL.Nat32,
           })

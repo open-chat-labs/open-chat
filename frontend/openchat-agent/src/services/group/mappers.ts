@@ -251,6 +251,7 @@ function groupChatSummaryUpdates(
         frozen: optionUpdate(candid.frozen, (_) => true),
         updatedEvents: candid.updated_events.map(updatedEvent),
         dateLastPinned: optional(candid.date_last_pinned, identity),
+        gate: optionUpdate(candid.gate, groupGate),
     };
 }
 
@@ -1444,6 +1445,10 @@ function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {
             kind: "gate_updated",
             updatedBy: candid.GroupGateUpdated.updated_by.toString(),
         };
+    }
+
+    if ("Empty" in candid) {
+        return { kind: "empty" };
     }
 
     throw new UnsupportedValueError("Unexpected ApiEventWrapper type received", candid);

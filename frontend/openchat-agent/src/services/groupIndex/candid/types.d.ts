@@ -50,7 +50,8 @@ export interface CanisterWasm {
   'version' : Version,
   'module' : Uint8Array | number[],
 }
-export type ChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
+export type ChatEvent = { 'Empty' : null } |
+  { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'ParticipantJoined' : ParticipantJoined } |
   { 'ParticipantAssumesSuperAdmin' : ParticipantAssumesSuperAdmin } |
   { 'GroupDescriptionChanged' : GroupDescriptionChanged } |
@@ -109,6 +110,7 @@ export interface ChatMetrics {
   'file_messages' : bigint,
   'poll_votes' : bigint,
   'text_messages' : bigint,
+  'message_reminders' : bigint,
   'image_messages' : bigint,
   'replies' : bigint,
   'video_messages' : bigint,
@@ -118,6 +120,7 @@ export interface ChatMetrics {
   'reported_messages' : bigint,
   'ckbtc_messages' : bigint,
   'reactions' : bigint,
+  'custom_type_messages' : bigint,
   'prize_messages' : bigint,
 }
 export interface ChatUnfrozen { 'unfrozen_by' : UserId }
@@ -137,6 +140,10 @@ export type Cryptocurrency = { 'InternetComputer' : null } |
   { 'CHAT' : null } |
   { 'SNS1' : null } |
   { 'CKBTC' : null };
+export interface CustomMessageContent {
+  'data' : Uint8Array | number[],
+  'kind' : string,
+}
 export type Cycles = bigint;
 export interface CyclesRegistrationFee {
   'recipient' : Principal,
@@ -339,6 +346,7 @@ export interface GroupCanisterGroupChatSummaryUpdates {
   'metrics' : [] | [ChatMetrics],
   'subtype' : GroupSubtypeUpdate,
   'date_last_pinned' : [] | [TimestampMillis],
+  'gate' : GroupGateUpdate,
   'name' : [] | [string],
   'role' : [] | [Role],
   'wasm_version' : [] | [Version],
@@ -542,23 +550,29 @@ export type MessageContent = { 'Giphy' : GiphyContent } |
   { 'Text' : TextContent } |
   { 'Image' : ImageContent } |
   { 'Prize' : PrizeContent } |
+  { 'Custom' : CustomMessageContent } |
   { 'GovernanceProposal' : ProposalContent } |
   { 'PrizeWinner' : PrizeWinnerContent } |
   { 'Audio' : AudioContent } |
   { 'Crypto' : CryptoContent } |
   { 'Video' : VideoContent } |
-  { 'Deleted' : DeletedContent };
+  { 'Deleted' : DeletedContent } |
+  { 'MessageReminderCreated' : MessageReminderCreated } |
+  { 'MessageReminder' : MessageReminder };
 export type MessageContentInitial = { 'Giphy' : GiphyContent } |
   { 'File' : FileContent } |
   { 'Poll' : PollContent } |
   { 'Text' : TextContent } |
   { 'Image' : ImageContent } |
   { 'Prize' : PrizeContentInitial } |
+  { 'Custom' : CustomMessageContent } |
   { 'GovernanceProposal' : ProposalContent } |
   { 'Audio' : AudioContent } |
   { 'Crypto' : CryptoContent } |
   { 'Video' : VideoContent } |
-  { 'Deleted' : DeletedContent };
+  { 'Deleted' : DeletedContent } |
+  { 'MessageReminderCreated' : MessageReminderCreated } |
+  { 'MessageReminder' : MessageReminder };
 export interface MessageEventWrapper {
   'event' : Message,
   'timestamp' : TimestampMillis,
@@ -582,6 +596,16 @@ export interface MessageMatch {
 export interface MessagePinned {
   'pinned_by' : UserId,
   'message_index' : MessageIndex,
+}
+export interface MessageReminder {
+  'notes' : [] | [string],
+  'reminder_id' : bigint,
+}
+export interface MessageReminderCreated {
+  'hidden' : boolean,
+  'notes' : [] | [string],
+  'remind_at' : TimestampMillis,
+  'reminder_id' : bigint,
 }
 export interface MessageUnpinned {
   'due_to_message_deleted' : boolean,
@@ -791,6 +815,7 @@ export type RemoveHotGroupExclusionResponse = { 'ChatNotFound' : null } |
   { 'Success' : null } |
   { 'InternalError' : string };
 export interface ReplyContext {
+  'event_list_if_other' : [] | [[ChatId, [] | [MessageIndex]]],
   'chat_id_if_other' : [] | [ChatId],
   'event_index' : EventIndex,
 }

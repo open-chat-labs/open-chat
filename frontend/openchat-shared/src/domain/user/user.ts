@@ -68,23 +68,6 @@ export enum AvatarSize {
     Large,
 }
 
-export type CreateChallengeResponse = Challenge | Throttled;
-
-export type Challenge = {
-    kind: "challenge";
-    key: number;
-    pngBase64: string;
-};
-
-export type Throttled = {
-    kind: "throttled";
-};
-
-export type ChallengeAttempt = {
-    key: number;
-    chars: string;
-};
-
 export type CurrentUserResponse = CreatedUser | UserNotFound;
 
 export type UpgradeInProgress = {
@@ -164,7 +147,7 @@ export type RegisterUserResponse =
     | "username_too_short"
     | "username_too_long"
     | "username_invalid"
-    | "challenge_failed";
+    | "public_key_invalid";
 
 export type PinChatResponse = { kind: "success" } | { kind: "pinned_limit_reached"; limit: number };
 
@@ -206,14 +189,8 @@ export type PayForDiamondMembershipResponse =
 
 export type SetUserUpgradeConcurrencyResponse = "success";
 
-export type SetNeuronControllerResponse =
+export type SetMessageReminderResponse =
+    | "notes_too_long"
     | "success"
-    | "user_not_found"
-    | "user_not_eligible"
-    | "airdrop_closed";
-
-export type EligibleForInitialAirdropResponse =
-    | { kind: "user_eligible"; principal?: string }
-    | { kind: "user_not_eligible" }
-    | { kind: "airdrop_closed" }
-    | UserNotFound;
+    | "reminder_date_in_past"
+    | "user_suspended";

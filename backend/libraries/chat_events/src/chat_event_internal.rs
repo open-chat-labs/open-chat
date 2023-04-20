@@ -15,6 +15,7 @@ use types::{
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum ChatEventInternal {
+    Empty,
     Message(Box<MessageInternal>),
     MessageEdited(Box<UpdatedMessageInternal>),
     MessageDeleted(Box<UpdatedMessageInternal>),
@@ -206,6 +207,13 @@ impl MessageInternal {
             }
             MessageContentInternal::PrizeWinner(_) => {
                 incr(&mut metrics.prize_winner_messages);
+            }
+            MessageContentInternal::MessageReminderCreated(_) => {}
+            MessageContentInternal::MessageReminder(_) => {
+                incr(&mut metrics.message_reminders);
+            }
+            MessageContentInternal::Custom(_) => {
+                incr(&mut metrics.custom_type_messages);
             }
         }
     }

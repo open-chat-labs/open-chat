@@ -282,9 +282,6 @@
         "bioTooLong": "Ihre Biografie ist zu lang",
         "userLimitReached": "Das Benutzerlimit wurde erreicht",
         "createUser": "Benutzer erstellen",
-        "challengeAttemptFailed": "Der eingegebene Wert ist falsch. Bitte versuchen Sie die neue Herausforderung.",
-        "challengeThrottled": "Es wurden zu viele Herausforderungen generiert. Bitte versuchen Sie es später erneut.",
-        "attemptChallenge": "Bitte geben Sie die angezeigten Zeichen ein",
         "closedTitle": "Registrierung pausiert",
         "closed": "Aufgrund der sehr hohen Nachfrage sind die Registrierungen neuer Benutzer vorübergehend geschlossen. Wir werden bald über mehrere Subnetze skalieren und können dann unbegrenzt wachsen!"
     },
@@ -419,8 +416,7 @@
         "minDissolveDelayN": "Minimale Auflösungsverzögerung {n} Tage",
         "minStakeN": "Mindesteinsatz {n} Token",
         "optional": "Optional",
-        "openAccessInfo": "Es gibt keine besonderen Zugangsvoraussetzungen, um dieser Gruppe beizutreten",
-        "gateCheckFailed": "Entschuldigung - Sie haben die Zugangsvoraussetzungen für diese Gruppe nicht erfüllt"
+        "openAccessInfo": "Es gibt keine besonderen Zugangsvoraussetzungen, um dieser Gruppe beizutreten"
     },
     "updateNow": "jetzt neu laden",
     "updateRequired": "Eine neue Version von OpenChat ist verfügbar - Neuladen in {countdown}s",
@@ -478,7 +474,15 @@
         "shortBalanceLabel": "Balance",
         "manageHeader": "{symbol}-Konto verwalten",
         "token": "Zeichen",
-        "comingSoon": "(kommt bald)"
+        "comingSoon": "(kommt bald)",
+        "send": "Schicken",
+        "deposit": "Kaution",
+        "depositToken": "Einzahlung {symbol}",
+        "sendTarget": "Geben Sie eine Adresse ein, an die gesendet werden soll",
+        "sendSucceeded": "Ihr {symbol} wurde erfolgreich gesendet!",
+        "sendFailed": "Fehler beim Senden von {symbol}",
+        "scan": "QR-Code scannen",
+        "withdrawToken": "Zurückziehen {symbol}"
     },
     "searchChat": "Suche",
     "search": "Suche...",
@@ -541,7 +545,6 @@
     "unpinMessage": "Lösen",
     "forward": "Nach vorne",
     "referralHeader": "Freunde/Familie einladen",
-    "userReferralMessage": "Teilen Sie diesen Link zu OpenChat mit Freunden und Familie. Für jede Person, die sich mit Ihrem Link registriert und ein verifizierter Benutzer wird, erhalten Sie eine Belohnung in Form von CHAT-Token (wird in den kommenden Wochen bestätigt). Sie können den Link jetzt teilen und wir vergeben nachträglich CHAT-Token, sobald sie verfügbar sind.",
     "userInfoHeader": "Öffentlichkeit",
     "thread": {
         "menu": "Antwort im Thread",
@@ -752,7 +755,8 @@
         "cannotExtend": "Sie können Ihre Mitgliedschaft nur innerhalb von drei Monaten nach Ablauf verlängern",
         "groupMsg": "Um bis zu 10 öffentliche Gruppen zu erstellen und den Gruppenzugriff zu steuern, müssen Sie ein Diamond-Benutzer sein",
         "gatingMsg": "Um Gruppen mit geschlossenem Zugang zu erstellen, müssen Sie ein Diamond-Benutzer sein",
-        "gatedGroups": "Geschlossene Gruppen"
+        "gatedGroups": "Geschlossene Gruppen",
+        "reminders": "Erinnerungen"
     },
     "currentUsage": "Aktuelle Speichernutzung",
     "promoteTo": "Heraufstufen zu {role}",
@@ -761,16 +765,26 @@
     "demoteFailed": "Herabstufung auf {role} nicht möglich",
     "ownerCantLeave": "Sie müssen einen weiteren Eigentümer hinzufügen, bevor Sie die Gruppe verlassen können",
     "participant": "Mitglied",
-    "airdrop": {
-        "register": "Registrieren Sie sich für Airdrop",
-        "placeholder": "NNS-Direktor ...",
-        "submit": "Einreichen",
-        "success": "Danke - Sie wurden erfolgreich für den Airdrop registriert",
-        "failure": "Entschuldigung - wir konnten Sie nicht für den Airdrop registrieren",
-        "showHow": "Zeig mir wie",
-        "howTo": "So finden Sie Ihren NNS-Prinzipal",
-        "info": "Wenn Sie einen Fehler machen, können Sie den richtigen Auftraggeber über das Hauptmenü erneut einreichen.",
-        "back": "Zurück",
-        "pleaseSubmit": "Um Ihren Airdrop zu erhalten, reichen Sie bitte unten vor dem {cutoff} Ihren [NNS dApp](https://nns.ic0.app)-Prinzipal ein."
-    }
+    "unauthorizedToCreatePublicGroup": "Sie sind nicht berechtigt, öffentliche Gruppen zu erstellen",
+    "reminders": {
+        "optional": "Optional",
+        "menu": "Erinnere mich",
+        "title": "Legen Sie eine Erinnerung fest",
+        "note": "Füg ein Notiz hinzu",
+        "notePlaceholder": "Erinnere mich an ...",
+        "twentyMinutes": "In 20 Minuten",
+        "oneHour": "In 1 Stunde",
+        "threeHours": "In 3 Stunden",
+        "tomorrow": "Morgen",
+        "nextWeek": "Nächste Woche",
+        "create": "Erstellen",
+        "success": "Ihre Erinnerung wurde erfolgreich eingestellt",
+        "remindAt": "Ich werde Sie um {datetime} an diese Nachricht erinnern",
+        "youAsked": "Sie haben mich gebeten, Sie an diese Nachricht zu erinnern.",
+        "failure": "Leider konnten wir Ihre Erinnerung nicht einstellen",
+        "cancel": "Erinnerung abbrechen",
+        "cancelSuccess": "Ihre Erinnerung wurde erfolgreich storniert",
+        "cancelFailure": "Es tut uns leid, dass wir Ihre Erinnerung nicht stornieren konnten"
+    },
+    "userReferralMessage": "Teilen Sie diesen Link zu OpenChat mit Freunden und Familie. Solange Sie selbst Diamond-Mitglied sind, erhalten Sie für jede Person, die sich über Ihren Link registriert und später Diamond-Mitglied wird, die Hälfte ihrer Mitgliedsbeiträge im ersten Jahr."
 }

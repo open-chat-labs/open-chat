@@ -1,7 +1,6 @@
 import type { IDL } from "@dfinity/candid";
 import {
     _SERVICE,
-    CreateChallengeResponse,
     CurrentUserResponse,
     CurrentUserArgs,
     CheckUsernameArgs,
@@ -22,12 +21,9 @@ import {
     DiamondMembershipDetails,
     DiamondMembershipPlanDuration,
     PayForDiamondMembershipResponse,
-    IsEligibleForInitialAirdropResponse,
-    SetNeuronControllerForInitialAirdropResponse,
 } from "./types";
 export {
     _SERVICE as UserIndexService,
-    CreateChallengeResponse as ApiCreateChallengeResponse,
     CurrentUserResponse as ApiCurrentUserResponse,
     CurrentUserArgs as ApiCurrentUserArgs,
     SetUsernameArgs as ApiSetUsernameArgs,
@@ -47,8 +43,6 @@ export {
     DiamondMembershipDetails as ApiDiamondMembershipDetails,
     DiamondMembershipPlanDuration as ApiDiamondMembershipPlanDuration,
     PayForDiamondMembershipResponse as ApiPayForDiamondMembershipResponse,
-    IsEligibleForInitialAirdropResponse as ApiIsEligibleForInitialAirdropResponse,
-    SetNeuronControllerForInitialAirdropResponse as ApiSetNeuronControllerForInitialAirdropResponse,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

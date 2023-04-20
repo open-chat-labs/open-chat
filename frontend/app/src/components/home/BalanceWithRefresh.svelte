@@ -34,7 +34,9 @@
                 dispatch("refreshed", val);
             })
             .catch((err) => {
-                const errorMessage = $_("unableToRefreshAccountBalance", { values: { token } });
+                const errorMessage = $_("unableToRefreshAccountBalance", {
+                    values: { token: token.toUpperCase() },
+                });
                 logger.error(`Failed to refresh ${token} account balance`, err);
                 dispatch("error", errorMessage);
             })

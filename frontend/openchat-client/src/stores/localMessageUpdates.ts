@@ -9,6 +9,16 @@ import { mergeThreadSummaries } from "../utils/chat";
 import { LocalUpdatesStore } from "./localUpdatesStore";
 
 class LocalMessageUpdatesStore extends LocalUpdatesStore<LocalMessageUpdates> {
+    markCancelled(messageId: string, content: MessageContent): void {
+        this.applyUpdate(messageId, (_) => ({
+            cancelledReminder: content,
+        }));
+    }
+    revertCancelled(messageId: string): void {
+        this.applyUpdate(messageId, (_) => ({
+            cancelledReminder: undefined,
+        }));
+    }
     markDeleted(messageId: string, deletedBy: string): void {
         this.applyUpdate(messageId, (_) => ({
             deleted: { deletedBy, timestamp: BigInt(Date.now()) },

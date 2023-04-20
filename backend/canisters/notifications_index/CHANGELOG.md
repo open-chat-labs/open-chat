@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.653](https://github.com/open-ic/open-chat/releases/tag/v2.0.653-notifications_index)] - 2023-03-30
+
 ### Changed
 
 - Skip upgrades where new wasm version matches current version ([#3158](https://github.com/open-ic/open-chat/pull/3158))

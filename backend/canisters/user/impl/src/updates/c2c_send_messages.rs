@@ -160,7 +160,7 @@ pub(crate) fn handle_message_impl(
     args: HandleMessageArgs,
     mute_notification: bool,
     runtime_state: &mut RuntimeState,
-) -> Response {
+) -> EventWrapper<Message> {
     let replies_to = convert_reply_context(args.replies_to, sender, args.now, runtime_state);
     let initial_content: MessageContentInitial = args.content.into();
     let content = initial_content.new_content_into_internal();
@@ -196,7 +196,7 @@ pub(crate) fn handle_message_impl(
                 sender,
                 thread_root_message_index: None,
                 sender_name: args.sender_name,
-                message: message_event,
+                message: message_event.clone(),
             });
 
             let recipient = runtime_state.env.canister_id().into();
@@ -205,7 +205,7 @@ pub(crate) fn handle_message_impl(
         }
     }
 
-    Success
+    message_event
 }
 
 fn convert_reply_context(
@@ -224,11 +224,18 @@ fn convert_reply_context(
                 .and_then(|chat| chat.events.main_events_reader(now).event_index(message_id.into()))
                 .map(|event_index| ReplyContext {
                     chat_id_if_other: None,
+                    event_list_if_other: None,
                     event_index,
                 })
         }
         C2CReplyContext::OtherChat(chat_id, event_index) => Some(ReplyContext {
             chat_id_if_other: Some(chat_id),
+            event_list_if_other: Some((chat_id, None)),
+            event_index,
+        }),
+        C2CReplyContext::OtherEventList(chat_id, thread_root_message_index, event_index) => Some(ReplyContext {
+            chat_id_if_other: Some(chat_id),
+            event_list_if_other: Some((chat_id, thread_root_message_index)),
             event_index,
         }),
     }

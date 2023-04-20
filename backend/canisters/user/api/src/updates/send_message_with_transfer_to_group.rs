@@ -27,7 +27,6 @@ pub enum Response {
     InvalidRequest(String),
     TransferFailed(String),
     TransferCannotBeZero,
-    TransferLimitExceeded(u128),
     UserSuspended,
     ChatFrozen,
     InternalError(String, CompletedCryptoTransaction),

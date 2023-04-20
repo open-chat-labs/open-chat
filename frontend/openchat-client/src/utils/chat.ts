@@ -186,6 +186,7 @@ export function activeUserIdFromEvent(event: ChatEvent): string | undefined {
         case "member_left": // We exclude participant_left events since the user is no longer in the group
         case "chat_frozen":
         case "chat_unfrozen":
+        case "empty":
             return undefined;
         default:
             throw new UnsupportedValueError("Unexpected ChatEvent type received", event);
@@ -232,6 +233,9 @@ function addCaption(caption: string | undefined, content: MessageContent): Messa
         content.kind !== "poll_content" &&
         content.kind !== "proposal_content" &&
         content.kind !== "prize_winner_content" &&
+        content.kind !== "message_reminder_content" &&
+        content.kind !== "message_reminder_created_content" &&
+        content.kind !== "custom_content" &&
         content.kind !== "crypto_content"
         ? { ...content, caption }
         : content;
@@ -1132,6 +1136,10 @@ function mergeLocalUpdates(
     }
 
     message = { ...message };
+
+    if (localUpdates?.cancelledReminder !== undefined) {
+        message.content = localUpdates.cancelledReminder;
+    }
 
     if (localUpdates?.editedContent !== undefined) {
         message.content = localUpdates.editedContent;

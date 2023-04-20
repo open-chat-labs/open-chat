@@ -5,9 +5,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Encapsulate pushing events and starting sync job ([#3452](https://github.com/open-ic/open-chat/pull/3452))
+
+## [[2.0.663](https://github.com/open-ic/open-chat/releases/tag/v2.0.663-local_user_index)] - 2023-04-17
+
 ### Added
 
 - Implement 'Gated Groups' ([#3406](https://github.com/open-ic/open-chat/pull/3406))
+
+### Changed
+
+- Store `diamond_membership_expires_at` in each user canister ([#3428](https://github.com/open-ic/open-chat/pull/3428))
 
 ### Removed
 

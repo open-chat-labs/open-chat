@@ -19,6 +19,7 @@ pub struct Message {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct ReplyContext {
     pub chat_id_if_other: Option<ChatId>,
+    pub event_list_if_other: Option<(ChatId, Option<MessageIndex>)>,
     pub event_index: EventIndex,
 }
 
@@ -31,6 +32,7 @@ impl From<GroupReplyContext> for ReplyContext {
     fn from(r: GroupReplyContext) -> Self {
         ReplyContext {
             chat_id_if_other: None,
+            event_list_if_other: None,
             event_index: r.event_index,
         }
     }

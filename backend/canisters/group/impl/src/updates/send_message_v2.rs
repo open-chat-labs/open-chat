@@ -52,7 +52,7 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
                 ContentValidationError::Empty => MessageEmpty,
                 ContentValidationError::TextTooLong(max_length) => TextTooLong(max_length),
                 ContentValidationError::InvalidPoll(reason) => InvalidPoll(reason),
-                ContentValidationError::TransferCannotBeZero | ContentValidationError::TransferLimitExceeded(_) => {
+                ContentValidationError::TransferCannotBeZero => {
                     unreachable!()
                 }
                 ContentValidationError::InvalidTypeForForwarding => {
@@ -61,6 +61,9 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
                 ContentValidationError::PrizeEndDateInThePast => InvalidRequest("Prize ended in the past".to_string()),
                 ContentValidationError::UnauthorizedToSendProposalMessages => {
                     InvalidRequest("User unauthorized to send proposal messages".to_string())
+                }
+                ContentValidationError::Unauthorized => {
+                    InvalidRequest("User unauthorized to send messages of this type".to_string())
                 }
             };
         }

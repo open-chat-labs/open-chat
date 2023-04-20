@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum ChatEvent {
+    Empty,
     Message(Box<Message>),
     GroupChatCreated(GroupChatCreated),
     DirectChatCreated(DirectChatCreated),

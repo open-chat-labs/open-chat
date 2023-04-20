@@ -28,6 +28,8 @@
     import type { Message, OpenChat } from "openchat-client";
     import { toastStore } from "../../stores/toast";
     import * as shareFunctions from "../../utils/share";
+    import { now } from "../../stores/time";
+    import { remindersEnabled } from "../../utils/features";
 
     const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
@@ -58,6 +60,14 @@
     export let msg: Message;
     export let threadRootMessage: Message | undefined;
 
+    $: canRemind =
+        remindersEnabled &&
+        msg.content.kind !== "message_reminder_content" &&
+        msg.content.kind !== "message_reminder_created_content";
+    $: canCancelRemind =
+        remindersEnabled &&
+        msg.content.kind === "message_reminder_created_content" &&
+        msg.content.remindAt > $now;
     $: user = client.user;
     $: inThread = threadRootMessage !== undefined;
     $: translationStore = client.translationStore;
@@ -80,6 +90,20 @@
 
     function collapseMessage() {
         dispatch("collapseMessage");
+    }
+
+    function remindMe() {
+        if (!$isDiamond) {
+            dispatch("upgrade");
+        } else {
+            dispatch("remindMe");
+        }
+    }
+
+    function cancelReminder() {
+        if (msg.content.kind === "message_reminder_created_content") {
+            dispatch("cancelReminder", msg.content);
+        }
     }
 
     function shareMessage() {
@@ -215,6 +239,18 @@
                         <div slot="text">{$_("copyMessageUrl")}</div>
                     </MenuItem>
                 {/if}
+                {#if canRemind && confirmed && !inert && !failed}
+                    <MenuItem on:click={remindMe}>
+                        <span class="emojicon" slot="icon">⏰</span>
+                        <div slot="text">{$_("reminders.menu")}</div>
+                    </MenuItem>
+                {/if}
+                {#if canCancelRemind && confirmed && !inert && !failed}
+                    <MenuItem on:click={cancelReminder}>
+                        <span class="emojicon" slot="icon">⏰</span>
+                        <div slot="text">{$_("reminders.cancel")}</div>
+                    </MenuItem>
+                {/if}
                 {#if confirmed && canPin && !inThread && !inert && !failed}
                     {#if pinned}
                         <MenuItem on:click={unpinMessage}>
@@ -243,7 +279,7 @@
                     {/if}
                     {#if !inThread && canStartThread}
                         <MenuItem on:click={initiateThread}>
-                            <span class="thread" slot="icon">🧵</span>
+                            <span class="emojicon" slot="icon">🧵</span>
                             <div slot="text">{$_("thread.menu")}</div>
                         </MenuItem>
                     {/if}
@@ -257,7 +293,7 @@
                         <div slot="text">{$_("forward")}</div>
                     </MenuItem>
                 {/if}
-                {#if confirmed && groupChat && !me && !inThread && !isProposal && !inert && !failed}
+                {#if confirmed && groupChat && !inThread && !me && !isProposal && !inert && !failed}
                     <MenuItem on:click={() => dispatch("replyPrivately")}>
                         <ReplyOutline
                             size={$iconSize}
@@ -350,6 +386,10 @@
             left: $offset;
             right: unset;
         }
+    }
+
+    .emojicon {
+        margin-left: $sp1;
     }
 
     .menu-icon {

@@ -23,7 +23,10 @@ export type MessageContent =
     | GiphyContent
     | ProposalContent
     | PrizeContent
-    | PrizeWinnerContent;
+    | PrizeWinnerContent
+    | MessageReminderCreatedContent
+    | MessageReminderContent
+    | CustomContent;
 
 export type IndexRange = [number, number];
 
@@ -142,6 +145,26 @@ export interface GiphyContent {
     mobile: GiphyImage; //will be "downsized_large" from the giphy api
 }
 
+export type CustomContent = {
+    kind: "custom_content";
+    subtype: string;
+    data: unknown;
+};
+
+export type MessageReminderCreatedContent = {
+    kind: "message_reminder_created_content";
+    notes?: string;
+    remindAt: number;
+    reminderId: bigint;
+    hidden: boolean;
+};
+
+export type MessageReminderContent = {
+    kind: "message_reminder_content";
+    notes?: string;
+    reminderId: bigint;
+};
+
 export interface PrizeWinnerContent {
     kind: "prize_winner_content";
     transaction: CompletedCryptocurrencyTransfer;
@@ -183,7 +206,7 @@ export interface ProposalCommon {
 
 export type ManageNeuronResponse =
     | { kind: "success" }
-    | { kind: "error", type: number, message: string };
+    | { kind: "error"; type: number; message: string };
 
 export interface Tally {
     yes: number;
@@ -336,10 +359,29 @@ export interface FileContent extends DataContent {
 
 export type ReplyContext = RawReplyContext | RehydratedReplyContext;
 
+export type MessageContext = {
+    chatId: string;
+    threadRootMessageIndex?: number;
+};
+
+export function messageContextFromString(ctxStr: string): MessageContext {
+    const [chatId, threadRootMessageIndex] = ctxStr.split("_");
+    return {
+        chatId,
+        threadRootMessageIndex: threadRootMessageIndex ? Number(threadRootMessageIndex) : undefined,
+    };
+}
+
+export function messageContextToString(ctx: MessageContext): string {
+    return ctx.threadRootMessageIndex !== undefined
+        ? `${ctx.chatId}_${ctx.threadRootMessageIndex}`
+        : ctx.chatId;
+}
+
 export type RawReplyContext = {
     kind: "raw_reply_context";
     eventIndex: number;
-    chatIdIfOther?: string;
+    sourceContext?: MessageContext;
 };
 
 export type RehydratedReplyContext = {
@@ -349,9 +391,9 @@ export type RehydratedReplyContext = {
     messageId: bigint;
     messageIndex: number;
     eventIndex: number;
-    chatId: string;
     edited: boolean;
     isThreadRoot: boolean;
+    sourceContext: MessageContext;
 };
 
 export type EnhancedReplyContext = RehydratedReplyContext & {
@@ -427,6 +469,7 @@ export type LocalMessageUpdates = {
         timestamp: bigint;
     };
     editedContent?: MessageContent;
+    cancelledReminder?: MessageContent;
     undeletedContent?: MessageContent;
     revealedContent?: MessageContent;
     prizeClaimed?: string;
@@ -489,7 +532,8 @@ export type GroupChatEvent =
     | ChatFrozenEvent
     | GateUpdatedEvent
     | ChatUnfrozenEvent
-    | EventsTimeToLiveUpdated;
+    | EventsTimeToLiveUpdated
+    | EmptyEvent;
 
 export type ChatEvent = GroupChatEvent | DirectChatEvent;
 
@@ -1054,6 +1098,7 @@ export type GroupCanisterGroupChatSummaryUpdates = {
     frozen: OptionUpdate<boolean>;
     updatedEvents: UpdatedEvent[];
     dateLastPinned: bigint | undefined;
+    gate: OptionUpdate<GroupGate>;
 };
 
 export type GroupCanisterThreadDetails = {
@@ -1110,6 +1155,7 @@ export type CreateGroupResponse =
     | CreateGroupThrottled
     | GroupRulesTooShort
     | GroupRulesTooLong
+    | UnauthorizedToCreatePublicGroup
     | UserSuspended;
 
 export type CreateGroupSuccess = {
@@ -1161,6 +1207,10 @@ export type MaxGroupsCreated = {
 
 export type CreateGroupThrottled = {
     kind: "throttled";
+};
+
+export type UnauthorizedToCreatePublicGroup = {
+    kind: "unauthorized_to_create_public_group";
 };
 
 export type AddMembersResponse =
@@ -1339,6 +1389,10 @@ export type EventsTimeToLiveUpdated = {
     kind: "events_ttl_updated";
     updatedBy: string;
     newTimeToLive: bigint | undefined;
+};
+
+export type EmptyEvent = {
+    kind: "empty";
 };
 
 export type SetAvatarResponse = "avatar_too_big" | "success" | "internal_error" | "user_suspended";

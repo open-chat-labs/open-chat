@@ -334,7 +334,7 @@ export function mergeGroupChatUpdates(
             blobReference: applyOptionUpdate(c.blobReference, blobReferenceUpdate),
             dateLastPinned: g?.dateLastPinned ?? c.dateLastPinned,
             dateReadPinned: u?.dateReadPinned ?? c.dateReadPinned,
-            gate: c.gate, // TODO we'll need to come back to this
+            gate: applyOptionUpdate(c.gate, g?.gate) ?? { kind: "no_gate" },
         };
     });
 }

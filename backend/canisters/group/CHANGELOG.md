@@ -5,10 +5,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Use hardcoded ledger ids ([#3452](https://github.com/open-ic/open-chat/pull/3452))
+
+## [[2.0.662](https://github.com/open-ic/open-chat/releases/tag/v2.0.662-group)] - 2023-04-16
+
 ### Added
 
 - Implement 'Gated Groups' ([#3406](https://github.com/open-ic/open-chat/pull/3406))
 - Added `register_proposal_vote_v2` for voting on proposals directly from the frontend ([#3413](https://github.com/open-ic/open-chat/pull/3413))
+- Added `Empty` event type ([#3439](https://github.com/open-ic/open-chat/pull/3439))
+- Added new message content types for reminders ([#3440](https://github.com/open-ic/open-chat/pull/3440))
+- Added new `Custom` message content type ([#3445](https://github.com/open-ic/open-chat/pull/3445))
 
 ### Removed
 

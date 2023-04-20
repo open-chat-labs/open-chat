@@ -5,19 +5,34 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Switch replies over to the new `event_list_if_other` field ([#3465](https://github.com/open-ic/open-chat/pull/3465))
+- Use hardcoded ledger ids ([#3452](https://github.com/open-ic/open-chat/pull/3452))
+
+## [[2.0.660](https://github.com/open-ic/open-chat/releases/tag/v2.0.660-user)] - 2023-04-16
+
 ### Added
 
 - Added `set_message_reminder` ([#3417](https://github.com/open-ic/open-chat/pull/3417))
 - Implement 'Gated Groups' ([#3406](https://github.com/open-ic/open-chat/pull/3406))
+- Added `Empty` event type ([#3439](https://github.com/open-ic/open-chat/pull/3439))
+- Added new message content types for reminders ([#3440](https://github.com/open-ic/open-chat/pull/3440))
+- Added new `Custom` message content type ([#3445](https://github.com/open-ic/open-chat/pull/3445))
 
 ### Changed
 
 - Simplify how we make calls to the SNS governance canister ([#3405](https://github.com/open-ic/open-chat/pull/3405))
+- Store `diamond_membership_expires_at` in each user canister ([#3428](https://github.com/open-ic/open-chat/pull/3428))
+- Send message reminders as private replies ([#3431](https://github.com/open-ic/open-chat/pull/3431))
+- Send OpenChat bot message when setting a message reminder ([#3436](https://github.com/open-ic/open-chat/pull/3436))
+- Hide 'reminder created' messages when cancelled or complete ([#3446](https://github.com/open-ic/open-chat/pull/3446))
 
 ### Removed
 
 - Removed temporary code needed for release ([#3375](https://github.com/open-ic/open-chat/pull/3375))
 - Removed `affected_events` which has been superseded by `updated_events` ([#3419](https://github.com/open-ic/open-chat/pull/3419))
+- Removed transfer limits ([#3457](https://github.com/open-ic/open-chat/pull/3457))
 
 ## [[2.0.645](https://github.com/open-ic/open-chat/releases/tag/v2.0.645-user)] - 2023-03-25
 

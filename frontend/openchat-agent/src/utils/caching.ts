@@ -19,7 +19,7 @@ import type {
 import type { Principal } from "@dfinity/principal";
 import { toRecord } from "./list";
 
-const CACHE_VERSION = 63;
+const CACHE_VERSION = 65;
 
 export type Database = Promise<IDBPDatabase<ChatSchema>>;
 
@@ -477,7 +477,8 @@ function removeReplyContent(
     if (repliesTo?.kind === "rehydrated_reply_context") {
         return {
             kind: "raw_reply_context",
-            chatIdIfOther: repliesTo.chatId === chatId ? undefined : repliesTo.chatId,
+            sourceContext:
+                repliesTo.sourceContext.chatId === chatId ? undefined : repliesTo.sourceContext,
             eventIndex: repliesTo.eventIndex,
         };
     }

@@ -1,15 +1,12 @@
-use candid::{CandidType, Principal};
+use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
-    pub controller: Principal,
+    pub reminder_id: u64,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success,
-    AirdropClosed,
-    UserNotEligible,
-    UserNotFound,
 }

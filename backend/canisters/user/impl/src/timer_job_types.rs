@@ -2,8 +2,10 @@ use crate::updates::send_message::send_to_recipients_canister;
 use crate::{mutate_state, openchat_bot, read_state};
 use canister_timer_jobs::Job;
 use serde::{Deserialize, Serialize};
-use types::{BlobReference, ChatId, MessageId, MessageIndex, UserId};
+use types::{BlobReference, ChatId, EventIndex, MessageContent, MessageId, MessageIndex, MessageReminderContent, UserId};
 use user_canister::c2c_send_messages;
+use user_canister::c2c_send_messages::C2CReplyContext;
+use utils::consts::OPENCHAT_BOT_USER_ID;
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum TimerJob {
@@ -34,10 +36,12 @@ pub struct DeleteFileReferencesJob {
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct MessageReminderJob {
+    pub reminder_id: u64,
     pub chat_id: ChatId,
     pub thread_root_message_index: Option<MessageIndex>,
-    pub message_index: MessageIndex,
+    pub event_index: EventIndex,
     pub notes: Option<String>,
+    pub reminder_created_message_index: MessageIndex,
 }
 
 impl Job for TimerJob {
@@ -107,28 +111,19 @@ impl Job for DeleteFileReferencesJob {
 
 impl Job for MessageReminderJob {
     fn execute(&self) {
-        let chat_id = self.chat_id;
-        let message_index = self.message_index;
+        let replies_to = C2CReplyContext::OtherEventList(self.chat_id, self.thread_root_message_index, self.event_index);
+        let content = MessageContent::MessageReminder(MessageReminderContent {
+            reminder_id: self.reminder_id,
+            notes: self.notes.clone(),
+        });
 
-        let url = if let Some(thread_root_message_index) = self.thread_root_message_index {
-            format!("https://oc.app/{chat_id}/{thread_root_message_index}/{message_index}")
-        } else {
-            format!("https://oc.app/{chat_id}/{message_index}")
-        };
-
-        let mut message = format!("You asked me to remind you about [this message]({url})");
-
-        if let Some(notes) = self.notes.clone() {
-            message.push_str(&format!(
-                "
-
-Notes:
-
-{notes}
-"
-            ));
-        }
-
-        mutate_state(|state| openchat_bot::send_text_message(message, false, state));
+        mutate_state(|state| {
+            if let Some(chat) = state.data.direct_chats.get_mut(&OPENCHAT_BOT_USER_ID.into()) {
+                let now = state.env.now();
+                chat.events
+                    .mark_message_reminder_created_message_hidden(self.reminder_created_message_index, now);
+            }
+            openchat_bot::send_message_with_reply(content, Some(replies_to), false, state)
+        });
     }
 }

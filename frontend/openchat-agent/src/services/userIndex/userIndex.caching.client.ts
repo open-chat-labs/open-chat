@@ -1,8 +1,6 @@
 import type { IUserIndexClient } from "./userIndex.client.interface";
 import type {
-    ChallengeAttempt,
     CheckUsernameResponse,
-    CreateChallengeResponse,
     CurrentUserResponse,
     PartialUserSummary,
     RegisterUserResponse,
@@ -18,8 +16,6 @@ import type {
     DiamondMembershipDuration,
     PayForDiamondMembershipResponse,
     SetUserUpgradeConcurrencyResponse,
-    SetNeuronControllerResponse,
-    EligibleForInitialAirdropResponse,
 } from "openchat-shared";
 import { groupBy } from "../../utils/list";
 import { profile } from "../common/profiling";
@@ -74,16 +70,8 @@ export class CachingUserIndexClient implements IUserIndexClient {
         return this.client.getCurrentUser();
     }
 
-    createChallenge(): Promise<CreateChallengeResponse> {
-        return this.client.createChallenge();
-    }
-
-    registerUser(
-        username: string,
-        challengeAttempt: ChallengeAttempt,
-        referredBy: string | undefined
-    ): Promise<RegisterUserResponse> {
-        return this.client.registerUser(username, challengeAttempt, referredBy);
+    registerUser(username: string, referredBy: string | undefined): Promise<RegisterUserResponse> {
+        return this.client.registerUser(username, referredBy);
     }
 
     searchUsers(searchTerm: string, maxResults?: number): Promise<UserSummary[]> {
@@ -217,13 +205,5 @@ export class CachingUserIndexClient implements IUserIndexClient {
 
     setUserUpgradeConcurrency(value: number): Promise<SetUserUpgradeConcurrencyResponse> {
         return this.client.setUserUpgradeConcurrency(value);
-    }
-
-    isEligibleForInitialAirdrop(): Promise<EligibleForInitialAirdropResponse> {
-        return this.client.isEligibleForInitialAirdrop();
-    }
-
-    setNeuronControllerForInitialAirdrop(principal: string): Promise<SetNeuronControllerResponse> {
-        return this.client.setNeuronControllerForInitialAirdrop(principal);
     }
 }

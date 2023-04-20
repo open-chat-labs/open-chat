@@ -1,5 +1,3 @@
-use crate::model::challenges::Challenges;
-use crate::model::initial_airdrop_queue::{InitialAirdropEntry, InitialAirdropQueue};
 use crate::model::local_user_index_map::LocalUserIndex;
 use crate::model::storage_index_user_sync_queue::OpenStorageUserSyncQueue;
 use crate::model::user_map::UserMap;
@@ -10,12 +8,11 @@ use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
 use local_user_index_canister::Event as LocalUserIndexEvent;
 use model::local_user_index_map::LocalUserIndexMap;
+use model::pending_payments_queue::{PendingPayment, PendingPaymentsQueue};
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
-use types::{
-    CanisterId, CanisterWasm, Cryptocurrency, Cycles, Milliseconds, SnsNeuronId, TimestampMillis, Timestamped, UserId, Version,
-};
+use types::{CanisterId, CanisterWasm, Cryptocurrency, Cycles, Milliseconds, TimestampMillis, Timestamped, UserId, Version};
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::canister_event_sync_queue::CanisterEventSyncQueue;
 use utils::env::Environment;
@@ -115,6 +112,11 @@ impl RuntimeState {
         jobs::sync_events_to_local_user_index_canisters::start_job_if_required(self);
     }
 
+    pub fn queue_payment(&mut self, pending_payment: PendingPayment) {
+        self.data.pending_payments_queue.push(pending_payment);
+        jobs::make_pending_payments::start_job_if_required(self);
+    }
+
     pub fn metrics(&self) -> Metrics {
         let now = self.env.now();
         let canister_upgrades_metrics = self.data.canisters_requiring_upgrade.metrics();
@@ -140,19 +142,14 @@ impl RuntimeState {
             max_concurrent_canister_upgrades: self.data.max_concurrent_canister_upgrades,
             platform_moderators: self.data.platform_moderators.len() as u8,
             platform_operators: self.data.platform_operators.len() as u8,
-            inflight_challenges: self.data.challenges.count(),
             user_index_events_queue_length: self.data.user_index_event_sync_queue.len(),
             local_user_indexes: self.data.local_index_map.iter().map(|(c, i)| (*c, i.clone())).collect(),
             canister_ids: CanisterIds {
                 group_index: self.data.group_index_canister_id,
                 notifications_index: self.data.notifications_index_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
+                internet_identity: self.data.internet_identity_canister_id,
             },
-            users_eligible_for_initial_airdrop: self.data.users.iter().filter(|u| u.is_eligible_for_initial_airdrop()).count()
-                as u32,
-            users_confirmed_for_initial_airdrop: self.data.neuron_controllers_for_initial_airdrop.len() as u32,
-            initial_airdrop_queue_length: self.data.initial_airdrop_queue.len() as u32,
-            initial_airdrop_failures: self.data.initial_airdrop_queue.failed().iter().take(10).cloned().collect(),
         }
     }
 }
@@ -173,37 +170,16 @@ struct Data {
     pub storage_index_user_sync_queue: OpenStorageUserSyncQueue,
     pub user_index_event_sync_queue: CanisterEventSyncQueue<LocalUserIndexEvent>,
     pub user_principal_migration_queue: UserPrincipalMigrationQueue,
+    pub pending_payments_queue: PendingPaymentsQueue,
     pub platform_moderators: HashSet<UserId>,
     pub platform_operators: HashSet<UserId>,
     pub test_mode: bool,
-    pub challenges: Challenges,
     pub max_concurrent_canister_upgrades: usize,
     pub diamond_membership_payment_metrics: DiamondMembershipPaymentMetrics,
     pub local_index_map: LocalUserIndexMap,
     pub timer_jobs: TimerJobs<TimerJob>,
     pub neuron_controllers_for_initial_airdrop: HashMap<UserId, Principal>,
-    #[serde(default = "true_")]
-    pub initial_airdrop_open: bool,
-    #[serde(default)]
-    pub initial_airdrop_neuron_id: Option<SnsNeuronId>,
-    #[serde(default)]
-    pub initial_airdrop_queue: InitialAirdropQueue,
-    #[serde(default = "oc_governance_canister")]
-    pub openchat_governance_canister_id: CanisterId,
-    #[serde(default = "oc_ledger_canister")]
-    pub openchat_ledger_canister_id: CanisterId,
-}
-
-fn true_() -> bool {
-    true
-}
-
-fn oc_governance_canister() -> CanisterId {
-    Principal::from_text("2jvtu-yqaaa-aaaaq-aaama-cai").unwrap()
-}
-
-fn oc_ledger_canister() -> CanisterId {
-    Principal::from_text("2ouva-viaaa-aaaaq-aaamq-cai").unwrap()
+    pub internet_identity_canister_id: CanisterId,
 }
 
 impl Data {
@@ -217,6 +193,7 @@ impl Data {
         cycles_dispenser_canister_id: CanisterId,
         storage_index_canister_id: CanisterId,
         proposals_bot_user_id: UserId,
+        internet_identity_canister_id: CanisterId,
         test_mode: bool,
     ) -> Self {
         let mut data = Data {
@@ -234,20 +211,16 @@ impl Data {
             storage_index_user_sync_queue: OpenStorageUserSyncQueue::default(),
             user_index_event_sync_queue: CanisterEventSyncQueue::default(),
             user_principal_migration_queue: UserPrincipalMigrationQueue::default(),
+            pending_payments_queue: PendingPaymentsQueue::default(),
             platform_moderators: HashSet::new(),
             platform_operators: HashSet::new(),
             test_mode,
-            challenges: Challenges::new(test_mode),
             max_concurrent_canister_upgrades: 2,
             diamond_membership_payment_metrics: DiamondMembershipPaymentMetrics::default(),
             local_index_map: LocalUserIndexMap::default(),
             timer_jobs: TimerJobs::default(),
             neuron_controllers_for_initial_airdrop: HashMap::new(),
-            initial_airdrop_open: false,
-            initial_airdrop_neuron_id: None,
-            initial_airdrop_queue: InitialAirdropQueue::default(),
-            openchat_governance_canister_id: oc_governance_canister(),
-            openchat_ledger_canister_id: oc_ledger_canister(),
+            internet_identity_canister_id,
         };
 
         // Register the ProposalsBot
@@ -283,20 +256,16 @@ impl Default for Data {
             storage_index_user_sync_queue: OpenStorageUserSyncQueue::default(),
             user_index_event_sync_queue: CanisterEventSyncQueue::default(),
             user_principal_migration_queue: UserPrincipalMigrationQueue::default(),
+            pending_payments_queue: PendingPaymentsQueue::default(),
             platform_moderators: HashSet::new(),
             platform_operators: HashSet::new(),
             test_mode: true,
-            challenges: Challenges::new(true),
             max_concurrent_canister_upgrades: 2,
             diamond_membership_payment_metrics: DiamondMembershipPaymentMetrics::default(),
             local_index_map: LocalUserIndexMap::default(),
             timer_jobs: TimerJobs::default(),
             neuron_controllers_for_initial_airdrop: HashMap::new(),
-            initial_airdrop_open: false,
-            initial_airdrop_neuron_id: None,
-            initial_airdrop_queue: InitialAirdropQueue::default(),
-            openchat_governance_canister_id: oc_governance_canister(),
-            openchat_ledger_canister_id: oc_ledger_canister(),
+            internet_identity_canister_id: Principal::anonymous(),
         }
     }
 }
@@ -321,14 +290,9 @@ pub struct Metrics {
     pub max_concurrent_canister_upgrades: usize,
     pub platform_moderators: u8,
     pub platform_operators: u8,
-    pub inflight_challenges: u32,
     pub user_index_events_queue_length: usize,
     pub local_user_indexes: Vec<(CanisterId, LocalUserIndex)>,
     pub canister_ids: CanisterIds,
-    pub users_eligible_for_initial_airdrop: u32,
-    pub users_confirmed_for_initial_airdrop: u32,
-    pub initial_airdrop_queue_length: u32,
-    pub initial_airdrop_failures: Vec<InitialAirdropEntry>,
 }
 
 #[derive(Serialize, Debug, Default)]
@@ -356,4 +320,5 @@ pub struct CanisterIds {
     pub group_index: CanisterId,
     pub notifications_index: CanisterId,
     pub cycles_dispenser: CanisterId,
+    pub internet_identity: CanisterId,
 }

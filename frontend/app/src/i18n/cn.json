@@ -225,9 +225,6 @@
         "userLimitReached": "已达到最大用户数",
         "createUser": "创建用户",
         "bioTooLong": "您的简介太长了",
-        "challengeAttemptFailed": "您输入的值不正确。请尝试新的挑战。",
-        "challengeThrottled": "已经产生了太多的挑战。请稍后再试。",
-        "attemptChallenge": "请输入您看到的字符",
         "closedTitle": "注册暂停",
         "closed": "由于需求量很大，新用户注册暂时关闭。我们很快将扩展到多个子网，然后将能够无限增长！"
     },
@@ -417,8 +414,7 @@
         "minDissolveDelayN": "最小溶解延迟 {n} 天",
         "minStakeN": "最小质押 {n} 个代币",
         "optional": "选修的",
-        "openAccessInfo": "加入这个群组没有特殊的访问要求",
-        "gateCheckFailed": "抱歉 - 您不符合该组的入学要求"
+        "openAccessInfo": "加入这个群组没有特殊的访问要求"
     },
     "updateNow": "现在重新加载",
     "updateRequired": "新版本的 OpenChat 可用 - 在 {countdown} 秒内重新加载",
@@ -476,7 +472,15 @@
         "shortBalanceLabel": "余额",
         "manageHeader": "管理 {symbol} 帐户",
         "token": "代币",
-        "comingSoon": "（快来了）"
+        "comingSoon": "（快来了）",
+        "send": "发送",
+        "deposit": "订金",
+        "depositToken": "存款 {symbol}",
+        "sendTarget": "输入要发送到的地址",
+        "sendSucceeded": "您的 {symbol} 已成功发送！",
+        "sendFailed": "无法发送 {symbol}",
+        "scan": "扫描二维码",
+        "withdrawToken": "提款 {symbol}"
     },
     "searchChat": "搜索",
     "search": "搜索...",
@@ -538,7 +542,6 @@
     "unpinMessage": "取消固定",
     "forward": "转发",
     "referralHeader": "邀请朋友/家人",
-    "userReferralMessage": "与朋友和家人分享此 OpenChat 链接。对于每个使用您的链接注册并继续成为经过验证的用户的人，您将获得 CHAT 代币奖励（将在未来几周内确认）。您现在可以继续分享链接，一旦 CHAT 代币可用，我们将追溯奖励它们。",
     "userInfoHeader": "公开",
     "thread": {
         "menu": "在线程中回复",
@@ -751,7 +754,8 @@
         "cannotExtend": "您只能在到期后三个月内延长您的会员资格",
         "groupMsg": "要创建最多 10 个公共组并控制组访问权限，您必须是 Diamond 用户",
         "gatingMsg": "要创建具有门禁访问权限的群组，您必须是 Diamond 用户",
-        "gatedGroups": "封闭组"
+        "gatedGroups": "封闭组",
+        "reminders": "提醒事项"
     },
     "currentUsage": "当前存储使用情况",
     "promoteTo": "晋升为{role}",
@@ -760,16 +764,26 @@
     "demoteFailed": "无法降级到 {role}",
     "ownerCantLeave": "您必须添加其他所有者才能离开群组",
     "participant": "成员",
-    "airdrop": {
-        "register": "注册空投",
-        "placeholder": "NNS校长...",
-        "submit": "提交",
-        "success": "谢谢 - 您已成功注册空投",
-        "failure": "抱歉 - 我们无法为您注册空投",
-        "showHow": "告诉我怎么做",
-        "howTo": "如何找到您的 NNS 负责人",
-        "info": "如果您输入有误，您可以通过主菜单重新提交正确的委托人。",
-        "back": "后退",
-        "pleaseSubmit": "要接收您的空投，请在 {cutoff} 之前在下方提交您的 [NNS dApp](https://nns.ic0.app) 委托人。"
-    }
+    "unauthorizedToCreatePublicGroup": "您无权创建公共组",
+    "reminders": {
+        "optional": "选修的",
+        "menu": "提醒我",
+        "title": "设置提醒",
+        "note": "添加注释",
+        "notePlaceholder": "提醒我...",
+        "twentyMinutes": "20分钟后",
+        "oneHour": "1小时内",
+        "threeHours": "3小时内",
+        "tomorrow": "明天",
+        "nextWeek": "下周",
+        "create": "创造",
+        "success": "您的提醒已设置成功",
+        "remindAt": "我会在 {datetime} 提醒您这条消息",
+        "youAsked": "你要我提醒你这条消息。",
+        "failure": "抱歉，我们无法设置您的提醒",
+        "cancel": "取消提醒",
+        "cancelSuccess": "您的提醒已成功取消",
+        "cancelFailure": "抱歉，我们无法取消您的提醒"
+    },
+    "userReferralMessage": "与朋友和家人分享此 OpenChat 链接。只要您自己是钻石会员，对于每个通过您的链接注册并继续成为钻石会员的人，您将收到他们第一年支付的会员费的一半。"
 }

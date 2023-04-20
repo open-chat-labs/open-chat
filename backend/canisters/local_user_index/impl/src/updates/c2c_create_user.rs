@@ -105,8 +105,8 @@ fn commit(
 
     if let Some(referred_by) = referred_by {
         if runtime_state.data.local_users.get(&referred_by).is_some() {
-            runtime_state.data.user_event_sync_queue.push(
-                referred_by.into(),
+            runtime_state.push_event_to_user(
+                referred_by,
                 UserEvent::ReferredUserRegistered(Box::new(ReferredUserRegistered { user_id, username })),
             );
         }

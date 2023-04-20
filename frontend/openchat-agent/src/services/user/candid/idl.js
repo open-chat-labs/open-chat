@@ -46,6 +46,8 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Null,
     'UserSuspended' : IDL.Null,
   });
+  const CancelMessageReminderArgs = IDL.Record({ 'reminder_id' : IDL.Nat64 });
+  const CancelMessageReminderResponse = IDL.Variant({ 'Success' : IDL.Null });
   const ContactsArgs = IDL.Record({});
   const Contact = IDL.Record({
     'nickname' : IDL.Opt(IDL.Text),
@@ -122,6 +124,7 @@ export const idlFactory = ({ IDL }) => {
     'NameTaken' : IDL.Null,
     'MaxGroupsCreated' : IDL.Nat32,
     'InternalError' : IDL.Null,
+    'UnauthorizedToCreatePublicGroup' : IDL.Null,
   });
   const DeleteGroupArgs = IDL.Record({ 'chat_id' : ChatId });
   const DeleteGroupResponse = IDL.Variant({
@@ -213,6 +216,10 @@ export const idlFactory = ({ IDL }) => {
     'prizes_pending' : IDL.Nat32,
     'caption' : IDL.Opt(IDL.Text),
     'winners' : IDL.Vec(UserId),
+  });
+  const CustomMessageContent = IDL.Record({
+    'data' : IDL.Vec(IDL.Nat8),
+    'kind' : IDL.Text,
   });
   const ProposalId = IDL.Nat64;
   const ProposalDecisionStatus = IDL.Variant({
@@ -397,6 +404,16 @@ export const idlFactory = ({ IDL }) => {
     'timestamp' : TimestampMillis,
     'deleted_by' : UserId,
   });
+  const MessageReminderCreated = IDL.Record({
+    'hidden' : IDL.Bool,
+    'notes' : IDL.Opt(IDL.Text),
+    'remind_at' : TimestampMillis,
+    'reminder_id' : IDL.Nat64,
+  });
+  const MessageReminder = IDL.Record({
+    'notes' : IDL.Opt(IDL.Text),
+    'reminder_id' : IDL.Nat64,
+  });
   const MessageContent = IDL.Variant({
     'Giphy' : GiphyContent,
     'File' : FileContent,
@@ -404,12 +421,15 @@ export const idlFactory = ({ IDL }) => {
     'Text' : TextContent,
     'Image' : ImageContent,
     'Prize' : PrizeContent,
+    'Custom' : CustomMessageContent,
     'GovernanceProposal' : ProposalContent,
     'PrizeWinner' : PrizeWinnerContent,
     'Audio' : AudioContent,
     'Crypto' : CryptoContent,
     'Video' : VideoContent,
     'Deleted' : DeletedContent,
+    'MessageReminderCreated' : MessageReminderCreated,
+    'MessageReminder' : MessageReminder,
   });
   const DeletedMessageResponse = IDL.Variant({
     'MessageNotFound' : IDL.Null,
@@ -488,6 +508,7 @@ export const idlFactory = ({ IDL }) => {
     'latest_event_index' : EventIndex,
   });
   const ReplyContext = IDL.Record({
+    'event_list_if_other' : IDL.Opt(IDL.Tuple(ChatId, IDL.Opt(MessageIndex))),
     'chat_id_if_other' : IDL.Opt(ChatId),
     'event_index' : EventIndex,
   });
@@ -589,6 +610,7 @@ export const idlFactory = ({ IDL }) => {
     'added_by' : UserId,
   });
   const ChatEvent = IDL.Variant({
+    'Empty' : IDL.Null,
     'MessageReactionRemoved' : UpdatedMessage,
     'ParticipantJoined' : ParticipantJoined,
     'ParticipantAssumesSuperAdmin' : ParticipantAssumesSuperAdmin,
@@ -696,6 +718,7 @@ export const idlFactory = ({ IDL }) => {
     'file_messages' : IDL.Nat64,
     'poll_votes' : IDL.Nat64,
     'text_messages' : IDL.Nat64,
+    'message_reminders' : IDL.Nat64,
     'image_messages' : IDL.Nat64,
     'replies' : IDL.Nat64,
     'video_messages' : IDL.Nat64,
@@ -705,6 +728,7 @@ export const idlFactory = ({ IDL }) => {
     'reported_messages' : IDL.Nat64,
     'ckbtc_messages' : IDL.Nat64,
     'reactions' : IDL.Nat64,
+    'custom_type_messages' : IDL.Nat64,
     'prize_messages' : IDL.Nat64,
   });
   const MessageIndexRange = IDL.Record({
@@ -941,7 +965,6 @@ export const idlFactory = ({ IDL }) => {
   });
   const SendMessageResponse = IDL.Variant({
     'TextTooLong' : IDL.Nat32,
-    'TransferLimitExceeded' : IDL.Nat,
     'TransferSuccessV2' : IDL.Record({
       'timestamp' : TimestampMillis,
       'chat_id' : ChatId,
@@ -980,11 +1003,14 @@ export const idlFactory = ({ IDL }) => {
     'Text' : TextContent,
     'Image' : ImageContent,
     'Prize' : PrizeContentInitial,
+    'Custom' : CustomMessageContent,
     'GovernanceProposal' : ProposalContent,
     'Audio' : AudioContent,
     'Crypto' : CryptoContent,
     'Video' : VideoContent,
     'Deleted' : DeletedContent,
+    'MessageReminderCreated' : MessageReminderCreated,
+    'MessageReminder' : MessageReminder,
   });
   const User = IDL.Record({ 'username' : IDL.Text, 'user_id' : UserId });
   const GroupReplyContext = IDL.Record({ 'event_index' : EventIndex });
@@ -1000,7 +1026,6 @@ export const idlFactory = ({ IDL }) => {
   });
   const SendMessageWithTransferToGroupResponse = IDL.Variant({
     'TextTooLong' : IDL.Nat32,
-    'TransferLimitExceeded' : IDL.Nat,
     'CallerNotInGroup' : IDL.Opt(CompletedCryptoTransaction),
     'ChatFrozen' : IDL.Null,
     'TransferCannotBeZero' : IDL.Null,
@@ -1046,6 +1071,19 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Null,
     'UserSuspended' : IDL.Null,
     'NicknameTooShort' : FieldTooShortResult,
+  });
+  const SetMessageReminderArgs = IDL.Record({
+    'notes' : IDL.Opt(IDL.Text),
+    'remind_at' : TimestampMillis,
+    'chat_id' : ChatId,
+    'event_index' : EventIndex,
+    'thread_root_message_index' : IDL.Opt(MessageIndex),
+  });
+  const SetMessageReminderResponse = IDL.Variant({
+    'NotesTooLong' : FieldTooLongResult,
+    'Success' : IDL.Nat64,
+    'ReminderDateInThePast' : IDL.Null,
+    'UserSuspended' : IDL.Null,
   });
   const TransferCryptoWithinGroupArgs = IDL.Record({
     'content' : CryptoContent,
@@ -1151,6 +1189,11 @@ export const idlFactory = ({ IDL }) => {
     'archive_chat' : IDL.Func([ArchiveChatArgs], [ArchiveChatResponse], []),
     'bio' : IDL.Func([BioArgs], [BioResponse], ['query']),
     'block_user' : IDL.Func([BlockUserArgs], [BlockUserResponse], []),
+    'cancel_message_reminder' : IDL.Func(
+        [CancelMessageReminderArgs],
+        [CancelMessageReminderResponse],
+        [],
+      ),
     'contacts' : IDL.Func([ContactsArgs], [ContactsResponse], ['query']),
     'create_group' : IDL.Func([CreateGroupArgs], [CreateGroupResponse], []),
     'delete_group' : IDL.Func([DeleteGroupArgs], [DeleteGroupResponse], []),
@@ -1229,6 +1272,11 @@ export const idlFactory = ({ IDL }) => {
     'set_avatar' : IDL.Func([SetAvatarArgs], [SetAvatarResponse], []),
     'set_bio' : IDL.Func([SetBioArgs], [SetBioResponse], []),
     'set_contact' : IDL.Func([SetContactArgs], [SetContactResponse], []),
+    'set_message_reminder' : IDL.Func(
+        [SetMessageReminderArgs],
+        [SetMessageReminderResponse],
+        [],
+      ),
     'transfer_crypto_within_group_v2' : IDL.Func(
         [TransferCryptoWithinGroupArgs],
         [SendMessageWithTransferToGroupResponse],

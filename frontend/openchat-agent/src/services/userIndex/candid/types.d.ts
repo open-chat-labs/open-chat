@@ -52,10 +52,8 @@ export interface CanisterWasm {
   'version' : Version,
   'module' : Uint8Array | number[],
 }
-export interface Challenge { 'key' : ChallengeKey, 'png_base64' : string }
-export interface ChallengeAttempt { 'key' : ChallengeKey, 'chars' : string }
-export type ChallengeKey = number;
-export type ChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
+export type ChatEvent = { 'Empty' : null } |
+  { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'ParticipantJoined' : ParticipantJoined } |
   { 'ParticipantAssumesSuperAdmin' : ParticipantAssumesSuperAdmin } |
   { 'GroupDescriptionChanged' : GroupDescriptionChanged } |
@@ -114,6 +112,7 @@ export interface ChatMetrics {
   'file_messages' : bigint,
   'poll_votes' : bigint,
   'text_messages' : bigint,
+  'message_reminders' : bigint,
   'image_messages' : bigint,
   'replies' : bigint,
   'video_messages' : bigint,
@@ -123,6 +122,7 @@ export interface ChatMetrics {
   'reported_messages' : bigint,
   'ckbtc_messages' : bigint,
   'reactions' : bigint,
+  'custom_type_messages' : bigint,
   'prize_messages' : bigint,
 }
 export interface ChatUnfrozen { 'unfrozen_by' : UserId }
@@ -136,8 +136,6 @@ export type CompletedCryptoTransaction = {
     'NNS' : NnsCompletedCryptoTransaction
   } |
   { 'SNS' : SnsCompletedCryptoTransaction };
-export type CreateChallengeResponse = { 'Throttled' : null } |
-  { 'Success' : Challenge };
 export interface CryptoContent {
   'recipient' : UserId,
   'caption' : [] | [string],
@@ -166,6 +164,10 @@ export type CurrentUserResponse = {
     }
   } |
   { 'UserNotFound' : null };
+export interface CustomMessageContent {
+  'data' : Uint8Array | number[],
+  'kind' : string,
+}
 export type Cycles = bigint;
 export interface CyclesRegistrationFee {
   'recipient' : Principal,
@@ -325,6 +327,7 @@ export interface GroupCanisterGroupChatSummaryUpdates {
   'metrics' : [] | [ChatMetrics],
   'subtype' : GroupSubtypeUpdate,
   'date_last_pinned' : [] | [TimestampMillis],
+  'gate' : GroupGateUpdate,
   'name' : [] | [string],
   'role' : [] | [Role],
   'wasm_version' : [] | [Version],
@@ -496,10 +499,6 @@ export type InvalidPollReason = { 'DuplicateOptions' : null } |
   { 'OptionTooLong' : number } |
   { 'EndDateInThePast' : null } |
   { 'PollsNotValidForDirectChats' : null };
-export type IsEligibleForInitialAirdropResponse = { 'No' : null } |
-  { 'Yes' : [] | [Principal] } |
-  { 'AirdropClosed' : null } |
-  { 'UserNotFound' : null };
 export type MarkSuspectedBotArgs = {};
 export type MarkSuspectedBotResponse = { 'Success' : null };
 export type Memo = bigint;
@@ -528,23 +527,29 @@ export type MessageContent = { 'Giphy' : GiphyContent } |
   { 'Text' : TextContent } |
   { 'Image' : ImageContent } |
   { 'Prize' : PrizeContent } |
+  { 'Custom' : CustomMessageContent } |
   { 'GovernanceProposal' : ProposalContent } |
   { 'PrizeWinner' : PrizeWinnerContent } |
   { 'Audio' : AudioContent } |
   { 'Crypto' : CryptoContent } |
   { 'Video' : VideoContent } |
-  { 'Deleted' : DeletedContent };
+  { 'Deleted' : DeletedContent } |
+  { 'MessageReminderCreated' : MessageReminderCreated } |
+  { 'MessageReminder' : MessageReminder };
 export type MessageContentInitial = { 'Giphy' : GiphyContent } |
   { 'File' : FileContent } |
   { 'Poll' : PollContent } |
   { 'Text' : TextContent } |
   { 'Image' : ImageContent } |
   { 'Prize' : PrizeContentInitial } |
+  { 'Custom' : CustomMessageContent } |
   { 'GovernanceProposal' : ProposalContent } |
   { 'Audio' : AudioContent } |
   { 'Crypto' : CryptoContent } |
   { 'Video' : VideoContent } |
-  { 'Deleted' : DeletedContent };
+  { 'Deleted' : DeletedContent } |
+  { 'MessageReminderCreated' : MessageReminderCreated } |
+  { 'MessageReminder' : MessageReminder };
 export interface MessageEventWrapper {
   'event' : Message,
   'timestamp' : TimestampMillis,
@@ -568,6 +573,16 @@ export interface MessageMatch {
 export interface MessagePinned {
   'pinned_by' : UserId,
   'message_index' : MessageIndex,
+}
+export interface MessageReminder {
+  'notes' : [] | [string],
+  'reminder_id' : bigint,
+}
+export interface MessageReminderCreated {
+  'hidden' : boolean,
+  'notes' : [] | [string],
+  'remind_at' : TimestampMillis,
+  'reminder_id' : bigint,
 }
 export interface MessageUnpinned {
   'due_to_message_deleted' : boolean,
@@ -790,10 +805,22 @@ export interface PushEventResult {
   'index' : EventIndex,
   'expires_at' : [] | [TimestampMillis],
 }
+export type ReferralMetricsResponse = {
+    'Success' : {
+      'users_who_referred' : number,
+      'users_who_referred_unpaid_diamond' : number,
+      'referrals_of_unpaid_diamond' : number,
+      'icp_raised_by_referrals_to_paid_diamond' : number,
+      'referrals_of_paid_diamond' : number,
+      'users_who_referred_paid_diamond' : number,
+      'referrals_other' : number,
+      'users_who_referred_90_percent_unpaid_diamond' : number,
+    }
+  };
 export interface RegisterUserArgs {
   'username' : string,
+  'public_key' : Uint8Array | number[],
   'referred_by' : [] | [UserId],
-  'challenge_attempt' : ChallengeAttempt,
 }
 export type RegisterUserResponse = { 'UsernameTaken' : null } |
   { 'UsernameTooShort' : number } |
@@ -802,7 +829,7 @@ export type RegisterUserResponse = { 'UsernameTaken' : null } |
   { 'UserLimitReached' : null } |
   { 'UsernameTooLong' : number } |
   { 'Success' : UserId } |
-  { 'ChallengeFailed' : null } |
+  { 'PublicKeyInvalid' : string } |
   { 'InternalError' : string } |
   { 'CyclesBalanceTooLow' : null };
 export type RegistrationFee = { 'ICP' : ICPRegistrationFee } |
@@ -814,6 +841,7 @@ export type RemovePlatformModeratorResponse = { 'Success' : null } |
 export interface RemovePlatformOperatorArgs { 'user_id' : UserId }
 export type RemovePlatformOperatorResponse = { 'Success' : null };
 export interface ReplyContext {
+  'event_list_if_other' : [] | [[ChatId, [] | [MessageIndex]]],
   'chat_id_if_other' : [] | [ChatId],
   'event_index' : EventIndex,
 }
@@ -830,15 +858,6 @@ export interface SearchArgs { 'max_results' : number, 'search_term' : string }
 export type SearchResponse = {
     'Success' : { 'timestamp' : TimestampMillis, 'users' : Array<UserSummary> }
   };
-export interface SetNeuronControllerForInitialAirdropArgs {
-  'controller' : Principal,
-}
-export type SetNeuronControllerForInitialAirdropResponse = {
-    'AirdropClosed' : null
-  } |
-  { 'UserNotEligible' : null } |
-  { 'Success' : null } |
-  { 'UserNotFound' : null };
 export interface SetUserUpgradeConcurrencyArgs { 'value' : number }
 export type SetUserUpgradeConcurrencyResponse = { 'Success' : null };
 export interface SetUsernameArgs { 'username' : string }
@@ -1037,12 +1056,7 @@ export interface _SERVICE {
     AddPlatformOperatorResponse
   >,
   'check_username' : ActorMethod<[CheckUsernameArgs], CheckUsernameResponse>,
-  'create_challenge' : ActorMethod<[EmptyArgs], CreateChallengeResponse>,
   'current_user' : ActorMethod<[EmptyArgs], CurrentUserResponse>,
-  'is_eligible_for_initial_airdrop' : ActorMethod<
-    [EmptyArgs],
-    IsEligibleForInitialAirdropResponse
-  >,
   'mark_suspected_bot' : ActorMethod<
     [MarkSuspectedBotArgs],
     MarkSuspectedBotResponse
@@ -1056,6 +1070,7 @@ export interface _SERVICE {
     [PlatformOperatorsArgs],
     PlatformOperatorsResponse
   >,
+  'referral_metrics' : ActorMethod<[EmptyArgs], ReferralMetricsResponse>,
   'register_user' : ActorMethod<[RegisterUserArgs], RegisterUserResponse>,
   'remove_platform_moderator' : ActorMethod<
     [RemovePlatformModeratorArgs],
@@ -1066,10 +1081,6 @@ export interface _SERVICE {
     RemovePlatformOperatorResponse
   >,
   'search' : ActorMethod<[SearchArgs], SearchResponse>,
-  'set_neuron_controller_for_initial_airdrop' : ActorMethod<
-    [SetNeuronControllerForInitialAirdropArgs],
-    SetNeuronControllerForInitialAirdropResponse
-  >,
   'set_user_upgrade_concurrency' : ActorMethod<
     [SetUserUpgradeConcurrencyArgs],
     SetUserUpgradeConcurrencyResponse

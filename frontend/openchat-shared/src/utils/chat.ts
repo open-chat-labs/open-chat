@@ -96,6 +96,7 @@ export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Set<string
             case "aggregate_common_events":
             case "chat_frozen":
             case "chat_unfrozen":
+            case "empty":
                 break;
             default:
                 throw new UnsupportedValueError("Unexpected ChatEvent type received", e.event);
@@ -137,6 +138,12 @@ export function getContentAsText(formatter: MessageFormatter, content: MessageCo
         text = captionedContent(formatter("prizeMessage"), content.caption);
     } else if (content.kind === "prize_winner_content") {
         text = "Prize winner message";
+    } else if (content.kind === "message_reminder_content") {
+        text = content.notes ?? "Message reminder";
+    } else if (content.kind === "message_reminder_created_content") {
+        text = content.notes ?? "Message reminder";
+    } else if (content.kind === "custom_content") {
+        text = "custom_content";
     } else {
         throw new UnsupportedValueError("Unrecognised content type", content);
     }

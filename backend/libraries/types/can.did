@@ -86,6 +86,8 @@ type ChatMetrics =
         reactions: nat64;
         proposals: nat64;
         reported_messages: nat64;
+        message_reminders: nat64;
+        custom_type_messages: nat64;
         last_active: TimestampMillis;
     };
 
@@ -194,6 +196,7 @@ type GroupChatCreated =
 
 type ChatEvent =
     variant {
+        Empty;
         Message: Message;
         GroupChatCreated: GroupChatCreated;
         DirectChatCreated: DirectChatCreated;
@@ -520,6 +523,7 @@ type PublicGroupSummary =
 type ReplyContext =
     record {
         chat_id_if_other: opt ChatId;
+        event_list_if_other: opt record { ChatId; opt MessageIndex };
         event_index: EventIndex;
     };
 
@@ -578,6 +582,9 @@ type MessageContentInitial =
         Giphy: GiphyContent;
         GovernanceProposal: ProposalContent;
         Prize: PrizeContentInitial;
+        MessageReminderCreated: MessageReminderCreated;
+        MessageReminder: MessageReminder;
+        Custom: CustomMessageContent;
     };
 
 type MessageContent =
@@ -594,6 +601,9 @@ type MessageContent =
         GovernanceProposal: ProposalContent;
         Prize: PrizeContent;
         PrizeWinner: PrizeWinnerContent;
+        MessageReminderCreated: MessageReminderCreated;
+        MessageReminder: MessageReminder;
+        Custom: CustomMessageContent;
     };
 
 type UpdatedMessage =
@@ -1253,4 +1263,24 @@ type GateCheckFailedReason =
         NoSnsNeuronsFound;
         NoSnsNeuronsWithRequiredStakeFound;
         NoSnsNeuronsWithRequiredDissolveDelayFound;
+    };
+
+type MessageReminderCreated =
+    record {
+        reminder_id: nat64;
+        remind_at: TimestampMillis;
+        notes: opt text;
+        hidden: bool;
+    };
+
+type MessageReminder =
+    record {
+        reminder_id: nat64;
+        notes: opt text;
+    };
+
+type CustomMessageContent =
+    record {
+        kind: text;
+        data: blob;
     };

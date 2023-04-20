@@ -34,6 +34,7 @@ import type {
     UpdatesResponse,
     DeletedDirectMessageResponse,
     EventWrapper,
+    SetMessageReminderResponse,
 } from "openchat-shared";
 import type { IUserClient } from "./user.client.interface";
 import {
@@ -237,15 +238,14 @@ export class CachingUserClient extends EventTarget implements IUserClient {
 
     @profile("userCachingClient")
     sendMessage(
-        recipientId: string,
+        chatId: string,
         sender: CreatedUser,
         event: EventWrapper<Message>,
-        replyingToChatId?: string,
         threadRootMessageIndex?: number
     ): Promise<[SendMessageResponse, Message]> {
         removeFailedMessage(this.db, this.userId, event.event.messageId, threadRootMessageIndex);
         return this.client
-            .sendMessage(recipientId, sender, event, replyingToChatId, threadRootMessageIndex)
+            .sendMessage(chatId, sender, event, threadRootMessageIndex)
             .then(
                 setCachedMessageFromSendResponse(
                     this.db,
@@ -384,5 +384,25 @@ export class CachingUserClient extends EventTarget implements IUserClient {
 
     getDeletedMessage(userId: string, messageId: bigint): Promise<DeletedDirectMessageResponse> {
         return this.client.getDeletedMessage(userId, messageId);
+    }
+
+    setMessageReminder(
+        chatId: string,
+        eventIndex: number,
+        remindAt: number,
+        notes?: string,
+        threadRootMessageIndex?: number
+    ): Promise<SetMessageReminderResponse> {
+        return this.client.setMessageReminder(
+            chatId,
+            eventIndex,
+            remindAt,
+            notes,
+            threadRootMessageIndex
+        );
+    }
+
+    cancelMessageReminder(reminderId: bigint): Promise<boolean> {
+        return this.client.cancelMessageReminder(reminderId);
     }
 }

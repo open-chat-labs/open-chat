@@ -32,6 +32,7 @@ import type {
     UpdatesResponse,
     DeletedDirectMessageResponse,
     EventWrapper,
+    SetMessageReminderResponse,
 } from "openchat-shared";
 
 export interface IUserClient {
@@ -66,10 +67,9 @@ export interface IUserClient {
         threadRootMessageIndex?: number
     ): Promise<EditMessageResponse>;
     sendMessage(
-        recipientId: string,
+        chatId: string,
         sender: CreatedUser,
         event: EventWrapper<Message>,
-        replyingToChatId?: string,
         threadRootMessageIndex?: number
     ): Promise<[SendMessageResponse, Message]>;
     sendGroupICPTransfer(
@@ -130,4 +130,12 @@ export interface IUserClient {
     initUserPrincipalMigration(newPrincipal: string): Promise<void>;
     migrateUserPrincipal(): Promise<MigrateUserPrincipalResponse>;
     getDeletedMessage(userId: string, messageId: bigint): Promise<DeletedDirectMessageResponse>;
+    setMessageReminder(
+        chatId: string,
+        eventIndex: number,
+        remindAt: number,
+        notes?: string,
+        threadRootMessageIndex?: number
+    ): Promise<SetMessageReminderResponse>;
+    cancelMessageReminder(reminderId: bigint): Promise<boolean>;
 }

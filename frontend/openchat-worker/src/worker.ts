@@ -725,7 +725,11 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
 
             case "getProposalVoteDetails":
                 agent
-                    .getProposalVoteDetails(payload.governanceCanisterId, payload.proposalId, payload.isNns)
+                    .getProposalVoteDetails(
+                        payload.governanceCanisterId,
+                        payload.proposalId,
+                        payload.isNns
+                    )
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,
@@ -803,18 +807,7 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
 
             case "registerUser":
                 agent
-                    .registerUser(payload.username, payload.challengeAttempt, payload.referredBy)
-                    .then((response) =>
-                        sendResponse(correlationId, {
-                            response,
-                        })
-                    )
-                    .catch(sendError(correlationId));
-                break;
-
-            case "createChallenge":
-                agent
-                    .createChallenge()
+                    .registerUser(payload.username, payload.referredBy)
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,
@@ -1319,9 +1312,15 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
                     .catch(sendError(correlationId));
                 break;
 
-            case "isEligibleForInitialAirdrop":
+            case "setMessageReminder":
                 agent
-                    .isEligibleForInitialAirdrop()
+                    .setMessageReminder(
+                        payload.chatId,
+                        payload.eventIndex,
+                        payload.remindAt,
+                        payload.notes,
+                        payload.threadRootMessageIndex
+                    )
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,
@@ -1330,9 +1329,9 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
                     .catch(sendError(correlationId));
                 break;
 
-            case "setNeuronControllerForInitialAirdrop":
+            case "cancelMessageReminder":
                 agent
-                    .setNeuronControllerForInitialAirdrop(payload)
+                    .cancelMessageReminder(payload.reminderId)
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,

@@ -247,9 +247,7 @@ import {
     type RemoteUserSentMessage,
     type CheckUsernameResponse,
     type UserSummary,
-    type ChallengeAttempt,
     type RegisterUserResponse,
-    type CreateChallengeResponse,
     type CurrentUserResponse,
     type AddMembersResponse,
     type RemoveMemberResponse,
@@ -301,9 +299,9 @@ import {
     UpdateMarketMakerConfigResponse,
     UpdatedEvent,
     compareRoles,
-    EligibleForInitialAirdropResponse,
     GroupGate,
     ProposalVoteDetails,
+    MessageReminderCreatedContent,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -582,10 +580,6 @@ export class OpenChat extends EventTarget {
             new Poller(() => this.updateUsers(), USER_UPDATE_INTERVAL, USER_UPDATE_INTERVAL);
             initNotificationStores();
             this.api.getUserStorageLimits().then(storageStore.set);
-            this.api.isEligibleForInitialAirdrop().then((eligible) => {
-                console.debug("Eligible: ", eligible);
-                this.eligibleForInitialAirdrop.set(eligible);
-            });
             this.identityState.set("logged_in");
             this.initWebRtc();
 
@@ -2923,20 +2917,13 @@ export class OpenChat extends EventTarget {
         return captured;
     }
 
-    registerUser(
-        username: string,
-        challengeAttempt: ChallengeAttempt
-    ): Promise<RegisterUserResponse> {
-        return this.api.registerUser(username, challengeAttempt, this._referredBy).then((res) => {
+    registerUser(username: string): Promise<RegisterUserResponse> {
+        return this.api.registerUser(username, this._referredBy).then((res) => {
             if (res === "success") {
                 localStorage.removeItem("openchat_referredby");
             }
             return res;
         });
-    }
-
-    createChallenge(): Promise<CreateChallengeResponse> {
-        return this.api.createChallenge();
     }
 
     getCurrentUser(): Promise<CurrentUserResponse> {
@@ -2986,11 +2973,17 @@ export class OpenChat extends EventTarget {
         return this.api.registerProposalVote(chatId, messageIndex, adopt);
     }
 
-    getProposalVoteDetails(governanceCanisterId: string, proposalId: bigint, isNns: boolean): Promise<ProposalVoteDetails> {
-        return this.api.getProposalVoteDetails(governanceCanisterId, proposalId, isNns).then((resp) => {
-            proposalTallies.setTally(governanceCanisterId, proposalId, resp.latestTally);
-            return resp;
-        });
+    getProposalVoteDetails(
+        governanceCanisterId: string,
+        proposalId: bigint,
+        isNns: boolean
+    ): Promise<ProposalVoteDetails> {
+        return this.api
+            .getProposalVoteDetails(governanceCanisterId, proposalId, isNns)
+            .then((resp) => {
+                proposalTallies.setTally(governanceCanisterId, proposalId, resp.latestTally);
+                return resp;
+            });
     }
 
     getRecommendedGroups(): Promise<GroupChatSummary[]> {
@@ -3752,19 +3745,34 @@ export class OpenChat extends EventTarget {
             });
     }
 
-    setNeuronControllerForInitialAirdrop(principal: string): Promise<boolean> {
+    setMessageReminder(
+        chatId: string,
+        eventIndex: number,
+        remindAt: number,
+        notes?: string,
+        threadRootMessageIndex?: number
+    ): Promise<boolean> {
         return this.api
-            .setNeuronControllerForInitialAirdrop(principal)
+            .setMessageReminder(chatId, eventIndex, remindAt, notes, threadRootMessageIndex)
             .then((res) => {
-                if (res !== "success") {
-                    console.log("Unable to set neuron controller for airdrop: ", res);
-                }
                 return res === "success";
             })
             .catch((err) => {
-                this._logger.error("Unable to set neuron controller for airdrop", err);
+                this._logger.error("Unable to set message reminder", err);
                 return false;
             });
+    }
+
+    cancelMessageReminder(
+        messageId: bigint,
+        content: MessageReminderCreatedContent
+    ): Promise<boolean> {
+        localMessageUpdates.markCancelled(messageId.toString(), content);
+        return this.api.cancelMessageReminder(content.reminderId).catch((err) => {
+            localMessageUpdates.revertCancelled(messageId.toString());
+            this._logger.error("Unable to cancel message reminder", err);
+            return false;
+        });
     }
 
     updateMarketMakerConfig(
@@ -3773,14 +3781,17 @@ export class OpenChat extends EventTarget {
         return this.api.updateMarketMakerConfig(config);
     }
 
+    usernameAndIcon(user?: PartialUserSummary): string {
+        return user !== undefined
+            ? `${user?.username}  ${user?.diamond ? "💎" : ""}`
+            : this.config.i18nFormatter("unknownUser");
+    }
+
     diamondDurationToMs = diamondDurationToMs;
 
     /**
      * Reactive state provided in the form of svelte stores
      */
-    eligibleForInitialAirdrop = writable<EligibleForInitialAirdropResponse>({
-        kind: "user_not_eligible",
-    });
     profileStore = profileStore;
     percentageStorageRemaining = percentageStorageRemaining;
     percentageStorageUsed = percentageStorageUsed;

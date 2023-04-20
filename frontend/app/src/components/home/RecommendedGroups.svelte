@@ -49,7 +49,12 @@
 
         <div class="groups">
             {#each groups as group, _i (group.chatId)}
-                <RecommendedGroup on:dismissRecommendation on:joinGroup {group} {joining} />
+                <RecommendedGroup
+                    on:upgrade
+                    on:dismissRecommendation
+                    on:joinGroup
+                    {group}
+                    {joining} />
             {/each}
         </div>
     </div>

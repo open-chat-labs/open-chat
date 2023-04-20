@@ -276,9 +276,6 @@
         "bioTooLong": "Tiểu sử của bạn quá dài",
         "userLimitReached": "Số lượng người dùng đã đạt giới hạn",
         "createUser": "Tạo tài khoản",
-        "challengeAttemptFailed": "Giá trị bạn đã nhập không chính xác. Hãy thử thách thức mới.",
-        "challengeThrottled": "Quá nhiều thách thức đã được tạo ra. Vui lòng thử lại sau.",
-        "attemptChallenge": "Vui lòng nhập các ký tự bạn thấy",
         "closedTitle": "Đăng ký bị tạm dừng",
         "closed": "Do nhu cầu rất cao, đăng ký người dùng mới tạm thời bị đóng. Chúng tôi sẽ sớm mở rộng quy mô trên nhiều mạng con và sau đó sẽ có thể phát triển vô tận!"
     },
@@ -418,8 +415,7 @@
         "minDissolveDelayN": "Chậm giải thể tối thiểu {n} ngày",
         "minStakeN": "Cổ phần tối thiểu {n} mã thông báo",
         "optional": "Không bắt buộc",
-        "openAccessInfo": "Không có yêu cầu truy cập đặc biệt để tham gia nhóm này",
-        "gateCheckFailed": "Xin lỗi - bạn chưa đáp ứng các yêu cầu đầu vào cho nhóm này"
+        "openAccessInfo": "Không có yêu cầu truy cập đặc biệt để tham gia nhóm này"
     },
     "updateNow": "tải lại ngay bây giờ",
     "updateRequired": "Đã có phiên bản OpenChat mới - tải lại sau {countdown} giây",
@@ -477,7 +473,15 @@
         "shortBalanceLabel": "sự cân bằng",
         "manageHeader": "Quản lý tài khoản {symbol}",
         "token": "mã thông báo",
-        "comingSoon": "(Sắp có)"
+        "comingSoon": "(Sắp có)",
+        "send": "Gửi",
+        "deposit": "Tiền gửi",
+        "depositToken": "Gửi tiền {symbol}",
+        "sendTarget": "nhập địa chỉ để gửi đến",
+        "sendSucceeded": "{symbol} của bạn đã được gửi thành công!",
+        "sendFailed": "Không thể gửi {symbol}",
+        "scan": "Quét mã QR",
+        "withdrawToken": "Rút {symbol}"
     },
     "searchChat": "Tìm kiếm",
     "search": "Tìm kiếm...",
@@ -540,7 +544,6 @@
     "unpinMessage": "Bỏ ghim",
     "forward": "Ở đằng trước",
     "referralHeader": "Mời bạn bè / gia đình",
-    "userReferralMessage": "Chia sẻ liên kết này tới OpenChat với bạn bè và gia đình. Đối với mỗi người đăng ký bằng liên kết của bạn và trở thành người dùng đã được xác minh, bạn sẽ nhận được phần thưởng là mã thông báo CHAT (sẽ được xác nhận trong những tuần tới). Bạn có thể tiếp tục và chia sẻ liên kết ngay bây giờ và chúng tôi sẽ truy tặng mã thông báo CHAT khi chúng có sẵn.",
     "userInfoHeader": "Công cộng",
     "thread": {
         "menu": "Trả lời trong chuỗi",
@@ -751,7 +754,8 @@
         "cannotExtend": "Bạn chỉ có thể gia hạn tư cách thành viên của mình trong vòng ba tháng kể từ khi hết hạn",
         "groupMsg": "Để tạo tối đa 10 nhóm công khai và kiểm soát quyền truy cập nhóm, bạn phải là người dùng Kim cương",
         "gatingMsg": "Để tạo nhóm có quyền truy cập kiểm soát, bạn phải là người dùng Kim cương",
-        "gatedGroups": "nhóm kiểm soát"
+        "gatedGroups": "nhóm kiểm soát",
+        "reminders": "nhắc nhở"
     },
     "currentUsage": "Mức sử dụng bộ nhớ hiện tại",
     "promoteTo": "Quảng cáo lên {role}",
@@ -760,16 +764,26 @@
     "demoteFailed": "Không thể hạ cấp xuống {role}",
     "ownerCantLeave": "Bạn phải thêm chủ sở hữu khác trước khi có thể rời khỏi nhóm",
     "participant": "thành viên",
-    "airdrop": {
-        "register": "Đăng ký airdrop",
-        "placeholder": "Hiệu trưởng NNS...",
-        "submit": "Nộp",
-        "success": "Cảm ơn - bạn đã đăng ký airdrop thành công",
-        "failure": "Xin lỗi - chúng tôi không thể đăng ký bạn cho airdrop",
-        "showHow": "Hãy chỉ cho tôi cách",
-        "howTo": "Cách tìm hiệu trưởng NNS của bạn",
-        "info": "Nếu bạn mắc lỗi, bạn có thể gửi lại tiền gốc chính xác thông qua menu chính.",
-        "back": "Mặt sau",
-        "pleaseSubmit": "Để nhận airdrop của bạn, vui lòng gửi tiền gốc [NNS dApp](https://nns.ic0.app) của bạn bên dưới trước {cutoff}."
-    }
+    "unauthorizedToCreatePublicGroup": "Bạn không được phép tạo nhóm công khai",
+    "reminders": {
+        "optional": "Không bắt buộc",
+        "menu": "Nhắc nhở tôi",
+        "title": "Đặt một lời nhắc nhở",
+        "note": "Thêm một lưu ý",
+        "notePlaceholder": "Nhắc tôi...",
+        "twentyMinutes": "Trong 20 phút",
+        "oneHour": "Trong 1 giờ",
+        "threeHours": "Trong 3 tiếng",
+        "tomorrow": "Ngày mai",
+        "nextWeek": "Tuần tới",
+        "create": "Tạo nên",
+        "success": "Lời nhắc của bạn đã được đặt thành công",
+        "remindAt": "Tôi sẽ nhắc bạn về tin nhắn này lúc {datetime}",
+        "youAsked": "Bạn yêu cầu tôi nhắc bạn về tin nhắn này.",
+        "failure": "Xin lỗi, chúng tôi không thể đặt lời nhắc của bạn",
+        "cancel": "Hủy lời nhắc",
+        "cancelSuccess": "Lời nhắc của bạn đã được hủy thành công",
+        "cancelFailure": "Xin lỗi, chúng tôi không thể hủy lời nhắc của bạn"
+    },
+    "userReferralMessage": "Chia sẻ liên kết này tới OpenChat với bạn bè và gia đình. Miễn là bản thân bạn là thành viên Kim cương, đối với mỗi người đăng ký bằng liên kết của bạn và tiếp tục trở thành thành viên Kim cương, bạn sẽ nhận được một nửa số tiền thanh toán thành viên mà họ thực hiện trong năm đầu tiên."
 }

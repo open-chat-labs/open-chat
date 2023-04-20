@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.652](https://github.com/open-ic/open-chat/releases/tag/v2.0.652-online_users)] - 2023-03-30
+
 ### Changed
 
 - Expose active user counts in metrics ([#3390](https://github.com/open-ic/open-chat/pull/3390))

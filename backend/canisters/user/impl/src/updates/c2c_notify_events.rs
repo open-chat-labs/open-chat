@@ -1,5 +1,5 @@
 use crate::guards::caller_is_local_user_index;
-use crate::{mutate_state, openchat_bot, RuntimeState, PREMIUM_GROUP_CREATION_LIMIT};
+use crate::{mutate_state, openchat_bot, RuntimeState};
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use user_canister::c2c_notify_user_events::{Response::*, *};
@@ -26,12 +26,10 @@ fn process_event(event: Event, runtime_state: &mut RuntimeState) {
         Event::PhoneNumberConfirmed(ev) => {
             runtime_state.data.phone_is_verified = true;
             runtime_state.data.storage_limit = ev.new_storage_limit;
-            runtime_state.data.group_creation_limit = PREMIUM_GROUP_CREATION_LIMIT;
             openchat_bot::send_phone_number_confirmed_bot_message(&ev, runtime_state);
         }
         Event::StorageUpgraded(ev) => {
             runtime_state.data.storage_limit = ev.new_storage_limit;
-            runtime_state.data.group_creation_limit = PREMIUM_GROUP_CREATION_LIMIT;
             openchat_bot::send_storage_ugraded_bot_message(&ev, runtime_state);
         }
         Event::ReferredUserRegistered(ev) => {
@@ -40,13 +38,22 @@ fn process_event(event: Event, runtime_state: &mut RuntimeState) {
         Event::UserSuspended(ev) => {
             openchat_bot::send_user_suspended_message(&ev, runtime_state);
         }
-        Event::OpenChatBotMessage(content) => openchat_bot::send_message(*content, false, runtime_state),
+        Event::OpenChatBotMessage(content) => {
+            openchat_bot::send_message(*content, false, runtime_state);
+        }
         Event::UserJoinedGroup(ev) => {
             let now = runtime_state.env.now();
 
             runtime_state.data.group_chats.join(ev.chat_id, ev.latest_message_index, now);
 
             runtime_state.data.hot_group_exclusions.remove(&ev.chat_id, now);
+        }
+        Event::DiamondMembershipPaymentReceived(ev) => {
+            runtime_state.data.diamond_membership_expires_at = Some(ev.expires_at);
+
+            if ev.send_bot_message {
+                openchat_bot::send_text_message("Payment received for Diamond membership!".to_string(), false, runtime_state);
+            }
         }
     }
 }

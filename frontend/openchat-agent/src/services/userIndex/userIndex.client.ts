@@ -1,4 +1,4 @@
-import type { Identity } from "@dfinity/agent";
+import type { Identity, SignIdentity } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
 import { idlFactory, UserIndexService } from "./candid/idl";
 import type {
@@ -9,8 +9,6 @@ import type {
     UsersResponse,
     UserSummary,
     RegisterUserResponse,
-    ChallengeAttempt,
-    CreateChallengeResponse,
     SuspendUserResponse,
     UnsuspendUserResponse,
     MarkSuspectedBotResponse,
@@ -18,14 +16,11 @@ import type {
     DiamondMembershipDuration,
     PayForDiamondMembershipResponse,
     SetUserUpgradeConcurrencyResponse,
-    SetNeuronControllerResponse,
-    EligibleForInitialAirdropResponse,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
     checkUsernameResponse,
     setUsernameResponse,
-    createChallengeResponse,
     currentUserResponse,
     usersResponse,
     userSearchResponse,
@@ -35,8 +30,6 @@ import {
     apiCryptocurrency,
     apiDiamondDuration,
     payForDiamondMembershipResponse,
-    isEligibleForInitialAirdropResponse,
-    setNeuronControllerResponse,
 } from "./mappers";
 import { CachingUserIndexClient } from "./userIndex.caching.client";
 import type { IUserIndexClient } from "./userIndex.client.interface";
@@ -62,25 +55,6 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
     }
 
     @profile("userIndexClient")
-    isEligibleForInitialAirdrop(): Promise<EligibleForInitialAirdropResponse> {
-        return this.handleQueryResponse(
-            () => this.userIndexService.is_eligible_for_initial_airdrop({}),
-            isEligibleForInitialAirdropResponse
-        );
-    }
-
-    @profile("userIndexClient")
-    setNeuronControllerForInitialAirdrop(principal: string): Promise<SetNeuronControllerResponse> {
-        return this.handleQueryResponse(
-            () =>
-                this.userIndexService.set_neuron_controller_for_initial_airdrop({
-                    controller: Principal.fromText(principal),
-                }),
-            setNeuronControllerResponse
-        );
-    }
-
-    @profile("userIndexClient")
     getCurrentUser(): Promise<CurrentUserResponse> {
         return this.handleQueryResponse(
             () => this.userIndexService.current_user({}),
@@ -89,24 +63,12 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
     }
 
     @profile("userIndexClient")
-    createChallenge(): Promise<CreateChallengeResponse> {
-        return this.handleQueryResponse(
-            () => this.userIndexService.create_challenge({}),
-            createChallengeResponse
-        );
-    }
-
-    @profile("userIndexClient")
-    registerUser(
-        username: string,
-        challengeAttempt: ChallengeAttempt,
-        referredBy: string | undefined
-    ): Promise<RegisterUserResponse> {
+    registerUser(username: string, referredBy: string | undefined): Promise<RegisterUserResponse> {
         return this.handleResponse(
             this.userIndexService.register_user({
                 username,
-                challenge_attempt: challengeAttempt,
                 referred_by: apiOptional((userId) => Principal.fromText(userId), referredBy),
+                public_key: new Uint8Array((this.identity as SignIdentity).getPublicKey().toDer()),
             }),
             registerUserResponse
         );

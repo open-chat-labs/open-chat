@@ -119,13 +119,15 @@ fn validate_request(args: &Args, runtime_state: &RuntimeState) -> ValidateReques
             ContentValidationError::TextTooLong(max_length) => TextTooLong(max_length),
             ContentValidationError::InvalidPoll(reason) => InvalidPoll(reason),
             ContentValidationError::TransferCannotBeZero => TransferCannotBeZero,
-            ContentValidationError::TransferLimitExceeded(limit) => TransferLimitExceeded(limit),
             ContentValidationError::InvalidTypeForForwarding => {
                 InvalidRequest("Cannot forward this type of message".to_string())
             }
             ContentValidationError::PrizeEndDateInThePast => unreachable!(),
             ContentValidationError::UnauthorizedToSendProposalMessages => {
                 InvalidRequest("User unauthorized to send proposal messages".to_string())
+            }
+            ContentValidationError::Unauthorized => {
+                InvalidRequest("User unauthorized to send messages of this type".to_string())
             }
         })
     } else if args.recipient == my_user_id {
@@ -171,8 +173,12 @@ fn send_message_impl(
             sender_message_index: message_event.event.message_index,
             content: args.content.into(),
             replies_to: args.replies_to.and_then(|r| {
-                if let Some(chat_id) = r.chat_id_if_other {
-                    Some(C2CReplyContext::OtherChat(chat_id, r.event_index))
+                if let Some((chat_id, thread_root_message_index)) = r.event_list_if_other {
+                    Some(C2CReplyContext::OtherEventList(
+                        chat_id,
+                        thread_root_message_index,
+                        r.event_index,
+                    ))
                 } else {
                     runtime_state
                         .data

@@ -4,30 +4,12 @@ type EmptyArgs =
     record {
     };
 
-type ChallengeKey = nat32;
-
-type CreateChallengeResponse =
-    variant {
-        Success: Challenge;
-        Throttled;
-    };
-
-type Challenge = record {
-    key: ChallengeKey;
-    png_base64: text;
-};
-
 type RegisterUserArgs =
     record {
         username: text;
-        challenge_attempt: ChallengeAttempt;
         referred_by: opt UserId;
+        public_key: blob;
     };
-
-type ChallengeAttempt = record {
-    key : ChallengeKey;
-    chars : text;
-};
 
 type RegisterUserResponse =
     variant {
@@ -40,7 +22,7 @@ type RegisterUserResponse =
         UsernameTooLong: nat16;
         CyclesBalanceTooLow;
         InternalError: text;
-        ChallengeFailed;
+        PublicKeyInvalid: text;
     };
 
 type SetUsernameArgs =
@@ -282,6 +264,20 @@ type PayForDiamondMembershipResponse =
         InternalError: text;
     };
 
+type ReferralMetricsResponse =
+    variant {
+        Success: record {
+            users_who_referred: nat32;
+            users_who_referred_paid_diamond: nat32;
+            users_who_referred_unpaid_diamond: nat32;
+            users_who_referred_90_percent_unpaid_diamond: nat32;
+            referrals_of_paid_diamond: nat32;
+            referrals_of_unpaid_diamond: nat32;
+            referrals_other: nat32;
+            icp_raised_by_referrals_to_paid_diamond: nat32;
+        };
+    };
+
 type SetUserUpgradeConcurrencyArgs =
     record {
         value: nat32;
@@ -292,30 +288,7 @@ type SetUserUpgradeConcurrencyResponse =
         Success;
     };
 
-type IsEligibleForInitialAirdropResponse =
-    variant {
-        Yes: opt principal;
-        No;
-        AirdropClosed;
-        UserNotFound;
-    };
-
-type SetNeuronControllerForInitialAirdropArgs =
-    record {
-        controller: principal
-    };
-
-type SetNeuronControllerForInitialAirdropResponse =
-    variant {
-        Success;
-        AirdropClosed;
-        UserNotEligible;
-        UserNotFound;
-    };
-
 service: {
-    create_challenge : (EmptyArgs) -> (CreateChallengeResponse);
-
     register_user: (RegisterUserArgs) -> (RegisterUserResponse);
 
     // This is used to set the initial username and subsequently to change it
@@ -340,6 +313,7 @@ service: {
     mark_suspected_bot: (MarkSuspectedBotArgs) -> (MarkSuspectedBotResponse);
 
     pay_for_diamond_membership: (PayForDiamondMembershipArgs) -> (PayForDiamondMembershipResponse);
+    referral_metrics: (EmptyArgs) -> (ReferralMetricsResponse) query;
 
     // List the platform moderators/operators
     platform_moderators: (EmptyArgs) -> (PlatformModeratorsResponse) query;
@@ -358,8 +332,4 @@ service: {
 
     // Only callable by "platform operators"
     set_user_upgrade_concurrency: (SetUserUpgradeConcurrencyArgs) -> (SetUserUpgradeConcurrencyResponse);
-
-    // Temporary endpoints for the initial airdrop
-    is_eligible_for_initial_airdrop: (EmptyArgs) -> (IsEligibleForInitialAirdropResponse) query;
-    set_neuron_controller_for_initial_airdrop: (SetNeuronControllerForInitialAirdropArgs) -> (SetNeuronControllerForInitialAirdropResponse);
 }

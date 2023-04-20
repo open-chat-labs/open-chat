@@ -62,9 +62,7 @@ import type { UpdateMarketMakerConfigArgs, UpdateMarketMakerConfigResponse } fro
 import type { ToggleMuteNotificationResponse } from "./notifications";
 import type {
     ArchiveChatResponse,
-    ChallengeAttempt,
     CheckUsernameResponse,
-    CreateChallengeResponse,
     CreatedUser,
     CurrentUserResponse,
     MigrateUserPrincipalResponse,
@@ -84,8 +82,7 @@ import type {
     UnsuspendUserResponse,
     DiamondMembershipDuration,
     PayForDiamondMembershipResponse,
-    SetNeuronControllerResponse,
-    EligibleForInitialAirdropResponse,
+    SetMessageReminderResponse,
 } from "./user";
 import type {
     GroupSearchResponse,
@@ -116,7 +113,6 @@ export type WorkerRequest =
     | PushSub
     | RemoveSub
     | SubscriptionExists
-    | CreateChallenge
     | RegisterUser
     | EditMessage
     | SendMessage
@@ -203,8 +199,8 @@ export type WorkerRequest =
     | SetGroupUpgradeConcurrency
     | SetUserUpgradeConcurrency
     | UpdateMarketMakerConfig
-    | IsEligibleForInitialAirdrop
-    | SetNeuronControllerForAirdrop;
+    | SetMessageReminder
+    | CancelMessageReminder;
 
 type SetCachedMessageFromNotification = Request<{
     chatId: string;
@@ -395,13 +391,8 @@ type SubscriptionExists = Request<{
     kind: "subscriptionExists";
 };
 
-type CreateChallenge = Request & {
-    kind: "createChallenge";
-};
-
 type RegisterUser = Request<{
     username: string;
-    challengeAttempt: ChallengeAttempt;
     referredBy: string | undefined;
 }> & {
     kind: "registerUser";
@@ -444,7 +435,7 @@ type UnpinMessage = Request<{
 type GetProposalVoteDetailsRequest = Request<{
     governanceCanisterId: string;
     proposalId: bigint;
-    isNns: boolean
+    isNns: boolean;
 }> & {
     kind: "getProposalVoteDetails";
 };
@@ -877,7 +868,6 @@ export type WorkerResponse =
     | Response<RemoveMemberResponse>
     | Response<boolean>
     | Response<RegisterUserResponse>
-    | Response<CreateChallengeResponse>
     | Response<EditMessageResponse>
     | Response<[SendMessageResponse, Message]>
     | Response<UnpinMessageResponse>
@@ -938,8 +928,7 @@ export type WorkerResponse =
     | Response<PayForDiamondMembershipResponse>
     | Response<ClaimPrizeResponse>
     | Response<UpdateMarketMakerConfigResponse>
-    | Response<SetNeuronControllerResponse>
-    | Response<EligibleForInitialAirdropResponse>;
+    | Response<SetMessageReminderResponse>;
 
 type Response<T> = {
     kind: "worker_response";
@@ -1009,10 +998,18 @@ type UpdateMarketMakerConfig = Request<UpdateMarketMakerConfigArgs> & {
     kind: "updateMarketMakerConfig";
 };
 
-type IsEligibleForInitialAirdrop = Request & {
-    kind: "isEligibleForInitialAirdrop";
+type SetMessageReminder = Request<{
+    chatId: string;
+    eventIndex: number;
+    remindAt: number;
+    notes?: string;
+    threadRootMessageIndex?: number;
+}> & {
+    kind: "setMessageReminder";
 };
 
-type SetNeuronControllerForAirdrop = Request<string> & {
-    kind: "setNeuronControllerForInitialAirdrop";
+type CancelMessageReminder = Request<{
+    reminderId: bigint;
+}> & {
+    kind: "cancelMessageReminder";
 };

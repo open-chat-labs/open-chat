@@ -5,9 +5,44 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.668](https://github.com/open-ic/open-chat/releases/tag/v2.0.668-user_index)] - 2023-04-19
+
+### Changed
+
+- Share Diamond membership payment with referrer ([#3452](https://github.com/open-ic/open-chat/pull/3452))
+
+### Removed
+
+- Remove one-time code to sync `diamond_membership_expires_at` with user canisters ([#3467](https://github.com/open-ic/open-chat/pull/3467))
+
+## [[2.0.666](https://github.com/open-ic/open-chat/releases/tag/v2.0.666-user_index)] - 2023-04-17
+
+### Changed
+
+- Store `diamond_membership_expires_at` in each user canister ([#3428](https://github.com/open-ic/open-chat/pull/3428))
+
+### Removed
+
+- Remove code to handle the initial airdrop ([#3462](https://github.com/open-ic/open-chat/pull/3462))
+
+### Fixed
+
+- Fix `referral_metrics` endpoint ([#3461](https://github.com/open-ic/open-chat/pull/3461))
+
+## [[2.0.661](https://github.com/open-ic/open-chat/releases/tag/v2.0.661-user_index)] - 2023-04-15
+
+### Added
+
+- Added `referral_metrics` endpoint ([#3429](https://github.com/open-ic/open-chat/pull/3429))
+
 ### Removed
 
 - Removed `c2c_lookup_principal` ([#3414](https://github.com/open-ic/open-chat/pull/3414))
+- Remove CAPTCHA and instead verify public key is derived from II canister ([#3426](https://github.com/open-ic/open-chat/pull/3426))
+
+### Fixed
+
+- Ensure only one airdrop neuron is created at a time ([#3458](https://github.com/open-ic/open-chat/pull/3458))
 
 ## [[2.0.656](https://github.com/open-ic/open-chat/releases/tag/v2.0.656-user_index)] - 2023-04-05
 

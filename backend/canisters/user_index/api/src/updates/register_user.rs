@@ -1,12 +1,12 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{ChallengeAttempt, UserId};
+use types::UserId;
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub username: String,
-    pub challenge_attempt: ChallengeAttempt,
     pub referred_by: Option<UserId>,
+    pub public_key: Vec<u8>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -20,5 +20,5 @@ pub enum Response {
     UsernameTooLong(u16),
     CyclesBalanceTooLow,
     InternalError(String),
-    ChallengeFailed,
+    PublicKeyInvalid(String),
 }

@@ -1,22 +1,27 @@
 use crate::env::ENV;
 use crate::rng::random_string;
-use crate::{client, TestEnv, User};
+use crate::{client, CanisterIds, TestEnv, User};
+use candid::Principal;
 use ic_test_state_machine_client::StateMachine;
 use itertools::Itertools;
 use std::ops::Deref;
 use std::time::Duration;
-use types::{CanisterId, ChatId, OptionUpdate};
+use types::{ChatId, OptionUpdate};
 
 #[test]
 fn disappearing_messages_in_group_chats() {
     let mut wrapper = ENV.deref().get();
-    let TestEnv { env, canister_ids, .. } = wrapper.env();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
 
-    let TestData { user1, group_id } = init_test_data(env, canister_ids.user_index, true);
+    let TestData { user, group_id } = init_test_data(env, canister_ids, *controller, true);
 
     client::group::update_group_v2(
         env,
-        user1.principal,
+        user.principal,
         group_id.into(),
         &group_canister::update_group_v2::Args {
             events_ttl: OptionUpdate::SetToSome(1000),
@@ -24,10 +29,10 @@ fn disappearing_messages_in_group_chats() {
         },
     );
 
-    let send_message_response1 = client::group::happy_path::send_text_message(env, &user1, group_id, None, "abc", None);
+    let send_message_response1 = client::group::happy_path::send_text_message(env, &user, group_id, None, "abc", None);
 
     assert!(
-        client::group::happy_path::events_by_index(env, &user1, group_id, vec![send_message_response1.event_index])
+        client::group::happy_path::events_by_index(env, &user, group_id, vec![send_message_response1.event_index])
             .events
             .first()
             .is_some()
@@ -37,7 +42,7 @@ fn disappearing_messages_in_group_chats() {
     env.tick();
 
     assert!(
-        client::group::happy_path::events_by_index(env, &user1, group_id, vec![send_message_response1.event_index])
+        client::group::happy_path::events_by_index(env, &user, group_id, vec![send_message_response1.event_index])
             .events
             .first()
             .is_none()
@@ -45,7 +50,7 @@ fn disappearing_messages_in_group_chats() {
 
     client::group::update_group_v2(
         env,
-        user1.principal,
+        user.principal,
         group_id.into(),
         &group_canister::update_group_v2::Args {
             events_ttl: OptionUpdate::SetToNone,
@@ -53,13 +58,13 @@ fn disappearing_messages_in_group_chats() {
         },
     );
 
-    let send_message_response2 = client::group::happy_path::send_text_message(env, &user1, group_id, None, "xyz", None);
+    let send_message_response2 = client::group::happy_path::send_text_message(env, &user, group_id, None, "xyz", None);
 
     env.advance_time(Duration::from_secs(100000));
     env.tick();
 
     assert!(
-        client::group::happy_path::events_by_index(env, &user1, group_id, vec![send_message_response2.event_index])
+        client::group::happy_path::events_by_index(env, &user, group_id, vec![send_message_response2.event_index])
             .events
             .first()
             .is_some()
@@ -69,13 +74,17 @@ fn disappearing_messages_in_group_chats() {
 #[test]
 fn group_chat_summary_contains_expired_messages() {
     let mut wrapper = ENV.deref().get();
-    let TestEnv { env, canister_ids, .. } = wrapper.env();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
 
-    let TestData { user1, group_id } = init_test_data(env, canister_ids.user_index, true);
+    let TestData { user, group_id } = init_test_data(env, canister_ids, *controller, true);
 
     client::group::update_group_v2(
         env,
-        user1.principal,
+        user.principal,
         group_id.into(),
         &group_canister::update_group_v2::Args {
             events_ttl: OptionUpdate::SetToSome(1000),
@@ -83,19 +92,19 @@ fn group_chat_summary_contains_expired_messages() {
         },
     );
 
-    let send_message_response1 = client::group::happy_path::send_text_message(env, &user1, group_id, None, "abc", None);
+    let send_message_response1 = client::group::happy_path::send_text_message(env, &user, group_id, None, "abc", None);
     env.advance_time(Duration::from_millis(400));
-    let send_message_response2 = client::group::happy_path::send_text_message(env, &user1, group_id, None, "def", None);
+    let send_message_response2 = client::group::happy_path::send_text_message(env, &user, group_id, None, "def", None);
     env.advance_time(Duration::from_millis(400));
-    let send_message_response3 = client::group::happy_path::send_text_message(env, &user1, group_id, None, "ghi", None);
+    let send_message_response3 = client::group::happy_path::send_text_message(env, &user, group_id, None, "ghi", None);
     env.advance_time(Duration::from_millis(400));
-    let send_message_response4 = client::group::happy_path::send_text_message(env, &user1, group_id, None, "jkl", None);
+    let send_message_response4 = client::group::happy_path::send_text_message(env, &user, group_id, None, "jkl", None);
     env.advance_time(Duration::from_millis(400));
-    let send_message_response5 = client::group::happy_path::send_text_message(env, &user1, group_id, None, "mno", None);
+    let send_message_response5 = client::group::happy_path::send_text_message(env, &user, group_id, None, "mno", None);
     env.advance_time(Duration::from_millis(400));
-    let send_message_response6 = client::group::happy_path::send_text_message(env, &user1, group_id, None, "mno", None);
+    let send_message_response6 = client::group::happy_path::send_text_message(env, &user, group_id, None, "mno", None);
 
-    let summary = client::group::happy_path::summary(env, &user1, group_id);
+    let summary = client::group::happy_path::summary(env, &user, group_id);
     let summary_timestamp = send_message_response6.timestamp;
 
     assert_eq!(summary.events_ttl, Some(1000));
@@ -113,15 +122,15 @@ fn group_chat_summary_contains_expired_messages() {
 
     client::group::update_group_v2(
         env,
-        user1.principal,
+        user.principal,
         group_id.into(),
         &group_canister::update_group_v2::Args {
             events_ttl: OptionUpdate::SetToSome(2000),
             ..Default::default()
         },
     );
-    let send_message_response7 = client::group::happy_path::send_text_message(env, &user1, group_id, None, "pqr", None);
-    let summary_updates = client::group::happy_path::summary_updates(env, &user1, group_id, summary_timestamp).unwrap();
+    let send_message_response7 = client::group::happy_path::send_text_message(env, &user, group_id, None, "pqr", None);
+    let summary_updates = client::group::happy_path::summary_updates(env, &user, group_id, summary_timestamp).unwrap();
 
     assert_eq!(summary_updates.events_ttl.expand(), Some(Some(2000)));
     assert_eq!(
@@ -138,18 +147,18 @@ fn group_chat_summary_contains_expired_messages() {
     );
 }
 
-fn init_test_data(env: &mut StateMachine, user_index: CanisterId, public: bool) -> TestData {
-    let user1 = client::user_index::happy_path::register_user(env, user_index);
+fn init_test_data(env: &mut StateMachine, canister_ids: &CanisterIds, controller: Principal, public: bool) -> TestData {
+    let user = client::register_diamond_user(env, canister_ids, controller);
 
     let group_name = random_string();
 
-    let group_id = client::user::happy_path::create_group(env, &user1, &group_name, public, true);
+    let group_id = client::user::happy_path::create_group(env, &user, &group_name, public, true);
 
-    TestData { user1, group_id }
+    TestData { user, group_id }
 }
 
 #[allow(dead_code)]
 struct TestData {
-    user1: User,
+    user: User,
     group_id: ChatId,
 }

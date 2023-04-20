@@ -1,9 +1,7 @@
-use crate::{TimestampNanos, UserId};
+use crate::{CanisterId, TimestampNanos, UserId};
 use candid::{CandidType, Principal};
 use ic_ledger_types::Tokens;
 use serde::{Deserialize, Serialize};
-
-const E8S_PER_TOKEN: u64 = 100_000_000;
 
 #[derive(CandidType, Serialize, Deserialize, Copy, Clone, Debug, Eq, PartialEq, Hash)]
 pub enum Cryptocurrency {
@@ -32,21 +30,21 @@ impl Cryptocurrency {
         }
     }
 
-    pub fn transfer_limit(&self) -> u128 {
-        match self {
-            Cryptocurrency::InternetComputer => (50 * E8S_PER_TOKEN).into(),
-            Cryptocurrency::SNS1 => (10 * E8S_PER_TOKEN).into(),
-            Cryptocurrency::CKBTC => (E8S_PER_TOKEN / 100).into(),
-            Cryptocurrency::CHAT => (1_000 * E8S_PER_TOKEN).into(),
-        }
-    }
-
     pub fn fee(&self) -> u128 {
         match self {
             Cryptocurrency::InternetComputer => 10_000,
             Cryptocurrency::SNS1 => 1_000,
             Cryptocurrency::CKBTC => 10,
             Cryptocurrency::CHAT => 100_000,
+        }
+    }
+
+    pub fn ledger_canister_id(&self) -> CanisterId {
+        match self {
+            Cryptocurrency::InternetComputer => Principal::from_text("ryjl3-tyaaa-aaaaa-aaaba-cai").unwrap(),
+            Cryptocurrency::SNS1 => Principal::from_text("zfcdd-tqaaa-aaaaq-aaaga-cai").unwrap(),
+            Cryptocurrency::CKBTC => Principal::from_text("mxzaz-hqaaa-aaaar-qaada-cai").unwrap(),
+            Cryptocurrency::CHAT => Principal::from_text("2ouva-viaaa-aaaaq-aaamq-cai").unwrap(),
         }
     }
 }
@@ -102,14 +100,6 @@ impl CryptoTransaction {
                 FailedCryptoTransaction::NNS(t) => t.amount.e8s().into(),
                 FailedCryptoTransaction::SNS(t) => t.amount.e8s().into(),
             },
-        }
-    }
-
-    pub fn exceeds_transfer_limit(&self) -> bool {
-        if let CryptoTransaction::Pending(t) = self {
-            t.units() > t.token().transfer_limit()
-        } else {
-            false
         }
     }
 }

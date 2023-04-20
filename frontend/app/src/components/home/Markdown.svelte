@@ -32,8 +32,14 @@
         });
     }
 
+    function replaceDatetimes(text: string): string {
+        return text.replace(/@DateTime\((\d+)\)/g, (match, p1) => {
+            return client.toDatetimeString(new Date(Number(p1)));
+        });
+    }
+
     $: {
-        let parsed = replaceUserIds(text);
+        let parsed = replaceUserIds(replaceDatetimes(text));
         try {
             if (inline) {
                 parsed = marked.parseInline(parsed, options);

@@ -64,6 +64,8 @@ export type BlockIndex = bigint;
 export interface BlockUserArgs { 'user_id' : UserId }
 export type BlockUserResponse = { 'Success' : null } |
   { 'UserSuspended' : null };
+export interface CancelMessageReminderArgs { 'reminder_id' : bigint }
+export type CancelMessageReminderResponse = { 'Success' : null };
 export type CanisterId = Principal;
 export type CanisterUpgradeStatus = { 'NotRequired' : null } |
   { 'InProgress' : null };
@@ -72,7 +74,8 @@ export interface CanisterWasm {
   'version' : Version,
   'module' : Uint8Array | number[],
 }
-export type ChatEvent = { 'MessageReactionRemoved' : UpdatedMessage } |
+export type ChatEvent = { 'Empty' : null } |
+  { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'ParticipantJoined' : ParticipantJoined } |
   { 'ParticipantAssumesSuperAdmin' : ParticipantAssumesSuperAdmin } |
   { 'GroupDescriptionChanged' : GroupDescriptionChanged } |
@@ -137,6 +140,7 @@ export interface ChatMetrics {
   'file_messages' : bigint,
   'poll_votes' : bigint,
   'text_messages' : bigint,
+  'message_reminders' : bigint,
   'image_messages' : bigint,
   'replies' : bigint,
   'video_messages' : bigint,
@@ -146,6 +150,7 @@ export interface ChatMetrics {
   'reported_messages' : bigint,
   'ckbtc_messages' : bigint,
   'reactions' : bigint,
+  'custom_type_messages' : bigint,
   'prize_messages' : bigint,
 }
 export interface ChatUnfrozen { 'unfrozen_by' : UserId }
@@ -178,7 +183,8 @@ export type CreateGroupResponse = { 'NameReserved' : null } |
   { 'NameTooLong' : FieldTooLongResult } |
   { 'NameTaken' : null } |
   { 'MaxGroupsCreated' : number } |
-  { 'InternalError' : null };
+  { 'InternalError' : null } |
+  { 'UnauthorizedToCreatePublicGroup' : null };
 export interface CreateGroupSuccessResult { 'chat_id' : ChatId }
 export interface CryptoContent {
   'recipient' : UserId,
@@ -192,6 +198,10 @@ export type Cryptocurrency = { 'InternetComputer' : null } |
   { 'CHAT' : null } |
   { 'SNS1' : null } |
   { 'CKBTC' : null };
+export interface CustomMessageContent {
+  'data' : Uint8Array | number[],
+  'kind' : string,
+}
 export type Cycles = bigint;
 export interface CyclesRegistrationFee {
   'recipient' : Principal,
@@ -418,6 +428,7 @@ export interface GroupCanisterGroupChatSummaryUpdates {
   'metrics' : [] | [ChatMetrics],
   'subtype' : GroupSubtypeUpdate,
   'date_last_pinned' : [] | [TimestampMillis],
+  'gate' : GroupGateUpdate,
   'name' : [] | [string],
   'role' : [] | [Role],
   'wasm_version' : [] | [Version],
@@ -658,23 +669,29 @@ export type MessageContent = { 'Giphy' : GiphyContent } |
   { 'Text' : TextContent } |
   { 'Image' : ImageContent } |
   { 'Prize' : PrizeContent } |
+  { 'Custom' : CustomMessageContent } |
   { 'GovernanceProposal' : ProposalContent } |
   { 'PrizeWinner' : PrizeWinnerContent } |
   { 'Audio' : AudioContent } |
   { 'Crypto' : CryptoContent } |
   { 'Video' : VideoContent } |
-  { 'Deleted' : DeletedContent };
+  { 'Deleted' : DeletedContent } |
+  { 'MessageReminderCreated' : MessageReminderCreated } |
+  { 'MessageReminder' : MessageReminder };
 export type MessageContentInitial = { 'Giphy' : GiphyContent } |
   { 'File' : FileContent } |
   { 'Poll' : PollContent } |
   { 'Text' : TextContent } |
   { 'Image' : ImageContent } |
   { 'Prize' : PrizeContentInitial } |
+  { 'Custom' : CustomMessageContent } |
   { 'GovernanceProposal' : ProposalContent } |
   { 'Audio' : AudioContent } |
   { 'Crypto' : CryptoContent } |
   { 'Video' : VideoContent } |
-  { 'Deleted' : DeletedContent };
+  { 'Deleted' : DeletedContent } |
+  { 'MessageReminderCreated' : MessageReminderCreated } |
+  { 'MessageReminder' : MessageReminder };
 export interface MessageEventWrapper {
   'event' : Message,
   'timestamp' : TimestampMillis,
@@ -698,6 +715,16 @@ export interface MessageMatch {
 export interface MessagePinned {
   'pinned_by' : UserId,
   'message_index' : MessageIndex,
+}
+export interface MessageReminder {
+  'notes' : [] | [string],
+  'reminder_id' : bigint,
+}
+export interface MessageReminderCreated {
+  'hidden' : boolean,
+  'notes' : [] | [string],
+  'remind_at' : TimestampMillis,
+  'reminder_id' : bigint,
 }
 export interface MessageUnpinned {
   'due_to_message_deleted' : boolean,
@@ -947,6 +974,7 @@ export type RemoveReactionResponse = { 'MessageNotFound' : null } |
   { 'UserSuspended' : null } |
   { 'SuccessV2' : PushEventResult };
 export interface ReplyContext {
+  'event_list_if_other' : [] | [[ChatId, [] | [MessageIndex]]],
   'chat_id_if_other' : [] | [ChatId],
   'event_index' : EventIndex,
 }
@@ -981,7 +1009,6 @@ export interface SendMessageArgs {
   'thread_root_message_index' : [] | [MessageIndex],
 }
 export type SendMessageResponse = { 'TextTooLong' : number } |
-  { 'TransferLimitExceeded' : bigint } |
   {
     'TransferSuccessV2' : {
       'timestamp' : TimestampMillis,
@@ -1023,7 +1050,6 @@ export interface SendMessageWithTransferToGroupArgs {
 export type SendMessageWithTransferToGroupResponse = {
     'TextTooLong' : number
   } |
-  { 'TransferLimitExceeded' : bigint } |
   { 'CallerNotInGroup' : [] | [CompletedCryptoTransaction] } |
   { 'ChatFrozen' : null } |
   { 'TransferCannotBeZero' : null } |
@@ -1056,6 +1082,19 @@ export type SetContactResponse = { 'NoChange' : null } |
   { 'Success' : null } |
   { 'UserSuspended' : null } |
   { 'NicknameTooShort' : FieldTooShortResult };
+export interface SetMessageReminderArgs {
+  'notes' : [] | [string],
+  'remind_at' : TimestampMillis,
+  'chat_id' : ChatId,
+  'event_index' : EventIndex,
+  'thread_root_message_index' : [] | [MessageIndex],
+}
+export type SetMessageReminderResponse = {
+    'NotesTooLong' : FieldTooLongResult
+  } |
+  { 'Success' : bigint } |
+  { 'ReminderDateInThePast' : null } |
+  { 'UserSuspended' : null };
 export type SnsAccount = { 'Mint' : null } |
   { 'Account' : Icrc1Account };
 export interface SnsCompletedCryptoTransaction {
@@ -1273,6 +1312,10 @@ export interface _SERVICE {
   'archive_chat' : ActorMethod<[ArchiveChatArgs], ArchiveChatResponse>,
   'bio' : ActorMethod<[BioArgs], BioResponse>,
   'block_user' : ActorMethod<[BlockUserArgs], BlockUserResponse>,
+  'cancel_message_reminder' : ActorMethod<
+    [CancelMessageReminderArgs],
+    CancelMessageReminderResponse
+  >,
   'contacts' : ActorMethod<[ContactsArgs], ContactsResponse>,
   'create_group' : ActorMethod<[CreateGroupArgs], CreateGroupResponse>,
   'delete_group' : ActorMethod<[DeleteGroupArgs], DeleteGroupResponse>,
@@ -1320,6 +1363,10 @@ export interface _SERVICE {
   'set_avatar' : ActorMethod<[SetAvatarArgs], SetAvatarResponse>,
   'set_bio' : ActorMethod<[SetBioArgs], SetBioResponse>,
   'set_contact' : ActorMethod<[SetContactArgs], SetContactResponse>,
+  'set_message_reminder' : ActorMethod<
+    [SetMessageReminderArgs],
+    SetMessageReminderResponse
+  >,
   'transfer_crypto_within_group_v2' : ActorMethod<
     [TransferCryptoWithinGroupArgs],
     SendMessageWithTransferToGroupResponse

@@ -58,8 +58,7 @@
     import AccountsModal from "./profile/AccountsModal.svelte";
     import { querystring } from "routes";
     import { eventListScrollTop } from "../../stores/scrollPos";
-    import { shownAirdropPrompt } from "../../stores/settings";
-    import AirdropModal from "./AirdropModal.svelte";
+    import GateCheckFailed from "./groupdetails/GateCheckFailed.svelte";
 
     const client = getContext<OpenChat>("client");
     const user = client.user;
@@ -92,7 +91,7 @@
         Suspended,
         NewGroup,
         Wallet,
-        AirdropPrompt,
+        GateCheckFailed,
     }
 
     let faqQuestion: Questions | undefined = undefined;
@@ -120,7 +119,6 @@
     $: currentChatDraftMessage = client.currentChatDraftMessage;
     $: chatStateStore = client.chatStateStore;
     $: confirmMessage = getConfirmMessage(confirmActionEvent);
-    $: eligibleForInitialAirdrop = client.eligibleForInitialAirdrop;
 
     // layout stuff
     $: showRight = $rightPanelHistory.length > 0 || $numberOfColumns === 3;
@@ -129,12 +127,6 @@
     $: leftSelected = $pathParams.chatId === undefined && hotGroups.kind === "idle";
     $: showMiddle = !$mobileWidth || (middleSelected && !showRight);
     $: showLeft = !$mobileWidth || (leftSelected && !showRight);
-
-    $: {
-        if ($eligibleForInitialAirdrop.kind === "user_eligible" && !$shownAirdropPrompt) {
-            modal = ModalType.AirdropPrompt;
-        }
-    }
 
     onMount(() => {
         subscribeToNotifications(client, (n) => client.notificationReceived(n));
@@ -346,14 +338,11 @@
     function closeModal() {
         modal = ModalType.None;
         candidateGroup = undefined;
+        joining = undefined;
     }
 
     function cancelRecommendations() {
         hotGroups = { kind: "idle" };
-    }
-
-    function registerForAirdrop() {
-        modal = ModalType.AirdropPrompt;
     }
 
     function dismissRecommendation(ev: CustomEvent<string>) {
@@ -573,6 +562,7 @@
         const chat = $chatSummariesListStore.find((c) => {
             return c.kind === "direct_chat" && c.them === ev.detail.sender?.userId;
         });
+
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const chatId = chat?.chatId ?? ev.detail.sender!.userId;
         currentChatDraftMessage.setTextContent(chatId, "");
@@ -691,16 +681,19 @@
             .then((resp) => {
                 if (resp === "blocked") {
                     toastStore.showFailureToast("youreBlocked");
+                    joining = undefined;
                 } else if (resp === "gate_check_failed") {
-                    toastStore.showFailureToast("group.gateCheckFailed");
+                    modal = ModalType.GateCheckFailed;
                 } else if (resp === "failure") {
                     toastStore.showFailureToast("joinGroupFailed");
+                    joining = undefined;
                 } else if (select) {
                     hotGroups = { kind: "idle" };
+                    joining = undefined;
                     page(`/${group.chatId}`);
                 }
             })
-            .finally(() => (joining = undefined));
+            .catch(() => (joining = undefined));
     }
 
     function cancelPreview(ev: CustomEvent<string>) {
@@ -919,7 +912,6 @@
             on:archiveChat={onArchiveChat}
             on:unarchiveChat={onUnarchiveChat}
             on:toggleMuteNotifications={toggleMuteNotifications}
-            on:registerForAirdrop={registerForAirdrop}
             on:loadMessage={loadMessage} />
     {/if}
     {#if showMiddle}
@@ -954,6 +946,7 @@
             on:showFaqQuestion={showFaqQuestion}
             on:userAvatarSelected={userAvatarSelected}
             on:goToMessageIndex={goToMessageIndex}
+            on:replyPrivatelyTo={replyPrivatelyTo}
             on:addMembers={addMembers}
             on:showMembers={showMembers}
             on:chatWith={chatWith}
@@ -972,6 +965,7 @@
                 on:showFaqQuestion={showFaqQuestion}
                 on:userAvatarSelected={userAvatarSelected}
                 on:goToMessageIndex={goToMessageIndex}
+                on:replyPrivatelyTo={replyPrivatelyTo}
                 on:addMembers={addMembers}
                 on:showMembers={showMembers}
                 on:chatWith={chatWith}
@@ -1016,12 +1010,12 @@
                 on:select={onSelectChat} />
         {:else if modal === ModalType.Suspended}
             <SuspendedModal on:close={closeModal} />
+        {:else if modal === ModalType.GateCheckFailed && joining !== undefined}
+            <GateCheckFailed on:close={closeModal} gate={joining.gate} />
         {:else if modal === ModalType.NewGroup && candidateGroup !== undefined}
             <NewGroup on:upgrade={upgrade} {candidateGroup} on:close={closeModal} />
         {:else if modal === ModalType.Wallet}
             <AccountsModal on:close={closeModal} />
-        {:else if modal === ModalType.AirdropPrompt}
-            <AirdropModal on:close={closeModal} />
         {/if}
     </Overlay>
 {/if}

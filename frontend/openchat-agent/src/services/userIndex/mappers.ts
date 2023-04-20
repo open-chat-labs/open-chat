@@ -2,7 +2,6 @@ import {
     CheckUsernameResponse,
     SetUsernameResponse,
     CurrentUserResponse,
-    CreateChallengeResponse,
     UsersResponse,
     UserSummary,
     PartialUserSummary,
@@ -17,21 +16,16 @@ import {
     DiamondMembershipDuration,
     PayForDiamondMembershipResponse,
     Cryptocurrency,
-    SetNeuronControllerResponse,
-    EligibleForInitialAirdropResponse,
 } from "openchat-shared";
 import type {
     ApiCheckUsernameResponse,
-    ApiCreateChallengeResponse,
     ApiCurrentUserResponse,
     ApiDiamondMembershipDetails,
     ApiDiamondMembershipPlanDuration,
-    ApiIsEligibleForInitialAirdropResponse,
     ApiPartialUserSummary,
     ApiPayForDiamondMembershipResponse,
     ApiRegisterUserResponse,
     ApiSearchResponse,
-    ApiSetNeuronControllerForInitialAirdropResponse,
     ApiSetUsernameResponse,
     ApiSuspendUserResponse,
     ApiSuspensionAction,
@@ -96,23 +90,6 @@ export function userSummary(candid: ApiUserSummary, timestamp: bigint): UserSumm
     };
 }
 
-export function createChallengeResponse(
-    candid: ApiCreateChallengeResponse
-): CreateChallengeResponse {
-    if ("Throttled" in candid) {
-        return { kind: "throttled" };
-    }
-    if ("Success" in candid) {
-        return {
-            kind: "challenge",
-            key: candid.Success.key,
-            pngBase64: candid.Success.png_base64,
-        };
-    }
-
-    throw new UnsupportedValueError("Unexpected ApiCreateChallengeResponse type received", candid);
-}
-
 export function registerUserResponse(candid: ApiRegisterUserResponse): RegisterUserResponse {
     if ("UsernameTaken" in candid) {
         return "username_taken";
@@ -144,53 +121,11 @@ export function registerUserResponse(candid: ApiRegisterUserResponse): RegisterU
     if ("CyclesBalanceTooLow" in candid) {
         return "cycles_balance_too_low";
     }
-    if ("ChallengeFailed" in candid) {
-        return "challenge_failed";
+    if ("PublicKeyInvalid" in candid) {
+        return "public_key_invalid";
     }
 
     throw new UnsupportedValueError("Unexpected ApiRegisterUserResponse type received", candid);
-}
-
-export function setNeuronControllerResponse(
-    candid: ApiSetNeuronControllerForInitialAirdropResponse
-): SetNeuronControllerResponse {
-    if ("Success" in candid) {
-        return "success";
-    }
-
-    if ("UserNotFound" in candid) {
-        return "user_not_found";
-    }
-
-    if ("UserNotEligible" in candid) {
-        return "user_not_eligible";
-    }
-
-    if ("AirdropClosed" in candid) {
-        return "airdrop_closed";
-    }
-
-    throw new Error(
-        `Unexpected ApiSetNeuronControllerForInitialAirdropResponse type received: ${candid}`
-    );
-}
-
-export function isEligibleForInitialAirdropResponse(
-    candid: ApiIsEligibleForInitialAirdropResponse
-): EligibleForInitialAirdropResponse {
-    if ("Yes" in candid) {
-        return { kind: "user_eligible", principal: optional(candid.Yes, (p) => p.toString()) };
-    }
-    if ("No" in candid) {
-        return { kind: "user_not_eligible" };
-    }
-    if ("AirdropClosed" in candid) {
-        return { kind: "airdrop_closed" };
-    }
-    if ("UserNotFound" in candid) {
-        return { kind: "unknown_user" };
-    }
-    throw new Error(`Unexpected ApiIsEligibleForInitialAirdropResponse type received: ${candid}`);
 }
 
 export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUserResponse {

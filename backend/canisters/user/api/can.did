@@ -37,7 +37,6 @@ type SendMessageResponse =
         InvalidRequest: text;
         TransferFailed: text;
         TransferCannotBeZero;
-        TransferLimitExceeded: nat;
         UserSuspended;
         InternalError: text;
     };
@@ -210,6 +209,7 @@ type CreateGroupResponse =
         RulesTooLong: FieldTooLongResult;
         RulesTooShort: FieldTooShortResult;
         UserSuspended;
+        UnauthorizedToCreatePublicGroup;
     };
 
 type LeaveGroupArgs =
@@ -327,27 +327,25 @@ type SetMessageReminderArgs =
     record {
         chat_id: ChatId;
         thread_root_message_index: opt MessageIndex;
-        message_index: MessageIndex;
+        event_index: EventIndex;
         notes: opt text;
         remind_at: TimestampMillis;
     };
 
 type SetMessageReminderResponse =
     variant {
-        Success;
+        Success: nat64;
         ReminderDateInThePast;
         NotesTooLong: FieldTooLongResult;
         UserSuspended;
     };
 
-type ClearMessageReminderArgs =
+type CancelMessageReminderArgs =
     record {
-        chat_id: ChatId;
-        thread_root_message_index: opt MessageIndex;
-        message_index: MessageIndex;
+        reminder_id: nat64;
     };
 
-type ClearMessageReminderResponse =
+type CancelMessageReminderResponse =
     variant {
         Success;
     };
@@ -393,7 +391,6 @@ type SendMessageWithTransferToGroupResponse =
         InvalidRequest: text;
         TransferFailed: text;
         TransferCannotBeZero;
-        TransferLimitExceeded: nat;
         UserSuspended;
         ChatFrozen;
         InternalError: record { text; CompletedCryptoTransaction; };
@@ -713,7 +710,7 @@ service: {
     set_bio: (SetBioArgs) -> (SetBioResponse);
     set_contact: (SetContactArgs) -> (SetContactResponse);
     set_message_reminder: (SetMessageReminderArgs) -> (SetMessageReminderResponse);
-    clear_message_reminder: (ClearMessageReminderArgs) -> (ClearMessageReminderResponse);
+    cancel_message_reminder: (CancelMessageReminderArgs) -> (CancelMessageReminderResponse);
     send_message_with_transfer_to_group: (SendMessageWithTransferToGroupArgs) -> (SendMessageWithTransferToGroupResponse);
     transfer_crypto_within_group_v2: (TransferCryptoWithinGroupArgs) -> (SendMessageWithTransferToGroupResponse);
     withdraw_crypto_v2: (WithdrawCryptoArgs) -> (WithdrawCryptoResponse);

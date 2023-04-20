@@ -41,6 +41,7 @@ import type {
     ApiIcrc1Account,
     ApiDirectChatSummaryUpdates,
     ApiDeletedDirectMessageResponse,
+    ApiSetMessageReminderResponse,
 } from "./candid/idl";
 import {
     EventsResponse,
@@ -82,6 +83,7 @@ import {
     DirectChatSummaryUpdates,
     DeletedDirectMessageResponse,
     UpdatedEvent,
+    SetMessageReminderResponse,
 } from "openchat-shared";
 import { bytesToHexString, identity, optional, optionUpdate } from "../../utils/mapping";
 import {
@@ -522,6 +524,10 @@ export function createGroupResponse(candid: ApiCreateGroupResponse): CreateGroup
 
     if ("UserSuspended" in candid) {
         return { kind: "user_suspended" };
+    }
+
+    if ("UnauthorizedToCreatePublicGroup" in candid) {
+        return { kind: "unauthorized_to_create_public_group" };
     }
 
     throw new UnsupportedValueError("Unexpected ApiCreateGroupResponse type received", candid);
@@ -1013,6 +1019,27 @@ export function deletedMessageResponse(
     }
     throw new UnsupportedValueError(
         "Unexpected ApiDeletedDirectMessageResponse type received",
+        candid
+    );
+}
+
+export function setMessageReminderResponse(
+    candid: ApiSetMessageReminderResponse
+): SetMessageReminderResponse {
+    if ("Success" in candid) {
+        return "success";
+    }
+    if ("NotesTooLong" in candid) {
+        return "notes_too_long";
+    }
+    if ("ReminderDateInThePast" in candid) {
+        return "reminder_date_in_past";
+    }
+    if ("UserSuspended" in candid) {
+        return "user_suspended";
+    }
+    throw new UnsupportedValueError(
+        "Unexpected ApiSetMessageReminderResponse type received",
         candid
     );
 }

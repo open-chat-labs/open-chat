@@ -53,8 +53,6 @@ import {
     User,
     EditMessageResponse,
     RegisterUserResponse,
-    ChallengeAttempt,
-    CreateChallengeResponse,
     AddMembersResponse,
     RemoveMemberResponse,
     MemberRole,
@@ -96,10 +94,9 @@ import {
     SetUserUpgradeConcurrencyResponse,
     UpdateMarketMakerConfigArgs,
     UpdateMarketMakerConfigResponse,
-    SetNeuronControllerResponse,
-    EligibleForInitialAirdropResponse,
     GroupGate,
     ProposalVoteDetails,
+    SetMessageReminderResponse,
 } from "openchat-shared";
 import type { OpenChatConfig } from "./config";
 import { v4 } from "uuid";
@@ -822,13 +819,17 @@ export class OpenChatAgentWorker extends EventTarget {
         });
     }
 
-    getProposalVoteDetails(governanceCanisterId: string, proposalId: bigint, isNns: boolean): Promise<ProposalVoteDetails> {
+    getProposalVoteDetails(
+        governanceCanisterId: string,
+        proposalId: bigint,
+        isNns: boolean
+    ): Promise<ProposalVoteDetails> {
         return this.sendRequest({
             kind: "getProposalVoteDetails",
             payload: {
                 governanceCanisterId,
                 proposalId,
-                isNns
+                isNns,
             },
         });
     }
@@ -902,25 +903,13 @@ export class OpenChatAgentWorker extends EventTarget {
         });
     }
 
-    registerUser(
-        username: string,
-        challengeAttempt: ChallengeAttempt,
-        referredBy: string | undefined
-    ): Promise<RegisterUserResponse> {
+    registerUser(username: string, referredBy: string | undefined): Promise<RegisterUserResponse> {
         return this.sendRequest({
             kind: "registerUser",
             payload: {
                 username,
-                challengeAttempt,
                 referredBy,
             },
-        });
-    }
-
-    createChallenge(): Promise<CreateChallengeResponse> {
-        return this.sendRequest({
-            kind: "createChallenge",
-            payload: undefined,
         });
     }
 
@@ -1377,17 +1366,31 @@ export class OpenChatAgentWorker extends EventTarget {
         });
     }
 
-    isEligibleForInitialAirdrop(): Promise<EligibleForInitialAirdropResponse> {
+    setMessageReminder(
+        chatId: string,
+        eventIndex: number,
+        remindAt: number,
+        notes?: string,
+        threadRootMessageIndex?: number
+    ): Promise<SetMessageReminderResponse> {
         return this.sendRequest({
-            kind: "isEligibleForInitialAirdrop",
-            payload: {},
+            kind: "setMessageReminder",
+            payload: {
+                chatId,
+                eventIndex,
+                remindAt,
+                notes,
+                threadRootMessageIndex,
+            },
         });
     }
 
-    setNeuronControllerForInitialAirdrop(principal: string): Promise<SetNeuronControllerResponse> {
+    cancelMessageReminder(reminderId: bigint): Promise<boolean> {
         return this.sendRequest({
-            kind: "setNeuronControllerForInitialAirdrop",
-            payload: principal,
+            kind: "cancelMessageReminder",
+            payload: {
+                reminderId,
+            },
         });
     }
 }

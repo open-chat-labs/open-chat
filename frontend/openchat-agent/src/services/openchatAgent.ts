@@ -51,11 +51,9 @@ import {
     BlobReference,
     BlockUserResponse,
     CandidateGroupChat,
-    ChallengeAttempt,
     ChangeRoleResponse,
     ChatEvent,
     CheckUsernameResponse,
-    CreateChallengeResponse,
     CreatedUser,
     CreateGroupResponse,
     Cryptocurrency,
@@ -142,14 +140,14 @@ import {
     SetUserUpgradeConcurrencyResponse,
     UpdateMarketMakerConfigArgs,
     UpdateMarketMakerConfigResponse,
-    SetNeuronControllerResponse,
-    EligibleForInitialAirdropResponse,
     GroupGate,
     ProposalVoteDetails,
+    SetMessageReminderResponse,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import { applyOptionUpdate } from "../utils/mapping";
 import { waitAll } from "../utils/promise";
+import { MessageContextMap } from "../utils/messageContext";
 
 export const apiKey = Symbol();
 
@@ -282,19 +280,7 @@ export class OpenChatAgent extends EventTarget {
             );
         }
         if (chatType === "direct_chat") {
-            const replyingToChatId =
-                event.event.repliesTo &&
-                event.event.repliesTo.kind === "rehydrated_reply_context" &&
-                chatId !== event.event.repliesTo.chatId
-                    ? event.event.repliesTo.chatId
-                    : undefined;
-            return this.sendDirectMessage(
-                chatId,
-                user,
-                event,
-                replyingToChatId,
-                threadRootMessageIndex
-            );
+            return this.sendDirectMessage(chatId, user, event, threadRootMessageIndex);
         }
         throw new UnsupportedValueError("Unexpect chat type", chatType);
     }
@@ -323,19 +309,12 @@ export class OpenChatAgent extends EventTarget {
     }
 
     private sendDirectMessage(
-        recipientId: string,
+        chatId: string,
         sender: CreatedUser,
         event: EventWrapper<Message>,
-        replyingToChatId?: string,
         threadRootMessageIndex?: number
     ): Promise<[SendMessageResponse, Message]> {
-        return this.userClient.sendMessage(
-            recipientId,
-            sender,
-            event,
-            replyingToChatId,
-            threadRootMessageIndex
-        );
+        return this.userClient.sendMessage(chatId, sender, event, threadRootMessageIndex);
     }
 
     private editDirectMessage(
@@ -591,22 +570,25 @@ export class OpenChatAgent extends EventTarget {
      */
     private findMissingEventIndexesByChat<T extends ChatEvent>(
         defaultChatId: string,
-        events: EventWrapper<T>[]
-    ): Record<string, number[]> {
-        return events.reduce<Record<string, number[]>>((result, ev) => {
+        events: EventWrapper<T>[],
+        threadRootMessageIndex: number | undefined
+    ): MessageContextMap<number> {
+        return events.reduce<MessageContextMap<number>>((result, ev) => {
             if (
                 ev.event.kind === "message" &&
                 ev.event.repliesTo &&
                 ev.event.repliesTo.kind === "raw_reply_context"
             ) {
-                const chatId = ev.event.repliesTo.chatIdIfOther ?? defaultChatId;
-                if (result[chatId] === undefined) {
-                    result[chatId] = [];
-                }
-                result[chatId].push(ev.event.repliesTo.eventIndex);
+                result.insert(
+                    ev.event.repliesTo.sourceContext ?? {
+                        chatId: defaultChatId,
+                        threadRootMessageIndex,
+                    },
+                    ev.event.repliesTo.eventIndex
+                );
             }
             return result;
-        }, {});
+        }, new MessageContextMap());
     }
 
     private messagesFromEventsResponse<T extends ChatEvent>(
@@ -634,55 +616,40 @@ export class OpenChatAgent extends EventTarget {
         events: EventWrapper<T>[],
         threadRootMessageIndex: number | undefined,
         latestClientEventIndex: number | undefined
-    ): Promise<Record<string, EventWrapper<Message>[]>> {
-        const missing = this.findMissingEventIndexesByChat(currentChatId, events);
-        const missingMessages: Promise<[string, EventWrapper<Message>[]]>[] = [];
-
-        // this looks horrendous but remember these things will *usually* come straight from the cache
-        Object.entries(missing).forEach(([chatId, idxs]) => {
-            if (chatId === currentChatId && chatType === "direct_chat") {
-                missingMessages.push(
-                    this.userClient
-                        .chatEventsByIndex(
-                            idxs,
-                            currentChatId,
-                            threadRootMessageIndex,
-                            latestClientEventIndex
-                        )
-                        .then((resp) => this.messagesFromEventsResponse(chatId, resp))
-                );
+    ): Promise<MessageContextMap<EventWrapper<Message>>> {
+        return this.findMissingEventIndexesByChat(
+            currentChatId,
+            events,
+            threadRootMessageIndex
+        ).asycMap((key, ctx, idxs) => {
+            if (ctx.chatId === currentChatId && chatType === "direct_chat") {
+                return this.userClient
+                    .chatEventsByIndex(
+                        idxs,
+                        currentChatId,
+                        ctx.threadRootMessageIndex,
+                        latestClientEventIndex
+                    )
+                    .then((resp) => this.messagesFromEventsResponse(key, resp));
             } else {
-                // it must be a group chat
-                const client = this.getGroupClient(chatId);
-                missingMessages.push(
-                    client
-                        .chatEventsByIndex(idxs, threadRootMessageIndex, latestClientEventIndex)
-                        .then((resp) => this.messagesFromEventsResponse(chatId, resp))
-                );
+                // Note that the latestClientEventIndex relates to the *currentChat*, not necessarily the chat for this messageContext
+                // So only include it if the context matches the current chat
+                // And yes - this is probably trying to tell us something
+                const latestIndex =
+                    ctx.chatId === currentChatId ? latestClientEventIndex : undefined;
+                const client = this.getGroupClient(ctx.chatId);
+                return client
+                    .chatEventsByIndex(idxs, ctx.threadRootMessageIndex, latestIndex)
+                    .then((resp) => this.messagesFromEventsResponse(key, resp));
             }
         });
-
-        // use waitAll so that a single failure doesn't derail everything
-        const result = await waitAll(missingMessages);
-        if (result.errors.length > 0) {
-            console.error("Some missing indexes could not be resolved: ", result.errors);
-        }
-        return result.success.reduce<Record<string, EventWrapper<Message>[]>>(
-            (res, [chatId, messages]) => {
-                if (!res[chatId]) {
-                    res[chatId] = [];
-                }
-                res[chatId] = res[chatId].concat(messages);
-                return res;
-            },
-            {}
-        );
     }
 
     private rehydrateEvent<T extends ChatEvent>(
         ev: EventWrapper<T>,
         defaultChatId: string,
-        missingReplies: Record<string, EventWrapper<Message>[]>
+        missingReplies: MessageContextMap<EventWrapper<Message>>,
+        threadRootMessageIndex: number | undefined
     ): EventWrapper<T> {
         if (ev.event.kind === "message") {
             const originalContent = ev.event.content;
@@ -691,8 +658,11 @@ export class OpenChatAgent extends EventTarget {
             const originalReplyContext = ev.event.repliesTo;
             let rehydratedReplyContext = undefined;
             if (ev.event.repliesTo && ev.event.repliesTo.kind === "raw_reply_context") {
-                const chatId = ev.event.repliesTo.chatIdIfOther ?? defaultChatId;
-                const messageEvents = missingReplies[chatId] ?? [];
+                const messageContext = ev.event.repliesTo.sourceContext ?? {
+                    chatId: defaultChatId,
+                    threadRootMessageIndex,
+                };
+                const messageEvents = missingReplies.lookup(messageContext);
                 const idx = ev.event.repliesTo.eventIndex;
                 const msg = messageEvents.find((me) => me.index === idx)?.event;
                 if (msg) {
@@ -703,15 +673,21 @@ export class OpenChatAgent extends EventTarget {
                         messageId: msg.messageId,
                         messageIndex: msg.messageIndex,
                         eventIndex: idx,
-                        chatId,
                         edited: msg.edited,
                         isThreadRoot: msg.thread !== undefined,
+                        sourceContext: ev.event.repliesTo.sourceContext ?? {
+                            chatId: defaultChatId,
+                        },
                     };
                 } else {
                     this._logger.error(
                         "Reply context not found, this should only happen if we failed to load the reply context message",
-                        defaultChatId,
-                        chatId
+                        {
+                            chatId: defaultChatId,
+                            messageContext,
+                            messageEvents,
+                            repliesTo: ev.event.repliesTo,
+                        }
                     );
                 }
             }
@@ -751,7 +727,9 @@ export class OpenChatAgent extends EventTarget {
             latestClientEventIndex
         );
 
-        resp.events = resp.events.map((e) => this.rehydrateEvent(e, currentChatId, missing));
+        resp.events = resp.events.map((e) =>
+            this.rehydrateEvent(e, currentChatId, missing, threadRootMessageIndex)
+        );
         return resp;
     }
 
@@ -801,7 +779,7 @@ export class OpenChatAgent extends EventTarget {
             threadRootMessageIndex,
             latestClientEventIndex
         );
-        return this.rehydrateEvent(message, chatId, missing);
+        return this.rehydrateEvent(message, chatId, missing, threadRootMessageIndex);
     }
 
     searchUsers(searchTerm: string, maxResults = 20): Promise<UserSummary[]> {
@@ -1315,16 +1293,8 @@ export class OpenChatAgent extends EventTarget {
         return this.userClient.setBio(bio);
     }
 
-    createChallenge(): Promise<CreateChallengeResponse> {
-        return this._userIndexClient.createChallenge();
-    }
-
-    registerUser(
-        username: string,
-        challengeAttempt: ChallengeAttempt,
-        referredBy: string | undefined
-    ): Promise<RegisterUserResponse> {
-        return this._userIndexClient.registerUser(username, challengeAttempt, referredBy);
+    registerUser(username: string, referredBy: string | undefined): Promise<RegisterUserResponse> {
+        return this._userIndexClient.registerUser(username, referredBy);
     }
 
     getUserStorageLimits(): Promise<StorageStatus> {
@@ -1534,9 +1504,19 @@ export class OpenChatAgent extends EventTarget {
         );
 
         const latestReplies = thread.latestReplies.map((r) =>
-            this.rehydrateEvent(r, thread.chatId, threadMissing)
+            this.rehydrateEvent(
+                r,
+                thread.chatId,
+                threadMissing,
+                thread.rootMessage.event.messageIndex
+            )
         );
-        const rootMessage = this.rehydrateEvent(thread.rootMessage, thread.chatId, rootMissing);
+        const rootMessage = this.rehydrateEvent(
+            thread.rootMessage,
+            thread.chatId,
+            rootMissing,
+            undefined
+        );
 
         return {
             ...thread,
@@ -1631,11 +1611,23 @@ export class OpenChatAgent extends EventTarget {
         return this._marketMakerClient.updateConfig(config);
     }
 
-    isEligibleForInitialAirdrop(): Promise<EligibleForInitialAirdropResponse> {
-        return this._userIndexClient.isEligibleForInitialAirdrop();
+    setMessageReminder(
+        chatId: string,
+        eventIndex: number,
+        remindAt: number,
+        notes?: string,
+        threadRootMessageIndex?: number
+    ): Promise<SetMessageReminderResponse> {
+        return this.userClient.setMessageReminder(
+            chatId,
+            eventIndex,
+            remindAt,
+            notes,
+            threadRootMessageIndex
+        );
     }
 
-    setNeuronControllerForInitialAirdrop(principal: string): Promise<SetNeuronControllerResponse> {
-        return this._userIndexClient.setNeuronControllerForInitialAirdrop(principal);
+    cancelMessageReminder(reminderId: bigint): Promise<boolean> {
+        return this.userClient.cancelMessageReminder(reminderId);
     }
 }

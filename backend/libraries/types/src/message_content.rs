@@ -3,7 +3,7 @@ use crate::{
     CanisterId, CompletedCryptoTransaction, CryptoTransaction, Cryptocurrency, MessageIndex, ProposalContent,
     ProposalContentInternal, TimestampMillis, TotalVotes, UserId, VoteOperation,
 };
-use candid::CandidType;
+use candid::{CandidType, Principal};
 use ic_ledger_types::Tokens;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
@@ -11,6 +11,7 @@ use std::fmt::{Debug, Formatter};
 
 pub const MAX_TEXT_LENGTH: u32 = 5_000;
 pub const MAX_TEXT_LENGTH_USIZE: usize = MAX_TEXT_LENGTH as usize;
+const OPENCHAT_BOT_USER_ID: UserId = UserId::new(Principal::from_slice(&[228, 104, 142, 9, 133, 211, 135, 217, 129, 1]));
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub enum MessageContentInitial {
@@ -25,6 +26,9 @@ pub enum MessageContentInitial {
     Giphy(GiphyContent),
     GovernanceProposal(ProposalContent),
     Prize(PrizeContentInitial),
+    MessageReminderCreated(MessageReminderCreatedContent),
+    MessageReminder(MessageReminderContent),
+    Custom(CustomContent),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -41,6 +45,9 @@ pub enum MessageContent {
     GovernanceProposal(ProposalContent),
     Prize(PrizeContent),
     PrizeWinner(PrizeWinnerContent),
+    MessageReminderCreated(MessageReminderCreatedContent),
+    MessageReminder(MessageReminderContent),
+    Custom(CustomContent),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -57,6 +64,9 @@ pub enum MessageContentInternal {
     GovernanceProposal(ProposalContentInternal),
     Prize(PrizeContentInternal),
     PrizeWinner(PrizeWinnerContent),
+    MessageReminderCreated(MessageReminderCreatedContent),
+    MessageReminder(MessageReminderContent),
+    Custom(CustomContent),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -65,10 +75,10 @@ pub enum ContentValidationError {
     TextTooLong(u32),
     InvalidPoll(InvalidPollReason),
     TransferCannotBeZero,
-    TransferLimitExceeded(u128),
     InvalidTypeForForwarding,
     PrizeEndDateInThePast,
     UnauthorizedToSendProposalMessages,
+    Unauthorized,
 }
 
 impl MessageContentInitial {
@@ -119,10 +129,6 @@ impl MessageContentInitial {
             MessageContentInitial::Crypto(c) => {
                 if c.transfer.is_zero() {
                     return Err(ContentValidationError::TransferCannotBeZero);
-                } else if c.transfer.exceeds_transfer_limit() {
-                    return Err(ContentValidationError::TransferLimitExceeded(
-                        c.transfer.token().transfer_limit(),
-                    ));
                 }
             }
             MessageContentInitial::Prize(p) => {
@@ -133,6 +139,16 @@ impl MessageContentInitial {
             MessageContentInitial::GovernanceProposal(_) => {
                 if proposals_bot_user_id.map_or(true, |u| u != sender) {
                     return Err(ContentValidationError::UnauthorizedToSendProposalMessages);
+                }
+            }
+            MessageContentInitial::MessageReminderCreated(_) => {
+                if sender != OPENCHAT_BOT_USER_ID {
+                    return Err(ContentValidationError::Unauthorized);
+                }
+            }
+            MessageContentInitial::MessageReminder(_) => {
+                if sender != OPENCHAT_BOT_USER_ID {
+                    return Err(ContentValidationError::Unauthorized);
                 }
             }
             _ => {}
@@ -149,7 +165,10 @@ impl MessageContentInitial {
             MessageContentInitial::Deleted(_) => true,
             MessageContentInitial::Crypto(_)
             | MessageContentInitial::Giphy(_)
-            | MessageContentInitial::GovernanceProposal(_) => false,
+            | MessageContentInitial::GovernanceProposal(_)
+            | MessageContentInitial::MessageReminderCreated(_)
+            | MessageContentInitial::MessageReminder(_)
+            | MessageContentInitial::Custom(_) => false,
         };
 
         if is_empty {
@@ -195,22 +214,31 @@ impl MessageContentInitial {
                 reservations: HashSet::new(),
                 transaction: p.transfer,
             }),
+            MessageContentInitial::MessageReminderCreated(r) => MessageContentInternal::MessageReminderCreated(r),
+            MessageContentInitial::MessageReminder(r) => MessageContentInternal::MessageReminder(r),
+            MessageContentInitial::Custom(c) => MessageContentInternal::Custom(c),
         }
     }
 
     pub fn text_length(&self) -> usize {
+        fn opt_string_len(input: &Option<String>) -> usize {
+            input.as_ref().map_or(0, |s| s.len())
+        }
+
         match self {
             MessageContentInitial::Text(t) => t.text.len(),
-            MessageContentInitial::Image(i) => i.caption.as_ref().map_or(0, |t| t.len()),
-            MessageContentInitial::Video(v) => v.caption.as_ref().map_or(0, |t| t.len()),
-            MessageContentInitial::Audio(a) => a.caption.as_ref().map_or(0, |t| t.len()),
-            MessageContentInitial::File(f) => f.caption.as_ref().map_or(0, |t| t.len()),
-            MessageContentInitial::Poll(p) => p.config.text.as_ref().map_or(0, |t| t.len()),
-            MessageContentInitial::Crypto(c) => c.caption.as_ref().map_or(0, |t| t.len()),
-            MessageContentInitial::Deleted(_) => 0,
-            MessageContentInitial::Giphy(g) => g.caption.as_ref().map_or(0, |t| t.len()),
+            MessageContentInitial::Image(i) => opt_string_len(&i.caption),
+            MessageContentInitial::Video(v) => opt_string_len(&v.caption),
+            MessageContentInitial::Audio(a) => opt_string_len(&a.caption),
+            MessageContentInitial::File(f) => opt_string_len(&f.caption),
+            MessageContentInitial::Poll(p) => opt_string_len(&p.config.text),
+            MessageContentInitial::Crypto(c) => opt_string_len(&c.caption),
+            MessageContentInitial::Giphy(g) => opt_string_len(&g.caption),
             MessageContentInitial::GovernanceProposal(p) => p.proposal.summary().len(),
-            MessageContentInitial::Prize(p) => p.caption.as_ref().map_or(0, |t| t.len()),
+            MessageContentInitial::Prize(p) => opt_string_len(&p.caption),
+            MessageContentInitial::MessageReminderCreated(r) => opt_string_len(&r.notes),
+            MessageContentInitial::MessageReminder(r) => opt_string_len(&r.notes),
+            MessageContentInitial::Deleted(_) | MessageContentInitial::Custom(_) => 0,
         }
     }
 }
@@ -230,6 +258,9 @@ impl From<MessageContent> for MessageContentInitial {
             MessageContent::Video(c) => MessageContentInitial::Video(c),
             MessageContent::Prize(_) => panic!("Cannot convert output prize to initial prize"),
             MessageContent::PrizeWinner(_) => panic!("Cannot send a prize winner message"),
+            MessageContent::MessageReminderCreated(r) => MessageContentInitial::MessageReminderCreated(r),
+            MessageContent::MessageReminder(r) => MessageContentInitial::MessageReminder(r),
+            MessageContent::Custom(c) => MessageContentInitial::Custom(c),
         }
     }
 }
@@ -255,6 +286,9 @@ impl From<MessageContentInitial> for MessageContent {
                 caption: c.caption,
                 prizes_pending: 0,
             }),
+            MessageContentInitial::MessageReminderCreated(r) => MessageContent::MessageReminderCreated(r),
+            MessageContentInitial::MessageReminder(r) => MessageContent::MessageReminder(r),
+            MessageContentInitial::Custom(c) => MessageContent::Custom(c),
         }
     }
 }
@@ -285,6 +319,9 @@ impl MessageContentInternal {
                 caption: p.caption.clone(),
                 prizes_pending: p.reservations.len() as u32,
             }),
+            MessageContentInternal::MessageReminderCreated(r) => MessageContent::MessageReminderCreated(r.clone()),
+            MessageContentInternal::MessageReminder(r) => MessageContent::MessageReminder(r.clone()),
+            MessageContentInternal::Custom(c) => MessageContent::Custom(c.clone()),
         }
     }
 
@@ -297,11 +334,14 @@ impl MessageContentInternal {
             MessageContentInternal::File(c) => c.caption.as_deref(),
             MessageContentInternal::Poll(c) => c.config.text.as_deref(),
             MessageContentInternal::Crypto(c) => c.caption.as_deref(),
-            MessageContentInternal::Deleted(_) => None,
             MessageContentInternal::Giphy(c) => c.caption.as_deref(),
             MessageContentInternal::GovernanceProposal(c) => Some(c.proposal.title()),
             MessageContentInternal::Prize(c) => c.caption.as_deref(),
-            MessageContentInternal::PrizeWinner(_) => None,
+            MessageContentInternal::MessageReminderCreated(r) => r.notes.as_deref(),
+            MessageContentInternal::MessageReminder(r) => r.notes.as_deref(),
+            MessageContentInternal::PrizeWinner(_) | MessageContentInternal::Deleted(_) | MessageContentInternal::Custom(_) => {
+                None
+            }
         }
     }
 
@@ -339,7 +379,10 @@ impl MessageContentInternal {
             | MessageContentInternal::Giphy(_)
             | MessageContentInternal::GovernanceProposal(_)
             | MessageContentInternal::Prize(_)
-            | MessageContentInternal::PrizeWinner(_) => {}
+            | MessageContentInternal::PrizeWinner(_)
+            | MessageContentInternal::MessageReminderCreated(_)
+            | MessageContentInternal::MessageReminder(_)
+            | MessageContentInternal::Custom(_) => {}
         }
 
         references
@@ -555,6 +598,27 @@ pub struct PrizeWinnerContent {
     pub winner: UserId,
     pub transaction: CompletedCryptoTransaction,
     pub prize_message: MessageIndex,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct MessageReminderCreatedContent {
+    pub reminder_id: u64,
+    pub remind_at: TimestampMillis,
+    pub notes: Option<String>,
+    pub hidden: bool,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct MessageReminderContent {
+    pub reminder_id: u64,
+    pub notes: Option<String>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct CustomContent {
+    pub kind: String,
+    #[serde(with = "serde_bytes")]
+    pub data: Vec<u8>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
