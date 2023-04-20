@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { OPENCHAT_BOT_USER_ID } from "openchat-client";
     import Launch from "./Launch.svelte";
 </script>
 
@@ -8,7 +9,7 @@
         <div class="sub-two">50,000</div>
         <div class="sub-three">satoshis</div>
     </div>
-    <Launch on:login />
+    <Launch rootPath={`/${OPENCHAT_BOT_USER_ID}`} on:login />
 </div>
 
 <style type="text/scss">

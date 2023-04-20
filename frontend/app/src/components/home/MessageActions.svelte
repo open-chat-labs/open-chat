@@ -6,6 +6,7 @@
     import Smiley from "./Smiley.svelte";
     import Close from "svelte-material-icons/Close.svelte";
     import Transfer from "../icons/Transfer.svelte";
+    import Bitcoin from "../icons/Bitcoin.svelte";
     import StickerEmoji from "svelte-material-icons/StickerEmoji.svelte";
     import TrayPlus from "svelte-material-icons/DotsVertical.svelte";
     import TrayRemove from "svelte-material-icons/Close.svelte";
@@ -125,7 +126,11 @@
         </div>
         <div class="send-icp" on:click|stopPropagation={createTokenTransfer}>
             <HoverIcon title={"Send Crypto"}>
-                <Transfer size={$iconSize} color={iconColour} />
+                <!-- <Transfer size={$iconSize} color={iconColour} /> -->
+                <Bitcoin
+                    txtColor={useDrawer ? "var(--button-txt)" : "var(--icon-txt)"}
+                    size={$iconSize}
+                    color={iconColour} />
             </HoverIcon>
         </div>
         <div class="gif" on:click|stopPropagation={sendGif}>

@@ -3,6 +3,8 @@
     import { createEventDispatcher, getContext } from "svelte";
     import page from "page";
 
+    export let rootPath = "/";
+
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
@@ -11,7 +13,7 @@
 
     function launch() {
         if ($identityState === "logged_in") {
-            page("/");
+            page(rootPath);
         } else {
             dispatch("login");
         }
