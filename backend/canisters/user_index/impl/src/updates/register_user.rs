@@ -136,7 +136,9 @@ fn commit(
         Some(local_user_index_canister_id),
     );
 
-    send_welcome_messages(user_id, runtime_state);
+    if runtime_state.data.next_user_upgrade_started {
+        send_welcome_messages(user_id, runtime_state);
+    }
 
     runtime_state.data.storage_index_user_sync_queue.push(UserConfig {
         user_id: caller,
