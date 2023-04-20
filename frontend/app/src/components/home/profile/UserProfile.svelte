@@ -345,6 +345,10 @@
                 <div>{user.userId}</div>
             </div>
             <div>
+                <Legend label={$_("principal")} />
+                <div>{client.principal}</div>
+            </div>
+            <div>
                 <Legend label={$_("version")} rules={$_("websiteVersion")} />
                 <div>{version}</div>
             </div>

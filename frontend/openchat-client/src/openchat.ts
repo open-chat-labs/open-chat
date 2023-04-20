@@ -400,6 +400,10 @@ export class OpenChat extends EventTarget {
         this.dispatchEvent(new ChatUpdated());
     }
 
+    public get principal(): string | undefined {
+        return this._identity?.getPrincipal().toString();
+    }
+
     private loadedIdentity(id: Identity) {
         this._identity = id;
         const anon = id.getPrincipal().isAnonymous();

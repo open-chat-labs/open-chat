@@ -624,7 +624,8 @@
         "proposalsBotAction": "Proposals Bot Actions",
         "storageIndexAction": "Storage Index Actions",
         "cyclesDispenserAction": "Cycles Dispenser Actions",
-        "unknownActionCategory": "Other Actions"
+        "unknownActionCategory": "Other Actions",
+        "eligibleNeurons": "Eligible neurons"
     },
     "yes": "Yes",
     "no": "No",

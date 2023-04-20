@@ -23,6 +23,7 @@
     import ProposalVotingProgress from "./ProposalVotingProgress.svelte";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import ProposalProgressLayout from "./ProposalProgressLayout.svelte";
+    import ProposalNeuronList from "./ProposalNeuronList.svelte";
 
     const dispatch = createEventDispatcher();
 
@@ -42,7 +43,8 @@
     let summaryExpanded = false;
     let showNeuronInfo = false;
     let showPayload = false;
-    
+    let showNeuronList = false;
+
     $: token = tokenByGovernanceCanisterLookup[content.governanceCanisterId];
     $: rootCanister = cryptoLookup[token].rootCanister;
     $: proposalTopicsStore = client.proposalTopicsStore;
@@ -68,7 +70,8 @@
     $: rejectPercent = round2((100 * proposal.tally.no) / proposal.tally.total);
     $: votingEnded = proposal.deadline <= $now;
     $: disable = readonly || reply || votingEnded;
-    $: votingDisabled = voteStatus !== undefined || disable;
+    // $: votingDisabled = voteStatus !== undefined || disable;
+    $: votingDisabled = disable;
     $: typeValue = getProposalTopicLabel(content, $proposalTopicsStore);
     $: showFullSummary = proposal.summary.length < 400;
     $: payload =
@@ -90,6 +93,9 @@
         if (votingDisabled) {
             return;
         }
+
+        showNeuronList = true;
+        return;
 
         const mId = messageId;
         proposalVotes.insert(mId, adopt ? "adopting" : "rejecting");
@@ -160,6 +166,14 @@
         );
     }
 </script>
+
+{#if showNeuronList}
+    <ProposalNeuronList
+        on:close={() => (showNeuronList = false)}
+        governanceCanisterId={content.governanceCanisterId}
+        proposalId={proposal.id}
+        {isNns} />
+{/if}
 
 {#if collapsed}
     <div on:click={onClick}>
