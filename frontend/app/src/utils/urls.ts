@@ -32,11 +32,16 @@ export function removeQueryStringParam(name: string): string {
     return [...qs.keys()].length > 0 ? `${path}?${qs}` : path;
 }
 
-const scrollingRoutes = ["features", "roadmap", "whitepaper", "architecture", "blog"];
+const nomenuRoutes = ["miami"];
+const scrollingRoutes = ["features", "roadmap", "whitepaper", "architecture", "blog", "miami"];
 const landingPageRoutes = ["home", ...scrollingRoutes];
 
 export function isLandingPageRoute(path: string): boolean {
     return landingPageRoutes.find((r) => path.slice(1).toLowerCase().startsWith(r)) !== undefined;
+}
+
+export function showMenuForLandingRoute(path: string): boolean {
+    return nomenuRoutes.find((r) => path.slice(1).toLowerCase().startsWith(r)) === undefined;
 }
 
 export function isScrollingRoute(path: string): boolean {
