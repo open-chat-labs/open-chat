@@ -44,6 +44,7 @@ async fn upgrade_user_canister_wasm(args: Args) -> Response {
         if use_for_new_canisters {
             mutate_state(|state| {
                 state.data.user_canister_wasm = wasm;
+                state.data.next_user_upgrade_started = true;
             });
         }
 

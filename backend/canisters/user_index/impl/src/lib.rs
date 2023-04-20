@@ -180,6 +180,8 @@ struct Data {
     pub timer_jobs: TimerJobs<TimerJob>,
     pub neuron_controllers_for_initial_airdrop: HashMap<UserId, Principal>,
     pub internet_identity_canister_id: CanisterId,
+    #[serde(default)]
+    pub next_user_upgrade_started: bool,
 }
 
 impl Data {
@@ -221,6 +223,7 @@ impl Data {
             timer_jobs: TimerJobs::default(),
             neuron_controllers_for_initial_airdrop: HashMap::new(),
             internet_identity_canister_id,
+            next_user_upgrade_started: false,
         };
 
         // Register the ProposalsBot
@@ -266,6 +269,7 @@ impl Default for Data {
             timer_jobs: TimerJobs::default(),
             neuron_controllers_for_initial_airdrop: HashMap::new(),
             internet_identity_canister_id: Principal::anonymous(),
+            next_user_upgrade_started: false,
         }
     }
 }
