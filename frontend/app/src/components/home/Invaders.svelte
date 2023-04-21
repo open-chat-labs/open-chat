@@ -48,10 +48,11 @@
     });
 
     function init() {
+        const width = containerWidth;
         const size = 30;
         ctx = canvas.getContext("2d");
         player = {
-            x: size + canvas.width / 2,
+            x: width / 2 - size / 2,
             y: canvas.height - size,
             width: size,
             height: size,
@@ -190,7 +191,6 @@
             color: "#ff0000",
             speed: 10,
         });
-        console.log("playing laser sound");
         laserSound.currentTime = 0;
         laserSound.play();
     }
@@ -199,9 +199,9 @@
     function createInvaders() {
         const invader = new Image();
         invader.src = "../assets/robot.svg";
-        let rows = 5;
-        let columns = 8;
-        let spacing = 30;
+        const rows = 5;
+        const columns = 8;
+        const spacing = 30;
         for (let i = 0; i < rows; i++) {
             for (let j = 0; j < columns; j++) {
                 invaders.push({

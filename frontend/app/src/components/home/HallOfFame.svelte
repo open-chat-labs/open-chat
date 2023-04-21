@@ -107,14 +107,16 @@
             </div>
             <table cellpadding="3px" class="scoreboard">
                 <thead class="table-header">
+                    <th class="rank">#</th>
                     <th class="username">Username</th>
                     <th class="value">Value</th>
                     <th class="diamonds">Diamonds</th>
                     <th class="users">Users</th>
                 </thead>
                 <tbody>
-                    {#each leaders as leader}
+                    {#each leaders as leader, i}
                         <tr class="table-row">
+                            <td class="rank">{i + 1}</td>
                             <td class="username">{leader.username}</td>
                             <td class="value">{leader.value}</td>
                             <td class="diamonds">{leader.diamonds}</td>
@@ -206,7 +208,8 @@
         td {
             padding: $sp2;
         }
-        .username {
+        .username,
+        .rank {
             text-align: start;
         }
         .value,
