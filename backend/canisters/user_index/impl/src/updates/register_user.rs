@@ -39,14 +39,14 @@ async fn register_user_v2(args: Args) -> Response {
         Err(response) => return response,
     };
 
-    let referrer = referral_type
+    let referral_code = referral_type
         .as_ref()
         .map(|t| ReferralCode::new(t, args.referral_code.unwrap()));
 
     let c2c_create_user_args = local_user_index_canister::c2c_create_user::Args {
         principal: caller,
         username: args.username.clone(),
-        referred_by: referrer.as_ref().and_then(|r| r.user()),
+        referred_by: referral_code.as_ref().and_then(|r| r.user()),
     };
 
     let result =
@@ -58,7 +58,7 @@ async fn register_user_v2(args: Args) -> Response {
                         args.username,
                         user_wasm_version,
                         user_id,
-                        referrer,
+                        referral_code,
                         local_user_index_canister,
                         state,
                     )
@@ -136,12 +136,12 @@ fn commit(
     username: String,
     wasm_version: Version,
     user_id: UserId,
-    referrer: Option<ReferralCode>,
+    referral_code: Option<ReferralCode>,
     local_user_index_canister_id: CanisterId,
     runtime_state: &mut RuntimeState,
 ) {
     let now = runtime_state.env.now();
-    let referred_by = referrer.as_ref().and_then(|r| r.user());
+    let referred_by = referral_code.as_ref().and_then(|r| r.user());
 
     runtime_state.data.users.release_username(&username);
 
@@ -175,7 +175,7 @@ fn commit(
         byte_limit: 100 * ONE_MB,
     });
 
-    if let Some(ReferralCode::BtcMiami(code)) = referrer {
+    if let Some(ReferralCode::BtcMiami(code)) = referral_code {
         // This referral code can only be used once so claim it
         runtime_state.data.referral_codes.claim(code, user_id, now);
 
