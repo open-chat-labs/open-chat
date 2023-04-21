@@ -2,17 +2,32 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use types::UserId;
 
+type Year = u32;
+type Month = u8;
+
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
-    pub all_time: bool,
-    pub year: Option<u32>,
-    pub month: Option<u32>,
+    pub filter: Option<LeaderboardFilter>,
     pub count: u32,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
+pub enum LeaderboardFilter {
+    Month(Year, Month),
+    CurrentMonth,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
-    Success(Vec<ReferralStats>),
+    AllTime(Vec<ReferralStats>),
+    Month(MonthSuccessResult),
+}
+
+#[derive(CandidType, Serialize, Deserialize, Debug)]
+pub struct MonthSuccessResult {
+    pub year: Year,
+    pub month: Month,
+    pub results: Vec<ReferralStats>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

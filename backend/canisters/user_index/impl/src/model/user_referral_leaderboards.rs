@@ -107,14 +107,14 @@ pub struct ReferralStats {
     pub user_id: UserId,
 }
 
-#[derive(Serialize, Deserialize, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Serialize, Deserialize, Copy, Clone, Eq, PartialEq, Ord, PartialOrd)]
 pub struct MonthKey {
     year: u32,
-    month: u32,
+    month: u8,
 }
 
 impl MonthKey {
-    pub fn new(year: u32, month: u32) -> MonthKey {
+    pub fn new(year: u32, month: u8) -> MonthKey {
         MonthKey { year, month }
     }
 
@@ -123,8 +123,16 @@ impl MonthKey {
 
         MonthKey {
             year: date.year() as u32,
-            month: u8::from(date.month()) as u32,
+            month: u8::from(date.month()),
         }
+    }
+
+    pub fn year(&self) -> u32 {
+        self.year
+    }
+
+    pub fn month(&self) -> u8 {
+        self.month
     }
 }
 
