@@ -118,6 +118,35 @@ impl RuntimeState {
         jobs::make_pending_payments::start_job_if_required(self);
     }
 
+    pub fn populate_user_referral_leaderboard(&mut self) {
+        let now = self.env.now();
+
+        for user in self.data.users.iter() {
+            if let Some(referred_by) = user.referred_by {
+                if let Some(referrer) = self.data.users.get_by_user_id(&referred_by) {
+                    if referrer.diamond_membership_details.is_active(now) {
+                        self.data.user_referral_leaderboards.add_referral(referred_by, now);
+
+                        let icp_raised_for_paid_diamond: u64 =
+                            user.diamond_membership_details.payments().iter().map(|p| p.amount_e8s).sum();
+                        if icp_raised_for_paid_diamond > 0 {
+                            self.data.user_referral_leaderboards.add_reward(
+                                referred_by,
+                                true,
+                                icp_raised_for_paid_diamond,
+                                now,
+                            );
+                        } else if user.diamond_membership_details.is_active(now) {
+                            self.data
+                                .user_referral_leaderboards
+                                .add_reward(referred_by, true, 75_000_000, now);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     pub fn metrics(&self) -> Metrics {
         let now = self.env.now();
         let canister_upgrades_metrics = self.data.canisters_requiring_upgrade.metrics();
