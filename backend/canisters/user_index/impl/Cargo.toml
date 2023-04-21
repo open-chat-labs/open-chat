@@ -41,7 +41,6 @@ lodepng = "3.6.1"
 msgpack = { path = "../../../libraries/msgpack" }
 notifications_index_canister = { path = "../../notifications_index/api" }
 notifications_index_canister_c2c_client = { path = "../../notifications_index/c2c_client" }
-querystring = { workspace = true }
 rand_core = { workspace = true }
 serde = { workspace = true }
 serde_bytes = { workspace = true }

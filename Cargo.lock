@@ -5288,12 +5288,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "querystring"
-version = "1.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9318ead08c799aad12a55a3e78b82e0b6167271ffd1f627b758891282f739187"
-
-[[package]]
 name = "quote"
 version = "1.0.26"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7036,7 +7030,6 @@ dependencies = [
  "msgpack",
  "notifications_index_canister",
  "notifications_index_canister_c2c_client",
- "querystring",
  "rand_core 0.6.4",
  "serde",
  "serde_bytes",
