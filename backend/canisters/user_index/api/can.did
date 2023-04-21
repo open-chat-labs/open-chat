@@ -282,7 +282,7 @@ type ReferralMetricsResponse =
 type ReferralLeaderboardArgs =
     record {
         filter: opt variant {
-            Month: record { nat32; nat8 };
+            Month: record { year: nat32; month: nat8 };
             CurrentMonth;
         };
         count: nat32;
