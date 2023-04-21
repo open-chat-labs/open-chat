@@ -2,6 +2,7 @@ use crate::model::local_user_index_map::LocalUserIndex;
 use crate::model::storage_index_user_sync_queue::OpenStorageUserSyncQueue;
 use crate::model::user_map::UserMap;
 use crate::model::user_principal_migration_queue::UserPrincipalMigrationQueue;
+use crate::model::user_referral_leaderboards::UserReferralLeaderboards;
 use crate::timer_job_types::TimerJob;
 use candid::Principal;
 use canister_state_macros::canister_state;
@@ -9,12 +10,15 @@ use canister_timer_jobs::TimerJobs;
 use local_user_index_canister::Event as LocalUserIndexEvent;
 use model::local_user_index_map::LocalUserIndexMap;
 use model::pending_payments_queue::{PendingPayment, PendingPaymentsQueue};
+use model::referral_codes::{ReferralCodes, ReferralTypeMetrics};
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use types::{CanisterId, CanisterWasm, Cryptocurrency, Cycles, Milliseconds, TimestampMillis, Timestamped, UserId, Version};
+use user_index_canister::add_referral_codes::ReferralType;
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::canister_event_sync_queue::CanisterEventSyncQueue;
+use utils::consts::DEV_TEAM_DFX_PRINCIPAL;
 use utils::env::Environment;
 use utils::time::DAY_IN_MS;
 
@@ -96,6 +100,11 @@ impl RuntimeState {
         }
     }
 
+    pub fn is_caller_dev_team_dfx_principal(&self) -> bool {
+        let caller = self.env.caller();
+        caller == DEV_TEAM_DFX_PRINCIPAL
+    }
+
     pub fn push_event_to_local_user_index(&mut self, user_id: UserId, event: LocalUserIndexEvent) {
         if let Some(canister_id) = self.data.local_index_map.get_index_canister(&user_id) {
             self.data.user_index_event_sync_queue.push(canister_id, event);
@@ -115,6 +124,35 @@ impl RuntimeState {
     pub fn queue_payment(&mut self, pending_payment: PendingPayment) {
         self.data.pending_payments_queue.push(pending_payment);
         jobs::make_pending_payments::start_job_if_required(self);
+    }
+
+    pub fn populate_user_referral_leaderboard(&mut self) {
+        let now = self.env.now();
+
+        for user in self.data.users.iter() {
+            if let Some(referred_by) = user.referred_by {
+                if let Some(referrer) = self.data.users.get_by_user_id(&referred_by) {
+                    if referrer.diamond_membership_details.is_active(now) {
+                        self.data.user_referral_leaderboards.add_referral(referred_by, now);
+
+                        let icp_raised_for_paid_diamond: u64 =
+                            user.diamond_membership_details.payments().iter().map(|p| p.amount_e8s).sum();
+                        if icp_raised_for_paid_diamond > 0 {
+                            self.data.user_referral_leaderboards.add_reward(
+                                referred_by,
+                                true,
+                                icp_raised_for_paid_diamond,
+                                now,
+                            );
+                        } else if user.diamond_membership_details.is_active(now) {
+                            self.data
+                                .user_referral_leaderboards
+                                .add_reward(referred_by, true, 75_000_000, now);
+                        }
+                    }
+                }
+            }
+        }
     }
 
     pub fn metrics(&self) -> Metrics {
@@ -150,6 +188,7 @@ impl RuntimeState {
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
                 internet_identity: self.data.internet_identity_canister_id,
             },
+            referral_codes: self.data.referral_codes.metrics(),
         }
     }
 }
@@ -182,6 +221,10 @@ struct Data {
     pub internet_identity_canister_id: CanisterId,
     #[serde(default)]
     pub next_user_upgrade_started: bool,
+    #[serde(default)]
+    pub referral_codes: ReferralCodes,
+    #[serde(default)]
+    pub user_referral_leaderboards: UserReferralLeaderboards,
 }
 
 impl Data {
@@ -224,6 +267,8 @@ impl Data {
             neuron_controllers_for_initial_airdrop: HashMap::new(),
             internet_identity_canister_id,
             next_user_upgrade_started: false,
+            referral_codes: ReferralCodes::default(),
+            user_referral_leaderboards: UserReferralLeaderboards::default(),
         };
 
         // Register the ProposalsBot
@@ -270,6 +315,8 @@ impl Default for Data {
             neuron_controllers_for_initial_airdrop: HashMap::new(),
             internet_identity_canister_id: Principal::anonymous(),
             next_user_upgrade_started: false,
+            referral_codes: ReferralCodes::default(),
+            user_referral_leaderboards: UserReferralLeaderboards::default(),
         }
     }
 }
@@ -297,6 +344,7 @@ pub struct Metrics {
     pub user_index_events_queue_length: usize,
     pub local_user_indexes: Vec<(CanisterId, LocalUserIndex)>,
     pub canister_ids: CanisterIds,
+    pub referral_codes: HashMap<ReferralType, ReferralTypeMetrics>,
 }
 
 #[derive(Serialize, Debug, Default)]

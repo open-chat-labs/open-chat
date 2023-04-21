@@ -4,6 +4,7 @@ pub mod current_user;
 pub mod http_request;
 pub mod platform_moderators;
 pub mod platform_operators;
+pub mod referral_leaderboard;
 pub mod referral_metrics;
 pub mod search;
 pub mod suspected_bots;

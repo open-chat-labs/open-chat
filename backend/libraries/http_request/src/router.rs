@@ -7,15 +7,18 @@ pub enum Route {
     Logs(Option<TimestampMillis>),
     Traces(Option<TimestampMillis>),
     Metrics,
-    Other(String),
+    Other(String, String),
 }
 
 pub fn extract_route(path: &str) -> Route {
-    let path = path.trim_start_matches('/').trim_end_matches('/').to_lowercase();
+    let trimmed = path.trim_start_matches('/').trim_end_matches('/').to_lowercase();
 
-    if path.is_empty() {
-        return Route::Other(path);
+    if trimmed.is_empty() {
+        return Route::Other("".to_string(), "".to_string());
     }
+
+    let (path, qs) = trimmed.split_once('?').unwrap_or((&trimmed, ""));
+
     let parts: Vec<_> = path.split('/').collect();
 
     match parts[0] {
@@ -27,7 +30,7 @@ pub fn extract_route(path: &str) -> Route {
             if let Ok(file_id) = FileId::from_str(parts[1]) {
                 Route::File(file_id)
             } else {
-                Route::Other(path)
+                Route::Other(path.to_string(), qs.to_string())
             }
         }
         "logs" => {
@@ -39,7 +42,7 @@ pub fn extract_route(path: &str) -> Route {
             Route::Traces(since)
         }
         "metrics" => Route::Metrics,
-        _ => Route::Other(path),
+        _ => Route::Other(path.to_string(), qs.to_string()),
     }
 }
 
@@ -63,6 +66,17 @@ mod tests {
 
     #[test]
     fn other() {
-        assert!(matches!(extract_route("blah"), Route::Other(_)));
+        assert!(matches!(extract_route("blah"), Route::Other(_, _)));
+    }
+
+    #[test]
+    fn querystring() {
+        let route = extract_route("blah?abc=1");
+        if let Route::Other(p, qs) = route {
+            assert_eq!(&p, "blah");
+            assert_eq!(&qs, "abc=1");
+        } else {
+            panic!();
+        }
     }
 }

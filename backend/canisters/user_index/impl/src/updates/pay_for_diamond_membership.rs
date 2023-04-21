@@ -83,6 +83,8 @@ fn process_charge(
 
     if let Some(diamond_membership) = runtime_state.data.users.diamond_membership_details_mut(&user_id) {
         let now = runtime_state.env.now();
+        let has_ever_been_diamond_member = diamond_membership.has_ever_been_diamond_member();
+
         diamond_membership.add_payment(
             args.token,
             args.expected_price_e8s,
@@ -145,6 +147,13 @@ fn process_charge(
                 recipient: share_with.into(),
                 reason: PendingPaymentReason::ReferralReward,
             });
+
+            runtime_state.data.user_referral_leaderboards.add_reward(
+                share_with,
+                !has_ever_been_diamond_member,
+                amount_to_referrer,
+                now,
+            );
         }
 
         runtime_state.queue_payment(PendingPayment {

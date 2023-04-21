@@ -1,5 +1,5 @@
 use crate::{read_state, RuntimeState};
-use http_request::{encode_logs, extract_route, get_avatar, get_metrics, Route};
+use http_request::{build_json_response, encode_logs, extract_route, get_avatar, Route};
 use ic_cdk_macros::query;
 use types::{HttpRequest, HttpResponse, TimestampMillis};
 
@@ -18,7 +18,7 @@ fn http_request(request: HttpRequest) -> HttpResponse {
     }
 
     fn get_metrics_impl(runtime_state: &RuntimeState) -> HttpResponse {
-        get_metrics(&runtime_state.metrics())
+        build_json_response(&runtime_state.metrics())
     }
 
     match extract_route(&request.url) {
