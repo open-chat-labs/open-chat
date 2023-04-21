@@ -12,13 +12,6 @@ pub enum ReferralCode {
 }
 
 impl ReferralCode {
-    pub fn new(referral_type: &ReferralType, value: String) -> ReferralCode {
-        match referral_type {
-            ReferralType::BtcMiami => ReferralCode::BtcMiami(value),
-            ReferralType::User => ReferralCode::User(Principal::from_text(value).unwrap().into()),
-        }
-    }
-
     pub fn user(&self) -> Option<UserId> {
         match self {
             ReferralCode::BtcMiami(_) => None,
@@ -82,7 +75,7 @@ impl ReferralCodes {
         }
     }
 
-    pub fn check(&self, code: &String) -> Option<ReferralType> {
+    pub fn check(&self, code: &String) -> Option<ReferralCode> {
         if code.len() > 100 {
             return None;
         }
@@ -90,10 +83,10 @@ impl ReferralCodes {
         if let Some(details) = self.codes.get(code) {
             match details.claimed {
                 Some(_) => None,
-                None => Some(details.referral_type.clone()),
+                None => Some(ReferralCode::BtcMiami(code.clone())),
             }
-        } else if Principal::from_text(code).is_ok() {
-            Some(ReferralType::User)
+        } else if let Ok(user_id) = Principal::from_text(code).map(|p| p.into()) {
+            Some(ReferralCode::User(user_id))
         } else {
             None
         }
@@ -102,7 +95,7 @@ impl ReferralCodes {
     pub fn metrics(&self) -> HashMap<ReferralType, ReferralTypeMetrics> {
         let mut metrics = HashMap::new();
 
-        for (_, details) in self.codes.iter() {
+        for details in self.codes.values() {
             let ms: &mut ReferralTypeMetrics = metrics.entry(details.referral_type.clone()).or_default();
             ms.total += 1;
             if details.claimed.is_some() {

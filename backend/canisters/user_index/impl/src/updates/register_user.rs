@@ -8,7 +8,6 @@ use ic_cdk_macros::update;
 use local_user_index_canister::{Event, OpenChatBotMessage, UserRegistered};
 use storage_index_canister::add_or_update_users::UserConfig;
 use types::{CanisterId, Cryptocurrency, MessageContent, TextContent, UserId, Version};
-use user_index_canister::add_referral_codes::ReferralType;
 use user_index_canister::register_user_v2::{Response::*, *};
 use x509_parser::prelude::FromDer;
 use x509_parser::x509::SubjectPublicKeyInfo;
@@ -33,15 +32,11 @@ async fn register_user_v2(args: Args) -> Response {
         local_user_index_canister,
         user_wasm_version,
         caller,
-        referral_type,
+        referral_code,
     } = match mutate_state(|state| prepare(&args, state)) {
         Ok(ok) => ok,
         Err(response) => return response,
     };
-
-    let referral_code = referral_type
-        .as_ref()
-        .map(|t| ReferralCode::new(t, args.referral_code.unwrap()));
 
     let c2c_create_user_args = local_user_index_canister::c2c_create_user::Args {
         principal: caller,
@@ -80,13 +75,13 @@ struct PrepareOk {
     caller: Principal,
     local_user_index_canister: CanisterId,
     user_wasm_version: Version,
-    referral_type: Option<ReferralType>,
+    referral_code: Option<ReferralCode>,
 }
 
 fn prepare(args: &Args, runtime_state: &mut RuntimeState) -> Result<PrepareOk, Response> {
     let caller = runtime_state.env.caller();
     let now = runtime_state.env.now();
-    let mut referral_type = None;
+    let mut referral_code = None;
 
     if let Err(error) = validate_public_key(caller, &args.public_key, runtime_state.data.internet_identity_canister_id) {
         return Err(PublicKeyInvalid(error));
@@ -100,8 +95,8 @@ fn prepare(args: &Args, runtime_state: &mut RuntimeState) -> Result<PrepareOk, R
         return Err(UserLimitReached);
     }
 
-    if let Some(referral_code) = &args.referral_code {
-        referral_type = match runtime_state.data.referral_codes.check(referral_code) {
+    if let Some(code) = &args.referral_code {
+        referral_code = match runtime_state.data.referral_codes.check(code) {
             Some(t) => Some(t),
             None => return Err(ReferralCodeInvalid),
         }
@@ -124,7 +119,7 @@ fn prepare(args: &Args, runtime_state: &mut RuntimeState) -> Result<PrepareOk, R
             local_user_index_canister,
             user_wasm_version,
             caller,
-            referral_type,
+            referral_code,
         })
     } else {
         Err(InternalError("All subnets are full".to_string()))
