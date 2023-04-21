@@ -124,8 +124,11 @@ fn membership_payment_shared_with_referrer() {
     client::upgrade_user(&user_a, env, canister_ids, *controller);
 
     // Register user_b with referral from user_a
-    let user_b =
-        client::user_index::happy_path::register_user_with_referrer(env, canister_ids.user_index, Some(user_a.user_id));
+    let user_b = client::user_index::happy_path::register_user_with_referrer(
+        env,
+        canister_ids.user_index,
+        Some(user_a.user_id.to_string()),
+    );
 
     // Take a snapshot of the ledger and referrer ICP balances
     let init_treasury_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, SNS_GOVERNANCE_CANISTER_ID);

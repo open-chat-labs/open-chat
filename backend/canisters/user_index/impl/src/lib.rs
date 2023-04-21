@@ -13,8 +13,10 @@ use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use types::{CanisterId, CanisterWasm, Cryptocurrency, Cycles, Milliseconds, TimestampMillis, Timestamped, UserId, Version};
+use user_index_canister::add_referral_codes::ReferralType;
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::canister_event_sync_queue::CanisterEventSyncQueue;
+use utils::consts::DEV_TEAM_DFX_PRINCIPAL;
 use utils::env::Environment;
 use utils::time::DAY_IN_MS;
 
@@ -96,6 +98,11 @@ impl RuntimeState {
         }
     }
 
+    pub fn is_caller_dev_team_dfx_principal(&self) -> bool {
+        let caller = self.env.caller();
+        caller == DEV_TEAM_DFX_PRINCIPAL
+    }
+
     pub fn push_event_to_local_user_index(&mut self, user_id: UserId, event: LocalUserIndexEvent) {
         if let Some(canister_id) = self.data.local_index_map.get_index_canister(&user_id) {
             self.data.user_index_event_sync_queue.push(canister_id, event);
@@ -150,6 +157,7 @@ impl RuntimeState {
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
                 internet_identity: self.data.internet_identity_canister_id,
             },
+            referral_codes: self.data.referrer_codes.len(),
         }
     }
 }
@@ -182,6 +190,8 @@ struct Data {
     pub internet_identity_canister_id: CanisterId,
     #[serde(default)]
     pub next_user_upgrade_started: bool,
+    #[serde(default)]
+    pub referrer_codes: HashMap<String, ReferralType>,
 }
 
 impl Data {
@@ -224,6 +234,7 @@ impl Data {
             neuron_controllers_for_initial_airdrop: HashMap::new(),
             internet_identity_canister_id,
             next_user_upgrade_started: false,
+            referrer_codes: HashMap::new(),
         };
 
         // Register the ProposalsBot
@@ -270,6 +281,7 @@ impl Default for Data {
             neuron_controllers_for_initial_airdrop: HashMap::new(),
             internet_identity_canister_id: Principal::anonymous(),
             next_user_upgrade_started: false,
+            referrer_codes: HashMap::new(),
         }
     }
 }
@@ -297,6 +309,7 @@ pub struct Metrics {
     pub user_index_events_queue_length: usize,
     pub local_user_indexes: Vec<(CanisterId, LocalUserIndex)>,
     pub canister_ids: CanisterIds,
+    pub referral_codes: usize,
 }
 
 #[derive(Serialize, Debug, Default)]
@@ -325,4 +338,26 @@ pub struct CanisterIds {
     pub notifications_index: CanisterId,
     pub cycles_dispenser: CanisterId,
     pub internet_identity: CanisterId,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+pub enum Referrer {
+    BtcMiami(String),
+    User(UserId),
+}
+
+impl Referrer {
+    pub fn new(referral_type: &ReferralType, value: String) -> Referrer {
+        match referral_type {
+            ReferralType::BtcMiami => Referrer::BtcMiami(value),
+            ReferralType::User => Referrer::User(Principal::from_text(value).unwrap().into()),
+        }
+    }
+
+    pub fn user(&self) -> Option<UserId> {
+        match self {
+            Referrer::BtcMiami(_) => None,
+            Referrer::User(user_id) => Some(*user_id),
+        }
+    }
 }

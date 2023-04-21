@@ -15,7 +15,7 @@ generate_update_call!(add_platform_moderator);
 generate_update_call!(c2c_register_bot);
 generate_update_call!(pay_for_diamond_membership);
 generate_update_call!(remove_platform_moderator);
-generate_update_call!(register_user);
+generate_update_call!(register_user_v2);
 generate_update_call!(set_username);
 generate_update_call!(suspend_user);
 generate_update_call!(unsuspend_user);
@@ -45,14 +45,14 @@ pub mod happy_path {
         register_user_with_referrer(env, canister_id, None)
     }
 
-    pub fn register_user_with_referrer(env: &mut StateMachine, canister_id: CanisterId, referred_by: Option<UserId>) -> User {
+    pub fn register_user_with_referrer(env: &mut StateMachine, canister_id: CanisterId, referred_by: Option<String>) -> User {
         let (principal, public_key) = random_user_principal();
 
-        let response = super::register_user(
+        let response = super::register_user_v2(
             env,
             principal,
             canister_id,
-            &user_index_canister::register_user::Args {
+            &user_index_canister::register_user_v2::Args {
                 username: principal_to_username(principal),
                 referred_by,
                 public_key,
@@ -60,7 +60,7 @@ pub mod happy_path {
         );
 
         match response {
-            user_index_canister::register_user::Response::Success(user_id) => User { principal, user_id },
+            user_index_canister::register_user_v2::Response::Success(user_id) => User { principal, user_id },
             response => panic!("'register_user' error: {response:?}"),
         }
     }
