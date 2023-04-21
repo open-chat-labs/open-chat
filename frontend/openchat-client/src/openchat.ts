@@ -583,11 +583,6 @@ export class OpenChat extends EventTarget {
             this.identityState.set("logged_in");
             this.initWebRtc();
 
-            // FIXME - not sure what to do about this
-            // if (isCanisterUrl) {
-            //     unsubscribeNotifications(api);
-            // }
-
             if (this._botDetected && !this._user?.isSuspectedBot) {
                 this.api.markSuspectedBot();
                 console.log("markSuspectedBot");

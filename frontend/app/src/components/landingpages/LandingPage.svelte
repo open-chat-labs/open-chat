@@ -5,15 +5,18 @@
     import Content from "./Content.svelte";
     import { location, pathParams } from "../../routes";
     import { getContext } from "svelte";
-    import type { CreatedUser, OpenChat } from "openchat-client";
+    import { CreatedUser, OPENCHAT_BOT_USER_ID, OpenChat } from "openchat-client";
     import Overlay from "../Overlay.svelte";
     import Register from "../register/Register.svelte";
     import BlogPage from "./BlogPage.svelte";
     import Loading from "../Loading.svelte";
+    import { showMenuForLandingRoute } from "utils/urls";
+    import page from "page";
 
     const client = getContext<OpenChat>("client");
 
     $: identityState = client.identityState;
+    $: showMenu = showMenuForLandingRoute($location);
 
     function logout() {
         client.logout();
@@ -21,6 +24,9 @@
 
     function createdUser(ev: CustomEvent<CreatedUser>) {
         client.onCreatedUser(ev.detail);
+        if ($location.startsWith("/miami")) {
+            page(`/${OPENCHAT_BOT_USER_ID}`);
+        }
     }
 </script>
 
@@ -30,7 +36,9 @@
     </Overlay>
 {/if}
 
-<Header on:login={() => client.login()} on:logout={logout} />
+{#if showMenu}
+    <Header on:login={() => client.login()} on:logout={logout} />
+{/if}
 
 <main class="main">
     {#if $location.startsWith("/features")}
@@ -72,6 +80,14 @@
                     </div>
                 {:then { default: ArchitecturePage }}
                     <ArchitecturePage />
+                {/await}
+            {:else if $location.startsWith("/miami")}
+                {#await import("./Miami.svelte")}
+                    <div class="loading">
+                        <Loading />
+                    </div>
+                {:then { default: Miami }}
+                    <Miami on:login={() => client.login()} />
                 {/await}
             {:else}
                 <HomePage on:login={() => client.login()} />

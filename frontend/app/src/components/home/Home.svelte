@@ -287,6 +287,12 @@
                     showUpgrade = true;
                     page.replace(removeQueryStringParam("diamond"));
                 }
+
+                const wallet = $querystring.get("wallet");
+                if (wallet !== null) {
+                    modal = ModalType.Wallet;
+                    page.replace(removeQueryStringParam("wallet"));
+                }
             }
         }
     }

@@ -14,6 +14,7 @@
         page("/roadmap", parsePathParams, () => (route = LandingPage));
         page("/blog/:slug?", parsePathParams, () => (route = LandingPage));
         page("/whitepaper", parsePathParams, () => (route = LandingPage));
+        page("/miami", parsePathParams, () => (route = LandingPage));
         page("/architecture", parsePathParams, () => (route = LandingPage));
         page(
             "/:chatId?/:messageIndex?/:threadMessageIndex?",
