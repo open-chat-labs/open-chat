@@ -213,7 +213,7 @@
                     color: "#00ff00",
                     status: true,
                     xSpeed: 3,
-                    ySpeed: 10,
+                    ySpeed: 8,
                 });
             }
         }
