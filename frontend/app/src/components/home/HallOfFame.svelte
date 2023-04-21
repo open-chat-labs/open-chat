@@ -14,11 +14,22 @@
 
     let bodyElement: HTMLDivElement;
 
-    let cutoff = +new Date() + 1000 * 60 * 60 * 24 * 15;
     let showGame = false;
     let mode: "all-time" | "monthly" = "monthly";
+    let date = new Date();
     let busy = false;
     let leaders: ReferralStats[] = [];
+    let cutoff = getBeginningOfNextMonth(date);
+    let blankLeader = {
+        username: "________",
+        totalUsers: 0,
+        userId: "",
+        diamondMembers: 0,
+        totalRewardsE8s: BigInt(0),
+    };
+
+    let month = date.getUTCMonth();
+    let year = date.getUTCFullYear();
 
     onMount(() => {
         if (bodyElement) {
@@ -32,27 +43,40 @@
                 star.style.top = `${top}%`;
             }
         }
+        getData();
+    });
+
+    function getData() {
         busy = true;
+        const args = mode === "all-time" ? undefined : { month, year };
         client
-            .getReferralLeaderboard()
+            .getReferralLeaderboard(args)
             .then((result) => {
-                leaders = result.stats;
+                leaders = [...result.stats];
             })
             .finally(() => {
                 if (leaders.length < 10) {
                     for (let i = leaders.length; i < 10; i++) {
-                        leaders.push({
-                            username: "",
-                            totalUsers: 0,
-                            userId: "",
-                            diamondMembers: 0,
-                            totalRewardsE8s: BigInt(0),
-                        });
+                        leaders.push(blankLeader);
                     }
+                    leaders = leaders; //trigger reaction
                 }
                 busy = false;
             });
-    });
+    }
+
+    function changeMode(m: "all-time" | "monthly") {
+        mode = m;
+        getData();
+    }
+
+    function getBeginningOfNextMonth(d: Date) {
+        const month = d.getUTCMonth();
+        const year = d.getUTCFullYear();
+        const nextMonth = month === 11 ? 0 : month + 1;
+        const nextYear = month === 11 ? year + 1 : year;
+        return +new Date(Date.UTC(nextYear, nextMonth, 1, 0, 0, 0, 0));
+    }
 </script>
 
 <ModalContent hideHeader closeIcon on:close>
@@ -66,10 +90,16 @@
                 <div class="title">{$_("openChat")}</div>
             </div>
             <div class="settings">
-                <div class="setting this-month" class:selected={mode === "monthly"}>
+                <div
+                    on:click={() => changeMode("monthly")}
+                    class="setting this-month"
+                    class:selected={mode === "monthly"}>
                     {$_("halloffame.thisMonth")}
                 </div>
-                <div class="setting all-time" class:selected={mode === "all-time"}>
+                <div
+                    on:click={() => changeMode("all-time")}
+                    class="setting all-time"
+                    class:selected={mode === "all-time"}>
                     {$_("halloffame.allTime")}
                 </div>
             </div>

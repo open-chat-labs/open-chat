@@ -1,6 +1,9 @@
 <script lang="ts">
     import { onMount } from "svelte";
     import { mobileWidth } from "../../stores/screenDimensions";
+    import { isTouchDevice } from "../../utils/devices";
+
+    // TODO - we need to make this work for mobile. Current plan is to use tilt for left and right and tap for fire
 
     let canvas: HTMLCanvasElement;
 
@@ -36,6 +39,8 @@
     let invaderDirection: "right" | "left" | "down" = "right";
     let nextDirection: "right" | "left" = "left";
     let destroyed = false;
+    let tiltAngle: number | null = 0;
+    const tiltSpeed = 0.05;
     const invaderImg = new Image();
     invaderImg.src = "../assets/evil-robot.svg";
     const playerImg = new Image();
@@ -75,6 +80,16 @@
         }
         if (keys.ArrowRight && player.x < canvas.width - player.width) {
             player.x += player.speed;
+        }
+
+        if (isTouchDevice) {
+            const angle = tiltAngle || 0;
+            if (
+                (angle < 0 && player.x > 0) ||
+                (angle > 0 && player.x < canvas.width - player.width)
+            ) {
+                player.x += (tiltAngle || 0) * tiltSpeed;
+            }
         }
 
         moveInvaders();
@@ -250,6 +265,16 @@
         keys[event.key] = false;
     });
 
+    if (isTouchDevice) {
+        //@ts-ignore
+        document.addEventListener("deviceorientation", handleOrientation);
+    }
+
+    function handleOrientation(ev: DeviceOrientationEvent) {
+        tiltAngle = ev.gamma; // 0 -> 45 is tilting right, 0 -> -45 is tilting left
+        console.log("tilt: ", tiltAngle);
+    }
+
     function gameLoop() {
         if (destroyed) return;
         update();
@@ -258,7 +283,7 @@
     }
 </script>
 
-<div bind:clientWidth={containerWidth} class="wrapper">
+<div on:click={fireBullet} bind:clientWidth={containerWidth} class="wrapper">
     <canvas height="500" width={containerWidth} bind:this={canvas} />
 </div>
 
