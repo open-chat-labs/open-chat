@@ -16,6 +16,14 @@ pub fn caller_is_governance_principal() -> Result<(), String> {
     }
 }
 
+pub fn caller_is_dev_team_dfx_principal() -> Result<(), String> {
+    if read_state(|state| state.is_caller_dev_team_dfx_principal()) {
+        Ok(())
+    } else {
+        Err("Caller is not the governance principal".to_string())
+    }
+}
+
 pub fn caller_is_local_user_index_canister() -> Result<(), String> {
     if read_state(|state| state.is_caller_local_user_index_canister()) {
         Ok(())

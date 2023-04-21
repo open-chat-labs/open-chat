@@ -1,4 +1,4 @@
-use crate::model::pending_payments_queue::{BackdatedReferralReward, PendingPayment, PendingPaymentReason};
+use crate::model::pending_payments_queue::{PendingPayment, PendingPaymentReason};
 use crate::LocalUserIndexEvent;
 use crate::{mutate_state, RuntimeState};
 use ic_cdk_timers::TimerId;
@@ -38,15 +38,9 @@ pub fn run() {
 async fn process_payment(pending_payment: PendingPayment) {
     let reason = pending_payment.reason.clone();
     match make_payment(&pending_payment).await {
-        Ok(block_index) => match reason {
-            PendingPaymentReason::Treasury => (),
-            PendingPaymentReason::ReferralReward => {
-                mutate_state(|state| inform_referrer(&pending_payment, block_index, None, state))
-            }
-            PendingPaymentReason::BackdatedReferralReward(backdated_data) => {
-                mutate_state(|state| inform_referrer(&pending_payment, block_index, Some(backdated_data), state))
-            }
-        },
+        Ok(block_index) => {
+            mutate_state(|state| inform_referrer(&pending_payment, block_index, reason, state));
+        }
         Err(_) => {
             mutate_state(|state| state.data.pending_payments_queue.push(pending_payment));
         }
@@ -85,9 +79,13 @@ async fn make_payment(pending_payment: &PendingPayment) -> Result<BlockIndex, ()
 fn inform_referrer(
     pending_payment: &PendingPayment,
     block_index: BlockIndex,
-    backdated: Option<BackdatedReferralReward>,
+    reason: PendingPaymentReason,
     state: &mut RuntimeState,
 ) {
+    if matches!(reason, PendingPaymentReason::Treasury) {
+        return;
+    }
+
     let user_id = pending_payment.recipient.into();
     let amount = Tokens::from_e8s(pending_payment.amount);
     let symbol = pending_payment.currency.token_symbol();
@@ -101,14 +99,10 @@ fn inform_referrer(
         amount_text = format!("[{}]({})", amount_text, link);
     }
 
-    let message = if let Some(backdated_data) = backdated {
-        format!(
-            "You have received a backdated referral reward of {}. This is because you referred {} Diamond members who paid and {} Diamond members who were given membership for either verifying a phone or buying storage.", 
-            amount_text,
-            backdated_data.referrals_to_paid_members,
-            backdated_data.referrals_to_gifted_members)
-    } else {
-        format!("You have received a referral reward of {}. This is because one of the users you referred has made a Diamond membership payment.", amount_text)
+    let message = match reason {
+        PendingPaymentReason::ReferralReward => format!("You have received a referral reward of {}. This is because one of the users you referred has made a Diamond membership payment.", amount_text),
+        PendingPaymentReason::BitcoinMiamiReferral => format!("Congratulations, you have received {}! Click [here](?wallet) to open your wallet.", amount_text),
+        PendingPaymentReason::Treasury => unreachable!(),
     };
 
     state.push_event_to_local_user_index(

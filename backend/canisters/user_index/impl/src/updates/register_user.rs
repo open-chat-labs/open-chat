@@ -1,3 +1,5 @@
+use crate::model::pending_payments_queue::{PendingPayment, PendingPaymentReason};
+use crate::model::referral_codes::ReferralCode;
 use crate::updates::set_username::{validate_username, UsernameValidationResult};
 use crate::{mutate_state, RuntimeState, ONE_MB, USER_LIMIT};
 use candid::Principal;
@@ -5,20 +7,32 @@ use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
 use local_user_index_canister::{Event, OpenChatBotMessage, UserRegistered};
 use storage_index_canister::add_or_update_users::UserConfig;
-use types::{CanisterId, MessageContent, TextContent, UserId, Version};
-use user_index_canister::register_user::{Response::*, *};
+use types::{CanisterId, Cryptocurrency, MessageContent, TextContent, UserId, Version};
+use user_index_canister::register_user_v2::{Response::*, *};
 use x509_parser::prelude::FromDer;
 use x509_parser::x509::SubjectPublicKeyInfo;
 
 #[update]
 #[trace]
-async fn register_user(args: Args) -> Response {
+async fn register_user(args: user_index_canister::register_user::Args) -> Response {
+    register_user_v2(Args {
+        username: args.username,
+        referral_code: args.referred_by.map(|referred_by| referred_by.to_string()),
+        public_key: args.public_key,
+    })
+    .await
+}
+
+#[update]
+#[trace]
+async fn register_user_v2(args: Args) -> Response {
     // Check the principal is derived from Internet Identity
     // Check the username is valid and doesn't already exist then reserve it
     let PrepareOk {
         local_user_index_canister,
         user_wasm_version,
         caller,
+        referral_code,
     } = match mutate_state(|state| prepare(&args, state)) {
         Ok(ok) => ok,
         Err(response) => return response,
@@ -27,7 +41,7 @@ async fn register_user(args: Args) -> Response {
     let c2c_create_user_args = local_user_index_canister::c2c_create_user::Args {
         principal: caller,
         username: args.username.clone(),
-        referred_by: args.referred_by,
+        referred_by: referral_code.as_ref().and_then(|r| r.user()),
     };
 
     let result =
@@ -39,7 +53,7 @@ async fn register_user(args: Args) -> Response {
                         args.username,
                         user_wasm_version,
                         user_id,
-                        args.referred_by,
+                        referral_code,
                         local_user_index_canister,
                         state,
                     )
@@ -61,11 +75,13 @@ struct PrepareOk {
     caller: Principal,
     local_user_index_canister: CanisterId,
     user_wasm_version: Version,
+    referral_code: Option<ReferralCode>,
 }
 
 fn prepare(args: &Args, runtime_state: &mut RuntimeState) -> Result<PrepareOk, Response> {
     let caller = runtime_state.env.caller();
     let now = runtime_state.env.now();
+    let mut referral_code = None;
 
     if let Err(error) = validate_public_key(caller, &args.public_key, runtime_state.data.internet_identity_canister_id) {
         return Err(PublicKeyInvalid(error));
@@ -77,6 +93,13 @@ fn prepare(args: &Args, runtime_state: &mut RuntimeState) -> Result<PrepareOk, R
 
     if runtime_state.data.users.len() >= USER_LIMIT {
         return Err(UserLimitReached);
+    }
+
+    if let Some(code) = &args.referral_code {
+        referral_code = match runtime_state.data.referral_codes.check(code) {
+            Some(t) => Some(t),
+            None => return Err(ReferralCodeInvalid),
+        }
     }
 
     match validate_username(&args.username) {
@@ -96,6 +119,7 @@ fn prepare(args: &Args, runtime_state: &mut RuntimeState) -> Result<PrepareOk, R
             local_user_index_canister,
             user_wasm_version,
             caller,
+            referral_code,
         })
     } else {
         Err(InternalError("All subnets are full".to_string()))
@@ -107,11 +131,12 @@ fn commit(
     username: String,
     wasm_version: Version,
     user_id: UserId,
-    referred_by: Option<UserId>,
+    referral_code: Option<ReferralCode>,
     local_user_index_canister_id: CanisterId,
     runtime_state: &mut RuntimeState,
 ) {
     let now = runtime_state.env.now();
+    let referred_by = referral_code.as_ref().and_then(|r| r.user());
 
     runtime_state.data.users.release_username(&username);
 
@@ -144,6 +169,20 @@ fn commit(
         user_id: caller,
         byte_limit: 100 * ONE_MB,
     });
+
+    if let Some(ReferralCode::BtcMiami(code)) = referral_code {
+        // This referral code can only be used once so claim it
+        runtime_state.data.referral_codes.claim(code, user_id, now);
+
+        runtime_state.queue_payment(PendingPayment {
+            amount: 50_000, // Approx $14
+            currency: Cryptocurrency::CKBTC,
+            timestamp: runtime_state.env.now_nanos(),
+            recipient: user_id.into(),
+            reason: PendingPaymentReason::BitcoinMiamiReferral,
+        });
+    }
+
     crate::jobs::sync_users_to_storage_index::start_job_if_required(runtime_state);
 }
 
