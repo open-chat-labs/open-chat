@@ -220,7 +220,7 @@ struct Data {
     pub neuron_controllers_for_initial_airdrop: HashMap<UserId, Principal>,
     pub internet_identity_canister_id: CanisterId,
     #[serde(default)]
-    pub next_user_upgrade_started: bool;
+    pub next_user_upgrade_started: bool,
     #[serde(default)]
     pub referral_codes: ReferralCodes,
     #[serde(default)]
