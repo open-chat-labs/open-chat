@@ -1,5 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte";
+    import { mobileWidth } from "../../stores/screenDimensions";
 
     let canvas: HTMLCanvasElement;
 
@@ -200,7 +201,7 @@
         const invader = new Image();
         invader.src = "../assets/robot.svg";
         const rows = 5;
-        const columns = 8;
+        const columns = $mobileWidth ? 5 : 8;
         const spacing = 30;
         for (let i = 0; i < rows; i++) {
             for (let j = 0; j < columns; j++) {
@@ -212,7 +213,7 @@
                     color: "#00ff00",
                     status: true,
                     xSpeed: 3,
-                    ySpeed: 5,
+                    ySpeed: 10,
                 });
             }
         }
@@ -258,7 +259,7 @@
 </script>
 
 <div bind:clientWidth={containerWidth} class="wrapper">
-    <canvas height="600" width={containerWidth} bind:this={canvas} />
+    <canvas height="500" width={containerWidth} bind:this={canvas} />
 </div>
 
 <style type="text/scss">

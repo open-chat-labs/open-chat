@@ -107,7 +107,9 @@
             </div>
             <table cellpadding="3px" class="scoreboard">
                 <thead class="table-header">
-                    <th class="rank">#</th>
+                    {#if !$mobileWidth}
+                        <th class="rank">#</th>
+                    {/if}
                     <th class="username">Username</th>
                     <th class="value">Value</th>
                     <th class="diamonds">Diamonds</th>
@@ -116,7 +118,9 @@
                 <tbody>
                     {#each leaders as leader, i}
                         <tr class="table-row">
-                            <td class="rank">{i + 1}</td>
+                            {#if !$mobileWidth}
+                                <td class="rank">{i + 1}</td>
+                            {/if}
                             <td class="username">{leader.username}</td>
                             <td class="value">{leader.value}</td>
                             <td class="diamonds">{leader.diamonds}</td>
@@ -132,11 +136,15 @@
         <ButtonGroup align={$mobileWidth ? "center" : "end"}>
             {#if showGame}
                 <div on:click={() => (showGame = false)} class="joystick">🏆️</div>
+                <Button
+                    tiny={$mobileWidth}
+                    small={!$mobileWidth}
+                    on:click={() => (showGame = false)}>{$_("backToResults")}</Button>
             {:else}
                 <div on:click={() => (showGame = true)} class="joystick">🕹️</div>
+                <Button tiny={$mobileWidth} small={!$mobileWidth} on:click={() => dispatch("close")}
+                    >{$_("close")}</Button>
             {/if}
-            <Button tiny={$mobileWidth} small={!$mobileWidth} on:click={() => dispatch("close")}
-                >{$_("close")}</Button>
         </ButtonGroup>
     </div>
 </ModalContent>
@@ -182,12 +190,21 @@
         text-transform: uppercase;
         transform: rotateX(45deg);
         text-align: center;
+
+        @include mobile() {
+            @include font-size(fs-180);
+        }
     }
 
     .countdown {
         @include font-size(fs-160);
         color: yellow;
         text-shadow: 3px 3px 0 red;
+
+        @include mobile() {
+            @include font-size(fs-100);
+            text-shadow: 2px 2px 0 red;
+        }
     }
 
     .scoreboard {
@@ -207,6 +224,9 @@
         th,
         td {
             padding: $sp2;
+            @include mobile() {
+                @include font-size(fs-50);
+            }
         }
         .username,
         .rank {
