@@ -101,7 +101,7 @@ fn inform_referrer(
 
     let message = match reason {
         PendingPaymentReason::ReferralReward => format!("You have received a referral reward of {}. This is because one of the users you referred has made a Diamond membership payment.", amount_text),
-        PendingPaymentReason::BitcoinMiamiReferral => format!("Congratulations, you have received {}!", amount_text),
+        PendingPaymentReason::BitcoinMiamiReferral => format!("Congratulations, you have received {}! Click [here](?wallet) to open your wallet.", amount_text),
         PendingPaymentReason::Treasury => unreachable!(),
     };
 

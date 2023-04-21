@@ -185,7 +185,7 @@ fn commit(
         runtime_state.data.referrer_codes.remove(&code);
 
         runtime_state.queue_payment(PendingPayment {
-            amount: 100_000, // Approx $28 - how much is the reward?
+            amount: 50_000, // Approx $14
             currency: Cryptocurrency::CKBTC,
             timestamp: runtime_state.env.now_nanos(),
             recipient: user_id.into(),
