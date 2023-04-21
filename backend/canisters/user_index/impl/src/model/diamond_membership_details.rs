@@ -117,4 +117,8 @@ impl DiamondMembershipDetailsInternal {
     pub fn set_recurring(&mut self, value: bool) {
         self.recurring = value;
     }
+
+    pub fn has_ever_been_diamond_member(&self) -> bool {
+        self.expires_at.is_some()
+    }
 }

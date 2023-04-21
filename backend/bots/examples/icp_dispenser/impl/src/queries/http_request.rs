@@ -1,10 +1,8 @@
 use crate::{read_state, RuntimeState};
-use http_request::{encode_logs, extract_route, get_avatar, get_metrics, Route};
+use http_request::{build_json_response, build_response, encode_logs, extract_route, get_avatar, Route};
 use ic_cdk_macros::query;
 use ledger_utils::default_ledger_account;
-use serde_bytes::ByteBuf;
-use std::borrow::Cow;
-use types::{HeaderField, HttpRequest, HttpResponse, TimestampMillis};
+use types::{HttpRequest, HttpResponse, TimestampMillis};
 
 #[query]
 fn http_request(request: HttpRequest) -> HttpResponse {
@@ -21,22 +19,14 @@ fn http_request(request: HttpRequest) -> HttpResponse {
     }
 
     fn get_metrics_impl(runtime_state: &RuntimeState) -> HttpResponse {
-        get_metrics(&runtime_state.metrics())
+        build_json_response(&runtime_state.metrics())
     }
 
     fn get_ledger_account_impl(runtime_state: &RuntimeState) -> HttpResponse {
         let ledger_account = default_ledger_account(runtime_state.env.canister_id()).to_string();
         let body = ledger_account.into_bytes();
 
-        HttpResponse {
-            status_code: 200,
-            headers: vec![
-                HeaderField("Content-Type".to_string(), "text/plain".to_string()),
-                HeaderField("Content-Length".to_string(), body.len().to_string()),
-            ],
-            body: Cow::Owned(ByteBuf::from(body)),
-            streaming_strategy: None,
-        }
+        build_response(body, "text/plain")
     }
 
     match extract_route(&request.url) {
@@ -44,7 +34,7 @@ fn http_request(request: HttpRequest) -> HttpResponse {
         Route::Logs(since) => get_logs_impl(since),
         Route::Traces(since) => get_traces_impl(since),
         Route::Metrics => read_state(get_metrics_impl),
-        Route::Other(path) if path == "ledger_account" => read_state(get_ledger_account_impl),
+        Route::Other(path, _) if path == "ledger_account" => read_state(get_ledger_account_impl),
         _ => HttpResponse::not_found(),
     }
 }

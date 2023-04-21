@@ -2,6 +2,7 @@ use crate::model::local_user_index_map::LocalUserIndex;
 use crate::model::storage_index_user_sync_queue::OpenStorageUserSyncQueue;
 use crate::model::user_map::UserMap;
 use crate::model::user_principal_migration_queue::UserPrincipalMigrationQueue;
+use crate::model::user_referral_leaderboards::UserReferralLeaderboards;
 use crate::timer_job_types::TimerJob;
 use candid::Principal;
 use canister_state_macros::canister_state;
@@ -182,6 +183,8 @@ struct Data {
     pub internet_identity_canister_id: CanisterId,
     #[serde(default)]
     pub next_user_upgrade_started: bool,
+    #[serde(default)]
+    pub user_referral_leaderboards: UserReferralLeaderboards,
 }
 
 impl Data {
@@ -224,6 +227,7 @@ impl Data {
             neuron_controllers_for_initial_airdrop: HashMap::new(),
             internet_identity_canister_id,
             next_user_upgrade_started: false,
+            user_referral_leaderboards: UserReferralLeaderboards::default(),
         };
 
         // Register the ProposalsBot
@@ -270,6 +274,7 @@ impl Default for Data {
             neuron_controllers_for_initial_airdrop: HashMap::new(),
             internet_identity_canister_id: Principal::anonymous(),
             next_user_upgrade_started: false,
+            user_referral_leaderboards: UserReferralLeaderboards::default(),
         }
     }
 }

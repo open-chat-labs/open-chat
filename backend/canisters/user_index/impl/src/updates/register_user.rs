@@ -145,6 +145,10 @@ fn commit(
         byte_limit: 100 * ONE_MB,
     });
     crate::jobs::sync_users_to_storage_index::start_job_if_required(runtime_state);
+
+    if let Some(referrer) = referred_by {
+        runtime_state.data.user_referral_leaderboards.add_referral(referrer, now);
+    }
 }
 
 fn send_welcome_messages(user_id: UserId, runtime_state: &mut RuntimeState) {

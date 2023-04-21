@@ -98,8 +98,8 @@ canister_logger = { git = "https://github.com/open-ic/ic-utils", rev = "d54cadd4
 canister_state_macros = { git = "https://github.com/open-ic/ic-utils", rev = "d54cadd47b1ceb325ae3f6bf9ec4e9d9aa6bc72e" }
 canister_timer_jobs = { git = "https://github.com/open-ic/ic-utils", rev = "d54cadd47b1ceb325ae3f6bf9ec4e9d9aa6bc72e" }
 canister_tracing_macros = { git = "https://github.com/open-ic/ic-utils", rev = "d54cadd47b1ceb325ae3f6bf9ec4e9d9aa6bc72e" }
-chrono = "0.4.24"
 clap = "3.2.23"
+time = "0.3.20"
 dirs = "4.0.0"
 dotenv = "0.15.0"
 futures = "0.3.26"
@@ -124,6 +124,7 @@ lazy_static = "1.4.0"
 num-traits = "0.2.15"
 openssl = "0.10.48"
 proc-macro2 = "1.0.51"
+querystring = "1.1.0"
 quote = "1.0.23"
 rand = "0.8.5"
 rand_chacha = "0.3.1"

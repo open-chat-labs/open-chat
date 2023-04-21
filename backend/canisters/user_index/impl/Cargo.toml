@@ -17,6 +17,7 @@ canister_logger = { workspace = true }
 canister_state_macros = { workspace = true }
 canister_timer_jobs = { workspace = true }
 canister_tracing_macros = { workspace = true }
+time = { workspace = true }
 futures = { workspace = true }
 group_canister = { path = "../../group/api" }
 group_canister_c2c_client = { path = "../../group/c2c_client" }
@@ -40,6 +41,7 @@ lodepng = "3.6.1"
 msgpack = { path = "../../../libraries/msgpack" }
 notifications_index_canister = { path = "../../notifications_index/api" }
 notifications_index_canister_c2c_client = { path = "../../notifications_index/c2c_client" }
+querystring = { workspace = true }
 rand_core = { workspace = true }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
