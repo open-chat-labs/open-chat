@@ -27,7 +27,7 @@ pub mod happy_path {
     use crate::User;
     use candid::Principal;
     use ic_test_state_machine_client::StateMachine;
-    use types::{CanisterId, Cryptocurrency, DiamondMembershipDetails, DiamondMembershipPlanDuration, UserId};
+    use types::{CanisterId, Cryptocurrency, DiamondMembershipDetails, DiamondMembershipPlanDuration};
 
     pub fn current_user(
         env: &StateMachine,
