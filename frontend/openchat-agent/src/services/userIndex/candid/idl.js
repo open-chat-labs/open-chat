@@ -9,6 +9,15 @@ export const idlFactory = ({ IDL }) => {
   });
   const AddPlatformOperatorArgs = IDL.Record({ 'user_id' : UserId });
   const AddPlatformOperatorResponse = IDL.Variant({ 'Success' : IDL.Null });
+  const ReferralType = IDL.Variant({
+    'User' : IDL.Null,
+    'BtcMiami' : IDL.Null,
+  });
+  const AddReferralCodesArgs = IDL.Record({
+    'codes' : IDL.Vec(IDL.Text),
+    'referral_type' : ReferralType,
+  });
+  const AddReferralCodesResponse = IDL.Variant({ 'Success' : IDL.Null });
   const CheckUsernameArgs = IDL.Record({ 'username' : IDL.Text });
   const CheckUsernameResponse = IDL.Variant({
     'UsernameTaken' : IDL.Null,
@@ -98,6 +107,30 @@ export const idlFactory = ({ IDL }) => {
   const PlatformOperatorsResponse = IDL.Variant({
     'Success' : IDL.Record({ 'users' : IDL.Vec(UserId) }),
   });
+  const ReferralLeaderboardArgs = IDL.Record({
+    'count' : IDL.Nat32,
+    'filter' : IDL.Opt(
+      IDL.Variant({
+        'CurrentMonth' : IDL.Null,
+        'Month' : IDL.Tuple(IDL.Nat32, IDL.Nat8),
+      })
+    ),
+  });
+  const ReferralStats = IDL.Record({
+    'username' : IDL.Text,
+    'total_users' : IDL.Nat32,
+    'user_id' : UserId,
+    'diamond_members' : IDL.Nat32,
+    'total_rewards_e8s' : IDL.Nat64,
+  });
+  const ReferralLeaderboardResponse = IDL.Variant({
+    'AllTime' : IDL.Vec(ReferralStats),
+    'Month' : IDL.Record({
+      'month' : IDL.Nat8,
+      'year' : IDL.Nat32,
+      'results' : IDL.Vec(ReferralStats),
+    }),
+  });
   const ReferralMetricsResponse = IDL.Variant({
     'Success' : IDL.Record({
       'users_who_referred' : IDL.Nat32,
@@ -110,10 +143,10 @@ export const idlFactory = ({ IDL }) => {
       'users_who_referred_90_percent_unpaid_diamond' : IDL.Nat32,
     }),
   });
-  const RegisterUserArgs = IDL.Record({
+  const RegisterUserV2Args = IDL.Record({
     'username' : IDL.Text,
     'public_key' : IDL.Vec(IDL.Nat8),
-    'referred_by' : IDL.Opt(UserId),
+    'referral_code' : IDL.Opt(IDL.Text),
   });
   const RegisterUserResponse = IDL.Variant({
     'UsernameTaken' : IDL.Null,
@@ -125,6 +158,7 @@ export const idlFactory = ({ IDL }) => {
     'Success' : UserId,
     'PublicKeyInvalid' : IDL.Text,
     'InternalError' : IDL.Text,
+    'ReferralCodeInvalid' : IDL.Null,
     'CyclesBalanceTooLow' : IDL.Null,
   });
   const RemovePlatformModeratorArgs = IDL.Record({ 'user_id' : UserId });
@@ -234,6 +268,11 @@ export const idlFactory = ({ IDL }) => {
         [AddPlatformOperatorResponse],
         [],
       ),
+    'add_referral_codes' : IDL.Func(
+        [AddReferralCodesArgs],
+        [AddReferralCodesResponse],
+        [],
+      ),
     'check_username' : IDL.Func(
         [CheckUsernameArgs],
         [CheckUsernameResponse],
@@ -260,12 +299,21 @@ export const idlFactory = ({ IDL }) => {
         [PlatformOperatorsResponse],
         ['query'],
       ),
+    'referral_leaderboard' : IDL.Func(
+        [ReferralLeaderboardArgs],
+        [ReferralLeaderboardResponse],
+        ['query'],
+      ),
     'referral_metrics' : IDL.Func(
         [EmptyArgs],
         [ReferralMetricsResponse],
         ['query'],
       ),
-    'register_user' : IDL.Func([RegisterUserArgs], [RegisterUserResponse], []),
+    'register_user_v2' : IDL.Func(
+        [RegisterUserV2Args],
+        [RegisterUserResponse],
+        [],
+      ),
     'remove_platform_moderator' : IDL.Func(
         [RemovePlatformModeratorArgs],
         [RemovePlatformModeratorResponse],

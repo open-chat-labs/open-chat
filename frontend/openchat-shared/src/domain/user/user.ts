@@ -194,3 +194,34 @@ export type SetMessageReminderResponse =
     | "success"
     | "reminder_date_in_past"
     | "user_suspended";
+
+export type ReferralLeaderboardRange = { year: number; month: number };
+
+// export type ReferralLeaderboardResponse =
+//     | { AllTime: Array<ReferralStats> }
+//     | {
+//           Month: {
+//               month: number;
+//               year: number;
+//               results: Array<ReferralStats>;
+//           };
+//       };
+// export type ReferralMetricsResponse = {
+//     Success: {
+//         users_who_referred: number;
+//         users_who_referred_unpaid_diamond: number;
+//         referrals_of_unpaid_diamond: number;
+//         icp_raised_by_referrals_to_paid_diamond: number;
+//         referrals_of_paid_diamond: number;
+//         users_who_referred_paid_diamond: number;
+//         referrals_other: number;
+//         users_who_referred_90_percent_unpaid_diamond: number;
+//     };
+// };
+// export interface ReferralStats {
+//     username: string;
+//     total_users: number;
+//     user_id: UserId;
+//     diamond_members: number;
+//     total_rewards_e8s: bigint;
+// }

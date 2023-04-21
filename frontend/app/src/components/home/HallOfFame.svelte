@@ -16,6 +16,7 @@
 
     let cutoff = +new Date() + 1000 * 60 * 60 * 24 * 15;
     let showGame = false;
+    let mode: "all-time" | "monthly" = "monthly";
 
     onMount(() => {
         if (bodyElement) {
@@ -104,6 +105,14 @@
             <img class="bot right" src="../assets/pixel.svg" />
             <div class="title-wrapper">
                 <div class="title">OpenChat</div>
+            </div>
+            <div class="settings">
+                <div class="setting this-month" class:selected={mode === "monthly"}>
+                    {$_("halloffame.thisMonth")}
+                </div>
+                <div class="setting all-time" class:selected={mode === "all-time"}>
+                    {$_("halloffame.allTime")}
+                </div>
             </div>
             <table cellpadding="3px" class="scoreboard">
                 <thead class="table-header">
@@ -259,5 +268,20 @@
         align-content: center;
         font-size: 1.6rem;
         cursor: pointer;
+    }
+
+    .settings {
+        display: flex;
+        justify-content: space-evenly;
+        margin-bottom: $sp5;
+
+        .setting {
+            cursor: pointer;
+            text-transform: uppercase;
+
+            &.selected {
+                border-bottom: 2px solid var(--txt);
+            }
+        }
     }
 </style>

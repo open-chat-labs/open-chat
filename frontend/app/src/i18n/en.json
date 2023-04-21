@@ -784,6 +784,8 @@
         "cancelFailure": "Sorry we were unable to cancel your reminder"
     },
     "halloffame": {
-        "menu": "Hall of fame"
+        "menu": "Top referrals",
+        "allTime": "All time",
+        "thisMonth": "This month"
     }
 }
