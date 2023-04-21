@@ -4,10 +4,10 @@ type EmptyArgs =
     record {
     };
 
-type RegisterUserArgs =
+type RegisterUserV2Args =
     record {
         username: text;
-        referred_by: opt UserId;
+        referral_code: opt text;
         public_key: blob;
     };
 
@@ -23,6 +23,7 @@ type RegisterUserResponse =
         CyclesBalanceTooLow;
         InternalError: text;
         PublicKeyInvalid: text;
+        ReferralCodeInvalid;
     };
 
 type SetUsernameArgs =
@@ -316,8 +317,25 @@ type SetUserUpgradeConcurrencyResponse =
         Success;
     };
 
+type AddReferralCodesArgs =
+    record {
+        referral_type: ReferralType;
+        codes: vec text;
+    };
+
+type ReferralType =
+    variant {
+        BtcMiami;
+        User;
+    };
+
+type AddReferralCodesResponse =
+    variant {
+        Success;
+    };
+
 service: {
-    register_user: (RegisterUserArgs) -> (RegisterUserResponse);
+    register_user_v2: (RegisterUserV2Args) -> (RegisterUserResponse);
 
     // This is used to set the initial username and subsequently to change it
     set_username: (SetUsernameArgs) -> (SetUsernameResponse);
@@ -361,4 +379,7 @@ service: {
 
     // Only callable by "platform operators"
     set_user_upgrade_concurrency: (SetUserUpgradeConcurrencyArgs) -> (SetUserUpgradeConcurrencyResponse);
+
+    // Only callable by OC dev team dfx identity
+    add_referral_codes: (AddReferralCodesArgs) -> (AddReferralCodesResponse);
 }

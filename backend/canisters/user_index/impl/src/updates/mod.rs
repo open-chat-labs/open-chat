@@ -1,6 +1,7 @@
 pub mod add_local_user_index_canister;
 pub mod add_platform_moderator;
 pub mod add_platform_operator;
+pub mod add_referral_codes;
 pub mod c2c_migrate_user_principal;
 pub mod c2c_notify_events;
 pub mod c2c_notify_low_balance;
