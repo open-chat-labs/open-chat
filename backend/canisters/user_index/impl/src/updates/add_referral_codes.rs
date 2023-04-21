@@ -8,8 +8,9 @@ use user_index_canister::add_referral_codes::{Response::*, *};
 #[trace]
 fn add_referral_codes(args: Args) -> Response {
     mutate_state(|state| {
+        let now = state.env.now();
         for code in args.codes {
-            state.data.referrer_codes.insert(code, args.referral_type.clone());
+            state.data.referral_codes.add(args.referral_type.clone(), code, now);
         }
     });
 

@@ -1,6 +1,7 @@
 use crate::model::pending_payments_queue::{PendingPayment, PendingPaymentReason};
+use crate::model::referral_codes::ReferralCode;
 use crate::updates::set_username::{validate_username, UsernameValidationResult};
-use crate::{mutate_state, Referrer, RuntimeState, ONE_MB, USER_LIMIT};
+use crate::{mutate_state, RuntimeState, ONE_MB, USER_LIMIT};
 use candid::Principal;
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
@@ -17,7 +18,7 @@ use x509_parser::x509::SubjectPublicKeyInfo;
 async fn register_user(args: user_index_canister::register_user::Args) -> Response {
     register_user_v2(Args {
         username: args.username,
-        referred_by: args.referred_by.map(|referred_by| referred_by.to_string()),
+        referral_code: args.referred_by.map(|referred_by| referred_by.to_string()),
         public_key: args.public_key,
     })
     .await
@@ -38,7 +39,9 @@ async fn register_user_v2(args: Args) -> Response {
         Err(response) => return response,
     };
 
-    let referrer = referral_type.as_ref().map(|t| Referrer::new(t, args.referred_by.unwrap()));
+    let referrer = referral_type
+        .as_ref()
+        .map(|t| ReferralCode::new(t, args.referral_code.unwrap()));
 
     let c2c_create_user_args = local_user_index_canister::c2c_create_user::Args {
         principal: caller,
@@ -97,18 +100,10 @@ fn prepare(args: &Args, runtime_state: &mut RuntimeState) -> Result<PrepareOk, R
         return Err(UserLimitReached);
     }
 
-    if let Some(referred_by) = &args.referred_by {
-        if referred_by.len() > 100 {
-            return Err(ReferralCodeInvalid);
-        }
-
-        if let Some(ref_type) = runtime_state.data.referrer_codes.get(referred_by) {
-            referral_type = Some(ref_type.clone());
-        } else {
-            if Principal::from_text(referred_by).is_err() {
-                return Err(ReferralCodeInvalid);
-            }
-            referral_type = Some(ReferralType::User);
+    if let Some(referral_code) = &args.referral_code {
+        referral_type = match runtime_state.data.referral_codes.check(referral_code) {
+            Some(t) => Some(t),
+            None => return Err(ReferralCodeInvalid),
         }
     }
 
@@ -141,7 +136,7 @@ fn commit(
     username: String,
     wasm_version: Version,
     user_id: UserId,
-    referrer: Option<Referrer>,
+    referrer: Option<ReferralCode>,
     local_user_index_canister_id: CanisterId,
     runtime_state: &mut RuntimeState,
 ) {
@@ -180,9 +175,9 @@ fn commit(
         byte_limit: 100 * ONE_MB,
     });
 
-    if let Some(Referrer::BtcMiami(code)) = referrer {
-        // This referral code can only be used once so remove it
-        runtime_state.data.referrer_codes.remove(&code);
+    if let Some(ReferralCode::BtcMiami(code)) = referrer {
+        // This referral code can only be used once so claim it
+        runtime_state.data.referral_codes.claim(code, user_id, now);
 
         runtime_state.queue_payment(PendingPayment {
             amount: 50_000, // Approx $14

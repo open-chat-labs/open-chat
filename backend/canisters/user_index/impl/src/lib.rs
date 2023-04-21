@@ -9,6 +9,7 @@ use canister_timer_jobs::TimerJobs;
 use local_user_index_canister::Event as LocalUserIndexEvent;
 use model::local_user_index_map::LocalUserIndexMap;
 use model::pending_payments_queue::{PendingPayment, PendingPaymentsQueue};
+use model::referral_codes::{ReferralCodes, ReferralTypeMetrics};
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
@@ -157,7 +158,7 @@ impl RuntimeState {
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
                 internet_identity: self.data.internet_identity_canister_id,
             },
-            referral_codes: self.data.referrer_codes.len(),
+            referral_codes: self.data.referral_codes.metrics(),
         }
     }
 }
@@ -191,7 +192,7 @@ struct Data {
     #[serde(default)]
     pub next_user_upgrade_started: bool,
     #[serde(default)]
-    pub referrer_codes: HashMap<String, ReferralType>,
+    pub referral_codes: ReferralCodes,
 }
 
 impl Data {
@@ -234,7 +235,7 @@ impl Data {
             neuron_controllers_for_initial_airdrop: HashMap::new(),
             internet_identity_canister_id,
             next_user_upgrade_started: false,
-            referrer_codes: HashMap::new(),
+            referral_codes: ReferralCodes::default(),
         };
 
         // Register the ProposalsBot
@@ -281,7 +282,7 @@ impl Default for Data {
             neuron_controllers_for_initial_airdrop: HashMap::new(),
             internet_identity_canister_id: Principal::anonymous(),
             next_user_upgrade_started: false,
-            referrer_codes: HashMap::new(),
+            referral_codes: ReferralCodes::default(),
         }
     }
 }
@@ -309,7 +310,7 @@ pub struct Metrics {
     pub user_index_events_queue_length: usize,
     pub local_user_indexes: Vec<(CanisterId, LocalUserIndex)>,
     pub canister_ids: CanisterIds,
-    pub referral_codes: usize,
+    pub referral_codes: HashMap<ReferralType, ReferralTypeMetrics>,
 }
 
 #[derive(Serialize, Debug, Default)]
@@ -338,26 +339,4 @@ pub struct CanisterIds {
     pub notifications_index: CanisterId,
     pub cycles_dispenser: CanisterId,
     pub internet_identity: CanisterId,
-}
-
-#[derive(Serialize, Deserialize, Clone)]
-pub enum Referrer {
-    BtcMiami(String),
-    User(UserId),
-}
-
-impl Referrer {
-    pub fn new(referral_type: &ReferralType, value: String) -> Referrer {
-        match referral_type {
-            ReferralType::BtcMiami => Referrer::BtcMiami(value),
-            ReferralType::User => Referrer::User(Principal::from_text(value).unwrap().into()),
-        }
-    }
-
-    pub fn user(&self) -> Option<UserId> {
-        match self {
-            Referrer::BtcMiami(_) => None,
-            Referrer::User(user_id) => Some(*user_id),
-        }
-    }
 }

@@ -5,7 +5,7 @@ use types::UserId;
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub username: String,
-    pub referred_by: Option<String>,
+    pub referral_code: Option<String>,
     pub public_key: Vec<u8>,
 }
 

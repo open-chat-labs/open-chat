@@ -7,7 +7,7 @@ pub struct Args {
     pub codes: Vec<String>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
+#[derive(CandidType, Serialize, Deserialize, Debug, Clone, Hash, PartialEq, Eq)]
 pub enum ReferralType {
     BtcMiami,
     User,

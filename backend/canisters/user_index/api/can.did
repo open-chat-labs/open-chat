@@ -7,7 +7,7 @@ type EmptyArgs =
 type RegisterUserV2Args =
     record {
         username: text;
-        referred_by: opt text;
+        referral_code: opt text;
         public_key: blob;
     };
 

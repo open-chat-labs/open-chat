@@ -45,7 +45,7 @@ pub mod happy_path {
         register_user_with_referrer(env, canister_id, None)
     }
 
-    pub fn register_user_with_referrer(env: &mut StateMachine, canister_id: CanisterId, referred_by: Option<String>) -> User {
+    pub fn register_user_with_referrer(env: &mut StateMachine, canister_id: CanisterId, referral_code: Option<String>) -> User {
         let (principal, public_key) = random_user_principal();
 
         let response = super::register_user_v2(
@@ -54,7 +54,7 @@ pub mod happy_path {
             canister_id,
             &user_index_canister::register_user_v2::Args {
                 username: principal_to_username(principal),
-                referred_by,
+                referral_code,
                 public_key,
             },
         );
