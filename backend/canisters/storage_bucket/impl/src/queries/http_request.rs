@@ -1,6 +1,6 @@
 use crate::{calc_chunk_count, read_state, RuntimeState};
 use candid::Func;
-use http_request::{encode_logs, extract_route, get_metrics, Route};
+use http_request::{build_json_response, encode_logs, extract_route, Route};
 use ic_cdk_macros::query;
 use num_traits::cast::ToPrimitive;
 use serde_bytes::ByteBuf;
@@ -24,7 +24,7 @@ fn http_request(request: HttpRequest) -> HttpResponse {
     }
 
     fn get_metrics_impl(runtime_state: &RuntimeState) -> HttpResponse {
-        get_metrics(&runtime_state.metrics())
+        build_json_response(&runtime_state.metrics())
     }
 
     match extract_route(&request.url) {

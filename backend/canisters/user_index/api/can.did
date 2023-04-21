@@ -279,6 +279,34 @@ type ReferralMetricsResponse =
         };
     };
 
+type ReferralLeaderboardArgs =
+    record {
+        filter: opt variant {
+            Month: record { nat32; nat8 };
+            CurrentMonth;
+        };
+        count: nat32;
+    };
+
+type ReferralLeaderboardResponse =
+    variant {
+        AllTime: vec ReferralStats;
+        Month: record {
+            year: nat32;
+            month: nat8;
+            results: vec ReferralStats;
+        };
+    };
+
+type ReferralStats =
+    record {
+        user_id: UserId;
+        username: text;
+        total_rewards_e8s: nat64;
+        diamond_members: nat32;
+        total_users: nat32;
+    };
+
 type SetUserUpgradeConcurrencyArgs =
     record {
         value: nat32;
@@ -332,6 +360,7 @@ service: {
 
     pay_for_diamond_membership: (PayForDiamondMembershipArgs) -> (PayForDiamondMembershipResponse);
     referral_metrics: (EmptyArgs) -> (ReferralMetricsResponse) query;
+    referral_leaderboard: (ReferralLeaderboardArgs) -> (ReferralLeaderboardResponse) query;
 
     // List the platform moderators/operators
     platform_moderators: (EmptyArgs) -> (PlatformModeratorsResponse) query;

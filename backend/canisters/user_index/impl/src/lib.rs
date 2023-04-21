@@ -2,6 +2,7 @@ use crate::model::local_user_index_map::LocalUserIndex;
 use crate::model::storage_index_user_sync_queue::OpenStorageUserSyncQueue;
 use crate::model::user_map::UserMap;
 use crate::model::user_principal_migration_queue::UserPrincipalMigrationQueue;
+use crate::model::user_referral_leaderboards::UserReferralLeaderboards;
 use crate::timer_job_types::TimerJob;
 use candid::Principal;
 use canister_state_macros::canister_state;
@@ -125,6 +126,35 @@ impl RuntimeState {
         jobs::make_pending_payments::start_job_if_required(self);
     }
 
+    pub fn populate_user_referral_leaderboard(&mut self) {
+        let now = self.env.now();
+
+        for user in self.data.users.iter() {
+            if let Some(referred_by) = user.referred_by {
+                if let Some(referrer) = self.data.users.get_by_user_id(&referred_by) {
+                    if referrer.diamond_membership_details.is_active(now) {
+                        self.data.user_referral_leaderboards.add_referral(referred_by, now);
+
+                        let icp_raised_for_paid_diamond: u64 =
+                            user.diamond_membership_details.payments().iter().map(|p| p.amount_e8s).sum();
+                        if icp_raised_for_paid_diamond > 0 {
+                            self.data.user_referral_leaderboards.add_reward(
+                                referred_by,
+                                true,
+                                icp_raised_for_paid_diamond,
+                                now,
+                            );
+                        } else if user.diamond_membership_details.is_active(now) {
+                            self.data
+                                .user_referral_leaderboards
+                                .add_reward(referred_by, true, 75_000_000, now);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     pub fn metrics(&self) -> Metrics {
         let now = self.env.now();
         let canister_upgrades_metrics = self.data.canisters_requiring_upgrade.metrics();
@@ -193,6 +223,8 @@ struct Data {
     pub next_user_upgrade_started: bool,
     #[serde(default)]
     pub referral_codes: ReferralCodes,
+    #[serde(default)]
+    pub user_referral_leaderboards: UserReferralLeaderboards,
 }
 
 impl Data {
@@ -236,6 +268,7 @@ impl Data {
             internet_identity_canister_id,
             next_user_upgrade_started: false,
             referral_codes: ReferralCodes::default(),
+            user_referral_leaderboards: UserReferralLeaderboards::default(),
         };
 
         // Register the ProposalsBot
@@ -283,6 +316,7 @@ impl Default for Data {
             internet_identity_canister_id: Principal::anonymous(),
             next_user_upgrade_started: false,
             referral_codes: ReferralCodes::default(),
+            user_referral_leaderboards: UserReferralLeaderboards::default(),
         }
     }
 }
