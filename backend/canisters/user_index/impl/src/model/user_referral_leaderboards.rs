@@ -5,6 +5,8 @@ use std::collections::btree_map::BTreeMap;
 use std::collections::HashMap;
 use types::{TimestampMillis, UserId};
 
+const STARTING_MONTH: MonthKey = MonthKey { year: 2023, month: 5 };
+
 #[derive(Serialize, Deserialize, Default)]
 pub struct UserReferralLeaderboards {
     per_month: BTreeMap<MonthKey, UserReferralLeaderboard>,
@@ -13,19 +15,22 @@ pub struct UserReferralLeaderboards {
 
 impl UserReferralLeaderboards {
     pub fn add_referral(&mut self, user_id: UserId, now: TimestampMillis) {
-        self.per_month
-            .entry(MonthKey::from_timestamp(now))
-            .or_default()
-            .add_referral(user_id);
+        let month = MonthKey::from_timestamp(now);
+        if month >= STARTING_MONTH {
+            self.per_month.entry(month).or_default().add_referral(user_id);
+        }
 
         self.all_time.add_referral(user_id);
     }
 
     pub fn add_reward(&mut self, user_id: UserId, new_diamond_member: bool, reward_e8s: u64, now: TimestampMillis) {
-        self.per_month
-            .entry(MonthKey::from_timestamp(now))
-            .or_default()
-            .add_reward(user_id, new_diamond_member, reward_e8s);
+        let month = MonthKey::from_timestamp(now);
+        if month >= STARTING_MONTH {
+            self.per_month
+                .entry(month)
+                .or_default()
+                .add_reward(user_id, new_diamond_member, reward_e8s);
+        }
 
         self.all_time.add_reward(user_id, new_diamond_member, reward_e8s);
     }
