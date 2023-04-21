@@ -99,7 +99,6 @@ canister_state_macros = { git = "https://github.com/open-ic/ic-utils", rev = "d5
 canister_timer_jobs = { git = "https://github.com/open-ic/ic-utils", rev = "d54cadd47b1ceb325ae3f6bf9ec4e9d9aa6bc72e" }
 canister_tracing_macros = { git = "https://github.com/open-ic/ic-utils", rev = "d54cadd47b1ceb325ae3f6bf9ec4e9d9aa6bc72e" }
 clap = "3.2.23"
-time = "0.3.20"
 dirs = "4.0.0"
 dotenv = "0.15.0"
 futures = "0.3.26"
@@ -142,6 +141,7 @@ sha3 = "0.10.6"
 stable_memory = { git = "https://github.com/open-ic/ic-utils", rev = "d54cadd47b1ceb325ae3f6bf9ec4e9d9aa6bc72e" }
 syn = "1.0.109"
 test-case = "3.0.0"
+time = "0.3.20"
 tokio = "1.26.0"
 tracing = "0.1.37"
 tracing-attributes = "0.1.23"
