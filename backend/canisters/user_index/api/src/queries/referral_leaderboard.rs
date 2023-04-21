@@ -13,7 +13,7 @@ pub struct Args {
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum LeaderboardFilter {
-    Month(Year, Month),
+    Month(YearAndMonth),
     CurrentMonth,
 }
 
@@ -21,6 +21,12 @@ pub enum LeaderboardFilter {
 pub enum Response {
     AllTime(Vec<ReferralStats>),
     Month(MonthSuccessResult),
+}
+
+#[derive(CandidType, Serialize, Deserialize, Debug)]
+pub struct YearAndMonth {
+    pub year: Year,
+    pub month: Month,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

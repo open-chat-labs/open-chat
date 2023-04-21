@@ -12,7 +12,7 @@ fn referral_leaderboard_impl(args: Args, runtime_state: &RuntimeState) -> Respon
     let count = args.count as usize;
 
     let month = args.filter.map(|f| match f {
-        LeaderboardFilter::Month(y, m) => MonthKey::new(y, m),
+        LeaderboardFilter::Month(m) => MonthKey::new(m.year, m.month),
         LeaderboardFilter::CurrentMonth => MonthKey::from_timestamp(runtime_state.env.now()),
     });
 
