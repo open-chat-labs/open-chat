@@ -288,7 +288,7 @@ type UserReferralLeaderboardArgs =
 
 type UserReferralLeaderboardResponse =
     variant {
-        Success: record {
+        Success: vec record {
             user_id: UserId;
             username: text;
             total_rewards_e8s: nat64;

@@ -3,12 +3,13 @@ use candid_gen::generate_candid_method;
 fn main() {
     generate_candid_method!(user_index, check_username, query);
     generate_candid_method!(user_index, current_user, query);
-    generate_candid_method!(user_index, search, query);
     generate_candid_method!(user_index, platform_moderators, query);
     generate_candid_method!(user_index, platform_operators, query);
     generate_candid_method!(user_index, referral_metrics, query);
+    generate_candid_method!(user_index, search, query);
     generate_candid_method!(user_index, suspected_bots, query);
     generate_candid_method!(user_index, user, query);
+    generate_candid_method!(user_index, user_referral_leaderboard, query);
     generate_candid_method!(user_index, users, query);
 
     generate_candid_method!(user_index, add_platform_moderator, update);
