@@ -17,7 +17,7 @@ pub fn extract_route(path: &str) -> Route {
         return Route::Other("".to_string(), "".to_string());
     }
 
-    let (path, qs) = trimmed.split_once("?").unwrap_or((&trimmed, ""));
+    let (path, qs) = trimmed.split_once('?').unwrap_or((&trimmed, ""));
 
     let parts: Vec<_> = path.split('/').collect();
 
@@ -66,6 +66,17 @@ mod tests {
 
     #[test]
     fn other() {
-        assert!(matches!(extract_route("blah"), Route::Other(_)));
+        assert!(matches!(extract_route("blah"), Route::Other(_, _)));
+    }
+
+    #[test]
+    fn querystring() {
+        let route = extract_route("blah?abc=1");
+        if let Route::Other(p, qs) = route {
+            assert_eq!(&p, "blah");
+            assert_eq!(&qs, "abc=1");
+        } else {
+            panic!();
+        }
     }
 }
