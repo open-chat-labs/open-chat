@@ -112,7 +112,7 @@ export const idlFactory = ({ IDL }) => {
     'filter' : IDL.Opt(
       IDL.Variant({
         'CurrentMonth' : IDL.Null,
-        'Month' : IDL.Tuple(IDL.Nat32, IDL.Nat8),
+        'Month' : IDL.Record({ 'month' : IDL.Nat8, 'year' : IDL.Nat32 }),
       })
     ),
   });

@@ -97,6 +97,8 @@ import {
     GroupGate,
     ProposalVoteDetails,
     SetMessageReminderResponse,
+    ReferralLeaderboardRange,
+    ReferralLeaderboardResponse,
 } from "openchat-shared";
 import type { OpenChatConfig } from "./config";
 import { v4 } from "uuid";
@@ -1390,6 +1392,15 @@ export class OpenChatAgentWorker extends EventTarget {
             kind: "cancelMessageReminder",
             payload: {
                 reminderId,
+            },
+        });
+    }
+
+    getReferralLeaderboard(args?: ReferralLeaderboardRange): Promise<ReferralLeaderboardResponse> {
+        return this.sendRequest({
+            kind: "getReferralLeaderboard",
+            payload: {
+                args,
             },
         });
     }

@@ -17,6 +17,7 @@ import type {
     PayForDiamondMembershipResponse,
     SetUserUpgradeConcurrencyResponse,
     ReferralLeaderboardRange,
+    ReferralLeaderboardResponse,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
@@ -31,6 +32,7 @@ import {
     apiCryptocurrency,
     apiDiamondDuration,
     payForDiamondMembershipResponse,
+    referralLeaderboardResponse,
 } from "./mappers";
 import { CachingUserIndexClient } from "./userIndex.caching.client";
 import type { IUserIndexClient } from "./userIndex.client.interface";
@@ -189,19 +191,20 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
     }
 
     @profile("userIndexClient")
-    getReferralLeaderboard(
-        req?: ReferralLeaderboardRange
-    ): Promise<SetUserUpgradeConcurrencyResponse> {
+    getReferralLeaderboard(req?: ReferralLeaderboardRange): Promise<ReferralLeaderboardResponse> {
         return this.handleResponse(
             this.userIndexService.referral_leaderboard({
                 count: 10,
                 filter: apiOptional((r) => {
                     return {
-                        Month: [r.year, r.month],
+                        Month: {
+                            year: r.year,
+                            month: r.month,
+                        },
                     };
                 }, req),
             }),
-            () => "success"
+            referralLeaderboardResponse
         );
     }
 }

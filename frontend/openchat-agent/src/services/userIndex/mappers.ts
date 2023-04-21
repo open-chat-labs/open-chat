@@ -16,6 +16,8 @@ import {
     DiamondMembershipDuration,
     PayForDiamondMembershipResponse,
     Cryptocurrency,
+    ReferralLeaderboardResponse,
+    ReferralStats,
 } from "openchat-shared";
 import type {
     ApiCheckUsernameResponse,
@@ -24,6 +26,8 @@ import type {
     ApiDiamondMembershipPlanDuration,
     ApiPartialUserSummary,
     ApiPayForDiamondMembershipResponse,
+    ApiReferralLeaderboardResponse,
+    ApiReferralStats,
     ApiRegisterUserResponse,
     ApiSearchResponse,
     ApiSetUsernameResponse,
@@ -123,6 +127,10 @@ export function registerUserResponse(candid: ApiRegisterUserResponse): RegisterU
     }
     if ("PublicKeyInvalid" in candid) {
         return "public_key_invalid";
+    }
+
+    if ("ReferralCodeInvalid" in candid) {
+        return "referral_code_invalid";
     }
 
     throw new UnsupportedValueError("Unexpected ApiRegisterUserResponse type received", candid);
@@ -278,6 +286,36 @@ export function unsuspendUserResponse(candid: ApiUnsuspendUserResponse): Unsuspe
         return "user_not_suspended";
     }
     throw new UnsupportedValueError("Unexpected ApiSuspendUserResponse type received", candid);
+}
+
+export function referralStat(candid: ApiReferralStats): ReferralStats {
+    return {
+        username: candid.username,
+        totalUsers: candid.total_users,
+        userId: candid.user_id.toString(),
+        diamondMembers: candid.diamond_members,
+        totalRewardsE8s: candid.total_rewards_e8s,
+    };
+}
+
+export function referralLeaderboardResponse(
+    candid: ApiReferralLeaderboardResponse
+): ReferralLeaderboardResponse {
+    if ("AllTime" in candid) {
+        return { kind: "all_time", stats: candid.AllTime.map(referralStat) };
+    }
+    if ("Month" in candid) {
+        return {
+            kind: "monthly",
+            stats: candid.Month.results.map(referralStat),
+            year: candid.Month.year,
+            month: candid.Month.month,
+        };
+    }
+    throw new UnsupportedValueError(
+        "Unexpected ApiReferralLeaderboardResponse type received",
+        candid
+    );
 }
 
 export function payForDiamondMembershipResponse(

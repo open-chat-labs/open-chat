@@ -147,7 +147,8 @@ export type RegisterUserResponse =
     | "username_too_short"
     | "username_too_long"
     | "username_invalid"
-    | "public_key_invalid";
+    | "public_key_invalid"
+    | "referral_code_invalid";
 
 export type PinChatResponse = { kind: "success" } | { kind: "pinned_limit_reached"; limit: number };
 
@@ -197,31 +198,24 @@ export type SetMessageReminderResponse =
 
 export type ReferralLeaderboardRange = { year: number; month: number };
 
-// export type ReferralLeaderboardResponse =
-//     | { AllTime: Array<ReferralStats> }
-//     | {
-//           Month: {
-//               month: number;
-//               year: number;
-//               results: Array<ReferralStats>;
-//           };
-//       };
-// export type ReferralMetricsResponse = {
-//     Success: {
-//         users_who_referred: number;
-//         users_who_referred_unpaid_diamond: number;
-//         referrals_of_unpaid_diamond: number;
-//         icp_raised_by_referrals_to_paid_diamond: number;
-//         referrals_of_paid_diamond: number;
-//         users_who_referred_paid_diamond: number;
-//         referrals_other: number;
-//         users_who_referred_90_percent_unpaid_diamond: number;
-//     };
-// };
-// export interface ReferralStats {
-//     username: string;
-//     total_users: number;
-//     user_id: UserId;
-//     diamond_members: number;
-//     total_rewards_e8s: bigint;
-// }
+export type ReferralLeaderboardResponse = AllTimeReferralStats | MonthlyReferralStats;
+
+export type AllTimeReferralStats = {
+    kind: "all_time";
+    stats: ReferralStats[];
+};
+
+export type MonthlyReferralStats = {
+    kind: "monthly";
+    month: number;
+    year: number;
+    stats: ReferralStats[];
+};
+
+export type ReferralStats = {
+    username: string;
+    totalUsers: number;
+    userId: string;
+    diamondMembers: number;
+    totalRewardsE8s: bigint;
+};

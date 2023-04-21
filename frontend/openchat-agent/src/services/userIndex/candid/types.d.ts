@@ -812,7 +812,10 @@ export interface PushEventResult {
 }
 export interface ReferralLeaderboardArgs {
   'count' : number,
-  'filter' : [] | [{ 'CurrentMonth' : null } | { 'Month' : [number, number] }],
+  'filter' : [] | [
+    { 'CurrentMonth' : null } |
+      { 'Month' : { 'month' : number, 'year' : number } }
+  ],
 }
 export type ReferralLeaderboardResponse = { 'AllTime' : Array<ReferralStats> } |
   {

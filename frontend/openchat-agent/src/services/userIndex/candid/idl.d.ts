@@ -21,6 +21,8 @@ import {
     DiamondMembershipDetails,
     DiamondMembershipPlanDuration,
     PayForDiamondMembershipResponse,
+    ReferralLeaderboardResponse,
+    ReferralStats,
 } from "./types";
 export {
     _SERVICE as UserIndexService,
@@ -43,6 +45,8 @@ export {
     DiamondMembershipDetails as ApiDiamondMembershipDetails,
     DiamondMembershipPlanDuration as ApiDiamondMembershipPlanDuration,
     PayForDiamondMembershipResponse as ApiPayForDiamondMembershipResponse,
+    ReferralLeaderboardResponse as ApiReferralLeaderboardResponse,
+    ReferralStats as ApiReferralStats,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

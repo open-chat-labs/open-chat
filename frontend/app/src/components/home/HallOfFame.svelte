@@ -4,7 +4,7 @@
     import ButtonGroup from "../ButtonGroup.svelte";
     import Button from "../Button.svelte";
     import { _ } from "svelte-i18n";
-    import type { OpenChat } from "openchat-client";
+    import { E8S_PER_TOKEN, OpenChat, ReferralStats } from "openchat-client";
     import { now500 } from "../../stores/time";
     import { mobileWidth } from "../../stores/screenDimensions";
     import Invaders from "./Invaders.svelte";
@@ -17,6 +17,8 @@
     let cutoff = +new Date() + 1000 * 60 * 60 * 24 * 15;
     let showGame = false;
     let mode: "all-time" | "monthly" = "monthly";
+    let busy = false;
+    let leaders: ReferralStats[] = [];
 
     onMount(() => {
         if (bodyElement) {
@@ -30,70 +32,27 @@
                 star.style.top = `${top}%`;
             }
         }
+        busy = true;
+        client
+            .getReferralLeaderboard()
+            .then((result) => {
+                leaders = result.stats;
+            })
+            .finally(() => {
+                if (leaders.length < 10) {
+                    for (let i = leaders.length; i < 10; i++) {
+                        leaders.push({
+                            username: "",
+                            totalUsers: 0,
+                            userId: "",
+                            diamondMembers: 0,
+                            totalRewardsE8s: BigInt(0),
+                        });
+                    }
+                }
+                busy = false;
+            });
     });
-
-    let leaders = [
-        {
-            username: "Hamish",
-            value: 126,
-            diamonds: 8,
-            referrals: 26,
-        },
-        {
-            username: "Matt",
-            value: 101,
-            diamonds: 8,
-            referrals: 26,
-        },
-        {
-            username: "julian_jelfs",
-            value: 91,
-            diamonds: 8,
-            referrals: 26,
-        },
-        {
-            username: "kennyslim98",
-            value: 76,
-            diamonds: 8,
-            referrals: 26,
-        },
-        {
-            username: "Fallen_crypto",
-            value: 58,
-            diamonds: 8,
-            referrals: 26,
-        },
-        {
-            username: "FoxMulder",
-            value: 40,
-            diamonds: 8,
-            referrals: 26,
-        },
-        {
-            username: "________",
-            value: 0,
-            diamonds: 0,
-            referrals: 0,
-        },
-        {
-            username: "________",
-            value: 0,
-            diamonds: 0,
-            referrals: 0,
-        },
-        {
-            username: "________",
-            value: 0,
-            diamonds: 0,
-            referrals: 0,
-        },
-        {
-            username: "________",
-            value: 0,
-            diamonds: 0,
-            referrals: 0,
-        },
-    ];
 </script>
 
 <ModalContent hideHeader closeIcon on:close>
@@ -104,7 +63,7 @@
             <img class="bot left" src="../assets/pixel.svg" />
             <img class="bot right" src="../assets/pixel.svg" />
             <div class="title-wrapper">
-                <div class="title">OpenChat</div>
+                <div class="title">{$_("openChat")}</div>
             </div>
             <div class="settings">
                 <div class="setting this-month" class:selected={mode === "monthly"}>
@@ -131,9 +90,10 @@
                                 <td class="rank">{i + 1}</td>
                             {/if}
                             <td class="username">{leader.username}</td>
-                            <td class="value">{leader.value}</td>
-                            <td class="diamonds">{leader.diamonds}</td>
-                            <td class="users">{leader.referrals}</td>
+                            <td class="value"
+                                >{(Number(leader.totalRewardsE8s) / E8S_PER_TOKEN).toString()}</td>
+                            <td class="diamonds">{leader.diamondMembers}</td>
+                            <td class="users">{leader.totalUsers}</td>
                         </tr>
                     {/each}
                 </tbody>
