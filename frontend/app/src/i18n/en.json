@@ -782,5 +782,8 @@
         "cancel": "Cancel reminder",
         "cancelSuccess": "Your reminder has been successfully cancelled",
         "cancelFailure": "Sorry we were unable to cancel your reminder"
+    },
+    "halloffame": {
+        "menu": "Hall of fame"
     }
 }
