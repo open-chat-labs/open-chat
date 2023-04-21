@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Expose user referral leaderboards ([#3482](https://github.com/open-ic/open-chat/pull/3482))
+- Add `add_referral_codes` and `register_user_v2` endpoints to support BTC Miami ([#3485](https://github.com/open-ic/open-chat/pull/3485))
 
 ## [[2.0.668](https://github.com/open-ic/open-chat/releases/tag/v2.0.668-user_index)] - 2023-04-19
 
