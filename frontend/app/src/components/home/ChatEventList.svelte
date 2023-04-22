@@ -370,7 +370,10 @@
                 // but it's still not clear what to do in this circumstance because we cannot
                 // scroll to this message and there is nothing that we can do about it. So where *do* we scroll?
                 // The *next* message?, the bottom?, nowhere?
-                return scrollBottom();
+                const nextMessage = findElementWithMessageIndex(index + 1);
+                return nextMessage
+                    ? scrollToMessageIndex(chatId, index + 1, preserveFocus, filling)
+                    : scrollBottom();
             }
         }
     }
