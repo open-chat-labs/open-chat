@@ -17,9 +17,6 @@
     let showGame = false;
     let mode: "all-time" | "monthly" = "monthly";
     let date = new Date();
-    let busy = false;
-    let leaders: ReferralStats[] = [];
-    let cutoff = getBeginningOfNextMonth(date);
     let blankLeader = {
         username: "________",
         totalUsers: 0,
@@ -27,8 +24,10 @@
         diamondMembers: 0,
         totalRewardsE8s: BigInt(0),
     };
+    let leaders: ReferralStats[] = dummyData();
+    let cutoff = getBeginningOfNextMonth(date);
 
-    let month = date.getUTCMonth();
+    let month = date.getUTCMonth() + 1;
     let year = date.getUTCFullYear();
 
     onMount(() => {
@@ -46,8 +45,15 @@
         getData();
     });
 
+    function dummyData() {
+        const data = [];
+        for (let i = 0; i < 10; i++) {
+            data.push(blankLeader);
+        }
+        return data;
+    }
+
     function getData() {
-        busy = true;
         const args = mode === "all-time" ? undefined : { month, year };
         client
             .getReferralLeaderboard(args)
@@ -61,7 +67,6 @@
                     }
                     leaders = leaders; //trigger reaction
                 }
-                busy = false;
             });
     }
 
@@ -103,31 +108,35 @@
                     {$_("halloffame.allTime")}
                 </div>
             </div>
-            <table cellpadding="3px" class="scoreboard">
-                <thead class="table-header">
-                    {#if !$mobileWidth}
-                        <th class="rank">#</th>
-                    {/if}
-                    <th class="username">Username</th>
-                    <th class="value">Value</th>
-                    <th class="diamonds">Diamonds</th>
-                    <th class="users">Users</th>
-                </thead>
-                <tbody>
-                    {#each leaders as leader, i}
-                        <tr class="table-row">
-                            {#if !$mobileWidth}
-                                <td class="rank">{i + 1}</td>
-                            {/if}
-                            <td class="username">{leader.username}</td>
-                            <td class="value"
-                                >{(Number(leader.totalRewardsE8s) / E8S_PER_TOKEN).toString()}</td>
-                            <td class="diamonds">{leader.diamondMembers}</td>
-                            <td class="users">{leader.totalUsers}</td>
-                        </tr>
-                    {/each}
-                </tbody>
-            </table>
+            <div class="scoreboard-container">
+                <table cellpadding="3px" class="scoreboard">
+                    <thead class="table-header">
+                        {#if !$mobileWidth}
+                            <th class="rank">#</th>
+                        {/if}
+                        <th class="username">{$_("halloffame.username")}</th>
+                        <th class="value">{$_("halloffame.value")}</th>
+                        <th class="diamonds">{$_("halloffame.diamonds")}</th>
+                        <th class="users">{$_("halloffame.users")}</th>
+                    </thead>
+                    <tbody>
+                        {#each leaders as leader, i}
+                            <tr class="table-row">
+                                {#if !$mobileWidth}
+                                    <td class="rank">{i + 1}</td>
+                                {/if}
+                                <td class="username">{leader.username}</td>
+                                <td class="value"
+                                    >{(
+                                        Number(leader.totalRewardsE8s) / E8S_PER_TOKEN
+                                    ).toString()}</td>
+                                <td class="diamonds">{leader.diamondMembers}</td>
+                                <td class="users">{leader.totalUsers}</td>
+                            </tr>
+                        {/each}
+                    </tbody>
+                </table>
+            </div>
         {/if}
     </div>
     <div slot="footer" class="hof-footer">
@@ -206,6 +215,10 @@
         }
     }
 
+    .scoreboard-container {
+        position: relative;
+    }
+
     .scoreboard {
         width: 100%;
         text-transform: uppercase;
@@ -257,6 +270,7 @@
         display: grid;
         align-content: center;
         font-size: 1.6rem;
+        margin-right: $sp2;
         cursor: pointer;
     }
 

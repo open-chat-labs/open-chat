@@ -527,7 +527,7 @@
     "messageUrlCopiedToClipboard": "Message url copied to clipboard!",
     "faqUrlCopiedToClipboard": "FAQ url copied to clipboard!",
     "failedToShareMessage": "Unable to share this message",
-    "backToResults": "back",
+    "backToResults": "Back",
     "giphyMessage": "Giphy message",
     "prizeMessage": "Prize message",
     "share": "Share",
@@ -786,6 +786,12 @@
     "halloffame": {
         "menu": "Top referrals",
         "allTime": "All time",
-        "thisMonth": "This month"
+        "thisMonth": "This month",
+        "start": "Start",
+        "username": "Username",
+        "value": "Value",
+        "diamonds": "Diamonds",
+        "users": "Users",
+        "gameover": "Game over!"
     }
 }

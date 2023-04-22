@@ -1,9 +1,9 @@
 <script lang="ts">
-    import { onMount } from "svelte";
+    import { onMount, tick } from "svelte";
     import { mobileWidth } from "../../stores/screenDimensions";
+    import { _ } from "svelte-i18n";
     import { isTouchDevice } from "../../utils/devices";
-
-    // TODO - we need to make this work for mobile. Current plan is to use tilt for left and right and tap for fire
+    import Button from "../Button.svelte";
 
     let canvas: HTMLCanvasElement;
 
@@ -23,11 +23,13 @@
         speed: number;
     };
 
-    interface Invader extends GameObject {
+    type Invader = GameObject & {
         xSpeed: number;
         ySpeed: number;
         status: boolean;
-    }
+    };
+
+    type State = "not_started" | "playing" | "game_over";
 
     let containerWidth: number;
     let ctx: CanvasRenderingContext2D | null;
@@ -35,12 +37,12 @@
     let bullets: Bullet[];
     let invaders: Invader[];
     let invaderSize = 30;
-    let gameover: boolean;
+    let state: State = "not_started";
     let invaderDirection: "right" | "left" | "down" = "right";
     let nextDirection: "right" | "left" = "left";
     let destroyed = false;
     let tiltAngle: number | null = 0;
-    const tiltSpeed = 0.05;
+    const tiltSpeed = 0.2;
     const invaderImg = new Image();
     invaderImg.src = "../assets/evil-robot.svg";
     const playerImg = new Image();
@@ -49,7 +51,9 @@
 
     onMount(() => {
         init();
-        gameLoop();
+        if (!isTouchDevice) {
+            start();
+        }
         return () => (destroyed = true);
     });
 
@@ -67,14 +71,12 @@
         };
         bullets = [];
         invaders = [];
-        gameover = false;
+        state = "not_started";
         createInvaders();
+        tick().then(draw);
     }
 
     function update() {
-        if (gameover) return;
-
-        // Move the player
         if (keys.ArrowLeft && player.x > 0) {
             player.x -= player.speed;
         }
@@ -94,17 +96,14 @@
 
         moveInvaders();
 
-        // Move the bullets
         bullets.forEach(function (bullet) {
             bullet.y -= bullet.speed;
         });
 
-        // Remove bullets that are off the screen
         bullets = bullets.filter(function (bullet) {
             return bullet.y > 0;
         });
 
-        // Check for collisions between bullets and invaders
         bullets.forEach(function (bullet) {
             invaders.forEach(function (invader) {
                 if (invader.status && collides(bullet, invader)) {
@@ -114,7 +113,6 @@
             });
         });
 
-        // Create new invaders if all are destroyed
         if (
             invaders.filter(function (invader) {
                 return invader.status;
@@ -123,10 +121,9 @@
             createInvaders();
         }
 
-        // Check for collisions between player and invaders
         invaders.forEach(function (invader) {
             if (invader.status && collides(invader, player)) {
-                gameover = true;
+                state = "game_over";
             }
         });
     }
@@ -160,11 +157,38 @@
             visibleInvaders.forEach((invader) => {
                 invader.x -= invader.xSpeed;
             });
-            const l = leftmost(visibleInvaders);
-            if (l < 0) {
+            if (leftmost(visibleInvaders) < 0) {
                 invaderDirection = "down";
             }
         }
+    }
+
+    function drawInvaders() {
+        invaders
+            .filter((i) => i.status)
+            .forEach(function (invader) {
+                drawGameObject(invader, invaderImg);
+            });
+    }
+
+    function drawBullets() {
+        bullets.forEach(function (bullet) {
+            drawGameObject(bullet);
+        });
+    }
+
+    function drawGameOver() {
+        if (!ctx || !canvas) return;
+        const h = canvas.width / 2;
+        const w = canvas.width / 2;
+        const x = w - w / 2;
+        const y = h - h / 2;
+        invaders = [];
+        ctx.drawImage(invaderImg, x, y, w, h);
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "40px Arial";
+        ctx.textAlign = "center";
+        ctx.fillText($_("halloffame.gameover"), canvas.width / 2, canvas.height / 2);
     }
 
     function draw() {
@@ -174,31 +198,17 @@
 
         drawGameObject(player, playerImg);
 
-        bullets.forEach(function (bullet) {
-            drawGameObject(bullet);
-        });
+        drawBullets();
 
-        invaders
-            .filter((i) => i.status)
-            .forEach(function (invader) {
-                drawGameObject(invader, invaderImg);
-            });
+        drawInvaders();
 
-        if (gameover) {
-            const h = canvas.width / 2;
-            const w = canvas.width / 2;
-            const x = w - w / 2;
-            const y = h - h / 2;
-            invaders = [];
-            ctx.drawImage(invaderImg, x, y, w, h);
-            ctx.fillStyle = "#ffffff";
-            ctx.font = "40px Arial";
-            ctx.textAlign = "center";
-            ctx.fillText("Game Over!", canvas.width / 2, canvas.height / 2);
+        if (state === "game_over") {
+            drawGameOver();
         }
     }
 
     function fireBullet() {
+        if (state !== "playing") return;
         bullets.push({
             x: player.x + player.width / 2,
             y: player.y,
@@ -211,7 +221,6 @@
         laserSound.play();
     }
 
-    // Create the invaders
     function createInvaders() {
         const invader = new Image();
         invader.src = "../assets/robot.svg";
@@ -236,6 +245,7 @@
 
     function drawGameObject(obj: GameObject, img?: CanvasImageSource) {
         if (!ctx) return;
+
         if (img) {
             ctx.drawImage(img, obj.x, obj.y, obj.width, obj.height);
         } else {
@@ -265,30 +275,73 @@
         keys[event.key] = false;
     });
 
-    if (isTouchDevice) {
-        //@ts-ignore
-        document.addEventListener("deviceorientation", handleOrientation);
-    }
-
     function handleOrientation(ev: DeviceOrientationEvent) {
         tiltAngle = ev.gamma; // 0 -> 45 is tilting right, 0 -> -45 is tilting left
-        console.log("tilt: ", tiltAngle);
     }
 
     function gameLoop() {
         if (destroyed) return;
+        if (state !== "playing") return;
+
         update();
         draw();
         requestAnimationFrame(gameLoop);
     }
+
+    // We'll use tilt controls on mobile devices
+    function setUpTilt() {
+        if ("DeviceOrientationEvent" in window) {
+            //@ts-ignore
+            return window.DeviceOrientationEvent.requestPermission().then((response) => {
+                if (response === "granted") {
+                    window.addEventListener("deviceorientation", handleOrientation, true);
+                }
+                return;
+            });
+        } else {
+            console.log("Device orientation not supported");
+        }
+    }
+
+    async function start() {
+        if (isTouchDevice) {
+            await setUpTilt();
+        }
+        state = "playing";
+        gameLoop();
+    }
 </script>
 
-<div on:click={fireBullet} bind:clientWidth={containerWidth} class="wrapper">
+<div
+    on:click={() => {
+        if (isTouchDevice) {
+            fireBullet();
+        }
+    }}
+    bind:clientWidth={containerWidth}
+    class="invaders">
     <canvas height="500" width={containerWidth} bind:this={canvas} />
+    {#if state === "not_started"}
+        <div class="start"><Button on:click={start}>{$_("halloffame.start")}</Button></div>
+    {/if}
 </div>
 
 <style type="text/scss">
+    :global(.invaders button) {
+        font-family: "Press Start 2P", cursive;
+    }
     canvas {
         display: block;
+    }
+    .invaders {
+        position: relative;
+    }
+
+    .start {
+        position: absolute;
+        text-align: center;
+        width: 100%;
+        left: 0;
+        top: calc(50% - 20px);
     }
 </style>
