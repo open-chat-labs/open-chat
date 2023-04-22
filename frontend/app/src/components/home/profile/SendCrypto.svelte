@@ -11,7 +11,7 @@
     import Scanner from "./Scanner.svelte";
 
     export let token: Cryptocurrency;
-    export let amountToWithdrawE8s: bigint;
+    export let amountToSendE8s: bigint;
     export let scanningUnsupported: Boolean;
 
     const client = getContext<OpenChat>("client");
@@ -20,7 +20,7 @@
 
     let validAmount = false;
     let targetAccount: string = "";
-    let withdrawing = false;
+    let sending = false;
     let scanner: Scanner;
 
     $: account = token === "icp" ? user.cryptoAccount : user.userId;
@@ -28,7 +28,7 @@
     $: transferFees = cryptoLookup[token].transferFeesE8s;
     $: valid =
         validAmount &&
-        amountToWithdrawE8s > BigInt(0) &&
+        amountToSendE8s > BigInt(0) &&
         targetAccount !== "" &&
         targetAccount !== account;
     $: symbol = cryptoLookup[token].symbol;
@@ -37,37 +37,37 @@
         scanner?.scan();
     }
 
-    function withdraw() {
+    function send() {
         if (!valid) return;
 
-        withdrawing = true;
+        sending = true;
         dispatch("error", undefined);
         client
             .withdrawCryptocurrency({
                 kind: "pending",
                 token,
                 to: targetAccount,
-                amountE8s: amountToWithdrawE8s,
+                amountE8s: amountToSendE8s,
                 feeE8s: transferFees,
             })
             .then((resp) => {
                 if (resp.kind === "completed") {
-                    amountToWithdrawE8s = BigInt(0);
+                    amountToSendE8s = BigInt(0);
                     targetAccount = "";
                     dispatch("refreshBalance");
-                    toastStore.showSuccessToast("cryptoAccount.withdrawalSucceeded");
+                    toastStore.showSuccessToast("cryptoAccount.sendSucceeded");
                 } else {
-                    dispatch("error", "cryptoAccount.withdrawalFailed");
+                    dispatch("error", "cryptoAccount.sendFailed");
                     logger.error(`Unable to withdraw ${symbol}`, resp);
-                    toastStore.showFailureToast("cryptoAccount.withdrawalFailed");
+                    toastStore.showFailureToast("cryptoAccount.sendFailed");
                 }
             })
             .catch((err) => {
-                dispatch("error", "cryptoAccount.withdrawalFailed");
+                dispatch("error", "cryptoAccount.sendFailed");
                 logger.error(`Unable to withdraw ${symbol}`, err);
-                toastStore.showFailureToast("cryptoAccount.withdrawalFailed");
+                toastStore.showFailureToast("cryptoAccount.sendFailed");
             })
-            .finally(() => (withdrawing = false));
+            .finally(() => (sending = false));
     }
 </script>
 
@@ -80,17 +80,17 @@
         {token}
         maxAmountE8s={BigInt(Math.max(0, Number($cryptoBalance[token] - transferFees)))}
         bind:valid={validAmount}
-        bind:amountE8s={amountToWithdrawE8s} />
+        bind:amountE8s={amountToSendE8s} />
 </div>
 <div class="target">
     <Input
         bind:value={targetAccount}
         countdown={false}
         maxlength={100}
-        placeholder={$_("cryptoAccount.withdrawTarget")} />
+        placeholder={$_("cryptoAccount.sendTarget")} />
 
-    <div class="withdraw" class:valid on:click={withdraw} class:withdrawing>
-        {#if !withdrawing}
+    <div class="send" class:valid on:click={send} class:sending>
+        {#if !sending}
             <Send size={$iconSize} color={valid ? "var(--icon-selected)" : "var(--icon-txt)"} />
         {/if}
     </div>
@@ -108,7 +108,7 @@
         margin-bottom: $sp3;
         position: relative;
 
-        .withdraw {
+        .send {
             position: absolute !important;
             top: 10px;
             right: $sp3;
@@ -117,7 +117,7 @@
                 cursor: pointer;
             }
 
-            &.withdrawing {
+            &.sending {
                 @include loading-spinner(
                     1em,
                     0.5em,

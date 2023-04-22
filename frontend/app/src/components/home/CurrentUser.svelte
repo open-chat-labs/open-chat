@@ -4,7 +4,7 @@
     import Home from "svelte-material-icons/Home.svelte";
     import Avatar from "../Avatar.svelte";
     import Cogs from "svelte-material-icons/Cogs.svelte";
-    import Wallet from "svelte-material-icons/Wallet.svelte";
+    import Wallet from "svelte-material-icons/WalletOutline.svelte";
     import Logout from "svelte-material-icons/Logout.svelte";
     import HoverIcon from "../HoverIcon.svelte";
     import HelpCircleOutline from "svelte-material-icons/HelpCircleOutline.svelte";
@@ -40,6 +40,11 @@
         </div>
         <h4 class:diamond={user.diamond} class="name">{user.username}</h4>
     </div>
+    <span on:click={() => dispatch("wallet")}>
+        <HoverIcon>
+            <Wallet size={$iconSize} color={"var(--icon-txt)"} />
+        </HoverIcon>
+    </span>
     <span class="menu">
         <MenuIcon>
             <span slot="icon">
