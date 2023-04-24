@@ -1169,19 +1169,30 @@ export class OpenChatAgent extends EventTarget {
         chatType: "direct_chat" | "group_chat",
         chatId: string,
         messageId: bigint,
-        threadRootMessageIndex?: number
+        threadRootMessageIndex?: number,
+        asPlatformModerator?: boolean
     ): Promise<DeleteMessageResponse> {
         return chatType === "group_chat"
-            ? this.deleteGroupMessage(chatId, messageId, threadRootMessageIndex)
+            ? this.deleteGroupMessage(
+                  chatId,
+                  messageId,
+                  threadRootMessageIndex,
+                  asPlatformModerator
+              )
             : this.deleteDirectMessage(chatId, messageId, threadRootMessageIndex);
     }
 
     private deleteGroupMessage(
         chatId: string,
         messageId: bigint,
-        threadRootMessageIndex?: number
+        threadRootMessageIndex?: number,
+        asPlatformModerator?: boolean
     ): Promise<DeleteMessageResponse> {
-        return this.getGroupClient(chatId).deleteMessage(messageId, threadRootMessageIndex);
+        return this.getGroupClient(chatId).deleteMessage(
+            messageId,
+            threadRootMessageIndex,
+            asPlatformModerator
+        );
     }
 
     private deleteDirectMessage(
@@ -1293,8 +1304,11 @@ export class OpenChatAgent extends EventTarget {
         return this.userClient.setBio(bio);
     }
 
-    registerUser(username: string, referredBy: string | undefined): Promise<RegisterUserResponse> {
-        return this._userIndexClient.registerUser(username, referredBy);
+    registerUser(
+        username: string,
+        referralCode: string | undefined
+    ): Promise<RegisterUserResponse> {
+        return this._userIndexClient.registerUser(username, referralCode);
     }
 
     getUserStorageLimits(): Promise<StorageStatus> {
