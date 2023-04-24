@@ -14,6 +14,7 @@ generate_c2c_call!(c2c_set_avatar);
 generate_c2c_call!(c2c_suspend_users);
 generate_c2c_call!(c2c_register_bot);
 
+#[derive(Debug)]
 pub enum LookupUserError {
     UserNotFound,
     InternalError(String),
