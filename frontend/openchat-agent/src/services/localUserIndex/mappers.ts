@@ -45,9 +45,6 @@ export function joinGroupResponse(candid: ApiJoinGroupResponse): JoinGroupRespon
     if ("GroupNotFound" in candid) {
         return { kind: "group_not_found" };
     }
-    if ("NotSuperAdmin" in candid) {
-        return { kind: "not_super_admin" };
-    }
     if ("UserSuspended" in candid) {
         return { kind: "user_suspended" };
     }

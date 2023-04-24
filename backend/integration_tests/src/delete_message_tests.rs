@@ -72,6 +72,7 @@ fn delete_group_message_succeeds() {
         &group_canister::delete_messages::Args {
             thread_root_message_index: None,
             message_ids: vec![message_id],
+            as_platform_moderator: None,
             correlation_id: 0,
         },
     );
@@ -186,6 +187,7 @@ fn delete_then_undelete_group_message(delay: bool) {
         &group_canister::delete_messages::Args {
             thread_root_message_index: None,
             message_ids: vec![message_id],
+            as_platform_moderator: None,
             correlation_id: 0,
         },
     );
