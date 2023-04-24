@@ -34,11 +34,14 @@ fn is_permitted_to_join(
     has_passed_gate: bool,
     runtime_state: &RuntimeState,
 ) -> Result<Option<(GroupGate, CanisterId)>, Response> {
-    let caller = runtime_state.env.caller();
-    // If the call is from the user index then we skip the checks
-    if caller == runtime_state.data.user_index_canister_id {
-        Ok(None)
-    } else if runtime_state.data.is_frozen() {
+    if !has_passed_gate {
+        let caller = runtime_state.env.caller();
+        // If the call is from the user index then we skip the checks
+        if caller == runtime_state.data.user_index_canister_id {
+            return Ok(None);
+        }
+    }
+    if runtime_state.data.is_frozen() {
         Err(ChatFrozen)
     } else if !runtime_state.data.is_accessible_by_non_member(invite_code) {
         Err(GroupNotPublic)
