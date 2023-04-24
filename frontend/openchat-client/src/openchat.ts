@@ -410,6 +410,10 @@ export class OpenChat extends EventTarget {
     }
 
     login(): void {
+        if (get(this.identityState) === "dismissed_registering") {
+            this.identityState.set("registering");
+            return;
+        }
         this.identityState.set("logging_in");
         const authProvider = this._liveState.selectedAuthProvider;
         this._authClient.then((c) => {

@@ -28,11 +28,19 @@
             page(`/${OPENCHAT_BOT_USER_ID}`);
         }
     }
+
+    function showGuidelines() {
+        identityState.set("dismissed_registering");
+        page("/guidelines");
+    }
 </script>
 
 {#if $identityState === "registering"}
-    <Overlay dismissible={false}>
-        <Register on:logout={logout} on:createdUser={createdUser} />
+    <Overlay dismissible on:close={() => identityState.set("dismissed_registering")}>
+        <Register
+            on:showGuidelines={showGuidelines}
+            on:logout={logout}
+            on:createdUser={createdUser} />
     </Overlay>
 {/if}
 

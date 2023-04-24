@@ -6,6 +6,7 @@ export type IdentityState =
     | "loading_user"
     | "logged_in"
     | "registering"
+    | "dismissed_registering"
     | "logging_in"
     | "upgrading_user"
     | "upgrade_user";
