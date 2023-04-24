@@ -72,6 +72,7 @@ fn delete_group_message_succeeds() {
         &group_canister::delete_messages::Args {
             thread_root_message_index: None,
             message_ids: vec![message_id],
+            as_platform_moderator: None,
             correlation_id: 0,
         },
     );
@@ -186,6 +187,7 @@ fn delete_then_undelete_group_message(delay: bool) {
         &group_canister::delete_messages::Args {
             thread_root_message_index: None,
             message_ids: vec![message_id],
+            as_platform_moderator: None,
             correlation_id: 0,
         },
     );
@@ -225,5 +227,57 @@ fn delete_then_undelete_group_message(delay: bool) {
         }
     } else {
         panic!("Unexpected response from `events_by_index`: {events_response:?}");
+    }
+}
+
+#[test_case(true; "is_platform_moderator")]
+#[test_case(false; "is_not_platform_moderator")]
+fn platform_operators_can_delete_messages(is_platform_moderator: bool) {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let user1 = client::user_index::happy_path::register_user(env, canister_ids.user_index);
+    let user2 = client::user_index::happy_path::register_user(env, canister_ids.user_index);
+    let group = client::user::happy_path::create_group(env, &user1, &random_string(), true, true);
+    client::local_user_index::happy_path::join_group(env, user2.principal, canister_ids.local_user_index, group);
+
+    let message_id = random_message_id();
+
+    client::group::happy_path::send_text_message(env, &user1, group, None, "TEXT", Some(message_id));
+
+    if is_platform_moderator {
+        client::user_index::add_platform_moderator(
+            env,
+            *controller,
+            canister_ids.user_index,
+            &user_index_canister::add_platform_moderator::Args { user_id: user2.user_id },
+        );
+    }
+
+    let delete_messages_response = client::group::delete_messages(
+        env,
+        user2.principal,
+        group.into(),
+        &group_canister::delete_messages::Args {
+            thread_root_message_index: None,
+            message_ids: vec![message_id],
+            as_platform_moderator: Some(true),
+            correlation_id: 0,
+        },
+    );
+    if is_platform_moderator {
+        assert!(matches!(
+            delete_messages_response,
+            group_canister::delete_messages::Response::Success
+        ));
+    } else {
+        assert!(matches!(
+            delete_messages_response,
+            group_canister::delete_messages::Response::NotPlatformModerator
+        ));
     }
 }

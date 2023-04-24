@@ -1,28 +1,39 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::timer_job_types::HardDeleteMessageContentJob;
-use crate::{mutate_state, run_regular_jobs, RuntimeState, TimerJob};
+use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState, TimerJob};
+use candid::Principal;
 use canister_tracing_macros::trace;
 use chat_events::{ChatEventInternal, DeleteMessageResult, DeleteUndeleteMessagesArgs, Reader};
 use group_canister::delete_messages::{Response::*, *};
 use ic_cdk_macros::update;
 use std::collections::HashSet;
 use types::{MessageId, MessageUnpinned};
+use user_index_canister_c2c_client::lookup_user;
 use utils::time::MINUTE_IN_MS;
 
 #[update]
 #[trace]
-fn delete_messages(args: Args) -> Response {
+async fn delete_messages(args: Args) -> Response {
     run_regular_jobs();
 
-    mutate_state(|state| delete_messages_impl(args, state))
+    let (caller, user_index_canister_id) = read_state(|state| (state.env.caller(), state.data.user_index_canister_id));
+
+    if args.as_platform_moderator.unwrap_or_default() {
+        match lookup_user(caller, user_index_canister_id).await {
+            Ok(u) if u.is_platform_moderator => {}
+            Ok(_) => return NotPlatformModerator,
+            Err(error) => return InternalError(format!("{error:?}")),
+        }
+    }
+
+    mutate_state(|state| delete_messages_impl(caller, args, state))
 }
 
-fn delete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
+fn delete_messages_impl(caller: Principal, args: Args, runtime_state: &mut RuntimeState) -> Response {
     if runtime_state.data.is_frozen() {
         return ChatFrozen;
     }
 
-    let caller = runtime_state.env.caller();
     if let Some(participant) = runtime_state.data.participants.get_by_principal(&caller) {
         if participant.suspended.value {
             return UserSuspended;
@@ -68,7 +79,8 @@ fn delete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
 
         let delete_message_results = runtime_state.data.events.delete_messages(DeleteUndeleteMessagesArgs {
             caller: user_id,
-            is_admin: participant.role.can_delete_messages(&runtime_state.data.permissions),
+            is_admin: participant.role.can_delete_messages(&runtime_state.data.permissions)
+                || args.as_platform_moderator.unwrap_or_default(),
             min_visible_event_index,
             thread_root_message_index: args.thread_root_message_index,
             message_ids: args.message_ids,

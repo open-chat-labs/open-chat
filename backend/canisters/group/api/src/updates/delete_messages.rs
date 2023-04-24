@@ -6,6 +6,7 @@ use types::{MessageId, MessageIndex};
 pub struct Args {
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_ids: Vec<MessageId>,
+    pub as_platform_moderator: Option<bool>,
     pub correlation_id: u64,
 }
 
@@ -16,4 +17,6 @@ pub enum Response {
     MessageNotFound,
     UserSuspended,
     ChatFrozen,
+    NotPlatformModerator,
+    InternalError(String),
 }
