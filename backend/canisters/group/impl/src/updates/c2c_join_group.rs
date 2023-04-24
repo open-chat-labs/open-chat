@@ -1,5 +1,5 @@
 use crate::activity_notifications::handle_activity_notification;
-use crate::guards::caller_is_local_user_index;
+use crate::guards::caller_is_user_index_or_local_user_index;
 use crate::model::participants::AddResult;
 use crate::{mutate_state, read_state, run_regular_jobs, AddParticipantArgs, RuntimeState};
 use canister_api_macros::update_msgpack;
@@ -9,7 +9,7 @@ use gated_groups::{check_if_passes_gate, CheckIfPassesGateResult};
 use group_canister::c2c_join_group::{Response::*, *};
 use types::{CanisterId, EventIndex, GroupGate, MessageIndex, ParticipantJoined, UsersUnblocked};
 
-#[update_msgpack(guard = "caller_is_local_user_index")]
+#[update_msgpack(guard = "caller_is_user_index_or_local_user_index")]
 #[trace]
 async fn c2c_join_group(args: Args) -> Response {
     run_regular_jobs();
@@ -34,7 +34,11 @@ fn is_permitted_to_join(
     has_passed_gate: bool,
     runtime_state: &RuntimeState,
 ) -> Result<Option<(GroupGate, CanisterId)>, Response> {
-    if runtime_state.data.is_frozen() {
+    let caller = runtime_state.env.caller();
+    // If the call is from the user index then we skip the checks
+    if caller == runtime_state.data.user_index_canister_id {
+        Ok(None)
+    } else if runtime_state.data.is_frozen() {
         Err(ChatFrozen)
     } else if !runtime_state.data.is_accessible_by_non_member(invite_code) {
         Err(GroupNotPublic)

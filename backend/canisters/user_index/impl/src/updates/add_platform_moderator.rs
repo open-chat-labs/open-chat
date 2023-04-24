@@ -1,4 +1,5 @@
 use crate::guards::caller_is_governance_principal;
+use crate::timer_job_types::{JoinUserToGroup, TimerJob};
 use crate::{mutate_state, read_state, RuntimeState};
 use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
@@ -37,4 +38,17 @@ fn commit(user_id: UserId, runtime_state: &mut RuntimeState) {
         }),
         None,
     );
+
+    if let Some(group_id) = runtime_state.data.platform_moderators_group {
+        let now = runtime_state.env.now();
+        runtime_state.data.timer_jobs.enqueue_job(
+            TimerJob::JoinUserToGroup(JoinUserToGroup {
+                user_id,
+                group_id,
+                attempt: 0,
+            }),
+            now,
+            now,
+        );
+    }
 }
