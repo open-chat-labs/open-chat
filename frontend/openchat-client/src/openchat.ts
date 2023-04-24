@@ -690,7 +690,7 @@ export class OpenChat extends EventTarget {
 
     previewChat(chatId: string): Promise<boolean> {
         return this.api.getPublicGroupSummary(chatId).then((maybeChat) => {
-            if (maybeChat === undefined) {
+            if (maybeChat === undefined || maybeChat.frozen) {
                 return false;
             }
             addGroupPreview(maybeChat);

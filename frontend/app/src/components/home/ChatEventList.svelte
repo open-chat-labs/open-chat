@@ -358,9 +358,23 @@
                 return Promise.resolve();
             }
         } else if (!destroyed) {
-            // make sure that we short-circuit recursion when unmounted otherwise ∞ 💥
-            await client.loadEventWindow(chatId, index, threadRootEvent);
-            return scrollToMessageIndex(chatId, index, preserveFocus);
+            // check whether we have already loaded the event we are looking for
+            const loaded = findMessageEvent(index);
+            if (loaded === undefined) {
+                // we must only recurse if we have not already loaded the event, otherwise we will enter an infinite loop
+                await client.loadEventWindow(chatId, index, threadRootEvent);
+                return scrollToMessageIndex(chatId, index, preserveFocus);
+            } else {
+                // if we got here it means that we could not find the DOM element for and event that we
+                // have already loaded. This isn't necessarily an error since a message might have been hidden
+                // but it's still not clear what to do in this circumstance because we cannot
+                // scroll to this message and there is nothing that we can do about it. So where *do* we scroll?
+                // The *next* message?, the bottom?, nowhere?
+                const nextMessage = findElementWithMessageIndex(index + 1);
+                return nextMessage
+                    ? scrollToMessageIndex(chatId, index + 1, preserveFocus, filling)
+                    : scrollBottom();
+            }
         }
     }
 
