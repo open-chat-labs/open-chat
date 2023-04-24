@@ -32,6 +32,7 @@ export function debug<T>(data: T, msg?: string): T {
 
 export const logger: Logger = {
     error(message?: unknown, ...optionalParams: unknown[]): void {
+        console.error(message as string, optionalParams);
         rollbar.error(message as string, optionalParams);
     },
 };

@@ -36,6 +36,7 @@ import type { IUserIndexClient } from "./userIndex.client.interface";
 import { profile } from "../common/profiling";
 import { apiOptional } from "../common/chatMappers";
 import type { AgentConfig } from "../../config";
+import { identity } from "../../utils/mapping";
 
 export class UserIndexClient extends CandidService implements IUserIndexClient {
     private userIndexService: UserIndexService;
@@ -63,11 +64,14 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
     }
 
     @profile("userIndexClient")
-    registerUser(username: string, referredBy: string | undefined): Promise<RegisterUserResponse> {
+    registerUser(
+        username: string,
+        referralCode: string | undefined
+    ): Promise<RegisterUserResponse> {
         return this.handleResponse(
-            this.userIndexService.register_user({
+            this.userIndexService.register_user_v2({
                 username,
-                referred_by: apiOptional((userId) => Principal.fromText(userId), referredBy),
+                referral_code: apiOptional(identity, referralCode),
                 public_key: new Uint8Array((this.identity as SignIdentity).getPublicKey().toDer()),
             }),
             registerUserResponse
