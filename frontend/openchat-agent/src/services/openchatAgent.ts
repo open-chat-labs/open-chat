@@ -63,9 +63,7 @@ import {
     DeleteGroupResponse,
     DeleteMessageResponse,
     DirectChatEvent,
-    DisableInviteCodeResponse,
     EditMessageResponse,
-    EnableInviteCodeResponse,
     EventsResponse,
     EventWrapper,
     GroupChatDetails,
@@ -77,7 +75,6 @@ import {
     GroupRules,
     GroupSearchResponse,
     IndexRange,
-    InviteCodeResponse,
     JoinGroupResponse,
     LeaveGroupResponse,
     ListNervousSystemFunctionsResponse,
@@ -97,7 +94,6 @@ import {
     RegisterProposalVoteResponse,
     RegisterUserResponse,
     RemoveMemberResponse,
-    ResetInviteCodeResponse,
     SearchDirectChatResponse,
     SearchGroupChatResponse,
     SendMessageResponse,
@@ -1349,22 +1345,6 @@ export class OpenChatAgent extends EventTarget {
         domain: PendingCryptocurrencyWithdrawal
     ): Promise<WithdrawCryptocurrencyResponse> {
         return this.userClient.withdrawCryptocurrency(domain);
-    }
-
-    getInviteCode(chatId: string): Promise<InviteCodeResponse> {
-        return this.getGroupClient(chatId).getInviteCode();
-    }
-
-    enableInviteCode(chatId: string): Promise<EnableInviteCodeResponse> {
-        return this.getGroupClient(chatId).enableInviteCode();
-    }
-
-    disableInviteCode(chatId: string): Promise<DisableInviteCodeResponse> {
-        return this.getGroupClient(chatId).disableInviteCode();
-    }
-
-    resetInviteCode(chatId: string): Promise<ResetInviteCodeResponse> {
-        return this.getGroupClient(chatId).resetInviteCode();
     }
 
     pinChat(chatId: string): Promise<PinChatResponse> {

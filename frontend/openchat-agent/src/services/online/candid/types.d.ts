@@ -204,6 +204,7 @@ export interface DirectReactionAddedNotification {
   'timestamp' : TimestampMillis,
   'reaction' : string,
 }
+export type EmptyArgs = {};
 export type EventIndex = number;
 export type EventsTimeToLiveUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
@@ -404,7 +405,6 @@ export interface GroupPermissions {
   'send_messages' : PermissionRole,
   'remove_members' : PermissionRole,
   'update_group' : PermissionRole,
-  'invite_users' : PermissionRole,
   'change_roles' : PermissionRole,
   'add_members' : PermissionRole,
   'create_polls' : PermissionRole,

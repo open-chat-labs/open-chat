@@ -1,6 +1,6 @@
 import type { Identity } from "@dfinity/agent";
 import { idlFactory, GroupService } from "./candid/idl";
-import {
+import type {
     AddMembersResponse,
     EventsResponse,
     GroupChatEvent,
@@ -25,14 +25,9 @@ import {
     RegisterPollVoteResponse,
     GroupPermissions,
     MakeGroupPrivateResponse,
-    InviteCodeResponse,
-    EnableInviteCodeResponse,
-    DisableInviteCodeResponse,
-    ResetInviteCodeResponse,
     ThreadPreviewsResponse,
     RegisterProposalVoteResponse,
     GroupRules,
-    textToCode,
     SearchGroupChatResponse,
     User,
     GroupCanisterSummaryResponse,
@@ -65,10 +60,6 @@ import {
     unpinMessageResponse,
     searchGroupChatResponse,
     makeGroupPrivateResponse,
-    inviteCodeResponse,
-    enableInviteCodeResponse,
-    disableInviteCodeResponse,
-    resetInviteCodeResponse,
     threadPreviewsResponse,
     registerPollVoteResponse,
     registerProposalVoteResponse,
@@ -101,7 +92,6 @@ export class GroupClient extends CandidService implements IGroupClient {
         identity: Identity,
         private config: AgentConfig,
         private chatId: string,
-        private inviteCode: string | undefined
     ) {
         super(identity);
         this.groupService = this.createServiceClient<GroupService>(idlFactory, chatId, config);
@@ -111,13 +101,12 @@ export class GroupClient extends CandidService implements IGroupClient {
         chatId: string,
         identity: Identity,
         config: AgentConfig,
-        db: Database,
-        inviteCode: string | undefined
+        db: Database
     ): IGroupClient {
         return new CachingGroupClient(
             db,
             chatId,
-            new GroupClient(identity, config, chatId, inviteCode),
+            new GroupClient(identity, config, chatId),
             config.logger
         );
     }
@@ -147,7 +136,6 @@ export class GroupClient extends CandidService implements IGroupClient {
         const args = {
             thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
             events: new Uint32Array(eventIndexes),
-            invite_code: apiOptional(textToCode, this.inviteCode),
             latest_client_event_index: apiOptional(identity, latestClientEventIndex),
         };
         // FIXME - this always seems to through a ReplicaNotUpToDate error for threads.
@@ -178,7 +166,6 @@ export class GroupClient extends CandidService implements IGroupClient {
             max_messages: MAX_MESSAGES,
             max_events: MAX_EVENTS,
             mid_point: messageIndex,
-            invite_code: apiOptional(textToCode, this.inviteCode),
             latest_client_event_index: apiOptional(identity, latestClientEventIndex),
         };
         return this.handleQueryResponse(
@@ -209,7 +196,6 @@ export class GroupClient extends CandidService implements IGroupClient {
             max_events: MAX_EVENTS,
             ascending,
             start_index: startIndex,
-            invite_code: apiOptional(textToCode, this.inviteCode),
             latest_client_event_index: apiOptional(identity, latestClientEventIndex),
         };
         return this.handleQueryResponse(
@@ -506,7 +492,7 @@ export class GroupClient extends CandidService implements IGroupClient {
 
     @profile("groupClient")
     getPublicSummary(): Promise<GroupChatSummary | undefined> {
-        const args = { invite_code: apiOptional(textToCode, this.inviteCode) };
+        const args = {};
         return this.handleQueryResponse(
             () => this.groupService.public_summary(args),
             publicSummaryResponse,
@@ -519,7 +505,7 @@ export class GroupClient extends CandidService implements IGroupClient {
 
     @profile("groupClient")
     getRules(): Promise<GroupRules | undefined> {
-        const args = { invite_code: apiOptional(textToCode, this.inviteCode) };
+        const args = {};
         return this.handleQueryResponse(
             () => this.groupService.rules(args),
             rulesResponse,
@@ -536,11 +522,9 @@ export class GroupClient extends CandidService implements IGroupClient {
         latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<Message>> {
         const thread_root_message_index: [] = [];
-        const invite_code: [] = [];
         const args = {
             thread_root_message_index,
             messages: new Uint32Array(messageIndexes),
-            invite_code,
             latest_client_event_index: apiOptional(identity, latestClientEventIndex),
         };
         return this.handleQueryResponse(
@@ -630,44 +614,6 @@ export class GroupClient extends CandidService implements IGroupClient {
             () => this.groupService.search_messages(args),
             searchGroupChatResponse,
             args
-        );
-    }
-
-    @profile("groupClient")
-    getInviteCode(): Promise<InviteCodeResponse> {
-        return this.handleQueryResponse(
-            () => this.groupService.invite_code({}),
-            inviteCodeResponse
-        );
-    }
-
-    @profile("groupClient")
-    enableInviteCode(): Promise<EnableInviteCodeResponse> {
-        return this.handleResponse(
-            this.groupService.enable_invite_code({
-                correlation_id: generateUint64(),
-            }),
-            enableInviteCodeResponse
-        );
-    }
-
-    @profile("groupClient")
-    disableInviteCode(): Promise<DisableInviteCodeResponse> {
-        return this.handleResponse(
-            this.groupService.disable_invite_code({
-                correlation_id: generateUint64(),
-            }),
-            disableInviteCodeResponse
-        );
-    }
-
-    @profile("groupClient")
-    resetInviteCode(): Promise<ResetInviteCodeResponse> {
-        return this.handleResponse(
-            this.groupService.reset_invite_code({
-                correlation_id: generateUint64(),
-            }),
-            resetInviteCodeResponse
         );
     }
 

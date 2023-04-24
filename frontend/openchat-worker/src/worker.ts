@@ -1079,39 +1079,6 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
                     .catch(sendError(correlationId));
                 break;
 
-            case "getInviteCode":
-                agent
-                    .getInviteCode(payload.chatId)
-                    .then((response) =>
-                        sendResponse(correlationId, {
-                            response,
-                        })
-                    )
-                    .catch(sendError(correlationId));
-                break;
-
-            case "enableInviteCode":
-                agent
-                    .enableInviteCode(payload.chatId)
-                    .then((response) =>
-                        sendResponse(correlationId, {
-                            response,
-                        })
-                    )
-                    .catch(sendError(correlationId));
-                break;
-
-            case "disableInviteCode":
-                agent
-                    .disableInviteCode(payload.chatId)
-                    .then((response) =>
-                        sendResponse(correlationId, {
-                            response,
-                        })
-                    )
-                    .catch(sendError(correlationId));
-                break;
-
             case "createGroupChat":
                 agent
                     .createGroupChat(payload.candidate)

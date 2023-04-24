@@ -1,5 +1,6 @@
 import type { Identity, SignIdentity } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
+import { identity } from "../../utils/mapping";
 import { idlFactory, UserIndexService } from "./candid/idl";
 import type {
     CheckUsernameResponse,
@@ -65,9 +66,9 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
     @profile("userIndexClient")
     registerUser(username: string, referredBy: string | undefined): Promise<RegisterUserResponse> {
         return this.handleResponse(
-            this.userIndexService.register_user({
+            this.userIndexService.register_user_v2({
                 username,
-                referred_by: apiOptional((userId) => Principal.fromText(userId), referredBy),
+                referral_code: apiOptional(identity, referredBy),
                 public_key: new Uint8Array((this.identity as SignIdentity).getPublicKey().toDer()),
             }),
             registerUserResponse

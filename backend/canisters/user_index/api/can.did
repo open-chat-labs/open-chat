@@ -1,9 +1,5 @@
 import "../../../libraries/types/can.did";
 
-type EmptyArgs =
-    record {
-    };
-
 type RegisterUserV2Args =
     record {
         username: text;

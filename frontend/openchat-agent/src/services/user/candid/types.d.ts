@@ -305,6 +305,7 @@ export type EditMessageResponse = { 'MessageNotFound' : null } |
   { 'Success' : null } |
   { 'UserSuspended' : null } |
   { 'UserBlocked' : null };
+export type EmptyArgs = {};
 export type EventIndex = number;
 export interface EventsArgs {
   'latest_client_event_index' : [] | [EventIndex],
@@ -536,7 +537,6 @@ export interface GroupPermissions {
   'send_messages' : PermissionRole,
   'remove_members' : PermissionRole,
   'update_group' : PermissionRole,
-  'invite_users' : PermissionRole,
   'change_roles' : PermissionRole,
   'add_members' : PermissionRole,
   'create_polls' : PermissionRole,

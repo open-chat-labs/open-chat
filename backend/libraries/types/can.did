@@ -1086,7 +1086,6 @@ type GroupPermissions =
         delete_messages: PermissionRole;
         update_group: PermissionRole;
         pin_messages: PermissionRole;
-        invite_users: PermissionRole;
         create_polls: PermissionRole;
         send_messages: PermissionRole;
         react_to_messages: PermissionRole;
@@ -1283,4 +1282,8 @@ type CustomMessageContent =
     record {
         kind: text;
         data: blob;
+    };
+
+type EmptyArgs =
+    record {
     };

@@ -68,7 +68,6 @@ export const idlFactory = ({ IDL }) => {
     'send_messages' : PermissionRole,
     'remove_members' : PermissionRole,
     'update_group' : PermissionRole,
-    'invite_users' : PermissionRole,
     'change_roles' : PermissionRole,
     'add_members' : PermissionRole,
     'create_polls' : PermissionRole,

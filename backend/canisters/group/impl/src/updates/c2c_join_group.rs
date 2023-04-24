@@ -14,7 +14,7 @@ use types::{CanisterId, EventIndex, GroupGate, MessageIndex, ParticipantJoined, 
 async fn c2c_join_group(args: Args) -> Response {
     run_regular_jobs();
 
-    match read_state(|state| is_permitted_to_join(args.invite_code, false, state)) {
+    match read_state(|state| is_permitted_to_join(false, state)) {
         Ok(Some((gate, user_index_canister_id))) => {
             match check_if_passes_gate(gate, args.user_id, user_index_canister_id).await {
                 CheckIfPassesGateResult::Success => {}
@@ -30,13 +30,12 @@ async fn c2c_join_group(args: Args) -> Response {
 }
 
 fn is_permitted_to_join(
-    invite_code: Option<u64>,
     has_passed_gate: bool,
     runtime_state: &RuntimeState,
 ) -> Result<Option<(GroupGate, CanisterId)>, Response> {
     if runtime_state.data.is_frozen() {
         Err(ChatFrozen)
-    } else if !runtime_state.data.is_accessible_by_non_member(invite_code) {
+    } else if !runtime_state.data.is_accessible_by_non_member() {
         Err(GroupNotPublic)
     } else if let Some(limit) = runtime_state.data.participants.user_limit_reached() {
         Err(ParticipantLimitReached(limit))
@@ -54,7 +53,7 @@ fn is_permitted_to_join(
 fn c2c_join_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     if runtime_state.data.gate.is_some() {
         // We need to check again because things may have changed during the async gate check
-        if let Err(response) = is_permitted_to_join(args.invite_code, true, runtime_state) {
+        if let Err(response) = is_permitted_to_join(true, runtime_state) {
             return response;
         }
     }

@@ -6,12 +6,12 @@ use group_canister::public_summary::{Response::*, *};
 use types::{Avatar, PublicGroupSummary, Version};
 
 #[query_candid_and_msgpack]
-fn public_summary(args: Args) -> Response {
-    read_state(|runtime_state: &RuntimeState| public_summary_impl(args, runtime_state))
+fn public_summary(_args: Args) -> Response {
+    read_state(public_summary_impl)
 }
 
-fn public_summary_impl(args: Args, runtime_state: &RuntimeState) -> Response {
-    if !runtime_state.data.is_accessible_by_non_member(args.invite_code) {
+fn public_summary_impl(runtime_state: &RuntimeState) -> Response {
+    if !runtime_state.data.is_accessible_by_non_member() {
         return NotAuthorized;
     }
 

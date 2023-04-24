@@ -2,7 +2,6 @@ export const idlFactory = ({ IDL }) => {
   const CanisterId = IDL.Principal;
   const ChatId = CanisterId;
   const JoinGroupArgs = IDL.Record({
-    'invite_code' : IDL.Opt(IDL.Nat64),
     'correlation_id' : IDL.Nat64,
     'chat_id' : ChatId,
   });
@@ -24,7 +23,6 @@ export const idlFactory = ({ IDL }) => {
     'send_messages' : PermissionRole,
     'remove_members' : PermissionRole,
     'update_group' : PermissionRole,
-    'invite_users' : PermissionRole,
     'change_roles' : PermissionRole,
     'add_members' : PermissionRole,
     'create_polls' : PermissionRole,

@@ -71,9 +71,6 @@ import {
     SetBioResponse,
     PendingCryptocurrencyWithdrawal,
     WithdrawCryptocurrencyResponse,
-    InviteCodeResponse,
-    EnableInviteCodeResponse,
-    DisableInviteCodeResponse,
     CandidateGroupChat,
     CreateGroupResponse,
     ChangeRoleResponse,
@@ -1161,33 +1158,6 @@ export class OpenChatAgentWorker extends EventTarget {
                 chatId,
                 messageIndexes,
                 latestClientEventIndex,
-            },
-        });
-    }
-
-    getInviteCode(chatId: string): Promise<InviteCodeResponse> {
-        return this.sendRequest({
-            kind: "getInviteCode",
-            payload: {
-                chatId,
-            },
-        });
-    }
-
-    enableInviteCode(chatId: string): Promise<EnableInviteCodeResponse> {
-        return this.sendRequest({
-            kind: "enableInviteCode",
-            payload: {
-                chatId,
-            },
-        });
-    }
-
-    disableInviteCode(chatId: string): Promise<DisableInviteCodeResponse> {
-        return this.sendRequest({
-            kind: "disableInviteCode",
-            payload: {
-                chatId,
             },
         });
     }

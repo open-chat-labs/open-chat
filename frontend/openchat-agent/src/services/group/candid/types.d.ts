@@ -313,11 +313,6 @@ export interface DirectReactionAddedNotification {
   'timestamp' : TimestampMillis,
   'reaction' : string,
 }
-export interface DisableInviteCodeArgs { 'correlation_id' : bigint }
-export type DisableInviteCodeResponse = { 'ChatFrozen' : null } |
-  { 'NotAuthorized' : null } |
-  { 'Success' : null } |
-  { 'UserSuspended' : null };
 export interface EditMessageArgs {
   'content' : MessageContent,
   'correlation_id' : bigint,
@@ -329,15 +324,10 @@ export type EditMessageResponse = { 'MessageNotFound' : null } |
   { 'ChatFrozen' : null } |
   { 'Success' : null } |
   { 'UserSuspended' : null };
-export interface EnableInviteCodeArgs { 'correlation_id' : bigint }
-export type EnableInviteCodeResponse = { 'ChatFrozen' : null } |
-  { 'NotAuthorized' : null } |
-  { 'Success' : { 'code' : bigint } } |
-  { 'UserSuspended' : null };
+export type EmptyArgs = {};
 export type EventIndex = number;
 export interface EventsArgs {
   'latest_client_event_index' : [] | [EventIndex],
-  'invite_code' : [] | [bigint],
   'max_messages' : number,
   'max_events' : number,
   'ascending' : boolean,
@@ -346,7 +336,6 @@ export interface EventsArgs {
 }
 export interface EventsByIndexArgs {
   'latest_client_event_index' : [] | [EventIndex],
-  'invite_code' : [] | [bigint],
   'events' : Uint32Array | number[],
   'thread_root_message_index' : [] | [MessageIndex],
 }
@@ -369,7 +358,6 @@ export interface EventsTimeToLiveUpdated {
 export interface EventsWindowArgs {
   'latest_client_event_index' : [] | [EventIndex],
   'mid_point' : MessageIndex,
-  'invite_code' : [] | [bigint],
   'max_messages' : number,
   'max_events' : number,
   'thread_root_message_index' : [] | [MessageIndex],
@@ -566,7 +554,6 @@ export interface GroupPermissions {
   'send_messages' : PermissionRole,
   'remove_members' : PermissionRole,
   'update_group' : PermissionRole,
-  'invite_users' : PermissionRole,
   'change_roles' : PermissionRole,
   'add_members' : PermissionRole,
   'create_polls' : PermissionRole,
@@ -630,9 +617,6 @@ export type InvalidPollReason = { 'DuplicateOptions' : null } |
   { 'OptionTooLong' : number } |
   { 'EndDateInThePast' : null } |
   { 'PollsNotValidForDirectChats' : null };
-export type InviteCodeArgs = {};
-export type InviteCodeResponse = { 'NotAuthorized' : null } |
-  { 'Success' : { 'code' : [] | [bigint] } };
 export type LocalUserIndexArgs = {};
 export type LocalUserIndexResponse = { 'Success' : CanisterId };
 export interface MakePrivateArgs { 'correlation_id' : bigint }
@@ -733,7 +717,6 @@ export interface MessageUnpinned {
 export interface MessagesByMessageIndexArgs {
   'latest_client_event_index' : [] | [EventIndex],
   'messages' : Uint32Array | number[],
-  'invite_code' : [] | [bigint],
   'thread_root_message_index' : [] | [MessageIndex],
 }
 export type MessagesByMessageIndexResponse = {
@@ -814,7 +797,6 @@ export interface OptionalGroupPermissions {
   'send_messages' : [] | [PermissionRole],
   'remove_members' : [] | [PermissionRole],
   'update_group' : [] | [PermissionRole],
-  'invite_users' : [] | [PermissionRole],
   'change_roles' : [] | [PermissionRole],
   'add_members' : [] | [PermissionRole],
   'create_polls' : [] | [PermissionRole],
@@ -956,7 +938,6 @@ export interface PublicGroupSummary {
   'participant_count' : number,
   'latest_message' : [] | [MessageEventWrapper],
 }
-export interface PublicSummaryArgs { 'invite_code' : [] | [bigint] }
 export type PublicSummaryResponse = { 'NotAuthorized' : null } |
   { 'Success' : PublicSummarySuccess };
 export interface PublicSummarySuccess { 'summary' : PublicGroupSummary }
@@ -1034,11 +1015,6 @@ export interface ReplyContext {
   'chat_id_if_other' : [] | [ChatId],
   'event_index' : EventIndex,
 }
-export interface ResetInviteCodeArgs { 'correlation_id' : bigint }
-export type ResetInviteCodeResponse = { 'ChatFrozen' : null } |
-  { 'NotAuthorized' : null } |
-  { 'Success' : { 'code' : bigint } } |
-  { 'UserSuspended' : null };
 export type Role = { 'Participant' : null } |
   { 'Admin' : null } |
   { 'Owner' : null };
@@ -1048,7 +1024,6 @@ export interface RoleChanged {
   'old_role' : Role,
   'new_role' : Role,
 }
-export interface RulesArgs { 'invite_code' : [] | [bigint] }
 export type RulesResponse = { 'NotAuthorized' : null } |
   { 'Success' : RulesSuccess };
 export interface RulesSuccess { 'rules' : [] | [string] }
@@ -1358,19 +1333,10 @@ export interface _SERVICE {
   'claim_prize' : ActorMethod<[ClaimPrizeArgs], ClaimPrizeResponse>,
   'delete_messages' : ActorMethod<[DeleteMessagesArgs], DeleteMessagesResponse>,
   'deleted_message' : ActorMethod<[DeletedMessageArgs], DeletedMessageResponse>,
-  'disable_invite_code' : ActorMethod<
-    [DisableInviteCodeArgs],
-    DisableInviteCodeResponse
-  >,
   'edit_message' : ActorMethod<[EditMessageArgs], EditMessageResponse>,
-  'enable_invite_code' : ActorMethod<
-    [EnableInviteCodeArgs],
-    EnableInviteCodeResponse
-  >,
   'events' : ActorMethod<[EventsArgs], EventsResponse>,
   'events_by_index' : ActorMethod<[EventsByIndexArgs], EventsResponse>,
   'events_window' : ActorMethod<[EventsWindowArgs], EventsResponse>,
-  'invite_code' : ActorMethod<[InviteCodeArgs], InviteCodeResponse>,
   'local_user_index' : ActorMethod<
     [LocalUserIndexArgs],
     LocalUserIndexResponse
@@ -1381,7 +1347,7 @@ export interface _SERVICE {
     MessagesByMessageIndexResponse
   >,
   'pin_message_v2' : ActorMethod<[PinMessageArgs], PinMessageV2Response>,
-  'public_summary' : ActorMethod<[PublicSummaryArgs], PublicSummaryResponse>,
+  'public_summary' : ActorMethod<[EmptyArgs], PublicSummaryResponse>,
   'register_poll_vote' : ActorMethod<
     [RegisterPollVoteArgs],
     RegisterPollVoteResponse
@@ -1399,11 +1365,7 @@ export interface _SERVICE {
     RemoveParticipantResponse
   >,
   'remove_reaction' : ActorMethod<[RemoveReactionArgs], RemoveReactionResponse>,
-  'reset_invite_code' : ActorMethod<
-    [ResetInviteCodeArgs],
-    ResetInviteCodeResponse
-  >,
-  'rules' : ActorMethod<[RulesArgs], RulesResponse>,
+  'rules' : ActorMethod<[EmptyArgs], RulesResponse>,
   'search_messages' : ActorMethod<[SearchMessagesArgs], SearchMessagesResponse>,
   'selected_initial' : ActorMethod<
     [SelectedInitialArgs],
