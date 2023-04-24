@@ -73,104 +73,113 @@
         calculateHeight();
         window.addEventListener("orientationchange", calculateHeight);
         window.addEventListener("unhandledrejection", unhandledError);
-        (<any>window).platformModerator = { addHotGroupExclusion, deleteFrozenGroup, freezeGroup, removeHotGroupExclusion, unfreezeGroup };
-        (<any>window).platformOperator = { setGroupUpgradeConcurrency, setUserUpgradeConcurrency, updateMarketMakerConfig };
+        (<any>window).platformModerator = {
+            addHotGroupExclusion,
+            deleteFrozenGroup,
+            freezeGroup,
+            removeHotGroupExclusion,
+            unfreezeGroup,
+            deleteMessage,
+        };
+        (<any>window).platformOperator = {
+            setGroupUpgradeConcurrency,
+            setUserUpgradeConcurrency,
+            updateMarketMakerConfig,
+        };
     });
 
     function addHotGroupExclusion(chatId: string): void {
-        client
-            .addHotGroupExclusion(chatId)
-            .then((success) => {
-                if (success) {
-                    console.log("Hot group exclusion added", chatId);
-                } else {
-                    console.log("Failed to add hot group exclusion", chatId);
-                }
-            });
+        client.addHotGroupExclusion(chatId).then((success) => {
+            if (success) {
+                console.log("Hot group exclusion added", chatId);
+            } else {
+                console.log("Failed to add hot group exclusion", chatId);
+            }
+        });
     }
 
     function deleteFrozenGroup(chatId: string): void {
-        client
-            .deleteFrozenGroup(chatId)
-            .then((success) => {
-                if (success) {
-                    console.log("Group deleted", chatId);
-                } else {
-                    console.log("Failed to delete frozen group", chatId);
-                }
-            });
+        client.deleteFrozenGroup(chatId).then((success) => {
+            if (success) {
+                console.log("Group deleted", chatId);
+            } else {
+                console.log("Failed to delete frozen group", chatId);
+            }
+        });
     }
 
     function freezeGroup(chatId: string, reason: string | undefined): void {
-        client
-            .freezeGroup(chatId, reason)
-            .then((success) => {
-                if (success) {
-                    console.log("Group frozen", chatId);
-                } else {
-                    console.log("Failed to freeze group", chatId);
-                }
-            });
+        client.freezeGroup(chatId, reason).then((success) => {
+            if (success) {
+                console.log("Group frozen", chatId);
+            } else {
+                console.log("Failed to freeze group", chatId);
+            }
+        });
     }
 
     function removeHotGroupExclusion(chatId: string): void {
-        client
-            .removeHotGroupExclusion(chatId)
-            .then((success) => {
-                if (success) {
-                    console.log("Hot group exclusion removed", chatId);
-                } else {
-                    console.log("Failed to remove hot group exclusion", chatId);
-                }
-            });
+        client.removeHotGroupExclusion(chatId).then((success) => {
+            if (success) {
+                console.log("Hot group exclusion removed", chatId);
+            } else {
+                console.log("Failed to remove hot group exclusion", chatId);
+            }
+        });
     }
 
     function unfreezeGroup(chatId: string): void {
-        client
-            .unfreezeGroup(chatId)
-            .then((success) => {
-                if (success) {
-                    console.log("Group unfrozen", chatId);
-                } else {
-                    console.log("Failed to unfreeze group", chatId);
-                }
-            });
+        client.unfreezeGroup(chatId).then((success) => {
+            if (success) {
+                console.log("Group unfrozen", chatId);
+            } else {
+                console.log("Failed to unfreeze group", chatId);
+            }
+        });
+    }
+
+    function deleteMessage(
+        chatId: string,
+        messageId: bigint,
+        threadRootMessageIndex?: number | undefined
+    ): void {
+        client.deleteMessage(chatId, threadRootMessageIndex, messageId).then((success) => {
+            if (success) {
+                console.log("Message deleted", chatId, messageId, threadRootMessageIndex);
+            } else {
+                console.log("Failed to delete message", chatId, messageId, threadRootMessageIndex);
+            }
+        });
     }
 
     function setGroupUpgradeConcurrency(value: number): void {
-        client
-            .setGroupUpgradeConcurrency(value)
-            .then((success) => {
-                if (success) {
-                    console.log("Group upgrade concurrency set", value);
-                } else {
-                    console.log("Failed to set group upgrade concurrency", value);
-                }
-            });
+        client.setGroupUpgradeConcurrency(value).then((success) => {
+            if (success) {
+                console.log("Group upgrade concurrency set", value);
+            } else {
+                console.log("Failed to set group upgrade concurrency", value);
+            }
+        });
     }
 
     function setUserUpgradeConcurrency(value: number): void {
-        client
-            .setUserUpgradeConcurrency(value)
-            .then((success) => {
-                if (success) {
-                    console.log("User upgrade concurrency set", value);
-                } else {
-                    console.log("Failed to set user upgrade concurrency", value);
-                }
-            });        
+        client.setUserUpgradeConcurrency(value).then((success) => {
+            if (success) {
+                console.log("User upgrade concurrency set", value);
+            } else {
+                console.log("Failed to set user upgrade concurrency", value);
+            }
+        });
     }
 
     function updateMarketMakerConfig(config: UpdateMarketMakerConfigArgs): void {
-        client
-            .updateMarketMakerConfig(config)
-            .then((resp) => {
-                if (resp === "success") {
-                    console.log("Market maker config updated");
-                } else {
-                    console.log("Failed to update market maker config", resp);
-                }
-            });
+        client.updateMarketMakerConfig(config).then((resp) => {
+            if (resp === "success") {
+                console.log("Market maker config updated");
+            } else {
+                console.log("Failed to update market maker config", resp);
+            }
+        });
     }
 
     $: {
