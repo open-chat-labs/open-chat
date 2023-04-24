@@ -6,9 +6,7 @@ use candid::Principal;
 use group_index_canister::freeze_group::SuspensionDetails;
 use ic_test_state_machine_client::StateMachine;
 use std::ops::Deref;
-use std::time::Duration;
 use types::ChatId;
-use utils::time::DAY_IN_MS;
 
 #[test]
 fn freeze_then_unfreeze() {
@@ -209,9 +207,7 @@ fn delete_frozen_group() {
         },
     );
 
-    env.advance_time(Duration::from_millis(7 * DAY_IN_MS));
-
-    let delete_group_response1 = client::group_index::delete_frozen_group(
+    let delete_group_response = client::group_index::delete_frozen_group(
         env,
         user1.principal,
         canister_ids.group_index,
@@ -219,26 +215,10 @@ fn delete_frozen_group() {
     );
     assert!(
         matches!(
-            delete_group_response1,
-            group_index_canister::delete_frozen_group::Response::ChatNotFrozenLongEnough(_)
-        ),
-        "{delete_group_response1:?}"
-    );
-
-    env.advance_time(Duration::from_millis(1));
-
-    let delete_group_response2 = client::group_index::delete_frozen_group(
-        env,
-        user1.principal,
-        canister_ids.group_index,
-        &group_index_canister::delete_frozen_group::Args { chat_id: group_id },
-    );
-    assert!(
-        matches!(
-            delete_group_response2,
+            delete_group_response,
             group_index_canister::delete_frozen_group::Response::Success
         ),
-        "{delete_group_response2:?}"
+        "{delete_group_response:?}"
     );
 
     tick_many(env, 5);

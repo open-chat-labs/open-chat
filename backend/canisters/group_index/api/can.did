@@ -113,7 +113,6 @@ type DeleteFrozenGroupResponse =
     variant {
         Success;
         ChatNotFrozen;
-        ChatNotFrozenLongEnough: TimestampMillis;
         ChatNotFound;
         NotAuthorized;
         InternalError: text;
