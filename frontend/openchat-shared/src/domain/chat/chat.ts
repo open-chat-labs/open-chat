@@ -1532,7 +1532,9 @@ export type DeleteMessageResponse =
     | "success"
     | "message_not_found"
     | "user_suspended"
-    | "chat_frozen";
+    | "chat_frozen"
+    | "internal_error"
+    | "not_platform_moderator";
 
 export type UndeleteMessageResponse =
     | {

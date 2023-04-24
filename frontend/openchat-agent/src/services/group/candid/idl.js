@@ -192,6 +192,7 @@ export const idlFactory = ({ IDL }) => {
     'TransferFailed' : IDL.Tuple(IDL.Text, FailedCryptoTransaction),
   });
   const DeleteMessagesArgs = IDL.Record({
+    'as_platform_moderator' : IDL.Opt(IDL.Bool),
     'message_ids' : IDL.Vec(MessageId),
     'correlation_id' : IDL.Nat64,
     'thread_root_message_index' : IDL.Opt(MessageIndex),
@@ -202,6 +203,8 @@ export const idlFactory = ({ IDL }) => {
     'ChatFrozen' : IDL.Null,
     'Success' : IDL.Null,
     'UserSuspended' : IDL.Null,
+    'NotPlatformModerator' : IDL.Null,
+    'InternalError' : IDL.Text,
   });
   const DeletedMessageArgs = IDL.Record({
     'message_id' : MessageId,

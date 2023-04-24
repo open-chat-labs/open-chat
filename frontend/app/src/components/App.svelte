@@ -143,7 +143,7 @@
         messageId: bigint,
         threadRootMessageIndex?: number | undefined
     ): void {
-        client.deleteMessage(chatId, threadRootMessageIndex, messageId).then((success) => {
+        client.deleteMessage(chatId, threadRootMessageIndex, messageId, true).then((success) => {
             if (success) {
                 console.log("Message deleted", chatId, messageId, threadRootMessageIndex);
             } else {

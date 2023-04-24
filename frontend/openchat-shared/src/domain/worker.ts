@@ -393,7 +393,7 @@ type SubscriptionExists = Request<{
 
 type RegisterUser = Request<{
     username: string;
-    referredBy: string | undefined;
+    referralCode: string | undefined;
 }> & {
     kind: "registerUser";
 };
@@ -496,6 +496,7 @@ type DeleteMessage = Request<{
     chatId: string;
     messageId: bigint;
     threadRootMessageIndex?: number;
+    asPlatformModerator?: boolean;
 }> & {
     kind: "deleteMessage";
 };

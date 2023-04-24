@@ -477,6 +477,12 @@ export function deleteMessageResponse(candid: ApiDeleteMessageResponse): DeleteM
     if ("ChatFrozen" in candid) {
         return "chat_frozen";
     }
+    if ("NotPlatformModerator" in candid) {
+        return "not_platform_moderator";
+    }
+    if ("InternalError" in candid) {
+        return "internal_error";
+    }
     throw new UnsupportedValueError("Unexpected ApiDeleteMessageResponse type received", candid);
 }
 

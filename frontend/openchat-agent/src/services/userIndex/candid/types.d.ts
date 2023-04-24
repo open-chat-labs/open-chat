@@ -11,6 +11,11 @@ export type AddPlatformModeratorResponse = {
   { 'InternalError' : string };
 export interface AddPlatformOperatorArgs { 'user_id' : UserId }
 export type AddPlatformOperatorResponse = { 'Success' : null };
+export interface AddReferralCodesArgs {
+  'codes' : Array<string>,
+  'referral_type' : ReferralType,
+}
+export type AddReferralCodesResponse = { 'Success' : null };
 export interface AddedToGroupNotification {
   'added_by_name' : string,
   'added_by' : UserId,
@@ -805,6 +810,21 @@ export interface PushEventResult {
   'index' : EventIndex,
   'expires_at' : [] | [TimestampMillis],
 }
+export interface ReferralLeaderboardArgs {
+  'count' : number,
+  'filter' : [] | [
+    { 'CurrentMonth' : null } |
+      { 'Month' : { 'month' : number, 'year' : number } }
+  ],
+}
+export type ReferralLeaderboardResponse = { 'AllTime' : Array<ReferralStats> } |
+  {
+    'Month' : {
+      'month' : number,
+      'year' : number,
+      'results' : Array<ReferralStats>,
+    }
+  };
 export type ReferralMetricsResponse = {
     'Success' : {
       'users_who_referred' : number,
@@ -817,11 +837,15 @@ export type ReferralMetricsResponse = {
       'users_who_referred_90_percent_unpaid_diamond' : number,
     }
   };
-export interface RegisterUserArgs {
+export interface ReferralStats {
   'username' : string,
-  'public_key' : Uint8Array | number[],
-  'referred_by' : [] | [UserId],
+  'total_users' : number,
+  'user_id' : UserId,
+  'diamond_members' : number,
+  'total_rewards_e8s' : bigint,
 }
+export type ReferralType = { 'User' : null } |
+  { 'BtcMiami' : null };
 export type RegisterUserResponse = { 'UsernameTaken' : null } |
   { 'UsernameTooShort' : number } |
   { 'UsernameInvalid' : null } |
@@ -831,7 +855,13 @@ export type RegisterUserResponse = { 'UsernameTaken' : null } |
   { 'Success' : UserId } |
   { 'PublicKeyInvalid' : string } |
   { 'InternalError' : string } |
+  { 'ReferralCodeInvalid' : null } |
   { 'CyclesBalanceTooLow' : null };
+export interface RegisterUserV2Args {
+  'username' : string,
+  'public_key' : Uint8Array | number[],
+  'referral_code' : [] | [string],
+}
 export type RegistrationFee = { 'ICP' : ICPRegistrationFee } |
   { 'Cycles' : CyclesRegistrationFee };
 export interface RemovePlatformModeratorArgs { 'user_id' : UserId }
@@ -1055,6 +1085,10 @@ export interface _SERVICE {
     [AddPlatformOperatorArgs],
     AddPlatformOperatorResponse
   >,
+  'add_referral_codes' : ActorMethod<
+    [AddReferralCodesArgs],
+    AddReferralCodesResponse
+  >,
   'check_username' : ActorMethod<[CheckUsernameArgs], CheckUsernameResponse>,
   'current_user' : ActorMethod<[EmptyArgs], CurrentUserResponse>,
   'mark_suspected_bot' : ActorMethod<
@@ -1070,8 +1104,12 @@ export interface _SERVICE {
     [PlatformOperatorsArgs],
     PlatformOperatorsResponse
   >,
+  'referral_leaderboard' : ActorMethod<
+    [ReferralLeaderboardArgs],
+    ReferralLeaderboardResponse
+  >,
   'referral_metrics' : ActorMethod<[EmptyArgs], ReferralMetricsResponse>,
-  'register_user' : ActorMethod<[RegisterUserArgs], RegisterUserResponse>,
+  'register_user_v2' : ActorMethod<[RegisterUserV2Args], RegisterUserResponse>,
   'remove_platform_moderator' : ActorMethod<
     [RemovePlatformModeratorArgs],
     RemovePlatformModeratorResponse

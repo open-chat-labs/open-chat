@@ -412,13 +412,15 @@ export class GroupClient extends CandidService implements IGroupClient {
     @profile("groupClient")
     deleteMessage(
         messageId: bigint,
-        threadRootMessageIndex?: number
+        threadRootMessageIndex?: number,
+        asPlatformModerator?: boolean
     ): Promise<DeleteMessageResponse> {
         return this.handleResponse(
             this.groupService.delete_messages({
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                 message_ids: [messageId],
                 correlation_id: generateUint64(),
+                as_platform_moderator: apiOptional(identity, asPlatformModerator),
             }),
             deleteMessageResponse
         );

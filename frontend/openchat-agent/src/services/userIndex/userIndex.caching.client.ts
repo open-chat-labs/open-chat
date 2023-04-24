@@ -70,8 +70,11 @@ export class CachingUserIndexClient implements IUserIndexClient {
         return this.client.getCurrentUser();
     }
 
-    registerUser(username: string, referredBy: string | undefined): Promise<RegisterUserResponse> {
-        return this.client.registerUser(username, referredBy);
+    registerUser(
+        username: string,
+        referralCode: string | undefined
+    ): Promise<RegisterUserResponse> {
+        return this.client.registerUser(username, referralCode);
     }
 
     searchUsers(searchTerm: string, maxResults?: number): Promise<UserSummary[]> {
