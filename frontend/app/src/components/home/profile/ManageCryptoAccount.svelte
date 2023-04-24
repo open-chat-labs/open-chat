@@ -11,10 +11,10 @@
     import { Cryptocurrency, cryptoLookup } from "openchat-client";
     import BalanceWithRefresh from "../BalanceWithRefresh.svelte";
     import type { OpenChat } from "openchat-client";
-    import WithdrawCrypto from "./WithdrawCrypto.svelte";
+    import SendCrypto from "./SendCrypto.svelte";
 
     export let token: Cryptocurrency;
-    export let mode: "withdraw" | "deposit";
+    export let mode: "send" | "receive";
 
     const client = getContext<OpenChat>("client");
     const user = client.user;
@@ -24,14 +24,14 @@
     let scanningUnsupported = ("standalone" in navigator && navigator.standalone) as boolean;
 
     $: title =
-        mode === "deposit"
-            ? $_("cryptoAccount.depositToken", { values: { symbol: token.toUpperCase() } })
-            : $_("cryptoAccount.withdrawToken", { values: { symbol: token.toUpperCase() } });
+        mode === "receive"
+            ? $_("cryptoAccount.receiveToken", { values: { symbol: token.toUpperCase() } })
+            : $_("cryptoAccount.sendToken", { values: { symbol: token.toUpperCase() } });
     $: cryptoBalance = client.cryptoBalance;
 
-    let withdrawCrypto: WithdrawCrypto;
+    let sendCrypto: SendCrypto;
     let error: string | undefined = undefined;
-    let amountToWithdrawE8s = BigInt(0);
+    let amountToSendE8s = BigInt(0);
     let balanceWithRefresh: BalanceWithRefresh;
 
     $: transferFees = cryptoLookup[token].transferFeesE8s;
@@ -39,8 +39,8 @@
     $: howToBuyUrl = cryptoLookup[token].howToBuyUrl;
 
     $: remainingBalanceE8s =
-        amountToWithdrawE8s > BigInt(0)
-            ? $cryptoBalance[token] - amountToWithdrawE8s - transferFees
+        amountToSendE8s > BigInt(0)
+            ? $cryptoBalance[token] - amountToSendE8s - transferFees
             : $cryptoBalance[token];
 
     function onBalanceRefreshed() {
@@ -67,21 +67,21 @@
                 on:error={onBalanceRefreshError} />
         </span>
         <form class={`body ${mode}`} slot="body">
-            {#if mode === "deposit"}
+            {#if mode === "receive"}
                 <AccountInfo qrSize={"larger"} centered {token} {user} />
                 <a rel="noreferrer" class="how-to" href={howToBuyUrl} target="_blank">
                     {$_("howToBuyToken", { values: { token: symbol.toUpperCase() } })}
                 </a>
             {/if}
 
-            {#if mode === "withdraw"}
-                <WithdrawCrypto
-                    bind:this={withdrawCrypto}
+            {#if mode === "send"}
+                <SendCrypto
+                    bind:this={sendCrypto}
                     on:error={(ev) => (error = ev.detail)}
                     on:refreshBalance={() => balanceWithRefresh.refresh()}
                     {scanningUnsupported}
                     {token}
-                    bind:amountToWithdrawE8s />
+                    bind:amountToSendE8s />
             {/if}
             {#if error}
                 <ErrorMessage>{$_(error)}</ErrorMessage>
@@ -89,8 +89,8 @@
         </form>
         <span slot="footer">
             <ButtonGroup>
-                {#if mode === "withdraw" && !scanningUnsupported}
-                    <Button secondary tiny={$mobileWidth} on:click={() => withdrawCrypto?.scan()}
+                {#if mode === "send" && !scanningUnsupported}
+                    <Button secondary tiny={$mobileWidth} on:click={() => sendCrypto?.scan()}
                         >{$_("cryptoAccount.scan")}</Button>
                 {/if}
                 <Button tiny={$mobileWidth} on:click={() => dispatch("close")}
@@ -124,7 +124,7 @@
         display: flex;
         flex-direction: column;
 
-        &.deposit {
+        &.receive {
             align-items: center;
         }
     }
