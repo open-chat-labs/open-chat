@@ -58,14 +58,19 @@ fn c2c_invite_users_impl(args: Args, runtime_state: &mut RuntimeState) -> Respon
 
         // Add new invites and update any existing invites
         for user_id in invited_users.iter() {
-            runtime_state.data.invited_users.insert(
-                *user_id,
-                UserInvite {
-                    timestamp: now,
-                    invited_by: participant.user_id,
-                    min_visible_event_index,
-                    min_visible_message_index,
+            runtime_state.data.invited_users.update(
+                |invited_users| {
+                    invited_users.insert(
+                        *user_id,
+                        UserInvite {
+                            timestamp: now,
+                            invited_by: participant.user_id,
+                            min_visible_event_index,
+                            min_visible_message_index,
+                        },
+                    );
                 },
+                now,
             );
         }
 

@@ -186,6 +186,8 @@ impl RuntimeState {
             members: self.data.participants.len(),
             admins: self.data.participants.admin_count(),
             owners: self.data.participants.owner_count(),
+            blocked: self.data.participants.blocked().len() as u32,
+            invited: self.data.invited_users.value.len() as u32,
             text_messages: chat_metrics.text_messages,
             image_messages: chat_metrics.image_messages,
             video_messages: chat_metrics.video_messages,
@@ -253,7 +255,7 @@ struct Data {
     pub date_last_pinned: Option<TimestampMillis>,
     pub gate: Timestamped<Option<GroupGate>>,
     #[serde(default)]
-    pub invited_users: HashMap<UserId, UserInvite>,
+    pub invited_users: Timestamped<HashMap<UserId, UserInvite>>,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -312,7 +314,7 @@ impl Data {
             timer_jobs: TimerJobs::default(),
             date_last_pinned: None,
             gate: Timestamped::new(gate, now),
-            invited_users: HashMap::new(),
+            invited_users: Timestamped::default(),
         }
     }
 
@@ -351,6 +353,8 @@ pub struct Metrics {
     pub members: u32,
     pub admins: u32,
     pub owners: u32,
+    pub blocked: u32,
+    pub invited: u32,
     pub text_messages: u64,
     pub image_messages: u64,
     pub video_messages: u64,

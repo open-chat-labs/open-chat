@@ -22,17 +22,28 @@ fn selected_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     let data = &runtime_state.data;
     let events_reader = data.events.visible_main_events_reader(min_visible_event_index, now);
     let latest_event_index = events_reader.latest_event_index().unwrap();
+    let updates_since_time = events_reader
+        .get(args.updates_since.into())
+        .map(|e| e.timestamp)
+        .unwrap_or_default();
 
     if latest_event_index <= args.updates_since {
         return SuccessNoUpdates(latest_event_index);
     }
 
+    let invited_users = data
+        .invited_users
+        .if_set_after(updates_since_time)
+        .map(|invited_users| invited_users.keys().copied().collect());
+
     let mut result = SuccessResult {
+        timestamp: now,
         latest_event_index,
         participants_added_or_updated: vec![],
         participants_removed: vec![],
         blocked_users_added: vec![],
         blocked_users_removed: vec![],
+        invited_users,
         pinned_messages_added: vec![],
         pinned_messages_removed: vec![],
         rules: None,

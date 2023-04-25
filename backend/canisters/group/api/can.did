@@ -452,9 +452,11 @@ type SelectedInitialArgs =
 
 type SelectedInitialSuccess =
     record {
+        timestamp: TimestampMillis;
         latest_event_index: EventIndex;
         participants: vec Participant;
         blocked_users: vec UserId;
+        invited_users: vec UserId;
         pinned_messages: vec MessageIndex;
         rules: GroupRules;
     };
@@ -472,11 +474,13 @@ type SelectedUpdatesArgs =
 
 type SelectedUpdatesSuccess =
     record {
+        timestamp: TimestampMillis;
         latest_event_index: EventIndex;
         participants_added_or_updated: vec Participant;
         participants_removed: vec UserId;
         blocked_users_added: vec UserId;
         blocked_users_removed: vec UserId;
+        invited_users: opt vec UserId;
         pinned_messages_added: vec MessageIndex;
         pinned_messages_removed: vec MessageIndex;
         rules: opt GroupRules;
