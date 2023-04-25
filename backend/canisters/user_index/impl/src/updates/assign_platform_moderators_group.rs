@@ -1,11 +1,11 @@
 use crate::guards::caller_is_governance_principal;
 use crate::{mutate_state, RuntimeState};
-use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
+use ic_cdk_macros::update;
 use types::ChatId;
 use user_index_canister::assign_platform_moderators_group::{Response::*, *};
 
-#[proposal(guard = "caller_is_governance_principal")]
+#[update(guard = "caller_is_governance_principal")]
 #[trace]
 fn assign_platform_moderators_group(args: Args) -> Response {
     mutate_state(|state| assign_platform_moderators_group_impl(args.group_id, state));
