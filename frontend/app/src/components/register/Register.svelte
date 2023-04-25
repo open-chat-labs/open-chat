@@ -10,7 +10,6 @@
     import type { CreatedUser, OpenChat } from "openchat-client";
     import Button from "../Button.svelte";
     import Select from "../Select.svelte";
-    import Markdown from "../home/Markdown.svelte";
     import ModalContent from "../ModalContent.svelte";
     import Legend from "../Legend.svelte";
 

@@ -9,6 +9,7 @@
     import Cancel from "svelte-material-icons/Cancel.svelte";
     import ReplyOutline from "svelte-material-icons/ReplyOutline.svelte";
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
+    import Flag from "svelte-material-icons/Flag.svelte";
     import Refresh from "svelte-material-icons/Refresh.svelte";
     import DeleteOffOutline from "svelte-material-icons/DeleteOffOutline.svelte";
     import TranslateIcon from "svelte-material-icons/Translate.svelte";
@@ -143,6 +144,10 @@
 
     function retrySend() {
         dispatch("retrySend");
+    }
+
+    function reportMessage() {
+        dispatch("reportMessage");
     }
 
     function deleteMessage() {
@@ -302,47 +307,6 @@
                         <div slot="text">{$_("replyPrivately")}</div>
                     </MenuItem>
                 {/if}
-                {#if confirmed && groupChat && !me && canBlockUser && !failed}
-                    <MenuItem on:click={blockUser}>
-                        <Cancel size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-                        <div slot="text">{$_("blockUser")}</div>
-                    </MenuItem>
-                {/if}
-                {#if canEdit && !inert && !failed}
-                    <MenuItem on:click={() => dispatch("editMessage")}>
-                        <PencilOutline
-                            size={$iconSize}
-                            color={"var(--icon-inverted-txt)"}
-                            slot="icon" />
-                        <div slot="text">{$_("editMessage")}</div>
-                    </MenuItem>
-                {/if}
-                {#if (canDelete || me) && !crypto && !inert}
-                    <MenuItem on:click={deleteMessage}>
-                        <DeleteOutline
-                            size={$iconSize}
-                            color={"var(--icon-inverted-txt)"}
-                            slot="icon" />
-                        <div slot="text">
-                            {$_(me ? "deleteMessage" : "deleteMessageAndReport")}
-                        </div>
-                    </MenuItem>
-                {/if}
-                {#if canRevealDeleted}
-                    <MenuItem on:click={revealDeletedMessage}>
-                        <EyeIcon size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-                        <div slot="text">{$_("revealDeletedMessage")}</div>
-                    </MenuItem>
-                {/if}
-                {#if canUndelete}
-                    <MenuItem on:click={undeleteMessage}>
-                        <DeleteOffOutline
-                            size={$iconSize}
-                            color={"var(--icon-inverted-txt)"}
-                            slot="icon" />
-                        <div slot="text">{$_("undeleteMessage")}</div>
-                    </MenuItem>
-                {/if}
                 {#if translatable && !failed}
                     {#if translated}
                         <MenuItem on:click={untranslateMessage}>
@@ -361,6 +325,56 @@
                             <div slot="text">{$_("translateMessage")}</div>
                         </MenuItem>
                     {/if}
+                {/if}
+                {#if canEdit && !inert && !failed}
+                    <MenuItem on:click={() => dispatch("editMessage")}>
+                        <PencilOutline
+                            size={$iconSize}
+                            color={"var(--icon-inverted-txt)"}
+                            slot="icon" />
+                        <div slot="text">{$_("editMessage")}</div>
+                    </MenuItem>
+                {/if}
+                <MenuItem separator />
+                {#if confirmed && groupChat && !me && canBlockUser && !failed}
+                    <MenuItem on:click={blockUser}>
+                        <Cancel size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
+                        <div slot="text">{$_("blockUser")}</div>
+                    </MenuItem>
+                {/if}
+                {#if (canDelete || me) && !crypto && !inert}
+                    <MenuItem on:click={deleteMessage}>
+                        <DeleteOutline
+                            size={$iconSize}
+                            color={"var(--icon-inverted-txt)"}
+                            slot="icon" />
+                        <div slot="text">
+                            {$_("deleteMessage")}
+                        </div>
+                    </MenuItem>
+                {/if}
+                {#if publicGroup && !me}
+                    <MenuItem on:click={reportMessage}>
+                        <Flag size={$iconSize} color={"var(--error)"} slot="icon" />
+                        <div slot="text">
+                            {$_("report.menu")}
+                        </div>
+                    </MenuItem>
+                {/if}
+                {#if canRevealDeleted}
+                    <MenuItem on:click={revealDeletedMessage}>
+                        <EyeIcon size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
+                        <div slot="text">{$_("revealDeletedMessage")}</div>
+                    </MenuItem>
+                {/if}
+                {#if canUndelete}
+                    <MenuItem on:click={undeleteMessage}>
+                        <DeleteOffOutline
+                            size={$iconSize}
+                            color={"var(--icon-inverted-txt)"}
+                            slot="icon" />
+                        <div slot="text">{$_("undeleteMessage")}</div>
+                    </MenuItem>
                 {/if}
                 {#if failed}
                     <MenuItem on:click={retrySend}>

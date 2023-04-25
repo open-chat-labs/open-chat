@@ -781,5 +781,24 @@
         "cancel": "Cancel reminder",
         "cancelSuccess": "Your reminder has been successfully cancelled",
         "cancelFailure": "Sorry we were unable to cancel your reminder"
+    },
+    "report": {
+        "menu": "Report",
+        "title": "Report message",
+        "reason": "Reason for report",
+        "pleaseSelect": "Please select a reason",
+        "optional": "Optional",
+        "note": "Add a note",
+        "notePlaceholder": "Tell us why you are reporting this content",
+        "advice": "If you believe this message violates the rules of this group, please contact the owners and admins on the group in the first instance. Only report a message for platform moderation if you feel like it violates the [platform guidelines](/guidelines).",
+        "threat": "Message is threatening",
+        "child": "Message contains child sexual content",
+        "nonConsensual": "Message contains non-consensual sexual content",
+        "misleading": "Message contains misinformation",
+        "deception": "Message contains deception",
+        "selfHarm": "Message contains or promotes self-harm",
+        "violence": "Message contains excessive violence",
+        "scam": "Message promotes a financial scam",
+        "other": "Other reason (add notes)"
     }
 }
