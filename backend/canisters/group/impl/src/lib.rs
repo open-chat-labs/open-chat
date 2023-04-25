@@ -7,10 +7,10 @@ use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
 use chat_events::{ChatEventInternal, ChatEvents, Reader};
+use model::invited_users::InvitedUsers;
 use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
-use std::collections::HashMap;
 use std::ops::Deref;
 use types::{
     Avatar, CanisterId, ChatId, Cryptocurrency, Cycles, EventIndex, FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupGate,
@@ -187,7 +187,7 @@ impl RuntimeState {
             admins: self.data.participants.admin_count(),
             owners: self.data.participants.owner_count(),
             blocked: self.data.participants.blocked().len() as u32,
-            invited: self.data.invited_users.value.len() as u32,
+            invited: self.data.invited_users.len() as u32,
             text_messages: chat_metrics.text_messages,
             image_messages: chat_metrics.image_messages,
             video_messages: chat_metrics.video_messages,
@@ -255,7 +255,7 @@ struct Data {
     pub date_last_pinned: Option<TimestampMillis>,
     pub gate: Timestamped<Option<GroupGate>>,
     #[serde(default)]
-    pub invited_users: Timestamped<HashMap<UserId, UserInvite>>,
+    pub invited_users: InvitedUsers,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -314,7 +314,7 @@ impl Data {
             timer_jobs: TimerJobs::default(),
             date_last_pinned: None,
             gate: Timestamped::new(gate, now),
-            invited_users: Timestamped::default(),
+            invited_users: InvitedUsers::default(),
         }
     }
 
@@ -322,18 +322,19 @@ impl Data {
         match self.participants.get_by_principal(&caller) {
             Some(p) => Some(p.min_visible_event_index()),
             None => {
-                if self.is_accessible_by_non_member() && self.history_visible_to_new_joiners {
+                if self.is_public && self.history_visible_to_new_joiners {
                     Some(EventIndex::default())
                 } else {
-                    None
+                    self.invited_users
+                        .get(caller)
+                        .map(|invitation| invitation.min_visible_event_index)
                 }
             }
         }
     }
 
-    pub fn is_accessible_by_non_member(&self) -> bool {
-        // TODO is private then check invite list
-        self.is_public
+    pub fn is_accessible_by_non_member(&self, caller: Principal) -> bool {
+        self.is_public || self.invited_users.get(caller).is_some()
     }
 
     pub fn is_frozen(&self) -> bool {
@@ -405,12 +406,4 @@ pub struct CanisterIds {
     pub notifications: CanisterId,
     pub proposals_bot: CanisterId,
     pub icp_ledger: CanisterId,
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct UserInvite {
-    invited_by: UserId,
-    timestamp: TimestampMillis,
-    min_visible_event_index: EventIndex,
-    min_visible_message_index: MessageIndex,
 }

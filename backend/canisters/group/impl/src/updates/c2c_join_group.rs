@@ -2,6 +2,7 @@ use crate::activity_notifications::handle_activity_notification;
 use crate::guards::caller_is_user_index_or_local_user_index;
 use crate::model::participants::AddResult;
 use crate::{mutate_state, read_state, run_regular_jobs, AddParticipantArgs, RuntimeState};
+use candid::Principal;
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use chat_events::ChatEventInternal;
@@ -14,7 +15,7 @@ use types::{CanisterId, EventIndex, GroupGate, MessageIndex, ParticipantJoined, 
 async fn c2c_join_group(args: Args) -> Response {
     run_regular_jobs();
 
-    match read_state(is_permitted_to_join) {
+    match read_state(|state| is_permitted_to_join(args.principal, state)) {
         Ok(Some((gate, user_index_canister_id))) => {
             match check_if_passes_gate(gate, args.user_id, user_index_canister_id).await {
                 CheckIfPassesGateResult::Success => {}
@@ -29,7 +30,10 @@ async fn c2c_join_group(args: Args) -> Response {
     mutate_state(|state| c2c_join_group_impl(args, state))
 }
 
-fn is_permitted_to_join(runtime_state: &RuntimeState) -> Result<Option<(GroupGate, CanisterId)>, Response> {
+fn is_permitted_to_join(
+    user_principal: Principal,
+    runtime_state: &RuntimeState,
+) -> Result<Option<(GroupGate, CanisterId)>, Response> {
     let caller = runtime_state.env.caller();
 
     // If the call is from the user index then we skip the checks
@@ -37,7 +41,7 @@ fn is_permitted_to_join(runtime_state: &RuntimeState) -> Result<Option<(GroupGat
         Ok(None)
     } else if runtime_state.data.is_frozen() {
         Err(ChatFrozen)
-    } else if !runtime_state.data.is_accessible_by_non_member() {
+    } else if !runtime_state.data.is_accessible_by_non_member(user_principal) {
         Err(GroupNotPublic)
     } else if let Some(limit) = runtime_state.data.participants.user_limit_reached() {
         Err(ParticipantLimitReached(limit))

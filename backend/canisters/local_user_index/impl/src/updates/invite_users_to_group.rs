@@ -1,5 +1,6 @@
 use crate::guards::caller_is_openchat_user;
 use crate::{mutate_state, read_state, RuntimeState};
+use candid::Principal;
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
 use local_user_index_canister::invite_users_to_group::{Response::*, *};
@@ -9,11 +10,11 @@ use user_canister::Event as UserEvent;
 #[update(guard = "caller_is_openchat_user")]
 #[trace]
 async fn invite_users_to_group(args: Args) -> Response {
-    let invited_by = read_state(get_user_id);
+    let PrepareResult { invited_by, users } = read_state(|state| prepare(&args, state));
 
     let c2c_args = group_canister::c2c_invite_users::Args {
         caller: invited_by,
-        user_ids: args.user_ids,
+        users,
         correlation_id: args.correlation_id,
     };
 
@@ -21,7 +22,7 @@ async fn invite_users_to_group(args: Args) -> Response {
         Ok(response) => match response {
             group_canister::c2c_invite_users::Response::Success(s) => {
                 mutate_state(|state| {
-                    queue_invitations_to_users(invited_by, args.group_id, s.group_name, &s.invited_users, state);
+                    commit(invited_by, args.group_id, s.group_name, &s.invited_users, state);
                 });
                 Success
             }
@@ -34,12 +35,24 @@ async fn invite_users_to_group(args: Args) -> Response {
     }
 }
 
-fn get_user_id(runtime_state: &RuntimeState) -> UserId {
-    let caller = runtime_state.env.caller();
-    runtime_state.data.global_users.get(&caller).unwrap().user_id
+struct PrepareResult {
+    invited_by: UserId,
+    users: Vec<(UserId, Principal)>,
 }
 
-fn queue_invitations_to_users(
+fn prepare(args: &Args, runtime_state: &RuntimeState) -> PrepareResult {
+    let caller = runtime_state.env.caller();
+    let invited_by = runtime_state.data.global_users.get(&caller).unwrap().user_id;
+    let users = args
+        .user_ids
+        .iter()
+        .filter_map(|user_id| runtime_state.data.global_users.get(&(*user_id).into()))
+        .map(|user| (user.user_id, user.principal))
+        .collect();
+    PrepareResult { invited_by, users }
+}
+
+fn commit(
     invited_by: UserId,
     group_id: ChatId,
     group_name: String,

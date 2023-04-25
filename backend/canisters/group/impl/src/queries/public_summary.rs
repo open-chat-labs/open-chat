@@ -11,7 +11,9 @@ fn public_summary(_args: Args) -> Response {
 }
 
 fn public_summary_impl(runtime_state: &RuntimeState) -> Response {
-    if !runtime_state.data.is_accessible_by_non_member() {
+    let caller = runtime_state.env.caller();
+
+    if !runtime_state.data.is_accessible_by_non_member(caller) {
         return NotAuthorized;
     }
 

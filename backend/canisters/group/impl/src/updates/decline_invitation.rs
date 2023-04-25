@@ -14,18 +14,11 @@ async fn decline_invitation(_args: Args) -> Response {
     match lookup_user(caller, user_index_canister_id).await {
         Ok(user) => mutate_state(|state| {
             let now = state.env.now();
-            let mut response = Success;
 
-            state.data.invited_users.update(
-                |invited_users| {
-                    if invited_users.remove(&user.user_id).is_none() {
-                        response = NotInvited;
-                    }
-                },
-                now,
-            );
-
-            response
+            match state.data.invited_users.remove(&user.user_id, now) {
+                true => Success,
+                false => NotInvited,
+            }
         }),
         Err(LookupUserError::UserNotFound) => NotAuthorized,
         Err(LookupUserError::InternalError(error)) => InternalError(error),

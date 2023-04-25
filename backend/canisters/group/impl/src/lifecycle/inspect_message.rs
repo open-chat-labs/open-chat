@@ -38,6 +38,7 @@ fn accept_if_valid(runtime_state: &RuntimeState) {
             | "undelete_messages"
             | "change_role"
             | "claim_prize"
+            | "decline_invitation"
             | "edit_message"
             | "put_chunk"
             | "register_poll_vote"

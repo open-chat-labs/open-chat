@@ -1,11 +1,11 @@
-use candid::CandidType;
+use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use types::UserId;
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub caller: UserId,
-    pub user_ids: Vec<UserId>,
+    pub users: Vec<(UserId, Principal)>,
     pub correlation_id: u64,
 }
 

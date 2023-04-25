@@ -24,7 +24,7 @@ fn selected_initial_impl(runtime_state: &RuntimeState) -> Response {
                 .unwrap_or_default(),
             participants: participants.iter().map(|p| p.into()).collect(),
             blocked_users: participants.blocked(),
-            invited_users: runtime_state.data.invited_users.value.keys().copied().collect(),
+            invited_users: runtime_state.data.invited_users.users(),
             pinned_messages: runtime_state
                 .data
                 .pinned_messages
