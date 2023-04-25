@@ -10,7 +10,7 @@ use ledger_utils::{nns, sns};
 use types::nns::UserOrAccount;
 use types::{
     CanisterId, CompletedCryptoTransaction, Cryptocurrency, GroupMessageNotification, MessageContentInternal, MessageId,
-    Notification, PendingCryptoTransaction, PrizeWinnerContent, TimestampNanos, UserId,
+    Notification, PendingCryptoTransaction, PrizeWinnerContent, UserId,
 };
 use utils::consts::{OPENCHAT_BOT_USERNAME, OPENCHAT_BOT_USER_ID};
 
@@ -28,22 +28,10 @@ async fn claim_prize(args: Args) -> Response {
     // Transfer the prize to the winner
     let result = match prepare_result.transaction {
         PendingCryptoTransaction::NNS(t) => {
-            nns::process_transaction(
-                t,
-                prepare_result.group,
-                prepare_result.ledger_canister_id,
-                prepare_result.now_nanos,
-            )
-            .await
+            nns::process_transaction(t, prepare_result.group, prepare_result.ledger_canister_id).await
         }
         PendingCryptoTransaction::SNS(t) => {
-            sns::process_transaction(
-                t,
-                prepare_result.group,
-                prepare_result.ledger_canister_id,
-                prepare_result.now_nanos,
-            )
-            .await
+            sns::process_transaction(t, prepare_result.group, prepare_result.ledger_canister_id).await
         }
     };
 
@@ -71,7 +59,6 @@ struct PrepareResult {
     pub transaction: PendingCryptoTransaction,
     pub group: CanisterId,
     pub ledger_canister_id: CanisterId,
-    pub now_nanos: TimestampNanos,
     pub user_id: UserId,
 }
 
@@ -88,6 +75,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareResult, Box<R
         }
 
         let now = state.env.now();
+        let now_nanos = state.env.now_nanos();
         let min_visible_event_index = participant.min_visible_event_index();
         let user_id = participant.user_id;
 
@@ -120,6 +108,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareResult, Box<R
                 to: UserOrAccount::User(user_id),
                 fee: None,
                 memo: None,
+                created: now_nanos,
             }),
             _ => PendingCryptoTransaction::SNS(types::sns::PendingCryptoTransaction {
                 token,
@@ -130,13 +119,13 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareResult, Box<R
                 },
                 fee: Tokens::from_e8s(token.fee() as u64),
                 memo: None,
+                created: now_nanos,
             }),
         };
 
         Ok(PrepareResult {
             group: state.env.canister_id(),
             ledger_canister_id: transaction.token().ledger_canister_id(),
-            now_nanos: state.env.now_nanos(),
             transaction,
             user_id,
         })
