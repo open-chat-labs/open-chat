@@ -147,7 +147,8 @@ export type RegisterUserResponse =
     | "username_too_short"
     | "username_too_long"
     | "username_invalid"
-    | "public_key_invalid";
+    | "public_key_invalid"
+    | "referral_code_invalid";
 
 export type PinChatResponse = { kind: "success" } | { kind: "pinned_limit_reached"; limit: number };
 

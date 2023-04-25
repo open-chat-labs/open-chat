@@ -615,6 +615,7 @@ export type NnsNeuronId = bigint;
 export interface NnsPendingCryptoTransaction {
   'to' : NnsUserOrAccount,
   'fee' : [] | [Tokens],
+  'created' : TimestampNanos,
   'token' : Cryptocurrency,
   'memo' : [] | [Memo],
   'amount' : Tokens,
@@ -834,6 +835,7 @@ export type SnsNeuronId = Uint8Array | number[];
 export interface SnsPendingCryptoTransaction {
   'to' : Icrc1Account,
   'fee' : Tokens,
+  'created' : TimestampNanos,
   'token' : Cryptocurrency,
   'memo' : [] | [Memo],
   'amount' : Tokens,

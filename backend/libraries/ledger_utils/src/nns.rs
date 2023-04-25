@@ -1,12 +1,11 @@
 use crate::{calculate_transaction_hash, default_ledger_account};
 use ic_ledger_types::{Memo, Timestamp, TransferArgs, DEFAULT_FEE};
-use types::{CanisterId, CompletedCryptoTransaction, FailedCryptoTransaction, TimestampNanos};
+use types::{CanisterId, CompletedCryptoTransaction, FailedCryptoTransaction};
 
 pub async fn process_transaction(
     transaction: types::nns::PendingCryptoTransaction,
     sender: CanisterId,
     ledger_canister_id: CanisterId,
-    now_nanos: TimestampNanos,
 ) -> Result<CompletedCryptoTransaction, FailedCryptoTransaction> {
     let memo = transaction.memo.unwrap_or(Memo(0));
     let fee = transaction.fee.unwrap_or(DEFAULT_FEE);
@@ -24,7 +23,7 @@ pub async fn process_transaction(
         from_subaccount: None,
         to,
         created_at_time: Some(Timestamp {
-            timestamp_nanos: now_nanos,
+            timestamp_nanos: transaction.created,
         }),
     };
 
@@ -38,7 +37,7 @@ pub async fn process_transaction(
             from: types::nns::CryptoAccount::Account(from),
             to: types::nns::CryptoAccount::Account(to),
             memo,
-            created: now_nanos,
+            created: transaction.created,
             transaction_hash,
             block_index,
         })),
@@ -59,7 +58,7 @@ pub async fn process_transaction(
             from: types::nns::CryptoAccount::Account(from),
             to: types::nns::CryptoAccount::Account(to),
             memo,
-            created: now_nanos,
+            created: transaction.created,
             transaction_hash,
             error_message: error,
         })

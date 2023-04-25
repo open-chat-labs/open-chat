@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{Empty, EventIndex, GroupRules, MessageIndex, Participant, UserId, TimestampMillis};
+use types::{Empty, EventIndex, GroupRules, MessageIndex, Participant, TimestampMillis, UserId};
 
 pub type Args = Empty;
 

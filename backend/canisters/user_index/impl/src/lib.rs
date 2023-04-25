@@ -14,7 +14,9 @@ use model::referral_codes::{ReferralCodes, ReferralTypeMetrics};
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
-use types::{CanisterId, CanisterWasm, Cryptocurrency, Cycles, Milliseconds, TimestampMillis, Timestamped, UserId, Version};
+use types::{
+    CanisterId, CanisterWasm, ChatId, Cryptocurrency, Cycles, Milliseconds, TimestampMillis, Timestamped, UserId, Version,
+};
 use user_index_canister::add_referral_codes::ReferralType;
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::canister_event_sync_queue::CanisterEventSyncQueue;
@@ -182,13 +184,14 @@ impl RuntimeState {
             platform_operators: self.data.platform_operators.len() as u8,
             user_index_events_queue_length: self.data.user_index_event_sync_queue.len(),
             local_user_indexes: self.data.local_index_map.iter().map(|(c, i)| (*c, i.clone())).collect(),
+            referral_codes: self.data.referral_codes.metrics(),
+            platform_moderators_group: self.data.platform_moderators_group,
             canister_ids: CanisterIds {
                 group_index: self.data.group_index_canister_id,
                 notifications_index: self.data.notifications_index_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
                 internet_identity: self.data.internet_identity_canister_id,
             },
-            referral_codes: self.data.referral_codes.metrics(),
         }
     }
 }
@@ -225,6 +228,12 @@ struct Data {
     pub referral_codes: ReferralCodes,
     #[serde(default)]
     pub user_referral_leaderboards: UserReferralLeaderboards,
+    #[serde(default = "platform_moderators_group")]
+    pub platform_moderators_group: Option<ChatId>,
+}
+
+fn platform_moderators_group() -> Option<ChatId> {
+    Some(Principal::from_text("rnyef-2iaaa-aaaar-ampxa-cai").unwrap().into())
 }
 
 impl Data {
@@ -269,6 +278,7 @@ impl Data {
             next_user_upgrade_started: false,
             referral_codes: ReferralCodes::default(),
             user_referral_leaderboards: UserReferralLeaderboards::default(),
+            platform_moderators_group: None,
         };
 
         // Register the ProposalsBot
@@ -317,6 +327,7 @@ impl Default for Data {
             next_user_upgrade_started: false,
             referral_codes: ReferralCodes::default(),
             user_referral_leaderboards: UserReferralLeaderboards::default(),
+            platform_moderators_group: None,
         }
     }
 }
@@ -343,8 +354,9 @@ pub struct Metrics {
     pub platform_operators: u8,
     pub user_index_events_queue_length: usize,
     pub local_user_indexes: Vec<(CanisterId, LocalUserIndex)>,
-    pub canister_ids: CanisterIds,
     pub referral_codes: HashMap<ReferralType, ReferralTypeMetrics>,
+    pub platform_moderators_group: Option<ChatId>,
+    pub canister_ids: CanisterIds,
 }
 
 #[derive(Serialize, Debug, Default)]

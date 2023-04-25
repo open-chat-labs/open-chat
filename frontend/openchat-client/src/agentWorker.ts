@@ -704,7 +704,8 @@ export class OpenChatAgentWorker extends EventTarget {
         chatType: "direct_chat" | "group_chat",
         chatId: string,
         messageId: bigint,
-        threadRootMessageIndex?: number
+        threadRootMessageIndex?: number,
+        asPlatformModerator?: boolean
     ): Promise<DeleteMessageResponse> {
         return this.sendRequest({
             kind: "deleteMessage",
@@ -713,6 +714,7 @@ export class OpenChatAgentWorker extends EventTarget {
                 chatId,
                 messageId,
                 threadRootMessageIndex,
+                asPlatformModerator,
             },
         });
     }
@@ -900,12 +902,15 @@ export class OpenChatAgentWorker extends EventTarget {
         });
     }
 
-    registerUser(username: string, referredBy: string | undefined): Promise<RegisterUserResponse> {
+    registerUser(
+        username: string,
+        referralCode: string | undefined
+    ): Promise<RegisterUserResponse> {
         return this.sendRequest({
             kind: "registerUser",
             payload: {
                 username,
-                referredBy,
+                referralCode,
             },
         });
     }

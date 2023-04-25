@@ -94,7 +94,8 @@ export interface IGroupClient {
     ): Promise<AddRemoveReactionResponse>;
     deleteMessage(
         messageId: bigint,
-        threadRootMessageIndex?: number
+        threadRootMessageIndex?: number,
+        asPlatformModerator?: boolean
     ): Promise<DeleteMessageResponse>;
     undeleteMessage(
         messageId: bigint,
@@ -133,6 +134,9 @@ export interface IGroupClient {
         latestClientThreadUpdate: bigint | undefined
     ): Promise<ThreadPreviewsResponse>;
     registerProposalVote(messageIdx: number, adopt: boolean): Promise<RegisterProposalVoteResponse>;
-    registerProposalVoteV2(messageIdx: number, adopt: boolean): Promise<RegisterProposalVoteResponse>;
+    registerProposalVoteV2(
+        messageIdx: number,
+        adopt: boolean
+    ): Promise<RegisterProposalVoteResponse>;
     localUserIndex(): Promise<string>;
 }

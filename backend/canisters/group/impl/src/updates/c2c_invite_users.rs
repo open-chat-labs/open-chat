@@ -1,5 +1,5 @@
 use crate::activity_notifications::handle_activity_notification;
-use crate::guards::caller_is_local_user_index;
+use crate::guards::caller_is_user_index_or_local_user_index;
 use crate::{mutate_state, run_regular_jobs, RuntimeState, UserInvite};
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
@@ -9,7 +9,7 @@ use types::{EventIndex, MessageIndex, UsersInvited};
 
 const MAX_INVITES: usize = 100;
 
-#[update_msgpack(guard = "caller_is_local_user_index")]
+#[update_msgpack(guard = "caller_is_user_index_or_local_user_index")]
 #[trace]
 fn c2c_invite_users(args: Args) -> Response {
     run_regular_jobs();

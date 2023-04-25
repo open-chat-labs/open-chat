@@ -18,6 +18,11 @@ export const idlFactory = ({ IDL }) => {
     'referral_type' : ReferralType,
   });
   const AddReferralCodesResponse = IDL.Variant({ 'Success' : IDL.Null });
+  const ChatId = CanisterId;
+  const AssignPlatformModeratorsGroupArgs = IDL.Record({ 'group_id' : ChatId });
+  const AssignPlatformModeratorsGroupResponse = IDL.Variant({
+    'Success' : IDL.Null,
+  });
   const CheckUsernameArgs = IDL.Record({ 'username' : IDL.Text });
   const CheckUsernameResponse = IDL.Variant({
     'UsernameTaken' : IDL.Null,
@@ -271,6 +276,11 @@ export const idlFactory = ({ IDL }) => {
     'add_referral_codes' : IDL.Func(
         [AddReferralCodesArgs],
         [AddReferralCodesResponse],
+        [],
+      ),
+    'assign_platform_moderators_group' : IDL.Func(
+        [AssignPlatformModeratorsGroupArgs],
+        [AssignPlatformModeratorsGroupResponse],
         [],
       ),
     'check_username' : IDL.Func(
