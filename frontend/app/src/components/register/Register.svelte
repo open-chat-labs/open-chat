@@ -11,7 +11,9 @@
     import Button from "../Button.svelte";
     import Select from "../Select.svelte";
     import ModalContent from "../ModalContent.svelte";
+    import Overlay from "../Overlay.svelte";
     import Legend from "../Legend.svelte";
+    import GuidelinesContent from "../landingpages/GuidelinesContent.svelte";
 
     const dispatch = createEventDispatcher();
 
@@ -27,7 +29,7 @@
     let username: Writable<string | undefined> = writable(undefined);
     let createdUser: CreatedUser | undefined = undefined;
     let closed: boolean = false;
-
+    let showGuidelines = false;
     let validUsername: string | undefined = undefined;
     let checkingUsername: boolean;
 
@@ -77,11 +79,20 @@
     }
 
     $: busy = $state.kind === "spinning";
-
-    function showGuidelines() {
-        dispatch("showGuidelines");
-    }
 </script>
+
+{#if showGuidelines}
+    <Overlay on:close={() => (showGuidelines = false)} dismissible>
+        <ModalContent large on:close={() => (showGuidelines = false)} closeIcon>
+            <span class="header" slot="header">
+                <h1>OpenChat guidelines</h1>
+            </span>
+            <span class="guidelines-modal" slot="body">
+                <GuidelinesContent modal />
+            </span>
+        </ModalContent>
+    </Overlay>
+{/if}
 
 <ModalContent compactFooter on:close>
     <div class="header" slot="header">
@@ -117,7 +128,7 @@
             {#if $error}
                 <ErrorMessage>{$_($error)}</ErrorMessage>
             {/if}
-            <div on:click={showGuidelines} class="smallprint">
+            <div on:click={() => (showGuidelines = true)} class="smallprint">
                 {$_("register.disclaimer")}
             </div>
         {/if}
@@ -155,6 +166,9 @@
 <Toast />
 
 <style type="text/scss">
+    :global(.guidelines-modal .card .header:not(.open) .arrow path) {
+        fill: var(--txt);
+    }
     :global(.lang select.select) {
         @include font(light, normal, fs-90);
         background-color: transparent;
@@ -178,13 +192,6 @@
         left: $sp3;
         top: $sp3;
     }
-    .spinner {
-        margin-top: auto;
-        margin-bottom: auto;
-        width: 100%;
-        @include loading-spinner(5em, 2.5em, var(--button-bg));
-    }
-
     .logout {
         @include font(light, normal, fs-90);
         cursor: pointer;

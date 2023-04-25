@@ -372,7 +372,7 @@
 {/if}
 
 {#if showReport}
-    <ReportMessage {chatId} {msg} on:close={() => (showReport = false)} />
+    <ReportMessage {threadRootMessageIndex} {chatId} {msg} on:close={() => (showReport = false)} />
 {/if}
 
 {#if viewProfile}

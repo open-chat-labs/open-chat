@@ -16,6 +16,7 @@
 
     export let chatId: string;
     export let msg: Message;
+    export let threadRootMessageIndex: number | undefined;
 
     const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
@@ -70,16 +71,22 @@
 
     function createReport() {
         busy = true;
-        // client
-        //     .setMessageReminder(chatId, eventIndex, remindAtMs, note, threadRootMessageIndex)
-        //     .then((success) => {
-        //         if (success) {
-        //             toastStore.showSuccessToast("reminders.success");
-        //         } else {
-        //             toastStore.showFailureToast("reminders.failure");
-        //         }
-        //     })
-        //     .finally(() => (busy = false));
+        client
+            .reportMessage(
+                chatId,
+                msg.messageId,
+                selectedReasonIndex,
+                note.length > 0 ? note : undefined,
+                threadRootMessageIndex
+            )
+            .then((success) => {
+                if (success) {
+                    toastStore.showSuccessToast("report.success");
+                } else {
+                    toastStore.showFailureToast("report.failure");
+                }
+            })
+            .finally(() => (busy = false));
         dispatch("close");
     }
 </script>
@@ -103,8 +110,8 @@
             <div class="note">
                 <Legend label={$_("report.note")} rules={$_("report.optional")} />
                 <TextArea
-                    maxlength={1000}
-                    rows={4}
+                    maxlength={200}
+                    rows={3}
                     placeholder={$_("report.notePlaceholder")}
                     bind:value={note} />
             </div>

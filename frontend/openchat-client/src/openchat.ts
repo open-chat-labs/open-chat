@@ -410,10 +410,6 @@ export class OpenChat extends EventTarget {
     }
 
     login(): void {
-        if (get(this.identityState) === "dismissed_registering") {
-            this.identityState.set("registering");
-            return;
-        }
         this.identityState.set("logging_in");
         const authProvider = this._liveState.selectedAuthProvider;
         this._authClient.then((c) => {
@@ -3773,6 +3769,22 @@ export class OpenChat extends EventTarget {
             this._logger.error("Unable to cancel message reminder", err);
             return false;
         });
+    }
+
+    reportMessage(
+        chatId: string,
+        messageId: bigint,
+        reasonCode: number,
+        notes: string | undefined,
+        threadRootMessageIndex: number | undefined
+    ): Promise<boolean> {
+        return this.api
+            .reportMessage(chatId, messageId, reasonCode, notes, threadRootMessageIndex)
+            .then((resp) => resp === "success")
+            .catch((err) => {
+                this._logger.error("Unable to set report message", err);
+                return false;
+            });
     }
 
     updateMarketMakerConfig(

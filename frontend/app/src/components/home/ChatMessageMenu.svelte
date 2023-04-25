@@ -30,7 +30,7 @@
     import { toastStore } from "../../stores/toast";
     import * as shareFunctions from "../../utils/share";
     import { now } from "../../stores/time";
-    import { remindersEnabled } from "../../utils/features";
+    import { remindersEnabled, reportMessageEnabled } from "../../utils/features";
 
     const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
@@ -349,11 +349,15 @@
                             color={"var(--icon-inverted-txt)"}
                             slot="icon" />
                         <div slot="text">
-                            {$_("deleteMessage")}
+                            {#if reportMessageEnabled}
+                                {me ? $_("deleteMessage") : $_("deleteMessageAndReport")}
+                            {:else}
+                                {$_("deleteMessage")}
+                            {/if}
                         </div>
                     </MenuItem>
                 {/if}
-                {#if publicGroup && !me}
+                {#if confirmed && publicGroup && !me && reportMessageEnabled}
                     <MenuItem on:click={reportMessage}>
                         <Flag size={$iconSize} color={"var(--error)"} slot="icon" />
                         <div slot="text">

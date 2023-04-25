@@ -10,7 +10,6 @@
     $: landingPage =
         $identityState === "requires_login" ||
         $identityState === "registering" ||
-        $identityState === "dismissed_registering" ||
         $identityState === "logging_in";
 </script>
 

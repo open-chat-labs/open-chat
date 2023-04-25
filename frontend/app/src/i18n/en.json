@@ -799,6 +799,8 @@
         "selfHarm": "Message contains or promotes self-harm",
         "violence": "Message contains excessive violence",
         "scam": "Message promotes a financial scam",
-        "other": "Other reason (add notes)"
+        "other": "Other reason (add notes)",
+        "success": "The message has been reported to the platform moderators",
+        "failure": "Sorry we were unable to report this message to the platform moderators"
     }
 }

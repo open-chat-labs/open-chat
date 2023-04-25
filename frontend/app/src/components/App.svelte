@@ -236,7 +236,7 @@
     <SwitchDomain />
 {:else if $identityState === "upgrading_user" || $identityState === "upgrade_user"}
     <Upgrading />
-{:else if $identityState === "requires_login" || $identityState === "logging_in" || $identityState === "registering" || $identityState === "dismissed_registering" || $identityState === "logged_in" || $identityState === "loading_user"}
+{:else if $identityState === "requires_login" || $identityState === "logging_in" || $identityState === "registering" || $identityState === "logged_in" || $identityState === "loading_user"}
     <Router />
 {/if}
 
