@@ -189,6 +189,11 @@ type PlatformModeratorsResponse =
         };
     };
 
+type PlatformModeratorsGroupResponse =
+    variant {
+        Success: ChatId;
+    };
+
 type PlatformOperatorsArgs =
     record {
     };
@@ -374,6 +379,7 @@ service: {
 
     // List the platform moderators/operators
     platform_moderators: (EmptyArgs) -> (PlatformModeratorsResponse) query;
+    platform_moderators_group: (EmptyArgs) -> (PlatformModeratorsGroupResponse) query;
     platform_operators: (PlatformOperatorsArgs) -> (PlatformOperatorsResponse) query;
 
     // Only callable by SNS governance canister
