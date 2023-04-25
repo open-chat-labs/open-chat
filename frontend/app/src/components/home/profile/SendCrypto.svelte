@@ -49,7 +49,7 @@
                 to: targetAccount,
                 amountE8s: amountToSendE8s,
                 feeE8s: transferFees,
-                created: BigInt(Date.now()),
+                createdAtNanos: BigInt(Date.now()) * BigInt(1_000_000),
             })
             .then((resp) => {
                 if (resp.kind === "completed") {

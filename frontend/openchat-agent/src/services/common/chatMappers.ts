@@ -453,7 +453,7 @@ function pendingCryptoTransfer(
         amountE8s: candid.amount.e8s,
         feeE8s: Array.isArray(candid.fee) ? optional(candid.fee, (f) => f.e8s) : candid.fee.e8s,
         memo: optional(candid.memo, identity),
-        created: candid.created,
+        createdAtNanos: candid.created,
     };
 }
 
@@ -987,7 +987,7 @@ function apiPendingCryptoTransaction(domain: CryptocurrencyTransfer): ApiCryptoT
                         amount: apiICP(domain.amountE8s),
                         fee: [],
                         memo: apiOptional(identity, domain.memo),
-                        created: domain.created,
+                        created: domain.createdAtNanos,
                     },
                 },
             };
@@ -1003,7 +1003,7 @@ function apiPendingCryptoTransaction(domain: CryptocurrencyTransfer): ApiCryptoT
                         amount: apiICP(domain.amountE8s),
                         fee: apiICP(domain.feeE8s ?? BigInt(0)),
                         memo: apiOptional(identity, domain.memo),
-                        created: domain.created,
+                        created: domain.createdAtNanos,
                     },
                 },
             };
@@ -1024,7 +1024,7 @@ export function apiPendingCryptocurrencyWithdrawal(
                     amount: apiICP(domain.amountE8s),
                     fee: [],
                     memo: apiOptional(identity, domain.memo),
-                    created: domain.created,
+                    created: domain.createdAtNanos,
                 },
             },
         };
@@ -1037,7 +1037,7 @@ export function apiPendingCryptocurrencyWithdrawal(
                     amount: apiICP(domain.amountE8s),
                     fee: apiICP(domain.feeE8s ?? BigInt(0)),
                     memo: apiOptional(identity, domain.memo),
-                    created: domain.created,
+                    created: domain.createdAtNanos,
                 },
             },
         };

@@ -90,7 +90,7 @@
                 recipient: receiver.userId,
                 amountE8s: draftAmountE8s,
                 feeE8s: transferFees,
-                created: BigInt(Date.now()),
+                createdAtNanos: BigInt(Date.now()) * BigInt(1_000_000),
             },
         };
         dispatch("sendTransfer", [content, undefined]);
