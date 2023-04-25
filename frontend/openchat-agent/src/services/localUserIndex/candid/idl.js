@@ -329,6 +329,7 @@ export const idlFactory = ({ IDL }) => {
   const NnsPendingCryptoTransaction = IDL.Record({
     'to' : NnsUserOrAccount,
     'fee' : IDL.Opt(Tokens),
+    'created' : TimestampNanos,
     'token' : Cryptocurrency,
     'memo' : IDL.Opt(Memo),
     'amount' : Tokens,
@@ -336,6 +337,7 @@ export const idlFactory = ({ IDL }) => {
   const SnsPendingCryptoTransaction = IDL.Record({
     'to' : Icrc1Account,
     'fee' : Tokens,
+    'created' : TimestampNanos,
     'token' : Cryptocurrency,
     'memo' : IDL.Opt(Memo),
     'amount' : Tokens,

@@ -972,6 +972,7 @@ type NnsPendingCryptoTransaction =
         to: NnsUserOrAccount;
         fee: opt Tokens;
         memo: opt Memo;
+        created: TimestampNanos;
     };
 
 type NnsCompletedCryptoTransaction =
@@ -1019,6 +1020,7 @@ type SnsPendingCryptoTransaction =
         to: Icrc1Account;
         fee: Tokens;
         memo: opt Memo;
+        created: TimestampNanos;
     };
 
 type SnsCompletedCryptoTransaction =

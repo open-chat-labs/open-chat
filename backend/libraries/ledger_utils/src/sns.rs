@@ -1,11 +1,10 @@
 use ic_ledger_canister_core::ledger::LedgerTransaction;
-use types::{CanisterId, CompletedCryptoTransaction, FailedCryptoTransaction, TimestampNanos};
+use types::{CanisterId, CompletedCryptoTransaction, FailedCryptoTransaction};
 
 pub async fn process_transaction(
     transaction: types::sns::PendingCryptoTransaction,
     sender: CanisterId,
     ledger_canister_id: CanisterId,
-    now_nanos: TimestampNanos,
 ) -> Result<CompletedCryptoTransaction, FailedCryptoTransaction> {
     let my_principal = ic_base_types::PrincipalId::from(sender);
     let from = ic_icrc1::Account::from(my_principal);
@@ -14,7 +13,7 @@ pub async fn process_transaction(
         from_subaccount: None,
         to: transaction.to.clone(),
         fee: Some(transaction.fee.e8s().into()),
-        created_at_time: Some(now_nanos),
+        created_at_time: Some(transaction.created),
         memo: transaction.memo.map(|m| ic_icrc1::Memo::from(m.0)),
         amount: transaction.amount.e8s().into(),
     };
@@ -26,7 +25,7 @@ pub async fn process_transaction(
             amount: transaction.amount.e8s(),
             fee: Some(transaction.fee.e8s()),
         },
-        created_at_time: Some(now_nanos),
+        created_at_time: Some(transaction.created),
         memo: args.memo.clone(),
     }
     .hash()
@@ -45,7 +44,7 @@ pub async fn process_transaction(
             from: types::sns::CryptoAccount::Account(from.clone()),
             to: types::sns::CryptoAccount::Account(transaction.to.clone()),
             memo: transaction.memo,
-            created: now_nanos,
+            created: transaction.created,
             transaction_hash,
             block_index,
         })),
@@ -66,7 +65,7 @@ pub async fn process_transaction(
             from: types::sns::CryptoAccount::Account(from),
             to: types::sns::CryptoAccount::Account(transaction.to),
             memo: transaction.memo,
-            created: now_nanos,
+            created: transaction.created,
             transaction_hash,
             error_message: error,
         })

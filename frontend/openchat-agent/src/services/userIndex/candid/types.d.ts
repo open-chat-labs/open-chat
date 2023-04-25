@@ -23,6 +23,8 @@ export interface AddedToGroupNotification {
   'chat_id' : ChatId,
   'group_name' : string,
 }
+export interface AssignPlatformModeratorsGroupArgs { 'group_id' : ChatId }
+export type AssignPlatformModeratorsGroupResponse = { 'Success' : null };
 export interface AudioContent {
   'mime_type' : string,
   'blob_reference' : [] | [BlobReference],
@@ -623,6 +625,7 @@ export type NnsNeuronId = bigint;
 export interface NnsPendingCryptoTransaction {
   'to' : NnsUserOrAccount,
   'fee' : [] | [Tokens],
+  'created' : TimestampNanos,
   'token' : Cryptocurrency,
   'memo' : [] | [Memo],
   'amount' : Tokens,
@@ -930,6 +933,7 @@ export type SnsNeuronId = Uint8Array | number[];
 export interface SnsPendingCryptoTransaction {
   'to' : Icrc1Account,
   'fee' : Tokens,
+  'created' : TimestampNanos,
   'token' : Cryptocurrency,
   'memo' : [] | [Memo],
   'amount' : Tokens,
@@ -1088,6 +1092,10 @@ export interface _SERVICE {
   'add_referral_codes' : ActorMethod<
     [AddReferralCodesArgs],
     AddReferralCodesResponse
+  >,
+  'assign_platform_moderators_group' : ActorMethod<
+    [AssignPlatformModeratorsGroupArgs],
+    AssignPlatformModeratorsGroupResponse
   >,
   'check_username' : ActorMethod<[CheckUsernameArgs], CheckUsernameResponse>,
   'current_user' : ActorMethod<[EmptyArgs], CurrentUserResponse>,

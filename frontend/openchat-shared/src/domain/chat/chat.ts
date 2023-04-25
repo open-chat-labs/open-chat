@@ -50,6 +50,7 @@ export type PendingCryptocurrencyWithdrawal = {
     amountE8s: bigint;
     feeE8s?: bigint;
     memo?: bigint;
+    created: bigint;
 };
 
 export type CompletedCryptocurrencyWithdrawal = {
@@ -102,6 +103,7 @@ export type PendingCryptocurrencyTransfer = {
     amountE8s: bigint;
     feeE8s?: bigint;
     memo?: bigint;
+    created: bigint;
 };
 
 export type FailedCryptocurrencyTransfer = {
