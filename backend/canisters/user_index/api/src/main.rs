@@ -4,6 +4,7 @@ fn main() {
     generate_candid_method!(user_index, check_username, query);
     generate_candid_method!(user_index, current_user, query);
     generate_candid_method!(user_index, platform_moderators, query);
+    generate_candid_method!(user_index, platform_moderators_group, query);
     generate_candid_method!(user_index, platform_operators, query);
     generate_candid_method!(user_index, referral_leaderboard, query);
     generate_candid_method!(user_index, referral_metrics, query);
