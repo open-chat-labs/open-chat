@@ -172,6 +172,16 @@ type RemovePlatformOperatorResponse =
         Success;
     };
 
+type AssignPlatformModeratorsGroupArgs =
+    record {
+        group_id: ChatId;
+    };
+
+type AssignPlatformModeratorsGroupResponse =
+    variant {
+        Success;
+    };
+
 type PlatformModeratorsResponse =
     variant {
         Success: record {
@@ -371,6 +381,7 @@ service: {
     add_platform_operator: (AddPlatformOperatorArgs) -> (AddPlatformOperatorResponse);
     remove_platform_moderator: (RemovePlatformModeratorArgs) -> (RemovePlatformModeratorResponse);
     remove_platform_operator: (RemovePlatformOperatorArgs) -> (RemovePlatformOperatorResponse);
+    assign_platform_moderators_group: (AssignPlatformModeratorsGroupArgs) -> (AssignPlatformModeratorsGroupResponse);
 
     // Only callable by "platform moderators"
     suspend_user: (SuspendUserArgs) -> (SuspendUserResponse);
