@@ -10,7 +10,7 @@ use types::{
     MessageIndex, MessagePinned, MessageUnpinned, OwnershipTransferred, ParticipantAssumesSuperAdmin,
     ParticipantDismissedAsSuperAdmin, ParticipantJoined, ParticipantLeft, ParticipantRelinquishesSuperAdmin, ParticipantsAdded,
     ParticipantsRemoved, PermissionsChanged, PollVoteRegistered, Reaction, ReplyContext, RoleChanged, ThreadSummary,
-    TimestampMillis, UserId, UsersBlocked, UsersUnblocked,
+    TimestampMillis, UserId, UsersBlocked, UsersInvited, UsersUnblocked,
 };
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -53,6 +53,7 @@ pub enum ChatEventInternal {
     ChatUnfrozen(Box<ChatUnfrozen>),
     EventsTimeToLiveUpdated(Box<EventsTimeToLiveUpdated>),
     GroupGateUpdated(Box<GroupGateUpdated>),
+    UsersInvited(Box<UsersInvited>),
 }
 
 impl ChatEventInternal {
@@ -94,6 +95,7 @@ impl ChatEventInternal {
                 | ChatEventInternal::ChatUnfrozen(_)
                 | ChatEventInternal::EventsTimeToLiveUpdated(_)
                 | ChatEventInternal::GroupGateUpdated(_)
+                | ChatEventInternal::UsersInvited(_)
         )
     }
 

@@ -45,6 +45,7 @@ pub enum ChatEvent {
     ChatUnfrozen(ChatUnfrozen),
     EventsTimeToLiveUpdated(EventsTimeToLiveUpdated),
     GroupGateUpdated(GroupGateUpdated),
+    UsersInvited(UsersInvited),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -255,3 +256,9 @@ pub struct GroupGateUpdated {
 
 #[derive(CandidType, Serialize, Deserialize, Copy, Clone, Debug)]
 pub struct DirectChatCreated {}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct UsersInvited {
+    pub user_ids: Vec<UserId>,
+    pub invited_by: UserId,
+}

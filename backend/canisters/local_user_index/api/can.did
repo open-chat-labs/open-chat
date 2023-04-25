@@ -21,6 +21,43 @@ type JoinGroupResponse =
         InternalError: text;
     };
 
+type InviteUsersToGroupArgs =
+    record {
+        group_id: ChatId;
+        user_ids: vec UserId;
+        correlation_id: nat64;
+    };
+
+type InviteUsersToGroupResponse =
+    variant {
+        Success;
+        GroupNotFound;
+        CallerNotInGroup;
+        NotAuthorized;
+        ChatFrozen;
+        TooManyInvites: nat32;
+        InternalError: text;
+    };
+
+type AcceptInvitationArgs =
+    record {
+        chat_id: ChatId;
+        correlation_id: nat64;
+    };
+
+type AcceptInvitationResponse =
+    variant {
+        Success: GroupCanisterGroupChatSummary;
+        AlreadyInGroup: GroupCanisterGroupChatSummary;
+        GroupNotFound;
+        ParticipantLimitReached: nat32;
+        Blocked;
+        UserSuspended;
+        ChatFrozen;
+        InternalError: text;
+    };
+
 service: {
     join_group: (JoinGroupArgs) -> (JoinGroupResponse);
+    invite_users_to_group: (InviteUsersToGroupArgs) -> (InviteUsersToGroupResponse);
 }

@@ -642,6 +642,14 @@ type RulesSuccess =
         rules: opt text;
     };
 
+type DeclineInvitationResponse =
+    variant {
+        Success;
+        NotAuthorized;
+        NotInvited;
+        InternalError: text;
+    };
+
 service: {
     // Owner only
     make_private: (MakePrivateArgs) -> (MakePrivateResponse);
@@ -670,6 +678,7 @@ service: {
     register_proposal_vote: (RegisterProposalVoteArgs) -> (RegisterProposalVoteResponse);
     register_proposal_vote_v2: (RegisterProposalVoteArgs) -> (RegisterProposalVoteV2Response);
     claim_prize: (ClaimPrizeArgs) -> (ClaimPrizeResponse);
+    decline_invitation: (EmptyArgs) -> (DeclineInvitationResponse);
 
     summary: (SummaryArgs) -> (SummaryResponse) query;
     summary_updates: (SummaryUpdatesArgs) -> (SummaryUpdatesResponse) query;

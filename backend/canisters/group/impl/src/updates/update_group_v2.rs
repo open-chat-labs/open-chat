@@ -271,6 +271,7 @@ fn merge_permissions(new: OptionalGroupPermissions, old: &GroupPermissions) -> G
         delete_messages: new.delete_messages.unwrap_or(old.delete_messages),
         update_group: new.update_group.unwrap_or(old.update_group),
         pin_messages: new.pin_messages.unwrap_or(old.pin_messages),
+        invite_users: new.invite_users.unwrap_or(old.invite_users),
         create_polls: new.create_polls.unwrap_or(old.create_polls),
         send_messages: new.send_messages.unwrap_or(old.send_messages),
         react_to_messages: new.react_to_messages.unwrap_or(old.react_to_messages),

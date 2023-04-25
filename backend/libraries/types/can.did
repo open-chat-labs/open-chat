@@ -234,6 +234,7 @@ type ChatEvent =
         ChatUnfrozen: ChatUnfrozen;
         EventsTimeToLiveUpdated: EventsTimeToLiveUpdated;
         GroupGateUpdated: GroupGateUpdated;
+        UsersInvited: UsersInvited;
     };
 
 type ChatEventWrapper =
@@ -1086,6 +1087,7 @@ type GroupPermissions =
         delete_messages: PermissionRole;
         update_group: PermissionRole;
         pin_messages: PermissionRole;
+        invite_users: PermissionRole;
         create_polls: PermissionRole;
         send_messages: PermissionRole;
         react_to_messages: PermissionRole;
@@ -1282,6 +1284,12 @@ type CustomMessageContent =
     record {
         kind: text;
         data: blob;
+    };
+
+type UsersInvited =
+    record {
+        user_ids: vec UserId;
+        invited_by: UserId;
     };
 
 type EmptyArgs =

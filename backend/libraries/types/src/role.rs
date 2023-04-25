@@ -33,6 +33,7 @@ pub struct GroupPermissions {
     pub delete_messages: PermissionRole,
     pub update_group: PermissionRole,
     pub pin_messages: PermissionRole,
+    pub invite_users: PermissionRole,
     pub create_polls: PermissionRole,
     pub send_messages: PermissionRole,
     pub react_to_messages: PermissionRole,
@@ -49,6 +50,7 @@ pub struct OptionalGroupPermissions {
     pub delete_messages: Option<PermissionRole>,
     pub update_group: Option<PermissionRole>,
     pub pin_messages: Option<PermissionRole>,
+    pub invite_users: Option<PermissionRole>,
     pub create_polls: Option<PermissionRole>,
     pub send_messages: Option<PermissionRole>,
     pub react_to_messages: Option<PermissionRole>,
@@ -66,6 +68,7 @@ impl Default for GroupPermissions {
             delete_messages: PermissionRole::Admins,
             update_group: PermissionRole::Admins,
             pin_messages: PermissionRole::Admins,
+            invite_users: PermissionRole::Admins,
             create_polls: PermissionRole::Members,
             send_messages: PermissionRole::Members,
             react_to_messages: PermissionRole::Members,
@@ -160,6 +163,10 @@ impl Role {
 
     pub fn can_view_full_message_history(&self) -> bool {
         self.has_owner_rights()
+    }
+
+    pub fn can_invite_users(&self, permissions: &GroupPermissions) -> bool {
+        self.is_permitted(permissions.invite_users)
     }
 
     pub fn is_permitted(&self, permission_role: PermissionRole) -> bool {

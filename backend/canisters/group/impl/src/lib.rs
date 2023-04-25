@@ -10,6 +10,7 @@ use chat_events::{ChatEventInternal, ChatEvents, Reader};
 use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
+use std::collections::HashMap;
 use std::ops::Deref;
 use types::{
     Avatar, CanisterId, ChatId, Cryptocurrency, Cycles, EventIndex, FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupGate,
@@ -251,6 +252,8 @@ struct Data {
     pub timer_jobs: TimerJobs<TimerJob>,
     pub date_last_pinned: Option<TimestampMillis>,
     pub gate: Timestamped<Option<GroupGate>>,
+    #[serde(default)]
+    pub invited_users: HashMap<UserId, UserInvite>,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -309,6 +312,7 @@ impl Data {
             timer_jobs: TimerJobs::default(),
             date_last_pinned: None,
             gate: Timestamped::new(gate, now),
+            invited_users: HashMap::new(),
         }
     }
 
@@ -397,4 +401,12 @@ pub struct CanisterIds {
     pub notifications: CanisterId,
     pub proposals_bot: CanisterId,
     pub icp_ledger: CanisterId,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct UserInvite {
+    invited_by: UserId,
+    timestamp: TimestampMillis,
+    min_visible_event_index: EventIndex,
+    min_visible_message_index: MessageIndex,
 }

@@ -21,6 +21,7 @@ fn main() {
     generate_candid_method!(group, block_user, update);
     generate_candid_method!(group, change_role, update);
     generate_candid_method!(group, claim_prize, update);
+    generate_candid_method!(group, decline_invitation, update);
     generate_candid_method!(group, delete_messages, update);
     generate_candid_method!(group, edit_message, update);
     generate_candid_method!(group, make_private, update);
