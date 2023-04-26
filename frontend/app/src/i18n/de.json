@@ -376,7 +376,7 @@
             "disabled": "behindert",
             "reset": "zurücksetzen"
         },
-        "welcome": "Willkommen zu",
+        "welcome": "Willkommen zu {groupName}",
         "historyPrivateMessage": "Alte Nachrichten sind für neue Mitglieder nicht sichtbar",
         "privateGroupInfo": "Benutzer können dieser Gruppe nicht frei beitreten. Sie müssen entweder hinzugefügt oder von einem autorisierten Mitglied eingeladen werden.",
         "permissionsUpdateFailed": "Berechtigungsaktualisierung fehlgeschlagen",
