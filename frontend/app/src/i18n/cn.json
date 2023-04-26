@@ -374,7 +374,7 @@
             "disabled": "禁用",
             "reset": "重启"
         },
-        "welcome": "欢迎来到",
+        "welcome": "欢迎来到 {groupName}",
         "historyPrivateMessage": "旧消息对新成员不可见",
         "privateGroupInfo": "用户不能自由加入该群聊。他们必须由授权成员添加或邀请。",
         "permissionsUpdateFailed": "权限更新失败",
