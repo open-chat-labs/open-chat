@@ -50,7 +50,7 @@
 
 <div class="smallprint">
     {$_("report.showing", {
-        values: { count: content.reports.length, total: (123454).toLocaleString() },
+        values: { count: content.reports.length, total: content.total.toLocaleString() },
     })}
 </div>
 

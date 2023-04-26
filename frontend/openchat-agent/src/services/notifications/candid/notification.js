@@ -9,6 +9,7 @@ export const Notification = IDL.Variant({
         'forwarded' : IDL.Bool,
         'content' : IDL.Variant({
           'ReportedMessage' : IDL.Record({
+            'count' : IDL.Nat32,
             'reports' : IDL.Vec(
               IDL.Record({
                 'notes' : IDL.Opt(IDL.Text),
@@ -435,6 +436,7 @@ export const Notification = IDL.Variant({
         'forwarded' : IDL.Bool,
         'content' : IDL.Variant({
           'ReportedMessage' : IDL.Record({
+            'count' : IDL.Nat32,
             'reports' : IDL.Vec(
               IDL.Record({
                 'notes' : IDL.Opt(IDL.Text),
@@ -864,6 +866,7 @@ export const Notification = IDL.Variant({
         'forwarded' : IDL.Bool,
         'content' : IDL.Variant({
           'ReportedMessage' : IDL.Record({
+            'count' : IDL.Nat32,
             'reports' : IDL.Vec(
               IDL.Record({
                 'notes' : IDL.Opt(IDL.Text),
@@ -1293,6 +1296,7 @@ export const Notification = IDL.Variant({
         'forwarded' : IDL.Bool,
         'content' : IDL.Variant({
           'ReportedMessage' : IDL.Record({
+            'count' : IDL.Nat32,
             'reports' : IDL.Vec(
               IDL.Record({
                 'notes' : IDL.Opt(IDL.Text),

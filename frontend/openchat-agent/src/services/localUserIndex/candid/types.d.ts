@@ -783,7 +783,10 @@ export interface ReportMessageArgs {
 }
 export type ReportMessageResponse = { 'Success' : null } |
   { 'InternalError' : string };
-export interface ReportedMessage { 'reports' : Array<MessageReport> }
+export interface ReportedMessage {
+  'count' : number,
+  'reports' : Array<MessageReport>,
+}
 export type Role = { 'Participant' : null } |
   { 'Admin' : null } |
   { 'Owner' : null };

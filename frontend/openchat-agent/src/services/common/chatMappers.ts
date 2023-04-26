@@ -190,6 +190,7 @@ export function messageContent(candid: ApiMessageContent, sender: string): Messa
 function reportedMessage(candid: ApiReportedMessage): ReportedMessageContent {
     return {
         kind: "reported_message_content",
+        total: candid.count,
         reports: candid.reports.map((r) => ({
             notes: optional(r.notes, identity),
             reasonCode: r.reason_code,

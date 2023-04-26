@@ -1045,7 +1045,10 @@ export interface ReplyContext {
   'chat_id_if_other' : [] | [ChatId],
   'event_index' : EventIndex,
 }
-export interface ReportedMessage { 'reports' : Array<MessageReport> }
+export interface ReportedMessage {
+  'count' : number,
+  'reports' : Array<MessageReport>,
+}
 export interface ResetInviteCodeArgs { 'correlation_id' : bigint }
 export type ResetInviteCodeResponse = { 'ChatFrozen' : null } |
   { 'NotAuthorized' : null } |

@@ -824,7 +824,10 @@ export interface ReplyContext {
   'chat_id_if_other' : [] | [ChatId],
   'event_index' : EventIndex,
 }
-export interface ReportedMessage { 'reports' : Array<MessageReport> }
+export interface ReportedMessage {
+  'count' : number,
+  'reports' : Array<MessageReport>,
+}
 export type Role = { 'Participant' : null } |
   { 'Admin' : null } |
   { 'Owner' : null };

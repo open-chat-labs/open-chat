@@ -118,7 +118,10 @@ export const idlFactory = ({ IDL }) => {
     'reported_by' : UserId,
     'reason_code' : IDL.Nat32,
   });
-  const ReportedMessage = IDL.Record({ 'reports' : IDL.Vec(MessageReport) });
+  const ReportedMessage = IDL.Record({
+    'count' : IDL.Nat32,
+    'reports' : IDL.Vec(MessageReport),
+  });
   const GiphyImageVariant = IDL.Record({
     'url' : IDL.Text,
     'height' : IDL.Nat32,

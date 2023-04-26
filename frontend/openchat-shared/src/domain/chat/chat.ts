@@ -156,6 +156,7 @@ export type CustomContent = {
 
 export type ReportedMessageContent = {
     kind: "reported_message_content";
+    total: number;
     reports: MessageReport[];
 };
 
