@@ -188,7 +188,7 @@
     </Checkbox>
 </div>
 
-{#if $isDiamond && gatedGroupsEnabled}
+{#if $isDiamond && gatedGroupsEnabled && candidateGroup.isPublic}
     <div class="wrapper">
         <div class="icon">
             <LockOutline size={$iconSize} color={"var(--icon-txt)"} />
