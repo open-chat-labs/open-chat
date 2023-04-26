@@ -317,6 +317,7 @@ type OptionalGroupPermissions =
         delete_messages: opt PermissionRole;
         update_group: opt PermissionRole;
         pin_messages: opt PermissionRole;
+        invite_users: opt PermissionRole;
         create_polls: opt PermissionRole;
         send_messages: opt PermissionRole;
         react_to_messages: opt PermissionRole;
