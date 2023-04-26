@@ -325,8 +325,8 @@ impl MessageContentInternal {
             MessageContentInternal::MessageReminderCreated(r) => MessageContent::MessageReminderCreated(r.clone()),
             MessageContentInternal::MessageReminder(r) => MessageContent::MessageReminder(r.clone()),
             MessageContentInternal::ReportedMessage(r) => MessageContent::ReportedMessage(ReportedMessage {
-                reports: r.reports.clone(),
-                count: r.users.len() as u32,
+                reports: r.reports.iter().take(10).cloned().collect(),
+                count: r.reports.len() as u32,
             }),
             MessageContentInternal::Custom(c) => MessageContent::Custom(c.clone()),
         }
@@ -346,10 +346,10 @@ impl MessageContentInternal {
             MessageContentInternal::Prize(c) => c.caption.as_deref(),
             MessageContentInternal::MessageReminderCreated(r) => r.notes.as_deref(),
             MessageContentInternal::MessageReminder(r) => r.notes.as_deref(),
-            MessageContentInternal::ReportedMessage(r) => r.reports.first().and_then(|r| r.notes.as_deref()),
-            MessageContentInternal::PrizeWinner(_) | MessageContentInternal::Deleted(_) | MessageContentInternal::Custom(_) => {
-                None
-            }
+            MessageContentInternal::PrizeWinner(_)
+            | MessageContentInternal::Deleted(_)
+            | MessageContentInternal::ReportedMessage(_)
+            | MessageContentInternal::Custom(_) => None,
         }
     }
 
@@ -632,7 +632,6 @@ pub struct ReportedMessage {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct ReportedMessageInternal {
     pub reports: Vec<MessageReport>,
-    pub users: HashSet<UserId>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
