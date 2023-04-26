@@ -26,6 +26,7 @@ export type MessageContent =
     | PrizeWinnerContent
     | MessageReminderCreatedContent
     | MessageReminderContent
+    | ReportedMessageContent
     | CustomContent;
 
 export type IndexRange = [number, number];
@@ -151,6 +152,18 @@ export type CustomContent = {
     kind: "custom_content";
     subtype: string;
     data: unknown;
+};
+
+export type ReportedMessageContent = {
+    kind: "reported_message_content";
+    reports: MessageReport[];
+};
+
+export type MessageReport = {
+    notes?: string;
+    reasonCode: number;
+    timestamp: number;
+    reportedBy: string;
 };
 
 export type MessageReminderCreatedContent = {

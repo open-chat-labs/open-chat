@@ -799,9 +799,11 @@
         "selfHarm": "Message contains or promotes self-harm",
         "violence": "Message contains excessive violence",
         "scam": "Message promotes a financial scam",
-        "other": "Other reason (add notes)",
+        "other": "Other reason",
         "success": "The message has been reported to the platform moderators",
         "failure": "Sorry we were unable to report this message to the platform moderators",
-        "deleteMessage": "Delete reported message"
+        "deleteMessage": "Delete reported message",
+        "messageReport": "Reported by @{username} on {timestamp} for the following reason: **{reason}**",
+        "showing": "Showing the most recent {count} of {total} reports"
     }
 }

@@ -8,6 +8,16 @@ export const Notification = IDL.Variant({
       'event' : IDL.Record({
         'forwarded' : IDL.Bool,
         'content' : IDL.Variant({
+          'ReportedMessage' : IDL.Record({
+            'reports' : IDL.Vec(
+              IDL.Record({
+                'notes' : IDL.Opt(IDL.Text),
+                'timestamp' : IDL.Nat64,
+                'reported_by' : IDL.Principal,
+                'reason_code' : IDL.Nat32,
+              })
+            ),
+          }),
           'Giphy' : IDL.Record({
             'title' : IDL.Text,
             'desktop' : IDL.Record({
@@ -424,6 +434,16 @@ export const Notification = IDL.Variant({
       'event' : IDL.Record({
         'forwarded' : IDL.Bool,
         'content' : IDL.Variant({
+          'ReportedMessage' : IDL.Record({
+            'reports' : IDL.Vec(
+              IDL.Record({
+                'notes' : IDL.Opt(IDL.Text),
+                'timestamp' : IDL.Nat64,
+                'reported_by' : IDL.Principal,
+                'reason_code' : IDL.Nat32,
+              })
+            ),
+          }),
           'Giphy' : IDL.Record({
             'title' : IDL.Text,
             'desktop' : IDL.Record({
@@ -843,6 +863,16 @@ export const Notification = IDL.Variant({
       'event' : IDL.Record({
         'forwarded' : IDL.Bool,
         'content' : IDL.Variant({
+          'ReportedMessage' : IDL.Record({
+            'reports' : IDL.Vec(
+              IDL.Record({
+                'notes' : IDL.Opt(IDL.Text),
+                'timestamp' : IDL.Nat64,
+                'reported_by' : IDL.Principal,
+                'reason_code' : IDL.Nat32,
+              })
+            ),
+          }),
           'Giphy' : IDL.Record({
             'title' : IDL.Text,
             'desktop' : IDL.Record({
@@ -1262,6 +1292,16 @@ export const Notification = IDL.Variant({
       'event' : IDL.Record({
         'forwarded' : IDL.Bool,
         'content' : IDL.Variant({
+          'ReportedMessage' : IDL.Record({
+            'reports' : IDL.Vec(
+              IDL.Record({
+                'notes' : IDL.Opt(IDL.Text),
+                'timestamp' : IDL.Nat64,
+                'reported_by' : IDL.Principal,
+                'reason_code' : IDL.Nat32,
+              })
+            ),
+          }),
           'Giphy' : IDL.Record({
             'title' : IDL.Text,
             'desktop' : IDL.Record({

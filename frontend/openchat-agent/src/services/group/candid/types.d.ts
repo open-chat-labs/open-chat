@@ -665,7 +665,8 @@ export interface Message {
   'reactions' : Array<[string, Array<UserId>]>,
   'message_index' : MessageIndex,
 }
-export type MessageContent = { 'Giphy' : GiphyContent } |
+export type MessageContent = { 'ReportedMessage' : ReportedMessage } |
+  { 'Giphy' : GiphyContent } |
   { 'File' : FileContent } |
   { 'Poll' : PollContent } |
   { 'Text' : TextContent } |
@@ -727,6 +728,12 @@ export interface MessageReminderCreated {
   'notes' : [] | [string],
   'remind_at' : TimestampMillis,
   'reminder_id' : bigint,
+}
+export interface MessageReport {
+  'notes' : [] | [string],
+  'timestamp' : TimestampMillis,
+  'reported_by' : UserId,
+  'reason_code' : number,
 }
 export interface MessageUnpinned {
   'due_to_message_deleted' : boolean,
@@ -1038,6 +1045,7 @@ export interface ReplyContext {
   'chat_id_if_other' : [] | [ChatId],
   'event_index' : EventIndex,
 }
+export interface ReportedMessage { 'reports' : Array<MessageReport> }
 export interface ResetInviteCodeArgs { 'correlation_id' : bigint }
 export type ResetInviteCodeResponse = { 'ChatFrozen' : null } |
   { 'NotAuthorized' : null } |

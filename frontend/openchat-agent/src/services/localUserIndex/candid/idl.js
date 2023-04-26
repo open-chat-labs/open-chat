@@ -112,6 +112,13 @@ export const idlFactory = ({ IDL }) => {
     'end' : MessageIndex,
     'start' : MessageIndex,
   });
+  const MessageReport = IDL.Record({
+    'notes' : IDL.Opt(IDL.Text),
+    'timestamp' : TimestampMillis,
+    'reported_by' : UserId,
+    'reason_code' : IDL.Nat32,
+  });
+  const ReportedMessage = IDL.Record({ 'reports' : IDL.Vec(MessageReport) });
   const GiphyImageVariant = IDL.Record({
     'url' : IDL.Text,
     'height' : IDL.Nat32,
@@ -380,6 +387,7 @@ export const idlFactory = ({ IDL }) => {
     'reminder_id' : IDL.Nat64,
   });
   const MessageContent = IDL.Variant({
+    'ReportedMessage' : ReportedMessage,
     'Giphy' : GiphyContent,
     'File' : FileContent,
     'Poll' : PollContent,
@@ -469,8 +477,24 @@ export const idlFactory = ({ IDL }) => {
     'AlreadyInGroupV2' : GroupCanisterGroupChatSummary,
     'InternalError' : IDL.Text,
   });
+  const ReportMessageArgs = IDL.Record({
+    'notes' : IDL.Opt(IDL.Text),
+    'chat_id' : ChatId,
+    'reason_code' : IDL.Nat32,
+    'event_index' : EventIndex,
+    'thread_root_message_index' : IDL.Opt(MessageIndex),
+  });
+  const ReportMessageResponse = IDL.Variant({
+    'Success' : IDL.Null,
+    'InternalError' : IDL.Text,
+  });
   return IDL.Service({
     'join_group' : IDL.Func([JoinGroupArgs], [JoinGroupResponse], []),
+    'report_message' : IDL.Func(
+        [ReportMessageArgs],
+        [ReportMessageResponse],
+        [],
+      ),
   });
 };
 export const init = ({ IDL }) => { return []; };

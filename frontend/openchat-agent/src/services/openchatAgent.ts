@@ -1646,13 +1646,21 @@ export class OpenChatAgent extends EventTarget {
         return this.userClient.cancelMessageReminder(reminderId);
     }
 
-    reportMessage(
-        _chatId: string,
-        _eventIndex: number,
-        _reasonCode: number,
-        _notes: string | undefined,
-        _threadRootMessageIndex: number | undefined
+    async reportMessage(
+        chatId: string,
+        eventIndex: number,
+        reasonCode: number,
+        notes: string | undefined,
+        threadRootMessageIndex: number | undefined
     ): Promise<ReportMessageResponse> {
-        return Promise.resolve("success");
+        const modGroupId = await this._userIndexClient.getPlatformModeratorGroup();
+        const localUserIndex = await this.getGroupClient(modGroupId).localUserIndex();
+        return this.createLocalUserIndexClient(localUserIndex).reportMessage(
+            chatId,
+            eventIndex,
+            reasonCode,
+            notes,
+            threadRootMessageIndex
+        );
     }
 }
