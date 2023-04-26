@@ -12,8 +12,8 @@
     },
     "author": "julian.jelfs@gmail.com",
     "dependencies": {
-        "@dfinity/agent": "^0.15.5",
-        "@dfinity/auth-client": "^0.15.5",
+        "@dfinity/agent": "^0.15.6",
+        "@dfinity/auth-client": "^0.15.6",
         "openchat-shared": "*",
         "openchat-agent": "*"
     },
