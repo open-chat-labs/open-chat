@@ -34,6 +34,7 @@ import type {
     OptionUpdate,
     ClaimPrizeResponse,
     GroupGate,
+    ThreadPreviewsResponse,
 } from "openchat-shared";
 
 export interface IGroupClient {

@@ -87,7 +87,6 @@ import type {
     SearchGroupChatResponse,
 } from "./search/search";
 import type { Cryptocurrency, Tokens } from "./crypto";
-import type { GroupInvite } from "./inviteCodes";
 
 /**
  * Worker request types
@@ -160,7 +159,6 @@ export type WorkerRequest =
     | CreateUserClient
     | Init
     | CurrentUser
-    | SetGroupInvite
     | SearchGroupChat
     | SearchDirectChat
     | RefreshAccountBalance
@@ -284,12 +282,6 @@ type SearchGroupChat = Request<{
     maxResults: number;
 }> & {
     kind: "searchGroupChat";
-};
-
-type SetGroupInvite = Request<{
-    value: GroupInvite;
-}> & {
-    kind: "groupInvite";
 };
 
 type DismissRecommendations = Request<{

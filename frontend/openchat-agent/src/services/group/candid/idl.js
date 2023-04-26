@@ -416,7 +416,6 @@ export const idlFactory = ({ IDL }) => {
     'reminder_id' : IDL.Nat64,
   });
   const MessageContent = IDL.Variant({
-    'ReportedMessage' : ReportedMessage,
     'Giphy' : GiphyContent,
     'File' : FileContent,
     'Poll' : PollContent,

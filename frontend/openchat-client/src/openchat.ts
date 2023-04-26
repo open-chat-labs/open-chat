@@ -254,7 +254,6 @@ import {
     type ChangeRoleResponse,
     type RegisterProposalVoteResponse,
     type GroupSearchResponse,
-    type GroupInvite,
     type SearchDirectChatResponse,
     type SearchGroupChatResponse,
     type Cryptocurrency,
@@ -3003,10 +3002,6 @@ export class OpenChat extends EventTarget {
     dismissRecommendation(chatId: string): Promise<void> {
         recommendedGroupExclusions.add(chatId);
         return this.api.dismissRecommendation(chatId);
-    }
-
-    set groupInvite(value: GroupInvite) {
-        this.api.groupInvite = value;
     }
 
     searchChat(

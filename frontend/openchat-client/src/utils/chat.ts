@@ -169,6 +169,8 @@ export function activeUserIdFromEvent(event: ChatEvent): string | undefined {
             return event.updatedBy;
         case "gate_updated":
             return event.updatedBy;
+        case "users_invited":
+            return event.invitedBy;
         case "message_deleted":
         case "message_undeleted":
         case "message_edited":

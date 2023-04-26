@@ -655,8 +655,7 @@ export interface Message {
   'reactions' : Array<[string, Array<UserId>]>,
   'message_index' : MessageIndex,
 }
-export type MessageContent = { 'ReportedMessage' : ReportedMessage } |
-  { 'Giphy' : GiphyContent } |
+export type MessageContent = { 'Giphy' : GiphyContent } |
   { 'File' : FileContent } |
   { 'Poll' : PollContent } |
   { 'Text' : TextContent } |
@@ -816,6 +815,7 @@ export interface OptionalGroupPermissions {
   'update_group' : [] | [PermissionRole],
   'change_roles' : [] | [PermissionRole],
   'add_members' : [] | [PermissionRole],
+  'invite_users' : [] | [PermissionRole],
   'create_polls' : [] | [PermissionRole],
   'pin_messages' : [] | [PermissionRole],
   'reply_in_thread' : [] | [PermissionRole],

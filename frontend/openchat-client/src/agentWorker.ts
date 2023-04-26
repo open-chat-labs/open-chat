@@ -58,7 +58,6 @@ import {
     MemberRole,
     RegisterProposalVoteResponse,
     GroupSearchResponse,
-    GroupInvite,
     SearchGroupChatResponse,
     SearchDirectChatResponse,
     Cryptocurrency,
@@ -1028,15 +1027,6 @@ export class OpenChatAgentWorker extends EventTarget {
             kind: "dismissRecommendation",
             payload: {
                 chatId,
-            },
-        });
-    }
-
-    set groupInvite(value: GroupInvite) {
-        this.sendRequest({
-            kind: "groupInvite",
-            payload: {
-                value,
             },
         });
     }

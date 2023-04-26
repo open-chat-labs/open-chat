@@ -943,13 +943,6 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
                     .catch(sendError(correlationId));
                 break;
 
-            case "groupInvite":
-                agent.groupInvite = payload.value;
-                sendResponse(correlationId, {
-                    response: undefined,
-                });
-                break;
-
             case "searchGroupChat":
                 agent
                     .searchGroupChat(

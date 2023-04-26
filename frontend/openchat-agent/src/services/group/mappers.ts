@@ -1352,6 +1352,14 @@ function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {
         };
     }
 
+    if ("UsersInvited" in candid) {
+        return {
+            kind: "users_invited",
+            userIds: candid.UsersInvited.user_ids.map((p) => p.toString()),
+            invitedBy: candid.UsersInvited.invited_by.toString(),
+        };
+    }
+
     if ("Empty" in candid) {
         return { kind: "empty" };
     }

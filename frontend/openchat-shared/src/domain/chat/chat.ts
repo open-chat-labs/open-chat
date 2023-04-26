@@ -535,6 +535,7 @@ export type GroupChatEvent =
     | GateUpdatedEvent
     | ChatUnfrozenEvent
     | EventsTimeToLiveUpdated
+    | UsersInvitedEvent
     | EmptyEvent;
 
 export type ChatEvent = GroupChatEvent | DirectChatEvent;
@@ -1382,6 +1383,12 @@ export type GateUpdatedEvent = {
     updatedBy: string;
 };
 
+export type UsersInvitedEvent = {
+    kind: "users_invited";
+    userIds: string[];
+    invitedBy: string;
+};
+
 export type ChatUnfrozenEvent = {
     kind: "chat_unfrozen";
     unfrozenBy: string;
@@ -1471,6 +1478,7 @@ export type JoinGroupResponse =
     | { kind: "blocked" }
     | { kind: "group_not_found" }
     | { kind: "group_not_public" }
+    | { kind: "not_invited" }
     | { kind: "already_in_group" }
     | { kind: "not_super_admin" }
     | { kind: "member_limit_reached" }
