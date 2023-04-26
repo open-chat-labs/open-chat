@@ -5,6 +5,7 @@ use local_user_index_canister::*;
 
 // Updates
 generate_update_call!(join_group);
+generate_update_call!(report_message);
 
 pub mod happy_path {
     use candid::Principal;

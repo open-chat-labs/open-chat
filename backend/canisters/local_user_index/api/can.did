@@ -40,7 +40,26 @@ type InviteUsersToGroupResponse =
         InternalError: text;
     };
 
+type ReportMessageArgs =
+    record {
+        chat_id: ChatId;
+        thread_root_message_index: opt MessageIndex;
+        event_index: EventIndex;
+        reason_code: nat32;
+        notes: opt text;
+    };
+
+type ReportMessageResponse =
+    variant {
+        Success;
+
+
+
+        InternalError: text;
+    };
+
 service: {
     join_group: (JoinGroupArgs) -> (JoinGroupResponse);
     invite_users_to_group: (InviteUsersToGroupArgs) -> (InviteUsersToGroupResponse);
+    report_message: (ReportMessageArgs) -> (ReportMessageResponse);
 }

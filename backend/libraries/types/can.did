@@ -605,6 +605,7 @@ type MessageContent =
         MessageReminderCreated: MessageReminderCreated;
         MessageReminder: MessageReminder;
         Custom: CustomMessageContent;
+        ReportedMessage: ReportedMessage;
     };
 
 type UpdatedMessage =
@@ -1293,6 +1294,19 @@ type UsersInvited =
     record {
         user_ids: vec UserId;
         invited_by: UserId;
+    };
+
+type ReportedMessage =
+    record {
+        reports: vec MessageReport;
+    };
+
+type MessageReport =
+    record {
+        reported_by: UserId;
+        timestamp: TimestampMillis;
+        reason_code: nat32;
+        notes: opt text;
     };
 
 type EmptyArgs =

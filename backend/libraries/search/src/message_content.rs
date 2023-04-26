@@ -63,6 +63,9 @@ impl From<&MessageContentInternal> for Document {
             }
             MessageContentInternal::MessageReminderCreated(r) => try_add_caption(&mut document, r.notes.as_ref()),
             MessageContentInternal::MessageReminder(r) => try_add_caption(&mut document, r.notes.as_ref()),
+            MessageContentInternal::ReportedMessage(r) => {
+                try_add_caption(&mut document, r.reports.first().and_then(|r| r.notes.as_ref()))
+            }
             MessageContentInternal::Custom(c) => {
                 document.add_field(c.kind.clone(), 1.0);
             }

@@ -47,6 +47,7 @@ pub enum MessageContent {
     PrizeWinner(PrizeWinnerContent),
     MessageReminderCreated(MessageReminderCreatedContent),
     MessageReminder(MessageReminderContent),
+    ReportedMessage(ReportedMessage),
     Custom(CustomContent),
 }
 
@@ -66,6 +67,7 @@ pub enum MessageContentInternal {
     PrizeWinner(PrizeWinnerContent),
     MessageReminderCreated(MessageReminderCreatedContent),
     MessageReminder(MessageReminderContent),
+    ReportedMessage(ReportedMessage),
     Custom(CustomContent),
 }
 
@@ -260,6 +262,7 @@ impl From<MessageContent> for MessageContentInitial {
             MessageContent::PrizeWinner(_) => panic!("Cannot send a prize winner message"),
             MessageContent::MessageReminderCreated(r) => MessageContentInitial::MessageReminderCreated(r),
             MessageContent::MessageReminder(r) => MessageContentInitial::MessageReminder(r),
+            MessageContent::ReportedMessage(_) => panic!("Cannot send a 'reported message' message"),
             MessageContent::Custom(c) => MessageContentInitial::Custom(c),
         }
     }
@@ -321,6 +324,7 @@ impl MessageContentInternal {
             }),
             MessageContentInternal::MessageReminderCreated(r) => MessageContent::MessageReminderCreated(r.clone()),
             MessageContentInternal::MessageReminder(r) => MessageContent::MessageReminder(r.clone()),
+            MessageContentInternal::ReportedMessage(r) => MessageContent::ReportedMessage(r.clone()),
             MessageContentInternal::Custom(c) => MessageContent::Custom(c.clone()),
         }
     }
@@ -339,6 +343,7 @@ impl MessageContentInternal {
             MessageContentInternal::Prize(c) => c.caption.as_deref(),
             MessageContentInternal::MessageReminderCreated(r) => r.notes.as_deref(),
             MessageContentInternal::MessageReminder(r) => r.notes.as_deref(),
+            MessageContentInternal::ReportedMessage(r) => r.reports.first().and_then(|r| r.notes.as_deref()),
             MessageContentInternal::PrizeWinner(_) | MessageContentInternal::Deleted(_) | MessageContentInternal::Custom(_) => {
                 None
             }
@@ -382,6 +387,7 @@ impl MessageContentInternal {
             | MessageContentInternal::PrizeWinner(_)
             | MessageContentInternal::MessageReminderCreated(_)
             | MessageContentInternal::MessageReminder(_)
+            | MessageContentInternal::ReportedMessage(_)
             | MessageContentInternal::Custom(_) => {}
         }
 
@@ -611,6 +617,19 @@ pub struct MessageReminderCreatedContent {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct MessageReminderContent {
     pub reminder_id: u64,
+    pub notes: Option<String>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct ReportedMessage {
+    pub reports: Vec<MessageReport>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct MessageReport {
+    pub reported_by: UserId,
+    pub timestamp: TimestampMillis,
+    pub reason_code: u32,
     pub notes: Option<String>,
 }
 
