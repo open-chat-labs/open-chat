@@ -28,12 +28,12 @@ fn accept_if_valid(runtime_state: &RuntimeState) {
         | "add_platform_operator"
         | "remove_platform_moderator"
         | "remove_platform_operator"
+        | "assign_platform_moderators_group"
         | "set_max_concurrent_user_canister_upgrades"
         | "add_local_user_index_canister"
         | "upgrade_user_canister_wasm"
         | "upgrade_local_user_index_canister_wasm"
         | "mark_local_user_index_full"
-        | "set_platform_moderators_group"
         | "suspected_bots" => runtime_state.is_caller_governance_principal(),
         "create_challenge" | "notify_registration_fee_paid" | "register_user" | "register_user_v2" => true,
         _ => false,
