@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Allow users to `Delete For Me` in direct chats ([#3498](https://github.com/open-ic/open-chat/pull/3498))
+- Implement `send_message_v2` and `edit_message_v2` ([#3504](https://github.com/open-ic/open-chat/pull/3504))
 
 ### Changed
 
