@@ -4,6 +4,8 @@
     import Select from "../Select.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
     import Button from "../Button.svelte";
+    import Checkbox from "../Checkbox.svelte";
+    import Markdown from "./Markdown.svelte";
     import Legend from "../Legend.svelte";
     import ModalContent from "../ModalContent.svelte";
     import { _ } from "svelte-i18n";
@@ -11,16 +13,19 @@
     import { mobileWidth } from "../../stores/screenDimensions";
     import Flag from "svelte-material-icons/Flag.svelte";
     import { createEventDispatcher, getContext } from "svelte";
-    import type { Message, OpenChat } from "openchat-client";
+    import type { OpenChat } from "openchat-client";
     import { toastStore } from "../../stores/toast";
 
     export let chatId: string;
-    export let msg: Message;
+    export let eventIndex: number;
+    export let messageId: bigint;
     export let threadRootMessageIndex: number | undefined;
+    export let canDelete: boolean;
 
     const dispatch = createEventDispatcher();
     const client = getContext<OpenChat>("client");
 
+    let deleteMessage = false;
     let busy = false;
     let note: string;
     let selectedReasonIndex = -1;
@@ -70,11 +75,18 @@
     $: valid = selectedReasonIndex > -1 && (selectedReasonIndex !== 8 || note.length > 0);
 
     function createReport() {
-        busy = true;
+        report();
+        if (deleteMessage) {
+            doDelete();
+        }
+        dispatch("close");
+    }
+
+    function report() {
         client
             .reportMessage(
                 chatId,
-                msg.messageId,
+                eventIndex,
                 selectedReasonIndex,
                 note.length > 0 ? note : undefined,
                 threadRootMessageIndex
@@ -85,9 +97,15 @@
                 } else {
                     toastStore.showFailureToast("report.failure");
                 }
-            })
-            .finally(() => (busy = false));
-        dispatch("close");
+            });
+    }
+
+    function doDelete() {
+        client.deleteMessage(chatId, threadRootMessageIndex, messageId, false).then((success) => {
+            if (!success) {
+                toastStore.showFailureToast("deleteFailed");
+            }
+        });
     }
 </script>
 
@@ -114,9 +132,17 @@
                     rows={3}
                     placeholder={$_("report.notePlaceholder")}
                     bind:value={note} />
+                {#if canDelete}
+                    <div class="delete">
+                        <Checkbox
+                            id={"delete_message"}
+                            label={$_("report.deleteMessage")}
+                            bind:checked={deleteMessage} />
+                    </div>
+                {/if}
             </div>
             <div class="advice">
-                {$_("report.advice")}
+                <Markdown text={$_("report.advice")} />
             </div>
         </span>
         <span slot="footer">
@@ -147,5 +173,9 @@
     .advice {
         @include font(book, normal, fs-80);
         color: var(--txt-light);
+    }
+
+    .delete {
+        margin-bottom: $sp4;
     }
 </style>

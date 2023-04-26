@@ -349,7 +349,7 @@
                             color={"var(--icon-inverted-txt)"}
                             slot="icon" />
                         <div slot="text">
-                            {#if reportMessageEnabled}
+                            {#if !reportMessageEnabled}
                                 {me ? $_("deleteMessage") : $_("deleteMessageAndReport")}
                             {:else}
                                 {$_("deleteMessage")}
@@ -357,7 +357,7 @@
                         </div>
                     </MenuItem>
                 {/if}
-                {#if confirmed && publicGroup && !me && reportMessageEnabled}
+                {#if confirmed && publicGroup && !me && !inert && reportMessageEnabled}
                     <MenuItem on:click={reportMessage}>
                         <Flag size={$iconSize} color={"var(--error)"} slot="icon" />
                         <div slot="text">

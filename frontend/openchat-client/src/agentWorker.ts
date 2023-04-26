@@ -1402,7 +1402,7 @@ export class OpenChatAgentWorker extends EventTarget {
 
     reportMessage(
         chatId: string,
-        messageId: bigint,
+        eventIndex: number,
         reasonCode: number,
         notes: string | undefined,
         threadRootMessageIndex: number | undefined
@@ -1411,7 +1411,7 @@ export class OpenChatAgentWorker extends EventTarget {
             kind: "reportMessage",
             payload: {
                 chatId,
-                messageId,
+                eventIndex,
                 reasonCode,
                 notes,
                 threadRootMessageIndex,

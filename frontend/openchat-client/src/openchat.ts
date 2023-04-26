@@ -3773,13 +3773,13 @@ export class OpenChat extends EventTarget {
 
     reportMessage(
         chatId: string,
-        messageId: bigint,
+        eventIndex: number,
         reasonCode: number,
         notes: string | undefined,
         threadRootMessageIndex: number | undefined
     ): Promise<boolean> {
         return this.api
-            .reportMessage(chatId, messageId, reasonCode, notes, threadRootMessageIndex)
+            .reportMessage(chatId, eventIndex, reasonCode, notes, threadRootMessageIndex)
             .then((resp) => resp === "success")
             .catch((err) => {
                 this._logger.error("Unable to set report message", err);

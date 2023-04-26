@@ -1648,7 +1648,7 @@ export class OpenChatAgent extends EventTarget {
 
     reportMessage(
         _chatId: string,
-        _messageId: bigint,
+        _eventIndex: number,
         _reasonCode: number,
         _notes: string | undefined,
         _threadRootMessageIndex: number | undefined

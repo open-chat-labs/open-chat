@@ -1020,7 +1020,7 @@ type CancelMessageReminder = Request<{
 
 type ReportMessage = Request<{
     chatId: string;
-    messageId: bigint;
+    eventIndex: number;
     reasonCode: number;
     notes: string | undefined;
     threadRootMessageIndex: number | undefined;

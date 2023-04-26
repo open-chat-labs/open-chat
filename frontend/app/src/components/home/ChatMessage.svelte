@@ -372,7 +372,13 @@
 {/if}
 
 {#if showReport}
-    <ReportMessage {threadRootMessageIndex} {chatId} {msg} on:close={() => (showReport = false)} />
+    <ReportMessage
+        {eventIndex}
+        {threadRootMessageIndex}
+        messageId={msg.messageId}
+        {chatId}
+        {canDelete}
+        on:close={() => (showReport = false)} />
 {/if}
 
 {#if viewProfile}

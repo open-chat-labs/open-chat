@@ -1345,7 +1345,7 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
                 agent
                     .reportMessage(
                         payload.chatId,
-                        payload.messageId,
+                        payload.eventIndex,
                         payload.reasonCode,
                         payload.notes,
                         payload.threadRootMessageIndex
