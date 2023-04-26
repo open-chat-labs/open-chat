@@ -94,6 +94,7 @@ import {
     ProposalVoteDetails,
     SetMessageReminderResponse,
     InviteUsersResponse,
+    DeclineInvitationResponse,
 } from "openchat-shared";
 import type { OpenChatConfig } from "./config";
 import { v4 } from "uuid";
@@ -1370,6 +1371,13 @@ export class OpenChatAgentWorker extends EventTarget {
             payload: {
                 reminderId,
             },
+        });
+    }
+
+    declineInvitation(chatId: string): Promise<DeclineInvitationResponse> {
+        return this.sendRequest({
+            kind: "declineInvitation",
+            payload: { chatId },
         });
     }
 }

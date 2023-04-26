@@ -194,7 +194,8 @@ export type WorkerRequest =
     | SetUserUpgradeConcurrency
     | UpdateMarketMakerConfig
     | SetMessageReminder
-    | CancelMessageReminder;
+    | CancelMessageReminder
+    | DeclineInvitation;
 
 type SetCachedMessageFromNotification = Request<{
     chatId: string;
@@ -989,3 +990,10 @@ type CancelMessageReminder = Request<{
 }> & {
     kind: "cancelMessageReminder";
 };
+
+type DeclineInvitation = Request<{
+    chatId: string;
+}> & {
+    kind: "declineInvitation";
+};
+

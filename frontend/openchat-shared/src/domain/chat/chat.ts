@@ -1756,3 +1756,8 @@ export type ClaimPrizeResponse =
     | { kind: "prize_fully_claimed" }
     | { kind: "failed_after_transfer" }
     | { kind: "transfer_failed" };
+
+export type DeclineInvitationResponse =
+    | "success"
+    | "not_invited"
+    | "internal_error";

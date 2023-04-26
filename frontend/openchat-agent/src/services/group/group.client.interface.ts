@@ -35,6 +35,7 @@ import type {
     ClaimPrizeResponse,
     GroupGate,
     ThreadPreviewsResponse,
+    DeclineInvitationResponse,
 } from "openchat-shared";
 
 export interface IGroupClient {
@@ -140,4 +141,5 @@ export interface IGroupClient {
         adopt: boolean
     ): Promise<RegisterProposalVoteResponse>;
     localUserIndex(): Promise<string>;
+    declineInvitation(): Promise<DeclineInvitationResponse>;
 }

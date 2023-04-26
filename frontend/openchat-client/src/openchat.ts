@@ -3759,6 +3759,18 @@ export class OpenChat extends EventTarget {
         });
     }
 
+    declineInvitation(chatId: string): Promise<boolean> {
+        return this.api
+            .declineInvitation(chatId)
+            .then((res) => {
+                return res === "success";
+            })
+            .catch((err) => {
+                this._logger.error("Failed to decline invitation", err);
+                return false;
+            });
+    }
+
     updateMarketMakerConfig(
         config: UpdateMarketMakerConfigArgs
     ): Promise<UpdateMarketMakerConfigResponse> {

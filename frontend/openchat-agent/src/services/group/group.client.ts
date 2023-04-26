@@ -37,6 +37,7 @@ import type {
     OptionUpdate,
     ClaimPrizeResponse,
     GroupGate,
+    DeclineInvitationResponse,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
@@ -70,6 +71,7 @@ import {
     summaryUpdatesResponse,
     deletedMessageResponse,
     claimPrizeResponse,
+    declineInvitationResponse,
 } from "./mappers";
 import type { IGroupClient } from "./group.client.interface";
 import { CachingGroupClient } from "./group.caching.client";
@@ -667,6 +669,14 @@ export class GroupClient extends CandidService implements IGroupClient {
         return this.handleQueryResponse(
             () => this.groupService.local_user_index({}),
             (resp) => resp.Success.toString()
+        );
+    }
+    
+    @profile("groupClient")
+    declineInvitation(): Promise<DeclineInvitationResponse> {
+        return this.handleResponse(
+            this.groupService.decline_invitation({}),
+            declineInvitationResponse
         );
     }
 }

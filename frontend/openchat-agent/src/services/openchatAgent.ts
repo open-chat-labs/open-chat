@@ -139,6 +139,7 @@ import {
     ProposalVoteDetails,
     SetMessageReminderResponse,
     InviteUsersResponse,
+    DeclineInvitationResponse,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import { applyOptionUpdate } from "../utils/mapping";
@@ -1619,5 +1620,9 @@ export class OpenChatAgent extends EventTarget {
 
     cancelMessageReminder(reminderId: bigint): Promise<boolean> {
         return this.userClient.cancelMessageReminder(reminderId);
+    }
+
+    declineInvitation(chatId: string): Promise<DeclineInvitationResponse> {
+        return this.getGroupClient(chatId).declineInvitation();
     }
 }

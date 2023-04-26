@@ -60,6 +60,7 @@ import {
     DeletedMessageResponse,
     ClaimPrizeResponse,
     GroupGateUpdate,
+    DeclineInvitationResponse
 } from "./types";
 export {
     _SERVICE as GroupService,
@@ -122,6 +123,7 @@ export {
     DeletedMessageResponse as ApiDeletedGroupMessageResponse,
     ClaimPrizeResponse as ApiClaimPrizeResponse,
     GroupGateUpdate as ApiGroupGateUpdate,
+    DeclineInvitationResponse as ApiDeclineInvitationResponse,
 };
 
 export const idlFactory: IDL.InterfaceFactory;
