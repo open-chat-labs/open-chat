@@ -623,6 +623,7 @@ impl ChatEvents {
         UnreservePrizeResult::MessageNotFound
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn report_message(
         &mut self,
         user_id: UserId,
@@ -638,17 +639,17 @@ impl ChatEvents {
         // message.
         let mut hasher = Sha256::new();
         let chat_id_bytes = chat_id.as_ref();
-        hasher.update(&[chat_id_bytes.len() as u8]);
+        hasher.update([chat_id_bytes.len() as u8]);
         hasher.update(chat_id_bytes);
         if let Some(root_message_index_bytes) = thread_root_message_index.map(u32::from).map(|i| i.to_be_bytes()) {
-            hasher.update(&[root_message_index_bytes.len() as u8]);
-            hasher.update(&root_message_index_bytes);
+            hasher.update([root_message_index_bytes.len() as u8]);
+            hasher.update(root_message_index_bytes);
         } else {
-            hasher.update(&[0]);
+            hasher.update([0]);
         }
         let event_index_bytes = u32::from(event_index).to_be_bytes();
-        hasher.update(&[event_index_bytes.len() as u8]);
-        hasher.update(&event_index_bytes);
+        hasher.update([event_index_bytes.len() as u8]);
+        hasher.update(event_index_bytes);
 
         let hash: Hash = hasher.finalize().into();
         let message_id_bytes: [u8; 16] = hash[..16].try_into().unwrap();
