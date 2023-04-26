@@ -360,7 +360,7 @@
             "replyInThread": "trả lời trong chuỗi"
         },
         "advanced": "Trình độ cao",
-        "welcome": "Chào mừng bạn đến",
+        "welcome": "Chào mừng bạn đến {groupName}",
         "historyPrivateMessage": "Các tin nhắn cũ không hiển thị với các thành viên mới",
         "privateGroupInfo": "Người dùng không thể tham gia nhóm này một cách tự do. Họ phải được thêm vào hoặc được mời bởi một thành viên được ủy quyền.",
         "permissionsUpdateFailed": "Cập nhật quyền không thành công",

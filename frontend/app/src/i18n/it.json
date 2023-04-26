@@ -359,7 +359,7 @@
             "replyInThread": "rispondi nel thread"
         },
         "advanced": "Avanzate",
-        "welcome": "Benvenuto a",
+        "welcome": "Benvenuto a {groupName}",
         "historyPrivateMessage": "I vecchi messaggi non sono visibili ai nuovi membri",
         "privateGroupInfo": "Gli utenti non possono unirsi a questo gruppo liberamente. Devono essere aggiunti o invitati da un membro autorizzato.",
         "permissionsUpdateFailed": "Aggiornamento delle autorizzazioni non riuscito",

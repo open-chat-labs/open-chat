@@ -418,7 +418,7 @@
         "inviteWithLink": "Invite to group via link",
         "invite": "Invite",
         "advanced": "Advanced",
-        "welcome": "Welcome to ",
+        "welcome": "Welcome to {groupName}",
         "historyPrivateMessage": "Old messages are not visible to new members",
         "privateGroupInfo": "Users cannot join this group freely. They must either be added or invited by an authorised member.",
         "permissionsUpdateFailed": "Permissions update failed",

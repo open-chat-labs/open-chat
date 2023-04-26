@@ -359,7 +359,7 @@
             "replyInThread": "スレッドで返信"
         },
         "advanced": "高度",
-        "welcome": "ようこそ",
+        "welcome": "ようこそ {groupName}",
         "historyPrivateMessage": "古いメッセージは新しいメンバーには表示されません",
         "privateGroupInfo": "ユーザーはこのグループに自由に参加できません。それらは、許可されたメンバーによって追加または招待される必要があります。",
         "permissionsUpdateFailed": "権限の更新に失敗しました",
