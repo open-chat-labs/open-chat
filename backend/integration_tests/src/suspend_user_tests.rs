@@ -3,7 +3,7 @@ use crate::rng::random_message_id;
 use crate::{client, TestEnv};
 use std::ops::Deref;
 use std::time::Duration;
-use types::{MessageContent, MessageContentInitial, TextContent};
+use types::{MessageContentInitial, TextContent};
 
 #[test]
 fn suspend_user() {
@@ -44,16 +44,16 @@ fn suspend_user() {
     let user_response1 = client::user_index::happy_path::current_user(env, user1.principal, canister_ids.user_index);
     assert!(user_response1.suspension_details.is_some());
 
-    let direct_message_response1 = client::user::send_message(
+    let direct_message_response1 = client::user::send_message_v2(
         env,
         user1.principal,
         user1.user_id.into(),
-        &user_canister::send_message::Args {
+        &user_canister::send_message_v2::Args {
             recipient: user2.user_id,
             thread_root_message_index: None,
             message_id: random_message_id(),
             sender_name: user1.username(),
-            content: MessageContent::Text(TextContent { text: "123".to_string() }),
+            content: MessageContentInitial::Text(TextContent { text: "123".to_string() }),
             replies_to: None,
             forwarding: false,
             correlation_id: 0,
@@ -96,16 +96,16 @@ fn suspend_user() {
     let user_response2 = client::user_index::happy_path::current_user(env, user1.principal, canister_ids.user_index);
     assert!(user_response2.suspension_details.is_none());
 
-    let direct_message_response2 = client::user::send_message(
+    let direct_message_response2 = client::user::send_message_v2(
         env,
         user1.principal,
         user1.user_id.into(),
-        &user_canister::send_message::Args {
+        &user_canister::send_message_v2::Args {
             recipient: user2.user_id,
             thread_root_message_index: None,
             message_id: random_message_id(),
             sender_name: user1.username(),
-            content: MessageContent::Text(TextContent { text: "123".to_string() }),
+            content: MessageContentInitial::Text(TextContent { text: "123".to_string() }),
             replies_to: None,
             forwarding: false,
             correlation_id: 0,
