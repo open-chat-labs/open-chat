@@ -373,7 +373,7 @@
             "disabled": "désactivé",
             "reset": "réinitialiser"
         },
-        "welcome": "Bienvenue à",
+        "welcome": "Bienvenue à {groupName}",
         "historyPrivateMessage": "Les anciens messages ne sont pas visibles pour les nouveaux membres",
         "privateGroupInfo": "Les utilisateurs ne peuvent pas rejoindre ce groupe librement. Ils doivent être ajoutés ou invités par un membre autorisé.",
         "permissionsUpdateFailed": "La mise à jour des autorisations a échoué",
