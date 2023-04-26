@@ -67,7 +67,7 @@ pub enum MessageContentInternal {
     PrizeWinner(PrizeWinnerContent),
     MessageReminderCreated(MessageReminderCreatedContent),
     MessageReminder(MessageReminderContent),
-    ReportedMessage(ReportedMessage),
+    ReportedMessage(ReportedMessageInternal),
     Custom(CustomContent),
 }
 
@@ -324,7 +324,10 @@ impl MessageContentInternal {
             }),
             MessageContentInternal::MessageReminderCreated(r) => MessageContent::MessageReminderCreated(r.clone()),
             MessageContentInternal::MessageReminder(r) => MessageContent::MessageReminder(r.clone()),
-            MessageContentInternal::ReportedMessage(r) => MessageContent::ReportedMessage(r.clone()),
+            MessageContentInternal::ReportedMessage(r) => MessageContent::ReportedMessage(ReportedMessage {
+                reports: r.reports.clone(),
+                count: r.users.len() as u32,
+            }),
             MessageContentInternal::Custom(c) => MessageContent::Custom(c.clone()),
         }
     }
@@ -623,6 +626,13 @@ pub struct MessageReminderContent {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct ReportedMessage {
     pub reports: Vec<MessageReport>,
+    pub count: u32,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct ReportedMessageInternal {
+    pub reports: Vec<MessageReport>,
+    pub users: HashSet<UserId>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

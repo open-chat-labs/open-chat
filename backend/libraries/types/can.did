@@ -1291,6 +1291,7 @@ type CustomMessageContent =
 type ReportedMessage =
     record {
         reports: vec MessageReport;
+        count: nat32;
     };
 
 type MessageReport =
