@@ -604,6 +604,7 @@ type MessageContent =
         MessageReminderCreated: MessageReminderCreated;
         MessageReminder: MessageReminder;
         Custom: CustomMessageContent;
+        ReportedMessage: ReportedMessage;
     };
 
 type UpdatedMessage =
@@ -1285,4 +1286,17 @@ type CustomMessageContent =
     record {
         kind: text;
         data: blob;
+    };
+
+type ReportedMessage =
+    record {
+        reports: vec MessageReport;
+    };
+
+type MessageReport =
+    record {
+        reported_by: UserId;
+        timestamp: TimestampMillis;
+        reason_code: nat32;
+        notes: opt text;
     };
