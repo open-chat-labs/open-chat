@@ -3,7 +3,7 @@ use model::global_user_map::GlobalUserMap;
 use model::local_user_map::LocalUserMap;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
-use types::{CanisterId, CanisterWasm, Cycles, TimestampMillis, Timestamped, UserId, Version};
+use types::{CanisterId, CanisterWasm, ChatId, Cycles, TimestampMillis, Timestamped, UserId, Version};
 use user_canister::Event as UserEvent;
 use user_index_canister::Event as UserIndexEvent;
 use utils::canister;
@@ -117,6 +117,8 @@ struct Data {
     pub test_mode: bool,
     pub max_concurrent_canister_upgrades: u32,
     pub user_upgrade_concurrency: u32,
+    #[serde(default)]
+    pub platform_moderators_group: Option<ChatId>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -153,6 +155,7 @@ impl Data {
             test_mode,
             max_concurrent_canister_upgrades: 10,
             user_upgrade_concurrency: 10,
+            platform_moderators_group: None,
         }
     }
 }

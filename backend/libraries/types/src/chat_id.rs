@@ -35,3 +35,9 @@ impl Display for ChatId {
         std::fmt::Display::fmt(&self.0, f)
     }
 }
+
+impl AsRef<[u8]> for ChatId {
+    fn as_ref(&self) -> &[u8] {
+        self.0.as_ref()
+    }
+}

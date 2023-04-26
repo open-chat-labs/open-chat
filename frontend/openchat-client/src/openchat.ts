@@ -2484,7 +2484,7 @@ export class OpenChat extends EventTarget {
     }
 
     private canRetryMessage(content: MessageContent): boolean {
-        return content.kind !== "crypto_content" && content.kind !== "poll_content";
+        return content.kind !== "poll_content";
     }
 
     sendMessageWithAttachment(

@@ -3,6 +3,7 @@
     import ButtonGroup from "../ButtonGroup.svelte";
     import { cryptoLookup, E8S_PER_TOKEN, PartialUserSummary } from "openchat-client";
     import type { Cryptocurrency, ChatSummary, OpenChat } from "openchat-client";
+    import type { CryptocurrencyContent } from "openchat-shared";
     import TokenInput from "./TokenInput.svelte";
     import Overlay from "../Overlay.svelte";
     import AccountInfo from "./AccountInfo.svelte";
@@ -80,7 +81,7 @@
 
         if (receiver === undefined) return;
 
-        const content = {
+        const content: CryptocurrencyContent = {
             kind: "crypto_content",
             caption: message === "" ? undefined : message,
             transfer: {
@@ -89,6 +90,7 @@
                 recipient: receiver.userId,
                 amountE8s: draftAmountE8s,
                 feeE8s: transferFees,
+                createdAtNanos: BigInt(Date.now()) * BigInt(1_000_000),
             },
         };
         dispatch("sendTransfer", [content, undefined]);

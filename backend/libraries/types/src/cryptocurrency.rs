@@ -203,6 +203,7 @@ pub mod nns {
         pub to: UserOrAccount,
         pub fee: Option<Tokens>,
         pub memo: Option<Memo>,
+        pub created: TimestampNanos,
     }
 
     #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -250,6 +251,7 @@ pub mod sns {
         pub to: Account,
         pub fee: Tokens,
         pub memo: Option<Memo>,
+        pub created: TimestampNanos,
     }
 
     #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

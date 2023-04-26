@@ -49,23 +49,24 @@
                 to: targetAccount,
                 amountE8s: amountToSendE8s,
                 feeE8s: transferFees,
+                createdAtNanos: BigInt(Date.now()) * BigInt(1_000_000),
             })
             .then((resp) => {
                 if (resp.kind === "completed") {
                     amountToSendE8s = BigInt(0);
                     targetAccount = "";
                     dispatch("refreshBalance");
-                    toastStore.showSuccessToast("cryptoAccount.sendSucceeded");
+                    toastStore.showSuccessToast("cryptoAccount.sendSucceeded", { values: { symbol } });
                 } else {
                     dispatch("error", "cryptoAccount.sendFailed");
                     logger.error(`Unable to withdraw ${symbol}`, resp);
-                    toastStore.showFailureToast("cryptoAccount.sendFailed");
+                    toastStore.showFailureToast("cryptoAccount.sendFailed", { values: { symbol } });
                 }
             })
             .catch((err) => {
                 dispatch("error", "cryptoAccount.sendFailed");
                 logger.error(`Unable to withdraw ${symbol}`, err);
-                toastStore.showFailureToast("cryptoAccount.sendFailed");
+                toastStore.showFailureToast("cryptoAccount.sendFailed", { values: { symbol } });
             })
             .finally(() => (sending = false));
     }

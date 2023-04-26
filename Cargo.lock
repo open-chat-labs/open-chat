@@ -1094,6 +1094,7 @@ dependencies = [
  "ledger_utils",
  "search",
  "serde",
+ "sha2 0.10.6",
  "types",
 ]
 

@@ -604,6 +604,7 @@ type MessageContent =
         MessageReminderCreated: MessageReminderCreated;
         MessageReminder: MessageReminder;
         Custom: CustomMessageContent;
+        ReportedMessage: ReportedMessage;
     };
 
 type UpdatedMessage =
@@ -972,6 +973,7 @@ type NnsPendingCryptoTransaction =
         to: NnsUserOrAccount;
         fee: opt Tokens;
         memo: opt Memo;
+        created: TimestampNanos;
     };
 
 type NnsCompletedCryptoTransaction =
@@ -1019,6 +1021,7 @@ type SnsPendingCryptoTransaction =
         to: Icrc1Account;
         fee: Tokens;
         memo: opt Memo;
+        created: TimestampNanos;
     };
 
 type SnsCompletedCryptoTransaction =
@@ -1283,4 +1286,17 @@ type CustomMessageContent =
     record {
         kind: text;
         data: blob;
+    };
+
+type ReportedMessage =
+    record {
+        reports: vec MessageReport;
+    };
+
+type MessageReport =
+    record {
+        reported_by: UserId;
+        timestamp: TimestampMillis;
+        reason_code: nat32;
+        notes: opt text;
     };

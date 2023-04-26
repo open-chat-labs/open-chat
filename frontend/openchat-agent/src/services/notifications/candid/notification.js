@@ -329,6 +329,7 @@ export const Notification = IDL.Variant({
                     'Account' : IDL.Vec(IDL.Nat8),
                   }),
                   'fee' : IDL.Opt(IDL.Record({ 'e8s' : IDL.Nat64 })),
+                  'created' : IDL.Nat64,
                   'token' : IDL.Variant({
                     'InternetComputer' : IDL.Null,
                     'CHAT' : IDL.Null,
@@ -344,6 +345,7 @@ export const Notification = IDL.Variant({
                     'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
                   }),
                   'fee' : IDL.Record({ 'e8s' : IDL.Nat64 }),
+                  'created' : IDL.Nat64,
                   'token' : IDL.Variant({
                     'InternetComputer' : IDL.Null,
                     'CHAT' : IDL.Null,
@@ -743,6 +745,7 @@ export const Notification = IDL.Variant({
                     'Account' : IDL.Vec(IDL.Nat8),
                   }),
                   'fee' : IDL.Opt(IDL.Record({ 'e8s' : IDL.Nat64 })),
+                  'created' : IDL.Nat64,
                   'token' : IDL.Variant({
                     'InternetComputer' : IDL.Null,
                     'CHAT' : IDL.Null,
@@ -758,6 +761,7 @@ export const Notification = IDL.Variant({
                     'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
                   }),
                   'fee' : IDL.Record({ 'e8s' : IDL.Nat64 }),
+                  'created' : IDL.Nat64,
                   'token' : IDL.Variant({
                     'InternetComputer' : IDL.Null,
                     'CHAT' : IDL.Null,
@@ -1160,6 +1164,7 @@ export const Notification = IDL.Variant({
                     'Account' : IDL.Vec(IDL.Nat8),
                   }),
                   'fee' : IDL.Opt(IDL.Record({ 'e8s' : IDL.Nat64 })),
+                  'created' : IDL.Nat64,
                   'token' : IDL.Variant({
                     'InternetComputer' : IDL.Null,
                     'CHAT' : IDL.Null,
@@ -1175,6 +1180,7 @@ export const Notification = IDL.Variant({
                     'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
                   }),
                   'fee' : IDL.Record({ 'e8s' : IDL.Nat64 }),
+                  'created' : IDL.Nat64,
                   'token' : IDL.Variant({
                     'InternetComputer' : IDL.Null,
                     'CHAT' : IDL.Null,
@@ -1577,6 +1583,7 @@ export const Notification = IDL.Variant({
                     'Account' : IDL.Vec(IDL.Nat8),
                   }),
                   'fee' : IDL.Opt(IDL.Record({ 'e8s' : IDL.Nat64 })),
+                  'created' : IDL.Nat64,
                   'token' : IDL.Variant({
                     'InternetComputer' : IDL.Null,
                     'CHAT' : IDL.Null,
@@ -1592,6 +1599,7 @@ export const Notification = IDL.Variant({
                     'subaccount' : IDL.Opt(IDL.Vec(IDL.Nat8)),
                   }),
                   'fee' : IDL.Record({ 'e8s' : IDL.Nat64 }),
+                  'created' : IDL.Nat64,
                   'token' : IDL.Variant({
                     'InternetComputer' : IDL.Null,
                     'CHAT' : IDL.Null,
