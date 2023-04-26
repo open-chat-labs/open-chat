@@ -30,46 +30,16 @@
     let note: string;
     let selectedReasonIndex = -1;
     let reasons = [
-        {
-            label: $_("report.pleaseSelect"),
-            index: -1,
-        },
-        {
-            label: $_("report.threat"),
-            index: 0,
-        },
-        {
-            label: $_("report.child"),
-            index: 1,
-        },
-        {
-            label: $_("report.nonConsensual"),
-            index: 2,
-        },
-        {
-            label: $_("report.misleading"),
-            index: 3,
-        },
-        {
-            label: $_("report.deception"),
-            index: 4,
-        },
-        {
-            label: $_("report.selfHarm"),
-            index: 5,
-        },
-        {
-            label: $_("report.violence"),
-            index: 6,
-        },
-        {
-            label: $_("report.scam"),
-            index: 7,
-        },
-        {
-            label: $_("report.other"),
-            index: 8,
-        },
+        $_("report.pleaseSelect"),
+        $_("report.threat"),
+        $_("report.child"),
+        $_("report.nonConsensual"),
+        $_("report.misleading"),
+        $_("report.deception"),
+        $_("report.selfHarm"),
+        $_("report.violence"),
+        $_("report.scam"),
+        $_("report.other"),
     ];
 
     $: valid = selectedReasonIndex > -1 && (selectedReasonIndex !== 8 || note.length > 0);
@@ -119,9 +89,8 @@
             <div class="reason">
                 <Legend label={$_("report.reason")} />
                 <Select bind:value={selectedReasonIndex}>
-                    {#each reasons as reason}
-                        <option disabled={reason.index === -1} value={reason.index}
-                            >{reason.label}</option>
+                    {#each reasons as reason, i}
+                        <option disabled={i === 0} value={i - 1}>{reason}</option>
                     {/each}
                 </Select>
             </div>
