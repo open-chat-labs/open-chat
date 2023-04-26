@@ -63,6 +63,10 @@ export function toCanisterResponseError(
 
     // if we make an api after the session has expired (which should not happen) it will manifest as a 400 error
     if (code === 400 && getTimeUntilSessionExpiryMs(identity) < 0) {
+        console.debug(
+            "SESSION: we received a 400 response and the session has timed out: ",
+            getTimeUntilSessionExpiryMs(identity)
+        );
         return new SessionExpiryError(code, error);
     }
 

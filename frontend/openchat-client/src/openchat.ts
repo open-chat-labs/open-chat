@@ -459,11 +459,23 @@ export class OpenChat extends EventTarget {
             // eslint-disable-next-line @typescript-eslint/no-this-alias
             const self = this;
             function timeout() {
+                console.debug(
+                    "SESSION: session has timed out after ",
+                    durationUntilLogoutMs,
+                    " based on expiry after ",
+                    durationUntilSessionExpireMS
+                );
                 self.logout().then(resolve);
             }
             if (durationUntilLogoutMs <= 5 * ONE_MINUTE_MILLIS) {
                 timeout();
             } else {
+                console.debug(
+                    "SESSION: session started and set to expire in ",
+                    durationUntilLogoutMs,
+                    " based on expiry in ",
+                    durationUntilSessionExpireMS
+                );
                 setTimeout(timeout, Math.min(MAX_TIMEOUT_MS, durationUntilLogoutMs));
             }
         });
