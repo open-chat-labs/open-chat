@@ -1,5 +1,6 @@
 use crate::model::pending_payments_queue::{PendingPayment, PendingPaymentReason};
 use crate::model::referral_codes::ReferralCode;
+use crate::timer_job_types::{JoinUserToGroup, TimerJob};
 use crate::updates::set_username::{validate_username, UsernameValidationResult};
 use crate::{mutate_state, RuntimeState, ONE_MB, USER_LIMIT};
 use candid::Principal;
@@ -181,6 +182,17 @@ fn commit(
             recipient: user_id.into(),
             reason: PendingPaymentReason::BitcoinMiamiReferral,
         });
+
+        let btc_miami_group = Principal::from_text("pbo6v-oiaaa-aaaar-ams6q-cai").unwrap().into();
+        runtime_state.data.timer_jobs.enqueue_job(
+            TimerJob::JoinUserToGroup(JoinUserToGroup {
+                user_id,
+                group_id: btc_miami_group,
+                attempt: 0,
+            }),
+            now,
+            now,
+        );
     }
 
     crate::jobs::sync_users_to_storage_index::start_job_if_required(runtime_state);
