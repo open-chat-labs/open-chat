@@ -376,7 +376,7 @@
             "disabled": "behindert",
             "reset": "zurücksetzen"
         },
-        "welcome": "Willkommen zu",
+        "welcome": "Willkommen zu {groupName}",
         "historyPrivateMessage": "Alte Nachrichten sind für neue Mitglieder nicht sichtbar",
         "privateGroupInfo": "Benutzer können dieser Gruppe nicht frei beitreten. Sie müssen entweder hinzugefügt oder von einem autorisierten Mitglied eingeladen werden.",
         "permissionsUpdateFailed": "Berechtigungsaktualisierung fehlgeschlagen",
@@ -472,14 +472,14 @@
         "manageHeader": "{symbol}-Konto verwalten",
         "token": "Zeichen",
         "comingSoon": "(kommt bald)",
-        "send": "Schicken",
+        "send": "Senden",
         "sendTarget": "Geben Sie eine Adresse ein, an die gesendet werden soll",
         "sendSucceeded": "Ihr {symbol} wurde erfolgreich gesendet!",
         "sendFailed": "Fehler beim Senden von {symbol}",
         "scan": "QR-Code scannen",
         "receiveToken": "Erhalte {symbol}",
         "sendToken": "Senden Sie {symbol}",
-        "receive": "Erhalten"
+        "receive": "Anfordern"
     },
     "searchChat": "Suche",
     "search": "Suche...",

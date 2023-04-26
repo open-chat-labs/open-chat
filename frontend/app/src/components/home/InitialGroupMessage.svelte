@@ -16,7 +16,7 @@
 </script>
 
 <div class="container">
-    <h4 class="welcome">{$_("group.welcome")}{group.name}</h4>
+    <h4 class="welcome">{$_("group.welcome", { values: { groupName: group.name } })}</h4>
     {#if group.description.length > 0}
         <div>
             <Markdown text={group.description} />

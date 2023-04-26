@@ -386,7 +386,7 @@
             "disabled": "נָכֶה",
             "reset": "אִתחוּל"
         },
-        "welcome": "ברוך הבא ל",
+        "welcome": "ברוך הבא ל {groupName}",
         "historyPrivateMessage": "הודעות ישנות אינן גלויות לחברים חדשים",
         "privateGroupInfo": "משתמשים לא יכולים להצטרף לקבוצה זו באופן חופשי. יש להוסיף אותם או להזמין אותם על ידי חבר מורשה.",
         "permissionsUpdateFailed": "עדכון ההרשאות נכשל",
