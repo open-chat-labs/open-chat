@@ -155,7 +155,10 @@ export const idlFactory = ({ IDL }) => {
     'reported_by' : UserId,
     'reason_code' : IDL.Nat32,
   });
-  const ReportedMessage = IDL.Record({ 'reports' : IDL.Vec(MessageReport) });
+  const ReportedMessage = IDL.Record({
+    'count' : IDL.Nat32,
+    'reports' : IDL.Vec(MessageReport),
+  });
   const GiphyImageVariant = IDL.Record({
     'url' : IDL.Text,
     'height' : IDL.Nat32,
@@ -477,8 +480,8 @@ export const idlFactory = ({ IDL }) => {
     'event_index' : EventIndex,
   });
   const ParticipantJoined = IDL.Record({
-    'invited' : IDL.Bool,
     'user_id' : UserId,
+    'invited_by' : IDL.Opt(UserId),
   });
   const ParticipantAssumesSuperAdmin = IDL.Record({ 'user_id' : UserId });
   const GroupDescriptionChanged = IDL.Record({

@@ -653,7 +653,6 @@ type RulesSuccess =
 type DeclineInvitationResponse =
     variant {
         Success;
-        NotAuthorized;
         NotInvited;
         InternalError: text;
     };

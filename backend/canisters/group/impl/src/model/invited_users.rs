@@ -25,20 +25,18 @@ impl InvitedUsers {
         self.invites.insert(principal, invitation).is_some()
     }
 
-    pub fn remove(&mut self, user_id: &UserId, now: TimestampMillis) -> bool {
+    pub fn remove(&mut self, user_id: &UserId, now: TimestampMillis) -> Option<UserInvitation> {
         if let Some(principal) = self.users.remove(user_id) {
-            self.invites.remove(&principal);
             self.last_updated = now;
-            true
+            self.invites.remove(&principal)
         } else {
-            false
+            None
         }
     }
 
     pub fn get(&self, user_id_or_principal: Principal) -> Option<&UserInvitation> {
-        self.invites
-            .get(&user_id_or_principal)
-            .or(self.get_by_user_id(&user_id_or_principal.into()))
+        let principal = self.users.get(&user_id_or_principal.into()).unwrap_or(&user_id_or_principal);
+        self.invites.get(principal)
     }
 
     pub fn users(&self) -> Vec<UserId> {
@@ -55,9 +53,5 @@ impl InvitedUsers {
 
     pub fn len(&self) -> usize {
         self.users.len()
-    }
-
-    fn get_by_user_id(&self, user_id: &UserId) -> Option<&UserInvitation> {
-        self.users.get(user_id).and_then(|principal| self.invites.get(principal))
     }
 }

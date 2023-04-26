@@ -674,7 +674,10 @@ export interface Participant {
 }
 export interface ParticipantAssumesSuperAdmin { 'user_id' : UserId }
 export interface ParticipantDismissedAsSuperAdmin { 'user_id' : UserId }
-export interface ParticipantJoined { 'invited' : boolean, 'user_id' : UserId }
+export interface ParticipantJoined {
+  'user_id' : UserId,
+  'invited_by' : [] | [UserId],
+}
 export interface ParticipantLeft { 'user_id' : UserId }
 export interface ParticipantRelinquishesSuperAdmin { 'user_id' : UserId }
 export interface ParticipantsAdded {
@@ -799,7 +802,10 @@ export interface ReplyContext {
   'chat_id_if_other' : [] | [ChatId],
   'event_index' : EventIndex,
 }
-export interface ReportedMessage { 'reports' : Array<MessageReport> }
+export interface ReportedMessage {
+  'count' : number,
+  'reports' : Array<MessageReport>,
+}
 export type Role = { 'Participant' : null } |
   { 'Admin' : null } |
   { 'Owner' : null };

@@ -16,11 +16,11 @@ async fn decline_invitation(_args: Args) -> Response {
             let now = state.env.now();
 
             match state.data.invited_users.remove(&user.user_id, now) {
-                true => Success,
-                false => NotInvited,
+                Some(_) => Success,
+                None => NotInvited,
             }
         }),
-        Err(LookupUserError::UserNotFound) => NotAuthorized,
+        Err(LookupUserError::UserNotFound) => NotInvited,
         Err(LookupUserError::InternalError(error)) => InternalError(error),
     }
 }

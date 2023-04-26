@@ -119,7 +119,7 @@ pub struct UsersUnblocked {
 pub struct ParticipantJoined {
     pub user_id: UserId,
     #[serde(default)]
-    pub invited: bool,
+    pub invited_by: Option<UserId>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

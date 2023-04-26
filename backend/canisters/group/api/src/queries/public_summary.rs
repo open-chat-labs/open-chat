@@ -1,7 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::Empty;
-use types::PublicGroupSummary;
+use types::{Empty, PublicGroupSummary};
 
 pub type Args = Empty;
 
