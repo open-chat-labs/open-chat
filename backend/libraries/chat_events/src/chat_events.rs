@@ -17,7 +17,7 @@ use sha2::{Digest, Sha256};
 use std::cmp::{max, Reverse};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
-use types::{Hash, MessageReport, ReportedMessage};
+use types::{Hash, MessageReport, ReportedMessageInternal};
 
 pub const OPENCHAT_BOT_USER_ID: UserId = UserId::new(Principal::from_slice(&[228, 104, 142, 9, 133, 211, 135, 217, 129, 1]));
 
@@ -657,6 +657,7 @@ impl ChatEvents {
 
         if let Some((message, index)) = self.message_internal_mut(EventIndex::default(), None, message_id.into(), now) {
             if let MessageContentInternal::ReportedMessage(r) = &mut message.content {
+                r.reports.retain(|x| x.reported_by != user_id);
                 r.reports.push(MessageReport {
                     reported_by: user_id,
                     timestamp: now,
@@ -672,7 +673,7 @@ impl ChatEvents {
             sender: OPENCHAT_BOT_USER_ID,
             thread_root_message_index: None,
             message_id,
-            content: MessageContentInternal::ReportedMessage(ReportedMessage {
+            content: MessageContentInternal::ReportedMessage(ReportedMessageInternal {
                 reports: vec![MessageReport {
                     reported_by: user_id,
                     timestamp: now,
