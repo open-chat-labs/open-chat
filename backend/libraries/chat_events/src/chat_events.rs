@@ -8,13 +8,18 @@ use ::types::{
     ProposalStatusUpdate, PushEventResult, PushIfNotContains, RangeSet, Reaction, RegisterVoteResult, ReplyContext,
     ThreadSummary, TimestampMillis, Timestamped, UserId, VoteOperation,
 };
+use candid::Principal;
 use ic_ledger_types::Tokens;
 use itertools::Itertools;
 use search::{Document, Query};
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use std::cmp::{max, Reverse};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
+use types::{Hash, MessageReport, ReportedMessage};
+
+pub const OPENCHAT_BOT_USER_ID: UserId = UserId::new(Principal::from_slice(&[228, 104, 142, 9, 133, 211, 135, 217, 129, 1]));
 
 #[derive(Serialize, Deserialize)]
 pub struct ChatEvents {
@@ -616,6 +621,73 @@ impl ChatEvents {
         }
 
         UnreservePrizeResult::MessageNotFound
+    }
+
+    pub fn report_message(
+        &mut self,
+        user_id: UserId,
+        chat_id: ChatId,
+        thread_root_message_index: Option<MessageIndex>,
+        event_index: EventIndex,
+        reason_code: u32,
+        notes: Option<String>,
+        now: TimestampMillis,
+    ) {
+        // Generate a deterministic MessageId based on the `chat_id`, `thread_root_message_index`,
+        // and `event_index`. This allows us to quickly find any existing reports for the same
+        // message.
+        let mut hasher = Sha256::new();
+        let chat_id_bytes = chat_id.as_ref();
+        hasher.update(&[chat_id_bytes.len() as u8]);
+        hasher.update(chat_id_bytes);
+        if let Some(root_message_index_bytes) = thread_root_message_index.map(u32::from).map(|i| i.to_be_bytes()) {
+            hasher.update(&[root_message_index_bytes.len() as u8]);
+            hasher.update(&root_message_index_bytes);
+        } else {
+            hasher.update(&[0]);
+        }
+        let event_index_bytes = u32::from(event_index).to_be_bytes();
+        hasher.update(&[event_index_bytes.len() as u8]);
+        hasher.update(&event_index_bytes);
+
+        let hash: Hash = hasher.finalize().into();
+        let message_id_bytes: [u8; 16] = hash[..16].try_into().unwrap();
+        let message_id: MessageId = u128::from_be_bytes(message_id_bytes).into();
+
+        if let Some((message, index)) = self.message_internal_mut(EventIndex::default(), None, message_id.into(), now) {
+            if let MessageContentInternal::ReportedMessage(r) = &mut message.content {
+                r.reports.push(MessageReport {
+                    reported_by: user_id,
+                    timestamp: now,
+                    reason_code,
+                    notes,
+                });
+                self.mark_event_updated(None, index, now);
+                return;
+            }
+        }
+
+        self.push_message(PushMessageArgs {
+            sender: OPENCHAT_BOT_USER_ID,
+            thread_root_message_index: None,
+            message_id,
+            content: MessageContentInternal::ReportedMessage(ReportedMessage {
+                reports: vec![MessageReport {
+                    reported_by: user_id,
+                    timestamp: now,
+                    reason_code,
+                    notes,
+                }],
+            }),
+            replies_to: Some(ReplyContext {
+                event_list_if_other: Some((chat_id, thread_root_message_index)),
+                chat_id_if_other: Some(chat_id),
+                event_index,
+            }),
+            forwarded: false,
+            correlation_id: 0,
+            now,
+        });
     }
 
     fn update_thread_summary(
