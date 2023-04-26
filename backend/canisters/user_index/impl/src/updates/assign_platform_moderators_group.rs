@@ -5,6 +5,7 @@ use ic_cdk_macros::update;
 use types::ChatId;
 use user_index_canister::assign_platform_moderators_group::{Response::*, *};
 
+// dfx canister call user_index assign_platform_moderators_group '(record { group_id = principal "..." })'
 #[update(guard = "caller_is_governance_principal")]
 #[trace]
 fn assign_platform_moderators_group(args: Args) -> Response {
