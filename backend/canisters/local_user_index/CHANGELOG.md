@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Added ability to `report_message` ([#3497](https://github.com/open-ic/open-chat/pull/3497))
+
 ### Changed
 
 - Encapsulate pushing events and starting sync job ([#3452](https://github.com/open-ic/open-chat/pull/3452))

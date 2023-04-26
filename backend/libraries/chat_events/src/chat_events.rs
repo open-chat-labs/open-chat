@@ -249,7 +249,7 @@ impl ChatEvents {
                             args.now,
                         );
 
-                        DeleteMessageResult::Success
+                        DeleteMessageResult::Success(sender)
                     }
                 }
             } else {
@@ -1119,7 +1119,7 @@ pub enum EditMessageResult {
 }
 
 pub enum DeleteMessageResult {
-    Success,
+    Success(UserId), // UserId is the message sender
     AlreadyDeleted,
     MessageTypeCannotBeDeleted,
     NotAuthorized,

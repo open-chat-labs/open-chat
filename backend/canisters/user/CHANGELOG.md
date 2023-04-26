@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Allow users to `Delete For Me` in direct chats ([#3498](https://github.com/open-ic/open-chat/pull/3498))
+
 ### Changed
 
 - Switch replies over to the new `event_list_if_other` field ([#3465](https://github.com/open-ic/open-chat/pull/3465))

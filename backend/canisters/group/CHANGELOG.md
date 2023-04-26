@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Allow platform moderators to delete any messages ([#3491](https://github.com/open-ic/open-chat/pull/3491))
 - Allow the user index to add group members ([#3493](https://github.com/open-ic/open-chat/pull/3493))
 - Added `created` to pending transactions ([#3494](https://github.com/open-ic/open-chat/pull/3494))
+- Added ability to `report_message` ([#3497](https://github.com/open-ic/open-chat/pull/3497))
 
 ## [[2.0.662](https://github.com/open-ic/open-chat/releases/tag/v2.0.662-group)] - 2023-04-16
 
