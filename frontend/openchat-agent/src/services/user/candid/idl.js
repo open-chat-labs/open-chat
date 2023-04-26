@@ -68,6 +68,7 @@ export const idlFactory = ({ IDL }) => {
     'send_messages' : PermissionRole,
     'remove_members' : PermissionRole,
     'update_group' : PermissionRole,
+    'invite_users' : PermissionRole,
     'change_roles' : PermissionRole,
     'add_members' : PermissionRole,
     'create_polls' : PermissionRole,
@@ -148,6 +149,13 @@ export const idlFactory = ({ IDL }) => {
     'user_id' : UserId,
     'message_id' : MessageId,
   });
+  const MessageReport = IDL.Record({
+    'notes' : IDL.Opt(IDL.Text),
+    'timestamp' : TimestampMillis,
+    'reported_by' : UserId,
+    'reason_code' : IDL.Nat32,
+  });
+  const ReportedMessage = IDL.Record({ 'reports' : IDL.Vec(MessageReport) });
   const GiphyImageVariant = IDL.Record({
     'url' : IDL.Text,
     'height' : IDL.Nat32,
@@ -416,6 +424,7 @@ export const idlFactory = ({ IDL }) => {
     'reminder_id' : IDL.Nat64,
   });
   const MessageContent = IDL.Variant({
+    'ReportedMessage' : ReportedMessage,
     'Giphy' : GiphyContent,
     'File' : FileContent,
     'Poll' : PollContent,
@@ -468,7 +477,10 @@ export const idlFactory = ({ IDL }) => {
     'message_id' : MessageId,
     'event_index' : EventIndex,
   });
-  const ParticipantJoined = IDL.Record({ 'user_id' : UserId });
+  const ParticipantJoined = IDL.Record({
+    'invited' : IDL.Bool,
+    'user_id' : UserId,
+  });
   const ParticipantAssumesSuperAdmin = IDL.Record({ 'user_id' : UserId });
   const GroupDescriptionChanged = IDL.Record({
     'new_description' : IDL.Text,
@@ -483,6 +495,10 @@ export const idlFactory = ({ IDL }) => {
   const MessagePinned = IDL.Record({
     'pinned_by' : UserId,
     'message_index' : MessageIndex,
+  });
+  const UsersInvited = IDL.Record({
+    'user_ids' : IDL.Vec(UserId),
+    'invited_by' : UserId,
   });
   const UsersBlocked = IDL.Record({
     'user_ids' : IDL.Vec(UserId),
@@ -618,6 +634,7 @@ export const idlFactory = ({ IDL }) => {
     'GroupDescriptionChanged' : GroupDescriptionChanged,
     'GroupChatCreated' : GroupChatCreated,
     'MessagePinned' : MessagePinned,
+    'UsersInvited' : UsersInvited,
     'UsersBlocked' : UsersBlocked,
     'MessageUnpinned' : MessageUnpinned,
     'MessageReactionAdded' : UpdatedMessage,

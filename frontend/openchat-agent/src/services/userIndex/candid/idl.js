@@ -108,6 +108,7 @@ export const idlFactory = ({ IDL }) => {
   const PlatformModeratorsResponse = IDL.Variant({
     'Success' : IDL.Record({ 'users' : IDL.Vec(UserId) }),
   });
+  const PlatformModeratorsGroupResponse = IDL.Variant({ 'Success' : ChatId });
   const PlatformOperatorsArgs = IDL.Record({});
   const PlatformOperatorsResponse = IDL.Variant({
     'Success' : IDL.Record({ 'users' : IDL.Vec(UserId) }),
@@ -302,6 +303,11 @@ export const idlFactory = ({ IDL }) => {
     'platform_moderators' : IDL.Func(
         [EmptyArgs],
         [PlatformModeratorsResponse],
+        ['query'],
+      ),
+    'platform_moderators_group' : IDL.Func(
+        [EmptyArgs],
+        [PlatformModeratorsGroupResponse],
         ['query'],
       ),
     'platform_operators' : IDL.Func(

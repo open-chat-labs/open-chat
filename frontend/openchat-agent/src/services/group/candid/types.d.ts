@@ -126,6 +126,7 @@ export type ChatEvent = { 'Empty' : null } |
   { 'GroupDescriptionChanged' : GroupDescriptionChanged } |
   { 'GroupChatCreated' : GroupChatCreated } |
   { 'MessagePinned' : MessagePinned } |
+  { 'UsersInvited' : UsersInvited } |
   { 'UsersBlocked' : UsersBlocked } |
   { 'MessageUnpinned' : MessageUnpinned } |
   { 'MessageReactionAdded' : UpdatedMessage } |
@@ -233,6 +234,10 @@ export interface CyclesRegistrationFee {
   'valid_until' : TimestampMillis,
   'amount' : Cycles,
 }
+export type DeclineInvitationResponse = { 'NotInvited' : null } |
+  { 'NotAuthorized' : null } |
+  { 'Success' : null } |
+  { 'InternalError' : string };
 export interface DeleteMessagesArgs {
   'as_platform_moderator' : [] | [boolean],
   'message_ids' : Array<MessageId>,
@@ -557,6 +562,7 @@ export interface GroupPermissions {
   'send_messages' : PermissionRole,
   'remove_members' : PermissionRole,
   'update_group' : PermissionRole,
+  'invite_users' : PermissionRole,
   'change_roles' : PermissionRole,
   'add_members' : PermissionRole,
   'create_polls' : PermissionRole,
@@ -649,7 +655,8 @@ export interface Message {
   'reactions' : Array<[string, Array<UserId>]>,
   'message_index' : MessageIndex,
 }
-export type MessageContent = { 'Giphy' : GiphyContent } |
+export type MessageContent = { 'ReportedMessage' : ReportedMessage } |
+  { 'Giphy' : GiphyContent } |
   { 'File' : FileContent } |
   { 'Poll' : PollContent } |
   { 'Text' : TextContent } |
@@ -711,6 +718,12 @@ export interface MessageReminderCreated {
   'notes' : [] | [string],
   'remind_at' : TimestampMillis,
   'reminder_id' : bigint,
+}
+export interface MessageReport {
+  'notes' : [] | [string],
+  'timestamp' : TimestampMillis,
+  'reported_by' : UserId,
+  'reason_code' : number,
 }
 export interface MessageUnpinned {
   'due_to_message_deleted' : boolean,
@@ -827,7 +840,7 @@ export interface Participant {
 }
 export interface ParticipantAssumesSuperAdmin { 'user_id' : UserId }
 export interface ParticipantDismissedAsSuperAdmin { 'user_id' : UserId }
-export interface ParticipantJoined { 'user_id' : UserId }
+export interface ParticipantJoined { 'invited' : boolean, 'user_id' : UserId }
 export interface ParticipantLeft { 'user_id' : UserId }
 export interface ParticipantRelinquishesSuperAdmin { 'user_id' : UserId }
 export interface ParticipantsAdded {
@@ -1019,6 +1032,7 @@ export interface ReplyContext {
   'chat_id_if_other' : [] | [ChatId],
   'event_index' : EventIndex,
 }
+export interface ReportedMessage { 'reports' : Array<MessageReport> }
 export type Role = { 'Participant' : null } |
   { 'Admin' : null } |
   { 'Owner' : null };
@@ -1048,7 +1062,9 @@ export type SelectedInitialResponse = { 'CallerNotInGroup' : null } |
   { 'Success' : SelectedInitialSuccess };
 export interface SelectedInitialSuccess {
   'participants' : Array<Participant>,
+  'invited_users' : Array<UserId>,
   'blocked_users' : Array<UserId>,
+  'timestamp' : TimestampMillis,
   'pinned_messages' : Uint32Array | number[],
   'latest_event_index' : EventIndex,
   'rules' : GroupRules,
@@ -1061,8 +1077,10 @@ export interface SelectedUpdatesSuccess {
   'blocked_users_removed' : Array<UserId>,
   'participants_added_or_updated' : Array<Participant>,
   'pinned_messages_removed' : Uint32Array | number[],
+  'invited_users' : [] | [Array<UserId>],
   'participants_removed' : Array<UserId>,
   'pinned_messages_added' : Uint32Array | number[],
+  'timestamp' : TimestampMillis,
   'latest_event_index' : EventIndex,
   'rules' : [] | [GroupRules],
   'blocked_users_added' : Array<UserId>,
@@ -1307,6 +1325,10 @@ export interface UsersBlocked {
   'user_ids' : Array<UserId>,
   'blocked_by' : UserId,
 }
+export interface UsersInvited {
+  'user_ids' : Array<UserId>,
+  'invited_by' : UserId,
+}
 export interface UsersUnblocked {
   'user_ids' : Array<UserId>,
   'unblocked_by' : UserId,
@@ -1336,6 +1358,7 @@ export interface _SERVICE {
   'block_user' : ActorMethod<[BlockUserArgs], BlockUserResponse>,
   'change_role' : ActorMethod<[ChangeRoleArgs], ChangeRoleResponse>,
   'claim_prize' : ActorMethod<[ClaimPrizeArgs], ClaimPrizeResponse>,
+  'decline_invitation' : ActorMethod<[EmptyArgs], DeclineInvitationResponse>,
   'delete_messages' : ActorMethod<[DeleteMessagesArgs], DeleteMessagesResponse>,
   'deleted_message' : ActorMethod<[DeletedMessageArgs], DeletedMessageResponse>,
   'edit_message' : ActorMethod<[EditMessageArgs], EditMessageResponse>,

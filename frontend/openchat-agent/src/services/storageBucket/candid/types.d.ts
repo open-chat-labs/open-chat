@@ -51,6 +51,7 @@ export type ChatEvent = { 'Empty' : null } |
   { 'GroupDescriptionChanged' : GroupDescriptionChanged } |
   { 'GroupChatCreated' : GroupChatCreated } |
   { 'MessagePinned' : MessagePinned } |
+  { 'UsersInvited' : UsersInvited } |
   { 'UsersBlocked' : UsersBlocked } |
   { 'MessageUnpinned' : MessageUnpinned } |
   { 'MessageReactionAdded' : UpdatedMessage } |
@@ -435,6 +436,7 @@ export interface GroupPermissions {
   'send_messages' : PermissionRole,
   'remove_members' : PermissionRole,
   'update_group' : PermissionRole,
+  'invite_users' : PermissionRole,
   'change_roles' : PermissionRole,
   'add_members' : PermissionRole,
   'create_polls' : PermissionRole,
@@ -518,7 +520,8 @@ export interface Message {
   'reactions' : Array<[string, Array<UserId>]>,
   'message_index' : MessageIndex,
 }
-export type MessageContent = { 'Giphy' : GiphyContent } |
+export type MessageContent = { 'ReportedMessage' : ReportedMessage } |
+  { 'Giphy' : GiphyContent } |
   { 'File' : FileContent } |
   { 'Poll' : PollContent } |
   { 'Text' : TextContent } |
@@ -580,6 +583,12 @@ export interface MessageReminderCreated {
   'notes' : [] | [string],
   'remind_at' : TimestampMillis,
   'reminder_id' : bigint,
+}
+export interface MessageReport {
+  'notes' : [] | [string],
+  'timestamp' : TimestampMillis,
+  'reported_by' : UserId,
+  'reason_code' : number,
 }
 export interface MessageUnpinned {
   'due_to_message_deleted' : boolean,
@@ -666,7 +675,7 @@ export interface Participant {
 }
 export interface ParticipantAssumesSuperAdmin { 'user_id' : UserId }
 export interface ParticipantDismissedAsSuperAdmin { 'user_id' : UserId }
-export interface ParticipantJoined { 'user_id' : UserId }
+export interface ParticipantJoined { 'invited' : boolean, 'user_id' : UserId }
 export interface ParticipantLeft { 'user_id' : UserId }
 export interface ParticipantRelinquishesSuperAdmin { 'user_id' : UserId }
 export interface ParticipantsAdded {
@@ -781,6 +790,7 @@ export interface ReplyContext {
   'chat_id_if_other' : [] | [ChatId],
   'event_index' : EventIndex,
 }
+export interface ReportedMessage { 'reports' : Array<MessageReport> }
 export type Role = { 'Participant' : null } |
   { 'Admin' : null } |
   { 'Owner' : null };
@@ -932,6 +942,10 @@ export interface UserSummary {
 export interface UsersBlocked {
   'user_ids' : Array<UserId>,
   'blocked_by' : UserId,
+}
+export interface UsersInvited {
+  'user_ids' : Array<UserId>,
+  'invited_by' : UserId,
 }
 export interface UsersUnblocked {
   'user_ids' : Array<UserId>,

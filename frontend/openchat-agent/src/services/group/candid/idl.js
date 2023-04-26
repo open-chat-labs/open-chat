@@ -191,6 +191,13 @@ export const idlFactory = ({ IDL }) => {
     'FailedAfterTransfer' : IDL.Tuple(IDL.Text, CompletedCryptoTransaction),
     'TransferFailed' : IDL.Tuple(IDL.Text, FailedCryptoTransaction),
   });
+  const EmptyArgs = IDL.Record({});
+  const DeclineInvitationResponse = IDL.Variant({
+    'NotInvited' : IDL.Null,
+    'NotAuthorized' : IDL.Null,
+    'Success' : IDL.Null,
+    'InternalError' : IDL.Text,
+  });
   const DeleteMessagesArgs = IDL.Record({
     'as_platform_moderator' : IDL.Opt(IDL.Bool),
     'message_ids' : IDL.Vec(MessageId),
@@ -210,6 +217,13 @@ export const idlFactory = ({ IDL }) => {
     'message_id' : MessageId,
     'thread_root_message_index' : IDL.Opt(MessageIndex),
   });
+  const MessageReport = IDL.Record({
+    'notes' : IDL.Opt(IDL.Text),
+    'timestamp' : TimestampMillis,
+    'reported_by' : UserId,
+    'reason_code' : IDL.Nat32,
+  });
+  const ReportedMessage = IDL.Record({ 'reports' : IDL.Vec(MessageReport) });
   const GiphyImageVariant = IDL.Record({
     'url' : IDL.Text,
     'height' : IDL.Nat32,
@@ -402,6 +416,7 @@ export const idlFactory = ({ IDL }) => {
     'reminder_id' : IDL.Nat64,
   });
   const MessageContent = IDL.Variant({
+    'ReportedMessage' : ReportedMessage,
     'Giphy' : GiphyContent,
     'File' : FileContent,
     'Poll' : PollContent,
@@ -452,7 +467,10 @@ export const idlFactory = ({ IDL }) => {
     'message_id' : MessageId,
     'event_index' : EventIndex,
   });
-  const ParticipantJoined = IDL.Record({ 'user_id' : UserId });
+  const ParticipantJoined = IDL.Record({
+    'invited' : IDL.Bool,
+    'user_id' : UserId,
+  });
   const ParticipantAssumesSuperAdmin = IDL.Record({ 'user_id' : UserId });
   const GroupDescriptionChanged = IDL.Record({
     'new_description' : IDL.Text,
@@ -467,6 +485,10 @@ export const idlFactory = ({ IDL }) => {
   const MessagePinned = IDL.Record({
     'pinned_by' : UserId,
     'message_index' : MessageIndex,
+  });
+  const UsersInvited = IDL.Record({
+    'user_ids' : IDL.Vec(UserId),
+    'invited_by' : UserId,
   });
   const UsersBlocked = IDL.Record({
     'user_ids' : IDL.Vec(UserId),
@@ -522,6 +544,7 @@ export const idlFactory = ({ IDL }) => {
     'send_messages' : PermissionRole,
     'remove_members' : PermissionRole,
     'update_group' : PermissionRole,
+    'invite_users' : PermissionRole,
     'change_roles' : PermissionRole,
     'add_members' : PermissionRole,
     'create_polls' : PermissionRole,
@@ -627,6 +650,7 @@ export const idlFactory = ({ IDL }) => {
     'GroupDescriptionChanged' : GroupDescriptionChanged,
     'GroupChatCreated' : GroupChatCreated,
     'MessagePinned' : MessagePinned,
+    'UsersInvited' : UsersInvited,
     'UsersBlocked' : UsersBlocked,
     'MessageUnpinned' : MessageUnpinned,
     'MessageReactionAdded' : UpdatedMessage,
@@ -735,7 +759,6 @@ export const idlFactory = ({ IDL }) => {
     'Success' : PushEventResult,
     'UserSuspended' : IDL.Null,
   });
-  const EmptyArgs = IDL.Record({});
   const GovernanceProposalsSubtype = IDL.Record({
     'is_nns' : IDL.Bool,
     'governance_canister_id' : CanisterId,
@@ -884,7 +907,9 @@ export const idlFactory = ({ IDL }) => {
   const GroupRules = IDL.Record({ 'text' : IDL.Text, 'enabled' : IDL.Bool });
   const SelectedInitialSuccess = IDL.Record({
     'participants' : IDL.Vec(Participant),
+    'invited_users' : IDL.Vec(UserId),
     'blocked_users' : IDL.Vec(UserId),
+    'timestamp' : TimestampMillis,
     'pinned_messages' : IDL.Vec(MessageIndex),
     'latest_event_index' : EventIndex,
     'rules' : GroupRules,
@@ -898,8 +923,10 @@ export const idlFactory = ({ IDL }) => {
     'blocked_users_removed' : IDL.Vec(UserId),
     'participants_added_or_updated' : IDL.Vec(Participant),
     'pinned_messages_removed' : IDL.Vec(MessageIndex),
+    'invited_users' : IDL.Opt(IDL.Vec(UserId)),
     'participants_removed' : IDL.Vec(UserId),
     'pinned_messages_added' : IDL.Vec(MessageIndex),
+    'timestamp' : TimestampMillis,
     'latest_event_index' : EventIndex,
     'rules' : IDL.Opt(GroupRules),
     'blocked_users_added' : IDL.Vec(UserId),
@@ -1247,6 +1274,11 @@ export const idlFactory = ({ IDL }) => {
     'block_user' : IDL.Func([BlockUserArgs], [BlockUserResponse], []),
     'change_role' : IDL.Func([ChangeRoleArgs], [ChangeRoleResponse], []),
     'claim_prize' : IDL.Func([ClaimPrizeArgs], [ClaimPrizeResponse], []),
+    'decline_invitation' : IDL.Func(
+        [EmptyArgs],
+        [DeclineInvitationResponse],
+        [],
+      ),
     'delete_messages' : IDL.Func(
         [DeleteMessagesArgs],
         [DeleteMessagesResponse],
