@@ -11,6 +11,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add `add_referral_codes` and `register_user_v2` endpoints to support BTC Miami ([#3485](https://github.com/open-ic/open-chat/pull/3485))
 - Add each new platform moderator to a moderation group ([#3493](https://github.com/open-ic/open-chat/pull/3493))
 - Added `platform_moderators_group` query endpoint ([#3495](https://github.com/open-ic/open-chat/pull/3495))
+- Join users who register with relevant code to Bitcoin Miami group ([#3501](https://github.com/open-ic/open-chat/pull/3501))
 
 ## [[2.0.668](https://github.com/open-ic/open-chat/releases/tag/v2.0.668-user_index)] - 2023-04-19
 
