@@ -8,10 +8,14 @@
 
     export let content: ReportedMessageContent;
 
+    $: console.log("ReportedContent: ", content);
+
     const client = getContext<OpenChat>("client");
     $: userStore = client.userStore;
 
-    let report = content.reports[0];
+    let index = 0;
+
+    $: report = content.reports[index];
     let reasons = [
         $_("report.threat"),
         $_("report.child"),
@@ -36,13 +40,13 @@
     <p class="msg"><Markdown text={message} /></p>
     {#if report.notes !== undefined && report.notes.length > 0}
         <Legend label={"Notes"} />
-        <TextArea disabled rows={3} bind:value={report.notes} />
+        <TextArea disabled rows={2} bind:value={report.notes} />
     {/if}
 </div>
 
 <div class="report-selectors">
     {#each content.reports as r, i}
-        <div on:click={() => (report = r)} class="selector" class:selected={report === r}>
+        <div on:click={() => (index = i)} class="selector" class:selected={report === r}>
             {i + 1}
         </div>
     {/each}

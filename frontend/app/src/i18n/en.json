@@ -804,6 +804,6 @@
         "failure": "Sorry we were unable to report this message to the platform moderators",
         "deleteMessage": "Delete reported message",
         "messageReport": "Reported by @{username} on {timestamp} for the following reason: **{reason}**",
-        "showing": "Showing the most recent {count} of {total} reports"
+        "showing": "Showing the most recent {count} of {total} report(s)"
     }
 }
