@@ -350,6 +350,7 @@ export function groupDetailsUpdatesResponse(
             pinnedMessagesRemoved: new Set(candid.Success.pinned_messages_removed),
             latestEventIndex: candid.Success.latest_event_index,
             rules: optional(candid.Success.rules, groupRules),
+            invitedUsers: optional(candid.Success.invited_users, (invited_users) => new Set(invited_users.map((u) => u.toString()))),
         };
     }
     throw new UnsupportedValueError("Unexpected ApiDeleteMessageResponse type received", candid);
@@ -363,6 +364,7 @@ export function groupDetailsResponse(candid: ApiSelectedInitialResponse): GroupC
         return {
             members: candid.Success.participants.map(member),
             blockedUsers: new Set(candid.Success.blocked_users.map((u) => u.toString())),
+            invitedUsers: new Set(candid.Success.invited_users.map((u) => u.toString())),
             pinnedMessages: new Set(candid.Success.pinned_messages),
             latestEventIndex: candid.Success.latest_event_index,
             rules: groupRules(candid.Success.rules),
@@ -1094,6 +1096,13 @@ function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {
             addedBy: candid.ParticipantsAdded.added_by.toString(),
         };
     }
+    if ("UsersInvited" in candid) {
+        return {
+            kind: "users_invited",
+            userIds: candid.UsersInvited.user_ids.map((p) => p.toString()),
+            invitedBy: candid.UsersInvited.invited_by.toString(),
+        };
+    }
     if ("ParticipantJoined" in candid) {
         return {
             kind: "member_joined",
@@ -1349,14 +1358,6 @@ function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {
         return {
             kind: "gate_updated",
             updatedBy: candid.GroupGateUpdated.updated_by.toString(),
-        };
-    }
-
-    if ("UsersInvited" in candid) {
-        return {
-            kind: "users_invited",
-            userIds: candid.UsersInvited.user_ids.map((p) => p.toString()),
-            invitedBy: candid.UsersInvited.invited_by.toString(),
         };
     }
 

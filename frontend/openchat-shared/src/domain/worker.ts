@@ -53,6 +53,7 @@ import type {
     UpdateGroupResponse,
     UpdatesResult,
     WithdrawCryptocurrencyResponse,
+    InviteUsersResponse,
 } from "./chat";
 import type { BlobReference, StorageStatus } from "./data/data";
 import type { UpdateMarketMakerConfigArgs, UpdateMarketMakerConfigResponse } from "./marketMaker";
@@ -106,6 +107,7 @@ export type WorkerRequest =
     | ChangeRole
     | RemoveMember
     | AddMembers
+    | InviteUsers
     | PushSub
     | RemoveSub
     | SubscriptionExists
@@ -339,6 +341,13 @@ type AddMembers = Request<{
     allowBlocked: boolean;
 }> & {
     kind: "addMembers";
+};
+
+type InviteUsers = Request<{
+    chatId: string;
+    userIds: string[];
+}> & {
+    kind: "inviteUsers";
 };
 
 type RemoveSub = Request<{
@@ -831,6 +840,7 @@ export type WorkerResponse =
     | Response<RegisterProposalVoteResponse>
     | Response<ChangeRoleResponse>
     | Response<AddMembersResponse>
+    | Response<InviteUsersResponse>
     | Response<RemoveMemberResponse>
     | Response<boolean>
     | Response<RegisterUserResponse>

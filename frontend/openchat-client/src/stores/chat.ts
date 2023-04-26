@@ -261,6 +261,7 @@ export const chatStateStore = createChatSpecificObjectStore<ChatSpecificState>((
     detailsLoaded: false,
     members: [],
     blockedUsers: new Set<string>(),
+    invitedUsers: new Set<string>(),
     pinnedMessages: new Set<number>(),
     userIds: new Set<string>(),
     userGroupKeys: new Set<string>(),
@@ -372,6 +373,12 @@ export const chatDetailsLatestEventIndex = createDerivedPropStore<
 export const currentChatBlockedUsers = createDerivedPropStore<ChatSpecificState, "blockedUsers">(
     chatStateStore,
     "blockedUsers",
+    () => new Set<string>(),
+    setsAreEqual
+);
+export const currentChatInvitedUsers = createDerivedPropStore<ChatSpecificState, "invitedUsers">(
+    chatStateStore,
+    "invitedUsers",
     () => new Set<string>(),
     setsAreEqual
 );

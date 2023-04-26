@@ -359,21 +359,6 @@
             "replyInThread": "在线程中回复"
         },
         "advanced": "高级",
-        "invite": {
-            "inviteWithLink": "通过链接邀请加入群聊",
-            "enableLink": "启用链接",
-            "resetLink": "重置链接",
-            "errorGettingLink": "无法获取链接",
-            "errorEnablingLink": "无法启用链接",
-            "errorDisablingLink": "无法禁用链接",
-            "errorResettingLink": "无法重置链接",
-            "confirmReset": "您确定要重置群聊链接吗？人们将无法再使用当前链接加入群聊。",
-            "shareMessage": "知道此链接的任何人都可以预览和加入群聊。",
-            "shareMessageTrust": "与您信任的人分享。",
-            "enabled": "启用",
-            "disabled": "禁用",
-            "reset": "重启"
-        },
         "welcome": "欢迎来到",
         "historyPrivateMessage": "旧消息对新成员不可见",
         "privateGroupInfo": "用户不能自由加入该群聊。他们必须由授权成员添加或邀请。",
@@ -415,7 +400,12 @@
         "minStakeN": "最小质押 {n} 个代币",
         "optional": "选修的",
         "openAccessInfo": "加入这个群组没有特殊的访问要求",
-        "gateCheckFailed": "未满足访问门"
+        "gateCheckFailed": "未满足访问门",
+        "inviteWithLink": "通过链接邀请加入群组",
+        "invite": "邀请",
+        "inviteUsers": "邀请用户",
+        "inviteUsersFailed": "邀请用户时出错",
+        "tooManyInvites": "您只能有 100 个未完成的邀请"
     },
     "updateNow": "现在重新加载",
     "updateRequired": "新版本的 OpenChat 可用 - 在 {countdown} 秒内重新加载",
@@ -782,5 +772,6 @@
         "cancelSuccess": "您的提醒已成功取消",
         "cancelFailure": "抱歉，我们无法取消您的提醒"
     },
-    "userReferralMessage": "与朋友和家人分享此 OpenChat 链接。只要您自己是钻石会员，对于每个通过您的链接注册并继续成为钻石会员的人，您将收到他们第一年支付的会员费的一半。"
+    "userReferralMessage": "与朋友和家人分享此 OpenChat 链接。只要您自己是钻石会员，对于每个通过您的链接注册并继续成为钻石会员的人，您将收到他们第一年支付的会员费的一半。",
+    "invitedBy": "{invitedBy} 邀请 {users} 加入群组"
 }

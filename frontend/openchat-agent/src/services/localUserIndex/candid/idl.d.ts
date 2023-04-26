@@ -3,6 +3,7 @@ import {
     _SERVICE,
     GroupCanisterGroupChatSummary,
     JoinGroupResponse,
+    InviteUsersToGroupResponse,
     GateCheckFailedReason,
 } from "./types";
 export {
@@ -10,6 +11,7 @@ export {
     GroupCanisterGroupChatSummary as ApiGroupCanisterGroupChatSummary,
     JoinGroupResponse as ApiJoinGroupResponse,
     GateCheckFailedReason as ApiGateCheckFailedReason,
+    InviteUsersToGroupResponse as ApiInviteUsersResponse
 };
 
 export const idlFactory: IDL.InterfaceFactory;

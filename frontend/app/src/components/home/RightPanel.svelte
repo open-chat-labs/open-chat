@@ -2,7 +2,7 @@
     import Panel from "../Panel.svelte";
     import UserProfile from "./profile/UserProfile.svelte";
     import GroupDetails from "./groupdetails/GroupDetails.svelte";
-    import AddMembers from "./groupdetails/AddMembers.svelte";
+    import InviteUsers from "./groupdetails/InviteUsers.svelte";
     import Members from "./groupdetails/Members.svelte";
     import PinnedMessages from "./pinned/PinnedMessages.svelte";
     import { rightPanelHistory } from "../../stores/rightPanel";
@@ -35,7 +35,7 @@
     const client = getContext<OpenChat>("client");
     const currentUser = client.user;
 
-    let savingMembers = false;
+    let invitingUsers = false;
 
     $: selectedChatId = client.selectedChatId;
     $: selectedChatStore = client.selectedChatStore;
@@ -91,16 +91,33 @@
         }
     }
 
-    async function saveMembers(ev: CustomEvent<UserSummary[]>) {
+    async function inviteUsers(ev: CustomEvent<UserSummary[]>) {
         if ($selectedChatId !== undefined) {
-            savingMembers = true;
-            const success = await addMembers($selectedChatId, false, ev.detail);
-            if (success) {
-                popHistory();
-            } else {
-                toastStore.showFailureToast("addMembersFailed");
-            }
-            savingMembers = false;
+            const userIds = ev.detail.map((u) => u.userId);
+
+            invitingUsers = true;
+
+            await client
+                .inviteUsers($selectedChatId, userIds)
+                .then((resp) => {
+                    switch (resp) {
+                        case "success":
+                            popHistory();
+                            break;                        
+                        case "too_many_invites":
+                            toastStore.showFailureToast("group.tooManyInvites");
+                            break;
+                        default:
+                            toastStore.showFailureToast("group.inviteUsersFailed");
+                            break;
+                    }
+                })
+                .catch((err) => {
+                    logger.error("InviteUsersFailed", err);
+                    toastStore.showFailureToast("group.inviteUsersFailed");
+                });
+
+            invitingUsers = false;
         }
     }
 
@@ -289,11 +306,11 @@
             on:chatWith
             on:showMembers />
     {:else if lastState.kind === "add_members"}
-        <AddMembers
-            busy={savingMembers}
+        <InviteUsers
+            busy={invitingUsers}
             closeIcon={$rightPanelHistory.length > 1 ? "back" : "close"}
-            on:saveMembers={saveMembers}
-            on:cancelAddMembers={popHistory} />
+            on:inviteUsers={inviteUsers}
+            on:cancelInviteUsers={popHistory} />
     {:else if lastState.kind === "show_members" && $selectedChatId !== undefined}
         <Members
             closeIcon={$rightPanelHistory.length > 1 ? "back" : "close"}

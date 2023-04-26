@@ -358,21 +358,6 @@
             "replyInThread": "répondre dans le fil"
         },
         "advanced": "Avancé",
-        "invite": {
-            "inviteWithLink": "Inviter au groupe via un lien",
-            "enableLink": "Activer le lien",
-            "resetLink": "Lien de réinitialisation",
-            "errorGettingLink": "Impossible d'obtenir le lien",
-            "errorEnablingLink": "Impossible d'activer le lien",
-            "errorDisablingLink": "Impossible de désactiver le lien",
-            "errorResettingLink": "Impossible de réinitialiser le lien",
-            "confirmReset": "Voulez-vous vraiment réinitialiser le lien du groupe ? Les personnes ne pourront plus rejoindre le groupe en utilisant le lien actuel.",
-            "shareMessage": "Toute personne disposant de ce lien peut prévisualiser et rejoindre le groupe.",
-            "shareMessageTrust": "Partagez-le avec des personnes de confiance.",
-            "enabled": "activé",
-            "disabled": "désactivé",
-            "reset": "réinitialiser"
-        },
         "welcome": "Bienvenue à",
         "historyPrivateMessage": "Les anciens messages ne sont pas visibles pour les nouveaux membres",
         "privateGroupInfo": "Les utilisateurs ne peuvent pas rejoindre ce groupe librement. Ils doivent être ajoutés ou invités par un membre autorisé.",
@@ -414,7 +399,12 @@
         "minStakeN": "Mise minimale {n} jetons",
         "optional": "Facultatif",
         "openAccessInfo": "Il n'y a pas d'exigences d'accès particulières pour rejoindre ce groupe",
-        "gateCheckFailed": "Porte d'accès non rencontrée"
+        "gateCheckFailed": "Porte d'accès non rencontrée",
+        "inviteWithLink": "Inviter au groupe via un lien",
+        "invite": "Inviter",
+        "inviteUsers": "Inviter des utilisateurs",
+        "inviteUsersFailed": "Une erreur s'est produite lors de l'invitation des utilisateurs",
+        "tooManyInvites": "Vous ne pouvez avoir que 100 invitations en suspens"
     },
     "updateNow": "recharger maintenant",
     "updateRequired": "Une nouvelle version d'OpenChat est disponible - rechargement dans {countdown}s",
@@ -781,5 +771,6 @@
         "cancelSuccess": "Votre rappel a été annulé avec succès",
         "cancelFailure": "Désolé, nous n'avons pas pu annuler votre rappel"
     },
-    "userReferralMessage": "Partagez ce lien vers OpenChat avec vos amis et votre famille. Tant que vous êtes vous-même membre Diamond, pour chaque personne qui s'inscrit avec votre lien et devient membre Diamond, vous recevrez la moitié des paiements d'adhésion qu'elle effectue au cours de sa première année."
+    "userReferralMessage": "Partagez ce lien vers OpenChat avec vos amis et votre famille. Tant que vous êtes vous-même membre Diamond, pour chaque personne qui s'inscrit avec votre lien et devient membre Diamond, vous recevrez la moitié des paiements d'adhésion qu'elle effectue au cours de sa première année.",
+    "invitedBy": "{invitedBy} a invité {users} dans le groupe"
 }

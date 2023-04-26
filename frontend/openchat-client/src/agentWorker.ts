@@ -93,6 +93,7 @@ import {
     GroupGate,
     ProposalVoteDetails,
     SetMessageReminderResponse,
+    InviteUsersResponse,
 } from "openchat-shared";
 import type { OpenChatConfig } from "./config";
 import { v4 } from "uuid";
@@ -954,6 +955,19 @@ export class OpenChatAgentWorker extends EventTarget {
                 userIds,
                 myUsername,
                 allowBlocked,
+            },
+        });
+    }
+
+    inviteUsers(
+        chatId: string,
+        userIds: string[],
+    ): Promise<InviteUsersResponse> {
+        return this.sendRequest({
+            kind: "inviteUsers",
+            payload: {
+                chatId,
+                userIds,
             },
         });
     }

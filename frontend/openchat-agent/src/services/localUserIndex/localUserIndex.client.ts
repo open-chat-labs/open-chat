@@ -2,10 +2,11 @@ import type { Identity } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
 import { idlFactory, LocalUserIndexService } from "./candid/idl";
 import type {
+    InviteUsersResponse,
     JoinGroupResponse,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
-import { joinGroupResponse } from "./mappers";
+import { inviteUsersResponse, joinGroupResponse } from "./mappers";
 import type { ILocalUserIndexClient } from "./localUserIndex.client.interface";
 import { profile } from "../common/profiling";
 import type { AgentConfig } from "../../config";
@@ -33,5 +34,14 @@ export class LocalUserIndexClient extends CandidService implements ILocalUserInd
             chat_id: Principal.fromText(chatId),
             correlation_id: BigInt(0)
         }), joinGroupResponse);
+    }
+
+    @profile("localUserIndexClient")
+    inviteUsersToGroup(chatId: string, userIds: string[]): Promise<InviteUsersResponse> {
+        return this.handleResponse(this.localUserIndexService.invite_users_to_group({
+            group_id: Principal.fromText(chatId),
+            user_ids: userIds.map((u) => Principal.fromText(u)),
+            correlation_id: BigInt(0)
+        }), inviteUsersResponse);
     }
 }

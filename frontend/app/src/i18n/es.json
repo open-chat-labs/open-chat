@@ -360,21 +360,6 @@
             "replyInThread": "responder en el hilo"
         },
         "advanced": "Avanzado",
-        "invite": {
-            "inviteWithLink": "Invitar al grupo a través de un enlace",
-            "enableLink": "Habilitar enlace",
-            "resetLink": "Restablecer enlace",
-            "errorGettingLink": "No se puede obtener el enlace",
-            "errorEnablingLink": "No se puede habilitar el enlace",
-            "errorDisablingLink": "No se puede deshabilitar el enlace",
-            "errorResettingLink": "No se puede restablecer el enlace",
-            "confirmReset": "¿Seguro que quieres restablecer el enlace del grupo? Las personas ya no podrán unirse al grupo usando el enlace actual.",
-            "shareMessage": "Cualquier persona con este enlace puede obtener una vista previa y unirse al grupo.",
-            "shareMessageTrust": "Compártelo con personas de confianza.",
-            "enabled": "activado",
-            "disabled": "desactivado",
-            "reset": "Reiniciar"
-        },
         "welcome": "Bienvenido a",
         "historyPrivateMessage": "Los mensajes antiguos no son visibles para los nuevos miembros.",
         "privateGroupInfo": "Los usuarios no pueden unirse a este grupo libremente. Deben ser agregados o invitados por un miembro autorizado.",
@@ -416,7 +401,12 @@
         "minStakeN": "Apuesta mínima {n} tokens",
         "optional": "Opcional",
         "openAccessInfo": "No hay requisitos especiales de acceso para unirse a este grupo",
-        "gateCheckFailed": "Puerta de acceso no cumplida"
+        "gateCheckFailed": "Puerta de acceso no cumplida",
+        "inviteWithLink": "Invitar al grupo a través de un enlace",
+        "invite": "Invitar",
+        "inviteUsers": "Invitar usuarios",
+        "inviteUsersFailed": "Hubo un error al invitar a los usuarios",
+        "tooManyInvites": "Solo puedes tener 100 invitaciones pendientes"
     },
     "updateNow": "recargar ahora",
     "updateRequired": "Una nueva versión de OpenChat está disponible - recargando en {countdown}s",
@@ -783,5 +773,6 @@
         "cancelSuccess": "Su recordatorio ha sido cancelado con éxito",
         "cancelFailure": "Lo sentimos, no pudimos cancelar tu recordatorio."
     },
-    "userReferralMessage": "Comparta este enlace a OpenChat con amigos y familiares. Siempre que usted sea un miembro Diamond, por cada persona que se registre con su enlace y se convierta en miembro Diamond, recibirá la mitad de los pagos de membresía que hagan durante su primer año."
+    "userReferralMessage": "Comparta este enlace a OpenChat con amigos y familiares. Siempre que usted sea un miembro Diamond, por cada persona que se registre con su enlace y se convierta en miembro Diamond, recibirá la mitad de los pagos de membresía que hagan durante su primer año.",
+    "invitedBy": "{invitedBy} invitó a {users} al grupo"
 }

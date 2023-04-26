@@ -1,12 +1,14 @@
 import {
     GateCheckFailedReason,
     GroupChatSummary,
+    InviteUsersResponse,
     JoinGroupResponse,
     UnsupportedValueError,
 } from "openchat-shared";
 import type {
     ApiGateCheckFailedReason,
     ApiGroupCanisterGroupChatSummary,
+    ApiInviteUsersResponse,
     ApiJoinGroupResponse,
 } from "./candid/idl";
 import { identity, optional } from "../../utils/mapping";
@@ -18,6 +20,31 @@ import {
     memberRole,
     message,
 } from "../common/chatMappers";
+
+export function inviteUsersResponse(candid: ApiInviteUsersResponse): InviteUsersResponse {
+    if ("Success" in candid) {
+        return "success";
+    }
+    if ("NotAuthorized" in candid) {
+        return "not_authorised";
+    }
+    if ("InternalError" in candid) {
+        return "internal_error";
+    }
+    if ("CallerNotInGroup" in candid) {
+        return "caller_not_in_group";
+    }
+    if ("GroupNotFound" in candid) {
+        return "group_not_found";
+    }
+    if ("TooManyInvites" in candid) {
+        return "too_many_invites";
+    }
+    if ("ChatFrozen" in candid) {
+        return "chat_frozen";
+    }
+    throw new UnsupportedValueError("Unexpected ApiInviteUsersResponse type received", candid);
+}
 
 export function joinGroupResponse(candid: ApiJoinGroupResponse): JoinGroupResponse {
     if ("Success" in candid) {

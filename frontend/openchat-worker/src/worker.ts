@@ -866,6 +866,20 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
                     .catch(sendError(correlationId));
                 break;
 
+            case "inviteUsers":
+                agent
+                    .inviteUsers(
+                        payload.chatId,
+                        payload.userIds,
+                    )
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
             case "removeMember":
                 agent
                     .removeMember(payload.chatId, payload.userId)

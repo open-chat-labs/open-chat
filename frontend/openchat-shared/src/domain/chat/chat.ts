@@ -921,6 +921,7 @@ export type GroupChatDetailsUpdatesResponse =
 export type GroupChatDetails = {
     members: Member[];
     blockedUsers: Set<string>;
+    invitedUsers: Set<string>;
     pinnedMessages: Set<number>;
     latestEventIndex: number;
     rules: GroupRules;
@@ -934,6 +935,7 @@ export type ChatSpecificState = {
     detailsLoaded: boolean;
     members: Member[];
     blockedUsers: Set<string>;
+    invitedUsers: Set<string>;
     pinnedMessages: Set<number>;
     latestEventIndex?: number;
     rules?: GroupRules;
@@ -965,6 +967,7 @@ export type GroupChatDetailsUpdates = {
     pinnedMessagesAdded: Set<number>;
     latestEventIndex: number;
     rules?: GroupRules;
+    invitedUsers?: Set<string>;
 };
 
 export type ChatSummary = DirectChatSummary | GroupChatSummary;
@@ -1486,6 +1489,15 @@ export type JoinGroupResponse =
     | UserSuspended
     | ChatFrozen
     | InternalError;
+
+export type InviteUsersResponse =
+    | "success"
+    | "group_not_found"
+    | "caller_not_in_group"
+    | "not_authorised"
+    | "chat_frozen"
+    | "too_many_invites"
+    | "internal_error";
 
 export type MarkReadRequest = {
     readUpTo: number | undefined;

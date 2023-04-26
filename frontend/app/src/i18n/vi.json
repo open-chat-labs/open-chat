@@ -360,21 +360,6 @@
             "replyInThread": "trả lời trong chuỗi"
         },
         "advanced": "Trình độ cao",
-        "invite": {
-            "inviteWithLink": "Mời vào nhóm qua liên kết",
-            "enableLink": "Bật liên kết",
-            "resetLink": "Đặt lại liên kết",
-            "errorGettingLink": "Không thể lấy liên kết",
-            "errorEnablingLink": "Không thể bật liên kết",
-            "errorDisablingLink": "Không thể tắt liên kết",
-            "errorResettingLink": "Không thể đặt lại liên kết",
-            "confirmReset": "Bạn có chắc chắn muốn đặt lại liên kết nhóm không? Mọi người sẽ không thể tham gia nhóm bằng liên kết hiện tại nữa.",
-            "shareMessage": "Bất kỳ ai có liên kết này đều có thể xem trước và tham gia nhóm.",
-            "shareMessageTrust": "Chia sẻ nó với những người bạn tin tưởng.",
-            "enabled": "được kích hoạt",
-            "disabled": "Vô hiệu hóa",
-            "reset": "cài lại"
-        },
         "welcome": "Chào mừng bạn đến",
         "historyPrivateMessage": "Các tin nhắn cũ không hiển thị với các thành viên mới",
         "privateGroupInfo": "Người dùng không thể tham gia nhóm này một cách tự do. Họ phải được thêm vào hoặc được mời bởi một thành viên được ủy quyền.",
@@ -416,7 +401,12 @@
         "minStakeN": "Cổ phần tối thiểu {n} mã thông báo",
         "optional": "Không bắt buộc",
         "openAccessInfo": "Không có yêu cầu truy cập đặc biệt để tham gia nhóm này",
-        "gateCheckFailed": "Cổng truy cập không được đáp ứng"
+        "gateCheckFailed": "Cổng truy cập không được đáp ứng",
+        "inviteWithLink": "Mời vào nhóm qua liên kết",
+        "invite": "Mời",
+        "inviteUsers": "Mời người dùng",
+        "inviteUsersFailed": "Đã xảy ra lỗi khi mời người dùng",
+        "tooManyInvites": "Bạn chỉ có thể có 100 lời mời nổi bật"
     },
     "updateNow": "tải lại ngay bây giờ",
     "updateRequired": "Đã có phiên bản OpenChat mới - tải lại sau {countdown} giây",
@@ -782,5 +772,6 @@
         "cancelSuccess": "Lời nhắc của bạn đã được hủy thành công",
         "cancelFailure": "Xin lỗi, chúng tôi không thể hủy lời nhắc của bạn"
     },
-    "userReferralMessage": "Chia sẻ liên kết này tới OpenChat với bạn bè và gia đình. Miễn là bản thân bạn là thành viên Kim cương, đối với mỗi người đăng ký bằng liên kết của bạn và tiếp tục trở thành thành viên Kim cương, bạn sẽ nhận được một nửa số tiền thanh toán thành viên mà họ thực hiện trong năm đầu tiên."
+    "userReferralMessage": "Chia sẻ liên kết này tới OpenChat với bạn bè và gia đình. Miễn là bản thân bạn là thành viên Kim cương, đối với mỗi người đăng ký bằng liên kết của bạn và tiếp tục trở thành thành viên Kim cương, bạn sẽ nhận được một nửa số tiền thanh toán thành viên mà họ thực hiện trong năm đầu tiên.",
+    "invitedBy": "{invitedBy} đã mời {users} vào nhóm"
 }
