@@ -1212,6 +1212,7 @@ export const idlFactory = ({ IDL }) => {
     'send_messages' : IDL.Opt(PermissionRole),
     'remove_members' : IDL.Opt(PermissionRole),
     'update_group' : IDL.Opt(PermissionRole),
+    'invite_users' : IDL.Opt(PermissionRole),
     'change_roles' : IDL.Opt(PermissionRole),
     'add_members' : IDL.Opt(PermissionRole),
     'create_polls' : IDL.Opt(PermissionRole),
