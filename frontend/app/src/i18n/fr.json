@@ -228,7 +228,9 @@
         "buychat_q": "Comment acheter des jetons CHAT ?",
         "buychat_a": "À l'heure actuelle, vous devez d'abord <a target=\"_blank\" href=\"https://www.finder.com/uk/how-to-buy-internet-computer\">acheter ICP</a> que vous pouvez ensuite échanger contre CHAT sur divers échanges décentralisés (DEX).<ul><li><a target=\"_blank\" href=\"https://avjzx-pyaaa-aaaaj-aadmq-cai.raw.ic0.app/ICDex/CHAT/ICP \">ICDex</a></li><li><a target=\"_blank\" href=\"https://info.icpswap.com/swap/pool/details/ne2vj-6yaaa-aaaag-qb3ia-cai\" >ICPSwap</a></li><li><a target=\"_blank\" href=\"https://app.infinityswap.one/tokens/2ouva-viaaa-aaaaq-aaamq-cai\">InfinitySwap</a ></li></ul>DFINITY ajoute la prise en charge de l'<a target=\"_blank\" href=\"https://www.rosetta-api.org/\">API Rosetta</a> pour les jetons ICRC1 (qui comprend CHAT), ce qui les rend beaucoup plus faciles à intégrer aux échanges centralisés (CEX). Une fois que cela s'est produit, il est probable que CHAT sera disponible pour négocier sur les CEX contre ICP ou USDT.",
         "shortcuts_q": "Quelles commandes de raccourci sont disponibles ?",
-        "shortcuts_a": "Il existe plusieurs commandes de raccourci que vous pouvez utiliser à partir de la zone de saisie de message. <br /><br /> `/poll` - pour créer un nouveau sondage <br /> `/search xyz` - pour rechercher dans le chat actuel le terme \"xyz\" <br />`/gif chatons` - pour rechercher des gifs chaton <br />`/icp 0.1` - pour envoyer 0.1 ICP à quelqu'un <br />`/faq question_id*` - pour créer et publier un lien formaté vers une question spécifique de la FAQ <br />`/diamond ` - pour créer et publier un lien formaté avec les détails de l'adhésion Diamond <br/> <br/>Les commandes qui acceptent un argument peuvent également être utilisées sans l'argument.<br /><br />* Les ID de question FAQ disponibles sont : airdrop, vote, portefeuille, buychat, send_tokens, diamant, ios_app, android_app, find_groups, style_messages, stockage, sécurité, feuille de route, raccourcis"
+        "shortcuts_a": "Il existe plusieurs commandes de raccourci que vous pouvez utiliser à partir de la zone de saisie de message. <br /><br /> `/poll` - pour créer un nouveau sondage <br /> `/search xyz` - pour rechercher dans le chat actuel le terme \"xyz\" <br />`/gif chatons` - pour rechercher des gifs chaton <br />`/icp 0.1` - pour envoyer 0.1 ICP à quelqu'un <br />`/faq question_id*` - pour créer et publier un lien formaté vers une question spécifique de la FAQ <br />`/diamond ` - pour créer et publier un lien formaté avec les détails de l'adhésion Diamond <br/> <br/>Les commandes qui acceptent un argument peuvent également être utilisées sans l'argument.<br /><br />* Les ID de question FAQ disponibles sont : airdrop, vote, portefeuille, buychat, send_tokens, diamant, ios_app, android_app, find_groups, style_messages, stockage, sécurité, feuille de route, raccourcis",
+        "content_q": "Quel type de contenu est autorisé ?",
+        "content_a": "Pour plus de détails sur nos directives de contenu et de modération, <a href=\"/guidelines\">cliquez ici</a>."
     },
     "roadmap": "Feuille de route",
     "here": "ici",
@@ -280,7 +282,8 @@
         "userLimitReached": "La limite d'utilisateurs a été atteinte",
         "createUser": "Créer un utilisateur",
         "closedTitle": "Inscription en pause",
-        "closed": "En raison d'une très forte demande, les inscriptions de nouveaux utilisateurs sont temporairement fermées. Nous allons bientôt évoluer sur plusieurs sous-réseaux et pourrons ensuite nous développer indéfiniment !"
+        "closed": "En raison d'une très forte demande, les inscriptions de nouveaux utilisateurs sont temporairement fermées. Nous allons bientôt évoluer sur plusieurs sous-réseaux et pourrons ensuite nous développer indéfiniment !",
+        "disclaimer": "En vous inscrivant à OpenChat, vous acceptez de respecter nos directives"
     },
     "roleChanged": "{changedBy} a changé le rôle de {changed} de {oldRole} à {newRole}",
     "yourRoleChanged": "{changedBy} a changé votre rôle de {oldRole} à {newRole}",
@@ -781,5 +784,29 @@
         "cancelSuccess": "Votre rappel a été annulé avec succès",
         "cancelFailure": "Désolé, nous n'avons pas pu annuler votre rappel"
     },
-    "userReferralMessage": "Partagez ce lien vers OpenChat avec vos amis et votre famille. Tant que vous êtes vous-même membre Diamond, pour chaque personne qui s'inscrit avec votre lien et devient membre Diamond, vous recevrez la moitié des paiements d'adhésion qu'elle effectue au cours de sa première année."
+    "userReferralMessage": "Partagez ce lien vers OpenChat avec vos amis et votre famille. Tant que vous êtes vous-même membre Diamond, pour chaque personne qui s'inscrit avec votre lien et devient membre Diamond, vous recevrez la moitié des paiements d'adhésion qu'elle effectue au cours de sa première année.",
+    "report": {
+        "menu": "Rapport",
+        "title": "Signaler un message",
+        "reason": "Raison du rapport",
+        "pleaseSelect": "Veuillez sélectionner une raison",
+        "optional": "Facultatif",
+        "note": "Ajouter une note",
+        "notePlaceholder": "Dites-nous pourquoi vous signalez ce contenu",
+        "advice": "Si vous pensez que ce message enfreint les règles de ce groupe, veuillez contacter les propriétaires et les administrateurs du groupe en premier lieu. Ne signalez un message à la modération de la plate-forme que si vous pensez qu'il enfreint les [directives de la plate-forme](/guidelines).",
+        "threat": "Le message est menaçant",
+        "child": "Le message contient du contenu sexuel impliquant des enfants",
+        "nonConsensual": "Le message contient du contenu sexuel non consensuel",
+        "misleading": "Le message contient des informations erronées",
+        "deception": "Le message contient de la tromperie",
+        "selfHarm": "Le message contient ou encourage l'automutilation",
+        "violence": "Le message contient une violence excessive",
+        "scam": "Le message fait la promotion d'une arnaque financière",
+        "other": "Autre raison",
+        "success": "Le message a été signalé aux modérateurs de la plateforme",
+        "failure": "Désolé, nous n'avons pas pu signaler ce message aux modérateurs de la plateforme",
+        "deleteMessage": "Supprimer le message signalé",
+        "messageReport": "Signalé par @{username} sur {timestamp} pour la raison suivante : **{reason}**",
+        "showing": "Affichage du ou des rapports {count} sur {total} les plus récents"
+    }
 }

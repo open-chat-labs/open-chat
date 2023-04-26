@@ -249,7 +249,8 @@
         "userLimitReached": "ユーザー数の上限に達しています",
         "createUser": "ユーザーを作成する",
         "closedTitle": "登録を一時停止しました",
-        "closed": "大変ご好評につき、新規ユーザー登録を一時的に停止しております。すぐに複数のサブネットにまたがってスケーリングし、その後は無制限に成長できるようになります!"
+        "closed": "大変ご好評につき、新規ユーザー登録を一時的に停止しております。すぐに複数のサブネットにまたがってスケーリングし、その後は無制限に成長できるようになります!",
+        "disclaimer": "OpenChat に登録することにより、当社のガイドラインに従うことに同意したことになります"
     },
     "faq": {
         "menu": "FAQ",
@@ -281,7 +282,9 @@
         "buychat_q": "CHAT トークンを購入するにはどうすればよいですか?",
         "buychat_a": "現時点では、まず <a target=\"_blank\" href=\"https://www.finder.com/uk/how-to-buy-internet-computer\">ICP を購入</a>する必要があります。さまざまな分散型取引所 (DEXes) でのチャット。<ul><li><a target=\"_blank\" href=\"https://avjzx-pyaaa-aaaaj-aadmq-cai.raw.ic0.app/ICDex/CHAT/ICP \">ICDex</a></li><li><a target=\"_blank\" href=\"https://info.icpswap.com/swap/pool/details/ne2vj-6yaaa-aaaag-qb3ia-cai\" >ICPSwap</a></li><li><a target=\"_blank\" href=\"https://app.infinityswap.one/tokens/2ouva-viaa-aaaaq-aaamq-cai\">インフィニティスワップ</a ></li></ul>DFINITY は、ICRC1 トークン (これはCHAT を含む) により、集中型取引所 (CEXes) との統合がはるかに容易になります。これが発生すると、ICPまたはUSDTのCEXでの取引にCHATが利用可能になる可能性があります。",
         "shortcuts_q": "どのショートカット コマンドを使用できますか?",
-        "shortcuts_a": "メッセージ エントリ入力ボックスから使用できるショートカット コマンドがいくつかあります。 <br /><br /> `/poll` - 新しい投票を作成します <br /> `/search xyz` - 現在のチャットで用語「xyz」を検索します <br />`/gif 子猫` - に子猫の gif を検索する <br />`/icp 0.1` - 誰かに 0.1 ICP を送る <br />`/faq question_id*` - 特定の FAQ 質問への書式付きリンクを作成して投稿する <br />`/diamond ` - ダイヤモンド メンバーシップの詳細を含む書式付きリンクを作成して投稿する <br/> <br/>引数を受け入れるコマンドは、引数なしでも使用できます。<br /><br />* 利用可能な FAQ 質問 ID は次のとおりです。 : エアドロップ、投票、ウォレット、buychat、send_tokens、ダイヤモンド、ios_app、android_app、find_groups、style_messages、ストレージ、セキュリティ、ロードマップ、ショートカット"
+        "shortcuts_a": "メッセージ エントリ入力ボックスから使用できるショートカット コマンドがいくつかあります。 <br /><br /> `/poll` - 新しい投票を作成します <br /> `/search xyz` - 現在のチャットで用語「xyz」を検索します <br />`/gif 子猫` - に子猫の gif を検索する <br />`/icp 0.1` - 誰かに 0.1 ICP を送る <br />`/faq question_id*` - 特定の FAQ 質問への書式付きリンクを作成して投稿する <br />`/diamond ` - ダイヤモンド メンバーシップの詳細を含む書式付きリンクを作成して投稿する <br/> <br/>引数を受け入れるコマンドは、引数なしでも使用できます。<br /><br />* 利用可能な FAQ 質問 ID は次のとおりです。 : エアドロップ、投票、ウォレット、buychat、send_tokens、ダイヤモンド、ios_app、android_app、find_groups、style_messages、ストレージ、セキュリティ、ロードマップ、ショートカット",
+        "content_q": "どのようなコンテンツが許可されますか?",
+        "content_a": "コンテンツとモデレーションのガイドラインの詳細については、<a href=\"/guidelines\">こちら</a>をご覧ください。"
     },
     "roleChanged": "{changedBy}は、{changed}の役割を{oldRole}から{newRole}に変更しました",
     "yourRoleChanged": "{changedBy}が役割を{oldRole}から{newRole}に変更しました",
@@ -782,5 +785,29 @@
         "cancelSuccess": "リマインダーがキャンセルされました",
         "cancelFailure": "リマインダーをキャンセルできませんでした"
     },
-    "userReferralMessage": "このリンクを OpenChat で友人や家族と共有してください。あなた自身がダイヤモンド メンバーである限り、あなたのリンクに登録してダイヤモンド メンバーになる 1 人につき、最初の 1 年間のメンバーシップ支払いの半額を受け取ることができます。"
+    "userReferralMessage": "このリンクを OpenChat で友人や家族と共有してください。あなた自身がダイヤモンド メンバーである限り、あなたのリンクに登録してダイヤモンド メンバーになる 1 人につき、最初の 1 年間のメンバーシップ支払いの半額を受け取ることができます。",
+    "report": {
+        "menu": "報告",
+        "title": "通報メッセージ",
+        "reason": "報告理由",
+        "pleaseSelect": "理由を選択してください",
+        "optional": "オプション",
+        "note": "メモを追加",
+        "notePlaceholder": "このコンテンツを報告する理由を教えてください",
+        "advice": "このメッセージがこのグループのルールに違反していると思われる場合は、まずグループの所有者と管理者に連絡してください。 [プラットフォーム ガイドライン](/guidelines) に違反していると思われる場合にのみ、プラットフォーム モデレートのためにメッセージを報告してください。",
+        "threat": "メッセージは脅迫的です",
+        "child": "メッセージには児童の性的コンテンツが含まれています",
+        "nonConsensual": "メッセージに同意のない性的コンテンツが含まれています",
+        "misleading": "メッセージには誤った情報が含まれています",
+        "deception": "メッセージには欺瞞が含まれています",
+        "selfHarm": "メッセージに自傷行為が含まれているか助長されている",
+        "violence": "メッセージには過度の暴力が含まれています",
+        "scam": "金融詐欺を助長するメッセージ",
+        "other": "他の理由",
+        "success": "メッセージはプラットフォームのモデレーターに報告されました",
+        "failure": "申し訳ありませんが、このメッセージをプラットフォームのモデレーターに報告できませんでした",
+        "deleteMessage": "報告されたメッセージを削除",
+        "messageReport": "次の理由により、@{username} によって {timestamp} に報告されました: **{reason}**",
+        "showing": "{count} 件のレポートのうち最新の {total} 件を表示しています"
+    }
 }

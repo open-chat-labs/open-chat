@@ -7,9 +7,6 @@
     import { _ } from "svelte-i18n";
 
     export let content: ReportedMessageContent;
-
-    $: console.log("ReportedContent: ", content);
-
     const client = getContext<OpenChat>("client");
     $: userStore = client.userStore;
 
