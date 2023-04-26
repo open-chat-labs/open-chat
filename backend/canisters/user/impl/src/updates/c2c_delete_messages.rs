@@ -37,7 +37,7 @@ fn c2c_delete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Res
 
         let remove_deleted_message_content_at = now + (5 * MINUTE_IN_MS);
         for (message_id, result) in delete_message_results {
-            if matches!(result, DeleteMessageResult::Success) {
+            if matches!(result, DeleteMessageResult::Success(_)) {
                 runtime_state.data.timer_jobs.enqueue_job(
                     TimerJob::HardDeleteMessageContent(Box::new(HardDeleteMessageContentJob {
                         chat_id,

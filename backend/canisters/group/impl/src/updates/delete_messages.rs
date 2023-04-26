@@ -90,7 +90,7 @@ fn delete_messages_impl(caller: Principal, args: Args, runtime_state: &mut Runti
         let remove_deleted_message_content_at = now + (5 * MINUTE_IN_MS);
         for message_id in delete_message_results
             .into_iter()
-            .filter(|(_, result)| matches!(result, DeleteMessageResult::Success))
+            .filter(|(_, result)| matches!(result, DeleteMessageResult::Success(_)))
             .map(|(message_id, _)| message_id)
             .filter(|message_id| my_messages.contains(message_id))
         {
