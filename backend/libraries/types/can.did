@@ -658,6 +658,7 @@ type Participant =
 type ParticipantJoined =
     record {
         user_id: UserId;
+        invited: bool;
     };
 
 type ParticipantLeft =

@@ -42,7 +42,7 @@ fn is_permitted_to_join(
     } else if runtime_state.data.is_frozen() {
         Err(ChatFrozen)
     } else if !runtime_state.data.is_accessible_by_non_member(user_principal) {
-        Err(GroupNotPublic)
+        Err(NotInvited)
     } else if let Some(limit) = runtime_state.data.participants.user_limit_reached() {
         Err(ParticipantLimitReached(limit))
     } else {
@@ -94,7 +94,12 @@ fn c2c_join_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Response
         mute_notifications: runtime_state.data.is_public,
     }) {
         AddResult::Success(participant) => {
-            let event = ParticipantJoined { user_id: args.user_id };
+            let invited = runtime_state.data.invited_users.remove(&args.user_id, now);
+
+            let event = ParticipantJoined {
+                user_id: args.user_id,
+                invited,
+            };
             runtime_state.data.events.push_main_event(
                 ChatEventInternal::ParticipantJoined(Box::new(event)),
                 args.correlation_id,

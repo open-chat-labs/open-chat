@@ -16,6 +16,7 @@ pub enum Response {
     GateCheckFailed(GateCheckFailedReason),
     GroupNotFound,
     GroupNotPublic,
+    NotInvited,
     ParticipantLimitReached(u32),
     Blocked,
     UserSuspended,

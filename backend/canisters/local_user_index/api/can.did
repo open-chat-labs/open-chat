@@ -14,6 +14,7 @@ type JoinGroupResponse =
         GateCheckFailed: GateCheckFailedReason;
         GroupNotFound;
         GroupNotPublic;
+        NotInvited;
         ParticipantLimitReached: nat32;
         Blocked;
         UserSuspended;
@@ -36,24 +37,6 @@ type InviteUsersToGroupResponse =
         NotAuthorized;
         ChatFrozen;
         TooManyInvites: nat32;
-        InternalError: text;
-    };
-
-type AcceptInvitationArgs =
-    record {
-        chat_id: ChatId;
-        correlation_id: nat64;
-    };
-
-type AcceptInvitationResponse =
-    variant {
-        Success: GroupCanisterGroupChatSummary;
-        AlreadyInGroup: GroupCanisterGroupChatSummary;
-        GroupNotFound;
-        ParticipantLimitReached: nat32;
-        Blocked;
-        UserSuspended;
-        ChatFrozen;
         InternalError: text;
     };
 
