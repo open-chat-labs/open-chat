@@ -472,14 +472,14 @@
         "manageHeader": "{symbol}-Konto verwalten",
         "token": "Zeichen",
         "comingSoon": "(kommt bald)",
-        "send": "Schicken",
+        "send": "Senden",
         "sendTarget": "Geben Sie eine Adresse ein, an die gesendet werden soll",
         "sendSucceeded": "Ihr {symbol} wurde erfolgreich gesendet!",
         "sendFailed": "Fehler beim Senden von {symbol}",
         "scan": "QR-Code scannen",
         "receiveToken": "Erhalte {symbol}",
         "sendToken": "Senden Sie {symbol}",
-        "receive": "Erhalten"
+        "receive": "Anfordern"
     },
     "searchChat": "Suche",
     "search": "Suche...",
