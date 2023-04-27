@@ -15,9 +15,17 @@
 
     $: userStatus = UserStatus.None;
     $: {
-        if (showStatus && userId !== undefined) {
-            client.getUserStatus(userId, $now).then((status) => {
-                userStatus = status;
+        // If the userId changes, set the userStatus to None
+        if (userId) {}
+        userStatus = UserStatus.None;
+    }
+    $: {
+        const userIdTemp = userId;
+        if (showStatus && userIdTemp !== undefined) {
+            client.getUserStatus(userIdTemp, $now).then((status) => {
+                if (userId === userIdTemp) {
+                    userStatus = status;
+                }
             });
         } else {
             userStatus = UserStatus.None;
