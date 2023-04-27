@@ -6,6 +6,7 @@ use ic_cdk_macros::update;
 use types::{CanisterId, EventIndex, MessageId, Reaction};
 use user_canister::add_reaction::{Response::*, *};
 use user_canister::c2c_toggle_reaction;
+use utils::consts::OPENCHAT_BOT_USER_ID;
 
 #[update(guard = "caller_is_owner")]
 #[trace]
@@ -37,13 +38,15 @@ fn add_reaction_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
             now,
         }) {
             AddRemoveReactionResult::Success => {
-                ic_cdk::spawn(add_reaction_on_recipients_canister(
-                    args.user_id.into(),
-                    args.message_id,
-                    args.reaction,
-                    args.username,
-                    args.correlation_id,
-                ));
+                if args.user_id != OPENCHAT_BOT_USER_ID {
+                    ic_cdk::spawn(add_reaction_on_recipients_canister(
+                        args.user_id.into(),
+                        args.message_id,
+                        args.reaction,
+                        args.username,
+                        args.correlation_id,
+                    ));
+                }
                 Success
             }
             AddRemoveReactionResult::NoChange => NoChange,
