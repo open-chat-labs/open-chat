@@ -39,7 +39,7 @@ fn c2c_invite_users_impl(args: Args, runtime_state: &mut RuntimeState) -> Respon
             .iter()
             .filter(|(_, principal)| {
                 runtime_state.data.participants.get_by_principal(principal).is_none()
-                    && runtime_state.data.invited_users.get(principal).is_none()
+                    && !runtime_state.data.invited_users.contains(principal)
             })
             .copied()
             .collect();

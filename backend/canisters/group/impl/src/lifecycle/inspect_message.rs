@@ -19,9 +19,9 @@ fn accept_if_valid(runtime_state: &RuntimeState) {
 
     let caller = runtime_state.env.caller();
     let permissions = &runtime_state.data.permissions;
-    if let Some(role) = runtime_state.data.participants.get_by_principal(&caller).map(|p| p.role) {
+    let is_valid = if let Some(role) = runtime_state.data.participants.get_by_principal(&caller).map(|p| p.role) {
         let is_public_group = runtime_state.data.is_public;
-        let is_valid = match method_name.as_str() {
+        match method_name.as_str() {
             "add_participants" => role.can_add_members(permissions, is_public_group) || role.can_unblock_users(permissions),
             "add_reaction" | "remove_reaction" => role.can_react_to_messages(permissions),
             "block_user" => role.can_block_users(permissions),
@@ -38,16 +38,17 @@ fn accept_if_valid(runtime_state: &RuntimeState) {
             | "undelete_messages"
             | "change_role"
             | "claim_prize"
-            | "decline_invitation"
             | "edit_message"
             | "put_chunk"
             | "register_poll_vote"
             | "register_proposal_vote" => true,
             _ => false,
-        };
-
-        if is_valid {
-            ic_cdk::api::call::accept_message();
         }
+    } else {
+        runtime_state.data.invited_users.contains(&caller) && method_name == "decline_invitation"
+    };
+
+    if is_valid {
+        ic_cdk::api::call::accept_message();
     }
 }

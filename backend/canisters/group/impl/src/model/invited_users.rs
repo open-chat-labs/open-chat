@@ -48,6 +48,10 @@ impl InvitedUsers {
         self.last_updated
     }
 
+    pub fn contains(&self, principal: &Principal) -> bool {
+        self.invites.contains_key(principal)
+    }
+
     pub fn len(&self) -> usize {
         self.users.len()
     }
