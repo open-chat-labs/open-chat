@@ -13,11 +13,18 @@
     export let blocked: boolean = false;
     export let statusBorder = "white";
 
-    $: userStatus = UserStatus.None;
+    let userStatus = UserStatus.None;
+    let userStatusUserId: string | undefined = undefined;
     $: {
-        if (showStatus && userId !== undefined) {
-            client.getUserStatus(userId, $now).then((status) => {
-                userStatus = status;
+        if (!showStatus || userId !== userStatusUserId) {
+            userStatus = UserStatus.None;
+            userStatusUserId = userId;
+        }
+        if (showStatus && userStatusUserId !== undefined) {
+            client.getUserStatus(userStatusUserId, $now).then((status) => {
+                if (userId === userStatusUserId) {
+                    userStatus = status;
+                }
             });
         }
     }
