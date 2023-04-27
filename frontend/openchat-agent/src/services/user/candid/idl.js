@@ -149,16 +149,6 @@ export const idlFactory = ({ IDL }) => {
     'user_id' : UserId,
     'message_id' : MessageId,
   });
-  const MessageReport = IDL.Record({
-    'notes' : IDL.Opt(IDL.Text),
-    'timestamp' : TimestampMillis,
-    'reported_by' : UserId,
-    'reason_code' : IDL.Nat32,
-  });
-  const ReportedMessage = IDL.Record({
-    'count' : IDL.Nat32,
-    'reports' : IDL.Vec(MessageReport),
-  });
   const GiphyImageVariant = IDL.Record({
     'url' : IDL.Text,
     'height' : IDL.Nat32,
@@ -427,7 +417,6 @@ export const idlFactory = ({ IDL }) => {
     'reminder_id' : IDL.Nat64,
   });
   const MessageContent = IDL.Variant({
-    'ReportedMessage' : ReportedMessage,
     'Giphy' : GiphyContent,
     'File' : FileContent,
     'Poll' : PollContent,
