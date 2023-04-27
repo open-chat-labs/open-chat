@@ -5,7 +5,6 @@ import { get, writable } from "svelte/store";
 import { load } from "@fingerprintjs/botd";
 import {
     buildUserAvatarUrl,
-    canAddMembers,
     canBlockUsers,
     canChangePermissions,
     canChangeRoles,
@@ -1073,10 +1072,6 @@ export class OpenChat extends EventTarget {
 
     canLeaveGroup(chatId: string): boolean {
         return this.chatPredicate(chatId, canLeaveGroup);
-    }
-
-    canAddMembers(chatId: string): boolean {
-        return this.chatPredicate(chatId, canAddMembers);
     }
 
     isPreviewing(chatId: string): boolean {

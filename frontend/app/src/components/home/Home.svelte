@@ -802,7 +802,6 @@
             permissions: {
                 changePermissions: "admins",
                 changeRoles: "admins",
-                addMembers: "admins",
                 removeMembers: "admins",
                 blockUsers: "admins",
                 deleteMessages: "admins",

@@ -898,7 +898,6 @@ export type PermissionRole = "owner" | "admins" | "members";
 export type GroupPermissions = {
     changePermissions: PermissionRole;
     changeRoles: PermissionRole;
-    addMembers: PermissionRole;
     removeMembers: PermissionRole;
     blockUsers: PermissionRole;
     deleteMessages: PermissionRole;

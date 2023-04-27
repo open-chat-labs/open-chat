@@ -1,3 +1,4 @@
+
 import { Principal } from "@dfinity/principal";
 import { bytesToHexString, hexStringToBytes, identity, optional } from "../../utils/mapping";
 import type {
@@ -588,7 +589,6 @@ export function groupPermissions(candid: ApiGroupPermissions): GroupPermissions 
     return {
         changePermissions: permissionRole(candid.change_permissions),
         changeRoles: permissionRole(candid.change_roles),
-        addMembers: permissionRole(candid.add_members),
         removeMembers: permissionRole(candid.remove_members),
         blockUsers: permissionRole(candid.block_users),
         deleteMessages: permissionRole(candid.delete_messages),
@@ -606,7 +606,7 @@ export function apiGroupPermissions(permissions: GroupPermissions): ApiGroupPerm
     return {
         change_permissions: apiPermissionRole(permissions.changePermissions),
         change_roles: apiPermissionRole(permissions.changeRoles),
-        add_members: apiPermissionRole(permissions.addMembers),
+        add_members: apiPermissionRole("owner"),
         remove_members: apiPermissionRole(permissions.removeMembers),
         block_users: apiPermissionRole(permissions.blockUsers),
         delete_messages: apiPermissionRole(permissions.deleteMessages),

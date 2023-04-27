@@ -37,7 +37,6 @@ export function publicGroupSummary(candid: ApiPublicGroupSummary): GroupChatSumm
         permissions: {
             changePermissions: "owner",
             changeRoles: "owner",
-            addMembers: "owner",
             removeMembers: "owner",
             blockUsers: "owner",
             deleteMessages: "owner",
