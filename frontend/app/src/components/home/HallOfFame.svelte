@@ -8,6 +8,7 @@
     import { now500 } from "../../stores/time";
     import { mobileWidth } from "../../stores/screenDimensions";
     import Invaders from "./Invaders.svelte";
+    import { isTouchDevice } from "../../utils/devices";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -116,8 +117,10 @@
                         {/if}
                         <th class="username">{$_("halloffame.username")}</th>
                         <th class="value">{$_("halloffame.value")}</th>
-                        <th class="diamonds">{$_("halloffame.diamonds")}</th>
-                        <th class="users">{$_("halloffame.users")}</th>
+                        {#if !$mobileWidth}
+                            <th class="diamonds">{$_("halloffame.diamonds")}</th>
+                            <th class="users">{$_("halloffame.users")}</th>
+                        {/if}
                     </thead>
                     <tbody>
                         {#each leaders as leader, i}
@@ -125,13 +128,15 @@
                                 {#if !$mobileWidth}
                                     <td class="rank">{i + 1}</td>
                                 {/if}
-                                <td class="username">{leader.username}</td>
+                                <td class="username" title={leader.username}>{leader.username}</td>
                                 <td class="value"
-                                    >{(
-                                        Number(leader.totalRewardsE8s) / E8S_PER_TOKEN
-                                    ).toString()}</td>
-                                <td class="diamonds">{leader.diamondMembers}</td>
-                                <td class="users">{leader.totalUsers}</td>
+                                    >{(Number(leader.totalRewardsE8s) / E8S_PER_TOKEN)
+                                        .toFixed(2)
+                                        .toString()}</td>
+                                {#if !$mobileWidth}
+                                    <td class="diamonds">{leader.diamondMembers}</td>
+                                    <td class="users">{leader.totalUsers}</td>
+                                {/if}
                             </tr>
                         {/each}
                     </tbody>
@@ -149,7 +154,9 @@
                     small={!$mobileWidth}
                     on:click={() => (showGame = false)}>{$_("backToResults")}</Button>
             {:else}
-                <div on:click={() => (showGame = true)} class="joystick">🕹️</div>
+                {#if !isTouchDevice}
+                    <div on:click={() => (showGame = true)} class="joystick">🕹️</div>
+                {/if}
                 <Button tiny={$mobileWidth} small={!$mobileWidth} on:click={() => dispatch("close")}
                     >{$_("close")}</Button>
             {/if}
@@ -220,7 +227,13 @@
     }
 
     .scoreboard {
+        table-layout: fixed;
         width: 100%;
+        border-collapse: collapse;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+
         text-transform: uppercase;
         margin-bottom: $sp4;
         @include font-size(fs-80);
@@ -240,14 +253,34 @@
                 @include font-size(fs-50);
             }
         }
+
+        th {
+            @include font-size(fs-50);
+        }
+
+        .username {
+            @include ellipsis();
+            max-width: 0;
+        }
+
+        .rank {
+            width: 50px;
+        }
+
         .username,
         .rank {
             text-align: start;
         }
+
         .value,
         .diamonds,
         .users {
+            width: 20%;
             text-align: end;
+
+            @include mobile() {
+                width: 25%;
+            }
         }
     }
 

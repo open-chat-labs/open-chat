@@ -24,7 +24,6 @@
     };
 
     type Invader = GameObject & {
-        xSpeed: number;
         ySpeed: number;
         status: boolean;
     };
@@ -37,6 +36,7 @@
     let bullets: Bullet[];
     let invaders: Invader[];
     let invaderSize = 30;
+    let invaderSpeed = 1;
     let state: State = "not_started";
     let invaderDirection: "right" | "left" | "down" = "right";
     let nextDirection: "right" | "left" = "left";
@@ -124,8 +124,13 @@
         invaders.forEach(function (invader) {
             if (invader.status && collides(invader, player)) {
                 state = "game_over";
+                invaderSpeed = 1;
             }
         });
+
+        if (state === "playing") {
+            invaderSpeed += 0.01;
+        }
     }
 
     function leftmost(i: Invader[]): number {
@@ -141,7 +146,7 @@
 
         if (invaderDirection === "right") {
             visibleInvaders.forEach((invader) => {
-                invader.x += invader.xSpeed;
+                invader.x += invaderSpeed;
             });
             const r = rightmost(visibleInvaders);
             if (r + invaderSize > canvas.width) {
@@ -155,7 +160,7 @@
             nextDirection = nextDirection === "left" ? "right" : "left";
         } else if (invaderDirection === "left") {
             visibleInvaders.forEach((invader) => {
-                invader.x -= invader.xSpeed;
+                invader.x -= invaderSpeed;
             });
             if (leftmost(visibleInvaders) < 0) {
                 invaderDirection = "down";
@@ -236,7 +241,6 @@
                     height: invaderSize,
                     color: "#00ff00",
                     status: true,
-                    xSpeed: 3,
                     ySpeed: 8,
                 });
             }
