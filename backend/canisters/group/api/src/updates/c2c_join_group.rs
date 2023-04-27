@@ -6,7 +6,6 @@ use types::{GateCheckFailedReason, GroupCanisterGroupChatSummary, UserId};
 pub struct Args {
     pub user_id: UserId,
     pub principal: Principal,
-    pub invite_code: Option<u64>,
     pub correlation_id: u64,
     pub is_platform_moderator: bool,
 }
@@ -18,6 +17,7 @@ pub enum Response {
     AlreadyInGroupV2(Box<GroupCanisterGroupChatSummary>),
     GateCheckFailed(GateCheckFailedReason),
     GroupNotPublic,
+    NotInvited,
     Blocked,
     ParticipantLimitReached(u32),
     ChatFrozen,

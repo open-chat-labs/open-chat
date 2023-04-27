@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Implement `edit_message_v2` ([#3504](https://github.com/open-ic/open-chat/pull/3504))
+- Supports inviting of specific users ([#3499](https://github.com/open-ic/open-chat/pull/3499))
 
 ### Changed
 
@@ -17,6 +18,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Added `created` to pending transactions ([#3494](https://github.com/open-ic/open-chat/pull/3494))
 - Added ability to `report_message` ([#3497](https://github.com/open-ic/open-chat/pull/3497))
 - Only return full details for the first 10 message reports ([#3505](https://github.com/open-ic/open-chat/pull/3505))
+
+### Removed
+
+- Removed invite to private group by link/code ([#3499](https://github.com/open-ic/open-chat/pull/3499))
 
 ## [[2.0.662](https://github.com/open-ic/open-chat/releases/tag/v2.0.662-group)] - 2023-04-16
 

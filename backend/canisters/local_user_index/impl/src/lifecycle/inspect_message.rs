@@ -16,7 +16,7 @@ fn accept_if_valid(runtime_state: &RuntimeState) {
     }
 
     let is_valid = match method_name.as_str() {
-        "join_group" | "report_message" => runtime_state.is_caller_openchat_user(),
+        "join_group" | "report_message" | "invite_users_to_group" => runtime_state.is_caller_openchat_user(),
         _ => false,
     };
 

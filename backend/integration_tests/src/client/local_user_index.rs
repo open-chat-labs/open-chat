@@ -19,7 +19,6 @@ pub mod happy_path {
             local_user_index_canister_id,
             &local_user_index_canister::join_group::Args {
                 chat_id,
-                invite_code: None,
                 correlation_id: 0,
             },
         );

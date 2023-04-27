@@ -19,14 +19,13 @@ fn accept_if_valid(runtime_state: &RuntimeState) {
 
     let caller = runtime_state.env.caller();
     let permissions = &runtime_state.data.permissions;
-    if let Some(role) = runtime_state.data.participants.get_by_principal(&caller).map(|p| p.role) {
+    let is_valid = if let Some(role) = runtime_state.data.participants.get_by_principal(&caller).map(|p| p.role) {
         let is_public_group = runtime_state.data.is_public;
-        let is_valid = match method_name.as_str() {
+        match method_name.as_str() {
             "add_participants" => role.can_add_members(permissions, is_public_group) || role.can_unblock_users(permissions),
             "add_reaction" | "remove_reaction" => role.can_react_to_messages(permissions),
             "block_user" => role.can_block_users(permissions),
             "delete_group" => role.can_delete_group(),
-            "enable_invite_code" | "disable_invite_code" | "reset_invite_code" => role.can_invite_users(permissions),
             "make_private" => role.can_change_group_visibility(),
             "pin_message" | "pin_message_v2" => role.can_pin_messages(permissions),
             "remove_participant" => role.can_remove_members(permissions),
@@ -44,10 +43,12 @@ fn accept_if_valid(runtime_state: &RuntimeState) {
             | "register_poll_vote"
             | "register_proposal_vote" => true,
             _ => false,
-        };
-
-        if is_valid {
-            ic_cdk::api::call::accept_message();
         }
+    } else {
+        runtime_state.data.invited_users.contains(&caller) && method_name == "decline_invitation"
+    };
+
+    if is_valid {
+        ic_cdk::api::call::accept_message();
     }
 }
