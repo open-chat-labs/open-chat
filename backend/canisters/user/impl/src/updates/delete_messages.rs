@@ -7,6 +7,7 @@ use ic_cdk_macros::update;
 use types::{CanisterId, EventIndex, MessageId};
 use user_canister::c2c_delete_messages;
 use user_canister::delete_messages::{Response::*, *};
+use utils::consts::OPENCHAT_BOT_USER_ID;
 use utils::time::MINUTE_IN_MS;
 
 #[update(guard = "caller_is_owner")]
@@ -63,19 +64,21 @@ fn delete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
                 );
             }
 
-            let my_messages: Vec<_> = deleted
-                .iter()
-                .filter(|(_, u)| *u == my_user_id)
-                .map(|(id, _)| id)
-                .copied()
-                .collect();
+            if args.user_id != OPENCHAT_BOT_USER_ID {
+                let my_messages: Vec<_> = deleted
+                    .iter()
+                    .filter(|(_, u)| *u == my_user_id)
+                    .map(|(id, _)| id)
+                    .copied()
+                    .collect();
 
-            if !my_messages.is_empty() {
-                ic_cdk::spawn(delete_on_recipients_canister(
-                    args.user_id.into(),
-                    my_messages,
-                    args.correlation_id,
-                ));
+                if !my_messages.is_empty() {
+                    ic_cdk::spawn(delete_on_recipients_canister(
+                        args.user_id.into(),
+                        my_messages,
+                        args.correlation_id,
+                    ));
+                }
             }
         }
 
