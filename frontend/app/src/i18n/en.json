@@ -297,7 +297,8 @@
         "userLimitReached": "The user limit has been reached",
         "createUser": "Create user",
         "closedTitle": "Registration paused",
-        "closed": "Due to very high demand, new user registrations are temporarily closed. We will soon be scaling across multiple subnets and will then be able to grow indefinitely!"
+        "closed": "Due to very high demand, new user registrations are temporarily closed. We will soon be scaling across multiple subnets and will then be able to grow indefinitely!",
+        "disclaimer": "By registering with OpenChat you agree to abide by our guidelines"
     },
     "faq": {
         "menu": "FAQ",
@@ -329,7 +330,9 @@
         "buychat_q": "How do I buy CHAT tokens?",
         "buychat_a": "Right now you must first <a target=\"_blank\" href=\"https://www.finder.com/uk/how-to-buy-internet-computer\">buy ICP</a> which you can then swap for CHAT on various Decentralised Exchanges (DEXes).<ul><li><a target=\"_blank\" href=\"https://avjzx-pyaaa-aaaaj-aadmq-cai.raw.ic0.app/ICDex/CHAT/ICP\">ICDex</a></li><li><a target=\"_blank\" href=\"https://info.icpswap.com/swap/pool/details/ne2vj-6yaaa-aaaag-qb3ia-cai\">ICPSwap</a></li><li><a target=\"_blank\" href=\"https://app.infinityswap.one/tokens/2ouva-viaaa-aaaaq-aaamq-cai\">InfinitySwap</a></li></ul>DFINITY are adding support for the <a target=\"_blank\" href=\"https://www.rosetta-api.org/\">Rosetta API</a> for ICRC1 tokens (which includes CHAT) making them much easier to integrate with Centralised Exchanges (CEXes). Once this has happened it is likely CHAT will be available to trade on CEXes for ICP or USDT.",
         "diamond_q": "What is Diamond Membership?",
-        "diamond_a": "You can upgrade to Diamond membership to have access to extra or enhanced features within OpenChat. <a href=\"?diamond=\">See here</a> for a feature comparison and to upgrade."
+        "diamond_a": "You can upgrade to Diamond membership to have access to extra or enhanced features within OpenChat. <a href=\"?diamond=\">See here</a> for a feature comparison and to upgrade.",
+        "content_q": "What kind of content is permissible?",
+        "content_a": "For full details of our content and moderation guidelines <a href=\"/guidelines\">see here</a>."
     },
     "pinMessage": "Pin",
     "unpinMessage": "Unpin",
@@ -789,5 +792,27 @@
         "diamonds": "Diamonds",
         "users": "Users",
         "gameover": "Game over!"
+    },
+    "report": {
+        "menu": "Report",
+        "title": "Report message",
+        "reason": "Reason for report",
+        "pleaseSelect": "Please select a reason",
+        "optional": "Optional",
+        "note": "Add a note",
+        "notePlaceholder": "Tell us why you are reporting this content",
+        "advice": "If you believe this message violates the rules of this group, please contact the owners and admins on the group in the first instance. Only report a message for platform moderation if you feel like it violates the [platform guidelines](/guidelines).",
+        "threat": "Message is threatening",
+        "child": "Message contains child sexual content",
+        "nonConsensual": "Message contains non-consensual sexual content",
+        "selfHarm": "Message contains or promotes self-harm",
+        "violence": "Message contains excessive violence",
+        "scam": "Message promotes a financial scam",
+        "other": "Other reason",
+        "success": "The message has been reported to the platform moderators",
+        "failure": "Sorry we were unable to report this message to the platform moderators",
+        "deleteMessage": "Delete reported message",
+        "messageReport": "Reported by @{username} on {timestamp} for the following reason: **{reason}**",
+        "showing": "Showing the most recent {count} of {total} report(s)"
     }
 }

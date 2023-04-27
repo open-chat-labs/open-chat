@@ -97,6 +97,7 @@
                             slot="icon" />
                         <span slot="text">{$_("faq.menu")}</span>
                     </MenuItem>
+                    <MenuItem separator />
                     <MenuItem on:click={() => dispatch("logout")}>
                         <Logout size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
                         <span slot="text">{$_("logout")}</span>

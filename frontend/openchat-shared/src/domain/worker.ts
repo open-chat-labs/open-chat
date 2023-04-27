@@ -56,6 +56,7 @@ import type {
     UpdateGroupResponse,
     UpdatesResult,
     WithdrawCryptocurrencyResponse,
+    ReportMessageResponse,
 } from "./chat";
 import type { BlobReference, StorageStatus } from "./data/data";
 import type { UpdateMarketMakerConfigArgs, UpdateMarketMakerConfigResponse } from "./marketMaker";
@@ -203,7 +204,8 @@ export type WorkerRequest =
     | UpdateMarketMakerConfig
     | SetMessageReminder
     | CancelMessageReminder
-    | ReferralLeaderboard;
+    | ReferralLeaderboard
+    | ReportMessage;
 
 type ReferralLeaderboard = Request<{
     args?: ReferralLeaderboardRange;
@@ -939,7 +941,8 @@ export type WorkerResponse =
     | Response<ClaimPrizeResponse>
     | Response<UpdateMarketMakerConfigResponse>
     | Response<SetMessageReminderResponse>
-    | Response<ReferralLeaderboardResponse>;
+    | Response<ReferralLeaderboardResponse>
+    | Response<ReportMessageResponse>;
 
 type Response<T> = {
     kind: "worker_response";
@@ -1023,4 +1026,14 @@ type CancelMessageReminder = Request<{
     reminderId: bigint;
 }> & {
     kind: "cancelMessageReminder";
+};
+
+type ReportMessage = Request<{
+    chatId: string;
+    eventIndex: number;
+    reasonCode: number;
+    notes: string | undefined;
+    threadRootMessageIndex: number | undefined;
+}> & {
+    kind: "reportMessage";
 };

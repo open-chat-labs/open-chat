@@ -215,4 +215,8 @@ export class CachingUserIndexClient implements IUserIndexClient {
     getReferralLeaderboard(req?: ReferralLeaderboardRange): Promise<ReferralLeaderboardResponse> {
         return this.client.getReferralLeaderboard(req);
     }
+
+    getPlatformModeratorGroup(): Promise<string> {
+        return this.client.getPlatformModeratorGroup();
+    }
 }

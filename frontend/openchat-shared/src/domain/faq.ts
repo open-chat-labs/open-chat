@@ -13,6 +13,7 @@ export const allQuestions = [
     "security",
     "roadmap",
     "shortcuts",
+    "content",
 ] as const;
 
 type QuestionsType = typeof allQuestions;

@@ -36,4 +36,5 @@ export interface IUserIndexClient {
     ): Promise<PayForDiamondMembershipResponse>;
     setUserUpgradeConcurrency(value: number): Promise<SetUserUpgradeConcurrencyResponse>;
     getReferralLeaderboard(req?: ReferralLeaderboardRange): Promise<ReferralLeaderboardResponse>;
+    getPlatformModeratorGroup(): Promise<string>;
 }

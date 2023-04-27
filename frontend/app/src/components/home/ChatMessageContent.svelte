@@ -1,6 +1,7 @@
 <svelte:options immutable={true} />
 
 <script lang="ts">
+    import ReportedMessageContent from "./ReportedMessageContent.svelte";
     import VideoContent from "./VideoContent.svelte";
     import ImageContent from "./ImageContent.svelte";
     import GiphyContent from "./GiphyContent.svelte";
@@ -82,4 +83,6 @@
     <MessageReminderCreatedContent {content} />
 {:else if content.kind === "message_reminder_content"}
     <MessageReminderContent {content} />
+{:else if content.kind === "reported_message_content"}
+    <ReportedMessageContent {content} />
 {/if}

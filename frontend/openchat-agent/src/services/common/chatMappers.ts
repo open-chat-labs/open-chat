@@ -45,6 +45,7 @@ import type {
     ApiMessageReminderCreated,
     ApiMessageReminder,
     ApiCustomMessageContent,
+    ApiReportedMessage,
 } from "../user/candid/idl";
 import {
     type Message,
@@ -93,6 +94,7 @@ import {
     MessageReminderContent,
     CustomContent,
     MessageContext,
+    ReportedMessageContent,
 } from "openchat-shared";
 import type { WithdrawCryptoArgs } from "../user/candid/types";
 
@@ -179,7 +181,23 @@ export function messageContent(candid: ApiMessageContent, sender: string): Messa
     if ("Custom" in candid) {
         return customContent(candid.Custom);
     }
+    if ("ReportedMessage" in candid) {
+        return reportedMessage(candid.ReportedMessage);
+    }
     throw new UnsupportedValueError("Unexpected ApiMessageContent type received", candid);
+}
+
+function reportedMessage(candid: ApiReportedMessage): ReportedMessageContent {
+    return {
+        kind: "reported_message_content",
+        total: candid.count,
+        reports: candid.reports.map((r) => ({
+            notes: optional(r.notes, identity),
+            reasonCode: r.reason_code,
+            timestamp: Number(r.timestamp),
+            reportedBy: r.reported_by.toString(),
+        })),
+    };
 }
 
 function customContent(candid: ApiCustomMessageContent): CustomContent {
@@ -750,6 +768,11 @@ export function apiMessageContent(domain: MessageContent): ApiMessageContent {
         case "message_reminder_created_content":
             throw new Error(
                 "Incorrectly attempting to send message reminder created content to the server"
+            );
+
+        case "reported_message_content":
+            throw new Error(
+                "Incorrectly attempting to send reported message content to the server"
             );
 
         case "custom_content":

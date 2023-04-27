@@ -47,6 +47,7 @@
     import ChatMessageMenu from "./ChatMessageMenu.svelte";
     import { toastStore } from "../../stores/toast";
     import ReminderBuilder from "./ReminderBuilder.svelte";
+    import ReportMessage from "./ReportMessage.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -97,6 +98,7 @@
     let poll = msg.content.kind === "poll_content";
     let canRevealDeleted = false;
     let showRemindMe = false;
+    let showReport = false;
 
     $: inThread = threadRootMessage !== undefined;
     $: threadRootMessageIndex =
@@ -369,6 +371,16 @@
         on:close={() => (showRemindMe = false)} />
 {/if}
 
+{#if showReport}
+    <ReportMessage
+        {eventIndex}
+        {threadRootMessageIndex}
+        messageId={msg.messageId}
+        {chatId}
+        {canDelete}
+        on:close={() => (showReport = false)} />
+{/if}
+
 {#if viewProfile}
     <ViewUserProfile
         alignTo={alignProfileTo}
@@ -553,6 +565,7 @@
                     on:deleteFailedMessage
                     on:replyPrivately={replyPrivately}
                     on:editMessage={editMessage}
+                    on:reportMessage={() => (showReport = true)}
                     on:cancelReminder={cancelReminder}
                     on:remindMe={() => (showRemindMe = true)} />
             {/if}

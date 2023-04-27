@@ -1,8 +1,8 @@
 <script lang="ts">
-    import Link from "./Link.svelte";
     import { createEventDispatcher, getContext, onMount } from "svelte";
-    import InternetIdentityLogo from "./InternetIdentityLogo.svelte";
     import { AuthProvider, OpenChat } from "openchat-client";
+    import MenuItem from "../MenuItem.svelte";
+    import Menu from "../Menu.svelte";
     import { location } from "../../routes";
     import page from "page";
 
@@ -21,10 +21,6 @@
         showAuthProviders = await client.showAuthProviders();
     });
 
-    function close() {
-        dispatch("close");
-    }
-
     function launch() {
         if ($identityState === "logged_in") {
             page("/");
@@ -38,101 +34,51 @@
     }
 </script>
 
-<svelte:body on:click|once={close} />
-
-<div class="menu-items">
-    <div class="menu-item">
-        <Link selected={path === "/features"} mode={"menu"} path="features">Features</Link>
-    </div>
-    <div class="menu-item">
-        <Link selected={path === "/roadmap"} mode={"menu"} path="roadmap">Roadmap</Link>
-    </div>
-    <div class="menu-item">
-        <Link selected={path === "/whitepaper"} mode={"menu"} path="whitepaper">Whitepaper</Link>
-    </div>
-    <div class="menu-item">
-        <Link selected={path === "/architecture"} mode={"menu"} path="architecture"
-            >Architecture</Link>
-    </div>
+<Menu>
+    <MenuItem selected={path === "/features"} on:click={() => page("/features")}>
+        <div slot="text">{"Features"}</div>
+    </MenuItem>
+    <MenuItem selected={path === "/roadmap"} on:click={() => page("/roadmap")}>
+        <div slot="text">{"Roadmap"}</div>
+    </MenuItem>
+    <MenuItem selected={path === "/whitepaper"} on:click={() => page("/whitepaper")}>
+        <div slot="text">{"Whitepaper"}</div>
+    </MenuItem>
+    <MenuItem selected={path === "/architecture"} on:click={() => page("/architecture")}>
+        <div slot="text">{"Architecture"}</div>
+    </MenuItem>
     {#if showBlog}
-        <div class="menu-item">
-            <Link selected={path === "/blog"} mode={"menu"} path="blog">Blog</Link>
-        </div>
+        <MenuItem selected={path.startsWith("/blog")} on:click={() => page("/blog")}>
+            <div slot="text">{"Blog"}</div>
+        </MenuItem>
     {/if}
-    <div class="menu-item">
-        <Link on:linkClicked={launch} mode={"menu"}>Launch app</Link>
-    </div>
+    <MenuItem on:click={launch}>
+        <div slot="text">{"Launch app"}</div>
+    </MenuItem>
     {#if $identityState === "logged_in"}
-        <Link on:linkClicked={() => dispatch("logout")} mode={"menu"}>Logout</Link>
+        <MenuItem on:click={() => dispatch("logout")}>
+            <div slot="text">{"Logout"}</div>
+        </MenuItem>
     {/if}
     {#if showAuthProviders}
-        <div class="menu-item">
-            <div
-                class="provider"
-                class:selected={$selectedAuthProviderStore === AuthProvider.II}
-                on:click={() => changeProvider(AuthProvider.II)}>
-                <div class="checked">✅</div>
-                {AuthProvider.II}
-                <div class="span ii-img"><InternetIdentityLogo /></div>
+        <MenuItem separator />
+        <MenuItem on:click={() => changeProvider(AuthProvider.II)}>
+            <div slot="icon" class="checked">
+                {#if $selectedAuthProviderStore === AuthProvider.II}
+                    ✅
+                {/if}
             </div>
-        </div>
-        <div class="menu-item">
-            <div
-                class="provider"
-                class:selected={$selectedAuthProviderStore === AuthProvider.NFID}
-                on:click={() => changeProvider(AuthProvider.NFID)}>
-                <div class="checked">✅</div>
-                {AuthProvider.NFID} (with google)
-                <img class="nfid-img" src="../assets/nfid.svg" alt="" />
+
+            <div slot="text">{AuthProvider.II}</div>
+        </MenuItem>
+        <MenuItem on:click={() => changeProvider(AuthProvider.NFID)}>
+            <div slot="icon" class="checked">
+                {#if $selectedAuthProviderStore === AuthProvider.NFID}
+                    ✅
+                {/if}
             </div>
-        </div>
+
+            <div slot="text">{AuthProvider.NFID} (with google)</div>
+        </MenuItem>
     {/if}
-</div>
-
-<style type="text/scss">
-    :global(.menu-items .link) {
-        @include font(bold, normal, fs-100);
-    }
-
-    .menu-items {
-        @include font(bold, normal, fs-130);
-        display: flex;
-        flex-direction: column;
-        justify-content: flex-start;
-        gap: $sp5;
-        align-items: flex-end;
-        background: var(--landing-context-bg);
-        border-radius: toRem(14);
-        box-shadow: 8px 4px 16px 0px #00000030;
-        padding: toRem(24) toRem(40);
-        position: absolute;
-        align-items: flex-end;
-        justify-content: flex-start;
-        right: toRem(24);
-        top: toRem(70);
-        flex-direction: column;
-        @include z-index("landing-page-menu");
-    }
-
-    .provider {
-        display: flex;
-        align-items: center;
-        justify-content: flex-end;
-        gap: $sp3;
-
-        .checked {
-            display: none;
-        }
-
-        &.selected .checked {
-            display: block;
-        }
-    }
-
-    .ii-img,
-    .nfid-img {
-        display: inline-block;
-        width: 20px;
-        margin-left: $sp2;
-    }
-</style>
+</Menu>

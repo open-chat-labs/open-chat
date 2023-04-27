@@ -33,7 +33,15 @@ export function removeQueryStringParam(name: string): string {
 }
 
 const nomenuRoutes = ["miami"];
-const scrollingRoutes = ["features", "roadmap", "whitepaper", "architecture", "blog", "miami"];
+const scrollingRoutes = [
+    "features",
+    "roadmap",
+    "whitepaper",
+    "architecture",
+    "blog",
+    "miami",
+    "guidelines",
+];
 const landingPageRoutes = ["home", ...scrollingRoutes];
 
 export function isLandingPageRoute(path: string): boolean {

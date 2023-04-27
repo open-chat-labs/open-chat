@@ -97,8 +97,12 @@ import {
     GroupGate,
     ProposalVoteDetails,
     SetMessageReminderResponse,
+<<<<<<< HEAD
     ReferralLeaderboardRange,
     ReferralLeaderboardResponse,
+=======
+    ReportMessageResponse,
+>>>>>>> master
 } from "openchat-shared";
 import type { OpenChatConfig } from "./config";
 import { v4 } from "uuid";
@@ -1406,6 +1410,25 @@ export class OpenChatAgentWorker extends EventTarget {
             kind: "getReferralLeaderboard",
             payload: {
                 args,
+            },
+        });
+    }
+
+    reportMessage(
+        chatId: string,
+        eventIndex: number,
+        reasonCode: number,
+        notes: string | undefined,
+        threadRootMessageIndex: number | undefined
+    ): Promise<ReportMessageResponse> {
+        return this.sendRequest({
+            kind: "reportMessage",
+            payload: {
+                chatId,
+                eventIndex,
+                reasonCode,
+                notes,
+                threadRootMessageIndex,
             },
         });
     }

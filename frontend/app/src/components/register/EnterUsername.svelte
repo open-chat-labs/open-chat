@@ -5,6 +5,7 @@
     import { createEventDispatcher } from "svelte";
     import { _ } from "svelte-i18n";
     import type { OpenChat } from "openchat-client";
+    import Legend from "../Legend.svelte";
 
     export let client: OpenChat;
     export let error: string | undefined = undefined;
@@ -22,8 +23,7 @@
     }
 </script>
 
-<p class="enter-username">{$_("register.usernameRules")}</p>
-
+<Legend label={$_("username")} rules={$_("usernameRules")} />
 <form class="username-wrapper" on:submit|preventDefault={submitUsername}>
     <UsernameInput
         {client}
@@ -47,10 +47,6 @@
 </div>
 
 <style type="text/scss">
-    .enter-username {
-        @include font(light, normal, fs-100);
-        margin-bottom: $sp4;
-    }
     .username-wrapper {
         width: 80%;
         @include mobile() {

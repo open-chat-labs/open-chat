@@ -210,4 +210,11 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
             referralLeaderboardResponse
         );
     }
+
+    @profile("userIndexClient")
+    getPlatformModeratorGroup(): Promise<string> {
+        return this.handleResponse(this.userIndexService.platform_moderators_group({}), (res) =>
+            res.Success.toString()
+        );
+    }
 }
