@@ -4,7 +4,6 @@ use candid::{CandidType, Principal};
 use ic_cdk::api::management_canister::main::{CanisterInstallMode, InstallCodeArgument};
 use ic_test_state_machine_client::{StateMachine, UserError, WasmResult};
 use serde::de::DeserializeOwned;
-use std::time::Duration;
 use types::{CanisterId, CanisterWasm, DiamondMembershipPlanDuration};
 
 mod macros;

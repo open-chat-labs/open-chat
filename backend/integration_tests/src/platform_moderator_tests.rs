@@ -5,7 +5,6 @@ use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
 use ic_test_state_machine_client::StateMachine;
 use std::ops::Deref;
-use std::time::Duration;
 use types::{ChatEvent, ChatId, MessageContent};
 
 #[test]
