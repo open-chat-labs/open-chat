@@ -19,10 +19,10 @@ pub struct UserInvitation {
 }
 
 impl InvitedUsers {
-    pub fn insert(&mut self, user_id: UserId, principal: Principal, invitation: UserInvitation) -> bool {
+    pub fn add(&mut self, user_id: UserId, principal: Principal, invitation: UserInvitation) {
         self.last_updated = invitation.timestamp;
-        self.users.insert(user_id, principal);
-        self.invites.insert(principal, invitation).is_some()
+        self.users.entry(user_id).or_insert(principal);
+        self.invites.entry(principal).or_insert(invitation);
     }
 
     pub fn remove(&mut self, user_id: &UserId, now: TimestampMillis) -> Option<UserInvitation> {
@@ -34,8 +34,9 @@ impl InvitedUsers {
         }
     }
 
-    pub fn get(&self, user_id_or_principal: Principal) -> Option<&UserInvitation> {
-        let principal = self.users.get(&user_id_or_principal.into()).unwrap_or(&user_id_or_principal);
+    pub fn get(&self, user_id_or_principal: &Principal) -> Option<&UserInvitation> {
+        let user_id: UserId = (*user_id_or_principal).into();
+        let principal = self.users.get(&user_id).unwrap_or(user_id_or_principal);
         self.invites.get(principal)
     }
 
@@ -43,12 +44,8 @@ impl InvitedUsers {
         self.users.keys().copied().collect()
     }
 
-    pub fn users_if_changed(&self, since: TimestampMillis) -> Option<Vec<UserId>> {
-        if self.last_updated > since {
-            Some(self.users.keys().copied().collect())
-        } else {
-            None
-        }
+    pub fn last_updated(&self) -> TimestampMillis {
+        self.last_updated
     }
 
     pub fn len(&self) -> usize {

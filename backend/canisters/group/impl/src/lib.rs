@@ -326,7 +326,7 @@ impl Data {
                     Some(EventIndex::default())
                 } else {
                     self.invited_users
-                        .get(caller)
+                        .get(&caller)
                         .map(|invitation| invitation.min_visible_event_index)
                 }
             }
@@ -334,7 +334,7 @@ impl Data {
     }
 
     pub fn is_accessible_by_non_member(&self, caller: Principal) -> bool {
-        self.is_public || self.invited_users.get(caller).is_some()
+        self.is_public || self.invited_users.get(&caller).is_some()
     }
 
     pub fn is_frozen(&self) -> bool {

@@ -33,11 +33,14 @@ fn c2c_invite_users_impl(args: Args, runtime_state: &mut RuntimeState) -> Respon
             return NotAuthorized;
         }
 
-        // Filter out users who are already members
+        // Filter out users who are already members and those who have already been invited
         let invited_users: Vec<_> = args
             .users
             .iter()
-            .filter(|(_, principal)| runtime_state.data.participants.get_by_principal(principal).is_none())
+            .filter(|(_, principal)| {
+                runtime_state.data.participants.get_by_principal(principal).is_none()
+                    && runtime_state.data.invited_users.get(principal).is_none()
+            })
             .copied()
             .collect();
 
@@ -62,9 +65,9 @@ fn c2c_invite_users_impl(args: Args, runtime_state: &mut RuntimeState) -> Respon
                 }
             };
 
-            // Add new invites and update any existing invites
+            // Add new invites
             for (user_id, principal) in invited_users.iter() {
-                runtime_state.data.invited_users.insert(
+                runtime_state.data.invited_users.add(
                     *user_id,
                     *principal,
                     UserInvitation {

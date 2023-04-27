@@ -31,6 +31,12 @@ fn selected_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
         return SuccessNoUpdates(latest_event_index);
     }
 
+    let invited_users = if data.invited_users.last_updated() > updates_since_time {
+        Some(data.invited_users.users())
+    } else {
+        None
+    };
+
     let mut result = SuccessResult {
         timestamp: now,
         latest_event_index,
@@ -38,7 +44,7 @@ fn selected_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
         participants_removed: vec![],
         blocked_users_added: vec![],
         blocked_users_removed: vec![],
-        invited_users: data.invited_users.users_if_changed(updates_since_time),
+        invited_users,
         pinned_messages_added: vec![],
         pinned_messages_removed: vec![],
         rules: None,
