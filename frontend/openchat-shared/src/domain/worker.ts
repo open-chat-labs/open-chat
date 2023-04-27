@@ -53,6 +53,7 @@ import type {
     UpdateGroupResponse,
     UpdatesResult,
     WithdrawCryptocurrencyResponse,
+    ReportMessageResponse,
     InviteUsersResponse,
 } from "./chat";
 import type { BlobReference, StorageStatus } from "./data/data";
@@ -195,6 +196,7 @@ export type WorkerRequest =
     | UpdateMarketMakerConfig
     | SetMessageReminder
     | CancelMessageReminder
+    | ReportMessage
     | DeclineInvitation;
 
 type SetCachedMessageFromNotification = Request<{
@@ -905,7 +907,8 @@ export type WorkerResponse =
     | Response<PayForDiamondMembershipResponse>
     | Response<ClaimPrizeResponse>
     | Response<UpdateMarketMakerConfigResponse>
-    | Response<SetMessageReminderResponse>;
+    | Response<SetMessageReminderResponse>
+    | Response<ReportMessageResponse>;
 
 type Response<T> = {
     kind: "worker_response";
@@ -989,6 +992,16 @@ type CancelMessageReminder = Request<{
     reminderId: bigint;
 }> & {
     kind: "cancelMessageReminder";
+};
+
+type ReportMessage = Request<{
+    chatId: string;
+    eventIndex: number;
+    reasonCode: number;
+    notes: string | undefined;
+    threadRootMessageIndex: number | undefined;
+}> & {
+    kind: "reportMessage";
 };
 
 type DeclineInvitation = Request<{

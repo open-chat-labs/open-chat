@@ -3,13 +3,17 @@
     import { setLocale, supportedLanguages } from "../../i18n/i18n";
     import { _ } from "svelte-i18n";
     import Toast from "../Toast.svelte";
-    import EnterUsername from "./EnterUsername.svelte";
+    import ErrorMessage from "../ErrorMessage.svelte";
+    import UsernameInput from "../UsernameInput.svelte";
     import { createEventDispatcher, getContext } from "svelte";
     import { writable, Writable } from "svelte/store";
     import type { CreatedUser, OpenChat } from "openchat-client";
     import Button from "../Button.svelte";
     import Select from "../Select.svelte";
     import ModalContent from "../ModalContent.svelte";
+    import Overlay from "../Overlay.svelte";
+    import Legend from "../Legend.svelte";
+    import GuidelinesContent from "../landingpages/GuidelinesContent.svelte";
 
     const dispatch = createEventDispatcher();
 
@@ -25,10 +29,15 @@
     let username: Writable<string | undefined> = writable(undefined);
     let createdUser: CreatedUser | undefined = undefined;
     let closed: boolean = false;
+    let showGuidelines = false;
+    let validUsername: string | undefined = undefined;
+    let checkingUsername: boolean;
 
-    function submitUsername(ev: CustomEvent<{ username: string }>) {
-        username.set(ev.detail.username);
-        registerUser(ev.detail.username);
+    function submitUsername() {
+        if (validUsername !== undefined) {
+            username.set(validUsername);
+            registerUser(validUsername);
+        }
     }
 
     function registerUser(username: string): void {
@@ -68,31 +77,72 @@
     $: {
         setLocale(selectedLocale);
     }
+
+    $: busy = $state.kind === "spinning";
 </script>
 
-<ModalContent hideFooter hideHeader fill on:close>
-    <div class="body" slot="body">
+{#if showGuidelines}
+    <Overlay on:close={() => (showGuidelines = false)} dismissible>
+        <ModalContent large on:close={() => (showGuidelines = false)} closeIcon>
+            <span class="header" slot="header">
+                <h1>OpenChat guidelines</h1>
+            </span>
+            <span class="guidelines-modal" slot="body">
+                <GuidelinesContent modal />
+            </span>
+        </ModalContent>
+    </Overlay>
+{/if}
+
+<ModalContent compactFooter on:close>
+    <div class="header" slot="header">
         {#if closed}
-            <div class="closed">
-                <div class="subtitle">
-                    <div class="logo" />
-                    <h4>{$_("register.closedTitle")}</h4>
-                </div>
-                <h4>{$_("register.closed")}</h4>
-                <Button on:click={() => (window.location.href = "/home")}>{$_("home")}</Button>
+            <div class="subtitle">
+                <div class="logo" />
+                <h4>{$_("register.closedTitle")}</h4>
             </div>
-        {:else if $state.kind === "spinning"}
-            <div class="spinner" />
         {:else}
             <div class="subtitle">
                 <div class="logo" />
-                <h4>{$_("register.registerUser")}</h4>
+                <h4>{$_("register.enterUsername")}</h4>
             </div>
-            <EnterUsername
-                {client}
-                originalUsername={$username}
-                error={$error}
-                on:submitUsername={submitUsername} />
+        {/if}
+    </div>
+    <div class="body" slot="body">
+        {#if closed}
+            <div class="closed">
+                <h4>{$_("register.closed")}</h4>
+            </div>
+        {:else}
+            <Legend label={$_("username")} rules={$_("usernameRules")} />
+            <form class="username-wrapper" on:submit|preventDefault={submitUsername}>
+                <UsernameInput
+                    {client}
+                    disabled={busy}
+                    bind:originalUsername={$username}
+                    bind:validUsername
+                    bind:checking={checkingUsername}
+                    bind:error={$error} />
+            </form>
+
+            {#if $error}
+                <ErrorMessage>{$_($error)}</ErrorMessage>
+            {/if}
+            <div on:click={() => (showGuidelines = true)} class="smallprint">
+                {$_("register.disclaimer")}
+            </div>
+        {/if}
+    </div>
+    <div class="footer" slot="footer">
+        {#if closed}
+            <Button on:click={() => (window.location.href = "/home")}>{$_("home")}</Button>
+        {:else}
+            <Button
+                loading={checkingUsername || busy}
+                disabled={validUsername === undefined || busy}
+                on:click={submitUsername}>
+                {$_("register.createUser")}
+            </Button>
         {/if}
     </div>
 </ModalContent>
@@ -116,6 +166,9 @@
 <Toast />
 
 <style type="text/scss">
+    :global(.guidelines-modal .card .header:not(.open) .arrow path) {
+        fill: var(--txt);
+    }
     :global(.lang select.select) {
         @include font(light, normal, fs-90);
         background-color: transparent;
@@ -130,18 +183,15 @@
             @include font(light, normal, fs-90);
         }
     }
+    .header,
+    .body {
+        color: var(--txt);
+    }
     .lang {
         position: absolute;
         left: $sp3;
         top: $sp3;
     }
-    .spinner {
-        margin-top: auto;
-        margin-bottom: auto;
-        width: 100%;
-        @include loading-spinner(5em, 2.5em, var(--button-bg));
-    }
-
     .logout {
         @include font(light, normal, fs-90);
         cursor: pointer;
@@ -162,7 +212,6 @@
         align-items: center;
         gap: $sp4;
         @include font(bold, normal, fs-160);
-        margin-bottom: $sp5;
 
         .logo {
             background-image: url("../assets/spinner.svg");
@@ -180,14 +229,22 @@
         flex: auto;
     }
 
-    .body {
-        padding: $sp5 $sp6;
-        display: flex;
-        flex-direction: column;
-        justify-content: flex-start;
-        text-align: center;
-        align-items: center;
-        min-height: 250px;
-        color: var(--txt);
+    .username-wrapper {
+        margin-bottom: $sp6;
+        width: 80%;
+        @include mobile() {
+            width: 100%;
+        }
+    }
+
+    .smallprint {
+        @include font(light, normal, fs-60);
+        color: var(--primary);
+        cursor: pointer;
+        text-decoration: none;
+
+        &:hover {
+            text-decoration: underline;
+        }
     }
 </style>

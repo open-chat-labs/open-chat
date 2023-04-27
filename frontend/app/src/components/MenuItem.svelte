@@ -2,6 +2,7 @@
     export let disabled: boolean = false;
     export let selected: boolean = false;
     export let warning: boolean = false;
+    export let separator: boolean = false;
 </script>
 
 {#if disabled}
@@ -11,6 +12,8 @@
         </span>
         <slot name="text" />
     </div>
+{:else if separator}
+    <hr class="separator" />
 {:else}
     <div class="menu-item" on:click role="menuitem" class:selected class:warning>
         <span class="icon">
@@ -50,6 +53,14 @@
 
         &.warning {
             color: var(--menu-warn);
+        }
+    }
+
+    .separator {
+        border: 1px solid var(--menu-separator);
+
+        &:last-child {
+            display: none;
         }
     }
 </style>

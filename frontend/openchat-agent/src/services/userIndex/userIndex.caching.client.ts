@@ -209,4 +209,8 @@ export class CachingUserIndexClient implements IUserIndexClient {
     setUserUpgradeConcurrency(value: number): Promise<SetUserUpgradeConcurrencyResponse> {
         return this.client.setUserUpgradeConcurrency(value);
     }
+
+    getPlatformModeratorGroup(): Promise<string> {
+        return this.client.getPlatformModeratorGroup();
+    }
 }

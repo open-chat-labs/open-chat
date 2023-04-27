@@ -225,7 +225,9 @@
         "buychat_q": "Làm cách nào để mua mã thông báo CHAT?",
         "buychat_a": "Ngay bây giờ, trước tiên bạn phải <a target=\"_blank\" href=\"https://www.finder.com/uk/how-to-buy-internet-computer\">mua ICP</a> mà sau đó bạn có thể đổi lấy CHAT trên nhiều Sàn giao dịch phi tập trung (DEX).<ul><li><a target=\"_blank\" href=\"https://avjzx-pyaaa-aaaaj-aadmq-cai.raw.ic0.app/ICDex/CHAT/ICP \">ICDex</a></li><li><a target=\"_blank\" href=\"https://info.icpswap.com/swap/pool/details/ne2vj-6yaaa-aaaag-qb3ia-cai\" >ICPSwap</a></li><li><a target=\"_blank\" href=\"https://app.infinityswap.one/tokens/2ouva-viaa-aaaaq-aaamq-cai\">InfinitySwap</a ></li></ul>DFINITY đang thêm hỗ trợ cho <a target=\"_blank\" href=\"https://www.rosetta-api.org/\">API Rosetta</a> dành cho mã thông báo ICRC1 (mà bao gồm CHAT) giúp chúng tích hợp dễ dàng hơn với Sàn giao dịch tập trung (CEXes). Khi điều này xảy ra, có khả năng CHAT sẽ có sẵn để giao dịch trên CEX lấy ICP hoặc USDT.",
         "shortcuts_q": "Có những lệnh tắt nào?",
-        "shortcuts_a": "Có một số lệnh tắt mà bạn có thể sử dụng từ hộp nhập mục nhập tin nhắn. <br /><br /> `/poll` - để tạo một cuộc thăm dò mới <br /> `/search xyz` - để tìm kiếm cụm từ \"xyz\" <br />`/gif kitty` trong cuộc trò chuyện hiện tại tìm kiếm gif mèo con <br />`/icp 0.1` - để gửi 0,1 ICP cho ai đó <br />`/faq question_id*` - để tạo và đăng liên kết được định dạng tới một câu hỏi thường gặp cụ thể <br />`/diamond ` - để tạo và đăng một liên kết được định dạng với các chi tiết về tư cách thành viên Kim cương <br/> <br/>Các lệnh chấp nhận một đối số cũng có thể được sử dụng mà không cần đối số.<br /><br />* ID câu hỏi thường gặp có sẵn là : airdrop, bỏ phiếu, ví, buychat, send_tokens, kim cương, ios_app, android_app, find_groups, style_messages, lưu trữ, bảo mật, lộ trình, phím tắt"
+        "shortcuts_a": "Có một số lệnh tắt mà bạn có thể sử dụng từ hộp nhập mục nhập tin nhắn. <br /><br /> `/poll` - để tạo một cuộc thăm dò mới <br /> `/search xyz` - để tìm kiếm cụm từ \"xyz\" <br />`/gif kitty` trong cuộc trò chuyện hiện tại tìm kiếm gif mèo con <br />`/icp 0.1` - để gửi 0,1 ICP cho ai đó <br />`/faq question_id*` - để tạo và đăng liên kết được định dạng tới một câu hỏi thường gặp cụ thể <br />`/diamond ` - để tạo và đăng một liên kết được định dạng với các chi tiết về tư cách thành viên Kim cương <br/> <br/>Các lệnh chấp nhận một đối số cũng có thể được sử dụng mà không cần đối số.<br /><br />* ID câu hỏi thường gặp có sẵn là : airdrop, bỏ phiếu, ví, buychat, send_tokens, kim cương, ios_app, android_app, find_groups, style_messages, lưu trữ, bảo mật, lộ trình, phím tắt",
+        "content_q": "Loại nội dung nào được phép?",
+        "content_a": "Để biết chi tiết đầy đủ về nội dung và nguyên tắc kiểm duyệt của chúng tôi <a href=\"/guidelines\">xem tại đây</a>."
     },
     "roadmap": "Lộ trình",
     "here": "tại đây",
@@ -277,7 +279,8 @@
         "userLimitReached": "Số lượng người dùng đã đạt giới hạn",
         "createUser": "Tạo tài khoản",
         "closedTitle": "Đăng ký bị tạm dừng",
-        "closed": "Do nhu cầu rất cao, đăng ký người dùng mới tạm thời bị đóng. Chúng tôi sẽ sớm mở rộng quy mô trên nhiều mạng con và sau đó sẽ có thể phát triển vô tận!"
+        "closed": "Do nhu cầu rất cao, đăng ký người dùng mới tạm thời bị đóng. Chúng tôi sẽ sớm mở rộng quy mô trên nhiều mạng con và sau đó sẽ có thể phát triển vô tận!",
+        "disclaimer": "Bằng cách đăng ký với OpenChat, bạn đồng ý tuân thủ các nguyên tắc của chúng tôi"
     },
     "tellMeMore": "Thêm thông tin",
     "insufficientFunds": "Vui lòng đảm bảo rằng tài khoản ở trên có số dư ít nhất là {amount} ICP để trang trải bộ nhớ được yêu cầu, sau đó nhấn nút \"Làm mới\".",
@@ -773,5 +776,27 @@
         "cancelFailure": "Xin lỗi, chúng tôi không thể hủy lời nhắc của bạn"
     },
     "userReferralMessage": "Chia sẻ liên kết này tới OpenChat với bạn bè và gia đình. Miễn là bản thân bạn là thành viên Kim cương, đối với mỗi người đăng ký bằng liên kết của bạn và tiếp tục trở thành thành viên Kim cương, bạn sẽ nhận được một nửa số tiền thanh toán thành viên mà họ thực hiện trong năm đầu tiên.",
+    "report": {
+        "menu": "Báo cáo",
+        "title": "Báo cáo tin nhắn",
+        "reason": "Lý do báo cáo",
+        "pleaseSelect": "Vui lòng chọn một lý do",
+        "optional": "Không bắt buộc",
+        "note": "Thêm một lưu ý",
+        "notePlaceholder": "Hãy cho chúng tôi biết lý do bạn báo cáo nội dung này",
+        "advice": "Nếu bạn tin rằng bài viết này vi phạm các quy tắc của nhóm này, vui lòng liên hệ với chủ sở hữu và quản trị viên của nhóm trong trường hợp đầu tiên. Chỉ báo cáo một tin nhắn để kiểm duyệt nền tảng nếu bạn cảm thấy nó vi phạm [nguyên tắc nền tảng](/guidelines).",
+        "threat": "Tin nhắn đe dọa",
+        "child": "Tin nhắn chứa nội dung khiêu dâm trẻ em",
+        "nonConsensual": "Tin nhắn chứa nội dung khiêu dâm không có sự đồng thuận",
+        "selfHarm": "Tin nhắn chứa hoặc khuyến khích tự làm hại bản thân",
+        "violence": "Tin nhắn chứa bạo lực quá mức",
+        "scam": "Tin nhắn quảng cáo lừa đảo tài chính",
+        "other": "Lý do khác",
+        "success": "Thông báo đã được báo cáo cho người điều hành nền tảng",
+        "failure": "Xin lỗi, chúng tôi không thể báo cáo tin nhắn này cho người điều hành nền tảng",
+        "deleteMessage": "Xóa tin nhắn đã báo cáo",
+        "messageReport": "Được @{username} báo cáo về {timestamp} vì lý do sau: **{reason}**",
+        "showing": "Đang hiển thị {count}/{total} báo cáo gần đây nhất"
+    },
     "invitedBy": "{invitedBy} đã mời {users} vào nhóm"
 }

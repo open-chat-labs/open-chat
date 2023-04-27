@@ -455,11 +455,23 @@ export class OpenChat extends EventTarget {
             // eslint-disable-next-line @typescript-eslint/no-this-alias
             const self = this;
             function timeout() {
+                console.debug(
+                    "SESSION: session has timed out after ",
+                    durationUntilLogoutMs,
+                    " based on expiry after ",
+                    durationUntilSessionExpireMS
+                );
                 self.logout().then(resolve);
             }
             if (durationUntilLogoutMs <= 5 * ONE_MINUTE_MILLIS) {
                 timeout();
             } else {
+                console.debug(
+                    "SESSION: session started and set to expire in ",
+                    durationUntilLogoutMs,
+                    " based on expiry in ",
+                    durationUntilSessionExpireMS
+                );
                 setTimeout(timeout, Math.min(MAX_TIMEOUT_MS, durationUntilLogoutMs));
             }
         });
@@ -3752,6 +3764,22 @@ export class OpenChat extends EventTarget {
             this._logger.error("Unable to cancel message reminder", err);
             return false;
         });
+    }
+
+    reportMessage(
+        chatId: string,
+        eventIndex: number,
+        reasonCode: number,
+        notes: string | undefined,
+        threadRootMessageIndex: number | undefined
+    ): Promise<boolean> {
+        return this.api
+            .reportMessage(chatId, eventIndex, reasonCode, notes, threadRootMessageIndex)
+            .then((resp) => resp === "success")
+            .catch((err) => {
+                this._logger.error("Unable to set report message", err);
+                return false;
+            });
     }
 
     declineInvitation(chatId: string): Promise<boolean> {

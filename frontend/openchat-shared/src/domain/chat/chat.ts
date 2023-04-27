@@ -26,6 +26,7 @@ export type MessageContent =
     | PrizeWinnerContent
     | MessageReminderCreatedContent
     | MessageReminderContent
+    | ReportedMessageContent
     | CustomContent;
 
 export type IndexRange = [number, number];
@@ -151,6 +152,19 @@ export type CustomContent = {
     kind: "custom_content";
     subtype: string;
     data: unknown;
+};
+
+export type ReportedMessageContent = {
+    kind: "reported_message_content";
+    total: number;
+    reports: MessageReport[];
+};
+
+export type MessageReport = {
+    notes?: string;
+    reasonCode: number;
+    timestamp: number;
+    reportedBy: string;
 };
 
 export type MessageReminderCreatedContent = {
@@ -1755,6 +1769,8 @@ export type ClaimPrizeResponse =
     | { kind: "prize_fully_claimed" }
     | { kind: "failed_after_transfer" }
     | { kind: "transfer_failed" };
+
+export type ReportMessageResponse = "success" | "failure";
 
 export type DeclineInvitationResponse =
     | "success"

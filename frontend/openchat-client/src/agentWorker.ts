@@ -93,6 +93,7 @@ import {
     GroupGate,
     ProposalVoteDetails,
     SetMessageReminderResponse,
+    ReportMessageResponse,
     InviteUsersResponse,
     DeclineInvitationResponse,
 } from "openchat-shared";
@@ -1370,6 +1371,25 @@ export class OpenChatAgentWorker extends EventTarget {
             kind: "cancelMessageReminder",
             payload: {
                 reminderId,
+            },
+        });
+    }
+
+    reportMessage(
+        chatId: string,
+        eventIndex: number,
+        reasonCode: number,
+        notes: string | undefined,
+        threadRootMessageIndex: number | undefined
+    ): Promise<ReportMessageResponse> {
+        return this.sendRequest({
+            kind: "reportMessage",
+            payload: {
+                chatId,
+                eventIndex,
+                reasonCode,
+                notes,
+                threadRootMessageIndex,
             },
         });
     }

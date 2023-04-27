@@ -134,6 +134,7 @@ export interface Theme {
         sh: string;
         "inverted-sh": string;
         bd: string;
+        separator: string;
     };
 
     button: {

@@ -229,7 +229,9 @@
         "buychat_q": "Come posso acquistare token CHAT?",
         "buychat_a": "In questo momento devi prima <a target=\"_blank\" href=\"https://www.finder.com/uk/how-to-buy-internet-computer\">acquistare ICP</a> che puoi poi scambiare CHAT su vari Decentralized Exchange (DEX).<ul><li><a target=\"_blank\" href=\"https://avjzx-pyaaa-aaaaj-aadmq-cai.raw.ic0.app/ICDex/CHAT/ICP \">ICDex</a></li><li><a target=\"_blank\" href=\"https://info.icpswap.com/swap/pool/details/ne2vj-6yaaa-aaaag-qb3ia-cai\" >ICPSwap</a></li><li><a target=\"_blank\" href=\"https://app.infinityswap.one/tokens/2ouva-viaaa-aaaaq-aaamq-cai\">InfinitySwap</a ></li></ul>DFINITY sta aggiungendo il supporto per <a target=\"_blank\" href=\"https://www.rosetta-api.org/\">API Rosetta</a> per i token ICRC1 (che include CHAT) rendendoli molto più facili da integrare con gli scambi centralizzati (CEX). Una volta che ciò sarà accaduto, è probabile che CHAT sarà disponibile per il trading su CEX per ICP o USDT.",
         "shortcuts_q": "Quali comandi di scelta rapida sono disponibili?",
-        "shortcuts_a": "Esistono diversi comandi di scelta rapida che è possibile utilizzare dalla casella di immissione dei messaggi. <br /><br /> `/poll` - per creare un nuovo sondaggio <br /> `/search xyz` - per cercare nella chat corrente il termine \"xyz\" <br />`/gif kittens` - per cerca gif di gattini <br />`/icp 0.1` - per inviare 0,1 ICP a qualcuno <br />`/faq question_id*` - per creare e pubblicare un collegamento formattato a una domanda FAQ specifica <br />`/diamond ` - per creare e pubblicare un collegamento formattato con i dettagli dell'appartenenza Diamond <br/> <br/>I comandi che accettano un argomento possono essere utilizzati anche senza l'argomento.<br /><br />* Gli ID delle domande faq disponibili sono : airdrop, vote, wallet, buychat, send_tokens, diamond, ios_app, android_app, find_groups, style_messages, storage, security, roadmap, scorciatoie"
+        "shortcuts_a": "Esistono diversi comandi di scelta rapida che è possibile utilizzare dalla casella di immissione dei messaggi. <br /><br /> `/poll` - per creare un nuovo sondaggio <br /> `/search xyz` - per cercare nella chat corrente il termine \"xyz\" <br />`/gif kittens` - per cerca gif di gattini <br />`/icp 0.1` - per inviare 0,1 ICP a qualcuno <br />`/faq question_id*` - per creare e pubblicare un collegamento formattato a una domanda FAQ specifica <br />`/diamond ` - per creare e pubblicare un collegamento formattato con i dettagli dell'appartenenza Diamond <br/> <br/>I comandi che accettano un argomento possono essere utilizzati anche senza l'argomento.<br /><br />* Gli ID delle domande faq disponibili sono : airdrop, vote, wallet, buychat, send_tokens, diamond, ios_app, android_app, find_groups, style_messages, storage, security, roadmap, scorciatoie",
+        "content_q": "Che tipo di contenuto è consentito?",
+        "content_a": "Per i dettagli completi delle nostre linee guida sui contenuti e sulla moderazione <a href=\"/guidelines\">vedi qui</a>."
     },
     "roadmap": "Tabella di marcia",
     "here": "qui",
@@ -281,7 +283,8 @@
         "userLimitReached": "Il limite di utenti è stato raggiunto",
         "createUser": "Creare un utente",
         "closedTitle": "Registrazione sospesa",
-        "closed": "A causa dell'elevata domanda, le registrazioni di nuovi utenti sono temporaneamente chiuse. Presto scaleremo su più sottoreti e saremo quindi in grado di crescere all'infinito!"
+        "closed": "A causa dell'elevata domanda, le registrazioni di nuovi utenti sono temporaneamente chiuse. Presto scaleremo su più sottoreti e saremo quindi in grado di crescere all'infinito!",
+        "disclaimer": "Registrandoti con OpenChat accetti di rispettare le nostre linee guida"
     },
     "roleChanged": "{changedBy} ha cambiato il ruolo di {changed} da {oldRole} a {newRole}",
     "yourRoleChanged": "{changedBy} ha cambiato il tuo ruolo da {oldRole} a {newRole}",
@@ -772,5 +775,27 @@
         "cancelFailure": "Spiacenti, non è stato possibile annullare il promemoria"
     },
     "userReferralMessage": "Condividi questo collegamento a OpenChat con amici e familiari. Finché sei tu stesso un membro Diamond, per ogni persona che si registra con il tuo link e diventa un membro Diamond, riceverai la metà dei pagamenti di iscrizione effettuati durante il loro primo anno.",
-    "invitedBy": "{invitedBy} ha invitato {users} nel gruppo"
+    "report": {
+        "menu": "Rapporto",
+        "title": "Messaggio di segnalazione",
+        "reason": "Motivo della segnalazione",
+        "pleaseSelect": "Seleziona un motivo",
+        "optional": "Opzionale",
+        "note": "Aggiungi una nota",
+        "notePlaceholder": "Spiegaci perché stai segnalando questo contenuto",
+        "advice": "Se ritieni che questo messaggio violi le regole di questo gruppo, contatta innanzitutto i proprietari e gli amministratori del gruppo. Segnala un messaggio per la moderazione della piattaforma solo se ritieni che violi le [linee guida della piattaforma](/guidelines).",
+        "threat": "Il messaggio è minaccioso",
+        "child": "Il messaggio contiene contenuti di natura sessuale per bambini",
+        "nonConsensual": "Il messaggio contiene contenuti sessuali non consensuali",
+        "selfHarm": "Il messaggio contiene o promuove l'autolesionismo",
+        "violence": "Il messaggio contiene violenza eccessiva",
+        "scam": "Il messaggio promuove una truffa finanziaria",
+        "other": "Un'altra ragione",
+        "success": "Il messaggio è stato segnalato ai moderatori della piattaforma",
+        "failure": "Spiacenti, non siamo stati in grado di segnalare questo messaggio ai moderatori della piattaforma",
+        "deleteMessage": "Elimina messaggio segnalato",
+        "messageReport": "Segnalato da @{username} il {timestamp} per il seguente motivo: **{reason}**",
+        "showing": "Visualizzazione dei {count} rapporti {total} più recenti"
+    },
+    "invitedBy": "{invitedBy} ha invitato {users} nel gruppo"    
 }

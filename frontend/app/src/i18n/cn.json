@@ -226,7 +226,8 @@
         "createUser": "创建用户",
         "bioTooLong": "您的简介太长了",
         "closedTitle": "注册暂停",
-        "closed": "由于需求量很大，新用户注册暂时关闭。我们很快将扩展到多个子网，然后将能够无限增长！"
+        "closed": "由于需求量很大，新用户注册暂时关闭。我们很快将扩展到多个子网，然后将能够无限增长！",
+        "disclaimer": "注册 OpenChat 即表示您同意遵守我们的准则"
     },
     "tellMeMore": "更多信息",
     "username": "用户名",
@@ -280,7 +281,9 @@
         "buychat_q": "我如何购买 CHAT 代币？",
         "buychat_a": "现在你必须先<a target=\"_blank\" href=\"https://www.finder.com/uk/how-to-buy-internet-computer\">购买ICP</a>然后你可以交换在各种去中心化交易所 (DEX) 上聊天。<ul><li><a target=\"_blank\" href=\"https://avjzx-pyaaa-aaaaj-aadmq-cai.raw.ic0.app/ICDex/CHAT/ICP \">ICDex</a></li><li><a target=\"_blank\" href=\"https://info.icpswap.com/swap/pool/details/ne2vj-6yaaa-aaaag-qb3ia-cai\" >ICPSwap</a></li><li><a target=\"_blank\" href=\"https://app.infinityswap.one/tokens/2ouva-viaaa-aaaaq-aaamq-cai\">InfinitySwap</a ></li></ul>DFINITY 正在为 ICRC1 令牌添加对 <a target=\"_blank\" href=\"https://www.rosetta-api.org/\">Rosetta API</a> 的支持（这包括 CHAT），使它们更容易与集中式交易所（CEX）集成。一旦发生这种情况，CHAT 很可能可以在 CEX 上进行 ICP 或 USDT 交易。",
         "shortcuts_q": "有哪些快捷命令可用？",
-        "shortcuts_a": "您可以从消息条目输入框中使用多个快捷命令。 <br /><br /> `/poll` - 创建一个新的投票 <br /> `/search xyz` - 在当前聊天中搜索术语“xyz” <br />`/gif kittens` - 到搜索小猫 gif 图片<br />`/icp 0.1` - 向某人发送 0.1 ICP <br />`/faq question_id*` - 创建并发布特定常见问题解答问题的格式化链接<br />`/diamond ` - 创建和发布带有钻石会员详细信息的格式化链接<br/> <br/>接受参数的命令也可以在没有参数的情况下使用。<br /><br />*可用的常见问题 ID 是: airdrop, voting, wallet, buychat, send_tokens, diamond, ios_app, android_app, find_groups, style_messages, storage, security, roadmap, shortcuts"
+        "shortcuts_a": "您可以从消息条目输入框中使用多个快捷命令。 <br /><br /> `/poll` - 创建一个新的投票 <br /> `/search xyz` - 在当前聊天中搜索术语“xyz” <br />`/gif kittens` - 到搜索小猫 gif 图片<br />`/icp 0.1` - 向某人发送 0.1 ICP <br />`/faq question_id*` - 创建并发布特定常见问题解答问题的格式化链接<br />`/diamond ` - 创建和发布带有钻石会员详细信息的格式化链接<br/> <br/>接受参数的命令也可以在没有参数的情况下使用。<br /><br />*可用的常见问题 ID 是: airdrop, voting, wallet, buychat, send_tokens, diamond, ios_app, android_app, find_groups, style_messages, storage, security, roadmap, shortcuts",
+        "content_q": "什么样的内容是允许的？",
+        "content_a": "有关我们的内容和审核指南的完整详细信息，请<a href=\"/guidelines\">参见此处</a>。"
     },
     "roadmap": "路线图",
     "roleChanged": "{changedBy} 将 {changed} 的角色从 {oldRole} 更改为 {newRole}",
@@ -773,5 +776,27 @@
         "cancelFailure": "抱歉，我们无法取消您的提醒"
     },
     "userReferralMessage": "与朋友和家人分享此 OpenChat 链接。只要您自己是钻石会员，对于每个通过您的链接注册并继续成为钻石会员的人，您将收到他们第一年支付的会员费的一半。",
+    "report": {
+        "menu": "报告",
+        "title": "举报留言",
+        "reason": "举报原因",
+        "pleaseSelect": "请选择原因",
+        "optional": "选修的",
+        "note": "添加备注",
+        "notePlaceholder": "告诉我们您举报此内容的原因",
+        "advice": "如果您认为该帖子违反了本群规则，请第一时间联系群主和管理员。如果您认为某条消息违反了[平台准则](/guidelines)，则仅将其报告给平台审核。",
+        "threat": "留言有威胁",
+        "child": "邮件包含儿童色情内容",
+        "nonConsensual": "消息包含未经同意的色情内容",
+        "selfHarm": "消息包含或宣扬自残",
+        "violence": "消息包含过度暴力",
+        "scam": "消息宣传金融骗局",
+        "other": "其他原因",
+        "success": "该消息已反馈给平台版主",
+        "failure": "抱歉，我们无法将此消息报告给平台版主",
+        "deleteMessage": "删除举报的消息",
+        "messageReport": "由@{username} 在 {timestamp} 上报告，原因如下：**{reason}**",
+        "showing": "显示最近的 {count} 份报告（共 {total} 份）"
+    },
     "invitedBy": "{invitedBy} 邀请 {users} 加入群组"
 }

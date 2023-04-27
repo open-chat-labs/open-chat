@@ -1,13 +1,14 @@
 <script lang="ts">
     import { mobileWidth } from "../../stores/screenDimensions";
+    import MenuIcon from "../MenuIcon.svelte";
+    import HoverIcon from "../HoverIcon.svelte";
     import MenuItems from "./MenuItems.svelte";
     import MobileMenuItems from "./MobileMenuItems.svelte";
     import Menu from "svelte-material-icons/Menu.svelte";
-    import Close from "svelte-material-icons/Close.svelte";
     import page from "page";
+    import { iconSize } from "../../stores/iconSize";
     import { postsBySlug } from "./blog/posts";
 
-    let showMenu = false;
     $: showBlog = Object.values(postsBySlug).length > 0;
 
     function home() {
@@ -22,18 +23,16 @@
             <div class="name">OpenChat</div>
         </div>
         {#if $mobileWidth}
-            <div class="menu-toggle" on:click|stopPropagation={() => (showMenu = !showMenu)}>
-                {#if showMenu}
-                    <Close size={"1.6em"} color={"var(--landing-txt)"} />
-                    <MobileMenuItems
-                        {showBlog}
-                        on:close={() => (showMenu = false)}
-                        on:login
-                        on:logout />
-                {:else}
-                    <Menu size={"1.6em"} color={"var(--landing-txt)"} />
-                {/if}
-            </div>
+            <MenuIcon>
+                <div slot="icon">
+                    <HoverIcon>
+                        <Menu size={$iconSize} color={"var(--landing-txt)"} />
+                    </HoverIcon>
+                </div>
+                <div slot="menu">
+                    <MobileMenuItems {showBlog} on:login on:logout />
+                </div>
+            </MenuIcon>
         {:else}
             <div class="menu">
                 <MenuItems {showBlog} on:login on:logout />
@@ -51,10 +50,6 @@
         top: 0;
         @include z-index("landing-page-menu");
         background-color: var(--landing-header-bg);
-    }
-
-    .menu-toggle {
-        cursor: pointer;
     }
 
     .logo {

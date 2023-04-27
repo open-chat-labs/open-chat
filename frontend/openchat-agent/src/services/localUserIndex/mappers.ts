@@ -3,6 +3,7 @@ import {
     GroupChatSummary,
     InviteUsersResponse,
     JoinGroupResponse,
+    ReportMessageResponse,
     UnsupportedValueError,
 } from "openchat-shared";
 import type {
@@ -10,6 +11,7 @@ import type {
     ApiGroupCanisterGroupChatSummary,
     ApiInviteUsersResponse,
     ApiJoinGroupResponse,
+    ApiReportMessageResponse,
 } from "./candid/idl";
 import { identity, optional } from "../../utils/mapping";
 import {
@@ -20,6 +22,16 @@ import {
     memberRole,
     message,
 } from "../common/chatMappers";
+
+export function reportMessageResponse(candid: ApiReportMessageResponse): ReportMessageResponse {
+    if ("Success" in candid) {
+        return "success";
+    }
+    if ("InternalError" in candid) {
+        return "failure";
+    }
+    throw new UnsupportedValueError("Unexpected ApiReportMessageResponse type received", candid);
+}
 
 export function inviteUsersResponse(candid: ApiInviteUsersResponse): InviteUsersResponse {
     if ("Success" in candid) {
