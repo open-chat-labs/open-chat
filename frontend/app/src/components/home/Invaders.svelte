@@ -35,6 +35,9 @@
     let player: Player;
     let bullets: Bullet[];
     let invaders: Invader[];
+    let currentScore = 0;
+    let highScore = Number(localStorage.getItem("openchat_invaders") || "0");
+    let newHighScore = false;
     let invaderSize = 30;
     let invaderSpeed = 1;
     let state: State = "not_started";
@@ -109,6 +112,7 @@
                 if (invader.status && collides(bullet, invader)) {
                     invader.status = false;
                     bullet.y = -100;
+                    currentScore += 10;
                 }
             });
         });
@@ -122,9 +126,18 @@
         }
 
         invaders.forEach(function (invader) {
-            if (invader.status && collides(invader, player)) {
+            if (
+                invader.status &&
+                (collides(invader, player) || invader.y + player.height > player.y)
+            ) {
                 state = "game_over";
                 invaderSpeed = 1;
+                newHighScore = currentScore > highScore;
+                if (newHighScore) {
+                    localStorage.setItem("openchat_invaders", currentScore.toString());
+                    highScore = currentScore;
+                }
+                currentScore = 0;
             }
         });
 
@@ -182,6 +195,22 @@
         });
     }
 
+    function drawScore() {
+        if (!ctx || !canvas) return;
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "20px Arial";
+        ctx.textAlign = "left";
+        ctx.fillText(currentScore.toString(), 10, 20);
+    }
+
+    function drawHighScore() {
+        if (!ctx || !canvas) return;
+        ctx.fillStyle = "#ffffff";
+        ctx.font = "20px Arial";
+        ctx.textAlign = "right";
+        ctx.fillText(highScore.toString(), canvas.width, 20);
+    }
+
     function drawGameOver() {
         if (!ctx || !canvas) return;
         const h = canvas.width / 2;
@@ -205,11 +234,15 @@
 
         drawBullets();
 
-        drawInvaders();
+        drawScore();
+
+        drawHighScore();
 
         if (state === "game_over") {
             drawGameOver();
         }
+
+        drawInvaders();
     }
 
     function fireBullet() {
