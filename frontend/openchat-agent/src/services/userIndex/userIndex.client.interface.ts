@@ -33,4 +33,5 @@ export interface IUserIndexClient {
         expectedPriceE8s: bigint
     ): Promise<PayForDiamondMembershipResponse>;
     setUserUpgradeConcurrency(value: number): Promise<SetUserUpgradeConcurrencyResponse>;
+    getPlatformModeratorGroup(): Promise<string>;
 }

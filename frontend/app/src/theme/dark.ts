@@ -157,6 +157,7 @@ export function darkTheme(defaultTheme: Theme): Theme {
             sh: "none",
             "inverted-sh": "0px -10px 10px 0px rgba(8,93,140,0.3)",
             bd: textBodyLight,
+            separator: "rgba(255,255,255,0.2)",
         },
 
         button: {

@@ -31,7 +31,7 @@
 </script>
 
 {#if $identityState === "registering"}
-    <Overlay dismissible={false}>
+    <Overlay>
         <Register on:logout={logout} on:createdUser={createdUser} />
     </Overlay>
 {/if}
@@ -88,6 +88,14 @@
                     </div>
                 {:then { default: Miami }}
                     <Miami on:login={() => client.login()} />
+                {/await}
+            {:else if $location.startsWith("/guidelines")}
+                {#await import("./GuidelinesPage.svelte")}
+                    <div class="loading">
+                        <Loading />
+                    </div>
+                {:then { default: GuidelinesPage }}
+                    <GuidelinesPage />
                 {/await}
             {:else}
                 <HomePage on:login={() => client.login()} />

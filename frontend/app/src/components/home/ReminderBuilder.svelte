@@ -105,7 +105,7 @@
 </script>
 
 <Overlay on:close dismissible>
-    <ModalContent>
+    <ModalContent on:close closeIcon>
         <span slot="header">
             <h1>⏰ {$_("reminders.title")}</h1>
         </span>

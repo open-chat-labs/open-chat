@@ -224,7 +224,9 @@
         "buychat_q": "¿Cómo compro tokens de CHAT?",
         "buychat_a": "En este momento, primero debe <a target=\"_blank\" href=\"https://www.finder.com/uk/how-to-buy-internet-computer\">comprar ICP</a> que luego puede intercambiar CHAT en varios intercambios descentralizados (DEX).<ul><li><a target=\"_blank\" href=\"https://avjzx-pyaaa-aaaaj-aadmq-cai.raw.ic0.app/ICDex/CHAT/ICP \">ICDex</a></li><li><a target=\"_blank\" href=\"https://info.icpswap.com/swap/pool/details/ne2vj-6yaaa-aaaag-qb3ia-cai\" >ICPSwap</a></li><li><a target=\"_blank\" href=\"https://app.infinityswap.one/tokens/2ouva-viaaa-aaaaq-aaamq-cai\">InfinitySwap</a ></li></ul>DFINITY está agregando soporte para la <a target=\"_blank\" href=\"https://www.rosetta-api.org/\">Rosetta API</a> para tokens ICRC1 (que incluye CHAT), lo que los hace mucho más fáciles de integrar con intercambios centralizados (CEX). Una vez que esto haya sucedido, es probable que CHAT esté disponible para operar en CEX para ICP o USDT.",
         "shortcuts_q": "¿Qué comandos de acceso directo están disponibles?",
-        "shortcuts_a": "Hay varios comandos de acceso directo que puede usar desde el cuadro de entrada de entrada de mensajes. <br /><br /> `/poll` - para crear una nueva encuesta <br /> `/search xyz` - para buscar el término \"xyz\" en el chat actual <br />`/gif gatitos` - para buscar gifs de gatitos <br />`/icp 0.1` - para enviar 0.1 ICP a alguien <br />`/faq question_id*` - para crear y publicar un enlace formateado a una pregunta frecuente específica <br />`/diamond ` - para crear y publicar un enlace formateado con los detalles de la membresía Diamante <br/> <br/>Los comandos que aceptan un argumento también se pueden usar sin el argumento.<br /><br />* Los ID de preguntas frecuentes disponibles son : airdrop, votación, billetera, buychat, send_tokens, diamante, ios_app, android_app, find_groups, style_messages, almacenamiento, seguridad, hoja de ruta, accesos directos"
+        "shortcuts_a": "Hay varios comandos de acceso directo que puede usar desde el cuadro de entrada de entrada de mensajes. <br /><br /> `/poll` - para crear una nueva encuesta <br /> `/search xyz` - para buscar el término \"xyz\" en el chat actual <br />`/gif gatitos` - para buscar gifs de gatitos <br />`/icp 0.1` - para enviar 0.1 ICP a alguien <br />`/faq question_id*` - para crear y publicar un enlace formateado a una pregunta frecuente específica <br />`/diamond ` - para crear y publicar un enlace formateado con los detalles de la membresía Diamante <br/> <br/>Los comandos que aceptan un argumento también se pueden usar sin el argumento.<br /><br />* Los ID de preguntas frecuentes disponibles son : airdrop, votación, billetera, buychat, send_tokens, diamante, ios_app, android_app, find_groups, style_messages, almacenamiento, seguridad, hoja de ruta, accesos directos",
+        "content_q": "¿Qué tipo de contenido está permitido?",
+        "content_a": "Para obtener detalles completos sobre nuestras pautas de contenido y moderación, <a href=\"/guidelines\">ver aquí</a>."
     },
     "roadmap": "Roadmap",
     "here": "aquí",
@@ -277,7 +279,8 @@
         "createUser": "Crear usuario",
         "confirm": "Confirmar",
         "closedTitle": "Registro en pausa",
-        "closed": "Debido a la gran demanda, los registros de nuevos usuarios están cerrados temporalmente. ¡Pronto escalaremos a través de múltiples subredes y luego podremos crecer indefinidamente!"
+        "closed": "Debido a la gran demanda, los registros de nuevos usuarios están cerrados temporalmente. ¡Pronto escalaremos a través de múltiples subredes y luego podremos crecer indefinidamente!",
+        "disclaimer": "Al registrarse en OpenChat, acepta cumplir con nuestras pautas"
     },
     "tellMeMore": "Más información",
     "insufficientFunds": "Asegúrese de que la cuenta anterior tenga un saldo de al menos {amount} ICP para cubrir el almacenamiento solicitado, luego presione el botón \"Actualizar\".",
@@ -783,5 +786,27 @@
         "cancelSuccess": "Su recordatorio ha sido cancelado con éxito",
         "cancelFailure": "Lo sentimos, no pudimos cancelar tu recordatorio."
     },
-    "userReferralMessage": "Comparta este enlace a OpenChat con amigos y familiares. Siempre que usted sea un miembro Diamond, por cada persona que se registre con su enlace y se convierta en miembro Diamond, recibirá la mitad de los pagos de membresía que hagan durante su primer año."
+    "userReferralMessage": "Comparta este enlace a OpenChat con amigos y familiares. Siempre que usted sea un miembro Diamond, por cada persona que se registre con su enlace y se convierta en miembro Diamond, recibirá la mitad de los pagos de membresía que hagan durante su primer año.",
+    "report": {
+        "menu": "Informe",
+        "title": "Informar mensaje",
+        "reason": "Motivo del informe",
+        "pleaseSelect": "Por favor seleccione una razón",
+        "optional": "Opcional",
+        "note": "Agrega una nota",
+        "notePlaceholder": "Cuéntanos por qué estás denunciando este contenido.",
+        "advice": "Si cree que este mensaje infringe las normas de este grupo, póngase en contacto con los propietarios y administradores del grupo en primera instancia. Informe un mensaje para la moderación de la plataforma solo si cree que infringe las [directrices de la plataforma](/directrices).",
+        "threat": "El mensaje es amenazante",
+        "child": "El mensaje contiene contenido sexual infantil",
+        "nonConsensual": "El mensaje contiene contenido sexual no consentido",
+        "selfHarm": "El mensaje contiene o promueve la autolesión",
+        "violence": "El mensaje contiene violencia excesiva",
+        "scam": "Mensaje promueve una estafa financiera",
+        "other": "Otra razon",
+        "success": "El mensaje ha sido informado a los moderadores de la plataforma.",
+        "failure": "Lo sentimos, no pudimos informar este mensaje a los moderadores de la plataforma.",
+        "deleteMessage": "Eliminar mensaje denunciado",
+        "messageReport": "Reportado por @{username} el {timestamp} por el siguiente motivo: **{reason}**",
+        "showing": "Mostrando los {count} más recientes de {total} informe(s)"
+    }
 }

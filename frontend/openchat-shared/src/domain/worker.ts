@@ -56,6 +56,7 @@ import type {
     UpdateGroupResponse,
     UpdatesResult,
     WithdrawCryptocurrencyResponse,
+    ReportMessageResponse,
 } from "./chat";
 import type { BlobReference, StorageStatus } from "./data/data";
 import type { UpdateMarketMakerConfigArgs, UpdateMarketMakerConfigResponse } from "./marketMaker";
@@ -200,7 +201,8 @@ export type WorkerRequest =
     | SetUserUpgradeConcurrency
     | UpdateMarketMakerConfig
     | SetMessageReminder
-    | CancelMessageReminder;
+    | CancelMessageReminder
+    | ReportMessage;
 
 type SetCachedMessageFromNotification = Request<{
     chatId: string;
@@ -929,7 +931,8 @@ export type WorkerResponse =
     | Response<PayForDiamondMembershipResponse>
     | Response<ClaimPrizeResponse>
     | Response<UpdateMarketMakerConfigResponse>
-    | Response<SetMessageReminderResponse>;
+    | Response<SetMessageReminderResponse>
+    | Response<ReportMessageResponse>;
 
 type Response<T> = {
     kind: "worker_response";
@@ -1013,4 +1016,14 @@ type CancelMessageReminder = Request<{
     reminderId: bigint;
 }> & {
     kind: "cancelMessageReminder";
+};
+
+type ReportMessage = Request<{
+    chatId: string;
+    eventIndex: number;
+    reasonCode: number;
+    notes: string | undefined;
+    threadRootMessageIndex: number | undefined;
+}> & {
+    kind: "reportMessage";
 };

@@ -252,6 +252,10 @@ function extractMessageContent(
         result = {
             text: "Custom content",
         };
+    } else if (content.kind === "reported_message_content") {
+        result = {
+            text: "Reported message",
+        };
     } else {
         throw new UnsupportedValueError(
             "Unexpected message content type received with notification",

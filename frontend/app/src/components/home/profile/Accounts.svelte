@@ -80,10 +80,10 @@
         </div>
         <div class="manage">
             {#if !token.disabled}
-                <LinkButton underline={"hover"} on:click={() => showReceive(token.key)}
-                    >{$_("cryptoAccount.receive")}</LinkButton>
                 <LinkButton underline={"hover"} on:click={() => showSend(token.key)}
                     >{$_("cryptoAccount.send")}</LinkButton>
+                <LinkButton underline={"hover"} on:click={() => showReceive(token.key)}
+                    >{$_("cryptoAccount.receive")}</LinkButton>
             {/if}
         </div>
     {/each}

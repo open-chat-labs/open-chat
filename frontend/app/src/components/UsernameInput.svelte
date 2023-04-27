@@ -16,6 +16,7 @@
 
     let timer: number | undefined = undefined;
     let input: Input;
+    let currentPromise: Promise<unknown> | undefined;
 
     export function reset() {
         input.setValue(originalUsername);
@@ -23,16 +24,23 @@
 
     function checkUsername(value: string) {
         if (value.length < MIN_USERNAME_LENGTH || value.length > MAX_USERNAME_LENGTH) {
-            stopChecking();
+            checking = false;
             return;
         }
 
-        const currTimer = timer;
-
-        client
+        const promise = client
             .checkUsername(value)
             .then((resp) => {
-                if (currTimer !== timer) return;
+                if (promise !== currentPromise) {
+                    return;
+                }
+
+                checking = false;
+
+                validUsername = undefined;
+
+                if (value === originalUsername) return;
+
                 switch (resp) {
                     case "success":
                         error = undefined;
@@ -55,32 +63,22 @@
             .catch((err) => {
                 error = "register.errorCheckingUsername";
                 logger.error("Unable to check username: ", err);
-            })
-            .finally(stopChecking);
+                checking = false;
+            });
+
+        currentPromise = promise;
     }
 
     function onChange(ev: CustomEvent<string>) {
+        checking = true;
         validUsername = undefined;
         error = undefined;
-        if (ev.detail === originalUsername) {
-            stopChecking();
-        } else {
-            startChecking(ev.detail);
-        }
+        scheduleCheck(ev.detail);
     }
 
-    function startChecking(username: string) {
-        checking = true;
-        if (timer) clearTimeout(timer);
+    function scheduleCheck(username: string) {
+        clearTimeout(timer);
         timer = setTimeout(() => checkUsername(username), 350);
-    }
-
-    function stopChecking() {
-        checking = false;
-        if (timer) {
-            clearTimeout(timer);
-            timer = undefined;
-        }
     }
 </script>
 
