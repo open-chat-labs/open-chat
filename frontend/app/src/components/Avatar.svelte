@@ -13,10 +13,10 @@
     export let blocked: boolean = false;
     export let statusBorder = "white";
 
+    let userStatus = UserStatus.None;
     let userStatusUserId = undefined;
-    $: userStatus = UserStatus.None;
     $: {
-        if (userId !== userStatusUserId) {
+        if (!showStatus || userId !== userStatusUserId) {
             userStatus = UserStatus.None;
             userStatusUserId = userId;
         }
@@ -26,8 +26,6 @@
                     userStatus = status;
                 }
             });
-        } else {
-            userStatus = UserStatus.None;
         }
     }
 </script>
