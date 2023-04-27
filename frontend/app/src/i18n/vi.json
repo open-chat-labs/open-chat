@@ -798,8 +798,6 @@
         "threat": "Tin nhắn đe dọa",
         "child": "Tin nhắn chứa nội dung khiêu dâm trẻ em",
         "nonConsensual": "Tin nhắn chứa nội dung khiêu dâm không có sự đồng thuận",
-        "misleading": "Tin nhắn chứa thông tin sai lệch",
-        "deception": "Tin nhắn chứa sự lừa dối",
         "selfHarm": "Tin nhắn chứa hoặc khuyến khích tự làm hại bản thân",
         "violence": "Tin nhắn chứa bạo lực quá mức",
         "scam": "Tin nhắn quảng cáo lừa đảo tài chính",

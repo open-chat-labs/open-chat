@@ -799,8 +799,6 @@
         "threat": "Nachricht ist bedrohlich",
         "child": "Die Nachricht enthält jugendgefährdende Inhalte",
         "nonConsensual": "Die Nachricht enthält nicht einvernehmliche sexuelle Inhalte",
-        "misleading": "Die Nachricht enthält Fehlinformationen",
-        "deception": "Nachricht enthält Täuschung",
         "selfHarm": "Die Nachricht enthält oder fördert Selbstverletzung",
         "violence": "Nachricht enthält übermäßige Gewalt",
         "scam": "Die Nachricht fördert einen Finanzbetrug",

@@ -17,8 +17,6 @@
         $_("report.threat"),
         $_("report.child"),
         $_("report.nonConsensual"),
-        $_("report.misleading"),
-        $_("report.deception"),
         $_("report.selfHarm"),
         $_("report.violence"),
         $_("report.scam"),

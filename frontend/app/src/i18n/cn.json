@@ -798,8 +798,6 @@
         "threat": "留言有威胁",
         "child": "邮件包含儿童色情内容",
         "nonConsensual": "消息包含未经同意的色情内容",
-        "misleading": "消息包含错误信息",
-        "deception": "消息包含欺骗",
         "selfHarm": "消息包含或宣扬自残",
         "violence": "消息包含过度暴力",
         "scam": "消息宣传金融骗局",

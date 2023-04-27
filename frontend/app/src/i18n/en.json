@@ -794,8 +794,6 @@
         "threat": "Message is threatening",
         "child": "Message contains child sexual content",
         "nonConsensual": "Message contains non-consensual sexual content",
-        "misleading": "Message contains misinformation",
-        "deception": "Message contains deception",
         "selfHarm": "Message contains or promotes self-harm",
         "violence": "Message contains excessive violence",
         "scam": "Message promotes a financial scam",

@@ -105,17 +105,6 @@
 
             <li>
                 <strong>
-                    Do not intentionally share false or misleading information (otherwise known as
-                    misinformation).
-                </strong>
-            </li>
-
-            <li>
-                <strong>Do not impersonate others in a deceptive or misleading manner.</strong>
-            </li>
-
-            <li>
-                <strong>
                     Do not share content that glorifies, promotes, or normalizes suicide or other
                     acts of physical self-harm.
                 </strong> This includes content that encourages others to cut, burn, or starve themselves,
