@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.671](https://github.com/open-ic/open-chat/releases/tag/v2.0.668-user_index)] - TBD
+
 ### Added
 
 - Expose user referral leaderboards ([#3482](https://github.com/open-ic/open-chat/pull/3482))
