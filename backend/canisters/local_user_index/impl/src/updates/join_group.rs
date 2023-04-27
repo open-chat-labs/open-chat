@@ -72,7 +72,6 @@ fn commit(user_id: UserId, chat_id: ChatId, latest_message_index: Option<Message
                 latest_message_index,
             })),
         );
-        crate::jobs::sync_events_to_user_canisters::start_job_if_required(runtime_state);
     } else {
         runtime_state.push_event_to_user_index(
             runtime_state.data.user_index_canister_id,
@@ -83,6 +82,5 @@ fn commit(user_id: UserId, chat_id: ChatId, latest_message_index: Option<Message
                 latest_message_index,
             }),
         );
-        crate::jobs::sync_events_to_user_index_canister::start_job_if_required(runtime_state);
     }
 }
