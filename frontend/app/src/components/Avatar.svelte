@@ -13,17 +13,16 @@
     export let blocked: boolean = false;
     export let statusBorder = "white";
 
+    let userStatusUserId = undefined;
     $: userStatus = UserStatus.None;
     $: {
-        // If the userId changes, set the userStatus to None
-        if (userId) {}
-        userStatus = UserStatus.None;
-    }
-    $: {
-        const userIdTemp = userId;
-        if (showStatus && userIdTemp !== undefined) {
-            client.getUserStatus(userIdTemp, $now).then((status) => {
-                if (userId === userIdTemp) {
+        if (userId !== userStatusUserId) {
+            userStatus = UserStatus.None;
+            userStatusUserId = userId;
+        }
+        if (showStatus && userStatusUserId !== undefined) {
+            client.getUserStatus(userStatusUserId, $now).then((status) => {
+                if (userId === userStatusUserId) {
                     userStatus = status;
                 }
             });
