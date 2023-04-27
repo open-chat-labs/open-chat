@@ -19,6 +19,8 @@
             client.getUserStatus(userId, $now).then((status) => {
                 userStatus = status;
             });
+        } else {
+            userStatus = UserStatus.None;
         }
     }
 </script>
