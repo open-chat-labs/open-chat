@@ -7,6 +7,7 @@ use ic_cdk_macros::update;
 use types::{CanisterId, EventIndex, MessageId};
 use user_canister::c2c_delete_messages;
 use user_canister::delete_messages::{Response::*, *};
+use utils::consts::OPENCHAT_BOT_USER_ID;
 use utils::time::MINUTE_IN_MS;
 
 #[update(guard = "caller_is_owner")]
@@ -28,7 +29,7 @@ fn delete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
 
         let delete_message_results = chat.events.delete_messages(DeleteUndeleteMessagesArgs {
             caller: my_user_id,
-            is_admin: false,
+            is_admin: true,
             min_visible_event_index: EventIndex::default(),
             thread_root_message_index: None,
             message_ids: args.message_ids,
@@ -37,12 +38,20 @@ fn delete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
 
         let deleted: Vec<_> = delete_message_results
             .into_iter()
-            .filter_map(|(message_id, result)| matches!(result, DeleteMessageResult::Success).then_some(message_id))
+            .filter_map(
+                |(message_id, result)| {
+                    if let DeleteMessageResult::Success(u) = result {
+                        Some((message_id, u))
+                    } else {
+                        None
+                    }
+                },
+            )
             .collect();
 
         if !deleted.is_empty() {
             let remove_deleted_message_content_at = now + (5 * MINUTE_IN_MS);
-            for message_id in deleted.iter().copied() {
+            for (message_id, _) in deleted.iter().copied() {
                 runtime_state.data.timer_jobs.enqueue_job(
                     TimerJob::HardDeleteMessageContent(Box::new(HardDeleteMessageContentJob {
                         chat_id: args.user_id.into(),
@@ -55,11 +64,22 @@ fn delete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
                 );
             }
 
-            ic_cdk::spawn(delete_on_recipients_canister(
-                args.user_id.into(),
-                deleted,
-                args.correlation_id,
-            ));
+            if args.user_id != OPENCHAT_BOT_USER_ID {
+                let my_messages: Vec<_> = deleted
+                    .iter()
+                    .filter(|(_, u)| *u == my_user_id)
+                    .map(|(id, _)| id)
+                    .copied()
+                    .collect();
+
+                if !my_messages.is_empty() {
+                    ic_cdk::spawn(delete_on_recipients_canister(
+                        args.user_id.into(),
+                        my_messages,
+                        args.correlation_id,
+                    ));
+                }
+            }
         }
 
         Success

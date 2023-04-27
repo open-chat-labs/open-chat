@@ -293,9 +293,10 @@ export class CachingGroupClient implements IGroupClient {
 
     deleteMessage(
         messageId: bigint,
-        threadRootMessageIndex?: number
+        threadRootMessageIndex?: number,
+        asPlatformModerator?: boolean
     ): Promise<DeleteMessageResponse> {
-        return this.client.deleteMessage(messageId, threadRootMessageIndex);
+        return this.client.deleteMessage(messageId, threadRootMessageIndex, asPlatformModerator);
     }
 
     undeleteMessage(

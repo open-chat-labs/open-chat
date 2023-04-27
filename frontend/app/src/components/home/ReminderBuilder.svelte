@@ -95,12 +95,12 @@
             .then((success) => {
                 if (success) {
                     toastStore.showSuccessToast("reminders.success");
-                    dispatch("close");
                 } else {
                     toastStore.showFailureToast("reminders.failure");
                 }
             })
             .finally(() => (busy = false));
+        dispatch("close");
     }
 </script>
 

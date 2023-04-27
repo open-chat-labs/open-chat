@@ -12,4 +12,5 @@ itertools = { workspace = true }
 ledger_utils = { path = "../ledger_utils" }
 search = { path = "../search" }
 serde = { workspace = true }
+sha2 = { workspace = true }
 types = { path = "../types" }

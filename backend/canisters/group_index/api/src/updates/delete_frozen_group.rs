@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{ChatId, TimestampMillis};
+use types::ChatId;
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -11,7 +11,6 @@ pub struct Args {
 pub enum Response {
     Success,
     ChatNotFrozen,
-    ChatNotFrozenLongEnough(TimestampMillis),
     ChatNotFound,
     NotAuthorized,
     InternalError(String),

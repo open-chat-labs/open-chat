@@ -67,11 +67,14 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
     }
 
     @profile("userIndexClient")
-    registerUser(username: string, referredBy: string | undefined): Promise<RegisterUserResponse> {
+    registerUser(
+        username: string,
+        referralCode: string | undefined
+    ): Promise<RegisterUserResponse> {
         return this.handleResponse(
             this.userIndexService.register_user_v2({
                 username,
-                referral_code: apiOptional(identity, referredBy),
+                referral_code: apiOptional(identity, referralCode),
                 public_key: new Uint8Array((this.identity as SignIdentity).getPublicKey().toDer()),
             }),
             registerUserResponse

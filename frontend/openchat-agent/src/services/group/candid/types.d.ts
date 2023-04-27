@@ -234,6 +234,7 @@ export interface CyclesRegistrationFee {
   'amount' : Cycles,
 }
 export interface DeleteMessagesArgs {
+  'as_platform_moderator' : [] | [boolean],
   'message_ids' : Array<MessageId>,
   'correlation_id' : bigint,
   'thread_root_message_index' : [] | [MessageIndex],
@@ -242,7 +243,9 @@ export type DeleteMessagesResponse = { 'MessageNotFound' : null } |
   { 'CallerNotInGroup' : null } |
   { 'ChatFrozen' : null } |
   { 'Success' : null } |
-  { 'UserSuspended' : null };
+  { 'UserSuspended' : null } |
+  { 'NotPlatformModerator' : null } |
+  { 'InternalError' : string };
 export interface DeletedContent {
   'timestamp' : TimestampMillis,
   'deleted_by' : UserId,
@@ -776,6 +779,7 @@ export type NnsNeuronId = bigint;
 export interface NnsPendingCryptoTransaction {
   'to' : NnsUserOrAccount,
   'fee' : [] | [Tokens],
+  'created' : TimestampNanos,
   'token' : Cryptocurrency,
   'memo' : [] | [Memo],
   'amount' : Tokens,
@@ -1158,6 +1162,7 @@ export type SnsNeuronId = Uint8Array | number[];
 export interface SnsPendingCryptoTransaction {
   'to' : Icrc1Account,
   'fee' : Tokens,
+  'created' : TimestampNanos,
   'token' : Cryptocurrency,
   'memo' : [] | [Memo],
   'amount' : Tokens,

@@ -4,6 +4,7 @@ fn main() {
     generate_candid_method!(user_index, check_username, query);
     generate_candid_method!(user_index, current_user, query);
     generate_candid_method!(user_index, platform_moderators, query);
+    generate_candid_method!(user_index, platform_moderators_group, query);
     generate_candid_method!(user_index, platform_operators, query);
     generate_candid_method!(user_index, referral_leaderboard, query);
     generate_candid_method!(user_index, referral_metrics, query);
@@ -15,6 +16,7 @@ fn main() {
     generate_candid_method!(user_index, add_platform_moderator, update);
     generate_candid_method!(user_index, add_platform_operator, update);
     generate_candid_method!(user_index, add_referral_codes, update);
+    generate_candid_method!(user_index, assign_platform_moderators_group, update);
     generate_candid_method!(user_index, mark_suspected_bot, update);
     generate_candid_method!(user_index, pay_for_diamond_membership, update);
     generate_candid_method!(user_index, register_user_v2, update);

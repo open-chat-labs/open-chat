@@ -53,7 +53,6 @@ impl From<&MessageContentInternal> for Document {
                 document.add_field(p.proposal.title().to_string(), 1.0);
                 document.add_field(p.proposal.summary().to_string(), 1.0);
             }
-            MessageContentInternal::Deleted(_) => {}
             MessageContentInternal::Prize(c) => {
                 document.add_field(c.transaction.token().token_symbol(), 1.0);
                 try_add_caption(&mut document, c.caption.as_ref())
@@ -66,6 +65,7 @@ impl From<&MessageContentInternal> for Document {
             MessageContentInternal::Custom(c) => {
                 document.add_field(c.kind.clone(), 1.0);
             }
+            MessageContentInternal::ReportedMessage(_) | MessageContentInternal::Deleted(_) => {}
         }
 
         document

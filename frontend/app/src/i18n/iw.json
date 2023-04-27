@@ -386,7 +386,7 @@
             "disabled": "נָכֶה",
             "reset": "אִתחוּל"
         },
-        "welcome": "ברוך הבא ל",
+        "welcome": "ברוך הבא ל {groupName}",
         "historyPrivateMessage": "הודעות ישנות אינן גלויות לחברים חדשים",
         "privateGroupInfo": "משתמשים לא יכולים להצטרף לקבוצה זו באופן חופשי. יש להוסיף אותם או להזמין אותם על ידי חבר מורשה.",
         "permissionsUpdateFailed": "עדכון ההרשאות נכשל",
@@ -426,7 +426,8 @@
         "minDissolveDelayN": "עיכוב פירוק מינימלי {n} ימים",
         "minStakeN": "אסימוני הימור מינימליים של {n}",
         "optional": "אופציונאלי",
-        "openAccessInfo": "אין דרישות גישה מיוחדות כדי להצטרף לקבוצה זו"
+        "openAccessInfo": "אין דרישות גישה מיוחדות כדי להצטרף לקבוצה זו",
+        "gateCheckFailed": "שער הגישה לא נפגש"
     },
     "updateNow": "טען מחדש עכשיו",
     "updateRequired": "גרסה חדשה של OpenChat זמינה - נטען מחדש ב-{countdown}s",
@@ -466,21 +467,17 @@
         "manage": "לנהל",
         "topUp": "הטעינו",
         "topUpBlurb": "כדי להטעין, פשוט העבר חלק מה-{token} לחשבון למעלה.",
-        "withdraw": "לָסֶגֶת",
-        "withdrawTarget": "הזן כתובת ליציאה ממנה",
-        "withdrawalSucceeded": "המשיכה שלך הצליחה!",
-        "withdrawalFailed": "המשיכה שלך נכשלה!",
         "manageHeader": "נהל חשבון {symbol}",
         "token": "אֲסִימוֹן",
         "comingSoon": "(בקרוב)",
         "send": "לִשְׁלוֹחַ",
-        "deposit": "לְהַפְקִיד",
-        "depositToken": "הפקדה {symbol}",
         "sendTarget": "הזן כתובת לשליחה",
         "sendSucceeded": "ה-{symbol} שלך נשלח בהצלחה!",
         "sendFailed": "שליחת {symbol} נכשלה",
         "scan": "סרוק קוד QR",
-        "withdrawToken": "משיכה {symbol}"
+        "receiveToken": "קבל {symbol}",
+        "sendToken": "שלח {symbol}",
+        "receive": "לְקַבֵּל"
     },
     "searchChat": "לחפש",
     "search": "לחפש...",

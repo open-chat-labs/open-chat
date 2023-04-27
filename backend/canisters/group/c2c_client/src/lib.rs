@@ -19,6 +19,7 @@ generate_c2c_call!(c2c_delete_group);
 generate_c2c_call!(c2c_freeze_group);
 generate_c2c_call!(c2c_join_group);
 generate_c2c_call!(c2c_leave_group);
+generate_c2c_call!(c2c_report_message);
 generate_c2c_call!(c2c_set_user_suspended);
 generate_c2c_call!(c2c_toggle_mute_notifications);
 generate_c2c_call!(c2c_unfreeze_group);

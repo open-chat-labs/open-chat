@@ -154,9 +154,10 @@ async fn transfer_prize_funds_to_group(
         },
         fee: Tokens::from_e8s(token.fee() as u64),
         memo: None,
+        created: now_nanos,
     };
 
-    match sns::process_transaction(pending_transaction, group, ledger_canister_id, now_nanos).await {
+    match sns::process_transaction(pending_transaction, group, ledger_canister_id).await {
         Ok(completed_transaction) => mutate_state(|state| {
             state.data.prizes_sent.push(Prize {
                 group,

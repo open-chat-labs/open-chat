@@ -21,19 +21,21 @@ fn accept_if_valid(runtime_state: &RuntimeState) {
             let is_user = runtime_state.data.users.get_by_principal(&caller).is_some();
             is_user
         }
+        "add_referral_codes" => runtime_state.is_caller_dev_team_dfx_principal(),
         "suspend_user" | "unsuspend_user" => runtime_state.is_caller_platform_moderator(),
         "set_user_upgrade_concurrency" => runtime_state.is_caller_platform_operator(),
         "add_platform_moderator"
         | "add_platform_operator"
         | "remove_platform_moderator"
         | "remove_platform_operator"
+        | "assign_platform_moderators_group"
         | "set_max_concurrent_user_canister_upgrades"
         | "add_local_user_index_canister"
         | "upgrade_user_canister_wasm"
         | "upgrade_local_user_index_canister_wasm"
         | "mark_local_user_index_full"
         | "suspected_bots" => runtime_state.is_caller_governance_principal(),
-        "create_challenge" | "notify_registration_fee_paid" | "register_user" => true,
+        "create_challenge" | "notify_registration_fee_paid" | "register_user" | "register_user_v2" => true,
         _ => false,
     };
 

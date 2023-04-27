@@ -6,12 +6,14 @@ generate_query_call!(check_username);
 generate_query_call!(current_user);
 generate_query_call!(search);
 generate_query_call!(platform_moderators);
+generate_query_call!(platform_moderators_group);
 generate_query_call!(user);
 generate_query_call!(users);
 
 // Updates
 generate_update_call!(add_local_user_index_canister);
 generate_update_call!(add_platform_moderator);
+generate_update_call!(assign_platform_moderators_group);
 generate_update_call!(c2c_register_bot);
 generate_update_call!(pay_for_diamond_membership);
 generate_update_call!(remove_platform_moderator);

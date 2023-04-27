@@ -128,6 +128,9 @@ export function registerUserResponse(candid: ApiRegisterUserResponse): RegisterU
     if ("PublicKeyInvalid" in candid) {
         return "public_key_invalid";
     }
+    if ("ReferralCodeInvalid" in candid) {
+        return "referral_code_invalid";
+    }
 
     if ("ReferralCodeInvalid" in candid) {
         return "referral_code_invalid";

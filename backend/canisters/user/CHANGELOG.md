@@ -5,10 +5,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Allow users to `Delete For Me` in direct chats ([#3498](https://github.com/open-ic/open-chat/pull/3498))
+- Implement `send_message_v2` and `edit_message_v2` ([#3504](https://github.com/open-ic/open-chat/pull/3504))
+
 ### Changed
 
 - Switch replies over to the new `event_list_if_other` field ([#3465](https://github.com/open-ic/open-chat/pull/3465))
 - Use hardcoded ledger ids ([#3452](https://github.com/open-ic/open-chat/pull/3452))
+- Added `created` to pending transactions ([#3494](https://github.com/open-ic/open-chat/pull/3494))
+- Skip c2c calls to the OpenChat bot ([#3508](https://github.com/open-ic/open-chat/pull/3508))
 
 ### Removed
 

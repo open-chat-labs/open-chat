@@ -12,14 +12,14 @@ generate_update_call!(add_reaction);
 generate_update_call!(block_user);
 generate_update_call!(delete_group);
 generate_update_call!(delete_messages);
-generate_update_call!(edit_message);
+generate_update_call!(edit_message_v2);
 generate_update_call!(cancel_message_reminder);
 generate_update_call!(create_group);
 generate_update_call!(leave_group);
 generate_update_call!(mark_read_v2);
 generate_update_call!(mute_notifications);
 generate_update_call!(remove_reaction);
-generate_update_call!(send_message);
+generate_update_call!(send_message_v2);
 generate_update_call!(set_message_reminder);
 generate_update_call!(unblock_user);
 generate_update_call!(undelete_messages);
@@ -28,7 +28,7 @@ pub mod happy_path {
     use crate::rng::random_message_id;
     use crate::User;
     use ic_test_state_machine_client::StateMachine;
-    use types::{ChatId, EventIndex, EventsResponse, GroupRules, MessageContent, MessageId, TextContent, UserId};
+    use types::{ChatId, EventIndex, EventsResponse, GroupRules, MessageContentInitial, MessageId, TextContent, UserId};
 
     pub fn send_text_message(
         env: &mut StateMachine,
@@ -37,16 +37,16 @@ pub mod happy_path {
         text: impl ToString,
         message_id: Option<MessageId>,
     ) -> user_canister::send_message_v2::SuccessResult {
-        let response = super::send_message(
+        let response = super::send_message_v2(
             env,
             sender.principal,
             sender.canister(),
-            &user_canister::send_message::Args {
+            &user_canister::send_message_v2::Args {
                 recipient,
                 thread_root_message_index: None,
                 message_id: message_id.unwrap_or_else(random_message_id),
                 sender_name: sender.username(),
-                content: MessageContent::Text(TextContent { text: text.to_string() }),
+                content: MessageContentInitial::Text(TextContent { text: text.to_string() }),
                 replies_to: None,
                 forwarding: false,
                 correlation_id: 0,

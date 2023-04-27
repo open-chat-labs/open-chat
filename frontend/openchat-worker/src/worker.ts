@@ -620,7 +620,8 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
                         payload.chatType,
                         payload.chatId,
                         payload.messageId,
-                        payload.threadRootMessageIndex
+                        payload.threadRootMessageIndex,
+                        payload.asPlatformModerator
                     )
                     .then((response) =>
                         sendResponse(correlationId, {
@@ -807,7 +808,7 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
 
             case "registerUser":
                 agent
-                    .registerUser(payload.username, payload.referredBy)
+                    .registerUser(payload.username, payload.referralCode)
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,

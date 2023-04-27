@@ -19,7 +19,7 @@ import type {
 
 export interface IUserIndexClient {
     getCurrentUser: () => Promise<CurrentUserResponse>;
-    registerUser(username: string, referredBy: string | undefined): Promise<RegisterUserResponse>;
+    registerUser(username: string, referralCode: string | undefined): Promise<RegisterUserResponse>;
     checkUsername(username: string): Promise<CheckUsernameResponse>;
     setUsername(userId: string, username: string): Promise<SetUsernameResponse>;
     getUsers(users: UsersArgs, allowStale: boolean): Promise<UsersResponse>;

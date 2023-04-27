@@ -10,15 +10,14 @@ export const idlFactory = ({ IDL }) => {
     'InternalError' : IDL.Text,
   });
   const DeleteFrozenGroupArgs = IDL.Record({ 'chat_id' : ChatId });
-  const TimestampMillis = IDL.Nat64;
   const DeleteFrozenGroupResponse = IDL.Variant({
-    'ChatNotFrozenLongEnough' : TimestampMillis,
     'ChatNotFound' : IDL.Null,
     'NotAuthorized' : IDL.Null,
     'Success' : IDL.Null,
     'ChatNotFrozen' : IDL.Null,
     'InternalError' : IDL.Text,
   });
+  const TimestampMillis = IDL.Nat64;
   const FilterGroupsArgs = IDL.Record({
     'active_since' : IDL.Opt(TimestampMillis),
     'chat_ids' : IDL.Vec(ChatId),
@@ -309,6 +308,7 @@ export const idlFactory = ({ IDL }) => {
   const NnsPendingCryptoTransaction = IDL.Record({
     'to' : NnsUserOrAccount,
     'fee' : IDL.Opt(Tokens),
+    'created' : TimestampNanos,
     'token' : Cryptocurrency,
     'memo' : IDL.Opt(Memo),
     'amount' : Tokens,
@@ -316,6 +316,7 @@ export const idlFactory = ({ IDL }) => {
   const SnsPendingCryptoTransaction = IDL.Record({
     'to' : Icrc1Account,
     'fee' : Tokens,
+    'created' : TimestampNanos,
     'token' : Cryptocurrency,
     'memo' : IDL.Opt(Memo),
     'amount' : Tokens,

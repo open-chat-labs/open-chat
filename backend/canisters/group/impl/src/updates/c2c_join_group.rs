@@ -1,5 +1,5 @@
 use crate::activity_notifications::handle_activity_notification;
-use crate::guards::caller_is_local_user_index;
+use crate::guards::caller_is_user_index_or_local_user_index;
 use crate::model::participants::AddResult;
 use crate::{mutate_state, read_state, run_regular_jobs, AddParticipantArgs, RuntimeState};
 use canister_api_macros::update_msgpack;
@@ -9,12 +9,12 @@ use gated_groups::{check_if_passes_gate, CheckIfPassesGateResult};
 use group_canister::c2c_join_group::{Response::*, *};
 use types::{CanisterId, EventIndex, GroupGate, MessageIndex, ParticipantJoined, UsersUnblocked};
 
-#[update_msgpack(guard = "caller_is_local_user_index")]
+#[update_msgpack(guard = "caller_is_user_index_or_local_user_index")]
 #[trace]
 async fn c2c_join_group(args: Args) -> Response {
     run_regular_jobs();
 
-    match read_state(|state| is_permitted_to_join(args.invite_code, false, state)) {
+    match read_state(|state| is_permitted_to_join(args.invite_code, state)) {
         Ok(Some((gate, user_index_canister_id))) => {
             match check_if_passes_gate(gate, args.user_id, user_index_canister_id).await {
                 CheckIfPassesGateResult::Success => {}
@@ -31,17 +31,19 @@ async fn c2c_join_group(args: Args) -> Response {
 
 fn is_permitted_to_join(
     invite_code: Option<u64>,
-    has_passed_gate: bool,
     runtime_state: &RuntimeState,
 ) -> Result<Option<(GroupGate, CanisterId)>, Response> {
-    if runtime_state.data.is_frozen() {
+    let caller = runtime_state.env.caller();
+
+    // If the call is from the user index then we skip the checks
+    if caller == runtime_state.data.user_index_canister_id {
+        Ok(None)
+    } else if runtime_state.data.is_frozen() {
         Err(ChatFrozen)
     } else if !runtime_state.data.is_accessible_by_non_member(invite_code) {
         Err(GroupNotPublic)
     } else if let Some(limit) = runtime_state.data.participants.user_limit_reached() {
         Err(ParticipantLimitReached(limit))
-    } else if has_passed_gate {
-        Ok(None)
     } else {
         Ok(runtime_state
             .data
@@ -52,13 +54,6 @@ fn is_permitted_to_join(
 }
 
 fn c2c_join_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    if runtime_state.data.gate.is_some() {
-        // We need to check again because things may have changed during the async gate check
-        if let Err(response) = is_permitted_to_join(args.invite_code, true, runtime_state) {
-            return response;
-        }
-    }
-
     let now = runtime_state.env.now();
     let min_visible_event_index;
     let min_visible_message_index;

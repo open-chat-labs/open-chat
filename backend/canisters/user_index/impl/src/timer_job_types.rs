@@ -4,7 +4,7 @@ use crate::updates::unsuspend_user::unsuspend_user_impl;
 use crate::{mutate_state, read_state};
 use canister_timer_jobs::Job;
 use ic_ledger_types::Tokens;
-use local_user_index_canister::OpenChatBotMessage;
+use local_user_index_canister::{Event as LocalUserIndexEvent, OpenChatBotMessage, UserJoinedGroup};
 use serde::{Deserialize, Serialize};
 use types::{ChatId, Cryptocurrency, DiamondMembershipPlanDuration, MessageContent, Milliseconds, TextContent, UserId};
 use utils::time::{MINUTE_IN_MS, SECOND_IN_MS};
@@ -15,6 +15,7 @@ pub enum TimerJob {
     SetUserSuspended(SetUserSuspended),
     SetUserSuspendedInGroup(SetUserSuspendedInGroup),
     UnsuspendUser(UnsuspendUser),
+    JoinUserToGroup(JoinUserToGroup),
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -43,6 +44,13 @@ pub struct UnsuspendUser {
     pub user_id: UserId,
 }
 
+#[derive(Serialize, Deserialize, Clone)]
+pub struct JoinUserToGroup {
+    pub user_id: UserId,
+    pub group_id: ChatId,
+    pub attempt: usize,
+}
+
 impl Job for TimerJob {
     fn execute(&self) {
         match self {
@@ -50,6 +58,7 @@ impl Job for TimerJob {
             TimerJob::SetUserSuspended(job) => job.execute(),
             TimerJob::SetUserSuspendedInGroup(job) => job.execute(),
             TimerJob::UnsuspendUser(job) => job.execute(),
+            TimerJob::JoinUserToGroup(job) => job.execute(),
         }
     }
 }
@@ -70,7 +79,6 @@ impl Job for RecurringDiamondMembershipPayment {
         }
 
         async fn pay_for_diamond_membership(user_id: UserId, duration: DiamondMembershipPlanDuration) {
-            use local_user_index_canister::Event as LocalUserIndexEvent;
             use user_index_canister::pay_for_diamond_membership::*;
 
             let price_e8s = duration.icp_price_e8s();
@@ -179,6 +187,61 @@ impl Job for UnsuspendUser {
 
         async fn unsuspend_user(user_id: UserId) {
             unsuspend_user_impl(user_id).await;
+        }
+    }
+}
+
+impl Job for JoinUserToGroup {
+    fn execute(&self) {
+        if let Some(args) = read_state(|state| {
+            state
+                .data
+                .users
+                .get_by_user_id(&self.user_id)
+                .map(|u| group_canister::c2c_join_group::Args {
+                    user_id: self.user_id,
+                    principal: u.principal,
+                    invite_code: None,
+                    correlation_id: 0,
+                    is_platform_moderator: state.data.platform_moderators.contains(&self.user_id),
+                })
+        }) {
+            ic_cdk::spawn(join_group(self.group_id, args, self.attempt));
+        }
+
+        async fn join_group(group_id: ChatId, args: group_canister::c2c_join_group::Args, attempt: usize) {
+            use group_canister::c2c_join_group::*;
+
+            match group_canister_c2c_client::c2c_join_group(group_id.into(), &args).await {
+                Ok(Response::Success(s) | Response::AlreadyInGroupV2(s)) => mutate_state(|state| {
+                    state.push_event_to_local_user_index(
+                        args.user_id,
+                        LocalUserIndexEvent::UserJoinedGroup(UserJoinedGroup {
+                            user_id: args.user_id,
+                            chat_id: group_id,
+                            as_super_admin: args.is_platform_moderator,
+                            latest_message_index: s.latest_message.map(|m| m.event.message_index),
+                        }),
+                    )
+                }),
+                Ok(Response::InternalError(_)) | Err(_) => {
+                    if attempt < 50 {
+                        mutate_state(|state| {
+                            let now = state.env.now();
+                            state.data.timer_jobs.enqueue_job(
+                                TimerJob::JoinUserToGroup(JoinUserToGroup {
+                                    user_id: args.user_id,
+                                    group_id,
+                                    attempt: attempt + 1,
+                                }),
+                                now + 10 * SECOND_IN_MS,
+                                now,
+                            );
+                        })
+                    }
+                }
+                _ => {}
+            }
         }
     }
 }

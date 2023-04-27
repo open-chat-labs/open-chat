@@ -8,11 +8,11 @@ pub fn caller_is_user_index() -> Result<(), String> {
     }
 }
 
-pub fn caller_is_local_user_index() -> Result<(), String> {
-    if read_state(|state| state.is_caller_local_user_index()) {
+pub fn caller_is_user_index_or_local_user_index() -> Result<(), String> {
+    if read_state(|state| state.is_caller_user_index() || state.is_caller_local_user_index()) {
         Ok(())
     } else {
-        Err("Caller is not the local_user_index".to_string())
+        Err("Caller is not the user_index or the local_user_index".to_string())
     }
 }
 

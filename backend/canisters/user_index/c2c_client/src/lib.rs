@@ -1,10 +1,11 @@
 use candid::Principal;
-use canister_client::generate_c2c_call;
+use canister_client::{generate_c2c_call, generate_candid_c2c_call};
 use types::{CanisterId, UserDetails};
 use user_index_canister::*;
 
 // Queries
 generate_c2c_call!(c2c_lookup_user);
+generate_candid_c2c_call!(platform_moderators_group);
 generate_c2c_call!(user);
 
 // Updates
@@ -14,6 +15,7 @@ generate_c2c_call!(c2c_set_avatar);
 generate_c2c_call!(c2c_suspend_users);
 generate_c2c_call!(c2c_register_bot);
 
+#[derive(Debug)]
 pub enum LookupUserError {
     UserNotFound,
     InternalError(String),
