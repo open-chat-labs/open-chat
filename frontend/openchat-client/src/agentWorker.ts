@@ -97,12 +97,9 @@ import {
     GroupGate,
     ProposalVoteDetails,
     SetMessageReminderResponse,
-<<<<<<< HEAD
     ReferralLeaderboardRange,
     ReferralLeaderboardResponse,
-=======
     ReportMessageResponse,
->>>>>>> master
 } from "openchat-shared";
 import type { OpenChatConfig } from "./config";
 import { v4 } from "uuid";
