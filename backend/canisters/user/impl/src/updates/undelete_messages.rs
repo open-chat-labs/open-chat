@@ -6,6 +6,7 @@ use ic_cdk_macros::update;
 use types::{CanisterId, EventIndex, MessageId};
 use user_canister::c2c_undelete_messages;
 use user_canister::undelete_messages::{Response::*, *};
+use utils::consts::OPENCHAT_BOT_USER_ID;
 
 #[update(guard = "caller_is_owner")]
 #[trace]
@@ -45,7 +46,7 @@ fn undelete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Respo
             .filter_map(|&message_id| events_reader.message(message_id.into(), Some(my_user_id)))
             .collect();
 
-        if !deleted.is_empty() {
+        if !deleted.is_empty() && args.user_id != OPENCHAT_BOT_USER_ID {
             ic_cdk::spawn(undelete_on_recipients_canister(
                 args.user_id.into(),
                 deleted,
