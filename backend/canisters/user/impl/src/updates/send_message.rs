@@ -16,14 +16,22 @@ use user_canister::send_message_v2::{Response::*, *};
 use utils::consts::OPENCHAT_BOT_USER_ID;
 use utils::time::{MINUTE_IN_MS, SECOND_IN_MS};
 
-// The args are mutable because if the request contains a pending transfer, we process the transfer
-// and then update the message content to contain the completed transfer.
 #[update(guard = "caller_is_owner")]
 #[trace]
 async fn send_message(args: user_canister::send_message::Args) -> Response {
-    run_regular_jobs();
+    send_message_inner(args.into()).await
+}
 
-    let mut args: Args = args.into();
+#[update(guard = "caller_is_owner")]
+#[trace]
+async fn send_message_v2(args: Args) -> Response {
+    send_message_inner(args).await
+}
+
+// The args are mutable because if the request contains a pending transfer, we process the transfer
+// and then update the message content to contain the completed transfer.
+async fn send_message_inner(mut args: Args) -> Response {
+    run_regular_jobs();
 
     let user_type = match read_state(|state| validate_request(&args, state)) {
         ValidateRequestResult::Valid(t) => t,
