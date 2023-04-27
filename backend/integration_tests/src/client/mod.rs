@@ -110,7 +110,6 @@ pub fn register_diamond_user(env: &mut StateMachine, canister_ids: &CanisterIds,
         true,
     );
 
-    env.advance_time(Duration::from_secs(15));
     tick_many(env, 3);
 
     user
@@ -133,7 +132,6 @@ pub fn upgrade_user(user: &User, env: &mut StateMachine, canister_ids: &Canister
         true,
     );
 
-    env.advance_time(Duration::from_secs(15));
     tick_many(env, 3);
 }
 
