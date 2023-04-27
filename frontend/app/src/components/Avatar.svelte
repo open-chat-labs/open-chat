@@ -14,7 +14,7 @@
     export let statusBorder = "white";
 
     let userStatus = UserStatus.None;
-    let userStatusUserId = undefined;
+    let userStatusUserId: string | undefined = undefined;
     $: {
         if (!showStatus || userId !== userStatusUserId) {
             userStatus = UserStatus.None;
