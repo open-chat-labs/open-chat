@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Added ability to `report_message` ([#3497](https://github.com/open-ic/open-chat/pull/3497))
+- Supports inviting of specific users ([#3499](https://github.com/open-ic/open-chat/pull/3499))
 
 ### Changed
 
