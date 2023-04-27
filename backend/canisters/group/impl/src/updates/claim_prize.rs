@@ -79,14 +79,6 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareResult, Box<R
         let min_visible_event_index = participant.min_visible_event_index();
         let user_id = participant.user_id;
 
-        if !state.data.events.user_metrics(&user_id, None).map_or(false, |metrics| {
-            metrics.text_messages > 0
-                && metrics.reported_messages == 0
-                && (metrics.edits > 0 || metrics.replies > 0 || metrics.poll_votes > 0 || metrics.polls > 0)
-        }) {
-            return Err(Box::new(AlreadyClaimed));
-        }
-
         let (token, amount) = match state
             .data
             .events
