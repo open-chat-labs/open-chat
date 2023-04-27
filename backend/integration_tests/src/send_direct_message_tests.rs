@@ -4,7 +4,7 @@ use crate::rng::random_message_id;
 use crate::{client, TestEnv};
 use std::ops::Deref;
 use std::time::Duration;
-use types::{ChatEvent, EventIndex, MessageContent, TextContent};
+use types::{ChatEvent, EventIndex, MessageContent, MessageContentInitial, TextContent};
 
 #[test]
 fn send_message_succeeds() {
@@ -35,17 +35,17 @@ fn empty_message_fails() {
     let user1 = client::user_index::happy_path::register_user(env, canister_ids.user_index);
     let user2 = client::user_index::happy_path::register_user(env, canister_ids.user_index);
 
-    let send_message_args = user_canister::send_message::Args {
+    let send_message_args = user_canister::send_message_v2::Args {
         recipient: user2.user_id,
         thread_root_message_index: None,
         message_id: random_message_id(),
         sender_name: user1.username(),
-        content: MessageContent::Text(TextContent { text: String::default() }),
+        content: MessageContentInitial::Text(TextContent { text: String::default() }),
         replies_to: None,
         forwarding: false,
         correlation_id: 0,
     };
-    let response = client::user::send_message(env, user1.principal, user1.canister(), &send_message_args);
+    let response = client::user::send_message_v2(env, user1.principal, user1.canister(), &send_message_args);
     if !matches!(response, user_canister::send_message::Response::MessageEmpty) {
         panic!("SendMessage was expected to return MessageEmpty but did not: {response:?}");
     }
@@ -59,19 +59,19 @@ fn text_too_long_fails() {
     let user1 = client::user_index::happy_path::register_user(env, canister_ids.user_index);
     let user2 = client::user_index::happy_path::register_user(env, canister_ids.user_index);
 
-    let send_message_args = user_canister::send_message::Args {
+    let send_message_args = user_canister::send_message_v2::Args {
         recipient: user2.user_id,
         thread_root_message_index: None,
         message_id: random_message_id(),
         sender_name: user1.username(),
-        content: MessageContent::Text(TextContent {
+        content: MessageContentInitial::Text(TextContent {
             text: (0..5001).map(|_| '1').collect(),
         }),
         replies_to: None,
         forwarding: false,
         correlation_id: 0,
     };
-    let response = client::user::send_message(env, user1.principal, user1.canister(), &send_message_args);
+    let response = client::user::send_message_v2(env, user1.principal, user1.canister(), &send_message_args);
     if !matches!(response, user_canister::send_message::Response::TextTooLong(5000)) {
         panic!("SendMessage was expected to return TextTooLong(5000) but did not: {response:?}");
     }
