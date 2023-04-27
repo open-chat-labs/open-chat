@@ -362,21 +362,6 @@
             "replyInThread": "rispondi nel thread"
         },
         "advanced": "Avanzate",
-        "invite": {
-            "inviteWithLink": "Invita al gruppo tramite link",
-            "enableLink": "Abilita collegamento",
-            "resetLink": "Ripristina collegamento",
-            "errorGettingLink": "Impossibile ottenere il collegamento",
-            "errorEnablingLink": "Impossibile abilitare il collegamento",
-            "errorDisablingLink": "Impossibile disabilitare il collegamento",
-            "errorResettingLink": "Impossibile ripristinare il collegamento",
-            "confirmReset": "Sei sicuro di voler reimpostare il collegamento del gruppo? Le persone non potranno più unirsi al gruppo utilizzando il collegamento corrente.",
-            "shareMessage": "Chiunque abbia questo collegamento può visualizzare in anteprima e unirsi al gruppo.",
-            "shareMessageTrust": "Condividilo con le persone di cui ti fidi.",
-            "enabled": "abilitato",
-            "disabled": "Disabilitato",
-            "reset": "Ripristina"
-        },
         "welcome": "Benvenuto a {groupName}",
         "historyPrivateMessage": "I vecchi messaggi non sono visibili ai nuovi membri",
         "privateGroupInfo": "Gli utenti non possono unirsi a questo gruppo liberamente. Devono essere aggiunti o invitati da un membro autorizzato.",
@@ -418,7 +403,9 @@
         "minStakeN": "Puntata minima {n} gettoni",
         "optional": "Opzionale",
         "openAccessInfo": "Non ci sono particolari requisiti di accesso per entrare a far parte di questo gruppo",
-        "gateCheckFailed": "Cancello di accesso non rispettato"
+        "gateCheckFailed": "Cancello di accesso non rispettato",
+        "inviteWithLink": "Invita al gruppo tramite link",
+        "shareMessage": "Chiunque disponga di questo collegamento può visualizzare l'anteprima e unirsi al gruppo. Se sei un membro Diamond e un utente registra un account tramite questo link, guadagnerai la metà di tutti i pagamenti dell'abbonamento Diamond effettuati entro il primo anno."
     },
     "updateNow": "ricarica ora",
     "updateRequired": "È disponibile una nuova versione di OpenChat, che si ricarica tra {countdown}s",

@@ -316,11 +316,6 @@ export interface DirectReactionAddedNotification {
   'timestamp' : TimestampMillis,
   'reaction' : string,
 }
-export interface DisableInviteCodeArgs { 'correlation_id' : bigint }
-export type DisableInviteCodeResponse = { 'ChatFrozen' : null } |
-  { 'NotAuthorized' : null } |
-  { 'Success' : null } |
-  { 'UserSuspended' : null };
 export interface EditMessageArgs {
   'content' : MessageContent,
   'correlation_id' : bigint,
@@ -331,11 +326,6 @@ export type EditMessageResponse = { 'MessageNotFound' : null } |
   { 'CallerNotInGroup' : null } |
   { 'ChatFrozen' : null } |
   { 'Success' : null } |
-  { 'UserSuspended' : null };
-export interface EnableInviteCodeArgs { 'correlation_id' : bigint }
-export type EnableInviteCodeResponse = { 'ChatFrozen' : null } |
-  { 'NotAuthorized' : null } |
-  { 'Success' : { 'code' : bigint } } |
   { 'UserSuspended' : null };
 export type EventIndex = number;
 export interface EventsArgs {
@@ -633,9 +623,6 @@ export type InvalidPollReason = { 'DuplicateOptions' : null } |
   { 'OptionTooLong' : number } |
   { 'EndDateInThePast' : null } |
   { 'PollsNotValidForDirectChats' : null };
-export type InviteCodeArgs = {};
-export type InviteCodeResponse = { 'NotAuthorized' : null } |
-  { 'Success' : { 'code' : [] | [bigint] } };
 export type LocalUserIndexArgs = {};
 export type LocalUserIndexResponse = { 'Success' : CanisterId };
 export interface MakePrivateArgs { 'correlation_id' : bigint }
@@ -1049,11 +1036,6 @@ export interface ReportedMessage {
   'count' : number,
   'reports' : Array<MessageReport>,
 }
-export interface ResetInviteCodeArgs { 'correlation_id' : bigint }
-export type ResetInviteCodeResponse = { 'ChatFrozen' : null } |
-  { 'NotAuthorized' : null } |
-  { 'Success' : { 'code' : bigint } } |
-  { 'UserSuspended' : null };
 export type Role = { 'Participant' : null } |
   { 'Admin' : null } |
   { 'Owner' : null };
@@ -1374,19 +1356,10 @@ export interface _SERVICE {
   'claim_prize' : ActorMethod<[ClaimPrizeArgs], ClaimPrizeResponse>,
   'delete_messages' : ActorMethod<[DeleteMessagesArgs], DeleteMessagesResponse>,
   'deleted_message' : ActorMethod<[DeletedMessageArgs], DeletedMessageResponse>,
-  'disable_invite_code' : ActorMethod<
-    [DisableInviteCodeArgs],
-    DisableInviteCodeResponse
-  >,
   'edit_message' : ActorMethod<[EditMessageArgs], EditMessageResponse>,
-  'enable_invite_code' : ActorMethod<
-    [EnableInviteCodeArgs],
-    EnableInviteCodeResponse
-  >,
   'events' : ActorMethod<[EventsArgs], EventsResponse>,
   'events_by_index' : ActorMethod<[EventsByIndexArgs], EventsResponse>,
   'events_window' : ActorMethod<[EventsWindowArgs], EventsResponse>,
-  'invite_code' : ActorMethod<[InviteCodeArgs], InviteCodeResponse>,
   'local_user_index' : ActorMethod<
     [LocalUserIndexArgs],
     LocalUserIndexResponse
@@ -1415,10 +1388,6 @@ export interface _SERVICE {
     RemoveParticipantResponse
   >,
   'remove_reaction' : ActorMethod<[RemoveReactionArgs], RemoveReactionResponse>,
-  'reset_invite_code' : ActorMethod<
-    [ResetInviteCodeArgs],
-    ResetInviteCodeResponse
-  >,
   'rules' : ActorMethod<[RulesArgs], RulesResponse>,
   'search_messages' : ActorMethod<[SearchMessagesArgs], SearchMessagesResponse>,
   'selected_initial' : ActorMethod<

@@ -472,6 +472,7 @@ export const idlFactory = ({ IDL }) => {
     'GroupNotFound' : IDL.Null,
     'GroupNotPublic' : IDL.Null,
     'AlreadyInGroup' : IDL.Null,
+    'NotInvited' : IDL.Null,
     'GateCheckFailed' : GateCheckFailedReason,
     'ChatFrozen' : IDL.Null,
     'Success' : GroupCanisterGroupChatSummary,
