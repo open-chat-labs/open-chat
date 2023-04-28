@@ -22,10 +22,6 @@ import type {
     ApiUnpinMessageResponse,
     ApiSearchGroupChatResponse,
     ApiMakePrivateResponse,
-    ApiInviteCodeResponse,
-    ApiEnableInviteCodeResponse,
-    ApiDisableInviteCodeResponse,
-    ApiResetInviteCodeResponse,
     ApiThreadPreviewsResponse,
     ApiThreadPreview,
     ApiRegisterPollVoteResponse,
@@ -66,10 +62,6 @@ import {
     PinMessageResponse,
     UnpinMessageResponse,
     MakeGroupPrivateResponse,
-    InviteCodeResponse,
-    EnableInviteCodeResponse,
-    DisableInviteCodeResponse,
-    ResetInviteCodeResponse,
     GroupInviteCodeChange,
     ThreadPreviewsResponse,
     ThreadPreview,
@@ -78,7 +70,6 @@ import {
     GroupRules,
     GroupPermissions,
     SearchGroupChatResponse,
-    codeToText,
     UnsupportedValueError,
     GroupCanisterGroupChatSummary,
     GroupCanisterGroupChatSummaryUpdates,
@@ -999,70 +990,6 @@ export function searchGroupChatResponse(
     );
 }
 
-export function inviteCodeResponse(candid: ApiInviteCodeResponse): InviteCodeResponse {
-    if ("Success" in candid) {
-        return {
-            kind: "success",
-            code: optional(candid.Success.code, codeToText),
-        };
-    }
-    if ("NotAuthorized" in candid) {
-        return {
-            kind: "not_authorised",
-        };
-    }
-    throw new UnsupportedValueError("Unexpected Group.ApiInviteCodeResponse type received", candid);
-}
-
-export function enableInviteCodeResponse(
-    candid: ApiEnableInviteCodeResponse
-): EnableInviteCodeResponse {
-    if ("Success" in candid) {
-        return {
-            kind: "success",
-            code: codeToText(candid.Success.code),
-        };
-    }
-    if ("NotAuthorized" in candid) {
-        return {
-            kind: "not_authorised",
-        };
-    }
-    if ("UserSuspended" in candid) {
-        return {
-            kind: "user_suspended",
-        };
-    }
-    if ("ChatFrozen" in candid) {
-        return { kind: "chat_frozen" };
-    }
-    throw new UnsupportedValueError(
-        "Unexpected Group.ApiEnableInviteCodeResponse type received",
-        candid
-    );
-}
-
-export function disableInviteCodeResponse(
-    candid: ApiDisableInviteCodeResponse
-): DisableInviteCodeResponse {
-    if ("Success" in candid) {
-        return "success";
-    }
-    if ("NotAuthorized" in candid) {
-        return "not_authorised";
-    }
-    if ("UserSuspended" in candid) {
-        return "user_suspended";
-    }
-    if ("ChatFrozen" in candid) {
-        return "chat_frozen";
-    }
-    throw new UnsupportedValueError(
-        "Unexpected ApiDisableInviteCodeResponse type received",
-        candid
-    );
-}
-
 export function threadPreview(chatId: string, candid: ApiThreadPreview): ThreadPreview {
     return {
         chatId,
@@ -1106,34 +1033,6 @@ export function threadPreviewsResponse(
     }
     throw new UnsupportedValueError(
         "Unexpected Group.ApiThreadPreviewsResponse type received",
-        candid
-    );
-}
-
-export function resetInviteCodeResponse(
-    candid: ApiResetInviteCodeResponse
-): ResetInviteCodeResponse {
-    if ("Success" in candid) {
-        return {
-            kind: "success",
-            code: codeToText(candid.Success.code),
-        };
-    }
-    if ("NotAuthorized" in candid) {
-        return {
-            kind: "not_authorised",
-        };
-    }
-    if ("UserSuspended" in candid) {
-        return {
-            kind: "user_suspended",
-        };
-    }
-    if ("ChatFrozen" in candid) {
-        return { kind: "chat_frozen" };
-    }
-    throw new UnsupportedValueError(
-        "Unexpected Group.ApiResetInviteCodeResponse type received",
         candid
     );
 }

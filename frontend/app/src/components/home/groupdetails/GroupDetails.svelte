@@ -129,7 +129,7 @@
             <CollapsibleCard
                 on:toggle={groupInviteUsersOpen.toggle}
                 open={$groupInviteUsersOpen}
-                headerText={$_("group.invite.inviteWithLink")}>
+                headerText={$_("group.inviteWithLink")}>
                 <InviteUsers group={chat} />
             </CollapsibleCard>
         {/if}
