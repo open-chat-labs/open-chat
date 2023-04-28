@@ -1341,6 +1341,17 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
                     .catch(sendError(correlationId));
                 break;
 
+            case "getReferralLeaderboard":
+                agent
+                    .getReferralLeaderboard(payload.args)
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
             case "reportMessage":
                 agent
                     .reportMessage(
