@@ -23,7 +23,7 @@
                 lectus tortor, dignissim sit amet, adipiscing nec, ultricies sed, dolor.
             </p>
 
-            <div class="launch">
+            <div class="launch-wrapper">
                 <Launch text="Claim" rootPath={`/${OPENCHAT_BOT_USER_ID}`} on:login />
             </div>
 
@@ -67,6 +67,7 @@
 
 <style type="text/scss">
     :global(.miami .layout .launch) {
+        width: 100%;
         background-color: #4e27c7 !important;
     }
 
@@ -130,7 +131,7 @@
                 margin-bottom: $sp5;
             }
 
-            .launch {
+            .launch-wrapper {
                 width: 230px;
                 border-radius: $sp2;
                 text-align: center;

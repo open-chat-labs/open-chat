@@ -4,7 +4,7 @@
     import Header from "./Header.svelte";
     import Content from "./Content.svelte";
     import { location, pathParams } from "../../routes";
-    import { getContext } from "svelte";
+    import { getContext, onMount } from "svelte";
     import { CreatedUser, OPENCHAT_BOT_USER_ID, OpenChat } from "openchat-client";
     import Overlay from "../Overlay.svelte";
     import Register from "../register/Register.svelte";
@@ -12,6 +12,7 @@
     import Loading from "../Loading.svelte";
     import { showMenuForLandingRoute } from "utils/urls";
     import page from "page";
+    import { saveSeletedTheme } from "../../theme/themes";
 
     const client = getContext<OpenChat>("client");
 
@@ -29,6 +30,12 @@
             page(`/${OPENCHAT_BOT_USER_ID}`);
         }
     }
+
+    onMount(() => {
+        if (miami) {
+            saveSeletedTheme("dark");
+        }
+    });
 </script>
 
 {#if $identityState === "registering"}
