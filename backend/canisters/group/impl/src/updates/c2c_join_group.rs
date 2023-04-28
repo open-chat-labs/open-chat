@@ -58,7 +58,11 @@ fn c2c_join_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Response
     let now = runtime_state.env.now();
     let min_visible_event_index;
     let min_visible_message_index;
-    if runtime_state.data.history_visible_to_new_joiners {
+
+    if let Some(invitation) = runtime_state.data.invited_users.get(&args.principal) {
+        min_visible_event_index = invitation.min_visible_event_index;
+        min_visible_message_index = invitation.min_visible_message_index;
+    } else if runtime_state.data.history_visible_to_new_joiners {
         min_visible_event_index = EventIndex::default();
         min_visible_message_index = MessageIndex::default();
     } else {
