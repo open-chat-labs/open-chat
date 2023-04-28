@@ -4,15 +4,13 @@
     import { _ } from "svelte-i18n";
     import Clock from "svelte-material-icons/Clock.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { getContext } from "svelte";
     import { Confetti } from "svelte-confetti";
     import { rtlStore } from "../../stores/rtl";
     import { now500 } from "../../stores/time";
     import CkBtcLarge from "../icons/CkBtcLarge.svelte";
     import { toastStore } from "../../stores/toast";
     import { claimsStore } from "../../stores/claims";
-
-    const dispatch = createEventDispatcher();
 
     const client = getContext<OpenChat>("client");
 
@@ -26,19 +24,13 @@
     $: finished = $now500 >= Number(content.endDate);
     $: allClaimed = content.prizesRemaining <= 0;
     $: disabled = finished || claimedByYou || allClaimed;
-    $: isDiamond = client.isDiamond;
     $: timeRemaining = finished
         ? $_("prizes.finished")
         : client.formatTimeRemaining($now500, Number(content.endDate));
     let progressWidth = 0;
-    // let source = "../assets/ckbtc_large.jpeg";
 
     function claim(e: MouseEvent) {
         if (e.isTrusted) {
-            if (!$isDiamond) {
-                dispatch("upgrade", "premium");
-                return;
-            }
             claimsStore.add(messageId);
             client
                 .claimPrize(chatId, messageId)
