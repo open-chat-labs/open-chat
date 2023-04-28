@@ -469,7 +469,10 @@ export const idlFactory = ({ IDL }) => {
     'message_id' : MessageId,
     'event_index' : EventIndex,
   });
-  const ParticipantJoined = IDL.Record({ 'user_id' : UserId });
+  const ParticipantJoined = IDL.Record({
+    'user_id' : UserId,
+    'invited_by' : IDL.Opt(UserId),
+  });
   const ParticipantAssumesSuperAdmin = IDL.Record({ 'user_id' : UserId });
   const GroupDescriptionChanged = IDL.Record({
     'new_description' : IDL.Text,
@@ -484,6 +487,10 @@ export const idlFactory = ({ IDL }) => {
   const MessagePinned = IDL.Record({
     'pinned_by' : UserId,
     'message_index' : MessageIndex,
+  });
+  const UsersInvited = IDL.Record({
+    'user_ids' : IDL.Vec(UserId),
+    'invited_by' : UserId,
   });
   const UsersBlocked = IDL.Record({
     'user_ids' : IDL.Vec(UserId),
@@ -619,6 +626,7 @@ export const idlFactory = ({ IDL }) => {
     'GroupDescriptionChanged' : GroupDescriptionChanged,
     'GroupChatCreated' : GroupChatCreated,
     'MessagePinned' : MessagePinned,
+    'UsersInvited' : UsersInvited,
     'UsersBlocked' : UsersBlocked,
     'MessageUnpinned' : MessageUnpinned,
     'MessageReactionAdded' : UpdatedMessage,

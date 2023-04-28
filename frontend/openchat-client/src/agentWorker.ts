@@ -96,6 +96,8 @@ import {
     ReferralLeaderboardRange,
     ReferralLeaderboardResponse,
     ReportMessageResponse,
+    InviteUsersResponse,
+    DeclineInvitationResponse,
 } from "openchat-shared";
 import type { OpenChatConfig } from "./config";
 import { v4 } from "uuid";
@@ -961,6 +963,19 @@ export class OpenChatAgentWorker extends EventTarget {
         });
     }
 
+    inviteUsers(
+        chatId: string,
+        userIds: string[],
+    ): Promise<InviteUsersResponse> {
+        return this.sendRequest({
+            kind: "inviteUsers",
+            payload: {
+                chatId,
+                userIds,
+            },
+        });
+    }
+
     removeMember(chatId: string, userId: string): Promise<RemoveMemberResponse> {
         return this.sendRequest({
             kind: "removeMember",
@@ -1387,6 +1402,13 @@ export class OpenChatAgentWorker extends EventTarget {
                 notes,
                 threadRootMessageIndex,
             },
+        });
+    }
+
+    declineInvitation(chatId: string): Promise<DeclineInvitationResponse> {
+        return this.sendRequest({
+            kind: "declineInvitation",
+            payload: { chatId },
         });
     }
 }

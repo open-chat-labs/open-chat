@@ -18,7 +18,7 @@
         groupVisibilityOpen,
     } from "../../../stores/settings";
     import AdvancedSection from "./AdvancedSection.svelte";
-    import InviteUsers from "./InviteUsers.svelte";
+    import InviteUsersWithLink from "./InviteUsersWithLink.svelte";
     import type { OpenChat, GroupChatSummary, GroupRules } from "openchat-client";
     import { AvatarSize } from "openchat-client";
     import GroupGateSummary from "./GroupGateSummary.svelte";
@@ -34,7 +34,6 @@
 
     // capture a snapshot of the chat as it is right now
     $: canEdit = client.canEditGroupDetails(chat.chatId);
-    $: canInvite = client.canInviteUsers(chat.chatId);
     $: avatarSrc = client.groupAvatarUrl(chat);
 
     function editGroup() {
@@ -125,12 +124,12 @@
                 <Markdown inline={false} text={rules.text} />
             </CollapsibleCard>
         {/if}
-        {#if canInvite}
+        {#if chat.public}
             <CollapsibleCard
                 on:toggle={groupInviteUsersOpen.toggle}
                 open={$groupInviteUsersOpen}
                 headerText={$_("group.inviteWithLink")}>
-                <InviteUsers group={chat} />
+                <InviteUsersWithLink group={chat} />
             </CollapsibleCard>
         {/if}
         <CollapsibleCard

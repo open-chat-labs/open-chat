@@ -5,7 +5,6 @@ import { get, writable } from "svelte/store";
 import { load } from "@fingerprintjs/botd";
 import {
     buildUserAvatarUrl,
-    canAddMembers,
     canBlockUsers,
     canChangePermissions,
     canChangeRoles,
@@ -78,6 +77,7 @@ import {
     userMetrics,
     createDirectChat,
     currentChatBlockedUsers,
+    currentChatInvitedUsers,
     currentChatDraftMessage,
     currentChatEditingEvent,
     currentChatFileToAttach,
@@ -297,6 +297,7 @@ import {
     GroupGate,
     ProposalVoteDetails,
     MessageReminderCreatedContent,
+    InviteUsersResponse,
     ReferralLeaderboardRange,
     ReferralLeaderboardResponse,
 } from "openchat-shared";
@@ -1087,10 +1088,6 @@ export class OpenChat extends EventTarget {
         return this.chatPredicate(chatId, canLeaveGroup);
     }
 
-    canAddMembers(chatId: string): boolean {
-        return this.chatPredicate(chatId, canAddMembers);
-    }
-
     isPreviewing(chatId: string): boolean {
         return this.chatPredicate(chatId, isPreviewing);
     }
@@ -1491,6 +1488,7 @@ export class OpenChat extends EventTarget {
         const allUserIds = new Set<string>();
         chatStateStore.getProp(chatId, "members").forEach((m) => allUserIds.add(m.userId));
         chatStateStore.getProp(chatId, "blockedUsers").forEach((u) => allUserIds.add(u));
+        chatStateStore.getProp(chatId, "invitedUsers").forEach((u) => allUserIds.add(u));
         for (const u of userIdsFromEvents) {
             allUserIds.add(u);
         }
@@ -1960,6 +1958,7 @@ export class OpenChat extends EventTarget {
                     );
                     chatStateStore.setProp(clientChat.chatId, "members", resp.members);
                     chatStateStore.setProp(clientChat.chatId, "blockedUsers", resp.blockedUsers);
+                    chatStateStore.setProp(clientChat.chatId, "invitedUsers", resp.invitedUsers);
                     chatStateStore.setProp(
                         clientChat.chatId,
                         "pinnedMessages",
@@ -1981,6 +1980,7 @@ export class OpenChat extends EventTarget {
                 const gd = await this.api.getGroupDetailsUpdates(clientChat.chatId, {
                     members: chatStateStore.getProp(clientChat.chatId, "members"),
                     blockedUsers: chatStateStore.getProp(clientChat.chatId, "blockedUsers"),
+                    invitedUsers: chatStateStore.getProp(clientChat.chatId, "invitedUsers"),
                     pinnedMessages: chatStateStore.getProp(clientChat.chatId, "pinnedMessages"),
                     latestEventIndex,
                     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -1988,6 +1988,7 @@ export class OpenChat extends EventTarget {
                 });
                 chatStateStore.setProp(clientChat.chatId, "members", gd.members);
                 chatStateStore.setProp(clientChat.chatId, "blockedUsers", gd.blockedUsers);
+                chatStateStore.setProp(clientChat.chatId, "invitedUsers", gd.invitedUsers);
                 chatStateStore.setProp(clientChat.chatId, "pinnedMessages", gd.pinnedMessages);
                 chatStateStore.setProp(clientChat.chatId, "rules", gd.rules);
                 await this.updateUserStore(clientChat.chatId, []);
@@ -2962,6 +2963,13 @@ export class OpenChat extends EventTarget {
         return this.api.addMembers(chatId, userIds, myUsername, allowBlocked);
     }
 
+    inviteUsers(
+        chatId: string,
+        userIds: string[]
+    ): Promise<InviteUsersResponse> {
+        return this.api.inviteUsers(chatId, userIds);
+    }
+
     removeMember(chatId: string, userId: string): Promise<RemoveMemberResponse> {
         return this.api.removeMember(chatId, userId);
     }
@@ -3776,6 +3784,18 @@ export class OpenChat extends EventTarget {
             });
     }
 
+    declineInvitation(chatId: string): Promise<boolean> {
+        return this.api
+            .declineInvitation(chatId)
+            .then((res) => {
+                return res === "success";
+            })
+            .catch((err) => {
+                this._logger.error("Failed to decline invitation", err);
+                return false;
+            });
+    }
+
     updateMarketMakerConfig(
         config: UpdateMarketMakerConfigArgs
     ): Promise<UpdateMarketMakerConfigResponse> {
@@ -3815,6 +3835,7 @@ export class OpenChat extends EventTarget {
     selectedChatId = selectedChatId;
     currentChatMembers = currentChatMembers;
     currentChatBlockedUsers = currentChatBlockedUsers;
+    currentChatInvitedUsers = currentChatInvitedUsers;
     chatStateStore = chatStateStore;
     unconfirmed = unconfirmed;
     failedMessagesStore = failedMessagesStore;

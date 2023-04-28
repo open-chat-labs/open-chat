@@ -703,10 +703,14 @@
             .catch(() => (joining = undefined));
     }
 
-    function cancelPreview(ev: CustomEvent<string>) {
+    function cancelPreview(ev: CustomEvent<GroupChatSummary>) {
+        let chat = ev.detail;
         page("/");
         tick().then(() => {
-            client.removeChat(ev.detail);
+            client.removeChat(chat.chatId);
+            if (!chat.public) {
+                client.declineInvitation(chat.chatId)
+            }
         });
     }
 
@@ -806,7 +810,6 @@
             permissions: {
                 changePermissions: "admins",
                 changeRoles: "admins",
-                addMembers: "admins",
                 removeMembers: "admins",
                 blockUsers: "admins",
                 deleteMessages: "admins",

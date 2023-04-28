@@ -1,6 +1,7 @@
 import {
     GateCheckFailedReason,
     GroupChatSummary,
+    InviteUsersResponse,
     JoinGroupResponse,
     ReportMessageResponse,
     UnsupportedValueError,
@@ -8,6 +9,7 @@ import {
 import type {
     ApiGateCheckFailedReason,
     ApiGroupCanisterGroupChatSummary,
+    ApiInviteUsersResponse,
     ApiJoinGroupResponse,
     ApiReportMessageResponse,
 } from "./candid/idl";
@@ -29,6 +31,31 @@ export function reportMessageResponse(candid: ApiReportMessageResponse): ReportM
         return "failure";
     }
     throw new UnsupportedValueError("Unexpected ApiReportMessageResponse type received", candid);
+}
+
+export function inviteUsersResponse(candid: ApiInviteUsersResponse): InviteUsersResponse {
+    if ("Success" in candid) {
+        return "success";
+    }
+    if ("NotAuthorized" in candid) {
+        return "not_authorised";
+    }
+    if ("InternalError" in candid) {
+        return "internal_error";
+    }
+    if ("CallerNotInGroup" in candid) {
+        return "caller_not_in_group";
+    }
+    if ("GroupNotFound" in candid) {
+        return "group_not_found";
+    }
+    if ("TooManyInvites" in candid) {
+        return "too_many_invites";
+    }
+    if ("ChatFrozen" in candid) {
+        return "chat_frozen";
+    }
+    throw new UnsupportedValueError("Unexpected ApiInviteUsersResponse type received", candid);
 }
 
 export function joinGroupResponse(candid: ApiJoinGroupResponse): JoinGroupResponse {

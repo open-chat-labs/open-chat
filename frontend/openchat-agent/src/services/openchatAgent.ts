@@ -141,6 +141,8 @@ import {
     ReferralLeaderboardRange,
     ReferralLeaderboardResponse,
     ReportMessageResponse,
+    InviteUsersResponse,
+    DeclineInvitationResponse,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import { applyOptionUpdate } from "../utils/mapping";
@@ -346,6 +348,18 @@ export class OpenChatAgent extends EventTarget {
             return Promise.resolve<AddMembersResponse>({ kind: "add_members_success" });
         }
         return this.getGroupClient(chatId).addMembers(userIds, myUsername, allowBlocked);
+    }
+
+    async inviteUsers(
+        chatId: string,
+        userIds: string[],
+    ): Promise<InviteUsersResponse> {
+        if (!userIds.length) {
+            return Promise.resolve<InviteUsersResponse>("success");
+        }
+
+        const localUserIndex = await this.getGroupClient(chatId).localUserIndex();
+        return this.createLocalUserIndexClient(localUserIndex).inviteUsersToGroup(chatId, userIds);
     }
 
     directChatEventsWindow(
@@ -1631,5 +1645,8 @@ export class OpenChatAgent extends EventTarget {
             notes,
             threadRootMessageIndex
         );
+    }
+    declineInvitation(chatId: string): Promise<DeclineInvitationResponse> {
+        return this.getGroupClient(chatId).declineInvitation();
     }
 }

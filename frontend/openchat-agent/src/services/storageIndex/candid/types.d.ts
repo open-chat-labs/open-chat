@@ -81,6 +81,7 @@ export type ChatEvent = { 'Empty' : null } |
   { 'GroupDescriptionChanged' : GroupDescriptionChanged } |
   { 'GroupChatCreated' : GroupChatCreated } |
   { 'MessagePinned' : MessagePinned } |
+  { 'UsersInvited' : UsersInvited } |
   { 'UsersBlocked' : UsersBlocked } |
   { 'MessageUnpinned' : MessageUnpinned } |
   { 'MessageReactionAdded' : UpdatedMessage } |
@@ -234,6 +235,7 @@ export interface DirectReactionAddedNotification {
   'timestamp' : TimestampMillis,
   'reaction' : string,
 }
+export type EmptyArgs = {};
 export type EventIndex = number;
 export type EventsTimeToLiveUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
@@ -673,7 +675,10 @@ export interface Participant {
 }
 export interface ParticipantAssumesSuperAdmin { 'user_id' : UserId }
 export interface ParticipantDismissedAsSuperAdmin { 'user_id' : UserId }
-export interface ParticipantJoined { 'user_id' : UserId }
+export interface ParticipantJoined {
+  'user_id' : UserId,
+  'invited_by' : [] | [UserId],
+}
 export interface ParticipantLeft { 'user_id' : UserId }
 export interface ParticipantRelinquishesSuperAdmin { 'user_id' : UserId }
 export interface ParticipantsAdded {
@@ -944,6 +949,10 @@ export interface UserSummary {
 export interface UsersBlocked {
   'user_ids' : Array<UserId>,
   'blocked_by' : UserId,
+}
+export interface UsersInvited {
+  'user_ids' : Array<UserId>,
+  'invited_by' : UserId,
 }
 export interface UsersUnblocked {
   'user_ids' : Array<UserId>,

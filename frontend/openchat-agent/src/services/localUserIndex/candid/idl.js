@@ -1,8 +1,22 @@
 export const idlFactory = ({ IDL }) => {
   const CanisterId = IDL.Principal;
+  const UserId = CanisterId;
   const ChatId = CanisterId;
+  const InviteUsersToGroupArgs = IDL.Record({
+    'user_ids' : IDL.Vec(UserId),
+    'group_id' : ChatId,
+    'correlation_id' : IDL.Nat64,
+  });
+  const InviteUsersToGroupResponse = IDL.Variant({
+    'GroupNotFound' : IDL.Null,
+    'CallerNotInGroup' : IDL.Null,
+    'ChatFrozen' : IDL.Null,
+    'NotAuthorized' : IDL.Null,
+    'Success' : IDL.Null,
+    'InternalError' : IDL.Text,
+    'TooManyInvites' : IDL.Nat32,
+  });
   const JoinGroupArgs = IDL.Record({
-    'invite_code' : IDL.Opt(IDL.Nat64),
     'correlation_id' : IDL.Nat64,
     'chat_id' : ChatId,
   });
@@ -94,7 +108,6 @@ export const idlFactory = ({ IDL }) => {
     'latest_event' : EventIndex,
     'latest_message' : MessageIndex,
   });
-  const UserId = CanisterId;
   const FrozenGroupInfo = IDL.Record({
     'timestamp' : TimestampMillis,
     'frozen_by' : UserId,
@@ -457,6 +470,7 @@ export const idlFactory = ({ IDL }) => {
     'latest_message' : IDL.Opt(MessageEventWrapper),
   });
   const JoinGroupResponse = IDL.Variant({
+    'NotInvited' : IDL.Null,
     'Blocked' : IDL.Null,
     'GroupNotFound' : IDL.Null,
     'GroupNotPublic' : IDL.Null,
@@ -482,6 +496,11 @@ export const idlFactory = ({ IDL }) => {
     'InternalError' : IDL.Text,
   });
   return IDL.Service({
+    'invite_users_to_group' : IDL.Func(
+        [InviteUsersToGroupArgs],
+        [InviteUsersToGroupResponse],
+        [],
+      ),
     'join_group' : IDL.Func([JoinGroupArgs], [JoinGroupResponse], []),
     'report_message' : IDL.Func(
         [ReportMessageArgs],

@@ -22,6 +22,7 @@
     import GroupInviteCodeChangedEvent from "./GroupInviteCodeChangedEvent.svelte";
     import ChatFrozenEvent from "./ChatFrozenEvent.svelte";
     import ChatUnfrozenEvent from "./ChatUnfrozenEvent.svelte";
+    import UsersInvitedEvent from "./UsersInvitedEvent.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -158,6 +159,12 @@
         changed={event.event.userIds}
         changedBy={event.event.addedBy}
         resourceKey={"addedBy"}
+        timestamp={event.timestamp} />
+{:else if event.event.kind === "users_invited"}
+    <UsersInvitedEvent
+        user={userSummary}
+        usersIds={event.event.userIds}
+        invitedBy={event.event.invitedBy}
         timestamp={event.timestamp} />
 {:else if event.event.kind === "members_removed"}
     <MembersChangedEvent

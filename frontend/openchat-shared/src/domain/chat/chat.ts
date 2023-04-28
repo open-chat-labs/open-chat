@@ -549,6 +549,7 @@ export type GroupChatEvent =
     | GateUpdatedEvent
     | ChatUnfrozenEvent
     | EventsTimeToLiveUpdated
+    | UsersInvitedEvent
     | EmptyEvent;
 
 export type ChatEvent = GroupChatEvent | DirectChatEvent;
@@ -911,7 +912,6 @@ export type PermissionRole = "owner" | "admins" | "members";
 export type GroupPermissions = {
     changePermissions: PermissionRole;
     changeRoles: PermissionRole;
-    addMembers: PermissionRole;
     removeMembers: PermissionRole;
     blockUsers: PermissionRole;
     deleteMessages: PermissionRole;
@@ -934,6 +934,7 @@ export type GroupChatDetailsUpdatesResponse =
 export type GroupChatDetails = {
     members: Member[];
     blockedUsers: Set<string>;
+    invitedUsers: Set<string>;
     pinnedMessages: Set<number>;
     latestEventIndex: number;
     rules: GroupRules;
@@ -947,6 +948,7 @@ export type ChatSpecificState = {
     detailsLoaded: boolean;
     members: Member[];
     blockedUsers: Set<string>;
+    invitedUsers: Set<string>;
     pinnedMessages: Set<number>;
     latestEventIndex?: number;
     rules?: GroupRules;
@@ -978,6 +980,7 @@ export type GroupChatDetailsUpdates = {
     pinnedMessagesAdded: Set<number>;
     latestEventIndex: number;
     rules?: GroupRules;
+    invitedUsers?: Set<string>;
 };
 
 export type ChatSummary = DirectChatSummary | GroupChatSummary;
@@ -1396,6 +1399,12 @@ export type GateUpdatedEvent = {
     updatedBy: string;
 };
 
+export type UsersInvitedEvent = {
+    kind: "users_invited";
+    userIds: string[];
+    invitedBy: string;
+};
+
 export type ChatUnfrozenEvent = {
     kind: "chat_unfrozen";
     unfrozenBy: string;
@@ -1486,6 +1495,7 @@ export type JoinGroupResponse =
     | { kind: "group_not_found" }
     | { kind: "not_invited" }
     | { kind: "group_not_public" }
+    | { kind: "not_invited" }
     | { kind: "already_in_group" }
     | { kind: "not_super_admin" }
     | { kind: "member_limit_reached" }
@@ -1493,6 +1503,15 @@ export type JoinGroupResponse =
     | UserSuspended
     | ChatFrozen
     | InternalError;
+
+export type InviteUsersResponse =
+    | "success"
+    | "group_not_found"
+    | "caller_not_in_group"
+    | "not_authorised"
+    | "chat_frozen"
+    | "too_many_invites"
+    | "internal_error";
 
 export type MarkReadRequest = {
     readUpTo: number | undefined;
@@ -1753,3 +1772,8 @@ export type ClaimPrizeResponse =
     | { kind: "transfer_failed" };
 
 export type ReportMessageResponse = "success" | "failure";
+
+export type DeclineInvitationResponse =
+    | "success"
+    | "not_invited"
+    | "internal_error";

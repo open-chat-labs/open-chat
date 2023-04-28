@@ -406,7 +406,11 @@
         "openAccessInfo": "No hay requisitos especiales de acceso para unirse a este grupo",
         "gateCheckFailed": "Puerta de acceso no cumplida",
         "inviteWithLink": "Invitar al grupo a través de un enlace",
-        "shareMessage": "Cualquier persona con este enlace puede obtener una vista previa y unirse al grupo. Si es miembro Diamond y cualquier usuario registra una cuenta a través de este enlace, obtendrá la mitad de los pagos de membresía Diamond que realicen durante su primer año."
+        "shareMessage": "Cualquier persona con este enlace puede obtener una vista previa y unirse al grupo. Si es miembro Diamond y cualquier usuario registra una cuenta a través de este enlace, obtendrá la mitad de los pagos de membresía Diamond que realicen durante su primer año.",
+        "invite": "Invitar",
+        "inviteUsers": "Invitar usuarios",
+        "inviteUsersFailed": "Hubo un error al invitar a los usuarios",
+        "tooManyInvites": "Solo puedes tener 100 invitaciones pendientes"
     },
     "updateNow": "recargar ahora",
     "updateRequired": "Una nueva versión de OpenChat está disponible - recargando en {countdown}s",
@@ -796,6 +800,7 @@
         "messageReport": "Reportado por @{username} el {timestamp} por el siguiente motivo: **{reason}**",
         "showing": "Mostrando los {count} más recientes de {total} informe(s)"
     },
+    "invitedBy": "{invitedBy} invitó a {users} al grupo",
     "halloffame": {
         "menu": "Referencias principales",
         "allTime": "Todo el tiempo",

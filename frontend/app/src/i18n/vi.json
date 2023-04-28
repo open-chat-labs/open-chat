@@ -406,7 +406,11 @@
         "openAccessInfo": "Không có yêu cầu truy cập đặc biệt để tham gia nhóm này",
         "gateCheckFailed": "Cổng truy cập không được đáp ứng",
         "inviteWithLink": "Mời vào nhóm qua liên kết",
-        "shareMessage": "Bất kỳ ai có liên kết này đều có thể xem trước và tham gia nhóm. Nếu bạn là thành viên Kim cương và bất kỳ người dùng nào đăng ký tài khoản qua liên kết này, bạn sẽ kiếm được một nửa số tiền thanh toán thành viên Kim cương mà họ thực hiện trong năm đầu tiên."
+        "shareMessage": "Bất kỳ ai có liên kết này đều có thể xem trước và tham gia nhóm. Nếu bạn là thành viên Kim cương và bất kỳ người dùng nào đăng ký tài khoản qua liên kết này, bạn sẽ kiếm được một nửa số tiền thanh toán thành viên Kim cương mà họ thực hiện trong năm đầu tiên.",
+        "invite": "Mời",
+        "inviteUsers": "Mời người dùng",
+        "inviteUsersFailed": "Đã xảy ra lỗi khi mời người dùng",
+        "tooManyInvites": "Bạn chỉ có thể có 100 lời mời nổi bật"
     },
     "updateNow": "tải lại ngay bây giờ",
     "updateRequired": "Đã có phiên bản OpenChat mới - tải lại sau {countdown} giây",
@@ -795,6 +799,7 @@
         "messageReport": "Được @{username} báo cáo về {timestamp} vì lý do sau: **{reason}**",
         "showing": "Đang hiển thị {count}/{total} báo cáo gần đây nhất"
     },
+    "invitedBy": "{invitedBy} đã mời {users} vào nhóm",
     "halloffame": {
         "menu": "Người giới thiệu hàng đầu",
         "allTime": "Mọi thời đại",

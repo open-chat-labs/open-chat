@@ -129,6 +129,7 @@
     "userJoined": "{username} joined the group",
     "addedBy": "{changedBy} added {changed} to the group",
     "removedBy": "{changedBy} removed {changed} from the group",
+    "invitedBy": "{invitedBy} invited {users} to the group",
     "roleChanged": "{changedBy} changed the role of {changed} from {oldRole} to {newRole}",
     "yourRoleChanged": "{changedBy} changed your role from {oldRole} to {newRole}",
     "permissionsChangedBy": "{changedBy} changed the group permissions",
@@ -419,6 +420,7 @@
         },
         "inviteWithLink": "Invite to group via link",
         "shareMessage": "Anyone with this link can preview and join the group. If you are a Diamond member and any user registers an account via this link, you will earn half of any Diamond membership payments they make within their first year.",
+        "invite": "Invite",
         "advanced": "Advanced",
         "welcome": "Welcome to {groupName}",
         "historyPrivateMessage": "Old messages are not visible to new members",
@@ -452,7 +454,10 @@
         "minStakeN": "Min stake {n} tokens",
         "optional": "Optional",
         "openAccessInfo": "There are no special access requirements to join this group",
-        "gateCheckFailed": "Access gate not met"
+        "gateCheckFailed": "Access gate not met",
+        "inviteUsers": "Invite users",
+        "inviteUsersFailed": "There was an error inviting users",
+        "tooManyInvites": "You can only have 100 outstanding invitations"
     },
     "updateNow": "reload now",
     "updateRequired": "A new version of OpenChat is available - reloading in {countdown}s",

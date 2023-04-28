@@ -1,100 +1,93 @@
 <script lang="ts">
-    import { getContext } from "svelte";
-    import ShareIcon from "svelte-material-icons/ShareVariant.svelte";
-    import QR from "svelte-qr";
-    import CopyIcon from "svelte-material-icons/ContentCopy.svelte";
+    import SectionHeader from "../../SectionHeader.svelte";
+    import Loading from "../../Loading.svelte";
+    import Button from "../../Button.svelte";
+    import Close from "svelte-material-icons/Close.svelte";
+    import HoverIcon from "../../HoverIcon.svelte";
     import { _ } from "svelte-i18n";
-    import Link from "../../Link.svelte";
+    import SelectUsers from "../SelectUsers.svelte";
+    import type { UserSummary } from "openchat-client";
+    import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
+    import { createEventDispatcher } from "svelte";
     import { iconSize } from "../../../stores/iconSize";
-    import { toastStore } from "../../../stores/toast";
-    import type { OpenChat, GroupChatSummary } from "openchat-client";
-    import { canShare, shareLink } from "../../../utils/share";
 
-    export let group: GroupChatSummary;
+    export let closeIcon: "close" | "back";
+    export let busy = false;
 
-    const client = getContext<OpenChat>("client");
+    const dispatch = createEventDispatcher();
+    let usersToInvite: UserSummary[] = [];
 
-    $: link = `${window.location.origin}/${group.chatId}/?ref=${client.user.userId}`;
-
-    function onCopy() {
-        navigator.clipboard.writeText(link).then(
-            () => {
-                toastStore.showSuccessToast("linkCopiedToClipboard");
-            },
-            () => {
-                toastStore.showFailureToast("failedToCopyLinkToClipboard");
-            }
-        );
+    function cancelInviteUsers() {
+        dispatch("cancelInviteUsers");
     }
 
-    function onShare() {
-        shareLink(link);
+    function inviteUsers() {
+        dispatch("inviteUsers", usersToInvite);
+    }
+
+    function deleteUser(ev: CustomEvent<UserSummary>) {
+        usersToInvite = usersToInvite.filter((u) => u.userId !== ev.detail.userId);
+    }
+
+    function selectUser(ev: CustomEvent<UserSummary>) {
+        usersToInvite = [...usersToInvite, ev.detail];
     }
 </script>
 
-<div class="link-enabled">
-    <div class="link">{link}</div>
-    <div class="qr-wrapper">
-        <div class="qr">
-            <QR text={link} />
-        </div>
+<SectionHeader border={false} flush={true}>
+    <h4>{$_("group.inviteUsers")}</h4>
+    <span title={$_("close")} class="close" on:click={cancelInviteUsers}>
+        <HoverIcon>
+            {#if closeIcon === "close"}
+                <Close size={$iconSize} color={"var(--icon-txt)"} />
+            {:else}
+                <ArrowLeft size={$iconSize} color={"var(--icon-txt)"} />
+            {/if}
+        </HoverIcon>
+    </span>
+</SectionHeader>
+
+{#if !busy}
+    <div class="find-user">
+        <SelectUsers
+            mode={"edit"}
+            on:selectUser={selectUser}
+            on:deleteUser={deleteUser}
+            selectedUsers={usersToInvite} />
     </div>
-    <div class="message">
-        {$_("group.shareMessage")}
-    </div>
-    <div class="action">
-        <CopyIcon size={$iconSize} color={"var(--icon-txt)"} />
-        <Link on:click={onCopy}>
-            {$_("copy")}
-        </Link>
-    </div>
-    {#if canShare()}
-        <div class="action">
-            <ShareIcon size={$iconSize} color={"var(--icon-txt)"} />
-            <Link on:click={onShare}>
-                {$_("share")}
-            </Link>
-        </div>
-    {/if}
+{/if}
+
+{#if busy}
+    <Loading />
+{/if}
+
+<div class="cta">
+    <Button
+        disabled={busy || usersToInvite.length === 0}
+        loading={busy}
+        on:click={inviteUsers}
+        fill={true}>{$_("group.inviteUsers")}</Button>
 </div>
 
 <style type="text/scss">
-    .qr-wrapper {
-        border: 1px solid var(--bd);
-        .qr {
-            background-color: #fff;
-            margin: $sp5 auto;
-            width: 200px;
-
-            @include mobile() {
-                width: 100%;
-                margin: 0;
-            }
-        }
+    h4 {
+        flex: 1;
+        padding: 0 $sp4;
+        @include font-size(fs-120);
     }
-
-    .link,
-    .message {
-        @include font(book, normal, fs-80);
+    .close {
+        flex: 0 0 30px;
     }
-
-    .message {
-        color: var(--txt-light);
-    }
-
-    .link {
-        color: var(--link-underline);
-    }
-
-    .link-enabled {
+    .find-user {
+        flex: 1;
         display: flex;
         flex-direction: column;
-        gap: $sp4;
-    }
 
-    .action {
-        display: flex;
-        gap: $sp4;
-        align-items: center;
+        @include size-above(xl) {
+            padding: 0;
+        }
+    }
+    .cta {
+        height: 57px;
     }
 </style>

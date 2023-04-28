@@ -405,7 +405,11 @@
         "openAccessInfo": "加入这个群组没有特殊的访问要求",
         "gateCheckFailed": "未满足访问门",
         "inviteWithLink": "通过链接邀请加入群组",
-        "shareMessage": "知道此链接的任何人都可以预览和加入群组。如果您是钻石会员并且任何用户通过此链接注册帐户，您将获得他们在第一年内支付的任何钻石会员付款的一半。"
+        "shareMessage": "知道此链接的任何人都可以预览和加入群组。如果您是钻石会员并且任何用户通过此链接注册帐户，您将获得他们在第一年内支付的任何钻石会员付款的一半。",
+        "invite": "邀请",
+        "inviteUsers": "邀请用户",
+        "inviteUsersFailed": "邀请用户时出错",
+        "tooManyInvites": "您只能有 100 个未完成的邀请"
     },
     "updateNow": "现在重新加载",
     "updateRequired": "新版本的 OpenChat 可用 - 在 {countdown} 秒内重新加载",
@@ -795,6 +799,7 @@
         "messageReport": "由@{username} 在 {timestamp} 上报告，原因如下：**{reason}**",
         "showing": "显示最近的 {count} 份报告（共 {total} 份）"
     },
+    "invitedBy": "{invitedBy} 邀请 {users} 加入群组",
     "halloffame": {
         "menu": "热门推荐人",
         "allTime": "整天",

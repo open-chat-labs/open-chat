@@ -124,20 +124,18 @@
         throw new UnsupportedValueError(`Unexpected CreateGroupResponse type received`, resp);
     }
 
-    function optionallyAddMembers(canisterId: string): Promise<void> {
+    function optionallyInviteUsers(canisterId: string): Promise<void> {
         if (candidateGroup.members.length === 0) {
             return Promise.resolve();
         }
         return client
-            .addMembers(
+            .inviteUsers(
                 canisterId,
                 candidateGroup.members.map((m) => m.user.userId),
-                user.username,
-                false
             )
             .then((resp) => {
-                if (resp.kind !== "add_members_success") {
-                    Promise.reject("Unable to add members to the new group");
+                if (resp !== "success") {
+                    Promise.reject("Unable to invite users to the new group");
                 }
             });
     }
@@ -302,12 +300,12 @@
                     if (err) toastStore.showFailureToast(err);
                     step = 0;
                 } else {
-                    return optionallyAddMembers(resp.canisterId)
+                    return optionallyInviteUsers(resp.canisterId)
                         .then(() => {
                             onGroupCreated(resp.canisterId);
                         })
                         .catch((err) => {
-                            toastStore.showFailureToast("addMembersFailed");
+                            toastStore.showFailureToast("inviteUsersFailed");
                             step = 0;
                         });
                 }

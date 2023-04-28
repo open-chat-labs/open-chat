@@ -54,6 +54,7 @@ import type {
     UpdatesResult,
     WithdrawCryptocurrencyResponse,
     ReportMessageResponse,
+    InviteUsersResponse,
 } from "./chat";
 import type { BlobReference, StorageStatus } from "./data/data";
 import type { UpdateMarketMakerConfigArgs, UpdateMarketMakerConfigResponse } from "./marketMaker";
@@ -90,7 +91,6 @@ import type {
     SearchGroupChatResponse,
 } from "./search/search";
 import type { Cryptocurrency, Tokens } from "./crypto";
-import type { GroupInvite } from "./inviteCodes";
 
 /**
  * Worker request types
@@ -110,6 +110,7 @@ export type WorkerRequest =
     | ChangeRole
     | RemoveMember
     | AddMembers
+    | InviteUsers
     | PushSub
     | RemoveSub
     | SubscriptionExists
@@ -163,7 +164,6 @@ export type WorkerRequest =
     | CreateUserClient
     | Init
     | CurrentUser
-    | SetGroupInvite
     | SearchGroupChat
     | SearchDirectChat
     | RefreshAccountBalance
@@ -199,7 +199,8 @@ export type WorkerRequest =
     | SetMessageReminder
     | CancelMessageReminder
     | ReferralLeaderboard
-    | ReportMessage;
+    | ReportMessage
+    | DeclineInvitation;
 
 type ReferralLeaderboard = Request<{
     args?: ReferralLeaderboardRange;
@@ -297,12 +298,6 @@ type SearchGroupChat = Request<{
     kind: "searchGroupChat";
 };
 
-type SetGroupInvite = Request<{
-    value: GroupInvite;
-}> & {
-    kind: "groupInvite";
-};
-
 type DismissRecommendations = Request<{
     chatId: string;
 }> & {
@@ -358,6 +353,13 @@ type AddMembers = Request<{
     allowBlocked: boolean;
 }> & {
     kind: "addMembers";
+};
+
+type InviteUsers = Request<{
+    chatId: string;
+    userIds: string[];
+}> & {
+    kind: "inviteUsers";
 };
 
 type RemoveSub = Request<{
@@ -850,6 +852,7 @@ export type WorkerResponse =
     | Response<RegisterProposalVoteResponse>
     | Response<ChangeRoleResponse>
     | Response<AddMembersResponse>
+    | Response<InviteUsersResponse>
     | Response<RemoveMemberResponse>
     | Response<boolean>
     | Response<RegisterUserResponse>
@@ -1010,3 +1013,10 @@ type ReportMessage = Request<{
 }> & {
     kind: "reportMessage";
 };
+
+type DeclineInvitation = Request<{
+    chatId: string;
+}> & {
+    kind: "declineInvitation";
+};
+
