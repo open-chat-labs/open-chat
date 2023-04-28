@@ -11,7 +11,7 @@ pub fn start_job() {
     ic_cdk_timers::set_timer_interval(INTERVAL, run);
 
     // Run the job now so that there is never a gap of more than 1 day.
-    ic_cdk_timers::set_timer(Duration::default(), run);
+    ic_cdk_timers::set_timer(Duration::ZERO, run);
 }
 
 fn run() {
