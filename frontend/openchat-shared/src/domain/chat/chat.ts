@@ -904,8 +904,7 @@ export type Member = {
     userId: string;
 };
 
-export type FullMember = Member & PartialUserSummary & { memberKind: "full_member" };
-export type BlockedMember = Member & PartialUserSummary & { memberKind: "blocked_member" };
+export type FullMember = Member & PartialUserSummary;
 
 export type PermissionRole = "owner" | "admins" | "members";
 

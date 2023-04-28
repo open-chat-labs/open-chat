@@ -105,7 +105,6 @@
     "ownershipTransferredBy": "{changedBy} đã chuyển quyền sở hữu nhóm cho {changed} 🎉",
     "historyVisible": "Hiển thị lịch sử trò chuyện",
     "historyOnInfo": "Toàn bộ lịch sử trò chuyện sẽ hiển thị cho những thành mới. Vui lòng cẩn trọng! 🤐",
-    "privateGroupInfo": "Nhóm này sẽ được giới hạn cho những người mà bạn chọn",
     "publicGroupUnique": "Tên nhóm công khai không được lặp lại",
     "publicGroupInfo": "Bất kỳ ai cũng có thể tham gia nhóm này",
     "newGroupName": "Nhập tên nhóm",
@@ -810,5 +809,7 @@
         "diamonds": "kim cương",
         "users": "người dùng",
         "gameover": "Trò chơi kết thúc!"
-    }
+    },
+    "privateGroupInfo": "Nhóm này sẽ được giới hạn cho những người mà bạn mời.",
+    "invited": "Được mời"
 }

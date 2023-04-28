@@ -114,7 +114,6 @@
     "ownershipTransferredBy": "{changedBy} העביר את הבעלות על הקבוצה אל {changed} 🎉",
     "historyVisible": "היסטוריית צ'אט גלויה",
     "historyOnInfo": "היסטוריית הצ'אט המלאה תהיה גלויה למצטרפים חדשים. זהירות עכשיו! 🤐",
-    "privateGroupInfo": "קבוצה זו תהיה מוגבלת לאנשים שתבחר.",
     "publicGroupUnique": "שמות קבוצות ציבוריים חייבים להיות ייחודיים.",
     "publicGroupInfo": "כל אחד יוכל לגלות ולהצטרף לקבוצה הזו.",
     "newGroupName": "הזן את שם הקבוצה",
@@ -807,5 +806,7 @@
         "diamonds": "יהלומים",
         "users": "משתמשים",
         "gameover": "סוף המשחק!"
-    }
+    },
+    "privateGroupInfo": "הקבוצה הזו תהיה מוגבלת לאנשים שאתה מזמין.",
+    "invited": "מוזמן"
 }

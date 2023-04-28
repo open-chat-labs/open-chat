@@ -87,7 +87,6 @@
     "ownershipTransferredBy": "{changedBy} 将群主转交给 {changed} 🎉",
     "historyVisible": "可见的聊天记录",
     "historyOnInfo": "请注意，新入群的用户可以看见全部的聊天记录 🤐",
-    "privateGroupInfo": "此群仅对指定成员可见",
     "publicGroupUnique": "公开群聊的名字不可与其他群聊重复",
     "publicGroupInfo": "任何人都可以搜索和加入此群",
     "newGroupName": "输入群聊名称",
@@ -810,5 +809,7 @@
         "diamonds": "钻石",
         "users": "用户",
         "gameover": "游戏结束！"
-    }
+    },
+    "privateGroupInfo": "该组仅限于您邀请的人员。",
+    "invited": "受邀"
 }

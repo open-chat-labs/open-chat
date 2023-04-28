@@ -556,10 +556,10 @@
     function addMembers(ev: CustomEvent<boolean>) {
         if ($selectedChatId !== undefined) {
             if (ev.detail) {
-                rightPanelHistory.set([{ kind: "add_members" }]);
+                rightPanelHistory.set([{ kind: "invite_members" }]);
             } else {
                 rightPanelHistory.update((history) => {
-                    return [...history, { kind: "add_members" }];
+                    return [...history, { kind: "invite_members" }];
                 });
             }
         }

@@ -4,7 +4,7 @@ import type { ChatSummary, GroupPermissions } from "openchat-client";
 
 export type RightPanelState =
     | GroupDetailsPanel
-    | AddMembersPanel
+    | InviteMembersPanel
     | ShowMembersPanel
     | ShowPinnedPanel
     | UserProfilePanel
@@ -30,8 +30,8 @@ export type UserProfilePanel = {
     kind: "user_profile";
 };
 
-export type AddMembersPanel = {
-    kind: "add_members";
+export type InviteMembersPanel = {
+    kind: "invite_members";
 };
 
 export type ShowMembersPanel = {

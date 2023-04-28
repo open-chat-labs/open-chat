@@ -41,6 +41,7 @@
     $: selectedChatStore = client.selectedChatStore;
     $: currentChatMembers = client.currentChatMembers;
     $: currentChatBlockedUsers = client.currentChatBlockedUsers;
+    $: currentChatInvitedUsers = client.currentChatInvitedUsers;
     $: currentChatPinnedMessages = client.currentChatPinnedMessages;
     $: currentChatRules = client.currentChatRules;
     $: chatStateStore = client.chatStateStore;
@@ -305,7 +306,7 @@
             on:editGroup
             on:chatWith
             on:showMembers />
-    {:else if lastState.kind === "add_members"}
+    {:else if lastState.kind === "invite_members"}
         <InviteUsers
             busy={invitingUsers}
             closeIcon={$rightPanelHistory.length > 1 ? "back" : "close"}
@@ -316,7 +317,8 @@
             closeIcon={$rightPanelHistory.length > 1 ? "back" : "close"}
             chat={$groupChat}
             members={currentChatMembers}
-            blockedUsers={currentChatBlockedUsers}
+            blocked={currentChatBlockedUsers}
+            invited={currentChatInvitedUsers}
             on:close={popHistory}
             on:blockUser={onBlockUser}
             on:unblockUser={unblockUser}

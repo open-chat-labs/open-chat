@@ -5,11 +5,11 @@
     import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
     import { _ } from "svelte-i18n";
     import { createEventDispatcher } from "svelte";
-    import type { BlockedMember, FullMember } from "openchat-client";
+    import type { FullMember } from "openchat-client";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import { iconSize } from "../../../stores/iconSize";
 
-    export let me: FullMember | BlockedMember | undefined;
+    export let me: FullMember | undefined;
     export let publicGroup: boolean;
     export let closeIcon: "close" | "back";
 

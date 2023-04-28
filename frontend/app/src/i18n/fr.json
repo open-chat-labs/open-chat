@@ -109,7 +109,6 @@
     "ownershipTransferredBy": "{changedBy} a transféré la propriété du groupe à {changed} 🎉",
     "historyVisible": "historique de chat visible",
     "historyOnInfo": "L'historique complet des discussions sera visible pour les nouveaux membres. Attention maintenant ! 🤐",
-    "privateGroupInfo": "Ce groupe sera limité aux personnes que vous aurez choisies.",
     "publicGroupUnique": "Les noms de groupe public doivent être uniques.",
     "publicGroupInfo": "Tout le monde pourra découvrir et rejoindre ce groupe.",
     "newGroupName": "entrez le nom du groupe",
@@ -809,5 +808,7 @@
         "diamonds": "Diamants",
         "users": "Utilisateurs",
         "gameover": "Jeu terminé!"
-    }
+    },
+    "privateGroupInfo": "Ce groupe sera limité aux personnes que vous invitez.",
+    "invited": "Invité"
 }

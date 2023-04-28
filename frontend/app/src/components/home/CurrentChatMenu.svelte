@@ -45,7 +45,7 @@
     $: groupDetailsSelected = lastState.kind === "group_details";
     $: pinnedSelected = lastState.kind === "show_pinned";
     $: membersSelected = lastState.kind === "show_members";
-    $: addMembersSelected = lastState.kind === "add_members";
+    $: inviteMembersSelected = lastState.kind === "invite_members";
     $: desktop = !$mobileWidth;
 
     let hasUnreadPinned = false;
@@ -193,7 +193,7 @@
                 <HoverIcon title={$_("group.inviteUsers")}>
                     <AccountMultiplePlus
                         size={$iconSize}
-                        color={addMembersSelected ? "var(--icon-selected)" : "var(--icon-txt)"} />
+                        color={inviteMembersSelected ? "var(--icon-selected)" : "var(--icon-txt)"} />
                 </HoverIcon>
             </span>
         {/if}

@@ -109,7 +109,6 @@
     "ownershipTransferredBy": "{changedBy} transferred group ownership to {changed} 🎉",
     "historyVisible": "閲覧可能なチャット履歴",
     "historyOnInfo": "新規参加者には、チャット履歴がすべて表示されます。注意してください🤐",
-    "privateGroupInfo": "このグループは、あなたが選んだ人だけに限定されます",
     "publicGroupUnique": "パブリックグループ名は一意でなければなりません.",
     "publicGroupInfo": "誰でもこのグループを発見し、参加することができます",
     "newGroupName": "グループ名を入力する",
@@ -810,5 +809,7 @@
         "diamonds": "ダイヤモンド",
         "users": "ユーザー",
         "gameover": "ゲームオーバー！"
-    }
+    },
+    "privateGroupInfo": "このグループは、あなたが招待した人に限定されます。",
+    "invited": "招待された"
 }

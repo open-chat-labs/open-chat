@@ -167,9 +167,8 @@
                 {#if searchResultsAvailable && chats.length > 0}
                     <h3 class="search-subtitle">{$_("yourChats")}</h3>
                 {/if}
-                {#each chats as chatSummary, i (chatSummary.chatId)}
+                {#each chats as chatSummary (chatSummary.chatId)}
                     <ChatSummary
-                        index={i}
                         {chatSummary}
                         selected={$selectedChatId === chatSummary.chatId}
                         visible={searchTerm !== "" || !chatSummary.archived}
