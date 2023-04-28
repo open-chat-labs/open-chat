@@ -268,7 +268,7 @@ impl Data {
             timer_jobs: TimerJobs::default(),
             neuron_controllers_for_initial_airdrop: HashMap::new(),
             internet_identity_canister_id,
-            next_user_upgrade_started: false,
+            next_user_upgrade_started: true, // for a new setup everything is on latest
             referral_codes: ReferralCodes::default(),
             user_referral_leaderboards: UserReferralLeaderboards::default(),
             platform_moderators_group: None,
