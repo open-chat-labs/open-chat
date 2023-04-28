@@ -345,6 +345,7 @@ pub trait Reader {
             ChatEventInternal::ChatUnfrozen(u) => ChatEvent::ChatUnfrozen(*u.clone()),
             ChatEventInternal::EventsTimeToLiveUpdated(u) => ChatEvent::EventsTimeToLiveUpdated(*u.clone()),
             ChatEventInternal::GroupGateUpdated(g) => ChatEvent::GroupGateUpdated(*g.clone()),
+            ChatEventInternal::UsersInvited(e) => ChatEvent::UsersInvited(*e.clone()),
         };
 
         EventWrapper {

@@ -45,7 +45,6 @@ async fn lookup_local_user_index(group: CanisterId) -> Result<CanisterId, Respon
 async fn call_join_group(group: CanisterId, local_user_index: CanisterId) -> Result<(), Response> {
     let c2c_args = local_user_index_canister::join_group::Args {
         chat_id: group.into(),
-        invite_code: None,
         correlation_id: 0,
     };
 
@@ -56,7 +55,8 @@ async fn call_join_group(group: CanisterId, local_user_index: CanisterId) -> Res
             | local_user_index_canister::join_group::Response::AlreadyInGroupV2(_) => Err(AlreadyInGroup),
             local_user_index_canister::join_group::Response::GateCheckFailed(reason) => Err(GateCheckFailed(reason)),
             local_user_index_canister::join_group::Response::GroupNotFound => Err(GroupNotFound),
-            local_user_index_canister::join_group::Response::GroupNotPublic => Err(GroupNotPublic),
+            local_user_index_canister::join_group::Response::NotInvited => Err(NotInvited),
+            local_user_index_canister::join_group::Response::GroupNotPublic => Err(NotInvited),
             local_user_index_canister::join_group::Response::ParticipantLimitReached(_) => Err(ParticipantLimitReached),
             local_user_index_canister::join_group::Response::Blocked => Err(Blocked),
             local_user_index_canister::join_group::Response::UserSuspended => Err(UserSuspended),

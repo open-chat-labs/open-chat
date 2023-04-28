@@ -1,11 +1,8 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::PublicGroupSummary;
+use types::{Empty, PublicGroupSummary};
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub struct Args {
-    pub invite_code: Option<u64>,
-}
+pub type Args = Empty;
 
 #[allow(clippy::large_enum_variant)]
 #[derive(CandidType, Serialize, Deserialize, Debug)]

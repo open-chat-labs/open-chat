@@ -2,6 +2,7 @@ use crate::activity_notifications::handle_activity_notification;
 use crate::guards::caller_is_user_index_or_local_user_index;
 use crate::model::participants::AddResult;
 use crate::{mutate_state, read_state, run_regular_jobs, AddParticipantArgs, RuntimeState};
+use candid::Principal;
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use chat_events::ChatEventInternal;
@@ -14,7 +15,7 @@ use types::{CanisterId, EventIndex, GroupGate, MessageIndex, ParticipantJoined, 
 async fn c2c_join_group(args: Args) -> Response {
     run_regular_jobs();
 
-    match read_state(|state| is_permitted_to_join(args.invite_code, state)) {
+    match read_state(|state| is_permitted_to_join(args.principal, state)) {
         Ok(Some((gate, user_index_canister_id))) => {
             match check_if_passes_gate(gate, args.user_id, user_index_canister_id).await {
                 CheckIfPassesGateResult::Success => {}
@@ -30,7 +31,7 @@ async fn c2c_join_group(args: Args) -> Response {
 }
 
 fn is_permitted_to_join(
-    invite_code: Option<u64>,
+    user_principal: Principal,
     runtime_state: &RuntimeState,
 ) -> Result<Option<(GroupGate, CanisterId)>, Response> {
     let caller = runtime_state.env.caller();
@@ -40,8 +41,8 @@ fn is_permitted_to_join(
         Ok(None)
     } else if runtime_state.data.is_frozen() {
         Err(ChatFrozen)
-    } else if !runtime_state.data.is_accessible_by_non_member(invite_code) {
-        Err(GroupNotPublic)
+    } else if !runtime_state.data.is_accessible_by_non_member(user_principal) {
+        Err(NotInvited)
     } else if let Some(limit) = runtime_state.data.participants.user_limit_reached() {
         Err(ParticipantLimitReached(limit))
     } else {
@@ -57,7 +58,11 @@ fn c2c_join_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Response
     let now = runtime_state.env.now();
     let min_visible_event_index;
     let min_visible_message_index;
-    if runtime_state.data.history_visible_to_new_joiners {
+
+    if let Some(invitation) = runtime_state.data.invited_users.get(&args.principal) {
+        min_visible_event_index = invitation.min_visible_event_index;
+        min_visible_message_index = invitation.min_visible_message_index;
+    } else if runtime_state.data.history_visible_to_new_joiners {
         min_visible_event_index = EventIndex::default();
         min_visible_message_index = MessageIndex::default();
     } else {
@@ -93,7 +98,12 @@ fn c2c_join_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Response
         mute_notifications: runtime_state.data.is_public,
     }) {
         AddResult::Success(participant) => {
-            let event = ParticipantJoined { user_id: args.user_id };
+            let invitation = runtime_state.data.invited_users.remove(&args.principal, now);
+
+            let event = ParticipantJoined {
+                user_id: args.user_id,
+                invited_by: invitation.map(|i| i.invited_by),
+            };
             runtime_state.data.events.push_main_event(
                 ChatEventInternal::ParticipantJoined(Box::new(event)),
                 args.correlation_id,
