@@ -222,18 +222,11 @@ struct Data {
     pub timer_jobs: TimerJobs<TimerJob>,
     pub neuron_controllers_for_initial_airdrop: HashMap<UserId, Principal>,
     pub internet_identity_canister_id: CanisterId,
-    #[serde(default)]
+    #[serde(skip_deserializing)]
     pub next_user_upgrade_started: bool,
-    #[serde(default)]
     pub referral_codes: ReferralCodes,
-    #[serde(default)]
     pub user_referral_leaderboards: UserReferralLeaderboards,
-    #[serde(default = "platform_moderators_group")]
     pub platform_moderators_group: Option<ChatId>,
-}
-
-fn platform_moderators_group() -> Option<ChatId> {
-    Some(Principal::from_text("rnyef-2iaaa-aaaar-ampxa-cai").unwrap().into())
 }
 
 impl Data {

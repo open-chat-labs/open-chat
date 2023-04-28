@@ -34,6 +34,7 @@ async fn register_user_v2(args: Args) -> Response {
         user_wasm_version,
         caller,
         referral_code,
+        openchat_bot_messages,
     } = match mutate_state(|state| prepare(&args, state)) {
         Ok(ok) => ok,
         Err(response) => return response,
@@ -43,6 +44,7 @@ async fn register_user_v2(args: Args) -> Response {
         principal: caller,
         username: args.username.clone(),
         referred_by: referral_code.as_ref().and_then(|r| r.user()),
+        openchat_bot_messages,
     };
 
     let result =
@@ -77,6 +79,7 @@ struct PrepareOk {
     local_user_index_canister: CanisterId,
     user_wasm_version: Version,
     referral_code: Option<ReferralCode>,
+    openchat_bot_messages: Vec<MessageContent>,
 }
 
 fn prepare(args: &Args, runtime_state: &mut RuntimeState) -> Result<PrepareOk, Response> {
@@ -116,11 +119,21 @@ fn prepare(args: &Args, runtime_state: &mut RuntimeState) -> Result<PrepareOk, R
 
     if let Some(local_user_index_canister) = runtime_state.data.local_index_map.index_for_new_user() {
         let user_wasm_version = runtime_state.data.user_canister_wasm.version;
+        let openchat_bot_messages = if runtime_state.data.next_user_upgrade_started {
+            welcome_messages()
+                .into_iter()
+                .map(|t| MessageContent::Text(TextContent { text: t }))
+                .collect()
+        } else {
+            Vec::new()
+        };
+
         Ok(PrepareOk {
             local_user_index_canister,
             user_wasm_version,
             caller,
             referral_code,
+            openchat_bot_messages,
         })
     } else {
         Err(InternalError("All subnets are full".to_string()))
@@ -162,7 +175,7 @@ fn commit(
         Some(local_user_index_canister_id),
     );
 
-    if runtime_state.data.next_user_upgrade_started {
+    if !runtime_state.data.next_user_upgrade_started {
         send_welcome_messages(user_id, runtime_state);
     }
 
@@ -176,14 +189,14 @@ fn commit(
         runtime_state.data.referral_codes.claim(code, user_id, now);
 
         runtime_state.queue_payment(PendingPayment {
-            amount: 50_000, // Approx $14
+            amount: 50, // Approx $14
             currency: Cryptocurrency::CKBTC,
             timestamp: runtime_state.env.now_nanos(),
             recipient: user_id.into(),
             reason: PendingPaymentReason::BitcoinMiamiReferral,
         });
 
-        let btc_miami_group = Principal::from_text("pbo6v-oiaaa-aaaar-ams6q-cai").unwrap().into();
+        let btc_miami_group = Principal::from_text("ueyan-5iaaa-aaaaf-bifxa-cai").unwrap().into();
         runtime_state.data.timer_jobs.enqueue_job(
             TimerJob::JoinUserToGroup(JoinUserToGroup {
                 user_id,
@@ -203,7 +216,20 @@ fn commit(
 }
 
 fn send_welcome_messages(user_id: UserId, runtime_state: &mut RuntimeState) {
+    for message in welcome_messages().into_iter().skip(1) {
+        runtime_state.push_event_to_local_user_index(
+            user_id,
+            Event::OpenChatBotMessage(OpenChatBotMessage {
+                user_id,
+                message: MessageContent::Text(TextContent { text: message }),
+            }),
+        )
+    }
+}
+
+fn welcome_messages() -> Vec<String> {
     const WELCOME_MESSAGES: &[&str] = &[
+        "Welcome to OpenChat!",
         "I am the OpenChat bot. I will send you messages to let you know about events that don't belong to any other chat, \
             such as if crypto has been deposited into your OpenChat account(s) or if you've been removed from a group. In \
             the future you'll be able to ask me questions or send me commands.",
@@ -218,17 +244,7 @@ fn send_welcome_messages(user_id: UserId, runtime_state: &mut RuntimeState) {
 - To introduce and discuss upcoming proposals, join [OpenChat Roadmap](/n2qig-viaaa-aaaar-ahviq-cai).",
         "Please keep posts relevant to each group. If you just want to say \"hi\", post in the [OpenChat](/vmdca-pqaaa-aaaaf-aabzq-cai) group."];
 
-    for message in WELCOME_MESSAGES {
-        runtime_state.push_event_to_local_user_index(
-            user_id,
-            Event::OpenChatBotMessage(OpenChatBotMessage {
-                user_id,
-                message: MessageContent::Text(TextContent {
-                    text: message.to_string(),
-                }),
-            }),
-        )
-    }
+    WELCOME_MESSAGES.iter().map(|t| t.to_string()).collect()
 }
 
 fn rollback(username: &str, runtime_state: &mut RuntimeState) {
