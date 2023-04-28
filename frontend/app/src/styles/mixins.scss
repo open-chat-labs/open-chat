@@ -157,6 +157,12 @@ $sp11: 192px;
     }
 }
 
+@mixin size-below-n($n) {
+    @media (max-width: ($n - 1)) {
+        @content;
+    }
+}
+
 @mixin size-below($breakpoint) {
     @if map-has-key($breakpoints, $breakpoint) {
         $breakpoint-value: map-get($breakpoints, $breakpoint);
