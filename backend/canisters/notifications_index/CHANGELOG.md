@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Reduce a few timer job intervals ([#3515](https://github.com/open-ic/open-chat/pull/3515))
+
 ## [[2.0.653](https://github.com/open-ic/open-chat/releases/tag/v2.0.653-notifications_index)] - 2023-03-30
 
 ### Changed
