@@ -6,7 +6,7 @@ use crate::{mutate_state, RuntimeState, ONE_MB, USER_LIMIT};
 use candid::Principal;
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
-use local_user_index_canister::{Event, OpenChatBotMessage, UserRegistered};
+use local_user_index_canister::{Event, UserRegistered};
 use storage_index_canister::add_or_update_users::UserConfig;
 use types::{CanisterId, Cryptocurrency, MessageContent, TextContent, UserId, Version};
 use user_index_canister::register_user_v2::{Response::*, *};
@@ -175,10 +175,6 @@ fn commit(
         Some(local_user_index_canister_id),
     );
 
-    if !runtime_state.data.next_user_upgrade_started {
-        send_welcome_messages(user_id, runtime_state);
-    }
-
     runtime_state.data.storage_index_user_sync_queue.push(UserConfig {
         user_id: caller,
         byte_limit: 100 * ONE_MB,
@@ -212,18 +208,6 @@ fn commit(
 
     if let Some(referrer) = referred_by {
         runtime_state.data.user_referral_leaderboards.add_referral(referrer, now);
-    }
-}
-
-fn send_welcome_messages(user_id: UserId, runtime_state: &mut RuntimeState) {
-    for message in welcome_messages().into_iter().skip(1) {
-        runtime_state.push_event_to_local_user_index(
-            user_id,
-            Event::OpenChatBotMessage(OpenChatBotMessage {
-                user_id,
-                message: MessageContent::Text(TextContent { text: message }),
-            }),
-        )
     }
 }
 
