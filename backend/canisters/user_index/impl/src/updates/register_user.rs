@@ -189,14 +189,14 @@ fn commit(
         runtime_state.data.referral_codes.claim(code, user_id, now);
 
         runtime_state.queue_payment(PendingPayment {
-            amount: 50, // Approx $14
+            amount: 50_000, // Approx $14
             currency: Cryptocurrency::CKBTC,
             timestamp: runtime_state.env.now_nanos(),
             recipient: user_id.into(),
             reason: PendingPaymentReason::BitcoinMiamiReferral,
         });
 
-        let btc_miami_group = Principal::from_text("ueyan-5iaaa-aaaaf-bifxa-cai").unwrap().into();
+        let btc_miami_group = Principal::from_text("pbo6v-oiaaa-aaaar-ams6q-cai").unwrap().into();
         runtime_state.data.timer_jobs.enqueue_job(
             TimerJob::JoinUserToGroup(JoinUserToGroup {
                 user_id,
