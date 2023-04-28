@@ -799,7 +799,7 @@
         "messageReport": "次の理由により、@{username} によって {timestamp} に報告されました: **{reason}**",
         "showing": "{count} 件のレポートのうち最新の {total} 件を表示しています"
     },
-    "invitedBy": "{invitedBy} さんが {users} さんをグループに招待しました",
+    "invitedBy": "{changedBy} さんが {changed} さんをグループに招待しました",
     "halloffame": {
         "menu": "トップリファラー",
         "allTime": "いつも",

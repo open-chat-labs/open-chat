@@ -800,7 +800,7 @@
         "messageReport": "Reportado por @{username} el {timestamp} por el siguiente motivo: **{reason}**",
         "showing": "Mostrando los {count} más recientes de {total} informe(s)"
     },
-    "invitedBy": "{invitedBy} invitó a {users} al grupo",
+    "invitedBy": "{changedBy} invitó a {changed} al grupo",
     "halloffame": {
         "menu": "Referencias principales",
         "allTime": "Todo el tiempo",

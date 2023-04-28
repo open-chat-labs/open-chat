@@ -798,7 +798,7 @@
         "messageReport": "Segnalato da @{username} il {timestamp} per il seguente motivo: **{reason}**",
         "showing": "Visualizzazione dei {count} rapporti {total} più recenti"
     },
-    "invitedBy": "{invitedBy} ha invitato {users} nel gruppo",
+    "invitedBy": "{changedBy} ha invitato {changed} nel gruppo",
     "halloffame": {
         "menu": "I migliori referrer",
         "allTime": "Sempre",

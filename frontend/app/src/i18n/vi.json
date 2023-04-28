@@ -799,7 +799,7 @@
         "messageReport": "Được @{username} báo cáo về {timestamp} vì lý do sau: **{reason}**",
         "showing": "Đang hiển thị {count}/{total} báo cáo gần đây nhất"
     },
-    "invitedBy": "{invitedBy} đã mời {users} vào nhóm",
+    "invitedBy": "{changedBy} đã mời {changed} vào nhóm",
     "halloffame": {
         "menu": "Người giới thiệu hàng đầu",
         "allTime": "Mọi thời đại",

@@ -129,7 +129,7 @@
     "userJoined": "{username} joined the group",
     "addedBy": "{changedBy} added {changed} to the group",
     "removedBy": "{changedBy} removed {changed} from the group",
-    "invitedBy": "{invitedBy} invited {users} to the group",
+    "invitedBy": "{changedBy} invited {changed} to the group",
     "roleChanged": "{changedBy} changed the role of {changed} from {oldRole} to {newRole}",
     "yourRoleChanged": "{changedBy} changed your role from {oldRole} to {newRole}",
     "permissionsChangedBy": "{changedBy} changed the group permissions",

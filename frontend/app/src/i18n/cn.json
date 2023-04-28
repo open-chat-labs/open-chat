@@ -799,7 +799,7 @@
         "messageReport": "由@{username} 在 {timestamp} 上报告，原因如下：**{reason}**",
         "showing": "显示最近的 {count} 份报告（共 {total} 份）"
     },
-    "invitedBy": "{invitedBy} 邀请 {users} 加入群组",
+    "invitedBy": "{changedBy} 邀请 {changed} 加入群组",
     "halloffame": {
         "menu": "热门推荐人",
         "allTime": "整天",

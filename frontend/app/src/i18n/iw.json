@@ -796,7 +796,7 @@
         "messageReport": "דווח על ידי @{username} ב-{timestamp} מהסיבה הבאה: **{reason}**",
         "showing": "מציג את ה-{count} העדכני ביותר מתוך {total} דוחות"
     },
-    "invitedBy": "{invitedBy} הזמין את {users} לקבוצה",
+    "invitedBy": "{changedBy} הזמין את {changed} לקבוצה",
     "halloffame": {
         "menu": "מפנים מובילים",
         "allTime": "כל הזמן",

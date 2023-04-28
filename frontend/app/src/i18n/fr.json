@@ -798,7 +798,7 @@
         "messageReport": "Signalé par @{username} sur {timestamp} pour la raison suivante : **{reason}**",
         "showing": "Affichage du ou des rapports {count} sur {total} les plus récents"
     },
-    "invitedBy": "{invitedBy} a invité {users} dans le groupe",
+    "invitedBy": "{changedBy} a invité {changed} dans le groupe",
     "halloffame": {
         "menu": "Principaux référents",
         "allTime": "Tout le temps",
