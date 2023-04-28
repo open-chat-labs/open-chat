@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Added `created` to pending transactions ([#3494](https://github.com/open-ic/open-chat/pull/3494))
 - Added ability to `report_message` ([#3497](https://github.com/open-ic/open-chat/pull/3497))
 - Only return full details for the first 10 message reports ([#3505](https://github.com/open-ic/open-chat/pull/3505))
+- Relax restrictions on who can claim prizes ([#3516](https://github.com/open-ic/open-chat/pull/3516))
 
 ### Removed
 
