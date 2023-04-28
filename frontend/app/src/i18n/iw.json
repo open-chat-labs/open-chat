@@ -804,5 +804,16 @@
         "deleteMessage": "מחק הודעה שדווחה",
         "messageReport": "דווח על ידי @{username} ב-{timestamp} מהסיבה הבאה: **{reason}**",
         "showing": "מציג את ה-{count} העדכני ביותר מתוך {total} דוחות"
+    },
+    "halloffame": {
+        "menu": "מפנים מובילים",
+        "allTime": "כל הזמן",
+        "thisMonth": "החודש",
+        "start": "הַתחָלָה",
+        "username": "שם משתמש",
+        "value": "ערך",
+        "diamonds": "יהלומים",
+        "users": "משתמשים",
+        "gameover": "סוף המשחק!"
     }
 }

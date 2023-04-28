@@ -806,5 +806,16 @@
         "deleteMessage": "Elimina messaggio segnalato",
         "messageReport": "Segnalato da @{username} il {timestamp} per il seguente motivo: **{reason}**",
         "showing": "Visualizzazione dei {count} rapporti {total} più recenti"
+    },
+    "halloffame": {
+        "menu": "I migliori referrer",
+        "allTime": "Sempre",
+        "thisMonth": "Questo mese",
+        "start": "Inizio",
+        "username": "Nome utente",
+        "value": "Valore",
+        "diamonds": "Diamanti",
+        "users": "Utenti",
+        "gameover": "Game Over!"
     }
 }
