@@ -157,8 +157,6 @@ fn init_test_data(env: &mut StateMachine, canister_ids: &CanisterIds) -> TestDat
     let user1 = client::user_index::happy_path::register_user(env, canister_ids.user_index);
     let user2 = client::user_index::happy_path::register_user(env, canister_ids.user_index);
 
-    tick_many(env, 5);
-
     client::notifications_index::push_subscription(
         env,
         user2.principal,
