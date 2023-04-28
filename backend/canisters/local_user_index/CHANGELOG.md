@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.674](https://github.com/open-ic/open-chat/releases/tag/v2.0.674-local_user_index)] - TBD
+
 ### Added
 
 - Added ability to `report_message` ([#3497](https://github.com/open-ic/open-chat/pull/3497))

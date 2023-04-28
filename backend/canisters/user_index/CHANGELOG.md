@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.673](https://github.com/open-ic/open-chat/releases/tag/v2.0.673-user_index)] - TBD
+
 ### Changed
 
 - Pass OpenChat bot messages in user canister init args ([#3517](https://github.com/open-ic/open-chat/pull/3517))

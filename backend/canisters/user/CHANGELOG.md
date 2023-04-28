@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.676](https://github.com/open-ic/open-chat/releases/tag/v2.0.676-user)] - TBD
+
 ### Added
 
 - Allow users to `Delete For Me` in direct chats ([#3498](https://github.com/open-ic/open-chat/pull/3498))
