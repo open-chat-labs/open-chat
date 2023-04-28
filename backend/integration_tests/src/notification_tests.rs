@@ -1,6 +1,5 @@
 use crate::env::ENV;
 use crate::rng::random_string;
-use crate::utils::tick_many;
 use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
 use ic_test_state_machine_client::StateMachine;
