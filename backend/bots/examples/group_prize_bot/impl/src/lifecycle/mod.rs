@@ -13,7 +13,7 @@ mod pre_upgrade;
 const UPGRADE_BUFFER_SIZE: usize = 1024 * 1024; // 1MB
 
 fn init_env() -> Box<CanisterEnv> {
-    ic_cdk_timers::set_timer(Duration::default(), reseed_rng);
+    ic_cdk_timers::set_timer(Duration::ZERO, reseed_rng);
     Box::default()
 }
 
