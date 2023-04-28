@@ -14,7 +14,6 @@
         UserLookup,
     } from "openchat-client";
     import { createEventDispatcher, getContext } from "svelte";
-    import type { Readable } from "svelte/store";
     import MembersSelectionButton from "../MembersSelectionButton.svelte";
     import InvitedUser from "./InvitedUser.svelte";
     import ViewUserProfile from "../profile/ViewUserProfile.svelte";
@@ -23,11 +22,11 @@
     const userId = client.user.userId;
 
     export let closeIcon: "close" | "back";
-    export let members: Readable<MemberType[]>;
-    export let blocked: Readable<Set<string>>;
-    export let invited: Readable<Set<string>>;
     export let chat: GroupChatSummary;
 
+    $: members = client.currentChatMembers;
+    $: blocked = client.currentChatBlockedUsers;
+    $: invited = client.currentChatInvitedUsers;
     $: userStore = client.userStore;
     $: knownUsers = getKnownUsers($userStore, $members);
     $: me = knownUsers.find((u) => u.userId === userId);
@@ -45,9 +44,17 @@
     $: showInvited = !publicGroup && $invited.size > 0;
 
     let searchTerm = "";
+    let chatId = chat.chatId;
     let membersList: VirtualList;
     let view: "members" | "blocked" | "invited" = "members";
     let profileUserId: string | undefined = undefined;
+
+    $: {
+        if (chat.chatId !== chatId) {
+            chatId = chat.chatId;
+            view = "members";
+        }
+    }
 
     const dispatch = createEventDispatcher();
 
@@ -161,8 +168,7 @@
             on:chatWith
             on:changeRole
             on:removeMember
-            on:openUserProfile={openUserProfile}
-            on:close={close} />
+            on:openUserProfile={openUserProfile} />
     </VirtualList>
 {:else if view === "blocked"}
     <div class="user-list">
@@ -172,8 +178,7 @@
                 {searchTerm} 
                 canUnblockUser={client.canUnblockUsers(chat.chatId)}
                 on:openUserProfile={openUserProfile}
-                on:unblockUser
-                on:close={close} />
+                on:unblockUser />
         {/each}
     </div>
 {:else if view === "invited"}
@@ -184,8 +189,7 @@
                 {searchTerm} 
                 canUninviteUser={false}
                 on:openUserProfile={openUserProfile}
-                on:uninviteUser
-                on:close={close} />
+                on:uninviteUser />
         {/each}
     </div>
 {/if}

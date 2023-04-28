@@ -40,8 +40,6 @@
     $: selectedChatId = client.selectedChatId;
     $: selectedChatStore = client.selectedChatStore;
     $: currentChatMembers = client.currentChatMembers;
-    $: currentChatBlockedUsers = client.currentChatBlockedUsers;
-    $: currentChatInvitedUsers = client.currentChatInvitedUsers;
     $: currentChatPinnedMessages = client.currentChatPinnedMessages;
     $: currentChatRules = client.currentChatRules;
     $: chatStateStore = client.chatStateStore;
@@ -316,9 +314,6 @@
         <Members
             closeIcon={$rightPanelHistory.length > 1 ? "back" : "close"}
             chat={$groupChat}
-            members={currentChatMembers}
-            blocked={currentChatBlockedUsers}
-            invited={currentChatInvitedUsers}
             on:close={popHistory}
             on:blockUser={onBlockUser}
             on:unblockUser={unblockUser}
