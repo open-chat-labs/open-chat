@@ -47,6 +47,9 @@ export function joinGroupResponse(candid: ApiJoinGroupResponse): JoinGroupRespon
     if ("GroupNotPublic" in candid) {
         return { kind: "group_not_public" };
     }
+    if ("NotInvited" in candid) {
+        return { kind: "not_invited" };
+    }
     if ("InternalError" in candid) {
         return { kind: "internal_error" };
     }

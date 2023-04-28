@@ -185,13 +185,6 @@
         // if this is an unknown chat let's preview it
         if (chat === undefined) {
             if (!(await createDirectChat(chatId))) {
-                const code = $querystring.get("code");
-                if (code) {
-                    client.groupInvite = {
-                        chatId,
-                        code,
-                    };
-                }
                 if (!(await client.previewChat(chatId))) {
                     page.replace("/");
                     return;

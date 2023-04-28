@@ -63,21 +63,17 @@ import {
     DeleteGroupResponse,
     DeleteMessageResponse,
     DirectChatEvent,
-    DisableInviteCodeResponse,
     EditMessageResponse,
-    EnableInviteCodeResponse,
     EventsResponse,
     EventWrapper,
     GroupChatDetails,
     GroupChatDetailsResponse,
     GroupChatEvent,
     GroupChatSummary,
-    GroupInvite,
     GroupPermissions,
     GroupRules,
     GroupSearchResponse,
     IndexRange,
-    InviteCodeResponse,
     JoinGroupResponse,
     LeaveGroupResponse,
     ListNervousSystemFunctionsResponse,
@@ -97,7 +93,6 @@ import {
     RegisterProposalVoteResponse,
     RegisterUserResponse,
     RemoveMemberResponse,
-    ResetInviteCodeResponse,
     SearchDirectChatResponse,
     SearchGroupChatResponse,
     SendMessageResponse,
@@ -163,7 +158,6 @@ export class OpenChatAgent extends EventTarget {
     private _marketMakerClient: IMarketMakerClient;
     private _ledgerClients: Record<Cryptocurrency, ILedgerClient>;
     private _groupClients: Record<string, IGroupClient>;
-    private _groupInvite: GroupInvite | undefined;
     private db: Database;
     private _logger: Logger;
 
@@ -203,10 +197,6 @@ export class OpenChatAgent extends EventTarget {
         this._logger.error(message, optionalParams);
     }
 
-    public set groupInvite(value: GroupInvite) {
-        this._groupInvite = value;
-    }
-
     createUserClient(userId: string): OpenChatAgent {
         this._userClient = UserClient.create(userId, this.identity, this.config, this.db);
         return this;
@@ -214,13 +204,11 @@ export class OpenChatAgent extends EventTarget {
 
     private getGroupClient(chatId: string): IGroupClient {
         if (!this._groupClients[chatId]) {
-            const inviteCode = this.getProvidedInviteCode(chatId);
             this._groupClients[chatId] = GroupClient.create(
                 chatId,
                 this.identity,
                 this.config,
-                this.db,
-                inviteCode
+                this.db
             );
         }
         return this._groupClients[chatId];
@@ -235,10 +223,6 @@ export class OpenChatAgent extends EventTarget {
 
     private createLocalUserIndexClient(canisterId: string): ILocalUserIndexClient {
         return LocalUserIndexClient.create(this.identity, this.config, canisterId);
-    }
-
-    private getProvidedInviteCode(chatId: string): string | undefined {
-        return this._groupInvite?.chatId === chatId ? this._groupInvite.code : undefined;
     }
 
     editMessage(
@@ -1089,17 +1073,12 @@ export class OpenChatAgent extends EventTarget {
     }
 
     leaveGroup(chatId: string): Promise<LeaveGroupResponse> {
-        if (this._groupInvite?.chatId === chatId) {
-            this._groupInvite = undefined;
-        }
-
         return this.userClient.leaveGroup(chatId);
     }
 
     async joinGroup(chatId: string): Promise<JoinGroupResponse> {
-        const inviteCode = this.getProvidedInviteCode(chatId);
         const localUserIndex = await this.getGroupClient(chatId).localUserIndex();
-        return this.createLocalUserIndexClient(localUserIndex).joinGroup(chatId, inviteCode);
+        return this.createLocalUserIndexClient(localUserIndex).joinGroup(chatId);
     }
 
     markMessagesRead(request: MarkReadRequest): Promise<MarkReadResponse> {
@@ -1366,22 +1345,6 @@ export class OpenChatAgent extends EventTarget {
         domain: PendingCryptocurrencyWithdrawal
     ): Promise<WithdrawCryptocurrencyResponse> {
         return this.userClient.withdrawCryptocurrency(domain);
-    }
-
-    getInviteCode(chatId: string): Promise<InviteCodeResponse> {
-        return this.getGroupClient(chatId).getInviteCode();
-    }
-
-    enableInviteCode(chatId: string): Promise<EnableInviteCodeResponse> {
-        return this.getGroupClient(chatId).enableInviteCode();
-    }
-
-    disableInviteCode(chatId: string): Promise<DisableInviteCodeResponse> {
-        return this.getGroupClient(chatId).disableInviteCode();
-    }
-
-    resetInviteCode(chatId: string): Promise<ResetInviteCodeResponse> {
-        return this.getGroupClient(chatId).resetInviteCode();
     }
 
     pinChat(chatId: string): Promise<PinChatResponse> {

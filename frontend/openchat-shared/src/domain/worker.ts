@@ -15,9 +15,7 @@ import type {
     DeleteGroupResponse,
     DeleteMessageResponse,
     DirectChatEvent,
-    DisableInviteCodeResponse,
     EditMessageResponse,
-    EnableInviteCodeResponse,
     EventsResponse,
     EventWrapper,
     FreezeGroupResponse,
@@ -29,7 +27,6 @@ import type {
     GroupPermissions,
     GroupRules,
     IndexRange,
-    InviteCodeResponse,
     JoinGroupResponse,
     LeaveGroupResponse,
     ListNervousSystemFunctionsResponse,
@@ -178,9 +175,6 @@ export type WorkerRequest =
     | GetBio
     | WithdrawCrypto
     | GroupMessagesByMessageIndex
-    | GetInviteCode
-    | EnableInviteCode
-    | DisableInviteCode
     | CreateGroupChat
     | SetCachedMessageFromNotification
     | FreezeGroup
@@ -225,24 +219,6 @@ type CreateGroupChat = Request<{
     candidate: CandidateGroupChat;
 }> & {
     kind: "createGroupChat";
-};
-
-type DisableInviteCode = Request<{
-    chatId: string;
-}> & {
-    kind: "disableInviteCode";
-};
-
-type EnableInviteCode = Request<{
-    chatId: string;
-}> & {
-    kind: "enableInviteCode";
-};
-
-type GetInviteCode = Request<{
-    chatId: string;
-}> & {
-    kind: "getInviteCode";
 };
 
 type GroupMessagesByMessageIndex = Request<{
@@ -857,9 +833,6 @@ export type WorkerError = {
  */
 export type WorkerResponse =
     | Response<CreateGroupResponse>
-    | Response<DisableInviteCodeResponse>
-    | Response<EnableInviteCodeResponse>
-    | Response<InviteCodeResponse>
     | Response<EventsResponse<Message>>
     | Response<WithdrawCryptocurrencyResponse>
     | Response<string>
