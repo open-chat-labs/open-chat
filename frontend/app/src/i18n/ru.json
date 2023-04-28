@@ -793,5 +793,16 @@
         "deleteMessage": "Удалить заявленное сообщение",
         "messageReport": "Сообщение @{username} в {timestamp} по следующей причине: **{reason}**",
         "showing": "Показаны последние {count} из {total} отчетов."
+    },
+    "halloffame": {
+        "menu": "Топ рефералов",
+        "allTime": "Все время",
+        "thisMonth": "Этот месяц",
+        "start": "Начинать",
+        "username": "Имя пользователя",
+        "value": "Ценить",
+        "diamonds": "Бриллианты",
+        "users": "Пользователи",
+        "gameover": "Игра закончена!"
     }
 }

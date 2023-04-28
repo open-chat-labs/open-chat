@@ -793,5 +793,16 @@
         "deleteMessage": "Supprimer le message signalé",
         "messageReport": "Signalé par @{username} sur {timestamp} pour la raison suivante : **{reason}**",
         "showing": "Affichage du ou des rapports {count} sur {total} les plus récents"
+    },
+    "halloffame": {
+        "menu": "Principaux référents",
+        "allTime": "Tout le temps",
+        "thisMonth": "Ce mois-ci",
+        "start": "Commencer",
+        "username": "Nom d'utilisateur",
+        "value": "Valeur",
+        "diamonds": "Diamants",
+        "users": "Utilisateurs",
+        "gameover": "Jeu terminé!"
     }
 }

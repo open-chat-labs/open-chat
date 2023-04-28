@@ -138,6 +138,8 @@ import {
     GroupGate,
     ProposalVoteDetails,
     SetMessageReminderResponse,
+    ReferralLeaderboardRange,
+    ReferralLeaderboardResponse,
     ReportMessageResponse,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
@@ -1607,6 +1609,10 @@ export class OpenChatAgent extends EventTarget {
 
     cancelMessageReminder(reminderId: bigint): Promise<boolean> {
         return this.userClient.cancelMessageReminder(reminderId);
+    }
+
+    getReferralLeaderboard(req?: ReferralLeaderboardRange): Promise<ReferralLeaderboardResponse> {
+        return this._userIndexClient.getReferralLeaderboard(req);
     }
 
     async reportMessage(

@@ -71,6 +71,10 @@
                         <span class="flame" slot="icon">🔥</span>
                         <span slot="text">{$_("whatsHot")}</span>
                     </MenuItem>
+                    <MenuItem on:click={() => dispatch("halloffame")}>
+                        <span class="halloffame" slot="icon">👑</span>
+                        <span slot="text">{$_("halloffame.menu")}</span>
+                    </MenuItem>
                     <MenuItem on:click={() => dispatch("upgrade")}>
                         <span class="diamond-icon" slot="icon">💎</span>
                         <span slot="text"
@@ -116,6 +120,7 @@
     }
 
     .flame,
+    .halloffame,
     .diamond-icon {
         @include font(bold, normal, fs-110);
     }

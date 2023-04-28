@@ -81,6 +81,8 @@ import type {
     DiamondMembershipDuration,
     PayForDiamondMembershipResponse,
     SetMessageReminderResponse,
+    ReferralLeaderboardRange,
+    ReferralLeaderboardResponse,
 } from "./user";
 import type {
     GroupSearchResponse,
@@ -196,7 +198,14 @@ export type WorkerRequest =
     | UpdateMarketMakerConfig
     | SetMessageReminder
     | CancelMessageReminder
+    | ReferralLeaderboard
     | ReportMessage;
+
+type ReferralLeaderboard = Request<{
+    args?: ReferralLeaderboardRange;
+}> & {
+    kind: "getReferralLeaderboard";
+};
 
 type SetCachedMessageFromNotification = Request<{
     chatId: string;
@@ -905,6 +914,7 @@ export type WorkerResponse =
     | Response<ClaimPrizeResponse>
     | Response<UpdateMarketMakerConfigResponse>
     | Response<SetMessageReminderResponse>
+    | Response<ReferralLeaderboardResponse>
     | Response<ReportMessageResponse>;
 
 type Response<T> = {

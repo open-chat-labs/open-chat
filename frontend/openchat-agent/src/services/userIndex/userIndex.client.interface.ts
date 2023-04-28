@@ -13,6 +13,8 @@ import type {
     DiamondMembershipDuration,
     PayForDiamondMembershipResponse,
     SetUserUpgradeConcurrencyResponse,
+    ReferralLeaderboardRange,
+    ReferralLeaderboardResponse,
 } from "openchat-shared";
 
 export interface IUserIndexClient {
@@ -33,5 +35,6 @@ export interface IUserIndexClient {
         expectedPriceE8s: bigint
     ): Promise<PayForDiamondMembershipResponse>;
     setUserUpgradeConcurrency(value: number): Promise<SetUserUpgradeConcurrencyResponse>;
+    getReferralLeaderboard(req?: ReferralLeaderboardRange): Promise<ReferralLeaderboardResponse>;
     getPlatformModeratorGroup(): Promise<string>;
 }

@@ -44,7 +44,6 @@ fn can_upgrade_to_diamond() {
         false,
     );
 
-    env.advance_time(Duration::from_secs(15));
     tick_many(env, 10);
 
     assert_eq!(diamond_response.expires_at, expected_expiry);

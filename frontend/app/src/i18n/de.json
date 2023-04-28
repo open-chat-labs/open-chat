@@ -795,5 +795,16 @@
         "deleteMessage": "Gemeldete Nachricht löschen",
         "messageReport": "Von @{username} auf {timestamp} aus folgendem Grund gemeldet: **{reason}**",
         "showing": "Anzeige der neusten {count} von {total} Bericht(en)"
+    },
+    "halloffame": {
+        "menu": "Top-Empfehlungen",
+        "allTime": "Alle Zeit",
+        "thisMonth": "Diesen Monat",
+        "start": "Start",
+        "username": "Nutzername",
+        "value": "Wert",
+        "diamonds": "Diamanten",
+        "users": "Benutzer",
+        "gameover": "Spiel ist aus!"
     }
 }

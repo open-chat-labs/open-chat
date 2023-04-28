@@ -297,6 +297,8 @@ import {
     GroupGate,
     ProposalVoteDetails,
     MessageReminderCreatedContent,
+    ReferralLeaderboardRange,
+    ReferralLeaderboardResponse,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -3778,6 +3780,10 @@ export class OpenChat extends EventTarget {
         config: UpdateMarketMakerConfigArgs
     ): Promise<UpdateMarketMakerConfigResponse> {
         return this.api.updateMarketMakerConfig(config);
+    }
+
+    getReferralLeaderboard(args?: ReferralLeaderboardRange): Promise<ReferralLeaderboardResponse> {
+        return this.api.getReferralLeaderboard(args);
     }
 
     usernameAndIcon(user?: PartialUserSummary): string {

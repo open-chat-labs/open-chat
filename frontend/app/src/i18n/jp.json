@@ -794,5 +794,16 @@
         "deleteMessage": "報告されたメッセージを削除",
         "messageReport": "次の理由により、@{username} によって {timestamp} に報告されました: **{reason}**",
         "showing": "{count} 件のレポートのうち最新の {total} 件を表示しています"
+    },
+    "halloffame": {
+        "menu": "トップリファラー",
+        "allTime": "いつも",
+        "thisMonth": "今月",
+        "start": "始める",
+        "username": "ユーザー名",
+        "value": "価値",
+        "diamonds": "ダイヤモンド",
+        "users": "ユーザー",
+        "gameover": "ゲームオーバー！"
     }
 }

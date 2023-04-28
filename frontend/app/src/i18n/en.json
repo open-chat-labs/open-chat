@@ -513,7 +513,7 @@
     "messageUrlCopiedToClipboard": "Message url copied to clipboard!",
     "faqUrlCopiedToClipboard": "FAQ url copied to clipboard!",
     "failedToShareMessage": "Unable to share this message",
-    "backToResults": "back",
+    "backToResults": "Back",
     "giphyMessage": "Giphy message",
     "prizeMessage": "Prize message",
     "share": "Share",
@@ -768,6 +768,17 @@
         "cancel": "Cancel reminder",
         "cancelSuccess": "Your reminder has been successfully cancelled",
         "cancelFailure": "Sorry we were unable to cancel your reminder"
+    },
+    "halloffame": {
+        "menu": "Top referrers",
+        "allTime": "All time",
+        "thisMonth": "This month",
+        "start": "Start",
+        "username": "Username",
+        "value": "Value",
+        "diamonds": "Diamonds",
+        "users": "Users",
+        "gameover": "Game over!"
     },
     "report": {
         "menu": "Report",
