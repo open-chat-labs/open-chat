@@ -654,7 +654,6 @@ type DeclineInvitationResponse =
     variant {
         Success;
         NotInvited;
-        InternalError: text;
     };
 
 service: {

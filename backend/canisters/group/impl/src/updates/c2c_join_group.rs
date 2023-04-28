@@ -98,7 +98,7 @@ fn c2c_join_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Response
         mute_notifications: runtime_state.data.is_public,
     }) {
         AddResult::Success(participant) => {
-            let invitation = runtime_state.data.invited_users.remove(&args.user_id, now);
+            let invitation = runtime_state.data.invited_users.remove(&args.principal, now);
 
             let event = ParticipantJoined {
                 user_id: args.user_id,

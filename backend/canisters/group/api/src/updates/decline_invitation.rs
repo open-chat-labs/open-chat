@@ -8,5 +8,4 @@ pub type Args = Empty;
 pub enum Response {
     Success,
     NotInvited,
-    InternalError(String),
 }

@@ -6,12 +6,12 @@ use types::{EventIndex, MessageIndex, TimestampMillis, UserId};
 #[derive(Serialize, Deserialize, Default)]
 pub struct InvitedUsers {
     last_updated: TimestampMillis,
-    invites: HashMap<Principal, UserInvitation>,
-    users: HashMap<UserId, Principal>,
+    users: HashMap<Principal, UserInvitation>,
 }
 
 #[derive(Serialize, Deserialize)]
 pub struct UserInvitation {
+    pub invited: UserId,
     pub invited_by: UserId,
     pub timestamp: TimestampMillis,
     pub min_visible_event_index: EventIndex,
@@ -19,29 +19,25 @@ pub struct UserInvitation {
 }
 
 impl InvitedUsers {
-    pub fn add(&mut self, user_id: UserId, principal: Principal, invitation: UserInvitation) {
+    pub fn add(&mut self, principal: Principal, invitation: UserInvitation) {
         self.last_updated = invitation.timestamp;
-        self.users.entry(user_id).or_insert(principal);
-        self.invites.entry(principal).or_insert(invitation);
+        self.users.entry(principal).or_insert(invitation);
     }
 
-    pub fn remove(&mut self, user_id: &UserId, now: TimestampMillis) -> Option<UserInvitation> {
-        if let Some(principal) = self.users.remove(user_id) {
+    pub fn remove(&mut self, principal: &Principal, now: TimestampMillis) -> Option<UserInvitation> {
+        let invitation = self.users.remove(principal);
+        if invitation.is_some() {
             self.last_updated = now;
-            self.invites.remove(&principal)
-        } else {
-            None
         }
+        invitation
     }
 
-    pub fn get(&self, user_id_or_principal: &Principal) -> Option<&UserInvitation> {
-        let user_id: UserId = (*user_id_or_principal).into();
-        let principal = self.users.get(&user_id).unwrap_or(user_id_or_principal);
-        self.invites.get(principal)
+    pub fn get(&self, principal: &Principal) -> Option<&UserInvitation> {
+        self.users.get(principal)
     }
 
     pub fn users(&self) -> Vec<UserId> {
-        self.users.keys().copied().collect()
+        self.users.values().map(|invitation| invitation.invited).collect()
     }
 
     pub fn last_updated(&self) -> TimestampMillis {
@@ -49,7 +45,7 @@ impl InvitedUsers {
     }
 
     pub fn contains(&self, principal: &Principal) -> bool {
-        self.invites.contains_key(principal)
+        self.users.contains_key(principal)
     }
 
     pub fn len(&self) -> usize {
