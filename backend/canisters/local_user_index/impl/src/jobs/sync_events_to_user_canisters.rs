@@ -14,7 +14,7 @@ pub(crate) fn start_job_if_required(runtime_state: &RuntimeState) -> bool {
     if TIMER_ID.with(|t| t.get().is_none())
         && (!runtime_state.data.user_event_sync_queue.is_empty() || runtime_state.data.user_event_sync_queue.sync_in_progress())
     {
-        let timer_id = ic_cdk_timers::set_timer_interval(Duration::default(), run);
+        let timer_id = ic_cdk_timers::set_timer_interval(Duration::ZERO, run);
         TIMER_ID.with(|t| t.set(Some(timer_id)));
         trace!("'sync_events_to_user_canisters' job started");
         true

@@ -19,6 +19,7 @@
             on:chatWith
             on:showFaq
             on:whatsHot
+            on:halloffame
             on:showHomePage
             on:newGroup
             on:profile

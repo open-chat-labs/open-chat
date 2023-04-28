@@ -4,7 +4,6 @@ use candid::{CandidType, Principal};
 use ic_cdk::api::management_canister::main::{CanisterInstallMode, InstallCodeArgument};
 use ic_test_state_machine_client::{StateMachine, UserError, WasmResult};
 use serde::de::DeserializeOwned;
-use std::time::Duration;
 use types::{CanisterId, CanisterWasm, DiamondMembershipPlanDuration};
 
 mod macros;
@@ -110,7 +109,6 @@ pub fn register_diamond_user(env: &mut StateMachine, canister_ids: &CanisterIds,
         true,
     );
 
-    env.advance_time(Duration::from_secs(15));
     tick_many(env, 3);
 
     user
@@ -133,7 +131,6 @@ pub fn upgrade_user(user: &User, env: &mut StateMachine, canister_ids: &Canister
         true,
     );
 
-    env.advance_time(Duration::from_secs(15));
     tick_many(env, 3);
 }
 

@@ -5,6 +5,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Pass OpenChat bot messages in user canister init args ([#3517](https://github.com/open-ic/open-chat/pull/3517))
+
+## [[2.0.671](https://github.com/open-ic/open-chat/releases/tag/v2.0.671-user_index)] - 2023-04-28
+
 ### Added
 
 - Expose user referral leaderboards ([#3482](https://github.com/open-ic/open-chat/pull/3482))
@@ -12,6 +18,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Add each new platform moderator to a moderation group ([#3493](https://github.com/open-ic/open-chat/pull/3493))
 - Added `platform_moderators_group` query endpoint ([#3495](https://github.com/open-ic/open-chat/pull/3495))
 - Join users who register with relevant code to Bitcoin Miami group ([#3501](https://github.com/open-ic/open-chat/pull/3501))
+
+### Changed
+
+- Reduce a few timer job intervals ([#3515](https://github.com/open-ic/open-chat/pull/3515))
 
 ## [[2.0.668](https://github.com/open-ic/open-chat/releases/tag/v2.0.668-user_index)] - 2023-04-19
 

@@ -78,6 +78,7 @@ fn prepare(args: &Args, runtime_state: &mut RuntimeState) -> Result<PrepareOk, R
         notifications_canister_id: runtime_state.data.notifications_canister_id,
         wasm_version: canister_wasm.version,
         username: args.username.clone(),
+        openchat_bot_messages: args.openchat_bot_messages.clone(),
         test_mode: runtime_state.data.test_mode,
     };
 

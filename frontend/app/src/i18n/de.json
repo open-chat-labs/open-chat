@@ -364,21 +364,6 @@
             "replyInThread": "Antwort im Thread"
         },
         "advanced": "Fortschrittlich",
-        "invite": {
-            "inviteWithLink": "Per Link zur Gruppe einladen",
-            "enableLink": "Verknüpfung aktivieren",
-            "resetLink": "Verknüpfung zurücksetzen",
-            "errorGettingLink": "Link kann nicht abgerufen werden",
-            "errorEnablingLink": "Link kann nicht aktiviert werden",
-            "errorDisablingLink": "Link kann nicht deaktiviert werden",
-            "errorResettingLink": "Link kann nicht zurückgesetzt werden",
-            "confirmReset": "Möchten Sie den Gruppenlink wirklich zurücksetzen? Personen können der Gruppe nicht mehr über den aktuellen Link beitreten.",
-            "shareMessage": "Jeder mit diesem Link kann eine Vorschau anzeigen und der Gruppe beitreten.",
-            "shareMessageTrust": "Teilen Sie es mit Menschen, denen Sie vertrauen.",
-            "enabled": "aktiviert",
-            "disabled": "behindert",
-            "reset": "zurücksetzen"
-        },
         "welcome": "Willkommen zu {groupName}",
         "historyPrivateMessage": "Alte Nachrichten sind für neue Mitglieder nicht sichtbar",
         "privateGroupInfo": "Benutzer können dieser Gruppe nicht frei beitreten. Sie müssen entweder hinzugefügt oder von einem autorisierten Mitglied eingeladen werden.",
@@ -420,7 +405,9 @@
         "minStakeN": "Mindesteinsatz {n} Token",
         "optional": "Optional",
         "openAccessInfo": "Es gibt keine besonderen Zugangsvoraussetzungen, um dieser Gruppe beizutreten",
-        "gateCheckFailed": "Zugangstor nicht erreicht"
+        "gateCheckFailed": "Zugangstor nicht erreicht",
+        "inviteWithLink": "Per Link zur Gruppe einladen",
+        "shareMessage": "Jeder mit diesem Link kann eine Vorschau anzeigen und der Gruppe beitreten. Wenn Sie ein Diamond-Mitglied sind und ein Benutzer über diesen Link ein Konto registriert, verdienen Sie die Hälfte aller Diamond-Mitgliedschaftszahlungen, die er innerhalb seines ersten Jahres leistet."
     },
     "updateNow": "jetzt neu laden",
     "updateRequired": "Eine neue Version von OpenChat ist verfügbar - Neuladen in {countdown}s",
@@ -808,5 +795,16 @@
         "deleteMessage": "Gemeldete Nachricht löschen",
         "messageReport": "Von @{username} auf {timestamp} aus folgendem Grund gemeldet: **{reason}**",
         "showing": "Anzeige der neusten {count} von {total} Bericht(en)"
+    },
+    "halloffame": {
+        "menu": "Top-Empfehlungen",
+        "allTime": "Alle Zeit",
+        "thisMonth": "Diesen Monat",
+        "start": "Start",
+        "username": "Nutzername",
+        "value": "Wert",
+        "diamonds": "Diamanten",
+        "users": "Benutzer",
+        "gameover": "Spiel ist aus!"
     }
 }

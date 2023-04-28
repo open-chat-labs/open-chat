@@ -16,7 +16,6 @@ async fn join_group(args: Args) -> Response {
     let c2c_args = group_canister::c2c_join_group::Args {
         user_id: user_details.user_id,
         principal: user_details.principal,
-        invite_code: args.invite_code,
         correlation_id: args.correlation_id,
         is_platform_moderator: user_details.is_platform_moderator,
     };
@@ -36,7 +35,8 @@ async fn join_group(args: Args) -> Response {
             }
             group_canister::c2c_join_group::Response::AlreadyInGroup => AlreadyInGroup,
             group_canister::c2c_join_group::Response::GateCheckFailed(msg) => GateCheckFailed(msg),
-            group_canister::c2c_join_group::Response::GroupNotPublic => GroupNotPublic,
+            group_canister::c2c_join_group::Response::NotInvited => NotInvited,
+            group_canister::c2c_join_group::Response::GroupNotPublic => NotInvited,
             group_canister::c2c_join_group::Response::Blocked => Blocked,
             group_canister::c2c_join_group::Response::ParticipantLimitReached(l) => ParticipantLimitReached(l),
             group_canister::c2c_join_group::Response::ChatFrozen => ChatFrozen,

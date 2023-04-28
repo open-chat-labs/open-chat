@@ -477,6 +477,7 @@ export type JoinGroupResponse = { 'Blocked' : null } |
   { 'GroupNotFound' : null } |
   { 'GroupNotPublic' : null } |
   { 'AlreadyInGroup' : null } |
+  { 'NotInvited' : null } |
   { 'GateCheckFailed' : GateCheckFailedReason } |
   { 'ChatFrozen' : null } |
   { 'Success' : GroupCanisterGroupChatSummary } |

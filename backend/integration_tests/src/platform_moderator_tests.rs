@@ -5,7 +5,6 @@ use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
 use ic_test_state_machine_client::StateMachine;
 use std::ops::Deref;
-use std::time::Duration;
 use types::{ChatEvent, ChatId, MessageContent};
 
 #[test]
@@ -29,10 +28,6 @@ fn new_platform_moderators_added_to_moderators_group() {
         canister_ids.user_index,
         &user_index_canister::add_platform_moderator::Args { user_id: user2.user_id },
     );
-
-    tick_many(env, 5);
-
-    env.advance_time(Duration::from_secs(15));
 
     tick_many(env, 5);
 
@@ -81,7 +76,6 @@ fn report_message_succeeds() {
             ascending: true,
             max_messages: 10,
             max_events: 10,
-            invite_code: None,
             latest_client_event_index: None,
         },
     );

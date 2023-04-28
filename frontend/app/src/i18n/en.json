@@ -417,21 +417,8 @@
             "notPermitted": "You are not permitted to {permission}",
             "replyInThread": "reply in thread"
         },
-        "invite": {
-            "inviteWithLink": "Invite to group via link",
-            "enableLink": "Enable link",
-            "resetLink": "Reset link",
-            "errorGettingLink": "Unable to get link",
-            "errorEnablingLink": "Unable to enable link",
-            "errorDisablingLink": "Unable to disable link",
-            "errorResettingLink": "Unable to reset link",
-            "confirmReset": "Are you sure you want to reset the group link? People will no longer be able to join the group using the current link.",
-            "shareMessage": "Anyone with this link can preview and join the group. ",
-            "shareMessageTrust": "Share it with people you trust.",
-            "enabled": "enabled",
-            "disabled": "disabled",
-            "reset": "reset"
-        },
+        "inviteWithLink": "Invite to group via link",
+        "shareMessage": "Anyone with this link can preview and join the group. If you are a Diamond member and any user registers an account via this link, you will earn half of any Diamond membership payments they make within their first year.",
         "advanced": "Advanced",
         "welcome": "Welcome to {groupName}",
         "historyPrivateMessage": "Old messages are not visible to new members",
@@ -526,7 +513,7 @@
     "messageUrlCopiedToClipboard": "Message url copied to clipboard!",
     "faqUrlCopiedToClipboard": "FAQ url copied to clipboard!",
     "failedToShareMessage": "Unable to share this message",
-    "backToResults": "back",
+    "backToResults": "Back",
     "giphyMessage": "Giphy message",
     "prizeMessage": "Prize message",
     "share": "Share",
@@ -781,6 +768,17 @@
         "cancel": "Cancel reminder",
         "cancelSuccess": "Your reminder has been successfully cancelled",
         "cancelFailure": "Sorry we were unable to cancel your reminder"
+    },
+    "halloffame": {
+        "menu": "Top referrers",
+        "allTime": "All time",
+        "thisMonth": "This month",
+        "start": "Start",
+        "username": "Username",
+        "value": "Value",
+        "diamonds": "Diamonds",
+        "users": "Users",
+        "gameover": "Game over!"
     },
     "report": {
         "menu": "Report",

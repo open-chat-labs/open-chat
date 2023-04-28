@@ -363,21 +363,6 @@
             "replyInThread": "responder en el hilo"
         },
         "advanced": "Avanzado",
-        "invite": {
-            "inviteWithLink": "Invitar al grupo a través de un enlace",
-            "enableLink": "Habilitar enlace",
-            "resetLink": "Restablecer enlace",
-            "errorGettingLink": "No se puede obtener el enlace",
-            "errorEnablingLink": "No se puede habilitar el enlace",
-            "errorDisablingLink": "No se puede deshabilitar el enlace",
-            "errorResettingLink": "No se puede restablecer el enlace",
-            "confirmReset": "¿Seguro que quieres restablecer el enlace del grupo? Las personas ya no podrán unirse al grupo usando el enlace actual.",
-            "shareMessage": "Cualquier persona con este enlace puede obtener una vista previa y unirse al grupo.",
-            "shareMessageTrust": "Compártelo con personas de confianza.",
-            "enabled": "activado",
-            "disabled": "desactivado",
-            "reset": "Reiniciar"
-        },
         "welcome": "Bienvenido a {groupName}",
         "historyPrivateMessage": "Los mensajes antiguos no son visibles para los nuevos miembros.",
         "privateGroupInfo": "Los usuarios no pueden unirse a este grupo libremente. Deben ser agregados o invitados por un miembro autorizado.",
@@ -419,7 +404,9 @@
         "minStakeN": "Apuesta mínima {n} tokens",
         "optional": "Opcional",
         "openAccessInfo": "No hay requisitos especiales de acceso para unirse a este grupo",
-        "gateCheckFailed": "Puerta de acceso no cumplida"
+        "gateCheckFailed": "Puerta de acceso no cumplida",
+        "inviteWithLink": "Invitar al grupo a través de un enlace",
+        "shareMessage": "Cualquier persona con este enlace puede obtener una vista previa y unirse al grupo. Si es miembro Diamond y cualquier usuario registra una cuenta a través de este enlace, obtendrá la mitad de los pagos de membresía Diamond que realicen durante su primer año."
     },
     "updateNow": "recargar ahora",
     "updateRequired": "Una nueva versión de OpenChat está disponible - recargando en {countdown}s",
@@ -808,5 +795,16 @@
         "deleteMessage": "Eliminar mensaje denunciado",
         "messageReport": "Reportado por @{username} el {timestamp} por el siguiente motivo: **{reason}**",
         "showing": "Mostrando los {count} más recientes de {total} informe(s)"
+    },
+    "halloffame": {
+        "menu": "Referencias principales",
+        "allTime": "Todo el tiempo",
+        "thisMonth": "Este mes",
+        "start": "Comenzar",
+        "username": "Nombre de usuario",
+        "value": "Valor",
+        "diamonds": "Diamantes",
+        "users": "Usuarios",
+        "gameover": "¡Juego terminado!"
     }
 }

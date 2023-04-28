@@ -254,7 +254,6 @@ import {
     type ChangeRoleResponse,
     type RegisterProposalVoteResponse,
     type GroupSearchResponse,
-    type GroupInvite,
     type SearchDirectChatResponse,
     type SearchGroupChatResponse,
     type Cryptocurrency,
@@ -268,10 +267,6 @@ import {
     type SetBioResponse,
     type PendingCryptocurrencyWithdrawal,
     type WithdrawCryptocurrencyResponse,
-    type InviteCodeResponse,
-    type EnableInviteCodeResponse,
-    type DisableInviteCodeResponse,
-    type ResetInviteCodeResponse,
     type UpdateGroupResponse,
     type CandidateGroupChat,
     type CreateGroupResponse,
@@ -302,6 +297,8 @@ import {
     GroupGate,
     ProposalVoteDetails,
     MessageReminderCreatedContent,
+    ReferralLeaderboardRange,
+    ReferralLeaderboardResponse,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -3021,10 +3018,6 @@ export class OpenChat extends EventTarget {
         return this.api.dismissRecommendation(chatId);
     }
 
-    set groupInvite(value: GroupInvite) {
-        this.api.groupInvite = value;
-    }
-
     searchChat(
         chatId: string,
         searchTerm: string,
@@ -3160,22 +3153,6 @@ export class OpenChat extends EventTarget {
             messageIndexes,
             serverChat?.latestEventIndex
         );
-    }
-
-    getInviteCode(chatId: string): Promise<InviteCodeResponse> {
-        return this.api.getInviteCode(chatId);
-    }
-
-    enableInviteCode(chatId: string): Promise<EnableInviteCodeResponse> {
-        return this.api.enableInviteCode(chatId);
-    }
-
-    disableInviteCode(chatId: string): Promise<DisableInviteCodeResponse> {
-        return this.api.disableInviteCode(chatId);
-    }
-
-    resetInviteCode(chatId: string): Promise<ResetInviteCodeResponse> {
-        return this.resetInviteCode(chatId);
     }
 
     updateGroup(
@@ -3803,6 +3780,10 @@ export class OpenChat extends EventTarget {
         config: UpdateMarketMakerConfigArgs
     ): Promise<UpdateMarketMakerConfigResponse> {
         return this.api.updateMarketMakerConfig(config);
+    }
+
+    getReferralLeaderboard(args?: ReferralLeaderboardRange): Promise<ReferralLeaderboardResponse> {
+        return this.api.getReferralLeaderboard(args);
     }
 
     usernameAndIcon(user?: PartialUserSummary): string {
