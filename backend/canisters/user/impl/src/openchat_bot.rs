@@ -1,5 +1,5 @@
 use crate::updates::c2c_send_messages::{handle_message_impl, HandleMessageArgs};
-use crate::{mutate_state, RuntimeState, BASIC_GROUP_CREATION_LIMIT, PREMIUM_GROUP_CREATION_LIMIT};
+use crate::{RuntimeState, BASIC_GROUP_CREATION_LIMIT, PREMIUM_GROUP_CREATION_LIMIT};
 use ic_ledger_types::Tokens;
 use types::{EventWrapper, Message, MessageContent, SuspensionDuration, TextContent, UserId};
 use user_canister::c2c_send_messages::C2CReplyContext;
@@ -7,10 +7,6 @@ use user_canister::{PhoneNumberConfirmed, ReferredUserRegistered, StorageUpgrade
 use utils::consts::{OPENCHAT_BOT_USERNAME, OPENCHAT_BOT_USER_ID};
 use utils::format::format_to_decimal_places;
 use utils::time::{DAY_IN_MS, HOUR_IN_MS};
-
-pub(crate) fn send_welcome_message() {
-    mutate_state(|state| send_text_message("Welcome to OpenChat!".to_string(), true, state));
-}
 
 pub(crate) fn send_group_deleted_message(
     deleted_by: UserId,
