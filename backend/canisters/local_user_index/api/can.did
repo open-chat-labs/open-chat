@@ -3,7 +3,6 @@ import "../../../libraries/types/can.did";
 type JoinGroupArgs =
     record {
         chat_id: ChatId;
-        invite_code: opt nat64;
         correlation_id: nat64;
     };
 
@@ -15,10 +14,29 @@ type JoinGroupResponse =
         GateCheckFailed: GateCheckFailedReason;
         GroupNotFound;
         GroupNotPublic;
+        NotInvited;
         ParticipantLimitReached: nat32;
         Blocked;
         UserSuspended;
         ChatFrozen;
+        InternalError: text;
+    };
+
+type InviteUsersToGroupArgs =
+    record {
+        group_id: ChatId;
+        user_ids: vec UserId;
+        correlation_id: nat64;
+    };
+
+type InviteUsersToGroupResponse =
+    variant {
+        Success;
+        GroupNotFound;
+        CallerNotInGroup;
+        NotAuthorized;
+        ChatFrozen;
+        TooManyInvites: nat32;
         InternalError: text;
     };
 
@@ -39,5 +57,6 @@ type ReportMessageResponse =
 
 service: {
     join_group: (JoinGroupArgs) -> (JoinGroupResponse);
+    invite_users_to_group: (InviteUsersToGroupArgs) -> (InviteUsersToGroupResponse);
     report_message: (ReportMessageArgs) -> (ReportMessageResponse);
 }

@@ -13,7 +13,7 @@ pub enum Response {
     Success,
     AlreadyInGroup,
     GroupNotFound,
-    GroupNotPublic,
+    NotInvited,
     GateCheckFailed(GateCheckFailedReason),
     ParticipantLimitReached,
     Blocked,

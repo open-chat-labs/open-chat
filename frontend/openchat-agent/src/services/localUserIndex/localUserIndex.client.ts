@@ -8,7 +8,6 @@ import type { ILocalUserIndexClient } from "./localUserIndex.client.interface";
 import { profile } from "../common/profiling";
 import type { AgentConfig } from "../../config";
 import { apiOptional } from "../common/chatMappers";
-import { textToCode } from "openchat-shared";
 import { identity } from "../../utils/mapping";
 
 export class LocalUserIndexClient extends CandidService implements ILocalUserIndexClient {
@@ -33,11 +32,11 @@ export class LocalUserIndexClient extends CandidService implements ILocalUserInd
     }
 
     @profile("localUserIndexClient")
-    joinGroup(chatId: string, inviteCode: string | undefined): Promise<JoinGroupResponse> {
+    joinGroup(chatId: string): Promise<JoinGroupResponse> {
         return this.handleResponse(
             this.localUserIndexService.join_group({
                 chat_id: Principal.fromText(chatId),
-                invite_code: apiOptional(textToCode, inviteCode),
+                invite_code: [],
                 correlation_id: BigInt(0),
             }),
             joinGroupResponse

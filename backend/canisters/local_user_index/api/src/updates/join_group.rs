@@ -5,7 +5,6 @@ use types::{ChatId, GateCheckFailedReason, GroupCanisterGroupChatSummary};
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub chat_id: ChatId,
-    pub invite_code: Option<u64>,
     pub correlation_id: u64,
 }
 
@@ -17,6 +16,7 @@ pub enum Response {
     GateCheckFailed(GateCheckFailedReason),
     GroupNotFound,
     GroupNotPublic,
+    NotInvited,
     ParticipantLimitReached(u32),
     Blocked,
     UserSuspended,

@@ -234,6 +234,7 @@ type ChatEvent =
         ChatUnfrozen: ChatUnfrozen;
         EventsTimeToLiveUpdated: EventsTimeToLiveUpdated;
         GroupGateUpdated: GroupGateUpdated;
+        UsersInvited: UsersInvited;
     };
 
 type ChatEventWrapper =
@@ -658,6 +659,7 @@ type Participant =
 type ParticipantJoined =
     record {
         user_id: UserId;
+        invited_by: opt UserId;
     };
 
 type ParticipantLeft =
@@ -1288,6 +1290,12 @@ type CustomMessageContent =
         data: blob;
     };
 
+type UsersInvited =
+    record {
+        user_ids: vec UserId;
+        invited_by: UserId;
+    };
+
 type ReportedMessage =
     record {
         reports: vec MessageReport;
@@ -1300,4 +1308,8 @@ type MessageReport =
         timestamp: TimestampMillis;
         reason_code: nat32;
         notes: opt text;
+    };
+
+type EmptyArgs =
+    record {
     };

@@ -8,10 +8,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Added ability to `report_message` ([#3497](https://github.com/open-ic/open-chat/pull/3497))
+- Supports inviting of specific users ([#3499](https://github.com/open-ic/open-chat/pull/3499))
 
 ### Changed
 
 - Encapsulate pushing events and starting sync job ([#3452](https://github.com/open-ic/open-chat/pull/3452))
+- Reduce a few timer job intervals ([#3515](https://github.com/open-ic/open-chat/pull/3515))
 
 ## [[2.0.663](https://github.com/open-ic/open-chat/releases/tag/v2.0.663-local_user_index)] - 2023-04-17
 

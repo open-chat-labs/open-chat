@@ -277,61 +277,6 @@ type ChangeRoleResponse =
         InternalError: text;
     };
 
-type InviteCodeArgs =
-    record {
-    };
-
-type InviteCodeResponse =
-    variant {
-        Success: record {
-            code: opt nat64;
-        };
-        NotAuthorized;
-    };
-
-type EnableInviteCodeArgs =
-    record {
-        correlation_id: nat64;
-    };
-
-type EnableInviteCodeResponse =
-    variant {
-        Success: record {
-            code: nat64;
-        };
-        NotAuthorized;
-        UserSuspended;
-        ChatFrozen;
-    };
-
-type DisableInviteCodeArgs =
-    record {
-        correlation_id: nat64;
-    };
-
-type DisableInviteCodeResponse =
-    variant {
-        Success;
-        NotAuthorized;
-        UserSuspended;
-        ChatFrozen;
-    };
-
-type ResetInviteCodeArgs =
-    record {
-        correlation_id: nat64;
-    };
-
-type ResetInviteCodeResponse =
-    variant {
-        Success: record {
-            code: nat64;
-        };
-        NotAuthorized;
-        UserSuspended;
-        ChatFrozen;
-    };
-
 type UpdateGroupV2Args =
     record {
         name: opt text;
@@ -511,9 +456,11 @@ type SelectedInitialArgs =
 
 type SelectedInitialSuccess =
     record {
+        timestamp: TimestampMillis;
         latest_event_index: EventIndex;
         participants: vec Participant;
         blocked_users: vec UserId;
+        invited_users: vec UserId;
         pinned_messages: vec MessageIndex;
         rules: GroupRules;
     };
@@ -531,11 +478,13 @@ type SelectedUpdatesArgs =
 
 type SelectedUpdatesSuccess =
     record {
+        timestamp: TimestampMillis;
         latest_event_index: EventIndex;
         participants_added_or_updated: vec Participant;
         participants_removed: vec UserId;
         blocked_users_added: vec UserId;
         blocked_users_removed: vec UserId;
+        invited_users: opt vec UserId;
         pinned_messages_added: vec MessageIndex;
         pinned_messages_removed: vec MessageIndex;
         rules: opt GroupRules;
@@ -555,7 +504,6 @@ type EventsArgs =
         ascending: bool;
         max_messages: nat32;
         max_events: nat32;
-        invite_code: opt nat64;
         latest_client_event_index: opt EventIndex;
     };
 
@@ -563,7 +511,6 @@ type EventsByIndexArgs =
     record {
         thread_root_message_index: opt MessageIndex;
         events: vec EventIndex;
-        invite_code: opt nat64;
         latest_client_event_index: opt EventIndex;
     };
 
@@ -573,7 +520,6 @@ type EventsWindowArgs =
         mid_point: MessageIndex;
         max_messages: nat32;
         max_events: nat32;
-        invite_code: opt nat64;
         latest_client_event_index: opt EventIndex;
     };
 
@@ -605,7 +551,6 @@ type MessagesByMessageIndexArgs =
     record {
         thread_root_message_index: opt MessageIndex;
         messages: vec MessageIndex;
-        invite_code: opt nat64;
         latest_client_event_index: opt EventIndex;
     };
 
@@ -683,11 +628,6 @@ type SearchMessagesSuccessResult =
         matches: vec MessageMatch;
     };
 
-type PublicSummaryArgs =
-    record {
-        invite_code: opt nat64;
-    };
-
 type PublicSummaryResponse =
     variant {
         Success: PublicSummarySuccess;
@@ -699,11 +639,6 @@ type PublicSummarySuccess =
         summary: PublicGroupSummary;
     };
 
-type RulesArgs =
-    record {
-        invite_code: opt nat64;
-    };
-
 type RulesResponse =
     variant {
         Success: RulesSuccess;
@@ -713,6 +648,12 @@ type RulesResponse =
 type RulesSuccess =
     record {
         rules: opt text;
+    };
+
+type DeclineInvitationResponse =
+    variant {
+        Success;
+        NotInvited;
     };
 
 service: {
@@ -727,10 +668,6 @@ service: {
     pin_message_v2: (PinMessageArgs) -> (PinMessageV2Response);
     unpin_message: (UnpinMessageArgs) -> (UnpinMessageResponse);
     change_role: (ChangeRoleArgs) -> (ChangeRoleResponse);
-    invite_code: (InviteCodeArgs) -> (InviteCodeResponse) query;
-    enable_invite_code: (EnableInviteCodeArgs) -> (EnableInviteCodeResponse);
-    disable_invite_code: (DisableInviteCodeArgs) -> (DisableInviteCodeResponse);
-    reset_invite_code: (ResetInviteCodeArgs) -> (ResetInviteCodeResponse);
 
     // Can be called by admins or regular users of public groups
     add_participants: (AddParticipantsArgs) -> (AddParticipantsResponse);
@@ -747,6 +684,7 @@ service: {
     register_proposal_vote: (RegisterProposalVoteArgs) -> (RegisterProposalVoteResponse);
     register_proposal_vote_v2: (RegisterProposalVoteArgs) -> (RegisterProposalVoteV2Response);
     claim_prize: (ClaimPrizeArgs) -> (ClaimPrizeResponse);
+    decline_invitation: (EmptyArgs) -> (DeclineInvitationResponse);
 
     summary: (SummaryArgs) -> (SummaryResponse) query;
     summary_updates: (SummaryUpdatesArgs) -> (SummaryUpdatesResponse) query;
@@ -763,6 +701,6 @@ service: {
 
     search_messages: (SearchMessagesArgs) -> (SearchMessagesResponse) query; // Use Tantivy
 
-    public_summary: (PublicSummaryArgs) -> (PublicSummaryResponse) query;
-    rules: (RulesArgs) -> (RulesResponse) query;
+    public_summary: (EmptyArgs) -> (PublicSummaryResponse) query;
+    rules: (EmptyArgs) -> (RulesResponse) query;
 }

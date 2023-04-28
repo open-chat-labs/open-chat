@@ -849,11 +849,7 @@ export function canPinMessages(chat: ChatSummary): boolean {
 }
 
 export function canInviteUsers(chat: ChatSummary): boolean {
-    if (chat.kind === "group_chat" && !chat.frozen) {
-        return chat.public || isPermitted(chat.myRole, chat.permissions.inviteUsers);
-    } else {
-        return false;
-    }
+    return chat.kind === "group_chat" && !chat.frozen && chat.public;
 }
 
 export function canCreatePolls(chat: ChatSummary): boolean {

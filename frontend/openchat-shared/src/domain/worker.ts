@@ -15,9 +15,7 @@ import type {
     DeleteGroupResponse,
     DeleteMessageResponse,
     DirectChatEvent,
-    DisableInviteCodeResponse,
     EditMessageResponse,
-    EnableInviteCodeResponse,
     EventsResponse,
     EventWrapper,
     FreezeGroupResponse,
@@ -29,7 +27,6 @@ import type {
     GroupPermissions,
     GroupRules,
     IndexRange,
-    InviteCodeResponse,
     JoinGroupResponse,
     LeaveGroupResponse,
     ListNervousSystemFunctionsResponse,
@@ -84,6 +81,8 @@ import type {
     DiamondMembershipDuration,
     PayForDiamondMembershipResponse,
     SetMessageReminderResponse,
+    ReferralLeaderboardRange,
+    ReferralLeaderboardResponse,
 } from "./user";
 import type {
     GroupSearchResponse,
@@ -176,9 +175,6 @@ export type WorkerRequest =
     | GetBio
     | WithdrawCrypto
     | GroupMessagesByMessageIndex
-    | GetInviteCode
-    | EnableInviteCode
-    | DisableInviteCode
     | CreateGroupChat
     | SetCachedMessageFromNotification
     | FreezeGroup
@@ -202,7 +198,14 @@ export type WorkerRequest =
     | UpdateMarketMakerConfig
     | SetMessageReminder
     | CancelMessageReminder
+    | ReferralLeaderboard
     | ReportMessage;
+
+type ReferralLeaderboard = Request<{
+    args?: ReferralLeaderboardRange;
+}> & {
+    kind: "getReferralLeaderboard";
+};
 
 type SetCachedMessageFromNotification = Request<{
     chatId: string;
@@ -216,24 +219,6 @@ type CreateGroupChat = Request<{
     candidate: CandidateGroupChat;
 }> & {
     kind: "createGroupChat";
-};
-
-type DisableInviteCode = Request<{
-    chatId: string;
-}> & {
-    kind: "disableInviteCode";
-};
-
-type EnableInviteCode = Request<{
-    chatId: string;
-}> & {
-    kind: "enableInviteCode";
-};
-
-type GetInviteCode = Request<{
-    chatId: string;
-}> & {
-    kind: "getInviteCode";
 };
 
 type GroupMessagesByMessageIndex = Request<{
@@ -848,9 +833,6 @@ export type WorkerError = {
  */
 export type WorkerResponse =
     | Response<CreateGroupResponse>
-    | Response<DisableInviteCodeResponse>
-    | Response<EnableInviteCodeResponse>
-    | Response<InviteCodeResponse>
     | Response<EventsResponse<Message>>
     | Response<WithdrawCryptocurrencyResponse>
     | Response<string>
@@ -932,6 +914,7 @@ export type WorkerResponse =
     | Response<ClaimPrizeResponse>
     | Response<UpdateMarketMakerConfigResponse>
     | Response<SetMessageReminderResponse>
+    | Response<ReferralLeaderboardResponse>
     | Response<ReportMessageResponse>;
 
 type Response<T> = {
