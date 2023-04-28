@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg viewBox="0 0 361 361" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:bx="https://boxy-svg.com">
+  <defs>
+    <linearGradient id="b" bx:pinned="true">
+      <stop offset="0" stop-color="#fbb03b"/>
+      <stop offset="1" stop-color="#f05a24"/>
+    </linearGradient>
+    <linearGradient id="a" bx:pinned="true">
+      <stop offset="0" stop-color="#5f2583"/>
+      <stop offset="1" stop-color="#ed1e79"/>
+    </linearGradient>
+    <linearGradient id="d" x1="973.216" x2="973.216" y1="100.665" y2="388.077" gradientTransform="matrix(.97413 -.22842 .31045 1.35247 -95.3 85.515)" gradientUnits="userSpaceOnUse" xlink:href="#a"/>
+    <linearGradient id="c" x1="188.919" x2="188.919" y1="1.638" y2="361.638" gradientTransform="matrix(-1 .0016 -.00202 -1.25907 376.78 357.265)" gradientUnits="userSpaceOnUse" xlink:href="#b"/>
+    <filter id="pixelete-filter-0" color-interpolation-filters="sRGB" x="0" y="0" width="100%" height="100%" bx:preset="pixelete 1 10">
+      <feFlood height="2" width="2"/>
+      <feComposite width="10" height="10"/>
+      <feTile result="a"/>
+      <feComposite in="SourceGraphic" in2="a" operator="in"/>
+      <feMorphology operator="dilate" radius="5"/>
+    </filter>
+  </defs>
+  <g transform="translate(-69.987 -69.986)" style="filter: url(#pixelete-filter-0);">
+    <path fill="url(#c)" d="M8.919 181.638a180 180 0 1 0 360 0 180 180 0 1 0-360 0Zm80 0a100 100 0 0 1 200 0 100 100 0 0 1-200 0Z" transform="translate(61.094 68.348)"/>
+    <path fill="url(#d)" d="M958.327 100.665a175.433 175.433 0 0 1 0 287.412l-45.03-64.31a96.924 96.924 0 0 0 0-158.791Z" paint-order="stroke" transform="matrix(1.03173 0 0 1.0208 -634.597 .545)"/>
+    <circle cx="250" cy="250" r="100" style="fill: rgb(51, 51, 51);"/>
+  </g>
+  <path style="stroke: rgb(0, 0, 0); fill: rgb(51, 51, 51); stroke-width: 0px; filter: url(#pixelete-filter-0);" d="M 141.482 217.444 H 219.17 A 15 15 0 0 1 234.17 232.444 V 263.693 A 20 20 0 0 1 214.17 283.693 H 141.482 A 15 15 0 0 1 126.482 268.693 V 232.444 A 15 15 0 0 1 141.482 217.444 Z" bx:shape="rect 126.482 217.444 107.688 66.249 15 15 20 15 1@5179be3d"/>
+  <path d="M 179.024 17.441 C 192.582 17.441 203.574 28.724 203.574 42.644 C 203.574 51.968 198.665 60.158 191.3 64.442 L 191.3 80.445 L 203.574 80.445 C 251.029 80.445 289.5 119.937 289.5 168.653 L 301.773 168.653 C 308.552 168.653 314.049 174.294 314.049 181.252 L 314.049 219.056 C 314.049 226.016 308.552 231.658 301.773 231.658 L 289.5 231.658 L 289.5 244.259 C 289.5 258.176 278.507 269.461 264.95 269.461 L 93.1 269.461 C 79.54 269.461 68.551 258.176 68.551 244.259 L 68.551 231.658 L 56.275 231.658 C 49.495 231.658 44 226.016 44 219.056 L 44 181.252 C 44 174.294 49.495 168.653 56.275 168.653 L 68.551 168.653 C 68.551 119.937 107.02 80.445 154.475 80.445 L 166.749 80.445 L 166.749 64.442 C 159.384 60.158 154.475 51.968 154.475 42.644 C 154.475 28.724 165.465 17.441 179.024 17.441 M 123.788 156.051 C 106.839 156.051 93.1 170.155 93.1 187.554 C 93.1 204.952 106.839 219.056 123.788 219.056 C 140.735 219.056 154.475 204.952 154.475 187.554 C 154.475 170.155 140.735 156.051 123.788 156.051 M 234.261 156.051 C 217.313 156.051 203.574 170.155 203.574 187.554 C 203.574 204.952 217.313 219.056 234.261 219.056 C 251.211 219.056 264.95 204.952 264.95 187.554 C 264.95 170.155 251.211 156.051 234.261 156.051 Z" style="fill: rgb(51, 51, 51); filter: url(#pixelete-filter-0);"/>
+  <circle cx="124.376" cy="185.526" r="29.221" style="fill: rgb(255, 255, 255); filter: url(#pixelete-filter-0);"/>
+  <circle cx="233.844" cy="185.5" r="29.2" style="fill: rgb(255, 255, 255); filter: url(#pixelete-filter-0);"/>
+  <g transform="matrix(1, 0, 0, 1, -287.45224, -8.763936)" style="filter: url(#pixelete-filter-0);">
+    <rect x="435.597" y="236.208" width="64.756" height="12.783" style="stroke: rgb(0, 0, 0); fill: rgb(255, 255, 255);"/>
+    <line style="fill: rgb(216, 216, 216); stroke: rgb(0, 0, 0);" x1="451.754" y1="236.522" x2="451.758" y2="248.991"/>
+    <line style="fill: rgb(216, 216, 216); stroke: rgb(0, 0, 0);" x1="467.819" y1="236.306" x2="467.823" y2="248.775"/>
+    <line style="fill: rgb(216, 216, 216); stroke: rgb(0, 0, 0);" x1="483.848" y1="236.516" x2="483.852" y2="248.985"/>
+    <rect x="435.597" y="248.985" width="64.756" height="12.783" style="stroke: rgb(0, 0, 0); fill: rgb(255, 255, 255);"/>
+    <line style="fill: rgb(216, 216, 216); stroke: rgb(0, 0, 0);" x1="451.75" y1="249.509" x2="451.754" y2="261.978"/>
+    <line style="fill: rgb(216, 216, 216); stroke: rgb(0, 0, 0);" x1="467.823" y1="249.299" x2="467.827" y2="261.768"/>
+    <line style="fill: rgb(216, 216, 216); stroke: rgb(0, 0, 0);" x1="483.852" y1="249.509" x2="483.856" y2="261.978"/>
+  </g>
+  <rect x="232.17" y="173.025" width="15.579" height="15.579" style="stroke: rgb(0, 0, 0); fill: rgb(25, 25, 25); filter: url(#pixelete-filter-0);"/>
+  <rect x="120.853" y="172.966" width="15.579" height="15.579" style="stroke: rgb(0, 0, 0); fill: rgb(25, 25, 25); filter: url(#pixelete-filter-0);"/>
+</svg>

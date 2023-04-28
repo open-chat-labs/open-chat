@@ -59,6 +59,7 @@
     import { querystring } from "routes";
     import { eventListScrollTop } from "../../stores/scrollPos";
     import GateCheckFailed from "./groupdetails/GateCheckFailed.svelte";
+    import HallOfFame from "./HallOfFame.svelte";
 
     const client = getContext<OpenChat>("client");
     const user = client.user;
@@ -92,6 +93,7 @@
         NewGroup,
         Wallet,
         GateCheckFailed,
+        HallOfFame,
     }
 
     let faqQuestion: Questions | undefined = undefined;
@@ -292,6 +294,12 @@
                 if (wallet !== null) {
                     modal = ModalType.Wallet;
                     page.replace(removeQueryStringParam("wallet"));
+                }
+
+                const hof = $querystring.get("hof");
+                if (hof !== null) {
+                    modal = ModalType.HallOfFame;
+                    page.replace(removeQueryStringParam("hof"));
                 }
             }
         }
@@ -907,6 +915,7 @@
             on:searchEntered={performSearch}
             on:chatWith={chatWith}
             on:whatsHot={() => whatsHot(true)}
+            on:halloffame={() => (modal = ModalType.HallOfFame)}
             on:newGroup={newGroup}
             on:profile={showProfile}
             on:logout={() => client.logout()}
@@ -1022,6 +1031,8 @@
             <NewGroup on:upgrade={upgrade} {candidateGroup} on:close={closeModal} />
         {:else if modal === ModalType.Wallet}
             <AccountsModal on:close={closeModal} />
+        {:else if modal === ModalType.HallOfFame}
+            <HallOfFame on:close={closeModal} />
         {/if}
     </Overlay>
 {/if}

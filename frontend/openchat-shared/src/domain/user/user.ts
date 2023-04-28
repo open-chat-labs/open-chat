@@ -195,3 +195,27 @@ export type SetMessageReminderResponse =
     | "success"
     | "reminder_date_in_past"
     | "user_suspended";
+
+export type ReferralLeaderboardRange = { year: number; month: number };
+
+export type ReferralLeaderboardResponse = AllTimeReferralStats | MonthlyReferralStats;
+
+export type AllTimeReferralStats = {
+    kind: "all_time";
+    stats: ReferralStats[];
+};
+
+export type MonthlyReferralStats = {
+    kind: "monthly";
+    month: number;
+    year: number;
+    stats: ReferralStats[];
+};
+
+export type ReferralStats = {
+    username: string;
+    totalUsers: number;
+    userId: string;
+    diamondMembers: number;
+    totalRewardsE8s: bigint;
+};

@@ -807,5 +807,16 @@
         "deleteMessage": "删除举报的消息",
         "messageReport": "由@{username} 在 {timestamp} 上报告，原因如下：**{reason}**",
         "showing": "显示最近的 {count} 份报告（共 {total} 份）"
+    },
+    "halloffame": {
+        "menu": "热门推荐人",
+        "allTime": "整天",
+        "thisMonth": "这个月",
+        "start": "开始",
+        "username": "用户名",
+        "value": "价值",
+        "diamonds": "钻石",
+        "users": "用户",
+        "gameover": "游戏结束！"
     }
 }

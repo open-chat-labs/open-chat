@@ -807,5 +807,16 @@
         "deleteMessage": "Xóa tin nhắn đã báo cáo",
         "messageReport": "Được @{username} báo cáo về {timestamp} vì lý do sau: **{reason}**",
         "showing": "Đang hiển thị {count}/{total} báo cáo gần đây nhất"
+    },
+    "halloffame": {
+        "menu": "Người giới thiệu hàng đầu",
+        "allTime": "Mọi thời đại",
+        "thisMonth": "Tháng này",
+        "start": "Bắt đầu",
+        "username": "tên tài khoản",
+        "value": "Giá trị",
+        "diamonds": "kim cương",
+        "users": "người dùng",
+        "gameover": "Trò chơi kết thúc!"
     }
 }

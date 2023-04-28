@@ -16,6 +16,8 @@ import type {
     DiamondMembershipDuration,
     PayForDiamondMembershipResponse,
     SetUserUpgradeConcurrencyResponse,
+    ReferralLeaderboardRange,
+    ReferralLeaderboardResponse,
 } from "openchat-shared";
 import { groupBy } from "../../utils/list";
 import { profile } from "../common/profiling";
@@ -208,6 +210,10 @@ export class CachingUserIndexClient implements IUserIndexClient {
 
     setUserUpgradeConcurrency(value: number): Promise<SetUserUpgradeConcurrencyResponse> {
         return this.client.setUserUpgradeConcurrency(value);
+    }
+
+    getReferralLeaderboard(req?: ReferralLeaderboardRange): Promise<ReferralLeaderboardResponse> {
+        return this.client.getReferralLeaderboard(req);
     }
 
     getPlatformModeratorGroup(): Promise<string> {
