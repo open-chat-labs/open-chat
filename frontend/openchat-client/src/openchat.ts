@@ -1514,14 +1514,14 @@ export class OpenChat extends EventTarget {
     compareUsername = compareUsername;
 
     private blockUserLocally(chatId: string, userId: string): void {
-        chatStateStore.updateProp(chatId, "blockedUsers", (b) => b.add(userId));
+        chatStateStore.updateProp(chatId, "blockedUsers", (b) => new Set(b.add(userId)));
         chatStateStore.updateProp(chatId, "members", (p) => p.filter((p) => p.userId !== userId));
     }
 
     private unblockUserLocally(chatId: string, userId: string): void {
         chatStateStore.updateProp(chatId, "blockedUsers", (b) => {
             b.delete(userId);
-            return b;
+            return new Set(b);
         });
         chatStateStore.updateProp(chatId, "members", (p) => [
             ...p,
