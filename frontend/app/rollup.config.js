@@ -134,14 +134,18 @@ function clean() {
             if (version) {
                 fs.writeFileSync("build/version", JSON.stringify({ version }));
             }
-            const iiAlternativeOrigins = process.env.II_ALTERNATIVE_ORIGINS;
-            if (iiAlternativeOrigins !== undefined) {
+            const customDomains = process.env.CUSTOM_DOMAINS;
+            if (customDomains !== undefined) {
                 fs.mkdirSync("build/.well-known");
                 fs.writeFileSync(
                     "build/.well-known/ii-alternative-origins",
                     JSON.stringify({
-                        alternativeOrigins: iiAlternativeOrigins.split(","),
+                        alternativeOrigins: customDomains.split(",").map((d) => `https://${d}`),
                     })
+                );
+                fs.writeFileSync(
+                    "build/.well-known/ic-domains",
+                    customDomains.split(",").join("\n")
                 );
             }
             copyFile(".", "build", ".ic-assets.json5");

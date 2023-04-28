@@ -23,4 +23,8 @@
             "Cache-Control": "max-age=31536000, immutable",
         },
     },
+    {
+        "match": ".well-known",
+        "ignore": false
+    }
 ]
