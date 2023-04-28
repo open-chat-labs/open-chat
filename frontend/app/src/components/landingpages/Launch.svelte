@@ -4,12 +4,13 @@
     import page from "page";
 
     export let rootPath = "/";
+    export let text = "Launch app";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
     $: identityState = client.identityState;
-    $: txt = $identityState === "logging_in" ? "Logging in..." : "Launch app";
+    $: txt = $identityState === "logging_in" ? "Logging in..." : text;
 
     function launch() {
         if ($identityState === "logged_in") {

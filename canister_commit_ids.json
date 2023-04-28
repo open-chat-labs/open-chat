@@ -4,12 +4,14 @@
   "group_index": "717d2cf5c17c3014c20ff1f2a6acdd40a83c67e7",
   "local_group_index": "717d2cf5c17c3014c20ff1f2a6acdd40a83c67e7",
   "local_user_index": "717d2cf5c17c3014c20ff1f2a6acdd40a83c67e7",
-  "online_users": "41d3ead0f47446ce3624cbad10f7250d281503c8",
-  "proposals_bot": "326ce505088ff299fa7bbc2148b92b5929044c35",
+  "market_maker": "c7a496d445937acf51080748a0cb272f0b5095ad",
   "notifications": "f3b8a5c45c062a6f6b7c48002be3fd9801901462",
   "notifications_index": "41d3ead0f47446ce3624cbad10f7250d281503c8",
-  "storage_bucket": "09fb4bfd8948eef0a5dd6f583635b317bf3bfbac",
-  "storage_index": "09fb4bfd8948eef0a5dd6f583635b317bf3bfbac",
+  "online_users": "41d3ead0f47446ce3624cbad10f7250d281503c8",
+  "proposal_validation": "523ab8e175033df06e3969a5b5d5c13dfe2da948",
+  "proposals_bot": "326ce505088ff299fa7bbc2148b92b5929044c35",
+  "storage_bucket": "523ab8e175033df06e3969a5b5d5c13dfe2da948",
+  "storage_index": "523ab8e175033df06e3969a5b5d5c13dfe2da948",
   "user": "80d99c2584c1491aafe5bbf3cff6fcadc8409a89",
   "user_index": "3de7d8e29a5a323e0d9dc3fe85f27bb53b186804"
 }

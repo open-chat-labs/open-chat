@@ -4,7 +4,7 @@
     import Header from "./Header.svelte";
     import Content from "./Content.svelte";
     import { location, pathParams } from "../../routes";
-    import { getContext } from "svelte";
+    import { getContext, onMount } from "svelte";
     import { CreatedUser, OPENCHAT_BOT_USER_ID, OpenChat } from "openchat-client";
     import Overlay from "../Overlay.svelte";
     import Register from "../register/Register.svelte";
@@ -12,11 +12,13 @@
     import Loading from "../Loading.svelte";
     import { showMenuForLandingRoute } from "utils/urls";
     import page from "page";
+    import { saveSeletedTheme } from "../../theme/themes";
 
     const client = getContext<OpenChat>("client");
 
     $: identityState = client.identityState;
     $: showMenu = showMenuForLandingRoute($location);
+    $: miami = $location.startsWith("/miami");
 
     function logout() {
         client.logout();
@@ -24,10 +26,16 @@
 
     function createdUser(ev: CustomEvent<CreatedUser>) {
         client.onCreatedUser(ev.detail);
-        if ($location.startsWith("/miami")) {
+        if (miami) {
             page(`/${OPENCHAT_BOT_USER_ID}`);
         }
     }
+
+    onMount(() => {
+        if (miami) {
+            saveSeletedTheme("dark");
+        }
+    });
 </script>
 
 {#if $identityState === "registering"}
@@ -40,7 +48,7 @@
     <Header on:login={() => client.login()} on:logout={logout} />
 {/if}
 
-<main class="main">
+<main class:miami class="main">
     {#if $location.startsWith("/features")}
         <FeaturesPage />
     {:else}
@@ -81,7 +89,7 @@
                 {:then { default: ArchitecturePage }}
                     <ArchitecturePage />
                 {/await}
-            {:else if $location.startsWith("/miami")}
+            {:else if miami}
                 {#await import("./Miami.svelte")}
                     <div class="loading">
                         <Loading />
@@ -117,6 +125,10 @@
         overflow-x: hidden;
         margin: 0 auto;
         margin-top: toRem(80);
+
+        &.miami {
+            margin-top: 0;
+        }
     }
 
     .loading {

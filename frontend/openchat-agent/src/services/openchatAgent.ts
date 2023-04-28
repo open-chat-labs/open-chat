@@ -622,7 +622,7 @@ export class OpenChatAgent extends EventTarget {
             currentChatId,
             events,
             threadRootMessageIndex
-        ).asycMap((key, ctx, idxs) => {
+        ).asyncMap((key, ctx, idxs) => {
             if (ctx.chatId === currentChatId && chatType === "direct_chat") {
                 return this.userClient
                     .chatEventsByIndex(
