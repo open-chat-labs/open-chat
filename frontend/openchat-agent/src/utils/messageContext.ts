@@ -16,7 +16,7 @@ export class MessageContextMap<T> {
         return this._map[messageContextToString(key)] ?? [];
     }
 
-    async asycMap<A>(
+    async asyncMap<A>(
         fn: (s: string, k: MessageContext, t: T[]) => Promise<[string, A[]]>
     ): Promise<MessageContextMap<A>> {
         const intermediate: Promise<[string, A[]]>[] = [];
