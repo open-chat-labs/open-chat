@@ -1514,14 +1514,13 @@ export class OpenChat extends EventTarget {
     compareUsername = compareUsername;
 
     private blockUserLocally(chatId: string, userId: string): void {
-        chatStateStore.updateProp(chatId, "blockedUsers", (b) => new Set(b.add(userId)));
+        chatStateStore.updateProp(chatId, "blockedUsers", (b) => new Set([...b, userId]));
         chatStateStore.updateProp(chatId, "members", (p) => p.filter((p) => p.userId !== userId));
     }
 
     private unblockUserLocally(chatId: string, userId: string): void {
         chatStateStore.updateProp(chatId, "blockedUsers", (b) => {
-            b.delete(userId);
-            return new Set(b);
+            return new Set([...b].filter((u) => u !== userId));
         });
         chatStateStore.updateProp(chatId, "members", (p) => [
             ...p,
@@ -2963,10 +2962,7 @@ export class OpenChat extends EventTarget {
         return this.api.addMembers(chatId, userIds, myUsername, allowBlocked);
     }
 
-    inviteUsers(
-        chatId: string,
-        userIds: string[]
-    ): Promise<InviteUsersResponse> {
+    inviteUsers(chatId: string, userIds: string[]): Promise<InviteUsersResponse> {
         return this.api.inviteUsers(chatId, userIds);
     }
 

@@ -102,7 +102,7 @@
                     switch (resp) {
                         case "success":
                             popHistory();
-                            break;                        
+                            break;
                         case "too_many_invites":
                             toastStore.showFailureToast("group.tooManyInvites");
                             break;
@@ -241,8 +241,8 @@
     function addMembersLocally(chatId: string, viaUnblock: boolean, users: UserSummary[]): void {
         if (viaUnblock) {
             chatStateStore.updateProp(chatId, "blockedUsers", (b) => {
-                users.forEach((u) => b.delete(u.userId));
-                return b;
+                const userIds = new Set(users.map((u) => u.userId));
+                return new Set([...b].filter((u) => !userIds.has(u)));
             });
         }
         chatStateStore.updateProp(chatId, "members", (ps) => [

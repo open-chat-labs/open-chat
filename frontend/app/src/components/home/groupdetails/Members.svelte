@@ -13,7 +13,7 @@
         PartialUserSummary,
         UserLookup,
     } from "openchat-client";
-    import { createEventDispatcher, getContext } from "svelte";
+    import { createEventDispatcher, getContext, onMount } from "svelte";
     import MembersSelectionButton from "../MembersSelectionButton.svelte";
     import InvitedUser from "./InvitedUser.svelte";
     import ViewUserProfile from "../profile/ViewUserProfile.svelte";
@@ -31,7 +31,13 @@
     $: knownUsers = getKnownUsers($userStore, $members);
     $: me = knownUsers.find((u) => u.userId === userId);
     $: fullMembers = knownUsers
-        .filter((u) => matchesSearch(searchTerm, u) && u.userId !== userId)
+        .filter(
+            (u) =>
+                matchesSearch(searchTerm, u) &&
+                u.userId !== userId &&
+                !$blocked.has(u.userId) &&
+                !$invited.has(u.userId)
+        )
         .sort(compareMembers);
     $: blockedUsers = Array.from($blocked)
         .map((userId) => $userStore[userId])
@@ -52,6 +58,13 @@
     $: {
         if (chat.chatId !== chatId) {
             chatId = chat.chatId;
+            view = "members";
+        }
+
+        if (
+            (view === "blocked" && $blocked.size === 0) ||
+            (view === "invited" && $invited.size === 0)
+        ) {
             view = "members";
         }
     }
@@ -126,11 +139,20 @@
 
 {#if showBlocked || showInvited}
     <div class="section-selector">
-        <MembersSelectionButton title={$_("members")} on:click={() => setView("members")} selected={view === "members"} />
+        <MembersSelectionButton
+            title={$_("members")}
+            on:click={() => setView("members")}
+            selected={view === "members"} />
         {#if showBlocked}
-            <MembersSelectionButton title={$_("blocked")} on:click={() => setView("blocked")} selected={view === "blocked"} />
+            <MembersSelectionButton
+                title={$_("blocked")}
+                on:click={() => setView("blocked")}
+                selected={view === "blocked"} />
         {:else}
-            <MembersSelectionButton title={$_("invited")} on:click={() => setView("invited")} selected={view === "invited"} />
+            <MembersSelectionButton
+                title={$_("invited")}
+                on:click={() => setView("invited")}
+                selected={view === "invited"} />
         {/if}
     </div>
 {/if}
@@ -144,9 +166,9 @@
 
 {#if view === "members"}
     {#if me !== undefined}
-        <Member 
+        <Member
             me
-            member={me} 
+            member={me}
             canPromoteToOwner={me.role !== "owner" && client.isPlatformModerator()}
             canDemoteToAdmin={client.canDemote(chat.chatId, me.role, "admin")}
             canDemoteToMember={client.canDemote(chat.chatId, me.role, "participant")}
@@ -173,9 +195,9 @@
 {:else if view === "blocked"}
     <div class="user-list">
         {#each blockedUsers as user}
-            <BlockedUser 
+            <BlockedUser
                 {user}
-                {searchTerm} 
+                {searchTerm}
                 canUnblockUser={client.canUnblockUsers(chat.chatId)}
                 on:openUserProfile={openUserProfile}
                 on:unblockUser />
@@ -184,9 +206,9 @@
 {:else if view === "invited"}
     <div class="user-list">
         {#each invitedUsers as user}
-            <InvitedUser 
+            <InvitedUser
                 {user}
-                {searchTerm} 
+                {searchTerm}
                 canUninviteUser={false}
                 on:openUserProfile={openUserProfile}
                 on:uninviteUser />
