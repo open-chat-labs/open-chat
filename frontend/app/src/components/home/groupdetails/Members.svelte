@@ -13,7 +13,7 @@
         PartialUserSummary,
         UserLookup,
     } from "openchat-client";
-    import { createEventDispatcher, getContext, onMount } from "svelte";
+    import { createEventDispatcher, getContext } from "svelte";
     import MembersSelectionButton from "../MembersSelectionButton.svelte";
     import InvitedUser from "./InvitedUser.svelte";
     import ViewUserProfile from "../profile/ViewUserProfile.svelte";
@@ -34,9 +34,7 @@
         .filter(
             (u) =>
                 matchesSearch(searchTerm, u) &&
-                u.userId !== userId &&
-                !$blocked.has(u.userId) &&
-                !$invited.has(u.userId)
+                u.userId !== userId
         )
         .sort(compareMembers);
     $: blockedUsers = Array.from($blocked)
@@ -75,8 +73,8 @@
         dispatch("close");
     }
 
-    function addMembers() {
-        dispatch("addMembers");
+    function showInviteUsers() {
+        dispatch("showInviteUsers");
     }
 
     function matchesSearch(searchTerm: string, user: PartialUserSummary): boolean {
@@ -127,7 +125,7 @@
     }
 </script>
 
-<MembersHeader {closeIcon} {publicGroup} {me} on:close={close} on:addMembers={addMembers} />
+<MembersHeader {closeIcon} {publicGroup} {me} on:close={close} on:showInviteUsers={showInviteUsers} />
 
 <div class="search">
     <Search

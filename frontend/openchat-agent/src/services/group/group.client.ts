@@ -1,7 +1,6 @@
 import type { Identity } from "@dfinity/agent";
 import { idlFactory, GroupService } from "./candid/idl";
 import type {
-    AddMembersResponse,
     EventsResponse,
     GroupChatEvent,
     Message,
@@ -42,7 +41,6 @@ import type {
 import { CandidService } from "../candidService";
 import {
     apiRole,
-    addMembersResponse,
     getEventsResponse,
     changeRoleResponse,
     sendMessageResponse,
@@ -211,23 +209,6 @@ export class GroupClient extends CandidService implements IGroupClient {
                     latestClientEventIndex
                 ),
             args
-        );
-    }
-
-    @profile("groupClient")
-    addMembers(
-        userIds: string[],
-        myUsername: string,
-        allowBlocked: boolean
-    ): Promise<AddMembersResponse> {
-        return this.handleResponse(
-            this.groupService.add_participants({
-                user_ids: userIds.map((u) => Principal.fromText(u)),
-                added_by_name: myUsername,
-                allow_blocked_users: allowBlocked,
-                correlation_id: generateUint64(),
-            }),
-            addMembersResponse
         );
     }
 

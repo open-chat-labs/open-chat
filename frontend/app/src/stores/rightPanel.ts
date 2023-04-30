@@ -31,7 +31,7 @@ export type UserProfilePanel = {
 };
 
 export type InviteMembersPanel = {
-    kind: "invite_members";
+    kind: "invite_users";
 };
 
 export type ShowMembersPanel = {

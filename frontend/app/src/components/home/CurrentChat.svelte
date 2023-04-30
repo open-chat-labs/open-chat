@@ -254,7 +254,7 @@
             on:unblockUser
             on:markAllRead={onMarkAllRead}
             on:toggleMuteNotifications
-            on:addMembers
+            on:showInviteUsers
             on:showGroupDetails
             on:showProposalFilters
             on:showMembers

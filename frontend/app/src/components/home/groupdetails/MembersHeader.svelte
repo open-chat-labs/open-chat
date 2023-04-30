@@ -20,14 +20,14 @@
         dispatch("close");
     }
 
-    function addMembers() {
-        dispatch("addMembers");
+    function showInviteUsers() {
+        dispatch("showInviteUsers");
     }
 </script>
 
 <SectionHeader gap border={false}>
     {#if canAdd}
-        <span title={$_("addMembers")} class="add" on:click={addMembers}>
+        <span title={$_("group.inviteUsers")} class="add" on:click={showInviteUsers}>
             <HoverIcon>
                 <AccountMultiplePlus size={$iconSize} color={"var(--icon-txt)"} />
             </HoverIcon>

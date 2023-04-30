@@ -553,13 +553,13 @@
         }
     }
 
-    function addMembers(ev: CustomEvent<boolean>) {
+    function showInviteUsers(ev: CustomEvent<boolean>) {
         if ($selectedChatId !== undefined) {
             if (ev.detail) {
-                rightPanelHistory.set([{ kind: "invite_members" }]);
+                rightPanelHistory.set([{ kind: "invite_users" }]);
             } else {
                 rightPanelHistory.update((history) => {
-                    return [...history, { kind: "invite_members" }];
+                    return [...history, { kind: "invite_users" }];
                 });
             }
         }
@@ -937,7 +937,7 @@
             on:leaveGroup={triggerConfirm}
             on:chatWith={chatWith}
             on:replyPrivatelyTo={replyPrivatelyTo}
-            on:addMembers={addMembers}
+            on:showInviteUsers={showInviteUsers}
             on:showGroupDetails={showGroupDetails}
             on:showProposalFilters={showProposalFilters}
             on:showMembers={showMembers}
@@ -958,7 +958,7 @@
             on:userAvatarSelected={userAvatarSelected}
             on:goToMessageIndex={goToMessageIndex}
             on:replyPrivatelyTo={replyPrivatelyTo}
-            on:addMembers={addMembers}
+            on:showInviteUsers={showInviteUsers}
             on:showMembers={showMembers}
             on:chatWith={chatWith}
             on:upgrade={upgrade}
@@ -977,7 +977,7 @@
                 on:userAvatarSelected={userAvatarSelected}
                 on:goToMessageIndex={goToMessageIndex}
                 on:replyPrivatelyTo={replyPrivatelyTo}
-                on:addMembers={addMembers}
+                on:showInviteUsers={showInviteUsers}
                 on:showMembers={showMembers}
                 on:chatWith={chatWith}
                 on:upgrade={upgrade}

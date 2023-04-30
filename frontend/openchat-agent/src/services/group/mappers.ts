@@ -1,5 +1,4 @@
 import type {
-    ApiAddParticipantsResponse,
     ApiEventsResponse,
     ApiEventWrapper,
     ApiGroupChatEvent,
@@ -44,7 +43,6 @@ import {
     EventsResponse,
     EventWrapper,
     GroupChatEvent,
-    AddMembersResponse,
     SendMessageResponse,
     RemoveMemberResponse,
     UpdateGroupResponse,
@@ -102,10 +100,6 @@ import { messageMatch } from "../user/mappers";
 import { identity, optional, optionUpdate } from "../../utils/mapping";
 import { ReplicaNotUpToDateError } from "../error";
 import type { OptionalGroupPermissions } from "./candid/types";
-
-function principalToString(p: Principal): string {
-    return p.toString();
-}
 
 export function apiRole(role: MemberRole): ApiRole | undefined {
     switch (role) {
@@ -718,61 +712,6 @@ export function removeMemberResponse(candid: ApiRemoveParticipantResponse): Remo
         "Unexpected ApiRemoveParticipantResponse type received",
         candid
     );
-}
-
-export function addMembersResponse(candid: ApiAddParticipantsResponse): AddMembersResponse {
-    if ("Failed" in candid) {
-        return {
-            kind: "add_members_failed",
-            usersAlreadyInGroup: candid.Failed.users_already_in_group.map(principalToString),
-            usersBlockedFromGroup: candid.Failed.users_blocked_from_group.map(principalToString),
-            usersWhoBlockedRequest: candid.Failed.users_who_blocked_request.map(principalToString),
-            errors: candid.Failed.errors.map(principalToString),
-        };
-    }
-    if ("PartialSuccess" in candid) {
-        return {
-            kind: "add_members_partial_success",
-            usersAdded: candid.PartialSuccess.users_added.map(principalToString),
-            usersAlreadyInGroup:
-                candid.PartialSuccess.users_already_in_group.map(principalToString),
-            usersBlockedFromGroup:
-                candid.PartialSuccess.users_blocked_from_group.map(principalToString),
-            usersWhoBlockedRequest:
-                candid.PartialSuccess.users_who_blocked_request.map(principalToString),
-            errors: candid.PartialSuccess.errors.map(principalToString),
-        };
-    }
-    if ("NotAuthorized" in candid) {
-        return {
-            kind: "add_members_not_authorised",
-        };
-    }
-    if ("ParticipantLimitReached" in candid) {
-        return {
-            // todo - need some UI changes to deal with this properly
-            kind: "member_limit_reached",
-        };
-    }
-    if ("Success" in candid) {
-        return {
-            kind: "add_members_success",
-        };
-    }
-    if ("CallerNotInGroup" in candid) {
-        return {
-            kind: "add_members_not_in_group",
-        };
-    }
-    if ("UserSuspended" in candid) {
-        return {
-            kind: "user_suspended",
-        };
-    }
-    if ("ChatFrozen" in candid) {
-        return { kind: "chat_frozen" };
-    }
-    throw new UnsupportedValueError("Unexpected ApiAddParticipantsResponse type received", candid);
 }
 
 export function deletedMessageResponse(

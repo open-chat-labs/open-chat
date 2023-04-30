@@ -1231,47 +1231,8 @@ export type UnauthorizedToCreatePublicGroup = {
     kind: "unauthorized_to_create_public_group";
 };
 
-export type AddMembersResponse =
-    | AddMembersSuccess
-    | AddMembersNotAuthorised
-    | MemberLimitReached
-    | AddMembersPartialSuccess
-    | AddMembersFailed
-    | AddMembersNotInGroup
-    | UserSuspended
-    | ChatFrozen;
-
-export type AddMembersSuccess = {
-    kind: "add_members_success";
-};
-
-export type AddMembersNotInGroup = {
-    kind: "add_members_not_in_group";
-};
-
-export type AddMembersNotAuthorised = {
-    kind: "add_members_not_authorised";
-};
-
 export type MemberLimitReached = {
     kind: "member_limit_reached";
-};
-
-export type AddMembersPartialSuccess = {
-    kind: "add_members_partial_success";
-    usersAdded: string[];
-    usersAlreadyInGroup: string[];
-    usersBlockedFromGroup: string[];
-    usersWhoBlockedRequest: string[];
-    errors: string[];
-};
-
-export type AddMembersFailed = {
-    kind: "add_members_failed";
-    usersAlreadyInGroup: string[];
-    usersBlockedFromGroup: string[];
-    usersWhoBlockedRequest: string[];
-    errors: string[];
 };
 
 export type EditMessageResponse =

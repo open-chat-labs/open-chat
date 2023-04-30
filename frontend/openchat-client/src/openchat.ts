@@ -249,7 +249,6 @@ import {
     type UserSummary,
     type RegisterUserResponse,
     type CurrentUserResponse,
-    type AddMembersResponse,
     type RemoveMemberResponse,
     type ChangeRoleResponse,
     type RegisterProposalVoteResponse,
@@ -1518,18 +1517,20 @@ export class OpenChat extends EventTarget {
         chatStateStore.updateProp(chatId, "members", (p) => p.filter((p) => p.userId !== userId));
     }
 
-    private unblockUserLocally(chatId: string, userId: string): void {
+    private unblockUserLocally(chatId: string, userId: string, addToMembers: boolean): void {
         chatStateStore.updateProp(chatId, "blockedUsers", (b) => {
             return new Set([...b].filter((u) => u !== userId));
         });
-        chatStateStore.updateProp(chatId, "members", (p) => [
-            ...p,
-            {
-                role: "participant",
-                userId,
-                username: this._liveState.userStore[userId]?.username ?? "unknown",
-            },
-        ]);
+        if (addToMembers) {
+            chatStateStore.updateProp(chatId, "members", (p) => [
+                ...p,
+                {
+                    role: "participant",
+                    userId,
+                    username: this._liveState.userStore[userId]?.username ?? "unknown",
+                },
+            ]);
+        }
     }
 
     blockUser(chatId: string, userId: string): Promise<boolean> {
@@ -1537,18 +1538,38 @@ export class OpenChat extends EventTarget {
         return this.api
             .blockUserFromGroupChat(chatId, userId)
             .then((resp) => {
+                console.log("blockUser result", resp);
                 if (resp !== "success") {
-                    this.unblockUserLocally(chatId, userId);
+                    this.unblockUserLocally(chatId, userId, true);
                     return false;
                 }
                 return true;
             })
             .catch((err) => {
                 this._logger.error("Error blocking user", err);
-                this.unblockUserLocally(chatId, userId);
+                this.unblockUserLocally(chatId, userId, true);
                 return false;
             });
     }
+
+    unblockUser(chatId: string, userId: string): Promise<boolean> {
+        this.unblockUserLocally(chatId, userId, false);
+        return this.api
+            .unblockUserFromGroupChat(chatId, userId)
+            .then((resp) => {
+                if (resp !== "success") {
+                    this.blockUserLocally(chatId, userId);
+                    return false;
+                }
+                return true;
+            })
+            .catch((err) => {
+                this._logger.error("Error blocking user", err);
+                    this.blockUserLocally(chatId, userId);
+                return false;
+            });
+    }
+
     nullUser = nullUser;
     toTitleCase = toTitleCase;
     enableAllProposalFilters = enableAllProposalFilters;
@@ -2953,17 +2974,31 @@ export class OpenChat extends EventTarget {
         return this.api.removeSubscription(subscription);
     }
 
-    addMembers(
-        chatId: string,
-        userIds: string[],
-        myUsername: string,
-        allowBlocked: boolean
-    ): Promise<AddMembersResponse> {
-        return this.api.addMembers(chatId, userIds, myUsername, allowBlocked);
+    private inviteUsersLocally(chatId: string, userIds: string[]): void {
+        chatStateStore.updateProp(chatId, "invitedUsers", (b) => new Set([...b, ...userIds]));
+    }
+
+    private uninviteUsersLocally(chatId: string, userIds: string[]): void {
+        chatStateStore.updateProp(chatId, "invitedUsers", (b) => {
+            return new Set([...b].filter((u) => !userIds.includes(u)));
+        });
     }
 
     inviteUsers(chatId: string, userIds: string[]): Promise<InviteUsersResponse> {
-        return this.api.inviteUsers(chatId, userIds);
+        this.inviteUsersLocally(chatId, userIds);
+        return this.api
+            .inviteUsers(chatId, userIds)
+            .then((resp) => {
+                if (resp !== "success") {
+                    this.uninviteUsersLocally(chatId, userIds);
+                }
+                return resp;
+            })
+            .catch((err) => {
+                this._logger.error("Error uninviting users", err);
+                this.uninviteUsersLocally(chatId, userIds);
+                return "internal_error";
+            });
     }
 
     removeMember(chatId: string, userId: string): Promise<RemoveMemberResponse> {

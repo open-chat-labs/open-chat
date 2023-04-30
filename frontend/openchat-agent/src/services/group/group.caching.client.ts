@@ -1,5 +1,4 @@
 import type {
-    AddMembersResponse,
     EventsResponse,
     GroupChatEvent,
     Message,
@@ -204,14 +203,6 @@ export class CachingGroupClient implements IGroupClient {
                 latestClientEventIndex
             );
         }
-    }
-
-    addMembers(
-        userIds: string[],
-        myUsername: string,
-        allowBlocked: boolean
-    ): Promise<AddMembersResponse> {
-        return this.client.addMembers(userIds, myUsername, allowBlocked);
     }
 
     sendMessage(

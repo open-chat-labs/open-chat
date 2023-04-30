@@ -85,7 +85,6 @@ export {
     EventsSuccessResult as ApiEventsSuccessResult,
     EventsArgs as ApiEventsArgs,
     ChatEvent as ApiGroupChatEvent,
-    AddParticipantsResponse as ApiAddParticipantsResponse,
     ChangeRoleResponse as ApiChangeRoleResponse,
     RemoveParticipantResponse as ApiRemoveParticipantResponse,
     UpdateGroupResponse as ApiUpdateGroupResponse,

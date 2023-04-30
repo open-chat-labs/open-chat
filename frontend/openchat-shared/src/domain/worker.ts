@@ -1,6 +1,5 @@
 import type { AgentConfig } from "./config";
 import type {
-    AddMembersResponse,
     AddRemoveReactionResponse,
     BlockUserResponse,
     CandidateGroupChat,
@@ -109,7 +108,6 @@ export type WorkerRequest =
     | RegisterProposalVote
     | ChangeRole
     | RemoveMember
-    | AddMembers
     | InviteUsers
     | PushSub
     | RemoveSub
@@ -122,6 +120,7 @@ export type WorkerRequest =
     | GetProposalVoteDetailsRequest
     | ListNervousSystemFunctions
     | BlockUserFromGroup
+    | UnblockUserFromGroup
     | AddGroupChatReaction
     | RemoveGroupChatReaction
     | RemoveDirectChatReaction
@@ -346,15 +345,6 @@ type RemoveMember = Request<{
     kind: "removeMember";
 };
 
-type AddMembers = Request<{
-    chatId: string;
-    userIds: string[];
-    myUsername: string;
-    allowBlocked: boolean;
-}> & {
-    kind: "addMembers";
-};
-
 type InviteUsers = Request<{
     chatId: string;
     userIds: string[];
@@ -440,6 +430,13 @@ type BlockUserFromGroup = Request<{
     userId: string;
 }> & {
     kind: "blockUserFromGroupChat";
+};
+
+type UnblockUserFromGroup = Request<{
+    chatId: string;
+    userId: string;
+}> & {
+    kind: "unblockUserFromGroupChat";
 };
 
 type AddGroupChatReaction = Request<{
@@ -851,7 +848,6 @@ export type WorkerResponse =
     | Response<GroupChatSummary[]>
     | Response<RegisterProposalVoteResponse>
     | Response<ChangeRoleResponse>
-    | Response<AddMembersResponse>
     | Response<InviteUsersResponse>
     | Response<RemoveMemberResponse>
     | Response<boolean>

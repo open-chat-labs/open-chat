@@ -53,7 +53,6 @@ import {
     User,
     EditMessageResponse,
     RegisterUserResponse,
-    AddMembersResponse,
     RemoveMemberResponse,
     MemberRole,
     RegisterProposalVoteResponse,
@@ -822,6 +821,16 @@ export class OpenChatAgentWorker extends EventTarget {
         });
     }
 
+    unblockUserFromGroupChat(chatId: string, userId: string): Promise<UnblockUserResponse> {
+        return this.sendRequest({
+            kind: "unblockUserFromGroupChat",
+            payload: {
+                chatId,
+                userId,
+            },
+        });
+    }
+
     getProposalVoteDetails(
         governanceCanisterId: string,
         proposalId: bigint,
@@ -942,23 +951,6 @@ export class OpenChatAgentWorker extends EventTarget {
             kind: "removeSubscription",
             payload: {
                 subscription,
-            },
-        });
-    }
-
-    addMembers(
-        chatId: string,
-        userIds: string[],
-        myUsername: string,
-        allowBlocked: boolean
-    ): Promise<AddMembersResponse> {
-        return this.sendRequest({
-            kind: "addMembers",
-            payload: {
-                chatId,
-                userIds,
-                myUsername,
-                allowBlocked,
             },
         });
     }

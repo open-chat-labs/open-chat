@@ -7,7 +7,6 @@
     import PinnedMessages from "./pinned/PinnedMessages.svelte";
     import { rightPanelHistory } from "../../stores/rightPanel";
     import type {
-        AddMembersResponse,
         ChatEvent,
         EventWrapper,
         GroupChatSummary,
@@ -71,23 +70,6 @@
 
     function popHistory() {
         rightPanelHistory.update((history) => history.slice(0, history.length - 1));
-    }
-
-    function onBlockUser(ev: CustomEvent<{ userId: string }>) {
-        if ($selectedChatId !== undefined) {
-            client.blockUser($selectedChatId, ev.detail.userId);
-        }
-    }
-
-    async function unblockUser(ev: CustomEvent<UserSummary>) {
-        if ($selectedChatId !== undefined) {
-            const success = await addMembers($selectedChatId, true, [ev.detail]);
-            if (success) {
-                toastStore.showSuccessToast("unblockUserSucceeded");
-            } else {
-                toastStore.showFailureToast("unblockUserFailed");
-            }
-        }
     }
 
     async function inviteUsers(ev: CustomEvent<UserSummary[]>) {
@@ -206,80 +188,26 @@
             });
     }
 
-    function removeMembersLocally(
-        chatId: string,
-        viaUnblock: boolean,
-        users: UserSummary[],
-        resp: AddMembersResponse | { kind: "unknown" }
-    ): void {
-        if (resp.kind === "add_members_success") return;
-
-        let toRemove: string[] = [];
-        if (resp.kind === "add_members_partial_success") {
-            toRemove = [
-                ...resp.usersAlreadyInGroup,
-                ...resp.usersBlockedFromGroup,
-                ...resp.usersWhoBlockedRequest,
-            ];
-        } else {
-            toRemove = users.map((u) => u.userId);
-        }
-
-        chatStateStore.updateProp(chatId, "members", (ps) =>
-            ps.filter((p) => {
-                !toRemove.includes(p.userId);
-            })
-        );
-
-        if (viaUnblock) {
-            chatStateStore.updateProp(chatId, "blockedUsers", (b) => {
-                return toRemove.reduce((blocked, u) => blocked.add(u), b);
-            });
+    async function onBlockUser(ev: CustomEvent<{ userId: string }>) {
+        if ($selectedChatId !== undefined) {
+            const success = await client.blockUser($selectedChatId, ev.detail.userId);
+            if (success) {
+                toastStore.showSuccessToast("blockUserSucceeded");
+            } else {
+                toastStore.showFailureToast("blockUserFailed");
+            }
         }
     }
 
-    function addMembersLocally(chatId: string, viaUnblock: boolean, users: UserSummary[]): void {
-        if (viaUnblock) {
-            chatStateStore.updateProp(chatId, "blockedUsers", (b) => {
-                const userIds = new Set(users.map((u) => u.userId));
-                return new Set([...b].filter((u) => !userIds.has(u)));
-            });
+    async function onUnblockUser(ev: CustomEvent<UserSummary>) {
+        if ($selectedChatId !== undefined) {
+            const success = await client.unblockUser($selectedChatId, ev.detail.userId);
+            if (success) {
+                toastStore.showSuccessToast("unblockUserSucceeded");
+            } else {
+                toastStore.showFailureToast("unblockUserFailed");
+            }
         }
-        chatStateStore.updateProp(chatId, "members", (ps) => [
-            ...users.map((u) => ({
-                userId: u.userId,
-                role: "participant" as MemberRole,
-            })),
-            ...ps,
-        ]);
-    }
-
-    function addMembers(
-        chatId: string,
-        viaUnblock: boolean,
-        users: UserSummary[]
-    ): Promise<boolean> {
-        addMembersLocally(chatId, viaUnblock, users);
-        return client
-            .addMembers(
-                chatId,
-                users.map((u) => u.userId),
-                currentUser.username,
-                viaUnblock
-            )
-            .then((resp) => {
-                if (resp.kind === "add_members_success") {
-                    return true;
-                } else {
-                    removeMembersLocally(chatId, viaUnblock, users, resp);
-                    return false;
-                }
-            })
-            .catch((err) => {
-                removeMembersLocally(chatId, viaUnblock, users, { kind: "unknown" });
-                logger.error("AddMembersFailed", err);
-                return false;
-            });
     }
 
     function updateGroupRules(ev: CustomEvent<{ chatId: string; rules: GroupRules }>) {
@@ -304,7 +232,7 @@
             on:editGroup
             on:chatWith
             on:showMembers />
-    {:else if lastState.kind === "invite_members"}
+    {:else if lastState.kind === "invite_users"}
         <InviteUsers
             busy={invitingUsers}
             closeIcon={$rightPanelHistory.length > 1 ? "back" : "close"}
@@ -316,9 +244,9 @@
             chat={$groupChat}
             on:close={popHistory}
             on:blockUser={onBlockUser}
-            on:unblockUser={unblockUser}
+            on:unblockUser={onUnblockUser}
             on:chatWith
-            on:addMembers
+            on:showInviteUsers
             on:removeMember={onRemoveMember}
             on:changeRole={onChangeRole} />
     {:else if lastState.kind === "show_pinned" && $selectedChatId !== undefined}

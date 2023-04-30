@@ -45,7 +45,7 @@
     $: groupDetailsSelected = lastState.kind === "group_details";
     $: pinnedSelected = lastState.kind === "show_pinned";
     $: membersSelected = lastState.kind === "show_members";
-    $: inviteMembersSelected = lastState.kind === "invite_members";
+    $: inviteMembersSelected = lastState.kind === "invite_users";
     $: desktop = !$mobileWidth;
 
     let hasUnreadPinned = false;
@@ -105,8 +105,8 @@
         }
     }
 
-    function inviteUsers() {
-        dispatch("addMembers", true);
+    function showInviteUsers() {
+        dispatch("showInviteUsers", true);
     }
 
     function leaveGroup() {
@@ -189,7 +189,7 @@
             </HoverIcon>
         </span>
         {#if client.canInviteUsers(selectedChatSummary.chatId)}
-            <span on:click={inviteUsers}>
+            <span on:click={showInviteUsers}>
                 <HoverIcon title={$_("group.inviteUsers")}>
                     <AccountMultiplePlus
                         size={$iconSize}
@@ -251,7 +251,7 @@
                             <div slot="text">{$_("members")}</div>
                         </MenuItem>
                         {#if client.canInviteUsers(selectedChatSummary.chatId)}
-                            <MenuItem on:click={inviteUsers}>
+                            <MenuItem on:click={showInviteUsers}>
                                 <AccountMultiplePlus
                                     size={$iconSize}
                                     color={"var(--icon-inverted-txt)"}

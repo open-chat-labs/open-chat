@@ -724,6 +724,17 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
                     .catch(sendError(correlationId));
                 break;
 
+            case "unblockUserFromGroupChat":
+                agent
+                    .unblockUserFromGroupChat(payload.chatId, payload.userId)
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
             case "getProposalVoteDetails":
                 agent
                     .getProposalVoteDetails(
@@ -845,22 +856,6 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
                     .then(() =>
                         sendResponse(correlationId, {
                             response: undefined,
-                        })
-                    )
-                    .catch(sendError(correlationId));
-                break;
-
-            case "addMembers":
-                agent
-                    .addMembers(
-                        payload.chatId,
-                        payload.userIds,
-                        payload.myUsername,
-                        payload.allowBlocked
-                    )
-                    .then((response) =>
-                        sendResponse(correlationId, {
-                            response,
                         })
                     )
                     .catch(sendError(correlationId));

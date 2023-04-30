@@ -45,7 +45,6 @@ import { SnsGovernanceClient } from "./snsGovernance/sns.governance.client";
 import type { AgentConfig } from "../config";
 import {
     Logger,
-    AddMembersResponse,
     AddRemoveReactionResponse,
     ArchiveChatResponse,
     BlobReference,
@@ -336,18 +335,6 @@ export class OpenChatAgent extends EventTarget {
             undefined,
             gate
         );
-    }
-
-    addMembers(
-        chatId: string,
-        userIds: string[],
-        myUsername: string,
-        allowBlocked: boolean
-    ): Promise<AddMembersResponse> {
-        if (!userIds.length) {
-            return Promise.resolve<AddMembersResponse>({ kind: "add_members_success" });
-        }
-        return this.getGroupClient(chatId).addMembers(userIds, myUsername, allowBlocked);
     }
 
     async inviteUsers(
