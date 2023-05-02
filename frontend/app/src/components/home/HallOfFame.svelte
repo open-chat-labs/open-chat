@@ -13,6 +13,11 @@
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
+    $: supportsGame =
+        !isTouchDevice ||
+        //@ts-ignore
+        (window.DeviceOrientationEvent && window.DeviceOrientationEvent.requestPermission);
+
     let bodyElement: HTMLDivElement;
 
     let showGame = false;
@@ -154,7 +159,7 @@
                     small={!$mobileWidth}
                     on:click={() => (showGame = false)}>{$_("backToResults")}</Button>
             {:else}
-                {#if !isTouchDevice}
+                {#if supportsGame}
                     <div on:click={() => (showGame = true)} class="joystick">🕹️</div>
                 {/if}
                 <Button tiny={$mobileWidth} small={!$mobileWidth} on:click={() => dispatch("close")}
