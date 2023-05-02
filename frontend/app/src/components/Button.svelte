@@ -8,6 +8,7 @@
     export let fill: boolean = false;
     export let hollow: boolean = false;
     export let title: string | undefined = undefined;
+    export let square: boolean = false;
 </script>
 
 <button
@@ -20,6 +21,7 @@
     class:hollow
     {disabled}
     class:secondary
+    class:square
     {title}
     class:fill>
     {#if !loading}
@@ -39,6 +41,10 @@
         min-height: 45px;
         min-width: 150px;
         @include font(book, normal, fs-100, 20);
+
+        &.square {
+            border-radius: 0;
+        }
 
         &.small {
             padding: $sp2 $sp5;

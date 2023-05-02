@@ -5,10 +5,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.676](https://github.com/open-ic/open-chat/releases/tag/v2.0.676-user)] - 2023-04-29
+
 ### Added
 
 - Allow users to `Delete For Me` in direct chats ([#3498](https://github.com/open-ic/open-chat/pull/3498))
 - Implement `send_message_v2` and `edit_message_v2` ([#3504](https://github.com/open-ic/open-chat/pull/3504))
+- Allow users to undelete messages for a short period in direct chats ([#3529](https://github.com/open-ic/open-chat/pull/3529))
 
 ### Changed
 
