@@ -57,7 +57,11 @@
         if (!isTouchDevice) {
             start();
         }
-        return () => (destroyed = true);
+        return () => {
+            document.removeEventListener("keyup", keyup);
+            document.removeEventListener("keydown", keydown);
+            destroyed = true;
+        };
     });
 
     function init() {
@@ -300,17 +304,21 @@
         );
     }
 
-    let keys: { [key: string]: boolean } = {};
-    document.addEventListener("keydown", function (event) {
+    function keydown(event: KeyboardEvent) {
         keys[event.key] = true;
         if (event.key === " ") {
             fireBullet();
         }
-    });
+    }
 
-    document.addEventListener("keyup", function (event) {
+    function keyup(event: KeyboardEvent) {
         keys[event.key] = false;
-    });
+    }
+
+    let keys: { [key: string]: boolean } = {};
+    document.addEventListener("keydown", keydown);
+
+    document.addEventListener("keyup", keyup);
 
     function handleOrientation(ev: DeviceOrientationEvent) {
         tiltAngle = ev.gamma; // 0 -> 45 is tilting right, 0 -> -45 is tilting left

@@ -2,4 +2,4 @@
 
 export const gatedGroupsEnabled = true;
 export const remindersEnabled = true;
-export const reportMessageEnabled = false;
+export const reportMessageEnabled = true;

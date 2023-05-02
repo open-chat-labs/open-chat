@@ -698,6 +698,8 @@
                     hotGroups = { kind: "idle" };
                     joining = undefined;
                     page(`/${group.chatId}`);
+                } else {
+                    joining = undefined;
                 }
             })
             .catch(() => (joining = undefined));
