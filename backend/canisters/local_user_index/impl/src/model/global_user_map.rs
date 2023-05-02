@@ -7,7 +7,6 @@ use types::UserId;
 pub struct GlobalUserMap {
     user_id_to_principal: HashMap<UserId, Principal>,
     principal_to_user_id: HashMap<Principal, UserId>,
-    #[serde(alias = "super_admins")]
     platform_moderators: HashSet<UserId>,
     bots: HashSet<UserId>,
 }

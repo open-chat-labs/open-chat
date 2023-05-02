@@ -6,7 +6,6 @@ use serde::{Deserialize, Serialize};
 pub struct NotificationEnvelope {
     pub recipients: Vec<UserId>,
     pub notification_bytes: Vec<u8>,
-    #[serde(default)]
     pub timestamp: TimestampMillis,
 }
 

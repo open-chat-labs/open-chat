@@ -254,7 +254,6 @@ struct Data {
     pub timer_jobs: TimerJobs<TimerJob>,
     pub date_last_pinned: Option<TimestampMillis>,
     pub gate: Timestamped<Option<GroupGate>>,
-    #[serde(default)]
     pub invited_users: InvitedUsers,
 }
 
