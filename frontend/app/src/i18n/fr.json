@@ -406,7 +406,8 @@
         "invite": "Inviter",
         "inviteUsers": "Inviter des utilisateurs",
         "inviteUsersFailed": "Une erreur s'est produite lors de l'invitation des utilisateurs",
-        "tooManyInvites": "Vous ne pouvez avoir que 100 invitations en suspens"
+        "tooManyInvites": "Vous ne pouvez avoir que 100 invitations en suspens",
+        "usersInvited": "Message d'invitation envoyé !"
     },
     "updateNow": "recharger maintenant",
     "updateRequired": "Une nouvelle version d'OpenChat est disponible - rechargement dans {countdown}s",

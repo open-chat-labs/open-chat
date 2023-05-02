@@ -417,7 +417,8 @@
         "invite": "להזמין",
         "inviteUsers": "הזמן משתמשים",
         "inviteUsersFailed": "אירעה שגיאה בהזמנת משתמשים",
-        "tooManyInvites": "אתה יכול לקבל רק 100 הזמנות יוצאות דופן"
+        "tooManyInvites": "אתה יכול לקבל רק 100 הזמנות יוצאות דופן",
+        "usersInvited": "הודעת הזמנה נשלחה!"
     },
     "updateNow": "טען מחדש עכשיו",
     "updateRequired": "גרסה חדשה של OpenChat זמינה - נטען מחדש ב-{countdown}s",

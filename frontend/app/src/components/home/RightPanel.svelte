@@ -84,6 +84,9 @@
                     switch (resp) {
                         case "success":
                             popHistory();
+                            if ($groupChat?.public ?? false) {
+                                toastStore.showSuccessToast("group.usersInvited");
+                            }
                             break;
                         case "too_many_invites":
                             toastStore.showFailureToast("group.tooManyInvites");

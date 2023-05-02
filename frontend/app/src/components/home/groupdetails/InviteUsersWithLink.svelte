@@ -40,8 +40,7 @@
         </div>
     </div>
     <div class="message">
-        {$_("group.invite.shareMessage") +
-            (group.public ? "" : $_("group.invite.shareMessageTrust"))}
+        {$_("group.shareMessage")}
     </div>
     <div class="action">
         <CopyIcon size={$iconSize} color={"var(--icon-txt)"} />

@@ -418,6 +418,7 @@
         },
         "inviteWithLink": "Invite to group via link",
         "shareMessage": "Anyone with this link can preview and join the group. If you are a Diamond member and any user registers an account via this link, you will earn half of any Diamond membership payments they make within their first year.",
+        "usersInvited": "Invite message sent!",
         "invite": "Invite",
         "advanced": "Advanced",
         "welcome": "Welcome to {groupName}",

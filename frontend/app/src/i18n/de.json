@@ -409,7 +409,8 @@
         "invite": "Einladen",
         "inviteUsers": "Benutzer einladen",
         "inviteUsersFailed": "Beim Einladen von Benutzern ist ein Fehler aufgetreten",
-        "tooManyInvites": "Sie können nur 100 ausstehende Einladungen haben"
+        "tooManyInvites": "Sie können nur 100 ausstehende Einladungen haben",
+        "usersInvited": "Einladungsnachricht gesendet!"
     },
     "updateNow": "jetzt neu laden",
     "updateRequired": "Eine neue Version von OpenChat ist verfügbar - Neuladen in {countdown}s",

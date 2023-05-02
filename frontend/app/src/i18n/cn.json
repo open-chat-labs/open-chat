@@ -407,7 +407,8 @@
         "invite": "邀请",
         "inviteUsers": "邀请用户",
         "inviteUsersFailed": "邀请用户时出错",
-        "tooManyInvites": "您只能有 100 个未完成的邀请"
+        "tooManyInvites": "您只能有 100 个未完成的邀请",
+        "usersInvited": "邀请信息已发送！"
     },
     "updateNow": "现在重新加载",
     "updateRequired": "新版本的 OpenChat 可用 - 在 {countdown} 秒内重新加载",
