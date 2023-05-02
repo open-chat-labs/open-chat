@@ -143,7 +143,6 @@ struct Data {
     pub notifications_canister_id: CanisterId,
     pub avatar: Timestamped<Option<Avatar>>,
     pub test_mode: bool,
-    #[serde(alias = "is_super_admin")]
     pub is_platform_moderator: bool,
     pub hot_group_exclusions: HotGroupExclusions,
     pub username: String,
