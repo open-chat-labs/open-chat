@@ -1,4 +1,9 @@
 {
+  "__Candid_UI": {
+    "ic": "6hsbt-vqaaa-aaaaf-aaafq-cai",
+    "ic_test": "pfs7b-iqaaa-aaaaf-abs7q-cai",
+    "web_test": "xp7uu-xyaaa-aaaaf-aoa6a-cai"
+  },
   "cycles_dispenser": {
     "ic": "gonut-hqaaa-aaaaf-aby7a-cai",
     "ic_test": "mq2tp-baaaa-aaaaf-aucva-cai"
