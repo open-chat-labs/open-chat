@@ -65,6 +65,7 @@
     <Button
         disabled={busy || usersToInvite.length === 0}
         loading={busy}
+        square
         on:click={inviteUsers}
         fill={true}>{$_("group.inviteUsers")}</Button>
 </div>
@@ -88,6 +89,6 @@
         }
     }
     .cta {
-        height: 57px;
+        flex: 0 0 toRem(60);
     }
 </style>

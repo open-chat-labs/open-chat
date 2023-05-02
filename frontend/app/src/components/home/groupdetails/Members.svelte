@@ -31,11 +31,7 @@
     $: knownUsers = getKnownUsers($userStore, $members);
     $: me = knownUsers.find((u) => u.userId === userId);
     $: fullMembers = knownUsers
-        .filter(
-            (u) =>
-                matchesSearch(searchTerm, u) &&
-                u.userId !== userId
-        )
+        .filter((u) => matchesSearch(searchTerm, u) && u.userId !== userId)
         .sort(compareMembers);
     $: blockedUsers = Array.from($blocked)
         .map((userId) => $userStore[userId])
@@ -46,6 +42,7 @@
     $: publicGroup = chat.public;
     $: showBlocked = publicGroup && $blocked.size > 0;
     $: showInvited = !publicGroup && $invited.size > 0;
+    $: canInvite = client.canInviteUsers(chat.chatId);
 
     let searchTerm = "";
     let chatId = chat.chatId;
@@ -125,7 +122,7 @@
     }
 </script>
 
-<MembersHeader {closeIcon} {publicGroup} {me} on:close={close} on:showInviteUsers={showInviteUsers} />
+<MembersHeader {closeIcon} {canInvite} on:close={close} on:showInviteUsers={showInviteUsers} />
 
 <div class="search">
     <Search

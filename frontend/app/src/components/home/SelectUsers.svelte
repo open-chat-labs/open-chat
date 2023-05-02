@@ -12,11 +12,13 @@
     let error: string | undefined = undefined;
 </script>
 
-<div class="selected">
-    {#each selectedUsers as user, _ui (user.userId)}
-        <UserPill on:deleteUser {user} />
-    {/each}
-</div>
+{#if selectedUsers.length > 0}
+    <div class="selected">
+        {#each selectedUsers as user, _ui (user.userId)}
+            <UserPill on:deleteUser {user} />
+        {/each}
+    </div>
+{/if}
 {#if error !== undefined}
     <ErrorMessage>{$_("errorSearchingForUser")}</ErrorMessage>
 {/if}

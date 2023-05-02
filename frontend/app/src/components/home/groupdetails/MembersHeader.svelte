@@ -5,15 +5,11 @@
     import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
     import { _ } from "svelte-i18n";
     import { createEventDispatcher } from "svelte";
-    import type { FullMember } from "openchat-client";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import { iconSize } from "../../../stores/iconSize";
 
-    export let me: FullMember | undefined;
-    export let publicGroup: boolean;
     export let closeIcon: "close" | "back";
-
-    $: canAdd = !publicGroup && (me?.role === "admin" || me?.role === "owner");
+    export let canInvite: boolean;
 
     const dispatch = createEventDispatcher();
     function close() {
@@ -26,7 +22,7 @@
 </script>
 
 <SectionHeader gap border={false}>
-    {#if canAdd}
+    {#if canInvite}
         <span title={$_("group.inviteUsers")} class="add" on:click={showInviteUsers}>
             <HoverIcon>
                 <AccountMultiplePlus size={$iconSize} color={"var(--icon-txt)"} />
