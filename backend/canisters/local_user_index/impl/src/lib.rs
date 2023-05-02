@@ -117,7 +117,6 @@ struct Data {
     pub test_mode: bool,
     pub max_concurrent_canister_upgrades: u32,
     pub user_upgrade_concurrency: u32,
-    #[serde(default)]
     pub platform_moderators_group: Option<ChatId>,
 }
 
