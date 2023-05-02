@@ -25,12 +25,10 @@
     export let me: boolean = false;
     export let truncate: boolean = false;
     export let fill: boolean;
-    export let first: boolean;
     export let reply: boolean = false;
     export let pinned: boolean = false;
     export let height: number | undefined = undefined;
     export let readonly: boolean;
-    export let groupChat: boolean;
     export let senderId: string;
     export let myUserId: string | undefined;
     export let messageId: bigint;
@@ -56,7 +54,7 @@
 {:else if content.kind === "deleted_content"}
     <DeletedContent {content} {undeleting} />
 {:else if content.kind === "crypto_content"}
-    <CryptoContent {senderId} {content} {me} {first} {groupChat} />
+    <CryptoContent {senderId} {content} {me} />
 {:else if content.kind === "placeholder_content"}
     <PlaceholderContent />
 {:else if content.kind === "prize_content"}

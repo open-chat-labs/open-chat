@@ -473,7 +473,7 @@
         "confirmedSent": "{sender} sent {amount} {token} to {receiver}",
         "pendingSent": "{sender} is sending {amount} {token} to {receiver}",
         "pendingSentByYou": "you are sending {amount} {token} to {receiver}",
-        "viewTransaction": "[View transaction]({url})",
+        "viewTransaction": "[Transaction]({url})",
         "warning": "WARNING - it is your responsibility to be sure that you trust the identity and motives of the recipient. OpenChat cannot reverse any {token} transfers.",
         "confirm": "Confirm",
         "transfer": "{token} transfer",

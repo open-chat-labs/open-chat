@@ -480,11 +480,9 @@
                 {readonly}
                 {fill}
                 {me}
-                {groupChat}
                 {chatId}
                 {collapsed}
                 {undeleting}
-                first
                 messageIndex={msg.messageIndex}
                 messageId={msg.messageId}
                 myUserId={user.userId}
@@ -801,10 +799,6 @@
         &.me {
             background-color: var(--currentChat-msg-me-bg);
             color: var(--currentChat-msg-me-txt);
-        }
-
-        &.crypto {
-            @include gold();
         }
 
         &.rtl {

@@ -1,66 +1,78 @@
 <script lang="ts">
     import { OPENCHAT_BOT_USER_ID } from "openchat-client";
-    import { mobileWidth } from "../../stores/screenDimensions";
     import Launch from "./Launch.svelte";
-
-    const image: number = Math.floor(Math.random() * 3);
-
-    $: heroSrc = $mobileWidth
-        ? `../assets/miami/mobile_${image}.png`
-        : `../assets/miami/desktop_${image}.png`;
 </script>
 
 <div class="miami">
     <div class="layout">
-        <div class="info">
-            <img src="../assets/ckbtc_nobackground.svg" alt="ckBTC logo" class="ckbtc" />
-            <div class="text">
-                <div class="sub-one">Claim your</div>
-                <div class="sub-two">50,000 Satoshis</div>
-            </div>
-            <p class="blurb">
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed non risus. Suspendisse
-                lectus tortor, dignissim sit amet, adipiscing nec, ultricies sed, dolor.
-            </p>
-
-            <div class="launch-wrapper">
-                <Launch text="Claim" rootPath={`/${OPENCHAT_BOT_USER_ID}`} on:login />
-            </div>
-
-            <div class="details">
-                <h4>Details</h4>
-                <p class="blurb">
-                    Before claiming your prize, you must create an Internet Identity on the Internet
-                    Computer Protocol (ICP) network. Creating an Internet Identity is an easy one
-                    time process that will allow you to securely access any dApp in the Internet
-                    Computer ecosystem without the hassle of usernames and passwords.
-                </p>
-
-                <h5>What to expect</h5>
-                <div class="list">
-                    <div class="num">1.</div>
-                    <div class="blurb">
-                        Create a new Internet Identity: Open the ICP wallet and click on "Create a
-                        new Internet Identity." You will be prompted to choose a unique name for
-                        your identity.
-                    </div>
-                    <div class="num">2.</div>
-                    <div class="blurb">
-                        Set up your identity: Once you have chosen a name for your identity, you
-                        will be asked to set up your profile. You can add your photo, contact
-                        information, and other details as desired.
-                    </div>
-                    <div class="num">3.</div>
-                    <div class="blurb">
-                        Use your Internet Identity: Once your identity has been verified, you can
-                        use it to access various services and applications built on the ICP
-                        protocol.
-                    </div>
+        <div class="main">
+            <div class="logos">
+                <div class="bitcoin" />
+                <div class="plus">+</div>
+                <div class="dfinity" />
+                <div class="text">
+                    <div class="faucet">Bitcoin faucet powered by</div>
+                    <div class="ic">internet computer</div>
                 </div>
             </div>
+            <div class="headlines">
+                <div class="sub-one">Claim your</div>
+                <div class="sub-two">50,000 Sats</div>
+                <div class="sub-three">& Send BTC at the speed of chat!</div>
+            </div>
+
+            <img src="../assets/ckbtc_nobackground.svg" alt="ckBTC logo" class="ckbtc" />
+            <img src="../assets/ckbtc_nobackground.svg" alt="ckBTC logo" class="ckbtc fuzzy" />
+
+            <div class="launch-wrapper">
+                <Launch text="Let's go!" rootPath={`/${OPENCHAT_BOT_USER_ID}`} on:login />
+            </div>
         </div>
-        <div class="image">
-            <img src={heroSrc} alt="Welcome to Miami" class="hero" />
+
+        <div class="info">
+            <div class="details">
+                <section>
+                    <h5 class="sub-title">What to expect</h5>
+                    <div class="list">
+                        <div class="num">1</div>
+                        <div class="blurb">Create an OpenChat account.</div>
+                        <div class="num">2</div>
+                        <div class="blurb">
+                            In a matter of seconds your sats will arrive in your OpenChat wallet as
+                            ckBTC.
+                        </div>
+                        <div class="num">3</div>
+                        <div class="blurb">Send your sats at the speed of chat 🚀</div>
+                    </div>
+                </section>
+                <section>
+                    <h5 class="sub-title">How does it work?</h5>
+                    <p>
+                        You will receive your 50,000 sats deposited in your OpenChat wallet as
+                        ckBTC.
+                    </p>
+                </section>
+                <section>
+                    <h5 class="sub-title">What is OpenChat?</h5>
+                    <p>
+                        OpenChat is the world’s first decentralized chat service running 100%
+                        on-chain and governed by a DAO.
+                    </p>
+                    <p>
+                        OpenChat also doubles as a crypto wallet enabling you to send crypto to your
+                        friends with a simple chat message. You can also send your sats to any
+                        external Bitcoin address anytime!
+                    </p>
+                </section>
+                <section>
+                    <h5 class="sub-title">What is ckBTC?</h5>
+                    <p>
+                        ckBTC is “Bitcoin twin” on the Internet Computer blockchain that is backed
+                        1:1 by Bitcoin held 100% on-chain. It offers fast, low fees and fully
+                        on-chain transactions for Bitcoin on the ICP blockchain.
+                    </p>
+                </section>
+            </div>
         </div>
     </div>
 </div>
@@ -68,15 +80,15 @@
 <style type="text/scss">
     :global(.miami .layout .launch) {
         width: 100%;
-        background-color: #4e27c7 !important;
+        background-color: #1b1c21 !important;
     }
 
     .layout {
         $gutter: toRem(80);
 
         display: grid;
-        grid-template-columns: 4fr 6fr;
-        grid-template-areas: "info image";
+        grid-template-columns: 5fr 5fr;
+        grid-template-areas: "main info";
         gap: $gutter;
         margin-top: $gutter;
 
@@ -95,21 +107,112 @@
             margin: 0;
             grid-template-columns: 1fr;
             grid-template-areas:
-                "image"
+                "main"
                 "info";
+        }
+
+        .main {
+            background-color: #4e27c7;
+            background: rgb(243, 143, 40);
+            background: linear-gradient(
+                32deg,
+                rgba(243, 143, 40, 1) 0%,
+                rgba(127, 99, 182, 1) 23%,
+                rgba(56, 72, 223, 1) 50%,
+                rgba(127, 99, 182, 1) 82%,
+                rgba(228, 30, 152, 1) 100%
+            );
+            grid-area: main;
+            position: relative;
+            padding: toRem(40) $sp4;
+            .headlines {
+                margin-top: toRem(80);
+                margin-bottom: toRem(40);
+                position: relative;
+                z-index: 1;
+
+                .sub-one {
+                    @include font(medium, normal, fs-100, 22);
+                }
+                .sub-two {
+                    @include font(bold, normal, fs-240, 68);
+                }
+                .sub-three {
+                    @include font(medium, normal, fs-180, 38);
+                }
+            }
+            .ckbtc {
+                width: 130px;
+                height: 130px;
+                opacity: 0.3;
+                position: absolute;
+                right: toRem(30);
+                top: toRem(120);
+
+                &.fuzzy {
+                    width: 80px;
+                    height: 80px;
+                    opacity: 0.3;
+                    left: toRem(-15);
+                    bottom: toRem(70);
+                    filter: blur(2px);
+                    top: unset;
+                    right: unset;
+                }
+            }
+            .logos {
+                display: flex;
+                align-items: center;
+                gap: $sp3;
+
+                .bitcoin {
+                    width: 28px;
+                    height: 28px;
+                    background-image: url("../assets/bitcoin_token.png");
+                    background-repeat: no-repeat;
+                    background-size: contain;
+                }
+                .dfinity {
+                    width: 51px;
+                    height: 24px;
+                    background-image: url("../assets/dfinity_logo.svg");
+                    background-repeat: no-repeat;
+                    background-size: contain;
+                }
+                .faucet {
+                    @include font(medium, normal, fs-50, 14);
+                }
+                .ic {
+                    text-transform: uppercase;
+                    @include font(bold, normal, fs-80, 14);
+                }
+            }
+            .launch-wrapper {
+                width: 230px;
+                border-radius: $sp2;
+                text-align: center;
+                position: relative;
+
+                @include mobile() {
+                    width: 100%;
+                }
+            }
         }
 
         .info {
             grid-area: info;
 
-            .text {
-                @include font(bold, normal, fs-200, 50);
-                padding: $sp5 0;
-            }
-
             .details {
-                h4 {
-                    @include font(bold, normal, fs-160, 38);
+                color: var(--txt-light);
+                @include font(book, normal, fs-100, 28);
+
+                section {
+                    margin-bottom: $sp5;
+                }
+
+                .sub-title {
+                    @include font(bold, normal, fs-130, 29);
+                    color: var(--txt);
                     margin-bottom: $sp3;
                 }
 
@@ -119,56 +222,14 @@
                     align-items: start;
                     column-gap: $sp3;
 
-                    .blurb {
-                        @include font(book, normal, fs-80, 20);
+                    .num {
+                        color: var(--txt);
                     }
                 }
             }
 
-            .blurb {
-                color: var(--landing-txt-light);
-                @include font(book, normal, fs-60, 18);
-                margin-bottom: $sp5;
-            }
-
-            .launch-wrapper {
-                width: 230px;
-                border-radius: $sp2;
-                text-align: center;
-                margin-bottom: $sp6;
-
-                @include mobile() {
-                    width: 100%;
-                }
-            }
-
             @include mobile() {
-                margin-top: 0;
-            }
-            .ckbtc {
-                width: 88px;
-                height: 88px;
-            }
-
-            @include mobile() {
-                margin-top: toRem(-80);
-                z-index: 1;
                 padding: 0 toRem(24);
-            }
-        }
-
-        .image {
-            grid-area: image;
-            .hero {
-                width: 100%;
-                height: 100%;
-                border-radius: $sp4;
-                object-fit: cover;
-                object-position: 0 100%;
-
-                @include mobile() {
-                    border-radius: 0 0 $sp4 $sp4;
-                }
             }
         }
     }
