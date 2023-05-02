@@ -126,6 +126,7 @@ export type ChatEvent = { 'Empty' : null } |
   { 'GroupDescriptionChanged' : GroupDescriptionChanged } |
   { 'GroupChatCreated' : GroupChatCreated } |
   { 'MessagePinned' : MessagePinned } |
+  { 'UsersInvited' : UsersInvited } |
   { 'UsersBlocked' : UsersBlocked } |
   { 'MessageUnpinned' : MessageUnpinned } |
   { 'MessageReactionAdded' : UpdatedMessage } |
@@ -233,6 +234,9 @@ export interface CyclesRegistrationFee {
   'valid_until' : TimestampMillis,
   'amount' : Cycles,
 }
+export type DeclineInvitationResponse = { 'NotInvited' : null } |
+  { 'Success' : null } |
+  { 'InternalError' : string };
 export interface DeleteMessagesArgs {
   'as_platform_moderator' : [] | [boolean],
   'message_ids' : Array<MessageId>,
@@ -327,10 +331,10 @@ export type EditMessageResponse = { 'MessageNotFound' : null } |
   { 'ChatFrozen' : null } |
   { 'Success' : null } |
   { 'UserSuspended' : null };
+export type EmptyArgs = {};
 export type EventIndex = number;
 export interface EventsArgs {
   'latest_client_event_index' : [] | [EventIndex],
-  'invite_code' : [] | [bigint],
   'max_messages' : number,
   'max_events' : number,
   'ascending' : boolean,
@@ -339,7 +343,6 @@ export interface EventsArgs {
 }
 export interface EventsByIndexArgs {
   'latest_client_event_index' : [] | [EventIndex],
-  'invite_code' : [] | [bigint],
   'events' : Uint32Array | number[],
   'thread_root_message_index' : [] | [MessageIndex],
 }
@@ -362,7 +365,6 @@ export interface EventsTimeToLiveUpdated {
 export interface EventsWindowArgs {
   'latest_client_event_index' : [] | [EventIndex],
   'mid_point' : MessageIndex,
-  'invite_code' : [] | [bigint],
   'max_messages' : number,
   'max_events' : number,
   'thread_root_message_index' : [] | [MessageIndex],
@@ -730,7 +732,6 @@ export interface MessageUnpinned {
 export interface MessagesByMessageIndexArgs {
   'latest_client_event_index' : [] | [EventIndex],
   'messages' : Uint32Array | number[],
-  'invite_code' : [] | [bigint],
   'thread_root_message_index' : [] | [MessageIndex],
 }
 export type MessagesByMessageIndexResponse = {
@@ -839,7 +840,10 @@ export interface Participant {
 }
 export interface ParticipantAssumesSuperAdmin { 'user_id' : UserId }
 export interface ParticipantDismissedAsSuperAdmin { 'user_id' : UserId }
-export interface ParticipantJoined { 'user_id' : UserId }
+export interface ParticipantJoined {
+  'user_id' : UserId,
+  'invited_by' : [] | [UserId],
+}
 export interface ParticipantLeft { 'user_id' : UserId }
 export interface ParticipantRelinquishesSuperAdmin { 'user_id' : UserId }
 export interface ParticipantsAdded {
@@ -954,7 +958,6 @@ export interface PublicGroupSummary {
   'participant_count' : number,
   'latest_message' : [] | [MessageEventWrapper],
 }
-export interface PublicSummaryArgs { 'invite_code' : [] | [bigint] }
 export type PublicSummaryResponse = { 'NotAuthorized' : null } |
   { 'Success' : PublicSummarySuccess };
 export interface PublicSummarySuccess { 'summary' : PublicGroupSummary }
@@ -1045,7 +1048,6 @@ export interface RoleChanged {
   'old_role' : Role,
   'new_role' : Role,
 }
-export interface RulesArgs { 'invite_code' : [] | [bigint] }
 export type RulesResponse = { 'NotAuthorized' : null } |
   { 'Success' : RulesSuccess };
 export interface RulesSuccess { 'rules' : [] | [string] }
@@ -1066,7 +1068,9 @@ export type SelectedInitialResponse = { 'CallerNotInGroup' : null } |
   { 'Success' : SelectedInitialSuccess };
 export interface SelectedInitialSuccess {
   'participants' : Array<Participant>,
+  'invited_users' : Array<UserId>,
   'blocked_users' : Array<UserId>,
+  'timestamp' : TimestampMillis,
   'pinned_messages' : Uint32Array | number[],
   'latest_event_index' : EventIndex,
   'rules' : GroupRules,
@@ -1079,8 +1083,10 @@ export interface SelectedUpdatesSuccess {
   'blocked_users_removed' : Array<UserId>,
   'participants_added_or_updated' : Array<Participant>,
   'pinned_messages_removed' : Uint32Array | number[],
+  'invited_users' : [] | [Array<UserId>],
   'participants_removed' : Array<UserId>,
   'pinned_messages_added' : Uint32Array | number[],
+  'timestamp' : TimestampMillis,
   'latest_event_index' : EventIndex,
   'rules' : [] | [GroupRules],
   'blocked_users_added' : Array<UserId>,
@@ -1325,6 +1331,10 @@ export interface UsersBlocked {
   'user_ids' : Array<UserId>,
   'blocked_by' : UserId,
 }
+export interface UsersInvited {
+  'user_ids' : Array<UserId>,
+  'invited_by' : UserId,
+}
 export interface UsersUnblocked {
   'user_ids' : Array<UserId>,
   'unblocked_by' : UserId,
@@ -1354,6 +1364,7 @@ export interface _SERVICE {
   'block_user' : ActorMethod<[BlockUserArgs], BlockUserResponse>,
   'change_role' : ActorMethod<[ChangeRoleArgs], ChangeRoleResponse>,
   'claim_prize' : ActorMethod<[ClaimPrizeArgs], ClaimPrizeResponse>,
+  'decline_invitation' : ActorMethod<[EmptyArgs], DeclineInvitationResponse>,
   'delete_messages' : ActorMethod<[DeleteMessagesArgs], DeleteMessagesResponse>,
   'deleted_message' : ActorMethod<[DeletedMessageArgs], DeletedMessageResponse>,
   'edit_message' : ActorMethod<[EditMessageArgs], EditMessageResponse>,
@@ -1370,7 +1381,7 @@ export interface _SERVICE {
     MessagesByMessageIndexResponse
   >,
   'pin_message_v2' : ActorMethod<[PinMessageArgs], PinMessageV2Response>,
-  'public_summary' : ActorMethod<[PublicSummaryArgs], PublicSummaryResponse>,
+  'public_summary' : ActorMethod<[EmptyArgs], PublicSummaryResponse>,
   'register_poll_vote' : ActorMethod<
     [RegisterPollVoteArgs],
     RegisterPollVoteResponse
@@ -1388,7 +1399,7 @@ export interface _SERVICE {
     RemoveParticipantResponse
   >,
   'remove_reaction' : ActorMethod<[RemoveReactionArgs], RemoveReactionResponse>,
-  'rules' : ActorMethod<[RulesArgs], RulesResponse>,
+  'rules' : ActorMethod<[EmptyArgs], RulesResponse>,
   'search_messages' : ActorMethod<[SearchMessagesArgs], SearchMessagesResponse>,
   'selected_initial' : ActorMethod<
     [SelectedInitialArgs],

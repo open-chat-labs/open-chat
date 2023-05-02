@@ -549,6 +549,7 @@ export type GroupChatEvent =
     | GateUpdatedEvent
     | ChatUnfrozenEvent
     | EventsTimeToLiveUpdated
+    | UsersInvitedEvent
     | EmptyEvent;
 
 export type ChatEvent = GroupChatEvent | DirectChatEvent;
@@ -903,15 +904,13 @@ export type Member = {
     userId: string;
 };
 
-export type FullMember = Member & PartialUserSummary & { memberKind: "full_member" };
-export type BlockedMember = Member & PartialUserSummary & { memberKind: "blocked_member" };
+export type FullMember = Member & PartialUserSummary;
 
 export type PermissionRole = "owner" | "admins" | "members";
 
 export type GroupPermissions = {
     changePermissions: PermissionRole;
     changeRoles: PermissionRole;
-    addMembers: PermissionRole;
     removeMembers: PermissionRole;
     blockUsers: PermissionRole;
     deleteMessages: PermissionRole;
@@ -934,6 +933,7 @@ export type GroupChatDetailsUpdatesResponse =
 export type GroupChatDetails = {
     members: Member[];
     blockedUsers: Set<string>;
+    invitedUsers: Set<string>;
     pinnedMessages: Set<number>;
     latestEventIndex: number;
     rules: GroupRules;
@@ -947,6 +947,7 @@ export type ChatSpecificState = {
     detailsLoaded: boolean;
     members: Member[];
     blockedUsers: Set<string>;
+    invitedUsers: Set<string>;
     pinnedMessages: Set<number>;
     latestEventIndex?: number;
     rules?: GroupRules;
@@ -978,6 +979,7 @@ export type GroupChatDetailsUpdates = {
     pinnedMessagesAdded: Set<number>;
     latestEventIndex: number;
     rules?: GroupRules;
+    invitedUsers?: Set<string>;
 };
 
 export type ChatSummary = DirectChatSummary | GroupChatSummary;
@@ -1229,47 +1231,8 @@ export type UnauthorizedToCreatePublicGroup = {
     kind: "unauthorized_to_create_public_group";
 };
 
-export type AddMembersResponse =
-    | AddMembersSuccess
-    | AddMembersNotAuthorised
-    | MemberLimitReached
-    | AddMembersPartialSuccess
-    | AddMembersFailed
-    | AddMembersNotInGroup
-    | UserSuspended
-    | ChatFrozen;
-
-export type AddMembersSuccess = {
-    kind: "add_members_success";
-};
-
-export type AddMembersNotInGroup = {
-    kind: "add_members_not_in_group";
-};
-
-export type AddMembersNotAuthorised = {
-    kind: "add_members_not_authorised";
-};
-
 export type MemberLimitReached = {
     kind: "member_limit_reached";
-};
-
-export type AddMembersPartialSuccess = {
-    kind: "add_members_partial_success";
-    usersAdded: string[];
-    usersAlreadyInGroup: string[];
-    usersBlockedFromGroup: string[];
-    usersWhoBlockedRequest: string[];
-    errors: string[];
-};
-
-export type AddMembersFailed = {
-    kind: "add_members_failed";
-    usersAlreadyInGroup: string[];
-    usersBlockedFromGroup: string[];
-    usersWhoBlockedRequest: string[];
-    errors: string[];
 };
 
 export type EditMessageResponse =
@@ -1396,6 +1359,12 @@ export type GateUpdatedEvent = {
     updatedBy: string;
 };
 
+export type UsersInvitedEvent = {
+    kind: "users_invited";
+    userIds: string[];
+    invitedBy: string;
+};
+
 export type ChatUnfrozenEvent = {
     kind: "chat_unfrozen";
     unfrozenBy: string;
@@ -1486,6 +1455,7 @@ export type JoinGroupResponse =
     | { kind: "group_not_found" }
     | { kind: "not_invited" }
     | { kind: "group_not_public" }
+    | { kind: "not_invited" }
     | { kind: "already_in_group" }
     | { kind: "not_super_admin" }
     | { kind: "member_limit_reached" }
@@ -1493,6 +1463,15 @@ export type JoinGroupResponse =
     | UserSuspended
     | ChatFrozen
     | InternalError;
+
+export type InviteUsersResponse =
+    | "success"
+    | "group_not_found"
+    | "caller_not_in_group"
+    | "not_authorised"
+    | "chat_frozen"
+    | "too_many_invites"
+    | "internal_error";
 
 export type MarkReadRequest = {
     readUpTo: number | undefined;
@@ -1753,3 +1732,8 @@ export type ClaimPrizeResponse =
     | { kind: "transfer_failed" };
 
 export type ReportMessageResponse = "success" | "failure";
+
+export type DeclineInvitationResponse =
+    | "success"
+    | "not_invited"
+    | "internal_error";

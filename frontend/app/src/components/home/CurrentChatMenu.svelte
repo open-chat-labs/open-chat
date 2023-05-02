@@ -45,7 +45,7 @@
     $: groupDetailsSelected = lastState.kind === "group_details";
     $: pinnedSelected = lastState.kind === "show_pinned";
     $: membersSelected = lastState.kind === "show_members";
-    $: addMembersSelected = lastState.kind === "add_members";
+    $: inviteMembersSelected = lastState.kind === "invite_users";
     $: desktop = !$mobileWidth;
 
     let hasUnreadPinned = false;
@@ -105,8 +105,8 @@
         }
     }
 
-    function addMembers() {
-        dispatch("addMembers", true);
+    function showInviteUsers() {
+        dispatch("showInviteUsers", true);
     }
 
     function leaveGroup() {
@@ -188,12 +188,12 @@
                     color={membersSelected ? "var(--icon-selected)" : "var(--icon-txt)"} />
             </HoverIcon>
         </span>
-        {#if client.canAddMembers(selectedChatSummary.chatId)}
-            <span on:click={addMembers}>
-                <HoverIcon title={$_("addMembers")}>
+        {#if client.canInviteUsers(selectedChatSummary.chatId)}
+            <span on:click={showInviteUsers}>
+                <HoverIcon title={$_("group.inviteUsers")}>
                     <AccountMultiplePlus
                         size={$iconSize}
-                        color={addMembersSelected ? "var(--icon-selected)" : "var(--icon-txt)"} />
+                        color={inviteMembersSelected ? "var(--icon-selected)" : "var(--icon-txt)"} />
                 </HoverIcon>
             </span>
         {/if}
@@ -250,13 +250,13 @@
                                 slot="icon" />
                             <div slot="text">{$_("members")}</div>
                         </MenuItem>
-                        {#if client.canAddMembers(selectedChatSummary.chatId)}
-                            <MenuItem on:click={addMembers}>
+                        {#if client.canInviteUsers(selectedChatSummary.chatId)}
+                            <MenuItem on:click={showInviteUsers}>
                                 <AccountMultiplePlus
                                     size={$iconSize}
                                     color={"var(--icon-inverted-txt)"}
                                     slot="icon" />
-                                <div slot="text">{$_("addMembers")}</div>
+                                <div slot="text">{$_("group.inviteUsers")}</div>
                             </MenuItem>
                         {/if}
                     {/if}

@@ -104,7 +104,6 @@
     "ownershipTransferredBy": "{changedBy} transfirió la propiedad del grupo a {changed} 🎉",
     "historyVisible": "historial de chat visible",
     "historyOnInfo": "El historial de chat completo será visible para los nuevos miembros. ¡Cuidado ahora! 🤐",
-    "privateGroupInfo": "Este grupo estará limitado a las personas que elijas.",
     "publicGroupUnique": "Los nombres de grupos públicos deben ser únicos.",
     "publicGroupInfo": "Cualquiera podrá descubrir y unirse a este grupo.",
     "newGroupName": "ingresa el nombre del grupo",
@@ -349,7 +348,6 @@
             "allMembers": "Todos los miembros pueden",
             "changePermissions": "cambiar permisos",
             "changeRoles": "cambiar los roles de los miembros",
-            "addMembers": "Añadir miembros",
             "removeMembers": "eliminar miembros",
             "blockUsers": "bloquear/desbloquear usuarios",
             "deleteMessages": "eliminar mensajes",
@@ -406,20 +404,23 @@
         "openAccessInfo": "No hay requisitos especiales de acceso para unirse a este grupo",
         "gateCheckFailed": "Puerta de acceso no cumplida",
         "inviteWithLink": "Invitar al grupo a través de un enlace",
-        "shareMessage": "Cualquier persona con este enlace puede obtener una vista previa y unirse al grupo. Si es miembro Diamond y cualquier usuario registra una cuenta a través de este enlace, obtendrá la mitad de los pagos de membresía Diamond que realicen durante su primer año."
+        "shareMessage": "Cualquier persona con este enlace puede obtener una vista previa y unirse al grupo. Si es miembro Diamond y cualquier usuario registra una cuenta a través de este enlace, obtendrá la mitad de los pagos de membresía Diamond que realicen durante su primer año.",
+        "invite": "Invitar",
+        "inviteUsers": "Invitar usuarios",
+        "inviteUsersFailed": "Hubo un error al invitar a los usuarios",
+        "tooManyInvites": "Solo puedes tener 100 invitaciones pendientes",
+        "usersInvited": "¡Mensaje de invitación enviado!"
     },
     "updateNow": "recargar ahora",
     "updateRequired": "Una nueva versión de OpenChat está disponible - recargando en {countdown}s",
     "chooseMembers": "elegir miembros",
     "confirmMembers": "Confirmar miembros",
     "permissionsChangedBy": "{changedBy} cambió los permisos del grupo",
-    "addMembersFailed": "Hubo un error al agregar miembros",
     "filterMembers": "filtrar miembros",
     "publicGroupWithN": "Grupo público con {número} miembro(s)",
     "privateGroupWithN": "Grupo privado con {number} miembro(s)",
     "groupWithN": "{number} miembro(s)",
     "members": "miembros",
-    "addMembers": "Añadir miembros",
     "removeMemberFailed": "No se puede eliminar el miembro",
     "member": "miembro",
     "memberCount": "{contar} miembro(s)",
@@ -796,6 +797,7 @@
         "messageReport": "Reportado por @{username} el {timestamp} por el siguiente motivo: **{reason}**",
         "showing": "Mostrando los {count} más recientes de {total} informe(s)"
     },
+    "invitedBy": "{changedBy} invitó a {changed} al grupo",
     "halloffame": {
         "menu": "Referencias principales",
         "allTime": "Todo el tiempo",
@@ -806,5 +808,7 @@
         "diamonds": "Diamantes",
         "users": "Usuarios",
         "gameover": "¡Juego terminado!"
-    }
+    },
+    "privateGroupInfo": "Este grupo estará limitado a las personas que invites.",
+    "invited": "Invitado"
 }

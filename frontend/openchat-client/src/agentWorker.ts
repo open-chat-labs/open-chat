@@ -53,7 +53,6 @@ import {
     User,
     EditMessageResponse,
     RegisterUserResponse,
-    AddMembersResponse,
     RemoveMemberResponse,
     MemberRole,
     RegisterProposalVoteResponse,
@@ -96,6 +95,8 @@ import {
     ReferralLeaderboardRange,
     ReferralLeaderboardResponse,
     ReportMessageResponse,
+    InviteUsersResponse,
+    DeclineInvitationResponse,
 } from "openchat-shared";
 import type { OpenChatConfig } from "./config";
 import { v4 } from "uuid";
@@ -820,6 +821,16 @@ export class OpenChatAgentWorker extends EventTarget {
         });
     }
 
+    unblockUserFromGroupChat(chatId: string, userId: string): Promise<UnblockUserResponse> {
+        return this.sendRequest({
+            kind: "unblockUserFromGroupChat",
+            payload: {
+                chatId,
+                userId,
+            },
+        });
+    }
+
     getProposalVoteDetails(
         governanceCanisterId: string,
         proposalId: bigint,
@@ -944,19 +955,15 @@ export class OpenChatAgentWorker extends EventTarget {
         });
     }
 
-    addMembers(
+    inviteUsers(
         chatId: string,
         userIds: string[],
-        myUsername: string,
-        allowBlocked: boolean
-    ): Promise<AddMembersResponse> {
+    ): Promise<InviteUsersResponse> {
         return this.sendRequest({
-            kind: "addMembers",
+            kind: "inviteUsers",
             payload: {
                 chatId,
                 userIds,
-                myUsername,
-                allowBlocked,
             },
         });
     }
@@ -1387,6 +1394,13 @@ export class OpenChatAgentWorker extends EventTarget {
                 notes,
                 threadRootMessageIndex,
             },
+        });
+    }
+
+    declineInvitation(chatId: string): Promise<DeclineInvitationResponse> {
+        return this.sendRequest({
+            kind: "declineInvitation",
+            payload: { chatId },
         });
     }
 }

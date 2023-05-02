@@ -29,7 +29,6 @@
     const client = getContext<OpenChat>("client");
     const userId = client.user.userId;
 
-    export let index: number;
     export let chatSummary: ChatSummary;
     export let selected: boolean;
     export let visible: boolean;
@@ -201,7 +200,6 @@
     <div
         role="button"
         class="chat-summary"
-        class:first={index === 0}
         class:selected
         use:swipe
         on:swiping={swiping}

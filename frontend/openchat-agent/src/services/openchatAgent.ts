@@ -45,7 +45,6 @@ import { SnsGovernanceClient } from "./snsGovernance/sns.governance.client";
 import type { AgentConfig } from "../config";
 import {
     Logger,
-    AddMembersResponse,
     AddRemoveReactionResponse,
     ArchiveChatResponse,
     BlobReference,
@@ -141,6 +140,8 @@ import {
     ReferralLeaderboardRange,
     ReferralLeaderboardResponse,
     ReportMessageResponse,
+    InviteUsersResponse,
+    DeclineInvitationResponse,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import { applyOptionUpdate } from "../utils/mapping";
@@ -336,16 +337,16 @@ export class OpenChatAgent extends EventTarget {
         );
     }
 
-    addMembers(
+    async inviteUsers(
         chatId: string,
         userIds: string[],
-        myUsername: string,
-        allowBlocked: boolean
-    ): Promise<AddMembersResponse> {
+    ): Promise<InviteUsersResponse> {
         if (!userIds.length) {
-            return Promise.resolve<AddMembersResponse>({ kind: "add_members_success" });
+            return Promise.resolve<InviteUsersResponse>("success");
         }
-        return this.getGroupClient(chatId).addMembers(userIds, myUsername, allowBlocked);
+
+        const localUserIndex = await this.getGroupClient(chatId).localUserIndex();
+        return this.createLocalUserIndexClient(localUserIndex).inviteUsersToGroup(chatId, userIds);
     }
 
     directChatEventsWindow(
@@ -1631,5 +1632,8 @@ export class OpenChatAgent extends EventTarget {
             notes,
             threadRootMessageIndex
         );
+    }
+    declineInvitation(chatId: string): Promise<DeclineInvitationResponse> {
+        return this.getGroupClient(chatId).declineInvitation();
     }
 }
