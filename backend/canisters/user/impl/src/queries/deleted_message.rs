@@ -18,16 +18,20 @@ fn deleted_message_impl(args: Args, state: &RuntimeState) -> Response {
         let events_reader = chat.events.main_events_reader(now);
 
         if let Some(message) = events_reader.message_internal(args.message_id.into()) {
-            if my_user_id != message.sender {
-                NotAuthorized
-            } else if message.deleted_by.is_none() {
-                MessageNotDeleted
-            } else if matches!(message.content, MessageContentInternal::Deleted(_)) {
-                MessageHardDeleted
-            } else {
-                Success(SuccessResult {
-                    content: message.content.hydrate(Some(my_user_id)),
-                })
+            let deleted_by = message.deleted_by.as_ref().map(|d| d.deleted_by);
+
+            match deleted_by {
+                None => MessageNotDeleted,
+                Some(u) if u != my_user_id => NotAuthorized,
+                _ => {
+                    if matches!(message.content, MessageContentInternal::Deleted(_)) {
+                        MessageHardDeleted
+                    } else {
+                        Success(SuccessResult {
+                            content: message.content.hydrate(Some(my_user_id)),
+                        })
+                    }
+                }
             }
         } else {
             MessageNotFound
