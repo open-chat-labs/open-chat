@@ -1,5 +1,6 @@
 import type { Identity, SignIdentity } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
+import { identity } from "../../utils/mapping";
 import { idlFactory, UserIndexService } from "./candid/idl";
 import type {
     CheckUsernameResponse,
@@ -39,7 +40,6 @@ import type { IUserIndexClient } from "./userIndex.client.interface";
 import { profile } from "../common/profiling";
 import { apiOptional } from "../common/chatMappers";
 import type { AgentConfig } from "../../config";
-import { identity } from "../../utils/mapping";
 
 export class UserIndexClient extends CandidService implements IUserIndexClient {
     private userIndexService: UserIndexService;

@@ -169,6 +169,8 @@ export function activeUserIdFromEvent(event: ChatEvent): string | undefined {
             return event.updatedBy;
         case "gate_updated":
             return event.updatedBy;
+        case "users_invited":
+            return event.invitedBy;
         case "message_deleted":
         case "message_undeleted":
         case "message_edited":
@@ -788,16 +790,6 @@ export function canChangeRoles(
     }
 }
 
-export function canAddMembers(chat: ChatSummary): boolean {
-    if (chat.kind === "group_chat") {
-        return (
-            !chat.public && !chat.frozen && isPermitted(chat.myRole, chat.permissions.addMembers)
-        );
-    } else {
-        return false;
-    }
-}
-
 export function canRemoveMembers(chat: ChatSummary): boolean {
     if (chat.kind === "group_chat") {
         return (
@@ -849,7 +841,9 @@ export function canPinMessages(chat: ChatSummary): boolean {
 }
 
 export function canInviteUsers(chat: ChatSummary): boolean {
-    return chat.kind === "group_chat" && !chat.frozen && chat.public;
+    return chat.kind === "group_chat" 
+        && !chat.frozen 
+        && (chat.public || isPermitted(chat.myRole, chat.permissions.inviteUsers));
 }
 
 export function canCreatePolls(chat: ChatSummary): boolean {

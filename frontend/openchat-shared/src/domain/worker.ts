@@ -1,6 +1,5 @@
 import type { AgentConfig } from "./config";
 import type {
-    AddMembersResponse,
     AddRemoveReactionResponse,
     BlockUserResponse,
     CandidateGroupChat,
@@ -54,6 +53,7 @@ import type {
     UpdatesResult,
     WithdrawCryptocurrencyResponse,
     ReportMessageResponse,
+    InviteUsersResponse,
 } from "./chat";
 import type { BlobReference, StorageStatus } from "./data/data";
 import type { UpdateMarketMakerConfigArgs, UpdateMarketMakerConfigResponse } from "./marketMaker";
@@ -90,7 +90,6 @@ import type {
     SearchGroupChatResponse,
 } from "./search/search";
 import type { Cryptocurrency, Tokens } from "./crypto";
-import type { GroupInvite } from "./inviteCodes";
 
 /**
  * Worker request types
@@ -109,7 +108,7 @@ export type WorkerRequest =
     | RegisterProposalVote
     | ChangeRole
     | RemoveMember
-    | AddMembers
+    | InviteUsers
     | PushSub
     | RemoveSub
     | SubscriptionExists
@@ -121,6 +120,7 @@ export type WorkerRequest =
     | GetProposalVoteDetailsRequest
     | ListNervousSystemFunctions
     | BlockUserFromGroup
+    | UnblockUserFromGroup
     | AddGroupChatReaction
     | RemoveGroupChatReaction
     | RemoveDirectChatReaction
@@ -163,7 +163,6 @@ export type WorkerRequest =
     | CreateUserClient
     | Init
     | CurrentUser
-    | SetGroupInvite
     | SearchGroupChat
     | SearchDirectChat
     | RefreshAccountBalance
@@ -199,7 +198,8 @@ export type WorkerRequest =
     | SetMessageReminder
     | CancelMessageReminder
     | ReferralLeaderboard
-    | ReportMessage;
+    | ReportMessage
+    | DeclineInvitation;
 
 type ReferralLeaderboard = Request<{
     args?: ReferralLeaderboardRange;
@@ -297,12 +297,6 @@ type SearchGroupChat = Request<{
     kind: "searchGroupChat";
 };
 
-type SetGroupInvite = Request<{
-    value: GroupInvite;
-}> & {
-    kind: "groupInvite";
-};
-
 type DismissRecommendations = Request<{
     chatId: string;
 }> & {
@@ -351,13 +345,11 @@ type RemoveMember = Request<{
     kind: "removeMember";
 };
 
-type AddMembers = Request<{
+type InviteUsers = Request<{
     chatId: string;
     userIds: string[];
-    myUsername: string;
-    allowBlocked: boolean;
 }> & {
-    kind: "addMembers";
+    kind: "inviteUsers";
 };
 
 type RemoveSub = Request<{
@@ -438,6 +430,13 @@ type BlockUserFromGroup = Request<{
     userId: string;
 }> & {
     kind: "blockUserFromGroupChat";
+};
+
+type UnblockUserFromGroup = Request<{
+    chatId: string;
+    userId: string;
+}> & {
+    kind: "unblockUserFromGroupChat";
 };
 
 type AddGroupChatReaction = Request<{
@@ -849,7 +848,7 @@ export type WorkerResponse =
     | Response<GroupChatSummary[]>
     | Response<RegisterProposalVoteResponse>
     | Response<ChangeRoleResponse>
-    | Response<AddMembersResponse>
+    | Response<InviteUsersResponse>
     | Response<RemoveMemberResponse>
     | Response<boolean>
     | Response<RegisterUserResponse>
@@ -1010,3 +1009,10 @@ type ReportMessage = Request<{
 }> & {
     kind: "reportMessage";
 };
+
+type DeclineInvitation = Request<{
+    chatId: string;
+}> & {
+    kind: "declineInvitation";
+};
+

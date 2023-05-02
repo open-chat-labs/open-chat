@@ -105,7 +105,6 @@
     "ownershipTransferredBy": "{changedBy} đã chuyển quyền sở hữu nhóm cho {changed} 🎉",
     "historyVisible": "Hiển thị lịch sử trò chuyện",
     "historyOnInfo": "Toàn bộ lịch sử trò chuyện sẽ hiển thị cho những thành mới. Vui lòng cẩn trọng! 🤐",
-    "privateGroupInfo": "Nhóm này sẽ được giới hạn cho những người mà bạn chọn",
     "publicGroupUnique": "Tên nhóm công khai không được lặp lại",
     "publicGroupInfo": "Bất kỳ ai cũng có thể tham gia nhóm này",
     "newGroupName": "Nhập tên nhóm",
@@ -349,7 +348,6 @@
             "allMembers": "Tất cả các thành viên có thể",
             "changePermissions": "thay đổi quyền",
             "changeRoles": "thay đổi vai trò thành viên",
-            "addMembers": "thêm thành viên",
             "removeMembers": "xóa thành viên",
             "blockUsers": "chặn / bỏ chặn người dùng",
             "deleteMessages": "xóa tin nhắn",
@@ -406,20 +404,23 @@
         "openAccessInfo": "Không có yêu cầu truy cập đặc biệt để tham gia nhóm này",
         "gateCheckFailed": "Cổng truy cập không được đáp ứng",
         "inviteWithLink": "Mời vào nhóm qua liên kết",
-        "shareMessage": "Bất kỳ ai có liên kết này đều có thể xem trước và tham gia nhóm. Nếu bạn là thành viên Kim cương và bất kỳ người dùng nào đăng ký tài khoản qua liên kết này, bạn sẽ kiếm được một nửa số tiền thanh toán thành viên Kim cương mà họ thực hiện trong năm đầu tiên."
+        "shareMessage": "Bất kỳ ai có liên kết này đều có thể xem trước và tham gia nhóm. Nếu bạn là thành viên Kim cương và bất kỳ người dùng nào đăng ký tài khoản qua liên kết này, bạn sẽ kiếm được một nửa số tiền thanh toán thành viên Kim cương mà họ thực hiện trong năm đầu tiên.",
+        "invite": "Mời",
+        "inviteUsers": "Mời người dùng",
+        "inviteUsersFailed": "Đã xảy ra lỗi khi mời người dùng",
+        "tooManyInvites": "Bạn chỉ có thể có 100 lời mời nổi bật",
+        "usersInvited": "Đã gửi tin nhắn mời!"
     },
     "updateNow": "tải lại ngay bây giờ",
     "updateRequired": "Đã có phiên bản OpenChat mới - tải lại sau {countdown} giây",
     "chooseMembers": "Chọn thành viên",
     "confirmMembers": "Xác nhận thành viên",
     "permissionsChangedBy": "{changeBy} đã thay đổi các quyền của nhóm",
-    "addMembersFailed": "Đã xảy ra lỗi khi thêm thành viên",
     "filterMembers": "lọc thành viên",
     "publicGroupWithN": "Nhóm công khai có {number} thành viên",
     "privateGroupWithN": "Nhóm riêng tư với {number} thành viên",
     "groupWithN": "{number} thành viên",
     "members": "Các thành viên",
-    "addMembers": "Thêm thành viên",
     "removeMemberFailed": "Không thể xóa thành viên",
     "member": "hội viên",
     "memberCount": "{count} thành viên",
@@ -795,6 +796,7 @@
         "messageReport": "Được @{username} báo cáo về {timestamp} vì lý do sau: **{reason}**",
         "showing": "Đang hiển thị {count}/{total} báo cáo gần đây nhất"
     },
+    "invitedBy": "{changedBy} đã mời {changed} vào nhóm",
     "halloffame": {
         "menu": "Người giới thiệu hàng đầu",
         "allTime": "Mọi thời đại",
@@ -805,5 +807,7 @@
         "diamonds": "kim cương",
         "users": "người dùng",
         "gameover": "Trò chơi kết thúc!"
-    }
+    },
+    "privateGroupInfo": "Nhóm này sẽ được giới hạn cho những người mà bạn mời.",
+    "invited": "Được mời"
 }

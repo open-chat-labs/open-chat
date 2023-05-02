@@ -51,6 +51,7 @@ export type ChatEvent = { 'Empty' : null } |
   { 'GroupDescriptionChanged' : GroupDescriptionChanged } |
   { 'GroupChatCreated' : GroupChatCreated } |
   { 'MessagePinned' : MessagePinned } |
+  { 'UsersInvited' : UsersInvited } |
   { 'UsersBlocked' : UsersBlocked } |
   { 'MessageUnpinned' : MessageUnpinned } |
   { 'MessageReactionAdded' : UpdatedMessage } |
@@ -204,6 +205,7 @@ export interface DirectReactionAddedNotification {
   'timestamp' : TimestampMillis,
   'reaction' : string,
 }
+export type EmptyArgs = {};
 export type EventIndex = number;
 export type EventsTimeToLiveUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
@@ -468,12 +470,21 @@ export type InvalidPollReason = { 'DuplicateOptions' : null } |
   { 'OptionTooLong' : number } |
   { 'EndDateInThePast' : null } |
   { 'PollsNotValidForDirectChats' : null };
-export interface JoinGroupArgs {
-  'invite_code' : [] | [bigint],
+export interface InviteUsersToGroupArgs {
+  'user_ids' : Array<UserId>,
+  'group_id' : ChatId,
   'correlation_id' : bigint,
-  'chat_id' : ChatId,
 }
-export type JoinGroupResponse = { 'Blocked' : null } |
+export type InviteUsersToGroupResponse = { 'GroupNotFound' : null } |
+  { 'CallerNotInGroup' : null } |
+  { 'ChatFrozen' : null } |
+  { 'NotAuthorized' : null } |
+  { 'Success' : null } |
+  { 'InternalError' : string } |
+  { 'TooManyInvites' : number };
+export interface JoinGroupArgs { 'correlation_id' : bigint, 'chat_id' : ChatId }
+export type JoinGroupResponse = { 'NotInvited' : null } |
+  { 'Blocked' : null } |
   { 'GroupNotFound' : null } |
   { 'GroupNotPublic' : null } |
   { 'AlreadyInGroup' : null } |
@@ -660,7 +671,10 @@ export interface Participant {
 }
 export interface ParticipantAssumesSuperAdmin { 'user_id' : UserId }
 export interface ParticipantDismissedAsSuperAdmin { 'user_id' : UserId }
-export interface ParticipantJoined { 'user_id' : UserId }
+export interface ParticipantJoined {
+  'user_id' : UserId,
+  'invited_by' : [] | [UserId],
+}
 export interface ParticipantLeft { 'user_id' : UserId }
 export interface ParticipantRelinquishesSuperAdmin { 'user_id' : UserId }
 export interface ParticipantsAdded {
@@ -917,6 +931,10 @@ export interface UsersBlocked {
   'user_ids' : Array<UserId>,
   'blocked_by' : UserId,
 }
+export interface UsersInvited {
+  'user_ids' : Array<UserId>,
+  'invited_by' : UserId,
+}
 export interface UsersUnblocked {
   'user_ids' : Array<UserId>,
   'unblocked_by' : UserId,
@@ -938,6 +956,10 @@ export interface VideoContent {
 export type VoteOperation = { 'RegisterVote' : null } |
   { 'DeleteVote' : null };
 export interface _SERVICE {
+  'invite_users_to_group' : ActorMethod<
+    [InviteUsersToGroupArgs],
+    InviteUsersToGroupResponse
+  >,
   'join_group' : ActorMethod<[JoinGroupArgs], JoinGroupResponse>,
   'report_message' : ActorMethod<[ReportMessageArgs], ReportMessageResponse>,
 }

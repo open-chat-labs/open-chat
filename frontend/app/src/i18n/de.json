@@ -109,7 +109,6 @@
     "ownershipTransferredBy": "{changedBy} hat den Gruppenbesitz an {changed} 🎉 übertragen",
     "historyVisible": "sichtbarer Chatverlauf",
     "historyOnInfo": "Der vollständige Chat-Verlauf ist für neue Teilnehmer sichtbar. Achtung jetzt! 🤐",
-    "privateGroupInfo": "Diese Gruppe wird auf die Personen beschränkt, die Sie auswählen.",
     "publicGroupUnique": "Öffentliche Gruppennamen müssen eindeutig sein.",
     "publicGroupInfo": "Jeder kann diese Gruppe entdecken und ihr beitreten.",
     "newGroupName": "Gruppennamen eingeben",
@@ -350,7 +349,6 @@
             "allMembers": "Alle Mitglieder können",
             "changePermissions": "Berechtigungen ändern",
             "changeRoles": "Mitgliederrollen ändern",
-            "addMembers": "Mitglieder hinzufügen",
             "removeMembers": "Mitglieder entfernen",
             "blockUsers": "Benutzer sperren/entsperren",
             "deleteMessages": "Nachrichten löschen",
@@ -407,20 +405,23 @@
         "openAccessInfo": "Es gibt keine besonderen Zugangsvoraussetzungen, um dieser Gruppe beizutreten",
         "gateCheckFailed": "Zugangstor nicht erreicht",
         "inviteWithLink": "Per Link zur Gruppe einladen",
-        "shareMessage": "Jeder mit diesem Link kann eine Vorschau anzeigen und der Gruppe beitreten. Wenn Sie ein Diamond-Mitglied sind und ein Benutzer über diesen Link ein Konto registriert, verdienen Sie die Hälfte aller Diamond-Mitgliedschaftszahlungen, die er innerhalb seines ersten Jahres leistet."
+        "shareMessage": "Jeder mit diesem Link kann eine Vorschau anzeigen und der Gruppe beitreten. Wenn Sie ein Diamond-Mitglied sind und ein Benutzer über diesen Link ein Konto registriert, verdienen Sie die Hälfte aller Diamond-Mitgliedschaftszahlungen, die er innerhalb seines ersten Jahres leistet.",
+        "invite": "Einladen",
+        "inviteUsers": "Benutzer einladen",
+        "inviteUsersFailed": "Beim Einladen von Benutzern ist ein Fehler aufgetreten",
+        "tooManyInvites": "Sie können nur 100 ausstehende Einladungen haben",
+        "usersInvited": "Einladungsnachricht gesendet!"
     },
     "updateNow": "jetzt neu laden",
     "updateRequired": "Eine neue Version von OpenChat ist verfügbar - Neuladen in {countdown}s",
     "chooseMembers": "Wähle Mitglieder",
     "confirmMembers": "Mitglieder bestätigen",
     "permissionsChangedBy": "{changedBy} hat die Gruppenberechtigungen geändert",
-    "addMembersFailed": "Beim Hinzufügen von Mitgliedern ist ein Fehler aufgetreten",
     "filterMembers": "Mitglieder filtern",
     "publicGroupWithN": "Öffentliche Gruppe mit {number} Mitglied(ern)",
     "privateGroupWithN": "Private Gruppe mit {number} Mitglied(ern)",
     "groupWithN": "{number} Mitglied(er)",
     "members": "Mitglieder",
-    "addMembers": "Mitglieder hinzufügen",
     "removeMemberFailed": "Mitglied kann nicht entfernt werden",
     "member": "Mitglied",
     "memberCount": "{count} Mitglied(er)",
@@ -796,6 +797,7 @@
         "messageReport": "Von @{username} auf {timestamp} aus folgendem Grund gemeldet: **{reason}**",
         "showing": "Anzeige der neusten {count} von {total} Bericht(en)"
     },
+    "invitedBy": "{changedBy} hat {changed} in die Gruppe eingeladen",
     "halloffame": {
         "menu": "Top-Empfehlungen",
         "allTime": "Alle Zeit",
@@ -806,5 +808,7 @@
         "diamonds": "Diamanten",
         "users": "Benutzer",
         "gameover": "Spiel ist aus!"
-    }
+    },
+    "privateGroupInfo": "Diese Gruppe ist auf die Personen beschränkt, die Sie einladen.",
+    "invited": "Eingeladen"
 }

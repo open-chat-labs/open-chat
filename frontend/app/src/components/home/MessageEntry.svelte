@@ -449,7 +449,7 @@
     }
 
     function cancelPreview() {
-        dispatch("cancelPreview", chat.chatId);
+        dispatch("cancelPreview", chat);
     }
 
     function freezeGroup() {

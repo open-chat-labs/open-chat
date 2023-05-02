@@ -1,5 +1,4 @@
 import type {
-    ApiAddParticipantsResponse,
     ApiEventsResponse,
     ApiEventWrapper,
     ApiGroupChatEvent,
@@ -38,12 +37,12 @@ import type {
     ApiDeletedGroupMessageResponse,
     ApiClaimPrizeResponse,
     ApiGroupGateUpdate,
+    ApiDeclineInvitationResponse,
 } from "./candid/idl";
 import {
     EventsResponse,
     EventWrapper,
     GroupChatEvent,
-    AddMembersResponse,
     SendMessageResponse,
     RemoveMemberResponse,
     UpdateGroupResponse,
@@ -81,6 +80,7 @@ import {
     DeletedGroupMessageResponse,
     ClaimPrizeResponse,
     UpdatedEvent,
+    DeclineInvitationResponse,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import {
@@ -100,10 +100,6 @@ import { messageMatch } from "../user/mappers";
 import { identity, optional, optionUpdate } from "../../utils/mapping";
 import { ReplicaNotUpToDateError } from "../error";
 import type { OptionalGroupPermissions } from "./candid/types";
-
-function principalToString(p: Principal): string {
-    return p.toString();
-}
 
 export function apiRole(role: MemberRole): ApiRole | undefined {
     switch (role) {
@@ -296,7 +292,7 @@ export function apiOptionalGroupPermissions(
         update_group: apiOptional(apiPermissionRole, permissions.updateGroup),
         invite_users: apiOptional(apiPermissionRole, permissions.inviteUsers),
         change_roles: apiOptional(apiPermissionRole, permissions.changeRoles),
-        add_members: apiOptional(apiPermissionRole, permissions.addMembers),
+        add_members: [],
         create_polls: apiOptional(apiPermissionRole, permissions.createPolls),
         pin_messages: apiOptional(apiPermissionRole, permissions.pinMessages),
         reply_in_thread: apiOptional(apiPermissionRole, permissions.replyInThread),
@@ -350,6 +346,7 @@ export function groupDetailsUpdatesResponse(
             pinnedMessagesRemoved: new Set(candid.Success.pinned_messages_removed),
             latestEventIndex: candid.Success.latest_event_index,
             rules: optional(candid.Success.rules, groupRules),
+            invitedUsers: optional(candid.Success.invited_users, (invited_users) => new Set(invited_users.map((u) => u.toString()))),
         };
     }
     throw new UnsupportedValueError("Unexpected ApiDeleteMessageResponse type received", candid);
@@ -363,6 +360,7 @@ export function groupDetailsResponse(candid: ApiSelectedInitialResponse): GroupC
         return {
             members: candid.Success.participants.map(member),
             blockedUsers: new Set(candid.Success.blocked_users.map((u) => u.toString())),
+            invitedUsers: new Set(candid.Success.invited_users.map((u) => u.toString())),
             pinnedMessages: new Set(candid.Success.pinned_messages),
             latestEventIndex: candid.Success.latest_event_index,
             rules: groupRules(candid.Success.rules),
@@ -716,61 +714,6 @@ export function removeMemberResponse(candid: ApiRemoveParticipantResponse): Remo
     );
 }
 
-export function addMembersResponse(candid: ApiAddParticipantsResponse): AddMembersResponse {
-    if ("Failed" in candid) {
-        return {
-            kind: "add_members_failed",
-            usersAlreadyInGroup: candid.Failed.users_already_in_group.map(principalToString),
-            usersBlockedFromGroup: candid.Failed.users_blocked_from_group.map(principalToString),
-            usersWhoBlockedRequest: candid.Failed.users_who_blocked_request.map(principalToString),
-            errors: candid.Failed.errors.map(principalToString),
-        };
-    }
-    if ("PartialSuccess" in candid) {
-        return {
-            kind: "add_members_partial_success",
-            usersAdded: candid.PartialSuccess.users_added.map(principalToString),
-            usersAlreadyInGroup:
-                candid.PartialSuccess.users_already_in_group.map(principalToString),
-            usersBlockedFromGroup:
-                candid.PartialSuccess.users_blocked_from_group.map(principalToString),
-            usersWhoBlockedRequest:
-                candid.PartialSuccess.users_who_blocked_request.map(principalToString),
-            errors: candid.PartialSuccess.errors.map(principalToString),
-        };
-    }
-    if ("NotAuthorized" in candid) {
-        return {
-            kind: "add_members_not_authorised",
-        };
-    }
-    if ("ParticipantLimitReached" in candid) {
-        return {
-            // todo - need some UI changes to deal with this properly
-            kind: "member_limit_reached",
-        };
-    }
-    if ("Success" in candid) {
-        return {
-            kind: "add_members_success",
-        };
-    }
-    if ("CallerNotInGroup" in candid) {
-        return {
-            kind: "add_members_not_in_group",
-        };
-    }
-    if ("UserSuspended" in candid) {
-        return {
-            kind: "user_suspended",
-        };
-    }
-    if ("ChatFrozen" in candid) {
-        return { kind: "chat_frozen" };
-    }
-    throw new UnsupportedValueError("Unexpected ApiAddParticipantsResponse type received", candid);
-}
-
 export function deletedMessageResponse(
     candid: ApiDeletedGroupMessageResponse
 ): DeletedGroupMessageResponse {
@@ -1094,6 +1037,13 @@ function groupChatEvent(candid: ApiGroupChatEvent): GroupChatEvent {
             addedBy: candid.ParticipantsAdded.added_by.toString(),
         };
     }
+    if ("UsersInvited" in candid) {
+        return {
+            kind: "users_invited",
+            userIds: candid.UsersInvited.user_ids.map((p) => p.toString()),
+            invitedBy: candid.UsersInvited.invited_by.toString(),
+        };
+    }
     if ("ParticipantJoined" in candid) {
         return {
             kind: "member_joined",
@@ -1411,4 +1361,17 @@ export function rulesResponse(candid: ApiRulesResponse): GroupRules | undefined 
             enabled: rules !== undefined,
         };
     }
+}
+
+export function declineInvitationResponse(candid: ApiDeclineInvitationResponse): DeclineInvitationResponse {
+    if ("Success" in candid) {
+        return "success";
+    }
+    if ("NotInvited" in candid) {
+        return "not_invited";
+    }
+    if ("InternalError" in candid) {
+        return "internal_error";
+    }
+    throw new UnsupportedValueError("Unexpected ApiDeclineInvitationResponse type received", candid);
 }

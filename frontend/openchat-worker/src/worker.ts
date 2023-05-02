@@ -724,6 +724,17 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
                     .catch(sendError(correlationId));
                 break;
 
+            case "unblockUserFromGroupChat":
+                agent
+                    .unblockUserFromGroupChat(payload.chatId, payload.userId)
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
             case "getProposalVoteDetails":
                 agent
                     .getProposalVoteDetails(
@@ -850,13 +861,11 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
                     .catch(sendError(correlationId));
                 break;
 
-            case "addMembers":
+            case "inviteUsers":
                 agent
-                    .addMembers(
+                    .inviteUsers(
                         payload.chatId,
                         payload.userIds,
-                        payload.myUsername,
-                        payload.allowBlocked
                     )
                     .then((response) =>
                         sendResponse(correlationId, {
@@ -1321,6 +1330,17 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
                         payload.notes,
                         payload.threadRootMessageIndex
                     )
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
+            case "declineInvitation":
+                agent
+                    .declineInvitation(payload.chatId)
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,

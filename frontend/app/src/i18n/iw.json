@@ -114,7 +114,6 @@
     "ownershipTransferredBy": "{changedBy} העביר את הבעלות על הקבוצה אל {changed} 🎉",
     "historyVisible": "היסטוריית צ'אט גלויה",
     "historyOnInfo": "היסטוריית הצ'אט המלאה תהיה גלויה למצטרפים חדשים. זהירות עכשיו! 🤐",
-    "privateGroupInfo": "קבוצה זו תהיה מוגבלת לאנשים שתבחר.",
     "publicGroupUnique": "שמות קבוצות ציבוריים חייבים להיות ייחודיים.",
     "publicGroupInfo": "כל אחד יוכל לגלות ולהצטרף לקבוצה הזו.",
     "newGroupName": "הזן את שם הקבוצה",
@@ -127,7 +126,6 @@
     "groupAlreadyExists": "כבר קיימת קבוצה ציבורית בשם זה",
     "avatarTooBig": "הדמות שנבחרה גדולה מדי",
     "userSearchFailed": "אירעה שגיאה בחיפוש משתמשים",
-    "addMembersFailed": "אירעה שגיאה בהוספת חברים",
     "enableNotifications": "האם תרצה להפעיל התראות?",
     "enableNotificationsMenu": "אפשר התראות",
     "disableNotificationsMenu": "השבת הודעות",
@@ -175,7 +173,6 @@
     "previewing": "קבוצת תצוגה מקדימה",
     "userIsBlocked": "בטל את חסימת המשתמש כדי לשלוח הודעות",
     "members": "חברים",
-    "addMembers": "הוסף חברים",
     "leaveGroup": "לעזוב קבוצה",
     "remove": "לְהַסִיר",
     "close": "סגור",
@@ -360,7 +357,6 @@
             "allMembers": "כל החברים יכולים",
             "changePermissions": "לשנות הרשאות",
             "changeRoles": "לשנות תפקידי חברים",
-            "addMembers": "להוסיף חברים",
             "removeMembers": "להסיר חברים",
             "blockUsers": "לחסום/בטל חסימה של משתמשים",
             "deleteMessages": "מחק הודעות",
@@ -417,7 +413,12 @@
         "openAccessInfo": "אין דרישות גישה מיוחדות כדי להצטרף לקבוצה זו",
         "gateCheckFailed": "שער הגישה לא נפגש",
         "inviteWithLink": "הזמינו לקבוצה דרך הקישור",
-        "shareMessage": "כל מי שיש לו קישור זה יכול לצפות בתצוגה מקדימה ולהצטרף לקבוצה. אם אתה חבר ב-Diamond וכל משתמש רושם חשבון באמצעות קישור זה, תרוויח מחצית מתשלומי החברות ב-Diamond שהם ישלמו במהלך השנה הראשונה שלו."
+        "shareMessage": "כל מי שיש לו קישור זה יכול לצפות בתצוגה מקדימה ולהצטרף לקבוצה. אם אתה חבר ב-Diamond וכל משתמש רושם חשבון באמצעות קישור זה, תרוויח מחצית מתשלומי החברות ב-Diamond שהם ישלמו במהלך השנה הראשונה שלו.",
+        "invite": "להזמין",
+        "inviteUsers": "הזמן משתמשים",
+        "inviteUsersFailed": "אירעה שגיאה בהזמנת משתמשים",
+        "tooManyInvites": "אתה יכול לקבל רק 100 הזמנות יוצאות דופן",
+        "usersInvited": "הודעת הזמנה נשלחה!"
     },
     "updateNow": "טען מחדש עכשיו",
     "updateRequired": "גרסה חדשה של OpenChat זמינה - נטען מחדש ב-{countdown}s",
@@ -792,6 +793,7 @@
         "messageReport": "דווח על ידי @{username} ב-{timestamp} מהסיבה הבאה: **{reason}**",
         "showing": "מציג את ה-{count} העדכני ביותר מתוך {total} דוחות"
     },
+    "invitedBy": "{changedBy} הזמין את {changed} לקבוצה",
     "halloffame": {
         "menu": "מפנים מובילים",
         "allTime": "כל הזמן",
@@ -802,5 +804,7 @@
         "diamonds": "יהלומים",
         "users": "משתמשים",
         "gameover": "סוף המשחק!"
-    }
+    },
+    "privateGroupInfo": "הקבוצה הזו תהיה מוגבלת לאנשים שאתה מזמין.",
+    "invited": "מוזמן"
 }

@@ -55,7 +55,7 @@
             on:blockUser
             on:leaveGroup
             on:replyPrivatelyTo
-            on:addMembers
+            on:showInviteUsers
             on:showGroupDetails
             on:showProposalFilters
             on:showMembers

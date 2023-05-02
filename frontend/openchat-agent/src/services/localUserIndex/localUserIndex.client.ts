@@ -1,9 +1,9 @@
 import type { Identity } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
 import { idlFactory, LocalUserIndexService } from "./candid/idl";
-import type { JoinGroupResponse, ReportMessageResponse } from "openchat-shared";
+import type { InviteUsersResponse, JoinGroupResponse, ReportMessageResponse } from "openchat-shared";
 import { CandidService } from "../candidService";
-import { joinGroupResponse, reportMessageResponse } from "./mappers";
+import { inviteUsersResponse, joinGroupResponse, reportMessageResponse } from "./mappers";
 import type { ILocalUserIndexClient } from "./localUserIndex.client.interface";
 import { profile } from "../common/profiling";
 import type { AgentConfig } from "../../config";
@@ -33,14 +33,10 @@ export class LocalUserIndexClient extends CandidService implements ILocalUserInd
 
     @profile("localUserIndexClient")
     joinGroup(chatId: string): Promise<JoinGroupResponse> {
-        return this.handleResponse(
-            this.localUserIndexService.join_group({
-                chat_id: Principal.fromText(chatId),
-                invite_code: [],
-                correlation_id: BigInt(0),
-            }),
-            joinGroupResponse
-        );
+        return this.handleResponse(this.localUserIndexService.join_group({
+            chat_id: Principal.fromText(chatId),
+            correlation_id: BigInt(0)
+        }), joinGroupResponse);
     }
 
     @profile("localUserIndexClient")
@@ -61,5 +57,14 @@ export class LocalUserIndexClient extends CandidService implements ILocalUserInd
             }),
             reportMessageResponse
         );
+    }
+
+    @profile("localUserIndexClient")
+    inviteUsersToGroup(chatId: string, userIds: string[]): Promise<InviteUsersResponse> {
+        return this.handleResponse(this.localUserIndexService.invite_users_to_group({
+            group_id: Principal.fromText(chatId),
+            user_ids: userIds.map((u) => Principal.fromText(u)),
+            correlation_id: BigInt(0)
+        }), inviteUsersResponse);
     }
 }
