@@ -187,12 +187,33 @@
     $: expandedDeletedMessages = client.expandedDeletedMessages;
 
     $: groupedEvents = client.groupEvents(
-        events,
+        [...events, userReferralEvent()],
         user.userId,
         $expandedDeletedMessages,
         groupInner(filteredProposals)
     );
 
+    function userReferralEvent(): EventWrapper<ChatEventType> {
+        return {
+            index: (events[events.length - 1]?.index ?? 0) + 1,
+            timestamp: BigInt(+new Date()),
+            event: {
+                kind: "message",
+                messageId: BigInt(12646464),
+                messageIndex: 12464654654,
+                content: {
+                    kind: "custom_content",
+                    subtype: "user_referral_card",
+                    data: {},
+                },
+                edited: false,
+                forwarded: false,
+                deleted: false,
+                reactions: [],
+                sender: OPENCHAT_BOT_USER_ID,
+            },
+        };
+    }
     $: {
         if (chat.chatId !== currentChatId) {
             currentChatId = chat.chatId;

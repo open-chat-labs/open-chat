@@ -430,7 +430,6 @@
         "message": "信息",
         "messagePlaceholder": "包括可选消息",
         "unexpected": "收到了意外的加密传输类型",
-        "viewTransaction": "[查看交易]({url})",
         "confirm": "确认",
         "transfer": "{token}转移",
         "makeDeposit": "请存入上述账户并刷新您的余额。",
@@ -450,7 +449,8 @@
         "chat": "CHAT",
         "sns1": "SNS-1",
         "max": "最大余额",
-        "ckbtc": "ckBTC"
+        "ckbtc": "ckBTC",
+        "viewTransaction": "[交易]({url})"
     },
     "cryptoAccount": {
         "manage": "管理",
@@ -809,5 +809,6 @@
         "gameover": "游戏结束！"
     },
     "privateGroupInfo": "该组仅限于您邀请的人员。",
-    "invited": "受邀"
+    "invited": "受邀",
+    "tapForReferralLink": "点击复制您的个人推荐链接"
 }

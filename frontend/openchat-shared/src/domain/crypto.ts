@@ -2,7 +2,7 @@ export const E8S_PER_TOKEN = 100_000_000;
 
 export const ICP_TRANSFER_FEE_E8S = BigInt(10_000);
 
-export const cryptoCurrencyList = ["icp", "chat", "sns1", "ckbtc"] as const;
+export const cryptoCurrencyList = ["chat", "icp", "ckbtc", "sns1"] as const;
 
 type CryptocurrenciesType = typeof cryptoCurrencyList;
 export type Cryptocurrency = CryptocurrenciesType[number];

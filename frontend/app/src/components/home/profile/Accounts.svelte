@@ -43,6 +43,18 @@
         balance: $cryptoBalance[t],
         disabled: cryptoLookup[t].disabled,
     }));
+
+    $: {
+        crypto.sort((a, b) => {
+            if (a.balance < b.balance) {
+                return 1;
+            } else if (a.balance > b.balance) {
+                return -1;
+            } else {
+                return 0;
+            }
+        });
+    }
 </script>
 
 {#if manageMode !== "none" && selectedCryptoAccount !== undefined}
