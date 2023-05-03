@@ -130,7 +130,7 @@ fn inform_referrer(
                 transaction_hash,
                 block_index
             })),
-            caption: Some("Here are your 50,000 sats as ckBTC".to_string()),
+            caption: Some("Here are your 50,000 sats as [ckBTC](https://internetcomputer.org/ckbtc)!".to_string()),
         }),
         MessageContent::Text(TextContent {
             text: "No one to send your ckBTC to? Invite your friends to chat!".to_string()
@@ -138,6 +138,9 @@ fn inform_referrer(
         MessageContent::Custom(CustomContent {
             kind: "user_referral_card".to_string(),
             data: Vec::new(),
+        }),
+        MessageContent::Text(TextContent {
+            text: "Find out more about OpenChat [here](/home)".to_string()
         })],
         PendingPaymentReason::Treasury => vec![],
     };
