@@ -29,11 +29,11 @@
             background-color: $ckbtc;
             border-radius: 50%;
             padding: $sp2;
-            margin-bottom: $sp4;
+            margin-bottom: $sp5;
         }
 
         .step {
-            @include font(bold, normal, fs-120, 22);
+            @include font(medium, normal, fs-120, 28);
         }
     }
 </style>

@@ -415,7 +415,6 @@
                 : undefined}
             on:dblclick={doubleClickMessage}
             class="message-bubble"
-            class:bot-font={isBot && !isProposal}
             class:focused
             class:editing
             class:fill={fill && !inert}
@@ -836,10 +835,6 @@
 
         &.collapsed {
             cursor: pointer;
-        }
-
-        &.bot-font {
-            font-family: courier;
         }
 
         &:after {

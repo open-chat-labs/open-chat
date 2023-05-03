@@ -10,6 +10,7 @@
     import FileContent from "./FileContent.svelte";
     import TextContent from "./TextContent.svelte";
     import PrizeContent from "./PrizeContent.svelte";
+    import UserReferralCardContent from "./UserReferralCardContent.svelte";
     import PrizeWinnerContent from "./PrizeWinnerContent.svelte";
     import CryptoContent from "./CryptoContent.svelte";
     import DeletedContent from "./DeletedContent.svelte";
@@ -83,4 +84,8 @@
     <MessageReminderContent {content} />
 {:else if content.kind === "reported_message_content"}
     <ReportedMessageContent {content} />
+{:else if content.kind === "custom_content"}
+    {#if content.subtype === "user_referral_card"}
+        <UserReferralCardContent />
+    {/if}
 {/if}

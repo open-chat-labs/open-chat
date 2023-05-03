@@ -45,9 +45,6 @@
                     text={"In a matter of seconds your sats will arrive in your OpenChat wallet as ckBTC."} />
                 <Card num={3} text={"Send your sats at the speed of chat 🚀"} />
             </section>
-            <section>
-                <h5 class="sub-title">More details</h5>
-            </section>
             <CollapsibleCard title={"How does it work?"}>
                 <p>You will receive your 50,000 sats deposited in your OpenChat wallet as ckBTC.</p>
             </CollapsibleCard>
@@ -226,6 +223,10 @@
                 &.cards {
                     padding: 0 0 0 toRem(24);
                 }
+            }
+
+            p {
+                margin-bottom: $sp4;
             }
 
             .sub-title {
