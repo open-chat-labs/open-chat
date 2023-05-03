@@ -123,7 +123,7 @@ fn inform_referrer(
                 token: Cryptocurrency::CKBTC,
                 amount,
                 fee: Tokens::from_e8s(10),
-                from: CryptoAccount::Account(Account::from(PrincipalId(Principal::from(OPENCHAT_BOT_USER_ID).into()))),
+                from: CryptoAccount::Account(Account::from(PrincipalId(Principal::from(OPENCHAT_BOT_USER_ID)))),
                 to: CryptoAccount::Account(Account::from(PrincipalId(Principal::from(user_id)))),
                 memo: None,
                 created: pending_payment.timestamp,
