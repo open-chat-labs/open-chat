@@ -90,7 +90,7 @@
                     <ArchitecturePage />
                 {/await}
             {:else if miami}
-                {#await import("./Miami.svelte")}
+                {#await import("./miami/Miami.svelte")}
                     <div class="loading">
                         <Loading />
                     </div>

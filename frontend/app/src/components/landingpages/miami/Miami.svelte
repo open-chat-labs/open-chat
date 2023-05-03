@@ -1,6 +1,8 @@
 <script lang="ts">
     import { OPENCHAT_BOT_USER_ID } from "openchat-client";
-    import Launch from "./Launch.svelte";
+    import Launch from "../Launch.svelte";
+    import CollapsibleCard from "./CollapsibleCard.svelte";
+    import Card from "./Card.svelte";
 </script>
 
 <div class="miami">
@@ -21,8 +23,10 @@
                 <div class="sub-three">& Send BTC at the speed of chat!</div>
             </div>
 
-            <img src="../assets/ckbtc_nobackground.svg" alt="ckBTC logo" class="ckbtc" />
-            <img src="../assets/ckbtc_nobackground.svg" alt="ckBTC logo" class="ckbtc fuzzy" />
+            <img src="../assets/ckbtc_nobackground.svg" alt="ckBTC logo" class="ckbtc one" />
+            <img src="../assets/ckbtc_nobackground.svg" alt="ckBTC logo" class="ckbtc two" />
+            <img src="../assets/ckbtc_nobackground.svg" alt="ckBTC logo" class="ckbtc three" />
+            <img src="../assets/ckbtc_nobackground.svg" alt="ckBTC logo" class="ckbtc four" />
 
             <div class="launch-wrapper">
                 <Launch text="Let's go!" rootPath={`/${OPENCHAT_BOT_USER_ID}`} on:login />
@@ -30,49 +34,41 @@
         </div>
 
         <div class="info">
-            <div class="details">
-                <section>
-                    <h5 class="sub-title">What to expect</h5>
-                    <div class="list">
-                        <div class="num">1</div>
-                        <div class="blurb">Create an OpenChat account.</div>
-                        <div class="num">2</div>
-                        <div class="blurb">
-                            In a matter of seconds your sats will arrive in your OpenChat wallet as
-                            ckBTC.
-                        </div>
-                        <div class="num">3</div>
-                        <div class="blurb">Send your sats at the speed of chat 🚀</div>
-                    </div>
-                </section>
-                <section>
-                    <h5 class="sub-title">How does it work?</h5>
-                    <p>
-                        You will receive your 50,000 sats deposited in your OpenChat wallet as
-                        ckBTC.
-                    </p>
-                </section>
-                <section>
-                    <h5 class="sub-title">What is OpenChat?</h5>
-                    <p>
-                        OpenChat is the world’s first decentralized chat service running 100%
-                        on-chain and governed by a DAO.
-                    </p>
-                    <p>
-                        OpenChat also doubles as a crypto wallet enabling you to send crypto to your
-                        friends with a simple chat message. You can also send your sats to any
-                        external Bitcoin address anytime!
-                    </p>
-                </section>
-                <section>
-                    <h5 class="sub-title">What is ckBTC?</h5>
-                    <p>
-                        ckBTC is “Bitcoin twin” on the Internet Computer blockchain that is backed
-                        1:1 by Bitcoin held 100% on-chain. It offers fast, low fees and fully
-                        on-chain transactions for Bitcoin on the ICP blockchain.
-                    </p>
-                </section>
-            </div>
+            <section>
+                <h5 class="sub-title">Claiming your sats is simple</h5>
+                <p>Follow these 3 steps</p>
+            </section>
+            <section class="cards">
+                <Card num={1} text={"Create an OpenChat account."} />
+                <Card
+                    num={2}
+                    text={"In a matter of seconds your sats will arrive in your OpenChat wallet as ckBTC."} />
+                <Card num={3} text={"Send your sats at the speed of chat 🚀"} />
+            </section>
+            <section>
+                <h5 class="sub-title">More details</h5>
+            </section>
+            <CollapsibleCard title={"How does it work?"}>
+                <p>You will receive your 50,000 sats deposited in your OpenChat wallet as ckBTC.</p>
+            </CollapsibleCard>
+            <CollapsibleCard title={"What is OpenChat?"}>
+                <p>
+                    OpenChat is the world’s first decentralized chat service running 100% on-chain
+                    and governed by a DAO.
+                </p>
+                <p>
+                    OpenChat also doubles as a crypto wallet enabling you to send crypto to your
+                    friends with a simple chat message. You can also send your sats to any external
+                    Bitcoin address anytime!
+                </p>
+            </CollapsibleCard>
+            <CollapsibleCard title={"What is ckBTC?"}>
+                <p>
+                    ckBTC is “Bitcoin twin” on the Internet Computer blockchain that is backed 1:1
+                    by Bitcoin held 100% on-chain. It offers fast, low fees and fully on-chain
+                    transactions for Bitcoin on the ICP blockchain.
+                </p>
+            </CollapsibleCard>
         </div>
     </div>
 </div>
@@ -83,11 +79,16 @@
         background-color: #1b1c21 !important;
     }
 
+    .miami {
+        overflow: hidden;
+    }
+
     .layout {
         $gutter: toRem(80);
 
+        overflow: hidden;
         display: grid;
-        grid-template-columns: 5fr 5fr;
+        grid-template-columns: 8fr 12fr;
         grid-template-areas: "main info";
         gap: $gutter;
         margin-top: $gutter;
@@ -112,6 +113,7 @@
         }
 
         .main {
+            overflow: hidden;
             background-color: #4e27c7;
             background: rgb(243, 143, 40);
             background: linear-gradient(
@@ -133,31 +135,42 @@
 
                 .sub-one {
                     @include font(medium, normal, fs-100, 22);
+                    margin-bottom: $sp4;
                 }
                 .sub-two {
                     @include font(bold, normal, fs-240, 68);
+                    margin-bottom: $sp4;
                 }
                 .sub-three {
                     @include font(medium, normal, fs-180, 38);
                 }
             }
-            .ckbtc {
-                width: 130px;
-                height: 130px;
-                opacity: 0.3;
+            @mixin ckbtclogo($size, $opacity, $top, $left, $bottom, $right, $filter) {
+                width: $size;
+                height: $size;
+                opacity: $opacity;
+                top: $top;
+                left: $left;
+                bottom: $bottom;
+                right: $right;
+                filter: $filter;
                 position: absolute;
-                right: toRem(30);
-                top: toRem(120);
+            }
+            .ckbtc {
+                &.one {
+                    @include ckbtclogo(130px, 0.3, 25%, unset, unset, 10%, none);
+                }
 
-                &.fuzzy {
-                    width: 80px;
-                    height: 80px;
-                    opacity: 0.3;
-                    left: toRem(-15);
-                    bottom: toRem(70);
-                    filter: blur(2px);
-                    top: unset;
-                    right: unset;
+                &.two {
+                    @include ckbtclogo(80px, 0.3, unset, -10%, 15%, unset, blur(3px));
+                }
+
+                &.three {
+                    @include ckbtclogo(60px, 0.3, 25%, unset, unset, 45%, blur(3px));
+                }
+
+                &.four {
+                    @include ckbtclogo(80px, 0.3, unset, unset, 25%, -10%, blur(3px));
                 }
             }
             .logos {
@@ -202,34 +215,33 @@
         .info {
             grid-area: info;
 
-            .details {
-                color: var(--txt-light);
-                @include font(book, normal, fs-100, 28);
+            color: var(--txt-light);
+            @include font(book, normal, fs-100, 28);
+            overflow: hidden;
 
-                section {
-                    margin-bottom: $sp5;
-                }
+            section {
+                margin-bottom: $sp5;
+                padding: 0 toRem(24);
 
-                .sub-title {
-                    @include font(bold, normal, fs-130, 29);
-                    color: var(--txt);
-                    margin-bottom: $sp3;
-                }
-
-                .list {
-                    display: grid;
-                    grid-template-columns: auto auto;
-                    align-items: start;
-                    column-gap: $sp3;
-
-                    .num {
-                        color: var(--txt);
-                    }
+                &.cards {
+                    padding: 0 0 0 toRem(24);
                 }
             }
 
+            .sub-title {
+                @include font(bold, normal, fs-130, 29);
+                color: var(--txt);
+                margin-bottom: $sp3;
+            }
+
+            .cards {
+                display: flex;
+                gap: $sp4;
+                overflow: auto;
+            }
+
             @include mobile() {
-                padding: 0 toRem(24);
+                // padding: 0 toRem(24);
             }
         }
     }

@@ -23,7 +23,9 @@
 
 {#if transferText !== undefined}
     <div class="message">
-        <div class={`logo ${symbol.toLowerCase()}`} />
+        <div class="logo-wrapper">
+            <div class={`logo ${symbol.toLowerCase()}`} />
+        </div>
         <div class="details">
             <div class="transfer-txt">{transferText}</div>
             <div class="links">
@@ -72,7 +74,7 @@
         width: $size;
         height: $size;
         background-size: contain;
-        border-radius: 50%;
+        // border-radius: 50%;
         background-repeat: no-repeat;
         background-position: top;
 
