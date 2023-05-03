@@ -51,6 +51,14 @@
 <main class:miami class="main">
     {#if $location.startsWith("/features")}
         <FeaturesPage />
+    {:else if miami}
+        {#await import("./miami/Miami.svelte")}
+            <div class="loading">
+                <Loading />
+            </div>
+        {:then { default: Miami }}
+            <Miami on:login={() => client.login()} />
+        {/await}
     {:else}
         <Content>
             {#if $location.startsWith("/blog")}
@@ -88,14 +96,6 @@
                     </div>
                 {:then { default: ArchitecturePage }}
                     <ArchitecturePage />
-                {/await}
-            {:else if miami}
-                {#await import("./miami/Miami.svelte")}
-                    <div class="loading">
-                        <Loading />
-                    </div>
-                {:then { default: Miami }}
-                    <Miami on:login={() => client.login()} />
                 {/await}
             {:else if $location.startsWith("/guidelines")}
                 {#await import("./GuidelinesPage.svelte")}

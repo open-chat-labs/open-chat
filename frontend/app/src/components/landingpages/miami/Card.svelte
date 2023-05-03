@@ -11,14 +11,19 @@
 <style type="text/scss">
     .card {
         $ckbtc: #4e27c7;
-        padding: $sp4;
-        flex: 0 0 250px;
-        height: 180px;
+        padding: $sp4 $sp7 $sp4 $sp4;
+        flex: 1;
+        height: 200px;
         display: inline-block;
         color: var(--txt);
         background-color: var(--input-bg);
         border-radius: $sp2;
         border-top: 2px solid $ckbtc;
+
+        @include mobile() {
+            flex: 0 0 250px;
+            padding: $sp4;
+        }
 
         .num {
             width: 30px;

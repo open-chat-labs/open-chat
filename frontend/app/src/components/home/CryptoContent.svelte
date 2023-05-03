@@ -103,7 +103,6 @@
     }
 
     .transfer-txt {
-        @include font-size(fs-110);
         margin-bottom: $sp2;
     }
 </style>

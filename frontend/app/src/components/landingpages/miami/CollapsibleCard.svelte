@@ -32,7 +32,7 @@
 <style type="text/scss">
     $ckbtc: #4e27c7;
     .card {
-        margin: 0 toRem(24) toRem(16) toRem(24);
+        margin-bottom: $sp5;
     }
     .header {
         padding: 8px 16px;

@@ -3,70 +3,88 @@
     import Launch from "../Launch.svelte";
     import CollapsibleCard from "./CollapsibleCard.svelte";
     import Card from "./Card.svelte";
+    import PoweredBy from "./PoweredBy.svelte";
+    import Content from "../Content.svelte";
 </script>
 
 <div class="miami">
     <div class="layout">
         <div class="main">
-            <div class="logos">
-                <div class="bitcoin" />
-                <div class="plus">+</div>
-                <div class="dfinity" />
-                <div class="text">
-                    <div class="faucet">Bitcoin faucet powered by</div>
-                    <div class="ic">internet computer</div>
+            <Content>
+                <div class="content">
+                    <div class="container">
+                        <PoweredBy />
+                        <div class="headlines">
+                            <div class="sub-one">Claim your</div>
+                            <div class="sub-two">50,000 Sats</div>
+                            <div class="sub-three">& Send BTC at the speed of chat!</div>
+                        </div>
+                        <img
+                            src="../assets/ckbtc_nobackground.svg"
+                            alt="ckBTC logo"
+                            class="ckbtc one" />
+                        <img
+                            src="../assets/ckbtc_nobackground.svg"
+                            alt="ckBTC logo"
+                            class="ckbtc two" />
+                        <img
+                            src="../assets/ckbtc_nobackground.svg"
+                            alt="ckBTC logo"
+                            class="ckbtc three" />
+                        <img
+                            src="../assets/ckbtc_nobackground.svg"
+                            alt="ckBTC logo"
+                            class="ckbtc four" />
+                        <div class="launch-wrapper">
+                            <Launch
+                                text="Let's go!"
+                                rootPath={`/${OPENCHAT_BOT_USER_ID}`}
+                                on:login />
+                        </div>
+                    </div>
                 </div>
-            </div>
-            <div class="headlines">
-                <div class="sub-one">Claim your</div>
-                <div class="sub-two">50,000 Sats</div>
-                <div class="sub-three">& Send BTC at the speed of chat!</div>
-            </div>
-
-            <img src="../assets/ckbtc_nobackground.svg" alt="ckBTC logo" class="ckbtc one" />
-            <img src="../assets/ckbtc_nobackground.svg" alt="ckBTC logo" class="ckbtc two" />
-            <img src="../assets/ckbtc_nobackground.svg" alt="ckBTC logo" class="ckbtc three" />
-            <img src="../assets/ckbtc_nobackground.svg" alt="ckBTC logo" class="ckbtc four" />
-
-            <div class="launch-wrapper">
-                <Launch text="Let's go!" rootPath={`/${OPENCHAT_BOT_USER_ID}`} on:login />
-            </div>
+            </Content>
         </div>
 
-        <div class="info">
-            <section>
-                <h5 class="sub-title">Claiming your sats is simple</h5>
-                <p>Follow these 3 steps</p>
-            </section>
-            <section class="cards">
-                <Card num={1} text={"Create an OpenChat account."} />
-                <Card
-                    num={2}
-                    text={"In a matter of seconds your sats will arrive in your OpenChat wallet as ckBTC."} />
-                <Card num={3} text={"Send your sats at the speed of chat 🚀"} />
-            </section>
-            <CollapsibleCard title={"How does it work?"}>
-                <p>You will receive your 50,000 sats deposited in your OpenChat wallet as ckBTC.</p>
-            </CollapsibleCard>
-            <CollapsibleCard title={"What is OpenChat?"}>
-                <p>
-                    OpenChat is the world’s first decentralized chat service running 100% on-chain
-                    and governed by a DAO.
-                </p>
-                <p>
-                    OpenChat also doubles as a crypto wallet enabling you to send crypto to your
-                    friends with a simple chat message. You can also send your sats to any external
-                    Bitcoin address anytime!
-                </p>
-            </CollapsibleCard>
-            <CollapsibleCard title={"What is ckBTC?"}>
-                <p>
-                    ckBTC is “Bitcoin twin” on the Internet Computer blockchain that is backed 1:1
-                    by Bitcoin held 100% on-chain. It offers fast, low fees and fully on-chain
-                    transactions for Bitcoin on the ICP blockchain.
-                </p>
-            </CollapsibleCard>
-        </div>
+        <Content>
+            <div class="info">
+                <section>
+                    <h5 class="sub-title">Claiming your sats is simple</h5>
+                    <p>Follow these 3 steps</p>
+                </section>
+                <section class="cards">
+                    <Card num={1} text={"Create an OpenChat account."} />
+                    <Card
+                        num={2}
+                        text={"In a matter of seconds your sats will arrive in your OpenChat wallet as ckBTC."} />
+                    <Card num={3} text={"Send your sats at the speed of chat 🚀"} />
+                </section>
+                <CollapsibleCard title={"How does it work?"}>
+                    <p>
+                        You will receive your 50,000 sats deposited in your OpenChat wallet as
+                        ckBTC.
+                    </p>
+                </CollapsibleCard>
+                <CollapsibleCard title={"What is OpenChat?"}>
+                    <p>
+                        OpenChat is the world’s first decentralized chat service running 100%
+                        on-chain and governed by a DAO.
+                    </p>
+                    <p>
+                        OpenChat also doubles as a crypto wallet enabling you to send crypto to your
+                        friends with a simple chat message. You can also send your sats to any
+                        external Bitcoin address anytime!
+                    </p>
+                </CollapsibleCard>
+                <CollapsibleCard title={"What is ckBTC?"}>
+                    <p>
+                        ckBTC is “Bitcoin twin” on the Internet Computer blockchain that is backed
+                        1:1 by Bitcoin held 100% on-chain. It offers fast, low fees and fully
+                        on-chain transactions for Bitcoin on the ICP blockchain.
+                    </p>
+                </CollapsibleCard>
+            </div>
+        </Content>
     </div>
 </div>
 
@@ -81,32 +99,15 @@
     }
 
     .layout {
-        $gutter: toRem(80);
-
         overflow: hidden;
-        display: grid;
-        grid-template-columns: 8fr 12fr;
-        grid-template-areas: "main info";
-        gap: $gutter;
-        margin-top: $gutter;
+        margin: 0;
 
-        @include size-below-n(1440px) {
-            margin-left: $gutter;
-            margin-right: $gutter;
+        .content {
+            @include lp-content-padding(220, 0);
         }
 
-        @include size-below(lg) {
-            margin-left: toRem(40);
-            margin-right: toRem(40);
-            gap: toRem(40);
-        }
-
-        @include mobile() {
-            margin: 0;
-            grid-template-columns: 1fr;
-            grid-template-areas:
-                "main"
-                "info";
+        .container {
+            position: relative;
         }
 
         .main {
@@ -115,14 +116,13 @@
             background: rgb(243, 143, 40);
             background: linear-gradient(
                 32deg,
-                rgba(243, 143, 40, 1) 0%,
+                rgba(228, 30, 152, 1) 0%,
                 rgba(127, 99, 182, 1) 23%,
                 rgba(56, 72, 223, 1) 50%,
                 rgba(127, 99, 182, 1) 82%,
-                rgba(228, 30, 152, 1) 100%
+                rgba(243, 143, 40, 1) 100%
             );
-            grid-area: main;
-            position: relative;
+
             padding: toRem(40) $sp4;
             .headlines {
                 margin-top: toRem(80);
@@ -140,6 +140,11 @@
                 }
                 .sub-three {
                     @include font(medium, normal, fs-180, 38);
+                    max-width: 350px;
+
+                    @include mobile() {
+                        max-width: unset;
+                    }
                 }
             }
             @mixin ckbtclogo($size, $opacity, $top, $left, $bottom, $right, $filter) {
@@ -159,42 +164,25 @@
                 }
 
                 &.two {
-                    @include ckbtclogo(80px, 0.3, unset, -10%, 15%, unset, blur(3px));
+                    @include ckbtclogo(80px, 0.3, unset, 38%, 15%, unset, blur(3px));
                 }
 
                 &.three {
-                    @include ckbtclogo(60px, 0.3, 25%, unset, unset, 45%, blur(3px));
+                    @include ckbtclogo(60px, 0.3, 25%, unset, unset, 24%, blur(3px));
                 }
 
                 &.four {
-                    @include ckbtclogo(80px, 0.3, unset, unset, 25%, -10%, blur(3px));
+                    @include ckbtclogo(80px, 0.3, unset, unset, 15%, 0%, blur(3px));
                 }
-            }
-            .logos {
-                display: flex;
-                align-items: center;
-                gap: $sp3;
 
-                .bitcoin {
-                    width: 28px;
-                    height: 28px;
-                    background-image: url("../assets/bitcoin_token.png");
-                    background-repeat: no-repeat;
-                    background-size: contain;
-                }
-                .dfinity {
-                    width: 51px;
-                    height: 24px;
-                    background-image: url("../assets/dfinity_logo.svg");
-                    background-repeat: no-repeat;
-                    background-size: contain;
-                }
-                .faucet {
-                    @include font(medium, normal, fs-50, 14);
-                }
-                .ic {
-                    text-transform: uppercase;
-                    @include font(bold, normal, fs-80, 14);
+                @include mobile() {
+                    &.two {
+                        @include ckbtclogo(80px, 0.3, unset, -15%, 4%, unset, blur(3px));
+                    }
+
+                    &.three {
+                        @include ckbtclogo(60px, 0.3, 18%, unset, unset, 41%, blur(3px));
+                    }
                 }
             }
             .launch-wrapper {
@@ -210,19 +198,16 @@
         }
 
         .info {
-            grid-area: info;
-
             color: var(--txt-light);
             @include font(book, normal, fs-100, 28);
             overflow: hidden;
 
+            @include lp-content-padding(220, 24);
+
+            padding-top: toRem(40) !important;
+
             section {
                 margin-bottom: $sp5;
-                padding: 0 toRem(24);
-
-                &.cards {
-                    padding: 0 0 0 toRem(24);
-                }
             }
 
             p {
@@ -237,12 +222,12 @@
 
             .cards {
                 display: flex;
-                gap: $sp4;
+                gap: $sp5;
                 overflow: auto;
-            }
 
-            @include mobile() {
-                // padding: 0 toRem(24);
+                @include mobile() {
+                    gap: $sp4;
+                }
             }
         }
     }
