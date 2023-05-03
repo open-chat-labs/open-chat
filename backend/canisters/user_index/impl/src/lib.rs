@@ -222,8 +222,6 @@ struct Data {
     pub timer_jobs: TimerJobs<TimerJob>,
     pub neuron_controllers_for_initial_airdrop: HashMap<UserId, Principal>,
     pub internet_identity_canister_id: CanisterId,
-    #[serde(skip_deserializing)]
-    pub next_user_upgrade_started: bool,
     pub referral_codes: ReferralCodes,
     pub user_referral_leaderboards: UserReferralLeaderboards,
     pub platform_moderators_group: Option<ChatId>,
@@ -268,7 +266,6 @@ impl Data {
             timer_jobs: TimerJobs::default(),
             neuron_controllers_for_initial_airdrop: HashMap::new(),
             internet_identity_canister_id,
-            next_user_upgrade_started: true, // for a new setup everything is on latest
             referral_codes: ReferralCodes::default(),
             user_referral_leaderboards: UserReferralLeaderboards::default(),
             platform_moderators_group: None,
@@ -317,7 +314,6 @@ impl Default for Data {
             timer_jobs: TimerJobs::default(),
             neuron_controllers_for_initial_airdrop: HashMap::new(),
             internet_identity_canister_id: Principal::anonymous(),
-            next_user_upgrade_started: false,
             referral_codes: ReferralCodes::default(),
             user_referral_leaderboards: UserReferralLeaderboards::default(),
             platform_moderators_group: None,

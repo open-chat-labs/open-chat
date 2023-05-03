@@ -119,9 +119,13 @@ fn prepare(args: &Args, runtime_state: &mut RuntimeState) -> Result<PrepareOk, R
 
     if let Some(local_user_index_canister) = runtime_state.data.local_index_map.index_for_new_user() {
         let user_wasm_version = runtime_state.data.user_canister_wasm.version;
-        let openchat_bot_messages = if referral_code.as_ref().filter(|c| matches!(c, ReferralCode::BtcMiami(_))).is_some() {
+        let openchat_bot_messages = if referral_code
+            .as_ref()
+            .filter(|c| matches!(c, ReferralCode::BtcMiami(_)))
+            .is_some()
+        {
             vec![MessageContent::Text(TextContent {
-                text: "Congratulations!! Your sats are on their way....".to_string()
+                text: "Congratulations!! Your sats are on their way....".to_string(),
             })]
         } else {
             welcome_messages()
