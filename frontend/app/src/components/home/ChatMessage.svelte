@@ -466,7 +466,6 @@
                         messageId={msg.messageId}
                         {readonly}
                         {chatId}
-                        {groupChat}
                         on:goToMessageIndex
                         repliesTo={msg.repliesTo} />
                 {:else}
