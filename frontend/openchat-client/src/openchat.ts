@@ -1476,7 +1476,13 @@ export class OpenChat extends EventTarget {
 
         this.addServerEventsToStores(chat.chatId, resp.events, undefined);
 
-        makeRtcConnections(this.user.userId, chat, resp.events, this._liveState.userStore);
+        makeRtcConnections(
+            this.user.userId,
+            chat,
+            resp.events,
+            this._liveState.userStore,
+            this.config.meteredApiKey
+        );
     }
 
     private async updateUserStore(
@@ -1699,7 +1705,8 @@ export class OpenChat extends EventTarget {
                 this.user.userId,
                 chat,
                 this._liveState.threadEvents,
-                this._liveState.userStore
+                this._liveState.userStore,
+                this.config.meteredApiKey
             );
 
             const isFollowedByMe =
