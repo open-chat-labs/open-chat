@@ -117,7 +117,8 @@ export function makeRtcConnections(
     myUserId: string,
     chat: ChatSummary,
     events: EventWrapper<ChatEvent>[],
-    lookup: UserLookup
+    lookup: UserLookup,
+    meteredApiKey: string
 ): void {
     const userIds = getUsersToMakeRtcConnectionsWith(myUserId, chat, events);
     if (userIds.length === 0) return;
@@ -127,7 +128,7 @@ export function makeRtcConnections(
         .filter((user) => user.kind === "user" && !rtcConnectionsManager.exists(user.userId))
         .map((user) => user.userId)
         .forEach((userId) => {
-            rtcConnectionsManager.create(myUserId, userId);
+            rtcConnectionsManager.create(myUserId, userId, meteredApiKey);
         });
 }
 
@@ -841,9 +842,11 @@ export function canPinMessages(chat: ChatSummary): boolean {
 }
 
 export function canInviteUsers(chat: ChatSummary): boolean {
-    return chat.kind === "group_chat" 
-        && !chat.frozen 
-        && (chat.public || isPermitted(chat.myRole, chat.permissions.inviteUsers));
+    return (
+        chat.kind === "group_chat" &&
+        !chat.frozen &&
+        (chat.public || isPermitted(chat.myRole, chat.permissions.inviteUsers))
+    );
 }
 
 export function canCreatePolls(chat: ChatSummary): boolean {
