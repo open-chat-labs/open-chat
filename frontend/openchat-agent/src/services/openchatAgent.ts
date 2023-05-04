@@ -337,10 +337,7 @@ export class OpenChatAgent extends EventTarget {
         );
     }
 
-    async inviteUsers(
-        chatId: string,
-        userIds: string[],
-    ): Promise<InviteUsersResponse> {
+    async inviteUsers(chatId: string, userIds: string[]): Promise<InviteUsersResponse> {
         if (!userIds.length) {
             return Promise.resolve<InviteUsersResponse>("success");
         }
@@ -610,21 +607,15 @@ export class OpenChatAgent extends EventTarget {
             events,
             threadRootMessageIndex
         ).asyncMap((key, ctx, idxs) => {
-            if (ctx.chatId === currentChatId && chatType === "direct_chat") {
+            // Note that the latestClientEventIndex relates to the *currentChat*, not necessarily the chat for this messageContext
+            // So only include it if the context matches the current chat
+            // And yes - this is probably trying to tell us something
+            const latestIndex = ctx.chatId === currentChatId ? latestClientEventIndex : undefined;
+            if (chatType === "direct_chat") {
                 return this.userClient
-                    .chatEventsByIndex(
-                        idxs,
-                        currentChatId,
-                        ctx.threadRootMessageIndex,
-                        latestClientEventIndex
-                    )
+                    .chatEventsByIndex(idxs, ctx.chatId, ctx.threadRootMessageIndex, latestIndex)
                     .then((resp) => this.messagesFromEventsResponse(key, resp));
             } else {
-                // Note that the latestClientEventIndex relates to the *currentChat*, not necessarily the chat for this messageContext
-                // So only include it if the context matches the current chat
-                // And yes - this is probably trying to tell us something
-                const latestIndex =
-                    ctx.chatId === currentChatId ? latestClientEventIndex : undefined;
                 const client = this.getGroupClient(ctx.chatId);
                 return client
                     .chatEventsByIndex(idxs, ctx.threadRootMessageIndex, latestIndex)
