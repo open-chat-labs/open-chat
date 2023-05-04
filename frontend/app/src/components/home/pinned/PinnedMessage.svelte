@@ -88,12 +88,7 @@
         {/if}
         {#if msg.repliesTo !== undefined && !deleted}
             {#if msg.repliesTo.kind === "rehydrated_reply_context"}
-                <RepliesTo
-                    messageId={msg.messageId}
-                    readonly
-                    {chatId}
-                    groupChat
-                    repliesTo={msg.repliesTo} />
+                <RepliesTo messageId={msg.messageId} readonly {chatId} repliesTo={msg.repliesTo} />
             {:else}
                 <UnresolvedReply />
             {/if}
@@ -108,8 +103,6 @@
             edited={msg.edited}
             messageIndex={msg.messageIndex}
             messageId={msg.messageId}
-            first
-            groupChat
             {me}
             myUserId={user.userId}
             content={msg.content} />

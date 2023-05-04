@@ -430,7 +430,6 @@
         "message": "Messaggio",
         "messagePlaceholder": "Includi un messaggio facoltativo",
         "unexpected": "È stato ricevuto un tipo di trasferimento crittografico imprevisto",
-        "viewTransaction": "[Visualizza transazione]({url})",
         "confirm": "Confermare",
         "transfer": "Trasferimento {token}",
         "makeDeposit": "Si prega di effettuare un deposito sul conto sopra e aggiornare il saldo.",
@@ -450,7 +449,8 @@
         "chat": "ApriChat",
         "sns1": "SNS-1",
         "max": "Massimo",
-        "ckbtc": "ckBitcoin"
+        "ckbtc": "ckBitcoin",
+        "viewTransaction": "[Transazione]({url})"
     },
     "cryptoAccount": {
         "manage": "Gestire",
@@ -808,5 +808,6 @@
         "gameover": "Game Over!"
     },
     "privateGroupInfo": "Questo gruppo sarà limitato alle persone che inviti.",
-    "invited": "Invitato"
+    "invited": "Invitato",
+    "tapForReferralLink": "Tocca per copiare il tuo link di riferimento personale"
 }
