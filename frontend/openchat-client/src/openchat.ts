@@ -690,7 +690,7 @@ export class OpenChat extends EventTarget {
     }
 
     private initWebRtc(): void {
-        rtcConnectionsManager.init(this.user.userId).then((_) => {
+        rtcConnectionsManager.init(this.user.userId, this.config.meteredApiKey).then((_) => {
             rtcConnectionsManager.subscribe((msg) =>
                 this.handleWebRtcMessage(msg as WebRtcMessage)
             );
@@ -1565,7 +1565,7 @@ export class OpenChat extends EventTarget {
             })
             .catch((err) => {
                 this._logger.error("Error blocking user", err);
-                    this.blockUserLocally(chatId, userId);
+                this.blockUserLocally(chatId, userId);
                 return false;
             });
     }
