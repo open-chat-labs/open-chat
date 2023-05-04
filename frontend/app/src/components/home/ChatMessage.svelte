@@ -415,7 +415,6 @@
                 : undefined}
             on:dblclick={doubleClickMessage}
             class="message-bubble"
-            class:bot-font={isBot && !isProposal}
             class:focused
             class:editing
             class:fill={fill && !inert}
@@ -467,7 +466,6 @@
                         messageId={msg.messageId}
                         {readonly}
                         {chatId}
-                        {groupChat}
                         on:goToMessageIndex
                         repliesTo={msg.repliesTo} />
                 {:else}
@@ -480,11 +478,9 @@
                 {readonly}
                 {fill}
                 {me}
-                {groupChat}
                 {chatId}
                 {collapsed}
                 {undeleting}
-                first
                 messageIndex={msg.messageIndex}
                 messageId={msg.messageId}
                 myUserId={user.userId}
@@ -803,10 +799,6 @@
             color: var(--currentChat-msg-me-txt);
         }
 
-        &.crypto {
-            @include gold();
-        }
-
         &.rtl {
             &.last:not(.first) {
                 border-radius: $radius $inner-radius $radius $radius;
@@ -842,10 +834,6 @@
 
         &.collapsed {
             cursor: pointer;
-        }
-
-        &.bot-font {
-            font-family: courier;
         }
 
         &:after {
