@@ -432,7 +432,6 @@
         "message": "Nachricht",
         "messagePlaceholder": "Fügen Sie eine optionale Nachricht hinzu",
         "unexpected": "Ein unerwarteter Kryptoübertragungstyp wurde empfangen",
-        "viewTransaction": "[Transaktion anzeigen]({url})",
         "confirm": "Bestätigen Sie",
         "transfer": "{token}-Übertragung",
         "makeDeposit": "Bitte tätigen Sie eine Einzahlung auf das obige Konto und aktualisieren Sie Ihr Guthaben.",
@@ -452,7 +451,8 @@
         "chat": "Chat öffnen",
         "sns1": "SNS-1",
         "max": "max",
-        "ckbtc": "ckBitcoin"
+        "ckbtc": "ckBitcoin",
+        "viewTransaction": "[Transaktion]({url})"
     },
     "cryptoAccount": {
         "manage": "Verwalten",
@@ -810,5 +810,6 @@
         "gameover": "Spiel ist aus!"
     },
     "privateGroupInfo": "Diese Gruppe ist auf die Personen beschränkt, die Sie einladen.",
-    "invited": "Eingeladen"
+    "invited": "Eingeladen",
+    "tapForReferralLink": "Tippen Sie hier, um Ihren persönlichen Empfehlungslink zu kopieren"
 }

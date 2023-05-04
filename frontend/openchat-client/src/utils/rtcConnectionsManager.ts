@@ -26,11 +26,23 @@ export class RtcConnectionsManager {
         });
     }
 
-    public init(me: string): Promise<Peer> {
+    private getIceServers(meteredApiKey: string) {
+        return fetch(
+            `https://openchat.metered.live/api/v1/turn/credentials?apiKey=${meteredApiKey}`
+        ).then((resp) => resp.json());
+    }
+
+    public async init(me: string, meteredApiKey: string): Promise<Peer> {
         if (this._peer) return Promise.resolve(this._peer);
 
+        const iceServers = await this.getIceServers(meteredApiKey);
+
         return new Promise((resolve) => {
-            this._peer = new Peer(me);
+            this._peer = new Peer(me, {
+                config: {
+                    iceServers,
+                },
+            });
 
             this._peer.on("open", (_id) => {
                 if (this._peer) {
@@ -73,8 +85,8 @@ export class RtcConnectionsManager {
         return this.connections.has(user);
     }
 
-    public create(me: string, them: string): void {
-        this.init(me).then((peer) => {
+    public create(me: string, them: string, meteredApiKey: string): void {
+        this.init(me, meteredApiKey).then((peer) => {
             this.cacheConnection(
                 me,
                 them,
