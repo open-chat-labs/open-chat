@@ -430,7 +430,6 @@
         "message": "Un message",
         "messagePlaceholder": "Inclure un message facultatif",
         "unexpected": "Un type de transfert crypto inattendu a été reçu",
-        "viewTransaction": "[Voir la transaction]({url})",
         "confirm": "Confirmer",
         "transfer": "Transfert {token}",
         "makeDeposit": "Veuillez effectuer un dépôt sur le compte ci-dessus et actualiser votre solde.",
@@ -450,7 +449,8 @@
         "chat": "OpenChat",
         "sns1": "SNS-1",
         "max": "Max",
-        "ckbtc": "ckBitcoin"
+        "ckbtc": "ckBitcoin",
+        "viewTransaction": "[Transaction]({url})"
     },
     "cryptoAccount": {
         "manage": "Faire en sorte",
@@ -808,5 +808,6 @@
         "gameover": "Jeu terminé!"
     },
     "privateGroupInfo": "Ce groupe sera limité aux personnes que vous invitez.",
-    "invited": "Invité"
+    "invited": "Invité",
+    "tapForReferralLink": "Appuyez pour copier votre lien de parrainage personnel"
 }

@@ -43,6 +43,18 @@
         balance: $cryptoBalance[t],
         disabled: cryptoLookup[t].disabled,
     }));
+
+    $: {
+        crypto.sort((a, b) => {
+            if (a.balance < b.balance) {
+                return 1;
+            } else if (a.balance > b.balance) {
+                return -1;
+            } else {
+                return 0;
+            }
+        });
+    }
 </script>
 
 {#if manageMode !== "none" && selectedCryptoAccount !== undefined}
@@ -105,7 +117,7 @@
         display: grid;
         grid-template-columns: 35px 1fr 1fr auto;
         align-items: center;
-        row-gap: $sp3;
+        row-gap: toRem(10);
         margin-bottom: $sp4;
 
         .token-header,
@@ -147,13 +159,13 @@
             background-repeat: no-repeat;
             background-position: top;
             &.icp {
-                background-image: url("../assets/icp_token.png");
+                background-image: url("../assets/icp_token.svg");
             }
             &.sns1 {
                 background-image: url("../assets/sns1_token.png");
             }
             &.ckbtc {
-                background-image: url("../assets/bitcoin_token2.jpeg");
+                background-image: url("../assets/ckbtc_nobackground.svg");
             }
             &.chat {
                 background-image: url("../assets/spinner.svg");
