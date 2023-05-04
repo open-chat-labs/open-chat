@@ -809,5 +809,6 @@
     },
     "privateGroupInfo": "Ce groupe sera limité aux personnes que vous invitez.",
     "invited": "Invité",
-    "tapForReferralLink": "Appuyez pour copier votre lien de parrainage personnel"
+    "tapForReferralLink": "Appuyez pour copier votre lien de parrainage personnel",
+    "deleteMessageForMe": "Supprimer pour moi"
 }

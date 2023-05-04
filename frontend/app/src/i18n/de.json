@@ -811,5 +811,6 @@
     },
     "privateGroupInfo": "Diese Gruppe ist auf die Personen beschränkt, die Sie einladen.",
     "invited": "Eingeladen",
-    "tapForReferralLink": "Tippen Sie hier, um Ihren persönlichen Empfehlungslink zu kopieren"
+    "tapForReferralLink": "Tippen Sie hier, um Ihren persönlichen Empfehlungslink zu kopieren",
+    "deleteMessageForMe": "Für mich löschen"
 }

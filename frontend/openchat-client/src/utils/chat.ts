@@ -821,7 +821,7 @@ export function canDeleteOtherUsersMessages(chat: ChatSummary): boolean {
     if (chat.kind === "group_chat" && !chat.frozen) {
         return isPermitted(chat.myRole, chat.permissions.deleteMessages);
     } else {
-        return false;
+        return true;
     }
 }
 

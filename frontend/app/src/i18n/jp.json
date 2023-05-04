@@ -810,5 +810,6 @@
     },
     "privateGroupInfo": "このグループは、あなたが招待した人に限定されます。",
     "invited": "招待された",
-    "tapForReferralLink": "タップして個人紹介リンクをコピーします"
+    "tapForReferralLink": "タップして個人紹介リンクをコピーします",
+    "deleteMessageForMe": "削除してください"
 }
