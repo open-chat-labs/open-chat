@@ -431,7 +431,6 @@
         "message": "Mensaje",
         "messagePlaceholder": "Incluir un mensaje opcional",
         "unexpected": "Se recibió un tipo de transferencia criptográfico inesperado",
-        "viewTransaction": "[Ver transacción]({url})",
         "confirm": "Confirmar",
         "transfer": "transferencia de {token}",
         "makeDeposit": "Realice un depósito en la cuenta anterior y actualice su saldo.",
@@ -451,7 +450,8 @@
         "chat": "Conversación abierta",
         "sns1": "SNS-1",
         "max": "máx.",
-        "ckbtc": "ckbitcoin"
+        "ckbtc": "ckbitcoin",
+        "viewTransaction": "[Transacción]({url})"
     },
     "cryptoAccount": {
         "manage": "Administrar",
@@ -810,5 +810,6 @@
         "gameover": "¡Juego terminado!"
     },
     "privateGroupInfo": "Este grupo estará limitado a las personas que invites.",
-    "invited": "Invitado"
+    "invited": "Invitado",
+    "tapForReferralLink": "Toque para copiar su enlace de referencia personal"
 }

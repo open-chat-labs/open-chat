@@ -430,7 +430,6 @@
         "message": "メッセージ",
         "messagePlaceholder": "オプションのメッセージを含める",
         "unexpected": "予期しない暗号転送タイプを受信しました",
-        "viewTransaction": "[トランザクションを表示]（{url}）",
         "confirm": "確認",
         "transfer": "{token}転送",
         "makeDeposit": "上記の口座に入金し、残高を更新してください。",
@@ -450,7 +449,8 @@
         "chat": "オープンチャット",
         "sns1": "SNS-1",
         "max": "最大",
-        "ckbtc": "ckビットコイン"
+        "ckbtc": "ckビットコイン",
+        "viewTransaction": "[取引]({url})"
     },
     "cryptoAccount": {
         "manage": "管理",
@@ -809,5 +809,6 @@
         "gameover": "ゲームオーバー！"
     },
     "privateGroupInfo": "このグループは、あなたが招待した人に限定されます。",
-    "invited": "招待された"
+    "invited": "招待された",
+    "tapForReferralLink": "タップして個人紹介リンクをコピーします"
 }

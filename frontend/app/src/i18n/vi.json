@@ -431,7 +431,6 @@
         "message": "Tin nhắn",
         "messagePlaceholder": "Bao gồm một tin nhắn tùy chọn",
         "unexpected": "Đã nhận được một loại chuyển tiền điện tử không mong muốn",
-        "viewTransaction": "[Xem giao dịch] ({url})",
         "confirm": "Xác nhận",
         "transfer": "Chuyển {token}",
         "makeDeposit": "Vui lòng gửi tiền vào tài khoản trên và làm mới số dư của bạn.",
@@ -451,7 +450,8 @@
         "chat": "trò chuyện mở",
         "sns1": "SNS-1",
         "max": "tối đa",
-        "ckbtc": "ckBitcoin"
+        "ckbtc": "ckBitcoin",
+        "viewTransaction": "[Giao dịch]({url})"
     },
     "cryptoAccount": {
         "manage": "Quản lý",
@@ -809,5 +809,6 @@
         "gameover": "Trò chơi kết thúc!"
     },
     "privateGroupInfo": "Nhóm này sẽ được giới hạn cho những người mà bạn mời.",
-    "invited": "Được mời"
+    "invited": "Được mời",
+    "tapForReferralLink": "Nhấn để sao chép liên kết giới thiệu cá nhân của bạn"
 }

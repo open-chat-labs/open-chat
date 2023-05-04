@@ -690,7 +690,7 @@ export class OpenChat extends EventTarget {
     }
 
     private initWebRtc(): void {
-        rtcConnectionsManager.init(this.user.userId).then((_) => {
+        rtcConnectionsManager.init(this.user.userId, this.config.meteredApiKey).then((_) => {
             rtcConnectionsManager.subscribe((msg) =>
                 this.handleWebRtcMessage(msg as WebRtcMessage)
             );
@@ -1476,7 +1476,13 @@ export class OpenChat extends EventTarget {
 
         this.addServerEventsToStores(chat.chatId, resp.events, undefined);
 
-        makeRtcConnections(this.user.userId, chat, resp.events, this._liveState.userStore);
+        makeRtcConnections(
+            this.user.userId,
+            chat,
+            resp.events,
+            this._liveState.userStore,
+            this.config.meteredApiKey
+        );
     }
 
     private async updateUserStore(
@@ -1565,7 +1571,7 @@ export class OpenChat extends EventTarget {
             })
             .catch((err) => {
                 this._logger.error("Error blocking user", err);
-                    this.blockUserLocally(chatId, userId);
+                this.blockUserLocally(chatId, userId);
                 return false;
             });
     }
@@ -1699,7 +1705,8 @@ export class OpenChat extends EventTarget {
                 this.user.userId,
                 chat,
                 this._liveState.threadEvents,
-                this._liveState.userStore
+                this._liveState.userStore,
+                this.config.meteredApiKey
             );
 
             const isFollowedByMe =

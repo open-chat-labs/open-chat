@@ -433,7 +433,6 @@
         "confirmedSent": "{sender} שלח את {token} {amount} אל {receiver}",
         "pendingSent": "{sender} שולח את {token} {amount} אל {receiver}",
         "pendingSentByYou": "אתה שולח {token} {amount} אל {receiver}",
-        "viewTransaction": "[הצג עסקה]({url})",
         "confirm": "לְאַשֵׁר",
         "transfer": "העברת {token}",
         "makeDeposit": "אנא בצע הפקדה לחשבון למעלה ורענן את יתרתך.",
@@ -450,7 +449,8 @@
         "chat": "OpenChat",
         "sns1": "SNS-1",
         "max": "מקסימום",
-        "ckbtc": "ckBitcoin"
+        "ckbtc": "ckBitcoin",
+        "viewTransaction": "[עסקה]({url})"
     },
     "cryptoAccount": {
         "shortBalanceLabel": "איזון",
@@ -806,5 +806,6 @@
         "gameover": "סוף המשחק!"
     },
     "privateGroupInfo": "הקבוצה הזו תהיה מוגבלת לאנשים שאתה מזמין.",
-    "invited": "מוזמן"
+    "invited": "מוזמן",
+    "tapForReferralLink": "הקש כדי להעתיק את קישור ההפניה האישי שלך"
 }

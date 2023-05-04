@@ -19,6 +19,7 @@
         FilteredProposals,
         MessageReadState,
         FailedMessages,
+        OPENCHAT_BOT_USER_ID,
     } from "openchat-client";
     import InitialGroupMessage from "./InitialGroupMessage.svelte";
     import page from "page";
