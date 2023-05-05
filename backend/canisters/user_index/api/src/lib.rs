@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use types::{ChatId, MessageIndex, UserId};
+use types::{ChatId, MessageContent, MessageIndex, UserId};
 
 mod lifecycle;
 mod queries;
@@ -11,13 +11,20 @@ pub use updates::*;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum Event {
-    UserJoinedGroup(UserJoinedGroup),
+    UserJoinedGroup(Box<UserJoinedGroup>),
+    OpenChatBotMessage(Box<OpenChatBotMessage>),
 }
 
-#[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct UserJoinedGroup {
     pub user_id: UserId,
     pub chat_id: ChatId,
     pub as_super_admin: bool,
     pub latest_message_index: Option<MessageIndex>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct OpenChatBotMessage {
+    pub user_id: UserId,
+    pub message: MessageContent,
 }
