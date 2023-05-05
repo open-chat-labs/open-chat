@@ -6,6 +6,7 @@ use ic_cdk_macros::update;
 use local_user_index_canister::invite_users_to_group::{Response::*, *};
 use types::{ChatId, MessageContent, TextContent, UserId};
 use user_canister::Event as UserEvent;
+use user_index_canister::{Event as UserIndexEvent, OpenChatBotMessage};
 
 #[update(guard = "caller_is_openchat_user")]
 #[trace]
@@ -22,7 +23,7 @@ async fn invite_users_to_group(args: Args) -> Response {
         Ok(response) => match response {
             group_canister::c2c_invite_users::Response::Success(s) => {
                 mutate_state(|state| {
-                    commit(invited_by, args.group_id, s.group_name, &s.invited_users, state);
+                    commit(invited_by, args.group_id, s.group_name, s.invited_users, state);
                 });
                 Success
             }
@@ -56,17 +57,26 @@ fn commit(
     invited_by: UserId,
     group_id: ChatId,
     group_name: String,
-    invited_users: &Vec<UserId>,
+    invited_users: Vec<UserId>,
     runtime_state: &mut RuntimeState,
 ) {
-    let message = format!("You have been invited to the group [{group_name}](/{group_id}) by @UserId({invited_by}).");
+    let text = format!("You have been invited to the group [{group_name}](/{group_id}) by @UserId({invited_by}).");
+    let message = MessageContent::Text(TextContent { text });
 
     for user_id in invited_users {
-        runtime_state.push_event_to_user(
-            *user_id,
-            UserEvent::OpenChatBotMessage(Box::new(MessageContent::Text(TextContent { text: message.clone() }))),
-        );
+        if runtime_state.data.local_users.get(&user_id).is_some() {
+            runtime_state.push_event_to_user(
+                user_id,
+                UserEvent::OpenChatBotMessage(Box::new(message.clone())),
+            );
+        } else {
+            runtime_state.push_event_to_user_index(UserIndexEvent::OpenChatBotMessage(OpenChatBotMessage {
+                user_id,
+                message: message.clone()
+            }));
+        }
     }
 
     crate::jobs::sync_events_to_user_canisters::start_job_if_required(runtime_state);
+    crate::jobs::sync_events_to_user_index_canister::start_job_if_required(runtime_state);
 }

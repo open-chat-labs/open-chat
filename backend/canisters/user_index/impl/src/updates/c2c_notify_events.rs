@@ -2,7 +2,7 @@ use crate::guards::caller_is_local_user_index_canister;
 use crate::{mutate_state, RuntimeState};
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
-use local_user_index_canister::{Event as LocalUserIndexEvent, UserJoinedGroup};
+use local_user_index_canister::{Event as LocalUserIndexEvent, OpenChatBotMessage, UserJoinedGroup};
 use user_index_canister::c2c_notify_events::{Response::*, *};
 use user_index_canister::Event;
 
@@ -30,6 +30,15 @@ fn handle_event(event: Event, runtime_state: &mut RuntimeState) {
                     chat_id: ev.chat_id,
                     as_super_admin: false,
                     latest_message_index: ev.latest_message_index,
+                }),
+            );
+        }
+        Event::OpenChatBotMessage(ev) => {
+            runtime_state.push_event_to_local_user_index(
+                ev.user_id,
+                LocalUserIndexEvent::OpenChatBotMessage(OpenChatBotMessage {
+                    user_id: ev.user_id,
+                    message: ev.message,
                 }),
             );
         }
