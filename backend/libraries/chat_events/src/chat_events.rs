@@ -1,13 +1,6 @@
 use crate::expiring_events::ExpiringEvents;
 use crate::last_updated_timestamps::LastUpdatedTimestamps;
 use crate::*;
-use ::types::{
-    ChatFrozen, ChatId, ChatMetrics, ChatUnfrozen, Cryptocurrency, DeletedBy, DirectChatCreated, EventIndex, EventWrapper,
-    EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupChatCreated, Mention, MentionInternal, Message,
-    MessageContentInitial, MessageContentInternal, MessageId, MessageIndex, MessageMatch, Milliseconds, PollVotes,
-    ProposalStatusUpdate, PushEventResult, PushIfNotContains, RangeSet, Reaction, RegisterVoteResult, ReplyContext,
-    ThreadSummary, TimestampMillis, Timestamped, UserId, VoteOperation,
-};
 use candid::Principal;
 use ic_ledger_types::Tokens;
 use itertools::Itertools;
@@ -17,6 +10,13 @@ use sha2::{Digest, Sha256};
 use std::cmp::{max, Reverse};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
+use types::{
+    ChatFrozen, ChatId, ChatMetrics, ChatUnfrozen, Cryptocurrency, DeletedBy, DirectChatCreated, EventIndex, EventWrapper,
+    EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupChatCreated, Mention, MentionInternal, Message,
+    MessageContentInitial, MessageContentInternal, MessageId, MessageIndex, MessageMatch, Milliseconds, PollVotes,
+    ProposalStatusUpdate, PushEventResult, PushIfNotContains, RangeSet, Reaction, RegisterVoteResult, ReplyContext,
+    ThreadSummary, TimestampMillis, Timestamped, UserId, VoteOperation,
+};
 use types::{Hash, MessageReport, ReportedMessageInternal};
 
 pub const OPENCHAT_BOT_USER_ID: UserId = UserId::new(Principal::from_slice(&[228, 104, 142, 9, 133, 211, 135, 217, 129, 1]));
@@ -194,6 +194,14 @@ impl ChatEvents {
         }
 
         EditMessageResult::NotFound
+    }
+
+    pub fn has_updates_since(&self, since: TimestampMillis) -> bool {
+        self.main.latest_event_timestamp().map_or(false, |ts| ts > since)
+            || self
+                .iter_recently_updated_events()
+                .next()
+                .map_or(false, |(_, _, ts)| ts > since)
     }
 
     pub fn delete_messages(&mut self, args: DeleteUndeleteMessagesArgs) -> Vec<(MessageId, DeleteMessageResult)> {
