@@ -36,6 +36,7 @@ fn updates_impl(updates_since: TimestampMillis, runtime_state: &RuntimeState) ->
         || runtime_state.data.direct_chats.any_updated(updates_since)
         || runtime_state.data.group_chats.any_updated(updates_since);
 
+    // Short circuit prior to calling `ic0.time()` so that caching works effectively
     if !has_any_updates {
         return SuccessNoUpdates;
     }

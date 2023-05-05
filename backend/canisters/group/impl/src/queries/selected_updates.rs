@@ -17,6 +17,7 @@ fn selected_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
         None => return CallerNotInGroup,
     };
 
+    // Short circuit prior to calling `ic0.time()` so that caching works effectively
     let latest_event_index = runtime_state.data.events.latest_event_index().unwrap_or_default();
     if latest_event_index <= args.updates_since {
         return SuccessNoUpdates(latest_event_index);
