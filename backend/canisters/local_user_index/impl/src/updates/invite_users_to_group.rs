@@ -65,14 +65,11 @@ fn commit(
 
     for user_id in invited_users {
         if runtime_state.data.local_users.get(&user_id).is_some() {
-            runtime_state.push_event_to_user(
-                user_id,
-                UserEvent::OpenChatBotMessage(Box::new(message.clone())),
-            );
+            runtime_state.push_event_to_user(user_id, UserEvent::OpenChatBotMessage(Box::new(message.clone())));
         } else {
             runtime_state.push_event_to_user_index(UserIndexEvent::OpenChatBotMessage(OpenChatBotMessage {
                 user_id,
-                message: message.clone()
+                message: message.clone(),
             }));
         }
     }
