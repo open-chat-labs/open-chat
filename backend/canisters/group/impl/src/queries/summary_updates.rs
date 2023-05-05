@@ -242,9 +242,3 @@ fn process_events(
 
     updates
 }
-
-impl UpdatesFromEvents {
-    fn has_updates(&self) -> bool {
-        self.latest_event_index.is_some() || !self.updated_events.is_empty() || self.notifications_muted.is_some()
-    }
-}
