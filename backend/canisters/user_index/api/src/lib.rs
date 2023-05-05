@@ -11,8 +11,8 @@ pub use updates::*;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum Event {
-    UserJoinedGroup(UserJoinedGroup),
-    OpenChatBotMessage(OpenChatBotMessage),
+    UserJoinedGroup(Box<UserJoinedGroup>),
+    OpenChatBotMessage(Box<OpenChatBotMessage>),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
