@@ -366,7 +366,6 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
             case "rehydrateMessage":
                 agent
                     .rehydrateMessage(
-                        payload.chatType,
                         payload.chatId,
                         payload.message,
                         payload.threadRootMessageIndex,
@@ -863,10 +862,7 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
 
             case "inviteUsers":
                 agent
-                    .inviteUsers(
-                        payload.chatId,
-                        payload.userIds,
-                    )
+                    .inviteUsers(payload.chatId, payload.userIds)
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,

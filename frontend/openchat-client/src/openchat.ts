@@ -2733,13 +2733,7 @@ export class OpenChat extends EventTarget {
         this.api.setCachedMessageFromNotification(chatId, threadRootMessageIndex, message);
 
         Promise.all([
-            this.api.rehydrateMessage(
-                serverChat.kind,
-                chatId,
-                message,
-                undefined,
-                serverChat.latestEventIndex
-            ),
+            this.api.rehydrateMessage(chatId, message, undefined, serverChat.latestEventIndex),
             this.addMissingUsersFromMessage(message),
         ]).then(([m, _]) => {
             updateSummaryWithConfirmedMessage(chatId, m);

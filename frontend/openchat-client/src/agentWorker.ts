@@ -478,7 +478,6 @@ export class OpenChatAgentWorker extends EventTarget {
     }
 
     rehydrateMessage(
-        chatType: "direct_chat" | "group_chat",
         currentChatId: string,
         message: EventWrapper<Message>,
         threadRootMessageIndex: number | undefined,
@@ -487,7 +486,6 @@ export class OpenChatAgentWorker extends EventTarget {
         return this.sendRequest({
             kind: "rehydrateMessage",
             payload: {
-                chatType,
                 currentChatId,
                 message,
                 threadRootMessageIndex,
@@ -955,10 +953,7 @@ export class OpenChatAgentWorker extends EventTarget {
         });
     }
 
-    inviteUsers(
-        chatId: string,
-        userIds: string[],
-    ): Promise<InviteUsersResponse> {
+    inviteUsers(chatId: string, userIds: string[]): Promise<InviteUsersResponse> {
         return this.sendRequest({
             kind: "inviteUsers",
             payload: {
