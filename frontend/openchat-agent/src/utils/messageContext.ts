@@ -12,6 +12,10 @@ export class MessageContextMap<T> {
         this._map[key].push(val);
     }
 
+    public get length(): number {
+        return Object.keys(this._map).length;
+    }
+
     lookup(key: MessageContext): T[] {
         return this._map[messageContextToString(key)] ?? [];
     }

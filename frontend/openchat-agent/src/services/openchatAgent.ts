@@ -337,10 +337,7 @@ export class OpenChatAgent extends EventTarget {
         );
     }
 
-    async inviteUsers(
-        chatId: string,
-        userIds: string[],
-    ): Promise<InviteUsersResponse> {
+    async inviteUsers(chatId: string, userIds: string[]): Promise<InviteUsersResponse> {
         if (!userIds.length) {
             return Promise.resolve<InviteUsersResponse>("success");
         }
@@ -356,7 +353,6 @@ export class OpenChatAgent extends EventTarget {
         latestClientMainEventIndex: number | undefined
     ): Promise<EventsResponse<DirectChatEvent>> {
         return this.rehydrateEventResponse(
-            "direct_chat",
             theirUserId,
             this.userClient.chatEventsWindow(
                 eventIndexRange,
@@ -407,7 +403,6 @@ export class OpenChatAgent extends EventTarget {
         latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<DirectChatEvent>> {
         return this.rehydrateEventResponse(
-            "direct_chat",
             theirUserId,
             this.userClient.chatEvents(
                 eventIndexRange,
@@ -430,7 +425,6 @@ export class OpenChatAgent extends EventTarget {
         latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<DirectChatEvent>> {
         return this.rehydrateEventResponse(
-            "direct_chat",
             theirUserId,
             this.userClient.chatEventsByIndex(
                 eventIndexes,
@@ -451,7 +445,6 @@ export class OpenChatAgent extends EventTarget {
         latestClientMainEventIndex: number | undefined
     ): Promise<EventsResponse<GroupChatEvent>> {
         return this.rehydrateEventResponse(
-            "group_chat",
             chatId,
             this.getGroupClient(chatId).chatEventsWindow(
                 eventIndexRange,
@@ -473,7 +466,6 @@ export class OpenChatAgent extends EventTarget {
         latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<GroupChatEvent>> {
         return this.rehydrateEventResponse(
-            "group_chat",
             chatId,
             this.getGroupClient(chatId).chatEvents(
                 eventIndexRange,
@@ -495,7 +487,6 @@ export class OpenChatAgent extends EventTarget {
         latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<GroupChatEvent>> {
         return this.rehydrateEventResponse(
-            "group_chat",
             chatId,
             this.getGroupClient(chatId).chatEventsByIndex(
                 eventIndexes,
@@ -598,33 +589,41 @@ export class OpenChatAgent extends EventTarget {
         }
     }
 
+    private async getCachedChatSummaries(): Promise<Record<string, ChatSummary>> {
+        const chatState = await getCachedChats(this.db, this.principal);
+        if (chatState === undefined) return {};
+        const chats = [...chatState.directChats, ...chatState.groupChats];
+        return toRecord(chats, (c) => c.chatId);
+    }
+
     private async resolveMissingIndexes<T extends ChatEvent>(
-        chatType: "direct_chat" | "group_chat",
         currentChatId: string,
         events: EventWrapper<T>[],
         threadRootMessageIndex: number | undefined,
         latestClientEventIndex: number | undefined
     ): Promise<MessageContextMap<EventWrapper<Message>>> {
-        return this.findMissingEventIndexesByChat(
+        const contextMap = this.findMissingEventIndexesByChat(
             currentChatId,
             events,
             threadRootMessageIndex
-        ).asyncMap((key, ctx, idxs) => {
-            if (ctx.chatId === currentChatId && chatType === "direct_chat") {
+        );
+
+        if (contextMap.length === 0) return Promise.resolve(new MessageContextMap());
+
+        const cachedChats = await this.getCachedChatSummaries();
+
+        return contextMap.asyncMap(async (key, ctx, idxs) => {
+            const targetChat = cachedChats[ctx.chatId];
+            // Note that the latestClientEventIndex relates to the *currentChat*, not necessarily the chat for this messageContext
+            // So only include it if the context matches the current chat
+            // And yes - this is probably trying to tell us something
+            const latestIndex = ctx.chatId === currentChatId ? latestClientEventIndex : undefined;
+
+            if (targetChat.kind === "direct_chat") {
                 return this.userClient
-                    .chatEventsByIndex(
-                        idxs,
-                        currentChatId,
-                        ctx.threadRootMessageIndex,
-                        latestClientEventIndex
-                    )
+                    .chatEventsByIndex(idxs, ctx.chatId, ctx.threadRootMessageIndex, latestIndex)
                     .then((resp) => this.messagesFromEventsResponse(key, resp));
             } else {
-                // Note that the latestClientEventIndex relates to the *currentChat*, not necessarily the chat for this messageContext
-                // So only include it if the context matches the current chat
-                // And yes - this is probably trying to tell us something
-                const latestIndex =
-                    ctx.chatId === currentChatId ? latestClientEventIndex : undefined;
                 const client = this.getGroupClient(ctx.chatId);
                 return client
                     .chatEventsByIndex(idxs, ctx.threadRootMessageIndex, latestIndex)
@@ -695,7 +694,6 @@ export class OpenChatAgent extends EventTarget {
     }
 
     private async rehydrateEventResponse<T extends ChatEvent>(
-        chatType: "direct_chat" | "group_chat",
         currentChatId: string,
         eventsPromise: Promise<EventsResponse<T>>,
         threadRootMessageIndex: number | undefined,
@@ -708,7 +706,6 @@ export class OpenChatAgent extends EventTarget {
         }
 
         const missing = await this.resolveMissingIndexes(
-            chatType,
             currentChatId,
             resp.events,
             threadRootMessageIndex,
@@ -754,14 +751,12 @@ export class OpenChatAgent extends EventTarget {
     }
 
     async rehydrateMessage(
-        chatType: "direct_chat" | "group_chat",
         chatId: string,
         message: EventWrapper<Message>,
         threadRootMessageIndex: number | undefined,
         latestClientEventIndex: number | undefined
     ): Promise<EventWrapper<Message>> {
         const missing = await this.resolveMissingIndexes(
-            chatType,
             chatId,
             [message],
             threadRootMessageIndex,
@@ -1008,7 +1003,6 @@ export class OpenChatAgent extends EventTarget {
         const latestMessage =
             chat.latestMessage !== undefined
                 ? await this.rehydrateMessage(
-                      chat.kind,
                       chat.chatId,
                       chat.latestMessage,
                       undefined,
@@ -1308,7 +1302,6 @@ export class OpenChatAgent extends EventTarget {
         latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<Message>> {
         return this.rehydrateEventResponse(
-            "group_chat",
             chatId,
             this.getGroupClient(chatId).getMessagesByMessageIndex(
                 messageIndexes,
@@ -1469,7 +1462,6 @@ export class OpenChatAgent extends EventTarget {
         latestClientMainEventIndex: number | undefined
     ): Promise<ThreadPreview> {
         const threadMissing = await this.resolveMissingIndexes(
-            "group_chat",
             thread.chatId,
             thread.latestReplies,
             thread.rootMessage.event.messageIndex,
@@ -1477,7 +1469,6 @@ export class OpenChatAgent extends EventTarget {
         );
 
         const rootMissing = await this.resolveMissingIndexes(
-            "group_chat",
             thread.chatId,
             [thread.rootMessage],
             undefined,

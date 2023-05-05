@@ -664,7 +664,6 @@ type GroupChatEventsByEventIndex = Request<{
 };
 
 type RehydrateMessage = Request<{
-    chatType: "direct_chat" | "group_chat";
     chatId: string;
     message: EventWrapper<Message>;
     threadRootMessageIndex: number | undefined;
@@ -1015,4 +1014,3 @@ type DeclineInvitation = Request<{
 }> & {
     kind: "declineInvitation";
 };
-
