@@ -34,12 +34,17 @@
 
     $: translationStore = client.translationStore;
     $: text = truncateText($translationStore.get(Number(messageId)) ?? content.text);
-    $: socialVideoMatch = content.text.match(client.youtubeRegex());
+    $: youtubeMatch = content.text.match(client.youtubeRegex());
     $: twitterLinkMatch = text.match(client.twitterLinkRegex());
     $: containsCodeBlock = content.text.match(/```([\s\S]*)```/);
+    $: youtubeCode =
+        youtubeMatch && (youtubeMatch[1] ?? youtubeMatch[2] ?? youtubeMatch[3])?.split("?")[0];
+    $: youtubeStartTime = youtubeMatch
+        ? new URL(youtubeMatch[0]).searchParams.get("t") || "0"
+        : "0";
 </script>
 
-{#if !socialVideoMatch}
+{#if !youtubeMatch}
     <Markdown inline={!containsCodeBlock} suppressLinks={pinned} {text} />
     {#if edited}
         <span class="edited-msg">({$_("edited")})</span>
@@ -56,7 +61,7 @@
         {/if}
     {/if}
 {:else}
-    {#if socialVideoMatch[0] !== content.text || !expanded}
+    {#if youtubeMatch[0] !== content.text || !expanded}
         <Markdown suppressLinks={pinned} {text} />
     {/if}
     {#if !expanded}
@@ -69,9 +74,7 @@
             class:fill
             width="100%"
             {height}
-            src={`https://www.youtube.com/embed/${
-                socialVideoMatch[1] ?? socialVideoMatch[2] ?? socialVideoMatch[3]
-            }`}
+            src={`https://www.youtube.com/embed/${youtubeCode}?start=${youtubeStartTime}`}
             title="YouTube video player"
             frameborder="0"
             allow="accelerometer;
