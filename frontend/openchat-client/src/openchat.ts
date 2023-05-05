@@ -359,6 +359,7 @@ export class OpenChat extends EventTarget {
         this._authClient = AuthClient.create({
             idleOptions: {
                 disableIdle: true,
+                disableDefaultIdleCallback: true,
             },
             storage: idbAuthClientStore,
         });
