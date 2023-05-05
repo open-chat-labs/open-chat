@@ -17,6 +17,11 @@ fn selected_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
         None => return CallerNotInGroup,
     };
 
+    let latest_event_index = runtime_state.data.events.latest_event_index().unwrap_or_default();
+    if latest_event_index <= args.updates_since {
+        return SuccessNoUpdates(latest_event_index);
+    }
+
     let min_visible_event_index = participant.min_visible_event_index();
     let now = runtime_state.env.now();
     let data = &runtime_state.data;
@@ -26,10 +31,6 @@ fn selected_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
         .get(args.updates_since.into())
         .map(|e| e.timestamp)
         .unwrap_or_default();
-
-    if latest_event_index <= args.updates_since {
-        return SuccessNoUpdates(latest_event_index);
-    }
 
     let invited_users = if data.invited_users.last_updated() > updates_since_time {
         Some(data.invited_users.users())
