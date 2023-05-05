@@ -809,5 +809,6 @@
     },
     "privateGroupInfo": "Questo gruppo sarà limitato alle persone che inviti.",
     "invited": "Invitato",
-    "tapForReferralLink": "Tocca per copiare il tuo link di riferimento personale"
+    "tapForReferralLink": "Tocca per copiare il tuo link di riferimento personale",
+    "deleteMessageForMe": "Cancella per me"
 }

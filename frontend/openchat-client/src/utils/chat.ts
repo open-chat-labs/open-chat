@@ -818,10 +818,10 @@ export function canUnblockUsers(chat: ChatSummary): boolean {
 }
 
 export function canDeleteOtherUsersMessages(chat: ChatSummary): boolean {
-    if (chat.kind === "group_chat" && !chat.frozen) {
-        return isPermitted(chat.myRole, chat.permissions.deleteMessages);
+    if (chat.kind === "group_chat") {
+        return !chat.frozen && isPermitted(chat.myRole, chat.permissions.deleteMessages);
     } else {
-        return false;
+        return true;
     }
 }
 
