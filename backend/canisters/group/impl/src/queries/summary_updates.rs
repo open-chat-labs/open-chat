@@ -26,56 +26,63 @@ fn summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
         Some(p) => p,
     };
     let updates_since = max(args.updates_since, participant.date_added);
+
+    // Short circuit without calling ic0.time() so that query caching works effectively.
+    // This doesn't account for expired events, but they aren't used yet and should probably just be
+    // handled by the FE anyway
+    if !runtime_state.data.events.has_updates_since(updates_since)
+        && runtime_state.data.invited_users.last_updated() <= updates_since
+        && participant.notifications_muted.timestamp <= updates_since
+    {
+        return SuccessNoUpdates;
+    }
+
     let now = runtime_state.env.now();
     let updates_from_events = process_events(updates_since, participant, now, &runtime_state.data);
     let newly_expired_messages = runtime_state.data.events.expired_messages_since(updates_since, now);
 
-    if updates_from_events.has_updates() || !newly_expired_messages.is_empty() {
-        let updates = GroupCanisterGroupChatSummaryUpdates {
-            chat_id: runtime_state.env.canister_id().into(),
-            last_updated: now,
-            name: updates_from_events.name,
-            description: updates_from_events.description,
-            subtype: updates_from_events.subtype,
-            avatar_id: updates_from_events.avatar_id,
-            latest_message: updates_from_events.latest_message,
-            latest_event_index: updates_from_events.latest_event_index,
-            participant_count: if updates_from_events.participants_changed {
-                Some(runtime_state.data.participants.len())
-            } else {
-                None
-            },
-            role: if updates_from_events.role_changed { Some(participant.role) } else { None },
-            mentions: updates_from_events.mentions,
-            permissions: updates_from_events.permissions,
-            updated_events: updates_from_events.updated_events,
-            metrics: Some(runtime_state.data.events.metrics().clone()),
-            my_metrics: runtime_state
-                .data
-                .events
-                .user_metrics(&participant.user_id, Some(args.updates_since))
-                .cloned(),
-            is_public: updates_from_events.is_public,
-            latest_threads: runtime_state.data.events.latest_threads(
-                participant.min_visible_event_index(),
-                participant.threads.iter(),
-                Some(args.updates_since),
-                MAX_THREADS_IN_SUMMARY,
-                now,
-            ),
-            notifications_muted: updates_from_events.notifications_muted,
-            frozen: updates_from_events.frozen,
-            wasm_version: None,
-            date_last_pinned: updates_from_events.date_last_pinned,
-            events_ttl: updates_from_events.events_ttl,
-            newly_expired_messages,
-            next_message_expiry: OptionUpdate::from_update(runtime_state.data.events.next_message_expiry(now)),
-            gate: updates_from_events.gate,
-        };
-        Success(SuccessResult { updates })
-    } else {
-        SuccessNoUpdates
-    }
+    let updates = GroupCanisterGroupChatSummaryUpdates {
+        chat_id: runtime_state.env.canister_id().into(),
+        last_updated: now,
+        name: updates_from_events.name,
+        description: updates_from_events.description,
+        subtype: updates_from_events.subtype,
+        avatar_id: updates_from_events.avatar_id,
+        latest_message: updates_from_events.latest_message,
+        latest_event_index: updates_from_events.latest_event_index,
+        participant_count: if updates_from_events.participants_changed {
+            Some(runtime_state.data.participants.len())
+        } else {
+            None
+        },
+        role: if updates_from_events.role_changed { Some(participant.role) } else { None },
+        mentions: updates_from_events.mentions,
+        permissions: updates_from_events.permissions,
+        updated_events: updates_from_events.updated_events,
+        metrics: Some(runtime_state.data.events.metrics().clone()),
+        my_metrics: runtime_state
+            .data
+            .events
+            .user_metrics(&participant.user_id, Some(args.updates_since))
+            .cloned(),
+        is_public: updates_from_events.is_public,
+        latest_threads: runtime_state.data.events.latest_threads(
+            participant.min_visible_event_index(),
+            participant.threads.iter(),
+            Some(args.updates_since),
+            MAX_THREADS_IN_SUMMARY,
+            now,
+        ),
+        notifications_muted: updates_from_events.notifications_muted,
+        frozen: updates_from_events.frozen,
+        wasm_version: None,
+        date_last_pinned: updates_from_events.date_last_pinned,
+        events_ttl: updates_from_events.events_ttl,
+        newly_expired_messages,
+        next_message_expiry: OptionUpdate::from_update(runtime_state.data.events.next_message_expiry(now)),
+        gate: updates_from_events.gate,
+    };
+    Success(SuccessResult { updates })
 }
 
 #[derive(Default)]
