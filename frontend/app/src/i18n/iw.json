@@ -807,5 +807,6 @@
     },
     "privateGroupInfo": "הקבוצה הזו תהיה מוגבלת לאנשים שאתה מזמין.",
     "invited": "מוזמן",
-    "tapForReferralLink": "הקש כדי להעתיק את קישור ההפניה האישי שלך"
+    "tapForReferralLink": "הקש כדי להעתיק את קישור ההפניה האישי שלך",
+    "deleteMessageForMe": "מחק בשבילי"
 }

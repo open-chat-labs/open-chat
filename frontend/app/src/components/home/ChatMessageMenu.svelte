@@ -342,7 +342,7 @@
                         <div slot="text">{$_("blockUser")}</div>
                     </MenuItem>
                 {/if}
-                {#if (canDelete || me) && !crypto && !inert}
+                {#if canDelete && !crypto && !inert}
                     <MenuItem on:click={deleteMessage}>
                         <DeleteOutline
                             size={$iconSize}
@@ -351,8 +351,10 @@
                         <div slot="text">
                             {#if !reportMessageEnabled}
                                 {me ? $_("deleteMessage") : $_("deleteMessageAndReport")}
-                            {:else}
+                            {:else if publicGroup || me}
                                 {$_("deleteMessage")}
+                            {:else}
+                                {$_("deleteMessageForMe")}
                             {/if}
                         </div>
                     </MenuItem>
