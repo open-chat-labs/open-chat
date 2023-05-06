@@ -226,7 +226,11 @@
         "bioTooLong": "您的简介太长了",
         "closedTitle": "注册暂停",
         "closed": "由于需求量很大，新用户注册暂时关闭。我们很快将扩展到多个子网，然后将能够无限增长！",
-        "disclaimer": "注册 OpenChat 即表示您同意遵守我们的准则"
+        "disclaimer": "注册 OpenChat 即表示您同意遵守我们的准则",
+        "invalidCode": "无效的代码",
+        "referralCodeInvalid": "抱歉，您扫描的二维码已被使用",
+        "doYouWantToProceed": "如果您继续，您将不会获得您的 50,000 聪。或者，找到团队成员以获取新代码。",
+        "proceed": "继续"
     },
     "tellMeMore": "更多信息",
     "username": "用户名",

@@ -279,7 +279,11 @@
         "confirm": "Confirmar",
         "closedTitle": "Registro en pausa",
         "closed": "Debido a la gran demanda, los registros de nuevos usuarios están cerrados temporalmente. ¡Pronto escalaremos a través de múltiples subredes y luego podremos crecer indefinidamente!",
-        "disclaimer": "Al registrarse en OpenChat, acepta cumplir con nuestras pautas"
+        "disclaimer": "Al registrarse en OpenChat, acepta cumplir con nuestras pautas",
+        "invalidCode": "Codigo invalido",
+        "referralCodeInvalid": "Lo siento, el código que escaneaste ya se usó",
+        "doYouWantToProceed": "Si continúa, no obtendrá sus 50,000 satoshis. Alternativamente, encuentre a un miembro del equipo para obtener un nuevo código.",
+        "proceed": "Proceder"
     },
     "tellMeMore": "Más información",
     "insufficientFunds": "Asegúrese de que la cuenta anterior tenga un saldo de al menos {amount} ICP para cubrir el almacenamiento solicitado, luego presione el botón \"Actualizar\".",
