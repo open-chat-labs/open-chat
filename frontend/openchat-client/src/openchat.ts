@@ -2933,6 +2933,11 @@ export class OpenChat extends EventTarget {
         });
     }
 
+    clearReferralCode(): void {
+        localStorage.removeItem("openchat_referredby");
+        this._referralCode = undefined;
+    }
+
     captureReferralCode(): boolean {
         const qs = new URLSearchParams(window.location.search);
         const code = qs.get("ref") ?? undefined;
@@ -2948,7 +2953,7 @@ export class OpenChat extends EventTarget {
     registerUser(username: string): Promise<RegisterUserResponse> {
         return this.api.registerUser(username, this._referralCode).then((res) => {
             if (res === "success") {
-                localStorage.removeItem("openchat_referredby");
+                this.clearReferralCode();
             }
             return res;
         });
