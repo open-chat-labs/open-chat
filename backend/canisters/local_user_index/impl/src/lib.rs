@@ -64,8 +64,10 @@ impl RuntimeState {
         jobs::sync_events_to_user_canisters::start_job_if_required(self);
     }
 
-    pub fn push_event_to_user_index(&mut self, canister_id: CanisterId, event: UserIndexEvent) {
-        self.data.user_index_event_sync_queue.push(canister_id, event);
+    pub fn push_event_to_user_index(&mut self, event: UserIndexEvent) {
+        self.data
+            .user_index_event_sync_queue
+            .push(self.data.user_index_canister_id, event);
         jobs::sync_events_to_user_index_canister::start_job_if_required(self);
     }
 
