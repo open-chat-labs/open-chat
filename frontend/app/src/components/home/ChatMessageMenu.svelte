@@ -351,7 +351,7 @@
                         <div slot="text">
                             {#if !reportMessageEnabled}
                                 {me ? $_("deleteMessage") : $_("deleteMessageAndReport")}
-                            {:else if publicGroup || me}
+                            {:else if groupChat || me}
                                 {$_("deleteMessage")}
                             {:else}
                                 {$_("deleteMessageForMe")}

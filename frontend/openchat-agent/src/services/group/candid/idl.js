@@ -195,7 +195,6 @@ export const idlFactory = ({ IDL }) => {
   const DeclineInvitationResponse = IDL.Variant({
     'NotInvited' : IDL.Null,
     'Success' : IDL.Null,
-    'InternalError' : IDL.Text,
   });
   const DeleteMessagesArgs = IDL.Record({
     'as_platform_moderator' : IDL.Opt(IDL.Bool),
@@ -215,6 +214,16 @@ export const idlFactory = ({ IDL }) => {
   const DeletedMessageArgs = IDL.Record({
     'message_id' : MessageId,
     'thread_root_message_index' : IDL.Opt(MessageIndex),
+  });
+  const MessageReport = IDL.Record({
+    'notes' : IDL.Opt(IDL.Text),
+    'timestamp' : TimestampMillis,
+    'reported_by' : UserId,
+    'reason_code' : IDL.Nat32,
+  });
+  const ReportedMessage = IDL.Record({
+    'count' : IDL.Nat32,
+    'reports' : IDL.Vec(MessageReport),
   });
   const GiphyImageVariant = IDL.Record({
     'url' : IDL.Text,
@@ -408,6 +417,7 @@ export const idlFactory = ({ IDL }) => {
     'reminder_id' : IDL.Nat64,
   });
   const MessageContent = IDL.Variant({
+    'ReportedMessage' : ReportedMessage,
     'Giphy' : GiphyContent,
     'File' : FileContent,
     'Poll' : PollContent,

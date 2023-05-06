@@ -73,14 +73,13 @@ fn commit(user_id: UserId, chat_id: ChatId, latest_message_index: Option<Message
             })),
         );
     } else {
-        runtime_state.push_event_to_user_index(
-            runtime_state.data.user_index_canister_id,
-            UserIndexEvent::UserJoinedGroup(user_index_canister::UserJoinedGroup {
+        runtime_state.push_event_to_user_index(UserIndexEvent::UserJoinedGroup(Box::new(
+            user_index_canister::UserJoinedGroup {
                 user_id,
                 chat_id,
                 as_super_admin: false,
                 latest_message_index,
-            }),
-        );
+            },
+        )));
     }
 }
