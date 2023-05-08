@@ -230,7 +230,7 @@
         "invalidCode": "无效的代码",
         "referralCodeInvalid": "抱歉，您扫描的二维码已被使用",
         "proceed": "继续",
-        "doYouWantToProceed": "如果您继续，您将不会收到您的 50,000 聪。或者，找到 Dfinity 团队的成员以获取新代码。"
+        "doYouWantToProceed": "如果您继续，您将不会收到 50,000 聪。或者，找到 Dfinity 团队的成员以获取新代码。"
     },
     "tellMeMore": "更多信息",
     "username": "用户名",

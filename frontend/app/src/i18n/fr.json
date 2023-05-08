@@ -286,7 +286,7 @@
         "invalidCode": "Code invalide",
         "referralCodeInvalid": "Désolé, le code que vous avez scanné a déjà été utilisé",
         "proceed": "Procéder",
-        "doYouWantToProceed": "Si vous continuez, vous ne recevrez pas vos 50 000 satoshis. Sinon, trouvez un membre de l'équipe Dfinity pour obtenir un nouveau code."
+        "doYouWantToProceed": "Si vous continuez, vous ne recevrez pas 50 000 satoshis. Sinon, trouvez un membre de l'équipe Dfinity pour obtenir un nouveau code."
     },
     "roleChanged": "{changedBy} a changé le rôle de {changed} de {oldRole} à {newRole}",
     "yourRoleChanged": "{changedBy} a changé votre rôle de {oldRole} à {newRole}",

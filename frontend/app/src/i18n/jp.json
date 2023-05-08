@@ -253,7 +253,7 @@
         "invalidCode": "無効なコード",
         "referralCodeInvalid": "スキャンしたコードは既に使用されています",
         "proceed": "続行",
-        "doYouWantToProceed": "続行すると、50,000 satoshi を受け取りません。または、Dfinity チームのメンバーを見つけて、新しいコードを入手してください。"
+        "doYouWantToProceed": "進むと50,000サトシはもらえません。または、Dfinity チームのメンバーを見つけて、新しいコードを入手してください。"
     },
     "faq": {
         "menu": "FAQ",

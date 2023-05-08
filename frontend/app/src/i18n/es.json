@@ -283,7 +283,7 @@
         "invalidCode": "Codigo invalido",
         "referralCodeInvalid": "Lo siento, el código que escaneaste ya se usó",
         "proceed": "Proceder",
-        "doYouWantToProceed": "Si continúa, no recibirá sus 50,000 satoshis. Alternativamente, busque a un miembro del equipo de Dfinity para obtener un nuevo código."
+        "doYouWantToProceed": "Si continúa, no recibirá 50,000 satoshis. Alternativamente, busque a un miembro del equipo de Dfinity para obtener un nuevo código."
     },
     "tellMeMore": "Más información",
     "insufficientFunds": "Asegúrese de que la cuenta anterior tenga un saldo de al menos {amount} ICP para cubrir el almacenamiento solicitado, luego presione el botón \"Actualizar\".",

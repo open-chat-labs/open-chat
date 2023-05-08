@@ -289,7 +289,7 @@
         "invalidCode": "Ungültiger Code",
         "referralCodeInvalid": "Entschuldigung, der von Ihnen gescannte Code wurde bereits verwendet",
         "proceed": "Fortfahren",
-        "doYouWantToProceed": "Wenn Sie fortfahren, erhalten Sie Ihre 50.000 Satoshis nicht. Alternativ können Sie ein Mitglied des Dfinity-Teams finden, um einen neuen Code zu erhalten."
+        "doYouWantToProceed": "Wenn Sie fortfahren, erhalten Sie keine 50.000 Satoshis. Alternativ können Sie ein Mitglied des Dfinity-Teams finden, um einen neuen Code zu erhalten."
     },
     "roleChanged": "{changedBy} hat die Rolle von {changed} von {oldRole} zu {newRole} geändert",
     "yourRoleChanged": "{changedBy} hat Ihre Rolle von {oldRole} zu {newRole} geändert",

@@ -287,7 +287,7 @@
         "invalidCode": "Неверный код",
         "referralCodeInvalid": "Извините, код, который вы отсканировали, уже был использован",
         "proceed": "Продолжить",
-        "doYouWantToProceed": "Если вы продолжите, вы не получите свои 50 000 сатоши. Кроме того, найдите члена команды Dfinity, чтобы получить новый код."
+        "doYouWantToProceed": "Если вы продолжите, вы не получите 50 000 сатоши. Кроме того, найдите члена команды Dfinity, чтобы получить новый код."
     },
     "roleChanged": "{changedBy} изменил роль {changed} с {oldRole} на {newRole}",
     "yourRoleChanged": "{changedBy} изменил вашу роль с {oldRole} на {newRole}",
