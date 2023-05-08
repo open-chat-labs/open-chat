@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.679](https://github.com/open-ic/open-chat/releases/tag/v2.0.679-user_index)] - 2023-05-08
+
 ### Changed
 
 - Bitcoin Miami welcome messages ([#3532](https://github.com/open-ic/open-chat/pull/3532))
