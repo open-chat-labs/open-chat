@@ -302,7 +302,7 @@
         "disclaimer": "By registering with OpenChat you agree to abide by our guidelines",
         "invalidCode": "Invalid Code",
         "referralCodeInvalid": "Sorry the code you scanned has already been used",
-        "doYouWantToProceed": "If you proceed you will not get your 50,000 satoshis. Alternatively, find a member of the team to get a new code.",
+        "doYouWantToProceed": "If you proceed you will not receive your 50,000 satoshis. Alternatively, find a member of the Dfinity team to get a new code.",
         "proceed": "Proceed"
     },
     "faq": {

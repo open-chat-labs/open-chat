@@ -285,8 +285,8 @@
         "disclaimer": "En vous inscrivant à OpenChat, vous acceptez de respecter nos directives",
         "invalidCode": "Code invalide",
         "referralCodeInvalid": "Désolé, le code que vous avez scanné a déjà été utilisé",
-        "doYouWantToProceed": "Si vous continuez, vous n'obtiendrez pas vos 50 000 satoshis. Sinon, trouvez un membre de l'équipe pour obtenir un nouveau code.",
-        "proceed": "Procéder"
+        "proceed": "Procéder",
+        "doYouWantToProceed": "Si vous continuez, vous ne recevrez pas vos 50 000 satoshis. Sinon, trouvez un membre de l'équipe Dfinity pour obtenir un nouveau code."
     },
     "roleChanged": "{changedBy} a changé le rôle de {changed} de {oldRole} à {newRole}",
     "yourRoleChanged": "{changedBy} a changé votre rôle de {oldRole} à {newRole}",

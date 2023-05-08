@@ -288,8 +288,8 @@
         "disclaimer": "Durch die Registrierung bei OpenChat erklären Sie sich mit unseren Richtlinien einverstanden",
         "invalidCode": "Ungültiger Code",
         "referralCodeInvalid": "Entschuldigung, der von Ihnen gescannte Code wurde bereits verwendet",
-        "doYouWantToProceed": "Wenn Sie fortfahren, erhalten Sie Ihre 50.000 Satoshis nicht. Alternativ können Sie ein Mitglied des Teams finden, um einen neuen Code zu erhalten.",
-        "proceed": "Fortfahren"
+        "proceed": "Fortfahren",
+        "doYouWantToProceed": "Wenn Sie fortfahren, erhalten Sie Ihre 50.000 Satoshis nicht. Alternativ können Sie ein Mitglied des Dfinity-Teams finden, um einen neuen Code zu erhalten."
     },
     "roleChanged": "{changedBy} hat die Rolle von {changed} von {oldRole} zu {newRole} geändert",
     "yourRoleChanged": "{changedBy} hat Ihre Rolle von {oldRole} zu {newRole} geändert",
