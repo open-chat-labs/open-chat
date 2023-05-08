@@ -5,6 +5,7 @@ use std::time::Duration;
 use tracing::trace;
 use types::CanisterId;
 use user_canister::Event as UserEvent;
+use user_index_canister::{Event as UserIndexEvent, OpenChatBotMessage};
 
 thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
@@ -69,10 +70,19 @@ async fn sync_events(canister_id: CanisterId, events: Vec<UserEvent>) {
     let args = user_canister::c2c_notify_user_events::Args { events: events.clone() };
     if user_canister_c2c_client::c2c_notify_events(canister_id, &args).await.is_err() {
         mutate_state(|state| {
-            state
-                .data
-                .user_event_sync_queue
-                .mark_sync_failed_for_canister(canister_id, events);
+            for event in events {
+                if let UserEvent::OpenChatBotMessage(m) = event {
+                    state.push_event_to_user_index(UserIndexEvent::OpenChatBotMessage(Box::new(OpenChatBotMessage {
+                        user_id: canister_id.into(),
+                        message: *m,
+                    })))
+                } else {
+                    state
+                        .data
+                        .user_event_sync_queue
+                        .mark_sync_failed_for_canister(canister_id, vec![event]);
+                }
+            }
         });
     }
 }
