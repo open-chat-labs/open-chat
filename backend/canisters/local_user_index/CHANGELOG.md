@@ -7,6 +7,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Fixed
 
+- One time fix for currently pending group invites ([#3548](https://github.com/open-ic/open-chat/pull/3548))
+
+## [[2.0.680](https://github.com/open-ic/open-chat/releases/tag/v2.0.680-local_user_index)] - 2023-05-08
+
+### Fixed
+
 - Fix group invite messages ([#3543](https://github.com/open-ic/open-chat/pull/3543))
 
 ## [[2.0.674](https://github.com/open-ic/open-chat/releases/tag/v2.0.674-local_user_index)] - 2023-04-28
