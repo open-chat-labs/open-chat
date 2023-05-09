@@ -129,6 +129,7 @@ impl RuntimeState {
     }
 
     pub fn populate_user_referral_leaderboard(&mut self) {
+        // 2023-02-09
         let diamond_start = 1675900800000;
 
         for user in self.data.users.iter() {
