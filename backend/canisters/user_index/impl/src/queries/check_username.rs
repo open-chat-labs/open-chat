@@ -10,16 +10,15 @@ fn check_username(args: Args) -> Response {
 
 fn check_username_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     match validate_username(&args.username) {
-        UsernameValidationResult::TooShort(min_length) => return UsernameTooShort(min_length),
-        UsernameValidationResult::TooLong(max_length) => return UsernameTooLong(max_length),
-        UsernameValidationResult::Invalid => return UsernameInvalid,
-        _ => {}
-    };
-
-    let now = runtime_state.env.now();
-    if runtime_state.data.users.does_username_exist(&args.username, now) {
-        return UsernameTaken;
+        UsernameValidationResult::Ok => {
+            if runtime_state.data.users.does_username_exist(&args.username) {
+                UsernameTaken
+            } else {
+                Success
+            }
+        }
+        UsernameValidationResult::TooShort(min_length) => UsernameTooShort(min_length),
+        UsernameValidationResult::TooLong(max_length) => UsernameTooLong(max_length),
+        UsernameValidationResult::Invalid => UsernameInvalid,
     }
-
-    Success
 }

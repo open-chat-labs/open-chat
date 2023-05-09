@@ -14,7 +14,6 @@ pub enum Response {
     Success(UserId),
     AlreadyRegistered,
     UserLimitReached,
-    UsernameTaken,
     UsernameInvalid,
     UsernameTooShort(u16),
     UsernameTooLong(u16),

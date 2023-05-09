@@ -6,7 +6,7 @@ use crate::{mutate_state, RuntimeState, ONE_MB, USER_LIMIT};
 use candid::Principal;
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
-use local_user_index_canister::{Event, UserRegistered};
+use local_user_index_canister::{Event, UserRegistered, UsernameChanged};
 use storage_index_canister::add_or_update_users::UserConfig;
 use types::{CanisterId, Cryptocurrency, MessageContent, TextContent, UserId, Version};
 use user_index_canister::register_user_v2::{Response::*, *};
@@ -47,31 +47,26 @@ async fn register_user_v2(args: Args) -> Response {
         openchat_bot_messages,
     };
 
-    let result =
-        match local_user_index_canister_c2c_client::c2c_create_user(local_user_index_canister, &c2c_create_user_args).await {
-            Ok(local_user_index_canister::c2c_create_user::Response::Success(user_id)) => {
-                mutate_state(|state| {
-                    commit(
-                        caller,
-                        args.username,
-                        user_wasm_version,
-                        user_id,
-                        referral_code,
-                        local_user_index_canister,
-                        state,
-                    )
-                });
-                return Success(user_id);
-            }
-            Ok(local_user_index_canister::c2c_create_user::Response::AlreadyRegistered) => AlreadyRegistered,
-            Ok(local_user_index_canister::c2c_create_user::Response::CyclesBalanceTooLow) => CyclesBalanceTooLow,
-            Ok(local_user_index_canister::c2c_create_user::Response::InternalError(error)) => InternalError(error),
-            Err(error) => InternalError(format!("{error:?}")),
-        };
-
-    mutate_state(|state| rollback(&args.username, state));
-
-    result
+    match local_user_index_canister_c2c_client::c2c_create_user(local_user_index_canister, &c2c_create_user_args).await {
+        Ok(local_user_index_canister::c2c_create_user::Response::Success(user_id)) => {
+            mutate_state(|state| {
+                commit(
+                    caller,
+                    args.username,
+                    user_wasm_version,
+                    user_id,
+                    referral_code,
+                    local_user_index_canister,
+                    state,
+                )
+            });
+            Success(user_id)
+        }
+        Ok(local_user_index_canister::c2c_create_user::Response::AlreadyRegistered) => AlreadyRegistered,
+        Ok(local_user_index_canister::c2c_create_user::Response::CyclesBalanceTooLow) => CyclesBalanceTooLow,
+        Ok(local_user_index_canister::c2c_create_user::Response::InternalError(error)) => InternalError(error),
+        Err(error) => InternalError(format!("{error:?}")),
+    }
 }
 
 struct PrepareOk {
@@ -84,7 +79,6 @@ struct PrepareOk {
 
 fn prepare(args: &Args, runtime_state: &mut RuntimeState) -> Result<PrepareOk, Response> {
     let caller = runtime_state.env.caller();
-    let now = runtime_state.env.now();
     let mut referral_code = None;
 
     if let Err(error) = validate_public_key(caller, &args.public_key, runtime_state.data.internet_identity_canister_id) {
@@ -112,10 +106,6 @@ fn prepare(args: &Args, runtime_state: &mut RuntimeState) -> Result<PrepareOk, R
         UsernameValidationResult::Invalid => return Err(UsernameInvalid),
         _ => {}
     };
-
-    if !runtime_state.data.users.reserve_username(&args.username, now) {
-        return Err(UsernameTaken);
-    }
 
     if let Some(local_user_index_canister) = runtime_state.data.local_index_map.index_for_new_user() {
         let user_wasm_version = runtime_state.data.user_canister_wasm.version;
@@ -158,7 +148,19 @@ fn commit(
     let now = runtime_state.env.now();
     let referred_by = referral_code.as_ref().and_then(|r| r.user());
 
-    runtime_state.data.users.release_username(&username);
+    let username = match runtime_state.data.users.ensure_unique_username(&username) {
+        Ok(_) => username,
+        Err(new_username) => {
+            runtime_state.push_event_to_local_user_index(
+                user_id,
+                Event::UsernameChanged(UsernameChanged {
+                    user_id,
+                    username: new_username.clone(),
+                }),
+            );
+            new_username
+        }
+    };
 
     runtime_state
         .data
@@ -235,10 +237,6 @@ fn welcome_messages() -> Vec<String> {
         "Please keep posts relevant to each group. If you just want to say \"hi\", post in the [OpenChat](/vmdca-pqaaa-aaaaf-aabzq-cai) group."];
 
     WELCOME_MESSAGES.iter().map(|t| t.to_string()).collect()
-}
-
-fn rollback(username: &str, runtime_state: &mut RuntimeState) {
-    runtime_state.data.users.release_username(username);
 }
 
 fn validate_public_key(caller: Principal, public_key: &[u8], internet_identity_canister_id: CanisterId) -> Result<(), String> {
