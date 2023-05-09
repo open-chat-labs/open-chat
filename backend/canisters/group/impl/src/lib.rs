@@ -249,6 +249,8 @@ struct Data {
     pub pinned_messages: Vec<MessageIndex>,
     pub test_mode: bool,
     pub permissions: GroupPermissions,
+    pub invite_code: Option<u64>,
+    pub invite_code_enabled: bool,
     pub new_joiner_rewards: Option<NewJoinerRewards>,
     pub frozen: Timestamped<Option<FrozenGroupInfo>>,
     pub timer_jobs: TimerJobs<TimerJob>,
@@ -308,6 +310,8 @@ impl Data {
             pinned_messages: Vec::new(),
             test_mode,
             permissions: permissions.unwrap_or_default(),
+            invite_code: None,
+            invite_code_enabled: false,
             new_joiner_rewards: None,
             frozen: Timestamped::default(),
             timer_jobs: TimerJobs::default(),
@@ -317,11 +321,11 @@ impl Data {
         }
     }
 
-    pub fn min_visible_event_index(&self, caller: Principal) -> Option<EventIndex> {
+    pub fn min_visible_event_index(&self, caller: Principal, invite_code: Option<u64>) -> Option<EventIndex> {
         match self.participants.get_by_principal(&caller) {
             Some(p) => Some(p.min_visible_event_index()),
             None => {
-                if self.is_public && self.history_visible_to_new_joiners {
+                if (self.is_public && self.history_visible_to_new_joiners) || self.is_invite_code_valid(invite_code) {
                     Some(EventIndex::default())
                 } else {
                     self.invited_users
@@ -332,12 +336,28 @@ impl Data {
         }
     }
 
-    pub fn is_accessible_by_non_member(&self, caller: Principal) -> bool {
-        self.is_public || self.invited_users.get(&caller).is_some()
+    pub fn is_accessible_by_non_member(&self, caller: Principal, invite_code: Option<u64>) -> bool {
+        if self.is_public || self.invited_users.get(&caller).is_some() {
+            return true;
+        }
+
+        self.is_invite_code_valid(invite_code)
     }
 
     pub fn is_frozen(&self) -> bool {
         self.frozen.is_some()
+    }
+
+    fn is_invite_code_valid(&self, invite_code: Option<u64>) -> bool {
+        if self.invite_code_enabled {
+            if let Some(provided_code) = invite_code {
+                if let Some(stored_code) = self.invite_code {
+                    return provided_code == stored_code;
+                }
+            }
+        }
+
+        false
     }
 }
 

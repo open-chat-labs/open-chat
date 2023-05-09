@@ -6,6 +6,7 @@ use types::{EventIndex, EventWrapper, Message, MessageIndex};
 pub struct Args {
     pub thread_root_message_index: Option<MessageIndex>,
     pub messages: Vec<MessageIndex>,
+    pub invite_code: Option<u64>,
     pub latest_client_event_index: Option<EventIndex>,
 }
 

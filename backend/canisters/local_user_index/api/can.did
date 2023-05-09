@@ -3,6 +3,7 @@ import "../../../libraries/types/can.did";
 type JoinGroupArgs =
     record {
         chat_id: ChatId;
+        invite_code: opt nat64;
         correlation_id: nat64;
     };
 

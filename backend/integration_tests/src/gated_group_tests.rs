@@ -52,6 +52,7 @@ fn public_group_diamond_member_gate_check(is_diamond: bool) {
         canister_ids.local_user_index,
         &local_user_index_canister::join_group::Args {
             chat_id: group_id,
+            invite_code: None,
             correlation_id: 0,
         },
     );

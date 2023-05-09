@@ -5,6 +5,7 @@ use types::{ChatId, GateCheckFailedReason, GroupCanisterGroupChatSummary};
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub chat_id: ChatId,
+    pub invite_code: Option<u64>,
     pub correlation_id: u64,
 }
 

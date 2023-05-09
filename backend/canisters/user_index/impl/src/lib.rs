@@ -129,27 +129,32 @@ impl RuntimeState {
     }
 
     pub fn populate_user_referral_leaderboard(&mut self) {
-        let now = self.env.now();
+        // 2023-02-09
+        let diamond_start = 1675900800000;
 
         for user in self.data.users.iter() {
             if let Some(referred_by) = user.referred_by {
                 if let Some(referrer) = self.data.users.get_by_user_id(&referred_by) {
-                    if referrer.diamond_membership_details.is_active(now) {
-                        self.data.user_referral_leaderboards.add_referral(referred_by, now);
+                    if referrer.diamond_membership_details.is_active(user.date_created) {
+                        self.data
+                            .user_referral_leaderboards
+                            .add_referral(referred_by, user.date_created);
 
-                        let icp_raised_for_paid_diamond: u64 =
-                            user.diamond_membership_details.payments().iter().map(|p| p.amount_e8s).sum();
-                        if icp_raised_for_paid_diamond > 0 {
-                            self.data.user_referral_leaderboards.add_reward(
-                                referred_by,
-                                true,
-                                icp_raised_for_paid_diamond,
-                                now,
-                            );
-                        } else if user.diamond_membership_details.is_active(now) {
+                        if user.diamond_membership_details.payments().is_empty()
+                            && user.diamond_membership_details.has_ever_been_diamond_member()
+                        {
                             self.data
                                 .user_referral_leaderboards
-                                .add_reward(referred_by, true, 75_000_000, now);
+                                .add_reward(referred_by, true, 75_000_000, diamond_start);
+                        } else {
+                            for (index, payment) in user.diamond_membership_details.payments().iter().enumerate() {
+                                self.data.user_referral_leaderboards.add_reward(
+                                    referred_by,
+                                    index == 0,
+                                    payment.amount_e8s,
+                                    payment.timestamp,
+                                );
+                            }
                         }
                     }
                 }
@@ -223,6 +228,7 @@ struct Data {
     pub neuron_controllers_for_initial_airdrop: HashMap<UserId, Principal>,
     pub internet_identity_canister_id: CanisterId,
     pub referral_codes: ReferralCodes,
+    #[serde(skip_deserializing)]
     pub user_referral_leaderboards: UserReferralLeaderboards,
     pub platform_moderators_group: Option<ChatId>,
 }

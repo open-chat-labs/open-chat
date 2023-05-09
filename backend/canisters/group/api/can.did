@@ -504,6 +504,7 @@ type EventsArgs =
         ascending: bool;
         max_messages: nat32;
         max_events: nat32;
+        invite_code: opt nat64;
         latest_client_event_index: opt EventIndex;
     };
 
@@ -511,6 +512,7 @@ type EventsByIndexArgs =
     record {
         thread_root_message_index: opt MessageIndex;
         events: vec EventIndex;
+        invite_code: opt nat64;
         latest_client_event_index: opt EventIndex;
     };
 
@@ -520,6 +522,7 @@ type EventsWindowArgs =
         mid_point: MessageIndex;
         max_messages: nat32;
         max_events: nat32;
+        invite_code: opt nat64;
         latest_client_event_index: opt EventIndex;
     };
 
@@ -551,6 +554,7 @@ type MessagesByMessageIndexArgs =
     record {
         thread_root_message_index: opt MessageIndex;
         messages: vec MessageIndex;
+        invite_code: opt nat64;
         latest_client_event_index: opt EventIndex;
     };
 
@@ -628,6 +632,11 @@ type SearchMessagesSuccessResult =
         matches: vec MessageMatch;
     };
 
+type PublicSummaryArgs =
+    record {
+        invite_code: opt nat64;
+    };    
+
 type PublicSummaryResponse =
     variant {
         Success: PublicSummarySuccess;
@@ -637,6 +646,11 @@ type PublicSummaryResponse =
 type PublicSummarySuccess =
     record {
         summary: PublicGroupSummary;
+    };
+
+type RulesArgs =
+    record {
+        invite_code: opt nat64;
     };
 
 type RulesResponse =
@@ -656,6 +670,61 @@ type DeclineInvitationResponse =
         NotInvited;
     };
 
+type InviteCodeArgs =
+    record {
+    };
+
+type InviteCodeResponse =
+    variant {
+        Success: record {
+            code: opt nat64;
+        };
+        NotAuthorized;
+    };
+
+type EnableInviteCodeArgs =
+    record {
+        correlation_id: nat64;
+    };
+
+type EnableInviteCodeResponse =
+    variant {
+        Success: record {
+            code: nat64;
+        };
+        NotAuthorized;
+        UserSuspended;
+        ChatFrozen;
+    };
+
+type DisableInviteCodeArgs =
+    record {
+        correlation_id: nat64;
+    };
+
+type DisableInviteCodeResponse =
+    variant {
+        Success;
+        NotAuthorized;
+        UserSuspended;
+        ChatFrozen;
+    };
+
+type ResetInviteCodeArgs =
+    record {
+        correlation_id: nat64;
+    };
+
+type ResetInviteCodeResponse =
+    variant {
+        Success: record {
+            code: nat64;
+        };
+        NotAuthorized;
+        UserSuspended;
+        ChatFrozen;
+    };
+
 service: {
     // Owner only
     make_private: (MakePrivateArgs) -> (MakePrivateResponse);
@@ -668,6 +737,10 @@ service: {
     pin_message_v2: (PinMessageArgs) -> (PinMessageV2Response);
     unpin_message: (UnpinMessageArgs) -> (UnpinMessageResponse);
     change_role: (ChangeRoleArgs) -> (ChangeRoleResponse);
+    invite_code: (InviteCodeArgs) -> (InviteCodeResponse) query;
+    enable_invite_code: (EnableInviteCodeArgs) -> (EnableInviteCodeResponse);
+    disable_invite_code: (DisableInviteCodeArgs) -> (DisableInviteCodeResponse);
+    reset_invite_code: (ResetInviteCodeArgs) -> (ResetInviteCodeResponse);
 
     // Can be called by admins or regular users of public groups
     add_participants: (AddParticipantsArgs) -> (AddParticipantsResponse);
@@ -701,6 +774,6 @@ service: {
 
     search_messages: (SearchMessagesArgs) -> (SearchMessagesResponse) query; // Use Tantivy
 
-    public_summary: (EmptyArgs) -> (PublicSummaryResponse) query;
-    rules: (EmptyArgs) -> (RulesResponse) query;
+    public_summary: (PublicSummaryArgs) -> (PublicSummaryResponse) query;
+    rules: (RulesArgs) -> (RulesResponse) query;
 }
