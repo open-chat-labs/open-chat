@@ -189,9 +189,14 @@
 
                 .hero {
                     grid-area: image;
+                    height: 100%;
+                    position: relative;
+
+                    @include size-below(lg) {
+                        right: -50px;
+                    }
 
                     @include mobile() {
-                        position: relative;
                         left: toRem(35);
                     }
                 }
