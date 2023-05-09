@@ -61,22 +61,37 @@
                     <Card num={"03"} text={"Send your SATS at the speed of chat 🚀"} />
                 </section>
                 <section class="bitcoin">
-                    <img
-                        src="../assets/ckbtc_nobackground.svg"
-                        alt="ckBTC logo"
-                        class="ckbtc one" />
-                    <img
-                        src="../assets/ckbtc_nobackground.svg"
-                        alt="ckBTC logo"
-                        class="ckbtc two" />
-                    <img
-                        src="../assets/ckbtc_nobackground.svg"
-                        alt="ckBTC logo"
-                        class="ckbtc three" />
-                    <img
-                        src="../assets/ckbtc_nobackground.svg"
-                        alt="ckBTC logo"
-                        class="ckbtc four" />
+                    <div class="img">
+                        <img
+                            src="../assets/ckbtc_nobackground.svg"
+                            alt="ckBTC logo"
+                            class="ckbtc one" />
+                        <img
+                            src="../assets/ckbtc_nobackground.svg"
+                            alt="ckBTC logo"
+                            class="ckbtc two" />
+                        <img
+                            src="../assets/ckbtc_nobackground.svg"
+                            alt="ckBTC logo"
+                            class="ckbtc three" />
+                        <img
+                            src="../assets/ckbtc_nobackground.svg"
+                            alt="ckBTC logo"
+                            class="ckbtc four" />
+                    </div>
+                    <div class="what-is">
+                        <div class="sub-title">What is ckBTC and how to use it</div>
+                        <p>
+                            ckBTC is a Bitcoin twin created by an Internet Computer smart contract
+                            that trustlessly and directly holds Bitcoin. ckBTC can be sent with 1
+                            second finality and negligible fees.
+                        </p>
+                        <p>
+                            <ArrowLink
+                                url={"https://internetcomputer.org/bitcoin-integration"}
+                                target={"_blank"}>Learn more</ArrowLink>
+                        </p>
+                    </div>
                 </section>
 
                 <section>
@@ -101,8 +116,8 @@
                 </CollapsibleCard>
                 <CollapsibleCard title={"What is ckBTC?"}>
                     <p>
-                        ckBTC is a Bitcoin twin on created by an Internet Computer smart contract
-                        that trustlessly and directly holds Bitcoin. ckBTC can be sent with 1 second
+                        ckBTC is a Bitcoin twin created by an Internet Computer smart contract that
+                        trustlessly and directly holds Bitcoin. ckBTC can be sent with 1 second
                         finality and negligible fees.
                     </p>
                     <p>
@@ -252,7 +267,7 @@
             padding-top: toRem(100) !important;
 
             section {
-                margin-bottom: $sp6;
+                margin-bottom: $sp7;
             }
 
             p {
@@ -260,51 +275,48 @@
             }
 
             .bitcoin {
-                background: $gradient;
-                position: relative;
-                display: flex;
+                display: grid;
+                grid-template-columns: 2fr 3fr;
+                gap: $sp6;
                 align-items: center;
-                justify-content: center;
-                height: 300px;
-                border-radius: $sp3;
-                overflow: hidden;
 
-                .ckbtc {
-                    @mixin ckbtclogo($size, $opacity, $top, $left, $bottom, $right, $filter) {
-                        width: $size;
-                        height: $size;
-                        opacity: $opacity;
-                        top: $top;
-                        left: $left;
-                        bottom: $bottom;
-                        right: $right;
-                        filter: $filter;
-                        position: absolute;
-                    }
-                    &.one {
-                        width: 200px;
-                        height: 200px;
-                    }
+                .img {
+                    background: $gradient;
+                    position: relative;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    height: 300px;
+                    border-radius: $sp3;
+                    overflow: hidden;
 
-                    &.two {
-                        @include ckbtclogo(100px, 0.3, unset, 20%, 15%, unset, blur(3px));
-                    }
+                    .ckbtc {
+                        @mixin ckbtclogo($size, $opacity, $top, $left, $bottom, $right, $filter) {
+                            width: $size;
+                            height: $size;
+                            opacity: $opacity;
+                            top: $top;
+                            left: $left;
+                            bottom: $bottom;
+                            right: $right;
+                            filter: $filter;
+                            position: absolute;
+                        }
+                        &.one {
+                            width: 200px;
+                            height: 200px;
+                        }
 
-                    &.three {
-                        @include ckbtclogo(60px, 0.3, 8%, 8%, unset, unset, blur(3px));
-                    }
-
-                    &.four {
-                        @include ckbtclogo(80px, 0.3, unset, unset, 8%, 0%, blur(3px));
-                    }
-
-                    @include mobile() {
                         &.two {
                             @include ckbtclogo(80px, 0.3, unset, -7%, 4%, unset, blur(3px));
                         }
 
                         &.three {
                             @include ckbtclogo(60px, 0.3, 8%, 8%, unset, unset, blur(3px));
+                        }
+
+                        &.four {
+                            @include ckbtclogo(80px, 0.3, unset, unset, 8%, 0%, blur(3px));
                         }
                     }
                 }
@@ -316,7 +328,7 @@
             }
 
             .sub-title {
-                @include font(bold, normal, fs-180, 40);
+                @include font(bold, normal, fs-160, 40);
                 color: var(--txt);
                 margin-bottom: $sp3;
             }

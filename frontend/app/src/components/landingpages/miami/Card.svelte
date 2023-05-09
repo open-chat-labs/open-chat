@@ -22,7 +22,11 @@
         .num {
             color: $ckbtc;
             @include font(bold, normal, fs-120);
-            flex: 0 0 30px;
+            flex: 0 0 200px;
+
+            @include mobile() {
+                flex: 0 0 30px;
+            }
         }
 
         .step {
