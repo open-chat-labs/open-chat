@@ -6,7 +6,7 @@ use crate::{mutate_state, RuntimeState, ONE_MB, USER_LIMIT};
 use candid::Principal;
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
-use local_user_index_canister::{Event, UserRegistered, UsernameChanged};
+use local_user_index_canister::{Event, OpenChatBotMessage, UserRegistered, UsernameChanged};
 use storage_index_canister::add_or_update_users::UserConfig;
 use types::{CanisterId, Cryptocurrency, MessageContent, TextContent, UserId, Version};
 use user_index_canister::register_user_v2::{Response::*, *};
@@ -148,16 +148,11 @@ fn commit(
     let now = runtime_state.env.now();
     let referred_by = referral_code.as_ref().and_then(|r| r.user());
 
+    let mut original_username = None;
     let username = match runtime_state.data.users.ensure_unique_username(&username) {
         Ok(_) => username,
         Err(new_username) => {
-            runtime_state.push_event_to_local_user_index(
-                user_id,
-                Event::UsernameChanged(UsernameChanged {
-                    user_id,
-                    username: new_username.clone(),
-                }),
-            );
+            original_username = Some(username);
             new_username
         }
     };
@@ -176,12 +171,32 @@ fn commit(
         Event::UserRegistered(UserRegistered {
             user_id,
             user_principal: caller,
-            username,
+            username: username.clone(),
             is_bot: false,
             referred_by,
         }),
         Some(local_user_index_canister_id),
     );
+    if let Some(original_username) = original_username {
+        runtime_state.push_event_to_local_user_index(
+            user_id,
+            Event::UsernameChanged(UsernameChanged {
+                user_id,
+                username: username.clone(),
+            }),
+        );
+        runtime_state.push_event_to_local_user_index(
+            user_id,
+            Event::OpenChatBotMessage(OpenChatBotMessage {
+                user_id,
+                message: MessageContent::Text(TextContent {
+                    text: format!("Unfortunately the username \"{original_username}\" was taken so your username has been changed to \"{username}\".
+
+You can change your username at any time by clicking \"Profile settings\" from the main menu.")
+                }),
+            }),
+        );
+    }
 
     runtime_state.data.storage_index_user_sync_queue.push(UserConfig {
         user_id: caller,
