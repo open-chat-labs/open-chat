@@ -12,7 +12,6 @@ type RegisterUserResponse =
         Success: UserId;
         AlreadyRegistered;
         UserLimitReached;
-        UsernameTaken;
         UsernameInvalid;
         UsernameTooShort: nat16;
         UsernameTooLong: nat16;
