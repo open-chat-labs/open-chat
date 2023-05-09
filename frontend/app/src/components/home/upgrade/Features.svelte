@@ -57,6 +57,36 @@
         </div>
     </Feature>
 
+    <Feature>
+        <div slot="title">{$_("upgrade.polls")}</div>
+        <div slot="free">
+            <Check size={"1em"} color={"limegreen"} />
+        </div>
+        <div slot="diamond">
+            <Check size={"1em"} color={"limegreen"} />
+        </div>
+    </Feature>
+
+    <Feature>
+        <div slot="title">{$_("upgrade.reminders")}</div>
+        <div slot="free">
+            <Check size={"1em"} color={"limegreen"} />
+        </div>
+        <div slot="diamond">
+            <Check size={"1em"} color={"limegreen"} />
+        </div>
+    </Feature>
+
+    <Feature>
+        <div slot="title">{$_("upgrade.crypto")}</div>
+        <div slot="free">
+            <Check size={"1em"} color={"limegreen"} />
+        </div>
+        <div slot="diamond">
+            <Check size={"1em"} color={"limegreen"} />
+        </div>
+    </Feature>
+
     <Feature
         diamondInfo={$_("upgrade.mediaLimits", { values: { image: "5mb", video: "50mb" } })}
         freeInfo={$_("upgrade.mediaLimits", { values: { image: "1mb", video: "5mb" } })}>
@@ -109,33 +139,6 @@
 
     <Feature>
         <div slot="title">{$_("upgrade.translations")}</div>
-        <div slot="free">
-            <Minus size={"1em"} color={"var(--menu-warn)"} />
-        </div>
-        <div slot="diamond">
-            <Check size={"1em"} color={"limegreen"} />
-        </div>
-    </Feature>
-
-    <Feature>
-        <div slot="title">{$_("upgrade.reminders")}</div>
-        <div slot="free">
-            <Minus size={"1em"} color={"var(--menu-warn)"} />
-        </div>
-        <div slot="diamond">
-            <Check size={"1em"} color={"limegreen"} />
-        </div>
-    </Feature>
-
-
-    <Feature>
-        <div slot="title">{$_("upgrade.crypto")}</div>
-        <div slot="free">{$_("upgrade.chatAndIcp")}</div>
-        <div slot="diamond">{$_("upgrade.allSupportedTokens")}</div>
-    </Feature>
-
-    <Feature>
-        <div slot="title">{$_("upgrade.polls")}</div>
         <div slot="free">
             <Minus size={"1em"} color={"var(--menu-warn)"} />
         </div>

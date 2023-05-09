@@ -46,9 +46,6 @@
                         num={"02"}
                         text={"In a matter of seconds your SATS will arrive in your OpenChat wallet as ckBTC."} />
                     <Card num={"03"} text={"Send your SATS at the speed of chat 🚀"} />
-                    <Card
-                        num={"04"}
-                        text={"Invite friends to OpenChat to claim additional ckBTC"} />
                 </section>
                 <section class="bitcoin">
                     <img
