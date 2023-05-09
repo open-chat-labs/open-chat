@@ -52,7 +52,10 @@ async fn process_payment(pending_payment: PendingPayment, this_canister_id: Cani
             mutate_state(|state| inform_referrer(&pending_payment, block_index, transaction_hash, reason, state));
         }
         Err(_) => {
-            mutate_state(|state| state.data.pending_payments_queue.push(pending_payment));
+            mutate_state(|state| {
+                state.data.pending_payments_queue.push(pending_payment);
+                start_job_if_required(state);
+            });
         }
     }
 }

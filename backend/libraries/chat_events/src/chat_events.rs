@@ -1017,6 +1017,10 @@ impl ChatEvents {
         }
     }
 
+    pub fn latest_event_index(&self) -> Option<EventIndex> {
+        self.main.latest_event_index()
+    }
+
     fn events_list(
         &self,
         min_visible_event_index: EventIndex,
