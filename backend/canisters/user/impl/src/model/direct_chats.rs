@@ -30,6 +30,10 @@ impl DirectChats {
         })
     }
 
+    pub fn any_updated(&self, since: TimestampMillis) -> bool {
+        self.direct_chats.values().any(|c| c.events.has_updates_since(since))
+    }
+
     pub fn iter(&self) -> impl Iterator<Item = &DirectChat> {
         self.direct_chats.values()
     }

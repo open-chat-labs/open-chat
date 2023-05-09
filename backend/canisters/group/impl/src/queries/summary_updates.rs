@@ -27,9 +27,9 @@ fn summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     };
     let updates_since = max(args.updates_since, participant.date_added);
 
-    // Short circuit without calling ic0.time() so that query caching works effectively.
+    // Short circuit prior to calling `ic0.time()` so that query caching works effectively.
     // This doesn't account for expired events, but they aren't used yet and should probably just be
-    // handled by the FE anyway
+    // handled by the FE anyway.
     if !runtime_state.data.events.has_updates_since(updates_since)
         && runtime_state.data.invited_users.last_updated() <= updates_since
         && participant.notifications_muted.timestamp <= updates_since

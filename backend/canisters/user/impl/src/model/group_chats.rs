@@ -36,6 +36,10 @@ impl GroupChats {
         self.group_chats.get_mut(chat_id)
     }
 
+    pub fn any_updated(&self, since: TimestampMillis) -> bool {
+        self.group_chats.values().any(|c| c.last_updated() > since)
+    }
+
     pub fn create(&mut self, chat_id: ChatId, now: TimestampMillis) -> bool {
         self.join(chat_id, None, now);
         self.groups_created += 1;
