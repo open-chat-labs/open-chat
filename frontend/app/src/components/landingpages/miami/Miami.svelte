@@ -80,7 +80,7 @@
                             class="ckbtc four" />
                     </div>
                     <div class="what-is">
-                        <div class="sub-title">What is ckBTC and how to use it</div>
+                        <div class="sub-title">What is ckBTC and how to use it?</div>
                         <p>
                             ckBTC is a Bitcoin twin created by an Internet Computer smart contract
                             that trustlessly and directly holds Bitcoin. ckBTC can be sent with 1
@@ -279,6 +279,10 @@
                 grid-template-columns: 2fr 3fr;
                 gap: $sp6;
                 align-items: center;
+
+                @include mobile() {
+                    grid-template-columns: 1fr;
+                }
 
                 .img {
                     background: $gradient;
