@@ -12,7 +12,7 @@
     .card {
         $ckbtc: #ad93ff;
 
-        padding: $sp4 0;
+        padding: $sp3 0;
         flex: 1;
         display: flex;
         gap: $sp5;

@@ -5,6 +5,7 @@
     import Card from "./Card.svelte";
     import Content from "../Content.svelte";
     import ArrowLink from "../../ArrowLink.svelte";
+    import { mobileWidth } from "../../../stores/screenDimensions";
 </script>
 
 <div class="miami">
@@ -17,21 +18,33 @@
                             <div class="logo" />
                             <span class="txt">OpenChat</span>
                         </div>
-                        <img
-                            class="hero"
-                            src="../assets/miami/hero.svg"
-                            alt="Send bitcoin at the speed of chat" />
-                        <div class="headlines">
-                            <div class="sub-one">Claim your</div>
-                            <div class="sub-two">50,000 SATS</div>
-                            <div class="sub-three">and send BTC at the speed of chat!</div>
+                        <div class="hero-wrapper">
+                            <img
+                                class="hero"
+                                src="../assets/miami/hero.svg"
+                                alt="Send bitcoin at the speed of chat" />
+                            <div class="headlines">
+                                <div class="sub-one">Claim your</div>
+                                <div class="sub-two">50,000 SATS</div>
+                                <div class="sub-three">and send BTC at the speed of chat!</div>
+                                {#if !$mobileWidth}
+                                    <div class="launch-wrapper">
+                                        <Launch
+                                            text="Let's go!"
+                                            rootPath={`/${OPENCHAT_BOT_USER_ID}`}
+                                            on:login />
+                                    </div>
+                                {/if}
+                            </div>
                         </div>
                     </div>
                 </div>
             </Content>
-            <div class="launch-wrapper">
-                <Launch text="Let's go!" rootPath={`/${OPENCHAT_BOT_USER_ID}`} on:login />
-            </div>
+            {#if $mobileWidth}
+                <div class="launch-wrapper">
+                    <Launch text="Let's go!" rootPath={`/${OPENCHAT_BOT_USER_ID}`} on:login />
+                </div>
+            {/if}
         </div>
 
         <Content>
@@ -159,42 +172,65 @@
             background-size: contain;
             position: relative;
 
-            .hero {
-                position: relative;
-                left: toRem(35);
-            }
+            .hero-wrapper {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                grid-template-areas: "headlines image";
+                gap: $sp6;
+                align-items: center;
 
-            padding: toRem(40) $sp4;
-            .headlines {
-                margin-bottom: toRem(30);
-                position: relative;
-                z-index: 1;
+                @include mobile() {
+                    gap: 0;
+                    grid-template-columns: 1fr;
+                    grid-template-areas:
+                        "image"
+                        "headlines";
+                }
 
-                .sub-one {
-                    @include font(medium, normal, fs-160, 38);
-                    margin-bottom: $sp4;
-                }
-                .sub-two {
-                    @include font(bold, normal, fs-240, 68);
-                    margin-bottom: $sp4;
-                }
-                .sub-three {
-                    @include font(medium, normal, fs-160, 38);
-                    max-width: 350px;
+                .hero {
+                    grid-area: image;
 
                     @include mobile() {
-                        max-width: unset;
+                        position: relative;
+                        left: toRem(35);
+                    }
+                }
+
+                .headlines {
+                    grid-area: headlines;
+                    margin-bottom: toRem(30);
+                    position: relative;
+                    z-index: 1;
+
+                    .sub-one {
+                        @include font(medium, normal, fs-160, 38);
+                        margin-bottom: $sp4;
+                    }
+                    .sub-two {
+                        @include font(bold, normal, fs-240, 68);
+                        margin-bottom: $sp4;
+                    }
+                    .sub-three {
+                        @include font(medium, normal, fs-160, 38);
+                        max-width: 350px;
+                        margin-bottom: $sp4;
+
+                        @include mobile() {
+                            max-width: unset;
+                        }
                     }
                 }
             }
+
+            padding: toRem(40) $sp4;
             .launch-wrapper {
                 width: 230px;
                 border-radius: $sp2;
                 text-align: center;
-                position: absolute;
                 bottom: -36px;
 
                 @include mobile() {
+                    position: absolute;
                     width: 100%;
                     width: calc(100% - 32px);
                 }
@@ -246,7 +282,7 @@
                     }
 
                     &.two {
-                        @include ckbtclogo(80px, 0.3, unset, 38%, 15%, unset, blur(3px));
+                        @include ckbtclogo(100px, 0.3, unset, 20%, 15%, unset, blur(3px));
                     }
 
                     &.three {
