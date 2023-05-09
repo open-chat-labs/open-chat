@@ -26,6 +26,10 @@ import type {
     EventsSuccessResult,
     MakeGroupPrivateResponse,
     ChatEvent,
+    InviteCodeResponse,
+    EnableInviteCodeResponse,
+    DisableInviteCodeResponse,
+    ResetInviteCodeResponse,
     ThreadPreviewsResponse,
     RegisterProposalVoteResponse,
     GroupRules,
@@ -405,6 +409,22 @@ export class CachingGroupClient implements IGroupClient {
         maxResults: number
     ): Promise<SearchGroupChatResponse> {
         return this.client.searchGroupChat(searchTerm, userIds, maxResults);
+    }
+
+    getInviteCode(): Promise<InviteCodeResponse> {
+        return this.client.getInviteCode();
+    }
+
+    enableInviteCode(): Promise<EnableInviteCodeResponse> {
+        return this.client.enableInviteCode();
+    }
+
+    disableInviteCode(): Promise<DisableInviteCodeResponse> {
+        return this.client.disableInviteCode();
+    }
+
+    resetInviteCode(): Promise<ResetInviteCodeResponse> {
+        return this.client.resetInviteCode();
     }
 
     threadPreviews(

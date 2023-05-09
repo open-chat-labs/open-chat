@@ -475,6 +475,11 @@ export interface InviteUsersToGroupArgs {
   'group_id' : ChatId,
   'correlation_id' : bigint,
 }
+export interface JoinGroupArgs {
+  'invite_code' : [] | [bigint],
+  'correlation_id' : bigint,
+  'chat_id' : ChatId,
+}
 export type InviteUsersToGroupResponse = { 'GroupNotFound' : null } |
   { 'CallerNotInGroup' : null } |
   { 'ChatFrozen' : null } |

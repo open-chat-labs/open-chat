@@ -253,6 +253,7 @@ import {
     type ChangeRoleResponse,
     type RegisterProposalVoteResponse,
     type GroupSearchResponse,
+    type GroupInvite,
     type SearchDirectChatResponse,
     type SearchGroupChatResponse,
     type Cryptocurrency,
@@ -266,6 +267,10 @@ import {
     type SetBioResponse,
     type PendingCryptocurrencyWithdrawal,
     type WithdrawCryptocurrencyResponse,
+    type InviteCodeResponse,
+    type EnableInviteCodeResponse,
+    type DisableInviteCodeResponse,
+    type ResetInviteCodeResponse,    
     type UpdateGroupResponse,
     type CandidateGroupChat,
     type CreateGroupResponse,
@@ -3064,6 +3069,10 @@ export class OpenChat extends EventTarget {
         return this.api.dismissRecommendation(chatId);
     }
 
+    set groupInvite(value: GroupInvite) {
+        this.api.groupInvite = value;
+    }
+
     searchChat(
         chatId: string,
         searchTerm: string,
@@ -3199,6 +3208,22 @@ export class OpenChat extends EventTarget {
             messageIndexes,
             serverChat?.latestEventIndex
         );
+    }
+
+    getInviteCode(chatId: string): Promise<InviteCodeResponse> {
+        return this.api.getInviteCode(chatId);
+    }
+
+    enableInviteCode(chatId: string): Promise<EnableInviteCodeResponse> {
+        return this.api.enableInviteCode(chatId);
+    }
+
+    disableInviteCode(chatId: string): Promise<DisableInviteCodeResponse> {
+        return this.api.disableInviteCode(chatId);
+    }
+
+    resetInviteCode(chatId: string): Promise<ResetInviteCodeResponse> {
+        return this.resetInviteCode(chatId);
     }
 
     updateGroup(

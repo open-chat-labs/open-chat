@@ -14,7 +14,9 @@ import type {
     DeleteGroupResponse,
     DeleteMessageResponse,
     DirectChatEvent,
+    DisableInviteCodeResponse,
     EditMessageResponse,
+    EnableInviteCodeResponse,
     EventsResponse,
     EventWrapper,
     FreezeGroupResponse,
@@ -26,6 +28,7 @@ import type {
     GroupPermissions,
     GroupRules,
     IndexRange,
+    InviteCodeResponse,
     JoinGroupResponse,
     LeaveGroupResponse,
     ListNervousSystemFunctionsResponse,
@@ -90,6 +93,7 @@ import type {
     SearchGroupChatResponse,
 } from "./search/search";
 import type { Cryptocurrency, Tokens } from "./crypto";
+import type { GroupInvite } from "./inviteCodes";
 
 /**
  * Worker request types
@@ -163,6 +167,7 @@ export type WorkerRequest =
     | CreateUserClient
     | Init
     | CurrentUser
+    | SetGroupInvite
     | SearchGroupChat
     | SearchDirectChat
     | RefreshAccountBalance
@@ -174,6 +179,9 @@ export type WorkerRequest =
     | GetBio
     | WithdrawCrypto
     | GroupMessagesByMessageIndex
+    | GetInviteCode
+    | EnableInviteCode
+    | DisableInviteCode    
     | CreateGroupChat
     | SetCachedMessageFromNotification
     | FreezeGroup
@@ -219,6 +227,24 @@ type CreateGroupChat = Request<{
     candidate: CandidateGroupChat;
 }> & {
     kind: "createGroupChat";
+};
+
+type DisableInviteCode = Request<{
+    chatId: string;
+}> & {
+    kind: "disableInviteCode";
+};
+
+type EnableInviteCode = Request<{
+    chatId: string;
+}> & {
+    kind: "enableInviteCode";
+};
+
+type GetInviteCode = Request<{
+    chatId: string;
+}> & {
+    kind: "getInviteCode";
 };
 
 type GroupMessagesByMessageIndex = Request<{
@@ -295,6 +321,12 @@ type SearchGroupChat = Request<{
     maxResults: number;
 }> & {
     kind: "searchGroupChat";
+};
+
+type SetGroupInvite = Request<{
+    value: GroupInvite;
+}> & {
+    kind: "groupInvite";
 };
 
 type DismissRecommendations = Request<{
@@ -831,6 +863,9 @@ export type WorkerError = {
  */
 export type WorkerResponse =
     | Response<CreateGroupResponse>
+    | Response<DisableInviteCodeResponse>
+    | Response<EnableInviteCodeResponse>
+    | Response<InviteCodeResponse>
     | Response<EventsResponse<Message>>
     | Response<WithdrawCryptocurrencyResponse>
     | Response<string>

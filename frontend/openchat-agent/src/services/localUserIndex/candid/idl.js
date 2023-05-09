@@ -17,6 +17,7 @@ export const idlFactory = ({ IDL }) => {
     'TooManyInvites' : IDL.Nat32,
   });
   const JoinGroupArgs = IDL.Record({
+    'invite_code' : IDL.Opt(IDL.Nat64),
     'correlation_id' : IDL.Nat64,
     'chat_id' : ChatId,
   });
