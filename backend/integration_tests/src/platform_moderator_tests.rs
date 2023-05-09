@@ -76,6 +76,7 @@ fn report_message_succeeds() {
             ascending: true,
             max_messages: 10,
             max_events: 10,
+            invite_code: None,
             latest_client_event_index: None,
         },
     );

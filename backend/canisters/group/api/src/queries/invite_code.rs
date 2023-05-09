@@ -1,10 +1,8 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
+use types::Empty;
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub struct Args {
-    pub invite_code: Option<u64>,
-}
+pub type Args = Empty;
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
@@ -14,5 +12,5 @@ pub enum Response {
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
-    pub rules: Option<String>,
+    pub code: Option<u64>,
 }

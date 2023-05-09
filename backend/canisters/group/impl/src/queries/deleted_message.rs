@@ -16,7 +16,7 @@ fn deleted_message_impl(args: Args, runtime_state: &RuntimeState) -> Response {
         Some(p) => p,
     };
 
-    if let Some(min_visible_event_index) = runtime_state.data.min_visible_event_index(caller) {
+    if let Some(min_visible_event_index) = runtime_state.data.min_visible_event_index(caller, None) {
         let now = runtime_state.env.now();
 
         if let Some(events_reader) =
