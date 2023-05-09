@@ -235,8 +235,7 @@ export interface CyclesRegistrationFee {
   'amount' : Cycles,
 }
 export type DeclineInvitationResponse = { 'NotInvited' : null } |
-  { 'Success' : null } |
-  { 'InternalError' : string };
+  { 'Success' : null };
 export interface DeleteMessagesArgs {
   'as_platform_moderator' : [] | [boolean],
   'message_ids' : Array<MessageId>,

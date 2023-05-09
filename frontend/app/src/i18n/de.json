@@ -285,7 +285,11 @@
         "createUser": "Benutzer erstellen",
         "closedTitle": "Registrierung pausiert",
         "closed": "Aufgrund der sehr hohen Nachfrage sind die Registrierungen neuer Benutzer vorübergehend geschlossen. Wir werden bald über mehrere Subnetze skalieren und können dann unbegrenzt wachsen!",
-        "disclaimer": "Durch die Registrierung bei OpenChat erklären Sie sich mit unseren Richtlinien einverstanden"
+        "disclaimer": "Durch die Registrierung bei OpenChat erklären Sie sich mit unseren Richtlinien einverstanden",
+        "invalidCode": "Ungültiger Code",
+        "referralCodeInvalid": "Entschuldigung, der von Ihnen gescannte Code wurde bereits verwendet",
+        "proceed": "Fortfahren",
+        "doYouWantToProceed": "Wenn Sie fortfahren, erhalten Sie keine 50.000 Satoshis. Alternativ können Sie ein Mitglied des Dfinity-Teams finden, um einen neuen Code zu erhalten."
     },
     "roleChanged": "{changedBy} hat die Rolle von {changed} von {oldRole} zu {newRole} geändert",
     "yourRoleChanged": "{changedBy} hat Ihre Rolle von {oldRole} zu {newRole} geändert",

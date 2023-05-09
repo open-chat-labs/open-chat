@@ -279,7 +279,11 @@
         "createUser": "Tạo tài khoản",
         "closedTitle": "Đăng ký bị tạm dừng",
         "closed": "Do nhu cầu rất cao, đăng ký người dùng mới tạm thời bị đóng. Chúng tôi sẽ sớm mở rộng quy mô trên nhiều mạng con và sau đó sẽ có thể phát triển vô tận!",
-        "disclaimer": "Bằng cách đăng ký với OpenChat, bạn đồng ý tuân thủ các nguyên tắc của chúng tôi"
+        "disclaimer": "Bằng cách đăng ký với OpenChat, bạn đồng ý tuân thủ các nguyên tắc của chúng tôi",
+        "invalidCode": "Mã không hợp lệ",
+        "referralCodeInvalid": "Xin lỗi, mã bạn quét đã được sử dụng",
+        "proceed": "Tiếp tục",
+        "doYouWantToProceed": "Nếu tiếp tục, bạn sẽ không nhận được 50.000 satoshi. Ngoài ra, hãy tìm một thành viên của nhóm Dfinity để nhận mã mới."
     },
     "tellMeMore": "Thêm thông tin",
     "insufficientFunds": "Vui lòng đảm bảo rằng tài khoản ở trên có số dư ít nhất là {amount} ICP để trang trải bộ nhớ được yêu cầu, sau đó nhấn nút \"Làm mới\".",
