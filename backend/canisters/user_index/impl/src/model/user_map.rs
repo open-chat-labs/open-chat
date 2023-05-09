@@ -6,7 +6,6 @@ use serde::{Deserialize, Serialize};
 use std::collections::{BTreeSet, HashMap};
 use types::{CyclesTopUp, Milliseconds, TimestampMillis, UserId, Version};
 use utils::case_insensitive_hash_map::CaseInsensitiveHashMap;
-use utils::time::MINUTE_IN_MS;
 
 #[derive(Serialize, Deserialize, Default)]
 #[serde(from = "UserMapTrimmed")]
@@ -16,45 +15,30 @@ pub struct UserMap {
     username_to_user_id: CaseInsensitiveHashMap<UserId>,
     #[serde(skip)]
     principal_to_user_id: HashMap<Principal, UserId>,
-    reserved_usernames: CaseInsensitiveHashMap<TimestampMillis>,
     #[serde(skip)]
     user_referrals: HashMap<UserId, Vec<UserId>>,
     suspected_bots: BTreeSet<UserId>,
 }
 
 impl UserMap {
-    pub fn does_username_exist(&self, username: &str, now: TimestampMillis) -> bool {
+    pub fn does_username_exist(&self, username: &str) -> bool {
         self.username_to_user_id.contains_key(username)
-            || self
-                .reserved_usernames
-                .get(username)
-                .map_or(false, |&ts| now.saturating_sub(ts) > 10 * MINUTE_IN_MS)
     }
 
-    // Returns true if the username was reserved or false if the username is taken
-    pub fn reserve_username(&mut self, username: &str, now: TimestampMillis) -> bool {
-        // First, remove all usernames which were reserved more than 10 minutes ago
-        let to_remove: Vec<_> = self
-            .reserved_usernames
-            .iter()
-            .filter(|(_, &ts)| now.saturating_sub(ts) > 10 * MINUTE_IN_MS)
-            .map(|(u, _)| u.clone())
-            .collect();
-
-        for key in to_remove {
-            self.reserved_usernames.remove(&key);
+    pub fn ensure_unique_username(&self, username: &str) -> Result<(), String> {
+        if !self.username_to_user_id.contains_key(username) {
+            return Ok(());
         }
 
-        if !self.does_username_exist(username, now) {
-            self.reserved_usernames.insert(username, now);
-            true
-        } else {
-            false
+        // Append the lowest number (starting from 2) which will make this username unique
+        let mut suffix = 2;
+        loop {
+            let u = format!("{username}{suffix}");
+            if !self.username_to_user_id.contains_key(&u) {
+                return Err(u);
+            }
+            suffix += 1;
         }
-    }
-
-    pub fn release_username(&mut self, username: &str) {
-        self.reserved_usernames.remove(username);
     }
 
     #[allow(clippy::too_many_arguments)]
@@ -95,7 +79,7 @@ impl UserMap {
                 return UpdateUserResult::PrincipalTaken;
             }
 
-            if username_case_insensitive_changed && self.does_username_exist(username, now) {
+            if username_case_insensitive_changed && self.does_username_exist(username) {
                 return UpdateUserResult::UsernameTaken;
             }
 
@@ -278,7 +262,6 @@ pub enum UpdateUserResult {
 #[derive(Deserialize)]
 struct UserMapTrimmed {
     users: HashMap<UserId, User>,
-    reserved_usernames: CaseInsensitiveHashMap<TimestampMillis>,
     suspected_bots: BTreeSet<UserId>,
 }
 
@@ -286,7 +269,6 @@ impl From<UserMapTrimmed> for UserMap {
     fn from(value: UserMapTrimmed) -> Self {
         let mut user_map = UserMap {
             users: value.users,
-            reserved_usernames: value.reserved_usernames,
             suspected_bots: value.suspected_bots,
             ..Default::default()
         };
