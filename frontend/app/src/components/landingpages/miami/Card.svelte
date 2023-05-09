@@ -1,5 +1,5 @@
 <script lang="ts">
-    export let num: number;
+    export let num: string;
     export let text: string;
 </script>
 
@@ -10,31 +10,19 @@
 
 <style type="text/scss">
     .card {
-        $ckbtc: #4e27c7;
-        padding: $sp4 $sp7 $sp4 $sp4;
-        flex: 1;
-        height: 200px;
-        display: inline-block;
-        color: var(--txt);
-        background-color: var(--input-bg);
-        border-radius: $sp2;
-        border-top: 2px solid $ckbtc;
+        $ckbtc: #ad93ff;
 
-        @include mobile() {
-            flex: 0 0 250px;
-            padding: $sp4;
-        }
+        padding: $sp4 0;
+        flex: 1;
+        display: flex;
+        gap: $sp5;
+        color: var(--txt);
+        border-bottom: 1px solid var(--bd);
 
         .num {
-            width: 30px;
-            height: 30px;
-            text-align: center;
-            display: grid;
-            align-content: center;
-            background-color: $ckbtc;
-            border-radius: 50%;
-            padding: $sp2;
-            margin-bottom: $sp5;
+            color: $ckbtc;
+            @include font(bold, normal, fs-120);
+            flex: 0 0 30px;
         }
 
         .step {

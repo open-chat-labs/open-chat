@@ -234,7 +234,6 @@
         "registerUser": "ユーザー登録...",
         "preparingUser": "ユーザーの準備 ...",
         "registerAs": "利用登録をするには",
-        "enterUsername": "ユーザー名を選択する",
         "usernameInvalid": "ユーザー名が無効です。再試行してください",
         "letsGo": "レッツゴー!",
         "registrationComplete": "登録完了 ...",
@@ -249,11 +248,12 @@
         "createUser": "ユーザーを作成する",
         "closedTitle": "登録を一時停止しました",
         "closed": "大変ご好評につき、新規ユーザー登録を一時的に停止しております。すぐに複数のサブネットにまたがってスケーリングし、その後は無制限に成長できるようになります!",
-        "disclaimer": "OpenChat に登録することにより、当社のガイドラインに従うことに同意したことになります",
         "invalidCode": "無効なコード",
         "referralCodeInvalid": "スキャンしたコードは既に使用されています",
         "proceed": "続行",
-        "doYouWantToProceed": "進むと50,000サトシはもらえません。または、Dfinity チームのメンバーを見つけて、新しいコードを入手してください。"
+        "doYouWantToProceed": "進むと50,000サトシはもらえません。または、DFINITY チームのメンバーを見つけて、新しいコードを入手してください。",
+        "enterUsername": "OpenChat ユーザー名を選択してください",
+        "disclaimer": "OpenChat に登録することにより、コミュニティ ガイドラインに従うことに同意したことになります"
     },
     "faq": {
         "menu": "FAQ",

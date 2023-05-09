@@ -267,7 +267,6 @@
         "registerUser": "Enregistrer l'utilisateur...",
         "preparingUser": "Préparation de l'utilisateur...",
         "registerAs": "Pour vous inscrire en tant qu'utilisateur",
-        "enterUsername": "Choisissez un nom d'utilisateur",
         "usernameInvalid": "Nom d'utilisateur invalide, veuillez réessayer",
         "letsGo": "Allons-y!",
         "registrationComplete": "Inscription complète ...",
@@ -282,11 +281,12 @@
         "createUser": "Créer un utilisateur",
         "closedTitle": "Inscription en pause",
         "closed": "En raison d'une très forte demande, les inscriptions de nouveaux utilisateurs sont temporairement fermées. Nous allons bientôt évoluer sur plusieurs sous-réseaux et pourrons ensuite nous développer indéfiniment !",
-        "disclaimer": "En vous inscrivant à OpenChat, vous acceptez de respecter nos directives",
         "invalidCode": "Code invalide",
         "referralCodeInvalid": "Désolé, le code que vous avez scanné a déjà été utilisé",
         "proceed": "Procéder",
-        "doYouWantToProceed": "Si vous continuez, vous ne recevrez pas 50 000 satoshis. Sinon, trouvez un membre de l'équipe Dfinity pour obtenir un nouveau code."
+        "doYouWantToProceed": "Si vous continuez, vous ne recevrez pas 50 000 satoshis. Sinon, trouvez un membre de l'équipe DFINITY pour obtenir un nouveau code.",
+        "enterUsername": "Choisissez un nom d'utilisateur OpenChat",
+        "disclaimer": "En vous inscrivant à OpenChat, vous acceptez de respecter les directives de la communauté"
     },
     "roleChanged": "{changedBy} a changé le rôle de {changed} de {oldRole} à {newRole}",
     "yourRoleChanged": "{changedBy} a changé votre rôle de {oldRole} à {newRole}",
