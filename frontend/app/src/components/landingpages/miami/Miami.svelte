@@ -233,16 +233,17 @@
                     .sub-three {
                         @include font(medium, normal, fs-160, 38);
                         max-width: 350px;
-                        margin-bottom: $sp4;
+                        margin-bottom: $sp5;
 
                         @include mobile() {
                             max-width: unset;
+                            margin-bottom: $sp4;
                         }
                     }
                 }
             }
 
-            padding: toRem(40) $sp4;
+            padding: $sp4;
             .launch-wrapper {
                 width: 230px;
                 border-radius: $sp2;
