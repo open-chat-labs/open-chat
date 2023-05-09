@@ -20,9 +20,6 @@
     const user = client.user;
     const dispatch = createEventDispatcher();
 
-    //@ts-ignore
-    let scanningUnsupported = ("standalone" in navigator && navigator.standalone) as boolean;
-
     $: title =
         mode === "receive"
             ? $_("cryptoAccount.receiveToken", { values: { symbol: token.toUpperCase() } })
@@ -33,6 +30,8 @@
     let error: string | undefined = undefined;
     let amountToSendE8s = BigInt(0);
     let balanceWithRefresh: BalanceWithRefresh;
+    let sending = false;
+    let valid = false;
 
     $: transferFees = cryptoLookup[token].transferFeesE8s;
     $: symbol = cryptoLookup[token].symbol;
@@ -77,9 +76,10 @@
             {#if mode === "send"}
                 <SendCrypto
                     bind:this={sendCrypto}
+                    bind:sending
+                    bind:valid
                     on:error={(ev) => (error = ev.detail)}
                     on:refreshBalance={() => balanceWithRefresh.refresh()}
-                    {scanningUnsupported}
                     {token}
                     bind:amountToSendE8s />
             {/if}
@@ -89,12 +89,18 @@
         </form>
         <span slot="footer">
             <ButtonGroup>
-                {#if mode === "send" && !scanningUnsupported}
-                    <Button secondary tiny={$mobileWidth} on:click={() => sendCrypto?.scan()}
-                        >{$_("cryptoAccount.scan")}</Button>
+                {#if mode === "send"}
+                    <Button secondary tiny={$mobileWidth} on:click={() => dispatch("close")}
+                        >{$_("cancel")}</Button>
+                    <Button
+                        disabled={sending || !valid}
+                        loading={sending}
+                        tiny={$mobileWidth}
+                        on:click={() => sendCrypto?.send()}>{$_("tokenTransfer.send")}</Button>
+                {:else}
+                    <Button tiny={$mobileWidth} on:click={() => dispatch("close")}
+                        >{$_("close")}</Button>
                 {/if}
-                <Button tiny={$mobileWidth} on:click={() => dispatch("close")}
-                    >{$_("close")}</Button>
             </ButtonGroup>
         </span>
     </ModalContent>
