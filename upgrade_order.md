@@ -1,7 +1,5 @@
-website -> user
-user_index -> local_user_index -> user
+group -> local_user_index
 
 Notes:
 
-Website before user because `created` has been added to pending transactions.
-UserIndex then LocalUserIndex then User because the OC bot messages have been added to the user canister init args.
+Groups before local_user_index because the invite_code argument of group::c2c_join_group needs to be in place before local_user_index::join_group is called
