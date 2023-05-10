@@ -142,7 +142,6 @@ import {
     ReportMessageResponse,
     InviteUsersResponse,
     DeclineInvitationResponse,
-    UpdatedEvent,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import { applyOptionUpdate } from "../utils/mapping";
@@ -906,10 +905,9 @@ export class OpenChatAgent extends EventTarget {
         const userResponse = await this.userClient.getUpdates(current.timestamp);
 
         if (userResponse.kind === "success_no_updates") {
-            const updatedEvents = {} as Record<string, UpdatedEvent[]>;
             return {
                 state: current,
-                updatedEvents,
+                updatedEvents: {},
                 anyUpdates: false,
                 anyErrors: false
             };
