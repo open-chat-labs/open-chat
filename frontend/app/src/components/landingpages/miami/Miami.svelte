@@ -109,19 +109,28 @@
                 </CollapsibleCard>
                 <CollapsibleCard title={"What is Internet Identity?"}>
                     <p>
-                        Tenderloin prosciutto bacon frankfurter andouille brisket shankle cupim
-                        turducken tail pork loin drumstick ribeye pancetta. Ground round burgdoggen
-                        alcatra short ribs sausage. Porchetta flank doner prosciutto fatback. Cupim
-                        pork belly chicken sausage beef ribs.
+                        Internet Identity is a cryptographic authentication framework used to
+                        securely connect to many of the Canister Smart Contract dApps running on the
+                        Internet Computer. It combines the self sovereignty and permissionless
+                        aspects of public/private key authentication with the convenience and safety
+                        features of a typical Web2 login experience.
+                    </p>
+                    <p>
+                        <ArrowLink
+                            url={"https://internetcomputer.org/internet-identity"}
+                            target={"_blank"}>More on Internet Identity</ArrowLink>
                     </p>
                 </CollapsibleCard>
                 <CollapsibleCard title={"What is the Internet Computer?"}>
                     <p>
-                        Bacon ipsum dolor amet strip steak cow meatloaf, swine tail kevin beef chuck
-                        ham turducken. Alcatra tongue pork belly sirloin, ribeye tail cupim meatloaf
-                        landjaeger short loin short ribs tri-tip brisket burgdoggen. Filet mignon
-                        turducken shoulder tail hamburger. Doner beef venison, meatloaf bresaola
-                        alcatra jerky.
+                        The Internet Computer is a general-purpose blockchain that reimagines the
+                        internet as a World Computer. An infinite Canister Smart Contract platform
+                        capable of running almost any online system or service 100% on chain without
+                        the need for traditional IT such as cloud computing services.
+                    </p>
+                    <p>
+                        <ArrowLink url={"https://internetcomputer.org"} target={"_blank"}
+                            >Learn about the Internet Computer</ArrowLink>
                     </p>
                 </CollapsibleCard>
             </div>
