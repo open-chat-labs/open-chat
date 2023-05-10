@@ -1410,7 +1410,7 @@ export class OpenChat extends EventTarget {
         const clientChat = this._liveState.chatSummaries[chatId];
         const serverChat = this._liveState.serverChatSummaries[chatId];
 
-        if (clientChat === undefined) {
+        if (clientChat === undefined || this.isPrivatePreview(clientChat)) {
             return Promise.resolve(undefined);
         }
 
@@ -1602,6 +1602,10 @@ export class OpenChat extends EventTarget {
         return true;
     }
 
+    private isPrivatePreview(chat: ChatSummary): boolean {
+        return chat.kind === "group_chat" && chat.myRole === "previewer" && !chat.public;
+    }
+
     setSelectedChat(chatId: string, messageIndex?: number, threadMessageIndex?: number): void {
         const clientChat = this._liveState.chatSummaries[chatId];
         const serverChat = this._liveState.serverChatSummaries[chatId];
@@ -1614,11 +1618,7 @@ export class OpenChat extends EventTarget {
 
         const { selectedChat, focusMessageIndex } = this._liveState;
         if (selectedChat !== undefined) {
-            if (
-                selectedChat.kind === "group_chat" &&
-                selectedChat.myRole === "previewer" &&
-                !selectedChat.public
-            ) {
+            if (this.isPrivatePreview(selectedChat)) {
                 console.log("We're previewing a private group so we don't load any messages");
                 return;
             }
@@ -1817,7 +1817,7 @@ export class OpenChat extends EventTarget {
     ): Promise<void> {
         const serverChat = this._liveState.serverChatSummaries[chatId];
 
-        if (serverChat === undefined) {
+        if (serverChat === undefined || this.isPrivatePreview(serverChat)) {
             return Promise.resolve();
         }
 
@@ -1898,7 +1898,7 @@ export class OpenChat extends EventTarget {
     ): Promise<boolean> {
         const serverChat = this._liveState.serverChatSummaries[chatId];
 
-        if (serverChat === undefined) {
+        if (serverChat === undefined || this.isPrivatePreview(serverChat)) {
             return Promise.resolve(false);
         }
 
