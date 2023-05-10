@@ -344,7 +344,6 @@ export type EnableInviteCodeResponse = { 'ChatFrozen' : null } |
 export type EventIndex = number;
 export interface EventsArgs {
   'latest_client_event_index' : [] | [EventIndex],
-  'invite_code' : [] | [bigint],
   'max_messages' : number,
   'max_events' : number,
   'ascending' : boolean,
@@ -353,7 +352,6 @@ export interface EventsArgs {
 }
 export interface EventsByIndexArgs {
   'latest_client_event_index' : [] | [EventIndex],
-  'invite_code' : [] | [bigint],
   'events' : Uint32Array | number[],
   'thread_root_message_index' : [] | [MessageIndex],
 }
@@ -376,7 +374,6 @@ export interface EventsTimeToLiveUpdated {
 export interface EventsWindowArgs {
   'latest_client_event_index' : [] | [EventIndex],
   'mid_point' : MessageIndex,
-  'invite_code' : [] | [bigint],
   'max_messages' : number,
   'max_events' : number,
   'thread_root_message_index' : [] | [MessageIndex],
@@ -747,7 +744,6 @@ export interface MessageUnpinned {
 export interface MessagesByMessageIndexArgs {
   'latest_client_event_index' : [] | [EventIndex],
   'messages' : Uint32Array | number[],
-  'invite_code' : [] | [bigint],
   'thread_root_message_index' : [] | [MessageIndex],
 }
 export type MessagesByMessageIndexResponse = {

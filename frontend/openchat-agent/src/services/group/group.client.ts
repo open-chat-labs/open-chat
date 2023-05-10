@@ -147,7 +147,6 @@ export class GroupClient extends CandidService implements IGroupClient {
         const args = {
             thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
             events: new Uint32Array(eventIndexes),
-            invite_code: apiOptional(textToCode, this.inviteCode),
             latest_client_event_index: apiOptional(identity, latestClientEventIndex),
         };
         // FIXME - this always seems to through a ReplicaNotUpToDate error for threads.
@@ -178,7 +177,6 @@ export class GroupClient extends CandidService implements IGroupClient {
             max_messages: MAX_MESSAGES,
             max_events: MAX_EVENTS,
             mid_point: messageIndex,
-            invite_code: apiOptional(textToCode, this.inviteCode),
             latest_client_event_index: apiOptional(identity, latestClientEventIndex),
         };
         return this.handleQueryResponse(
@@ -209,7 +207,6 @@ export class GroupClient extends CandidService implements IGroupClient {
             max_events: MAX_EVENTS,
             ascending,
             start_index: startIndex,
-            invite_code: apiOptional(textToCode, this.inviteCode),
             latest_client_event_index: apiOptional(identity, latestClientEventIndex),
         };
         return this.handleQueryResponse(
