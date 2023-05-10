@@ -1,10 +1,10 @@
 import "../../../libraries/types/can.did";
 
-type SendMessageArgs =
+type SendMessageV2Args =
     record {
         message_id: MessageId;
         thread_root_message_index: opt MessageIndex;
-        content: MessageContent;
+        content: MessageContentInitial;
         sender_name: text;
         replies_to: opt GroupReplyContext;
         mentioned: vec User;
@@ -31,23 +31,11 @@ type SendMessageResponse =
         ChatFrozen;
     };
 
-type SendMessageV2Args =
+type EditMessageV2Args =
     record {
-        message_id: MessageId;
         thread_root_message_index: opt MessageIndex;
+        message_id: MessageId;
         content: MessageContentInitial;
-        sender_name: text;
-        replies_to: opt GroupReplyContext;
-        mentioned: vec User;
-        forwarding: bool;
-        correlation_id: nat64;
-    };
-
-type EditMessageArgs =
-    record {
-        thread_root_message_index: opt MessageIndex;
-        message_id: MessageId;
-        content: MessageContent;
         correlation_id: nat64;
     };
 
@@ -742,9 +730,8 @@ service: {
     add_participants: (AddParticipantsArgs) -> (AddParticipantsResponse);
 
     // Regular users
-    send_message: (SendMessageArgs) -> (SendMessageResponse);
     send_message_v2: (SendMessageV2Args) -> (SendMessageResponse);
-    edit_message: (EditMessageArgs) -> (EditMessageResponse);
+    edit_message_v2: (EditMessageV2Args) -> (EditMessageResponse);
     delete_messages: (DeleteMessagesArgs) -> (DeleteMessagesResponse);
     undelete_messages: (UndeleteMessagesArgs) -> (UndeleteMessagesResponse);
     register_poll_vote: (RegisterPollVoteArgs) -> (RegisterPollVoteResponse);
