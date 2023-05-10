@@ -149,7 +149,7 @@ impl RuntimeState {
                                 self.data.user_referral_leaderboards.add_reward(
                                     referred_by,
                                     index == 0,
-                                    payment.amount_e8s,
+                                    payment.amount_e8s / 2,
                                     payment.timestamp,
                                 );
                             }
