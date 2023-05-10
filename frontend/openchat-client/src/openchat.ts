@@ -1601,6 +1601,7 @@ export class OpenChat extends EventTarget {
         createDirectChat(chatId);
         return true;
     }
+
     setSelectedChat(chatId: string, messageIndex?: number, threadMessageIndex?: number): void {
         const clientChat = this._liveState.chatSummaries[chatId];
         const serverChat = this._liveState.serverChatSummaries[chatId];
