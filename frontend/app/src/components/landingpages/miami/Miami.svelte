@@ -87,9 +87,8 @@
                             second finality and negligible fees.
                         </p>
                         <p>
-                            <ArrowLink
-                                url={"https://internetcomputer.org/bitcoin-integration"}
-                                target={"_blank"}>ckBTC in more depth</ArrowLink>
+                            <ArrowLink url={"https://internetcomputer.org/ckbtc"} target={"_blank"}
+                                >ckBTC in more depth</ArrowLink>
                         </p>
                     </div>
                 </section>

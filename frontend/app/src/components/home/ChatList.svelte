@@ -48,7 +48,6 @@
     $: lowercaseSearch = searchTerm.toLowerCase();
     $: showWhatsHot =
         !$discoverHotGroupsDismissed &&
-        $chatSummariesListStore.length < 5 &&
         groupSearchResults === undefined &&
         userSearchResults === undefined;
 
@@ -296,7 +295,8 @@
         align-items: center;
         justify-content: space-between;
         height: toRem(80);
-        background-color: var(--chatSummary-hv);
+        border-top: 1px solid var(--bd);
+        border-bottom: 1px solid var(--bd);
         padding: $sp4;
         gap: toRem(12);
         cursor: pointer;
@@ -321,7 +321,7 @@
             flex: 0 0 toRem(48);
             height: toRem(48);
             width: toRem(48);
-            background-color: rgba(255, 255, 255, 0.3);
+            background-color: rgba(255, 255, 255, 0.2);
             border-radius: 50%;
         }
     }
