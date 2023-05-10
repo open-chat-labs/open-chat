@@ -18,8 +18,7 @@ pub const USER_LIMIT: usize = 150_000;
 #[update]
 #[trace]
 async fn register_user(args: Args) -> Response {
-    // Check the principal is derived from Internet Identity
-    // Check the username is valid and doesn't already exist then reserve it
+    // Check the principal is derived from Internet Identity + check the username is valid
     let PrepareOk {
         caller,
         referral_code,
