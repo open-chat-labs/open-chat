@@ -1613,6 +1613,14 @@ export class OpenChat extends EventTarget {
 
         const { selectedChat, focusMessageIndex } = this._liveState;
         if (selectedChat !== undefined) {
+            if (
+                selectedChat.kind === "group_chat" &&
+                selectedChat.myRole === "previewer" &&
+                !selectedChat.public
+            ) {
+                console.log("We're previewing a private group so we don't load any messages");
+                return;
+            }
             if (focusMessageIndex !== undefined) {
                 this.loadEventWindow(chatId, focusMessageIndex, undefined, true).then(() => {
                     this.loadDetails(selectedChat);
