@@ -906,10 +906,10 @@ export class OpenChatAgent extends EventTarget {
         const userResponse = await this.userClient.getUpdates(current.timestamp);
 
         if (userResponse.kind === "success_no_updates") {
-            const result = {} as Record<string, UpdatedEvent[]>;
+            const updatedEvents = {} as Record<string, UpdatedEvent[]>;
             return {
                 state: current,
-                updatedEvents: result,
+                updatedEvents,
                 anyUpdates: false,
                 anyErrors: false
             };
