@@ -1295,6 +1295,8 @@ export class OpenChatAgent extends EventTarget {
         username: string,
         referralCode: string | undefined
     ): Promise<RegisterUserResponse> {
+        // const localUserIndex = await this._userIndexClient.userRegistrationCanister();
+        // return this.createLocalUserIndexClient(localUserIndex).registerUser(username, referralCode);
         return this._userIndexClient.registerUser(username, referralCode);
     }
 

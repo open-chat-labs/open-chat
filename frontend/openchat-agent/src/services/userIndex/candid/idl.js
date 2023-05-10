@@ -155,7 +155,6 @@ export const idlFactory = ({ IDL }) => {
     'referral_code' : IDL.Opt(IDL.Text),
   });
   const RegisterUserResponse = IDL.Variant({
-    'UsernameTaken' : IDL.Null,
     'UsernameTooShort' : IDL.Nat16,
     'UsernameInvalid' : IDL.Null,
     'AlreadyRegistered' : IDL.Null,
@@ -240,6 +239,10 @@ export const idlFactory = ({ IDL }) => {
   const UserResponse = IDL.Variant({
     'Success' : UserSummary,
     'UserNotFound' : IDL.Null,
+  });
+  const UserRegistrationCanisterResponse = IDL.Variant({
+    'Success' : CanisterId,
+    'NewRegistrationsClosed' : IDL.Null,
   });
   const UsersArgs = IDL.Record({
     'user_groups' : IDL.Vec(
@@ -359,6 +362,11 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'user' : IDL.Func([UserArgs], [UserResponse], ['query']),
+    'user_registration_canister' : IDL.Func(
+        [EmptyArgs],
+        [UserRegistrationCanisterResponse],
+        ['query'],
+      ),
     'users' : IDL.Func([UsersArgs], [UsersResponse], ['query']),
   });
 };

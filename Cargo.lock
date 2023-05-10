@@ -4134,14 +4134,19 @@ dependencies = [
  "canister_api_macros",
  "canister_logger",
  "canister_state_macros",
+ "canister_timer_jobs",
  "canister_tracing_macros",
  "futures",
  "group_canister",
  "group_canister_c2c_client",
  "http_request",
+ "ic-base-types",
  "ic-cdk 0.7.3",
  "ic-cdk-macros",
  "ic-cdk-timers",
+ "ic-icrc1",
+ "ic-icrc1-client",
+ "ic-icrc1-client-cdk",
  "ic-ledger-types",
  "ic-stable-structures",
  "ledger_utils",
@@ -4157,6 +4162,7 @@ dependencies = [
  "user_index_canister",
  "user_index_canister_c2c_client",
  "utils",
+ "x509-parser 0.15.0",
 ]
 
 [[package]]

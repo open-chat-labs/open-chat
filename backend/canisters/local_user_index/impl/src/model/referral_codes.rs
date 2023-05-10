@@ -2,8 +2,7 @@ use std::collections::{hash_map::Entry, HashMap};
 
 use candid::{Deserialize, Principal};
 use serde::Serialize;
-use types::{TimestampMillis, UserId};
-use user_index_canister::add_referral_codes::ReferralType;
+use types::{ReferralType, TimestampMillis, UserId};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum ReferralCode {
@@ -96,7 +95,7 @@ impl ReferralCodes {
         let mut metrics = HashMap::new();
 
         for details in self.codes.values() {
-            let ms: &mut ReferralTypeMetrics = metrics.entry(details.referral_type.clone()).or_default();
+            let ms: &mut ReferralTypeMetrics = metrics.entry(details.referral_type).or_default();
             ms.total += 1;
             if details.claimed.is_some() {
                 ms.claimed += 1;

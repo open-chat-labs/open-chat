@@ -16,3 +16,4 @@ pub mod mentions;
 pub mod regular_jobs;
 pub mod time;
 pub mod timestamped_map;
+pub mod username_validation;

@@ -1,14 +1,14 @@
 use candid::Principal;
 use serde::{Deserialize, Serialize};
 use std::collections::VecDeque;
-use types::{Cryptocurrency, TimestampNanos};
+use types::TimestampNanos;
 
 #[derive(Serialize, Deserialize, Default)]
-pub struct PendingPaymentsQueue {
+pub struct BtcMiamiPaymentsQueue {
     pending_payments: VecDeque<PendingPayment>,
 }
 
-impl PendingPaymentsQueue {
+impl BtcMiamiPaymentsQueue {
     pub fn push(&mut self, pending_payment: PendingPayment) {
         self.pending_payments.push_back(pending_payment);
     }
@@ -25,14 +25,6 @@ impl PendingPaymentsQueue {
 #[derive(Serialize, Deserialize)]
 pub struct PendingPayment {
     pub amount: u64,
-    pub currency: Cryptocurrency,
     pub timestamp: TimestampNanos,
     pub recipient: Principal,
-    pub reason: PendingPaymentReason,
-}
-
-#[derive(Serialize, Deserialize, Clone)]
-pub enum PendingPaymentReason {
-    Treasury,
-    ReferralReward,
 }
