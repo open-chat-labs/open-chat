@@ -2,8 +2,7 @@ use std::collections::{hash_map::Entry, HashMap};
 
 use candid::{Deserialize, Principal};
 use serde::Serialize;
-use types::{TimestampMillis, UserId};
-use user_index_canister::add_referral_codes::ReferralType;
+use types::{ReferralType, TimestampMillis, UserId};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum ReferralCode {

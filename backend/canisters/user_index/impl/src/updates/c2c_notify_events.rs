@@ -1,8 +1,10 @@
 use crate::guards::caller_is_local_user_index_canister;
+use crate::updates::register_user::commit_registered_user;
 use crate::{mutate_state, RuntimeState};
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use local_user_index_canister::{Event as LocalUserIndexEvent, OpenChatBotMessage, UserJoinedGroup};
+use types::CanisterId;
 use user_index_canister::c2c_notify_events::{Response::*, *};
 use user_index_canister::Event;
 
@@ -21,7 +23,12 @@ fn c2c_notify_events_impl(args: Args, runtime_state: &mut RuntimeState) -> Respo
 }
 
 fn handle_event(event: Event, runtime_state: &mut RuntimeState) {
+    let caller: CanisterId = runtime_state.env.caller().into();
+
     match event {
+        Event::UserRegistered(ev) => {
+            commit_registered_user(ev.principal, ev.username, ev.user_id, ev.referred_by, caller, runtime_state)
+        }
         Event::UserJoinedGroup(ev) => {
             runtime_state.push_event_to_local_user_index(
                 ev.user_id,

@@ -4,7 +4,7 @@ use crate::DiamondMembershipUserMetrics;
 use candid::Principal;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeSet, HashMap};
-use types::{CyclesTopUp, Milliseconds, TimestampMillis, UserId, Version};
+use types::{CyclesTopUp, Milliseconds, TimestampMillis, UserId};
 use utils::case_insensitive_hash_map::CaseInsensitiveHashMap;
 
 #[derive(Serialize, Deserialize, Default)]
@@ -46,7 +46,6 @@ impl UserMap {
         &mut self,
         principal: Principal,
         user_id: UserId,
-        wasm_version: Version,
         username: String,
         now: TimestampMillis,
         referred_by: Option<UserId>,
@@ -55,7 +54,7 @@ impl UserMap {
         self.username_to_user_id.insert(&username, user_id);
         self.principal_to_user_id.insert(principal, user_id);
 
-        let user = User::new(principal, user_id, username, now, wasm_version, referred_by, is_bot);
+        let user = User::new(principal, user_id, username, now, referred_by, is_bot);
         self.users.insert(user_id, user);
 
         if let Some(ref_by) = referred_by {

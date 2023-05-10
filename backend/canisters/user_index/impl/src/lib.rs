@@ -10,14 +10,12 @@ use canister_timer_jobs::TimerJobs;
 use local_user_index_canister::Event as LocalUserIndexEvent;
 use model::local_user_index_map::LocalUserIndexMap;
 use model::pending_payments_queue::{PendingPayment, PendingPaymentsQueue};
-use model::referral_codes::{ReferralCodes, ReferralTypeMetrics};
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use types::{
     CanisterId, CanisterWasm, ChatId, Cryptocurrency, Cycles, Milliseconds, TimestampMillis, Timestamped, UserId, Version,
 };
-use user_index_canister::add_referral_codes::ReferralType;
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::canister_event_sync_queue::CanisterEventSyncQueue;
 use utils::consts::DEV_TEAM_DFX_PRINCIPAL;
@@ -189,7 +187,6 @@ impl RuntimeState {
             platform_operators: self.data.platform_operators.len() as u8,
             user_index_events_queue_length: self.data.user_index_event_sync_queue.len(),
             local_user_indexes: self.data.local_index_map.iter().map(|(c, i)| (*c, i.clone())).collect(),
-            referral_codes: self.data.referral_codes.metrics(),
             platform_moderators_group: self.data.platform_moderators_group,
             canister_ids: CanisterIds {
                 group_index: self.data.group_index_canister_id,
@@ -227,7 +224,6 @@ struct Data {
     pub timer_jobs: TimerJobs<TimerJob>,
     pub neuron_controllers_for_initial_airdrop: HashMap<UserId, Principal>,
     pub internet_identity_canister_id: CanisterId,
-    pub referral_codes: ReferralCodes,
     #[serde(skip_deserializing)]
     pub user_referral_leaderboards: UserReferralLeaderboards,
     pub platform_moderators_group: Option<ChatId>,
@@ -272,7 +268,6 @@ impl Data {
             timer_jobs: TimerJobs::default(),
             neuron_controllers_for_initial_airdrop: HashMap::new(),
             internet_identity_canister_id,
-            referral_codes: ReferralCodes::default(),
             user_referral_leaderboards: UserReferralLeaderboards::default(),
             platform_moderators_group: None,
         };
@@ -281,7 +276,6 @@ impl Data {
         data.users.register(
             proposals_bot_user_id.into(),
             proposals_bot_user_id,
-            Version::default(),
             "ProposalsBot".to_string(),
             0,
             None,
@@ -320,7 +314,6 @@ impl Default for Data {
             timer_jobs: TimerJobs::default(),
             neuron_controllers_for_initial_airdrop: HashMap::new(),
             internet_identity_canister_id: Principal::anonymous(),
-            referral_codes: ReferralCodes::default(),
             user_referral_leaderboards: UserReferralLeaderboards::default(),
             platform_moderators_group: None,
         }
@@ -349,7 +342,6 @@ pub struct Metrics {
     pub platform_operators: u8,
     pub user_index_events_queue_length: usize,
     pub local_user_indexes: Vec<(CanisterId, LocalUserIndex)>,
-    pub referral_codes: HashMap<ReferralType, ReferralTypeMetrics>,
     pub platform_moderators_group: Option<ChatId>,
     pub canister_ids: CanisterIds,
 }

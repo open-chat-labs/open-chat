@@ -1,16 +1,11 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
+use types::ReferralType;
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub referral_type: ReferralType,
     pub codes: Vec<String>,
-}
-
-#[derive(CandidType, Serialize, Deserialize, Debug, Clone, Hash, PartialEq, Eq)]
-pub enum ReferralType {
-    BtcMiami,
-    User,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

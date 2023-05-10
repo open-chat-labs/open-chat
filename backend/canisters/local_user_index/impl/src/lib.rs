@@ -1,9 +1,14 @@
+use crate::model::btc_miami_payments_queue::BtcMiamiPaymentsQueue;
+use crate::model::referral_codes::{ReferralCodes, ReferralTypeMetrics};
+use crate::timer_job_types::TimerJob;
 use canister_state_macros::canister_state;
+use canister_timer_jobs::TimerJobs;
 use model::global_user_map::GlobalUserMap;
 use model::local_user_map::LocalUserMap;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
-use types::{CanisterId, CanisterWasm, ChatId, Cycles, TimestampMillis, Timestamped, UserId, Version};
+use std::collections::HashMap;
+use types::{CanisterId, CanisterWasm, ChatId, Cycles, ReferralType, TimestampMillis, Timestamped, UserId, Version};
 use user_canister::Event as UserEvent;
 use user_index_canister::Event as UserIndexEvent;
 use utils::canister;
@@ -18,6 +23,7 @@ mod lifecycle;
 mod memory;
 mod model;
 mod queries;
+mod timer_job_types;
 mod updates;
 
 const USER_CANISTER_INITIAL_CYCLES_BALANCE: Cycles = CYCLES_REQUIRED_FOR_UPGRADE + USER_CANISTER_TOP_UP_AMOUNT; // 0.18T cycles
@@ -91,6 +97,7 @@ impl RuntimeState {
             max_concurrent_canister_upgrades: self.data.max_concurrent_canister_upgrades,
             user_upgrade_concurrency: self.data.user_upgrade_concurrency,
             user_events_queue_length: self.data.user_event_sync_queue.len(),
+            referral_codes: self.data.referral_codes.metrics(),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
@@ -111,6 +118,8 @@ struct Data {
     pub group_index_canister_id: CanisterId,
     pub notifications_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
+    #[serde(default = "internet_identity_canister_id")]
+    pub internet_identity_canister_id: CanisterId,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub canister_pool: canister::Pool,
     pub total_cycles_spent_on_canisters: Cycles,
@@ -120,6 +129,16 @@ struct Data {
     pub max_concurrent_canister_upgrades: u32,
     pub user_upgrade_concurrency: u32,
     pub platform_moderators_group: Option<ChatId>,
+    #[serde(default)]
+    pub referral_codes: ReferralCodes,
+    #[serde(default)]
+    pub timer_jobs: TimerJobs<TimerJob>,
+    #[serde(default)]
+    pub btc_miami_payments_queue: BtcMiamiPaymentsQueue,
+}
+
+fn internet_identity_canister_id() -> CanisterId {
+    CanisterId::from_text("rdmx6-jaaaa-aaaaa-aaadq-cai").unwrap()
 }
 
 #[derive(Serialize, Deserialize)]
@@ -136,6 +155,7 @@ impl Data {
         group_index_canister_id: CanisterId,
         notifications_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
+        internet_identity_canister_id: CanisterId,
         canister_pool_target_size: u16,
         test_mode: bool,
     ) -> Self {
@@ -148,6 +168,7 @@ impl Data {
             group_index_canister_id,
             notifications_canister_id,
             cycles_dispenser_canister_id,
+            internet_identity_canister_id,
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             canister_pool: canister::Pool::new(canister_pool_target_size),
             total_cycles_spent_on_canisters: 0,
@@ -157,6 +178,9 @@ impl Data {
             max_concurrent_canister_upgrades: 10,
             user_upgrade_concurrency: 10,
             platform_moderators_group: None,
+            referral_codes: ReferralCodes::default(),
+            timer_jobs: TimerJobs::default(),
+            btc_miami_payments_queue: BtcMiamiPaymentsQueue::default(),
         }
     }
 }
@@ -180,6 +204,7 @@ pub struct Metrics {
     pub max_concurrent_canister_upgrades: u32,
     pub user_upgrade_concurrency: u32,
     pub user_events_queue_length: usize,
+    pub referral_codes: HashMap<ReferralType, ReferralTypeMetrics>,
     pub canister_ids: CanisterIds,
 }
 

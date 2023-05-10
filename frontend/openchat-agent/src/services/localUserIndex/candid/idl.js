@@ -17,6 +17,7 @@ export const idlFactory = ({ IDL }) => {
     'TooManyInvites' : IDL.Nat32,
   });
   const JoinGroupArgs = IDL.Record({
+    'invite_code' : IDL.Opt(IDL.Nat64),
     'correlation_id' : IDL.Nat64,
     'chat_id' : ChatId,
   });
@@ -494,6 +495,23 @@ export const idlFactory = ({ IDL }) => {
     'AlreadyInGroupV2' : GroupCanisterGroupChatSummary,
     'InternalError' : IDL.Text,
   });
+  const RegisterUserArgs = IDL.Record({
+    'username' : IDL.Text,
+    'public_key' : IDL.Vec(IDL.Nat8),
+    'referral_code' : IDL.Opt(IDL.Text),
+  });
+  const RegisterUserResponse = IDL.Variant({
+    'UsernameTooShort' : IDL.Nat16,
+    'UsernameInvalid' : IDL.Null,
+    'AlreadyRegistered' : IDL.Null,
+    'UserLimitReached' : IDL.Null,
+    'UsernameTooLong' : IDL.Nat16,
+    'Success' : UserId,
+    'PublicKeyInvalid' : IDL.Text,
+    'InternalError' : IDL.Text,
+    'ReferralCodeInvalid' : IDL.Null,
+    'CyclesBalanceTooLow' : IDL.Null,
+  });
   const ReportMessageArgs = IDL.Record({
     'notes' : IDL.Opt(IDL.Text),
     'chat_id' : ChatId,
@@ -512,6 +530,7 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'join_group' : IDL.Func([JoinGroupArgs], [JoinGroupResponse], []),
+    'register_user' : IDL.Func([RegisterUserArgs], [RegisterUserResponse], []),
     'report_message' : IDL.Func(
         [ReportMessageArgs],
         [ReportMessageResponse],

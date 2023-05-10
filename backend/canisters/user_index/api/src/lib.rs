@@ -1,3 +1,4 @@
+use candid::Principal;
 use serde::{Deserialize, Serialize};
 use types::{ChatId, MessageContent, MessageIndex, UserId};
 
@@ -11,8 +12,17 @@ pub use updates::*;
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum Event {
+    UserRegistered(Box<UserRegistered>),
     UserJoinedGroup(Box<UserJoinedGroup>),
     OpenChatBotMessage(Box<OpenChatBotMessage>),
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct UserRegistered {
+    pub principal: Principal,
+    pub user_id: UserId,
+    pub username: String,
+    pub referred_by: Option<UserId>,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
