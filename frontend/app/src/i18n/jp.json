@@ -815,5 +815,6 @@
     "privateGroupInfo": "このグループは、あなたが招待した人に限定されます。",
     "invited": "招待された",
     "tapForReferralLink": "タップして個人紹介リンクをコピーします",
-    "deleteMessageForMe": "削除してください"
+    "deleteMessageForMe": "削除してください",
+    "whatsHotButton": "注目のグループを発見する"
 }

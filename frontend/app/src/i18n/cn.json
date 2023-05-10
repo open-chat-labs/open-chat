@@ -815,5 +815,6 @@
     "privateGroupInfo": "该组仅限于您邀请的人员。",
     "invited": "受邀",
     "tapForReferralLink": "点击复制您的个人推荐链接",
-    "deleteMessageForMe": "帮我删除"
+    "deleteMessageForMe": "帮我删除",
+    "whatsHotButton": "发现热门群体"
 }
