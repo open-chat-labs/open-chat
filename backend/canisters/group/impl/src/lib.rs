@@ -323,16 +323,14 @@ impl Data {
         }
     }
 
-    pub fn min_visible_event_index(&self, caller: Principal, invite_code: Option<u64>) -> Option<EventIndex> {
+    pub fn min_visible_event_index(&self, caller: Principal) -> Option<EventIndex> {
         match self.participants.get_by_principal(&caller) {
             Some(p) => Some(p.min_visible_event_index()),
             None => {
-                if (self.is_public && self.history_visible_to_new_joiners) || self.is_invite_code_valid(invite_code) {
+                if self.is_public && self.history_visible_to_new_joiners {
                     Some(EventIndex::default())
                 } else {
-                    self.invited_users
-                        .get(&caller)
-                        .map(|invitation| invitation.min_visible_event_index)
+                    None
                 }
             }
         }
