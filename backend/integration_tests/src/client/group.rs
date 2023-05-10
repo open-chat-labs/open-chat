@@ -125,7 +125,6 @@ pub mod happy_path {
             &group_canister::events_by_index::Args {
                 thread_root_message_index: None,
                 events,
-                invite_code: None,
                 latest_client_event_index: None,
             },
         );
