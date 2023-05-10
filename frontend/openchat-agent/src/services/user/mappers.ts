@@ -711,6 +711,7 @@ export function initialStateResponse(candid: ApiInitialStateResponse): InitialSt
 export function getUpdatesResponse(candid: ApiUpdatesResponse): UpdatesResponse {
     if ("Success" in candid) {
         return {
+            kind: "success",
             timestamp: candid.Success.timestamp,
             directChatsAdded: candid.Success.direct_chats_added.map(directChatSummary),
             directChatsUpdated: candid.Success.direct_chats_updated.map(directChatSummaryUpdates),
@@ -725,6 +726,12 @@ export function getUpdatesResponse(candid: ApiUpdatesResponse): UpdatesResponse 
             ),
             pinnedChats: optional(candid.Success.pinned_chats, (p) => p.map((c) => c.toString())),
         };
+    }
+    
+    if ("SuccessNoUpdates" in candid) {
+        return {
+            kind: "success_no_updates"
+        }
     }
 
     throw new Error(`Unexpected ApiUpdatesResponse type received: ${candid}`);
