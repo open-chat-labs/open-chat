@@ -442,13 +442,6 @@ export const idlFactory = ({ IDL }) => {
     'MessageHardDeleted' : IDL.Null,
     'MessageNotDeleted' : IDL.Null,
   });
-  const DisableInviteCodeArgs = IDL.Record({ 'correlation_id' : IDL.Nat64 });
-  const DisableInviteCodeResponse = IDL.Variant({
-    'ChatFrozen' : IDL.Null,
-    'NotAuthorized' : IDL.Null,
-    'Success' : IDL.Null,
-    'UserSuspended' : IDL.Null,
-  });
   const EditMessageArgs = IDL.Record({
     'content' : MessageContent,
     'correlation_id' : IDL.Nat64,
@@ -462,16 +455,8 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Null,
     'UserSuspended' : IDL.Null,
   });
-  const EnableInviteCodeArgs = IDL.Record({ 'correlation_id' : IDL.Nat64 });
-  const EnableInviteCodeResponse = IDL.Variant({
-    'ChatFrozen' : IDL.Null,
-    'NotAuthorized' : IDL.Null,
-    'Success' : IDL.Record({ 'code' : IDL.Nat64 }),
-    'UserSuspended' : IDL.Null,
-  });
   const EventsArgs = IDL.Record({
     'latest_client_event_index' : IDL.Opt(EventIndex),
-    'invite_code' : IDL.Opt(IDL.Nat64),
     'max_messages' : IDL.Nat32,
     'max_events' : IDL.Nat32,
     'ascending' : IDL.Bool,
@@ -719,22 +704,15 @@ export const idlFactory = ({ IDL }) => {
   });
   const EventsByIndexArgs = IDL.Record({
     'latest_client_event_index' : IDL.Opt(EventIndex),
-    'invite_code' : IDL.Opt(IDL.Nat64),
     'events' : IDL.Vec(EventIndex),
     'thread_root_message_index' : IDL.Opt(MessageIndex),
   });
   const EventsWindowArgs = IDL.Record({
     'latest_client_event_index' : IDL.Opt(EventIndex),
     'mid_point' : MessageIndex,
-    'invite_code' : IDL.Opt(IDL.Nat64),
     'max_messages' : IDL.Nat32,
     'max_events' : IDL.Nat32,
     'thread_root_message_index' : IDL.Opt(MessageIndex),
-  });
-  const InviteCodeArgs = IDL.Record({});
-  const InviteCodeResponse = IDL.Variant({
-    'NotAuthorized' : IDL.Null,
-    'Success' : IDL.Record({ 'code' : IDL.Opt(IDL.Nat64) }),
   });
   const LocalUserIndexArgs = IDL.Record({});
   const LocalUserIndexResponse = IDL.Variant({ 'Success' : CanisterId });
@@ -750,7 +728,6 @@ export const idlFactory = ({ IDL }) => {
   const MessagesByMessageIndexArgs = IDL.Record({
     'latest_client_event_index' : IDL.Opt(EventIndex),
     'messages' : IDL.Vec(MessageIndex),
-    'invite_code' : IDL.Opt(IDL.Nat64),
     'thread_root_message_index' : IDL.Opt(MessageIndex),
   });
   const MessageEventWrapper = IDL.Record({
@@ -783,7 +760,6 @@ export const idlFactory = ({ IDL }) => {
     'Success' : PushEventResult,
     'UserSuspended' : IDL.Null,
   });
-  const PublicSummaryArgs = IDL.Record({ 'invite_code' : IDL.Opt(IDL.Nat64) });
   const GovernanceProposalsSubtype = IDL.Record({
     'is_nns' : IDL.Bool,
     'governance_canister_id' : CanisterId,
@@ -895,14 +871,6 @@ export const idlFactory = ({ IDL }) => {
     'UserSuspended' : IDL.Null,
     'SuccessV2' : PushEventResult,
   });
-  const ResetInviteCodeArgs = IDL.Record({ 'correlation_id' : IDL.Nat64 });
-  const ResetInviteCodeResponse = IDL.Variant({
-    'ChatFrozen' : IDL.Null,
-    'NotAuthorized' : IDL.Null,
-    'Success' : IDL.Record({ 'code' : IDL.Nat64 }),
-    'UserSuspended' : IDL.Null,
-  });
-  const RulesArgs = IDL.Record({ 'invite_code' : IDL.Opt(IDL.Nat64) });
   const RulesSuccess = IDL.Record({ 'rules' : IDL.Opt(IDL.Text) });
   const RulesResponse = IDL.Variant({
     'NotAuthorized' : IDL.Null,
@@ -1323,17 +1291,7 @@ export const idlFactory = ({ IDL }) => {
         [DeletedMessageResponse],
         ['query'],
       ),
-    'disable_invite_code' : IDL.Func(
-        [DisableInviteCodeArgs],
-        [DisableInviteCodeResponse],
-        [],
-      ),
     'edit_message' : IDL.Func([EditMessageArgs], [EditMessageResponse], []),
-    'enable_invite_code' : IDL.Func(
-        [EnableInviteCodeArgs],
-        [EnableInviteCodeResponse],
-        [],
-      ),
     'events' : IDL.Func([EventsArgs], [EventsResponse], ['query']),
     'events_by_index' : IDL.Func(
         [EventsByIndexArgs],
@@ -1341,7 +1299,6 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'events_window' : IDL.Func([EventsWindowArgs], [EventsResponse], ['query']),
-    'invite_code' : IDL.Func([InviteCodeArgs], [InviteCodeResponse], ['query']),
     'local_user_index' : IDL.Func(
         [LocalUserIndexArgs],
         [LocalUserIndexResponse],
@@ -1355,7 +1312,7 @@ export const idlFactory = ({ IDL }) => {
       ),
     'pin_message_v2' : IDL.Func([PinMessageArgs], [PinMessageV2Response], []),
     'public_summary' : IDL.Func(
-        [PublicSummaryArgs],
+        [EmptyArgs],
         [PublicSummaryResponse],
         ['query'],
       ),
@@ -1384,12 +1341,7 @@ export const idlFactory = ({ IDL }) => {
         [RemoveReactionResponse],
         [],
       ),
-    'reset_invite_code' : IDL.Func(
-        [ResetInviteCodeArgs],
-        [ResetInviteCodeResponse],
-        [],
-      ),
-    'rules' : IDL.Func([RulesArgs], [RulesResponse], ['query']),
+    'rules' : IDL.Func([EmptyArgs], [RulesResponse], ['query']),
     'search_messages' : IDL.Func(
         [SearchMessagesArgs],
         [SearchMessagesResponse],

@@ -1,6 +1,10 @@
-import type { InviteUsersResponse, JoinGroupResponse, ReportMessageResponse } from "openchat-shared";
+import type { InviteUsersResponse, JoinGroupResponse, RegisterUserResponse, ReportMessageResponse } from "openchat-shared";
 
 export interface ILocalUserIndexClient {
+    registerUser(
+        username: string,
+        referralCode: string | undefined
+    ): Promise<RegisterUserResponse>;
     inviteUsersToGroup(chatId: string, userIds: string[]): Promise<InviteUsersResponse>;
     joinGroup(chatId: string): Promise<JoinGroupResponse>;
     reportMessage(
