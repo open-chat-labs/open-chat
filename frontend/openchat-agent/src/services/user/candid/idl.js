@@ -1191,6 +1191,7 @@ export const idlFactory = ({ IDL }) => {
       'direct_chats_updated' : IDL.Vec(DirectChatSummaryUpdates),
       'pinned_chats' : IDL.Opt(IDL.Vec(ChatId)),
     }),
+    'SuccessNoUpdates' : IDL.Null,
   });
   const WithdrawCryptoArgs = IDL.Record({
     'withdrawal' : PendingCryptoTransaction,

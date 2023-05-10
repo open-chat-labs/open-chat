@@ -1267,7 +1267,8 @@ export type UpdatesV2Response = {
       'direct_chats_updated' : Array<DirectChatSummaryUpdates>,
       'pinned_chats' : [] | [Array<ChatId>],
     }
-  };
+  } |
+  { 'SuccessNoUpdates' : null };
 export interface User { 'username' : string, 'user_id' : UserId }
 export interface UserCanisterGroupChatSummary {
   'read_by_me_up_to' : [] | [MessageIndex],

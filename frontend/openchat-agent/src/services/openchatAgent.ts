@@ -903,6 +903,16 @@ export class OpenChatAgent extends EventTarget {
 
     async getUpdates(current: ChatStateFull): Promise<UpdatesResult> {
         const userResponse = await this.userClient.getUpdates(current.timestamp);
+
+        if (userResponse.kind === "success_no_updates") {
+            return {
+                state: current,
+                updatedEvents: {},
+                anyUpdates: false,
+                anyErrors: false
+            };
+        }
+
         const groupChatIds = current.groupChats
             .map((g) => g.chatId)
             .concat(userResponse.groupChatsAdded.map((g) => g.chatId));
