@@ -52,7 +52,7 @@ pub fn run() {
 async fn process_payment(pending_payment: PendingPayment, this_canister_id: CanisterId) {
     match make_payment(&pending_payment, this_canister_id).await {
         Ok((block_index, transaction_hash)) => {
-            mutate_state(|state| inform_referrer(&pending_payment, block_index, transaction_hash, state));
+            mutate_state(|state| send_oc_bot_messages(&pending_payment, block_index, transaction_hash, state));
         }
         Err(_) => {
             mutate_state(|state| {
@@ -97,7 +97,7 @@ async fn make_payment(
     Err(())
 }
 
-fn inform_referrer(
+fn send_oc_bot_messages(
     pending_payment: &PendingPayment,
     block_index: BlockIndex,
     transaction_hash: TransactionHash,
