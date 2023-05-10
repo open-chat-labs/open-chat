@@ -95,7 +95,7 @@ impl ReferralCodes {
         let mut metrics = HashMap::new();
 
         for details in self.codes.values() {
-            let ms: &mut ReferralTypeMetrics = metrics.entry(details.referral_type.clone()).or_default();
+            let ms: &mut ReferralTypeMetrics = metrics.entry(details.referral_type).or_default();
             ms.total += 1;
             if details.claimed.is_some() {
                 ms.claimed += 1;

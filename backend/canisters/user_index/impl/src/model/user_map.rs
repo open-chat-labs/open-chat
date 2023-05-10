@@ -240,7 +240,6 @@ impl UserMap {
         self.register(
             user.principal,
             user.user_id,
-            user.wasm_version,
             user.username.clone(),
             user.date_created,
             None,
@@ -305,9 +304,9 @@ mod tests {
         let user_id2: UserId = Principal::from_slice(&[3, 2]).into();
         let user_id3: UserId = Principal::from_slice(&[3, 3]).into();
 
-        user_map.register(principal1, user_id1, Version::new(0, 0, 0), username1.clone(), 1, None, false);
-        user_map.register(principal2, user_id2, Version::new(0, 0, 0), username2.clone(), 2, None, false);
-        user_map.register(principal3, user_id3, Version::new(0, 0, 0), username3.clone(), 3, None, false);
+        user_map.register(principal1, user_id1, username1.clone(), 1, None, false);
+        user_map.register(principal2, user_id2, username2.clone(), 2, None, false);
+        user_map.register(principal3, user_id3, username3.clone(), 3, None, false);
 
         let principal_to_user_id: Vec<_> = user_map
             .principal_to_user_id
@@ -344,7 +343,7 @@ mod tests {
 
         let user_id = Principal::from_slice(&[1, 1]).into();
 
-        user_map.register(principal, user_id, Version::new(0, 0, 0), username1, 1, None, false);
+        user_map.register(principal, user_id, username1, 1, None, false);
 
         if let Some(original) = user_map.get_by_principal(&principal) {
             let mut updated = original.clone();

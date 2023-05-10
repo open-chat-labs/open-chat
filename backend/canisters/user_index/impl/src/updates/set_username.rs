@@ -174,7 +174,7 @@ mod tests {
             username: "abcd".to_string(),
         };
         let result = set_username_impl(args, &mut runtime_state);
-        assert!(matches!(result, Response::UsernameTooShort(MIN_USERNAME_LENGTH)));
+        assert!(matches!(result, Response::UsernameTooShort(_)));
     }
 
     #[test]
@@ -196,33 +196,33 @@ mod tests {
             username: "abcdefghijklmnopqrstuvwxyz".to_string(),
         };
         let result = set_username_impl(args, &mut runtime_state);
-        assert!(matches!(result, Response::UsernameTooLong(MAX_USERNAME_LENGTH)));
+        assert!(matches!(result, Response::UsernameTooLong(_)));
     }
 
     #[test]
     fn valid_usernames() {
-        assert!(matches!(validate_username("abcde"), UsernameValidationResult::Ok));
-        assert!(matches!(validate_username("12345"), UsernameValidationResult::Ok));
-        assert!(matches!(validate_username("SNSABC"), UsernameValidationResult::Ok));
-        assert!(matches!(
-            validate_username("1_2_3_4_5_6_7_8_9_0_1_2_3"),
-            UsernameValidationResult::Ok
-        ));
+        assert!(matches!(validate_username("abcde"), Ok(_)));
+        assert!(matches!(validate_username("12345"), Ok(_)));
+        assert!(matches!(validate_username("SNSABC"), Ok(_)));
+        assert!(matches!(validate_username("1_2_3_4_5_6_7_8_9_0_1_2_3"), Ok(_)));
     }
 
     #[test]
     fn invalid_usernames() {
-        assert!(matches!(validate_username("abcde "), UsernameValidationResult::Invalid));
-        assert!(matches!(validate_username("ab cde"), UsernameValidationResult::Invalid));
-        assert!(matches!(validate_username("_abcde"), UsernameValidationResult::Invalid));
-        assert!(matches!(validate_username("abcde_"), UsernameValidationResult::Invalid));
-        assert!(matches!(validate_username("ab__cde"), UsernameValidationResult::Invalid));
-        assert!(matches!(validate_username("ab,cde"), UsernameValidationResult::Invalid));
-        assert!(matches!(validate_username("abcéd"), UsernameValidationResult::Invalid));
-        assert!(matches!(validate_username("abcṷd"), UsernameValidationResult::Invalid));
-        assert!(matches!(validate_username("abc王d"), UsernameValidationResult::Invalid));
-        assert!(matches!(validate_username("OpenChat_Bot"), UsernameValidationResult::Invalid));
-        assert!(matches!(validate_username("SNS1Bot"), UsernameValidationResult::Invalid));
-        assert!(matches!(validate_username("SNS2_B0T"), UsernameValidationResult::Invalid));
+        assert!(matches!(validate_username("abcde "), Err(UsernameValidationError::Invalid)));
+        assert!(matches!(validate_username("ab cde"), Err(UsernameValidationError::Invalid)));
+        assert!(matches!(validate_username("_abcde"), Err(UsernameValidationError::Invalid)));
+        assert!(matches!(validate_username("abcde_"), Err(UsernameValidationError::Invalid)));
+        assert!(matches!(validate_username("ab__cde"), Err(UsernameValidationError::Invalid)));
+        assert!(matches!(validate_username("ab,cde"), Err(UsernameValidationError::Invalid)));
+        assert!(matches!(validate_username("abcéd"), Err(UsernameValidationError::Invalid)));
+        assert!(matches!(validate_username("abcṷd"), Err(UsernameValidationError::Invalid)));
+        assert!(matches!(validate_username("abc王d"), Err(UsernameValidationError::Invalid)));
+        assert!(matches!(
+            validate_username("OpenChat_Bot"),
+            Err(UsernameValidationError::Invalid)
+        ));
+        assert!(matches!(validate_username("SNS1Bot"), Err(UsernameValidationError::Invalid)));
+        assert!(matches!(validate_username("SNS2_B0T"), Err(UsernameValidationError::Invalid)));
     }
 }

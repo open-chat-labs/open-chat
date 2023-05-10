@@ -23,7 +23,7 @@ fn c2c_notify_events_impl(args: Args, runtime_state: &mut RuntimeState) -> Respo
 }
 
 fn handle_event(event: Event, runtime_state: &mut RuntimeState) {
-    let caller: CanisterId = runtime_state.env.caller().into();
+    let caller: CanisterId = runtime_state.env.caller();
 
     match event {
         Event::UserRegistered(ev) => {
