@@ -82,14 +82,14 @@
                     <div class="what-is">
                         <div class="sub-title">What is ckBTC and how to use it?</div>
                         <p>
-                            ckBTC is a Bitcoin twin created by an Internet Computer smart contract
-                            that trustlessly and directly holds Bitcoin. ckBTC can be sent with 1
+                            ckBTC is a Bitcoin twin created by Internet Computer smart contracts
+                            that trustlessly and directly hold Bitcoin. ckBTC can be sent with 1-2
                             second finality and negligible fees.
                         </p>
                         <p>
                             <ArrowLink
                                 url={"https://internetcomputer.org/bitcoin-integration"}
-                                target={"_blank"}>Learn more</ArrowLink>
+                                target={"_blank"}>ckBTC in more depth</ArrowLink>
                         </p>
                     </div>
                 </section>
@@ -98,12 +98,6 @@
                     <div class="sub-title">More questions?</div>
                 </section>
 
-                <CollapsibleCard title={"How does it work?"}>
-                    <p>
-                        You will receive your 50,000 SATS deposited in your OpenChat wallet as
-                        ckBTC.
-                    </p>
-                </CollapsibleCard>
                 <CollapsibleCard title={"What is OpenChat?"}>
                     <p>
                         OpenChat is a decentralized chat service running 100% on-chain and governed
@@ -114,16 +108,21 @@
                         simple chat message (a transaction).
                     </p>
                 </CollapsibleCard>
-                <CollapsibleCard title={"What is ckBTC?"}>
+                <CollapsibleCard title={"What is Internet Identity?"}>
                     <p>
-                        ckBTC is a Bitcoin twin created by an Internet Computer smart contract that
-                        trustlessly and directly holds Bitcoin. ckBTC can be sent with 1 second
-                        finality and negligible fees.
+                        Tenderloin prosciutto bacon frankfurter andouille brisket shankle cupim
+                        turducken tail pork loin drumstick ribeye pancetta. Ground round burgdoggen
+                        alcatra short ribs sausage. Porchetta flank doner prosciutto fatback. Cupim
+                        pork belly chicken sausage beef ribs.
                     </p>
+                </CollapsibleCard>
+                <CollapsibleCard title={"What is the Internet Computer?"}>
                     <p>
-                        <ArrowLink
-                            url={"https://internetcomputer.org/bitcoin-integration"}
-                            target={"_blank"}>Learn more</ArrowLink>
+                        Bacon ipsum dolor amet strip steak cow meatloaf, swine tail kevin beef chuck
+                        ham turducken. Alcatra tongue pork belly sirloin, ribeye tail cupim meatloaf
+                        landjaeger short loin short ribs tri-tip brisket burgdoggen. Filet mignon
+                        turducken shoulder tail hamburger. Doner beef venison, meatloaf bresaola
+                        alcatra jerky.
                     </p>
                 </CollapsibleCard>
             </div>
