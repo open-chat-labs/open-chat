@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Short circuit without calling `ic0.time()` if there have been no updates ([#3539](https://github.com/open-ic/open-chat/pull/3539))
 - Short circuit query calls prior to calling `ic0.time()` where possible ([#3542](https://github.com/open-ic/open-chat/pull/3542))
+- Invited users can't see private group messages ([#3558](https://github.com/open-ic/open-chat/pull/3558))
 
 ## [[2.0.675](https://github.com/open-ic/open-chat/releases/tag/v2.0.675-group)] - 2023-04-29
 
