@@ -146,9 +146,3 @@ fn send_oc_bot_messages(
         }
     }
 }
-
-#[derive(Serialize)]
-struct Link {
-    url: String,
-    caption: String,
-}
