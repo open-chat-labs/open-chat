@@ -82,9 +82,9 @@
                     <div class="what-is">
                         <div class="sub-title">What is ckBTC and how to use it?</div>
                         <p>
-                            ckBTC is a Bitcoin twin created by Internet Computer smart contracts
-                            that trustlessly and directly hold Bitcoin. ckBTC can be sent with 1-2
-                            second finality and negligible fees.
+                            ckBTC is a bitcoin twin created by Canister Smart Contracts, running on
+                            the Internet Computer, that trustlessly and directly hold Bitcoin. ckBTC
+                            can be sent with 1-2 second finality and negligible fees.
                         </p>
                         <p>
                             <ArrowLink url={"https://internetcomputer.org/ckbtc"} target={"_blank"}
