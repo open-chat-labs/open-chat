@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Restart payments job if final payment in queue fails ([#3551](https://github.com/open-ic/open-chat/pull/3551))
 - Append a suffix when registering if username is taken ([#3553](https://github.com/open-ic/open-chat/pull/3553))
+- Register users via LocalUserIndex to improve speed ([#3557](https://github.com/open-ic/open-chat/pull/3557))
 
 ### Fixed
 
