@@ -30,7 +30,7 @@ fn accept_if_valid(runtime_state: &RuntimeState) {
             "make_private" => role.can_change_group_visibility(),
             "pin_message" | "pin_message_v2" => role.can_pin_messages(permissions),
             "remove_participant" => role.can_remove_members(permissions),
-            "send_message" => role.can_send_messages(permissions) || role.can_reply_in_thread(permissions),
+            "send_message" | "send_message_v2" => role.can_send_messages(permissions) || role.can_reply_in_thread(permissions),
             "unblock_user" => role.can_unblock_users(permissions),
             "unpin_message" => role.can_pin_messages(permissions),
             "update_group_v2" => role.can_update_group(permissions),
@@ -40,6 +40,7 @@ fn accept_if_valid(runtime_state: &RuntimeState) {
             | "change_role"
             | "claim_prize"
             | "edit_message"
+            | "edit_message_v2"
             | "put_chunk"
             | "register_poll_vote"
             | "register_proposal_vote" => true,
