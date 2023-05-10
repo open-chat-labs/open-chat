@@ -43,6 +43,7 @@ pub mod happy_path {
             response => panic!("'current_user' error: {response:?}"),
         }
     }
+
     pub fn register_user(env: &mut StateMachine, canister_id: CanisterId) -> User {
         register_user_with_referrer(env, canister_id, None)
     }
