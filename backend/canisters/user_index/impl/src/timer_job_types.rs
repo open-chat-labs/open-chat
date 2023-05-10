@@ -203,7 +203,7 @@ impl Job for JoinUserToGroup {
                     principal: u.principal,
                     invite_code: None,
                     correlation_id: 0,
-                    is_platform_moderator: false,
+                    is_platform_moderator: state.data.platform_moderators.contains(&self.user_id),
                 })
         }) {
             ic_cdk::spawn(join_group(self.group_id, args, self.attempt));
