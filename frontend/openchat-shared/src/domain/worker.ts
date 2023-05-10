@@ -57,6 +57,7 @@ import type {
     WithdrawCryptocurrencyResponse,
     ReportMessageResponse,
     InviteUsersResponse,
+    ResetInviteCodeResponse,
 } from "./chat";
 import type { BlobReference, StorageStatus } from "./data/data";
 import type { UpdateMarketMakerConfigArgs, UpdateMarketMakerConfigResponse } from "./marketMaker";
@@ -181,6 +182,7 @@ export type WorkerRequest =
     | GroupMessagesByMessageIndex
     | GetInviteCode
     | EnableInviteCode
+    | ResetInviteCode
     | DisableInviteCode    
     | CreateGroupChat
     | SetCachedMessageFromNotification
@@ -239,6 +241,12 @@ type EnableInviteCode = Request<{
     chatId: string;
 }> & {
     kind: "enableInviteCode";
+};
+
+type ResetInviteCode = Request<{
+    chatId: string;
+}> & {
+    kind: "resetInviteCode";
 };
 
 type GetInviteCode = Request<{
@@ -865,6 +873,7 @@ export type WorkerResponse =
     | Response<CreateGroupResponse>
     | Response<DisableInviteCodeResponse>
     | Response<EnableInviteCodeResponse>
+    | Response<ResetInviteCodeResponse>
     | Response<InviteCodeResponse>
     | Response<EventsResponse<Message>>
     | Response<WithdrawCryptocurrencyResponse>

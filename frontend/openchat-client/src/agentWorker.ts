@@ -101,6 +101,7 @@ import {
     ReportMessageResponse,
     InviteUsersResponse,
     DeclineInvitationResponse,
+    ResetInviteCodeResponse,
 } from "openchat-shared";
 import type { OpenChatConfig } from "./config";
 import { v4 } from "uuid";
@@ -1196,6 +1197,15 @@ export class OpenChatAgentWorker extends EventTarget {
     disableInviteCode(chatId: string): Promise<DisableInviteCodeResponse> {
         return this.sendRequest({
             kind: "disableInviteCode",
+            payload: {
+                chatId,
+            },
+        });
+    }
+
+    resetInviteCode(chatId: string): Promise<ResetInviteCodeResponse> {
+        return this.sendRequest({
+            kind: "resetInviteCode",
             payload: {
                 chatId,
             },

@@ -3223,7 +3223,7 @@ export class OpenChat extends EventTarget {
     }
 
     resetInviteCode(chatId: string): Promise<ResetInviteCodeResponse> {
-        return this.resetInviteCode(chatId);
+        return this.api.resetInviteCode(chatId);
     }
 
     updateGroup(

@@ -1118,6 +1118,17 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
                     .catch(sendError(correlationId));
                 break;
 
+            case "resetInviteCode":
+                agent
+                    .resetInviteCode(payload.chatId)
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
             case "createGroupChat":
                 agent
                     .createGroupChat(payload.candidate)
