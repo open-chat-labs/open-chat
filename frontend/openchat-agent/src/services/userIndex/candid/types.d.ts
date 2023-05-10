@@ -861,8 +861,7 @@ export interface ReferralStats {
 }
 export type ReferralType = { 'User' : null } |
   { 'BtcMiami' : null };
-export type RegisterUserResponse = { 'UsernameTaken' : null } |
-  { 'UsernameTooShort' : number } |
+export type RegisterUserResponse = { 'UsernameTooShort' : number } |
   { 'UsernameInvalid' : null } |
   { 'AlreadyRegistered' : null } |
   { 'UserLimitReached' : null } |
@@ -1050,6 +1049,8 @@ export interface UserArgs {
   'user_id' : [] | [UserId],
 }
 export type UserId = CanisterId;
+export type UserRegistrationCanisterResponse = { 'Success' : CanisterId } |
+  { 'NewRegistrationsClosed' : null };
 export type UserResponse = { 'Success' : UserSummary } |
   { 'UserNotFound' : null };
 export interface UserSummary {
@@ -1160,5 +1161,9 @@ export interface _SERVICE {
   'suspend_user' : ActorMethod<[SuspendUserArgs], SuspendUserResponse>,
   'unsuspend_user' : ActorMethod<[UnsuspendUserArgs], UnsuspendUserResponse>,
   'user' : ActorMethod<[UserArgs], UserResponse>,
+  'user_registration_canister' : ActorMethod<
+    [EmptyArgs],
+    UserRegistrationCanisterResponse
+  >,
   'users' : ActorMethod<[UsersArgs], UsersResponse>,
 }

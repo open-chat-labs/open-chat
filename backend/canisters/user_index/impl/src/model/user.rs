@@ -3,7 +3,7 @@ use crate::model::diamond_membership_details::DiamondMembershipDetailsInternal;
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use types::{
-    CyclesTopUp, Milliseconds, PartialUserSummary, PhoneNumber, RegistrationFee, TimestampMillis, UserId, UserSummary, Version,
+    CyclesTopUp, Milliseconds, PartialUserSummary, PhoneNumber, RegistrationFee, TimestampMillis, UserId, UserSummary,
 };
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -13,7 +13,6 @@ pub struct User {
     pub username: String,
     pub date_created: TimestampMillis,
     pub date_updated: TimestampMillis,
-    pub wasm_version: Version,
     pub upgrade_in_progress: bool,
     pub cycle_top_ups: Vec<CyclesTopUp>,
     pub avatar_id: Option<u128>,
@@ -51,7 +50,6 @@ impl User {
         user_id: UserId,
         username: String,
         now: TimestampMillis,
-        wasm_version: Version,
         referred_by: Option<UserId>,
         is_bot: bool,
     ) -> User {
@@ -61,7 +59,6 @@ impl User {
             username,
             date_created: now,
             date_updated: now,
-            wasm_version,
             upgrade_in_progress: false,
             cycle_top_ups: Vec::new(),
             avatar_id: None,
@@ -130,7 +127,6 @@ impl Default for User {
             username: String::new(),
             date_created: 0,
             date_updated: 0,
-            wasm_version: Version::new(0, 0, 0),
             upgrade_in_progress: false,
             cycle_top_ups: Vec::new(),
             avatar_id: None,

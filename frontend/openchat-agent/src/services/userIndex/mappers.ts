@@ -35,6 +35,7 @@ import type {
     ApiSuspensionAction,
     ApiSuspensionDetails,
     ApiUnsuspendUserResponse,
+    ApiUserRegistrationCanisterResponse,
     ApiUsersResponse,
     ApiUserSummary,
 } from "./candid/idl";
@@ -92,6 +93,13 @@ export function userSummary(candid: ApiUserSummary, timestamp: bigint): UserSumm
         suspended: candid.suspended,
         diamond: candid.diamond_member,
     };
+}
+
+export function userRegistrationCanisterResponse(candid: ApiUserRegistrationCanisterResponse): string {
+    if ("Success" in candid) {
+        return candid.Success.toString();
+    }
+    throw new Error(`Unexpected ApiUserRegistrationCanisterResponse type received: ${candid}`)
 }
 
 export function registerUserResponse(candid: ApiRegisterUserResponse): RegisterUserResponse {

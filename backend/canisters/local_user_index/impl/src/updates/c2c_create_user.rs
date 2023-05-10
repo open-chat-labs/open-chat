@@ -14,6 +14,10 @@ use utils::consts::{CREATE_CANISTER_CYCLES_FEE, MIN_CYCLES_BALANCE};
 #[update_msgpack(guard = "caller_is_user_index_canister")]
 #[trace]
 async fn c2c_create_user(args: Args) -> Response {
+    create_user(args).await
+}
+
+pub(crate) async fn create_user(args: Args) -> Response {
     let prepare_ok = match mutate_state(|state| prepare(&args, state)) {
         Err(response) => return response,
         Ok(ok) => ok,
