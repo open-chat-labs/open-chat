@@ -126,40 +126,6 @@ impl RuntimeState {
         jobs::make_pending_payments::start_job_if_required(self);
     }
 
-    pub fn populate_user_referral_leaderboard(&mut self) {
-        // 2023-02-09
-        let diamond_start = 1675900800000;
-
-        for user in self.data.users.iter() {
-            if let Some(referred_by) = user.referred_by {
-                if let Some(referrer) = self.data.users.get_by_user_id(&referred_by) {
-                    if referrer.diamond_membership_details.is_active(user.date_created) {
-                        self.data
-                            .user_referral_leaderboards
-                            .add_referral(referred_by, user.date_created);
-
-                        if user.diamond_membership_details.payments().is_empty()
-                            && user.diamond_membership_details.has_ever_been_diamond_member()
-                        {
-                            self.data
-                                .user_referral_leaderboards
-                                .add_reward(referred_by, true, 75_000_000, diamond_start);
-                        } else {
-                            for (index, payment) in user.diamond_membership_details.payments().iter().enumerate() {
-                                self.data.user_referral_leaderboards.add_reward(
-                                    referred_by,
-                                    index == 0,
-                                    payment.amount_e8s / 2,
-                                    payment.timestamp,
-                                );
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
     pub fn metrics(&self) -> Metrics {
         let now = self.env.now();
         let canister_upgrades_metrics = self.data.canisters_requiring_upgrade.metrics();
@@ -224,7 +190,6 @@ struct Data {
     pub timer_jobs: TimerJobs<TimerJob>,
     pub neuron_controllers_for_initial_airdrop: HashMap<UserId, Principal>,
     pub internet_identity_canister_id: CanisterId,
-    #[serde(skip_deserializing)]
     pub user_referral_leaderboards: UserReferralLeaderboards,
     pub platform_moderators_group: Option<ChatId>,
 }
