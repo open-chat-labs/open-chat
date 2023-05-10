@@ -6,7 +6,6 @@ use ic_cdk_timers::TimerId;
 use ic_icrc1::Account;
 use ic_ledger_types::{BlockIndex, Tokens};
 use ledger_utils::sns::transaction_hash;
-use serde::Serialize;
 use std::cell::Cell;
 use std::time::Duration;
 use tracing::{error, trace};
@@ -15,8 +14,6 @@ use types::{
     sns, CanisterId, CompletedCryptoTransaction, CryptoContent, CryptoTransaction, Cryptocurrency, CustomContent,
     MessageContent, TextContent, TransactionHash,
 };
-use user_canister::Event as UserEvent;
-use user_index_canister::Event as UserIndexEvent;
 use utils::consts::OPENCHAT_BOT_USER_ID;
 
 thread_local! {
@@ -134,15 +131,7 @@ fn send_oc_bot_messages(
         }),
     ];
 
-    if state.data.local_users.get(&user_id).is_some() {
-        for message in messages {
-            state.push_event_to_user(user_id, UserEvent::OpenChatBotMessage(Box::new(message)));
-        }
-    } else {
-        for message in messages {
-            state.push_event_to_user_index(UserIndexEvent::OpenChatBotMessage(Box::new(
-                user_index_canister::OpenChatBotMessage { user_id, message },
-            )));
-        }
+    for message in messages {
+        state.push_oc_bot_message_to_user(user_id, message);
     }
 }

@@ -8,7 +8,9 @@ use model::local_user_map::LocalUserMap;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashMap;
-use types::{CanisterId, CanisterWasm, ChatId, Cycles, ReferralType, TimestampMillis, Timestamped, UserId, Version};
+use types::{
+    CanisterId, CanisterWasm, ChatId, Cycles, MessageContent, ReferralType, TimestampMillis, Timestamped, UserId, Version,
+};
 use user_canister::Event as UserEvent;
 use user_index_canister::Event as UserIndexEvent;
 use utils::canister;
@@ -75,6 +77,16 @@ impl RuntimeState {
             .user_index_event_sync_queue
             .push(self.data.user_index_canister_id, event);
         jobs::sync_events_to_user_index_canister::start_job_if_required(self);
+    }
+
+    pub fn push_oc_bot_message_to_user(&mut self, user_id: UserId, message: MessageContent) {
+        if self.data.local_users.get(&user_id).is_some() {
+            self.push_event_to_user(user_id, UserEvent::OpenChatBotMessage(Box::new(message)));
+        } else {
+            self.push_event_to_user_index(UserIndexEvent::OpenChatBotMessage(Box::new(
+                user_index_canister::OpenChatBotMessage { user_id, message },
+            )));
+        }
     }
 
     pub fn metrics(&self) -> Metrics {
