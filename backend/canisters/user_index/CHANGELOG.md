@@ -5,6 +5,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Restart payments job if final payment in queue fails ([#3551](https://github.com/open-ic/open-chat/pull/3551))
+- Append a suffix when registering if username is taken ([#3553](https://github.com/open-ic/open-chat/pull/3553))
+
+### Fixed
+
+- Fix the 'Top Referrers' leaderboard which has double counted referrals ([#3549](https://github.com/open-ic/open-chat/pull/3549))
+
 ## [[2.0.679](https://github.com/open-ic/open-chat/releases/tag/v2.0.679-user_index)] - 2023-05-08
 
 ### Changed

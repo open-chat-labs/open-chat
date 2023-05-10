@@ -26,6 +26,7 @@ fn accept_if_valid(runtime_state: &RuntimeState) {
             "add_reaction" | "remove_reaction" => role.can_react_to_messages(permissions),
             "block_user" => role.can_block_users(permissions),
             "delete_group" => role.can_delete_group(),
+            "enable_invite_code" | "disable_invite_code" | "reset_invite_code" => role.can_invite_users(permissions),
             "make_private" => role.can_change_group_visibility(),
             "pin_message" | "pin_message_v2" => role.can_pin_messages(permissions),
             "remove_participant" => role.can_remove_members(permissions),

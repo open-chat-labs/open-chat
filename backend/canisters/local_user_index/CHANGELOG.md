@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.681](https://github.com/open-ic/open-chat/releases/tag/v2.0.681-local_user_index)] - 2023-05-08
+
 ### Fixed
 
 - One time fix for currently pending group invites ([#3548](https://github.com/open-ic/open-chat/pull/3548))

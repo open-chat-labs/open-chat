@@ -522,6 +522,7 @@ type UpdatesV2Response =
             blocked_users_v2: opt vec UserId;
             pinned_chats: opt vec ChatId;
         };
+        SuccessNoUpdates;
     };
 
 type UserCanisterGroupChatSummary =

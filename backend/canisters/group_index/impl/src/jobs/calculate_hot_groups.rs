@@ -31,7 +31,7 @@ async fn hydrate_and_set_hot_groups(chat_ids: Vec<ChatId>) {
 async fn hydrate_hot_groups(chat_ids: Vec<ChatId>) -> Vec<CachedPublicGroupSummary> {
     use group_canister::public_summary::{Args, Response};
 
-    let args = Args {};
+    let args = Args { invite_code: None };
 
     let futures: Vec<_> = chat_ids
         .into_iter()

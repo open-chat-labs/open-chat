@@ -811,7 +811,10 @@ export type InitialStateResponse = {
     pinnedChats: string[];
 };
 
-export type UpdatesResponse = {
+export type UpdatesResponse = UpdatesSuccessResponse | SuccessNoUpdates;
+
+export type UpdatesSuccessResponse = {
+    kind: "success";
     timestamp: bigint;
     directChatsAdded: DirectChatSummary[];
     directChatsUpdated: DirectChatSummaryUpdates[];
@@ -822,6 +825,10 @@ export type UpdatesResponse = {
     blockedUsers: string[] | undefined;
     pinnedChats: string[] | undefined;
 };
+
+export type SuccessNoUpdates = {
+    kind: "success_no_updates"
+}
 
 export type UserCanisterGroupChatSummary = {
     chatId: string;
