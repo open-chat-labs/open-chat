@@ -188,6 +188,25 @@
                         on:deleteDirectChat />
                 {/each}
 
+                {#if userSearchResults !== undefined}
+                    <div class="search-matches">
+                        {#await userSearchResults then resp}
+                            {#if resp.length > 0}
+                                <h3 class="search-subtitle">{$_("users")}</h3>
+                                {#each resp as user, i (user.userId)}
+                                    <SearchResult
+                                        index={i}
+                                        avatarUrl={client.userAvatarUrl(user)}
+                                        on:click={() => chatWith(user.userId)}>
+                                        <h4 class="search-item-title">
+                                            @{user.username}
+                                        </h4>
+                                    </SearchResult>
+                                {/each}
+                            {/if}
+                        {/await}
+                    </div>
+                {/if}
                 {#if groupSearchResults !== undefined}
                     <div class="search-matches">
                         {#await groupSearchResults then resp}
@@ -204,25 +223,6 @@
                                         <p title={group.description} class="search-item-desc">
                                             {group.description}
                                         </p>
-                                    </SearchResult>
-                                {/each}
-                            {/if}
-                        {/await}
-                    </div>
-                {/if}
-                {#if userSearchResults !== undefined}
-                    <div class="search-matches">
-                        {#await userSearchResults then resp}
-                            {#if resp.length > 0}
-                                <h3 class="search-subtitle">{$_("users")}</h3>
-                                {#each resp as user, i (user.userId)}
-                                    <SearchResult
-                                        index={i}
-                                        avatarUrl={client.userAvatarUrl(user)}
-                                        on:click={() => chatWith(user.userId)}>
-                                        <h4 class="search-item-title">
-                                            @{user.username}
-                                        </h4>
                                     </SearchResult>
                                 {/each}
                             {/if}
