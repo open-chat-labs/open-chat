@@ -1,11 +1,18 @@
 <script lang="ts">
-    import { OPENCHAT_BOT_USER_ID } from "openchat-client";
+    import { OPENCHAT_BOT_USER_ID, OpenChat } from "openchat-client";
     import Launch from "../Launch.svelte";
     import CollapsibleCard from "./CollapsibleCard.svelte";
     import Card from "./Card.svelte";
     import Content from "../Content.svelte";
     import ArrowLink from "../../ArrowLink.svelte";
     import { mobileWidth } from "../../../stores/screenDimensions";
+    import { getContext, onMount } from "svelte";
+
+    const client = getContext<OpenChat>("client");
+
+    onMount(() => {
+        client.lastCryptoSent.set("ckbtc");
+    });
 </script>
 
 <div class="miami">
