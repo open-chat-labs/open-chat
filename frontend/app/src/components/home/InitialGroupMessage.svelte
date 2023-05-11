@@ -29,9 +29,9 @@
             values: { number: group.memberCount },
         })}
     </div>
-    {#if !group.historyVisibleToNewJoiners}
+    <!-- {#if !group.historyVisibleToNewJoiners}
         <div>{$_("group.historyPrivateMessage")}</div>
-    {/if}
+    {/if} -->
 </div>
 
 <style type="text/scss">
