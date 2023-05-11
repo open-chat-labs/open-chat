@@ -117,17 +117,26 @@ fn send_oc_bot_messages(
                 transaction_hash,
                 block_index,
             })),
-            caption: Some("Here are your 50,000 sats as [ckBTC](https://internetcomputer.org/ckbtc)!".to_string()),
+            caption: Some("Here are your 50,000 SATS as [ckBTC](https://internetcomputer.org/ckbtc)!".to_string()),
         }),
         MessageContent::Text(TextContent {
-            text: "No one to send your ckBTC to? Invite your friends to chat!".to_string(),
+            text: "🤔 No one to send your ckBTC to? Invite your friends to chat!".to_string(),
         }),
         MessageContent::Custom(CustomContent {
             kind: "user_referral_card".to_string(),
             data: Vec::new(),
         }),
         MessageContent::Text(TextContent {
-            text: "Find out more about OpenChat [here](/home)".to_string(),
+            text: format!(
+                "🤝 ...or meet new people and win prizes in the [BTC Miami](/{}) chat",
+                if state.data.test_mode { "ueyan-5iaaa-aaaaf-bifxa-cai" } else { "pbo6v-oiaaa-aaaar-ams6q-cai" }
+            ),
+        }),
+        MessageContent::Text(TextContent {
+            text: "🎲 ...or play Satoshi Dice with the [Satoshi Dice](/wznbi-caaaa-aaaar-anvea-cai) chat".to_string(),
+        }),
+        MessageContent::Text(TextContent {
+            text: "🧐 Find out more about OpenChat [here](/home)".to_string(),
         }),
     ];
 
