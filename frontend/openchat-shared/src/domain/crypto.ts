@@ -13,7 +13,6 @@ export type CryptocurrencyDetails = {
     transferFeesE8s: bigint;
     howToBuyUrl: string;
     disabled: boolean;
-    diamond: boolean;
     rootCanister: string | undefined;
 };
 
@@ -30,7 +29,6 @@ export const cryptoLookup: Record<Cryptocurrency, CryptocurrencyDetails> = {
         transferFeesE8s: BigInt(10_000),
         howToBuyUrl: "https://www.finder.com/uk/how-to-buy-internet-computer",
         disabled: false,
-        diamond: false,
         rootCanister: "r7inp-6aaaa-aaaaa-aaabq-cai",
     },
     sns1: {
@@ -40,7 +38,6 @@ export const cryptoLookup: Record<Cryptocurrency, CryptocurrencyDetails> = {
         howToBuyUrl:
             "https://3ezrj-4yaaa-aaaam-abcha-cai.ic0.app/sns/faq#how-do-you-get-sns-tokens",
         disabled: false,
-        diamond: true,
         rootCanister: "zxeu2-7aaaa-aaaaq-aaafa-cai",
     },
     ckbtc: {
@@ -49,7 +46,6 @@ export const cryptoLookup: Record<Cryptocurrency, CryptocurrencyDetails> = {
         transferFeesE8s: BigInt(10),
         howToBuyUrl: "https://www.finder.com/uk/how-to-buy-bitcoin",
         disabled: false,
-        diamond: true,
         rootCanister: undefined,
     },
     chat: {
@@ -58,7 +54,6 @@ export const cryptoLookup: Record<Cryptocurrency, CryptocurrencyDetails> = {
         transferFeesE8s: BigInt(100_000),
         howToBuyUrl: "https://oc.app?faq=chat_account",
         disabled: false,
-        diamond: false,
         rootCanister: "3e3x2-xyaaa-aaaaq-aaalq-cai",
     },
 };

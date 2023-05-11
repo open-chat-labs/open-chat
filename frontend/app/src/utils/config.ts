@@ -27,4 +27,5 @@ export const configKeys = {
     userCreated: "openchat_user_created",
     lowBandwidth: "openchat_lowbandwidth",
     shownAirdropPrompt: "openchat_shown_airdrop_prompt",
+    discoverHotGroupsDismissed: "openchat_discover_hot_groups_dismissed",
 };

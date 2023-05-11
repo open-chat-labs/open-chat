@@ -1,7 +1,7 @@
 <script lang="ts">
     import Button from "../Button.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
-    import { cryptoLookup, E8S_PER_TOKEN, PartialUserSummary } from "openchat-client";
+    import { cryptoLookup, PartialUserSummary } from "openchat-client";
     import type { Cryptocurrency, ChatSummary, OpenChat } from "openchat-client";
     import type { CryptocurrencyContent } from "openchat-shared";
     import TokenInput from "./TokenInput.svelte";
@@ -53,7 +53,6 @@
             : $cryptoBalance[token];
     $: valid = error === undefined && validAmount && receiver !== undefined && !tokenChanging;
     $: zero = $cryptoBalance[token] <= transferFees && !tokenChanging;
-    $: isDiamond = client.isDiamond;
 
     onMount(() => {
         // default the receiver to the other user in a direct chat
@@ -133,7 +132,7 @@
                 <div class="main-title">
                     <div>{$_("tokenTransfer.send")}</div>
                     <div>
-                        <CryptoSelector on:upgrade isDiamond={$isDiamond} bind:token />
+                        <CryptoSelector bind:token />
                     </div>
                 </div>
             </div>

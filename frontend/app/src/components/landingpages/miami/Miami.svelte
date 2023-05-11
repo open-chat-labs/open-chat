@@ -1,10 +1,18 @@
 <script lang="ts">
-    import { OPENCHAT_BOT_USER_ID } from "openchat-client";
+    import { OPENCHAT_BOT_USER_ID, OpenChat } from "openchat-client";
     import Launch from "../Launch.svelte";
     import CollapsibleCard from "./CollapsibleCard.svelte";
     import Card from "./Card.svelte";
-    import PoweredBy from "./PoweredBy.svelte";
     import Content from "../Content.svelte";
+    import ArrowLink from "../../ArrowLink.svelte";
+    import { mobileWidth } from "../../../stores/screenDimensions";
+    import { getContext, onMount } from "svelte";
+
+    const client = getContext<OpenChat>("client");
+
+    onMount(() => {
+        client.lastCryptoSent.set("ckbtc");
+    });
 </script>
 
 <div class="miami">
@@ -13,12 +21,54 @@
             <Content>
                 <div class="content">
                     <div class="container">
-                        <PoweredBy />
-                        <div class="headlines">
-                            <div class="sub-one">Claim your</div>
-                            <div class="sub-two">50,000 Sats</div>
-                            <div class="sub-three">& Send BTC at the speed of chat!</div>
+                        <div class="oc-logo">
+                            <div class="logo" />
+                            <span class="txt">OpenChat</span>
                         </div>
+                        <div class="hero-wrapper">
+                            <img
+                                class="hero"
+                                src="../assets/miami/hero.svg"
+                                alt="Send bitcoin at the speed of chat" />
+                            <div class="headlines">
+                                <div class="sub-one">Claim your</div>
+                                <div class="sub-two">50,000 SATS</div>
+                                <div class="sub-three">and send BTC at the speed of chat!</div>
+                                {#if !$mobileWidth}
+                                    <div class="launch-wrapper">
+                                        <Launch
+                                            text="Let's go!"
+                                            rootPath={`/${OPENCHAT_BOT_USER_ID}`}
+                                            on:login />
+                                    </div>
+                                {/if}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </Content>
+            {#if $mobileWidth}
+                <div class="launch-wrapper">
+                    <Launch text="Let's go!" rootPath={`/${OPENCHAT_BOT_USER_ID}`} on:login />
+                </div>
+            {/if}
+        </div>
+
+        <Content>
+            <div class="info">
+                <section>
+                    <h5 class="sub-title">Claiming your SATS is simple</h5>
+                    <p class="follow">Follow these 3 steps</p>
+                </section>
+                <section class="cards">
+                    <Card num={"01"} text={"Create an OpenChat account."} />
+                    <Card
+                        num={"02"}
+                        text={"In a matter of seconds your SATS will arrive in your OpenChat wallet as ckBTC."} />
+                    <Card num={"03"} text={"Send your SATS at the speed of chat 🚀"} />
+                </section>
+                <section class="bitcoin">
+                    <div class="img">
                         <img
                             src="../assets/ckbtc_nobackground.svg"
                             alt="ckBTC logo"
@@ -35,52 +85,59 @@
                             src="../assets/ckbtc_nobackground.svg"
                             alt="ckBTC logo"
                             class="ckbtc four" />
-                        <div class="launch-wrapper">
-                            <Launch
-                                text="Let's go!"
-                                rootPath={`/${OPENCHAT_BOT_USER_ID}`}
-                                on:login />
-                        </div>
                     </div>
-                </div>
-            </Content>
-        </div>
+                    <div class="what-is">
+                        <div class="sub-title">What is ckBTC and how to use it?</div>
+                        <p>
+                            ckBTC is a bitcoin twin created by Canister Smart Contracts, running on
+                            the Internet Computer, that trustlessly and directly hold Bitcoin. ckBTC
+                            can be sent with 1-2 second finality and negligible fees.
+                        </p>
+                        <p>
+                            <ArrowLink url={"https://internetcomputer.org/ckbtc"} target={"_blank"}
+                                >ckBTC in more depth</ArrowLink>
+                        </p>
+                    </div>
+                </section>
 
-        <Content>
-            <div class="info">
                 <section>
-                    <h5 class="sub-title">Claiming your sats is simple</h5>
-                    <p>Follow these 3 steps</p>
+                    <div class="sub-title">More questions?</div>
                 </section>
-                <section class="cards">
-                    <Card num={1} text={"Create an OpenChat account."} />
-                    <Card
-                        num={2}
-                        text={"In a matter of seconds your sats will arrive in your OpenChat wallet as ckBTC."} />
-                    <Card num={3} text={"Send your sats at the speed of chat 🚀"} />
-                </section>
-                <CollapsibleCard title={"How does it work?"}>
-                    <p>
-                        You will receive your 50,000 sats deposited in your OpenChat wallet as
-                        ckBTC.
-                    </p>
-                </CollapsibleCard>
+
                 <CollapsibleCard title={"What is OpenChat?"}>
                     <p>
-                        OpenChat is the world’s first decentralized chat service running 100%
-                        on-chain and governed by a DAO.
+                        OpenChat is a decentralized chat service running 100% on-chain and governed
+                        by a DAO.
                     </p>
                     <p>
-                        OpenChat also doubles as a crypto wallet enabling you to send crypto to your
-                        friends with a simple chat message. You can also send your sats to any
-                        external Bitcoin address anytime!
+                        OpenChat also doubles as a crypto wallet enabling you to send crypto with a
+                        simple chat message (a transaction).
                     </p>
                 </CollapsibleCard>
-                <CollapsibleCard title={"What is ckBTC?"}>
+                <CollapsibleCard title={"What is Internet Identity?"}>
                     <p>
-                        ckBTC is “Bitcoin twin” on the Internet Computer blockchain that is backed
-                        1:1 by Bitcoin held 100% on-chain. It offers fast, low fees and fully
-                        on-chain transactions for Bitcoin on the ICP blockchain.
+                        Internet Identity is a cryptographic authentication framework used to
+                        securely connect to many of the Canister Smart Contract dApps running on the
+                        Internet Computer. It combines the self sovereignty and permissionless
+                        aspects of public/private key authentication with the convenience and safety
+                        features of a typical Web2 login experience.
+                    </p>
+                    <p>
+                        <ArrowLink
+                            url={"https://internetcomputer.org/internet-identity"}
+                            target={"_blank"}>More on Internet Identity</ArrowLink>
+                    </p>
+                </CollapsibleCard>
+                <CollapsibleCard title={"What is the Internet Computer?"}>
+                    <p>
+                        The Internet Computer is a general-purpose blockchain that reimagines the
+                        internet as a World Computer. An infinite Canister Smart Contract platform
+                        capable of running almost any online system or service 100% on chain without
+                        the need for traditional IT such as cloud computing services.
+                    </p>
+                    <p>
+                        <ArrowLink url={"https://internetcomputer.org"} target={"_blank"}
+                            >Learn about the Internet Computer</ArrowLink>
                     </p>
                 </CollapsibleCard>
             </div>
@@ -89,9 +146,20 @@
 </div>
 
 <style type="text/scss">
+    $purple: #4e27c7;
+    $gradient: linear-gradient(
+        32deg,
+        rgba(228, 30, 152, 1) 0%,
+        rgba(127, 99, 182, 1) 23%,
+        rgba(56, 72, 223, 1) 50%,
+        rgba(127, 99, 182, 1) 82%,
+        rgba(243, 143, 40, 1) 100%
+    );
+
     :global(.miami .layout .launch) {
         width: 100%;
-        background-color: #1b1c21 !important;
+        background-color: #fff !important;
+        color: $purple;
     }
 
     .miami {
@@ -108,91 +176,98 @@
 
         .container {
             position: relative;
+
+            .oc-logo {
+                display: flex;
+                gap: $sp3;
+                align-items: center;
+
+                .logo {
+                    background-image: url("../assets/spinner.svg");
+                    width: 44px;
+                    height: 44px;
+                }
+
+                .txt {
+                    @include font(bold, normal, fs-160, 40);
+                }
+            }
         }
 
         .main {
-            overflow: hidden;
-            background-color: #4e27c7;
-            background: rgb(243, 143, 40);
-            background: linear-gradient(
-                32deg,
-                rgba(228, 30, 152, 1) 0%,
-                rgba(127, 99, 182, 1) 23%,
-                rgba(56, 72, 223, 1) 50%,
-                rgba(127, 99, 182, 1) 82%,
-                rgba(243, 143, 40, 1) 100%
-            );
+            background: $gradient;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-size: contain;
+            position: relative;
 
-            padding: toRem(40) $sp4;
-            .headlines {
-                margin-top: toRem(80);
-                margin-bottom: toRem(40);
-                position: relative;
-                z-index: 1;
-
-                .sub-one {
-                    @include font(medium, normal, fs-100, 22);
-                    margin-bottom: $sp4;
-                }
-                .sub-two {
-                    @include font(bold, normal, fs-240, 68);
-                    margin-bottom: $sp4;
-                }
-                .sub-three {
-                    @include font(medium, normal, fs-180, 38);
-                    max-width: 350px;
-
-                    @include mobile() {
-                        max-width: unset;
-                    }
-                }
-            }
-            @mixin ckbtclogo($size, $opacity, $top, $left, $bottom, $right, $filter) {
-                width: $size;
-                height: $size;
-                opacity: $opacity;
-                top: $top;
-                left: $left;
-                bottom: $bottom;
-                right: $right;
-                filter: $filter;
-                position: absolute;
-            }
-            .ckbtc {
-                &.one {
-                    @include ckbtclogo(130px, 0.3, 25%, unset, unset, 10%, none);
-                }
-
-                &.two {
-                    @include ckbtclogo(80px, 0.3, unset, 38%, 15%, unset, blur(3px));
-                }
-
-                &.three {
-                    @include ckbtclogo(60px, 0.3, 25%, unset, unset, 24%, blur(3px));
-                }
-
-                &.four {
-                    @include ckbtclogo(80px, 0.3, unset, unset, 15%, 0%, blur(3px));
-                }
+            .hero-wrapper {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                grid-template-areas: "headlines image";
+                gap: $sp6;
+                align-items: center;
 
                 @include mobile() {
-                    &.two {
-                        @include ckbtclogo(80px, 0.3, unset, -15%, 4%, unset, blur(3px));
+                    gap: 0;
+                    grid-template-columns: 1fr;
+                    grid-template-areas:
+                        "image"
+                        "headlines";
+                }
+
+                .hero {
+                    grid-area: image;
+                    height: 100%;
+                    position: relative;
+
+                    @include size-below(lg) {
+                        right: -50px;
                     }
 
-                    &.three {
-                        @include ckbtclogo(60px, 0.3, 18%, unset, unset, 41%, blur(3px));
+                    @include mobile() {
+                        left: toRem(35);
+                    }
+                }
+
+                .headlines {
+                    grid-area: headlines;
+                    margin-bottom: toRem(30);
+                    position: relative;
+                    z-index: 1;
+
+                    .sub-one {
+                        @include font(medium, normal, fs-160, 38);
+                        margin-bottom: $sp4;
+                    }
+                    .sub-two {
+                        @include font(bold, normal, fs-240, 68);
+                        margin-bottom: $sp4;
+                    }
+                    .sub-three {
+                        @include font(medium, normal, fs-160, 38);
+                        max-width: 350px;
+                        margin-bottom: $sp5;
+
+                        @include mobile() {
+                            max-width: unset;
+                            margin-bottom: $sp4;
+                        }
                     }
                 }
             }
+
+            padding: $sp4;
             .launch-wrapper {
                 width: 230px;
                 border-radius: $sp2;
                 text-align: center;
-                position: relative;
+                bottom: -36px;
 
                 @include mobile() {
+                    position: absolute;
                     width: 100%;
+                    width: calc(100% - 32px);
                 }
             }
         }
@@ -204,24 +279,82 @@
 
             @include lp-content-padding(220, 24);
 
-            padding-top: toRem(40) !important;
+            padding-top: toRem(100) !important;
 
             section {
-                margin-bottom: $sp5;
+                margin-bottom: $sp7;
             }
 
             p {
                 margin-bottom: $sp4;
             }
 
+            .bitcoin {
+                display: grid;
+                grid-template-columns: 2fr 3fr;
+                gap: $sp6;
+                align-items: center;
+
+                @include mobile() {
+                    grid-template-columns: 1fr;
+                }
+
+                .img {
+                    background: $gradient;
+                    position: relative;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    height: 300px;
+                    border-radius: $sp3;
+                    overflow: hidden;
+
+                    .ckbtc {
+                        @mixin ckbtclogo($size, $opacity, $top, $left, $bottom, $right, $filter) {
+                            width: $size;
+                            height: $size;
+                            opacity: $opacity;
+                            top: $top;
+                            left: $left;
+                            bottom: $bottom;
+                            right: $right;
+                            filter: $filter;
+                            position: absolute;
+                        }
+                        &.one {
+                            width: 200px;
+                            height: 200px;
+                        }
+
+                        &.two {
+                            @include ckbtclogo(80px, 0.3, unset, -7%, 4%, unset, blur(3px));
+                        }
+
+                        &.three {
+                            @include ckbtclogo(60px, 0.3, 8%, 8%, unset, unset, blur(3px));
+                        }
+
+                        &.four {
+                            @include ckbtclogo(80px, 0.3, unset, unset, 8%, 0%, blur(3px));
+                        }
+                    }
+                }
+            }
+
+            .follow {
+                @include font(bold, normal, fs-130, 28);
+                color: #ad93ff;
+            }
+
             .sub-title {
-                @include font(bold, normal, fs-130, 29);
+                @include font(bold, normal, fs-160, 40);
                 color: var(--txt);
                 margin-bottom: $sp3;
             }
 
             .cards {
                 display: flex;
+                flex-direction: column;
                 gap: $sp5;
                 overflow: auto;
 

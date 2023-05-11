@@ -1,4 +1,5 @@
 <script lang="ts">
+    import Close from "svelte-material-icons/Close.svelte";
     import CurrentUser from "./CurrentUser.svelte";
     import Search from "../Search.svelte";
     import Loading from "../Loading.svelte";
@@ -20,6 +21,8 @@
     import ThreadPreviews from "./thread/ThreadPreviews.svelte";
     import ThreadsButton from "./ThreadsButton.svelte";
     import ChatsButton from "./ChatsButton.svelte";
+    import { iconSize } from "../../stores/iconSize";
+    import { discoverHotGroupsDismissed } from "../../stores/settings";
 
     const client = getContext<OpenChat>("client");
     const createdUser = client.user;
@@ -43,6 +46,10 @@
     $: userStore = client.userStore;
     $: user = $userStore[createdUser.userId];
     $: lowercaseSearch = searchTerm.toLowerCase();
+    $: showWhatsHot =
+        !$discoverHotGroupsDismissed &&
+        groupSearchResults === undefined &&
+        userSearchResults === undefined;
 
     function chatMatchesSearch(chat: ChatSummaryType): boolean {
         if (chat.kind === "group_chat") {
@@ -223,6 +230,15 @@
                     </div>
                 {/if}
             </div>
+            {#if showWhatsHot}
+                <div class="hot-groups" on:click={() => dispatch("whatsHot")}>
+                    <div class="flame">🔥</div>
+                    <div class="label">{$_("whatsHotButton")}</div>
+                    <div on:click={() => discoverHotGroupsDismissed.set(true)} class="close">
+                        <Close viewBox="0 -3 24 24" size={$iconSize} color={"var(--button-txt)"} />
+                    </div>
+                </div>
+            {/if}
         {/if}
     </div>
     <NotificationsBar />
@@ -233,6 +249,7 @@
         overflow: auto;
         flex: auto;
         @include nice-scrollbar();
+        position: relative;
     }
     .chat-summaries {
         overflow: auto;
@@ -270,5 +287,42 @@
         color: var(--txt-light);
         @include font(light, normal, fs-80);
         @include ellipsis();
+    }
+
+    .hot-groups {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        height: toRem(80);
+        border-top: 1px solid var(--bd);
+        border-bottom: 1px solid var(--bd);
+        padding: $sp4;
+        gap: toRem(12);
+        cursor: pointer;
+
+        @include mobile() {
+            padding: $sp3 $sp4;
+        }
+
+        .label {
+            flex: auto;
+        }
+
+        .close {
+            flex: 0 0 toRem(20);
+        }
+
+        .flame {
+            display: grid;
+            align-content: center;
+            @include font-size(fs-120);
+            text-align: center;
+            flex: 0 0 toRem(48);
+            height: toRem(48);
+            width: toRem(48);
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+        }
     }
 </style>

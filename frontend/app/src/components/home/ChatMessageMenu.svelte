@@ -94,11 +94,7 @@
     }
 
     function remindMe() {
-        if (!$isDiamond) {
-            dispatch("upgrade");
-        } else {
-            dispatch("remindMe");
-        }
+        dispatch("remindMe");
     }
 
     function cancelReminder() {

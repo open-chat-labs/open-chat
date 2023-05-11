@@ -25,6 +25,9 @@
     export let closeIcon: boolean = false;
     export let square: boolean = false;
 
+    // if your modal *definitely* overflows on mobile you might need to set height explicitly
+    export let overflows: boolean = false;
+
     let divElement: HTMLElement;
 
     $: useAlignTo = alignTo !== undefined && !$mobileWidth;
@@ -69,6 +72,7 @@
     class="modal-content"
     class:square
     class:large
+    class:overflows
     in:fade={{ duration: fadeDuration, delay: fadeDelay }}
     out:fade={{ duration: fadeDuration }}
     class:fixed-width={fixedWidth}
@@ -122,6 +126,9 @@
                 width: 100%;
                 max-height: calc(100% - 20px);
                 border-radius: $sp4 $sp4 0 0;
+            }
+            &.overflows {
+                height: 100%;
             }
         }
         @include size-above(sm) {
