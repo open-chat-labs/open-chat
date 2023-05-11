@@ -249,9 +249,7 @@ struct Data {
     pub pinned_messages: Vec<MessageIndex>,
     pub test_mode: bool,
     pub permissions: GroupPermissions,
-    #[serde(default)]
     pub invite_code: Option<u64>,
-    #[serde(default)]
     pub invite_code_enabled: bool,
     pub new_joiner_rewards: Option<NewJoinerRewards>,
     pub frozen: Timestamped<Option<FrozenGroupInfo>>,
