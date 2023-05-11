@@ -82,7 +82,7 @@
     <p>
         Before working on a substantial new feature or other change to OpenChat the dev team will
         describe their plan as a message in the new <Link path="n2qig-viaaa-aaaar-ahviq-cai"
-            >OpenChat Roadmap</Link> group. For now the group will be read-only for top-level messages
+            >OpenChat Governance</Link> group. For now the group will be read-only for top-level messages
         to stop noise but everyone will be able to post in threaded replies to discuss the proposed changes.
     </p>
     <p>
