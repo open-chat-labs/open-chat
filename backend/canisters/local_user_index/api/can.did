@@ -41,6 +41,27 @@ type InviteUsersToGroupResponse =
         InternalError: text;
     };
 
+type RegisterUserArgs =
+    record {
+        username: text;
+        referral_code: opt text;
+        public_key: blob;
+    };
+
+type RegisterUserResponse =
+    variant {
+        Success: UserId;
+        AlreadyRegistered;
+        UserLimitReached;
+        UsernameInvalid;
+        UsernameTooShort: nat16;
+        UsernameTooLong: nat16;
+        CyclesBalanceTooLow;
+        InternalError: text;
+        PublicKeyInvalid: text;
+        ReferralCodeInvalid;
+    };
+
 type ReportMessageArgs =
     record {
         chat_id: ChatId;
@@ -59,5 +80,6 @@ type ReportMessageResponse =
 service: {
     join_group: (JoinGroupArgs) -> (JoinGroupResponse);
     invite_users_to_group: (InviteUsersToGroupArgs) -> (InviteUsersToGroupResponse);
+    register_user: (RegisterUserArgs) -> (RegisterUserResponse);
     report_message: (ReportMessageArgs) -> (ReportMessageResponse);
 }

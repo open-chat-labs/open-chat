@@ -39,7 +39,7 @@
         @include font(bold, normal, fs-100, 28);
         background-color: var(--input-bg);
         border-radius: $sp2;
-        border-top: 2px solid $ckbtc;
+        border-top: 1px solid $ckbtc;
         color: var(--txt);
         font-weight: 700;
         display: flex;

@@ -5,10 +5,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.684](https://github.com/open-ic/open-chat/releases/tag/v2.0.684-user_index)] - 2023-05-10
+
+### Fixed
+
+- Fix incorrect calculation in backdated referral rewards ([#3562](https://github.com/open-ic/open-chat/pull/3562))
+
+## [[2.0.683](https://github.com/open-ic/open-chat/releases/tag/v2.0.683-user_index)] - 2023-05-10
+
 ### Changed
 
 - Restart payments job if final payment in queue fails ([#3551](https://github.com/open-ic/open-chat/pull/3551))
 - Append a suffix when registering if username is taken ([#3553](https://github.com/open-ic/open-chat/pull/3553))
+- Register users via LocalUserIndex to improve speed ([#3557](https://github.com/open-ic/open-chat/pull/3557))
 
 ### Fixed
 

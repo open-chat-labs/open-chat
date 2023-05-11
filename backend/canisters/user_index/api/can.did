@@ -1,5 +1,11 @@
 import "../../../libraries/types/can.did";
 
+type UserRegistrationCanisterResponse =
+    variant {
+        Success: CanisterId;
+        NewRegistrationsClosed;
+    };
+
 type RegisterUserV2Args =
     record {
         username: text;
@@ -345,6 +351,7 @@ type AddReferralCodesResponse =
     };
 
 service: {
+    user_registration_canister: (EmptyArgs) -> (UserRegistrationCanisterResponse) query;
     register_user_v2: (RegisterUserV2Args) -> (RegisterUserResponse);
 
     // This is used to set the initial username and subsequently to change it

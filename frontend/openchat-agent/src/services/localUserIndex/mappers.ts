@@ -3,6 +3,7 @@ import {
     GroupChatSummary,
     InviteUsersResponse,
     JoinGroupResponse,
+    RegisterUserResponse,
     ReportMessageResponse,
     UnsupportedValueError,
 } from "openchat-shared";
@@ -11,6 +12,7 @@ import type {
     ApiGroupCanisterGroupChatSummary,
     ApiInviteUsersResponse,
     ApiJoinGroupResponse,
+    ApiRegisterUserResponse,
     ApiReportMessageResponse,
 } from "./candid/idl";
 import { identity, optional } from "../../utils/mapping";
@@ -22,6 +24,51 @@ import {
     memberRole,
     message,
 } from "../common/chatMappers";
+
+export function registerUserResponse(candid: ApiRegisterUserResponse): RegisterUserResponse {
+    if ("UsernameTaken" in candid) {
+        return "username_taken";
+    }
+    if ("UsernameTooShort" in candid) {
+        return "username_too_short";
+    }
+    if ("UsernameInvalid" in candid) {
+        return "username_invalid";
+    }
+    if ("AlreadyRegistered" in candid) {
+        return "already_registered";
+    }
+    if ("UserLimitReached" in candid) {
+        return "user_limit_reached";
+    }
+    if ("UsernameTooLong" in candid) {
+        return "username_too_long";
+    }
+    if ("Success" in candid) {
+        return "success";
+    }
+    if ("NotSupported" in candid) {
+        return "not_supported";
+    }
+    if ("InternalError" in candid) {
+        return "internal_error";
+    }
+    if ("CyclesBalanceTooLow" in candid) {
+        return "cycles_balance_too_low";
+    }
+    if ("PublicKeyInvalid" in candid) {
+        return "public_key_invalid";
+    }
+    if ("ReferralCodeInvalid" in candid) {
+        return "referral_code_invalid";
+    }
+
+    if ("ReferralCodeInvalid" in candid) {
+        return "referral_code_invalid";
+    }
+
+    throw new UnsupportedValueError("Unexpected ApiRegisterUserResponse type received", candid);
+}
 
 export function reportMessageResponse(candid: ApiReportMessageResponse): ReportMessageResponse {
     if ("Success" in candid) {

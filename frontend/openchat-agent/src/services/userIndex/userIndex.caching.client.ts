@@ -72,6 +72,10 @@ export class CachingUserIndexClient implements IUserIndexClient {
         return this.client.getCurrentUser();
     }
 
+    userRegistrationCanister(): Promise<string> {
+        return this.client.userRegistrationCanister();
+    }
+
     registerUser(
         username: string,
         referralCode: string | undefined

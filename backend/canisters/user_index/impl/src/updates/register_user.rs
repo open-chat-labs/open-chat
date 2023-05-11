@@ -1,15 +1,12 @@
-use crate::model::pending_payments_queue::{PendingPayment, PendingPaymentReason};
-use crate::model::referral_codes::ReferralCode;
-use crate::timer_job_types::{JoinUserToGroup, TimerJob};
-use crate::updates::set_username::{validate_username, UsernameValidationResult};
 use crate::{mutate_state, RuntimeState, ONE_MB, USER_LIMIT};
 use candid::Principal;
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
 use local_user_index_canister::{Event, OpenChatBotMessage, UserRegistered, UsernameChanged};
 use storage_index_canister::add_or_update_users::UserConfig;
-use types::{CanisterId, Cryptocurrency, MessageContent, TextContent, UserId, Version};
+use types::{CanisterId, MessageContent, TextContent, UserId};
 use user_index_canister::register_user_v2::{Response::*, *};
+use utils::username_validation::{validate_username, UsernameValidationError};
 use x509_parser::prelude::FromDer;
 use x509_parser::x509::SubjectPublicKeyInfo;
 
@@ -31,9 +28,8 @@ async fn register_user_v2(args: Args) -> Response {
     // Check the username is valid and doesn't already exist then reserve it
     let PrepareOk {
         local_user_index_canister,
-        user_wasm_version,
         caller,
-        referral_code,
+        referred_by,
         openchat_bot_messages,
     } = match mutate_state(|state| prepare(&args, state)) {
         Ok(ok) => ok,
@@ -43,22 +39,14 @@ async fn register_user_v2(args: Args) -> Response {
     let c2c_create_user_args = local_user_index_canister::c2c_create_user::Args {
         principal: caller,
         username: args.username.clone(),
-        referred_by: referral_code.as_ref().and_then(|r| r.user()),
+        referred_by,
         openchat_bot_messages,
     };
 
     match local_user_index_canister_c2c_client::c2c_create_user(local_user_index_canister, &c2c_create_user_args).await {
         Ok(local_user_index_canister::c2c_create_user::Response::Success(user_id)) => {
             mutate_state(|state| {
-                commit(
-                    caller,
-                    args.username,
-                    user_wasm_version,
-                    user_id,
-                    referral_code,
-                    local_user_index_canister,
-                    state,
-                )
+                commit_registered_user(caller, args.username, user_id, referred_by, local_user_index_canister, state)
             });
             Success(user_id)
         }
@@ -72,14 +60,13 @@ async fn register_user_v2(args: Args) -> Response {
 struct PrepareOk {
     caller: Principal,
     local_user_index_canister: CanisterId,
-    user_wasm_version: Version,
-    referral_code: Option<ReferralCode>,
+    referred_by: Option<UserId>,
     openchat_bot_messages: Vec<MessageContent>,
 }
 
 fn prepare(args: &Args, runtime_state: &mut RuntimeState) -> Result<PrepareOk, Response> {
     let caller = runtime_state.env.caller();
-    let mut referral_code = None;
+    let mut referred_by = None;
 
     if let Err(error) = validate_public_key(caller, &args.public_key, runtime_state.data.internet_identity_canister_id) {
         return Err(PublicKeyInvalid(error));
@@ -94,41 +81,26 @@ fn prepare(args: &Args, runtime_state: &mut RuntimeState) -> Result<PrepareOk, R
     }
 
     if let Some(code) = &args.referral_code {
-        referral_code = match runtime_state.data.referral_codes.check(code) {
-            Some(t) => Some(t),
-            None => return Err(ReferralCodeInvalid),
-        }
+        referred_by = Principal::from_text(code).ok().map(UserId::from);
     }
 
     match validate_username(&args.username) {
-        UsernameValidationResult::TooShort(min_length) => return Err(UsernameTooShort(min_length)),
-        UsernameValidationResult::TooLong(max_length) => return Err(UsernameTooLong(max_length)),
-        UsernameValidationResult::Invalid => return Err(UsernameInvalid),
-        _ => {}
+        Ok(_) => {}
+        Err(UsernameValidationError::TooShort(min_length)) => return Err(UsernameTooShort(min_length)),
+        Err(UsernameValidationError::TooLong(max_length)) => return Err(UsernameTooLong(max_length)),
+        Err(UsernameValidationError::Invalid) => return Err(UsernameInvalid),
     };
 
     if let Some(local_user_index_canister) = runtime_state.data.local_index_map.index_for_new_user() {
-        let user_wasm_version = runtime_state.data.user_canister_wasm.version;
-        let openchat_bot_messages = if referral_code
-            .as_ref()
-            .filter(|c| matches!(c, ReferralCode::BtcMiami(_)))
-            .is_some()
-        {
-            vec![MessageContent::Text(TextContent {
-                text: "Congratulations!! Your sats are on their way....".to_string(),
-            })]
-        } else {
-            welcome_messages()
-                .into_iter()
-                .map(|t| MessageContent::Text(TextContent { text: t }))
-                .collect()
-        };
+        let openchat_bot_messages = welcome_messages()
+            .into_iter()
+            .map(|t| MessageContent::Text(TextContent { text: t }))
+            .collect();
 
         Ok(PrepareOk {
             local_user_index_canister,
-            user_wasm_version,
             caller,
-            referral_code,
+            referred_by,
             openchat_bot_messages,
         })
     } else {
@@ -136,17 +108,15 @@ fn prepare(args: &Args, runtime_state: &mut RuntimeState) -> Result<PrepareOk, R
     }
 }
 
-fn commit(
+pub(crate) fn commit_registered_user(
     caller: Principal,
     username: String,
-    wasm_version: Version,
     user_id: UserId,
-    referral_code: Option<ReferralCode>,
+    referred_by: Option<UserId>,
     local_user_index_canister_id: CanisterId,
     runtime_state: &mut RuntimeState,
 ) {
     let now = runtime_state.env.now();
-    let referred_by = referral_code.as_ref().and_then(|r| r.user());
 
     let mut original_username = None;
     let username = match runtime_state.data.users.ensure_unique_username(&username) {
@@ -160,7 +130,7 @@ fn commit(
     runtime_state
         .data
         .users
-        .register(caller, user_id, wasm_version, username.clone(), now, referred_by, false);
+        .register(caller, user_id, username.clone(), now, referred_by, false);
 
     runtime_state
         .data
@@ -202,30 +172,6 @@ You can change your username at any time by clicking \"Profile settings\" from t
         user_id: caller,
         byte_limit: 100 * ONE_MB,
     });
-
-    if let Some(ReferralCode::BtcMiami(code)) = referral_code {
-        // This referral code can only be used once so claim it
-        runtime_state.data.referral_codes.claim(code, user_id, now);
-
-        runtime_state.queue_payment(PendingPayment {
-            amount: 50_000, // Approx $14
-            currency: Cryptocurrency::CKBTC,
-            timestamp: runtime_state.env.now_nanos(),
-            recipient: user_id.into(),
-            reason: PendingPaymentReason::BitcoinMiamiReferral,
-        });
-
-        let btc_miami_group = Principal::from_text("pbo6v-oiaaa-aaaar-ams6q-cai").unwrap().into();
-        runtime_state.data.timer_jobs.enqueue_job(
-            TimerJob::JoinUserToGroup(JoinUserToGroup {
-                user_id,
-                group_id: btc_miami_group,
-                attempt: 0,
-            }),
-            now,
-            now,
-        );
-    }
 
     crate::jobs::sync_users_to_storage_index::start_job_if_required(runtime_state);
 

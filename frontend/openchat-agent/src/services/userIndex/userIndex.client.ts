@@ -34,6 +34,7 @@ import {
     apiDiamondDuration,
     payForDiamondMembershipResponse,
     referralLeaderboardResponse,
+    userRegistrationCanisterResponse,
 } from "./mappers";
 import { CachingUserIndexClient } from "./userIndex.caching.client";
 import type { IUserIndexClient } from "./userIndex.client.interface";
@@ -63,6 +64,14 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
         return this.handleQueryResponse(
             () => this.userIndexService.current_user({}),
             currentUserResponse
+        );
+    }
+
+    @profile("userIndexClient")
+    userRegistrationCanister(): Promise<string> {
+        return this.handleResponse(
+            this.userIndexService.user_registration_canister({}),
+            userRegistrationCanisterResponse
         );
     }
 

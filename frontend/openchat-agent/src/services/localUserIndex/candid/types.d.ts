@@ -785,6 +785,21 @@ export interface PushEventResult {
   'index' : EventIndex,
   'expires_at' : [] | [TimestampMillis],
 }
+export interface RegisterUserArgs {
+  'username' : string,
+  'public_key' : Uint8Array | number[],
+  'referral_code' : [] | [string],
+}
+export type RegisterUserResponse = { 'UsernameTooShort' : number } |
+  { 'UsernameInvalid' : null } |
+  { 'AlreadyRegistered' : null } |
+  { 'UserLimitReached' : null } |
+  { 'UsernameTooLong' : number } |
+  { 'Success' : UserId } |
+  { 'PublicKeyInvalid' : string } |
+  { 'InternalError' : string } |
+  { 'ReferralCodeInvalid' : null } |
+  { 'CyclesBalanceTooLow' : null };
 export type RegistrationFee = { 'ICP' : ICPRegistrationFee } |
   { 'Cycles' : CyclesRegistrationFee };
 export interface ReplyContext {
@@ -964,5 +979,6 @@ export interface _SERVICE {
     InviteUsersToGroupResponse
   >,
   'join_group' : ActorMethod<[JoinGroupArgs], JoinGroupResponse>,
+  'register_user' : ActorMethod<[RegisterUserArgs], RegisterUserResponse>,
   'report_message' : ActorMethod<[ReportMessageArgs], ReportMessageResponse>,
 }

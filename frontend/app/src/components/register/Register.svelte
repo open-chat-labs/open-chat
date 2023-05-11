@@ -242,7 +242,7 @@
         display: flex;
         align-items: center;
         gap: $sp4;
-        @include font(bold, normal, fs-160);
+        @include font(bold, normal, fs-120);
 
         .logo {
             background-image: url("../assets/spinner.svg");

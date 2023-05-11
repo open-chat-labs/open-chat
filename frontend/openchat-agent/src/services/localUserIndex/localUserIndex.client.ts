@@ -1,9 +1,14 @@
-import type { Identity } from "@dfinity/agent";
+import type { Identity, SignIdentity } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
 import { idlFactory, LocalUserIndexService } from "./candid/idl";
-import type { InviteUsersResponse, JoinGroupResponse, ReportMessageResponse } from "openchat-shared";
+import type {
+    InviteUsersResponse,
+    JoinGroupResponse,
+    RegisterUserResponse,
+    ReportMessageResponse
+} from "openchat-shared";
 import { CandidService } from "../candidService";
-import { inviteUsersResponse, joinGroupResponse, reportMessageResponse } from "./mappers";
+import { inviteUsersResponse, joinGroupResponse, registerUserResponse, reportMessageResponse } from "./mappers";
 import type { ILocalUserIndexClient } from "./localUserIndex.client.interface";
 import { profile } from "../common/profiling";
 import type { AgentConfig } from "../../config";
@@ -30,6 +35,21 @@ export class LocalUserIndexClient extends CandidService implements ILocalUserInd
         canisterId: string
     ): ILocalUserIndexClient {
         return new LocalUserIndexClient(identity, config, canisterId);
+    }
+
+    @profile("localUserIndexClient")
+    registerUser(
+        username: string,
+        referralCode: string | undefined
+    ): Promise<RegisterUserResponse> {
+        return this.handleResponse(
+            this.localUserIndexService.register_user({
+                username,
+                referral_code: apiOptional(identity, referralCode),
+                public_key: new Uint8Array((this.identity as SignIdentity).getPublicKey().toDer()),
+            }),
+            registerUserResponse
+        );
     }
 
     @profile("localUserIndexClient")

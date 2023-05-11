@@ -4,7 +4,7 @@
     import { Cryptocurrency, OpenChat, cryptoLookup } from "openchat-client";
     import Input from "../../Input.svelte";
     import { _ } from "svelte-i18n";
-    import Send from "svelte-material-icons/Send.svelte";
+    import QrcodeScan from "svelte-material-icons/QrcodeScan.svelte";
     import { logger } from "../../../utils/logging";
     import { toastStore } from "../../../stores/toast";
     import { iconSize } from "../../../stores/iconSize";
@@ -12,7 +12,8 @@
 
     export let token: Cryptocurrency;
     export let amountToSendE8s: bigint;
-    export let scanningUnsupported: Boolean;
+    export let sending = false;
+    export let valid = false;
 
     const client = getContext<OpenChat>("client");
     const user = client.user;
@@ -20,24 +21,25 @@
 
     let validAmount = false;
     let targetAccount: string = "";
-    let sending = false;
     let scanner: Scanner;
 
     $: account = token === "icp" ? user.cryptoAccount : user.userId;
     $: cryptoBalance = client.cryptoBalance;
     $: transferFees = cryptoLookup[token].transferFeesE8s;
-    $: valid =
-        validAmount &&
-        amountToSendE8s > BigInt(0) &&
-        targetAccount !== "" &&
-        targetAccount !== account;
     $: symbol = cryptoLookup[token].symbol;
+    $: {
+        valid =
+            validAmount &&
+            amountToSendE8s > BigInt(0) &&
+            targetAccount !== "" &&
+            targetAccount !== account;
+    }
 
     export function scan() {
         scanner?.scan();
     }
 
-    function send() {
+    export function send() {
         if (!valid) return;
 
         sending = true;
@@ -56,7 +58,9 @@
                     amountToSendE8s = BigInt(0);
                     targetAccount = "";
                     dispatch("refreshBalance");
-                    toastStore.showSuccessToast("cryptoAccount.sendSucceeded", { values: { symbol } });
+                    toastStore.showSuccessToast("cryptoAccount.sendSucceeded", {
+                        values: { symbol },
+                    });
                 } else {
                     dispatch("error", "cryptoAccount.sendFailed");
                     logger.error(`Unable to withdraw ${symbol}`, resp);
@@ -72,9 +76,7 @@
     }
 </script>
 
-{#if !scanningUnsupported}
-    <Scanner on:data={(ev) => (targetAccount = ev.detail)} bind:this={scanner} />
-{/if}
+<Scanner on:data={(ev) => (targetAccount = ev.detail)} bind:this={scanner} />
 
 <div class="token-input">
     <TokenInput
@@ -90,10 +92,8 @@
         maxlength={100}
         placeholder={$_("cryptoAccount.sendTarget")} />
 
-    <div class="send" class:valid on:click={send} class:sending>
-        {#if !sending}
-            <Send size={$iconSize} color={valid ? "var(--icon-selected)" : "var(--icon-txt)"} />
-        {/if}
+    <div class="qr" on:click={scan}>
+        <QrcodeScan size={$iconSize} color={"var(--icon-selected)"} />
     </div>
 </div>
 
@@ -109,25 +109,11 @@
         margin-bottom: $sp3;
         position: relative;
 
-        .send {
+        .qr {
             position: absolute !important;
             top: 10px;
             right: $sp3;
-
-            &.valid {
-                cursor: pointer;
-            }
-
-            &.sending {
-                @include loading-spinner(
-                    1em,
-                    0.5em,
-                    var(--button-spinner),
-                    "../assets/plain-spinner.svg"
-                );
-                top: 21px;
-                right: 20px;
-            }
+            cursor: pointer;
         }
     }
 </style>

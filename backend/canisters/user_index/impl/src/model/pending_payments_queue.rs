@@ -35,5 +35,4 @@ pub struct PendingPayment {
 pub enum PendingPaymentReason {
     Treasury,
     ReferralReward,
-    BitcoinMiamiReferral,
 }
