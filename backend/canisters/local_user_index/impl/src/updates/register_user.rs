@@ -87,9 +87,14 @@ fn prepare(args: &Args, runtime_state: &mut RuntimeState) -> Result<PrepareOk, R
         .filter(|c| matches!(c, ReferralCode::BtcMiami(_)))
         .is_some()
     {
-        vec![MessageContent::Text(TextContent {
-            text: "Congratulations!! Your sats are on their way....".to_string(),
-        })]
+        vec![
+            MessageContent::Text(TextContent {
+                text: "Congratulations!!".to_string(),
+            }),
+            MessageContent::Text(TextContent {
+                text: format!("Wait here {}, your sats are coming below 👇", args.username),
+            }),
+        ]
     } else {
         welcome_messages()
             .into_iter()
