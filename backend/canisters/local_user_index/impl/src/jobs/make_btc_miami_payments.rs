@@ -133,7 +133,7 @@ fn send_oc_bot_messages(
             ),
         }),
         MessageContent::Text(TextContent {
-            text: "🎲 ...or play Satoshi Dice with the [Satoshi Dice](/TODO) chat".to_string(),
+            text: "🎲 ...or play Satoshi Dice with the [Satoshi Dice](/wznbi-caaaa-aaaar-anvea-cai) chat".to_string(),
         }),
         MessageContent::Text(TextContent {
             text: "🧐 Find out more about OpenChat [here](/home)".to_string(),
