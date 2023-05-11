@@ -747,7 +747,10 @@
         "groupMsg": "最大 10 個の公開グループを作成し、グループ アクセスを制御するには、Diamond ユーザーである必要があります",
         "gatingMsg": "アクセスが制限されたグループを作成するには、Diamond ユーザーである必要があります",
         "gatedGroups": "ゲーテッド グループ",
-        "reminders": "リマインダー"
+        "reminders": "リマインダー",
+        "notifications": "通知",
+        "freeNotifications": "iOS、Android、デスクトップ",
+        "diamondNotifications": "iOS、Android、デスクトップ"
     },
     "currentUsage": "現在のストレージ使用量",
     "promoteTo": "{role} に昇格",

@@ -748,7 +748,10 @@
         "groupMsg": "Um bis zu 10 öffentliche Gruppen zu erstellen und den Gruppenzugriff zu steuern, müssen Sie ein Diamond-Benutzer sein",
         "gatingMsg": "Um Gruppen mit geschlossenem Zugang zu erstellen, müssen Sie ein Diamond-Benutzer sein",
         "gatedGroups": "Geschlossene Gruppen",
-        "reminders": "Erinnerungen"
+        "reminders": "Erinnerungen",
+        "notifications": "Benachrichtigungen",
+        "freeNotifications": "iOS, Android und Desktop",
+        "diamondNotifications": "iOS, Android und Desktop"
     },
     "currentUsage": "Aktuelle Speichernutzung",
     "promoteTo": "Heraufstufen zu {role}",

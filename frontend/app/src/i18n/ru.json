@@ -746,7 +746,10 @@
         "groupMsg": "Чтобы создать до 10 общедоступных групп и управлять доступом к группам, вы должны быть пользователем Diamond.",
         "gatingMsg": "Чтобы создавать группы с закрытым доступом, вы должны быть пользователем Diamond.",
         "gatedGroups": "Закрытые группы",
-        "reminders": "Напоминания"
+        "reminders": "Напоминания",
+        "notifications": "Уведомления",
+        "freeNotifications": "iOS, Android и рабочий стол",
+        "diamondNotifications": "iOS, Android и рабочий стол"
     },
     "currentUsage": "Текущее использование хранилища",
     "promoteTo": "Повысить до {role}",

@@ -747,7 +747,10 @@
         "groupMsg": "要创建最多 10 个公共组并控制组访问权限，您必须是 Diamond 用户",
         "gatingMsg": "要创建具有门禁访问权限的群组，您必须是 Diamond 用户",
         "gatedGroups": "封闭组",
-        "reminders": "提醒事项"
+        "reminders": "提醒事项",
+        "notifications": "通知",
+        "freeNotifications": "iOS、安卓和桌面",
+        "diamondNotifications": "iOS、安卓和桌面"
     },
     "currentUsage": "当前存储使用情况",
     "promoteTo": "晋升为{role}",

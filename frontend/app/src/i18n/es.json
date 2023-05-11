@@ -748,7 +748,10 @@
         "groupMsg": "Para crear hasta 10 grupos públicos y controlar el acceso a los grupos, debe ser un usuario Diamond",
         "gatingMsg": "Para crear grupos con acceso privado, debe ser un usuario Diamond",
         "gatedGroups": "Grupos cerrados",
-        "reminders": "Recordatorios"
+        "reminders": "Recordatorios",
+        "notifications": "Notificaciones",
+        "freeNotifications": "iOS, Android y escritorio",
+        "diamondNotifications": "iOS, Android y escritorio"
     },
     "currentUsage": "Uso de almacenamiento actual",
     "promoteTo": "Promocionar a {role}",

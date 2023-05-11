@@ -747,7 +747,10 @@
         "groupMsg": "Để tạo tối đa 10 nhóm công khai và kiểm soát quyền truy cập nhóm, bạn phải là người dùng Kim cương",
         "gatingMsg": "Để tạo nhóm có quyền truy cập kiểm soát, bạn phải là người dùng Kim cương",
         "gatedGroups": "nhóm kiểm soát",
-        "reminders": "nhắc nhở"
+        "reminders": "nhắc nhở",
+        "notifications": "thông báo",
+        "freeNotifications": "iOS, Android & Máy tính để bàn",
+        "diamondNotifications": "iOS, Android & Máy tính để bàn"
     },
     "currentUsage": "Mức sử dụng bộ nhớ hiện tại",
     "promoteTo": "Quảng cáo lên {role}",

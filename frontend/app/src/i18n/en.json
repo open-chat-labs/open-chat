@@ -751,7 +751,10 @@
         "expiryMessage": "Your diamond membership expires {relative} ",
         "extendTo": " Extend to ",
         "cannotExtend": "You can only extend your membership within three months of expiry",
-        "reminders": "Reminders"
+        "reminders": "Reminders",
+        "notifications": "Notifications",
+        "freeNotifications": "iOS, Android & Desktop",
+        "diamondNotifications": "iOS, Android & Desktop"
     },
     "promoteTo": "Promote to {role}",
     "demoteTo": "Demote to {role}",

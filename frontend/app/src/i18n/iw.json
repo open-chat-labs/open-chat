@@ -744,7 +744,10 @@
         "groupMsg": "כדי ליצור עד 10 קבוצות ציבוריות וכדי לשלוט בגישה לקבוצה, עליך להיות משתמש Diamond",
         "gatingMsg": "כדי ליצור קבוצות עם גישה מגודרת, עליך להיות משתמש Diamond",
         "gatedGroups": "קבוצות סגורות",
-        "reminders": "תזכורות"
+        "reminders": "תזכורות",
+        "notifications": "התראות",
+        "freeNotifications": "iOS, אנדרואיד ושולחן עבודה",
+        "diamondNotifications": "iOS, אנדרואיד ושולחן עבודה"
     },
     "currentUsage": "שימוש נוכחי באחסון",
     "promoteTo": "קדם ל-{role}",
