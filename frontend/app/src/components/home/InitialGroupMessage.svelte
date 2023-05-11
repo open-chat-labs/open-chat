@@ -12,7 +12,6 @@
     const client = getContext<OpenChat>("client");
 
     export let group: GroupChatSummary;
-    export let noVisibleEvents: boolean;
 </script>
 
 <div class="container">
@@ -30,7 +29,7 @@
             values: { number: group.memberCount },
         })}
     </div>
-    {#if noVisibleEvents}
+    {#if !group.historyVisibleToNewJoiners}
         <div>{$_("group.historyPrivateMessage")}</div>
     {/if}
 </div>
