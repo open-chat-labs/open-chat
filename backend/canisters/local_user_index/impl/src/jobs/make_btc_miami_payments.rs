@@ -128,7 +128,7 @@ fn send_oc_bot_messages(
         }),
         MessageContent::Text(TextContent {
             text: format!(
-                "🤝 ...or meet new people and win prizes in the [BTC Miami](/{}) chat",
+                "🤝 ...or connect with fellow BTC Miami attendees and win prizes in the [BTC Miami](/{}) chat",
                 if state.data.test_mode { "ueyan-5iaaa-aaaaf-bifxa-cai" } else { "pbo6v-oiaaa-aaaar-ams6q-cai" }
             ),
         }),
