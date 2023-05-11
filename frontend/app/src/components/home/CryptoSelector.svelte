@@ -1,26 +1,41 @@
 <script lang="ts">
     import { fade } from "svelte/transition";
-    import { cryptoCurrencyList, cryptoLookup } from "openchat-client";
+    import { OpenChat, cryptoCurrencyList, cryptoLookup } from "openchat-client";
     import type { Cryptocurrency } from "openchat-client";
     import { _ } from "svelte-i18n";
     import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import { iconSize } from "stores/iconSize";
-    import { createEventDispatcher } from "svelte";
+    import { getContext } from "svelte";
 
-    const dispatch = createEventDispatcher();
+    const client = getContext<OpenChat>("client");
 
     export let token: Cryptocurrency;
 
     let selecting = false;
+
+    $: cryptoBalance = client.cryptoBalance;
 
     $: crypto = cryptoCurrencyList
         .map((t) => ({
             key: t,
             symbol: cryptoLookup[t].symbol,
             name: $_(`tokenTransfer.${t}`),
+            balance: $cryptoBalance[t],
             disabled: cryptoLookup[t].disabled,
         }))
         .filter((token) => !token.disabled);
+
+    $: {
+        crypto.sort((a, b) => {
+            if (a.balance < b.balance) {
+                return 1;
+            } else if (a.balance > b.balance) {
+                return -1;
+            } else {
+                return 0;
+            }
+        });
+    }
 
     function selectToken(symbol: Cryptocurrency) {
         selecting = false;
