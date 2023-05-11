@@ -113,18 +113,22 @@ fn commit(
 ) {
     if let Some(ReferralCode::BtcMiami(code)) = referral_code.clone() {
         let now = runtime_state.env.now();
+        let test_mode = runtime_state.data.test_mode;
 
         // This referral code can only be used once so claim it
         runtime_state.data.referral_codes.claim(code, user_id, now);
 
         runtime_state.data.btc_miami_payments_queue.push(PendingPayment {
-            amount: 50_000, // Approx $14
+            amount: if test_mode { 50 } else { 50_000 }, // Approx $14
             timestamp: runtime_state.env.now_nanos(),
             recipient: user_id.into(),
         });
         crate::jobs::make_btc_miami_payments::start_job_if_required(runtime_state);
 
-        let btc_miami_group = Principal::from_text("pbo6v-oiaaa-aaaar-ams6q-cai").unwrap().into();
+        let btc_miami_group =
+            Principal::from_text(if test_mode { "ueyan-5iaaa-aaaaf-bifxa-cai" } else { "pbo6v-oiaaa-aaaar-ams6q-cai" })
+                .unwrap()
+                .into();
         runtime_state.data.timer_jobs.enqueue_job(
             TimerJob::JoinUserToGroup(JoinUserToGroup {
                 user_id,
