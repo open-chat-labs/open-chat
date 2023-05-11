@@ -263,7 +263,6 @@
         "registerUser": "Registrando usario...",
         "preparingUser": "Perparando usuario ...",
         "registerAs": "Registrando como usuario",
-        "enterUsername": "Elije un nombre de usuario",
         "usernameInvalid": "Nombre de usuario inválido, inténtelo de nuevo",
         "letsGo": "Allá vamos!",
         "registrationComplete": "Registro completado ...",
@@ -279,11 +278,12 @@
         "confirm": "Confirmar",
         "closedTitle": "Registro en pausa",
         "closed": "Debido a la gran demanda, los registros de nuevos usuarios están cerrados temporalmente. ¡Pronto escalaremos a través de múltiples subredes y luego podremos crecer indefinidamente!",
-        "disclaimer": "Al registrarse en OpenChat, acepta cumplir con nuestras pautas",
         "invalidCode": "Codigo invalido",
         "referralCodeInvalid": "Lo siento, el código que escaneaste ya se usó",
         "proceed": "Proceder",
-        "doYouWantToProceed": "Si continúa, no recibirá 50,000 satoshis. Alternativamente, busque a un miembro del equipo de Dfinity para obtener un nuevo código."
+        "doYouWantToProceed": "Si continúa, no recibirá 50,000 satoshis. Alternativamente, busque a un miembro del equipo de DFINITY para obtener un nuevo código.",
+        "enterUsername": "Elija un nombre de usuario de OpenChat",
+        "disclaimer": "Al registrarse en OpenChat, acepta cumplir con las pautas de la comunidad"
     },
     "tellMeMore": "Más información",
     "insufficientFunds": "Asegúrese de que la cuenta anterior tenga un saldo de al menos {amount} ICP para cubrir el almacenamiento solicitado, luego presione el botón \"Actualizar\".",
@@ -748,7 +748,10 @@
         "groupMsg": "Para crear hasta 10 grupos públicos y controlar el acceso a los grupos, debe ser un usuario Diamond",
         "gatingMsg": "Para crear grupos con acceso privado, debe ser un usuario Diamond",
         "gatedGroups": "Grupos cerrados",
-        "reminders": "Recordatorios"
+        "reminders": "Recordatorios",
+        "notifications": "Notificaciones",
+        "freeNotifications": "iOS, Android y escritorio",
+        "diamondNotifications": "iOS, Android y escritorio"
     },
     "currentUsage": "Uso de almacenamiento actual",
     "promoteTo": "Promocionar a {role}",
@@ -816,5 +819,6 @@
     "privateGroupInfo": "Este grupo estará limitado a las personas que invites.",
     "invited": "Invitado",
     "tapForReferralLink": "Toque para copiar su enlace de referencia personal",
-    "deleteMessageForMe": "Eliminar para mí"
+    "deleteMessageForMe": "Eliminar para mí",
+    "whatsHotButton": "Descubre grupos calientes"
 }

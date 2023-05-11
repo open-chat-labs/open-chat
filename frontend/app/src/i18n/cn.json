@@ -211,7 +211,6 @@
         "registerUser": "注册用户...",
         "preparingUser": "生成用户 ...",
         "registerAs": "注册为用户",
-        "enterUsername": "选择用户名",
         "usernameInvalid": "无效用户名, 请重试",
         "letsGo": "Let's go!",
         "registrationComplete": "注册完成 ...",
@@ -226,11 +225,12 @@
         "bioTooLong": "您的简介太长了",
         "closedTitle": "注册暂停",
         "closed": "由于需求量很大，新用户注册暂时关闭。我们很快将扩展到多个子网，然后将能够无限增长！",
-        "disclaimer": "注册 OpenChat 即表示您同意遵守我们的准则",
         "invalidCode": "无效的代码",
         "referralCodeInvalid": "抱歉，您扫描的二维码已被使用",
         "proceed": "继续",
-        "doYouWantToProceed": "如果您继续，您将不会收到 50,000 聪。或者，找到 Dfinity 团队的成员以获取新代码。"
+        "doYouWantToProceed": "如果您继续，您将不会收到 50,000 聪。或者，找到 DFINITY 团队的成员以获取新代码。",
+        "enterUsername": "选择一个 OpenChat 用户名",
+        "disclaimer": "注册 OpenChat 即表示您同意遵守社区准则"
     },
     "tellMeMore": "更多信息",
     "username": "用户名",
@@ -747,7 +747,10 @@
         "groupMsg": "要创建最多 10 个公共组并控制组访问权限，您必须是 Diamond 用户",
         "gatingMsg": "要创建具有门禁访问权限的群组，您必须是 Diamond 用户",
         "gatedGroups": "封闭组",
-        "reminders": "提醒事项"
+        "reminders": "提醒事项",
+        "notifications": "通知",
+        "freeNotifications": "iOS、安卓和桌面",
+        "diamondNotifications": "iOS、安卓和桌面"
     },
     "currentUsage": "当前存储使用情况",
     "promoteTo": "晋升为{role}",
@@ -815,5 +818,6 @@
     "privateGroupInfo": "该组仅限于您邀请的人员。",
     "invited": "受邀",
     "tapForReferralLink": "点击复制您的个人推荐链接",
-    "deleteMessageForMe": "帮我删除"
+    "deleteMessageForMe": "帮我删除",
+    "whatsHotButton": "发现热门群体"
 }

@@ -267,7 +267,6 @@
         "registerUser": "Enregistrer l'utilisateur...",
         "preparingUser": "Préparation de l'utilisateur...",
         "registerAs": "Pour vous inscrire en tant qu'utilisateur",
-        "enterUsername": "Choisissez un nom d'utilisateur",
         "usernameInvalid": "Nom d'utilisateur invalide, veuillez réessayer",
         "letsGo": "Allons-y!",
         "registrationComplete": "Inscription complète ...",
@@ -282,11 +281,12 @@
         "createUser": "Créer un utilisateur",
         "closedTitle": "Inscription en pause",
         "closed": "En raison d'une très forte demande, les inscriptions de nouveaux utilisateurs sont temporairement fermées. Nous allons bientôt évoluer sur plusieurs sous-réseaux et pourrons ensuite nous développer indéfiniment !",
-        "disclaimer": "En vous inscrivant à OpenChat, vous acceptez de respecter nos directives",
         "invalidCode": "Code invalide",
         "referralCodeInvalid": "Désolé, le code que vous avez scanné a déjà été utilisé",
         "proceed": "Procéder",
-        "doYouWantToProceed": "Si vous continuez, vous ne recevrez pas 50 000 satoshis. Sinon, trouvez un membre de l'équipe Dfinity pour obtenir un nouveau code."
+        "doYouWantToProceed": "Si vous continuez, vous ne recevrez pas 50 000 satoshis. Sinon, trouvez un membre de l'équipe DFINITY pour obtenir un nouveau code.",
+        "enterUsername": "Choisissez un nom d'utilisateur OpenChat",
+        "disclaimer": "En vous inscrivant à OpenChat, vous acceptez de respecter les directives de la communauté"
     },
     "roleChanged": "{changedBy} a changé le rôle de {changed} de {oldRole} à {newRole}",
     "yourRoleChanged": "{changedBy} a changé votre rôle de {oldRole} à {newRole}",
@@ -746,7 +746,10 @@
         "groupMsg": "Pour créer jusqu'à 10 groupes publics et contrôler l'accès aux groupes, vous devez être un utilisateur Diamond",
         "gatingMsg": "Pour créer des groupes avec accès sécurisé, vous devez être un utilisateur Diamond",
         "gatedGroups": "Groupes fermés",
-        "reminders": "Rappels"
+        "reminders": "Rappels",
+        "notifications": "Avis",
+        "freeNotifications": "iOS, Android et ordinateur de bureau",
+        "diamondNotifications": "iOS, Android et ordinateur de bureau"
     },
     "currentUsage": "Utilisation actuelle du stockage",
     "promoteTo": "Promouvoir à {role}",
@@ -814,5 +817,6 @@
     "privateGroupInfo": "Ce groupe sera limité aux personnes que vous invitez.",
     "invited": "Invité",
     "tapForReferralLink": "Appuyez pour copier votre lien de parrainage personnel",
-    "deleteMessageForMe": "Supprimer pour moi"
+    "deleteMessageForMe": "Supprimer pour moi",
+    "whatsHotButton": "Découvrez les groupes chauds"
 }

@@ -68,11 +68,7 @@
     }
 
     function createPoll() {
-        if (!$isDiamond) {
-            dispatch("upgrade");
-        } else {
-            dispatch("createPoll");
-        }
+        dispatch("createPoll");
         drawOpen = false;
     }
 

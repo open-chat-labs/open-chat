@@ -268,7 +268,6 @@
         "registerUser": "Registra utente...",
         "preparingUser": "Utente in preparazione...",
         "registerAs": "Per registrarsi come utente",
-        "enterUsername": "Scegli un nome utente",
         "usernameInvalid": "Nome utente non valido, riprova",
         "letsGo": "Andiamo!",
         "registrationComplete": "Registrazione completa ...",
@@ -283,11 +282,12 @@
         "createUser": "Creare un utente",
         "closedTitle": "Registrazione sospesa",
         "closed": "A causa dell'elevata domanda, le registrazioni di nuovi utenti sono temporaneamente chiuse. Presto scaleremo su più sottoreti e saremo quindi in grado di crescere all'infinito!",
-        "disclaimer": "Registrandoti con OpenChat accetti di rispettare le nostre linee guida",
         "invalidCode": "Codice non VALIDO",
         "referralCodeInvalid": "Siamo spiacenti, il codice che hai scansionato è già stato utilizzato",
         "proceed": "Procedere",
-        "doYouWantToProceed": "Se procedi non riceverai 50.000 satoshi. In alternativa, trova un membro del team Dfinity per ottenere un nuovo codice."
+        "doYouWantToProceed": "Se procedi non riceverai 50.000 satoshi. In alternativa, trova un membro del team DFINITY per ottenere un nuovo codice.",
+        "enterUsername": "Scegli un nome utente OpenChat",
+        "disclaimer": "Registrandoti con OpenChat accetti di rispettare le linee guida della community"
     },
     "roleChanged": "{changedBy} ha cambiato il ruolo di {changed} da {oldRole} a {newRole}",
     "yourRoleChanged": "{changedBy} ha cambiato il tuo ruolo da {oldRole} a {newRole}",
@@ -746,7 +746,10 @@
         "groupMsg": "Per creare fino a 10 gruppi pubblici e per controllare l'accesso ai gruppi, devi essere un utente Diamond",
         "gatingMsg": "Per creare gruppi con accesso controllato, devi essere un utente Diamond",
         "gatedGroups": "Gruppi recintati",
-        "reminders": "Promemoria"
+        "reminders": "Promemoria",
+        "notifications": "Notifiche",
+        "freeNotifications": "iOS, Android e Desktop",
+        "diamondNotifications": "iOS, Android e Desktop"
     },
     "currentUsage": "Utilizzo corrente dello spazio di archiviazione",
     "promoteTo": "Promuovi a {role}",
@@ -814,5 +817,6 @@
     "privateGroupInfo": "Questo gruppo sarà limitato alle persone che inviti.",
     "invited": "Invitato",
     "tapForReferralLink": "Tocca per copiare il tuo link di riferimento personale",
-    "deleteMessageForMe": "Cancella per me"
+    "deleteMessageForMe": "Cancella per me",
+    "whatsHotButton": "Scopri gruppi caldi"
 }
