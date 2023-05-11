@@ -117,7 +117,7 @@ fn send_oc_bot_messages(
                 transaction_hash,
                 block_index,
             })),
-            caption: Some("Here are your 50,000 sats as [ckBTC](https://internetcomputer.org/ckbtc)!".to_string()),
+            caption: Some("Here are your 50,000 SATS as [ckBTC](https://internetcomputer.org/ckbtc)!".to_string()),
         }),
         MessageContent::Text(TextContent {
             text: "🤔 No one to send your ckBTC to? Invite your friends to chat!".to_string(),
