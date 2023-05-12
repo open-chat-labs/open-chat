@@ -9,6 +9,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Short circuit query calls prior to calling `ic0.time()` where possible ([#3542](https://github.com/open-ic/open-chat/pull/3542))
 
+### Removed
+
+- Remove `send_message` and `edit_message` (there are now `v2` versions) ([#3578](https://github.com/open-ic/open-chat/pull/3578))
+
 ## [[2.0.676](https://github.com/open-ic/open-chat/releases/tag/v2.0.676-user)] - 2023-04-29
 
 ### Added
