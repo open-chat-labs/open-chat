@@ -228,7 +228,7 @@
         "info_q": "Tôi có thể tìm hiểu thêm về OpenChat ở đâu?",
         "info_a": "Truy cập <a href=\"/home\">trang chủ</a> của chúng tôi và tìm các liên kết đến <a href=\"/features\">các tính năng</a>, <a href=\"/roadmap\">lộ trình</a> của OpenChat a>, <a href=\"/whitepaper\">sách trắng</a>, <a href=\"/architecture\">kiến trúc</a> và <a href=\"/blog\">blog</a>",
         "referral_rewards_q": "Phần thưởng giới thiệu là gì?",
-        "referral_rewards_a": "Là thành viên Kim cương, bạn có thể kiếm được phần thưởng cho mỗi người dùng mà bạn giới thiệu sẽ trở thành thành viên Kim cương. Bạn sẽ nhận được một nửa bất kỳ khoản thanh toán Kim cương nào họ thực hiện trong năm đầu tiên tham gia OpenChat. Bạn có thể tìm thấy liên kết giới thiệu của mình trong phần \"mời bạn bè/gia đình\" của \"cài đặt hồ sơ\" từ menu chính.<br><br>Như một phần thưởng bổ sung, mỗi tháng bạn cũng có thể giành được giải thưởng đáng kể 3000, 2000 hoặc 1000 mã thông báo CHAT nếu bạn nằm trong 3 người giới thiệu hàng đầu theo giá trị! Xem \"Người giới thiệu hàng đầu\" trong menu chính.<br><br>Trong tương lai, chúng tôi sẽ mở rộng phần thưởng giới thiệu cho tất cả người dùng mà bạn giới thiệu bất kể họ có trở thành thành viên Kim cương hay không. Tuy nhiên, vì điều này có thể dễ dàng khai thác nên trước tiên chúng tôi cần giới thiệu một số loại \"bằng chứng về tư cách cá nhân duy nhất\"."
+        "referral_rewards_a": "Là thành viên Kim cương, bạn có thể kiếm được phần thưởng cho mỗi người dùng mà bạn giới thiệu sẽ trở thành thành viên Kim cương. Bạn sẽ nhận được một nửa bất kỳ khoản thanh toán Kim cương nào họ thực hiện trong năm đầu tiên tham gia OpenChat. Bạn có thể tìm thấy liên kết giới thiệu của mình trong phần &quot;mời bạn bè/gia đình&quot; của &quot;cài đặt hồ sơ&quot; từ menu chính.<br><br> Là một phần thưởng bổ sung, mỗi tháng bạn cũng có thể giành được giải thưởng đáng kể là 3000, 2000 hoặc 1000 mã thông báo CHAT nếu bạn nằm trong top 3 người giới thiệu theo giá trị! Xem &quot;Người giới thiệu hàng đầu&quot; trong menu chính.<br><br> Làm thế nào bạn có thể làm điều này? Có rất nhiều cách. Bạn có thể nói với bạn bè và gia đình, tweet về OpenChat, tạo video về OpenChat mô tả những điều bạn yêu thích về nó và chia sẻ video đó lên TikTok hoặc YouTube. Bạn có thể phát trực tuyến trên Twitch hoặc viết một bài đăng trên blog hoặc tạo một podcast hoặc tổ chức một không gian Twitter hoặc thậm chí tổ chức một buổi gặp mặt ngoài đời thực. Chúng tôi mong muốn được nhìn thấy tất cả những ý tưởng sáng tạo mà bạn nghĩ ra để truyền tải thông điệp!<br><br> Trong tương lai, chúng tôi sẽ mở rộng phần thưởng giới thiệu cho tất cả người dùng mà bạn giới thiệu bất kể họ có trở thành thành viên Kim cương hay không. Tuy nhiên, vì điều này có thể dễ dàng khai thác nên trước tiên chúng tôi cần giới thiệu một số loại &quot;bằng chứng về tư cách cá nhân duy nhất&quot;."
     },
     "roadmap": "Lộ trình",
     "here": "tại đây",
@@ -409,13 +409,26 @@
         "optional": "Không bắt buộc",
         "openAccessInfo": "Không có yêu cầu truy cập đặc biệt để tham gia nhóm này",
         "gateCheckFailed": "Cổng truy cập không được đáp ứng",
-        "inviteWithLink": "Mời vào nhóm qua liên kết",
-        "shareMessage": "Bất kỳ ai có liên kết này đều có thể xem trước và tham gia nhóm. Nếu bạn là thành viên Kim cương và bất kỳ người dùng nào đăng ký tài khoản qua liên kết này, bạn sẽ kiếm được một nửa số tiền thanh toán thành viên Kim cương mà họ thực hiện trong năm đầu tiên.",
-        "invite": "Mời",
         "inviteUsers": "Mời người dùng",
         "inviteUsersFailed": "Đã xảy ra lỗi khi mời người dùng",
         "tooManyInvites": "Bạn chỉ có thể có 100 lời mời nổi bật",
-        "usersInvited": "Đã gửi tin nhắn mời!"
+        "usersInvited": "Đã gửi tin nhắn mời!",
+        "invite": {
+            "inviteWithLink": "Mời vào nhóm qua liên kết",
+            "enableLink": "Bật liên kết",
+            "resetLink": "Đặt lại liên kết",
+            "errorGettingLink": "Không lấy được liên kết",
+            "errorEnablingLink": "Không thể bật liên kết",
+            "errorDisablingLink": "Không thể tắt liên kết",
+            "errorResettingLink": "Không thể đặt lại liên kết",
+            "confirmReset": "Bạn có chắc chắn muốn đặt lại liên kết nhóm không? Mọi người sẽ không thể tham gia nhóm bằng liên kết hiện tại nữa.",
+            "shareMessage": "Bất kỳ ai có liên kết này đều có thể xem trước và tham gia nhóm. Là thành viên Kim cương, bạn cũng có thể kiếm được [phần thưởng giới thiệu](?faq=referral_rewards).",
+            "shareMessageTrust": "Chia sẻ nó với những người bạn tin tưởng.",
+            "enabled": "kích hoạt",
+            "disabled": "tàn tật",
+            "reset": "cài lại",
+            "invite": "Mời"
+        }
     },
     "updateNow": "tải lại ngay bây giờ",
     "updateRequired": "Đã có phiên bản OpenChat mới - tải lại sau {countdown} giây",

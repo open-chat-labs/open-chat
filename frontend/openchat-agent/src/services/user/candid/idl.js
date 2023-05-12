@@ -452,8 +452,30 @@ export const idlFactory = ({ IDL }) => {
     'MessageHardDeleted' : IDL.Null,
     'MessageNotDeleted' : IDL.Null,
   });
-  const EditMessageArgs = IDL.Record({
-    'content' : MessageContent,
+  const PrizeContentInitial = IDL.Record({
+    'end_date' : TimestampMillis,
+    'caption' : IDL.Opt(IDL.Text),
+    'prizes' : IDL.Vec(Tokens),
+    'transfer' : CryptoTransaction,
+  });
+  const MessageContentInitial = IDL.Variant({
+    'Giphy' : GiphyContent,
+    'File' : FileContent,
+    'Poll' : PollContent,
+    'Text' : TextContent,
+    'Image' : ImageContent,
+    'Prize' : PrizeContentInitial,
+    'Custom' : CustomMessageContent,
+    'GovernanceProposal' : ProposalContent,
+    'Audio' : AudioContent,
+    'Crypto' : CryptoContent,
+    'Video' : VideoContent,
+    'Deleted' : DeletedContent,
+    'MessageReminderCreated' : MessageReminderCreated,
+    'MessageReminder' : MessageReminder,
+  });
+  const EditMessageV2Args = IDL.Record({
+    'content' : MessageContentInitial,
     'user_id' : UserId,
     'correlation_id' : IDL.Nat64,
     'message_id' : MessageId,
@@ -966,8 +988,8 @@ export const idlFactory = ({ IDL }) => {
     'TermTooLong' : IDL.Nat8,
     'InvalidTerm' : IDL.Null,
   });
-  const SendMessageArgs = IDL.Record({
-    'content' : MessageContent,
+  const SendMessageV2Args = IDL.Record({
+    'content' : MessageContentInitial,
     'recipient' : UserId,
     'forwarding' : IDL.Bool,
     'sender_name' : IDL.Text,
@@ -1010,28 +1032,6 @@ export const idlFactory = ({ IDL }) => {
     'TransferFailed' : IDL.Text,
     'InternalError' : IDL.Text,
     'RecipientNotFound' : IDL.Null,
-  });
-  const PrizeContentInitial = IDL.Record({
-    'end_date' : TimestampMillis,
-    'caption' : IDL.Opt(IDL.Text),
-    'prizes' : IDL.Vec(Tokens),
-    'transfer' : CryptoTransaction,
-  });
-  const MessageContentInitial = IDL.Variant({
-    'Giphy' : GiphyContent,
-    'File' : FileContent,
-    'Poll' : PollContent,
-    'Text' : TextContent,
-    'Image' : ImageContent,
-    'Prize' : PrizeContentInitial,
-    'Custom' : CustomMessageContent,
-    'GovernanceProposal' : ProposalContent,
-    'Audio' : AudioContent,
-    'Crypto' : CryptoContent,
-    'Video' : VideoContent,
-    'Deleted' : DeletedContent,
-    'MessageReminderCreated' : MessageReminderCreated,
-    'MessageReminder' : MessageReminder,
   });
   const User = IDL.Record({ 'username' : IDL.Text, 'user_id' : UserId });
   const GroupReplyContext = IDL.Record({ 'event_index' : EventIndex });
@@ -1105,17 +1105,6 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Nat64,
     'ReminderDateInThePast' : IDL.Null,
     'UserSuspended' : IDL.Null,
-  });
-  const TransferCryptoWithinGroupArgs = IDL.Record({
-    'content' : CryptoContent,
-    'recipient' : UserId,
-    'mentioned' : IDL.Vec(User),
-    'group_id' : ChatId,
-    'sender_name' : IDL.Text,
-    'correlation_id' : IDL.Nat64,
-    'message_id' : MessageId,
-    'replies_to' : IDL.Opt(GroupReplyContext),
-    'thread_root_message_index' : IDL.Opt(MessageIndex),
   });
   const UnArchiveChatArgs = IDL.Record({ 'chat_id' : ChatId });
   const UnArchiveChatResponse = IDL.Variant({
@@ -1229,7 +1218,11 @@ export const idlFactory = ({ IDL }) => {
         [DeletedMessageResponse],
         ['query'],
       ),
-    'edit_message' : IDL.Func([EditMessageArgs], [EditMessageResponse], []),
+    'edit_message_v2' : IDL.Func(
+        [EditMessageV2Args],
+        [EditMessageResponse],
+        [],
+      ),
     'events' : IDL.Func([EventsArgs], [EventsResponse], ['query']),
     'events_by_index' : IDL.Func(
         [EventsByIndexArgs],
@@ -1285,7 +1278,11 @@ export const idlFactory = ({ IDL }) => {
         [SearchMessagesResponse],
         ['query'],
       ),
-    'send_message' : IDL.Func([SendMessageArgs], [SendMessageResponse], []),
+    'send_message_v2' : IDL.Func(
+        [SendMessageV2Args],
+        [SendMessageResponse],
+        [],
+      ),
     'send_message_with_transfer_to_group' : IDL.Func(
         [SendMessageWithTransferToGroupArgs],
         [SendMessageWithTransferToGroupResponse],
@@ -1297,11 +1294,6 @@ export const idlFactory = ({ IDL }) => {
     'set_message_reminder' : IDL.Func(
         [SetMessageReminderArgs],
         [SetMessageReminderResponse],
-        [],
-      ),
-    'transfer_crypto_within_group_v2' : IDL.Func(
-        [TransferCryptoWithinGroupArgs],
-        [SendMessageWithTransferToGroupResponse],
         [],
       ),
     'unarchive_chat' : IDL.Func(

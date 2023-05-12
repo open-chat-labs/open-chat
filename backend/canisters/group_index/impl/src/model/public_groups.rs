@@ -96,6 +96,7 @@ impl PublicGroups {
             name: group.name.clone(),
             description: group.description.clone(),
             subtype: group.subtype.clone(),
+            history_visible_to_new_joiners: true,
             avatar_id: group.avatar_id,
             latest_message: summary.latest_message,
             latest_event_index: summary.latest_event_index,

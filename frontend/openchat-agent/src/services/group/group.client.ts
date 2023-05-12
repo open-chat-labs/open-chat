@@ -24,6 +24,10 @@ import type {
     RegisterPollVoteResponse,
     GroupPermissions,
     MakeGroupPrivateResponse,
+    InviteCodeResponse,
+    EnableInviteCodeResponse,
+    DisableInviteCodeResponse,
+    ResetInviteCodeResponse,
     ThreadPreviewsResponse,
     RegisterProposalVoteResponse,
     GroupRules,
@@ -38,6 +42,7 @@ import type {
     GroupGate,
     DeclineInvitationResponse,
 } from "openchat-shared";
+import { textToCode } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
     apiRole,
@@ -59,6 +64,10 @@ import {
     unpinMessageResponse,
     searchGroupChatResponse,
     makeGroupPrivateResponse,
+    inviteCodeResponse,
+    enableInviteCodeResponse,
+    disableInviteCodeResponse,
+    resetInviteCodeResponse,
     threadPreviewsResponse,
     registerPollVoteResponse,
     registerProposalVoteResponse,
@@ -92,6 +101,7 @@ export class GroupClient extends CandidService implements IGroupClient {
         identity: Identity,
         private config: AgentConfig,
         private chatId: string,
+        private inviteCode: string | undefined
     ) {
         super(identity);
         this.groupService = this.createServiceClient<GroupService>(idlFactory, chatId, config);
@@ -101,12 +111,13 @@ export class GroupClient extends CandidService implements IGroupClient {
         chatId: string,
         identity: Identity,
         config: AgentConfig,
-        db: Database
+        db: Database,
+        inviteCode: string | undefined
     ): IGroupClient {
         return new CachingGroupClient(
             db,
             chatId,
-            new GroupClient(identity, config, chatId),
+            new GroupClient(identity, config, chatId, inviteCode),
             config.logger
         );
     }
@@ -245,7 +256,7 @@ export class GroupClient extends CandidService implements IGroupClient {
             .uploadData(message.content, [this.chatId])
             .then((content) => {
                 return this.handleResponse(
-                    this.groupService.edit_message({
+                    this.groupService.edit_message_v2({
                         thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                         content: apiMessageContent(content ?? message.content),
                         message_id: message.messageId,
@@ -297,7 +308,7 @@ export class GroupClient extends CandidService implements IGroupClient {
                 correlation_id: generateUint64(),
             };
             return this.handleResponse(
-                this.groupService.send_message(args),
+                this.groupService.send_message_v2(args),
                 sendMessageResponse
             ).then((resp) => [resp, { ...event.event, content: newContent }]);
         });
@@ -477,7 +488,7 @@ export class GroupClient extends CandidService implements IGroupClient {
 
     @profile("groupClient")
     getPublicSummary(): Promise<GroupChatSummary | undefined> {
-        const args = {};
+        const args = { invite_code: apiOptional(textToCode, this.inviteCode) };
         return this.handleQueryResponse(
             () => this.groupService.public_summary(args),
             publicSummaryResponse,
@@ -490,7 +501,7 @@ export class GroupClient extends CandidService implements IGroupClient {
 
     @profile("groupClient")
     getRules(): Promise<GroupRules | undefined> {
-        const args = {};
+        const args = { invite_code: apiOptional(textToCode, this.inviteCode) };
         return this.handleQueryResponse(
             () => this.groupService.rules(args),
             rulesResponse,
@@ -507,9 +518,11 @@ export class GroupClient extends CandidService implements IGroupClient {
         latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<Message>> {
         const thread_root_message_index: [] = [];
+        const invite_code: [] = [];
         const args = {
             thread_root_message_index,
             messages: new Uint32Array(messageIndexes),
+            invite_code,
             latest_client_event_index: apiOptional(identity, latestClientEventIndex),
         };
         return this.handleQueryResponse(
@@ -603,6 +616,44 @@ export class GroupClient extends CandidService implements IGroupClient {
     }
 
     @profile("groupClient")
+    getInviteCode(): Promise<InviteCodeResponse> {
+        return this.handleQueryResponse(
+            () => this.groupService.invite_code({}),
+            inviteCodeResponse
+        );
+    }
+
+    @profile("groupClient")
+    enableInviteCode(): Promise<EnableInviteCodeResponse> {
+        return this.handleResponse(
+            this.groupService.enable_invite_code({
+                correlation_id: generateUint64(),
+            }),
+            enableInviteCodeResponse
+        );
+    }
+
+    @profile("groupClient")
+    disableInviteCode(): Promise<DisableInviteCodeResponse> {
+        return this.handleResponse(
+            this.groupService.disable_invite_code({
+                correlation_id: generateUint64(),
+            }),
+            disableInviteCodeResponse
+        );
+    }
+
+    @profile("groupClient")
+    resetInviteCode(): Promise<ResetInviteCodeResponse> {
+        return this.handleResponse(
+            this.groupService.reset_invite_code({
+                correlation_id: generateUint64(),
+            }),
+            resetInviteCodeResponse
+        );
+    }
+
+    @profile("groupClient")
     threadPreviews(
         threadRootMessageIndexes: number[],
         latestClientThreadUpdate: bigint | undefined
@@ -652,7 +703,7 @@ export class GroupClient extends CandidService implements IGroupClient {
             (resp) => resp.Success.toString()
         );
     }
-    
+
     @profile("groupClient")
     declineInvitation(): Promise<DeclineInvitationResponse> {
         return this.handleResponse(

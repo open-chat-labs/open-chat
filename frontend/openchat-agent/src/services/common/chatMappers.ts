@@ -1,4 +1,3 @@
-
 import { Principal } from "@dfinity/principal";
 import { bytesToHexString, hexStringToBytes, identity, optional } from "../../utils/mapping";
 import type {
@@ -8,6 +7,7 @@ import type {
     ApiAudioContent,
     ApiVideoContent,
     ApiMessageContent,
+    ApiMessageContentInitial,
     ApiMessage,
     ApiTextContent,
     ApiReplyContext,
@@ -719,7 +719,7 @@ export function apiReplyContextArgs(chatId: string, domain: ReplyContext): ApiRe
     }
 }
 
-export function apiMessageContent(domain: MessageContent): ApiMessageContent {
+export function apiMessageContent(domain: MessageContent): ApiMessageContentInitial {
     switch (domain.kind) {
         case "text_content":
             return { Text: apiTextContent(domain) };

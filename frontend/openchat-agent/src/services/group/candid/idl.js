@@ -442,8 +442,37 @@ export const idlFactory = ({ IDL }) => {
     'MessageHardDeleted' : IDL.Null,
     'MessageNotDeleted' : IDL.Null,
   });
-  const EditMessageArgs = IDL.Record({
-    'content' : MessageContent,
+  const DisableInviteCodeArgs = IDL.Record({ 'correlation_id' : IDL.Nat64 });
+  const DisableInviteCodeResponse = IDL.Variant({
+    'ChatFrozen' : IDL.Null,
+    'NotAuthorized' : IDL.Null,
+    'Success' : IDL.Null,
+    'UserSuspended' : IDL.Null,
+  });
+  const PrizeContentInitial = IDL.Record({
+    'end_date' : TimestampMillis,
+    'caption' : IDL.Opt(IDL.Text),
+    'prizes' : IDL.Vec(Tokens),
+    'transfer' : CryptoTransaction,
+  });
+  const MessageContentInitial = IDL.Variant({
+    'Giphy' : GiphyContent,
+    'File' : FileContent,
+    'Poll' : PollContent,
+    'Text' : TextContent,
+    'Image' : ImageContent,
+    'Prize' : PrizeContentInitial,
+    'Custom' : CustomMessageContent,
+    'GovernanceProposal' : ProposalContent,
+    'Audio' : AudioContent,
+    'Crypto' : CryptoContent,
+    'Video' : VideoContent,
+    'Deleted' : DeletedContent,
+    'MessageReminderCreated' : MessageReminderCreated,
+    'MessageReminder' : MessageReminder,
+  });
+  const EditMessageV2Args = IDL.Record({
+    'content' : MessageContentInitial,
     'correlation_id' : IDL.Nat64,
     'message_id' : MessageId,
     'thread_root_message_index' : IDL.Opt(MessageIndex),
@@ -453,6 +482,13 @@ export const idlFactory = ({ IDL }) => {
     'CallerNotInGroup' : IDL.Null,
     'ChatFrozen' : IDL.Null,
     'Success' : IDL.Null,
+    'UserSuspended' : IDL.Null,
+  });
+  const EnableInviteCodeArgs = IDL.Record({ 'correlation_id' : IDL.Nat64 });
+  const EnableInviteCodeResponse = IDL.Variant({
+    'ChatFrozen' : IDL.Null,
+    'NotAuthorized' : IDL.Null,
+    'Success' : IDL.Record({ 'code' : IDL.Nat64 }),
     'UserSuspended' : IDL.Null,
   });
   const EventsArgs = IDL.Record({
@@ -714,6 +750,11 @@ export const idlFactory = ({ IDL }) => {
     'max_events' : IDL.Nat32,
     'thread_root_message_index' : IDL.Opt(MessageIndex),
   });
+  const InviteCodeArgs = IDL.Record({});
+  const InviteCodeResponse = IDL.Variant({
+    'NotAuthorized' : IDL.Null,
+    'Success' : IDL.Record({ 'code' : IDL.Opt(IDL.Nat64) }),
+  });
   const LocalUserIndexArgs = IDL.Record({});
   const LocalUserIndexResponse = IDL.Variant({ 'Success' : CanisterId });
   const MakePrivateArgs = IDL.Record({ 'correlation_id' : IDL.Nat64 });
@@ -760,6 +801,7 @@ export const idlFactory = ({ IDL }) => {
     'Success' : PushEventResult,
     'UserSuspended' : IDL.Null,
   });
+  const PublicSummaryArgs = IDL.Record({ 'invite_code' : IDL.Opt(IDL.Nat64) });
   const GovernanceProposalsSubtype = IDL.Record({
     'is_nns' : IDL.Bool,
     'governance_canister_id' : CanisterId,
@@ -871,6 +913,14 @@ export const idlFactory = ({ IDL }) => {
     'UserSuspended' : IDL.Null,
     'SuccessV2' : PushEventResult,
   });
+  const ResetInviteCodeArgs = IDL.Record({ 'correlation_id' : IDL.Nat64 });
+  const ResetInviteCodeResponse = IDL.Variant({
+    'ChatFrozen' : IDL.Null,
+    'NotAuthorized' : IDL.Null,
+    'Success' : IDL.Record({ 'code' : IDL.Nat64 }),
+    'UserSuspended' : IDL.Null,
+  });
+  const RulesArgs = IDL.Record({ 'invite_code' : IDL.Opt(IDL.Nat64) });
   const RulesSuccess = IDL.Record({ 'rules' : IDL.Opt(IDL.Text) });
   const RulesResponse = IDL.Variant({
     'NotAuthorized' : IDL.Null,
@@ -939,8 +989,8 @@ export const idlFactory = ({ IDL }) => {
   });
   const User = IDL.Record({ 'username' : IDL.Text, 'user_id' : UserId });
   const GroupReplyContext = IDL.Record({ 'event_index' : EventIndex });
-  const SendMessageArgs = IDL.Record({
-    'content' : MessageContent,
+  const SendMessageV2Args = IDL.Record({
+    'content' : MessageContentInitial,
     'mentioned' : IDL.Vec(User),
     'forwarding' : IDL.Bool,
     'sender_name' : IDL.Text,
@@ -973,38 +1023,6 @@ export const idlFactory = ({ IDL }) => {
     'InvalidPoll' : InvalidPollReason,
     'UserSuspended' : IDL.Null,
     'InvalidRequest' : IDL.Text,
-  });
-  const PrizeContentInitial = IDL.Record({
-    'end_date' : TimestampMillis,
-    'caption' : IDL.Opt(IDL.Text),
-    'prizes' : IDL.Vec(Tokens),
-    'transfer' : CryptoTransaction,
-  });
-  const MessageContentInitial = IDL.Variant({
-    'Giphy' : GiphyContent,
-    'File' : FileContent,
-    'Poll' : PollContent,
-    'Text' : TextContent,
-    'Image' : ImageContent,
-    'Prize' : PrizeContentInitial,
-    'Custom' : CustomMessageContent,
-    'GovernanceProposal' : ProposalContent,
-    'Audio' : AudioContent,
-    'Crypto' : CryptoContent,
-    'Video' : VideoContent,
-    'Deleted' : DeletedContent,
-    'MessageReminderCreated' : MessageReminderCreated,
-    'MessageReminder' : MessageReminder,
-  });
-  const SendMessageV2Args = IDL.Record({
-    'content' : MessageContentInitial,
-    'mentioned' : IDL.Vec(User),
-    'forwarding' : IDL.Bool,
-    'sender_name' : IDL.Text,
-    'correlation_id' : IDL.Nat64,
-    'message_id' : MessageId,
-    'replies_to' : IDL.Opt(GroupReplyContext),
-    'thread_root_message_index' : IDL.Opt(MessageIndex),
   });
   const SummaryArgs = IDL.Record({});
   const ChatMetrics = IDL.Record({
@@ -1291,7 +1309,21 @@ export const idlFactory = ({ IDL }) => {
         [DeletedMessageResponse],
         ['query'],
       ),
-    'edit_message' : IDL.Func([EditMessageArgs], [EditMessageResponse], []),
+    'disable_invite_code' : IDL.Func(
+        [DisableInviteCodeArgs],
+        [DisableInviteCodeResponse],
+        [],
+      ),
+    'edit_message_v2' : IDL.Func(
+        [EditMessageV2Args],
+        [EditMessageResponse],
+        [],
+      ),
+    'enable_invite_code' : IDL.Func(
+        [EnableInviteCodeArgs],
+        [EnableInviteCodeResponse],
+        [],
+      ),
     'events' : IDL.Func([EventsArgs], [EventsResponse], ['query']),
     'events_by_index' : IDL.Func(
         [EventsByIndexArgs],
@@ -1299,6 +1331,7 @@ export const idlFactory = ({ IDL }) => {
         ['query'],
       ),
     'events_window' : IDL.Func([EventsWindowArgs], [EventsResponse], ['query']),
+    'invite_code' : IDL.Func([InviteCodeArgs], [InviteCodeResponse], ['query']),
     'local_user_index' : IDL.Func(
         [LocalUserIndexArgs],
         [LocalUserIndexResponse],
@@ -1312,7 +1345,7 @@ export const idlFactory = ({ IDL }) => {
       ),
     'pin_message_v2' : IDL.Func([PinMessageArgs], [PinMessageV2Response], []),
     'public_summary' : IDL.Func(
-        [EmptyArgs],
+        [PublicSummaryArgs],
         [PublicSummaryResponse],
         ['query'],
       ),
@@ -1341,7 +1374,12 @@ export const idlFactory = ({ IDL }) => {
         [RemoveReactionResponse],
         [],
       ),
-    'rules' : IDL.Func([EmptyArgs], [RulesResponse], ['query']),
+    'reset_invite_code' : IDL.Func(
+        [ResetInviteCodeArgs],
+        [ResetInviteCodeResponse],
+        [],
+      ),
+    'rules' : IDL.Func([RulesArgs], [RulesResponse], ['query']),
     'search_messages' : IDL.Func(
         [SearchMessagesArgs],
         [SearchMessagesResponse],
@@ -1357,7 +1395,6 @@ export const idlFactory = ({ IDL }) => {
         [SelectedUpdatesResponse],
         ['query'],
       ),
-    'send_message' : IDL.Func([SendMessageArgs], [SendMessageResponse], []),
     'send_message_v2' : IDL.Func(
         [SendMessageV2Args],
         [SendMessageResponse],

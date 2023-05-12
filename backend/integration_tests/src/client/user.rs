@@ -54,7 +54,7 @@ pub mod happy_path {
         );
 
         match response {
-            user_canister::send_message::Response::Success(result) => result,
+            user_canister::send_message_v2::Response::Success(result) => result,
             response => panic!("'send_message' error: {response:?}"),
         }
     }

@@ -294,18 +294,18 @@ export interface DirectReactionAddedNotification {
   'timestamp' : TimestampMillis,
   'reaction' : string,
 }
-export interface EditMessageArgs {
-  'content' : MessageContent,
-  'user_id' : UserId,
-  'correlation_id' : bigint,
-  'message_id' : MessageId,
-  'thread_root_message_index' : [] | [MessageIndex],
-}
 export type EditMessageResponse = { 'MessageNotFound' : null } |
   { 'ChatNotFound' : null } |
   { 'Success' : null } |
   { 'UserSuspended' : null } |
   { 'UserBlocked' : null };
+export interface EditMessageV2Args {
+  'content' : MessageContentInitial,
+  'user_id' : UserId,
+  'correlation_id' : bigint,
+  'message_id' : MessageId,
+  'thread_root_message_index' : [] | [MessageIndex],
+}
 export type EmptyArgs = {};
 export type EventIndex = number;
 export interface EventsArgs {
@@ -1015,16 +1015,6 @@ export type SearchMessagesResponse = { 'TermTooShort' : number } |
   { 'TermTooLong' : number } |
   { 'InvalidTerm' : null };
 export interface SearchMessagesSuccessResult { 'matches' : Array<MessageMatch> }
-export interface SendMessageArgs {
-  'content' : MessageContent,
-  'recipient' : UserId,
-  'forwarding' : boolean,
-  'sender_name' : string,
-  'correlation_id' : bigint,
-  'message_id' : MessageId,
-  'replies_to' : [] | [ReplyContext],
-  'thread_root_message_index' : [] | [MessageIndex],
-}
 export type SendMessageResponse = { 'TextTooLong' : number } |
   {
     'TransferSuccessV2' : {
@@ -1054,6 +1044,16 @@ export type SendMessageResponse = { 'TextTooLong' : number } |
   { 'TransferFailed' : string } |
   { 'InternalError' : string } |
   { 'RecipientNotFound' : null };
+export interface SendMessageV2Args {
+  'content' : MessageContentInitial,
+  'recipient' : UserId,
+  'forwarding' : boolean,
+  'sender_name' : string,
+  'correlation_id' : bigint,
+  'message_id' : MessageId,
+  'replies_to' : [] | [ReplyContext],
+  'thread_root_message_index' : [] | [MessageIndex],
+}
 export interface SendMessageWithTransferToGroupArgs {
   'content' : MessageContentInitial,
   'mentioned' : Array<User>,
@@ -1216,17 +1216,6 @@ export type TotalPollVotes = { 'Anonymous' : Array<[number, number]> } |
   { 'Visible' : Array<[number, Array<UserId>]> } |
   { 'Hidden' : number };
 export type TransactionHash = Uint8Array | number[];
-export interface TransferCryptoWithinGroupArgs {
-  'content' : CryptoContent,
-  'recipient' : UserId,
-  'mentioned' : Array<User>,
-  'group_id' : ChatId,
-  'sender_name' : string,
-  'correlation_id' : bigint,
-  'message_id' : MessageId,
-  'replies_to' : [] | [GroupReplyContext],
-  'thread_root_message_index' : [] | [MessageIndex],
-}
 export interface UnArchiveChatArgs { 'chat_id' : ChatId }
 export type UnArchiveChatResponse = { 'ChatNotFound' : null } |
   { 'Success' : null };
@@ -1344,7 +1333,7 @@ export interface _SERVICE {
   'delete_group' : ActorMethod<[DeleteGroupArgs], DeleteGroupResponse>,
   'delete_messages' : ActorMethod<[DeleteMessagesArgs], DeleteMessagesResponse>,
   'deleted_message' : ActorMethod<[DeletedMessageArgs], DeletedMessageResponse>,
-  'edit_message' : ActorMethod<[EditMessageArgs], EditMessageResponse>,
+  'edit_message_v2' : ActorMethod<[EditMessageV2Args], EditMessageResponse>,
   'events' : ActorMethod<[EventsArgs], EventsResponse>,
   'events_by_index' : ActorMethod<[EventsByIndexArgs], EventsResponse>,
   'events_window' : ActorMethod<[EventsWindowArgs], EventsResponse>,
@@ -1378,7 +1367,7 @@ export interface _SERVICE {
   'public_profile' : ActorMethod<[PublicProfileArgs], PublicProfileResponse>,
   'remove_reaction' : ActorMethod<[RemoveReactionArgs], RemoveReactionResponse>,
   'search_messages' : ActorMethod<[SearchMessagesArgs], SearchMessagesResponse>,
-  'send_message' : ActorMethod<[SendMessageArgs], SendMessageResponse>,
+  'send_message_v2' : ActorMethod<[SendMessageV2Args], SendMessageResponse>,
   'send_message_with_transfer_to_group' : ActorMethod<
     [SendMessageWithTransferToGroupArgs],
     SendMessageWithTransferToGroupResponse
@@ -1389,10 +1378,6 @@ export interface _SERVICE {
   'set_message_reminder' : ActorMethod<
     [SetMessageReminderArgs],
     SetMessageReminderResponse
-  >,
-  'transfer_crypto_within_group_v2' : ActorMethod<
-    [TransferCryptoWithinGroupArgs],
-    SendMessageWithTransferToGroupResponse
   >,
   'unarchive_chat' : ActorMethod<[UnArchiveChatArgs], UnArchiveChatResponse>,
   'unblock_user' : ActorMethod<[UnblockUserArgs], UnblockUserResponse>,

@@ -288,7 +288,7 @@
         "info_q": "我在哪里可以找到有关 OpenChat 的更多信息？",
         "info_a": "转到我们的<a href=\"/home\">主页</a>并找到指向 OpenChat <a href=\"/features\">功能</a>、<a href=\"/roadmap\">路线图</的链接a>、<a href=\"/whitepaper\">白皮书</a>、<a href=\"/architecture\">架构</a>和<a href=\"/blog\">博客</a>",
         "referral_rewards_q": "什么是推荐奖励？",
-        "referral_rewards_a": "作为钻石会员，您可以为您推荐的每一位后来成为钻石会员的用户赚取奖励。在加入 OpenChat 的第一年内，您将收到他们支付的任何钻石付款的一半。您可以在主菜单的“个人资料设置”的“邀请朋友/家人”部分找到您的推荐链接。<br><br>作为额外的奖励，每个月您还可以获得 3000、2000 的丰厚奖金, 或 1000 个 CHAT 代币，如果您在推荐人中排名前三！请参阅主菜单中的“顶级推荐人”。<br><br>将来我们将为您推荐的所有用户开放推荐奖励，无论他们是否成为钻石会员。然而，由于这很容易被利用，我们首先需要引入某种类型的“独特人格证明”。"
+        "referral_rewards_a": "作为钻石会员，您可以为您推荐的每一位后来成为钻石会员的用户赚取奖励。在加入 OpenChat 的第一年内，您将收到他们支付的任何钻石付款的一半。您可以在主菜单的“个人资料设置”的“邀请朋友/家人”部分找到您的推荐链接。<br><br>作为额外奖励，如果您在价值推荐人中排名前 3 位，您每个月还可以获得 3000、2000 或 1000 CHAT 代币的丰厚奖励！请参阅主菜单中的“热门推荐人”。<br><br>你会怎么做？有很多方法。您可以告诉朋友和家人，发布关于 OpenChat 的推文，制作一段关于 OpenChat 的视频来描述您对它的喜爱并将其分享到 TikTok 或 YouTube。您可以在 Twitch 上直播或撰写博客文章或创建播客或主持 Twitter 空间，甚至举办现实生活中的聚会。我们期待看到您提出的所有创意点子来宣传！<br><br>未来我们会为您推荐的所有用户开放推荐奖励，无论他们是否成为钻石会员。然而，由于这很容易被利用，我们首先需要引入某种类型的“独特人格证明”。"
     },
     "roadmap": "路线图",
     "roleChanged": "{changedBy} 将 {changed} 的角色从 {oldRole} 更改为 {newRole}",
@@ -408,13 +408,26 @@
         "optional": "选修的",
         "openAccessInfo": "加入这个群组没有特殊的访问要求",
         "gateCheckFailed": "未满足访问门",
-        "inviteWithLink": "通过链接邀请加入群组",
-        "shareMessage": "知道此链接的任何人都可以预览和加入群组。如果您是钻石会员并且任何用户通过此链接注册帐户，您将获得他们在第一年内支付的任何钻石会员付款的一半。",
-        "invite": "邀请",
         "inviteUsers": "邀请用户",
         "inviteUsersFailed": "邀请用户时出错",
         "tooManyInvites": "您只能有 100 个未完成的邀请",
-        "usersInvited": "邀请信息已发送！"
+        "usersInvited": "邀请信息已发送！",
+        "invite": {
+            "inviteWithLink": "通过链接邀请加入群组",
+            "enableLink": "启用链接",
+            "resetLink": "重置链接",
+            "errorGettingLink": "无法获取链接",
+            "errorEnablingLink": "无法启用链接",
+            "errorDisablingLink": "无法禁用链接",
+            "errorResettingLink": "无法重置链接",
+            "confirmReset": "您确定要重置群组链接吗？人们将无法再使用当前链接加入群组。",
+            "shareMessage": "知道此链接的任何人都可以预览和加入群组。作为钻石会员，您还可以获得[推荐奖励](?faq=referral_rewards)。",
+            "shareMessageTrust": "与您信任的人分享。",
+            "enabled": "启用",
+            "disabled": "禁用",
+            "reset": "重置",
+            "invite": "邀请"
+        }
     },
     "updateNow": "现在重新加载",
     "updateRequired": "新版本的 OpenChat 可用 - 在 {countdown} 秒内重新加载",

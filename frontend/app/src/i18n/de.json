@@ -232,7 +232,7 @@
         "info_q": "Wo kann ich mehr über OpenChat erfahren?",
         "info_a": "Gehen Sie zu unserer <a href=\"/home\">Homepage</a> und finden Sie Links zu OpenChat <a href=\"/features\">Funktionen</a>, <a href=\"/roadmap\">Roadmap</ a>, <a href=\"/whitepaper\">Whitepaper</a>, <a href=\"/architecture\">Architektur</a> und <a href=\"/blog\">Blog</a>",
         "referral_rewards_q": "Was sind Empfehlungsprämien?",
-        "referral_rewards_a": "Als Diamond-Mitglied können Sie Belohnungen für jeden von Ihnen geworbenen Benutzer erhalten, der selbst Diamond-Mitglied wird. Sie erhalten die Hälfte aller Diamond-Zahlungen, die sie innerhalb des ersten Jahres nach Ihrem Beitritt zu OpenChat leisten. Sie finden Ihren Empfehlungslink im Abschnitt „Freunde/Familie einladen“ Ihrer „Profileinstellungen“ im Hauptmenü.<br><br>Als zusätzlichen Anreiz können Sie jeden Monat einen stattlichen Preis von 3000, 2000 gewinnen oder 1000 CHAT-Tokens, wenn Sie wertmäßig zu den drei Empfehlungsgebern gehören! Siehe „Top-Empfehler“ im Hauptmenü.<br><br>In Zukunft werden wir Empfehlungsprämien für alle von Ihnen geworbenen Benutzer eröffnen, unabhängig davon, ob sie Diamond-Mitglieder werden. Da dies jedoch leicht auszunutzen ist, müssen wir zunächst eine Art „Beweis für die einzigartige Persönlichkeit“ einführen."
+        "referral_rewards_a": "Als Diamond-Mitglied können Sie Belohnungen für jeden von Ihnen geworbenen Benutzer erhalten, der selbst Diamond-Mitglied wird. Sie erhalten die Hälfte aller Diamond-Zahlungen, die sie innerhalb des ersten Jahres nach Ihrem Beitritt zu OpenChat leisten. Sie finden Ihren Empfehlungslink im Abschnitt „Freunde/Familie einladen“ Ihrer „Profileinstellungen“ im Hauptmenü.<br><br> Als zusätzlichen Anreiz können Sie außerdem jeden Monat einen stattlichen Preis von 3.000, 2.000 oder 1.000 CHAT-Tokens gewinnen, wenn Sie wertmäßig zu den drei Empfehlungsgebern gehören! Siehe „Top-Referrer“ im Hauptmenü.<br><br> Wie könnten Sie das tun? Es gibt viele Möglichkeiten. Sie können Freunden und Familie davon erzählen, über OpenChat twittern, ein Video über OpenChat erstellen, in dem Sie beschreiben, was Sie daran lieben, und es auf TikTok oder YouTube teilen. Sie könnten auf Twitch streamen, einen Blog-Beitrag schreiben, einen Podcast erstellen, einen Twitter-Bereich hosten oder sogar ein echtes Treffen veranstalten. Wir freuen uns darauf, all die kreativen Ideen zu sehen, die Sie haben, um die Nachricht bekannt zu machen!<br><br> In Zukunft bieten wir Empfehlungsprämien für alle von Ihnen geworbenen Benutzer an, unabhängig davon, ob sie Diamond-Mitglieder werden. Da dies jedoch leicht auszunutzen ist, müssen wir zunächst eine Art „Beweis für die einzigartige Persönlichkeit“ einführen."
     },
     "roadmap": "Fahrplan",
     "here": "Hier",
@@ -410,13 +410,26 @@
         "optional": "Optional",
         "openAccessInfo": "Es gibt keine besonderen Zugangsvoraussetzungen, um dieser Gruppe beizutreten",
         "gateCheckFailed": "Zugangstor nicht erreicht",
-        "inviteWithLink": "Per Link zur Gruppe einladen",
-        "shareMessage": "Jeder mit diesem Link kann eine Vorschau anzeigen und der Gruppe beitreten. Wenn Sie ein Diamond-Mitglied sind und ein Benutzer über diesen Link ein Konto registriert, verdienen Sie die Hälfte aller Diamond-Mitgliedschaftszahlungen, die er innerhalb seines ersten Jahres leistet.",
-        "invite": "Einladen",
         "inviteUsers": "Benutzer einladen",
         "inviteUsersFailed": "Beim Einladen von Benutzern ist ein Fehler aufgetreten",
         "tooManyInvites": "Sie können nur 100 ausstehende Einladungen haben",
-        "usersInvited": "Einladungsnachricht gesendet!"
+        "usersInvited": "Einladungsnachricht gesendet!",
+        "invite": {
+            "inviteWithLink": "Per Link zur Gruppe einladen",
+            "enableLink": "Verknüpfung aktivieren",
+            "resetLink": "Verknüpfung zurücksetzen",
+            "errorGettingLink": "Link kann nicht abgerufen werden",
+            "errorEnablingLink": "Link kann nicht aktiviert werden",
+            "errorDisablingLink": "Link kann nicht deaktiviert werden",
+            "errorResettingLink": "Link kann nicht zurückgesetzt werden",
+            "confirmReset": "Möchten Sie den Gruppenlink wirklich zurücksetzen? Personen können der Gruppe nicht mehr über den aktuellen Link beitreten.",
+            "shareMessage": "Jeder mit diesem Link kann eine Vorschau anzeigen und der Gruppe beitreten. Als Diamond-Mitglied können Sie auch [Empfehlungsprämien](?faq=referral_rewards) verdienen.",
+            "shareMessageTrust": "Teilen Sie es mit Menschen, denen Sie vertrauen.",
+            "enabled": "ermöglicht",
+            "disabled": "Behinderte",
+            "reset": "zurücksetzen",
+            "invite": "Einladen"
+        }
     },
     "updateNow": "jetzt neu laden",
     "updateRequired": "Eine neue Version von OpenChat ist verfügbar - Neuladen in {countdown}s",
