@@ -50,7 +50,10 @@ type RegisterUserArgs =
 
 type RegisterUserResponse =
     variant {
-        Success: UserId;
+        Success: record {
+            user_id: UserId;
+            icp_account: AccountIdentifier;
+        };
         AlreadyRegistered;
         UserLimitReached;
         UsernameInvalid;

@@ -506,7 +506,10 @@ export const idlFactory = ({ IDL }) => {
     'AlreadyRegistered' : IDL.Null,
     'UserLimitReached' : IDL.Null,
     'UsernameTooLong' : IDL.Nat16,
-    'Success' : UserId,
+    'Success' : IDL.Record({
+      'icp_account' : AccountIdentifier,
+      'user_id' : UserId,
+    }),
     'PublicKeyInvalid' : IDL.Text,
     'InternalError' : IDL.Text,
     'ReferralCodeInvalid' : IDL.Null,
