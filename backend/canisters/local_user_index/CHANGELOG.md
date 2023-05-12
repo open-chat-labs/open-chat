@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Re-introduce invite by code on backend ([#3552](https://github.com/open-ic/open-chat/pull/3552))
+
 ### Changed
 
 - Register users via LocalUserIndex to improve speed ([#3557](https://github.com/open-ic/open-chat/pull/3557))
@@ -12,10 +16,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Update BTC Miami welcome messages ([#3566](https://github.com/open-ic/open-chat/pull/3566))
 
 ## [[2.0.681](https://github.com/open-ic/open-chat/releases/tag/v2.0.681-local_user_index)] - 2023-05-08
-
-### Added
-
-- Re-introduce invite by code on backend ([#3552](https://github.com/open-ic/open-chat/pull/3552))
 
 ### Fixed
 
