@@ -106,10 +106,6 @@
             color: var(--currentChat-msg-me-txt);
         }
 
-        &.crypto {
-            @include gold();
-        }
-
         &:after {
             content: "";
             display: table;
