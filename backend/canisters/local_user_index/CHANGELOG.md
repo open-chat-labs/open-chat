@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Register users via LocalUserIndex to improve speed ([#3557](https://github.com/open-ic/open-chat/pull/3557))
 - Make BTC Miami promo work on test and on prod ([#3565](https://github.com/open-ic/open-chat/pull/3565))
 - Update BTC Miami welcome messages ([#3566](https://github.com/open-ic/open-chat/pull/3566))
+- Return `icp_account` in `register_user` responses ([#3581](https://github.com/open-ic/open-chat/pull/3581))
 
 ## [[2.0.681](https://github.com/open-ic/open-chat/releases/tag/v2.0.681-local_user_index)] - 2023-05-08
 
