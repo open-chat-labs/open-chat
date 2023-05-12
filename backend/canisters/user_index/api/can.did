@@ -6,27 +6,6 @@ type UserRegistrationCanisterResponse =
         NewRegistrationsClosed;
     };
 
-type RegisterUserV2Args =
-    record {
-        username: text;
-        referral_code: opt text;
-        public_key: blob;
-    };
-
-type RegisterUserResponse =
-    variant {
-        Success: UserId;
-        AlreadyRegistered;
-        UserLimitReached;
-        UsernameInvalid;
-        UsernameTooShort: nat16;
-        UsernameTooLong: nat16;
-        CyclesBalanceTooLow;
-        InternalError: text;
-        PublicKeyInvalid: text;
-        ReferralCodeInvalid;
-    };
-
 type SetUsernameArgs =
     record {
         username: text;
@@ -352,7 +331,6 @@ type AddReferralCodesResponse =
 
 service: {
     user_registration_canister: (EmptyArgs) -> (UserRegistrationCanisterResponse) query;
-    register_user_v2: (RegisterUserV2Args) -> (RegisterUserResponse);
 
     // This is used to set the initial username and subsequently to change it
     set_username: (SetUsernameArgs) -> (SetUsernameResponse);

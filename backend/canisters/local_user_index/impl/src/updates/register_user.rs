@@ -1,15 +1,19 @@
 use crate::model::btc_miami_payments_queue::PendingPayment;
 use crate::model::referral_codes::ReferralCode;
 use crate::timer_job_types::{JoinUserToGroup, TimerJob};
-use crate::updates::c2c_create_user::create_user;
-use crate::{mutate_state, RuntimeState};
+use crate::{mutate_state, RuntimeState, USER_CANISTER_INITIAL_CYCLES_BALANCE};
 use candid::Principal;
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
 use ledger_utils::default_ledger_account;
 use local_user_index_canister::register_user::{Response::*, *};
-use types::{CanisterId, MessageContent, TextContent, UserId};
+use types::{CanisterId, CanisterWasm, Cycles, MessageContent, TextContent, UserId, Version};
+use user_canister::init::Args as InitUserCanisterArgs;
+use user_canister::{Event as UserEvent, ReferredUserRegistered};
 use user_index_canister::{Event as UserIndexEvent, UserRegistered};
+use utils::canister;
+use utils::canister::CreateAndInstallError;
+use utils::consts::{CREATE_CANISTER_CYCLES_FEE, MIN_CYCLES_BALANCE};
 use utils::username_validation::{validate_username, UsernameValidationError};
 use x509_parser::prelude::FromDer;
 use x509_parser::x509::SubjectPublicKeyInfo;
@@ -22,43 +26,60 @@ async fn register_user(args: Args) -> Response {
     // Check the principal is derived from Internet Identity + check the username is valid
     let PrepareOk {
         caller,
+        canister_id,
+        canister_wasm,
+        cycles_to_use,
         referral_code,
-        openchat_bot_messages,
+        init_canister_args,
     } = match mutate_state(|state| prepare(&args, state)) {
         Ok(ok) => ok,
         Err(response) => return response,
     };
 
-    match create_user(local_user_index_canister::c2c_create_user::Args {
-        principal: caller,
-        username: args.username.clone(),
-        referred_by: referral_code.as_ref().and_then(|r| r.user()),
-        openchat_bot_messages,
-    })
+    let wasm_version = canister_wasm.version;
+
+    match canister::create_and_install(
+        canister_id,
+        canister_wasm,
+        init_canister_args,
+        cycles_to_use,
+        on_canister_created,
+    )
     .await
     {
-        local_user_index_canister::c2c_create_user::Response::Success(user_id) => {
-            mutate_state(|state| commit(caller, user_id, args.username, referral_code, state));
+        Ok(canister_id) => {
+            let user_id = canister_id.into();
+            mutate_state(|state| commit(caller, user_id, args.username, wasm_version, referral_code, state));
             Success(SuccessResult {
                 user_id,
                 icp_account: default_ledger_account(user_id.into()),
             })
         }
-        local_user_index_canister::c2c_create_user::Response::AlreadyRegistered => AlreadyRegistered,
-        local_user_index_canister::c2c_create_user::Response::CyclesBalanceTooLow => CyclesBalanceTooLow,
-        local_user_index_canister::c2c_create_user::Response::InternalError(error) => InternalError(error),
+        Err(error) => {
+            if let CreateAndInstallError::InstallFailed(id, ..) = error {
+                mutate_state(|state| state.data.canister_pool.push(id));
+            }
+            InternalError(format!("{error:?}"))
+        }
     }
 }
 
 struct PrepareOk {
     caller: Principal,
+    canister_id: Option<CanisterId>,
+    canister_wasm: CanisterWasm,
+    cycles_to_use: Cycles,
     referral_code: Option<ReferralCode>,
-    openchat_bot_messages: Vec<MessageContent>,
+    init_canister_args: InitUserCanisterArgs,
 }
 
 fn prepare(args: &Args, runtime_state: &mut RuntimeState) -> Result<PrepareOk, Response> {
     let caller = runtime_state.env.caller();
     let mut referral_code = None;
+
+    if runtime_state.data.global_users.get_by_principal(&caller).is_some() {
+        return Err(AlreadyRegistered);
+    }
 
     if let Err(error) = validate_public_key(caller, &args.public_key, runtime_state.data.internet_identity_canister_id) {
         return Err(PublicKeyInvalid(error));
@@ -106,10 +127,39 @@ fn prepare(args: &Args, runtime_state: &mut RuntimeState) -> Result<PrepareOk, R
             .collect()
     };
 
+    let cycles_to_use = if runtime_state.data.canister_pool.is_empty() {
+        let cycles_required = USER_CANISTER_INITIAL_CYCLES_BALANCE + CREATE_CANISTER_CYCLES_FEE;
+        if !utils::cycles::can_spend_cycles(cycles_required, MIN_CYCLES_BALANCE) {
+            return Err(CyclesBalanceTooLow);
+        }
+        cycles_required
+    } else {
+        0
+    };
+
+    let canister_id = runtime_state.data.canister_pool.pop();
+    let canister_wasm = runtime_state.data.user_canister_wasm_for_new_canisters.clone();
+    let init_canister_args = InitUserCanisterArgs {
+        owner: caller,
+        group_index_canister_id: runtime_state.data.group_index_canister_id,
+        user_index_canister_id: runtime_state.data.user_index_canister_id,
+        local_user_index_canister_id: runtime_state.env.canister_id(),
+        notifications_canister_id: runtime_state.data.notifications_canister_id,
+        wasm_version: canister_wasm.version,
+        username: args.username.clone(),
+        openchat_bot_messages,
+        test_mode: runtime_state.data.test_mode,
+    };
+
+    crate::jobs::topup_canister_pool::start_job_if_required(runtime_state);
+
     Ok(PrepareOk {
         caller,
+        canister_id,
+        canister_wasm,
+        cycles_to_use,
         referral_code,
-        openchat_bot_messages,
+        init_canister_args,
     })
 }
 
@@ -117,44 +167,60 @@ fn commit(
     principal: Principal,
     user_id: UserId,
     username: String,
+    wasm_version: Version,
     referral_code: Option<ReferralCode>,
     runtime_state: &mut RuntimeState,
 ) {
-    if let Some(ReferralCode::BtcMiami(code)) = referral_code.clone() {
-        let now = runtime_state.env.now();
-        let test_mode = runtime_state.data.test_mode;
-
-        // This referral code can only be used once so claim it
-        runtime_state.data.referral_codes.claim(code, user_id, now);
-
-        runtime_state.data.btc_miami_payments_queue.push(PendingPayment {
-            amount: if test_mode { 50 } else { 50_000 }, // Approx $14
-            timestamp: runtime_state.env.now_nanos(),
-            recipient: user_id.into(),
-        });
-        crate::jobs::make_btc_miami_payments::start_job_if_required(runtime_state);
-
-        let btc_miami_group =
-            Principal::from_text(if test_mode { "ueyan-5iaaa-aaaaf-bifxa-cai" } else { "pbo6v-oiaaa-aaaar-ams6q-cai" })
-                .unwrap()
-                .into();
-        runtime_state.data.timer_jobs.enqueue_job(
-            TimerJob::JoinUserToGroup(JoinUserToGroup {
-                user_id,
-                group_id: btc_miami_group,
-                attempt: 0,
-            }),
-            now,
-            now,
-        );
-    }
+    let now = runtime_state.env.now();
+    runtime_state.data.local_users.add(user_id, wasm_version, now);
+    runtime_state.data.global_users.add(principal, user_id, false);
 
     runtime_state.push_event_to_user_index(UserIndexEvent::UserRegistered(Box::new(UserRegistered {
         principal,
         user_id,
-        username,
-        referred_by: referral_code.and_then(|r| r.user()),
+        username: username.clone(),
+        referred_by: referral_code.as_ref().and_then(|r| r.user()),
     })));
+
+    match referral_code {
+        Some(ReferralCode::User(referred_by)) => {
+            if runtime_state.data.local_users.get(&referred_by).is_some() {
+                runtime_state.push_event_to_user(
+                    referred_by,
+                    UserEvent::ReferredUserRegistered(Box::new(ReferredUserRegistered { user_id, username })),
+                );
+            }
+        }
+        Some(ReferralCode::BtcMiami(code)) => {
+            let test_mode = runtime_state.data.test_mode;
+
+            // This referral code can only be used once so claim it
+            runtime_state.data.referral_codes.claim(code, user_id, now);
+
+            runtime_state.data.btc_miami_payments_queue.push(PendingPayment {
+                amount: if test_mode { 50 } else { 50_000 }, // Approx $14
+                timestamp: runtime_state.env.now_nanos(),
+                recipient: user_id.into(),
+            });
+            crate::jobs::make_btc_miami_payments::start_job_if_required(runtime_state);
+
+            let btc_miami_group =
+                Principal::from_text(if test_mode { "ueyan-5iaaa-aaaaf-bifxa-cai" } else { "pbo6v-oiaaa-aaaar-ams6q-cai" })
+                    .unwrap()
+                    .into();
+
+            runtime_state.data.timer_jobs.enqueue_job(
+                TimerJob::JoinUserToGroup(JoinUserToGroup {
+                    user_id,
+                    group_id: btc_miami_group,
+                    attempt: 0,
+                }),
+                now,
+                now,
+            );
+        }
+        _ => {}
+    }
 }
 
 fn welcome_messages() -> Vec<String> {
@@ -192,4 +258,8 @@ fn validate_public_key(caller: Principal, public_key: &[u8], internet_identity_c
     } else {
         Err("PublicKey does not match caller".to_string())
     }
+}
+
+fn on_canister_created(cycles: Cycles) {
+    mutate_state(|state| state.data.total_cycles_spent_on_canisters += cycles);
 }

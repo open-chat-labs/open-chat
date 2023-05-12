@@ -14,10 +14,10 @@ fn suspend_user() {
         controller,
     } = wrapper.env();
 
-    let user1 = client::user_index::happy_path::register_user(env, canister_ids.user_index);
-    let user2 = client::user_index::happy_path::register_user(env, canister_ids.user_index);
+    let user1 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
     let group = client::user::happy_path::create_group(env, &user1, "SUSPEND_USER_TEST", false, false);
-    let platform_moderator = client::user_index::happy_path::register_user(env, canister_ids.user_index);
+    let platform_moderator = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
 
     client::user_index::add_platform_moderator(
         env,
@@ -146,8 +146,8 @@ fn suspend_user_for_duration() {
         controller,
     } = wrapper.env();
 
-    let user = client::user_index::happy_path::register_user(env, canister_ids.user_index);
-    let platform_moderator = client::user_index::happy_path::register_user(env, canister_ids.user_index);
+    let user = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let platform_moderator = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
 
     client::user_index::add_platform_moderator(
         env,

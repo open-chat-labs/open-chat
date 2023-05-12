@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Removed
+
+- Remove `register_user_v2` since users now register via a LocalUserIndex ([#3583](https://github.com/open-ic/open-chat/pull/3583))
+
 ## [[2.0.684](https://github.com/open-ic/open-chat/releases/tag/v2.0.684-user_index)] - 2023-05-10
 
 ### Fixed

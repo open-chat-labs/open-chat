@@ -10,7 +10,7 @@ fn delete_group_succeeds() {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
-    let TestData { user1, user2, group_id } = init_test_data(env, canister_ids.user_index);
+    let TestData { user1, user2, group_id } = init_test_data(env, canister_ids.local_user_index);
 
     let delete_group_response = client::user::delete_group(
         env,
@@ -31,9 +31,9 @@ fn delete_group_succeeds() {
     assert!(!initial_state.group_chats.iter().any(|c| c.chat_id == group_id));
 }
 
-fn init_test_data(env: &mut StateMachine, user_index: CanisterId) -> TestData {
-    let user1 = client::user_index::happy_path::register_user(env, user_index);
-    let user2 = client::user_index::happy_path::register_user(env, user_index);
+fn init_test_data(env: &mut StateMachine, local_user_index: CanisterId) -> TestData {
+    let user1 = client::local_user_index::happy_path::register_user(env, local_user_index);
+    let user2 = client::local_user_index::happy_path::register_user(env, local_user_index);
 
     let group_name = random_string();
 

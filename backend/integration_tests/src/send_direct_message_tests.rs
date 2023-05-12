@@ -11,8 +11,8 @@ fn send_message_succeeds() {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
-    let user1 = client::user_index::happy_path::register_user(env, canister_ids.user_index);
-    let user2 = client::user_index::happy_path::register_user(env, canister_ids.user_index);
+    let user1 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
 
     let send_message_result = client::user::happy_path::send_text_message(env, &user1, user2.user_id, "TEXT", None);
 
@@ -32,8 +32,8 @@ fn empty_message_fails() {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
-    let user1 = client::user_index::happy_path::register_user(env, canister_ids.user_index);
-    let user2 = client::user_index::happy_path::register_user(env, canister_ids.user_index);
+    let user1 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
 
     let send_message_args = user_canister::send_message_v2::Args {
         recipient: user2.user_id,
@@ -56,8 +56,8 @@ fn text_too_long_fails() {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
-    let user1 = client::user_index::happy_path::register_user(env, canister_ids.user_index);
-    let user2 = client::user_index::happy_path::register_user(env, canister_ids.user_index);
+    let user1 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
 
     let send_message_args = user_canister::send_message_v2::Args {
         recipient: user2.user_id,
@@ -82,8 +82,8 @@ fn send_message_retries_if_fails() {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
-    let user1 = client::user_index::happy_path::register_user(env, canister_ids.user_index);
-    let user2 = client::user_index::happy_path::register_user(env, canister_ids.user_index);
+    let user1 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
 
     stop_canister(env, canister_ids.local_user_index, user2.user_id.into());
 
@@ -107,8 +107,8 @@ fn messages_arrive_in_order_even_if_some_fail_originally() {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
-    let user1 = client::user_index::happy_path::register_user(env, canister_ids.user_index);
-    let user2 = client::user_index::happy_path::register_user(env, canister_ids.user_index);
+    let user1 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
 
     stop_canister(env, canister_ids.local_user_index, user2.user_id.into());
 
