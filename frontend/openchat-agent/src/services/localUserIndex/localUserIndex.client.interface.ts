@@ -6,7 +6,7 @@ export interface ILocalUserIndexClient {
         referralCode: string | undefined
     ): Promise<RegisterUserResponse>;
     inviteUsersToGroup(chatId: string, userIds: string[]): Promise<InviteUsersResponse>;
-    joinGroup(chatId: string): Promise<JoinGroupResponse>;
+    joinGroup(chatId: string, inviteCode: string | undefined): Promise<JoinGroupResponse>;
     reportMessage(
         chatId: string,
         eventIndex: number,

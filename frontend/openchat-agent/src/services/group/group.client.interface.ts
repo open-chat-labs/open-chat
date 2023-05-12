@@ -23,6 +23,10 @@ import type {
     RegisterPollVoteResponse,
     GroupPermissions,
     MakeGroupPrivateResponse,
+    InviteCodeResponse,
+    EnableInviteCodeResponse,
+    DisableInviteCodeResponse,
+    ResetInviteCodeResponse,
     RegisterProposalVoteResponse,
     GroupRules,
     SearchGroupChatResponse,
@@ -125,6 +129,10 @@ export interface IGroupClient {
         userIds: string[],
         maxResults: number
     ): Promise<SearchGroupChatResponse>;
+    getInviteCode(): Promise<InviteCodeResponse>;
+    enableInviteCode(): Promise<EnableInviteCodeResponse>;
+    disableInviteCode(): Promise<DisableInviteCodeResponse>;
+    resetInviteCode(): Promise<ResetInviteCodeResponse>;
     threadPreviews(
         threadRootMessageIndexes: number[],
         latestClientThreadUpdate: bigint | undefined
