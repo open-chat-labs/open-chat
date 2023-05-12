@@ -34,6 +34,7 @@
 
     // capture a snapshot of the chat as it is right now
     $: canEdit = client.canEditGroupDetails(chat.chatId);
+    $: canInvite = client.canInviteUsers(chat.chatId);
     $: avatarSrc = client.groupAvatarUrl(chat);
 
     function editGroup() {
@@ -124,11 +125,11 @@
                 <Markdown inline={false} text={rules.text} />
             </CollapsibleCard>
         {/if}
-        {#if chat.public}
+        {#if canInvite}
             <CollapsibleCard
                 on:toggle={groupInviteUsersOpen.toggle}
                 open={$groupInviteUsersOpen}
-                headerText={$_("group.inviteWithLink")}>
+                headerText={$_("group.invite.inviteWithLink")}>
                 <InviteUsersWithLink group={chat} />
             </CollapsibleCard>
         {/if}
