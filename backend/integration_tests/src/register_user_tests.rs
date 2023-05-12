@@ -63,6 +63,8 @@ fn register_user_with_duplicate_username_appends_suffix() {
         }
     }
 
+    env.tick();
+
     let response = client::user_index::users(
         env,
         first_user_principal.unwrap(),
