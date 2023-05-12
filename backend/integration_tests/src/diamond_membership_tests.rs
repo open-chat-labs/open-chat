@@ -22,7 +22,7 @@ fn can_upgrade_to_diamond() {
 
     let init_treasury_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, SNS_GOVERNANCE_CANISTER_ID);
 
-    let user = client::user_index::happy_path::register_user(env, canister_ids.user_index);
+    let user = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
 
     client::icrc1::happy_path::transfer(
         env,
@@ -80,7 +80,7 @@ fn membership_renews_automatically_if_set_to_recurring(ledger_error: bool) {
 
     let start_time = now_millis(env);
 
-    let user = client::user_index::happy_path::register_user(env, canister_ids.user_index);
+    let user = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
 
     client::upgrade_user(&user, env, canister_ids, *controller);
 
@@ -119,13 +119,13 @@ fn membership_payment_shared_with_referrer() {
     } = wrapper.env();
 
     // Register referrer and upgrade to Diamond
-    let user_a = client::user_index::happy_path::register_user(env, canister_ids.user_index);
+    let user_a = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
     client::upgrade_user(&user_a, env, canister_ids, *controller);
 
     // Register user_b with referral from user_a
-    let user_b = client::user_index::happy_path::register_user_with_referrer(
+    let user_b = client::local_user_index::happy_path::register_user_with_referrer(
         env,
-        canister_ids.user_index,
+        canister_ids.local_user_index,
         Some(user_a.user_id.to_string()),
     );
 

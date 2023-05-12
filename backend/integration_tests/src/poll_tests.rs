@@ -29,7 +29,7 @@ fn allow_multiple_votes_per_user() {
         user2,
         group,
         create_poll_result,
-    } = init_test_data(env, canister_ids.user_index, poll_config);
+    } = init_test_data(env, canister_ids.local_user_index, poll_config);
 
     if let group_canister::send_message::Response::Success(r) = create_poll_result {
         let register_vote_result1 = client::group::happy_path::register_poll_vote(env, &user2, group, r.message_index, 0);
@@ -59,7 +59,7 @@ fn single_vote_per_user() {
         user2,
         group,
         create_poll_result,
-    } = init_test_data(env, canister_ids.user_index, poll_config);
+    } = init_test_data(env, canister_ids.local_user_index, poll_config);
 
     if let group_canister::send_message::Response::Success(r) = create_poll_result {
         let register_vote_result1 = client::group::happy_path::register_poll_vote(env, &user2, group, r.message_index, 0);
@@ -91,7 +91,7 @@ fn polls_ended_correctly() {
         user2,
         group,
         create_poll_result: create_poll_result1,
-    } = init_test_data(env, canister_ids.user_index, poll_config1);
+    } = init_test_data(env, canister_ids.local_user_index, poll_config1);
 
     let poll_config2 = PollConfig {
         text: None,
@@ -212,9 +212,9 @@ fn polls_ended_correctly() {
     }
 }
 
-fn init_test_data(env: &mut StateMachine, user_index: CanisterId, poll_config: PollConfig) -> TestData {
-    let user1 = client::user_index::happy_path::register_user(env, user_index);
-    let user2 = client::user_index::happy_path::register_user(env, user_index);
+fn init_test_data(env: &mut StateMachine, local_user_index: CanisterId, poll_config: PollConfig) -> TestData {
+    let user1 = client::local_user_index::happy_path::register_user(env, local_user_index);
+    let user2 = client::local_user_index::happy_path::register_user(env, local_user_index);
 
     let group = client::user::happy_path::create_group(env, &user1, "TEST_NAME", false, false);
     client::group::happy_path::add_participants(env, &user1, group, vec![user2.user_id]);

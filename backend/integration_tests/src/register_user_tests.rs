@@ -3,27 +3,17 @@ use crate::rng::{random_string, random_user_principal};
 use crate::{client, TestEnv};
 use itertools::Itertools;
 use std::ops::Deref;
-use test_case::test_case;
 
-#[test_case(false; "via UserIndex")]
-#[test_case(true; "via LocalUserIndex")]
-fn register_users(via_local_user_index: bool) {
+#[test]
+fn register_users() {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
     let user_count = 5usize;
 
     let users: Vec<_> = (0..user_count)
-        .map(|_| {
-            if via_local_user_index {
-                client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index)
-            } else {
-                client::user_index::happy_path::register_user(env, canister_ids.user_index)
-            }
-        })
+        .map(|_| client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index))
         .collect();
-
-    env.tick();
 
     let response = client::user_index::users(
         env,
@@ -56,18 +46,18 @@ fn register_user_with_duplicate_username_appends_suffix() {
         if first_user_principal.is_none() {
             first_user_principal = Some(principal);
         }
-        let response = client::user_index::register_user_v2(
+        let response = client::local_user_index::register_user(
             env,
             principal,
             canister_ids.user_index,
-            &user_index_canister::register_user_v2::Args {
+            &local_user_index_canister::register_user::Args {
                 username: username.clone(),
                 referral_code: None,
                 public_key,
             },
         );
-        if let user_index_canister::register_user_v2::Response::Success(user_id) = response {
-            user_ids.push(user_id);
+        if let local_user_index_canister::register_user::Response::Success(res) = response {
+            user_ids.push(res.user_id);
         } else {
             panic!()
         }

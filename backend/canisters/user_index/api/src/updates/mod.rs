@@ -13,8 +13,6 @@ pub mod create_challenge;
 pub mod mark_local_user_index_full;
 pub mod mark_suspected_bot;
 pub mod pay_for_diamond_membership;
-pub mod register_user;
-pub mod register_user_v2;
 pub mod remove_platform_moderator;
 pub mod remove_platform_operator;
 pub mod remove_sms_messages;

@@ -153,8 +153,8 @@ fn latest_notification_index(env: &StateMachine, notifications_canister_id: Prin
 }
 
 fn init_test_data(env: &mut StateMachine, canister_ids: &CanisterIds) -> TestData {
-    let user1 = client::user_index::happy_path::register_user(env, canister_ids.user_index);
-    let user2 = client::user_index::happy_path::register_user(env, canister_ids.user_index);
+    let user1 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
 
     client::notifications_index::push_subscription(
         env,

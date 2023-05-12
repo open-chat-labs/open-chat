@@ -34,6 +34,8 @@ pub mod happy_path {
             },
         );
 
+        env.tick();
+
         match response {
             local_user_index_canister::register_user::Response::Success(res) => User {
                 principal,
