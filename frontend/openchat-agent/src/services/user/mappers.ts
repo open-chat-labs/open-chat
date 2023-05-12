@@ -342,7 +342,7 @@ export function editMessageResponse(candid: ApiEditMessageResponse): EditMessage
     throw new UnsupportedValueError("Unexpected ApiEditMessageResponse type received", candid);
 }
 
-export function transferWithinGroupResponse(
+export function sendMessageWithTransferToGroupResponse(
     candid: ApiSendMessageWithTransferToGroupResponse,
     sender: string,
     recipient: string

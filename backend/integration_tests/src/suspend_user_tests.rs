@@ -61,7 +61,7 @@ fn suspend_user() {
     );
     assert!(matches!(
         direct_message_response1,
-        user_canister::send_message::Response::UserSuspended
+        user_canister::send_message_v2::Response::UserSuspended
     ));
 
     let group_message_response1 = client::group::send_message_v2(
@@ -113,7 +113,7 @@ fn suspend_user() {
     );
     assert!(matches!(
         direct_message_response2,
-        user_canister::send_message::Response::Success(_)
+        user_canister::send_message_v2::Response::Success(_)
     ));
 
     let group_message_response2 = client::group::send_message_v2(

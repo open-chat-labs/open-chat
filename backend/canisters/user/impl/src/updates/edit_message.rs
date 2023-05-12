@@ -10,14 +10,6 @@ use utils::consts::OPENCHAT_BOT_USER_ID;
 
 #[update(guard = "caller_is_owner")]
 #[trace]
-fn edit_message(args: user_canister::edit_message::Args) -> Response {
-    run_regular_jobs();
-
-    mutate_state(|state| edit_message_impl(args.into(), state))
-}
-
-#[update(guard = "caller_is_owner")]
-#[trace]
 fn edit_message_v2(args: Args) -> Response {
     run_regular_jobs();
 

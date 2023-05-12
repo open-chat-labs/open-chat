@@ -324,17 +324,17 @@ export type DisableInviteCodeResponse = { 'ChatFrozen' : null } |
   { 'NotAuthorized' : null } |
   { 'Success' : null } |
   { 'UserSuspended' : null };
-export interface EditMessageArgs {
-  'content' : MessageContent,
-  'correlation_id' : bigint,
-  'message_id' : MessageId,
-  'thread_root_message_index' : [] | [MessageIndex],
-}
 export type EditMessageResponse = { 'MessageNotFound' : null } |
   { 'CallerNotInGroup' : null } |
   { 'ChatFrozen' : null } |
   { 'Success' : null } |
   { 'UserSuspended' : null };
+export interface EditMessageV2Args {
+  'content' : MessageContentInitial,
+  'correlation_id' : bigint,
+  'message_id' : MessageId,
+  'thread_root_message_index' : [] | [MessageIndex],
+}
 export type EmptyArgs = {};
 export interface EnableInviteCodeArgs { 'correlation_id' : bigint }
 export type EnableInviteCodeResponse = { 'ChatFrozen' : null } |
@@ -1110,16 +1110,6 @@ export interface SelectedUpdatesSuccess {
   'rules' : [] | [GroupRules],
   'blocked_users_added' : Array<UserId>,
 }
-export interface SendMessageArgs {
-  'content' : MessageContent,
-  'mentioned' : Array<User>,
-  'forwarding' : boolean,
-  'sender_name' : string,
-  'correlation_id' : bigint,
-  'message_id' : MessageId,
-  'replies_to' : [] | [GroupReplyContext],
-  'thread_root_message_index' : [] | [MessageIndex],
-}
 export type SendMessageResponse = { 'TextTooLong' : number } |
   { 'ThreadMessageNotFound' : null } |
   { 'CallerNotInGroup' : null } |
@@ -1390,7 +1380,7 @@ export interface _SERVICE {
     [DisableInviteCodeArgs],
     DisableInviteCodeResponse
   >,
-  'edit_message' : ActorMethod<[EditMessageArgs], EditMessageResponse>,
+  'edit_message_v2' : ActorMethod<[EditMessageV2Args], EditMessageResponse>,
   'enable_invite_code' : ActorMethod<
     [EnableInviteCodeArgs],
     EnableInviteCodeResponse
@@ -1441,7 +1431,6 @@ export interface _SERVICE {
     [SelectedUpdatesArgs],
     SelectedUpdatesResponse
   >,
-  'send_message' : ActorMethod<[SendMessageArgs], SendMessageResponse>,
   'send_message_v2' : ActorMethod<[SendMessageV2Args], SendMessageResponse>,
   'summary' : ActorMethod<[SummaryArgs], SummaryResponse>,
   'summary_updates' : ActorMethod<[SummaryUpdatesArgs], SummaryUpdatesResponse>,

@@ -9,6 +9,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Return `history_visible_to_new_joiners` from `group::chat_summary` ([#3572](https://github.com/open-ic/open-chat/pull/3572))
 
+### Removed
+
+- Remove `send_message` and `edit_message` (there are now `v2` versions) ([#3578](https://github.com/open-ic/open-chat/pull/3578))
+
 ## [[2.0.686](https://github.com/open-ic/open-chat/releases/tag/v2.0.686-group)] - 2023-05-11
 
 ### Added

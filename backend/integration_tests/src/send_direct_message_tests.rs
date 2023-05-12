@@ -46,7 +46,7 @@ fn empty_message_fails() {
         correlation_id: 0,
     };
     let response = client::user::send_message_v2(env, user1.principal, user1.canister(), &send_message_args);
-    if !matches!(response, user_canister::send_message::Response::MessageEmpty) {
+    if !matches!(response, user_canister::send_message_v2::Response::MessageEmpty) {
         panic!("SendMessage was expected to return MessageEmpty but did not: {response:?}");
     }
 }
@@ -72,7 +72,7 @@ fn text_too_long_fails() {
         correlation_id: 0,
     };
     let response = client::user::send_message_v2(env, user1.principal, user1.canister(), &send_message_args);
-    if !matches!(response, user_canister::send_message::Response::TextTooLong(5000)) {
+    if !matches!(response, user_canister::send_message_v2::Response::TextTooLong(5000)) {
         panic!("SendMessage was expected to return TextTooLong(5000) but did not: {response:?}");
     }
 }

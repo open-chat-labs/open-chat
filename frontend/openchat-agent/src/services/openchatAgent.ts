@@ -267,7 +267,7 @@ export class OpenChatAgent extends EventTarget {
     ): Promise<[SendMessageResponse, Message]> {
         if (chatType === "group_chat") {
             if (event.event.content.kind === "crypto_content") {
-                return this.userClient.sendGroupICPTransfer(
+                return this.userClient.sendMessageWithTransferToGroup(
                     chatId,
                     event.event.content.transfer.recipient,
                     user,
