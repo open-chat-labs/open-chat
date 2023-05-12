@@ -88,6 +88,9 @@ pub struct DirectChatSummaryUpdates {
     pub newly_expired_messages: RangeSet<MessageIndex>,
 }
 
+// TODO: This type is used in the response from group::public_summary and group_index::recommended_groups
+// which is causing unnecessarily coupling. We should use separate types for these use cases.
+// For instance we only need to return history_visible_to_new_joiners and is_public from group::public_summary
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct PublicGroupSummary {
     pub chat_id: ChatId,
@@ -95,6 +98,8 @@ pub struct PublicGroupSummary {
     pub name: String,
     pub description: String,
     pub subtype: Option<GroupSubtype>,
+    #[serde(default)]
+    pub history_visible_to_new_joiners: bool,
     pub avatar_id: Option<u128>,
     pub latest_message: Option<EventWrapper<Message>>,
     pub latest_event_index: EventIndex,

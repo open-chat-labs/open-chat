@@ -7,6 +7,11 @@ export function textToCode(codeStr: string): bigint {
     return codeStr.length === 16 ? BigInt("0x" + codeStr) : base64ToBigint(codeStr);
 }
 
+export type GroupInvite = {
+    chatId: string;
+    code: string;
+};
+
 function base64ToBigint(b64: string): bigint {
     const bin = atob(b64);
     const hex: string[] = [];

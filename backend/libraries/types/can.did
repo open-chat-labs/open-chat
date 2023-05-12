@@ -511,6 +511,7 @@ type PublicGroupSummary =
         name: text;
         description: text;
         subtype: opt GroupSubtype;
+        history_visible_to_new_joiners: bool;
         avatar_id: opt nat;
         latest_message: opt MessageEventWrapper;
         latest_event_index: EventIndex;

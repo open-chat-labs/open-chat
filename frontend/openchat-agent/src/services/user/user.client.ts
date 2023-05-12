@@ -2,7 +2,7 @@ import type { Identity } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
 import {
     ApiSendMessageArgs,
-    ApiTransferCryptoWithinGroupArgs,
+    ApiSendMessageWithTransferToGroupArgs,
     idlFactory,
     UserService,
 } from "./candid/idl";
@@ -63,7 +63,7 @@ import {
     addRemoveReactionResponse,
     unblockResponse,
     withdrawCryptoResponse,
-    transferWithinGroupResponse,
+    sendMessageWithTransferToGroupResponse,
     publicProfileResponse,
     pinChatResponse,
     unpinChatResponse,
@@ -277,7 +277,7 @@ export class UserClient extends CandidService implements IUserClient {
                     message_id: message.messageId,
                     correlation_id: generateUint64(),
                 };
-                return this.handleResponse(this.userService.edit_message(req), editMessageResponse);
+                return this.handleResponse(this.userService.edit_message_v2(req), editMessageResponse);
             });
     }
 
@@ -309,14 +309,14 @@ export class UserClient extends CandidService implements IUserClient {
                 correlation_id: generateUint64(),
             };
             console.log("What are we actually sending: ", req);
-            return this.handleResponse(this.userService.send_message(req), (resp) =>
+            return this.handleResponse(this.userService.send_message_v2(req), (resp) =>
                 sendMessageResponse(resp, event.event.sender, chatId)
             ).then((resp) => [resp, { ...event.event, content: newContent }]);
         });
     }
 
     @profile("userClient")
-    sendGroupICPTransfer(
+    sendMessageWithTransferToGroup(
         groupId: string,
         recipientId: string,
         sender: CreatedUser,
@@ -325,10 +325,11 @@ export class UserClient extends CandidService implements IUserClient {
     ): Promise<[SendMessageResponse, Message]> {
         const content = apiPendingCryptoContent(event.event.content as CryptocurrencyContent);
 
-        const req: ApiTransferCryptoWithinGroupArgs = {
+        const req: ApiSendMessageWithTransferToGroupArgs = {
             thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
-            content,
-            recipient: content.recipient,
+            content: {
+                Crypto: content
+            },
             sender_name: sender.username,
             mentioned: [],
             message_id: event.event.messageId,
@@ -339,8 +340,8 @@ export class UserClient extends CandidService implements IUserClient {
             ),
             correlation_id: generateUint64(),
         };
-        return this.handleResponse(this.userService.transfer_crypto_within_group_v2(req), (resp) =>
-            transferWithinGroupResponse(resp, event.event.sender, recipientId)
+        return this.handleResponse(this.userService.send_message_with_transfer_to_group(req), (resp) =>
+            sendMessageWithTransferToGroupResponse(resp, event.event.sender, recipientId)
         ).then((resp) => [resp, event.event]);
     }
 

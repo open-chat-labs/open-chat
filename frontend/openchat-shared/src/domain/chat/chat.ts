@@ -1607,6 +1607,41 @@ export type RegisterPollVoteResponse =
     | "chat_frozen"
     | "polls_not_valid_for_direct_chats";
 
+export type InviteCodeResponse = InviteCodeSuccess | NotAuthorised;
+
+export type InviteCodeSuccess = {
+    kind: "success";
+    code?: string;
+};
+
+export type EnableInviteCodeResponse =
+    | EnableInviteCodeSuccess
+    | NotAuthorised
+    | UserSuspended
+    | ChatFrozen;
+
+export type EnableInviteCodeSuccess = {
+    kind: "success";
+    code: string;
+};
+
+export type DisableInviteCodeResponse =
+    | "not_authorised"
+    | "user_suspended"
+    | "chat_frozen"
+    | "success";
+
+export type ResetInviteCodeResponse =
+    | ResetInviteCodeSuccess
+    | NotAuthorised
+    | UserSuspended
+    | ChatFrozen;
+
+export type ResetInviteCodeSuccess = {
+    kind: "success";
+    code: string;
+};    
+
 export type ThreadPreviewsResponse = CallerNotInGroup | ThreadPreviewsSuccess;
 
 export type ThreadPreviewsSuccess = {

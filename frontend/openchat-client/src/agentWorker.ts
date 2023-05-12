@@ -57,6 +57,7 @@ import {
     MemberRole,
     RegisterProposalVoteResponse,
     GroupSearchResponse,
+    GroupInvite,
     SearchGroupChatResponse,
     SearchDirectChatResponse,
     Cryptocurrency,
@@ -69,6 +70,9 @@ import {
     SetBioResponse,
     PendingCryptocurrencyWithdrawal,
     WithdrawCryptocurrencyResponse,
+    InviteCodeResponse,
+    EnableInviteCodeResponse,
+    DisableInviteCodeResponse,    
     CandidateGroupChat,
     CreateGroupResponse,
     ChangeRoleResponse,
@@ -97,6 +101,7 @@ import {
     ReportMessageResponse,
     InviteUsersResponse,
     DeclineInvitationResponse,
+    ResetInviteCodeResponse,
 } from "openchat-shared";
 import type { OpenChatConfig } from "./config";
 import { v4 } from "uuid";
@@ -1036,6 +1041,15 @@ export class OpenChatAgentWorker extends EventTarget {
         });
     }
 
+    set groupInvite(value: GroupInvite) {
+        this.sendRequest({
+            kind: "groupInvite",
+            payload: {
+                value,
+            },
+        });
+    }
+
     searchGroupChat(
         chatId: string,
         searchTerm: string,
@@ -1158,6 +1172,42 @@ export class OpenChatAgentWorker extends EventTarget {
                 chatId,
                 messageIndexes,
                 latestClientEventIndex,
+            },
+        });
+    }
+
+    getInviteCode(chatId: string): Promise<InviteCodeResponse> {
+        return this.sendRequest({
+            kind: "getInviteCode",
+            payload: {
+                chatId,
+            },
+        });
+    }
+
+    enableInviteCode(chatId: string): Promise<EnableInviteCodeResponse> {
+        return this.sendRequest({
+            kind: "enableInviteCode",
+            payload: {
+                chatId,
+            },
+        });
+    }
+
+    disableInviteCode(chatId: string): Promise<DisableInviteCodeResponse> {
+        return this.sendRequest({
+            kind: "disableInviteCode",
+            payload: {
+                chatId,
+            },
+        });
+    }
+
+    resetInviteCode(chatId: string): Promise<ResetInviteCodeResponse> {
+        return this.sendRequest({
+            kind: "resetInviteCode",
+            payload: {
+                chatId,
             },
         });
     }

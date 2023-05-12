@@ -37,6 +37,7 @@ fn public_summary_impl(args: Args, runtime_state: &RuntimeState) -> Response {
         name: data.name.clone(),
         description: data.description.clone(),
         subtype: data.subtype.value.clone(),
+        history_visible_to_new_joiners: data.history_visible_to_new_joiners,
         avatar_id: Avatar::id(&data.avatar),
         latest_message,
         latest_event_index,
