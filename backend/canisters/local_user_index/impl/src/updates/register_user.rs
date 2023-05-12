@@ -6,8 +6,9 @@ use crate::{mutate_state, RuntimeState};
 use candid::Principal;
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
+use ledger_utils::default_ledger_account;
+use local_user_index_canister::register_user::{Response::*, *};
 use types::{CanisterId, MessageContent, TextContent, UserId};
-use user_index_canister::register_user_v2::{Response::*, *};
 use user_index_canister::{Event as UserIndexEvent, UserRegistered};
 use utils::username_validation::{validate_username, UsernameValidationError};
 use x509_parser::prelude::FromDer;
@@ -38,7 +39,10 @@ async fn register_user(args: Args) -> Response {
     {
         local_user_index_canister::c2c_create_user::Response::Success(user_id) => {
             mutate_state(|state| commit(caller, user_id, args.username, referral_code, state));
-            Success(user_id)
+            Success(SuccessResult {
+                user_id,
+                icp_account: default_ledger_account(user_id.into()),
+            })
         }
         local_user_index_canister::c2c_create_user::Response::AlreadyRegistered => AlreadyRegistered,
         local_user_index_canister::c2c_create_user::Response::CyclesBalanceTooLow => CyclesBalanceTooLow,

@@ -795,7 +795,7 @@ export type RegisterUserResponse = { 'UsernameTooShort' : number } |
   { 'AlreadyRegistered' : null } |
   { 'UserLimitReached' : null } |
   { 'UsernameTooLong' : number } |
-  { 'Success' : UserId } |
+  { 'Success' : { 'icp_account' : AccountIdentifier, 'user_id' : UserId } } |
   { 'PublicKeyInvalid' : string } |
   { 'InternalError' : string } |
   { 'ReferralCodeInvalid' : null } |

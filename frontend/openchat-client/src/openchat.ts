@@ -270,7 +270,7 @@ import {
     type InviteCodeResponse,
     type EnableInviteCodeResponse,
     type DisableInviteCodeResponse,
-    type ResetInviteCodeResponse,    
+    type ResetInviteCodeResponse,
     type UpdateGroupResponse,
     type CandidateGroupChat,
     type CreateGroupResponse,
@@ -2962,7 +2962,7 @@ export class OpenChat extends EventTarget {
 
     registerUser(username: string): Promise<RegisterUserResponse> {
         return this.api.registerUser(username, this._referralCode).then((res) => {
-            if (res === "success") {
+            if (res.kind === "success") {
                 this.clearReferralCode();
             }
             return res;
