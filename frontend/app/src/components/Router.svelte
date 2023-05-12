@@ -9,18 +9,19 @@
     let route: typeof SvelteComponent | undefined = undefined;
 
     onMount(() => {
-        page("/home", parsePathParams, () => (route = LandingPage));
-        page("/features", parsePathParams, () => (route = LandingPage));
-        page("/roadmap", parsePathParams, () => (route = LandingPage));
-        page("/blog/:slug?", parsePathParams, () => (route = LandingPage));
-        page("/whitepaper", parsePathParams, () => (route = LandingPage));
-        page("/miami", parsePathParams, () => (route = LandingPage));
-        page("/guidelines", parsePathParams, () => (route = LandingPage));
-        page("/architecture", parsePathParams, () => (route = LandingPage));
+        page("/home", parsePathParams, track, () => (route = LandingPage));
+        page("/features", parsePathParams, track, () => (route = LandingPage));
+        page("/roadmap", parsePathParams, track, () => (route = LandingPage));
+        page("/blog/:slug?", parsePathParams, track, () => (route = LandingPage));
+        page("/whitepaper", parsePathParams, track, () => (route = LandingPage));
+        page("/miami", parsePathParams, track, () => (route = LandingPage));
+        page("/guidelines", parsePathParams, track, () => (route = LandingPage));
+        page("/architecture", parsePathParams, track, () => (route = LandingPage));
         page(
             "/:chatId?/:messageIndex?/:threadMessageIndex?",
             redirectHashRoutes,
             parsePathParams,
+            track,
             () => (route = Home)
         );
         page("*", () => {
@@ -45,6 +46,14 @@
         } else {
             next();
         }
+    }
+
+    function track(ctx: PageJS.Context, next: () => any) {
+        console.debug("GA: page_view", ctx.pathname);
+        gtag("event", "page_view", {
+            page_location: ctx.pathname,
+        });
+        next();
     }
 
     function parsePathParams(ctx: PageJS.Context, next: () => any) {
