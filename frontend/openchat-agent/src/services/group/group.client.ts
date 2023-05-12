@@ -256,7 +256,7 @@ export class GroupClient extends CandidService implements IGroupClient {
             .uploadData(message.content, [this.chatId])
             .then((content) => {
                 return this.handleResponse(
-                    this.groupService.edit_message({
+                    this.groupService.edit_message_v2({
                         thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
                         content: apiMessageContent(content ?? message.content),
                         message_id: message.messageId,
@@ -308,7 +308,7 @@ export class GroupClient extends CandidService implements IGroupClient {
                 correlation_id: generateUint64(),
             };
             return this.handleResponse(
-                this.groupService.send_message(args),
+                this.groupService.send_message_v2(args),
                 sendMessageResponse
             ).then((resp) => [resp, { ...event.event, content: newContent }]);
         });
@@ -703,7 +703,7 @@ export class GroupClient extends CandidService implements IGroupClient {
             (resp) => resp.Success.toString()
         );
     }
-    
+
     @profile("groupClient")
     declineInvitation(): Promise<DeclineInvitationResponse> {
         return this.handleResponse(

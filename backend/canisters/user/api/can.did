@@ -1,12 +1,12 @@
 import "../../../libraries/types/can.did";
 
-type SendMessageArgs =
+type SendMessageV2Args =
     record {
         recipient: UserId;
         thread_root_message_index: opt MessageIndex;
         message_id: MessageId;
         sender_name: text;
-        content: MessageContent;
+        content: MessageContentInitial;
         replies_to: opt ReplyContext;
         forwarding: bool;
         correlation_id: nat64;
@@ -41,12 +41,12 @@ type SendMessageResponse =
         InternalError: text;
     };
 
-type EditMessageArgs =
+type EditMessageV2Args =
     record {
         user_id: UserId;
         thread_root_message_index: opt MessageIndex;
         message_id: MessageId;
-        content: MessageContent;
+        content: MessageContentInitial;
         correlation_id: nat64;
     };
 
@@ -348,19 +348,6 @@ type CancelMessageReminderArgs =
 type CancelMessageReminderResponse =
     variant {
         Success;
-    };
-
-type TransferCryptoWithinGroupArgs =
-    record {
-        message_id: MessageId;
-        group_id: ChatId;
-        thread_root_message_index: opt MessageIndex;
-        recipient: UserId;
-        content: CryptoContent;
-        sender_name: text;
-        replies_to: opt GroupReplyContext;
-        mentioned: vec User;
-        correlation_id: nat64;
     };
 
 type SendMessageWithTransferToGroupArgs =
@@ -692,8 +679,8 @@ type DeletedMessageResponse =
     };
 
 service: {
-    send_message: (SendMessageArgs) -> (SendMessageResponse);
-    edit_message: (EditMessageArgs) -> (EditMessageResponse);
+    send_message_v2: (SendMessageV2Args) -> (SendMessageResponse);
+    edit_message_v2: (EditMessageV2Args) -> (EditMessageResponse);
     delete_messages: (DeleteMessagesArgs) -> (DeleteMessagesResponse);
     undelete_messages: (UndeleteMessagesArgs) -> (UndeleteMessagesResponse);
     add_reaction: (AddReactionArgs) -> (AddReactionResponse);
@@ -713,7 +700,6 @@ service: {
     set_message_reminder: (SetMessageReminderArgs) -> (SetMessageReminderResponse);
     cancel_message_reminder: (CancelMessageReminderArgs) -> (CancelMessageReminderResponse);
     send_message_with_transfer_to_group: (SendMessageWithTransferToGroupArgs) -> (SendMessageWithTransferToGroupResponse);
-    transfer_crypto_within_group_v2: (TransferCryptoWithinGroupArgs) -> (SendMessageWithTransferToGroupResponse);
     withdraw_crypto_v2: (WithdrawCryptoArgs) -> (WithdrawCryptoResponse);
     pin_chat: (PinChatRequest) -> (PinChatResponse);
     unpin_chat: (UnpinChatRequest) -> (UnpinChatResponse);

@@ -219,7 +219,7 @@ export class CachingUserClient extends EventTarget implements IUserClient {
     }
 
     @profile("userCachingClient")
-    sendGroupICPTransfer(
+    sendMessageWithTransferToGroup(
         groupId: string,
         recipientId: string,
         sender: CreatedUser,
@@ -228,7 +228,7 @@ export class CachingUserClient extends EventTarget implements IUserClient {
     ): Promise<[SendMessageResponse, Message]> {
         removeFailedMessage(this.db, this.userId, event.event.messageId, threadRootMessageIndex);
         return this.client
-            .sendGroupICPTransfer(groupId, recipientId, sender, event, threadRootMessageIndex)
+            .sendMessageWithTransferToGroup(groupId, recipientId, sender, event, threadRootMessageIndex)
             .then(setCachedMessageFromSendResponse(this.db, groupId, event, threadRootMessageIndex))
             .catch((err) => {
                 recordFailedMessage(this.db, groupId, event);

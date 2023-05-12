@@ -62,7 +62,7 @@ import {
     DeleteGroupResponse,
     DeleteMessageResponse,
     DirectChatEvent,
-    DisableInviteCodeResponse,    
+    DisableInviteCodeResponse,
     EditMessageResponse,
     EnableInviteCodeResponse,
     EventsResponse,
@@ -207,7 +207,7 @@ export class OpenChatAgent extends EventTarget {
     public set groupInvite(value: GroupInvite) {
         this._groupInvite = value;
     }
-        
+
     createUserClient(userId: string): OpenChatAgent {
         this._userClient = UserClient.create(userId, this.identity, this.config, this.db);
         return this;
@@ -267,7 +267,7 @@ export class OpenChatAgent extends EventTarget {
     ): Promise<[SendMessageResponse, Message]> {
         if (chatType === "group_chat") {
             if (event.event.content.kind === "crypto_content") {
-                return this.userClient.sendGroupICPTransfer(
+                return this.userClient.sendMessageWithTransferToGroup(
                     chatId,
                     event.event.content.transfer.recipient,
                     user,
@@ -1312,13 +1312,12 @@ export class OpenChatAgent extends EventTarget {
         return this.userClient.setBio(bio);
     }
 
-    registerUser(
+    async registerUser(
         username: string,
         referralCode: string | undefined
     ): Promise<RegisterUserResponse> {
-        // const localUserIndex = await this._userIndexClient.userRegistrationCanister();
-        // return this.createLocalUserIndexClient(localUserIndex).registerUser(username, referralCode);
-        return this._userIndexClient.registerUser(username, referralCode);
+        const localUserIndex = await this._userIndexClient.userRegistrationCanister();
+        return this.createLocalUserIndexClient(localUserIndex).registerUser(username, referralCode);
     }
 
     getUserStorageLimits(): Promise<StorageStatus> {
