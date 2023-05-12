@@ -365,7 +365,7 @@
         {#if $isProposalGroup}
             <ProposalBot />
         {:else if chat.kind === "group_chat"}
-            <InitialGroupMessage group={chat} noVisibleEvents={events.length === 0} />
+            <InitialGroupMessage group={chat} />
         {:else if client.isOpenChatBot(chat.them)}
             <Robot />
         {:else}
