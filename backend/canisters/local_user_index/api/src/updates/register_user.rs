@@ -1,4 +1,5 @@
 use candid::CandidType;
+use ic_ledger_types::AccountIdentifier;
 use serde::{Deserialize, Serialize};
 use types::UserId;
 
@@ -11,7 +12,7 @@ pub struct Args {
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
-    Success(UserId),
+    Success(SuccessResult),
     AlreadyRegistered,
     UserLimitReached,
     UsernameInvalid,
@@ -21,4 +22,10 @@ pub enum Response {
     InternalError(String),
     PublicKeyInvalid(String),
     ReferralCodeInvalid,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Debug)]
+pub struct SuccessResult {
+    pub user_id: UserId,
+    pub icp_account: AccountIdentifier,
 }

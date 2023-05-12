@@ -1,6 +1,5 @@
-import type { Identity, SignIdentity } from "@dfinity/agent";
+import type { Identity } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
-import { identity } from "../../utils/mapping";
 import { idlFactory, UserIndexService } from "./candid/idl";
 import type {
     CheckUsernameResponse,
@@ -9,7 +8,6 @@ import type {
     UsersArgs,
     UsersResponse,
     UserSummary,
-    RegisterUserResponse,
     SuspendUserResponse,
     UnsuspendUserResponse,
     MarkSuspectedBotResponse,
@@ -27,7 +25,6 @@ import {
     currentUserResponse,
     usersResponse,
     userSearchResponse,
-    registerUserResponse,
     suspendUserResponse,
     unsuspendUserResponse,
     apiCryptocurrency,
@@ -72,21 +69,6 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
         return this.handleResponse(
             this.userIndexService.user_registration_canister({}),
             userRegistrationCanisterResponse
-        );
-    }
-
-    @profile("userIndexClient")
-    registerUser(
-        username: string,
-        referralCode: string | undefined
-    ): Promise<RegisterUserResponse> {
-        return this.handleResponse(
-            this.userIndexService.register_user_v2({
-                username,
-                referral_code: apiOptional(identity, referralCode),
-                public_key: new Uint8Array((this.identity as SignIdentity).getPublicKey().toDer()),
-            }),
-            registerUserResponse
         );
     }
 

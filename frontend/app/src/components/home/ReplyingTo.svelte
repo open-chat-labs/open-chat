@@ -86,10 +86,6 @@
             color: #ffffff;
         }
 
-        &.crypto {
-            @include gold();
-        }
-
         &:after {
             content: "";
             display: table;

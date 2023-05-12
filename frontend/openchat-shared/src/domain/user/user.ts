@@ -1,4 +1,3 @@
-import type { Version } from "../../domain/version";
 import type { DataContent } from "../data/data";
 
 export type IdentityState =
@@ -80,7 +79,6 @@ export type CreatedUser = {
     cryptoAccount: string;
     userId: string;
     canisterUpgradeStatus: "required" | "not_required" | "in_progress";
-    wasmVersion: Version;
     referrals: string[];
     isPlatformModerator: boolean;
     suspensionDetails: SuspensionDetails | undefined;
@@ -137,18 +135,22 @@ export type InvalidCurrency = { kind: "invalid_currency" };
 export type SetBioResponse = "success" | "bio_too_long" | "user_suspended";
 
 export type RegisterUserResponse =
-    | "user_limit_reached"
-    | "success"
-    | "not_supported"
-    | "already_registered"
-    | "username_taken"
-    | "internal_error"
-    | "cycles_balance_too_low"
-    | "username_too_short"
-    | "username_too_long"
-    | "username_invalid"
-    | "public_key_invalid"
-    | "referral_code_invalid";
+    | {
+        kind: "success",
+        userId: string,
+        icpAccount: string,
+    }
+    | { kind: "user_limit_reached" }
+    | { kind: "not_supported" }
+    | { kind: "already_registered" }
+    | { kind: "username_taken" }
+    | { kind: "internal_error" }
+    | { kind: "cycles_balance_too_low" }
+    | { kind: "username_too_short" }
+    | { kind: "username_too_long" }
+    | { kind: "username_invalid" }
+    | { kind: "public_key_invalid" }
+    | { kind: "referral_code_invalid" };
 
 export type PinChatResponse = { kind: "success" } | { kind: "pinned_limit_reached"; limit: number };
 

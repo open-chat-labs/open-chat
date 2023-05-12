@@ -630,12 +630,17 @@ export class OpenChatAgent extends EventTarget {
 
         return contextMap.asyncMap(async (key, ctx, idxs) => {
             const targetChat = cachedChats[ctx.chatId];
+
+            // it is *possible* that the target chat might not be in the cached chats if e.g. we are previewing
+            // in that case we assume it's a group chat - this is pretty dodgy but it should work in practice
+            const chatKind = targetChat?.kind ?? "group_chat";
+
             // Note that the latestClientEventIndex relates to the *currentChat*, not necessarily the chat for this messageContext
             // So only include it if the context matches the current chat
             // And yes - this is probably trying to tell us something
             const latestIndex = ctx.chatId === currentChatId ? latestClientEventIndex : undefined;
 
-            if (targetChat.kind === "direct_chat") {
+            if (chatKind === "direct_chat") {
                 return this.userClient
                     .chatEventsByIndex(idxs, ctx.chatId, ctx.threadRootMessageIndex, latestIndex)
                     .then((resp) => this.messagesFromEventsResponse(key, resp));
@@ -925,7 +930,7 @@ export class OpenChatAgent extends EventTarget {
                 state: current,
                 updatedEvents: {},
                 anyUpdates: false,
-                anyErrors: false
+                anyErrors: false,
             };
         }
 
