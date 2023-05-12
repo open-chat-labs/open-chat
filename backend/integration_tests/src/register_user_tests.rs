@@ -49,7 +49,7 @@ fn register_user_with_duplicate_username_appends_suffix() {
         let response = client::local_user_index::register_user(
             env,
             principal,
-            canister_ids.user_index,
+            canister_ids.local_user_index,
             &local_user_index_canister::register_user::Args {
                 username: username.clone(),
                 referral_code: None,
