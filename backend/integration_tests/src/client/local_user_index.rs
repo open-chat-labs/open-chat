@@ -35,7 +35,10 @@ pub mod happy_path {
         );
 
         match response {
-            local_user_index_canister::register_user::Response::Success(user_id) => User { principal, user_id },
+            local_user_index_canister::register_user::Response::Success(res) => User {
+                principal,
+                user_id: res.user_id,
+            },
             response => panic!("'register_user' error: {response:?}"),
         }
     }

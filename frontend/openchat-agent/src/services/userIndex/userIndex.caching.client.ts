@@ -3,7 +3,6 @@ import type {
     CheckUsernameResponse,
     CurrentUserResponse,
     PartialUserSummary,
-    RegisterUserResponse,
     SetUsernameResponse,
     UsersArgs,
     UsersResponse,
@@ -74,13 +73,6 @@ export class CachingUserIndexClient implements IUserIndexClient {
 
     userRegistrationCanister(): Promise<string> {
         return this.client.userRegistrationCanister();
-    }
-
-    registerUser(
-        username: string,
-        referralCode: string | undefined
-    ): Promise<RegisterUserResponse> {
-        return this.client.registerUser(username, referralCode);
     }
 
     searchUsers(searchTerm: string, maxResults?: number): Promise<UserSummary[]> {

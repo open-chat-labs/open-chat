@@ -57,34 +57,36 @@
         client.registerUser(username).then((resp) => {
             badCode = false;
             state.set({ kind: "awaiting_username" });
-            if (resp === "username_taken") {
+            if (resp.kind === "username_taken") {
                 error.set("register.usernameTaken");
-            } else if (resp === "username_too_short") {
+            } else if (resp.kind === "username_too_short") {
                 error.set("register.usernameTooShort");
-            } else if (resp === "username_too_long") {
+            } else if (resp.kind === "username_too_long") {
                 error.set("register.usernameTooLong");
-            } else if (resp === "username_invalid") {
+            } else if (resp.kind === "username_invalid") {
                 error.set("register.usernameInvalid");
-            } else if (resp === "user_limit_reached") {
+            } else if (resp.kind === "user_limit_reached") {
                 error.set("register.userLimitReached");
-            } else if (resp === "internal_error") {
+            } else if (resp.kind === "internal_error") {
                 error.set("unexpectedError");
-            } else if (resp === "referral_code_invalid") {
+            } else if (resp.kind === "referral_code_invalid") {
                 error.set("register.referralCodeInvalid");
                 badCode = true;
-            } else if (resp === "success") {
+            } else if (resp.kind === "success") {
                 error.set(undefined);
-                loadUser();
-            }
-        });
-    }
-
-    function loadUser(): void {
-        state.set({ kind: "spinning" });
-        client.getCurrentUser().then((resp) => {
-            if (resp.kind === "created_user") {
-                createdUser = resp;
-                dispatch("createdUser", createdUser);
+                createdUser = {
+                    kind: "created_user",
+                    username,
+                    cryptoAccount: resp.icpAccount,
+                    userId: resp.userId,
+                    canisterUpgradeStatus: "not_required",
+                    referrals: [],
+                    isPlatformModerator: false,
+                    suspensionDetails: undefined,
+                    isSuspectedBot: false,
+                    diamondMembership: undefined,
+                }
+                dispatch("createdUser", createdUser)
             }
         });
     }
