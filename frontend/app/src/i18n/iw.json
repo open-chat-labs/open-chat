@@ -298,7 +298,7 @@
         "wallet_q": "איך עובד הארנק שלי?",
         "wallet_a": "כאשר משתמש OpenChat נוצר, יש לו אוטומטית חשבון עבור חבורה של אסימונים (ICP, CHAT, ckBTC, SNS1). חשבון זה יהיה ריק בהתחלה, אך ניתן להטעין את החשבון על ידי העברת אסימונים לכתובתו. ברגע שיש לך כמה אסימונים בארנק ה-OpenChat שלך, תוכל לשלוח אותם ישירות לחשבון של כל משתמש OpenChat אחר באמצעות סוג מיוחד של הודעה. אתה יכול גם להשתמש ב-ICP (בקרוב CHAT) בארנק שלך כדי לשדרג לחברות Diamond. אם תרצו לשלוח את האסימונים לחשבון אחר, תוכלו לעשות זאת על ידי פתיחת הארנק מהתפריט הראשי ולחיצה על הקישור \"שלח\". מסך זה נותן לך את האפשרות לשלוח את האסימונים שלך לכל כתובת אחרת שתבחר.",
         "diamond_q": "מה זה 💎 חברות יהלום?",
-        "diamond_a": "אתה יכול לשדרג לחברות Diamond כדי לקבל גישה לתכונות נוספות או משופרות בתוך OpenChat. <a href=\"?diamond=\">ראה כאן</a> להשוואת תכונות ולשדרוג.",
+        "diamond_a": "אתה יכול לשדרג לחברות Diamond כדי לקבל גישה לתכונות נוספות או משופרות בתוך OpenChat. <a href=\"/?diamond=\">ראה כאן</a> להשוואת תכונות ולשדרוג.",
         "info_q": "היכן אוכל לקבל מידע נוסף על OpenChat?",
         "info_a": "עבור אל <a href=\"/home\">דף הבית</a> שלנו ומצא קישורים ל<a href=\"/features\">תכונות</a> של OpenChat, <a href=\"/roadmap\">מפת דרכים</a> a>, <a href=\"/whitepaper\">whitepaper</a>, <a href=\"/architecture\">ארכיטקטורה</a> ו<a href=\"/blog\">בלוג</a>",
         "referral_rewards_q": "מהם תגמולי הפניה?",
