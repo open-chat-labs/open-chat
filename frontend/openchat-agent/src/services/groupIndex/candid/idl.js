@@ -428,6 +428,7 @@ export const idlFactory = ({ IDL }) => {
     'avatar_id' : IDL.Opt(IDL.Nat),
     'frozen' : IDL.Opt(FrozenGroupInfo),
     'latest_event_index' : EventIndex,
+    'history_visible_to_new_joiners' : IDL.Bool,
     'chat_id' : ChatId,
     'participant_count' : IDL.Nat32,
     'latest_message' : IDL.Opt(MessageEventWrapper),

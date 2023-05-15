@@ -149,23 +149,6 @@ export const idlFactory = ({ IDL }) => {
       'users_who_referred_90_percent_unpaid_diamond' : IDL.Nat32,
     }),
   });
-  const RegisterUserV2Args = IDL.Record({
-    'username' : IDL.Text,
-    'public_key' : IDL.Vec(IDL.Nat8),
-    'referral_code' : IDL.Opt(IDL.Text),
-  });
-  const RegisterUserResponse = IDL.Variant({
-    'UsernameTooShort' : IDL.Nat16,
-    'UsernameInvalid' : IDL.Null,
-    'AlreadyRegistered' : IDL.Null,
-    'UserLimitReached' : IDL.Null,
-    'UsernameTooLong' : IDL.Nat16,
-    'Success' : UserId,
-    'PublicKeyInvalid' : IDL.Text,
-    'InternalError' : IDL.Text,
-    'ReferralCodeInvalid' : IDL.Null,
-    'CyclesBalanceTooLow' : IDL.Null,
-  });
   const RemovePlatformModeratorArgs = IDL.Record({ 'user_id' : UserId });
   const RemovePlatformModeratorResponse = IDL.Variant({
     'Success' : IDL.Null,
@@ -327,11 +310,6 @@ export const idlFactory = ({ IDL }) => {
         [EmptyArgs],
         [ReferralMetricsResponse],
         ['query'],
-      ),
-    'register_user_v2' : IDL.Func(
-        [RegisterUserV2Args],
-        [RegisterUserResponse],
-        [],
       ),
     'remove_platform_moderator' : IDL.Func(
         [RemovePlatformModeratorArgs],
