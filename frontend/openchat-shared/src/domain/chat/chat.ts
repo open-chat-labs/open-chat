@@ -776,7 +776,8 @@ export type UpdatesResult = {
 };
 
 export type ChatStateFull = {
-    timestamp: bigint;
+    latestUserCanisterUpdate: bigint;
+    latestActiveGroupsCheck: bigint;
     directChats: DirectChatSummary[];
     groupChats: GroupChatSummary[];
     avatarId: bigint | undefined;
@@ -1640,7 +1641,7 @@ export type ResetInviteCodeResponse =
 export type ResetInviteCodeSuccess = {
     kind: "success";
     code: string;
-};    
+};
 
 export type ThreadPreviewsResponse = CallerNotInGroup | ThreadPreviewsSuccess;
 
