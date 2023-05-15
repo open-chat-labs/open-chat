@@ -1,75 +1,146 @@
 <script lang="ts">
     import { onMount } from "svelte";
+    import { cubicInOut } from "svelte/easing";
+    import { tweened } from "svelte/motion";
 
-    let ring: SVGElement;
-    let sliceCount = 0;
-    let totalAngle = 0;
+    let canvas: HTMLCanvasElement;
+    let ctx: CanvasRenderingContext2D | null;
+    let speed = 800;
+    let purpleTarget = 270;
+    let orangeTarget = 45;
 
-    const sliceAngles = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90];
+    let phase: 1 | 2 | 3 | 4 | 5 = 1;
 
-    function nextIteration() {
-        totalAngle += sliceAngles[sliceCount];
-        ring.setAttribute(
-            "d",
-            `M ${50 + 40 * Math.sin((totalAngle * Math.PI) / 180)} ${
-                50 - 40 * Math.cos((totalAngle * Math.PI) / 180)
-            }
-                            A 40 40 0 ${totalAngle > 180 ? 1 : 0} 1 ${
-                50 + 40 * Math.sin(((totalAngle + sliceAngles[sliceCount]) * Math.PI) / 180)
-            } ${50 - 40 * Math.cos(((totalAngle + sliceAngles[sliceCount]) * Math.PI) / 180)}
-                            L ${
-                                50 +
-                                30 *
-                                    Math.sin(
-                                        ((totalAngle + sliceAngles[sliceCount]) * Math.PI) / 180
-                                    )
-                            } ${
-                50 - 30 * Math.cos(((totalAngle + sliceAngles[sliceCount]) * Math.PI) / 180)
-            }
-                            A 30 30 0 ${totalAngle > 180 ? 1 : 0} 0 ${
-                50 + 30 * Math.sin((totalAngle * Math.PI) / 180)
-            } ${50 - 30 * Math.cos((totalAngle * Math.PI) / 180)}
-                            Z`
-        );
-        sliceCount++;
-        // if (sliceCount < sliceAngles.length) {
-        //     requestAnimationFrame(drawSlice);
-        // }
+    const options = { duration: speed, easing: cubicInOut };
+
+    const purpleEnd = tweened(-90, {
+        duration: speed,
+        easing: cubicInOut,
+    });
+
+    let orangeStart = tweened(-90, options);
+    let orangeEnd = tweened(-90, options);
+
+    function resetOrange() {
+        phase = 2;
+        orangeTarget = 45;
+        orangeStart = tweened(-90, options);
+        orangeEnd = tweened(-90, options);
+        orangeStart.set(45);
+        orangeEnd.set(315);
     }
 
-    function animateDoughnut(sliceAngles: number[]) {
-        requestAnimationFrame(nextIteration);
+    $: {
+        if (phase === 1) {
+            if ($purpleEnd >= purpleTarget) {
+                phase = 2;
+                orangeStart.set(45);
+                orangeEnd.set(315);
+            }
+            plotPurple($purpleEnd);
+        }
+    }
+
+    $: {
+        plotOrange($orangeStart, $orangeEnd);
+        if (phase === 2) {
+            if ($orangeStart >= orangeTarget) {
+                phase = 3;
+                orangeTarget = 270;
+                orangeStart.set(270);
+                orangeEnd.set(630);
+            }
+        }
+        if (phase === 3) {
+            if ($orangeStart >= orangeTarget) {
+                phase = 4;
+                orangeTarget = 630;
+                orangeStart.set(630);
+            }
+        }
+        if (phase === 4) {
+            if ($orangeStart >= orangeTarget) {
+                phase = 5;
+                orangeEnd.set(630);
+            }
+        }
+        if (phase === 5) {
+            if ($orangeEnd >= orangeTarget) {
+                resetOrange();
+            }
+        }
+    }
+
+    function plotPurple(end: number) {
+        if (!ctx) return;
+        ctx.clearRect(0, 0, 500, 500);
+        drawDoughnut(-90, end);
+        ctx.fillStyle = createPurple(ctx);
+        ctx.fill();
+    }
+
+    function plotOrange(start: number, end: number) {
+        if (!ctx) return;
+        ctx.clearRect(0, 0, 500, 500);
+        drawPurple();
+        drawDoughnut(start, end);
+        ctx.fillStyle = createOrange(ctx);
+        ctx.fill();
+    }
+
+    function drawDoughnut(startAngle: number, endAngle: number, counterClockwise: boolean = false) {
+        if (!ctx) return;
+
+        const cx = 250;
+        const cy = 250;
+        const innerRadius = 120;
+        const outerRadius = 200;
+        const startRad = (startAngle * Math.PI) / 180;
+        const endRad = (endAngle * Math.PI) / 180;
+        const startOfOuterArcX = outerRadius * Math.cos(endRad) + cx;
+        const startOfOuterArcY = outerRadius * Math.sin(endRad) + cy;
+
+        ctx.beginPath();
+        ctx.arc(cx, cy, innerRadius, startRad, endRad, counterClockwise);
+        ctx.lineTo(startOfOuterArcX, startOfOuterArcY);
+        ctx.arc(cx, cy, outerRadius, endRad, startRad, !counterClockwise);
+        ctx.closePath();
+    }
+
+    function drawPurple() {
+        if (!ctx) return;
+
+        drawDoughnut(-90, 270);
+        ctx.fillStyle = createPurple(ctx);
+        ctx.fill();
+    }
+
+    function createOrange(ctx: CanvasRenderingContext2D): CanvasGradient {
+        const orange = ctx.createLinearGradient(0, 0, 500, 500);
+        orange.addColorStop(0, "rgb(251, 176, 59)");
+        orange.addColorStop(1, "rgb(240, 90, 36)");
+        return orange;
+    }
+
+    function createPurple(ctx: CanvasRenderingContext2D): CanvasGradient {
+        const purple = ctx.createLinearGradient(0, 0, 500, 500);
+        purple.addColorStop(0, "rgb(95, 37, 131)");
+        purple.addColorStop(1, "rgb(237, 30, 121)");
+        return purple;
     }
 
     onMount(() => {
-        // animateDoughnut(sliceAngles);
+        ctx = canvas.getContext("2d");
+        if (!ctx) return;
+        purpleEnd.set(270);
     });
 </script>
 
-<svg class="logo" viewBox="0 0 100 100">
-    <defs>
-        <mask id="mask">
-            <rect width="100%" height="100%" fill="white" />
-            <circle cx="50" cy="50" r="30" fill="black" />
-        </mask>
-    </defs>
-    <circle
-        bind:this={ring}
-        id="ring"
-        cx="50"
-        cy="50"
-        r="40"
-        stroke="#000"
-        stroke-width="10"
-        fill="none"
-        mask="url(#mask)" />
-</svg>
-
-<button on:click={nextIteration}>Next</button>
+<canvas width="500" height="500" class="logo" bind:this={canvas} />
 
 <style type="text/scss">
     .logo {
-        width: 500px;
-        height: 500px;
+        width: 300px;
+        height: 300px;
     }
 </style>
