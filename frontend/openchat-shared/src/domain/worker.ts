@@ -5,7 +5,6 @@ import type {
     CandidateGroupChat,
     ChangeRoleResponse,
     ChatEvent,
-    ChatStateFull,
     ClaimPrizeResponse,
     CreateGroupResponse,
     DeletedDirectMessageResponse,
@@ -193,7 +192,6 @@ export type WorkerRequest =
     | SuspendUser
     | UnsuspendUser
     | MarkSuspectedBot
-    | GetInitialState
     | GetUpdates
     | GetDeletedGroupMessage
     | GetDeletedDirectMessage
@@ -831,14 +829,8 @@ type CreateUserClient = Request<{ userId: string }> & {
     kind: "createUserClient";
 };
 
-type GetUpdates = Request<{
-    currentState: ChatStateFull;
-}> & {
+type GetUpdates = Request<Record<string, never>> & {
     kind: "getUpdates";
-};
-
-type GetInitialState = Request<Record<string, never>> & {
-    kind: "getInitialState";
 };
 
 type GetDeletedGroupMessage = Request<{

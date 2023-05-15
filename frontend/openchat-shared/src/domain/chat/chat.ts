@@ -772,7 +772,6 @@ export type UpdatesResult = {
     state: ChatStateFull;
     updatedEvents: Record<string, UpdatedEvent[]>;
     anyUpdates: boolean;
-    anyErrors: boolean;
 };
 
 export type ChatStateFull = {

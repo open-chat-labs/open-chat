@@ -273,7 +273,6 @@ import {
     type UpdateGroupResponse,
     type CandidateGroupChat,
     type CreateGroupResponse,
-    type CurrentChatState,
     type Notification,
     getTimeUntilSessionExpiryMs,
     userIdsFromEvents,
@@ -301,7 +300,6 @@ import {
     InviteUsersResponse,
     ReferralLeaderboardRange,
     ReferralLeaderboardResponse,
-    ChatStateFull,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -336,7 +334,6 @@ export class OpenChat extends EventTarget {
     private _liveState: LiveState;
     identityState = writable<IdentityState>("loading_user");
     private _logger: Logger;
-    private _latestChatUpdates: ChatStateFull | undefined = undefined;
     private _botDetected = false;
     private _lastOnlineDatesPending = new Set<string>();
     private _lastOnlineDatesPromise: Promise<Record<string, number>> | undefined;
@@ -3493,21 +3490,13 @@ export class OpenChat extends EventTarget {
 
             const chats = Object.values(this._liveState.myServerChatSummaries);
             const avatarId = this._liveState.userStore[this.user.userId]?.blobReference?.blobId;
-            const chatsResponse =
-                this._latestChatUpdates === undefined
-                    ? await this.api.getInitialState()
-                    : await this.api.getUpdates(this._latestChatUpdates);
+            const chatsResponse = await this.api.getUpdates();
 
-            if (chatsResponse.anyUpdates) {
-                const updatedChats = (chatsResponse.state.directChats as ChatSummary[]).concat(chatsResponse.state.groupChats);
+            if (!init || chatsResponse.anyUpdates) {
+                const updatedChats = (chatsResponse.state.directChats as ChatSummary[])
+                    .concat(chatsResponse.state.groupChats);
+
                 this.updateReadUpToStore(updatedChats);
-
-                // If there were any errors then we retry from the same state on the next iteration, this ensures no
-                // updates get missed
-                if (!chatsResponse.anyErrors) {
-                    this._latestChatUpdates = chatsResponse.state;
-                }
-
                 this._cachePrimer?.processChatUpdates(chats, updatedChats);
 
                 const userIds = this.userIdsFromChatSummaries(updatedChats);
