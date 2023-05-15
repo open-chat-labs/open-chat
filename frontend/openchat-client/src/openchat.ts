@@ -228,7 +228,6 @@ import {
     type ChatSummary,
     type EventWrapper,
     type Message,
-    type DirectChatSummary,
     type GroupChatSummary,
     type MemberRole,
     type GroupRules,
@@ -3493,11 +3492,6 @@ export class OpenChat extends EventTarget {
             chatsLoading.set(!init);
 
             const chats = Object.values(this._liveState.myServerChatSummaries);
-            const currentState: CurrentChatState = {
-                chatSummaries: chats,
-                blockedUsers: this._liveState.blockedUsers,
-                pinnedChats: this._liveState.pinnedChats,
-            };
             const avatarId = this._liveState.userStore[this.user.userId]?.blobReference?.blobId;
             const chatsResponse =
                 this._latestChatUpdates === undefined
