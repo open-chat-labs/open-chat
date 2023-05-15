@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.687](https://github.com/open-ic/open-chat/releases/tag/v2.0.687-local_user_index)] - 2023-05-12
+
 ### Added
 
 - Re-introduce invite by code on backend ([#3552](https://github.com/open-ic/open-chat/pull/3552))
