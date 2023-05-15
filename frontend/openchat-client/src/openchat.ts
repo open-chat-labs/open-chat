@@ -290,7 +290,6 @@ import {
     type UserStatus,
     userStatus,
     ThreadRead,
-    UpdatesResult,
     DiamondMembershipDuration,
     DiamondMembershipDetails,
     UpdateMarketMakerConfigArgs,
@@ -303,6 +302,7 @@ import {
     InviteUsersResponse,
     ReferralLeaderboardRange,
     ReferralLeaderboardResponse,
+    ChatStateFull,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -337,8 +337,7 @@ export class OpenChat extends EventTarget {
     private _liveState: LiveState;
     identityState = writable<IdentityState>("loading_user");
     private _logger: Logger;
-    private _latestUserCanisterUpdates: bigint | undefined = undefined;
-    private _latestActiveGroupsCheck: bigint | undefined = undefined;
+    private _latestChatUpdates: ChatStateFull | undefined = undefined;
     private _botDetected = false;
     private _lastOnlineDatesPending = new Set<string>();
     private _lastOnlineDatesPromise: Promise<Record<string, number>> | undefined;
@@ -3501,18 +3500,18 @@ export class OpenChat extends EventTarget {
             };
             const avatarId = this._liveState.userStore[this.user.userId]?.blobReference?.blobId;
             const chatsResponse =
-                this._latestUserCanisterUpdates === undefined
+                this._latestChatUpdates === undefined
                     ? await this.api.getInitialState()
-                    : await this.updates(this._latestUserCanisterUpdates, currentState, avatarId);
+                    : await this.api.getUpdates(this._latestChatUpdates);
 
             if (chatsResponse.anyUpdates) {
                 const updatedChats = (chatsResponse.state.directChats as ChatSummary[]).concat(chatsResponse.state.groupChats);
                 this.updateReadUpToStore(updatedChats);
 
-                // If there were any errors we don't bump the timestamps, this ensures no updates get missed
+                // If there were any errors then we retry from the same state on the next iteration, this ensures no
+                // updates get missed
                 if (!chatsResponse.anyErrors) {
-                    this._latestUserCanisterUpdates = chatsResponse.state.latestUserCanisterUpdates;
-                    this._latestActiveGroupsCheck = chatsResponse.state.latestActiveGroupsCheck;
+                    this._latestChatUpdates = chatsResponse.state;
                 }
 
                 this._cachePrimer?.processChatUpdates(chats, updatedChats);
@@ -3636,32 +3635,6 @@ export class OpenChat extends EventTarget {
         } catch {
             return {};
         }
-    }
-
-    private async updates(
-        latestUserCanisterUpdates: bigint,
-        current: CurrentChatState,
-        avatarId: bigint | undefined
-    ): Promise<UpdatesResult> {
-        const directChats: DirectChatSummary[] = [];
-        const groupChats: GroupChatSummary[] = [];
-        current.chatSummaries.forEach((c) => {
-            if (c.kind === "direct_chat") {
-                directChats.push(c);
-            } else {
-                groupChats.push(c);
-            }
-        });
-
-        return await this.api.getUpdates({
-            latestUserCanisterUpdates,
-            latestActiveGroupsCheck: this._latestActiveGroupsCheck ?? latestUserCanisterUpdates,
-            directChats,
-            groupChats,
-            avatarId,
-            blockedUsers: [...current.blockedUsers],
-            pinnedChats: current.pinnedChats,
-        });
     }
 
     private updateReadUpToStore(chatSummaries: ChatSummary[]): void {
