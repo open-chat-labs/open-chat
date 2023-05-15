@@ -89,7 +89,7 @@
                     <div class="what-is">
                         <div class="sub-title">What is ckBTC and how to use it?</div>
                         <p>
-                            ckBTC is a bitcoin twin created by Canister Smart Contracts, running on
+                            ckBTC is a bitcoin twin created by canister smart contracts, running on
                             the Internet Computer, that trustlessly and directly hold Bitcoin. ckBTC
                             can be sent with 1-2 second finality and negligible fees.
                         </p>
@@ -117,7 +117,7 @@
                 <CollapsibleCard title={"What is Internet Identity?"}>
                     <p>
                         Internet Identity is a cryptographic authentication framework used to
-                        securely connect to many of the Canister Smart Contract dApps running on the
+                        securely connect to many of the canister smart contract dapps running on the
                         Internet Computer. It combines the self sovereignty and permissionless
                         aspects of public/private key authentication with the convenience and safety
                         features of a typical Web2 login experience.
@@ -130,10 +130,12 @@
                 </CollapsibleCard>
                 <CollapsibleCard title={"What is the Internet Computer?"}>
                     <p>
-                        The Internet Computer is a general-purpose blockchain that reimagines the
-                        internet as a World Computer. An infinite Canister Smart Contract platform
-                        capable of running almost any online system or service 100% on chain without
-                        the need for traditional IT such as cloud computing services.
+                        The Internet Computer is a third-generation blockchain that plays the role
+                        of a crypto cloud that can replace traditional IT. Using canister smart
+                        contracts, virtually any Web3 service or enterprise system can be built 100%
+                        on the blockchain, without need for centralized cloud computing, such as
+                        Amazon Web Services. Multi-chain crypto directly binds it to the Bitcoin and
+                        Ethereum networks realizing the World Computer vision.
                     </p>
                     <p>
                         <ArrowLink url={"https://internetcomputer.org"} target={"_blank"}
