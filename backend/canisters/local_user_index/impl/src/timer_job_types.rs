@@ -115,20 +115,19 @@ impl Job for AddUserToSatoshiDice {
             )
             .await
             .is_err()
+                && attempt < 50
             {
-                if attempt < 50 {
-                    mutate_state(|state| {
-                        let now = state.env.now();
-                        state.data.timer_jobs.enqueue_job(
-                            TimerJob::AddUserToSatoshiDice(AddUserToSatoshiDice {
-                                user_id,
-                                attempt: attempt + 1,
-                            }),
-                            now + 10 * SECOND_IN_MS,
-                            now,
-                        );
-                    })
-                }
+                mutate_state(|state| {
+                    let now = state.env.now();
+                    state.data.timer_jobs.enqueue_job(
+                        TimerJob::AddUserToSatoshiDice(AddUserToSatoshiDice {
+                            user_id,
+                            attempt: attempt + 1,
+                        }),
+                        now + 10 * SECOND_IN_MS,
+                        now,
+                    );
+                })
             }
         }
     }
