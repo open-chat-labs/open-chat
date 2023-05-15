@@ -184,49 +184,6 @@ type UnblockUserResponse =
         ChatFrozen;
     };
 
-type AddParticipantsArgs =
-    record {
-        user_ids: vec UserId;
-        added_by_name: text;
-        allow_blocked_users: bool;
-        correlation_id: nat64;
-    };
-
-type AddParticipantsResponse =
-    variant {
-        Success;
-        PartialSuccess: AddParticipantsPartialSuccessResult;
-        Failed: AddParticipantsFailedResult;
-        CallerNotInGroup;
-        ParticipantLimitReached: nat32;
-        NotAuthorized;
-        UserSuspended;
-        ChatFrozen;
-    };
-
-type AddParticipantsPartialSuccessResult =
-    record {
-        users_added: vec UserId;
-        users_already_in_group: vec UserId;
-        users_blocked_from_group: vec UserId;
-        users_who_blocked_request: vec UserId;
-        users_not_authorized_to_add: vec UserId;
-        users_who_failed_gate_check: vec UserId;
-        users_suspended: vec UserId;
-        errors: vec UserId;
-    };
-
-type AddParticipantsFailedResult =
-    record {
-        users_already_in_group: vec UserId;
-        users_blocked_from_group: vec UserId;
-        users_who_blocked_request: vec UserId;
-        users_not_authorized_to_add: vec UserId;
-        users_who_failed_gate_check: vec UserId;
-        users_suspended: vec UserId;
-        errors: vec UserId;
-    };
-
 type RemoveParticipantArgs =
     record {
         user_id: UserId;
@@ -725,9 +682,6 @@ service: {
     enable_invite_code: (EnableInviteCodeArgs) -> (EnableInviteCodeResponse);
     disable_invite_code: (DisableInviteCodeArgs) -> (DisableInviteCodeResponse);
     reset_invite_code: (ResetInviteCodeArgs) -> (ResetInviteCodeResponse);
-
-    // Can be called by admins or regular users of public groups
-    add_participants: (AddParticipantsArgs) -> (AddParticipantsResponse);
 
     // Regular users
     send_message_v2: (SendMessageV2Args) -> (SendMessageResponse);
