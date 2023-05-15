@@ -106,5 +106,7 @@ pub mod happy_path {
         for (_, principal) in users {
             join_group(env, principal, local_user_index_canister_id, group_id);
         }
+
+        env.tick();
     }
 }
