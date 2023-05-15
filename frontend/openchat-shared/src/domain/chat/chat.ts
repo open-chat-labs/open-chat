@@ -772,26 +772,16 @@ export type UpdatesResult = {
     state: ChatStateFull;
     updatedEvents: Record<string, UpdatedEvent[]>;
     anyUpdates: boolean;
-    anyErrors: boolean;
 };
 
 export type ChatStateFull = {
-    timestamp: bigint;
+    latestUserCanisterUpdates: bigint;
+    latestActiveGroupsCheck: bigint;
     directChats: DirectChatSummary[];
     groupChats: GroupChatSummary[];
     avatarId: bigint | undefined;
     blockedUsers: string[];
     pinnedChats: string[];
-};
-
-export type MergedUpdatesResponse = {
-    wasUpdated: boolean;
-    chatSummaries: ChatSummary[];
-    blockedUsers: Set<string>;
-    pinnedChats: string[];
-    avatarIdUpdate: OptionUpdate<bigint>;
-    updatedEvents: Record<string, UpdatedEvent[]>;
-    timestamp: bigint;
 };
 
 export type CurrentChatState = {
@@ -1640,7 +1630,7 @@ export type ResetInviteCodeResponse =
 export type ResetInviteCodeSuccess = {
     kind: "success";
     code: string;
-};    
+};
 
 export type ThreadPreviewsResponse = CallerNotInGroup | ThreadPreviewsSuccess;
 

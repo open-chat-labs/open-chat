@@ -147,17 +147,6 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
                     .catch(sendError(correlationId));
                 break;
 
-            case "getInitialState":
-                agent
-                    .getInitialState()
-                    .then((response) =>
-                        sendResponse(correlationId, {
-                            response,
-                        })
-                    )
-                    .catch(sendError(correlationId));
-                break;
-
             case "getDeletedGroupMessage":
                 agent
                     .getDeletedGroupMessage(
@@ -186,7 +175,7 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
 
             case "getUpdates":
                 agent
-                    .getUpdates(payload.currentState)
+                    .getUpdates()
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,
