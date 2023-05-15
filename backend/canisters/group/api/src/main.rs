@@ -17,7 +17,6 @@ fn main() {
     generate_candid_method!(group, summary, query);
     generate_candid_method!(group, summary_updates, query);
 
-    generate_candid_method!(group, add_participants, update);
     generate_candid_method!(group, add_reaction, update);
     generate_candid_method!(group, block_user, update);
     generate_candid_method!(group, change_role, update);

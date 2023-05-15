@@ -9,7 +9,6 @@ generate_query_call!(selected_initial);
 generate_query_call!(selected_updates);
 
 // Updates
-generate_update_call!(add_participants);
 generate_update_call!(add_reaction);
 generate_update_call!(block_user);
 generate_update_call!(change_role);

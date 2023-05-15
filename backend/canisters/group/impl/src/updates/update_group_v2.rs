@@ -265,7 +265,6 @@ fn merge_permissions(new: OptionalGroupPermissions, old: &GroupPermissions) -> G
     GroupPermissions {
         change_permissions: new.change_permissions.unwrap_or(old.change_permissions),
         change_roles: new.change_roles.unwrap_or(old.change_roles),
-        add_members: new.add_members.unwrap_or(old.add_members),
         remove_members: new.remove_members.unwrap_or(old.remove_members),
         block_users: new.block_users.unwrap_or(old.block_users),
         delete_messages: new.delete_messages.unwrap_or(old.delete_messages),
