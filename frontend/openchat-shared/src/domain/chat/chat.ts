@@ -776,23 +776,13 @@ export type UpdatesResult = {
 };
 
 export type ChatStateFull = {
-    latestUserCanisterUpdate: bigint;
+    latestUserCanisterUpdates: bigint;
     latestActiveGroupsCheck: bigint;
     directChats: DirectChatSummary[];
     groupChats: GroupChatSummary[];
     avatarId: bigint | undefined;
     blockedUsers: string[];
     pinnedChats: string[];
-};
-
-export type MergedUpdatesResponse = {
-    wasUpdated: boolean;
-    chatSummaries: ChatSummary[];
-    blockedUsers: Set<string>;
-    pinnedChats: string[];
-    avatarIdUpdate: OptionUpdate<bigint>;
-    updatedEvents: Record<string, UpdatedEvent[]>;
-    timestamp: bigint;
 };
 
 export type CurrentChatState = {

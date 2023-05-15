@@ -36,7 +36,6 @@ import type {
     MarkReadRequest,
     MarkReadResponse,
     MemberRole,
-    MergedUpdatesResponse,
     Message,
     PendingCryptocurrencyWithdrawal,
     PinMessageResponse,
@@ -183,7 +182,7 @@ export type WorkerRequest =
     | GetInviteCode
     | EnableInviteCode
     | ResetInviteCode
-    | DisableInviteCode    
+    | DisableInviteCode
     | CreateGroupChat
     | SetCachedMessageFromNotification
     | FreezeGroup
@@ -938,7 +937,6 @@ export type WorkerResponse =
     | Response<UsersResponse>
     | Response<undefined>
     | Response<CurrentUserResponse>
-    | Response<MergedUpdatesResponse>
     | Response<EventsResponse<ChatEvent>>
     | Response<FreezeGroupResponse>
     | Response<UnfreezeGroupResponse>

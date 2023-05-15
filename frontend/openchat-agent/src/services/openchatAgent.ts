@@ -870,7 +870,7 @@ export class OpenChatAgent extends EventTarget {
             const groupChats = groupPromiseResults.success.filter(isSuccessfulGroupSummaryResponse);
 
             state = {
-                latestUserCanisterUpdate: userResponse.timestamp,
+                latestUserCanisterUpdates: userResponse.timestamp,
                 latestActiveGroupsCheck: userResponse.timestamp,
                 directChats: userResponse.directChats,
                 groupChats: mergeGroupChats(userResponse.groupChatsAdded, groupChats),
@@ -900,7 +900,7 @@ export class OpenChatAgent extends EventTarget {
             );
 
             state = {
-                latestUserCanisterUpdate: userResponse.timestamp,
+                latestUserCanisterUpdates: userResponse.timestamp,
                 latestActiveGroupsCheck: userResponse.timestamp,
                 directChats: userResponse.directChats,
                 groupChats,
@@ -924,14 +924,14 @@ export class OpenChatAgent extends EventTarget {
     }
 
     async getUpdates(current: ChatStateFull): Promise<UpdatesResult> {
-        const userResponse = await this.userClient.getUpdates(current.latestUserCanisterUpdate);
+        const userResponse = await this.userClient.getUpdates(current.latestUserCanisterUpdates);
 
         // Convert "success_no_updates" to a UpdatesSuccessResponse with the previous timestamp and everything else set
         // to empty. This allows us to have a single path through the rest of this function.
         const updates: UpdatesSuccessResponse = userResponse.kind === "success_no_updates"
             ? {
                 kind: "success",
-                timestamp: current.latestUserCanisterUpdate,
+                timestamp: current.latestUserCanisterUpdates,
                 directChatsAdded: [],
                 directChatsUpdated: [],
                 groupChatsAdded: [],
@@ -992,7 +992,7 @@ export class OpenChatAgent extends EventTarget {
             .filter((g) => !chatsRemoved.has(g.chatId));
 
         const state = {
-            latestUserCanisterUpdate: updates.timestamp,
+            latestUserCanisterUpdates: updates.timestamp,
             latestActiveGroupsCheck: groupIndexResponse.timestamp,
             directChats,
             groupChats,
