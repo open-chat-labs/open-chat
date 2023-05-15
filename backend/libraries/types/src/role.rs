@@ -13,7 +13,6 @@ pub enum Role {
 pub struct GroupPermissions {
     pub change_permissions: PermissionRole,
     pub change_roles: PermissionRole,
-    pub add_members: PermissionRole,
     pub remove_members: PermissionRole,
     pub block_users: PermissionRole,
     pub delete_messages: PermissionRole,
@@ -48,7 +47,6 @@ impl Default for GroupPermissions {
         GroupPermissions {
             change_permissions: PermissionRole::Admins,
             change_roles: PermissionRole::Admins,
-            add_members: PermissionRole::Admins,
             remove_members: PermissionRole::Moderators,
             block_users: PermissionRole::Moderators,
             delete_messages: PermissionRole::Moderators,
@@ -90,10 +88,6 @@ impl Role {
 
     pub fn can_change_roles(&self, new_role: Role, permissions: &GroupPermissions) -> bool {
         self.is_same_or_senior(new_role) && self.is_permitted(permissions.change_roles)
-    }
-
-    pub fn can_add_members(&self, permissions: &GroupPermissions, is_public_group: bool) -> bool {
-        !is_public_group && self.is_permitted(permissions.add_members)
     }
 
     pub fn can_remove_members(&self, permissions: &GroupPermissions) -> bool {

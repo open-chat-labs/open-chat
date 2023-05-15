@@ -38,7 +38,13 @@ fn init_test_data(env: &mut StateMachine, local_user_index: CanisterId) -> TestD
     let group_name = random_string();
 
     let group_id = client::user::happy_path::create_group(env, &user1, &group_name, false, true);
-    client::group::happy_path::add_participants(env, &user1, group_id, vec![user2.user_id]);
+    client::local_user_index::happy_path::add_users_to_group(
+        env,
+        user1.principal,
+        local_user_index,
+        group_id,
+        vec![(user2.user_id, user2.principal)],
+    );
 
     TestData { user1, user2, group_id }
 }
