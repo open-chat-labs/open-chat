@@ -1,6 +1,6 @@
 use crate::model::btc_miami_payments_queue::PendingPayment;
 use crate::model::referral_codes::ReferralCode;
-use crate::timer_job_types::{JoinUserToGroup, TimerJob};
+use crate::timer_job_types::{AddUserToSatoshiDice, JoinUserToGroup, TimerJob};
 use crate::{mutate_state, RuntimeState, USER_CANISTER_INITIAL_CYCLES_BALANCE};
 use candid::Principal;
 use canister_tracing_macros::trace;
@@ -215,6 +215,11 @@ fn commit(
                     group_id: btc_miami_group,
                     attempt: 0,
                 }),
+                now,
+                now,
+            );
+            runtime_state.data.timer_jobs.enqueue_job(
+                TimerJob::AddUserToSatoshiDice(AddUserToSatoshiDice { user_id, attempt: 0 }),
                 now,
                 now,
             );
