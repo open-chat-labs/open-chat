@@ -234,6 +234,7 @@
     "failedToLeaveGroup": "There was an error trying to remove you from the group",
     "owner": "owner",
     "admin": "admin",
+    "moderator": "moderator",
     "member": "member",
     "viewer": "viewer",
     "goToFirstMention": "Go to the first unread mention",
@@ -402,13 +403,15 @@
         "role": {
             "owner": "Owner",
             "admins": "Admins",
+            "moderators": "Moderators",
             "members": "Members"
         },
         "permissions": {
             "whoCan": "Who can ",
             "permissions": "Permissons",
-            "ownerOnly": "Owner can",
-            "ownerAndAdmins": "Owner and admins can",
+            "ownerOnly": "Owners can",
+            "ownerAndAdmins": "Owners and admins can",
+            "ownerAndAdminsAndModerators": "Owners, admins and moderators can",
             "allMembers": "All members can",
             "changePermissions": "change permissions",
             "changeRoles": "change member roles",

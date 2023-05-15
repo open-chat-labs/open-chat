@@ -9,11 +9,12 @@
     type PermissionsByRole = Record<PermissionRole, Set<string>>;
     type PermissionsEntry = [keyof GroupPermissions, PermissionRole];
 
-    const allRoles: PermissionRole[] = ["owner", "admins", "members"];
+    const allRoles: PermissionRole[] = ["owner", "admins", "moderators", "members"];
 
     const roleLabels: Record<PermissionRole, string> = {
         owner: "group.permissions.ownerOnly",
         admins: "group.permissions.ownerAndAdmins",
+        moderators: "group.permissions.ownerAndAdminsAndModerators",
         members: "group.permissions.allMembers",
     };
 

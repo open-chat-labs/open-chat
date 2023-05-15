@@ -798,6 +798,9 @@ function memberRole(candid: ApiRole): MemberRole {
     if ("Admin" in candid) {
         return "admin";
     }
+    if ("Moderator" in candid) {
+        return "moderator";
+    }
     if ("Participant" in candid) {
         return "participant";
     }

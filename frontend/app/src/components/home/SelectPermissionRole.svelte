@@ -6,7 +6,7 @@
     export let label: string;
     export let rolePermission: PermissionRole;
 
-    let roles: PermissionRole[] = ["owner", "admins", "members"];
+    let roles: PermissionRole[] = ["owner", "admins", "moderators", "members"];
 </script>
 
 <li>
