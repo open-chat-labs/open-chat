@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Short circuit query calls prior to calling `ic0.time()` where possible ([#3542](https://github.com/open-ic/open-chat/pull/3542))
+- Allow registered bot accounts to start conversations with OC users ([#3591](https://github.com/open-ic/open-chat/pull/3591))
 
 ### Removed
 
