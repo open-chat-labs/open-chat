@@ -114,10 +114,10 @@ fn prepare(args: &Args, runtime_state: &mut RuntimeState) -> Result<PrepareOk, R
     {
         vec![
             MessageContent::Text(TextContent {
-                text: "Congratulations!!".to_string(),
+                text: "Welcome to OpenChat!!".to_string(),
             }),
             MessageContent::Text(TextContent {
-                text: format!("Wait here {}, your SATS are coming below 👇", args.username),
+                text: format!("Wait a moment {}, your SATS are coming below 👇", args.username),
             }),
         ]
     } else {
