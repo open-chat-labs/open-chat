@@ -72,7 +72,7 @@ import {
     WithdrawCryptocurrencyResponse,
     InviteCodeResponse,
     EnableInviteCodeResponse,
-    DisableInviteCodeResponse,    
+    DisableInviteCodeResponse,
     CandidateGroupChat,
     CreateGroupResponse,
     ChangeRoleResponse,
@@ -80,7 +80,6 @@ import {
     UnfreezeGroupResponse,
     SuspendUserResponse,
     UnsuspendUserResponse,
-    ChatStateFull,
     UpdatesResult,
     DeletedGroupMessageResponse,
     DeletedDirectMessageResponse,
@@ -272,19 +271,10 @@ export class OpenChatAgentWorker extends EventTarget {
         });
     }
 
-    getInitialState(): Promise<UpdatesResult> {
-        return this.sendRequest({
-            kind: "getInitialState",
-            payload: {},
-        });
-    }
-
-    getUpdates(currentState: ChatStateFull): Promise<UpdatesResult> {
+    getUpdates(): Promise<UpdatesResult> {
         return this.sendRequest({
             kind: "getUpdates",
-            payload: {
-                currentState,
-            },
+            payload: {},
         });
     }
 

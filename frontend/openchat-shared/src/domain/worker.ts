@@ -5,7 +5,6 @@ import type {
     CandidateGroupChat,
     ChangeRoleResponse,
     ChatEvent,
-    ChatStateFull,
     ClaimPrizeResponse,
     CreateGroupResponse,
     DeletedDirectMessageResponse,
@@ -36,7 +35,6 @@ import type {
     MarkReadRequest,
     MarkReadResponse,
     MemberRole,
-    MergedUpdatesResponse,
     Message,
     PendingCryptocurrencyWithdrawal,
     PinMessageResponse,
@@ -183,7 +181,7 @@ export type WorkerRequest =
     | GetInviteCode
     | EnableInviteCode
     | ResetInviteCode
-    | DisableInviteCode    
+    | DisableInviteCode
     | CreateGroupChat
     | SetCachedMessageFromNotification
     | FreezeGroup
@@ -194,7 +192,6 @@ export type WorkerRequest =
     | SuspendUser
     | UnsuspendUser
     | MarkSuspectedBot
-    | GetInitialState
     | GetUpdates
     | GetDeletedGroupMessage
     | GetDeletedDirectMessage
@@ -832,14 +829,8 @@ type CreateUserClient = Request<{ userId: string }> & {
     kind: "createUserClient";
 };
 
-type GetUpdates = Request<{
-    currentState: ChatStateFull;
-}> & {
+type GetUpdates = Request<Record<string, never>> & {
     kind: "getUpdates";
-};
-
-type GetInitialState = Request<Record<string, never>> & {
-    kind: "getInitialState";
 };
 
 type GetDeletedGroupMessage = Request<{
@@ -938,7 +929,6 @@ export type WorkerResponse =
     | Response<UsersResponse>
     | Response<undefined>
     | Response<CurrentUserResponse>
-    | Response<MergedUpdatesResponse>
     | Response<EventsResponse<ChatEvent>>
     | Response<FreezeGroupResponse>
     | Response<UnfreezeGroupResponse>

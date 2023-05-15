@@ -228,7 +228,6 @@ import {
     type ChatSummary,
     type EventWrapper,
     type Message,
-    type DirectChatSummary,
     type GroupChatSummary,
     type MemberRole,
     type GroupRules,
@@ -274,7 +273,6 @@ import {
     type UpdateGroupResponse,
     type CandidateGroupChat,
     type CreateGroupResponse,
-    type CurrentChatState,
     type Notification,
     getTimeUntilSessionExpiryMs,
     userIdsFromEvents,
@@ -289,9 +287,7 @@ import {
     type ChatUnfrozenEvent,
     type UserStatus,
     userStatus,
-    MergedUpdatesResponse,
     ThreadRead,
-    UpdatesResult,
     DiamondMembershipDuration,
     DiamondMembershipDetails,
     UpdateMarketMakerConfigArgs,
@@ -338,7 +334,6 @@ export class OpenChat extends EventTarget {
     private _liveState: LiveState;
     identityState = writable<IdentityState>("loading_user");
     private _logger: Logger;
-    private _chatUpdatesSince: bigint | undefined = undefined;
     private _botDetected = false;
     private _lastOnlineDatesPending = new Set<string>();
     private _lastOnlineDatesPromise: Promise<Record<string, number>> | undefined;
@@ -3494,23 +3489,17 @@ export class OpenChat extends EventTarget {
             chatsLoading.set(!init);
 
             const chats = Object.values(this._liveState.myServerChatSummaries);
-            const currentState: CurrentChatState = {
-                chatSummaries: chats,
-                blockedUsers: this._liveState.blockedUsers,
-                pinnedChats: this._liveState.pinnedChats,
-            };
             const avatarId = this._liveState.userStore[this.user.userId]?.blobReference?.blobId;
-            const chatsResponse =
-                this._chatUpdatesSince === undefined
-                    ? await this.initialState()
-                    : await this.updates(this._chatUpdatesSince, currentState, avatarId);
+            const chatsResponse = await this.api.getUpdates();
 
-            this._chatUpdatesSince = chatsResponse.timestamp;
+            if (!init || chatsResponse.anyUpdates) {
+                const updatedChats = (chatsResponse.state.directChats as ChatSummary[])
+                    .concat(chatsResponse.state.groupChats);
 
-            if (chatsResponse.wasUpdated) {
-                this._cachePrimer?.processChatUpdates(chats, chatsResponse.chatSummaries);
+                this.updateReadUpToStore(updatedChats);
+                this._cachePrimer?.processChatUpdates(chats, updatedChats);
 
-                const userIds = this.userIdsFromChatSummaries(chatsResponse.chatSummaries);
+                const userIds = this.userIdsFromChatSummaries(updatedChats);
                 if (!init) {
                     for (const userId of this.user.referrals) {
                         userIds.add(userId);
@@ -3519,20 +3508,20 @@ export class OpenChat extends EventTarget {
                 userIds.add(this.user.userId);
                 await this.getMissingUsers(userIds);
 
-                if (chatsResponse.blockedUsers !== undefined) {
-                    blockedUsers.set(chatsResponse.blockedUsers);
+                if (chatsResponse.state.blockedUsers !== undefined) {
+                    blockedUsers.set(new Set(chatsResponse.state.blockedUsers));
                 }
 
-                if (chatsResponse.pinnedChats !== undefined) {
-                    pinnedChatsStore.set(chatsResponse.pinnedChats);
+                if (chatsResponse.state.pinnedChats !== undefined) {
+                    pinnedChatsStore.set(chatsResponse.state.pinnedChats);
                 }
 
                 myServerChatSummariesStore.set(
-                    toRecord(chatsResponse.chatSummaries, (chat) => chat.chatId)
+                    toRecord(updatedChats, (chat) => chat.chatId)
                 );
 
                 if (Object.keys(this._liveState.uninitializedDirectChats).length > 0) {
-                    for (const chat of chatsResponse.chatSummaries) {
+                    for (const chat of updatedChats) {
                         if (this._liveState.uninitializedDirectChats[chat.chatId] !== undefined) {
                             removeUninitializedDirectChat(chat.chatId);
                         }
@@ -3552,13 +3541,13 @@ export class OpenChat extends EventTarget {
                     }
                 }
 
-                if (chatsResponse.avatarIdUpdate !== undefined) {
+                if (chatsResponse.state.avatarId !== avatarId) {
                     const blobReference =
-                        chatsResponse.avatarIdUpdate === "set_to_none"
+                        chatsResponse.state.avatarId === undefined
                             ? undefined
                             : {
                                   canisterId: this.user.userId,
-                                  blobId: chatsResponse.avatarIdUpdate.value,
+                                  blobId: chatsResponse.state.avatarId,
                               };
                     const dataContent = {
                         blobReference,
@@ -3575,7 +3564,7 @@ export class OpenChat extends EventTarget {
                 // If the latest message in a chat is sent by the current user, then we know they must have read up to
                 // that message, so we mark the chat as read up to that message if it isn't already. This happens when a
                 // user sends a message on one device then looks at OpenChat on another.
-                for (const chat of chatsResponse.chatSummaries) {
+                for (const chat of updatedChats) {
                     const latestMessage = chat.latestMessage?.event;
                     if (
                         latestMessage !== undefined &&
@@ -3629,68 +3618,6 @@ export class OpenChat extends EventTarget {
         } catch {
             return {};
         }
-    }
-
-    private async initialState(): Promise<MergedUpdatesResponse> {
-        const response = await this.api.getInitialState();
-        return this.handleUpdatesResult(response, BigInt(0), undefined);
-    }
-
-    private async updates(
-        updatesSince: bigint,
-        current: CurrentChatState,
-        avatarId: bigint | undefined
-    ): Promise<MergedUpdatesResponse> {
-        const directChats: DirectChatSummary[] = [];
-        const groupChats: GroupChatSummary[] = [];
-        current.chatSummaries.forEach((c) => {
-            if (c.kind === "direct_chat") {
-                directChats.push(c);
-            } else {
-                groupChats.push(c);
-            }
-        });
-
-        const response = await this.api.getUpdates({
-            timestamp: updatesSince,
-            directChats,
-            groupChats,
-            avatarId,
-            blockedUsers: [...current.blockedUsers],
-            pinnedChats: current.pinnedChats,
-        });
-
-        return this.handleUpdatesResult(response, updatesSince, avatarId);
-    }
-
-    private handleUpdatesResult(
-        result: UpdatesResult,
-        updatesSince: bigint,
-        avatarId: bigint | undefined
-    ): MergedUpdatesResponse {
-        const chatSummaries = (result.state.directChats as ChatSummary[]).concat(
-            result.state.groupChats
-        );
-
-        this.updateReadUpToStore(chatSummaries);
-
-        const avatarIdUpdate =
-            result.state.avatarId === avatarId
-                ? undefined
-                : result.state.avatarId !== undefined
-                ? { value: result.state.avatarId }
-                : "set_to_none";
-
-        return {
-            wasUpdated: result.anyUpdates,
-            chatSummaries,
-            blockedUsers: new Set(result.state.blockedUsers),
-            pinnedChats: result.state.pinnedChats,
-            avatarIdUpdate,
-            updatedEvents: result.updatedEvents,
-            // If there were any errors we don't bump the timestamp, this ensures no updates get missed
-            timestamp: result.anyErrors ? updatesSince : result.state.timestamp,
-        };
     }
 
     private updateReadUpToStore(chatSummaries: ChatSummary[]): void {
