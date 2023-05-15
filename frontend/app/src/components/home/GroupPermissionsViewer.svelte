@@ -36,7 +36,7 @@
                 dict[val].add($_(`group.permissions.${key}`));
                 return dict;
             },
-            { admins: new Set(), members: new Set(), owner: new Set() } as PermissionsByRole
+            { admins: new Set(), moderators: new Set(), members: new Set(), owner: new Set() } as PermissionsByRole
         );
     }
 </script>

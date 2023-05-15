@@ -87,8 +87,8 @@
     <Feature height={sectionHeight} backgroundColor={"#FEC000"} color={black} title={"Permissions"}>
         <p>
             Permissions are assigned to different types of users. As the group owner you will decide
-            who gets admin privileges. Making other people admins will allow them to help you
-            moderate the group to make sure it works the way you want.
+            who gets admin or moderator privileges. This will allow them to help you moderate the 
+            group to make sure it works the way you want.
         </p>
     </Feature>
 
