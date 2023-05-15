@@ -111,10 +111,10 @@ pub mod happy_path {
 
         fn convert_groups(
             cached: Vec<GroupChatSummary>,
-            mut added: Vec<user_canister::GroupChatSummary>,
+            added: Vec<user_canister::GroupChatSummary>,
         ) -> Vec<user_canister::GroupChatSummary> {
             let mut result: Vec<_> = cached.into_iter().map(convert_group_chat_summary).collect();
-            result.append(&mut added);
+            result.extend(added);
             result
         }
 
