@@ -5,29 +5,14 @@ use serde::{Deserialize, Serialize};
 pub enum Role {
     Owner,
     Admin,
+    Moderator,
     Participant,
-}
-
-#[derive(CandidType, Serialize, Deserialize, Copy, Clone, Debug, Eq, PartialEq)]
-pub enum FallbackRole {
-    Admin,
-    Participant,
-}
-
-impl From<FallbackRole> for Role {
-    fn from(role: FallbackRole) -> Self {
-        match role {
-            FallbackRole::Participant => Role::Participant,
-            FallbackRole::Admin => Role::Admin,
-        }
-    }
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct GroupPermissions {
     pub change_permissions: PermissionRole,
     pub change_roles: PermissionRole,
-    pub add_members: PermissionRole,
     pub remove_members: PermissionRole,
     pub block_users: PermissionRole,
     pub delete_messages: PermissionRole,
@@ -62,10 +47,9 @@ impl Default for GroupPermissions {
         GroupPermissions {
             change_permissions: PermissionRole::Admins,
             change_roles: PermissionRole::Admins,
-            add_members: PermissionRole::Admins,
-            remove_members: PermissionRole::Admins,
-            block_users: PermissionRole::Admins,
-            delete_messages: PermissionRole::Admins,
+            remove_members: PermissionRole::Moderators,
+            block_users: PermissionRole::Moderators,
+            delete_messages: PermissionRole::Moderators,
             update_group: PermissionRole::Admins,
             pin_messages: PermissionRole::Admins,
             invite_users: PermissionRole::Admins,
@@ -81,6 +65,7 @@ impl Default for GroupPermissions {
 pub enum PermissionRole {
     Owner,
     Admins,
+    Moderators,
     Members,
 }
 
@@ -93,16 +78,16 @@ impl Role {
         matches!(self, Role::Admin)
     }
 
+    pub fn is_moderator(&self) -> bool {
+        matches!(self, Role::Moderator)
+    }
+
     pub fn can_change_permissions(&self, permissions: &GroupPermissions) -> bool {
         self.is_permitted(permissions.change_permissions)
     }
 
     pub fn can_change_roles(&self, new_role: Role, permissions: &GroupPermissions) -> bool {
         self.is_same_or_senior(new_role) && self.is_permitted(permissions.change_roles)
-    }
-
-    pub fn can_add_members(&self, permissions: &GroupPermissions, is_public_group: bool) -> bool {
-        !is_public_group && self.is_permitted(permissions.add_members)
     }
 
     pub fn can_remove_members(&self, permissions: &GroupPermissions) -> bool {
@@ -173,6 +158,7 @@ impl Role {
         match permission_role {
             PermissionRole::Owner => self.has_owner_rights(),
             PermissionRole::Admins => self.has_admin_rights(),
+            PermissionRole::Moderators => self.has_moderator_rights(),
             PermissionRole::Members => true,
         }
     }
@@ -181,15 +167,20 @@ impl Role {
         match role {
             Role::Owner => self.has_owner_rights(),
             Role::Admin => self.has_admin_rights(),
+            Role::Moderator => self.has_moderator_rights(),
             Role::Participant => true,
         }
     }
 
+    fn has_moderator_rights(&self) -> bool {
+        self.is_moderator() || self.has_admin_rights()
+    }
+
     fn has_admin_rights(&self) -> bool {
-        matches!(self, Role::Admin) || self.has_owner_rights()
+        self.is_admin() || self.has_owner_rights()
     }
 
     fn has_owner_rights(&self) -> bool {
-        matches!(self, Role::Owner)
+        self.is_owner()
     }
 }

@@ -1,4 +1,3 @@
-pub mod add_participants;
 pub mod add_reaction;
 pub mod block_user;
 pub mod c2c_delete_group;
