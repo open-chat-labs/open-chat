@@ -2,6 +2,7 @@
     import { _ } from "svelte-i18n";
     import type { PermissionRole } from "openchat-client";
     import Legend from "../Legend.svelte";
+    import Select from "../Select.svelte";
 
     export let label: string;
     export let rolePermission: PermissionRole;
@@ -9,7 +10,14 @@
     let roles: PermissionRole[] = ["owner", "admins", "moderators", "members"];
 </script>
 
-<li>
+<Legend label={`${$_("group.permissions.whoCan")} ${label}`} />
+<Select bind:value={rolePermission}>
+    {#each roles as r, _i (r)}
+        <option value={r}>{$_(`group.role.${r}`)}</option>
+    {/each}
+</Select>
+
+<!-- <li>
     <Legend label={`${$_("group.permissions.whoCan")} ${label}`} />
     <div class="roles">
         {#each roles as r, _i (r)}
@@ -22,7 +30,7 @@
             <div class="arrow">></div>
         {/each}
     </div>
-</li>
+</li> -->
 
 <style type="text/scss">
     li {
