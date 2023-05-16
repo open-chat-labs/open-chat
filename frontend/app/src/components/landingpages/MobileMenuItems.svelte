@@ -52,6 +52,9 @@
             <div slot="text">{"Blog"}</div>
         </MenuItem>
     {/if}
+    <MenuItem selected={path.startsWith("/faq")} on:click={() => page("/faq")}>
+        <div slot="text">{"FAQs"}</div>
+    </MenuItem>
     <MenuItem on:click={launch}>
         <div slot="text">{"Launch app"}</div>
     </MenuItem>

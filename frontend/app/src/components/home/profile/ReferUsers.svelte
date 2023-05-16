@@ -102,11 +102,7 @@
 </div>
 
 {#if viewedUserId !== undefined}
-    <ViewUserProfile
-        userId={viewedUserId}
-        on:openDirectChat={onChat}
-        on:close={closeUserProfile}
-        on:showFaqQuestion />
+    <ViewUserProfile userId={viewedUserId} on:openDirectChat={onChat} on:close={closeUserProfile} />
 {/if}
 
 <style type="text/scss">

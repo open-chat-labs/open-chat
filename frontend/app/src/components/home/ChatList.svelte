@@ -149,7 +149,6 @@
         on:logout
         on:whatsHot
         on:halloffame
-        on:showFaq
         {user}
         on:profile
         on:upgrade

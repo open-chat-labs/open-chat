@@ -264,7 +264,6 @@
         <UserProfile
             on:unsubscribeNotifications={() => client.setSoftDisabled(true)}
             on:upgrade
-            on:showFaqQuestion
             {user}
             on:userAvatarSelected
             on:closeProfile={popHistory} />
