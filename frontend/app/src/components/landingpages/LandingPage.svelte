@@ -105,6 +105,22 @@
                 {:then { default: GuidelinesPage }}
                     <GuidelinesPage />
                 {/await}
+            {:else if $location.startsWith("/faq")}
+                {#await import("./FAQPage.svelte")}
+                    <div class="loading">
+                        <Loading />
+                    </div>
+                {:then { default: FAQPage }}
+                    <FAQPage />
+                {/await}
+            {:else if $location.startsWith("/diamond")}
+                {#await import("./DiamondPage.svelte")}
+                    <div class="loading">
+                        <Loading />
+                    </div>
+                {:then { default: DiamondPage }}
+                    <DiamondPage />
+                {/await}
             {:else}
                 <HomePage on:login={() => client.login()} />
             {/if}

@@ -12,6 +12,7 @@
 
     export let isDiamond: boolean;
     export let canExtend: boolean;
+    export let landing = false;
 
     function cancel() {
         dispatch("cancel");
@@ -22,14 +23,14 @@
     }
 </script>
 
-<div class="grid header">
+<div class:landing class="grid header">
     <div class="header-col">{$_("upgrade.feature")}</div>
     <div class="header-col free">{$_("upgrade.free")}</div>
     <div class="header-col diamond">{$_("upgrade.diamond")}</div>
 </div>
 
-<div class="grid body">
-    <Feature>
+<div class:landing class="grid body">
+    <Feature {landing}>
         <div slot="title">{$_("upgrade.textMessages")}</div>
         <div slot="free">
             <Check size={"1em"} color={"limegreen"} />
@@ -39,7 +40,7 @@
         </div>
     </Feature>
 
-    <Feature>
+    <Feature {landing}>
         <div slot="title">{$_("upgrade.giphys")}</div>
         <div slot="free">
             <Check size={"1em"} color={"limegreen"} />
@@ -49,7 +50,7 @@
         </div>
     </Feature>
 
-    <Feature>
+    <Feature {landing}>
         <div slot="title">{$_("upgrade.reactions")}</div>
         <div slot="free">
             <Check size={"1em"} color={"limegreen"} />
@@ -59,7 +60,7 @@
         </div>
     </Feature>
 
-    <Feature>
+    <Feature {landing}>
         <div slot="title">{$_("upgrade.polls")}</div>
         <div slot="free">
             <Check size={"1em"} color={"limegreen"} />
@@ -69,7 +70,7 @@
         </div>
     </Feature>
 
-    <Feature>
+    <Feature {landing}>
         <div slot="title">{$_("upgrade.reminders")}</div>
         <div slot="free">
             <Check size={"1em"} color={"limegreen"} />
@@ -79,7 +80,7 @@
         </div>
     </Feature>
 
-    <Feature>
+    <Feature {landing}>
         <div slot="title">{$_("upgrade.crypto")}</div>
         <div slot="free">
             <Check size={"1em"} color={"limegreen"} />
@@ -89,13 +90,14 @@
         </div>
     </Feature>
 
-    <Feature>
+    <Feature {landing}>
         <div slot="title">{$_("upgrade.notifications")}</div>
         <div slot="free">{$_("upgrade.freeNotifications")}</div>
         <div slot="diamond">{$_("upgrade.diamondNotifications")}</div>
     </Feature>
 
     <Feature
+        {landing}
         diamondInfo={$_("upgrade.mediaLimits", { values: { image: "5mb", video: "50mb" } })}
         freeInfo={$_("upgrade.mediaLimits", { values: { image: "1mb", video: "5mb" } })}>
         <div slot="title">{$_("upgrade.mediaMessages")}</div>
@@ -104,6 +106,7 @@
     </Feature>
 
     <Feature
+        {landing}
         diamondInfo={$_("upgrade.diamondStorageLimit")}
         freeInfo={$_("upgrade.freeStorageLimit")}>
         <div slot="title">{$_("upgrade.storage")}</div>
@@ -111,7 +114,7 @@
         <div slot="diamond">{$_("upgrade.diamondStorage")}</div>
     </Feature>
 
-    <Feature>
+    <Feature {landing}>
         <div slot="title">{$_("upgrade.directChats")}</div>
         <div slot="free">
             <Check size={"1em"} color={"limegreen"} />
@@ -121,13 +124,13 @@
         </div>
     </Feature>
 
-    <Feature>
+    <Feature {landing}>
         <div slot="title">{$_("upgrade.privateGroups")}</div>
         <div slot="free">{$_("upgrade.freePrivateGroups")}</div>
         <div slot="diamond">{$_("upgrade.diamondPrivateGroups")}</div>
     </Feature>
 
-    <Feature>
+    <Feature {landing}>
         <div slot="title">{$_("upgrade.publicGroups")}</div>
         <div slot="free">
             <Minus size={"1em"} color={"var(--menu-warn)"} />
@@ -135,7 +138,7 @@
         <div slot="diamond">{$_("upgrade.diamondPublicGroups")}</div>
     </Feature>
 
-    <Feature>
+    <Feature {landing}>
         <div slot="title">{$_("upgrade.gatedGroups")}</div>
         <div slot="free">
             <Minus size={"1em"} color={"var(--menu-warn)"} />
@@ -145,7 +148,7 @@
         </div>
     </Feature>
 
-    <Feature>
+    <Feature {landing}>
         <div slot="title">{$_("upgrade.translations")}</div>
         <div slot="free">
             <Minus size={"1em"} color={"var(--menu-warn)"} />
@@ -155,7 +158,7 @@
         </div>
     </Feature>
 
-    <Feature>
+    <Feature {landing}>
         <div slot="title">{$_("upgrade.diamondBadge")}</div>
         <div slot="free">
             <Minus size={"1em"} color={"var(--menu-warn)"} />
@@ -165,7 +168,7 @@
         </div>
     </Feature>
 
-    <Feature diamondInfo={$_("upgrade.airdropsInfo")}>
+    <Feature {landing} diamondInfo={$_("upgrade.airdropsInfo")}>
         <div slot="title">{$_("upgrade.airdrops")}</div>
         <div slot="free">
             <Minus size={"1em"} color={"var(--menu-warn)"} />
@@ -173,7 +176,7 @@
         <div slot="diamond">{$_("upgrade.eligible")}</div>
     </Feature>
 
-    <Feature comingSoon>
+    <Feature {landing} comingSoon>
         <div slot="title">{$_("upgrade.customThemes")}</div>
         <div slot="free">
             <Minus size={"1em"} color={"var(--menu-warn)"} />
@@ -183,7 +186,7 @@
         </div>
     </Feature>
 
-    <Feature comingSoon>
+    <Feature {landing} comingSoon>
         <div slot="title">{$_("upgrade.nftProfile")}</div>
         <div slot="free">
             <Minus size={"1em"} color={"var(--menu-warn)"} />
@@ -194,19 +197,21 @@
     </Feature>
 </div>
 
-<div class="footer">
-    <Footer>
-        <Button tiny={$mobileWidth} small={!$mobileWidth} secondary={true} on:click={cancel}
-            >{isDiamond ? $_("close") : $_("cancel")}</Button>
-        {#if !isDiamond}
-            <Button on:click={upgrade} tiny={$mobileWidth} small={!$mobileWidth}
-                >{$_("upgrade.button")}</Button>
-        {:else if canExtend}
-            <Button on:click={upgrade} tiny={$mobileWidth} small={!$mobileWidth}
-                >{$_("upgrade.extendShort")}</Button>
-        {/if}
-    </Footer>
-</div>
+{#if !landing}
+    <div class="footer">
+        <Footer>
+            <Button tiny={$mobileWidth} small={!$mobileWidth} secondary={true} on:click={cancel}
+                >{isDiamond ? $_("close") : $_("cancel")}</Button>
+            {#if !isDiamond}
+                <Button on:click={upgrade} tiny={$mobileWidth} small={!$mobileWidth}
+                    >{$_("upgrade.button")}</Button>
+            {:else if canExtend}
+                <Button on:click={upgrade} tiny={$mobileWidth} small={!$mobileWidth}
+                    >{$_("upgrade.extendShort")}</Button>
+            {/if}
+        </Footer>
+    </div>
+{/if}
 
 <style type="text/scss">
     .grid {
@@ -223,6 +228,10 @@
         @include mobile() {
             padding: 0 $sp3 $sp3 $sp3;
         }
+
+        &.landing {
+            padding: 0;
+        }
     }
 
     .header {
@@ -230,6 +239,11 @@
 
         @include mobile() {
             padding: $sp3 $sp3 0 $sp3;
+        }
+
+        &.landing {
+            padding: 0;
+            @include font-size(fs-120);
         }
     }
     .header-col {

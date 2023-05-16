@@ -5,22 +5,23 @@
     export let comingSoon: boolean = false;
     export let freeInfo: string | undefined = undefined;
     export let diamondInfo: string | undefined = undefined;
+    export let landing: boolean = false;
 </script>
 
-<div class="title">
+<div class:landing class="title">
     <slot name="title" />
     {#if comingSoon}
         <span class="soon">({$_("upgrade.comingSoon")})</span>
     {/if}
 </div>
-<div class="feature free">
+<div class:landing class="feature free">
     <slot name="free" />
 
     {#if freeInfo !== undefined}
         <MoreInfo>{freeInfo}</MoreInfo>
     {/if}
 </div>
-<div class="feature diamond">
+<div class:landing class="feature diamond">
     <slot name="diamond" />
 
     {#if diamondInfo !== undefined}
@@ -56,5 +57,10 @@
     .soon {
         @include font(light, normal, fs-50);
         margin-left: $sp2;
+    }
+
+    .landing {
+        @include font-size(fs-120);
+        color: var(--landing-txt-light);
     }
 </style>
