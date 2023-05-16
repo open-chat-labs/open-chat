@@ -6,6 +6,8 @@ members = [
     "backend/bots/examples/group_prize_bot/impl",
     "backend/bots/examples/icp_dispenser/api",
     "backend/bots/examples/icp_dispenser/impl",
+    "backend/bots/examples/satoshi_dice/api",
+    "backend/bots/examples/satoshi_dice/impl",
     "backend/bots/examples/sns1_airdrop/api",
     "backend/bots/examples/sns1_airdrop/impl",
     "backend/canister_installer",

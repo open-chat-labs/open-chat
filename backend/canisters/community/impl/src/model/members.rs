@@ -40,21 +40,16 @@ impl Members {
         } else {
             match self.by_principal.entry(principal) {
                 Vacant(e) => {
-                    let participant = ParticipantInternal {
+                    let member = MemberInternal {
                         user_id,
                         date_added: now,
-                        role: CommunityRole::Participant,
-                        min_visible_event_index,
-                        min_visible_message_index,
+                        role: CommunityRole::Member,
                         notifications_muted: Timestamped::new(notifications_muted, now),
-                        mentions_v2: Mentions::default(),
-                        threads: HashSet::new(),
-                        proposal_votes: BTreeMap::default(),
                         suspended: Timestamped::default(),
                     };
-                    e.insert(participant.clone());
+                    e.insert(member.clone());
                     self.user_id_to_principal_map.insert(user_id, principal);
-                    AddResult::Success(participant)
+                    AddResult::Success(member)
                 }
                 _ => AddResult::AlreadyInGroup,
             }
@@ -66,7 +61,7 @@ impl Members {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct MemberInternal {
     pub user_id: UserId,
     pub date_added: TimestampMillis,
@@ -77,7 +72,7 @@ pub struct MemberInternal {
 
 #[allow(clippy::large_enum_variant)]
 pub enum AddResult {
-    Success(ParticipantInternal),
+    Success(MemberInternal),
     AlreadyInGroup,
     Blocked,
 }

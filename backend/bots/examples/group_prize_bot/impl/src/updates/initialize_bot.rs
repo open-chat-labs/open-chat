@@ -1,7 +1,7 @@
 use crate::guards::caller_is_admin;
 use crate::{mutate_state, read_state, PrizeData};
 use canister_tracing_macros::trace;
-use group_prize_bot::initalize_bot::{Response::*, *};
+use group_prize_bot::initialize_bot::{Response::*, *};
 use ic_cdk::api::call::CallResult;
 use ic_cdk_macros::update;
 use types::Cycles;
