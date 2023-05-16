@@ -13,7 +13,25 @@ fn init(args: Args) {
 
     let env = init_env();
 
-    let data = Data::new(args.created_by_principal, args.created_by_user_id, args.test_mode, env.now());
+    let data = Data::new(
+        args.created_by_principal,
+        args.created_by_user_id,
+        args.is_public,
+        args.name,
+        args.description,
+        args.rules,
+        args.avatar,
+        args.permissions,
+        args.user_index_canister_id,
+        args.local_user_index_canister_id,
+        args.group_index_canister_id,
+        args.local_group_index_canister_id,
+        args.notifications_canister_id,
+        args.proposals_bot_user_id,
+        args.gate,
+        args.test_mode,
+        env.now(),
+    );
 
     init_state(env, data, args.wasm_version);
 

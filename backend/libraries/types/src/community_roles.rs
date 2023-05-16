@@ -40,7 +40,7 @@ impl Default for CommunityPermissions {
             invite_users: CommunityPermissionRole::Admins,
             remove_members: CommunityPermissionRole::Admins,
             block_users: CommunityPermissionRole::Admins,
-            update_details: CommunityPermissionRole::Admins,        
+            update_details: CommunityPermissionRole::Admins,
             create_public_group: CommunityPermissionRole::Members,
             create_private_group: CommunityPermissionRole::Members,
         }

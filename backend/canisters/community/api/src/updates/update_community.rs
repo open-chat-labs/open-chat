@@ -1,6 +1,8 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{FieldTooLongResult, FieldTooShortResult, GroupRules, OptionUpdate, Avatar, GroupGate, OptionalCommunityPermissions};
+use types::{
+    Avatar, FieldTooLongResult, FieldTooShortResult, GroupGate, GroupRules, OptionUpdate, OptionalCommunityPermissions,
+};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
