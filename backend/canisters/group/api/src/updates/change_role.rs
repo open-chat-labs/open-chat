@@ -1,11 +1,11 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{Role, UserId};
+use types::{GroupRole, UserId};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub user_id: UserId,
-    pub new_role: Role,
+    pub new_role: GroupRole,
     pub correlation_id: u64,
 }
 

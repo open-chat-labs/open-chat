@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::{BTreeMap, HashMap, HashSet};
 use types::{
-    EventIndex, GroupPermissions, Mention, MessageIndex, Participant, Role, TimestampMillis, Timestamped, UserId,
+    EventIndex, GroupPermissions, GroupRole, Mention, MessageIndex, Participant, TimestampMillis, Timestamped, UserId,
     MAX_RETURNED_MENTIONS,
 };
 
@@ -28,7 +28,7 @@ impl Participants {
         let participant = ParticipantInternal {
             user_id: creator_user_id,
             date_added: now,
-            role: Role::Owner,
+            role: GroupRole::Owner,
             min_visible_event_index: EventIndex::default(),
             min_visible_message_index: MessageIndex::default(),
             notifications_muted: Timestamped::new(false, now),
@@ -65,7 +65,7 @@ impl Participants {
                     let participant = ParticipantInternal {
                         user_id,
                         date_added: now,
-                        role: Role::Participant,
+                        role: GroupRole::Participant,
                         min_visible_event_index,
                         min_visible_message_index,
                         notifications_muted: Timestamped::new(notifications_muted, now),
@@ -87,9 +87,9 @@ impl Participants {
         if let Some(principal) = self.user_id_to_principal_map.remove(&user_id) {
             if let Some(participant) = self.by_principal.remove(&principal) {
                 match participant.role {
-                    Role::Owner => self.owner_count -= 1,
-                    Role::Admin => self.admin_count -= 1,
-                    Role::Moderator => self.moderator_count -= 1,
+                    GroupRole::Owner => self.owner_count -= 1,
+                    GroupRole::Admin => self.admin_count -= 1,
+                    GroupRole::Moderator => self.moderator_count -= 1,
                     _ => (),
                 }
 
@@ -106,9 +106,9 @@ impl Participants {
         if self.by_principal.insert(principal, participant).is_none() {
             self.user_id_to_principal_map.insert(user_id, principal);
             match role {
-                Role::Owner => self.owner_count += 1,
-                Role::Admin => self.admin_count += 1,
-                Role::Moderator => self.moderator_count += 1,
+                GroupRole::Owner => self.owner_count += 1,
+                GroupRole::Admin => self.admin_count += 1,
+                GroupRole::Moderator => self.moderator_count += 1,
                 _ => (),
             }
         }
@@ -217,7 +217,7 @@ impl Participants {
         &mut self,
         caller_id: UserId,
         user_id: UserId,
-        new_role: Role,
+        new_role: GroupRole,
         permissions: &GroupPermissions,
         is_caller_platform_moderator: bool,
         is_user_platform_moderator: bool,
@@ -262,18 +262,18 @@ impl Participants {
         }
 
         match member.role {
-            Role::Owner => owner_count -= 1,
-            Role::Admin => admin_count -= 1,
-            Role::Moderator => moderator_count -= 1,
+            GroupRole::Owner => owner_count -= 1,
+            GroupRole::Admin => admin_count -= 1,
+            GroupRole::Moderator => moderator_count -= 1,
             _ => (),
         }
 
         member.role = new_role;
 
         match member.role {
-            Role::Owner => owner_count += 1,
-            Role::Admin => admin_count += 1,
-            Role::Moderator => moderator_count += 1,
+            GroupRole::Owner => owner_count += 1,
+            GroupRole::Admin => admin_count += 1,
+            GroupRole::Moderator => moderator_count += 1,
             _ => (),
         }
 
@@ -322,14 +322,14 @@ pub enum ChangeRoleResult {
 
 pub struct ChangeRoleSuccessResult {
     pub caller_id: UserId,
-    pub prev_role: Role,
+    pub prev_role: GroupRole,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct ParticipantInternal {
     pub user_id: UserId,
     pub date_added: TimestampMillis,
-    pub role: Role,
+    pub role: GroupRole,
     pub notifications_muted: Timestamped<bool>,
     pub mentions_v2: Mentions,
     pub threads: HashSet<MessageIndex>,

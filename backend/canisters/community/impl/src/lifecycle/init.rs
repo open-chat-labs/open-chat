@@ -4,6 +4,7 @@ use canister_tracing_macros::trace;
 use community_canister::init::Args;
 use ic_cdk_macros::init;
 use tracing::info;
+use utils::env::Environment;
 
 #[init]
 #[trace]
@@ -12,7 +13,7 @@ fn init(args: Args) {
 
     let env = init_env();
 
-    let data = Data::new(args.test_mode);
+    let data = Data::new(args.created_by_principal, args.created_by_user_id, args.test_mode, env.now());
 
     init_state(env, data, args.wasm_version);
 

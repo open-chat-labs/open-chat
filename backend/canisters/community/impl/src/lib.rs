@@ -1,7 +1,10 @@
+use crate::model::groups::Groups;
+use crate::model::members::Members;
+use candid::Principal;
 use canister_state_macros::canister_state;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
-use types::{Cycles, TimestampMillis, Timestamped, Version};
+use types::{Cycles, TimestampMillis, Timestamped, UserId, Version};
 use utils::env::Environment;
 
 mod guards;
@@ -42,20 +45,20 @@ impl RuntimeState {
 
 #[derive(Serialize, Deserialize)]
 struct Data {
-    pub test_mode: bool,
+    members: Members,
+    groups: Groups,
+    test_mode: bool,
 }
 
 impl Data {
-    #[allow(clippy::too_many_arguments)]
-    fn new(test_mode: bool) -> Data {
-        Data { test_mode }
-    }
-}
+    fn new(created_by_principal: Principal, created_by_user_id: UserId, test_mode: bool, now: TimestampMillis) -> Data {
+        let members = Members::new(created_by_principal, created_by_user_id, now);
 
-#[cfg(test)]
-impl Default for Data {
-    fn default() -> Data {
-        Data { test_mode: true }
+        Data {
+            members,
+            groups: Groups::default(),
+            test_mode,
+        }
     }
 }
 

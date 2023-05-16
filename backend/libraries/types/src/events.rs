@@ -1,5 +1,5 @@
 use crate::{
-    EventIndex, EventWrapper, GroupGate, GroupPermissions, Message, MessageId, MessageIndex, Milliseconds, Role,
+    EventIndex, EventWrapper, GroupGate, GroupPermissions, GroupRole, Message, MessageId, MessageIndex, Milliseconds,
     TimestampMillis, UserId,
 };
 use candid::CandidType;
@@ -136,8 +136,8 @@ pub struct OwnershipTransferred {
 pub struct RoleChanged {
     pub user_ids: Vec<UserId>,
     pub changed_by: UserId,
-    pub old_role: Role,
-    pub new_role: Role,
+    pub old_role: GroupRole,
+    pub new_role: GroupRole,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

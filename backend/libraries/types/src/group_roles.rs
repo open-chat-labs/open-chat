@@ -2,7 +2,7 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
 #[derive(CandidType, Serialize, Deserialize, Copy, Clone, Debug, Eq, PartialEq)]
-pub enum Role {
+pub enum GroupRole {
     Owner,
     Admin,
     Moderator,
@@ -11,82 +11,82 @@ pub enum Role {
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct GroupPermissions {
-    pub change_permissions: PermissionRole,
-    pub change_roles: PermissionRole,
-    pub remove_members: PermissionRole,
-    pub block_users: PermissionRole,
-    pub delete_messages: PermissionRole,
-    pub update_group: PermissionRole,
-    pub pin_messages: PermissionRole,
-    pub invite_users: PermissionRole,
-    pub create_polls: PermissionRole,
-    pub send_messages: PermissionRole,
-    pub react_to_messages: PermissionRole,
-    pub reply_in_thread: PermissionRole,
+    pub change_permissions: GroupPermissionRole,
+    pub change_roles: GroupPermissionRole,
+    pub remove_members: GroupPermissionRole,
+    pub block_users: GroupPermissionRole,
+    pub delete_messages: GroupPermissionRole,
+    pub update_group: GroupPermissionRole,
+    pub pin_messages: GroupPermissionRole,
+    pub invite_users: GroupPermissionRole,
+    pub create_polls: GroupPermissionRole,
+    pub send_messages: GroupPermissionRole,
+    pub react_to_messages: GroupPermissionRole,
+    pub reply_in_thread: GroupPermissionRole,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct OptionalGroupPermissions {
-    pub change_permissions: Option<PermissionRole>,
-    pub change_roles: Option<PermissionRole>,
-    pub add_members: Option<PermissionRole>,
-    pub remove_members: Option<PermissionRole>,
-    pub block_users: Option<PermissionRole>,
-    pub delete_messages: Option<PermissionRole>,
-    pub update_group: Option<PermissionRole>,
-    pub pin_messages: Option<PermissionRole>,
-    pub invite_users: Option<PermissionRole>,
-    pub create_polls: Option<PermissionRole>,
-    pub send_messages: Option<PermissionRole>,
-    pub react_to_messages: Option<PermissionRole>,
-    pub reply_in_thread: Option<PermissionRole>,
+    pub change_permissions: Option<GroupPermissionRole>,
+    pub change_roles: Option<GroupPermissionRole>,
+    pub add_members: Option<GroupPermissionRole>,
+    pub remove_members: Option<GroupPermissionRole>,
+    pub block_users: Option<GroupPermissionRole>,
+    pub delete_messages: Option<GroupPermissionRole>,
+    pub update_group: Option<GroupPermissionRole>,
+    pub pin_messages: Option<GroupPermissionRole>,
+    pub invite_users: Option<GroupPermissionRole>,
+    pub create_polls: Option<GroupPermissionRole>,
+    pub send_messages: Option<GroupPermissionRole>,
+    pub react_to_messages: Option<GroupPermissionRole>,
+    pub reply_in_thread: Option<GroupPermissionRole>,
 }
 
 impl Default for GroupPermissions {
     fn default() -> Self {
         GroupPermissions {
-            change_permissions: PermissionRole::Admins,
-            change_roles: PermissionRole::Admins,
-            remove_members: PermissionRole::Moderators,
-            block_users: PermissionRole::Moderators,
-            delete_messages: PermissionRole::Moderators,
-            update_group: PermissionRole::Admins,
-            pin_messages: PermissionRole::Admins,
-            invite_users: PermissionRole::Admins,
-            create_polls: PermissionRole::Members,
-            send_messages: PermissionRole::Members,
-            react_to_messages: PermissionRole::Members,
-            reply_in_thread: PermissionRole::Members,
+            change_permissions: GroupPermissionRole::Admins,
+            change_roles: GroupPermissionRole::Admins,
+            remove_members: GroupPermissionRole::Moderators,
+            block_users: GroupPermissionRole::Moderators,
+            delete_messages: GroupPermissionRole::Moderators,
+            update_group: GroupPermissionRole::Admins,
+            pin_messages: GroupPermissionRole::Admins,
+            invite_users: GroupPermissionRole::Admins,
+            create_polls: GroupPermissionRole::Members,
+            send_messages: GroupPermissionRole::Members,
+            react_to_messages: GroupPermissionRole::Members,
+            reply_in_thread: GroupPermissionRole::Members,
         }
     }
 }
 
 #[derive(CandidType, Serialize, Deserialize, Copy, Clone, Debug)]
-pub enum PermissionRole {
+pub enum GroupPermissionRole {
     Owner,
     Admins,
     Moderators,
     Members,
 }
 
-impl Role {
+impl GroupRole {
     pub fn is_owner(&self) -> bool {
-        matches!(self, Role::Owner)
+        matches!(self, GroupRole::Owner)
     }
 
     pub fn is_admin(&self) -> bool {
-        matches!(self, Role::Admin)
+        matches!(self, GroupRole::Admin)
     }
 
     pub fn is_moderator(&self) -> bool {
-        matches!(self, Role::Moderator)
+        matches!(self, GroupRole::Moderator)
     }
 
     pub fn can_change_permissions(&self, permissions: &GroupPermissions) -> bool {
         self.is_permitted(permissions.change_permissions)
     }
 
-    pub fn can_change_roles(&self, new_role: Role, permissions: &GroupPermissions) -> bool {
+    pub fn can_change_roles(&self, new_role: GroupRole, permissions: &GroupPermissions) -> bool {
         self.is_same_or_senior(new_role) && self.is_permitted(permissions.change_roles)
     }
 
@@ -94,7 +94,7 @@ impl Role {
         self.is_permitted(permissions.remove_members)
     }
 
-    pub fn can_remove_members_with_role(&self, member_role: Role, permissions: &GroupPermissions) -> bool {
+    pub fn can_remove_members_with_role(&self, member_role: GroupRole, permissions: &GroupPermissions) -> bool {
         self.is_same_or_senior(member_role) && self.is_permitted(permissions.remove_members)
     }
 
@@ -102,7 +102,7 @@ impl Role {
         self.is_permitted(permissions.block_users)
     }
 
-    pub fn can_block_users_with_role(&self, user_role: Role, permissions: &GroupPermissions) -> bool {
+    pub fn can_block_users_with_role(&self, user_role: GroupRole, permissions: &GroupPermissions) -> bool {
         self.is_same_or_senior(user_role) && self.is_permitted(permissions.block_users)
     }
 
@@ -154,21 +154,21 @@ impl Role {
         self.is_permitted(permissions.invite_users)
     }
 
-    pub fn is_permitted(&self, permission_role: PermissionRole) -> bool {
+    pub fn is_permitted(&self, permission_role: GroupPermissionRole) -> bool {
         match permission_role {
-            PermissionRole::Owner => self.has_owner_rights(),
-            PermissionRole::Admins => self.has_admin_rights(),
-            PermissionRole::Moderators => self.has_moderator_rights(),
-            PermissionRole::Members => true,
+            GroupPermissionRole::Owner => self.has_owner_rights(),
+            GroupPermissionRole::Admins => self.has_admin_rights(),
+            GroupPermissionRole::Moderators => self.has_moderator_rights(),
+            GroupPermissionRole::Members => true,
         }
     }
 
-    pub fn is_same_or_senior(&self, role: Role) -> bool {
+    pub fn is_same_or_senior(&self, role: GroupRole) -> bool {
         match role {
-            Role::Owner => self.has_owner_rights(),
-            Role::Admin => self.has_admin_rights(),
-            Role::Moderator => self.has_moderator_rights(),
-            Role::Participant => true,
+            GroupRole::Owner => self.has_owner_rights(),
+            GroupRole::Admin => self.has_admin_rights(),
+            GroupRole::Moderator => self.has_moderator_rights(),
+            GroupRole::Participant => true,
         }
     }
 

@@ -1,4 +1,4 @@
-use crate::role::Role;
+use crate::group_roles::GroupRole;
 use crate::TimestampMillis;
 use crate::UserId;
 use candid::CandidType;
@@ -8,5 +8,5 @@ use serde::{Deserialize, Serialize};
 pub struct Participant {
     pub user_id: UserId,
     pub date_added: TimestampMillis,
-    pub role: Role,
+    pub role: GroupRole,
 }
