@@ -329,19 +329,17 @@ variant {
     ChatFrozen;
 };
 
-type UpdateGroupV2Args =
+type UpdateCommunityArgs =
     record {
         name: opt text;
         description: opt text;
         rules: opt GroupRules;
         avatar: AvatarUpdate;
-        permissions: opt OptionalGroupPermissions;
-        events_ttl: EventsTimeToLiveUpdate;
+        permissions: opt OptionalCommunityPermissions;
         gate: GroupGateUpdate;
-        correlation_id: nat64;
     };
 
-type UpdateGroupV2Response =
+type UpdateCommunityResponse =
 variant {
     Success;
     NotAuthorized;
@@ -359,21 +357,23 @@ variant {
     ChatFrozen;
 };
 
-type OptionalGroupPermissions =
+type CommunityPermissionRole =
+    variant {
+        Owners;
+        Admins;
+        Members;
+    };
+
+type OptionalCommunityPermissions =
 record {
-    change_permissions: opt PermissionRole;
-    change_roles: opt PermissionRole;
-    add_members: opt PermissionRole;
-    remove_members: opt PermissionRole;
-    block_users: opt PermissionRole;
-    delete_messages: opt PermissionRole;
-    update_group: opt PermissionRole;
-    pin_messages: opt PermissionRole;
-    invite_users: opt PermissionRole;
-    create_polls: opt PermissionRole;
-    send_messages: opt PermissionRole;
-    react_to_messages: opt PermissionRole;
-    reply_in_thread: opt PermissionRole;
+    create_public_group: opt CommunityPermissionRole;
+    create_private_group: opt CommunityPermissionRole;
+    change_permissions: opt CommunityPermissionRole;
+    change_roles: opt CommunityPermissionRole;
+    invite_users: opt CommunityPermissionRole;
+    remove_members: opt CommunityPermissionRole;
+    block_users: opt CommunityPermissionRole;
+    update_details: opt CommunityPermissionRole;
 };
 
 type PinMessageArgs =
@@ -714,7 +714,7 @@ record {
 
 service: {
     // Community
-    update_community: (UpdateGroupV2Args) -> (UpdateGroupV2Response);
+    update_community: (UpdateCommunityArgs) -> (UpdateCommunityResponse);
 
     block_user: (BlockUserArgs) -> (BlockUserResponse); // public only
     unblock_user: (UnblockUserArgs) -> (UnblockUserResponse); // public only
