@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 pub enum CommunityRole {
     Owner,
     Admin,
-    Participant,
+    Member,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -65,7 +65,7 @@ impl CommunityRole {
         match role {
             CommunityRole::Owner => self.has_owner_rights(),
             CommunityRole::Admin => self.has_admin_rights(),
-            CommunityRole::Participant => true,
+            CommunityRole::Member => true,
         }
     }
 

@@ -1,5 +1,6 @@
 use candid::Principal;
 use serde::{Deserialize, Serialize};
+use std::collections::hash_map::Entry::Vacant;
 use std::collections::{HashMap, HashSet};
 use types::{CommunityRole, TimestampMillis, Timestamped, UserId};
 
@@ -32,6 +33,37 @@ impl Members {
             owner_count: 1,
         }
     }
+
+    pub fn add(&mut self, user_id: UserId, principal: Principal, now: TimestampMillis, notifications_muted: bool) -> AddResult {
+        if self.blocked.contains(&user_id) {
+            AddResult::Blocked
+        } else {
+            match self.by_principal.entry(principal) {
+                Vacant(e) => {
+                    let participant = ParticipantInternal {
+                        user_id,
+                        date_added: now,
+                        role: CommunityRole::Participant,
+                        min_visible_event_index,
+                        min_visible_message_index,
+                        notifications_muted: Timestamped::new(notifications_muted, now),
+                        mentions_v2: Mentions::default(),
+                        threads: HashSet::new(),
+                        proposal_votes: BTreeMap::default(),
+                        suspended: Timestamped::default(),
+                    };
+                    e.insert(participant.clone());
+                    self.user_id_to_principal_map.insert(user_id, principal);
+                    AddResult::Success(participant)
+                }
+                _ => AddResult::AlreadyInGroup,
+            }
+        }
+    }
+
+    pub fn get_by_principal(&self, principal: &Principal) -> Option<&MemberInternal> {
+        self.by_principal.get(principal)
+    }
 }
 
 #[derive(Serialize, Deserialize)]
@@ -41,4 +73,11 @@ pub struct MemberInternal {
     pub role: CommunityRole,
     pub notifications_muted: Timestamped<bool>,
     pub suspended: Timestamped<bool>,
+}
+
+#[allow(clippy::large_enum_variant)]
+pub enum AddResult {
+    Success(ParticipantInternal),
+    AlreadyInGroup,
+    Blocked,
 }
