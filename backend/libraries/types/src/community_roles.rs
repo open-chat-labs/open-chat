@@ -12,12 +12,24 @@ pub enum CommunityRole {
 pub struct CommunityPermissions {
     pub change_permissions: CommunityPermissionRole,
     pub change_roles: CommunityPermissionRole,
+    pub invite_users: CommunityPermissionRole,
+    pub remove_members: CommunityPermissionRole,
+    pub block_users: CommunityPermissionRole,
+    pub update_details: CommunityPermissionRole,
+    pub create_public_group: CommunityPermissionRole,
+    pub create_private_group: CommunityPermissionRole,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct OptionalCommunityPermissions {
     pub change_permissions: Option<CommunityPermissionRole>,
     pub change_roles: Option<CommunityPermissionRole>,
+    pub invite_users: Option<CommunityPermissionRole>,
+    pub remove_members: Option<CommunityPermissionRole>,
+    pub block_users: Option<CommunityPermissionRole>,
+    pub update_details: Option<CommunityPermissionRole>,
+    pub create_public_group: Option<CommunityPermissionRole>,
+    pub create_private_group: Option<CommunityPermissionRole>,
 }
 
 impl Default for CommunityPermissions {
@@ -25,13 +37,19 @@ impl Default for CommunityPermissions {
         CommunityPermissions {
             change_permissions: CommunityPermissionRole::Admins,
             change_roles: CommunityPermissionRole::Admins,
+            invite_users: CommunityPermissionRole::Admins,
+            remove_members: CommunityPermissionRole::Admins,
+            block_users: CommunityPermissionRole::Admins,
+            update_details: CommunityPermissionRole::Admins,        
+            create_public_group: CommunityPermissionRole::Members,
+            create_private_group: CommunityPermissionRole::Members,
         }
     }
 }
 
 #[derive(CandidType, Serialize, Deserialize, Copy, Clone, Debug)]
 pub enum CommunityPermissionRole {
-    Owner,
+    Owners,
     Admins,
     Members,
 }
@@ -55,7 +73,7 @@ impl CommunityRole {
 
     pub fn is_permitted(&self, permission_role: CommunityPermissionRole) -> bool {
         match permission_role {
-            CommunityPermissionRole::Owner => self.has_owner_rights(),
+            CommunityPermissionRole::Owners => self.has_owner_rights(),
             CommunityPermissionRole::Admins => self.has_admin_rights(),
             CommunityPermissionRole::Members => true,
         }
