@@ -17,6 +17,7 @@
         page("/miami", parsePathParams, track, () => (route = LandingPage));
         page("/guidelines", parsePathParams, track, () => (route = LandingPage));
         page("/faq", parsePathParams, track, () => (route = LandingPage));
+        page("/diamond", parsePathParams, track, () => (route = LandingPage));
         page("/architecture", parsePathParams, track, () => (route = LandingPage));
         page(
             "/:chatId?/:messageIndex?/:threadMessageIndex?",

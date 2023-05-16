@@ -334,7 +334,7 @@
         "buychat_q": "How do I buy CHAT tokens?",
         "buychat_a": "Right now you must first <a target=\"_blank\" href=\"https://www.finder.com/uk/how-to-buy-internet-computer\">buy ICP</a> which you can then swap for CHAT on various Decentralised Exchanges (DEXes).<ul><li><a target=\"_blank\" href=\"https://avjzx-pyaaa-aaaaj-aadmq-cai.raw.ic0.app/ICDex/CHAT/ICP\">ICDex</a></li><li><a target=\"_blank\" href=\"https://info.icpswap.com/swap/pool/details/ne2vj-6yaaa-aaaag-qb3ia-cai\">ICPSwap</a></li><li><a target=\"_blank\" href=\"https://app.infinityswap.one/tokens/2ouva-viaaa-aaaaq-aaamq-cai\">InfinitySwap</a></li></ul>DFINITY are adding support for the <a target=\"_blank\" href=\"https://www.rosetta-api.org/\">Rosetta API</a> for ICRC1 tokens (which includes CHAT) making them much easier to integrate with Centralised Exchanges (CEXes). Once this has happened it is likely CHAT will be available to trade on CEXes for ICP or USDT.",
         "diamond_q": "What is 💎 Diamond Membership?",
-        "diamond_a": "You can upgrade to Diamond membership to have access to extra or enhanced features within OpenChat. <a href=\"/?diamond=\">See here</a> for a feature comparison and to upgrade.",
+        "diamond_a": "You can upgrade to Diamond membership to have access to extra or enhanced features within OpenChat. <a href=\"/diamond\">See here</a> for a feature comparison and to upgrade.",
         "content_q": "What kind of content is permissible?",
         "content_a": "For full details of our content and moderation guidelines <a href=\"/guidelines\">see here</a>.",
         "info_q": "Where can I find out more about OpenChat?",

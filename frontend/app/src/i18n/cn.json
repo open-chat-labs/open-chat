@@ -284,7 +284,7 @@
         "wallet_q": "我的钱包如何运作？",
         "wallet_a": "创建 OpenChat 用户时，他们会自动拥有一个用于一堆令牌（ICP、CHAT、ckBTC、SNS1）的帐户。该帐户最初是空的，但您可以通过将代币转移到其地址来充值该帐户。一旦您的 OpenChat 钱包中有了一些令牌，您就可以通过一种特殊的消息将它们直接发送到任何其他 OpenChat 用户的帐户。您也可以使用钱包中的ICP（即将CHAT）升级为钻石会员。如果您想将代币发送到另一个帐户，您可以通过从主菜单打开钱包并单击“发送”链接来实现。此屏幕让您可以选择将您的代币发送到您选择的任何其他地址。",
         "diamond_q": "什么是💎钻石会员？",
-        "diamond_a": "您可以升级为钻石会员，以访问 OpenChat 中的额外或增强功能。 <a href=\"/?diamond=\">参见此处</a> 进行功能比较和升级。",
+        "diamond_a": "您可以升级为钻石会员，以访问 OpenChat 中的额外或增强功能。 <a href=\"/diamond\">参见此处</a> 进行功能比较和升级。",
         "info_q": "我在哪里可以找到有关 OpenChat 的更多信息？",
         "info_a": "转到我们的<a href=\"/home\">主页</a>并找到指向 OpenChat <a href=\"/features\">功能</a>、<a href=\"/roadmap\">路线图</的链接a>、<a href=\"/whitepaper\">白皮书</a>、<a href=\"/architecture\">架构</a>和<a href=\"/blog\">博客</a>",
         "referral_rewards_q": "什么是推荐奖励？",

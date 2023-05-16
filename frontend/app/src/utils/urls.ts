@@ -42,6 +42,7 @@ const scrollingRoutes = [
     "miami",
     "guidelines",
     "faq",
+    "diamond",
 ];
 const landingPageRoutes = ["home", ...scrollingRoutes];
 
