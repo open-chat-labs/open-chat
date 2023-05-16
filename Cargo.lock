@@ -4152,6 +4152,8 @@ dependencies = [
  "ledger_utils",
  "local_user_index_canister",
  "msgpack",
+ "satoshi_dice_canister",
+ "satoshi_dice_canister_c2c_client",
  "serde",
  "serde_json",
  "serializer",
@@ -5711,6 +5713,72 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7b4b9743ed687d4b4bcedf9ff5eaa7398495ae14e61cba0a295704edbc7decde"
 
 [[package]]
+name = "satoshi_dice_canister"
+version = "0.1.0"
+dependencies = [
+ "bot_api",
+ "candid",
+ "candid_gen",
+ "serde",
+ "types",
+ "user_canister",
+ "user_index_canister",
+]
+
+[[package]]
+name = "satoshi_dice_canister_c2c_client"
+version = "0.1.0"
+dependencies = [
+ "canister_client",
+ "ic-cdk 0.7.3",
+ "msgpack",
+ "satoshi_dice_canister",
+ "tracing",
+ "types",
+]
+
+[[package]]
+name = "satoshi_dice_canister_impl"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "canister_api_macros",
+ "canister_logger",
+ "canister_state_macros",
+ "canister_tracing_macros",
+ "futures",
+ "group_canister",
+ "group_canister_c2c_client",
+ "http_request",
+ "ic-base-types",
+ "ic-cdk 0.7.3",
+ "ic-cdk-macros",
+ "ic-cdk-timers",
+ "ic-icrc1",
+ "ic-icrc1-client",
+ "ic-icrc1-client-cdk",
+ "ic-ledger-types",
+ "ic-stable-structures",
+ "ledger_utils",
+ "local_user_index_canister",
+ "local_user_index_canister_c2c_client",
+ "msgpack",
+ "rand",
+ "satoshi_dice_canister",
+ "serde",
+ "serde_bytes",
+ "serde_json",
+ "serializer",
+ "tracing",
+ "types",
+ "user_canister",
+ "user_canister_c2c_client",
+ "user_index_canister",
+ "user_index_canister_c2c_client",
+ "utils",
+]
+
+[[package]]
 name = "schannel"
 version = "0.1.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6897,6 +6965,7 @@ dependencies = [
 name = "user_canister_c2c_client"
 version = "0.1.0"
 dependencies = [
+ "candid",
  "canister_client",
  "ic-cdk 0.7.3",
  "msgpack",

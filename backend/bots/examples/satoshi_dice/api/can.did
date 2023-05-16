@@ -1,0 +1,67 @@
+type CanisterId = principal;
+type Cycles = nat;
+
+type InitializeBotArgs =
+    record {
+        username: text;
+    };
+
+type InitializeBotResponse =
+    variant {
+        Success;
+        EndDateInPast;
+        AlreadyRegistered;
+        UserLimitReached;
+        UsernameTaken;
+        UsernameInvalid;
+        UsernameTooShort: nat16;
+        UsernameTooLong: nat16;
+        InsufficientCyclesProvided: Cycles;
+        InternalError: text;
+    };
+
+type Avatar =
+    record {
+        id: nat;
+        mime_type: text;
+        data: blob;
+    };
+
+type FieldTooLongResult =
+    record {
+        length_provided: nat32;
+        max_length: nat32;
+    };
+
+type SetAvatarArgs =
+    record {
+        avatar: opt Avatar;
+    };
+
+type SetAvatarResponse =
+    variant {
+        Success;
+        AvatarTooBig: FieldTooLongResult;
+    };
+
+type InitArgs =
+    record {
+        user_index_canister_id: CanisterId;
+        local_user_index_canister_id: CanisterId;
+        ck_btc_ledger_canister_id: CanisterId;
+        admins: vec principal;
+        wasm_version: Version;
+        test_mode: bool;
+    };
+
+type Version =
+    record {
+        major: nat32;
+        minor: nat32;
+        patch: nat32;
+    };
+
+service: (InitArgs) -> {
+    initialize_bot: (InitializeBotArgs) -> (InitializeBotResponse);
+    set_avatar: (SetAvatarArgs) -> (SetAvatarResponse);
+}
