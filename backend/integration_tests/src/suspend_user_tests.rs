@@ -81,7 +81,7 @@ fn suspend_user() {
     );
     assert!(matches!(
         group_message_response1,
-        group_canister::send_message::Response::UserSuspended
+        group_canister::send_message_v2::Response::UserSuspended
     ));
 
     client::user_index::unsuspend_user(
@@ -133,7 +133,7 @@ fn suspend_user() {
     );
     assert!(matches!(
         group_message_response2,
-        group_canister::send_message::Response::Success(_)
+        group_canister::send_message_v2::Response::Success(_)
     ));
 }
 
