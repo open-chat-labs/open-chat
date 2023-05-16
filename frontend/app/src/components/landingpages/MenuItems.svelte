@@ -35,6 +35,9 @@
                 <Link selected={path.startsWith("/blog")} mode={"menu"} path="blog">Blog</Link>
             </div>
         {/if}
+        <div class="menu-item">
+            <Link selected={path.startsWith("/faq")} mode={"menu"} path="faq">FAQs</Link>
+        </div>
         {#if $identityState === "logged_in"}
             <Link on:linkClicked={() => dispatch("logout")} mode={"menu"}>Logout</Link>
         {/if}

@@ -17,6 +17,7 @@
     import { iconSize } from "../../stores/iconSize";
     import { AvatarSize, OpenChat, PartialUserSummary } from "openchat-client";
     import SectionHeader from "../SectionHeader.svelte";
+    import page from "page";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -90,7 +91,7 @@
                         <Wallet size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
                         <span slot="text">{$_("wallet")}</span>
                     </MenuItem>
-                    <MenuItem on:click={() => dispatch("showFaq")}>
+                    <MenuItem on:click={() => page("/faq")}>
                         <HelpCircleOutline
                             size={$iconSize}
                             color={"var(--icon-inverted-txt)"}

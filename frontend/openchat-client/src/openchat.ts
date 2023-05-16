@@ -3488,8 +3488,6 @@ export class OpenChat extends EventTarget {
             const init = this._liveState.chatsInitialised;
             chatsLoading.set(!init);
 
-            const chats = Object.values(this._liveState.myServerChatSummaries);
-            const avatarId = this._liveState.userStore[this.user.userId]?.blobReference?.blobId;
             const chatsResponse = await this.api.getUpdates();
 
             if (!init || chatsResponse.anyUpdates) {
@@ -3497,6 +3495,7 @@ export class OpenChat extends EventTarget {
                     .concat(chatsResponse.state.groupChats);
 
                 this.updateReadUpToStore(updatedChats);
+                const chats = Object.values(this._liveState.myServerChatSummaries);
                 this._cachePrimer?.processChatUpdates(chats, updatedChats);
 
                 const userIds = this.userIdsFromChatSummaries(updatedChats);
@@ -3541,6 +3540,7 @@ export class OpenChat extends EventTarget {
                     }
                 }
 
+                const avatarId = this._liveState.userStore[this.user.userId]?.blobReference?.blobId;
                 if (chatsResponse.state.avatarId !== avatarId) {
                     const blobReference =
                         chatsResponse.state.avatarId === undefined

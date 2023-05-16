@@ -4,7 +4,6 @@
     import LeftPanel from "./LeftPanel.svelte";
     import type CurrentChatMessages from "./CurrentChatMessages.svelte";
     import Toast from "../Toast.svelte";
-    import FaqModal from "../FaqModal.svelte";
     import SelectChatModal from "../SelectChatModal.svelte";
     import MiddlePanel from "./MiddlePanel.svelte";
     import RightPanel from "./RightPanel.svelte";
@@ -17,7 +16,6 @@
         GroupChatSummary,
         GroupRules,
         Message,
-        Questions,
         OpenChat,
         ThreadSelected,
         ThreadClosed,
@@ -87,7 +85,6 @@
 
     enum ModalType {
         None,
-        Faq,
         SelectChat,
         Suspended,
         NewGroup,
@@ -96,7 +93,6 @@
         HallOfFame,
     }
 
-    let faqQuestion: Questions | undefined = undefined;
     let modal = ModalType.None;
     let groupSearchResults: Promise<GroupSearchResponse> | undefined = undefined;
     let userSearchResults: Promise<UserSummary[]> | undefined = undefined;
@@ -191,7 +187,7 @@
                         chatId,
                         code,
                     };
-                }                
+                }
                 if (!(await client.previewChat(chatId))) {
                     page.replace("/");
                     return;
@@ -277,13 +273,6 @@
                 }
 
                 // regardless of the path params, we *always* check the query string
-                const faq = $querystring.get("faq");
-                if (faq !== null) {
-                    faqQuestion = faq as Questions;
-                    modal = ModalType.Faq;
-                    page.replace(removeQueryStringParam("faq"));
-                }
-
                 const diamond = $querystring.get("diamond");
                 if (diamond !== null) {
                     showUpgrade = true;
@@ -362,11 +351,6 @@
     function dismissRecommendation(ev: CustomEvent<string>) {
         hotGroups = mapRemoteData(hotGroups, (data) => data.filter((g) => g.chatId !== ev.detail));
         client.dismissRecommendation(ev.detail);
-    }
-
-    function showFaqQuestion(ev: CustomEvent<Questions>) {
-        faqQuestion = ev.detail;
-        modal = ModalType.Faq;
     }
 
     async function performSearch(ev: CustomEvent<string>) {
@@ -718,7 +702,7 @@
         tick().then(() => {
             client.removeChat(chat.chatId);
             if (!chat.public) {
-                client.declineInvitation(chat.chatId)
+                client.declineInvitation(chat.chatId);
             }
         });
     }
@@ -916,7 +900,6 @@
             {searchResultsAvailable}
             {searching}
             on:showHomePage={showLandingPageRoute("/home")}
-            on:showFaq={() => (modal = ModalType.Faq)}
             on:searchEntered={performSearch}
             on:chatWith={chatWith}
             on:whatsHot={() => whatsHot(true)}
@@ -963,7 +946,6 @@
     {/if}
     {#if showRight && !floatRightPanel}
         <RightPanel
-            on:showFaqQuestion={showFaqQuestion}
             on:userAvatarSelected={userAvatarSelected}
             on:goToMessageIndex={goToMessageIndex}
             on:replyPrivatelyTo={replyPrivatelyTo}
@@ -982,7 +964,6 @@
     <Overlay on:close={closeRightPanel} dismissible fade={!$mobileWidth}>
         <div on:click|stopPropagation class="right-wrapper" class:rtl={$rtlStore}>
             <RightPanel
-                on:showFaqQuestion={showFaqQuestion}
                 on:userAvatarSelected={userAvatarSelected}
                 on:goToMessageIndex={goToMessageIndex}
                 on:replyPrivatelyTo={replyPrivatelyTo}
@@ -1013,7 +994,7 @@
 <Toast />
 
 {#if showUpgrade && user}
-    <Upgrade on:showFaqQuestion={showFaqQuestion} on:cancel={() => (showUpgrade = false)} />
+    <Upgrade on:cancel={() => (showUpgrade = false)} />
 {/if}
 
 {#if modal !== ModalType.None}
@@ -1021,9 +1002,7 @@
         dismissible={modal !== ModalType.SelectChat && modal !== ModalType.Wallet}
         alignLeft={modal === ModalType.SelectChat}
         on:close={closeModal}>
-        {#if modal === ModalType.Faq}
-            <FaqModal bind:question={faqQuestion} on:close={closeModal} />
-        {:else if modal === ModalType.SelectChat}
+        {#if modal === ModalType.SelectChat}
             <SelectChatModal
                 chatsSummaries={filterChatSelection($chatSummariesListStore, $selectedChatId)}
                 on:close={onCloseSelectChat}

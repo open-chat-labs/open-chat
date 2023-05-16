@@ -17,7 +17,6 @@
         <ChatList
             on:loadMessage
             on:chatWith
-            on:showFaq
             on:whatsHot
             on:halloffame
             on:showHomePage
