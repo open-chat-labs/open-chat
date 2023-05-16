@@ -10,7 +10,7 @@ use ic_cdk::api::call::CallResult;
 use ic_cdk_macros::heartbeat;
 use sha2::{Digest, Sha256};
 use std::collections::HashSet;
-use types::{CanisterId, ChatId, MessageContent, MessageId, Proposal, ProposalContent, ProposalId};
+use types::{CanisterId, ChatId, MessageContentInitial, MessageId, Proposal, ProposalContent, ProposalId};
 
 #[heartbeat]
 fn heartbeat() {
@@ -154,10 +154,10 @@ mod push_proposals {
 
     async fn push_proposal(governance_canister_id: CanisterId, chat_id: ChatId, proposal: Proposal) {
         let message_id = generate_message_id(governance_canister_id, proposal.id());
-        let send_message_args = group_canister::send_message::Args {
+        let send_message_args = group_canister::send_message_v2::Args {
             message_id,
             thread_root_message_index: None,
-            content: MessageContent::GovernanceProposal(ProposalContent {
+            content: MessageContentInitial::GovernanceProposal(ProposalContent {
                 governance_canister_id,
                 proposal: proposal.clone(),
                 my_vote: None,
@@ -168,7 +168,7 @@ mod push_proposals {
             forwarding: false,
             correlation_id: 0,
         };
-        match group_canister_c2c_client::send_message(chat_id.into(), &send_message_args).await {
+        match group_canister_c2c_client::send_message_v2(chat_id.into(), &send_message_args).await {
             Ok(_) => {
                 mutate_state(|state| {
                     state

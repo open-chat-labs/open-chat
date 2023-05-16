@@ -61,22 +61,22 @@ async fn send_message_with_transfer_to_group_impl(args: Args) -> Response {
     // Send the message to the group
     match group_canister_c2c_client::send_message_v2(args.group_id.into(), &c2c_args).await {
         Ok(response) => match response {
-            group_canister::send_message::Response::Success(r) => Success(SuccessResult {
+            group_canister::send_message_v2::Response::Success(r) => Success(SuccessResult {
                 event_index: r.event_index,
                 message_index: r.message_index,
                 timestamp: r.timestamp,
                 expires_at: r.expires_at,
                 transfer: completed_transaction,
             }),
-            group_canister::send_message::Response::CallerNotInGroup => CallerNotInGroup(Some(completed_transaction)),
-            group_canister::send_message::Response::UserSuspended => UserSuspended,
-            group_canister::send_message::Response::ChatFrozen => ChatFrozen,
-            group_canister::send_message::Response::MessageEmpty
-            | group_canister::send_message::Response::InvalidPoll(_)
-            | group_canister::send_message::Response::NotAuthorized
-            | group_canister::send_message::Response::ThreadMessageNotFound
-            | group_canister::send_message::Response::InvalidRequest(_)
-            | group_canister::send_message::Response::TextTooLong(_) => unreachable!(),
+            group_canister::send_message_v2::Response::CallerNotInGroup => CallerNotInGroup(Some(completed_transaction)),
+            group_canister::send_message_v2::Response::UserSuspended => UserSuspended,
+            group_canister::send_message_v2::Response::ChatFrozen => ChatFrozen,
+            group_canister::send_message_v2::Response::MessageEmpty
+            | group_canister::send_message_v2::Response::InvalidPoll(_)
+            | group_canister::send_message_v2::Response::NotAuthorized
+            | group_canister::send_message_v2::Response::ThreadMessageNotFound
+            | group_canister::send_message_v2::Response::InvalidRequest(_)
+            | group_canister::send_message_v2::Response::TextTooLong(_) => unreachable!(),
         },
         // TODO: We should retry sending the message
         Err(error) => InternalError(format!("{error:?}"), completed_transaction),
