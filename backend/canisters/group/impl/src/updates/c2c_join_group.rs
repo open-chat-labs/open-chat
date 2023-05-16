@@ -42,7 +42,7 @@ fn is_permitted_to_join(
         Ok(None)
     } else if runtime_state.data.is_frozen() {
         Err(ChatFrozen)
-    } else if !runtime_state.data.is_accessible_by_non_member(user_principal, invite_code) {
+    } else if !runtime_state.data.is_accessible(user_principal, invite_code) {
         Err(NotInvited)
     } else if let Some(limit) = runtime_state.data.participants.user_limit_reached() {
         Err(ParticipantLimitReached(limit))

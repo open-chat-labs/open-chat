@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Added `moderator` role ([#3592](https://github.com/open-ic/open-chat/pull/3592))
+
 ## [[2.0.664](https://github.com/open-ic/open-chat/releases/tag/v2.0.664-local_group_index)] - 2023-04-17
 
 ### Added

@@ -195,7 +195,7 @@
     );
 
     $: privatePreview = chat.kind === "group_chat" && chat.myRole === "previewer" && !chat.public;
-    $: isEmptyChat = chat.latestEventIndex < 0 || privatePreview;
+    $: isEmptyChat = chat.latestEventIndex <= 0 || privatePreview;
 
     $: {
         if (chat.chatId !== currentChatId) {

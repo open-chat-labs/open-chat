@@ -335,12 +335,11 @@ impl Data {
         }
     }
 
-    pub fn is_accessible_by_non_member(&self, caller: Principal, invite_code: Option<u64>) -> bool {
-        if self.is_public || self.invited_users.get(&caller).is_some() {
-            return true;
-        }
-
-        self.is_invite_code_valid(invite_code)
+    pub fn is_accessible(&self, caller: Principal, invite_code: Option<u64>) -> bool {
+        self.is_public
+            || self.participants.get_by_principal(&caller).is_some()
+            || self.invited_users.get(&caller).is_some()
+            || self.is_invite_code_valid(invite_code)
     }
 
     pub fn is_frozen(&self) -> bool {

@@ -1081,6 +1081,7 @@ type GroupPermissions =
     record {
         change_permissions: PermissionRole;
         change_roles: PermissionRole;
+        add_members: PermissionRole;
         remove_members: PermissionRole;
         block_users: PermissionRole;
         delete_messages: PermissionRole;
