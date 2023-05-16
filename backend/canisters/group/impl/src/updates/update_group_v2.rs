@@ -9,7 +9,7 @@ use ic_cdk_macros::update;
 use tracing::error;
 use types::{
     Avatar, AvatarChanged, CanisterId, ChatId, FieldTooLongResult, FieldTooShortResult, GroupDescriptionChanged,
-    GroupGateUpdated, GroupNameChanged, GroupPermissions, GroupRulesChanged, OptionalGroupPermissions, PermissionRole,
+    GroupGateUpdated, GroupNameChanged, GroupPermissionRole, GroupPermissions, GroupRulesChanged, OptionalGroupPermissions,
     PermissionsChanged, Timestamped, UserId, MAX_AVATAR_SIZE,
 };
 use utils::group_validation::{validate_name, NameValidationError};
@@ -265,7 +265,7 @@ fn merge_permissions(new: OptionalGroupPermissions, old: &GroupPermissions) -> G
     GroupPermissions {
         change_permissions: new.change_permissions.unwrap_or(old.change_permissions),
         change_roles: new.change_roles.unwrap_or(old.change_roles),
-        add_members: PermissionRole::Owner,
+        add_members: GroupPermissionRole::Owner,
         remove_members: new.remove_members.unwrap_or(old.remove_members),
         block_users: new.block_users.unwrap_or(old.block_users),
         delete_messages: new.delete_messages.unwrap_or(old.delete_messages),

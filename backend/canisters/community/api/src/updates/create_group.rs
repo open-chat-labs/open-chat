@@ -1,8 +1,8 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use types::{
-    Avatar, ChatId, CommunityGroupId, FieldTooLongResult, FieldTooShortResult, GroupGate, GroupPermissions, GroupRules,
-    GroupSubtype, Milliseconds,
+    Avatar, CommunityGroupId, FieldTooLongResult, FieldTooShortResult, GroupGate, GroupPermissions, GroupRules, GroupSubtype,
+    Milliseconds,
 };
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
