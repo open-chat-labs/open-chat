@@ -256,7 +256,6 @@ type OptionalGroupPermissions =
     record {
         change_permissions: opt PermissionRole;
         change_roles: opt PermissionRole;
-        add_members: opt PermissionRole;
         remove_members: opt PermissionRole;
         block_users: opt PermissionRole;
         delete_messages: opt PermissionRole;
