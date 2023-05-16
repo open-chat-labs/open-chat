@@ -27,10 +27,9 @@ pub(crate) fn c2c_add_user_impl(user_id: UserId, state: &mut RuntimeState) -> Re
 fn welcome_messages() -> Vec<&'static str> {
     vec![
         "Hey there! I am the SatoshiDice bot!",
-        "Each time you send me ckBTC I will roll a dice between 0 and 250, then based on your dice \
-roll I will send you back between 0 and 250% of the amount of ckBTC you sent me.",
-        "You can only send up to 10k SATS on each roll and you may only roll 5 times per hour, if \
-you exceed these limits I will simply refund you without rolling the dice.",
-        "Go ahead! Roll the dice! 🎲",
+        "I am here to help you experiment with sending ckBTC as a chat message. Simply send me some \
+ckBTC (up to 10k SATS) and you will receive your SATS back with a surprise bonus on top within just \
+a few moments!",
+        "Start playing now! 🎲",
     ]
 }

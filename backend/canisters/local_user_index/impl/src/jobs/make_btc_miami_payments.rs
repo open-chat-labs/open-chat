@@ -136,6 +136,9 @@ fn send_oc_bot_messages(
             text: "🎲 ...or play Satoshi Dice with the [Satoshi Dice](/wznbi-caaaa-aaaar-anvea-cai) chat bot".to_string(),
         }),
         MessageContent::Text(TextContent {
+            text: "👀 View projects, wallets, and DEXs that support ckBTC [here](https://internetcomputer.org/ecosystem/?tag=Bitcoin)".to_string(),
+        }),
+        MessageContent::Text(TextContent {
             text: "🧐 Find out more about OpenChat [here](/home)".to_string(),
         }),
     ];

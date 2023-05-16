@@ -32,8 +32,8 @@ fn handle_message(args: Args, state: &mut RuntimeState) -> Response {
             match state.data.users.time_until_next_roll_permitted(&user_id, now) {
                 Some(0) => {
                     // This isn't quite uniformly distributed but it's more than good enough
-                    let roll = state.env.rng().next_u64() % 251;
-                    let amount_out = sats * roll / 100;
+                    let roll = state.env.rng().next_u64() % 101;
+                    let amount_out = sats + CKBTC_FEE + (sats * roll / 100);
                     state.data.users.add_roll(
                         &user_id,
                         DiceRoll {
