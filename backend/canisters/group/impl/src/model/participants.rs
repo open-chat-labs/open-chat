@@ -16,6 +16,8 @@ pub struct Participants {
     by_principal: HashMap<Principal, ParticipantInternal>,
     user_id_to_principal_map: HashMap<UserId, Principal>,
     blocked: HashSet<UserId>,
+    #[serde(default)]
+    moderator_count: u32,
     admin_count: u32,
     owner_count: u32,
 }
@@ -40,6 +42,7 @@ impl Participants {
             by_principal: vec![(creator_principal, participant)].into_iter().collect(),
             user_id_to_principal_map: vec![(creator_user_id, creator_principal)].into_iter().collect(),
             blocked: HashSet::new(),
+            moderator_count: 0,
             admin_count: 0,
             owner_count: 1,
         }
@@ -86,6 +89,7 @@ impl Participants {
                 match participant.role {
                     Role::Owner => self.owner_count -= 1,
                     Role::Admin => self.admin_count -= 1,
+                    Role::Moderator => self.moderator_count -= 1,
                     _ => (),
                 }
 
@@ -104,6 +108,7 @@ impl Participants {
             match role {
                 Role::Owner => self.owner_count += 1,
                 Role::Admin => self.admin_count += 1,
+                Role::Moderator => self.moderator_count += 1,
                 _ => (),
             }
         }
@@ -233,6 +238,7 @@ impl Participants {
 
         let mut owner_count = self.owner_count;
         let mut admin_count = self.admin_count;
+        let mut moderator_count = self.moderator_count;
 
         let member = match self.get_by_user_id_mut(&user_id) {
             Some(p) => p,
@@ -258,6 +264,7 @@ impl Participants {
         match member.role {
             Role::Owner => owner_count -= 1,
             Role::Admin => admin_count -= 1,
+            Role::Moderator => moderator_count -= 1,
             _ => (),
         }
 
@@ -266,11 +273,13 @@ impl Participants {
         match member.role {
             Role::Owner => owner_count += 1,
             Role::Admin => admin_count += 1,
+            Role::Moderator => moderator_count += 1,
             _ => (),
         }
 
         self.owner_count = owner_count;
         self.admin_count = admin_count;
+        self.moderator_count = moderator_count;
 
         ChangeRoleResult::Success(ChangeRoleSuccessResult { caller_id, prev_role })
     }
@@ -281,6 +290,10 @@ impl Participants {
 
     pub fn admin_count(&self) -> u32 {
         self.admin_count
+    }
+
+    pub fn moderator_count(&self) -> u32 {
+        self.moderator_count
     }
 
     pub fn add_thread(&mut self, user_id: &UserId, root_message_index: MessageIndex) {

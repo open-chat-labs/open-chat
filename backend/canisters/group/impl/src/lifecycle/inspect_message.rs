@@ -20,9 +20,7 @@ fn accept_if_valid(runtime_state: &RuntimeState) {
     let caller = runtime_state.env.caller();
     let permissions = &runtime_state.data.permissions;
     let is_valid = if let Some(role) = runtime_state.data.participants.get_by_principal(&caller).map(|p| p.role) {
-        let is_public_group = runtime_state.data.is_public;
         match method_name.as_str() {
-            "add_participants" => role.can_add_members(permissions, is_public_group) || role.can_unblock_users(permissions),
             "add_reaction" | "remove_reaction" => role.can_react_to_messages(permissions),
             "block_user" => role.can_block_users(permissions),
             "delete_group" => role.can_delete_group(),
