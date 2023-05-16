@@ -34,24 +34,17 @@
                                 <div class="sub-one">Claim your</div>
                                 <div class="sub-two">50,000 SATS</div>
                                 <div class="sub-three">and send BTC at the speed of chat!</div>
-                                {#if !$mobileWidth}
-                                    <div class="launch-wrapper">
-                                        <Launch
-                                            text="Let's go!"
-                                            rootPath={`/${OPENCHAT_BOT_USER_ID}`}
-                                            on:login />
-                                    </div>
-                                {/if}
+                                <div class="launch-wrapper">
+                                    <Launch
+                                        text="Let's go!"
+                                        rootPath={`/${OPENCHAT_BOT_USER_ID}`}
+                                        on:login />
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </Content>
-            {#if $mobileWidth}
-                <div class="launch-wrapper">
-                    <Launch text="Let's go!" rootPath={`/${OPENCHAT_BOT_USER_ID}`} on:login />
-                </div>
-            {/if}
         </div>
 
         <Content>
@@ -234,7 +227,6 @@
 
                 .headlines {
                     grid-area: headlines;
-                    margin-bottom: toRem(30);
                     position: relative;
                     z-index: 1;
 
@@ -265,11 +257,10 @@
                 border-radius: $sp2;
                 text-align: center;
                 bottom: -36px;
+                margin: toRem(30) 0 toRem(10) 0;
 
                 @include mobile() {
-                    position: absolute;
                     width: 100%;
-                    width: calc(100% - 32px);
                 }
             }
         }
