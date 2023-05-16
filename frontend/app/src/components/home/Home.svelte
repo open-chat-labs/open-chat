@@ -16,7 +16,6 @@
         GroupChatSummary,
         GroupRules,
         Message,
-        Questions,
         OpenChat,
         ThreadSelected,
         ThreadClosed,
