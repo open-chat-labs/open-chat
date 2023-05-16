@@ -12,16 +12,16 @@ pub enum Cryptocurrency {
 }
 
 impl Cryptocurrency {
-    pub fn token_symbol(&self) -> String {
+    pub const fn token_symbol(&self) -> &'static str {
         match self {
-            Cryptocurrency::InternetComputer => "ICP".to_string(),
-            Cryptocurrency::SNS1 => "SNS1".to_string(),
-            Cryptocurrency::CKBTC => "ckBTC".to_string(),
-            Cryptocurrency::CHAT => "CHAT".to_string(),
+            Cryptocurrency::InternetComputer => "ICP",
+            Cryptocurrency::SNS1 => "SNS1",
+            Cryptocurrency::CKBTC => "ckBTC",
+            Cryptocurrency::CHAT => "CHAT",
         }
     }
 
-    pub fn decimals(&self) -> usize {
+    pub const fn decimals(&self) -> usize {
         match self {
             Cryptocurrency::InternetComputer => 8,
             Cryptocurrency::SNS1 => 8,
@@ -30,7 +30,7 @@ impl Cryptocurrency {
         }
     }
 
-    pub fn fee(&self) -> u128 {
+    pub const fn fee(&self) -> u128 {
         match self {
             Cryptocurrency::InternetComputer => 10_000,
             Cryptocurrency::SNS1 => 1_000,

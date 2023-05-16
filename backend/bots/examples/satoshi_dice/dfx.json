@@ -1,0 +1,31 @@
+{
+  "canisters": {
+    "satoshi_dice": {
+      "type": "rust",
+      "candid": "api/can.did",
+      "package": "satoshi_dice_impl"
+    }
+  },
+  "networks": {
+    "local": {
+      "bind": "127.0.0.1:8080",
+      "type": "ephemeral",
+      "replica": {
+        "subnet_type": "system"
+      }
+    },
+    "ic": {
+      "providers": [
+        "https://icp0.io/"
+      ],
+      "type": "persistent"
+    },
+    "ic_test": {
+      "providers": [
+        "https://icp0.io/"
+      ],
+      "type": "persistent"
+    }
+  },
+  "version": 1
+}

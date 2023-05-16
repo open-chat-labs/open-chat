@@ -13,6 +13,8 @@ pub enum GroupRole {
 pub struct GroupPermissions {
     pub change_permissions: GroupPermissionRole,
     pub change_roles: GroupPermissionRole,
+    #[serde(default = "owner_role")]
+    pub add_members: GroupPermissionRole,
     pub remove_members: GroupPermissionRole,
     pub block_users: GroupPermissionRole,
     pub delete_messages: GroupPermissionRole,
@@ -25,11 +27,14 @@ pub struct GroupPermissions {
     pub reply_in_thread: GroupPermissionRole,
 }
 
+fn owner_role() -> GroupPermissionRole {
+    GroupPermissionRole::Owner
+}
+
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct OptionalGroupPermissions {
     pub change_permissions: Option<GroupPermissionRole>,
     pub change_roles: Option<GroupPermissionRole>,
-    pub add_members: Option<GroupPermissionRole>,
     pub remove_members: Option<GroupPermissionRole>,
     pub block_users: Option<GroupPermissionRole>,
     pub delete_messages: Option<GroupPermissionRole>,
@@ -47,6 +52,7 @@ impl Default for GroupPermissions {
         GroupPermissions {
             change_permissions: GroupPermissionRole::Admins,
             change_roles: GroupPermissionRole::Admins,
+            add_members: GroupPermissionRole::Admins,
             remove_members: GroupPermissionRole::Moderators,
             block_users: GroupPermissionRole::Moderators,
             delete_messages: GroupPermissionRole::Moderators,
