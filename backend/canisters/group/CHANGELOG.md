@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Removed
+
+- Remove last remnants of `send_message` and `edit_message` ([#3603](https://github.com/open-ic/open-chat/pull/3603))
+
 ### Changed
 
 - Return `history_visible_to_new_joiners` from `group::public_summary` ([#3572](https://github.com/open-ic/open-chat/pull/3572))
