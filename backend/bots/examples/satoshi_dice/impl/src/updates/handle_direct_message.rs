@@ -8,6 +8,8 @@ use satoshi_dice_canister::handle_direct_message::*;
 use types::{BotMessage, Cryptocurrency, MessageContent, TextContent, UserId};
 use utils::time::MINUTE_IN_MS;
 
+const CKBTC_FEE: u64 = 10;
+
 #[update_msgpack]
 #[trace]
 fn handle_direct_message(args: Args) -> Response {
@@ -25,7 +27,7 @@ fn handle_message(args: Args, state: &mut RuntimeState) -> Response {
                 "The limit per roll is 10k SATS, so this roll won't count, please wait a moment while I refund your ckBTC"
                     .to_string(),
             );
-            send_ckbtc_message(user_id, sats.saturating_sub(20), state);
+            send_ckbtc_message(user_id, sats.saturating_sub(2 * CKBTC_FEE), state);
         } else {
             match state.data.users.time_until_next_roll_permitted(&user_id, now) {
                 Some(0) => {
@@ -54,14 +56,14 @@ fn handle_message(args: Args, state: &mut RuntimeState) -> Response {
                         "You can only roll the dice 5 times per hour. You can try again in {minutes} minute{s}. please wait a moment while I refund your ckBTC"
                     ));
 
-                    send_ckbtc_message(user_id, sats.saturating_sub(20), state);
+                    send_ckbtc_message(user_id, sats.saturating_sub(2 * CKBTC_FEE), state);
                 }
                 None => {
                     messages.push("User not recognized, please wait a moment while I refund your ckBTC".to_string());
 
                     state.enqueue_pending_action(Action::TransferCkbtc(TransferCkbtc {
                         user_id,
-                        amount: sats.saturating_sub(20),
+                        amount: sats.saturating_sub(2 * CKBTC_FEE),
                         send_oc_message: false,
                     }));
                 }
