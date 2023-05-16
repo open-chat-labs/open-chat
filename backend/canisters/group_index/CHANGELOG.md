@@ -9,7 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Removed time limit before frozen groups can be deleted ([#3490](https://github.com/open-ic/open-chat/pull/3490))
 - Reduce a few timer job intervals ([#3515](https://github.com/open-ic/open-chat/pull/3515))
-- Added `moderator` role ([#3592](https://github.com/open-ic/open-chat/pull/3592))
+- Added `moderator` role and removed `add_members` permission ([#3592](https://github.com/open-ic/open-chat/pull/3592))
 
 ## [[2.0.665](https://github.com/open-ic/open-chat/releases/tag/v2.0.665-group_index)] - 2023-04-17
 
