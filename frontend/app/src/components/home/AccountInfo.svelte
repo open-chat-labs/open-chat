@@ -40,6 +40,7 @@
     <div class="qr-wrapper" class:border>
         <div class="qr" class:smaller={qrSize === "smaller"} class:larger={qrSize === "larger"}>
             <QR text={account} />
+            <div class={`icon ${token}`} />
         </div>
     </div>
     <p class:centered>{$_("tokenTransfer.yourAccount", { values: { token: symbol } })}</p>
@@ -60,6 +61,7 @@
         justify-content: center;
         width: 100%;
         margin-bottom: $sp4;
+        position: relative;
 
         &.border {
             border: 1px solid var(--bd);
@@ -71,14 +73,47 @@
         width: 140px;
         height: 140px;
 
+        .icon {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-size: contain;
+            height: 35px;
+            width: 35px;
+            border-radius: 50%;
+            background-repeat: no-repeat;
+            background-position: top;
+            &.icp {
+                background-image: url("../assets/icp_token.svg");
+            }
+            &.sns1 {
+                background-image: url("../assets/sns1_token.png");
+            }
+            &.ckbtc {
+                background-image: url("../assets/ckbtc_nobackground.svg");
+            }
+            &.chat {
+                background-image: url("../assets/spinner.svg");
+            }
+        }
+
         &.smaller {
             width: 120px;
             height: 120px;
+            .icon {
+                height: 30px;
+                width: 30px;
+            }
         }
 
         &.larger {
             width: 180px;
             height: 180px;
+            .icon {
+                height: 45px;
+                width: 45px;
+            }
         }
     }
 
