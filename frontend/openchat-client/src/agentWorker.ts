@@ -474,7 +474,7 @@ export class OpenChatAgentWorker extends EventTarget {
     }
 
     rehydrateMessage(
-        currentChatId: string,
+        chatId: string,
         message: EventWrapper<Message>,
         threadRootMessageIndex: number | undefined,
         latestClientEventIndex: number | undefined
@@ -482,7 +482,7 @@ export class OpenChatAgentWorker extends EventTarget {
         return this.sendRequest({
             kind: "rehydrateMessage",
             payload: {
-                currentChatId,
+                chatId,
                 message,
                 threadRootMessageIndex,
                 latestClientEventIndex,
