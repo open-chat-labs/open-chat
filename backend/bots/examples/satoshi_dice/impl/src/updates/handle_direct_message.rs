@@ -8,7 +8,7 @@ use satoshi_dice_canister::handle_direct_message::*;
 use types::{BotMessage, Cryptocurrency, MessageContent, TextContent, UserId};
 use utils::time::MINUTE_IN_MS;
 
-const CKBTC_FEE: u64 = 10;
+const CKBTC_FEE: u64 = Cryptocurrency::CKBTC.fee() as u64;
 
 #[update_msgpack]
 #[trace]
