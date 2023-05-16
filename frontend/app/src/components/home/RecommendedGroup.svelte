@@ -137,6 +137,11 @@
             @include font(book, normal, fs-100);
             height: 150px;
             overflow: auto;
+
+            @include mobile() {
+                height: unset;
+                max-height: 150px;
+            }
         }
 
         .user-count {
