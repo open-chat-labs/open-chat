@@ -104,7 +104,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
         return Err(AvatarTooBig(error));
     }
 
-    if let Some(member) = state.data.members.get_by_principal(&caller) {
+    if let Some(member) = state.data.members.get(caller) {
         if member.suspended.value {
             return Err(UserSuspended);
         }

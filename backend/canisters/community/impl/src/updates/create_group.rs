@@ -15,7 +15,7 @@ fn create_group(args: Args) -> Response {
 
 fn create_group_impl(args: Args, state: &mut RuntimeState) -> Response {
     let caller = state.env.caller();
-    if let Some(member) = state.data.members.get_by_principal(&caller) {
+    if let Some(member) = state.data.members.get(caller) {
         let is_authorized = if args.is_public {
             member.role.can_create_public_group(&state.data.permissions)
         } else {
