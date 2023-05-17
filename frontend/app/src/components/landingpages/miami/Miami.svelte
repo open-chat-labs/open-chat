@@ -265,6 +265,7 @@
                 border-radius: $sp2;
                 text-align: center;
                 bottom: -36px;
+                margin: toRem(30) 0 toRem(10) 0;
 
                 @include mobile() {
                     position: absolute;

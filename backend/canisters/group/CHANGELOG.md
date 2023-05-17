@@ -5,13 +5,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Removed
+
+- Remove last remnants of `send_message` and `edit_message` ([#3603](https://github.com/open-ic/open-chat/pull/3603))
+
 ### Changed
 
 - Return `history_visible_to_new_joiners` from `group::public_summary` ([#3572](https://github.com/open-ic/open-chat/pull/3572))
+- Added `moderator` role ([#3592](https://github.com/open-ic/open-chat/pull/3592))
 
 ### Removed
 
 - Remove `send_message` and `edit_message` (there are now `v2` versions) ([#3578](https://github.com/open-ic/open-chat/pull/3578))
+- Remove `add_participants` endpoint and `add_members` permission ([#3589](https://github.com/open-ic/open-chat/pull/3589))
 
 ## [[2.0.686](https://github.com/open-ic/open-chat/releases/tag/v2.0.686-group)] - 2023-05-11
 

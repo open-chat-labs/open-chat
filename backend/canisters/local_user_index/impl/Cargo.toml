@@ -35,6 +35,8 @@ msgpack = { path = "../../../libraries/msgpack" }
 serde = { workspace = true }
 serde_json = { workspace = true }
 serializer = { workspace = true }
+satoshi_dice_canister = { path = "../../../bots/examples/satoshi_dice/api" }
+satoshi_dice_canister_c2c_client = { path = "../../../bots/examples/satoshi_dice/c2c_client" }
 tracing = { workspace = true }
 types = { path = "../../../libraries/types" }
 user_canister = { path = "../../user/api" }

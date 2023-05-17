@@ -31,7 +31,7 @@ fn allow_multiple_votes_per_user() {
         create_poll_result,
     } = init_test_data(env, canister_ids.local_user_index, poll_config);
 
-    if let group_canister::send_message::Response::Success(r) = create_poll_result {
+    if let group_canister::send_message_v2::Response::Success(r) = create_poll_result {
         let register_vote_result1 = client::group::happy_path::register_poll_vote(env, &user2, group, r.message_index, 0);
         assert_eq!(register_vote_result1.user, vec![0]);
 
@@ -61,7 +61,7 @@ fn single_vote_per_user() {
         create_poll_result,
     } = init_test_data(env, canister_ids.local_user_index, poll_config);
 
-    if let group_canister::send_message::Response::Success(r) = create_poll_result {
+    if let group_canister::send_message_v2::Response::Success(r) = create_poll_result {
         let register_vote_result1 = client::group::happy_path::register_poll_vote(env, &user2, group, r.message_index, 0);
         assert_eq!(register_vote_result1.user, vec![0]);
 
@@ -125,7 +125,7 @@ fn polls_ended_correctly() {
         },
     );
 
-    if let group_canister::send_message::Response::Success(r) = create_poll_result1 {
+    if let group_canister::send_message_v2::Response::Success(r) = create_poll_result1 {
         let register_vote_result1 = client::group::happy_path::register_poll_vote(env, &user2, group, r.message_index, 0);
         assert!(matches!(register_vote_result1.total, TotalVotes::Hidden(1)));
 
@@ -168,7 +168,7 @@ fn polls_ended_correctly() {
         }
     }
 
-    if let group_canister::send_message::Response::Success(r) = create_poll_result2 {
+    if let group_canister::send_message_v2::Response::Success(r) = create_poll_result2 {
         let register_vote_result2 = client::group::happy_path::register_poll_vote(env, &user2, group, r.message_index, 0);
         assert!(matches!(register_vote_result2.total, TotalVotes::Hidden(1)));
 
@@ -217,7 +217,13 @@ fn init_test_data(env: &mut StateMachine, local_user_index: CanisterId, poll_con
     let user2 = client::local_user_index::happy_path::register_user(env, local_user_index);
 
     let group = client::user::happy_path::create_group(env, &user1, "TEST_NAME", false, false);
-    client::group::happy_path::add_participants(env, &user1, group, vec![user2.user_id]);
+    client::local_user_index::happy_path::add_users_to_group(
+        env,
+        user1.principal,
+        local_user_index,
+        group,
+        vec![(user2.user_id, user2.principal)],
+    );
 
     let create_poll_result = client::group::send_message_v2(
         env,
@@ -254,5 +260,5 @@ struct TestData {
     user1: User,
     user2: User,
     group: ChatId,
-    create_poll_result: group_canister::send_message::Response,
+    create_poll_result: group_canister::send_message_v2::Response,
 }

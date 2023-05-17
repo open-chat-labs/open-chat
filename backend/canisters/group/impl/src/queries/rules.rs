@@ -11,7 +11,7 @@ fn rules(args: Args) -> Response {
 fn rules_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
 
-    if !runtime_state.data.is_accessible_by_non_member(caller, args.invite_code) {
+    if !runtime_state.data.is_accessible(caller, args.invite_code) {
         return NotAuthorized;
     }
 

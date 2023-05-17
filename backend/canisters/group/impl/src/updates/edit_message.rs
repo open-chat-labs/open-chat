@@ -7,14 +7,6 @@ use ic_cdk_macros::update;
 
 #[update]
 #[trace]
-fn edit_message(args: group_canister::edit_message::Args) -> Response {
-    run_regular_jobs();
-
-    mutate_state(|state| edit_message_impl(args.into(), state))
-}
-
-#[update]
-#[trace]
 fn edit_message_v2(args: Args) -> Response {
     run_regular_jobs();
 

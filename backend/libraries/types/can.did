@@ -886,12 +886,7 @@ type Role =
     variant {
         Owner;
         Admin;
-        Participant;
-    };
-
-type FallbackRole =
-    variant {
-        Admin;
+        Moderator;
         Participant;
     };
 
@@ -1103,6 +1098,7 @@ type PermissionRole =
     variant {
         Owner;
         Admins;
+        Moderators;
         Members;
     };
 
