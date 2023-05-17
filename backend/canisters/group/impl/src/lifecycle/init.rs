@@ -14,7 +14,6 @@ fn init(args: Args) {
     let env = init_env();
 
     let data = Data::new(
-        env.canister_id().into(),
         args.is_public,
         args.name,
         args.description,

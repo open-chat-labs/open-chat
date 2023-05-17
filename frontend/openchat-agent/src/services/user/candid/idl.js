@@ -975,7 +975,6 @@ export const idlFactory = ({ IDL }) => {
     'content' : MessageContent,
     'sender' : UserId,
     'score' : IDL.Nat32,
-    'chat_id' : ChatId,
     'message_index' : MessageIndex,
   });
   const SearchMessagesSuccessResult = IDL.Record({

@@ -23,7 +23,6 @@ pub const OPENCHAT_BOT_USER_ID: UserId = UserId::new(Principal::from_slice(&[228
 
 #[derive(Serialize, Deserialize)]
 pub struct ChatEvents {
-    chat_id: ChatId,
     chat_type: ChatType,
     main: ChatEventsList,
     threads: HashMap<MessageIndex, ChatEventsList>,
@@ -36,9 +35,8 @@ pub struct ChatEvents {
 }
 
 impl ChatEvents {
-    pub fn new_direct_chat(them: UserId, events_ttl: Option<Milliseconds>, now: TimestampMillis) -> ChatEvents {
+    pub fn new_direct_chat(events_ttl: Option<Milliseconds>, now: TimestampMillis) -> ChatEvents {
         let mut events = ChatEvents {
-            chat_id: them.into(),
             chat_type: ChatType::Direct,
             main: ChatEventsList::default(),
             threads: HashMap::new(),
@@ -56,7 +54,6 @@ impl ChatEvents {
     }
 
     pub fn new_group_chat(
-        chat_id: ChatId,
         name: String,
         description: String,
         created_by: UserId,
@@ -64,7 +61,6 @@ impl ChatEvents {
         now: TimestampMillis,
     ) -> ChatEvents {
         let mut events = ChatEvents {
-            chat_id,
             chat_type: ChatType::Group,
             main: ChatEventsList::default(),
             threads: HashMap::new(),
@@ -823,7 +819,6 @@ impl ChatEvents {
             .rev()
             .take(max_results as usize)
             .map(|(score, message)| MessageMatch {
-                chat_id: self.chat_id,
                 message_index: message.message_index,
                 sender: message.sender,
                 content: message.content.hydrate(Some(my_user_id)),

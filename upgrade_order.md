@@ -1,3 +1,3 @@
-groups -> local_group_index -> group_index -> users -> website
+Website -> User/Group
 
-A new variant moderator has been added to Role enum. create_group starts with user -> group_index
+Website must go before user and group because the `chat_id` field has been removed from the `MessageMatch` type

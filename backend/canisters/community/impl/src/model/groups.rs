@@ -1,7 +1,8 @@
+use chat_events::ChatEvents;
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::{HashMap, HashSet};
-use types::{CommunityGroupId, GroupRules, TimestampMillis};
+use types::{CommunityGroupId, GroupRules, Milliseconds, TimestampMillis, UserId};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct Groups {
@@ -26,17 +27,22 @@ pub struct Group {
     pub rules: GroupRules,
     pub history_visible_to_new_joiners: bool,
     pub created: TimestampMillis,
+    pub events: ChatEvents,
 }
 
 impl Group {
     pub fn new(
+        created_by: UserId,
         is_public: bool,
         name: String,
         description: String,
         rules: GroupRules,
         history_visible_to_new_joiners: bool,
+        events_ttl: Option<Milliseconds>,
         now: TimestampMillis,
     ) -> Group {
+        let events = ChatEvents::new_group_chat(name.clone(), description.clone(), created_by, events_ttl, now);
+
         Group {
             is_public,
             name,
@@ -44,6 +50,7 @@ impl Group {
             rules,
             history_visible_to_new_joiners,
             created: now,
+            events,
         }
     }
 }

@@ -13,7 +13,7 @@ use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::ops::Deref;
 use types::{
-    Avatar, CanisterId, ChatId, Cryptocurrency, Cycles, EventIndex, FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupGate,
+    Avatar, CanisterId, Cryptocurrency, Cycles, EventIndex, FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupGate,
     GroupPermissions, GroupRules, GroupSubtype, MessageIndex, Milliseconds, Notification, TimestampMillis, Timestamped, UserId,
     Version, MAX_THREADS_IN_SUMMARY,
 };
@@ -263,7 +263,6 @@ struct Data {
 #[allow(clippy::too_many_arguments)]
 impl Data {
     pub fn new(
-        chat_id: ChatId,
         is_public: bool,
         name: String,
         description: String,
@@ -287,7 +286,7 @@ impl Data {
         gate: Option<GroupGate>,
     ) -> Data {
         let participants = GroupMembers::new(creator_principal, creator_user_id, now);
-        let events = ChatEvents::new_group_chat(chat_id, name.clone(), description.clone(), creator_user_id, events_ttl, now);
+        let events = ChatEvents::new_group_chat(name.clone(), description.clone(), creator_user_id, events_ttl, now);
 
         Data {
             is_public,

@@ -39,11 +39,13 @@ fn create_group_impl(args: Args, state: &mut RuntimeState) -> Response {
         } else {
             let group_id: CommunityGroupId = state.env.rng().gen();
             let group = Group::new(
+                member.user_id,
                 args.is_public,
                 args.name,
                 args.description,
                 args.rules,
                 args.history_visible_to_new_joiners,
+                args.events_ttl,
                 state.env.now(),
             );
             state.data.groups.add(group_id, group);

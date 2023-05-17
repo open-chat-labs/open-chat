@@ -26,7 +26,7 @@ impl DirectChat {
         DirectChat {
             them,
             date_created: now,
-            events: ChatEvents::new_direct_chat(them, events_ttl, now),
+            events: ChatEvents::new_direct_chat(events_ttl, now),
             unread_message_index_map: UnreadMessageIndexMap::default(),
             read_by_me_up_to: Timestamped::new(None, now),
             read_by_them_up_to: Timestamped::new(None, now),
