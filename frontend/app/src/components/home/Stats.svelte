@@ -243,7 +243,7 @@
         {$_("stats.deletedMessages")}
     </div>
     {#if showReported}
-        <TooltipWrapper alignRight={true} bottomOffset={-4} centreChevron={false}>
+        <TooltipWrapper position={"top"} align="center">
             <div slot="target" class="reported-messages">
                 <span>
                     <span class="stat">{stats.reportedMessages.toLocaleString()}</span>
@@ -253,8 +253,8 @@
                     <Flag size={$iconSize} color={"var(--accent)"} />
                 </span>
             </div>
-            <div slot="tooltip">
-                <TooltipPopup alignRight={true} textLength={100} longestWord={20}>
+            <div let:position let:align slot="tooltip">
+                <TooltipPopup {position} {align} textLength={100} longestWord={20}>
                     <div>
                         {$_("stats.reportedMessagesInfo")}
                     </div>

@@ -34,29 +34,29 @@
 
 {#if gate.kind !== "no_gate"}
     {#if gate.kind === "diamond_gate"}
-        <TooltipWrapper bottomOffset={-10} alignRight={!rtlStore} centreChevron={true}>
+        <TooltipWrapper position={"top"} align={"start"}>
             <div on:click={() => dispatch("upgrade")} slot="target" class="diamond">💎</div>
-            <div slot="tooltip">
-                <TooltipPopup alignRight={!rtlStore}>
+            <div let:position let:align slot="tooltip">
+                <TooltipPopup {position} {align}>
                     {$_("group.diamondGateInfo")}
                 </TooltipPopup>
             </div>
         </TooltipWrapper>
     {:else if gate.kind === "openchat_gate"}
-        <TooltipWrapper bottomOffset={-10} alignRight={!rtlStore} centreChevron={true}>
+        <TooltipWrapper position={"top"} align={"start"}>
             <div slot="target" class="icon oc" />
-            <div slot="tooltip">
-                <TooltipPopup alignRight={!rtlStore}>
+            <div let:position let:align slot="tooltip">
+                <TooltipPopup {position} {align}>
                     <p>{`${$_("group.chatHolderInfo")}`}</p>
                     <p class="params">{params}</p>
                 </TooltipPopup>
             </div>
         </TooltipWrapper>
     {:else if gate.kind === "sns1_gate"}
-        <TooltipWrapper bottomOffset={-10} alignRight={!rtlStore} centreChevron={true}>
+        <TooltipWrapper position={"top"} align={"start"}>
             <div slot="target" class="icon sns1" />
-            <div slot="tooltip">
-                <TooltipPopup alignRight={!rtlStore}>
+            <div let:position let:align slot="tooltip">
+                <TooltipPopup {position} {align}>
                     <p>{`${$_("group.sns1HolderInfo")}`}</p>
                     <p class="params">{params}</p>
                 </TooltipPopup>

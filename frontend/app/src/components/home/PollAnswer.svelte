@@ -5,7 +5,6 @@
     import CheckCircleOutline from "svelte-material-icons/CheckCircleOutline.svelte";
     import Progress from "../Progress.svelte";
     import TooltipPopup from "../TooltipPopup.svelte";
-    import { rtlStore } from "../../stores/rtl";
     import TooltipWrapper from "../TooltipWrapper.svelte";
     import type { OpenChat, UserLookup } from "openchat-client";
     import { getContext } from "svelte";
@@ -22,11 +21,9 @@
     export let voters: string[] | undefined;
     export let numVotes: number;
     export let showVotes: boolean;
-    export let me: boolean;
 
     $: userStore = client.userStore;
     $: usernames = buildPollUsernames($userStore, voters, myUserId);
-    $: alignRight = me != $rtlStore;
 
     function buildPollUsernames(
         userStore: UserLookup,
@@ -62,7 +59,7 @@
     }
 </script>
 
-<TooltipWrapper enable={showVotes} {alignRight} bottomOffset={4}>
+<TooltipWrapper position={"right"} align={"center"} enable={showVotes}>
     <div slot="target" class:readonly class="answer-text" class:finished on:click>
         <Progress bg={"button"} {percent}>
             <div class="label">
@@ -73,11 +70,12 @@
             </div>
         </Progress>
     </div>
-    <div slot="tooltip">
+    <div let:position let:align slot="tooltip">
         <TooltipPopup
+            {position}
+            {align}
             textLength={usernames === undefined ? 10 : usernames.length + 16}
-            longestWord={30}
-            {alignRight}>
+            longestWord={30}>
             {buildTooltipText()}
         </TooltipPopup>
     </div>

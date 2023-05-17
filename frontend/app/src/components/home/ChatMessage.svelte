@@ -593,7 +593,6 @@
                     on:click={() => toggleReaction(reaction)}
                     {reaction}
                     {userIds}
-                    {me}
                     myUserId={user?.userId} />
             {/each}
         </div>

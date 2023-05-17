@@ -5,9 +5,8 @@
     import Hoverable from "./Hoverable.svelte";
 
     export let enable = true;
-    export let centreChevron = false;
-    export let alignRight: boolean;
-    export let bottomOffset = 0;
+    export let position: "top" | "right" | "bottom" | "left" = "top";
+    export let align: "start" | "center" | "end" = "start";
 
     let target: HTMLElement;
     let tooltipContainer: HTMLElement;
@@ -32,7 +31,7 @@
 
         await tick();
 
-        tooltipStore.position(rect, alignRight, bottomOffset, centreChevron);
+        tooltipStore.position(rect, position, align);
     }
 
     function closeTooltip() {
@@ -49,7 +48,7 @@
 <div class="tooltip-blueprint">
     <span class="tooltip" bind:this={tooltipContainer}>
         {#if $tooltipStore === tooltipContainer}
-            <slot name="tooltip" />
+            <slot {align} {position} name="tooltip" />
         {/if}
     </span>
 </div>

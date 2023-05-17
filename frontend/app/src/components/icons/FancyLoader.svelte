@@ -3,6 +3,8 @@
     import { cubicInOut } from "svelte/easing";
     import { tweened } from "svelte/motion";
 
+    export let loop = true;
+
     let canvas: HTMLCanvasElement;
     let ctx: CanvasRenderingContext2D | null;
     let speed = 800;
@@ -43,30 +45,32 @@
 
     $: {
         plotOrange($orangeStart, $orangeEnd);
-        if (phase === 2) {
-            if ($orangeStart >= orangeTarget) {
-                phase = 3;
-                orangeTarget = 270;
-                orangeStart.set(270);
-                orangeEnd.set(630);
+        if (loop) {
+            if (phase === 2) {
+                if ($orangeStart >= orangeTarget) {
+                    phase = 3;
+                    orangeTarget = 270;
+                    orangeStart.set(270);
+                    orangeEnd.set(630);
+                }
             }
-        }
-        if (phase === 3) {
-            if ($orangeStart >= orangeTarget) {
-                phase = 4;
-                orangeTarget = 630;
-                orangeStart.set(630);
+            if (phase === 3) {
+                if ($orangeStart >= orangeTarget) {
+                    phase = 4;
+                    orangeTarget = 630;
+                    orangeStart.set(630);
+                }
             }
-        }
-        if (phase === 4) {
-            if ($orangeStart >= orangeTarget) {
-                phase = 5;
-                orangeEnd.set(630);
+            if (phase === 4) {
+                if ($orangeStart >= orangeTarget) {
+                    phase = 5;
+                    orangeEnd.set(630);
+                }
             }
-        }
-        if (phase === 5) {
-            if ($orangeEnd >= orangeTarget) {
-                resetOrange();
+            if (phase === 5) {
+                if ($orangeEnd >= orangeTarget) {
+                    resetOrange();
+                }
             }
         }
     }
@@ -93,8 +97,8 @@
 
         const cx = 250;
         const cy = 250;
-        const innerRadius = 120;
-        const outerRadius = 200;
+        const innerRadius = 140;
+        const outerRadius = 250;
         const startRad = (startAngle * Math.PI) / 180;
         const endRad = (endAngle * Math.PI) / 180;
         const startOfOuterArcX = outerRadius * Math.cos(endRad) + cx;
@@ -140,7 +144,6 @@
 
 <style type="text/scss">
     .logo {
-        width: 300px;
-        height: 300px;
+        width: 100%;
     }
 </style>

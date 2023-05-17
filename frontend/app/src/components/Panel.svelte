@@ -1,6 +1,7 @@
 <script lang="ts">
     import { numberOfColumns } from "../stores/layout";
     import { mobileWidth } from "../stores/screenDimensions";
+    import { rtlStore } from "../stores/rtl";
 
     export let left: boolean = false;
     export let nav: boolean = false;
@@ -12,7 +13,14 @@
     $: modal = !$mobileWidth && (forceModal || $numberOfColumns === 2);
 </script>
 
-<section class:nav class:left class:right class:middle class:modal class:empty>
+<section
+    class:rtl={$rtlStore}
+    class:nav
+    class:left
+    class:right
+    class:middle
+    class:modal
+    class:empty>
     <slot />
 </section>
 
@@ -51,6 +59,11 @@
             border-right: 1px solid var(--bd);
             background: var(--panel-left-bg);
 
+            &.rtl {
+                border-right: none;
+                border-left: 1px solid var(--bd);
+            }
+
             @include mobile() {
                 width: 100%;
                 max-width: none;
@@ -63,8 +76,16 @@
         &.nav {
             display: flex;
             flex-direction: column;
+            align-items: center;
             flex: 0 0 toRem(80);
-            background-color: red;
+            background: var(--panel-left-bg);
+            padding: $sp4 0;
+            border-right: 1px solid var(--bd);
+
+            &.rtl {
+                border-right: none;
+                border-left: 1px solid var(--bd);
+            }
 
             @include mobile() {
                 flex: 0 0 toRem(60);
