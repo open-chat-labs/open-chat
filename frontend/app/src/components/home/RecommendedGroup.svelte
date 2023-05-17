@@ -21,10 +21,7 @@
     export let joining: GroupChatSummary | undefined;
 
     $: chatSummariesStore = client.chatSummariesStore;
-
     $: member = $chatSummariesStore[group.chatId] !== undefined;
-
-    $: console.log("Member: ", member);
 
     function dismiss({ chatId }: GroupChatSummary) {
         dispatch("dismissRecommendation", chatId);
