@@ -8,7 +8,7 @@ use chat_events::ChatEventInternal;
 use gated_groups::{check_if_passes_gate, CheckIfPassesGateResult};
 use group_canister::c2c_join_group::{Response::*, *};
 use group_members::AddResult;
-use types::{CanisterId, EventIndex, GroupGate, MessageIndex, ParticipantJoined, UsersUnblocked};
+use types::{CanisterId, EventIndex, GroupGate, MemberJoined, MessageIndex, UsersUnblocked};
 
 #[update_msgpack(guard = "caller_is_user_index_or_local_user_index")]
 #[trace]
@@ -101,7 +101,7 @@ fn c2c_join_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Response
         AddResult::Success(participant) => {
             let invitation = runtime_state.data.invited_users.remove(&args.principal, now);
 
-            let event = ParticipantJoined {
+            let event = MemberJoined {
                 user_id: args.user_id,
                 invited_by: invitation.map(|i| i.invited_by),
             };

@@ -2,10 +2,12 @@ use crate::model::groups::Groups;
 use crate::model::members::CommunityMembers;
 use candid::Principal;
 use canister_state_macros::canister_state;
+use model::events::CommunityEvents;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use types::{
-    Avatar, CanisterId, CommunityPermissions, Cycles, GroupGate, GroupRules, TimestampMillis, Timestamped, UserId, Version,
+    Avatar, CanisterId, CommunityPermissions, Cycles, FrozenGroupInfo, GroupGate, GroupRules, TimestampMillis, Timestamped,
+    UserId, Version,
 };
 use utils::env::Environment;
 
@@ -63,8 +65,10 @@ struct Data {
     date_created: TimestampMillis,
     members: CommunityMembers,
     groups: Groups,
+    events: CommunityEvents,
     invite_code: Option<u64>,
     invite_code_enabled: bool,
+    frozen: Timestamped<Option<FrozenGroupInfo>>,
     test_mode: bool,
 }
 
@@ -107,10 +111,16 @@ impl Data {
             date_created: now,
             members,
             groups: Groups::default(),
+            events: CommunityEvents::default(),
             invite_code: None,
             invite_code_enabled: false,
+            frozen: Timestamped::default(),
             test_mode,
         }
+    }
+
+    pub fn is_frozen(&self) -> bool {
+        self.frozen.is_some()
     }
 }
 

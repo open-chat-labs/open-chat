@@ -4,7 +4,7 @@ use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use chat_events::ChatEventInternal;
 use group_canister::c2c_leave_group::{Response::*, *};
-use types::ParticipantLeft;
+use types::MemberLeft;
 
 // Called via the user's user canister
 #[update_msgpack]
@@ -38,7 +38,7 @@ fn c2c_leave_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
 
     runtime_state.data.participants.remove(caller);
 
-    let event = ParticipantLeft { user_id: caller };
+    let event = MemberLeft { user_id: caller };
 
     runtime_state
         .data

@@ -11,8 +11,8 @@ use std::cmp::{max, Reverse};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
 use types::{
-    ChatFrozen, ChatId, ChatMetrics, ChatUnfrozen, Cryptocurrency, DeletedBy, DirectChatCreated, EventIndex, EventWrapper,
-    EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupChatCreated, Mention, MentionInternal, Message,
+    ChatId, ChatMetrics, Cryptocurrency, DeletedBy, DirectChatCreated, EventIndex, EventWrapper, EventsTimeToLiveUpdated,
+    GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen, Mention, MentionInternal, Message,
     MessageContentInitial, MessageContentInternal, MessageId, MessageIndex, MessageMatch, Milliseconds, PollVotes,
     ProposalStatusUpdate, PushEventResult, PushIfNotContains, RangeSet, Reaction, RegisterVoteResult, ReplyContext,
     ThreadSummary, TimestampMillis, Timestamped, UserId, VoteOperation,
@@ -74,7 +74,7 @@ impl ChatEvents {
 
         events.push_event(
             None,
-            ChatEventInternal::GroupChatCreated(Box::new(GroupChatCreated {
+            ChatEventInternal::GroupChatCreated(Box::new(GroupCreated {
                 name,
                 description,
                 created_by,
@@ -938,7 +938,7 @@ impl ChatEvents {
     pub fn freeze(&mut self, user_id: UserId, reason: Option<String>, now: TimestampMillis) -> PushEventResult {
         let push_event_result = self.push_event(
             None,
-            ChatEventInternal::ChatFrozen(Box::new(ChatFrozen {
+            ChatEventInternal::ChatFrozen(Box::new(GroupFrozen {
                 frozen_by: user_id,
                 reason,
             })),
@@ -953,7 +953,7 @@ impl ChatEvents {
         self.frozen = false;
         self.push_event(
             None,
-            ChatEventInternal::ChatUnfrozen(Box::new(ChatUnfrozen { unfrozen_by: user_id })),
+            ChatEventInternal::ChatUnfrozen(Box::new(GroupUnfrozen { unfrozen_by: user_id })),
             0,
             now,
         )

@@ -6,7 +6,7 @@ use chat_events::ChatEventInternal;
 use group_canister::remove_participant::{Response::*, *};
 use group_members::GroupMemberInternal;
 use ic_cdk_macros::update;
-use types::{ParticipantsRemoved, UserId, UsersBlocked};
+use types::{MembersRemoved, UserId, UsersBlocked};
 use user_canister::c2c_remove_from_group;
 
 #[update]
@@ -142,7 +142,7 @@ fn commit(block: bool, user_id: UserId, correlation_id: u64, removed_by: UserId,
 
         ChatEventInternal::UsersBlocked(Box::new(event))
     } else {
-        let event = ParticipantsRemoved {
+        let event = MembersRemoved {
             user_ids: vec![user_id],
             removed_by,
         };

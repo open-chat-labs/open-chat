@@ -1,17 +1,17 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{ChatId, EventWrapper, GroupUnfrozen};
 
+// TODO: implement c2c_update_community
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
-    pub chat_id: ChatId,
+    pub name: String,
+    pub description: String,
+    pub avatar_id: Option<u128>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
-    Success(EventWrapper<GroupUnfrozen>),
-    ChatNotFrozen,
-    ChatNotFound,
-    NotAuthorized,
-    InternalError(String),
+    Success,
+    NameTaken,
+    CommunityNotFound,
 }

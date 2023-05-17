@@ -4,7 +4,7 @@ use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use group_canister::c2c_freeze_group::{Response::*, *};
-use types::{ChatFrozen, EventWrapper, FrozenGroupInfo, Timestamped};
+use types::{EventWrapper, FrozenGroupInfo, GroupFrozen, Timestamped};
 
 #[update_msgpack(guard = "caller_is_group_index_or_local_group_index")]
 #[trace]
@@ -33,7 +33,7 @@ fn c2c_freeze_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Respon
             timestamp: now,
             correlation_id: 0,
             expires_at: push_event_result.expires_at,
-            event: ChatFrozen {
+            event: GroupFrozen {
                 frozen_by: args.caller,
                 reason: args.reason,
             },
