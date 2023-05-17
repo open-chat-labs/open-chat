@@ -37,8 +37,8 @@ fn is_permitted_to_join(
 ) -> Result<Option<(GroupGate, CanisterId)>, Response> {
     let caller = runtime_state.env.caller();
 
-    // If the call is from the user index then we skip the checks
-    if caller == runtime_state.data.user_index_canister_id {
+    // If the call is from the user index or local user index then we skip the checks
+    if caller == runtime_state.data.user_index_canister_id || caller == runtime_state.data.local_user_index_canister_id {
         Ok(None)
     } else if runtime_state.data.is_frozen() {
         Err(ChatFrozen)
