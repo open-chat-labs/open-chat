@@ -1,10 +1,10 @@
 use crate::activity_notifications::handle_activity_notification;
-use crate::model::participants::ChangeRoleResult;
 use crate::updates::change_role::Response::*;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use chat_events::ChatEventInternal;
 use group_canister::change_role::*;
+use group_members::ChangeRoleResult;
 use ic_cdk_macros::update;
 use types::{CanisterId, RoleChanged, UserId};
 use user_index_canister_c2c_client::{lookup_user, LookupUserError};

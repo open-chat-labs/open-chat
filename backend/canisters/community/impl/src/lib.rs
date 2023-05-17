@@ -1,5 +1,5 @@
 use crate::model::groups::Groups;
-use crate::model::members::Members;
+use crate::model::members::CommunityMembers;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use serde::{Deserialize, Serialize};
@@ -61,7 +61,7 @@ struct Data {
     notifications_canister_id: CanisterId,
     proposals_bot_user_id: UserId,
     date_created: TimestampMillis,
-    members: Members,
+    members: CommunityMembers,
     groups: Groups,
     invite_code: Option<u64>,
     invite_code_enabled: bool,
@@ -88,7 +88,7 @@ impl Data {
         test_mode: bool,
         now: TimestampMillis,
     ) -> Data {
-        let members = Members::new(created_by_principal, created_by_user_id, now);
+        let members = CommunityMembers::new(created_by_principal, created_by_user_id, now);
 
         Data {
             is_public,

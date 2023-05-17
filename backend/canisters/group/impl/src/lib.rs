@@ -1,12 +1,12 @@
 use crate::model::activity_notification_state::ActivityNotificationState;
 use crate::model::new_joiner_rewards::{NewJoinerRewardMetrics, NewJoinerRewardStatus, NewJoinerRewards};
-use crate::model::participants::{AddResult as AddParticipantResult, ParticipantInternal, Participants};
 use crate::new_joiner_rewards::process_new_joiner_reward;
 use crate::timer_job_types::TimerJob;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
 use chat_events::{ChatEventInternal, ChatEvents, Reader};
+use group_members::{AddResult as AddMemberResult, GroupMemberInternal, GroupMembers};
 use model::invited_users::InvitedUsers;
 use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
@@ -80,7 +80,7 @@ impl RuntimeState {
         }
     }
 
-    pub fn summary(&self, participant: &ParticipantInternal, now: TimestampMillis) -> GroupCanisterGroupChatSummary {
+    pub fn summary(&self, participant: &GroupMemberInternal, now: TimestampMillis) -> GroupCanisterGroupChatSummary {
         let data = &self.data;
         let min_visible_event_index = participant.min_visible_event_index();
         let min_visible_message_index = participant.min_visible_message_index();
@@ -129,7 +129,7 @@ impl RuntimeState {
         }
     }
 
-    pub fn add_participant(&mut self, args: AddParticipantArgs) -> AddParticipantResult {
+    pub fn add_participant(&mut self, args: AddParticipantArgs) -> AddMemberResult {
         let result = self.data.participants.add(
             args.user_id,
             args.principal,
@@ -139,7 +139,7 @@ impl RuntimeState {
             args.mute_notifications,
         );
 
-        if matches!(result, AddParticipantResult::Success(_)) {
+        if matches!(result, AddMemberResult::Success(_)) {
             if let Some(new_joiner_rewards) = &mut self.data.new_joiner_rewards {
                 if let Ok(amount) = new_joiner_rewards.try_claim_user_reward(args.user_id, args.now) {
                     ic_cdk::spawn(process_new_joiner_reward(
@@ -236,7 +236,7 @@ struct Data {
     pub subtype: Timestamped<Option<GroupSubtype>>,
     pub avatar: Option<Avatar>,
     pub history_visible_to_new_joiners: bool,
-    pub participants: Participants,
+    pub participants: GroupMembers,
     pub events: ChatEvents,
     pub date_created: TimestampMillis,
     pub mark_active_duration: Milliseconds,
@@ -286,7 +286,7 @@ impl Data {
         permissions: Option<GroupPermissions>,
         gate: Option<GroupGate>,
     ) -> Data {
-        let participants = Participants::new(creator_principal, creator_user_id, now);
+        let participants = GroupMembers::new(creator_principal, creator_user_id, now);
         let events = ChatEvents::new_group_chat(chat_id, name.clone(), description.clone(), creator_user_id, events_ttl, now);
 
         Data {

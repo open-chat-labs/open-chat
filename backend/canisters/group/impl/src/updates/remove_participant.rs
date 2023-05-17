@@ -1,10 +1,10 @@
 use crate::activity_notifications::handle_activity_notification;
-use crate::model::participants::ParticipantInternal;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use candid::Principal;
 use canister_tracing_macros::trace;
 use chat_events::ChatEventInternal;
 use group_canister::remove_participant::{Response::*, *};
+use group_members::GroupMemberInternal;
 use ic_cdk_macros::update;
 use types::{ParticipantsRemoved, UserId, UsersBlocked};
 use user_canister::c2c_remove_from_group;
@@ -70,7 +70,7 @@ struct PrepareResult {
     removed_by: UserId,
     group_name: String,
     public: bool,
-    participant_to_remove: ParticipantInternal,
+    participant_to_remove: GroupMemberInternal,
     principal_to_remove: Principal,
 }
 
@@ -154,7 +154,7 @@ fn commit(block: bool, user_id: UserId, correlation_id: u64, removed_by: UserId,
     Success
 }
 
-fn rollback(block: bool, principal: Principal, participant: ParticipantInternal, runtime_state: &mut RuntimeState) {
+fn rollback(block: bool, principal: Principal, participant: GroupMemberInternal, runtime_state: &mut RuntimeState) {
     if block {
         runtime_state.data.participants.unblock(&participant.user_id);
     }

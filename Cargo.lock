@@ -1264,6 +1264,7 @@ dependencies = [
  "ic-cdk-macros",
  "ic-cdk-timers",
  "ic-stable-structures",
+ "rand",
  "serde",
  "serializer",
  "tracing",
@@ -2372,6 +2373,7 @@ dependencies = [
  "group_canister",
  "group_index_canister",
  "group_index_canister_c2c_client",
+ "group_members",
  "http_request",
  "ic-base-types",
  "ic-cdk 0.7.3",
@@ -2471,6 +2473,16 @@ dependencies = [
  "user_index_canister",
  "user_index_canister_c2c_client",
  "utils",
+]
+
+[[package]]
+name = "group_members"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "chat_events",
+ "serde",
+ "types",
 ]
 
 [[package]]

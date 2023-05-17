@@ -21,6 +21,7 @@ ic-cdk = { workspace = true }
 ic-cdk-macros = { workspace = true }
 ic-cdk-timers = { workspace = true }
 ic-stable-structures = { workspace = true }
+rand = { workspace = true }
 serde = { workspace = true }
 serializer = { workspace = true }
 tracing = { workspace = true }

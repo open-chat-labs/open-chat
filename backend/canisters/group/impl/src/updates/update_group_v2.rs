@@ -4,15 +4,16 @@ use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use chat_events::ChatEventInternal;
 use group_canister::update_group_v2::*;
-use group_index_canister::{c2c_update_group, MAX_GROUP_DESCRIPTION_LENGTH, MAX_GROUP_RULES_LENGTH};
+use group_index_canister::c2c_update_group;
 use ic_cdk_macros::update;
 use tracing::error;
 use types::{
-    Avatar, AvatarChanged, CanisterId, ChatId, FieldTooLongResult, FieldTooShortResult, GroupDescriptionChanged,
-    GroupGateUpdated, GroupNameChanged, GroupPermissionRole, GroupPermissions, GroupRulesChanged, OptionalGroupPermissions,
-    PermissionsChanged, Timestamped, UserId, MAX_AVATAR_SIZE,
+    Avatar, AvatarChanged, CanisterId, ChatId, GroupDescriptionChanged, GroupGateUpdated, GroupNameChanged,
+    GroupPermissionRole, GroupPermissions, GroupRulesChanged, OptionalGroupPermissions, PermissionsChanged, Timestamped,
+    UserId,
 };
-use utils::group_validation::{validate_name, NameValidationError};
+use utils::avatar_validation::validate_avatar;
+use utils::group_validation::{validate_description, validate_name, validate_rules, NameValidationError, RulesValidationError};
 
 #[update]
 #[trace]
@@ -78,7 +79,6 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
 
     let caller = runtime_state.env.caller();
     let avatar_update = args.avatar.as_ref().expand();
-    let avatar_update_size = avatar_update.flatten().map_or(0, |a| a.data.len() as u32);
 
     if let Some(name) = &args.name {
         if let Err(error) = validate_name(name, runtime_state.data.is_public) {
@@ -91,34 +91,22 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
     }
 
     if let Some(description) = &args.description {
-        if description.len() > MAX_GROUP_DESCRIPTION_LENGTH as usize {
-            return Err(DescriptionTooLong(FieldTooLongResult {
-                length_provided: description.len() as u32,
-                max_length: MAX_GROUP_DESCRIPTION_LENGTH,
-            }));
+        if let Err(error) = validate_description(description) {
+            return Err(DescriptionTooLong(error));
         }
     }
 
     if let Some(rules) = &args.rules {
-        if rules.enabled && rules.text.is_empty() {
-            return Err(RulesTooShort(FieldTooShortResult {
-                length_provided: rules.text.len() as u32,
-                min_length: 1,
-            }));
-        }
-        if rules.text.len() > MAX_GROUP_RULES_LENGTH as usize {
-            return Err(RulesTooLong(FieldTooLongResult {
-                length_provided: rules.text.len() as u32,
-                max_length: MAX_GROUP_RULES_LENGTH,
-            }));
+        if let Err(error) = validate_rules(rules.enabled, &rules.text) {
+            return Err(match error {
+                RulesValidationError::TooShort(s) => RulesTooShort(s),
+                RulesValidationError::TooLong(l) => RulesTooLong(l),
+            });
         }
     }
 
-    if avatar_update_size > MAX_AVATAR_SIZE {
-        return Err(AvatarTooBig(FieldTooLongResult {
-            length_provided: avatar_update_size,
-            max_length: MAX_AVATAR_SIZE,
-        }));
+    if let Err(error) = avatar_update.map_or(Ok(()), |a| validate_avatar(a)) {
+        return Err(AvatarTooBig(error));
     }
 
     if let Some(participant) = runtime_state.data.participants.get_by_principal(&caller) {

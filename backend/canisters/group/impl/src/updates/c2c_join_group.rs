@@ -1,6 +1,5 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::guards::caller_is_user_index_or_local_user_index;
-use crate::model::participants::AddResult;
 use crate::{mutate_state, read_state, run_regular_jobs, AddParticipantArgs, RuntimeState};
 use candid::Principal;
 use canister_api_macros::update_msgpack;
@@ -8,6 +7,7 @@ use canister_tracing_macros::trace;
 use chat_events::ChatEventInternal;
 use gated_groups::{check_if_passes_gate, CheckIfPassesGateResult};
 use group_canister::c2c_join_group::{Response::*, *};
+use group_members::AddResult;
 use types::{CanisterId, EventIndex, GroupGate, MessageIndex, ParticipantJoined, UsersUnblocked};
 
 #[update_msgpack(guard = "caller_is_user_index_or_local_user_index")]

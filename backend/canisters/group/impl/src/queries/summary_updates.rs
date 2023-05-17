@@ -1,7 +1,8 @@
-use crate::{read_state, Data, ParticipantInternal, RuntimeState};
+use crate::{read_state, Data, RuntimeState};
 use canister_api_macros::query_msgpack;
 use chat_events::{ChatEventInternal, Reader};
 use group_canister::summary_updates::{Response::*, *};
+use group_members::GroupMemberInternal;
 use ic_cdk_macros::query;
 use std::cmp::max;
 use types::{
@@ -108,7 +109,7 @@ struct UpdatesFromEvents {
 
 fn process_events(
     since: TimestampMillis,
-    participant: &ParticipantInternal,
+    participant: &GroupMemberInternal,
     now: TimestampMillis,
     data: &Data,
 ) -> UpdatesFromEvents {

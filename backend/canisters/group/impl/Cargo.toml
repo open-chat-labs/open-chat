@@ -22,6 +22,7 @@ gated_groups = { path = "../../../libraries/gated_groups" }
 group_canister = { path = "../api" }
 group_index_canister = { path = "../../group_index/api" }
 group_index_canister_c2c_client = { path = "../../group_index/c2c_client" }
+group_members = { path = "../../../libraries/group_members" }
 http_request = { path = "../../../libraries/http_request" }
 ic-base-types = { workspace = true }
 ic-cdk = { workspace = true }

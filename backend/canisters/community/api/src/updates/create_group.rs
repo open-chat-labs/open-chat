@@ -24,6 +24,7 @@ pub enum Response {
     Success(SuccessResult),
     NameTooShort(FieldTooShortResult),
     NameTooLong(FieldTooLongResult),
+    NameReserved,
     DescriptionTooLong(FieldTooLongResult),
     RulesTooShort(FieldTooShortResult),
     RulesTooLong(FieldTooLongResult),

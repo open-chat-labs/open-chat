@@ -71,6 +71,30 @@ impl CommunityRole {
         self.is_same_or_senior(new_role) && self.is_permitted(permissions.change_roles)
     }
 
+    pub fn can_invite_users(&self, permissions: &CommunityPermissions) -> bool {
+        self.is_permitted(permissions.invite_users)
+    }
+
+    pub fn can_remove_members(&self, permissions: &CommunityPermissions) -> bool {
+        self.is_permitted(permissions.remove_members)
+    }
+
+    pub fn can_block_users(&self, permissions: &CommunityPermissions) -> bool {
+        self.is_permitted(permissions.block_users)
+    }
+
+    pub fn can_update_details(&self, permissions: &CommunityPermissions) -> bool {
+        self.is_permitted(permissions.update_details)
+    }
+
+    pub fn can_create_public_group(&self, permissions: &CommunityPermissions) -> bool {
+        self.is_permitted(permissions.create_public_group)
+    }
+
+    pub fn can_create_private_group(&self, permissions: &CommunityPermissions) -> bool {
+        self.is_permitted(permissions.create_private_group)
+    }
+
     pub fn is_permitted(&self, permission_role: CommunityPermissionRole) -> bool {
         match permission_role {
             CommunityPermissionRole::Owners => self.has_owner_rights(),
