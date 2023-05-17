@@ -50,7 +50,7 @@
         @include z-index("tooltip");
         @include font-size(fs-50);
         width: max-content;
-        padding: $sp2 $sp3 $sp3 $sp3;
+        padding: $sp3;
         border-radius: $sp3;
         pointer-events: none;
         word-wrap: break-word;
