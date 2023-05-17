@@ -10,7 +10,6 @@
     import type { GroupChatSummary, OpenChat } from "openchat-client";
     import { pathParams } from "../../routes";
     import { getContext } from "svelte";
-    import FancyLoader from "../icons/FancyLoader.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -31,15 +30,14 @@
         <Loading />
     {:else if $selectedChatId === undefined}
         {#if hotGroups.kind === "success"}
-            <FancyLoader />
-            <!-- <RecommendedGroups
+            <RecommendedGroups
                 {joining}
                 on:cancelRecommendations
                 on:joinGroup
                 on:recommend
                 on:upgrade
                 on:dismissRecommendation
-                groups={hotGroups.data} /> -->
+                groups={hotGroups.data} />
         {:else if noChat}
             <div class="no-chat" in:fade>
                 <NoChatSelected on:recommend on:newchat />
