@@ -133,7 +133,10 @@ fn send_oc_bot_messages(
             ),
         }),
         MessageContent::Text(TextContent {
-            text: "🎲 ...or play Satoshi Dice with the [Satoshi Dice](/wznbi-caaaa-aaaar-anvea-cai) chat bot".to_string(),
+            text: format!(
+                "🎲 ...or play Satoshi Dice with the [Satoshi Dice](/{}) chat bot",
+                if state.data.test_mode { "uuw5d-uiaaa-aaaar-anzeq-cai" } else { "wznbi-caaaa-aaaar-anvea-cai" }
+            ),
         }),
         MessageContent::Text(TextContent {
             text: "👀 View projects, wallets, and DEXs that support ckBTC [here](https://internetcomputer.org/ecosystem/?tag=Bitcoin)".to_string(),
