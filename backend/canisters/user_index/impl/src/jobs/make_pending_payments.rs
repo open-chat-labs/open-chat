@@ -42,16 +42,19 @@ async fn process_payment(pending_payment: PendingPayment) {
         Ok(block_index) => {
             mutate_state(|state| inform_referrer(&pending_payment, block_index, reason, state));
         }
-        Err(_) => {
-            mutate_state(|state| {
-                state.data.pending_payments_queue.push(pending_payment);
-                start_job_if_required(state);
-            });
+        Err(retry) => {
+            if retry {
+                mutate_state(|state| {
+                    state.data.pending_payments_queue.push(pending_payment);
+                    start_job_if_required(state);
+                });
+            }
         }
     }
 }
 
-async fn make_payment(pending_payment: &PendingPayment) -> Result<BlockIndex, ()> {
+// Error response contains a boolean stating if the transfer should be retried
+async fn make_payment(pending_payment: &PendingPayment) -> Result<BlockIndex, bool> {
     let to = Account {
         owner: pending_payment.recipient.into(),
         subaccount: None,
@@ -71,13 +74,17 @@ async fn make_payment(pending_payment: &PendingPayment) -> Result<BlockIndex, ()
         runtime: ic_icrc1_client_cdk::CdkRuntime,
     };
 
-    match client.transfer(args).await {
-        Ok(Ok(block_index)) => return Ok(block_index),
-        Ok(Err(transfer_error)) => error!("Transfer failed. {transfer_error:?}"),
-        Err((code, msg)) => error!("Transfer failed. {code:?}: {msg}"),
+    match client.transfer(args.clone()).await {
+        Ok(Ok(block_index)) => Ok(block_index),
+        Ok(Err(transfer_error)) => {
+            error!(?transfer_error, ?args, "Transfer failed");
+            Err(false)
+        }
+        Err((code, msg)) => {
+            error!(code, msg, "Transfer failed");
+            Err(true)
+        }
     }
-
-    Err(())
 }
 
 fn inform_referrer(
