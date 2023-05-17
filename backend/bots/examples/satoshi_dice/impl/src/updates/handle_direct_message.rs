@@ -33,7 +33,8 @@ fn handle_message(args: Args, state: &mut RuntimeState) -> Response {
                 Some(0) => {
                     // This isn't quite uniformly distributed but it's more than good enough
                     let roll = state.env.rng().next_u64() % 101;
-                    let amount_out = sats + CKBTC_FEE + (sats * roll / 100);
+                    let winnings = (sats * roll / 100);
+                    let amount_out = sats + CKBTC_FEE + winnings;
                     state.data.users.add_roll(
                         &user_id,
                         DiceRoll {
@@ -43,8 +44,8 @@ fn handle_message(args: Args, state: &mut RuntimeState) -> Response {
                             amount_out,
                         },
                     );
-                    messages.push("Let's roll the dice!".to_string());
-                    messages.push(format!("Your roll was {roll}"));
+                    messages.push(format!("Thanks for playing!"));
+                    messages.push(format!("You won an additional {winnings} SATS!"));
                     messages.push("Please wait a moment while I transfer you your ckBTC".to_string());
 
                     send_ckbtc_message(user_id, amount_out, state);
