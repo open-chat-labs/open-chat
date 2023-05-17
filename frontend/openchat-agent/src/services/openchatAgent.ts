@@ -937,7 +937,7 @@ export class OpenChatAgent extends EventTarget {
         const updatedEvents = getUpdatedEvents(updates.directChatsUpdated, groupUpdates);
 
         return await this.hydrateChatState(state).then((s) => {
-            if (anyUpdates && !anyErrors) {
+            if (!anyErrors) {
                 setCachedChats(this.db, this.principal, s, updatedEvents);
             }
 
