@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Added `JoinUserToGroup` event ([#3613](https://github.com/open-ic/open-chat/pull/3613))
+
 ### Removed
 
 - Remove `register_user_v2` since users now register via a LocalUserIndex ([#3583](https://github.com/open-ic/open-chat/pull/3583))
