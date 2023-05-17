@@ -144,9 +144,10 @@ async function showNotification(notification: Notification): Promise<void> {
     } else if (notification.kind === "group_reaction") {
         title = notification.groupName;
         body = `${notification.addedByName} reacted '${notification.reaction}' to your message`;
-        path = notification.threadRootMessageIndex !== undefined
-            ? `${notification.chatId}/${notification.threadRootMessageIndex}/${notification.message.event.messageIndex}?open=true`
-            : `${notification.chatId}/${notification.message.event.messageIndex}`;
+        path =
+            notification.threadRootMessageIndex !== undefined
+                ? `${notification.chatId}/${notification.threadRootMessageIndex}/${notification.message.event.messageIndex}?open=true`
+                : `${notification.chatId}/${notification.message.event.messageIndex}`;
         tag = path;
         timestamp = Number(notification.timestamp);
     } else if (notification.kind === "added_to_group_notification") {

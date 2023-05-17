@@ -69,6 +69,3 @@
 {#if route !== undefined}
     <svelte:component this={route} />
 {/if}
-
-<style type="text/scss">
-</style>
