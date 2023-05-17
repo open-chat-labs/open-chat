@@ -3,6 +3,7 @@
     import { mobileWidth } from "../stores/screenDimensions";
 
     export let left: boolean = false;
+    export let nav: boolean = false;
     export let middle: boolean = false;
     export let right: boolean = false;
     export let forceModal: boolean = false;
@@ -11,7 +12,7 @@
     $: modal = !$mobileWidth && (forceModal || $numberOfColumns === 2);
 </script>
 
-<section class:left class:right class:middle class:modal class:empty>
+<section class:nav class:left class:right class:middle class:modal class:empty>
     <slot />
 </section>
 
@@ -56,6 +57,17 @@
                 padding: 0;
                 flex: auto;
                 border-right: none;
+            }
+        }
+
+        &.nav {
+            display: flex;
+            flex-direction: column;
+            flex: 0 0 toRem(80);
+            background-color: red;
+
+            @include mobile() {
+                flex: 0 0 toRem(60);
             }
         }
 
