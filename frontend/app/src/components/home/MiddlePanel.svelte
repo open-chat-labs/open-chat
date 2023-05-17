@@ -34,6 +34,7 @@
                 {joining}
                 on:cancelRecommendations
                 on:joinGroup
+                on:leaveGroup
                 on:recommend
                 on:upgrade
                 on:dismissRecommendation
