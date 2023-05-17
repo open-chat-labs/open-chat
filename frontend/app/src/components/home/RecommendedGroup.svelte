@@ -10,9 +10,9 @@
     import { iconSize } from "../../stores/iconSize";
     import { createEventDispatcher, getContext } from "svelte";
     import Button from "../Button.svelte";
-    import page from "page";
     import GroupGateIcon from "./GroupGateIcon.svelte";
     import { gatedGroupsEnabled } from "../../utils/features";
+    import page from "page";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -20,11 +20,17 @@
     export let group: GroupChatSummary;
     export let joining: GroupChatSummary | undefined;
 
+    $: chatSummariesStore = client.chatSummariesStore;
+
+    $: member = $chatSummariesStore[group.chatId] !== undefined;
+
+    $: console.log("Member: ", member);
+
     function dismiss({ chatId }: GroupChatSummary) {
         dispatch("dismissRecommendation", chatId);
     }
 
-    function previewGroup({ chatId }: GroupChatSummary) {
+    function gotoGroup({ chatId }: GroupChatSummary) {
         page(`/${chatId}`);
     }
 
@@ -33,6 +39,9 @@
             group,
             select: false,
         });
+    }
+    function leaveGroup(group: GroupChatSummary) {
+        dispatch("leaveGroup", { kind: "leave", chatId: group.chatId });
     }
 </script>
 
@@ -68,16 +77,20 @@
                 <GroupGateIcon on:upgrade gate={group.gate} />
             </div>
         {/if}
-        {#if !client.isReadOnly()}
-            <Button
-                disabled={joining === group}
-                loading={joining === group}
-                tiny={true}
-                hollow={true}
-                on:click={() => joinGroup(group)}>{$_("join")}</Button>
+        {#if member}
+            <Button tiny on:click={() => leaveGroup(group)}>{$_("leave")}</Button>
+        {:else}
+            {#if !client.isReadOnly()}
+                <Button
+                    disabled={joining === group}
+                    loading={joining === group}
+                    tiny
+                    hollow
+                    on:click={() => joinGroup(group)}>{$_("join")}</Button>
+            {/if}
+            <Button disabled={joining === group} tiny on:click={() => gotoGroup(group)}
+                >{$_("preview")}</Button>
         {/if}
-        <Button disabled={joining === group} tiny={true} on:click={() => previewGroup(group)}
-            >{$_("preview")}</Button>
     </Footer>
 </div>
 
