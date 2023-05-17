@@ -81,7 +81,7 @@ async fn make_payment(pending_payment: &PendingPayment) -> Result<BlockIndex, bo
             Err(false)
         }
         Err((code, msg)) => {
-            error!(code, msg, "Transfer failed");
+            error!(code, msg, ?args, "Transfer failed");
             Err(true)
         }
     }
