@@ -79,7 +79,15 @@ impl CommunityRole {
         self.is_permitted(permissions.remove_members)
     }
 
+    pub fn can_remove_members_with_role(&self, member_role: CommunityRole, permissions: &CommunityPermissions) -> bool {
+        self.is_same_or_senior(member_role) && self.is_permitted(permissions.remove_members)
+    }
+
     pub fn can_block_users(&self, permissions: &CommunityPermissions) -> bool {
+        self.is_permitted(permissions.block_users)
+    }
+
+    pub fn can_unblock_users(&self, permissions: &CommunityPermissions) -> bool {
         self.is_permitted(permissions.block_users)
     }
 

@@ -6,6 +6,8 @@ pub mod create_group;
 pub mod decline_invitation;
 pub mod disable_invite_code;
 pub mod enable_invite_code;
+pub mod remove_member;
 pub mod send_message;
+pub mod unblock_user;
 pub mod update_community;
 pub mod wallet_receive;
