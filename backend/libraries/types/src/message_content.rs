@@ -662,7 +662,7 @@ pub struct BlobReference {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone)]
-pub struct ThumbnailData(String);
+pub struct ThumbnailData(pub String);
 
 impl Debug for ThumbnailData {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
