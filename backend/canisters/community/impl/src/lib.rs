@@ -124,6 +124,7 @@ struct Data {
 }
 
 impl Data {
+    #[allow(clippy::too_many_arguments)]
     fn new(
         created_by_principal: Principal,
         created_by_user_id: UserId,

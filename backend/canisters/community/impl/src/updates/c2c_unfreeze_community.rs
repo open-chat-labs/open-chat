@@ -20,7 +20,7 @@ fn c2c_unfreeze_community_impl(args: Args, state: &mut RuntimeState) -> Response
 
         let event_index = state.data.events.push_event(
             CommunityEvent::Unfrozen(Box::new(GroupUnfrozen {
-                unfrozen_by: args.caller.into(),
+                unfrozen_by: args.caller,
             })),
             now,
         );

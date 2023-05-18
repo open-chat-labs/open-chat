@@ -116,7 +116,7 @@ fn prepare(block: bool, user_id: UserId, state: &mut RuntimeState) -> Result<Pre
                 removed_by,
                 group_name: state.data.name.clone(),
                 public: state.data.is_public,
-                member_to_remove: member_to_remove,
+                member_to_remove,
                 principal_to_remove,
             })
         }

@@ -17,10 +17,6 @@ impl Groups {
             _ => unreachable!(),
         };
     }
-
-    pub fn get_mut(&mut self, group_id: &CommunityGroupId) -> Option<&mut Group> {
-        self.groups.get_mut(group_id)
-    }
 }
 
 #[derive(Serialize, Deserialize)]
@@ -36,6 +32,7 @@ pub struct Group {
 }
 
 impl Group {
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         created_by: UserId,
         is_public: bool,

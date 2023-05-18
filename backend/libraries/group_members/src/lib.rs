@@ -158,6 +158,7 @@ impl GroupMembers {
         }
     }
 
+    #[allow(clippy::len_without_is_empty)]
     pub fn len(&self) -> u32 {
         self.members.len() as u32
     }

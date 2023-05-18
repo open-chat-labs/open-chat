@@ -39,7 +39,7 @@ fn c2c_invite_users_impl(args: Args, runtime_state: &mut RuntimeState) -> Respon
             .users
             .iter()
             .filter(|(user_id, principal)| {
-                runtime_state.data.group_chat_core.members.get(&user_id).is_none()
+                runtime_state.data.group_chat_core.members.get(user_id).is_none()
                     && !runtime_state.data.invited_users.contains(principal)
             })
             .copied()

@@ -27,7 +27,7 @@ fn c2c_freeze_community_impl(args: Args, state: &mut RuntimeState) -> Response {
 
         let event_index = state.data.events.push_event(
             CommunityEvent::Frozen(Box::new(GroupFrozen {
-                frozen_by: args.caller.into(),
+                frozen_by: args.caller,
                 reason: args.reason.clone(),
             })),
             now,

@@ -100,7 +100,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
         }
     }
 
-    if let Err(error) = avatar_update.map_or(Ok(()), |a| validate_avatar(a)) {
+    if let Err(error) = avatar_update.map_or(Ok(()), validate_avatar) {
         return Err(AvatarTooBig(error));
     }
 
