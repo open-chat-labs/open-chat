@@ -2,7 +2,7 @@ use crate::model::groups::Groups;
 use crate::model::members::CommunityMembers;
 use candid::Principal;
 use canister_state_macros::canister_state;
-use model::events::CommunityEvents;
+use model::{events::CommunityEvents, invited_users::InvitedUsers};
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use types::{
@@ -33,6 +33,22 @@ struct RuntimeState {
 impl RuntimeState {
     pub fn new(env: Box<dyn Environment>, data: Data) -> RuntimeState {
         RuntimeState { env, data }
+    }
+
+    pub fn is_caller_user_index(&self) -> bool {
+        self.env.caller() == self.data.user_index_canister_id
+    }
+
+    pub fn is_caller_local_user_index(&self) -> bool {
+        self.env.caller() == self.data.local_user_index_canister_id
+    }
+
+    pub fn is_caller_group_index(&self) -> bool {
+        self.env.caller() == self.data.group_index_canister_id
+    }
+
+    pub fn is_caller_local_group_index(&self) -> bool {
+        self.env.caller() == self.data.local_group_index_canister_id
     }
 
     pub fn metrics(&self) -> Metrics {
@@ -66,6 +82,7 @@ struct Data {
     members: CommunityMembers,
     groups: Groups,
     events: CommunityEvents,
+    invited_users: InvitedUsers,
     invite_code: Option<u64>,
     invite_code_enabled: bool,
     frozen: Timestamped<Option<FrozenGroupInfo>>,
@@ -112,6 +129,7 @@ impl Data {
             members,
             groups: Groups::default(),
             events: CommunityEvents::default(),
+            invited_users: InvitedUsers::default(),
             invite_code: None,
             invite_code_enabled: false,
             frozen: Timestamped::default(),
