@@ -135,7 +135,7 @@ impl RuntimeState {
         }
     }
 
-    pub fn add_participant(&mut self, args: AddParticipantArgs) -> AddMemberResult {
+    pub fn add_member(&mut self, args: AddMemberArgs) -> AddMemberResult {
         let result = self.data.group_chat_core.members.add(
             args.user_id,
             args.now,
@@ -144,7 +144,8 @@ impl RuntimeState {
             args.mute_notifications,
         );
 
-        if matches!(result, AddMemberResult::Success(_)) {
+        if matches!(result, AddMemberResult::Success(_) | AddMemberResult::AlreadyInGroup) {
+            self.data.principal_to_user_id_map.insert(args.principal, args.user_id);
             if let Some(new_joiner_rewards) = &mut self.data.new_joiner_rewards {
                 if let Ok(amount) = new_joiner_rewards.try_claim_user_reward(args.user_id, args.now) {
                     ic_cdk::spawn(process_new_joiner_reward(
@@ -159,6 +160,20 @@ impl RuntimeState {
         }
 
         result
+    }
+
+    pub fn remove_member(&mut self, user_id: UserId) -> Option<GroupMemberInternal> {
+        if let Some(principal) = self
+            .data
+            .principal_to_user_id_map
+            .iter()
+            .find(|(_, &u)| u == user_id)
+            .map(|(p, _)| *p)
+        {
+            self.data.principal_to_user_id_map.remove(&principal);
+        }
+
+        self.data.group_chat_core.members.remove(user_id)
     }
 
     pub fn metrics(&self) -> Metrics {
@@ -460,8 +475,9 @@ fn run_regular_jobs() {
     mutate_state(|state| state.regular_jobs.run(state.env.deref(), &mut state.data));
 }
 
-struct AddParticipantArgs {
+struct AddMemberArgs {
     user_id: UserId,
+    principal: Principal,
     now: TimestampMillis,
     min_visible_event_index: EventIndex,
     min_visible_message_index: MessageIndex,

@@ -92,12 +92,7 @@ fn prepare(block: bool, user_id: UserId, runtime_state: &mut RuntimeState) -> Re
 
             // Remove the user from the group
             let removed_by = member.user_id;
-            let participant_to_remove = runtime_state
-                .data
-                .group_chat_core
-                .members
-                .remove(user_id)
-                .expect("user must be a member");
+            let participant_to_remove = runtime_state.remove_member(user_id).expect("user must be a member");
 
             if block {
                 // Also block the user
@@ -139,6 +134,7 @@ fn commit(block: bool, user_id: UserId, correlation_id: u64, removed_by: UserId,
         .group_chat_core
         .events
         .push_main_event(event, correlation_id, now);
+
     handle_activity_notification(runtime_state);
     Success
 }
