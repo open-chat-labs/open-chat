@@ -20,27 +20,38 @@ fn register_proposal_vote_impl(args: Args, runtime_state: &mut RuntimeState) -> 
 
     let caller = runtime_state.env.caller();
 
-    let participant = match runtime_state.data.participants.get_by_principal_mut(&caller) {
+    let member = match runtime_state.data.get_member_mut(caller) {
         Some(p) => p,
         None => return CallerNotInGroup,
     };
 
-    if participant.suspended.value {
+    if member.suspended.value {
         return UserSuspended;
     }
 
     let now = runtime_state.env.now();
-    let min_visible_event_index = participant.min_visible_event_index();
+    let min_visible_event_index = member.min_visible_event_index();
+    let user_id = member.user_id;
 
-    match runtime_state.data.events.record_proposal_vote(
-        participant.user_id,
+    match runtime_state.data.group_chat_core.events.record_proposal_vote(
+        user_id,
         min_visible_event_index,
         args.message_index,
         args.adopt,
         now,
     ) {
         RecordProposalVoteResult::Success => {
-            participant.proposal_votes.entry(now).or_default().push(args.message_index);
+            runtime_state
+                .data
+                .group_chat_core
+                .members
+                .get_mut(&user_id)
+                .unwrap()
+                .proposal_votes
+                .entry(now)
+                .or_default()
+                .push(args.message_index);
+
             handle_activity_notification(runtime_state);
             Success
         }

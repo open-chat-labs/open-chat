@@ -13,7 +13,7 @@ fn thread_previews(args: Args) -> Response {
 
 fn thread_previews_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
-    if let Some(participant) = runtime_state.data.participants.get_by_principal(&caller) {
+    if let Some(member) = runtime_state.data.get_member(caller) {
         let now = runtime_state.env.now();
 
         if args.latest_client_thread_update.map_or(false, |t| now < t) {
@@ -27,8 +27,8 @@ fn thread_previews_impl(args: Args, runtime_state: &RuntimeState) -> Response {
                 .filter_map(|root_message_index| {
                     build_thread_preview(
                         runtime_state,
-                        participant.user_id,
-                        participant.min_visible_event_index(),
+                        member.user_id,
+                        member.min_visible_event_index(),
                         root_message_index,
                         now,
                     )
@@ -50,6 +50,7 @@ fn build_thread_preview(
 ) -> Option<ThreadPreview> {
     let events_reader = runtime_state
         .data
+        .group_chat_core
         .events
         .visible_main_events_reader(min_visible_event_index, now);
 
@@ -58,6 +59,7 @@ fn build_thread_preview(
     let thread_events_reader =
         runtime_state
             .data
+            .group_chat_core
             .events
             .events_reader(min_visible_event_index, Some(root_message_index), now)?;
 

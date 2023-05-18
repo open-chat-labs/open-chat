@@ -4,7 +4,7 @@ use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
 use proposals_bot_canister::add_governance_canister::{Response::*, *};
 use std::fmt::Write;
-use types::{ChatId, GovernanceProposalsSubtype, GroupPermissions, GroupRules, GroupSubtype, PermissionRole};
+use types::{ChatId, GovernanceProposalsSubtype, GroupPermissionRole, GroupPermissions, GroupRules, GroupSubtype};
 
 // dfx --identity openchat canister --network ic call proposals_bot add_governance_canister '(record { governance_canister_id=principal "rrkah-fqaaa-aaaaa-aaaaq-cai"; name="NNS" })'
 #[proposal(guard = "caller_is_governance_principal")]
@@ -59,8 +59,8 @@ async fn create_group(args: &Args, is_nns: bool) -> Result<ChatId, Response> {
         avatar: args.avatar.clone(),
         history_visible_to_new_joiners: true,
         permissions: Some(GroupPermissions {
-            create_polls: PermissionRole::Admins,
-            send_messages: PermissionRole::Admins,
+            create_polls: GroupPermissionRole::Admins,
+            send_messages: GroupPermissionRole::Admins,
             ..Default::default()
         }),
         events_ttl: None,

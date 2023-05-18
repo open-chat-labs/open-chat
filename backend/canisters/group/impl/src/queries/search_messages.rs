@@ -30,7 +30,7 @@ fn search_messages_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     }
 
     let caller = runtime_state.env.caller();
-    let participant = match runtime_state.data.participants.get(caller) {
+    let member = match runtime_state.data.get_member(caller) {
         None => return CallerNotInGroup,
         Some(p) => p,
     };
@@ -38,12 +38,12 @@ fn search_messages_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     let mut query = Query::parse(&args.search_term);
     query.users = HashSet::from_iter(users);
 
-    let matches = runtime_state.data.events.search_messages(
+    let matches = runtime_state.data.group_chat_core.events.search_messages(
         runtime_state.env.now(),
-        participant.min_visible_event_index(),
+        member.min_visible_event_index(),
         &query,
         args.max_results,
-        participant.user_id,
+        member.user_id,
     );
 
     Success(SuccessResult { matches })

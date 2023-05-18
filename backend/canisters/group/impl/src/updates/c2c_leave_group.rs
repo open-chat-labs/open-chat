@@ -4,7 +4,7 @@ use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use chat_events::ChatEventInternal;
 use group_canister::c2c_leave_group::{Response::*, *};
-use types::ParticipantLeft;
+use types::MemberLeft;
 
 // Called via the user's user canister
 #[update_msgpack]
@@ -23,27 +23,28 @@ fn c2c_leave_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
     let caller = runtime_state.env.caller().into();
     let now = runtime_state.env.now();
 
-    let participant = match runtime_state.data.participants.get_by_user_id(&caller) {
+    let member = match runtime_state.data.group_chat_core.members.get(&caller) {
         Some(p) => p,
         None => return CallerNotInGroup,
     };
 
-    if participant.suspended.value {
+    if member.suspended.value {
         return UserSuspended;
     }
 
-    if participant.role.is_owner() && runtime_state.data.participants.owner_count() == 1 {
+    if member.role.is_owner() && runtime_state.data.group_chat_core.members.owner_count() == 1 {
         return OwnerCannotLeave;
     }
 
-    runtime_state.data.participants.remove(caller);
+    runtime_state.data.group_chat_core.members.remove(caller);
 
-    let event = ParticipantLeft { user_id: caller };
+    let event = MemberLeft { user_id: caller };
 
-    runtime_state
-        .data
-        .events
-        .push_main_event(ChatEventInternal::ParticipantLeft(Box::new(event)), args.correlation_id, now);
+    runtime_state.data.group_chat_core.events.push_main_event(
+        ChatEventInternal::ParticipantLeft(Box::new(event)),
+        args.correlation_id,
+        now,
+    );
 
     handle_activity_notification(runtime_state);
 

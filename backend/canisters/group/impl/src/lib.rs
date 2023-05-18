@@ -1,19 +1,21 @@
 use crate::model::activity_notification_state::ActivityNotificationState;
 use crate::model::new_joiner_rewards::{NewJoinerRewardMetrics, NewJoinerRewardStatus, NewJoinerRewards};
-use crate::model::participants::{AddResult as AddParticipantResult, ParticipantInternal, Participants};
 use crate::new_joiner_rewards::process_new_joiner_reward;
 use crate::timer_job_types::TimerJob;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
 use chat_events::{ChatEventInternal, ChatEvents, Reader};
+use group_chat_core::GroupChatCore;
+use group_members::{AddResult as AddMemberResult, GroupMemberInternal, GroupMembers};
 use model::invited_users::InvitedUsers;
 use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
+use std::collections::{HashMap, HashSet};
 use std::ops::Deref;
 use types::{
-    Avatar, CanisterId, ChatId, Cryptocurrency, Cycles, EventIndex, FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupGate,
+    Avatar, CanisterId, Cryptocurrency, Cycles, EventIndex, FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupGate,
     GroupPermissions, GroupRules, GroupSubtype, MessageIndex, Milliseconds, Notification, TimestampMillis, Timestamped, UserId,
     Version, MAX_THREADS_IN_SUMMARY,
 };
@@ -80,66 +82,69 @@ impl RuntimeState {
         }
     }
 
-    pub fn summary(&self, participant: &ParticipantInternal, now: TimestampMillis) -> GroupCanisterGroupChatSummary {
+    pub fn summary(&self, member: &GroupMemberInternal, now: TimestampMillis) -> GroupCanisterGroupChatSummary {
         let data = &self.data;
-        let min_visible_event_index = participant.min_visible_event_index();
-        let min_visible_message_index = participant.min_visible_message_index();
-        let main_events_reader = data.events.visible_main_events_reader(min_visible_event_index, now);
+        let min_visible_event_index = member.min_visible_event_index();
+        let min_visible_message_index = member.min_visible_message_index();
+        let main_events_reader = data
+            .group_chat_core
+            .events
+            .visible_main_events_reader(min_visible_event_index, now);
         let latest_event_index = main_events_reader.latest_event_index().unwrap_or_default();
 
         GroupCanisterGroupChatSummary {
             chat_id: self.env.canister_id().into(),
             last_updated: now,
-            name: data.name.clone(),
-            description: data.description.clone(),
-            subtype: data.subtype.value.clone(),
-            avatar_id: Avatar::id(&data.avatar),
-            is_public: data.is_public,
-            history_visible_to_new_joiners: data.history_visible_to_new_joiners,
+            name: data.group_chat_core.name.clone(),
+            description: data.group_chat_core.description.clone(),
+            subtype: data.group_chat_core.subtype.value.clone(),
+            avatar_id: Avatar::id(&data.group_chat_core.avatar),
+            is_public: data.group_chat_core.is_public,
+            history_visible_to_new_joiners: data.group_chat_core.history_visible_to_new_joiners,
             min_visible_event_index,
             min_visible_message_index,
-            latest_message: main_events_reader.latest_message_event(Some(participant.user_id)),
+            latest_message: main_events_reader.latest_message_event(Some(member.user_id)),
             latest_event_index,
-            joined: participant.date_added,
-            participant_count: data.participants.len(),
-            role: participant.role,
-            mentions: participant.most_recent_mentions(None, &data.events, now),
-            permissions: data.permissions.clone(),
-            notifications_muted: participant.notifications_muted.value,
-            metrics: data.events.metrics().clone(),
+            joined: member.date_added,
+            participant_count: data.group_chat_core.members.len(),
+            role: member.role,
+            mentions: member.most_recent_mentions(None, &data.group_chat_core.events, now),
+            permissions: data.group_chat_core.permissions.clone(),
+            notifications_muted: member.notifications_muted.value,
+            metrics: data.group_chat_core.events.metrics().clone(),
             my_metrics: data
+                .group_chat_core
                 .events
-                .user_metrics(&participant.user_id, None)
+                .user_metrics(&member.user_id, None)
                 .cloned()
                 .unwrap_or_default(),
-            latest_threads: data.events.latest_threads(
+            latest_threads: data.group_chat_core.events.latest_threads(
                 min_visible_event_index,
-                participant.threads.iter(),
+                member.threads.iter(),
                 None,
                 MAX_THREADS_IN_SUMMARY,
                 now,
             ),
             frozen: data.frozen.value.clone(),
             wasm_version: Version::default(),
-            date_last_pinned: data.date_last_pinned,
-            events_ttl: data.events.get_events_time_to_live().value,
-            expired_messages: data.events.expired_messages(now),
-            next_message_expiry: data.events.next_message_expiry(now),
-            gate: data.gate.value.clone(),
+            date_last_pinned: data.group_chat_core.date_last_pinned,
+            events_ttl: data.group_chat_core.events.get_events_time_to_live().value,
+            expired_messages: data.group_chat_core.events.expired_messages(now),
+            next_message_expiry: data.group_chat_core.events.next_message_expiry(now),
+            gate: data.group_chat_core.gate.value.clone(),
         }
     }
 
-    pub fn add_participant(&mut self, args: AddParticipantArgs) -> AddParticipantResult {
-        let result = self.data.participants.add(
+    pub fn add_participant(&mut self, args: AddParticipantArgs) -> AddMemberResult {
+        let result = self.data.group_chat_core.members.add(
             args.user_id,
-            args.principal,
             args.now,
             args.min_visible_event_index,
             args.min_visible_message_index,
             args.mute_notifications,
         );
 
-        if matches!(result, AddParticipantResult::Success(_)) {
+        if matches!(result, AddMemberResult::Success(_)) {
             if let Some(new_joiner_rewards) = &mut self.data.new_joiner_rewards {
                 if let Ok(amount) = new_joiner_rewards.try_claim_user_reward(args.user_id, args.now) {
                     ic_cdk::spawn(process_new_joiner_reward(
@@ -157,21 +162,24 @@ impl RuntimeState {
     }
 
     pub fn metrics(&self) -> Metrics {
-        let chat_metrics = self.data.events.metrics();
+        let group_chat_core = &self.data.group_chat_core;
+        let chat_metrics = group_chat_core.events.metrics();
 
         let now = self.env.now();
-        let messages_in_last_hour = self.data.events.event_count_since(now.saturating_sub(HOUR_IN_MS), now, |e| {
-            matches!(e, ChatEventInternal::Message(_))
-        }) as u64;
-        let messages_in_last_day = self.data.events.event_count_since(now.saturating_sub(DAY_IN_MS), now, |e| {
-            matches!(e, ChatEventInternal::Message(_))
-        }) as u64;
-        let events_in_last_hour = self
-            .data
+        let messages_in_last_hour = group_chat_core
+            .events
+            .event_count_since(now.saturating_sub(HOUR_IN_MS), now, |e| {
+                matches!(e, ChatEventInternal::Message(_))
+            }) as u64;
+        let messages_in_last_day = group_chat_core
+            .events
+            .event_count_since(now.saturating_sub(DAY_IN_MS), now, |e| {
+                matches!(e, ChatEventInternal::Message(_))
+            }) as u64;
+        let events_in_last_hour = group_chat_core
             .events
             .event_count_since(now.saturating_sub(HOUR_IN_MS), now, |_| true) as u64;
-        let events_in_last_day = self
-            .data
+        let events_in_last_day = group_chat_core
             .events
             .event_count_since(now.saturating_sub(DAY_IN_MS), now, |_| true) as u64;
 
@@ -181,13 +189,13 @@ impl RuntimeState {
             cycles_balance: self.env.cycles_balance(),
             wasm_version: WASM_VERSION.with(|v| **v.borrow()),
             git_commit_id: utils::git::git_commit_id().to_string(),
-            public: self.data.is_public,
-            date_created: self.data.date_created,
-            members: self.data.participants.len(),
-            moderators: self.data.participants.moderator_count(),
-            admins: self.data.participants.admin_count(),
-            owners: self.data.participants.owner_count(),
-            blocked: self.data.participants.blocked().len() as u32,
+            public: group_chat_core.is_public,
+            date_created: group_chat_core.date_created,
+            members: group_chat_core.members.len(),
+            moderators: group_chat_core.members.moderator_count(),
+            admins: group_chat_core.members.admin_count(),
+            owners: group_chat_core.members.owner_count(),
+            blocked: group_chat_core.members.blocked().len() as u32,
             invited: self.data.invited_users.len() as u32,
             text_messages: chat_metrics.text_messages,
             image_messages: chat_metrics.image_messages,
@@ -227,18 +235,44 @@ impl RuntimeState {
     }
 }
 
+#[derive(Deserialize)]
+struct DataPrevious {
+    is_public: bool,
+    name: String,
+    description: String,
+    rules: GroupRules,
+    subtype: Timestamped<Option<GroupSubtype>>,
+    avatar: Option<Avatar>,
+    history_visible_to_new_joiners: bool,
+    participants: Participants,
+    events: ChatEvents,
+    date_created: TimestampMillis,
+    mark_active_duration: Milliseconds,
+    group_index_canister_id: CanisterId,
+    local_group_index_canister_id: CanisterId,
+    user_index_canister_id: CanisterId,
+    local_user_index_canister_id: CanisterId,
+    notifications_canister_id: CanisterId,
+    proposals_bot_user_id: UserId,
+    activity_notification_state: ActivityNotificationState,
+    pinned_messages: Vec<MessageIndex>,
+    test_mode: bool,
+    permissions: GroupPermissions,
+    invite_code: Option<u64>,
+    invite_code_enabled: bool,
+    new_joiner_rewards: Option<NewJoinerRewards>,
+    frozen: Timestamped<Option<FrozenGroupInfo>>,
+    timer_jobs: TimerJobs<TimerJob>,
+    date_last_pinned: Option<TimestampMillis>,
+    gate: Timestamped<Option<GroupGate>>,
+    invited_users: InvitedUsers,
+}
+
 #[derive(Serialize, Deserialize)]
+#[serde(from = "DataPrevious")]
 struct Data {
-    pub is_public: bool,
-    pub name: String,
-    pub description: String,
-    pub rules: GroupRules,
-    pub subtype: Timestamped<Option<GroupSubtype>>,
-    pub avatar: Option<Avatar>,
-    pub history_visible_to_new_joiners: bool,
-    pub participants: Participants,
-    pub events: ChatEvents,
-    pub date_created: TimestampMillis,
+    pub group_chat_core: GroupChatCore,
+    pub principal_to_user_id_map: HashMap<Principal, UserId>,
     pub mark_active_duration: Milliseconds,
     pub group_index_canister_id: CanisterId,
     pub local_group_index_canister_id: CanisterId,
@@ -247,23 +281,18 @@ struct Data {
     pub notifications_canister_id: CanisterId,
     pub proposals_bot_user_id: UserId,
     pub activity_notification_state: ActivityNotificationState,
-    pub pinned_messages: Vec<MessageIndex>,
     pub test_mode: bool,
-    pub permissions: GroupPermissions,
     pub invite_code: Option<u64>,
     pub invite_code_enabled: bool,
     pub new_joiner_rewards: Option<NewJoinerRewards>,
     pub frozen: Timestamped<Option<FrozenGroupInfo>>,
     pub timer_jobs: TimerJobs<TimerJob>,
-    pub date_last_pinned: Option<TimestampMillis>,
-    pub gate: Timestamped<Option<GroupGate>>,
     pub invited_users: InvitedUsers,
 }
 
 #[allow(clippy::too_many_arguments)]
 impl Data {
     pub fn new(
-        chat_id: ChatId,
         is_public: bool,
         name: String,
         description: String,
@@ -286,10 +315,10 @@ impl Data {
         permissions: Option<GroupPermissions>,
         gate: Option<GroupGate>,
     ) -> Data {
-        let participants = Participants::new(creator_principal, creator_user_id, now);
-        let events = ChatEvents::new_group_chat(chat_id, name.clone(), description.clone(), creator_user_id, events_ttl, now);
+        let members = GroupMembers::new(creator_user_id, now);
+        let events = ChatEvents::new_group_chat(name.clone(), description.clone(), creator_user_id, events_ttl, now);
 
-        Data {
+        let group_chat_core = GroupChatCore {
             is_public,
             name,
             description,
@@ -297,9 +326,18 @@ impl Data {
             subtype: Timestamped::new(subtype, now),
             avatar,
             history_visible_to_new_joiners,
-            participants,
+            members,
             events,
             date_created: now,
+            pinned_messages: Vec::new(),
+            permissions: permissions.unwrap_or_default(),
+            date_last_pinned: None,
+            gate: Timestamped::new(gate, now),
+        };
+
+        Data {
+            group_chat_core,
+            principal_to_user_id_map: [(creator_principal, creator_user_id)].into_iter().collect(),
             mark_active_duration,
             group_index_canister_id,
             local_group_index_canister_id,
@@ -308,25 +346,41 @@ impl Data {
             notifications_canister_id,
             proposals_bot_user_id,
             activity_notification_state: ActivityNotificationState::new(now),
-            pinned_messages: Vec::new(),
             test_mode,
-            permissions: permissions.unwrap_or_default(),
             invite_code: None,
             invite_code_enabled: false,
             new_joiner_rewards: None,
             frozen: Timestamped::default(),
             timer_jobs: TimerJobs::default(),
-            date_last_pinned: None,
-            gate: Timestamped::new(gate, now),
             invited_users: InvitedUsers::default(),
         }
     }
 
+    pub fn get_member(&self, user_id_or_principal: Principal) -> Option<&GroupMemberInternal> {
+        let user_id = self
+            .principal_to_user_id_map
+            .get(&user_id_or_principal)
+            .copied()
+            .unwrap_or(user_id_or_principal.into());
+
+        self.group_chat_core.members.get(&user_id)
+    }
+
+    pub fn get_member_mut(&mut self, user_id_or_principal: Principal) -> Option<&mut GroupMemberInternal> {
+        let user_id = self
+            .principal_to_user_id_map
+            .get(&user_id_or_principal)
+            .copied()
+            .unwrap_or(user_id_or_principal.into());
+
+        self.group_chat_core.members.get_mut(&user_id)
+    }
+
     pub fn min_visible_event_index(&self, caller: Principal) -> Option<EventIndex> {
-        match self.participants.get_by_principal(&caller) {
-            Some(p) => Some(p.min_visible_event_index()),
+        match self.get_member(caller) {
+            Some(m) => Some(m.min_visible_event_index()),
             None => {
-                if self.is_public && self.history_visible_to_new_joiners {
+                if self.group_chat_core.is_public && self.group_chat_core.history_visible_to_new_joiners {
                     Some(EventIndex::default())
                 } else {
                     None
@@ -335,15 +389,15 @@ impl Data {
         }
     }
 
-    pub fn is_accessible(&self, caller: Principal, invite_code: Option<u64>) -> bool {
-        self.is_public
-            || self.participants.get_by_principal(&caller).is_some()
-            || self.invited_users.get(&caller).is_some()
-            || self.is_invite_code_valid(invite_code)
-    }
-
     pub fn is_frozen(&self) -> bool {
         self.frozen.is_some()
+    }
+
+    pub fn is_accessible(&self, caller: Principal, invite_code: Option<u64>) -> bool {
+        self.group_chat_core.is_public
+            || self.get_member(caller).is_some()
+            || self.invited_users.get(&caller).is_some()
+            || self.is_invite_code_valid(invite_code)
     }
 
     fn is_invite_code_valid(&self, invite_code: Option<u64>) -> bool {
@@ -408,7 +462,6 @@ fn run_regular_jobs() {
 
 struct AddParticipantArgs {
     user_id: UserId,
-    principal: Principal,
     now: TimestampMillis,
     min_visible_event_index: EventIndex,
     min_visible_message_index: MessageIndex,
@@ -424,4 +477,74 @@ pub struct CanisterIds {
     pub notifications: CanisterId,
     pub proposals_bot: CanisterId,
     pub icp_ledger: CanisterId,
+}
+
+impl From<DataPrevious> for Data {
+    fn from(value: DataPrevious) -> Self {
+        let principal_to_user_id_map = value
+            .participants
+            .user_id_to_principal_map
+            .iter()
+            .map(|(u, p)| (*p, *u))
+            .collect();
+
+        let group_chat_core = GroupChatCore {
+            is_public: value.is_public,
+            name: value.name,
+            description: value.description,
+            rules: value.rules,
+            subtype: value.subtype,
+            avatar: value.avatar,
+            history_visible_to_new_joiners: value.history_visible_to_new_joiners,
+            members: value.participants.into(),
+            events: value.events,
+            date_created: value.date_created,
+            pinned_messages: value.pinned_messages,
+            permissions: value.permissions,
+            date_last_pinned: value.date_last_pinned,
+            gate: value.gate,
+        };
+
+        Data {
+            group_chat_core,
+            principal_to_user_id_map,
+            mark_active_duration: value.mark_active_duration,
+            group_index_canister_id: value.group_index_canister_id,
+            local_group_index_canister_id: value.local_group_index_canister_id,
+            user_index_canister_id: value.user_index_canister_id,
+            local_user_index_canister_id: value.local_user_index_canister_id,
+            notifications_canister_id: value.notifications_canister_id,
+            proposals_bot_user_id: value.proposals_bot_user_id,
+            activity_notification_state: value.activity_notification_state,
+            test_mode: value.test_mode,
+            invite_code: value.invite_code,
+            invite_code_enabled: value.invite_code_enabled,
+            new_joiner_rewards: value.new_joiner_rewards,
+            frozen: value.frozen,
+            timer_jobs: value.timer_jobs,
+            invited_users: value.invited_users,
+        }
+    }
+}
+
+#[derive(Deserialize)]
+struct Participants {
+    by_principal: HashMap<Principal, GroupMemberInternal>,
+    user_id_to_principal_map: HashMap<UserId, Principal>,
+    blocked: HashSet<UserId>,
+    moderator_count: u32,
+    admin_count: u32,
+    owner_count: u32,
+}
+
+impl From<Participants> for GroupMembers {
+    fn from(value: Participants) -> Self {
+        GroupMembers {
+            members: value.by_principal.into_values().map(|m| (m.user_id, m)).collect(),
+            blocked: value.blocked,
+            moderator_count: value.moderator_count,
+            admin_count: value.admin_count,
+            owner_count: value.owner_count,
+        }
+    }
 }

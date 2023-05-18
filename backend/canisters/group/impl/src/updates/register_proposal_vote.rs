@@ -56,30 +56,31 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
 
     let caller = runtime_state.env.caller();
 
-    let participant = match runtime_state.data.participants.get_by_principal(&caller) {
+    let member = match runtime_state.data.get_member(caller) {
         Some(p) => p,
         None => return Err(CallerNotInGroup),
     };
 
-    if participant.suspended.value {
+    if member.suspended.value {
         return Err(UserSuspended);
     }
 
     let now = runtime_state.env.now();
-    let min_visible_event_index = participant.min_visible_event_index();
+    let min_visible_event_index = member.min_visible_event_index();
 
     if let Some(proposal) = runtime_state
         .data
+        .group_chat_core
         .events
         .visible_main_events_reader(min_visible_event_index, now)
         .message_internal(args.message_index.into())
         .and_then(|m| if let MessageContentInternal::GovernanceProposal(p) = &m.content { Some(p) } else { None })
     {
-        if let Some(vote) = proposal.votes.get(&participant.user_id) {
+        if let Some(vote) = proposal.votes.get(&member.user_id) {
             Err(AlreadyVoted(*vote))
         } else {
             Ok(PrepareResult {
-                user_id: participant.user_id,
+                user_id: member.user_id,
                 is_nns: proposal.proposal.is_nns(),
                 governance_canister_id: proposal.governance_canister_id,
                 proposal_id: proposal.proposal.id(),
@@ -91,21 +92,23 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
 }
 
 fn commit(user_id: UserId, args: Args, runtime_state: &mut RuntimeState) -> Response {
-    let participant = match runtime_state.data.participants.get_by_user_id_mut(&user_id) {
+    let member = match runtime_state.data.group_chat_core.members.get_mut(&user_id) {
         Some(p) => p,
         None => return CallerNotInGroup,
     };
 
     let now = runtime_state.env.now();
-    let min_visible_event_index = participant.min_visible_event_index();
+    let min_visible_event_index = member.min_visible_event_index();
 
-    match runtime_state
-        .data
-        .events
-        .record_proposal_vote(user_id, min_visible_event_index, args.message_index, args.adopt, now)
-    {
+    match runtime_state.data.group_chat_core.events.record_proposal_vote(
+        user_id,
+        min_visible_event_index,
+        args.message_index,
+        args.adopt,
+        now,
+    ) {
         RecordProposalVoteResult::Success => {
-            let votes = participant.proposal_votes.entry(now).or_default();
+            let votes = member.proposal_votes.entry(now).or_default();
             if !votes.contains(&args.message_index) {
                 votes.push(args.message_index);
             }

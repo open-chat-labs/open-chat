@@ -53,7 +53,10 @@ impl UserPrincipalMigrationQueue {
                 user_id,
                 CanisterToNotifyOfUserPrincipalMigration::Group(
                     chat_id,
-                    group_canister::c2c_update_user_principal::Args { user_id, new_principal },
+                    group_canister::c2c_update_user_principal::Args {
+                        old_principal,
+                        new_principal,
+                    },
                 ),
             ));
         }
