@@ -44,9 +44,9 @@ fn handle_message(args: Args, state: &mut RuntimeState) -> Response {
                             amount_out,
                         },
                     );
-                    messages.push("Thanks for playing!".to_string());
-                    messages.push(format!("You won an additional {winnings} SATS!"));
-                    messages.push("Please wait a moment while I transfer you your ckBTC".to_string());
+                    messages.push("Thanks for playing! 🎲".to_string());
+                    messages.push(format!("🎉 Your bonus is {winnings} SATS 🎉"));
+                    messages.push("Please wait a moment while I send you your bonus plus your original ckBTC👇".to_string());
 
                     send_ckbtc_message(user_id, amount_out, state);
                 }
