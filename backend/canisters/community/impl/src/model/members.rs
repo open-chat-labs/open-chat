@@ -8,7 +8,7 @@ const MAX_MEMBERS_PER_COMMUNITY: u32 = 100_000;
 
 #[derive(Serialize, Deserialize)]
 pub struct CommunityMembers {
-    by_principal: HashMap<Principal, CommunityMemberInternal>,
+    members: HashMap<Principal, CommunityMemberInternal>,
     user_id_to_principal_map: HashMap<UserId, Principal>,
     blocked: HashSet<UserId>,
     admin_count: u32,
@@ -26,7 +26,7 @@ impl CommunityMembers {
         };
 
         CommunityMembers {
-            by_principal: vec![(creator_principal, member)].into_iter().collect(),
+            members: vec![(creator_principal, member)].into_iter().collect(),
             user_id_to_principal_map: vec![(creator_user_id, creator_principal)].into_iter().collect(),
             blocked: HashSet::new(),
             admin_count: 0,
@@ -38,7 +38,7 @@ impl CommunityMembers {
         if self.blocked.contains(&user_id) {
             AddResult::Blocked
         } else {
-            match self.by_principal.entry(principal) {
+            match self.members.entry(principal) {
                 Vacant(e) => {
                     let member = CommunityMemberInternal {
                         user_id,
@@ -58,7 +58,7 @@ impl CommunityMembers {
 
     pub fn remove(&mut self, user_id: UserId) -> Option<CommunityMemberInternal> {
         if let Some(principal) = self.user_id_to_principal_map.remove(&user_id) {
-            if let Some(member) = self.by_principal.remove(&principal) {
+            if let Some(member) = self.members.remove(&principal) {
                 match member.role {
                     CommunityRole::Owner => self.owner_count -= 1,
                     CommunityRole::Admin => self.admin_count -= 1,
@@ -142,7 +142,7 @@ impl CommunityMembers {
     pub fn try_undo_remove(&mut self, principal: Principal, member: CommunityMemberInternal) {
         let user_id = member.user_id;
         let role = member.role;
-        if self.by_principal.insert(principal, member).is_none() {
+        if self.members.insert(principal, member).is_none() {
             self.user_id_to_principal_map.insert(user_id, principal);
             match role {
                 CommunityRole::Owner => self.owner_count += 1,
@@ -161,7 +161,7 @@ impl CommunityMembers {
     }
 
     pub fn user_limit_reached(&self) -> Option<u32> {
-        if self.by_principal.len() >= MAX_MEMBERS_PER_COMMUNITY as usize {
+        if self.members.len() >= MAX_MEMBERS_PER_COMMUNITY as usize {
             Some(MAX_MEMBERS_PER_COMMUNITY)
         } else {
             None
@@ -172,13 +172,21 @@ impl CommunityMembers {
         self.blocked.contains(user_id)
     }
 
+    pub fn blocked(&self) -> Vec<UserId> {
+        self.blocked.iter().copied().collect()
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = &CommunityMemberInternal> {
+        self.members.values()
+    }
+
     pub fn get(&self, user_id_or_principal: Principal) -> Option<&CommunityMemberInternal> {
         let principal = self
             .user_id_to_principal_map
             .get(&user_id_or_principal.into())
             .unwrap_or(&user_id_or_principal);
 
-        self.by_principal.get(principal)
+        self.members.get(principal)
     }
 
     pub fn get_principal(&self, user_id: &UserId) -> Option<Principal> {
@@ -191,11 +199,11 @@ impl CommunityMembers {
             .get(&user_id_or_principal.into())
             .unwrap_or(&user_id_or_principal);
 
-        self.by_principal.get_mut(principal)
+        self.members.get_mut(principal)
     }
 
     pub fn len(&self) -> u32 {
-        self.by_principal.len() as u32
+        self.members.len() as u32
     }
 
     pub fn owner_count(&self) -> u32 {

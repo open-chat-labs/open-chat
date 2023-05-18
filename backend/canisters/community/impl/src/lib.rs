@@ -78,7 +78,21 @@ impl RuntimeState {
             cycles_balance: self.env.cycles_balance(),
             wasm_version: WASM_VERSION.with(|v| **v.borrow()),
             git_commit_id: utils::git::git_commit_id().to_string(),
-            canister_ids: CanisterIds {},
+            canister_ids: CanisterIds {
+                user_index: self.data.user_index_canister_id,
+                group_index: self.data.group_index_canister_id,
+                local_user_index: self.data.local_user_index_canister_id,
+                local_group_index: self.data.local_group_index_canister_id,
+                notifications: self.data.notifications_canister_id,
+            },
+            public: self.data.is_public,
+            date_created: self.data.date_created,
+            members: self.data.members.len(),
+            admins: self.data.members.admin_count(),
+            owners: self.data.members.owner_count(),
+            blocked: self.data.members.blocked().len() as u32,
+            invited: self.data.invited_users.len() as u32,
+            frozen: self.data.is_frozen(),
         }
     }
 }
@@ -190,7 +204,21 @@ pub struct Metrics {
     pub wasm_version: Version,
     pub git_commit_id: String,
     pub canister_ids: CanisterIds,
+    pub public: bool,
+    pub date_created: TimestampMillis,
+    pub members: u32,
+    pub admins: u32,
+    pub owners: u32,
+    pub blocked: u32,
+    pub invited: u32,
+    pub frozen: bool,
 }
 
 #[derive(Serialize, Debug)]
-pub struct CanisterIds {}
+pub struct CanisterIds {
+    pub user_index: CanisterId,
+    pub group_index: CanisterId,
+    pub local_user_index: CanisterId,
+    pub local_group_index: CanisterId,
+    pub notifications: CanisterId,
+}

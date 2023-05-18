@@ -84,6 +84,10 @@ impl CommunityEvents {
         event_index
     }
 
+    pub fn get(&self, event_index: EventIndex) -> Option<&EventWrapper<CommunityEvent>> {
+        self.events_map.get(&event_index)
+    }
+
     pub fn next_event_index(&self) -> EventIndex {
         self.latest_event_index.incr()
     }

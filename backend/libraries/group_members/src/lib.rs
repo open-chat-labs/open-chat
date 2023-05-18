@@ -1,7 +1,5 @@
 mod mentions;
-
 use crate::mentions::Mentions;
-use candid::Principal;
 use chat_events::ChatEvents;
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
