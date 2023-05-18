@@ -134,8 +134,11 @@ async fn process_action(action: Action) {
                         }))
                     })
                 }
-                error => {
+                Ok(error) => {
                     error!(?args, ?error, "Failed to transfer ckBTC");
+                }
+                Err(error) => {
+                    error!(?args, ?error, "Failed to transfer ckBTC, retrying");
                     mutate_state(|state| state.enqueue_pending_action(action))
                 }
             }
