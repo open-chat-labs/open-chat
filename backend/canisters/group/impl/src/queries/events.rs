@@ -15,19 +15,18 @@ fn events_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     if let Some(min_visible_event_index) = runtime_state.data.min_visible_event_index(caller) {
         let now = runtime_state.env.now();
 
-        if let Some(events_reader) =
-            runtime_state
-                .data
-                .events
-                .events_reader(min_visible_event_index, args.thread_root_message_index, now)
-        {
+        if let Some(events_reader) = runtime_state.data.group_chat_core.events.events_reader(
+            min_visible_event_index,
+            args.thread_root_message_index,
+            now,
+        ) {
             let latest_event_index = events_reader.latest_event_index().unwrap();
 
             if args.latest_client_event_index.map_or(false, |e| latest_event_index < e) {
                 return ReplicaNotUpToDate(latest_event_index);
             }
 
-            let user_id = runtime_state.data.participants.get(caller).map(|p| p.user_id);
+            let user_id = runtime_state.data.get_member(caller).map(|m| m.user_id);
             let events = events_reader.scan(
                 Some(args.start_index.into()),
                 args.ascending,

@@ -10,10 +10,10 @@ fn c2c_name_and_members(_args: Args) -> Response {
 }
 
 fn c2c_name_and_members_impl(runtime_state: &RuntimeState) -> Response {
-    let members = runtime_state.data.participants.iter().map(|p| p.user_id).collect();
+    let members = runtime_state.data.group_chat_core.members.iter().map(|p| p.user_id).collect();
 
     Success(SuccessResult {
-        name: runtime_state.data.name.clone(),
+        name: runtime_state.data.group_chat_core.name.clone(),
         members,
     })
 }

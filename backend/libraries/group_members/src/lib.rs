@@ -15,17 +15,16 @@ const MAX_MEMBERS_PER_GROUP: u32 = 100_000;
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct GroupMembers {
-    by_principal: HashMap<Principal, GroupMemberInternal>,
-    user_id_to_principal_map: HashMap<UserId, Principal>,
-    blocked: HashSet<UserId>,
-    moderator_count: u32,
-    admin_count: u32,
-    owner_count: u32,
+    pub members: HashMap<UserId, GroupMemberInternal>,
+    pub blocked: HashSet<UserId>,
+    pub moderator_count: u32,
+    pub admin_count: u32,
+    pub owner_count: u32,
 }
 
 #[allow(clippy::too_many_arguments)]
 impl GroupMembers {
-    pub fn new(creator_principal: Principal, creator_user_id: UserId, now: TimestampMillis) -> GroupMembers {
+    pub fn new(creator_user_id: UserId, now: TimestampMillis) -> GroupMembers {
         let member = GroupMemberInternal {
             user_id: creator_user_id,
             date_added: now,
@@ -40,8 +39,7 @@ impl GroupMembers {
         };
 
         GroupMembers {
-            by_principal: vec![(creator_principal, member)].into_iter().collect(),
-            user_id_to_principal_map: vec![(creator_user_id, creator_principal)].into_iter().collect(),
+            members: vec![(creator_user_id, member)].into_iter().collect(),
             blocked: HashSet::new(),
             moderator_count: 0,
             admin_count: 0,
@@ -52,7 +50,6 @@ impl GroupMembers {
     pub fn add(
         &mut self,
         user_id: UserId,
-        principal: Principal,
         now: TimestampMillis,
         min_visible_event_index: EventIndex,
         min_visible_message_index: MessageIndex,
@@ -61,7 +58,7 @@ impl GroupMembers {
         if self.blocked.contains(&user_id) {
             AddResult::Blocked
         } else {
-            match self.by_principal.entry(principal) {
+            match self.members.entry(user_id) {
                 Vacant(e) => {
                     let member = GroupMemberInternal {
                         user_id,
@@ -76,7 +73,6 @@ impl GroupMembers {
                         suspended: Timestamped::default(),
                     };
                     e.insert(member.clone());
-                    self.user_id_to_principal_map.insert(user_id, principal);
                     AddResult::Success(member)
                 }
                 _ => AddResult::AlreadyInGroup,
@@ -85,27 +81,24 @@ impl GroupMembers {
     }
 
     pub fn remove(&mut self, user_id: UserId) -> Option<GroupMemberInternal> {
-        if let Some(principal) = self.user_id_to_principal_map.remove(&user_id) {
-            if let Some(member) = self.by_principal.remove(&principal) {
-                match member.role {
-                    GroupRole::Owner => self.owner_count -= 1,
-                    GroupRole::Admin => self.admin_count -= 1,
-                    GroupRole::Moderator => self.moderator_count -= 1,
-                    _ => (),
-                }
-
-                return Some(member);
+        if let Some(member) = self.members.remove(&user_id) {
+            match member.role {
+                GroupRole::Owner => self.owner_count -= 1,
+                GroupRole::Admin => self.admin_count -= 1,
+                GroupRole::Moderator => self.moderator_count -= 1,
+                _ => (),
             }
-        }
 
-        None
+            Some(member)
+        } else {
+            None
+        }
     }
 
-    pub fn try_undo_remove(&mut self, principal: Principal, member: GroupMemberInternal) {
+    pub fn try_undo_remove(&mut self, member: GroupMemberInternal) {
         let user_id = member.user_id;
         let role = member.role;
-        if self.by_principal.insert(principal, member).is_none() {
-            self.user_id_to_principal_map.insert(user_id, principal);
+        if self.members.insert(user_id, member).is_none() {
             match role {
                 GroupRole::Owner => self.owner_count += 1,
                 GroupRole::Admin => self.admin_count += 1,
@@ -128,44 +121,15 @@ impl GroupMembers {
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &GroupMemberInternal> {
-        self.by_principal.values()
+        self.members.values()
     }
 
-    pub fn get(&self, user_id_or_principal: Principal) -> Option<&GroupMemberInternal> {
-        let principal = self
-            .user_id_to_principal_map
-            .get(&user_id_or_principal.into())
-            .unwrap_or(&user_id_or_principal);
-
-        self.by_principal.get(principal)
+    pub fn get(&self, user_id: &UserId) -> Option<&GroupMemberInternal> {
+        self.members.get(user_id)
     }
 
-    pub fn get_by_user_id(&self, user_id: &UserId) -> Option<&GroupMemberInternal> {
-        if let Some(p) = self.user_id_to_principal_map.get(user_id) {
-            self.get_by_principal(p)
-        } else {
-            None
-        }
-    }
-
-    pub fn get_principal(&self, user_id: &UserId) -> Option<Principal> {
-        self.user_id_to_principal_map.get(user_id).copied()
-    }
-
-    pub fn get_by_user_id_mut(&mut self, user_id: &UserId) -> Option<&mut GroupMemberInternal> {
-        if let Some(&p) = self.user_id_to_principal_map.get(user_id) {
-            self.get_by_principal_mut(&p)
-        } else {
-            None
-        }
-    }
-
-    pub fn get_by_principal(&self, principal: &Principal) -> Option<&GroupMemberInternal> {
-        self.by_principal.get(principal)
-    }
-
-    pub fn get_by_principal_mut(&mut self, principal: &Principal) -> Option<&mut GroupMemberInternal> {
-        self.by_principal.get_mut(principal)
+    pub fn get_mut(&mut self, user_id: &UserId) -> Option<&mut GroupMemberInternal> {
+        self.members.get_mut(user_id)
     }
 
     pub fn is_blocked(&self, user_id: &UserId) -> bool {
@@ -176,11 +140,11 @@ impl GroupMembers {
         if let Some(thread_participants) = thread_participants {
             thread_participants
                 .iter()
-                .filter(|user_id| self.get_by_user_id(user_id).map_or(false, |p| !p.notifications_muted.value))
+                .filter(|user_id| self.get(user_id).map_or(false, |p| !p.notifications_muted.value))
                 .copied()
                 .collect()
         } else {
-            self.by_principal
+            self.members
                 .values()
                 .filter(|p| !p.notifications_muted.value)
                 .map(|p| p.user_id)
@@ -189,29 +153,15 @@ impl GroupMembers {
     }
 
     pub fn user_limit_reached(&self) -> Option<u32> {
-        if self.by_principal.len() >= MAX_MEMBERS_PER_GROUP as usize {
+        if self.members.len() >= MAX_MEMBERS_PER_GROUP as usize {
             Some(MAX_MEMBERS_PER_GROUP)
         } else {
             None
         }
     }
 
-    pub fn update_user_principal(&mut self, user_id: UserId, new_principal: Principal) -> bool {
-        if let Some(user) = self
-            .user_id_to_principal_map
-            .get(&user_id)
-            .and_then(|p| self.by_principal.remove(p))
-        {
-            self.user_id_to_principal_map.insert(user_id, new_principal);
-            self.by_principal.insert(new_principal, user);
-            true
-        } else {
-            false
-        }
-    }
-
     pub fn len(&self) -> u32 {
-        self.by_principal.len() as u32
+        self.members.len() as u32
     }
 
     pub fn change_role(
@@ -224,7 +174,7 @@ impl GroupMembers {
         is_user_platform_moderator: bool,
     ) -> ChangeRoleResult {
         // Is the caller authorized to change the user to this role
-        match self.get_by_user_id(&caller_id) {
+        match self.get(&caller_id) {
             Some(p) => {
                 if p.suspended.value {
                     return ChangeRoleResult::UserSuspended;
@@ -241,7 +191,7 @@ impl GroupMembers {
         let mut admin_count = self.admin_count;
         let mut moderator_count = self.moderator_count;
 
-        let member = match self.get_by_user_id_mut(&user_id) {
+        let member = match self.get_mut(&user_id) {
             Some(p) => p,
             None => return ChangeRoleResult::UserNotInGroup,
         };
@@ -298,7 +248,7 @@ impl GroupMembers {
     }
 
     pub fn add_thread(&mut self, user_id: &UserId, root_message_index: MessageIndex) {
-        if let Some(p) = self.get_by_user_id_mut(user_id) {
+        if let Some(p) = self.get_mut(user_id) {
             p.threads.insert(root_message_index);
         }
     }

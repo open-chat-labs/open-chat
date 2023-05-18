@@ -19,24 +19,24 @@ fn edit_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     }
 
     let caller = runtime_state.env.caller();
-    if let Some(participant) = runtime_state.data.participants.get_by_principal(&caller) {
-        if participant.suspended.value {
+    if let Some(member) = runtime_state.data.get_member(caller) {
+        if member.suspended.value {
             return UserSuspended;
         }
 
         let now = runtime_state.env.now();
-        let sender = participant.user_id;
+        let sender = member.user_id;
 
         let edit_message_args = EditMessageArgs {
             sender,
-            min_visible_event_index: participant.min_visible_event_index(),
+            min_visible_event_index: member.min_visible_event_index(),
             thread_root_message_index: args.thread_root_message_index,
             message_id: args.message_id,
             content: args.content,
             now,
         };
 
-        match runtime_state.data.events.edit_message(edit_message_args) {
+        match runtime_state.data.group_chat_core.events.edit_message(edit_message_args) {
             EditMessageResult::Success => {
                 handle_activity_notification(runtime_state);
                 Success
