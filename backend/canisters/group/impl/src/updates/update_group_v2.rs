@@ -81,7 +81,7 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
     let avatar_update = args.avatar.as_ref().expand();
 
     if let Some(name) = &args.name {
-        if let Err(error) = validate_name(name, runtime_state.data.is_public) {
+        if let Err(error) = validate_name(name, runtime_state.data.group_chat_core.is_public) {
             return Err(match error {
                 NameValidationError::TooShort(s) => NameTooShort(s),
                 NameValidationError::TooLong(l) => NameTooLong(l),
@@ -109,25 +109,31 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
         return Err(AvatarTooBig(error));
     }
 
-    if let Some(participant) = runtime_state.data.participants.get_by_principal(&caller) {
-        if participant.suspended.value {
+    if let Some(member) = runtime_state.data.get_member(caller) {
+        if member.suspended.value {
             return Err(UserSuspended);
         }
 
-        let permissions = &runtime_state.data.permissions;
-        if !participant.role.can_update_group(permissions)
-            || (args.permissions.is_some() && !participant.role.can_change_permissions(permissions))
+        let permissions = &runtime_state.data.group_chat_core.permissions;
+        if !member.role.can_update_group(permissions)
+            || (args.permissions.is_some() && !member.role.can_change_permissions(permissions))
         {
             Err(NotAuthorized)
         } else {
             Ok(PrepareResult {
-                my_user_id: participant.user_id,
+                my_user_id: member.user_id,
                 group_index_canister_id: runtime_state.data.group_index_canister_id,
-                is_public: runtime_state.data.is_public,
+                is_public: runtime_state.data.group_chat_core.is_public,
                 chat_id: runtime_state.env.canister_id().into(),
-                name: args.name.as_ref().unwrap_or(&runtime_state.data.name).clone(),
-                description: args.description.as_ref().unwrap_or(&runtime_state.data.description).clone(),
-                avatar_id: avatar_update.map_or(Avatar::id(&runtime_state.data.avatar), |avatar| avatar.map(|a| a.id)),
+                name: args.name.as_ref().unwrap_or(&runtime_state.data.group_chat_core.name).clone(),
+                description: args
+                    .description
+                    .as_ref()
+                    .unwrap_or(&runtime_state.data.group_chat_core.description)
+                    .clone(),
+                avatar_id: avatar_update.map_or(Avatar::id(&runtime_state.data.group_chat_core.avatar), |avatar| {
+                    avatar.map(|a| a.id)
+                }),
             })
         }
     } else {
@@ -137,58 +143,60 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
 
 fn commit(my_user_id: UserId, args: Args, runtime_state: &mut RuntimeState) {
     let now = runtime_state.env.now();
-    let events = &mut runtime_state.data.events;
+    let events = &mut runtime_state.data.group_chat_core.events;
 
     if let Some(name) = args.name {
-        if runtime_state.data.name != name {
+        if runtime_state.data.group_chat_core.name != name {
             events.push_main_event(
                 ChatEventInternal::GroupNameChanged(Box::new(GroupNameChanged {
                     new_name: name.clone(),
-                    previous_name: runtime_state.data.name.clone(),
+                    previous_name: runtime_state.data.group_chat_core.name.clone(),
                     changed_by: my_user_id,
                 })),
                 args.correlation_id,
                 now,
             );
 
-            runtime_state.data.name = name;
+            runtime_state.data.group_chat_core.name = name;
         }
     }
 
     if let Some(description) = args.description {
-        if runtime_state.data.description != description {
+        if runtime_state.data.group_chat_core.description != description {
             events.push_main_event(
                 ChatEventInternal::GroupDescriptionChanged(Box::new(GroupDescriptionChanged {
                     new_description: description.clone(),
-                    previous_description: runtime_state.data.description.clone(),
+                    previous_description: runtime_state.data.group_chat_core.description.clone(),
                     changed_by: my_user_id,
                 })),
                 args.correlation_id,
                 now,
             );
 
-            runtime_state.data.description = description;
+            runtime_state.data.group_chat_core.description = description;
         }
     }
 
     if let Some(rules) = args.rules {
-        if runtime_state.data.rules.enabled != rules.enabled || runtime_state.data.rules.text != rules.text {
+        if runtime_state.data.group_chat_core.rules.enabled != rules.enabled
+            || runtime_state.data.group_chat_core.rules.text != rules.text
+        {
             events.push_main_event(
                 ChatEventInternal::GroupRulesChanged(Box::new(GroupRulesChanged {
                     enabled: rules.enabled,
-                    prev_enabled: runtime_state.data.rules.enabled,
+                    prev_enabled: runtime_state.data.group_chat_core.rules.enabled,
                     changed_by: my_user_id,
                 })),
                 args.correlation_id,
                 now,
             );
 
-            runtime_state.data.rules = rules;
+            runtime_state.data.group_chat_core.rules = rules;
         }
     }
 
     if let Some(avatar) = args.avatar.expand() {
-        let previous_avatar_id = Avatar::id(&runtime_state.data.avatar);
+        let previous_avatar_id = Avatar::id(&runtime_state.data.group_chat_core.avatar);
         let new_avatar_id = Avatar::id(&avatar);
 
         if new_avatar_id != previous_avatar_id {
@@ -202,16 +210,16 @@ fn commit(my_user_id: UserId, args: Args, runtime_state: &mut RuntimeState) {
                 now,
             );
 
-            runtime_state.data.avatar = avatar;
+            runtime_state.data.group_chat_core.avatar = avatar;
         }
     }
 
     if let Some(permissions) = args.permissions {
-        let old_permissions = runtime_state.data.permissions.clone();
+        let old_permissions = runtime_state.data.group_chat_core.permissions.clone();
         let new_permissions = merge_permissions(permissions, &old_permissions);
-        runtime_state.data.permissions = new_permissions.clone();
+        runtime_state.data.group_chat_core.permissions = new_permissions.clone();
 
-        runtime_state.data.events.push_main_event(
+        runtime_state.data.group_chat_core.events.push_main_event(
             ChatEventInternal::PermissionsChanged(Box::new(PermissionsChanged {
                 old_permissions,
                 new_permissions,
@@ -223,19 +231,20 @@ fn commit(my_user_id: UserId, args: Args, runtime_state: &mut RuntimeState) {
     }
 
     if let Some(new_events_ttl) = args.events_ttl.expand() {
-        if new_events_ttl != runtime_state.data.events.get_events_time_to_live().value {
+        if new_events_ttl != runtime_state.data.group_chat_core.events.get_events_time_to_live().value {
             runtime_state
                 .data
+                .group_chat_core
                 .events
                 .set_events_time_to_live(my_user_id, new_events_ttl, now);
         }
     }
 
     if let Some(gate) = args.gate.expand() {
-        if runtime_state.data.gate.value != gate {
-            runtime_state.data.gate = Timestamped::new(gate.clone(), now);
+        if runtime_state.data.group_chat_core.gate.value != gate {
+            runtime_state.data.group_chat_core.gate = Timestamped::new(gate.clone(), now);
 
-            runtime_state.data.events.push_main_event(
+            runtime_state.data.group_chat_core.events.push_main_event(
                 ChatEventInternal::GroupGateUpdated(Box::new(GroupGateUpdated {
                     updated_by: my_user_id,
                     new_gate: gate,

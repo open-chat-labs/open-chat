@@ -9,30 +9,32 @@ fn selected_initial(_args: Args) -> Response {
 
 fn selected_initial_impl(runtime_state: &RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
-    if let Some(participant) = runtime_state.data.participants.get(caller) {
+    if let Some(member) = runtime_state.data.get_member(caller) {
         let now = runtime_state.env.now();
-        let min_visible_message_index = participant.min_visible_message_index();
-        let participants = &runtime_state.data.participants;
+        let min_visible_message_index = member.min_visible_message_index();
+        let members = &runtime_state.data.group_chat_core.members;
 
         Success(SuccessResult {
             timestamp: now,
             latest_event_index: runtime_state
                 .data
+                .group_chat_core
                 .events
                 .main_events_reader(now)
                 .latest_event_index()
                 .unwrap_or_default(),
-            participants: participants.iter().map(|p| p.into()).collect(),
-            blocked_users: participants.blocked(),
+            participants: members.iter().map(|p| p.into()).collect(),
+            blocked_users: members.blocked(),
             invited_users: runtime_state.data.invited_users.users(),
             pinned_messages: runtime_state
                 .data
+                .group_chat_core
                 .pinned_messages
                 .iter()
                 .filter(|&m| *m >= min_visible_message_index)
                 .copied()
                 .collect(),
-            rules: runtime_state.data.rules.clone(),
+            rules: runtime_state.data.group_chat_core.rules.clone(),
         })
     } else {
         CallerNotInGroup

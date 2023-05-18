@@ -77,11 +77,11 @@ async fn generate_code() -> u64 {
 fn record_event(caller: Principal, change: GroupInviteCodeChange, correlation_id: u64, runtime_state: &mut RuntimeState) {
     let now = runtime_state.env.now();
 
-    if let Some(participant) = runtime_state.data.participants.get_by_principal(&caller) {
-        runtime_state.data.events.push_main_event(
+    if let Some(member) = runtime_state.data.get_member(caller) {
+        runtime_state.data.group_chat_core.events.push_main_event(
             ChatEventInternal::GroupInviteCodeChanged(Box::new(GroupInviteCodeChanged {
                 change,
-                changed_by: participant.user_id,
+                changed_by: member.user_id,
             })),
             correlation_id,
             now,
@@ -103,12 +103,12 @@ fn prepare(runtime_state: &RuntimeState) -> Result<PrepareResult, Response> {
     }
 
     let caller = runtime_state.env.caller();
-    if let Some(participant) = runtime_state.data.participants.get_by_principal(&caller) {
-        if participant.suspended.value {
+    if let Some(member) = runtime_state.data.get_member(caller) {
+        if member.suspended.value {
             return Err(UserSuspended);
         }
 
-        if participant.role.can_invite_users(&runtime_state.data.permissions) {
+        if member.role.can_invite_users(&runtime_state.data.group_chat_core.permissions) {
             return Ok(PrepareResult {
                 caller,
                 code: runtime_state.data.invite_code,

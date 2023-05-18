@@ -16,12 +16,17 @@ fn create_group(args: Args) -> Response {
 fn create_group_impl(args: Args, state: &mut RuntimeState) -> Response {
     let caller = state.env.caller();
     if let Some(member) = state.data.members.get(caller) {
+        if member.suspended.value {
+            return UserSuspended;
+        }
+
         let is_authorized = if args.is_public {
             member.role.can_create_public_group(&state.data.permissions)
         } else {
             member.role.can_create_private_group(&state.data.permissions)
         };
-        if is_authorized {
+
+        if !is_authorized {
             NotAuthorized
         } else if let Err(error) = validate_name(&args.name, args.is_public) {
             match error {
@@ -46,6 +51,7 @@ fn create_group_impl(args: Args, state: &mut RuntimeState) -> Response {
                 args.rules,
                 args.history_visible_to_new_joiners,
                 args.events_ttl,
+                args.gate,
                 state.env.now(),
             );
             state.data.groups.add(group_id, group);

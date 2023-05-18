@@ -18,7 +18,7 @@ fn c2c_unfreeze_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Resp
     if runtime_state.data.frozen.is_some() {
         let now = runtime_state.env.now();
 
-        let push_event_result = runtime_state.data.events.unfreeze(args.caller, now);
+        let push_event_result = runtime_state.data.group_chat_core.events.unfreeze(args.caller, now);
         runtime_state.data.frozen = Timestamped::new(None, now);
 
         handle_activity_notification(runtime_state);

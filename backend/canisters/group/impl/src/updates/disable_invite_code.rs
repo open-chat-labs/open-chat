@@ -20,19 +20,20 @@ fn disable_invite_code_impl(args: Args, runtime_state: &mut RuntimeState) -> Res
     }
 
     let caller = runtime_state.env.caller();
-    if let Some(participant) = runtime_state.data.participants.get_by_principal(&caller) {
-        if participant.suspended.value {
+    if let Some(member) = runtime_state.data.get_member(caller) {
+        if member.suspended.value {
             return UserSuspended;
         }
 
-        if participant.role.can_invite_users(&runtime_state.data.permissions) {
+        if member.role.can_invite_users(&runtime_state.data.group_chat_core.permissions) {
+            let user_id = member.user_id;
             runtime_state.data.invite_code_enabled = false;
 
             let now = runtime_state.env.now();
-            runtime_state.data.events.push_main_event(
+            runtime_state.data.group_chat_core.events.push_main_event(
                 ChatEventInternal::GroupInviteCodeChanged(Box::new(GroupInviteCodeChanged {
                     change: GroupInviteCodeChange::Disabled,
-                    changed_by: participant.user_id,
+                    changed_by: user_id,
                 })),
                 args.correlation_id,
                 now,

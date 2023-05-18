@@ -2,7 +2,7 @@ use chat_events::ChatEvents;
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::{HashMap, HashSet};
-use types::{CommunityGroupId, GroupRules, Milliseconds, TimestampMillis, UserId};
+use types::{CommunityGroupId, GroupGate, GroupRules, Milliseconds, TimestampMillis, UserId};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct Groups {
@@ -17,6 +17,10 @@ impl Groups {
             _ => unreachable!(),
         };
     }
+
+    pub fn get_mut(&mut self, group_id: &CommunityGroupId) -> Option<&mut Group> {
+        self.groups.get_mut(group_id)
+    }
 }
 
 #[derive(Serialize, Deserialize)]
@@ -28,6 +32,7 @@ pub struct Group {
     pub history_visible_to_new_joiners: bool,
     pub created: TimestampMillis,
     pub events: ChatEvents,
+    pub gate: Option<GroupGate>,
 }
 
 impl Group {
@@ -39,6 +44,7 @@ impl Group {
         rules: GroupRules,
         history_visible_to_new_joiners: bool,
         events_ttl: Option<Milliseconds>,
+        gate: Option<GroupGate>,
         now: TimestampMillis,
     ) -> Group {
         let events = ChatEvents::new_group_chat(name.clone(), description.clone(), created_by, events_ttl, now);
@@ -51,6 +57,7 @@ impl Group {
             history_visible_to_new_joiners,
             created: now,
             events,
+            gate,
         }
     }
 }

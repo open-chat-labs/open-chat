@@ -2380,6 +2380,7 @@ dependencies = [
  "futures",
  "gated_groups",
  "group_canister",
+ "group_chat_core",
  "group_index_canister",
  "group_index_canister_c2c_client",
  "group_members",
@@ -2413,6 +2414,17 @@ dependencies = [
  "user_index_canister",
  "user_index_canister_c2c_client",
  "utils",
+]
+
+[[package]]
+name = "group_chat_core"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "chat_events",
+ "group_members",
+ "serde",
+ "types",
 ]
 
 [[package]]

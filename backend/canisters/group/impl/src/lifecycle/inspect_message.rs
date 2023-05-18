@@ -18,8 +18,8 @@ fn accept_if_valid(runtime_state: &RuntimeState) {
     }
 
     let caller = runtime_state.env.caller();
-    let permissions = &runtime_state.data.permissions;
-    let is_valid = if let Some(role) = runtime_state.data.participants.get_by_principal(&caller).map(|p| p.role) {
+    let permissions = &runtime_state.data.group_chat_core.permissions;
+    let is_valid = if let Some(role) = runtime_state.data.get_member(caller).map(|p| p.role) {
         match method_name.as_str() {
             "add_reaction" | "remove_reaction" => role.can_react_to_messages(permissions),
             "block_user" => role.can_block_users(permissions),
