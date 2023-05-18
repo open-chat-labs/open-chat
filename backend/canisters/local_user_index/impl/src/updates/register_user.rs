@@ -232,7 +232,6 @@ fn welcome_messages() -> Vec<String> {
         "\
 - To follow announcements by the OpenChat team, join [Announcements](/kvvn5-aiaaa-aaaaf-aqznq-cai).
 - To ask for help, join [OpenChat Help](/4stss-vaaaa-aaaar-amjda-cai).
-- To follow software updates, join [OpenChat Updates](/eucat-raaaa-aaaaf-adn7q-cai).
 - To request new features, join [Feature Requests](/vfaj4-zyaaa-aaaaf-aabya-cai).
 - To report bugs, join [Bug Reports](/sycha-wyaaa-aaaaf-aabka-cai).
 - To provide feedback in general, join the [Product Feedback](/s7dbu-3aaaa-aaaaf-aabkq-cai).
