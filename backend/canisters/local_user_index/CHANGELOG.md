@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.700](https://github.com/open-ic/open-chat/releases/tag/v2.0.700-local_user_index)] - 2023-05-18
+
 ### Added
 
 - Send ckBTC to the SatoshiDice bot for Bitcoin Miami ([#3616](https://github.com/open-ic/open-chat/pull/3616))
