@@ -3,7 +3,7 @@ use crate::{mutate_state, read_state, RuntimeState};
 use candid::Principal;
 use ic_base_types::PrincipalId;
 use ic_cdk_timers::TimerId;
-use ic_icrc1::endpoints::TransferArg;
+use ic_icrc1::endpoints::{TransferArg, TransferError};
 use ic_icrc1::Account;
 use ic_ledger_types::Tokens;
 use ledger_utils::sns::transaction_hash;
@@ -95,7 +95,7 @@ async fn process_action(action: Action) {
             };
             let transaction_hash = transaction_hash(from.clone(), &args);
 
-            match ledger_client.transfer(args).await {
+            match ledger_client.transfer(args.clone()).await {
                 Ok(Ok(block_index)) => {
                     if send_oc_message {
                         mutate_state(|state| {
@@ -124,8 +124,18 @@ async fn process_action(action: Action) {
                         });
                     }
                 }
+                Ok(Err(TransferError::InsufficientFunds { balance })) => {
+                    error!(?args, ?balance, "Failed to transfer ckBTC, insufficient funds");
+                    mutate_state(|state| {
+                        state.enqueue_pending_action(Action::TransferCkbtc(TransferCkbtc {
+                            user_id,
+                            amount: balance.0.try_into().unwrap(),
+                            send_oc_message,
+                        }))
+                    })
+                }
                 error => {
-                    error!(?error, "Failed to transfer ckBTC");
+                    error!(?args, ?error, "Failed to transfer ckBTC");
                     mutate_state(|state| state.enqueue_pending_action(action))
                 }
             }
