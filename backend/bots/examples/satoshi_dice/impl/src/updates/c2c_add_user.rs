@@ -29,10 +29,10 @@ fn welcome_messages() -> Vec<&'static str> {
         "Hey there! I am the SatoshiDice chatbot!",
         "I am here to help you experiment with sending ckBTC as a chat message",
         "How to play:
-- Send me up to 0.0001 ckBTC in a single message ✉️
-- Wait a few moments 🕰️ 
-- I’ll send your ckBTC back with a surprise bonus on top! 🎉 
-- Only send me ckBTC ❗",
+✉️ Send me up to 0.0001 ckBTC in a single message
+❗ Only send me ckBTC
+🕰️ Wait a few moments 
+🎉 I’ll send your ckBTC back with a surprise bonus on top!",
         "Start playing now! 🎲",
     ]
 }
