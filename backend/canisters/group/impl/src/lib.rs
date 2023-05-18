@@ -334,15 +334,15 @@ impl Data {
         }
     }
 
+    pub fn is_frozen(&self) -> bool {
+        self.frozen.is_some()
+    }
+
     pub fn is_accessible(&self, caller: Principal, invite_code: Option<u64>) -> bool {
         self.is_public
             || self.participants.get_by_principal(&caller).is_some()
             || self.invited_users.get(&caller).is_some()
             || self.is_invite_code_valid(invite_code)
-    }
-
-    pub fn is_frozen(&self) -> bool {
-        self.frozen.is_some()
     }
 
     fn is_invite_code_valid(&self, invite_code: Option<u64>) -> bool {

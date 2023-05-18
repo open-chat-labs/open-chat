@@ -1,7 +1,7 @@
 use candid::{Deserialize, Principal};
 use serde::Serialize;
 use std::collections::HashMap;
-use types::{TimestampMillis, UserId};
+use types::{CommunityGroupId, EventIndex, MessageIndex, TimestampMillis, UserId};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct InvitedUsers {
@@ -14,6 +14,14 @@ pub struct UserInvitation {
     pub invited: UserId,
     pub invited_by: UserId,
     pub timestamp: TimestampMillis,
+    pub group: Option<GroupInvitation>,
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct GroupInvitation {
+    pub group: CommunityGroupId,
+    pub min_visible_event_index: EventIndex,
+    pub min_visible_message_index: MessageIndex,
 }
 
 impl InvitedUsers {

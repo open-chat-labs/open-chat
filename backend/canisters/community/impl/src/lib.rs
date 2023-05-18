@@ -2,12 +2,12 @@ use crate::model::groups::Groups;
 use crate::model::members::CommunityMembers;
 use candid::Principal;
 use canister_state_macros::canister_state;
-use model::{events::CommunityEvents, invited_users::InvitedUsers};
+use model::{events::CommunityEvents, invited_users::InvitedUsers, members::CommunityMemberInternal};
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use types::{
-    Avatar, CanisterId, CommunityPermissions, Cycles, FrozenGroupInfo, GroupGate, GroupRules, TimestampMillis, Timestamped,
-    UserId, Version,
+    Avatar, CanisterId, CommunityPermissions, CommunitySummary, Cycles, FrozenGroupInfo, GroupGate, GroupRules,
+    TimestampMillis, Timestamped, UserId, Version,
 };
 use utils::env::Environment;
 
@@ -49,6 +49,26 @@ impl RuntimeState {
 
     pub fn is_caller_local_group_index(&self) -> bool {
         self.env.caller() == self.data.local_group_index_canister_id
+    }
+
+    pub fn summary(&self, member: &CommunityMemberInternal, now: TimestampMillis) -> CommunitySummary {
+        let data = &self.data;
+
+        CommunitySummary {
+            community_id: self.env.canister_id().into(),
+            last_updated: now,
+            name: data.name.clone(),
+            description: data.description.clone(),
+            avatar_id: Avatar::id(&data.avatar),
+            is_public: data.is_public,
+            latest_event_index: data.events.latest_event_index(),
+            joined: member.date_added,
+            member_count: data.members.len(),
+            role: member.role,
+            permissions: data.permissions.clone(),
+            frozen: data.frozen.value.clone(),
+            gate: data.gate.value.clone(),
+        }
     }
 
     pub fn metrics(&self) -> Metrics {
@@ -110,6 +130,7 @@ impl Data {
         now: TimestampMillis,
     ) -> Data {
         let members = CommunityMembers::new(created_by_principal, created_by_user_id, now);
+        let events = CommunityEvents::new(name.clone(), description.clone(), created_by_user_id, now);
 
         Data {
             is_public,
@@ -128,7 +149,7 @@ impl Data {
             date_created: now,
             members,
             groups: Groups::default(),
-            events: CommunityEvents::default(),
+            events,
             invited_users: InvitedUsers::default(),
             invite_code: None,
             invite_code_enabled: false,
@@ -139,6 +160,25 @@ impl Data {
 
     pub fn is_frozen(&self) -> bool {
         self.frozen.is_some()
+    }
+
+    pub fn is_accessible(&self, caller: Principal, invite_code: Option<u64>) -> bool {
+        self.is_public
+            || self.members.get(caller).is_some()
+            || self.invited_users.get(&caller).is_some()
+            || self.is_invite_code_valid(invite_code)
+    }
+
+    fn is_invite_code_valid(&self, invite_code: Option<u64>) -> bool {
+        if self.invite_code_enabled {
+            if let Some(provided_code) = invite_code {
+                if let Some(stored_code) = self.invite_code {
+                    return provided_code == stored_code;
+                }
+            }
+        }
+
+        false
     }
 }
 

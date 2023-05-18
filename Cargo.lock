@@ -1260,6 +1260,7 @@ dependencies = [
  "canister_tracing_macros",
  "chat_events",
  "community_canister",
+ "gated_groups",
  "group_index_canister",
  "group_index_canister_c2c_client",
  "http_request",

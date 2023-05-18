@@ -4,6 +4,8 @@ use std::collections::hash_map::Entry::Vacant;
 use std::collections::{HashMap, HashSet};
 use types::{CommunityPermissions, CommunityRole, TimestampMillis, Timestamped, UserId};
 
+const MAX_MEMBERS_PER_COMMUNITY: u32 = 100_000;
+
 #[derive(Serialize, Deserialize)]
 pub struct CommunityMembers {
     by_principal: HashMap<Principal, CommunityMemberInternal>,
@@ -49,7 +51,7 @@ impl CommunityMembers {
                     self.user_id_to_principal_map.insert(user_id, principal);
                     AddResult::Success(member)
                 }
-                _ => AddResult::AlreadyInGroup,
+                _ => AddResult::AlreadyInCommunity,
             }
         }
     }
@@ -121,6 +123,26 @@ impl CommunityMembers {
         ChangeRoleResult::Success(ChangeRoleSuccessResult { caller_id, prev_role })
     }
 
+    pub fn block(&mut self, user_id: UserId) {
+        self.blocked.insert(user_id);
+    }
+
+    pub fn unblock(&mut self, user_id: &UserId) -> bool {
+        self.blocked.remove(user_id)
+    }
+
+    pub fn user_limit_reached(&self) -> Option<u32> {
+        if self.by_principal.len() >= MAX_MEMBERS_PER_COMMUNITY as usize {
+            Some(MAX_MEMBERS_PER_COMMUNITY)
+        } else {
+            None
+        }
+    }
+
+    pub fn is_blocked(&self, user_id: &UserId) -> bool {
+        self.blocked.contains(user_id)
+    }
+
     pub fn get(&self, user_id_or_principal: Principal) -> Option<&CommunityMemberInternal> {
         let principal = self
             .user_id_to_principal_map
@@ -137,6 +159,10 @@ impl CommunityMembers {
             .unwrap_or(&user_id_or_principal);
 
         self.by_principal.get_mut(principal)
+    }
+
+    pub fn len(&self) -> u32 {
+        self.by_principal.len() as u32
     }
 
     pub fn owner_count(&self) -> u32 {
@@ -160,7 +186,7 @@ pub struct CommunityMemberInternal {
 #[allow(clippy::large_enum_variant)]
 pub enum AddResult {
     Success(CommunityMemberInternal),
-    AlreadyInGroup,
+    AlreadyInCommunity,
     Blocked,
 }
 
