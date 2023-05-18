@@ -56,6 +56,22 @@ impl CommunityMembers {
         }
     }
 
+    pub fn remove(&mut self, user_id: UserId) -> Option<CommunityMemberInternal> {
+        if let Some(principal) = self.user_id_to_principal_map.remove(&user_id) {
+            if let Some(member) = self.by_principal.remove(&principal) {
+                match member.role {
+                    CommunityRole::Owner => self.owner_count -= 1,
+                    CommunityRole::Admin => self.admin_count -= 1,
+                    _ => (),
+                }
+
+                return Some(member);
+            }
+        }
+
+        None
+    }
+
     pub fn change_role(
         &mut self,
         caller_id: UserId,
