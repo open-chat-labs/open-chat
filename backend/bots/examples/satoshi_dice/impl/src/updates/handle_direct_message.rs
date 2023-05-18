@@ -25,7 +25,7 @@ fn handle_message(args: Args, state: &mut RuntimeState) -> Response {
         if sats > MAX_SATS_PER_ROLL {
             messages.push("❗️I only accept messages with up to 0.0001 ckBTC".to_string());
             messages.push("Please wait a moment while I refund your ckBTC 🕰".to_string());
-            send_ckbtc_message(user_id, sats.saturating_sub(2 * CKBTC_FEE), state);
+            send_ckbtc_message(user_id, sats + CKBTC_FEE, state);
         } else {
             match state.data.users.time_until_next_roll_permitted(&user_id, now) {
                 Some(0) => {
