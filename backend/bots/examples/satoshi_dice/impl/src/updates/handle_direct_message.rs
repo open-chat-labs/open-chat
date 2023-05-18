@@ -56,7 +56,7 @@ fn handle_message(args: Args, state: &mut RuntimeState) -> Response {
                     ));
                     messages.push("Please wait a moment while I refund your ckBTC 🕰️".to_string());
 
-                    send_ckbtc_message(user_id, sats.saturating_sub(2 * CKBTC_FEE), state);
+                    send_ckbtc_message(user_id, sats + CKBTC_FEE, state);
                 }
                 None => {
                     messages.push("User not recognized, please wait a moment while I refund your ckBTC".to_string());
