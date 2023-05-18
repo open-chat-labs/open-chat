@@ -1,113 +1,95 @@
 <script lang="ts">
-    import Hamburger from "svelte-material-icons/Menu.svelte";
-    import AccountMultiplePlus from "svelte-material-icons/AccountMultiplePlus.svelte";
-    import Home from "svelte-material-icons/Home.svelte";
     import Avatar from "../Avatar.svelte";
-    import Cogs from "svelte-material-icons/Cogs.svelte";
-    import Wallet from "svelte-material-icons/WalletOutline.svelte";
-    import Logout from "svelte-material-icons/Logout.svelte";
-    import HoverIcon from "../HoverIcon.svelte";
-    import HelpCircleOutline from "svelte-material-icons/HelpCircleOutline.svelte";
     import MenuIcon from "../MenuIcon.svelte";
-    import Menu from "../Menu.svelte";
-    import MenuItem from "../MenuItem.svelte";
+    import Kebab from "svelte-material-icons/DotsVertical.svelte";
+    import Wallet from "svelte-material-icons/WalletOutline.svelte";
+    import Hamburger from "svelte-material-icons/Menu.svelte";
+    import HoverIcon from "../HoverIcon.svelte";
     import { _ } from "svelte-i18n";
     import { createEventDispatcher, getContext } from "svelte";
     import { rtlStore } from "../../stores/rtl";
     import { iconSize } from "../../stores/iconSize";
     import { AvatarSize, OpenChat, PartialUserSummary } from "openchat-client";
     import SectionHeader from "../SectionHeader.svelte";
-    import page from "page";
+    import CurrentUserMenu from "./CurrentUserMenu.svelte";
+    import { communitiesEnabled } from "utils/features";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
     export let user: PartialUserSummary;
-
-    $: canExtendDiamond = client.canExtendDiamond;
-
-    function newGroup() {
-        dispatch("newGroup");
-    }
 </script>
 
-<SectionHeader border={false}>
-    <div class="current-user" class:rtl={$rtlStore} on:click={() => dispatch("profile")}>
-        <div class="avatar">
-            <Avatar
-                url={client.userAvatarUrl(user)}
-                userId={user.userId}
-                size={AvatarSize.Default} />
+{#if communitiesEnabled}
+    <SectionHeader border={false}>
+        <div class="current-user" class:rtl={$rtlStore}>
+            <div class="avatar">
+                <Avatar
+                    url={"../assets/unknownUserAvatar.svg"}
+                    userId={undefined}
+                    size={AvatarSize.Default} />
+            </div>
+            <h4 class="name">{"OpenChat community"}</h4>
         </div>
-        <h4 class:diamond={user.diamond} class="name">{user.username}</h4>
-    </div>
-    <span on:click={() => dispatch("wallet")}>
-        <HoverIcon>
-            <Wallet size={$iconSize} color={"var(--icon-txt)"} />
-        </HoverIcon>
-    </span>
-    <span class="menu">
-        <MenuIcon>
-            <span slot="icon">
-                <HoverIcon>
-                    <Hamburger size={$iconSize} color={"var(--icon-txt)"} />
-                </HoverIcon>
-            </span>
-            <span slot="menu">
-                <Menu>
-                    <MenuItem on:click={() => dispatch("showHomePage")}>
-                        <Home size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-                        <span slot="text">{$_("homepage")}</span>
-                    </MenuItem>
-                    {#if !client.isReadOnly()}
-                        <MenuItem on:click={newGroup}>
-                            <AccountMultiplePlus
-                                size={$iconSize}
-                                color={"var(--icon-inverted-txt)"}
-                                slot="icon" />
-                            <span slot="text">{$_("newGroup")}</span>
-                        </MenuItem>
-                    {/if}
-                    <MenuItem on:click={() => dispatch("whatsHot")}>
-                        <span class="flame" slot="icon">🔥</span>
-                        <span slot="text">{$_("whatsHot")}</span>
-                    </MenuItem>
-                    <MenuItem on:click={() => dispatch("halloffame")}>
-                        <span class="halloffame" slot="icon">👑</span>
-                        <span slot="text">{$_("halloffame.menu")}</span>
-                    </MenuItem>
-                    <MenuItem on:click={() => dispatch("upgrade")}>
-                        <span class="diamond-icon" slot="icon">💎</span>
-                        <span slot="text"
-                            >{$canExtendDiamond
-                                ? $_("upgrade.extend")
-                                : $_("upgrade.diamond")}</span>
-                    </MenuItem>
-                    <MenuItem on:click={() => dispatch("profile")}>
-                        <Cogs size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-                        <span slot="text">{$_("profile.title")}</span>
-                    </MenuItem>
-                    <MenuItem on:click={() => dispatch("wallet")}>
-                        <Wallet size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-                        <span slot="text">{$_("wallet")}</span>
-                    </MenuItem>
-                    <MenuItem on:click={() => page("/faq")}>
-                        <HelpCircleOutline
-                            size={$iconSize}
-                            color={"var(--icon-inverted-txt)"}
-                            slot="icon" />
-                        <span slot="text">{$_("faq.menu")}</span>
-                    </MenuItem>
-                    <MenuItem separator />
-                    <MenuItem on:click={() => dispatch("logout")}>
-                        <Logout size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-                        <span slot="text">{$_("logout")}</span>
-                    </MenuItem>
-                </Menu>
-            </span>
-        </MenuIcon>
-    </span>
-</SectionHeader>
+        <span class="menu">
+            <MenuIcon>
+                <span slot="icon">
+                    <HoverIcon>
+                        <Kebab size={$iconSize} color={"var(--icon-txt)"} />
+                    </HoverIcon>
+                </span>
+                <span slot="menu">
+                    <CurrentUserMenu
+                        on:halloffame
+                        on:logout
+                        on:newGroup
+                        on:profile
+                        on:showHomePage
+                        on:upgrade
+                        on:wallet
+                        on:whatsHot />
+                </span>
+            </MenuIcon>
+        </span>
+    </SectionHeader>
+{:else}
+    <SectionHeader border={false}>
+        <div class="current-user" class:rtl={$rtlStore} on:click={() => dispatch("profile")}>
+            <div class="avatar">
+                <Avatar
+                    url={client.userAvatarUrl(user)}
+                    userId={user.userId}
+                    size={AvatarSize.Default} />
+            </div>
+            <h4 class:diamond={user.diamond} class="name">{user.username}</h4>
+        </div>
+        <span on:click={() => dispatch("wallet")}>
+            <HoverIcon>
+                <Wallet size={$iconSize} color={"var(--icon-txt)"} />
+            </HoverIcon>
+        </span>
+        <span class="menu">
+            <MenuIcon>
+                <span slot="icon">
+                    <HoverIcon>
+                        <Hamburger size={$iconSize} color={"var(--icon-txt)"} />
+                    </HoverIcon>
+                </span>
+                <span slot="menu">
+                    <CurrentUserMenu
+                        on:halloffame
+                        on:logout
+                        on:newGroup
+                        on:profile
+                        on:showHomePage
+                        on:upgrade
+                        on:wallet
+                        on:whatsHot />
+                </span>
+            </MenuIcon>
+        </span>
+    </SectionHeader>
+{/if}
 
 <style type="text/scss">
     :global(.current-user .photo-section) {
@@ -118,12 +100,6 @@
     :global(.current-user.rtl .photo-section) {
         margin-left: $sp4;
         margin-right: 0;
-    }
-
-    .flame,
-    .halloffame,
-    .diamond-icon {
-        @include font(bold, normal, fs-110);
     }
 
     .current-user {
@@ -137,11 +113,6 @@
             padding: 0 $sp3;
         }
     }
-
-    .menu {
-        cursor: pointer;
-    }
-
     .diamond {
         @include diamond();
     }

@@ -14,7 +14,15 @@
 
 {#if communitiesEnabled}
     <Panel nav>
-        <LeftNav />
+        <LeftNav
+            on:profile
+            on:wallet
+            on:halloffame
+            on:logout
+            on:newGroup
+            on:showHomePage
+            on:upgrade
+            on:whatsHot />
     </Panel>
 {/if}
 

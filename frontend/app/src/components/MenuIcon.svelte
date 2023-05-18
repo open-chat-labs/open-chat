@@ -8,6 +8,8 @@
     let menu: HTMLElement;
     let contextMenu: HTMLElement;
 
+    $: open = $menuStore === contextMenu;
+
     onDestroy(closeMenu);
 
     async function showMenu(e: MouseEvent): Promise<void> {
@@ -26,13 +28,13 @@
     }
 </script>
 
-<div class="menu-icon" bind:this={menu} on:click|stopPropagation={showMenu}>
+<div class:open class="menu-icon" bind:this={menu} on:click|stopPropagation={showMenu}>
     <slot name="icon" />
 </div>
 
 <div class="menu-blueprint">
     <span class="menu" bind:this={contextMenu} on:click|stopPropagation={closeMenu}>
-        {#if $menuStore === contextMenu}
+        {#if open}
             <slot name="menu" />
         {/if}
     </span>
@@ -42,6 +44,10 @@
 <svelte:window on:resize={closeMenu} on:orientationchange={closeMenu} />
 
 <style type="text/scss">
+    :global(.menu-icon.open path) {
+        fill: var(--icon-selected);
+    }
+
     .menu {
         position: absolute;
     }

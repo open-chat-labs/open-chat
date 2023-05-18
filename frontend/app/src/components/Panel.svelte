@@ -77,7 +77,9 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: space-between;
             flex: 0 0 toRem(80);
+            gap: $sp4;
             background: var(--panel-left-bg);
             padding: $sp4 0;
             border-right: 1px solid var(--bd);

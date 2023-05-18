@@ -12,6 +12,7 @@
     export let longPressed: boolean = false;
     export let enableLongPress: boolean = false;
     export let coords: { x: number; y: number } = { x: 0, y: 0 };
+    export let fill = false;
 
     let containerDiv: HTMLDivElement;
     let hoverTimer: number | undefined;
@@ -100,9 +101,13 @@
             });
         }
     });
+
+    export function getBoundingClientRect() {
+        return containerDiv.getBoundingClientRect();
+    }
 </script>
 
-<div class="noselect" bind:this={containerDiv}>
+<div class:fill class="noselect" bind:this={containerDiv}>
     <slot />
 </div>
 
@@ -114,5 +119,10 @@
         -moz-user-select: none; // Old versions of Firefox
         -ms-user-select: none; // Internet Explorer/Edge
         user-select: none; // Non-prefixed version, currently supported by Chrome, Edge, Opera and Firefox
+
+        &.fill {
+            width: 100%;
+            text-align: center;
+        }
     }
 </style>
