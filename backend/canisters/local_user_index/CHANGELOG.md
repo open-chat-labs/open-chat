@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Send ckBTC to the SatoshiDice bot for Bitcoin Miami ([#3616](https://github.com/open-ic/open-chat/pull/3616))
+
 ### Changed
 
 - Join users to groups via the UserIndex rather than directly ([#3613](https://github.com/open-ic/open-chat/pull/3613))
