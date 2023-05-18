@@ -5,6 +5,7 @@
     import HoverIcon from "../../HoverIcon.svelte";
     import HeartOutline from "svelte-material-icons/HeartOutline.svelte";
     import Plus from "svelte-material-icons/Plus.svelte";
+    import Compass from "svelte-material-icons/CompassOutline.svelte";
     import Wallet from "svelte-material-icons/WalletOutline.svelte";
     import Hamburger from "svelte-material-icons/Menu.svelte";
     import TooltipWrapper from "../../TooltipWrapper.svelte";
@@ -49,6 +50,10 @@
 
     function createCommunity() {
         console.log("create community");
+    }
+
+    function exploreCommunities() {
+        console.log("explore communities");
     }
 
     function directChats() {
@@ -134,6 +139,16 @@
             </TooltipPopup>
         </div>
     </TooltipWrapper>
+    <TooltipWrapper gutter={-6} fill position="right" align={"center"}>
+        <div slot="target" on:click={exploreCommunities} class="hover explore">
+            <Compass size={$iconSize} color={"var(--icon-txt)"} />
+        </div>
+        <div slot="tooltip" let:position let:align>
+            <TooltipPopup {position} {align}>
+                {"Explore communities"}
+            </TooltipPopup>
+        </div>
+    </TooltipWrapper>
 </div>
 
 <div class="bottom">
@@ -202,6 +217,9 @@
             gap: $sp4;
         }
     }
+    .bottom {
+        gap: $sp3;
+    }
     .hover {
         cursor: pointer;
         text-align: center;
@@ -224,7 +242,7 @@
 
     .plus,
     .explore {
-        margin: toRem(12) auto;
+        margin: toRem(6) auto;
         width: toRem(48);
         height: toRem(48);
         border: 2px solid transparent;
@@ -234,6 +252,11 @@
         align-items: center;
         justify-content: center;
         transition: border-color 250ms ease-in-out;
+
+        @include mobile() {
+            width: toRem(35);
+            height: toRem(35);
+        }
 
         &:hover {
             border-color: var(--icon-selected);

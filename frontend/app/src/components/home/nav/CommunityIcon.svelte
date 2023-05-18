@@ -33,8 +33,12 @@
     .hover {
         cursor: pointer;
         text-align: center;
-        padding: toRem(12) 0;
+        padding: toRem(10) 0;
         transition: background-color 250ms ease-in-out;
+
+        @include mobile() {
+            padding: toRem(6) 0;
+        }
 
         &.selected {
             background-color: var(--chatSummary-bg-selected);
