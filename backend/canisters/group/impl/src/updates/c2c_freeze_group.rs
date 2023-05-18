@@ -8,7 +8,7 @@ use types::{EventWrapper, FrozenGroupInfo, GroupFrozen, Timestamped};
 
 #[update_msgpack(guard = "caller_is_group_index_or_local_group_index")]
 #[trace]
-async fn c2c_freeze_group(args: Args) -> Response {
+fn c2c_freeze_group(args: Args) -> Response {
     run_regular_jobs();
 
     mutate_state(|state| c2c_freeze_group_impl(args, state))
