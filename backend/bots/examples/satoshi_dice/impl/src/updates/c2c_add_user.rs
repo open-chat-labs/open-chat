@@ -27,7 +27,7 @@ pub(crate) fn c2c_add_user_impl(user_id: UserId, state: &mut RuntimeState) -> Re
 fn welcome_messages() -> Vec<&'static str> {
     vec![
         "Hey there! I am the SatoshiDice chatbot!",
-        "I am here to help you experiment with sending ckBTC as a chat message.",
+        "I am here to help you experiment with sending ckBTC as a chat message",
         "How to play:
 - ✉️ Send me up to 0.0001 ckBTC in a single message
 - 🕰️ Wait a few moments 

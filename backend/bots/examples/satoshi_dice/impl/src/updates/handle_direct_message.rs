@@ -23,10 +23,8 @@ fn handle_message(args: Args, state: &mut RuntimeState) -> Response {
         let now = state.env.now();
 
         if sats > MAX_SATS_PER_ROLL {
-            messages.push(
-                "The limit per roll is 10k SATS, so this roll won't count, please wait a moment while I refund your ckBTC"
-                    .to_string(),
-            );
+            messages.push("❗️I only accept messages with up to 0.0001 ckBTC".to_string());
+            messages.push("Please wait a moment while I refund your ckBTC 🕰".to_string());
             send_ckbtc_message(user_id, sats.saturating_sub(2 * CKBTC_FEE), state);
         } else {
             match state.data.users.time_until_next_roll_permitted(&user_id, now) {
@@ -54,8 +52,9 @@ fn handle_message(args: Args, state: &mut RuntimeState) -> Response {
                     let minutes = (ms / MINUTE_IN_MS) + 1;
                     let s = if minutes == 1 { "" } else { "s" };
                     messages.push(format!(
-                        "You can only roll the dice 5 times per hour. You can try again in {minutes} minute{s}. please wait a moment while I refund your ckBTC"
+                        "❗️You can only play 5 times per hour. Try again in {minutes} minute{s} 🎲"
                     ));
+                    messages.push("Please wait a moment while I refund your ckBTC 🕰️".to_string());
 
                     send_ckbtc_message(user_id, sats.saturating_sub(2 * CKBTC_FEE), state);
                 }
