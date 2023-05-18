@@ -18,7 +18,7 @@ fn handle_direct_message(args: Args) -> Response {
 
 fn handle_message(args: Args, state: &mut RuntimeState) -> Response {
     let mut messages = Vec::new();
-    if let Some(sats) = extract_ckbtc_amount(args.content) {
+    if let Some(sats) = extract_ckbtc_amount(&args.content) {
         let user_id: UserId = state.env.caller().into();
         let now = state.env.now();
 
@@ -69,6 +69,10 @@ fn handle_message(args: Args, state: &mut RuntimeState) -> Response {
                 }
             }
         }
+    } else if matches!(args.content, MessageContent::Crypto(_)) {
+        messages.push(
+            "❗️I only accept ckBTC. Sending me any other crypto is seen as a donation to the OpenChat DAO 😉".to_string(),
+        );
     }
 
     Success(SuccessResult {
@@ -82,7 +86,7 @@ fn handle_message(args: Args, state: &mut RuntimeState) -> Response {
     })
 }
 
-fn extract_ckbtc_amount(content: MessageContent) -> Option<u64> {
+fn extract_ckbtc_amount(content: &MessageContent) -> Option<u64> {
     if let MessageContent::Crypto(c) = content {
         if c.transfer.token() == Cryptocurrency::CKBTC {
             return Some(c.transfer.units().try_into().unwrap());
