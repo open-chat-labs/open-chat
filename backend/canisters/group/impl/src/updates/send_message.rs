@@ -15,14 +15,6 @@ use types::{
 
 #[update_candid_and_msgpack]
 #[trace]
-fn send_message(args: group_canister::send_message::Args) -> Response {
-    run_regular_jobs();
-
-    mutate_state(|state| send_message_impl(args.into(), state))
-}
-
-#[update_candid_and_msgpack]
-#[trace]
 fn send_message_v2(args: Args) -> Response {
     run_regular_jobs();
 

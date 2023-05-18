@@ -1,4 +1,5 @@
 use crate::guards::caller_is_local_user_index_canister;
+use crate::timer_job_types::{JoinUserToGroup, TimerJob};
 use crate::{mutate_state, RuntimeState, ONE_MB};
 use candid::Principal;
 use canister_api_macros::update_msgpack;
@@ -41,6 +42,18 @@ fn handle_event(event: Event, runtime_state: &mut RuntimeState) {
                     as_super_admin: false,
                     latest_message_index: ev.latest_message_index,
                 }),
+            );
+        }
+        Event::JoinUserToGroup(ev) => {
+            let now = runtime_state.env.now();
+            runtime_state.data.timer_jobs.enqueue_job(
+                TimerJob::JoinUserToGroup(JoinUserToGroup {
+                    user_id: ev.user_id,
+                    group_id: ev.chat_id,
+                    attempt: 0,
+                }),
+                now,
+                now,
             );
         }
         Event::OpenChatBotMessage(ev) => {

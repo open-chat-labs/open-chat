@@ -14,6 +14,7 @@ pub use updates::*;
 pub enum Event {
     UserRegistered(Box<UserRegistered>),
     UserJoinedGroup(Box<UserJoinedGroup>),
+    JoinUserToGroup(Box<JoinUserToGroup>),
     OpenChatBotMessage(Box<OpenChatBotMessage>),
 }
 
@@ -31,6 +32,12 @@ pub struct UserJoinedGroup {
     pub chat_id: ChatId,
     pub as_super_admin: bool,
     pub latest_message_index: Option<MessageIndex>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct JoinUserToGroup {
+    pub user_id: UserId,
+    pub chat_id: ChatId,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

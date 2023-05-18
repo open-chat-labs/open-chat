@@ -197,16 +197,16 @@ async fn send_prize_message_to_group(
 
     match group_canister_c2c_client::send_message_v2(group, &c2c_args).await {
         Ok(response) => match response {
-            group_canister::send_message::Response::Success(_) => Ok(()),
-            group_canister::send_message::Response::CallerNotInGroup => Err("Bot not in group".to_string()),
-            group_canister::send_message::Response::UserSuspended => Err("Bot suspended".to_string()),
-            group_canister::send_message::Response::ChatFrozen => Err("Group frozen".to_string()),
-            group_canister::send_message::Response::MessageEmpty
-            | group_canister::send_message::Response::InvalidPoll(_)
-            | group_canister::send_message::Response::NotAuthorized
-            | group_canister::send_message::Response::ThreadMessageNotFound
-            | group_canister::send_message::Response::InvalidRequest(_)
-            | group_canister::send_message::Response::TextTooLong(_) => unreachable!(),
+            group_canister::send_message_v2::Response::Success(_) => Ok(()),
+            group_canister::send_message_v2::Response::CallerNotInGroup => Err("Bot not in group".to_string()),
+            group_canister::send_message_v2::Response::UserSuspended => Err("Bot suspended".to_string()),
+            group_canister::send_message_v2::Response::ChatFrozen => Err("Group frozen".to_string()),
+            group_canister::send_message_v2::Response::MessageEmpty
+            | group_canister::send_message_v2::Response::InvalidPoll(_)
+            | group_canister::send_message_v2::Response::NotAuthorized
+            | group_canister::send_message_v2::Response::ThreadMessageNotFound
+            | group_canister::send_message_v2::Response::InvalidRequest(_)
+            | group_canister::send_message_v2::Response::TextTooLong(_) => unreachable!(),
         },
         // TODO: We should retry sending the message
         Err(error) => Err(format!("{error:?}")),
