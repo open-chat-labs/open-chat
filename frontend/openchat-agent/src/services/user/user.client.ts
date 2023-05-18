@@ -481,7 +481,7 @@ export class UserClient extends CandidService implements IUserClient {
         };
         return this.handleQueryResponse(
             () => this.userService.search_messages(args),
-            searchDirectChatResponse,
+            (res) => searchDirectChatResponse(res, userId),
             args
         );
     }
