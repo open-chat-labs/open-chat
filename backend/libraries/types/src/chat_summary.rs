@@ -1,6 +1,6 @@
 use crate::{
-    CanisterId, ChatId, EventIndex, EventWrapper, FrozenGroupInfo, GroupGate, GroupPermissions, Mention, Message, MessageIndex,
-    Milliseconds, OptionUpdate, RangeSet, Role, TimestampMillis, UserId, Version, MAX_RETURNED_MENTIONS,
+    CanisterId, ChatId, EventIndex, EventWrapper, FrozenGroupInfo, GroupGate, GroupPermissions, GroupRole, Mention, Message,
+    MessageIndex, Milliseconds, OptionUpdate, RangeSet, TimestampMillis, UserId, Version, MAX_RETURNED_MENTIONS,
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
@@ -50,7 +50,7 @@ pub struct GroupChatSummary {
     pub read_by_me_up_to: Option<MessageIndex>,
     pub notifications_muted: bool,
     pub participant_count: u32,
-    pub role: Role,
+    pub role: GroupRole,
     pub mentions: Vec<Mention>,
     pub wasm_version: Version,
     pub permissions: GroupPermissions,
@@ -127,7 +127,7 @@ pub struct GroupCanisterGroupChatSummary {
     pub latest_event_index: EventIndex,
     pub joined: TimestampMillis,
     pub participant_count: u32,
-    pub role: Role,
+    pub role: GroupRole,
     pub mentions: Vec<Mention>,
     pub wasm_version: Version,
     pub permissions: GroupPermissions,
@@ -216,7 +216,7 @@ pub struct GroupCanisterGroupChatSummaryUpdates {
     pub latest_message: Option<EventWrapper<Message>>,
     pub latest_event_index: Option<EventIndex>,
     pub participant_count: Option<u32>,
-    pub role: Option<Role>,
+    pub role: Option<GroupRole>,
     pub mentions: Vec<Mention>,
     pub wasm_version: Option<Version>,
     pub permissions: Option<GroupPermissions>,

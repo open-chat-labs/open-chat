@@ -49,6 +49,12 @@ impl UserMap {
         }
     }
 
+    pub fn total_winnings(&self, user_id: &UserId) -> u64 {
+        self.users
+            .get(user_id)
+            .map_or(0, |u| u.rolls.iter().map(|r| r.amount_out.saturating_sub(r.amount_in)).sum())
+    }
+
     pub fn len(&self) -> usize {
         self.users.len()
     }

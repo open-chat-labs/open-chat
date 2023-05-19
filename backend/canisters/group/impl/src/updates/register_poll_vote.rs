@@ -19,16 +19,16 @@ fn register_poll_vote_impl(args: Args, runtime_state: &mut RuntimeState) -> Resp
     }
 
     let caller = runtime_state.env.caller();
-    if let Some(participant) = runtime_state.data.participants.get_by_principal(&caller) {
-        if participant.suspended.value {
+    if let Some(member) = runtime_state.data.get_member(caller) {
+        if member.suspended.value {
             return UserSuspended;
         }
 
         let now = runtime_state.env.now();
-        let user_id = participant.user_id;
-        let min_visible_event_index = participant.min_visible_event_index();
+        let user_id = member.user_id;
+        let min_visible_event_index = member.min_visible_event_index();
 
-        let result = runtime_state.data.events.register_poll_vote(RegisterPollVoteArgs {
+        let result = runtime_state.data.chat.events.register_poll_vote(RegisterPollVoteArgs {
             user_id,
             min_visible_event_index,
             thread_root_message_index: args.thread_root_message_index,

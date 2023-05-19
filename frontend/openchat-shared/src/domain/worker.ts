@@ -700,7 +700,7 @@ type GroupChatEventsByEventIndex = Request<{
     kind: "groupChatEventsByEventIndex";
 };
 
-type RehydrateMessage = Request<{
+export type RehydrateMessage = Request<{
     chatId: string;
     message: EventWrapper<Message>;
     threadRootMessageIndex: number | undefined;
@@ -1048,3 +1048,5 @@ type DeclineInvitation = Request<{
 }> & {
     kind: "declineInvitation";
 };
+
+export type InboundWorkerRequest = Omit<WorkerRequest, "correlationId">;

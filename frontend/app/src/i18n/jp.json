@@ -341,9 +341,10 @@
         "privateGroup": "プライベートグループ",
         "groupInfo": "グループ情報",
         "role": {
-            "owner": "オーナー",
             "admins": "管理者",
-            "members": "メンバー"
+            "members": "メンバー",
+            "moderators": "モデレーター",
+            "owner": "所有者"
         },
         "permissions": {
             "whoCan": "誰ができますか",
@@ -363,7 +364,8 @@
             "reactToMessages": "メッセージに反応する",
             "inviteUsers": "ユーザーを招待する",
             "notPermitted": "{permission}は許可されていません",
-            "replyInThread": "スレッドで返信"
+            "replyInThread": "スレッドで返信",
+            "ownerAndAdminsAndModerators": "所有者、管理者、モデレータは次のことができます。"
         },
         "advanced": "高度",
         "welcome": "ようこそ {groupName}",
@@ -834,5 +836,6 @@
     "invited": "招待された",
     "tapForReferralLink": "タップして個人紹介リンクをコピーします",
     "deleteMessageForMe": "削除してください",
-    "whatsHotButton": "注目のグループを発見する"
+    "whatsHotButton": "注目のグループを発見する",
+    "moderator": "モデレータ"
 }

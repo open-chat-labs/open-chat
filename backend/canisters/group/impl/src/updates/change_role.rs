@@ -1,12 +1,11 @@
 use crate::activity_notifications::handle_activity_notification;
-use crate::model::participants::ChangeRoleResult;
 use crate::updates::change_role::Response::*;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
-use chat_events::ChatEventInternal;
 use group_canister::change_role::*;
+use group_members::ChangeRoleResult;
 use ic_cdk_macros::update;
-use types::{CanisterId, RoleChanged, UserId};
+use types::{CanisterId, UserId};
 use user_index_canister_c2c_client::{lookup_user, LookupUserError};
 
 #[update]
@@ -66,16 +65,12 @@ struct PrepareResult {
 
 fn prepare(user_id: UserId, state: &RuntimeState) -> Result<PrepareResult, Response> {
     let caller = state.env.caller();
-    if let Some(participant) = state.data.participants.get(caller) {
+    if let Some(member) = state.data.get_member(caller) {
         Ok(PrepareResult {
-            caller_id: participant.user_id,
+            caller_id: member.user_id,
             user_index_canister_id: state.data.user_index_canister_id,
-            is_caller_owner: participant.role.is_owner(),
-            is_user_owner: state
-                .data
-                .participants
-                .get_by_user_id(&user_id)
-                .map_or(false, |p| p.role.is_owner()),
+            is_caller_owner: member.role.is_owner(),
+            is_user_owner: state.data.chat.members.get(&user_id).map_or(false, |u| u.role.is_owner()),
         })
     } else {
         Err(CallerNotInGroup)
@@ -94,32 +89,23 @@ fn change_role_impl(
     }
 
     let now = state.env.now();
-    let event = match state.data.participants.change_role(
+    match state.data.chat.change_role(
         caller_id,
         args.user_id,
         args.new_role,
-        &state.data.permissions,
         is_caller_platform_moderator,
         is_user_platform_moderator,
+        now,
     ) {
-        ChangeRoleResult::Success(r) => {
-            let event = RoleChanged {
-                user_ids: vec![args.user_id],
-                old_role: r.prev_role,
-                new_role: args.new_role,
-                changed_by: r.caller_id,
-            };
-            ChatEventInternal::RoleChanged(Box::new(event))
+        ChangeRoleResult::Success(_) => {
+            handle_activity_notification(state);
+            Success
         }
-        ChangeRoleResult::NotAuthorized => return NotAuthorized,
-        ChangeRoleResult::Invalid => return Invalid,
-        ChangeRoleResult::UserNotInGroup => return UserNotInGroup,
-        ChangeRoleResult::Unchanged => return Success,
-        ChangeRoleResult::CallerNotInGroup => return CallerNotInGroup,
-        ChangeRoleResult::UserSuspended => return UserSuspended,
-    };
-
-    state.data.events.push_main_event(event, args.correlation_id, now);
-    handle_activity_notification(state);
-    Success
+        ChangeRoleResult::CallerNotInGroup => CallerNotInGroup,
+        ChangeRoleResult::NotAuthorized => NotAuthorized,
+        ChangeRoleResult::UserNotInGroup => UserNotInGroup,
+        ChangeRoleResult::Unchanged => Success,
+        ChangeRoleResult::Invalid => Invalid,
+        ChangeRoleResult::UserSuspended => UserSuspended,
+    }
 }

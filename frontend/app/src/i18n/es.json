@@ -342,9 +342,10 @@
         "privateGroup": "Grupo privado",
         "groupInfo": "información del grupo",
         "role": {
-            "owner": "Dueño",
             "admins": "administradores",
-            "members": "miembros"
+            "members": "miembros",
+            "moderators": "Moderadores",
+            "owner": "Propietarios"
         },
         "permissions": {
             "whoCan": "Quién puede",
@@ -364,7 +365,8 @@
             "reactToMessages": "reaccionar a los mensajes",
             "inviteUsers": "invitar a los usuarios",
             "notPermitted": "No tienes permiso para {permission}",
-            "replyInThread": "responder en el hilo"
+            "replyInThread": "responder en el hilo",
+            "ownerAndAdminsAndModerators": "Los propietarios, administradores y moderadores pueden"
         },
         "advanced": "Avanzado",
         "welcome": "Bienvenido a {groupName}",
@@ -835,5 +837,6 @@
     "invited": "Invitado",
     "tapForReferralLink": "Toque para copiar su enlace de referencia personal",
     "deleteMessageForMe": "Eliminar para mí",
-    "whatsHotButton": "Descubre grupos calientes"
+    "whatsHotButton": "Descubre grupos calientes",
+    "moderator": "moderador"
 }

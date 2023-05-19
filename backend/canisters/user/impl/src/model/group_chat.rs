@@ -29,6 +29,7 @@ impl GroupChat {
 
     pub fn last_updated(&self) -> TimestampMillis {
         [
+            self.date_joined,
             self.read_by_me_up_to.timestamp,
             self.last_changed_for_my_data,
             self.threads_read.last_updated().unwrap_or_default(),

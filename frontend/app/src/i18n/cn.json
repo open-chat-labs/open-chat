@@ -341,9 +341,10 @@
         "privateGroup": "私有群聊",
         "groupInfo": "群聊信息",
         "role": {
-            "owner": "所有者",
             "admins": "管理员",
-            "members": "成员"
+            "members": "成员",
+            "moderators": "主持人",
+            "owner": "拥有者"
         },
         "permissions": {
             "whoCan": "谁可以",
@@ -363,7 +364,8 @@
             "reactToMessages": "对消息做出反应",
             "inviteUsers": "邀请用户",
             "notPermitted": "您无权{permission}",
-            "replyInThread": "在线程中回复"
+            "replyInThread": "在线程中回复",
+            "ownerAndAdminsAndModerators": "所有者、管理员和版主可以"
         },
         "advanced": "高级",
         "welcome": "欢迎来到 {groupName}",
@@ -834,5 +836,6 @@
     "invited": "受邀",
     "tapForReferralLink": "点击复制您的个人推荐链接",
     "deleteMessageForMe": "帮我删除",
-    "whatsHotButton": "发现热门群体"
+    "whatsHotButton": "发现热门群体",
+    "moderator": "版主"
 }

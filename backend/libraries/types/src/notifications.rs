@@ -1,4 +1,6 @@
-use crate::{ChatId, EventWrapper, Message, MessageIndex, Reaction, TimestampMillis, User, UserId};
+use crate::{
+    ChatId, CommunityGroupId, CommunityId, EventWrapper, Message, MessageIndex, Reaction, TimestampMillis, User, UserId,
+};
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 
@@ -14,6 +16,7 @@ pub enum Notification {
     AddedToGroupNotification(AddedToGroupNotification),
     DirectMessageNotification(DirectMessageNotification),
     GroupMessageNotification(GroupMessageNotification),
+    CommunityMessageNotification(CommunityMessageNotification),
     DirectReactionAddedNotification(DirectReactionAddedNotification),
     GroupReactionAddedNotification(GroupReactionAddedNotification),
 }
@@ -39,6 +42,19 @@ pub struct DirectMessageNotification {
 pub struct GroupMessageNotification {
     pub chat_id: ChatId,
     pub thread_root_message_index: Option<MessageIndex>,
+    pub group_name: String,
+    pub sender: UserId,
+    pub sender_name: String,
+    pub message: EventWrapper<Message>,
+    pub mentioned: Vec<User>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct CommunityMessageNotification {
+    pub community_id: CommunityId,
+    pub group_id: CommunityGroupId,
+    pub thread_root_message_index: Option<MessageIndex>,
+    pub community_name: String,
     pub group_name: String,
     pub sender: UserId,
     pub sender_name: String,

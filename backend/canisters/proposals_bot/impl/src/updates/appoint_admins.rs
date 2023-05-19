@@ -3,7 +3,7 @@ use crate::read_state;
 use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
 use proposals_bot_canister::appoint_admins::{Response::*, *};
-use types::{CanisterId, Role, UserId};
+use types::{CanisterId, GroupRole, UserId};
 
 #[proposal(guard = "caller_is_governance_principal")]
 #[trace]
@@ -21,7 +21,7 @@ fn appoint_admins(args: Args) -> Response {
 async fn appoint_admin(group_id: CanisterId, user_id: UserId) {
     let args = group_canister::change_role::Args {
         user_id,
-        new_role: Role::Admin,
+        new_role: GroupRole::Admin,
         correlation_id: 0,
     };
 

@@ -341,9 +341,10 @@
         "privateGroup": "Частная группа",
         "groupInfo": "Информация о группе",
         "role": {
-            "owner": "Владелец",
             "admins": "Админы",
-            "members": "Члены"
+            "members": "Члены",
+            "moderators": "Модераторы",
+            "owner": "Владельцы"
         },
         "permissions": {
             "whoCan": "Кто может",
@@ -363,7 +364,8 @@
             "reactToMessages": "реагировать на сообщения",
             "inviteUsers": "пригласить пользователей",
             "notPermitted": "Вам не разрешено {permission}",
-            "replyInThread": "ответ в теме"
+            "replyInThread": "ответ в теме",
+            "ownerAndAdminsAndModerators": "Владельцы, администраторы и модераторы могут"
         },
         "advanced": "Передовой",
         "welcome": "Добро пожаловать в {groupName}",
@@ -833,5 +835,6 @@
     "invited": "Приглашенный",
     "tapForReferralLink": "Нажмите, чтобы скопировать личную реферальную ссылку",
     "deleteMessageForMe": "Удалить для меня",
-    "whatsHotButton": "Откройте для себя горячие группы"
+    "whatsHotButton": "Откройте для себя горячие группы",
+    "moderator": "Модератор"
 }

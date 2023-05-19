@@ -1,11 +1,12 @@
 use crate::NervousSystemMetrics;
-use group_canister::c2c_update_proposals::ProposalUpdate;
 use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 use std::cmp::max;
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::{BTreeMap, HashMap};
-use types::{CanisterId, ChatId, MessageId, Milliseconds, Proposal, ProposalId, ProposalRewardStatus, TimestampMillis};
+use types::{
+    CanisterId, ChatId, MessageId, Milliseconds, Proposal, ProposalId, ProposalRewardStatus, ProposalUpdate, TimestampMillis,
+};
 use utils::time::MINUTE_IN_MS;
 
 const MIN_INTERVAL_BETWEEN_SYNCS: Milliseconds = MINUTE_IN_MS; // 1 minute

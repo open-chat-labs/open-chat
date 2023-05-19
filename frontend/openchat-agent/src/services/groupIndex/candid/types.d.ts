@@ -235,8 +235,6 @@ export interface EventsTimeToLiveUpdated {
 }
 export type FailedCryptoTransaction = { 'NNS' : NnsFailedCryptoTransaction } |
   { 'SNS' : SnsFailedCryptoTransaction };
-export type FallbackRole = { 'Participant' : null } |
-  { 'Admin' : null };
 export interface FieldTooLongResult {
   'length_provided' : number,
   'max_length' : number,
@@ -461,7 +459,6 @@ export interface GroupPermissions {
   'update_group' : PermissionRole,
   'invite_users' : PermissionRole,
   'change_roles' : PermissionRole,
-  'add_members' : PermissionRole,
   'create_polls' : PermissionRole,
   'pin_messages' : PermissionRole,
   'reply_in_thread' : PermissionRole,
@@ -590,7 +587,6 @@ export interface MessageMatch {
   'content' : MessageContent,
   'sender' : UserId,
   'score' : number,
-  'chat_id' : ChatId,
   'message_index' : MessageIndex,
 }
 export interface MessagePinned {
@@ -715,7 +711,8 @@ export interface ParticipantsRemoved {
 }
 export type PendingCryptoTransaction = { 'NNS' : NnsPendingCryptoTransaction } |
   { 'SNS' : SnsPendingCryptoTransaction };
-export type PermissionRole = { 'Owner' : null } |
+export type PermissionRole = { 'Moderators' : null } |
+  { 'Owner' : null } |
   { 'Admins' : null } |
   { 'Members' : null };
 export interface PermissionsChanged {
@@ -800,6 +797,7 @@ export interface PublicGroupSummary {
   'avatar_id' : [] | [bigint],
   'frozen' : [] | [FrozenGroupInfo],
   'latest_event_index' : EventIndex,
+  'history_visible_to_new_joiners' : boolean,
   'chat_id' : ChatId,
   'participant_count' : number,
   'latest_message' : [] | [MessageEventWrapper],
@@ -835,6 +833,7 @@ export interface ReportedMessage {
 }
 export type Role = { 'Participant' : null } |
   { 'Admin' : null } |
+  { 'Moderator' : null } |
   { 'Owner' : null };
 export interface RoleChanged {
   'user_ids' : Array<UserId>,

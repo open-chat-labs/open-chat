@@ -5,9 +5,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Split common group logic into new `group_chat_core` library ([#3620](https://github.com/open-ic/open-chat/pull/3620))
+- Simplify `c2c_update_proposals` ([#3621](https://github.com/open-ic/open-chat/pull/3621))
+- Move `delete_messages` into `group_chat_core` ([#3622](https://github.com/open-ic/open-chat/pull/3622))
+- Move `change_role` into `group_chat_core` ([#3624](https://github.com/open-ic/open-chat/pull/3624))
+- Move `pin/unpin_message` into `group_chat_core` ([#3626](https://github.com/open-ic/open-chat/pull/3626))
+
 ### Removed
 
 - Remove last remnants of `send_message` and `edit_message` ([#3603](https://github.com/open-ic/open-chat/pull/3603))
+
+## [[2.0.690](https://github.com/open-ic/open-chat/releases/tag/v2.0.690-group)] - 2023-05-16
 
 ### Changed
 
@@ -18,6 +28,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Remove `send_message` and `edit_message` (there are now `v2` versions) ([#3578](https://github.com/open-ic/open-chat/pull/3578))
 - Remove `add_participants` endpoint and `add_members` permission ([#3589](https://github.com/open-ic/open-chat/pull/3589))
+
+### Fixed
+
+- Fix issue with group accessibility ([#3600](https://github.com/open-ic/open-chat/pull/3600))
 
 ## [[2.0.686](https://github.com/open-ic/open-chat/releases/tag/v2.0.686-group)] - 2023-05-11
 

@@ -540,7 +540,7 @@
                 We think a reward system should be based on reputation. Each user would have a
                 reputation score taking into account positive and negative activity on the dapp.
                 Positive signals could include inviting other users (if they themselves go on to
-                gain a sufficiently high reputation), owner/admin of popular groups, sending
+                gain a sufficiently high reputation), owner/admin/moderator of popular groups, sending
                 messages and reactions, moderating content and users, etc. Negative signals could
                 include cross-posting, sending spam messages, creating multiple accounts etc. We
                 expect to add a feature to allow users to mark messages as spam (or more generally

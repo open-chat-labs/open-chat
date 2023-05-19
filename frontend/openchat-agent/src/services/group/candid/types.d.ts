@@ -3,41 +3,6 @@ import type { ActorMethod } from '@dfinity/agent';
 
 export type AccessorId = Principal;
 export type AccountIdentifier = Uint8Array | number[];
-export interface AddParticipantsArgs {
-  'allow_blocked_users' : boolean,
-  'user_ids' : Array<UserId>,
-  'added_by_name' : string,
-  'correlation_id' : bigint,
-}
-export interface AddParticipantsFailedResult {
-  'errors' : Array<UserId>,
-  'users_who_failed_gate_check' : Array<UserId>,
-  'users_suspended' : Array<UserId>,
-  'users_blocked_from_group' : Array<UserId>,
-  'users_not_authorized_to_add' : Array<UserId>,
-  'users_who_blocked_request' : Array<UserId>,
-  'users_already_in_group' : Array<UserId>,
-}
-export interface AddParticipantsPartialSuccessResult {
-  'errors' : Array<UserId>,
-  'users_who_failed_gate_check' : Array<UserId>,
-  'users_suspended' : Array<UserId>,
-  'users_blocked_from_group' : Array<UserId>,
-  'users_not_authorized_to_add' : Array<UserId>,
-  'users_added' : Array<UserId>,
-  'users_who_blocked_request' : Array<UserId>,
-  'users_already_in_group' : Array<UserId>,
-}
-export type AddParticipantsResponse = {
-    'Failed' : AddParticipantsFailedResult
-  } |
-  { 'PartialSuccess' : AddParticipantsPartialSuccessResult } |
-  { 'CallerNotInGroup' : null } |
-  { 'ChatFrozen' : null } |
-  { 'NotAuthorized' : null } |
-  { 'Success' : null } |
-  { 'UserSuspended' : null } |
-  { 'ParticipantLimitReached' : number };
 export interface AddReactionArgs {
   'username' : string,
   'correlation_id' : bigint,
@@ -380,8 +345,6 @@ export interface EventsWindowArgs {
 }
 export type FailedCryptoTransaction = { 'NNS' : NnsFailedCryptoTransaction } |
   { 'SNS' : SnsFailedCryptoTransaction };
-export type FallbackRole = { 'Participant' : null } |
-  { 'Admin' : null };
 export interface FieldTooLongResult {
   'length_provided' : number,
   'max_length' : number,
@@ -572,7 +535,6 @@ export interface GroupPermissions {
   'update_group' : PermissionRole,
   'invite_users' : PermissionRole,
   'change_roles' : PermissionRole,
-  'add_members' : PermissionRole,
   'create_polls' : PermissionRole,
   'pin_messages' : PermissionRole,
   'reply_in_thread' : PermissionRole,
@@ -713,7 +675,6 @@ export interface MessageMatch {
   'content' : MessageContent,
   'sender' : UserId,
   'score' : number,
-  'chat_id' : ChatId,
   'message_index' : MessageIndex,
 }
 export interface MessagePinned {
@@ -869,7 +830,8 @@ export interface ParticipantsRemoved {
 }
 export type PendingCryptoTransaction = { 'NNS' : NnsPendingCryptoTransaction } |
   { 'SNS' : SnsPendingCryptoTransaction };
-export type PermissionRole = { 'Owner' : null } |
+export type PermissionRole = { 'Moderators' : null } |
+  { 'Owner' : null } |
   { 'Admins' : null } |
   { 'Members' : null };
 export interface PermissionsChanged {
@@ -966,6 +928,7 @@ export interface PublicGroupSummary {
   'avatar_id' : [] | [bigint],
   'frozen' : [] | [FrozenGroupInfo],
   'latest_event_index' : EventIndex,
+  'history_visible_to_new_joiners' : boolean,
   'chat_id' : ChatId,
   'participant_count' : number,
   'latest_message' : [] | [MessageEventWrapper],
@@ -1059,6 +1022,7 @@ export type ResetInviteCodeResponse = { 'ChatFrozen' : null } |
   { 'UserSuspended' : null };
 export type Role = { 'Participant' : null } |
   { 'Admin' : null } |
+  { 'Moderator' : null } |
   { 'Owner' : null };
 export interface RoleChanged {
   'user_ids' : Array<UserId>,
@@ -1365,10 +1329,6 @@ export interface VideoContent {
 export type VoteOperation = { 'RegisterVote' : null } |
   { 'DeleteVote' : null };
 export interface _SERVICE {
-  'add_participants' : ActorMethod<
-    [AddParticipantsArgs],
-    AddParticipantsResponse
-  >,
   'add_reaction' : ActorMethod<[AddReactionArgs], AddReactionResponse>,
   'block_user' : ActorMethod<[BlockUserArgs], BlockUserResponse>,
   'change_role' : ActorMethod<[ChangeRoleArgs], ChangeRoleResponse>,

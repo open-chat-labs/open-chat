@@ -15,9 +15,9 @@ fn c2c_toggle_mute_notifications(args: Args) -> Response {
 fn c2c_toggle_mute_notifications_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     let user_id = runtime_state.env.caller().into();
     let now = runtime_state.env.now();
-    match runtime_state.data.participants.get_by_user_id_mut(&user_id) {
-        Some(participant) => {
-            participant.notifications_muted = Timestamped::new(args.mute, now);
+    match runtime_state.data.chat.members.get_mut(&user_id) {
+        Some(member) => {
+            member.notifications_muted = Timestamped::new(args.mute, now);
             Success
         }
         None => CallerNotInGroup,

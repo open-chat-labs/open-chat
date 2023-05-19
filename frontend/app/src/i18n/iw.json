@@ -351,9 +351,10 @@
         "privateGroup": "קבוצה פרטית",
         "groupInfo": "מידע על הקבוצה",
         "role": {
-            "owner": "בעלים",
             "admins": "מנהלי מערכת",
-            "members": "חברים"
+            "members": "חברים",
+            "moderators": "מנחים",
+            "owner": "בעלים"
         },
         "permissions": {
             "whoCan": "מי יכול",
@@ -373,7 +374,8 @@
             "reactToMessages": "להגיב להודעות",
             "inviteUsers": "להזמין משתמשים",
             "notPermitted": "אינך מורשה {permission}",
-            "replyInThread": "תשובה בשרשור"
+            "replyInThread": "תשובה בשרשור",
+            "ownerAndAdminsAndModerators": "בעלים, מנהלים ומנחים יכולים"
         },
         "advanced": "מִתקַדֵם",
         "welcome": "ברוך הבא ל {groupName}",
@@ -831,5 +833,6 @@
     "invited": "מוזמן",
     "tapForReferralLink": "הקש כדי להעתיק את קישור ההפניה האישי שלך",
     "deleteMessageForMe": "מחק בשבילי",
-    "whatsHotButton": "גלה קבוצות חמות"
+    "whatsHotButton": "גלה קבוצות חמות",
+    "moderator": "מַנחֶה"
 }

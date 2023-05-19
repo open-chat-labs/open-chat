@@ -690,7 +690,7 @@ mod tests {
     }
 
     fn setup_events(events_ttl: Option<Milliseconds>) -> ChatEvents {
-        let mut events = ChatEvents::new_direct_chat(Principal::from_slice(&[1]).into(), events_ttl, 1);
+        let mut events = ChatEvents::new_direct_chat(events_ttl, 1);
 
         push_events(&mut events, 0);
 

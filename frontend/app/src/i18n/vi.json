@@ -342,9 +342,10 @@
         "privateGroup": "Nhóm kín",
         "groupInfo": "Thông tin nhóm",
         "role": {
-            "owner": "Chủ nhân",
             "admins": "Quản trị viên",
-            "members": "Các thành viên"
+            "members": "Các thành viên",
+            "moderators": "người điều hành",
+            "owner": "Những chủ sở hữu"
         },
         "permissions": {
             "whoCan": "Ai có thể",
@@ -364,7 +365,8 @@
             "reactToMessages": "phản ứng với tin nhắn",
             "inviteUsers": "mời người dùng",
             "notPermitted": "Bạn không được phép {permission}",
-            "replyInThread": "trả lời trong chuỗi"
+            "replyInThread": "trả lời trong chuỗi",
+            "ownerAndAdminsAndModerators": "Chủ sở hữu, quản trị viên và người điều hành có thể"
         },
         "advanced": "Trình độ cao",
         "welcome": "Chào mừng bạn đến {groupName}",
@@ -834,5 +836,6 @@
     "invited": "Được mời",
     "tapForReferralLink": "Nhấn để sao chép liên kết giới thiệu cá nhân của bạn",
     "deleteMessageForMe": "Xóa cho tôi",
-    "whatsHotButton": "Khám phá các nhóm hấp dẫn"
+    "whatsHotButton": "Khám phá các nhóm hấp dẫn",
+    "moderator": "người điều hành"
 }

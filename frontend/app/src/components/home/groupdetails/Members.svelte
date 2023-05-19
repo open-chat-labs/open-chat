@@ -100,6 +100,8 @@
             if (b.role === "owner") return 1;
             if (a.role === "admin") return -1;
             if (b.role === "admin") return 1;
+            if (a.role === "moderator") return -1;
+            if (b.role === "moderator") return 1;
         }
         return 0;
     }
@@ -166,6 +168,7 @@
             member={me}
             canPromoteToOwner={me.role !== "owner" && client.isPlatformModerator()}
             canDemoteToAdmin={client.canDemote(chat.chatId, me.role, "admin")}
+            canDemoteToModerator={client.canDemote(chat.chatId, me.role, "moderator")}
             canDemoteToMember={client.canDemote(chat.chatId, me.role, "participant")}
             on:openUserProfile={openUserProfile}
             on:changeRole />
@@ -177,6 +180,8 @@
             canPromoteToOwner={client.canPromote(chat.chatId, item.role, "owner")}
             canPromoteToAdmin={client.canPromote(chat.chatId, item.role, "admin")}
             canDemoteToAdmin={client.canDemote(chat.chatId, item.role, "admin")}
+            canPromoteToModerator={client.canPromote(chat.chatId, item.role, "moderator")}
+            canDemoteToModerator={client.canDemote(chat.chatId, item.role, "moderator")}
             canDemoteToMember={client.canDemote(chat.chatId, item.role, "participant")}
             canBlockUser={client.canBlockUsers(chat.chatId)}
             canRemoveMember={client.canRemoveMembers(chat.chatId)}

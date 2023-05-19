@@ -3,11 +3,11 @@ use crate::timer_job_types::HardDeleteMessageContentJob;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState, TimerJob};
 use candid::Principal;
 use canister_tracing_macros::trace;
-use chat_events::{ChatEventInternal, DeleteMessageResult, DeleteUndeleteMessagesArgs, Reader};
+use chat_events::DeleteMessageResult;
 use group_canister::delete_messages::{Response::*, *};
+use group_chat_core::{DeleteMessagesResult, DeleteMessagesSuccess};
 use ic_cdk_macros::update;
-use std::collections::HashSet;
-use types::{MessageId, MessageUnpinned};
+use types::{CanisterId, UserId};
 use user_index_canister_c2c_client::lookup_user;
 use utils::time::MINUTE_IN_MS;
 
@@ -16,7 +16,14 @@ use utils::time::MINUTE_IN_MS;
 async fn delete_messages(args: Args) -> Response {
     run_regular_jobs();
 
-    let (caller, user_index_canister_id) = read_state(|state| (state.env.caller(), state.data.user_index_canister_id));
+    let PrepareResult {
+        caller,
+        user_id,
+        user_index_canister_id,
+    } = match read_state(prepare) {
+        Ok(ok) => ok,
+        Err(response) => return response,
+    };
 
     if args.as_platform_moderator.unwrap_or_default() {
         match lookup_user(caller, user_index_canister_id).await {
@@ -26,89 +33,66 @@ async fn delete_messages(args: Args) -> Response {
         }
     }
 
-    mutate_state(|state| delete_messages_impl(caller, args, state))
+    mutate_state(|state| delete_messages_impl(user_id, args, state))
 }
 
-fn delete_messages_impl(caller: Principal, args: Args, runtime_state: &mut RuntimeState) -> Response {
+struct PrepareResult {
+    caller: Principal,
+    user_id: UserId,
+    user_index_canister_id: CanisterId,
+}
+
+fn prepare(runtime_state: &RuntimeState) -> Result<PrepareResult, Response> {
+    let caller = runtime_state.env.caller();
+    if let Some(user_id) = runtime_state.data.principal_to_user_id_map.get(&caller).copied() {
+        Ok(PrepareResult {
+            caller,
+            user_id,
+            user_index_canister_id: runtime_state.data.user_index_canister_id,
+        })
+    } else {
+        Err(CallerNotInGroup)
+    }
+}
+
+fn delete_messages_impl(user_id: UserId, args: Args, runtime_state: &mut RuntimeState) -> Response {
     if runtime_state.data.is_frozen() {
         return ChatFrozen;
     }
 
-    if let Some(participant) = runtime_state.data.participants.get_by_principal(&caller) {
-        if participant.suspended.value {
-            return UserSuspended;
-        }
-
-        let now = runtime_state.env.now();
-        let user_id = participant.user_id;
-        let min_visible_event_index = participant.min_visible_event_index();
-
-        let mut my_messages: HashSet<MessageId> = HashSet::new();
-
-        if args.thread_root_message_index.is_none() {
-            for message_id in args.message_ids.iter().copied() {
-                if let Some((message_index, sender)) = runtime_state
-                    .data
-                    .events
-                    .visible_main_events_reader(min_visible_event_index, now)
-                    .message_internal(message_id.into())
-                    .map(|m| (m.message_index, m.sender))
-                {
-                    // Remember those messages where the deleter was also the sender
-                    if sender == user_id {
-                        my_messages.insert(message_id);
-                    }
-
-                    // If the message being deleted is pinned, unpin it
-                    if let Ok(index) = runtime_state.data.pinned_messages.binary_search(&message_index) {
-                        runtime_state.data.pinned_messages.remove(index);
-
-                        runtime_state.data.events.push_main_event(
-                            ChatEventInternal::MessageUnpinned(Box::new(MessageUnpinned {
-                                message_index,
-                                unpinned_by: user_id,
-                                due_to_message_deleted: true,
-                            })),
-                            args.correlation_id,
-                            runtime_state.env.now(),
-                        );
-                    }
-                }
+    let now = runtime_state.env.now();
+    match runtime_state.data.chat.delete_messages(
+        user_id,
+        args.thread_root_message_index,
+        args.message_ids,
+        args.as_platform_moderator.unwrap_or_default(),
+        now,
+    ) {
+        DeleteMessagesResult::Success(DeleteMessagesSuccess { results, my_messages }) => {
+            let remove_deleted_message_content_at = now + (5 * MINUTE_IN_MS);
+            for message_id in results
+                .into_iter()
+                .filter(|(_, result)| matches!(result, DeleteMessageResult::Success(_)))
+                .map(|(message_id, _)| message_id)
+                .filter(|message_id| my_messages.contains(message_id))
+            {
+                // After 5 minutes hard delete those messages where the deleter was the message sender
+                runtime_state.data.timer_jobs.enqueue_job(
+                    TimerJob::HardDeleteMessageContent(HardDeleteMessageContentJob {
+                        thread_root_message_index: args.thread_root_message_index,
+                        message_id,
+                    }),
+                    remove_deleted_message_content_at,
+                    now,
+                );
             }
+
+            handle_activity_notification(runtime_state);
+
+            Success
         }
-
-        let delete_message_results = runtime_state.data.events.delete_messages(DeleteUndeleteMessagesArgs {
-            caller: user_id,
-            is_admin: participant.role.can_delete_messages(&runtime_state.data.permissions)
-                || args.as_platform_moderator.unwrap_or_default(),
-            min_visible_event_index,
-            thread_root_message_index: args.thread_root_message_index,
-            message_ids: args.message_ids,
-            now,
-        });
-
-        let remove_deleted_message_content_at = now + (5 * MINUTE_IN_MS);
-        for message_id in delete_message_results
-            .into_iter()
-            .filter(|(_, result)| matches!(result, DeleteMessageResult::Success(_)))
-            .map(|(message_id, _)| message_id)
-            .filter(|message_id| my_messages.contains(message_id))
-        {
-            // After 5 minutes hard delete those messages where the deleter was the message sender
-            runtime_state.data.timer_jobs.enqueue_job(
-                TimerJob::HardDeleteMessageContent(HardDeleteMessageContentJob {
-                    thread_root_message_index: args.thread_root_message_index,
-                    message_id,
-                }),
-                remove_deleted_message_content_at,
-                now,
-            );
-        }
-
-        handle_activity_notification(runtime_state);
-
-        Success
-    } else {
-        CallerNotInGroup
+        DeleteMessagesResult::MessageNotFound => MessageNotFound,
+        DeleteMessagesResult::UserNotInGroup => CallerNotInGroup,
+        DeleteMessagesResult::UserSuspended => UserSuspended,
     }
 }
