@@ -1,6 +1,6 @@
 use crate::model::btc_miami_payments_queue::PendingPayment;
 use crate::model::referral_codes::ReferralCode;
-use crate::timer_job_types::{JoinUserToGroup, TimerJob};
+use crate::timer_job_types::{AddUserToSatoshiDice, TimerJob};
 use crate::{mutate_state, RuntimeState, USER_CANISTER_INITIAL_CYCLES_BALANCE};
 use candid::Principal;
 use canister_tracing_macros::trace;
@@ -10,7 +10,7 @@ use local_user_index_canister::register_user::{Response::*, *};
 use types::{CanisterId, CanisterWasm, Cycles, MessageContent, TextContent, UserId, Version};
 use user_canister::init::Args as InitUserCanisterArgs;
 use user_canister::{Event as UserEvent, ReferredUserRegistered};
-use user_index_canister::{Event as UserIndexEvent, UserRegistered};
+use user_index_canister::{Event as UserIndexEvent, JoinUserToGroup, UserRegistered};
 use utils::canister;
 use utils::canister::CreateAndInstallError;
 use utils::consts::{CREATE_CANISTER_CYCLES_FEE, MIN_CYCLES_BALANCE};
@@ -114,10 +114,10 @@ fn prepare(args: &Args, runtime_state: &mut RuntimeState) -> Result<PrepareOk, R
     {
         vec![
             MessageContent::Text(TextContent {
-                text: "Congratulations!!".to_string(),
+                text: "Welcome to OpenChat!!".to_string(),
             }),
             MessageContent::Text(TextContent {
-                text: format!("Wait here {}, your SATS are coming below 👇", args.username),
+                text: format!("Wait a moment {}, your SATS are coming below 👇", args.username),
             }),
         ]
     } else {
@@ -209,12 +209,12 @@ fn commit(
                     .unwrap()
                     .into();
 
+            runtime_state.push_event_to_user_index(UserIndexEvent::JoinUserToGroup(Box::new(JoinUserToGroup {
+                user_id,
+                chat_id: btc_miami_group,
+            })));
             runtime_state.data.timer_jobs.enqueue_job(
-                TimerJob::JoinUserToGroup(JoinUserToGroup {
-                    user_id,
-                    group_id: btc_miami_group,
-                    attempt: 0,
-                }),
+                TimerJob::AddUserToSatoshiDice(AddUserToSatoshiDice { user_id, attempt: 0 }),
                 now,
                 now,
             );
@@ -232,7 +232,6 @@ fn welcome_messages() -> Vec<String> {
         "\
 - To follow announcements by the OpenChat team, join [Announcements](/kvvn5-aiaaa-aaaaf-aqznq-cai).
 - To ask for help, join [OpenChat Help](/4stss-vaaaa-aaaar-amjda-cai).
-- To follow software updates, join [OpenChat Updates](/eucat-raaaa-aaaaf-adn7q-cai).
 - To request new features, join [Feature Requests](/vfaj4-zyaaa-aaaaf-aabya-cai).
 - To report bugs, join [Bug Reports](/sycha-wyaaa-aaaaf-aabka-cai).
 - To provide feedback in general, join the [Product Feedback](/s7dbu-3aaaa-aaaaf-aabkq-cai).

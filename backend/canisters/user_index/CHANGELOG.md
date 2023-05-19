@@ -5,6 +5,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.699](https://github.com/open-ic/open-chat/releases/tag/v2.0.699-user_index)] - 2023-05-18
+
+### Added
+
+- Added `JoinUserToGroup` event ([#3613](https://github.com/open-ic/open-chat/pull/3613))
+
+### Changed
+
+- Only retry transfers where the c2c call failed ([#3614](https://github.com/open-ic/open-chat/pull/3614))
+
 ### Removed
 
 - Remove `register_user_v2` since users now register via a LocalUserIndex ([#3583](https://github.com/open-ic/open-chat/pull/3583))

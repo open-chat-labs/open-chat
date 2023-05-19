@@ -9,10 +9,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Short circuit query calls prior to calling `ic0.time()` where possible ([#3542](https://github.com/open-ic/open-chat/pull/3542))
 - Added `moderator` role ([#3592](https://github.com/open-ic/open-chat/pull/3592))
+- Allow registered bot accounts to start conversations with OC users ([#3591](https://github.com/open-ic/open-chat/pull/3591))
 
 ### Removed
 
 - Remove `send_message` and `edit_message` (there are now `v2` versions) ([#3578](https://github.com/open-ic/open-chat/pull/3578))
+
+### Fixed
+
+- Fix `last_updated` date on group chats ([#3609](https://github.com/open-ic/open-chat/pull/3609))
 
 ## [[2.0.676](https://github.com/open-ic/open-chat/releases/tag/v2.0.676-user)] - 2023-04-29
 

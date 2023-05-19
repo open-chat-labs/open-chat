@@ -564,7 +564,6 @@ export interface MessageMatch {
   'content' : MessageContent,
   'sender' : UserId,
   'score' : number,
-  'chat_id' : ChatId,
   'message_index' : MessageIndex,
 }
 export interface MessagePinned {

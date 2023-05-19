@@ -1,4 +1,3 @@
-use crate::guards::caller_is_known_bot;
 use crate::timer_job_types::{DeleteFileReferencesJob, TimerJob};
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update_msgpack;
@@ -25,7 +24,7 @@ async fn c2c_send_messages_impl(args: Args) -> Response {
         SenderStatus::Ok(user_id) => user_id,
         SenderStatus::Blocked => return Blocked,
         SenderStatus::UnknownUser(local_user_index_canister_id, user_id) => {
-            if !verify_user(local_user_index_canister_id, user_id).await {
+            if !verify_user(local_user_index_canister_id, user_id, false).await {
                 panic!("This request is not from an OpenChat user");
             }
             user_id
@@ -70,9 +69,9 @@ async fn c2c_send_messages_impl(args: Args) -> Response {
     Success
 }
 
-#[update(guard = "caller_is_known_bot")]
+#[update]
 #[trace]
-fn c2c_handle_bot_messages(
+async fn c2c_handle_bot_messages(
     args: user_canister::c2c_handle_bot_messages::Args,
 ) -> user_canister::c2c_handle_bot_messages::Response {
     let (sender_status, now) = read_state(|state| (get_sender_status(state), state.env.now()));
@@ -80,7 +79,12 @@ fn c2c_handle_bot_messages(
     let sender_user_id = match sender_status {
         SenderStatus::Ok(user_id) => user_id,
         SenderStatus::Blocked => return user_canister::c2c_handle_bot_messages::Response::Blocked,
-        SenderStatus::UnknownUser(..) => unreachable!(),
+        SenderStatus::UnknownUser(local_user_index_canister_id, user_id) => {
+            if !verify_user(local_user_index_canister_id, user_id, true).await {
+                panic!("This request is not from a bot registered with OpenChat");
+            }
+            user_id
+        }
     };
 
     for message in args.messages.iter() {
@@ -144,12 +148,16 @@ fn get_sender_status(runtime_state: &RuntimeState) -> SenderStatus {
     }
 }
 
-async fn verify_user(local_user_index_canister_id: CanisterId, user_id: UserId) -> bool {
+async fn verify_user(local_user_index_canister_id: CanisterId, user_id: UserId, is_bot: bool) -> bool {
     let args = local_user_index_canister::c2c_lookup_user::Args {
         user_id_or_principal: user_id.into(),
     };
     if let Ok(response) = local_user_index_canister_c2c_client::c2c_lookup_user(local_user_index_canister_id, &args).await {
-        matches!(response, local_user_index_canister::c2c_lookup_user::Response::Success(_))
+        if let local_user_index_canister::c2c_lookup_user::Response::Success(r) = response {
+            r.is_bot == is_bot
+        } else {
+            false
+        }
     } else {
         panic!("Failed to call local_user_index to verify user");
     }

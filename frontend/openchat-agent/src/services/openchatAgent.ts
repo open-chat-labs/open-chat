@@ -604,18 +604,12 @@ export class OpenChatAgent extends EventTarget {
         }
     }
 
-    private async getCachedChatSummaries(): Promise<Record<string, ChatSummary>> {
-        const chatState = await getCachedChats(this.db, this.principal);
-        if (chatState === undefined) return {};
-        const chats = [...chatState.directChats, ...chatState.groupChats];
-        return toRecord(chats, (c) => c.chatId);
-    }
-
     private async resolveMissingIndexes<T extends ChatEvent>(
         currentChatId: string,
         events: EventWrapper<T>[],
         threadRootMessageIndex: number | undefined,
-        latestClientEventIndex: number | undefined
+        latestClientEventIndex: number | undefined,
+        chatState: ChatStateFull | undefined
     ): Promise<MessageContextMap<EventWrapper<Message>>> {
         const contextMap = this.findMissingEventIndexesByChat(
             currentChatId,
@@ -625,10 +619,14 @@ export class OpenChatAgent extends EventTarget {
 
         if (contextMap.length === 0) return Promise.resolve(new MessageContextMap());
 
-        const cachedChats = await this.getCachedChatSummaries();
+        const state = chatState ?? await getCachedChats(this.db, this.principal);
+        const chatSummaries = toRecord(
+            state === undefined ? [] : [...state.directChats, ...state.groupChats],
+            (c) => c.chatId
+        );
 
         return contextMap.asyncMap(async (key, ctx, idxs) => {
-            const targetChat = cachedChats[ctx.chatId];
+            const targetChat = chatSummaries[ctx.chatId];
 
             // it is *possible* that the target chat might not be in the cached chats if e.g. we are previewing
             // in that case we assume it's a group chat - this is pretty dodgy but it should work in practice
@@ -729,7 +727,8 @@ export class OpenChatAgent extends EventTarget {
             currentChatId,
             resp.events,
             threadRootMessageIndex,
-            latestClientEventIndex
+            latestClientEventIndex,
+            undefined,
         );
 
         resp.events = resp.events.map((e) =>
@@ -774,13 +773,15 @@ export class OpenChatAgent extends EventTarget {
         chatId: string,
         message: EventWrapper<Message>,
         threadRootMessageIndex: number | undefined,
-        latestClientEventIndex: number | undefined
+        latestClientEventIndex: number | undefined,
+        chatState: ChatStateFull | undefined,
     ): Promise<EventWrapper<Message>> {
         const missing = await this.resolveMissingIndexes(
             chatId,
             [message],
             threadRootMessageIndex,
-            latestClientEventIndex
+            latestClientEventIndex,
+            chatState,
         );
         return this.rehydrateEvent(message, chatId, missing, threadRootMessageIndex);
     }
@@ -937,7 +938,7 @@ export class OpenChatAgent extends EventTarget {
         const updatedEvents = getUpdatedEvents(updates.directChatsUpdated, groupUpdates);
 
         return await this.hydrateChatState(state).then((s) => {
-            if (anyUpdates && !anyErrors) {
+            if (!anyErrors) {
                 setCachedChats(this.db, this.principal, s, updatedEvents);
             }
 
@@ -1005,7 +1006,6 @@ export class OpenChatAgent extends EventTarget {
                 groupUpdatePromiseResults.errors.length > 0;
         }
 
-
         return await this.hydrateChatState(state).then((s) => {
             if (!anyErrors) {
                 setCachedChats(this.db, this.principal, state, {});
@@ -1020,8 +1020,8 @@ export class OpenChatAgent extends EventTarget {
     }
 
     async hydrateChatState(state: ChatStateFull): Promise<ChatStateFull> {
-        const directChatPromises = state.directChats.map((c) => this.hydrateChatSummary(c));
-        const groupChatPromises = state.groupChats.map((c) => this.hydrateChatSummary(c));
+        const directChatPromises = state.directChats.map((c) => this.hydrateChatSummary(c, state));
+        const groupChatPromises = state.groupChats.map((c) => this.hydrateChatSummary(c, state));
 
         const directChats = await Promise.all(directChatPromises);
         const groupChats = await Promise.all(groupChatPromises);
@@ -1033,14 +1033,15 @@ export class OpenChatAgent extends EventTarget {
         };
     }
 
-    async hydrateChatSummary<T extends ChatSummary>(chat: T): Promise<T> {
+    async hydrateChatSummary<T extends ChatSummary>(chat: T, chatState: ChatStateFull): Promise<T> {
         const latestMessage =
             chat.latestMessage !== undefined
                 ? await this.rehydrateMessage(
                       chat.chatId,
                       chat.latestMessage,
                       undefined,
-                      chat.latestEventIndex
+                      chat.latestEventIndex,
+                      chatState,
                   )
                 : undefined;
 
@@ -1517,18 +1518,21 @@ export class OpenChatAgent extends EventTarget {
         thread: ThreadPreview,
         latestClientMainEventIndex: number | undefined
     ): Promise<ThreadPreview> {
+        const chatState = await getCachedChats(this.db, this.principal);
         const threadMissing = await this.resolveMissingIndexes(
             thread.chatId,
             thread.latestReplies,
             thread.rootMessage.event.messageIndex,
-            thread.rootMessage.event.thread?.latestEventIndex
+            thread.rootMessage.event.thread?.latestEventIndex,
+            chatState,
         );
 
         const rootMissing = await this.resolveMissingIndexes(
             thread.chatId,
             [thread.rootMessage],
             undefined,
-            latestClientMainEventIndex
+            latestClientMainEventIndex,
+            chatState,
         );
 
         const latestReplies = thread.latestReplies.map((r) =>

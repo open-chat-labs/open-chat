@@ -5,6 +5,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Removed
+
+- Remove out of date welcome message ([#3618](https://github.com/open-ic/open-chat/pull/3618))
+
+## [[2.0.700](https://github.com/open-ic/open-chat/releases/tag/v2.0.700-local_user_index)] - 2023-05-18
+
+### Added
+
+- Send ckBTC to the SatoshiDice bot for Bitcoin Miami ([#3616](https://github.com/open-ic/open-chat/pull/3616))
+
+### Changed
+
+- Join users to groups via the UserIndex rather than directly ([#3613](https://github.com/open-ic/open-chat/pull/3613))
+
+### Removed
+
+- Remove `JoinUserToGroup` event ([#3613](https://github.com/open-ic/open-chat/pull/3613))
+
+## [[2.0.694](https://github.com/open-ic/open-chat/releases/tag/v2.0.694-local_user_index)] - 2023-05-17
+
+### Added
+
+- Register new Bitcoin Miami users with the SatoshiDice bot ([#3591](https://github.com/open-ic/open-chat/pull/3591))
+
 ## [[2.0.687](https://github.com/open-ic/open-chat/releases/tag/v2.0.687-local_user_index)] - 2023-05-12
 
 ### Added

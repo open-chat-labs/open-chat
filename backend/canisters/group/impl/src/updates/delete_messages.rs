@@ -34,14 +34,16 @@ fn delete_messages_impl(caller: Principal, args: Args, runtime_state: &mut Runti
         return ChatFrozen;
     }
 
-    if let Some(participant) = runtime_state.data.participants.get_by_principal(&caller) {
-        if participant.suspended.value {
+    if let Some(member) = runtime_state.data.get_member(caller) {
+        if member.suspended.value {
             return UserSuspended;
         }
 
         let now = runtime_state.env.now();
-        let user_id = participant.user_id;
-        let min_visible_event_index = participant.min_visible_event_index();
+        let user_id = member.user_id;
+        let min_visible_event_index = member.min_visible_event_index();
+        let is_admin = member.role.can_delete_messages(&runtime_state.data.chat.permissions)
+            || args.as_platform_moderator.unwrap_or_default();
 
         let mut my_messages: HashSet<MessageId> = HashSet::new();
 
@@ -49,6 +51,7 @@ fn delete_messages_impl(caller: Principal, args: Args, runtime_state: &mut Runti
             for message_id in args.message_ids.iter().copied() {
                 if let Some((message_index, sender)) = runtime_state
                     .data
+                    .chat
                     .events
                     .visible_main_events_reader(min_visible_event_index, now)
                     .message_internal(message_id.into())
@@ -60,10 +63,10 @@ fn delete_messages_impl(caller: Principal, args: Args, runtime_state: &mut Runti
                     }
 
                     // If the message being deleted is pinned, unpin it
-                    if let Ok(index) = runtime_state.data.pinned_messages.binary_search(&message_index) {
-                        runtime_state.data.pinned_messages.remove(index);
+                    if let Ok(index) = runtime_state.data.chat.pinned_messages.binary_search(&message_index) {
+                        runtime_state.data.chat.pinned_messages.remove(index);
 
-                        runtime_state.data.events.push_main_event(
+                        runtime_state.data.chat.events.push_main_event(
                             ChatEventInternal::MessageUnpinned(Box::new(MessageUnpinned {
                                 message_index,
                                 unpinned_by: user_id,
@@ -77,10 +80,9 @@ fn delete_messages_impl(caller: Principal, args: Args, runtime_state: &mut Runti
             }
         }
 
-        let delete_message_results = runtime_state.data.events.delete_messages(DeleteUndeleteMessagesArgs {
+        let delete_message_results = runtime_state.data.chat.events.delete_messages(DeleteUndeleteMessagesArgs {
             caller: user_id,
-            is_admin: participant.role.can_delete_messages(&runtime_state.data.permissions)
-                || args.as_platform_moderator.unwrap_or_default(),
+            is_admin,
             min_visible_event_index,
             thread_root_message_index: args.thread_root_message_index,
             message_ids: args.message_ids,

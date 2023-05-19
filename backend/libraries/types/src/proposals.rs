@@ -1,4 +1,4 @@
-use crate::{CanisterId, NnsNeuronId, ProposalId, SnsNeuronId, TimestampMillis, UserId};
+use crate::{CanisterId, MessageId, NnsNeuronId, ProposalId, SnsNeuronId, TimestampMillis, UserId};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -162,12 +162,32 @@ pub struct ProposalContent {
     pub my_vote: Option<bool>,
 }
 
+#[derive(CandidType, Serialize, Deserialize, Debug, Clone)]
+pub struct ProposalUpdate {
+    pub message_id: MessageId,
+    pub status: Option<ProposalDecisionStatus>,
+    pub reward_status: Option<ProposalRewardStatus>,
+    pub latest_tally: Option<Tally>,
+    pub deadline: Option<TimestampMillis>,
+}
+
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct ProposalStatusUpdate {
     pub status: Option<ProposalDecisionStatus>,
     pub reward_status: Option<ProposalRewardStatus>,
     pub latest_tally: Option<Tally>,
     pub deadline: Option<TimestampMillis>,
+}
+
+impl From<ProposalUpdate> for ProposalStatusUpdate {
+    fn from(value: ProposalUpdate) -> Self {
+        ProposalStatusUpdate {
+            status: value.status,
+            reward_status: value.reward_status,
+            latest_tally: value.latest_tally,
+            deadline: value.deadline,
+        }
+    }
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default, Eq, PartialEq)]

@@ -905,12 +905,13 @@ export async function getEventsResponse(
 }
 
 export function searchGroupChatResponse(
-    candid: ApiSearchGroupChatResponse
+    candid: ApiSearchGroupChatResponse,
+    chatId: string,
 ): SearchGroupChatResponse {
     if ("Success" in candid) {
         return {
             kind: "success",
-            matches: candid.Success.matches.map(messageMatch),
+            matches: candid.Success.matches.map((m) => messageMatch(m, chatId)),
         };
     }
     if ("TermTooShort" in candid) {

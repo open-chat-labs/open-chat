@@ -53,6 +53,7 @@
                     on:upgrade
                     on:dismissRecommendation
                     on:joinGroup
+                    on:leaveGroup
                     {group}
                     {joining} />
             {/each}
