@@ -24,7 +24,7 @@
     import ChatsButton from "./ChatsButton.svelte";
     import { iconSize } from "../../stores/iconSize";
     import { discoverHotGroupsDismissed } from "../../stores/settings";
-    import { communitiesEnabled } from "utils/features";
+    import { communitiesEnabled } from "../../utils/features";
 
     const client = getContext<OpenChat>("client");
     const createdUser = client.user;
@@ -145,7 +145,7 @@
 </script>
 
 {#if user}
-    {#if communitiesEnabled}
+    {#if $communitiesEnabled}
         <CurrentSelection />
     {:else}
         <CurrentUser

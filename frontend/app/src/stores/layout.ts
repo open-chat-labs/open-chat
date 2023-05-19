@@ -17,10 +17,18 @@ type Layout = {
     rightPanel: RightPanelState;
 };
 
+function debug<T>(label: string, obj: T): T {
+    console.log(label, obj);
+    return obj;
+}
+
+// TODO - we really need some tests around this and now that it's out of the Home component we can do that easily
 export const layoutStore: Readable<Layout> = derived(
     [numberOfColumns, rightPanelHistory, mobileWidth, pathParams],
     ([$numberOfColumns, $rightPanelHistory, $mobileWidth, $pathParams]) => {
-        const showRight = $rightPanelHistory.length > 0 || $numberOfColumns === 3;
+        const showRight =
+            $pathParams.kind !== "communities_route" &&
+            ($rightPanelHistory.length > 0 || $numberOfColumns === 3);
         const floatRight = !$mobileWidth && $numberOfColumns < 3;
         const middleSelected =
             $pathParams.kind === "chat_selected_route" ||
@@ -28,9 +36,11 @@ export const layoutStore: Readable<Layout> = derived(
             $pathParams.kind === "communities_route";
         const leftSelected = $pathParams.kind === "home_route";
         const showMiddle = !$mobileWidth || (middleSelected && !showRight);
-        const showLeft = !$mobileWidth || (leftSelected && !showRight);
+        const showLeft =
+            $pathParams.kind !== "communities_route" &&
+            (!$mobileWidth || (leftSelected && !showRight));
 
-        return {
+        return debug("layoutStore", {
             numberOfColumns: $numberOfColumns,
             showMiddle,
             showLeft,
@@ -39,6 +49,6 @@ export const layoutStore: Readable<Layout> = derived(
                     ? "floating"
                     : "inline"
                 : "hidden") as RightPanelState,
-        };
+        });
     }
 );

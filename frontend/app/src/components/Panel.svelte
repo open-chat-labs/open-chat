@@ -2,6 +2,7 @@
     import { numberOfColumns } from "../stores/layout";
     import { mobileWidth } from "../stores/screenDimensions";
     import { rtlStore } from "../stores/rtl";
+    import { communitiesEnabled } from "../utils/features";
 
     export let left: boolean = false;
     export let nav: boolean = false;
@@ -20,6 +21,7 @@
     class:right
     class:middle
     class:modal
+    class:nav-supported={$communitiesEnabled}
     class:empty>
     <slot />
 </section>
@@ -32,6 +34,14 @@
         padding-bottom: 0;
         overflow: auto;
         overflow-x: hidden;
+
+        // whichever panel is the 2nd panel should be nudged right to accommodate the nav
+        &.nav-supported:nth-child(2) {
+            margin-left: toRem(80);
+            @include mobile() {
+                margin-left: toRem(60);
+            }
+        }
 
         &.middle {
             padding-left: 0;
@@ -55,7 +65,6 @@
         }
 
         &.left {
-            // margin-left: toRem(80); // accommodate the left nav
             position: relative;
             border-right: 1px solid var(--bd);
             background: var(--panel-left-bg);
@@ -75,15 +84,21 @@
         }
 
         &.nav {
+            position: absolute;
             display: flex;
             flex-direction: column;
-            align-items: center;
+            // align-items: center;
             justify-content: space-between;
-            flex: 0 0 toRem(80);
-            gap: $sp4;
+            width: toRem(80);
+            // width: toRem(150);
+            overflow-x: hidden;
+            height: 100%;
             background: var(--panel-left-bg);
-            padding: $sp4 0;
+            background: var(--panel-right-modal);
+            padding: 0;
             border-right: 1px solid var(--bd);
+            @include z-index("left-nav");
+            transition: width 250ms ease-in-out;
 
             &.rtl {
                 border-right: none;
@@ -91,7 +106,16 @@
             }
 
             @include mobile() {
-                flex: 0 0 toRem(60);
+                width: toRem(60);
+            }
+
+            &:hover {
+                width: toRem(350);
+                box-shadow: 10px 0 10px rgba(0, 0, 0, 0.1);
+
+                @include mobile() {
+                    width: toRem(250);
+                }
             }
         }
 

@@ -1,6 +1,4 @@
-import type { GroupChatSummary } from "openchat-client";
 import { Readable, derived, writable } from "svelte/store";
-import type { RemoteData } from "./utils/remoteData";
 
 export const notFound = writable(false);
 

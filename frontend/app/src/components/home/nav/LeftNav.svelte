@@ -1,24 +1,25 @@
 <script lang="ts">
     import Avatar from "../../Avatar.svelte";
     import FancyLoader from "../../icons/FancyLoader.svelte";
+    import Panel from "../../Panel.svelte";
     import MenuIcon from "../../MenuIcon.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
     import HeartOutline from "svelte-material-icons/HeartOutline.svelte";
     import Plus from "svelte-material-icons/Plus.svelte";
     import Compass from "svelte-material-icons/CompassOutline.svelte";
     import Wallet from "svelte-material-icons/WalletOutline.svelte";
-    import Hamburger from "svelte-material-icons/Menu.svelte";
-    import TooltipWrapper from "../../TooltipWrapper.svelte";
+    import Hamburger from "svelte-material-icons/DotsVertical.svelte";
     import { AvatarSize, OpenChat } from "openchat-client";
-    import TooltipPopup from "../../TooltipPopup.svelte";
     import { iconSize } from "../../../stores/iconSize";
     import { mobileWidth } from "../../../stores/screenDimensions";
     import { _ } from "svelte-i18n";
+    import { pathParams } from "../../../routes";
     import page from "page";
     import { createEventDispatcher, getContext } from "svelte";
     import DirectChats from "../../icons/DirectChats.svelte";
     import CurrentUserMenu from "../CurrentUserMenu.svelte";
-    import CommunityIcon from "./CommunityIcon.svelte";
+    import LeftNavItem from "./LeftNavItem.svelte";
+    import LandingPageMenu from "./LandingPageMenu.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -93,6 +94,11 @@
         console.log("favourite chats");
     }
 
+    function selectCommunity(idx: number) {
+        selectedIndex = idx;
+        page("/"); // TODO - do we need to have the communityId in the route? Or do we just select the first group for that community?
+    }
+
     /* 
     let's imagine that we have: 
     - home logo
@@ -112,141 +118,122 @@
     */
 </script>
 
-<div class="top">
-    <TooltipWrapper gutter={-6} fill position="right" align={"center"}>
-        <div slot="target" on:click={() => page("/home")} class="hover logo">
-            <FancyLoader loop={false} />
-        </div>
-        <div slot="tooltip" let:position let:align>
-            <TooltipPopup {position} {align}>
-                {$_("homepage")}
-            </TooltipPopup>
-        </div>
-    </TooltipWrapper>
+<Panel nav>
+    <div class="top">
+        <LeftNavItem separator label={$_("homepage")} on:click={() => page("/home")}>
+            <div class="hover logo">
+                <FancyLoader loop={false} />
+            </div>
+            <div slot="menu">
+                <LandingPageMenu />
+            </div>
+        </LeftNavItem>
 
-    <TooltipWrapper gutter={-6} fill position="right" align={"center"}>
-        <div slot="target" on:click={directChats} class="hover direct">
-            <DirectChats size={$iconSize} color={"var(--icon-txt)"} />
-        </div>
-        <div slot="tooltip" let:position let:align>
-            <TooltipPopup {position} {align}>
-                {"Direct chats"}
-            </TooltipPopup>
-        </div>
-    </TooltipWrapper>
-    <TooltipWrapper gutter={-6} fill position="right" align={"center"}>
-        <div slot="target" on:click={favouriteChats} class="hover favs">
-            <HeartOutline size={$iconSize} color={"var(--icon-txt)"} />
-        </div>
-        <div slot="tooltip" let:position let:align>
-            <TooltipPopup {position} {align}>
-                {"Favourite chats"}
-            </TooltipPopup>
-        </div>
-    </TooltipWrapper>
-</div>
+        {#if user !== undefined}
+            <LeftNavItem label={$_("profile.title")} on:click={() => dispatch("profile")}>
+                <Avatar url={client.userAvatarUrl(user)} userId={user.userId} size={avatarSize} />
+                <div slot="menu">
+                    <MenuIcon>
+                        <span slot="icon">
+                            <HoverIcon>
+                                <Hamburger size={$iconSize} color={"var(--icon-txt)"} />
+                            </HoverIcon>
+                        </span>
+                        <span slot="menu">
+                            <CurrentUserMenu
+                                on:halloffame
+                                on:logout
+                                on:newGroup
+                                on:profile
+                                on:showHomePage
+                                on:upgrade
+                                on:wallet
+                                on:whatsHot />
+                        </span>
+                    </MenuIcon>
+                </div>
+            </LeftNavItem>
+        {/if}
 
-<div class="middle">
-    {#each communities as community, i}
-        <CommunityIcon
-            on:selectCommunity={() => (selectedIndex = i)}
-            {community}
-            selected={i === selectedIndex} />
-    {/each}
-    <TooltipWrapper gutter={-6} fill position="right" align={"center"}>
-        <div slot="target" on:click={createCommunity} class="hover plus">
-            <Plus size={$iconSize} color={"var(--icon-txt)"} />
-        </div>
-        <div slot="tooltip" let:position let:align>
-            <TooltipPopup {position} {align}>
-                {"Create community"}
-            </TooltipPopup>
-        </div>
-    </TooltipWrapper>
-    <TooltipWrapper gutter={-6} fill position="right" align={"center"}>
-        <div slot="target" on:click={exploreCommunities} class="hover explore">
-            <Compass size={$iconSize} color={"var(--icon-txt)"} />
-        </div>
-        <div slot="tooltip" let:position let:align>
-            <TooltipPopup {position} {align}>
-                {"Explore communities"}
-            </TooltipPopup>
-        </div>
-    </TooltipWrapper>
-</div>
+        <LeftNavItem label={"Open wallet"} on:click={openWallet}>
+            <div class="hover wallet">
+                <Wallet size={$iconSize} color={"var(--icon-txt)"} />
+            </div>
+        </LeftNavItem>
 
-<div class="bottom">
-    <TooltipWrapper gutter={-6} fill position="right" align={"center"}>
-        <div slot="target" on:click={openWallet} class="hover wallet">
-            <Wallet size={$iconSize} color={"var(--icon-txt)"} />
-        </div>
-        <div slot="tooltip" let:position let:align>
-            <TooltipPopup {position} {align}>
-                {"Open wallet"}
-            </TooltipPopup>
-        </div>
-    </TooltipWrapper>
+        <LeftNavItem label={"Direct chats"} on:click={directChats}>
+            <div class="hover direct">
+                <DirectChats size={$iconSize} color={"var(--icon-txt)"} />
+            </div>
+        </LeftNavItem>
 
-    <span class="menu">
-        <MenuIcon>
-            <span slot="icon">
-                <HoverIcon>
-                    <Hamburger size={$iconSize} color={"var(--icon-txt)"} />
-                </HoverIcon>
-            </span>
-            <span slot="menu">
-                <CurrentUserMenu
-                    on:halloffame
-                    on:logout
-                    on:newGroup
-                    on:profile
-                    on:showHomePage
-                    on:upgrade
-                    on:wallet
-                    on:whatsHot />
-            </span>
-        </MenuIcon>
-    </span>
+        <LeftNavItem separator label={"Favourite chats"} on:click={favouriteChats}>
+            <div class="hover favs">
+                <HeartOutline size={$iconSize} color={"var(--icon-txt)"} />
+            </div>
+        </LeftNavItem>
+    </div>
 
-    <TooltipWrapper gutter={-6} fill position="right" align={"center"}>
-        <div slot="target" on:click={() => dispatch("profile")} class="hover avatar">
-            <Avatar url={client.userAvatarUrl(user)} userId={user.userId} size={avatarSize} />
-        </div>
-        <div slot="tooltip" let:position let:align>
-            <TooltipPopup {position} {align}>
-                {$_("profile.title")}
-            </TooltipPopup>
-        </div>
-    </TooltipWrapper>
-</div>
+    <div class="middle">
+        {#each communities as community, i}
+            <LeftNavItem
+                selected={i === selectedIndex}
+                label={community.name}
+                on:click={() => selectCommunity(i)}>
+                <Avatar selected={i === selectedIndex} url={community.url} size={avatarSize} />
+            </LeftNavItem>
+        {/each}
+    </div>
+
+    <div class="bottom">
+        <LeftNavItem label={"Create community"} on:click={createCommunity}>
+            <div class="plus hover">
+                <Plus size={$iconSize} color={"var(--icon-txt)"} />
+            </div>
+        </LeftNavItem>
+        <LeftNavItem
+            selected={$pathParams.kind === "communities_route"}
+            label={"Explore communities"}
+            on:click={exploreCommunities}>
+            <div class="explore hover">
+                <Compass size={$iconSize} color={"var(--icon-txt)"} />
+            </div>
+        </LeftNavItem>
+    </div>
+</Panel>
 
 <style type="text/scss">
     :global(.hover svg path) {
         transition: fill 250ms ease-in-out;
     }
-    :global(.hover:hover svg path) {
+
+    :global(.left-nav-item:hover .hover svg path) {
         fill: var(--icon-selected);
+    }
+
+    :global(.left-nav-item:hover .hover) {
+        border-color: var(--icon-selected);
+    }
+
+    :global(.left-nav-item.selected svg path) {
+        fill: var(--icon-selected);
+    }
+
+    :global(.left-nav-item.selected) {
+        .path,
+        .explore {
+            border: 2px solid var(--icon-selected);
+        }
     }
 
     .top,
     .bottom,
     .middle {
         display: flex;
-        align-items: center;
         flex-direction: column;
-        gap: $sp5;
-        width: 100%;
-
-        @include mobile() {
-            gap: $sp4;
-        }
     }
     .bottom {
         gap: $sp3;
-    }
-    .hover {
-        cursor: pointer;
-        text-align: center;
     }
     .logo {
         width: toRem(48);
@@ -261,14 +248,11 @@
 
     .middle {
         flex: auto;
-        gap: 0;
-        overflow: auto;
+        overflow-x: hidden;
         @include nice-scrollbar();
     }
 
-    .plus,
-    .explore {
-        margin: toRem(6) auto;
+    .hover {
         width: toRem(48);
         height: toRem(48);
         border: 2px solid transparent;
@@ -282,10 +266,6 @@
         @include mobile() {
             width: toRem(35);
             height: toRem(35);
-        }
-
-        &:hover {
-            border-color: var(--icon-selected);
         }
     }
 </style>

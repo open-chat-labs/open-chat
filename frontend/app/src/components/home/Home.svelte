@@ -56,6 +56,8 @@
     import { eventListScrollTop } from "../../stores/scrollPos";
     import GateCheckFailed from "./groupdetails/GateCheckFailed.svelte";
     import HallOfFame from "./HallOfFame.svelte";
+    import { communitiesEnabled } from "../../utils/features";
+    import LeftNav from "./nav/LeftNav.svelte";
 
     const client = getContext<OpenChat>("client");
     const user = client.user;
@@ -841,9 +843,22 @@
 
     $: bgHeight = $dimensions.height * 0.9;
     $: bgClip = (($dimensions.height - 32) / bgHeight) * 361;
+
+    $: console.log("Communities Enabled: ", $communitiesEnabled);
 </script>
 
 <main>
+    {#if $communitiesEnabled}
+        <LeftNav
+            on:profile={showProfile}
+            on:wallet={showWallet}
+            on:halloffame={() => (modal = ModalType.HallOfFame)}
+            on:logout={() => client.logout()}
+            on:newGroup={newGroup}
+            on:showHomePage={showLandingPageRoute("/home")}
+            on:upgrade={upgrade} />
+    {/if}
+
     {#if $layoutStore.showLeft}
         <LeftPanel
             {groupSearchResults}
