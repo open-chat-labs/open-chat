@@ -341,10 +341,10 @@
         "privateGroup": "Gruppo privato",
         "groupInfo": "Informazioni sul gruppo",
         "role": {
-            "owner": "Proprietario",
             "admins": "Amministratori",
             "members": "Membri",
-            "moderators": "Moderatori"
+            "moderators": "Moderatori",
+            "owner": "Proprietari"
         },
         "permissions": {
             "whoCan": "Chi può",

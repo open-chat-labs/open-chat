@@ -342,10 +342,10 @@
         "privateGroup": "Nhóm kín",
         "groupInfo": "Thông tin nhóm",
         "role": {
-            "owner": "Chủ nhân",
             "admins": "Quản trị viên",
             "members": "Các thành viên",
-            "moderators": "người điều hành"
+            "moderators": "người điều hành",
+            "owner": "Những chủ sở hữu"
         },
         "permissions": {
             "whoCan": "Ai có thể",

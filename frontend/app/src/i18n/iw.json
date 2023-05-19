@@ -351,10 +351,10 @@
         "privateGroup": "קבוצה פרטית",
         "groupInfo": "מידע על הקבוצה",
         "role": {
-            "owner": "בעלים",
             "admins": "מנהלי מערכת",
             "members": "חברים",
-            "moderators": "מנחים"
+            "moderators": "מנחים",
+            "owner": "בעלים"
         },
         "permissions": {
             "whoCan": "מי יכול",

@@ -342,10 +342,10 @@
         "privateGroup": "Grupo privado",
         "groupInfo": "información del grupo",
         "role": {
-            "owner": "Dueño",
             "admins": "administradores",
             "members": "miembros",
-            "moderators": "Moderadores"
+            "moderators": "Moderadores",
+            "owner": "Propietarios"
         },
         "permissions": {
             "whoCan": "Quién puede",

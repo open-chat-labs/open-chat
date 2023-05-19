@@ -401,7 +401,7 @@
         "groupInfo": "Group info",
         "visibility": "Access",
         "role": {
-            "owner": "Owner",
+            "owner": "Owners",
             "admins": "Admins",
             "moderators": "Moderators",
             "members": "Members"
