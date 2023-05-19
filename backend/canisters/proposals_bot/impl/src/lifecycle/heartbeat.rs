@@ -10,7 +10,7 @@ use ic_cdk::api::call::CallResult;
 use ic_cdk_macros::heartbeat;
 use sha2::{Digest, Sha256};
 use std::collections::HashSet;
-use types::{CanisterId, ChatId, MessageContentInitial, MessageId, Proposal, ProposalContent, ProposalId};
+use types::{CanisterId, ChatId, MessageContentInitial, MessageId, Proposal, ProposalContent, ProposalId, ProposalUpdate};
 
 #[heartbeat]
 fn heartbeat() {
@@ -201,7 +201,6 @@ mod push_proposals {
 
 mod update_proposals {
     use super::*;
-    use group_canister::c2c_update_proposals::ProposalUpdate;
 
     pub fn run() {
         if let Some(ProposalsToUpdate {
