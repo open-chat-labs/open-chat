@@ -97,7 +97,8 @@ impl GroupMembers {
     pub fn try_undo_remove(&mut self, member: GroupMemberInternal) {
         let user_id = member.user_id;
         let role = member.role;
-        if self.members.insert(user_id, member).is_none() {
+        if let Vacant(e) = self.members.entry(user_id) {
+            e.insert(member);
             match role {
                 GroupRole::Owner => self.owner_count += 1,
                 GroupRole::Admin => self.admin_count += 1,
