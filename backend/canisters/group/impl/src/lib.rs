@@ -83,52 +83,47 @@ impl RuntimeState {
     }
 
     pub fn summary(&self, member: &GroupMemberInternal, now: TimestampMillis) -> GroupCanisterGroupChatSummary {
-        let data = &self.data;
+        let chat = &self.data.chat;
         let min_visible_event_index = member.min_visible_event_index();
         let min_visible_message_index = member.min_visible_message_index();
-        let main_events_reader = data.chat.events.visible_main_events_reader(min_visible_event_index, now);
+        let main_events_reader = chat.events.visible_main_events_reader(min_visible_event_index, now);
         let latest_event_index = main_events_reader.latest_event_index().unwrap_or_default();
 
         GroupCanisterGroupChatSummary {
             chat_id: self.env.canister_id().into(),
             last_updated: now,
-            name: data.chat.name.clone(),
-            description: data.chat.description.clone(),
-            subtype: data.chat.subtype.value.clone(),
-            avatar_id: Avatar::id(&data.chat.avatar),
-            is_public: data.chat.is_public,
-            history_visible_to_new_joiners: data.chat.history_visible_to_new_joiners,
+            name: chat.name.clone(),
+            description: chat.description.clone(),
+            subtype: chat.subtype.value.clone(),
+            avatar_id: Avatar::id(&chat.avatar),
+            is_public: chat.is_public,
+            history_visible_to_new_joiners: chat.history_visible_to_new_joiners,
             min_visible_event_index,
             min_visible_message_index,
             latest_message: main_events_reader.latest_message_event(Some(member.user_id)),
             latest_event_index,
             joined: member.date_added,
-            participant_count: data.chat.members.len(),
+            participant_count: chat.members.len(),
             role: member.role,
-            mentions: member.most_recent_mentions(None, &data.chat.events, now),
-            permissions: data.chat.permissions.clone(),
+            mentions: member.most_recent_mentions(None, &chat.events, now),
+            permissions: chat.permissions.clone(),
             notifications_muted: member.notifications_muted.value,
-            metrics: data.chat.events.metrics().clone(),
-            my_metrics: data
-                .chat
-                .events
-                .user_metrics(&member.user_id, None)
-                .cloned()
-                .unwrap_or_default(),
-            latest_threads: data.chat.events.latest_threads(
+            metrics: chat.events.metrics().clone(),
+            my_metrics: chat.events.user_metrics(&member.user_id, None).cloned().unwrap_or_default(),
+            latest_threads: chat.events.latest_threads(
                 min_visible_event_index,
                 member.threads.iter(),
                 None,
                 MAX_THREADS_IN_SUMMARY,
                 now,
             ),
-            frozen: data.frozen.value.clone(),
+            frozen: self.data.frozen.value.clone(),
             wasm_version: Version::default(),
-            date_last_pinned: data.chat.date_last_pinned,
-            events_ttl: data.chat.events.get_events_time_to_live().value,
-            expired_messages: data.chat.events.expired_messages(now),
-            next_message_expiry: data.chat.events.next_message_expiry(now),
-            gate: data.chat.gate.value.clone(),
+            date_last_pinned: chat.date_last_pinned,
+            events_ttl: chat.events.get_events_time_to_live().value,
+            expired_messages: chat.events.expired_messages(now),
+            next_message_expiry: chat.events.next_message_expiry(now),
+            gate: chat.gate.value.clone(),
         }
     }
 
