@@ -8,8 +8,7 @@ use std::collections::HashSet;
 use types::{
     Avatar, ContentValidationError, CryptoTransaction, EventIndex, EventWrapper, GroupGate, GroupPermissions,
     GroupReplyContext, GroupRole, GroupRules, GroupSubtype, InvalidPollReason, MentionInternal, Message, MessageContentInitial,
-    MessageId, MessageIndex, MessagePinned, MessageUnpinned, Milliseconds, PushEventResult, Reaction, RoleChanged,
-    TimestampMillis, Timestamped, User, UserId,
+    MessageId, MessageIndex, MessageUnpinned, Milliseconds, Reaction, RoleChanged, TimestampMillis, Timestamped, User, UserId,
 };
 
 #[derive(Serialize, Deserialize)]
