@@ -28,6 +28,7 @@ pub enum Response {
     InvalidPoll(InvalidPollReason),
     NotAuthorized,
     CallerNotInCommunity,
+    UserNotInGroup,
     UserSuspended,
     InvalidRequest(String),
     ChatFrozen,

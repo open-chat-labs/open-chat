@@ -17,4 +17,12 @@ impl Groups {
             _ => unreachable!(),
         };
     }
+
+    pub fn _get(&self, group_id: &CommunityGroupId) -> Option<&GroupChatCore> {
+        self.groups.get(group_id)
+    }
+
+    pub fn get_mut(&mut self, group_id: &CommunityGroupId) -> Option<&mut GroupChatCore> {
+        self.groups.get_mut(group_id)
+    }
 }

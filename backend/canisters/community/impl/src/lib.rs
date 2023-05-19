@@ -1,12 +1,15 @@
 use crate::model::groups::Groups;
 use crate::model::members::CommunityMembers;
+use crate::timer_job_types::TimerJob;
 use candid::Principal;
 use canister_state_macros::canister_state;
+use canister_timer_jobs::TimerJobs;
 use model::{events::CommunityEvents, invited_users::InvitedUsers, members::CommunityMemberInternal};
+use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use types::{
-    Avatar, CanisterId, CommunityPermissions, CommunitySummary, Cycles, FrozenGroupInfo, GroupGate, GroupRules,
+    Avatar, CanisterId, CommunityPermissions, CommunitySummary, Cycles, FrozenGroupInfo, GroupGate, GroupRules, Notification,
     TimestampMillis, Timestamped, UserId, Version,
 };
 use utils::env::Environment;
@@ -17,6 +20,7 @@ mod lifecycle;
 mod memory;
 mod model;
 mod queries;
+mod timer_job_types;
 mod updates;
 
 thread_local! {
@@ -49,6 +53,21 @@ impl RuntimeState {
 
     pub fn is_caller_local_group_index(&self) -> bool {
         self.env.caller() == self.data.local_group_index_canister_id
+    }
+
+    pub fn push_notification(&mut self, recipients: Vec<UserId>, notification: Notification) {
+        if !recipients.is_empty() {
+            let args = c2c_push_notification::Args {
+                recipients,
+                authorizer: Some(self.data.local_group_index_canister_id),
+                notification_bytes: candid::encode_one(notification).unwrap(),
+            };
+            ic_cdk::spawn(push_notification_inner(self.data.notifications_canister_id, args));
+        }
+
+        async fn push_notification_inner(canister_id: CanisterId, args: c2c_push_notification::Args) {
+            let _ = notifications_canister_c2c_client::c2c_push_notification(canister_id, &args).await;
+        }
     }
 
     pub fn summary(&self, member: &CommunityMemberInternal, now: TimestampMillis) -> CommunitySummary {
@@ -120,6 +139,7 @@ struct Data {
     invite_code: Option<u64>,
     invite_code_enabled: bool,
     frozen: Timestamped<Option<FrozenGroupInfo>>,
+    timer_jobs: TimerJobs<TimerJob>,
     test_mode: bool,
 }
 
@@ -169,6 +189,7 @@ impl Data {
             invite_code: None,
             invite_code_enabled: false,
             frozen: Timestamped::default(),
+            timer_jobs: TimerJobs::default(),
             test_mode,
         }
     }
