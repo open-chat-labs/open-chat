@@ -294,7 +294,6 @@ type UnpinMessageArgs =
 
 type UnpinMessageResponse =
     variant {
-        Success: EventIndex;
         SuccessV2: PushEventResult;
         NoChange;
         NotAuthorized;

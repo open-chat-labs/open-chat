@@ -315,8 +315,8 @@ impl GroupChatCore {
         result
     }
 
-    pub fn pin_message(&mut self, user_id: UserId, message_index: MessageIndex, now: TimestampMillis) -> PinMessageResult {
-        use PinMessageResult::*;
+    pub fn pin_message(&mut self, user_id: UserId, message_index: MessageIndex, now: TimestampMillis) -> PinUnpinMessageResult {
+        use PinUnpinMessageResult::*;
 
         if let Some(member) = self.members.get(&user_id) {
             if member.suspended.value {
@@ -349,6 +349,57 @@ impl GroupChatCore {
                 );
 
                 self.date_last_pinned = Some(now);
+                Success(push_event_result)
+            } else {
+                NoChange
+            }
+        } else {
+            UserNotInGroup
+        }
+    }
+
+    pub fn unpin_message(
+        &mut self,
+        user_id: UserId,
+        message_index: MessageIndex,
+        now: TimestampMillis,
+    ) -> PinUnpinMessageResult {
+        use PinUnpinMessageResult::*;
+
+        if let Some(member) = self.members.get(&user_id) {
+            if member.suspended.value {
+                return UserSuspended;
+            }
+            if !member.role.can_pin_messages(&self.permissions) {
+                return NotAuthorized;
+            }
+
+            if !self
+                .events
+                .is_accessible(member.min_visible_event_index(), None, message_index.into(), now)
+            {
+                return MessageNotFound;
+            }
+
+            let user_id = member.user_id;
+
+            if let Ok(index) = self.pinned_messages.binary_search(&message_index) {
+                self.pinned_messages.remove(index);
+
+                let push_event_result = self.events.push_main_event(
+                    ChatEventInternal::MessageUnpinned(Box::new(MessageUnpinned {
+                        message_index,
+                        unpinned_by: user_id,
+                        due_to_message_deleted: false,
+                    })),
+                    0,
+                    now,
+                );
+
+                if self.pinned_messages.is_empty() {
+                    self.date_last_pinned = None;
+                }
+
                 Success(push_event_result)
             } else {
                 NoChange
@@ -415,7 +466,7 @@ pub struct DeleteMessagesSuccess {
     pub my_messages: HashSet<MessageId>,
 }
 
-pub enum PinMessageResult {
+pub enum PinUnpinMessageResult {
     Success(PushEventResult),
     NoChange,
     NotAuthorized,
