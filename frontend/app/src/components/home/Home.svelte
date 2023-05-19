@@ -843,12 +843,10 @@
 
     $: bgHeight = $dimensions.height * 0.9;
     $: bgClip = (($dimensions.height - 32) / bgHeight) * 361;
-
-    $: console.log("Communities Enabled: ", $communitiesEnabled);
 </script>
 
 <main>
-    {#if $communitiesEnabled}
+    {#if $layoutStore.showNav}
         <LeftNav
             on:profile={showProfile}
             on:wallet={showWallet}

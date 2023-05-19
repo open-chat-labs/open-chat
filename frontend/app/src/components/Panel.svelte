@@ -2,6 +2,8 @@
     import { numberOfColumns } from "../stores/layout";
     import { mobileWidth } from "../stores/screenDimensions";
     import { rtlStore } from "../stores/rtl";
+    import { menuStore } from "../stores/menu";
+    import { navOpen } from "../stores/layout";
     import { communitiesEnabled } from "../utils/features";
 
     export let left: boolean = false;
@@ -12,15 +14,36 @@
     export let empty: boolean = false;
 
     $: modal = !$mobileWidth && (forceModal || $numberOfColumns === 2);
+
+    let delay: number | undefined = undefined;
+
+    function mouseenter() {
+        if (nav) {
+            delay = window.setTimeout(() => {
+                navOpen.set(true);
+            }, 300);
+        }
+    }
+
+    function mouseleave() {
+        if ($menuStore === undefined && nav) {
+            window.clearTimeout(delay);
+            console.log("Closing nav");
+            navOpen.set(false);
+        }
+    }
 </script>
 
 <section
+    on:mouseenter={mouseenter}
+    on:mouseleave={mouseleave}
     class:rtl={$rtlStore}
     class:nav
     class:left
     class:right
     class:middle
     class:modal
+    class:hovering={$navOpen}
     class:nav-supported={$communitiesEnabled}
     class:empty>
     <slot />
@@ -109,7 +132,7 @@
                 width: toRem(60);
             }
 
-            &:hover {
+            &.hovering {
                 width: toRem(350);
                 box-shadow: 10px 0 10px rgba(0, 0, 0, 0.1);
 
