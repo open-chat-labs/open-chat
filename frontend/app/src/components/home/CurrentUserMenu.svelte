@@ -12,6 +12,7 @@
     import { iconSize } from "../../stores/iconSize";
     import type { OpenChat } from "openchat-client";
     import page from "page";
+    import { communitiesEnabled } from "../../utils/features";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -24,10 +25,12 @@
 </script>
 
 <Menu>
-    <MenuItem on:click={() => dispatch("showHomePage")}>
-        <Home size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-        <span slot="text">{$_("homepage")}</span>
-    </MenuItem>
+    {#if !$communitiesEnabled}
+        <MenuItem on:click={() => dispatch("showHomePage")}>
+            <Home size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
+            <span slot="text">{$_("homepage")}</span>
+        </MenuItem>
+    {/if}
     {#if !client.isReadOnly()}
         <MenuItem on:click={newGroup}>
             <AccountMultiplePlus size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
@@ -54,10 +57,12 @@
         <Wallet size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
         <span slot="text">{$_("wallet")}</span>
     </MenuItem>
-    <MenuItem on:click={() => page("/faq")}>
-        <HelpCircleOutline size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
-        <span slot="text">{$_("faq.menu")}</span>
-    </MenuItem>
+    {#if !$communitiesEnabled}
+        <MenuItem on:click={() => page("/faq")}>
+            <HelpCircleOutline size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
+            <span slot="text">{$_("faq.menu")}</span>
+        </MenuItem>
+    {/if}
     <MenuItem separator />
     <MenuItem on:click={() => dispatch("logout")}>
         <Logout size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
