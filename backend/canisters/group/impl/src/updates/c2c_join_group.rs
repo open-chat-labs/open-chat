@@ -1,6 +1,6 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::guards::caller_is_user_index_or_local_user_index;
-use crate::{mutate_state, read_state, run_regular_jobs, AddParticipantArgs, RuntimeState};
+use crate::{mutate_state, read_state, run_regular_jobs, AddMemberArgs, RuntimeState};
 use candid::Principal;
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
@@ -92,8 +92,9 @@ fn c2c_join_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Response
         new_event = true;
     }
 
-    let response = match runtime_state.add_participant(AddParticipantArgs {
+    let response = match runtime_state.add_member(AddMemberArgs {
         user_id: args.user_id,
+        principal: args.principal,
         now,
         min_visible_event_index,
         min_visible_message_index,

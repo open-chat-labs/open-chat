@@ -36,7 +36,7 @@ fn c2c_leave_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
         return OwnerCannotLeave;
     }
 
-    runtime_state.data.chat.members.remove(caller);
+    runtime_state.remove_member(caller);
 
     let event = MemberLeft { user_id: caller };
 

@@ -27,6 +27,7 @@ pub struct GroupChatCore {
 }
 
 impl GroupChatCore {
+    #[allow(clippy::too_many_arguments)]
     pub fn send_message(
         &mut self,
         sender: UserId,
@@ -199,7 +200,7 @@ impl GroupChatCore {
                 min_visible_event_index,
                 thread_root_message_index,
                 message_id,
-                reaction: reaction.clone(),
+                reaction,
                 now,
             }) {
                 AddRemoveReactionResult::Success => Success,
@@ -228,6 +229,7 @@ impl GroupChatCore {
     }
 }
 
+#[allow(clippy::large_enum_variant)]
 pub enum SendMessageResult {
     Success(SendMessageSuccessResult),
     ThreadMessageNotFound,

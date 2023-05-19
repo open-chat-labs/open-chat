@@ -1,4 +1,5 @@
 mod mentions;
+
 use crate::mentions::Mentions;
 use chat_events::ChatEvents;
 use serde::{Deserialize, Serialize};
@@ -158,9 +159,12 @@ impl GroupMembers {
         }
     }
 
-    #[allow(clippy::len_without_is_empty)]
     pub fn len(&self) -> u32 {
         self.members.len() as u32
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.members.is_empty()
     }
 
     pub fn change_role(

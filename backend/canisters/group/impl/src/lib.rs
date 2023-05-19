@@ -83,56 +83,51 @@ impl RuntimeState {
     }
 
     pub fn summary(&self, member: &GroupMemberInternal, now: TimestampMillis) -> GroupCanisterGroupChatSummary {
-        let data = &self.data;
+        let chat = &self.data.chat;
         let min_visible_event_index = member.min_visible_event_index();
         let min_visible_message_index = member.min_visible_message_index();
-        let main_events_reader = data.chat.events.visible_main_events_reader(min_visible_event_index, now);
+        let main_events_reader = chat.events.visible_main_events_reader(min_visible_event_index, now);
         let latest_event_index = main_events_reader.latest_event_index().unwrap_or_default();
 
         GroupCanisterGroupChatSummary {
             chat_id: self.env.canister_id().into(),
             last_updated: now,
-            name: data.chat.name.clone(),
-            description: data.chat.description.clone(),
-            subtype: data.chat.subtype.value.clone(),
-            avatar_id: Avatar::id(&data.chat.avatar),
-            is_public: data.chat.is_public,
-            history_visible_to_new_joiners: data.chat.history_visible_to_new_joiners,
+            name: chat.name.clone(),
+            description: chat.description.clone(),
+            subtype: chat.subtype.value.clone(),
+            avatar_id: Avatar::id(&chat.avatar),
+            is_public: chat.is_public,
+            history_visible_to_new_joiners: chat.history_visible_to_new_joiners,
             min_visible_event_index,
             min_visible_message_index,
             latest_message: main_events_reader.latest_message_event(Some(member.user_id)),
             latest_event_index,
             joined: member.date_added,
-            participant_count: data.chat.members.len(),
+            participant_count: chat.members.len(),
             role: member.role,
-            mentions: member.most_recent_mentions(None, &data.chat.events, now),
-            permissions: data.chat.permissions.clone(),
+            mentions: member.most_recent_mentions(None, &chat.events, now),
+            permissions: chat.permissions.clone(),
             notifications_muted: member.notifications_muted.value,
-            metrics: data.chat.events.metrics().clone(),
-            my_metrics: data
-                .chat
-                .events
-                .user_metrics(&member.user_id, None)
-                .cloned()
-                .unwrap_or_default(),
-            latest_threads: data.chat.events.latest_threads(
+            metrics: chat.events.metrics().clone(),
+            my_metrics: chat.events.user_metrics(&member.user_id, None).cloned().unwrap_or_default(),
+            latest_threads: chat.events.latest_threads(
                 min_visible_event_index,
                 member.threads.iter(),
                 None,
                 MAX_THREADS_IN_SUMMARY,
                 now,
             ),
-            frozen: data.frozen.value.clone(),
+            frozen: self.data.frozen.value.clone(),
             wasm_version: Version::default(),
-            date_last_pinned: data.chat.date_last_pinned,
-            events_ttl: data.chat.events.get_events_time_to_live().value,
-            expired_messages: data.chat.events.expired_messages(now),
-            next_message_expiry: data.chat.events.next_message_expiry(now),
-            gate: data.chat.gate.value.clone(),
+            date_last_pinned: chat.date_last_pinned,
+            events_ttl: chat.events.get_events_time_to_live().value,
+            expired_messages: chat.events.expired_messages(now),
+            next_message_expiry: chat.events.next_message_expiry(now),
+            gate: chat.gate.value.clone(),
         }
     }
 
-    pub fn add_participant(&mut self, args: AddParticipantArgs) -> AddMemberResult {
+    pub fn add_member(&mut self, args: AddMemberArgs) -> AddMemberResult {
         let result = self.data.chat.members.add(
             args.user_id,
             args.now,
@@ -141,7 +136,8 @@ impl RuntimeState {
             args.mute_notifications,
         );
 
-        if matches!(result, AddMemberResult::Success(_)) {
+        if matches!(result, AddMemberResult::Success(_) | AddMemberResult::AlreadyInGroup) {
+            self.data.principal_to_user_id_map.insert(args.principal, args.user_id);
             if let Some(new_joiner_rewards) = &mut self.data.new_joiner_rewards {
                 if let Ok(amount) = new_joiner_rewards.try_claim_user_reward(args.user_id, args.now) {
                     ic_cdk::spawn(process_new_joiner_reward(
@@ -158,19 +154,41 @@ impl RuntimeState {
         result
     }
 
+    pub fn remove_member(&mut self, user_id: UserId) -> Option<GroupMemberInternal> {
+        if let Some(principal) = self
+            .data
+            .principal_to_user_id_map
+            .iter()
+            .find(|(_, &u)| u == user_id)
+            .map(|(p, _)| *p)
+        {
+            self.data.principal_to_user_id_map.remove(&principal);
+        }
+
+        self.data.chat.members.remove(user_id)
+    }
+
     pub fn metrics(&self) -> Metrics {
-        let chat = &self.data.chat;
-        let chat_metrics = chat.events.metrics();
+        let group_chat_core = &self.data.chat;
+        let chat_metrics = group_chat_core.events.metrics();
 
         let now = self.env.now();
-        let messages_in_last_hour = chat.events.event_count_since(now.saturating_sub(HOUR_IN_MS), now, |e| {
-            matches!(e, ChatEventInternal::Message(_))
-        }) as u64;
-        let messages_in_last_day = chat.events.event_count_since(now.saturating_sub(DAY_IN_MS), now, |e| {
-            matches!(e, ChatEventInternal::Message(_))
-        }) as u64;
-        let events_in_last_hour = chat.events.event_count_since(now.saturating_sub(HOUR_IN_MS), now, |_| true) as u64;
-        let events_in_last_day = chat.events.event_count_since(now.saturating_sub(DAY_IN_MS), now, |_| true) as u64;
+        let messages_in_last_hour = group_chat_core
+            .events
+            .event_count_since(now.saturating_sub(HOUR_IN_MS), now, |e| {
+                matches!(e, ChatEventInternal::Message(_))
+            }) as u64;
+        let messages_in_last_day = group_chat_core
+            .events
+            .event_count_since(now.saturating_sub(DAY_IN_MS), now, |e| {
+                matches!(e, ChatEventInternal::Message(_))
+            }) as u64;
+        let events_in_last_hour = group_chat_core
+            .events
+            .event_count_since(now.saturating_sub(HOUR_IN_MS), now, |_| true) as u64;
+        let events_in_last_day = group_chat_core
+            .events
+            .event_count_since(now.saturating_sub(DAY_IN_MS), now, |_| true) as u64;
 
         Metrics {
             memory_used: utils::memory::used(),
@@ -178,13 +196,13 @@ impl RuntimeState {
             cycles_balance: self.env.cycles_balance(),
             wasm_version: WASM_VERSION.with(|v| **v.borrow()),
             git_commit_id: utils::git::git_commit_id().to_string(),
-            public: chat.is_public,
-            date_created: chat.date_created,
-            members: chat.members.len(),
-            moderators: chat.members.moderator_count(),
-            admins: chat.members.admin_count(),
-            owners: chat.members.owner_count(),
-            blocked: chat.members.blocked().len() as u32,
+            public: group_chat_core.is_public,
+            date_created: group_chat_core.date_created,
+            members: group_chat_core.members.len(),
+            moderators: group_chat_core.members.moderator_count(),
+            admins: group_chat_core.members.admin_count(),
+            owners: group_chat_core.members.owner_count(),
+            blocked: group_chat_core.members.blocked().len() as u32,
             invited: self.data.invited_users.len() as u32,
             text_messages: chat_metrics.text_messages,
             image_messages: chat_metrics.image_messages,
@@ -307,7 +325,7 @@ impl Data {
         let members = GroupMembers::new(creator_user_id, now);
         let events = ChatEvents::new_group_chat(name.clone(), description.clone(), creator_user_id, events_ttl, now);
 
-        let chat = GroupChatCore {
+        let group_chat_core = GroupChatCore {
             is_public,
             name,
             description,
@@ -325,7 +343,7 @@ impl Data {
         };
 
         Data {
-            chat,
+            chat: group_chat_core,
             principal_to_user_id_map: [(creator_principal, creator_user_id)].into_iter().collect(),
             mark_active_duration,
             group_index_canister_id,
@@ -449,8 +467,9 @@ fn run_regular_jobs() {
     mutate_state(|state| state.regular_jobs.run(state.env.deref(), &mut state.data));
 }
 
-struct AddParticipantArgs {
+struct AddMemberArgs {
     user_id: UserId,
+    principal: Principal,
     now: TimestampMillis,
     min_visible_event_index: EventIndex,
     min_visible_message_index: MessageIndex,
@@ -477,7 +496,7 @@ impl From<DataPrevious> for Data {
             .map(|(u, p)| (*p, *u))
             .collect();
 
-        let chat = GroupChatCore {
+        let group_chat_core = GroupChatCore {
             is_public: value.is_public,
             name: value.name,
             description: value.description,
@@ -495,7 +514,7 @@ impl From<DataPrevious> for Data {
         };
 
         Data {
-            chat,
+            chat: group_chat_core,
             principal_to_user_id_map,
             mark_active_duration: value.mark_active_duration,
             group_index_canister_id: value.group_index_canister_id,
