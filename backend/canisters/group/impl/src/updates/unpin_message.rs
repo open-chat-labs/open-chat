@@ -24,32 +24,27 @@ fn unpin_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response 
         if member.suspended.value {
             return UserSuspended;
         }
-        if !member.role.can_pin_messages(&runtime_state.data.group_chat_core.permissions) {
+        if !member.role.can_pin_messages(&runtime_state.data.chat.permissions) {
             return NotAuthorized;
         }
 
         let now = runtime_state.env.now();
 
-        if !runtime_state.data.group_chat_core.events.is_accessible(
-            member.min_visible_event_index(),
-            None,
-            args.message_index.into(),
-            now,
-        ) {
+        if !runtime_state
+            .data
+            .chat
+            .events
+            .is_accessible(member.min_visible_event_index(), None, args.message_index.into(), now)
+        {
             return MessageNotFound;
         }
 
         let user_id = member.user_id;
 
-        if let Ok(index) = runtime_state
-            .data
-            .group_chat_core
-            .pinned_messages
-            .binary_search(&args.message_index)
-        {
-            runtime_state.data.group_chat_core.pinned_messages.remove(index);
+        if let Ok(index) = runtime_state.data.chat.pinned_messages.binary_search(&args.message_index) {
+            runtime_state.data.chat.pinned_messages.remove(index);
 
-            let push_event_result = runtime_state.data.group_chat_core.events.push_main_event(
+            let push_event_result = runtime_state.data.chat.events.push_main_event(
                 ChatEventInternal::MessageUnpinned(Box::new(MessageUnpinned {
                     message_index: args.message_index,
                     unpinned_by: user_id,
@@ -59,8 +54,8 @@ fn unpin_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response 
                 now,
             );
 
-            if runtime_state.data.group_chat_core.pinned_messages.is_empty() {
-                runtime_state.data.group_chat_core.date_last_pinned = None;
+            if runtime_state.data.chat.pinned_messages.is_empty() {
+                runtime_state.data.chat.date_last_pinned = None;
             }
 
             handle_activity_notification(runtime_state);

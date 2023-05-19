@@ -79,19 +79,18 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareResult, Box<R
         let min_visible_event_index = member.min_visible_event_index();
         let user_id = member.user_id;
 
-        let (token, amount) =
-            match state
-                .data
-                .group_chat_core
-                .events
-                .reserve_prize(args.message_id, min_visible_event_index, user_id, now)
-            {
-                ReservePrizeResult::AlreadyClaimed => return Err(Box::new(AlreadyClaimed)),
-                ReservePrizeResult::Success(token, amount) => (token, amount),
-                ReservePrizeResult::MessageNotFound => return Err(Box::new(MessageNotFound)),
-                ReservePrizeResult::PrizeFullyClaimed => return Err(Box::new(PrizeFullyClaimed)),
-                ReservePrizeResult::PrizeEnded => return Err(Box::new(PrizeEnded)),
-            };
+        let (token, amount) = match state
+            .data
+            .chat
+            .events
+            .reserve_prize(args.message_id, min_visible_event_index, user_id, now)
+        {
+            ReservePrizeResult::AlreadyClaimed => return Err(Box::new(AlreadyClaimed)),
+            ReservePrizeResult::Success(token, amount) => (token, amount),
+            ReservePrizeResult::MessageNotFound => return Err(Box::new(MessageNotFound)),
+            ReservePrizeResult::PrizeFullyClaimed => return Err(Box::new(PrizeFullyClaimed)),
+            ReservePrizeResult::PrizeEnded => return Err(Box::new(PrizeEnded)),
+        };
 
         let principal = ic_base_types::PrincipalId::from(Principal::from(user_id));
 
@@ -130,10 +129,10 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareResult, Box<R
 
 fn commit(args: Args, winner: UserId, transaction: CompletedCryptoTransaction, state: &mut RuntimeState) -> Option<String> {
     let now = state.env.now();
-    match state.data.group_chat_core.events.claim_prize(args.message_id, winner, now) {
+    match state.data.chat.events.claim_prize(args.message_id, winner, now) {
         chat_events::ClaimPrizeResult::Success(message_index) => {
             // Push a PrizeWinnerContent message to the group from the OpenChatBot
-            let message_event = state.data.group_chat_core.events.push_message(PushMessageArgs {
+            let message_event = state.data.chat.events.push_message(PushMessageArgs {
                 sender: OPENCHAT_BOT_USER_ID,
                 thread_root_message_index: None,
                 message_id: MessageId::generate(state.env.rng()),
@@ -149,12 +148,12 @@ fn commit(args: Args, winner: UserId, transaction: CompletedCryptoTransaction, s
             });
 
             // Send a notification to group participants
-            let notification_recipients = state.data.group_chat_core.members.users_to_notify(None).into_iter().collect();
+            let notification_recipients = state.data.chat.members.users_to_notify(None).into_iter().collect();
 
             let notification = Notification::GroupMessageNotification(GroupMessageNotification {
                 chat_id: state.env.canister_id().into(),
                 thread_root_message_index: None,
-                group_name: state.data.group_chat_core.name.clone(),
+                group_name: state.data.chat.name.clone(),
                 sender: OPENCHAT_BOT_USER_ID,
                 sender_name: OPENCHAT_BOT_USERNAME.to_string(),
                 message: message_event,
@@ -173,12 +172,7 @@ fn commit(args: Args, winner: UserId, transaction: CompletedCryptoTransaction, s
 
 fn rollback(args: Args, user_id: UserId, amount: Tokens, state: &mut RuntimeState) -> String {
     let now = state.env.now();
-    match state
-        .data
-        .group_chat_core
-        .events
-        .unreserve_prize(args.message_id, user_id, amount, now)
-    {
+    match state.data.chat.events.unreserve_prize(args.message_id, user_id, amount, now) {
         chat_events::UnreservePrizeResult::Success => "prize reservation cancelled".to_string(),
         chat_events::UnreservePrizeResult::MessageNotFound => "prize message not found".to_string(),
         chat_events::UnreservePrizeResult::ReservationNotFound => "prize reservation not found".to_string(),

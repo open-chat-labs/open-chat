@@ -56,7 +56,7 @@ fn prepare(runtime_state: &RuntimeState) -> Result<PrepareResult, Response> {
             Err(UserSuspended)
         } else if !member.role.can_change_group_visibility() {
             Err(NotAuthorized)
-        } else if !runtime_state.data.group_chat_core.is_public {
+        } else if !runtime_state.data.chat.is_public {
             Err(AlreadyPrivate)
         } else {
             Ok(PrepareResult {
@@ -71,7 +71,7 @@ fn prepare(runtime_state: &RuntimeState) -> Result<PrepareResult, Response> {
 }
 
 fn commit(args: Args, user_id: UserId, runtime_state: &mut RuntimeState) {
-    runtime_state.data.group_chat_core.is_public = false;
+    runtime_state.data.chat.is_public = false;
 
     let now = runtime_state.env.now();
     let event = GroupVisibilityChanged {
@@ -79,7 +79,7 @@ fn commit(args: Args, user_id: UserId, runtime_state: &mut RuntimeState) {
         changed_by: user_id,
     };
 
-    runtime_state.data.group_chat_core.events.push_main_event(
+    runtime_state.data.chat.events.push_main_event(
         ChatEventInternal::GroupVisibilityChanged(Box::new(event)),
         args.correlation_id,
         now,

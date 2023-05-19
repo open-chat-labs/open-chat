@@ -18,12 +18,7 @@ fn selected_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     };
 
     // Short circuit prior to calling `ic0.time()` so that query caching works effectively.
-    let latest_event_index = runtime_state
-        .data
-        .group_chat_core
-        .events
-        .latest_event_index()
-        .unwrap_or_default();
+    let latest_event_index = runtime_state.data.chat.events.latest_event_index().unwrap_or_default();
     if latest_event_index <= args.updates_since {
         return SuccessNoUpdates(latest_event_index);
     }
@@ -31,10 +26,7 @@ fn selected_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     let min_visible_event_index = member.min_visible_event_index();
     let now = runtime_state.env.now();
     let data = &runtime_state.data;
-    let events_reader = data
-        .group_chat_core
-        .events
-        .visible_main_events_reader(min_visible_event_index, now);
+    let events_reader = data.chat.events.visible_main_events_reader(min_visible_event_index, now);
     let latest_event_index = events_reader.latest_event_index().unwrap();
     let updates_since_time = events_reader
         .get(args.updates_since.into())
@@ -119,7 +111,7 @@ fn selected_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
             }
             ChatEventInternal::GroupRulesChanged(_) => {
                 if result.rules.is_none() {
-                    result.rules = Some(data.group_chat_core.rules.clone());
+                    result.rules = Some(data.chat.rules.clone());
                 }
             }
             _ => {}
@@ -150,7 +142,7 @@ impl<'a> UserUpdatesHandler<'a> {
         if self.users_updated.insert(user_id) {
             if removed {
                 result.participants_removed.push(user_id);
-            } else if let Some(member) = self.data.group_chat_core.members.get(&user_id) {
+            } else if let Some(member) = self.data.chat.members.get(&user_id) {
                 result.participants_added_or_updated.push(member.into());
             }
         }

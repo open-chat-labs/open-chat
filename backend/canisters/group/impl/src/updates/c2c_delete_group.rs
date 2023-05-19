@@ -50,7 +50,7 @@ fn prepare(runtime_state: &RuntimeState) -> Result<PrepareResult, Response> {
     }
 
     let caller = runtime_state.env.caller().into();
-    if let Some(participant) = runtime_state.data.group_chat_core.members.get(&caller) {
+    if let Some(participant) = runtime_state.data.chat.members.get(&caller) {
         if !participant.role.can_delete_group() {
             Err(NotAuthorized)
         } else {
@@ -58,8 +58,8 @@ fn prepare(runtime_state: &RuntimeState) -> Result<PrepareResult, Response> {
                 group_index_canister_id: runtime_state.data.group_index_canister_id,
                 chat_id: runtime_state.env.canister_id().into(),
                 deleted_by: participant.user_id,
-                group_name: runtime_state.data.group_chat_core.name.clone(),
-                members: runtime_state.data.group_chat_core.members.iter().map(|m| m.user_id).collect(),
+                group_name: runtime_state.data.chat.name.clone(),
+                members: runtime_state.data.chat.members.iter().map(|m| m.user_id).collect(),
             })
         }
     } else {

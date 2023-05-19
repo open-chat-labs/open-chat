@@ -25,12 +25,12 @@ fn disable_invite_code_impl(args: Args, runtime_state: &mut RuntimeState) -> Res
             return UserSuspended;
         }
 
-        if member.role.can_invite_users(&runtime_state.data.group_chat_core.permissions) {
+        if member.role.can_invite_users(&runtime_state.data.chat.permissions) {
             let user_id = member.user_id;
             runtime_state.data.invite_code_enabled = false;
 
             let now = runtime_state.env.now();
-            runtime_state.data.group_chat_core.events.push_main_event(
+            runtime_state.data.chat.events.push_main_event(
                 ChatEventInternal::GroupInviteCodeChanged(Box::new(GroupInviteCodeChanged {
                     change: GroupInviteCodeChange::Disabled,
                     changed_by: user_id,

@@ -22,7 +22,7 @@ fn deleted_message_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     if let Some(events_reader) =
         runtime_state
             .data
-            .group_chat_core
+            .chat
             .events
             .events_reader(min_visible_event_index, args.thread_root_message_index, now)
     {
@@ -32,9 +32,7 @@ fn deleted_message_impl(args: Args, runtime_state: &RuntimeState) -> Response {
                     MessageHardDeleted
                 } else if member.user_id == message.sender
                     || (deleted_by.deleted_by != message.sender
-                        && member
-                            .role
-                            .can_delete_messages(&runtime_state.data.group_chat_core.permissions))
+                        && member.role.can_delete_messages(&runtime_state.data.chat.permissions))
                 {
                     Success(SuccessResult {
                         content: message.content.hydrate(Some(member.user_id)),

@@ -44,12 +44,12 @@ fn is_permitted_to_join(
         Err(ChatFrozen)
     } else if !runtime_state.data.is_accessible(user_principal, invite_code) {
         Err(NotInvited)
-    } else if let Some(limit) = runtime_state.data.group_chat_core.members.user_limit_reached() {
+    } else if let Some(limit) = runtime_state.data.chat.members.user_limit_reached() {
         Err(ParticipantLimitReached(limit))
     } else {
         Ok(runtime_state
             .data
-            .group_chat_core
+            .chat
             .gate
             .as_ref()
             .map(|g| (g.clone(), runtime_state.data.user_index_canister_id)))
@@ -64,26 +64,26 @@ fn c2c_join_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Response
     if let Some(invitation) = runtime_state.data.invited_users.get(&args.principal) {
         min_visible_event_index = invitation.min_visible_event_index;
         min_visible_message_index = invitation.min_visible_message_index;
-    } else if runtime_state.data.group_chat_core.history_visible_to_new_joiners {
+    } else if runtime_state.data.chat.history_visible_to_new_joiners {
         min_visible_event_index = EventIndex::default();
         min_visible_message_index = MessageIndex::default();
     } else {
-        let events_reader = runtime_state.data.group_chat_core.events.main_events_reader(now);
+        let events_reader = runtime_state.data.chat.events.main_events_reader(now);
         min_visible_event_index = events_reader.next_event_index();
         min_visible_message_index = events_reader.next_message_index();
     };
 
     // Unblock "platform moderator" if necessary
     let mut new_event = false;
-    if args.is_platform_moderator && runtime_state.data.group_chat_core.members.is_blocked(&args.user_id) {
-        runtime_state.data.group_chat_core.members.unblock(&args.user_id);
+    if args.is_platform_moderator && runtime_state.data.chat.members.is_blocked(&args.user_id) {
+        runtime_state.data.chat.members.unblock(&args.user_id);
 
         let event = UsersUnblocked {
             user_ids: vec![args.user_id],
             unblocked_by: args.user_id,
         };
 
-        runtime_state.data.group_chat_core.events.push_main_event(
+        runtime_state.data.chat.events.push_main_event(
             ChatEventInternal::UsersUnblocked(Box::new(event)),
             args.correlation_id,
             now,
@@ -97,7 +97,7 @@ fn c2c_join_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Response
         now,
         min_visible_event_index,
         min_visible_message_index,
-        mute_notifications: runtime_state.data.group_chat_core.is_public,
+        mute_notifications: runtime_state.data.chat.is_public,
     }) {
         AddResult::Success(participant) => {
             let invitation = runtime_state.data.invited_users.remove(&args.principal, now);
@@ -106,7 +106,7 @@ fn c2c_join_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Response
                 user_id: args.user_id,
                 invited_by: invitation.map(|i| i.invited_by),
             };
-            runtime_state.data.group_chat_core.events.push_main_event(
+            runtime_state.data.chat.events.push_main_event(
                 ChatEventInternal::ParticipantJoined(Box::new(event)),
                 args.correlation_id,
                 now,
@@ -118,7 +118,7 @@ fn c2c_join_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Response
             Success(Box::new(summary))
         }
         AddResult::AlreadyInGroup => {
-            let member = runtime_state.data.group_chat_core.members.get(&args.user_id).unwrap();
+            let member = runtime_state.data.chat.members.get(&args.user_id).unwrap();
             let summary = runtime_state.summary(member, now);
             AlreadyInGroupV2(Box::new(summary))
         }

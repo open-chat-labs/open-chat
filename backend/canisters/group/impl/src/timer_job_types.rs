@@ -43,11 +43,13 @@ impl Job for HardDeleteMessageContentJob {
         mutate_state(|state| {
             let now = state.env.now();
 
-            if let Some(content) = state.data.group_chat_core.events.remove_deleted_message_content(
-                self.thread_root_message_index,
-                self.message_id,
-                now,
-            ) {
+            if let Some(content) =
+                state
+                    .data
+                    .chat
+                    .events
+                    .remove_deleted_message_content(self.thread_root_message_index, self.message_id, now)
+            {
                 let files_to_delete = content.blob_references();
                 if !files_to_delete.is_empty() {
                     // If there was already a job queued up to delete these files, cancel it
@@ -77,7 +79,7 @@ impl Job for EndPollJob {
             let now = state.env.now();
             state
                 .data
-                .group_chat_core
+                .chat
                 .events
                 .end_poll(self.thread_root_message_index, self.message_index, now);
 

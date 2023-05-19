@@ -24,7 +24,7 @@ fn add_reaction_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     if let Some(user_id) = runtime_state.data.principal_to_user_id_map.get(&caller).copied() {
         let now = runtime_state.env.now();
 
-        match runtime_state.data.group_chat_core.add_reaction(
+        match runtime_state.data.chat.add_reaction(
             user_id,
             args.thread_root_message_index,
             args.message_id,
@@ -62,7 +62,7 @@ fn handle_notification(
 ) {
     if let Some(message) = runtime_state
         .data
-        .group_chat_core
+        .chat
         .events
         .events_reader(EventIndex::default(), thread_root_message_index, now)
         // We pass in `None` in place of `my_user_id` because we don't want to hydrate
@@ -72,7 +72,7 @@ fn handle_notification(
         if message.event.sender != user_id {
             let notifications_muted = runtime_state
                 .data
-                .group_chat_core
+                .chat
                 .members
                 .get(&message.event.sender)
                 .map_or(true, |p| p.notifications_muted.value);
@@ -83,7 +83,7 @@ fn handle_notification(
                     Notification::GroupReactionAddedNotification(GroupReactionAddedNotification {
                         chat_id: runtime_state.env.canister_id().into(),
                         thread_root_message_index,
-                        group_name: runtime_state.data.group_chat_core.name.clone(),
+                        group_name: runtime_state.data.chat.name.clone(),
                         added_by: user_id,
                         added_by_name: username,
                         message,

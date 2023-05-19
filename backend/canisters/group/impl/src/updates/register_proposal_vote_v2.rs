@@ -33,7 +33,7 @@ fn register_proposal_vote_impl(args: Args, runtime_state: &mut RuntimeState) -> 
     let min_visible_event_index = member.min_visible_event_index();
     let user_id = member.user_id;
 
-    match runtime_state.data.group_chat_core.events.record_proposal_vote(
+    match runtime_state.data.chat.events.record_proposal_vote(
         user_id,
         min_visible_event_index,
         args.message_index,
@@ -43,7 +43,7 @@ fn register_proposal_vote_impl(args: Args, runtime_state: &mut RuntimeState) -> 
         RecordProposalVoteResult::Success => {
             runtime_state
                 .data
-                .group_chat_core
+                .chat
                 .members
                 .get_mut(&user_id)
                 .unwrap()

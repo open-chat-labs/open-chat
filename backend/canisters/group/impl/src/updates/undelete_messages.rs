@@ -29,24 +29,18 @@ fn undelete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Respo
         let user_id = member.user_id;
         let min_visible_event_index = member.min_visible_event_index();
 
-        let results = runtime_state
-            .data
-            .group_chat_core
-            .events
-            .undelete_messages(DeleteUndeleteMessagesArgs {
-                caller: user_id,
-                is_admin: member
-                    .role
-                    .can_delete_messages(&runtime_state.data.group_chat_core.permissions),
-                min_visible_event_index,
-                thread_root_message_index: args.thread_root_message_index,
-                message_ids: args.message_ids,
-                now,
-            });
+        let results = runtime_state.data.chat.events.undelete_messages(DeleteUndeleteMessagesArgs {
+            caller: user_id,
+            is_admin: member.role.can_delete_messages(&runtime_state.data.chat.permissions),
+            min_visible_event_index,
+            thread_root_message_index: args.thread_root_message_index,
+            message_ids: args.message_ids,
+            now,
+        });
 
         let events_reader = runtime_state
             .data
-            .group_chat_core
+            .chat
             .events
             .events_reader(min_visible_event_index, args.thread_root_message_index, now)
             .unwrap();
