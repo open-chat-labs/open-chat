@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{Empty, EventIndex, GroupRules, MessageIndex, Participant, TimestampMillis, UserId};
+use types::{Empty, EventIndex, GroupMember, GroupRules, MessageIndex, TimestampMillis, UserId};
 
 pub type Args = Empty;
 
@@ -14,7 +14,7 @@ pub enum Response {
 pub struct SuccessResult {
     pub timestamp: TimestampMillis,
     pub latest_event_index: EventIndex,
-    pub participants: Vec<Participant>,
+    pub participants: Vec<GroupMember>,
     pub blocked_users: Vec<UserId>,
     pub invited_users: Vec<UserId>,
     pub pinned_messages: Vec<MessageIndex>,

@@ -16,7 +16,7 @@ async fn c2c_update_proposals(args: Args) -> Response {
 fn c2c_update_proposals_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
 
-    if let Some(participant) = runtime_state.data.participants.get(caller) {
+    if let Some(user_id) = runtime_state.data.principal_to_user_id_map.get(&caller).copied() {
         let now = runtime_state.env.now();
 
         let updates = args
@@ -35,8 +35,7 @@ fn c2c_update_proposals_impl(args: Args, runtime_state: &mut RuntimeState) -> Re
             })
             .collect();
 
-        runtime_state.data.events.update_proposals(participant.user_id, updates, now);
-
+        runtime_state.data.chat.events.update_proposals(user_id, updates, now);
         handle_activity_notification(runtime_state);
 
         Success

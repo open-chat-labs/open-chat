@@ -46,6 +46,7 @@ impl Job for HardDeleteMessageContentJob {
             if let Some(content) =
                 state
                     .data
+                    .chat
                     .events
                     .remove_deleted_message_content(self.thread_root_message_index, self.message_id, now)
             {
@@ -78,6 +79,7 @@ impl Job for EndPollJob {
             let now = state.env.now();
             state
                 .data
+                .chat
                 .events
                 .end_poll(self.thread_root_message_index, self.message_index, now);
 

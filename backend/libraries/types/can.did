@@ -618,7 +618,6 @@ type UpdatedMessage =
 
 type MessageMatch =
     record {
-        chat_id: ChatId;
         message_index: MessageIndex;
         content: MessageContent;
         sender: UserId;

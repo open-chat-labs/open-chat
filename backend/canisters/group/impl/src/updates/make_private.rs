@@ -51,18 +51,18 @@ fn prepare(runtime_state: &RuntimeState) -> Result<PrepareResult, Response> {
     }
 
     let caller = runtime_state.env.caller();
-    if let Some(participant) = runtime_state.data.participants.get_by_principal(&caller) {
-        if participant.suspended.value {
+    if let Some(member) = runtime_state.data.get_member(caller) {
+        if member.suspended.value {
             Err(UserSuspended)
-        } else if !participant.role.can_change_group_visibility() {
+        } else if !member.role.can_change_group_visibility() {
             Err(NotAuthorized)
-        } else if !runtime_state.data.is_public {
+        } else if !runtime_state.data.chat.is_public {
             Err(AlreadyPrivate)
         } else {
             Ok(PrepareResult {
                 group_index_canister_id: runtime_state.data.group_index_canister_id,
                 chat_id: runtime_state.env.canister_id().into(),
-                user_id: participant.user_id,
+                user_id: member.user_id,
             })
         }
     } else {
@@ -71,7 +71,7 @@ fn prepare(runtime_state: &RuntimeState) -> Result<PrepareResult, Response> {
 }
 
 fn commit(args: Args, user_id: UserId, runtime_state: &mut RuntimeState) {
-    runtime_state.data.is_public = false;
+    runtime_state.data.chat.is_public = false;
 
     let now = runtime_state.env.now();
     let event = GroupVisibilityChanged {
@@ -79,7 +79,7 @@ fn commit(args: Args, user_id: UserId, runtime_state: &mut RuntimeState) {
         changed_by: user_id,
     };
 
-    runtime_state.data.events.push_main_event(
+    runtime_state.data.chat.events.push_main_event(
         ChatEventInternal::GroupVisibilityChanged(Box::new(event)),
         args.correlation_id,
         now,

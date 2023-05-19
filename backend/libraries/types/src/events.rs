@@ -1,5 +1,5 @@
 use crate::{
-    EventIndex, EventWrapper, GroupGate, GroupPermissions, Message, MessageId, MessageIndex, Milliseconds, Role,
+    EventIndex, EventWrapper, GroupGate, GroupPermissions, GroupRole, Message, MessageId, MessageIndex, Milliseconds,
     TimestampMillis, UserId,
 };
 use candid::CandidType;
@@ -9,17 +9,17 @@ use serde::{Deserialize, Serialize};
 pub enum ChatEvent {
     Empty,
     Message(Box<Message>),
-    GroupChatCreated(GroupChatCreated),
+    GroupChatCreated(GroupCreated),
     DirectChatCreated(DirectChatCreated),
     GroupNameChanged(GroupNameChanged),
     GroupDescriptionChanged(GroupDescriptionChanged),
     GroupRulesChanged(GroupRulesChanged),
     AvatarChanged(AvatarChanged),
     OwnershipTransferred(OwnershipTransferred),
-    ParticipantsAdded(ParticipantsAdded),
-    ParticipantsRemoved(ParticipantsRemoved),
-    ParticipantJoined(ParticipantJoined),
-    ParticipantLeft(ParticipantLeft),
+    ParticipantsAdded(MembersAdded),
+    ParticipantsRemoved(MembersRemoved),
+    ParticipantJoined(MemberJoined),
+    ParticipantLeft(MemberLeft),
     ParticipantAssumesSuperAdmin(ParticipantAssumesSuperAdmin),
     ParticipantDismissedAsSuperAdmin(ParticipantDismissedAsSuperAdmin),
     ParticipantRelinquishesSuperAdmin(ParticipantRelinquishesSuperAdmin),
@@ -41,8 +41,8 @@ pub enum ChatEvent {
     GroupInviteCodeChanged(GroupInviteCodeChanged),
     ThreadUpdated(ThreadUpdated),
     ProposalsUpdated(ProposalsUpdated),
-    ChatFrozen(ChatFrozen),
-    ChatUnfrozen(ChatUnfrozen),
+    ChatFrozen(GroupFrozen),
+    ChatUnfrozen(GroupUnfrozen),
     EventsTimeToLiveUpdated(EventsTimeToLiveUpdated),
     GroupGateUpdated(GroupGateUpdated),
     UsersInvited(UsersInvited),
@@ -56,7 +56,7 @@ pub struct EventsResponse {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct GroupChatCreated {
+pub struct GroupCreated {
     pub name: String,
     pub description: String,
     pub created_by: UserId,
@@ -91,14 +91,14 @@ pub struct AvatarChanged {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct ParticipantsAdded {
+pub struct MembersAdded {
     pub user_ids: Vec<UserId>,
     pub added_by: UserId,
     pub unblocked: Vec<UserId>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct ParticipantsRemoved {
+pub struct MembersRemoved {
     pub user_ids: Vec<UserId>,
     pub removed_by: UserId,
 }
@@ -116,13 +116,13 @@ pub struct UsersUnblocked {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct ParticipantJoined {
+pub struct MemberJoined {
     pub user_id: UserId,
     pub invited_by: Option<UserId>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct ParticipantLeft {
+pub struct MemberLeft {
     pub user_id: UserId,
 }
 
@@ -136,8 +136,8 @@ pub struct OwnershipTransferred {
 pub struct RoleChanged {
     pub user_ids: Vec<UserId>,
     pub changed_by: UserId,
-    pub old_role: Role,
-    pub new_role: Role,
+    pub old_role: GroupRole,
+    pub new_role: GroupRole,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -233,13 +233,13 @@ pub struct ProposalUpdated {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct ChatFrozen {
+pub struct GroupFrozen {
     pub frozen_by: UserId,
     pub reason: Option<String>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct ChatUnfrozen {
+pub struct GroupUnfrozen {
     pub unfrozen_by: UserId,
 }
 

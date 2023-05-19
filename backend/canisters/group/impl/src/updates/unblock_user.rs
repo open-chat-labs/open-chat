@@ -20,28 +20,28 @@ fn unblock_user_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
         return ChatFrozen;
     }
 
-    let caller = &runtime_state.env.caller();
-    if !runtime_state.data.is_public {
+    let caller = runtime_state.env.caller();
+    if !runtime_state.data.chat.is_public {
         GroupNotPublic
-    } else if let Some(caller_participant) = runtime_state.data.participants.get_by_principal(caller) {
-        if caller_participant.suspended.value {
+    } else if let Some(caller_member) = runtime_state.data.get_member(caller) {
+        if caller_member.suspended.value {
             return UserSuspended;
         }
 
-        let unblocked_by = caller_participant.user_id;
+        let unblocked_by = caller_member.user_id;
         if unblocked_by == args.user_id {
             CannotUnblockSelf
-        } else if caller_participant.role.can_unblock_users(&runtime_state.data.permissions) {
+        } else if caller_member.role.can_unblock_users(&runtime_state.data.chat.permissions) {
             let now = runtime_state.env.now();
 
-            runtime_state.data.participants.unblock(&args.user_id);
+            runtime_state.data.chat.members.unblock(&args.user_id);
 
             let event = UsersUnblocked {
                 user_ids: vec![args.user_id],
                 unblocked_by,
             };
 
-            runtime_state.data.events.push_main_event(
+            runtime_state.data.chat.events.push_main_event(
                 ChatEventInternal::UsersUnblocked(Box::new(event)),
                 args.correlation_id,
                 now,

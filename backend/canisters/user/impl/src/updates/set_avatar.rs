@@ -3,8 +3,9 @@ use crate::updates::set_avatar::Response::*;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
-use types::{CanisterId, FieldTooLongResult, Timestamped, MAX_AVATAR_SIZE};
+use types::{CanisterId, Timestamped};
 use user_canister::set_avatar::*;
+use utils::avatar_validation::validate_avatar;
 
 #[update(guard = "caller_is_owner")]
 #[trace]
@@ -19,12 +20,8 @@ fn set_avatar_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
         return UserSuspended;
     }
 
-    let avatar_size = args.avatar.as_ref().map_or(0, |a| a.data.len() as u32);
-    if avatar_size > MAX_AVATAR_SIZE {
-        return AvatarTooBig(FieldTooLongResult {
-            length_provided: avatar_size,
-            max_length: MAX_AVATAR_SIZE,
-        });
+    if let Err(error) = validate_avatar(args.avatar.as_ref()) {
+        return AvatarTooBig(error);
     }
 
     let id = args.avatar.as_ref().map(|a| a.id);

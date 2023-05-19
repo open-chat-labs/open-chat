@@ -11,8 +11,8 @@ use std::cmp::{max, Reverse};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
 use types::{
-    ChatFrozen, ChatId, ChatMetrics, ChatUnfrozen, Cryptocurrency, DeletedBy, DirectChatCreated, EventIndex, EventWrapper,
-    EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupChatCreated, Mention, MentionInternal, Message,
+    ChatId, ChatMetrics, Cryptocurrency, DeletedBy, DirectChatCreated, EventIndex, EventWrapper, EventsTimeToLiveUpdated,
+    GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen, Mention, MentionInternal, Message,
     MessageContentInitial, MessageContentInternal, MessageId, MessageIndex, MessageMatch, Milliseconds, PollVotes,
     ProposalStatusUpdate, PushEventResult, PushIfNotContains, RangeSet, Reaction, RegisterVoteResult, ReplyContext,
     ThreadSummary, TimestampMillis, Timestamped, UserId, VoteOperation,
@@ -23,7 +23,6 @@ pub const OPENCHAT_BOT_USER_ID: UserId = UserId::new(Principal::from_slice(&[228
 
 #[derive(Serialize, Deserialize)]
 pub struct ChatEvents {
-    chat_id: ChatId,
     chat_type: ChatType,
     main: ChatEventsList,
     threads: HashMap<MessageIndex, ChatEventsList>,
@@ -36,9 +35,8 @@ pub struct ChatEvents {
 }
 
 impl ChatEvents {
-    pub fn new_direct_chat(them: UserId, events_ttl: Option<Milliseconds>, now: TimestampMillis) -> ChatEvents {
+    pub fn new_direct_chat(events_ttl: Option<Milliseconds>, now: TimestampMillis) -> ChatEvents {
         let mut events = ChatEvents {
-            chat_id: them.into(),
             chat_type: ChatType::Direct,
             main: ChatEventsList::default(),
             threads: HashMap::new(),
@@ -56,7 +54,6 @@ impl ChatEvents {
     }
 
     pub fn new_group_chat(
-        chat_id: ChatId,
         name: String,
         description: String,
         created_by: UserId,
@@ -64,7 +61,6 @@ impl ChatEvents {
         now: TimestampMillis,
     ) -> ChatEvents {
         let mut events = ChatEvents {
-            chat_id,
             chat_type: ChatType::Group,
             main: ChatEventsList::default(),
             threads: HashMap::new(),
@@ -78,7 +74,7 @@ impl ChatEvents {
 
         events.push_event(
             None,
-            ChatEventInternal::GroupChatCreated(Box::new(GroupChatCreated {
+            ChatEventInternal::GroupChatCreated(Box::new(GroupCreated {
                 name,
                 description,
                 created_by,
@@ -823,7 +819,6 @@ impl ChatEvents {
             .rev()
             .take(max_results as usize)
             .map(|(score, message)| MessageMatch {
-                chat_id: self.chat_id,
                 message_index: message.message_index,
                 sender: message.sender,
                 content: message.content.hydrate(Some(my_user_id)),
@@ -943,7 +938,7 @@ impl ChatEvents {
     pub fn freeze(&mut self, user_id: UserId, reason: Option<String>, now: TimestampMillis) -> PushEventResult {
         let push_event_result = self.push_event(
             None,
-            ChatEventInternal::ChatFrozen(Box::new(ChatFrozen {
+            ChatEventInternal::ChatFrozen(Box::new(GroupFrozen {
                 frozen_by: user_id,
                 reason,
             })),
@@ -958,7 +953,7 @@ impl ChatEvents {
         self.frozen = false;
         self.push_event(
             None,
-            ChatEventInternal::ChatUnfrozen(Box::new(ChatUnfrozen { unfrozen_by: user_id })),
+            ChatEventInternal::ChatUnfrozen(Box::new(GroupUnfrozen { unfrozen_by: user_id })),
             0,
             now,
         )

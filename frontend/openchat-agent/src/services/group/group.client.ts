@@ -610,7 +610,7 @@ export class GroupClient extends CandidService implements IGroupClient {
         };
         return this.handleQueryResponse(
             () => this.groupService.search_messages(args),
-            searchGroupChatResponse,
+            (res) => searchGroupChatResponse(res, this.chatId),
             args
         );
     }

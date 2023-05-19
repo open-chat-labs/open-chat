@@ -4,7 +4,7 @@ use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use group_canister::c2c_unfreeze_group::{Response::*, *};
-use types::{ChatUnfrozen, EventWrapper, Timestamped};
+use types::{EventWrapper, GroupUnfrozen, Timestamped};
 
 #[update_msgpack(guard = "caller_is_group_index_or_local_group_index")]
 #[trace]
@@ -18,7 +18,7 @@ fn c2c_unfreeze_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Resp
     if runtime_state.data.frozen.is_some() {
         let now = runtime_state.env.now();
 
-        let push_event_result = runtime_state.data.events.unfreeze(args.caller, now);
+        let push_event_result = runtime_state.data.chat.events.unfreeze(args.caller, now);
         runtime_state.data.frozen = Timestamped::new(None, now);
 
         handle_activity_notification(runtime_state);
@@ -28,7 +28,7 @@ fn c2c_unfreeze_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Resp
             timestamp: now,
             correlation_id: 0,
             expires_at: push_event_result.expires_at,
-            event: ChatUnfrozen {
+            event: GroupUnfrozen {
                 unfrozen_by: args.caller,
             },
         })

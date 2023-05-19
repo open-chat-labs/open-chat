@@ -127,12 +127,13 @@ export function setBioResponse(candid: ApiSetBioResponse): SetBioResponse {
 }
 
 export function searchDirectChatResponse(
-    candid: ApiSearchDirectChatResponse
+    candid: ApiSearchDirectChatResponse,
+    chatId: string,
 ): SearchDirectChatResponse {
     if ("Success" in candid) {
         return {
             kind: "success",
-            matches: candid.Success.matches.map(messageMatch),
+            matches: candid.Success.matches.map((m) => messageMatch(m, chatId)),
         };
     }
     if ("TermTooShort" in candid) {
@@ -161,10 +162,10 @@ export function searchDirectChatResponse(
     );
 }
 
-export function messageMatch(candid: ApiMessageMatch): MessageMatch {
+export function messageMatch(candid: ApiMessageMatch, chatId: string): MessageMatch {
     const sender = candid.sender.toString();
     return {
-        chatId: candid.chat_id.toString(),
+        chatId,
         messageIndex: candid.message_index,
         content: messageContent(candid.content, sender),
         sender,
@@ -727,7 +728,7 @@ export function getUpdatesResponse(candid: ApiUpdatesResponse): UpdatesResponse 
             pinnedChats: optional(candid.Success.pinned_chats, (p) => p.map((c) => c.toString())),
         };
     }
-    
+
     if ("SuccessNoUpdates" in candid) {
         return {
             kind: "success_no_updates"

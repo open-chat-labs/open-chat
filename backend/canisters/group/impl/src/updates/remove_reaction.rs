@@ -19,19 +19,19 @@ fn remove_reaction_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
     }
 
     let caller = runtime_state.env.caller();
-    if let Some(participant) = runtime_state.data.participants.get_by_principal(&caller) {
-        if participant.suspended.value {
+    if let Some(member) = runtime_state.data.get_member(caller) {
+        if member.suspended.value {
             return UserSuspended;
         }
-        if !participant.role.can_react_to_messages(&runtime_state.data.permissions) {
+        if !member.role.can_react_to_messages(&runtime_state.data.chat.permissions) {
             return NotAuthorized;
         }
 
         let now = runtime_state.env.now();
-        let user_id = participant.user_id;
-        let min_visible_event_index = participant.min_visible_event_index();
+        let user_id = member.user_id;
+        let min_visible_event_index = member.min_visible_event_index();
 
-        match runtime_state.data.events.remove_reaction(AddRemoveReactionArgs {
+        match runtime_state.data.chat.events.remove_reaction(AddRemoveReactionArgs {
             user_id,
             min_visible_event_index,
             thread_root_message_index: args.thread_root_message_index,

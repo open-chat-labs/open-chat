@@ -1,18 +1,17 @@
 use crate::activity_notifications::handle_activity_notification;
-use crate::model::participants::ParticipantInternal;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
-use candid::Principal;
 use canister_tracing_macros::trace;
 use chat_events::ChatEventInternal;
 use group_canister::remove_participant::{Response::*, *};
+use group_members::GroupMemberInternal;
 use ic_cdk_macros::update;
-use types::{ParticipantsRemoved, UserId, UsersBlocked};
+use types::{MembersRemoved, UserId, UsersBlocked};
 use user_canister::c2c_remove_from_group;
 
 #[update]
 #[trace]
 async fn block_user(args: group_canister::block_user::Args) -> group_canister::block_user::Response {
-    if !read_state(|state| state.data.is_public) {
+    if !read_state(|state| state.data.chat.is_public) {
         return group_canister::block_user::Response::GroupNotPublic;
     }
 
@@ -54,14 +53,7 @@ async fn remove_participant_impl(user_id: UserId, correlation_id: u64, block: bo
     };
 
     // Put the participant back
-    mutate_state(|state| {
-        rollback(
-            block,
-            prepare_result.principal_to_remove,
-            prepare_result.participant_to_remove,
-            state,
-        )
-    });
+    mutate_state(|state| rollback(block, prepare_result.participant_to_remove, state));
 
     response
 }
@@ -70,8 +62,7 @@ struct PrepareResult {
     removed_by: UserId,
     group_name: String,
     public: bool,
-    participant_to_remove: ParticipantInternal,
-    principal_to_remove: Principal,
+    participant_to_remove: GroupMemberInternal,
 }
 
 fn prepare(block: bool, user_id: UserId, runtime_state: &mut RuntimeState) -> Result<PrepareResult, Response> {
@@ -80,50 +71,39 @@ fn prepare(block: bool, user_id: UserId, runtime_state: &mut RuntimeState) -> Re
     }
 
     let caller = runtime_state.env.caller();
-    if let Some(participant) = runtime_state.data.participants.get_by_principal(&caller) {
-        if participant.suspended.value {
+    if let Some(member) = runtime_state.data.get_member(caller) {
+        if member.suspended.value {
             Err(UserSuspended)
-        } else if participant.user_id == user_id {
+        } else if member.user_id == user_id {
             Err(CannotRemoveSelf)
         } else {
             // Check if the caller is authorized to remove the user
-            let principal_to_remove = match runtime_state.data.participants.get_by_user_id(&user_id) {
+            match runtime_state.data.chat.members.get(&user_id) {
                 None => return Err(UserNotInGroup),
                 Some(participant_to_remove) => {
-                    if participant
+                    if !member
                         .role
-                        .can_remove_members_with_role(participant_to_remove.role, &runtime_state.data.permissions)
+                        .can_remove_members_with_role(participant_to_remove.role, &runtime_state.data.chat.permissions)
                     {
-                        runtime_state
-                            .data
-                            .participants
-                            .get_principal(&user_id)
-                            .expect("missing principal for participant")
-                    } else {
                         return Err(NotAuthorized);
                     }
                 }
             };
 
             // Remove the user from the group
-            let removed_by = participant.user_id;
-            let participant_to_remove = runtime_state
-                .data
-                .participants
-                .remove(user_id)
-                .expect("user must be a participant");
+            let removed_by = member.user_id;
+            let participant_to_remove = runtime_state.remove_member(user_id).expect("user must be a member");
 
             if block {
                 // Also block the user
-                runtime_state.data.participants.block(user_id);
+                runtime_state.data.chat.members.block(user_id);
             }
 
             Ok(PrepareResult {
                 removed_by,
-                group_name: runtime_state.data.name.clone(),
-                public: runtime_state.data.is_public,
+                group_name: runtime_state.data.chat.name.clone(),
+                public: runtime_state.data.chat.is_public,
                 participant_to_remove,
-                principal_to_remove,
             })
         }
     } else {
@@ -142,22 +122,23 @@ fn commit(block: bool, user_id: UserId, correlation_id: u64, removed_by: UserId,
 
         ChatEventInternal::UsersBlocked(Box::new(event))
     } else {
-        let event = ParticipantsRemoved {
+        let event = MembersRemoved {
             user_ids: vec![user_id],
             removed_by,
         };
         ChatEventInternal::ParticipantsRemoved(Box::new(event))
     };
 
-    runtime_state.data.events.push_main_event(event, correlation_id, now);
+    runtime_state.data.chat.events.push_main_event(event, correlation_id, now);
+
     handle_activity_notification(runtime_state);
     Success
 }
 
-fn rollback(block: bool, principal: Principal, participant: ParticipantInternal, runtime_state: &mut RuntimeState) {
+fn rollback(block: bool, member: GroupMemberInternal, runtime_state: &mut RuntimeState) {
     if block {
-        runtime_state.data.participants.unblock(&participant.user_id);
+        runtime_state.data.chat.members.unblock(&member.user_id);
     }
 
-    runtime_state.data.participants.try_undo_remove(principal, participant);
+    runtime_state.data.chat.members.try_undo_remove(member);
 }
