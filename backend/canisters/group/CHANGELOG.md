@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Split common group logic into new `group_chat_core` library ([#3620](https://github.com/open-ic/open-chat/pull/3620))
+- Simplify `c2c_update_proposals` ([#3621](https://github.com/open-ic/open-chat/pull/3621))
 
 ### Removed
 
