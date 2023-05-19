@@ -932,6 +932,8 @@ function isPermitted(role: MemberRole, permissionRole: PermissionRole): boolean 
         case "owner":
             return hasOwnerRights(role);
         case "admins":
+            return role !== "participant" && role !== "moderator";
+        case "moderators":
             return role !== "participant";
         case "members":
             return true;

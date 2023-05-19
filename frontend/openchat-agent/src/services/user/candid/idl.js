@@ -57,6 +57,7 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Record({ 'contacts' : IDL.Vec(Contact) }),
   });
   const PermissionRole = IDL.Variant({
+    'Moderators' : IDL.Null,
     'Owner' : IDL.Null,
     'Admins' : IDL.Null,
     'Members' : IDL.Null,
@@ -70,7 +71,6 @@ export const idlFactory = ({ IDL }) => {
     'update_group' : PermissionRole,
     'invite_users' : PermissionRole,
     'change_roles' : PermissionRole,
-    'add_members' : PermissionRole,
     'create_polls' : PermissionRole,
     'pin_messages' : PermissionRole,
     'reply_in_thread' : PermissionRole,
@@ -617,6 +617,7 @@ export const idlFactory = ({ IDL }) => {
   const Role = IDL.Variant({
     'Participant' : IDL.Null,
     'Admin' : IDL.Null,
+    'Moderator' : IDL.Null,
     'Owner' : IDL.Null,
   });
   const RoleChanged = IDL.Record({

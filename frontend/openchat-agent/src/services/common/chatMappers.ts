@@ -624,7 +624,6 @@ export function apiGroupPermissions(permissions: GroupPermissions): ApiGroupPerm
     return {
         change_permissions: apiPermissionRole(permissions.changePermissions),
         change_roles: apiPermissionRole(permissions.changeRoles),
-        add_members: apiPermissionRole("owner"),
         remove_members: apiPermissionRole(permissions.removeMembers),
         block_users: apiPermissionRole(permissions.blockUsers),
         delete_messages: apiPermissionRole(permissions.deleteMessages),
@@ -644,6 +643,8 @@ export function apiPermissionRole(permissionRole: PermissionRole): ApiPermission
             return { Owner: null };
         case "admins":
             return { Admins: null };
+        case "moderators":
+            return { Moderators: null };
         case "members":
             return { Members: null };
     }
@@ -652,6 +653,7 @@ export function apiPermissionRole(permissionRole: PermissionRole): ApiPermission
 export function permissionRole(candid: ApiPermissionRole): PermissionRole {
     if ("Owner" in candid) return "owner";
     if ("Admins" in candid) return "admins";
+    if ("Moderators" in candid) return "moderators";
     return "members";
 }
 
@@ -680,6 +682,9 @@ export function chatMetrics(candid: ApiChatMetrics): ChatMetrics {
 export function memberRole(candid: ApiRole): MemberRole {
     if ("Admin" in candid) {
         return "admin";
+    }
+    if ("Moderator" in candid) {
+        return "moderator";
     }
     if ("Participant" in candid) {
         return "participant";

@@ -253,8 +253,6 @@ export interface EventsTimeToLiveUpdated {
 }
 export type FailedCryptoTransaction = { 'NNS' : NnsFailedCryptoTransaction } |
   { 'SNS' : SnsFailedCryptoTransaction };
-export type FallbackRole = { 'Participant' : null } |
-  { 'Admin' : null };
 export interface FieldTooLongResult {
   'length_provided' : number,
   'max_length' : number,
@@ -445,7 +443,6 @@ export interface GroupPermissions {
   'update_group' : PermissionRole,
   'invite_users' : PermissionRole,
   'change_roles' : PermissionRole,
-  'add_members' : PermissionRole,
   'create_polls' : PermissionRole,
   'pin_messages' : PermissionRole,
   'reply_in_thread' : PermissionRole,
@@ -722,7 +719,8 @@ export type PayForDiamondMembershipResponse = {
   { 'InsufficientFunds' : bigint };
 export type PendingCryptoTransaction = { 'NNS' : NnsPendingCryptoTransaction } |
   { 'SNS' : SnsPendingCryptoTransaction };
-export type PermissionRole = { 'Owner' : null } |
+export type PermissionRole = { 'Moderators' : null } |
+  { 'Owner' : null } |
   { 'Admins' : null } |
   { 'Members' : null };
 export interface PermissionsChanged {
@@ -815,6 +813,7 @@ export interface PublicGroupSummary {
   'avatar_id' : [] | [bigint],
   'frozen' : [] | [FrozenGroupInfo],
   'latest_event_index' : EventIndex,
+  'history_visible_to_new_joiners' : boolean,
   'chat_id' : ChatId,
   'participant_count' : number,
   'latest_message' : [] | [MessageEventWrapper],
@@ -860,21 +859,6 @@ export interface ReferralStats {
 }
 export type ReferralType = { 'User' : null } |
   { 'BtcMiami' : null };
-export type RegisterUserResponse = { 'UsernameTooShort' : number } |
-  { 'UsernameInvalid' : null } |
-  { 'AlreadyRegistered' : null } |
-  { 'UserLimitReached' : null } |
-  { 'UsernameTooLong' : number } |
-  { 'Success' : UserId } |
-  { 'PublicKeyInvalid' : string } |
-  { 'InternalError' : string } |
-  { 'ReferralCodeInvalid' : null } |
-  { 'CyclesBalanceTooLow' : null };
-export interface RegisterUserV2Args {
-  'username' : string,
-  'public_key' : Uint8Array | number[],
-  'referral_code' : [] | [string],
-}
 export type RegistrationFee = { 'ICP' : ICPRegistrationFee } |
   { 'Cycles' : CyclesRegistrationFee };
 export interface RemovePlatformModeratorArgs { 'user_id' : UserId }
@@ -894,6 +878,7 @@ export interface ReportedMessage {
 }
 export type Role = { 'Participant' : null } |
   { 'Admin' : null } |
+  { 'Moderator' : null } |
   { 'Owner' : null };
 export interface RoleChanged {
   'user_ids' : Array<UserId>,
@@ -1141,7 +1126,6 @@ export interface _SERVICE {
     ReferralLeaderboardResponse
   >,
   'referral_metrics' : ActorMethod<[EmptyArgs], ReferralMetricsResponse>,
-  'register_user_v2' : ActorMethod<[RegisterUserV2Args], RegisterUserResponse>,
   'remove_platform_moderator' : ActorMethod<
     [RemovePlatformModeratorArgs],
     RemovePlatformModeratorResponse

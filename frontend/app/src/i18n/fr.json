@@ -342,7 +342,8 @@
         "role": {
             "owner": "Propriétaire",
             "admins": "Administrateurs",
-            "members": "Membres"
+            "members": "Membres",
+            "moderators": "Modérateurs"
         },
         "permissions": {
             "whoCan": "Qui peut",
@@ -362,7 +363,8 @@
             "reactToMessages": "réagir aux messages",
             "inviteUsers": "inviter des utilisateurs",
             "notPermitted": "Vous n'êtes pas autorisé à {permission}",
-            "replyInThread": "répondre dans le fil"
+            "replyInThread": "répondre dans le fil",
+            "ownerAndAdminsAndModerators": "Les propriétaires, les administrateurs et les modérateurs peuvent"
         },
         "advanced": "Avancé",
         "welcome": "Bienvenue à {groupName}",
@@ -833,5 +835,6 @@
     "invited": "Invité",
     "tapForReferralLink": "Appuyez pour copier votre lien de parrainage personnel",
     "deleteMessageForMe": "Supprimer pour moi",
-    "whatsHotButton": "Découvrez les groupes chauds"
+    "whatsHotButton": "Découvrez les groupes chauds",
+    "moderator": "modérateur"
 }
