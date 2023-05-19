@@ -1,11 +1,14 @@
-use chat_events::{AddRemoveReactionArgs, AddRemoveReactionResult, ChatEvents, PushMessageArgs, Reader};
+use chat_events::{
+    AddRemoveReactionArgs, AddRemoveReactionResult, ChatEventInternal, ChatEvents, DeleteMessageResult,
+    DeleteUndeleteMessagesArgs, PushMessageArgs, Reader,
+};
 use group_members::GroupMembers;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use types::{
     Avatar, ContentValidationError, CryptoTransaction, EventIndex, EventWrapper, GroupGate, GroupPermissions,
     GroupReplyContext, GroupRules, GroupSubtype, InvalidPollReason, MentionInternal, Message, MessageContentInitial, MessageId,
-    MessageIndex, Reaction, TimestampMillis, Timestamped, User, UserId,
+    MessageIndex, MessageUnpinned, Reaction, TimestampMillis, Timestamped, User, UserId,
 };
 
 #[derive(Serialize, Deserialize)]
@@ -166,7 +169,7 @@ impl GroupChatCore {
             users_to_notify.extend(&mentions);
             users_to_notify.remove(&sender);
 
-            Success(SendMessageSuccessResult {
+            Success(SendMessageSuccess {
                 message_event,
                 users_to_notify: users_to_notify.into_iter().collect(),
             })
@@ -212,6 +215,72 @@ impl GroupChatCore {
         }
     }
 
+    pub fn delete_messages(
+        &mut self,
+        user_id: UserId,
+        thread_root_message_index: Option<MessageIndex>,
+        message_ids: Vec<MessageId>,
+        as_platform_moderator: bool,
+        now: TimestampMillis,
+    ) -> DeleteMessagesResult {
+        use DeleteMessagesResult::*;
+
+        if let Some(member) = self.members.get(&user_id) {
+            if member.suspended.value {
+                return UserSuspended;
+            }
+
+            let min_visible_event_index = member.min_visible_event_index();
+            let is_admin = member.role.can_delete_messages(&self.permissions) || as_platform_moderator;
+
+            let mut my_messages: HashSet<MessageId> = HashSet::new();
+
+            if thread_root_message_index.is_none() {
+                for message_id in message_ids.iter().copied() {
+                    if let Some((message_index, sender)) = self
+                        .events
+                        .visible_main_events_reader(min_visible_event_index, now)
+                        .message_internal(message_id.into())
+                        .map(|m| (m.message_index, m.sender))
+                    {
+                        // Remember those messages where the deleter was also the sender
+                        if sender == user_id {
+                            my_messages.insert(message_id);
+                        }
+
+                        // If the message being deleted is pinned, unpin it
+                        if let Ok(index) = self.pinned_messages.binary_search(&message_index) {
+                            self.pinned_messages.remove(index);
+
+                            self.events.push_main_event(
+                                ChatEventInternal::MessageUnpinned(Box::new(MessageUnpinned {
+                                    message_index,
+                                    unpinned_by: user_id,
+                                    due_to_message_deleted: true,
+                                })),
+                                0,
+                                now,
+                            );
+                        }
+                    }
+                }
+            }
+
+            let results = self.events.delete_messages(DeleteUndeleteMessagesArgs {
+                caller: user_id,
+                is_admin,
+                min_visible_event_index,
+                thread_root_message_index,
+                message_ids,
+                now,
+            });
+
+            Success(DeleteMessagesSuccess { results, my_messages })
+        } else {
+            UserNotInGroup
+        }
+    }
+
     fn get_user_being_replied_to(
         &self,
         replies_to: &GroupReplyContext,
@@ -231,7 +300,7 @@ impl GroupChatCore {
 
 #[allow(clippy::large_enum_variant)]
 pub enum SendMessageResult {
-    Success(SendMessageSuccessResult),
+    Success(SendMessageSuccess),
     ThreadMessageNotFound,
     MessageEmpty,
     TextTooLong(u32),
@@ -242,7 +311,7 @@ pub enum SendMessageResult {
     InvalidRequest(String),
 }
 
-pub struct SendMessageSuccessResult {
+pub struct SendMessageSuccess {
     pub message_event: EventWrapper<Message>,
     pub users_to_notify: Vec<UserId>,
 }
@@ -255,4 +324,16 @@ pub enum AddReactionResult {
     UserNotInGroup,
     NotAuthorized,
     UserSuspended,
+}
+
+pub enum DeleteMessagesResult {
+    Success(DeleteMessagesSuccess),
+    MessageNotFound,
+    UserNotInGroup,
+    UserSuspended,
+}
+
+pub struct DeleteMessagesSuccess {
+    pub results: Vec<(MessageId, DeleteMessageResult)>,
+    pub my_messages: HashSet<MessageId>,
 }
