@@ -1,8 +1,7 @@
-use crate::activity_notifications::handle_activity_notification;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
-use chat_events::{AddRemoveReactionArgs, AddRemoveReactionResult};
 use group_canister::remove_reaction::{Response::*, *};
+use group_chat_core::AddRemoveReactionResult;
 use ic_cdk_macros::update;
 
 #[update]
@@ -19,32 +18,22 @@ fn remove_reaction_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
     }
 
     let caller = runtime_state.env.caller();
-    if let Some(member) = runtime_state.data.get_member(caller) {
-        if member.suspended.value {
-            return UserSuspended;
-        }
-        if !member.role.can_react_to_messages(&runtime_state.data.chat.permissions) {
-            return NotAuthorized;
-        }
-
+    if let Some(user_id) = runtime_state.data.principal_to_user_id_map.get(&caller).copied() {
         let now = runtime_state.env.now();
-        let user_id = member.user_id;
-        let min_visible_event_index = member.min_visible_event_index();
 
-        match runtime_state.data.chat.events.remove_reaction(AddRemoveReactionArgs {
+        match runtime_state.data.chat.remove_reaction(
             user_id,
-            min_visible_event_index,
-            thread_root_message_index: args.thread_root_message_index,
-            message_id: args.message_id,
-            reaction: args.reaction,
+            args.thread_root_message_index,
+            args.message_id,
+            args.reaction,
             now,
-        }) {
-            AddRemoveReactionResult::Success => {
-                handle_activity_notification(runtime_state);
-                Success
-            }
-            AddRemoveReactionResult::NoChange => NoChange,
+        ) {
+            AddRemoveReactionResult::Success => Success,
+            AddRemoveReactionResult::NoChange | AddRemoveReactionResult::InvalidReaction => NoChange,
             AddRemoveReactionResult::MessageNotFound => MessageNotFound,
+            AddRemoveReactionResult::UserNotInGroup => CallerNotInGroup,
+            AddRemoveReactionResult::NotAuthorized => NotAuthorized,
+            AddRemoveReactionResult::UserSuspended => UserSuspended,
         }
     } else {
         CallerNotInGroup

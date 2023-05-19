@@ -4,7 +4,7 @@ use canister_api_macros::update_candid_and_msgpack;
 use canister_tracing_macros::trace;
 use chat_events::Reader;
 use community_canister::add_reaction::{Response::*, *};
-use group_chat_core::{AddReactionResult, GroupChatCore};
+use group_chat_core::{AddRemoveReactionResult, GroupChatCore};
 use types::{CommunityReactionAddedNotification, EventIndex, EventWrapper, Message, Notification, TimestampMillis, UserId};
 
 #[update_candid_and_msgpack]
@@ -30,18 +30,18 @@ fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> Response {
                 args.reaction.clone(),
                 now,
             ) {
-                AddReactionResult::Success => {
+                AddRemoveReactionResult::Success => {
                     if let Some(message) = should_push_notification(&args, user_id, group, &state.data.members, now) {
                         push_notification(args, user_id, group.name.clone(), message, now, state);
                     }
                     Success
                 }
-                AddReactionResult::NoChange => NoChange,
-                AddReactionResult::InvalidReaction => InvalidReaction,
-                AddReactionResult::MessageNotFound => MessageNotFound,
-                AddReactionResult::UserNotInGroup => UserNotInGroup,
-                AddReactionResult::NotAuthorized => NotAuthorized,
-                AddReactionResult::UserSuspended => UserSuspended,
+                AddRemoveReactionResult::NoChange => NoChange,
+                AddRemoveReactionResult::InvalidReaction => InvalidReaction,
+                AddRemoveReactionResult::MessageNotFound => MessageNotFound,
+                AddRemoveReactionResult::UserNotInGroup => UserNotInGroup,
+                AddRemoveReactionResult::NotAuthorized => NotAuthorized,
+                AddRemoveReactionResult::UserSuspended => UserSuspended,
             }
         } else {
             UserNotInGroup
