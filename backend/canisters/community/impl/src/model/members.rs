@@ -2,7 +2,7 @@ use candid::Principal;
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::{HashMap, HashSet};
-use types::{CommunityPermissions, CommunityRole, TimestampMillis, Timestamped, UserId};
+use types::{CommunityMember, CommunityPermissions, CommunityRole, TimestampMillis, Timestamped, UserId};
 
 const MAX_MEMBERS_PER_COMMUNITY: u32 = 100_000;
 
@@ -244,4 +244,24 @@ pub enum ChangeRoleResult {
 pub struct ChangeRoleSuccessResult {
     pub caller_id: UserId,
     pub prev_role: CommunityRole,
+}
+
+impl From<CommunityMemberInternal> for CommunityMember {
+    fn from(p: CommunityMemberInternal) -> Self {
+        CommunityMember {
+            user_id: p.user_id,
+            date_added: p.date_added,
+            role: p.role,
+        }
+    }
+}
+
+impl From<&CommunityMemberInternal> for CommunityMember {
+    fn from(p: &CommunityMemberInternal) -> Self {
+        CommunityMember {
+            user_id: p.user_id,
+            date_added: p.date_added,
+            role: p.role,
+        }
+    }
 }
