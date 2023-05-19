@@ -113,7 +113,7 @@
     }
 
     function stripThreadFromUrl(path: string) {
-        if ($pathParams.threadMessageIndex !== undefined) {
+        if ($pathParams.kind === "home_route" && $pathParams.threadMessageIndex !== undefined) {
             return removeThreadMessageIndex($pathParams.threadMessageIndex, path);
         }
         return path;

@@ -22,7 +22,7 @@
     $: selectedChatId = client.selectedChatId;
     $: eventsStore = client.eventsStore;
     $: filteredProposalsStore = client.filteredProposalsStore;
-    $: noChat = $pathParams.chatId === undefined;
+    $: noChat = $pathParams.kind !== "home_route" || $pathParams.chatId === undefined;
 </script>
 
 <Panel middle>

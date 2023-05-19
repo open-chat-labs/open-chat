@@ -62,7 +62,7 @@
     {:else}
         <Content>
             {#if $location.startsWith("/blog")}
-                {#if $pathParams.slug !== undefined}
+                {#if $pathParams.kind === "blog_route" && $pathParams.slug !== undefined}
                     {#await import("./BlogPostPage.svelte")}
                         <div class="loading">
                             <Loading />

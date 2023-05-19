@@ -39,11 +39,35 @@
             url: "../assets/sns1_medium.png",
         },
         {
+            name: "ckBTC Enthusiasts",
+            url: "../assets/ckbtc_nobackground.png",
+        },
+        {
             name: "8Year Gang",
             url: "../assets/unknownUserAvatar.svg",
         },
         {
             name: "/biz Nazis",
+            url: "../assets/unknownUserAvatar.svg",
+        },
+        {
+            name: "Community One",
+            url: "../assets/unknownUserAvatar.svg",
+        },
+        {
+            name: "Community Two",
+            url: "../assets/unknownUserAvatar.svg",
+        },
+        {
+            name: "Community Three",
+            url: "../assets/unknownUserAvatar.svg",
+        },
+        {
+            name: "Community Four",
+            url: "../assets/unknownUserAvatar.svg",
+        },
+        {
+            name: "Community Five",
             url: "../assets/unknownUserAvatar.svg",
         },
     ];
@@ -53,7 +77,7 @@
     }
 
     function exploreCommunities() {
-        console.log("explore communities");
+        page("/communities");
     }
 
     function directChats() {
@@ -238,6 +262,8 @@
     .middle {
         flex: auto;
         gap: 0;
+        overflow: auto;
+        @include nice-scrollbar();
     }
 
     .plus,

@@ -32,7 +32,7 @@
     import { rtlStore } from "../../stores/rtl";
     import { mobileWidth, screenWidth, ScreenWidth } from "../../stores/screenDimensions";
     import page from "page";
-    import { pathParams } from "../../routes";
+    import { pathParams, location } from "../../routes";
     import type { RouteParams } from "../../routes";
     import { toastStore } from "../../stores/toast";
     import {
@@ -121,10 +121,20 @@
     // layout stuff
     $: showRight = $rightPanelHistory.length > 0 || $numberOfColumns === 3;
     $: floatRightPanel = !$mobileWidth && $numberOfColumns < 3;
-    $: middleSelected = $pathParams.chatId !== undefined || hotGroups.kind !== "idle";
-    $: leftSelected = $pathParams.chatId === undefined && hotGroups.kind === "idle";
+    $: middleSelected =
+        ($pathParams.kind === "home_route" && $pathParams.chatId !== undefined) ||
+        hotGroups.kind !== "idle";
+    $: leftSelected =
+        $pathParams.kind === "home_route" &&
+        $pathParams.chatId === undefined &&
+        hotGroups.kind === "idle";
     $: showMiddle = !$mobileWidth || (middleSelected && !showRight);
     $: showLeft = !$mobileWidth || (leftSelected && !showRight);
+
+    $: console.log("Location: ", $location);
+    $: console.log("PathParams: ", $location);
+    $: console.log("ShowLeft: ", showLeft);
+    $: console.log("ShowMiddle: ", showMiddle);
 
     onMount(() => {
         subscribeToNotifications(client, (n) => client.notificationReceived(n));
@@ -225,19 +235,18 @@
     async function routeChange(initialised: boolean, pathParams: RouteParams): Promise<void> {
         // wait until we have loaded the chats
         if (initialised) {
-            if (pathParams.chatId === "share") {
-                const title = $querystring.get("title") ?? "";
-                const text = $querystring.get("text") ?? "";
-                const url = $querystring.get("url") ?? "";
+            if (pathParams.kind === "share_route") {
                 share = {
-                    title,
-                    text,
-                    url,
+                    title: pathParams.title,
+                    text: pathParams.text,
+                    url: pathParams.url,
                     files: [],
                 };
                 page.replace("/");
                 modal = ModalType.SelectChat;
-            } else {
+            } else if (pathParams.kind === "communities_route") {
+                console.log("Deal with whatever needs doing on the communities route");
+            } else if (pathParams.kind === "home_route") {
                 // if we have something in the chatId url param
 
                 // first close any open thread
@@ -519,7 +528,7 @@
     }
 
     function deleteDirectChat(ev: CustomEvent<string>) {
-        if (ev.detail === $pathParams.chatId) {
+        if ($pathParams.kind === "home_route" && ev.detail === $pathParams.chatId) {
             page("/");
         }
         tick().then(() => client.removeChat(ev.detail));

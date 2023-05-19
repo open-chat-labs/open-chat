@@ -20,6 +20,14 @@
         page("/diamond", parsePathParams, track, () => (route = LandingPage));
         page("/architecture", parsePathParams, track, () => (route = LandingPage));
         page(
+            "/communities/:communityId?",
+            redirectHashRoutes,
+            parsePathParams,
+            track,
+            () => (route = Home)
+        );
+        page("/hotgroups", redirectHashRoutes, parsePathParams, track, () => (route = Home));
+        page(
             "/:chatId?/:messageIndex?/:threadMessageIndex?",
             redirectHashRoutes,
             parsePathParams,

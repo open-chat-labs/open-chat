@@ -579,7 +579,9 @@
         <ThreadSummary
             {chatId}
             threadRootMessageIndex={msg.messageIndex}
-            selected={msg.messageIndex === $pathParams.messageIndex && $pathParams.open}
+            selected={$pathParams.kind === "home_route" &&
+                msg.messageIndex === $pathParams.messageIndex &&
+                $pathParams.open}
             {threadSummary}
             indent={showAvatar}
             {me}
