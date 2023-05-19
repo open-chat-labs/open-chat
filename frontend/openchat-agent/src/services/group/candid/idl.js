@@ -1,41 +1,4 @@
 export const idlFactory = ({ IDL }) => {
-  const CanisterId = IDL.Principal;
-  const UserId = CanisterId;
-  const AddParticipantsArgs = IDL.Record({
-    'allow_blocked_users' : IDL.Bool,
-    'user_ids' : IDL.Vec(UserId),
-    'added_by_name' : IDL.Text,
-    'correlation_id' : IDL.Nat64,
-  });
-  const AddParticipantsFailedResult = IDL.Record({
-    'errors' : IDL.Vec(UserId),
-    'users_who_failed_gate_check' : IDL.Vec(UserId),
-    'users_suspended' : IDL.Vec(UserId),
-    'users_blocked_from_group' : IDL.Vec(UserId),
-    'users_not_authorized_to_add' : IDL.Vec(UserId),
-    'users_who_blocked_request' : IDL.Vec(UserId),
-    'users_already_in_group' : IDL.Vec(UserId),
-  });
-  const AddParticipantsPartialSuccessResult = IDL.Record({
-    'errors' : IDL.Vec(UserId),
-    'users_who_failed_gate_check' : IDL.Vec(UserId),
-    'users_suspended' : IDL.Vec(UserId),
-    'users_blocked_from_group' : IDL.Vec(UserId),
-    'users_not_authorized_to_add' : IDL.Vec(UserId),
-    'users_added' : IDL.Vec(UserId),
-    'users_who_blocked_request' : IDL.Vec(UserId),
-    'users_already_in_group' : IDL.Vec(UserId),
-  });
-  const AddParticipantsResponse = IDL.Variant({
-    'Failed' : AddParticipantsFailedResult,
-    'PartialSuccess' : AddParticipantsPartialSuccessResult,
-    'CallerNotInGroup' : IDL.Null,
-    'ChatFrozen' : IDL.Null,
-    'NotAuthorized' : IDL.Null,
-    'Success' : IDL.Null,
-    'UserSuspended' : IDL.Null,
-    'ParticipantLimitReached' : IDL.Nat32,
-  });
   const MessageId = IDL.Nat;
   const MessageIndex = IDL.Nat32;
   const AddReactionArgs = IDL.Record({
@@ -63,6 +26,8 @@ export const idlFactory = ({ IDL }) => {
     'InvalidReaction' : IDL.Null,
     'SuccessV2' : PushEventResult,
   });
+  const CanisterId = IDL.Principal;
+  const UserId = CanisterId;
   const BlockUserArgs = IDL.Record({
     'user_id' : UserId,
     'correlation_id' : IDL.Nat64,
@@ -82,6 +47,7 @@ export const idlFactory = ({ IDL }) => {
   const Role = IDL.Variant({
     'Participant' : IDL.Null,
     'Admin' : IDL.Null,
+    'Moderator' : IDL.Null,
     'Owner' : IDL.Null,
   });
   const ChangeRoleArgs = IDL.Record({
@@ -570,6 +536,7 @@ export const idlFactory = ({ IDL }) => {
     'message_index' : MessageIndex,
   });
   const PermissionRole = IDL.Variant({
+    'Moderators' : IDL.Null,
     'Owner' : IDL.Null,
     'Admins' : IDL.Null,
     'Members' : IDL.Null,
@@ -583,7 +550,6 @@ export const idlFactory = ({ IDL }) => {
     'update_group' : PermissionRole,
     'invite_users' : PermissionRole,
     'change_roles' : PermissionRole,
-    'add_members' : PermissionRole,
     'create_polls' : PermissionRole,
     'pin_messages' : PermissionRole,
     'reply_in_thread' : PermissionRole,
@@ -830,6 +796,7 @@ export const idlFactory = ({ IDL }) => {
     'avatar_id' : IDL.Opt(IDL.Nat),
     'frozen' : IDL.Opt(FrozenGroupInfo),
     'latest_event_index' : EventIndex,
+    'history_visible_to_new_joiners' : IDL.Bool,
     'chat_id' : ChatId,
     'participant_count' : IDL.Nat32,
     'latest_message' : IDL.Opt(MessageEventWrapper),
@@ -1284,11 +1251,6 @@ export const idlFactory = ({ IDL }) => {
     'InternalError' : IDL.Null,
   });
   return IDL.Service({
-    'add_participants' : IDL.Func(
-        [AddParticipantsArgs],
-        [AddParticipantsResponse],
-        [],
-      ),
     'add_reaction' : IDL.Func([AddReactionArgs], [AddReactionResponse], []),
     'block_user' : IDL.Func([BlockUserArgs], [BlockUserResponse], []),
     'change_role' : IDL.Func([ChangeRoleArgs], [ChangeRoleResponse], []),

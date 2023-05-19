@@ -243,6 +243,7 @@ export class OpenChatAgentWorker extends EventTarget {
             ...req,
             correlationId: v4(),
         };
+
         this._worker.postMessage(correlated);
         const promise = new Promise<Resp>((resolve, reject) => {
             const sentAt = Date.now();

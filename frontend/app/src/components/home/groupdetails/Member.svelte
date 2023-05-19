@@ -24,6 +24,8 @@
     export let canPromoteToOwner: boolean = false;
     export let canPromoteToAdmin: boolean = false;
     export let canDemoteToAdmin: boolean = false;
+    export let canPromoteToModerator: boolean = false;
+    export let canDemoteToModerator: boolean = false;
     export let canDemoteToMember: boolean = false;
     export let canRemoveMember: boolean = false;
     export let canBlockUser: boolean = false;
@@ -35,12 +37,15 @@
         canPromoteToOwner ||
         canPromoteToAdmin ||
         canDemoteToAdmin ||
+        canPromoteToModerator ||
+        canDemoteToModerator ||
         canDemoteToMember ||
         canRemoveMember ||
         canBlockUser;
 
     $: ownerText = $_("owner");
     $: adminText = $_("admin");
+    $: moderatorText = $_("moderator");
     $: memberText = $_("member");
 
     function removeUser() {
@@ -68,7 +73,7 @@
     user={member} 
     {me} 
     {searchTerm} 
-    role={member.role === "admin" || member.role === "owner" ? member.role : undefined}
+    role={member.role === "moderator" || member.role === "admin" || member.role === "owner" ? member.role : undefined}
     on:open={openUserProfile}>
     {#if showMenu}
         <span class="menu">
@@ -105,6 +110,24 @@
                                     color={"var(--icon-inverted-txt)"}
                                     slot="icon" />
                                 <div slot="text">{$_("demoteTo", { values: { role: adminText } })}</div>
+                            </MenuItem>
+                        {/if}
+                        {#if canPromoteToModerator}
+                            <MenuItem on:click={() => changeRole("moderator")}>
+                                <AccountPlusOutline
+                                    size={$iconSize}
+                                    color={"var(--icon-inverted-txt)"}
+                                    slot="icon" />
+                                <div slot="text">{$_("promoteTo", { values: { role: moderatorText } })}</div>
+                            </MenuItem>
+                        {/if}
+                        {#if canDemoteToModerator}
+                            <MenuItem on:click={() => changeRole("moderator")}>
+                                <AccountRemoveOutline
+                                    size={$iconSize}
+                                    color={"var(--icon-inverted-txt)"}
+                                    slot="icon" />
+                                <div slot="text">{$_("demoteTo", { values: { role: moderatorText } })}</div>
                             </MenuItem>
                         {/if}
                         {#if canDemoteToMember}

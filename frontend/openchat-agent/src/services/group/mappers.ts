@@ -114,6 +114,8 @@ export function apiRole(role: MemberRole): ApiRole | undefined {
     switch (role) {
         case "admin":
             return { Admin: null };
+        case "moderator":
+            return { Moderator: null };
         case "participant":
             return { Participant: null };
         case "owner":

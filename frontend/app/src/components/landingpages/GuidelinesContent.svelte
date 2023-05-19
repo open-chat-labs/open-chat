@@ -146,8 +146,8 @@
         </p>
 
         <p>
-            Group owners are also encouraged to create a trusted team of admins that are prepared to
-            help to moderate the group.
+            Group owners are also encouraged to create a trusted team of admins and moderators who are 
+            prepared to help to moderate the group.
         </p>
 
         <p>

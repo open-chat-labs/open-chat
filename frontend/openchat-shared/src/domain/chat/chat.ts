@@ -894,7 +894,7 @@ export type ThreadSyncDetails = {
     latestMessageIndex: number;
 };
 
-export type MemberRole = "admin" | "participant" | "owner" | "previewer";
+export type MemberRole = "admin" | "moderator" | "participant" | "owner" | "previewer";
 
 export type Member = {
     role: MemberRole;
@@ -903,7 +903,7 @@ export type Member = {
 
 export type FullMember = Member & PartialUserSummary;
 
-export type PermissionRole = "owner" | "admins" | "members";
+export type PermissionRole = "owner" | "admins" | "moderators" | "members";
 
 export type GroupPermissions = {
     changePermissions: PermissionRole;
