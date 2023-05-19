@@ -21,8 +21,7 @@
             on:logout
             on:newGroup
             on:showHomePage
-            on:upgrade
-            on:whatsHot />
+            on:upgrade />
     </Panel>
 {/if}
 
@@ -31,7 +30,6 @@
         <ChatList
             on:loadMessage
             on:chatWith
-            on:whatsHot
             on:halloffame
             on:showHomePage
             on:newGroup

@@ -1,4 +1,6 @@
+import type { GroupChatSummary } from "openchat-client";
 import { Readable, derived, writable } from "svelte/store";
+import type { RemoteData } from "./utils/remoteData";
 
 export const notFound = writable(false);
 
@@ -48,20 +50,29 @@ export const pathParams: Readable<RouteParams> = derived(
             } as BlogRoute;
         }
 
+        const chatId = $params["chatId"] || undefined;
+
+        if (chatId === undefined) {
+            return {
+                kind: "home_route",
+            } as HomeRoute;
+        }
+
         return {
-            kind: "home_route",
-            chatId: $params["chatId"] || undefined,
+            kind: "chat_selected_route",
+            chatId,
             messageIndex: $params["messageIndex"] ? Number($params["messageIndex"]) : undefined,
             threadMessageIndex: $params["threadMessageIndex"]
                 ? Number($params["threadMessageIndex"])
                 : undefined,
             open: $qs.get("open") === "true",
-        } as HomeRoute;
+        } as ChatSelectedRoute;
     }
 );
 
 export type RouteParams =
     | HomeRoute
+    | ChatSelectedRoute
     | CommunitiesRoute
     | ShareRoute
     | NotFound
@@ -70,7 +81,11 @@ export type RouteParams =
 
 type HomeRoute = {
     kind: "home_route";
-    chatId?: string;
+};
+
+type ChatSelectedRoute = {
+    kind: "chat_selected_route";
+    chatId: string;
     messageIndex?: number;
     threadMessageIndex?: number;
     open: boolean;

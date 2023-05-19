@@ -236,7 +236,7 @@
                 {/if}
             </div>
             {#if showWhatsHot}
-                <div class="hot-groups" on:click={() => dispatch("whatsHot")}>
+                <div class="hot-groups" on:click={() => page("/hotgroups")}>
                     <div class="flame">🔥</div>
                     <div class="label">{$_("whatsHotButton")}</div>
                     <div on:click={() => discoverHotGroupsDismissed.set(true)} class="close">

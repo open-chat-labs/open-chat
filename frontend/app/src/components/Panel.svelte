@@ -55,6 +55,7 @@
         }
 
         &.left {
+            // margin-left: toRem(80); // accommodate the left nav
             position: relative;
             border-right: 1px solid var(--bd);
             background: var(--panel-left-bg);

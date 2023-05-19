@@ -34,7 +34,7 @@
             <span slot="text">{$_("newGroup")}</span>
         </MenuItem>
     {/if}
-    <MenuItem on:click={() => dispatch("whatsHot")}>
+    <MenuItem on:click={() => page("/hotgroups")}>
         <span class="flame" slot="icon">🔥</span>
         <span slot="text">{$_("whatsHot")}</span>
     </MenuItem>
