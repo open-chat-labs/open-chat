@@ -341,10 +341,10 @@
         "privateGroup": "Частная группа",
         "groupInfo": "Информация о группе",
         "role": {
-            "owner": "Владелец",
             "admins": "Админы",
             "members": "Члены",
-            "moderators": "Модераторы"
+            "moderators": "Модераторы",
+            "owner": "Владельцы"
         },
         "permissions": {
             "whoCan": "Кто может",

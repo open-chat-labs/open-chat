@@ -343,10 +343,10 @@
         "privateGroup": "Private Gruppe",
         "groupInfo": "Gruppeninfo",
         "role": {
-            "owner": "Eigentümer",
             "admins": "Admins",
             "members": "Mitglieder",
-            "moderators": "Moderatoren"
+            "moderators": "Moderatoren",
+            "owner": "Eigentümer"
         },
         "permissions": {
             "whoCan": "Wer kann",

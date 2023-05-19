@@ -340,10 +340,10 @@
         "privateGroup": "Groupe privé",
         "groupInfo": "Informations sur le groupe",
         "role": {
-            "owner": "Propriétaire",
             "admins": "Administrateurs",
             "members": "Membres",
-            "moderators": "Modérateurs"
+            "moderators": "Modérateurs",
+            "owner": "Les propriétaires"
         },
         "permissions": {
             "whoCan": "Qui peut",

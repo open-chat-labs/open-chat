@@ -341,10 +341,10 @@
         "privateGroup": "プライベートグループ",
         "groupInfo": "グループ情報",
         "role": {
-            "owner": "オーナー",
             "admins": "管理者",
             "members": "メンバー",
-            "moderators": "モデレーター"
+            "moderators": "モデレーター",
+            "owner": "所有者"
         },
         "permissions": {
             "whoCan": "誰ができますか",

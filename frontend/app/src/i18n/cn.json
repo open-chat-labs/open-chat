@@ -341,10 +341,10 @@
         "privateGroup": "私有群聊",
         "groupInfo": "群聊信息",
         "role": {
-            "owner": "所有者",
             "admins": "管理员",
             "members": "成员",
-            "moderators": "主持人"
+            "moderators": "主持人",
+            "owner": "拥有者"
         },
         "permissions": {
             "whoCan": "谁可以",
