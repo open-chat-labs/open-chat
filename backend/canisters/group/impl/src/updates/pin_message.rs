@@ -24,7 +24,7 @@ fn pin_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
         if member.suspended.value {
             return UserSuspended;
         }
-        if !member.role.can_pin_messages(&runtime_state.data.group_chat_core.permissions) {
+        if !member.role.can_pin_messages(&runtime_state.data.chat.permissions) {
             return NotAuthorized;
         }
 
@@ -32,28 +32,19 @@ fn pin_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
         let min_visible_event_index = member.min_visible_event_index();
         let user_id = member.user_id;
 
-        if !runtime_state.data.group_chat_core.events.is_accessible(
-            min_visible_event_index,
-            None,
-            args.message_index.into(),
-            now,
-        ) {
+        if !runtime_state
+            .data
+            .chat
+            .events
+            .is_accessible(min_visible_event_index, None, args.message_index.into(), now)
+        {
             return MessageNotFound;
         }
 
-        if let Err(index) = runtime_state
-            .data
-            .group_chat_core
-            .pinned_messages
-            .binary_search(&args.message_index)
-        {
-            runtime_state
-                .data
-                .group_chat_core
-                .pinned_messages
-                .insert(index, args.message_index);
+        if let Err(index) = runtime_state.data.chat.pinned_messages.binary_search(&args.message_index) {
+            runtime_state.data.chat.pinned_messages.insert(index, args.message_index);
 
-            let push_event_result = runtime_state.data.group_chat_core.events.push_main_event(
+            let push_event_result = runtime_state.data.chat.events.push_main_event(
                 ChatEventInternal::MessagePinned(Box::new(MessagePinned {
                     message_index: args.message_index,
                     pinned_by: user_id,
@@ -62,7 +53,7 @@ fn pin_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
                 now,
             );
 
-            runtime_state.data.group_chat_core.date_last_pinned = Some(now);
+            runtime_state.data.chat.date_last_pinned = Some(now);
 
             handle_activity_notification(runtime_state);
 

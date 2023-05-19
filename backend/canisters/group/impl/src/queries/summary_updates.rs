@@ -31,7 +31,7 @@ fn summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     // Short circuit prior to calling `ic0.time()` so that query caching works effectively.
     // This doesn't account for expired events, but they aren't used yet and should probably just be
     // handled by the FE anyway.
-    if !runtime_state.data.group_chat_core.events.has_updates_since(updates_since)
+    if !runtime_state.data.chat.events.has_updates_since(updates_since)
         && runtime_state.data.invited_users.last_updated() <= updates_since
         && member.notifications_muted.timestamp <= updates_since
     {
@@ -40,11 +40,7 @@ fn summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
 
     let now = runtime_state.env.now();
     let updates_from_events = process_events(updates_since, member, now, &runtime_state.data);
-    let newly_expired_messages = runtime_state
-        .data
-        .group_chat_core
-        .events
-        .expired_messages_since(updates_since, now);
+    let newly_expired_messages = runtime_state.data.chat.events.expired_messages_since(updates_since, now);
 
     let updates = GroupCanisterGroupChatSummaryUpdates {
         chat_id: runtime_state.env.canister_id().into(),
@@ -56,7 +52,7 @@ fn summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
         latest_message: updates_from_events.latest_message,
         latest_event_index: updates_from_events.latest_event_index,
         participant_count: if updates_from_events.participants_changed {
-            Some(runtime_state.data.group_chat_core.members.len())
+            Some(runtime_state.data.chat.members.len())
         } else {
             None
         },
@@ -64,15 +60,15 @@ fn summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
         mentions: updates_from_events.mentions,
         permissions: updates_from_events.permissions,
         updated_events: updates_from_events.updated_events,
-        metrics: Some(runtime_state.data.group_chat_core.events.metrics().clone()),
+        metrics: Some(runtime_state.data.chat.events.metrics().clone()),
         my_metrics: runtime_state
             .data
-            .group_chat_core
+            .chat
             .events
             .user_metrics(&member.user_id, Some(args.updates_since))
             .cloned(),
         is_public: updates_from_events.is_public,
-        latest_threads: runtime_state.data.group_chat_core.events.latest_threads(
+        latest_threads: runtime_state.data.chat.events.latest_threads(
             member.min_visible_event_index(),
             member.threads.iter(),
             Some(args.updates_since),
@@ -85,7 +81,7 @@ fn summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
         date_last_pinned: updates_from_events.date_last_pinned,
         events_ttl: updates_from_events.events_ttl,
         newly_expired_messages,
-        next_message_expiry: OptionUpdate::from_update(runtime_state.data.group_chat_core.events.next_message_expiry(now)),
+        next_message_expiry: OptionUpdate::from_update(runtime_state.data.chat.events.next_message_expiry(now)),
         gate: updates_from_events.gate,
     };
     Success(SuccessResult { updates })
@@ -119,7 +115,7 @@ fn process_events(
     data: &Data,
 ) -> UpdatesFromEvents {
     let events_reader = data
-        .group_chat_core
+        .chat
         .events
         .visible_main_events_reader(member.min_visible_event_index(), now);
 
@@ -129,18 +125,18 @@ fn process_events(
         // during the iteration below.
         latest_message: events_reader.latest_message_event_if_updated(since, Some(member.user_id)),
         updated_events: data
-            .group_chat_core
+            .chat
             .events
             .iter_recently_updated_events()
             .take_while(|(_, _, ts)| *ts > since)
             .take(1000)
             .collect(),
-        mentions: member.most_recent_mentions(Some(since), &data.group_chat_core.events, now),
+        mentions: member.most_recent_mentions(Some(since), &data.chat.events, now),
         ..Default::default()
     };
 
-    if data.group_chat_core.subtype.timestamp > since {
-        updates.subtype = OptionUpdate::from_update(data.group_chat_core.subtype.value.clone());
+    if data.chat.subtype.timestamp > since {
+        updates.subtype = OptionUpdate::from_update(data.chat.subtype.value.clone());
     }
 
     if member.notifications_muted.timestamp > since {
@@ -152,15 +148,15 @@ fn process_events(
     }
 
     if data
-        .group_chat_core
+        .chat
         .date_last_pinned
         .map_or(false, |date_last_pinned| date_last_pinned > since)
     {
-        updates.date_last_pinned = data.group_chat_core.date_last_pinned;
+        updates.date_last_pinned = data.chat.date_last_pinned;
     }
 
-    if data.group_chat_core.gate.timestamp > since {
-        updates.gate = OptionUpdate::from_update(data.group_chat_core.gate.value.clone());
+    if data.chat.gate.timestamp > since {
+        updates.gate = OptionUpdate::from_update(data.chat.gate.value.clone());
     }
 
     let new_proposal_votes =

@@ -35,11 +35,7 @@ fn c2c_update_proposals_impl(args: Args, runtime_state: &mut RuntimeState) -> Re
             })
             .collect();
 
-        runtime_state
-            .data
-            .group_chat_core
-            .events
-            .update_proposals(user_id, updates, now);
+        runtime_state.data.chat.events.update_proposals(user_id, updates, now);
         handle_activity_notification(runtime_state);
 
         Success

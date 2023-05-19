@@ -23,10 +23,7 @@ fn remove_reaction_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
         if member.suspended.value {
             return UserSuspended;
         }
-        if !member
-            .role
-            .can_react_to_messages(&runtime_state.data.group_chat_core.permissions)
-        {
+        if !member.role.can_react_to_messages(&runtime_state.data.chat.permissions) {
             return NotAuthorized;
         }
 
@@ -34,18 +31,14 @@ fn remove_reaction_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
         let user_id = member.user_id;
         let min_visible_event_index = member.min_visible_event_index();
 
-        match runtime_state
-            .data
-            .group_chat_core
-            .events
-            .remove_reaction(AddRemoveReactionArgs {
-                user_id,
-                min_visible_event_index,
-                thread_root_message_index: args.thread_root_message_index,
-                message_id: args.message_id,
-                reaction: args.reaction,
-                now,
-            }) {
+        match runtime_state.data.chat.events.remove_reaction(AddRemoveReactionArgs {
+            user_id,
+            min_visible_event_index,
+            thread_root_message_index: args.thread_root_message_index,
+            message_id: args.message_id,
+            reaction: args.reaction,
+            now,
+        }) {
             AddRemoveReactionResult::Success => {
                 handle_activity_notification(runtime_state);
                 Success

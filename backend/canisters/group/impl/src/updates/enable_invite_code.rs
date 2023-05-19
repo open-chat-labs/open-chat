@@ -78,7 +78,7 @@ fn record_event(caller: Principal, change: GroupInviteCodeChange, correlation_id
     let now = runtime_state.env.now();
 
     if let Some(member) = runtime_state.data.get_member(caller) {
-        runtime_state.data.group_chat_core.events.push_main_event(
+        runtime_state.data.chat.events.push_main_event(
             ChatEventInternal::GroupInviteCodeChanged(Box::new(GroupInviteCodeChanged {
                 change,
                 changed_by: member.user_id,
@@ -108,7 +108,7 @@ fn prepare(runtime_state: &RuntimeState) -> Result<PrepareResult, Response> {
             return Err(UserSuspended);
         }
 
-        if member.role.can_invite_users(&runtime_state.data.group_chat_core.permissions) {
+        if member.role.can_invite_users(&runtime_state.data.chat.permissions) {
             return Ok(PrepareResult {
                 caller,
                 code: runtime_state.data.invite_code,

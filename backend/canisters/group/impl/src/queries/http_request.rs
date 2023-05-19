@@ -6,7 +6,7 @@ use types::{HttpRequest, HttpResponse, TimestampMillis};
 #[query]
 fn http_request(request: HttpRequest) -> HttpResponse {
     fn get_avatar_impl(requested_avatar_id: Option<u128>, runtime_state: &RuntimeState) -> HttpResponse {
-        get_avatar(requested_avatar_id, &runtime_state.data.group_chat_core.avatar)
+        get_avatar(requested_avatar_id, &runtime_state.data.chat.avatar)
     }
 
     fn get_logs_impl(since: Option<TimestampMillis>) -> HttpResponse {

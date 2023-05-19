@@ -38,7 +38,7 @@ fn search_messages_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     let mut query = Query::parse(&args.search_term);
     query.users = HashSet::from_iter(users);
 
-    let matches = runtime_state.data.group_chat_core.events.search_messages(
+    let matches = runtime_state.data.chat.events.search_messages(
         runtime_state.env.now(),
         member.min_visible_event_index(),
         &query,

@@ -86,39 +86,36 @@ impl RuntimeState {
         let data = &self.data;
         let min_visible_event_index = member.min_visible_event_index();
         let min_visible_message_index = member.min_visible_message_index();
-        let main_events_reader = data
-            .group_chat_core
-            .events
-            .visible_main_events_reader(min_visible_event_index, now);
+        let main_events_reader = data.chat.events.visible_main_events_reader(min_visible_event_index, now);
         let latest_event_index = main_events_reader.latest_event_index().unwrap_or_default();
 
         GroupCanisterGroupChatSummary {
             chat_id: self.env.canister_id().into(),
             last_updated: now,
-            name: data.group_chat_core.name.clone(),
-            description: data.group_chat_core.description.clone(),
-            subtype: data.group_chat_core.subtype.value.clone(),
-            avatar_id: Avatar::id(&data.group_chat_core.avatar),
-            is_public: data.group_chat_core.is_public,
-            history_visible_to_new_joiners: data.group_chat_core.history_visible_to_new_joiners,
+            name: data.chat.name.clone(),
+            description: data.chat.description.clone(),
+            subtype: data.chat.subtype.value.clone(),
+            avatar_id: Avatar::id(&data.chat.avatar),
+            is_public: data.chat.is_public,
+            history_visible_to_new_joiners: data.chat.history_visible_to_new_joiners,
             min_visible_event_index,
             min_visible_message_index,
             latest_message: main_events_reader.latest_message_event(Some(member.user_id)),
             latest_event_index,
             joined: member.date_added,
-            participant_count: data.group_chat_core.members.len(),
+            participant_count: data.chat.members.len(),
             role: member.role,
-            mentions: member.most_recent_mentions(None, &data.group_chat_core.events, now),
-            permissions: data.group_chat_core.permissions.clone(),
+            mentions: member.most_recent_mentions(None, &data.chat.events, now),
+            permissions: data.chat.permissions.clone(),
             notifications_muted: member.notifications_muted.value,
-            metrics: data.group_chat_core.events.metrics().clone(),
+            metrics: data.chat.events.metrics().clone(),
             my_metrics: data
-                .group_chat_core
+                .chat
                 .events
                 .user_metrics(&member.user_id, None)
                 .cloned()
                 .unwrap_or_default(),
-            latest_threads: data.group_chat_core.events.latest_threads(
+            latest_threads: data.chat.events.latest_threads(
                 min_visible_event_index,
                 member.threads.iter(),
                 None,
@@ -127,16 +124,16 @@ impl RuntimeState {
             ),
             frozen: data.frozen.value.clone(),
             wasm_version: Version::default(),
-            date_last_pinned: data.group_chat_core.date_last_pinned,
-            events_ttl: data.group_chat_core.events.get_events_time_to_live().value,
-            expired_messages: data.group_chat_core.events.expired_messages(now),
-            next_message_expiry: data.group_chat_core.events.next_message_expiry(now),
-            gate: data.group_chat_core.gate.value.clone(),
+            date_last_pinned: data.chat.date_last_pinned,
+            events_ttl: data.chat.events.get_events_time_to_live().value,
+            expired_messages: data.chat.events.expired_messages(now),
+            next_message_expiry: data.chat.events.next_message_expiry(now),
+            gate: data.chat.gate.value.clone(),
         }
     }
 
     pub fn add_member(&mut self, args: AddMemberArgs) -> AddMemberResult {
-        let result = self.data.group_chat_core.members.add(
+        let result = self.data.chat.members.add(
             args.user_id,
             args.now,
             args.min_visible_event_index,
@@ -173,11 +170,11 @@ impl RuntimeState {
             self.data.principal_to_user_id_map.remove(&principal);
         }
 
-        self.data.group_chat_core.members.remove(user_id)
+        self.data.chat.members.remove(user_id)
     }
 
     pub fn metrics(&self) -> Metrics {
-        let group_chat_core = &self.data.group_chat_core;
+        let group_chat_core = &self.data.chat;
         let chat_metrics = group_chat_core.events.metrics();
 
         let now = self.env.now();
@@ -286,7 +283,7 @@ struct DataPrevious {
 #[derive(Serialize, Deserialize)]
 #[serde(from = "DataPrevious")]
 struct Data {
-    pub group_chat_core: GroupChatCore,
+    pub chat: GroupChatCore,
     pub principal_to_user_id_map: HashMap<Principal, UserId>,
     pub mark_active_duration: Milliseconds,
     pub group_index_canister_id: CanisterId,
@@ -351,7 +348,7 @@ impl Data {
         };
 
         Data {
-            group_chat_core,
+            chat: group_chat_core,
             principal_to_user_id_map: [(creator_principal, creator_user_id)].into_iter().collect(),
             mark_active_duration,
             group_index_canister_id,
@@ -378,7 +375,7 @@ impl Data {
             .copied()
             .unwrap_or(user_id_or_principal.into());
 
-        self.group_chat_core.members.get(&user_id)
+        self.chat.members.get(&user_id)
     }
 
     pub fn get_member_mut(&mut self, user_id_or_principal: Principal) -> Option<&mut GroupMemberInternal> {
@@ -388,14 +385,14 @@ impl Data {
             .copied()
             .unwrap_or(user_id_or_principal.into());
 
-        self.group_chat_core.members.get_mut(&user_id)
+        self.chat.members.get_mut(&user_id)
     }
 
     pub fn min_visible_event_index(&self, caller: Principal) -> Option<EventIndex> {
         match self.get_member(caller) {
             Some(m) => Some(m.min_visible_event_index()),
             None => {
-                if self.group_chat_core.is_public && self.group_chat_core.history_visible_to_new_joiners {
+                if self.chat.is_public && self.chat.history_visible_to_new_joiners {
                     Some(EventIndex::default())
                 } else {
                     None
@@ -409,7 +406,7 @@ impl Data {
     }
 
     pub fn is_accessible(&self, caller: Principal, invite_code: Option<u64>) -> bool {
-        self.group_chat_core.is_public
+        self.chat.is_public
             || self.get_member(caller).is_some()
             || self.invited_users.get(&caller).is_some()
             || self.is_invite_code_valid(invite_code)
@@ -522,7 +519,7 @@ impl From<DataPrevious> for Data {
         };
 
         Data {
-            group_chat_core,
+            chat: group_chat_core,
             principal_to_user_id_map,
             mark_active_duration: value.mark_active_duration,
             group_index_canister_id: value.group_index_canister_id,

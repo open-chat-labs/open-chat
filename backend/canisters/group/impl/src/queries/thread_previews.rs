@@ -50,7 +50,7 @@ fn build_thread_preview(
 ) -> Option<ThreadPreview> {
     let events_reader = runtime_state
         .data
-        .group_chat_core
+        .chat
         .events
         .visible_main_events_reader(min_visible_event_index, now);
 
@@ -59,7 +59,7 @@ fn build_thread_preview(
     let thread_events_reader =
         runtime_state
             .data
-            .group_chat_core
+            .chat
             .events
             .events_reader(min_visible_event_index, Some(root_message_index), now)?;
 

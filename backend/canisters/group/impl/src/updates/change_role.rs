@@ -71,12 +71,7 @@ fn prepare(user_id: UserId, state: &RuntimeState) -> Result<PrepareResult, Respo
             caller_id: member.user_id,
             user_index_canister_id: state.data.user_index_canister_id,
             is_caller_owner: member.role.is_owner(),
-            is_user_owner: state
-                .data
-                .group_chat_core
-                .members
-                .get(&user_id)
-                .map_or(false, |u| u.role.is_owner()),
+            is_user_owner: state.data.chat.members.get(&user_id).map_or(false, |u| u.role.is_owner()),
         })
     } else {
         Err(CallerNotInGroup)
@@ -95,11 +90,11 @@ fn change_role_impl(
     }
 
     let now = state.env.now();
-    let event = match state.data.group_chat_core.members.change_role(
+    let event = match state.data.chat.members.change_role(
         caller_id,
         args.user_id,
         args.new_role,
-        &state.data.group_chat_core.permissions,
+        &state.data.chat.permissions,
         is_caller_platform_moderator,
         is_user_platform_moderator,
     ) {
@@ -120,11 +115,7 @@ fn change_role_impl(
         ChangeRoleResult::UserSuspended => return UserSuspended,
     };
 
-    state
-        .data
-        .group_chat_core
-        .events
-        .push_main_event(event, args.correlation_id, now);
+    state.data.chat.events.push_main_event(event, args.correlation_id, now);
     handle_activity_notification(state);
     Success
 }

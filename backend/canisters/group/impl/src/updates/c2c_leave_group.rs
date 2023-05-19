@@ -23,7 +23,7 @@ fn c2c_leave_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
     let caller = runtime_state.env.caller().into();
     let now = runtime_state.env.now();
 
-    let member = match runtime_state.data.group_chat_core.members.get(&caller) {
+    let member = match runtime_state.data.chat.members.get(&caller) {
         Some(p) => p,
         None => return CallerNotInGroup,
     };
@@ -32,7 +32,7 @@ fn c2c_leave_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
         return UserSuspended;
     }
 
-    if member.role.is_owner() && runtime_state.data.group_chat_core.members.owner_count() == 1 {
+    if member.role.is_owner() && runtime_state.data.chat.members.owner_count() == 1 {
         return OwnerCannotLeave;
     }
 
@@ -40,7 +40,7 @@ fn c2c_leave_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
 
     let event = MemberLeft { user_id: caller };
 
-    runtime_state.data.group_chat_core.events.push_main_event(
+    runtime_state.data.chat.events.push_main_event(
         ChatEventInternal::ParticipantLeft(Box::new(event)),
         args.correlation_id,
         now,

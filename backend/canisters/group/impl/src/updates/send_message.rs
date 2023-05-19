@@ -25,7 +25,7 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     if let Some(user_id) = runtime_state.data.principal_to_user_id_map.get(&caller).copied() {
         let now = runtime_state.env.now();
 
-        match runtime_state.data.group_chat_core.send_message(
+        match runtime_state.data.chat.send_message(
             user_id,
             args.thread_root_message_index,
             args.message_id,
@@ -51,7 +51,7 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
                 let notification = Notification::GroupMessageNotification(GroupMessageNotification {
                     chat_id: runtime_state.env.canister_id().into(),
                     thread_root_message_index: args.thread_root_message_index,
-                    group_name: runtime_state.data.group_chat_core.name.clone(),
+                    group_name: runtime_state.data.chat.name.clone(),
                     sender: user_id,
                     sender_name: args.sender_name,
                     message: result.message_event,

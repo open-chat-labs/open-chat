@@ -11,7 +11,7 @@ use user_canister::c2c_remove_from_group;
 #[update]
 #[trace]
 async fn block_user(args: group_canister::block_user::Args) -> group_canister::block_user::Response {
-    if !read_state(|state| state.data.group_chat_core.is_public) {
+    if !read_state(|state| state.data.chat.is_public) {
         return group_canister::block_user::Response::GroupNotPublic;
     }
 
@@ -78,13 +78,13 @@ fn prepare(block: bool, user_id: UserId, runtime_state: &mut RuntimeState) -> Re
             Err(CannotRemoveSelf)
         } else {
             // Check if the caller is authorized to remove the user
-            match runtime_state.data.group_chat_core.members.get(&user_id) {
+            match runtime_state.data.chat.members.get(&user_id) {
                 None => return Err(UserNotInGroup),
                 Some(participant_to_remove) => {
-                    if !member.role.can_remove_members_with_role(
-                        participant_to_remove.role,
-                        &runtime_state.data.group_chat_core.permissions,
-                    ) {
+                    if !member
+                        .role
+                        .can_remove_members_with_role(participant_to_remove.role, &runtime_state.data.chat.permissions)
+                    {
                         return Err(NotAuthorized);
                     }
                 }
@@ -96,13 +96,13 @@ fn prepare(block: bool, user_id: UserId, runtime_state: &mut RuntimeState) -> Re
 
             if block {
                 // Also block the user
-                runtime_state.data.group_chat_core.members.block(user_id);
+                runtime_state.data.chat.members.block(user_id);
             }
 
             Ok(PrepareResult {
                 removed_by,
-                group_name: runtime_state.data.group_chat_core.name.clone(),
-                public: runtime_state.data.group_chat_core.is_public,
+                group_name: runtime_state.data.chat.name.clone(),
+                public: runtime_state.data.chat.is_public,
                 participant_to_remove,
             })
         }
@@ -129,11 +129,7 @@ fn commit(block: bool, user_id: UserId, correlation_id: u64, removed_by: UserId,
         ChatEventInternal::ParticipantsRemoved(Box::new(event))
     };
 
-    runtime_state
-        .data
-        .group_chat_core
-        .events
-        .push_main_event(event, correlation_id, now);
+    runtime_state.data.chat.events.push_main_event(event, correlation_id, now);
 
     handle_activity_notification(runtime_state);
     Success
@@ -141,8 +137,8 @@ fn commit(block: bool, user_id: UserId, correlation_id: u64, removed_by: UserId,
 
 fn rollback(block: bool, member: GroupMemberInternal, runtime_state: &mut RuntimeState) {
     if block {
-        runtime_state.data.group_chat_core.members.unblock(&member.user_id);
+        runtime_state.data.chat.members.unblock(&member.user_id);
     }
 
-    runtime_state.data.group_chat_core.members.try_undo_remove(member);
+    runtime_state.data.chat.members.try_undo_remove(member);
 }

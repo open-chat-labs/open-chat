@@ -36,7 +36,7 @@ fn edit_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
             now,
         };
 
-        match runtime_state.data.group_chat_core.events.edit_message(edit_message_args) {
+        match runtime_state.data.chat.events.edit_message(edit_message_args) {
             EditMessageResult::Success => {
                 handle_activity_notification(runtime_state);
                 Success

@@ -28,20 +28,16 @@ fn register_poll_vote_impl(args: Args, runtime_state: &mut RuntimeState) -> Resp
         let user_id = member.user_id;
         let min_visible_event_index = member.min_visible_event_index();
 
-        let result = runtime_state
-            .data
-            .group_chat_core
-            .events
-            .register_poll_vote(RegisterPollVoteArgs {
-                user_id,
-                min_visible_event_index,
-                thread_root_message_index: args.thread_root_message_index,
-                message_index: args.message_index,
-                option_index: args.poll_option,
-                operation: args.operation,
-                correlation_id: args.correlation_id,
-                now,
-            });
+        let result = runtime_state.data.chat.events.register_poll_vote(RegisterPollVoteArgs {
+            user_id,
+            min_visible_event_index,
+            thread_root_message_index: args.thread_root_message_index,
+            message_index: args.message_index,
+            option_index: args.poll_option,
+            operation: args.operation,
+            correlation_id: args.correlation_id,
+            now,
+        });
 
         match result {
             RegisterPollVoteResult::Success(votes) => {

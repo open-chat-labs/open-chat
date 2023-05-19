@@ -16,7 +16,7 @@ fn c2c_events_internal_impl(args: Args, runtime_state: &RuntimeState) -> Respons
     if let Some(events_reader) =
         runtime_state
             .data
-            .group_chat_core
+            .chat
             .events
             .events_reader(EventIndex::default(), args.thread_root_message_index, now)
     {

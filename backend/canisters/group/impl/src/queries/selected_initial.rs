@@ -12,13 +12,13 @@ fn selected_initial_impl(runtime_state: &RuntimeState) -> Response {
     if let Some(member) = runtime_state.data.get_member(caller) {
         let now = runtime_state.env.now();
         let min_visible_message_index = member.min_visible_message_index();
-        let members = &runtime_state.data.group_chat_core.members;
+        let members = &runtime_state.data.chat.members;
 
         Success(SuccessResult {
             timestamp: now,
             latest_event_index: runtime_state
                 .data
-                .group_chat_core
+                .chat
                 .events
                 .main_events_reader(now)
                 .latest_event_index()
@@ -28,13 +28,13 @@ fn selected_initial_impl(runtime_state: &RuntimeState) -> Response {
             invited_users: runtime_state.data.invited_users.users(),
             pinned_messages: runtime_state
                 .data
-                .group_chat_core
+                .chat
                 .pinned_messages
                 .iter()
                 .filter(|&m| *m >= min_visible_message_index)
                 .copied()
                 .collect(),
-            rules: runtime_state.data.group_chat_core.rules.clone(),
+            rules: runtime_state.data.chat.rules.clone(),
         })
     } else {
         CallerNotInGroup

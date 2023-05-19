@@ -18,11 +18,7 @@ fn c2c_freeze_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Respon
     if runtime_state.data.frozen.is_none() {
         let now = runtime_state.env.now();
 
-        let push_event_result = runtime_state
-            .data
-            .group_chat_core
-            .events
-            .freeze(args.caller, args.reason.clone(), now);
+        let push_event_result = runtime_state.data.chat.events.freeze(args.caller, args.reason.clone(), now);
 
         runtime_state.data.frozen = Timestamped::new(
             Some(FrozenGroupInfo {
@@ -47,10 +43,7 @@ fn c2c_freeze_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Respon
         handle_activity_notification(runtime_state);
 
         if args.return_members {
-            SuccessWithMembers(
-                event,
-                runtime_state.data.group_chat_core.members.iter().map(|p| p.user_id).collect(),
-            )
+            SuccessWithMembers(event, runtime_state.data.chat.members.iter().map(|p| p.user_id).collect())
         } else {
             Success(event)
         }

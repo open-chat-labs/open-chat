@@ -16,10 +16,6 @@ fn rules_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     }
 
     let data = &runtime_state.data;
-    let rules = data
-        .group_chat_core
-        .rules
-        .enabled
-        .then_some(data.group_chat_core.rules.text.clone());
+    let rules = data.chat.rules.enabled.then_some(data.chat.rules.text.clone());
     Success(SuccessResult { rules })
 }
