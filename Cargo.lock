@@ -1240,6 +1240,48 @@ dependencies = [
 ]
 
 [[package]]
+name = "community_canister"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "candid_gen",
+ "serde",
+ "types",
+]
+
+[[package]]
+name = "community_canister_impl"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "canister_api_macros",
+ "canister_logger",
+ "canister_state_macros",
+ "canister_tracing_macros",
+ "chat_events",
+ "community_canister",
+ "gated_groups",
+ "group_index_canister",
+ "group_index_canister_c2c_client",
+ "http_request",
+ "ic-cdk 0.7.3",
+ "ic-cdk-macros",
+ "ic-cdk-timers",
+ "ic-stable-structures",
+ "msgpack",
+ "rand",
+ "serde",
+ "serializer",
+ "tracing",
+ "types",
+ "user_canister",
+ "user_canister_c2c_client",
+ "user_index_canister",
+ "user_index_canister_c2c_client",
+ "utils",
+]
+
+[[package]]
 name = "comparable"
 version = "0.5.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
