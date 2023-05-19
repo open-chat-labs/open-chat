@@ -235,7 +235,7 @@ impl GroupMembers {
         self.admin_count = admin_count;
         self.moderator_count = moderator_count;
 
-        ChangeRoleResult::Success(ChangeRoleSuccess { caller_id, prev_role })
+        ChangeRoleResult::Success(ChangeRoleSuccess { prev_role })
     }
 
     pub fn owner_count(&self) -> u32 {
