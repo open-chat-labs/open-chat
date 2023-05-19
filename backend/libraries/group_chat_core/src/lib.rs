@@ -2,13 +2,13 @@ use chat_events::{
     AddRemoveReactionArgs, AddRemoveReactionResult, ChatEventInternal, ChatEvents, DeleteMessageResult,
     DeleteUndeleteMessagesArgs, PushMessageArgs, Reader,
 };
-use group_members::GroupMembers;
+use group_members::{ChangeRoleResult, GroupMembers};
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use types::{
     Avatar, ContentValidationError, CryptoTransaction, EventIndex, EventWrapper, GroupGate, GroupPermissions,
-    GroupReplyContext, GroupRules, GroupSubtype, InvalidPollReason, MentionInternal, Message, MessageContentInitial, MessageId,
-    MessageIndex, MessageUnpinned, Reaction, TimestampMillis, Timestamped, User, UserId,
+    GroupReplyContext, GroupRole, GroupRules, GroupSubtype, InvalidPollReason, MentionInternal, Message, MessageContentInitial,
+    MessageId, MessageIndex, MessageUnpinned, Reaction, RoleChanged, TimestampMillis, Timestamped, User, UserId,
 };
 
 #[derive(Serialize, Deserialize)]
@@ -279,6 +279,39 @@ impl GroupChatCore {
         } else {
             UserNotInGroup
         }
+    }
+
+    pub fn change_role(
+        &mut self,
+        caller: UserId,
+        target_user: UserId,
+        new_role: GroupRole,
+        is_caller_platform_moderator: bool,
+        is_user_platform_moderator: bool,
+        now: TimestampMillis,
+    ) -> ChangeRoleResult {
+        let result = self.members.change_role(
+            caller,
+            target_user,
+            new_role,
+            &self.permissions,
+            is_caller_platform_moderator,
+            is_user_platform_moderator,
+        );
+
+        if let ChangeRoleResult::Success(r) = &result {
+            let event = RoleChanged {
+                user_ids: vec![target_user],
+                old_role: r.prev_role,
+                new_role,
+                changed_by: caller,
+            };
+
+            self.events
+                .push_main_event(ChatEventInternal::RoleChanged(Box::new(event)), 0, now);
+        };
+
+        result
     }
 
     fn get_user_being_replied_to(

@@ -10,6 +10,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Split common group logic into new `group_chat_core` library ([#3620](https://github.com/open-ic/open-chat/pull/3620))
 - Simplify `c2c_update_proposals` ([#3621](https://github.com/open-ic/open-chat/pull/3621))
 - Move `delete_messages` into `group_chat_core` ([#3622](https://github.com/open-ic/open-chat/pull/3622))
+- Move `change_role` into `group_chat_core` ([#3624](https://github.com/open-ic/open-chat/pull/3624))
 
 ### Removed
 
