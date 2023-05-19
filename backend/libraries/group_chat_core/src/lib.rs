@@ -8,7 +8,8 @@ use std::collections::HashSet;
 use types::{
     Avatar, ContentValidationError, CryptoTransaction, EventIndex, EventWrapper, GroupGate, GroupPermissions,
     GroupReplyContext, GroupRole, GroupRules, GroupSubtype, InvalidPollReason, MentionInternal, Message, MessageContentInitial,
-    MessageId, MessageIndex, MessageUnpinned, Reaction, RoleChanged, TimestampMillis, Timestamped, User, UserId,
+    MessageId, MessageIndex, MessagePinned, MessageUnpinned, PushEventResult, Reaction, RoleChanged, TimestampMillis,
+    Timestamped, User, UserId,
 };
 
 #[derive(Serialize, Deserialize)]
@@ -314,6 +315,49 @@ impl GroupChatCore {
         result
     }
 
+    pub fn pin_message(&mut self, user_id: UserId, message_index: MessageIndex, now: TimestampMillis) -> PinMessageResult {
+        use PinMessageResult::*;
+
+        if let Some(member) = self.members.get(&user_id) {
+            if member.suspended.value {
+                return UserSuspended;
+            }
+            if !member.role.can_pin_messages(&self.permissions) {
+                return NotAuthorized;
+            }
+
+            let min_visible_event_index = member.min_visible_event_index();
+            let user_id = member.user_id;
+
+            if !self
+                .events
+                .is_accessible(min_visible_event_index, None, message_index.into(), now)
+            {
+                return MessageNotFound;
+            }
+
+            if let Err(index) = self.pinned_messages.binary_search(&message_index) {
+                self.pinned_messages.insert(index, message_index);
+
+                let push_event_result = self.events.push_main_event(
+                    ChatEventInternal::MessagePinned(Box::new(MessagePinned {
+                        message_index,
+                        pinned_by: user_id,
+                    })),
+                    0,
+                    now,
+                );
+
+                self.date_last_pinned = Some(now);
+                Success(push_event_result)
+            } else {
+                NoChange
+            }
+        } else {
+            UserNotInGroup
+        }
+    }
+
     fn get_user_being_replied_to(
         &self,
         replies_to: &GroupReplyContext,
@@ -369,4 +413,13 @@ pub enum DeleteMessagesResult {
 pub struct DeleteMessagesSuccess {
     pub results: Vec<(MessageId, DeleteMessageResult)>,
     pub my_messages: HashSet<MessageId>,
+}
+
+pub enum PinMessageResult {
+    Success(PushEventResult),
+    NoChange,
+    NotAuthorized,
+    UserNotInGroup,
+    MessageNotFound,
+    UserSuspended,
 }
