@@ -14,8 +14,8 @@ use types::{
     ChatId, ChatMetrics, Cryptocurrency, DeletedBy, DirectChatCreated, EventIndex, EventWrapper, EventsTimeToLiveUpdated,
     GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen, Mention, MentionInternal, Message,
     MessageContentInitial, MessageContentInternal, MessageId, MessageIndex, MessageMatch, Milliseconds, PollVotes,
-    ProposalStatusUpdate, PushEventResult, PushIfNotContains, RangeSet, Reaction, RegisterVoteResult, ReplyContext,
-    ThreadSummary, TimestampMillis, Timestamped, UserId, VoteOperation,
+    ProposalUpdate, PushEventResult, PushIfNotContains, RangeSet, Reaction, RegisterVoteResult, ReplyContext, ThreadSummary,
+    TimestampMillis, Timestamped, UserId, VoteOperation,
 };
 use types::{Hash, MessageReport, ReportedMessageInternal};
 
@@ -445,13 +445,14 @@ impl ChatEvents {
         }
     }
 
-    pub fn update_proposals(&mut self, user_id: UserId, updates: Vec<(MessageId, ProposalStatusUpdate)>, now: TimestampMillis) {
-        for (message_id, update) in updates {
-            if let Some((message, event_index)) = self.message_internal_mut(EventIndex::default(), None, message_id.into(), now)
+    pub fn update_proposals(&mut self, user_id: UserId, updates: Vec<ProposalUpdate>, now: TimestampMillis) {
+        for update in updates {
+            if let Some((message, event_index)) =
+                self.message_internal_mut(EventIndex::default(), None, update.message_id.into(), now)
             {
                 if message.sender == user_id {
                     if let MessageContentInternal::GovernanceProposal(p) = &mut message.content {
-                        p.proposal.update_status(update, now);
+                        p.proposal.update_status(update.into(), now);
                         message.last_updated = Some(now);
                         self.last_updated_timestamps.mark_updated(None, event_index, now);
                     }
