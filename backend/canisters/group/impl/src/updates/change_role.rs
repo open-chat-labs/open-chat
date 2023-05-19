@@ -2,11 +2,10 @@ use crate::activity_notifications::handle_activity_notification;
 use crate::updates::change_role::Response::*;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
-use chat_events::ChatEventInternal;
 use group_canister::change_role::*;
 use group_members::ChangeRoleResult;
 use ic_cdk_macros::update;
-use types::{CanisterId, RoleChanged, UserId};
+use types::{CanisterId, UserId};
 use user_index_canister_c2c_client::{lookup_user, LookupUserError};
 
 #[update]
@@ -90,32 +89,23 @@ fn change_role_impl(
     }
 
     let now = state.env.now();
-    let event = match state.data.chat.members.change_role(
+    match state.data.chat.change_role(
         caller_id,
         args.user_id,
         args.new_role,
-        &state.data.chat.permissions,
         is_caller_platform_moderator,
         is_user_platform_moderator,
+        now,
     ) {
-        ChangeRoleResult::Success(r) => {
-            let event = RoleChanged {
-                user_ids: vec![args.user_id],
-                old_role: r.prev_role,
-                new_role: args.new_role,
-                changed_by: r.caller_id,
-            };
-            ChatEventInternal::RoleChanged(Box::new(event))
+        ChangeRoleResult::Success(_) => {
+            handle_activity_notification(state);
+            Success
         }
-        ChangeRoleResult::NotAuthorized => return NotAuthorized,
-        ChangeRoleResult::Invalid => return Invalid,
-        ChangeRoleResult::UserNotInGroup => return UserNotInGroup,
-        ChangeRoleResult::Unchanged => return Success,
-        ChangeRoleResult::CallerNotInGroup => return CallerNotInGroup,
-        ChangeRoleResult::UserSuspended => return UserSuspended,
-    };
-
-    state.data.chat.events.push_main_event(event, args.correlation_id, now);
-    handle_activity_notification(state);
-    Success
+        ChangeRoleResult::CallerNotInGroup => CallerNotInGroup,
+        ChangeRoleResult::NotAuthorized => NotAuthorized,
+        ChangeRoleResult::UserNotInGroup => UserNotInGroup,
+        ChangeRoleResult::Unchanged => Success,
+        ChangeRoleResult::Invalid => Invalid,
+        ChangeRoleResult::UserSuspended => UserSuspended,
+    }
 }

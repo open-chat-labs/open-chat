@@ -2,13 +2,14 @@ use chat_events::{
     AddRemoveReactionArgs, AddRemoveReactionResult, ChatEventInternal, ChatEvents, DeleteMessageResult,
     DeleteUndeleteMessagesArgs, PushMessageArgs, Reader,
 };
-use group_members::GroupMembers;
+use group_members::{ChangeRoleResult, GroupMembers};
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use types::{
     Avatar, ContentValidationError, CryptoTransaction, EventIndex, EventWrapper, GroupGate, GroupPermissions,
-    GroupReplyContext, GroupRules, GroupSubtype, InvalidPollReason, MentionInternal, Message, MessageContentInitial, MessageId,
-    MessageIndex, MessageUnpinned, Reaction, TimestampMillis, Timestamped, User, UserId,
+    GroupReplyContext, GroupRole, GroupRules, GroupSubtype, InvalidPollReason, MentionInternal, Message, MessageContentInitial,
+    MessageId, MessageIndex, MessagePinned, MessageUnpinned, PushEventResult, Reaction, RoleChanged, TimestampMillis,
+    Timestamped, User, UserId,
 };
 
 #[derive(Serialize, Deserialize)]
@@ -281,6 +282,133 @@ impl GroupChatCore {
         }
     }
 
+    pub fn change_role(
+        &mut self,
+        caller: UserId,
+        target_user: UserId,
+        new_role: GroupRole,
+        is_caller_platform_moderator: bool,
+        is_user_platform_moderator: bool,
+        now: TimestampMillis,
+    ) -> ChangeRoleResult {
+        let result = self.members.change_role(
+            caller,
+            target_user,
+            new_role,
+            &self.permissions,
+            is_caller_platform_moderator,
+            is_user_platform_moderator,
+        );
+
+        if let ChangeRoleResult::Success(r) = &result {
+            let event = RoleChanged {
+                user_ids: vec![target_user],
+                old_role: r.prev_role,
+                new_role,
+                changed_by: caller,
+            };
+
+            self.events
+                .push_main_event(ChatEventInternal::RoleChanged(Box::new(event)), 0, now);
+        };
+
+        result
+    }
+
+    pub fn pin_message(&mut self, user_id: UserId, message_index: MessageIndex, now: TimestampMillis) -> PinUnpinMessageResult {
+        use PinUnpinMessageResult::*;
+
+        if let Some(member) = self.members.get(&user_id) {
+            if member.suspended.value {
+                return UserSuspended;
+            }
+            if !member.role.can_pin_messages(&self.permissions) {
+                return NotAuthorized;
+            }
+
+            let min_visible_event_index = member.min_visible_event_index();
+            let user_id = member.user_id;
+
+            if !self
+                .events
+                .is_accessible(min_visible_event_index, None, message_index.into(), now)
+            {
+                return MessageNotFound;
+            }
+
+            if let Err(index) = self.pinned_messages.binary_search(&message_index) {
+                self.pinned_messages.insert(index, message_index);
+
+                let push_event_result = self.events.push_main_event(
+                    ChatEventInternal::MessagePinned(Box::new(MessagePinned {
+                        message_index,
+                        pinned_by: user_id,
+                    })),
+                    0,
+                    now,
+                );
+
+                self.date_last_pinned = Some(now);
+                Success(push_event_result)
+            } else {
+                NoChange
+            }
+        } else {
+            UserNotInGroup
+        }
+    }
+
+    pub fn unpin_message(
+        &mut self,
+        user_id: UserId,
+        message_index: MessageIndex,
+        now: TimestampMillis,
+    ) -> PinUnpinMessageResult {
+        use PinUnpinMessageResult::*;
+
+        if let Some(member) = self.members.get(&user_id) {
+            if member.suspended.value {
+                return UserSuspended;
+            }
+            if !member.role.can_pin_messages(&self.permissions) {
+                return NotAuthorized;
+            }
+
+            if !self
+                .events
+                .is_accessible(member.min_visible_event_index(), None, message_index.into(), now)
+            {
+                return MessageNotFound;
+            }
+
+            let user_id = member.user_id;
+
+            if let Ok(index) = self.pinned_messages.binary_search(&message_index) {
+                self.pinned_messages.remove(index);
+
+                let push_event_result = self.events.push_main_event(
+                    ChatEventInternal::MessageUnpinned(Box::new(MessageUnpinned {
+                        message_index,
+                        unpinned_by: user_id,
+                        due_to_message_deleted: false,
+                    })),
+                    0,
+                    now,
+                );
+
+                if self.pinned_messages.is_empty() {
+                    self.date_last_pinned = None;
+                }
+
+                Success(push_event_result)
+            } else {
+                NoChange
+            }
+        } else {
+            UserNotInGroup
+        }
+    }
+
     fn get_user_being_replied_to(
         &self,
         replies_to: &GroupReplyContext,
@@ -336,4 +464,13 @@ pub enum DeleteMessagesResult {
 pub struct DeleteMessagesSuccess {
     pub results: Vec<(MessageId, DeleteMessageResult)>,
     pub my_messages: HashSet<MessageId>,
+}
+
+pub enum PinUnpinMessageResult {
+    Success(PushEventResult),
+    NoChange,
+    NotAuthorized,
+    UserNotInGroup,
+    MessageNotFound,
+    UserSuspended,
 }
