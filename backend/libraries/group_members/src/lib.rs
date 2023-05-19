@@ -235,7 +235,7 @@ impl GroupMembers {
         self.admin_count = admin_count;
         self.moderator_count = moderator_count;
 
-        ChangeRoleResult::Success(ChangeRoleSuccessResult { caller_id, prev_role })
+        ChangeRoleResult::Success(ChangeRoleSuccess { caller_id, prev_role })
     }
 
     pub fn owner_count(&self) -> u32 {
@@ -265,7 +265,7 @@ pub enum AddResult {
 }
 
 pub enum ChangeRoleResult {
-    Success(ChangeRoleSuccessResult),
+    Success(ChangeRoleSuccess),
     CallerNotInGroup,
     NotAuthorized,
     UserNotInGroup,
@@ -274,8 +274,7 @@ pub enum ChangeRoleResult {
     UserSuspended,
 }
 
-pub struct ChangeRoleSuccessResult {
-    pub caller_id: UserId,
+pub struct ChangeRoleSuccess {
     pub prev_role: GroupRole,
 }
 
