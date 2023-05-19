@@ -18,6 +18,7 @@ canister_tracing_macros = { workspace = true }
 chat_events = { path = "../../../libraries/chat_events" }
 community_canister = { path = "../api" }
 gated_groups = { path = "../../../libraries/gated_groups" }
+group_chat_core = { path = "../../../libraries/group_chat_core" }
 group_index_canister = { path = "../../group_index/api" }
 group_index_canister_c2c_client = { path = "../../group_index/c2c_client" }
 http_request = { path = "../../../libraries/http_request" }

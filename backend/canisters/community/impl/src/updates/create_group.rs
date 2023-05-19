@@ -1,7 +1,7 @@
-use crate::model::groups::Group;
 use crate::{mutate_state, RuntimeState};
 use canister_tracing_macros::trace;
 use community_canister::create_group::{Response::*, *};
+use group_chat_core::GroupChatCore;
 use ic_cdk_macros::update;
 use rand::Rng;
 use types::CommunityGroupId;
@@ -43,15 +43,18 @@ fn create_group_impl(args: Args, state: &mut RuntimeState) -> Response {
             }
         } else {
             let group_id: CommunityGroupId = state.env.rng().gen();
-            let group = Group::new(
+            let group = GroupChatCore::new(
                 member.user_id,
                 args.is_public,
                 args.name,
                 args.description,
                 args.rules,
+                None,
+                None,
                 args.history_visible_to_new_joiners,
-                args.events_ttl,
+                args.permissions.unwrap_or_default(),
                 args.gate,
+                args.events_ttl,
                 state.env.now(),
             );
             state.data.groups.add(group_id, group);

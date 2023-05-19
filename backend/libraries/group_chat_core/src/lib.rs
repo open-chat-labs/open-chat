@@ -8,8 +8,8 @@ use std::collections::HashSet;
 use types::{
     Avatar, ContentValidationError, CryptoTransaction, EventIndex, EventWrapper, GroupGate, GroupPermissions,
     GroupReplyContext, GroupRole, GroupRules, GroupSubtype, InvalidPollReason, MentionInternal, Message, MessageContentInitial,
-    MessageId, MessageIndex, MessagePinned, MessageUnpinned, PushEventResult, Reaction, RoleChanged, TimestampMillis,
-    Timestamped, User, UserId,
+    MessageId, MessageIndex, MessagePinned, MessageUnpinned, Milliseconds, PushEventResult, Reaction, RoleChanged,
+    TimestampMillis, Timestamped, User, UserId,
 };
 
 #[derive(Serialize, Deserialize)]
@@ -30,8 +30,43 @@ pub struct GroupChatCore {
     pub gate: Timestamped<Option<GroupGate>>,
 }
 
+#[allow(clippy::too_many_arguments)]
 impl GroupChatCore {
-    #[allow(clippy::too_many_arguments)]
+    pub fn new(
+        created_by: UserId,
+        is_public: bool,
+        name: String,
+        description: String,
+        rules: GroupRules,
+        subtype: Option<GroupSubtype>,
+        avatar: Option<Avatar>,
+        history_visible_to_new_joiners: bool,
+        permissions: GroupPermissions,
+        gate: Option<GroupGate>,
+        events_ttl: Option<Milliseconds>,
+        now: TimestampMillis,
+    ) -> GroupChatCore {
+        let members = GroupMembers::new(created_by, now);
+        let events = ChatEvents::new_group_chat(name.clone(), description.clone(), created_by, events_ttl, now);
+
+        GroupChatCore {
+            is_public,
+            name,
+            description,
+            rules,
+            subtype: Timestamped::new(subtype, now),
+            avatar,
+            history_visible_to_new_joiners,
+            members,
+            events,
+            date_created: now,
+            pinned_messages: Vec::new(),
+            permissions,
+            date_last_pinned: None,
+            gate: Timestamped::new(gate, now),
+        }
+    }
+
     pub fn send_message(
         &mut self,
         sender: UserId,

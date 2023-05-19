@@ -322,28 +322,23 @@ impl Data {
         permissions: Option<GroupPermissions>,
         gate: Option<GroupGate>,
     ) -> Data {
-        let members = GroupMembers::new(creator_user_id, now);
-        let events = ChatEvents::new_group_chat(name.clone(), description.clone(), creator_user_id, events_ttl, now);
-
-        let group_chat_core = GroupChatCore {
+        let chat = GroupChatCore::new(
+            creator_user_id,
             is_public,
             name,
             description,
             rules,
-            subtype: Timestamped::new(subtype, now),
+            subtype,
             avatar,
             history_visible_to_new_joiners,
-            members,
-            events,
-            date_created: now,
-            pinned_messages: Vec::new(),
-            permissions: permissions.unwrap_or_default(),
-            date_last_pinned: None,
-            gate: Timestamped::new(gate, now),
-        };
+            permissions.unwrap_or_default(),
+            gate,
+            events_ttl,
+            now,
+        );
 
         Data {
-            chat: group_chat_core,
+            chat,
             principal_to_user_id_map: [(creator_principal, creator_user_id)].into_iter().collect(),
             mark_active_duration,
             group_index_canister_id,

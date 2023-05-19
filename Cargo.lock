@@ -1261,6 +1261,7 @@ dependencies = [
  "chat_events",
  "community_canister",
  "gated_groups",
+ "group_chat_core",
  "group_index_canister",
  "group_index_canister_c2c_client",
  "http_request",
