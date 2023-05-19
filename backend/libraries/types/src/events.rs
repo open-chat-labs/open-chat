@@ -1,6 +1,6 @@
 use crate::{
-    EventIndex, EventWrapper, GroupGate, GroupPermissions, GroupRole, Message, MessageId, MessageIndex, Milliseconds,
-    TimestampMillis, UserId,
+    CommunityPermissions, CommunityRole, EventIndex, EventWrapper, GroupGate, GroupPermissions, GroupRole, Message, MessageId,
+    MessageIndex, Milliseconds, TimestampMillis, UserId,
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
@@ -141,6 +141,14 @@ pub struct RoleChanged {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct CommunityRoleChanged {
+    pub user_ids: Vec<UserId>,
+    pub changed_by: UserId,
+    pub old_role: CommunityRole,
+    pub new_role: CommunityRole,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct ParticipantAssumesSuperAdmin {
     pub user_id: UserId,
 }
@@ -192,6 +200,13 @@ pub struct PollEnded {
 pub struct PermissionsChanged {
     pub old_permissions: GroupPermissions,
     pub new_permissions: GroupPermissions,
+    pub changed_by: UserId,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct CommunityPermissionsChanged {
+    pub old_permissions: CommunityPermissions,
+    pub new_permissions: CommunityPermissions,
     pub changed_by: UserId,
 }
 
