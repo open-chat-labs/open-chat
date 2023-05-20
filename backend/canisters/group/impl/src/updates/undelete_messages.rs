@@ -1,8 +1,8 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::{mutate_state, run_regular_jobs, RuntimeState, TimerJob};
 use canister_tracing_macros::trace;
-use chat_events::{DeleteUndeleteMessagesArgs, Reader, UndeleteMessageResult};
 use group_canister::undelete_messages::{Response::*, *};
+use group_chat_core::UndeleteMessagesResult;
 use ic_cdk_macros::update;
 use std::collections::HashSet;
 
@@ -26,52 +26,31 @@ fn undelete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Respo
         }
 
         let now = runtime_state.env.now();
-        let user_id = member.user_id;
-        let min_visible_event_index = member.min_visible_event_index();
-
-        let results = runtime_state.data.chat.events.undelete_messages(DeleteUndeleteMessagesArgs {
-            caller: user_id,
-            is_admin: member.role.can_delete_messages(&runtime_state.data.chat.permissions),
-            min_visible_event_index,
-            thread_root_message_index: args.thread_root_message_index,
-            message_ids: args.message_ids,
-            now,
-        });
-
-        let events_reader = runtime_state
+        match runtime_state
             .data
             .chat
-            .events
-            .events_reader(min_visible_event_index, args.thread_root_message_index, now)
-            .unwrap();
+            .undelete_messages(member.user_id, args.thread_root_message_index, args.message_ids, now)
+        {
+            UndeleteMessagesResult::Success(messages) => {
+                if !messages.is_empty() {
+                    let message_ids: HashSet<_> = messages.iter().map(|m| m.message_id).collect();
+                    runtime_state.data.timer_jobs.cancel_jobs(|job| {
+                        if let TimerJob::HardDeleteMessageContent(j) = job {
+                            j.thread_root_message_index == args.thread_root_message_index && message_ids.contains(&j.message_id)
+                        } else {
+                            false
+                        }
+                    });
 
-        let mut message_ids = HashSet::new();
-        let mut messages = Vec::new();
-        for (message_id, result) in results {
-            if matches!(result, UndeleteMessageResult::Success) {
-                message_ids.insert(message_id);
-                if let Some(message) = events_reader
-                    .message_event_internal(message_id.into())
-                    .map(|e| e.event.hydrate(Some(user_id)))
-                {
-                    messages.push(message);
+                    handle_activity_notification(runtime_state);
                 }
+
+                Success(SuccessResult { messages })
             }
+            UndeleteMessagesResult::MessageNotFound => MessageNotFound,
+            UndeleteMessagesResult::UserNotInGroup => CallerNotInGroup,
+            UndeleteMessagesResult::UserSuspended => UserSuspended,
         }
-
-        if !message_ids.is_empty() {
-            runtime_state.data.timer_jobs.cancel_jobs(|job| {
-                if let TimerJob::HardDeleteMessageContent(j) = job {
-                    j.thread_root_message_index == args.thread_root_message_index && message_ids.contains(&j.message_id)
-                } else {
-                    false
-                }
-            });
-        }
-
-        handle_activity_notification(runtime_state);
-
-        Success(SuccessResult { messages })
     } else {
         CallerNotInGroup
     }
