@@ -42,9 +42,10 @@ export const layoutStore: Readable<Layout> = derived(
                 rightPanel: (showRight ? "inline" : "hidden") as RightPanelState,
             });
         } else {
-            const showRight =
-                $pathParams.kind !== "communities_route" &&
-                ($rightPanelHistory.length > 0 || $numberOfColumns === 3);
+            const showRight = $rightPanelHistory.length > 0 || $numberOfColumns === 3;
+            // const showRight =
+            //     $pathParams.kind !== "communities_route" &&
+            //     ($rightPanelHistory.length > 0 || $numberOfColumns === 3);
             const floatRight = $numberOfColumns < 3;
             const showLeft = $pathParams.kind !== "communities_route";
 
