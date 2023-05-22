@@ -8,8 +8,8 @@ const MAX_MEMBERS_PER_COMMUNITY: u32 = 100_000;
 
 #[derive(Serialize, Deserialize)]
 pub struct CommunityMembers {
-    members: HashMap<Principal, CommunityMemberInternal>,
-    user_id_to_principal_map: HashMap<UserId, Principal>,
+    members: HashMap<UserId, CommunityMemberInternal>,
+    principal_to_user_id_map: HashMap<Principal, UserId>,
     blocked: HashSet<UserId>,
     admin_count: u32,
     owner_count: u32,
@@ -19,6 +19,7 @@ impl CommunityMembers {
     pub fn new(creator_principal: Principal, creator_user_id: UserId, now: TimestampMillis) -> CommunityMembers {
         let member = CommunityMemberInternal {
             user_id: creator_user_id,
+            principal: creator_principal,
             date_added: now,
             role: CommunityRole::Owner,
             notifications_muted: Timestamped::new(false, now),
@@ -26,8 +27,8 @@ impl CommunityMembers {
         };
 
         CommunityMembers {
-            members: vec![(creator_principal, member)].into_iter().collect(),
-            user_id_to_principal_map: vec![(creator_user_id, creator_principal)].into_iter().collect(),
+            members: vec![(creator_user_id, member)].into_iter().collect(),
+            principal_to_user_id_map: vec![(creator_principal, creator_user_id)].into_iter().collect(),
             blocked: HashSet::new(),
             admin_count: 0,
             owner_count: 1,
@@ -38,17 +39,18 @@ impl CommunityMembers {
         if self.blocked.contains(&user_id) {
             AddResult::Blocked
         } else {
-            match self.members.entry(principal) {
+            match self.members.entry(user_id) {
                 Vacant(e) => {
                     let member = CommunityMemberInternal {
                         user_id,
+                        principal,
                         date_added: now,
                         role: CommunityRole::Member,
                         notifications_muted: Timestamped::new(notifications_muted, now),
                         suspended: Timestamped::default(),
                     };
                     e.insert(member.clone());
-                    self.user_id_to_principal_map.insert(user_id, principal);
+                    self.principal_to_user_id_map.insert(principal, user_id);
                     AddResult::Success(member)
                 }
                 _ => AddResult::AlreadyInCommunity,
@@ -57,16 +59,16 @@ impl CommunityMembers {
     }
 
     pub fn remove(&mut self, user_id: UserId) -> Option<CommunityMemberInternal> {
-        if let Some(principal) = self.user_id_to_principal_map.remove(&user_id) {
-            if let Some(member) = self.members.remove(&principal) {
-                match member.role {
-                    CommunityRole::Owner => self.owner_count -= 1,
-                    CommunityRole::Admin => self.admin_count -= 1,
-                    _ => (),
-                }
+        if let Some(member) = self.members.remove(&user_id) {
+            self.principal_to_user_id_map.remove(&member.principal);
 
-                return Some(member);
+            match member.role {
+                CommunityRole::Owner => self.owner_count -= 1,
+                CommunityRole::Admin => self.admin_count -= 1,
+                _ => (),
             }
+
+            return Some(member);
         }
 
         None
@@ -139,11 +141,12 @@ impl CommunityMembers {
         ChangeRoleResult::Success(ChangeRoleSuccessResult { caller_id, prev_role })
     }
 
-    pub fn try_undo_remove(&mut self, principal: Principal, member: CommunityMemberInternal) {
+    pub fn try_undo_remove(&mut self, member: CommunityMemberInternal) {
         let user_id = member.user_id;
+        let principal = member.principal;
         let role = member.role;
-        if self.members.insert(principal, member).is_none() {
-            self.user_id_to_principal_map.insert(user_id, principal);
+        if self.members.insert(user_id, member).is_none() {
+            self.principal_to_user_id_map.insert(principal, user_id);
             match role {
                 CommunityRole::Owner => self.owner_count += 1,
                 CommunityRole::Admin => self.admin_count += 1,
@@ -181,25 +184,19 @@ impl CommunityMembers {
     }
 
     pub fn get(&self, user_id_or_principal: Principal) -> Option<&CommunityMemberInternal> {
-        let principal = self
-            .user_id_to_principal_map
-            .get(&user_id_or_principal.into())
-            .unwrap_or(&user_id_or_principal);
+        let user_id = user_id_or_principal.into();
 
-        self.members.get(principal)
-    }
+        let user_id = self.principal_to_user_id_map.get(&user_id_or_principal).unwrap_or(&user_id);
 
-    pub fn get_principal(&self, user_id: &UserId) -> Option<Principal> {
-        self.user_id_to_principal_map.get(user_id).copied()
+        self.members.get(user_id)
     }
 
     pub fn get_mut(&mut self, user_id_or_principal: Principal) -> Option<&mut CommunityMemberInternal> {
-        let principal = self
-            .user_id_to_principal_map
-            .get(&user_id_or_principal.into())
-            .unwrap_or(&user_id_or_principal);
+        let user_id = user_id_or_principal.into();
 
-        self.members.get_mut(principal)
+        let user_id = self.principal_to_user_id_map.get(&user_id_or_principal).unwrap_or(&user_id);
+
+        self.members.get_mut(user_id)
     }
 
     pub fn len(&self) -> u32 {
@@ -218,6 +215,7 @@ impl CommunityMembers {
 #[derive(Serialize, Deserialize, Clone)]
 pub struct CommunityMemberInternal {
     pub user_id: UserId,
+    pub principal: Principal,
     pub date_added: TimestampMillis,
     pub role: CommunityRole,
     pub notifications_muted: Timestamped<bool>,

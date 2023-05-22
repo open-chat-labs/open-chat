@@ -2,7 +2,6 @@ use crate::{
     model::{events::CommunityEvent, members::CommunityMemberInternal},
     mutate_state, read_state, RuntimeState,
 };
-use candid::Principal;
 use canister_tracing_macros::trace;
 use community_canister::remove_member::{Response::*, *};
 use ic_cdk_macros::update;
@@ -52,14 +51,7 @@ async fn remove_member_impl(user_id: UserId, block: bool) -> Response {
     };
 
     // Put the member back
-    mutate_state(|state| {
-        rollback(
-            block,
-            prepare_result.principal_to_remove,
-            prepare_result.member_to_remove,
-            state,
-        )
-    });
+    mutate_state(|state| rollback(block, prepare_result.member_to_remove, state));
 
     response
 }
@@ -69,7 +61,6 @@ struct PrepareResult {
     group_name: String,
     public: bool,
     member_to_remove: CommunityMemberInternal,
-    principal_to_remove: Principal,
 }
 
 fn prepare(block: bool, user_id: UserId, state: &mut RuntimeState) -> Result<PrepareResult, Response> {
@@ -85,23 +76,17 @@ fn prepare(block: bool, user_id: UserId, state: &mut RuntimeState) -> Result<Pre
             Err(CannotRemoveSelf)
         } else {
             // Check if the caller is authorized to remove the user
-            let principal_to_remove = match state.data.members.get(user_id.into()) {
+            match state.data.members.get(user_id.into()) {
                 None => return Err(UserNotInCommunity),
                 Some(member_to_remove) => {
-                    if member
+                    if !member
                         .role
                         .can_remove_members_with_role(member_to_remove.role, &state.data.permissions)
                     {
-                        state
-                            .data
-                            .members
-                            .get_principal(&user_id)
-                            .expect("missing principal for member")
-                    } else {
                         return Err(NotAuthorized);
                     }
                 }
-            };
+            }
 
             // Remove the user from the group
             let removed_by = member.user_id;
@@ -117,7 +102,6 @@ fn prepare(block: bool, user_id: UserId, state: &mut RuntimeState) -> Result<Pre
                 group_name: state.data.name.clone(),
                 public: state.data.is_public,
                 member_to_remove,
-                principal_to_remove,
             })
         }
     } else {
@@ -147,10 +131,10 @@ fn commit(block: bool, user_id: UserId, removed_by: UserId, state: &mut RuntimeS
     Success
 }
 
-fn rollback(block: bool, principal: Principal, member: CommunityMemberInternal, state: &mut RuntimeState) {
+fn rollback(block: bool, member: CommunityMemberInternal, state: &mut RuntimeState) {
     if block {
         state.data.members.unblock(&member.user_id);
     }
 
-    state.data.members.try_undo_remove(principal, member);
+    state.data.members.try_undo_remove(member);
 }
