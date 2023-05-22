@@ -12,6 +12,7 @@ pub mod delete_messages;
 pub mod disable_invite_code;
 pub mod enable_invite_code;
 pub mod remove_member;
+pub mod remove_reaction;
 pub mod reset_invite_code;
 pub mod send_message;
 pub mod unblock_user;

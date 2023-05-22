@@ -44,7 +44,7 @@ fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> Response {
                 AddRemoveReactionResult::UserSuspended => UserSuspended,
             }
         } else {
-            UserNotInGroup
+            GroupNotFound
         }
     } else {
         CallerNotInCommunity
