@@ -78,6 +78,7 @@
 
         &.left,
         &.right {
+            max-width: 500px; // need this for routes without the left panel
             flex: 7;
             display: flex;
             flex-direction: column;
