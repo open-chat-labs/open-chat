@@ -41,6 +41,9 @@ jobs:
           uri: https://github.com/dfinity/candid/releases/download/2022-11-17/didc-linux64
           name: didc
           version: 0.8.4
+      - uses: arduino/setup-protoc@v1
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
       - name: run validate-candid-matches-rust.sh
         run: ./scripts/validate-candid-matches-rust.sh
         shell: bash
