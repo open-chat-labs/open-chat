@@ -46,9 +46,9 @@ impl InvitedUsers {
         self.users.values().map(|invitation| invitation.invited).collect()
     }
 
-    // pub fn last_updated(&self) -> TimestampMillis {
-    //     self.last_updated
-    // }
+    pub fn last_updated(&self) -> TimestampMillis {
+        self.last_updated
+    }
 
     pub fn contains(&self, principal: &Principal) -> bool {
         self.users.contains_key(principal)
