@@ -7,8 +7,6 @@ use ic_cdk_macros::update;
 #[update]
 #[trace]
 fn remove_reaction(args: Args) -> Response {
-    run_regular_jobs();
-
     mutate_state(|state| remove_reaction_impl(args, state))
 }
 
