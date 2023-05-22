@@ -1,7 +1,7 @@
 use crate::{model::events::CommunityEvent, read_state, Data, RuntimeState};
 use community_canister::selected_updates::{Response::*, *};
 use ic_cdk_macros::query;
-use std::collections::HashSet;
+use std::{cmp::max, collections::HashSet};
 use types::UserId;
 
 #[query]
@@ -11,30 +11,28 @@ fn selected_updates(args: Args) -> Response {
 
 fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
     let caller = state.env.caller();
+    let data = &state.data;
 
-    if state.data.members.get(caller).is_none() {
+    if data.members.get(caller).is_none() {
         return CallerNotInCommunity;
     }
 
     // Short circuit prior to calling `ic0.time()` so that query caching works effectively.
-    let latest_event_index = state.data.events.latest_event_index();
-    if latest_event_index <= args.updates_since {
-        return SuccessNoUpdates(latest_event_index);
+    let invited_users_last_updated = data.invited_users.last_updated();
+    let events_last_updated = data.events.latest_event_timestamp();
+    let latest_timestamp = max(events_last_updated, invited_users_last_updated);
+    if latest_timestamp <= args.updates_since {
+        return SuccessNoUpdates;
     }
 
-    let now = state.env.now();
-    let data = &state.data;
-    let updates_since_time = data.events.get(args.updates_since).map(|e| e.timestamp).unwrap_or_default();
-
-    let invited_users = if data.invited_users.last_updated() > updates_since_time {
+    let invited_users = if invited_users_last_updated > args.updates_since {
         Some(data.invited_users.users())
     } else {
         None
     };
 
     let mut result = SuccessResult {
-        timestamp: now,
-        latest_event_index,
+        timestamp: state.env.now(),
         members_added_or_updated: vec![],
         members_removed: vec![],
         blocked_users_added: vec![],
@@ -49,7 +47,7 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
     };
 
     // Iterate through the new events starting from most recent
-    for event_wrapper in data.events.iter(None, false).take_while(|e| e.index > args.updates_since) {
+    for event_wrapper in data.events.iter(None, false).take_while(|e| e.timestamp > args.updates_since) {
         match &event_wrapper.event {
             CommunityEvent::MembersRemoved(p) => {
                 for user_id in p.user_ids.iter() {
@@ -93,7 +91,7 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
         && result.blocked_users_removed.is_empty()
         && result.rules.is_none()
     {
-        SuccessNoUpdates(latest_event_index)
+        SuccessNoUpdates
     } else {
         Success(result)
     }

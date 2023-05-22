@@ -92,6 +92,10 @@ impl CommunityEvents {
         self.latest_event_index
     }
 
+    pub fn latest_event_timestamp(&self) -> TimestampMillis {
+        self.latest_event_timestamp
+    }
+
     pub(crate) fn get(&self, event_index: EventIndex) -> Option<&EventWrapper<CommunityEvent>> {
         self.events_map.get(&event_index)
     }
