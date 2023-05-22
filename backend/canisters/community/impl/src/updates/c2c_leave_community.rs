@@ -32,7 +32,7 @@ fn c2c_leave_community_impl(state: &mut RuntimeState) -> Response {
         return LastOwnerCannotLeave;
     }
 
-    state.data.members.remove(caller);
+    state.data.members.remove(&caller);
 
     state
         .data

@@ -19,7 +19,6 @@ impl CommunityMembers {
     pub fn new(creator_principal: Principal, creator_user_id: UserId, now: TimestampMillis) -> CommunityMembers {
         let member = CommunityMemberInternal {
             user_id: creator_user_id,
-            principal: creator_principal,
             date_added: now,
             role: CommunityRole::Owner,
             notifications_muted: Timestamped::new(false, now),
@@ -43,7 +42,6 @@ impl CommunityMembers {
                 Vacant(e) => {
                     let member = CommunityMemberInternal {
                         user_id,
-                        principal,
                         date_added: now,
                         role: CommunityRole::Member,
                         notifications_muted: Timestamped::new(notifications_muted, now),
@@ -58,10 +56,10 @@ impl CommunityMembers {
         }
     }
 
-    pub fn remove(&mut self, user_id: UserId) -> Option<CommunityMemberInternal> {
-        if let Some(member) = self.members.remove(&user_id) {
-            self.principal_to_user_id_map.remove(&member.principal);
+    pub fn remove(&mut self, user_id: &UserId) -> Option<CommunityMemberInternal> {
+        self.principal_to_user_id_map.retain(|_, uid| user_id != uid);
 
+        if let Some(member) = self.members.remove(user_id) {
             match member.role {
                 CommunityRole::Owner => self.owner_count -= 1,
                 CommunityRole::Admin => self.admin_count -= 1,
@@ -141,9 +139,8 @@ impl CommunityMembers {
         ChangeRoleResult::Success(ChangeRoleSuccessResult { caller_id, prev_role })
     }
 
-    pub fn try_undo_remove(&mut self, member: CommunityMemberInternal) {
+    pub fn try_undo_remove(&mut self, principal: Principal, member: CommunityMemberInternal) {
         let user_id = member.user_id;
-        let principal = member.principal;
         let role = member.role;
         if self.members.insert(user_id, member).is_none() {
             self.principal_to_user_id_map.insert(principal, user_id);
@@ -191,6 +188,14 @@ impl CommunityMembers {
         self.members.get(user_id)
     }
 
+    // Note this lookup is O(n)
+    pub fn get_principal(&self, user_id: &UserId) -> Option<Principal> {
+        self.principal_to_user_id_map
+            .iter()
+            .find(|(_, u)| *u == user_id)
+            .map(|(p, _)| *p)
+    }
+
     pub fn get_mut(&mut self, user_id_or_principal: Principal) -> Option<&mut CommunityMemberInternal> {
         let user_id = user_id_or_principal.into();
 
@@ -215,7 +220,6 @@ impl CommunityMembers {
 #[derive(Serialize, Deserialize, Clone)]
 pub struct CommunityMemberInternal {
     pub user_id: UserId,
-    pub principal: Principal,
     pub date_added: TimestampMillis,
     pub role: CommunityRole,
     pub notifications_muted: Timestamped<bool>,
