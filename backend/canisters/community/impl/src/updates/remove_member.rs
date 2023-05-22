@@ -105,7 +105,11 @@ fn prepare(block: bool, user_id: UserId, state: &mut RuntimeState) -> Result<Pre
 
             // Remove the user from the group
             let removed_by = member.user_id;
-            let member_to_remove = state.data.members.remove(user_id).expect("user must be a member");
+            let member_to_remove = state
+                .data
+                .members
+                .remove_by_principal(&principal_to_remove)
+                .expect("user must be a member");
 
             if block {
                 // Also block the user
