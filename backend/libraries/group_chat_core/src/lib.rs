@@ -1,6 +1,6 @@
 use chat_events::{
     AddRemoveReactionArgs, ChatEventInternal, ChatEvents, DeleteMessageResult, DeleteUndeleteMessagesArgs, PushMessageArgs,
-    Reader,
+    Reader, UndeleteMessageResult,
 };
 use group_members::{ChangeRoleResult, GroupMembers};
 use serde::{Deserialize, Serialize};
@@ -302,21 +302,27 @@ impl GroupChatCore {
             let min_visible_event_index = member.min_visible_event_index();
             let is_admin = member.role.can_delete_messages(&self.permissions) || as_platform_moderator;
 
-            let mut my_messages: HashSet<MessageId> = HashSet::new();
+            let results = self.events.delete_messages(DeleteUndeleteMessagesArgs {
+                caller: user_id,
+                is_admin,
+                min_visible_event_index,
+                thread_root_message_index,
+                message_ids,
+                now,
+            });
 
             if thread_root_message_index.is_none() {
-                for message_id in message_ids.iter().copied() {
-                    if let Some((message_index, sender)) = self
+                for message_id in results
+                    .iter()
+                    .filter(|(_, result)| matches!(result, DeleteMessageResult::Success(_)))
+                    .map(|(message_id, _)| *message_id)
+                {
+                    if let Some(message_index) = self
                         .events
                         .visible_main_events_reader(min_visible_event_index, now)
                         .message_internal(message_id.into())
-                        .map(|m| (m.message_index, m.sender))
+                        .map(|m| m.message_index)
                     {
-                        // Remember those messages where the deleter was also the sender
-                        if sender == user_id {
-                            my_messages.insert(message_id);
-                        }
-
                         // If the message being deleted is pinned, unpin it
                         if let Ok(index) = self.pinned_messages.binary_search(&message_index) {
                             self.pinned_messages.remove(index);
@@ -335,16 +341,54 @@ impl GroupChatCore {
                 }
             }
 
-            let results = self.events.delete_messages(DeleteUndeleteMessagesArgs {
+            Success(results)
+        } else {
+            UserNotInGroup
+        }
+    }
+
+    pub fn undelete_messages(
+        &mut self,
+        user_id: UserId,
+        thread_root_message_index: Option<MessageIndex>,
+        message_ids: Vec<MessageId>,
+        now: TimestampMillis,
+    ) -> UndeleteMessagesResult {
+        use UndeleteMessagesResult::*;
+
+        if let Some(member) = self.members.get(&user_id) {
+            if member.suspended.value {
+                return UserSuspended;
+            }
+
+            let min_visible_event_index = member.min_visible_event_index();
+
+            let results = self.events.undelete_messages(DeleteUndeleteMessagesArgs {
                 caller: user_id,
-                is_admin,
+                is_admin: member.role.can_delete_messages(&self.permissions),
                 min_visible_event_index,
                 thread_root_message_index,
                 message_ids,
                 now,
             });
 
-            Success(DeleteMessagesSuccess { results, my_messages })
+            let events_reader = self
+                .events
+                .events_reader(min_visible_event_index, thread_root_message_index, now)
+                .unwrap();
+
+            let messages = results
+                .into_iter()
+                .filter(|(_, result)| matches!(result, UndeleteMessageResult::Success))
+                .map(|(message_id, _)| message_id)
+                .filter_map(|message_id| {
+                    events_reader
+                        .message_internal(message_id.into())
+                        .map(|m| m.hydrate(Some(user_id)))
+                })
+                .collect();
+
+            Success(messages)
         } else {
             UserNotInGroup
         }
@@ -533,15 +577,17 @@ impl From<chat_events::AddRemoveReactionResult> for AddRemoveReactionResult {
 }
 
 pub enum DeleteMessagesResult {
-    Success(DeleteMessagesSuccess),
+    Success(Vec<(MessageId, DeleteMessageResult)>),
     MessageNotFound,
     UserNotInGroup,
     UserSuspended,
 }
 
-pub struct DeleteMessagesSuccess {
-    pub results: Vec<(MessageId, DeleteMessageResult)>,
-    pub my_messages: HashSet<MessageId>,
+pub enum UndeleteMessagesResult {
+    Success(Vec<Message>),
+    MessageNotFound,
+    UserNotInGroup,
+    UserSuspended,
 }
 
 pub enum PinUnpinMessageResult {

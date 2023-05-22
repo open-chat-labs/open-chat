@@ -30,7 +30,7 @@ pub enum Response {
     UserNotInGroup,
     UserSuspended,
     InvalidRequest(String),
-    ChatFrozen,
+    CommunityFrozen,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
