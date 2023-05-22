@@ -85,16 +85,7 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
         }
     }
 
-    if result.members_added_or_updated.is_empty()
-        && result.members_removed.is_empty()
-        && result.blocked_users_added.is_empty()
-        && result.blocked_users_removed.is_empty()
-        && result.rules.is_none()
-    {
-        SuccessNoUpdates
-    } else {
-        Success(result)
-    }
+    Success(result)
 }
 
 struct UserUpdatesHandler<'a> {
