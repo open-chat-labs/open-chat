@@ -10,6 +10,7 @@
     import type { GroupChatSummary, OpenChat } from "openchat-client";
     import { pathParams } from "../../routes";
     import { getContext } from "svelte";
+    import CommunitySummary from "./communities/explore/CommunitySummary.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -28,7 +29,11 @@
     {#if $pathParams.kind === "hot_groups_route"}
         <RecommendedGroups {joining} on:joinGroup on:leaveGroup on:upgrade />
     {:else if $pathParams.kind === "communities_route"}
-        <ExploreCommunities />
+        {#if $pathParams.communityId !== undefined}
+            <CommunitySummary />
+        {:else}
+            <ExploreCommunities />
+        {/if}
     {:else if loadingChats}
         <Loading />
     {:else if $selectedChatId === undefined}

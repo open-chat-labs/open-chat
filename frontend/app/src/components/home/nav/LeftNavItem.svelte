@@ -4,7 +4,7 @@
     export let separator: boolean = false;
 </script>
 
-<div class:separator class:selected class="left-nav-item" on:click>
+<div role="button" tabindex="0" class:separator class:selected class="left-nav-item" on:click>
     <div class="icon"><slot /></div>
     <div class="label">{label}</div>
     <div class="menu"><slot name="menu" /></div>
