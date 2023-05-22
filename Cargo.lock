@@ -1271,6 +1271,7 @@ dependencies = [
  "group_chat_core",
  "group_index_canister",
  "group_index_canister_c2c_client",
+ "group_members",
  "http_request",
  "ic-cdk 0.7.3",
  "ic-cdk-macros",
