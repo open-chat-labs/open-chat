@@ -26,6 +26,7 @@ ic-icrc1 = { workspace = true }
 ic-icrc1-client = { workspace = true }
 ic-icrc1-client-cdk = { workspace = true }
 ic-stable-structures = { workspace = true, features = ["candid"] }
+icrc-ledger-types = { workspace = true }
 itertools = { workspace = true }
 market_maker_canister = { path = "../api" }
 msgpack = { path = "../../../libraries/msgpack" }

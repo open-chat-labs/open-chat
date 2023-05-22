@@ -6,6 +6,7 @@ use chat_events::{PushMessageArgs, ReservePrizeResult};
 use group_canister::claim_prize::{Response::*, *};
 use ic_cdk_macros::update;
 use ic_ledger_types::Tokens;
+use icrc_ledger_types::icrc1::account::Account;
 use ledger_utils::{nns, sns};
 use types::nns::UserOrAccount;
 use types::{
@@ -92,7 +93,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareResult, Box<R
             ReservePrizeResult::PrizeEnded => return Err(Box::new(PrizeEnded)),
         };
 
-        let principal = ic_base_types::PrincipalId::from(Principal::from(user_id));
+        let principal = Principal::from(user_id);
 
         let transaction = match token {
             Cryptocurrency::InternetComputer => PendingCryptoTransaction::NNS(types::nns::PendingCryptoTransaction {
@@ -106,7 +107,7 @@ fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareResult, Box<R
             _ => PendingCryptoTransaction::SNS(types::sns::PendingCryptoTransaction {
                 token,
                 amount,
-                to: ic_icrc1::Account {
+                to: Account {
                     owner: principal,
                     subaccount: None,
                 },

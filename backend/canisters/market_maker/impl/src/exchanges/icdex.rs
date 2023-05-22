@@ -4,7 +4,8 @@ use async_trait::async_trait;
 use candid::{CandidType, Nat};
 use canister_client::make_c2c_call;
 use ic_cdk::api::call::{CallResult, RejectionCode};
-use ic_icrc1::endpoints::TransferArg;
+use icrc_ledger_types::icrc1::account::Account;
+use icrc_ledger_types::icrc1::transfer::TransferArg;
 use market_maker_canister::{CancelOrderRequest, ExchangeId, MakeOrderRequest, OrderType, ICDEX_EXCHANGE_ID};
 use serde::{Deserialize, Serialize};
 use types::CanisterId;
@@ -63,7 +64,7 @@ impl ICDexClient {
     }
 
     pub async fn make_order(&self, order: MakeOrderRequest) -> CallResult<()> {
-        let get_account_response: CallResult<(ic_icrc1::Account, String, Nat, [u8; 32])> = make_c2c_call(
+        let get_account_response: CallResult<(Account, String, Nat, [u8; 32])> = make_c2c_call(
             self.dex_canister_id,
             "getTxAccount",
             self.this_canister_id.to_string(),
