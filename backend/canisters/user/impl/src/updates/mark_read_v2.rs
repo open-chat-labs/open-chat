@@ -1,6 +1,7 @@
 use crate::guards::caller_is_owner;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
+use fire_and_forget_handler::FireAndForgetHandler;
 use ic_cdk_macros::update;
 use types::{ChatId, MessageIndex, Timestamped};
 use user_canister::c2c_mark_read_v2;
@@ -47,10 +48,12 @@ fn mark_read_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
                     if let Some(read_up_to_of_theirs) =
                         direct_chat.unread_message_index_map.get_max_read_up_to_of_theirs(&read_up_to)
                     {
-                        ic_cdk::spawn(mark_read_on_recipients_canister(
+                        mark_read_on_recipients_canister(
                             chat_messages_read.chat_id,
                             read_up_to_of_theirs,
-                        ));
+                            &runtime_state.data.fire_and_forget_handler,
+                        );
+                        direct_chat.unread_message_index_map.remove_up_to(read_up_to_of_theirs);
                     }
                 }
             }
@@ -60,13 +63,9 @@ fn mark_read_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     Success
 }
 
-async fn mark_read_on_recipients_canister(chat_id: ChatId, read_up_to: MessageIndex) {
+fn mark_read_on_recipients_canister(chat_id: ChatId, read_up_to: MessageIndex, fire_and_forget_handler: &FireAndForgetHandler) {
     let args = c2c_mark_read_v2::Args { read_up_to };
-    let _ = user_canister_c2c_client::c2c_mark_read_v2(chat_id.into(), &args).await;
-
-    mutate_state(|state| {
-        if let Some(chat) = state.data.direct_chats.get_mut(&chat_id) {
-            chat.unread_message_index_map.remove_up_to(&read_up_to);
-        }
-    });
+    let mut payload = Vec::new();
+    serializer::serialize(&args, &mut payload).unwrap();
+    fire_and_forget_handler.send(chat_id.into(), "c2c_mark_read_v2_msgpack".to_string(), payload);
 }

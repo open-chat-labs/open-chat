@@ -28,8 +28,8 @@ impl UnreadMessageIndexMap {
             .max()
     }
 
-    pub fn remove_up_to(&mut self, theirs: &MessageIndex) {
-        self.map.retain(|_, t| *t > *theirs)
+    pub fn remove_up_to(&mut self, theirs: MessageIndex) {
+        self.map.retain(|_, t| *t > theirs)
     }
 }
 

@@ -74,6 +74,7 @@ members = [
     "backend/libraries/chat_events",
     "backend/libraries/cycles_dispenser_client",
     "backend/libraries/dynamodb_index_store",
+    "backend/libraries/fire_and_forget_handler",
     "backend/libraries/gated_groups",
     "backend/libraries/group_chat_core",
     "backend/libraries/group_members",

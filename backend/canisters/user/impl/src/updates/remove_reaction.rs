@@ -2,7 +2,9 @@ use crate::guards::caller_is_owner;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use chat_events::{AddRemoveReactionArgs, AddRemoveReactionResult};
+use fire_and_forget_handler::FireAndForgetHandler;
 use ic_cdk_macros::update;
+use msgpack::serialize_then_unwrap;
 use types::{CanisterId, EventIndex, MessageId, Reaction};
 use user_canister::c2c_toggle_reaction;
 use user_canister::remove_reaction::{Response::*, *};
@@ -35,12 +37,12 @@ fn remove_reaction_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
         }) {
             AddRemoveReactionResult::Success => {
                 if args.user_id != OPENCHAT_BOT_USER_ID {
-                    ic_cdk::spawn(remove_reaction_on_recipients_canister(
+                    remove_reaction_on_recipients_canister(
                         args.user_id.into(),
                         args.message_id,
                         args.reaction,
-                        args.correlation_id,
-                    ));
+                        &runtime_state.data.fire_and_forget_handler,
+                    );
                 }
                 Success
             }
@@ -52,18 +54,22 @@ fn remove_reaction_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
     }
 }
 
-async fn remove_reaction_on_recipients_canister(
+fn remove_reaction_on_recipients_canister(
     canister_id: CanisterId,
     message_id: MessageId,
     reaction: Reaction,
-    correlation_id: u64,
+    fire_and_forget_handler: &FireAndForgetHandler,
 ) {
     let args = c2c_toggle_reaction::Args {
         message_id,
         reaction,
         added: false,
         username: "".to_string(),
-        correlation_id,
+        correlation_id: 0,
     };
-    let _ = user_canister_c2c_client::c2c_toggle_reaction(canister_id, &args).await;
+    fire_and_forget_handler.send(
+        canister_id,
+        "c2c_toggle_reaction_msgpack".to_string(),
+        serialize_then_unwrap(&args),
+    );
 }
