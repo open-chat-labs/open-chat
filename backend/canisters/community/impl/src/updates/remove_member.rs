@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::{
     model::{events::CommunityEvent, members::CommunityMemberInternal},
     mutate_state, read_state, RuntimeState,
@@ -5,9 +7,10 @@ use crate::{
 use candid::Principal;
 use canister_tracing_macros::trace;
 use community_canister::remove_member::{Response::*, *};
+use group_members::GroupMemberInternal;
 use ic_cdk_macros::update;
-use types::{MembersRemoved, UserId, UsersBlocked};
-use user_canister::c2c_remove_from_group;
+use types::{CommunityGroupId, MembersRemoved, UserId, UsersBlocked};
+use user_canister::c2c_remove_from_community;
 
 #[update]
 #[trace]
@@ -27,29 +30,30 @@ async fn remove_member(args: Args) -> Response {
 }
 
 async fn remove_member_impl(user_id: UserId, block: bool) -> Response {
-    // If authorized remove the member from the group
+    // If authorized remove the member from the community
     let prepare_result = match mutate_state(|state| prepare(block, user_id, state)) {
         Ok(ok) => ok,
         Err(response) => return response,
     };
 
     // Try to remove the member from the user canister
-    let c2c_remove_from_group_args = c2c_remove_from_group::Args {
+    let c2c_remove_from_community_args = c2c_remove_from_community::Args {
         removed_by: prepare_result.removed_by,
         blocked: block,
-        group_name: prepare_result.group_name,
+        community_name: prepare_result.community_name,
         public: prepare_result.public,
     };
 
-    let response = match user_canister_c2c_client::c2c_remove_from_group(user_id.into(), &c2c_remove_from_group_args).await {
-        Ok(c2c_remove_from_group::Response::Success) => {
-            // Push a MembersRemoved event
-            mutate_state(|state| commit(block, user_id, prepare_result.removed_by, state));
-            return Success;
-        }
-        Ok(c2c_remove_from_group::Response::CannotRemoveUser) => CannotRemoveUser,
-        Err(error) => InternalError(format!("{error:?}")),
-    };
+    let response =
+        match user_canister_c2c_client::c2c_remove_from_community(user_id.into(), &c2c_remove_from_community_args).await {
+            Ok(c2c_remove_from_community::Response::Success) => {
+                // Push a MembersRemoved event
+                mutate_state(|state| commit(block, user_id, prepare_result.removed_by, state));
+                return Success;
+            }
+            Ok(c2c_remove_from_community::Response::CannotRemoveUser) => CannotRemoveUser,
+            Err(error) => InternalError(format!("{error:?}")),
+        };
 
     // Put the member back
     mutate_state(|state| {
@@ -57,6 +61,7 @@ async fn remove_member_impl(user_id: UserId, block: bool) -> Response {
             block,
             prepare_result.principal_to_remove,
             prepare_result.member_to_remove,
+            prepare_result.groups_removed_from,
             state,
         )
     });
@@ -66,10 +71,11 @@ async fn remove_member_impl(user_id: UserId, block: bool) -> Response {
 
 struct PrepareResult {
     removed_by: UserId,
-    group_name: String,
+    community_name: String,
     public: bool,
     member_to_remove: CommunityMemberInternal,
     principal_to_remove: Principal,
+    groups_removed_from: HashMap<CommunityGroupId, GroupMemberInternal>,
 }
 
 fn prepare(block: bool, user_id: UserId, state: &mut RuntimeState) -> Result<PrepareResult, Response> {
@@ -103,13 +109,16 @@ fn prepare(block: bool, user_id: UserId, state: &mut RuntimeState) -> Result<Pre
                 }
             };
 
-            // Remove the user from the group
+            // Remove the user from the community
             let removed_by = member.user_id;
             let member_to_remove = state
                 .data
                 .members
                 .remove_by_principal(&principal_to_remove)
                 .expect("user must be a member");
+
+            // Remove the user from each group they are a member of
+            let groups_removed_from = state.data.groups.remove_member(user_id);
 
             if block {
                 // Also block the user
@@ -118,10 +127,11 @@ fn prepare(block: bool, user_id: UserId, state: &mut RuntimeState) -> Result<Pre
 
             Ok(PrepareResult {
                 removed_by,
-                group_name: state.data.name.clone(),
+                community_name: state.data.name.clone(),
                 public: state.data.is_public,
                 member_to_remove,
                 principal_to_remove,
+                groups_removed_from,
             })
         }
     } else {
@@ -151,10 +161,22 @@ fn commit(block: bool, user_id: UserId, removed_by: UserId, state: &mut RuntimeS
     Success
 }
 
-fn rollback(block: bool, principal: Principal, member: CommunityMemberInternal, state: &mut RuntimeState) {
+fn rollback(
+    block: bool,
+    principal: Principal,
+    member: CommunityMemberInternal,
+    groups_removed_from: HashMap<CommunityGroupId, GroupMemberInternal>,
+    state: &mut RuntimeState,
+) {
     if block {
         state.data.members.unblock(&member.user_id);
     }
 
     state.data.members.try_undo_remove(principal, member);
+
+    for (group_id, member) in groups_removed_from {
+        if let Some(group) = state.data.groups.get_mut(&group_id) {
+            group.members.try_undo_remove(member);
+        }
+    }
 }
