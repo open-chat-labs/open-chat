@@ -43,7 +43,7 @@ pub mod happy_path {
             icp_ledger_canister_id,
             &icrc1_transfer::Args {
                 from_subaccount: None,
-                to: Account::from(PrincipalId(recipient)),
+                to: Account::from(recipient),
                 fee: None,
                 created_at_time: None,
                 memo: None,
@@ -62,7 +62,7 @@ pub mod happy_path {
             Principal::anonymous(),
             icp_ledger_canister_id,
             &icrc1_balance_of::Args {
-                owner: PrincipalId(principal),
+                owner: principal,
                 subaccount: None,
             },
         )
