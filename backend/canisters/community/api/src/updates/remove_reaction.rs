@@ -8,19 +8,17 @@ pub struct Args {
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_id: MessageId,
     pub reaction: Reaction,
-    pub username: String,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success,
     NoChange,
-    InvalidReaction,
     MessageNotFound,
     GroupNotFound,
-    NotAuthorized,
     CallerNotInCommunity,
     UserNotInGroup,
+    NotAuthorized,
     UserSuspended,
     CommunityFrozen,
 }
