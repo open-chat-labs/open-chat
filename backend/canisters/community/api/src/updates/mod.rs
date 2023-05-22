@@ -1,3 +1,4 @@
+pub mod add_reaction;
 pub mod block_user;
 pub mod c2c_freeze_community;
 pub mod c2c_invite_users;

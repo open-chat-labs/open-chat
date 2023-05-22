@@ -221,8 +221,8 @@ impl GroupChatCore {
         message_id: MessageId,
         reaction: Reaction,
         now: TimestampMillis,
-    ) -> AddReactionResult {
-        use AddReactionResult::*;
+    ) -> AddRemoveReactionResult {
+        use AddRemoveReactionResult::*;
 
         if let Some(member) = self.members.get(&user_id) {
             if member.suspended.value {
@@ -234,18 +234,51 @@ impl GroupChatCore {
 
             let min_visible_event_index = member.min_visible_event_index();
 
-            match self.events.add_reaction(AddRemoveReactionArgs {
-                user_id,
-                min_visible_event_index,
-                thread_root_message_index,
-                message_id,
-                reaction,
-                now,
-            }) {
-                AddRemoveReactionResult::Success => Success,
-                AddRemoveReactionResult::NoChange => NoChange,
-                AddRemoveReactionResult::MessageNotFound => MessageNotFound,
+            self.events
+                .add_reaction(AddRemoveReactionArgs {
+                    user_id,
+                    min_visible_event_index,
+                    thread_root_message_index,
+                    message_id,
+                    reaction,
+                    now,
+                })
+                .into()
+        } else {
+            UserNotInGroup
+        }
+    }
+
+    pub fn remove_reaction(
+        &mut self,
+        user_id: UserId,
+        thread_root_message_index: Option<MessageIndex>,
+        message_id: MessageId,
+        reaction: Reaction,
+        now: TimestampMillis,
+    ) -> AddRemoveReactionResult {
+        use AddRemoveReactionResult::*;
+
+        if let Some(member) = self.members.get(&user_id) {
+            if member.suspended.value {
+                return UserSuspended;
             }
+            if !member.role.can_react_to_messages(&self.permissions) {
+                return NotAuthorized;
+            }
+
+            let min_visible_event_index = member.min_visible_event_index();
+
+            self.events
+                .remove_reaction(AddRemoveReactionArgs {
+                    user_id,
+                    min_visible_event_index,
+                    thread_root_message_index,
+                    message_id,
+                    reaction,
+                    now,
+                })
+                .into()
         } else {
             UserNotInGroup
         }
@@ -523,7 +556,7 @@ pub struct SendMessageSuccess {
     pub users_to_notify: Vec<UserId>,
 }
 
-pub enum AddReactionResult {
+pub enum AddRemoveReactionResult {
     Success,
     NoChange,
     InvalidReaction,
@@ -531,6 +564,16 @@ pub enum AddReactionResult {
     UserNotInGroup,
     NotAuthorized,
     UserSuspended,
+}
+
+impl From<chat_events::AddRemoveReactionResult> for AddRemoveReactionResult {
+    fn from(value: chat_events::AddRemoveReactionResult) -> Self {
+        match value {
+            chat_events::AddRemoveReactionResult::Success => AddRemoveReactionResult::Success,
+            chat_events::AddRemoveReactionResult::NoChange => AddRemoveReactionResult::NoChange,
+            chat_events::AddRemoveReactionResult::MessageNotFound => AddRemoveReactionResult::MessageNotFound,
+        }
+    }
 }
 
 pub enum DeleteMessagesResult {

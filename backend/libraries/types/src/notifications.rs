@@ -19,6 +19,7 @@ pub enum Notification {
     CommunityMessageNotification(CommunityMessageNotification),
     DirectReactionAddedNotification(DirectReactionAddedNotification),
     GroupReactionAddedNotification(GroupReactionAddedNotification),
+    CommunityReactionAddedNotification(CommunityReactionAddedNotification),
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -75,6 +76,20 @@ pub struct DirectReactionAddedNotification {
 pub struct GroupReactionAddedNotification {
     pub chat_id: ChatId,
     pub thread_root_message_index: Option<MessageIndex>,
+    pub group_name: String,
+    pub added_by: UserId,
+    pub added_by_name: String,
+    pub message: EventWrapper<Message>,
+    pub reaction: Reaction,
+    pub timestamp: TimestampMillis,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct CommunityReactionAddedNotification {
+    pub community_id: CommunityId,
+    pub group_id: CommunityGroupId,
+    pub thread_root_message_index: Option<MessageIndex>,
+    pub community_name: String,
     pub group_name: String,
     pub added_by: UserId,
     pub added_by_name: String,
