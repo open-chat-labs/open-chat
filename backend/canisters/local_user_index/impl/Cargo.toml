@@ -20,7 +20,6 @@ futures = { workspace = true }
 group_canister = { path = "../../group/api" }
 group_canister_c2c_client = { path = "../../group/c2c_client" }
 http_request = { path = "../../../libraries/http_request" }
-ic-base-types = { workspace = true }
 ic-cdk = { workspace = true }
 ic-cdk-macros = { workspace = true }
 ic-cdk-timers = { workspace = true }
@@ -29,6 +28,7 @@ ic-stable-structures = { workspace = true }
 ic-icrc1 = { workspace = true }
 ic-icrc1-client = { workspace = true }
 ic-icrc1-client-cdk = { workspace = true }
+icrc-ledger-types = { workspace = true }
 ledger_utils = { path = "../../../libraries/ledger_utils" }
 local_user_index_canister = { path = "../api" }
 msgpack = { path = "../../../libraries/msgpack" }

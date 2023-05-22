@@ -1,6 +1,6 @@
-use ic_icrc1::endpoints::TransferArg;
-use ic_icrc1::Account;
 use ic_ledger_canister_core::ledger::LedgerTransaction;
+use icrc_ledger_types::icrc1::account::Account;
+use icrc_ledger_types::icrc1::transfer::{Memo, TransferArg};
 use types::{CanisterId, CompletedCryptoTransaction, FailedCryptoTransaction, TransactionHash};
 
 pub async fn process_transaction(
@@ -8,15 +8,14 @@ pub async fn process_transaction(
     sender: CanisterId,
     ledger_canister_id: CanisterId,
 ) -> Result<CompletedCryptoTransaction, FailedCryptoTransaction> {
-    let my_principal = ic_base_types::PrincipalId::from(sender);
-    let from = ic_icrc1::Account::from(my_principal);
+    let from = Account::from(sender);
 
     let args = TransferArg {
         from_subaccount: None,
         to: transaction.to.clone(),
         fee: Some(transaction.fee.e8s().into()),
         created_at_time: Some(transaction.created),
-        memo: transaction.memo.map(|m| ic_icrc1::Memo::from(m.0)),
+        memo: transaction.memo.map(|m| Memo::from(m.0)),
         amount: transaction.amount.e8s().into(),
     };
 

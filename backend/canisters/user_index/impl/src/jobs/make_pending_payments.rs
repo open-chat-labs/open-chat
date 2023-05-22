@@ -2,8 +2,9 @@ use crate::model::pending_payments_queue::{PendingPayment, PendingPaymentReason}
 use crate::LocalUserIndexEvent;
 use crate::{mutate_state, RuntimeState};
 use ic_cdk_timers::TimerId;
-use ic_icrc1::Account;
 use ic_ledger_types::{BlockIndex, Tokens};
+use icrc_ledger_types::icrc1::account::Account;
+use icrc_ledger_types::icrc1::transfer::TransferArg;
 use local_user_index_canister::OpenChatBotMessage;
 use serde::Serialize;
 use std::cell::Cell;
@@ -56,11 +57,11 @@ async fn process_payment(pending_payment: PendingPayment) {
 // Error response contains a boolean stating if the transfer should be retried
 async fn make_payment(pending_payment: &PendingPayment) -> Result<BlockIndex, bool> {
     let to = Account {
-        owner: pending_payment.recipient.into(),
+        owner: pending_payment.recipient,
         subaccount: None,
     };
 
-    let args = ic_icrc1::endpoints::TransferArg {
+    let args = TransferArg {
         from_subaccount: None,
         to,
         fee: None,
