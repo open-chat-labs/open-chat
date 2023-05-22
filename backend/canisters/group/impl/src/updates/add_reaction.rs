@@ -3,7 +3,7 @@ use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use chat_events::Reader;
 use group_canister::add_reaction::{Response::*, *};
-use group_chat_core::AddReactionResult;
+use group_chat_core::AddRemoveReactionResult;
 use ic_cdk_macros::update;
 use types::{EventIndex, GroupReactionAddedNotification, Notification, TimestampMillis, UserId};
 
@@ -31,17 +31,17 @@ fn add_reaction_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
             args.reaction.clone(),
             now,
         ) {
-            AddReactionResult::Success => {
+            AddRemoveReactionResult::Success => {
                 handle_activity_notification(runtime_state);
                 handle_notification(args, user_id, now, runtime_state);
                 Success
             }
-            AddReactionResult::NoChange => NoChange,
-            AddReactionResult::InvalidReaction => InvalidReaction,
-            AddReactionResult::MessageNotFound => MessageNotFound,
-            AddReactionResult::UserNotInGroup => CallerNotInGroup,
-            AddReactionResult::NotAuthorized => NotAuthorized,
-            AddReactionResult::UserSuspended => UserSuspended,
+            AddRemoveReactionResult::NoChange => NoChange,
+            AddRemoveReactionResult::InvalidReaction => InvalidReaction,
+            AddRemoveReactionResult::MessageNotFound => MessageNotFound,
+            AddRemoveReactionResult::UserNotInGroup => CallerNotInGroup,
+            AddRemoveReactionResult::NotAuthorized => NotAuthorized,
+            AddRemoveReactionResult::UserSuspended => UserSuspended,
         }
     } else {
         CallerNotInGroup
