@@ -313,6 +313,7 @@
         if (msgEvent && threadRootEvent === undefined) {
             if (
                 msgEvent.event.thread !== undefined &&
+                $pathParams.kind === "chat_selected_route" &&
                 ($pathParams.open || $pathParams.threadMessageIndex !== undefined)
             ) {
                 client.openThread(msgEvent, false);

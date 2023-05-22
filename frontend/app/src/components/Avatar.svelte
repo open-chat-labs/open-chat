@@ -12,6 +12,7 @@
     export let size: AvatarSize = AvatarSize.Default;
     export let blocked: boolean = false;
     export let statusBorder = "white";
+    export let selected = false;
 
     let userStatus = UserStatus.None;
     let userStatusUserId: string | undefined = undefined;
@@ -32,6 +33,7 @@
 
 <div
     class="avatar"
+    class:selected
     class:tiny={size === AvatarSize.Tiny}
     class:small={size === AvatarSize.Small}
     class:default={size === AvatarSize.Default}
@@ -89,6 +91,10 @@
         &.large {
             width: toRem(150);
             height: toRem(150);
+        }
+
+        &.selected {
+            border: 3px solid var(--icon-selected);
         }
 
         &.blocked::after {

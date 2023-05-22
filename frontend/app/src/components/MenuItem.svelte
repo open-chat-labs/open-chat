@@ -41,9 +41,13 @@
             background-color: var(--menu-hv);
         }
 
-        .icon {
+        .icon:not(:empty) {
             display: flex;
             flex: 0 0 toRem(34);
+        }
+
+        .icon:empty {
+            display: none;
         }
 
         &.disabled {

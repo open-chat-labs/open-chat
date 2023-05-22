@@ -4,7 +4,6 @@
     import type { OpenChat, UserLookup } from "openchat-client";
     import { getContext, onMount } from "svelte";
     import { emojiDatabase } from "../../utils/emojis";
-    import { rtlStore } from "../../stores/rtl";
     import TooltipWrapper from "../TooltipWrapper.svelte";
     import TooltipPopup from "../TooltipPopup.svelte";
 
@@ -12,13 +11,11 @@
 
     export let reaction: string;
     export let userIds: Set<string>;
-    export let me: boolean;
     export let myUserId: string | undefined;
 
     let reactionCode = "unknown";
 
     $: userStore = client.userStore;
-    $: alignRight = me != $rtlStore;
     $: selected = myUserId !== undefined ? userIds.has(myUserId) : false;
     $: usernames = buildReactionUsernames($userStore, userIds, myUserId);
 
@@ -50,16 +47,17 @@
     }
 </script>
 
-<TooltipWrapper {alignRight} bottomOffset={-4} centreChevron={true}>
+<TooltipWrapper position={"top"} align={"start"}>
     <div slot="target" on:click class:selected class="message-reaction">
         {reaction}
         <span class="reaction-count">
             {userIds.size > 999 ? "999+" : userIds.size}
         </span>
     </div>
-    <div slot="tooltip">
+    <div let:position let:align slot="tooltip">
         <TooltipPopup
-            {alignRight}
+            {align}
+            {position}
             textLength={usernames.length + reactionCode.length}
             longestWord={reactionCode.length}>
             <div class="reaction-tooltip-emoji">{reaction}</div>

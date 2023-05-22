@@ -8,8 +8,6 @@
     export let searchTerm: string = "";
     export let searching: boolean = false;
     export let searchResultsAvailable: boolean = false;
-
-    // TODO - this component doesn't do anything now. We could remove it but it might be a useful abstraction
 </script>
 
 <Panel left>
@@ -17,7 +15,6 @@
         <ChatList
             on:loadMessage
             on:chatWith
-            on:whatsHot
             on:halloffame
             on:showHomePage
             on:newGroup

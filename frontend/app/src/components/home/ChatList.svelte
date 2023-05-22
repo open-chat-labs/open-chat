@@ -1,6 +1,7 @@
 <script lang="ts">
     import Close from "svelte-material-icons/Close.svelte";
     import CurrentUser from "./CurrentUser.svelte";
+    import CurrentSelection from "./CurrentSelection.svelte";
     import Search from "../Search.svelte";
     import Loading from "../Loading.svelte";
     import ChatSummary from "./ChatSummary.svelte";
@@ -23,6 +24,7 @@
     import ChatsButton from "./ChatsButton.svelte";
     import { iconSize } from "../../stores/iconSize";
     import { discoverHotGroupsDismissed } from "../../stores/settings";
+    import { communitiesEnabled } from "../../utils/features";
 
     const client = getContext<OpenChat>("client");
     const createdUser = client.user;
@@ -143,16 +145,20 @@
 </script>
 
 {#if user}
-    <CurrentUser
-        on:wallet
-        on:showHomePage
-        on:logout
-        on:whatsHot
-        on:halloffame
-        {user}
-        on:profile
-        on:upgrade
-        on:newGroup />
+    {#if $communitiesEnabled}
+        <CurrentSelection />
+    {:else}
+        <CurrentUser
+            on:wallet
+            on:showHomePage
+            on:logout
+            on:whatsHot
+            on:halloffame
+            {user}
+            on:profile
+            on:upgrade
+            on:newGroup />
+    {/if}
 
     <Search {searching} {searchTerm} on:searchEntered={onSearchEntered} />
 
@@ -230,7 +236,7 @@
                 {/if}
             </div>
             {#if showWhatsHot}
-                <div class="hot-groups" on:click={() => dispatch("whatsHot")}>
+                <div class="hot-groups" on:click={() => page("/hotgroups")}>
                     <div class="flame">🔥</div>
                     <div class="label">{$_("whatsHotButton")}</div>
                     <div on:click={() => discoverHotGroupsDismissed.set(true)} class="close">

@@ -4,17 +4,17 @@
     import { fade } from "svelte/transition";
     import NoChatSelected from "./NoChatSelected.svelte";
     import RecommendedGroups from "./RecommendedGroups.svelte";
+    import ExploreCommunities from "./communities/explore/Explore.svelte";
     import type CurrentChatMessages from "./CurrentChatMessages.svelte";
     import CurrentChat from "./CurrentChat.svelte";
-    import type { RemoteData } from "../../utils/remoteData";
     import type { GroupChatSummary, OpenChat } from "openchat-client";
     import { pathParams } from "../../routes";
     import { getContext } from "svelte";
+    import CommunitySummary from "./communities/explore/CommunitySummary.svelte";
 
     const client = getContext<OpenChat>("client");
 
     export let loadingChats: boolean = false;
-    export let hotGroups: RemoteData<GroupChatSummary[], string>;
     export let joining: GroupChatSummary | undefined;
     export let currentChatMessages: CurrentChatMessages | undefined;
 
@@ -22,26 +22,24 @@
     $: selectedChatId = client.selectedChatId;
     $: eventsStore = client.eventsStore;
     $: filteredProposalsStore = client.filteredProposalsStore;
-    $: noChat = $pathParams.chatId === undefined;
+    $: noChat = $pathParams.kind !== "chat_selected_route";
 </script>
 
 <Panel middle>
-    {#if loadingChats || hotGroups.kind === "loading"}
+    {#if $pathParams.kind === "hot_groups_route"}
+        <RecommendedGroups {joining} on:joinGroup on:leaveGroup on:upgrade />
+    {:else if $pathParams.kind === "communities_route"}
+        {#if $pathParams.communityId !== undefined}
+            <CommunitySummary />
+        {:else}
+            <ExploreCommunities />
+        {/if}
+    {:else if loadingChats}
         <Loading />
     {:else if $selectedChatId === undefined}
-        {#if hotGroups.kind === "success"}
-            <RecommendedGroups
-                {joining}
-                on:cancelRecommendations
-                on:joinGroup
-                on:leaveGroup
-                on:recommend
-                on:upgrade
-                on:dismissRecommendation
-                groups={hotGroups.data} />
-        {:else if noChat}
+        {#if noChat}
             <div class="no-chat" in:fade>
-                <NoChatSelected on:recommend on:newchat />
+                <NoChatSelected on:newchat />
             </div>
         {/if}
     {:else if $selectedChatStore !== undefined}

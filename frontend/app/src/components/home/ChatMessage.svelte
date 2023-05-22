@@ -579,7 +579,9 @@
         <ThreadSummary
             {chatId}
             threadRootMessageIndex={msg.messageIndex}
-            selected={msg.messageIndex === $pathParams.messageIndex && $pathParams.open}
+            selected={$pathParams.kind === "chat_selected_route" &&
+                msg.messageIndex === $pathParams.messageIndex &&
+                $pathParams.open}
             {threadSummary}
             indent={showAvatar}
             {me}
@@ -593,7 +595,6 @@
                     on:click={() => toggleReaction(reaction)}
                     {reaction}
                     {userIds}
-                    {me}
                     myUserId={user?.userId} />
             {/each}
         </div>

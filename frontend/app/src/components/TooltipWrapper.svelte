@@ -5,11 +5,12 @@
     import Hoverable from "./Hoverable.svelte";
 
     export let enable = true;
-    export let centreChevron = false;
-    export let alignRight: boolean;
-    export let bottomOffset = 0;
+    export let position: "top" | "right" | "bottom" | "left" = "top";
+    export let align: "start" | "center" | "end" = "start";
+    export let fill = false;
+    export let gutter = 8;
 
-    let target: HTMLElement;
+    let target: Hoverable;
     let tooltipContainer: HTMLElement;
     let hovering: boolean;
     let longPressed: boolean;
@@ -32,7 +33,7 @@
 
         await tick();
 
-        tooltipStore.position(rect, alignRight, bottomOffset, centreChevron);
+        tooltipStore.position(rect, position, align, gutter);
     }
 
     function closeTooltip() {
@@ -40,16 +41,14 @@
     }
 </script>
 
-<div bind:this={target}>
-    <Hoverable bind:hovering bind:longPressed enableLongPress={true}>
-        <slot name="target" />
-    </Hoverable>
-</div>
+<Hoverable {fill} bind:this={target} bind:hovering bind:longPressed enableLongPress>
+    <slot name="target" />
+</Hoverable>
 
 <div class="tooltip-blueprint">
     <span class="tooltip" bind:this={tooltipContainer}>
         {#if $tooltipStore === tooltipContainer}
-            <slot name="tooltip" />
+            <slot {align} {position} name="tooltip" />
         {/if}
     </span>
 </div>

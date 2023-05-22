@@ -41,12 +41,10 @@
         subscribeToNotifications,
     } from "../../utils/notifications";
     import { filterByChatType, rightPanelHistory } from "../../stores/rightPanel";
-    import { mapRemoteData } from "../../utils/remoteData";
-    import type { RemoteData } from "../../utils/remoteData";
     import Upgrade from "./upgrade/Upgrade.svelte";
     import AreYouSure from "../AreYouSure.svelte";
     import { removeQueryStringParam } from "../../utils/urls";
-    import { numberOfColumns } from "../../stores/layout";
+    import { layoutStore } from "../../stores/layout";
     import { dimensions } from "../../stores/screenDimensions";
     import { messageToForwardStore } from "../../stores/messageToForward";
     import type { Share } from "../../utils/share";
@@ -58,6 +56,8 @@
     import { eventListScrollTop } from "../../stores/scrollPos";
     import GateCheckFailed from "./groupdetails/GateCheckFailed.svelte";
     import HallOfFame from "./HallOfFame.svelte";
+    import { communitiesEnabled } from "../../utils/features";
+    import LeftNav from "./nav/LeftNav.svelte";
 
     const client = getContext<OpenChat>("client");
     const user = client.user;
@@ -100,7 +100,6 @@
     let searching: boolean = false;
     let searchResultsAvailable: boolean = false;
     let confirmActionEvent: ConfirmActionEvent | undefined;
-    let hotGroups: RemoteData<GroupChatSummary[], string> = { kind: "idle" };
     let joining: GroupChatSummary | undefined = undefined;
     let showUpgrade: boolean = false;
     let share: Share = { title: "", text: "", url: "", files: [] };
@@ -117,14 +116,6 @@
     $: currentChatDraftMessage = client.currentChatDraftMessage;
     $: chatStateStore = client.chatStateStore;
     $: confirmMessage = getConfirmMessage(confirmActionEvent);
-
-    // layout stuff
-    $: showRight = $rightPanelHistory.length > 0 || $numberOfColumns === 3;
-    $: floatRightPanel = !$mobileWidth && $numberOfColumns < 3;
-    $: middleSelected = $pathParams.chatId !== undefined || hotGroups.kind !== "idle";
-    $: leftSelected = $pathParams.chatId === undefined && hotGroups.kind === "idle";
-    $: showMiddle = !$mobileWidth || (middleSelected && !showRight);
-    $: showLeft = !$mobileWidth || (leftSelected && !showRight);
 
     onMount(() => {
         subscribeToNotifications(client, (n) => client.notificationReceived(n));
@@ -207,7 +198,6 @@
         $eventListScrollTop = undefined;
         client.setSelectedChat(chat.chatId, messageIndex, threadMessageIndex);
         resetRightPanel();
-        hotGroups = { kind: "idle" };
     }
 
     // the currentChatMessages component may not exist straight away
@@ -225,71 +215,62 @@
     async function routeChange(initialised: boolean, pathParams: RouteParams): Promise<void> {
         // wait until we have loaded the chats
         if (initialised) {
-            if (pathParams.chatId === "share") {
-                const title = $querystring.get("title") ?? "";
-                const text = $querystring.get("text") ?? "";
-                const url = $querystring.get("url") ?? "";
-                share = {
-                    title,
-                    text,
-                    url,
-                    files: [],
-                };
-                page.replace("/");
-                modal = ModalType.SelectChat;
-            } else {
-                // if we have something in the chatId url param
-
+            if (pathParams.kind === "chat_selected_route") {
                 // first close any open thread
                 closeThread();
 
-                if (pathParams.chatId !== undefined) {
-                    // if the chat in the url is different from the chat we already have selected
-                    if (pathParams.chatId !== $selectedChatId?.toString()) {
-                        console.log("PathParams: ", pathParams);
-                        newChatSelected(
-                            pathParams.chatId,
-                            pathParams.messageIndex,
-                            pathParams.threadMessageIndex
-                        );
-                    } else {
-                        // if the chat in the url is *the same* as the selected chat
-                        // *and* if we have a messageIndex specified in the url
-                        if (pathParams.messageIndex !== undefined) {
-                            waitAndScrollToMessageIndex(pathParams.messageIndex, false);
-                        }
-                    }
+                // if the chat in the url is different from the chat we already have selected
+                if (pathParams.chatId !== $selectedChatId?.toString()) {
+                    console.log("PathParams: ", pathParams);
+                    newChatSelected(
+                        pathParams.chatId,
+                        pathParams.messageIndex,
+                        pathParams.threadMessageIndex
+                    );
                 } else {
-                    // we do *not* have a chat in the url
-                    if ($selectedChatId !== undefined) {
-                        client.clearSelectedChat();
+                    // if the chat in the url is *the same* as the selected chat
+                    // *and* if we have a messageIndex specified in the url
+                    if (pathParams.messageIndex !== undefined) {
+                        waitAndScrollToMessageIndex(pathParams.messageIndex, false);
                     }
-
-                    if (!$mobileWidth && hotGroups.kind === "idle") {
-                        whatsHot(false);
-                    }
-
-                    filterChatSpecificRightPanelStates();
                 }
-
-                // regardless of the path params, we *always* check the query string
-                const diamond = $querystring.get("diamond");
-                if (diamond !== null) {
-                    showUpgrade = true;
-                    page.replace(removeQueryStringParam("diamond"));
+            } else {
+                // any other route with no associated chat therefore we must clear any selected chat and potentially close the right panel
+                if ($selectedChatId !== undefined) {
+                    client.clearSelectedChat();
                 }
+                closeThread();
+                filterChatSpecificRightPanelStates();
 
-                const wallet = $querystring.get("wallet");
-                if (wallet !== null) {
-                    modal = ModalType.Wallet;
-                    page.replace(removeQueryStringParam("wallet"));
+                if (pathParams.kind === "share_route") {
+                    share = {
+                        title: pathParams.title,
+                        text: pathParams.text,
+                        url: pathParams.url,
+                        files: [],
+                    };
+                    page.replace("/");
+                    modal = ModalType.SelectChat;
                 }
+            }
 
-                const hof = $querystring.get("hof");
-                if (hof !== null) {
-                    modal = ModalType.HallOfFame;
-                    page.replace(removeQueryStringParam("hof"));
-                }
+            // regardless of the path params, we *always* check the query string
+            const diamond = $querystring.get("diamond");
+            if (diamond !== null) {
+                showUpgrade = true;
+                page.replace(removeQueryStringParam("diamond"));
+            }
+
+            const wallet = $querystring.get("wallet");
+            if (wallet !== null) {
+                modal = ModalType.Wallet;
+                page.replace(removeQueryStringParam("wallet"));
+            }
+
+            const hof = $querystring.get("hof");
+            if (hof !== null) {
+                modal = ModalType.HallOfFame;
+                page.replace(removeQueryStringParam("hof"));
             }
         }
     }
@@ -342,15 +323,6 @@
         modal = ModalType.None;
         candidateGroup = undefined;
         joining = undefined;
-    }
-
-    function cancelRecommendations() {
-        hotGroups = { kind: "idle" };
-    }
-
-    function dismissRecommendation(ev: CustomEvent<string>) {
-        hotGroups = mapRemoteData(hotGroups, (data) => data.filter((g) => g.chatId !== ev.detail));
-        client.dismissRecommendation(ev.detail);
     }
 
     async function performSearch(ev: CustomEvent<string>) {
@@ -519,7 +491,7 @@
     }
 
     function deleteDirectChat(ev: CustomEvent<string>) {
-        if (ev.detail === $pathParams.chatId) {
+        if ($pathParams.kind === "chat_selected_route" && ev.detail === $pathParams.chatId) {
             page("/");
         }
         tick().then(() => client.removeChat(ev.detail));
@@ -686,7 +658,6 @@
                     toastStore.showFailureToast("joinGroupFailed");
                     joining = undefined;
                 } else if (select) {
-                    hotGroups = { kind: "idle" };
                     joining = undefined;
                     page(`/${group.chatId}`);
                 } else {
@@ -704,23 +675,6 @@
             if (!chat.public) {
                 client.declineInvitation(chat.chatId);
             }
-        });
-    }
-
-    function whatsHot(navigate: boolean = true) {
-        if (navigate) {
-            page("/");
-        }
-        tick().then(() => {
-            hotGroups = { kind: "loading" };
-            client
-                .getRecommendedGroups()
-                .then((resp) => {
-                    if (hotGroups.kind === "loading") {
-                        hotGroups = { kind: "success", data: resp };
-                    }
-                })
-                .catch((err) => (hotGroups = { kind: "error", error: err.toString() }));
         });
     }
 
@@ -892,7 +846,18 @@
 </script>
 
 <main>
-    {#if showLeft}
+    {#if $layoutStore.showNav}
+        <LeftNav
+            on:profile={showProfile}
+            on:wallet={showWallet}
+            on:halloffame={() => (modal = ModalType.HallOfFame)}
+            on:logout={() => client.logout()}
+            on:newGroup={newGroup}
+            on:showHomePage={showLandingPageRoute("/home")}
+            on:upgrade={upgrade} />
+    {/if}
+
+    {#if $layoutStore.showLeft}
         <LeftPanel
             {groupSearchResults}
             {userSearchResults}
@@ -902,7 +867,6 @@
             on:showHomePage={showLandingPageRoute("/home")}
             on:searchEntered={performSearch}
             on:chatWith={chatWith}
-            on:whatsHot={() => whatsHot(true)}
             on:halloffame={() => (modal = ModalType.HallOfFame)}
             on:newGroup={newGroup}
             on:profile={showProfile}
@@ -917,9 +881,8 @@
             on:toggleMuteNotifications={toggleMuteNotifications}
             on:loadMessage={loadMessage} />
     {/if}
-    {#if showMiddle}
+    {#if $layoutStore.showMiddle}
         <MiddlePanel
-            {hotGroups}
             {joining}
             bind:currentChatMessages
             loadingChats={$chatsLoading}
@@ -935,16 +898,13 @@
             on:showMembers={showMembers}
             on:joinGroup={joinGroup}
             on:cancelPreview={cancelPreview}
-            on:cancelRecommendations={cancelRecommendations}
-            on:recommend={() => whatsHot(false)}
-            on:dismissRecommendation={dismissRecommendation}
             on:upgrade={upgrade}
             on:showPinned={showPinned}
             on:toggleMuteNotifications={toggleMuteNotifications}
             on:goToMessageIndex={goToMessageIndex}
             on:forward={forwardMessage} />
     {/if}
-    {#if showRight && !floatRightPanel}
+    {#if $layoutStore.rightPanel === "inline"}
         <RightPanel
             on:userAvatarSelected={userAvatarSelected}
             on:goToMessageIndex={goToMessageIndex}
@@ -960,7 +920,7 @@
     {/if}
 </main>
 
-{#if showRight && floatRightPanel}
+{#if $layoutStore.rightPanel === "floating"}
     <Overlay on:close={closeRightPanel} dismissible fade={!$mobileWidth}>
         <div on:click|stopPropagation class="right-wrapper" class:rtl={$rtlStore}>
             <RightPanel

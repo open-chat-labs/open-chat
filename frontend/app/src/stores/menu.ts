@@ -2,7 +2,8 @@ import { get, writable } from "svelte/store";
 import { logger } from "utils/logging";
 import { fontSizeScale } from "./fontSize";
 import { rtlStore } from "./rtl";
-import { mobileWidth, toPixel } from "./screenDimensions";
+import { mobileWidth } from "./screenDimensions";
+import { navOpen } from "./layout";
 
 const { subscribe, update } = writable<HTMLElement | undefined>(undefined);
 
@@ -21,6 +22,7 @@ function close(menu: HTMLElement | undefined): HTMLElement | undefined {
             }
         }
     }
+
     return undefined;
 }
 
@@ -62,6 +64,7 @@ export const menuStore = {
         }),
     hideMenu: (): void =>
         update((menu) => {
+            navOpen.set(false);
             return close(menu);
         }),
 };

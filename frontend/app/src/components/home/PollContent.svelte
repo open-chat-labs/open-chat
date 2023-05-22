@@ -118,8 +118,7 @@
                 {myUserId}
                 voters={voters(i)}
                 numVotes={voteCount(i)}
-                {showVotes}
-                {me} />
+                {showVotes} />
         {/each}
     </div>
     <p class="total-votes">

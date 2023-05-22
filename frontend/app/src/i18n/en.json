@@ -833,5 +833,9 @@
         "deleteMessage": "Delete reported message",
         "messageReport": "Reported by @{username} on {timestamp} for the following reason: **{reason}**",
         "showing": "Showing the most recent {count} of {total} report(s)"
+    },
+    "communities": {
+        "explore": "Explore communities",
+        "search": "Search communities"
     }
 }

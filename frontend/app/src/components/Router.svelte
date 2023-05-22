@@ -5,6 +5,7 @@
     import LandingPage from "./landingpages/LandingPage.svelte";
     import NotFound from "./NotFound.svelte";
     import { pathContextStore, notFound } from "../routes";
+    import { communitiesEnabled } from "../utils/features";
 
     let route: typeof SvelteComponent | undefined = undefined;
 
@@ -19,6 +20,16 @@
         page("/faq", parsePathParams, track, () => (route = LandingPage));
         page("/diamond", parsePathParams, track, () => (route = LandingPage));
         page("/architecture", parsePathParams, track, () => (route = LandingPage));
+        if ($communitiesEnabled) {
+            page(
+                "/communities/:communityId?",
+                redirectHashRoutes,
+                parsePathParams,
+                track,
+                () => (route = Home)
+            );
+        }
+        page("/hotgroups", redirectHashRoutes, parsePathParams, track, () => (route = Home));
         page(
             "/:chatId?/:messageIndex?/:threadMessageIndex?",
             redirectHashRoutes,
@@ -69,6 +80,3 @@
 {#if route !== undefined}
     <svelte:component this={route} />
 {/if}
-
-<style type="text/scss">
-</style>
