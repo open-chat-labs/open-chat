@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Introduce `FireAndForgetHandler` which retries failed c2c calls ([#3639](https://github.com/open-ic/open-chat/pull/3639))
+
 ### Changed
 
 - Short circuit query calls prior to calling `ic0.time()` where possible ([#3542](https://github.com/open-ic/open-chat/pull/3542))
