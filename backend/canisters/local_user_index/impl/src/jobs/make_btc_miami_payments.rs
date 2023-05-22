@@ -1,10 +1,10 @@
 use crate::model::btc_miami_payments_queue::PendingPayment;
 use crate::{mutate_state, RuntimeState};
 use candid::Principal;
-use ic_base_types::PrincipalId;
 use ic_cdk_timers::TimerId;
-use ic_icrc1::Account;
 use ic_ledger_types::{BlockIndex, Tokens};
+use icrc_ledger_types::icrc1::account::Account;
+use icrc_ledger_types::icrc1::transfer::TransferArg;
 use ledger_utils::sns::transaction_hash;
 use std::cell::Cell;
 use std::time::Duration;
@@ -65,11 +65,11 @@ async fn make_payment(
     this_canister_id: CanisterId,
 ) -> Result<(BlockIndex, TransactionHash), ()> {
     let to = Account {
-        owner: pending_payment.recipient.into(),
+        owner: pending_payment.recipient,
         subaccount: None,
     };
 
-    let args = ic_icrc1::endpoints::TransferArg {
+    let args = TransferArg {
         from_subaccount: None,
         to,
         fee: None,
@@ -78,7 +78,7 @@ async fn make_payment(
         amount: pending_payment.amount.into(),
     };
 
-    let transaction_hash = transaction_hash(ic_icrc1::Account::from(PrincipalId(this_canister_id)), &args);
+    let transaction_hash = transaction_hash(Account::from(this_canister_id), &args);
 
     let ckbtc_client = ic_icrc1_client::ICRC1Client {
         ledger_canister_id: CanisterId::from_text("mxzaz-hqaaa-aaaar-qaada-cai").unwrap(),
@@ -110,8 +110,8 @@ fn send_oc_bot_messages(
                 token: Cryptocurrency::CKBTC,
                 amount,
                 fee: Tokens::from_e8s(10),
-                from: CryptoAccount::Account(Account::from(PrincipalId(Principal::from(OPENCHAT_BOT_USER_ID)))),
-                to: CryptoAccount::Account(Account::from(PrincipalId(Principal::from(user_id)))),
+                from: CryptoAccount::Account(Account::from(Principal::from(OPENCHAT_BOT_USER_ID))),
+                to: CryptoAccount::Account(Account::from(Principal::from(user_id))),
                 memo: None,
                 created: pending_payment.timestamp,
                 transaction_hash,

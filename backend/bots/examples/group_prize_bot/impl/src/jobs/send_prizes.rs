@@ -1,5 +1,6 @@
 use crate::{mutate_state, Prize, RuntimeState};
 use ic_ledger_types::Tokens;
+use icrc_ledger_types::icrc1::account::Account;
 use ledger_utils::sns;
 use rand::Rng;
 use std::{cmp, time::Duration};
@@ -148,8 +149,8 @@ async fn transfer_prize_funds_to_group(
     let pending_transaction = types::sns::PendingCryptoTransaction {
         token,
         amount: Tokens::from_e8s(amount),
-        to: ic_icrc1::Account {
-            owner: ic_base_types::PrincipalId::from(group),
+        to: Account {
+            owner: group,
             subaccount: None,
         },
         fee: Tokens::from_e8s(token.fee() as u64),

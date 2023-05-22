@@ -1,11 +1,10 @@
 use crate::model::pending_actions_queue::{Action, TransferCkbtc};
 use crate::{mutate_state, read_state, RuntimeState};
 use candid::Principal;
-use ic_base_types::PrincipalId;
 use ic_cdk_timers::TimerId;
-use ic_icrc1::endpoints::{TransferArg, TransferError};
-use ic_icrc1::Account;
 use ic_ledger_types::Tokens;
+use icrc_ledger_types::icrc1::account::Account;
+use icrc_ledger_types::icrc1::transfer::{TransferArg, TransferError};
 use ledger_utils::sns::transaction_hash;
 use std::cell::Cell;
 use std::time::Duration;
@@ -82,18 +81,18 @@ async fn process_action(action: Action) {
                 ledger_canister_id,
             };
 
-            let from = Account::from(PrincipalId(this_canister_id));
+            let from = Account::from(this_canister_id);
             let now_nanos = now * 1_000_000;
 
             let args = TransferArg {
                 from_subaccount: None,
-                to: Account::from(PrincipalId(Principal::from(user_id))),
+                to: Account::from(Principal::from(user_id)),
                 fee: Some(10.into()),
                 created_at_time: Some(now_nanos),
                 memo: None,
                 amount: amount.into(),
             };
-            let transaction_hash = transaction_hash(from.clone(), &args);
+            let transaction_hash = transaction_hash(from, &args);
 
             match ledger_client.transfer(args.clone()).await {
                 Ok(Ok(block_index)) => {
@@ -109,9 +108,7 @@ async fn process_action(action: Action) {
                                             amount: Tokens::from_e8s(amount),
                                             fee: Tokens::from_e8s(10),
                                             from: sns::CryptoAccount::Account(from),
-                                            to: sns::CryptoAccount::Account(Account::from(PrincipalId(Principal::from(
-                                                user_id,
-                                            )))),
+                                            to: sns::CryptoAccount::Account(Account::from(Principal::from(user_id))),
                                             memo: None,
                                             created: now_nanos,
                                             transaction_hash,
