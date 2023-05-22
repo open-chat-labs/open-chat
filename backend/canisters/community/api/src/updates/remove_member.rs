@@ -15,7 +15,6 @@ pub enum Response {
     CannotRemoveUser,
     NotAuthorized,
     UserNotInCommunity,
-    UserSuspended,
     CommunityFrozen,
     InternalError(String),
 }

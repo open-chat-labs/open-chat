@@ -1,6 +1,7 @@
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
-use types::UserId;
+
+use crate::GlobalUser;
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -9,14 +10,6 @@ pub struct Args {
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
-    Success(SuccessResult),
+    Success(GlobalUser),
     UserNotFound,
-}
-
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub struct SuccessResult {
-    pub principal: Principal,
-    pub user_id: UserId,
-    pub is_bot: bool,
-    pub is_super_admin: bool,
 }

@@ -1,4 +1,5 @@
 use candid::Principal;
+use local_user_index_canister::GlobalUser;
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 use types::UserId;
@@ -59,11 +60,4 @@ impl GlobalUserMap {
     pub fn len(&self) -> usize {
         self.user_id_to_principal.len()
     }
-}
-
-pub struct GlobalUser {
-    pub user_id: UserId,
-    pub principal: Principal,
-    pub is_bot: bool,
-    pub is_platform_moderator: bool,
 }
