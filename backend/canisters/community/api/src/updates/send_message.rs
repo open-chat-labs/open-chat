@@ -15,7 +15,6 @@ pub struct Args {
     pub replies_to: Option<GroupReplyContext>,
     pub mentioned: Vec<User>,
     pub forwarding: bool,
-    pub correlation_id: u64,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -31,7 +30,7 @@ pub enum Response {
     UserNotInGroup,
     UserSuspended,
     InvalidRequest(String),
-    ChatFrozen,
+    CommunityFrozen,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
