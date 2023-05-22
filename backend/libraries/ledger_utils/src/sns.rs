@@ -12,14 +12,14 @@ pub async fn process_transaction(
 
     let args = TransferArg {
         from_subaccount: None,
-        to: transaction.to.clone(),
+        to: transaction.to,
         fee: Some(transaction.fee.e8s().into()),
         created_at_time: Some(transaction.created),
         memo: transaction.memo.map(|m| Memo::from(m.0)),
         amount: transaction.amount.e8s().into(),
     };
 
-    let transaction_hash = transaction_hash(from.clone(), &args);
+    let transaction_hash = transaction_hash(from, &args);
 
     let client = ic_icrc1_client::ICRC1Client {
         ledger_canister_id,
@@ -31,8 +31,8 @@ pub async fn process_transaction(
             token: transaction.token,
             amount: transaction.amount,
             fee: transaction.fee,
-            from: types::sns::CryptoAccount::Account(from.clone()),
-            to: types::sns::CryptoAccount::Account(transaction.to.clone()),
+            from: types::sns::CryptoAccount::Account(from),
+            to: types::sns::CryptoAccount::Account(transaction.to),
             memo: transaction.memo,
             created: transaction.created,
             transaction_hash,
@@ -66,7 +66,7 @@ pub fn transaction_hash(from: Account, args: &TransferArg) -> TransactionHash {
     ic_icrc1::Transaction {
         operation: ic_icrc1::Operation::Transfer {
             from,
-            to: args.to.clone(),
+            to: args.to,
             amount: args.amount.clone().0.try_into().unwrap(),
             fee: args.fee.clone().and_then(|f| f.0.try_into().ok()),
         },

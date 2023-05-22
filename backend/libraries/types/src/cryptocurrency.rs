@@ -129,7 +129,7 @@ impl PendingCryptoTransaction {
                 }
             },
             PendingCryptoTransaction::SNS(t) => {
-                t.to.owner == Principal::from(user_id).into() && t.to.subaccount.map_or(true, |s| s == *DEFAULT_SUBACCOUNT)
+                t.to.owner == user_id.into() && t.to.subaccount.map_or(true, |s| s == *DEFAULT_SUBACCOUNT)
             }
         }
     }
