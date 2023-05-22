@@ -60,13 +60,13 @@ mod tests {
         map.add(4.into(), 8.into());
         map.add(5.into(), 9.into());
 
-        map.remove_up_to(&0.into());
+        map.remove_up_to(0.into());
         assert_eq!(map.map.len(), 5);
 
-        map.remove_up_to(&7.into());
+        map.remove_up_to(7.into());
         assert_eq!(map.map.len(), 2);
 
-        map.remove_up_to(&9.into());
+        map.remove_up_to(9.into());
         assert_eq!(map.map.len(), 0);
     }
 }
