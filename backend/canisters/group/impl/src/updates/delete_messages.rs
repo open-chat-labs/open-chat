@@ -5,7 +5,7 @@ use candid::Principal;
 use canister_tracing_macros::trace;
 use chat_events::DeleteMessageResult;
 use group_canister::delete_messages::{Response::*, *};
-use group_chat_core::{DeleteMessagesResult, DeleteMessagesSuccess};
+use group_chat_core::DeleteMessagesResult;
 use ic_cdk_macros::update;
 use types::{CanisterId, UserId};
 use user_index_canister_c2c_client::lookup_user;
@@ -68,14 +68,15 @@ fn delete_messages_impl(user_id: UserId, args: Args, runtime_state: &mut Runtime
         args.as_platform_moderator.unwrap_or_default(),
         now,
     ) {
-        DeleteMessagesResult::Success(DeleteMessagesSuccess { results, my_messages }) => {
+        DeleteMessagesResult::Success(results) => {
             let remove_deleted_message_content_at = now + (5 * MINUTE_IN_MS);
-            for message_id in results
-                .into_iter()
-                .filter(|(_, result)| matches!(result, DeleteMessageResult::Success(_)))
-                .map(|(message_id, _)| message_id)
-                .filter(|message_id| my_messages.contains(message_id))
-            {
+            for message_id in results.into_iter().filter_map(|(message_id, result)| {
+                if let DeleteMessageResult::Success(sender) = result {
+                    (sender == user_id).then_some(message_id)
+                } else {
+                    None
+                }
+            }) {
                 // After 5 minutes hard delete those messages where the deleter was the message sender
                 runtime_state.data.timer_jobs.enqueue_job(
                     TimerJob::HardDeleteMessageContent(HardDeleteMessageContentJob {
