@@ -18,7 +18,7 @@ fn send_message(args: Args) -> Response {
 
 fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
     if state.data.is_frozen() {
-        return ChatFrozen;
+        return CommunityFrozen;
     }
 
     let caller = state.env.caller();

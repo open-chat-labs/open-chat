@@ -18,7 +18,7 @@ pub enum Response {
     CallerNotInCommunity,
     UserNotInGroup,
     UserSuspended,
-    ChatFrozen,
+    CommunityFrozen,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

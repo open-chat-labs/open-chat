@@ -15,7 +15,7 @@ fn add_reaction(args: Args) -> Response {
 
 fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> Response {
     if state.data.is_frozen() {
-        return ChatFrozen;
+        return CommunityFrozen;
     }
 
     let caller = state.env.caller();

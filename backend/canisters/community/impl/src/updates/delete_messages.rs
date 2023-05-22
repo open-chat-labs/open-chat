@@ -54,7 +54,7 @@ fn prepare(state: &RuntimeState) -> Result<PrepareResult, Response> {
 
 fn delete_messages_impl(user_id: UserId, args: Args, state: &mut RuntimeState) -> Response {
     if state.data.is_frozen() {
-        return ChatFrozen;
+        return CommunityFrozen;
     }
 
     let now = state.env.now();
