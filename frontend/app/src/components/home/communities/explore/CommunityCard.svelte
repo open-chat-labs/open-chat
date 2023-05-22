@@ -2,19 +2,23 @@
     import type { Community } from "openchat-client";
 
     export let community: Community;
+    export let selected: boolean;
+    export let header = false;
 </script>
 
-<div on:click class="card">
+<div class:selected class:header on:click class="card">
     <div class="banner">
         <div class="avatar" />
     </div>
     <div class="content">
         <div class="name">{community.name}</div>
         <div class="desc">{community.description}</div>
-        <div class="footer">
-            <span class="number">{community.memberCount.toLocaleString()}</span>
-            <span class="members">{"members"}</span>
-        </div>
+        {#if !header}
+            <div class="footer">
+                <span class="number">{community.memberCount.toLocaleString()}</span>
+                <span class="members">{"members"}</span>
+            </div>
+        {/if}
     </div>
 </div>
 
@@ -24,6 +28,10 @@
         background-color: var(--recommended-bg);
         border: 1px solid var(--bd);
         border-radius: $sp3;
+
+        &.selected {
+            border-color: var(--txt);
+        }
 
         .banner {
             position: relative;
@@ -39,6 +47,14 @@
                 left: $sp3;
                 border-radius: 50%;
                 background-color: orange;
+            }
+        }
+
+        &.header {
+            border-radius: 0;
+            border: none;
+            .banner {
+                border-radius: 0;
             }
         }
 

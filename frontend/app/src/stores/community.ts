@@ -11,6 +11,14 @@ function createDummyCommunity(id: string) {
     };
 }
 
+function createDummyCommunityGroup(id: string) {
+    return {
+        name: `Group ${id}`,
+        description:
+            "This is a nice groups that belongs to this community. It might have some _markdown_ or even some `code samples`.",
+    };
+}
+
 export const dummyCommunities = writable<Community[]>([
     createDummyCommunity("1"),
     createDummyCommunity("2"),
@@ -26,4 +34,21 @@ export const dummyCommunities = writable<Community[]>([
     createDummyCommunity("12"),
     createDummyCommunity("13"),
     createDummyCommunity("14"),
+]);
+
+export const dummyCommunityGroups = writable<{ name: string; description: string }[]>([
+    createDummyCommunityGroup("1"),
+    createDummyCommunityGroup("2"),
+    createDummyCommunityGroup("3"),
+    createDummyCommunityGroup("4"),
+    createDummyCommunityGroup("5"),
+    createDummyCommunityGroup("6"),
+    createDummyCommunityGroup("7"),
+    createDummyCommunityGroup("8"),
+    createDummyCommunityGroup("9"),
+    createDummyCommunityGroup("10"),
+    createDummyCommunityGroup("11"),
+    createDummyCommunityGroup("12"),
+    createDummyCommunityGroup("13"),
+    createDummyCommunityGroup("14"),
 ]);

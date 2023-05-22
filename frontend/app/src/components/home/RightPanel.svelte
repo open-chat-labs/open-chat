@@ -5,7 +5,7 @@
     import InviteUsers from "./groupdetails/InviteUsers.svelte";
     import Members from "./groupdetails/Members.svelte";
     import PinnedMessages from "./pinned/PinnedMessages.svelte";
-    import { rightPanelHistory } from "../../stores/rightPanel";
+    import { popRightPanelHistory, rightPanelHistory } from "../../stores/rightPanel";
     import type {
         ChatEvent,
         EventWrapper,
@@ -28,6 +28,7 @@
     import { pathParams } from "../../routes";
     import page from "page";
     import { compareRoles } from "openchat-shared";
+    import CommunityGroups from "./communities/explore/CommunityGroups.svelte";
 
     const dispatch = createEventDispatcher();
 
@@ -68,10 +69,6 @@
         }
     }
 
-    function popHistory() {
-        rightPanelHistory.update((history) => history.slice(0, history.length - 1));
-    }
-
     async function inviteUsers(ev: CustomEvent<UserSummary[]>) {
         if ($selectedChatId !== undefined) {
             const userIds = ev.detail.map((u) => u.userId);
@@ -83,7 +80,7 @@
                 .then((resp) => {
                     switch (resp) {
                         case "success":
-                            popHistory();
+                            popRightPanelHistory();
                             if ($groupChat?.public ?? false) {
                                 toastStore.showSuccessToast("group.usersInvited");
                             }
@@ -108,7 +105,7 @@
     function goToMessageIndex(ev: CustomEvent<{ index: number; preserveFocus: boolean }>): void {
         dispatch("goToMessageIndex", ev.detail);
         if (modal) {
-            popHistory();
+            popRightPanelHistory();
         }
     }
 
@@ -123,7 +120,7 @@
     }
 
     function closeThread(_ev: CustomEvent<string>) {
-        popHistory();
+        popRightPanelHistory();
         page.replace(stripThreadFromUrl(removeQueryStringParam("open")));
     }
 
@@ -232,7 +229,7 @@
             chat={$groupChat}
             memberCount={$currentChatMembers.length}
             rules={$currentChatRules}
-            on:close={popHistory}
+            on:close={popRightPanelHistory}
             on:updateGroupRules={updateGroupRules}
             on:deleteGroup
             on:editGroup
@@ -243,12 +240,12 @@
             busy={invitingUsers}
             closeIcon={$rightPanelHistory.length > 1 ? "back" : "close"}
             on:inviteUsers={inviteUsers}
-            on:cancelInviteUsers={popHistory} />
+            on:cancelInviteUsers={popRightPanelHistory} />
     {:else if lastState.kind === "show_members" && $selectedChatId !== undefined}
         <Members
             closeIcon={$rightPanelHistory.length > 1 ? "back" : "close"}
             chat={$groupChat}
-            on:close={popHistory}
+            on:close={popRightPanelHistory}
             on:blockUser={onBlockUser}
             on:unblockUser={onUnblockUser}
             on:chatWith
@@ -262,14 +259,14 @@
             chatId={$selectedChatId}
             pinned={$currentChatPinnedMessages}
             dateLastPinned={$groupChat.dateLastPinned}
-            on:close={popHistory} />
+            on:close={popRightPanelHistory} />
     {:else if lastState.kind === "user_profile"}
         <UserProfile
             on:unsubscribeNotifications={() => client.setSoftDisabled(true)}
             on:upgrade
             {user}
             on:userAvatarSelected
-            on:closeProfile={popHistory} />
+            on:closeProfile={popRightPanelHistory} />
     {:else if threadRootEvent !== undefined && $selectedChatStore !== undefined}
         <Thread
             on:chatWith
@@ -279,6 +276,8 @@
             chat={$selectedChatStore}
             on:closeThread={closeThread} />
     {:else if lastState.kind === "proposal_filters" && $selectedChatId !== undefined}
-        <ProposalGroupFilters on:close={popHistory} />
+        <ProposalGroupFilters on:close={popRightPanelHistory} />
+    {:else if lastState.kind === "community_groups"}
+        <CommunityGroups communityId={lastState.communityId} />
     {/if}
 </Panel>

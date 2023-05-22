@@ -6,9 +6,13 @@
     import page from "page";
     import CommunityCard from "./CommunityCard.svelte";
     import Search from "../../..//Search.svelte";
+    import { pathParams } from "../../../../routes";
 
     let searchTerm = "";
     let searching = false;
+
+    $: selectedCommunityId =
+        $pathParams.kind === "communities_route" ? $pathParams.communityId : undefined;
 </script>
 
 <div class="explore">
@@ -37,7 +41,10 @@
 
     <div class="communities">
         {#each $dummyCommunities as community}
-            <CommunityCard {community} on:click={() => page(`/communities/${community.id}`)}>
+            <CommunityCard
+                selected={selectedCommunityId === community.id}
+                {community}
+                on:click={() => page(`/communities/${community.id}`)}>
                 {community.name}
             </CommunityCard>
         {/each}

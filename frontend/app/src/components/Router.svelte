@@ -21,6 +21,7 @@
         page("/diamond", parsePathParams, track, () => (route = LandingPage));
         page("/architecture", parsePathParams, track, () => (route = LandingPage));
         if ($communitiesEnabled) {
+            // this is for explore mode
             page(
                 "/communities/:communityId?",
                 redirectHashRoutes,
@@ -28,6 +29,14 @@
                 track,
                 () => (route = Home)
             );
+            // this is for looking through my
+            // page(
+            //     "/community/:communityId?/:chatId?/:messageIndex?/:threadMessageIndex?",
+            //     redirectHashRoutes,
+            //     parsePathParams,
+            //     track,
+            //     () => (route = Home)
+            // );
         }
         page("/hotgroups", redirectHashRoutes, parsePathParams, track, () => (route = Home));
         page(

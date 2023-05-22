@@ -836,6 +836,7 @@
     },
     "communities": {
         "explore": "Explore communities",
-        "search": "Search communities"
+        "search": "Search communities",
+        "searchGroups": "Search community groups"
     }
 }

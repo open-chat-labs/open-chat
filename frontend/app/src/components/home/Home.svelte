@@ -215,7 +215,15 @@
     async function routeChange(initialised: boolean, pathParams: RouteParams): Promise<void> {
         // wait until we have loaded the chats
         if (initialised) {
-            if (pathParams.kind === "chat_selected_route") {
+            if (pathParams.kind === "communities_route") {
+                if (pathParams.communityId !== undefined) {
+                    rightPanelHistory.set([
+                        { kind: "community_groups", communityId: pathParams.communityId },
+                    ]);
+                } else {
+                    rightPanelHistory.set([]);
+                }
+            } else if (pathParams.kind === "chat_selected_route") {
                 // first close any open thread
                 closeThread();
 
@@ -282,9 +290,9 @@
     // Note: very important (and hacky) that this is hidden in a function rather than inline in the top level reactive
     // statement because we don't want that reactive statement to execute in reponse to changes in rightPanelHistory :puke:
     function filterChatSpecificRightPanelStates() {
-        rightPanelHistory.update((history) => {
-            return history.filter((panel) => panel.kind === "user_profile");
-        });
+        rightPanelHistory.update((history) =>
+            history.filter((panel) => panel.kind === "user_profile")
+        );
     }
 
     function closeThread() {
@@ -293,16 +301,14 @@
             return;
         }
         tick().then(() => {
-            rightPanelHistory.update((history) => {
-                return history.filter((panel) => panel.kind !== "message_thread_panel");
-            });
+            rightPanelHistory.update((history) =>
+                history.filter((panel) => panel.kind !== "message_thread_panel")
+            );
         });
     }
 
     function resetRightPanel() {
-        rightPanelHistory.update((history) => {
-            return filterByChatType(history, $selectedChatStore);
-        });
+        rightPanelHistory.update((history) => filterByChatType(history, $selectedChatStore));
     }
 
     function userAvatarSelected(ev: CustomEvent<{ data: Uint8Array }>): void {

@@ -96,26 +96,8 @@
 
     function selectCommunity(idx: number) {
         selectedIndex = idx;
-        page("/"); // TODO - do we need to have the communityId in the route? Or do we just select the first group for that community?
+        page("/"); // TODO - we will need a new route here to represent the selected community
     }
-
-    /* 
-    let's imagine that we have: 
-    - home logo
-    - direct chats
-    - favourite chats
-    - create community
-    - explore communities
-
-    ... all my communities
-
-    - wallet
-    - menu
-    - profile pic
-
-    It just feels like too much stuff to squeeze in
-
-    */
 </script>
 
 <Panel nav>
@@ -130,7 +112,7 @@
         </LeftNavItem>
 
         {#if user !== undefined}
-            <LeftNavItem label={$_("profile.title")} on:click={() => dispatch("profile")}>
+            <LeftNavItem label={$_("profile.label")} on:click={() => dispatch("profile")}>
                 <Avatar url={client.userAvatarUrl(user)} userId={user.userId} size={avatarSize} />
                 <div slot="menu">
                     <MenuIcon>
