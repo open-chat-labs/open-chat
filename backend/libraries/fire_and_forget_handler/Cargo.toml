@@ -1,0 +1,16 @@
+[package]
+name = "fire_and_forget_handler"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+canister_client = { path = "../canister_client" }
+futures = { workspace = true }
+ic-cdk = { workspace = true }
+ic-cdk-timers = { workspace = true }
+serde = { workspace = true }
+tracing = { workspace = true }
+types = { path = "../types" }
+utils = { path = "../utils" }

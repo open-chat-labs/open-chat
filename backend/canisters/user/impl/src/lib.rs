@@ -6,6 +6,7 @@ use crate::timer_job_types::TimerJob;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
+use fire_and_forget_handler::FireAndForgetHandler;
 use ic_ledger_types::AccountIdentifier;
 use ledger_utils::default_ledger_account;
 use model::contacts::Contacts;
@@ -152,6 +153,8 @@ struct Data {
     pub timer_jobs: TimerJobs<TimerJob>,
     pub contacts: Contacts,
     pub diamond_membership_expires_at: Option<TimestampMillis>,
+    #[serde(default)]
+    pub fire_and_forget_handler: FireAndForgetHandler,
 }
 
 impl Data {
@@ -191,6 +194,7 @@ impl Data {
             timer_jobs: TimerJobs::default(),
             contacts: Contacts::default(),
             diamond_membership_expires_at: None,
+            fire_and_forget_handler: FireAndForgetHandler::default(),
         }
     }
 

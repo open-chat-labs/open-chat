@@ -1267,6 +1267,7 @@ dependencies = [
  "canister_tracing_macros",
  "chat_events",
  "community_canister",
+ "fire_and_forget_handler",
  "gated_groups",
  "group_chat_core",
  "group_index_canister",
@@ -2129,6 +2130,20 @@ dependencies = [
 ]
 
 [[package]]
+name = "fire_and_forget_handler"
+version = "0.1.0"
+dependencies = [
+ "canister_client",
+ "futures",
+ "ic-cdk 0.7.3",
+ "ic-cdk-timers",
+ "serde",
+ "tracing",
+ "types",
+ "utils",
+]
+
+[[package]]
 name = "fixedbitset"
 version = "0.4.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2393,6 +2408,7 @@ dependencies = [
  "canister_timer_jobs",
  "canister_tracing_macros",
  "chat_events",
+ "fire_and_forget_handler",
  "futures",
  "gated_groups",
  "group_canister",
@@ -7237,6 +7253,7 @@ dependencies = [
  "canister_timer_jobs",
  "canister_tracing_macros",
  "chat_events",
+ "fire_and_forget_handler",
  "futures",
  "group_canister",
  "group_canister_c2c_client",

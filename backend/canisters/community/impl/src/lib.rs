@@ -4,6 +4,7 @@ use crate::timer_job_types::TimerJob;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
+use fire_and_forget_handler::FireAndForgetHandler;
 use model::{events::CommunityEvents, invited_users::InvitedUsers, members::CommunityMemberInternal};
 use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
@@ -140,6 +141,7 @@ struct Data {
     invite_code_enabled: bool,
     frozen: Timestamped<Option<FrozenGroupInfo>>,
     timer_jobs: TimerJobs<TimerJob>,
+    fire_and_forget_handler: FireAndForgetHandler,
     test_mode: bool,
 }
 
@@ -190,6 +192,7 @@ impl Data {
             invite_code_enabled: false,
             frozen: Timestamped::default(),
             timer_jobs: TimerJobs::default(),
+            fire_and_forget_handler: FireAndForgetHandler::default(),
             test_mode,
         }
     }

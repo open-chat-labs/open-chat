@@ -19,6 +19,7 @@ canister_state_macros = { workspace = true }
 canister_timer_jobs = { workspace = true }
 canister_tracing_macros = { workspace = true }
 chat_events = { path = "../../../libraries/chat_events" }
+fire_and_forget_handler = { path = "../../../libraries/fire_and_forget_handler" }
 futures = { workspace = true }
 group_canister = { path = "../../group/api" }
 group_canister_c2c_client = { path = "../../group/c2c_client" }

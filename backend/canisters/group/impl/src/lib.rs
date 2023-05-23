@@ -6,6 +6,7 @@ use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
 use chat_events::{ChatEventInternal, ChatEvents, Reader};
+use fire_and_forget_handler::FireAndForgetHandler;
 use group_chat_core::GroupChatCore;
 use group_members::{AddResult as AddMemberResult, GroupMemberInternal, GroupMembers};
 use model::invited_users::InvitedUsers;
@@ -295,6 +296,8 @@ struct Data {
     pub frozen: Timestamped<Option<FrozenGroupInfo>>,
     pub timer_jobs: TimerJobs<TimerJob>,
     pub invited_users: InvitedUsers,
+    #[serde(default)]
+    pub fire_and_forget_handler: FireAndForgetHandler,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -355,6 +358,7 @@ impl Data {
             frozen: Timestamped::default(),
             timer_jobs: TimerJobs::default(),
             invited_users: InvitedUsers::default(),
+            fire_and_forget_handler: FireAndForgetHandler::default(),
         }
     }
 
@@ -526,6 +530,7 @@ impl From<DataPrevious> for Data {
             frozen: value.frozen,
             timer_jobs: value.timer_jobs,
             invited_users: value.invited_users,
+            fire_and_forget_handler: FireAndForgetHandler::default(),
         }
     }
 }
