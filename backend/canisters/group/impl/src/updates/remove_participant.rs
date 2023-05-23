@@ -1,9 +1,11 @@
 use crate::{mutate_state, read_state, RuntimeState};
 use canister_tracing_macros::trace;
 use chat_events::ChatEventInternal;
+use fire_and_forget_handler::FireAndForgetHandler;
 use group_canister::remove_participant::{Response::*, *};
 use ic_cdk_macros::update;
 use local_user_index_canister_c2c_client::{lookup_user, LookupUserError};
+use msgpack::serialize_then_unwrap;
 use types::{CanisterId, MembersRemoved, UserId, UsersBlocked};
 use user_canister::c2c_remove_from_group;
 
@@ -117,31 +119,33 @@ fn commit(user_id: UserId, block: bool, removed_by: UserId, state: &mut RuntimeS
     state.data.chat.events.push_main_event(event, 0, state.env.now());
 
     // Fire-and-forget call to notify the user canister
-    // TODO: This should retry on failure
-    ic_cdk::spawn(remove_membership_from_user_canister(
+    remove_membership_from_user_canister(
         user_id,
         removed_by,
         block,
         state.data.chat.name.clone(),
         state.data.chat.is_public,
-    ));
+        &mut state.data.fire_and_forget_handler,
+    );
 }
 
-async fn remove_membership_from_user_canister(
+fn remove_membership_from_user_canister(
     user_id: UserId,
     removed_by: UserId,
     blocked: bool,
     group_name: String,
     public: bool,
+    fire_and_forget_handler: &mut FireAndForgetHandler,
 ) {
-    let _ = user_canister_c2c_client::c2c_remove_from_group(
+    let args = c2c_remove_from_group::Args {
+        removed_by,
+        blocked,
+        group_name,
+        public,
+    };
+    fire_and_forget_handler.send(
         user_id.into(),
-        &c2c_remove_from_group::Args {
-            removed_by,
-            blocked,
-            group_name,
-            public,
-        },
-    )
-    .await;
+        "c2c_remove_from_group_msgpack".to_string(),
+        serialize_then_unwrap(args),
+    );
 }

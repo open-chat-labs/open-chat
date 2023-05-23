@@ -1267,6 +1267,7 @@ dependencies = [
  "canister_tracing_macros",
  "chat_events",
  "community_canister",
+ "fire_and_forget_handler",
  "gated_groups",
  "group_chat_core",
  "group_index_canister",
