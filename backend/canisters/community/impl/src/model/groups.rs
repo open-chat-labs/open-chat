@@ -19,7 +19,11 @@ impl Groups {
         };
     }
 
-    pub fn _get(&self, group_id: &CommunityGroupId) -> Option<&GroupChatCore> {
+    pub fn delete(&mut self, group_id: CommunityGroupId) -> Option<GroupChatCore> {
+        self.groups.remove(&group_id)
+    }
+
+    pub fn get(&self, group_id: &CommunityGroupId) -> Option<&GroupChatCore> {
         self.groups.get(group_id)
     }
 
