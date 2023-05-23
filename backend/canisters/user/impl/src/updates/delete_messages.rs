@@ -101,7 +101,7 @@ fn delete_on_recipients_canister(
     };
     fire_and_forget_handler.send(
         canister_id,
-        "c2c_toggle_reaction_msgpack".to_string(),
+        "c2c_delete_messages_msgpack".to_string(),
         serialize_then_unwrap(args),
     );
 }
