@@ -63,7 +63,9 @@ fn prepare(user_id: UserId, state: &RuntimeState) -> Result<PrepareResult, Respo
     let caller = state.env.caller();
 
     if let Some(member) = state.data.get_member(caller) {
-        if member.user_id == user_id {
+        if member.suspended.value {
+            Err(UserSuspended)
+        } else if member.user_id == user_id {
             Err(CannotRemoveSelf)
         } else {
             // Check if the caller is authorized to remove the user

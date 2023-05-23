@@ -123,6 +123,10 @@ impl CommunityRole {
         }
     }
 
+    pub fn can_change_community_visibility(&self) -> bool {
+        self.is_owner()
+    }
+
     fn has_admin_rights(&self) -> bool {
         self.is_admin() || self.has_owner_rights()
     }

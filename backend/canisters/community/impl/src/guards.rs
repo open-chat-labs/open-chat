@@ -1,5 +1,13 @@
 use crate::read_state;
 
+pub fn caller_is_user_index() -> Result<(), String> {
+    if read_state(|state| state.is_caller_user_index()) {
+        Ok(())
+    } else {
+        Err("Caller is not the user_index".to_string())
+    }
+}
+
 pub fn caller_is_user_index_or_local_user_index() -> Result<(), String> {
     if read_state(|state| state.is_caller_user_index() || state.is_caller_local_user_index()) {
         Ok(())
