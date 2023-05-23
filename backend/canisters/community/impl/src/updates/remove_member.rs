@@ -34,7 +34,7 @@ async fn remove_member_impl(user_id: UserId, block: bool) -> Response {
     // is not authorized
     if prepare_result.is_user_an_owner {
         match lookup_user(user_id.into(), prepare_result.local_user_index_canister_id).await {
-            Ok(user) if user.is_platform_moderator => (),
+            Ok(user) if !user.is_platform_moderator => (),
             Ok(_) | Err(LookupUserError::UserNotFound) => return NotAuthorized,
             Err(LookupUserError::InternalError(error)) => return InternalError(error),
         }
