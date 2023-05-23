@@ -7,7 +7,7 @@
 </script>
 
 {#if $hideLeftNav}
-    <span on:click={() => navOpen.set(true)} class="menu">
+    <span on:click|stopPropagation={() => navOpen.set(true)} class="menu">
         <HoverIcon>
             <Arrow size={$iconSize} color={"var(--icon-txt)"} />
         </HoverIcon>

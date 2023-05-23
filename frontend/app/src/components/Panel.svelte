@@ -22,7 +22,7 @@
         if (nav && !$hideLeftNav) {
             delay = window.setTimeout(() => {
                 navOpen.set(true);
-            }, 300);
+            }, 1000); // TODO what is the "right" value for this delay - getting that right makes it bearable
         }
     }
 
@@ -33,13 +33,18 @@
         }
     }
 
+    function click() {
+        // if click on the panel, clear any outstanding timer to stop the menu opening
+        window.clearTimeout(delay);
+    }
+
     $: console.log("NavOpen: ", $navOpen);
 </script>
 
 <section
     on:mouseenter={mouseenter}
     on:mouseleave={mouseleave}
-    on:click
+    on:click={click}
     class:rtl={$rtlStore}
     class:nav
     class:left

@@ -1,5 +1,7 @@
 <script lang="ts">
     import type { Community } from "openchat-client";
+    import ButtonGroup from "../../../ButtonGroup.svelte";
+    import Button from "../../../Button.svelte";
 
     export let community: Community;
     export let selected: boolean;
@@ -14,9 +16,20 @@
         <div class="name">{community.name}</div>
         <div class="desc">{community.description}</div>
         {#if !header}
+            <ButtonGroup align={"fill"}>
+                <Button tiny hollow>Preview</Button>
+                <Button tiny>Join</Button>
+            </ButtonGroup>
             <div class="footer">
-                <span class="number">{community.memberCount.toLocaleString()}</span>
-                <span class="members">{"members"}</span>
+                <div class="members">
+                    <span class="number">{community.memberCount.toLocaleString()}</span>
+                    <span class="label">{"members"}</span>
+                </div>
+
+                <div on:click class="groups">
+                    <span class="number">{community.groupCount.toLocaleString()}</span>
+                    <span class="label">{"groups"}</span>
+                </div>
             </div>
         {/if}
     </div>
@@ -76,12 +89,24 @@
             .footer {
                 border-top: 1px solid var(--bd);
                 padding-top: $sp4;
+                margin-top: $sp4;
+                display: flex;
+                justify-content: space-between;
+                gap: $sp3;
 
-                .number {
-                    font-weight: 500;
+                .members,
+                .groups {
+                    .number {
+                        font-weight: 500;
+                    }
+                    .label {
+                        color: var(--txt-light);
+                    }
                 }
-                .members {
-                    color: var(--txt-light);
+
+                .groups {
+                    cursor: pointer;
+                    text-decoration: underline;
                 }
             }
         }

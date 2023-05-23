@@ -87,7 +87,6 @@
     on:change={onChange}
     invalid={false}
     value={originalUsername}
-    autofocus={true}
     {disabled}
     minlength={MIN_USERNAME_LENGTH}
     maxlength={MAX_USERNAME_LENGTH}

@@ -8,6 +8,7 @@
     import Search from "../../..//Search.svelte";
     import { pathParams } from "../../../../routes";
     import ToggleIcon from "../../nav/ToggleIcon.svelte";
+    import { mobileWidth } from "../../../../stores/screenDimensions";
 
     let searchTerm = "";
     let searching = false;
@@ -18,26 +19,48 @@
 
 <div class="explore">
     <div class="header">
-        <ToggleIcon />
-        <div class="title">{$_("communities.explore")}</div>
-        <div class="search">
-            <Search bind:searchTerm bind:searching placeholder={$_("communities.search")} />
+        <div class="title-row">
+            <div class="title">
+                <ToggleIcon />
+                <h4>{$_("communities.explore")}</h4>
+            </div>
+            {#if !$mobileWidth}
+                <div class="search">
+                    <Search
+                        fill
+                        bind:searchTerm
+                        bind:searching
+                        placeholder={$_("communities.search")} />
+                </div>
+                <div class="create">
+                    <Button>Create a community</Button>
+                </div>
+            {/if}
         </div>
-        <div class="create">
-            <Button>Create a community</Button>
-        </div>
-        <div class="tags">
-            <p>All, Gaming, Crypto, Metaverse, Sport, Music</p>
-        </div>
-        <div class="sort">
-            <Select>
-                <option value={""} selected={true} disabled={true}>Sort by</option>
-                <option value={""}>{"Newest"}</option>
-                <option value={""}>{"Member count: Low to high"}</option>
-                <option value={""}>{"Member count: High to low"}</option>
-                <option value={""}>{"Alphabetical: A-Z"}</option>
-                <option value={""}>{"Alphabetical: Z-A"}</option>
-            </Select>
+        <div class="subtitle-row">
+            <div class="tags">
+                <p>All, Gaming, Crypto, Metaverse, Sport, Music</p>
+            </div>
+            {#if $mobileWidth}
+                <div class="search">
+                    <Search
+                        fill
+                        bind:searchTerm
+                        bind:searching
+                        placeholder={$_("communities.search")} />
+                </div>
+            {:else}
+                <div class="sort">
+                    <Select>
+                        <option value={""} selected={true} disabled={true}>Sort by</option>
+                        <option value={""}>{"Newest"}</option>
+                        <option value={""}>{"Member count: Low to high"}</option>
+                        <option value={""}>{"Member count: High to low"}</option>
+                        <option value={""}>{"Alphabetical: A-Z"}</option>
+                        <option value={""}>{"Alphabetical: Z-A"}</option>
+                    </Select>
+                </div>
+            {/if}
         </div>
     </div>
 
@@ -57,46 +80,82 @@
     .explore {
         display: flex;
         flex-direction: column;
-        gap: $sp5;
+        gap: $sp4;
         padding: $sp5;
+        height: 100%;
+        overflow: hidden;
 
         @include mobile() {
             padding: $sp3;
         }
     }
+
     .header {
-        display: grid;
-        grid-template-columns: toRem(40) repeat(5, 1fr);
-        gap: $sp4;
-        border-bottom: 1px solid var(--bd);
-        margin-bottom: $sp3;
+        .title-row {
+            display: flex;
+            gap: $sp4;
+            margin-bottom: $sp5;
 
-        .title {
-            @include font(bold, normal, fs-160, 38);
-            grid-column: 2 / span 2;
+            .title {
+                display: flex;
+                gap: $sp3;
+                align-items: center;
+
+                h4 {
+                    @include font(bold, normal, fs-160, 38);
+                    flex: auto;
+                }
+            }
+
+            .search {
+                flex: auto;
+            }
         }
 
-        .search {
-            grid-column: span 2;
-        }
+        .subtitle-row {
+            display: flex;
+            justify-content: space-between;
+            gap: $sp4;
 
-        .create {
-            justify-self: self-end;
-            grid-column: 6;
-        }
-
-        .tags {
-            grid-column: 1 / span 5;
-        }
-
-        .sort {
-            grid-column: 6;
+            @include mobile() {
+                flex-direction: column;
+            }
         }
     }
+    // .header {
+    //     display: grid;
+    //     grid-template-columns: toRem(40) repeat(5, 1fr);
+    //     gap: $sp4;
+    //     border-bottom: 1px solid var(--bd);
+    //     margin-bottom: $sp3;
+
+    //     .title {
+    //         @include font(bold, normal, fs-160, 38);
+    //         grid-column: 2 / span 2;
+    //     }
+
+    //     .search {
+    //         grid-column: span 2;
+    //     }
+
+    //     .create {
+    //         justify-self: self-end;
+    //         grid-column: 6;
+    //     }
+
+    //     .tags {
+    //         grid-column: 1 / span 5;
+    //     }
+
+    //     .sort {
+    //         grid-column: 6;
+    //     }
+    // }
 
     .communities {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr));
         gap: $sp5;
+        @include nice-scrollbar();
     }
 </style>

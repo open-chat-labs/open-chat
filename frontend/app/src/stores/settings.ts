@@ -1,6 +1,7 @@
 import { isTouchDevice } from "../utils/devices";
 import { configKeys } from "../utils/config";
 import { createLsBoolStore } from "openchat-client";
+import { mobileWidth } from "./screenDimensions";
 
 export type LsBoolStore = ReturnType<typeof createLsBoolStore>;
 
@@ -25,3 +26,4 @@ export const discoverHotGroupsDismissed = createLsBoolStore(
     false
 );
 export const hideLeftNav = createLsBoolStore(configKeys.userInfoSection, false);
+mobileWidth.subscribe((mobile) => hideLeftNav.set(mobile));

@@ -11,8 +11,10 @@
     import Search from "../../..//Search.svelte";
     import { mobileWidth } from "../../../../stores/screenDimensions";
     import { dummyCommunityGroups, dummyCommunities } from "../../../../stores/community";
+    import { iconSize } from "../../../../stores/iconSize";
     import CommunityCard from "./CommunityCard.svelte";
-    import { popRightPanelHistory } from "../../../../stores/rightPanel";
+    import SectionHeader from "../../../SectionHeader.svelte";
+    import page from "page";
 
     export let communityId: string;
 
@@ -21,25 +23,25 @@
 
     $: community = $dummyCommunities.find((c) => c.id === communityId);
 
-    function onClose() {
-        popRightPanelHistory();
+    function close() {
+        page("/communities");
     }
 </script>
 
 {#if community}
     <div class="wrapper">
-        <CommunityCard header {community} selected={false} />
-        <span title={$_("close")} class="close" on:click={onClose}>
-            <HoverIcon>
-                <Close size={"1em"} color={"var(--icon-txt)"} />
-            </HoverIcon>
-        </span>
-        <div class="buttons">
-            <ButtonGroup align={"fill"}>
-                <Button hollow>Preview</Button>
-                <Button>Join</Button>
-            </ButtonGroup>
-        </div>
+        {#if $mobileWidth}
+            <SectionHeader border flush shadow>
+                <h4>{community.name}</h4>
+                <span title={$_("close")} class="close" on:click={close}>
+                    <HoverIcon>
+                        <Close size={$iconSize} color={"var(--icon-txt)"} />
+                    </HoverIcon>
+                </span>
+            </SectionHeader>
+        {:else}
+            <CommunityCard header {community} selected={false} />
+        {/if}
         <div class="search">
             <Search
                 fill
@@ -91,11 +93,17 @@
         display: flex;
         flex-direction: column;
         gap: $sp4;
+        height: 100%;
+        overflow: hidden;
 
-        .buttons,
         .search,
         .sort {
             margin: 0 $sp4;
+        }
+
+        .name {
+            @include font(bold, normal, fs-130);
+            margin-bottom: $sp3;
         }
     }
     .groups {
@@ -103,6 +111,7 @@
         margin: 0 $sp4;
         grid-template-columns: repeat(auto-fit, minmax(min(250px, 100%), 1fr));
         gap: $sp4;
+        @include nice-scrollbar();
 
         .group {
             padding: $sp4;
@@ -125,9 +134,12 @@
         }
     }
 
+    h4 {
+        flex: 1;
+        margin: 0 $sp3;
+        @include font-size(fs-120);
+    }
     .close {
-        position: absolute;
-        top: $sp3;
-        right: $sp3;
+        flex: 0 0 30px;
     }
 </style>

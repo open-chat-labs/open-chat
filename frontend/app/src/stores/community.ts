@@ -1,13 +1,23 @@
 import type { Community } from "openchat-client";
 import { writable } from "svelte/store";
 
-function createDummyCommunity(id: string) {
+function createDummyCommunity(
+    id: string,
+    name = `Community name ${id}`,
+    url = "../assets/unknownUserAvatar.svg",
+    memberCount = 2000,
+    groupCount = 15,
+    unreadCount = 0
+) {
     return {
-        name: `Community name ${id}`,
+        name,
         id,
         description:
             "This is an awsome community with lots of interesting things to see and do. Not too much racism. Not financial advice. HODL.",
-        memberCount: 2000,
+        memberCount,
+        groupCount,
+        unreadCount,
+        blobUrl: url,
     };
 }
 
@@ -20,11 +30,18 @@ function createDummyCommunityGroup(id: string) {
 }
 
 export const dummyCommunities = writable<Community[]>([
-    createDummyCommunity("1"),
-    createDummyCommunity("2"),
-    createDummyCommunity("3"),
-    createDummyCommunity("4"),
-    createDummyCommunity("5"),
+    createDummyCommunity("1", "OpenChat community", "../assets/evil-robot.svg", 30515, 20, 5),
+    createDummyCommunity("2", "SNS1 Idiots", "../assets/sns1_medium.png"),
+    createDummyCommunity(
+        "3",
+        "ckBTC Enthusiasts",
+        "../assets/ckbtc_nobackground.png",
+        1286,
+        10,
+        1000
+    ),
+    createDummyCommunity("4", "8Year Gang"),
+    createDummyCommunity("5", "/biz Nazis"),
     createDummyCommunity("6"),
     createDummyCommunity("7"),
     createDummyCommunity("8"),

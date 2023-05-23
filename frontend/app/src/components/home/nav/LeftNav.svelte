@@ -20,7 +20,8 @@
     import CurrentUserMenu from "../CurrentUserMenu.svelte";
     import LeftNavItem from "./LeftNavItem.svelte";
     import LandingPageMenu from "./LandingPageMenu.svelte";
-    import { navOpen } from "stores/layout";
+    import { navOpen } from "../../../stores/layout";
+    import { dummyCommunities } from "../../../stores/community";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -28,51 +29,9 @@
     $: userStore = client.userStore;
     $: user = $userStore[createdUser.userId];
     $: avatarSize = $mobileWidth ? AvatarSize.Small : AvatarSize.Default;
+    $: myCommunities = $dummyCommunities.slice(0, 8);
 
     let selectedIndex = 0;
-
-    const communities = [
-        {
-            name: "OpenChat Community",
-            url: "../assets/evil-robot.svg",
-        },
-        {
-            name: "SNS1 Idiots",
-            url: "../assets/sns1_medium.png",
-        },
-        {
-            name: "ckBTC Enthusiasts",
-            url: "../assets/ckbtc_nobackground.png",
-        },
-        {
-            name: "8Year Gang",
-            url: "../assets/unknownUserAvatar.svg",
-        },
-        {
-            name: "/biz Nazis",
-            url: "../assets/unknownUserAvatar.svg",
-        },
-        {
-            name: "Community One",
-            url: "../assets/unknownUserAvatar.svg",
-        },
-        {
-            name: "Community Two",
-            url: "../assets/unknownUserAvatar.svg",
-        },
-        {
-            name: "Community Three",
-            url: "../assets/unknownUserAvatar.svg",
-        },
-        {
-            name: "Community Four",
-            url: "../assets/unknownUserAvatar.svg",
-        },
-        {
-            name: "Community Five",
-            url: "../assets/unknownUserAvatar.svg",
-        },
-    ];
 
     function createCommunity() {
         console.log("create community");
@@ -99,9 +58,18 @@
         selectedIndex = idx;
         page("/"); // TODO - we will need a new route here to represent the selected community
     }
+
+    function closeIfOpen() {
+        if ($navOpen) {
+            console.log("Closing nav on body click");
+            navOpen.set(false);
+        }
+    }
 </script>
 
-<Panel on:click={() => navOpen.set(false)} nav>
+<svelte:body on:click={closeIfOpen} />
+
+<Panel nav>
     <div class="top">
         <LeftNavItem separator label={$_("homepage")} on:click={() => page("/home")}>
             <div class="hover logo">
@@ -158,12 +126,13 @@
     </div>
 
     <div class="middle">
-        {#each communities as community, i}
+        {#each myCommunities as community, i}
             <LeftNavItem
                 selected={i === selectedIndex}
+                unread={community.unreadCount}
                 label={community.name}
                 on:click={() => selectCommunity(i)}>
-                <Avatar selected={i === selectedIndex} url={community.url} size={avatarSize} />
+                <Avatar selected={i === selectedIndex} url={community.blobUrl} size={avatarSize} />
             </LeftNavItem>
         {/each}
     </div>
