@@ -11,13 +11,13 @@ use utils::time::{now_millis, SECOND_IN_MS};
 fn start_job(wrapper: Arc<Mutex<FireAndForgetHandlerInner>>) {
     let clone = wrapper.clone();
     let timer_id = ic_cdk_timers::set_timer_interval(Duration::ZERO, move || run(&clone));
-    wrapper.try_lock().expect("1").timer_id = Some(timer_id);
+    wrapper.lock().unwrap().timer_id = Some(timer_id);
     trace!("FireAndForgetHandler job started");
 }
 
 fn run(wrapper: &Arc<Mutex<FireAndForgetHandlerInner>>) {
     let now = now_millis();
-    let mut handler = wrapper.try_lock().expect("2");
+    let mut handler = wrapper.lock().unwrap();
     match handler.next_batch(50, now) {
         NextBatchResult::Success(batch) => ic_cdk::spawn(process_batch(batch, wrapper.clone())),
         NextBatchResult::Continue => {}
@@ -39,7 +39,7 @@ async fn process_single(mut call: C2cCall, wrapper: Arc<Mutex<FireAndForgetHandl
 
     let mut should_start_job = false;
     if result.is_err() || call.attempt > 0 {
-        let handler = &mut wrapper.try_lock().expect("3");
+        let handler = &mut wrapper.lock().unwrap();
         let calls = handler.canisters.entry(call.canister_id).or_default();
         calls.in_progress.retain(|id| *id != call.id);
 
@@ -71,7 +71,7 @@ impl Default for FireAndForgetHandler {
 
 impl FireAndForgetHandler {
     pub fn send(&self, canister_id: CanisterId, method_name: String, payload: Vec<u8>) {
-        let mut handler = self.inner.try_lock().expect("4");
+        let mut handler = self.inner.lock().unwrap();
         let id = handler.next_id;
         handler.next_id += 1;
 
@@ -165,7 +165,7 @@ impl Serialize for FireAndForgetHandler {
     where
         S: Serializer,
     {
-        self.inner.try_lock().expect("5").serialize(serializer)
+        self.inner.lock().unwrap().serialize(serializer)
     }
 }
 
