@@ -103,6 +103,10 @@ impl CommunityRole {
         self.is_permitted(permissions.create_private_group)
     }
 
+    pub fn can_delete_community(&self) -> bool {
+        self.has_owner_rights()
+    }
+
     pub fn is_permitted(&self, permission_role: CommunityPermissionRole) -> bool {
         match permission_role {
             CommunityPermissionRole::Owners => self.has_owner_rights(),
