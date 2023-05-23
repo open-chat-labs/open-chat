@@ -1,10 +1,10 @@
-use crate::{mutate_state, read_state, RuntimeState, model::events::CommunityEvent};
+use crate::{model::events::CommunityEvent, mutate_state, read_state, RuntimeState};
 use canister_tracing_macros::trace;
 use community_canister::make_private::{Response::*, *};
 use group_index_canister::c2c_make_community_private;
 use ic_cdk_macros::update;
 use tracing::error;
-use types::{CanisterId, GroupVisibilityChanged, UserId, CommunityId};
+use types::{CanisterId, CommunityId, GroupVisibilityChanged, UserId};
 
 #[update]
 #[trace]
@@ -20,7 +20,9 @@ async fn make_private(_args: Args) -> Response {
 
     let c2c_make_community_private_args = c2c_make_community_private::Args {};
 
-    match group_index_canister_c2c_client::c2c_make_community_private(group_index_canister_id, &c2c_make_community_private_args).await {
+    match group_index_canister_c2c_client::c2c_make_community_private(group_index_canister_id, &c2c_make_community_private_args)
+        .await
+    {
         Ok(response) => match response {
             c2c_make_community_private::Response::CommunityNotFound => {
                 error!(%community_id, "Community not found in index");
@@ -75,8 +77,8 @@ fn commit(user_id: UserId, state: &mut RuntimeState) {
         changed_by: user_id,
     };
 
-    state.data.events.push_event(
-        CommunityEvent::VisibilityChanged(Box::new(event)),
-        now,
-    );
+    state
+        .data
+        .events
+        .push_event(CommunityEvent::VisibilityChanged(Box::new(event)), now);
 }
