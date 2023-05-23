@@ -8,6 +8,7 @@ generate_c2c_call!(c2c_filter_groups);
 generate_c2c_call!(c2c_create_group);
 generate_c2c_call!(c2c_delete_community);
 generate_c2c_call!(c2c_delete_group);
+generate_c2c_call!(c2c_make_community_private);
 generate_c2c_call!(c2c_make_private);
 generate_c2c_call!(c2c_mark_active);
 generate_c2c_call!(c2c_update_community);
