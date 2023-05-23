@@ -4,10 +4,12 @@ use crate::utils::tick_many;
 use crate::{client, TestEnv};
 use std::ops::Deref;
 use std::time::Duration;
+use test_case::test_case;
 use types::ChatEvent;
 
-#[test]
-fn retries_after_failure() {
+#[test_case(1)]
+#[test_case(5)]
+fn retries_after_failures(failures: usize) {
     let mut wrapper = ENV.deref().get();
     let TestEnv { env, canister_ids, .. } = wrapper.env();
 
@@ -29,12 +31,15 @@ fn retries_after_failure() {
 
     client::user::happy_path::add_reaction(env, &user1, user2.user_id, "1", message_id);
 
-    env.tick();
+    for _ in 0..failures {
+        env.advance_time(Duration::from_secs(100));
+        env.tick();
+    }
 
     env.start_canister(user2.user_id.into(), Some(canister_ids.local_user_index))
         .unwrap();
 
-    env.advance_time(Duration::from_secs(2));
+    env.advance_time(Duration::from_secs(100));
     tick_many(env, 3);
 
     let events_response1 =
