@@ -11,9 +11,9 @@ fn c2c_toggle_mute_notifications(args: Args) -> Response {
 }
 
 fn c2c_toggle_mute_notifications_impl(args: Args, state: &mut RuntimeState) -> Response {
-    let user_id = state.env.caller().into();
+    let caller = state.env.caller();
     let now = state.env.now();
-    match state.data.members.get_mut(user_id) {
+    match state.data.members.get_mut(caller) {
         Some(member) => {
             member.notifications_muted = Timestamped::new(args.mute, now);
             Success
