@@ -8,6 +8,7 @@ use test_case::test_case;
 use types::ChatEvent;
 
 #[test_case(1)]
+#[test_case(3)]
 #[test_case(5)]
 fn retries_after_failures(failures: usize) {
     let mut wrapper = ENV.deref().get();
@@ -31,7 +32,7 @@ fn retries_after_failures(failures: usize) {
 
     client::user::happy_path::add_reaction(env, &user1, user2.user_id, "1", message_id);
 
-    for _ in 0..failures {
+    for _ in 1..failures {
         env.advance_time(Duration::from_secs(100));
         env.tick();
     }
@@ -39,6 +40,7 @@ fn retries_after_failures(failures: usize) {
     env.start_canister(user2.user_id.into(), Some(canister_ids.local_user_index))
         .unwrap();
 
+    env.tick();
     env.advance_time(Duration::from_secs(100));
     tick_many(env, 3);
 
