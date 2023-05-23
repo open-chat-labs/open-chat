@@ -1,34 +1,28 @@
 use canister_client::make_c2c_call_raw;
 use ic_cdk_timers::TimerId;
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
-use std::cell::{Cell, RefCell};
 use std::collections::{BTreeMap, HashMap};
+use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use tracing::trace;
 use types::{CanisterId, TimestampMillis};
 use utils::time::{now_millis, SECOND_IN_MS};
 
-thread_local! {
-    static INIT: Cell<bool> = Cell::default();
-    static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
-    static HANDLER: RefCell<FireAndForgetHandlerInner> = RefCell::default();
+fn start_job(wrapper: Arc<Mutex<FireAndForgetHandlerInner>>) {
+    let clone = wrapper.clone();
+    let timer_id = ic_cdk_timers::set_timer_interval(Duration::ZERO, move || run(&clone));
+    wrapper.try_lock().expect("1").timer_id = Some(timer_id);
+    trace!("FireAndForgetHandler job started");
 }
 
-fn start_job_if_required() {
-    if TIMER_ID.with(|t| t.get().is_none()) && HANDLER.with(|h| !h.borrow().canisters.is_empty()) {
-        let timer_id = ic_cdk_timers::set_timer_interval(Duration::ZERO, run);
-        TIMER_ID.with(|t| t.set(Some(timer_id)));
-        trace!("FireAndForgetHandler job started");
-    }
-}
-
-fn run() {
+fn run(wrapper: &Arc<Mutex<FireAndForgetHandlerInner>>) {
     let now = now_millis();
-    match HANDLER.with(|h| h.borrow_mut().next_batch(50, now)) {
-        NextBatchResult::Success(batch) => ic_cdk::spawn(process_batch(batch)),
+    let mut handler = wrapper.try_lock().expect("2");
+    match handler.next_batch(50, now) {
+        NextBatchResult::Success(batch) => ic_cdk::spawn(process_batch(batch, wrapper.clone())),
         NextBatchResult::Continue => {}
         NextBatchResult::StopJob => {
-            if let Some(timer_id) = TIMER_ID.with(|t| t.take()) {
+            if let Some(timer_id) = handler.timer_id.take() {
                 ic_cdk_timers::clear_timer(timer_id);
                 trace!("FireAndForgetHandler job stopped");
             }
@@ -36,33 +30,38 @@ fn run() {
     }
 }
 
-async fn process_batch(batch: Vec<C2cCall>) {
-    futures::future::join_all(batch.into_iter().map(process_single)).await;
+async fn process_batch(batch: Vec<C2cCall>, wrapper: Arc<Mutex<FireAndForgetHandlerInner>>) {
+    futures::future::join_all(batch.into_iter().map(|c| process_single(c, wrapper.clone()))).await;
 }
 
-async fn process_single(mut call: C2cCall) {
+async fn process_single(mut call: C2cCall, wrapper: Arc<Mutex<FireAndForgetHandlerInner>>) {
     let result = make_c2c_call_raw(call.canister_id, &call.method_name, &call.payload).await;
 
+    let mut should_start_job = false;
     if result.is_err() || call.attempt > 0 {
-        HANDLER.with(|h| {
-            let map = &mut h.borrow_mut().canisters;
-            let calls = map.entry(call.canister_id).or_default();
-            calls.in_progress.retain(|id| *id != call.id);
+        let handler = &mut wrapper.try_lock().expect("3");
+        let calls = handler.canisters.entry(call.canister_id).or_default();
+        calls.in_progress.retain(|id| *id != call.id);
 
-            if result.is_err() && call.attempt < 50 {
-                call.attempt += 1;
-                let now = now_millis();
-                let due = now + (u64::from(call.attempt) * SECOND_IN_MS);
-                calls.queue.insert((due, call.id), call);
-            } else if calls.in_progress.is_empty() && calls.queue.is_empty() {
-                map.remove(&call.canister_id);
-            }
-        });
-        start_job_if_required();
+        if result.is_err() && call.attempt < 50 {
+            call.attempt += 1;
+            let now = now_millis();
+            let due = now + (u64::from(call.attempt) * SECOND_IN_MS);
+            calls.queue.insert((due, call.id), call);
+            should_start_job = handler.should_start_job();
+        } else if calls.in_progress.is_empty() && calls.queue.is_empty() {
+            handler.canisters.remove(&call.canister_id);
+        }
+    }
+
+    if should_start_job {
+        start_job(wrapper.clone());
     }
 }
 
-pub struct FireAndForgetHandler {}
+pub struct FireAndForgetHandler {
+    inner: Arc<Mutex<FireAndForgetHandlerInner>>,
+}
 
 impl Default for FireAndForgetHandler {
     fn default() -> Self {
@@ -72,12 +71,9 @@ impl Default for FireAndForgetHandler {
 
 impl FireAndForgetHandler {
     pub fn send(&self, canister_id: CanisterId, method_name: String, payload: Vec<u8>) {
-        let id = HANDLER.with(|h| {
-            let mut handler = h.borrow_mut();
-            let id = handler.next_id;
-            handler.next_id += 1;
-            id
-        });
+        let mut handler = self.inner.try_lock().expect("4");
+        let id = handler.next_id;
+        handler.next_id += 1;
 
         let call = C2cCall {
             id,
@@ -87,17 +83,18 @@ impl FireAndForgetHandler {
             attempt: 0,
         };
 
-        ic_cdk::spawn(process_single(call));
+        ic_cdk::spawn(process_single(call, self.inner.clone()));
     }
 
     fn init(inner: FireAndForgetHandlerInner) -> Self {
-        if INIT.with(|v| v.replace(true)) {
-            panic!("Can only initialize a single instance of FireAndForgetHandler");
-        }
-        HANDLER.with(|h| h.replace(inner));
-        start_job_if_required();
+        let should_start_job = inner.should_start_job();
+        let wrapped = Arc::new(Mutex::new(inner));
 
-        FireAndForgetHandler {}
+        if should_start_job {
+            start_job(wrapped.clone());
+        }
+
+        FireAndForgetHandler { inner: wrapped }
     }
 }
 
@@ -105,6 +102,8 @@ impl FireAndForgetHandler {
 struct FireAndForgetHandlerInner {
     canisters: HashMap<CanisterId, PendingC2cCalls>,
     next_id: u64,
+    #[serde(skip)]
+    timer_id: Option<TimerId>,
 }
 
 enum NextBatchResult {
@@ -140,6 +139,10 @@ impl FireAndForgetHandlerInner {
             }
         }
     }
+
+    fn should_start_job(&self) -> bool {
+        self.timer_id.is_none() && !self.canisters.is_empty()
+    }
 }
 
 #[derive(Serialize, Deserialize, Default)]
@@ -162,7 +165,7 @@ impl Serialize for FireAndForgetHandler {
     where
         S: Serializer,
     {
-        HANDLER.with(|h| h.borrow().serialize(serializer))
+        self.inner.try_lock().expect("5").serialize(serializer)
     }
 }
 
