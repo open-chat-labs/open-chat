@@ -12,6 +12,7 @@ pub mod create_group;
 pub mod decline_invitation;
 pub mod delete_messages;
 pub mod disable_invite_code;
+pub mod edit_message;
 pub mod enable_invite_code;
 pub mod make_private;
 pub mod remove_member;
