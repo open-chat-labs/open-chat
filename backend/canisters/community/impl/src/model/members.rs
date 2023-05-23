@@ -144,19 +144,6 @@ impl CommunityMembers {
         ChangeRoleResult::Success(ChangeRoleSuccessResult { caller_id, prev_role })
     }
 
-    pub fn try_undo_remove(&mut self, principal: Principal, member: CommunityMemberInternal) {
-        let user_id = member.user_id;
-        let role = member.role;
-        if self.members.insert(user_id, member).is_none() {
-            self.principal_to_user_id_map.insert(principal, user_id);
-            match role {
-                CommunityRole::Owner => self.owner_count += 1,
-                CommunityRole::Admin => self.admin_count += 1,
-                _ => (),
-            }
-        }
-    }
-
     pub fn block(&mut self, user_id: UserId) {
         self.blocked.insert(user_id);
     }
