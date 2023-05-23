@@ -16,7 +16,6 @@ pub enum Response {
     CommunityNotPublic,
     NotAuthorized,
     UserNotInCommunity,
-    UserSuspended,
     CommunityFrozen,
     InternalError(String),
 }
@@ -31,7 +30,6 @@ impl From<crate::remove_member::Response> for Response {
             crate::remove_member::Response::InternalError(e) => Response::InternalError(e),
             crate::remove_member::Response::NotAuthorized => Response::NotAuthorized,
             crate::remove_member::Response::UserNotInCommunity => Response::UserNotInCommunity,
-            crate::remove_member::Response::UserSuspended => Response::UserSuspended,
             crate::remove_member::Response::CommunityFrozen => Response::CommunityFrozen,
         }
     }

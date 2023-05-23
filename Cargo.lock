@@ -1277,6 +1277,8 @@ dependencies = [
  "ic-cdk-macros",
  "ic-cdk-timers",
  "ic-stable-structures",
+ "local_user_index_canister",
+ "local_user_index_canister_c2c_client",
  "msgpack",
  "notifications_canister",
  "notifications_canister_c2c_client",
