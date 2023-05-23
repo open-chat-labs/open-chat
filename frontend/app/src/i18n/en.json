@@ -838,6 +838,8 @@
         "explore": "Explore communities",
         "search": "Search communities",
         "searchGroups": "Search community groups",
-        "hideLeftNav": "Hide communities menu"
+        "hideLeftNav": "Collapse communities menu",
+        "mainMenu": "Main menu",
+        "autoExpand": "Auto-expand communities menu"
     }
 }

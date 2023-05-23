@@ -1,14 +1,14 @@
 <script lang="ts">
     import Avatar from "../../Avatar.svelte";
-    import FancyLoader from "../../icons/FancyLoader.svelte";
     import Panel from "../../Panel.svelte";
     import MenuIcon from "../../MenuIcon.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
     import HeartOutline from "svelte-material-icons/HeartOutline.svelte";
-    import Plus from "svelte-material-icons/Plus.svelte";
     import Compass from "svelte-material-icons/CompassOutline.svelte";
     import Wallet from "svelte-material-icons/WalletOutline.svelte";
-    import Hamburger from "svelte-material-icons/DotsVertical.svelte";
+    import Hamburger from "svelte-material-icons/Menu.svelte";
+    import ArrowRight from "svelte-material-icons/ArrowExpandRight.svelte";
+    import ArrowLeft from "svelte-material-icons/ArrowExpandLeft.svelte";
     import { AvatarSize, OpenChat } from "openchat-client";
     import { iconSize } from "../../../stores/iconSize";
     import { mobileWidth } from "../../../stores/screenDimensions";
@@ -17,9 +17,8 @@
     import page from "page";
     import { createEventDispatcher, getContext } from "svelte";
     import DirectChats from "../../icons/DirectChats.svelte";
-    import CurrentUserMenu from "../CurrentUserMenu.svelte";
     import LeftNavItem from "./LeftNavItem.svelte";
-    import LandingPageMenu from "./LandingPageMenu.svelte";
+    import MainMenu from "./MainMenu.svelte";
     import { navOpen } from "../../../stores/layout";
     import { dummyCommunities } from "../../../stores/community";
 
@@ -33,8 +32,12 @@
 
     let selectedIndex = 0;
 
-    function createCommunity() {
-        console.log("create community");
+    function toggleNav() {
+        if ($navOpen) {
+            navOpen.set(false);
+        } else {
+            navOpen.set(true);
+        }
     }
 
     function exploreCommunities() {
@@ -71,38 +74,27 @@
 
 <Panel nav>
     <div class="top">
-        <LeftNavItem separator label={$_("homepage")} on:click={() => page("/home")}>
+        <LeftNavItem separator label={$_("communities.mainMenu")}>
             <div class="hover logo">
-                <FancyLoader loop={false} />
+                <MenuIcon>
+                    <span slot="icon">
+                        <HoverIcon>
+                            <Hamburger size={$iconSize} color={"var(--icon-txt)"} />
+                        </HoverIcon>
+                    </span>
+                    <span slot="menu">
+                        <MainMenu on:halloffame on:logout on:upgrade />
+                    </span>
+                </MenuIcon>
             </div>
-            <div slot="menu">
+            <!-- <div slot="menu">
                 <LandingPageMenu />
-            </div>
+            </div> -->
         </LeftNavItem>
 
         {#if user !== undefined}
-            <LeftNavItem label={$_("profile.label")} on:click={() => dispatch("profile")}>
+            <LeftNavItem label={$_("profile.title")} on:click={() => dispatch("profile")}>
                 <Avatar url={client.userAvatarUrl(user)} userId={user.userId} size={avatarSize} />
-                <div slot="menu">
-                    <MenuIcon>
-                        <span slot="icon">
-                            <HoverIcon>
-                                <Hamburger size={$iconSize} color={"var(--icon-txt)"} />
-                            </HoverIcon>
-                        </span>
-                        <span slot="menu">
-                            <CurrentUserMenu
-                                on:halloffame
-                                on:logout
-                                on:newGroup
-                                on:profile
-                                on:showHomePage
-                                on:upgrade
-                                on:wallet
-                                on:whatsHot />
-                        </span>
-                    </MenuIcon>
-                </div>
             </LeftNavItem>
         {/if}
 
@@ -138,17 +130,17 @@
     </div>
 
     <div class="bottom">
-        <LeftNavItem label={"Create community"} on:click={createCommunity}>
-            <div class="plus hover">
-                <Plus size={$iconSize} color={"var(--icon-txt)"} />
-            </div>
-        </LeftNavItem>
         <LeftNavItem
             selected={$pathParams.kind === "communities_route"}
             label={"Explore communities"}
             on:click={exploreCommunities}>
             <div class="explore hover">
                 <Compass size={$iconSize} color={"var(--icon-txt)"} />
+            </div>
+        </LeftNavItem>
+        <LeftNavItem label={"Collapse"}>
+            <div class:open={$navOpen} on:click|stopPropagation={toggleNav} class="expand hover">
+                <ArrowRight size={$iconSize} color={"var(--icon-txt)"} />
             </div>
         </LeftNavItem>
     </div>
@@ -218,6 +210,14 @@
         @include mobile() {
             width: toRem(35);
             height: toRem(35);
+        }
+    }
+
+    .expand {
+        transition: transform 250ms ease-in-out;
+
+        &.open {
+            transform: rotate(-180deg);
         }
     }
 </style>

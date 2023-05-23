@@ -30,6 +30,7 @@
         storageSectionOpen,
         userInfoOpen,
         hideLeftNav,
+        autoExpandLeftNav,
     } from "../../../stores/settings";
     import { createEventDispatcher, getContext, onMount } from "svelte";
     import { saveSeletedTheme, themeNameStore } from "theme/themes";
@@ -273,6 +274,14 @@
                         label={$_("communities.hideLeftNav")}
                         checked={$hideLeftNav} />
                 </div>
+                <!-- <div class="para">
+                    <Toggle
+                        id={"auto_expand_left_nav"}
+                        small
+                        on:change={autoExpandLeftNav.toggle}
+                        label={$_("communities.autoExpand")}
+                        checked={$autoExpandLeftNav} />
+                </div> -->
             {/if}
         </CollapsibleCard>
     </div>

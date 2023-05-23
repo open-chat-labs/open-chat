@@ -4,7 +4,7 @@
     import { rtlStore } from "../stores/rtl";
     import { menuStore } from "../stores/menu";
     import { navOpen } from "../stores/layout";
-    import { hideLeftNav } from "../stores/settings";
+    import { autoExpandLeftNav, hideLeftNav } from "../stores/settings";
     import { communitiesEnabled } from "../utils/features";
 
     export let left: boolean = false;
@@ -19,10 +19,10 @@
     let delay: number | undefined = undefined;
 
     function mouseenter() {
-        if (nav && !$hideLeftNav) {
+        if (nav && !$hideLeftNav && $autoExpandLeftNav) {
             delay = window.setTimeout(() => {
                 navOpen.set(true);
-            }, 1000); // TODO what is the "right" value for this delay - getting that right makes it bearable
+            }, 800); // TODO what is the "right" value for this delay - getting that right makes it bearable
         }
     }
 
@@ -151,7 +151,7 @@
                 box-shadow: 10px 0 10px rgba(0, 0, 0, 0.1);
 
                 @include mobile() {
-                    width: toRem(250);
+                    width: toRem(300);
                 }
             }
         }
