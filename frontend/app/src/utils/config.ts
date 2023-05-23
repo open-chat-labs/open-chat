@@ -28,4 +28,5 @@ export const configKeys = {
     lowBandwidth: "openchat_lowbandwidth",
     shownAirdropPrompt: "openchat_shown_airdrop_prompt",
     discoverHotGroupsDismissed: "openchat_discover_hot_groups_dismissed",
+    hideLeftNav: "openchat_hide_left_nav",
 };

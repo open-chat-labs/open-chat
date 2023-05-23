@@ -24,3 +24,4 @@ export const discoverHotGroupsDismissed = createLsBoolStore(
     configKeys.discoverHotGroupsDismissed,
     false
 );
+export const hideLeftNav = createLsBoolStore(configKeys.userInfoSection, false);

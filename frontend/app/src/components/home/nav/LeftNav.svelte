@@ -20,6 +20,7 @@
     import CurrentUserMenu from "../CurrentUserMenu.svelte";
     import LeftNavItem from "./LeftNavItem.svelte";
     import LandingPageMenu from "./LandingPageMenu.svelte";
+    import { navOpen } from "stores/layout";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -100,7 +101,7 @@
     }
 </script>
 
-<Panel nav>
+<Panel on:click={() => navOpen.set(false)} nav>
     <div class="top">
         <LeftNavItem separator label={$_("homepage")} on:click={() => page("/home")}>
             <div class="hover logo">

@@ -837,6 +837,7 @@
     "communities": {
         "explore": "Explore communities",
         "search": "Search communities",
-        "searchGroups": "Search community groups"
+        "searchGroups": "Search community groups",
+        "hideLeftNav": "Hide communities menu"
     }
 }

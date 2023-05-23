@@ -64,7 +64,9 @@ export const menuStore = {
         }),
     hideMenu: (): void =>
         update((menu) => {
-            navOpen.set(false);
+            if (menu) {
+                navOpen.set(false);
+            }
             return close(menu);
         }),
 };

@@ -7,6 +7,7 @@
     import CommunityCard from "./CommunityCard.svelte";
     import Search from "../../..//Search.svelte";
     import { pathParams } from "../../../../routes";
+    import ToggleIcon from "../../nav/ToggleIcon.svelte";
 
     let searchTerm = "";
     let searching = false;
@@ -17,6 +18,7 @@
 
 <div class="explore">
     <div class="header">
+        <ToggleIcon />
         <div class="title">{$_("communities.explore")}</div>
         <div class="search">
             <Search bind:searchTerm bind:searching placeholder={$_("communities.search")} />
@@ -64,14 +66,14 @@
     }
     .header {
         display: grid;
-        grid-template-columns: repeat(5, 1fr);
+        grid-template-columns: toRem(40) repeat(5, 1fr);
         gap: $sp4;
         border-bottom: 1px solid var(--bd);
         margin-bottom: $sp3;
 
         .title {
             @include font(bold, normal, fs-160, 38);
-            grid-column: 1 / span 2;
+            grid-column: 2 / span 2;
         }
 
         .search {
@@ -80,15 +82,15 @@
 
         .create {
             justify-self: self-end;
-            grid-column: 5;
+            grid-column: 6;
         }
 
         .tags {
-            grid-column: 1 / span 4;
+            grid-column: 1 / span 5;
         }
 
         .sort {
-            grid-column: 5;
+            grid-column: 6;
         }
     }
 

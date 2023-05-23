@@ -29,6 +29,7 @@
         statsSectionOpen,
         storageSectionOpen,
         userInfoOpen,
+        hideLeftNav,
     } from "../../../stores/settings";
     import { createEventDispatcher, getContext, onMount } from "svelte";
     import { saveSeletedTheme, themeNameStore } from "theme/themes";
@@ -39,6 +40,7 @@
     import ErrorMessage from "../../ErrorMessage.svelte";
     import ReferUsers from "./ReferUsers.svelte";
     import Expiry from "../upgrade/Expiry.svelte";
+    import { communitiesEnabled } from "../../../utils/features";
 
     const client = getContext<OpenChat>("client");
 
@@ -261,6 +263,17 @@
                 <Legend label={$_("fontSize")} />
                 <FontSize />
             </div>
+
+            {#if $communitiesEnabled}
+                <div class="para">
+                    <Toggle
+                        id={"hide_left_nav"}
+                        small
+                        on:change={hideLeftNav.toggle}
+                        label={$_("communities.hideLeftNav")}
+                        checked={$hideLeftNav} />
+                </div>
+            {/if}
         </CollapsibleCard>
     </div>
     <div class="invite">

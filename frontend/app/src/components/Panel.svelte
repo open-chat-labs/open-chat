@@ -4,6 +4,7 @@
     import { rtlStore } from "../stores/rtl";
     import { menuStore } from "../stores/menu";
     import { navOpen } from "../stores/layout";
+    import { hideLeftNav } from "../stores/settings";
     import { communitiesEnabled } from "../utils/features";
 
     export let left: boolean = false;
@@ -18,7 +19,7 @@
     let delay: number | undefined = undefined;
 
     function mouseenter() {
-        if (nav) {
+        if (nav && !$hideLeftNav) {
             delay = window.setTimeout(() => {
                 navOpen.set(true);
             }, 300);
@@ -28,15 +29,17 @@
     function mouseleave() {
         if ($menuStore === undefined && nav) {
             window.clearTimeout(delay);
-            console.log("Closing nav");
             navOpen.set(false);
         }
     }
+
+    $: console.log("NavOpen: ", $navOpen);
 </script>
 
 <section
     on:mouseenter={mouseenter}
     on:mouseleave={mouseleave}
+    on:click
     class:rtl={$rtlStore}
     class:nav
     class:left
@@ -45,6 +48,7 @@
     class:modal
     class:hovering={$navOpen}
     class:nav-supported={$communitiesEnabled}
+    class:hide-nav={$hideLeftNav}
     class:empty>
     <slot />
 </section>
@@ -59,7 +63,7 @@
         overflow-x: hidden;
 
         // whichever panel is the 2nd panel should be nudged right to accommodate the nav
-        &.nav-supported:nth-child(2) {
+        &.nav-supported:not(.hide-nav):nth-child(2) {
             margin-inline-start: toRem(80);
             @include mobile() {
                 margin-inline-start: toRem(60);
@@ -123,6 +127,10 @@
             border-right: 1px solid var(--bd);
             @include z-index("left-nav");
             transition: width 250ms ease-in-out;
+
+            &.hide-nav {
+                width: 0;
+            }
 
             &.rtl {
                 border-right: none;
