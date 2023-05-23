@@ -17,12 +17,13 @@ fn start_job(wrapper: Arc<Mutex<FireAndForgetHandlerInner>>) {
 
 fn run(wrapper: &Arc<Mutex<FireAndForgetHandlerInner>>) {
     let now = now_millis();
-    let mut handler = wrapper.lock().unwrap();
-    match handler.next_batch(50, now) {
+    // This line must remain separate from the match statement so that the MutexGuard is dropped
+    let next_batch = wrapper.lock().unwrap().next_batch(50, now);
+    match next_batch {
         NextBatchResult::Success(batch) => ic_cdk::spawn(process_batch(batch, wrapper.clone())),
         NextBatchResult::Continue => {}
         NextBatchResult::StopJob => {
-            if let Some(timer_id) = handler.timer_id.take() {
+            if let Some(timer_id) = wrapper.lock().unwrap().timer_id.take() {
                 ic_cdk_timers::clear_timer(timer_id);
                 trace!("FireAndForgetHandler job stopped");
             }

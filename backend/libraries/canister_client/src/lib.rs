@@ -39,37 +39,3 @@ pub async fn make_c2c_call_raw(canister_id: Principal, method_name: &str, payloa
         }
     }
 }
-
-#[macro_export]
-macro_rules! MakeC2CCallJob {
-    () => {
-        #[derive(serde::Serialize, serde::Deserialize, Clone)]
-        pub struct MakeC2CCallJob {
-            pub canister_id: types::CanisterId,
-            pub method_name: String,
-            pub payload: Vec<u8>,
-            pub attempt: u32,
-        }
-
-        impl Job for MakeC2CCallJob {
-            fn execute(&self) {
-                async fn execute_async(mut job: MakeC2CCallJob) {
-                    if canister_client::make_c2c_call_raw(job.canister_id, &job.method_name, &job.payload)
-                        .await
-                        .is_err()
-                        && job.attempt < 50
-                    {
-                        mutate_state(|state| {
-                            let now = state.env.now();
-                            let due = now + (u64::from(job.attempt) * utils::time::SECOND_IN_MS);
-                            job.attempt += 1;
-                            state.data.timer_jobs.enqueue_job(TimerJob::MakeC2CCall(job), due, now);
-                        })
-                    }
-                }
-
-                ic_cdk::spawn(execute_async(self.clone()));
-            }
-        }
-    };
-}
