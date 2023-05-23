@@ -49,7 +49,7 @@
                 bind:searching
                 placeholder={$_("communities.searchGroups")} />
         </div>
-        <div class="sort">
+        <!-- <div class="sort">
             <Select margin={false}>
                 <option value={""} selected={true} disabled={true}>Sort by</option>
                 <option value={""}>{"Newest"}</option>
@@ -58,7 +58,7 @@
                 <option value={""}>{"Alphabetical: A-Z"}</option>
                 <option value={""}>{"Alphabetical: Z-A"}</option>
             </Select>
-        </div>
+        </div> -->
         <div class="groups">
             {#each $dummyCommunityGroups as group}
                 <div class="group">
@@ -96,39 +96,51 @@
         height: 100%;
         overflow: hidden;
 
+        @include mobile() {
+            gap: $sp3;
+        }
+
         .search,
+        .groups,
         .sort {
             margin: 0 $sp4;
+            @include mobile() {
+                margin: 0 $sp3;
+            }
         }
 
         .name {
             @include font(bold, normal, fs-130);
             margin-bottom: $sp3;
         }
-    }
-    .groups {
-        display: grid;
-        margin: 0 $sp4;
-        grid-template-columns: repeat(auto-fit, minmax(min(250px, 100%), 1fr));
-        gap: $sp4;
-        @include nice-scrollbar();
 
-        .group {
-            padding: $sp4;
-            background-color: var(--accent);
-            background-color: var(--recommended-bg);
+        .groups {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(min(250px, 100%), 1fr));
+            gap: $sp4;
+            @include nice-scrollbar();
 
-            .details {
-                display: flex;
-                margin-bottom: $sp4;
-                gap: $sp4;
+            @include mobile() {
+                gap: $sp3;
+            }
 
-                .group-name {
-                    margin-bottom: $sp3;
-                }
+            .group {
+                padding: $sp4;
+                background-color: var(--accent);
+                background-color: var(--recommended-bg);
 
-                .group-desc {
-                    color: var(--txt-light);
+                .details {
+                    display: flex;
+                    margin-bottom: $sp4;
+                    gap: $sp4;
+
+                    .group-name {
+                        margin-bottom: $sp3;
+                    }
+
+                    .group-desc {
+                        color: var(--txt-light);
+                    }
                 }
             }
         }

@@ -8,9 +8,7 @@
     import Wallet from "svelte-material-icons/WalletOutline.svelte";
     import Hamburger from "svelte-material-icons/Menu.svelte";
     import ArrowRight from "svelte-material-icons/ArrowExpandRight.svelte";
-    import ArrowLeft from "svelte-material-icons/ArrowExpandLeft.svelte";
     import { AvatarSize, OpenChat } from "openchat-client";
-    import { iconSize } from "../../../stores/iconSize";
     import { mobileWidth } from "../../../stores/screenDimensions";
     import { _ } from "svelte-i18n";
     import { pathParams } from "../../../routes";
@@ -31,6 +29,7 @@
     $: myCommunities = $dummyCommunities.slice(0, 8);
 
     let selectedIndex = 0;
+    let iconSize = $mobileWidth ? "1.2em" : "1.4em"; // in this case we don't want to use the standard store
 
     function toggleNav() {
         if ($navOpen) {
@@ -79,7 +78,7 @@
                 <MenuIcon>
                     <span slot="icon">
                         <HoverIcon>
-                            <Hamburger size={$iconSize} color={"var(--icon-txt)"} />
+                            <Hamburger size={iconSize} color={"var(--icon-txt)"} />
                         </HoverIcon>
                     </span>
                     <span slot="menu">
@@ -100,19 +99,19 @@
 
         <LeftNavItem label={"Open wallet"} on:click={openWallet}>
             <div class="hover wallet">
-                <Wallet size={$iconSize} color={"var(--icon-txt)"} />
+                <Wallet size={iconSize} color={"var(--icon-txt)"} />
             </div>
         </LeftNavItem>
 
         <LeftNavItem label={"Direct chats"} on:click={directChats}>
             <div class="hover direct">
-                <DirectChats size={$iconSize} color={"var(--icon-txt)"} />
+                <DirectChats size={iconSize} color={"var(--icon-txt)"} />
             </div>
         </LeftNavItem>
 
         <LeftNavItem separator label={"Favourite chats"} on:click={favouriteChats}>
             <div class="hover favs">
-                <HeartOutline size={$iconSize} color={"var(--icon-txt)"} />
+                <HeartOutline size={iconSize} color={"var(--icon-txt)"} />
             </div>
         </LeftNavItem>
     </div>
@@ -135,12 +134,12 @@
             label={"Explore communities"}
             on:click={exploreCommunities}>
             <div class="explore hover">
-                <Compass size={$iconSize} color={"var(--icon-txt)"} />
+                <Compass size={iconSize} color={"var(--icon-txt)"} />
             </div>
         </LeftNavItem>
         <LeftNavItem label={"Collapse"}>
             <div class:open={$navOpen} on:click|stopPropagation={toggleNav} class="expand hover">
-                <ArrowRight size={$iconSize} color={"var(--icon-txt)"} />
+                <ArrowRight size={iconSize} color={"var(--icon-txt)"} />
             </div>
         </LeftNavItem>
     </div>
@@ -164,9 +163,8 @@
     }
 
     :global(.left-nav-item.selected) {
-        .path,
         .explore {
-            border: 2px solid var(--icon-selected);
+            border: 1px solid var(--icon-selected);
         }
     }
 
@@ -199,7 +197,7 @@
     .hover {
         width: toRem(48);
         height: toRem(48);
-        border: 2px solid transparent;
+        border: 1px solid transparent;
         border-radius: 50%;
         background: var(--icon-hv);
         display: flex;

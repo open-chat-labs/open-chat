@@ -9,12 +9,10 @@
     import { AvatarSize } from "openchat-client";
     import SectionHeader from "../SectionHeader.svelte";
     import CurrentUserMenu from "./CurrentUserMenu.svelte";
-    import ToggleIcon from "./nav/ToggleIcon.svelte";
 </script>
 
 <SectionHeader border={false}>
     <div class="current-selection" class:rtl={$rtlStore}>
-        <ToggleIcon />
         <div class="avatar">
             <Avatar
                 url={"../assets/unknownUserAvatar.svg"}

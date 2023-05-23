@@ -53,8 +53,8 @@
             border-radius: $sp3 $sp3 0 0;
 
             .avatar {
-                width: toRem(42);
-                height: toRem(42);
+                width: toRem(48);
+                height: toRem(48);
                 position: absolute;
                 bottom: toRem(-15);
                 left: $sp3;

@@ -7,7 +7,6 @@
     import CommunityCard from "./CommunityCard.svelte";
     import Search from "../../..//Search.svelte";
     import { pathParams } from "../../../../routes";
-    import ToggleIcon from "../../nav/ToggleIcon.svelte";
     import { mobileWidth } from "../../../../stores/screenDimensions";
 
     let searchTerm = "";
@@ -21,7 +20,6 @@
     <div class="header">
         <div class="title-row">
             <div class="title">
-                <ToggleIcon />
                 <h4>{$_("communities.explore")}</h4>
             </div>
             {#if !$mobileWidth}
@@ -87,12 +85,14 @@
 
         @include mobile() {
             padding: $sp3;
+            gap: $sp3;
         }
     }
 
     .header {
         .title-row {
             display: flex;
+            align-items: center;
             gap: $sp4;
             margin-bottom: $sp5;
 
