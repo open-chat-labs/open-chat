@@ -22,7 +22,7 @@
         <h4 class="name">{"OpenChat community"}</h4>
     </div>
     <span class="menu">
-        <MenuIcon>
+        <MenuIcon position={"bottom"} align={"end"}>
             <span slot="icon">
                 <HoverIcon>
                     <Kebab size={$iconSize} color={"var(--icon-txt)"} />

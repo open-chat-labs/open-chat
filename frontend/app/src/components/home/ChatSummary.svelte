@@ -271,7 +271,7 @@
             {/if}
             {#if !client.isReadOnly()}
                 <div class="menu">
-                    <MenuIcon>
+                    <MenuIcon position={"bottom"} align={"end"}>
                         <div class="menu-icon" slot="icon">
                             <ChevronDown viewBox="0 -3 24 24" size="1.6em" color="var(--icon-txt" />
                         </div>

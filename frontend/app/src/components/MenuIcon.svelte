@@ -2,8 +2,12 @@
     import { onDestroy } from "svelte";
     import { menuStore } from "../stores/menu";
     import { tick } from "svelte";
+    import type { Alignment, Position } from "../utils/alignment";
 
     export let centered = false;
+    export let position: Position = "bottom";
+    export let align: Alignment = "center";
+    export let gutter = 8;
 
     let menu: HTMLElement;
     let contextMenu: HTMLElement;
@@ -19,7 +23,12 @@
         } else {
             const rect = menu.getBoundingClientRect();
             menuStore.showMenu(contextMenu);
-            tick().then(() => menuStore.position(rect, centered));
+
+            await tick();
+
+            console.log("Menu Trigger: ", rect);
+            console.log("Menu Element: ", contextMenu.getBoundingClientRect(), contextMenu);
+            menuStore.position(rect, centered, position, align, gutter);
         }
     }
 
@@ -50,6 +59,7 @@
 
     .menu {
         position: absolute;
+        @include z-index("popup-menu");
     }
 
     .menu-blueprint {

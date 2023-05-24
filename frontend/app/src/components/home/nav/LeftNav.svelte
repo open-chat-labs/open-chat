@@ -75,7 +75,7 @@
     <div class="top">
         <LeftNavItem separator label={$_("communities.mainMenu")}>
             <div class="hover logo">
-                <MenuIcon>
+                <MenuIcon position="right" align="start" gutter={20}>
                     <span slot="icon">
                         <HoverIcon>
                             <Hamburger size={iconSize} color={"var(--icon-txt)"} />
