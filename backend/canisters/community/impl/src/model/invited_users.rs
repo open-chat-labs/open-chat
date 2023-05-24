@@ -14,12 +14,12 @@ pub struct UserInvitation {
     pub invited: UserId,
     pub invited_by: UserId,
     pub timestamp: TimestampMillis,
-    pub group: Option<GroupInvitation>,
+    pub channel: Option<ChannelInvitation>,
 }
 
 #[derive(Serialize, Deserialize)]
-pub struct GroupInvitation {
-    pub group: ChannelId,
+pub struct ChannelInvitation {
+    pub channel_id: ChannelId,
     pub min_visible_event_index: EventIndex,
     pub min_visible_message_index: MessageIndex,
 }
