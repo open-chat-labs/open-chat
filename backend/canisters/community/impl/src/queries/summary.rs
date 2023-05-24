@@ -21,6 +21,6 @@ fn summary_impl(runtime_state: &RuntimeState) -> Response {
         let summary = runtime_state.summary(member, now);
         Success(SuccessResult { summary })
     } else {
-        CallerNotInCommunity
+        UserNotInCommunity
     }
 }

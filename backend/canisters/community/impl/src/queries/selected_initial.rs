@@ -11,7 +11,7 @@ fn selected_initial_impl(state: &RuntimeState) -> Response {
     let caller = state.env.caller();
 
     if state.data.members.get(caller).is_none() {
-        return CallerNotInCommunity;
+        return UserNotInCommunity;
     }
 
     let now = state.env.now();

@@ -45,6 +45,6 @@ fn edit_message_impl(args: Args, state: &mut RuntimeState) -> Response {
             ChannelNotFound
         }
     } else {
-        CallerNotInCommunity
+        UserNotInCommunity
     }
 }

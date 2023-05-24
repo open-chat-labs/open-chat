@@ -69,7 +69,7 @@ fn prepare(user_id: UserId, state: &RuntimeState) -> Result<PrepareResult, Respo
         } else {
             // Check if the caller is authorized to remove the user
             let is_user_an_owner = match state.data.members.get(user_id.into()) {
-                None => return Err(UserNotInCommunity),
+                None => return Err(TargetUserNotInCommunity),
                 Some(member_to_remove) => {
                     if member
                         .role
@@ -89,7 +89,7 @@ fn prepare(user_id: UserId, state: &RuntimeState) -> Result<PrepareResult, Respo
             })
         }
     } else {
-        Err(CallerNotInCommunity)
+        Err(UserNotInCommunity)
     }
 }
 

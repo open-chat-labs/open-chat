@@ -21,7 +21,7 @@ fn c2c_leave_community_impl(state: &mut RuntimeState) -> Response {
 
     let member = match state.data.members.get(caller.into()) {
         Some(p) => p,
-        None => return CallerNotInCommunity,
+        None => return UserNotInCommunity,
     };
 
     if member.suspended.value {

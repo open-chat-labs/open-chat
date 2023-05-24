@@ -14,7 +14,7 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
     let data = &state.data;
 
     if data.members.get(caller).is_none() {
-        return CallerNotInCommunity;
+        return UserNotInCommunity;
     }
 
     // Short circuit prior to calling `ic0.time()` so that query caching works effectively.

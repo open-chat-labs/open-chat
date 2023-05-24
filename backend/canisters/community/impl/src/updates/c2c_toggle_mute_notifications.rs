@@ -18,6 +18,6 @@ fn c2c_toggle_mute_notifications_impl(args: Args, state: &mut RuntimeState) -> R
             member.notifications_muted = Timestamped::new(args.mute, now);
             Success
         }
-        None => CallerNotInCommunity,
+        None => UserNotInCommunity,
     }
 }

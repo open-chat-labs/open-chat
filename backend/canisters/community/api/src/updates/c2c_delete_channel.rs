@@ -12,7 +12,7 @@ pub enum Response {
     Success,
     CommunityFrozen,
     UserSuspended,
-    CallerNotInCommunity,
+    UserNotInCommunity,
     ChannelNotFound,
     UserNotInChannel,
     NotAuthorized,

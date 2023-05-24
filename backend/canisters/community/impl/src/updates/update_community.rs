@@ -126,7 +126,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
             })
         }
     } else {
-        Err(CallerNotInCommunity)
+        Err(UserNotInCommunity)
     }
 }
 

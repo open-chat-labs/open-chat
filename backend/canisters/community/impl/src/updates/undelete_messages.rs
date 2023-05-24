@@ -51,6 +51,6 @@ fn undelete_messages_impl(args: Args, state: &mut RuntimeState) -> Response {
             UserNotInChannel
         }
     } else {
-        CallerNotInCommunity
+        UserNotInCommunity
     }
 }
