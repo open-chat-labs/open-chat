@@ -1,6 +1,6 @@
 pub mod add_reaction;
+pub mod c2c_delete_channel;
 pub mod c2c_delete_community;
-pub mod c2c_delete_group;
 pub mod c2c_freeze_community;
 pub mod c2c_invite_users;
 pub mod c2c_join_community;
@@ -9,7 +9,7 @@ pub mod c2c_set_user_suspended;
 pub mod c2c_toggle_mute_notifications;
 pub mod c2c_unfreeze_community;
 pub mod change_role;
-pub mod create_group;
+pub mod create_channel;
 pub mod decline_invitation;
 pub mod delete_messages;
 pub mod disable_invite_code;

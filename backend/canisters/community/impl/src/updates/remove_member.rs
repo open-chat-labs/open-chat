@@ -98,7 +98,7 @@ fn commit(user_id: UserId, block: bool, removed_by: UserId, state: &mut RuntimeS
     state.data.members.remove(&user_id).expect("user must be a member");
 
     // Remove the user from each group they are a member of
-    state.data.groups.remove_member(user_id);
+    state.data.channels.remove_member(user_id);
 
     if block {
         // Also block the user

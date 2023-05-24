@@ -22,8 +22,8 @@ fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> Response {
     if let Some(user_id) = state.data.members.get(caller).map(|m| m.user_id) {
         let now = state.env.now();
 
-        if let Some(group) = state.data.groups.get_mut(&args.group_id) {
-            match group.add_reaction(
+        if let Some(channel) = state.data.channels.get_mut(&args.channel_id) {
+            match channel.add_reaction(
                 user_id,
                 args.thread_root_message_index,
                 args.message_id,
@@ -31,20 +31,20 @@ fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> Response {
                 now,
             ) {
                 AddRemoveReactionResult::Success => {
-                    if let Some(message) = should_push_notification(&args, user_id, group, &state.data.members, now) {
-                        push_notification(args, user_id, group.name.clone(), message, now, state);
+                    if let Some(message) = should_push_notification(&args, user_id, channel, &state.data.members, now) {
+                        push_notification(args, user_id, channel.name.clone(), message, now, state);
                     }
                     Success
                 }
                 AddRemoveReactionResult::NoChange => NoChange,
                 AddRemoveReactionResult::InvalidReaction => InvalidReaction,
                 AddRemoveReactionResult::MessageNotFound => MessageNotFound,
-                AddRemoveReactionResult::UserNotInGroup => UserNotInGroup,
+                AddRemoveReactionResult::UserNotInGroup => UserNotInChannel,
                 AddRemoveReactionResult::NotAuthorized => NotAuthorized,
                 AddRemoveReactionResult::UserSuspended => UserSuspended,
             }
         } else {
-            GroupNotFound
+            ChannelNotFound
         }
     } else {
         CallerNotInCommunity
@@ -54,11 +54,11 @@ fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> Response {
 fn should_push_notification(
     args: &Args,
     user_id: UserId,
-    group: &GroupChatCore,
+    chat: &GroupChatCore,
     members: &CommunityMembers,
     now: TimestampMillis,
 ) -> Option<EventWrapper<Message>> {
-    let message = group
+    let message = chat
         .events
         .events_reader(EventIndex::default(), args.thread_root_message_index, now)
         // We pass in `None` in place of `my_user_id` because we don't want to hydrate
@@ -67,7 +67,7 @@ fn should_push_notification(
 
     let sender = message.event.sender;
     if sender != user_id {
-        let notifications_muted = group.members.get(&sender).map_or(true, |m| m.notifications_muted.value)
+        let notifications_muted = chat.members.get(&sender).map_or(true, |m| m.notifications_muted.value)
             || members
                 .get(message.event.sender.into())
                 .map_or(true, |p| p.notifications_muted.value);
@@ -82,7 +82,7 @@ fn should_push_notification(
 fn push_notification(
     args: Args,
     user_id: UserId,
-    group_name: String,
+    channel_name: String,
     message: EventWrapper<Message>,
     now: TimestampMillis,
     state: &mut RuntimeState,
@@ -90,10 +90,10 @@ fn push_notification(
     let recipient = message.event.sender;
     let notification = Notification::CommunityReactionAddedNotification(CommunityReactionAddedNotification {
         community_id: state.env.canister_id().into(),
-        group_id: args.group_id,
+        channel_id: args.channel_id,
         thread_root_message_index: args.thread_root_message_index,
         community_name: state.data.name.clone(),
-        group_name,
+        channel_name,
         added_by: user_id,
         added_by_name: args.username,
         message,

@@ -1,7 +1,7 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use types::{
-    Avatar, CommunityGroupId, FieldTooLongResult, FieldTooShortResult, GroupGate, GroupPermissions, GroupRules, GroupSubtype,
+    Avatar, ChannelId, FieldTooLongResult, FieldTooShortResult, GroupGate, GroupPermissions, GroupRules, GroupSubtype,
     Milliseconds,
 };
 
@@ -29,7 +29,7 @@ pub enum Response {
     RulesTooShort(FieldTooShortResult),
     RulesTooLong(FieldTooLongResult),
     AvatarTooBig(FieldTooLongResult),
-    MaxGroupsCreated(u32),
+    MaxChannelsCreated(u32),
     NameTaken,
     UserSuspended,
     NotAuthorized,
@@ -37,5 +37,5 @@ pub enum Response {
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
-    pub group_id: CommunityGroupId,
+    pub channel_id: ChannelId,
 }

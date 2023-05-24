@@ -58,8 +58,8 @@ fn delete_messages_impl(user_id: UserId, args: Args, state: &mut RuntimeState) -
     }
 
     let now = state.env.now();
-    if let Some(group) = state.data.groups.get_mut(&args.group_id) {
-        match group.delete_messages(
+    if let Some(channel) = state.data.channels.get_mut(&args.channel_id) {
+        match channel.delete_messages(
             user_id,
             args.thread_root_message_index,
             args.message_ids,
@@ -78,7 +78,7 @@ fn delete_messages_impl(user_id: UserId, args: Args, state: &mut RuntimeState) -
                     // After 5 minutes hard delete those messages where the deleter was the message sender
                     state.data.timer_jobs.enqueue_job(
                         TimerJob::HardDeleteMessageContent(HardDeleteMessageContentJob {
-                            group_id: args.group_id,
+                            channel_id: args.channel_id,
                             thread_root_message_index: args.thread_root_message_index,
                             message_id,
                         }),
@@ -92,10 +92,10 @@ fn delete_messages_impl(user_id: UserId, args: Args, state: &mut RuntimeState) -
                 Success
             }
             DeleteMessagesResult::MessageNotFound => MessageNotFound,
-            DeleteMessagesResult::UserNotInGroup => UserNotInGroup,
+            DeleteMessagesResult::UserNotInGroup => UserNotInChannel,
             DeleteMessagesResult::UserSuspended => UserSuspended,
         }
     } else {
-        GroupNotFound
+        ChannelNotFound
     }
 }

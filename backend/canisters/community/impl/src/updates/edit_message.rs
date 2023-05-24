@@ -23,12 +23,12 @@ fn edit_message_impl(args: Args, state: &mut RuntimeState) -> Response {
 
         let now = state.env.now();
 
-        if let Some(group) = state.data.groups.get_mut(&args.group_id) {
+        if let Some(channel) = state.data.channels.get_mut(&args.channel_id) {
             let sender = member.user_id;
-            if let Some(group_member) = group.members.get(&sender) {
-                match group.events.edit_message(EditMessageArgs {
+            if let Some(channel_member) = channel.members.get(&sender) {
+                match channel.events.edit_message(EditMessageArgs {
                     sender,
-                    min_visible_event_index: group_member.min_visible_event_index(),
+                    min_visible_event_index: channel_member.min_visible_event_index(),
                     thread_root_message_index: args.thread_root_message_index,
                     message_id: args.message_id,
                     content: args.content,
@@ -39,10 +39,10 @@ fn edit_message_impl(args: Args, state: &mut RuntimeState) -> Response {
                     EditMessageResult::NotFound => MessageNotFound,
                 }
             } else {
-                UserNotInGroup
+                UserNotInChannel
             }
         } else {
-            GroupNotFound
+            ChannelNotFound
         }
     } else {
         CallerNotInCommunity

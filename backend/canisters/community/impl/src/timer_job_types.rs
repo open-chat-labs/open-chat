@@ -1,7 +1,7 @@
 use crate::mutate_state;
 use canister_timer_jobs::Job;
 use serde::{Deserialize, Serialize};
-use types::{BlobReference, CommunityGroupId, MessageId, MessageIndex};
+use types::{BlobReference, ChannelId, MessageId, MessageIndex};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub enum TimerJob {
@@ -12,7 +12,7 @@ pub enum TimerJob {
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct HardDeleteMessageContentJob {
-    pub group_id: CommunityGroupId,
+    pub channel_id: ChannelId,
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_id: MessageId,
 }
@@ -24,7 +24,7 @@ pub struct DeleteFileReferencesJob {
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct EndPollJob {
-    pub group_id: CommunityGroupId,
+    pub channel_id: ChannelId,
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_index: MessageIndex,
 }
@@ -44,7 +44,7 @@ impl Job for HardDeleteMessageContentJob {
         mutate_state(|state| {
             let now = state.env.now();
 
-            if let Some(content) = state.data.groups.get_mut(&self.group_id).and_then(|g| {
+            if let Some(content) = state.data.channels.get_mut(&self.channel_id).and_then(|g| {
                 g.events
                     .remove_deleted_message_content(self.thread_root_message_index, self.message_id, now)
             }) {
@@ -75,8 +75,10 @@ impl Job for EndPollJob {
     fn execute(&self) {
         mutate_state(|state| {
             let now = state.env.now();
-            if let Some(group) = state.data.groups.get_mut(&self.group_id) {
-                group.events.end_poll(self.thread_root_message_index, self.message_index, now);
+            if let Some(channel) = state.data.channels.get_mut(&self.channel_id) {
+                channel
+                    .events
+                    .end_poll(self.thread_root_message_index, self.message_index, now);
                 // handle_activity_notification(state);
             }
         });
