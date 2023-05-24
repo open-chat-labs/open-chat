@@ -1,6 +1,6 @@
 use crate::{
-    CommunityGroupId, CommunityPermissions, CommunityRole, EventIndex, EventWrapper, GroupGate, GroupPermissions, GroupRole,
-    Message, MessageId, MessageIndex, Milliseconds, TimestampMillis, UserId,
+    ChannelId, CommunityPermissions, CommunityRole, EventIndex, EventWrapper, GroupGate, GroupPermissions, GroupRole, Message,
+    MessageId, MessageIndex, Milliseconds, TimestampMillis, UserId,
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
@@ -280,8 +280,8 @@ pub struct UsersInvited {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct GroupDeleted {
-    pub group_id: CommunityGroupId,
+pub struct ChannelDeleted {
+    pub channel_id: ChannelId,
     pub name: String,
     pub deleted_by: UserId,
 }

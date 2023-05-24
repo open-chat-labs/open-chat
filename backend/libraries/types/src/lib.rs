@@ -110,7 +110,7 @@ pub use version::*;
 
 pub type AccessorId = Principal;
 pub type CanisterId = Principal;
-pub type CommunityGroupId = u128;
+pub type ChannelId = u128;
 pub type FileId = u128;
 pub type Hash = [u8; 32];
 pub type ICP = Tokens;

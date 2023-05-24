@@ -6,8 +6,7 @@ use canister_tracing_macros::trace;
 use community_canister::send_message::{Response::*, *};
 use group_chat_core::SendMessageResult;
 use types::{
-    CommunityGroupId, CommunityMessageNotification, EventWrapper, Message, MessageContent, MessageIndex, Notification,
-    TimestampMillis,
+    ChannelId, CommunityMessageNotification, EventWrapper, Message, MessageContent, MessageIndex, Notification, TimestampMillis,
 };
 
 #[update_candid_and_msgpack]
@@ -25,8 +24,8 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
     if let Some(user_id) = state.data.members.get(caller).map(|m| m.user_id) {
         let now = state.env.now();
 
-        if let Some(group) = state.data.groups.get_mut(&args.group_id) {
-            match group.send_message(
+        if let Some(channel) = state.data.channels.get_mut(&args.channel_id) {
+            match channel.send_message(
                 user_id,
                 args.thread_root_message_index,
                 args.message_id,
@@ -43,7 +42,7 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
                     let expires_at = result.message_event.expires_at;
 
                     register_timer_jobs(
-                        args.group_id,
+                        args.channel_id,
                         args.thread_root_message_index,
                         &result.message_event,
                         now,
@@ -52,10 +51,10 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
 
                     let notification = Notification::CommunityMessageNotification(CommunityMessageNotification {
                         community_id: state.env.canister_id().into(),
-                        group_id: args.group_id,
+                        channel_id: args.channel_id,
                         thread_root_message_index: args.thread_root_message_index,
                         community_name: state.data.name.clone(),
-                        group_name: group.name.clone(),
+                        group_name: channel.name.clone(),
                         sender: user_id,
                         sender_name: args.sender_name,
                         message: result.message_event,
@@ -76,12 +75,12 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
                 SendMessageResult::TextTooLong(max_length) => TextTooLong(max_length),
                 SendMessageResult::InvalidPoll(reason) => InvalidPoll(reason),
                 SendMessageResult::NotAuthorized => NotAuthorized,
-                SendMessageResult::UserNotInGroup => UserNotInGroup,
+                SendMessageResult::UserNotInGroup => UserNotInChannel,
                 SendMessageResult::UserSuspended => UserSuspended,
                 SendMessageResult::InvalidRequest(error) => InvalidRequest(error),
             }
         } else {
-            GroupNotFound
+            ChannelNotFound
         }
     } else {
         CallerNotInCommunity
@@ -89,7 +88,7 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
 }
 
 fn register_timer_jobs(
-    group_id: CommunityGroupId,
+    channel_id: ChannelId,
     thread_root_message_index: Option<MessageIndex>,
     message_event: &EventWrapper<Message>,
     now: TimestampMillis,
@@ -99,7 +98,7 @@ fn register_timer_jobs(
         if let Some(end_date) = p.config.end_date {
             timer_jobs.enqueue_job(
                 TimerJob::EndPoll(EndPollJob {
-                    group_id,
+                    channel_id,
                     thread_root_message_index,
                     message_index: message_event.event.message_index,
                 }),
