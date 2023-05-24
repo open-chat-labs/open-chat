@@ -6,12 +6,12 @@ use std::collections::{HashMap, HashSet};
 use types::{ChannelId, UserId};
 
 #[derive(Serialize, Deserialize, Default)]
-pub struct Groups {
+pub struct Channels {
     channels: HashMap<ChannelId, GroupChatCore>,
     default_groups: HashSet<ChannelId>,
 }
 
-impl Groups {
+impl Channels {
     pub fn add(&mut self, channel_id: ChannelId, chat: GroupChatCore) {
         match self.channels.entry(channel_id) {
             Vacant(e) => e.insert(chat),
