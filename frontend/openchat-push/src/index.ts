@@ -61,7 +61,7 @@ async function handlePushNotification(event: PushEvent): Promise<void> {
     });
 
     // If notifications are disabled or an OC browser window already has the focus then don't show a notification
-    const isClientFocused = windowClients.some((wc) => wc.visibilityState === "visible");
+    const isClientFocused = windowClients.some((wc) => wc.focused && wc.visibilityState === "visible");
     if (isClientFocused) {
         return;
     }
