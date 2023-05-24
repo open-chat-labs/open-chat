@@ -1,4 +1,4 @@
-use crate::model::groups::Channels;
+use crate::model::channels::Channels;
 use crate::model::members::CommunityMembers;
 use crate::timer_job_types::TimerJob;
 use candid::Principal;
