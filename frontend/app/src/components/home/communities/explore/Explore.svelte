@@ -122,35 +122,6 @@
             }
         }
     }
-    // .header {
-    //     display: grid;
-    //     grid-template-columns: toRem(40) repeat(5, 1fr);
-    //     gap: $sp4;
-    //     border-bottom: 1px solid var(--bd);
-    //     margin-bottom: $sp3;
-
-    //     .title {
-    //         @include font(bold, normal, fs-160, 38);
-    //         grid-column: 2 / span 2;
-    //     }
-
-    //     .search {
-    //         grid-column: span 2;
-    //     }
-
-    //     .create {
-    //         justify-self: self-end;
-    //         grid-column: 6;
-    //     }
-
-    //     .tags {
-    //         grid-column: 1 / span 5;
-    //     }
-
-    //     .sort {
-    //         grid-column: 6;
-    //     }
-    // }
 
     .communities {
         display: grid;
