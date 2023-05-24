@@ -16,7 +16,12 @@ fn remove_reaction_impl(args: Args, state: &mut RuntimeState) -> Response {
     }
 
     let caller = state.env.caller();
-    if let Some(user_id) = state.data.members.get(caller).map(|m| m.user_id) {
+    if let Some(member) = state.data.members.get(caller) {
+        if member.suspended.value {
+            return UserSuspended;
+        }
+
+        let user_id = member.user_id;
         let now = state.env.now();
 
         if let Some(channel) = state.data.channels.get_mut(&args.channel_id) {

@@ -64,12 +64,16 @@ struct PrepareResult {
 fn prepare(user_id: UserId, state: &RuntimeState) -> Result<PrepareResult, Response> {
     let caller = state.env.caller();
     if let Some(member) = state.data.members.get(caller) {
-        Ok(PrepareResult {
-            caller_id: member.user_id,
-            user_index_canister_id: state.data.user_index_canister_id,
-            is_caller_owner: member.role.is_owner(),
-            is_user_owner: state.data.members.get(user_id.into()).map_or(false, |p| p.role.is_owner()),
-        })
+        if member.suspended.value {
+            Err(UserSuspended)
+        } else {
+            Ok(PrepareResult {
+                caller_id: member.user_id,
+                user_index_canister_id: state.data.user_index_canister_id,
+                is_caller_owner: member.role.is_owner(),
+                is_user_owner: state.data.members.get(user_id.into()).map_or(false, |p| p.role.is_owner()),
+            })
+        }
     } else {
         Err(UserNotInCommunity)
     }

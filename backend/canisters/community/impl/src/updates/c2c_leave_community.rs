@@ -2,7 +2,7 @@ use crate::{model::events::CommunityEvent, mutate_state, RuntimeState};
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use community_canister::c2c_leave_community::{Response::*, *};
-use types::{MemberLeft, UserId};
+use types::MemberLeft;
 
 // Called via the user's user canister
 #[update_msgpack]
@@ -16,10 +16,10 @@ fn c2c_leave_community_impl(state: &mut RuntimeState) -> Response {
         return CommunityFrozen;
     }
 
-    let caller: UserId = state.env.caller().into();
+    let caller = state.env.caller();
     let now = state.env.now();
 
-    let member = match state.data.members.get(caller.into()) {
+    let member = match state.data.members.get(caller) {
         Some(p) => p,
         None => return UserNotInCommunity,
     };
@@ -32,13 +32,15 @@ fn c2c_leave_community_impl(state: &mut RuntimeState) -> Response {
         return LastOwnerCannotLeave;
     }
 
-    state.data.members.remove(&caller);
-    state.data.channels.remove_member(caller);
+    let user_id = member.user_id;
+
+    state.data.members.remove(&user_id);
+    state.data.channels.remove_member(user_id);
 
     state
         .data
         .events
-        .push_event(CommunityEvent::MemberLeft(Box::new(MemberLeft { user_id: caller })), now);
+        .push_event(CommunityEvent::MemberLeft(Box::new(MemberLeft { user_id })), now);
 
     Success
 }

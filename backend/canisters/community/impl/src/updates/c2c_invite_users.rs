@@ -23,8 +23,12 @@ fn c2c_invite_users_impl(args: Args, state: &mut RuntimeState) -> Response {
     let now = state.env.now();
 
     if let Some(member) = state.data.members.get(args.caller.into()) {
+        if member.suspended.value {
+            return UserSuspended;
+        }
+
         // The original caller must be authorized to invite other users
-        if member.suspended.value || (!state.data.is_public && !member.role.can_invite_users(&state.data.permissions)) {
+        if !state.data.is_public && !member.role.can_invite_users(&state.data.permissions) {
             return NotAuthorized;
         }
 
