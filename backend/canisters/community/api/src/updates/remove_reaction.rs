@@ -16,7 +16,7 @@ pub enum Response {
     NoChange,
     MessageNotFound,
     ChannelNotFound,
-    CallerNotInCommunity,
+    UserNotInCommunity,
     UserNotInChannel,
     NotAuthorized,
     UserSuspended,

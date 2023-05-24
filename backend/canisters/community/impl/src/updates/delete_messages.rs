@@ -48,7 +48,7 @@ fn prepare(state: &RuntimeState) -> Result<PrepareResult, Response> {
             user_index_canister_id: state.data.user_index_canister_id,
         })
     } else {
-        Err(CallerNotInCommunity)
+        Err(UserNotInCommunity)
     }
 }
 

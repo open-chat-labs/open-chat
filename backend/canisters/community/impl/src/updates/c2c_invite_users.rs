@@ -74,6 +74,6 @@ fn c2c_invite_users_impl(args: Args, state: &mut RuntimeState) -> Response {
             community_name: state.data.name.clone(),
         })
     } else {
-        CallerNotInCommunity
+        UserNotInCommunity
     }
 }

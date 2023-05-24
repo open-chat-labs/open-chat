@@ -18,7 +18,7 @@ pub struct Args {
 pub enum Response {
     Success,
     NotAuthorized,
-    CallerNotInCommunity,
+    UserNotInCommunity,
     NameTooShort(FieldTooShortResult),
     NameTooLong(FieldTooLongResult),
     NameReserved,

@@ -32,6 +32,6 @@ fn remove_reaction_impl(args: Args, state: &mut RuntimeState) -> Response {
             ChannelNotFound
         }
     } else {
-        CallerNotInCommunity
+        UserNotInCommunity
     }
 }

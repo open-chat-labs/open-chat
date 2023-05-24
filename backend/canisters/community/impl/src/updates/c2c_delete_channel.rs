@@ -49,7 +49,7 @@ fn can_delete_channel(channel_id: ChannelId, caller: Principal, data: &Data) -> 
             ChannelNotFound
         }
     } else {
-        CallerNotInCommunity
+        UserNotInCommunity
     }
 }
 

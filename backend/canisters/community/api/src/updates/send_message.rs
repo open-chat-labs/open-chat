@@ -26,7 +26,7 @@ pub enum Response {
     TextTooLong(u32),
     InvalidPoll(InvalidPollReason),
     NotAuthorized,
-    CallerNotInCommunity,
+    UserNotInCommunity,
     UserNotInChannel,
     UserSuspended,
     InvalidRequest(String),

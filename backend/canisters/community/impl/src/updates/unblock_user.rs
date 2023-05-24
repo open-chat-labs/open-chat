@@ -49,6 +49,6 @@ fn unblock_user_impl(args: Args, state: &mut RuntimeState) -> Response {
             NotAuthorized
         }
     } else {
-        CallerNotInCommunity
+        UserNotInCommunity
     }
 }
