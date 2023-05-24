@@ -9,5 +9,6 @@ pub enum Response {
     Success,
     NotAuthorized,
     CommunityFrozen,
+    UserSuspended,
     InternalError(String),
 }

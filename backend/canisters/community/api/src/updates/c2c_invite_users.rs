@@ -16,6 +16,7 @@ pub enum Response {
     NotAuthorized,
     CommunityFrozen,
     TooManyInvites(u32),
+    UserSuspended,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
