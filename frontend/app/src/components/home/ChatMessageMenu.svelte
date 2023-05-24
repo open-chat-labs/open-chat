@@ -208,7 +208,7 @@
 </script>
 
 <div class="menu" class:rtl={$rtlStore}>
-    <MenuIcon centered>
+    <MenuIcon centered position={"right"} align={"end"}>
         <div class="menu-icon" slot="icon">
             <HoverIcon compact={true}>
                 <ChevronDown size="1.6em" color={me ? "#fff" : "var(--icon-txt)"} />

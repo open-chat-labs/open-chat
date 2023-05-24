@@ -3,10 +3,11 @@
     import { tooltipStore } from "../stores/tooltip";
     import { tick } from "svelte";
     import Hoverable from "./Hoverable.svelte";
+    import type { Alignment, Position } from "../utils/alignment";
 
     export let enable = true;
-    export let position: "top" | "right" | "bottom" | "left" = "top";
-    export let align: "start" | "center" | "end" = "start";
+    export let position: Position = "top";
+    export let align: Alignment = "start";
     export let fill = false;
     export let gutter = 8;
 

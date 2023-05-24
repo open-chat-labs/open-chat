@@ -14,29 +14,9 @@
     export let empty: boolean = false;
 
     $: modal = !$mobileWidth && (forceModal || $numberOfColumns === 2);
-
-    let delay: number | undefined = undefined;
-
-    function mouseenter() {
-        if (nav) {
-            delay = window.setTimeout(() => {
-                navOpen.set(true);
-            }, 300);
-        }
-    }
-
-    function mouseleave() {
-        if ($menuStore === undefined && nav) {
-            window.clearTimeout(delay);
-            console.log("Closing nav");
-            navOpen.set(false);
-        }
-    }
 </script>
 
 <section
-    on:mouseenter={mouseenter}
-    on:mouseleave={mouseleave}
     class:rtl={$rtlStore}
     class:nav
     class:left
@@ -111,15 +91,13 @@
             position: absolute;
             display: flex;
             flex-direction: column;
-            // align-items: center;
             justify-content: space-between;
             width: toRem(80);
-            // width: toRem(150);
             overflow-x: hidden;
             height: 100%;
             background: var(--panel-left-bg);
             background: var(--panel-right-modal);
-            padding: 0;
+            padding: $sp2 0;
             border-right: 1px solid var(--bd);
             @include z-index("left-nav");
             transition: width 250ms ease-in-out;
@@ -138,7 +116,7 @@
                 box-shadow: 10px 0 10px rgba(0, 0, 0, 0.1);
 
                 @include mobile() {
-                    width: toRem(250);
+                    width: toRem(300);
                 }
             }
         }

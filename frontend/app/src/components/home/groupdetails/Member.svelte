@@ -53,10 +53,10 @@
     }
 
     function changeRole(role: MemberRole) {
-        dispatch("changeRole", { 
-            userId: member.userId, 
-            newRole: role, 
-            oldRole: member.role
+        dispatch("changeRole", {
+            userId: member.userId,
+            newRole: role,
+            oldRole: member.role,
         });
     }
 
@@ -69,15 +69,17 @@
     }
 </script>
 
-<User 
-    user={member} 
-    {me} 
-    {searchTerm} 
-    role={member.role === "moderator" || member.role === "admin" || member.role === "owner" ? member.role : undefined}
+<User
+    user={member}
+    {me}
+    {searchTerm}
+    role={member.role === "moderator" || member.role === "admin" || member.role === "owner"
+        ? member.role
+        : undefined}
     on:open={openUserProfile}>
     {#if showMenu}
         <span class="menu">
-            <MenuIcon>
+            <MenuIcon position={"bottom"} align={"end"}>
                 <span slot="icon">
                     <HoverIcon>
                         <ChevronDown size={$iconSize} color={"var(--icon-txt)"} />
@@ -91,7 +93,9 @@
                                     size={$iconSize}
                                     color={"var(--icon-inverted-txt)"}
                                     slot="icon" />
-                                <div slot="text">{$_("promoteTo", { values: { role: ownerText } })}</div>
+                                <div slot="text">
+                                    {$_("promoteTo", { values: { role: ownerText } })}
+                                </div>
                             </MenuItem>
                         {/if}
                         {#if canPromoteToAdmin}
@@ -100,7 +104,9 @@
                                     size={$iconSize}
                                     color={"var(--icon-inverted-txt)"}
                                     slot="icon" />
-                                <div slot="text">{$_("promoteTo", { values: { role: adminText } })}</div>
+                                <div slot="text">
+                                    {$_("promoteTo", { values: { role: adminText } })}
+                                </div>
                             </MenuItem>
                         {/if}
                         {#if canDemoteToAdmin}
@@ -109,7 +115,9 @@
                                     size={$iconSize}
                                     color={"var(--icon-inverted-txt)"}
                                     slot="icon" />
-                                <div slot="text">{$_("demoteTo", { values: { role: adminText } })}</div>
+                                <div slot="text">
+                                    {$_("demoteTo", { values: { role: adminText } })}
+                                </div>
                             </MenuItem>
                         {/if}
                         {#if canPromoteToModerator}
@@ -118,7 +126,9 @@
                                     size={$iconSize}
                                     color={"var(--icon-inverted-txt)"}
                                     slot="icon" />
-                                <div slot="text">{$_("promoteTo", { values: { role: moderatorText } })}</div>
+                                <div slot="text">
+                                    {$_("promoteTo", { values: { role: moderatorText } })}
+                                </div>
                             </MenuItem>
                         {/if}
                         {#if canDemoteToModerator}
@@ -127,7 +137,9 @@
                                     size={$iconSize}
                                     color={"var(--icon-inverted-txt)"}
                                     slot="icon" />
-                                <div slot="text">{$_("demoteTo", { values: { role: moderatorText } })}</div>
+                                <div slot="text">
+                                    {$_("demoteTo", { values: { role: moderatorText } })}
+                                </div>
                             </MenuItem>
                         {/if}
                         {#if canDemoteToMember}
@@ -136,7 +148,9 @@
                                     size={$iconSize}
                                     color={"var(--icon-inverted-txt)"}
                                     slot="icon" />
-                                <div slot="text">{$_("demoteTo", { values: { role: memberText } })}</div>
+                                <div slot="text">
+                                    {$_("demoteTo", { values: { role: memberText } })}
+                                </div>
                             </MenuItem>
                         {/if}
                         {#if canBlockUser}
@@ -163,4 +177,3 @@
         </span>
     {/if}
 </User>
-

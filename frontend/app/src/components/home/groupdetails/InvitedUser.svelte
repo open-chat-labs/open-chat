@@ -25,16 +25,13 @@
 
     function openUserProfile() {
         dispatch("openUserProfile", user.userId);
-    }    
+    }
 </script>
 
-<User 
-    {user}
-    {searchTerm} 
-    on:open={openUserProfile}>
+<User {user} {searchTerm} on:open={openUserProfile}>
     {#if canUninviteUser}
         <span class="menu">
-            <MenuIcon>
+            <MenuIcon position={"bottom"} align={"end"}>
                 <span slot="icon">
                     <HoverIcon>
                         <ChevronDown size={$iconSize} color={"var(--icon-txt)"} />

@@ -34,7 +34,7 @@
         </HoverIcon>
     </span>
     <span class="menu">
-        <MenuIcon>
+        <MenuIcon position={"bottom"} align={"end"}>
             <span slot="icon">
                 <HoverIcon>
                     <Hamburger size={$iconSize} color={"var(--icon-txt)"} />

@@ -193,14 +193,16 @@
                 <HoverIcon title={$_("group.inviteUsers")}>
                     <AccountMultiplePlus
                         size={$iconSize}
-                        color={inviteMembersSelected ? "var(--icon-selected)" : "var(--icon-txt)"} />
+                        color={inviteMembersSelected
+                            ? "var(--icon-selected)"
+                            : "var(--icon-txt)"} />
                 </HoverIcon>
             </span>
         {/if}
     {/if}
 {/if}
 <div class="menu">
-    <MenuIcon>
+    <MenuIcon position={"bottom"} align={"end"}>
         <div slot="icon">
             <HoverIcon>
                 <DotsVertical size={$iconSize} color={"var(--icon-txt)"} />

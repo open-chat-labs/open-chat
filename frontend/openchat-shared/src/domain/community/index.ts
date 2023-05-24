@@ -5,4 +5,6 @@ export type Community = DataContent & {
     name: string;
     description: string;
     memberCount: number;
+    channelCount: number;
+    unreadCount: number;
 };

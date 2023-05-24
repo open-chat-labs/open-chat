@@ -1,20 +1,37 @@
 <script lang="ts">
     import type { Community } from "openchat-client";
+    import ButtonGroup from "../../../ButtonGroup.svelte";
+    import Button from "../../../Button.svelte";
 
     export let community: Community;
+    export let selected: boolean;
+    export let header = false;
 </script>
 
-<div on:click class="card">
+<div class:selected class:header on:click class="card">
     <div class="banner">
         <div class="avatar" />
     </div>
     <div class="content">
         <div class="name">{community.name}</div>
         <div class="desc">{community.description}</div>
-        <div class="footer">
-            <span class="number">{community.memberCount.toLocaleString()}</span>
-            <span class="members">{"members"}</span>
-        </div>
+        {#if !header}
+            <ButtonGroup align={"fill"}>
+                <Button tiny hollow>Preview</Button>
+                <Button tiny>Join</Button>
+            </ButtonGroup>
+            <div class="footer">
+                <div class="members">
+                    <span class="number">{community.memberCount.toLocaleString()}</span>
+                    <span class="label">{"members"}</span>
+                </div>
+
+                <div on:click class="channels">
+                    <span class="number">{community.channelCount.toLocaleString()}</span>
+                    <span class="label">{"channels"}</span>
+                </div>
+            </div>
+        {/if}
     </div>
 </div>
 
@@ -25,6 +42,10 @@
         border: 1px solid var(--bd);
         border-radius: $sp3;
 
+        &.selected {
+            border-color: var(--txt);
+        }
+
         .banner {
             position: relative;
             background-color: blueviolet;
@@ -32,13 +53,21 @@
             border-radius: $sp3 $sp3 0 0;
 
             .avatar {
-                width: toRem(42);
-                height: toRem(42);
+                width: toRem(48);
+                height: toRem(48);
                 position: absolute;
                 bottom: toRem(-15);
                 left: $sp3;
                 border-radius: 50%;
                 background-color: orange;
+            }
+        }
+
+        &.header {
+            border-radius: 0;
+            border: none;
+            .banner {
+                border-radius: 0;
             }
         }
 
@@ -60,12 +89,24 @@
             .footer {
                 border-top: 1px solid var(--bd);
                 padding-top: $sp4;
+                margin-top: $sp4;
+                display: flex;
+                justify-content: space-between;
+                gap: $sp3;
 
-                .number {
-                    font-weight: 500;
+                .members,
+                .channels {
+                    .number {
+                        font-weight: 500;
+                    }
+                    .label {
+                        color: var(--txt-light);
+                    }
                 }
-                .members {
-                    color: var(--txt-light);
+
+                .channels {
+                    cursor: pointer;
+                    text-decoration: underline;
                 }
             }
         }

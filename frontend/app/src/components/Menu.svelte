@@ -11,9 +11,7 @@
 <style type="text/scss">
     .menu {
         width: toRem(200);
-        position: absolute;
         background-color: var(--menu-bg);
-        @include z-index("popup-menu");
         box-shadow: var(--menu-sh);
         border-radius: $sp2;
         border: 1px solid var(--menu-bd);

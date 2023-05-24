@@ -21,6 +21,7 @@
         page("/diamond", parsePathParams, track, () => (route = LandingPage));
         page("/architecture", parsePathParams, track, () => (route = LandingPage));
         if ($communitiesEnabled) {
+            // this is for explore mode
             page(
                 "/communities/:communityId?",
                 redirectHashRoutes,

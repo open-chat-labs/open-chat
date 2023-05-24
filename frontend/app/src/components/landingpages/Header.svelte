@@ -23,7 +23,7 @@
             <div class="name">OpenChat</div>
         </div>
         {#if $mobileWidth}
-            <MenuIcon>
+            <MenuIcon position={"bottom"} align={"end"}>
                 <div slot="icon">
                     <HoverIcon>
                         <Menu size={$iconSize} color={"var(--landing-txt)"} />

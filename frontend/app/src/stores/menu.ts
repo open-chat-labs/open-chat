@@ -1,9 +1,14 @@
-import { get, writable } from "svelte/store";
+import { writable, get } from "svelte/store";
 import { logger } from "utils/logging";
-import { fontSizeScale } from "./fontSize";
-import { rtlStore } from "./rtl";
-import { mobileWidth } from "./screenDimensions";
 import { navOpen } from "./layout";
+import { mobileWidth } from "./screenDimensions";
+import {
+    Alignment,
+    Position,
+    boundsCheck,
+    centerOfScreen,
+    derivePosition,
+} from "../utils/alignment";
 
 const { subscribe, update } = writable<HTMLElement | undefined>(undefined);
 
@@ -26,34 +31,31 @@ function close(menu: HTMLElement | undefined): HTMLElement | undefined {
     return undefined;
 }
 
-const offsetStep = 25;
-const desktopHeightStep = 3;
-const mobileHeightStep = 2.8;
-
 export const menuStore = {
     subscribe,
-    position: (pos: DOMRect, centered: boolean): void =>
+    position: (
+        triggerRect: DOMRect,
+        centered: boolean,
+        position: Position = "bottom",
+        align: Alignment = "center",
+        gutter = 8
+    ): void =>
         update((menu) => {
             if (menu === undefined) return menu;
 
-            const scale = get(fontSizeScale) - 2;
-            const baseOffset = 180 + scale * offsetStep;
-            const xoffset = get(rtlStore) ? baseOffset : -baseOffset;
-            const items = menu.querySelectorAll(".menu-item").length;
-            const isMobile = get(mobileWidth);
-            const itemHeight = isMobile
-                ? 36.7 + scale * mobileHeightStep
-                : 46.5 + scale * desktopHeightStep;
-            const height = itemHeight * items;
-            if (centered && isMobile) {
-                menu.style.setProperty("top", `calc(50% - ${height / 2}px)`);
-                menu.style.setProperty("left", `calc(50% - 35vw)`);
-            } else {
-                const left = Math.max(10, pos.x + xoffset);
-                const top = pos.y > window.innerHeight / 2 ? pos.y - height : pos.y + pos.height;
-                menu.style.setProperty("top", `${top}px`);
-                menu.style.setProperty("left", `${left}px`);
-            }
+            const elementRect = menu.getBoundingClientRect();
+
+            const dim =
+                centered && get(mobileWidth)
+                    ? centerOfScreen(elementRect)
+                    : boundsCheck(
+                          triggerRect,
+                          derivePosition(triggerRect, elementRect, position, align, gutter)
+                      );
+
+            menu.style.setProperty("left", `${dim.x}px`);
+            menu.style.setProperty("top", `${dim.y}px`);
+
             return menu;
         }),
     showMenu: (menu: HTMLElement): void =>
@@ -64,7 +66,9 @@ export const menuStore = {
         }),
     hideMenu: (): void =>
         update((menu) => {
-            navOpen.set(false);
+            if (menu) {
+                navOpen.set(false);
+            }
             return close(menu);
         }),
 };

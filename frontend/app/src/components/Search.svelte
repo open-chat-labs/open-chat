@@ -9,6 +9,7 @@
     export let searchTerm = "";
     export let searching: boolean;
     export let placeholder: string = "searchPlaceholder";
+    export let fill = false;
 
     let timer: number | undefined;
 
@@ -35,7 +36,7 @@
     }
 </script>
 
-<form on:submit|preventDefault={performSearch} class="wrapper">
+<form on:submit|preventDefault={performSearch} class="wrapper" class:fill>
     <input
         on:keydown={keydown}
         spellcheck="false"
@@ -68,6 +69,10 @@
         @include mobile() {
             margin: 0 $sp3;
             margin-bottom: $sp3;
+        }
+
+        &.fill {
+            margin: 0;
         }
     }
     .icon {

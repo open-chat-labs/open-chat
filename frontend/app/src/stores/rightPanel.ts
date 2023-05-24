@@ -10,6 +10,7 @@ export type RightPanelState =
     | UserProfilePanel
     | MessageThreadPanel
     | ProposalFilterPanel
+    | CommunityGroups
     | NoPanel;
 
 export type NoPanel = {
@@ -36,6 +37,11 @@ export type InviteMembersPanel = {
 
 export type ShowMembersPanel = {
     kind: "show_members";
+};
+
+export type CommunityGroups = {
+    kind: "community_groups";
+    communityId: string;
 };
 
 export type ShowPinnedPanel = {
@@ -79,3 +85,7 @@ export function filterByChatType(
 }
 
 export const rightPanelHistory = writable<RightPanelState[]>([]);
+
+export function popRightPanelHistory(): void {
+    rightPanelHistory.update((history) => history.slice(0, history.length - 1));
+}
