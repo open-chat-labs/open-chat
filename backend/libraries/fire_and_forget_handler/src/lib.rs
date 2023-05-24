@@ -8,11 +8,13 @@ use tracing::trace;
 use types::{CanisterId, TimestampMillis};
 use utils::time::{now_millis, SECOND_IN_MS};
 
-fn start_job(wrapper: Arc<Mutex<FireAndForgetHandlerInner>>) {
-    let clone = wrapper.clone();
-    let timer_id = ic_cdk_timers::set_timer_interval(Duration::ZERO, move || run(&clone));
-    wrapper.lock().unwrap().timer_id = Some(timer_id);
-    trace!("FireAndForgetHandler job started");
+fn start_job_if_required(wrapper: Arc<Mutex<FireAndForgetHandlerInner>>) {
+    if wrapper.lock().unwrap().should_start_job() {
+        let clone = wrapper.clone();
+        let timer_id = ic_cdk_timers::set_timer_interval(Duration::ZERO, move || run(&clone));
+        wrapper.lock().unwrap().timer_id = Some(timer_id);
+        trace!("FireAndForgetHandler job started");
+    }
 }
 
 fn run(wrapper: &Arc<Mutex<FireAndForgetHandlerInner>>) {
@@ -38,7 +40,6 @@ async fn process_batch(batch: Vec<C2cCall>, wrapper: Arc<Mutex<FireAndForgetHand
 async fn process_single(mut call: C2cCall, wrapper: Arc<Mutex<FireAndForgetHandlerInner>>) {
     let result = make_c2c_call_raw(call.canister_id, &call.method_name, &call.payload).await;
 
-    let mut should_start_job = false;
     if result.is_err() || call.attempt > 0 {
         let handler = &mut wrapper.lock().unwrap();
         let calls = handler.canisters.entry(call.canister_id).or_default();
@@ -49,15 +50,12 @@ async fn process_single(mut call: C2cCall, wrapper: Arc<Mutex<FireAndForgetHandl
             let now = now_millis();
             let due = now + (u64::from(call.attempt) * SECOND_IN_MS);
             calls.queue.insert((due, call.id), call);
-            should_start_job = handler.should_start_job();
         } else if calls.in_progress.is_empty() && calls.queue.is_empty() {
             handler.canisters.remove(&call.canister_id);
         }
     }
 
-    if should_start_job {
-        start_job(wrapper.clone());
-    }
+    start_job_if_required(wrapper);
 }
 
 pub struct FireAndForgetHandler {
@@ -88,12 +86,9 @@ impl FireAndForgetHandler {
     }
 
     fn init(inner: FireAndForgetHandlerInner) -> Self {
-        let should_start_job = inner.should_start_job();
         let wrapped = Arc::new(Mutex::new(inner));
 
-        if should_start_job {
-            start_job(wrapped.clone());
-        }
+        start_job_if_required(wrapped.clone());
 
         FireAndForgetHandler { inner: wrapped }
     }
