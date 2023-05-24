@@ -1,4 +1,5 @@
-/** This is used to calculate the position of thing A according to the required
+/**
+ * This is used to calculate the position of thing A according to the required
  * alignment to thing B.
  *
  * It is used for both tooltips and menus
@@ -20,65 +21,65 @@ function center({ left, top, height, width }: DOMRect): { x: number; y: number }
 }
 
 export function derivePosition(
-    target: DOMRect,
-    tooltip: DOMRect,
+    triggerRect: DOMRect,
+    elementRect: DOMRect,
     position: Position,
     align: Alignment,
     gutter: number
 ): { x: number; y: number } {
-    const targetCenter = center(target);
+    const triggerCenter = center(triggerRect);
     const [flippedPosition, flippedAlign] = flipPositionAndAlignment(position, align);
     switch (flippedPosition) {
         case "right":
             return {
-                x: target.x + target.width + gutter,
-                y: verticalPosition(targetCenter, tooltip, flippedAlign),
+                x: triggerRect.x + triggerRect.width + gutter,
+                y: verticalPosition(triggerCenter, elementRect, flippedAlign),
             };
         case "left":
             return {
-                x: target.x - tooltip.width - gutter,
-                y: verticalPosition(targetCenter, tooltip, flippedAlign),
+                x: triggerRect.x - elementRect.width - gutter,
+                y: verticalPosition(triggerCenter, elementRect, flippedAlign),
             };
         case "top":
             return {
-                x: horizontalPosition(targetCenter, tooltip, flippedAlign),
-                y: target.y - tooltip.height - gutter,
+                x: horizontalPosition(triggerCenter, elementRect, flippedAlign),
+                y: triggerRect.y - elementRect.height - gutter,
             };
         case "bottom":
             return {
-                x: horizontalPosition(targetCenter, tooltip, flippedAlign),
-                y: target.y + target.height + gutter,
+                x: horizontalPosition(triggerCenter, elementRect, flippedAlign),
+                y: triggerRect.y + triggerRect.height + gutter,
             };
     }
 }
 
 function horizontalPosition(
-    targetCenter: { x: number; y: number },
-    tooltip: DOMRect,
+    triggerCenter: { x: number; y: number },
+    elementRect: DOMRect,
     align: Alignment
 ): number {
     switch (align) {
         case "center":
-            return targetCenter.x - tooltip.width / 2;
+            return triggerCenter.x - elementRect.width / 2;
         case "start":
-            return targetCenter.x - CHEVRON_OFFSET;
+            return triggerCenter.x - CHEVRON_OFFSET;
         case "end":
-            return targetCenter.x - tooltip.width + CHEVRON_OFFSET;
+            return triggerCenter.x - elementRect.width + CHEVRON_OFFSET;
     }
 }
 
 function verticalPosition(
-    targetCenter: { x: number; y: number },
-    tooltip: DOMRect,
+    triggerCenter: { x: number; y: number },
+    elementRect: DOMRect,
     align: Alignment
 ): number {
     switch (align) {
         case "center":
-            return targetCenter.y - tooltip.height / 2;
+            return triggerCenter.y - elementRect.height / 2;
         case "start":
-            return targetCenter.y - CHEVRON_OFFSET;
+            return triggerCenter.y - CHEVRON_OFFSET;
         case "end":
-            return targetCenter.y - tooltip.height + CHEVRON_OFFSET;
+            return triggerCenter.y - elementRect.height + CHEVRON_OFFSET;
     }
 }
 

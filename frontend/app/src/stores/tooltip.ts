@@ -19,7 +19,7 @@ function close(tooltip: HTMLElement | undefined): HTMLElement | undefined {
 export const tooltipStore = {
     subscribe,
     position: (
-        targetRect: DOMRect,
+        triggerRect: DOMRect,
         position: Position = "top",
         align: Alignment = "start",
         gutter = 8
@@ -28,7 +28,7 @@ export const tooltipStore = {
             if (tooltip === undefined) return tooltip;
 
             const pos = derivePosition(
-                targetRect,
+                triggerRect,
                 tooltip.getBoundingClientRect(),
                 position,
                 align,
