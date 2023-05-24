@@ -1,12 +1,12 @@
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
-use types::{CommunityGroupId, UserId};
+use types::{ChannelId, UserId};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub caller: UserId,
     pub users: Vec<(UserId, Principal)>,
-    pub group: Option<CommunityGroupId>,
+    pub channel: Option<ChannelId>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

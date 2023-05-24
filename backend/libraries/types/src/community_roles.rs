@@ -16,8 +16,8 @@ pub struct CommunityPermissions {
     pub remove_members: CommunityPermissionRole,
     pub block_users: CommunityPermissionRole,
     pub update_details: CommunityPermissionRole,
-    pub create_public_group: CommunityPermissionRole,
-    pub create_private_group: CommunityPermissionRole,
+    pub create_public_channel: CommunityPermissionRole,
+    pub create_private_channel: CommunityPermissionRole,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -28,8 +28,8 @@ pub struct OptionalCommunityPermissions {
     pub remove_members: Option<CommunityPermissionRole>,
     pub block_users: Option<CommunityPermissionRole>,
     pub update_details: Option<CommunityPermissionRole>,
-    pub create_public_group: Option<CommunityPermissionRole>,
-    pub create_private_group: Option<CommunityPermissionRole>,
+    pub create_public_channel: Option<CommunityPermissionRole>,
+    pub create_private_channel: Option<CommunityPermissionRole>,
 }
 
 impl Default for CommunityPermissions {
@@ -41,8 +41,8 @@ impl Default for CommunityPermissions {
             remove_members: CommunityPermissionRole::Admins,
             block_users: CommunityPermissionRole::Admins,
             update_details: CommunityPermissionRole::Admins,
-            create_public_group: CommunityPermissionRole::Members,
-            create_private_group: CommunityPermissionRole::Members,
+            create_public_channel: CommunityPermissionRole::Members,
+            create_private_channel: CommunityPermissionRole::Members,
         }
     }
 }
@@ -95,12 +95,12 @@ impl CommunityRole {
         self.is_permitted(permissions.update_details)
     }
 
-    pub fn can_create_public_group(&self, permissions: &CommunityPermissions) -> bool {
-        self.is_permitted(permissions.create_public_group)
+    pub fn can_create_public_channel(&self, permissions: &CommunityPermissions) -> bool {
+        self.is_permitted(permissions.create_public_channel)
     }
 
-    pub fn can_create_private_group(&self, permissions: &CommunityPermissions) -> bool {
-        self.is_permitted(permissions.create_private_group)
+    pub fn can_create_private_channel(&self, permissions: &CommunityPermissions) -> bool {
+        self.is_permitted(permissions.create_private_channel)
     }
 
     pub fn can_delete_community(&self) -> bool {

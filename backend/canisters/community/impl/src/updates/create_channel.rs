@@ -1,19 +1,19 @@
 use crate::{mutate_state, RuntimeState};
 use canister_tracing_macros::trace;
-use community_canister::create_group::{Response::*, *};
+use community_canister::create_channel::{Response::*, *};
 use group_chat_core::GroupChatCore;
 use ic_cdk_macros::update;
 use rand::Rng;
-use types::CommunityGroupId;
+use types::ChannelId;
 use utils::group_validation::{validate_description, validate_name, validate_rules, NameValidationError, RulesValidationError};
 
 #[update]
 #[trace]
-fn create_group(args: Args) -> Response {
-    mutate_state(|state| create_group_impl(args, state))
+fn create_channel(args: Args) -> Response {
+    mutate_state(|state| create_channel_impl(args, state))
 }
 
-fn create_group_impl(args: Args, state: &mut RuntimeState) -> Response {
+fn create_channel_impl(args: Args, state: &mut RuntimeState) -> Response {
     let caller = state.env.caller();
     if let Some(member) = state.data.members.get(caller) {
         if member.suspended.value {
@@ -21,9 +21,9 @@ fn create_group_impl(args: Args, state: &mut RuntimeState) -> Response {
         }
 
         let is_authorized = if args.is_public {
-            member.role.can_create_public_group(&state.data.permissions)
+            member.role.can_create_public_channel(&state.data.permissions)
         } else {
-            member.role.can_create_private_group(&state.data.permissions)
+            member.role.can_create_private_channel(&state.data.permissions)
         };
 
         if !is_authorized {
@@ -42,8 +42,8 @@ fn create_group_impl(args: Args, state: &mut RuntimeState) -> Response {
                 RulesValidationError::TooLong(l) => RulesTooLong(l),
             }
         } else {
-            let group_id: CommunityGroupId = state.env.rng().gen();
-            let group = GroupChatCore::new(
+            let channel_id: ChannelId = state.env.rng().gen();
+            let chat = GroupChatCore::new(
                 member.user_id,
                 args.is_public,
                 args.name,
@@ -57,8 +57,8 @@ fn create_group_impl(args: Args, state: &mut RuntimeState) -> Response {
                 args.events_ttl,
                 state.env.now(),
             );
-            state.data.groups.add(group_id, group);
-            Success(SuccessResult { group_id })
+            state.data.channels.add(channel_id, chat);
+            Success(SuccessResult { channel_id })
         }
     } else {
         NotAuthorized

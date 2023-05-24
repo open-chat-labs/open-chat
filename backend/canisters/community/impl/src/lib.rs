@@ -1,4 +1,4 @@
-use crate::model::groups::Groups;
+use crate::model::channels::Channels;
 use crate::model::members::CommunityMembers;
 use crate::timer_job_types::TimerJob;
 use candid::Principal;
@@ -134,7 +134,7 @@ struct Data {
     proposals_bot_user_id: UserId,
     date_created: TimestampMillis,
     members: CommunityMembers,
-    groups: Groups,
+    channels: Channels,
     events: CommunityEvents,
     invited_users: InvitedUsers,
     invite_code: Option<u64>,
@@ -185,7 +185,7 @@ impl Data {
             proposals_bot_user_id,
             date_created: now,
             members,
-            groups: Groups::default(),
+            channels: Channels::default(),
             events,
             invited_users: InvitedUsers::default(),
             invite_code: None,
