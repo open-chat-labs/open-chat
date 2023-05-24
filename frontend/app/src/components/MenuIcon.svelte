@@ -26,8 +26,6 @@
 
             await tick();
 
-            console.log("Menu Trigger: ", rect);
-            console.log("Menu Element: ", contextMenu.getBoundingClientRect(), contextMenu);
             menuStore.position(rect, centered, position, align, gutter);
         }
     }

@@ -29,14 +29,6 @@
                 track,
                 () => (route = Home)
             );
-            // this is for looking through my
-            // page(
-            //     "/community/:communityId?/:chatId?/:messageIndex?/:threadMessageIndex?",
-            //     redirectHashRoutes,
-            //     parsePathParams,
-            //     track,
-            //     () => (route = Home)
-            // );
         }
         page("/hotgroups", redirectHashRoutes, parsePathParams, track, () => (route = Home));
         page(
