@@ -1,6 +1,5 @@
 <script lang="ts">
     import ButtonGroup from "../../../ButtonGroup.svelte";
-    import Select from "../../../Select.svelte";
     import HoverIcon from "../../../HoverIcon.svelte";
     import Markdown from "../../Markdown.svelte";
     import Avatar from "../../../Avatar.svelte";
@@ -8,9 +7,9 @@
     import { AvatarSize } from "openchat-client";
     import { _ } from "svelte-i18n";
     import Button from "../../../Button.svelte";
-    import Search from "../../..//Search.svelte";
+    import Search from "../../../Search.svelte";
     import { mobileWidth } from "../../../../stores/screenDimensions";
-    import { dummyCommunityGroups, dummyCommunities } from "../../../../stores/community";
+    import { dummyCommunityChannels, dummyCommunities } from "../../../../stores/community";
     import { iconSize } from "../../../../stores/iconSize";
     import CommunityCard from "./CommunityCard.svelte";
     import SectionHeader from "../../../SectionHeader.svelte";
@@ -59,9 +58,9 @@
                 <option value={""}>{"Alphabetical: Z-A"}</option>
             </Select>
         </div> -->
-        <div class="groups">
-            {#each $dummyCommunityGroups as group}
-                <div class="group">
+        <div class="channels">
+            {#each $dummyCommunityChannels as channel}
+                <div class="channel">
                     <div class="details">
                         <div class="avatar">
                             <Avatar
@@ -69,11 +68,11 @@
                                 size={$mobileWidth ? AvatarSize.Small : AvatarSize.Default} />
                         </div>
                         <div>
-                            <h3 class="group-name">
-                                {group.name}
+                            <h3 class="channel-name">
+                                {channel.name}
                             </h3>
-                            <div class="group-desc">
-                                <Markdown text={group.description} />
+                            <div class="channel-desc">
+                                <Markdown text={channel.description} />
                             </div>
                         </div>
                     </div>
@@ -101,7 +100,7 @@
         }
 
         .search,
-        .groups,
+        .channels,
         .sort {
             margin: 0 $sp4;
             @include mobile() {
@@ -114,7 +113,7 @@
             margin-bottom: $sp3;
         }
 
-        .groups {
+        .channels {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(min(250px, 100%), 1fr));
             gap: $sp4;
@@ -124,7 +123,7 @@
                 gap: $sp3;
             }
 
-            .group {
+            .channel {
                 padding: $sp4;
                 background-color: var(--accent);
                 background-color: var(--recommended-bg);
@@ -134,11 +133,11 @@
                     margin-bottom: $sp4;
                     gap: $sp4;
 
-                    .group-name {
+                    .channel-name {
                         margin-bottom: $sp3;
                     }
 
-                    .group-desc {
+                    .channel-desc {
                         color: var(--txt-light);
                     }
                 }

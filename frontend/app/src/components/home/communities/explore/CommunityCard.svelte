@@ -26,9 +26,9 @@
                     <span class="label">{"members"}</span>
                 </div>
 
-                <div on:click class="groups">
-                    <span class="number">{community.groupCount.toLocaleString()}</span>
-                    <span class="label">{"groups"}</span>
+                <div on:click class="channels">
+                    <span class="number">{community.channelCount.toLocaleString()}</span>
+                    <span class="label">{"channels"}</span>
                 </div>
             </div>
         {/if}
@@ -95,7 +95,7 @@
                 gap: $sp3;
 
                 .members,
-                .groups {
+                .channels {
                     .number {
                         font-weight: 500;
                     }
@@ -104,7 +104,7 @@
                     }
                 }
 
-                .groups {
+                .channels {
                     cursor: pointer;
                     text-decoration: underline;
                 }

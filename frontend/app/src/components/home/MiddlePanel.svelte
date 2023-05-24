@@ -10,7 +10,7 @@
     import type { GroupChatSummary, OpenChat } from "openchat-client";
     import { pathParams } from "../../routes";
     import { getContext } from "svelte";
-    import CommunitySummary from "./communities/explore/CommunityGroups.svelte";
+    import CommunitySummary from "./communities/explore/CommunityChannels.svelte";
 
     const client = getContext<OpenChat>("client");
 
