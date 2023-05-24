@@ -7,7 +7,7 @@ pub type Args = Empty;
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
-    CallerNotInCommunity,
+    UserNotInCommunity,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

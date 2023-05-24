@@ -12,6 +12,7 @@ mod delete_message_tests;
 mod diamond_membership_tests;
 mod disappearing_message_tests;
 mod env;
+mod fire_and_forget_handler_tests;
 mod freeze_group_tests;
 mod gated_group_tests;
 mod join_group_tests;

@@ -71,7 +71,7 @@ fn prepare(user_id: UserId, state: &RuntimeState) -> Result<PrepareResult, Respo
             is_user_owner: state.data.members.get(user_id.into()).map_or(false, |p| p.role.is_owner()),
         })
     } else {
-        Err(CallerNotInCommunity)
+        Err(UserNotInCommunity)
     }
 }
 
@@ -108,7 +108,7 @@ fn change_role_impl(
         ChangeRoleResult::Invalid => return Invalid,
         ChangeRoleResult::UserNotInCommunity => return UserNotInCommunity,
         ChangeRoleResult::Unchanged => return Success,
-        ChangeRoleResult::CallerNotInCommunity => return CallerNotInCommunity,
+        ChangeRoleResult::TargetUserNotInCommunity => return TargetUserNotInCommunity,
         ChangeRoleResult::UserSuspended => return UserSuspended,
     };
 

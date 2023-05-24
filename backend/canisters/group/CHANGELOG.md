@@ -5,10 +5,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Introduce `FireAndForgetHandler` which retries failed c2c calls ([#3639](https://github.com/open-ic/open-chat/pull/3639))
+
 ### Changed
 
 - Split common group logic into new `group_chat_core` library ([#3620](https://github.com/open-ic/open-chat/pull/3620)), ([#3622](https://github.com/open-ic/open-chat/pull/3622)), ([#3624](https://github.com/open-ic/open-chat/pull/3624)), ([#3626](https://github.com/open-ic/open-chat/pull/3626)), ([#3633](https://github.com/open-ic/open-chat/pull/3633)), ([#3634](https://github.com/open-ic/open-chat/pull/3634))
 - Simplify `c2c_update_proposals` ([#3621](https://github.com/open-ic/open-chat/pull/3621))
+- Simplify `remove_participant` ([#3641](https://github.com/open-ic/open-chat/pull/3641))
 
 ### Removed
 

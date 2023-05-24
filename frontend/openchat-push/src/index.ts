@@ -36,13 +36,19 @@ self.addEventListener("notificationclick", (ev: NotificationEvent) => {
 });
 
 async function handlePushNotification(event: PushEvent): Promise<void> {
-    if (!event.data) return;
+    const id = Date.now().toString();
+    console.debug("PUSH: push notification received", id);
+    if (!event.data) {
+        console.debug("PUSH: notification data is empty", id);
+        return;
+    }
 
     const bytes = toUint8Array(event.data.text());
 
     // Try to extract the typed notification from the event
     const candid = IDL.decode([NotificationIdl], bytes.buffer)[0] as unknown as ApiNotification;
     if (!candid) {
+        console.debug("PUSH: unable to decode candid", id);
         return;
     }
 
@@ -61,11 +67,12 @@ async function handlePushNotification(event: PushEvent): Promise<void> {
     });
 
     // If notifications are disabled or an OC browser window already has the focus then don't show a notification
-    const isClientFocused = windowClients.some((wc) => wc.visibilityState === "visible");
+    const isClientFocused = windowClients.some((wc) => wc.focused && wc.visibilityState === "visible");
     if (isClientFocused) {
+        console.debug("PUSH: suppressing notification because client focused", id);
         return;
     }
-    await showNotification(notification);
+    await showNotification(notification, id);
 }
 
 async function handleNotificationClick(event: NotificationEvent): Promise<void> {
@@ -95,7 +102,7 @@ function toUint8Array(base64String: string): Uint8Array {
     return Uint8Array.from(atob(base64String), (c) => c.charCodeAt(0));
 }
 
-async function showNotification(notification: Notification): Promise<void> {
+async function showNotification(notification: Notification, id: string): Promise<void> {
     let icon = "/_/raw/icon.png";
     let title: string;
     let body: string;
@@ -178,7 +185,7 @@ async function showNotification(notification: Notification): Promise<void> {
         },
     };
 
-    console.debug("PUSH: about to show notification: ", toShow);
+    console.debug("PUSH: about to show notification: ", toShow, id);
 
     await self.registration.showNotification(title, toShow);
 }

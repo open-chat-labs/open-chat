@@ -79,15 +79,15 @@ impl CommunityMembers {
 
     pub fn change_role(
         &mut self,
-        caller_id: UserId,
         user_id: UserId,
+        target_user_id: UserId,
         new_role: CommunityRole,
         permissions: &CommunityPermissions,
         is_caller_platform_moderator: bool,
         is_user_platform_moderator: bool,
     ) -> ChangeRoleResult {
         // Is the caller authorized to change the user to this role
-        match self.get(caller_id.into()) {
+        match self.get(user_id.into()) {
             Some(p) => {
                 if p.suspended.value {
                     return ChangeRoleResult::UserSuspended;
@@ -97,19 +97,19 @@ impl CommunityMembers {
                     return ChangeRoleResult::NotAuthorized;
                 }
             }
-            None => return ChangeRoleResult::CallerNotInCommunity,
+            None => return ChangeRoleResult::UserNotInCommunity,
         }
 
         let mut owner_count = self.owner_count;
         let mut admin_count = self.admin_count;
 
-        let member = match self.get_mut(user_id.into()) {
+        let member = match self.get_mut(target_user_id.into()) {
             Some(p) => p,
-            None => return ChangeRoleResult::UserNotInCommunity,
+            None => return ChangeRoleResult::TargetUserNotInCommunity,
         };
 
         // Platform moderators cannot be demoted from owner except by themselves
-        if is_user_platform_moderator && member.role.is_owner() && user_id != caller_id {
+        if is_user_platform_moderator && member.role.is_owner() && target_user_id != user_id {
             return ChangeRoleResult::NotAuthorized;
         }
 
@@ -141,20 +141,10 @@ impl CommunityMembers {
         self.owner_count = owner_count;
         self.admin_count = admin_count;
 
-        ChangeRoleResult::Success(ChangeRoleSuccessResult { caller_id, prev_role })
-    }
-
-    pub fn try_undo_remove(&mut self, principal: Principal, member: CommunityMemberInternal) {
-        let user_id = member.user_id;
-        let role = member.role;
-        if self.members.insert(user_id, member).is_none() {
-            self.principal_to_user_id_map.insert(principal, user_id);
-            match role {
-                CommunityRole::Owner => self.owner_count += 1,
-                CommunityRole::Admin => self.admin_count += 1,
-                _ => (),
-            }
-        }
+        ChangeRoleResult::Success(ChangeRoleSuccessResult {
+            caller_id: user_id,
+            prev_role,
+        })
     }
 
     pub fn block(&mut self, user_id: UserId) {
@@ -240,9 +230,9 @@ pub enum AddResult {
 
 pub enum ChangeRoleResult {
     Success(ChangeRoleSuccessResult),
-    CallerNotInCommunity,
-    NotAuthorized,
     UserNotInCommunity,
+    NotAuthorized,
+    TargetUserNotInCommunity,
     Unchanged,
     Invalid,
     UserSuspended,

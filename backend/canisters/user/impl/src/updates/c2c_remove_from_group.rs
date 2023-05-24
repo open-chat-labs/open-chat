@@ -15,10 +15,6 @@ fn c2c_remove_from_group_impl(args: Args, runtime_state: &mut RuntimeState) -> R
     let chat_id = runtime_state.env.caller().into();
     let now = runtime_state.env.now();
 
-    if runtime_state.data.is_platform_moderator {
-        return CannotRemoveUser;
-    }
-
     if runtime_state.data.group_chats.remove(chat_id, now).is_some() {
         runtime_state.data.hot_group_exclusions.add(chat_id, None, now);
 

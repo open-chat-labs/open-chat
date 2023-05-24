@@ -32,7 +32,7 @@ pub mod happy_path {
     use ic_test_state_machine_client::StateMachine;
     use types::{
         ChatId, EventIndex, EventsResponse, GroupChatSummary, GroupRules, MessageContentInitial, MessageId, MessageIndex,
-        TextContent, ThreadSyncDetails, UserId,
+        Reaction, TextContent, ThreadSyncDetails, UserId,
     };
     use user_canister::initial_state_v2::SuccessCachedResult;
 
@@ -94,6 +94,29 @@ pub mod happy_path {
             user_canister::create_group::Response::Success(result) => result.chat_id,
             response => panic!("'create_group' error: {response:?}"),
         }
+    }
+
+    pub fn add_reaction(
+        env: &mut StateMachine,
+        sender: &User,
+        user_id: UserId,
+        reaction: impl ToString,
+        message_id: MessageId,
+    ) {
+        let response = super::add_reaction(
+            env,
+            sender.principal,
+            sender.canister(),
+            &user_canister::add_reaction::Args {
+                user_id,
+                thread_root_message_index: None,
+                message_id,
+                reaction: Reaction::new(reaction.to_string()),
+                username: sender.username(),
+                correlation_id: 0,
+            },
+        );
+        assert!(matches!(response, user_canister::add_reaction::Response::Success));
     }
 
     pub fn initial_state_v2(env: &StateMachine, sender: &User) -> user_canister::initial_state_v2::SuccessResult {

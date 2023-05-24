@@ -1,4 +1,4 @@
-use candid::Principal;
+use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use types::nns::CryptoAmount;
 use types::{
@@ -117,4 +117,13 @@ pub struct OpenChatBotMessage {
 pub struct ReferralCodeAdded {
     pub referral_type: ReferralType,
     pub code: String,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Debug)]
+pub struct GlobalUser {
+    pub user_id: UserId,
+    pub principal: Principal,
+    pub is_bot: bool,
+    #[serde(alias = "is_super_admin")]
+    pub is_platform_moderator: bool,
 }

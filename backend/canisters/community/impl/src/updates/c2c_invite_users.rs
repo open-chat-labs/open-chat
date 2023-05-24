@@ -22,10 +22,9 @@ fn c2c_invite_users_impl(args: Args, state: &mut RuntimeState) -> Response {
 
     let now = state.env.now();
 
-    if let Some(participant) = state.data.members.get(args.caller.into()) {
+    if let Some(member) = state.data.members.get(args.caller.into()) {
         // The original caller must be authorized to invite other users
-        if participant.suspended.value || (!state.data.is_public && !participant.role.can_invite_users(&state.data.permissions))
-        {
+        if member.suspended.value || (!state.data.is_public && !member.role.can_invite_users(&state.data.permissions)) {
             return NotAuthorized;
         }
 
@@ -53,7 +52,7 @@ fn c2c_invite_users_impl(args: Args, state: &mut RuntimeState) -> Response {
                     *principal,
                     UserInvitation {
                         invited: *user_id,
-                        invited_by: participant.user_id,
+                        invited_by: member.user_id,
                         timestamp: now,
                         group: None, // TODO: need to fill this in
                     },
@@ -64,7 +63,7 @@ fn c2c_invite_users_impl(args: Args, state: &mut RuntimeState) -> Response {
             state.data.events.push_event(
                 CommunityEvent::UsersInvited(Box::new(UsersInvited {
                     user_ids: user_ids.clone(),
-                    invited_by: participant.user_id,
+                    invited_by: member.user_id,
                 })),
                 now,
             );
@@ -75,6 +74,6 @@ fn c2c_invite_users_impl(args: Args, state: &mut RuntimeState) -> Response {
             community_name: state.data.name.clone(),
         })
     } else {
-        CallerNotInCommunity
+        UserNotInCommunity
     }
 }

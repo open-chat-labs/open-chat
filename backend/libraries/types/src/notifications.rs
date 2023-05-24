@@ -1,6 +1,4 @@
-use crate::{
-    ChatId, CommunityGroupId, CommunityId, EventWrapper, Message, MessageIndex, Reaction, TimestampMillis, User, UserId,
-};
+use crate::{ChannelId, ChatId, CommunityId, EventWrapper, Message, MessageIndex, Reaction, TimestampMillis, User, UserId};
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 
@@ -53,7 +51,7 @@ pub struct GroupMessageNotification {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct CommunityMessageNotification {
     pub community_id: CommunityId,
-    pub group_id: CommunityGroupId,
+    pub channel_id: ChannelId,
     pub thread_root_message_index: Option<MessageIndex>,
     pub community_name: String,
     pub group_name: String,
@@ -87,10 +85,10 @@ pub struct GroupReactionAddedNotification {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct CommunityReactionAddedNotification {
     pub community_id: CommunityId,
-    pub group_id: CommunityGroupId,
+    pub channel_id: ChannelId,
     pub thread_root_message_index: Option<MessageIndex>,
     pub community_name: String,
-    pub group_name: String,
+    pub channel_name: String,
     pub added_by: UserId,
     pub added_by_name: String,
     pub message: EventWrapper<Message>,

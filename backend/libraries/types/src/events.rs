@@ -1,6 +1,6 @@
 use crate::{
-    CommunityPermissions, CommunityRole, EventIndex, EventWrapper, GroupGate, GroupPermissions, GroupRole, Message, MessageId,
-    MessageIndex, Milliseconds, TimestampMillis, UserId,
+    ChannelId, CommunityPermissions, CommunityRole, EventIndex, EventWrapper, GroupGate, GroupPermissions, GroupRole, Message,
+    MessageId, MessageIndex, Milliseconds, TimestampMillis, UserId,
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
@@ -277,4 +277,11 @@ pub struct DirectChatCreated {}
 pub struct UsersInvited {
     pub user_ids: Vec<UserId>,
     pub invited_by: UserId,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct ChannelDeleted {
+    pub channel_id: ChannelId,
+    pub name: String,
+    pub deleted_by: UserId,
 }

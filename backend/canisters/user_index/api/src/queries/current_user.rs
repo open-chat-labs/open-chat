@@ -22,6 +22,7 @@ pub struct SuccessResult {
     pub icp_account: AccountIdentifier,
     pub referrals: Vec<UserId>,
     pub is_super_admin: bool,
+    pub is_platform_moderator: bool,
     pub suspension_details: Option<SuspensionDetails>,
     pub is_suspected_bot: bool,
     pub diamond_membership_details: Option<DiamondMembershipDetails>,

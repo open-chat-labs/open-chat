@@ -1,9 +1,10 @@
-use crate::model::groups::Groups;
+use crate::model::channels::Channels;
 use crate::model::members::CommunityMembers;
 use crate::timer_job_types::TimerJob;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
+use fire_and_forget_handler::FireAndForgetHandler;
 use model::{events::CommunityEvents, invited_users::InvitedUsers, members::CommunityMemberInternal};
 use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
@@ -133,13 +134,14 @@ struct Data {
     proposals_bot_user_id: UserId,
     date_created: TimestampMillis,
     members: CommunityMembers,
-    groups: Groups,
+    channels: Channels,
     events: CommunityEvents,
     invited_users: InvitedUsers,
     invite_code: Option<u64>,
     invite_code_enabled: bool,
     frozen: Timestamped<Option<FrozenGroupInfo>>,
     timer_jobs: TimerJobs<TimerJob>,
+    fire_and_forget_handler: FireAndForgetHandler,
     test_mode: bool,
 }
 
@@ -183,13 +185,14 @@ impl Data {
             proposals_bot_user_id,
             date_created: now,
             members,
-            groups: Groups::default(),
+            channels: Channels::default(),
             events,
             invited_users: InvitedUsers::default(),
             invite_code: None,
             invite_code_enabled: false,
             frozen: Timestamped::default(),
             timer_jobs: TimerJobs::default(),
+            fire_and_forget_handler: FireAndForgetHandler::default(),
             test_mode,
         }
     }

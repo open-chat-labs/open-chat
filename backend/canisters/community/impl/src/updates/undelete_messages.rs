@@ -23,14 +23,14 @@ fn undelete_messages_impl(args: Args, state: &mut RuntimeState) -> Response {
         }
 
         let now = state.env.now();
-        if let Some(group) = state.data.groups.get_mut(&args.group_id) {
-            match group.undelete_messages(member.user_id, args.thread_root_message_index, args.message_ids, now) {
+        if let Some(channel) = state.data.channels.get_mut(&args.channel_id) {
+            match channel.undelete_messages(member.user_id, args.thread_root_message_index, args.message_ids, now) {
                 UndeleteMessagesResult::Success(messages) => {
                     if !messages.is_empty() {
                         let message_ids: HashSet<_> = messages.iter().map(|m| m.message_id).collect();
                         state.data.timer_jobs.cancel_jobs(|job| {
                             if let TimerJob::HardDeleteMessageContent(j) = job {
-                                j.group_id == args.group_id
+                                j.channel_id == args.channel_id
                                     && j.thread_root_message_index == args.thread_root_message_index
                                     && message_ids.contains(&j.message_id)
                             } else {
@@ -44,13 +44,13 @@ fn undelete_messages_impl(args: Args, state: &mut RuntimeState) -> Response {
                     Success(SuccessResult { messages })
                 }
                 UndeleteMessagesResult::MessageNotFound => MessageNotFound,
-                UndeleteMessagesResult::UserNotInGroup => UserNotInGroup,
+                UndeleteMessagesResult::UserNotInGroup => UserNotInChannel,
                 UndeleteMessagesResult::UserSuspended => UserSuspended,
             }
         } else {
-            UserNotInGroup
+            UserNotInChannel
         }
     } else {
-        CallerNotInCommunity
+        UserNotInCommunity
     }
 }

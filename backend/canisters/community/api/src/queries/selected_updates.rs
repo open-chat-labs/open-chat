@@ -12,7 +12,7 @@ pub struct Args {
 pub enum Response {
     Success(SuccessResult),
     SuccessNoUpdates,
-    CallerNotInCommunity,
+    UserNotInCommunity,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
