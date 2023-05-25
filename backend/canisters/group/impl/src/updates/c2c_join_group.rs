@@ -8,14 +8,14 @@ use chat_events::ChatEventInternal;
 use gated_groups::{check_if_passes_gate, CheckIfPassesGateResult};
 use group_canister::c2c_join_group::{Response::*, *};
 use group_members::AddResult;
-use types::{CanisterId, EventIndex, GroupGate, MemberJoined, MessageIndex, UsersUnblocked};
+use types::{CanisterId, EventIndex, GroupGate, MemberJoined, MessageIndex, UserId, UsersUnblocked};
 
 #[update_msgpack(guard = "caller_is_user_index_or_local_user_index")]
 #[trace]
 async fn c2c_join_group(args: Args) -> Response {
     run_regular_jobs();
 
-    match read_state(|state| is_permitted_to_join(args.invite_code, args.principal, state)) {
+    match read_state(|state| is_permitted_to_join(args.invite_code, args.principal, args.user_id, state)) {
         Ok(Some((gate, user_index_canister_id))) => {
             match check_if_passes_gate(gate, args.user_id, user_index_canister_id).await {
                 CheckIfPassesGateResult::Success => {}
@@ -33,6 +33,7 @@ async fn c2c_join_group(args: Args) -> Response {
 fn is_permitted_to_join(
     invite_code: Option<u64>,
     user_principal: Principal,
+    user_id: UserId,
     runtime_state: &RuntimeState,
 ) -> Result<Option<(GroupGate, CanisterId)>, Response> {
     let caller = runtime_state.env.caller();
@@ -46,6 +47,10 @@ fn is_permitted_to_join(
         Err(NotInvited)
     } else if let Some(limit) = runtime_state.data.chat.members.user_limit_reached() {
         Err(ParticipantLimitReached(limit))
+    } else if let Some(member) = runtime_state.data.chat.members.get(&user_id) {
+        let now = runtime_state.env.now();
+        let summary = runtime_state.summary(member, now);
+        Err(AlreadyInGroupV2(Box::new(summary)))
     } else {
         Ok(runtime_state
             .data
@@ -124,6 +129,7 @@ fn c2c_join_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Response
             AlreadyInGroupV2(Box::new(summary))
         }
         AddResult::Blocked => Blocked,
+        AddResult::UserLimitReached(limit) => ParticipantLimitReached(limit),
     };
 
     if new_event {
