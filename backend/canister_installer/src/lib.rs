@@ -71,6 +71,7 @@ async fn install_service_canisters_impl(
     let group_index_init_args = group_index_canister::init::Args {
         service_principals: vec![principal],
         group_canister_wasm: CanisterWasm::default(),
+        community_canister_wasm: CanisterWasm::default(),
         local_group_index_canister_wasm: CanisterWasm::default(),
         user_index_canister_id: canister_ids.user_index,
         cycles_dispenser_canister_id: canister_ids.cycles_dispenser,
@@ -215,11 +216,12 @@ async fn install_service_canisters_impl(
 
     let user_canister_wasm = get_canister_wasm(CanisterName::User, version);
     let group_canister_wasm = get_canister_wasm(CanisterName::Group, version);
+    let community_canister_wasm = get_canister_wasm(CanisterName::Community, version);
     let local_group_index_canister_wasm = get_canister_wasm(CanisterName::LocalGroupIndex, version);
     let local_user_index_canister_wasm = get_canister_wasm(CanisterName::LocalUserIndex, version);
     let notifications_canister_wasm = get_canister_wasm(CanisterName::Notifications, version);
 
-    futures::future::try_join5(
+    futures::future::try_join3(
         user_index_canister_client::upgrade_local_user_index_canister_wasm(
             agent,
             &canister_ids.user_index,
@@ -247,11 +249,25 @@ async fn install_service_canisters_impl(
                 use_for_new_canisters: None,
             },
         ),
+    )
+    .await
+    .unwrap();
+
+    futures::future::try_join3(
         group_index_canister_client::upgrade_group_canister_wasm(
             agent,
             &canister_ids.group_index,
             &group_index_canister::upgrade_group_canister_wasm::Args {
                 wasm: group_canister_wasm,
+                filter: None,
+                use_for_new_canisters: None,
+            },
+        ),
+        group_index_canister_client::upgrade_community_canister_wasm(
+            agent,
+            &canister_ids.group_index,
+            &group_index_canister::upgrade_community_canister_wasm::Args {
+                wasm: community_canister_wasm,
                 filter: None,
                 use_for_new_canisters: None,
             },

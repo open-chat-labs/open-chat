@@ -13,6 +13,7 @@ use types::{CanisterId, CanisterWasm, Version};
 
 #[derive(Debug)]
 pub enum CanisterName {
+    Community,
     CyclesDispenser,
     Group,
     GroupIndex,
@@ -34,6 +35,7 @@ impl FromStr for CanisterName {
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
+            "community" => Ok(CanisterName::Community),
             "cycles_dispenser" => Ok(CanisterName::CyclesDispenser),
             "group" => Ok(CanisterName::Group),
             "group_index" => Ok(CanisterName::GroupIndex),
@@ -56,6 +58,7 @@ impl FromStr for CanisterName {
 impl Display for CanisterName {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         let name = match self {
+            CanisterName::Community => "community",
             CanisterName::CyclesDispenser => "cycles_dispenser",
             CanisterName::Group => "group",
             CanisterName::GroupIndex => "group_index",

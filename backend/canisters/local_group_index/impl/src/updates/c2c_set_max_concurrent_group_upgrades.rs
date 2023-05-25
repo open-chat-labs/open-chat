@@ -9,8 +9,8 @@ use tracing::info;
 #[trace]
 fn c2c_set_max_concurrent_group_upgrades(args: Args) -> Response {
     mutate_state(|state| {
-        state.data.max_concurrent_canister_upgrades = args.value;
+        state.data.max_concurrent_group_upgrades = args.value;
     });
-    info!(args.value, "Max concurrent upgrades set");
+    info!(args.value, "Max concurrent group upgrades set");
     Response::Success
 }
