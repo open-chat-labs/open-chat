@@ -3,7 +3,7 @@ use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use group_canister::c2c_leave_group::{Response::*, *};
-use group_chat_core::LeaveGroupResult;
+use group_chat_core::LeaveResult;
 
 // Called via the user's user canister
 #[update_msgpack]
@@ -23,12 +23,12 @@ fn c2c_leave_group_impl(runtime_state: &mut RuntimeState) -> Response {
     let now = runtime_state.env.now();
 
     match runtime_state.data.chat.leave(caller, now) {
-        LeaveGroupResult::Success => {
+        LeaveResult::Success => {
             handle_activity_notification(runtime_state);
             Success(SuccessResult {})
         }
-        LeaveGroupResult::UserSuspended => UserSuspended,
-        LeaveGroupResult::LastOwnerCannotLeave => OwnerCannotLeave,
-        LeaveGroupResult::UserNotInGroup => CallerNotInGroup,
+        LeaveResult::UserSuspended => UserSuspended,
+        LeaveResult::LastOwnerCannotLeave => OwnerCannotLeave,
+        LeaveResult::UserNotInGroup => CallerNotInGroup,
     }
 }

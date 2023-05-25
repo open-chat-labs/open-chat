@@ -521,8 +521,8 @@ impl GroupChatCore {
         }
     }
 
-    pub fn leave(&mut self, user_id: UserId, now: TimestampMillis) -> LeaveGroupResult {
-        use LeaveGroupResult::*;
+    pub fn leave(&mut self, user_id: UserId, now: TimestampMillis) -> LeaveResult {
+        use LeaveResult::*;
 
         if let Some(member) = self.members.get(&user_id) {
             if member.suspended.value {
@@ -622,7 +622,7 @@ pub enum PinUnpinMessageResult {
     UserSuspended,
 }
 
-pub enum LeaveGroupResult {
+pub enum LeaveResult {
     Success,
     UserSuspended,
     LastOwnerCannotLeave,

@@ -1,7 +1,7 @@
 use crate::{mutate_state, RuntimeState};
 use canister_tracing_macros::trace;
 use community_canister::leave_channel::{Response::*, *};
-use group_chat_core::LeaveGroupResult;
+use group_chat_core::LeaveResult;
 use ic_cdk_macros::update;
 
 #[update]
@@ -23,10 +23,10 @@ fn leave_channel_impl(args: Args, state: &mut RuntimeState) -> Response {
 
         if let Some(channel) = state.data.channels.get_mut(&args.channel_id) {
             match channel.chat.leave(member.user_id, state.env.now()) {
-                LeaveGroupResult::Success => Success,
-                LeaveGroupResult::UserSuspended => UserSuspended,
-                LeaveGroupResult::LastOwnerCannotLeave => LastOwnerCannotLeave,
-                LeaveGroupResult::UserNotInGroup => UserNotInChannel,
+                LeaveResult::Success => Success,
+                LeaveResult::UserSuspended => UserSuspended,
+                LeaveResult::LastOwnerCannotLeave => LastOwnerCannotLeave,
+                LeaveResult::UserNotInGroup => UserNotInChannel,
             }
         } else {
             ChannelNotFound
