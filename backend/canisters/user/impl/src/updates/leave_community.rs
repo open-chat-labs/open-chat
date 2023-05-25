@@ -29,7 +29,7 @@ async fn leave_community(args: Args) -> Response {
             }
             c2c_leave_community::Response::LastOwnerCannotLeave => LastOwnerCannotLeave,
             c2c_leave_community::Response::UserSuspended => UserSuspended,
-            c2c_leave_community::Response::CommunityFrozen => ChatFrozen,
+            c2c_leave_community::Response::CommunityFrozen => CommunityFrozen,
         },
         Err(error) => InternalError(format!("{error:?}")),
     }

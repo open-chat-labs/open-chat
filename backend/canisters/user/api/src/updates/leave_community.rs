@@ -15,6 +15,6 @@ pub enum Response {
     UserNotInCommunity,
     LastOwnerCannotLeave,
     UserSuspended,
-    ChatFrozen,
+    CommunityFrozen,
     InternalError(String),
 }
