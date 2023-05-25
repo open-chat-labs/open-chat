@@ -95,9 +95,13 @@
         dispatch("searchEntered", "");
     }
 
-    function chatSelected(ev: CustomEvent<string>): void {
+    function chatSelected(ev: CustomEvent<ChatSummary>): void {
         chatScrollTop = chatListElement.scrollTop;
-        page(`/${ev.detail}`);
+        const url =
+            ev.detail.kind === "direct_chat"
+                ? `/user/${ev.detail.chatId}`
+                : `/group/${ev.detail.chatId}`;
+        page(url);
         closeSearch();
     }
 

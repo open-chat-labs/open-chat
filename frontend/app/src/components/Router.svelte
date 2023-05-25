@@ -4,44 +4,152 @@
     import Home from "./home/HomeRoute.svelte";
     import LandingPage from "./landingpages/LandingPage.svelte";
     import NotFound from "./NotFound.svelte";
-    import { pathContextStore, notFound } from "../routes";
+    import {
+        pathContextStore,
+        notFound,
+        RouteParams,
+        pathParams,
+        communitesRoute,
+        blogRoute,
+        shareRoute,
+        chatSelectedRoute,
+        globalDirectChatRoute,
+        globalGroupChatRoute,
+    } from "../routes";
     import { communitiesEnabled } from "../utils/features";
 
     let route: typeof SvelteComponent | undefined = undefined;
 
+    function parsePathParams(fn: (ctx: PageJS.Context) => RouteParams) {
+        return (ctx: PageJS.Context, next: () => any) => {
+            notFound.set(false);
+            pathContextStore.set(ctx);
+            pathParams.set(fn(ctx));
+            scrollToTop();
+            next();
+        };
+    }
+
     onMount(() => {
-        page("/home", parsePathParams, track, () => (route = LandingPage));
-        page("/features", parsePathParams, track, () => (route = LandingPage));
-        page("/roadmap", parsePathParams, track, () => (route = LandingPage));
-        page("/blog/:slug?", parsePathParams, track, () => (route = LandingPage));
-        page("/whitepaper", parsePathParams, track, () => (route = LandingPage));
-        page("/miami", parsePathParams, track, () => (route = LandingPage));
-        page("/guidelines", parsePathParams, track, () => (route = LandingPage));
-        page("/faq", parsePathParams, track, () => (route = LandingPage));
-        page("/diamond", parsePathParams, track, () => (route = LandingPage));
-        page("/architecture", parsePathParams, track, () => (route = LandingPage));
-        if ($communitiesEnabled) {
-            // this is for explore mode
-            page(
-                "/communities/:communityId?",
-                redirectHashRoutes,
-                parsePathParams,
-                track,
-                () => (route = Home)
-            );
-        }
-        page("/hotgroups", redirectHashRoutes, parsePathParams, track, () => (route = Home));
         page(
-            "/:chatId?/:messageIndex?/:threadMessageIndex?",
-            redirectHashRoutes,
-            parsePathParams,
+            "/home",
+            parsePathParams(() => ({ kind: "home_landing_route" })),
+            track,
+            () => (route = LandingPage)
+        );
+        page(
+            "/features",
+            parsePathParams(() => ({ kind: "features_route" })),
+            track,
+            () => (route = LandingPage)
+        );
+        page(
+            "/roadmap",
+            parsePathParams(() => ({ kind: "roadmap_route" })),
+            track,
+            () => (route = LandingPage)
+        );
+        page("/blog/:slug?", parsePathParams(blogRoute), track, () => (route = LandingPage));
+        page(
+            "/whitepaper",
+            parsePathParams(() => ({ kind: "whitepaper_route" })),
+            track,
+            () => (route = LandingPage)
+        );
+        page(
+            "/miami",
+            parsePathParams(() => ({ kind: "miami_route" })),
+            track,
+            () => (route = LandingPage)
+        );
+        page(
+            "/guidelines",
+            parsePathParams(() => ({ kind: "guidelines_route" })),
+            track,
+            () => (route = LandingPage)
+        );
+        page(
+            "/faq",
+            parsePathParams(() => ({ kind: "faq_route" })),
+            track,
+            () => (route = LandingPage)
+        );
+        page(
+            "/diamond",
+            parsePathParams(() => ({ kind: "diamond_route" })),
+            track,
+            () => (route = LandingPage)
+        );
+        page(
+            "/architecture",
+            parsePathParams(() => ({ kind: "architecture_route" })),
+            track,
+            () => (route = LandingPage)
+        );
+        // this is for explore mode
+        page(
+            "/communities/:communityId?",
+            parsePathParams(communitesRoute),
             track,
             () => (route = Home)
         );
-        page("*", () => {
-            notFound.set(true);
-            route = NotFound;
-        });
+        // global direct chats
+        page(
+            "/user/:chatId/:messageIndex?/:threadMessageIndex?",
+            parsePathParams(globalDirectChatRoute),
+            track,
+            () => (route = Home)
+        );
+        // // global group chats
+        page(
+            "/group/:chatId/:messageIndex?/:threadMessageIndex?",
+            parsePathParams(globalGroupChatRoute),
+            track,
+            () => (route = Home)
+        );
+        // // selected community group
+        // page(
+        //     "/community/:communityId/group/:chatId?/:messageIndex?/:threadMessageIndex?",
+        //     parsePathParams,
+        //     track,
+        //     () => (route = Home)
+        // );
+        // // selected community direct chat
+        // page(
+        //     "/community/:communityId/user/:chatId?/:messageIndex?/:threadMessageIndex?",
+        //     parsePathParams,
+        //     track,
+        //     () => (route = Home)
+        // );
+        // // favourite chats
+        // page(
+        //     "/favourites/:chatId?/:messageIndex?/:threadMessageIndex?",
+        //     parsePathParams,
+        //     track,
+        //     () => (route = Home)
+        // );
+        page("/share", parsePathParams(shareRoute), track, () => (route = Home));
+        page(
+            "/hotgroups",
+            parsePathParams(() => ({ kind: "hot_groups_route" })),
+            track,
+            () => (route = Home)
+        );
+        page(
+            "/:chatId?/:messageIndex?/:threadMessageIndex?",
+            redirectHashRoutes,
+            parsePathParams(chatSelectedRoute),
+            track,
+            () => (route = Home)
+        );
+        page(
+            "*",
+            parsePathParams(() => ({ kind: "not_found_route" })),
+            () => {
+                notFound.set(true);
+                route = NotFound;
+            }
+        );
         page.start();
     });
 
@@ -67,13 +175,6 @@
         gtag("event", "page_view", {
             page_location: ctx.pathname,
         });
-        next();
-    }
-
-    function parsePathParams(ctx: PageJS.Context, next: () => any) {
-        notFound.set(false);
-        pathContextStore.set(ctx);
-        scrollToTop();
         next();
     }
 </script>

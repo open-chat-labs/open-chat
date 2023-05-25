@@ -3,22 +3,32 @@
     import HomePage from "./HomePage.svelte";
     import Header from "./Header.svelte";
     import Content from "./Content.svelte";
-    import { location, pathParams } from "../../routes";
+    import {
+        isArchitectureRoute,
+        isBlogRoute,
+        isDiamondRoute,
+        isFaqRoute,
+        isGuidelinesRoute,
+        isMiamiRoute,
+        isRoadmapRoute,
+        isWhitepaperRoute,
+        pathParams,
+    } from "../../routes";
     import { getContext, onMount } from "svelte";
     import { CreatedUser, OPENCHAT_BOT_USER_ID, OpenChat } from "openchat-client";
     import Overlay from "../Overlay.svelte";
     import Register from "../register/Register.svelte";
     import BlogPage from "./BlogPage.svelte";
     import Loading from "../Loading.svelte";
-    import { showMenuForLandingRoute } from "utils/urls";
+    import { showMenuForLandingRoute } from "../../utils/urls";
     import page from "page";
     import { saveSeletedTheme } from "../../theme/themes";
 
     const client = getContext<OpenChat>("client");
 
     $: identityState = client.identityState;
-    $: showMenu = showMenuForLandingRoute($location);
-    $: miami = $location.startsWith("/miami");
+    $: showMenu = showMenuForLandingRoute($pathParams);
+    $: miami = isMiamiRoute($pathParams);
 
     function logout() {
         client.logout();
@@ -49,7 +59,7 @@
 {/if}
 
 <main class:miami class="main">
-    {#if $location.startsWith("/features")}
+    {#if $pathParams.kind === "features_route"}
         <FeaturesPage />
     {:else if miami}
         {#await import("./miami/Miami.svelte")}
@@ -61,8 +71,8 @@
         {/await}
     {:else}
         <Content>
-            {#if $location.startsWith("/blog")}
-                {#if $pathParams.kind === "blog_route" && $pathParams.slug !== undefined}
+            {#if isBlogRoute($pathParams)}
+                {#if $pathParams.slug !== undefined}
                     {#await import("./BlogPostPage.svelte")}
                         <div class="loading">
                             <Loading />
@@ -73,7 +83,7 @@
                 {:else}
                     <BlogPage />
                 {/if}
-            {:else if $location.startsWith("/roadmap")}
+            {:else if isRoadmapRoute($pathParams)}
                 {#await import("./RoadmapPage.svelte")}
                     <div class="loading">
                         <Loading />
@@ -81,7 +91,7 @@
                 {:then { default: RoadmapPage }}
                     <RoadmapPage />
                 {/await}
-            {:else if $location.startsWith("/whitepaper")}
+            {:else if isWhitepaperRoute($pathParams)}
                 {#await import("./WhitepaperPage.svelte")}
                     <div class="loading">
                         <Loading />
@@ -89,7 +99,7 @@
                 {:then { default: WhitepaperPage }}
                     <WhitepaperPage />
                 {/await}
-            {:else if $location.startsWith("/architecture")}
+            {:else if isArchitectureRoute($pathParams)}
                 {#await import("./ArchitecturePage.svelte")}
                     <div class="loading">
                         <Loading />
@@ -97,7 +107,7 @@
                 {:then { default: ArchitecturePage }}
                     <ArchitecturePage />
                 {/await}
-            {:else if $location.startsWith("/guidelines")}
+            {:else if isGuidelinesRoute($pathParams)}
                 {#await import("./GuidelinesPage.svelte")}
                     <div class="loading">
                         <Loading />
@@ -105,7 +115,7 @@
                 {:then { default: GuidelinesPage }}
                     <GuidelinesPage />
                 {/await}
-            {:else if $location.startsWith("/faq")}
+            {:else if isFaqRoute($pathParams)}
                 {#await import("./FAQPage.svelte")}
                     <div class="loading">
                         <Loading />
@@ -113,7 +123,7 @@
                 {:then { default: FAQPage }}
                     <FAQPage />
                 {/await}
-            {:else if $location.startsWith("/diamond")}
+            {:else if isDiamondRoute($pathParams)}
                 {#await import("./DiamondPage.svelte")}
                     <div class="loading">
                         <Loading />

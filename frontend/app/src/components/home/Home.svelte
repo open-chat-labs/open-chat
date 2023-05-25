@@ -164,6 +164,7 @@
 
     async function newChatSelected(
         chatId: string,
+        chatType: ChatSummary["kind"] | "unknown",
         messageIndex?: number,
         threadMessageIndex?: number
     ): Promise<void> {
@@ -171,7 +172,8 @@
 
         // if this is an unknown chat let's preview it
         if (chat === undefined) {
-            if (!(await createDirectChat(chatId))) {
+            const isGroup = chatType === "group_chat" || !(await createDirectChat(chatId));
+            if (isGroup) {
                 const code = $querystring.get("code");
                 if (code) {
                     client.groupInvite = {
@@ -223,15 +225,15 @@
                 } else {
                     rightPanelHistory.set([]);
                 }
-            } else if (pathParams.kind === "chat_selected_route") {
+            } else if (pathParams.kind === "global_chat_selected_route") {
                 // first close any open thread
                 closeThread();
 
                 // if the chat in the url is different from the chat we already have selected
                 if (pathParams.chatId !== $selectedChatId?.toString()) {
-                    console.log("PathParams: ", pathParams);
                     newChatSelected(
                         pathParams.chatId,
+                        pathParams.chatType,
                         pathParams.messageIndex,
                         pathParams.threadMessageIndex
                     );
@@ -497,7 +499,7 @@
     }
 
     function deleteDirectChat(ev: CustomEvent<string>) {
-        if ($pathParams.kind === "chat_selected_route" && ev.detail === $pathParams.chatId) {
+        if ($pathParams.kind === "global_chat_selected_route" && ev.detail === $pathParams.chatId) {
             page("/");
         }
         tick().then(() => client.removeChat(ev.detail));
@@ -508,7 +510,7 @@
             return c.kind === "direct_chat" && c.them === ev.detail;
         });
         if (chat) {
-            page(`/${chat.chatId}`);
+            page(`/user/${chat.chatId}`);
         } else {
             createDirectChat(ev.detail);
         }
@@ -836,7 +838,7 @@
             return false;
         }
 
-        page(`/${chatId}`);
+        page(`/user/${chatId}`);
         return true;
     }
 
