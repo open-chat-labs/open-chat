@@ -19,11 +19,14 @@ fn main() {
     generate_candid_method!(user, archive_chat, update);
     generate_candid_method!(user, block_user, update);
     generate_candid_method!(user, cancel_message_reminder, update);
+    generate_candid_method!(user, create_community, update);
     generate_candid_method!(user, create_group, update);
+    generate_candid_method!(user, delete_community, update);
     generate_candid_method!(user, delete_group, update);
     generate_candid_method!(user, delete_messages, update);
     generate_candid_method!(user, edit_message_v2, update);
     generate_candid_method!(user, init_user_principal_migration, update);
+    generate_candid_method!(user, leave_community, update);
     generate_candid_method!(user, leave_group, update);
     generate_candid_method!(user, mark_read_v2, update);
     generate_candid_method!(user, migrate_user_principal, update);

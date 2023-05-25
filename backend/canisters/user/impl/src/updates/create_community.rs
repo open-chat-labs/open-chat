@@ -1,7 +1,5 @@
 use crate::guards::caller_is_owner;
-use crate::{
-    mutate_state, read_state, run_regular_jobs, RuntimeState, BASIC_COMMUNITY_CREATION_LIMIT, PREMIUM_COMMUNITY_CREATION_LIMIT,
-};
+use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState, COMMUNITY_CREATION_LIMIT};
 use canister_tracing_macros::trace;
 use group_index_canister::c2c_create_community;
 use ic_cdk_macros::update;
@@ -63,15 +61,13 @@ fn prepare(args: Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Re
 
     let now = runtime_state.env.now();
     let is_diamond_member = runtime_state.data.is_diamond_member(now);
-    let community_creation_limit =
-        if is_diamond_member { PREMIUM_COMMUNITY_CREATION_LIMIT } else { BASIC_COMMUNITY_CREATION_LIMIT };
 
     if runtime_state.data.suspended.value {
         Err(UserSuspended)
-    } else if !is_diamond_member && args.is_public {
-        Err(UnauthorizedToCreatePublicCommunity)
-    } else if runtime_state.data.communities.communities_created() >= community_creation_limit {
-        Err(MaxCommunitiesCreated(community_creation_limit))
+    } else if !is_diamond_member {
+        Err(Unauthorized)
+    } else if runtime_state.data.communities.communities_created() >= COMMUNITY_CREATION_LIMIT {
+        Err(MaxCommunitiesCreated(COMMUNITY_CREATION_LIMIT))
     } else if is_throttled() {
         Err(Throttled)
     } else if let Err(error) = validate_name(&args.name, args.is_public) {
