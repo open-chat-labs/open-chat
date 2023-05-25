@@ -1,4 +1,6 @@
 pub mod cached_group_summaries;
+pub mod communities;
+pub mod community;
 pub mod contacts;
 pub mod direct_chat;
 pub mod direct_chats;

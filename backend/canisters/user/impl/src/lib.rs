@@ -1,4 +1,5 @@
 use crate::model::cached_group_summaries::CachedGroupSummaries;
+use crate::model::communities::Communities;
 use crate::model::direct_chats::DirectChats;
 use crate::model::group_chats::GroupChats;
 use crate::model::hot_group_exclusions::HotGroupExclusions;
@@ -33,6 +34,8 @@ mod updates;
 
 pub const BASIC_GROUP_CREATION_LIMIT: u32 = 5;
 pub const PREMIUM_GROUP_CREATION_LIMIT: u32 = 40;
+pub const BASIC_COMMUNITY_CREATION_LIMIT: u32 = 1;
+pub const PREMIUM_COMMUNITY_CREATION_LIMIT: u32 = 10;
 
 thread_local! {
     static WASM_VERSION: RefCell<Timestamped<Version>> = RefCell::default();
@@ -132,6 +135,8 @@ struct Data {
     pub owner: Principal,
     pub direct_chats: DirectChats,
     pub group_chats: GroupChats,
+    #[serde(default)]
+    pub communities: Communities,
     pub blocked_users: Timestamped<HashSet<UserId>>,
     pub user_index_canister_id: CanisterId,
     pub local_user_index_canister_id: CanisterId,
@@ -173,6 +178,7 @@ impl Data {
             owner,
             direct_chats: DirectChats::default(),
             group_chats: GroupChats::default(),
+            communities: Communities::default(),
             blocked_users: Timestamped::default(),
             user_index_canister_id,
             local_user_index_canister_id,

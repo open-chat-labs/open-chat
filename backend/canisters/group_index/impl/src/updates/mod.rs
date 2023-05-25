@@ -1,6 +1,8 @@
 pub mod add_hot_group_exclusion;
 pub mod add_local_group_index_canister;
+pub mod c2c_create_community;
 pub mod c2c_create_group;
+pub mod c2c_delete_community;
 pub mod c2c_delete_group;
 pub mod c2c_make_community_private;
 pub mod c2c_make_private;

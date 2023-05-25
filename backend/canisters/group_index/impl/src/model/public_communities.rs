@@ -29,8 +29,12 @@ impl PublicCommunities {
         self.communities.get_mut(community_id)
     }
 
+    pub fn is_name_taken(&self, name: &str) -> bool {
+        self.name_to_id_map.contains_key(name) || self.communities_pending.contains_key(name)
+    }
+
     pub fn reserve_name(&mut self, name: &str, now: TimestampMillis) -> bool {
-        if self.name_to_id_map.contains_key(name) || self.communities_pending.contains_key(name) {
+        if self.is_name_taken(name) {
             false
         } else {
             self.communities_pending.insert(name, now);

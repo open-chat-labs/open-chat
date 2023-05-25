@@ -20,16 +20,20 @@ pub(crate) fn send_group_deleted_message(
     send_text_message(text, false, runtime_state);
 }
 
-pub(crate) fn send_removed_from_group_message(
+pub(crate) fn send_removed_from_group_or_community_message(
+    is_group: bool,
     removed_by: UserId,
-    group_name: String,
+    group_or_community_name: String,
     public: bool,
     blocked: bool,
     runtime_state: &mut RuntimeState,
 ) {
     let visibility = if public { "public" } else { "private" };
     let action = if blocked { "blocked" } else { "removed" };
-    let text = format!("You were {action} from the {visibility} group \"{group_name}\" by @UserId({removed_by})");
+    let group_or_community = if is_group { "group" } else { "community" };
+    let text = format!(
+        "You were {action} from the {visibility} {group_or_community} \"{group_or_community_name}\" by @UserId({removed_by})"
+    );
 
     send_text_message(text, false, runtime_state);
 }

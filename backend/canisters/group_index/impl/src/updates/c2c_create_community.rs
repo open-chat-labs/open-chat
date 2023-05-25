@@ -1,15 +1,14 @@
-use crate::model::private_groups::PrivateGroupInfo;
-use crate::model::public_groups::GroupCreatedArgs;
+use crate::model::private_communities::PrivateCommunityInfo;
 use crate::{mutate_state, read_state, RuntimeState};
 use candid::Principal;
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
-use group_index_canister::c2c_create_group::{Response::*, *};
-use types::{Avatar, CanisterId, ChatId, GroupSubtype, UserId};
+use group_index_canister::c2c_create_community::{Response::*, *};
+use types::{Avatar, CanisterId, CommunityId, UserId};
 
 #[update_msgpack]
 #[trace]
-async fn c2c_create_group(args: Args) -> Response {
+async fn c2c_create_community(args: Args) -> Response {
     let avatar_id = Avatar::id(&args.avatar);
 
     let (user_id, principal) = match validate_caller().await {
@@ -24,41 +23,40 @@ async fn c2c_create_group(args: Args) -> Response {
         Err(response) => return response,
     };
 
-    let c2c_create_group_args = local_group_index_canister::c2c_create_group::Args {
+    let c2c_create_community_args = local_group_index_canister::c2c_create_community::Args {
         created_by_user_id: user_id,
         created_by_user_principal: principal,
         is_public: args.is_public,
         name: args.name.clone(),
         description: args.description.clone(),
         rules: args.rules,
-        subtype: args.subtype.clone(),
         avatar: args.avatar,
         history_visible_to_new_joiners: args.history_visible_to_new_joiners,
         permissions: args.permissions,
-        events_ttl: args.events_ttl,
         gate: args.gate,
     };
 
-    match local_group_index_canister_c2c_client::c2c_create_group(local_group_index_canister, &c2c_create_group_args).await {
-        Ok(local_group_index_canister::c2c_create_group::Response::Success(result)) => {
+    match local_group_index_canister_c2c_client::c2c_create_community(local_group_index_canister, &c2c_create_community_args)
+        .await
+    {
+        Ok(local_group_index_canister::c2c_create_community::Response::Success(result)) => {
             mutate_state(|state| {
                 commit(
-                    CommitArgs {
-                        is_public: args.is_public,
-                        chat_id: result.chat_id,
-                        name: args.name,
-                        description: args.description,
-                        subtype: args.subtype,
-                        avatar_id,
-                        local_group_index_canister,
-                    },
+                    args.is_public,
+                    result.community_id,
+                    args.name,
+                    args.description,
+                    avatar_id,
+                    local_group_index_canister,
                     state,
                 )
             });
-            Success(SuccessResult { chat_id: result.chat_id })
+            Success(SuccessResult {
+                community_id: result.community_id,
+            })
         }
-        Ok(local_group_index_canister::c2c_create_group::Response::CyclesBalanceTooLow) => CyclesBalanceTooLow,
-        Ok(local_group_index_canister::c2c_create_group::Response::InternalError(_)) => InternalError,
+        Ok(local_group_index_canister::c2c_create_community::Response::CyclesBalanceTooLow) => CyclesBalanceTooLow,
+        Ok(local_group_index_canister::c2c_create_community::Response::InternalError(_)) => InternalError,
         Err(_) => {
             mutate_state(|state| rollback(args.is_public, &args.name, state));
             InternalError
@@ -104,41 +102,35 @@ fn prepare(name: &str, is_public: bool, runtime_state: &mut RuntimeState) -> Res
     }
 }
 
-struct CommitArgs {
+fn commit(
     is_public: bool,
-    chat_id: ChatId,
+    community_id: CommunityId,
     name: String,
     description: String,
-    subtype: Option<GroupSubtype>,
     avatar_id: Option<u128>,
     local_group_index_canister: CanisterId,
-}
-
-fn commit(args: CommitArgs, runtime_state: &mut RuntimeState) {
+    runtime_state: &mut RuntimeState,
+) {
     let now = runtime_state.env.now();
-    if args.is_public {
-        runtime_state.data.public_groups.handle_group_created(GroupCreatedArgs {
-            chat_id: args.chat_id,
-            name: args.name,
-            description: args.description,
-            subtype: args.subtype,
-            avatar_id: args.avatar_id,
-            now,
-        });
+    if is_public {
+        runtime_state
+            .data
+            .public_communities
+            .handle_community_created(community_id, name, description, avatar_id, now);
     } else {
         runtime_state
             .data
-            .private_groups
-            .add(PrivateGroupInfo::new(args.chat_id, now));
+            .private_communities
+            .add(PrivateCommunityInfo::new(community_id, now));
     }
     runtime_state
         .data
         .local_index_map
-        .add_group(args.local_group_index_canister, args.chat_id);
+        .add_community(local_group_index_canister, community_id);
 }
 
 fn rollback(is_public: bool, name: &str, runtime_state: &mut RuntimeState) {
     if is_public {
-        runtime_state.data.public_groups.handle_group_creation_failed(name);
+        runtime_state.data.public_communities.handle_community_creation_failed(name);
     }
 }
