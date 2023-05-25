@@ -10,7 +10,6 @@
     import type { GroupChatSummary, OpenChat } from "openchat-client";
     import { pathParams } from "../../routes";
     import { getContext } from "svelte";
-    import CommunitySummary from "./communities/explore/CommunityChannels.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -22,7 +21,7 @@
     $: selectedChatId = client.selectedChatId;
     $: eventsStore = client.eventsStore;
     $: filteredProposalsStore = client.filteredProposalsStore;
-    $: noChat = $pathParams.kind !== "chat_selected_route";
+    $: noChat = $pathParams.kind !== "global_chat_selected_route";
 </script>
 
 <Panel middle>
