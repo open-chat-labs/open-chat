@@ -579,7 +579,7 @@
         <ThreadSummary
             {chatId}
             threadRootMessageIndex={msg.messageIndex}
-            selected={$pathParams.kind === "chat_selected_route" &&
+            selected={$pathParams.kind === "global_chat_selected_route" &&
                 msg.messageIndex === $pathParams.messageIndex &&
                 $pathParams.open}
             {threadSummary}

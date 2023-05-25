@@ -111,7 +111,7 @@
 
     function stripThreadFromUrl(path: string) {
         if (
-            $pathParams.kind === "chat_selected_route" &&
+            $pathParams.kind === "global_chat_selected_route" &&
             $pathParams.threadMessageIndex !== undefined
         ) {
             return removeThreadMessageIndex($pathParams.threadMessageIndex, path);

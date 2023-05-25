@@ -25,6 +25,7 @@
     import { iconSize } from "../../stores/iconSize";
     import { discoverHotGroupsDismissed } from "../../stores/settings";
     import { communitiesEnabled } from "../../utils/features";
+    import { chatTypeToPath } from "../../routes";
 
     const client = getContext<OpenChat>("client");
     const createdUser = client.user;
@@ -87,7 +88,7 @@
      * the routing will take care of the rest
      */
     function selectGroup({ chatId }: GroupMatch): void {
-        page(`/${chatId}`);
+        page(`/group/${chatId}`);
         closeSearch();
     }
 
@@ -95,9 +96,10 @@
         dispatch("searchEntered", "");
     }
 
-    function chatSelected(ev: CustomEvent<string>): void {
+    function chatSelected(ev: CustomEvent<ChatSummaryType>): void {
         chatScrollTop = chatListElement.scrollTop;
-        page(`/${ev.detail}`);
+        const url = `/${chatTypeToPath(ev.detail.kind)}/${ev.detail.chatId}`;
+        page(url);
         closeSearch();
     }
 

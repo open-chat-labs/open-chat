@@ -6,7 +6,7 @@
     import { rtlStore } from "../stores/rtl";
     import { _ } from "svelte-i18n";
     import Router from "./Router.svelte";
-    import { location, notFound } from "../routes";
+    import { notFound, pathParams } from "../routes";
     import SwitchDomain from "./SwitchDomain.svelte";
     import Upgrading from "./upgrading/Upgrading.svelte";
     import UpgradeBanner from "./UpgradeBanner.svelte";
@@ -61,7 +61,7 @@
     setContext<OpenChat>("client", client);
 
     $: identityState = client.identityState;
-    $: landingPage = isLandingPageRoute($location);
+    $: landingPage = isLandingPageRoute($pathParams);
 
     onMount(() => {
         redirectLandingPageLinksIfNecessary();
@@ -219,7 +219,7 @@
     let isFirefox = navigator.userAgent.indexOf("Firefox") >= 0;
     $: burstPath = $themeStore.name === "dark" ? "../assets/burst_dark" : "../assets/burst_light";
     $: burstUrl = isFirefox ? `${burstPath}.png` : `${burstPath}.svg`;
-    $: burstFixed = isScrollingRoute($location);
+    $: burstFixed = isScrollingRoute($pathParams);
 </script>
 
 {#if $themeStore.burst || landingPage}

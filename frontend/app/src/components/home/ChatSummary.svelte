@@ -179,7 +179,7 @@
     }
 
     function selectChat() {
-        dispatch("chatSelected", chatSummary.chatId);
+        dispatch("chatSelected", chatSummary);
     }
 
     function unarchiveChat() {
