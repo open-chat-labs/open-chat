@@ -28,7 +28,7 @@ pub enum Response {
     NameTaken,
     Throttled,
     UserSuspended,
-    UnauthorizedToCreatePublicCommunity,
+    Unauthorized,
     InternalError,
 }
 
