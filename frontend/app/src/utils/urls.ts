@@ -53,7 +53,7 @@ export function isLandingPageRoute(route: RouteParams): boolean {
 }
 
 export function showMenuForLandingRoute(route: RouteParams): boolean {
-    return nomenuRoutes.includes(route.kind);
+    return !nomenuRoutes.includes(route.kind);
 }
 
 export function isScrollingRoute(route: RouteParams): boolean {
