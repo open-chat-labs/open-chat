@@ -817,8 +817,8 @@ export type UpdatesSuccessResponse = {
 };
 
 export type SuccessNoUpdates = {
-    kind: "success_no_updates"
-}
+    kind: "success_no_updates";
+};
 
 export type UserCanisterGroupChatSummary = {
     chatId: string;
@@ -980,6 +980,8 @@ export type GroupChatDetailsUpdates = {
 };
 
 export type ChatSummary = DirectChatSummary | GroupChatSummary;
+
+export type ChatType = ChatSummary["kind"];
 
 type ChatSummaryCommon = {
     chatId: string; // this represents a Principal
@@ -1765,7 +1767,4 @@ export type ClaimPrizeResponse =
 
 export type ReportMessageResponse = "success" | "failure";
 
-export type DeclineInvitationResponse =
-    | "success"
-    | "not_invited"
-    | "internal_error";
+export type DeclineInvitationResponse = "success" | "not_invited" | "internal_error";

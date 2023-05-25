@@ -87,7 +87,7 @@
      * the routing will take care of the rest
      */
     function selectGroup({ chatId }: GroupMatch): void {
-        page(`/${chatId}`);
+        page(`/group_chat/${chatId}`);
         closeSearch();
     }
 
@@ -97,10 +97,7 @@
 
     function chatSelected(ev: CustomEvent<ChatSummary>): void {
         chatScrollTop = chatListElement.scrollTop;
-        const url =
-            ev.detail.kind === "direct_chat"
-                ? `/user/${ev.detail.chatId}`
-                : `/group/${ev.detail.chatId}`;
+        const url = `/${ev.detail.kind}/${ev.detail.chatId}`;
         page(url);
         closeSearch();
     }

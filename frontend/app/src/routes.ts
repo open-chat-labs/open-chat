@@ -1,5 +1,5 @@
 import { derived, writable } from "svelte/store";
-import type { ChatSummary } from "openchat-client";
+import type { ChatType } from "openchat-client";
 
 export const notFound = writable(false);
 
@@ -83,7 +83,7 @@ export function globalGroupChatRoute(ctx: PageJS.Context): RouteParams {
 
 export function chatSelectedRoute(
     ctx: PageJS.Context,
-    chatType: ChatSummary["kind"] | "unknown" = "unknown"
+    chatType: ChatType | "unknown" = "unknown"
 ): RouteParams {
     const $qs = qs(ctx);
 
@@ -146,7 +146,7 @@ export type HomeRoute = {
 
 export type GlobalChatSelectedRoute = {
     kind: "global_chat_selected_route";
-    chatType: ChatSummary["kind"] | "unknown";
+    chatType: ChatType | "unknown";
     chatId: string;
     messageIndex?: number;
     threadMessageIndex?: number;

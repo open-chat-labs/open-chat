@@ -95,14 +95,14 @@
         );
         // global direct chats
         page(
-            "/user/:chatId/:messageIndex?/:threadMessageIndex?",
+            "/direct_chat/:chatId/:messageIndex?/:threadMessageIndex?",
             parsePathParams(globalDirectChatRoute),
             track,
             () => (route = Home)
         );
         // // global group chats
         page(
-            "/group/:chatId/:messageIndex?/:threadMessageIndex?",
+            "/group_chat/:chatId/:messageIndex?/:threadMessageIndex?",
             parsePathParams(globalGroupChatRoute),
             track,
             () => (route = Home)

@@ -26,6 +26,7 @@
         CandidateGroupChat,
         defaultGroupRules,
         EventWrapper,
+        ChatType,
     } from "openchat-client";
     import Overlay from "../Overlay.svelte";
     import { getContext, onMount, tick } from "svelte";
@@ -56,7 +57,6 @@
     import { eventListScrollTop } from "../../stores/scrollPos";
     import GateCheckFailed from "./groupdetails/GateCheckFailed.svelte";
     import HallOfFame from "./HallOfFame.svelte";
-    import { communitiesEnabled } from "../../utils/features";
     import LeftNav from "./nav/LeftNav.svelte";
 
     const client = getContext<OpenChat>("client");
@@ -68,11 +68,13 @@
     interface ConfirmLeaveEvent {
         kind: "leave";
         chatId: string;
+        chatType: ChatType;
     }
 
     interface ConfirmDeleteEvent {
         kind: "delete";
         chatId: string;
+        chatType: ChatType;
         doubleCheck: { challenge: string; response: string };
     }
 
@@ -164,7 +166,7 @@
 
     async function newChatSelected(
         chatId: string,
-        chatType: ChatSummary["kind"] | "unknown",
+        chatType: ChatType | "unknown",
         messageIndex?: number,
         threadMessageIndex?: number
     ): Promise<void> {
@@ -457,11 +459,13 @@
     function doConfirmAction(confirmActionEvent: ConfirmActionEvent): Promise<void> {
         switch (confirmActionEvent.kind) {
             case "leave":
-                return leaveGroup(confirmActionEvent.chatId);
+                return leaveGroup(confirmActionEvent.chatId, confirmActionEvent.chatType);
             case "delete":
-                return deleteGroup(confirmActionEvent.chatId).then((_) => {
-                    rightPanelHistory.set([]);
-                });
+                return deleteGroup(confirmActionEvent.chatId, confirmActionEvent.chatType).then(
+                    (_) => {
+                        rightPanelHistory.set([]);
+                    }
+                );
             case "rules":
                 return doJoinGroup(confirmActionEvent.group, confirmActionEvent.select);
             default:
@@ -469,19 +473,19 @@
         }
     }
 
-    function deleteGroup(chatId: string): Promise<void> {
+    function deleteGroup(chatId: string, chatType: ChatType): Promise<void> {
         page("/");
         return client.deleteGroup(chatId).then((success) => {
             if (success) {
                 toastStore.showSuccessToast("deleteGroupSuccess");
             } else {
                 toastStore.showFailureToast("deleteGroupFailure");
-                page(`/${chatId}`);
+                page(`/${chatType}/${chatId}`);
             }
         });
     }
 
-    function leaveGroup(chatId: string): Promise<void> {
+    function leaveGroup(chatId: string, chatType: ChatType): Promise<void> {
         page("/");
 
         client.leaveGroup(chatId).then((resp) => {
@@ -491,7 +495,7 @@
                 } else {
                     toastStore.showFailureToast("failedToLeaveGroup");
                 }
-                page(`/${chatId}`);
+                page(`/${chatType}/${chatId}`);
             }
         });
 
@@ -510,7 +514,7 @@
             return c.kind === "direct_chat" && c.them === ev.detail;
         });
         if (chat) {
-            page(`/user/${chat.chatId}`);
+            page(`/direct_chat/${chat.chatId}`);
         } else {
             createDirectChat(ev.detail);
         }
@@ -838,7 +842,7 @@
             return false;
         }
 
-        page(`/user/${chatId}`);
+        page(`/direct_user/${chatId}`);
         return true;
     }
 
