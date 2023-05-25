@@ -7,9 +7,9 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use types::{
     Avatar, ContentValidationError, CryptoTransaction, EventIndex, EventWrapper, GroupGate, GroupPermissions,
-    GroupReplyContext, GroupRole, GroupRules, GroupSubtype, InvalidPollReason, MentionInternal, Message, MessageContentInitial,
-    MessageId, MessageIndex, MessagePinned, MessageUnpinned, Milliseconds, PushEventResult, Reaction, RoleChanged,
-    TimestampMillis, Timestamped, User, UserId,
+    GroupReplyContext, GroupRole, GroupRules, GroupSubtype, InvalidPollReason, MemberLeft, MentionInternal, Message,
+    MessageContentInitial, MessageId, MessageIndex, MessagePinned, MessageUnpinned, Milliseconds, PushEventResult, Reaction,
+    RoleChanged, TimestampMillis, Timestamped, User, UserId,
 };
 
 #[derive(Serialize, Deserialize)]
@@ -521,6 +521,31 @@ impl GroupChatCore {
         }
     }
 
+    pub fn leave_group(&mut self, user_id: UserId, now: TimestampMillis) -> LeaveGroupResult {
+        use LeaveGroupResult::*;
+
+        if let Some(member) = self.members.get(&user_id) {
+            if member.suspended.value {
+                return UserSuspended;
+            }
+
+            if member.role.is_owner() && self.members.owner_count() == 1 {
+                return LastOwnerCannotLeave;
+            }
+
+            self.members.remove(user_id);
+
+            let event = MemberLeft { user_id };
+
+            self.events
+                .push_main_event(ChatEventInternal::ParticipantLeft(Box::new(event)), 0, now);
+
+            Success
+        } else {
+            UserNotInGroup
+        }
+    }
+
     fn get_user_being_replied_to(
         &self,
         replies_to: &GroupReplyContext,
@@ -597,4 +622,11 @@ pub enum PinUnpinMessageResult {
     UserNotInGroup,
     MessageNotFound,
     UserSuspended,
+}
+
+pub enum LeaveGroupResult {
+    Success,
+    UserSuspended,
+    LastOwnerCannotLeave,
+    UserNotInGroup,
 }

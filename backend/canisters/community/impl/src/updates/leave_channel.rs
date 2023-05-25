@@ -1,9 +1,8 @@
 use crate::{mutate_state, RuntimeState};
 use canister_tracing_macros::trace;
-use chat_events::ChatEventInternal;
 use community_canister::leave_channel::{Response::*, *};
+use group_chat_core::LeaveGroupResult;
 use ic_cdk_macros::update;
-use types::MemberLeft;
 
 #[update]
 #[trace]
@@ -19,22 +18,11 @@ fn leave_channel_impl(args: Args, state: &mut RuntimeState) -> Response {
         }
 
         if let Some(channel) = state.data.channels.get_mut(&args.channel_id) {
-            if let Some(channel_member) = channel.chat.members.get(&member.user_id) {
-                if channel_member.role.is_owner() && channel.chat.members.owner_count() == 1 {
-                    return LastOwnerCannotLeave;
-                }
-
-                channel.chat.members.remove(member.user_id);
-
-                channel.chat.events.push_main_event(
-                    ChatEventInternal::ParticipantLeft(Box::new(MemberLeft { user_id: member.user_id })),
-                    0,
-                    state.env.now(),
-                );
-
-                Success
-            } else {
-                UserNotInChannel
+            match channel.chat.leave_group(member.user_id, state.env.now()) {
+                LeaveGroupResult::Success => Success,
+                LeaveGroupResult::UserSuspended => UserSuspended,
+                LeaveGroupResult::LastOwnerCannotLeave => LastOwnerCannotLeave,
+                LeaveGroupResult::UserNotInGroup => UserNotInChannel,
             }
         } else {
             ChannelNotFound
