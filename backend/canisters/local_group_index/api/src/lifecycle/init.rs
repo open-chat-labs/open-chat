@@ -7,6 +7,9 @@ pub struct Args {
     // The wasm module for creating group canisters
     pub group_canister_wasm: CanisterWasm,
 
+    // The wasm module for creating community canisters
+    pub community_canister_wasm: CanisterWasm,
+
     // The wasm version running on this canister
     pub wasm_version: Version,
 

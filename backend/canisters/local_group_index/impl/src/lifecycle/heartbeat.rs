@@ -7,11 +7,12 @@ use utils::consts::{CREATE_CANISTER_CYCLES_FEE, MIN_CYCLES_BALANCE};
 
 #[heartbeat]
 fn heartbeat() {
-    upgrade_canisters::run();
+    upgrade_groups::run();
+    upgrade_communities::run();
     topup_canister_pool::run();
 }
 
-mod upgrade_canisters {
+mod upgrade_groups {
     use super::*;
 
     type CanisterToUpgrade = canister::CanisterToInstall<group_canister::post_upgrade::Args>;
@@ -24,7 +25,7 @@ mod upgrade_canisters {
     }
 
     fn next_batch(runtime_state: &mut RuntimeState) -> Vec<CanisterToUpgrade> {
-        let count_in_progress = runtime_state.data.canisters_requiring_upgrade.count_in_progress();
+        let count_in_progress = runtime_state.data.groups_requiring_upgrade.count_in_progress();
         let group_upgrade_concurrency = runtime_state.data.group_upgrade_concurrency as usize;
 
         (0..(group_upgrade_concurrency.saturating_sub(count_in_progress)))
@@ -33,10 +34,10 @@ mod upgrade_canisters {
     }
 
     fn try_get_next(runtime_state: &mut RuntimeState) -> Option<CanisterToUpgrade> {
-        let canister_id = runtime_state.data.canisters_requiring_upgrade.try_take_next()?;
+        let canister_id = runtime_state.data.groups_requiring_upgrade.try_take_next()?;
 
         initialize_upgrade(canister_id, runtime_state).or_else(|| {
-            runtime_state.data.canisters_requiring_upgrade.mark_skipped(&canister_id);
+            runtime_state.data.groups_requiring_upgrade.mark_skipped(&canister_id);
             None
         })
     }
@@ -102,13 +103,13 @@ mod upgrade_canisters {
             );
         }
 
-        runtime_state.data.canisters_requiring_upgrade.mark_success(&canister_id);
+        runtime_state.data.groups_requiring_upgrade.mark_success(&canister_id);
     }
 
     fn on_failure(canister_id: CanisterId, from_version: Version, to_version: Version, runtime_state: &mut RuntimeState) {
         mark_upgrade_complete(canister_id.into(), None, runtime_state);
 
-        runtime_state.data.canisters_requiring_upgrade.mark_failure(FailedUpgrade {
+        runtime_state.data.groups_requiring_upgrade.mark_failure(FailedUpgrade {
             canister_id,
             from_version,
             to_version,
@@ -118,6 +119,118 @@ mod upgrade_canisters {
     fn mark_upgrade_complete(chat_id: ChatId, new_wasm_version: Option<Version>, runtime_state: &mut RuntimeState) {
         if let Some(group) = runtime_state.data.local_groups.get_mut(&chat_id) {
             group.set_canister_upgrade_status(false, new_wasm_version);
+        }
+    }
+}
+
+mod upgrade_communities {
+    use super::*;
+    use types::CommunityId;
+
+    type CanisterToUpgrade = canister::CanisterToInstall<community_canister::post_upgrade::Args>;
+
+    pub fn run() {
+        let canisters_to_upgrade = mutate_state(next_batch);
+        if !canisters_to_upgrade.is_empty() {
+            ic_cdk::spawn(perform_upgrades(canisters_to_upgrade));
+        }
+    }
+
+    fn next_batch(runtime_state: &mut RuntimeState) -> Vec<CanisterToUpgrade> {
+        let count_in_progress = runtime_state.data.communities_requiring_upgrade.count_in_progress();
+        let community_upgrade_concurrency = runtime_state.data.community_upgrade_concurrency as usize;
+
+        (0..(community_upgrade_concurrency.saturating_sub(count_in_progress)))
+            .map_while(|_| try_get_next(runtime_state))
+            .collect()
+    }
+
+    fn try_get_next(runtime_state: &mut RuntimeState) -> Option<CanisterToUpgrade> {
+        let canister_id = runtime_state.data.communities_requiring_upgrade.try_take_next()?;
+
+        initialize_upgrade(canister_id, runtime_state).or_else(|| {
+            runtime_state.data.communities_requiring_upgrade.mark_skipped(&canister_id);
+            None
+        })
+    }
+
+    fn initialize_upgrade(canister_id: CanisterId, runtime_state: &mut RuntimeState) -> Option<CanisterToUpgrade> {
+        let community_id = canister_id.into();
+        let community = runtime_state.data.local_communities.get_mut(&community_id)?;
+        let current_wasm_version = community.wasm_version;
+        let community_canister_wasm = &runtime_state.data.community_canister_wasm_for_upgrades;
+        let deposit_cycles_if_needed = ic_cdk::api::canister_balance128() > MIN_CYCLES_BALANCE;
+
+        if current_wasm_version == community_canister_wasm.version {
+            return None;
+        }
+
+        community.set_canister_upgrade_status(true, None);
+
+        Some(CanisterToUpgrade {
+            canister_id,
+            current_wasm_version,
+            new_wasm: community_canister_wasm.clone(),
+            deposit_cycles_if_needed,
+            args: community_canister::post_upgrade::Args {
+                wasm_version: community_canister_wasm.version,
+            },
+            mode: CanisterInstallMode::Upgrade,
+            stop_start_canister: true,
+        })
+    }
+
+    async fn perform_upgrades(canisters_to_upgrade: Vec<CanisterToUpgrade>) {
+        let futures: Vec<_> = canisters_to_upgrade.into_iter().map(perform_upgrade).collect();
+
+        futures::future::join_all(futures).await;
+    }
+
+    async fn perform_upgrade(canister_to_upgrade: CanisterToUpgrade) {
+        let canister_id = canister_to_upgrade.canister_id;
+        let from_version = canister_to_upgrade.current_wasm_version;
+        let to_version = canister_to_upgrade.new_wasm.version;
+
+        match utils::canister::install(canister_to_upgrade).await {
+            Ok(_) => {
+                mutate_state(|state| on_success(canister_id, to_version, None, state));
+            }
+            Err(_) => {
+                mutate_state(|state| on_failure(canister_id, from_version, to_version, state));
+            }
+        }
+    }
+
+    fn on_success(canister_id: CanisterId, to_version: Version, top_up: Option<Cycles>, runtime_state: &mut RuntimeState) {
+        let community_id = canister_id.into();
+        mark_upgrade_complete(community_id, Some(to_version), runtime_state);
+
+        if let Some(top_up) = top_up {
+            runtime_state.data.local_communities.mark_cycles_top_up(
+                &community_id,
+                CyclesTopUp {
+                    amount: top_up,
+                    date: runtime_state.env.now(),
+                },
+            );
+        }
+
+        runtime_state.data.communities_requiring_upgrade.mark_success(&canister_id);
+    }
+
+    fn on_failure(canister_id: CanisterId, from_version: Version, to_version: Version, runtime_state: &mut RuntimeState) {
+        mark_upgrade_complete(canister_id.into(), None, runtime_state);
+
+        runtime_state.data.communities_requiring_upgrade.mark_failure(FailedUpgrade {
+            canister_id,
+            from_version,
+            to_version,
+        });
+    }
+
+    fn mark_upgrade_complete(community_id: CommunityId, new_wasm_version: Option<Version>, runtime_state: &mut RuntimeState) {
+        if let Some(community) = runtime_state.data.local_communities.get_mut(&community_id) {
+            community.set_canister_upgrade_status(false, new_wasm_version);
         }
     }
 }

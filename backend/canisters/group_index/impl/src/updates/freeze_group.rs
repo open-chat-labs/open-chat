@@ -111,7 +111,7 @@ struct PrepareResult {
 }
 
 fn prepare(chat_id: &ChatId, runtime_state: &RuntimeState) -> Result<PrepareResult, ()> {
-    if let Some(frozen_info) = runtime_state.data.chat_frozen_info(chat_id) {
+    if let Some(frozen_info) = runtime_state.data.group_frozen_info(chat_id) {
         Ok(PrepareResult {
             caller: runtime_state.env.caller(),
             is_frozen: frozen_info.is_some(),

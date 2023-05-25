@@ -23,22 +23,11 @@ impl PrivateGroups {
         self.groups.get_mut(chat_id)
     }
 
-    pub fn handle_group_created(&mut self, chat_id: ChatId, now: TimestampMillis) -> bool {
-        match self.groups.entry(chat_id) {
+    pub fn add(&mut self, group: PrivateGroupInfo) -> bool {
+        match self.groups.entry(group.id) {
             Occupied(_) => false,
             Vacant(e) => {
-                let group_info = PrivateGroupInfo::new(chat_id, now);
-                e.insert(group_info);
-                true
-            }
-        }
-    }
-
-    pub fn add_existing(&mut self, private_group_info: PrivateGroupInfo) -> bool {
-        match self.groups.entry(private_group_info.id()) {
-            Occupied(_) => false,
-            Vacant(e) => {
-                e.insert(private_group_info);
+                e.insert(group);
                 true
             }
         }
@@ -67,15 +56,6 @@ impl PrivateGroupInfo {
             id,
             created: now,
             marked_active_until: now + MARK_ACTIVE_DURATION,
-            frozen: None,
-        }
-    }
-
-    pub fn from(id: ChatId, created: TimestampMillis, marked_active_until: TimestampMillis) -> PrivateGroupInfo {
-        PrivateGroupInfo {
-            id,
-            created,
-            marked_active_until,
             frozen: None,
         }
     }

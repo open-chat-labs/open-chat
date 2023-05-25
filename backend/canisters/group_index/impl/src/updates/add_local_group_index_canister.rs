@@ -48,6 +48,7 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
             canister_wasm: runtime_state.data.local_group_index_canister_wasm_for_new_canisters.clone(),
             init_args: local_group_index_canister::init::Args {
                 group_canister_wasm: runtime_state.data.group_canister_wasm.clone(),
+                community_canister_wasm: runtime_state.data.community_canister_wasm.clone(),
                 wasm_version: runtime_state.data.local_group_index_canister_wasm_for_new_canisters.version,
                 user_index_canister_id: runtime_state.data.user_index_canister_id,
                 local_user_index_canister_id: args.local_user_index_canister_id,
