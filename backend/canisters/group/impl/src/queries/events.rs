@@ -1,8 +1,7 @@
 use crate::{read_state, RuntimeState};
-use chat_events::Reader;
 use group_canister::events::{Response::*, *};
+use group_chat_core::EventsResult;
 use ic_cdk_macros::query;
-use types::EventsResponse;
 
 #[query]
 fn events(args: Args) -> Response {
@@ -11,42 +10,22 @@ fn events(args: Args) -> Response {
 
 fn events_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
+    let now = runtime_state.env.now();
     let user_id = runtime_state.data.lookup_user_id(&caller);
 
-    if let Some(min_visible_event_index) = runtime_state.data.chat.min_visible_event_index(user_id) {
-        let now = runtime_state.env.now();
-
-        if let Some(events_reader) =
-            runtime_state
-                .data
-                .chat
-                .events
-                .events_reader(min_visible_event_index, args.thread_root_message_index, now)
-        {
-            let latest_event_index = events_reader.latest_event_index().unwrap();
-
-            if args.latest_client_event_index.map_or(false, |e| latest_event_index < e) {
-                return ReplicaNotUpToDate(latest_event_index);
-            }
-
-            let user_id = runtime_state.data.get_member(caller).map(|m| m.user_id);
-            let events = events_reader.scan(
-                Some(args.start_index.into()),
-                args.ascending,
-                args.max_messages as usize,
-                args.max_events as usize,
-                user_id,
-            );
-
-            Success(EventsResponse {
-                events,
-                latest_event_index,
-                timestamp: now,
-            })
-        } else {
-            ThreadMessageNotFound
-        }
-    } else {
-        CallerNotInGroup
+    match runtime_state.data.chat.events(
+        user_id,
+        args.thread_root_message_index,
+        args.start_index,
+        args.ascending,
+        args.max_messages,
+        args.max_events,
+        args.latest_client_event_index,
+        now,
+    ) {
+        EventsResult::Success(response) => Success(response),
+        EventsResult::UserNotInGroup => CallerNotInGroup,
+        EventsResult::ThreadNotFound => ThreadMessageNotFound,
+        EventsResult::ReplicaNotUpToDate(event_index) => ReplicaNotUpToDate(event_index),
     }
 }
