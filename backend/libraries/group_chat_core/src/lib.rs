@@ -10,8 +10,8 @@ use types::{
     FieldTooLongResult, FieldTooShortResult, GroupDescriptionChanged, GroupGate, GroupGateUpdated, GroupNameChanged,
     GroupPermissionRole, GroupPermissions, GroupReplyContext, GroupRole, GroupRules, GroupRulesChanged, GroupSubtype,
     InvalidPollReason, MemberLeft, MembersRemoved, MentionInternal, Message, MessageContentInitial, MessageId, MessageIndex,
-    MessagePinned, MessageUnpinned, Milliseconds, OptionUpdate, OptionalGroupPermissions, PermissionsChanged, PushEventResult,
-    Reaction, RoleChanged, TimestampMillis, Timestamped, User, UserId, UsersBlocked,
+    MessagePinned, MessageUnpinned, MessagesResponse, Milliseconds, OptionUpdate, OptionalGroupPermissions, PermissionsChanged,
+    PushEventResult, Reaction, RoleChanged, TimestampMillis, Timestamped, User, UserId, UsersBlocked,
 };
 use utils::avatar_validation::validate_avatar;
 use utils::group_validation::{validate_description, validate_name, validate_rules, NameValidationError, RulesValidationError};
@@ -173,6 +173,39 @@ impl GroupChatCore {
 
                 Success(EventsResponse {
                     events,
+                    latest_event_index,
+                    timestamp: now,
+                })
+            }
+            EventsReaderResult::ThreadNotFound => ThreadNotFound,
+            EventsReaderResult::UserNotInGroup => UserNotInGroup,
+        }
+    }
+
+    pub fn messages_by_message_index(
+        &self,
+        user_id: Option<UserId>,
+        thread_root_message_index: Option<MessageIndex>,
+        messages: Vec<MessageIndex>,
+        latest_client_event_index: Option<EventIndex>,
+        now: TimestampMillis,
+    ) -> MessagesResult {
+        use MessagesResult::*;
+
+        match self.events_reader(user_id, thread_root_message_index, now) {
+            EventsReaderResult::Success(reader) => {
+                let latest_event_index = reader.latest_event_index().unwrap();
+                if latest_client_event_index.map_or(false, |e| latest_event_index < e) {
+                    return ReplicaNotUpToDate(latest_event_index);
+                }
+
+                let messages: Vec<_> = messages
+                    .into_iter()
+                    .filter_map(|m| reader.message_event(m.into(), user_id))
+                    .collect();
+
+                Success(MessagesResponse {
+                    messages,
                     latest_event_index,
                     timestamp: now,
                 })
@@ -957,6 +990,13 @@ impl GroupChatCore {
 
 pub enum EventsResult {
     Success(EventsResponse),
+    UserNotInGroup,
+    ThreadNotFound,
+    ReplicaNotUpToDate(EventIndex),
+}
+
+pub enum MessagesResult {
+    Success(MessagesResponse),
     UserNotInGroup,
     ThreadNotFound,
     ReplicaNotUpToDate(EventIndex),
