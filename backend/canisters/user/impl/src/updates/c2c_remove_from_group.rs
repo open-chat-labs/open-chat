@@ -22,7 +22,8 @@ fn c2c_remove_from_group_impl(args: Args, runtime_state: &mut RuntimeState) -> R
             cached_groups.remove_group(&chat_id);
         }
 
-        openchat_bot::send_removed_from_group_message(
+        openchat_bot::send_removed_from_group_or_community_message(
+            true,
             args.removed_by,
             args.group_name,
             args.public,
