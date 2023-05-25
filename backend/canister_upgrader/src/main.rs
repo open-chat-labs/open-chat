@@ -10,6 +10,7 @@ async fn main() {
     let identity = get_dfx_identity(&opts.controller);
 
     match opts.canister_to_upgrade {
+        CanisterName::Community => upgrade_group_canister(identity, opts.url, opts.group_index, opts.version).await,
         CanisterName::CyclesDispenser => {
             upgrade_cycles_dispenser_canister(identity, opts.url, opts.cycles_dispenser, opts.version).await
         }

@@ -25,7 +25,10 @@ fn remove_reaction_impl(args: Args, state: &mut RuntimeState) -> Response {
         let now = state.env.now();
 
         if let Some(channel) = state.data.channels.get_mut(&args.channel_id) {
-            match channel.remove_reaction(user_id, args.thread_root_message_index, args.message_id, args.reaction, now) {
+            match channel
+                .chat
+                .remove_reaction(user_id, args.thread_root_message_index, args.message_id, args.reaction, now)
+            {
                 AddRemoveReactionResult::Success => Success,
                 AddRemoveReactionResult::NoChange | AddRemoveReactionResult::InvalidReaction => NoChange,
                 AddRemoveReactionResult::MessageNotFound => MessageNotFound,

@@ -30,7 +30,7 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
         let now = state.env.now();
 
         if let Some(channel) = state.data.channels.get_mut(&args.channel_id) {
-            match channel.send_message(
+            match channel.chat.send_message(
                 user_id,
                 args.thread_root_message_index,
                 args.message_id,
@@ -59,7 +59,7 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
                         channel_id: args.channel_id,
                         thread_root_message_index: args.thread_root_message_index,
                         community_name: state.data.name.clone(),
-                        group_name: channel.name.clone(),
+                        group_name: channel.chat.name.clone(),
                         sender: user_id,
                         sender_name: args.sender_name,
                         message: result.message_event,

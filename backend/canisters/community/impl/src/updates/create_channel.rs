@@ -1,4 +1,4 @@
-use crate::{mutate_state, RuntimeState};
+use crate::{model::channels::Channel, mutate_state, RuntimeState};
 use canister_tracing_macros::trace;
 use community_canister::create_channel::{Response::*, *};
 use group_chat_core::GroupChatCore;
@@ -14,6 +14,10 @@ fn create_channel(args: Args) -> Response {
 }
 
 fn create_channel_impl(args: Args, state: &mut RuntimeState) -> Response {
+    if state.data.is_frozen() {
+        return CommunityFrozen;
+    }
+
     let caller = state.env.caller();
     if let Some(member) = state.data.members.get(caller) {
         if member.suspended.value {
@@ -57,7 +61,7 @@ fn create_channel_impl(args: Args, state: &mut RuntimeState) -> Response {
                 args.events_ttl,
                 state.env.now(),
             );
-            state.data.channels.add(channel_id, chat);
+            state.data.channels.add(Channel { id: channel_id, chat });
             Success(SuccessResult { channel_id })
         }
     } else {

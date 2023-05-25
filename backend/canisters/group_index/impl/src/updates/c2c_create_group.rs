@@ -1,3 +1,4 @@
+use crate::model::private_groups::PrivateGroupInfo;
 use crate::model::public_groups::GroupCreatedArgs;
 use crate::{mutate_state, read_state, RuntimeState};
 use candid::Principal;
@@ -94,7 +95,7 @@ fn prepare(name: &str, is_public: bool, runtime_state: &mut RuntimeState) -> Res
         return Err(NameTaken);
     }
 
-    if let Some(local_group_index_canister) = runtime_state.data.local_index_map.index_for_new_group() {
+    if let Some(local_group_index_canister) = runtime_state.data.local_index_map.index_for_new_canister() {
         Ok(PrepareResult {
             local_group_index_canister,
         })
@@ -125,7 +126,10 @@ fn commit(args: CommitArgs, runtime_state: &mut RuntimeState) {
             now,
         });
     } else {
-        runtime_state.data.private_groups.handle_group_created(args.chat_id, now);
+        runtime_state
+            .data
+            .private_groups
+            .add(PrivateGroupInfo::new(args.chat_id, now));
     }
     runtime_state
         .data

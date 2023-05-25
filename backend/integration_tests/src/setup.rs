@@ -40,6 +40,7 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
     let local_group_index_canister_id = create_canister(env, group_index_canister_id);
     let notifications_canister_id = create_canister(env, notifications_index_canister_id);
 
+    let community_canister_wasm = wasms::COMMUNITY.clone();
     let cycles_dispenser_canister_wasm = wasms::CYCLES_DISPENSER.clone();
     let cycles_minting_canister_wasm = wasms::CYCLES_MINTING_CANISTER.clone();
     let group_canister_wasm = wasms::GROUP.clone();
@@ -80,6 +81,7 @@ fn install_canisters(env: &mut StateMachine, controller: Principal) -> CanisterI
     let group_index_init_args = group_index_canister::init::Args {
         service_principals: vec![controller],
         group_canister_wasm,
+        community_canister_wasm,
         local_group_index_canister_wasm,
         user_index_canister_id,
         cycles_dispenser_canister_id,

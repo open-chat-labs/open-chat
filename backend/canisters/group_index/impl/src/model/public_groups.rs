@@ -39,8 +39,12 @@ impl PublicGroups {
         self.groups.get_mut(chat_id)
     }
 
+    pub fn is_name_taken(&self, name: &str) -> bool {
+        self.name_to_id_map.contains_key(name) || self.groups_pending.contains_key(name)
+    }
+
     pub fn reserve_name(&mut self, name: &str, now: TimestampMillis) -> bool {
-        if self.name_to_id_map.contains_key(name) || self.groups_pending.contains_key(name) {
+        if self.is_name_taken(name) {
             false
         } else {
             self.groups_pending.insert(name, now);
@@ -295,11 +299,10 @@ impl From<&PublicGroupInfo> for Document {
 
 impl From<PublicGroupInfo> for PrivateGroupInfo {
     fn from(public_group_info: PublicGroupInfo) -> Self {
-        PrivateGroupInfo::from(
-            public_group_info.id,
-            public_group_info.created,
-            public_group_info.marked_active_until,
-        )
+        let mut private_group_info = PrivateGroupInfo::new(public_group_info.id, public_group_info.created);
+        private_group_info.mark_active(public_group_info.marked_active_until);
+        private_group_info.set_frozen(public_group_info.frozen);
+        private_group_info
     }
 }
 

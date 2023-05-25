@@ -24,7 +24,7 @@ fn delete_channel_impl(channel_id: ChannelId, state: &mut RuntimeState) -> Respo
 
         if let Some(channel) = state.data.channels.get(&channel_id) {
             let user_id = member.user_id;
-            if let Some(channel_member) = channel.members.get(&user_id) {
+            if let Some(channel_member) = channel.chat.members.get(&user_id) {
                 if channel_member.role.can_delete_group() {
                     let now = state.env.now();
                     let channel = state.data.channels.delete(channel_id).expect("Channel should exist");
@@ -32,7 +32,7 @@ fn delete_channel_impl(channel_id: ChannelId, state: &mut RuntimeState) -> Respo
                     state.data.events.push_event(
                         CommunityEvent::ChannelDeleted(Box::new(ChannelDeleted {
                             channel_id,
-                            name: channel.name,
+                            name: channel.chat.name,
                             deleted_by: user_id,
                         })),
                         now,
