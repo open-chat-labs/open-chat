@@ -91,6 +91,7 @@ pub struct UserSuspended {
 pub struct UserJoinedGroup {
     pub user_id: UserId,
     pub chat_id: ChatId,
+    #[serde(default)]
     pub as_super_admin: bool,
     pub latest_message_index: Option<MessageIndex>,
 }
@@ -99,7 +100,6 @@ pub struct UserJoinedGroup {
 pub struct UserJoinedCommunity {
     pub user_id: UserId,
     pub community_id: CommunityId,
-    pub as_super_admin: bool,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]

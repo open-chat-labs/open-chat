@@ -50,7 +50,6 @@ fn handle_event(event: Event, runtime_state: &mut RuntimeState) {
                 LocalUserIndexEvent::UserJoinedCommunity(UserJoinedCommunity {
                     user_id: ev.user_id,
                     community_id: ev.community_id,
-                    as_super_admin: false,
                 }),
             );
         }
