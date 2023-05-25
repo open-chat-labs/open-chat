@@ -11,4 +11,5 @@ chat_events = { path = "../chat_events" }
 group_members = { path = "../group_members" }
 serde = { workspace = true }
 types = { path = "../types" }
+utils = { path = "../utils" }
 

@@ -26,4 +26,5 @@ pub mod reset_invite_code;
 pub mod send_message;
 pub mod unblock_user;
 pub mod undelete_messages;
+pub mod update_channel;
 pub mod update_community;
