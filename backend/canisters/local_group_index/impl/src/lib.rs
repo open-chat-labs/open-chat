@@ -125,10 +125,18 @@ struct Data {
     #[serde(alias = "max_concurrent_canister_upgrades")]
     pub max_concurrent_group_upgrades: u32,
     pub group_upgrade_concurrency: u32,
-    #[serde(default)]
+    #[serde(default = "ten")]
     pub max_concurrent_community_upgrades: u32,
-    #[serde(default)]
+    #[serde(default = "two")]
     pub community_upgrade_concurrency: u32,
+}
+
+fn ten() -> u32 {
+    10
+}
+
+fn two() -> u32 {
+    2
 }
 
 impl Data {
@@ -165,7 +173,7 @@ impl Data {
             test_mode,
             max_concurrent_group_upgrades: 10,
             group_upgrade_concurrency: 10,
-            max_concurrent_community_upgrades: 2,
+            max_concurrent_community_upgrades: 10,
             community_upgrade_concurrency: 2,
         }
     }
