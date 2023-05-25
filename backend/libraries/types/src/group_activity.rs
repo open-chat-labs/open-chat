@@ -2,6 +2,8 @@ use crate::TimestampMillis;
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
+pub type PublicCommunityActivity = PublicGroupActivity;
+
 #[derive(CandidType, Serialize, Deserialize, Debug, Default)]
 pub struct PublicGroupActivity {
     pub timestamp: TimestampMillis,

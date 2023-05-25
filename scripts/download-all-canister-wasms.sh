@@ -13,6 +13,7 @@ fi
 
 echo "Downloading wasms"
 
+./download-canister-wasm.sh community $WASM_SRC
 ./download-canister-wasm.sh cycles_dispenser $WASM_SRC
 ./download-canister-wasm.sh group $WASM_SRC
 ./download-canister-wasm.sh group_index $WASM_SRC

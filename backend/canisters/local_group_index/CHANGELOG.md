@@ -5,6 +5,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Integrate Communities ([#3656](https://github.com/open-ic/open-chat/pull/3656))
+
+## [[2.0.691](https://github.com/open-ic/open-chat/releases/tag/v2.0.691-local_group_index)] - 2023-05-17
+
 ### Changed
 
 - Added `moderator` role ([#3592](https://github.com/open-ic/open-chat/pull/3592))

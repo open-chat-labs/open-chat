@@ -23,7 +23,7 @@ async fn set_max_concurrent_group_canister_upgrades(args: Args) -> Response {
     if let Some(first_error) = result.into_iter().filter_map(|res| res.err()).next() {
         InternalError(format!("{first_error:?}"))
     } else {
-        info!(args.value, "Max concurrent upgrades set");
+        info!(args.value, "Max concurrent group upgrades set");
         Success
     }
 }
