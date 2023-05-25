@@ -14,6 +14,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Change `c2c_remove_from_group` to always remove the user ([#3641](https://github.com/open-ic/open-chat/pull/3641))
 
+### Removed
+
+- Remove `c2c_try_add_to_group` ([#3661](https://github.com/open-ic/open-chat/pull/3661))
+
 ## [[2.0.698](https://github.com/open-ic/open-chat/releases/tag/v2.0.698-user)] - 2023-05-17
 
 ### Changed
