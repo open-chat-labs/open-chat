@@ -67,6 +67,16 @@ impl GroupChatCore {
         }
     }
 
+    pub fn min_visible_event_index(&self, user_id: Option<UserId>) -> Option<EventIndex> {
+        if self.is_public && self.history_visible_to_new_joiners {
+            Some(EventIndex::default())
+        } else {
+            user_id
+                .and_then(|u| self.members.get(&u))
+                .map(|m| m.min_visible_event_index())
+        }
+    }
+
     pub fn send_message(
         &mut self,
         sender: UserId,

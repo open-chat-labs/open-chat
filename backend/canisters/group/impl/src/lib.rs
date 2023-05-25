@@ -372,19 +372,6 @@ impl Data {
         self.chat.members.get_mut(&user_id)
     }
 
-    pub fn min_visible_event_index(&self, caller: Principal) -> Option<EventIndex> {
-        match self.get_member(caller) {
-            Some(m) => Some(m.min_visible_event_index()),
-            None => {
-                if self.chat.is_public && self.chat.history_visible_to_new_joiners {
-                    Some(EventIndex::default())
-                } else {
-                    None
-                }
-            }
-        }
-    }
-
     pub fn is_frozen(&self) -> bool {
         self.frozen.is_some()
     }

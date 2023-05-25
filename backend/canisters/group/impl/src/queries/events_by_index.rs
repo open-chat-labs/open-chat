@@ -11,8 +11,9 @@ fn events_by_index(args: Args) -> Response {
 
 fn events_by_index_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     let caller = runtime_state.env.caller();
+    let user_id = runtime_state.data.lookup_user_id(&caller);
 
-    if let Some(min_visible_event_index) = runtime_state.data.min_visible_event_index(caller) {
+    if let Some(min_visible_event_index) = runtime_state.data.chat.min_visible_event_index(user_id) {
         let now = runtime_state.env.now();
 
         if let Some(events_reader) =
