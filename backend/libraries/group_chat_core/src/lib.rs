@@ -521,7 +521,7 @@ impl GroupChatCore {
         }
     }
 
-    pub fn leave_group(&mut self, user_id: UserId, now: TimestampMillis) -> LeaveGroupResult {
+    pub fn leave(&mut self, user_id: UserId, now: TimestampMillis) -> LeaveGroupResult {
         use LeaveGroupResult::*;
 
         if let Some(member) = self.members.get(&user_id) {

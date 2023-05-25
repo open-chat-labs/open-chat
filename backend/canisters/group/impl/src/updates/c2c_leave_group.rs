@@ -22,7 +22,7 @@ fn c2c_leave_group_impl(runtime_state: &mut RuntimeState) -> Response {
     let caller = runtime_state.env.caller().into();
     let now = runtime_state.env.now();
 
-    match runtime_state.data.chat.leave_group(caller, now) {
+    match runtime_state.data.chat.leave(caller, now) {
         LeaveGroupResult::Success => {
             handle_activity_notification(runtime_state);
             Success(SuccessResult {})

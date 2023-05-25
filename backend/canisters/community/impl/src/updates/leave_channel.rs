@@ -22,7 +22,7 @@ fn leave_channel_impl(args: Args, state: &mut RuntimeState) -> Response {
         }
 
         if let Some(channel) = state.data.channels.get_mut(&args.channel_id) {
-            match channel.chat.leave_group(member.user_id, state.env.now()) {
+            match channel.chat.leave(member.user_id, state.env.now()) {
                 LeaveGroupResult::Success => Success,
                 LeaveGroupResult::UserSuspended => UserSuspended,
                 LeaveGroupResult::LastOwnerCannotLeave => LastOwnerCannotLeave,
