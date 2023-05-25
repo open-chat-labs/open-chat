@@ -11,6 +11,10 @@ fn leave_channel(args: Args) -> Response {
 }
 
 fn leave_channel_impl(args: Args, state: &mut RuntimeState) -> Response {
+    if state.data.is_frozen() {
+        return CommunityFrozen;
+    }
+
     let caller = state.env.caller();
     if let Some(member) = state.data.members.get(caller) {
         if member.suspended.value {
