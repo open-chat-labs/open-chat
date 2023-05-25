@@ -396,6 +396,17 @@ impl Data {
             || self.is_invite_code_valid(invite_code)
     }
 
+    pub fn remove_principal(&mut self, user_id: UserId) {
+        if let Some(principal) = self
+            .principal_to_user_id_map
+            .iter()
+            .find(|(_, &u)| u == user_id)
+            .map(|(p, _)| *p)
+        {
+            self.principal_to_user_id_map.remove(&principal);
+        }
+    }
+
     fn is_invite_code_valid(&self, invite_code: Option<u64>) -> bool {
         if self.invite_code_enabled {
             if let Some(provided_code) = invite_code {

@@ -95,16 +95,7 @@ fn prepare(user_id: UserId, state: &RuntimeState) -> Result<PrepareResult, Respo
 fn commit(user_id: UserId, block: bool, removed_by: UserId, state: &mut RuntimeState) -> Response {
     match state.data.chat.remove_member(removed_by, user_id, block, state.env.now()) {
         group_chat_core::RemoveMemberResult::Success => {
-            // Remove the user's principal from the map
-            if let Some(principal) = state
-                .data
-                .principal_to_user_id_map
-                .iter()
-                .find(|(_, &u)| u == user_id)
-                .map(|(p, _)| *p)
-            {
-                state.data.principal_to_user_id_map.remove(&principal);
-            }
+            state.data.remove_principal(user_id);
 
             handle_activity_notification(state);
 
