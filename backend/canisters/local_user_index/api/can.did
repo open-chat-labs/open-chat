@@ -1,5 +1,26 @@
 import "../../../libraries/types/can.did";
 
+type JoinCommunityArgs =
+    record {
+        community_id: CommunityId;
+        invite_code: opt nat64;
+    };
+
+type JoinCommunityResponse =
+    variant {
+        Success: CommunityCanisterCommunitySummary;
+        AlreadyInCommunity: CommunityCanisterCommunitySummary;
+        GateCheckFailed: GateCheckFailedReason;
+        CommunityNotFound;
+        CommunityNotPublic;
+        NotInvited;
+        MemberLimitReached: nat32;
+        Blocked;
+        UserSuspended;
+        CommunityFrozen;
+        InternalError: text;
+    };
+
 type JoinGroupArgs =
     record {
         chat_id: ChatId;
@@ -81,6 +102,7 @@ type ReportMessageResponse =
     };
 
 service: {
+    join_community: (JoinCommunityArgs) -> (JoinCommunityResponse);
     join_group: (JoinGroupArgs) -> (JoinGroupResponse);
     invite_users_to_group: (InviteUsersToGroupArgs) -> (InviteUsersToGroupResponse);
     register_user: (RegisterUserArgs) -> (RegisterUserResponse);

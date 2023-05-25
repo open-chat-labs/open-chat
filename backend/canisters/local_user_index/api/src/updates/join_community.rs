@@ -1,13 +1,11 @@
-use candid::{CandidType, Principal};
+use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{CommunityCanisterCommunitySummary, GateCheckFailedReason, UserId};
+use types::{CommunityCanisterCommunitySummary, CommunityId, GateCheckFailedReason};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
-    pub user_id: UserId,
-    pub principal: Principal,
+    pub community_id: CommunityId,
     pub invite_code: Option<u64>,
-    pub is_platform_moderator: bool,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -15,9 +13,12 @@ pub enum Response {
     Success(Box<CommunityCanisterCommunitySummary>),
     AlreadyInCommunity(Box<CommunityCanisterCommunitySummary>),
     GateCheckFailed(GateCheckFailedReason),
+    CommunityNotFound,
+    CommunityNotPublic,
     NotInvited,
-    Blocked,
     MemberLimitReached(u32),
+    Blocked,
+    UserSuspended,
     CommunityFrozen,
     InternalError(String),
 }

@@ -10,8 +10,8 @@ use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use types::{
-    Avatar, CanisterId, CommunityPermissions, CommunitySummary, Cycles, FrozenGroupInfo, GroupGate, GroupRules, Notification,
-    TimestampMillis, Timestamped, UserId, Version,
+    Avatar, CanisterId, CommunityCanisterCommunitySummary, CommunityPermissions, Cycles, FrozenGroupInfo, GroupGate,
+    GroupRules, Notification, TimestampMillis, Timestamped, UserId, Version,
 };
 use utils::env::Environment;
 
@@ -71,10 +71,10 @@ impl RuntimeState {
         }
     }
 
-    pub fn summary(&self, member: &CommunityMemberInternal, now: TimestampMillis) -> CommunitySummary {
+    pub fn summary(&self, member: &CommunityMemberInternal, now: TimestampMillis) -> CommunityCanisterCommunitySummary {
         let data = &self.data;
 
-        CommunitySummary {
+        CommunityCanisterCommunitySummary {
             community_id: self.env.canister_id().into(),
             last_updated: now,
             name: data.name.clone(),

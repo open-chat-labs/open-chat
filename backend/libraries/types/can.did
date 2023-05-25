@@ -343,6 +343,23 @@ type GroupCanisterGroupChatSummaryUpdates =
         gate: GroupGateUpdate;
     };
 
+type CommunityCanisterCommunitySummary =
+    record {
+        community_id: CommunityId;
+        name: text;
+        description: text;
+        avatar_id: opt nat;
+        is_public: bool;
+        joined: TimestampMillis;
+        member_count: nat32;
+        role: CommunityRole;
+        permissions: CommunityPermissions;
+        frozen: opt FrozenGroupInfo;
+        gate: opt GroupGate;
+        last_updated: TimestampMillis;
+        latest_event_index: EventIndex;
+    };
+
 type GroupDescriptionChanged =
     record {
         new_description: text;
@@ -1119,6 +1136,13 @@ type CommunityPermissionRole =
         Owners;
         Admins;
         Members;
+    };
+
+type CommunityRole =
+    variant {
+        Owner;
+        Admin;
+        Member;
     };
 
 type ThreadSummary =
