@@ -107,6 +107,10 @@ export function chatSelectedRoute(
     };
 }
 
+export function chatTypeToPath(chatType: ChatType): string {
+    return chatType === "direct_chat" ? "user" : "group";
+}
+
 export const pathParams = writable<RouteParams>({ kind: "not_found_route" });
 
 export type LandingPageRoute =

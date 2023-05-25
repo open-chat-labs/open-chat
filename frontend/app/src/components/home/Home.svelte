@@ -33,7 +33,7 @@
     import { rtlStore } from "../../stores/rtl";
     import { mobileWidth, screenWidth, ScreenWidth } from "../../stores/screenDimensions";
     import page from "page";
-    import { pathParams } from "../../routes";
+    import { chatTypeToPath, pathParams } from "../../routes";
     import type { RouteParams } from "../../routes";
     import { toastStore } from "../../stores/toast";
     import {
@@ -480,7 +480,7 @@
                 toastStore.showSuccessToast("deleteGroupSuccess");
             } else {
                 toastStore.showFailureToast("deleteGroupFailure");
-                page(`/${chatType}/${chatId}`);
+                page(`/${chatTypeToPath(chatType)}/${chatId}`);
             }
         });
     }
@@ -495,7 +495,7 @@
                 } else {
                     toastStore.showFailureToast("failedToLeaveGroup");
                 }
-                page(`/${chatType}/${chatId}`);
+                page(`/${chatTypeToPath(chatType)}/${chatId}`);
             }
         });
 
@@ -514,7 +514,7 @@
             return c.kind === "direct_chat" && c.them === ev.detail;
         });
         if (chat) {
-            page(`/direct_chat/${chat.chatId}`);
+            page(`/user/${chat.chatId}`);
         } else {
             createDirectChat(ev.detail);
         }
