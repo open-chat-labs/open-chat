@@ -71,7 +71,7 @@ fn join_channel_impl(channel_id: ChannelId, state: &mut RuntimeState) -> Respons
             let mut min_visible_event_index = EventIndex::default();
             let mut min_visible_message_index = MessageIndex::default();
 
-            if channel.chat.history_visible_to_new_joiners {
+            if !channel.chat.history_visible_to_new_joiners {
                 let events_reader = channel.chat.events.main_events_reader(now);
                 min_visible_event_index = events_reader.next_event_index();
                 min_visible_message_index = events_reader.next_message_index();
