@@ -44,7 +44,7 @@ struct PrepareResult {
 
 fn prepare(runtime_state: &RuntimeState) -> Result<PrepareResult, Response> {
     let caller = runtime_state.env.caller();
-    if let Some(user_id) = runtime_state.data.principal_to_user_id_map.get(&caller).copied() {
+    if let Some(user_id) = runtime_state.data.lookup_user_id(&caller) {
         Ok(PrepareResult {
             caller,
             user_id,

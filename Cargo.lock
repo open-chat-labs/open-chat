@@ -1256,6 +1256,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "community_canister_c2c_client"
+version = "0.1.0"
+dependencies = [
+ "canister_client",
+ "community_canister",
+ "ic-cdk 0.7.3",
+ "msgpack",
+ "tracing",
+ "types",
+]
+
+[[package]]
 name = "community_canister_impl"
 version = "0.1.0"
 dependencies = [
@@ -2502,6 +2514,8 @@ dependencies = [
  "canister_logger",
  "canister_state_macros",
  "canister_tracing_macros",
+ "community_canister",
+ "community_canister_c2c_client",
  "futures",
  "group_canister",
  "group_canister_c2c_client",
@@ -4251,6 +4265,8 @@ dependencies = [
  "canister_state_macros",
  "canister_tracing_macros",
  "chat_events",
+ "community_canister",
+ "community_canister_c2c_client",
  "futures",
  "group_canister",
  "group_canister_c2c_client",
@@ -7253,6 +7269,8 @@ dependencies = [
  "canister_timer_jobs",
  "canister_tracing_macros",
  "chat_events",
+ "community_canister",
+ "community_canister_c2c_client",
  "fire_and_forget_handler",
  "futures",
  "group_canister",

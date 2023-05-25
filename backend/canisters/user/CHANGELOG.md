@@ -8,13 +8,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Introduce `FireAndForgetHandler` which retries failed c2c calls ([#3639](https://github.com/open-ic/open-chat/pull/3639))
+- Integrate Communities ([#3657](https://github.com/open-ic/open-chat/pull/3657)), ([#3659](https://github.com/open-ic/open-chat/pull/3659))
+
+### Changed
+
+- Change `c2c_remove_from_group` to always remove the user ([#3641](https://github.com/open-ic/open-chat/pull/3641))
+
+### Removed
+
+- Remove `c2c_try_add_to_group` ([#3661](https://github.com/open-ic/open-chat/pull/3661))
+
+## [[2.0.698](https://github.com/open-ic/open-chat/releases/tag/v2.0.698-user)] - 2023-05-17
 
 ### Changed
 
 - Short circuit query calls prior to calling `ic0.time()` where possible ([#3542](https://github.com/open-ic/open-chat/pull/3542))
-- Added `moderator` role ([#3592](https://github.com/open-ic/open-chat/pull/3592))
+- Added `moderator` role and removed `add_members` permission ([#3592](https://github.com/open-ic/open-chat/pull/3592))
+- Put back `add_members` permission with serde default ([#3599](https://github.com/open-ic/open-chat/pull/3599))
 - Allow registered bot accounts to start conversations with OC users ([#3591](https://github.com/open-ic/open-chat/pull/3591))
-- Change `c2c_remove_from_group` to always remove the user ([#3641](https://github.com/open-ic/open-chat/pull/3641))
 
 ### Removed
 

@@ -19,7 +19,7 @@ fn c2c_upgrade_group_canister_wasm_impl(args: Args, runtime_state: &mut RuntimeS
     if !runtime_state.data.test_mode && version < runtime_state.data.group_canister_wasm_for_new_canisters.version {
         VersionNotHigher
     } else {
-        runtime_state.data.canisters_requiring_upgrade.clear();
+        runtime_state.data.groups_requiring_upgrade.clear();
         if args.use_for_new_canisters.unwrap_or(true) {
             runtime_state.data.group_canister_wasm_for_new_canisters = args.wasm.clone();
         }
@@ -39,10 +39,10 @@ fn c2c_upgrade_group_canister_wasm_impl(args: Args, runtime_state: &mut RuntimeS
             .filter(|c| include_all || include.contains(c))
             .filter(|c| !exclude.contains(c))
         {
-            runtime_state.data.canisters_requiring_upgrade.enqueue(canister_id)
+            runtime_state.data.groups_requiring_upgrade.enqueue(canister_id)
         }
 
-        let canisters_queued_for_upgrade = runtime_state.data.canisters_requiring_upgrade.count_pending();
+        let canisters_queued_for_upgrade = runtime_state.data.groups_requiring_upgrade.count_pending();
         info!(%version, canisters_queued_for_upgrade, "Group canister wasm upgraded");
         Success
     }

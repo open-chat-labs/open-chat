@@ -1,7 +1,10 @@
 use crate::model::cached_hot_groups::CachedHotGroups;
+use crate::model::deleted_communities::DeletedCommunities;
 use crate::model::deleted_groups::DeletedGroups;
 use crate::model::local_group_index_map::LocalGroupIndex;
+use crate::model::private_communities::PrivateCommunities;
 use crate::model::private_groups::PrivateGroups;
+use crate::model::public_communities::PublicCommunities;
 use crate::model::public_groups::PublicGroups;
 use candid::{CandidType, Principal};
 use canister_state_macros::canister_state;
@@ -10,7 +13,8 @@ use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashSet;
 use types::{
-    CanisterId, CanisterWasm, ChatId, Cycles, FrozenGroupInfo, Milliseconds, TimestampMillis, Timestamped, UserId, Version,
+    CanisterId, CanisterWasm, ChatId, CommunityId, Cycles, FrozenGroupInfo, Milliseconds, TimestampMillis, Timestamped, UserId,
+    Version,
 };
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::env::Environment;
@@ -59,14 +63,22 @@ impl RuntimeState {
             wasm_version: WASM_VERSION.with(|v| **v.borrow()),
             git_commit_id: utils::git::git_commit_id().to_string(),
             total_cycles_spent_on_canisters: self.data.total_cycles_spent_on_canisters,
-            public_groups: self.data.public_groups.len() as u32,
+            public_groups: self.data.public_groups.len() as u64,
             private_groups: self.data.private_groups.len() as u64,
+            public_communities: self.data.public_communities.len() as u64,
+            private_communities: self.data.private_communities.len() as u64,
             active_public_groups: self.data.cached_metrics.active_public_groups,
             active_private_groups: self.data.cached_metrics.active_private_groups,
             deleted_public_groups: self.data.cached_metrics.deleted_public_groups,
             deleted_private_groups: self.data.cached_metrics.deleted_private_groups,
+            active_public_communities: self.data.cached_metrics.active_public_communities,
+            active_private_communities: self.data.cached_metrics.active_private_communities,
+            deleted_public_communities: self.data.cached_metrics.deleted_public_communities,
+            deleted_private_communities: self.data.cached_metrics.deleted_private_communities,
             group_deleted_notifications_pending: self.data.cached_metrics.group_deleted_notifications_pending,
+            community_deleted_notifications_pending: self.data.cached_metrics.community_deleted_notifications_pending,
             frozen_groups: self.data.cached_metrics.frozen_groups.clone(),
+            frozen_communities: self.data.cached_metrics.frozen_communities.clone(),
             canister_upgrades_completed: canister_upgrades_metrics.completed,
             canister_upgrades_failed: canister_upgrades_metrics.failed,
             canister_upgrades_pending: canister_upgrades_metrics.pending as u64,
@@ -89,8 +101,16 @@ struct Data {
     pub public_groups: PublicGroups,
     pub private_groups: PrivateGroups,
     pub deleted_groups: DeletedGroups,
+    #[serde(default)]
+    pub public_communities: PublicCommunities,
+    #[serde(default)]
+    pub private_communities: PrivateCommunities,
+    #[serde(default)]
+    pub deleted_communities: DeletedCommunities,
     pub governance_principals: HashSet<Principal>,
     pub group_canister_wasm: CanisterWasm,
+    #[serde(default)]
+    pub community_canister_wasm: CanisterWasm,
     pub local_group_index_canister_wasm_for_new_canisters: CanisterWasm,
     pub local_group_index_canister_wasm_for_upgrades: CanisterWasm,
     pub user_index_canister_id: CanisterId,
@@ -109,6 +129,7 @@ impl Data {
     fn new(
         governance_principals: Vec<Principal>,
         group_canister_wasm: CanisterWasm,
+        community_canister_wasm: CanisterWasm,
         local_group_index_canister_wasm: CanisterWasm,
         user_index_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
@@ -119,8 +140,12 @@ impl Data {
             public_groups: PublicGroups::default(),
             private_groups: PrivateGroups::default(),
             deleted_groups: DeletedGroups::default(),
+            public_communities: PublicCommunities::default(),
+            private_communities: PrivateCommunities::default(),
+            deleted_communities: DeletedCommunities::default(),
             governance_principals: governance_principals.into_iter().collect(),
             group_canister_wasm,
+            community_canister_wasm,
             local_group_index_canister_wasm_for_new_canisters: local_group_index_canister_wasm.clone(),
             local_group_index_canister_wasm_for_upgrades: local_group_index_canister_wasm,
             user_index_canister_id,
@@ -135,11 +160,18 @@ impl Data {
         }
     }
 
-    pub fn chat_frozen_info(&self, chat_id: &ChatId) -> Option<Option<&FrozenGroupInfo>> {
+    pub fn group_frozen_info(&self, chat_id: &ChatId) -> Option<Option<&FrozenGroupInfo>> {
         self.public_groups
             .get(chat_id)
             .map(|g| g.frozen_info())
             .or_else(|| self.private_groups.get(chat_id).map(|g| g.frozen_info()))
+    }
+
+    pub fn community_frozen_info(&self, community_id: &CommunityId) -> Option<Option<&FrozenGroupInfo>> {
+        self.public_communities
+            .get(community_id)
+            .map(|c| c.frozen_info())
+            .or_else(|| self.private_communities.get(community_id).map(|c| c.frozen_info()))
     }
 
     pub fn calculate_metrics(&mut self, now: TimestampMillis) {
@@ -187,8 +219,12 @@ impl Default for Data {
             public_groups: PublicGroups::default(),
             private_groups: PrivateGroups::default(),
             deleted_groups: DeletedGroups::default(),
+            public_communities: PublicCommunities::default(),
+            private_communities: PrivateCommunities::default(),
+            deleted_communities: DeletedCommunities::default(),
             governance_principals: HashSet::default(),
             group_canister_wasm: CanisterWasm::default(),
+            community_canister_wasm: CanisterWasm::default(),
             local_group_index_canister_wasm_for_new_canisters: CanisterWasm::default(),
             local_group_index_canister_wasm_for_upgrades: CanisterWasm::default(),
             user_index_canister_id: Principal::anonymous(),
@@ -213,14 +249,22 @@ pub struct Metrics {
     pub git_commit_id: String,
     pub governance_principals: Vec<Principal>,
     pub total_cycles_spent_on_canisters: Cycles,
-    pub public_groups: u32,
+    pub public_groups: u64,
     pub private_groups: u64,
+    pub public_communities: u64,
+    pub private_communities: u64,
     pub active_public_groups: u64,
     pub active_private_groups: u64,
     pub deleted_public_groups: u64,
     pub deleted_private_groups: u64,
+    pub active_public_communities: u64,
+    pub active_private_communities: u64,
+    pub deleted_public_communities: u64,
+    pub deleted_private_communities: u64,
     pub group_deleted_notifications_pending: u64,
+    pub community_deleted_notifications_pending: u64,
     pub frozen_groups: Vec<ChatId>,
+    pub frozen_communities: Vec<ChatId>,
     pub canister_upgrades_completed: u64,
     pub canister_upgrades_failed: Vec<FailedUpgradeCount>,
     pub canister_upgrades_pending: u64,
@@ -238,8 +282,14 @@ pub struct CachedMetrics {
     pub active_private_groups: u64,
     pub deleted_public_groups: u64,
     pub deleted_private_groups: u64,
+    pub active_public_communities: u64,
+    pub active_private_communities: u64,
+    pub deleted_public_communities: u64,
+    pub deleted_private_communities: u64,
     pub group_deleted_notifications_pending: u64,
+    pub community_deleted_notifications_pending: u64,
     pub frozen_groups: Vec<ChatId>,
+    pub frozen_communities: Vec<ChatId>,
 }
 
 #[derive(Serialize, Debug)]

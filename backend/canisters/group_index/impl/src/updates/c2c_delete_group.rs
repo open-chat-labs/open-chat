@@ -40,7 +40,7 @@ fn prepare(state: &RuntimeState) -> Result<PrepareResult, Response> {
     let caller = state.env.caller();
     let chat_id = ChatId::from(caller);
 
-    if let Some(local_group_index_canister_id) = state.data.local_index_map.get_index_canister(&chat_id) {
+    if let Some(local_group_index_canister_id) = state.data.local_index_map.get_index_canister_for_group(&chat_id) {
         Ok(PrepareResult {
             local_group_index_canister_id,
             chat_id,
