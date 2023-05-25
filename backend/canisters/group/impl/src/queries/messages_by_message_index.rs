@@ -1,5 +1,4 @@
 use crate::{read_state, RuntimeState};
-use chat_events::Reader;
 use group_canister::messages_by_message_index::{Response::*, *};
 use group_chat_core::MessagesResult;
 use ic_cdk_macros::query;
