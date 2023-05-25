@@ -19,10 +19,12 @@ fn leave_channel_impl(args: Args, state: &mut RuntimeState) -> Response {
         }
 
         if let Some(channel) = state.data.channels.get_mut(&args.channel_id) {
-            if let Some(channel_member) = channel.chat.members.remove(member.user_id) {
+            if let Some(channel_member) = channel.chat.members.get(&member.user_id) {
                 if channel_member.role.is_owner() && channel.chat.members.owner_count() == 1 {
                     return LastOwnerCannotLeave;
                 }
+
+                channel.chat.members.remove(member.user_id);
 
                 channel.chat.events.push_main_event(
                     ChatEventInternal::ParticipantLeft(Box::new(MemberLeft { user_id: member.user_id })),
