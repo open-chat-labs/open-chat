@@ -121,6 +121,8 @@ export type LandingPageRoute =
     | GuidelinesRoute
     | DiamondRoute;
 
+export type RouteType = RouteParams["kind"];
+
 export type RouteParams =
     | LandingPageRoute
     | HomeRoute

@@ -1,6 +1,6 @@
 // https://stackoverflow.com/questions/10687099/how-to-test-if-a-url-string-is-absolute-or-relative
 
-import type { RouteParams } from "routes";
+import type { RouteParams, RouteType } from "routes";
 
 const regex = new RegExp("^(?:[a-z]+:)?//", "i");
 
@@ -34,8 +34,8 @@ export function removeQueryStringParam(name: string): string {
     return [...qs.keys()].length > 0 ? `${path}?${qs}` : path;
 }
 
-const nomenuRoutes: RouteParams["kind"][] = ["miami_route"];
-const scrollingRoutes: RouteParams["kind"][] = [
+const nomenuRoutes: RouteType[] = ["miami_route"];
+const scrollingRoutes: RouteType[] = [
     "features_route",
     "roadmap_route",
     "whitepaper_route",
@@ -46,7 +46,7 @@ const scrollingRoutes: RouteParams["kind"][] = [
     "faq_route",
     "diamond_route",
 ];
-const landingPageRoutes: RouteParams["kind"][] = ["home_landing_route", ...scrollingRoutes];
+const landingPageRoutes: RouteType[] = ["home_landing_route", ...scrollingRoutes];
 
 export function isLandingPageRoute(route: RouteParams): boolean {
     return landingPageRoutes.includes(route.kind);
