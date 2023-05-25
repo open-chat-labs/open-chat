@@ -96,7 +96,7 @@
         dispatch("searchEntered", "");
     }
 
-    function chatSelected(ev: CustomEvent<ChatSummary>): void {
+    function chatSelected(ev: CustomEvent<ChatSummaryType>): void {
         chatScrollTop = chatListElement.scrollTop;
         const url = `/${chatTypeToPath(ev.detail.kind)}/${ev.detail.chatId}`;
         page(url);
