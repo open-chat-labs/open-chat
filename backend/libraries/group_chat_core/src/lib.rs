@@ -535,10 +535,8 @@ impl GroupChatCore {
 
             self.members.remove(user_id);
 
-            let event = MemberLeft { user_id };
-
             self.events
-                .push_main_event(ChatEventInternal::ParticipantLeft(Box::new(event)), 0, now);
+                .push_main_event(ChatEventInternal::ParticipantLeft(Box::new(MemberLeft { user_id })), 0, now);
 
             Success
         } else {
