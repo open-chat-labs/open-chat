@@ -26,6 +26,7 @@ pub mod delete_group;
 pub mod delete_messages;
 pub mod edit_message;
 pub mod init_user_principal_migration;
+pub mod leave_community;
 pub mod leave_group;
 pub mod mark_read_v2;
 pub mod migrate_user_principal;
