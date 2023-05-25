@@ -7,9 +7,9 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use types::{
     Avatar, ContentValidationError, CryptoTransaction, EventIndex, EventWrapper, GroupGate, GroupPermissions,
-    GroupReplyContext, GroupRole, GroupRules, GroupSubtype, InvalidPollReason, MemberLeft, MentionInternal, Message,
-    MessageContentInitial, MessageId, MessageIndex, MessagePinned, MessageUnpinned, Milliseconds, PushEventResult, Reaction,
-    RoleChanged, TimestampMillis, Timestamped, User, UserId,
+    GroupReplyContext, GroupRole, GroupRules, GroupSubtype, InvalidPollReason, MemberLeft, MembersRemoved, MentionInternal,
+    Message, MessageContentInitial, MessageId, MessageIndex, MessagePinned, MessageUnpinned, Milliseconds, PushEventResult,
+    Reaction, RoleChanged, TimestampMillis, Timestamped, User, UserId, UsersBlocked,
 };
 
 #[derive(Serialize, Deserialize)]
@@ -544,6 +544,66 @@ impl GroupChatCore {
         }
     }
 
+    pub fn remove_member(
+        &mut self,
+        user_id: UserId,
+        target_user_id: UserId,
+        block: bool,
+        now: TimestampMillis,
+    ) -> RemoveMemberResult {
+        use RemoveMemberResult::*;
+
+        if user_id == target_user_id {
+            return CannotRemoveSelf;
+        }
+
+        if let Some(member) = self.members.get(&user_id) {
+            if member.suspended.value {
+                return UserSuspended;
+            }
+
+            if let Some(target_member) = self.members.get(&target_user_id) {
+                if member
+                    .role
+                    .can_remove_members_with_role(target_member.role, &self.permissions)
+                {
+                    // Remove the user from the group
+                    self.members.remove(target_user_id);
+
+                    if block {
+                        // Also block the user
+                        self.members.block(target_user_id);
+                    }
+
+                    // Push relevant event
+                    let event = if block {
+                        let event = UsersBlocked {
+                            user_ids: vec![target_user_id],
+                            blocked_by: user_id,
+                        };
+
+                        ChatEventInternal::UsersBlocked(Box::new(event))
+                    } else {
+                        let event = MembersRemoved {
+                            user_ids: vec![target_user_id],
+                            removed_by: user_id,
+                        };
+                        ChatEventInternal::ParticipantsRemoved(Box::new(event))
+                    };
+                    self.events.push_main_event(event, 0, now);
+
+                    Success
+                } else {
+                    NotAuthorized
+                }
+            } else {
+                TargetUserNotInGroup
+            }
+        } else {
+            UserNotInGroup
+        }
+    }
+
     fn get_user_being_replied_to(
         &self,
         replies_to: &GroupReplyContext,
@@ -627,4 +687,13 @@ pub enum LeaveResult {
     UserSuspended,
     LastOwnerCannotLeave,
     UserNotInGroup,
+}
+
+pub enum RemoveMemberResult {
+    Success,
+    UserSuspended,
+    UserNotInGroup,
+    TargetUserNotInGroup,
+    NotAuthorized,
+    CannotRemoveSelf,
 }

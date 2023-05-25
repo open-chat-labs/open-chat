@@ -4327,6 +4327,8 @@ dependencies = [
  "canister_state_macros",
  "canister_timer_jobs",
  "canister_tracing_macros",
+ "community_canister",
+ "community_canister_c2c_client",
  "futures",
  "group_canister",
  "group_canister_c2c_client",

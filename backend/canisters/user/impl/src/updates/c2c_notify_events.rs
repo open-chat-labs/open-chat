@@ -43,10 +43,12 @@ fn process_event(event: Event, runtime_state: &mut RuntimeState) {
         }
         Event::UserJoinedGroup(ev) => {
             let now = runtime_state.env.now();
-
             runtime_state.data.group_chats.join(ev.chat_id, ev.latest_message_index, now);
-
             runtime_state.data.hot_group_exclusions.remove(&ev.chat_id, now);
+        }
+        Event::UserJoinedCommunity(ev) => {
+            let now = runtime_state.env.now();
+            runtime_state.data.communities.join(ev.community_id, now);
         }
         Event::DiamondMembershipPaymentReceived(ev) => {
             runtime_state.data.diamond_membership_expires_at = Some(ev.expires_at);

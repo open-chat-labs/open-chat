@@ -14,17 +14,20 @@ fn c2c_leave_group(_args: Args) -> Response {
     mutate_state(c2c_leave_group_impl)
 }
 
-fn c2c_leave_group_impl(runtime_state: &mut RuntimeState) -> Response {
-    if runtime_state.data.is_frozen() {
+fn c2c_leave_group_impl(state: &mut RuntimeState) -> Response {
+    if state.data.is_frozen() {
         return ChatFrozen;
     }
 
-    let caller = runtime_state.env.caller().into();
-    let now = runtime_state.env.now();
+    let caller = state.env.caller().into();
+    let now = state.env.now();
 
-    match runtime_state.data.chat.leave(caller, now) {
+    match state.data.chat.leave(caller, now) {
         LeaveResult::Success => {
-            handle_activity_notification(runtime_state);
+            state.data.remove_principal(caller);
+
+            handle_activity_notification(state);
+
             Success(SuccessResult {})
         }
         LeaveResult::UserSuspended => UserSuspended,
