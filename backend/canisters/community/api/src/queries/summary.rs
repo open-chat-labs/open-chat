@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{CommunitySummary, Empty};
+use types::{CommunityCanisterCommunitySummary, Empty};
 
 pub type Args = Empty;
 
@@ -14,5 +14,5 @@ pub enum Response {
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct SuccessResult {
-    pub summary: CommunitySummary,
+    pub summary: CommunityCanisterCommunitySummary,
 }

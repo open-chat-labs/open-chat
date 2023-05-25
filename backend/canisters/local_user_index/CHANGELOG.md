@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Integrate Communities ([#3666](https://github.com/open-ic/open-chat/pull/3666))
+
 ### Removed
 
 - Remove out of date welcome message ([#3618](https://github.com/open-ic/open-chat/pull/3618))

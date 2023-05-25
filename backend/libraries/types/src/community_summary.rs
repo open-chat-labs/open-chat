@@ -3,7 +3,7 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
-pub struct CommunitySummary {
+pub struct CommunityCanisterCommunitySummary {
     pub community_id: CommunityId,
     pub name: String,
     pub description: String,

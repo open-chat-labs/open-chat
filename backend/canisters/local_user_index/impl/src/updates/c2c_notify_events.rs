@@ -9,7 +9,7 @@ use local_user_index_canister::Event;
 use tracing::info;
 use user_canister::{
     DiamondMembershipPaymentReceived, Event as UserEvent, PhoneNumberConfirmed, ReferredUserRegistered, StorageUpgraded,
-    UserJoinedGroup, UserSuspended, UsernameChanged,
+    UserJoinedCommunity, UserJoinedGroup, UserSuspended, UsernameChanged,
 };
 
 #[update_msgpack(guard = "caller_is_user_index_canister")]
@@ -105,6 +105,14 @@ fn handle_event(event: Event, runtime_state: &mut RuntimeState) {
                 UserEvent::UserJoinedGroup(Box::new(UserJoinedGroup {
                     chat_id: ev.chat_id,
                     latest_message_index: ev.latest_message_index,
+                })),
+            );
+        }
+        Event::UserJoinedCommunity(ev) => {
+            runtime_state.push_event_to_user(
+                ev.user_id,
+                UserEvent::UserJoinedCommunity(Box::new(UserJoinedCommunity {
+                    community_id: ev.community_id,
                 })),
             );
         }
