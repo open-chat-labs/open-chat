@@ -6,11 +6,15 @@ use group_members::{ChangeRoleResult, GroupMembers};
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use types::{
-    Avatar, ContentValidationError, CryptoTransaction, EventIndex, EventWrapper, EventsResponse, GroupGate, GroupPermissions,
-    GroupReplyContext, GroupRole, GroupRules, GroupSubtype, InvalidPollReason, MemberLeft, MembersRemoved, MentionInternal,
-    Message, MessageContentInitial, MessageId, MessageIndex, MessagePinned, MessageUnpinned, Milliseconds, PushEventResult,
+    Avatar, AvatarChanged, ContentValidationError, CryptoTransaction, EventIndex, EventWrapper, EventsResponse,
+    FieldTooLongResult, FieldTooShortResult, GroupDescriptionChanged, GroupGate, GroupGateUpdated, GroupNameChanged,
+    GroupPermissionRole, GroupPermissions, GroupReplyContext, GroupRole, GroupRules, GroupRulesChanged, GroupSubtype,
+    InvalidPollReason, MemberLeft, MembersRemoved, MentionInternal, Message, MessageContentInitial, MessageId, MessageIndex,
+    MessagePinned, MessageUnpinned, Milliseconds, OptionUpdate, OptionalGroupPermissions, PermissionsChanged, PushEventResult,
     Reaction, RoleChanged, TimestampMillis, Timestamped, User, UserId, UsersBlocked,
 };
+use utils::avatar_validation::validate_avatar;
+use utils::group_validation::{validate_description, validate_name, validate_rules, NameValidationError, RulesValidationError};
 
 #[derive(Serialize, Deserialize)]
 pub struct GroupChatCore {
@@ -715,6 +719,185 @@ impl GroupChatCore {
         }
     }
 
+    pub fn can_update(
+        &self,
+        user_id: &UserId,
+        name: &Option<String>,
+        description: &Option<String>,
+        rules: &Option<GroupRules>,
+        avatar: &OptionUpdate<Avatar>,
+        permissions: &Option<OptionalGroupPermissions>,
+    ) -> CanUpdateResult {
+        use CanUpdateResult::*;
+
+        let avatar_update = avatar.as_ref().expand();
+
+        if let Some(name) = name {
+            if let Err(error) = validate_name(name, self.is_public) {
+                return match error {
+                    NameValidationError::TooShort(s) => NameTooShort(s),
+                    NameValidationError::TooLong(l) => NameTooLong(l),
+                    NameValidationError::Reserved => NameReserved,
+                };
+            }
+        }
+
+        if let Some(description) = description {
+            if let Err(error) = validate_description(description) {
+                return DescriptionTooLong(error);
+            }
+        }
+
+        if let Some(rules) = rules {
+            if let Err(error) = validate_rules(rules.enabled, &rules.text) {
+                return match error {
+                    RulesValidationError::TooShort(s) => RulesTooShort(s),
+                    RulesValidationError::TooLong(l) => RulesTooLong(l),
+                };
+            }
+        }
+
+        if let Err(error) = avatar_update.map_or(Ok(()), validate_avatar) {
+            return AvatarTooBig(error);
+        }
+
+        if let Some(member) = self.members.get(user_id) {
+            if member.suspended.value {
+                return UserSuspended;
+            }
+
+            let group_permissions = &self.permissions;
+            if !member.role.can_update_group(group_permissions)
+                || (permissions.is_some() && !member.role.can_change_permissions(group_permissions))
+            {
+                NotAuthorized
+            } else {
+                Success
+            }
+        } else {
+            UserNotInGroup
+        }
+    }
+
+    pub fn do_update(
+        &mut self,
+        user_id: UserId,
+        name: Option<String>,
+        description: Option<String>,
+        rules: Option<GroupRules>,
+        avatar: OptionUpdate<Avatar>,
+        permissions: Option<OptionalGroupPermissions>,
+        gate: OptionUpdate<GroupGate>,
+        events_ttl: OptionUpdate<Milliseconds>,
+        now: TimestampMillis,
+    ) {
+        let events = &mut self.events;
+
+        if let Some(name) = name {
+            if self.name != name {
+                events.push_main_event(
+                    ChatEventInternal::GroupNameChanged(Box::new(GroupNameChanged {
+                        new_name: name.clone(),
+                        previous_name: self.name.clone(),
+                        changed_by: user_id,
+                    })),
+                    0,
+                    now,
+                );
+
+                self.name = name;
+            }
+        }
+
+        if let Some(description) = description {
+            if self.description != description {
+                events.push_main_event(
+                    ChatEventInternal::GroupDescriptionChanged(Box::new(GroupDescriptionChanged {
+                        new_description: description.clone(),
+                        previous_description: self.description.clone(),
+                        changed_by: user_id,
+                    })),
+                    0,
+                    now,
+                );
+
+                self.description = description;
+            }
+        }
+
+        if let Some(rules) = rules {
+            if self.rules.enabled != rules.enabled || self.rules.text != rules.text {
+                events.push_main_event(
+                    ChatEventInternal::GroupRulesChanged(Box::new(GroupRulesChanged {
+                        enabled: rules.enabled,
+                        prev_enabled: self.rules.enabled,
+                        changed_by: user_id,
+                    })),
+                    0,
+                    now,
+                );
+
+                self.rules = rules;
+            }
+        }
+
+        if let Some(avatar) = avatar.expand() {
+            let previous_avatar_id = Avatar::id(&self.avatar);
+            let new_avatar_id = Avatar::id(&avatar);
+
+            if new_avatar_id != previous_avatar_id {
+                events.push_main_event(
+                    ChatEventInternal::AvatarChanged(Box::new(AvatarChanged {
+                        new_avatar: new_avatar_id,
+                        previous_avatar: previous_avatar_id,
+                        changed_by: user_id,
+                    })),
+                    0,
+                    now,
+                );
+
+                self.avatar = avatar;
+            }
+        }
+
+        if let Some(permissions) = permissions {
+            let old_permissions = self.permissions.clone();
+            let new_permissions = GroupChatCore::merge_permissions(permissions, &old_permissions);
+            self.permissions = new_permissions.clone();
+
+            events.push_main_event(
+                ChatEventInternal::PermissionsChanged(Box::new(PermissionsChanged {
+                    old_permissions,
+                    new_permissions,
+                    changed_by: user_id,
+                })),
+                0,
+                now,
+            );
+        }
+
+        if let Some(new_events_ttl) = events_ttl.expand() {
+            if new_events_ttl != events.get_events_time_to_live().value {
+                events.set_events_time_to_live(user_id, new_events_ttl, now);
+            }
+        }
+
+        if let Some(gate) = gate.expand() {
+            if self.gate.value != gate {
+                self.gate = Timestamped::new(gate.clone(), now);
+
+                self.events.push_main_event(
+                    ChatEventInternal::GroupGateUpdated(Box::new(GroupGateUpdated {
+                        updated_by: user_id,
+                        new_gate: gate,
+                    })),
+                    0,
+                    now,
+                );
+            }
+        }
+    }
+
     fn events_reader(
         &self,
         user_id: Option<UserId>,
@@ -751,6 +934,24 @@ impl GroupChatCore {
         events_reader
             .message_internal(replies_to.event_index.into())
             .map(|message| message.sender)
+    }
+
+    fn merge_permissions(new: OptionalGroupPermissions, old: &GroupPermissions) -> GroupPermissions {
+        GroupPermissions {
+            change_permissions: new.change_permissions.unwrap_or(old.change_permissions),
+            change_roles: new.change_roles.unwrap_or(old.change_roles),
+            add_members: GroupPermissionRole::Owner,
+            remove_members: new.remove_members.unwrap_or(old.remove_members),
+            block_users: new.block_users.unwrap_or(old.block_users),
+            delete_messages: new.delete_messages.unwrap_or(old.delete_messages),
+            update_group: new.update_group.unwrap_or(old.update_group),
+            pin_messages: new.pin_messages.unwrap_or(old.pin_messages),
+            invite_users: new.invite_users.unwrap_or(old.invite_users),
+            create_polls: new.create_polls.unwrap_or(old.create_polls),
+            send_messages: new.send_messages.unwrap_or(old.send_messages),
+            react_to_messages: new.react_to_messages.unwrap_or(old.react_to_messages),
+            reply_in_thread: new.reply_in_thread.unwrap_or(old.reply_in_thread),
+        }
     }
 }
 
@@ -836,6 +1037,21 @@ pub enum RemoveMemberResult {
     TargetUserNotInGroup,
     NotAuthorized,
     CannotRemoveSelf,
+}
+
+pub enum CanUpdateResult {
+    Success,
+    UserSuspended,
+    UserNotInGroup,
+    NotAuthorized,
+    NameTooShort(FieldTooShortResult),
+    NameTooLong(FieldTooLongResult),
+    NameReserved,
+    DescriptionTooLong(FieldTooLongResult),
+    RulesTooShort(FieldTooShortResult),
+    RulesTooLong(FieldTooLongResult),
+    AvatarTooBig(FieldTooLongResult),
+    NameTaken,
 }
 
 enum EventsReaderResult<'r> {

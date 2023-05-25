@@ -7,7 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
-- Integrate Communities ([#3666](https://github.com/open-ic/open-chat/pull/3666))
+- Integrate Communities ([#3666](https://github.com/open-ic/open-chat/pull/3666)), ([#3669](https://github.com/open-ic/open-chat/pull/3669))
 
 ### Removed
 
