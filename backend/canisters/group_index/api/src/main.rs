@@ -10,6 +10,7 @@ fn main() {
     generate_candid_method!(group_index, unfreeze_group, update);
     generate_candid_method!(group_index, add_hot_group_exclusion, update);
     generate_candid_method!(group_index, remove_hot_group_exclusion, update);
+    generate_candid_method!(group_index, set_community_upgrade_concurrency, update);
     generate_candid_method!(group_index, set_group_upgrade_concurrency, update);
 
     candid::export_service!();
