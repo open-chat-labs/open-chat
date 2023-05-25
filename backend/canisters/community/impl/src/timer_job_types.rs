@@ -44,8 +44,10 @@ impl Job for HardDeleteMessageContentJob {
         mutate_state(|state| {
             let now = state.env.now();
 
-            if let Some(content) = state.data.channels.get_mut(&self.channel_id).and_then(|g| {
-                g.events
+            if let Some(content) = state.data.channels.get_mut(&self.channel_id).and_then(|channel| {
+                channel
+                    .chat
+                    .events
                     .remove_deleted_message_content(self.thread_root_message_index, self.message_id, now)
             }) {
                 let files_to_delete = content.blob_references();
@@ -77,6 +79,7 @@ impl Job for EndPollJob {
             let now = state.env.now();
             if let Some(channel) = state.data.channels.get_mut(&self.channel_id) {
                 channel
+                    .chat
                     .events
                     .end_poll(self.thread_root_message_index, self.message_index, now);
                 // handle_activity_notification(state);

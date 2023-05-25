@@ -28,7 +28,7 @@ fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> Response {
         let now = state.env.now();
 
         if let Some(channel) = state.data.channels.get_mut(&args.channel_id) {
-            match channel.add_reaction(
+            match channel.chat.add_reaction(
                 user_id,
                 args.thread_root_message_index,
                 args.message_id,
@@ -36,8 +36,8 @@ fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> Response {
                 now,
             ) {
                 AddRemoveReactionResult::Success => {
-                    if let Some(message) = should_push_notification(&args, user_id, channel, &state.data.members, now) {
-                        push_notification(args, user_id, channel.name.clone(), message, now, state);
+                    if let Some(message) = should_push_notification(&args, user_id, &channel.chat, &state.data.members, now) {
+                        push_notification(args, user_id, channel.chat.name.clone(), message, now, state);
                     }
                     Success
                 }

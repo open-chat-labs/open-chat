@@ -63,7 +63,7 @@ fn delete_messages_impl(user_id: UserId, args: Args, state: &mut RuntimeState) -
 
     let now = state.env.now();
     if let Some(channel) = state.data.channels.get_mut(&args.channel_id) {
-        match channel.delete_messages(
+        match channel.chat.delete_messages(
             user_id,
             args.thread_root_message_index,
             args.message_ids,

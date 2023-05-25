@@ -24,7 +24,10 @@ fn undelete_messages_impl(args: Args, state: &mut RuntimeState) -> Response {
 
         let now = state.env.now();
         if let Some(channel) = state.data.channels.get_mut(&args.channel_id) {
-            match channel.undelete_messages(member.user_id, args.thread_root_message_index, args.message_ids, now) {
+            match channel
+                .chat
+                .undelete_messages(member.user_id, args.thread_root_message_index, args.message_ids, now)
+            {
                 UndeleteMessagesResult::Success(messages) => {
                     if !messages.is_empty() {
                         let message_ids: HashSet<_> = messages.iter().map(|m| m.message_id).collect();
