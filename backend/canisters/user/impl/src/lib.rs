@@ -34,8 +34,7 @@ mod updates;
 
 pub const BASIC_GROUP_CREATION_LIMIT: u32 = 5;
 pub const PREMIUM_GROUP_CREATION_LIMIT: u32 = 40;
-pub const BASIC_COMMUNITY_CREATION_LIMIT: u32 = 1;
-pub const PREMIUM_COMMUNITY_CREATION_LIMIT: u32 = 10;
+pub const COMMUNITY_CREATION_LIMIT: u32 = 10;
 
 thread_local! {
     static WASM_VERSION: RefCell<Timestamped<Version>> = RefCell::default();

@@ -244,6 +244,74 @@ type DeleteGroupResponse =
         InternalError: text;
     };
 
+type CreateCommunityArgs =
+    record {
+        is_public: bool;
+        name: text;
+        description: text;
+        avatar: opt Avatar;
+        history_visible_to_new_joiners: bool;
+        permissions: opt CommunityPermissions;
+        rules: GroupRules;
+        gate: opt GroupGate
+    };
+
+type CreateCommunitySuccessResult =
+    record {
+        community_id: CommunityId;
+    };
+
+type CreateCommunityResponse =
+    variant {
+        Success: CreateCommunitySuccessResult;
+        NameTooShort: FieldTooShortResult;
+        NameTooLong: FieldTooLongResult;
+        NameReserved;
+        DescriptionTooLong: FieldTooLongResult;
+        AvatarTooBig: FieldTooLongResult;
+        MaxCommunitiesCreated: nat32;
+        NameTaken;
+        Throttled;
+        InternalError;
+        RulesTooLong: FieldTooLongResult;
+        RulesTooShort: FieldTooShortResult;
+        UserSuspended;
+        Unauthorized;
+    };
+
+type LeaveCommunityArgs =
+    record {
+        community_id: CommunityId;
+    };
+
+type LeaveCommunityResponse =
+    variant {
+        Success;
+        CommunityNotFound;
+        CommunityNotPublic;
+        InternalError: text;
+        UserNotInCommunity;
+        LastOwnerCannotLeave;
+        UserSuspended;
+        CommunityFrozen;
+    };
+
+type DeleteCommunityArgs =
+    record {
+        community_id: CommunityId;
+    };
+
+type DeleteCommunityResponse =
+    variant {
+        Success;
+        NotAuthorized;
+        UserSuspended;
+        CommunityFrozen;
+        InternalError: text;
+    };
+
+
+
 type SetAvatarArgs =
     record {
         avatar: opt Avatar;
@@ -691,6 +759,9 @@ service: {
     create_group: (CreateGroupArgs) -> (CreateGroupResponse);
     leave_group: (LeaveGroupArgs) -> (LeaveGroupResponse);
     delete_group: (DeleteGroupArgs) -> (DeleteGroupResponse);
+    create_community: (CreateCommunityArgs) -> (CreateCommunityResponse);
+    leave_community: (LeaveCommunityArgs) -> (LeaveCommunityResponse);
+    delete_community: (DeleteCommunityArgs) -> (DeleteCommunityResponse);
     set_avatar: (SetAvatarArgs) -> (SetAvatarResponse);
     mute_notifications: (MuteNotificationsArgs) -> (MuteNotificationsResponse);
     unmute_notifications: (UnmuteNotificationsArgs) -> (UnmuteNotificationsResponse);
