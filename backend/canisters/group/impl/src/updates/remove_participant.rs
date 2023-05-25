@@ -1,12 +1,12 @@
+use crate::activity_notifications::handle_activity_notification;
 use crate::{mutate_state, read_state, RuntimeState};
 use canister_tracing_macros::trace;
-use chat_events::ChatEventInternal;
 use fire_and_forget_handler::FireAndForgetHandler;
 use group_canister::remove_participant::{Response::*, *};
 use ic_cdk_macros::update;
 use local_user_index_canister_c2c_client::{lookup_user, LookupUserError};
 use msgpack::serialize_then_unwrap;
-use types::{CanisterId, MembersRemoved, UserId, UsersBlocked};
+use types::{CanisterId, UserId};
 use user_canister::c2c_remove_from_group;
 
 #[update]
@@ -32,7 +32,7 @@ async fn remove_participant_impl(user_id: UserId, block: bool) -> Response {
         Err(response) => return response,
     };
 
-    // If the user is an owner of the community then call the local_user_index
+    // If the user is an owner of the group then call the local_user_index
     // to check whether they are a "platform moderator" in which case this removal
     // is not authorized
     if prepare_result.is_user_an_owner {
@@ -43,10 +43,8 @@ async fn remove_participant_impl(user_id: UserId, block: bool) -> Response {
         }
     }
 
-    // Remove the user from the community
-    mutate_state(|state| commit(user_id, block, prepare_result.removed_by, state));
-
-    Success
+    // Remove the user from the group
+    mutate_state(|state| commit(user_id, block, prepare_result.removed_by, state))
 }
 
 struct PrepareResult {
@@ -94,41 +92,40 @@ fn prepare(user_id: UserId, state: &RuntimeState) -> Result<PrepareResult, Respo
     }
 }
 
-fn commit(user_id: UserId, block: bool, removed_by: UserId, state: &mut RuntimeState) {
-    // Remove the user from the group
-    state.remove_member(user_id).expect("user must be a member");
+fn commit(user_id: UserId, block: bool, removed_by: UserId, state: &mut RuntimeState) -> Response {
+    match state.data.chat.remove_member(removed_by, user_id, block, state.env.now()) {
+        group_chat_core::RemoveMemberResult::Success => {
+            // Remove the user's principal from the map
+            if let Some(principal) = state
+                .data
+                .principal_to_user_id_map
+                .iter()
+                .find(|(_, &u)| u == user_id)
+                .map(|(p, _)| *p)
+            {
+                state.data.principal_to_user_id_map.remove(&principal);
+            }
 
-    if block {
-        // Also block the user
-        state.data.chat.members.block(user_id);
+            handle_activity_notification(state);
+
+            // Fire-and-forget call to notify the user canister
+            remove_membership_from_user_canister(
+                user_id,
+                removed_by,
+                block,
+                state.data.chat.name.clone(),
+                state.data.chat.is_public,
+                &mut state.data.fire_and_forget_handler,
+            );
+
+            Success
+        }
+        group_chat_core::RemoveMemberResult::UserSuspended => UserSuspended,
+        group_chat_core::RemoveMemberResult::UserNotInGroup => CallerNotInGroup,
+        group_chat_core::RemoveMemberResult::TargetUserNotInGroup => UserNotInGroup,
+        group_chat_core::RemoveMemberResult::NotAuthorized => NotAuthorized,
+        group_chat_core::RemoveMemberResult::CannotRemoveSelf => CannotRemoveSelf,
     }
-
-    // Push relevant event
-    let event = if block {
-        let event = UsersBlocked {
-            user_ids: vec![user_id],
-            blocked_by: removed_by,
-        };
-
-        ChatEventInternal::UsersBlocked(Box::new(event))
-    } else {
-        let event = MembersRemoved {
-            user_ids: vec![user_id],
-            removed_by,
-        };
-        ChatEventInternal::ParticipantsRemoved(Box::new(event))
-    };
-    state.data.chat.events.push_main_event(event, 0, state.env.now());
-
-    // Fire-and-forget call to notify the user canister
-    remove_membership_from_user_canister(
-        user_id,
-        removed_by,
-        block,
-        state.data.chat.name.clone(),
-        state.data.chat.is_public,
-        &mut state.data.fire_and_forget_handler,
-    );
 }
 
 fn remove_membership_from_user_canister(

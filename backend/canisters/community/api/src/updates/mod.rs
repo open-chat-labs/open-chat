@@ -20,6 +20,7 @@ pub mod join_channel;
 pub mod leave_channel;
 pub mod make_private;
 pub mod remove_member;
+pub mod remove_member_from_channel;
 pub mod remove_reaction;
 pub mod reset_invite_code;
 pub mod send_message;

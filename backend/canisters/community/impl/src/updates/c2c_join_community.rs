@@ -86,8 +86,8 @@ fn c2c_join_community_impl(args: Args, state: &mut RuntimeState) -> Response {
                 now,
             );
 
-            // TODO: Optionally join the user to the group in the invitation
-            // TODO: Join the user to all default groups for the community
+            // TODO: Optionally join the user to the channel in the invitation
+            // TODO: Join the user to all default channels for the community
 
             let summary = state.summary(&member, now);
             Success(Box::new(summary))

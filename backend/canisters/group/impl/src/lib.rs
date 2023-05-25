@@ -155,20 +155,6 @@ impl RuntimeState {
         result
     }
 
-    pub fn remove_member(&mut self, user_id: UserId) -> Option<GroupMemberInternal> {
-        if let Some(principal) = self
-            .data
-            .principal_to_user_id_map
-            .iter()
-            .find(|(_, &u)| u == user_id)
-            .map(|(p, _)| *p)
-        {
-            self.data.principal_to_user_id_map.remove(&principal);
-        }
-
-        self.data.chat.members.remove(user_id)
-    }
-
     pub fn metrics(&self) -> Metrics {
         let group_chat_core = &self.data.chat;
         let chat_metrics = group_chat_core.events.metrics();
