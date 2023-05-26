@@ -301,14 +301,13 @@
             const faqMatch = txt.match(/^\/faq( *(.*))$/);
             if (faqMatch && faqMatch[2] !== undefined) {
                 if (allQuestions.includes(faqMatch[2] as Questions)) {
-                    const url = addQueryStringParam("faq", faqMatch[2]);
+                    const url = `/faq?q=${faqMatch[2]}`;
                     dispatch("sendMessage", [
                         `[🤔 FAQ: ${$_(`faq.${faqMatch[2]}_q`)}](${url})`,
                         [],
                     ]);
                 } else {
-                    const url = addQueryStringParam("faq", "");
-                    dispatch("sendMessage", [`[🤔 FAQs](${url})`, []]);
+                    dispatch("sendMessage", [`[🤔 FAQs](/faq)`, []]);
                 }
                 return true;
             }
