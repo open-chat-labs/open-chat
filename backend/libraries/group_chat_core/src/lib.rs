@@ -752,6 +752,29 @@ impl GroupChatCore {
         }
     }
 
+    pub fn update(
+        &mut self,
+        user_id: UserId,
+        name: Option<String>,
+        description: Option<String>,
+        rules: Option<GroupRules>,
+        avatar: OptionUpdate<Avatar>,
+        permissions: Option<OptionalGroupPermissions>,
+        gate: OptionUpdate<GroupGate>,
+        events_ttl: OptionUpdate<Milliseconds>,
+        now: TimestampMillis,
+    ) -> UpdateResult {
+        use UpdateResult::*;
+
+        let result = self.can_update(&user_id, &name, &description, &rules, &avatar, &permissions);
+
+        if matches!(result, Success) {
+            self.do_update(user_id, name, description, rules, avatar, permissions, gate, events_ttl, now);
+        }
+
+        result
+    }
+
     pub fn can_update(
         &self,
         user_id: &UserId,
@@ -760,8 +783,8 @@ impl GroupChatCore {
         rules: &Option<GroupRules>,
         avatar: &OptionUpdate<Avatar>,
         permissions: &Option<OptionalGroupPermissions>,
-    ) -> CanUpdateResult {
-        use CanUpdateResult::*;
+    ) -> UpdateResult {
+        use UpdateResult::*;
 
         let avatar_update = avatar.as_ref().expand();
 
@@ -1079,7 +1102,7 @@ pub enum RemoveMemberResult {
     CannotRemoveSelf,
 }
 
-pub enum CanUpdateResult {
+pub enum UpdateResult {
     Success,
     UserSuspended,
     UserNotInGroup,
