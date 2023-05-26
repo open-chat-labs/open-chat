@@ -101,9 +101,9 @@ fn change_role_impl(
             handle_activity_notification(state);
             Success
         }
-        ChangeRoleResult::CallerNotInGroup => CallerNotInGroup,
+        ChangeRoleResult::UserNotInGroup => CallerNotInGroup,
         ChangeRoleResult::NotAuthorized => NotAuthorized,
-        ChangeRoleResult::UserNotInGroup => UserNotInGroup,
+        ChangeRoleResult::TargetUserNotInGroup => UserNotInGroup,
         ChangeRoleResult::Unchanged => Success,
         ChangeRoleResult::Invalid => Invalid,
         ChangeRoleResult::UserSuspended => UserSuspended,
