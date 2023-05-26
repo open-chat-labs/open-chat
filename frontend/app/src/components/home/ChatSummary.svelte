@@ -201,6 +201,7 @@
         role="button"
         class="chat-summary"
         class:selected
+        tabindex="0"
         use:swipe
         on:swiping={swiping}
         on:leftswipe={leftSwipe}
@@ -254,6 +255,7 @@
                         values: { count: unreadMentions.toString() },
                     })}
                     class:rtl={$rtlStore}
+                    class:muted
                     class="notification mention">
                     @
                 </div>
@@ -265,6 +267,7 @@
                         values: { count: unreadMessages.toString() },
                     })}
                     class:rtl={$rtlStore}
+                    class:muted
                     class="notification">
                     {unreadMessages > 999 ? "999+" : unreadMessages}
                 </div>
@@ -525,6 +528,10 @@
             left: $sp3;
             margin-right: 2px;
             margin-left: 0;
+        }
+
+        &.muted {
+            background-color: var(--chatSummary-bg-selected);
         }
     }
 
