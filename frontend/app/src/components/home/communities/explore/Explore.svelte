@@ -8,13 +8,18 @@
     import Search from "../../..//Search.svelte";
     import { pathParams } from "../../../../routes";
     import { mobileWidth } from "../../../../stores/screenDimensions";
+    import Filters from "./Filters.svelte";
+    import Create from "./Create.svelte";
 
     let searchTerm = "";
     let searching = false;
+    let showCreateModal = false;
 
     $: selectedCommunityId =
         $pathParams.kind === "communities_route" ? $pathParams.communityId : undefined;
 </script>
+
+<Create bind:show={showCreateModal} />
 
 <div class="explore">
     <div class="header">
@@ -31,14 +36,13 @@
                         placeholder={$_("communities.search")} />
                 </div>
                 <div class="create">
-                    <Button>Create a community</Button>
+                    <Button on:click={() => (showCreateModal = true)} hollow
+                        >{$_("communities.create")}</Button>
                 </div>
             {/if}
         </div>
         <div class="subtitle-row">
-            <div class="tags">
-                <p>All, Gaming, Crypto, Metaverse, Sport, Music</p>
-            </div>
+            <Filters />
             {#if $mobileWidth}
                 <div class="search">
                     <Search

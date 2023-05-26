@@ -29,7 +29,7 @@ function createDummyCommunityChannel(id: string) {
     };
 }
 
-export const dummyCommunities = writable<Community[]>([
+const allCommunities: Community[] = [
     createDummyCommunity("1", "OpenChat community", "../assets/evil-robot.svg", 30515, 20, 5),
     createDummyCommunity("2", "SNS1 Idiots", "../assets/sns1_medium.png"),
     createDummyCommunity(
@@ -51,7 +51,11 @@ export const dummyCommunities = writable<Community[]>([
     createDummyCommunity("12"),
     createDummyCommunity("13"),
     createDummyCommunity("14"),
-]);
+];
+
+export const selectedCommunity = writable<Community>(allCommunities[0]);
+
+export const dummyCommunities = writable<Community[]>(allCommunities);
 
 export const dummyCommunityChannels = writable<{ name: string; description: string }[]>([
     createDummyCommunityChannel("1"),

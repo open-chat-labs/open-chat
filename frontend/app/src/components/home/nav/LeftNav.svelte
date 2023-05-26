@@ -8,8 +8,9 @@
     import Wallet from "svelte-material-icons/WalletOutline.svelte";
     import Hamburger from "svelte-material-icons/Menu.svelte";
     import ArrowRight from "svelte-material-icons/ArrowExpandRight.svelte";
-    import { AvatarSize, OpenChat } from "openchat-client";
+    import { AvatarSize, Community, OpenChat } from "openchat-client";
     import { mobileWidth } from "../../../stores/screenDimensions";
+    import CommunityMenu from "../communities/CommunityMenu.svelte";
     import { _ } from "svelte-i18n";
     import { pathParams } from "../../../routes";
     import page from "page";
@@ -18,7 +19,7 @@
     import LeftNavItem from "./LeftNavItem.svelte";
     import MainMenu from "./MainMenu.svelte";
     import { navOpen } from "../../../stores/layout";
-    import { dummyCommunities } from "../../../stores/community";
+    import { dummyCommunities, selectedCommunity } from "../../../stores/community";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -28,7 +29,6 @@
     $: avatarSize = $mobileWidth ? AvatarSize.Small : AvatarSize.Default;
     $: myCommunities = $dummyCommunities.slice(0, 8);
 
-    let selectedIndex = 0;
     let iconSize = $mobileWidth ? "1.2em" : "1.4em"; // in this case we don't want to use the standard store
 
     function toggleNav() {
@@ -56,8 +56,8 @@
         console.log("favourite chats");
     }
 
-    function selectCommunity(idx: number) {
-        selectedIndex = idx;
+    function selectCommunity(community: Community) {
+        selectedCommunity.set(community);
         page("/"); // TODO - we will need a new route here to represent the selected community
     }
 
@@ -119,11 +119,17 @@
     <div class="middle">
         {#each myCommunities as community, i}
             <LeftNavItem
-                selected={i === selectedIndex}
+                selected={community === $selectedCommunity}
                 unread={community.unreadCount}
                 label={community.name}
-                on:click={() => selectCommunity(i)}>
-                <Avatar selected={i === selectedIndex} url={community.blobUrl} size={avatarSize} />
+                on:click={() => selectCommunity(community)}>
+                <Avatar
+                    selected={community === $selectedCommunity}
+                    url={community.blobUrl}
+                    size={avatarSize} />
+                <div slot="menu">
+                    <CommunityMenu {community} />
+                </div>
             </LeftNavItem>
         {/each}
     </div>

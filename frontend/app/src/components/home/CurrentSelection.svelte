@@ -1,45 +1,28 @@
 <script lang="ts">
     import Avatar from "../Avatar.svelte";
-    import MenuIcon from "../MenuIcon.svelte";
-    import Kebab from "svelte-material-icons/DotsVertical.svelte";
-    import HoverIcon from "../HoverIcon.svelte";
     import { _ } from "svelte-i18n";
     import { rtlStore } from "../../stores/rtl";
-    import { iconSize } from "../../stores/iconSize";
-    import { AvatarSize } from "openchat-client";
+    import { AvatarSize, OpenChat } from "openchat-client";
     import SectionHeader from "../SectionHeader.svelte";
-    import CurrentUserMenu from "./CurrentUserMenu.svelte";
+    import CommunityMenu from "./communities/CommunityMenu.svelte";
+    import { selectedCommunity } from "../../stores/community";
+    import { getContext } from "svelte";
+
+    const client = getContext<OpenChat>("client");
 </script>
 
 <SectionHeader border={false}>
     <div class="current-selection" class:rtl={$rtlStore}>
         <div class="avatar">
             <Avatar
-                url={"../assets/unknownUserAvatar.svg"}
+                url={client.groupAvatarUrl($selectedCommunity)}
                 userId={undefined}
                 size={AvatarSize.Default} />
         </div>
-        <h4 class="name">{"OpenChat community"}</h4>
+        <h4 class="name">{$selectedCommunity.name}</h4>
     </div>
     <span class="menu">
-        <MenuIcon position={"bottom"} align={"end"}>
-            <span slot="icon">
-                <HoverIcon>
-                    <Kebab size={$iconSize} color={"var(--icon-txt)"} />
-                </HoverIcon>
-            </span>
-            <span slot="menu">
-                <CurrentUserMenu
-                    on:halloffame
-                    on:logout
-                    on:newGroup
-                    on:profile
-                    on:showHomePage
-                    on:upgrade
-                    on:wallet
-                    on:whatsHot />
-            </span>
-        </MenuIcon>
+        <CommunityMenu community={$selectedCommunity} />
     </span>
 </SectionHeader>
 

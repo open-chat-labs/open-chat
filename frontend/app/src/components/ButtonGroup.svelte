@@ -15,6 +15,7 @@
     .button-group {
         display: flex;
         gap: $sp3;
+        flex-wrap: wrap;
 
         &.start {
             justify-content: flex-start;

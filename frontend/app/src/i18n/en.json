@@ -837,9 +837,23 @@
     "communities": {
         "explore": "Explore communities",
         "search": "Search communities",
+        "create": "Create a community",
+        "edit": "Edit community",
         "searchGroups": "Search community groups",
         "hideLeftNav": "Collapse communities menu",
         "mainMenu": "Main menu",
-        "autoExpand": "Auto-expand communities menu"
+        "autoExpand": "Auto-expand communities menu",
+        "back": "Back",
+        "leave": "Leave community",
+        "leaveMessage": "Do you really want to leave this community?",
+        "tags": {
+            "all": "All",
+            "gaming": "Gaming",
+            "crypto": "Crypto",
+            "metaverse": "Metaverse",
+            "sport": "Sport",
+            "music": "Music",
+            "photography": "Photography"
+        }
     }
 }

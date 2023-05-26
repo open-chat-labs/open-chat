@@ -1,7 +1,9 @@
 <script lang="ts">
     import type { Community } from "openchat-client";
+    import Avatar from "../../../Avatar.svelte";
     import ButtonGroup from "../../../ButtonGroup.svelte";
     import Button from "../../../Button.svelte";
+    import { AvatarSize } from "openchat-client";
 
     export let community: Community;
     export let selected: boolean;
@@ -10,7 +12,9 @@
 
 <div class:selected class:header on:click class="card">
     <div class="banner">
-        <div class="avatar" />
+        <div class="avatar">
+            <Avatar url={"../assets/evil-robot.svg"} userId={undefined} size={AvatarSize.Default} />
+        </div>
     </div>
     <div class="content">
         <div class="name">{community.name}</div>
@@ -58,8 +62,6 @@
                 position: absolute;
                 bottom: toRem(-15);
                 left: $sp3;
-                border-radius: 50%;
-                background-color: orange;
             }
         }
 
