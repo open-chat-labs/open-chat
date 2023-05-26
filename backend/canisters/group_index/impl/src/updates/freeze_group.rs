@@ -110,12 +110,12 @@ struct PrepareResult {
     is_frozen: bool,
 }
 
-fn prepare(chat_id: &ChatId, runtime_state: &RuntimeState) -> Result<PrepareResult, ()> {
-    if let Some(frozen_info) = runtime_state.data.group_frozen_info(chat_id) {
+fn prepare(chat_id: &ChatId, state: &RuntimeState) -> Result<PrepareResult, ()> {
+    if let Some(frozen_info) = state.data.group_frozen_info(chat_id) {
         Ok(PrepareResult {
-            caller: runtime_state.env.caller(),
+            caller: state.env.caller(),
             is_frozen: frozen_info.is_some(),
-            user_index_canister_id: runtime_state.data.user_index_canister_id,
+            user_index_canister_id: state.data.user_index_canister_id,
         })
     } else {
         // ChatNotFound
@@ -123,10 +123,10 @@ fn prepare(chat_id: &ChatId, runtime_state: &RuntimeState) -> Result<PrepareResu
     }
 }
 
-fn commit(chat_id: &ChatId, info: Option<FrozenGroupInfo>, runtime_state: &mut RuntimeState) {
-    if let Some(chat) = runtime_state.data.public_groups.get_mut(chat_id) {
+fn commit(chat_id: &ChatId, info: Option<FrozenGroupInfo>, state: &mut RuntimeState) {
+    if let Some(chat) = state.data.public_groups.get_mut(chat_id) {
         chat.set_frozen(info);
-    } else if let Some(chat) = runtime_state.data.private_groups.get_mut(chat_id) {
+    } else if let Some(chat) = state.data.private_groups.get_mut(chat_id) {
         chat.set_frozen(info);
     } else {
         unreachable!();

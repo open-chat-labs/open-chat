@@ -18,23 +18,21 @@ fn c2c_notify_events(args: Args) -> Response {
     mutate_state(|state| c2c_notify_events_impl(args, state))
 }
 
-fn c2c_notify_events_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
+fn c2c_notify_events_impl(args: Args, state: &mut RuntimeState) -> Response {
     for event in args.events {
-        handle_event(event, runtime_state);
+        handle_event(event, state);
     }
 
     Success
 }
 
-fn handle_event(event: Event, runtime_state: &mut RuntimeState) {
-    let caller: CanisterId = runtime_state.env.caller();
+fn handle_event(event: Event, state: &mut RuntimeState) {
+    let caller: CanisterId = state.env.caller();
 
     match event {
-        Event::UserRegistered(ev) => {
-            process_new_user(ev.principal, ev.username, ev.user_id, ev.referred_by, caller, runtime_state)
-        }
+        Event::UserRegistered(ev) => process_new_user(ev.principal, ev.username, ev.user_id, ev.referred_by, caller, state),
         Event::UserJoinedGroup(ev) => {
-            runtime_state.push_event_to_local_user_index(
+            state.push_event_to_local_user_index(
                 ev.user_id,
                 LocalUserIndexEvent::UserJoinedGroup(UserJoinedGroup {
                     user_id: ev.user_id,
@@ -45,7 +43,7 @@ fn handle_event(event: Event, runtime_state: &mut RuntimeState) {
             );
         }
         Event::UserJoinedCommunity(ev) => {
-            runtime_state.push_event_to_local_user_index(
+            state.push_event_to_local_user_index(
                 ev.user_id,
                 LocalUserIndexEvent::UserJoinedCommunity(UserJoinedCommunity {
                     user_id: ev.user_id,
@@ -54,8 +52,8 @@ fn handle_event(event: Event, runtime_state: &mut RuntimeState) {
             );
         }
         Event::JoinUserToGroup(ev) => {
-            let now = runtime_state.env.now();
-            runtime_state.data.timer_jobs.enqueue_job(
+            let now = state.env.now();
+            state.data.timer_jobs.enqueue_job(
                 TimerJob::JoinUserToGroup(JoinUserToGroup {
                     user_id: ev.user_id,
                     group_id: ev.chat_id,
@@ -66,7 +64,7 @@ fn handle_event(event: Event, runtime_state: &mut RuntimeState) {
             );
         }
         Event::OpenChatBotMessage(ev) => {
-            runtime_state.push_event_to_local_user_index(
+            state.push_event_to_local_user_index(
                 ev.user_id,
                 LocalUserIndexEvent::OpenChatBotMessage(OpenChatBotMessage {
                     user_id: ev.user_id,
@@ -83,12 +81,12 @@ fn process_new_user(
     user_id: UserId,
     referred_by: Option<UserId>,
     local_user_index_canister_id: CanisterId,
-    runtime_state: &mut RuntimeState,
+    state: &mut RuntimeState,
 ) {
-    let now = runtime_state.env.now();
+    let now = state.env.now();
 
     let mut original_username = None;
-    let username = match runtime_state.data.users.ensure_unique_username(&username) {
+    let username = match state.data.users.ensure_unique_username(&username) {
         Ok(_) => username,
         Err(new_username) => {
             original_username = Some(username);
@@ -96,17 +94,14 @@ fn process_new_user(
         }
     };
 
-    runtime_state
+    state
         .data
         .users
         .register(caller, user_id, username.clone(), now, referred_by, false);
 
-    runtime_state
-        .data
-        .local_index_map
-        .add_user(local_user_index_canister_id, user_id);
+    state.data.local_index_map.add_user(local_user_index_canister_id, user_id);
 
-    runtime_state.push_event_to_all_local_user_indexes(
+    state.push_event_to_all_local_user_indexes(
         LocalUserIndexEvent::UserRegistered(UserRegistered {
             user_id,
             user_principal: caller,
@@ -117,14 +112,14 @@ fn process_new_user(
         Some(local_user_index_canister_id),
     );
     if let Some(original_username) = original_username {
-        runtime_state.push_event_to_local_user_index(
+        state.push_event_to_local_user_index(
             user_id,
             LocalUserIndexEvent::UsernameChanged(UsernameChanged {
                 user_id,
                 username: username.clone(),
             }),
         );
-        runtime_state.push_event_to_local_user_index(
+        state.push_event_to_local_user_index(
             user_id,
             LocalUserIndexEvent::OpenChatBotMessage(OpenChatBotMessage {
                 user_id,
@@ -137,14 +132,14 @@ You can change your username at any time by clicking \"Profile settings\" from t
         );
     }
 
-    runtime_state.data.storage_index_user_sync_queue.push(UserConfig {
+    state.data.storage_index_user_sync_queue.push(UserConfig {
         user_id: caller,
         byte_limit: 100 * ONE_MB,
     });
 
-    crate::jobs::sync_users_to_storage_index::start_job_if_required(runtime_state);
+    crate::jobs::sync_users_to_storage_index::start_job_if_required(state);
 
     if let Some(referrer) = referred_by {
-        runtime_state.data.user_referral_leaderboards.add_referral(referrer, now);
+        state.data.user_referral_leaderboards.add_referral(referrer, now);
     }
 }

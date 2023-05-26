@@ -30,12 +30,12 @@ async fn push_subscription(args: Args) -> Response {
     Success
 }
 
-fn lookup_user_locally(runtime_state: &RuntimeState) -> LookupResult {
-    let caller = runtime_state.env.caller();
-    if let Some(user_id) = runtime_state.data.principal_to_user_id.get(&caller).copied() {
+fn lookup_user_locally(state: &RuntimeState) -> LookupResult {
+    let caller = state.env.caller();
+    if let Some(user_id) = state.data.principal_to_user_id.get(&caller).copied() {
         LookupResult::Found(user_id)
     } else {
-        LookupResult::NotFound((caller, runtime_state.data.user_index_canister_id))
+        LookupResult::NotFound((caller, state.data.user_index_canister_id))
     }
 }
 
@@ -44,6 +44,6 @@ enum LookupResult {
     NotFound((Principal, CanisterId)),
 }
 
-fn add_user_locally(principal: Principal, user_id: UserId, runtime_state: &mut RuntimeState) {
-    runtime_state.data.principal_to_user_id.insert(principal, user_id);
+fn add_user_locally(principal: Principal, user_id: UserId, state: &mut RuntimeState) {
+    state.data.principal_to_user_id.insert(principal, user_id);
 }

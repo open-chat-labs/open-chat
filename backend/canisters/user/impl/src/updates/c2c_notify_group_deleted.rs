@@ -12,12 +12,12 @@ fn c2c_notify_group_deleted(args: Args) -> Response {
     mutate_state(|state| c2c_notify_group_deleted_impl(args, state))
 }
 
-fn c2c_notify_group_deleted_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    let now = runtime_state.env.now();
+fn c2c_notify_group_deleted_impl(args: Args, state: &mut RuntimeState) -> Response {
+    let now = state.env.now();
     let chat_id = args.deleted_group.id;
-    runtime_state.data.group_chats.remove(chat_id, now);
+    state.data.group_chats.remove(chat_id, now);
 
-    if let Some(cached_groups) = &mut runtime_state.data.cached_group_summaries {
+    if let Some(cached_groups) = &mut state.data.cached_group_summaries {
         cached_groups.remove_group(&chat_id);
     }
 
@@ -25,7 +25,7 @@ fn c2c_notify_group_deleted_impl(args: Args, runtime_state: &mut RuntimeState) -
         args.deleted_group.deleted_by,
         args.deleted_group.group_name,
         args.deleted_group.public,
-        runtime_state,
+        state,
     );
 
     Success

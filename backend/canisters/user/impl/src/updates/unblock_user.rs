@@ -12,12 +12,12 @@ fn unblock_user(args: Args) -> Response {
     mutate_state(|state| unblock_user_impl(args, state))
 }
 
-fn unblock_user_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    if runtime_state.data.suspended.value {
+fn unblock_user_impl(args: Args, state: &mut RuntimeState) -> Response {
+    if state.data.suspended.value {
         return UserSuspended;
     }
 
-    let now = runtime_state.env.now();
-    runtime_state.data.unblock_user(&args.user_id, now);
+    let now = state.env.now();
+    state.data.unblock_user(&args.user_id, now);
     Success
 }

@@ -11,12 +11,12 @@ fn search(args: Args) -> Response {
     read_state(|state| search_impl(args, state))
 }
 
-fn search_impl(args: Args, runtime_state: &RuntimeState) -> Response {
-    runtime_state.trap_if_caller_not_openchat_user();
+fn search_impl(args: Args, state: &RuntimeState) -> Response {
+    state.trap_if_caller_not_openchat_user();
 
-    let caller = runtime_state.env.caller();
-    let now = runtime_state.env.now();
-    let users = &runtime_state.data.users;
+    let caller = state.env.caller();
+    let now = state.env.now();
+    let users = &state.data.users;
 
     // Remove spaces since usernames can't have spaces
     let mut search_term = args.search_term.replace(' ', "");
@@ -97,14 +97,14 @@ mod tests {
 
     #[test]
     fn search_results_constrained_by_max_results() {
-        let runtime_state = setup_runtime_state();
+        let state = setup_runtime_state();
 
         let response = search_impl(
             Args {
                 max_results: 2,
                 search_term: "ma".to_string(),
             },
-            &runtime_state,
+            &state,
         );
 
         let Response::Success(results) = response;
@@ -113,14 +113,14 @@ mod tests {
 
     #[test]
     fn case_insensitive_matches() {
-        let runtime_state = setup_runtime_state();
+        let state = setup_runtime_state();
 
         let response = search_impl(
             Args {
                 max_results: 10,
                 search_term: "MA".to_string(),
             },
-            &runtime_state,
+            &state,
         );
 
         let Response::Success(results) = response;
@@ -129,14 +129,14 @@ mod tests {
 
     #[test]
     fn results_ordered_by_all_criteria() {
-        let runtime_state = setup_runtime_state();
+        let state = setup_runtime_state();
 
         let response = search_impl(
             Args {
                 max_results: 10,
                 search_term: "Ma".to_string(),
             },
-            &runtime_state,
+            &state,
         );
 
         let Response::Success(results) = response;
@@ -151,14 +151,14 @@ mod tests {
 
     #[test]
     fn search_with_zero_length_term_matches_all_users() {
-        let runtime_state = setup_runtime_state();
+        let state = setup_runtime_state();
 
         let response = search_impl(
             Args {
                 max_results: 10,
                 search_term: "".to_string(),
             },
-            &runtime_state,
+            &state,
         );
 
         let Response::Success(results) = response;
@@ -167,14 +167,14 @@ mod tests {
 
     #[test]
     fn all_fields_set_correctly() {
-        let runtime_state = setup_runtime_state();
+        let state = setup_runtime_state();
 
         let response = search_impl(
             Args {
                 max_results: 10,
                 search_term: "hamish".to_string(),
             },
-            &runtime_state,
+            &state,
         );
 
         let Response::Success(results) = response;

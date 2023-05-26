@@ -8,12 +8,12 @@ fn invite_code(_: Args) -> Response {
     read_state(invite_code_impl)
 }
 
-fn invite_code_impl(runtime_state: &RuntimeState) -> Response {
-    let caller = runtime_state.env.caller();
-    if let Some(member) = runtime_state.data.get_member(caller) {
-        if member.role.can_invite_users(&runtime_state.data.chat.permissions) {
+fn invite_code_impl(state: &RuntimeState) -> Response {
+    let caller = state.env.caller();
+    if let Some(member) = state.data.get_member(caller) {
+        if member.role.can_invite_users(&state.data.chat.permissions) {
             return Success(SuccessResult {
-                code: if runtime_state.data.invite_code_enabled { runtime_state.data.invite_code } else { None },
+                code: if state.data.invite_code_enabled { state.data.invite_code } else { None },
             });
         }
     }

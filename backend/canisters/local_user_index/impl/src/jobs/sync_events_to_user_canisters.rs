@@ -10,9 +10,9 @@ thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
 }
 
-pub(crate) fn start_job_if_required(runtime_state: &RuntimeState) -> bool {
+pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
     if TIMER_ID.with(|t| t.get().is_none())
-        && (!runtime_state.data.user_event_sync_queue.is_empty() || runtime_state.data.user_event_sync_queue.sync_in_progress())
+        && (!state.data.user_event_sync_queue.is_empty() || state.data.user_event_sync_queue.sync_in_progress())
     {
         let timer_id = ic_cdk_timers::set_timer_interval(Duration::ZERO, run);
         TIMER_ID.with(|t| t.set(Some(timer_id)));
@@ -42,12 +42,10 @@ enum NextBatchResult {
     QueueEmpty,
 }
 
-fn next_batch(runtime_state: &mut RuntimeState) -> NextBatchResult {
-    if let Some(batch) = runtime_state.data.user_event_sync_queue.try_start_batch() {
+fn next_batch(state: &mut RuntimeState) -> NextBatchResult {
+    if let Some(batch) = state.data.user_event_sync_queue.try_start_batch() {
         NextBatchResult::Success(batch)
-    } else if !runtime_state.data.user_event_sync_queue.is_empty()
-        || runtime_state.data.user_event_sync_queue.sync_in_progress()
-    {
+    } else if !state.data.user_event_sync_queue.is_empty() || state.data.user_event_sync_queue.sync_in_progress() {
         NextBatchResult::Continue
     } else {
         NextBatchResult::QueueEmpty

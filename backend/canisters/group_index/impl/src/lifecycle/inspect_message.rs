@@ -6,7 +6,7 @@ fn inspect_message() {
     read_state(accept_if_valid);
 }
 
-fn accept_if_valid(runtime_state: &RuntimeState) {
+fn accept_if_valid(state: &RuntimeState) {
     let method_name = ic_cdk::api::call::method_name();
 
     // 'inspect_message' only applies to ingress messages so calls to c2c methods should be rejected
@@ -21,7 +21,7 @@ fn accept_if_valid(runtime_state: &RuntimeState) {
         | "reinstall_group"
         | "set_max_concurrent_group_canister_upgrades"
         | "upgrade_group_canister_wasm"
-        | "upgrade_local_group_index_canister_wasm" => runtime_state.is_caller_governance_principal(),
+        | "upgrade_local_group_index_canister_wasm" => state.is_caller_governance_principal(),
         "add_hot_group_exclusion"
         | "delete_frozen_group"
         | "freeze_group"

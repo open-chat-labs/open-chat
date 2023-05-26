@@ -10,7 +10,7 @@ fn mark_completed(_args: Args) -> Response {
     mutate_state(mark_completed_impl)
 }
 
-fn mark_completed_impl(runtime_state: &mut RuntimeState) -> Response {
-    runtime_state.data.completed = true;
+fn mark_completed_impl(state: &mut RuntimeState) -> Response {
+    state.data.completed = true;
     Success
 }

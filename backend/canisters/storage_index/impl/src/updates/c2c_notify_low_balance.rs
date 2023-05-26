@@ -27,26 +27,26 @@ struct PrepareResult {
     top_up: CyclesTopUp,
 }
 
-fn prepare(runtime_state: &RuntimeState) -> Result<PrepareResult, NotifyLowBalanceResponse> {
-    let caller = runtime_state.env.caller();
+fn prepare(state: &RuntimeState) -> Result<PrepareResult, NotifyLowBalanceResponse> {
+    let caller = state.env.caller();
     let top_up_amount = BUCKET_CANISTER_TOP_UP_AMOUNT;
     let top_up = CyclesTopUp {
-        date: runtime_state.env.now(),
+        date: state.env.now(),
         amount: top_up_amount,
     };
 
     if !can_spend_cycles(top_up_amount, MIN_CYCLES_BALANCE) {
         Err(NotifyLowBalanceResponse::NotEnoughCyclesRemaining)
-    } else if runtime_state.data.buckets.get(&caller).is_some() {
+    } else if state.data.buckets.get(&caller).is_some() {
         Ok(PrepareResult { bucket: caller, top_up })
     } else {
         panic!("Caller not recognised. {caller}");
     }
 }
 
-fn commit(bucket: CanisterId, top_up: CyclesTopUp, runtime_state: &mut RuntimeState) {
-    runtime_state.data.total_cycles_spent_on_canisters += top_up.amount;
-    if !runtime_state.data.buckets.mark_cycles_top_up(&bucket, top_up) {
+fn commit(bucket: CanisterId, top_up: CyclesTopUp, state: &mut RuntimeState) {
+    state.data.total_cycles_spent_on_canisters += top_up.amount;
+    if !state.data.buckets.mark_cycles_top_up(&bucket, top_up) {
         panic!("Bucket not found. {bucket}");
     }
 }

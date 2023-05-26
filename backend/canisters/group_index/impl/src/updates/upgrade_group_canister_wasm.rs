@@ -57,15 +57,15 @@ struct PrepareResult {
     local_group_index_canisters: Vec<(CanisterId, UpgradesFilter)>,
 }
 
-fn prepare(args: Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Response> {
-    if !runtime_state.data.test_mode && args.wasm.version < runtime_state.data.group_canister_wasm.version {
+fn prepare(args: Args, state: &RuntimeState) -> Result<PrepareResult, Response> {
+    if !state.data.test_mode && args.wasm.version < state.data.group_canister_wasm.version {
         return Err(VersionNotHigher);
     }
 
-    let local_group_index_canister_ids: Vec<_> = runtime_state.data.local_index_map.canisters().copied().collect();
+    let local_group_index_canister_ids: Vec<_> = state.data.local_index_map.canisters().copied().collect();
 
     let local_group_index_canisters = build_filter_map(local_group_index_canister_ids, args.filter.unwrap_or_default(), |c| {
-        runtime_state.data.local_index_map.get_index_canister_for_group(&c.into())
+        state.data.local_index_map.get_index_canister_for_group(&c.into())
     });
 
     Ok(PrepareResult {

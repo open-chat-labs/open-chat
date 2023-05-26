@@ -34,12 +34,12 @@ struct PrepareResult {
     is_nns: bool,
 }
 
-fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Response> {
-    if runtime_state.data.nervous_systems.exists(&args.governance_canister_id) {
+fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response> {
+    if state.data.nervous_systems.exists(&args.governance_canister_id) {
         Err(AlreadyAdded)
     } else {
         Ok(PrepareResult {
-            is_nns: args.governance_canister_id == runtime_state.data.nns_governance_canister_id,
+            is_nns: args.governance_canister_id == state.data.nns_governance_canister_id,
         })
     }
 }

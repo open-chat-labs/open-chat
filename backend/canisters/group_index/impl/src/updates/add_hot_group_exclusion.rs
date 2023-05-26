@@ -66,12 +66,12 @@ struct PrepareResult {
     is_excluded: bool,
 }
 
-fn prepare(chat_id: &ChatId, runtime_state: &RuntimeState) -> Result<PrepareResult, ()> {
-    if let Some(group) = runtime_state.data.public_groups.get(chat_id) {
+fn prepare(chat_id: &ChatId, state: &RuntimeState) -> Result<PrepareResult, ()> {
+    if let Some(group) = state.data.public_groups.get(chat_id) {
         Ok(PrepareResult {
-            caller: runtime_state.env.caller(),
+            caller: state.env.caller(),
             is_excluded: group.is_excluded_from_hotlist(),
-            user_index_canister_id: runtime_state.data.user_index_canister_id,
+            user_index_canister_id: state.data.user_index_canister_id,
         })
     } else {
         // ChatNotFound
@@ -79,8 +79,8 @@ fn prepare(chat_id: &ChatId, runtime_state: &RuntimeState) -> Result<PrepareResu
     }
 }
 
-fn commit(chat_id: &ChatId, exclude: bool, runtime_state: &mut RuntimeState) -> bool {
-    if let Some(group) = runtime_state.data.public_groups.get_mut(chat_id) {
+fn commit(chat_id: &ChatId, exclude: bool, state: &mut RuntimeState) -> bool {
+    if let Some(group) = state.data.public_groups.get_mut(chat_id) {
         group.set_excluded_from_hotlist(exclude);
         true
     } else {

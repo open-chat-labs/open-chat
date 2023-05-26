@@ -6,20 +6,20 @@ fn inspect_message() {
     read_state(accept_if_valid);
 }
 
-fn accept_if_valid(runtime_state: &RuntimeState) {
+fn accept_if_valid(state: &RuntimeState) {
     let method_name = ic_cdk::api::call::method_name();
 
     let is_c2c_method = method_name.starts_with("c2c") || method_name == "wallet_receive";
-    let is_frozen = runtime_state.data.frozen.value.is_some();
+    let is_frozen = state.data.frozen.value.is_some();
 
     // 'inspect_message' only applies to ingress messages so calls to c2c methods should be rejected
     if is_c2c_method || is_frozen {
         return;
     }
 
-    let caller = runtime_state.env.caller();
-    let permissions = &runtime_state.data.chat.permissions;
-    let is_valid = if let Some(role) = runtime_state.data.get_member(caller).map(|p| p.role) {
+    let caller = state.env.caller();
+    let permissions = &state.data.chat.permissions;
+    let is_valid = if let Some(role) = state.data.get_member(caller).map(|p| p.role) {
         match method_name.as_str() {
             "add_reaction" | "remove_reaction" => role.can_react_to_messages(permissions),
             "block_user" => role.can_block_users(permissions),
@@ -45,7 +45,7 @@ fn accept_if_valid(runtime_state: &RuntimeState) {
             _ => false,
         }
     } else {
-        runtime_state.data.invited_users.contains(&caller) && method_name == "decline_invitation"
+        state.data.invited_users.contains(&caller) && method_name == "decline_invitation"
     };
 
     if is_valid {

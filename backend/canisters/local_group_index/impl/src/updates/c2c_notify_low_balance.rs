@@ -30,13 +30,13 @@ struct PrepareResult {
     is_group: bool,
 }
 
-fn prepare(runtime_state: &RuntimeState) -> Result<PrepareResult, NotifyLowBalanceResponse> {
-    let canister_id = runtime_state.env.caller();
-    let is_group = runtime_state.is_caller_local_group_canister();
+fn prepare(state: &RuntimeState) -> Result<PrepareResult, NotifyLowBalanceResponse> {
+    let canister_id = state.env.caller();
+    let is_group = state.is_caller_local_group_canister();
 
     let top_up_amount = if is_group { GROUP_CANISTER_TOP_UP_AMOUNT } else { COMMUNITY_CANISTER_TOP_UP_AMOUNT };
     let top_up = CyclesTopUp {
-        date: runtime_state.env.now(),
+        date: state.env.now(),
         amount: top_up_amount,
     };
 
@@ -51,22 +51,14 @@ fn prepare(runtime_state: &RuntimeState) -> Result<PrepareResult, NotifyLowBalan
     }
 }
 
-fn commit(canister_id: CanisterId, top_up: CyclesTopUp, is_group: bool, runtime_state: &mut RuntimeState) {
-    runtime_state.data.total_cycles_spent_on_canisters += top_up.amount;
+fn commit(canister_id: CanisterId, top_up: CyclesTopUp, is_group: bool, state: &mut RuntimeState) {
+    state.data.total_cycles_spent_on_canisters += top_up.amount;
 
     if is_group {
-        if !runtime_state
-            .data
-            .local_groups
-            .mark_cycles_top_up(&canister_id.into(), top_up)
-        {
+        if !state.data.local_groups.mark_cycles_top_up(&canister_id.into(), top_up) {
             panic!("Group not found. {canister_id}");
         }
-    } else if !runtime_state
-        .data
-        .local_communities
-        .mark_cycles_top_up(&canister_id.into(), top_up)
-    {
+    } else if !state.data.local_communities.mark_cycles_top_up(&canister_id.into(), top_up) {
         panic!("Community not found. {canister_id}");
     }
 }

@@ -10,10 +10,10 @@ fn delete_file(args: Args) -> Response {
     mutate_state(|state| delete_file_impl(args, state))
 }
 
-fn delete_file_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    let caller = runtime_state.env.caller();
+fn delete_file_impl(args: Args, state: &mut RuntimeState) -> Response {
+    let caller = state.env.caller();
 
-    match runtime_state.data.remove_file(caller, args.file_id) {
+    match state.data.remove_file(caller, args.file_id) {
         RemoveFileResult::Success(_) => Success,
         RemoveFileResult::NotAuthorized => NotAuthorized,
         RemoveFileResult::NotFound => NotFound,

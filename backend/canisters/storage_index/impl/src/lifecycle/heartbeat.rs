@@ -44,24 +44,24 @@ mod ensure_sufficient_active_buckets {
         CreateBucket(CreateBucketArgs),
     }
 
-    fn prepare(runtime_state: &mut RuntimeState) -> PrepareResponse {
-        if !runtime_state.data.buckets.try_to_acquire_creation_lock() {
+    fn prepare(state: &mut RuntimeState) -> PrepareResponse {
+        if !state.data.buckets.try_to_acquire_creation_lock() {
             return DoNothing;
         }
 
         let cycles_required = BUCKET_CANISTER_INITIAL_CYCLES_BALANCE + CREATE_CANISTER_CYCLES_FEE;
 
         if !utils::cycles::can_spend_cycles(cycles_required, MIN_CYCLES_BALANCE) {
-            runtime_state.data.buckets.release_creation_lock();
+            state.data.buckets.release_creation_lock();
             return CyclesBalanceTooLow;
         }
 
         CreateBucket(CreateBucketArgs {
-            canister_wasm: runtime_state.data.bucket_canister_wasm.clone(),
+            canister_wasm: state.data.bucket_canister_wasm.clone(),
             cycles_to_use: cycles_required,
             init_canister_args: storage_bucket_canister::init::Args {
-                wasm_version: runtime_state.data.bucket_canister_wasm.version,
-                test_mode: runtime_state.data.test_mode,
+                wasm_version: state.data.bucket_canister_wasm.version,
+                test_mode: state.data.test_mode,
             },
         })
     }
@@ -100,8 +100,8 @@ mod sync_buckets {
         }
     }
 
-    fn next_batch(runtime_state: &mut RuntimeState) -> Vec<(CanisterId, Args)> {
-        runtime_state.data.buckets.pop_args_for_next_sync()
+    fn next_batch(state: &mut RuntimeState) -> Vec<(CanisterId, Args)> {
+        state.data.buckets.pop_args_for_next_sync()
     }
 
     async fn send_to_bucket(canister_id: CanisterId, args: Args) {
@@ -115,18 +115,18 @@ mod sync_buckets {
         }
     }
 
-    fn handle_success(canister_id: CanisterId, result: SuccessResult, runtime_state: &mut RuntimeState) {
+    fn handle_success(canister_id: CanisterId, result: SuccessResult, state: &mut RuntimeState) {
         for file in result.files_removed {
-            runtime_state.data.remove_file_reference(canister_id, file);
+            state.data.remove_file_reference(canister_id, file);
         }
 
-        if let Some(bucket) = runtime_state.data.buckets.get_mut(&canister_id) {
+        if let Some(bucket) = state.data.buckets.get_mut(&canister_id) {
             bucket.sync_state.mark_sync_completed();
         }
     }
 
-    fn handle_error(canister_id: CanisterId, args: Args, runtime_state: &mut RuntimeState) {
-        if let Some(bucket) = runtime_state.data.buckets.get_mut(&canister_id) {
+    fn handle_error(canister_id: CanisterId, args: Args, state: &mut RuntimeState) {
+        if let Some(bucket) = state.data.buckets.get_mut(&canister_id) {
             bucket.sync_state.mark_sync_failed(args);
         }
     }
@@ -146,17 +146,17 @@ mod upgrade_canisters {
         }
     }
 
-    fn next_batch(runtime_state: &mut RuntimeState) -> Vec<CanisterToUpgrade> {
-        let count_in_progress = runtime_state.data.canisters_requiring_upgrade.count_in_progress();
+    fn next_batch(state: &mut RuntimeState) -> Vec<CanisterToUpgrade> {
+        let count_in_progress = state.data.canisters_requiring_upgrade.count_in_progress();
         (0..(MAX_CONCURRENT_CANISTER_UPGRADES - count_in_progress))
-            .map_while(|_| try_get_next(runtime_state))
+            .map_while(|_| try_get_next(state))
             .collect()
     }
 
-    fn try_get_next(runtime_state: &mut RuntimeState) -> Option<CanisterToUpgrade> {
-        let canister_id = runtime_state.data.canisters_requiring_upgrade.try_take_next()?;
-        let bucket = runtime_state.data.buckets.get(&canister_id)?;
-        let new_wasm = runtime_state.data.bucket_canister_wasm.clone();
+    fn try_get_next(state: &mut RuntimeState) -> Option<CanisterToUpgrade> {
+        let canister_id = state.data.canisters_requiring_upgrade.try_take_next()?;
+        let bucket = state.data.buckets.get(&canister_id)?;
+        let new_wasm = state.data.bucket_canister_wasm.clone();
         let wasm_version = new_wasm.version;
 
         Some(CanisterToUpgrade {
@@ -191,15 +191,15 @@ mod upgrade_canisters {
         }
     }
 
-    fn on_success(canister_id: CanisterId, to_version: Version, runtime_state: &mut RuntimeState) {
-        if let Some(bucket) = runtime_state.data.buckets.get_mut(&canister_id) {
+    fn on_success(canister_id: CanisterId, to_version: Version, state: &mut RuntimeState) {
+        if let Some(bucket) = state.data.buckets.get_mut(&canister_id) {
             bucket.wasm_version = to_version;
         }
-        runtime_state.data.canisters_requiring_upgrade.mark_success(&canister_id);
+        state.data.canisters_requiring_upgrade.mark_success(&canister_id);
     }
 
-    fn on_failure(canister_id: CanisterId, from_version: Version, to_version: Version, runtime_state: &mut RuntimeState) {
-        runtime_state.data.canisters_requiring_upgrade.mark_failure(FailedUpgrade {
+    fn on_failure(canister_id: CanisterId, from_version: Version, to_version: Version, state: &mut RuntimeState) {
+        state.data.canisters_requiring_upgrade.mark_failure(FailedUpgrade {
             canister_id,
             from_version,
             to_version,

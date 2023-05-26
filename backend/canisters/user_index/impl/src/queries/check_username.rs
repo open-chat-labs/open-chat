@@ -8,10 +8,10 @@ fn check_username(args: Args) -> Response {
     read_state(|state| check_username_impl(args, state))
 }
 
-fn check_username_impl(args: Args, runtime_state: &RuntimeState) -> Response {
+fn check_username_impl(args: Args, state: &RuntimeState) -> Response {
     match validate_username(&args.username) {
         Ok(_) => {
-            if runtime_state.data.users.does_username_exist(&args.username) {
+            if state.data.users.does_username_exist(&args.username) {
                 UsernameTaken
             } else {
                 Success

@@ -14,19 +14,19 @@ fn undelete_messages(args: Args) -> Response {
     mutate_state(|state| undelete_messages_impl(args, state))
 }
 
-fn undelete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    if runtime_state.data.is_frozen() {
+fn undelete_messages_impl(args: Args, state: &mut RuntimeState) -> Response {
+    if state.data.is_frozen() {
         return ChatFrozen;
     }
 
-    let caller = runtime_state.env.caller();
-    if let Some(member) = runtime_state.data.get_member(caller) {
+    let caller = state.env.caller();
+    if let Some(member) = state.data.get_member(caller) {
         if member.suspended.value {
             return UserSuspended;
         }
 
-        let now = runtime_state.env.now();
-        match runtime_state
+        let now = state.env.now();
+        match state
             .data
             .chat
             .undelete_messages(member.user_id, args.thread_root_message_index, args.message_ids, now)
@@ -34,7 +34,7 @@ fn undelete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Respo
             UndeleteMessagesResult::Success(messages) => {
                 if !messages.is_empty() {
                     let message_ids: HashSet<_> = messages.iter().map(|m| m.message_id).collect();
-                    runtime_state.data.timer_jobs.cancel_jobs(|job| {
+                    state.data.timer_jobs.cancel_jobs(|job| {
                         if let TimerJob::HardDeleteMessageContent(j) = job {
                             j.thread_root_message_index == args.thread_root_message_index && message_ids.contains(&j.message_id)
                         } else {
@@ -42,7 +42,7 @@ fn undelete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Respo
                         }
                     });
 
-                    handle_activity_notification(runtime_state);
+                    handle_activity_notification(state);
                 }
 
                 Success(SuccessResult { messages })

@@ -15,13 +15,13 @@ fn upload_chunk_v2(args: Args) -> Response {
     mutate_state(|state| upload_chunk_impl(args, state))
 }
 
-fn upload_chunk_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    let user_id = runtime_state.env.caller();
-    let now = runtime_state.env.now();
-    let user = runtime_state.data.users.get_mut(&user_id).unwrap();
+fn upload_chunk_impl(args: Args, state: &mut RuntimeState) -> Response {
+    let user_id = state.env.caller();
+    let now = state.env.now();
+    let user = state.data.users.get_mut(&user_id).unwrap();
     let file_id = args.file_id;
 
-    if !validate_file_id(file_id, runtime_state.env.canister_id()) {
+    if !validate_file_id(file_id, state.env.canister_id()) {
         return InvalidFileId;
     }
 
@@ -42,16 +42,13 @@ fn upload_chunk_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
         user.set_file_status(file_id, FileStatusInternal::Uploading(IndexSyncComplete::No));
     }
 
-    match runtime_state.data.files.put_chunk(PutChunkArgs::new(user_id, args, now)) {
+    match state.data.files.put_chunk(PutChunkArgs::new(user_id, args, now)) {
         PutChunkResult::Success(r) => {
             if r.file_completed {
                 user.set_file_status(file_id, FileStatusInternal::Complete(index_sync_complete));
             }
             if let Some(file_added) = r.file_added {
-                runtime_state
-                    .data
-                    .index_sync_state
-                    .enqueue(EventToSync::FileAdded(file_added));
+                state.data.index_sync_state.enqueue(EventToSync::FileAdded(file_added));
             }
             Success
         }
@@ -75,13 +72,10 @@ fn upload_chunk_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
             // this match statement will never have been reached so the file reference will not have
             // been added to the index canister.
             if hm.chunk_count > 1 {
-                runtime_state
-                    .data
-                    .index_sync_state
-                    .enqueue(EventToSync::FileRemoved(FileRemoved {
-                        file_id,
-                        meta_data: hm.meta_data,
-                    }));
+                state.data.index_sync_state.enqueue(EventToSync::FileRemoved(FileRemoved {
+                    file_id,
+                    meta_data: hm.meta_data,
+                }));
             }
 
             HashMismatch

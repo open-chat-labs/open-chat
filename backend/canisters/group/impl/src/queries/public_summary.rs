@@ -7,32 +7,32 @@ use types::{Avatar, PublicGroupSummary, Version};
 
 #[query_candid_and_msgpack]
 fn public_summary(args: Args) -> Response {
-    read_state(|runtime_state: &RuntimeState| public_summary_impl(args, runtime_state))
+    read_state(|state: &RuntimeState| public_summary_impl(args, state))
 }
 
-fn public_summary_impl(args: Args, runtime_state: &RuntimeState) -> Response {
-    let caller = runtime_state.env.caller();
+fn public_summary_impl(args: Args, state: &RuntimeState) -> Response {
+    let caller = state.env.caller();
 
-    if !runtime_state.data.is_accessible(caller, args.invite_code) {
+    if !state.data.is_accessible(caller, args.invite_code) {
         return NotAuthorized;
     }
 
-    let is_public = runtime_state.data.chat.is_public;
-    let now = runtime_state.env.now();
-    let data = &runtime_state.data;
+    let is_public = state.data.chat.is_public;
+    let now = state.env.now();
+    let data = &state.data;
     let events_reader = data.chat.events.main_events_reader(now);
     let latest_event_timestamp = events_reader.latest_event_timestamp().unwrap_or_default();
     let latest_event_index = events_reader.latest_event_index().unwrap_or_default();
 
     // You can't see private group messages unless you are a member of the group
-    let latest_message = if is_public || runtime_state.data.get_member(caller).is_some() {
+    let latest_message = if is_public || state.data.get_member(caller).is_some() {
         events_reader.latest_message_event(None)
     } else {
         None
     };
 
     let summary = PublicGroupSummary {
-        chat_id: runtime_state.env.canister_id().into(),
+        chat_id: state.env.canister_id().into(),
         last_updated: latest_event_timestamp,
         name: data.chat.name.clone(),
         description: data.chat.description.clone(),

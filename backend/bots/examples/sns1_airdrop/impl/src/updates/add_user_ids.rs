@@ -10,9 +10,9 @@ fn add_user_ids(args: Args) -> Response {
     mutate_state(|state| add_user_ids_impl(args, state))
 }
 
-fn add_user_ids_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
+fn add_user_ids_impl(args: Args, state: &mut RuntimeState) -> Response {
     for user_id in args.user_ids {
-        runtime_state.data.users.entry(user_id).or_insert(None);
+        state.data.users.entry(user_id).or_insert(None);
     }
     Success
 }

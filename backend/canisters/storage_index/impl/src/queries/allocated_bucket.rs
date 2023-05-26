@@ -11,12 +11,12 @@ fn allocated_bucket_v2(args: Args) -> Response {
     read_state(|state| allocated_bucket_impl(args, state))
 }
 
-fn allocated_bucket_impl(args: Args, runtime_state: &RuntimeState) -> Response {
-    let user_id = runtime_state.env.caller();
-    if let Some(user) = runtime_state.data.users.get(&user_id) {
+fn allocated_bucket_impl(args: Args, state: &RuntimeState) -> Response {
+    let user_id = state.env.caller();
+    if let Some(user) = state.data.users.get(&user_id) {
         let byte_limit = user.byte_limit;
         let bytes_used = user.bytes_used;
-        let bytes_used_after_upload = if runtime_state.data.files.user_owns_blob(user_id, args.file_hash) {
+        let bytes_used_after_upload = if state.data.files.user_owns_blob(user_id, args.file_hash) {
             bytes_used
         } else {
             bytes_used
@@ -33,14 +33,14 @@ fn allocated_bucket_impl(args: Args, runtime_state: &RuntimeState) -> Response {
             });
         }
 
-        let bucket = runtime_state
+        let bucket = state
             .data
             .files
             .bucket_for_blob(args.file_hash)
-            .or_else(|| runtime_state.data.buckets.allocate(args.file_hash));
+            .or_else(|| state.data.buckets.allocate(args.file_hash));
 
         if let Some(canister_id) = bucket {
-            let now = runtime_state.env.now();
+            let now = state.env.now();
 
             Success(SuccessResult {
                 canister_id,

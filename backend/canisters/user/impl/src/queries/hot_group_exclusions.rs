@@ -7,8 +7,8 @@ fn hot_group_exclusions(_args: Args) -> Response {
     read_state(hot_group_exclusions_impl)
 }
 
-fn hot_group_exclusions_impl(runtime_state: &RuntimeState) -> Response {
-    let now = runtime_state.env.now();
+fn hot_group_exclusions_impl(state: &RuntimeState) -> Response {
+    let now = state.env.now();
 
-    Success(runtime_state.data.hot_group_exclusions.get_all(now).copied().collect())
+    Success(state.data.hot_group_exclusions.get_all(now).copied().collect())
 }

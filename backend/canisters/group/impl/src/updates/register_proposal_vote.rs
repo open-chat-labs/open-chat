@@ -49,14 +49,14 @@ struct PrepareResult {
     proposal_id: ProposalId,
 }
 
-fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Response> {
-    if runtime_state.data.is_frozen() {
+fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response> {
+    if state.data.is_frozen() {
         return Err(ChatFrozen);
     }
 
-    let caller = runtime_state.env.caller();
+    let caller = state.env.caller();
 
-    let member = match runtime_state.data.get_member(caller) {
+    let member = match state.data.get_member(caller) {
         Some(p) => p,
         None => return Err(CallerNotInGroup),
     };
@@ -65,10 +65,10 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
         return Err(UserSuspended);
     }
 
-    let now = runtime_state.env.now();
+    let now = state.env.now();
     let min_visible_event_index = member.min_visible_event_index();
 
-    if let Some(proposal) = runtime_state
+    if let Some(proposal) = state
         .data
         .chat
         .events
@@ -91,28 +91,27 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
     }
 }
 
-fn commit(user_id: UserId, args: Args, runtime_state: &mut RuntimeState) -> Response {
-    let member = match runtime_state.data.chat.members.get_mut(&user_id) {
+fn commit(user_id: UserId, args: Args, state: &mut RuntimeState) -> Response {
+    let member = match state.data.chat.members.get_mut(&user_id) {
         Some(p) => p,
         None => return CallerNotInGroup,
     };
 
-    let now = runtime_state.env.now();
+    let now = state.env.now();
     let min_visible_event_index = member.min_visible_event_index();
 
-    match runtime_state.data.chat.events.record_proposal_vote(
-        user_id,
-        min_visible_event_index,
-        args.message_index,
-        args.adopt,
-        now,
-    ) {
+    match state
+        .data
+        .chat
+        .events
+        .record_proposal_vote(user_id, min_visible_event_index, args.message_index, args.adopt, now)
+    {
         RecordProposalVoteResult::Success => {
             let votes = member.proposal_votes.entry(now).or_default();
             if !votes.contains(&args.message_index) {
                 votes.push(args.message_index);
             }
-            handle_activity_notification(runtime_state);
+            handle_activity_notification(state);
             Success
         }
         RecordProposalVoteResult::AlreadyVoted(vote) => AlreadyVoted(vote),

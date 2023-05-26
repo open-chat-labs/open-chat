@@ -8,12 +8,12 @@ fn events_by_index(args: Args) -> Response {
     read_state(|state| events_by_index_impl(args, state))
 }
 
-fn events_by_index_impl(args: Args, runtime_state: &RuntimeState) -> Response {
-    let caller = runtime_state.env.caller();
-    let now = runtime_state.env.now();
-    let user_id = runtime_state.data.lookup_user_id(&caller);
+fn events_by_index_impl(args: Args, state: &RuntimeState) -> Response {
+    let caller = state.env.caller();
+    let now = state.env.now();
+    let user_id = state.data.lookup_user_id(&caller);
 
-    match runtime_state.data.chat.events_by_index(
+    match state.data.chat.events_by_index(
         user_id,
         args.thread_root_message_index,
         args.events,

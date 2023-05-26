@@ -20,9 +20,9 @@ fn c2c_summary_updates(args: Args) -> Response {
     read_state(|state| summary_updates_impl(args, state))
 }
 
-fn summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
-    let caller = runtime_state.env.caller();
-    let member = match runtime_state.data.get_member(caller) {
+fn summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
+    let caller = state.env.caller();
+    let member = match state.data.get_member(caller) {
         None => return CallerNotInGroup,
         Some(p) => p,
     };
@@ -31,19 +31,19 @@ fn summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     // Short circuit prior to calling `ic0.time()` so that query caching works effectively.
     // This doesn't account for expired events, but they aren't used yet and should probably just be
     // handled by the FE anyway.
-    if !runtime_state.data.chat.events.has_updates_since(updates_since)
-        && runtime_state.data.invited_users.last_updated() <= updates_since
+    if !state.data.chat.events.has_updates_since(updates_since)
+        && state.data.invited_users.last_updated() <= updates_since
         && member.notifications_muted.timestamp <= updates_since
     {
         return SuccessNoUpdates;
     }
 
-    let now = runtime_state.env.now();
-    let updates_from_events = process_events(updates_since, member, now, &runtime_state.data);
-    let newly_expired_messages = runtime_state.data.chat.events.expired_messages_since(updates_since, now);
+    let now = state.env.now();
+    let updates_from_events = process_events(updates_since, member, now, &state.data);
+    let newly_expired_messages = state.data.chat.events.expired_messages_since(updates_since, now);
 
     let updates = GroupCanisterGroupChatSummaryUpdates {
-        chat_id: runtime_state.env.canister_id().into(),
+        chat_id: state.env.canister_id().into(),
         last_updated: now,
         name: updates_from_events.name,
         description: updates_from_events.description,
@@ -51,24 +51,20 @@ fn summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
         avatar_id: updates_from_events.avatar_id,
         latest_message: updates_from_events.latest_message,
         latest_event_index: updates_from_events.latest_event_index,
-        participant_count: if updates_from_events.participants_changed {
-            Some(runtime_state.data.chat.members.len())
-        } else {
-            None
-        },
+        participant_count: if updates_from_events.participants_changed { Some(state.data.chat.members.len()) } else { None },
         role: if updates_from_events.role_changed { Some(member.role) } else { None },
         mentions: updates_from_events.mentions,
         permissions: updates_from_events.permissions,
         updated_events: updates_from_events.updated_events,
-        metrics: Some(runtime_state.data.chat.events.metrics().clone()),
-        my_metrics: runtime_state
+        metrics: Some(state.data.chat.events.metrics().clone()),
+        my_metrics: state
             .data
             .chat
             .events
             .user_metrics(&member.user_id, Some(args.updates_since))
             .cloned(),
         is_public: updates_from_events.is_public,
-        latest_threads: runtime_state.data.chat.events.latest_threads(
+        latest_threads: state.data.chat.events.latest_threads(
             member.min_visible_event_index(),
             member.threads.iter(),
             Some(args.updates_since),
@@ -81,7 +77,7 @@ fn summary_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
         date_last_pinned: updates_from_events.date_last_pinned,
         events_ttl: updates_from_events.events_ttl,
         newly_expired_messages,
-        next_message_expiry: OptionUpdate::from_update(runtime_state.data.chat.events.next_message_expiry(now)),
+        next_message_expiry: OptionUpdate::from_update(state.data.chat.events.next_message_expiry(now)),
         gate: updates_from_events.gate,
     };
     Success(SuccessResult { updates })

@@ -73,28 +73,28 @@ struct PrepareOk {
     init_canister_args: InitUserCanisterArgs,
 }
 
-fn prepare(args: &Args, runtime_state: &mut RuntimeState) -> Result<PrepareOk, Response> {
-    let caller = runtime_state.env.caller();
+fn prepare(args: &Args, state: &mut RuntimeState) -> Result<PrepareOk, Response> {
+    let caller = state.env.caller();
     let mut referral_code = None;
 
-    if runtime_state.data.global_users.get_by_principal(&caller).is_some() {
+    if state.data.global_users.get_by_principal(&caller).is_some() {
         return Err(AlreadyRegistered);
     }
 
-    if let Err(error) = validate_public_key(caller, &args.public_key, runtime_state.data.internet_identity_canister_id) {
+    if let Err(error) = validate_public_key(caller, &args.public_key, state.data.internet_identity_canister_id) {
         return Err(PublicKeyInvalid(error));
     }
 
-    if runtime_state.data.global_users.get_by_principal(&caller).is_some() {
+    if state.data.global_users.get_by_principal(&caller).is_some() {
         return Err(AlreadyRegistered);
     }
 
-    if runtime_state.data.global_users.len() >= USER_LIMIT {
+    if state.data.global_users.len() >= USER_LIMIT {
         return Err(UserLimitReached);
     }
 
     if let Some(code) = &args.referral_code {
-        referral_code = match runtime_state.data.referral_codes.check(code) {
+        referral_code = match state.data.referral_codes.check(code) {
             Some(t) => Some(t),
             None => return Err(ReferralCodeInvalid),
         }
@@ -127,7 +127,7 @@ fn prepare(args: &Args, runtime_state: &mut RuntimeState) -> Result<PrepareOk, R
             .collect()
     };
 
-    let cycles_to_use = if runtime_state.data.canister_pool.is_empty() {
+    let cycles_to_use = if state.data.canister_pool.is_empty() {
         let cycles_required = USER_CANISTER_INITIAL_CYCLES_BALANCE + CREATE_CANISTER_CYCLES_FEE;
         if !utils::cycles::can_spend_cycles(cycles_required, MIN_CYCLES_BALANCE) {
             return Err(CyclesBalanceTooLow);
@@ -137,21 +137,21 @@ fn prepare(args: &Args, runtime_state: &mut RuntimeState) -> Result<PrepareOk, R
         0
     };
 
-    let canister_id = runtime_state.data.canister_pool.pop();
-    let canister_wasm = runtime_state.data.user_canister_wasm_for_new_canisters.clone();
+    let canister_id = state.data.canister_pool.pop();
+    let canister_wasm = state.data.user_canister_wasm_for_new_canisters.clone();
     let init_canister_args = InitUserCanisterArgs {
         owner: caller,
-        group_index_canister_id: runtime_state.data.group_index_canister_id,
-        user_index_canister_id: runtime_state.data.user_index_canister_id,
-        local_user_index_canister_id: runtime_state.env.canister_id(),
-        notifications_canister_id: runtime_state.data.notifications_canister_id,
+        group_index_canister_id: state.data.group_index_canister_id,
+        user_index_canister_id: state.data.user_index_canister_id,
+        local_user_index_canister_id: state.env.canister_id(),
+        notifications_canister_id: state.data.notifications_canister_id,
         wasm_version: canister_wasm.version,
         username: args.username.clone(),
         openchat_bot_messages,
-        test_mode: runtime_state.data.test_mode,
+        test_mode: state.data.test_mode,
     };
 
-    crate::jobs::topup_canister_pool::start_job_if_required(runtime_state);
+    crate::jobs::topup_canister_pool::start_job_if_required(state);
 
     Ok(PrepareOk {
         caller,
@@ -169,13 +169,13 @@ fn commit(
     username: String,
     wasm_version: Version,
     referral_code: Option<ReferralCode>,
-    runtime_state: &mut RuntimeState,
+    state: &mut RuntimeState,
 ) {
-    let now = runtime_state.env.now();
-    runtime_state.data.local_users.add(user_id, wasm_version, now);
-    runtime_state.data.global_users.add(principal, user_id, false);
+    let now = state.env.now();
+    state.data.local_users.add(user_id, wasm_version, now);
+    state.data.global_users.add(principal, user_id, false);
 
-    runtime_state.push_event_to_user_index(UserIndexEvent::UserRegistered(Box::new(UserRegistered {
+    state.push_event_to_user_index(UserIndexEvent::UserRegistered(Box::new(UserRegistered {
         principal,
         user_id,
         username: username.clone(),
@@ -184,36 +184,36 @@ fn commit(
 
     match referral_code {
         Some(ReferralCode::User(referred_by)) => {
-            if runtime_state.data.local_users.get(&referred_by).is_some() {
-                runtime_state.push_event_to_user(
+            if state.data.local_users.get(&referred_by).is_some() {
+                state.push_event_to_user(
                     referred_by,
                     UserEvent::ReferredUserRegistered(Box::new(ReferredUserRegistered { user_id, username })),
                 );
             }
         }
         Some(ReferralCode::BtcMiami(code)) => {
-            let test_mode = runtime_state.data.test_mode;
+            let test_mode = state.data.test_mode;
 
             // This referral code can only be used once so claim it
-            runtime_state.data.referral_codes.claim(code, user_id, now);
+            state.data.referral_codes.claim(code, user_id, now);
 
-            runtime_state.data.btc_miami_payments_queue.push(PendingPayment {
+            state.data.btc_miami_payments_queue.push(PendingPayment {
                 amount: if test_mode { 50 } else { 50_000 }, // Approx $14
-                timestamp: runtime_state.env.now_nanos(),
+                timestamp: state.env.now_nanos(),
                 recipient: user_id.into(),
             });
-            crate::jobs::make_btc_miami_payments::start_job_if_required(runtime_state);
+            crate::jobs::make_btc_miami_payments::start_job_if_required(state);
 
             let btc_miami_group =
                 Principal::from_text(if test_mode { "ueyan-5iaaa-aaaaf-bifxa-cai" } else { "pbo6v-oiaaa-aaaar-ams6q-cai" })
                     .unwrap()
                     .into();
 
-            runtime_state.push_event_to_user_index(UserIndexEvent::JoinUserToGroup(Box::new(JoinUserToGroup {
+            state.push_event_to_user_index(UserIndexEvent::JoinUserToGroup(Box::new(JoinUserToGroup {
                 user_id,
                 chat_id: btc_miami_group,
             })));
-            runtime_state.data.timer_jobs.enqueue_job(
+            state.data.timer_jobs.enqueue_job(
                 TimerJob::AddUserToSatoshiDice(AddUserToSatoshiDice { user_id, attempt: 0 }),
                 now,
                 now,

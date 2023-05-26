@@ -10,33 +10,33 @@ fn c2c_migrate_user_principal(args: Args) -> Response {
     mutate_state(|state| c2c_migrate_user_principal_impl(args, state))
 }
 
-fn c2c_migrate_user_principal_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    let user_id = runtime_state.env.caller().into();
+fn c2c_migrate_user_principal_impl(args: Args, state: &mut RuntimeState) -> Response {
+    let user_id = state.env.caller().into();
 
-    if let Some(user) = runtime_state.data.users.get_by_user_id(&user_id) {
+    if let Some(user) = state.data.users.get_by_user_id(&user_id) {
         if user.principal == args.new_principal {
             SuccessNoChange
-        } else if runtime_state.data.users.get_by_principal(&args.new_principal).is_some() {
+        } else if state.data.users.get_by_principal(&args.new_principal).is_some() {
             PrincipalAlreadyInUse
-        } else if runtime_state.data.user_principal_migration_queue.count_pending(&user_id) > 0 {
+        } else if state.data.user_principal_migration_queue.count_pending(&user_id) > 0 {
             MigrationAlreadyInProgress
         } else {
             let old_principal = user.principal;
-            let now = runtime_state.env.now();
+            let now = state.env.now();
 
             let mut clone = user.clone();
             clone.principal = args.new_principal;
-            runtime_state.data.users.update(clone, now);
+            state.data.users.update(clone, now);
 
-            runtime_state.data.user_principal_migration_queue.push(
+            state.data.user_principal_migration_queue.push(
                 user_id,
                 old_principal,
                 args.new_principal,
                 args.groups,
-                runtime_state.data.storage_index_canister_id,
-                runtime_state.data.notifications_index_canister_id,
+                state.data.storage_index_canister_id,
+                state.data.notifications_index_canister_id,
             );
-            crate::jobs::notify_user_principal_migrations::start_job_if_required(runtime_state);
+            crate::jobs::notify_user_principal_migrations::start_job_if_required(state);
 
             Success
         }

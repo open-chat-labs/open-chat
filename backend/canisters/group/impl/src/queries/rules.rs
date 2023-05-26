@@ -5,17 +5,17 @@ use group_canister::rules::{Response::*, *};
 
 #[query_candid_and_msgpack]
 fn rules(args: Args) -> Response {
-    read_state(|runtime_state: &RuntimeState| rules_impl(args, runtime_state))
+    read_state(|state: &RuntimeState| rules_impl(args, state))
 }
 
-fn rules_impl(args: Args, runtime_state: &RuntimeState) -> Response {
-    let caller = runtime_state.env.caller();
+fn rules_impl(args: Args, state: &RuntimeState) -> Response {
+    let caller = state.env.caller();
 
-    if !runtime_state.data.is_accessible(caller, args.invite_code) {
+    if !state.data.is_accessible(caller, args.invite_code) {
         return NotAuthorized;
     }
 
-    let data = &runtime_state.data;
+    let data = &state.data;
     let rules = data.chat.rules.enabled.then_some(data.chat.rules.text.clone());
     Success(SuccessResult { rules })
 }

@@ -7,8 +7,8 @@ fn platform_operators(_args: Args) -> Response {
     read_state(platform_operators_impl)
 }
 
-fn platform_operators_impl(runtime_state: &RuntimeState) -> Response {
+fn platform_operators_impl(state: &RuntimeState) -> Response {
     Success(SuccessResult {
-        users: runtime_state.data.platform_operators.iter().copied().collect(),
+        users: state.data.platform_operators.iter().copied().collect(),
     })
 }

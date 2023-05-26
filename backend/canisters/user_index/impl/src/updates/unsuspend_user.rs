@@ -27,10 +27,10 @@ pub(crate) async fn unsuspend_user_impl(user_id: UserId) -> Response {
     }
 }
 
-fn commit(user_id: UserId, groups: Vec<ChatId>, runtime_state: &mut RuntimeState) {
-    let now = runtime_state.env.now();
+fn commit(user_id: UserId, groups: Vec<ChatId>, state: &mut RuntimeState) {
+    let now = state.env.now();
     for group in groups {
-        runtime_state.data.timer_jobs.enqueue_job(
+        state.data.timer_jobs.enqueue_job(
             TimerJob::SetUserSuspendedInGroup(SetUserSuspendedInGroup {
                 user_id,
                 group,
@@ -41,5 +41,5 @@ fn commit(user_id: UserId, groups: Vec<ChatId>, runtime_state: &mut RuntimeState
             now,
         );
     }
-    runtime_state.data.users.unsuspend_user(&user_id);
+    state.data.users.unsuspend_user(&user_id);
 }

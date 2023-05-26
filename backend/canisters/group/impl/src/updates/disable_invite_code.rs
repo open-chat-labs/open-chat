@@ -14,23 +14,23 @@ fn disable_invite_code(args: Args) -> Response {
     mutate_state(|state| disable_invite_code_impl(args, state))
 }
 
-fn disable_invite_code_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    if runtime_state.data.is_frozen() {
+fn disable_invite_code_impl(args: Args, state: &mut RuntimeState) -> Response {
+    if state.data.is_frozen() {
         return ChatFrozen;
     }
 
-    let caller = runtime_state.env.caller();
-    if let Some(member) = runtime_state.data.get_member(caller) {
+    let caller = state.env.caller();
+    if let Some(member) = state.data.get_member(caller) {
         if member.suspended.value {
             return UserSuspended;
         }
 
-        if member.role.can_invite_users(&runtime_state.data.chat.permissions) {
+        if member.role.can_invite_users(&state.data.chat.permissions) {
             let user_id = member.user_id;
-            runtime_state.data.invite_code_enabled = false;
+            state.data.invite_code_enabled = false;
 
-            let now = runtime_state.env.now();
-            runtime_state.data.chat.events.push_main_event(
+            let now = state.env.now();
+            state.data.chat.events.push_main_event(
                 ChatEventInternal::GroupInviteCodeChanged(Box::new(GroupInviteCodeChanged {
                     change: GroupInviteCodeChange::Disabled,
                     changed_by: user_id,
@@ -39,7 +39,7 @@ fn disable_invite_code_impl(args: Args, runtime_state: &mut RuntimeState) -> Res
                 now,
             );
 
-            handle_activity_notification(runtime_state);
+            handle_activity_notification(state);
 
             return Success;
         }
