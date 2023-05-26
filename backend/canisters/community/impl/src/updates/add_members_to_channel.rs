@@ -72,6 +72,7 @@ struct GateCheckInfo {
     user_index_canister_id: CanisterId,
 }
 
+#[allow(clippy::result_large_err)]
 fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response> {
     if state.data.is_frozen() {
         return Err(CommunityFrozen);
@@ -147,6 +148,7 @@ fn commit(
         }
 
         let mut users_added: Vec<UserId> = Vec::new();
+        let mut users_limit_reached: Vec<UserId> = Vec::new();
 
         for user_id in users_to_add {
             match channel.chat.members.add(
@@ -158,7 +160,7 @@ fn commit(
             ) {
                 AddResult::Success(_) => users_added.push(user_id),
                 AddResult::AlreadyInGroup => users_already_in_channel.push(user_id),
-                AddResult::UserLimitReached(limit) => return UserLimitReached(limit),
+                AddResult::UserLimitReached(_) => users_limit_reached.push(user_id),
                 AddResult::Blocked => users_failed_with_error.push(UserFailedError {
                     user_id,
                     error: "User blocked".to_string(),
@@ -169,6 +171,7 @@ fn commit(
         if users_added.is_empty() {
             return Failed(FailedResult {
                 users_already_in_channel,
+                users_limit_reached,
                 users_failed_gate_check,
                 users_failed_with_error,
             });
@@ -200,6 +203,7 @@ fn commit(
         if !users_already_in_channel.is_empty() || !users_failed_gate_check.is_empty() || !users_failed_with_error.is_empty() {
             PartialSuccess(PartialSuccessResult {
                 users_added,
+                users_limit_reached,
                 users_already_in_channel,
                 users_failed_gate_check,
                 users_failed_with_error,

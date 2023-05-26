@@ -27,6 +27,7 @@ pub enum Response {
 pub struct PartialSuccessResult {
     pub users_added: Vec<UserId>,
     pub users_already_in_channel: Vec<UserId>,
+    pub users_limit_reached: Vec<UserId>,
     pub users_failed_gate_check: Vec<UserFailedGateCheck>,
     pub users_failed_with_error: Vec<UserFailedError>,
 }
@@ -34,6 +35,7 @@ pub struct PartialSuccessResult {
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct FailedResult {
     pub users_already_in_channel: Vec<UserId>,
+    pub users_limit_reached: Vec<UserId>,
     pub users_failed_gate_check: Vec<UserFailedGateCheck>,
     pub users_failed_with_error: Vec<UserFailedError>,
 }
