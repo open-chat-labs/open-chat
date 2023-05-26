@@ -17,5 +17,4 @@ pub enum Response {
     UserNotInChannel,
     NotAuthorized,
     AlreadyPrivate,
-    InternalError,
 }
