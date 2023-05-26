@@ -55,6 +55,13 @@ pub struct EventsResponse {
     pub timestamp: TimestampMillis,
 }
 
+#[derive(CandidType, Serialize, Deserialize, Debug)]
+pub struct MessagesResponse {
+    pub messages: Vec<EventWrapper<Message>>,
+    pub latest_event_index: EventIndex,
+    pub timestamp: TimestampMillis,
+}
+
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct GroupCreated {
     pub name: String,

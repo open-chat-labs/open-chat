@@ -1,17 +1,17 @@
 use chat_events::{
-    AddRemoveReactionArgs, ChatEventInternal, ChatEvents, DeleteMessageResult, DeleteUndeleteMessagesArgs, PushMessageArgs,
-    Reader, UndeleteMessageResult,
+    AddRemoveReactionArgs, ChatEventInternal, ChatEvents, ChatEventsListReader, DeleteMessageResult,
+    DeleteUndeleteMessagesArgs, PushMessageArgs, Reader, UndeleteMessageResult,
 };
 use group_members::{ChangeRoleResult, GroupMembers};
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use types::{
-    Avatar, AvatarChanged, ContentValidationError, CryptoTransaction, EventIndex, EventWrapper, FieldTooLongResult,
-    FieldTooShortResult, GroupDescriptionChanged, GroupGate, GroupGateUpdated, GroupNameChanged, GroupPermissionRole,
-    GroupPermissions, GroupReplyContext, GroupRole, GroupRules, GroupRulesChanged, GroupSubtype, InvalidPollReason, MemberLeft,
-    MembersRemoved, MentionInternal, Message, MessageContentInitial, MessageId, MessageIndex, MessagePinned, MessageUnpinned,
-    Milliseconds, OptionUpdate, OptionalGroupPermissions, PermissionsChanged, PushEventResult, Reaction, RoleChanged,
-    TimestampMillis, Timestamped, User, UserId, UsersBlocked,
+    Avatar, AvatarChanged, ContentValidationError, CryptoTransaction, EventIndex, EventWrapper, EventsResponse,
+    FieldTooLongResult, FieldTooShortResult, GroupDescriptionChanged, GroupGate, GroupGateUpdated, GroupNameChanged,
+    GroupPermissionRole, GroupPermissions, GroupReplyContext, GroupRole, GroupRules, GroupRulesChanged, GroupSubtype,
+    InvalidPollReason, MemberLeft, MembersRemoved, MentionInternal, Message, MessageContentInitial, MessageId, MessageIndex,
+    MessagePinned, MessageUnpinned, MessagesResponse, Milliseconds, OptionUpdate, OptionalGroupPermissions, PermissionsChanged,
+    PushEventResult, Reaction, RoleChanged, TimestampMillis, Timestamped, User, UserId, UsersBlocked,
 };
 use utils::avatar_validation::validate_avatar;
 use utils::group_validation::{validate_description, validate_name, validate_rules, NameValidationError, RulesValidationError};
@@ -68,6 +68,150 @@ impl GroupChatCore {
             permissions,
             date_last_pinned: None,
             gate: Timestamped::new(gate, now),
+        }
+    }
+
+    pub fn min_visible_event_index(&self, user_id: Option<UserId>) -> Option<EventIndex> {
+        if self.is_public && self.history_visible_to_new_joiners {
+            Some(EventIndex::default())
+        } else {
+            user_id
+                .and_then(|u| self.members.get(&u))
+                .map(|m| m.min_visible_event_index())
+        }
+    }
+
+    pub fn events(
+        &self,
+        user_id: Option<UserId>,
+        thread_root_message_index: Option<MessageIndex>,
+        start_index: EventIndex,
+        ascending: bool,
+        max_messages: u32,
+        max_events: u32,
+        latest_client_event_index: Option<EventIndex>,
+        now: TimestampMillis,
+    ) -> EventsResult {
+        use EventsResult::*;
+
+        match self.events_reader(user_id, thread_root_message_index, now) {
+            EventsReaderResult::Success(reader) => {
+                let latest_event_index = reader.latest_event_index().unwrap();
+                if latest_client_event_index.map_or(false, |e| latest_event_index < e) {
+                    return ReplicaNotUpToDate(latest_event_index);
+                }
+
+                let events = reader.scan(
+                    Some(start_index.into()),
+                    ascending,
+                    max_messages as usize,
+                    max_events as usize,
+                    user_id,
+                );
+
+                Success(EventsResponse {
+                    events,
+                    latest_event_index,
+                    timestamp: now,
+                })
+            }
+            EventsReaderResult::ThreadNotFound => ThreadNotFound,
+            EventsReaderResult::UserNotInGroup => UserNotInGroup,
+        }
+    }
+
+    pub fn events_by_index(
+        &self,
+        user_id: Option<UserId>,
+        thread_root_message_index: Option<MessageIndex>,
+        events: Vec<EventIndex>,
+        latest_client_event_index: Option<EventIndex>,
+        now: TimestampMillis,
+    ) -> EventsResult {
+        use EventsResult::*;
+
+        match self.events_reader(user_id, thread_root_message_index, now) {
+            EventsReaderResult::Success(reader) => {
+                let latest_event_index = reader.latest_event_index().unwrap();
+                if latest_client_event_index.map_or(false, |e| latest_event_index < e) {
+                    return ReplicaNotUpToDate(latest_event_index);
+                }
+
+                let events = reader.get_by_indexes(&events, user_id);
+
+                Success(EventsResponse {
+                    events,
+                    latest_event_index,
+                    timestamp: now,
+                })
+            }
+            EventsReaderResult::ThreadNotFound => ThreadNotFound,
+            EventsReaderResult::UserNotInGroup => UserNotInGroup,
+        }
+    }
+
+    pub fn events_window(
+        &self,
+        user_id: Option<UserId>,
+        thread_root_message_index: Option<MessageIndex>,
+        mid_point: MessageIndex,
+        max_messages: u32,
+        max_events: u32,
+        latest_client_event_index: Option<EventIndex>,
+        now: TimestampMillis,
+    ) -> EventsResult {
+        use EventsResult::*;
+
+        match self.events_reader(user_id, thread_root_message_index, now) {
+            EventsReaderResult::Success(reader) => {
+                let latest_event_index = reader.latest_event_index().unwrap();
+                if latest_client_event_index.map_or(false, |e| latest_event_index < e) {
+                    return ReplicaNotUpToDate(latest_event_index);
+                }
+
+                let events = reader.window(mid_point.into(), max_messages as usize, max_events as usize, user_id);
+
+                Success(EventsResponse {
+                    events,
+                    latest_event_index,
+                    timestamp: now,
+                })
+            }
+            EventsReaderResult::ThreadNotFound => ThreadNotFound,
+            EventsReaderResult::UserNotInGroup => UserNotInGroup,
+        }
+    }
+
+    pub fn messages_by_message_index(
+        &self,
+        user_id: Option<UserId>,
+        thread_root_message_index: Option<MessageIndex>,
+        messages: Vec<MessageIndex>,
+        latest_client_event_index: Option<EventIndex>,
+        now: TimestampMillis,
+    ) -> MessagesResult {
+        use MessagesResult::*;
+
+        match self.events_reader(user_id, thread_root_message_index, now) {
+            EventsReaderResult::Success(reader) => {
+                let latest_event_index = reader.latest_event_index().unwrap();
+                if latest_client_event_index.map_or(false, |e| latest_event_index < e) {
+                    return ReplicaNotUpToDate(latest_event_index);
+                }
+
+                let messages: Vec<_> = messages
+                    .into_iter()
+                    .filter_map(|m| reader.message_event(m.into(), user_id))
+                    .collect();
+
+                Success(MessagesResponse {
+                    messages,
+                    latest_event_index,
+                    timestamp: now,
+                })
+            }
+            EventsReaderResult::ThreadNotFound => ThreadNotFound,
+            EventsReaderResult::UserNotInGroup => UserNotInGroup,
         }
     }
 
@@ -787,6 +931,28 @@ impl GroupChatCore {
         }
     }
 
+    fn events_reader(
+        &self,
+        user_id: Option<UserId>,
+        thread_root_message_index: Option<MessageIndex>,
+        now: TimestampMillis,
+    ) -> EventsReaderResult {
+        use EventsReaderResult::*;
+
+        if let Some(min_visible_event_index) = self.min_visible_event_index(user_id) {
+            if let Some(events_reader) = self
+                .events
+                .events_reader(min_visible_event_index, thread_root_message_index, now)
+            {
+                Success(events_reader)
+            } else {
+                ThreadNotFound
+            }
+        } else {
+            UserNotInGroup
+        }
+    }
+
     fn get_user_being_replied_to(
         &self,
         replies_to: &GroupReplyContext,
@@ -820,6 +986,20 @@ impl GroupChatCore {
             reply_in_thread: new.reply_in_thread.unwrap_or(old.reply_in_thread),
         }
     }
+}
+
+pub enum EventsResult {
+    Success(EventsResponse),
+    UserNotInGroup,
+    ThreadNotFound,
+    ReplicaNotUpToDate(EventIndex),
+}
+
+pub enum MessagesResult {
+    Success(MessagesResponse),
+    UserNotInGroup,
+    ThreadNotFound,
+    ReplicaNotUpToDate(EventIndex),
 }
 
 #[allow(clippy::large_enum_variant)]
@@ -912,4 +1092,10 @@ pub enum CanUpdateResult {
     RulesTooLong(FieldTooLongResult),
     AvatarTooBig(FieldTooLongResult),
     NameTaken,
+}
+
+enum EventsReaderResult<'r> {
+    Success(ChatEventsListReader<'r>),
+    UserNotInGroup,
+    ThreadNotFound,
 }
