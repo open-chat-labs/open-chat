@@ -10,9 +10,9 @@ fn events(args: Args) -> Response {
     read_state(|state| events_impl(args, state))
 }
 
-fn events_impl(args: Args, runtime_state: &RuntimeState) -> Response {
-    if let Some(chat) = runtime_state.data.direct_chats.get(&args.user_id.into()) {
-        let now = runtime_state.env.now();
+fn events_impl(args: Args, state: &RuntimeState) -> Response {
+    if let Some(chat) = state.data.direct_chats.get(&args.user_id.into()) {
+        let now = state.env.now();
         let events_reader = chat.events.main_events_reader(now);
         let latest_event_index = events_reader.latest_event_index().unwrap();
 
@@ -20,7 +20,7 @@ fn events_impl(args: Args, runtime_state: &RuntimeState) -> Response {
             return ReplicaNotUpToDate(latest_event_index);
         }
 
-        let my_user_id = runtime_state.env.canister_id().into();
+        let my_user_id = state.env.canister_id().into();
 
         let events: Vec<_> = events_reader.scan(
             Some(args.start_index.into()),

@@ -16,14 +16,14 @@ fn undelete_messages(args: Args) -> Response {
     mutate_state(|state| undelete_messages_impl(args, state))
 }
 
-fn undelete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    if runtime_state.data.suspended.value {
+fn undelete_messages_impl(args: Args, state: &mut RuntimeState) -> Response {
+    if state.data.suspended.value {
         return UserSuspended;
     }
 
-    if let Some(chat) = runtime_state.data.direct_chats.get_mut(&args.user_id.into()) {
-        let my_user_id = runtime_state.env.canister_id().into();
-        let now = runtime_state.env.now();
+    if let Some(chat) = state.data.direct_chats.get_mut(&args.user_id.into()) {
+        let my_user_id = state.env.canister_id().into();
+        let now = state.env.now();
 
         let delete_message_results = chat.events.undelete_messages(DeleteUndeleteMessagesArgs {
             caller: my_user_id,

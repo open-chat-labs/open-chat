@@ -10,8 +10,8 @@ fn c2c_lookup_user(args: Args) -> Response {
     read_state(|state| c2c_lookup_user_impl(args, state))
 }
 
-fn c2c_lookup_user_impl(args: Args, runtime_state: &RuntimeState) -> Response {
-    if let Some(user) = runtime_state.data.global_users.get(&args.user_id_or_principal) {
+fn c2c_lookup_user_impl(args: Args, state: &RuntimeState) -> Response {
+    if let Some(user) = state.data.global_users.get(&args.user_id_or_principal) {
         Success(GlobalUser {
             principal: user.principal,
             user_id: user.user_id,

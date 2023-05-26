@@ -19,8 +19,8 @@ thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
 }
 
-pub(crate) fn start_job_if_required(runtime_state: &RuntimeState) -> bool {
-    if TIMER_ID.with(|t| t.get().is_none()) && !runtime_state.data.pending_actions_queue.is_empty() {
+pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
+    if TIMER_ID.with(|t| t.get().is_none()) && !state.data.pending_actions_queue.is_empty() {
         let timer_id = ic_cdk_timers::set_timer_interval(Duration::ZERO, run);
         TIMER_ID.with(|t| t.set(Some(timer_id)));
         trace!("'process_pending_actions' job started");
@@ -40,9 +40,9 @@ fn run() {
     }
 }
 
-fn next_batch(runtime_state: &mut RuntimeState) -> Vec<Action> {
+fn next_batch(state: &mut RuntimeState) -> Vec<Action> {
     (0..MAX_BATCH_SIZE)
-        .map_while(|_| runtime_state.data.pending_actions_queue.pop())
+        .map_while(|_| state.data.pending_actions_queue.pop())
         .collect()
 }
 

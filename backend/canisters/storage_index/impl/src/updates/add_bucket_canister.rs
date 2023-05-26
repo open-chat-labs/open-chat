@@ -33,15 +33,15 @@ struct InitBucketArgs {
     init_args: storage_bucket_canister::init::Args,
 }
 
-fn prepare(canister_id: CanisterId, runtime_state: &RuntimeState) -> Result<InitBucketArgs, Response> {
-    if runtime_state.data.buckets.get(&canister_id).is_some() {
+fn prepare(canister_id: CanisterId, state: &RuntimeState) -> Result<InitBucketArgs, Response> {
+    if state.data.buckets.get(&canister_id).is_some() {
         Err(BucketAlreadyAdded)
     } else {
         Ok(InitBucketArgs {
-            wasm: runtime_state.data.bucket_canister_wasm.clone(),
+            wasm: state.data.bucket_canister_wasm.clone(),
             init_args: storage_bucket_canister::init::Args {
-                wasm_version: runtime_state.data.bucket_canister_wasm.version,
-                test_mode: runtime_state.data.test_mode,
+                wasm_version: state.data.bucket_canister_wasm.version,
+                test_mode: state.data.test_mode,
             },
         })
     }

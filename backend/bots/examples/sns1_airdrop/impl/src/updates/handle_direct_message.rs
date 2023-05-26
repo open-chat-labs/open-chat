@@ -12,38 +12,38 @@ fn handle_direct_message(args: Args) -> Response {
     mutate_state(|state| handle_message(args, state))
 }
 
-fn handle_message(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    let text = build_text(args, runtime_state);
+fn handle_message(args: Args, state: &mut RuntimeState) -> Response {
+    let text = build_text(args, state);
 
     Success(SuccessResult {
-        bot_name: runtime_state.data.bot_name.clone(),
+        bot_name: state.data.bot_name.clone(),
         messages: vec![BotMessage {
             content: MessageContent::Text(TextContent { text }),
         }],
     })
 }
 
-fn build_text(args: Args, runtime_state: &mut RuntimeState) -> String {
-    if runtime_state.data.completed {
+fn build_text(args: Args, state: &mut RuntimeState) -> String {
+    if state.data.completed {
         return "Registrations are no longer open".to_string();
     }
 
-    let caller: UserId = runtime_state.env.caller().into();
+    let caller: UserId = state.env.caller().into();
 
-    match runtime_state.data.users.entry(caller) {
+    match state.data.users.entry(caller) {
         Occupied(e) => {
             let current = *e.get();
             match try_extract_principal(args.content) {
                 Ok(principal) => {
                     if Some(principal) == current {
                         format!("You have already registered principal '{principal}' in the SNS-1 airdrop!")
-                    } else if !runtime_state.data.principals.insert(principal) {
+                    } else if !state.data.principals.insert(principal) {
                         format!("Principal '{principal}' has already been registered by another user")
                     } else {
                         *e.into_mut() = Some(principal);
 
                         if let Some(current) = current {
-                            runtime_state.data.principals.remove(&current);
+                            state.data.principals.remove(&current);
                             format!("Principal successfully updated to '{principal}'!")
                         } else {
                             format!("Principal '{principal}' successfully registered for the SNS-1 airdrop!")

@@ -13,17 +13,17 @@ async fn unpin_message(args: Args) -> Response {
     mutate_state(|state| unpin_message_impl(args, state))
 }
 
-fn unpin_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    if runtime_state.data.is_frozen() {
+fn unpin_message_impl(args: Args, state: &mut RuntimeState) -> Response {
+    if state.data.is_frozen() {
         return ChatFrozen;
     }
 
-    let caller = runtime_state.env.caller();
-    if let Some(user_id) = runtime_state.data.lookup_user_id(&caller) {
-        let now = runtime_state.env.now();
-        match runtime_state.data.chat.unpin_message(user_id, args.message_index, now) {
+    let caller = state.env.caller();
+    if let Some(user_id) = state.data.lookup_user_id(&caller) {
+        let now = state.env.now();
+        match state.data.chat.unpin_message(user_id, args.message_index, now) {
             PinUnpinMessageResult::Success(r) => {
-                handle_activity_notification(runtime_state);
+                handle_activity_notification(state);
                 SuccessV2(r)
             }
             PinUnpinMessageResult::NoChange => NoChange,

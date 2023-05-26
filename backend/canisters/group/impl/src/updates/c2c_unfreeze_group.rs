@@ -14,14 +14,14 @@ async fn c2c_unfreeze_group(args: Args) -> Response {
     mutate_state(|state| c2c_unfreeze_group_impl(args, state))
 }
 
-fn c2c_unfreeze_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    if runtime_state.data.frozen.is_some() {
-        let now = runtime_state.env.now();
+fn c2c_unfreeze_group_impl(args: Args, state: &mut RuntimeState) -> Response {
+    if state.data.frozen.is_some() {
+        let now = state.env.now();
 
-        let push_event_result = runtime_state.data.chat.events.unfreeze(args.caller, now);
-        runtime_state.data.frozen = Timestamped::new(None, now);
+        let push_event_result = state.data.chat.events.unfreeze(args.caller, now);
+        state.data.frozen = Timestamped::new(None, now);
 
-        handle_activity_notification(runtime_state);
+        handle_activity_notification(state);
 
         Success(EventWrapper {
             index: push_event_result.index,

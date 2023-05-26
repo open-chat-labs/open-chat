@@ -10,14 +10,14 @@ fn delete_files(args: Args) -> Response {
     mutate_state(|state| delete_files_impl(args, state))
 }
 
-fn delete_files_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    let caller = runtime_state.env.caller();
+fn delete_files_impl(args: Args, state: &mut RuntimeState) -> Response {
+    let caller = state.env.caller();
 
     let mut success = Vec::new();
     let mut failures = Vec::new();
 
     for file_id in args.file_ids {
-        match runtime_state.data.remove_file(caller, file_id) {
+        match state.data.remove_file(caller, file_id) {
             RemoveFileResult::Success(_) => success.push(file_id),
             RemoveFileResult::NotAuthorized => {
                 failures.push(DeleteFileFailure {

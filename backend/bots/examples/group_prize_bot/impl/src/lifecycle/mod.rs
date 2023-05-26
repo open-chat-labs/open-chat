@@ -19,10 +19,10 @@ fn init_env() -> Box<CanisterEnv> {
 
 fn init_state(env: Box<dyn Environment>, data: Data, wasm_version: Version) {
     let now = env.now();
-    let mut runtime_state = RuntimeState::new(env, data);
+    let mut state = RuntimeState::new(env, data);
 
-    crate::jobs::start(&mut runtime_state);
-    crate::init_state(runtime_state);
+    crate::jobs::start(&mut state);
+    crate::init_state(state);
     WASM_VERSION.with(|v| *v.borrow_mut() = Timestamped::new(wasm_version, now));
 }
 

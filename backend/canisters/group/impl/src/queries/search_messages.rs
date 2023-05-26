@@ -13,7 +13,7 @@ fn search_messages(args: Args) -> Response {
     read_state(|state| search_messages_impl(args, state))
 }
 
-fn search_messages_impl(args: Args, runtime_state: &RuntimeState) -> Response {
+fn search_messages_impl(args: Args, state: &RuntimeState) -> Response {
     let term_length = args.search_term.len() as u8;
     let users = args.users.unwrap_or_default();
 
@@ -29,8 +29,8 @@ fn search_messages_impl(args: Args, runtime_state: &RuntimeState) -> Response {
         return TooManyUsers(MAX_USERS);
     }
 
-    let caller = runtime_state.env.caller();
-    let member = match runtime_state.data.get_member(caller) {
+    let caller = state.env.caller();
+    let member = match state.data.get_member(caller) {
         None => return CallerNotInGroup,
         Some(p) => p,
     };
@@ -38,8 +38,8 @@ fn search_messages_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     let mut query = Query::parse(&args.search_term);
     query.users = HashSet::from_iter(users);
 
-    let matches = runtime_state.data.chat.events.search_messages(
-        runtime_state.env.now(),
+    let matches = state.data.chat.events.search_messages(
+        state.env.now(),
         member.min_visible_event_index(),
         &query,
         args.max_results,

@@ -14,11 +14,11 @@ fn c2c_summary(_: Args) -> Response {
     read_state(summary_impl)
 }
 
-fn summary_impl(runtime_state: &RuntimeState) -> Response {
-    let caller = runtime_state.env.caller();
-    if let Some(member) = runtime_state.data.members.get(caller) {
-        let now = runtime_state.env.now();
-        let summary = runtime_state.summary(member, now);
+fn summary_impl(state: &RuntimeState) -> Response {
+    let caller = state.env.caller();
+    if let Some(member) = state.data.members.get(caller) {
+        let now = state.env.now();
+        let summary = state.summary(member, now);
         Success(SuccessResult { summary })
     } else {
         UserNotInCommunity

@@ -13,15 +13,15 @@ fn c2c_edit_message(args: Args) -> Response {
     mutate_state(|state| c2c_edit_message_impl(args, state))
 }
 
-fn c2c_edit_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    let caller: UserId = runtime_state.env.caller().into();
+fn c2c_edit_message_impl(args: Args, state: &mut RuntimeState) -> Response {
+    let caller: UserId = state.env.caller().into();
 
-    if runtime_state.data.blocked_users.contains(&caller) {
+    if state.data.blocked_users.contains(&caller) {
         return UserBlocked;
     }
 
-    if let Some(chat) = runtime_state.data.direct_chats.get_mut(&caller.into()) {
-        let now = runtime_state.env.now();
+    if let Some(chat) = state.data.direct_chats.get_mut(&caller.into()) {
+        let now = state.env.now();
 
         let edit_message_args = EditMessageArgs {
             sender: caller,

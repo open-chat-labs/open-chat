@@ -7,11 +7,11 @@ fn c2c_user_principals(args: Args) -> Response {
     read_state(|state| c2c_user_principals_impl(args, state))
 }
 
-fn c2c_user_principals_impl(args: Args, runtime_state: &RuntimeState) -> Response {
+fn c2c_user_principals_impl(args: Args, state: &RuntimeState) -> Response {
     let map = args
         .user_ids
         .into_iter()
-        .filter_map(|id| runtime_state.data.global_users.get_by_user_id(&id).map(|u| (id, u.principal)))
+        .filter_map(|id| state.data.global_users.get_by_user_id(&id).map(|u| (id, u.principal)))
         .collect();
 
     Success(map)

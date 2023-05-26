@@ -9,10 +9,10 @@ fn current_user(_args: Args) -> Response {
     read_state(current_user_impl)
 }
 
-fn current_user_impl(runtime_state: &RuntimeState) -> Response {
-    let caller = runtime_state.env.caller();
+fn current_user_impl(state: &RuntimeState) -> Response {
+    let caller = state.env.caller();
 
-    if let Some(u) = runtime_state.data.users.get_by_principal(&caller) {
+    if let Some(u) = state.data.users.get_by_principal(&caller) {
         let canister_upgrade_status = if u.upgrade_in_progress {
             CanisterUpgradeStatus::InProgress
         } else {
@@ -30,8 +30,8 @@ fn current_user_impl(runtime_state: &RuntimeState) -> Response {
             suspended_by: d.suspended_by,
         });
 
-        let now = runtime_state.env.now();
-        let is_platform_moderator = runtime_state.data.platform_moderators.contains(&u.user_id);
+        let now = state.env.now();
+        let is_platform_moderator = state.data.platform_moderators.contains(&u.user_id);
 
         Success(SuccessResult {
             user_id: u.user_id,
@@ -40,11 +40,11 @@ fn current_user_impl(runtime_state: &RuntimeState) -> Response {
             avatar_id: u.avatar_id,
             wasm_version: Version::default(),
             icp_account: default_ledger_account(u.user_id.into()),
-            referrals: runtime_state.data.users.referrals(&u.user_id),
+            referrals: state.data.users.referrals(&u.user_id),
             is_super_admin: is_platform_moderator,
             is_platform_moderator,
             suspension_details,
-            is_suspected_bot: runtime_state.data.users.is_suspected_bot(&u.user_id),
+            is_suspected_bot: state.data.users.is_suspected_bot(&u.user_id),
             diamond_membership_details: u.diamond_membership_details.hydrate(now),
         })
     } else {

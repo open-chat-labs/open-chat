@@ -14,9 +14,9 @@ fn run() {
     ic_cdk::spawn(hydrate_and_set_hot_groups(groups));
 }
 
-fn calculate_hot_group_ids(runtime_state: &RuntimeState) -> Vec<ChatId> {
-    let now = runtime_state.env.now();
-    runtime_state.data.public_groups.calculate_hot_groups(now)
+fn calculate_hot_group_ids(state: &RuntimeState) -> Vec<ChatId> {
+    let now = state.env.now();
+    state.data.public_groups.calculate_hot_groups(now)
 }
 
 async fn hydrate_and_set_hot_groups(chat_ids: Vec<ChatId>) {

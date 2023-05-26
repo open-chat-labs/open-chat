@@ -51,8 +51,8 @@ struct PrepareOk {
     init_canister_args: InitGroupCanisterArgs,
 }
 
-fn prepare(args: Args, runtime_state: &mut RuntimeState) -> Result<PrepareOk, Response> {
-    let cycles_to_use = if runtime_state.data.canister_pool.is_empty() {
+fn prepare(args: Args, state: &mut RuntimeState) -> Result<PrepareOk, Response> {
+    let cycles_to_use = if state.data.canister_pool.is_empty() {
         let cycles_required = GROUP_CANISTER_INITIAL_CYCLES_BALANCE + CREATE_CANISTER_CYCLES_FEE;
         if !utils::cycles::can_spend_cycles(cycles_required, MIN_CYCLES_BALANCE) {
             return Err(CyclesBalanceTooLow);
@@ -62,8 +62,8 @@ fn prepare(args: Args, runtime_state: &mut RuntimeState) -> Result<PrepareOk, Re
         0
     };
 
-    let canister_id = runtime_state.data.canister_pool.pop();
-    let canister_wasm = runtime_state.data.group_canister_wasm_for_new_canisters.clone();
+    let canister_id = state.data.canister_pool.pop();
+    let canister_wasm = state.data.group_canister_wasm_for_new_canisters.clone();
     let init_canister_args = group_canister::init::Args {
         is_public: args.is_public,
         name: args.name,
@@ -77,16 +77,16 @@ fn prepare(args: Args, runtime_state: &mut RuntimeState) -> Result<PrepareOk, Re
         created_by_user_id: args.created_by_user_id,
         events_ttl: args.events_ttl,
         mark_active_duration: MARK_ACTIVE_DURATION,
-        group_index_canister_id: runtime_state.data.group_index_canister_id,
-        local_group_index_canister_id: runtime_state.env.canister_id(),
-        user_index_canister_id: runtime_state.data.user_index_canister_id,
-        local_user_index_canister_id: runtime_state.data.local_user_index_canister_id,
-        notifications_canister_id: runtime_state.data.notifications_canister_id,
-        proposals_bot_user_id: runtime_state.data.proposals_bot_user_id,
+        group_index_canister_id: state.data.group_index_canister_id,
+        local_group_index_canister_id: state.env.canister_id(),
+        user_index_canister_id: state.data.user_index_canister_id,
+        local_user_index_canister_id: state.data.local_user_index_canister_id,
+        notifications_canister_id: state.data.notifications_canister_id,
+        proposals_bot_user_id: state.data.proposals_bot_user_id,
         avatar: args.avatar,
         gate: args.gate,
         wasm_version: canister_wasm.version,
-        test_mode: runtime_state.data.test_mode,
+        test_mode: state.data.test_mode,
     };
 
     Ok(PrepareOk {
@@ -97,13 +97,13 @@ fn prepare(args: Args, runtime_state: &mut RuntimeState) -> Result<PrepareOk, Re
     })
 }
 
-fn commit(chat_id: ChatId, wasm_version: Version, runtime_state: &mut RuntimeState) {
-    runtime_state.data.local_groups.add(chat_id, wasm_version);
+fn commit(chat_id: ChatId, wasm_version: Version, state: &mut RuntimeState) {
+    state.data.local_groups.add(chat_id, wasm_version);
 }
 
-fn rollback(canister_id: Option<CanisterId>, runtime_state: &mut RuntimeState) {
+fn rollback(canister_id: Option<CanisterId>, state: &mut RuntimeState) {
     if let Some(canister_id) = canister_id {
-        runtime_state.data.canister_pool.push(canister_id);
+        state.data.canister_pool.push(canister_id);
     }
 }
 

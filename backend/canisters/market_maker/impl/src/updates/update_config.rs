@@ -18,8 +18,8 @@ async fn update_config(args: Args) -> Response {
     mutate_state(|state| update_config_impl(args, state))
 }
 
-fn update_config_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    if let Some(config) = runtime_state.data.exchange_config.get_mut(&args.exchange_id) {
+fn update_config_impl(args: Args, state: &mut RuntimeState) -> Response {
+    if let Some(config) = state.data.exchange_config.get_mut(&args.exchange_id) {
         update_if_some(args.enabled, &mut config.enabled);
         update_if_some(args.price_increment, &mut config.price_increment);
         update_if_some(args.order_size, &mut config.order_size);

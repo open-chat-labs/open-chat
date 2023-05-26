@@ -12,22 +12,20 @@ fn remove_reaction(args: Args) -> Response {
     mutate_state(|state| remove_reaction_impl(args, state))
 }
 
-fn remove_reaction_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    if runtime_state.data.is_frozen() {
+fn remove_reaction_impl(args: Args, state: &mut RuntimeState) -> Response {
+    if state.data.is_frozen() {
         return ChatFrozen;
     }
 
-    let caller = runtime_state.env.caller();
-    if let Some(user_id) = runtime_state.data.lookup_user_id(&caller) {
-        let now = runtime_state.env.now();
+    let caller = state.env.caller();
+    if let Some(user_id) = state.data.lookup_user_id(&caller) {
+        let now = state.env.now();
 
-        match runtime_state.data.chat.remove_reaction(
-            user_id,
-            args.thread_root_message_index,
-            args.message_id,
-            args.reaction,
-            now,
-        ) {
+        match state
+            .data
+            .chat
+            .remove_reaction(user_id, args.thread_root_message_index, args.message_id, args.reaction, now)
+        {
             AddRemoveReactionResult::Success => Success,
             AddRemoveReactionResult::NoChange | AddRemoveReactionResult::InvalidReaction => NoChange,
             AddRemoveReactionResult::MessageNotFound => MessageNotFound,

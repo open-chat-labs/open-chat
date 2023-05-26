@@ -10,22 +10,22 @@ fn selected_updates(args: Args) -> Response {
     read_state(|state| selected_updates_impl(args, state))
 }
 
-fn selected_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
-    let caller = runtime_state.env.caller();
-    let member = match runtime_state.data.get_member(caller) {
+fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
+    let caller = state.env.caller();
+    let member = match state.data.get_member(caller) {
         Some(p) => p,
         None => return CallerNotInGroup,
     };
 
     // Short circuit prior to calling `ic0.time()` so that query caching works effectively.
-    let latest_event_index = runtime_state.data.chat.events.latest_event_index().unwrap_or_default();
+    let latest_event_index = state.data.chat.events.latest_event_index().unwrap_or_default();
     if latest_event_index <= args.updates_since {
         return SuccessNoUpdates(latest_event_index);
     }
 
     let min_visible_event_index = member.min_visible_event_index();
-    let now = runtime_state.env.now();
-    let data = &runtime_state.data;
+    let now = state.env.now();
+    let data = &state.data;
     let events_reader = data.chat.events.visible_main_events_reader(min_visible_event_index, now);
     let latest_event_index = events_reader.latest_event_index().unwrap();
     let updates_since_time = events_reader

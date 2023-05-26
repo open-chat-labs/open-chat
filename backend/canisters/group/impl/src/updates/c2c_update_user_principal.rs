@@ -12,12 +12,9 @@ async fn c2c_update_user_principal(args: Args) -> Response {
     mutate_state(|state| c2c_update_user_principal_impl(args, state))
 }
 
-fn c2c_update_user_principal_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    if let Some(user_id) = runtime_state.data.principal_to_user_id_map.remove(&args.old_principal) {
-        runtime_state
-            .data
-            .principal_to_user_id_map
-            .insert(args.new_principal, user_id);
+fn c2c_update_user_principal_impl(args: Args, state: &mut RuntimeState) -> Response {
+    if let Some(user_id) = state.data.principal_to_user_id_map.remove(&args.old_principal) {
+        state.data.principal_to_user_id_map.insert(args.new_principal, user_id);
 
         Success
     } else {

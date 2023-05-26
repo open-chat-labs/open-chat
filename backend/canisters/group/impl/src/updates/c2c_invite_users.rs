@@ -18,17 +18,16 @@ fn c2c_invite_users(args: Args) -> Response {
     mutate_state(|state| c2c_invite_users_impl(args, state))
 }
 
-fn c2c_invite_users_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    if runtime_state.data.is_frozen() {
+fn c2c_invite_users_impl(args: Args, state: &mut RuntimeState) -> Response {
+    if state.data.is_frozen() {
         return ChatFrozen;
     }
 
-    let now = runtime_state.env.now();
+    let now = state.env.now();
 
-    if let Some(member) = runtime_state.data.chat.members.get(&args.caller) {
+    if let Some(member) = state.data.chat.members.get(&args.caller) {
         // The original caller must be authorized to invite other users
-        if member.suspended.value
-            || (!runtime_state.data.chat.is_public && !member.role.can_invite_users(&runtime_state.data.chat.permissions))
+        if member.suspended.value || (!state.data.chat.is_public && !member.role.can_invite_users(&state.data.chat.permissions))
         {
             return NotAuthorized;
         }
@@ -38,26 +37,26 @@ fn c2c_invite_users_impl(args: Args, runtime_state: &mut RuntimeState) -> Respon
             .users
             .iter()
             .filter(|(user_id, principal)| {
-                runtime_state.data.chat.members.get(user_id).is_none() && !runtime_state.data.invited_users.contains(principal)
+                state.data.chat.members.get(user_id).is_none() && !state.data.invited_users.contains(principal)
             })
             .copied()
             .collect();
 
         let user_ids: Vec<_> = invited_users.iter().map(|(user_id, _)| user_id).copied().collect();
 
-        if !runtime_state.data.chat.is_public {
+        if !state.data.chat.is_public {
             // Check the max invite limit will not be exceeded
-            if runtime_state.data.invited_users.len() + invited_users.len() > MAX_INVITES {
+            if state.data.invited_users.len() + invited_users.len() > MAX_INVITES {
                 return TooManyInvites(MAX_INVITES as u32);
             }
 
             // Find the latest event and message that the invited users are allowed to see
             let mut min_visible_event_index = EventIndex::default();
             let mut min_visible_message_index = MessageIndex::default();
-            if !runtime_state.data.chat.history_visible_to_new_joiners {
+            if !state.data.chat.history_visible_to_new_joiners {
                 // If there is only an initial "group created" event then allow these users
                 // to see the "group created" event by starting min_visible_* at zero
-                let events_reader = runtime_state.data.chat.events.main_events_reader(now);
+                let events_reader = state.data.chat.events.main_events_reader(now);
                 if events_reader.len() > 1 {
                     min_visible_event_index = events_reader.next_event_index();
                     min_visible_message_index = events_reader.next_message_index();
@@ -66,7 +65,7 @@ fn c2c_invite_users_impl(args: Args, runtime_state: &mut RuntimeState) -> Respon
 
             // Add new invites
             for (user_id, principal) in invited_users.iter() {
-                runtime_state.data.invited_users.add(
+                state.data.invited_users.add(
                     *principal,
                     UserInvitation {
                         invited: *user_id,
@@ -79,7 +78,7 @@ fn c2c_invite_users_impl(args: Args, runtime_state: &mut RuntimeState) -> Respon
             }
 
             // Push a UsersInvited event
-            runtime_state.data.chat.events.push_main_event(
+            state.data.chat.events.push_main_event(
                 ChatEventInternal::UsersInvited(Box::new(UsersInvited {
                     user_ids: user_ids.clone(),
                     invited_by: member.user_id,
@@ -87,12 +86,12 @@ fn c2c_invite_users_impl(args: Args, runtime_state: &mut RuntimeState) -> Respon
                 args.correlation_id,
                 now,
             );
-            handle_activity_notification(runtime_state);
+            handle_activity_notification(state);
         }
 
         Success(SuccessResult {
             invited_users: user_ids,
-            group_name: runtime_state.data.chat.name.clone(),
+            group_name: state.data.chat.name.clone(),
         })
     } else {
         CallerNotInGroup

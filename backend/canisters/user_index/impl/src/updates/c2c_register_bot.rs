@@ -14,18 +14,16 @@ fn c2c_register_bot(args: Args) -> Response {
     mutate_state(|state| c2c_register_bot_impl(args, state))
 }
 
-fn c2c_register_bot_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    let caller = runtime_state.env.caller();
+fn c2c_register_bot_impl(args: Args, state: &mut RuntimeState) -> Response {
+    let caller = state.env.caller();
     let user_id: UserId = caller.into();
-    let now = runtime_state.env.now();
+    let now = state.env.now();
 
-    if runtime_state.data.users.get_by_principal(&caller).is_some()
-        || runtime_state.data.users.get_by_user_id(&user_id).is_some()
-    {
+    if state.data.users.get_by_principal(&caller).is_some() || state.data.users.get_by_user_id(&user_id).is_some() {
         return AlreadyRegistered;
     }
 
-    if runtime_state.data.users.len() >= USER_LIMIT {
+    if state.data.users.len() >= USER_LIMIT {
         return UserLimitReached;
     }
 
@@ -36,7 +34,7 @@ fn c2c_register_bot_impl(args: Args, runtime_state: &mut RuntimeState) -> Respon
         Err(UsernameValidationError::Invalid) => return UsernameInvalid,
     };
 
-    if runtime_state.data.users.get_by_username(&args.username).is_some() {
+    if state.data.users.get_by_username(&args.username).is_some() {
         return UsernameTaken;
     }
 
@@ -46,12 +44,12 @@ fn c2c_register_bot_impl(args: Args, runtime_state: &mut RuntimeState) -> Respon
     }
     ic_cdk::api::call::msg_cycles_accept128(BOT_REGISTRATION_FEE);
 
-    runtime_state
+    state
         .data
         .users
         .register(caller, user_id, args.username.clone(), now, None, true);
 
-    runtime_state.push_event_to_all_local_user_indexes(
+    state.push_event_to_all_local_user_indexes(
         Event::UserRegistered(UserRegistered {
             user_id,
             user_principal: caller,

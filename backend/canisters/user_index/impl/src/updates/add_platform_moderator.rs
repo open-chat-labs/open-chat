@@ -25,13 +25,13 @@ async fn add_platform_moderator(args: Args) -> Response {
     }
 }
 
-fn is_already_platform_moderator(user_id: &UserId, runtime_state: &RuntimeState) -> bool {
-    runtime_state.data.platform_moderators.contains(user_id)
+fn is_already_platform_moderator(user_id: &UserId, state: &RuntimeState) -> bool {
+    state.data.platform_moderators.contains(user_id)
 }
 
-fn commit(user_id: UserId, runtime_state: &mut RuntimeState) {
-    runtime_state.data.platform_moderators.insert(user_id);
-    runtime_state.push_event_to_all_local_user_indexes(
+fn commit(user_id: UserId, state: &mut RuntimeState) {
+    state.data.platform_moderators.insert(user_id);
+    state.push_event_to_all_local_user_indexes(
         Event::SuperAdminStatusChanged(SuperAdminStatusChanged {
             user_id,
             is_super_admin: true,
@@ -39,9 +39,9 @@ fn commit(user_id: UserId, runtime_state: &mut RuntimeState) {
         None,
     );
 
-    if let Some(group_id) = runtime_state.data.platform_moderators_group {
-        let now = runtime_state.env.now();
-        runtime_state.data.timer_jobs.enqueue_job(
+    if let Some(group_id) = state.data.platform_moderators_group {
+        let now = state.env.now();
+        state.data.timer_jobs.enqueue_job(
             TimerJob::JoinUserToGroup(JoinUserToGroup {
                 user_id,
                 group_id,

@@ -112,8 +112,8 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
     }
 }
 
-fn commit(my_user_id: UserId, args: Args, runtime_state: &mut RuntimeState) {
-    runtime_state.data.chat.do_update(
+fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) {
+    state.data.chat.do_update(
         my_user_id,
         args.name,
         args.description,
@@ -122,8 +122,8 @@ fn commit(my_user_id: UserId, args: Args, runtime_state: &mut RuntimeState) {
         args.permissions,
         args.gate,
         args.events_ttl,
-        runtime_state.env.now(),
+        state.env.now(),
     );
 
-    handle_activity_notification(runtime_state);
+    handle_activity_notification(state);
 }

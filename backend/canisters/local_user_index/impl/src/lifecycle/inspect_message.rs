@@ -6,7 +6,7 @@ fn inspect_message() {
     read_state(accept_if_valid);
 }
 
-fn accept_if_valid(runtime_state: &RuntimeState) {
+fn accept_if_valid(state: &RuntimeState) {
     let method_name = ic_cdk::api::call::method_name();
 
     // 'inspect_message' only applies to ingress messages so calls to c2c methods should be rejected
@@ -16,7 +16,7 @@ fn accept_if_valid(runtime_state: &RuntimeState) {
     }
 
     let is_valid = match method_name.as_str() {
-        "join_group" | "report_message" | "invite_users_to_group" => runtime_state.is_caller_openchat_user(),
+        "join_group" | "report_message" | "invite_users_to_group" => state.is_caller_openchat_user(),
         "register_user" => true,
         _ => false,
     };

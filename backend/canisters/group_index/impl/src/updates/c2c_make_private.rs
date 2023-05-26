@@ -10,13 +10,13 @@ fn c2c_make_private(_args: Args) -> Response {
     mutate_state(c2c_make_private_impl)
 }
 
-fn c2c_make_private_impl(runtime_state: &mut RuntimeState) -> Response {
-    let caller = runtime_state.env.caller();
+fn c2c_make_private_impl(state: &mut RuntimeState) -> Response {
+    let caller = state.env.caller();
     let chat_id = ChatId::from(caller);
 
-    if let Some(group) = runtime_state.data.public_groups.delete(&chat_id) {
-        runtime_state.data.cached_hot_groups.remove(chat_id);
-        runtime_state.data.private_groups.add(group.into());
+    if let Some(group) = state.data.public_groups.delete(&chat_id) {
+        state.data.cached_hot_groups.remove(chat_id);
+        state.data.private_groups.add(group.into());
         Success
     } else {
         ChatNotFound

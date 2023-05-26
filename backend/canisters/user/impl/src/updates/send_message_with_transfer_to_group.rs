@@ -83,12 +83,12 @@ async fn send_message_with_transfer_to_group_impl(args: Args) -> Response {
     }
 }
 
-fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PendingCryptoTransaction, Box<Response>> {
-    let now = runtime_state.env.now();
+fn prepare(args: &Args, state: &RuntimeState) -> Result<PendingCryptoTransaction, Box<Response>> {
+    let now = state.env.now();
 
-    if runtime_state.data.suspended.value {
+    if state.data.suspended.value {
         return Err(Box::new(UserSuspended));
-    } else if runtime_state.data.group_chats.get(&args.group_id).is_none() {
+    } else if state.data.group_chats.get(&args.group_id).is_none() {
         return Err(Box::new(CallerNotInGroup(None)));
     } else if args.content.text_length() > MAX_TEXT_LENGTH_USIZE {
         return Err(Box::new(TextTooLong(MAX_TEXT_LENGTH)));
@@ -96,7 +96,7 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PendingCryptoTra
 
     let pending_transaction = match &args.content {
         MessageContentInitial::Crypto(c) => {
-            if runtime_state.data.blocked_users.contains(&c.recipient) {
+            if state.data.blocked_users.contains(&c.recipient) {
                 return Err(Box::new(RecipientBlocked));
             }
             match &c.transfer {

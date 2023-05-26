@@ -45,16 +45,16 @@ struct PrepareResult {
     user_id: UserId,
 }
 
-fn prepare(runtime_state: &RuntimeState) -> Result<PrepareResult, Response> {
-    if runtime_state.data.is_frozen() {
+fn prepare(state: &RuntimeState) -> Result<PrepareResult, Response> {
+    if state.data.is_frozen() {
         return Err(ChatFrozen);
     }
 
-    if let Some(user_id) = runtime_state.data.lookup_user_id(&runtime_state.env.caller()) {
-        match runtime_state.data.chat.can_make_private(user_id) {
+    if let Some(user_id) = state.data.lookup_user_id(&state.env.caller()) {
+        match state.data.chat.can_make_private(user_id) {
             MakePrivateResult::Success => Ok(PrepareResult {
-                group_index_canister_id: runtime_state.data.group_index_canister_id,
-                chat_id: runtime_state.env.canister_id().into(),
+                group_index_canister_id: state.data.group_index_canister_id,
+                chat_id: state.env.canister_id().into(),
                 user_id,
             }),
             MakePrivateResult::UserSuspended => Err(UserSuspended),
@@ -67,8 +67,8 @@ fn prepare(runtime_state: &RuntimeState) -> Result<PrepareResult, Response> {
     }
 }
 
-fn commit(user_id: UserId, runtime_state: &mut RuntimeState) {
-    runtime_state.data.chat.do_make_private(user_id, runtime_state.env.now());
+fn commit(user_id: UserId, state: &mut RuntimeState) {
+    state.data.chat.do_make_private(user_id, state.env.now());
 
-    handle_activity_notification(runtime_state);
+    handle_activity_notification(state);
 }

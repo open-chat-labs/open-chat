@@ -30,8 +30,8 @@ mod process_pending_actions {
         }
     }
 
-    fn get_next(runtime_state: &mut RuntimeState) -> Option<PendingAction> {
-        runtime_state.data.pending_actions.take()
+    fn get_next(state: &mut RuntimeState) -> Option<PendingAction> {
+        state.data.pending_actions.take()
     }
 
     async fn process_icp_transfer(recipient: UserId, transfer_args: TransferArgs, transaction_hash: TransactionHash) {

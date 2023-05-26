@@ -20,15 +20,15 @@ mod sync_index {
         }
     }
 
-    fn next_batch(runtime_state: &mut RuntimeState) -> Option<(CanisterId, Args)> {
-        let bytes_used = runtime_state.data.files.bytes_used();
+    fn next_batch(state: &mut RuntimeState) -> Option<(CanisterId, Args)> {
+        let bytes_used = state.data.files.bytes_used();
         let bytes_remaining = (DATA_LIMIT_BYTES as i64) - (bytes_used as i64);
 
-        runtime_state
+        state
             .data
             .index_sync_state
             .pop_args_for_next_sync(bytes_used, bytes_remaining)
-            .map(|args| (runtime_state.data.storage_index_canister_id, args))
+            .map(|args| (state.data.storage_index_canister_id, args))
     }
 
     async fn send_to_index(storage_index_canister_id: CanisterId, args: Args) {
@@ -42,7 +42,7 @@ mod sync_index {
         }
     }
 
-    fn handle_success(result: SuccessResult, runtime_state: &mut RuntimeState) {
+    fn handle_success(result: SuccessResult, state: &mut RuntimeState) {
         // For each file that is rejected by the index canister we want to do 2 things -
         // 1. Record the reason against the user so that they can determine what happened
         // 2. Delete any additional data we have held for that file
@@ -50,24 +50,24 @@ mod sync_index {
             let file_id = file.file_id;
             let reason = file.reason.into();
 
-            if let Some(user_id) = runtime_state.data.files.owner(&file.file_id) {
-                if let Some(user) = runtime_state.data.users.get_mut(&user_id) {
+            if let Some(user_id) = state.data.files.owner(&file.file_id) {
+                if let Some(user) = state.data.users.get_mut(&user_id) {
                     let old_status = user.set_file_status(file_id, FileStatusInternal::Rejected(reason));
 
                     if let Some(FileStatusInternal::Uploading(_)) = old_status {
-                        runtime_state.data.files.remove_pending_file(&file_id);
+                        state.data.files.remove_pending_file(&file_id);
                     } else {
-                        runtime_state.data.files.remove(user_id, file_id);
+                        state.data.files.remove(user_id, file_id);
                     }
                 }
             }
         }
 
-        runtime_state.data.index_sync_state.mark_sync_completed();
+        state.data.index_sync_state.mark_sync_completed();
     }
 
-    fn handle_error(args: Args, runtime_state: &mut RuntimeState) {
-        runtime_state.data.index_sync_state.mark_sync_failed(args);
+    fn handle_error(args: Args, state: &mut RuntimeState) {
+        state.data.index_sync_state.mark_sync_failed(args);
     }
 }
 

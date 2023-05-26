@@ -14,13 +14,13 @@ fn c2c_freeze_group(args: Args) -> Response {
     mutate_state(|state| c2c_freeze_group_impl(args, state))
 }
 
-fn c2c_freeze_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    if runtime_state.data.frozen.is_none() {
-        let now = runtime_state.env.now();
+fn c2c_freeze_group_impl(args: Args, state: &mut RuntimeState) -> Response {
+    if state.data.frozen.is_none() {
+        let now = state.env.now();
 
-        let push_event_result = runtime_state.data.chat.events.freeze(args.caller, args.reason.clone(), now);
+        let push_event_result = state.data.chat.events.freeze(args.caller, args.reason.clone(), now);
 
-        runtime_state.data.frozen = Timestamped::new(
+        state.data.frozen = Timestamped::new(
             Some(FrozenGroupInfo {
                 timestamp: now,
                 frozen_by: args.caller,
@@ -40,10 +40,10 @@ fn c2c_freeze_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Respon
             },
         };
 
-        handle_activity_notification(runtime_state);
+        handle_activity_notification(state);
 
         if args.return_members {
-            SuccessWithMembers(event, runtime_state.data.chat.members.iter().map(|p| p.user_id).collect())
+            SuccessWithMembers(event, state.data.chat.members.iter().map(|p| p.user_id).collect())
         } else {
             Success(event)
         }

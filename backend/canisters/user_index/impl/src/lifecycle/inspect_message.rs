@@ -6,7 +6,7 @@ fn inspect_message() {
     read_state(accept_if_valid);
 }
 
-fn accept_if_valid(runtime_state: &RuntimeState) {
+fn accept_if_valid(state: &RuntimeState) {
     let method_name = ic_cdk::api::call::method_name();
 
     // 'inspect_message' only applies to ingress messages so calls to c2c methods should be rejected
@@ -17,13 +17,13 @@ fn accept_if_valid(runtime_state: &RuntimeState) {
 
     let is_valid = match method_name.as_str() {
         "create_canister" | "mark_as_online" | "pay_for_diamond_membership" | "set_username" | "mark_suspected_bot" => {
-            let caller = runtime_state.env.caller();
-            let is_user = runtime_state.data.users.get_by_principal(&caller).is_some();
+            let caller = state.env.caller();
+            let is_user = state.data.users.get_by_principal(&caller).is_some();
             is_user
         }
-        "add_referral_codes" => runtime_state.is_caller_dev_team_dfx_principal(),
-        "suspend_user" | "unsuspend_user" => runtime_state.is_caller_platform_moderator(),
-        "set_user_upgrade_concurrency" => runtime_state.is_caller_platform_operator(),
+        "add_referral_codes" => state.is_caller_dev_team_dfx_principal(),
+        "suspend_user" | "unsuspend_user" => state.is_caller_platform_moderator(),
+        "set_user_upgrade_concurrency" => state.is_caller_platform_operator(),
         "add_platform_moderator"
         | "add_platform_operator"
         | "remove_platform_moderator"
@@ -34,7 +34,7 @@ fn accept_if_valid(runtime_state: &RuntimeState) {
         | "upgrade_user_canister_wasm"
         | "upgrade_local_user_index_canister_wasm"
         | "mark_local_user_index_full"
-        | "suspected_bots" => runtime_state.is_caller_governance_principal(),
+        | "suspected_bots" => state.is_caller_governance_principal(),
         "create_challenge" | "notify_registration_fee_paid" | "register_user" | "register_user_v2" => true,
         _ => false,
     };

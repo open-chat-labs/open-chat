@@ -14,12 +14,12 @@ fn add_reward_codes(args: Args) -> Response {
     }
 }
 
-fn add_reward_codes_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    let caller = runtime_state.env.caller();
-    let now = runtime_state.env.now();
+fn add_reward_codes_impl(args: Args, state: &mut RuntimeState) -> Response {
+    let caller = state.env.caller();
+    let now = state.env.now();
 
     for code in args.codes {
-        runtime_state
+        state
             .data
             .reward_codes
             .add(code.to_ascii_uppercase(), args.reward_amount, caller, args.expiry, now);

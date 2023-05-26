@@ -13,17 +13,17 @@ fn set_avatar(args: Args) -> Response {
     mutate_state(|state| set_avatar_impl(args, state))
 }
 
-fn set_avatar_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
+fn set_avatar_impl(args: Args, state: &mut RuntimeState) -> Response {
     if let Err(error) = validate_avatar(args.avatar.as_ref()) {
         return AvatarTooBig(error);
     }
 
     let id = args.avatar.as_ref().map(|a| a.id);
-    let now = runtime_state.env.now();
+    let now = state.env.now();
 
-    runtime_state.data.avatar = Timestamped::new(args.avatar, now);
+    state.data.avatar = Timestamped::new(args.avatar, now);
 
-    let user_index_canister_id = runtime_state.data.user_index_canister_id;
+    let user_index_canister_id = state.data.user_index_canister_id;
     ic_cdk::spawn(update_index_canister(user_index_canister_id, id));
 
     Success

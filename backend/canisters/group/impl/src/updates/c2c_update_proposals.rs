@@ -12,14 +12,14 @@ async fn c2c_update_proposals(args: Args) -> Response {
     mutate_state(|state| c2c_update_proposals_impl(args, state))
 }
 
-fn c2c_update_proposals_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    let caller = runtime_state.env.caller();
+fn c2c_update_proposals_impl(args: Args, state: &mut RuntimeState) -> Response {
+    let caller = state.env.caller();
 
-    if let Some(user_id) = runtime_state.data.lookup_user_id(&caller) {
-        let now = runtime_state.env.now();
+    if let Some(user_id) = state.data.lookup_user_id(&caller) {
+        let now = state.env.now();
 
-        runtime_state.data.chat.events.update_proposals(user_id, args.proposals, now);
-        handle_activity_notification(runtime_state);
+        state.data.chat.events.update_proposals(user_id, args.proposals, now);
+        handle_activity_notification(state);
 
         Success
     } else {

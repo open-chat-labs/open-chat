@@ -7,6 +7,6 @@ fn platform_moderators_group(_args: Args) -> Response {
     read_state(platform_moderators_group_impl)
 }
 
-fn platform_moderators_group_impl(runtime_state: &RuntimeState) -> Response {
-    Success(runtime_state.data.platform_moderators_group.unwrap())
+fn platform_moderators_group_impl(state: &RuntimeState) -> Response {
+    Success(state.data.platform_moderators_group.unwrap())
 }

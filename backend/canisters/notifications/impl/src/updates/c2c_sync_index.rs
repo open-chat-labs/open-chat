@@ -11,17 +11,17 @@ fn c2c_sync_index(args: Args) -> Response {
     mutate_state(|state| c2c_sync_index_impl(args, state))
 }
 
-fn c2c_sync_index_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
+fn c2c_sync_index_impl(args: Args, state: &mut RuntimeState) -> Response {
     for event in args.events {
         match event {
             NotificationsIndexEvent::SubscriptionAdded(s) => {
-                runtime_state.data.subscriptions.push(s.user_id, s.subscription);
+                state.data.subscriptions.push(s.user_id, s.subscription);
             }
             NotificationsIndexEvent::SubscriptionRemoved(s) => {
-                runtime_state.data.subscriptions.remove(s.user_id, &s.p256dh_key);
+                state.data.subscriptions.remove(s.user_id, &s.p256dh_key);
             }
             NotificationsIndexEvent::AllSubscriptionsRemoved(u) => {
-                runtime_state.data.subscriptions.remove_all(u);
+                state.data.subscriptions.remove_all(u);
             }
         }
     }

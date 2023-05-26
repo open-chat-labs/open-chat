@@ -10,8 +10,8 @@ fn upgrade_bucket_canister_wasm(args: Args) -> Response {
     mutate_state(|state| upgrade_bucket_canister_wasm_impl(args, state))
 }
 
-fn upgrade_bucket_canister_wasm_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    let canisters_to_upgrade: Vec<_> = runtime_state
+fn upgrade_bucket_canister_wasm_impl(args: Args, state: &mut RuntimeState) -> Response {
+    let canisters_to_upgrade: Vec<_> = state
         .data
         .buckets
         .iter()
@@ -19,12 +19,12 @@ fn upgrade_bucket_canister_wasm_impl(args: Args, runtime_state: &mut RuntimeStat
         .map(|b| b.canister_id)
         .collect();
 
-    if canisters_to_upgrade.is_empty() && runtime_state.data.buckets.iter().next().is_some() {
+    if canisters_to_upgrade.is_empty() && state.data.buckets.iter().next().is_some() {
         VersionNotHigher
     } else {
-        runtime_state.data.bucket_canister_wasm = args.wasm;
+        state.data.bucket_canister_wasm = args.wasm;
         for canister_id in canisters_to_upgrade {
-            runtime_state.data.canisters_requiring_upgrade.enqueue(canister_id)
+            state.data.canisters_requiring_upgrade.enqueue(canister_id)
         }
         Success
     }

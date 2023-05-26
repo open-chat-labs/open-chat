@@ -10,10 +10,10 @@ fn remove_subscriptions(args: Args) -> Response {
     mutate_state(|state| remove_subscriptions_impl(args, state))
 }
 
-fn remove_subscriptions_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
+fn remove_subscriptions_impl(args: Args, state: &mut RuntimeState) -> Response {
     for user in args.subscriptions_by_user {
         for key in user.p256dh_keys {
-            runtime_state.remove_subscription(user.user_id, key);
+            state.remove_subscription(user.user_id, key);
         }
     }
     Success
