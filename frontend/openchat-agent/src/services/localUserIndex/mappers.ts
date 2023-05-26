@@ -15,7 +15,7 @@ import type {
     ApiRegisterUserResponse,
     ApiReportMessageResponse,
 } from "./candid/idl";
-import { identity, optional } from "../../utils/mapping";
+import { bytesToHexString, identity, optional } from "../../utils/mapping";
 import {
     apiGroupSubtype,
     chatMetrics,
@@ -30,7 +30,7 @@ export function registerUserResponse(candid: ApiRegisterUserResponse): RegisterU
         return {
             kind: "success",
             userId: candid.Success.user_id.toString(),
-            icpAccount: candid.Success.icp_account.toString(),
+            icpAccount: bytesToHexString(candid.Success.icp_account),
         };
     }
 
