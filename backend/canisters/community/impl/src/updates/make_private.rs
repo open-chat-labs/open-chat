@@ -64,7 +64,7 @@ fn prepare(state: &RuntimeState) -> Result<PrepareResult, Response> {
             })
         }
     } else {
-        Err(NotAuthorized)
+        Err(UserNotInCommunity)
     }
 }
 
