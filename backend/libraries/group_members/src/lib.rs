@@ -190,7 +190,7 @@ impl GroupMembers {
                     return ChangeRoleResult::NotAuthorized;
                 }
             }
-            None => return ChangeRoleResult::CallerNotInGroup,
+            None => return ChangeRoleResult::UserNotInGroup,
         }
 
         let mut owner_count = self.owner_count;
@@ -199,7 +199,7 @@ impl GroupMembers {
 
         let member = match self.get_mut(&user_id) {
             Some(p) => p,
-            None => return ChangeRoleResult::UserNotInGroup,
+            None => return ChangeRoleResult::TargetUserNotInGroup,
         };
 
         // Platform moderators cannot be demoted from owner except by themselves
@@ -270,9 +270,9 @@ pub enum AddResult {
 
 pub enum ChangeRoleResult {
     Success(ChangeRoleSuccess),
-    CallerNotInGroup,
-    NotAuthorized,
     UserNotInGroup,
+    NotAuthorized,
+    TargetUserNotInGroup,
     Unchanged,
     Invalid,
     UserSuspended,

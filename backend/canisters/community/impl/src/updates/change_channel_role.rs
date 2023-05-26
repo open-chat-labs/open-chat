@@ -29,9 +29,9 @@ fn change_channel_role_impl(args: Args, state: &mut RuntimeState) -> Response {
                 .change_role(member.user_id, args.user_id, args.new_role, false, false, now)
             {
                 ChangeRoleResult::Success(_) => Success,
-                ChangeRoleResult::CallerNotInGroup => UserNotInChannel,
+                ChangeRoleResult::UserNotInGroup => UserNotInChannel,
                 ChangeRoleResult::NotAuthorized => NotAuthorized,
-                ChangeRoleResult::UserNotInGroup => TargetUserNotInChannel,
+                ChangeRoleResult::TargetUserNotInGroup => TargetUserNotInChannel,
                 ChangeRoleResult::Unchanged => Success,
                 ChangeRoleResult::Invalid => Invalid,
                 ChangeRoleResult::UserSuspended => UserSuspended,
