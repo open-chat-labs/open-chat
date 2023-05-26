@@ -364,7 +364,7 @@
     <ReminderBuilder
         {chatId}
         {eventIndex}
-        threadRootMessageIndex={threadRootMessage?.messageIndex}
+        {threadRootMessageIndex}
         on:close={() => (showRemindMe = false)} />
 {/if}
 
