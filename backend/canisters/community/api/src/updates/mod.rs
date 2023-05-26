@@ -8,6 +8,7 @@ pub mod c2c_leave_community;
 pub mod c2c_set_user_suspended;
 pub mod c2c_toggle_mute_notifications;
 pub mod c2c_unfreeze_community;
+pub mod change_channel_role;
 pub mod change_role;
 pub mod create_channel;
 pub mod decline_invitation;

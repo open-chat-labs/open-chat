@@ -1,7 +1,7 @@
 use crate::{mutate_state, RuntimeState};
 use canister_tracing_macros::trace;
 use community_canister::update_channel::{Response::*, *};
-use group_chat_core::CanUpdateResult;
+use group_chat_core::UpdateResult;
 use ic_cdk_macros::update;
 use types::OptionUpdate;
 
@@ -22,40 +22,29 @@ fn update_channel_impl(mut args: Args, state: &mut RuntimeState) -> Response {
         let caller = state.env.caller();
 
         if let Some(member) = state.data.members.get(caller) {
-            match channel.chat.can_update(
-                &member.user_id,
-                &args.name,
-                &args.description,
-                &args.rules,
-                &args.avatar,
-                &args.permissions,
+            match channel.chat.update(
+                member.user_id,
+                args.name,
+                args.description,
+                args.rules,
+                args.avatar,
+                args.permissions,
+                args.gate,
+                OptionUpdate::NoChange,
+                state.env.now(),
             ) {
-                CanUpdateResult::Success => {
-                    channel.chat.do_update(
-                        member.user_id,
-                        args.name,
-                        args.description,
-                        args.rules,
-                        args.avatar,
-                        args.permissions,
-                        args.gate,
-                        OptionUpdate::NoChange,
-                        state.env.now(),
-                    );
-
-                    Success
-                }
-                CanUpdateResult::UserSuspended => UserSuspended,
-                CanUpdateResult::UserNotInGroup => UserNotInChannel,
-                CanUpdateResult::NotAuthorized => NotAuthorized,
-                CanUpdateResult::NameTooShort(v) => NameTooShort(v),
-                CanUpdateResult::NameTooLong(v) => NameTooLong(v),
-                CanUpdateResult::NameReserved => NameReserved,
-                CanUpdateResult::DescriptionTooLong(v) => DescriptionTooLong(v),
-                CanUpdateResult::RulesTooShort(v) => RulesTooShort(v),
-                CanUpdateResult::RulesTooLong(v) => RulesTooLong(v),
-                CanUpdateResult::AvatarTooBig(v) => AvatarTooBig(v),
-                CanUpdateResult::NameTaken => NameTaken,
+                UpdateResult::Success => Success,
+                UpdateResult::UserSuspended => UserSuspended,
+                UpdateResult::UserNotInGroup => UserNotInChannel,
+                UpdateResult::NotAuthorized => NotAuthorized,
+                UpdateResult::NameTooShort(v) => NameTooShort(v),
+                UpdateResult::NameTooLong(v) => NameTooLong(v),
+                UpdateResult::NameReserved => NameReserved,
+                UpdateResult::DescriptionTooLong(v) => DescriptionTooLong(v),
+                UpdateResult::RulesTooShort(v) => RulesTooShort(v),
+                UpdateResult::RulesTooLong(v) => RulesTooLong(v),
+                UpdateResult::AvatarTooBig(v) => AvatarTooBig(v),
+                UpdateResult::NameTaken => NameTaken,
             }
         } else {
             UserNotInCommunity

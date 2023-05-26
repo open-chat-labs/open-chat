@@ -3,7 +3,7 @@ use crate::updates::update_group_v2::Response::*;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use group_canister::update_group_v2::*;
-use group_chat_core::CanUpdateResult;
+use group_chat_core::UpdateResult;
 use group_index_canister::c2c_update_group;
 use ic_cdk_macros::update;
 use tracing::error;
@@ -82,7 +82,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
             &args.avatar,
             &args.permissions,
         ) {
-            CanUpdateResult::Success => {
+            UpdateResult::Success => {
                 let avatar_update = args.avatar.as_ref().expand();
 
                 Ok(PrepareResult {
@@ -95,17 +95,17 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
                     avatar_id: avatar_update.map_or(Avatar::id(&state.data.chat.avatar), |avatar| avatar.map(|a| a.id)),
                 })
             }
-            CanUpdateResult::UserSuspended => Err(UserSuspended),
-            CanUpdateResult::UserNotInGroup => Err(CallerNotInGroup),
-            CanUpdateResult::NotAuthorized => Err(NotAuthorized),
-            CanUpdateResult::NameTooShort(v) => Err(NameTooShort(v)),
-            CanUpdateResult::NameTooLong(v) => Err(NameTooLong(v)),
-            CanUpdateResult::NameReserved => Err(NameReserved),
-            CanUpdateResult::DescriptionTooLong(v) => Err(DescriptionTooLong(v)),
-            CanUpdateResult::RulesTooShort(v) => Err(RulesTooShort(v)),
-            CanUpdateResult::RulesTooLong(v) => Err(RulesTooLong(v)),
-            CanUpdateResult::AvatarTooBig(v) => Err(AvatarTooBig(v)),
-            CanUpdateResult::NameTaken => Err(NameTaken),
+            UpdateResult::UserSuspended => Err(UserSuspended),
+            UpdateResult::UserNotInGroup => Err(CallerNotInGroup),
+            UpdateResult::NotAuthorized => Err(NotAuthorized),
+            UpdateResult::NameTooShort(v) => Err(NameTooShort(v)),
+            UpdateResult::NameTooLong(v) => Err(NameTooLong(v)),
+            UpdateResult::NameReserved => Err(NameReserved),
+            UpdateResult::DescriptionTooLong(v) => Err(DescriptionTooLong(v)),
+            UpdateResult::RulesTooShort(v) => Err(RulesTooShort(v)),
+            UpdateResult::RulesTooLong(v) => Err(RulesTooLong(v)),
+            UpdateResult::AvatarTooBig(v) => Err(AvatarTooBig(v)),
+            UpdateResult::NameTaken => Err(NameTaken),
         }
     } else {
         Err(CallerNotInGroup)
