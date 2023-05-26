@@ -38,13 +38,11 @@
 
     const dispatch = createEventDispatcher();
 
-    let chatsWithUnreadMsgs: number;
     let view: "chats" | "threads" = "chats";
 
     $: selectedChatId = client.selectedChatId;
     $: numberOfThreadsStore = client.numberOfThreadsStore;
     $: chatsLoading = client.chatsLoading;
-    $: messagesRead = client.messagesRead;
     $: chatSummariesListStore = client.chatSummariesListStore;
     $: userStore = client.userStore;
     $: user = $userStore[createdUser.userId];
@@ -73,10 +71,6 @@
         searchTerm !== ""
             ? $chatSummariesListStore.filter(chatMatchesSearch)
             : $chatSummariesListStore;
-
-    $: {
-        document.title = chatsWithUnreadMsgs > 0 ? `OpenChat (${chatsWithUnreadMsgs})` : "OpenChat";
-    }
 
     function chatWith(userId: string): void {
         dispatch("chatWith", userId);
@@ -113,23 +107,7 @@
             }
         });
 
-        let unsub = messagesRead.subscribe((_val) => {
-            chatsWithUnreadMsgs = chats
-                ? chats.reduce(
-                      (num, chat) =>
-                          client.unreadMessageCount(
-                              chat.chatId,
-                              chat.latestMessage?.event.messageIndex
-                          ) > 0
-                              ? num + 1
-                              : num,
-                      0
-                  )
-                : 0;
-        });
-
         return () => {
-            unsub();
             chatListScroll.set(chatScrollTop);
         };
     });
