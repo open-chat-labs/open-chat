@@ -279,6 +279,11 @@
                 page.replace(removeQueryStringParam("wallet"));
             }
 
+            const faq = $querystring.get("faq");
+            if (faq !== null) {
+                page.replace(`/faq?q=${faq}`);
+            }
+
             const hof = $querystring.get("hof");
             if (hof !== null) {
                 modal = ModalType.HallOfFame;
