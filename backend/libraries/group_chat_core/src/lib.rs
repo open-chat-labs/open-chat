@@ -9,9 +9,10 @@ use types::{
     Avatar, AvatarChanged, ContentValidationError, CryptoTransaction, EventIndex, EventWrapper, EventsResponse,
     FieldTooLongResult, FieldTooShortResult, GroupDescriptionChanged, GroupGate, GroupGateUpdated, GroupNameChanged,
     GroupPermissionRole, GroupPermissions, GroupReplyContext, GroupRole, GroupRules, GroupRulesChanged, GroupSubtype,
-    InvalidPollReason, MemberLeft, MembersRemoved, MentionInternal, Message, MessageContentInitial, MessageId, MessageIndex,
-    MessagePinned, MessageUnpinned, MessagesResponse, Milliseconds, OptionUpdate, OptionalGroupPermissions, PermissionsChanged,
-    PushEventResult, Reaction, RoleChanged, TimestampMillis, Timestamped, User, UserId, UsersBlocked,
+    GroupVisibilityChanged, InvalidPollReason, MemberLeft, MembersRemoved, MentionInternal, Message, MessageContentInitial,
+    MessageId, MessageIndex, MessagePinned, MessageUnpinned, MessagesResponse, Milliseconds, OptionUpdate,
+    OptionalGroupPermissions, PermissionsChanged, PushEventResult, Reaction, RoleChanged, TimestampMillis, Timestamped, User,
+    UserId, UsersBlocked,
 };
 use utils::avatar_validation::validate_avatar;
 use utils::group_validation::{validate_description, validate_name, validate_rules, NameValidationError, RulesValidationError};
@@ -954,6 +955,48 @@ impl GroupChatCore {
         }
     }
 
+    pub fn make_private(&mut self, user_id: UserId, now: TimestampMillis) -> MakePrivateResult {
+        use MakePrivateResult::*;
+
+        let result = self.can_make_private(user_id);
+
+        if matches!(result, Success) {
+            self.do_make_private(user_id, now);
+        }
+
+        result
+    }
+
+    pub fn can_make_private(&self, user_id: UserId) -> MakePrivateResult {
+        use MakePrivateResult::*;
+
+        if let Some(member) = self.members.get(&user_id) {
+            if member.suspended.value {
+                UserSuspended
+            } else if !self.is_public {
+                AlreadyPrivate
+            } else if !member.role.can_change_group_visibility() {
+                NotAuthorized
+            } else {
+                Success
+            }
+        } else {
+            UserNotInGroup
+        }
+    }
+
+    pub fn do_make_private(&mut self, user_id: UserId, now: TimestampMillis) {
+        self.is_public = false;
+
+        let event = GroupVisibilityChanged {
+            now_public: false,
+            changed_by: user_id,
+        };
+
+        self.events
+            .push_main_event(ChatEventInternal::GroupVisibilityChanged(Box::new(event)), 0, now);
+    }
+
     fn events_reader(
         &self,
         user_id: Option<UserId>,
@@ -1121,4 +1164,12 @@ enum EventsReaderResult<'r> {
     Success(ChatEventsListReader<'r>),
     UserNotInGroup,
     ThreadNotFound,
+}
+
+pub enum MakePrivateResult {
+    Success,
+    UserSuspended,
+    UserNotInGroup,
+    NotAuthorized,
+    AlreadyPrivate,
 }

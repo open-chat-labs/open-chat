@@ -1,8 +1,11 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::Empty;
+use types::ChannelId;
 
-pub type Args = Empty;
+#[derive(CandidType, Serialize, Deserialize, Debug)]
+pub struct Args {
+    pub channel_id: ChannelId,
+}
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
@@ -10,7 +13,8 @@ pub enum Response {
     CommunityFrozen,
     UserNotInCommunity,
     UserSuspended,
+    ChannelNotFound,
+    UserNotInChannel,
     NotAuthorized,
     AlreadyPrivate,
-    InternalError,
 }
