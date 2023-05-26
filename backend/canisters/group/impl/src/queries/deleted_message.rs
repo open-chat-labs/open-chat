@@ -9,18 +9,18 @@ fn deleted_message(args: Args) -> Response {
     read_state(|state| deleted_message_impl(args, state))
 }
 
-fn deleted_message_impl(args: Args, runtime_state: &RuntimeState) -> Response {
-    let caller = runtime_state.env.caller();
-    let member = match runtime_state.data.get_member(caller) {
+fn deleted_message_impl(args: Args, state: &RuntimeState) -> Response {
+    let caller = state.env.caller();
+    let member = match state.data.get_member(caller) {
         None => return CallerNotInGroup,
         Some(p) => p,
     };
 
     let min_visible_event_index = member.min_visible_event_index();
-    let now = runtime_state.env.now();
+    let now = state.env.now();
 
     if let Some(events_reader) =
-        runtime_state
+        state
             .data
             .chat
             .events
@@ -32,7 +32,7 @@ fn deleted_message_impl(args: Args, runtime_state: &RuntimeState) -> Response {
                     MessageHardDeleted
                 } else if member.user_id == message.sender
                     || (deleted_by.deleted_by != message.sender
-                        && member.role.can_delete_messages(&runtime_state.data.chat.permissions))
+                        && member.role.can_delete_messages(&state.data.chat.permissions))
                 {
                     Success(SuccessResult {
                         content: message.content.hydrate(Some(member.user_id)),

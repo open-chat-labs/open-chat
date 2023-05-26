@@ -8,12 +8,12 @@ fn messages_by_message_index(args: Args) -> Response {
     read_state(|state| messages_by_message_index_impl(args, state))
 }
 
-fn messages_by_message_index_impl(args: Args, runtime_state: &RuntimeState) -> Response {
-    let caller = runtime_state.env.caller();
-    let now = runtime_state.env.now();
-    let user_id = runtime_state.data.lookup_user_id(&caller);
+fn messages_by_message_index_impl(args: Args, state: &RuntimeState) -> Response {
+    let caller = state.env.caller();
+    let now = state.env.now();
+    let user_id = state.data.lookup_user_id(&caller);
 
-    match runtime_state.data.chat.messages_by_message_index(
+    match state.data.chat.messages_by_message_index(
         user_id,
         args.thread_root_message_index,
         args.messages,

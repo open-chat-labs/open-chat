@@ -11,9 +11,9 @@ fn c2c_update_group(args: Args) -> Response {
     mutate_state(|state| c2c_update_group_impl(args, state))
 }
 
-fn c2c_update_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    let chat_id = ChatId::from(runtime_state.env.caller());
-    match runtime_state
+fn c2c_update_group_impl(args: Args, state: &mut RuntimeState) -> Response {
+    let chat_id = ChatId::from(state.env.caller());
+    match state
         .data
         .public_groups
         .update_group(&chat_id, args.name, args.description, args.avatar_id)

@@ -16,11 +16,11 @@ fn mark_read_v2(args: Args) -> Response {
     mutate_state(|state| mark_read_impl(args, state))
 }
 
-fn mark_read_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    let now = runtime_state.env.now();
+fn mark_read_impl(args: Args, state: &mut RuntimeState) -> Response {
+    let now = state.env.now();
 
     for chat_messages_read in args.messages_read {
-        if let Some(group_chat) = runtime_state.data.group_chats.get_mut(&chat_messages_read.chat_id) {
+        if let Some(group_chat) = state.data.group_chats.get_mut(&chat_messages_read.chat_id) {
             if let Some(read_up_to) = chat_messages_read.read_up_to {
                 group_chat.mark_read_up_to(read_up_to, now);
             }
@@ -34,7 +34,7 @@ fn mark_read_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
             if chat_messages_read.date_read_pinned > group_chat.date_read_pinned.value {
                 group_chat.date_read_pinned = Timestamped::new(chat_messages_read.date_read_pinned, now);
             }
-        } else if let Some(direct_chat) = runtime_state.data.direct_chats.get_mut(&chat_messages_read.chat_id) {
+        } else if let Some(direct_chat) = state.data.direct_chats.get_mut(&chat_messages_read.chat_id) {
             if let Some(read_up_to) = chat_messages_read.read_up_to {
                 if read_up_to
                     <= direct_chat
@@ -51,7 +51,7 @@ fn mark_read_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
                         mark_read_on_recipients_canister(
                             chat_messages_read.chat_id,
                             read_up_to_of_theirs,
-                            &runtime_state.data.fire_and_forget_handler,
+                            &state.data.fire_and_forget_handler,
                         );
                         direct_chat.unread_message_index_map.remove_up_to(read_up_to_of_theirs);
                     }

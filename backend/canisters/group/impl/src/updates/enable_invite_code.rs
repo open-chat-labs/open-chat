@@ -23,15 +23,10 @@ async fn reset_invite_code(args: reset_invite_code::Args) -> reset_invite_code::
 
     let code = generate_code().await;
 
-    mutate_state(|runtime_state| {
-        runtime_state.data.invite_code = Some(code);
-        runtime_state.data.invite_code_enabled = true;
-        record_event(
-            initial_state.caller,
-            GroupInviteCodeChange::Reset,
-            args.correlation_id,
-            runtime_state,
-        );
+    mutate_state(|state| {
+        state.data.invite_code = Some(code);
+        state.data.invite_code_enabled = true;
+        record_event(initial_state.caller, GroupInviteCodeChange::Reset, args.correlation_id, state);
     });
 
     Success(SuccessResult { code })
@@ -53,14 +48,14 @@ async fn enable_invite_code(args: Args) -> Response {
     };
 
     if !initial_state.enabled {
-        mutate_state(|runtime_state| {
-            runtime_state.data.invite_code = Some(code);
-            runtime_state.data.invite_code_enabled = true;
+        mutate_state(|state| {
+            state.data.invite_code = Some(code);
+            state.data.invite_code_enabled = true;
             record_event(
                 initial_state.caller,
                 GroupInviteCodeChange::Enabled,
                 args.correlation_id,
-                runtime_state,
+                state,
             );
         });
     }
@@ -74,11 +69,11 @@ async fn generate_code() -> u64 {
     rng.next_u64()
 }
 
-fn record_event(caller: Principal, change: GroupInviteCodeChange, correlation_id: u64, runtime_state: &mut RuntimeState) {
-    let now = runtime_state.env.now();
+fn record_event(caller: Principal, change: GroupInviteCodeChange, correlation_id: u64, state: &mut RuntimeState) {
+    let now = state.env.now();
 
-    if let Some(member) = runtime_state.data.get_member(caller) {
-        runtime_state.data.chat.events.push_main_event(
+    if let Some(member) = state.data.get_member(caller) {
+        state.data.chat.events.push_main_event(
             ChatEventInternal::GroupInviteCodeChanged(Box::new(GroupInviteCodeChanged {
                 change,
                 changed_by: member.user_id,
@@ -87,7 +82,7 @@ fn record_event(caller: Principal, change: GroupInviteCodeChange, correlation_id
             now,
         );
 
-        handle_activity_notification(runtime_state);
+        handle_activity_notification(state);
     }
 }
 
@@ -97,22 +92,22 @@ struct PrepareResult {
     enabled: bool,
 }
 
-fn prepare(runtime_state: &RuntimeState) -> Result<PrepareResult, Response> {
-    if runtime_state.data.is_frozen() {
+fn prepare(state: &RuntimeState) -> Result<PrepareResult, Response> {
+    if state.data.is_frozen() {
         return Err(ChatFrozen);
     }
 
-    let caller = runtime_state.env.caller();
-    if let Some(member) = runtime_state.data.get_member(caller) {
+    let caller = state.env.caller();
+    if let Some(member) = state.data.get_member(caller) {
         if member.suspended.value {
             return Err(UserSuspended);
         }
 
-        if member.role.can_invite_users(&runtime_state.data.chat.permissions) {
+        if member.role.can_invite_users(&state.data.chat.permissions) {
             return Ok(PrepareResult {
                 caller,
-                code: runtime_state.data.invite_code,
-                enabled: runtime_state.data.invite_code_enabled,
+                code: state.data.invite_code,
+                enabled: state.data.invite_code_enabled,
             });
         }
     }

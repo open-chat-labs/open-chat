@@ -53,20 +53,20 @@ struct PrepareResult {
     create_community_args: c2c_create_community::Args,
 }
 
-fn prepare(args: Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Response> {
+fn prepare(args: Args, state: &RuntimeState) -> Result<PrepareResult, Response> {
     fn is_throttled() -> bool {
         // TODO check here that the user hasn't created too many communities in succession
         false
     }
 
-    let now = runtime_state.env.now();
-    let is_diamond_member = runtime_state.data.is_diamond_member(now);
+    let now = state.env.now();
+    let is_diamond_member = state.data.is_diamond_member(now);
 
-    if runtime_state.data.suspended.value {
+    if state.data.suspended.value {
         Err(UserSuspended)
     } else if !is_diamond_member {
         Err(Unauthorized)
-    } else if runtime_state.data.communities.communities_created() >= COMMUNITY_CREATION_LIMIT {
+    } else if state.data.communities.communities_created() >= COMMUNITY_CREATION_LIMIT {
         Err(MaxCommunitiesCreated(COMMUNITY_CREATION_LIMIT))
     } else if is_throttled() {
         Err(Throttled)
@@ -97,13 +97,13 @@ fn prepare(args: Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Re
             gate: args.gate,
         };
         Ok(PrepareResult {
-            group_index_canister_id: runtime_state.data.group_index_canister_id,
+            group_index_canister_id: state.data.group_index_canister_id,
             create_community_args,
         })
     }
 }
 
-fn commit(community_id: CommunityId, runtime_state: &mut RuntimeState) {
-    let now = runtime_state.env.now();
-    runtime_state.data.communities.create(community_id, now);
+fn commit(community_id: CommunityId, state: &mut RuntimeState) {
+    let now = state.env.now();
+    state.data.communities.create(community_id, now);
 }

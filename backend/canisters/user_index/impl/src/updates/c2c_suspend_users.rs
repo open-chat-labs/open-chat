@@ -11,11 +11,11 @@ fn c2c_suspend_users(args: Args) -> Response {
     mutate_state(|state| c2c_suspend_users_impl(args, state))
 }
 
-fn c2c_suspend_users_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    let now = runtime_state.env.now();
+fn c2c_suspend_users_impl(args: Args, state: &mut RuntimeState) -> Response {
+    let now = state.env.now();
     for user_id in args.user_ids {
-        if matches!(runtime_state.data.users.is_user_suspended(&user_id), Some(false)) {
-            runtime_state.data.timer_jobs.enqueue_job(
+        if matches!(state.data.users.is_user_suspended(&user_id), Some(false)) {
+            state.data.timer_jobs.enqueue_job(
                 TimerJob::SetUserSuspended(SetUserSuspended {
                     user_id,
                     duration: args.duration,

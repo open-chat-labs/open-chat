@@ -7,10 +7,10 @@ fn subscription_exists(args: Args) -> Response {
     read_state(|state| subscription_exists_impl(args, state))
 }
 
-fn subscription_exists_impl(args: Args, runtime_state: &RuntimeState) -> Response {
-    let caller = runtime_state.env.caller();
-    if let Some(user_id) = runtime_state.data.principal_to_user_id.get(&caller) {
-        match runtime_state.data.subscriptions.exists(user_id, args.p256dh_key) {
+fn subscription_exists_impl(args: Args, state: &RuntimeState) -> Response {
+    let caller = state.env.caller();
+    if let Some(user_id) = state.data.principal_to_user_id.get(&caller) {
+        match state.data.subscriptions.exists(user_id, args.p256dh_key) {
             true => Yes,
             false => No,
         }

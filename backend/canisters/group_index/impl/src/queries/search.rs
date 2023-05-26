@@ -10,7 +10,7 @@ fn search(args: Args) -> Response {
     read_state(|state| search_impl(args, state))
 }
 
-fn search_impl(args: Args, runtime_state: &RuntimeState) -> Response {
+fn search_impl(args: Args, state: &RuntimeState) -> Response {
     let term_length = args.search_term.len() as u8;
 
     if term_length < MIN_TERM_LENGTH {
@@ -21,7 +21,7 @@ fn search_impl(args: Args, runtime_state: &RuntimeState) -> Response {
         return TermTooLong(MAX_TERM_LENGTH);
     }
 
-    let matches = runtime_state.data.public_groups.search(&args.search_term, args.max_results);
+    let matches = state.data.public_groups.search(&args.search_term, args.max_results);
 
     Success(SuccessResult { matches })
 }
@@ -36,14 +36,14 @@ mod tests {
 
     #[test]
     fn term_too_short() {
-        let runtime_state = setup_runtime_state();
+        let state = setup_runtime_state();
 
         let response = search_impl(
             Args {
                 max_results: 10,
                 search_term: "".to_string(),
             },
-            &runtime_state,
+            &state,
         );
 
         assert!(matches!(response, Response::TermTooShort(_)));
@@ -51,14 +51,14 @@ mod tests {
 
     #[test]
     fn term_too_long() {
-        let runtime_state = setup_runtime_state();
+        let state = setup_runtime_state();
 
         let response = search_impl(
             Args {
                 max_results: 10,
                 search_term: "sausages, chips, beans, eggs, bacon, hash browns".to_string(),
             },
-            &runtime_state,
+            &state,
         );
 
         assert!(matches!(response, Response::TermTooLong(_)));
@@ -66,14 +66,14 @@ mod tests {
 
     #[test]
     fn max_results_respected() {
-        let runtime_state = setup_runtime_state();
+        let state = setup_runtime_state();
 
         let response = search_impl(
             Args {
                 max_results: 2,
                 search_term: "Sausages".to_string(),
             },
-            &runtime_state,
+            &state,
         );
 
         if let Response::Success(result) = response {
@@ -85,14 +85,14 @@ mod tests {
 
     #[test]
     fn results_in_expected_order() {
-        let runtime_state = setup_runtime_state();
+        let state = setup_runtime_state();
 
         let response = search_impl(
             Args {
                 max_results: 10,
                 search_term: "Sausages".to_string(),
             },
-            &runtime_state,
+            &state,
         );
 
         if let Response::Success(result) = response {

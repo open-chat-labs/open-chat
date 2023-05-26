@@ -14,16 +14,16 @@ fn http_request(request: HttpRequest) -> HttpResponse {
         encode_logs(canister_logger::export_traces(), since.unwrap_or(0))
     }
 
-    fn get_metrics_impl(runtime_state: &RuntimeState) -> HttpResponse {
-        build_json_response(&runtime_state.metrics())
+    fn get_metrics_impl(state: &RuntimeState) -> HttpResponse {
+        build_json_response(&state.metrics())
     }
 
-    fn get_order_logs(runtime_state: &RuntimeState) -> HttpResponse {
+    fn get_order_logs(state: &RuntimeState) -> HttpResponse {
         let mut body = Vec::new();
 
-        let skip = runtime_state.data.orders_log.len().saturating_sub(200);
+        let skip = state.data.orders_log.len().saturating_sub(200);
 
-        for log in runtime_state.data.orders_log.iter().skip(skip as usize) {
+        for log in state.data.orders_log.iter().skip(skip as usize) {
             writeln!(&mut body, "{log}").unwrap();
         }
 

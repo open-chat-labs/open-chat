@@ -42,19 +42,19 @@ struct PrepareResult {
     user_index_canister_id: CanisterId,
 }
 
-fn prepare(runtime_state: &mut RuntimeState) -> Result<PrepareResult, Response> {
-    let caller = runtime_state.env.caller();
-    if runtime_state.data.pending_user_principal_migration == Some(caller) {
-        runtime_state.data.pending_user_principal_migration = None;
+fn prepare(state: &mut RuntimeState) -> Result<PrepareResult, Response> {
+    let caller = state.env.caller();
+    if state.data.pending_user_principal_migration == Some(caller) {
+        state.data.pending_user_principal_migration = None;
 
         let c2c_args = user_index_canister::c2c_migrate_user_principal::Args {
             new_principal: caller,
-            groups: runtime_state.data.group_chats.iter().map(|g| g.chat_id).collect(),
+            groups: state.data.group_chats.iter().map(|g| g.chat_id).collect(),
         };
         Ok(PrepareResult {
             caller,
             c2c_args,
-            user_index_canister_id: runtime_state.data.user_index_canister_id,
+            user_index_canister_id: state.data.user_index_canister_id,
         })
     } else {
         Err(MigrationNotInitialized)

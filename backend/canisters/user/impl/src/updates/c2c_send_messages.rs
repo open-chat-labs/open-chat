@@ -136,15 +136,15 @@ enum SenderStatus {
     UnknownUser(CanisterId, UserId),
 }
 
-fn get_sender_status(runtime_state: &RuntimeState) -> SenderStatus {
-    let sender = runtime_state.env.caller().into();
+fn get_sender_status(state: &RuntimeState) -> SenderStatus {
+    let sender = state.env.caller().into();
 
-    if runtime_state.data.blocked_users.contains(&sender) {
+    if state.data.blocked_users.contains(&sender) {
         SenderStatus::Blocked
-    } else if runtime_state.data.direct_chats.get(&sender.into()).is_some() {
+    } else if state.data.direct_chats.get(&sender.into()).is_some() {
         SenderStatus::Ok(sender)
     } else {
-        SenderStatus::UnknownUser(runtime_state.data.local_user_index_canister_id, sender)
+        SenderStatus::UnknownUser(state.data.local_user_index_canister_id, sender)
     }
 }
 
@@ -167,18 +167,16 @@ pub(crate) fn handle_message_impl(
     sender: UserId,
     args: HandleMessageArgs,
     mute_notification: bool,
-    runtime_state: &mut RuntimeState,
+    state: &mut RuntimeState,
 ) -> EventWrapper<Message> {
-    let replies_to = convert_reply_context(args.replies_to, sender, args.now, runtime_state);
+    let replies_to = convert_reply_context(args.replies_to, sender, args.now, state);
     let initial_content: MessageContentInitial = args.content.into();
     let content = initial_content.new_content_into_internal();
     let files = content.blob_references();
 
     let push_message_args = PushMessageArgs {
         thread_root_message_index: None,
-        message_id: args
-            .message_id
-            .unwrap_or_else(|| MessageId::generate(runtime_state.env.rng())),
+        message_id: args.message_id.unwrap_or_else(|| MessageId::generate(state.env.rng())),
         sender,
         content,
         replies_to,
@@ -188,14 +186,14 @@ pub(crate) fn handle_message_impl(
     };
 
     let message_event =
-        runtime_state
+        state
             .data
             .direct_chats
             .push_message(false, sender, args.sender_message_index, push_message_args, args.is_bot);
 
-    register_timer_jobs(&message_event, files, args.now, &mut runtime_state.data.timer_jobs);
+    register_timer_jobs(&message_event, files, args.now, &mut state.data.timer_jobs);
 
-    if let Some(chat) = runtime_state.data.direct_chats.get_mut(&sender.into()) {
+    if let Some(chat) = state.data.direct_chats.get_mut(&sender.into()) {
         if args.is_bot {
             chat.mark_read_up_to(message_event.event.message_index, false, args.now);
         }
@@ -207,9 +205,9 @@ pub(crate) fn handle_message_impl(
                 message: message_event.clone(),
             });
 
-            let recipient = runtime_state.env.canister_id().into();
+            let recipient = state.env.canister_id().into();
 
-            runtime_state.push_notification(vec![recipient], notification);
+            state.push_notification(vec![recipient], notification);
         }
     }
 
@@ -220,12 +218,12 @@ fn convert_reply_context(
     replies_to: Option<C2CReplyContext>,
     sender: UserId,
     now: TimestampMillis,
-    runtime_state: &RuntimeState,
+    state: &RuntimeState,
 ) -> Option<ReplyContext> {
     match replies_to? {
         C2CReplyContext::ThisChat(message_id) => {
             let chat_id = sender.into();
-            runtime_state
+            state
                 .data
                 .direct_chats
                 .get(&chat_id)

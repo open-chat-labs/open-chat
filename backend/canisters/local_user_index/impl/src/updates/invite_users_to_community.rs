@@ -40,13 +40,13 @@ struct PrepareResult {
     users: Vec<(UserId, Principal)>,
 }
 
-fn prepare(args: &Args, runtime_state: &RuntimeState) -> PrepareResult {
-    let caller = runtime_state.env.caller();
-    let invited_by = runtime_state.data.global_users.get(&caller).unwrap().user_id;
+fn prepare(args: &Args, state: &RuntimeState) -> PrepareResult {
+    let caller = state.env.caller();
+    let invited_by = state.data.global_users.get(&caller).unwrap().user_id;
     let users = args
         .user_ids
         .iter()
-        .filter_map(|user_id| runtime_state.data.global_users.get(&(*user_id).into()))
+        .filter_map(|user_id| state.data.global_users.get(&(*user_id).into()))
         .map(|user| (user.user_id, user.principal))
         .collect();
     PrepareResult { invited_by, users }
@@ -57,7 +57,7 @@ fn commit(
     community_id: CommunityId,
     community_name: String,
     invited_users: Vec<UserId>,
-    runtime_state: &mut RuntimeState,
+    state: &mut RuntimeState,
 ) {
     let text = format!(
         "You have been invited to the community [{community_name}](/community/{community_id}) by @UserId({invited_by})."
@@ -65,9 +65,9 @@ fn commit(
     let message = MessageContent::Text(TextContent { text });
 
     for user_id in invited_users {
-        runtime_state.push_oc_bot_message_to_user(user_id, message.clone());
+        state.push_oc_bot_message_to_user(user_id, message.clone());
     }
 
-    crate::jobs::sync_events_to_user_canisters::start_job_if_required(runtime_state);
-    crate::jobs::sync_events_to_user_index_canister::start_job_if_required(runtime_state);
+    crate::jobs::sync_events_to_user_canisters::start_job_if_required(state);
+    crate::jobs::sync_events_to_user_index_canister::start_job_if_required(state);
 }

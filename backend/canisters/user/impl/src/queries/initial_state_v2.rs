@@ -11,15 +11,15 @@ fn initial_state_v2(args: Args) -> Response {
     read_state(|state| initial_state_impl(args, state))
 }
 
-fn initial_state_impl(args: Args, runtime_state: &RuntimeState) -> Response {
-    let now = runtime_state.env.now();
-    let my_user_id: UserId = runtime_state.env.canister_id().into();
-    let avatar_id = runtime_state.data.avatar.value.as_ref().map(|a| a.id);
-    let blocked_users = runtime_state.data.blocked_users.value.iter().copied().collect();
-    let pinned_chats = runtime_state.data.pinned_chats.value.clone();
+fn initial_state_impl(args: Args, state: &RuntimeState) -> Response {
+    let now = state.env.now();
+    let my_user_id: UserId = state.env.canister_id().into();
+    let avatar_id = state.data.avatar.value.as_ref().map(|a| a.id);
+    let blocked_users = state.data.blocked_users.value.iter().copied().collect();
+    let pinned_chats = state.data.pinned_chats.value.clone();
     let user_canister_wasm_version = WASM_VERSION.with(|version| version.borrow().value);
 
-    let direct_chats = runtime_state
+    let direct_chats = state
         .data
         .direct_chats
         .iter()
@@ -29,13 +29,13 @@ fn initial_state_impl(args: Args, runtime_state: &RuntimeState) -> Response {
     let disable_cache = args.disable_cache.unwrap_or_default();
 
     if let Some(cached) = (!disable_cache)
-        .then_some(runtime_state.data.cached_group_summaries.as_ref())
+        .then_some(state.data.cached_group_summaries.as_ref())
         .flatten()
     {
         // We must handle the scenario where some groups are missing from the cache due to them
         // being inaccessible while the cache was refreshed. To do this, we get all groups, and any
         // groups not found in the cache are included in `group_chats_added`.
-        let mut group_chats: HashMap<_, _> = runtime_state.data.group_chats.get_all(None).map(|g| (g.chat_id, g)).collect();
+        let mut group_chats: HashMap<_, _> = state.data.group_chats.get_all(None).map(|g| (g.chat_id, g)).collect();
 
         SuccessCached(SuccessCachedResult {
             timestamp: now,
@@ -54,7 +54,7 @@ fn initial_state_impl(args: Args, runtime_state: &RuntimeState) -> Response {
             user_canister_wasm_version,
         })
     } else {
-        let group_chats = runtime_state.data.group_chats.iter().map(|g| g.to_summary()).collect();
+        let group_chats = state.data.group_chats.iter().map(|g| g.to_summary()).collect();
 
         Success(SuccessResult {
             timestamp: now,

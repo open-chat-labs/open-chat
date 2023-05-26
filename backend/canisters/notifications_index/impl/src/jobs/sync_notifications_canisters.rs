@@ -10,10 +10,10 @@ thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
 }
 
-pub(crate) fn start_job_if_required(runtime_state: &RuntimeState) -> bool {
+pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
     if TIMER_ID.with(|t| t.get().is_none())
-        && (!runtime_state.data.notifications_index_event_sync_queue.is_empty()
-            || runtime_state.data.notifications_index_event_sync_queue.sync_in_progress())
+        && (!state.data.notifications_index_event_sync_queue.is_empty()
+            || state.data.notifications_index_event_sync_queue.sync_in_progress())
     {
         let timer_id = ic_cdk_timers::set_timer_interval(Duration::ZERO, run);
         TIMER_ID.with(|t| t.set(Some(timer_id)));
@@ -35,8 +35,8 @@ pub fn run() {
     }
 }
 
-fn next_batch(runtime_state: &mut RuntimeState) -> Option<Vec<(CanisterId, Vec<NotificationsIndexEvent>)>> {
-    runtime_state.data.notifications_index_event_sync_queue.try_start_batch()
+fn next_batch(state: &mut RuntimeState) -> Option<Vec<(CanisterId, Vec<NotificationsIndexEvent>)>> {
+    state.data.notifications_index_event_sync_queue.try_start_batch()
 }
 
 async fn process_batch(batch: Vec<(CanisterId, Vec<NotificationsIndexEvent>)>) {

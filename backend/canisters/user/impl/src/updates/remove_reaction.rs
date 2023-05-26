@@ -18,14 +18,14 @@ fn remove_reaction(args: Args) -> Response {
     mutate_state(|state| remove_reaction_impl(args, state))
 }
 
-fn remove_reaction_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    if runtime_state.data.suspended.value {
+fn remove_reaction_impl(args: Args, state: &mut RuntimeState) -> Response {
+    if state.data.suspended.value {
         return UserSuspended;
     }
 
-    if let Some(chat) = runtime_state.data.direct_chats.get_mut(&args.user_id.into()) {
-        let my_user_id = runtime_state.env.canister_id().into();
-        let now = runtime_state.env.now();
+    if let Some(chat) = state.data.direct_chats.get_mut(&args.user_id.into()) {
+        let my_user_id = state.env.canister_id().into();
+        let now = state.env.now();
 
         match chat.events.remove_reaction(AddRemoveReactionArgs {
             user_id: my_user_id,
@@ -41,7 +41,7 @@ fn remove_reaction_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
                         args.user_id.into(),
                         args.message_id,
                         args.reaction,
-                        &runtime_state.data.fire_and_forget_handler,
+                        &state.data.fire_and_forget_handler,
                     );
                 }
                 Success

@@ -64,21 +64,17 @@ pub async fn process_new_joiner_reward(
     }
 }
 
-fn update_status(user_id: &UserId, status: NewJoinerRewardStatus, runtime_state: &mut RuntimeState) {
-    if let Some(new_joiner_rewards) = &mut runtime_state.data.new_joiner_rewards {
+fn update_status(user_id: &UserId, status: NewJoinerRewardStatus, state: &mut RuntimeState) {
+    if let Some(new_joiner_rewards) = &mut state.data.new_joiner_rewards {
         new_joiner_rewards.update_status(user_id, status);
     }
 }
 
-fn send_reward_transferred_message(
-    user_id: UserId,
-    transfer: nns::CompletedCryptoTransaction,
-    runtime_state: &mut RuntimeState,
-) {
-    runtime_state.data.chat.events.push_message(PushMessageArgs {
+fn send_reward_transferred_message(user_id: UserId, transfer: nns::CompletedCryptoTransaction, state: &mut RuntimeState) {
+    state.data.chat.events.push_message(PushMessageArgs {
         sender: OPENCHAT_BOT_USER_ID,
         thread_root_message_index: None,
-        message_id: MessageId::generate(runtime_state.env.rng()),
+        message_id: MessageId::generate(state.env.rng()),
         content: MessageContentInternal::Crypto(CryptoContent {
             recipient: user_id,
             transfer: CryptoTransaction::Completed(CompletedCryptoTransaction::NNS(transfer)),
@@ -87,6 +83,6 @@ fn send_reward_transferred_message(
         replies_to: None,
         forwarded: false,
         correlation_id: 0,
-        now: runtime_state.env.now(),
+        now: state.env.now(),
     });
 }

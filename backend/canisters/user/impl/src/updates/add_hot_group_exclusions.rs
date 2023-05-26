@@ -20,10 +20,10 @@ fn add_recommended_group_exclusions(args: Args) -> Response {
     mutate_state(|state| add_hot_group_exclusions_impl(args, state))
 }
 
-fn add_hot_group_exclusions_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    let now = runtime_state.env.now();
+fn add_hot_group_exclusions_impl(args: Args, state: &mut RuntimeState) -> Response {
+    let now = state.env.now();
     for group in args.groups {
-        runtime_state.data.hot_group_exclusions.add(group, args.duration, now);
+        state.data.hot_group_exclusions.add(group, args.duration, now);
     }
     Success
 }

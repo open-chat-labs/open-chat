@@ -53,9 +53,9 @@ struct UserDetails {
     is_platform_moderator: bool,
 }
 
-fn user_details(runtime_state: &RuntimeState) -> UserDetails {
-    let caller = runtime_state.env.caller();
-    let user = runtime_state.data.global_users.get(&caller).unwrap();
+fn user_details(state: &RuntimeState) -> UserDetails {
+    let caller = state.env.caller();
+    let user = state.data.global_users.get(&caller).unwrap();
 
     UserDetails {
         user_id: user.user_id,
@@ -64,9 +64,9 @@ fn user_details(runtime_state: &RuntimeState) -> UserDetails {
     }
 }
 
-fn commit(user_id: UserId, chat_id: ChatId, latest_message_index: Option<MessageIndex>, runtime_state: &mut RuntimeState) {
-    if runtime_state.data.local_users.get(&user_id).is_some() {
-        runtime_state.push_event_to_user(
+fn commit(user_id: UserId, chat_id: ChatId, latest_message_index: Option<MessageIndex>, state: &mut RuntimeState) {
+    if state.data.local_users.get(&user_id).is_some() {
+        state.push_event_to_user(
             user_id,
             UserEvent::UserJoinedGroup(Box::new(user_canister::UserJoinedGroup {
                 chat_id,
@@ -74,7 +74,7 @@ fn commit(user_id: UserId, chat_id: ChatId, latest_message_index: Option<Message
             })),
         );
     } else {
-        runtime_state.push_event_to_user_index(UserIndexEvent::UserJoinedGroup(Box::new(
+        state.push_event_to_user_index(UserIndexEvent::UserJoinedGroup(Box::new(
             user_index_canister::UserJoinedGroup {
                 user_id,
                 chat_id,

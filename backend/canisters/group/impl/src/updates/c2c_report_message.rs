@@ -13,10 +13,10 @@ fn c2c_report_message(args: Args) -> Response {
     mutate_state(|state| c2c_report_message_impl(args, state))
 }
 
-fn c2c_report_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    let now = runtime_state.env.now();
+fn c2c_report_message_impl(args: Args, state: &mut RuntimeState) -> Response {
+    let now = state.env.now();
 
-    runtime_state.data.chat.events.report_message(
+    state.data.chat.events.report_message(
         args.user_id,
         args.chat_id,
         args.thread_root_message_index,
@@ -26,6 +26,6 @@ fn c2c_report_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Resp
         now,
     );
 
-    handle_activity_notification(runtime_state);
+    handle_activity_notification(state);
     Success
 }

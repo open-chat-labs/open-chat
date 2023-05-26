@@ -53,21 +53,21 @@ struct PrepareResult {
     create_group_args: c2c_create_group::Args,
 }
 
-fn prepare(args: Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Response> {
+fn prepare(args: Args, state: &RuntimeState) -> Result<PrepareResult, Response> {
     fn is_throttled() -> bool {
         // TODO check here that the user hasn't created too many groups in succession
         false
     }
 
-    let now = runtime_state.env.now();
-    let is_diamond_member = runtime_state.data.is_diamond_member(now);
+    let now = state.env.now();
+    let is_diamond_member = state.data.is_diamond_member(now);
     let group_creation_limit = if is_diamond_member { PREMIUM_GROUP_CREATION_LIMIT } else { BASIC_GROUP_CREATION_LIMIT };
 
-    if runtime_state.data.suspended.value {
+    if state.data.suspended.value {
         Err(UserSuspended)
     // } else if !is_diamond_member && args.is_public {
     //     Err(UnauthorizedToCreatePublicGroup)
-    } else if runtime_state.data.group_chats.groups_created() >= group_creation_limit {
+    } else if state.data.group_chats.groups_created() >= group_creation_limit {
         Err(MaxGroupsCreated(group_creation_limit))
     } else if is_throttled() {
         Err(Throttled)
@@ -100,13 +100,13 @@ fn prepare(args: Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Re
             gate: args.gate,
         };
         Ok(PrepareResult {
-            group_index_canister_id: runtime_state.data.group_index_canister_id,
+            group_index_canister_id: state.data.group_index_canister_id,
             create_group_args,
         })
     }
 }
 
-fn commit(chat_id: ChatId, runtime_state: &mut RuntimeState) {
-    let now = runtime_state.env.now();
-    runtime_state.data.group_chats.create(chat_id, now);
+fn commit(chat_id: ChatId, state: &mut RuntimeState) {
+    let now = state.env.now();
+    state.data.group_chats.create(chat_id, now);
 }

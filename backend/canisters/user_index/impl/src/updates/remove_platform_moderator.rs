@@ -24,10 +24,10 @@ async fn remove_platform_moderator(args: Args) -> Response {
     }
 }
 
-fn commit(user_id: UserId, runtime_state: &mut RuntimeState) {
-    runtime_state.data.platform_moderators.remove(&user_id);
+fn commit(user_id: UserId, state: &mut RuntimeState) {
+    state.data.platform_moderators.remove(&user_id);
 
-    runtime_state.push_event_to_all_local_user_indexes(
+    state.push_event_to_all_local_user_indexes(
         Event::SuperAdminStatusChanged(SuperAdminStatusChanged {
             user_id,
             is_super_admin: false,

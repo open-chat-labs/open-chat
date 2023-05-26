@@ -34,10 +34,10 @@ mod retrieve_proposals {
         }
     }
 
-    fn get_next(runtime_state: &mut RuntimeState) -> Option<(CanisterId, bool)> {
-        let now = runtime_state.env.now();
-        let governance_canister_id = runtime_state.data.nervous_systems.start_next_sync(now)?;
-        let is_nns = governance_canister_id == runtime_state.data.nns_governance_canister_id;
+    fn get_next(state: &mut RuntimeState) -> Option<(CanisterId, bool)> {
+        let now = state.env.now();
+        let governance_canister_id = state.data.nervous_systems.start_next_sync(now)?;
+        let is_nns = governance_canister_id == state.data.nns_governance_canister_id;
         Some((governance_canister_id, is_nns))
     }
 

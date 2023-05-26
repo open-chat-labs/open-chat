@@ -12,8 +12,8 @@ async fn set_user_upgrade_concurrency(args: Args) -> Response {
     mutate_state(|state| set_user_upgrade_concurrency_impl(args, state))
 }
 
-fn set_user_upgrade_concurrency_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    runtime_state.push_event_to_all_local_user_indexes(
+fn set_user_upgrade_concurrency_impl(args: Args, state: &mut RuntimeState) -> Response {
+    state.push_event_to_all_local_user_indexes(
         Event::UserUpgradeConcurrencyChanged(UserUpgradeConcurrencyChanged { value: args.value }),
         None,
     );

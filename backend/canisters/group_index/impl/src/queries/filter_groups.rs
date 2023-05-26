@@ -21,20 +21,20 @@ fn c2c_filter_groups(args: group_index_canister::c2c_filter_groups::Args) -> gro
     })
 }
 
-fn filter_groups_impl(args: Args, runtime_state: &RuntimeState) -> Response {
-    let now = runtime_state.env.now();
+fn filter_groups_impl(args: Args, state: &RuntimeState) -> Response {
+    let now = state.env.now();
     let active_since = args.active_since;
-    let all_deleted = &runtime_state.data.deleted_groups;
+    let all_deleted = &state.data.deleted_groups;
 
     let deleted_groups = args.chat_ids.iter().filter_map(|id| all_deleted.get(id)).cloned().collect();
 
     let mut active_groups = Vec::new();
     for chat_id in args.chat_ids {
-        if let Some(g) = runtime_state.data.private_groups.get(&chat_id) {
+        if let Some(g) = state.data.private_groups.get(&chat_id) {
             if active_since.map(|t| g.has_been_active_since(t)).unwrap_or_default() {
                 active_groups.push(g.id());
             }
-        } else if let Some(g) = runtime_state.data.public_groups.get(&chat_id) {
+        } else if let Some(g) = state.data.public_groups.get(&chat_id) {
             if active_since.map(|t| g.has_been_active_since(t)).unwrap_or_default() {
                 active_groups.push(g.id());
             }

@@ -11,9 +11,9 @@ fn c2c_update_community(args: Args) -> Response {
     mutate_state(|state| c2c_update_community_impl(args, state))
 }
 
-fn c2c_update_community_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    let community_id = CommunityId::from(runtime_state.env.caller());
-    match runtime_state
+fn c2c_update_community_impl(args: Args, state: &mut RuntimeState) -> Response {
+    let community_id = CommunityId::from(state.env.caller());
+    match state
         .data
         .public_communities
         .update_community(&community_id, args.name, args.description, args.avatar_id)

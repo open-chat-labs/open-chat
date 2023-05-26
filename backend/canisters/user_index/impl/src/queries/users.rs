@@ -7,10 +7,10 @@ fn users(args: Args) -> Response {
     read_state(|state| users_impl(args, state))
 }
 
-fn users_impl(args: Args, runtime_state: &RuntimeState) -> Response {
-    runtime_state.trap_if_caller_not_openchat_user();
+fn users_impl(args: Args, state: &RuntimeState) -> Response {
+    state.trap_if_caller_not_openchat_user();
 
-    let now = runtime_state.env.now();
+    let now = state.env.now();
 
     let users = args
         .user_groups
@@ -19,7 +19,7 @@ fn users_impl(args: Args, runtime_state: &RuntimeState) -> Response {
             let updated_since = g.updated_since;
             g.users
                 .into_iter()
-                .filter_map(|user_id| runtime_state.data.users.get_by_user_id(&user_id))
+                .filter_map(|user_id| state.data.users.get_by_user_id(&user_id))
                 .filter(move |u| u.date_updated > updated_since)
                 .map(|u| u.to_partial_summary(now))
         })
@@ -77,7 +77,7 @@ mod tests {
             ..Default::default()
         });
         env.now += 1000;
-        let runtime_state = RuntimeState::new(Box::new(env), data);
+        let state = RuntimeState::new(Box::new(env), data);
 
         let args = Args {
             user_groups: vec![UserGroup {
@@ -86,7 +86,7 @@ mod tests {
             }],
         };
 
-        let Success(result) = users_impl(args, &runtime_state);
+        let Success(result) = users_impl(args, &state);
 
         let users = result.users.iter().sorted_unstable_by_key(|u| u.user_id).collect_vec();
 
@@ -139,7 +139,7 @@ mod tests {
         });
         env.now += 1000;
         let now = env.now;
-        let runtime_state = RuntimeState::new(Box::new(env), data);
+        let state = RuntimeState::new(Box::new(env), data);
 
         let args = Args {
             user_groups: vec![UserGroup {
@@ -148,7 +148,7 @@ mod tests {
             }],
         };
 
-        let Success(result) = users_impl(args, &runtime_state);
+        let Success(result) = users_impl(args, &state);
 
         let users = result.users;
 

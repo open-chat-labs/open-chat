@@ -11,10 +11,10 @@ fn thread_previews(args: Args) -> Response {
     read_state(|state| thread_previews_impl(args, state))
 }
 
-fn thread_previews_impl(args: Args, runtime_state: &RuntimeState) -> Response {
-    let caller = runtime_state.env.caller();
-    if let Some(member) = runtime_state.data.get_member(caller) {
-        let now = runtime_state.env.now();
+fn thread_previews_impl(args: Args, state: &RuntimeState) -> Response {
+    let caller = state.env.caller();
+    if let Some(member) = state.data.get_member(caller) {
+        let now = state.env.now();
 
         if args.latest_client_thread_update.map_or(false, |t| now < t) {
             return ReplicaNotUpToDate(now);
@@ -26,7 +26,7 @@ fn thread_previews_impl(args: Args, runtime_state: &RuntimeState) -> Response {
                 .into_iter()
                 .filter_map(|root_message_index| {
                     build_thread_preview(
-                        runtime_state,
+                        state,
                         member.user_id,
                         member.min_visible_event_index(),
                         root_message_index,
@@ -42,13 +42,13 @@ fn thread_previews_impl(args: Args, runtime_state: &RuntimeState) -> Response {
 }
 
 fn build_thread_preview(
-    runtime_state: &RuntimeState,
+    state: &RuntimeState,
     caller_user_id: UserId,
     min_visible_event_index: EventIndex,
     root_message_index: MessageIndex,
     now: TimestampMillis,
 ) -> Option<ThreadPreview> {
-    let events_reader = runtime_state
+    let events_reader = state
         .data
         .chat
         .events
@@ -56,12 +56,11 @@ fn build_thread_preview(
 
     let root_message = events_reader.message_event(root_message_index.into(), Some(caller_user_id))?;
 
-    let thread_events_reader =
-        runtime_state
-            .data
-            .chat
-            .events
-            .events_reader(min_visible_event_index, Some(root_message_index), now)?;
+    let thread_events_reader = state
+        .data
+        .chat
+        .events
+        .events_reader(min_visible_event_index, Some(root_message_index), now)?;
 
     Some(ThreadPreview {
         root_message,

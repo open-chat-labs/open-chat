@@ -12,8 +12,8 @@ fn c2c_delete_group(args: Args) -> Response {
     mutate_state(|state| c2c_delete_group_impl(args, state))
 }
 
-fn c2c_delete_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    if runtime_state.data.local_groups.delete(&args.chat_id) {
+fn c2c_delete_group_impl(args: Args, state: &mut RuntimeState) -> Response {
+    if state.data.local_groups.delete(&args.chat_id) {
         ic_cdk::spawn(delete_canister(args.chat_id.into()));
         Success
     } else {

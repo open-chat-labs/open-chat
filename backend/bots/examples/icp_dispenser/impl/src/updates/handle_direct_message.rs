@@ -12,12 +12,12 @@ fn handle_direct_message(args: Args) -> Response {
     mutate_state(|state| handle_message(args, state))
 }
 
-fn handle_message(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    let caller: UserId = runtime_state.env.caller().into();
-    let now = runtime_state.env.now();
+fn handle_message(args: Args, state: &mut RuntimeState) -> Response {
+    let caller: UserId = state.env.caller().into();
+    let now = state.env.now();
 
     let (text, action) = if let Some(code) = try_extract_code(args.content) {
-        match runtime_state.data.reward_codes.claim(code, caller, now) {
+        match state.data.reward_codes.claim(code, caller, now) {
             ClaimRewardCodeResult::Success(transfer_args, transaction_hash) => (
                 "Code claimed successfully! Please wait while your ICP is transferred.",
                 Some(PendingAction::IcpTransfer(caller, transfer_args, transaction_hash)),
@@ -35,11 +35,11 @@ fn handle_message(args: Args, runtime_state: &mut RuntimeState) -> Response {
     };
 
     if let Some(a) = action {
-        runtime_state.data.pending_actions.add(a, now);
+        state.data.pending_actions.add(a, now);
     }
 
     Success(SuccessResult {
-        bot_name: runtime_state.data.bot_name.clone(),
+        bot_name: state.data.bot_name.clone(),
         messages: vec![BotMessage {
             content: MessageContent::Text(TextContent { text: text.to_string() }),
         }],

@@ -9,9 +9,9 @@ fn user(_args: Args) -> Response {
     read_state(user_impl)
 }
 
-fn user_impl(runtime_state: &RuntimeState) -> Response {
-    let user_id = runtime_state.env.caller();
-    if let Some(user) = runtime_state.data.users.get(&user_id) {
+fn user_impl(state: &RuntimeState) -> Response {
+    let user_id = state.env.caller();
+    if let Some(user) = state.data.users.get(&user_id) {
         Success(UserRecord {
             bytes_used: user.bytes_used,
             byte_limit: user.byte_limit,

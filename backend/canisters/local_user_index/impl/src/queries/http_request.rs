@@ -13,8 +13,8 @@ fn http_request(request: HttpRequest) -> HttpResponse {
         encode_logs(canister_logger::export_traces(), since.unwrap_or(0))
     }
 
-    fn get_metrics_impl(runtime_state: &RuntimeState) -> HttpResponse {
-        build_json_response(&runtime_state.metrics())
+    fn get_metrics_impl(state: &RuntimeState) -> HttpResponse {
+        build_json_response(&state.metrics())
     }
 
     match extract_route(&request.url) {

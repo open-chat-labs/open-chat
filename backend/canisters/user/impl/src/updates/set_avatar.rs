@@ -15,8 +15,8 @@ fn set_avatar(args: Args) -> Response {
     mutate_state(|state| set_avatar_impl(args, state))
 }
 
-fn set_avatar_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    if runtime_state.data.suspended.value {
+fn set_avatar_impl(args: Args, state: &mut RuntimeState) -> Response {
+    if state.data.suspended.value {
         return UserSuspended;
     }
 
@@ -25,11 +25,11 @@ fn set_avatar_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
     }
 
     let id = args.avatar.as_ref().map(|a| a.id);
-    let now = runtime_state.env.now();
+    let now = state.env.now();
 
-    runtime_state.data.avatar = Timestamped::new(args.avatar, now);
+    state.data.avatar = Timestamped::new(args.avatar, now);
 
-    ic_cdk::spawn(update_index_canister(runtime_state.data.user_index_canister_id, id));
+    ic_cdk::spawn(update_index_canister(state.data.user_index_canister_id, id));
 
     Success
 }

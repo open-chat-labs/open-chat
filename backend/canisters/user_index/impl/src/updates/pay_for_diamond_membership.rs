@@ -56,11 +56,11 @@ pub(crate) async fn pay_for_diamond_membership_impl(args: Args, user_id: UserId,
     response
 }
 
-fn prepare(args: &Args, user_id: UserId, runtime_state: &mut RuntimeState) -> Result<(), Response> {
-    let diamond_membership = runtime_state.data.users.diamond_membership_details_mut(&user_id).unwrap();
+fn prepare(args: &Args, user_id: UserId, state: &mut RuntimeState) -> Result<(), Response> {
+    let diamond_membership = state.data.users.diamond_membership_details_mut(&user_id).unwrap();
     if diamond_membership.payment_in_progress() {
         Err(PaymentAlreadyInProgress)
-    } else if let Err(result) = diamond_membership.can_extend(runtime_state.env.now()) {
+    } else if let Err(result) = diamond_membership.can_extend(state.env.now()) {
         Err(CannotExtend(result))
     } else if args.token != Cryptocurrency::InternetComputer {
         Err(CurrencyNotSupported)
@@ -77,12 +77,12 @@ fn process_charge(
     user_id: UserId,
     block_index: BlockIndex,
     manual_payment: bool,
-    runtime_state: &mut RuntimeState,
+    state: &mut RuntimeState,
 ) -> Response {
-    let share_with = referrer_to_share_payment(user_id, runtime_state);
+    let share_with = referrer_to_share_payment(user_id, state);
 
-    if let Some(diamond_membership) = runtime_state.data.users.diamond_membership_details_mut(&user_id) {
-        let now = runtime_state.env.now();
+    if let Some(diamond_membership) = state.data.users.diamond_membership_details_mut(&user_id) {
+        let now = state.env.now();
         let has_ever_been_diamond_member = diamond_membership.has_ever_been_diamond_member();
 
         diamond_membership.add_payment(
@@ -98,8 +98,8 @@ fn process_charge(
         let expires_at = diamond_membership.expires_at().unwrap();
         let result = diamond_membership.hydrate(now).unwrap();
 
-        runtime_state.data.users.mark_updated(&user_id, now);
-        runtime_state.push_event_to_local_user_index(
+        state.data.users.mark_updated(&user_id, now);
+        state.push_event_to_local_user_index(
             user_id,
             Event::DiamondMembershipPaymentReceived(DiamondMembershipPaymentReceived {
                 user_id,
@@ -113,18 +113,18 @@ fn process_charge(
                 send_bot_message: true,
             }),
         );
-        crate::jobs::sync_events_to_local_user_index_canisters::start_job_if_required(runtime_state);
+        crate::jobs::sync_events_to_local_user_index_canisters::start_job_if_required(state);
 
-        if let Some(user) = runtime_state.data.users.get_by_user_id(&user_id) {
-            runtime_state.data.storage_index_user_sync_queue.push(UserConfig {
+        if let Some(user) = state.data.users.get_by_user_id(&user_id) {
+            state.data.storage_index_user_sync_queue.push(UserConfig {
                 user_id: user.principal,
                 byte_limit: ONE_GB,
             });
-            crate::jobs::sync_users_to_storage_index::start_job_if_required(runtime_state);
+            crate::jobs::sync_users_to_storage_index::start_job_if_required(state);
         }
 
         if args.recurring {
-            runtime_state.data.timer_jobs.enqueue_job(
+            state.data.timer_jobs.enqueue_job(
                 TimerJob::RecurringDiamondMembershipPayment(RecurringDiamondMembershipPayment { user_id }),
                 expires_at.saturating_sub(DAY_IN_MS),
                 now,
@@ -133,14 +133,14 @@ fn process_charge(
 
         let mut amount_to_treasury = args.expected_price_e8s - (2 * Cryptocurrency::InternetComputer.fee() as u64);
 
-        let now_nanos = runtime_state.env.now_nanos();
+        let now_nanos = state.env.now_nanos();
 
         if let Some(share_with) = share_with {
             let amount_to_referrer = args.expected_price_e8s / 2;
             amount_to_treasury -= amount_to_referrer;
             amount_to_treasury -= Cryptocurrency::InternetComputer.fee() as u64;
 
-            runtime_state.queue_payment(PendingPayment {
+            state.queue_payment(PendingPayment {
                 amount: amount_to_referrer,
                 currency: Cryptocurrency::InternetComputer,
                 timestamp: now_nanos,
@@ -148,7 +148,7 @@ fn process_charge(
                 reason: PendingPaymentReason::ReferralReward,
             });
 
-            runtime_state.data.user_referral_leaderboards.add_reward(
+            state.data.user_referral_leaderboards.add_reward(
                 share_with,
                 !has_ever_been_diamond_member,
                 amount_to_referrer,
@@ -156,7 +156,7 @@ fn process_charge(
             );
         }
 
-        runtime_state.queue_payment(PendingPayment {
+        state.queue_payment(PendingPayment {
             amount: amount_to_treasury,
             currency: Cryptocurrency::InternetComputer,
             timestamp: now_nanos,
@@ -165,11 +165,11 @@ fn process_charge(
         });
 
         if manual_payment {
-            runtime_state.data.diamond_membership_payment_metrics.manual_payments_taken += 1;
+            state.data.diamond_membership_payment_metrics.manual_payments_taken += 1;
         } else {
-            runtime_state.data.diamond_membership_payment_metrics.recurring_payments_taken += 1;
+            state.data.diamond_membership_payment_metrics.recurring_payments_taken += 1;
         }
-        if let Some(amount) = runtime_state
+        if let Some(amount) = state
             .data
             .diamond_membership_payment_metrics
             .amount_raised
@@ -179,7 +179,7 @@ fn process_charge(
         {
             *amount += args.expected_price_e8s as u128;
         } else {
-            runtime_state
+            state
                 .data
                 .diamond_membership_payment_metrics
                 .amount_raised
@@ -193,12 +193,12 @@ fn process_charge(
     }
 }
 
-fn referrer_to_share_payment(user_id: UserId, runtime_state: &RuntimeState) -> Option<UserId> {
-    if let Some(user) = runtime_state.data.users.get_by_user_id(&user_id) {
-        let now = runtime_state.env.now();
+fn referrer_to_share_payment(user_id: UserId, state: &RuntimeState) -> Option<UserId> {
+    if let Some(user) = state.data.users.get_by_user_id(&user_id) {
+        let now = state.env.now();
         let diamond_membership = &user.diamond_membership_details;
         if let Some(referred_by) = user.referred_by {
-            if let Some(referrer) = runtime_state.data.users.get_by_user_id(&referred_by) {
+            if let Some(referrer) = state.data.users.get_by_user_id(&referred_by) {
                 if referrer.diamond_membership_details.is_active(now) {
                     let one_year = DiamondMembershipPlanDuration::OneYear.as_millis();
                     let year_from_joined = user.date_created + one_year;

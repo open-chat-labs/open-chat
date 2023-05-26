@@ -32,7 +32,7 @@ async fn delete_community(args: Args) -> Response {
     }
 }
 
-fn commit(community_id: CommunityId, runtime_state: &mut RuntimeState) {
-    let now = runtime_state.env.now();
-    runtime_state.data.communities.remove(community_id, now);
+fn commit(community_id: CommunityId, state: &mut RuntimeState) {
+    let now = state.env.now();
+    state.data.communities.remove(community_id, now);
 }

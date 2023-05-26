@@ -8,6 +8,6 @@ fn latest_notification_index(_args: Args) -> Response {
     read_state(latest_notification_index_impl)
 }
 
-fn latest_notification_index_impl(runtime_state: &RuntimeState) -> Response {
-    Success(runtime_state.data.notifications.latest_event_index())
+fn latest_notification_index_impl(state: &RuntimeState) -> Response {
+    Success(state.data.notifications.latest_event_index())
 }

@@ -20,14 +20,14 @@ fn delete_messages(args: Args) -> Response {
     mutate_state(|state| delete_messages_impl(args, state))
 }
 
-fn delete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    if runtime_state.data.suspended.value {
+fn delete_messages_impl(args: Args, state: &mut RuntimeState) -> Response {
+    if state.data.suspended.value {
         return UserSuspended;
     }
 
-    if let Some(chat) = runtime_state.data.direct_chats.get_mut(&args.user_id.into()) {
-        let my_user_id = runtime_state.env.canister_id().into();
-        let now = runtime_state.env.now();
+    if let Some(chat) = state.data.direct_chats.get_mut(&args.user_id.into()) {
+        let my_user_id = state.env.canister_id().into();
+        let now = state.env.now();
 
         let delete_message_results = chat.events.delete_messages(DeleteUndeleteMessagesArgs {
             caller: my_user_id,
@@ -54,7 +54,7 @@ fn delete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
         if !deleted.is_empty() {
             let remove_deleted_message_content_at = now + (5 * MINUTE_IN_MS);
             for (message_id, _) in deleted.iter().copied() {
-                runtime_state.data.timer_jobs.enqueue_job(
+                state.data.timer_jobs.enqueue_job(
                     TimerJob::HardDeleteMessageContent(Box::new(HardDeleteMessageContentJob {
                         chat_id: args.user_id.into(),
                         thread_root_message_index: None,
@@ -75,11 +75,7 @@ fn delete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
                     .collect();
 
                 if !my_messages.is_empty() {
-                    delete_on_recipients_canister(
-                        args.user_id.into(),
-                        my_messages,
-                        &runtime_state.data.fire_and_forget_handler,
-                    );
+                    delete_on_recipients_canister(args.user_id.into(), my_messages, &state.data.fire_and_forget_handler);
                 }
             }
         }

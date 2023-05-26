@@ -10,8 +10,8 @@ thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
 }
 
-pub(crate) fn start_job_if_required(runtime_state: &RuntimeState) -> bool {
-    if TIMER_ID.with(|t| t.get().is_none()) && !runtime_state.data.storage_index_user_sync_queue.is_empty() {
+pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
+    if TIMER_ID.with(|t| t.get().is_none()) && !state.data.storage_index_user_sync_queue.is_empty() {
         let timer_id = ic_cdk_timers::set_timer_interval(Duration::ZERO, run);
         TIMER_ID.with(|t| t.set(Some(timer_id)));
         trace!("'sync_users_to_storage_index' job started");
@@ -42,11 +42,11 @@ enum GetNextResult {
     QueueEmpty,
 }
 
-fn try_get_next(runtime_state: &mut RuntimeState) -> GetNextResult {
-    if runtime_state.data.storage_index_user_sync_queue.is_empty() {
+fn try_get_next(state: &mut RuntimeState) -> GetNextResult {
+    if state.data.storage_index_user_sync_queue.is_empty() {
         GetNextResult::QueueEmpty
-    } else if let Some(users) = runtime_state.data.storage_index_user_sync_queue.try_start_sync() {
-        GetNextResult::Success((runtime_state.data.storage_index_canister_id, users))
+    } else if let Some(users) = state.data.storage_index_user_sync_queue.try_start_sync() {
+        GetNextResult::Success((state.data.storage_index_canister_id, users))
     } else {
         GetNextResult::Continue
     }
@@ -60,11 +60,11 @@ async fn sync_users(storage_index_canister_id: CanisterId, users: Vec<UserConfig
     }
 }
 
-fn on_success(runtime_state: &mut RuntimeState) {
-    runtime_state.data.storage_index_user_sync_queue.mark_sync_completed();
+fn on_success(state: &mut RuntimeState) {
+    state.data.storage_index_user_sync_queue.mark_sync_completed();
 }
 
-fn on_failure(users: Vec<UserConfig>, runtime_state: &mut RuntimeState) {
-    runtime_state.data.storage_index_user_sync_queue.mark_sync_failed(users);
-    start_job_if_required(runtime_state);
+fn on_failure(users: Vec<UserConfig>, state: &mut RuntimeState) {
+    state.data.storage_index_user_sync_queue.mark_sync_failed(users);
+    start_job_if_required(state);
 }

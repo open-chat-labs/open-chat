@@ -33,35 +33,31 @@ enum CanPushNotificationsResult {
     Unknown(Principal, CanisterId), // (Caller, Authorizer)
 }
 
-fn can_push_notifications(args: &Args, runtime_state: &RuntimeState) -> CanPushNotificationsResult {
-    let caller = runtime_state.env.caller();
-    if let Some(authorized) = runtime_state.data.authorized_principals.can_push_notifications(&caller) {
+fn can_push_notifications(args: &Args, state: &RuntimeState) -> CanPushNotificationsResult {
+    let caller = state.env.caller();
+    if let Some(authorized) = state.data.authorized_principals.can_push_notifications(&caller) {
         if authorized {
             return CanPushNotificationsResult::Authorized;
         }
     } else if let Some(authorizer) = args.authorizer {
-        if runtime_state.data.authorized_principals.is_authorizer(&authorizer) {
+        if state.data.authorized_principals.is_authorizer(&authorizer) {
             return CanPushNotificationsResult::Unknown(caller, authorizer);
         }
     }
     CanPushNotificationsResult::Blocked
 }
 
-fn c2c_push_notification_impl(
-    recipients: Vec<UserId>,
-    notification_bytes: Vec<u8>,
-    runtime_state: &mut RuntimeState,
-) -> Response {
+fn c2c_push_notification_impl(recipients: Vec<UserId>, notification_bytes: Vec<u8>, state: &mut RuntimeState) -> Response {
     let filtered_recipients: Vec<_> = recipients
         .into_iter()
-        .filter(|u| runtime_state.data.subscriptions.any_for_user(u))
+        .filter(|u| state.data.subscriptions.any_for_user(u))
         .collect();
 
     if !filtered_recipients.is_empty() {
-        runtime_state.data.notifications.add(NotificationEnvelope {
+        state.data.notifications.add(NotificationEnvelope {
             recipients: filtered_recipients,
             notification_bytes,
-            timestamp: runtime_state.env.now(),
+            timestamp: state.env.now(),
         });
     }
     Success

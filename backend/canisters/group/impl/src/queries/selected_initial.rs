@@ -7,16 +7,16 @@ fn selected_initial(_args: Args) -> Response {
     read_state(selected_initial_impl)
 }
 
-fn selected_initial_impl(runtime_state: &RuntimeState) -> Response {
-    let caller = runtime_state.env.caller();
-    if let Some(member) = runtime_state.data.get_member(caller) {
-        let now = runtime_state.env.now();
+fn selected_initial_impl(state: &RuntimeState) -> Response {
+    let caller = state.env.caller();
+    if let Some(member) = state.data.get_member(caller) {
+        let now = state.env.now();
         let min_visible_message_index = member.min_visible_message_index();
-        let members = &runtime_state.data.chat.members;
+        let members = &state.data.chat.members;
 
         Success(SuccessResult {
             timestamp: now,
-            latest_event_index: runtime_state
+            latest_event_index: state
                 .data
                 .chat
                 .events
@@ -25,8 +25,8 @@ fn selected_initial_impl(runtime_state: &RuntimeState) -> Response {
                 .unwrap_or_default(),
             participants: members.iter().map(|p| p.into()).collect(),
             blocked_users: members.blocked(),
-            invited_users: runtime_state.data.invited_users.users(),
-            pinned_messages: runtime_state
+            invited_users: state.data.invited_users.users(),
+            pinned_messages: state
                 .data
                 .chat
                 .pinned_messages
@@ -34,7 +34,7 @@ fn selected_initial_impl(runtime_state: &RuntimeState) -> Response {
                 .filter(|&m| *m >= min_visible_message_index)
                 .copied()
                 .collect(),
-            rules: runtime_state.data.chat.rules.clone(),
+            rules: state.data.chat.rules.clone(),
         })
     } else {
         CallerNotInGroup

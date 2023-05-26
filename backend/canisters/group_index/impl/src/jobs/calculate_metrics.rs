@@ -13,7 +13,7 @@ fn run() {
     mutate_state(calculate_metrics_impl);
 }
 
-fn calculate_metrics_impl(runtime_state: &mut RuntimeState) {
-    let now = runtime_state.env.now();
-    runtime_state.data.calculate_metrics(now);
+fn calculate_metrics_impl(state: &mut RuntimeState) {
+    let now = state.env.now();
+    state.data.calculate_metrics(now);
 }

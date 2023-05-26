@@ -12,14 +12,14 @@ fn file_status(args: Args) -> Response {
     read_state(|state| file_status_impl(args, state))
 }
 
-fn file_status_impl(args: Args, runtime_state: &RuntimeState) -> Response {
-    let caller = runtime_state.env.caller();
-    let user = runtime_state.data.users.get(&caller).unwrap();
+fn file_status_impl(args: Args, state: &RuntimeState) -> Response {
+    let caller = state.env.caller();
+    let user = state.data.users.get(&caller).unwrap();
 
     if let Some(status_internal) = user.file_status(&args.file_id) {
         let status = match status_internal {
             FileStatusInternal::Complete(c) => {
-                let file = runtime_state.data.files.get(&args.file_id).unwrap_or_else(|| {
+                let file = state.data.files.get(&args.file_id).unwrap_or_else(|| {
                     panic!("Data inconsistency. File not found. FileId: {}", args.file_id);
                 });
 
@@ -27,11 +27,11 @@ fn file_status_impl(args: Args, runtime_state: &RuntimeState) -> Response {
                     created: file.created,
                     index_sync_complete: matches!(c, IndexSyncComplete::Yes),
                     mime_type: file.mime_type.clone(),
-                    size: runtime_state.data.files.data_size(&file.hash).unwrap_or_default(),
+                    size: state.data.files.data_size(&file.hash).unwrap_or_default(),
                 })
             }
             FileStatusInternal::Uploading(c) => {
-                let pending_file = runtime_state.data.files.pending_file(&args.file_id).unwrap_or_else(|| {
+                let pending_file = state.data.files.pending_file(&args.file_id).unwrap_or_else(|| {
                     panic!("Data inconsistency. Pending file not found. FileId: {}", args.file_id);
                 });
 

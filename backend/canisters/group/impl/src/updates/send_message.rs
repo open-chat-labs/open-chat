@@ -16,16 +16,16 @@ fn send_message_v2(args: Args) -> Response {
     mutate_state(|state| send_message_impl(args, state))
 }
 
-fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    if runtime_state.data.is_frozen() {
+fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
+    if state.data.is_frozen() {
         return ChatFrozen;
     }
 
-    let caller = runtime_state.env.caller();
-    if let Some(user_id) = runtime_state.data.lookup_user_id(&caller) {
-        let now = runtime_state.env.now();
+    let caller = state.env.caller();
+    if let Some(user_id) = state.data.lookup_user_id(&caller) {
+        let now = state.env.now();
 
-        match runtime_state.data.chat.send_message(
+        match state.data.chat.send_message(
             user_id,
             args.thread_root_message_index,
             args.message_id,
@@ -33,7 +33,7 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
             args.replies_to,
             args.mentioned.clone(),
             args.forwarding,
-            runtime_state.data.proposals_bot_user_id,
+            state.data.proposals_bot_user_id,
             now,
         ) {
             SendMessageResult::Success(result) => {
@@ -45,21 +45,21 @@ fn send_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
                     args.thread_root_message_index,
                     &result.message_event,
                     now,
-                    &mut runtime_state.data.timer_jobs,
+                    &mut state.data.timer_jobs,
                 );
 
                 let notification = Notification::GroupMessageNotification(GroupMessageNotification {
-                    chat_id: runtime_state.env.canister_id().into(),
+                    chat_id: state.env.canister_id().into(),
                     thread_root_message_index: args.thread_root_message_index,
-                    group_name: runtime_state.data.chat.name.clone(),
+                    group_name: state.data.chat.name.clone(),
                     sender: user_id,
                     sender_name: args.sender_name,
                     message: result.message_event,
                     mentioned: args.mentioned,
                 });
 
-                runtime_state.push_notification(result.users_to_notify, notification);
-                handle_activity_notification(runtime_state);
+                state.push_notification(result.users_to_notify, notification);
+                handle_activity_notification(state);
 
                 Success(SuccessResult {
                     event_index,

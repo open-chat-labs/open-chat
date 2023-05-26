@@ -15,16 +15,16 @@ fn add_reaction(args: Args) -> Response {
     mutate_state(|state| add_reaction_impl(args, state))
 }
 
-fn add_reaction_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    if runtime_state.data.is_frozen() {
+fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> Response {
+    if state.data.is_frozen() {
         return ChatFrozen;
     }
 
-    let caller = runtime_state.env.caller();
-    if let Some(user_id) = runtime_state.data.lookup_user_id(&caller) {
-        let now = runtime_state.env.now();
+    let caller = state.env.caller();
+    if let Some(user_id) = state.data.lookup_user_id(&caller) {
+        let now = state.env.now();
 
-        match runtime_state.data.chat.add_reaction(
+        match state.data.chat.add_reaction(
             user_id,
             args.thread_root_message_index,
             args.message_id,
@@ -32,8 +32,8 @@ fn add_reaction_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
             now,
         ) {
             AddRemoveReactionResult::Success => {
-                handle_activity_notification(runtime_state);
-                handle_notification(args, user_id, now, runtime_state);
+                handle_activity_notification(state);
+                handle_notification(args, user_id, now, state);
                 Success
             }
             AddRemoveReactionResult::NoChange => NoChange,
@@ -58,9 +58,9 @@ fn handle_notification(
     }: Args,
     user_id: UserId,
     now: TimestampMillis,
-    runtime_state: &mut RuntimeState,
+    state: &mut RuntimeState,
 ) {
-    if let Some(message) = runtime_state
+    if let Some(message) = state
         .data
         .chat
         .events
@@ -70,7 +70,7 @@ fn handle_notification(
         .and_then(|events_reader| events_reader.message_event(message_id.into(), None))
     {
         if message.event.sender != user_id {
-            let notifications_muted = runtime_state
+            let notifications_muted = state
                 .data
                 .chat
                 .members
@@ -78,12 +78,12 @@ fn handle_notification(
                 .map_or(true, |p| p.notifications_muted.value);
 
             if !notifications_muted {
-                runtime_state.push_notification(
+                state.push_notification(
                     vec![message.event.sender],
                     Notification::GroupReactionAddedNotification(GroupReactionAddedNotification {
-                        chat_id: runtime_state.env.canister_id().into(),
+                        chat_id: state.env.canister_id().into(),
                         thread_root_message_index,
-                        group_name: runtime_state.data.chat.name.clone(),
+                        group_name: state.data.chat.name.clone(),
                         added_by: user_id,
                         added_by_name: username,
                         message,

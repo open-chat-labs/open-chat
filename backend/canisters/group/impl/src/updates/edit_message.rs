@@ -13,18 +13,18 @@ fn edit_message_v2(args: Args) -> Response {
     mutate_state(|state| edit_message_impl(args, state))
 }
 
-fn edit_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    if runtime_state.data.is_frozen() {
+fn edit_message_impl(args: Args, state: &mut RuntimeState) -> Response {
+    if state.data.is_frozen() {
         return ChatFrozen;
     }
 
-    let caller = runtime_state.env.caller();
-    if let Some(member) = runtime_state.data.get_member(caller) {
+    let caller = state.env.caller();
+    if let Some(member) = state.data.get_member(caller) {
         if member.suspended.value {
             return UserSuspended;
         }
 
-        let now = runtime_state.env.now();
+        let now = state.env.now();
         let sender = member.user_id;
 
         let edit_message_args = EditMessageArgs {
@@ -36,9 +36,9 @@ fn edit_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
             now,
         };
 
-        match runtime_state.data.chat.events.edit_message(edit_message_args) {
+        match state.data.chat.events.edit_message(edit_message_args) {
             EditMessageResult::Success => {
-                handle_activity_notification(runtime_state);
+                handle_activity_notification(state);
                 Success
             }
             EditMessageResult::NotAuthorized => MessageNotFound,

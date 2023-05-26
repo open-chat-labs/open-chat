@@ -88,14 +88,14 @@ struct PrepareResult {
     pub local_group_index_canister: CanisterId,
 }
 
-fn prepare(name: &str, is_public: bool, runtime_state: &mut RuntimeState) -> Result<PrepareResult, Response> {
-    let now = runtime_state.env.now();
+fn prepare(name: &str, is_public: bool, state: &mut RuntimeState) -> Result<PrepareResult, Response> {
+    let now = state.env.now();
 
-    if is_public && !runtime_state.data.public_groups.reserve_name(name, now) {
+    if is_public && !state.data.public_groups.reserve_name(name, now) {
         return Err(NameTaken);
     }
 
-    if let Some(local_group_index_canister) = runtime_state.data.local_index_map.index_for_new_canister() {
+    if let Some(local_group_index_canister) = state.data.local_index_map.index_for_new_canister() {
         Ok(PrepareResult {
             local_group_index_canister,
         })
@@ -114,10 +114,10 @@ struct CommitArgs {
     local_group_index_canister: CanisterId,
 }
 
-fn commit(args: CommitArgs, runtime_state: &mut RuntimeState) {
-    let now = runtime_state.env.now();
+fn commit(args: CommitArgs, state: &mut RuntimeState) {
+    let now = state.env.now();
     if args.is_public {
-        runtime_state.data.public_groups.handle_group_created(GroupCreatedArgs {
+        state.data.public_groups.handle_group_created(GroupCreatedArgs {
             chat_id: args.chat_id,
             name: args.name,
             description: args.description,
@@ -126,19 +126,16 @@ fn commit(args: CommitArgs, runtime_state: &mut RuntimeState) {
             now,
         });
     } else {
-        runtime_state
-            .data
-            .private_groups
-            .add(PrivateGroupInfo::new(args.chat_id, now));
+        state.data.private_groups.add(PrivateGroupInfo::new(args.chat_id, now));
     }
-    runtime_state
+    state
         .data
         .local_index_map
         .add_group(args.local_group_index_canister, args.chat_id);
 }
 
-fn rollback(is_public: bool, name: &str, runtime_state: &mut RuntimeState) {
+fn rollback(is_public: bool, name: &str, state: &mut RuntimeState) {
     if is_public {
-        runtime_state.data.public_groups.handle_group_creation_failed(name);
+        state.data.public_groups.handle_group_creation_failed(name);
     }
 }

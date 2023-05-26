@@ -42,26 +42,26 @@ struct PrepareResult {
     user_index_canister_id: CanisterId,
 }
 
-fn prepare(runtime_state: &RuntimeState) -> Result<PrepareResult, Response> {
-    let caller = runtime_state.env.caller();
-    if let Some(user_id) = runtime_state.data.lookup_user_id(&caller) {
+fn prepare(state: &RuntimeState) -> Result<PrepareResult, Response> {
+    let caller = state.env.caller();
+    if let Some(user_id) = state.data.lookup_user_id(&caller) {
         Ok(PrepareResult {
             caller,
             user_id,
-            user_index_canister_id: runtime_state.data.user_index_canister_id,
+            user_index_canister_id: state.data.user_index_canister_id,
         })
     } else {
         Err(CallerNotInGroup)
     }
 }
 
-fn delete_messages_impl(user_id: UserId, args: Args, runtime_state: &mut RuntimeState) -> Response {
-    if runtime_state.data.is_frozen() {
+fn delete_messages_impl(user_id: UserId, args: Args, state: &mut RuntimeState) -> Response {
+    if state.data.is_frozen() {
         return ChatFrozen;
     }
 
-    let now = runtime_state.env.now();
-    match runtime_state.data.chat.delete_messages(
+    let now = state.env.now();
+    match state.data.chat.delete_messages(
         user_id,
         args.thread_root_message_index,
         args.message_ids,
@@ -78,7 +78,7 @@ fn delete_messages_impl(user_id: UserId, args: Args, runtime_state: &mut Runtime
                 }
             }) {
                 // After 5 minutes hard delete those messages where the deleter was the message sender
-                runtime_state.data.timer_jobs.enqueue_job(
+                state.data.timer_jobs.enqueue_job(
                     TimerJob::HardDeleteMessageContent(HardDeleteMessageContentJob {
                         thread_root_message_index: args.thread_root_message_index,
                         message_id,
@@ -88,7 +88,7 @@ fn delete_messages_impl(user_id: UserId, args: Args, runtime_state: &mut Runtime
                 );
             }
 
-            handle_activity_notification(runtime_state);
+            handle_activity_notification(state);
 
             Success
         }

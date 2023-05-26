@@ -10,8 +10,8 @@ use types::{
     PrizeContentInitial, TimestampMillis, TimestampNanos,
 };
 
-pub(crate) fn start_job(runtime_state: &mut RuntimeState) {
-    if let Some(time_until_next_prize) = time_until_next_prize(runtime_state) {
+pub(crate) fn start_job(state: &mut RuntimeState) {
+    if let Some(time_until_next_prize) = time_until_next_prize(state) {
         ic_cdk_timers::set_timer(time_until_next_prize, run);
     }
 }

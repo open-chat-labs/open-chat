@@ -12,11 +12,11 @@ fn c2c_mark_read_v2(args: Args) -> Response {
     mutate_state(|state| c2c_mark_read_impl(args, state))
 }
 
-fn c2c_mark_read_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    let their_user_id: UserId = runtime_state.env.caller().into();
+fn c2c_mark_read_impl(args: Args, state: &mut RuntimeState) -> Response {
+    let their_user_id: UserId = state.env.caller().into();
     let chat_id = ChatId::from(their_user_id);
-    if let Some(chat) = runtime_state.data.direct_chats.get_mut(&chat_id) {
-        let now = runtime_state.env.now();
+    if let Some(chat) = state.data.direct_chats.get_mut(&chat_id) {
+        let now = state.env.now();
         if chat.mark_read_up_to(args.read_up_to, false, now) {
             Success
         } else {
