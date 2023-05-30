@@ -4,7 +4,7 @@
     import EditableAvatar from "../../EditableAvatar.svelte";
     import Input from "../../Input.svelte";
     import TextArea from "../../TextArea.svelte";
-    import FormField from "./FormField.svelte";
+    import Legend from "../../Legend.svelte";
 
     const MIN_LENGTH = 3;
     const MAX_LENGTH = 25;
@@ -21,15 +21,18 @@
     }
 </script>
 
-<FormField label={"Group Image"}>
+<section>
+    <Legend label={"Group Image"} />
     <div class="photo">
         <EditableAvatar
             overlayIcon
             image={candidateGroup.avatar?.blobUrl}
             on:imageSelected={groupAvatarSelected} />
     </div>
-</FormField>
-<FormField label={"Group name"} required>
+</section>
+
+<section>
+    <Legend label={"Group name"} required />
     <Input
         autofocus
         disabled={busy}
@@ -38,20 +41,26 @@
         maxlength={MAX_LENGTH}
         countdown
         placeholder={$_("newGroupName")} />
-</FormField>
-<FormField label={"Description"}>
+</section>
+
+<section>
+    <Legend label={"Description"} />
     <TextArea
         rows={4}
         disabled={busy}
         bind:value={candidateGroup.description}
         maxlength={MAX_DESC_LENGTH}
         placeholder={$_("newGroupDesc")} />
-</FormField>
+</section>
 
 <style type="text/scss">
     .photo {
         text-align: center;
         padding: $sp4 0;
         margin-bottom: $sp3;
+    }
+
+    section {
+        margin-bottom: $sp5;
     }
 </style>

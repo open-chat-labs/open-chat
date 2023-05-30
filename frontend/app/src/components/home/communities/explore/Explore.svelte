@@ -9,7 +9,7 @@
     import { pathParams } from "../../../../routes";
     import { mobileWidth } from "../../../../stores/screenDimensions";
     import Filters from "./Filters.svelte";
-    import Create from "./Create.svelte";
+    import Create from "../create/Create.svelte";
 
     let searchTerm = "";
     let searching = false;

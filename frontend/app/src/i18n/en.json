@@ -844,6 +844,7 @@
         "mainMenu": "Main menu",
         "autoExpand": "Auto-expand communities menu",
         "back": "Back",
+        "next": "Next",
         "leave": "Leave community",
         "leaveMessage": "Do you really want to leave this community?",
         "tags": {
@@ -854,6 +855,16 @@
             "sport": "Sport",
             "music": "Music",
             "photography": "Photography"
-        }
+        },
+        "details": "Details",
+        "visibility": "Visibility",
+        "rules": "Rules",
+        "permissions": "Permissions",
+        "invite": "Invite Users",
+        "imageLabel": "Banner/Avatar image",
+        "name": "Name",
+        "namePlaceholder": "Enter community name",
+        "description": "Description",
+        "descriptionPlaceholder": "Tell us what your community is all about"
     }
 }

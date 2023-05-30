@@ -3,11 +3,12 @@
     import ModalContent from "../../../ModalContent.svelte";
     import Overlay from "../../../Overlay.svelte";
     import Button from "../../../Button.svelte";
-    import { toastStore } from "../../../../stores/toast";
+    import ButtonGroup from "../../../ButtonGroup.svelte";
     import { mobileWidth } from "../../../../stores/screenDimensions";
     import { createEventDispatcher, getContext, tick } from "svelte";
-    import page from "page";
-    import type { OpenChat } from "openchat-client";
+    import type { Community, OpenChat } from "openchat-client";
+    import StageHeader from "./StageHeader.svelte";
+    import Details from "./Details.svelte";
 
     export let show = false;
 
@@ -20,6 +21,21 @@
     $: padding = $mobileWidth ? 16 : 24; // yes this is horrible
     $: left = step * (actualWidth - padding);
     $: dirty = false;
+
+    const candidate: Community = {
+        id: "",
+        name: "",
+        description: "",
+        memberCount: 0,
+        channelCount: 0,
+        unreadCount: 0,
+        avatar: {},
+        banner: {},
+    };
+
+    function changeStep(ev: CustomEvent<number>) {
+        step = ev.detail;
+    }
 </script>
 
 {#if show}
@@ -29,10 +45,11 @@
                 {editing ? $_("communities.edit") : $_("communities.create")}
             </div>
             <div class="body" slot="body">
+                <StageHeader enabled={true} on:step={changeStep} {step} />
                 <div class="wrapper">
                     <div class="sections" style={`left: -${left}px`}>
                         <div class="details" class:visible={step === 0}>
-                            <h1>Details</h1>
+                            <Details bind:busy community={candidate} />
                         </div>
                         <div class="visibility" class:visible={step === 1}>
                             <h1>Visibility</h1>
@@ -58,7 +75,12 @@
                         {/if}
                     </div>
                     <div class="actions">
-                        <h1>Some buttons</h1>
+                        <ButtonGroup>
+                            <Button
+                                small={!$mobileWidth}
+                                tiny={$mobileWidth}
+                                on:click={() => (step = step + 1)}>{$_("communities.next")}</Button>
+                        </ButtonGroup>
                     </div>
                 </div>
             </span>

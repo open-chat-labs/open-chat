@@ -1,9 +1,9 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
     import TextArea from "../../TextArea.svelte";
+    import Legend from "../../Legend.svelte";
     import Toggle from "../../Toggle.svelte";
     import type { GroupRules } from "openchat-client";
-    import FormField from "../addgroup/FormField.svelte";
 
     const MAX_RULES_LENGTH = 1024;
 
@@ -23,14 +23,14 @@
         checked={rules.enabled} />
     <div class="instructions">{$_("group.rules.instructions")}</div>
 
-    <FormField label={"Group rules"}>
+    <Legend label={"Group rules"}>
         <TextArea
             bind:value={rules.text}
             minlength={0}
             maxlength={MAX_RULES_LENGTH}
             rows={8}
             placeholder={$_("group.rules.placeholder")} />
-    </FormField>
+    </Legend>
 </div>
 
 <style type="text/scss">

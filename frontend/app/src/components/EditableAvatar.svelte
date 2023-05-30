@@ -12,16 +12,44 @@
 
     export let image: string | null | undefined;
     export let disabled = false;
-    export let small = false;
+    export let size: Size = "large";
+    export let mode: Mode = "avatar";
     export let overlayIcon = false;
+
+    type Dimensions = { width: number; height: number };
+    type Mode = "banner" | "avatar";
+    type Size = "small" | "medium" | "large";
+    type CropShape = "round" | "rect";
 
     let fileinput: HTMLInputElement;
     let avatar: string | null | undefined;
     let originalImage = new Image();
     let showModal = false;
-    let CROP_SIZE = 400;
-    let SAVE_SIZE = 150;
+    $: SAVE_DIMS = getSaveDimensions(mode);
+    $: CROP_SHAPE = mode === "avatar" ? "round" : ("rect" as CropShape);
     let cropData: CropData | undefined = undefined;
+
+    $: iconSize = getIconSize(size);
+
+    function getSaveDimensions(mode: Mode): Dimensions {
+        switch (mode) {
+            case "avatar":
+                return { width: 150, height: 150 };
+            case "banner":
+                return { width: 1056, height: 300 };
+        }
+    }
+
+    function getIconSize(size: Size): string {
+        switch (size) {
+            case "large":
+                return "3em";
+            case "medium":
+                return "2em";
+            case "small":
+                return "1em";
+        }
+    }
 
     export function addPhoto() {
         if (!disabled) {
@@ -54,11 +82,21 @@
         } = cropData;
 
         const canvas: HTMLCanvasElement = document.createElement("canvas");
-        canvas.width = SAVE_SIZE;
-        canvas.height = SAVE_SIZE;
+        canvas.width = SAVE_DIMS.width;
+        canvas.height = SAVE_DIMS.height;
         canvas
             .getContext("2d")
-            ?.drawImage(originalImage, x, y, width, height, 0, 0, SAVE_SIZE, SAVE_SIZE);
+            ?.drawImage(
+                originalImage,
+                x,
+                y,
+                width,
+                height,
+                0,
+                0,
+                SAVE_DIMS.width,
+                SAVE_DIMS.height
+            );
 
         canvas.toBlob(async (blob: Blob | null) => {
             if (blob) {
@@ -86,8 +124,9 @@
                     <Cropper
                         image={avatar}
                         on:cropcomplete={onCrop}
-                        cropSize={{ width: CROP_SIZE, height: CROP_SIZE }}
-                        cropShape="round" />
+                        crop={{ x: 0, y: 0 }}
+                        aspect={mode === "banner" ? SAVE_DIMS.width / SAVE_DIMS.height : 1}
+                        cropShape={CROP_SHAPE} />
                 </div>
             </span>
             <span slot="footer">
@@ -108,20 +147,31 @@
     on:change={onFileSelected}
     bind:this={fileinput} />
 
-<div class="photo-section" on:click={addPhoto}>
-    <div class:small class="photo-icon">
-        {#if image}
-            <div class="avatar" style={`background-image: url(${image})`} />
-            {#if overlayIcon}
-                <div class="overlay">
-                    <ChooseImage size={"3em"} color={"#fff"} />
-                </div>
-            {/if}
-        {:else}
-            <ChooseImage size={"3em"} color={"var(--icon-txt)"} />
-        {/if}
+{#if mode === "banner"}
+    <div
+        class={`photo-section ${mode}`}
+        on:click={addPhoto}
+        style={image ? `background-image: url(${image})` : ""}>
+        <div class={`photo-icon ${size} ${mode}`}>
+            <ChooseImage size={iconSize} color={"var(--icon-txt)"} />
+        </div>
     </div>
-</div>
+{:else}
+    <div class={`photo-section ${mode}`} on:click={addPhoto}>
+        <div class={`photo-icon ${size} ${mode}`}>
+            {#if image}
+                <div class="avatar" style={`background-image: url(${image})`} />
+                {#if overlayIcon}
+                    <div class="overlay">
+                        <ChooseImage size={iconSize} color={"#fff"} />
+                    </div>
+                {/if}
+            {:else}
+                <ChooseImage size={iconSize} color={"var(--icon-txt)"} />
+            {/if}
+        </div>
+    </div>
+{/if}
 
 <style type="text/scss">
     .cropper {
@@ -135,6 +185,11 @@
         flex-direction: column;
         align-items: center;
         cursor: pointer;
+
+        &.banner {
+            background-color: var(--input-bg);
+            background-size: cover;
+        }
     }
 
     .overlay {
@@ -144,14 +199,23 @@
 
     .photo-icon {
         border-radius: 50%;
-        width: toRem(150);
-        height: toRem(150);
         display: flex;
         justify-content: center;
         align-items: center;
         position: relative;
-        background-color: var(--input-bg);
 
+        &.avatar {
+            background-color: var(--input-bg);
+        }
+
+        &.large {
+            width: toRem(150);
+            height: toRem(150);
+        }
+        &.medium {
+            width: toRem(100);
+            height: toRem(100);
+        }
         &.small {
             width: toRem(48);
             height: toRem(48);

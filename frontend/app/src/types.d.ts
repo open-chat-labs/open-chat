@@ -19,6 +19,16 @@ declare module "svelte-easy-crop" {
         image?: string | null;
         cropSize?: { width: number; height: number };
         cropShape?: "rect" | "round";
+
+        crop?: Point | undefined;
+        zoom?: number | undefined;
+        aspect?: number | undefined;
+        minZoom?: number | undefined;
+        maxZoom?: number | undefined;
+        showGrid?: boolean | undefined;
+        zoomSpeed?: number | undefined;
+        crossOrigin?: HTMLImgAttributes["crossorigin"];
+        restrictPosition?: boolean | undefined;
     }
     export default class Cropper extends SvelteComponentTyped<CropperProps, CropperEvents> {}
 }
