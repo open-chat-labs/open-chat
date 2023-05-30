@@ -6,6 +6,7 @@ mod http_request;
 mod local_user_index;
 mod messages_by_message_index;
 mod rules;
+mod search_channel;
 mod selected_initial;
 mod selected_updates;
 mod summary;
