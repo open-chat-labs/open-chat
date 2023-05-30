@@ -5,6 +5,7 @@ use community_canister::add_members_to_channel::{Response::*, *};
 use gated_groups::{check_if_passes_gate, CheckIfPassesGateResult};
 use group_members::AddResult;
 use ic_cdk_macros::update;
+use std::iter::zip;
 use types::{
     AddedToChannelNotification, CanisterId, ChannelId, EventIndex, GroupGate, MembersAdded, MessageIndex, Notification, UserId,
 };
@@ -30,8 +31,7 @@ async fn add_members_to_channel(args: Args) -> Response {
 
         let results = futures::future::join_all(futures).await;
 
-        for (index, result) in results.into_iter().enumerate() {
-            let user_id = *prepare_result.users_to_add.get(index).unwrap();
+        for (user_id, result) in zip(prepare_result.users_to_add, results) {
             match result {
                 CheckIfPassesGateResult::Success => users_to_add.push(user_id),
                 CheckIfPassesGateResult::Failed(reason) => {
