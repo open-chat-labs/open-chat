@@ -130,6 +130,10 @@ impl GroupMembers {
         self.members.get(user_id)
     }
 
+    pub fn contains(&self, user_id: &UserId) -> bool {
+        self.members.contains_key(user_id)
+    }
+
     pub fn get_mut(&mut self, user_id: &UserId) -> Option<&mut GroupMemberInternal> {
         self.members.get_mut(user_id)
     }

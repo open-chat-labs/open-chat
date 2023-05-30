@@ -9,7 +9,7 @@ pub enum CheckIfPassesGateResult {
 }
 
 pub async fn check_if_passes_gate(
-    gate: GroupGate,
+    gate: &GroupGate,
     user_id: UserId,
     user_index_canister_id: CanisterId,
 ) -> CheckIfPassesGateResult {
@@ -33,7 +33,7 @@ async fn check_diamond_member_gate(user_id: UserId, user_index_canister_id: Cani
     }
 }
 
-async fn check_sns_neuron_gate(gate: SnsNeuronGate, user_id: UserId) -> CheckIfPassesGateResult {
+async fn check_sns_neuron_gate(gate: &SnsNeuronGate, user_id: UserId) -> CheckIfPassesGateResult {
     let args = sns_governance_canister::list_neurons::Args {
         limit: 10,
         start_page_at: None,

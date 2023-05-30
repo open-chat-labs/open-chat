@@ -17,7 +17,7 @@ async fn c2c_join_group(args: Args) -> Response {
 
     match read_state(|state| is_permitted_to_join(args.invite_code, args.principal, args.user_id, state)) {
         Ok(Some((gate, user_index_canister_id))) => {
-            match check_if_passes_gate(gate, args.user_id, user_index_canister_id).await {
+            match check_if_passes_gate(&gate, args.user_id, user_index_canister_id).await {
                 CheckIfPassesGateResult::Success => {}
                 CheckIfPassesGateResult::Failed(reason) => return GateCheckFailed(reason),
                 CheckIfPassesGateResult::InternalError(error) => return InternalError(error),

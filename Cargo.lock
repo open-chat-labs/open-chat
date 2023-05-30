@@ -1280,6 +1280,7 @@ dependencies = [
  "chat_events",
  "community_canister",
  "fire_and_forget_handler",
+ "futures",
  "gated_groups",
  "group_chat_core",
  "group_index_canister",
