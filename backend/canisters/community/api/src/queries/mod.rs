@@ -10,3 +10,4 @@ pub mod rules;
 pub mod selected_initial;
 pub mod selected_updates;
 pub mod summary;
+pub mod thread_previews;
