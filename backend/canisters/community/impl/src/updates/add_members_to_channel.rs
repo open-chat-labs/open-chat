@@ -22,11 +22,11 @@ async fn add_members_to_channel(args: Args) -> Response {
     let mut users_failed_gate_check: Vec<UserFailedGateCheck> = Vec::new();
     let mut users_failed_with_error: Vec<UserFailedError> = Vec::new();
 
-    if let Some(gate_check) = prepare_result.gate_check {
+    if let Some(gate) = prepare_result.gate {
         let futures: Vec<_> = prepare_result
             .users_to_add
             .iter()
-            .map(|user_id| check_if_passes_gate(&gate_check.gate, *user_id, gate_check.user_index_canister_id))
+            .map(|user_id| check_if_passes_gate(&gate, *user_id, prepare_result.user_index_canister_id))
             .collect();
 
         let results = futures::future::join_all(futures).await;
@@ -64,11 +64,7 @@ struct PrepareResult {
     user_id: UserId,
     users_to_add: Vec<UserId>,
     users_already_in_channel: Vec<UserId>,
-    gate_check: Option<GateCheckInfo>,
-}
-
-struct GateCheckInfo {
-    gate: GroupGate,
+    gate: Option<GroupGate>,
     user_index_canister_id: CanisterId,
 }
 
@@ -102,16 +98,12 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
                     .copied()
                     .partition(|id| channel.chat.members.contains(id));
 
-                let gate_check = channel.chat.gate.as_ref().map(|gate| GateCheckInfo {
-                    gate: gate.clone(),
-                    user_index_canister_id: state.data.user_index_canister_id,
-                });
-
                 Ok(PrepareResult {
                     user_id,
                     users_to_add,
                     users_already_in_channel,
-                    gate_check,
+                    gate: channel.chat.gate.as_ref().cloned(),
+                    user_index_canister_id: state.data.user_index_canister_id,
                 })
             } else {
                 Err(UserNotInChannel)
