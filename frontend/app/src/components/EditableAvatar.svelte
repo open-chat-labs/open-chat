@@ -29,6 +29,8 @@
     $: CROP_SHAPE = mode === "avatar" ? "round" : ("rect" as CropShape);
     let cropData: CropData | undefined = undefined;
 
+    $: width = 0;
+    $: height = width / (600 / 350);
     $: iconSize = getIconSize(size);
 
     function getSaveDimensions(mode: Mode): Dimensions {
@@ -36,7 +38,7 @@
             case "avatar":
                 return { width: 150, height: 150 };
             case "banner":
-                return { width: 1056, height: 300 };
+                return { width: 600, height: 350 };
         }
     }
 
@@ -149,9 +151,12 @@
 
 {#if mode === "banner"}
     <div
+        bind:clientWidth={width}
         class={`photo-section ${mode}`}
         on:click={addPhoto}
-        style={image ? `background-image: url(${image})` : ""}>
+        style={image
+            ? `height: ${height}px; background-image: url(${image})`
+            : `height: ${height}px`}>
         <div class={`photo-icon ${size} ${mode}`}>
             <ChooseImage size={iconSize} color={"var(--icon-txt)"} />
         </div>
@@ -184,17 +189,19 @@
         display: flex;
         flex-direction: column;
         align-items: center;
+        justify-content: center;
         cursor: pointer;
 
         &.banner {
             background-color: var(--input-bg);
             background-size: cover;
+            height: 200px;
         }
     }
 
     .overlay {
         position: absolute;
-        opacity: 0.3;
+        opacity: 0.6;
     }
 
     .photo-icon {

@@ -1,29 +1,50 @@
+<!-- svelte-ignore a11y-click-events-have-key-events -->
+
 <script lang="ts">
-    import type { Community } from "openchat-client";
+    import type { Community, OpenChat } from "openchat-client";
     import Avatar from "../../../Avatar.svelte";
     import ButtonGroup from "../../../ButtonGroup.svelte";
+    import { _ } from "svelte-i18n";
     import Button from "../../../Button.svelte";
     import { AvatarSize } from "openchat-client";
+    import { createEventDispatcher, getContext } from "svelte";
+    import CommunityBanner from "./CommunityBanner.svelte";
+
+    const dispatch = createEventDispatcher();
 
     export let community: Community;
     export let selected: boolean;
     export let header = false;
+    export let joining: boolean;
+    export let member: boolean;
+
+    const client = getContext<OpenChat>("client");
+
+    function join() {
+        dispatch("joinCommunity", community);
+    }
 </script>
 
 <div class:selected class:header on:click class="card">
-    <div class="banner">
+    <CommunityBanner square={header} {community}>
         <div class="avatar">
-            <Avatar url={"../assets/evil-robot.svg"} userId={undefined} size={AvatarSize.Default} />
+            <Avatar
+                url={client.communityAvatarUrl(community.avatar)}
+                userId={undefined}
+                size={AvatarSize.Default} />
         </div>
-    </div>
+    </CommunityBanner>
     <div class="content">
         <div class="name">{community.name}</div>
         <div class="desc">{community.description}</div>
         {#if !header}
-            <ButtonGroup align={"fill"}>
-                <Button tiny hollow>Preview</Button>
-                <Button tiny>Join</Button>
-            </ButtonGroup>
+            {#if !member}
+                <ButtonGroup align={"fill"}>
+                    <Button tiny hollow>{$_("communities.preview")}</Button>
+                    <Button disabled={joining} loading={joining} on:click={join} tiny
+                        >{$_("communities.join")}</Button>
+                </ButtonGroup>
+            {/if}
             <div class="footer">
                 <div class="members">
                     <span class="number">{community.memberCount.toLocaleString()}</span>
@@ -50,27 +71,17 @@
             border-color: var(--txt);
         }
 
-        .banner {
-            position: relative;
-            background-color: blueviolet;
-            height: 150px;
-            border-radius: $sp3 $sp3 0 0;
-
-            .avatar {
-                width: toRem(48);
-                height: toRem(48);
-                position: absolute;
-                bottom: toRem(-15);
-                left: $sp3;
-            }
+        .avatar {
+            width: toRem(48);
+            height: toRem(48);
+            position: absolute;
+            bottom: toRem(-15);
+            left: $sp4;
         }
 
         &.header {
             border-radius: 0;
             border: none;
-            .banner {
-                border-radius: 0;
-            }
         }
 
         .content {

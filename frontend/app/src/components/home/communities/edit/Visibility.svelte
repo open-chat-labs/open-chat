@@ -1,34 +1,26 @@
 <script lang="ts">
     import LockOutline from "svelte-material-icons/LockOutline.svelte";
-    import Checkbox from "../../Checkbox.svelte";
-    import {
-        CandidateGroupChat,
-        E8S_PER_TOKEN,
-        Gated,
-        AccessGate,
-        OpenChat,
-    } from "openchat-client";
+    import { Community, E8S_PER_TOKEN, AccessGate, Gated, OpenChat } from "openchat-client";
     import { _ } from "svelte-i18n";
-    import Radio from "../../Radio.svelte";
+    import Radio from "../../../Radio.svelte";
     import { afterUpdate, createEventDispatcher, getContext, onMount } from "svelte";
-    import Button from "../../Button.svelte";
-    import Select from "../../Select.svelte";
+    import Button from "../../../Button.svelte";
+    import Select from "../../../Select.svelte";
     import { iconSize } from "stores/iconSize";
-    import Legend from "../../Legend.svelte";
-    import Input from "../../Input.svelte";
-    import { gatedGroupsEnabled } from "../../../utils/features";
+    import Legend from "../../../Legend.svelte";
+    import Input from "../../../Input.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
-    export let candidateGroup: CandidateGroupChat;
-    export let originalGroup: CandidateGroupChat;
+    export let candidate: Community;
+    export let originalCommunity: Community;
     export let editing: boolean;
 
     type GateBinding = { index: number; label: string; gate: AccessGate; enabled: boolean };
 
-    let minDissolveDelay = getMinDissolveDelay(originalGroup);
-    let minStake = getMinStake(originalGroup);
+    let minDissolveDelay = getMinDissolveDelay(originalCommunity);
+    let minStake = getMinStake(originalCommunity);
 
     $: invalidDissolveDelay = minDissolveDelay !== "" && isNaN(Number(minDissolveDelay));
     $: invalidMinStake = minStake !== "" && isNaN(Number(minStake));
@@ -93,18 +85,15 @@
     let selectedGateIndex = 0;
 
     onMount(() => {
-        selectedGateIndex = gates.findIndex((g) => candidateGroup.gate.kind === g.gate.kind) ?? 0;
+        selectedGateIndex = gates.findIndex((g) => candidate.gate.kind === g.gate.kind) ?? 0;
     });
 
     afterUpdate(() => {
-        if (
-            candidateGroup.gate.kind === "openchat_gate" ||
-            candidateGroup.gate.kind === "sns1_gate"
-        ) {
-            candidateGroup = {
-                ...candidateGroup,
+        if (candidate.gate.kind === "openchat_gate" || candidate.gate.kind === "sns1_gate") {
+            candidate = {
+                ...candidate,
                 gate: {
-                    ...candidateGroup.gate,
+                    ...candidate.gate,
                     minDissolveDelay: !invalidDissolveDelay
                         ? Number(minDissolveDelay) * 24 * 60 * 60 * 1000
                         : undefined,
@@ -116,21 +105,14 @@
 
     $: isDiamond = client.isDiamond;
 
-    $: canMakePrivate =
-        candidateGroup.chatId !== undefined
-            ? client.canMakeGroupPrivate(candidateGroup.chatId)
-            : true;
+    $: canMakePrivate = false;
 
     function toggleScope() {
-        candidateGroup.isPublic = !candidateGroup.isPublic;
-        if (candidateGroup.isPublic) {
-            candidateGroup.historyVisible = true;
-            candidateGroup.members = [];
-        }
+        candidate.isPublic = !candidate.isPublic;
     }
 
     function updateGate() {
-        candidateGroup.gate = gates[selectedGateIndex]?.gate;
+        candidate.gate = gates[selectedGateIndex]?.gate;
         minDissolveDelay = "";
         minStake = "";
     }
@@ -139,7 +121,7 @@
 <div class="section">
     <Radio
         on:change={toggleScope}
-        checked={!candidateGroup.isPublic}
+        checked={!candidate.isPublic}
         id={"private"}
         disabled={!canMakePrivate}
         align={"start"}
@@ -158,10 +140,10 @@
     <div class="section">
         <Radio
             on:change={toggleScope}
-            checked={candidateGroup.isPublic}
+            checked={candidate.isPublic}
             id={"public"}
             align={"start"}
-            disabled={editing && !originalGroup.isPublic}
+            disabled={editing && !originalCommunity.isPublic}
             group={"group-visibility"}>
             <div class="section-title">
                 <div class={"img public"} />
@@ -175,26 +157,7 @@
     </div>
 {/if}
 
-<div class="section">
-    <Checkbox
-        id="history-visible"
-        disabled={candidateGroup.isPublic || editing}
-        on:change={() => (candidateGroup.historyVisible = !candidateGroup.historyVisible)}
-        label={$_("historyVisible")}
-        align={"start"}
-        checked={candidateGroup.historyVisible}>
-        <div class="section-title">{$_("historyVisible")}</div>
-        <div class="info">
-            {#if candidateGroup.historyVisible}
-                <p>{$_("historyOnInfo")}</p>
-            {:else}
-                <p>{$_("historyOffInfo")}</p>
-            {/if}
-        </div>
-    </Checkbox>
-</div>
-
-{#if $isDiamond && gatedGroupsEnabled && candidateGroup.isPublic}
+{#if $isDiamond && candidate.isPublic}
     <div class="wrapper">
         <div class="icon">
             <LockOutline size={$iconSize} color={"var(--icon-txt)"} />
@@ -208,7 +171,7 @@
                     {/each}
                 </Select>
             </div>
-            {#if candidateGroup.gate.kind === "openchat_gate" || candidateGroup.gate.kind === "sns1_gate"}
+            {#if candidate.gate.kind === "openchat_gate" || candidate.gate.kind === "sns1_gate"}
                 <Legend label={$_("group.minDissolveDelay")} />
                 <Input
                     maxlength={100}
@@ -223,13 +186,13 @@
                     invalid={invalidMinStake}
                     bind:value={minStake} />
             {/if}
-            {#if candidateGroup.gate.kind === "diamond_gate"}
+            {#if candidate.gate.kind === "diamond_gate"}
                 <div class="info">{$_("group.diamondGateInfo")}</div>
-            {:else if candidateGroup.gate.kind === "openchat_gate"}
+            {:else if candidate.gate.kind === "openchat_gate"}
                 <div class="info">{$_("group.chatHolderInfo")}</div>
-            {:else if candidateGroup.gate.kind === "sns1_gate"}
+            {:else if candidate.gate.kind === "sns1_gate"}
                 <div class="info">{$_("group.sns1HolderInfo")}</div>
-            {:else if candidateGroup.gate.kind === "no_gate"}
+            {:else if candidate.gate.kind === "no_gate"}
                 <div class="info">{$_("group.openAccessInfo")}</div>
             {/if}
         </div>

@@ -294,7 +294,7 @@ import {
     UpdateMarketMakerConfigResponse,
     UpdatedEvent,
     compareRoles,
-    GroupGate,
+    AccessGate,
     ProposalVoteDetails,
     MessageReminderCreatedContent,
     InviteUsersResponse,
@@ -1007,6 +1007,14 @@ export class OpenChat extends EventTarget {
     groupBySender = groupBySender;
     groupBy = groupBy;
     getTypingString = getTypingString;
+
+    communityAvatarUrl<T extends { blobUrl?: string }>(dataContent?: T): string {
+        return dataContent?.blobUrl ?? "../assets/evil-robot.svg";
+    }
+
+    communityBannerUrl<T extends { blobUrl?: string }>(dataContent?: T): string {
+        return dataContent?.blobUrl ?? "../assets/landscape.png";
+    }
 
     canBlockUsers(chatId: string): boolean {
         return this.chatPredicate(chatId, canBlockUsers);
@@ -3233,7 +3241,7 @@ export class OpenChat extends EventTarget {
         rules?: GroupRules,
         permissions?: Partial<GroupPermissions>,
         avatar?: Uint8Array,
-        gate?: GroupGate
+        gate?: AccessGate
     ): Promise<UpdateGroupResponse> {
         console.log(
             "Updating group: ",
@@ -3491,8 +3499,9 @@ export class OpenChat extends EventTarget {
             const chatsResponse = await this.api.getUpdates();
 
             if (!init || chatsResponse.anyUpdates) {
-                const updatedChats = (chatsResponse.state.directChats as ChatSummary[])
-                    .concat(chatsResponse.state.groupChats);
+                const updatedChats = (chatsResponse.state.directChats as ChatSummary[]).concat(
+                    chatsResponse.state.groupChats
+                );
 
                 this.updateReadUpToStore(updatedChats);
                 const chats = Object.values(this._liveState.myServerChatSummaries);
@@ -3515,9 +3524,7 @@ export class OpenChat extends EventTarget {
                     pinnedChatsStore.set(chatsResponse.state.pinnedChats);
                 }
 
-                myServerChatSummariesStore.set(
-                    toRecord(updatedChats, (chat) => chat.chatId)
-                );
+                myServerChatSummariesStore.set(toRecord(updatedChats, (chat) => chat.chatId));
 
                 if (Object.keys(this._liveState.uninitializedDirectChats).length > 0) {
                     for (const chat of updatedChats) {

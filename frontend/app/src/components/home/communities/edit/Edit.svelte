@@ -5,12 +5,14 @@
     import Button from "../../../Button.svelte";
     import ButtonGroup from "../../../ButtonGroup.svelte";
     import { mobileWidth } from "../../../../stores/screenDimensions";
-    import { createEventDispatcher, getContext, tick } from "svelte";
+    import { createEventDispatcher, getContext, onMount } from "svelte";
     import type { Community, OpenChat } from "openchat-client";
     import StageHeader from "./StageHeader.svelte";
     import Details from "./Details.svelte";
+    import { dummyCommunities, createCandidateCommunity } from "stores/community";
 
     export let show = false;
+    export let candidate: Community = createCandidateCommunity("");
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -22,19 +24,18 @@
     $: left = step * (actualWidth - padding);
     $: dirty = false;
 
-    const candidate: Community = {
-        id: "",
-        name: "",
-        description: "",
-        memberCount: 0,
-        channelCount: 0,
-        unreadCount: 0,
-        avatar: {},
-        banner: {},
-    };
+    onMount(() => {});
 
     function changeStep(ev: CustomEvent<number>) {
         step = ev.detail;
+    }
+
+    function save() {
+        // TODO this is a dummy save for now
+        dummyCommunities.update((communities) => {
+            const next = (communities.length + 2).toString();
+            return [{ ...candidate, id: next }, ...communities];
+        });
     }
 </script>
 
@@ -76,6 +77,11 @@
                     </div>
                     <div class="actions">
                         <ButtonGroup>
+                            <Button
+                                small={!$mobileWidth}
+                                tiny={$mobileWidth}
+                                secondary
+                                on:click={save}>{"(Dummy) Save"}</Button>
                             <Button
                                 small={!$mobileWidth}
                                 tiny={$mobileWidth}

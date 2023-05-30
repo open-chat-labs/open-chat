@@ -13,7 +13,7 @@
     import {
         CandidateGroupChat,
         CreateGroupResponse,
-        GroupGate,
+        AccessGate,
         OpenChat,
         UnsupportedValueError,
         UpdateGroupResponse,
@@ -72,7 +72,7 @@
     $: gateDirty = gatesDifferent(candidateGroup.gate, originalGroup.gate);
     $: dirty = infoDirty || rulesDirty || permissionsDirty || visDirty || gateDirty;
 
-    function gatesDifferent(current: GroupGate, original: GroupGate): boolean {
+    function gatesDifferent(current: AccessGate, original: AccessGate): boolean {
         if (current === original) return false;
         if (current.kind !== original.kind) return true;
         if (
@@ -120,7 +120,8 @@
         if (resp.kind === "rules_too_short") return "groupRulesTooShort";
         if (resp.kind === "rules_too_long") return "groupRulesTooLong";
         if (resp.kind === "user_suspended") return "userSuspended";
-        if (resp.kind === "unauthorized_to_create_public_group") return "unauthorizedToCreatePublicGroup";
+        if (resp.kind === "unauthorized_to_create_public_group")
+            return "unauthorizedToCreatePublicGroup";
         throw new UnsupportedValueError(`Unexpected CreateGroupResponse type received`, resp);
     }
 
@@ -131,7 +132,7 @@
         return client
             .inviteUsers(
                 canisterId,
-                candidateGroup.members.map((m) => m.user.userId),
+                candidateGroup.members.map((m) => m.user.userId)
             )
             .then((resp) => {
                 if (resp !== "success") {
@@ -212,7 +213,7 @@
             });
     }
 
-    function doUpdateGate(gate: GroupGate): Promise<void> {
+    function doUpdateGate(gate: AccessGate): Promise<void> {
         if (candidateGroup.chatId === undefined) return Promise.resolve();
 
         return client

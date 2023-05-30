@@ -23,7 +23,7 @@ import type {
     GroupChatDetailsResponse,
     GroupChatEvent,
     GroupChatSummary,
-    GroupGate,
+    AccessGate,
     GroupPermissions,
     GroupRules,
     IndexRange,
@@ -550,7 +550,7 @@ type UpdateGroup = Request<{
     rules?: GroupRules;
     permissions?: Partial<GroupPermissions>;
     avatar?: Uint8Array;
-    gate?: GroupGate;
+    gate?: AccessGate;
 }> & {
     kind: "updateGroup";
 };

@@ -1,6 +1,7 @@
+import type { Gated } from "../access";
 import type { DataContent } from "../data";
 
-export type Community = {
+export type Community = Gated & {
     id: string;
     name: string;
     description: string;
@@ -9,4 +10,5 @@ export type Community = {
     unreadCount: number;
     avatar: DataContent;
     banner: DataContent;
+    isPublic: boolean;
 };

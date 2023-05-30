@@ -29,6 +29,7 @@
             on:wallet
             on:upgrade
             on:toggleMuteNotifications
+            on:browseChannels
             {searchResultsAvailable}
             {searchTerm}
             {searching}

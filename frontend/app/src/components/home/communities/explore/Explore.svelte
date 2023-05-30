@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { dummyCommunities } from "../../../../stores/community";
+    import { dummyCommunities, myCommunities } from "../../../../stores/community";
     import { _ } from "svelte-i18n";
     import Button from "../../../Button.svelte";
     import Select from "../../../Select.svelte";
@@ -9,17 +9,40 @@
     import { pathParams } from "../../../../routes";
     import { mobileWidth } from "../../../../stores/screenDimensions";
     import Filters from "./Filters.svelte";
-    import Create from "../create/Create.svelte";
+    import Edit from "../edit/Edit.svelte";
+    import type { Community, OpenChat } from "openchat-client";
+    import { getContext } from "svelte";
+
+    const client = getContext<OpenChat>("client");
 
     let searchTerm = "";
     let searching = false;
-    let showCreateModal = false;
+    let showEditModel = false;
+    let joining: Set<string> = new Set();
 
     $: selectedCommunityId =
         $pathParams.kind === "communities_route" ? $pathParams.communityId : undefined;
+    $: myCommunitiesLookup = client.toRecord2(
+        $myCommunities,
+        (c) => c.id,
+        (c) => c
+    );
+
+    function joinCommunity(ev: CustomEvent<Community>) {
+        joining.add(ev.detail.id);
+        joining = joining;
+
+        setTimeout(() => {
+            myCommunities.update((communities) => {
+                return [ev.detail, ...communities];
+            });
+            joining.delete(ev.detail.id);
+            joining = joining;
+        }, 2000);
+    }
 </script>
 
-<Create bind:show={showCreateModal} />
+<Edit bind:show={showEditModel} />
 
 <div class="explore">
     <div class="header">
@@ -36,7 +59,7 @@
                         placeholder={$_("communities.search")} />
                 </div>
                 <div class="create">
-                    <Button on:click={() => (showCreateModal = true)} hollow
+                    <Button on:click={() => (showEditModel = true)} hollow
                         >{$_("communities.create")}</Button>
                 </div>
             {/if}
@@ -69,11 +92,12 @@
     <div class="communities">
         {#each $dummyCommunities as community}
             <CommunityCard
+                on:joinCommunity={joinCommunity}
                 selected={selectedCommunityId === community.id}
                 {community}
-                on:click={() => page(`/communities/${community.id}`)}>
-                {community.name}
-            </CommunityCard>
+                joining={joining.has(community.id)}
+                member={myCommunitiesLookup[community.id] !== undefined}
+                on:click={() => page(`/communities/${community.id}`)} />
         {/each}
     </div>
 </div>

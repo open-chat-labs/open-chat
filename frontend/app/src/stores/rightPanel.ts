@@ -10,7 +10,7 @@ export type RightPanelState =
     | UserProfilePanel
     | MessageThreadPanel
     | ProposalFilterPanel
-    | CommunityGroups
+    | CommunityChannels
     | NoPanel;
 
 export type NoPanel = {
@@ -39,8 +39,8 @@ export type ShowMembersPanel = {
     kind: "show_members";
 };
 
-export type CommunityGroups = {
-    kind: "community_groups";
+export type CommunityChannels = {
+    kind: "community_channels";
     communityId: string;
 };
 

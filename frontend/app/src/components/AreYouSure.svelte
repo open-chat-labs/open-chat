@@ -37,7 +37,7 @@
             <Markdown inline={false} text={message} />
 
             {#if doubleCheck !== undefined}
-                <p>
+                <p class="challenge">
                     <Markdown text={doubleCheck.challenge} />
                 </p>
                 <Input
@@ -66,3 +66,9 @@
         </span>
     </ModalContent>
 </Overlay>
+
+<style type="text/scss">
+    .challenge {
+        margin: $sp3 0;
+    }
+</style>

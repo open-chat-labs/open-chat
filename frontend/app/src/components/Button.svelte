@@ -12,7 +12,7 @@
 </script>
 
 <button
-    on:click
+    on:click|stopPropagation
     class={cls}
     class:loading
     class:disabled

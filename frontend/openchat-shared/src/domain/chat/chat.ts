@@ -2,6 +2,7 @@ import type { BlobReference, DataContent } from "../data/data";
 import type { PartialUserSummary, UserSummary } from "../user/user";
 import type { OptionUpdate } from "../optionUpdate";
 import type { Cryptocurrency } from "../crypto";
+import type { AccessGate, Gated } from "../access";
 
 export const Sns1GovernanceCanisterId = "zqfso-syaaa-aaaaq-aaafq-cai";
 export const OpenChatGovernanceCanisterId = "2jvtu-yqaaa-aaaaq-aaama-cai";
@@ -473,7 +474,7 @@ export type LocalChatSummaryUpdates = {
               notificationsMuted?: boolean;
               archived?: boolean;
               frozen?: boolean;
-              gate?: GroupGate;
+              gate?: AccessGate;
           };
     removedAtTimestamp?: bigint;
     lastUpdated: number;
@@ -994,35 +995,6 @@ type ChatSummaryCommon = {
     archived: boolean;
 };
 
-export type GroupGate =
-    | NoGate
-    | Sns1NeuronGate
-    | OpenChatNeuronGate
-    | DiamondGate
-    | NnsNeuronGate
-    | NftGate;
-
-export type NoGate = { kind: "no_gate" };
-
-export type NnsNeuronGate = { kind: "nns_gate" };
-
-export type NftGate = { kind: "nft_gate" };
-
-type SnsNeuronGate = {
-    minStakeE8s?: number;
-    minDissolveDelay?: number;
-};
-
-export type Sns1NeuronGate = SnsNeuronGate & {
-    kind: "sns1_gate";
-};
-
-export type OpenChatNeuronGate = SnsNeuronGate & {
-    kind: "openchat_gate";
-};
-
-export type DiamondGate = { kind: "diamond_gate" };
-
 export type DirectChatSummary = ChatSummaryCommon & {
     kind: "direct_chat";
     them: string;
@@ -1031,7 +1003,8 @@ export type DirectChatSummary = ChatSummaryCommon & {
 };
 
 export type GroupChatSummary = DataContent &
-    ChatSummaryCommon & {
+    ChatSummaryCommon &
+    Gated & {
         kind: "group_chat";
         name: string;
         description: string;
@@ -1051,7 +1024,6 @@ export type GroupChatSummary = DataContent &
         frozen: boolean;
         dateLastPinned: bigint | undefined;
         dateReadPinned: bigint | undefined;
-        gate: GroupGate;
     };
 
 export type GroupCanisterSummaryResponse = GroupCanisterGroupChatSummary | CallerNotInGroup;
@@ -1085,7 +1057,7 @@ export type GroupCanisterGroupChatSummary = {
     latestThreads: GroupCanisterThreadDetails[];
     frozen: boolean;
     dateLastPinned: bigint | undefined;
-    gate: GroupGate;
+    gate: AccessGate;
 };
 
 export type UpdatedEvent = {
@@ -1115,7 +1087,7 @@ export type GroupCanisterGroupChatSummaryUpdates = {
     frozen: OptionUpdate<boolean>;
     updatedEvents: UpdatedEvent[];
     dateLastPinned: bigint | undefined;
-    gate: OptionUpdate<GroupGate>;
+    gate: OptionUpdate<AccessGate>;
 };
 
 export type GroupCanisterThreadDetails = {
@@ -1155,7 +1127,7 @@ export type CandidateGroupChat = {
     members: CandidateMember[];
     avatar?: DataContent;
     permissions: GroupPermissions;
-    gate: GroupGate;
+    gate: AccessGate;
 };
 
 // todo - there are all sorts of error conditions here that we need to deal with but - later

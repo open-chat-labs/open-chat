@@ -19,7 +19,7 @@
     import LeftNavItem from "./LeftNavItem.svelte";
     import MainMenu from "./MainMenu.svelte";
     import { navOpen } from "../../../stores/layout";
-    import { dummyCommunities, selectedCommunity } from "../../../stores/community";
+    import { myCommunities, selectedCommunity } from "../../../stores/community";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -27,7 +27,6 @@
     $: userStore = client.userStore;
     $: user = $userStore[createdUser.userId];
     $: avatarSize = $mobileWidth ? AvatarSize.Small : AvatarSize.Default;
-    $: myCommunities = $dummyCommunities.slice(0, 8);
 
     let iconSize = $mobileWidth ? "1.2em" : "1.4em"; // in this case we don't want to use the standard store
 
@@ -117,7 +116,7 @@
     </div>
 
     <div class="middle">
-        {#each myCommunities as community, i}
+        {#each $myCommunities as community, i}
             <LeftNavItem
                 selected={community === $selectedCommunity}
                 unread={community.unreadCount}
@@ -125,10 +124,10 @@
                 on:click={() => selectCommunity(community)}>
                 <Avatar
                     selected={community === $selectedCommunity}
-                    url={community.blobUrl}
+                    url={client.communityAvatarUrl(community.avatar)}
                     size={avatarSize} />
                 <div slot="menu">
-                    <CommunityMenu {community} />
+                    <CommunityMenu on:browseChannels {community} />
                 </div>
             </LeftNavItem>
         {/each}

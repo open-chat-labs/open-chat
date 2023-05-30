@@ -15,14 +15,14 @@
     <div class="current-selection" class:rtl={$rtlStore}>
         <div class="avatar">
             <Avatar
-                url={client.groupAvatarUrl($selectedCommunity)}
+                url={client.communityAvatarUrl($selectedCommunity.avatar)}
                 userId={undefined}
                 size={AvatarSize.Default} />
         </div>
         <h4 class="name">{$selectedCommunity.name}</h4>
     </div>
     <span class="menu">
-        <CommunityMenu community={$selectedCommunity} />
+        <CommunityMenu on:browseChannels community={$selectedCommunity} />
     </span>
 </SectionHeader>
 

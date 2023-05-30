@@ -277,7 +277,7 @@
             on:closeThread={closeThread} />
     {:else if lastState.kind === "proposal_filters" && $selectedChatId !== undefined}
         <ProposalGroupFilters on:close={popRightPanelHistory} />
-    {:else if lastState.kind === "community_groups"}
+    {:else if lastState.kind === "community_channels"}
         <CommunityChannels communityId={lastState.communityId} />
     {/if}
 </Panel>

@@ -27,6 +27,7 @@
         defaultGroupRules,
         EventWrapper,
         ChatType,
+        Community,
     } from "openchat-client";
     import Overlay from "../Overlay.svelte";
     import { getContext, onMount, tick } from "svelte";
@@ -222,7 +223,7 @@
             if (pathParams.kind === "communities_route") {
                 if (pathParams.communityId !== undefined) {
                     rightPanelHistory.set([
-                        { kind: "community_groups", communityId: pathParams.communityId },
+                        { kind: "community_channels", communityId: pathParams.communityId },
                     ]);
                 } else {
                     rightPanelHistory.set([]);
@@ -858,6 +859,10 @@
         rightPanelHistory.set([]);
     }
 
+    function browseChannels(ev: CustomEvent<Community>) {
+        rightPanelHistory.set([{ kind: "community_channels", communityId: ev.detail.id }]);
+    }
+
     $: bgHeight = $dimensions.height * 0.9;
     $: bgClip = (($dimensions.height - 32) / bgHeight) * 361;
 </script>
@@ -867,6 +872,7 @@
         <LeftNav
             on:profile={showProfile}
             on:wallet={showWallet}
+            on:browseChannels={browseChannels}
             on:halloffame={() => (modal = ModalType.HallOfFame)}
             on:logout={() => client.logout()}
             on:newGroup={newGroup}
@@ -887,6 +893,7 @@
             on:halloffame={() => (modal = ModalType.HallOfFame)}
             on:newGroup={newGroup}
             on:profile={showProfile}
+            on:browseChannels={browseChannels}
             on:logout={() => client.logout()}
             on:wallet={showWallet}
             on:deleteDirectChat={deleteDirectChat}

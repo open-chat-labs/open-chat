@@ -8,7 +8,7 @@ function createDummyCommunity(
     memberCount = 2000,
     channelCount = 15,
     unreadCount = 0
-) {
+): Community {
     return {
         name,
         id,
@@ -17,7 +17,10 @@ function createDummyCommunity(
         memberCount,
         channelCount,
         unreadCount,
-        blobUrl: url,
+        avatar: { blobUrl: url },
+        banner: {},
+        gate: { kind: "no_gate" },
+        isPublic: true,
     };
 }
 
@@ -57,6 +60,8 @@ export const selectedCommunity = writable<Community>(allCommunities[0]);
 
 export const dummyCommunities = writable<Community[]>(allCommunities);
 
+export const myCommunities = writable<Community[]>(allCommunities.slice(0, 5));
+
 export const dummyCommunityChannels = writable<{ name: string; description: string }[]>([
     createDummyCommunityChannel("1"),
     createDummyCommunityChannel("2"),
@@ -73,3 +78,18 @@ export const dummyCommunityChannels = writable<{ name: string; description: stri
     createDummyCommunityChannel("13"),
     createDummyCommunityChannel("14"),
 ]);
+
+export function createCandidateCommunity(id: string): Community {
+    return {
+        id,
+        name: "",
+        description: "",
+        memberCount: 0,
+        channelCount: 0,
+        unreadCount: 0,
+        avatar: {},
+        banner: {},
+        gate: { kind: "no_gate" },
+        isPublic: true,
+    };
+}
