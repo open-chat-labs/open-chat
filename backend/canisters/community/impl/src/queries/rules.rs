@@ -5,7 +5,7 @@ use community_canister::rules::{Response::*, *};
 
 #[query_candid_and_msgpack]
 fn rules(args: Args) -> Response {
-    read_state(|state: &RuntimeState| rules_impl(args, state))
+    read_state(|state| rules_impl(args, state))
 }
 
 fn rules_impl(args: Args, state: &RuntimeState) -> Response {
