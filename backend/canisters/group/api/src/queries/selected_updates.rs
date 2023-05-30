@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{EventIndex, GroupMember, GroupRules, MessageIndex, TimestampMillis, UserId};
+use types::{AccessRules, EventIndex, GroupMember, MessageIndex, TimestampMillis, UserId};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -26,5 +26,5 @@ pub struct SuccessResult {
     pub invited_users: Option<Vec<UserId>>,
     pub pinned_messages_added: Vec<MessageIndex>,
     pub pinned_messages_removed: Vec<MessageIndex>,
-    pub rules: Option<GroupRules>,
+    pub rules: Option<AccessRules>,
 }

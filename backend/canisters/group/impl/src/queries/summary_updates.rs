@@ -6,8 +6,8 @@ use group_members::GroupMemberInternal;
 use ic_cdk_macros::query;
 use std::cmp::max;
 use types::{
-    EventIndex, EventWrapper, FrozenGroupInfo, GroupCanisterGroupChatSummaryUpdates, GroupGate, GroupPermissions, GroupSubtype,
-    Mention, Message, MessageIndex, Milliseconds, OptionUpdate, TimestampMillis, MAX_THREADS_IN_SUMMARY,
+    AccessGate, EventIndex, EventWrapper, FrozenGroupInfo, GroupCanisterGroupChatSummaryUpdates, GroupPermissions,
+    GroupSubtype, Mention, Message, MessageIndex, Milliseconds, OptionUpdate, TimestampMillis, MAX_THREADS_IN_SUMMARY,
 };
 
 #[query]
@@ -101,7 +101,7 @@ struct UpdatesFromEvents {
     frozen: OptionUpdate<FrozenGroupInfo>,
     date_last_pinned: Option<TimestampMillis>,
     events_ttl: OptionUpdate<Milliseconds>,
-    gate: OptionUpdate<GroupGate>,
+    gate: OptionUpdate<AccessGate>,
 }
 
 fn process_events(

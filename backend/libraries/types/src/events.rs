@@ -1,5 +1,5 @@
 use crate::{
-    ChannelId, CommunityPermissions, CommunityRole, EventIndex, EventWrapper, GroupGate, GroupPermissions, GroupRole, Message,
+    AccessGate, ChannelId, CommunityPermissions, CommunityRole, EventIndex, EventWrapper, GroupPermissions, GroupRole, Message,
     MessageId, MessageIndex, Milliseconds, TimestampMillis, UserId,
 };
 use candid::CandidType;
@@ -274,7 +274,7 @@ pub struct EventsTimeToLiveUpdated {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct GroupGateUpdated {
     pub updated_by: UserId,
-    pub new_gate: Option<GroupGate>,
+    pub new_gate: Option<AccessGate>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Copy, Clone, Debug)]

@@ -3,7 +3,7 @@ use crate::rng::random_string;
 use crate::{client, TestEnv};
 use std::ops::Deref;
 use test_case::test_case;
-use types::{GateCheckFailedReason, GroupGate, GroupRules};
+use types::{AccessGate, AccessRules, GateCheckFailedReason};
 
 #[test_case(true; "diamond_member")]
 #[test_case(false; "not_diamond_member")]
@@ -30,10 +30,10 @@ fn public_group_diamond_member_gate_check(is_diamond: bool) {
             avatar: None,
             history_visible_to_new_joiners: true,
             permissions: None,
-            rules: GroupRules::default(),
+            rules: AccessRules::default(),
             subtype: None,
             events_ttl: None,
-            gate: Some(GroupGate::DiamondMember),
+            gate: Some(AccessGate::DiamondMember),
         },
     ) {
         user_canister::create_group::Response::Success(result) => result.chat_id,

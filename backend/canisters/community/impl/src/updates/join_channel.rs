@@ -6,7 +6,7 @@ use community_canister::join_channel::{Response::*, *};
 use gated_groups::{check_if_passes_gate, CheckIfPassesGateResult};
 use group_members::AddResult;
 use ic_cdk_macros::update;
-use types::{CanisterId, ChannelId, EventIndex, GroupGate, MemberJoined, MessageIndex, UserId};
+use types::{AccessGate, CanisterId, ChannelId, EventIndex, MemberJoined, MessageIndex, UserId};
 
 #[update(guard = "caller_is_user_index_or_local_user_index")]
 #[trace]
@@ -29,7 +29,7 @@ async fn join_channel(args: Args) -> Response {
 fn is_permitted_to_join(
     channel_id: ChannelId,
     state: &RuntimeState,
-) -> Result<Option<(GroupGate, CanisterId, UserId)>, Response> {
+) -> Result<Option<(AccessGate, CanisterId, UserId)>, Response> {
     if state.data.is_frozen() {
         return Err(CommunityFrozen);
     }

@@ -31,7 +31,7 @@ pub mod happy_path {
     use crate::User;
     use ic_test_state_machine_client::StateMachine;
     use types::{
-        ChatId, EventIndex, EventsResponse, GroupChatSummary, GroupRules, MessageContentInitial, MessageId, MessageIndex,
+        AccessRules, ChatId, EventIndex, EventsResponse, GroupChatSummary, MessageContentInitial, MessageId, MessageIndex,
         Reaction, TextContent, ThreadSyncDetails, UserId,
     };
     use user_canister::initial_state_v2::SuccessCachedResult;
@@ -83,7 +83,7 @@ pub mod happy_path {
                 avatar: None,
                 history_visible_to_new_joiners,
                 permissions: None,
-                rules: GroupRules::default(),
+                rules: AccessRules::default(),
                 subtype: None,
                 events_ttl: None,
                 gate: None,
