@@ -13,7 +13,7 @@ use types::{CanisterId, ChannelId, EventIndex, GroupGate, MemberJoined, MessageI
 async fn join_channel(args: Args) -> Response {
     match read_state(|state| is_permitted_to_join(args.channel_id, state)) {
         Ok(Some((gate, user_index_canister_id, user_id))) => {
-            match check_if_passes_gate(gate, user_id, user_index_canister_id).await {
+            match check_if_passes_gate(&gate, user_id, user_index_canister_id).await {
                 CheckIfPassesGateResult::Success => {}
                 CheckIfPassesGateResult::Failed(reason) => return GateCheckFailed(reason),
                 CheckIfPassesGateResult::InternalError(error) => return InternalError(error),

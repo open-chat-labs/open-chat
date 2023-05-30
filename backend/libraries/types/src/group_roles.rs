@@ -13,7 +13,6 @@ pub enum GroupRole {
 pub struct GroupPermissions {
     pub change_permissions: GroupPermissionRole,
     pub change_roles: GroupPermissionRole,
-    #[serde(default = "owner_role")]
     pub add_members: GroupPermissionRole,
     pub remove_members: GroupPermissionRole,
     pub block_users: GroupPermissionRole,
@@ -25,10 +24,6 @@ pub struct GroupPermissions {
     pub send_messages: GroupPermissionRole,
     pub react_to_messages: GroupPermissionRole,
     pub reply_in_thread: GroupPermissionRole,
-}
-
-fn owner_role() -> GroupPermissionRole {
-    GroupPermissionRole::Owner
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -94,6 +89,10 @@ impl GroupRole {
 
     pub fn can_change_roles(&self, new_role: GroupRole, permissions: &GroupPermissions) -> bool {
         self.is_same_or_senior(new_role) && self.is_permitted(permissions.change_roles)
+    }
+
+    pub fn can_add_members(&self, permissions: &GroupPermissions) -> bool {
+        self.is_permitted(permissions.add_members)
     }
 
     pub fn can_remove_members(&self, permissions: &GroupPermissions) -> bool {
