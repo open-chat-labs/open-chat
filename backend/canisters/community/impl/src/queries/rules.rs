@@ -1,7 +1,7 @@
 use crate::read_state;
 use crate::RuntimeState;
 use canister_api_macros::query_candid_and_msgpack;
-use group_canister::rules::{Response::*, *};
+use community_canister::rules::{Response::*, *};
 
 #[query_candid_and_msgpack]
 fn rules(args: Args) -> Response {
@@ -16,6 +16,6 @@ fn rules_impl(args: Args, state: &RuntimeState) -> Response {
     }
 
     let data = &state.data;
-    let rules = data.chat.rules.enabled.then_some(data.chat.rules.text.clone());
+    let rules = data.rules.enabled.then_some(data.rules.text.clone());
     Success(SuccessResult { rules })
 }
