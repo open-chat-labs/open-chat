@@ -1,3 +1,4 @@
+mod deleted_message;
 mod events;
 mod events_by_index;
 mod events_window;

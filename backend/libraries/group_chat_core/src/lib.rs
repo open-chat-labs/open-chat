@@ -9,10 +9,10 @@ use types::{
     Avatar, AvatarChanged, ContentValidationError, CryptoTransaction, EventIndex, EventWrapper, EventsResponse,
     FieldTooLongResult, FieldTooShortResult, GroupDescriptionChanged, GroupGate, GroupGateUpdated, GroupNameChanged,
     GroupPermissionRole, GroupPermissions, GroupReplyContext, GroupRole, GroupRules, GroupRulesChanged, GroupSubtype,
-    GroupVisibilityChanged, InvalidPollReason, MemberLeft, MembersRemoved, MentionInternal, Message, MessageContentInitial,
-    MessageId, MessageIndex, MessagePinned, MessageUnpinned, MessagesResponse, Milliseconds, OptionUpdate,
-    OptionalGroupPermissions, PermissionsChanged, PushEventResult, Reaction, RoleChanged, TimestampMillis, Timestamped, User,
-    UserId, UsersBlocked,
+    GroupVisibilityChanged, InvalidPollReason, MemberLeft, MembersRemoved, MentionInternal, Message, MessageContent,
+    MessageContentInitial, MessageContentInternal, MessageId, MessageIndex, MessagePinned, MessageUnpinned, MessagesResponse,
+    Milliseconds, OptionUpdate, OptionalGroupPermissions, PermissionsChanged, PushEventResult, Reaction, RoleChanged,
+    TimestampMillis, Timestamped, User, UserId, UsersBlocked,
 };
 use utils::avatar_validation::validate_avatar;
 use utils::group_validation::{validate_description, validate_name, validate_rules, NameValidationError, RulesValidationError};
@@ -213,6 +213,45 @@ impl GroupChatCore {
             }
             EventsReaderResult::ThreadNotFound => ThreadNotFound,
             EventsReaderResult::UserNotInGroup => UserNotInGroup,
+        }
+    }
+
+    pub fn deleted_message(
+        &self,
+        user_id: UserId,
+        thread_root_message_index: Option<MessageIndex>,
+        message_id: MessageId,
+        now: TimestampMillis,
+    ) -> DeletedMessageResult {
+        use DeletedMessageResult::*;
+
+        if let Some(member) = self.members.get(&user_id) {
+            let min_visible_event_index = member.min_visible_event_index();
+
+            if let Some(events_reader) = self
+                .events
+                .events_reader(min_visible_event_index, thread_root_message_index, now)
+            {
+                if let Some(message) = events_reader.message_internal(message_id.into()) {
+                    return if let Some(deleted_by) = &message.deleted_by {
+                        if matches!(message.content, MessageContentInternal::Deleted(_)) {
+                            MessageHardDeleted
+                        } else if user_id == message.sender
+                            || (deleted_by.deleted_by != message.sender && member.role.can_delete_messages(&self.permissions))
+                        {
+                            Success(Box::new(message.content.hydrate(Some(user_id))))
+                        } else {
+                            NotAuthorized
+                        }
+                    } else {
+                        MessageNotDeleted
+                    };
+                }
+            }
+
+            MessageNotFound
+        } else {
+            UserNotInGroup
         }
     }
 
@@ -1172,4 +1211,13 @@ pub enum MakePrivateResult {
     UserNotInGroup,
     NotAuthorized,
     AlreadyPrivate,
+}
+
+pub enum DeletedMessageResult {
+    Success(Box<MessageContent>),
+    UserNotInGroup,
+    NotAuthorized,
+    MessageNotFound,
+    MessageNotDeleted,
+    MessageHardDeleted,
 }

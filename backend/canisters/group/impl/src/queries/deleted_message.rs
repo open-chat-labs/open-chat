@@ -1,8 +1,7 @@
 use crate::{read_state, RuntimeState};
-use chat_events::Reader;
 use group_canister::deleted_message::{Response::*, *};
+use group_chat_core::DeletedMessageResult;
 use ic_cdk_macros::query;
-use types::MessageContentInternal;
 
 #[query]
 fn deleted_message(args: Args) -> Response {
@@ -11,40 +10,21 @@ fn deleted_message(args: Args) -> Response {
 
 fn deleted_message_impl(args: Args, state: &RuntimeState) -> Response {
     let caller = state.env.caller();
-    let member = match state.data.get_member(caller) {
-        None => return CallerNotInGroup,
-        Some(p) => p,
-    };
 
-    let min_visible_event_index = member.min_visible_event_index();
-    let now = state.env.now();
-
-    if let Some(events_reader) =
-        state
+    if let Some(user_id) = state.data.lookup_user_id(&caller) {
+        match state
             .data
             .chat
-            .events
-            .events_reader(min_visible_event_index, args.thread_root_message_index, now)
-    {
-        if let Some(message) = events_reader.message_internal(args.message_id.into()) {
-            return if let Some(deleted_by) = &message.deleted_by {
-                if matches!(message.content, MessageContentInternal::Deleted(_)) {
-                    MessageHardDeleted
-                } else if member.user_id == message.sender
-                    || (deleted_by.deleted_by != message.sender
-                        && member.role.can_delete_messages(&state.data.chat.permissions))
-                {
-                    Success(SuccessResult {
-                        content: message.content.hydrate(Some(member.user_id)),
-                    })
-                } else {
-                    NotAuthorized
-                }
-            } else {
-                MessageNotDeleted
-            };
+            .deleted_message(user_id, args.thread_root_message_index, args.message_id, state.env.now())
+        {
+            DeletedMessageResult::Success(content) => Success(SuccessResult { content: *content }),
+            DeletedMessageResult::UserNotInGroup => CallerNotInGroup,
+            DeletedMessageResult::NotAuthorized => NotAuthorized,
+            DeletedMessageResult::MessageNotFound => MessageNotFound,
+            DeletedMessageResult::MessageNotDeleted => MessageNotDeleted,
+            DeletedMessageResult::MessageHardDeleted => MessageHardDeleted,
         }
+    } else {
+        CallerNotInGroup
     }
-
-    MessageNotFound
 }
