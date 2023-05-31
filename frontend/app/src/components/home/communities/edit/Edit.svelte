@@ -11,6 +11,7 @@
     import PermissionsViewer from "./PermissionsViewer.svelte";
     import Details from "./Details.svelte";
     import { dummyCommunities, createCandidateCommunity } from "stores/community";
+    import VisibilityControl from "../../VisibilityControl.svelte";
 
     export let original: Community = createCandidateCommunity("");
 
@@ -46,7 +47,7 @@
     $: descDirty = editing && candidate.description !== original.description;
     $: avatarDirty = editing && candidate.avatar?.blobUrl !== original.avatar?.blobUrl;
     $: bannerDirty = editing && candidate.banner.blobUrl !== original.banner.blobUrl;
-    $: visDirty = editing && candidate.isPublic !== original.isPublic;
+    $: visDirty = editing && candidate.public !== original.public;
     $: infoDirty = nameDirty || descDirty || avatarDirty || bannerDirty;
     $: gateDirty = client.hasAccessGateChanged(candidate.gate, original.gate);
     $: dirty = infoDirty /*|| rulesDirty */ || permissionsDirty || visDirty || gateDirty;
@@ -87,7 +88,7 @@
                     <Details bind:busy {candidate} />
                 </div>
                 <div class="visibility" class:visible={step === 1}>
-                    <h1>Visibility</h1>
+                    <VisibilityControl {candidate} {original} {editing} />
                 </div>
                 <div class="rules" class:visible={step === 2}>
                     <h1>Rules</h1>

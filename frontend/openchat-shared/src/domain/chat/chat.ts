@@ -2,7 +2,9 @@ import type { BlobReference, DataContent } from "../data/data";
 import type { PartialUserSummary, UserSummary } from "../user/user";
 import type { OptionUpdate } from "../optionUpdate";
 import type { Cryptocurrency } from "../crypto";
-import type { AccessGate, Gated } from "../access";
+import type { AccessGate, AccessControlled } from "../access";
+import type { GroupPermissionRole, MemberRole, Permissioned } from "../permission";
+import type { HasIdentity } from "../identity";
 
 export const Sns1GovernanceCanisterId = "zqfso-syaaa-aaaaq-aaafq-cai";
 export const OpenChatGovernanceCanisterId = "2jvtu-yqaaa-aaaaq-aaama-cai";
@@ -895,18 +897,12 @@ export type ThreadSyncDetails = {
     latestMessageIndex: number;
 };
 
-export type MemberRole = "admin" | "moderator" | "participant" | "owner" | "previewer";
-
 export type Member = {
     role: MemberRole;
     userId: string;
 };
 
 export type FullMember = Member & PartialUserSummary;
-
-export const groupRoles = ["owner", "admins", "moderators", "members"] as const;
-type RolesType = typeof groupRoles;
-export type GroupPermissionRole = RolesType[number];
 
 export type GroupPermissions = {
     changePermissions: GroupPermissionRole;
@@ -1006,7 +1002,8 @@ export type DirectChatSummary = ChatSummaryCommon & {
 
 export type GroupChatSummary = DataContent &
     ChatSummaryCommon &
-    Gated & {
+    AccessControlled &
+    Permissioned<GroupPermissions> & {
         kind: "group_chat";
         name: string;
         description: string;
@@ -1016,9 +1013,6 @@ export type GroupChatSummary = DataContent &
         lastUpdated: bigint;
         memberCount: number;
         mentions: Mention[];
-        public: boolean;
-        myRole: MemberRole;
-        permissions: GroupPermissions;
         historyVisibleToNewJoiners: boolean;
         latestThreads: ThreadSyncDetails[];
         subtype: GroupSubtype;
@@ -1119,18 +1113,16 @@ export type CandidateMember = {
     user: UserSummary;
 };
 
-export type CandidateGroupChat = {
-    chatId?: string;
-    name: string;
-    description: string;
-    rules: GroupRules;
-    historyVisible: boolean;
-    isPublic: boolean;
-    members: CandidateMember[];
-    avatar?: DataContent;
-    permissions: GroupPermissions;
-    gate: AccessGate;
-};
+export type CandidateGroupChat = HasIdentity &
+    AccessControlled & {
+        name: string;
+        description: string;
+        rules: GroupRules;
+        historyVisible: boolean;
+        members: CandidateMember[];
+        avatar?: DataContent;
+        permissions: GroupPermissions;
+    };
 
 // todo - there are all sorts of error conditions here that we need to deal with but - later
 export type CreateGroupResponse =

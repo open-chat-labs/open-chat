@@ -21,7 +21,7 @@
     import InviteUsersWithLink from "./InviteUsersWithLink.svelte";
     import type { OpenChat, GroupChatSummary, GroupRules } from "openchat-client";
     import { AvatarSize } from "openchat-client";
-    import GroupGateSummary from "./GroupGateSummary.svelte";
+    import GroupGateSummary from "./AccessGateSummary.svelte";
 
     const dispatch = createEventDispatcher();
 

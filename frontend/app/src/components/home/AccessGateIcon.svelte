@@ -1,18 +1,17 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
-    import { rtlStore } from "../../stores/rtl";
     import TooltipWrapper from "../TooltipWrapper.svelte";
     import TooltipPopup from "../TooltipPopup.svelte";
-    import { E8S_PER_TOKEN, GroupGate } from "openchat-client";
+    import { E8S_PER_TOKEN, AccessGate } from "openchat-client";
     import { createEventDispatcher } from "svelte";
 
-    export let gate: GroupGate;
+    export let gate: AccessGate;
 
     const dispatch = createEventDispatcher();
 
     $: params = formatParams(gate);
 
-    function formatParams(gate: GroupGate): string {
+    function formatParams(gate: AccessGate): string {
         const parts = [];
         if (gate.kind === "openchat_gate" || gate.kind === "sns1_gate") {
             if (gate.minDissolveDelay) {

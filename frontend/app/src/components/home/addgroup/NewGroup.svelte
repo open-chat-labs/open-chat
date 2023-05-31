@@ -3,7 +3,6 @@
     import ModalContent from "../../ModalContent.svelte";
     import Button from "../../Button.svelte";
     import GroupDetails from "./GroupDetails.svelte";
-    import GroupVisibility from "./GroupVisibility.svelte";
     import Rules from "../groupdetails/Rules.svelte";
     import GroupPermissionsEditor from "../GroupPermissionsEditor.svelte";
     import GroupPermissionsViewer from "../GroupPermissionsViewer.svelte";
@@ -22,6 +21,7 @@
     import { createEventDispatcher, getContext, tick } from "svelte";
     import page from "page";
     import AreYouSure from "../../AreYouSure.svelte";
+    import VisibilityControl from "../VisibilityControl.svelte";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -41,16 +41,14 @@
         permissions: { ...candidateGroup.permissions },
         gate: { ...candidateGroup.gate },
     };
-    $: steps = getSteps(candidateGroup.isPublic, editing);
-    $: editing = candidateGroup.chatId !== undefined;
+    $: steps = getSteps(candidateGroup.public, editing);
+    $: editing = candidateGroup.id !== "";
     $: padding = $mobileWidth ? 16 : 24; // yes this is horrible
     $: left = step * (actualWidth - padding);
     $: valid = candidateGroup.name.length > MIN_LENGTH && candidateGroup.name.length <= MAX_LENGTH;
-    $: finalStep = candidateGroup.isPublic ? 3 : 4;
+    $: finalStep = candidateGroup.public ? 3 : 4;
     $: canEditPermissions =
-        candidateGroup.chatId === undefined
-            ? true
-            : client.canChangePermissions(candidateGroup.chatId);
+        candidateGroup.id === "" ? true : client.canChangePermissions(candidateGroup.id);
 
     $: permissionsDirty = client.havePermissionsChanged(
         originalGroup.permissions,
@@ -68,7 +66,7 @@
     $: nameDirty = editing && candidateGroup.name !== originalGroup.name;
     $: descDirty = editing && candidateGroup.description !== originalGroup.description;
     $: avatarDirty = editing && candidateGroup.avatar?.blobUrl !== originalGroup.avatar?.blobUrl;
-    $: visDirty = editing && candidateGroup.isPublic !== originalGroup.isPublic;
+    $: visDirty = editing && candidateGroup.public !== originalGroup.public;
     $: infoDirty = nameDirty || descDirty || avatarDirty;
     $: gateDirty = client.hasAccessGateChanged(candidateGroup.gate, originalGroup.gate);
     $: dirty = infoDirty || rulesDirty || permissionsDirty || visDirty || gateDirty;
@@ -144,7 +142,7 @@
     function updateGroup(yes: boolean = true): Promise<void> {
         busy = true;
 
-        const makePrivate = visDirty && !candidateGroup.isPublic && originalGroup.isPublic;
+        const makePrivate = visDirty && !candidateGroup.public && originalGroup.public;
 
         if (makePrivate && !confirming) {
             confirming = true;
@@ -154,7 +152,7 @@
         if (makePrivate && confirming && !yes) {
             confirming = false;
             busy = false;
-            candidateGroup.isPublic = true;
+            candidateGroup.public = true;
             return Promise.resolve();
         }
 
@@ -177,13 +175,13 @@
     }
 
     function doMakeGroupPrivate(): Promise<void> {
-        if (candidateGroup.chatId === undefined) return Promise.resolve();
+        if (candidateGroup.id === "") return Promise.resolve();
 
-        return client.makeGroupPrivate(candidateGroup.chatId).then((success) => {
+        return client.makeGroupPrivate(candidateGroup.id).then((success) => {
             if (success) {
                 originalGroup = {
                     ...originalGroup,
-                    isPublic: candidateGroup.isPublic,
+                    public: candidateGroup.public,
                 };
             } else {
                 toastStore.showFailureToast("makeGroupPrivateFailed");
@@ -192,11 +190,11 @@
     }
 
     function doUpdatePermissions(): Promise<void> {
-        if (candidateGroup.chatId === undefined) return Promise.resolve();
+        if (candidateGroup.id === "") return Promise.resolve();
 
         return client
             .updateGroupPermissions(
-                candidateGroup.chatId,
+                candidateGroup.id,
                 originalGroup.permissions,
                 candidateGroup.permissions
             )
@@ -214,11 +212,11 @@
     }
 
     function doUpdateGate(gate: AccessGate): Promise<void> {
-        if (candidateGroup.chatId === undefined) return Promise.resolve();
+        if (candidateGroup.id === "") return Promise.resolve();
 
         return client
             .updateGroup(
-                candidateGroup.chatId,
+                candidateGroup.id,
                 undefined,
                 undefined,
                 undefined,
@@ -243,28 +241,26 @@
     }
 
     function doUpdateRules(): Promise<void> {
-        if (candidateGroup.chatId === undefined) return Promise.resolve();
+        if (candidateGroup.id === "") return Promise.resolve();
 
-        return client
-            .updateGroupRules(candidateGroup.chatId, candidateGroup.rules)
-            .then((success) => {
-                if (success) {
-                    dispatch("updateGroupRules", {
-                        chatId: candidateGroup.chatId,
-                        rules: candidateGroup.rules,
-                    });
-                } else {
-                    toastStore.showFailureToast("group.rulesUpdateFailed");
-                }
-            });
+        return client.updateGroupRules(candidateGroup.id, candidateGroup.rules).then((success) => {
+            if (success) {
+                dispatch("updateGroupRules", {
+                    chatId: candidateGroup.id,
+                    rules: candidateGroup.rules,
+                });
+            } else {
+                toastStore.showFailureToast("group.rulesUpdateFailed");
+            }
+        });
     }
 
     function doUpdateInfo(): Promise<void> {
-        if (candidateGroup.chatId === undefined) return Promise.resolve();
+        if (candidateGroup.id === "") return Promise.resolve();
 
         return client
             .updateGroup(
-                candidateGroup.chatId,
+                candidateGroup.id,
                 nameDirty ? candidateGroup.name : undefined,
                 descDirty ? candidateGroup.description : undefined,
                 undefined,
@@ -322,7 +318,7 @@
         const url = `/${canisterId}`;
         dispatch("groupCreated", {
             chatId: canisterId,
-            isPublic: candidateGroup.isPublic,
+            public: candidateGroup.public,
             rules: candidateGroup.rules,
         });
         dispatch("close");
@@ -352,7 +348,11 @@
                     <GroupDetails {busy} bind:candidateGroup />
                 </div>
                 <div class="visibility" class:visible={step === 1}>
-                    <GroupVisibility on:upgrade {originalGroup} {editing} bind:candidateGroup />
+                    <VisibilityControl
+                        on:upgrade
+                        original={originalGroup}
+                        {editing}
+                        bind:candidate={candidateGroup} />
                 </div>
                 <div class="rules" class:visible={step === 2}>
                     <Rules bind:rules={candidateGroup.rules} />
@@ -361,14 +361,14 @@
                     {#if canEditPermissions}
                         <GroupPermissionsEditor
                             bind:permissions={candidateGroup.permissions}
-                            isPublic={candidateGroup.isPublic} />
+                            isPublic={candidateGroup.public} />
                     {:else}
                         <GroupPermissionsViewer
                             bind:permissions={candidateGroup.permissions}
-                            isPublic={candidateGroup.isPublic} />
+                            isPublic={candidateGroup.public} />
                     {/if}
                 </div>
-                {#if !candidateGroup.isPublic && !editing}
+                {#if !candidateGroup.public && !editing}
                     <div class="members" class:visible={step === 4}>
                         <ChooseMembers bind:candidateGroup {busy} />
                     </div>

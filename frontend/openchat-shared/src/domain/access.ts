@@ -27,6 +27,9 @@ export type OpenChatNeuronGate = SnsNeuronGate & {
 
 export type DiamondGate = { kind: "diamond_gate" };
 
-export type Gated = {
+export type AccessControlled = {
     gate: AccessGate;
+    public: boolean;
+    frozen: boolean;
+    historyVisible: boolean;
 };

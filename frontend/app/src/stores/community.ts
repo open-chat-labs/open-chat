@@ -31,8 +31,9 @@ function createDummyCommunity(
         avatar: { blobUrl: url },
         banner: {},
         gate: { kind: "no_gate" },
-        isPublic: true,
+        public: true,
         permissions: defaultPermissions,
+        myRole: "owner",
     };
 }
 
@@ -102,7 +103,8 @@ export function createCandidateCommunity(id: string): Community {
         avatar: {},
         banner: {},
         gate: { kind: "no_gate" },
-        isPublic: true,
+        public: true,
         permissions: defaultPermissions,
+        myRole: "owner",
     };
 }

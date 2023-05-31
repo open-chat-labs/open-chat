@@ -15,7 +15,7 @@ import {
     canForward,
     canInviteUsers,
     canLeaveGroup,
-    canMakeGroupPrivate,
+    canMakePrivate,
     canPinMessages,
     canReactToMessages,
     canRemoveMembers,
@@ -301,6 +301,7 @@ import {
     ReferralLeaderboardRange,
     ReferralLeaderboardResponse,
     CommunityPermissions,
+    E8S_PER_TOKEN,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -1086,23 +1087,25 @@ export class OpenChat extends EventTarget {
     }
 
     canDeleteGroup(chatId: string): boolean {
-        return this.chatPredicate(chatId, canDeleteGroup);
+        return this.groupChatPredicate(chatId, canDeleteGroup);
     }
 
+    canMakePrivate = canMakePrivate;
+
     canMakeGroupPrivate(chatId: string): boolean {
-        return this.chatPredicate(chatId, canMakeGroupPrivate);
+        return this.groupChatPredicate(chatId, canMakePrivate);
     }
 
     canLeaveGroup(chatId: string): boolean {
-        return this.chatPredicate(chatId, canLeaveGroup);
+        return this.groupChatPredicate(chatId, canLeaveGroup);
     }
 
     isPreviewing(chatId: string): boolean {
-        return this.chatPredicate(chatId, isPreviewing);
+        return this.groupChatPredicate(chatId, isPreviewing);
     }
 
     isFrozen(chatId: string): boolean {
-        return this.chatPredicate(chatId, isFrozen);
+        return this.groupChatPredicate(chatId, isFrozen);
     }
 
     isOpenChatBot(userId: string): boolean {
@@ -1120,6 +1123,14 @@ export class OpenChat extends EventTarget {
     private chatPredicate(chatId: string, predicate: (chat: ChatSummary) => boolean): boolean {
         const chat = this._liveState.chatSummaries[chatId];
         return chat !== undefined && predicate(chat);
+    }
+
+    private groupChatPredicate(
+        chatId: string,
+        predicate: (chat: GroupChatSummary) => boolean
+    ): boolean {
+        const chat = this._liveState.chatSummaries[chatId];
+        return chat.kind === "group_chat" && chat !== undefined && predicate(chat);
     }
 
     isPlatformModerator(): boolean {
@@ -1817,6 +1828,22 @@ export class OpenChat extends EventTarget {
             );
         }
         return false;
+    }
+
+    getMinDissolveDelayDays(gate: AccessGate): number | undefined {
+        if (gate.kind === "sns1_gate" || gate.kind === "openchat_gate") {
+            return gate.minDissolveDelay
+                ? gate.minDissolveDelay / (24 * 60 * 60 * 1000)
+                : undefined;
+        }
+        return undefined;
+    }
+
+    getMinStakeInTokens(gate: AccessGate): number | undefined {
+        if (gate.kind === "sns1_gate" || gate.kind === "openchat_gate") {
+            return gate.minStakeE8s ? gate.minStakeE8s / E8S_PER_TOKEN : undefined;
+        }
+        return undefined;
     }
 
     earliestLoadedThreadIndex(): number | undefined {

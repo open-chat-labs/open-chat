@@ -1,30 +1,29 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
-    import type { GroupGate } from "openchat-client";
-    import GroupGateIcon from "../GroupGateIcon.svelte";
-    import GroupGateParameters from "./GroupGateParameters.svelte";
-    import { gatedGroupsEnabled } from "../../../utils/features";
+    import type { AccessGate } from "openchat-client";
+    import AccessGateIcon from "../AccessGateIcon.svelte";
+    import AccessGateParameters from "./AccessGateParameters.svelte";
 
-    export let gate: GroupGate;
+    export let gate: AccessGate;
     export let showHeader = true;
     $: showDetails =
         (gate.kind === "sns1_gate" || gate.kind === "openchat_gate") &&
         (gate.minDissolveDelay !== undefined || gate.minStakeE8s !== undefined);
 </script>
 
-{#if gate.kind !== "no_gate" && gatedGroupsEnabled}
+{#if gate.kind !== "no_gate"}
     <div class="wrapper">
         {#if showHeader}
             <h4>{$_("group.groupGate")}</h4>
         {/if}
         <div class="gate" class:showDetails>
-            <GroupGateIcon {gate} />
+            <AccessGateIcon {gate} />
             {#if gate.kind === "diamond_gate"}
-                <p>{$_("group.diamondMember")}</p>
+                <p>{$_("access.diamondMember")}</p>
             {:else if gate.kind === "openchat_gate"}
-                <GroupGateParameters {gate} />
+                <AccessGateParameters {gate} />
             {:else if gate.kind === "sns1_gate"}
-                <GroupGateParameters {gate} />
+                <AccessGateParameters {gate} />
             {/if}
         </div>
     </div>

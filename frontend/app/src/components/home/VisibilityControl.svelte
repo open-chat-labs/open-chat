@@ -1,91 +1,42 @@
 <script lang="ts">
     import LockOutline from "svelte-material-icons/LockOutline.svelte";
-    import { Community, E8S_PER_TOKEN, AccessGate, Gated, OpenChat } from "openchat-client";
+    import Checkbox from "../Checkbox.svelte";
+    import {
+        E8S_PER_TOKEN,
+        AccessControlled,
+        OpenChat,
+        HasIdentity,
+        Permissioned,
+    } from "openchat-client";
     import { _ } from "svelte-i18n";
-    import Radio from "../../../Radio.svelte";
+    import Radio from "../Radio.svelte";
     import { afterUpdate, createEventDispatcher, getContext, onMount } from "svelte";
-    import Button from "../../../Button.svelte";
-    import Select from "../../../Select.svelte";
+    import Button from "../Button.svelte";
+    import Select from "../Select.svelte";
     import { iconSize } from "stores/iconSize";
-    import Legend from "../../../Legend.svelte";
-    import Input from "../../../Input.svelte";
+    import Legend from "../Legend.svelte";
+    import Input from "../Input.svelte";
+    import { gateBindings } from "../../utils/access";
+
+    type T = $$Generic;
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
-    export let candidate: Community;
-    export let originalCommunity: Community;
+    export let candidate: AccessControlled & HasIdentity & Permissioned<T>;
+    export let original: AccessControlled & HasIdentity;
     export let editing: boolean;
 
-    type GateBinding = { index: number; label: string; gate: AccessGate; enabled: boolean };
+    let minDissolveDelay = client.getMinDissolveDelayDays(original.gate);
+    let minStake = client.getMinStakeInTokens(original.gate);
 
-    let minDissolveDelay = getMinDissolveDelay(originalCommunity);
-    let minStake = getMinStake(originalCommunity);
-
-    $: invalidDissolveDelay = minDissolveDelay !== "" && isNaN(Number(minDissolveDelay));
-    $: invalidMinStake = minStake !== "" && isNaN(Number(minStake));
-
-    function getMinDissolveDelay(group: Gated): string {
-        if (group.gate.kind === "sns1_gate" || group.gate.kind === "openchat_gate") {
-            return group.gate.minDissolveDelay
-                ? (group.gate.minDissolveDelay / (24 * 60 * 60 * 1000)).toString()
-                : "";
-        }
-        return "";
-    }
-
-    function getMinStake(group: Gated): string {
-        if (group.gate.kind === "sns1_gate" || group.gate.kind === "openchat_gate") {
-            return group.gate.minStakeE8s
-                ? (group.gate.minStakeE8s / E8S_PER_TOKEN).toString()
-                : "";
-        }
-        return "";
-    }
-
-    let gates: GateBinding[] = [
-        {
-            index: 0,
-            label: $_("group.openAccess"),
-            gate: { kind: "no_gate" },
-            enabled: true,
-        },
-        {
-            index: 1,
-            label: $_("group.diamondMember"),
-            gate: { kind: "diamond_gate" },
-            enabled: true,
-        },
-        {
-            index: 2,
-            label: $_("group.chatHolder"),
-            gate: { kind: "openchat_gate" },
-            enabled: true,
-        },
-        {
-            index: 3,
-            label: $_("group.sns1Holder"),
-            gate: { kind: "sns1_gate" },
-            enabled: true,
-        },
-        {
-            index: 4,
-            label: $_("group.nnsHolder"),
-            gate: { kind: "nns_gate" },
-            enabled: false,
-        },
-        {
-            index: 5,
-            label: $_("group.nftHolder"),
-            gate: { kind: "nft_gate" },
-            enabled: false,
-        },
-    ];
+    $: invalidDissolveDelay = minDissolveDelay !== undefined && isNaN(minDissolveDelay);
+    $: invalidMinStake = minStake !== undefined && isNaN(minStake);
 
     let selectedGateIndex = 0;
 
     onMount(() => {
-        selectedGateIndex = gates.findIndex((g) => candidate.gate.kind === g.gate.kind) ?? 0;
+        selectedGateIndex = gateBindings.findIndex((g) => candidate.gate.kind === g.gate.kind) ?? 0;
     });
 
     afterUpdate(() => {
@@ -105,27 +56,30 @@
 
     $: isDiamond = client.isDiamond;
 
-    $: canMakePrivate = false;
+    $: canMakePrivate = candidate.id !== undefined ? client.canMakePrivate(candidate) : true;
 
     function toggleScope() {
-        candidate.isPublic = !candidate.isPublic;
+        candidate.public = !candidate.public;
+        if (candidate.public) {
+            candidate.historyVisible = true;
+        }
     }
 
     function updateGate() {
-        candidate.gate = gates[selectedGateIndex]?.gate;
-        minDissolveDelay = "";
-        minStake = "";
+        candidate.gate = gateBindings[selectedGateIndex]?.gate;
+        minDissolveDelay = undefined;
+        minStake = undefined;
     }
 </script>
 
 <div class="section">
     <Radio
         on:change={toggleScope}
-        checked={!candidate.isPublic}
+        checked={!candidate.public}
         id={"private"}
         disabled={!canMakePrivate}
         align={"start"}
-        group={"group-visibility"}>
+        group={"visibility"}>
         <div class="section-title">
             <div class={"img private"} />
             <p>{$_("group.privateGroup")}</p>
@@ -140,11 +94,11 @@
     <div class="section">
         <Radio
             on:change={toggleScope}
-            checked={candidate.isPublic}
+            checked={candidate.public}
             id={"public"}
             align={"start"}
-            disabled={editing && !originalCommunity.isPublic}
-            group={"group-visibility"}>
+            disabled={editing && !original.public}
+            group={"visibility"}>
             <div class="section-title">
                 <div class={"img public"} />
                 <p>{$_("group.publicGroup")}</p>
@@ -157,43 +111,63 @@
     </div>
 {/if}
 
-{#if $isDiamond && candidate.isPublic}
+<div class="section">
+    <Checkbox
+        id="history-visible"
+        disabled={candidate.public || editing}
+        on:change={() => (candidate.historyVisible = !candidate.historyVisible)}
+        label={$_("historyVisible")}
+        align={"start"}
+        checked={candidate.historyVisible}>
+        <div class="section-title">{$_("historyVisible")}</div>
+        <div class="info">
+            {#if candidate.historyVisible}
+                <p>{$_("historyOnInfo")}</p>
+            {:else}
+                <p>{$_("historyOffInfo")}</p>
+            {/if}
+        </div>
+    </Checkbox>
+</div>
+
+{#if $isDiamond && candidate.public}
     <div class="wrapper">
         <div class="icon">
             <LockOutline size={$iconSize} color={"var(--icon-txt)"} />
         </div>
         <div class="section">
-            <div class="section-title">{$_("group.chooseGate")}</div>
+            <div class="section-title">{$_("access.chooseGate")}</div>
             <div class="choose-gate">
                 <Select margin={false} on:change={updateGate} bind:value={selectedGateIndex}>
-                    {#each gates as gate}
-                        <option disabled={!gate.enabled} value={gate.index}>{gate.label}</option>
+                    {#each gateBindings as gate}
+                        <option disabled={!gate.enabled} value={gate.index}
+                            >{$_(gate.label)}</option>
                     {/each}
                 </Select>
             </div>
             {#if candidate.gate.kind === "openchat_gate" || candidate.gate.kind === "sns1_gate"}
-                <Legend label={$_("group.minDissolveDelay")} />
+                <Legend label={$_("access.minDissolveDelay")} />
                 <Input
                     maxlength={100}
-                    placeholder={$_("group.optional")}
+                    placeholder={$_("access.optional")}
                     invalid={invalidDissolveDelay}
                     bind:value={minDissolveDelay} />
 
-                <Legend label={$_("group.minStake")} />
+                <Legend label={$_("access.minStake")} />
                 <Input
                     maxlength={100}
-                    placeholder={$_("group.optional")}
+                    placeholder={$_("access.optional")}
                     invalid={invalidMinStake}
                     bind:value={minStake} />
             {/if}
             {#if candidate.gate.kind === "diamond_gate"}
-                <div class="info">{$_("group.diamondGateInfo")}</div>
+                <div class="info">{$_("access.diamondGateInfo")}</div>
             {:else if candidate.gate.kind === "openchat_gate"}
-                <div class="info">{$_("group.chatHolderInfo")}</div>
+                <div class="info">{$_("access.chatHolderInfo")}</div>
             {:else if candidate.gate.kind === "sns1_gate"}
-                <div class="info">{$_("group.sns1HolderInfo")}</div>
+                <div class="info">{$_("access.sns1HolderInfo")}</div>
             {:else if candidate.gate.kind === "no_gate"}
-                <div class="info">{$_("group.openAccessInfo")}</div>
+                <div class="info">{$_("access.openAccessInfo")}</div>
             {/if}
         </div>
     </div>

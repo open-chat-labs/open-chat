@@ -57,7 +57,7 @@
     import AccountsModal from "./profile/AccountsModal.svelte";
     import { querystring } from "routes";
     import { eventListScrollTop } from "../../stores/scrollPos";
-    import GateCheckFailed from "./groupdetails/GateCheckFailed.svelte";
+    import GateCheckFailed from "./groupdetails/AccessGateCheckFailed.svelte";
     import HallOfFame from "./HallOfFame.svelte";
     import LeftNav from "./nav/LeftNav.svelte";
     import { createCandidateCommunity } from "stores/community";
@@ -777,10 +777,12 @@
     function newGroup() {
         modal = ModalType.NewGroup;
         candidateGroup = {
+            id: "",
             name: "",
             description: "",
             historyVisible: true,
-            isPublic: false,
+            public: false,
+            frozen: false,
             members: [],
             permissions: {
                 changePermissions: "admins",
@@ -808,11 +810,12 @@
         modal = ModalType.NewGroup;
         const { chat, rules } = ev.detail;
         candidateGroup = {
-            chatId: chat.chatId,
+            id: chat.chatId,
             name: chat.name,
             description: chat.description,
             historyVisible: chat.historyVisibleToNewJoiners,
-            isPublic: chat.public,
+            public: chat.public,
+            frozen: chat.frozen,
             members: [],
             permissions: { ...chat.permissions },
             rules:

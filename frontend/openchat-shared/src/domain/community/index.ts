@@ -1,22 +1,19 @@
-import type { Gated } from "../access";
+import type { AccessControlled } from "../access";
 import type { DataContent } from "../data";
+import type { HasIdentity } from "../identity";
+import type { CommunityPermissionRole, Permissioned } from "../permission";
 
-export type Community = Gated & {
-    id: string;
-    name: string;
-    description: string;
-    memberCount: number;
-    channelCount: number;
-    unreadCount: number;
-    avatar: DataContent;
-    banner: DataContent;
-    isPublic: boolean;
-    permissions: CommunityPermissions;
-};
-
-export const communityRoles = ["owner", "admins", "members"] as const;
-type RolesType = typeof communityRoles;
-export type CommunityPermissionRole = RolesType[number];
+export type Community = HasIdentity &
+    AccessControlled &
+    Permissioned<CommunityPermissions> & {
+        name: string;
+        description: string;
+        memberCount: number;
+        channelCount: number;
+        unreadCount: number;
+        avatar: DataContent;
+        banner: DataContent;
+    };
 
 export type CommunityPermissions = {
     changePermissions: CommunityPermissionRole;

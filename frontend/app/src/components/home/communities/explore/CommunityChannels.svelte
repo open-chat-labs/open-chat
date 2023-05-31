@@ -40,7 +40,7 @@
                 </span>
             </SectionHeader>
         {:else}
-            <CommunityCard member={false} joining={false} header {community} selected={false} />
+            <CommunityCard joining={false} header {community} selected={false} />
         {/if}
         <div class="search">
             <Search

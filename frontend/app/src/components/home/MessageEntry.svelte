@@ -31,7 +31,7 @@
     import MessageActions from "./MessageActions.svelte";
     import { addQueryStringParam } from "../../utils/urls";
     import { toastStore } from "../../stores/toast";
-    import GroupGateIcon from "./GroupGateIcon.svelte";
+    import GroupGateIcon from "./AccessGateIcon.svelte";
     import { gatedGroupsEnabled } from "../../utils/features";
 
     const client = getContext<OpenChat>("client");

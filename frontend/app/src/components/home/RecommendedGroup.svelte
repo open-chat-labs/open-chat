@@ -10,7 +10,7 @@
     import { iconSize } from "../../stores/iconSize";
     import { createEventDispatcher, getContext } from "svelte";
     import Button from "../Button.svelte";
-    import GroupGateIcon from "./GroupGateIcon.svelte";
+    import GroupGateIcon from "./AccessGateIcon.svelte";
     import { gatedGroupsEnabled } from "../../utils/features";
     import page from "page";
 
