@@ -282,13 +282,19 @@ pub struct CachedMetrics {
     pub active_private_groups: u64,
     pub deleted_public_groups: u64,
     pub deleted_private_groups: u64,
+    #[serde(default)]
     pub active_public_communities: u64,
+    #[serde(default)]
     pub active_private_communities: u64,
+    #[serde(default)]
     pub deleted_public_communities: u64,
+    #[serde(default)]
     pub deleted_private_communities: u64,
     pub group_deleted_notifications_pending: u64,
+    #[serde(default)]
     pub community_deleted_notifications_pending: u64,
     pub frozen_groups: Vec<ChatId>,
+    #[serde(default)]
     pub frozen_communities: Vec<ChatId>,
 }
 
