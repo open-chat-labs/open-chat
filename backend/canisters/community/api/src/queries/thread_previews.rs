@@ -1,9 +1,10 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{MessageIndex, ThreadPreview, TimestampMillis};
+use types::{ChannelId, MessageIndex, ThreadPreview, TimestampMillis};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
+    pub channel_id: ChannelId,
     pub threads: Vec<MessageIndex>,
     pub latest_client_thread_update: Option<TimestampMillis>,
 }
@@ -11,7 +12,9 @@ pub struct Args {
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
     Success(SuccessResult),
-    CallerNotInGroup,
+    UserNotInCommunity,
+    ChannelNotFound,
+    UserNotInChannel,
     ReplicaNotUpToDate(TimestampMillis),
 }
 
