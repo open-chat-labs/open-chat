@@ -126,7 +126,7 @@
 
 {#if user}
     {#if $communitiesEnabled}
-        <CurrentSelection on:editCommunity on:browseChannels />
+        <CurrentSelection on:newChannel on:editCommunity on:browseChannels />
     {:else}
         <CurrentUser
             on:wallet

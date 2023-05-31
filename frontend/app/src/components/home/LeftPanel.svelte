@@ -31,6 +31,7 @@
             on:toggleMuteNotifications
             on:browseChannels
             on:editCommunity
+            on:newChannel
             {searchResultsAvailable}
             {searchTerm}
             {searching}

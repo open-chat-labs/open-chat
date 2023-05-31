@@ -872,6 +872,7 @@
         "descriptionPlaceholder": "Tell us what your community is all about",
         "join": "Join",
         "preview": "Preview",
-        "browseChannels": "Browse channels"
+        "browseChannels": "Browse channels",
+        "createChannel": "New channel"
     }
 }

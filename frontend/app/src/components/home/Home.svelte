@@ -769,6 +769,11 @@
         modal = ModalType.Wallet;
     }
 
+    function newChannel() {
+        // TODO - come back to this
+        newGroup();
+    }
+
     function newGroup() {
         modal = ModalType.NewGroup;
         candidateGroup = {
@@ -893,6 +898,7 @@
             on:newGroup={newGroup}
             on:editCommunity={editCommunity}
             on:showHomePage={showLandingPageRoute("/home")}
+            on:newChannel={newChannel}
             on:upgrade={upgrade} />
     {/if}
 
@@ -920,6 +926,7 @@
             on:archiveChat={onArchiveChat}
             on:unarchiveChat={onUnarchiveChat}
             on:toggleMuteNotifications={toggleMuteNotifications}
+            on:newChannel={newChannel}
             on:loadMessage={loadMessage} />
     {/if}
     {#if $layoutStore.showMiddle}

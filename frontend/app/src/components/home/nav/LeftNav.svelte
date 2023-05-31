@@ -81,7 +81,7 @@
                         </HoverIcon>
                     </span>
                     <span slot="menu">
-                        <MainMenu on:halloffame on:logout on:upgrade />
+                        <MainMenu on:newGroup on:halloffame on:logout on:upgrade />
                     </span>
                 </MenuIcon>
             </div>
@@ -127,7 +127,7 @@
                     url={client.communityAvatarUrl(community.avatar)}
                     size={avatarSize} />
                 <div slot="menu">
-                    <CommunityMenu on:editCommunity on:browseChannels {community} />
+                    <CommunityMenu on:newChannel on:editCommunity on:browseChannels {community} />
                 </div>
             </LeftNavItem>
         {/each}

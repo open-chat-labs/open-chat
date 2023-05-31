@@ -7,7 +7,8 @@
     import { createEventDispatcher, getContext, onMount } from "svelte";
     import type { Community, OpenChat } from "openchat-client";
     import StageHeader from "../../StageHeader.svelte";
-    import PermissionEditor from "./PermissionsEditor.svelte";
+    import PermissionsEditor from "./PermissionsEditor.svelte";
+    import PermissionsViewer from "./PermissionsViewer.svelte";
     import Details from "./Details.svelte";
     import { dummyCommunities, createCandidateCommunity } from "stores/community";
 
@@ -27,6 +28,7 @@
         "permissions.permissions",
     ];
 
+    $: canEditPermissions = true; // TODO - this is a whole can of refactor worms which I don't want to open yet
     $: permissionsDirty = client.havePermissionsChanged(
         original.permissions,
         candidate.permissions
@@ -91,7 +93,11 @@
                     <h1>Rules</h1>
                 </div>
                 <div class="permissions" class:visible={step === 3}>
-                    <PermissionEditor permissions={candidate.permissions} />
+                    {#if canEditPermissions}
+                        <PermissionsEditor permissions={candidate.permissions} />
+                    {:else}
+                        <PermissionsViewer permissions={candidate.permissions} />
+                    {/if}
                 </div>
             </div>
         </div>

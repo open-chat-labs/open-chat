@@ -23,7 +23,6 @@ export type CommunityPermissions = {
     changeRoles: CommunityPermissionRole;
     inviteUsers: CommunityPermissionRole;
     removeMembers: CommunityPermissionRole;
-    blockUsers: CommunityPermissionRole;
     updateDetails: CommunityPermissionRole;
     createPublicChannel: CommunityPermissionRole;
     createPrivateChannel: CommunityPermissionRole;

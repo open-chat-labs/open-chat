@@ -2,6 +2,7 @@
     import MenuIcon from "../../MenuIcon.svelte";
     import HoverIcon from "../../HoverIcon.svelte";
     import LocationExit from "svelte-material-icons/LocationExit.svelte";
+    import PlaylistPlus from "svelte-material-icons/PlaylistPlus.svelte";
     import PencilOutline from "svelte-material-icons/PencilOutline.svelte";
     import DeleteOutline from "svelte-material-icons/DeleteOutline.svelte";
     import Pound from "svelte-material-icons/Pound.svelte";
@@ -60,6 +61,10 @@
 
     function browseChannels() {
         dispatch("browseChannels", community);
+    }
+
+    function newChannel() {
+        dispatch("newChannel");
     }
 
     async function doPostConfirm(yes: boolean) {
@@ -130,6 +135,10 @@
             <MenuItem on:click={browseChannels}>
                 <Pound size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
                 <div slot="text">{$_("communities.browseChannels")}</div>
+            </MenuItem>
+            <MenuItem on:click={newChannel}>
+                <PlaylistPlus size={$iconSize} color={"var(--icon-inverted-txt)"} slot="icon" />
+                <span slot="text">{$_("communities.createChannel")}</span>
             </MenuItem>
             <MenuItem separator />
             {#if canDelete}
