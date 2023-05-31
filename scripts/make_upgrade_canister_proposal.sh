@@ -21,7 +21,7 @@ URL=$6
 SUMMARY=$7
 
 # Download the canister WASM at the given commit
-./scripts/download-canister-wasm.sh $CANISTER_NAME $COMMIT_ID
+./scripts/download-canister-wasm.sh $CANISTER_NAME $COMMIT_ID || exit 1
 
 if [ "$FUNCTION_ID" -ge "1000" ] ; then
     # Setup variables
