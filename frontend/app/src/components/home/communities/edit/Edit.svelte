@@ -6,7 +6,7 @@
     import { mobileWidth } from "../../../../stores/screenDimensions";
     import { createEventDispatcher, getContext, onMount } from "svelte";
     import type { Community, OpenChat } from "openchat-client";
-    import StageHeader from "./StageHeader.svelte";
+    import StageHeader from "../../StageHeader.svelte";
     import PermissionEditor from "./PermissionsEditor.svelte";
     import Details from "./Details.svelte";
     import { dummyCommunities, createCandidateCommunity } from "stores/community";
@@ -20,6 +20,12 @@
     let step = 0;
     let busy = false;
     let candidate = original;
+    const steps = [
+        "communities.details",
+        "communities.visibility",
+        "communities.rules",
+        "permissions.permissions",
+    ];
 
     $: permissionsDirty = client.havePermissionsChanged(
         original.permissions,
@@ -72,7 +78,7 @@
         {editing ? $_("communities.edit") : $_("communities.create")}
     </div>
     <div class="body" slot="body">
-        <StageHeader enabled={true} on:step={changeStep} {step} />
+        <StageHeader {steps} enabled={true} on:step={changeStep} {step} />
         <div class="wrapper">
             <div class="sections" style={`left: -${left}px`}>
                 <div class="details" class:visible={step === 0}>

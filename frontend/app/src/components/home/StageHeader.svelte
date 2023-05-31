@@ -1,13 +1,11 @@
 <script lang="ts">
-    import type { CandidateGroupChat } from "openchat-client";
     import { _ } from "svelte-i18n";
     import { createEventDispatcher } from "svelte";
     const dispatch = createEventDispatcher();
 
     export let step: number;
     export let enabled: boolean;
-    export let candidateGroup: CandidateGroupChat;
-    export let editing: boolean;
+    export let steps: string[];
 
     function selectStep(n: number) {
         if (enabled) {
@@ -17,23 +15,12 @@
 </script>
 
 <div class="steps" class:enabled>
-    <div on:click={() => selectStep(0)} class:selected={step === 0} class="step">
-        {$_("group.details")}
-    </div>
-    <div on:click={() => selectStep(1)} class:selected={step === 1} class="step">
-        {$_("group.visibility")}
-    </div>
-    <div on:click={() => selectStep(2)} class:selected={step === 2} class="step">
-        {$_("group.groupRules")}
-    </div>
-    <div on:click={() => selectStep(3)} class:selected={step === 3} class="step">
-        {$_("permissions.permissions")}
-    </div>
-    {#if !candidateGroup.isPublic && !editing}
-        <div on:click={() => selectStep(4)} class:selected={step === 4} class="step">
-            {$_("group.invite.invite")}
+    {#each steps as s, i}
+        <!-- svelte-ignore a11y-click-events-have-key-events -->
+        <div on:click={() => selectStep(i)} class:selected={step === i} class="step">
+            {$_(s)}
         </div>
-    {/if}
+    {/each}
 </div>
 
 <style type="text/scss">

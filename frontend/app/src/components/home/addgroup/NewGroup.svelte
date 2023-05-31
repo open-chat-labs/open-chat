@@ -18,7 +18,7 @@
         UnsupportedValueError,
         UpdateGroupResponse,
     } from "openchat-client";
-    import StageHeader from "./StageHeader.svelte";
+    import StageHeader from "../StageHeader.svelte";
     import { createEventDispatcher, getContext, tick } from "svelte";
     import page from "page";
     import AreYouSure from "../../AreYouSure.svelte";
@@ -41,6 +41,7 @@
         permissions: { ...candidateGroup.permissions },
         gate: { ...candidateGroup.gate },
     };
+    $: steps = getSteps(candidateGroup.isPublic, editing);
     $: editing = candidateGroup.chatId !== undefined;
     $: padding = $mobileWidth ? 16 : 24; // yes this is horrible
     $: left = step * (actualWidth - padding);
@@ -71,6 +72,20 @@
     $: infoDirty = nameDirty || descDirty || avatarDirty;
     $: gateDirty = client.hasAccessGateChanged(candidateGroup.gate, originalGroup.gate);
     $: dirty = infoDirty || rulesDirty || permissionsDirty || visDirty || gateDirty;
+
+    function getSteps(isPublic: boolean, editing: boolean) {
+        let steps = [
+            "group.details",
+            "group.visibility",
+            "group.groupRules",
+            "permissions.permissions",
+        ];
+
+        if (!isPublic && !editing) {
+            steps.push("group.invite.invite");
+        }
+        return steps;
+    }
 
     function groupUpdateErrorMessage(resp: UpdateGroupResponse): string | undefined {
         if (resp === "success") return undefined;
@@ -330,7 +345,7 @@
 <ModalContent bind:actualWidth closeIcon on:close>
     <div class="header" slot="header">{editing ? $_("group.edit") : $_("group.createTitle")}</div>
     <div class="body" slot="body">
-        <StageHeader {editing} {candidateGroup} enabled={valid} on:step={changeStep} {step} />
+        <StageHeader {steps} enabled={valid} on:step={changeStep} {step} />
         <div class="wrapper">
             <div class="sections" style={`left: -${left}px`}>
                 <div class="details" class:visible={step === 0}>
