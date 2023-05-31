@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Added missing proposal validation functions ([#3298](https://github.com/open-ic/open-chat/pull/3298))
+- Add `git_commit_id` to metrics ([#3691](https://github.com/open-ic/open-chat/pull/3691))
 
 ### Removed
 
