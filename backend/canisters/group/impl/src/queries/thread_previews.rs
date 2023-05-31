@@ -1,10 +1,7 @@
 use crate::{read_state, RuntimeState};
-use chat_events::Reader;
 use group_canister::thread_previews::{Response::*, *};
+use group_chat_core::ThreadPreviewsResult;
 use ic_cdk_macros::query;
-use types::{EventIndex, MessageIndex, TimestampMillis, UserId};
-
-const MAX_PREVIEWED_REPLY_COUNT: usize = 2;
 
 #[query]
 fn thread_previews(args: Args) -> Response {
@@ -13,61 +10,20 @@ fn thread_previews(args: Args) -> Response {
 
 fn thread_previews_impl(args: Args, state: &RuntimeState) -> Response {
     let caller = state.env.caller();
-    if let Some(member) = state.data.get_member(caller) {
+
+    if let Some(user_id) = state.data.lookup_user_id(&caller) {
         let now = state.env.now();
 
-        if args.latest_client_thread_update.map_or(false, |t| now < t) {
-            return ReplicaNotUpToDate(now);
+        match state
+            .data
+            .chat
+            .thread_previews(user_id, args.threads, args.latest_client_thread_update, now)
+        {
+            ThreadPreviewsResult::Success(threads) => Success(SuccessResult { threads, timestamp: now }),
+            ThreadPreviewsResult::UserNotInGroup => CallerNotInGroup,
+            ThreadPreviewsResult::ReplicaNotUpToDate(t) => ReplicaNotUpToDate(t),
         }
-
-        Success(SuccessResult {
-            threads: args
-                .threads
-                .into_iter()
-                .filter_map(|root_message_index| {
-                    build_thread_preview(
-                        state,
-                        member.user_id,
-                        member.min_visible_event_index(),
-                        root_message_index,
-                        now,
-                    )
-                })
-                .collect(),
-            timestamp: now,
-        })
     } else {
         CallerNotInGroup
     }
-}
-
-fn build_thread_preview(
-    state: &RuntimeState,
-    caller_user_id: UserId,
-    min_visible_event_index: EventIndex,
-    root_message_index: MessageIndex,
-    now: TimestampMillis,
-) -> Option<ThreadPreview> {
-    let events_reader = state
-        .data
-        .chat
-        .events
-        .visible_main_events_reader(min_visible_event_index, now);
-
-    let root_message = events_reader.message_event(root_message_index.into(), Some(caller_user_id))?;
-
-    let thread_events_reader = state
-        .data
-        .chat
-        .events
-        .events_reader(min_visible_event_index, Some(root_message_index), now)?;
-
-    Some(ThreadPreview {
-        root_message,
-        latest_replies: thread_events_reader
-            .iter_latest_messages(Some(caller_user_id))
-            .take(MAX_PREVIEWED_REPLY_COUNT)
-            .collect(),
-        total_replies: thread_events_reader.next_message_index().into(),
-    })
 }
