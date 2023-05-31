@@ -30,7 +30,7 @@ fn search_messages_impl(args: Args, state: &RuntimeState) -> Response {
     };
 
     let my_user_id = state.env.canister_id().into();
-    let query = Query::parse(&args.search_term);
+    let query = Query::parse(args.search_term);
 
     let matches =
         direct_chat
