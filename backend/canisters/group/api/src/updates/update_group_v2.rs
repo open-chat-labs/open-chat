@@ -1,7 +1,7 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use types::{
-    Avatar, FieldTooLongResult, FieldTooShortResult, GroupGate, GroupRules, Milliseconds, OptionUpdate,
+    AccessGate, AccessRules, Avatar, FieldTooLongResult, FieldTooShortResult, Milliseconds, OptionUpdate,
     OptionalGroupPermissions,
 };
 
@@ -9,11 +9,11 @@ use types::{
 pub struct Args {
     pub name: Option<String>,
     pub description: Option<String>,
-    pub rules: Option<GroupRules>,
+    pub rules: Option<AccessRules>,
     pub avatar: OptionUpdate<Avatar>,
     pub permissions: Option<OptionalGroupPermissions>,
     pub events_ttl: OptionUpdate<Milliseconds>,
-    pub gate: OptionUpdate<GroupGate>,
+    pub gate: OptionUpdate<AccessGate>,
     pub correlation_id: u64,
 }
 

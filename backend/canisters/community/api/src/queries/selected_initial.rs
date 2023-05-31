@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{CommunityMember, Empty, EventIndex, GroupRules, TimestampMillis, UserId};
+use types::{AccessRules, CommunityMember, Empty, EventIndex, TimestampMillis, UserId};
 
 pub type Args = Empty;
 
@@ -17,5 +17,5 @@ pub struct SuccessResult {
     pub members: Vec<CommunityMember>,
     pub blocked_users: Vec<UserId>,
     pub invited_users: Vec<UserId>,
-    pub rules: GroupRules,
+    pub rules: AccessRules,
 }

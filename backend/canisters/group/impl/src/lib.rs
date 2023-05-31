@@ -16,9 +16,9 @@ use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use std::ops::Deref;
 use types::{
-    Avatar, CanisterId, Cryptocurrency, Cycles, EventIndex, FrozenGroupInfo, GroupCanisterGroupChatSummary, GroupGate,
-    GroupPermissions, GroupRules, GroupSubtype, MessageIndex, Milliseconds, Notification, TimestampMillis, Timestamped, UserId,
-    Version, MAX_THREADS_IN_SUMMARY,
+    AccessGate, AccessRules, Avatar, CanisterId, Cryptocurrency, Cycles, EventIndex, FrozenGroupInfo,
+    GroupCanisterGroupChatSummary, GroupPermissions, GroupSubtype, MessageIndex, Milliseconds, Notification, TimestampMillis,
+    Timestamped, UserId, Version, MAX_THREADS_IN_SUMMARY,
 };
 use utils::env::Environment;
 use utils::regular_jobs::RegularJobs;
@@ -234,7 +234,7 @@ struct DataPrevious {
     is_public: bool,
     name: String,
     description: String,
-    rules: GroupRules,
+    rules: AccessRules,
     subtype: Timestamped<Option<GroupSubtype>>,
     avatar: Option<Avatar>,
     history_visible_to_new_joiners: bool,
@@ -258,7 +258,7 @@ struct DataPrevious {
     frozen: Timestamped<Option<FrozenGroupInfo>>,
     timer_jobs: TimerJobs<TimerJob>,
     date_last_pinned: Option<TimestampMillis>,
-    gate: Timestamped<Option<GroupGate>>,
+    gate: Timestamped<Option<AccessGate>>,
     invited_users: InvitedUsers,
 }
 
@@ -292,7 +292,7 @@ impl Data {
         is_public: bool,
         name: String,
         description: String,
-        rules: GroupRules,
+        rules: AccessRules,
         subtype: Option<GroupSubtype>,
         avatar: Option<Avatar>,
         history_visible_to_new_joiners: bool,
@@ -309,7 +309,7 @@ impl Data {
         proposals_bot_user_id: UserId,
         test_mode: bool,
         permissions: Option<GroupPermissions>,
-        gate: Option<GroupGate>,
+        gate: Option<AccessGate>,
     ) -> Data {
         let chat = GroupChatCore::new(
             creator_user_id,
