@@ -20,6 +20,7 @@ fn accept_if_valid(state: &RuntimeState) {
         | "mark_local_group_index_full"
         | "reinstall_group"
         | "set_max_concurrent_group_canister_upgrades"
+        | "upgrade_community_canister_wasm"
         | "upgrade_group_canister_wasm"
         | "upgrade_local_group_index_canister_wasm" => state.is_caller_governance_principal(),
         "add_hot_group_exclusion"
