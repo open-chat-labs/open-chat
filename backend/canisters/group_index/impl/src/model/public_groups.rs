@@ -77,7 +77,7 @@ impl PublicGroups {
         self.groups_pending.remove(name);
     }
 
-    pub fn search(&self, search_term: &str, max_results: u8) -> Vec<GroupMatch> {
+    pub fn search(&self, search_term: String, max_results: u8) -> Vec<GroupMatch> {
         let query = Query::parse(search_term);
 
         self.iter()
@@ -291,8 +291,8 @@ impl From<&PublicGroupInfo> for Document {
     fn from(group: &PublicGroupInfo) -> Self {
         let mut document = Document::default();
         document
-            .add_field(group.name.to_owned(), 5.0)
-            .add_field(group.description.to_owned(), 1.0);
+            .add_field(group.name.to_owned(), 5.0, true)
+            .add_field(group.description.to_owned(), 1.0, true);
         document
     }
 }
