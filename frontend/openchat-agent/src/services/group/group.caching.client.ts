@@ -455,4 +455,8 @@ export class CachingGroupClient implements IGroupClient {
     declineInvitation(): Promise<DeclineInvitationResponse> {
         return this.client.declineInvitation();
     }
+
+    toggleMuteNotifications(mute: boolean): Promise<undefined> {
+        return this.client.toggleMuteNotifications(mute);
+    }
 }

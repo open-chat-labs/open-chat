@@ -607,6 +607,17 @@ type DeclineInvitationResponse =
         NotInvited;
     };
 
+type ToggleMuteNotificationsArgs =
+    record {
+        mute: bool;
+    };
+
+type ToggleMuteNotificationsResponse =
+    variant {
+        Success;
+        CallerNotInGroup;
+    };
+
 type InviteCodeArgs =
     record {
     };
@@ -691,6 +702,7 @@ service: {
     register_proposal_vote_v2: (RegisterProposalVoteArgs) -> (RegisterProposalVoteV2Response);
     claim_prize: (ClaimPrizeArgs) -> (ClaimPrizeResponse);
     decline_invitation: (EmptyArgs) -> (DeclineInvitationResponse);
+    toggle_mute_notifications: (ToggleMuteNotificationsArgs) -> (ToggleMuteNotificationsResponse);
 
     summary: (SummaryArgs) -> (SummaryResponse) query;
     summary_updates: (SummaryUpdatesArgs) -> (SummaryUpdatesResponse) query;

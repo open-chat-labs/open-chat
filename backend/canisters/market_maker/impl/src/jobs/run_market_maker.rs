@@ -1,8 +1,8 @@
 use crate::exchanges::Exchange;
-use crate::{read_state, Config, Order, RuntimeState};
+use crate::{mutate_state, read_state, Config, Order, RuntimeState};
 use ic_cdk::api::call::CallResult;
 use itertools::Itertools;
-use market_maker_canister::{CancelOrderRequest, MakeOrderRequest, OrderType};
+use market_maker_canister::{CancelOrderRequest, ExchangeId, MakeOrderRequest, OrderType};
 use std::cmp::Reverse;
 use std::collections::btree_map::Entry::Occupied;
 use std::collections::BTreeMap;
@@ -25,22 +25,46 @@ fn run() {
 }
 
 fn get_active_exchanges(state: &RuntimeState) -> Vec<(Box<dyn Exchange>, Config)> {
+    let now = state.env.now();
+
     state
         .data
         .exchange_config
         .iter()
         .filter(|(_, c)| c.enabled)
+        // Exclude exchanges where there are orders in progress, unless those orders have been
+        // pending for more than 10 minutes, since realistically that means they have failed.
+        .filter(|(&id, _)| {
+            state
+                .data
+                .market_makers_in_progress
+                .get(&id)
+                .map_or(true, |ts| now.saturating_sub(*ts) > 10 * MINUTE_IN_MS)
+        })
         .filter_map(|(&id, c)| state.get_exchange_client(id).map(|e| (e, c.clone())))
         .collect()
 }
 
 async fn run_async(exchanges: Vec<(Box<dyn Exchange>, Config)>) {
-    futures::future::join_all(exchanges.into_iter().map(|(e, c)| run_single(e, c))).await;
+    mutate_state(|state| {
+        let now = state.env.now();
+        for exchange_id in exchanges.iter().map(|(e, _)| e.exchange_id()) {
+            state.data.market_makers_in_progress.insert(exchange_id, now);
+        }
+    });
+    futures::future::join_all(exchanges.into_iter().map(|(e, c)| async {
+        let exchange_id = e.exchange_id();
+        let _ = run_single(e, c).await;
+        mark_market_maker_complete(&exchange_id);
+    }))
+    .await;
 }
 
 async fn run_single(exchange_client: Box<dyn Exchange>, config: Config) -> CallResult<()> {
     let exchange_id = exchange_client.exchange_id();
     trace!(%exchange_id, "Running market maker");
+
+    mutate_state(|state| state.data.market_makers_in_progress.insert(exchange_id, state.env.now()));
 
     let state = exchange_client.market_state().await?;
 
@@ -73,6 +97,10 @@ async fn run_single(exchange_client: Box<dyn Exchange>, config: Config) -> CallR
 
     trace!(%exchange_id, orders_made, orders_cancelled, "Market maker ran successfully");
     Ok(())
+}
+
+fn mark_market_maker_complete(exchange_id: &ExchangeId) {
+    mutate_state(|state| state.data.market_makers_in_progress.remove(exchange_id));
 }
 
 fn calculate_orders_to_make(

@@ -1222,6 +1222,9 @@ export type TimestampNanos = bigint;
 export type TimestampUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : TimestampMillis };
+export interface ToggleMuteNotificationsArgs { 'mute' : boolean }
+export type ToggleMuteNotificationsResponse = { 'CallerNotInGroup' : null } |
+  { 'Success' : null };
 export interface Tokens { 'e8s' : bigint }
 export type TotalPollVotes = { 'Anonymous' : Array<[number, number]> } |
   { 'Visible' : Array<[number, Array<UserId>]> } |
@@ -1395,6 +1398,10 @@ export interface _SERVICE {
   'summary' : ActorMethod<[SummaryArgs], SummaryResponse>,
   'summary_updates' : ActorMethod<[SummaryUpdatesArgs], SummaryUpdatesResponse>,
   'thread_previews' : ActorMethod<[ThreadPreviewsArgs], ThreadPreviewsResponse>,
+  'toggle_mute_notifications' : ActorMethod<
+    [ToggleMuteNotificationsArgs],
+    ToggleMuteNotificationsResponse
+  >,
   'unblock_user' : ActorMethod<[UnblockUserArgs], UnblockUserResponse>,
   'undelete_messages' : ActorMethod<
     [UndeleteMessagesArgs],

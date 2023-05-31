@@ -711,4 +711,12 @@ export class GroupClient extends CandidService implements IGroupClient {
             declineInvitationResponse
         );
     }
+
+    @profile("groupClient")
+    toggleMuteNotifications(mute: boolean): Promise<undefined> {
+        return this.handleResponse(
+            this.groupService.toggle_mute_notifications({ mute }),
+            (_) => undefined,
+        );
+    }
 }

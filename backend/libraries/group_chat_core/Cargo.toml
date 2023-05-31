@@ -9,6 +9,7 @@ edition = "2021"
 candid = { workspace = true }
 chat_events = { path = "../chat_events" }
 group_members = { path = "../group_members" }
+search = { path = "../search" }
 serde = { workspace = true }
 types = { path = "../types" }
 utils = { path = "../utils" }

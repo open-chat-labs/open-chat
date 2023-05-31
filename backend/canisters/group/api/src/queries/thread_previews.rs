@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{EventWrapper, Message, MessageIndex, TimestampMillis};
+use types::{MessageIndex, ThreadPreview, TimestampMillis};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -19,11 +19,4 @@ pub enum Response {
 pub struct SuccessResult {
     pub threads: Vec<ThreadPreview>,
     pub timestamp: TimestampMillis,
-}
-
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub struct ThreadPreview {
-    pub root_message: EventWrapper<Message>,
-    pub latest_replies: Vec<EventWrapper<Message>>,
-    pub total_replies: u32,
 }

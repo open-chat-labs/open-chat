@@ -1,13 +1,13 @@
 use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
-use types::{Avatar, CanisterId, GroupGate, GroupPermissions, GroupRules, GroupSubtype, Milliseconds, UserId, Version};
+use types::{AccessGate, AccessRules, Avatar, CanisterId, GroupPermissions, GroupSubtype, Milliseconds, UserId, Version};
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct Args {
     pub is_public: bool,
     pub name: String,
     pub description: String,
-    pub rules: GroupRules,
+    pub rules: AccessRules,
     pub subtype: Option<GroupSubtype>,
     pub avatar: Option<Avatar>,
     pub history_visible_to_new_joiners: bool,
@@ -22,7 +22,7 @@ pub struct Args {
     pub local_group_index_canister_id: CanisterId,
     pub notifications_canister_id: CanisterId,
     pub proposals_bot_user_id: UserId,
-    pub gate: Option<GroupGate>,
+    pub gate: Option<AccessGate>,
     pub wasm_version: Version,
     pub test_mode: bool,
 }

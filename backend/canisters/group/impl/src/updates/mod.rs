@@ -25,6 +25,7 @@ mod register_proposal_vote_v2;
 mod remove_participant;
 mod remove_reaction;
 mod send_message;
+mod toggle_mute_notifications;
 mod unblock_user;
 mod undelete_messages;
 mod unpin_message;

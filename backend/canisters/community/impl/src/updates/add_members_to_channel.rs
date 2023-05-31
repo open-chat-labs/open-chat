@@ -7,7 +7,7 @@ use group_members::AddResult;
 use ic_cdk_macros::update;
 use std::iter::zip;
 use types::{
-    AddedToChannelNotification, CanisterId, ChannelId, EventIndex, GroupGate, MembersAdded, MessageIndex, Notification, UserId,
+    AccessGate, AddedToChannelNotification, CanisterId, ChannelId, EventIndex, MembersAdded, MessageIndex, Notification, UserId,
 };
 
 #[update]
@@ -64,7 +64,7 @@ struct PrepareResult {
     user_id: UserId,
     users_to_add: Vec<UserId>,
     users_already_in_channel: Vec<UserId>,
-    gate: Option<GroupGate>,
+    gate: Option<AccessGate>,
     user_index_canister_id: CanisterId,
 }
 

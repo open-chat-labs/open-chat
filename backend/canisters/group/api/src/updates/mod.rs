@@ -29,6 +29,7 @@ pub mod remove_participant;
 pub mod remove_reaction;
 pub mod reset_invite_code;
 pub mod send_message_v2;
+pub mod toggle_mute_notifications;
 pub mod unblock_user;
 pub mod undelete_messages;
 pub mod unpin_message;

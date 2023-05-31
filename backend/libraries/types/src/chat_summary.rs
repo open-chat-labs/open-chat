@@ -1,5 +1,5 @@
 use crate::{
-    CanisterId, ChatId, EventIndex, EventWrapper, FrozenGroupInfo, GroupGate, GroupPermissions, GroupRole, Mention, Message,
+    AccessGate, CanisterId, ChatId, EventIndex, EventWrapper, FrozenGroupInfo, GroupPermissions, GroupRole, Mention, Message,
     MessageIndex, Milliseconds, OptionUpdate, RangeSet, TimestampMillis, UserId, Version, MAX_RETURNED_MENTIONS,
 };
 use candid::CandidType;
@@ -108,7 +108,7 @@ pub struct PublicGroupSummary {
     pub is_public: bool,
     pub frozen: Option<FrozenGroupInfo>,
     pub events_ttl: Option<Milliseconds>,
-    pub gate: Option<GroupGate>,
+    pub gate: Option<AccessGate>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -140,7 +140,7 @@ pub struct GroupCanisterGroupChatSummary {
     pub events_ttl: Option<Milliseconds>,
     pub expired_messages: RangeSet<MessageIndex>,
     pub next_message_expiry: Option<TimestampMillis>,
-    pub gate: Option<GroupGate>,
+    pub gate: Option<AccessGate>,
 }
 
 impl GroupCanisterGroupChatSummary {
@@ -231,7 +231,7 @@ pub struct GroupCanisterGroupChatSummaryUpdates {
     pub events_ttl: OptionUpdate<Milliseconds>,
     pub newly_expired_messages: RangeSet<MessageIndex>,
     pub next_message_expiry: OptionUpdate<TimestampMillis>,
-    pub gate: OptionUpdate<GroupGate>,
+    pub gate: OptionUpdate<AccessGate>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug, Default, Clone)]
@@ -329,7 +329,7 @@ pub struct GovernanceProposalsSubtype {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]
-pub struct GroupRules {
+pub struct AccessRules {
     pub text: String,
     pub enabled: bool,
 }

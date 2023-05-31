@@ -3,7 +3,7 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
-pub enum GroupGate {
+pub enum AccessGate {
     DiamondMember,
     SnsNeuron(SnsNeuronGate),
 }

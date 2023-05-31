@@ -7,7 +7,7 @@ use types::{Avatar, PublicGroupSummary, Version};
 
 #[query_candid_and_msgpack]
 fn public_summary(args: Args) -> Response {
-    read_state(|state: &RuntimeState| public_summary_impl(args, state))
+    read_state(|state| public_summary_impl(args, state))
 }
 
 fn public_summary_impl(args: Args, state: &RuntimeState) -> Response {

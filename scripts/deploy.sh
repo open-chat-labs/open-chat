@@ -22,7 +22,7 @@ then
     ./scripts/generate-all-canister-wasms.sh
 elif [ $WASM_SRC != "local" ]
 then
-    ./scripts/download-all-canister-wasms.sh $WASM_SRC
+    ./scripts/download-all-canister-wasms.sh $WASM_SRC || exit 1
 fi
 
 USER_INDEX_CANISTER_ID=$(dfx canister --network $NETWORK id user_index)

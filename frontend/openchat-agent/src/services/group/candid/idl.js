@@ -1152,6 +1152,11 @@ export const idlFactory = ({ IDL }) => {
       'timestamp' : TimestampMillis,
     }),
   });
+  const ToggleMuteNotificationsArgs = IDL.Record({ 'mute' : IDL.Bool });
+  const ToggleMuteNotificationsResponse = IDL.Variant({
+    'CallerNotInGroup' : IDL.Null,
+    'Success' : IDL.Null,
+  });
   const UnblockUserArgs = IDL.Record({
     'user_id' : UserId,
     'correlation_id' : IDL.Nat64,
@@ -1371,6 +1376,11 @@ export const idlFactory = ({ IDL }) => {
         [ThreadPreviewsArgs],
         [ThreadPreviewsResponse],
         ['query'],
+      ),
+    'toggle_mute_notifications' : IDL.Func(
+        [ToggleMuteNotificationsArgs],
+        [ToggleMuteNotificationsResponse],
+        [],
       ),
     'unblock_user' : IDL.Func([UnblockUserArgs], [UnblockUserResponse], []),
     'undelete_messages' : IDL.Func(

@@ -62,10 +62,11 @@ impl RuntimeState {
         let bucket_upgrade_metrics = self.data.canisters_requiring_upgrade.metrics();
 
         Metrics {
-            memory_used: utils::memory::used(),
             now: self.env.now(),
+            memory_used: utils::memory::used(),
             cycles_balance: self.env.cycles_balance(),
             wasm_version: WASM_VERSION.with(|v| **v.borrow()),
+            git_commit_id: utils::git::git_commit_id().to_string(),
             governance_principals: self.data.governance_principals.iter().copied().collect(),
             user_controllers: self.data.user_controllers.iter().copied().collect(),
             user_count: self.data.users.len() as u64,
@@ -201,10 +202,11 @@ struct UserRecordInternal {
 
 #[derive(CandidType, Serialize, Debug)]
 pub struct Metrics {
-    pub memory_used: u64,
     pub now: TimestampMillis,
+    pub memory_used: u64,
     pub cycles_balance: Cycles,
     pub wasm_version: Version,
+    pub git_commit_id: String,
     pub governance_principals: Vec<Principal>,
     pub user_controllers: Vec<Principal>,
     pub user_count: u64,

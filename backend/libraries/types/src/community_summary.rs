@@ -1,4 +1,4 @@
-use crate::{CommunityId, CommunityPermissions, CommunityRole, EventIndex, FrozenGroupInfo, GroupGate, TimestampMillis};
+use crate::{AccessGate, CommunityId, CommunityPermissions, CommunityRole, EventIndex, FrozenGroupInfo, TimestampMillis};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
@@ -14,7 +14,7 @@ pub struct CommunityCanisterCommunitySummary {
     pub role: CommunityRole,
     pub permissions: CommunityPermissions,
     pub frozen: Option<FrozenGroupInfo>,
-    pub gate: Option<GroupGate>,
+    pub gate: Option<AccessGate>,
     pub last_updated: TimestampMillis,
     pub latest_event_index: EventIndex,
 }
@@ -29,7 +29,7 @@ pub struct PublicCommunitySummary {
     pub member_count: u32,
     pub permissions: CommunityPermissions,
     pub frozen: Option<FrozenGroupInfo>,
-    pub gate: Option<GroupGate>,
+    pub gate: Option<AccessGate>,
     pub last_updated: TimestampMillis,
     pub latest_event_index: EventIndex,
 }

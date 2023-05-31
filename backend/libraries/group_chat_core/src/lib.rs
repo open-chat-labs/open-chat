@@ -3,16 +3,17 @@ use chat_events::{
     DeleteUndeleteMessagesArgs, PushMessageArgs, Reader, UndeleteMessageResult,
 };
 use group_members::{ChangeRoleResult, GroupMembers};
+use search::Query;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use types::{
-    Avatar, AvatarChanged, ContentValidationError, CryptoTransaction, EventIndex, EventWrapper, EventsResponse,
-    FieldTooLongResult, FieldTooShortResult, GroupDescriptionChanged, GroupGate, GroupGateUpdated, GroupNameChanged,
-    GroupPermissionRole, GroupPermissions, GroupReplyContext, GroupRole, GroupRules, GroupRulesChanged, GroupSubtype,
-    GroupVisibilityChanged, InvalidPollReason, MemberLeft, MembersRemoved, MentionInternal, Message, MessageContentInitial,
-    MessageId, MessageIndex, MessagePinned, MessageUnpinned, MessagesResponse, Milliseconds, OptionUpdate,
-    OptionalGroupPermissions, PermissionsChanged, PushEventResult, Reaction, RoleChanged, TimestampMillis, Timestamped, User,
-    UserId, UsersBlocked,
+    AccessGate, AccessRules, Avatar, AvatarChanged, ContentValidationError, CryptoTransaction, EventIndex, EventWrapper,
+    EventsResponse, FieldTooLongResult, FieldTooShortResult, GroupDescriptionChanged, GroupGateUpdated, GroupNameChanged,
+    GroupPermissionRole, GroupPermissions, GroupReplyContext, GroupRole, GroupRulesChanged, GroupSubtype,
+    GroupVisibilityChanged, InvalidPollReason, MemberLeft, MembersRemoved, MentionInternal, Message, MessageContent,
+    MessageContentInitial, MessageContentInternal, MessageId, MessageIndex, MessageMatch, MessagePinned, MessageUnpinned,
+    MessagesResponse, Milliseconds, OptionUpdate, OptionalGroupPermissions, PermissionsChanged, PushEventResult, Reaction,
+    RoleChanged, ThreadPreview, TimestampMillis, Timestamped, User, UserId, UsersBlocked,
 };
 use utils::avatar_validation::validate_avatar;
 use utils::group_validation::{validate_description, validate_name, validate_rules, NameValidationError, RulesValidationError};
@@ -22,7 +23,7 @@ pub struct GroupChatCore {
     pub is_public: bool,
     pub name: String,
     pub description: String,
-    pub rules: GroupRules,
+    pub rules: AccessRules,
     pub subtype: Timestamped<Option<GroupSubtype>>,
     pub avatar: Option<Avatar>,
     pub history_visible_to_new_joiners: bool,
@@ -32,7 +33,7 @@ pub struct GroupChatCore {
     pub pinned_messages: Vec<MessageIndex>,
     pub permissions: GroupPermissions,
     pub date_last_pinned: Option<TimestampMillis>,
-    pub gate: Timestamped<Option<GroupGate>>,
+    pub gate: Timestamped<Option<AccessGate>>,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -42,12 +43,12 @@ impl GroupChatCore {
         is_public: bool,
         name: String,
         description: String,
-        rules: GroupRules,
+        rules: AccessRules,
         subtype: Option<GroupSubtype>,
         avatar: Option<Avatar>,
         history_visible_to_new_joiners: bool,
         permissions: GroupPermissions,
-        gate: Option<GroupGate>,
+        gate: Option<AccessGate>,
         events_ttl: Option<Milliseconds>,
         now: TimestampMillis,
     ) -> GroupChatCore {
@@ -214,6 +215,116 @@ impl GroupChatCore {
             EventsReaderResult::ThreadNotFound => ThreadNotFound,
             EventsReaderResult::UserNotInGroup => UserNotInGroup,
         }
+    }
+
+    pub fn deleted_message(
+        &self,
+        user_id: UserId,
+        thread_root_message_index: Option<MessageIndex>,
+        message_id: MessageId,
+        now: TimestampMillis,
+    ) -> DeletedMessageResult {
+        use DeletedMessageResult::*;
+
+        if let Some(member) = self.members.get(&user_id) {
+            let min_visible_event_index = member.min_visible_event_index();
+
+            if let Some(events_reader) = self
+                .events
+                .events_reader(min_visible_event_index, thread_root_message_index, now)
+            {
+                if let Some(message) = events_reader.message_internal(message_id.into()) {
+                    return if let Some(deleted_by) = &message.deleted_by {
+                        if matches!(message.content, MessageContentInternal::Deleted(_)) {
+                            MessageHardDeleted
+                        } else if user_id == message.sender
+                            || (deleted_by.deleted_by != message.sender && member.role.can_delete_messages(&self.permissions))
+                        {
+                            Success(Box::new(message.content.hydrate(Some(user_id))))
+                        } else {
+                            NotAuthorized
+                        }
+                    } else {
+                        MessageNotDeleted
+                    };
+                }
+            }
+
+            MessageNotFound
+        } else {
+            UserNotInGroup
+        }
+    }
+
+    pub fn thread_previews(
+        &self,
+        user_id: UserId,
+        threads: Vec<MessageIndex>,
+        latest_client_thread_update: Option<TimestampMillis>,
+        now: TimestampMillis,
+    ) -> ThreadPreviewsResult {
+        use ThreadPreviewsResult::*;
+
+        if let Some(member) = self.members.get(&user_id) {
+            if latest_client_thread_update.map_or(false, |t| now < t) {
+                return ReplicaNotUpToDate(now);
+            }
+
+            Success(
+                threads
+                    .into_iter()
+                    .filter_map(|root_message_index| {
+                        self.build_thread_preview(member.user_id, member.min_visible_event_index(), root_message_index, now)
+                    })
+                    .collect(),
+            )
+        } else {
+            UserNotInGroup
+        }
+    }
+
+    pub fn search(
+        &self,
+        user_id: UserId,
+        search_term: String,
+        users: Option<Vec<UserId>>,
+        max_results: u8,
+        now: TimestampMillis,
+    ) -> SearchResults {
+        use SearchResults::*;
+
+        const MIN_TERM_LENGTH: u8 = 3;
+        const MAX_TERM_LENGTH: u8 = 30;
+        const MAX_USERS: u8 = 5;
+
+        let term_length = search_term.len() as u8;
+        let users = users.unwrap_or_default();
+
+        if users.is_empty() && term_length < MIN_TERM_LENGTH {
+            return TermTooShort(MIN_TERM_LENGTH);
+        }
+
+        if term_length > MAX_TERM_LENGTH {
+            return TermTooLong(MAX_TERM_LENGTH);
+        }
+
+        if users.len() as u8 > MAX_USERS {
+            return TooManyUsers(MAX_USERS);
+        }
+
+        let member = match self.members.get(&user_id) {
+            None => return UserNotInGroup,
+            Some(p) => p,
+        };
+
+        let mut query = Query::parse(search_term);
+        query.users = HashSet::from_iter(users);
+
+        let matches = self
+            .events
+            .search_messages(now, member.min_visible_event_index(), &query, max_results, user_id);
+
+        Success(matches)
     }
 
     pub fn send_message(
@@ -758,10 +869,10 @@ impl GroupChatCore {
         user_id: UserId,
         name: Option<String>,
         description: Option<String>,
-        rules: Option<GroupRules>,
+        rules: Option<AccessRules>,
         avatar: OptionUpdate<Avatar>,
         permissions: Option<OptionalGroupPermissions>,
-        gate: OptionUpdate<GroupGate>,
+        gate: OptionUpdate<AccessGate>,
         events_ttl: OptionUpdate<Milliseconds>,
         now: TimestampMillis,
     ) -> UpdateResult {
@@ -781,7 +892,7 @@ impl GroupChatCore {
         user_id: &UserId,
         name: &Option<String>,
         description: &Option<String>,
-        rules: &Option<GroupRules>,
+        rules: &Option<AccessRules>,
         avatar: &OptionUpdate<Avatar>,
         permissions: &Option<OptionalGroupPermissions>,
     ) -> UpdateResult {
@@ -841,10 +952,10 @@ impl GroupChatCore {
         user_id: UserId,
         name: Option<String>,
         description: Option<String>,
-        rules: Option<GroupRules>,
+        rules: Option<AccessRules>,
         avatar: OptionUpdate<Avatar>,
         permissions: Option<OptionalGroupPermissions>,
-        gate: OptionUpdate<GroupGate>,
+        gate: OptionUpdate<AccessGate>,
         events_ttl: OptionUpdate<Milliseconds>,
         now: TimestampMillis,
     ) {
@@ -1052,6 +1163,33 @@ impl GroupChatCore {
             reply_in_thread: new.reply_in_thread.unwrap_or(old.reply_in_thread),
         }
     }
+
+    fn build_thread_preview(
+        &self,
+        caller_user_id: UserId,
+        min_visible_event_index: EventIndex,
+        root_message_index: MessageIndex,
+        now: TimestampMillis,
+    ) -> Option<ThreadPreview> {
+        const MAX_PREVIEWED_REPLY_COUNT: usize = 2;
+
+        let events_reader = self.events.visible_main_events_reader(min_visible_event_index, now);
+
+        let root_message = events_reader.message_event(root_message_index.into(), Some(caller_user_id))?;
+
+        let thread_events_reader = self
+            .events
+            .events_reader(min_visible_event_index, Some(root_message_index), now)?;
+
+        Some(ThreadPreview {
+            root_message,
+            latest_replies: thread_events_reader
+                .iter_latest_messages(Some(caller_user_id))
+                .take(MAX_PREVIEWED_REPLY_COUNT)
+                .collect(),
+            total_replies: thread_events_reader.next_message_index().into(),
+        })
+    }
 }
 
 pub enum EventsResult {
@@ -1172,4 +1310,28 @@ pub enum MakePrivateResult {
     UserNotInGroup,
     NotAuthorized,
     AlreadyPrivate,
+}
+
+pub enum DeletedMessageResult {
+    Success(Box<MessageContent>),
+    UserNotInGroup,
+    NotAuthorized,
+    MessageNotFound,
+    MessageNotDeleted,
+    MessageHardDeleted,
+}
+
+pub enum ThreadPreviewsResult {
+    Success(Vec<ThreadPreview>),
+    UserNotInGroup,
+    ReplicaNotUpToDate(TimestampMillis),
+}
+
+pub enum SearchResults {
+    Success(Vec<MessageMatch>),
+    InvalidTerm,
+    TermTooLong(u8),
+    TermTooShort(u8),
+    TooManyUsers(u8),
+    UserNotInGroup,
 }
