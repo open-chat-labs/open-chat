@@ -13,21 +13,21 @@ fi
 
 echo "Downloading wasms"
 
-./download-canister-wasm.sh community $WASM_SRC
-./download-canister-wasm.sh cycles_dispenser $WASM_SRC
-./download-canister-wasm.sh group $WASM_SRC
-./download-canister-wasm.sh group_index $WASM_SRC
-./download-canister-wasm.sh local_group_index $WASM_SRC
-./download-canister-wasm.sh local_user_index $WASM_SRC
-./download-canister-wasm.sh market_maker $WASM_SRC
-./download-canister-wasm.sh notifications $WASM_SRC
-./download-canister-wasm.sh notifications_index $WASM_SRC
-./download-canister-wasm.sh online_users $WASM_SRC
-./download-canister-wasm.sh proposal_validation $WASM_SRC
-./download-canister-wasm.sh proposals_bot $WASM_SRC
-./download-canister-wasm.sh storage_bucket $WASM_SRC
-./download-canister-wasm.sh storage_index $WASM_SRC
-./download-canister-wasm.sh user $WASM_SRC
-./download-canister-wasm.sh user_index $WASM_SRC
+./download-canister-wasm.sh community $WASM_SRC || exit 1
+./download-canister-wasm.sh cycles_dispenser $WASM_SRC || exit 1
+./download-canister-wasm.sh group $WASM_SRC || exit 1
+./download-canister-wasm.sh group_index $WASM_SRC || exit 1
+./download-canister-wasm.sh local_group_index $WASM_SRC || exit 1
+./download-canister-wasm.sh local_user_index $WASM_SRC || exit 1
+./download-canister-wasm.sh market_maker $WASM_SRC || exit 1
+./download-canister-wasm.sh notifications $WASM_SRC || exit 1
+./download-canister-wasm.sh notifications_index $WASM_SRC || exit 1
+./download-canister-wasm.sh online_users $WASM_SRC || exit 1
+./download-canister-wasm.sh proposal_validation $WASM_SRC || exit 1
+./download-canister-wasm.sh proposals_bot $WASM_SRC || exit 1
+./download-canister-wasm.sh storage_bucket $WASM_SRC || exit 1
+./download-canister-wasm.sh storage_index $WASM_SRC || exit 1
+./download-canister-wasm.sh user $WASM_SRC || exit 1
+./download-canister-wasm.sh user_index $WASM_SRC || exit 1
 
 echo "Wasms downloaded"
