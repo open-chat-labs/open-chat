@@ -393,7 +393,7 @@ export class OpenChat extends EventTarget {
             this.handleMessageSentByOther(chat, latestMessage);
         }
 
-        this.refreshUpdatedEvents(chat, updatedEvents);
+        this.refreshUpdatedEvents(updatedEvents);
         this.updateDetails(chat);
         this.dispatchEvent(new ChatUpdated());
     }
@@ -2051,9 +2051,13 @@ export class OpenChat extends EventTarget {
     }
 
     private async refreshUpdatedEvents(
-        serverChat: ChatSummary,
         updatedEvents: UpdatedEvent[]
     ): Promise<void> {
+        const serverChat = this._liveState.selectedServerChat;
+        if (serverChat === undefined) {
+            return;
+        }
+
         const confirmedLoaded = confirmedEventIndexesLoaded(serverChat.chatId);
         const confirmedThreadLoaded = this._liveState.confirmedThreadEventIndexesLoaded;
         const selectedThreadRootEvent = this._liveState.selectedThreadRootEvent;
