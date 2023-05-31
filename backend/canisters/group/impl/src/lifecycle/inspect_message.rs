@@ -41,7 +41,8 @@ fn accept_if_valid(state: &RuntimeState) {
             | "edit_message_v2"
             | "put_chunk"
             | "register_poll_vote"
-            | "register_proposal_vote" => true,
+            | "register_proposal_vote"
+            | "toggle_mute_notifications" => true,
             _ => false,
         }
     } else {

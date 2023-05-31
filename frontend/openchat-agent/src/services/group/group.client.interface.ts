@@ -144,4 +144,5 @@ export interface IGroupClient {
     ): Promise<RegisterProposalVoteResponse>;
     localUserIndex(): Promise<string>;
     declineInvitation(): Promise<DeclineInvitationResponse>;
+    toggleMuteNotifications(mute: boolean): Promise<undefined>;
 }
