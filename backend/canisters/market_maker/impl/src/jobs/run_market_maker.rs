@@ -120,18 +120,25 @@ fn calculate_orders_to_make(
         };
     }
 
+    let mut open_bids = BTreeMap::new();
+    let mut open_asks = BTreeMap::new();
     for order in open_orders {
-        if let Occupied(mut e) = match order.order_type {
-            OrderType::Bid => bids_to_make.entry(round_to_nearest_increment(order.price, increment)),
-            OrderType::Ask => asks_to_make.entry(round_to_nearest_increment(order.price, increment)),
-        } {
-            let entry = e.get_mut();
-            entry.amount = entry.amount.saturating_sub(order.amount);
-            if entry.amount < min_order_size {
-                e.remove();
+        match order.order_type {
+            OrderType::Bid => {
+                *open_bids
+                    .entry(round_to_nearest_increment(order.price, increment))
+                    .or_default() += order.amount
+            }
+            OrderType::Ask => {
+                *open_asks
+                    .entry(round_to_nearest_increment(order.price, increment))
+                    .or_default() += order.amount
             }
         }
     }
+
+    exclude_open_orders(&mut bids_to_make, open_bids, increment, min_order_size);
+    exclude_open_orders(&mut asks_to_make, open_asks, increment, min_order_size);
 
     bids_to_make
         .into_values()
@@ -139,6 +146,23 @@ fn calculate_orders_to_make(
         .sorted_unstable_by_key(|o| Reverse(latest_price.abs_diff(o.price)))
         .take(max_orders_to_make)
         .collect()
+}
+
+fn exclude_open_orders(
+    orders_to_make: &mut BTreeMap<u64, MakeOrderRequest>,
+    open_orders: BTreeMap<u64, u64>,
+    increment: u64,
+    min_order_size: u64,
+) {
+    for (price, amount) in open_orders {
+        if let Occupied(mut e) = orders_to_make.entry(round_to_nearest_increment(price, increment)) {
+            let entry = e.get_mut();
+            entry.amount = entry.amount.saturating_sub(amount);
+            if entry.amount < min_order_size {
+                e.remove();
+            }
+        }
+    }
 }
 
 fn calculate_orders_to_cancel(
@@ -213,5 +237,109 @@ mod tests {
     #[test_case(100011, 2, 100014)]
     fn starting_ask_tests(latest_price: u64, increment: u64, expected: u64) {
         assert_eq!(starting_ask(latest_price, increment), expected)
+    }
+
+    #[test]
+    fn calculate_orders_to_make() {
+        let open_orders = vec![
+            Order {
+                order_type: OrderType::Bid,
+                id: "1".to_string(),
+                price: 10,
+                amount: 10,
+            },
+            Order {
+                order_type: OrderType::Bid,
+                id: "2".to_string(),
+                price: 10,
+                amount: 20,
+            },
+            Order {
+                order_type: OrderType::Bid,
+                id: "3".to_string(),
+                price: 20,
+                amount: 20,
+            },
+            Order {
+                order_type: OrderType::Bid,
+                id: "4".to_string(),
+                price: 30,
+                amount: 30,
+            },
+            Order {
+                order_type: OrderType::Ask,
+                id: "5".to_string(),
+                price: 40,
+                amount: 25,
+            },
+            Order {
+                order_type: OrderType::Ask,
+                id: "6".to_string(),
+                price: 50,
+                amount: 30,
+            },
+            Order {
+                order_type: OrderType::Ask,
+                id: "7".to_string(),
+                price: 60,
+                amount: 20,
+            },
+            Order {
+                order_type: OrderType::Ask,
+                id: "8".to_string(),
+                price: 60,
+                amount: 10,
+            },
+        ];
+
+        let target_orders = vec![
+            MakeOrderRequest {
+                order_type: OrderType::Bid,
+                price: 10,
+                amount: 50,
+            },
+            MakeOrderRequest {
+                order_type: OrderType::Bid,
+                price: 20,
+                amount: 50,
+            },
+            MakeOrderRequest {
+                order_type: OrderType::Bid,
+                price: 30,
+                amount: 50,
+            },
+            MakeOrderRequest {
+                order_type: OrderType::Ask,
+                price: 40,
+                amount: 50,
+            },
+            MakeOrderRequest {
+                order_type: OrderType::Ask,
+                price: 50,
+                amount: 50,
+            },
+            MakeOrderRequest {
+                order_type: OrderType::Ask,
+                price: 60,
+                amount: 50,
+            },
+        ];
+
+        let orders_to_make = super::calculate_orders_to_make(&open_orders, target_orders, 25, 35, 10, 10);
+
+        let expected = vec![
+            MakeOrderRequest {
+                order_type: OrderType::Bid,
+                price: 20,
+                amount: 30,
+            },
+            MakeOrderRequest {
+                order_type: OrderType::Ask,
+                price: 40,
+                amount: 25,
+            },
+        ];
+
+        assert_eq!(orders_to_make, expected);
     }
 }
