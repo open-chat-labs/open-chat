@@ -30,7 +30,7 @@
     let cropData: CropData | undefined = undefined;
 
     $: width = 0;
-    $: height = width / (600 / 350);
+    $: height = width / (600 / 300);
     $: iconSize = getIconSize(size);
 
     function getSaveDimensions(mode: Mode): Dimensions {
@@ -38,7 +38,7 @@
             case "avatar":
                 return { width: 150, height: 150 };
             case "banner":
-                return { width: 600, height: 350 };
+                return { width: 600, height: 300 };
         }
     }
 
@@ -150,6 +150,7 @@
     bind:this={fileinput} />
 
 {#if mode === "banner"}
+    <!-- svelte-ignore a11y-click-events-have-key-events -->
     <div
         bind:clientWidth={width}
         class={`photo-section ${mode}`}
@@ -158,10 +159,11 @@
             ? `height: ${height}px; background-image: url(${image})`
             : `height: ${height}px`}>
         <div class={`photo-icon ${size} ${mode}`}>
-            <ChooseImage size={iconSize} color={"var(--icon-txt)"} />
+            <ChooseImage size={iconSize} color={image ? "#fff" : "var(--icon-txt)"} />
         </div>
     </div>
 {:else}
+    <!-- svelte-ignore a11y-click-events-have-key-events -->
     <div class={`photo-section ${mode}`} on:click={addPhoto}>
         <div class={`photo-icon ${size} ${mode}`}>
             {#if image}
@@ -201,7 +203,6 @@
 
     .overlay {
         position: absolute;
-        opacity: 0.6;
     }
 
     .photo-icon {

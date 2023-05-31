@@ -1,7 +1,6 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
     import ModalContent from "../../../ModalContent.svelte";
-    import Overlay from "../../../Overlay.svelte";
     import Button from "../../../Button.svelte";
     import ButtonGroup from "../../../ButtonGroup.svelte";
     import { mobileWidth } from "../../../../stores/screenDimensions";
@@ -11,20 +10,22 @@
     import Details from "./Details.svelte";
     import { dummyCommunities, createCandidateCommunity } from "stores/community";
 
-    export let show = false;
-    export let candidate: Community = createCandidateCommunity("");
+    export let original: Community = createCandidateCommunity("");
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
     let actualWidth = 0;
-    let editing = false;
+    let editing = original.id !== "";
     let step = 0;
     let busy = false;
+    let candidate = original;
     $: padding = $mobileWidth ? 16 : 24; // yes this is horrible
     $: left = step * (actualWidth - padding);
     $: dirty = false;
 
-    onMount(() => {});
+    onMount(() => {
+        candidate = { ...original };
+    });
 
     function changeStep(ev: CustomEvent<number>) {
         step = ev.detail;
@@ -33,66 +34,63 @@
     function save() {
         // TODO this is a dummy save for now
         dummyCommunities.update((communities) => {
-            const next = (communities.length + 2).toString();
-            return [{ ...candidate, id: next }, ...communities];
+            if (editing) {
+                return communities.map((c) => (c.id === candidate.id ? candidate : c));
+            } else {
+                const next = (communities.length + 2).toString();
+                return [{ ...candidate, id: next }, ...communities];
+            }
         });
     }
 </script>
 
-{#if show}
-    <Overlay dismissible on:close={() => (show = false)}>
-        <ModalContent bind:actualWidth closeIcon on:close={() => (show = false)}>
-            <div class="header" slot="header">
-                {editing ? $_("communities.edit") : $_("communities.create")}
-            </div>
-            <div class="body" slot="body">
-                <StageHeader enabled={true} on:step={changeStep} {step} />
-                <div class="wrapper">
-                    <div class="sections" style={`left: -${left}px`}>
-                        <div class="details" class:visible={step === 0}>
-                            <Details bind:busy community={candidate} />
-                        </div>
-                        <div class="visibility" class:visible={step === 1}>
-                            <h1>Visibility</h1>
-                        </div>
-                        <div class="rules" class:visible={step === 2}>
-                            <h1>Rules</h1>
-                        </div>
-                        <div class="permissions" class:visible={step === 3}>
-                            <h1>Permissions</h1>
-                        </div>
-                    </div>
+<ModalContent bind:actualWidth closeIcon on:close>
+    <div class="header" slot="header">
+        {editing ? $_("communities.edit") : $_("communities.create")}
+    </div>
+    <div class="body" slot="body">
+        <StageHeader enabled={true} on:step={changeStep} {step} />
+        <div class="wrapper">
+            <div class="sections" style={`left: -${left}px`}>
+                <div class="details" class:visible={step === 0}>
+                    <Details bind:busy community={candidate} />
+                </div>
+                <div class="visibility" class:visible={step === 1}>
+                    <h1>Visibility</h1>
+                </div>
+                <div class="rules" class:visible={step === 2}>
+                    <h1>Rules</h1>
+                </div>
+                <div class="permissions" class:visible={step === 3}>
+                    <h1>Permissions</h1>
                 </div>
             </div>
-            <span class="footer" slot="footer">
-                <div class="community-buttons">
-                    <div class="back">
-                        {#if !editing && step > 0}
-                            <Button
-                                disabled={busy}
-                                small={!$mobileWidth}
-                                tiny={$mobileWidth}
-                                on:click={() => (step = step - 1)}>{$_("communities.back")}</Button>
-                        {/if}
-                    </div>
-                    <div class="actions">
-                        <ButtonGroup>
-                            <Button
-                                small={!$mobileWidth}
-                                tiny={$mobileWidth}
-                                secondary
-                                on:click={save}>{"(Dummy) Save"}</Button>
-                            <Button
-                                small={!$mobileWidth}
-                                tiny={$mobileWidth}
-                                on:click={() => (step = step + 1)}>{$_("communities.next")}</Button>
-                        </ButtonGroup>
-                    </div>
-                </div>
-            </span>
-        </ModalContent>
-    </Overlay>
-{/if}
+        </div>
+    </div>
+    <span class="footer" slot="footer">
+        <div class="community-buttons">
+            <div class="back">
+                {#if !editing && step > 0}
+                    <Button
+                        disabled={busy}
+                        small={!$mobileWidth}
+                        tiny={$mobileWidth}
+                        on:click={() => (step = step - 1)}>{$_("communities.back")}</Button>
+                {/if}
+            </div>
+            <div class="actions">
+                <ButtonGroup>
+                    <Button small={!$mobileWidth} tiny={$mobileWidth} secondary on:click={save}
+                        >{"(Dummy) Save"}</Button>
+                    <Button
+                        small={!$mobileWidth}
+                        tiny={$mobileWidth}
+                        on:click={() => (step = step + 1)}>{$_("communities.next")}</Button>
+                </ButtonGroup>
+            </div>
+        </div>
+    </span>
+</ModalContent>
 
 <style type="text/scss">
     :global(.community-buttons button:not(.loading)) {

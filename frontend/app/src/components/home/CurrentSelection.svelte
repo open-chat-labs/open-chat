@@ -22,7 +22,7 @@
         <h4 class="name">{$selectedCommunity.name}</h4>
     </div>
     <span class="menu">
-        <CommunityMenu on:browseChannels community={$selectedCommunity} />
+        <CommunityMenu on:editCommunity on:browseChannels community={$selectedCommunity} />
     </span>
 </SectionHeader>
 

@@ -6,6 +6,7 @@
     import ButtonGroup from "../../../ButtonGroup.svelte";
     import { _ } from "svelte-i18n";
     import Button from "../../../Button.svelte";
+    import Markdown from "../../Markdown.svelte";
     import { AvatarSize } from "openchat-client";
     import { createEventDispatcher, getContext } from "svelte";
     import CommunityBanner from "./CommunityBanner.svelte";
@@ -16,7 +17,6 @@
     export let selected: boolean;
     export let header = false;
     export let joining: boolean;
-    export let member: boolean;
 
     const client = getContext<OpenChat>("client");
 
@@ -36,15 +36,15 @@
     </CommunityBanner>
     <div class="content">
         <div class="name">{community.name}</div>
-        <div class="desc">{community.description}</div>
+        <div class="desc" class:fixed={!header}>
+            <Markdown text={community.description} />
+        </div>
         {#if !header}
-            {#if !member}
-                <ButtonGroup align={"fill"}>
-                    <Button tiny hollow>{$_("communities.preview")}</Button>
-                    <Button disabled={joining} loading={joining} on:click={join} tiny
-                        >{$_("communities.join")}</Button>
-                </ButtonGroup>
-            {/if}
+            <ButtonGroup align={"fill"}>
+                <Button tiny hollow>{$_("communities.preview")}</Button>
+                <Button disabled={joining} loading={joining} on:click={join} tiny
+                    >{$_("communities.join")}</Button>
+            </ButtonGroup>
             <div class="footer">
                 <div class="members">
                     <span class="number">{community.memberCount.toLocaleString()}</span>
@@ -97,6 +97,12 @@
                 @include font(book, normal, fs-100, 28);
                 color: var(--txt-light);
                 margin-bottom: $sp4;
+                max-height: toRem(150);
+                @include nice-scrollbar();
+
+                &.fixed {
+                    height: toRem(150);
+                }
             }
 
             .footer {

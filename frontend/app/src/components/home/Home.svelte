@@ -7,6 +7,7 @@
     import SelectChatModal from "../SelectChatModal.svelte";
     import MiddlePanel from "./MiddlePanel.svelte";
     import RightPanel from "./RightPanel.svelte";
+    import EditCommunity from "./communities/edit/Edit.svelte";
     import {
         GroupSearchResponse,
         MessageMatch,
@@ -59,10 +60,12 @@
     import GateCheckFailed from "./groupdetails/GateCheckFailed.svelte";
     import HallOfFame from "./HallOfFame.svelte";
     import LeftNav from "./nav/LeftNav.svelte";
+    import { createCandidateCommunity } from "stores/community";
 
     const client = getContext<OpenChat>("client");
     const user = client.user;
     let candidateGroup: CandidateGroupChat | undefined;
+    let candidateCommunity: Community | undefined;
 
     type ConfirmActionEvent = ConfirmLeaveEvent | ConfirmDeleteEvent | ConfirmRulesEvent;
 
@@ -94,6 +97,7 @@
         Wallet,
         GateCheckFailed,
         HallOfFame,
+        EditCommunity,
     }
 
     let modal = ModalType.None;
@@ -338,6 +342,7 @@
     function closeModal() {
         modal = ModalType.None;
         candidateGroup = undefined;
+        candidateCommunity = undefined;
         joining = undefined;
     }
 
@@ -863,6 +868,16 @@
         rightPanelHistory.set([{ kind: "community_channels", communityId: ev.detail.id }]);
     }
 
+    function createCommunity() {
+        modal = ModalType.EditCommunity;
+        candidateCommunity = createCandidateCommunity("");
+    }
+
+    function editCommunity(ev: CustomEvent<Community>) {
+        modal = ModalType.EditCommunity;
+        candidateCommunity = ev.detail;
+    }
+
     $: bgHeight = $dimensions.height * 0.9;
     $: bgClip = (($dimensions.height - 32) / bgHeight) * 361;
 </script>
@@ -876,6 +891,7 @@
             on:halloffame={() => (modal = ModalType.HallOfFame)}
             on:logout={() => client.logout()}
             on:newGroup={newGroup}
+            on:editCommunity={editCommunity}
             on:showHomePage={showLandingPageRoute("/home")}
             on:upgrade={upgrade} />
     {/if}
@@ -894,6 +910,7 @@
             on:newGroup={newGroup}
             on:profile={showProfile}
             on:browseChannels={browseChannels}
+            on:editCommunity={editCommunity}
             on:logout={() => client.logout()}
             on:wallet={showWallet}
             on:deleteDirectChat={deleteDirectChat}
@@ -926,7 +943,8 @@
             on:showPinned={showPinned}
             on:toggleMuteNotifications={toggleMuteNotifications}
             on:goToMessageIndex={goToMessageIndex}
-            on:forward={forwardMessage} />
+            on:forward={forwardMessage}
+            on:createCommunity={createCommunity} />
     {/if}
     {#if $layoutStore.rightPanel === "inline"}
         <RightPanel
@@ -997,6 +1015,8 @@
             <GateCheckFailed on:close={closeModal} gate={joining.gate} />
         {:else if modal === ModalType.NewGroup && candidateGroup !== undefined}
             <NewGroup on:upgrade={upgrade} {candidateGroup} on:close={closeModal} />
+        {:else if modal === ModalType.EditCommunity && candidateCommunity !== undefined}
+            <EditCommunity original={candidateCommunity} on:close={closeModal} />
         {:else if modal === ModalType.Wallet}
             <AccountsModal on:close={closeModal} />
         {:else if modal === ModalType.HallOfFame}

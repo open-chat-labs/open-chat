@@ -30,6 +30,7 @@
             on:upgrade
             on:toggleMuteNotifications
             on:browseChannels
+            on:editCommunity
             {searchResultsAvailable}
             {searchTerm}
             {searching}

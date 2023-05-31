@@ -127,7 +127,7 @@
                     url={client.communityAvatarUrl(community.avatar)}
                     size={avatarSize} />
                 <div slot="menu">
-                    <CommunityMenu on:browseChannels {community} />
+                    <CommunityMenu on:editCommunity on:browseChannels {community} />
                 </div>
             </LeftNavItem>
         {/each}

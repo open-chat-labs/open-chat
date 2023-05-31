@@ -28,7 +28,7 @@
     {#if $pathParams.kind === "hot_groups_route"}
         <RecommendedGroups {joining} on:joinGroup on:leaveGroup on:upgrade />
     {:else if $pathParams.kind === "communities_route"}
-        <ExploreCommunities />
+        <ExploreCommunities on:createCommunity />
     {:else if loadingChats}
         <Loading />
     {:else if $selectedChatId === undefined}
