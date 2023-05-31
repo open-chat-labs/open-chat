@@ -10,8 +10,8 @@ use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use types::{
-    Avatar, CanisterId, CommunityCanisterCommunitySummary, CommunityPermissions, Cycles, FrozenGroupInfo, GroupGate,
-    GroupRules, Notification, TimestampMillis, Timestamped, UserId, Version,
+    AccessGate, AccessRules, Avatar, CanisterId, CommunityCanisterCommunitySummary, CommunityPermissions, Cycles,
+    FrozenGroupInfo, Notification, TimestampMillis, Timestamped, UserId, Version,
 };
 use utils::env::Environment;
 
@@ -122,10 +122,10 @@ struct Data {
     is_public: bool,
     name: String,
     description: String,
-    rules: GroupRules,
+    rules: AccessRules,
     avatar: Option<Avatar>,
     permissions: CommunityPermissions,
-    gate: Timestamped<Option<GroupGate>>,
+    gate: Timestamped<Option<AccessGate>>,
     user_index_canister_id: CanisterId,
     local_user_index_canister_id: CanisterId,
     group_index_canister_id: CanisterId,
@@ -153,7 +153,7 @@ impl Data {
         is_public: bool,
         name: String,
         description: String,
-        rules: GroupRules,
+        rules: AccessRules,
         avatar: Option<Avatar>,
         permissions: CommunityPermissions,
         user_index_canister_id: CanisterId,
@@ -162,7 +162,7 @@ impl Data {
         local_group_index_canister_id: CanisterId,
         notifications_canister_id: CanisterId,
         proposals_bot_user_id: UserId,
-        gate: Option<GroupGate>,
+        gate: Option<AccessGate>,
         test_mode: bool,
         now: TimestampMillis,
     ) -> Data {

@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{CommunityMember, GroupRules, TimestampMillis, UserId};
+use types::{AccessRules, CommunityMember, TimestampMillis, UserId};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -23,5 +23,5 @@ pub struct SuccessResult {
     pub blocked_users_added: Vec<UserId>,
     pub blocked_users_removed: Vec<UserId>,
     pub invited_users: Option<Vec<UserId>>,
-    pub rules: Option<GroupRules>,
+    pub rules: Option<AccessRules>,
 }

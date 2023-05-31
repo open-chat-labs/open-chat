@@ -7,7 +7,7 @@ use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use community_canister::c2c_join_community::{Response::*, *};
 use gated_groups::{check_if_passes_gate, CheckIfPassesGateResult};
-use types::{CanisterId, GroupGate, MemberJoined, UsersUnblocked};
+use types::{AccessGate, CanisterId, MemberJoined, UsersUnblocked};
 
 #[update_msgpack(guard = "caller_is_user_index_or_local_user_index")]
 #[trace]
@@ -31,7 +31,7 @@ fn is_permitted_to_join(
     invite_code: Option<u64>,
     user_principal: Principal,
     state: &RuntimeState,
-) -> Result<Option<(GroupGate, CanisterId)>, Response> {
+) -> Result<Option<(AccessGate, CanisterId)>, Response> {
     let caller = state.env.caller();
 
     // If the call is from the user index then we skip the checks

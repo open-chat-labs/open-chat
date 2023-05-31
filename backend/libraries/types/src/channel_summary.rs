@@ -1,4 +1,4 @@
-use crate::{ChannelId, EventIndex, GroupGate, GroupPermissions, GroupRole, TimestampMillis};
+use crate::{AccessGate, ChannelId, EventIndex, GroupPermissions, GroupRole, TimestampMillis};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
@@ -13,7 +13,7 @@ pub struct ChannelSummary {
     pub member_count: u32,
     pub role: GroupRole,
     pub permissions: GroupPermissions,
-    pub gate: Option<GroupGate>,
+    pub gate: Option<AccessGate>,
     pub last_updated: TimestampMillis,
     pub latest_event_index: EventIndex,
 }

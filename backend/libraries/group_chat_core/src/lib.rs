@@ -7,9 +7,9 @@ use search::Query;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use types::{
-    Avatar, AvatarChanged, ContentValidationError, CryptoTransaction, EventIndex, EventWrapper, EventsResponse,
-    FieldTooLongResult, FieldTooShortResult, GroupDescriptionChanged, GroupGate, GroupGateUpdated, GroupNameChanged,
-    GroupPermissionRole, GroupPermissions, GroupReplyContext, GroupRole, GroupRules, GroupRulesChanged, GroupSubtype,
+    AccessGate, AccessRules, Avatar, AvatarChanged, ContentValidationError, CryptoTransaction, EventIndex, EventWrapper,
+    EventsResponse, FieldTooLongResult, FieldTooShortResult, GroupDescriptionChanged, GroupGateUpdated, GroupNameChanged,
+    GroupPermissionRole, GroupPermissions, GroupReplyContext, GroupRole, GroupRulesChanged, GroupSubtype,
     GroupVisibilityChanged, InvalidPollReason, MemberLeft, MembersRemoved, MentionInternal, Message, MessageContent,
     MessageContentInitial, MessageContentInternal, MessageId, MessageIndex, MessageMatch, MessagePinned, MessageUnpinned,
     MessagesResponse, Milliseconds, OptionUpdate, OptionalGroupPermissions, PermissionsChanged, PushEventResult, Reaction,
@@ -23,7 +23,7 @@ pub struct GroupChatCore {
     pub is_public: bool,
     pub name: String,
     pub description: String,
-    pub rules: GroupRules,
+    pub rules: AccessRules,
     pub subtype: Timestamped<Option<GroupSubtype>>,
     pub avatar: Option<Avatar>,
     pub history_visible_to_new_joiners: bool,
@@ -33,7 +33,7 @@ pub struct GroupChatCore {
     pub pinned_messages: Vec<MessageIndex>,
     pub permissions: GroupPermissions,
     pub date_last_pinned: Option<TimestampMillis>,
-    pub gate: Timestamped<Option<GroupGate>>,
+    pub gate: Timestamped<Option<AccessGate>>,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -43,12 +43,12 @@ impl GroupChatCore {
         is_public: bool,
         name: String,
         description: String,
-        rules: GroupRules,
+        rules: AccessRules,
         subtype: Option<GroupSubtype>,
         avatar: Option<Avatar>,
         history_visible_to_new_joiners: bool,
         permissions: GroupPermissions,
-        gate: Option<GroupGate>,
+        gate: Option<AccessGate>,
         events_ttl: Option<Milliseconds>,
         now: TimestampMillis,
     ) -> GroupChatCore {
@@ -869,10 +869,10 @@ impl GroupChatCore {
         user_id: UserId,
         name: Option<String>,
         description: Option<String>,
-        rules: Option<GroupRules>,
+        rules: Option<AccessRules>,
         avatar: OptionUpdate<Avatar>,
         permissions: Option<OptionalGroupPermissions>,
-        gate: OptionUpdate<GroupGate>,
+        gate: OptionUpdate<AccessGate>,
         events_ttl: OptionUpdate<Milliseconds>,
         now: TimestampMillis,
     ) -> UpdateResult {
@@ -892,7 +892,7 @@ impl GroupChatCore {
         user_id: &UserId,
         name: &Option<String>,
         description: &Option<String>,
-        rules: &Option<GroupRules>,
+        rules: &Option<AccessRules>,
         avatar: &OptionUpdate<Avatar>,
         permissions: &Option<OptionalGroupPermissions>,
     ) -> UpdateResult {
@@ -952,10 +952,10 @@ impl GroupChatCore {
         user_id: UserId,
         name: Option<String>,
         description: Option<String>,
-        rules: Option<GroupRules>,
+        rules: Option<AccessRules>,
         avatar: OptionUpdate<Avatar>,
         permissions: Option<OptionalGroupPermissions>,
-        gate: OptionUpdate<GroupGate>,
+        gate: OptionUpdate<AccessGate>,
         events_ttl: OptionUpdate<Milliseconds>,
         now: TimestampMillis,
     ) {
