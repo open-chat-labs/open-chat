@@ -54,10 +54,11 @@ impl RuntimeState {
         let file_metrics = self.data.files.metrics();
 
         Metrics {
-            memory_used: utils::memory::used(),
             now: self.env.now(),
+            memory_used: utils::memory::used(),
             cycles_balance: self.env.cycles_balance(),
             wasm_version: WASM_VERSION.with(|v| **v.borrow()),
+            git_commit_id: utils::git::git_commit_id().to_string(),
             user_count: self.data.users.len() as u64,
             file_count: file_metrics.file_count,
             blob_count: file_metrics.blob_count,
@@ -101,10 +102,11 @@ impl Data {
 
 #[derive(CandidType, Serialize, Debug)]
 pub struct Metrics {
-    pub memory_used: u64,
     pub now: TimestampMillis,
+    pub memory_used: u64,
     pub cycles_balance: Cycles,
     pub wasm_version: Version,
+    pub git_commit_id: String,
     pub user_count: u64,
     pub file_count: u64,
     pub blob_count: u64,
