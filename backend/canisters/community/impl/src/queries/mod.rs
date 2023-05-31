@@ -10,3 +10,4 @@ mod search_channel;
 mod selected_initial;
 mod selected_updates;
 mod summary;
+mod thread_previews;

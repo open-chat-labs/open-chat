@@ -11,3 +11,4 @@ pub mod search_channel;
 pub mod selected_initial;
 pub mod selected_updates;
 pub mod summary;
+pub mod thread_previews;
