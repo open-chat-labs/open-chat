@@ -2,8 +2,10 @@
 
 # Extract the args or use defaults
 TITLE=$1
-SUMMARY=$2
-URL=$3
+URL=$2
+SUMMARY_PATH=$3
+
+SUMMARY=`cat $SUMMARY_PATH`
 
 # Set current directory to the OC root
 SCRIPT=$(readlink -f "$0")
