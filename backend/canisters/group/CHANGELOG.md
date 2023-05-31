@@ -18,6 +18,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Extract `remove_participant` logic to `GroupChatCore` ([#3665](https://github.com/open-ic/open-chat/pull/3665))
 - Extract `update_group_v2` logic to `GroupChatCore` ([#3668](https://github.com/open-ic/open-chat/pull/3668))
 - Avoid multi subnet calls when (un)muting group notifications ([#3685](https://github.com/open-ic/open-chat/pull/3685))
+- Refactor search ([#3689](https://github.com/open-ic/open-chat/pull/3689))
 
 ### Removed
 

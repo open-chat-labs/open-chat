@@ -17,6 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Reduce a few timer job intervals ([#3515](https://github.com/open-ic/open-chat/pull/3515))
 - Added `moderator` role and removed `add_members` permission ([#3592](https://github.com/open-ic/open-chat/pull/3592))
 - Put back `add_members` permission with serde default ([#3599](https://github.com/open-ic/open-chat/pull/3599))
+- Improve search by splitting "terms" into "tokens" ([#3689](https://github.com/open-ic/open-chat/pull/3689))
 
 ## [[2.0.665](https://github.com/open-ic/open-chat/releases/tag/v2.0.665-group_index)] - 2023-04-17
 
