@@ -9,6 +9,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Introduce `FireAndForgetHandler` which retries failed c2c calls ([#3639](https://github.com/open-ic/open-chat/pull/3639))
 - Integrate Communities ([#3657](https://github.com/open-ic/open-chat/pull/3657)), ([#3659](https://github.com/open-ic/open-chat/pull/3659))
+- Added `c2c_mark_group_updated_for_user` ([#3685](https://github.com/open-ic/open-chat/pull/3685))
 
 ### Changed
 
