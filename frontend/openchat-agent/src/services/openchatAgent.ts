@@ -886,13 +886,15 @@ export class OpenChatAgent extends EventTarget {
             current.latestActiveGroupsCheck
         );
 
-        const activeGroups = new Set(groupIndexResponse.activeGroups);
+        const groupsToCheckForUpdates = new Set(
+            groupIndexResponse.activeGroups.concat(updates.groupChatsUpdated.map((g) => g.chatId))
+        );
 
         const groupPromises = updates.groupChatsAdded.map((g) =>
             this.getGroupClient(g.chatId).summary()
         );
         const groupUpdatePromises = current.groupChats
-            .filter((g) => activeGroups.has(g.chatId))
+            .filter((g) => groupsToCheckForUpdates.has(g.chatId))
             .map((g) => this.getGroupClient(g.chatId).summaryUpdates(g.lastUpdated));
 
         const groupPromiseResults = await waitAll(groupPromises);
