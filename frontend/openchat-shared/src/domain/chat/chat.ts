@@ -904,21 +904,23 @@ export type Member = {
 
 export type FullMember = Member & PartialUserSummary;
 
-export type PermissionRole = "owner" | "admins" | "moderators" | "members";
+export const groupRoles = ["owner", "admins", "moderators", "members"] as const;
+type RolesType = typeof groupRoles;
+export type GroupPermissionRole = RolesType[number];
 
 export type GroupPermissions = {
-    changePermissions: PermissionRole;
-    changeRoles: PermissionRole;
-    removeMembers: PermissionRole;
-    blockUsers: PermissionRole;
-    deleteMessages: PermissionRole;
-    updateGroup: PermissionRole;
-    pinMessages: PermissionRole;
-    inviteUsers: PermissionRole;
-    createPolls: PermissionRole;
-    sendMessages: PermissionRole;
-    reactToMessages: PermissionRole;
-    replyInThread: PermissionRole;
+    changePermissions: GroupPermissionRole;
+    changeRoles: GroupPermissionRole;
+    removeMembers: GroupPermissionRole;
+    blockUsers: GroupPermissionRole;
+    deleteMessages: GroupPermissionRole;
+    updateGroup: GroupPermissionRole;
+    pinMessages: GroupPermissionRole;
+    inviteUsers: GroupPermissionRole;
+    createPolls: GroupPermissionRole;
+    sendMessages: GroupPermissionRole;
+    reactToMessages: GroupPermissionRole;
+    replyInThread: GroupPermissionRole;
 };
 
 export type GroupChatDetailsResponse = "caller_not_in_group" | GroupChatDetails;

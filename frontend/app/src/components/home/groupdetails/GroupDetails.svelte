@@ -136,7 +136,7 @@
         <CollapsibleCard
             on:toggle={groupPermissionsOpen.toggle}
             open={$groupPermissionsOpen}
-            headerText={$_("group.permissions.permissions")}>
+            headerText={$_("permissions.permissions")}>
             <GroupPermissionsViewer bind:permissions={chat.permissions} isPublic={chat.public} />
         </CollapsibleCard>
         <CollapsibleCard

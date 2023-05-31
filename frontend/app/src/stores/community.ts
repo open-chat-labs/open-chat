@@ -1,5 +1,17 @@
-import type { Community } from "openchat-client";
+import type { Community, CommunityPermissions } from "openchat-client";
 import { writable } from "svelte/store";
+
+// TODO - come back and decide on default permissions
+const defaultPermissions: CommunityPermissions = {
+    changePermissions: "owner",
+    changeRoles: "owner",
+    inviteUsers: "owner",
+    removeMembers: "owner",
+    blockUsers: "owner",
+    updateDetails: "owner",
+    createPublicChannel: "owner",
+    createPrivateChannel: "owner",
+};
 
 function createDummyCommunity(
     id: string,
@@ -21,6 +33,7 @@ function createDummyCommunity(
         banner: {},
         gate: { kind: "no_gate" },
         isPublic: true,
+        permissions: defaultPermissions,
     };
 }
 
@@ -91,5 +104,6 @@ export function createCandidateCommunity(id: string): Community {
         banner: {},
         gate: { kind: "no_gate" },
         isPublic: true,
+        permissions: defaultPermissions,
     };
 }

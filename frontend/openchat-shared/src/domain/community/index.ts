@@ -11,4 +11,20 @@ export type Community = Gated & {
     avatar: DataContent;
     banner: DataContent;
     isPublic: boolean;
+    permissions: CommunityPermissions;
+};
+
+export const communityRoles = ["owner", "admins", "members"] as const;
+type RolesType = typeof communityRoles;
+export type CommunityPermissionRole = RolesType[number];
+
+export type CommunityPermissions = {
+    changePermissions: CommunityPermissionRole;
+    changeRoles: CommunityPermissionRole;
+    inviteUsers: CommunityPermissionRole;
+    removeMembers: CommunityPermissionRole;
+    blockUsers: CommunityPermissionRole;
+    updateDetails: CommunityPermissionRole;
+    createPublicChannel: CommunityPermissionRole;
+    createPrivateChannel: CommunityPermissionRole;
 };

@@ -300,6 +300,7 @@ import {
     InviteUsersResponse,
     ReferralLeaderboardRange,
     ReferralLeaderboardResponse,
+    CommunityPermissions,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -1795,9 +1796,27 @@ export class OpenChat extends EventTarget {
     }
     formatFileSize = formatFileSize;
 
-    havePermissionsChanged(p1: GroupPermissions, p2: GroupPermissions): boolean {
+    havePermissionsChanged(
+        p1: GroupPermissions | CommunityPermissions,
+        p2: GroupPermissions | CommunityPermissions
+    ): boolean {
         const args = this.mergeKeepingOnlyChanged(p1, p2);
         return Object.keys(args).length > 0;
+    }
+
+    hasAccessGateChanged(current: AccessGate, original: AccessGate): boolean {
+        if (current === original) return false;
+        if (current.kind !== original.kind) return true;
+        if (
+            (current.kind === "openchat_gate" || current.kind === "sns1_gate") &&
+            (original.kind === "openchat_gate" || original.kind === "sns1_gate")
+        ) {
+            return (
+                current.minDissolveDelay !== original.minDissolveDelay ||
+                current.minStakeE8s !== original.minStakeE8s
+            );
+        }
+        return false;
     }
 
     earliestLoadedThreadIndex(): number | undefined {

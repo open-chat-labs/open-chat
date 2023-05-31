@@ -27,7 +27,7 @@
         {$_("group.groupRules")}
     </div>
     <div on:click={() => selectStep(3)} class:selected={step === 3} class="step">
-        {$_("group.permissions.permissions")}
+        {$_("permissions.permissions")}
     </div>
     {#if !candidateGroup.isPublic && !editing}
         <div on:click={() => selectStep(4)} class:selected={step === 4} class="step">

@@ -1,26 +1,24 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
-    import type { PermissionRole } from "openchat-client";
     import Legend from "../Legend.svelte";
     import Select from "../Select.svelte";
 
     export let label: string;
-    export let rolePermission: PermissionRole;
-
-    let roles: PermissionRole[] = ["owner", "admins", "moderators", "members"];
+    export let rolePermission: string;
+    export let roles: readonly string[];
 </script>
 
-<div class="group-permission">
-    <Legend label={`${$_("group.permissions.whoCan")} ${label}`} />
+<div class="permission">
+    <Legend label={`${$_("permissions.whoCan")} ${label}`} />
     <Select bind:value={rolePermission}>
         {#each roles as r, _i (r)}
-            <option value={r}>{$_(`group.role.${r}`)}</option>
+            <option value={r}>{$_(`role.${r}`)}</option>
         {/each}
     </Select>
 </div>
 
 <style type="text/scss">
-    .group-permission {
+    .permission {
         max-width: 300px;
     }
 </style>

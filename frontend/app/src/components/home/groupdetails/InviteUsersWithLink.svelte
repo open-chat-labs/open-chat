@@ -19,8 +19,8 @@
     export let group: GroupChatSummary;
 
     const client = getContext<OpenChat>("client");
-    const unauthorized = $_("group.permissions.notPermitted", {
-        values: { permission: $_("group.permissions.inviteUsers") },
+    const unauthorized = $_("permissions.notPermitted", {
+        values: { permission: $_("permissions.inviteUsers") },
     });
 
     let ready = false;
@@ -30,7 +30,9 @@
     let loading = false;
     let confirmReset = false;
 
-    $: link = `${window.location.origin}/${group.chatId}/?ref=${client.user.userId}` + (!group.public ? `&code=${code}` : "");
+    $: link =
+        `${window.location.origin}/${group.chatId}/?ref=${client.user.userId}` +
+        (!group.public ? `&code=${code}` : "");
 
     $: spinner = loading && code === undefined;
 
@@ -159,9 +161,6 @@
             bind:checked />
 
         <div class:spinner />
-
-
-
     </div>
 {/if}
 {#if ready}
@@ -174,7 +173,9 @@
                 </div>
             </div>
             <div class="message">
-                <Markdown text={$_("group.invite.shareMessage") + (group.public ? "" : $_("group.invite.shareMessageTrust"))} />                
+                <Markdown
+                    text={$_("group.invite.shareMessage") +
+                        (group.public ? "" : $_("group.invite.shareMessageTrust"))} />
             </div>
             <div class="action">
                 <CopyIcon size={$iconSize} color={"var(--icon-txt)"} />

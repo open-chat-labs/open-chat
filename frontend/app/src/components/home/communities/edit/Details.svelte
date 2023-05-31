@@ -11,17 +11,17 @@
     const MAX_DESC_LENGTH = 1024;
 
     export let busy: boolean;
-    export let community: Community;
+    export let candidate: Community;
 
     function communityAvatarSelected(ev: CustomEvent<{ url: string; data: Uint8Array }>) {
-        community.avatar = {
+        candidate.avatar = {
             blobUrl: ev.detail.url,
             blobData: ev.detail.data,
         };
     }
 
     function communityBannerSelected(ev: CustomEvent<{ url: string; data: Uint8Array }>) {
-        community.banner = {
+        candidate.banner = {
             blobUrl: ev.detail.url,
             blobData: ev.detail.data,
         };
@@ -35,14 +35,14 @@
             <EditableAvatar
                 mode={"banner"}
                 overlayIcon
-                image={community.banner?.blobUrl}
+                image={candidate.banner?.blobUrl}
                 on:imageSelected={communityBannerSelected} />
         </div>
         <div class="avatar">
             <EditableAvatar
                 overlayIcon
                 size={"medium"}
-                image={community.avatar?.blobUrl}
+                image={candidate.avatar?.blobUrl}
                 on:imageSelected={communityAvatarSelected} />
         </div>
     </div>
@@ -52,7 +52,7 @@
     <Input
         autofocus
         disabled={busy}
-        bind:value={community.name}
+        bind:value={candidate.name}
         minlength={MIN_LENGTH}
         maxlength={MAX_LENGTH}
         countdown
@@ -63,7 +63,7 @@
     <TextArea
         rows={4}
         disabled={busy}
-        bind:value={community.description}
+        bind:value={candidate.description}
         maxlength={MAX_DESC_LENGTH}
         placeholder={$_("communities.descriptionPlaceholder")} />
 </section>

@@ -69,23 +69,8 @@
     $: avatarDirty = editing && candidateGroup.avatar?.blobUrl !== originalGroup.avatar?.blobUrl;
     $: visDirty = editing && candidateGroup.isPublic !== originalGroup.isPublic;
     $: infoDirty = nameDirty || descDirty || avatarDirty;
-    $: gateDirty = gatesDifferent(candidateGroup.gate, originalGroup.gate);
+    $: gateDirty = client.hasAccessGateChanged(candidateGroup.gate, originalGroup.gate);
     $: dirty = infoDirty || rulesDirty || permissionsDirty || visDirty || gateDirty;
-
-    function gatesDifferent(current: AccessGate, original: AccessGate): boolean {
-        if (current === original) return false;
-        if (current.kind !== original.kind) return true;
-        if (
-            (current.kind === "openchat_gate" || current.kind === "sns1_gate") &&
-            (original.kind === "openchat_gate" || original.kind === "sns1_gate")
-        ) {
-            return (
-                current.minDissolveDelay !== original.minDissolveDelay ||
-                current.minStakeE8s !== original.minStakeE8s
-            );
-        }
-        return false;
-    }
 
     function groupUpdateErrorMessage(resp: UpdateGroupResponse): string | undefined {
         if (resp === "success") return undefined;

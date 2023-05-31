@@ -16,7 +16,7 @@
         "communities.details",
         "communities.visibility",
         "communities.rules",
-        "communities.permissions",
+        "permissions.permissions",
         "communities.invite",
     ];
 </script>

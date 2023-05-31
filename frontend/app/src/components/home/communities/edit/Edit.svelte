@@ -7,6 +7,7 @@
     import { createEventDispatcher, getContext, onMount } from "svelte";
     import type { Community, OpenChat } from "openchat-client";
     import StageHeader from "./StageHeader.svelte";
+    import PermissionEditor from "./PermissionsEditor.svelte";
     import Details from "./Details.svelte";
     import { dummyCommunities, createCandidateCommunity } from "stores/community";
 
@@ -19,11 +20,33 @@
     let step = 0;
     let busy = false;
     let candidate = original;
+
+    $: permissionsDirty = client.havePermissionsChanged(
+        original.permissions,
+        candidate.permissions
+    );
+    // $: rulesDirty =
+    //     editing &&
+    //     candidate.rules !== undefined &&
+    //     (candidate.rules.enabled !== candidate.rules.enabled ||
+    //         candidate.rules.text !== candidate.rules.text);
+    // $: rulesInvalid =
+    //     candidate.rules !== undefined &&
+    //     candidate.rules.enabled &&
+    //     candidate.rules.text.length === 0;
+    $: nameDirty = editing && candidate.name !== original.name;
+    $: descDirty = editing && candidate.description !== original.description;
+    $: avatarDirty = editing && candidate.avatar?.blobUrl !== original.avatar?.blobUrl;
+    $: bannerDirty = editing && candidate.banner.blobUrl !== original.banner.blobUrl;
+    $: visDirty = editing && candidate.isPublic !== original.isPublic;
+    $: infoDirty = nameDirty || descDirty || avatarDirty || bannerDirty;
+    $: gateDirty = client.hasAccessGateChanged(candidate.gate, original.gate);
+    $: dirty = infoDirty /*|| rulesDirty */ || permissionsDirty || visDirty || gateDirty;
     $: padding = $mobileWidth ? 16 : 24; // yes this is horrible
     $: left = step * (actualWidth - padding);
-    $: dirty = false;
 
     onMount(() => {
+        console.log("Cloning input community");
         candidate = { ...original };
     });
 
@@ -53,7 +76,7 @@
         <div class="wrapper">
             <div class="sections" style={`left: -${left}px`}>
                 <div class="details" class:visible={step === 0}>
-                    <Details bind:busy community={candidate} />
+                    <Details bind:busy {candidate} />
                 </div>
                 <div class="visibility" class:visible={step === 1}>
                     <h1>Visibility</h1>
@@ -62,7 +85,7 @@
                     <h1>Rules</h1>
                 </div>
                 <div class="permissions" class:visible={step === 3}>
-                    <h1>Permissions</h1>
+                    <PermissionEditor permissions={candidate.permissions} />
                 </div>
             </div>
         </div>
