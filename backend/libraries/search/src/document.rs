@@ -13,8 +13,18 @@ pub struct Token {
     pub value_lower: String,
 }
 
+impl Token {
+    fn new(text: String) -> Token {
+        let value_lower = text.to_lowercase();
+        Token {
+            value: text,
+            value_lower,
+        }
+    }
+}
+
 impl Query {
-    pub fn parse(free_text: &str) -> Query {
+    pub fn parse(free_text: String) -> Query {
         Query {
             tokens: parse_tokens(free_text),
             users: HashSet::new(),
@@ -28,9 +38,9 @@ pub struct Field {
 }
 
 impl Field {
-    fn new(free_text: &str, weight: f32) -> Field {
+    fn new(free_text: String, weight: f32, split: bool) -> Field {
         Field {
-            tokens: parse_tokens(free_text),
+            tokens: if split { parse_tokens(free_text) } else { vec![Token::new(free_text)] },
             weight,
         }
     }
@@ -43,8 +53,8 @@ pub struct Document {
 }
 
 impl Document {
-    pub fn add_field(&mut self, value: String, weight: f32) -> &mut Document {
-        self.fields.push(Field::new(&value, weight));
+    pub fn add_field(&mut self, value: String, weight: f32, split: bool) -> &mut Document {
+        self.fields.push(Field::new(value, weight, split));
         self
     }
 
@@ -141,11 +151,6 @@ fn calculate_age_boost(age: Milliseconds) -> f32 {
     1.0 + (-age_in_days / 20.0).exp()
 }
 
-fn parse_tokens(text: &str) -> Vec<Token> {
-    text.split_whitespace()
-        .map(|word| Token {
-            value: word.to_string(),
-            value_lower: word.to_lowercase(),
-        })
-        .collect()
+fn parse_tokens(text: String) -> Vec<Token> {
+    text.split_whitespace().map(|word| Token::new(word.to_string())).collect()
 }

@@ -317,7 +317,7 @@ impl GroupChatCore {
             Some(p) => p,
         };
 
-        let mut query = Query::parse(&search_term);
+        let mut query = Query::parse(search_term);
         query.users = HashSet::from_iter(users);
 
         let matches = self

@@ -21,7 +21,7 @@ fn search_impl(args: Args, state: &RuntimeState) -> Response {
         return TermTooLong(MAX_TERM_LENGTH);
     }
 
-    let matches = state.data.public_groups.search(&args.search_term, args.max_results);
+    let matches = state.data.public_groups.search(args.search_term, args.max_results);
 
     Success(SuccessResult { matches })
 }
