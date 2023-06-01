@@ -21,7 +21,7 @@ fn remove_member_from_channel_impl(args: Args, state: &mut RuntimeState) -> Resp
             return UserSuspended;
         }
 
-        if state.data.members.get(args.user_id.into()).is_none() {
+        if state.data.members.get_by_user_id(&args.user_id).is_none() {
             return TargetUserNotInCommunity;
         }
 

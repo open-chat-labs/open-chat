@@ -65,7 +65,7 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
                             state
                                 .data
                                 .members
-                                .get((*u).into())
+                                .get_by_user_id(u)
                                 .map_or(false, |m| !m.notifications_muted.value)
                         })
                         .chain(result.mentions)
