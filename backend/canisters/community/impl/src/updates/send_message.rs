@@ -5,8 +5,10 @@ use canister_timer_jobs::TimerJobs;
 use canister_tracing_macros::trace;
 use community_canister::send_message::{Response::*, *};
 use group_chat_core::SendMessageResult;
+use itertools::Itertools;
 use types::{
-    ChannelId, CommunityMessageNotification, EventWrapper, Message, MessageContent, MessageIndex, Notification, TimestampMillis,
+    ChannelId, CommunityMessageNotification, EventWrapper, Message, MessageContent, MessageIndex, Notification,
+    TimestampMillis, UserId,
 };
 
 #[update_candid_and_msgpack]
@@ -54,6 +56,22 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
                         &mut state.data.timer_jobs,
                     );
 
+                    // Filter the users to notify to remove those members that have the commumity muted
+                    // but always include mentions
+                    let users_to_notify: Vec<UserId> = result
+                        .users_to_notify
+                        .into_iter()
+                        .filter(|u| {
+                            state
+                                .data
+                                .members
+                                .get((*u).into())
+                                .map_or(false, |m| !m.notifications_muted.value)
+                        })
+                        .chain(result.mentions)
+                        .unique()
+                        .collect();
+
                     let notification = Notification::CommunityMessageNotification(CommunityMessageNotification {
                         community_id: state.env.canister_id().into(),
                         channel_id: args.channel_id,
@@ -66,7 +84,7 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
                         mentioned: args.mentioned,
                     });
 
-                    state.push_notification(result.users_to_notify, notification);
+                    state.push_notification(users_to_notify, notification);
 
                     Success(SuccessResult {
                         event_index,

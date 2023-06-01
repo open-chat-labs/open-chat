@@ -73,9 +73,7 @@ fn should_push_notification(
     let sender = message.event.sender;
     if sender != user_id {
         let notifications_muted = chat.members.get(&sender).map_or(true, |m| m.notifications_muted.value)
-            || members
-                .get(message.event.sender.into())
-                .map_or(true, |p| p.notifications_muted.value);
+            || members.get(sender.into()).map_or(true, |m| m.notifications_muted.value);
 
         if !notifications_muted {
             return Some(message);

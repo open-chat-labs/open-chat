@@ -468,6 +468,7 @@ impl GroupChatCore {
             Success(SendMessageSuccess {
                 message_event,
                 users_to_notify: users_to_notify.into_iter().collect(),
+                mentions,
             })
         } else {
             UserNotInGroup
@@ -1222,6 +1223,7 @@ pub enum SendMessageResult {
 pub struct SendMessageSuccess {
     pub message_event: EventWrapper<Message>,
     pub users_to_notify: Vec<UserId>,
+    pub mentions: HashSet<UserId>,
 }
 
 pub enum AddRemoveReactionResult {
