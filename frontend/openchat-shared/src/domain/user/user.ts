@@ -150,7 +150,9 @@ export type RegisterUserResponse =
     | { kind: "username_too_long" }
     | { kind: "username_invalid" }
     | { kind: "public_key_invalid" }
-    | { kind: "referral_code_invalid" };
+    | { kind: "referral_code_invalid" }
+    | { kind: "referral_code_already_claimed" }
+    | { kind: "referral_code_expired" };
 
 export type PinChatResponse = { kind: "success" } | { kind: "pinned_limit_reached"; limit: number };
 

@@ -843,6 +843,8 @@ export type RegisterUserResponse = { 'UsernameTooShort' : number } |
   { 'UsernameTooLong' : number } |
   { 'Success' : { 'icp_account' : AccountIdentifier, 'user_id' : UserId } } |
   { 'PublicKeyInvalid' : string } |
+  { 'ReferralCodeAlreadyClaimed' : null } |
+  { 'ReferralCodeExpired' : null } |
   { 'InternalError' : string } |
   { 'ReferralCodeInvalid' : null } |
   { 'CyclesBalanceTooLow' : null };

@@ -67,6 +67,12 @@ export function registerUserResponse(candid: ApiRegisterUserResponse): RegisterU
     if ("ReferralCodeInvalid" in candid) {
         return { kind: "referral_code_invalid" };
     }
+    if ("ReferralCodeAlreadyClaimed" in candid) {
+        return { kind: "referral_code_already_claimed" };
+    }
+    if ("ReferralCodeExpired" in candid) {
+        return { kind: "referral_code_expired" };
+    }
 
     throw new UnsupportedValueError("Unexpected ApiRegisterUserResponse type received", candid);
 }
