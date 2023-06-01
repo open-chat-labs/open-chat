@@ -39,8 +39,10 @@ fn c2c_toggle_reaction_impl(args: Args, state: &mut RuntimeState) -> Response {
         if args.added {
             match chat.events.add_reaction(add_remove_reaction_args) {
                 AddRemoveReactionResult::Success => {
-                    if let Some((recipients, notification)) = build_notification(args, chat, now) {
-                        state.push_notification(recipients, notification);
+                    if !*state.data.suspended {
+                        if let Some((recipients, notification)) = build_notification(args, chat, now) {
+                            state.push_notification(recipients, notification);
+                        }
                     }
                     Added
                 }

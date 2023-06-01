@@ -71,14 +71,22 @@ fn should_push_notification(
         .and_then(|events_reader| events_reader.message_event(args.message_id.into(), None))?;
 
     let sender = message.event.sender;
-    if sender != user_id {
-        let notifications_muted = chat.members.get(&sender).map_or(true, |m| m.notifications_muted.value)
-            || members.get_by_user_id(&sender).map_or(true, |m| m.notifications_muted.value);
 
-        if !notifications_muted {
+    if sender != user_id {
+        let notifications_muted_in_channel = chat
+            .members
+            .get(&sender)
+            .map_or(true, |m| m.notifications_muted.value || *m.suspended);
+
+        let notifications_muted_in_community = members
+            .get_by_user_id(&sender)
+            .map_or(true, |m| m.notifications_muted.value || *m.suspended);
+
+        if !(notifications_muted_in_channel || notifications_muted_in_community) {
             return Some(message);
         }
     }
+
     None
 }
 
