@@ -125,6 +125,7 @@ pub struct OpenChatBotMessage {
 pub struct ReferralCodeAdded {
     pub referral_type: ReferralType,
     pub code: String,
+    pub expiry: Option<TimestampMillis>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
