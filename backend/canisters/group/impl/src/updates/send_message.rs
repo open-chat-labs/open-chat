@@ -48,8 +48,6 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
                     &mut state.data.timer_jobs,
                 );
 
-                let users_to_notify = result.mentioned_users.union(&result.other_users_to_notify).copied().collect();
-
                 let notification = Notification::GroupMessageNotification(GroupMessageNotification {
                     chat_id: state.env.canister_id().into(),
                     thread_root_message_index: args.thread_root_message_index,
@@ -60,7 +58,7 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
                     mentioned: args.mentioned,
                 });
 
-                state.push_notification(users_to_notify, notification);
+                state.push_notification(result.users_to_notify, notification);
                 handle_activity_notification(state);
 
                 Success(SuccessResult {

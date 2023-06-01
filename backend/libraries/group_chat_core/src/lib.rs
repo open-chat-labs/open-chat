@@ -460,12 +460,20 @@ impl GroupChatCore {
                 }
             }
 
-            let mut other_users_to_notify = self.members.users_to_notify(thread_participants);
-            other_users_to_notify.remove(&sender);
+            let mut users_to_notify: HashSet<UserId> = self
+                .members
+                .users_to_notify(thread_participants)
+                .union(&mentioned_users)
+                .copied()
+                .collect();
+
+            users_to_notify.remove(&sender);
+
+            let users_to_notify: Vec<UserId> = users_to_notify.into_iter().collect();
 
             Success(SendMessageSuccess {
                 message_event,
-                other_users_to_notify,
+                users_to_notify,
                 mentioned_users,
             })
         } else {
@@ -1220,8 +1228,8 @@ pub enum SendMessageResult {
 
 pub struct SendMessageSuccess {
     pub message_event: EventWrapper<Message>,
+    pub users_to_notify: Vec<UserId>,
     pub mentioned_users: HashSet<UserId>,
-    pub other_users_to_notify: HashSet<UserId>,
 }
 
 pub enum AddRemoveReactionResult {
