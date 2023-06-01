@@ -23,14 +23,13 @@
         checked={rules.enabled} />
     <div class="instructions">{$_("group.rules.instructions")}</div>
 
-    <Legend label={"Group rules"}>
-        <TextArea
-            bind:value={rules.text}
-            minlength={0}
-            maxlength={MAX_RULES_LENGTH}
-            rows={8}
-            placeholder={$_("group.rules.placeholder")} />
-    </Legend>
+    <Legend label={"Group rules"} />
+    <TextArea
+        bind:value={rules.text}
+        minlength={0}
+        maxlength={MAX_RULES_LENGTH}
+        rows={8}
+        placeholder={$_("group.rules.placeholder")} />
 </div>
 
 <style type="text/scss">

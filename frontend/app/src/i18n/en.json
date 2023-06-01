@@ -866,7 +866,7 @@
         "details": "Details",
         "visibility": "Visibility",
         "rules": "Rules",
-        "invite": "Invite Users",
+        "invite": "Invite",
         "imageLabel": "Banner/Avatar image",
         "name": "Name",
         "namePlaceholder": "Enter community name",
@@ -875,6 +875,7 @@
         "join": "Join",
         "preview": "Preview",
         "browseChannels": "Browse channels",
-        "createChannel": "New channel"
+        "createChannel": "New channel",
+        "convert": "Convert to community"
     }
 }

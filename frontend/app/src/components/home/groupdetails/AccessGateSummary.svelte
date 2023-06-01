@@ -14,7 +14,7 @@
 {#if gate.kind !== "no_gate"}
     <div class="wrapper">
         {#if showHeader}
-            <h4>{$_("group.groupGate")}</h4>
+            <h4>{$_("access.gate")}</h4>
         {/if}
         <div class="gate" class:showDetails>
             <AccessGateIcon {gate} />

@@ -1013,11 +1013,9 @@ export type GroupChatSummary = DataContent &
         lastUpdated: bigint;
         memberCount: number;
         mentions: Mention[];
-        historyVisibleToNewJoiners: boolean;
         latestThreads: ThreadSyncDetails[];
         subtype: GroupSubtype;
         previewed: boolean;
-        frozen: boolean;
         dateLastPinned: bigint | undefined;
         dateReadPinned: bigint | undefined;
     };
@@ -1029,32 +1027,27 @@ export type GroupCanisterSummaryUpdatesResponse =
     | { kind: "success_no_updates" }
     | CallerNotInGroup;
 
-export type GroupCanisterGroupChatSummary = {
-    chatId: string;
-    lastUpdated: bigint;
-    name: string;
-    description: string;
-    subtype: GroupSubtype;
-    avatarId: bigint | undefined;
-    public: boolean;
-    historyVisibleToNewJoiners: boolean;
-    minVisibleEventIndex: number;
-    minVisibleMessageIndex: number;
-    latestMessage: EventWrapper<Message> | undefined;
-    latestEventIndex: number;
-    joined: bigint;
-    memberCount: number;
-    myRole: MemberRole;
-    mentions: Mention[];
-    permissions: GroupPermissions;
-    notificationsMuted: boolean;
-    metrics: ChatMetrics;
-    myMetrics: ChatMetrics;
-    latestThreads: GroupCanisterThreadDetails[];
-    frozen: boolean;
-    dateLastPinned: bigint | undefined;
-    gate: AccessGate;
-};
+export type GroupCanisterGroupChatSummary = AccessControlled &
+    Permissioned<GroupPermissions> & {
+        chatId: string;
+        lastUpdated: bigint;
+        name: string;
+        description: string;
+        subtype: GroupSubtype;
+        avatarId: bigint | undefined;
+        minVisibleEventIndex: number;
+        minVisibleMessageIndex: number;
+        latestMessage: EventWrapper<Message> | undefined;
+        latestEventIndex: number;
+        joined: bigint;
+        memberCount: number;
+        mentions: Mention[];
+        notificationsMuted: boolean;
+        metrics: ChatMetrics;
+        myMetrics: ChatMetrics;
+        latestThreads: GroupCanisterThreadDetails[];
+        dateLastPinned: bigint | undefined;
+    };
 
 export type UpdatedEvent = {
     eventIndex: number;
@@ -1114,14 +1107,13 @@ export type CandidateMember = {
 };
 
 export type CandidateGroupChat = HasIdentity &
-    AccessControlled & {
+    AccessControlled &
+    Permissioned<GroupPermissions> & {
         name: string;
         description: string;
         rules: GroupRules;
-        historyVisible: boolean;
         members: CandidateMember[];
         avatar?: DataContent;
-        permissions: GroupPermissions;
     };
 
 // todo - there are all sorts of error conditions here that we need to deal with but - later

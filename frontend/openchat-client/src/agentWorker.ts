@@ -92,7 +92,7 @@ import {
     SetUserUpgradeConcurrencyResponse,
     UpdateMarketMakerConfigArgs,
     UpdateMarketMakerConfigResponse,
-    GroupGate,
+    AccessGate,
     ProposalVoteDetails,
     SetMessageReminderResponse,
     ReferralLeaderboardRange,
@@ -662,7 +662,7 @@ export class OpenChatAgentWorker extends EventTarget {
         rules?: GroupRules,
         permissions?: Partial<GroupPermissions>,
         avatar?: Uint8Array,
-        gate?: GroupGate
+        gate?: AccessGate
     ): Promise<UpdateGroupResponse> {
         return this.sendRequest({
             kind: "updateGroup",

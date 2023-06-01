@@ -10,7 +10,7 @@
     import { iconSize } from "../../stores/iconSize";
     import { createEventDispatcher, getContext } from "svelte";
     import Button from "../Button.svelte";
-    import GroupGateIcon from "./AccessGateIcon.svelte";
+    import AccessGateIcon from "./AccessGateIcon.svelte";
     import { gatedGroupsEnabled } from "../../utils/features";
     import page from "page";
 
@@ -71,7 +71,7 @@
     <Footer align="end">
         {#if gatedGroupsEnabled}
             <div class="gate">
-                <GroupGateIcon on:upgrade gate={group.gate} />
+                <AccessGateIcon on:upgrade gate={group.gate} />
             </div>
         {/if}
         {#if member}

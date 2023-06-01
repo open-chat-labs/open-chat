@@ -41,7 +41,7 @@
         permissions: { ...candidateGroup.permissions },
         gate: { ...candidateGroup.gate },
     };
-    $: steps = getSteps(candidateGroup.public, editing);
+    $: steps = getSteps(editing);
     $: editing = candidateGroup.id !== "";
     $: padding = $mobileWidth ? 16 : 24; // yes this is horrible
     $: left = step * (actualWidth - padding);
@@ -71,15 +71,15 @@
     $: gateDirty = client.hasAccessGateChanged(candidateGroup.gate, originalGroup.gate);
     $: dirty = infoDirty || rulesDirty || permissionsDirty || visDirty || gateDirty;
 
-    function getSteps(isPublic: boolean, editing: boolean) {
+    function getSteps(editing: boolean) {
         let steps = [
             "group.details",
-            "group.visibility",
+            "access.visibility",
             "group.groupRules",
             "permissions.permissions",
         ];
 
-        if (!isPublic && !editing) {
+        if (!editing) {
             steps.push("group.invite.invite");
         }
         return steps;
@@ -315,7 +315,7 @@
     }
 
     function onGroupCreated(canisterId: string) {
-        const url = `/${canisterId}`;
+        const url = `/group/${canisterId}`;
         dispatch("groupCreated", {
             chatId: canisterId,
             public: candidateGroup.public,
@@ -332,6 +332,8 @@
             step = ev.detail;
         }
     }
+
+    $: console.log("Permissions: ", candidateGroup.permissions);
 </script>
 
 {#if confirming}
@@ -368,7 +370,7 @@
                             isPublic={candidateGroup.public} />
                     {/if}
                 </div>
-                {#if !candidateGroup.public && !editing}
+                {#if !editing}
                     <div class="members" class:visible={step === 4}>
                         <ChooseMembers bind:candidateGroup {busy} />
                     </div>

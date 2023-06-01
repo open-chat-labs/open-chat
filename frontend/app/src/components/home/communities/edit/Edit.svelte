@@ -27,6 +27,7 @@
         "communities.visibility",
         "communities.rules",
         "permissions.permissions",
+        "communities.invite",
     ];
 
     $: canEditPermissions = true; // TODO - this is a whole can of refactor worms which I don't want to open yet
@@ -100,6 +101,13 @@
                         <PermissionsViewer permissions={candidate.permissions} />
                     {/if}
                 </div>
+                <!--  this might mean that we need a CandidateCommunity or we might be able to refactor it 
+                    to just keep track of a flat list of users rather than have it as a property of the candidate
+                {#if !editing}
+                    <div class="members" class:visible={step === 4}>
+                        <ChooseMembers bind:candidate {busy} />
+                    </div>
+                {/if} -->
             </div>
         </div>
     </div>

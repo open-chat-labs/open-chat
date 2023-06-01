@@ -95,7 +95,7 @@
         <CollapsibleCard
             on:toggle={groupVisibilityOpen.toggle}
             open={$groupVisibilityOpen}
-            headerText={$_("group.visibility")}>
+            headerText={$_("access.visibility")}>
             {#if chat.public}
                 <h4>{$_("group.publicGroup")}</h4>
             {:else}
@@ -108,7 +108,7 @@
                     <p>{$_("group.privateGroupInfo")}</p>
                 {/if}
                 {#if !chat.public}
-                    {#if chat.historyVisibleToNewJoiners}
+                    {#if chat.historyVisible}
                         <p>{$_("historyOnInfo")}</p>
                     {:else}
                         <p>{$_("historyOffInfo")}</p>

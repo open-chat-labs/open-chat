@@ -803,6 +803,7 @@
                 enabled: false,
             },
             gate: { kind: "no_gate" },
+            myRole: "owner",
         };
     }
 
@@ -813,11 +814,12 @@
             id: chat.chatId,
             name: chat.name,
             description: chat.description,
-            historyVisible: chat.historyVisibleToNewJoiners,
+            historyVisible: chat.historyVisible,
             public: chat.public,
             frozen: chat.frozen,
             members: [],
             permissions: { ...chat.permissions },
+            myRole: chat.myRole,
             rules:
                 rules !== undefined
                     ? { ...rules }

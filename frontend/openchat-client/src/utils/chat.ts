@@ -664,7 +664,7 @@ export function groupChatFromCandidate(
         name: candidate.name,
         description: candidate.description,
         public: candidate.public,
-        historyVisibleToNewJoiners: candidate.historyVisible,
+        historyVisible: candidate.historyVisible,
         joined: BigInt(Date.now()),
         minVisibleEventIndex: 0,
         minVisibleMessageIndex: 0,

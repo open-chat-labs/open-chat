@@ -34,6 +34,8 @@ function createDummyCommunity(
         public: true,
         permissions: defaultPermissions,
         myRole: "owner",
+        historyVisible: true,
+        frozen: false,
     };
 }
 
@@ -106,5 +108,7 @@ export function createCandidateCommunity(id: string): Community {
         public: true,
         permissions: defaultPermissions,
         myRole: "owner",
+        historyVisible: true,
+        frozen: false,
     };
 }

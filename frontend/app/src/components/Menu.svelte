@@ -10,7 +10,7 @@
 
 <style type="text/scss">
     .menu {
-        width: toRem(200);
+        width: toRem(250);
         background-color: var(--menu-bg);
         box-shadow: var(--menu-sh);
         border-radius: $sp2;

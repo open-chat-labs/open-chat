@@ -139,7 +139,6 @@ import {
     SetUserUpgradeConcurrencyResponse,
     UpdateMarketMakerConfigArgs,
     UpdateMarketMakerConfigResponse,
-    GroupGate,
     ProposalVoteDetails,
     SetMessageReminderResponse,
     ReferralLeaderboardRange,
@@ -148,6 +147,7 @@ import {
     InviteUsersResponse,
     DeclineInvitationResponse,
     UpdatesSuccessResponse,
+    AccessGate,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import { applyOptionUpdate } from "../utils/mapping";
@@ -339,7 +339,7 @@ export class OpenChatAgent extends EventTarget {
         rules?: GroupRules,
         permissions?: Partial<GroupPermissions>,
         avatar?: Uint8Array,
-        gate?: GroupGate
+        gate?: AccessGate
     ): Promise<UpdateGroupResponse> {
         return this.getGroupClient(chatId).updateGroup(
             name,
@@ -619,7 +619,7 @@ export class OpenChatAgent extends EventTarget {
 
         if (contextMap.length === 0) return Promise.resolve(new MessageContextMap());
 
-        const state = chatState ?? await getCachedChats(this.db, this.principal);
+        const state = chatState ?? (await getCachedChats(this.db, this.principal));
         const chatSummaries = toRecord(
             state === undefined ? [] : [...state.directChats, ...state.groupChats],
             (c) => c.chatId
@@ -728,7 +728,7 @@ export class OpenChatAgent extends EventTarget {
             resp.events,
             threadRootMessageIndex,
             latestClientEventIndex,
-            undefined,
+            undefined
         );
 
         resp.events = resp.events.map((e) =>
@@ -774,14 +774,14 @@ export class OpenChatAgent extends EventTarget {
         message: EventWrapper<Message>,
         threadRootMessageIndex: number | undefined,
         latestClientEventIndex: number | undefined,
-        chatState: ChatStateFull | undefined,
+        chatState: ChatStateFull | undefined
     ): Promise<EventWrapper<Message>> {
         const missing = await this.resolveMissingIndexes(
             chatId,
             [message],
             threadRootMessageIndex,
             latestClientEventIndex,
-            chatState,
+            chatState
         );
         return this.rehydrateEvent(message, chatId, missing, threadRootMessageIndex);
     }
@@ -863,20 +863,21 @@ export class OpenChatAgent extends EventTarget {
 
         // Convert "success_no_updates" to a UpdatesSuccessResponse with the previous timestamp and everything else set
         // to empty. This allows us to have a single path through the rest of this function.
-        const updates: UpdatesSuccessResponse = userResponse.kind === "success_no_updates"
-            ? {
-                kind: "success",
-                timestamp: current.latestUserCanisterUpdates,
-                directChatsAdded: [],
-                directChatsUpdated: [],
-                groupChatsAdded: [],
-                groupChatsUpdated: [],
-                chatsRemoved: [],
-                avatarId: undefined,
-                blockedUsers: undefined,
-                pinnedChats: undefined,
-            }
-            : userResponse;
+        const updates: UpdatesSuccessResponse =
+            userResponse.kind === "success_no_updates"
+                ? {
+                      kind: "success",
+                      timestamp: current.latestUserCanisterUpdates,
+                      directChatsAdded: [],
+                      directChatsUpdated: [],
+                      groupChatsAdded: [],
+                      groupChatsUpdated: [],
+                      chatsRemoved: [],
+                      avatarId: undefined,
+                      blockedUsers: undefined,
+                      pinnedChats: undefined,
+                  }
+                : userResponse;
 
         const groupChatIds = current.groupChats
             .map((g) => g.chatId)
@@ -920,11 +921,7 @@ export class OpenChatAgent extends EventTarget {
 
         const groupChats = mergeGroupChats(updates.groupChatsAdded, groups)
             .concat(
-                mergeGroupChatUpdates(
-                    current.groupChats,
-                    updates.groupChatsUpdated,
-                    groupUpdates
-                )
+                mergeGroupChatUpdates(current.groupChats, updates.groupChatsUpdated, groupUpdates)
             )
             .filter((g) => !chatsRemoved.has(g.chatId));
 
@@ -1017,7 +1014,7 @@ export class OpenChatAgent extends EventTarget {
                 state: s,
                 updatedEvents: {},
                 anyUpdates: true,
-            }
+            };
         });
     }
 
@@ -1043,7 +1040,7 @@ export class OpenChatAgent extends EventTarget {
                       chat.latestMessage,
                       undefined,
                       chat.latestEventIndex,
-                      chatState,
+                      chatState
                   )
                 : undefined;
 
@@ -1526,7 +1523,7 @@ export class OpenChatAgent extends EventTarget {
             thread.latestReplies,
             thread.rootMessage.event.messageIndex,
             thread.rootMessage.event.thread?.latestEventIndex,
-            chatState,
+            chatState
         );
 
         const rootMissing = await this.resolveMissingIndexes(
@@ -1534,7 +1531,7 @@ export class OpenChatAgent extends EventTarget {
             [thread.rootMessage],
             undefined,
             latestClientMainEventIndex,
-            chatState,
+            chatState
         );
 
         const latestReplies = thread.latestReplies.map((r) =>

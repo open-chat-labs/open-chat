@@ -313,7 +313,7 @@ export function mergeGroupChatUpdates(
             public: g?.public ?? c.public,
             myRole: g?.myRole ?? c.myRole,
             permissions: g?.permissions ?? c.permissions,
-            historyVisibleToNewJoiners: c.historyVisibleToNewJoiners,
+            historyVisible: c.historyVisible,
             latestThreads: mergeThreads(
                 c.latestThreads,
                 g?.latestThreads ?? [],
@@ -363,7 +363,7 @@ export function mergeGroupChats(
             public: g.public,
             myRole: g.myRole,
             permissions: g.permissions,
-            historyVisibleToNewJoiners: g.historyVisibleToNewJoiners,
+            historyVisible: g.historyVisible,
             latestThreads: mergeThreads([], g.latestThreads, u.threadsRead),
             subtype: g.subtype,
             previewed: false,
