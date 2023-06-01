@@ -303,7 +303,7 @@
         "closed": "Due to very high demand, new user registrations are temporarily closed. We will soon be scaling across multiple subnets and will then be able to grow indefinitely!",
         "disclaimer": "By registering with OpenChat you agree to abide by community guidelines",
         "invalidCode": "Invalid Code",
-        "referralCodeInvalid": "Sorry the code you scanned has already been used",
+        "referralCodeInvalid": "Sorry the code you scanned has expired",
         "doYouWantToProceed": "If you proceed you will not receive 50,000 satoshis. Alternatively, find a member of the DFINITY team to get a new code.",
         "proceed": "Proceed"
     },

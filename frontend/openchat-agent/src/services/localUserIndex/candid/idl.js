@@ -566,6 +566,8 @@ export const idlFactory = ({ IDL }) => {
       'user_id' : UserId,
     }),
     'PublicKeyInvalid' : IDL.Text,
+    'ReferralCodeAlreadyClaimed' : IDL.Null,
+    'ReferralCodeExpired' : IDL.Null,
     'InternalError' : IDL.Text,
     'ReferralCodeInvalid' : IDL.Null,
     'CyclesBalanceTooLow' : IDL.Null,

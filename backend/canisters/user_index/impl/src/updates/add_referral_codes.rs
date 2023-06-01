@@ -22,6 +22,7 @@ fn add_referral_codes(args: Args) -> Response {
                 Event::ReferralCodeAdded(ReferralCodeAdded {
                     referral_type: args.referral_type,
                     code,
+                    expiry: args.expiry,
                 }),
             );
         }
