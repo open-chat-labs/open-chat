@@ -7,7 +7,7 @@ use canister_tracing_macros::trace;
 use chat_events::ChatEventInternal;
 use gated_groups::{check_if_passes_gate, CheckIfPassesGateResult};
 use group_canister::c2c_join_group::{Response::*, *};
-use group_members::AddResult;
+use group_chat_core::AddResult;
 use types::{AccessGate, CanisterId, EventIndex, MemberJoined, MessageIndex, UserId, UsersUnblocked};
 
 #[update_msgpack(guard = "caller_is_user_index_or_local_user_index")]

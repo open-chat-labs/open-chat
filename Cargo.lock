@@ -1285,7 +1285,6 @@ dependencies = [
  "group_chat_core",
  "group_index_canister",
  "group_index_canister_c2c_client",
- "group_members",
  "http_request",
  "ic-cdk 0.7.3",
  "ic-cdk-macros",
@@ -2429,7 +2428,6 @@ dependencies = [
  "group_chat_core",
  "group_index_canister",
  "group_index_canister_c2c_client",
- "group_members",
  "http_request",
  "ic-cdk 0.7.3",
  "ic-cdk-macros",
@@ -2468,7 +2466,6 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "chat_events",
- "group_members",
  "search",
  "serde",
  "types",
@@ -2544,16 +2541,6 @@ dependencies = [
  "user_index_canister",
  "user_index_canister_c2c_client",
  "utils",
-]
-
-[[package]]
-name = "group_members"
-version = "0.1.0"
-dependencies = [
- "candid",
- "chat_events",
- "serde",
- "types",
 ]
 
 [[package]]
