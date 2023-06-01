@@ -73,6 +73,7 @@ export const idlFactory = ({ IDL }) => {
       'canister_upgrade_status' : CanisterUpgradeStatus,
       'is_super_admin' : IDL.Bool,
       'suspension_details' : IDL.Opt(SuspensionDetails),
+      'is_platform_moderator' : IDL.Bool,
       'diamond_membership_details' : IDL.Opt(DiamondMembershipDetails),
     }),
     'UserNotFound' : IDL.Null,
