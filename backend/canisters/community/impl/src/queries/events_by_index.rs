@@ -14,7 +14,7 @@ fn events_by_index_impl(args: Args, state: &RuntimeState) -> Response {
     let user_id = state.data.members.get(caller).map(|m| m.user_id);
 
     if !state.data.is_public && user_id.is_none() {
-        return CallerNotInCommunity;
+        return UserNotInCommunity;
     }
 
     if let Some(channel) = state.data.channels.get(&args.channel_id) {

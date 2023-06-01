@@ -2,7 +2,7 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use types::{
-    ChatId, CommunityId, Cryptocurrency, DiamondMembershipPlanDuration, MessageContent, MessageIndex, PhoneNumber,
+    ChatId, CommunityId, Cryptocurrency, DiamondMembershipPlanDuration, EventIndex, MessageContent, MessageIndex, PhoneNumber,
     SuspensionDuration, TimestampMillis, UserId,
 };
 
@@ -16,6 +16,13 @@ mod _updates;
 pub use _updates::*;
 pub use lifecycle::*;
 pub use queries::*;
+
+#[derive(CandidType, Serialize, Deserialize, Debug)]
+pub enum EventsResponse {
+    Success(types::EventsResponse),
+    ChatNotFound,
+    ReplicaNotUpToDate(EventIndex),
+}
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct GroupChatSummary {

@@ -2,6 +2,7 @@ type AccessorId = principal;
 type AccountIdentifier = blob;
 type BlockIndex = nat64;
 type CanisterId = principal;
+type ChannelId = nat;
 type ChatId = CanisterId;
 type CommunityId = principal;
 type Cycles = nat;
@@ -265,7 +266,7 @@ type GroupChatSummary =
         read_by_me_up_to: opt MessageIndex;
         notifications_muted: bool;
         participant_count: nat32;
-        role: Role;
+        role: GroupRole;
         mentions: vec Mention;
         permissions: GroupPermissions;
         metrics: ChatMetrics;
@@ -279,7 +280,7 @@ type GroupChatSummary =
         events_ttl: opt Milliseconds;
         expired_messages: vec MessageIndexRange;
         next_message_expiry: opt TimestampMillis;
-        gate: opt GroupGate;
+        gate: opt AccessGate;
     };
 
 type GroupCanisterGroupChatSummary =
@@ -298,7 +299,7 @@ type GroupCanisterGroupChatSummary =
         latest_event_index: EventIndex;
         joined: TimestampMillis;
         participant_count: nat32;
-        role: Role;
+        role: GroupRole;
         mentions: vec Mention;
         permissions: GroupPermissions;
         notifications_muted: bool;
@@ -311,7 +312,7 @@ type GroupCanisterGroupChatSummary =
         events_ttl: opt Milliseconds;
         expired_messages: vec MessageIndexRange;
         next_message_expiry: opt TimestampMillis;
-        gate: opt GroupGate;
+        gate: opt AccessGate;
     };
 
 type GroupCanisterGroupChatSummaryUpdates =
@@ -325,7 +326,7 @@ type GroupCanisterGroupChatSummaryUpdates =
         latest_message: opt MessageEventWrapper;
         latest_event_index: opt EventIndex;
         participant_count: opt nat32;
-        role: opt Role;
+        role: opt GroupRole;
         mentions: vec Mention;
         permissions: opt GroupPermissions;
         updated_events: vec record { opt nat32; nat32; nat64 };
@@ -340,7 +341,7 @@ type GroupCanisterGroupChatSummaryUpdates =
         events_ttl: EventsTimeToLiveUpdate;
         newly_expired_messages: vec MessageIndexRange;
         next_message_expiry: TimestampUpdate;
-        gate: GroupGateUpdate;
+        gate: AccessGateUpdate;
     };
 
 type CommunityCanisterCommunitySummary =
@@ -355,7 +356,23 @@ type CommunityCanisterCommunitySummary =
         role: CommunityRole;
         permissions: CommunityPermissions;
         frozen: opt FrozenGroupInfo;
-        gate: opt GroupGate;
+        gate: opt AccessGate;
+        last_updated: TimestampMillis;
+        latest_event_index: EventIndex;
+    };
+
+type ChannelSummary =
+    record {
+        channel_id: ChannelId;
+        name: text;
+        description: text;
+        avatar_id: opt nat;
+        is_public: bool;
+        joined: TimestampMillis;
+        member_count: nat32;
+        role: GroupRole;
+        permissions: GroupPermissions;
+        gate: opt AccessGate;
         last_updated: TimestampMillis;
         latest_event_index: EventIndex;
     };
@@ -536,7 +553,7 @@ type PublicGroupSummary =
         participant_count: nat32;
         is_public: bool;
         frozen: opt FrozenGroupInfo;
-        gate: opt GroupGate;
+        gate: opt AccessGate;
         wasm_version: Version;
     };
 
@@ -671,7 +688,7 @@ type Participant =
     record {
         user_id: UserId;
         date_added: TimestampMillis;
-        role: Role;
+        role: GroupRole;
     };
 
 type ParticipantJoined =
@@ -766,8 +783,8 @@ type RoleChanged =
     record {
         user_ids: vec UserId;
         changed_by: UserId;
-        old_role: Role;
-        new_role: Role;
+        old_role: GroupRole;
+        new_role: GroupRole;
     };
 
 type OwnershipTransferred =
@@ -899,7 +916,7 @@ type CyclesRegistrationFee =
         valid_until: TimestampMillis;
     };
 
-type Role =
+type GroupRole =
     variant {
         Owner;
         Admin;
@@ -1111,6 +1128,23 @@ type GroupPermissions =
         reply_in_thread: PermissionRole;
     };
 
+
+type OptionalGroupPermissions =
+    record {
+        change_permissions: opt PermissionRole;
+        change_roles: opt PermissionRole;
+        remove_members: opt PermissionRole;
+        block_users: opt PermissionRole;
+        delete_messages: opt PermissionRole;
+        update_group: opt PermissionRole;
+        pin_messages: opt PermissionRole;
+        invite_users: opt PermissionRole;
+        create_polls: opt PermissionRole;
+        send_messages: opt PermissionRole;
+        react_to_messages: opt PermissionRole;
+        reply_in_thread: opt PermissionRole;
+    };
+
 type PermissionRole =
     variant {
         Owner;
@@ -1129,6 +1163,18 @@ type CommunityPermissions =
         update_details: CommunityPermissionRole;
         create_public_channel: CommunityPermissionRole;
         create_private_channel: CommunityPermissionRole;
+    };
+
+type OptionalCommunityPermissions =
+    record {
+        change_permissions: opt CommunityPermissionRole;
+        change_roles: opt CommunityPermissionRole;
+        invite_users: opt CommunityPermissionRole;
+        remove_members: opt CommunityPermissionRole;
+        block_users: opt CommunityPermissionRole;
+        update_details: opt CommunityPermissionRole;
+        create_public_channel: opt CommunityPermissionRole;
+        create_private_channel: opt CommunityPermissionRole;
     };
 
 type CommunityPermissionRole =
@@ -1188,7 +1234,7 @@ type ProposalUpdated =
         message_index: MessageIndex;
     };
 
-type GroupRules =
+type AccessRules =
     record {
         text: text;
         enabled: bool;
@@ -1230,6 +1276,20 @@ type PushEventResult =
         index: EventIndex;
         timestamp: TimestampMillis;
         expires_at: opt TimestampMillis;
+    };
+
+type EventsSuccessResult =
+    record {
+        events: vec ChatEventWrapper;
+        latest_event_index: nat32;
+        timestamp: TimestampMillis;
+    };
+
+type MessagesSuccessResult =
+    record {
+        messages: vec MessageEventWrapper;
+        latest_event_index: EventIndex;
+        timestamp: TimestampMillis;
     };
 
 type MessageIndexRange =
@@ -1276,23 +1336,23 @@ type DiamondMembershipPlanDuration =
         OneYear;
     };
 
-type GroupGate =
+type AccessGate =
     variant {
         DiamondMember;
         SnsNeuron: SnsNeuronGate;
     };
 
-type GroupGateUpdate =
+type AccessGateUpdate =
     variant {
         NoChange;
         SetToNone;
-        SetToSome: GroupGate;
+        SetToSome: AccessGate;
     };
 
 type GroupGateUpdated =
     record {
         updated_by: UserId;
-        new_gate: opt GroupGate;
+        new_gate: opt AccessGate;
     };
 
 type SnsNeuronGate =

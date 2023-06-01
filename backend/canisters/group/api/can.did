@@ -204,7 +204,7 @@ type RemoveParticipantResponse =
 type ChangeRoleArgs =
     record {
         user_id: UserId;
-        new_role: Role;
+        new_role: GroupRole;
         correlation_id: nat64;
     };
 
@@ -224,11 +224,11 @@ type UpdateGroupV2Args =
     record {
         name: opt text;
         description: opt text;
-        rules: opt GroupRules;
+        rules: opt AccessRules;
         avatar: AvatarUpdate;
         permissions: opt OptionalGroupPermissions;
         events_ttl: EventsTimeToLiveUpdate;
-        gate: GroupGateUpdate;
+        gate: AccessGateUpdate;
         correlation_id: nat64;
     };
 
@@ -248,22 +248,6 @@ type UpdateGroupV2Response =
         RulesTooShort: FieldTooShortResult;
         UserSuspended;
         ChatFrozen;
-    };
-
-type OptionalGroupPermissions =
-    record {
-        change_permissions: opt PermissionRole;
-        change_roles: opt PermissionRole;
-        remove_members: opt PermissionRole;
-        block_users: opt PermissionRole;
-        delete_messages: opt PermissionRole;
-        update_group: opt PermissionRole;
-        pin_messages: opt PermissionRole;
-        invite_users: opt PermissionRole;
-        create_polls: opt PermissionRole;
-        send_messages: opt PermissionRole;
-        react_to_messages: opt PermissionRole;
-        reply_in_thread: opt PermissionRole;
     };
 
 type PinMessageArgs =
@@ -403,7 +387,7 @@ type SelectedInitialSuccess =
         blocked_users: vec UserId;
         invited_users: vec UserId;
         pinned_messages: vec MessageIndex;
-        rules: GroupRules;
+        rules: AccessRules;
     };
 
 type SelectedInitialResponse =
@@ -428,7 +412,7 @@ type SelectedUpdatesSuccess =
         invited_users: opt vec UserId;
         pinned_messages_added: vec MessageIndex;
         pinned_messages_removed: vec MessageIndex;
-        rules: opt GroupRules;
+        rules: opt AccessRules;
     };
 
 type SelectedUpdatesResponse =
@@ -462,13 +446,6 @@ type EventsWindowArgs =
         max_messages: nat32;
         max_events: nat32;
         latest_client_event_index: opt EventIndex;
-    };
-
-type EventsSuccessResult =
-    record {
-        events: vec ChatEventWrapper;
-        latest_event_index: nat32;
-        timestamp: TimestampMillis;
     };
 
 type EventsResponse =
