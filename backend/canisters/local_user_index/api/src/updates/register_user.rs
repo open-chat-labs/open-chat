@@ -22,6 +22,8 @@ pub enum Response {
     InternalError(String),
     PublicKeyInvalid(String),
     ReferralCodeInvalid,
+    ReferralCodeAlreadyClaimed,
+    ReferralCodeExpired,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
