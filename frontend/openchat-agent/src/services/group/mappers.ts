@@ -303,7 +303,6 @@ export function apiOptionalGroupPermissions(
         update_group: apiOptional(apiPermissionRole, permissions.updateGroup),
         invite_users: apiOptional(apiPermissionRole, permissions.inviteUsers),
         change_roles: apiOptional(apiPermissionRole, permissions.changeRoles),
-        add_members: [],
         create_polls: apiOptional(apiPermissionRole, permissions.createPolls),
         pin_messages: apiOptional(apiPermissionRole, permissions.pinMessages),
         reply_in_thread: apiOptional(apiPermissionRole, permissions.replyInThread),

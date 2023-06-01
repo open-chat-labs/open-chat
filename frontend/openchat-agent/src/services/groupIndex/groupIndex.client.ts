@@ -23,7 +23,7 @@ import {
     groupSearchResponse,
     recommendedGroupsResponse,
     removeHotGroupExclusionResponse,
-    setGroupUpgradeConcurrencyResponse,
+    setUpgradeConcurrencyResponse,
     unfreezeGroupResponse
 } from "./mappers";
 import { apiOptional } from "../common/chatMappers";
@@ -115,6 +115,6 @@ export class GroupIndexClient extends CandidService implements IGroupIndexClient
     setGroupUpgradeConcurrency(value: number): Promise<SetGroupUpgradeConcurrencyResponse> {
         return this.handleResponse(
             this.groupIndexService.set_group_upgrade_concurrency({ value }),
-            setGroupUpgradeConcurrencyResponse)        
+            setUpgradeConcurrencyResponse)
     }
 }

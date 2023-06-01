@@ -461,8 +461,8 @@ export const idlFactory = ({ IDL }) => {
     'TermTooLong' : IDL.Nat8,
     'InvalidTerm' : IDL.Null,
   });
-  const SetGroupUpgradeConcurrencyArgs = IDL.Record({ 'value' : IDL.Nat32 });
-  const SetGroupUpgradeConcurrencyResponse = IDL.Variant({
+  const SetUpgradeConcurrencyArgs = IDL.Record({ 'value' : IDL.Nat32 });
+  const SetUpgradeConcurrencyResponse = IDL.Variant({
     'NotAuthorized' : IDL.Null,
     'Success' : IDL.Null,
     'InternalError' : IDL.Text,
@@ -509,9 +509,14 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'search' : IDL.Func([SearchArgs], [SearchResponse], ['query']),
+    'set_community_upgrade_concurrency' : IDL.Func(
+        [SetUpgradeConcurrencyArgs],
+        [SetUpgradeConcurrencyResponse],
+        [],
+      ),
     'set_group_upgrade_concurrency' : IDL.Func(
-        [SetGroupUpgradeConcurrencyArgs],
-        [SetGroupUpgradeConcurrencyResponse],
+        [SetUpgradeConcurrencyArgs],
+        [SetUpgradeConcurrencyResponse],
         [],
       ),
     'unfreeze_group' : IDL.Func(
