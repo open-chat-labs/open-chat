@@ -12,6 +12,11 @@
 
     export let busy: boolean;
     export let candidate: Community;
+    export let valid: boolean;
+
+    $: {
+        valid = candidate.name !== "" && candidate.description !== "";
+    }
 
     function communityAvatarSelected(ev: CustomEvent<{ url: string; data: Uint8Array }>) {
         candidate.avatar = {

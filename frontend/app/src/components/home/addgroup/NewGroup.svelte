@@ -8,7 +8,7 @@
     import GroupPermissionsViewer from "../GroupPermissionsViewer.svelte";
     import { toastStore } from "../../../stores/toast";
     import { mobileWidth } from "../../../stores/screenDimensions";
-    import ChooseMembers from "./ChooseMembers.svelte";
+    import ChooseMembers from "../ChooseMembers.svelte";
     import {
         CandidateGroupChat,
         CreateGroupResponse,
@@ -73,14 +73,14 @@
 
     function getSteps(editing: boolean) {
         let steps = [
-            "group.details",
-            "access.visibility",
-            "group.groupRules",
-            "permissions.permissions",
+            { labelKey: "group.details", valid: true },
+            { labelKey: "access.visibility", valid: true },
+            { labelKey: "group.groupRules", valid: true },
+            { labelKey: "permissions.permissions", valid: true },
         ];
 
         if (!editing) {
-            steps.push("group.invite.invite");
+            steps.push({ labelKey: "group.invite.invite", valid: true });
         }
         return steps;
     }
@@ -372,7 +372,7 @@
                 </div>
                 {#if !editing}
                     <div class="members" class:visible={step === 4}>
-                        <ChooseMembers bind:candidateGroup {busy} />
+                        <ChooseMembers bind:members={candidateGroup.members} {busy} />
                     </div>
                 {/if}
             </div>

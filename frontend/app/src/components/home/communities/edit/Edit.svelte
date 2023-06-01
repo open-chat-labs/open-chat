@@ -3,9 +3,16 @@
     import ModalContent from "../../../ModalContent.svelte";
     import Button from "../../../Button.svelte";
     import ButtonGroup from "../../../ButtonGroup.svelte";
+    import ChooseMembers from "../../ChooseMembers.svelte";
     import { mobileWidth } from "../../../../stores/screenDimensions";
     import { createEventDispatcher, getContext, onMount } from "svelte";
-    import type { AccessRules, Community, OpenChat } from "openchat-client";
+    import type {
+        AccessRules,
+        CandidateMember,
+        Community,
+        DefaultChannel,
+        OpenChat,
+    } from "openchat-client";
     import StageHeader from "../../StageHeader.svelte";
     import PermissionsEditor from "./PermissionsEditor.svelte";
     import PermissionsViewer from "./PermissionsViewer.svelte";
@@ -13,6 +20,7 @@
     import Details from "./Details.svelte";
     import { dummyCommunities, createCandidateCommunity } from "stores/community";
     import VisibilityControl from "../../VisibilityControl.svelte";
+    import ChooseChannels from "./ChooseChannels.svelte";
 
     export let original: Community = createCandidateCommunity("");
 
@@ -27,13 +35,11 @@
     let busy = false;
     let candidate = original;
     let candidateRules = originalRules;
-    const steps = [
-        "communities.details",
-        "communities.visibility",
-        "communities.rules",
-        "permissions.permissions",
-        "communities.invite",
-    ];
+    let members: CandidateMember[] = [];
+    let channels: DefaultChannel[] = [{ name: $_("communities.general"), createdAt: Date.now() }];
+    let channelsValid = true;
+    let detailsValid = true;
+    $: steps = getSteps(editing, detailsValid, channelsValid);
     $: canEditPermissions = true; // TODO - this is a whole can of refactor worms which I don't want to open yet
     $: permissionsDirty = client.havePermissionsChanged(
         original.permissions,
@@ -55,7 +61,20 @@
     $: padding = $mobileWidth ? 16 : 24; // yes this is horrible
     $: left = step * (actualWidth - padding);
 
-    $: console.log("Rules: ", candidateRules, originalRules);
+    function getSteps(editing: boolean, detailsValid: boolean, channelsValid: boolean) {
+        let steps = [
+            { labelKey: "communities.details", valid: detailsValid },
+            { labelKey: "communities.visibility", valid: true },
+            { labelKey: "communities.rules", valid: true },
+            { labelKey: "permissions.permissions", valid: true },
+        ];
+
+        if (!editing) {
+            steps.push({ labelKey: "communities.channels", valid: channelsValid });
+            steps.push({ labelKey: "communities.invite", valid: true });
+        }
+        return steps;
+    }
 
     onMount(() => {
         console.log("Cloning input community");
@@ -95,7 +114,7 @@
         <div class="wrapper">
             <div class="sections" style={`left: -${left}px`}>
                 <div class="details" class:visible={step === 0}>
-                    <Details bind:busy {candidate} />
+                    <Details bind:valid={detailsValid} bind:busy {candidate} />
                 </div>
                 <div class="visibility" class:visible={step === 1}>
                     <VisibilityControl {candidate} {original} {editing} />
@@ -110,13 +129,14 @@
                         <PermissionsViewer permissions={candidate.permissions} />
                     {/if}
                 </div>
-                <!--  this might mean that we need a CandidateCommunity or we might be able to refactor it 
-                    to just keep track of a flat list of users rather than have it as a property of the candidate
                 {#if !editing}
-                    <div class="members" class:visible={step === 4}>
-                        <ChooseMembers bind:candidate {busy} />
+                    <div class="channels" class:visible={step === 4}>
+                        <ChooseChannels bind:valid={channelsValid} bind:channels />
                     </div>
-                {/if} -->
+                    <div class="members" class:visible={step === 5}>
+                        <ChooseMembers bind:members {busy} />
+                    </div>
+                {/if}
             </div>
         </div>
     </div>
@@ -205,6 +225,7 @@
     .visibility,
     .rules,
     .members,
+    .channels,
     .permissions {
         flex: 0 0 100%;
         visibility: hidden;

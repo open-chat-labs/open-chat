@@ -876,6 +876,14 @@
         "preview": "Preview",
         "browseChannels": "Browse channels",
         "createChannel": "New channel",
-        "convert": "Convert to community"
+        "convert": "Convert to community",
+        "channels": "Channels",
+        "channelPlaceholder": "Enter a default channel",
+        "channelsInfo": "You must create one or more public default channels. Any user who joins your community will be automatically enrolled in these default channels. You can always change this later.",
+        "updateChannelPlaceholder": "Update channel name",
+        "general": "General",
+        "mustHaveOneChannel": "You must create at least one default channel",
+        "mustHaveUniqueChannels": "You cannot have duplicate default channel names",
+        "noBlankChannels": "All default channels must have a name"
     }
 }

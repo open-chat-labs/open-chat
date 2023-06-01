@@ -24,3 +24,9 @@ export type CommunityPermissions = {
     createPublicChannel: CommunityPermissionRole;
     createPrivateChannel: CommunityPermissionRole;
 };
+
+// TODO - not sure if this really needs to be a thing yet
+export type DefaultChannel = {
+    name: string;
+    createdAt: number;
+};

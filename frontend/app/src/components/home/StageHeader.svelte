@@ -3,9 +3,14 @@
     import { createEventDispatcher } from "svelte";
     const dispatch = createEventDispatcher();
 
+    type Step = {
+        labelKey: string;
+        valid: boolean;
+    };
+
     export let step: number;
     export let enabled: boolean;
-    export let steps: string[];
+    export let steps: Step[];
 
     function selectStep(n: number) {
         if (enabled) {
@@ -17,8 +22,13 @@
 <div class="steps" class:enabled>
     {#each steps as s, i}
         <!-- svelte-ignore a11y-click-events-have-key-events -->
-        <div on:click={() => selectStep(i)} class:selected={step === i} class="step">
-            {$_(s)}
+        <div
+            role="button"
+            class:invalid={!s.valid}
+            on:click={() => selectStep(i)}
+            class:selected={step === i}
+            class="step">
+            {$_(s.labelKey)}
         </div>
     {/each}
 </div>
@@ -47,6 +57,10 @@
             &.selected {
                 color: var(--txt);
                 border-bottom: 4px solid var(--primary);
+            }
+            &.invalid::after {
+                content: "!";
+                color: var(--error);
             }
         }
 

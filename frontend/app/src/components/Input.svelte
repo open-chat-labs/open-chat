@@ -33,6 +33,10 @@
         dispatch("change", value);
     };
 
+    export function focus() {
+        inp.focus();
+    }
+
     export function setValue(text: string) {
         value = text;
     }
@@ -58,6 +62,7 @@
         {placeholder}
         on:input={handleInput}
         on:keydown={keyDown}
+        on:blur
         bind:this={inp}
         {value}
         class={`textbox ${fontSize} ${align}`} />
@@ -95,6 +100,11 @@
         width: 100%;
 
         @include input();
+
+        &:disabled {
+            box-shadow: none;
+            border: 1px solid var(--bd);
+        }
 
         &.small {
             @include font(book, normal, fs-80);
