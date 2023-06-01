@@ -16,6 +16,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Simplify `remove_participant` ([#3641](https://github.com/open-ic/open-chat/pull/3641))
 - Avoid multi subnet calls when (un)muting group notifications ([#3685](https://github.com/open-ic/open-chat/pull/3685))
 - Refactor search ([#3689](https://github.com/open-ic/open-chat/pull/3689))
+- Don't send notifications to suspended users ([#3704](https://github.com/open-ic/open-chat/pull/3704))
 
 ### Removed
 
