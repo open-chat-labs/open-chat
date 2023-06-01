@@ -81,22 +81,6 @@ impl ReferralCodes {
         }
     }
 
-    // pub fn claim(&mut self, code: String, user_id: UserId, now: TimestampMillis) -> bool {
-    //     match self.codes.entry(code) {
-    //         Entry::Occupied(mut e) => {
-    //             let details = e.get_mut();
-    //             match details.claimed {
-    //                 Some(_) => false,
-    //                 None => {
-    //                     details.claimed = Some(ReferralCodeClaim { when: now, who: user_id });
-    //                     true
-    //                 }
-    //             }
-    //         }
-    //         Entry::Vacant(_) => false,
-    //     }
-    // }
-
     pub fn check(&self, code: &String, now: TimestampMillis) -> Result<ReferralCode, ReferralCodeError> {
         if code.len() > 100 {
             return Err(ReferralCodeError::NotFound);
