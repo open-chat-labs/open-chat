@@ -22,7 +22,7 @@ fn c2c_invite_users_impl(args: Args, state: &mut RuntimeState) -> Response {
 
     let now = state.env.now();
 
-    if let Some(member) = state.data.members.get(args.caller.into()) {
+    if let Some(member) = state.data.members.get_by_user_id(&args.caller) {
         if member.suspended.value {
             return UserSuspended;
         }

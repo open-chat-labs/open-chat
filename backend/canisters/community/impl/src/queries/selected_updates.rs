@@ -98,7 +98,7 @@ impl<'a> UserUpdatesHandler<'a> {
         if self.users_updated.insert(user_id) {
             if removed {
                 result.members_removed.push(user_id);
-            } else if let Some(member) = self.data.members.get(user_id.into()) {
+            } else if let Some(member) = self.data.members.get_by_user_id(&user_id) {
                 result.members_added_or_updated.push(member.into());
             }
         }
