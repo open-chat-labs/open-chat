@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Switch over to using `send_message_v2` ([#3603](https://github.com/open-ic/open-chat/pull/3603))
+
 ## [[2.0.658](https://github.com/open-ic/open-chat/releases/tag/v2.0.658-proposals_bot)] - 2023-04-14
 
 ### Changed
