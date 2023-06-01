@@ -20,7 +20,7 @@ fn toggle_mute_channel_notifications_impl(args: Args, state: &mut RuntimeState) 
     let now = state.env.now();
     match state.data.members.get_mut(caller) {
         Some(member) => {
-            if *member.suspended {
+            if member.suspended.value {
                 return UserSuspended;
             }
 

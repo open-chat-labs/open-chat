@@ -66,7 +66,7 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
                                 .data
                                 .members
                                 .get_by_user_id(u)
-                                .map_or(false, |m| !m.notifications_muted.value && !*m.suspended)
+                                .map_or(false, |m| !m.notifications_muted.value && !m.suspended.value)
                         })
                         .chain(result.mentions)
                         .unique()

@@ -76,11 +76,11 @@ fn should_push_notification(
         let notifications_muted_in_channel = chat
             .members
             .get(&sender)
-            .map_or(true, |m| m.notifications_muted.value || *m.suspended);
+            .map_or(true, |m| m.notifications_muted.value || m.suspended.value);
 
         let notifications_muted_in_community = members
             .get_by_user_id(&sender)
-            .map_or(true, |m| m.notifications_muted.value || *m.suspended);
+            .map_or(true, |m| m.notifications_muted.value || m.suspended.value);
 
         if !(notifications_muted_in_channel || notifications_muted_in_community) {
             return Some(message);

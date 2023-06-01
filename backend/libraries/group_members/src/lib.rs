@@ -148,7 +148,7 @@ impl GroupMembers {
                 .iter()
                 .filter(|user_id| {
                     self.get(user_id)
-                        .map_or(false, |p| !p.notifications_muted.value && !*p.suspended)
+                        .map_or(false, |p| !p.notifications_muted.value && !p.suspended.value)
                 })
                 .copied()
                 .collect()
