@@ -1,5 +1,4 @@
 use std::collections::HashSet;
-
 use crate::timer_job_types::{DeleteFileReferencesJob, EndPollJob, TimerJob};
 use crate::{mutate_state, RuntimeState};
 use canister_api_macros::update_candid_and_msgpack;
