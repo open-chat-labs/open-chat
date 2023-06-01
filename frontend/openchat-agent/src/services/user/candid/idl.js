@@ -56,25 +56,20 @@ export const idlFactory = ({ IDL }) => {
   const ContactsResponse = IDL.Variant({
     'Success' : IDL.Record({ 'contacts' : IDL.Vec(Contact) }),
   });
-  const PermissionRole = IDL.Variant({
-    'Moderators' : IDL.Null,
-    'Owner' : IDL.Null,
+  const CommunityPermissionRole = IDL.Variant({
+    'Owners' : IDL.Null,
     'Admins' : IDL.Null,
     'Members' : IDL.Null,
   });
-  const GroupPermissions = IDL.Record({
-    'block_users' : PermissionRole,
-    'change_permissions' : PermissionRole,
-    'delete_messages' : PermissionRole,
-    'send_messages' : PermissionRole,
-    'remove_members' : PermissionRole,
-    'update_group' : PermissionRole,
-    'invite_users' : PermissionRole,
-    'change_roles' : PermissionRole,
-    'create_polls' : PermissionRole,
-    'pin_messages' : PermissionRole,
-    'reply_in_thread' : PermissionRole,
-    'react_to_messages' : PermissionRole,
+  const CommunityPermissions = IDL.Record({
+    'create_public_channel' : CommunityPermissionRole,
+    'block_users' : CommunityPermissionRole,
+    'change_permissions' : CommunityPermissionRole,
+    'update_details' : CommunityPermissionRole,
+    'remove_members' : CommunityPermissionRole,
+    'invite_users' : CommunityPermissionRole,
+    'change_roles' : CommunityPermissionRole,
+    'create_private_channel' : CommunityPermissionRole,
   });
   const SnsNeuronGate = IDL.Record({
     'min_stake_e8s' : IDL.Opt(IDL.Nat64),
@@ -91,9 +86,9 @@ export const idlFactory = ({ IDL }) => {
     'data' : IDL.Vec(IDL.Nat8),
     'mime_type' : IDL.Text,
   });
-  const CreateGroupArgs = IDL.Record({
+  const CreateCommunityArgs = IDL.Record({
     'is_public' : IDL.Bool,
-    'permissions' : IDL.Opt(GroupPermissions),
+    'permissions' : IDL.Opt(CommunityPermissions),
     'gate' : IDL.Opt(GroupGate),
     'name' : IDL.Text,
     'description' : IDL.Text,
@@ -108,6 +103,57 @@ export const idlFactory = ({ IDL }) => {
   const FieldTooShortResult = IDL.Record({
     'length_provided' : IDL.Nat32,
     'min_length' : IDL.Nat32,
+  });
+  const CommunityId = IDL.Principal;
+  const CreateCommunitySuccessResult = IDL.Record({
+    'community_id' : CommunityId,
+  });
+  const CreateCommunityResponse = IDL.Variant({
+    'NameReserved' : IDL.Null,
+    'RulesTooLong' : FieldTooLongResult,
+    'DescriptionTooLong' : FieldTooLongResult,
+    'NameTooShort' : FieldTooShortResult,
+    'Throttled' : IDL.Null,
+    'AvatarTooBig' : FieldTooLongResult,
+    'Success' : CreateCommunitySuccessResult,
+    'Unauthorized' : IDL.Null,
+    'UserSuspended' : IDL.Null,
+    'RulesTooShort' : FieldTooShortResult,
+    'NameTooLong' : FieldTooLongResult,
+    'NameTaken' : IDL.Null,
+    'InternalError' : IDL.Null,
+    'MaxCommunitiesCreated' : IDL.Nat32,
+  });
+  const PermissionRole = IDL.Variant({
+    'Moderators' : IDL.Null,
+    'Owner' : IDL.Null,
+    'Admins' : IDL.Null,
+    'Members' : IDL.Null,
+  });
+  const GroupPermissions = IDL.Record({
+    'block_users' : PermissionRole,
+    'change_permissions' : PermissionRole,
+    'delete_messages' : PermissionRole,
+    'send_messages' : PermissionRole,
+    'remove_members' : PermissionRole,
+    'update_group' : PermissionRole,
+    'invite_users' : PermissionRole,
+    'change_roles' : PermissionRole,
+    'add_members' : PermissionRole,
+    'create_polls' : PermissionRole,
+    'pin_messages' : PermissionRole,
+    'reply_in_thread' : PermissionRole,
+    'react_to_messages' : PermissionRole,
+  });
+  const CreateGroupArgs = IDL.Record({
+    'is_public' : IDL.Bool,
+    'permissions' : IDL.Opt(GroupPermissions),
+    'gate' : IDL.Opt(GroupGate),
+    'name' : IDL.Text,
+    'description' : IDL.Text,
+    'history_visible_to_new_joiners' : IDL.Bool,
+    'rules' : GroupRules,
+    'avatar' : IDL.Opt(Avatar),
   });
   const CreateGroupSuccessResult = IDL.Record({ 'chat_id' : ChatId });
   const CreateGroupResponse = IDL.Variant({
@@ -125,6 +171,14 @@ export const idlFactory = ({ IDL }) => {
     'MaxGroupsCreated' : IDL.Nat32,
     'InternalError' : IDL.Null,
     'UnauthorizedToCreatePublicGroup' : IDL.Null,
+  });
+  const DeleteCommunityArgs = IDL.Record({ 'community_id' : CommunityId });
+  const DeleteCommunityResponse = IDL.Variant({
+    'NotAuthorized' : IDL.Null,
+    'Success' : IDL.Null,
+    'UserSuspended' : IDL.Null,
+    'CommunityFrozen' : IDL.Null,
+    'InternalError' : IDL.Text,
   });
   const DeleteGroupArgs = IDL.Record({ 'chat_id' : ChatId });
   const DeleteGroupResponse = IDL.Variant({
@@ -881,6 +935,17 @@ export const idlFactory = ({ IDL }) => {
       'pinned_chats' : IDL.Vec(ChatId),
     }),
   });
+  const LeaveCommunityArgs = IDL.Record({ 'community_id' : CommunityId });
+  const LeaveCommunityResponse = IDL.Variant({
+    'CommunityNotFound' : IDL.Null,
+    'LastOwnerCannotLeave' : IDL.Null,
+    'Success' : IDL.Null,
+    'UserNotInCommunity' : IDL.Null,
+    'CommunityNotPublic' : IDL.Null,
+    'UserSuspended' : IDL.Null,
+    'CommunityFrozen' : IDL.Null,
+    'InternalError' : IDL.Text,
+  });
   const LeaveGroupArgs = IDL.Record({
     'correlation_id' : IDL.Nat64,
     'chat_id' : ChatId,
@@ -1206,7 +1271,17 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'contacts' : IDL.Func([ContactsArgs], [ContactsResponse], ['query']),
+    'create_community' : IDL.Func(
+        [CreateCommunityArgs],
+        [CreateCommunityResponse],
+        [],
+      ),
     'create_group' : IDL.Func([CreateGroupArgs], [CreateGroupResponse], []),
+    'delete_community' : IDL.Func(
+        [DeleteCommunityArgs],
+        [DeleteCommunityResponse],
+        [],
+      ),
     'delete_group' : IDL.Func([DeleteGroupArgs], [DeleteGroupResponse], []),
     'delete_messages' : IDL.Func(
         [DeleteMessagesArgs],
@@ -1244,6 +1319,11 @@ export const idlFactory = ({ IDL }) => {
         [InitialStateV2Args],
         [InitialStateV2Response],
         ['query'],
+      ),
+    'leave_community' : IDL.Func(
+        [LeaveCommunityArgs],
+        [LeaveCommunityResponse],
+        [],
       ),
     'leave_group' : IDL.Func([LeaveGroupArgs], [LeaveGroupResponse], []),
     'mark_read_v2' : IDL.Func([MarkReadArgs], [MarkReadResponse], []),

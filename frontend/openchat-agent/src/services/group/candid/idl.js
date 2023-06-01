@@ -8,13 +8,6 @@ export const idlFactory = ({ IDL }) => {
     'thread_root_message_index' : IDL.Opt(MessageIndex),
     'reaction' : IDL.Text,
   });
-  const TimestampMillis = IDL.Nat64;
-  const EventIndex = IDL.Nat32;
-  const PushEventResult = IDL.Record({
-    'timestamp' : TimestampMillis,
-    'index' : EventIndex,
-    'expires_at' : IDL.Opt(TimestampMillis),
-  });
   const AddReactionResponse = IDL.Variant({
     'MessageNotFound' : IDL.Null,
     'NoChange' : IDL.Null,
@@ -24,7 +17,6 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Null,
     'UserSuspended' : IDL.Null,
     'InvalidReaction' : IDL.Null,
-    'SuccessV2' : PushEventResult,
   });
   const CanisterId = IDL.Principal;
   const UserId = CanisterId;
@@ -181,6 +173,7 @@ export const idlFactory = ({ IDL }) => {
     'message_id' : MessageId,
     'thread_root_message_index' : IDL.Opt(MessageIndex),
   });
+  const TimestampMillis = IDL.Nat64;
   const MessageReport = IDL.Record({
     'notes' : IDL.Opt(IDL.Text),
     'timestamp' : TimestampMillis,
@@ -457,6 +450,7 @@ export const idlFactory = ({ IDL }) => {
     'Success' : IDL.Record({ 'code' : IDL.Nat64 }),
     'UserSuspended' : IDL.Null,
   });
+  const EventIndex = IDL.Nat32;
   const EventsArgs = IDL.Record({
     'latest_client_event_index' : IDL.Opt(EventIndex),
     'max_messages' : IDL.Nat32,
@@ -550,6 +544,7 @@ export const idlFactory = ({ IDL }) => {
     'update_group' : PermissionRole,
     'invite_users' : PermissionRole,
     'change_roles' : PermissionRole,
+    'add_members' : PermissionRole,
     'create_polls' : PermissionRole,
     'pin_messages' : PermissionRole,
     'reply_in_thread' : PermissionRole,
@@ -757,6 +752,11 @@ export const idlFactory = ({ IDL }) => {
     'correlation_id' : IDL.Nat64,
     'message_index' : MessageIndex,
   });
+  const PushEventResult = IDL.Record({
+    'timestamp' : TimestampMillis,
+    'index' : EventIndex,
+    'expires_at' : IDL.Opt(TimestampMillis),
+  });
   const PinMessageV2Response = IDL.Variant({
     'MessageIndexOutOfRange' : IDL.Null,
     'MessageNotFound' : IDL.Null,
@@ -878,7 +878,6 @@ export const idlFactory = ({ IDL }) => {
     'NotAuthorized' : IDL.Null,
     'Success' : IDL.Null,
     'UserSuspended' : IDL.Null,
-    'SuccessV2' : PushEventResult,
   });
   const ResetInviteCodeArgs = IDL.Record({ 'correlation_id' : IDL.Nat64 });
   const ResetInviteCodeResponse = IDL.Variant({
@@ -1192,7 +1191,6 @@ export const idlFactory = ({ IDL }) => {
     'CallerNotInGroup' : IDL.Null,
     'ChatFrozen' : IDL.Null,
     'NotAuthorized' : IDL.Null,
-    'Success' : EventIndex,
     'UserSuspended' : IDL.Null,
     'SuccessV2' : PushEventResult,
   });
@@ -1205,7 +1203,6 @@ export const idlFactory = ({ IDL }) => {
     'update_group' : IDL.Opt(PermissionRole),
     'invite_users' : IDL.Opt(PermissionRole),
     'change_roles' : IDL.Opt(PermissionRole),
-    'add_members' : IDL.Opt(PermissionRole),
     'create_polls' : IDL.Opt(PermissionRole),
     'pin_messages' : IDL.Opt(PermissionRole),
     'reply_in_thread' : IDL.Opt(PermissionRole),

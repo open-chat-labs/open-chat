@@ -634,6 +634,7 @@ export function apiGroupPermissions(permissions: GroupPermissions): ApiGroupPerm
         send_messages: apiPermissionRole(permissions.sendMessages),
         react_to_messages: apiPermissionRole(permissions.reactToMessages),
         reply_in_thread: apiPermissionRole(permissions.replyInThread),
+        add_members: apiPermissionRole("owner"), // TODO remove this
     };
 }
 

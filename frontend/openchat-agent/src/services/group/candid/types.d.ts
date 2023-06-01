@@ -17,8 +17,7 @@ export type AddReactionResponse = { 'MessageNotFound' : null } |
   { 'NotAuthorized' : null } |
   { 'Success' : null } |
   { 'UserSuspended' : null } |
-  { 'InvalidReaction' : null } |
-  { 'SuccessV2' : PushEventResult };
+  { 'InvalidReaction' : null };
 export interface AddedToGroupNotification {
   'added_by_name' : string,
   'added_by' : UserId,
@@ -173,6 +172,38 @@ export type ClaimPrizeResponse = { 'PrizeFullyClaimed' : null } |
   { 'PrizeEnded' : null } |
   { 'FailedAfterTransfer' : [string, CompletedCryptoTransaction] } |
   { 'TransferFailed' : [string, FailedCryptoTransaction] };
+export interface CommunityCanisterCommunitySummary {
+  'is_public' : boolean,
+  'permissions' : CommunityPermissions,
+  'community_id' : CommunityId,
+  'gate' : [] | [GroupGate],
+  'name' : string,
+  'role' : CommunityRole,
+  'description' : string,
+  'last_updated' : TimestampMillis,
+  'joined' : TimestampMillis,
+  'avatar_id' : [] | [bigint],
+  'frozen' : [] | [FrozenGroupInfo],
+  'latest_event_index' : EventIndex,
+  'member_count' : number,
+}
+export type CommunityId = Principal;
+export type CommunityPermissionRole = { 'Owners' : null } |
+  { 'Admins' : null } |
+  { 'Members' : null };
+export interface CommunityPermissions {
+  'create_public_channel' : CommunityPermissionRole,
+  'block_users' : CommunityPermissionRole,
+  'change_permissions' : CommunityPermissionRole,
+  'update_details' : CommunityPermissionRole,
+  'remove_members' : CommunityPermissionRole,
+  'invite_users' : CommunityPermissionRole,
+  'change_roles' : CommunityPermissionRole,
+  'create_private_channel' : CommunityPermissionRole,
+}
+export type CommunityRole = { 'Member' : null } |
+  { 'Admin' : null } |
+  { 'Owner' : null };
 export type CompletedCryptoTransaction = {
     'NNS' : NnsCompletedCryptoTransaction
   } |
@@ -535,6 +566,7 @@ export interface GroupPermissions {
   'update_group' : PermissionRole,
   'invite_users' : PermissionRole,
   'change_roles' : PermissionRole,
+  'add_members' : PermissionRole,
   'create_polls' : PermissionRole,
   'pin_messages' : PermissionRole,
   'reply_in_thread' : PermissionRole,
@@ -788,7 +820,6 @@ export interface OptionalGroupPermissions {
   'update_group' : [] | [PermissionRole],
   'invite_users' : [] | [PermissionRole],
   'change_roles' : [] | [PermissionRole],
-  'add_members' : [] | [PermissionRole],
   'create_polls' : [] | [PermissionRole],
   'pin_messages' : [] | [PermissionRole],
   'reply_in_thread' : [] | [PermissionRole],
@@ -1004,8 +1035,7 @@ export type RemoveReactionResponse = { 'MessageNotFound' : null } |
   { 'ChatFrozen' : null } |
   { 'NotAuthorized' : null } |
   { 'Success' : null } |
-  { 'UserSuspended' : null } |
-  { 'SuccessV2' : PushEventResult };
+  { 'UserSuspended' : null };
 export interface ReplyContext {
   'event_list_if_other' : [] | [[ChatId, [] | [MessageIndex]]],
   'chat_id_if_other' : [] | [ChatId],
@@ -1260,7 +1290,6 @@ export type UnpinMessageResponse = { 'MessageNotFound' : null } |
   { 'CallerNotInGroup' : null } |
   { 'ChatFrozen' : null } |
   { 'NotAuthorized' : null } |
-  { 'Success' : EventIndex } |
   { 'UserSuspended' : null } |
   { 'SuccessV2' : PushEventResult };
 export interface UpdateGroupV2Args {

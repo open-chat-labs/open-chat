@@ -10,7 +10,7 @@ import {
     UnfreezeGroupResponse,
     AddHotGroupExclusionResponse,
     RemoveHotGroupExclusionResponse,
-    SetGroupUpgradeConcurrencyResponse
+    SetUpgradeConcurrencyResponse
 } from "./types";
 export {
     _SERVICE as GroupIndexService,
@@ -23,7 +23,7 @@ export {
     UnfreezeGroupResponse as ApiUnfreezeGroupResponse,
     AddHotGroupExclusionResponse as ApiAddHotGroupExclusionResponse,
     RemoveHotGroupExclusionResponse as ApiRemoveHotGroupExclusionResponse,
-    SetGroupUpgradeConcurrencyResponse as ApiSetGroupUpgradeConcurrencyResponse,
+    SetUpgradeConcurrencyResponse as ApiSetUpgradeConcurrencyResponse,
 };
 
 export const idlFactory: IDL.InterfaceFactory;
