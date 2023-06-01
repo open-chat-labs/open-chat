@@ -28,7 +28,7 @@ fn toggle_mute_notifications_impl(args: Args, state: &mut RuntimeState) -> Respo
             let user_canister_id = member.user_id.into();
             state.data.fire_and_forget_handler.send(
                 user_canister_id,
-                "c2c_mark_group_updated_for_user_msgpack".to_string(),
+                "c2c_mark_community_updated_for_user_msgpack".to_string(),
                 serialize_then_unwrap(Empty {}),
             );
             Success
