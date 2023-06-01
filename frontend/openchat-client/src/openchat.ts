@@ -170,6 +170,7 @@ import {
     toDatetimeString,
     toLongDateString,
     toShortTimeString,
+    toMonthString,
 } from "./utils/date";
 import formatFileSize from "./utils/fileSize";
 import { calculateMediaDimensions } from "./utils/layout";
@@ -1002,6 +1003,7 @@ export class OpenChat extends EventTarget {
     formatTokens = formatTokens;
     validateTokenInput = validateTokenInput;
     toShortTimeString = toShortTimeString;
+    toMonthString = toMonthString;
     formatMessageDate = formatMessageDate;
     userIdsFromEvents = userIdsFromEvents;
     missingUserIds = missingUserIds;
