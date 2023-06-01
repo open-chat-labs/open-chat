@@ -5,7 +5,6 @@ use canister_timer_jobs::TimerJobs;
 use canister_tracing_macros::trace;
 use community_canister::send_message::{Response::*, *};
 use group_chat_core::SendMessageResult;
-use std::collections::HashSet;
 use types::{
     ChannelId, CommunityMessageNotification, EventWrapper, Message, MessageContent, MessageIndex, Notification,
     TimestampMillis, UserId,
@@ -57,7 +56,7 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
                     );
 
                     // Filter the users to notify to remove those members that have the commumity muted
-                    let users_to_notify: HashSet<UserId> = result
+                    let users_to_notify: Vec<UserId> = result
                         .users_to_notify
                         .into_iter()
                         .filter(|u| {
@@ -67,10 +66,8 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
                                 .get((*u).into())
                                 .map_or(false, |m| !m.notifications_muted.value)
                         })
+                        .chain(result.mentions)
                         .collect();
-
-                    // Always notify "mentioned" users
-                    let users_to_notify: Vec<UserId> = result.mentions.union(&users_to_notify).copied().collect();
 
                     let notification = Notification::CommunityMessageNotification(CommunityMessageNotification {
                         community_id: state.env.canister_id().into(),
