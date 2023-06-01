@@ -103,7 +103,7 @@ impl CommunityMembers {
         let mut owner_count = self.owner_count;
         let mut admin_count = self.admin_count;
 
-        let member = match self.get_mut_by_user_id(&target_user_id) {
+        let member = match self.get_by_user_id_mut(&target_user_id) {
             Some(p) => p,
             None => return ChangeRoleResult::TargetUserNotInCommunity,
         };
@@ -203,7 +203,7 @@ impl CommunityMembers {
         self.members.get_mut(user_id)
     }
 
-    pub fn get_mut_by_user_id(&mut self, user_id: &UserId) -> Option<&mut CommunityMemberInternal> {
+    pub fn get_by_user_id_mut(&mut self, user_id: &UserId) -> Option<&mut CommunityMemberInternal> {
         self.members.get_mut(user_id)
     }
 
