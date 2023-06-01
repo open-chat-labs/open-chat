@@ -39,7 +39,7 @@ impl Display for ExchangeId {
     }
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
 pub struct MakeOrderRequest {
     pub order_type: OrderType,
     pub price: u64,
@@ -51,7 +51,7 @@ pub struct CancelOrderRequest {
     pub id: String,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Copy, Clone, Debug)]
+#[derive(CandidType, Serialize, Deserialize, Copy, Clone, Debug, Eq, PartialEq)]
 pub enum OrderType {
     Bid,
     Ask,
