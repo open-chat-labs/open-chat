@@ -36,8 +36,8 @@
     let year = date.getUTCFullYear();
     let lastMonth = month == 1 ? 12 : month - 1;
     let lastMonthYear = month == 1 ? year - 1 : year;
-    $: monthText = client.toMonthString(new Date(2000, month - 1), $locale || "en");
-    $: lastMonthText = client.toMonthString(new Date(2000, lastMonth - 1), $locale || "en");
+    $: monthText = buildMonthText(month, $locale);
+    $: lastMonthText = buildMonthText(lastMonth, $locale);
 
     onMount(() => {
         if (bodyElement) {
@@ -53,6 +53,10 @@
         }
         getData();
     });
+
+    function buildMonthText(month: number, locale: string | null | undefined): string {
+        return client.toMonthString(new Date(2000, month - 1), locale || "en");
+    }
 
     function dummyData() {
         const data = [];
