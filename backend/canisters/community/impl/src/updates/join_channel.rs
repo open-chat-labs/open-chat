@@ -4,7 +4,7 @@ use canister_tracing_macros::trace;
 use chat_events::ChatEventInternal;
 use community_canister::join_channel::{Response::*, *};
 use gated_groups::{check_if_passes_gate, CheckIfPassesGateResult};
-use group_members::AddResult;
+use group_chat_core::AddResult;
 use ic_cdk_macros::update;
 use types::{AccessGate, CanisterId, ChannelId, EventIndex, MemberJoined, MessageIndex, UserId};
 

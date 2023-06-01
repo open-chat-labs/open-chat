@@ -1,8 +1,13 @@
+mod members;
+mod mentions;
+
+pub use members::*;
+pub use mentions::*;
+
 use chat_events::{
     AddRemoveReactionArgs, ChatEventInternal, ChatEvents, ChatEventsListReader, DeleteMessageResult,
     DeleteUndeleteMessagesArgs, PushMessageArgs, Reader, UndeleteMessageResult,
 };
-use group_members::{ChangeRoleResult, GroupMembers};
 use search::Query;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;

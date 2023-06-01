@@ -3,7 +3,7 @@ use canister_tracing_macros::trace;
 use chat_events::ChatEventInternal;
 use community_canister::add_members_to_channel::{Response::*, *};
 use gated_groups::{check_if_passes_gate, CheckIfPassesGateResult};
-use group_members::AddResult;
+use group_chat_core::AddResult;
 use ic_cdk_macros::update;
 use std::iter::zip;
 use types::{
