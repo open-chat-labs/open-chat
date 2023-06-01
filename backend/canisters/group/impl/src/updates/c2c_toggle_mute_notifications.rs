@@ -4,6 +4,8 @@ use canister_tracing_macros::trace;
 use group_canister::c2c_toggle_mute_notifications::{Response::*, *};
 use types::Timestamped;
 
+// TODO: Delete this when FE is using group::toggle_mute_notifications
+
 #[update_msgpack]
 #[trace]
 fn c2c_toggle_mute_notifications(args: Args) -> Response {
