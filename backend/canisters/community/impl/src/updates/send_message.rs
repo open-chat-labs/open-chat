@@ -70,7 +70,7 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
                         .collect();
 
                     // Always notify "mentioned" users
-                    let users_to_notify: Vec<UserId> = result.mentioned_users.union(&users_to_notify).copied().collect();
+                    let users_to_notify: Vec<UserId> = result.mentions.union(&users_to_notify).copied().collect();
 
                     let notification = Notification::CommunityMessageNotification(CommunityMessageNotification {
                         community_id: state.env.canister_id().into(),

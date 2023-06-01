@@ -421,8 +421,9 @@ impl GroupChatCore {
             let message_event = self.events.push_message(push_message_args);
             let message_index = message_event.event.message_index;
 
-            let mut mentioned_users: HashSet<_> = mentioned.iter().map(|m| m.user_id).chain(user_being_replied_to).collect();
+            let mut mentions: HashSet<_> = mentioned.iter().map(|m| m.user_id).chain(user_being_replied_to).collect();
 
+            let mut users_to_notify = HashSet::new();
             let mut thread_participants = None;
 
             if let Some(thread_root_message) = thread_root_message_index.and_then(|root_message_index| {
@@ -431,24 +432,24 @@ impl GroupChatCore {
                     .message_internal(root_message_index.into())
                     .cloned()
             }) {
-                mentioned_users.insert(thread_root_message.sender);
+                users_to_notify.insert(thread_root_message.sender);
 
                 if let Some(thread_summary) = thread_root_message.thread_summary {
                     thread_participants = Some(thread_summary.participant_ids);
 
                     let is_first_reply = thread_summary.reply_count == 1;
                     if is_first_reply {
-                        mentioned_users.insert(thread_root_message.sender);
+                        mentions.insert(thread_root_message.sender);
                     }
                 }
 
-                for user_id in mentioned_users.iter().copied().chain([sender]) {
+                for user_id in mentions.iter().copied().chain([sender]) {
                     self.members.add_thread(&user_id, thread_root_message.message_index);
                 }
             }
 
-            mentioned_users.remove(&sender);
-            for user_id in mentioned_users.iter() {
+            mentions.remove(&sender);
+            for user_id in mentions.iter() {
                 if let Some(mentioned) = self.members.get_mut(user_id) {
                     mentioned.mentions_v2.add(
                         MentionInternal {
@@ -460,21 +461,14 @@ impl GroupChatCore {
                 }
             }
 
-            let mut users_to_notify: HashSet<UserId> = self
-                .members
-                .users_to_notify(thread_participants)
-                .union(&mentioned_users)
-                .copied()
-                .collect();
-
+            users_to_notify.extend(self.members.users_to_notify(thread_participants));
+            users_to_notify.extend(&mentions);
             users_to_notify.remove(&sender);
-
-            let users_to_notify: Vec<UserId> = users_to_notify.into_iter().collect();
 
             Success(SendMessageSuccess {
                 message_event,
-                users_to_notify,
-                mentioned_users,
+                users_to_notify: users_to_notify.into_iter().collect(),
+                mentions,
             })
         } else {
             UserNotInGroup
@@ -1229,7 +1223,7 @@ pub enum SendMessageResult {
 pub struct SendMessageSuccess {
     pub message_event: EventWrapper<Message>,
     pub users_to_notify: Vec<UserId>,
-    pub mentioned_users: HashSet<UserId>,
+    pub mentions: HashSet<UserId>,
 }
 
 pub enum AddRemoveReactionResult {
