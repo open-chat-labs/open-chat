@@ -169,16 +169,13 @@ fn commit(
         referred_by: referral_code.as_ref().and_then(|r| r.user()),
     })));
 
-    match referral_code {
-        Some(ReferralCode::User(referred_by)) => {
-            if state.data.local_users.get(&referred_by).is_some() {
-                state.push_event_to_user(
-                    referred_by,
-                    UserEvent::ReferredUserRegistered(Box::new(ReferredUserRegistered { user_id, username })),
-                );
-            }
+    if let Some(ReferralCode::User(referred_by)) = referral_code {
+        if state.data.local_users.get(&referred_by).is_some() {
+            state.push_event_to_user(
+                referred_by,
+                UserEvent::ReferredUserRegistered(Box::new(ReferredUserRegistered { user_id, username })),
+            );
         }
-        _ => {}
     }
 }
 
