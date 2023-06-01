@@ -57,7 +57,6 @@ struct Data {
     pub mark_as_online_count: u64,
     pub batches_sent_to_user_index: u64,
     pub failed_batches: u64,
-    #[serde(default)]
     pub cached_active_users: ActiveUsers,
     pub test_mode: bool,
 }
