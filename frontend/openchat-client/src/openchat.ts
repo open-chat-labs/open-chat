@@ -369,8 +369,7 @@ export class OpenChat extends EventTarget {
 
         chatUpdatedStore.subscribe((val) => {
             if (val !== undefined) {
-                const updated = val.updatedEvents;
-                this.chatUpdated(updated);
+                this.chatUpdated(val.chatId, val.updatedEvents);
                 chatUpdatedStore.set(undefined);
             }
         });
@@ -384,7 +383,9 @@ export class OpenChat extends EventTarget {
             .catch((err) => console.error(err));
     }
 
-    private chatUpdated(updatedEvents: UpdatedEvent[]): void {
+    private chatUpdated(chatId: string, updatedEvents: UpdatedEvent[]): void {
+        if (chatId !== this._liveState.selectedChatId) return;
+
         const chat = this._liveState.selectedChat;
         if (chat === undefined) return;
         // The chat summary has been updated which means the latest message may be new
@@ -393,7 +394,10 @@ export class OpenChat extends EventTarget {
             this.handleMessageSentByOther(chat, latestMessage);
         }
 
-        this.refreshUpdatedEvents(chat, updatedEvents);
+        const serverChat = this._liveState.selectedServerChat;
+        if (serverChat !== undefined) {
+            this.refreshUpdatedEvents(serverChat, updatedEvents);
+        }
         this.updateDetails(chat);
         this.dispatchEvent(new ChatUpdated());
     }
@@ -3535,6 +3539,7 @@ export class OpenChat extends EventTarget {
                         this.dispatchEvent(new SelectedChatInvalid());
                     } else {
                         chatUpdatedStore.set({
+                            chatId: selectedChatId,
                             updatedEvents: chatsResponse.updatedEvents[selectedChatId] ?? [],
                         });
                     }
