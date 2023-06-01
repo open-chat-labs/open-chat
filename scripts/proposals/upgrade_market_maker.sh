@@ -8,8 +8,8 @@ SUMMARY_PATH=$5
 
 SUMMARY=`cat $SUMMARY_PATH`
 
-FUNCTION_ID=5003
-CANISTER_NAME=storage_bucket
+FUNCTION_ID=3
+CANISTER_NAME=market_maker
 
 # Set current directory to the scripts root
 SCRIPT=$(readlink -f "$0")

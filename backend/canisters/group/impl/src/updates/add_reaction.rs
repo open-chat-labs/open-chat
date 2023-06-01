@@ -75,7 +75,7 @@ fn handle_notification(
                 .chat
                 .members
                 .get(&message.event.sender)
-                .map_or(true, |p| p.notifications_muted.value);
+                .map_or(true, |p| p.notifications_muted.value || p.suspended.value);
 
             if !notifications_muted {
                 state.push_notification(

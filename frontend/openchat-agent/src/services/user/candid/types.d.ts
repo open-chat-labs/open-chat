@@ -155,6 +155,38 @@ export interface ChatMetrics {
   'prize_messages' : bigint,
 }
 export interface ChatUnfrozen { 'unfrozen_by' : UserId }
+export interface CommunityCanisterCommunitySummary {
+  'is_public' : boolean,
+  'permissions' : CommunityPermissions,
+  'community_id' : CommunityId,
+  'gate' : [] | [GroupGate],
+  'name' : string,
+  'role' : CommunityRole,
+  'description' : string,
+  'last_updated' : TimestampMillis,
+  'joined' : TimestampMillis,
+  'avatar_id' : [] | [bigint],
+  'frozen' : [] | [FrozenGroupInfo],
+  'latest_event_index' : EventIndex,
+  'member_count' : number,
+}
+export type CommunityId = Principal;
+export type CommunityPermissionRole = { 'Owners' : null } |
+  { 'Admins' : null } |
+  { 'Members' : null };
+export interface CommunityPermissions {
+  'create_public_channel' : CommunityPermissionRole,
+  'block_users' : CommunityPermissionRole,
+  'change_permissions' : CommunityPermissionRole,
+  'update_details' : CommunityPermissionRole,
+  'remove_members' : CommunityPermissionRole,
+  'invite_users' : CommunityPermissionRole,
+  'change_roles' : CommunityPermissionRole,
+  'create_private_channel' : CommunityPermissionRole,
+}
+export type CommunityRole = { 'Member' : null } |
+  { 'Admin' : null } |
+  { 'Owner' : null };
 export type CompletedCryptoTransaction = {
     'NNS' : NnsCompletedCryptoTransaction
   } |
@@ -162,6 +194,31 @@ export type CompletedCryptoTransaction = {
 export interface Contact { 'nickname' : [] | [string], 'user_id' : UserId }
 export type ContactsArgs = {};
 export type ContactsResponse = { 'Success' : { 'contacts' : Array<Contact> } };
+export interface CreateCommunityArgs {
+  'is_public' : boolean,
+  'permissions' : [] | [CommunityPermissions],
+  'gate' : [] | [GroupGate],
+  'name' : string,
+  'description' : string,
+  'history_visible_to_new_joiners' : boolean,
+  'rules' : GroupRules,
+  'avatar' : [] | [Avatar],
+}
+export type CreateCommunityResponse = { 'NameReserved' : null } |
+  { 'RulesTooLong' : FieldTooLongResult } |
+  { 'DescriptionTooLong' : FieldTooLongResult } |
+  { 'NameTooShort' : FieldTooShortResult } |
+  { 'Throttled' : null } |
+  { 'AvatarTooBig' : FieldTooLongResult } |
+  { 'Success' : CreateCommunitySuccessResult } |
+  { 'Unauthorized' : null } |
+  { 'UserSuspended' : null } |
+  { 'RulesTooShort' : FieldTooShortResult } |
+  { 'NameTooLong' : FieldTooLongResult } |
+  { 'NameTaken' : null } |
+  { 'InternalError' : null } |
+  { 'MaxCommunitiesCreated' : number };
+export interface CreateCommunitySuccessResult { 'community_id' : CommunityId }
 export interface CreateGroupArgs {
   'is_public' : boolean,
   'permissions' : [] | [GroupPermissions],
@@ -209,6 +266,12 @@ export interface CyclesRegistrationFee {
   'valid_until' : TimestampMillis,
   'amount' : Cycles,
 }
+export interface DeleteCommunityArgs { 'community_id' : CommunityId }
+export type DeleteCommunityResponse = { 'NotAuthorized' : null } |
+  { 'Success' : null } |
+  { 'UserSuspended' : null } |
+  { 'CommunityFrozen' : null } |
+  { 'InternalError' : string };
 export interface DeleteGroupArgs { 'chat_id' : ChatId }
 export type DeleteGroupResponse = { 'ChatFrozen' : null } |
   { 'NotAuthorized' : null } |
@@ -538,6 +601,7 @@ export interface GroupPermissions {
   'update_group' : PermissionRole,
   'invite_users' : PermissionRole,
   'change_roles' : PermissionRole,
+  'add_members' : PermissionRole,
   'create_polls' : PermissionRole,
   'pin_messages' : PermissionRole,
   'reply_in_thread' : PermissionRole,
@@ -628,6 +692,15 @@ export type InvalidPollReason = { 'DuplicateOptions' : null } |
   { 'OptionTooLong' : number } |
   { 'EndDateInThePast' : null } |
   { 'PollsNotValidForDirectChats' : null };
+export interface LeaveCommunityArgs { 'community_id' : CommunityId }
+export type LeaveCommunityResponse = { 'CommunityNotFound' : null } |
+  { 'LastOwnerCannotLeave' : null } |
+  { 'Success' : null } |
+  { 'UserNotInCommunity' : null } |
+  { 'CommunityNotPublic' : null } |
+  { 'UserSuspended' : null } |
+  { 'CommunityFrozen' : null } |
+  { 'InternalError' : string };
 export interface LeaveGroupArgs {
   'correlation_id' : bigint,
   'chat_id' : ChatId,
@@ -1328,7 +1401,15 @@ export interface _SERVICE {
     CancelMessageReminderResponse
   >,
   'contacts' : ActorMethod<[ContactsArgs], ContactsResponse>,
+  'create_community' : ActorMethod<
+    [CreateCommunityArgs],
+    CreateCommunityResponse
+  >,
   'create_group' : ActorMethod<[CreateGroupArgs], CreateGroupResponse>,
+  'delete_community' : ActorMethod<
+    [DeleteCommunityArgs],
+    DeleteCommunityResponse
+  >,
   'delete_group' : ActorMethod<[DeleteGroupArgs], DeleteGroupResponse>,
   'delete_messages' : ActorMethod<[DeleteMessagesArgs], DeleteMessagesResponse>,
   'deleted_message' : ActorMethod<[DeletedMessageArgs], DeletedMessageResponse>,
@@ -1348,6 +1429,7 @@ export interface _SERVICE {
     [InitialStateV2Args],
     InitialStateV2Response
   >,
+  'leave_community' : ActorMethod<[LeaveCommunityArgs], LeaveCommunityResponse>,
   'leave_group' : ActorMethod<[LeaveGroupArgs], LeaveGroupResponse>,
   'mark_read_v2' : ActorMethod<[MarkReadArgs], MarkReadResponse>,
   'messages_by_message_index' : ActorMethod<

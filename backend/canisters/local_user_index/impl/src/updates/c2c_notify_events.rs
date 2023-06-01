@@ -132,7 +132,10 @@ fn handle_event(event: Event, state: &mut RuntimeState) {
             state.push_event_to_user(ev.user_id, UserEvent::OpenChatBotMessage(Box::new(ev.message)));
         }
         Event::ReferralCodeAdded(ev) => {
-            state.data.referral_codes.add(ev.referral_type, ev.code, state.env.now());
+            state
+                .data
+                .referral_codes
+                .add(ev.referral_type, ev.code, ev.expiry, state.env.now());
         }
     }
 }

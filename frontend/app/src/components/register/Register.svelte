@@ -72,6 +72,12 @@
             } else if (resp.kind === "referral_code_invalid") {
                 error.set("register.referralCodeInvalid");
                 badCode = true;
+            } else if (resp.kind === "referral_code_already_claimed") {
+                error.set("register.referralCodeAlreadyClaimed");
+                badCode = true;
+            }  else if (resp.kind === "referral_code_expired") {
+                error.set("register.referralCodeExpired");
+                badCode = true;
             } else if (resp.kind === "success") {
                 error.set(undefined);
                 createdUser = {

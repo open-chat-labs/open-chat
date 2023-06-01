@@ -197,7 +197,7 @@ pub(crate) fn handle_message_impl(
         if args.is_bot {
             chat.mark_read_up_to(message_event.event.message_index, false, args.now);
         }
-        if !mute_notification && !chat.notifications_muted.value {
+        if !mute_notification && !chat.notifications_muted.value && !state.data.suspended.value {
             let notification = Notification::DirectMessageNotification(DirectMessageNotification {
                 sender,
                 thread_root_message_index: None,

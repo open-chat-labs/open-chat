@@ -119,6 +119,38 @@ export interface ChatMetrics {
   'prize_messages' : bigint,
 }
 export interface ChatUnfrozen { 'unfrozen_by' : UserId }
+export interface CommunityCanisterCommunitySummary {
+  'is_public' : boolean,
+  'permissions' : CommunityPermissions,
+  'community_id' : CommunityId,
+  'gate' : [] | [GroupGate],
+  'name' : string,
+  'role' : CommunityRole,
+  'description' : string,
+  'last_updated' : TimestampMillis,
+  'joined' : TimestampMillis,
+  'avatar_id' : [] | [bigint],
+  'frozen' : [] | [FrozenGroupInfo],
+  'latest_event_index' : EventIndex,
+  'member_count' : number,
+}
+export type CommunityId = Principal;
+export type CommunityPermissionRole = { 'Owners' : null } |
+  { 'Admins' : null } |
+  { 'Members' : null };
+export interface CommunityPermissions {
+  'create_public_channel' : CommunityPermissionRole,
+  'block_users' : CommunityPermissionRole,
+  'change_permissions' : CommunityPermissionRole,
+  'update_details' : CommunityPermissionRole,
+  'remove_members' : CommunityPermissionRole,
+  'invite_users' : CommunityPermissionRole,
+  'change_roles' : CommunityPermissionRole,
+  'create_private_channel' : CommunityPermissionRole,
+}
+export type CommunityRole = { 'Member' : null } |
+  { 'Admin' : null } |
+  { 'Owner' : null };
 export type CompletedCryptoTransaction = {
     'NNS' : NnsCompletedCryptoTransaction
   } |
@@ -406,6 +438,7 @@ export interface GroupPermissions {
   'update_group' : PermissionRole,
   'invite_users' : PermissionRole,
   'change_roles' : PermissionRole,
+  'add_members' : PermissionRole,
   'create_polls' : PermissionRole,
   'pin_messages' : PermissionRole,
   'reply_in_thread' : PermissionRole,
@@ -479,6 +512,21 @@ export type InviteUsersToGroupResponse = { 'GroupNotFound' : null } |
   { 'Success' : null } |
   { 'InternalError' : string } |
   { 'TooManyInvites' : number };
+export interface JoinCommunityArgs {
+  'community_id' : CommunityId,
+  'invite_code' : [] | [bigint],
+}
+export type JoinCommunityResponse = { 'NotInvited' : null } |
+  { 'Blocked' : null } |
+  { 'CommunityNotFound' : null } |
+  { 'GateCheckFailed' : GateCheckFailedReason } |
+  { 'MemberLimitReached' : number } |
+  { 'Success' : CommunityCanisterCommunitySummary } |
+  { 'CommunityNotPublic' : null } |
+  { 'UserSuspended' : null } |
+  { 'CommunityFrozen' : null } |
+  { 'AlreadyInCommunity' : CommunityCanisterCommunitySummary } |
+  { 'InternalError' : string };
 export interface JoinGroupArgs {
   'invite_code' : [] | [bigint],
   'correlation_id' : bigint,
@@ -795,6 +843,8 @@ export type RegisterUserResponse = { 'UsernameTooShort' : number } |
   { 'UsernameTooLong' : number } |
   { 'Success' : { 'icp_account' : AccountIdentifier, 'user_id' : UserId } } |
   { 'PublicKeyInvalid' : string } |
+  { 'ReferralCodeAlreadyClaimed' : null } |
+  { 'ReferralCodeExpired' : null } |
   { 'InternalError' : string } |
   { 'ReferralCodeInvalid' : null } |
   { 'CyclesBalanceTooLow' : null };
@@ -977,6 +1027,7 @@ export interface _SERVICE {
     [InviteUsersToGroupArgs],
     InviteUsersToGroupResponse
   >,
+  'join_community' : ActorMethod<[JoinCommunityArgs], JoinCommunityResponse>,
   'join_group' : ActorMethod<[JoinGroupArgs], JoinGroupResponse>,
   'register_user' : ActorMethod<[RegisterUserArgs], RegisterUserResponse>,
   'report_message' : ActorMethod<[ReportMessageArgs], ReportMessageResponse>,

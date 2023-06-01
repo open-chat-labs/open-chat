@@ -87,7 +87,7 @@ impl CommunityMembers {
         is_user_platform_moderator: bool,
     ) -> ChangeRoleResult {
         // Is the caller authorized to change the user to this role
-        match self.get(user_id.into()) {
+        match self.get_by_user_id(&user_id) {
             Some(p) => {
                 if p.suspended.value {
                     return ChangeRoleResult::UserSuspended;
@@ -103,7 +103,7 @@ impl CommunityMembers {
         let mut owner_count = self.owner_count;
         let mut admin_count = self.admin_count;
 
-        let member = match self.get_mut(target_user_id.into()) {
+        let member = match self.get_by_user_id_mut(&target_user_id) {
             Some(p) => p,
             None => return ChangeRoleResult::TargetUserNotInCommunity,
         };
@@ -183,6 +183,10 @@ impl CommunityMembers {
         self.members.get(user_id)
     }
 
+    pub fn get_by_user_id(&self, user_id: &UserId) -> Option<&CommunityMemberInternal> {
+        self.members.get(user_id)
+    }
+
     // Note this lookup is O(n)
     pub fn get_principal(&self, user_id: &UserId) -> Option<Principal> {
         self.principal_to_user_id_map
@@ -196,6 +200,10 @@ impl CommunityMembers {
 
         let user_id = self.principal_to_user_id_map.get(&user_id_or_principal).unwrap_or(&user_id);
 
+        self.members.get_mut(user_id)
+    }
+
+    pub fn get_by_user_id_mut(&mut self, user_id: &UserId) -> Option<&mut CommunityMemberInternal> {
         self.members.get_mut(user_id)
     }
 
