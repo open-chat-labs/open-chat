@@ -5,6 +5,7 @@ use canister_timer_jobs::TimerJobs;
 use canister_tracing_macros::trace;
 use community_canister::send_message::{Response::*, *};
 use group_chat_core::SendMessageResult;
+use itertools::Itertools;
 use types::{
     ChannelId, CommunityMessageNotification, EventWrapper, Message, MessageContent, MessageIndex, Notification,
     TimestampMillis, UserId,
@@ -56,6 +57,7 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
                     );
 
                     // Filter the users to notify to remove those members that have the commumity muted
+                    // but always include mentions
                     let users_to_notify: Vec<UserId> = result
                         .users_to_notify
                         .into_iter()
@@ -67,6 +69,7 @@ fn send_message_impl(args: Args, state: &mut RuntimeState) -> Response {
                                 .map_or(false, |m| !m.notifications_muted.value)
                         })
                         .chain(result.mentions)
+                        .unique()
                         .collect();
 
                     let notification = Notification::CommunityMessageNotification(CommunityMessageNotification {
