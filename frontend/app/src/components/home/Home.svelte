@@ -15,7 +15,7 @@
         ChatSummary,
         EnhancedReplyContext,
         GroupChatSummary,
-        GroupRules,
+        AccessRules,
         Message,
         OpenChat,
         ThreadSelected,
@@ -25,7 +25,7 @@
         ChatsUpdated,
         Notification,
         CandidateGroupChat,
-        defaultGroupRules,
+        defaultAccessRules,
         EventWrapper,
         ChatType,
         Community,
@@ -745,7 +745,7 @@
     }
 
     function groupCreated(
-        ev: CustomEvent<{ chatId: string; isPublic: boolean; rules: GroupRules }>
+        ev: CustomEvent<{ chatId: string; isPublic: boolean; rules: AccessRules }>
     ) {
         const { chatId, isPublic, rules } = ev.detail;
         chatStateStore.setProp(chatId, "rules", rules);
@@ -798,16 +798,15 @@
                 reactToMessages: "members",
                 replyInThread: "members",
             },
-            rules: {
-                text: defaultGroupRules,
-                enabled: false,
-            },
+            rules: defaultAccessRules,
             gate: { kind: "no_gate" },
             myRole: "owner",
         };
     }
 
-    function editGroup(ev: CustomEvent<{ chat: GroupChatSummary; rules: GroupRules | undefined }>) {
+    function editGroup(
+        ev: CustomEvent<{ chat: GroupChatSummary; rules: AccessRules | undefined }>
+    ) {
         modal = ModalType.NewGroup;
         const { chat, rules } = ev.detail;
         candidateGroup = {
@@ -820,13 +819,7 @@
             members: [],
             permissions: { ...chat.permissions },
             myRole: chat.myRole,
-            rules:
-                rules !== undefined
-                    ? { ...rules }
-                    : {
-                          text: defaultGroupRules,
-                          enabled: false,
-                      },
+            rules: rules !== undefined ? { ...rules } : defaultAccessRules,
             avatar: {
                 blobUrl: chat.blobUrl,
                 blobData: chat.blobData,
@@ -1028,7 +1021,10 @@
         {:else if modal === ModalType.NewGroup && candidateGroup !== undefined}
             <NewGroup on:upgrade={upgrade} {candidateGroup} on:close={closeModal} />
         {:else if modal === ModalType.EditCommunity && candidateCommunity !== undefined}
-            <EditCommunity original={candidateCommunity} on:close={closeModal} />
+            <EditCommunity
+                originalRules={defaultAccessRules}
+                original={candidateCommunity}
+                on:close={closeModal} />
         {:else if modal === ModalType.Wallet}
             <AccountsModal on:close={closeModal} />
         {:else if modal === ModalType.HallOfFame}

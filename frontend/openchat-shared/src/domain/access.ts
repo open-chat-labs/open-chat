@@ -33,3 +33,20 @@ export type AccessControlled = {
     frozen: boolean;
     historyVisible: boolean;
 };
+
+// annoyingly this is a not part of the AccessControlled type although it feels like it *should* be
+export type AccessRules = {
+    text: string;
+    enabled: boolean;
+};
+
+export const defaultAccessRuleText = `- Do not impersonate others in a deceptive or misleading manner
+- Do not intentionally share false or misleading information
+- Keep messages relevant to the group
+
+If you break the rules you might be blocked and/or have your message(s) deleted.`;
+
+export const defaultAccessRules: AccessRules = {
+    text: defaultAccessRuleText,
+    enabled: false,
+};

@@ -5,15 +5,19 @@
     import ButtonGroup from "../../../ButtonGroup.svelte";
     import { mobileWidth } from "../../../../stores/screenDimensions";
     import { createEventDispatcher, getContext, onMount } from "svelte";
-    import type { Community, OpenChat } from "openchat-client";
+    import type { AccessRules, Community, OpenChat } from "openchat-client";
     import StageHeader from "../../StageHeader.svelte";
     import PermissionsEditor from "./PermissionsEditor.svelte";
     import PermissionsViewer from "./PermissionsViewer.svelte";
+    import Rules from "../../Rules.svelte";
     import Details from "./Details.svelte";
     import { dummyCommunities, createCandidateCommunity } from "stores/community";
     import VisibilityControl from "../../VisibilityControl.svelte";
 
     export let original: Community = createCandidateCommunity("");
+
+    //TODO - at the moment we are *always* passing in the default access rules even in the edit case because we don't know where to get the rules from yet
+    export let originalRules: AccessRules;
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -22,6 +26,7 @@
     let step = 0;
     let busy = false;
     let candidate = original;
+    let candidateRules = originalRules;
     const steps = [
         "communities.details",
         "communities.visibility",
@@ -29,21 +34,16 @@
         "permissions.permissions",
         "communities.invite",
     ];
-
     $: canEditPermissions = true; // TODO - this is a whole can of refactor worms which I don't want to open yet
     $: permissionsDirty = client.havePermissionsChanged(
         original.permissions,
         candidate.permissions
     );
-    // $: rulesDirty =
-    //     editing &&
-    //     candidate.rules !== undefined &&
-    //     (candidate.rules.enabled !== candidate.rules.enabled ||
-    //         candidate.rules.text !== candidate.rules.text);
-    // $: rulesInvalid =
-    //     candidate.rules !== undefined &&
-    //     candidate.rules.enabled &&
-    //     candidate.rules.text.length === 0;
+    $: rulesDirty =
+        editing &&
+        (candidateRules.enabled !== originalRules.enabled ||
+            candidateRules.text !== originalRules.text);
+    $: rulesInvalid = candidateRules.enabled && candidateRules.text.length === 0;
     $: nameDirty = editing && candidate.name !== original.name;
     $: descDirty = editing && candidate.description !== original.description;
     $: avatarDirty = editing && candidate.avatar?.blobUrl !== original.avatar?.blobUrl;
@@ -51,13 +51,22 @@
     $: visDirty = editing && candidate.public !== original.public;
     $: infoDirty = nameDirty || descDirty || avatarDirty || bannerDirty;
     $: gateDirty = client.hasAccessGateChanged(candidate.gate, original.gate);
-    $: dirty = infoDirty /*|| rulesDirty */ || permissionsDirty || visDirty || gateDirty;
+    $: dirty = infoDirty || rulesDirty || permissionsDirty || visDirty || gateDirty;
     $: padding = $mobileWidth ? 16 : 24; // yes this is horrible
     $: left = step * (actualWidth - padding);
 
+    $: console.log("Rules: ", candidateRules, originalRules);
+
     onMount(() => {
         console.log("Cloning input community");
-        candidate = { ...original };
+        candidate = {
+            ...original,
+            permissions: { ...original.permissions },
+            gate: { ...original.gate },
+        };
+        candidateRules = {
+            ...originalRules,
+        };
     });
 
     function changeStep(ev: CustomEvent<number>) {
@@ -92,7 +101,7 @@
                     <VisibilityControl {candidate} {original} {editing} />
                 </div>
                 <div class="rules" class:visible={step === 2}>
-                    <h1>Rules</h1>
+                    <Rules bind:rules={candidateRules} />
                 </div>
                 <div class="permissions" class:visible={step === 3}>
                     {#if canEditPermissions}

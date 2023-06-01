@@ -2,7 +2,7 @@ import type { BlobReference, DataContent } from "../data/data";
 import type { PartialUserSummary, UserSummary } from "../user/user";
 import type { OptionUpdate } from "../optionUpdate";
 import type { Cryptocurrency } from "../crypto";
-import type { AccessGate, AccessControlled } from "../access";
+import type { AccessGate, AccessControlled, AccessRules } from "../access";
 import type { GroupPermissionRole, MemberRole, Permissioned } from "../permission";
 import type { HasIdentity } from "../identity";
 
@@ -932,7 +932,7 @@ export type GroupChatDetails = {
     invitedUsers: Set<string>;
     pinnedMessages: Set<number>;
     latestEventIndex: number;
-    rules: GroupRules;
+    rules: AccessRules;
 };
 
 /**
@@ -946,7 +946,7 @@ export type ChatSpecificState = {
     invitedUsers: Set<string>;
     pinnedMessages: Set<number>;
     latestEventIndex?: number;
-    rules?: GroupRules;
+    rules?: AccessRules;
     userIds: Set<string>;
     focusMessageIndex?: number;
     focusThreadMessageIndex?: number;
@@ -954,17 +954,6 @@ export type ChatSpecificState = {
     serverEvents: EventWrapper<ChatEvent>[];
     expandedDeletedMessages: Set<number>;
 };
-
-export type GroupRules = {
-    text: string;
-    enabled: boolean;
-};
-
-export const defaultGroupRules = `- Do not impersonate others in a deceptive or misleading manner
-- Do not intentionally share false or misleading information
-- Keep messages relevant to the group
-
-If you break the rules you might be blocked and/or have your message(s) deleted.`;
 
 export type GroupChatDetailsUpdates = {
     membersAddedOrUpdated: Member[];
@@ -974,7 +963,7 @@ export type GroupChatDetailsUpdates = {
     pinnedMessagesRemoved: Set<number>;
     pinnedMessagesAdded: Set<number>;
     latestEventIndex: number;
-    rules?: GroupRules;
+    rules?: AccessRules;
     invitedUsers?: Set<string>;
 };
 
@@ -1111,7 +1100,7 @@ export type CandidateGroupChat = HasIdentity &
     Permissioned<GroupPermissions> & {
         name: string;
         description: string;
-        rules: GroupRules;
+        rules: AccessRules;
         members: CandidateMember[];
         avatar?: DataContent;
     };

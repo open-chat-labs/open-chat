@@ -3,7 +3,7 @@
     import ModalContent from "../../ModalContent.svelte";
     import Button from "../../Button.svelte";
     import GroupDetails from "./GroupDetails.svelte";
-    import Rules from "../groupdetails/Rules.svelte";
+    import Rules from "../Rules.svelte";
     import GroupPermissionsEditor from "../GroupPermissionsEditor.svelte";
     import GroupPermissionsViewer from "../GroupPermissionsViewer.svelte";
     import { toastStore } from "../../../stores/toast";

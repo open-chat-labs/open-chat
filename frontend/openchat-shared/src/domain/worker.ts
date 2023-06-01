@@ -25,7 +25,7 @@ import type {
     GroupChatSummary,
     AccessGate,
     GroupPermissions,
-    GroupRules,
+    AccessRules,
     IndexRange,
     InviteCodeResponse,
     JoinGroupResponse,
@@ -547,7 +547,7 @@ type UpdateGroup = Request<{
     chatId: string;
     name?: string;
     desc?: string;
-    rules?: GroupRules;
+    rules?: AccessRules;
     permissions?: Partial<GroupPermissions>;
     avatar?: Uint8Array;
     gate?: AccessGate;
@@ -878,7 +878,7 @@ export type WorkerResponse =
     | Response<SearchDirectChatResponse>
     | Response<SearchGroupChatResponse>
     | Response<GroupSearchResponse>
-    | Response<GroupRules | undefined>
+    | Response<AccessRules | undefined>
     | Response<GroupChatSummary[]>
     | Response<RegisterProposalVoteResponse>
     | Response<ChangeRoleResponse>

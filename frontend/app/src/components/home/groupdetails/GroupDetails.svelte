@@ -19,7 +19,7 @@
     } from "../../../stores/settings";
     import AdvancedSection from "./AdvancedSection.svelte";
     import InviteUsersWithLink from "./InviteUsersWithLink.svelte";
-    import type { OpenChat, GroupChatSummary, GroupRules } from "openchat-client";
+    import type { OpenChat, GroupChatSummary, AccessRules } from "openchat-client";
     import { AvatarSize } from "openchat-client";
     import GroupGateSummary from "./AccessGateSummary.svelte";
 
@@ -30,7 +30,7 @@
 
     export let chat: GroupChatSummary;
     export let memberCount: number;
-    export let rules: GroupRules | undefined;
+    export let rules: AccessRules | undefined;
 
     // capture a snapshot of the chat as it is right now
     $: canEdit = client.canEditGroupDetails(chat.chatId);

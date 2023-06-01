@@ -1,13 +1,13 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
-    import TextArea from "../../TextArea.svelte";
-    import Legend from "../../Legend.svelte";
-    import Toggle from "../../Toggle.svelte";
-    import type { GroupRules } from "openchat-client";
+    import TextArea from "../TextArea.svelte";
+    import Legend from "../Legend.svelte";
+    import Toggle from "../Toggle.svelte";
+    import type { AccessRules } from "openchat-client";
 
     const MAX_RULES_LENGTH = 1024;
 
-    export let rules: GroupRules;
+    export let rules: AccessRules;
 
     function toggleRules() {
         rules.enabled = !rules.enabled;
