@@ -29,6 +29,7 @@
             position: absolute;
             right: 0.7em;
             top: 0.35em;
+            pointer-events: none;
         }
 
         &.rtl {
