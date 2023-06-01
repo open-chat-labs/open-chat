@@ -7,14 +7,12 @@ use types::{CanisterId, ChatId, CommunityId, Version};
 pub struct LocalGroupIndexMap {
     index_map: HashMap<CanisterId, LocalGroupIndex>,
     group_to_index: HashMap<ChatId, CanisterId>,
-    #[serde(default)]
     community_to_index: HashMap<CommunityId, CanisterId>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]
 pub struct LocalGroupIndex {
     group_count: u32,
-    #[serde(default)]
     community_count: u32,
     full: bool,
     wasm_version: Version,

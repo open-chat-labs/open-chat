@@ -101,15 +101,11 @@ struct Data {
     pub public_groups: PublicGroups,
     pub private_groups: PrivateGroups,
     pub deleted_groups: DeletedGroups,
-    #[serde(default)]
     pub public_communities: PublicCommunities,
-    #[serde(default)]
     pub private_communities: PrivateCommunities,
-    #[serde(default)]
     pub deleted_communities: DeletedCommunities,
     pub governance_principals: HashSet<Principal>,
     pub group_canister_wasm: CanisterWasm,
-    #[serde(default)]
     pub community_canister_wasm: CanisterWasm,
     pub local_group_index_canister_wasm_for_new_canisters: CanisterWasm,
     pub local_group_index_canister_wasm_for_upgrades: CanisterWasm,
@@ -282,19 +278,13 @@ pub struct CachedMetrics {
     pub active_private_groups: u64,
     pub deleted_public_groups: u64,
     pub deleted_private_groups: u64,
-    #[serde(default)]
     pub active_public_communities: u64,
-    #[serde(default)]
     pub active_private_communities: u64,
-    #[serde(default)]
     pub deleted_public_communities: u64,
-    #[serde(default)]
     pub deleted_private_communities: u64,
     pub group_deleted_notifications_pending: u64,
-    #[serde(default)]
     pub community_deleted_notifications_pending: u64,
     pub frozen_groups: Vec<ChatId>,
-    #[serde(default)]
     pub frozen_communities: Vec<ChatId>,
 }
 

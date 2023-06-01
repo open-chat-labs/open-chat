@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.709](https://github.com/open-ic/open-chat/releases/tag/v2.0.709-user_index)] - 2023-06-01
+
 ### Added
 
 - Add `is_platform_moderator` to `current_user` response ([#3640](https://github.com/open-ic/open-chat/pull/3640))

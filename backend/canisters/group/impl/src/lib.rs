@@ -5,15 +5,15 @@ use crate::timer_job_types::TimerJob;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
-use chat_events::{ChatEventInternal, ChatEvents, Reader};
+use chat_events::{ChatEventInternal, Reader};
 use fire_and_forget_handler::FireAndForgetHandler;
 use group_chat_core::GroupChatCore;
-use group_members::{AddResult as AddMemberResult, GroupMemberInternal, GroupMembers};
+use group_members::{AddResult as AddMemberResult, GroupMemberInternal};
 use model::invited_users::InvitedUsers;
 use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::ops::Deref;
 use types::{
     AccessGate, AccessRules, Avatar, CanisterId, Cryptocurrency, Cycles, EventIndex, FrozenGroupInfo,
@@ -229,41 +229,7 @@ impl RuntimeState {
     }
 }
 
-#[derive(Deserialize)]
-struct DataPrevious {
-    is_public: bool,
-    name: String,
-    description: String,
-    rules: AccessRules,
-    subtype: Timestamped<Option<GroupSubtype>>,
-    avatar: Option<Avatar>,
-    history_visible_to_new_joiners: bool,
-    participants: Participants,
-    events: ChatEvents,
-    date_created: TimestampMillis,
-    mark_active_duration: Milliseconds,
-    group_index_canister_id: CanisterId,
-    local_group_index_canister_id: CanisterId,
-    user_index_canister_id: CanisterId,
-    local_user_index_canister_id: CanisterId,
-    notifications_canister_id: CanisterId,
-    proposals_bot_user_id: UserId,
-    activity_notification_state: ActivityNotificationState,
-    pinned_messages: Vec<MessageIndex>,
-    test_mode: bool,
-    permissions: GroupPermissions,
-    invite_code: Option<u64>,
-    invite_code_enabled: bool,
-    new_joiner_rewards: Option<NewJoinerRewards>,
-    frozen: Timestamped<Option<FrozenGroupInfo>>,
-    timer_jobs: TimerJobs<TimerJob>,
-    date_last_pinned: Option<TimestampMillis>,
-    gate: Timestamped<Option<AccessGate>>,
-    invited_users: InvitedUsers,
-}
-
 #[derive(Serialize, Deserialize)]
-#[serde(from = "DataPrevious")]
 struct Data {
     pub chat: GroupChatCore,
     pub principal_to_user_id_map: HashMap<Principal, UserId>,
@@ -282,7 +248,6 @@ struct Data {
     pub frozen: Timestamped<Option<FrozenGroupInfo>>,
     pub timer_jobs: TimerJobs<TimerJob>,
     pub invited_users: InvitedUsers,
-    #[serde(default)]
     pub fire_and_forget_handler: FireAndForgetHandler,
 }
 
@@ -472,75 +437,4 @@ pub struct CanisterIds {
     pub notifications: CanisterId,
     pub proposals_bot: CanisterId,
     pub icp_ledger: CanisterId,
-}
-
-impl From<DataPrevious> for Data {
-    fn from(value: DataPrevious) -> Self {
-        let principal_to_user_id_map = value
-            .participants
-            .user_id_to_principal_map
-            .iter()
-            .map(|(u, p)| (*p, *u))
-            .collect();
-
-        let group_chat_core = GroupChatCore {
-            is_public: value.is_public,
-            name: value.name,
-            description: value.description,
-            rules: value.rules,
-            subtype: value.subtype,
-            avatar: value.avatar,
-            history_visible_to_new_joiners: value.history_visible_to_new_joiners,
-            members: value.participants.into(),
-            events: value.events,
-            date_created: value.date_created,
-            pinned_messages: value.pinned_messages,
-            permissions: value.permissions,
-            date_last_pinned: value.date_last_pinned,
-            gate: value.gate,
-        };
-
-        Data {
-            chat: group_chat_core,
-            principal_to_user_id_map,
-            mark_active_duration: value.mark_active_duration,
-            group_index_canister_id: value.group_index_canister_id,
-            local_group_index_canister_id: value.local_group_index_canister_id,
-            user_index_canister_id: value.user_index_canister_id,
-            local_user_index_canister_id: value.local_user_index_canister_id,
-            notifications_canister_id: value.notifications_canister_id,
-            proposals_bot_user_id: value.proposals_bot_user_id,
-            activity_notification_state: value.activity_notification_state,
-            test_mode: value.test_mode,
-            invite_code: value.invite_code,
-            invite_code_enabled: value.invite_code_enabled,
-            new_joiner_rewards: value.new_joiner_rewards,
-            frozen: value.frozen,
-            timer_jobs: value.timer_jobs,
-            invited_users: value.invited_users,
-            fire_and_forget_handler: FireAndForgetHandler::default(),
-        }
-    }
-}
-
-#[derive(Deserialize)]
-struct Participants {
-    by_principal: HashMap<Principal, GroupMemberInternal>,
-    user_id_to_principal_map: HashMap<UserId, Principal>,
-    blocked: HashSet<UserId>,
-    moderator_count: u32,
-    admin_count: u32,
-    owner_count: u32,
-}
-
-impl From<Participants> for GroupMembers {
-    fn from(value: Participants) -> Self {
-        GroupMembers {
-            members: value.by_principal.into_values().map(|m| (m.user_id, m)).collect(),
-            blocked: value.blocked,
-            moderator_count: value.moderator_count,
-            admin_count: value.admin_count,
-            owner_count: value.owner_count,
-        }
-    }
 }

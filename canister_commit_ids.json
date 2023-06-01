@@ -1,17 +1,17 @@
 {
   "cycles_dispenser": "139505181600965cc23c62720d3c782c4c35e4df",
-  "group": "bba4704094984c2e7d1482caa521146172d21074",
-  "group_index": "bba4704094984c2e7d1482caa521146172d21074",
-  "local_group_index": "bba4704094984c2e7d1482caa521146172d21074",
+  "group": "5de8c94a5047e2aa50485c42318b9a6a2ac85829",
+  "group_index": "a8d0a6722a2b72c07b746411137571ac8d04fd35",
+  "local_group_index": "a8d0a6722a2b72c07b746411137571ac8d04fd35",
   "local_user_index": "cdea1b9b6bbf8dee6c505a2c384a054a97fbec5b",
-  "market_maker": "c7a496d445937acf51080748a0cb272f0b5095ad",
+  "market_maker": "e6b3741cf5d6f59ed9b56bcb7f05e1e4cd7912b8",
   "notifications": "f3b8a5c45c062a6f6b7c48002be3fd9801901462",
   "notifications_index": "41d3ead0f47446ce3624cbad10f7250d281503c8",
   "online_users": "41d3ead0f47446ce3624cbad10f7250d281503c8",
   "proposals_bot": "326ce505088ff299fa7bbc2148b92b5929044c35",
   "proposal_validation": "523ab8e175033df06e3969a5b5d5c13dfe2da948",
-  "storage_bucket": "09fb4bfd8948eef0a5dd6f583635b317bf3bfbac",
-  "storage_index": "09fb4bfd8948eef0a5dd6f583635b317bf3bfbac",
+  "storage_bucket": "e6b3741cf5d6f59ed9b56bcb7f05e1e4cd7912b8",
+  "storage_index": "e6b3741cf5d6f59ed9b56bcb7f05e1e4cd7912b8",
   "user": "db0d52f193d5b411349c10f977800b325eb12373",
-  "user_index": "c46c637a4f406653163d73783d8df503da493ff3"
+  "user_index": "fe0d59f730ad79f4888faa78226f09ca32383b98"
 }
