@@ -61,7 +61,7 @@
     import GateCheckFailed from "./groupdetails/AccessGateCheckFailed.svelte";
     import HallOfFame from "./HallOfFame.svelte";
     import LeftNav from "./nav/LeftNav.svelte";
-    import { createCandidateCommunity } from "stores/community";
+    import { createCandidateCommunity } from "../../stores/community";
 
     const client = getContext<OpenChat>("client");
     const user = client.user;

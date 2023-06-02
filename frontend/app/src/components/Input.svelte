@@ -33,10 +33,6 @@
         dispatch("change", value);
     };
 
-    export function focus() {
-        inp.focus();
-    }
-
     export function setValue(text: string) {
         value = text;
     }
@@ -100,11 +96,6 @@
         width: 100%;
 
         @include input();
-
-        &:disabled {
-            box-shadow: none;
-            border: 1px solid var(--bd);
-        }
 
         &.small {
             @include font(book, normal, fs-80);
