@@ -40,6 +40,7 @@ impl GlobalUserMap {
             user_id: *user_id,
             principal: *principal,
             is_bot: self.bots.contains(user_id),
+            is_super_admin: self.platform_moderators.contains(user_id),
             is_platform_moderator: self.platform_moderators.contains(user_id),
         })
     }
@@ -49,6 +50,7 @@ impl GlobalUserMap {
             user_id: *user_id,
             principal: *principal,
             is_bot: self.bots.contains(user_id),
+            is_super_admin: self.platform_moderators.contains(user_id),
             is_platform_moderator: self.platform_moderators.contains(user_id),
         })
     }
