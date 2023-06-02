@@ -50,7 +50,7 @@ fn prepare(state: &RuntimeState) -> Result<PrepareResult, Response> {
         return Err(ChatFrozen);
     }
 
-    if let Some(user_id) = state.data.lookup_user_id(&state.env.caller()) {
+    if let Some(user_id) = state.data.lookup_user_id(state.env.caller()) {
         match state.data.chat.can_make_private(user_id) {
             MakePrivateResult::Success => Ok(PrepareResult {
                 group_index_canister_id: state.data.group_index_canister_id,

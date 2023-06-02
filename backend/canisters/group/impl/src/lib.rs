@@ -312,8 +312,8 @@ impl Data {
         }
     }
 
-    pub fn lookup_user_id(&self, principal: &Principal) -> Option<UserId> {
-        self.principal_to_user_id_map.get(principal).copied()
+    pub fn lookup_user_id(&self, user_id_or_principal: Principal) -> Option<UserId> {
+        self.get_member(user_id_or_principal).map(|m| m.user_id)
     }
 
     pub fn get_member(&self, user_id_or_principal: Principal) -> Option<&GroupMemberInternal> {

@@ -19,7 +19,7 @@ fn unpin_message_impl(args: Args, state: &mut RuntimeState) -> Response {
     }
 
     let caller = state.env.caller();
-    if let Some(user_id) = state.data.lookup_user_id(&caller) {
+    if let Some(user_id) = state.data.lookup_user_id(caller) {
         let now = state.env.now();
         match state.data.chat.unpin_message(user_id, args.message_index, now) {
             PinUnpinMessageResult::Success(r) => {

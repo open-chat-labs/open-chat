@@ -11,7 +11,7 @@ fn deleted_message(args: Args) -> Response {
 fn deleted_message_impl(args: Args, state: &RuntimeState) -> Response {
     let caller = state.env.caller();
 
-    if let Some(user_id) = state.data.lookup_user_id(&caller) {
+    if let Some(user_id) = state.data.lookup_user_id(caller) {
         match state
             .data
             .chat

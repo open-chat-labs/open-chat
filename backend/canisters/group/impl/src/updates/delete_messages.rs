@@ -44,7 +44,7 @@ struct PrepareResult {
 
 fn prepare(state: &RuntimeState) -> Result<PrepareResult, Response> {
     let caller = state.env.caller();
-    if let Some(user_id) = state.data.lookup_user_id(&caller) {
+    if let Some(user_id) = state.data.lookup_user_id(caller) {
         Ok(PrepareResult {
             caller,
             user_id,
