@@ -11,7 +11,7 @@ fn messages_by_message_index(args: Args) -> Response {
 fn messages_by_message_index_impl(args: Args, state: &RuntimeState) -> Response {
     let caller = state.env.caller();
     let now = state.env.now();
-    let user_id = state.data.lookup_user_id(&caller);
+    let user_id = state.data.lookup_user_id(caller);
 
     match state.data.chat.messages_by_message_index(
         user_id,

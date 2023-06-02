@@ -11,7 +11,7 @@ fn thread_previews(args: Args) -> Response {
 fn thread_previews_impl(args: Args, state: &RuntimeState) -> Response {
     let caller = state.env.caller();
 
-    if let Some(user_id) = state.data.lookup_user_id(&caller) {
+    if let Some(user_id) = state.data.lookup_user_id(caller) {
         let now = state.env.now();
 
         match state

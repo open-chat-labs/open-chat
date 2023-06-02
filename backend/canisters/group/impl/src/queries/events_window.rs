@@ -11,7 +11,7 @@ fn events_window(args: Args) -> Response {
 fn events_window_impl(args: Args, state: &RuntimeState) -> Response {
     let caller = state.env.caller();
     let now = state.env.now();
-    let user_id = state.data.lookup_user_id(&caller);
+    let user_id = state.data.lookup_user_id(caller);
 
     match state.data.chat.events_window(
         user_id,

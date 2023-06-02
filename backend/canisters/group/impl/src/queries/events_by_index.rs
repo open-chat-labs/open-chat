@@ -11,7 +11,7 @@ fn events_by_index(args: Args) -> Response {
 fn events_by_index_impl(args: Args, state: &RuntimeState) -> Response {
     let caller = state.env.caller();
     let now = state.env.now();
-    let user_id = state.data.lookup_user_id(&caller);
+    let user_id = state.data.lookup_user_id(caller);
 
     match state.data.chat.events_by_index(
         user_id,
