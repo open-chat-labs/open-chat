@@ -30,7 +30,7 @@ if ! cargo install --list | grep -Fxq "ic-wasm v0.3.7:"
 then
   cargo install --version 0.3.7 ic-wasm
 fi
-ic-wasm ./target/wasm32-unknown-unknown/release/$PACKAGE.wasm -o ./target/wasm32-unknown-unknown/release/$PACKAGE-opt.wasm shrink --optimize Oz
+ic-wasm ./target/wasm32-unknown-unknown/release/$PACKAGE.wasm -o ./target/wasm32-unknown-unknown/release/$PACKAGE-opt.wasm shrink
 
 echo Compressing wasm
 mkdir -p wasms
