@@ -22,6 +22,7 @@ mod platform_moderator_tests;
 mod poll_tests;
 mod register_user_tests;
 mod rng;
+mod send_crypto_tests;
 mod send_direct_message_tests;
 mod set_message_reminder_tests;
 mod setup;
