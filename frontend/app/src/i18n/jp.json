@@ -360,8 +360,6 @@
         "ownerAndAdminsAndModerators": "所有者、管理者、モデレータは次のことができます。"
     },
     "group": {
-        "addGroupPhoto": "グループ写真を追加",
-        "editGroupPhoto": "グループ写真を編集",
         "publicGroup": "公開グループ",
         "privateGroup": "プライベートグループ",
         "groupInfo": "グループ情報",

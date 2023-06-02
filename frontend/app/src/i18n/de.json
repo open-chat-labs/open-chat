@@ -362,8 +362,6 @@
         "ownerAndAdminsAndModerators": "Eigentümer, Administratoren und Moderatoren können"
     },
     "group": {
-        "addGroupPhoto": "Gruppenfoto hinzufügen",
-        "editGroupPhoto": "Gruppenfoto bearbeiten",
         "publicGroup": "Öffentliche Gruppe",
         "privateGroup": "Private Gruppe",
         "groupInfo": "Gruppeninfo",

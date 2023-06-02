@@ -256,9 +256,7 @@
                     rules: candidateGroup.rules,
                 });
             } else {
-                toastStore.showFailureToast("group.rulesUpdateFailed", {
-                    values: { level: candidateGroup.level },
-                });
+                toastStore.showFailureToast(interpolateError("group.rulesUpdateFailed"));
             }
         });
     }

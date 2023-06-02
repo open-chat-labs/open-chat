@@ -73,7 +73,7 @@ import {
     GroupChatSummary,
     GroupInvite,
     GroupPermissions,
-    GroupRules,
+    AccessRules,
     GroupSearchResponse,
     IndexRange,
     InviteCodeResponse,
@@ -336,7 +336,7 @@ export class OpenChatAgent extends EventTarget {
         chatId: string,
         name?: string,
         desc?: string,
-        rules?: GroupRules,
+        rules?: AccessRules,
         permissions?: Partial<GroupPermissions>,
         avatar?: Uint8Array,
         gate?: AccessGate
@@ -1288,7 +1288,7 @@ export class OpenChatAgent extends EventTarget {
         return this.getGroupClient(chatId).getPublicSummary();
     }
 
-    getGroupRules(chatId: string): Promise<GroupRules | undefined> {
+    getGroupRules(chatId: string): Promise<AccessRules | undefined> {
         return this.getGroupClient(chatId).getRules();
     }
 

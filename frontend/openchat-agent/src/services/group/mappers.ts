@@ -74,7 +74,7 @@ import {
     ThreadPreview,
     RegisterPollVoteResponse,
     RegisterProposalVoteResponse,
-    GroupRules,
+    AccessRules,
     GroupPermissions,
     SearchGroupChatResponse,
     codeToText,
@@ -317,14 +317,14 @@ function member(candid: ApiParticipant): Member {
     };
 }
 
-function groupRules(candid: ApiGroupRules): GroupRules {
+function groupRules(candid: ApiGroupRules): AccessRules {
     return {
         text: candid.text,
         enabled: candid.enabled,
     };
 }
 
-export function apiGroupRules(rules: GroupRules): ApiGroupRules {
+export function apiGroupRules(rules: AccessRules): ApiGroupRules {
     return {
         text: rules.text,
         enabled: rules.enabled,
@@ -1459,7 +1459,7 @@ export function registerProposalVoteResponse(
     throw new UnsupportedValueError("Unexpected ApiVoteOnProposalResponse type received", candid);
 }
 
-export function rulesResponse(candid: ApiRulesResponse): GroupRules | undefined {
+export function rulesResponse(candid: ApiRulesResponse): AccessRules | undefined {
     if ("Success" in candid) {
         const rules = optional(candid.Success.rules, identity);
         return {

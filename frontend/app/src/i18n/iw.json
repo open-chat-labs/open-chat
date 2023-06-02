@@ -370,8 +370,6 @@
         "ownerAndAdminsAndModerators": "בעלים, מנהלים ומנחים יכולים"
     },
     "group": {
-        "addGroupPhoto": "הוסף תמונה קבוצתית",
-        "editGroupPhoto": "ערוך תמונה קבוצתית",
         "publicGroup": "קבוצה ציבורית",
         "privateGroup": "קבוצה פרטית",
         "groupInfo": "מידע על הקבוצה",

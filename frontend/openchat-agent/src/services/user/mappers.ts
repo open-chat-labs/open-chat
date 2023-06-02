@@ -865,6 +865,7 @@ function groupChatSummary(candid: ApiGroupChatSummary, limitReadByMeUpTo = true)
         dateLastPinned: optional(candid.date_last_pinned, identity),
         dateReadPinned: optional(candid.date_read_pinned, identity),
         gate: optional(candid.gate, groupGate) ?? { kind: "no_gate" },
+        level: "group",
     };
 }
 

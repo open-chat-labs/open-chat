@@ -361,8 +361,6 @@
         "ownerAndAdminsAndModerators": "Chủ sở hữu, quản trị viên và người điều hành có thể"
     },
     "group": {
-        "addGroupPhoto": "Thêm ảnh nhóm",
-        "editGroupPhoto": "Chỉnh sửa ảnh nhóm",
         "publicGroup": "Nhóm mở",
         "privateGroup": "Nhóm kín",
         "groupInfo": "Thông tin nhóm",

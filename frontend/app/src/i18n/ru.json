@@ -360,8 +360,6 @@
         "ownerAndAdminsAndModerators": "Владельцы, администраторы и модераторы могут"
     },
     "group": {
-        "addGroupPhoto": "Добавить фото группы",
-        "editGroupPhoto": "Редактировать фото группы",
         "publicGroup": "Публичная группа",
         "privateGroup": "Частная группа",
         "groupInfo": "Информация о группе",

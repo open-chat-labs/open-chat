@@ -360,8 +360,6 @@
         "ownerAndAdminsAndModerators": "所有者、管理员和版主可以"
     },
     "group": {
-        "addGroupPhoto": "添加群聊图片",
-        "editGroupPhoto": "更改群聊图片",
         "publicGroup": "公开群聊",
         "privateGroup": "私有群聊",
         "groupInfo": "群聊信息",

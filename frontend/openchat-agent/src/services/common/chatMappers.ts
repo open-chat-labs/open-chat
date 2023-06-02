@@ -88,7 +88,7 @@ import {
     type GroupSubtype,
     PrizeContent,
     PrizeWinnerContent,
-    GroupGate,
+    AccessGate,
     OpenChatGovernanceCanisterId,
     Sns1GovernanceCanisterId,
     MessageReminderCreatedContent,
@@ -900,7 +900,7 @@ export function apiOptional<D, A>(mapper: (d: D) => A, domain: D | undefined): [
     return domain !== undefined ? [mapper(domain)] : [];
 }
 
-export function apiMaybeGroupGate(domain: GroupGate): [] | [ApiGroupGate] {
+export function apiMaybeGroupGate(domain: AccessGate): [] | [ApiGroupGate] {
     if (domain.kind === "no_gate") return [];
     if (domain.kind === "nft_gate") return []; // TODO
     if (domain.kind === "nns_gate") return []; // TODO
@@ -928,7 +928,7 @@ export function apiMaybeGroupGate(domain: GroupGate): [] | [ApiGroupGate] {
     return [];
 }
 
-export function apiGroupGate(domain: GroupGate): ApiGroupGate {
+export function apiGroupGate(domain: AccessGate): ApiGroupGate {
     if (domain.kind === "diamond_gate") return { DiamondMember: null };
     if (domain.kind === "openchat_gate")
         return {
@@ -949,7 +949,7 @@ export function apiGroupGate(domain: GroupGate): ApiGroupGate {
     throw new Error(`Received a domain level group gate that we cannot parse: ${domain}`);
 }
 
-export function groupGate(candid: ApiGroupGate): GroupGate {
+export function groupGate(candid: ApiGroupGate): AccessGate {
     if ("SnsNeuron" in candid) {
         const canisterId = candid.SnsNeuron.governance_canister_id.toString();
         if (canisterId === OpenChatGovernanceCanisterId) {

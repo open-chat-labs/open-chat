@@ -208,5 +208,6 @@ function groupChatSummary(candid: ApiGroupCanisterGroupChatSummary): GroupChatSu
         dateLastPinned: optional(candid.date_last_pinned, identity),
         dateReadPinned: undefined,
         gate: optional(candid.gate, groupGate) ?? { kind: "no_gate" },
+        level: "group",
     };
 }

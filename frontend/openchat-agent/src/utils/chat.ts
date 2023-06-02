@@ -336,6 +336,7 @@ export function mergeGroupChatUpdates(
             dateLastPinned: g?.dateLastPinned ?? c.dateLastPinned,
             dateReadPinned: u?.dateReadPinned ?? c.dateReadPinned,
             gate: applyOptionUpdate(c.gate, g?.gate) ?? { kind: "no_gate" },
+            level: "group",
         };
     });
 }
@@ -380,6 +381,7 @@ export function mergeGroupChats(
             dateLastPinned: g.dateLastPinned,
             dateReadPinned: u?.dateReadPinned,
             gate: g.gate,
+            level: "group",
         };
     });
 }

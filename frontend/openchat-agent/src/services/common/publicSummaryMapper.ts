@@ -58,6 +58,7 @@ export function publicGroupSummary(candid: ApiPublicGroupSummary): GroupChatSumm
         dateLastPinned: undefined,
         dateReadPinned: undefined,
         gate: optional(candid.gate, groupGate) ?? { kind: "no_gate" },
+        level: "group",
     };
 }
 

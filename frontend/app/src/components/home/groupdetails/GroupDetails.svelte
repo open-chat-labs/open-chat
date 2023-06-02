@@ -22,6 +22,7 @@
     import type { OpenChat, GroupChatSummary, AccessRules } from "openchat-client";
     import { AvatarSize } from "openchat-client";
     import GroupGateSummary from "./AccessGateSummary.svelte";
+    import { interpolateLevel } from "../../../utils/i18n";
 
     const dispatch = createEventDispatcher();
 
@@ -63,6 +64,7 @@
 </script>
 
 <GroupDetailsHeader
+    level={chat.level}
     {canEdit}
     on:showMembers={showMembers}
     on:close={clickClose}
@@ -73,7 +75,7 @@
         <CollapsibleCard
             on:toggle={groupInfoOpen.toggle}
             open={$groupInfoOpen}
-            headerText={$_("group.groupInfo")}>
+            headerText={interpolateLevel("group.groupInfo", chat.level)}>
             <div class="sub-section photo">
                 <Avatar url={avatarSrc} size={AvatarSize.Large} />
 
@@ -86,7 +88,7 @@
             {#if chat.description?.length > 0}
                 <fieldset>
                     <legend>
-                        <Legend label={$_("groupDesc")} />
+                        <Legend label={interpolateLevel("groupDesc", chat.level)} />
                     </legend>
                     <Markdown text={description(chat)} />
                 </fieldset>
@@ -97,15 +99,15 @@
             open={$groupVisibilityOpen}
             headerText={$_("access.visibility")}>
             {#if chat.public}
-                <h4>{$_("group.publicGroup")}</h4>
+                <h4>{interpolateLevel("group.publicGroup", chat.level, true)}</h4>
             {:else}
-                <h4>{$_("group.privateGroup")}</h4>
+                <h4>{interpolateLevel("group.privateGroup", chat.level, true)}</h4>
             {/if}
             <div class="info">
                 {#if chat.public}
-                    <p>{$_("publicGroupInfo")}</p>
+                    <p>{interpolateLevel("publicGroupInfo", chat.level, true)}</p>
                 {:else}
-                    <p>{$_("group.privateGroupInfo")}</p>
+                    <p>{interpolateLevel("group.privateGroupInfo", chat.level, true)}</p>
                 {/if}
                 {#if !chat.public}
                     {#if chat.historyVisible}
@@ -121,7 +123,7 @@
             <CollapsibleCard
                 on:toggle={groupRulesOpen.toggle}
                 open={$groupRulesOpen}
-                headerText={$_("group.groupRules")}>
+                headerText={interpolateLevel("rules.rules", chat.level)}>
                 <Markdown inline={false} text={rules.text} />
             </CollapsibleCard>
         {/if}
@@ -142,7 +144,7 @@
         <CollapsibleCard
             on:toggle={groupStatsOpen.toggle}
             open={$groupStatsOpen}
-            headerText={$_("stats.groupStats")}>
+            headerText={interpolateLevel("stats.groupStats", chat.level)}>
             <Stats showReported={false} stats={chat.metrics} />
         </CollapsibleCard>
         {#if client.canDeleteGroup(chat.chatId)}

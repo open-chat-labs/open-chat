@@ -10,7 +10,7 @@
         ChatEvent,
         EventWrapper,
         GroupChatSummary,
-        GroupRules,
+        AccessRules,
         MemberRole,
         Message,
         UserSummary,
@@ -213,7 +213,7 @@
         }
     }
 
-    function updateGroupRules(ev: CustomEvent<{ chatId: string; rules: GroupRules }>) {
+    function updateGroupRules(ev: CustomEvent<{ chatId: string; rules: AccessRules }>) {
         chatStateStore.setProp(ev.detail.chatId, "rules", ev.detail.rules);
     }
 

@@ -993,6 +993,7 @@ export type DirectChatSummary = ChatSummaryCommon & {
 export type GroupChatSummary = DataContent &
     ChatSummaryCommon &
     AccessControlled &
+    HasLevel &
     Permissioned<GroupPermissions> & {
         kind: "group_chat";
         name: string;
