@@ -3,6 +3,7 @@
     import ModalContent from "../../../ModalContent.svelte";
     import Button from "../../../Button.svelte";
     import ButtonGroup from "../../../ButtonGroup.svelte";
+    import { menuCloser } from "../../../../actions/closeMenu";
     import ChooseMembers from "../../ChooseMembers.svelte";
     import { mobileWidth } from "../../../../stores/screenDimensions";
     import { createEventDispatcher, getContext, onMount } from "svelte";
@@ -122,7 +123,7 @@
                 <div class="rules" class:visible={step === 2}>
                     <Rules bind:rules={candidateRules} />
                 </div>
-                <div class="permissions" class:visible={step === 3}>
+                <div use:menuCloser class="permissions" class:visible={step === 3}>
                     {#if canEditPermissions}
                         <PermissionsEditor permissions={candidate.permissions} />
                     {:else}

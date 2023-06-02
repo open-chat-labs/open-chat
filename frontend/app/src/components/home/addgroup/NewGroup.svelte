@@ -2,6 +2,7 @@
     import { _ } from "svelte-i18n";
     import ModalContent from "../../ModalContent.svelte";
     import Button from "../../Button.svelte";
+    import { menuCloser } from "../../../actions/closeMenu";
     import GroupDetails from "./GroupDetails.svelte";
     import Rules from "../Rules.svelte";
     import GroupPermissionsEditor from "../GroupPermissionsEditor.svelte";
@@ -332,8 +333,6 @@
             step = ev.detail;
         }
     }
-
-    $: console.log("Permissions: ", candidateGroup.permissions);
 </script>
 
 {#if confirming}
@@ -359,7 +358,7 @@
                 <div class="rules" class:visible={step === 2}>
                     <Rules bind:rules={candidateGroup.rules} />
                 </div>
-                <div class="permissions" class:visible={step === 3}>
+                <div use:menuCloser class="permissions" class:visible={step === 3}>
                     {#if canEditPermissions}
                         <GroupPermissionsEditor
                             bind:permissions={candidateGroup.permissions}
