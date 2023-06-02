@@ -23,9 +23,7 @@ import type {
     GroupChatDetailsResponse,
     GroupChatEvent,
     GroupChatSummary,
-    AccessGate,
     GroupPermissions,
-    AccessRules,
     IndexRange,
     InviteCodeResponse,
     JoinGroupResponse,
@@ -34,7 +32,6 @@ import type {
     MakeGroupPrivateResponse,
     MarkReadRequest,
     MarkReadResponse,
-    MemberRole,
     Message,
     PendingCryptocurrencyWithdrawal,
     PinMessageResponse,
@@ -93,6 +90,8 @@ import type {
 } from "./search/search";
 import type { Cryptocurrency, Tokens } from "./crypto";
 import type { GroupInvite } from "./inviteCodes";
+import type { MemberRole } from "./permission";
+import type { AccessGate, AccessRules } from "./access";
 
 /**
  * Worker request types
