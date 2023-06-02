@@ -1,6 +1,6 @@
 use crate::env::ENV;
 use crate::rng::{random_message_id, random_string};
-use crate::utils::now_millis;
+use crate::utils::now_nanos;
 use crate::{client, TestEnv};
 use ic_ledger_types::Tokens;
 use std::ops::Deref;
@@ -46,7 +46,7 @@ fn send_message_with_transfer_to_group_succeeds() {
                     to: UserOrAccount::User(user2.user_id),
                     fee: None,
                     memo: None,
-                    created: now_millis(env),
+                    created: now_nanos(env),
                 })),
                 caption: None,
             }),
@@ -64,6 +64,6 @@ fn send_message_with_transfer_to_group_succeeds() {
         let user2_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user2.user_id.into());
         assert_eq!(user2_balance, 10000);
     } else {
-        panic!()
+        panic!("{send_message_result:?}")
     }
 }
