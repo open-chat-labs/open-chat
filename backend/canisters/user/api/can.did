@@ -253,7 +253,8 @@ type CreateCommunityArgs =
         history_visible_to_new_joiners: bool;
         permissions: opt CommunityPermissions;
         rules: AccessRules;
-        gate: opt AccessGate
+        gate: opt AccessGate;
+        default_channels: vec text;
     };
 
 type CreateCommunitySuccessResult =
@@ -277,6 +278,7 @@ type CreateCommunityResponse =
         RulesTooShort: FieldTooShortResult;
         UserSuspended;
         Unauthorized;
+        DefaultChannelsInvalid;
     };
 
 type LeaveCommunityArgs =
