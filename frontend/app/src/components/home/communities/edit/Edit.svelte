@@ -121,7 +121,7 @@
                     <VisibilityControl {candidate} {original} {editing} />
                 </div>
                 <div class="rules" class:visible={step === 2}>
-                    <Rules bind:rules={candidateRules} />
+                    <Rules level={candidate.level} bind:rules={candidateRules} />
                 </div>
                 <div use:menuCloser class="permissions" class:visible={step === 3}>
                     {#if canEditPermissions}

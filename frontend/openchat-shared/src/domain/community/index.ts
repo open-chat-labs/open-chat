@@ -2,9 +2,11 @@ import type { AccessControlled } from "../access";
 import type { DataContent } from "../data";
 import type { HasIdentity } from "../identity";
 import type { CommunityPermissionRole, Permissioned } from "../permission";
+import type { HasLevel } from "../structure";
 
 export type Community = HasIdentity &
     AccessControlled &
+    HasLevel &
     Permissioned<CommunityPermissions> & {
         name: string;
         description: string;

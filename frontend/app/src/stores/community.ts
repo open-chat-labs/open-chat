@@ -36,6 +36,7 @@ function createDummyCommunity(
         myRole: "owner",
         historyVisible: true,
         frozen: false,
+        level: "community",
     };
 }
 
@@ -110,5 +111,6 @@ export function createCandidateCommunity(id: string): Community {
         myRole: "owner",
         historyVisible: true,
         frozen: false,
+        level: "community",
     };
 }

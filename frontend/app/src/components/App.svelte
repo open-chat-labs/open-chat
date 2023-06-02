@@ -3,6 +3,7 @@
 
     import "../i18n/i18n";
     import "../utils/markdown";
+    import "../utils/i18n";
     import { rtlStore } from "../stores/rtl";
     import { _ } from "svelte-i18n";
     import Router from "./Router.svelte";

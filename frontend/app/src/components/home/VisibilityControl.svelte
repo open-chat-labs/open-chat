@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { interpolateLevel } from "../../utils/i18n";
     import LockOutline from "svelte-material-icons/LockOutline.svelte";
     import Checkbox from "../Checkbox.svelte";
     import {
@@ -7,6 +8,7 @@
         OpenChat,
         HasIdentity,
         Permissioned,
+        HasLevel,
     } from "openchat-client";
     import { _ } from "svelte-i18n";
     import Radio from "../Radio.svelte";
@@ -23,7 +25,7 @@
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
 
-    export let candidate: AccessControlled & HasIdentity & Permissioned<T>;
+    export let candidate: AccessControlled & HasIdentity & HasLevel & Permissioned<T>;
     export let original: AccessControlled & HasIdentity;
     export let editing: boolean;
 
@@ -82,10 +84,10 @@
         group={"visibility"}>
         <div class="section-title">
             <div class={"img private"} />
-            <p>{$_("group.privateGroup")}</p>
+            <p>{interpolateLevel("group.privateGroup", candidate.level, true)}</p>
         </div>
         <div class="info">
-            <p>{$_("privateGroupInfo")}</p>
+            <p>{interpolateLevel("privateGroupInfo", candidate.level, true)}</p>
         </div>
     </Radio>
 </div>
@@ -101,11 +103,11 @@
             group={"visibility"}>
             <div class="section-title">
                 <div class={"img public"} />
-                <p>{$_("group.publicGroup")}</p>
+                <p>{interpolateLevel("group.publicGroup", candidate.level, true)}</p>
             </div>
             <div class="info">
-                <p>{$_("publicGroupInfo")}</p>
-                <p>{$_("publicGroupUnique")}</p>
+                <p>{interpolateLevel("publicGroupInfo", candidate.level, true)}</p>
+                <p>{interpolateLevel("publicGroupUnique", candidate.level, true)}</p>
             </div>
         </Radio>
     </div>

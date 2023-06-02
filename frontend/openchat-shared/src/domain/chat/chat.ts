@@ -5,6 +5,7 @@ import type { Cryptocurrency } from "../crypto";
 import type { AccessGate, AccessControlled, AccessRules } from "../access";
 import type { GroupPermissionRole, MemberRole, Permissioned } from "../permission";
 import type { HasIdentity } from "../identity";
+import type { HasLevel, Level } from "../structure";
 
 export const Sns1GovernanceCanisterId = "zqfso-syaaa-aaaaq-aaafq-cai";
 export const OpenChatGovernanceCanisterId = "2jvtu-yqaaa-aaaaq-aaama-cai";
@@ -1097,6 +1098,7 @@ export type CandidateMember = {
 
 export type CandidateGroupChat = HasIdentity &
     AccessControlled &
+    HasLevel &
     Permissioned<GroupPermissions> & {
         name: string;
         description: string;

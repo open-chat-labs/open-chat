@@ -3,11 +3,13 @@
     import TextArea from "../TextArea.svelte";
     import Legend from "../Legend.svelte";
     import Toggle from "../Toggle.svelte";
-    import type { AccessRules } from "openchat-client";
+    import type { AccessRules, Level } from "openchat-client";
+    import { interpolateLevel } from "../../utils/i18n";
 
     const MAX_RULES_LENGTH = 1024;
 
     export let rules: AccessRules;
+    export let level: Level;
 
     function toggleRules() {
         rules.enabled = !rules.enabled;
@@ -19,17 +21,17 @@
         small
         id="enable-rules"
         on:change={toggleRules}
-        label={$_("group.rules.enable")}
+        label={$_("rules.enable")}
         checked={rules.enabled} />
-    <div class="instructions">{$_("group.rules.instructions")}</div>
+    <div class="instructions">{interpolateLevel("rules.instructions", level, true)}</div>
 
-    <Legend label={"Group rules"} />
+    <Legend label={interpolateLevel("rules.rules", level)} />
     <TextArea
         bind:value={rules.text}
         minlength={0}
         maxlength={MAX_RULES_LENGTH}
         rows={8}
-        placeholder={$_("group.rules.placeholder")} />
+        placeholder={interpolateLevel("rules.placeholder", level, true)} />
 </div>
 
 <style type="text/scss">

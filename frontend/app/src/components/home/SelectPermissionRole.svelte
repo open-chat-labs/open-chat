@@ -2,6 +2,7 @@
     import { _ } from "svelte-i18n";
     import Legend from "../Legend.svelte";
     import Kebab from "svelte-material-icons/DotsVertical.svelte";
+    import ChevronDown from "svelte-material-icons/ChevronDown.svelte";
     import Check from "svelte-material-icons/Check.svelte";
     import MenuIcon from "../MenuIcon.svelte";
     import Menu from "../Menu.svelte";
@@ -21,13 +22,13 @@
 </script>
 
 <Legend label={`${$_("permissions.whoCan")} ${label}`} />
-<div class:selecting class="select" on:click|stopPropagation={() => menu.showMenu()}>
+<div class:selecting class="permission-select" on:click|stopPropagation={() => menu.showMenu()}>
     <div class="role">
         {$_(`role.${rolePermission}`)}
     </div>
     <MenuIcon bind:this={menu} position="bottom" align="end">
         <span class="icon" slot="icon">
-            <Kebab viewBox={"0 -3 24 24"} size={$iconSize} color={"var(--icon-txt)"} />
+            <ChevronDown viewBox={"0 -3 24 24"} size={$iconSize} color={"var(--icon-txt)"} />
         </span>
         <span slot="menu">
             <Menu>
@@ -51,7 +52,7 @@
 </div>
 
 <style type="text/scss">
-    .select {
+    .permission-select {
         max-width: toRem(300);
         background-color: var(--input-bg);
         padding: $sp3 $sp3 $sp3 $sp4;

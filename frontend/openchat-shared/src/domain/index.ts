@@ -22,3 +22,4 @@ export * from "./community";
 export * from "./access";
 export * from "./permission";
 export * from "./identity";
+export * from "./structure";

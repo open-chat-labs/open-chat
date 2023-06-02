@@ -29,6 +29,7 @@
         EventWrapper,
         ChatType,
         Community,
+        Level,
     } from "openchat-client";
     import Overlay from "../Overlay.svelte";
     import { getContext, onMount, tick } from "svelte";
@@ -771,10 +772,10 @@
 
     function newChannel() {
         // TODO - come back to this
-        newGroup();
+        newGroup("channel");
     }
 
-    function newGroup() {
+    function newGroup(level: Level = "group") {
         modal = ModalType.NewGroup;
         candidateGroup = {
             id: "",
@@ -801,6 +802,7 @@
             rules: defaultAccessRules,
             gate: { kind: "no_gate" },
             myRole: "owner",
+            level,
         };
     }
 
@@ -825,6 +827,7 @@
                 blobData: chat.blobData,
             },
             gate: chat.gate,
+            level: "group",
         };
     }
 
@@ -893,7 +896,7 @@
             on:browseChannels={browseChannels}
             on:halloffame={() => (modal = ModalType.HallOfFame)}
             on:logout={() => client.logout()}
-            on:newGroup={newGroup}
+            on:newGroup={() => newGroup("group")}
             on:editCommunity={editCommunity}
             on:showHomePage={showLandingPageRoute("/home")}
             on:newChannel={newChannel}
@@ -911,7 +914,7 @@
             on:searchEntered={performSearch}
             on:chatWith={chatWith}
             on:halloffame={() => (modal = ModalType.HallOfFame)}
-            on:newGroup={newGroup}
+            on:newGroup={() => newGroup("group")}
             on:profile={showProfile}
             on:browseChannels={browseChannels}
             on:editCommunity={editCommunity}

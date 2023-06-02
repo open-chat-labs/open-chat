@@ -5,6 +5,7 @@
     import Input from "../../Input.svelte";
     import TextArea from "../../TextArea.svelte";
     import Legend from "../../Legend.svelte";
+    import { interpolateLevel } from "utils/i18n";
 
     const MIN_LENGTH = 3;
     const MAX_LENGTH = 25;
@@ -22,7 +23,7 @@
 </script>
 
 <section>
-    <Legend label={"Group Image"} />
+    <Legend label={interpolateLevel("group.image", candidateGroup.level)} />
     <div class="photo">
         <EditableAvatar
             overlayIcon
@@ -32,7 +33,7 @@
 </section>
 
 <section>
-    <Legend label={"Group name"} required />
+    <Legend label={interpolateLevel("group.name", candidateGroup.level)} required />
     <Input
         autofocus
         disabled={busy}
@@ -40,17 +41,17 @@
         minlength={MIN_LENGTH}
         maxlength={MAX_LENGTH}
         countdown
-        placeholder={$_("newGroupName")} />
+        placeholder={interpolateLevel("newGroupName", candidateGroup.level, true)} />
 </section>
 
 <section>
-    <Legend label={"Description"} />
+    <Legend label={interpolateLevel("group.description", candidateGroup.level)} />
     <TextArea
         rows={4}
         disabled={busy}
         bind:value={candidateGroup.description}
         maxlength={MAX_DESC_LENGTH}
-        placeholder={$_("newGroupDesc")} />
+        placeholder={interpolateLevel("newGroupDesc", candidateGroup.level, true)} />
 </section>
 
 <style type="text/scss">

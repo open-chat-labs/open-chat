@@ -231,7 +231,7 @@ import {
     type Message,
     type GroupChatSummary,
     type MemberRole,
-    type GroupRules,
+    type AccessRules,
     type GroupPermissions,
     missingUserIds,
     type EventsResponse,
@@ -949,7 +949,7 @@ export class OpenChat extends EventTarget {
             });
     }
 
-    updateGroupRules(chatId: string, rules: GroupRules | undefined): Promise<boolean> {
+    updateGroupRules(chatId: string, rules: AccessRules | undefined): Promise<boolean> {
         return this.api
             .updateGroup(chatId, undefined, undefined, rules, undefined, undefined, undefined)
             .then((resp) => resp === "success")
@@ -3116,7 +3116,7 @@ export class OpenChat extends EventTarget {
         return this.api.getRecommendedGroups([...exclusions]);
     }
 
-    getGroupRules(chatId: string): Promise<GroupRules | undefined> {
+    getGroupRules(chatId: string): Promise<AccessRules | undefined> {
         return this.api.getGroupRules(chatId);
     }
 
@@ -3290,7 +3290,7 @@ export class OpenChat extends EventTarget {
         chatId: string,
         name?: string,
         description?: string,
-        rules?: GroupRules,
+        rules?: AccessRules,
         permissions?: Partial<GroupPermissions>,
         avatar?: Uint8Array,
         gate?: AccessGate

@@ -23,6 +23,7 @@
     import page from "page";
     import AreYouSure from "../../AreYouSure.svelte";
     import VisibilityControl from "../VisibilityControl.svelte";
+    import { interpolateLevel } from "../../../utils/i18n";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -34,7 +35,6 @@
     let confirming = false;
     let busy = false;
     let step = 0;
-    let user = client.user;
     let actualWidth = 0;
     let originalGroup = {
         ...candidateGroup,
@@ -47,7 +47,6 @@
     $: padding = $mobileWidth ? 16 : 24; // yes this is horrible
     $: left = step * (actualWidth - padding);
     $: valid = candidateGroup.name.length > MIN_LENGTH && candidateGroup.name.length <= MAX_LENGTH;
-    $: finalStep = candidateGroup.public ? 3 : 4;
     $: canEditPermissions =
         candidateGroup.id === "" ? true : client.canChangePermissions(candidateGroup.id);
 
@@ -76,7 +75,7 @@
         let steps = [
             { labelKey: "group.details", valid: true },
             { labelKey: "access.visibility", valid: true },
-            { labelKey: "group.groupRules", valid: true },
+            { labelKey: interpolateLevel("rules.rules", candidateGroup.level), valid: true },
             { labelKey: "permissions.permissions", valid: true },
         ];
 
@@ -84,6 +83,10 @@
             steps.push({ labelKey: "group.invite.invite", valid: true });
         }
         return steps;
+    }
+
+    function interpolateError(error: string): string {
+        return interpolateLevel(error, candidateGroup.level, true);
     }
 
     function groupUpdateErrorMessage(resp: UpdateGroupResponse): string | undefined {
@@ -228,7 +231,7 @@
             .then((resp) => {
                 const err = groupUpdateErrorMessage(resp);
                 if (err) {
-                    toastStore.showFailureToast(err);
+                    toastStore.showFailureToast(interpolateError(err));
                 } else {
                     originalGroup = {
                         ...originalGroup,
@@ -237,7 +240,9 @@
                 }
             })
             .catch(() => {
-                toastStore.showFailureToast("groupUpdateFailed");
+                toastStore.showFailureToast("groupUpdateFailed", {
+                    values: { level: candidateGroup.level },
+                });
             });
     }
 
@@ -251,7 +256,9 @@
                     rules: candidateGroup.rules,
                 });
             } else {
-                toastStore.showFailureToast("group.rulesUpdateFailed");
+                toastStore.showFailureToast("group.rulesUpdateFailed", {
+                    values: { level: candidateGroup.level },
+                });
             }
         });
     }
@@ -272,7 +279,7 @@
             .then((resp) => {
                 const err = groupUpdateErrorMessage(resp);
                 if (err) {
-                    toastStore.showFailureToast(err);
+                    toastStore.showFailureToast(interpolateError(err));
                 } else {
                     originalGroup = {
                         ...originalGroup,
@@ -283,7 +290,9 @@
                 }
             })
             .catch(() => {
-                toastStore.showFailureToast("groupUpdateFailed");
+                toastStore.showFailureToast("groupUpdateFailed", {
+                    values: { level: candidateGroup.level },
+                });
             });
     }
 
@@ -295,7 +304,7 @@
             .then((resp) => {
                 if (resp.kind !== "success") {
                     const err = groupCreationErrorMessage(resp);
-                    if (err) toastStore.showFailureToast(err);
+                    if (err) toastStore.showFailureToast(interpolateError(err));
                     step = 0;
                 } else {
                     return optionallyInviteUsers(resp.canisterId)
@@ -340,7 +349,11 @@
 {/if}
 
 <ModalContent bind:actualWidth closeIcon on:close>
-    <div class="header" slot="header">{editing ? $_("group.edit") : $_("group.createTitle")}</div>
+    <div class="header" slot="header">
+        {editing
+            ? interpolateLevel("group.edit", candidateGroup.level, true)
+            : interpolateLevel("group.createTitle", candidateGroup.level, true)}
+    </div>
     <div class="body" slot="body">
         <StageHeader {steps} enabled={valid} on:step={changeStep} {step} />
         <div class="wrapper">
@@ -356,7 +369,7 @@
                         bind:candidate={candidateGroup} />
                 </div>
                 <div class="rules" class:visible={step === 2}>
-                    <Rules bind:rules={candidateGroup.rules} />
+                    <Rules level={candidateGroup.level} bind:rules={candidateGroup.rules} />
                 </div>
                 <div use:menuCloser class="permissions" class:visible={step === 3}>
                     {#if canEditPermissions}
@@ -402,8 +415,9 @@
                         loading={busy}
                         small={!$mobileWidth}
                         tiny={$mobileWidth}
-                        on:click={() => updateGroup()}>{$_("group.update")}</Button>
-                {:else if step < finalStep}
+                        on:click={() => updateGroup()}
+                        >{interpolateLevel("group.update", candidateGroup.level, true)}</Button>
+                {:else if step < 4}
                     <Button
                         disabled={!valid}
                         small={!$mobileWidth}
@@ -417,7 +431,8 @@
                         loading={busy}
                         small={!$mobileWidth}
                         tiny={$mobileWidth}
-                        on:click={createGroup}>{$_("group.create")}</Button>
+                        on:click={createGroup}
+                        >{interpolateLevel("group.create", candidateGroup.level, true)}</Button>
                 {/if}
             </div>
         </div>
