@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{ChannelId, EventIndex, EventsResponse, MessageIndex};
+use types::{ChannelId, EventIndex, MessageIndex};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -10,12 +10,4 @@ pub struct Args {
     pub latest_client_event_index: Option<EventIndex>,
 }
 
-#[derive(CandidType, Serialize, Deserialize, Debug)]
-pub enum Response {
-    Success(EventsResponse),
-    CallerNotInCommunity,
-    UserNotInChannel,
-    ChannelNotFound,
-    ThreadNotFound,
-    ReplicaNotUpToDate(EventIndex),
-}
+pub use crate::EventsResponse as Response;
