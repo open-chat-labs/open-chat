@@ -20,6 +20,8 @@
     let joining: Set<string> = new Set();
     let canCreate = true; //TODO - permissions?
 
+    $: isDiamond = client.isDiamond;
+
     $: selectedCommunityId =
         $pathParams.kind === "communities_route" ? $pathParams.communityId : undefined;
 
@@ -43,6 +45,14 @@
             joining = joining;
         }, 2000);
     }
+
+    function createCommunity() {
+        if (!$isDiamond) {
+            dispatch("upgrade");
+        } else {
+            dispatch("createCommunity");
+        }
+    }
 </script>
 
 <div class="explore">
@@ -61,7 +71,7 @@
                 </div>
                 {#if canCreate}
                     <div class="create">
-                        <Button on:click={() => dispatch("createCommunity")} hollow
+                        <Button on:click={createCommunity} hollow
                             >{$_("communities.create")}</Button>
                     </div>
                 {/if}

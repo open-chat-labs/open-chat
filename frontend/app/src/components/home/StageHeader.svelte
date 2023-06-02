@@ -63,7 +63,7 @@
             }
             &.invalid::after {
                 content: "!";
-                color: var(--error);
+                color: var(--menu-warn);
             }
         }
 

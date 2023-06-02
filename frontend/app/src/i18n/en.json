@@ -777,7 +777,8 @@
         "reminders": "Reminders",
         "notifications": "Notifications",
         "freeNotifications": "iOS, Android & Desktop",
-        "diamondNotifications": "iOS, Android & Desktop"
+        "diamondNotifications": "iOS, Android & Desktop",
+        "createCommunities": "Create communities"
     },
     "promoteTo": "Promote to {role}",
     "demoteTo": "Demote to {role}",

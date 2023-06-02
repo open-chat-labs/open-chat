@@ -90,7 +90,7 @@
         color: var(--txt-light);
 
         &.near-max {
-            color: var(--warn);
+            color: var(--menu-warn);
         }
     }
 
