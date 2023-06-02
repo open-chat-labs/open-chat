@@ -1,5 +1,4 @@
-use group_chat_core::GroupChatCore;
-use group_members::GroupMemberInternal;
+use group_chat_core::{GroupChatCore, GroupMemberInternal};
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::{HashMap, HashSet};

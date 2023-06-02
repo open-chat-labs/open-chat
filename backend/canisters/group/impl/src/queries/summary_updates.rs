@@ -2,7 +2,7 @@ use crate::{read_state, Data, RuntimeState};
 use canister_api_macros::query_msgpack;
 use chat_events::{ChatEventInternal, Reader};
 use group_canister::summary_updates::{Response::*, *};
-use group_members::GroupMemberInternal;
+use group_chat_core::GroupMemberInternal;
 use ic_cdk_macros::query;
 use std::cmp::max;
 use types::{

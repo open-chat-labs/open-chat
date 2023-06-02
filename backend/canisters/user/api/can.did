@@ -185,8 +185,8 @@ type CreateGroupArgs =
         avatar: opt Avatar;
         history_visible_to_new_joiners: bool;
         permissions: opt GroupPermissions;
-        rules: GroupRules;
-        gate: opt GroupGate
+        rules: AccessRules;
+        gate: opt AccessGate
     };
 
 type CreateGroupSuccessResult =
@@ -252,8 +252,8 @@ type CreateCommunityArgs =
         avatar: opt Avatar;
         history_visible_to_new_joiners: bool;
         permissions: opt CommunityPermissions;
-        rules: GroupRules;
-        gate: opt GroupGate
+        rules: AccessRules;
+        gate: opt AccessGate
     };
 
 type CreateCommunitySuccessResult =
@@ -625,13 +625,6 @@ type EventsWindowArgs =
         max_messages: nat32;
         max_events: nat32;
         latest_client_event_index: opt EventIndex;
-    };
-
-type EventsSuccessResult =
-    record {
-        events: vec ChatEventWrapper;
-        latest_event_index: EventIndex;
-        timestamp: TimestampMillis;
     };
 
 type EventsResponse =

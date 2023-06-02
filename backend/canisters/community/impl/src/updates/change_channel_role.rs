@@ -1,7 +1,7 @@
 use crate::{mutate_state, RuntimeState};
 use canister_tracing_macros::trace;
 use community_canister::change_channel_role::{Response::*, *};
-use group_members::ChangeRoleResult;
+use group_chat_core::ChangeRoleResult;
 use ic_cdk_macros::update;
 
 #[update]

@@ -75,7 +75,6 @@ struct Data {
     pub icp_ledger_canister_id: CanisterId,
     pub chat_ledger_canister_id: CanisterId,
     pub orders_log: OrdersLog,
-    #[serde(default)]
     pub market_makers_in_progress: HashMap<ExchangeId, TimestampMillis>,
     pub test_mode: bool,
 }

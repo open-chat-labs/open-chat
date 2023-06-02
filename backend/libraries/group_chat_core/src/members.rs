@@ -1,5 +1,3 @@
-mod mentions;
-
 use crate::mentions::Mentions;
 use chat_events::ChatEvents;
 use serde::{Deserialize, Serialize};

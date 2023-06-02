@@ -5,6 +5,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.703](https://github.com/open-ic/open-chat/releases/tag/v2.0.703-group_index)] - 2023-06-01
+
 ### Added
 
 - Integrate Communities ([#3656](https://github.com/open-ic/open-chat/pull/3656)), ([#3657](https://github.com/open-ic/open-chat/pull/3657)), ([#3687](https://github.com/open-ic/open-chat/pull/3687))

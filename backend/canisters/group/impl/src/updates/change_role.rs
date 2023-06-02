@@ -3,7 +3,7 @@ use crate::updates::change_role::Response::*;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use group_canister::change_role::*;
-use group_members::ChangeRoleResult;
+use group_chat_core::ChangeRoleResult;
 use ic_cdk_macros::update;
 use types::{CanisterId, UserId};
 use user_index_canister_c2c_client::{lookup_user, LookupUserError};

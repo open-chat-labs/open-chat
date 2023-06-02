@@ -101,42 +101,26 @@ impl RuntimeState {
 #[derive(Serialize, Deserialize)]
 struct Data {
     pub local_groups: LocalGroupMap,
-    #[serde(default)]
     pub local_communities: LocalCommunityMap,
     pub group_canister_wasm_for_new_canisters: CanisterWasm,
     pub group_canister_wasm_for_upgrades: CanisterWasm,
-    #[serde(default)]
     pub community_canister_wasm_for_new_canisters: CanisterWasm,
-    #[serde(default)]
     pub community_canister_wasm_for_upgrades: CanisterWasm,
     pub user_index_canister_id: CanisterId,
     pub local_user_index_canister_id: CanisterId,
     pub group_index_canister_id: CanisterId,
     pub notifications_canister_id: CanisterId,
-    #[serde(alias = "canisters_requiring_upgrade")]
     pub groups_requiring_upgrade: CanistersRequiringUpgrade,
-    #[serde(default)]
     pub communities_requiring_upgrade: CanistersRequiringUpgrade,
     pub cycles_dispenser_canister_id: CanisterId,
     pub proposals_bot_user_id: UserId,
     pub canister_pool: canister::Pool,
     pub total_cycles_spent_on_canisters: Cycles,
     pub test_mode: bool,
-    #[serde(alias = "max_concurrent_canister_upgrades")]
     pub max_concurrent_group_upgrades: u32,
     pub group_upgrade_concurrency: u32,
-    #[serde(default = "ten")]
     pub max_concurrent_community_upgrades: u32,
-    #[serde(default = "two")]
     pub community_upgrade_concurrency: u32,
-}
-
-fn ten() -> u32 {
-    10
-}
-
-fn two() -> u32 {
-    2
 }
 
 impl Data {
