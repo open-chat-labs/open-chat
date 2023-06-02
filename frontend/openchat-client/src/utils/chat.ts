@@ -684,6 +684,7 @@ export function groupChatFromCandidate(
         dateLastPinned: undefined,
         dateReadPinned: undefined,
         gate: candidate.gate,
+        level: "group",
     };
 }
 
