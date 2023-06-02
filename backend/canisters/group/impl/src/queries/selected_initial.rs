@@ -25,7 +25,7 @@ fn selected_initial_impl(state: &RuntimeState) -> Response {
                 .unwrap_or_default(),
             participants: members.iter().map(|p| p.into()).collect(),
             blocked_users: members.blocked(),
-            invited_users: state.data.invited_users.users(),
+            invited_users: state.data.chat.invited_users.users(),
             pinned_messages: state
                 .data
                 .chat

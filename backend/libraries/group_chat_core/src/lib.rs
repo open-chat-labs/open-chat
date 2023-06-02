@@ -1,6 +1,8 @@
+mod invited_users;
 mod members;
 mod mentions;
 
+pub use invited_users::*;
 pub use members::*;
 pub use mentions::*;
 
@@ -39,6 +41,8 @@ pub struct GroupChatCore {
     pub permissions: GroupPermissions,
     pub date_last_pinned: Option<TimestampMillis>,
     pub gate: Timestamped<Option<AccessGate>>,
+    #[serde(default)]
+    pub invited_users: InvitedUsers,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -75,6 +79,7 @@ impl GroupChatCore {
             permissions,
             date_last_pinned: None,
             gate: Timestamped::new(gate, now),
+            invited_users: InvitedUsers::default(),
         }
     }
 

@@ -1,11 +1,11 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::guards::caller_is_user_index_or_local_user_index;
-use crate::model::invited_users::UserInvitation;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use chat_events::ChatEventInternal;
 use group_canister::c2c_invite_users::{Response::*, *};
+use group_chat_core::UserInvitation;
 use types::{EventIndex, MessageIndex, UsersInvited};
 
 const MAX_INVITES: usize = 100;
@@ -37,7 +37,7 @@ fn c2c_invite_users_impl(args: Args, state: &mut RuntimeState) -> Response {
             .users
             .iter()
             .filter(|(user_id, principal)| {
-                state.data.chat.members.get(user_id).is_none() && !state.data.invited_users.contains(principal)
+                state.data.chat.members.get(user_id).is_none() && !state.data.chat.invited_users.contains(principal)
             })
             .copied()
             .collect();
@@ -46,7 +46,7 @@ fn c2c_invite_users_impl(args: Args, state: &mut RuntimeState) -> Response {
 
         if !state.data.chat.is_public {
             // Check the max invite limit will not be exceeded
-            if state.data.invited_users.len() + invited_users.len() > MAX_INVITES {
+            if state.data.chat.invited_users.len() + invited_users.len() > MAX_INVITES {
                 return TooManyInvites(MAX_INVITES as u32);
             }
 
@@ -65,7 +65,7 @@ fn c2c_invite_users_impl(args: Args, state: &mut RuntimeState) -> Response {
 
             // Add new invites
             for (user_id, principal) in invited_users.iter() {
-                state.data.invited_users.add(
+                state.data.chat.invited_users.add(
                     *principal,
                     UserInvitation {
                         invited: *user_id,
