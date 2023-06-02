@@ -133,6 +133,7 @@ pub struct GlobalUser {
     pub user_id: UserId,
     pub principal: Principal,
     pub is_bot: bool,
-    #[serde(alias = "is_super_admin")]
+    #[serde(default)]
+    pub is_super_admin: bool,
     pub is_platform_moderator: bool,
 }

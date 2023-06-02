@@ -15,7 +15,11 @@ pub fn tick_many(env: &mut StateMachine, count: usize) {
 }
 
 pub fn now_millis(env: &StateMachine) -> TimestampMillis {
-    env.time().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_millis() as u64
+    now_nanos(env) / 1_000_000
+}
+
+pub fn now_nanos(env: &StateMachine) -> TimestampMillis {
+    env.time().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_nanos() as u64
 }
 
 pub fn local_bin() -> PathBuf {

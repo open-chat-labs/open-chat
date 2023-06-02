@@ -1,6 +1,9 @@
+mod invited_users;
 mod members;
 mod mentions;
 
+use candid::Principal;
+pub use invited_users::*;
 pub use members::*;
 pub use mentions::*;
 
@@ -18,7 +21,7 @@ use types::{
     GroupVisibilityChanged, InvalidPollReason, MemberLeft, MembersRemoved, MentionInternal, Message, MessageContent,
     MessageContentInitial, MessageContentInternal, MessageId, MessageIndex, MessageMatch, MessagePinned, MessageUnpinned,
     MessagesResponse, Milliseconds, OptionUpdate, OptionalGroupPermissions, PermissionsChanged, PushEventResult, Reaction,
-    RoleChanged, ThreadPreview, TimestampMillis, Timestamped, User, UserId, UsersBlocked,
+    RoleChanged, ThreadPreview, TimestampMillis, Timestamped, User, UserId, UsersBlocked, UsersInvited,
 };
 use utils::avatar_validation::validate_avatar;
 use utils::group_validation::{validate_description, validate_name, validate_rules, NameValidationError, RulesValidationError};
@@ -39,6 +42,8 @@ pub struct GroupChatCore {
     pub permissions: GroupPermissions,
     pub date_last_pinned: Option<TimestampMillis>,
     pub gate: Timestamped<Option<AccessGate>>,
+    #[serde(default)]
+    pub invited_users: InvitedUsers,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -75,6 +80,7 @@ impl GroupChatCore {
             permissions,
             date_last_pinned: None,
             gate: Timestamped::new(gate, now),
+            invited_users: InvitedUsers::default(),
         }
     }
 
@@ -787,6 +793,88 @@ impl GroupChatCore {
         }
     }
 
+    pub fn invite_users(
+        &mut self,
+        invited_by: UserId,
+        users: Vec<(UserId, Principal)>,
+        now: TimestampMillis,
+    ) -> InvitedUsersResult {
+        use InvitedUsersResult::*;
+
+        const MAX_INVITES: usize = 100;
+
+        if let Some(member) = self.members.get(&invited_by) {
+            if member.suspended.value {
+                return UserSuspended;
+            }
+
+            // The original caller must be authorized to invite other users
+            if !self.is_public && !member.role.can_invite_users(&self.permissions) {
+                return NotAuthorized;
+            }
+
+            // Filter out users who are already members and those who have already been invited
+            let invited_users: Vec<_> = users
+                .iter()
+                .filter(|(user_id, principal)| self.members.get(user_id).is_none() && !self.invited_users.contains(principal))
+                .copied()
+                .collect();
+
+            let user_ids: Vec<_> = invited_users.iter().map(|(user_id, _)| user_id).copied().collect();
+
+            if !self.is_public {
+                // Check the max invite limit will not be exceeded
+                if self.invited_users.len() + invited_users.len() > MAX_INVITES {
+                    return TooManyInvites(MAX_INVITES as u32);
+                }
+
+                // Find the latest event and message that the invited users are allowed to see
+                let mut min_visible_event_index = EventIndex::default();
+                let mut min_visible_message_index = MessageIndex::default();
+                if !self.history_visible_to_new_joiners {
+                    // If there is only an initial "group created" event then allow these users
+                    // to see the "group created" event by starting min_visible_* at zero
+                    let events_reader = self.events.main_events_reader(now);
+                    if events_reader.len() > 1 {
+                        min_visible_event_index = events_reader.next_event_index();
+                        min_visible_message_index = events_reader.next_message_index();
+                    }
+                };
+
+                // Add new invites
+                for (user_id, principal) in invited_users.iter() {
+                    self.invited_users.add(
+                        *principal,
+                        UserInvitation {
+                            invited: *user_id,
+                            invited_by: member.user_id,
+                            timestamp: now,
+                            min_visible_event_index,
+                            min_visible_message_index,
+                        },
+                    );
+                }
+
+                // Push a UsersInvited event
+                self.events.push_main_event(
+                    ChatEventInternal::UsersInvited(Box::new(UsersInvited {
+                        user_ids: user_ids.clone(),
+                        invited_by: member.user_id,
+                    })),
+                    0,
+                    now,
+                );
+            }
+
+            Success(InvitedUsersSuccess {
+                invited_users: user_ids,
+                group_name: self.name.clone(),
+            })
+        } else {
+            UserNotInGroup
+        }
+    }
+
     pub fn leave(&mut self, user_id: UserId, now: TimestampMillis) -> LeaveResult {
         use LeaveResult::*;
 
@@ -1341,4 +1429,17 @@ pub enum SearchResults {
     TermTooShort(u8),
     TooManyUsers(u8),
     UserNotInGroup,
+}
+
+pub enum InvitedUsersResult {
+    Success(InvitedUsersSuccess),
+    UserNotInGroup,
+    TooManyInvites(u32),
+    UserSuspended,
+    NotAuthorized,
+}
+
+pub struct InvitedUsersSuccess {
+    pub invited_users: Vec<UserId>,
+    pub group_name: String,
 }

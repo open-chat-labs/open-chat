@@ -859,7 +859,7 @@
             return false;
         }
 
-        page(`/direct_user/${chatId}`);
+        page(`/user/${chatId}`);
         return true;
     }
 

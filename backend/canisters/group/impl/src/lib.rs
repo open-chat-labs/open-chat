@@ -8,7 +8,6 @@ use canister_timer_jobs::TimerJobs;
 use chat_events::{ChatEventInternal, Reader};
 use fire_and_forget_handler::FireAndForgetHandler;
 use group_chat_core::{AddResult as AddMemberResult, GroupChatCore, GroupMemberInternal};
-use model::invited_users::InvitedUsers;
 use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
@@ -189,7 +188,7 @@ impl RuntimeState {
             admins: group_chat_core.members.admin_count(),
             owners: group_chat_core.members.owner_count(),
             blocked: group_chat_core.members.blocked().len() as u32,
-            invited: self.data.invited_users.len() as u32,
+            invited: self.data.chat.invited_users.len() as u32,
             text_messages: chat_metrics.text_messages,
             image_messages: chat_metrics.image_messages,
             video_messages: chat_metrics.video_messages,
@@ -246,7 +245,6 @@ struct Data {
     pub new_joiner_rewards: Option<NewJoinerRewards>,
     pub frozen: Timestamped<Option<FrozenGroupInfo>>,
     pub timer_jobs: TimerJobs<TimerJob>,
-    pub invited_users: InvitedUsers,
     pub fire_and_forget_handler: FireAndForgetHandler,
 }
 
@@ -307,13 +305,12 @@ impl Data {
             new_joiner_rewards: None,
             frozen: Timestamped::default(),
             timer_jobs: TimerJobs::default(),
-            invited_users: InvitedUsers::default(),
             fire_and_forget_handler: FireAndForgetHandler::default(),
         }
     }
 
-    pub fn lookup_user_id(&self, principal: &Principal) -> Option<UserId> {
-        self.principal_to_user_id_map.get(principal).copied()
+    pub fn lookup_user_id(&self, user_id_or_principal: Principal) -> Option<UserId> {
+        self.get_member(user_id_or_principal).map(|m| m.user_id)
     }
 
     pub fn get_member(&self, user_id_or_principal: Principal) -> Option<&GroupMemberInternal> {
@@ -343,7 +340,7 @@ impl Data {
     pub fn is_accessible(&self, caller: Principal, invite_code: Option<u64>) -> bool {
         self.chat.is_public
             || self.get_member(caller).is_some()
-            || self.invited_users.get(&caller).is_some()
+            || self.chat.invited_users.get(&caller).is_some()
             || self.is_invite_code_valid(invite_code)
     }
 

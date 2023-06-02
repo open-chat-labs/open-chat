@@ -51,4 +51,8 @@ impl InvitedUsers {
     pub fn len(&self) -> usize {
         self.users.len()
     }
+
+    pub fn is_empty(&self) -> bool {
+        self.users.is_empty()
+    }
 }

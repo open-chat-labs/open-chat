@@ -20,7 +20,6 @@ npm run --prefix frontend deploy:prod_test
 if [ $? -eq 0 ]; then
     echo "npm deploy script succeeded - proceeding with dfx deploy"
     dfx --identity $IDENTITY deploy --network ic_test --no-wallet website
-    icx-asset --pem ~/.config/dfx/identity/$IDENTITY/identity.pem --replica https://ic0.app/ upload pfs7b-iqaaa-aaaaf-abs7q-cai /.well-known/ii-alternative-origins=frontend/app/build/.well-known/ii-alternative-origins
 else
   echo "npm run --prefix frontend deploy:prod_test - failed"
 fi

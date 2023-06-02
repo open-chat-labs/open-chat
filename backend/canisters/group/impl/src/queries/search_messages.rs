@@ -11,7 +11,7 @@ fn search_messages(args: Args) -> Response {
 fn search_messages_impl(args: Args, state: &RuntimeState) -> Response {
     let caller = state.env.caller();
 
-    if let Some(user_id) = state.data.lookup_user_id(&caller) {
+    if let Some(user_id) = state.data.lookup_user_id(caller) {
         match state
             .data
             .chat
