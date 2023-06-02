@@ -66,7 +66,7 @@ fn c2c_join_group_impl(args: Args, state: &mut RuntimeState) -> Response {
     let min_visible_event_index;
     let min_visible_message_index;
 
-    if let Some(invitation) = state.data.invited_users.get(&args.principal) {
+    if let Some(invitation) = state.data.chat.invited_users.get(&args.principal) {
         min_visible_event_index = invitation.min_visible_event_index;
         min_visible_message_index = invitation.min_visible_message_index;
     } else if state.data.chat.history_visible_to_new_joiners {
@@ -106,7 +106,7 @@ fn c2c_join_group_impl(args: Args, state: &mut RuntimeState) -> Response {
         mute_notifications: state.data.chat.is_public,
     }) {
         AddResult::Success(participant) => {
-            let invitation = state.data.invited_users.remove(&args.principal, now);
+            let invitation = state.data.chat.invited_users.remove(&args.principal, now);
 
             let event = MemberJoined {
                 user_id: args.user_id,

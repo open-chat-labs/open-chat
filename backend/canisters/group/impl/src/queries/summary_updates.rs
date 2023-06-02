@@ -32,7 +32,7 @@ fn summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
     // This doesn't account for expired events, but they aren't used yet and should probably just be
     // handled by the FE anyway.
     if !state.data.chat.events.has_updates_since(updates_since)
-        && state.data.invited_users.last_updated() <= updates_since
+        && state.data.chat.invited_users.last_updated() <= updates_since
         && member.notifications_muted.timestamp <= updates_since
     {
         return SuccessNoUpdates;

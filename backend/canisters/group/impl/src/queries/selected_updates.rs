@@ -33,8 +33,8 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
         .map(|e| e.timestamp)
         .unwrap_or_default();
 
-    let invited_users = if data.invited_users.last_updated() > updates_since_time {
-        Some(data.invited_users.users())
+    let invited_users = if data.chat.invited_users.last_updated() > updates_since_time {
+        Some(data.chat.invited_users.users())
     } else {
         None
     };
