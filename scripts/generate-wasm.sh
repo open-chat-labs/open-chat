@@ -26,11 +26,11 @@ done
 cargo build --locked --target wasm32-unknown-unknown --release --package $PACKAGE
 
 echo Optimising wasm
-if ! cargo install --list | grep -Fxq "ic-cdk-optimizer v0.3.4:"
+if ! cargo install --list | grep -Fxq "ic-wasm v0.3.7:"
 then
-  cargo install --version 0.3.4 ic-cdk-optimizer
+  cargo install --version 0.3.7 ic-wasm
 fi
-ic-cdk-optimizer ./target/wasm32-unknown-unknown/release/$PACKAGE.wasm -o ./target/wasm32-unknown-unknown/release/$PACKAGE-opt.wasm
+ic-wasm ./target/wasm32-unknown-unknown/release/$PACKAGE.wasm -o ./target/wasm32-unknown-unknown/release/$PACKAGE-opt.wasm shrink --optimize Oz
 
 echo Compressing wasm
 mkdir -p wasms
