@@ -70,6 +70,7 @@ const defaultGroupChat: GroupChatSummary = {
     dateLastPinned: undefined,
     dateReadPinned: undefined,
     gate: { kind: "no_gate" },
+    level: "group",
 };
 
 function createUser(userId: string, username: string): PartialUserSummary {
