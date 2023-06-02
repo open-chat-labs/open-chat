@@ -1,6 +1,7 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
-    import { createEventDispatcher } from "svelte";
+    import { afterUpdate, createEventDispatcher } from "svelte";
+    import { menuStore } from "../../stores/menu";
     const dispatch = createEventDispatcher();
 
     type Step = {
@@ -11,6 +12,8 @@
     export let step: number;
     export let enabled: boolean;
     export let steps: Step[];
+
+    afterUpdate(() => menuStore.hideMenu());
 
     function selectStep(n: number) {
         if (enabled) {

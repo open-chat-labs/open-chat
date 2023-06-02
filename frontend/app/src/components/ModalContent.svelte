@@ -8,6 +8,7 @@
     import { rtlStore } from "../stores/rtl";
     import { logger } from "../utils/logging";
     import { mobileWidth } from "../stores/screenDimensions";
+    import { menuStore } from "../stores/menu";
 
     const dispatch = createEventDispatcher();
 
@@ -33,6 +34,10 @@
     $: useAlignTo = alignTo !== undefined && !$mobileWidth;
     $: style = useAlignTo ? "visibility: hidden;" : "visibility: visible;";
 
+    function closeMenus() {
+        menuStore.hideMenu();
+    }
+
     onMount(async () => {
         try {
             if (useAlignTo) {
@@ -40,10 +45,14 @@
                 calculatePosition();
             }
             tick().then(() => (actualWidth = divElement?.clientWidth));
+            divElement.addEventListener("click", closeMenus);
         } catch (e: any) {
             logger.error("Failed to open modal", e);
             onClose();
         }
+        return () => {
+            divElement.removeEventListener("click", closeMenus);
+        };
     });
 
     function calculatePosition() {

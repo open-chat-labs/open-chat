@@ -13,6 +13,7 @@
     export let roles: readonly string[];
 
     let selecting = false;
+    let menu: MenuIcon;
 
     function select(r: string) {
         rolePermission = r;
@@ -20,11 +21,11 @@
 </script>
 
 <Legend label={`${$_("permissions.whoCan")} ${label}`} />
-<div class:selecting class="select">
+<div class:selecting class="select" on:click|stopPropagation={() => menu.showMenu()}>
     <div class="role">
         {$_(`role.${rolePermission}`)}
     </div>
-    <MenuIcon position="bottom" align="end">
+    <MenuIcon bind:this={menu} position="bottom" align="end">
         <span class="icon" slot="icon">
             <Kebab viewBox={"0 -3 24 24"} size={$iconSize} color={"var(--icon-txt)"} />
         </span>
@@ -53,7 +54,7 @@
     .select {
         max-width: toRem(300);
         background-color: var(--input-bg);
-        padding: $sp3 $sp4;
+        padding: $sp3 $sp3 $sp3 $sp4;
         color: var(--txt);
         box-shadow: var(--input-sh);
         border-radius: $sp2;
@@ -62,10 +63,7 @@
         align-items: center;
         gap: $sp2;
         margin-bottom: $sp3;
-
-        .icon {
-            cursor: pointer;
-        }
+        cursor: pointer;
 
         .role {
             flex: auto;

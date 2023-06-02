@@ -16,8 +16,7 @@
 
     onDestroy(closeMenu);
 
-    async function showMenu(e: MouseEvent): Promise<void> {
-        e.preventDefault();
+    export async function showMenu() {
         if ($menuStore === contextMenu) {
             menuStore.hideMenu();
         } else {
@@ -30,12 +29,17 @@
         }
     }
 
+    async function onShowMenu(e: MouseEvent): Promise<void> {
+        e.preventDefault();
+        await showMenu();
+    }
+
     function closeMenu() {
         menuStore.hideMenu();
     }
 </script>
 
-<div class:open class="menu-icon" bind:this={menu} on:click|stopPropagation={showMenu}>
+<div class:open class="menu-icon" bind:this={menu} on:click|stopPropagation={onShowMenu}>
     <slot name="icon" />
 </div>
 
@@ -46,9 +50,6 @@
         {/if}
     </span>
 </div>
-
-<svelte:body on:click={closeMenu} />
-<svelte:window on:resize={closeMenu} on:orientationchange={closeMenu} />
 
 <style type="text/scss">
     :global(.menu-icon.open path) {
