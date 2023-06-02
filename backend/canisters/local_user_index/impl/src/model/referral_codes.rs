@@ -52,14 +52,6 @@ pub enum ReferralCodeError {
 }
 
 impl ReferralCodes {
-    pub fn set_miami_codes_expired(&mut self, now: TimestampMillis) {
-        for code in self.codes.values_mut() {
-            if matches!(code.referral_type, ReferralType::BtcMiami) && code.expiry.is_none() {
-                code.expiry = Some(now);
-            }
-        }
-    }
-
     pub fn add(
         &mut self,
         referral_type: ReferralType,

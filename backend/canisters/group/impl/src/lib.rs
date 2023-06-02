@@ -7,7 +7,7 @@ use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
 use chat_events::{ChatEventInternal, Reader};
 use fire_and_forget_handler::FireAndForgetHandler;
-use group_chat_core::{AddResult as AddMemberResult, GroupChatCore, GroupMemberInternal, InvitedUsers};
+use group_chat_core::{AddResult as AddMemberResult, GroupChatCore, GroupMemberInternal};
 use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
@@ -227,30 +227,7 @@ impl RuntimeState {
     }
 }
 
-#[derive(Deserialize)]
-struct DataPrevious {
-    chat: GroupChatCore,
-    principal_to_user_id_map: HashMap<Principal, UserId>,
-    mark_active_duration: Milliseconds,
-    group_index_canister_id: CanisterId,
-    local_group_index_canister_id: CanisterId,
-    user_index_canister_id: CanisterId,
-    local_user_index_canister_id: CanisterId,
-    notifications_canister_id: CanisterId,
-    proposals_bot_user_id: UserId,
-    activity_notification_state: ActivityNotificationState,
-    test_mode: bool,
-    invite_code: Option<u64>,
-    invite_code_enabled: bool,
-    new_joiner_rewards: Option<NewJoinerRewards>,
-    frozen: Timestamped<Option<FrozenGroupInfo>>,
-    timer_jobs: TimerJobs<TimerJob>,
-    fire_and_forget_handler: FireAndForgetHandler,
-    invited_users: InvitedUsers,
-}
-
 #[derive(Serialize, Deserialize)]
-#[serde(from = "DataPrevious")]
 struct Data {
     pub chat: GroupChatCore,
     pub principal_to_user_id_map: HashMap<Principal, UserId>,
@@ -269,33 +246,6 @@ struct Data {
     pub frozen: Timestamped<Option<FrozenGroupInfo>>,
     pub timer_jobs: TimerJobs<TimerJob>,
     pub fire_and_forget_handler: FireAndForgetHandler,
-}
-
-impl From<DataPrevious> for Data {
-    fn from(value: DataPrevious) -> Self {
-        let mut chat = value.chat;
-        chat.invited_users = value.invited_users;
-
-        Data {
-            chat,
-            principal_to_user_id_map: value.principal_to_user_id_map,
-            mark_active_duration: value.mark_active_duration,
-            group_index_canister_id: value.group_index_canister_id,
-            local_group_index_canister_id: value.local_group_index_canister_id,
-            user_index_canister_id: value.user_index_canister_id,
-            local_user_index_canister_id: value.local_user_index_canister_id,
-            notifications_canister_id: value.notifications_canister_id,
-            proposals_bot_user_id: value.proposals_bot_user_id,
-            activity_notification_state: value.activity_notification_state,
-            test_mode: value.test_mode,
-            invite_code: value.invite_code,
-            invite_code_enabled: value.invite_code_enabled,
-            new_joiner_rewards: value.new_joiner_rewards,
-            frozen: value.frozen,
-            timer_jobs: value.timer_jobs,
-            fire_and_forget_handler: value.fire_and_forget_handler,
-        }
-    }
 }
 
 #[allow(clippy::too_many_arguments)]

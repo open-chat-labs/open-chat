@@ -24,8 +24,8 @@ RUN curl --fail https://sh.rustup.rs -sSf \
     rustup default ${rust_version}-x86_64-unknown-linux-gnu && \
     rustup target add wasm32-unknown-unknown
 
-# Install IC CDK optimizer
-RUN cargo install --version 0.3.4 ic-cdk-optimizer
+# Install IC Wasm
+RUN cargo install --version 0.3.7 ic-wasm
 
 COPY . /build
 WORKDIR /build
