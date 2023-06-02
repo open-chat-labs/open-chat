@@ -5,6 +5,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Temporarily re-add deprecated `is_super_admin` field ([#3717](https://github.com/open-ic/open-chat/pull/3717))
+
+## [[2.0.712](https://github.com/open-ic/open-chat/releases/tag/v2.0.712-local_user_index)] - 2023-06-02
+
 ### Added
 
 - Integrate Communities ([#3666](https://github.com/open-ic/open-chat/pull/3666)), ([#3669](https://github.com/open-ic/open-chat/pull/3669))
