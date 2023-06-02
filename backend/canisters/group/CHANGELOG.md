@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Fixed
+
+- Fix bug where user could be not found for c2c calls ([#3712](https://github.com/open-ic/open-chat/pull/3712))
+
 ## [[2.0.705](https://github.com/open-ic/open-chat/releases/tag/v2.0.705-group)] - 2023-06-01
 
 ### Added
