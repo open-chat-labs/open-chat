@@ -10,4 +10,5 @@ pub mod referral_metrics;
 pub mod search;
 pub mod suspected_bots;
 pub mod user;
+pub mod user_registration_canister;
 pub mod users;

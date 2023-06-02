@@ -26,20 +26,17 @@ async fn mark_as_online(_args: Args) -> Response {
     mutate_state(|state| mark_as_online_impl(user_id, state))
 }
 
-fn try_get_user_id_locally(runtime_state: &RuntimeState) -> Result<UserId, (Principal, CanisterId)> {
-    let caller = runtime_state.env.caller();
-    runtime_state
+fn try_get_user_id_locally(state: &RuntimeState) -> Result<UserId, (Principal, CanisterId)> {
+    let caller = state.env.caller();
+    state
         .data
         .principal_to_user_id_map
         .get(&caller)
-        .ok_or((caller, runtime_state.data.user_index_canister_id))
+        .ok_or((caller, state.data.user_index_canister_id))
 }
 
-fn mark_as_online_impl(user_id: UserId, runtime_state: &mut RuntimeState) -> Response {
-    runtime_state
-        .data
-        .last_online_dates
-        .mark_online(user_id, runtime_state.env.now());
-    runtime_state.data.mark_as_online_count += 1;
+fn mark_as_online_impl(user_id: UserId, state: &mut RuntimeState) -> Response {
+    state.data.last_online_dates.mark_online(user_id, state.env.now());
+    state.data.mark_as_online_count += 1;
     Success
 }

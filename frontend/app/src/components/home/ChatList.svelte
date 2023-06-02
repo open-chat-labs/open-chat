@@ -1,5 +1,7 @@
 <script lang="ts">
+    import Close from "svelte-material-icons/Close.svelte";
     import CurrentUser from "./CurrentUser.svelte";
+    import CurrentSelection from "./CurrentSelection.svelte";
     import Search from "../Search.svelte";
     import Loading from "../Loading.svelte";
     import ChatSummary from "./ChatSummary.svelte";
@@ -20,6 +22,10 @@
     import ThreadPreviews from "./thread/ThreadPreviews.svelte";
     import ThreadsButton from "./ThreadsButton.svelte";
     import ChatsButton from "./ChatsButton.svelte";
+    import { iconSize } from "../../stores/iconSize";
+    import { discoverHotGroupsDismissed } from "../../stores/settings";
+    import { communitiesEnabled } from "../../utils/features";
+    import { chatTypeToPath } from "../../routes";
 
     const client = getContext<OpenChat>("client");
     const createdUser = client.user;
@@ -32,17 +38,19 @@
 
     const dispatch = createEventDispatcher();
 
-    let chatsWithUnreadMsgs: number;
     let view: "chats" | "threads" = "chats";
 
     $: selectedChatId = client.selectedChatId;
     $: numberOfThreadsStore = client.numberOfThreadsStore;
     $: chatsLoading = client.chatsLoading;
-    $: messagesRead = client.messagesRead;
     $: chatSummariesListStore = client.chatSummariesListStore;
     $: userStore = client.userStore;
     $: user = $userStore[createdUser.userId];
     $: lowercaseSearch = searchTerm.toLowerCase();
+    $: showWhatsHot =
+        !$discoverHotGroupsDismissed &&
+        groupSearchResults === undefined &&
+        userSearchResults === undefined;
 
     function chatMatchesSearch(chat: ChatSummaryType): boolean {
         if (chat.kind === "group_chat") {
@@ -64,10 +72,6 @@
             ? $chatSummariesListStore.filter(chatMatchesSearch)
             : $chatSummariesListStore;
 
-    $: {
-        document.title = chatsWithUnreadMsgs > 0 ? `OpenChat (${chatsWithUnreadMsgs})` : "OpenChat";
-    }
-
     function chatWith(userId: string): void {
         dispatch("chatWith", userId);
         closeSearch();
@@ -78,7 +82,7 @@
      * the routing will take care of the rest
      */
     function selectGroup({ chatId }: GroupMatch): void {
-        page(`/${chatId}`);
+        page(`/group/${chatId}`);
         closeSearch();
     }
 
@@ -86,9 +90,10 @@
         dispatch("searchEntered", "");
     }
 
-    function chatSelected(ev: CustomEvent<string>): void {
+    function chatSelected(ev: CustomEvent<ChatSummaryType>): void {
         chatScrollTop = chatListElement.scrollTop;
-        page(`/${ev.detail}`);
+        const url = `/${chatTypeToPath(ev.detail.kind)}/${ev.detail.chatId}`;
+        page(url);
         closeSearch();
     }
 
@@ -102,23 +107,7 @@
             }
         });
 
-        let unsub = messagesRead.subscribe((_val) => {
-            chatsWithUnreadMsgs = chats
-                ? chats.reduce(
-                      (num, chat) =>
-                          client.unreadMessageCount(
-                              chat.chatId,
-                              chat.latestMessage?.event.messageIndex
-                          ) > 0
-                              ? num + 1
-                              : num,
-                      0
-                  )
-                : 0;
-        });
-
         return () => {
-            unsub();
             chatListScroll.set(chatScrollTop);
         };
     });
@@ -136,17 +125,20 @@
 </script>
 
 {#if user}
-    <CurrentUser
-        on:wallet
-        on:showHomePage
-        on:logout
-        on:whatsHot
-        on:halloffame
-        on:showFaq
-        {user}
-        on:profile
-        on:upgrade
-        on:newGroup />
+    {#if $communitiesEnabled}
+        <CurrentSelection />
+    {:else}
+        <CurrentUser
+            on:wallet
+            on:showHomePage
+            on:logout
+            on:whatsHot
+            on:halloffame
+            {user}
+            on:profile
+            on:upgrade
+            on:newGroup />
+    {/if}
 
     <Search {searching} {searchTerm} on:searchEntered={onSearchEntered} />
 
@@ -167,9 +159,8 @@
                 {#if searchResultsAvailable && chats.length > 0}
                     <h3 class="search-subtitle">{$_("yourChats")}</h3>
                 {/if}
-                {#each chats as chatSummary, i (chatSummary.chatId)}
+                {#each chats as chatSummary (chatSummary.chatId)}
                     <ChatSummary
-                        index={i}
                         {chatSummary}
                         selected={$selectedChatId === chatSummary.chatId}
                         visible={searchTerm !== "" || !chatSummary.archived}
@@ -182,6 +173,25 @@
                         on:deleteDirectChat />
                 {/each}
 
+                {#if userSearchResults !== undefined}
+                    <div class="search-matches">
+                        {#await userSearchResults then resp}
+                            {#if resp.length > 0}
+                                <h3 class="search-subtitle">{$_("users")}</h3>
+                                {#each resp as user, i (user.userId)}
+                                    <SearchResult
+                                        index={i}
+                                        avatarUrl={client.userAvatarUrl(user)}
+                                        on:click={() => chatWith(user.userId)}>
+                                        <h4 class="search-item-title">
+                                            @{user.username}
+                                        </h4>
+                                    </SearchResult>
+                                {/each}
+                            {/if}
+                        {/await}
+                    </div>
+                {/if}
                 {#if groupSearchResults !== undefined}
                     <div class="search-matches">
                         {#await groupSearchResults then resp}
@@ -204,26 +214,16 @@
                         {/await}
                     </div>
                 {/if}
-                {#if userSearchResults !== undefined}
-                    <div class="search-matches">
-                        {#await userSearchResults then resp}
-                            {#if resp.length > 0}
-                                <h3 class="search-subtitle">{$_("users")}</h3>
-                                {#each resp as user, i (user.userId)}
-                                    <SearchResult
-                                        index={i}
-                                        avatarUrl={client.userAvatarUrl(user)}
-                                        on:click={() => chatWith(user.userId)}>
-                                        <h4 class="search-item-title">
-                                            @{user.username}
-                                        </h4>
-                                    </SearchResult>
-                                {/each}
-                            {/if}
-                        {/await}
-                    </div>
-                {/if}
             </div>
+            {#if showWhatsHot}
+                <div class="hot-groups" on:click={() => page("/hotgroups")}>
+                    <div class="flame">🔥</div>
+                    <div class="label">{$_("whatsHotButton")}</div>
+                    <div on:click={() => discoverHotGroupsDismissed.set(true)} class="close">
+                        <Close viewBox="0 -3 24 24" size={$iconSize} color={"var(--button-txt)"} />
+                    </div>
+                </div>
+            {/if}
         {/if}
     </div>
     <NotificationsBar />
@@ -234,6 +234,7 @@
         overflow: auto;
         flex: auto;
         @include nice-scrollbar();
+        position: relative;
     }
     .chat-summaries {
         overflow: auto;
@@ -271,5 +272,42 @@
         color: var(--txt-light);
         @include font(light, normal, fs-80);
         @include ellipsis();
+    }
+
+    .hot-groups {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        height: toRem(80);
+        border-top: 1px solid var(--bd);
+        border-bottom: 1px solid var(--bd);
+        padding: $sp4;
+        gap: toRem(12);
+        cursor: pointer;
+
+        @include mobile() {
+            padding: $sp3 $sp4;
+        }
+
+        .label {
+            flex: auto;
+        }
+
+        .close {
+            flex: 0 0 toRem(20);
+        }
+
+        .flame {
+            display: grid;
+            align-content: center;
+            @include font-size(fs-120);
+            text-align: center;
+            flex: 0 0 toRem(48);
+            height: toRem(48);
+            width: toRem(48);
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+        }
     }
 </style>

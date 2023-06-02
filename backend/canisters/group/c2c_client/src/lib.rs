@@ -10,6 +10,7 @@ generate_c2c_call!(public_summary);
 
 generate_candid_c2c_call!(events);
 generate_candid_c2c_call!(http_request);
+generate_candid_c2c_call!(invite_code);
 generate_candid_c2c_call!(local_user_index);
 generate_candid_c2c_call!(selected_initial);
 
@@ -26,6 +27,5 @@ generate_c2c_call!(c2c_unfreeze_group);
 generate_c2c_call!(c2c_update_proposals);
 generate_c2c_call!(c2c_update_user_principal);
 generate_c2c_call!(send_message_v2);
-generate_c2c_call!(send_message);
 
 generate_candid_c2c_call!(change_role);

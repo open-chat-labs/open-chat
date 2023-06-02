@@ -104,7 +104,6 @@
     "ownershipTransferredBy": "{changedBy} transfirió la propiedad del grupo a {changed} 🎉",
     "historyVisible": "historial de chat visible",
     "historyOnInfo": "El historial de chat completo será visible para los nuevos miembros. ¡Cuidado ahora! 🤐",
-    "privateGroupInfo": "Este grupo estará limitado a las personas que elijas.",
     "publicGroupUnique": "Los nombres de grupos públicos deben ser únicos.",
     "publicGroupInfo": "Cualquiera podrá descubrir y unirse a este grupo.",
     "newGroupName": "ingresa el nombre del grupo",
@@ -207,26 +206,28 @@
         "style_messages_a": "Puede agregar saltos de línea usando shift-enter y puede usar un subconjunto de markdown de la siguiente manera:<br /> \\_<em>cursiva</em>\\_ o \\*<em>cursiva</em>\\* <br /> \\*\\*<strong>negrita</strong>\\*\\*<br /> \\*\\*\\*<strong><em>ambos</em></strong>\\*\\*\\ *<br /> \\~<s>tachado</s>\\~<br /> \\[texto del enlace\\](https://oc.app)<br /> \\`<code>let a: int = 10; // código</código>\\`",
         "security_q": "¿Mis mensajes están seguros?",
         "security_a": "En resumen, Internet Computer proporciona garantías de seguridad muy sólidas. Sin embargo, hay un área de debilidad particular bien conocida que Dfinity está abordando. Con un poco de esfuerzo, un proveedor de nodos deshonestos podría instalar una versión pirateada del software del nodo que les permitiera interceptar y leer mensajes de ingreso y leer directamente la memoria. Sin embargo, una vez <a target=\"_blank\" href=\"https://www.amd.com/system/files/TechDocs/SEV-SNP-strengthening-vm-isolation-with-integrity-protection-and-more.pdf \">SEV-SNP</a> está disponible en las máquinas de los nodos, los usuarios pueden estar extremadamente seguros de que, aparte de los destinatarios de sus mensajes, sus datos no serán accesibles a nadie más que a ellos mismos. En una fecha posterior, implementaremos el cifrado e2e para que los datos se almacenen en forma cifrada en la memoria del recipiente y, por lo tanto, los operadores de nodos no autorizados no puedan acceder a ellos, independientemente de que SEV-SNP esté implementado. Es probable que esto implique algunas limitaciones, como no poder buscar en su historial de mensajes, por lo que puede optar por optar por la seguridad e2e para los chats seleccionados.",
-        "roadmap_q": "¿Tienes un mapa?",
-        "roadmap_a": "¡Sí, lo hacemos ahora! ¡Encuéntralo en el menú principal junto a estas preguntas frecuentes!",
         "storage_q": "¿Cómo funciona el almacenamiento?",
         "storage_a": "Los mensajes de texto ocupan poco espacio y, por lo tanto, nos cuestan relativamente poco. Las imágenes suelen ocupar mucho más espacio y los costos se suman. Ahora algunos antecedentes sobre el sistema OpenChat. Cada usuario tiene su propio contenedor que contiene todos los mensajes para sus chats directos. Cada grupo también tiene su propio recipiente que contiene todos los mensajes del grupo. Sin embargo, almacenamos cualquier dato de <em>archivo</em> asociado con mensajes, como imágenes y videos, en <a target=\"_blank\" href=\"https://github.com/open-ic/open-storage \">Abrir almacenamiento</a>. Cada usuario tiene una asignación continua de datos y cuando se envía un mensaje, los datos del archivo salen de la asignación del <em>remitente</em>. Esto también se aplica a los mensajes enviados a grupos, por lo que no hay asignación de datos grupales, solo individual. <br/><br/> Cada usuario de OpenChat recibirá 0,1 GB de almacenamiento gratuito. Luego, un usuario puede actualizar opcionalmente a Diamond para recibir 1 GB de almacenamiento. Cuando un usuario alcanza su límite de almacenamiento, sus archivos más antiguos caducarán automáticamente y se recuperarán. Esto significa que un usuario nunca debe quedarse sin almacenamiento. Para minimizar nuestros costos, los archivos del usuario del nivel gratuito también se recuperarán después de noventa días, independientemente del uso de almacenamiento. Tenga en cuenta que el mensaje en sí, incluidos los subtítulos y la miniatura de la imagen, nunca se eliminaría y, por lo tanto, se mantendría el historial de mensajes.",
-        "airdrop_q": "¿Habrá un lanzamiento aéreo?",
-        "airdrop_a": "En abril, habrá un airdrop de 1 millón de tokens de CHAT para los usuarios Diamond elegibles. Consulte <a href=\"/nsbx4-4iaaa-aaaar-afusa-cai/64\">esta propuesta de movimiento</a> para obtener detalles.<br><br>Más adelante este año, el equipo de desarrollo de OpenChat hará una propuesta para implementar un esquema de recompensas para el usuario. Los usuarios Diamond podrán ganar tokens de CHAT en función de su puntuación de reputación en OpenChat. No se ha decidido exactamente cómo se calcula la reputación, pero se harán grandes esfuerzos para garantizar que se castigue a los spammers. Queremos alentar el chat genuino y no brindar una oportunidad para que los bots o los usuarios sin escrúpulos \"cultiven\" tokens.",
         "send_tokens_q": "¿Por qué se me cobra una tarifa de transacción cuando envío tokens?",
         "send_tokens_a": "Al enviar tokens como un mensaje de chat, el libro mayor realiza la transferencia para el token dado, lo que genera una tarifa obligatoria. Esta tarifa se quema, lo que reduce ligeramente el suministro de tokens. Las tarifas para los distintos tokens que admitimos son las siguientes: <ul><li>CHAT 0.001</li><li>ICP 0.0001</li><li>ckBTC 0.0000001</li><li>SNS1 0.00001</li ></ul>",
-        "wallet_q": "¿Cómo funciona mi billetera?",
-        "wallet_a": "Cuando se crea un usuario de OpenChat, automáticamente tiene una cuenta para varios tokens (ICP, CHAT, ckBTC, SNS1). Esta cuenta inicialmente estará vacía, pero puede recargarla transfiriendo tokens a su dirección. Una vez que tenga algunos tokens en su billetera de OpenChat, podrá enviarlos directamente a la cuenta de cualquier otro usuario de OpenChat a través de un tipo especial de mensaje. También puede usar el ICP (pronto CHAT) en su billetera para actualizar a la membresía Diamond. Si desea retirar los tokens, puede hacerlo abriendo su billetera desde el menú principal y haciendo clic en el botón \"Administrar\". Esta pantalla le da la opción de retirar sus tokens a cualquier otra dirección de su elección.",
         "voting_q": "¿Cómo voto las propuestas?",
         "voting_a": "Únase al <a href=\"/nsbx4-4iaaa-aaaar-afusa-cai\">grupo de propuestas de OpenChat</a> y lea <a href=\"/blog/governance\">esta publicación de blog</a> que brinda una descripción general de la gobernanza de OpenChat y tiene una guía paso a paso sobre la votación.",
-        "diamond_q": "¿Qué es la Membresía Diamante?",
-        "diamond_a": "Puede actualizar a la membresía Diamond para tener acceso a funciones adicionales o mejoradas dentro de OpenChat. <a href=\"?diamond=\">Ver aquí</a> para una comparación de características y para actualizar.",
         "buychat_q": "¿Cómo compro tokens de CHAT?",
         "buychat_a": "En este momento, primero debe <a target=\"_blank\" href=\"https://www.finder.com/uk/how-to-buy-internet-computer\">comprar ICP</a> que luego puede intercambiar CHAT en varios intercambios descentralizados (DEX).<ul><li><a target=\"_blank\" href=\"https://avjzx-pyaaa-aaaaj-aadmq-cai.raw.ic0.app/ICDex/CHAT/ICP \">ICDex</a></li><li><a target=\"_blank\" href=\"https://info.icpswap.com/swap/pool/details/ne2vj-6yaaa-aaaag-qb3ia-cai\" >ICPSwap</a></li><li><a target=\"_blank\" href=\"https://app.infinityswap.one/tokens/2ouva-viaaa-aaaaq-aaamq-cai\">InfinitySwap</a ></li></ul>DFINITY está agregando soporte para la <a target=\"_blank\" href=\"https://www.rosetta-api.org/\">Rosetta API</a> para tokens ICRC1 (que incluye CHAT), lo que los hace mucho más fáciles de integrar con intercambios centralizados (CEX). Una vez que esto haya sucedido, es probable que CHAT esté disponible para operar en CEX para ICP o USDT.",
         "shortcuts_q": "¿Qué comandos de acceso directo están disponibles?",
         "shortcuts_a": "Hay varios comandos de acceso directo que puede usar desde el cuadro de entrada de entrada de mensajes. <br /><br /> `/poll` - para crear una nueva encuesta <br /> `/search xyz` - para buscar el término \"xyz\" en el chat actual <br />`/gif gatitos` - para buscar gifs de gatitos <br />`/icp 0.1` - para enviar 0.1 ICP a alguien <br />`/faq question_id*` - para crear y publicar un enlace formateado a una pregunta frecuente específica <br />`/diamond ` - para crear y publicar un enlace formateado con los detalles de la membresía Diamante <br/> <br/>Los comandos que aceptan un argumento también se pueden usar sin el argumento.<br /><br />* Los ID de preguntas frecuentes disponibles son : airdrop, votación, billetera, buychat, send_tokens, diamante, ios_app, android_app, find_groups, style_messages, almacenamiento, seguridad, hoja de ruta, accesos directos",
         "content_q": "¿Qué tipo de contenido está permitido?",
-        "content_a": "Para obtener detalles completos sobre nuestras pautas de contenido y moderación, <a href=\"/guidelines\">ver aquí</a>."
+        "content_a": "Para obtener detalles completos sobre nuestras pautas de contenido y moderación, <a href=\"/guidelines\">ver aquí</a>.",
+        "airdrop_q": "¿Habrá un lanzamiento aéreo?",
+        "airdrop_a": "En abril hubo un airdrop de 1 millón de tokens de CHAT para los usuarios Diamond elegibles. Consulte <a href=\"/nsbx4-4iaaa-aaaar-afusa-cai/64\">esta propuesta de movimiento</a> para obtener detalles.<br><br>Más adelante este año, el equipo de desarrollo de OpenChat hará una propuesta para implementar un esquema de recompensas para el usuario. Los usuarios Diamond podrán ganar tokens de CHAT en función de su puntuación de reputación en OpenChat. No se ha decidido exactamente cómo se calcula la reputación, pero se harán grandes esfuerzos para garantizar que se castigue a los spammers. Queremos fomentar el chat genuino y no brindar una oportunidad para que los bots o los usuarios sin escrúpulos \"cultiven\" tokens.",
+        "wallet_q": "¿Cómo funciona mi billetera?",
+        "wallet_a": "Cuando se crea un usuario de OpenChat, automáticamente tiene una cuenta para varios tokens (ICP, CHAT, ckBTC, SNS1). Esta cuenta inicialmente estará vacía, pero puede recargarla transfiriendo tokens a su dirección. Una vez que tenga algunos tokens en su billetera de OpenChat, podrá enviarlos directamente a la cuenta de cualquier otro usuario de OpenChat a través de un tipo especial de mensaje. También puede usar el ICP (pronto CHAT) en su billetera para actualizar a la membresía Diamond. Si desea enviar los tokens a otra cuenta, puede hacerlo abriendo su billetera desde el menú principal y haciendo clic en el enlace \"enviar\". Esta pantalla le da la opción de enviar sus tokens a cualquier otra dirección de su elección.",
+        "diamond_q": "¿Qué es la 💎 Membresía Diamante?",
+        "diamond_a": "Puede actualizar a la membresía Diamond para tener acceso a funciones adicionales o mejoradas dentro de OpenChat. <a href=\"/diamond\">Ver aquí</a> para una comparación de características y para actualizar.",
+        "info_q": "¿Dónde puedo obtener más información sobre OpenChat?",
+        "info_a": "Vaya a nuestra <a href=\"/home\">página de inicio</a> y busque enlaces a las <a href=\"/features\">características</a> de OpenChat, <a href=\"/roadmap\">hoja de ruta</ a>, <a href=\"/whitepaper\">informe</a>, <a href=\"/architecture\">arquitectura</a> y <a href=\"/blog\">blog</a>",
+        "referral_rewards_q": "¿Qué son las recompensas por recomendación?",
+        "referral_rewards_a": "Como miembro Diamante, puede ganar recompensas por cada usuario que recomiende y que se convierta en miembro Diamante. Recibirá la mitad de los pagos de Diamante que realicen durante el primer año de unirse a OpenChat. Puede encontrar su enlace de referencia en la sección &quot;invitar a amigos/familiares&quot; de su &quot;configuración de perfil&quot; en el menú principal.<br><br> Como incentivo adicional, cada mes también puede ganar un premio sustancial de 3000, 2000 o 1000 tokens de CHAT si se encuentra entre los 3 mejores referentes por valor. Consulte &quot;Recomendadores principales&quot; en el menú principal.<br><br> ¿Cómo podrías hacer esto? Hay muchas maneras. Puede contarle a sus amigos y familiares, twittear sobre OpenChat, crear un video sobre OpenChat que describa lo que le gusta y compartirlo en TikTok o YouTube. Puede transmitir en Twitch o escribir una publicación de blog o crear un podcast o albergar un espacio de Twitter o incluso realizar una reunión de la vida real. ¡Esperamos ver todas las ideas creativas que se te ocurran para correr la voz!<br><br> En el futuro, abriremos recompensas por recomendación para todos los usuarios que refiera, independientemente de si se convierten en miembros Diamante. Sin embargo, debido a que esto es fácilmente explotable, primero necesitaremos presentar algún tipo de &quot;prueba de personalidad única&quot;."
     },
     "roadmap": "Roadmap",
     "here": "aquí",
@@ -264,7 +265,6 @@
         "registerUser": "Registrando usario...",
         "preparingUser": "Perparando usuario ...",
         "registerAs": "Registrando como usuario",
-        "enterUsername": "Elije un nombre de usuario",
         "usernameInvalid": "Nombre de usuario inválido, inténtelo de nuevo",
         "letsGo": "Allá vamos!",
         "registrationComplete": "Registro completado ...",
@@ -280,7 +280,12 @@
         "confirm": "Confirmar",
         "closedTitle": "Registro en pausa",
         "closed": "Debido a la gran demanda, los registros de nuevos usuarios están cerrados temporalmente. ¡Pronto escalaremos a través de múltiples subredes y luego podremos crecer indefinidamente!",
-        "disclaimer": "Al registrarse en OpenChat, acepta cumplir con nuestras pautas"
+        "invalidCode": "Codigo invalido",
+        "referralCodeInvalid": "Lo siento, el código que escaneaste ya se usó",
+        "proceed": "Proceder",
+        "doYouWantToProceed": "Si continúa, no recibirá 50,000 satoshis. Alternativamente, busque a un miembro del equipo de DFINITY para obtener un nuevo código.",
+        "enterUsername": "Elija un nombre de usuario de OpenChat",
+        "disclaimer": "Al registrarse en OpenChat, acepta cumplir con las pautas de la comunidad"
     },
     "tellMeMore": "Más información",
     "insufficientFunds": "Asegúrese de que la cuenta anterior tenga un saldo de al menos {amount} ICP para cubrir el almacenamiento solicitado, luego presione el botón \"Actualizar\".",
@@ -337,9 +342,10 @@
         "privateGroup": "Grupo privado",
         "groupInfo": "información del grupo",
         "role": {
-            "owner": "Dueño",
             "admins": "administradores",
-            "members": "miembros"
+            "members": "miembros",
+            "moderators": "Moderadores",
+            "owner": "Propietarios"
         },
         "permissions": {
             "whoCan": "Quién puede",
@@ -349,7 +355,6 @@
             "allMembers": "Todos los miembros pueden",
             "changePermissions": "cambiar permisos",
             "changeRoles": "cambiar los roles de los miembros",
-            "addMembers": "Añadir miembros",
             "removeMembers": "eliminar miembros",
             "blockUsers": "bloquear/desbloquear usuarios",
             "deleteMessages": "eliminar mensajes",
@@ -360,7 +365,8 @@
             "reactToMessages": "reaccionar a los mensajes",
             "inviteUsers": "invitar a los usuarios",
             "notPermitted": "No tienes permiso para {permission}",
-            "replyInThread": "responder en el hilo"
+            "replyInThread": "responder en el hilo",
+            "ownerAndAdminsAndModerators": "Los propietarios, administradores y moderadores pueden"
         },
         "advanced": "Avanzado",
         "welcome": "Bienvenido a {groupName}",
@@ -405,21 +411,37 @@
         "optional": "Opcional",
         "openAccessInfo": "No hay requisitos especiales de acceso para unirse a este grupo",
         "gateCheckFailed": "Puerta de acceso no cumplida",
-        "inviteWithLink": "Invitar al grupo a través de un enlace",
-        "shareMessage": "Cualquier persona con este enlace puede obtener una vista previa y unirse al grupo. Si es miembro Diamond y cualquier usuario registra una cuenta a través de este enlace, obtendrá la mitad de los pagos de membresía Diamond que realicen durante su primer año."
+        "inviteUsers": "Invitar usuarios",
+        "inviteUsersFailed": "Hubo un error al invitar a los usuarios",
+        "tooManyInvites": "Solo puedes tener 100 invitaciones pendientes",
+        "usersInvited": "¡Mensaje de invitación enviado!",
+        "invite": {
+            "inviteWithLink": "Invitar al grupo a través de un enlace",
+            "enableLink": "Habilitar enlace",
+            "resetLink": "Restablecer enlace",
+            "errorGettingLink": "No se puede obtener el enlace",
+            "errorEnablingLink": "No se puede habilitar el enlace",
+            "errorDisablingLink": "No se puede deshabilitar el enlace",
+            "errorResettingLink": "No se puede restablecer el enlace",
+            "confirmReset": "¿Seguro que quieres restablecer el enlace del grupo? Las personas ya no podrán unirse al grupo usando el enlace actual.",
+            "shareMessage": "Cualquier persona con este enlace puede obtener una vista previa y unirse al grupo. Como miembro Diamante, también puede ganar [recompensas por recomendación](?faq=referral_rewards).",
+            "shareMessageTrust": "Compártelo con personas de confianza.",
+            "enabled": "activado",
+            "disabled": "desactivado",
+            "reset": "reiniciar",
+            "invite": "Invitar"
+        }
     },
     "updateNow": "recargar ahora",
     "updateRequired": "Una nueva versión de OpenChat está disponible - recargando en {countdown}s",
     "chooseMembers": "elegir miembros",
     "confirmMembers": "Confirmar miembros",
     "permissionsChangedBy": "{changedBy} cambió los permisos del grupo",
-    "addMembersFailed": "Hubo un error al agregar miembros",
     "filterMembers": "filtrar miembros",
     "publicGroupWithN": "Grupo público con {número} miembro(s)",
     "privateGroupWithN": "Grupo privado con {number} miembro(s)",
     "groupWithN": "{number} miembro(s)",
     "members": "miembros",
-    "addMembers": "Añadir miembros",
     "removeMemberFailed": "No se puede eliminar el miembro",
     "member": "miembro",
     "memberCount": "{contar} miembro(s)",
@@ -430,7 +452,6 @@
         "message": "Mensaje",
         "messagePlaceholder": "Incluir un mensaje opcional",
         "unexpected": "Se recibió un tipo de transferencia criptográfico inesperado",
-        "viewTransaction": "[Ver transacción]({url})",
         "confirm": "Confirmar",
         "transfer": "transferencia de {token}",
         "makeDeposit": "Realice un depósito en la cuenta anterior y actualice su saldo.",
@@ -450,7 +471,8 @@
         "chat": "Conversación abierta",
         "sns1": "SNS-1",
         "max": "máx.",
-        "ckbtc": "ckbitcoin"
+        "ckbtc": "ckbitcoin",
+        "viewTransaction": "[Transacción]({url})"
     },
     "cryptoAccount": {
         "manage": "Administrar",
@@ -743,7 +765,10 @@
         "groupMsg": "Para crear hasta 10 grupos públicos y controlar el acceso a los grupos, debe ser un usuario Diamond",
         "gatingMsg": "Para crear grupos con acceso privado, debe ser un usuario Diamond",
         "gatedGroups": "Grupos cerrados",
-        "reminders": "Recordatorios"
+        "reminders": "Recordatorios",
+        "notifications": "Notificaciones",
+        "freeNotifications": "iOS, Android y escritorio",
+        "diamondNotifications": "iOS, Android y escritorio"
     },
     "currentUsage": "Uso de almacenamiento actual",
     "promoteTo": "Promocionar a {role}",
@@ -796,6 +821,7 @@
         "messageReport": "Reportado por @{username} el {timestamp} por el siguiente motivo: **{reason}**",
         "showing": "Mostrando los {count} más recientes de {total} informe(s)"
     },
+    "invitedBy": "{changedBy} invitó a {changed} al grupo",
     "halloffame": {
         "menu": "Referencias principales",
         "allTime": "Todo el tiempo",
@@ -806,5 +832,11 @@
         "diamonds": "Diamantes",
         "users": "Usuarios",
         "gameover": "¡Juego terminado!"
-    }
+    },
+    "privateGroupInfo": "Este grupo estará limitado a las personas que invites.",
+    "invited": "Invitado",
+    "tapForReferralLink": "Toque para copiar su enlace de referencia personal",
+    "deleteMessageForMe": "Eliminar para mí",
+    "whatsHotButton": "Descubre grupos calientes",
+    "moderator": "moderador"
 }

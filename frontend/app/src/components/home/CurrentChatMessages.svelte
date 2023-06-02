@@ -19,10 +19,12 @@
         FilteredProposals,
         MessageReadState,
         FailedMessages,
+        OPENCHAT_BOT_USER_ID,
     } from "openchat-client";
     import InitialGroupMessage from "./InitialGroupMessage.svelte";
     import page from "page";
     import ChatEventList from "./ChatEventList.svelte";
+    import PrivatePreview from "./PrivatePreview.svelte";
 
     // todo - these thresholds need to be relative to screen height otherwise things get screwed up on (relatively) tall screens
     const MESSAGE_READ_THRESHOLD = 500;
@@ -192,13 +194,15 @@
         groupInner(filteredProposals)
     );
 
+    $: privatePreview = chat.kind === "group_chat" && chat.myRole === "previewer" && !chat.public;
+    $: isEmptyChat = chat.latestEventIndex <= 0 || privatePreview;
+
     $: {
         if (chat.chatId !== currentChatId) {
             currentChatId = chat.chatId;
             initialised = false;
 
             // If the chat is empty, there is nothing to initialise, so we can set initialised to true
-            const isEmptyChat = chat.latestEventIndex < 0;
             if (isEmptyChat) {
                 initialised = true;
             }
@@ -326,7 +330,6 @@
         earliestLoadedEventIndex: number | undefined
     ): boolean {
         // If this is an empty chat, show the avatar
-        const isEmptyChat = chat.latestEventIndex < 0;
         if (isEmptyChat) {
             return true;
         }
@@ -362,7 +365,7 @@
         {#if $isProposalGroup}
             <ProposalBot />
         {:else if chat.kind === "group_chat"}
-            <InitialGroupMessage group={chat} noVisibleEvents={events.length === 0} />
+            <InitialGroupMessage group={chat} />
         {:else if client.isOpenChatBot(chat.them)}
             <Robot />
         {:else}
@@ -373,6 +376,9 @@
                     size={AvatarSize.Large} />
             </div>
         {/if}
+    {/if}
+    {#if privatePreview}
+        <PrivatePreview />
     {/if}
     {#each groupedEvents as dayGroup, _di (dateGroupKey(dayGroup))}
         <div class="day-group">

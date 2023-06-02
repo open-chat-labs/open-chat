@@ -124,10 +124,7 @@
     $: undeletingMessagesStore = client.undeletingMessagesStore;
     $: undeleting = $undeletingMessagesStore.has(msg.messageId);
     $: showChatMenu = (!inert || canRevealDeleted) && !readonly;
-    $: canUndelete =
-        msg.deleted &&
-        msg.content.kind !== "deleted_content" &&
-        (msg.sender !== user.userId || canDelete);
+    $: canUndelete = msg.deleted && msg.content.kind !== "deleted_content";
 
     afterUpdate(() => {
         if (readByMe && observer && msgElement) {
@@ -367,7 +364,7 @@
     <ReminderBuilder
         {chatId}
         {eventIndex}
-        threadRootMessageIndex={threadRootMessage?.messageIndex}
+        {threadRootMessageIndex}
         on:close={() => (showRemindMe = false)} />
 {/if}
 
@@ -418,7 +415,6 @@
                 : undefined}
             on:dblclick={doubleClickMessage}
             class="message-bubble"
-            class:bot-font={isBot && !isProposal}
             class:focused
             class:editing
             class:fill={fill && !inert}
@@ -470,7 +466,6 @@
                         messageId={msg.messageId}
                         {readonly}
                         {chatId}
-                        {groupChat}
                         on:goToMessageIndex
                         repliesTo={msg.repliesTo} />
                 {:else}
@@ -483,11 +478,9 @@
                 {readonly}
                 {fill}
                 {me}
-                {groupChat}
                 {chatId}
                 {collapsed}
                 {undeleting}
-                first
                 messageIndex={msg.messageIndex}
                 messageId={msg.messageId}
                 myUserId={user.userId}
@@ -586,7 +579,9 @@
         <ThreadSummary
             {chatId}
             threadRootMessageIndex={msg.messageIndex}
-            selected={msg.messageIndex === $pathParams.messageIndex && $pathParams.open}
+            selected={$pathParams.kind === "global_chat_selected_route" &&
+                msg.messageIndex === $pathParams.messageIndex &&
+                $pathParams.open}
             {threadSummary}
             indent={showAvatar}
             {me}
@@ -600,7 +595,6 @@
                     on:click={() => toggleReaction(reaction)}
                     {reaction}
                     {userIds}
-                    {me}
                     myUserId={user?.userId} />
             {/each}
         </div>
@@ -806,10 +800,6 @@
             color: var(--currentChat-msg-me-txt);
         }
 
-        &.crypto {
-            @include gold();
-        }
-
         &.rtl {
             &.last:not(.first) {
                 border-radius: $radius $inner-radius $radius $radius;
@@ -845,10 +835,6 @@
 
         &.collapsed {
             cursor: pointer;
-        }
-
-        &.bot-font {
-            font-family: courier;
         }
 
         &:after {

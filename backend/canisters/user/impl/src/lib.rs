@@ -1,4 +1,5 @@
 use crate::model::cached_group_summaries::CachedGroupSummaries;
+use crate::model::communities::Communities;
 use crate::model::direct_chats::DirectChats;
 use crate::model::group_chats::GroupChats;
 use crate::model::hot_group_exclusions::HotGroupExclusions;
@@ -6,6 +7,7 @@ use crate::timer_job_types::TimerJob;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
+use fire_and_forget_handler::FireAndForgetHandler;
 use ic_ledger_types::AccountIdentifier;
 use ledger_utils::default_ledger_account;
 use model::contacts::Contacts;
@@ -32,6 +34,7 @@ mod updates;
 
 pub const BASIC_GROUP_CREATION_LIMIT: u32 = 5;
 pub const PREMIUM_GROUP_CREATION_LIMIT: u32 = 40;
+pub const COMMUNITY_CREATION_LIMIT: u32 = 10;
 
 thread_local! {
     static WASM_VERSION: RefCell<Timestamped<Version>> = RefCell::default();
@@ -69,11 +72,6 @@ impl RuntimeState {
     pub fn is_caller_known_group_canister(&self) -> bool {
         let caller = self.env.caller();
         self.data.group_chats.get(&caller.into()).is_some()
-    }
-
-    pub fn is_caller_known_bot(&self) -> bool {
-        let caller = self.env.caller();
-        self.data.direct_chats.get(&caller.into()).map_or(false, |c| c.is_bot)
     }
 
     pub fn push_notification(&mut self, recipients: Vec<UserId>, notification: Notification) {
@@ -136,6 +134,8 @@ struct Data {
     pub owner: Principal,
     pub direct_chats: DirectChats,
     pub group_chats: GroupChats,
+    #[serde(default)]
+    pub communities: Communities,
     pub blocked_users: Timestamped<HashSet<UserId>>,
     pub user_index_canister_id: CanisterId,
     pub local_user_index_canister_id: CanisterId,
@@ -143,7 +143,6 @@ struct Data {
     pub notifications_canister_id: CanisterId,
     pub avatar: Timestamped<Option<Avatar>>,
     pub test_mode: bool,
-    #[serde(alias = "is_super_admin")]
     pub is_platform_moderator: bool,
     pub hot_group_exclusions: HotGroupExclusions,
     pub username: String,
@@ -158,6 +157,8 @@ struct Data {
     pub timer_jobs: TimerJobs<TimerJob>,
     pub contacts: Contacts,
     pub diamond_membership_expires_at: Option<TimestampMillis>,
+    #[serde(default)]
+    pub fire_and_forget_handler: FireAndForgetHandler,
 }
 
 impl Data {
@@ -176,6 +177,7 @@ impl Data {
             owner,
             direct_chats: DirectChats::default(),
             group_chats: GroupChats::default(),
+            communities: Communities::default(),
             blocked_users: Timestamped::default(),
             user_index_canister_id,
             local_user_index_canister_id,
@@ -197,6 +199,7 @@ impl Data {
             timer_jobs: TimerJobs::default(),
             contacts: Contacts::default(),
             diamond_membership_expires_at: None,
+            fire_and_forget_handler: FireAndForgetHandler::default(),
         }
     }
 

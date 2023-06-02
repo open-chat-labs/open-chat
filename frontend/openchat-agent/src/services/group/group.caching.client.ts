@@ -1,5 +1,4 @@
 import type {
-    AddMembersResponse,
     EventsResponse,
     GroupChatEvent,
     Message,
@@ -27,6 +26,10 @@ import type {
     EventsSuccessResult,
     MakeGroupPrivateResponse,
     ChatEvent,
+    InviteCodeResponse,
+    EnableInviteCodeResponse,
+    DisableInviteCodeResponse,
+    ResetInviteCodeResponse,
     ThreadPreviewsResponse,
     RegisterProposalVoteResponse,
     GroupRules,
@@ -38,6 +41,7 @@ import type {
     OptionUpdate,
     ClaimPrizeResponse,
     GroupGate,
+    DeclineInvitationResponse,
 } from "openchat-shared";
 import type { IGroupClient } from "./group.client.interface";
 import type { IDBPDatabase } from "idb";
@@ -203,14 +207,6 @@ export class CachingGroupClient implements IGroupClient {
                 latestClientEventIndex
             );
         }
-    }
-
-    addMembers(
-        userIds: string[],
-        myUsername: string,
-        allowBlocked: boolean
-    ): Promise<AddMembersResponse> {
-        return this.client.addMembers(userIds, myUsername, allowBlocked);
     }
 
     sendMessage(
@@ -415,6 +411,22 @@ export class CachingGroupClient implements IGroupClient {
         return this.client.searchGroupChat(searchTerm, userIds, maxResults);
     }
 
+    getInviteCode(): Promise<InviteCodeResponse> {
+        return this.client.getInviteCode();
+    }
+
+    enableInviteCode(): Promise<EnableInviteCodeResponse> {
+        return this.client.enableInviteCode();
+    }
+
+    disableInviteCode(): Promise<DisableInviteCodeResponse> {
+        return this.client.disableInviteCode();
+    }
+
+    resetInviteCode(): Promise<ResetInviteCodeResponse> {
+        return this.client.resetInviteCode();
+    }
+
     threadPreviews(
         threadRootMessageIndexes: number[],
         latestClientThreadUpdate: bigint | undefined
@@ -438,5 +450,13 @@ export class CachingGroupClient implements IGroupClient {
 
     localUserIndex(): Promise<string> {
         return this.client.localUserIndex();
+    }
+
+    declineInvitation(): Promise<DeclineInvitationResponse> {
+        return this.client.declineInvitation();
+    }
+
+    toggleMuteNotifications(mute: boolean): Promise<undefined> {
+        return this.client.toggleMuteNotifications(mute);
     }
 }

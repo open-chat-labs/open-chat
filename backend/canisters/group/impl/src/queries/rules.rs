@@ -4,18 +4,18 @@ use canister_api_macros::query_candid_and_msgpack;
 use group_canister::rules::{Response::*, *};
 
 #[query_candid_and_msgpack]
-fn rules(_args: Args) -> Response {
-    read_state(rules_impl)
+fn rules(args: Args) -> Response {
+    read_state(|state| rules_impl(args, state))
 }
 
-fn rules_impl(runtime_state: &RuntimeState) -> Response {
-    let caller = runtime_state.env.caller();
+fn rules_impl(args: Args, state: &RuntimeState) -> Response {
+    let caller = state.env.caller();
 
-    if !runtime_state.data.is_accessible_by_non_member(caller) {
+    if !state.data.is_accessible(caller, args.invite_code) {
         return NotAuthorized;
     }
 
-    let data = &runtime_state.data;
-    let rules = data.rules.enabled.then_some(data.rules.text.clone());
+    let data = &state.data;
+    let rules = data.chat.rules.enabled.then_some(data.chat.rules.text.clone());
     Success(SuccessResult { rules })
 }

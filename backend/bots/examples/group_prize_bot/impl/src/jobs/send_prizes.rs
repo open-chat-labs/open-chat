@@ -1,5 +1,6 @@
 use crate::{mutate_state, Prize, RuntimeState};
 use ic_ledger_types::Tokens;
+use icrc_ledger_types::icrc1::account::Account;
 use ledger_utils::sns;
 use rand::Rng;
 use std::{cmp, time::Duration};
@@ -9,8 +10,8 @@ use types::{
     PrizeContentInitial, TimestampMillis, TimestampNanos,
 };
 
-pub(crate) fn start_job(runtime_state: &mut RuntimeState) {
-    if let Some(time_until_next_prize) = time_until_next_prize(runtime_state) {
+pub(crate) fn start_job(state: &mut RuntimeState) {
+    if let Some(time_until_next_prize) = time_until_next_prize(state) {
         ic_cdk_timers::set_timer(time_until_next_prize, run);
     }
 }
@@ -148,8 +149,8 @@ async fn transfer_prize_funds_to_group(
     let pending_transaction = types::sns::PendingCryptoTransaction {
         token,
         amount: Tokens::from_e8s(amount),
-        to: ic_icrc1::Account {
-            owner: ic_base_types::PrincipalId::from(group),
+        to: Account {
+            owner: group,
             subaccount: None,
         },
         fee: Tokens::from_e8s(token.fee() as u64),
@@ -197,16 +198,16 @@ async fn send_prize_message_to_group(
 
     match group_canister_c2c_client::send_message_v2(group, &c2c_args).await {
         Ok(response) => match response {
-            group_canister::send_message::Response::Success(_) => Ok(()),
-            group_canister::send_message::Response::CallerNotInGroup => Err("Bot not in group".to_string()),
-            group_canister::send_message::Response::UserSuspended => Err("Bot suspended".to_string()),
-            group_canister::send_message::Response::ChatFrozen => Err("Group frozen".to_string()),
-            group_canister::send_message::Response::MessageEmpty
-            | group_canister::send_message::Response::InvalidPoll(_)
-            | group_canister::send_message::Response::NotAuthorized
-            | group_canister::send_message::Response::ThreadMessageNotFound
-            | group_canister::send_message::Response::InvalidRequest(_)
-            | group_canister::send_message::Response::TextTooLong(_) => unreachable!(),
+            group_canister::send_message_v2::Response::Success(_) => Ok(()),
+            group_canister::send_message_v2::Response::CallerNotInGroup => Err("Bot not in group".to_string()),
+            group_canister::send_message_v2::Response::UserSuspended => Err("Bot suspended".to_string()),
+            group_canister::send_message_v2::Response::ChatFrozen => Err("Group frozen".to_string()),
+            group_canister::send_message_v2::Response::MessageEmpty
+            | group_canister::send_message_v2::Response::InvalidPoll(_)
+            | group_canister::send_message_v2::Response::NotAuthorized
+            | group_canister::send_message_v2::Response::ThreadMessageNotFound
+            | group_canister::send_message_v2::Response::InvalidRequest(_)
+            | group_canister::send_message_v2::Response::TextTooLong(_) => unreachable!(),
         },
         // TODO: We should retry sending the message
         Err(error) => Err(format!("{error:?}")),

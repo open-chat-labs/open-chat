@@ -10,7 +10,7 @@ fn remove_notifications(args: Args) -> Response {
     mutate_state(|state| remove_notifications_impl(args, state))
 }
 
-fn remove_notifications_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    runtime_state.data.notifications.remove(args.up_to_notification_index);
+fn remove_notifications_impl(args: Args, state: &mut RuntimeState) -> Response {
+    state.data.notifications.remove(args.up_to_notification_index);
     Success
 }

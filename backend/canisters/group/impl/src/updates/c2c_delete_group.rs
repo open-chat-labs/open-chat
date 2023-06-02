@@ -44,22 +44,22 @@ struct PrepareResult {
     members: Vec<UserId>,
 }
 
-fn prepare(runtime_state: &RuntimeState) -> Result<PrepareResult, Response> {
-    if runtime_state.data.is_frozen() {
+fn prepare(state: &RuntimeState) -> Result<PrepareResult, Response> {
+    if state.data.is_frozen() {
         return Err(ChatFrozen);
     }
 
-    let caller = runtime_state.env.caller().into();
-    if let Some(participant) = runtime_state.data.participants.get_by_user_id(&caller) {
-        if !participant.role.can_delete_group() {
+    let caller = state.env.caller().into();
+    if let Some(member) = state.data.chat.members.get(&caller) {
+        if !member.role.can_delete_group() {
             Err(NotAuthorized)
         } else {
             Ok(PrepareResult {
-                group_index_canister_id: runtime_state.data.group_index_canister_id,
-                chat_id: runtime_state.env.canister_id().into(),
-                deleted_by: participant.user_id,
-                group_name: runtime_state.data.name.clone(),
-                members: runtime_state.data.participants.iter().map(|m| m.user_id).collect(),
+                group_index_canister_id: state.data.group_index_canister_id,
+                chat_id: state.env.canister_id().into(),
+                deleted_by: member.user_id,
+                group_name: state.data.chat.name.clone(),
+                members: state.data.chat.members.iter().map(|m| m.user_id).collect(),
             })
         }
     } else {

@@ -4,9 +4,8 @@ use crate::DiamondMembershipUserMetrics;
 use candid::Principal;
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeSet, HashMap};
-use types::{CyclesTopUp, Milliseconds, TimestampMillis, UserId, Version};
+use types::{CyclesTopUp, Milliseconds, TimestampMillis, UserId};
 use utils::case_insensitive_hash_map::CaseInsensitiveHashMap;
-use utils::time::MINUTE_IN_MS;
 
 #[derive(Serialize, Deserialize, Default)]
 #[serde(from = "UserMapTrimmed")]
@@ -16,45 +15,30 @@ pub struct UserMap {
     username_to_user_id: CaseInsensitiveHashMap<UserId>,
     #[serde(skip)]
     principal_to_user_id: HashMap<Principal, UserId>,
-    reserved_usernames: CaseInsensitiveHashMap<TimestampMillis>,
     #[serde(skip)]
     user_referrals: HashMap<UserId, Vec<UserId>>,
     suspected_bots: BTreeSet<UserId>,
 }
 
 impl UserMap {
-    pub fn does_username_exist(&self, username: &str, now: TimestampMillis) -> bool {
+    pub fn does_username_exist(&self, username: &str) -> bool {
         self.username_to_user_id.contains_key(username)
-            || self
-                .reserved_usernames
-                .get(username)
-                .map_or(false, |&ts| now.saturating_sub(ts) > 10 * MINUTE_IN_MS)
     }
 
-    // Returns true if the username was reserved or false if the username is taken
-    pub fn reserve_username(&mut self, username: &str, now: TimestampMillis) -> bool {
-        // First, remove all usernames which were reserved more than 10 minutes ago
-        let to_remove: Vec<_> = self
-            .reserved_usernames
-            .iter()
-            .filter(|(_, &ts)| now.saturating_sub(ts) > 10 * MINUTE_IN_MS)
-            .map(|(u, _)| u.clone())
-            .collect();
-
-        for key in to_remove {
-            self.reserved_usernames.remove(&key);
+    pub fn ensure_unique_username(&self, username: &str) -> Result<(), String> {
+        if !self.username_to_user_id.contains_key(username) {
+            return Ok(());
         }
 
-        if !self.does_username_exist(username, now) {
-            self.reserved_usernames.insert(username, now);
-            true
-        } else {
-            false
+        // Append the lowest number (starting from 2) which will make this username unique
+        let mut suffix = 2;
+        loop {
+            let u = format!("{username}{suffix}");
+            if !self.username_to_user_id.contains_key(&u) {
+                return Err(u);
+            }
+            suffix += 1;
         }
-    }
-
-    pub fn release_username(&mut self, username: &str) {
-        self.reserved_usernames.remove(username);
     }
 
     #[allow(clippy::too_many_arguments)]
@@ -62,7 +46,6 @@ impl UserMap {
         &mut self,
         principal: Principal,
         user_id: UserId,
-        wasm_version: Version,
         username: String,
         now: TimestampMillis,
         referred_by: Option<UserId>,
@@ -71,7 +54,7 @@ impl UserMap {
         self.username_to_user_id.insert(&username, user_id);
         self.principal_to_user_id.insert(principal, user_id);
 
-        let user = User::new(principal, user_id, username, now, wasm_version, referred_by, is_bot);
+        let user = User::new(principal, user_id, username, now, referred_by, is_bot);
         self.users.insert(user_id, user);
 
         if let Some(ref_by) = referred_by {
@@ -95,7 +78,7 @@ impl UserMap {
                 return UpdateUserResult::PrincipalTaken;
             }
 
-            if username_case_insensitive_changed && self.does_username_exist(username, now) {
+            if username_case_insensitive_changed && self.does_username_exist(username) {
                 return UpdateUserResult::UsernameTaken;
             }
 
@@ -257,7 +240,6 @@ impl UserMap {
         self.register(
             user.principal,
             user.user_id,
-            user.wasm_version,
             user.username.clone(),
             user.date_created,
             None,
@@ -278,7 +260,6 @@ pub enum UpdateUserResult {
 #[derive(Deserialize)]
 struct UserMapTrimmed {
     users: HashMap<UserId, User>,
-    reserved_usernames: CaseInsensitiveHashMap<TimestampMillis>,
     suspected_bots: BTreeSet<UserId>,
 }
 
@@ -286,7 +267,6 @@ impl From<UserMapTrimmed> for UserMap {
     fn from(value: UserMapTrimmed) -> Self {
         let mut user_map = UserMap {
             users: value.users,
-            reserved_usernames: value.reserved_usernames,
             suspected_bots: value.suspected_bots,
             ..Default::default()
         };
@@ -324,9 +304,9 @@ mod tests {
         let user_id2: UserId = Principal::from_slice(&[3, 2]).into();
         let user_id3: UserId = Principal::from_slice(&[3, 3]).into();
 
-        user_map.register(principal1, user_id1, Version::new(0, 0, 0), username1.clone(), 1, None, false);
-        user_map.register(principal2, user_id2, Version::new(0, 0, 0), username2.clone(), 2, None, false);
-        user_map.register(principal3, user_id3, Version::new(0, 0, 0), username3.clone(), 3, None, false);
+        user_map.register(principal1, user_id1, username1.clone(), 1, None, false);
+        user_map.register(principal2, user_id2, username2.clone(), 2, None, false);
+        user_map.register(principal3, user_id3, username3.clone(), 3, None, false);
 
         let principal_to_user_id: Vec<_> = user_map
             .principal_to_user_id
@@ -363,7 +343,7 @@ mod tests {
 
         let user_id = Principal::from_slice(&[1, 1]).into();
 
-        user_map.register(principal, user_id, Version::new(0, 0, 0), username1, 1, None, false);
+        user_map.register(principal, user_id, username1, 1, None, false);
 
         if let Some(original) = user_map.get_by_principal(&principal) {
             let mut updated = original.clone();

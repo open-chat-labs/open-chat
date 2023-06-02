@@ -11,10 +11,10 @@ fn decline_invitation(_args: Args) -> Response {
     mutate_state(decline_invitation_impl)
 }
 
-fn decline_invitation_impl(runtime_state: &mut RuntimeState) -> Response {
-    let caller = runtime_state.env.caller();
-    let now = runtime_state.env.now();
-    match runtime_state.data.invited_users.remove(&caller, now) {
+fn decline_invitation_impl(state: &mut RuntimeState) -> Response {
+    let caller = state.env.caller();
+    let now = state.env.now();
+    match state.data.chat.invited_users.remove(&caller, now) {
         Some(_) => Success,
         None => NotInvited,
     }

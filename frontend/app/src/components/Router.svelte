@@ -4,29 +4,152 @@
     import Home from "./home/HomeRoute.svelte";
     import LandingPage from "./landingpages/LandingPage.svelte";
     import NotFound from "./NotFound.svelte";
-    import { pathContextStore, notFound } from "../routes";
+    import {
+        pathContextStore,
+        notFound,
+        RouteParams,
+        pathParams,
+        communitesRoute,
+        blogRoute,
+        shareRoute,
+        chatSelectedRoute,
+        globalDirectChatRoute,
+        globalGroupChatRoute,
+    } from "../routes";
+    import { communitiesEnabled } from "../utils/features";
 
     let route: typeof SvelteComponent | undefined = undefined;
 
+    function parsePathParams(fn: (ctx: PageJS.Context) => RouteParams) {
+        return (ctx: PageJS.Context, next: () => any) => {
+            notFound.set(false);
+            pathContextStore.set(ctx);
+            pathParams.set(fn(ctx));
+            scrollToTop();
+            next();
+        };
+    }
+
     onMount(() => {
-        page("/home", parsePathParams, () => (route = LandingPage));
-        page("/features", parsePathParams, () => (route = LandingPage));
-        page("/roadmap", parsePathParams, () => (route = LandingPage));
-        page("/blog/:slug?", parsePathParams, () => (route = LandingPage));
-        page("/whitepaper", parsePathParams, () => (route = LandingPage));
-        page("/miami", parsePathParams, () => (route = LandingPage));
-        page("/guidelines", parsePathParams, () => (route = LandingPage));
-        page("/architecture", parsePathParams, () => (route = LandingPage));
+        page(
+            "/home",
+            parsePathParams(() => ({ kind: "home_landing_route" })),
+            track,
+            () => (route = LandingPage)
+        );
+        page(
+            "/features",
+            parsePathParams(() => ({ kind: "features_route" })),
+            track,
+            () => (route = LandingPage)
+        );
+        page(
+            "/roadmap",
+            parsePathParams(() => ({ kind: "roadmap_route" })),
+            track,
+            () => (route = LandingPage)
+        );
+        page("/blog/:slug?", parsePathParams(blogRoute), track, () => (route = LandingPage));
+        page(
+            "/whitepaper",
+            parsePathParams(() => ({ kind: "whitepaper_route" })),
+            track,
+            () => (route = LandingPage)
+        );
+        page(
+            "/miami",
+            parsePathParams(() => ({ kind: "miami_route" })),
+            track,
+            () => (route = LandingPage)
+        );
+        page(
+            "/guidelines",
+            parsePathParams(() => ({ kind: "guidelines_route" })),
+            track,
+            () => (route = LandingPage)
+        );
+        page(
+            "/faq",
+            parsePathParams(() => ({ kind: "faq_route" })),
+            track,
+            () => (route = LandingPage)
+        );
+        page(
+            "/diamond",
+            parsePathParams(() => ({ kind: "diamond_route" })),
+            track,
+            () => (route = LandingPage)
+        );
+        page(
+            "/architecture",
+            parsePathParams(() => ({ kind: "architecture_route" })),
+            track,
+            () => (route = LandingPage)
+        );
+        // this is for explore mode
+        page(
+            "/communities/:communityId?",
+            parsePathParams(communitesRoute),
+            track,
+            () => (route = Home)
+        );
+        // global direct chats
+        page(
+            "/user/:chatId/:messageIndex?/:threadMessageIndex?",
+            parsePathParams(globalDirectChatRoute),
+            track,
+            () => (route = Home)
+        );
+        // // global group chats
+        page(
+            "/group/:chatId/:messageIndex?/:threadMessageIndex?",
+            parsePathParams(globalGroupChatRoute),
+            track,
+            () => (route = Home)
+        );
+        // // selected community group
+        // page(
+        //     "/community/:communityId/group/:chatId?/:messageIndex?/:threadMessageIndex?",
+        //     parsePathParams,
+        //     track,
+        //     () => (route = Home)
+        // );
+        // // selected community direct chat
+        // page(
+        //     "/community/:communityId/user/:chatId?/:messageIndex?/:threadMessageIndex?",
+        //     parsePathParams,
+        //     track,
+        //     () => (route = Home)
+        // );
+        // // favourite chats
+        // page(
+        //     "/favourites/:chatId?/:messageIndex?/:threadMessageIndex?",
+        //     parsePathParams,
+        //     track,
+        //     () => (route = Home)
+        // );
+        page("/share", parsePathParams(shareRoute), track, () => (route = Home));
+        page(
+            "/hotgroups",
+            parsePathParams(() => ({ kind: "hot_groups_route" })),
+            track,
+            () => (route = Home)
+        );
         page(
             "/:chatId?/:messageIndex?/:threadMessageIndex?",
             redirectHashRoutes,
-            parsePathParams,
+            parsePathParams(chatSelectedRoute),
+            track,
             () => (route = Home)
         );
-        page("*", () => {
-            notFound.set(true);
-            route = NotFound;
-        });
+        page(
+            "*",
+            parsePathParams(() => ({ kind: "not_found_route" })),
+            () => {
+                notFound.set(true);
+                route = NotFound;
+            }
+        );
         page.start();
     });
 
@@ -47,10 +170,11 @@
         }
     }
 
-    function parsePathParams(ctx: PageJS.Context, next: () => any) {
-        notFound.set(false);
-        pathContextStore.set(ctx);
-        scrollToTop();
+    function track(ctx: PageJS.Context, next: () => any) {
+        console.debug("GA: page_view", ctx.pathname);
+        gtag("event", "page_view", {
+            page_location: ctx.pathname,
+        });
         next();
     }
 </script>
@@ -58,6 +182,3 @@
 {#if route !== undefined}
     <svelte:component this={route} />
 {/if}
-
-<style type="text/scss">
-</style>

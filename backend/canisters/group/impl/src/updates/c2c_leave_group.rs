@@ -2,50 +2,36 @@ use crate::activity_notifications::handle_activity_notification;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
-use chat_events::ChatEventInternal;
 use group_canister::c2c_leave_group::{Response::*, *};
-use types::ParticipantLeft;
+use group_chat_core::LeaveResult;
 
 // Called via the user's user canister
 #[update_msgpack]
 #[trace]
-fn c2c_leave_group(args: Args) -> Response {
+fn c2c_leave_group(_args: Args) -> Response {
     run_regular_jobs();
 
-    mutate_state(|state| c2c_leave_group_impl(args, state))
+    mutate_state(c2c_leave_group_impl)
 }
 
-fn c2c_leave_group_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    if runtime_state.data.is_frozen() {
+fn c2c_leave_group_impl(state: &mut RuntimeState) -> Response {
+    if state.data.is_frozen() {
         return ChatFrozen;
     }
 
-    let caller = runtime_state.env.caller().into();
-    let now = runtime_state.env.now();
+    let caller = state.env.caller().into();
+    let now = state.env.now();
 
-    let participant = match runtime_state.data.participants.get_by_user_id(&caller) {
-        Some(p) => p,
-        None => return CallerNotInGroup,
-    };
+    match state.data.chat.leave(caller, now) {
+        LeaveResult::Success => {
+            state.data.remove_principal(caller);
 
-    if participant.suspended.value {
-        return UserSuspended;
+            handle_activity_notification(state);
+
+            Success(SuccessResult {})
+        }
+        LeaveResult::UserSuspended => UserSuspended,
+        LeaveResult::LastOwnerCannotLeave => OwnerCannotLeave,
+        LeaveResult::UserNotInGroup => CallerNotInGroup,
     }
-
-    if participant.role.is_owner() && runtime_state.data.participants.owner_count() == 1 {
-        return OwnerCannotLeave;
-    }
-
-    runtime_state.data.participants.remove(caller);
-
-    let event = ParticipantLeft { user_id: caller };
-
-    runtime_state
-        .data
-        .events
-        .push_main_event(ChatEventInternal::ParticipantLeft(Box::new(event)), args.correlation_id, now);
-
-    handle_activity_notification(runtime_state);
-
-    Success(SuccessResult {})
 }

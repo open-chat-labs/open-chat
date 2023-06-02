@@ -11,14 +11,6 @@ use user_canister::send_message_with_transfer_to_group::{Response::*, *};
 
 #[update(guard = "caller_is_owner")]
 #[trace]
-async fn transfer_crypto_within_group_v2(
-    args: user_canister::transfer_crypto_within_group_v2::Args,
-) -> user_canister::transfer_crypto_within_group_v2::Response {
-    send_message_with_transfer_to_group_impl(args.into()).await
-}
-
-#[update(guard = "caller_is_owner")]
-#[trace]
 async fn send_message_with_transfer_to_group(args: Args) -> Response {
     send_message_with_transfer_to_group_impl(args).await
 }
@@ -69,34 +61,34 @@ async fn send_message_with_transfer_to_group_impl(args: Args) -> Response {
     // Send the message to the group
     match group_canister_c2c_client::send_message_v2(args.group_id.into(), &c2c_args).await {
         Ok(response) => match response {
-            group_canister::send_message::Response::Success(r) => Success(SuccessResult {
+            group_canister::send_message_v2::Response::Success(r) => Success(SuccessResult {
                 event_index: r.event_index,
                 message_index: r.message_index,
                 timestamp: r.timestamp,
                 expires_at: r.expires_at,
                 transfer: completed_transaction,
             }),
-            group_canister::send_message::Response::CallerNotInGroup => CallerNotInGroup(Some(completed_transaction)),
-            group_canister::send_message::Response::UserSuspended => UserSuspended,
-            group_canister::send_message::Response::ChatFrozen => ChatFrozen,
-            group_canister::send_message::Response::MessageEmpty
-            | group_canister::send_message::Response::InvalidPoll(_)
-            | group_canister::send_message::Response::NotAuthorized
-            | group_canister::send_message::Response::ThreadMessageNotFound
-            | group_canister::send_message::Response::InvalidRequest(_)
-            | group_canister::send_message::Response::TextTooLong(_) => unreachable!(),
+            group_canister::send_message_v2::Response::CallerNotInGroup => CallerNotInGroup(Some(completed_transaction)),
+            group_canister::send_message_v2::Response::UserSuspended => UserSuspended,
+            group_canister::send_message_v2::Response::ChatFrozen => ChatFrozen,
+            group_canister::send_message_v2::Response::MessageEmpty
+            | group_canister::send_message_v2::Response::InvalidPoll(_)
+            | group_canister::send_message_v2::Response::NotAuthorized
+            | group_canister::send_message_v2::Response::ThreadMessageNotFound
+            | group_canister::send_message_v2::Response::InvalidRequest(_)
+            | group_canister::send_message_v2::Response::TextTooLong(_) => unreachable!(),
         },
         // TODO: We should retry sending the message
         Err(error) => InternalError(format!("{error:?}"), completed_transaction),
     }
 }
 
-fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PendingCryptoTransaction, Box<Response>> {
-    let now = runtime_state.env.now();
+fn prepare(args: &Args, state: &RuntimeState) -> Result<PendingCryptoTransaction, Box<Response>> {
+    let now = state.env.now();
 
-    if runtime_state.data.suspended.value {
+    if state.data.suspended.value {
         return Err(Box::new(UserSuspended));
-    } else if runtime_state.data.group_chats.get(&args.group_id).is_none() {
+    } else if state.data.group_chats.get(&args.group_id).is_none() {
         return Err(Box::new(CallerNotInGroup(None)));
     } else if args.content.text_length() > MAX_TEXT_LENGTH_USIZE {
         return Err(Box::new(TextTooLong(MAX_TEXT_LENGTH)));
@@ -104,7 +96,7 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PendingCryptoTra
 
     let pending_transaction = match &args.content {
         MessageContentInitial::Crypto(c) => {
-            if runtime_state.data.blocked_users.contains(&c.recipient) {
+            if state.data.blocked_users.contains(&c.recipient) {
                 return Err(Box::new(RecipientBlocked));
             }
             match &c.transfer {

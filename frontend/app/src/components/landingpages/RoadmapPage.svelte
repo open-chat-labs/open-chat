@@ -228,7 +228,7 @@
                     Broadcast groups
                     <ul>
                         <li>stream video 1-many</li>
-                        <li>broadcast group roles (owner, admin, participant, viewer)</li>
+                        <li>broadcast group roles (owner, admin, moderator, participant, viewer)</li>
                         <li>viewers can tip using cycles</li>
                     </ul>
                 </li>

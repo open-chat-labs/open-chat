@@ -43,18 +43,19 @@ struct PrepareResult {
     init_args: local_user_index_canister::init::Args,
 }
 
-fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Response> {
-    if !runtime_state.data.local_index_map.contains_key(&args.canister_id) {
+fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response> {
+    if !state.data.local_index_map.contains_key(&args.canister_id) {
         Ok(PrepareResult {
-            canister_wasm: runtime_state.data.local_user_index_canister_wasm_for_new_canisters.clone(),
+            canister_wasm: state.data.local_user_index_canister_wasm_for_new_canisters.clone(),
             init_args: local_user_index_canister::init::Args {
-                user_canister_wasm: runtime_state.data.user_canister_wasm.clone(),
-                wasm_version: runtime_state.data.local_user_index_canister_wasm_for_new_canisters.version,
-                user_index_canister_id: runtime_state.env.canister_id(),
-                group_index_canister_id: runtime_state.data.group_index_canister_id,
+                user_canister_wasm: state.data.user_canister_wasm.clone(),
+                wasm_version: state.data.local_user_index_canister_wasm_for_new_canisters.version,
+                user_index_canister_id: state.env.canister_id(),
+                group_index_canister_id: state.data.group_index_canister_id,
                 notifications_canister_id: args.notifications_canister_id,
-                cycles_dispenser_canister_id: runtime_state.data.cycles_dispenser_canister_id,
-                test_mode: runtime_state.data.test_mode,
+                cycles_dispenser_canister_id: state.data.cycles_dispenser_canister_id,
+                internet_identity_canister_id: state.data.internet_identity_canister_id,
+                test_mode: state.data.test_mode,
             },
         })
     } else {
@@ -62,11 +63,11 @@ fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, R
     }
 }
 
-fn commit(canister_id: CanisterId, wasm_version: Version, runtime_state: &mut RuntimeState) -> Response {
-    if runtime_state.data.local_index_map.add_index(canister_id, wasm_version) {
+fn commit(canister_id: CanisterId, wasm_version: Version, state: &mut RuntimeState) -> Response {
+    if state.data.local_index_map.add_index(canister_id, wasm_version) {
         // We need to initialize the new local user index with all of the existing users
-        for user in runtime_state.data.users.iter() {
-            runtime_state.data.user_index_event_sync_queue.push(
+        for user in state.data.users.iter() {
+            state.data.user_index_event_sync_queue.push(
                 canister_id,
                 Event::UserRegistered(UserRegistered {
                     user_id: user.user_id,
@@ -77,7 +78,7 @@ fn commit(canister_id: CanisterId, wasm_version: Version, runtime_state: &mut Ru
                 }),
             )
         }
-        crate::jobs::sync_events_to_local_user_index_canisters::start_job_if_required(runtime_state);
+        crate::jobs::sync_events_to_local_user_index_canisters::start_job_if_required(state);
 
         Success
     } else {

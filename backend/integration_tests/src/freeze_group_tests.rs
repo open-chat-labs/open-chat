@@ -30,7 +30,7 @@ fn freeze_then_unfreeze() {
         },
     );
 
-    let summary_args = group_canister::public_summary::Args {};
+    let summary_args = group_canister::public_summary::Args { invite_code: None };
 
     if let group_canister::public_summary::Response::Success(res) =
         client::group::public_summary(env, user1.principal, group_id.into(), &summary_args)

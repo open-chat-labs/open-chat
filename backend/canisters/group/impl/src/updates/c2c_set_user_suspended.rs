@@ -13,10 +13,10 @@ fn c2c_set_user_suspended(args: Args) -> Response {
     mutate_state(|state| c2c_set_user_suspended_impl(args, state))
 }
 
-fn c2c_set_user_suspended_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    if let Some(user) = runtime_state.data.participants.get_by_user_id_mut(&args.user_id) {
+fn c2c_set_user_suspended_impl(args: Args, state: &mut RuntimeState) -> Response {
+    if let Some(user) = state.data.chat.members.get_mut(&args.user_id) {
         if user.suspended.value != args.suspended {
-            let now = runtime_state.env.now();
+            let now = state.env.now();
             user.suspended = Timestamped::new(args.suspended, now);
         }
         Success

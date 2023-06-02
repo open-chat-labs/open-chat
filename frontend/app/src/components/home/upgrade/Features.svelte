@@ -12,6 +12,7 @@
 
     export let isDiamond: boolean;
     export let canExtend: boolean;
+    export let landing = false;
 
     function cancel() {
         dispatch("cancel");
@@ -22,12 +23,14 @@
     }
 </script>
 
-<div class="body">
-    <div class="header">{$_("upgrade.feature")}</div>
-    <div class="header free">{$_("upgrade.free")}</div>
-    <div class="header diamond">{$_("upgrade.diamond")}</div>
+<div class:landing class="grid header">
+    <div class="header-col">{$_("upgrade.feature")}</div>
+    <div class="header-col free">{$_("upgrade.free")}</div>
+    <div class="header-col diamond">{$_("upgrade.diamond")}</div>
+</div>
 
-    <Feature>
+<div class:landing class="grid body">
+    <Feature {landing}>
         <div slot="title">{$_("upgrade.textMessages")}</div>
         <div slot="free">
             <Check size={"1em"} color={"limegreen"} />
@@ -37,7 +40,7 @@
         </div>
     </Feature>
 
-    <Feature>
+    <Feature {landing}>
         <div slot="title">{$_("upgrade.giphys")}</div>
         <div slot="free">
             <Check size={"1em"} color={"limegreen"} />
@@ -47,7 +50,7 @@
         </div>
     </Feature>
 
-    <Feature>
+    <Feature {landing}>
         <div slot="title">{$_("upgrade.reactions")}</div>
         <div slot="free">
             <Check size={"1em"} color={"limegreen"} />
@@ -57,7 +60,44 @@
         </div>
     </Feature>
 
+    <Feature {landing}>
+        <div slot="title">{$_("upgrade.polls")}</div>
+        <div slot="free">
+            <Check size={"1em"} color={"limegreen"} />
+        </div>
+        <div slot="diamond">
+            <Check size={"1em"} color={"limegreen"} />
+        </div>
+    </Feature>
+
+    <Feature {landing}>
+        <div slot="title">{$_("upgrade.reminders")}</div>
+        <div slot="free">
+            <Check size={"1em"} color={"limegreen"} />
+        </div>
+        <div slot="diamond">
+            <Check size={"1em"} color={"limegreen"} />
+        </div>
+    </Feature>
+
+    <Feature {landing}>
+        <div slot="title">{$_("upgrade.crypto")}</div>
+        <div slot="free">
+            <Check size={"1em"} color={"limegreen"} />
+        </div>
+        <div slot="diamond">
+            <Check size={"1em"} color={"limegreen"} />
+        </div>
+    </Feature>
+
+    <Feature {landing}>
+        <div slot="title">{$_("upgrade.notifications")}</div>
+        <div slot="free">{$_("upgrade.freeNotifications")}</div>
+        <div slot="diamond">{$_("upgrade.diamondNotifications")}</div>
+    </Feature>
+
     <Feature
+        {landing}
         diamondInfo={$_("upgrade.mediaLimits", { values: { image: "5mb", video: "50mb" } })}
         freeInfo={$_("upgrade.mediaLimits", { values: { image: "1mb", video: "5mb" } })}>
         <div slot="title">{$_("upgrade.mediaMessages")}</div>
@@ -66,6 +106,7 @@
     </Feature>
 
     <Feature
+        {landing}
         diamondInfo={$_("upgrade.diamondStorageLimit")}
         freeInfo={$_("upgrade.freeStorageLimit")}>
         <div slot="title">{$_("upgrade.storage")}</div>
@@ -73,7 +114,7 @@
         <div slot="diamond">{$_("upgrade.diamondStorage")}</div>
     </Feature>
 
-    <Feature>
+    <Feature {landing}>
         <div slot="title">{$_("upgrade.directChats")}</div>
         <div slot="free">
             <Check size={"1em"} color={"limegreen"} />
@@ -83,13 +124,13 @@
         </div>
     </Feature>
 
-    <Feature>
+    <Feature {landing}>
         <div slot="title">{$_("upgrade.privateGroups")}</div>
         <div slot="free">{$_("upgrade.freePrivateGroups")}</div>
         <div slot="diamond">{$_("upgrade.diamondPrivateGroups")}</div>
     </Feature>
 
-    <Feature>
+    <Feature {landing}>
         <div slot="title">{$_("upgrade.publicGroups")}</div>
         <div slot="free">
             <Minus size={"1em"} color={"var(--menu-warn)"} />
@@ -97,7 +138,7 @@
         <div slot="diamond">{$_("upgrade.diamondPublicGroups")}</div>
     </Feature>
 
-    <Feature>
+    <Feature {landing}>
         <div slot="title">{$_("upgrade.gatedGroups")}</div>
         <div slot="free">
             <Minus size={"1em"} color={"var(--menu-warn)"} />
@@ -107,7 +148,7 @@
         </div>
     </Feature>
 
-    <Feature>
+    <Feature {landing}>
         <div slot="title">{$_("upgrade.translations")}</div>
         <div slot="free">
             <Minus size={"1em"} color={"var(--menu-warn)"} />
@@ -117,34 +158,7 @@
         </div>
     </Feature>
 
-    <Feature>
-        <div slot="title">{$_("upgrade.reminders")}</div>
-        <div slot="free">
-            <Minus size={"1em"} color={"var(--menu-warn)"} />
-        </div>
-        <div slot="diamond">
-            <Check size={"1em"} color={"limegreen"} />
-        </div>
-    </Feature>
-
-
-    <Feature>
-        <div slot="title">{$_("upgrade.crypto")}</div>
-        <div slot="free">{$_("upgrade.chatAndIcp")}</div>
-        <div slot="diamond">{$_("upgrade.allSupportedTokens")}</div>
-    </Feature>
-
-    <Feature>
-        <div slot="title">{$_("upgrade.polls")}</div>
-        <div slot="free">
-            <Minus size={"1em"} color={"var(--menu-warn)"} />
-        </div>
-        <div slot="diamond">
-            <Check size={"1em"} color={"limegreen"} />
-        </div>
-    </Feature>
-
-    <Feature>
+    <Feature {landing}>
         <div slot="title">{$_("upgrade.diamondBadge")}</div>
         <div slot="free">
             <Minus size={"1em"} color={"var(--menu-warn)"} />
@@ -154,7 +168,7 @@
         </div>
     </Feature>
 
-    <Feature diamondInfo={$_("upgrade.airdropsInfo")}>
+    <Feature {landing} diamondInfo={$_("upgrade.airdropsInfo")}>
         <div slot="title">{$_("upgrade.airdrops")}</div>
         <div slot="free">
             <Minus size={"1em"} color={"var(--menu-warn)"} />
@@ -162,7 +176,7 @@
         <div slot="diamond">{$_("upgrade.eligible")}</div>
     </Feature>
 
-    <Feature comingSoon>
+    <Feature {landing} comingSoon>
         <div slot="title">{$_("upgrade.customThemes")}</div>
         <div slot="free">
             <Minus size={"1em"} color={"var(--menu-warn)"} />
@@ -172,7 +186,7 @@
         </div>
     </Feature>
 
-    <Feature comingSoon>
+    <Feature {landing} comingSoon>
         <div slot="title">{$_("upgrade.nftProfile")}</div>
         <div slot="free">
             <Minus size={"1em"} color={"var(--menu-warn)"} />
@@ -183,42 +197,67 @@
     </Feature>
 </div>
 
-<Footer>
-    <Button tiny={$mobileWidth} small={!$mobileWidth} secondary={true} on:click={cancel}
-        >{isDiamond ? $_("close") : $_("cancel")}</Button>
-    {#if !isDiamond}
-        <Button on:click={upgrade} tiny={$mobileWidth} small={!$mobileWidth}
-            >{$_("upgrade.button")}</Button>
-    {:else if canExtend}
-        <Button on:click={upgrade} tiny={$mobileWidth} small={!$mobileWidth}
-            >{$_("upgrade.extendShort")}</Button>
-    {/if}
-</Footer>
+{#if !landing}
+    <div class="footer">
+        <Footer>
+            <Button tiny={$mobileWidth} small={!$mobileWidth} secondary={true} on:click={cancel}
+                >{isDiamond ? $_("close") : $_("cancel")}</Button>
+            {#if !isDiamond}
+                <Button on:click={upgrade} tiny={$mobileWidth} small={!$mobileWidth}
+                    >{$_("upgrade.button")}</Button>
+            {:else if canExtend}
+                <Button on:click={upgrade} tiny={$mobileWidth} small={!$mobileWidth}
+                    >{$_("upgrade.extendShort")}</Button>
+            {/if}
+        </Footer>
+    </div>
+{/if}
 
 <style type="text/scss">
-    .body {
+    .grid {
         @include font(book, normal, fs-90);
         display: grid;
         grid-template-columns: 1fr 1fr 1fr;
-        padding: $sp4 $sp5 $sp5 $sp5;
+    }
+
+    .body {
+        padding: 0 $sp5 $sp5 $sp5;
+        flex: 1;
+        overflow-y: scroll;
 
         @include mobile() {
-            padding: $sp3;
+            padding: 0 $sp3 $sp3 $sp3;
         }
 
-        .header {
-            font-weight: 700;
-            padding: $sp3 $sp2;
+        &.landing {
+            padding: 0;
+        }
+    }
 
-            &.free,
-            &.diamond {
-                text-align: center;
-            }
+    .header {
+        padding: $sp5 $sp5 0 $sp5;
 
-            &.diamond {
-                background-color: var(--primary);
-                color: #ffffff;
-            }
+        @include mobile() {
+            padding: $sp3 $sp3 0 $sp3;
+        }
+
+        &.landing {
+            padding: 0;
+            @include font-size(fs-120);
+        }
+    }
+    .header-col {
+        font-weight: 700;
+        padding: $sp3 $sp2;
+
+        &.free,
+        &.diamond {
+            text-align: center;
+        }
+
+        &.diamond {
+            background-color: var(--primary);
+            color: #ffffff;
         }
     }
 </style>

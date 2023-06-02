@@ -6,11 +6,16 @@ members = [
     "backend/bots/examples/group_prize_bot/impl",
     "backend/bots/examples/icp_dispenser/api",
     "backend/bots/examples/icp_dispenser/impl",
+    "backend/bots/examples/satoshi_dice/api",
+    "backend/bots/examples/satoshi_dice/impl",
     "backend/bots/examples/sns1_airdrop/api",
     "backend/bots/examples/sns1_airdrop/impl",
     "backend/canister_installer",
     "backend/canister_upgrade_proposal_builder",
     "backend/canister_upgrader",
+    "backend/canisters/community/api",
+    "backend/canisters/community/c2c_client",
+    "backend/canisters/community/impl",
     "backend/canisters/cycles_dispenser/api",
     "backend/canisters/cycles_dispenser/impl",
     "backend/canisters/group/api",
@@ -70,7 +75,9 @@ members = [
     "backend/libraries/chat_events",
     "backend/libraries/cycles_dispenser_client",
     "backend/libraries/dynamodb_index_store",
+    "backend/libraries/fire_and_forget_handler",
     "backend/libraries/gated_groups",
+    "backend/libraries/group_chat_core",
     "backend/libraries/http_request",
     "backend/libraries/human_readable",
     "backend/libraries/human_readable_derive",
@@ -98,6 +105,7 @@ canister_logger = { git = "https://github.com/open-ic/ic-utils", rev = "d54cadd4
 canister_state_macros = { git = "https://github.com/open-ic/ic-utils", rev = "d54cadd47b1ceb325ae3f6bf9ec4e9d9aa6bc72e" }
 canister_timer_jobs = { git = "https://github.com/open-ic/ic-utils", rev = "d54cadd47b1ceb325ae3f6bf9ec4e9d9aa6bc72e" }
 canister_tracing_macros = { git = "https://github.com/open-ic/ic-utils", rev = "d54cadd47b1ceb325ae3f6bf9ec4e9d9aa6bc72e" }
+ciborium = { git = "https://github.com/enarx/ciborium", rev = "e719537c99b564c3674a56defe53713c702c6f46" }
 clap = "3.2.23"
 dirs = "4.0.0"
 dotenv = "0.15.0"
@@ -105,19 +113,19 @@ futures = "0.3.26"
 getrandom = "0.2.8"
 hex = "0.4.3"
 ic-agent = "0.23.0"
-ic-base-types = { git = "https://github.com/dfinity/ic", rev = "7445081734e6d896d090295967d50710975c4f25" }
 ic-cdk = "0.7.3"
 ic-cdk-macros = "0.6.10"
 ic-cdk-timers = "0.1.2"
-ic-icrc1 = { git = "https://github.com/dfinity/ic", rev = "7445081734e6d896d090295967d50710975c4f25" }
-ic-icrc1-client = { git = "https://github.com/dfinity/ic", rev = "7445081734e6d896d090295967d50710975c4f25" }
-ic-icrc1-client-cdk = { git = "https://github.com/dfinity/ic", rev = "7445081734e6d896d090295967d50710975c4f25" }
+ic-icrc1 = { git = "https://github.com/dfinity/ic", rev = "6d21535b301fee2ad3e8a0e8af2c3f9a3d022111" }
+ic-icrc1-client = { git = "https://github.com/dfinity/ic", rev = "6d21535b301fee2ad3e8a0e8af2c3f9a3d022111" }
+ic-icrc1-client-cdk = { git = "https://github.com/dfinity/ic", rev = "6d21535b301fee2ad3e8a0e8af2c3f9a3d022111" }
 ic-ledger-types = "0.4.2"
-ic-ledger-canister-core = { git = "https://github.com/dfinity/ic", rev = "7445081734e6d896d090295967d50710975c4f25" }
-ic-sns-governance = { git = "https://github.com/dfinity/ic", rev = "7445081734e6d896d090295967d50710975c4f25" }
+ic-ledger-canister-core = { git = "https://github.com/dfinity/ic", rev = "6d21535b301fee2ad3e8a0e8af2c3f9a3d022111" }
+ic-sns-governance = { git = "https://github.com/dfinity/ic", rev = "6d21535b301fee2ad3e8a0e8af2c3f9a3d022111" }
 ic-stable-structures = "0.5.1"
 ic-test-state-machine-client = { git = "https://github.com/dfinity/test-state-machine-client", rev = "1b16d2dbb0be28e3f8059fc76640d08a923dc65c" }
 ic-utils = "0.23.0"
+icrc-ledger-types = { git = "https://github.com/dfinity/ic", rev = "6d21535b301fee2ad3e8a0e8af2c3f9a3d022111" }
 itertools = "0.10.5"
 lazy_static = "1.4.0"
 num-traits = "0.2.15"

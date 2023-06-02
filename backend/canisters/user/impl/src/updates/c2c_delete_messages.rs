@@ -15,16 +15,16 @@ fn c2c_delete_messages(args: Args) -> Response {
     mutate_state(|state| c2c_delete_messages_impl(args, state))
 }
 
-fn c2c_delete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    let caller: UserId = runtime_state.env.caller().into();
+fn c2c_delete_messages_impl(args: Args, state: &mut RuntimeState) -> Response {
+    let caller: UserId = state.env.caller().into();
 
-    if runtime_state.data.blocked_users.contains(&caller) {
+    if state.data.blocked_users.contains(&caller) {
         return UserBlocked;
     }
 
     let chat_id: ChatId = caller.into();
-    if let Some(chat) = runtime_state.data.direct_chats.get_mut(&chat_id) {
-        let now = runtime_state.env.now();
+    if let Some(chat) = state.data.direct_chats.get_mut(&chat_id) {
+        let now = state.env.now();
 
         let delete_message_results = chat.events.delete_messages(DeleteUndeleteMessagesArgs {
             caller,
@@ -38,7 +38,7 @@ fn c2c_delete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Res
         let remove_deleted_message_content_at = now + (5 * MINUTE_IN_MS);
         for (message_id, result) in delete_message_results {
             if matches!(result, DeleteMessageResult::Success(_)) {
-                runtime_state.data.timer_jobs.enqueue_job(
+                state.data.timer_jobs.enqueue_job(
                     TimerJob::HardDeleteMessageContent(Box::new(HardDeleteMessageContentJob {
                         chat_id,
                         thread_root_message_index: None,

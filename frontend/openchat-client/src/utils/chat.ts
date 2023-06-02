@@ -117,7 +117,8 @@ export function makeRtcConnections(
     myUserId: string,
     chat: ChatSummary,
     events: EventWrapper<ChatEvent>[],
-    lookup: UserLookup
+    lookup: UserLookup,
+    meteredApiKey: string
 ): void {
     const userIds = getUsersToMakeRtcConnectionsWith(myUserId, chat, events);
     if (userIds.length === 0) return;
@@ -127,7 +128,7 @@ export function makeRtcConnections(
         .filter((user) => user.kind === "user" && !rtcConnectionsManager.exists(user.userId))
         .map((user) => user.userId)
         .forEach((userId) => {
-            rtcConnectionsManager.create(myUserId, userId);
+            rtcConnectionsManager.create(myUserId, userId, meteredApiKey);
         });
 }
 
@@ -169,6 +170,8 @@ export function activeUserIdFromEvent(event: ChatEvent): string | undefined {
             return event.updatedBy;
         case "gate_updated":
             return event.updatedBy;
+        case "users_invited":
+            return event.invitedBy;
         case "message_deleted":
         case "message_undeleted":
         case "message_edited":
@@ -788,16 +791,6 @@ export function canChangeRoles(
     }
 }
 
-export function canAddMembers(chat: ChatSummary): boolean {
-    if (chat.kind === "group_chat") {
-        return (
-            !chat.public && !chat.frozen && isPermitted(chat.myRole, chat.permissions.addMembers)
-        );
-    } else {
-        return false;
-    }
-}
-
 export function canRemoveMembers(chat: ChatSummary): boolean {
     if (chat.kind === "group_chat") {
         return (
@@ -825,10 +818,10 @@ export function canUnblockUsers(chat: ChatSummary): boolean {
 }
 
 export function canDeleteOtherUsersMessages(chat: ChatSummary): boolean {
-    if (chat.kind === "group_chat" && !chat.frozen) {
-        return isPermitted(chat.myRole, chat.permissions.deleteMessages);
+    if (chat.kind === "group_chat") {
+        return !chat.frozen && isPermitted(chat.myRole, chat.permissions.deleteMessages);
     } else {
-        return false;
+        return true;
     }
 }
 
@@ -849,7 +842,11 @@ export function canPinMessages(chat: ChatSummary): boolean {
 }
 
 export function canInviteUsers(chat: ChatSummary): boolean {
-    return chat.kind === "group_chat" && !chat.frozen && chat.public;
+    return (
+        chat.kind === "group_chat" &&
+        !chat.frozen &&
+        (chat.public || isPermitted(chat.myRole, chat.permissions.inviteUsers))
+    );
 }
 
 export function canCreatePolls(chat: ChatSummary): boolean {
@@ -935,6 +932,8 @@ function isPermitted(role: MemberRole, permissionRole: PermissionRole): boolean 
         case "owner":
             return hasOwnerRights(role);
         case "admins":
+            return role !== "participant" && role !== "moderator";
+        case "moderators":
             return role !== "participant";
         case "members":
             return true;

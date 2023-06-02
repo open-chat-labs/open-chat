@@ -48,7 +48,13 @@ fn group_message_notification_succeeds() {
     let latest_notification_index = latest_notification_index(env, canister_ids.notifications, *controller);
 
     let group_id = client::user::happy_path::create_group(env, &user1, &random_string(), false, false);
-    client::group::happy_path::add_participants(env, &user1, group_id, vec![user2.user_id]);
+    client::local_user_index::happy_path::add_users_to_group(
+        env,
+        user1.principal,
+        canister_ids.local_user_index,
+        group_id,
+        vec![(user2.user_id, user2.principal)],
+    );
 
     client::group::happy_path::send_text_message(env, &user1, group_id, None, "TEXT", None);
 
@@ -115,7 +121,13 @@ fn group_message_notification_muted() {
     let TestData { user1, user2 } = init_test_data(env, canister_ids);
 
     let group_id = client::user::happy_path::create_group(env, &user1, &random_string(), false, false);
-    client::group::happy_path::add_participants(env, &user1, group_id, vec![user2.user_id]);
+    client::local_user_index::happy_path::add_users_to_group(
+        env,
+        user1.principal,
+        canister_ids.local_user_index,
+        group_id,
+        vec![(user2.user_id, user2.principal)],
+    );
 
     client::user::mute_notifications(
         env,
@@ -153,8 +165,8 @@ fn latest_notification_index(env: &StateMachine, notifications_canister_id: Prin
 }
 
 fn init_test_data(env: &mut StateMachine, canister_ids: &CanisterIds) -> TestData {
-    let user1 = client::user_index::happy_path::register_user(env, canister_ids.user_index);
-    let user2 = client::user_index::happy_path::register_user(env, canister_ids.user_index);
+    let user1 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
 
     client::notifications_index::push_subscription(
         env,

@@ -15,39 +15,39 @@ fn unblock_user(args: Args) -> Response {
     mutate_state(|state| unblock_user_impl(args, state))
 }
 
-fn unblock_user_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    if runtime_state.data.is_frozen() {
+fn unblock_user_impl(args: Args, state: &mut RuntimeState) -> Response {
+    if state.data.is_frozen() {
         return ChatFrozen;
     }
 
-    let caller = &runtime_state.env.caller();
-    if !runtime_state.data.is_public {
+    let caller = state.env.caller();
+    if !state.data.chat.is_public {
         GroupNotPublic
-    } else if let Some(caller_participant) = runtime_state.data.participants.get_by_principal(caller) {
-        if caller_participant.suspended.value {
+    } else if let Some(caller_member) = state.data.get_member(caller) {
+        if caller_member.suspended.value {
             return UserSuspended;
         }
 
-        let unblocked_by = caller_participant.user_id;
+        let unblocked_by = caller_member.user_id;
         if unblocked_by == args.user_id {
             CannotUnblockSelf
-        } else if caller_participant.role.can_unblock_users(&runtime_state.data.permissions) {
-            let now = runtime_state.env.now();
+        } else if caller_member.role.can_unblock_users(&state.data.chat.permissions) {
+            let now = state.env.now();
 
-            runtime_state.data.participants.unblock(&args.user_id);
+            state.data.chat.members.unblock(&args.user_id);
 
             let event = UsersUnblocked {
                 user_ids: vec![args.user_id],
                 unblocked_by,
             };
 
-            runtime_state.data.events.push_main_event(
+            state.data.chat.events.push_main_event(
                 ChatEventInternal::UsersUnblocked(Box::new(event)),
                 args.correlation_id,
                 now,
             );
 
-            handle_activity_notification(runtime_state);
+            handle_activity_notification(state);
             Success
         } else {
             NotAuthorized

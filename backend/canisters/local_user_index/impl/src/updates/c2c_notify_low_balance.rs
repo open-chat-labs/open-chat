@@ -29,12 +29,12 @@ struct PrepareResult {
     top_up: CyclesTopUp,
 }
 
-fn prepare(runtime_state: &RuntimeState) -> Result<PrepareResult, NotifyLowBalanceResponse> {
-    let caller = runtime_state.env.caller();
+fn prepare(state: &RuntimeState) -> Result<PrepareResult, NotifyLowBalanceResponse> {
+    let caller = state.env.caller();
     let user_id = caller.into();
     let top_up_amount = USER_CANISTER_TOP_UP_AMOUNT;
     let top_up = CyclesTopUp {
-        date: runtime_state.env.now(),
+        date: state.env.now(),
         amount: top_up_amount,
     };
 
@@ -45,9 +45,9 @@ fn prepare(runtime_state: &RuntimeState) -> Result<PrepareResult, NotifyLowBalan
     }
 }
 
-fn commit(user_id: UserId, top_up: CyclesTopUp, runtime_state: &mut RuntimeState) {
-    runtime_state.data.total_cycles_spent_on_canisters += top_up.amount;
-    if !runtime_state.data.local_users.mark_cycles_top_up(&user_id, top_up) {
+fn commit(user_id: UserId, top_up: CyclesTopUp, state: &mut RuntimeState) {
+    state.data.total_cycles_spent_on_canisters += top_up.amount;
+    if !state.data.local_users.mark_cycles_top_up(&user_id, top_up) {
         panic!("User not found. {user_id:?}");
     }
 }

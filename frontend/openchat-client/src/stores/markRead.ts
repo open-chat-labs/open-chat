@@ -34,7 +34,11 @@ export class MessagesRead {
     }
 
     empty(): boolean {
-        return this.readUpTo === undefined && Object.keys(this.threads).length === 0 && this.dateReadPinned === undefined;
+        return (
+            this.readUpTo === undefined &&
+            Object.keys(this.threads).length === 0 &&
+            this.dateReadPinned === undefined
+        );
     }
 
     markReadUpTo(index: number): void {
@@ -181,7 +185,7 @@ export class MessageReadTracker {
         }
         this.state[chatId].markReadPinned(dateLastPinned);
         this.publish();
-    }    
+    }
 
     confirmMessage(chatId: string, messageIndex: number, messageId: bigint): boolean {
         // this is called when a message is confirmed so that we can move it from
@@ -237,7 +241,8 @@ export class MessageReadTracker {
     }
 
     unreadMessageCount(chatId: string, latestMessageIndex: number | undefined): number {
-        if (latestMessageIndex === undefined) {
+        // previewed chats will not exist in this.serverState
+        if (latestMessageIndex === undefined || this.serverState[chatId] === undefined) {
             return 0;
         }
 
@@ -284,7 +289,12 @@ export class MessageReadTracker {
         return undefined;
     }
 
-    syncWithServer(chatId: string, readUpTo: number | undefined, threads: ThreadRead[], dateReadPinned: bigint | undefined): void {
+    syncWithServer(
+        chatId: string,
+        readUpTo: number | undefined,
+        threads: ThreadRead[],
+        dateReadPinned: bigint | undefined
+    ): void {
         const serverState = new MessagesRead();
         serverState.readUpTo = readUpTo;
         serverState.setThreads(threads);

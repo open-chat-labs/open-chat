@@ -267,11 +267,11 @@
 
     /**
      * Check the message content for special commands
-     * * !poll - creates a poll
-     * * !icp [amount]
-     * * !search [term]
-     * * !pinned - opens pinned messages (not yet)
-     * * !details - opens group details (not yet)
+     * * /poll - creates a poll
+     * * /icp [amount]
+     * * /search [term]
+     * * /pinned - opens pinned messages (not yet)
+     * * /details - opens group details (not yet)
      */
     function parseCommands(txt: string): boolean {
         if (isGroup && /^\/poll$/.test(txt)) {
@@ -297,21 +297,18 @@
             return true;
         }
 
-        if (chat.kind === "group_chat") {
-            const faqMatch = txt.match(/^\/faq( *(.*))$/);
-            if (faqMatch && faqMatch[2] !== undefined) {
-                if (allQuestions.includes(faqMatch[2] as Questions)) {
-                    const url = addQueryStringParam("faq", faqMatch[2]);
-                    dispatch("sendMessage", [
-                        `[🤔 FAQ: ${$_(`faq.${faqMatch[2]}_q`)}](${url})`,
-                        [],
-                    ]);
-                } else {
-                    const url = addQueryStringParam("faq", "");
-                    dispatch("sendMessage", [`[🤔 FAQs](${url})`, []]);
-                }
-                return true;
+        const faqMatch = txt.match(/^\/faq( *(.*))$/);
+        if (faqMatch && faqMatch[2] !== undefined) {
+            if (allQuestions.includes(faqMatch[2] as Questions)) {
+                const url = `/faq?q=${faqMatch[2]}`;
+                dispatch("sendMessage", [
+                    `[🤔 FAQ: ${$_(`faq.${faqMatch[2]}_q`)}](${url})`,
+                    [],
+                ]);
+            } else {
+                dispatch("sendMessage", [`[🤔 FAQs](/faq)`, []]);
             }
+            return true;
         }
 
         if (/^\/diamond$/.test(txt)) {
@@ -449,7 +446,7 @@
     }
 
     function cancelPreview() {
-        dispatch("cancelPreview", chat.chatId);
+        dispatch("cancelPreview", chat);
     }
 
     function freezeGroup() {

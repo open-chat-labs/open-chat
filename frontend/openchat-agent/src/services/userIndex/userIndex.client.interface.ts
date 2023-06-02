@@ -5,7 +5,6 @@ import type {
     UsersArgs,
     UsersResponse,
     UserSummary,
-    RegisterUserResponse,
     SuspendUserResponse,
     UnsuspendUserResponse,
     MarkSuspectedBotResponse,
@@ -19,7 +18,7 @@ import type {
 
 export interface IUserIndexClient {
     getCurrentUser: () => Promise<CurrentUserResponse>;
-    registerUser(username: string, referralCode: string | undefined): Promise<RegisterUserResponse>;
+    userRegistrationCanister(): Promise<string>;
     checkUsername(username: string): Promise<CheckUsernameResponse>;
     setUsername(userId: string, username: string): Promise<SetUsernameResponse>;
     getUsers(users: UsersArgs, allowStale: boolean): Promise<UsersResponse>;

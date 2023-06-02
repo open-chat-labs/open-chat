@@ -11,12 +11,12 @@ fn add_or_update_users(args: Args) -> Response {
     mutate_state(|state| add_or_update_users_impl(args, state))
 }
 
-fn add_or_update_users_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
+fn add_or_update_users_impl(args: Args, state: &mut RuntimeState) -> Response {
     for user_config in args.users {
-        if let Some(user) = runtime_state.data.users.get_mut(&user_config.user_id) {
+        if let Some(user) = state.data.users.get_mut(&user_config.user_id) {
             user.byte_limit = user_config.byte_limit;
         } else {
-            runtime_state.data.users.insert(
+            state.data.users.insert(
                 user_config.user_id,
                 UserRecordInternal {
                     byte_limit: user_config.byte_limit,
@@ -25,10 +25,7 @@ fn add_or_update_users_impl(args: Args, runtime_state: &mut RuntimeState) -> Res
                 },
             );
 
-            runtime_state
-                .data
-                .buckets
-                .sync_event(EventToSync::UserAdded(user_config.user_id));
+            state.data.buckets.sync_event(EventToSync::UserAdded(user_config.user_id));
         }
     }
 

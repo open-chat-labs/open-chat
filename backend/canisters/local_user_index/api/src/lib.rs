@@ -1,9 +1,9 @@
-use candid::Principal;
+use candid::{CandidType, Principal};
 use serde::{Deserialize, Serialize};
 use types::nns::CryptoAmount;
 use types::{
-    ChatId, Cryptocurrency, DiamondMembershipPlanDuration, MessageContent, MessageIndex, PhoneNumber, SuspensionDuration,
-    TimestampMillis, UserId,
+    ChatId, CommunityId, Cryptocurrency, DiamondMembershipPlanDuration, MessageContent, MessageIndex, PhoneNumber,
+    ReferralType, SuspensionDuration, TimestampMillis, UserId,
 };
 
 mod lifecycle;
@@ -25,8 +25,10 @@ pub enum Event {
     UserUpgradeConcurrencyChanged(UserUpgradeConcurrencyChanged),
     UserSuspended(UserSuspended),
     UserJoinedGroup(UserJoinedGroup),
+    UserJoinedCommunity(UserJoinedCommunity),
     DiamondMembershipPaymentReceived(DiamondMembershipPaymentReceived),
     OpenChatBotMessage(OpenChatBotMessage),
+    ReferralCodeAdded(ReferralCodeAdded),
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -89,8 +91,15 @@ pub struct UserSuspended {
 pub struct UserJoinedGroup {
     pub user_id: UserId,
     pub chat_id: ChatId,
+    #[serde(default)]
     pub as_super_admin: bool,
     pub latest_message_index: Option<MessageIndex>,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
+pub struct UserJoinedCommunity {
+    pub user_id: UserId,
+    pub community_id: CommunityId,
 }
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
@@ -110,4 +119,21 @@ pub struct DiamondMembershipPaymentReceived {
 pub struct OpenChatBotMessage {
     pub user_id: UserId,
     pub message: MessageContent,
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct ReferralCodeAdded {
+    pub referral_type: ReferralType,
+    pub code: String,
+    pub expiry: Option<TimestampMillis>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Debug)]
+pub struct GlobalUser {
+    pub user_id: UserId,
+    pub principal: Principal,
+    pub is_bot: bool,
+    #[serde(default)]
+    pub is_super_admin: bool,
+    pub is_platform_moderator: bool,
 }

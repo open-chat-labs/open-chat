@@ -1,4 +1,5 @@
 import { writable } from "svelte/store";
+import { Alignment, Position, derivePosition } from "../utils/alignment";
 
 const { subscribe, update } = writable<HTMLElement | undefined>(undefined);
 
@@ -18,39 +19,24 @@ function close(tooltip: HTMLElement | undefined): HTMLElement | undefined {
 export const tooltipStore = {
     subscribe,
     position: (
-        targetRect: DOMRect,
-        rightAligned: boolean,
-        bottomOffset: number,
-        centreChevron: boolean
+        triggerRect: DOMRect,
+        position: Position = "top",
+        align: Alignment = "start",
+        gutter = 8
     ): void =>
         update((tooltip) => {
             if (tooltip === undefined) return tooltip;
 
-            const tooltipWidth = tooltip.getBoundingClientRect().width;
-            const chevronOffset = 23;
-            const targetCentre = targetRect.left + targetRect.width / 2;
+            const pos = derivePosition(
+                triggerRect,
+                tooltip.getBoundingClientRect(),
+                position,
+                align,
+                gutter
+            );
 
-            const left = centreChevron
-                ? targetCentre - chevronOffset
-                : Math.max(targetRect.left, targetCentre - tooltipWidth / 2);
-
-            const right = centreChevron
-                ? window.innerWidth - targetCentre - chevronOffset
-                : Math.max(
-                      window.innerWidth - targetCentre - tooltipWidth / 2,
-                      window.innerWidth - targetRect.right
-                  );
-
-            if (rightAligned) {
-                tooltip.style.setProperty("left", "auto");
-                tooltip.style.setProperty("right", `${right}px`);
-            } else {
-                tooltip.style.setProperty("left", `${left}px`);
-                tooltip.style.setProperty("right", "auto");
-            }
-
-            const bottom = window.innerHeight - targetRect.top - bottomOffset;
-            tooltip.style.setProperty("bottom", `${bottom}px`);
+            tooltip.style.setProperty("left", `${pos.x}px`);
+            tooltip.style.setProperty("top", `${pos.y}px`);
 
             return tooltip;
         }),

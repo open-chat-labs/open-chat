@@ -1,25 +1,9 @@
 import "../../../libraries/types/can.did";
 
-type RegisterUserV2Args =
-    record {
-        username: text;
-        referral_code: opt text;
-        public_key: blob;
-    };
-
-type RegisterUserResponse =
+type UserRegistrationCanisterResponse =
     variant {
-        Success: UserId;
-        AlreadyRegistered;
-        UserLimitReached;
-        UsernameTaken;
-        UsernameInvalid;
-        UsernameTooShort: nat16;
-        UsernameTooLong: nat16;
-        CyclesBalanceTooLow;
-        InternalError: text;
-        PublicKeyInvalid: text;
-        ReferralCodeInvalid;
+        Success: CanisterId;
+        NewRegistrationsClosed;
     };
 
 type SetUsernameArgs =
@@ -62,6 +46,7 @@ type CurrentUserResponse =
             icp_account: AccountIdentifier;
             referrals: vec UserId;
             is_super_admin: bool;
+            is_platform_moderator: bool;
             suspension_details: opt SuspensionDetails;
             is_suspected_bot: bool;
             diamond_membership_details: opt DiamondMembershipDetails;
@@ -346,7 +331,7 @@ type AddReferralCodesResponse =
     };
 
 service: {
-    register_user_v2: (RegisterUserV2Args) -> (RegisterUserResponse);
+    user_registration_canister: (EmptyArgs) -> (UserRegistrationCanisterResponse) query;
 
     // This is used to set the initial username and subsequently to change it
     set_username: (SetUsernameArgs) -> (SetUsernameResponse);

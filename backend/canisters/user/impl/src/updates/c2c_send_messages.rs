@@ -1,4 +1,3 @@
-use crate::guards::caller_is_known_bot;
 use crate::timer_job_types::{DeleteFileReferencesJob, TimerJob};
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update_msgpack;
@@ -25,7 +24,7 @@ async fn c2c_send_messages_impl(args: Args) -> Response {
         SenderStatus::Ok(user_id) => user_id,
         SenderStatus::Blocked => return Blocked,
         SenderStatus::UnknownUser(local_user_index_canister_id, user_id) => {
-            if !verify_user(local_user_index_canister_id, user_id).await {
+            if !verify_user(local_user_index_canister_id, user_id, false).await {
                 panic!("This request is not from an OpenChat user");
             }
             user_id
@@ -70,9 +69,9 @@ async fn c2c_send_messages_impl(args: Args) -> Response {
     Success
 }
 
-#[update(guard = "caller_is_known_bot")]
+#[update]
 #[trace]
-fn c2c_handle_bot_messages(
+async fn c2c_handle_bot_messages(
     args: user_canister::c2c_handle_bot_messages::Args,
 ) -> user_canister::c2c_handle_bot_messages::Response {
     let (sender_status, now) = read_state(|state| (get_sender_status(state), state.env.now()));
@@ -80,7 +79,12 @@ fn c2c_handle_bot_messages(
     let sender_user_id = match sender_status {
         SenderStatus::Ok(user_id) => user_id,
         SenderStatus::Blocked => return user_canister::c2c_handle_bot_messages::Response::Blocked,
-        SenderStatus::UnknownUser(..) => unreachable!(),
+        SenderStatus::UnknownUser(local_user_index_canister_id, user_id) => {
+            if !verify_user(local_user_index_canister_id, user_id, true).await {
+                panic!("This request is not from a bot registered with OpenChat");
+            }
+            user_id
+        }
     };
 
     for message in args.messages.iter() {
@@ -132,24 +136,28 @@ enum SenderStatus {
     UnknownUser(CanisterId, UserId),
 }
 
-fn get_sender_status(runtime_state: &RuntimeState) -> SenderStatus {
-    let sender = runtime_state.env.caller().into();
+fn get_sender_status(state: &RuntimeState) -> SenderStatus {
+    let sender = state.env.caller().into();
 
-    if runtime_state.data.blocked_users.contains(&sender) {
+    if state.data.blocked_users.contains(&sender) {
         SenderStatus::Blocked
-    } else if runtime_state.data.direct_chats.get(&sender.into()).is_some() {
+    } else if state.data.direct_chats.get(&sender.into()).is_some() {
         SenderStatus::Ok(sender)
     } else {
-        SenderStatus::UnknownUser(runtime_state.data.local_user_index_canister_id, sender)
+        SenderStatus::UnknownUser(state.data.local_user_index_canister_id, sender)
     }
 }
 
-async fn verify_user(local_user_index_canister_id: CanisterId, user_id: UserId) -> bool {
+async fn verify_user(local_user_index_canister_id: CanisterId, user_id: UserId, is_bot: bool) -> bool {
     let args = local_user_index_canister::c2c_lookup_user::Args {
         user_id_or_principal: user_id.into(),
     };
     if let Ok(response) = local_user_index_canister_c2c_client::c2c_lookup_user(local_user_index_canister_id, &args).await {
-        matches!(response, local_user_index_canister::c2c_lookup_user::Response::Success(_))
+        if let local_user_index_canister::c2c_lookup_user::Response::Success(r) = response {
+            r.is_bot == is_bot
+        } else {
+            false
+        }
     } else {
         panic!("Failed to call local_user_index to verify user");
     }
@@ -159,18 +167,16 @@ pub(crate) fn handle_message_impl(
     sender: UserId,
     args: HandleMessageArgs,
     mute_notification: bool,
-    runtime_state: &mut RuntimeState,
+    state: &mut RuntimeState,
 ) -> EventWrapper<Message> {
-    let replies_to = convert_reply_context(args.replies_to, sender, args.now, runtime_state);
+    let replies_to = convert_reply_context(args.replies_to, sender, args.now, state);
     let initial_content: MessageContentInitial = args.content.into();
     let content = initial_content.new_content_into_internal();
     let files = content.blob_references();
 
     let push_message_args = PushMessageArgs {
         thread_root_message_index: None,
-        message_id: args
-            .message_id
-            .unwrap_or_else(|| MessageId::generate(runtime_state.env.rng())),
+        message_id: args.message_id.unwrap_or_else(|| MessageId::generate(state.env.rng())),
         sender,
         content,
         replies_to,
@@ -180,18 +186,18 @@ pub(crate) fn handle_message_impl(
     };
 
     let message_event =
-        runtime_state
+        state
             .data
             .direct_chats
             .push_message(false, sender, args.sender_message_index, push_message_args, args.is_bot);
 
-    register_timer_jobs(&message_event, files, args.now, &mut runtime_state.data.timer_jobs);
+    register_timer_jobs(&message_event, files, args.now, &mut state.data.timer_jobs);
 
-    if let Some(chat) = runtime_state.data.direct_chats.get_mut(&sender.into()) {
+    if let Some(chat) = state.data.direct_chats.get_mut(&sender.into()) {
         if args.is_bot {
             chat.mark_read_up_to(message_event.event.message_index, false, args.now);
         }
-        if !mute_notification && !chat.notifications_muted.value {
+        if !mute_notification && !chat.notifications_muted.value && !state.data.suspended.value {
             let notification = Notification::DirectMessageNotification(DirectMessageNotification {
                 sender,
                 thread_root_message_index: None,
@@ -199,9 +205,9 @@ pub(crate) fn handle_message_impl(
                 message: message_event.clone(),
             });
 
-            let recipient = runtime_state.env.canister_id().into();
+            let recipient = state.env.canister_id().into();
 
-            runtime_state.push_notification(vec![recipient], notification);
+            state.push_notification(vec![recipient], notification);
         }
     }
 
@@ -212,12 +218,12 @@ fn convert_reply_context(
     replies_to: Option<C2CReplyContext>,
     sender: UserId,
     now: TimestampMillis,
-    runtime_state: &RuntimeState,
+    state: &RuntimeState,
 ) -> Option<ReplyContext> {
     match replies_to? {
         C2CReplyContext::ThisChat(message_id) => {
             let chat_id = sender.into();
-            runtime_state
+            state
                 .data
                 .direct_chats
                 .get(&chat_id)

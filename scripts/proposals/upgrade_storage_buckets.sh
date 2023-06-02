@@ -8,7 +8,7 @@ SUMMARY_PATH=$5
 
 SUMMARY=`cat $SUMMARY_PATH`
 
-FUNCTION_ID=5000
+FUNCTION_ID=5003
 CANISTER_NAME=storage_bucket
 
 # Set current directory to the scripts root

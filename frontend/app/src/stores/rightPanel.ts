@@ -4,12 +4,13 @@ import type { ChatSummary, GroupPermissions } from "openchat-client";
 
 export type RightPanelState =
     | GroupDetailsPanel
-    | AddMembersPanel
+    | InviteMembersPanel
     | ShowMembersPanel
     | ShowPinnedPanel
     | UserProfilePanel
     | MessageThreadPanel
     | ProposalFilterPanel
+    | CommunityGroups
     | NoPanel;
 
 export type NoPanel = {
@@ -30,12 +31,17 @@ export type UserProfilePanel = {
     kind: "user_profile";
 };
 
-export type AddMembersPanel = {
-    kind: "add_members";
+export type InviteMembersPanel = {
+    kind: "invite_users";
 };
 
 export type ShowMembersPanel = {
     kind: "show_members";
+};
+
+export type CommunityGroups = {
+    kind: "community_groups";
+    communityId: string;
 };
 
 export type ShowPinnedPanel = {
@@ -79,3 +85,7 @@ export function filterByChatType(
 }
 
 export const rightPanelHistory = writable<RightPanelState[]>([]);
+
+export function popRightPanelHistory(): void {
+    rightPanelHistory.update((history) => history.slice(0, history.length - 1));
+}

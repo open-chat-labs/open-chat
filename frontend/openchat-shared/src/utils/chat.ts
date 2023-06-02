@@ -97,6 +97,7 @@ export function userIdsFromEvents(events: EventWrapper<ChatEvent>[]): Set<string
             case "chat_frozen":
             case "chat_unfrozen":
             case "empty":
+            case "users_invited":
                 break;
             default:
                 throw new UnsupportedValueError("Unexpected ChatEvent type received", e.event);
@@ -143,7 +144,11 @@ export function getContentAsText(formatter: MessageFormatter, content: MessageCo
     } else if (content.kind === "message_reminder_created_content") {
         text = content.notes ?? "Message reminder";
     } else if (content.kind === "custom_content") {
-        text = "custom_content";
+        if (content.subtype === "user_referral_card") {
+            text = formatter("referralHeader");
+        } else {
+            text = "custom_content";
+        }
     } else if (content.kind === "reported_message_content") {
         text = "reported message";
     } else {
@@ -230,6 +235,8 @@ export function compareRoles(a: MemberRole, b: MemberRole): number {
     if (b === "owner") return -1;
     if (a === "admin") return 1;
     if (b === "admin") return -1;
+    if (a === "moderator") return 1;
+    if (b === "moderator") return -1;
     if (a === "participant") return 1;
     return -1;
 }

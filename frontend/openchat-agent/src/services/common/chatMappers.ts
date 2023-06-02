@@ -7,6 +7,7 @@ import type {
     ApiAudioContent,
     ApiVideoContent,
     ApiMessageContent,
+    ApiMessageContentInitial,
     ApiMessage,
     ApiTextContent,
     ApiReplyContext,
@@ -606,7 +607,6 @@ export function groupPermissions(candid: ApiGroupPermissions): GroupPermissions 
     return {
         changePermissions: permissionRole(candid.change_permissions),
         changeRoles: permissionRole(candid.change_roles),
-        addMembers: permissionRole(candid.add_members),
         removeMembers: permissionRole(candid.remove_members),
         blockUsers: permissionRole(candid.block_users),
         deleteMessages: permissionRole(candid.delete_messages),
@@ -624,7 +624,6 @@ export function apiGroupPermissions(permissions: GroupPermissions): ApiGroupPerm
     return {
         change_permissions: apiPermissionRole(permissions.changePermissions),
         change_roles: apiPermissionRole(permissions.changeRoles),
-        add_members: apiPermissionRole(permissions.addMembers),
         remove_members: apiPermissionRole(permissions.removeMembers),
         block_users: apiPermissionRole(permissions.blockUsers),
         delete_messages: apiPermissionRole(permissions.deleteMessages),
@@ -635,6 +634,7 @@ export function apiGroupPermissions(permissions: GroupPermissions): ApiGroupPerm
         send_messages: apiPermissionRole(permissions.sendMessages),
         react_to_messages: apiPermissionRole(permissions.reactToMessages),
         reply_in_thread: apiPermissionRole(permissions.replyInThread),
+        add_members: apiPermissionRole("owner"), // TODO remove this
     };
 }
 
@@ -644,6 +644,8 @@ export function apiPermissionRole(permissionRole: PermissionRole): ApiPermission
             return { Owner: null };
         case "admins":
             return { Admins: null };
+        case "moderators":
+            return { Moderators: null };
         case "members":
             return { Members: null };
     }
@@ -652,6 +654,7 @@ export function apiPermissionRole(permissionRole: PermissionRole): ApiPermission
 export function permissionRole(candid: ApiPermissionRole): PermissionRole {
     if ("Owner" in candid) return "owner";
     if ("Admins" in candid) return "admins";
+    if ("Moderators" in candid) return "moderators";
     return "members";
 }
 
@@ -680,6 +683,9 @@ export function chatMetrics(candid: ApiChatMetrics): ChatMetrics {
 export function memberRole(candid: ApiRole): MemberRole {
     if ("Admin" in candid) {
         return "admin";
+    }
+    if ("Moderator" in candid) {
+        return "moderator";
     }
     if ("Participant" in candid) {
         return "participant";
@@ -719,7 +725,7 @@ export function apiReplyContextArgs(chatId: string, domain: ReplyContext): ApiRe
     }
 }
 
-export function apiMessageContent(domain: MessageContent): ApiMessageContent {
+export function apiMessageContent(domain: MessageContent): ApiMessageContentInitial {
     switch (domain.kind) {
         case "text_content":
             return { Text: apiTextContent(domain) };

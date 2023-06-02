@@ -15,8 +15,8 @@ fn set_bio(args: Args) -> Response {
     mutate_state(|state| set_bio_impl(args, state))
 }
 
-fn set_bio_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    if runtime_state.data.suspended.value {
+fn set_bio_impl(args: Args, state: &mut RuntimeState) -> Response {
+    if state.data.suspended.value {
         return UserSuspended;
     }
 
@@ -28,6 +28,6 @@ fn set_bio_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
         });
     }
 
-    runtime_state.data.bio = args.text;
+    state.data.bio = args.text;
     Success
 }

@@ -10,29 +10,31 @@ fn selected_updates(args: Args) -> Response {
     read_state(|state| selected_updates_impl(args, state))
 }
 
-fn selected_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
-    let caller = runtime_state.env.caller();
-    let participant = match runtime_state.data.participants.get(caller) {
+fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
+    let caller = state.env.caller();
+    let member = match state.data.get_member(caller) {
         Some(p) => p,
         None => return CallerNotInGroup,
     };
 
-    let min_visible_event_index = participant.min_visible_event_index();
-    let now = runtime_state.env.now();
-    let data = &runtime_state.data;
-    let events_reader = data.events.visible_main_events_reader(min_visible_event_index, now);
+    // Short circuit prior to calling `ic0.time()` so that query caching works effectively.
+    let latest_event_index = state.data.chat.events.latest_event_index().unwrap_or_default();
+    if latest_event_index <= args.updates_since {
+        return SuccessNoUpdates(latest_event_index);
+    }
+
+    let min_visible_event_index = member.min_visible_event_index();
+    let now = state.env.now();
+    let data = &state.data;
+    let events_reader = data.chat.events.visible_main_events_reader(min_visible_event_index, now);
     let latest_event_index = events_reader.latest_event_index().unwrap();
     let updates_since_time = events_reader
         .get(args.updates_since.into())
         .map(|e| e.timestamp)
         .unwrap_or_default();
 
-    if latest_event_index <= args.updates_since {
-        return SuccessNoUpdates(latest_event_index);
-    }
-
-    let invited_users = if data.invited_users.last_updated() > updates_since_time {
-        Some(data.invited_users.users())
+    let invited_users = if data.chat.invited_users.last_updated() > updates_since_time {
+        Some(data.chat.invited_users.users())
     } else {
         None
     };
@@ -109,7 +111,7 @@ fn selected_updates_impl(args: Args, runtime_state: &RuntimeState) -> Response {
             }
             ChatEventInternal::GroupRulesChanged(_) => {
                 if result.rules.is_none() {
-                    result.rules = Some(data.rules.clone());
+                    result.rules = Some(data.chat.rules.clone());
                 }
             }
             _ => {}
@@ -140,8 +142,8 @@ impl<'a> UserUpdatesHandler<'a> {
         if self.users_updated.insert(user_id) {
             if removed {
                 result.participants_removed.push(user_id);
-            } else if let Some(participant) = self.data.participants.get_by_user_id(&user_id) {
-                result.participants_added_or_updated.push(participant.into());
+            } else if let Some(member) = self.data.chat.members.get(&user_id) {
+                result.participants_added_or_updated.push(member.into());
             }
         }
     }

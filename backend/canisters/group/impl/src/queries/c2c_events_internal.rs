@@ -10,12 +10,13 @@ fn c2c_events_internal(args: Args) -> Response {
     read_state(|state| c2c_events_internal_impl(args, state))
 }
 
-fn c2c_events_internal_impl(args: Args, runtime_state: &RuntimeState) -> Response {
-    let now = runtime_state.env.now();
+fn c2c_events_internal_impl(args: Args, state: &RuntimeState) -> Response {
+    let now = state.env.now();
 
     if let Some(events_reader) =
-        runtime_state
+        state
             .data
+            .chat
             .events
             .events_reader(EventIndex::default(), args.thread_root_message_index, now)
     {

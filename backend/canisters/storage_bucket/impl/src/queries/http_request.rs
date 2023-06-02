@@ -23,8 +23,8 @@ fn http_request(request: HttpRequest) -> HttpResponse {
         encode_logs(canister_logger::export_traces(), since.unwrap_or(0))
     }
 
-    fn get_metrics_impl(runtime_state: &RuntimeState) -> HttpResponse {
-        build_json_response(&runtime_state.metrics())
+    fn get_metrics_impl(state: &RuntimeState) -> HttpResponse {
+        build_json_response(&state.metrics())
     }
 
     match extract_route(&request.url) {
@@ -41,10 +41,10 @@ fn http_request_streaming_callback(token: Token) -> StreamingCallbackHttpRespons
     read_state(|state| continue_streaming_file(token, state))
 }
 
-fn start_streaming_file(file_id: FileId, runtime_state: &RuntimeState) -> HttpResponse {
-    if let Some(file) = runtime_state.data.files.get(&file_id) {
-        if let Some(bytes) = runtime_state.data.files.blob_bytes(&file.hash) {
-            let canister_id = runtime_state.env.canister_id();
+fn start_streaming_file(file_id: FileId, state: &RuntimeState) -> HttpResponse {
+    if let Some(file) = state.data.files.get(&file_id) {
+        if let Some(bytes) = state.data.files.blob_bytes(&file.hash) {
+            let canister_id = state.env.canister_id();
 
             let (chunk_bytes, stream_next_chunk) = chunk_bytes(bytes, 0);
 
@@ -80,10 +80,10 @@ fn start_streaming_file(file_id: FileId, runtime_state: &RuntimeState) -> HttpRe
     HttpResponse::not_found()
 }
 
-fn continue_streaming_file(token: Token, runtime_state: &RuntimeState) -> StreamingCallbackHttpResponse {
+fn continue_streaming_file(token: Token, state: &RuntimeState) -> StreamingCallbackHttpResponse {
     if let Route::File(file_id) = extract_route(&token.key) {
         let chunk_index = token.index.0.to_u32().unwrap();
-        let files = &runtime_state.data.files;
+        let files = &state.data.files;
 
         if let Some(bytes) = files.get(&file_id).and_then(|f| files.blob_bytes(&f.hash)) {
             let (chunk_bytes, stream_next_chunk) = chunk_bytes(bytes, chunk_index);

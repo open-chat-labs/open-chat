@@ -11,8 +11,8 @@ thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
 }
 
-pub(crate) fn start_job_if_required(runtime_state: &RuntimeState) -> bool {
-    if TIMER_ID.with(|t| t.get().is_none()) && !runtime_state.data.canister_pool.is_full() {
+pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
+    if TIMER_ID.with(|t| t.get().is_none()) && !state.data.canister_pool.is_full() {
         let timer_id = ic_cdk_timers::set_timer_interval(Duration::ZERO, run);
         TIMER_ID.with(|t| t.set(Some(timer_id)));
         trace!("'topup_canister_pool' job started");
@@ -37,8 +37,8 @@ fn run() {
     }
 }
 
-fn is_pool_full(runtime_state: &RuntimeState) -> bool {
-    runtime_state.data.canister_pool.is_full()
+fn is_pool_full(state: &RuntimeState) -> bool {
+    state.data.canister_pool.is_full()
 }
 
 async fn add_new_canister(cycles_to_use: Cycles) {
@@ -47,7 +47,7 @@ async fn add_new_canister(cycles_to_use: Cycles) {
     }
 }
 
-fn add_canister_to_pool(canister_id: CanisterId, cycles: Cycles, runtime_state: &mut RuntimeState) {
-    runtime_state.data.canister_pool.push(canister_id);
-    runtime_state.data.total_cycles_spent_on_canisters += cycles;
+fn add_canister_to_pool(canister_id: CanisterId, cycles: Cycles, state: &mut RuntimeState) {
+    state.data.canister_pool.push(canister_id);
+    state.data.total_cycles_spent_on_canisters += cycles;
 }

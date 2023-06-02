@@ -18,15 +18,15 @@ fn c2c_toggle_reaction(args: Args) -> Response {
     }
 }
 
-fn c2c_toggle_reaction_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    let caller: UserId = runtime_state.env.caller().into();
+fn c2c_toggle_reaction_impl(args: Args, state: &mut RuntimeState) -> Response {
+    let caller: UserId = state.env.caller().into();
 
-    if runtime_state.data.blocked_users.contains(&caller) {
+    if state.data.blocked_users.contains(&caller) {
         return UserBlocked;
     }
 
-    if let Some(chat) = runtime_state.data.direct_chats.get_mut(&caller.into()) {
-        let now = runtime_state.env.now();
+    if let Some(chat) = state.data.direct_chats.get_mut(&caller.into()) {
+        let now = state.env.now();
         let add_remove_reaction_args = AddRemoveReactionArgs {
             user_id: caller,
             min_visible_event_index: EventIndex::default(),
@@ -39,8 +39,10 @@ fn c2c_toggle_reaction_impl(args: Args, runtime_state: &mut RuntimeState) -> Res
         if args.added {
             match chat.events.add_reaction(add_remove_reaction_args) {
                 AddRemoveReactionResult::Success => {
-                    if let Some((recipients, notification)) = build_notification(args, chat, now) {
-                        runtime_state.push_notification(recipients, notification);
+                    if !state.data.suspended.value {
+                        if let Some((recipients, notification)) = build_notification(args, chat, now) {
+                            state.push_notification(recipients, notification);
+                        }
                     }
                     Added
                 }

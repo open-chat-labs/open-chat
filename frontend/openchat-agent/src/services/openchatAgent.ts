@@ -45,7 +45,6 @@ import { SnsGovernanceClient } from "./snsGovernance/sns.governance.client";
 import type { AgentConfig } from "../config";
 import {
     Logger,
-    AddMembersResponse,
     AddRemoveReactionResponse,
     ArchiveChatResponse,
     BlobReference,
@@ -63,17 +62,21 @@ import {
     DeleteGroupResponse,
     DeleteMessageResponse,
     DirectChatEvent,
+    DisableInviteCodeResponse,
     EditMessageResponse,
+    EnableInviteCodeResponse,
     EventsResponse,
     EventWrapper,
     GroupChatDetails,
     GroupChatDetailsResponse,
     GroupChatEvent,
     GroupChatSummary,
+    GroupInvite,
     GroupPermissions,
     GroupRules,
     GroupSearchResponse,
     IndexRange,
+    InviteCodeResponse,
     JoinGroupResponse,
     LeaveGroupResponse,
     ListNervousSystemFunctionsResponse,
@@ -93,6 +96,7 @@ import {
     RegisterProposalVoteResponse,
     RegisterUserResponse,
     RemoveMemberResponse,
+    ResetInviteCodeResponse,
     SearchDirectChatResponse,
     SearchGroupChatResponse,
     SendMessageResponse,
@@ -141,13 +145,14 @@ import {
     ReferralLeaderboardRange,
     ReferralLeaderboardResponse,
     ReportMessageResponse,
+    InviteUsersResponse,
+    DeclineInvitationResponse,
+    UpdatesSuccessResponse,
 } from "openchat-shared";
 import type { Principal } from "@dfinity/principal";
 import { applyOptionUpdate } from "../utils/mapping";
 import { waitAll } from "../utils/promise";
 import { MessageContextMap } from "../utils/messageContext";
-
-export const apiKey = Symbol();
 
 export class OpenChatAgent extends EventTarget {
     private _userIndexClient: IUserIndexClient;
@@ -158,6 +163,7 @@ export class OpenChatAgent extends EventTarget {
     private _marketMakerClient: IMarketMakerClient;
     private _ledgerClients: Record<Cryptocurrency, ILedgerClient>;
     private _groupClients: Record<string, IGroupClient>;
+    private _groupInvite: GroupInvite | undefined;
     private db: Database;
     private _logger: Logger;
 
@@ -197,6 +203,10 @@ export class OpenChatAgent extends EventTarget {
         this._logger.error(message, optionalParams);
     }
 
+    public set groupInvite(value: GroupInvite) {
+        this._groupInvite = value;
+    }
+
     createUserClient(userId: string): OpenChatAgent {
         this._userClient = UserClient.create(userId, this.identity, this.config, this.db);
         return this;
@@ -204,11 +214,13 @@ export class OpenChatAgent extends EventTarget {
 
     private getGroupClient(chatId: string): IGroupClient {
         if (!this._groupClients[chatId]) {
+            const inviteCode = this.getProvidedInviteCode(chatId);
             this._groupClients[chatId] = GroupClient.create(
                 chatId,
                 this.identity,
                 this.config,
-                this.db
+                this.db,
+                inviteCode
             );
         }
         return this._groupClients[chatId];
@@ -223,6 +235,10 @@ export class OpenChatAgent extends EventTarget {
 
     private createLocalUserIndexClient(canisterId: string): ILocalUserIndexClient {
         return LocalUserIndexClient.create(this.identity, this.config, canisterId);
+    }
+
+    private getProvidedInviteCode(chatId: string): string | undefined {
+        return this._groupInvite?.chatId === chatId ? this._groupInvite.code : undefined;
     }
 
     editMessage(
@@ -250,7 +266,7 @@ export class OpenChatAgent extends EventTarget {
     ): Promise<[SendMessageResponse, Message]> {
         if (chatType === "group_chat") {
             if (event.event.content.kind === "crypto_content") {
-                return this.userClient.sendGroupICPTransfer(
+                return this.userClient.sendMessageWithTransferToGroup(
                     chatId,
                     event.event.content.transfer.recipient,
                     user,
@@ -336,16 +352,13 @@ export class OpenChatAgent extends EventTarget {
         );
     }
 
-    addMembers(
-        chatId: string,
-        userIds: string[],
-        myUsername: string,
-        allowBlocked: boolean
-    ): Promise<AddMembersResponse> {
+    async inviteUsers(chatId: string, userIds: string[]): Promise<InviteUsersResponse> {
         if (!userIds.length) {
-            return Promise.resolve<AddMembersResponse>({ kind: "add_members_success" });
+            return Promise.resolve<InviteUsersResponse>("success");
         }
-        return this.getGroupClient(chatId).addMembers(userIds, myUsername, allowBlocked);
+
+        const localUserIndex = await this.getGroupClient(chatId).localUserIndex();
+        return this.createLocalUserIndexClient(localUserIndex).inviteUsersToGroup(chatId, userIds);
     }
 
     directChatEventsWindow(
@@ -355,7 +368,6 @@ export class OpenChatAgent extends EventTarget {
         latestClientMainEventIndex: number | undefined
     ): Promise<EventsResponse<DirectChatEvent>> {
         return this.rehydrateEventResponse(
-            "direct_chat",
             theirUserId,
             this.userClient.chatEventsWindow(
                 eventIndexRange,
@@ -406,7 +418,6 @@ export class OpenChatAgent extends EventTarget {
         latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<DirectChatEvent>> {
         return this.rehydrateEventResponse(
-            "direct_chat",
             theirUserId,
             this.userClient.chatEvents(
                 eventIndexRange,
@@ -429,7 +440,6 @@ export class OpenChatAgent extends EventTarget {
         latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<DirectChatEvent>> {
         return this.rehydrateEventResponse(
-            "direct_chat",
             theirUserId,
             this.userClient.chatEventsByIndex(
                 eventIndexes,
@@ -450,7 +460,6 @@ export class OpenChatAgent extends EventTarget {
         latestClientMainEventIndex: number | undefined
     ): Promise<EventsResponse<GroupChatEvent>> {
         return this.rehydrateEventResponse(
-            "group_chat",
             chatId,
             this.getGroupClient(chatId).chatEventsWindow(
                 eventIndexRange,
@@ -472,7 +481,6 @@ export class OpenChatAgent extends EventTarget {
         latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<GroupChatEvent>> {
         return this.rehydrateEventResponse(
-            "group_chat",
             chatId,
             this.getGroupClient(chatId).chatEvents(
                 eventIndexRange,
@@ -494,7 +502,6 @@ export class OpenChatAgent extends EventTarget {
         latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<GroupChatEvent>> {
         return this.rehydrateEventResponse(
-            "group_chat",
             chatId,
             this.getGroupClient(chatId).chatEventsByIndex(
                 eventIndexes,
@@ -598,32 +605,43 @@ export class OpenChatAgent extends EventTarget {
     }
 
     private async resolveMissingIndexes<T extends ChatEvent>(
-        chatType: "direct_chat" | "group_chat",
         currentChatId: string,
         events: EventWrapper<T>[],
         threadRootMessageIndex: number | undefined,
-        latestClientEventIndex: number | undefined
+        latestClientEventIndex: number | undefined,
+        chatState: ChatStateFull | undefined
     ): Promise<MessageContextMap<EventWrapper<Message>>> {
-        return this.findMissingEventIndexesByChat(
+        const contextMap = this.findMissingEventIndexesByChat(
             currentChatId,
             events,
             threadRootMessageIndex
-        ).asyncMap((key, ctx, idxs) => {
-            if (ctx.chatId === currentChatId && chatType === "direct_chat") {
+        );
+
+        if (contextMap.length === 0) return Promise.resolve(new MessageContextMap());
+
+        const state = chatState ?? await getCachedChats(this.db, this.principal);
+        const chatSummaries = toRecord(
+            state === undefined ? [] : [...state.directChats, ...state.groupChats],
+            (c) => c.chatId
+        );
+
+        return contextMap.asyncMap(async (key, ctx, idxs) => {
+            const targetChat = chatSummaries[ctx.chatId];
+
+            // it is *possible* that the target chat might not be in the cached chats if e.g. we are previewing
+            // in that case we assume it's a group chat - this is pretty dodgy but it should work in practice
+            const chatKind = targetChat?.kind ?? "group_chat";
+
+            // Note that the latestClientEventIndex relates to the *currentChat*, not necessarily the chat for this messageContext
+            // So only include it if the context matches the current chat
+            // And yes - this is probably trying to tell us something
+            const latestIndex = ctx.chatId === currentChatId ? latestClientEventIndex : undefined;
+
+            if (chatKind === "direct_chat") {
                 return this.userClient
-                    .chatEventsByIndex(
-                        idxs,
-                        currentChatId,
-                        ctx.threadRootMessageIndex,
-                        latestClientEventIndex
-                    )
+                    .chatEventsByIndex(idxs, ctx.chatId, ctx.threadRootMessageIndex, latestIndex)
                     .then((resp) => this.messagesFromEventsResponse(key, resp));
             } else {
-                // Note that the latestClientEventIndex relates to the *currentChat*, not necessarily the chat for this messageContext
-                // So only include it if the context matches the current chat
-                // And yes - this is probably trying to tell us something
-                const latestIndex =
-                    ctx.chatId === currentChatId ? latestClientEventIndex : undefined;
                 const client = this.getGroupClient(ctx.chatId);
                 return client
                     .chatEventsByIndex(idxs, ctx.threadRootMessageIndex, latestIndex)
@@ -694,7 +712,6 @@ export class OpenChatAgent extends EventTarget {
     }
 
     private async rehydrateEventResponse<T extends ChatEvent>(
-        chatType: "direct_chat" | "group_chat",
         currentChatId: string,
         eventsPromise: Promise<EventsResponse<T>>,
         threadRootMessageIndex: number | undefined,
@@ -707,11 +724,11 @@ export class OpenChatAgent extends EventTarget {
         }
 
         const missing = await this.resolveMissingIndexes(
-            chatType,
             currentChatId,
             resp.events,
             threadRootMessageIndex,
-            latestClientEventIndex
+            latestClientEventIndex,
+            undefined,
         );
 
         resp.events = resp.events.map((e) =>
@@ -753,18 +770,18 @@ export class OpenChatAgent extends EventTarget {
     }
 
     async rehydrateMessage(
-        chatType: "direct_chat" | "group_chat",
         chatId: string,
         message: EventWrapper<Message>,
         threadRootMessageIndex: number | undefined,
-        latestClientEventIndex: number | undefined
+        latestClientEventIndex: number | undefined,
+        chatState: ChatStateFull | undefined,
     ): Promise<EventWrapper<Message>> {
         const missing = await this.resolveMissingIndexes(
-            chatType,
             chatId,
             [message],
             threadRootMessageIndex,
-            latestClientEventIndex
+            latestClientEventIndex,
+            chatState,
         );
         return this.rehydrateEvent(message, chatId, missing, threadRootMessageIndex);
     }
@@ -831,10 +848,10 @@ export class OpenChatAgent extends EventTarget {
         }));
     }
 
-    async getInitialState(): Promise<UpdatesResult> {
-        const cached = await getCachedChats(this.db, this.principal);
-        if (cached !== undefined) {
-            return await this.getUpdates(cached).then((result) => {
+    async getUpdates(): Promise<UpdatesResult> {
+        const current = await getCachedChats(this.db, this.principal);
+        if (current === undefined) {
+            return await this.getInitialState().then((result) => {
                 return {
                     ...result,
                     anyUpdates: true,
@@ -842,6 +859,100 @@ export class OpenChatAgent extends EventTarget {
             });
         }
 
+        const userResponse = await this.userClient.getUpdates(current.latestUserCanisterUpdates);
+
+        // Convert "success_no_updates" to a UpdatesSuccessResponse with the previous timestamp and everything else set
+        // to empty. This allows us to have a single path through the rest of this function.
+        const updates: UpdatesSuccessResponse = userResponse.kind === "success_no_updates"
+            ? {
+                kind: "success",
+                timestamp: current.latestUserCanisterUpdates,
+                directChatsAdded: [],
+                directChatsUpdated: [],
+                groupChatsAdded: [],
+                groupChatsUpdated: [],
+                chatsRemoved: [],
+                avatarId: undefined,
+                blockedUsers: undefined,
+                pinnedChats: undefined,
+            }
+            : userResponse;
+
+        const groupChatIds = current.groupChats
+            .map((g) => g.chatId)
+            .concat(updates.groupChatsAdded.map((g) => g.chatId));
+        const groupIndexResponse = await this._groupIndexClient.filterGroups(
+            groupChatIds,
+            current.latestActiveGroupsCheck
+        );
+
+        const groupsToCheckForUpdates = new Set(
+            groupIndexResponse.activeGroups.concat(updates.groupChatsUpdated.map((g) => g.chatId))
+        );
+
+        const groupPromises = updates.groupChatsAdded.map((g) =>
+            this.getGroupClient(g.chatId).summary()
+        );
+        const groupUpdatePromises = current.groupChats
+            .filter((g) => groupsToCheckForUpdates.has(g.chatId))
+            .map((g) => this.getGroupClient(g.chatId).summaryUpdates(g.lastUpdated));
+
+        const groupPromiseResults = await waitAll(groupPromises);
+        const groupUpdatePromiseResults = await waitAll(groupUpdatePromises);
+
+        const groups = groupPromiseResults.success.filter(isSuccessfulGroupSummaryResponse);
+        const groupUpdates = groupUpdatePromiseResults.success.filter(
+            isSuccessfulGroupSummaryUpdatesResponse
+        );
+
+        const anyUpdates = userResponse.kind === "success" || groupUpdates.length > 0;
+
+        const anyErrors =
+            groupPromiseResults.errors.length > 0 || groupUpdatePromiseResults.errors.length > 0;
+
+        const directChats = updates.directChatsAdded.concat(
+            mergeDirectChatUpdates(current.directChats, updates.directChatsUpdated)
+        );
+
+        const chatsRemoved = new Set(
+            updates.chatsRemoved.concat(groupIndexResponse.deletedGroups.map((g) => g.id))
+        );
+
+        const groupChats = mergeGroupChats(updates.groupChatsAdded, groups)
+            .concat(
+                mergeGroupChatUpdates(
+                    current.groupChats,
+                    updates.groupChatsUpdated,
+                    groupUpdates
+                )
+            )
+            .filter((g) => !chatsRemoved.has(g.chatId));
+
+        const state = {
+            latestUserCanisterUpdates: updates.timestamp,
+            latestActiveGroupsCheck: groupIndexResponse.timestamp,
+            directChats,
+            groupChats,
+            avatarId: applyOptionUpdate(current.avatarId, updates.avatarId),
+            blockedUsers: updates.blockedUsers ?? current.blockedUsers,
+            pinnedChats: updates.pinnedChats ?? current.pinnedChats,
+        };
+        const updatedEvents = getUpdatedEvents(updates.directChatsUpdated, groupUpdates);
+
+        return await this.hydrateChatState(state).then((s) => {
+            if (!anyErrors) {
+                setCachedChats(this.db, this.principal, s, updatedEvents);
+            }
+
+            return {
+                state: s,
+                updatedEvents,
+                anyUpdates,
+            };
+        });
+    }
+
+    private async getInitialState(): Promise<UpdatesResult> {
         let state: ChatStateFull;
         let anyErrors: boolean;
         const userResponse = await this.userClient.getInitialState();
@@ -854,7 +965,8 @@ export class OpenChatAgent extends EventTarget {
             const groupChats = groupPromiseResults.success.filter(isSuccessfulGroupSummaryResponse);
 
             state = {
-                timestamp: userResponse.timestamp,
+                latestUserCanisterUpdates: userResponse.timestamp,
+                latestActiveGroupsCheck: userResponse.timestamp,
                 directChats: userResponse.directChats,
                 groupChats: mergeGroupChats(userResponse.groupChatsAdded, groupChats),
                 avatarId: userResponse.avatarId,
@@ -883,7 +995,8 @@ export class OpenChatAgent extends EventTarget {
             );
 
             state = {
-                timestamp: userResponse.timestamp,
+                latestUserCanisterUpdates: userResponse.timestamp,
+                latestActiveGroupsCheck: userResponse.timestamp,
                 directChats: userResponse.directChats,
                 groupChats,
                 avatarId: userResponse.avatarId,
@@ -895,103 +1008,22 @@ export class OpenChatAgent extends EventTarget {
                 groupUpdatePromiseResults.errors.length > 0;
         }
 
-        await setCachedChats(this.db, this.principal, state, {});
-
-        return await this.hydrateChatState(state).then((s) => ({
-            state: s,
-            updatedEvents: {},
-            anyUpdates: true,
-            anyErrors,
-        }));
-    }
-
-    async getUpdates(current: ChatStateFull): Promise<UpdatesResult> {
-        const userResponse = await this.userClient.getUpdates(current.timestamp);
-        const groupChatIds = current.groupChats
-            .map((g) => g.chatId)
-            .concat(userResponse.groupChatsAdded.map((g) => g.chatId));
-        const groupIndexResponse = await this._groupIndexClient.filterGroups(
-            groupChatIds,
-            current.timestamp
-        );
-
-        const activeGroups = new Set(groupIndexResponse.activeGroups);
-
-        const groupPromises = userResponse.groupChatsAdded.map((g) =>
-            this.getGroupClient(g.chatId).summary()
-        );
-        const groupUpdatePromises = current.groupChats
-            .filter((g) => activeGroups.has(g.chatId))
-            .map((g) => this.getGroupClient(g.chatId).summaryUpdates(g.lastUpdated));
-
-        const groupPromiseResults = await waitAll(groupPromises);
-        const groupUpdatePromiseResults = await waitAll(groupUpdatePromises);
-
-        const groups = groupPromiseResults.success.filter(isSuccessfulGroupSummaryResponse);
-        const groupUpdates = groupUpdatePromiseResults.success.filter(
-            isSuccessfulGroupSummaryUpdatesResponse
-        );
-
-        const anyUpdates =
-            userResponse.directChatsAdded.length > 0 ||
-            userResponse.directChatsUpdated.length > 0 ||
-            userResponse.groupChatsAdded.length > 0 ||
-            userResponse.groupChatsUpdated.length > 0 ||
-            userResponse.chatsRemoved.length > 0 ||
-            userResponse.avatarId !== undefined ||
-            userResponse.blockedUsers !== undefined ||
-            userResponse.pinnedChats !== undefined ||
-            groups.length > 0 ||
-            groupUpdates.length > 0;
-
-        const anyErrors =
-            groupPromiseResults.errors.length > 0 || groupUpdatePromiseResults.errors.length > 0;
-
-        const directChats = userResponse.directChatsAdded.concat(
-            mergeDirectChatUpdates(current.directChats, userResponse.directChatsUpdated)
-        );
-
-        const chatsRemoved = new Set(
-            userResponse.chatsRemoved.concat(groupIndexResponse.deletedGroups.map((g) => g.id))
-        );
-
-        const groupChats = mergeGroupChats(userResponse.groupChatsAdded, groups)
-            .concat(
-                mergeGroupChatUpdates(
-                    current.groupChats,
-                    userResponse.groupChatsUpdated,
-                    groupUpdates
-                )
-            )
-            .filter((g) => !chatsRemoved.has(g.chatId));
-
-        const state = {
-            timestamp: userResponse.timestamp,
-            directChats,
-            groupChats,
-            avatarId: applyOptionUpdate(current.avatarId, userResponse.avatarId),
-            blockedUsers: userResponse.blockedUsers ?? current.blockedUsers,
-            pinnedChats: userResponse.pinnedChats ?? current.pinnedChats,
-        };
-        const updatedEvents = getUpdatedEvents(userResponse.directChatsUpdated, groupUpdates);
-
         return await this.hydrateChatState(state).then((s) => {
-            if (anyUpdates) {
-                setCachedChats(this.db, this.principal, s, updatedEvents);
+            if (!anyErrors) {
+                setCachedChats(this.db, this.principal, state, {});
             }
 
             return {
                 state: s,
-                updatedEvents,
-                anyUpdates,
-                anyErrors,
-            };
+                updatedEvents: {},
+                anyUpdates: true,
+            }
         });
     }
 
     async hydrateChatState(state: ChatStateFull): Promise<ChatStateFull> {
-        const directChatPromises = state.directChats.map((c) => this.hydrateChatSummary(c));
-        const groupChatPromises = state.groupChats.map((c) => this.hydrateChatSummary(c));
+        const directChatPromises = state.directChats.map((c) => this.hydrateChatSummary(c, state));
+        const groupChatPromises = state.groupChats.map((c) => this.hydrateChatSummary(c, state));
 
         const directChats = await Promise.all(directChatPromises);
         const groupChats = await Promise.all(groupChatPromises);
@@ -1003,15 +1035,15 @@ export class OpenChatAgent extends EventTarget {
         };
     }
 
-    async hydrateChatSummary<T extends ChatSummary>(chat: T): Promise<T> {
+    async hydrateChatSummary<T extends ChatSummary>(chat: T, chatState: ChatStateFull): Promise<T> {
         const latestMessage =
             chat.latestMessage !== undefined
                 ? await this.rehydrateMessage(
-                      chat.kind,
                       chat.chatId,
                       chat.latestMessage,
                       undefined,
-                      chat.latestEventIndex
+                      chat.latestEventIndex,
+                      chatState,
                   )
                 : undefined;
 
@@ -1073,12 +1105,17 @@ export class OpenChatAgent extends EventTarget {
     }
 
     leaveGroup(chatId: string): Promise<LeaveGroupResponse> {
+        if (this._groupInvite?.chatId === chatId) {
+            this._groupInvite = undefined;
+        }
+
         return this.userClient.leaveGroup(chatId);
     }
 
     async joinGroup(chatId: string): Promise<JoinGroupResponse> {
+        const inviteCode = this.getProvidedInviteCode(chatId);
         const localUserIndex = await this.getGroupClient(chatId).localUserIndex();
-        return this.createLocalUserIndexClient(localUserIndex).joinGroup(chatId);
+        return this.createLocalUserIndexClient(localUserIndex).joinGroup(chatId, inviteCode);
     }
 
     markMessagesRead(request: MarkReadRequest): Promise<MarkReadResponse> {
@@ -1286,11 +1323,12 @@ export class OpenChatAgent extends EventTarget {
         return this.userClient.setBio(bio);
     }
 
-    registerUser(
+    async registerUser(
         username: string,
         referralCode: string | undefined
     ): Promise<RegisterUserResponse> {
-        return this._userIndexClient.registerUser(username, referralCode);
+        const localUserIndex = await this._userIndexClient.userRegistrationCanister();
+        return this.createLocalUserIndexClient(localUserIndex).registerUser(username, referralCode);
     }
 
     getUserStorageLimits(): Promise<StorageStatus> {
@@ -1307,7 +1345,6 @@ export class OpenChatAgent extends EventTarget {
         latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<Message>> {
         return this.rehydrateEventResponse(
-            "group_chat",
             chatId,
             this.getGroupClient(chatId).getMessagesByMessageIndex(
                 messageIndexes,
@@ -1345,6 +1382,22 @@ export class OpenChatAgent extends EventTarget {
         domain: PendingCryptocurrencyWithdrawal
     ): Promise<WithdrawCryptocurrencyResponse> {
         return this.userClient.withdrawCryptocurrency(domain);
+    }
+
+    getInviteCode(chatId: string): Promise<InviteCodeResponse> {
+        return this.getGroupClient(chatId).getInviteCode();
+    }
+
+    enableInviteCode(chatId: string): Promise<EnableInviteCodeResponse> {
+        return this.getGroupClient(chatId).enableInviteCode();
+    }
+
+    disableInviteCode(chatId: string): Promise<DisableInviteCodeResponse> {
+        return this.getGroupClient(chatId).disableInviteCode();
+    }
+
+    resetInviteCode(chatId: string): Promise<ResetInviteCodeResponse> {
+        return this.getGroupClient(chatId).resetInviteCode();
     }
 
     pinChat(chatId: string): Promise<PinChatResponse> {
@@ -1467,20 +1520,21 @@ export class OpenChatAgent extends EventTarget {
         thread: ThreadPreview,
         latestClientMainEventIndex: number | undefined
     ): Promise<ThreadPreview> {
+        const chatState = await getCachedChats(this.db, this.principal);
         const threadMissing = await this.resolveMissingIndexes(
-            "group_chat",
             thread.chatId,
             thread.latestReplies,
             thread.rootMessage.event.messageIndex,
-            thread.rootMessage.event.thread?.latestEventIndex
+            thread.rootMessage.event.thread?.latestEventIndex,
+            chatState,
         );
 
         const rootMissing = await this.resolveMissingIndexes(
-            "group_chat",
             thread.chatId,
             [thread.rootMessage],
             undefined,
-            latestClientMainEventIndex
+            latestClientMainEventIndex,
+            chatState,
         );
 
         const latestReplies = thread.latestReplies.map((r) =>
@@ -1631,5 +1685,8 @@ export class OpenChatAgent extends EventTarget {
             notes,
             threadRootMessageIndex
         );
+    }
+    declineInvitation(chatId: string): Promise<DeclineInvitationResponse> {
+        return this.getGroupClient(chatId).declineInvitation();
     }
 }

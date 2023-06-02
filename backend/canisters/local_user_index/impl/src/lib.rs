@@ -1,9 +1,13 @@
+use crate::model::referral_codes::{ReferralCodes, ReferralTypeMetrics};
 use canister_state_macros::canister_state;
 use model::global_user_map::GlobalUserMap;
 use model::local_user_map::LocalUserMap;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
-use types::{CanisterId, CanisterWasm, ChatId, Cycles, TimestampMillis, Timestamped, UserId, Version};
+use std::collections::HashMap;
+use types::{
+    CanisterId, CanisterWasm, ChatId, Cycles, MessageContent, ReferralType, TimestampMillis, Timestamped, UserId, Version,
+};
 use user_canister::Event as UserEvent;
 use user_index_canister::Event as UserIndexEvent;
 use utils::canister;
@@ -64,9 +68,21 @@ impl RuntimeState {
         jobs::sync_events_to_user_canisters::start_job_if_required(self);
     }
 
-    pub fn push_event_to_user_index(&mut self, canister_id: CanisterId, event: UserIndexEvent) {
-        self.data.user_index_event_sync_queue.push(canister_id, event);
+    pub fn push_event_to_user_index(&mut self, event: UserIndexEvent) {
+        self.data
+            .user_index_event_sync_queue
+            .push(self.data.user_index_canister_id, event);
         jobs::sync_events_to_user_index_canister::start_job_if_required(self);
+    }
+
+    pub fn push_oc_bot_message_to_user(&mut self, user_id: UserId, message: MessageContent) {
+        if self.data.local_users.get(&user_id).is_some() {
+            self.push_event_to_user(user_id, UserEvent::OpenChatBotMessage(Box::new(message)));
+        } else {
+            self.push_event_to_user_index(UserIndexEvent::OpenChatBotMessage(Box::new(
+                user_index_canister::OpenChatBotMessage { user_id, message },
+            )));
+        }
     }
 
     pub fn metrics(&self) -> Metrics {
@@ -89,6 +105,7 @@ impl RuntimeState {
             max_concurrent_canister_upgrades: self.data.max_concurrent_canister_upgrades,
             user_upgrade_concurrency: self.data.user_upgrade_concurrency,
             user_events_queue_length: self.data.user_event_sync_queue.len(),
+            referral_codes: self.data.referral_codes.metrics(),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
@@ -109,6 +126,8 @@ struct Data {
     pub group_index_canister_id: CanisterId,
     pub notifications_canister_id: CanisterId,
     pub cycles_dispenser_canister_id: CanisterId,
+    #[serde(default = "internet_identity_canister_id")]
+    pub internet_identity_canister_id: CanisterId,
     pub canisters_requiring_upgrade: CanistersRequiringUpgrade,
     pub canister_pool: canister::Pool,
     pub total_cycles_spent_on_canisters: Cycles,
@@ -117,8 +136,13 @@ struct Data {
     pub test_mode: bool,
     pub max_concurrent_canister_upgrades: u32,
     pub user_upgrade_concurrency: u32,
-    #[serde(default)]
     pub platform_moderators_group: Option<ChatId>,
+    #[serde(default)]
+    pub referral_codes: ReferralCodes,
+}
+
+fn internet_identity_canister_id() -> CanisterId {
+    CanisterId::from_text("rdmx6-jaaaa-aaaaa-aaadq-cai").unwrap()
 }
 
 #[derive(Serialize, Deserialize)]
@@ -135,6 +159,7 @@ impl Data {
         group_index_canister_id: CanisterId,
         notifications_canister_id: CanisterId,
         cycles_dispenser_canister_id: CanisterId,
+        internet_identity_canister_id: CanisterId,
         canister_pool_target_size: u16,
         test_mode: bool,
     ) -> Self {
@@ -147,6 +172,7 @@ impl Data {
             group_index_canister_id,
             notifications_canister_id,
             cycles_dispenser_canister_id,
+            internet_identity_canister_id,
             canisters_requiring_upgrade: CanistersRequiringUpgrade::default(),
             canister_pool: canister::Pool::new(canister_pool_target_size),
             total_cycles_spent_on_canisters: 0,
@@ -156,6 +182,7 @@ impl Data {
             max_concurrent_canister_upgrades: 10,
             user_upgrade_concurrency: 10,
             platform_moderators_group: None,
+            referral_codes: ReferralCodes::default(),
         }
     }
 }
@@ -179,6 +206,7 @@ pub struct Metrics {
     pub max_concurrent_canister_upgrades: u32,
     pub user_upgrade_concurrency: u32,
     pub user_events_queue_length: usize,
+    pub referral_codes: HashMap<ReferralType, ReferralTypeMetrics>,
     pub canister_ids: CanisterIds,
 }
 

@@ -16,21 +16,11 @@ use user_canister::send_message_v2::{Response::*, *};
 use utils::consts::OPENCHAT_BOT_USER_ID;
 use utils::time::{MINUTE_IN_MS, SECOND_IN_MS};
 
-#[update(guard = "caller_is_owner")]
-#[trace]
-async fn send_message(args: user_canister::send_message::Args) -> Response {
-    send_message_inner(args.into()).await
-}
-
-#[update(guard = "caller_is_owner")]
-#[trace]
-async fn send_message_v2(args: Args) -> Response {
-    send_message_inner(args).await
-}
-
 // The args are mutable because if the request contains a pending transfer, we process the transfer
 // and then update the message content to contain the completed transfer.
-async fn send_message_inner(mut args: Args) -> Response {
+#[update(guard = "caller_is_owner")]
+#[trace]
+async fn send_message_v2(mut args: Args) -> Response {
     run_regular_jobs();
 
     let user_type = match read_state(|state| validate_request(&args, state)) {
@@ -101,11 +91,11 @@ enum ValidateRequestResult {
     RecipientUnknown(CanisterId), // Value is the user_index canisterId
 }
 
-fn validate_request(args: &Args, runtime_state: &RuntimeState) -> ValidateRequestResult {
-    if runtime_state.data.suspended.value {
+fn validate_request(args: &Args, state: &RuntimeState) -> ValidateRequestResult {
+    if state.data.suspended.value {
         return ValidateRequestResult::Invalid(UserSuspended);
     }
-    if runtime_state.data.blocked_users.contains(&args.recipient) {
+    if state.data.blocked_users.contains(&args.recipient) {
         return ValidateRequestResult::Invalid(RecipientBlocked);
     }
     if args.recipient == OPENCHAT_BOT_USER_ID {
@@ -114,13 +104,13 @@ fn validate_request(args: &Args, runtime_state: &RuntimeState) -> ValidateReques
         ));
     }
 
-    let now = runtime_state.env.now();
+    let now = state.env.now();
 
     if matches!(args.content, MessageContentInitial::Prize(_)) {
         return ValidateRequestResult::Invalid(InvalidRequest("Cannot send a prize message in a direct chat".to_string()));
     }
 
-    let my_user_id: UserId = runtime_state.env.canister_id().into();
+    let my_user_id: UserId = state.env.canister_id().into();
     if let Err(error) = args.content.validate_for_new_direct_message(my_user_id, args.forwarding, now) {
         ValidateRequestResult::Invalid(match error {
             ContentValidationError::Empty => MessageEmpty,
@@ -140,11 +130,11 @@ fn validate_request(args: &Args, runtime_state: &RuntimeState) -> ValidateReques
         })
     } else if args.recipient == my_user_id {
         ValidateRequestResult::Valid(UserType::_Self)
-    } else if let Some(chat) = runtime_state.data.direct_chats.get(&args.recipient.into()) {
+    } else if let Some(chat) = state.data.direct_chats.get(&args.recipient.into()) {
         let user_type = if chat.is_bot { UserType::Bot } else { UserType::User };
         ValidateRequestResult::Valid(user_type)
     } else {
-        ValidateRequestResult::RecipientUnknown(runtime_state.data.local_user_index_canister_id)
+        ValidateRequestResult::RecipientUnknown(state.data.local_user_index_canister_id)
     }
 }
 
@@ -152,10 +142,10 @@ fn send_message_impl(
     args: Args,
     completed_transfer: Option<CompletedCryptoTransaction>,
     user_type: UserType,
-    runtime_state: &mut RuntimeState,
+    state: &mut RuntimeState,
 ) -> Response {
-    let now = runtime_state.env.now();
-    let my_user_id = runtime_state.env.canister_id().into();
+    let now = state.env.now();
+    let my_user_id = state.env.canister_id().into();
     let recipient = args.recipient;
 
     let push_message_args = PushMessageArgs {
@@ -169,11 +159,10 @@ fn send_message_impl(
         now,
     };
 
-    let message_event =
-        runtime_state
-            .data
-            .direct_chats
-            .push_message(true, recipient, None, push_message_args, user_type.is_bot());
+    let message_event = state
+        .data
+        .direct_chats
+        .push_message(true, recipient, None, push_message_args, user_type.is_bot());
 
     if !user_type.is_self() {
         let send_message_args = SendMessageArgs {
@@ -188,7 +177,7 @@ fn send_message_impl(
                         r.event_index,
                     ))
                 } else {
-                    runtime_state
+                    state
                         .data
                         .direct_chats
                         .get(&args.recipient.into())
@@ -205,10 +194,10 @@ fn send_message_impl(
             correlation_id: args.correlation_id,
         };
 
-        if let Some(chat) = runtime_state.data.direct_chats.get_mut(&recipient.into()) {
+        if let Some(chat) = state.data.direct_chats.get_mut(&recipient.into()) {
             chat.mark_message_pending(send_message_args.clone());
 
-            let sender_name = runtime_state.data.username.clone();
+            let sender_name = state.data.username.clone();
 
             if user_type.is_bot() {
                 ic_cdk::spawn(send_to_bot_canister(

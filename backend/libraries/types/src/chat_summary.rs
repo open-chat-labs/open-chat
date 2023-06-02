@@ -1,6 +1,6 @@
 use crate::{
-    CanisterId, ChatId, EventIndex, EventWrapper, FrozenGroupInfo, GroupGate, GroupPermissions, Mention, Message, MessageIndex,
-    Milliseconds, OptionUpdate, RangeSet, Role, TimestampMillis, UserId, Version, MAX_RETURNED_MENTIONS,
+    AccessGate, CanisterId, ChatId, EventIndex, EventWrapper, FrozenGroupInfo, GroupPermissions, GroupRole, Mention, Message,
+    MessageIndex, Milliseconds, OptionUpdate, RangeSet, TimestampMillis, UserId, Version, MAX_RETURNED_MENTIONS,
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
@@ -50,7 +50,7 @@ pub struct GroupChatSummary {
     pub read_by_me_up_to: Option<MessageIndex>,
     pub notifications_muted: bool,
     pub participant_count: u32,
-    pub role: Role,
+    pub role: GroupRole,
     pub mentions: Vec<Mention>,
     pub wasm_version: Version,
     pub permissions: GroupPermissions,
@@ -88,6 +88,9 @@ pub struct DirectChatSummaryUpdates {
     pub newly_expired_messages: RangeSet<MessageIndex>,
 }
 
+// TODO: This type is used in the response from group::public_summary and group_index::recommended_groups
+// which is causing unnecessarily coupling. We should use separate types for these use cases.
+// For instance we only need to return history_visible_to_new_joiners and is_public from group::public_summary
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct PublicGroupSummary {
     pub chat_id: ChatId,
@@ -95,6 +98,8 @@ pub struct PublicGroupSummary {
     pub name: String,
     pub description: String,
     pub subtype: Option<GroupSubtype>,
+    #[serde(default)]
+    pub history_visible_to_new_joiners: bool,
     pub avatar_id: Option<u128>,
     pub latest_message: Option<EventWrapper<Message>>,
     pub latest_event_index: EventIndex,
@@ -103,7 +108,7 @@ pub struct PublicGroupSummary {
     pub is_public: bool,
     pub frozen: Option<FrozenGroupInfo>,
     pub events_ttl: Option<Milliseconds>,
-    pub gate: Option<GroupGate>,
+    pub gate: Option<AccessGate>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -122,7 +127,7 @@ pub struct GroupCanisterGroupChatSummary {
     pub latest_event_index: EventIndex,
     pub joined: TimestampMillis,
     pub participant_count: u32,
-    pub role: Role,
+    pub role: GroupRole,
     pub mentions: Vec<Mention>,
     pub wasm_version: Version,
     pub permissions: GroupPermissions,
@@ -135,7 +140,7 @@ pub struct GroupCanisterGroupChatSummary {
     pub events_ttl: Option<Milliseconds>,
     pub expired_messages: RangeSet<MessageIndex>,
     pub next_message_expiry: Option<TimestampMillis>,
-    pub gate: Option<GroupGate>,
+    pub gate: Option<AccessGate>,
 }
 
 impl GroupCanisterGroupChatSummary {
@@ -211,7 +216,7 @@ pub struct GroupCanisterGroupChatSummaryUpdates {
     pub latest_message: Option<EventWrapper<Message>>,
     pub latest_event_index: Option<EventIndex>,
     pub participant_count: Option<u32>,
-    pub role: Option<Role>,
+    pub role: Option<GroupRole>,
     pub mentions: Vec<Mention>,
     pub wasm_version: Option<Version>,
     pub permissions: Option<GroupPermissions>,
@@ -226,7 +231,7 @@ pub struct GroupCanisterGroupChatSummaryUpdates {
     pub events_ttl: OptionUpdate<Milliseconds>,
     pub newly_expired_messages: RangeSet<MessageIndex>,
     pub next_message_expiry: OptionUpdate<TimestampMillis>,
-    pub gate: OptionUpdate<GroupGate>,
+    pub gate: OptionUpdate<AccessGate>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug, Default, Clone)]
@@ -324,7 +329,7 @@ pub struct GovernanceProposalsSubtype {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug, Default)]
-pub struct GroupRules {
+pub struct AccessRules {
     pub text: String,
     pub enabled: bool,
 }

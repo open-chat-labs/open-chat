@@ -13,11 +13,11 @@ fn c2c_set_user_suspended(args: Args) -> Response {
     mutate_state(|state| c2c_set_user_suspended_impl(args.suspended, state))
 }
 
-fn c2c_set_user_suspended_impl(suspended: bool, runtime_state: &mut RuntimeState) -> Response {
-    let now = runtime_state.env.now();
-    let groups = runtime_state.data.group_chats.iter().map(|g| g.chat_id).collect();
+fn c2c_set_user_suspended_impl(suspended: bool, state: &mut RuntimeState) -> Response {
+    let now = state.env.now();
+    let groups = state.data.group_chats.iter().map(|g| g.chat_id).collect();
 
-    runtime_state.data.suspended = Timestamped::new(suspended, now);
+    state.data.suspended = Timestamped::new(suspended, now);
 
     Success(SuccessResult { groups })
 }

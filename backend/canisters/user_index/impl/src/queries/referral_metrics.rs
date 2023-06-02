@@ -17,13 +17,13 @@ pub struct ReferralData {
     pub icp_raised_for_paid_diamond_e8s: u64,
 }
 
-fn referral_metrics_impl(runtime_state: &RuntimeState) -> Response {
+fn referral_metrics_impl(state: &RuntimeState) -> Response {
     let mut user_referrals_map: HashMap<UserId, ReferralData> = HashMap::new();
-    let now = runtime_state.env.now();
+    let now = state.env.now();
 
-    for user in runtime_state.data.users.iter() {
+    for user in state.data.users.iter() {
         if let Some(referred_by) = user.referred_by {
-            if let Some(referrer) = runtime_state.data.users.get_by_user_id(&referred_by) {
+            if let Some(referrer) = state.data.users.get_by_user_id(&referred_by) {
                 if referrer.diamond_membership_details.is_active(now) {
                     let data = user_referrals_map.entry(referred_by).or_default();
                     let icp_raised_for_paid_diamond: u64 =

@@ -293,6 +293,7 @@ $z-indexed-items: (
         "phone",
         "phone-image",
         "landing-page-menu",
+        "left-nav",
         "footer-overlay",
         "zoom",
         "overlay",
@@ -465,10 +466,10 @@ $shadow-level-3: 2px 6px 12px 0 rgba(25, 25, 25, 0.55);
     }
 }
 
-@mixin lp-content-padding() {
-    padding: 0 toRem(160);
+@mixin lp-content-padding($gutter: 160, $mobile-gutter: 24) {
+    padding: 0 toRem($gutter);
     @include mobile() {
-        padding: 0 toRem(24);
+        padding: 0 toRem($mobile-gutter);
     }
 }
 

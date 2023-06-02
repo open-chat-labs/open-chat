@@ -9,21 +9,19 @@
     type PermissionsByRole = Record<PermissionRole, Set<string>>;
     type PermissionsEntry = [keyof GroupPermissions, PermissionRole];
 
-    const allRoles: PermissionRole[] = ["owner", "admins", "members"];
+    const allRoles: PermissionRole[] = ["owner", "admins", "moderators", "members"];
 
     const roleLabels: Record<PermissionRole, string> = {
         owner: "group.permissions.ownerOnly",
         admins: "group.permissions.ownerAndAdmins",
+        moderators: "group.permissions.ownerAndAdminsAndModerators",
         members: "group.permissions.allMembers",
     };
 
     $: partitioned = partitionPermissions(permissions);
 
     function filterPermissions([key, _]: PermissionsEntry): boolean {
-        if (
-            isPublic &&
-            (key === "addMembers" || key === "removeMembers" || key === "inviteUsers")
-        ) {
+        if (isPublic && (key === "removeMembers" || key === "inviteUsers")) {
             return false;
         }
         if (!isPublic && key === "blockUsers") {
@@ -38,7 +36,7 @@
                 dict[val].add($_(`group.permissions.${key}`));
                 return dict;
             },
-            { admins: new Set(), members: new Set(), owner: new Set() } as PermissionsByRole
+            { admins: new Set(), moderators: new Set(), members: new Set(), owner: new Set() } as PermissionsByRole
         );
     }
 </script>

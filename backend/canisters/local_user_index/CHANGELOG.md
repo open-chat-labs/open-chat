@@ -5,6 +5,74 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.714](https://github.com/open-ic/open-chat/releases/tag/v2.0.714-local_user_index)] - 2023-06-02
+
+### Changed
+
+- Temporarily re-add deprecated `is_super_admin` field ([#3717](https://github.com/open-ic/open-chat/pull/3717))
+
+## [[2.0.712](https://github.com/open-ic/open-chat/releases/tag/v2.0.712-local_user_index)] - 2023-06-02
+
+### Added
+
+- Integrate Communities ([#3666](https://github.com/open-ic/open-chat/pull/3666)), ([#3669](https://github.com/open-ic/open-chat/pull/3669))
+- Add `expiry` to referral codes ([#3705](https://github.com/open-ic/open-chat/pull/3705))
+
+### Changed
+
+- End the BtcMiami promo ([#3705](https://github.com/open-ic/open-chat/pull/3705))
+
+### Removed
+
+- Remove out of date welcome message ([#3618](https://github.com/open-ic/open-chat/pull/3618))
+
+## [[2.0.700](https://github.com/open-ic/open-chat/releases/tag/v2.0.700-local_user_index)] - 2023-05-18
+
+### Added
+
+- Send ckBTC to the SatoshiDice bot for Bitcoin Miami ([#3616](https://github.com/open-ic/open-chat/pull/3616))
+
+### Changed
+
+- Join users to groups via the UserIndex rather than directly ([#3613](https://github.com/open-ic/open-chat/pull/3613))
+
+### Removed
+
+- Remove `JoinUserToGroup` event ([#3613](https://github.com/open-ic/open-chat/pull/3613))
+
+## [[2.0.694](https://github.com/open-ic/open-chat/releases/tag/v2.0.694-local_user_index)] - 2023-05-17
+
+### Added
+
+- Register new Bitcoin Miami users with the SatoshiDice bot ([#3591](https://github.com/open-ic/open-chat/pull/3591))
+
+## [[2.0.687](https://github.com/open-ic/open-chat/releases/tag/v2.0.687-local_user_index)] - 2023-05-12
+
+### Added
+
+- Re-introduce invite by code on backend ([#3552](https://github.com/open-ic/open-chat/pull/3552))
+
+### Changed
+
+- Register users via LocalUserIndex to improve speed ([#3557](https://github.com/open-ic/open-chat/pull/3557))
+- Make BTC Miami promo work on test and on prod ([#3565](https://github.com/open-ic/open-chat/pull/3565))
+- Update BTC Miami welcome messages ([#3566](https://github.com/open-ic/open-chat/pull/3566))
+- Return `icp_account` in `register_user` responses ([#3581](https://github.com/open-ic/open-chat/pull/3581))
+
+## [[2.0.681](https://github.com/open-ic/open-chat/releases/tag/v2.0.681-local_user_index)] - 2023-05-08
+
+### Fixed
+
+- One time fix for currently pending group invites ([#3548](https://github.com/open-ic/open-chat/pull/3548))
+
+## [[2.0.680](https://github.com/open-ic/open-chat/releases/tag/v2.0.680-local_user_index)] - 2023-05-08
+
+### Fixed
+
+- Fix group invite messages ([#3543](https://github.com/open-ic/open-chat/pull/3543))
+
+## [[2.0.674](https://github.com/open-ic/open-chat/releases/tag/v2.0.674-local_user_index)] - 2023-04-28
+
 ### Added
 
 - Added ability to `report_message` ([#3497](https://github.com/open-ic/open-chat/pull/3497))

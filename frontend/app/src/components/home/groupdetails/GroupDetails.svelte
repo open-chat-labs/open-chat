@@ -18,7 +18,7 @@
         groupVisibilityOpen,
     } from "../../../stores/settings";
     import AdvancedSection from "./AdvancedSection.svelte";
-    import InviteUsers from "./InviteUsers.svelte";
+    import InviteUsersWithLink from "./InviteUsersWithLink.svelte";
     import type { OpenChat, GroupChatSummary, GroupRules } from "openchat-client";
     import { AvatarSize } from "openchat-client";
     import GroupGateSummary from "./GroupGateSummary.svelte";
@@ -129,8 +129,8 @@
             <CollapsibleCard
                 on:toggle={groupInviteUsersOpen.toggle}
                 open={$groupInviteUsersOpen}
-                headerText={$_("group.inviteWithLink")}>
-                <InviteUsers group={chat} />
+                headerText={$_("group.invite.inviteWithLink")}>
+                <InviteUsersWithLink group={chat} />
             </CollapsibleCard>
         {/if}
         <CollapsibleCard

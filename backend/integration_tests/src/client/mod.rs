@@ -91,7 +91,7 @@ pub fn execute_update<P: CandidType, R: CandidType + DeserializeOwned>(
 }
 
 pub fn register_diamond_user(env: &mut StateMachine, canister_ids: &CanisterIds, controller: Principal) -> User {
-    let user = user_index::happy_path::register_user(env, canister_ids.user_index);
+    let user = local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
 
     icrc1::happy_path::transfer(
         env,

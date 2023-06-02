@@ -7,8 +7,44 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ### Added
 
+- Introduce `FireAndForgetHandler` which retries failed c2c calls ([#3639](https://github.com/open-ic/open-chat/pull/3639))
+- Integrate Communities ([#3657](https://github.com/open-ic/open-chat/pull/3657)), ([#3659](https://github.com/open-ic/open-chat/pull/3659))
+- Added `c2c_mark_group_updated_for_user` ([#3685](https://github.com/open-ic/open-chat/pull/3685))
+
+### Changed
+
+- Change `c2c_remove_from_group` to always remove the user ([#3641](https://github.com/open-ic/open-chat/pull/3641))
+- Refactor search ([#3689](https://github.com/open-ic/open-chat/pull/3689))
+- Don't send notifications to suspended users ([#3704](https://github.com/open-ic/open-chat/pull/3704))
+
+### Removed
+
+- Remove `c2c_try_add_to_group` ([#3661](https://github.com/open-ic/open-chat/pull/3661))
+
+## [[2.0.698](https://github.com/open-ic/open-chat/releases/tag/v2.0.698-user)] - 2023-05-17
+
+### Changed
+
+- Short circuit query calls prior to calling `ic0.time()` where possible ([#3542](https://github.com/open-ic/open-chat/pull/3542))
+- Added `moderator` role and removed `add_members` permission ([#3592](https://github.com/open-ic/open-chat/pull/3592))
+- Put back `add_members` permission with serde default ([#3599](https://github.com/open-ic/open-chat/pull/3599))
+- Allow registered bot accounts to start conversations with OC users ([#3591](https://github.com/open-ic/open-chat/pull/3591))
+
+### Removed
+
+- Remove `send_message` and `edit_message` (there are now `v2` versions) ([#3578](https://github.com/open-ic/open-chat/pull/3578))
+
+### Fixed
+
+- Fix `last_updated` date on group chats ([#3609](https://github.com/open-ic/open-chat/pull/3609))
+
+## [[2.0.676](https://github.com/open-ic/open-chat/releases/tag/v2.0.676-user)] - 2023-04-29
+
+### Added
+
 - Allow users to `Delete For Me` in direct chats ([#3498](https://github.com/open-ic/open-chat/pull/3498))
 - Implement `send_message_v2` and `edit_message_v2` ([#3504](https://github.com/open-ic/open-chat/pull/3504))
+- Allow users to undelete messages for a short period in direct chats ([#3529](https://github.com/open-ic/open-chat/pull/3529))
 
 ### Changed
 

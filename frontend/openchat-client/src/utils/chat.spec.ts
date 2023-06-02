@@ -42,10 +42,9 @@ const defaultGroupChat: GroupChatSummary = {
     permissions: {
         changePermissions: "admins",
         changeRoles: "admins",
-        addMembers: "admins",
-        removeMembers: "admins",
-        blockUsers: "admins",
-        deleteMessages: "admins",
+        removeMembers: "moderators",
+        blockUsers: "moderators",
+        deleteMessages: "moderators",
         updateGroup: "admins",
         pinMessages: "admins",
         inviteUsers: "admins",

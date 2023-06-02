@@ -1,33 +1,54 @@
 <script lang="ts">
-    import type { GroupChatSummary } from "openchat-client";
+    import type { GroupChatSummary, OpenChat } from "openchat-client";
     import { _ } from "svelte-i18n";
     import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
     import SectionHeader from "../SectionHeader.svelte";
     import ArrowRight from "svelte-material-icons/ArrowRight.svelte";
+    import Loading from "../Loading.svelte";
     import Button from "../Button.svelte";
     import ButtonGroup from "../ButtonGroup.svelte";
     import { rtlStore } from "../../stores/rtl";
     import HoverIcon from "../HoverIcon.svelte";
     import { mobileWidth } from "../../stores/screenDimensions";
-    import { createEventDispatcher } from "svelte";
+    import { getContext, onMount } from "svelte";
     import { iconSize } from "../../stores/iconSize";
     import RecommendedGroup from "./RecommendedGroup.svelte";
+    import { RemoteData, mapRemoteData } from "../../utils/remoteData";
+    import page from "page";
 
-    export let groups: GroupChatSummary[];
     export let joining: GroupChatSummary | undefined;
 
-    const dispatch = createEventDispatcher();
+    const client = getContext<OpenChat>("client");
+
+    let hotGroups: RemoteData<GroupChatSummary[], string> = { kind: "idle" };
+
+    onMount(loadData);
 
     function cancelRecommendations() {
-        dispatch("cancelRecommendations");
+        page("/");
     }
 
-    function refresh() {
-        dispatch("recommend");
+    function dismissRecommendation(ev: CustomEvent<string>) {
+        hotGroups = mapRemoteData(hotGroups, (data) => data.filter((g) => g.chatId !== ev.detail));
+        client.dismissRecommendation(ev.detail);
+    }
+
+    function loadData() {
+        hotGroups = { kind: "loading" };
+        client
+            .getRecommendedGroups()
+            .then((resp) => {
+                if (hotGroups.kind === "loading") {
+                    hotGroups = { kind: "success", data: resp };
+                }
+            })
+            .catch((err) => (hotGroups = { kind: "error", error: err.toString() }));
     }
 </script>
 
-{#if groups.length > 0}
+{#if hotGroups.kind === "loading"}
+    <Loading />
+{:else if hotGroups.kind === "success" && hotGroups.data.length > 0}
     <div class="wrapper">
         <SectionHeader>
             {#if $mobileWidth}
@@ -48,11 +69,12 @@
         </SectionHeader>
 
         <div class="groups">
-            {#each groups as group, _i (group.chatId)}
+            {#each hotGroups.data as group, _i (group.chatId)}
                 <RecommendedGroup
                     on:upgrade
-                    on:dismissRecommendation
+                    on:dismissRecommendation={dismissRecommendation}
                     on:joinGroup
+                    on:leaveGroup
                     {group}
                     {joining} />
             {/each}
@@ -64,7 +86,7 @@
         <p class="subtitle">{$_("checkBackLater")}</p>
         <ButtonGroup align={"fill"}>
             <Button small={true} on:click={cancelRecommendations}>{$_("close")}</Button>
-            <Button secondary={true} small={true} on:click={refresh}>{$_("refresh")}</Button>
+            <Button secondary={true} small={true} on:click={loadData}>{$_("refresh")}</Button>
         </ButtonGroup>
     </div>
 {/if}

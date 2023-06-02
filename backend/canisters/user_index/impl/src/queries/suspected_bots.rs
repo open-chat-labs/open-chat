@@ -8,8 +8,8 @@ fn suspected_bots(args: Args) -> Response {
     read_state(|state| suspected_bots_impl(args, state))
 }
 
-fn suspected_bots_impl(args: Args, runtime_state: &RuntimeState) -> Response {
+fn suspected_bots_impl(args: Args, state: &RuntimeState) -> Response {
     Success(SuccessResult {
-        users: runtime_state.data.users.suspected_bots(args.after, args.count as usize),
+        users: state.data.users.suspected_bots(args.after, args.count as usize),
     })
 }

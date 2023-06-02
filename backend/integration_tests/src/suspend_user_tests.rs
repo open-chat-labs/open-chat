@@ -14,10 +14,10 @@ fn suspend_user() {
         controller,
     } = wrapper.env();
 
-    let user1 = client::user_index::happy_path::register_user(env, canister_ids.user_index);
-    let user2 = client::user_index::happy_path::register_user(env, canister_ids.user_index);
+    let user1 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
     let group = client::user::happy_path::create_group(env, &user1, "SUSPEND_USER_TEST", false, false);
-    let platform_moderator = client::user_index::happy_path::register_user(env, canister_ids.user_index);
+    let platform_moderator = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
 
     client::user_index::add_platform_moderator(
         env,
@@ -61,7 +61,7 @@ fn suspend_user() {
     );
     assert!(matches!(
         direct_message_response1,
-        user_canister::send_message::Response::UserSuspended
+        user_canister::send_message_v2::Response::UserSuspended
     ));
 
     let group_message_response1 = client::group::send_message_v2(
@@ -81,7 +81,7 @@ fn suspend_user() {
     );
     assert!(matches!(
         group_message_response1,
-        group_canister::send_message::Response::UserSuspended
+        group_canister::send_message_v2::Response::UserSuspended
     ));
 
     client::user_index::unsuspend_user(
@@ -113,7 +113,7 @@ fn suspend_user() {
     );
     assert!(matches!(
         direct_message_response2,
-        user_canister::send_message::Response::Success(_)
+        user_canister::send_message_v2::Response::Success(_)
     ));
 
     let group_message_response2 = client::group::send_message_v2(
@@ -133,7 +133,7 @@ fn suspend_user() {
     );
     assert!(matches!(
         group_message_response2,
-        group_canister::send_message::Response::Success(_)
+        group_canister::send_message_v2::Response::Success(_)
     ));
 }
 
@@ -146,8 +146,8 @@ fn suspend_user_for_duration() {
         controller,
     } = wrapper.env();
 
-    let user = client::user_index::happy_path::register_user(env, canister_ids.user_index);
-    let platform_moderator = client::user_index::happy_path::register_user(env, canister_ids.user_index);
+    let user = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
+    let platform_moderator = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
 
     client::user_index::add_platform_moderator(
         env,

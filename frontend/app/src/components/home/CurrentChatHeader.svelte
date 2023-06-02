@@ -156,7 +156,7 @@
             on:markAllRead
             on:blockUser
             on:unblockUser
-            on:addMembers
+            on:showInviteUsers
             on:leaveGroup />
     {/if}
 </SectionHeader>

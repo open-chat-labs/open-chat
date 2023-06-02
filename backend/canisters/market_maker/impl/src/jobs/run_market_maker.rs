@@ -1,8 +1,8 @@
 use crate::exchanges::Exchange;
-use crate::{read_state, Config, Order, RuntimeState};
+use crate::{mutate_state, read_state, Config, Order, RuntimeState};
 use ic_cdk::api::call::CallResult;
 use itertools::Itertools;
-use market_maker_canister::{CancelOrderRequest, MakeOrderRequest, OrderType};
+use market_maker_canister::{CancelOrderRequest, ExchangeId, MakeOrderRequest, OrderType};
 use std::cmp::Reverse;
 use std::collections::btree_map::Entry::Occupied;
 use std::collections::BTreeMap;
@@ -25,22 +25,46 @@ fn run() {
 }
 
 fn get_active_exchanges(state: &RuntimeState) -> Vec<(Box<dyn Exchange>, Config)> {
+    let now = state.env.now();
+
     state
         .data
         .exchange_config
         .iter()
         .filter(|(_, c)| c.enabled)
+        // Exclude exchanges where there are orders in progress, unless those orders have been
+        // pending for more than 10 minutes, since realistically that means they have failed.
+        .filter(|(&id, _)| {
+            state
+                .data
+                .market_makers_in_progress
+                .get(&id)
+                .map_or(true, |ts| now.saturating_sub(*ts) > 10 * MINUTE_IN_MS)
+        })
         .filter_map(|(&id, c)| state.get_exchange_client(id).map(|e| (e, c.clone())))
         .collect()
 }
 
 async fn run_async(exchanges: Vec<(Box<dyn Exchange>, Config)>) {
-    futures::future::join_all(exchanges.into_iter().map(|(e, c)| run_single(e, c))).await;
+    mutate_state(|state| {
+        let now = state.env.now();
+        for exchange_id in exchanges.iter().map(|(e, _)| e.exchange_id()) {
+            state.data.market_makers_in_progress.insert(exchange_id, now);
+        }
+    });
+    futures::future::join_all(exchanges.into_iter().map(|(e, c)| async {
+        let exchange_id = e.exchange_id();
+        let _ = run_single(e, c).await;
+        mark_market_maker_complete(&exchange_id);
+    }))
+    .await;
 }
 
 async fn run_single(exchange_client: Box<dyn Exchange>, config: Config) -> CallResult<()> {
     let exchange_id = exchange_client.exchange_id();
     trace!(%exchange_id, "Running market maker");
+
+    mutate_state(|state| state.data.market_makers_in_progress.insert(exchange_id, state.env.now()));
 
     let state = exchange_client.market_state().await?;
 
@@ -75,6 +99,10 @@ async fn run_single(exchange_client: Box<dyn Exchange>, config: Config) -> CallR
     Ok(())
 }
 
+fn mark_market_maker_complete(exchange_id: &ExchangeId) {
+    mutate_state(|state| state.data.market_makers_in_progress.remove(exchange_id));
+}
+
 fn calculate_orders_to_make(
     open_orders: &[Order],
     target_orders: Vec<MakeOrderRequest>,
@@ -92,18 +120,25 @@ fn calculate_orders_to_make(
         };
     }
 
+    let mut open_bids = BTreeMap::new();
+    let mut open_asks = BTreeMap::new();
     for order in open_orders {
-        if let Occupied(mut e) = match order.order_type {
-            OrderType::Bid => bids_to_make.entry(round_to_nearest_increment(order.price, increment)),
-            OrderType::Ask => asks_to_make.entry(round_to_nearest_increment(order.price, increment)),
-        } {
-            let entry = e.get_mut();
-            entry.amount = entry.amount.saturating_sub(order.amount);
-            if entry.amount < min_order_size {
-                e.remove();
+        match order.order_type {
+            OrderType::Bid => {
+                *open_bids
+                    .entry(round_to_nearest_increment(order.price, increment))
+                    .or_default() += order.amount
+            }
+            OrderType::Ask => {
+                *open_asks
+                    .entry(round_to_nearest_increment(order.price, increment))
+                    .or_default() += order.amount
             }
         }
     }
+
+    exclude_open_orders(&mut bids_to_make, open_bids, increment, min_order_size);
+    exclude_open_orders(&mut asks_to_make, open_asks, increment, min_order_size);
 
     bids_to_make
         .into_values()
@@ -111,6 +146,23 @@ fn calculate_orders_to_make(
         .sorted_unstable_by_key(|o| Reverse(latest_price.abs_diff(o.price)))
         .take(max_orders_to_make)
         .collect()
+}
+
+fn exclude_open_orders(
+    orders_to_make: &mut BTreeMap<u64, MakeOrderRequest>,
+    open_orders: BTreeMap<u64, u64>,
+    increment: u64,
+    min_order_size: u64,
+) {
+    for (price, amount) in open_orders {
+        if let Occupied(mut e) = orders_to_make.entry(round_to_nearest_increment(price, increment)) {
+            let entry = e.get_mut();
+            entry.amount = entry.amount.saturating_sub(amount);
+            if entry.amount < min_order_size {
+                e.remove();
+            }
+        }
+    }
 }
 
 fn calculate_orders_to_cancel(
@@ -185,5 +237,109 @@ mod tests {
     #[test_case(100011, 2, 100014)]
     fn starting_ask_tests(latest_price: u64, increment: u64, expected: u64) {
         assert_eq!(starting_ask(latest_price, increment), expected)
+    }
+
+    #[test]
+    fn calculate_orders_to_make() {
+        let open_orders = vec![
+            Order {
+                order_type: OrderType::Bid,
+                id: "1".to_string(),
+                price: 10,
+                amount: 10,
+            },
+            Order {
+                order_type: OrderType::Bid,
+                id: "2".to_string(),
+                price: 10,
+                amount: 20,
+            },
+            Order {
+                order_type: OrderType::Bid,
+                id: "3".to_string(),
+                price: 20,
+                amount: 20,
+            },
+            Order {
+                order_type: OrderType::Bid,
+                id: "4".to_string(),
+                price: 30,
+                amount: 30,
+            },
+            Order {
+                order_type: OrderType::Ask,
+                id: "5".to_string(),
+                price: 40,
+                amount: 25,
+            },
+            Order {
+                order_type: OrderType::Ask,
+                id: "6".to_string(),
+                price: 50,
+                amount: 30,
+            },
+            Order {
+                order_type: OrderType::Ask,
+                id: "7".to_string(),
+                price: 60,
+                amount: 20,
+            },
+            Order {
+                order_type: OrderType::Ask,
+                id: "8".to_string(),
+                price: 60,
+                amount: 10,
+            },
+        ];
+
+        let target_orders = vec![
+            MakeOrderRequest {
+                order_type: OrderType::Bid,
+                price: 10,
+                amount: 50,
+            },
+            MakeOrderRequest {
+                order_type: OrderType::Bid,
+                price: 20,
+                amount: 50,
+            },
+            MakeOrderRequest {
+                order_type: OrderType::Bid,
+                price: 30,
+                amount: 50,
+            },
+            MakeOrderRequest {
+                order_type: OrderType::Ask,
+                price: 40,
+                amount: 50,
+            },
+            MakeOrderRequest {
+                order_type: OrderType::Ask,
+                price: 50,
+                amount: 50,
+            },
+            MakeOrderRequest {
+                order_type: OrderType::Ask,
+                price: 60,
+                amount: 50,
+            },
+        ];
+
+        let orders_to_make = super::calculate_orders_to_make(&open_orders, target_orders, 25, 35, 10, 10);
+
+        let expected = vec![
+            MakeOrderRequest {
+                order_type: OrderType::Bid,
+                price: 20,
+                amount: 30,
+            },
+            MakeOrderRequest {
+                order_type: OrderType::Ask,
+                price: 40,
+                amount: 25,
+            },
+        ];
+
+        assert_eq!(orders_to_make, expected);
     }
 }

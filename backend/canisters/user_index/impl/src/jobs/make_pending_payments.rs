@@ -2,9 +2,11 @@ use crate::model::pending_payments_queue::{PendingPayment, PendingPaymentReason}
 use crate::LocalUserIndexEvent;
 use crate::{mutate_state, RuntimeState};
 use ic_cdk_timers::TimerId;
-use ic_icrc1::Account;
 use ic_ledger_types::{BlockIndex, Tokens};
+use icrc_ledger_types::icrc1::account::Account;
+use icrc_ledger_types::icrc1::transfer::TransferArg;
 use local_user_index_canister::OpenChatBotMessage;
+use serde::Serialize;
 use std::cell::Cell;
 use std::time::Duration;
 use tracing::{error, trace};
@@ -41,19 +43,25 @@ async fn process_payment(pending_payment: PendingPayment) {
         Ok(block_index) => {
             mutate_state(|state| inform_referrer(&pending_payment, block_index, reason, state));
         }
-        Err(_) => {
-            mutate_state(|state| state.data.pending_payments_queue.push(pending_payment));
+        Err(retry) => {
+            if retry {
+                mutate_state(|state| {
+                    state.data.pending_payments_queue.push(pending_payment);
+                    start_job_if_required(state);
+                });
+            }
         }
     }
 }
 
-async fn make_payment(pending_payment: &PendingPayment) -> Result<BlockIndex, ()> {
+// Error response contains a boolean stating if the transfer should be retried
+async fn make_payment(pending_payment: &PendingPayment) -> Result<BlockIndex, bool> {
     let to = Account {
-        owner: pending_payment.recipient.into(),
+        owner: pending_payment.recipient,
         subaccount: None,
     };
 
-    let args = ic_icrc1::endpoints::TransferArg {
+    let args = TransferArg {
         from_subaccount: None,
         to,
         fee: None,
@@ -67,13 +75,17 @@ async fn make_payment(pending_payment: &PendingPayment) -> Result<BlockIndex, ()
         runtime: ic_icrc1_client_cdk::CdkRuntime,
     };
 
-    match client.transfer(args).await {
-        Ok(Ok(block_index)) => return Ok(block_index),
-        Ok(Err(transfer_error)) => error!("Transfer failed. {transfer_error:?}"),
-        Err((code, msg)) => error!("Transfer failed. {code:?}: {msg}"),
+    match client.transfer(args.clone()).await {
+        Ok(Ok(block_index)) => Ok(block_index),
+        Ok(Err(transfer_error)) => {
+            error!(?transfer_error, ?args, "Transfer failed");
+            Err(false)
+        }
+        Err((code, msg)) => {
+            error!(code, msg, ?args, "Transfer failed");
+            Err(true)
+        }
     }
-
-    Err(())
 }
 
 fn inform_referrer(
@@ -99,17 +111,21 @@ fn inform_referrer(
         amount_text = format!("[{}]({})", amount_text, link);
     }
 
-    let message = match reason {
-        PendingPaymentReason::ReferralReward => format!("You have received a referral reward of {}. This is because one of the users you referred has made a Diamond membership payment.", amount_text),
-        PendingPaymentReason::BitcoinMiamiReferral => format!("Congratulations, you have received {}! Click [here](?wallet) to open your wallet.", amount_text),
-        PendingPaymentReason::Treasury => unreachable!(),
+    let messages = match reason {
+        PendingPaymentReason::ReferralReward => vec![MessageContent::Text(TextContent { text: format!("You have received a referral reward of {}. This is because one of the users you referred has made a Diamond membership payment.", amount_text) })],
+        PendingPaymentReason::Treasury => vec![],
     };
 
-    state.push_event_to_local_user_index(
-        user_id,
-        LocalUserIndexEvent::OpenChatBotMessage(OpenChatBotMessage {
+    for message in messages {
+        state.push_event_to_local_user_index(
             user_id,
-            message: MessageContent::Text(TextContent { text: message }),
-        }),
-    );
+            LocalUserIndexEvent::OpenChatBotMessage(OpenChatBotMessage { user_id, message }),
+        );
+    }
+}
+
+#[derive(Serialize)]
+struct Link {
+    url: String,
+    caption: String,
 }

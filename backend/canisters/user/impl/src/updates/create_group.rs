@@ -3,12 +3,13 @@ use crate::{
     mutate_state, read_state, run_regular_jobs, RuntimeState, BASIC_GROUP_CREATION_LIMIT, PREMIUM_GROUP_CREATION_LIMIT,
 };
 use canister_tracing_macros::trace;
-use group_index_canister::{c2c_create_group, MAX_GROUP_DESCRIPTION_LENGTH, MAX_GROUP_RULES_LENGTH};
+use group_index_canister::c2c_create_group;
 use ic_cdk_macros::update;
 use tracing::error;
-use types::{CanisterId, ChatId, FieldTooLongResult, FieldTooShortResult, MAX_AVATAR_SIZE};
+use types::{CanisterId, ChatId};
 use user_canister::create_group::{Response::*, *};
-use utils::group_validation::{validate_name, NameValidationError};
+use utils::avatar_validation::validate_avatar;
+use utils::group_validation::{validate_description, validate_name, validate_rules, NameValidationError, RulesValidationError};
 
 #[update(guard = "caller_is_owner")]
 #[trace]
@@ -52,21 +53,21 @@ struct PrepareResult {
     create_group_args: c2c_create_group::Args,
 }
 
-fn prepare(args: Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Response> {
+fn prepare(args: Args, state: &RuntimeState) -> Result<PrepareResult, Response> {
     fn is_throttled() -> bool {
         // TODO check here that the user hasn't created too many groups in succession
         false
     }
 
-    let now = runtime_state.env.now();
-    let is_diamond_member = runtime_state.data.is_diamond_member(now);
+    let now = state.env.now();
+    let is_diamond_member = state.data.is_diamond_member(now);
     let group_creation_limit = if is_diamond_member { PREMIUM_GROUP_CREATION_LIMIT } else { BASIC_GROUP_CREATION_LIMIT };
 
-    if runtime_state.data.suspended.value {
+    if state.data.suspended.value {
         Err(UserSuspended)
     // } else if !is_diamond_member && args.is_public {
     //     Err(UnauthorizedToCreatePublicGroup)
-    } else if runtime_state.data.group_chats.groups_created() >= group_creation_limit {
+    } else if state.data.group_chats.groups_created() >= group_creation_limit {
         Err(MaxGroupsCreated(group_creation_limit))
     } else if is_throttled() {
         Err(Throttled)
@@ -76,30 +77,15 @@ fn prepare(args: Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Re
             NameValidationError::TooLong(l) => NameTooLong(l),
             NameValidationError::Reserved => NameReserved,
         })
-    } else if args.description.len() > MAX_GROUP_DESCRIPTION_LENGTH as usize {
-        Err(DescriptionTooLong(FieldTooLongResult {
-            length_provided: args.description.len() as u32,
-            max_length: MAX_GROUP_DESCRIPTION_LENGTH,
-        }))
-    } else if args.rules.enabled && args.rules.text.is_empty() {
-        Err(RulesTooShort(FieldTooShortResult {
-            length_provided: args.rules.text.len() as u32,
-            min_length: 1,
-        }))
-    } else if args.rules.text.len() > MAX_GROUP_RULES_LENGTH as usize {
-        Err(RulesTooLong(FieldTooLongResult {
-            length_provided: args.rules.text.len() as u32,
-            max_length: MAX_GROUP_RULES_LENGTH,
-        }))
-    } else if args
-        .avatar
-        .as_ref()
-        .map_or(false, |a| a.data.len() > MAX_AVATAR_SIZE as usize)
-    {
-        Err(AvatarTooBig(FieldTooLongResult {
-            length_provided: args.avatar.as_ref().unwrap().data.len() as u32,
-            max_length: MAX_AVATAR_SIZE,
-        }))
+    } else if let Err(error) = validate_description(&args.description) {
+        Err(DescriptionTooLong(error))
+    } else if let Err(error) = validate_rules(args.rules.enabled, &args.rules.text) {
+        return Err(match error {
+            RulesValidationError::TooShort(s) => RulesTooShort(s),
+            RulesValidationError::TooLong(l) => RulesTooLong(l),
+        });
+    } else if let Err(error) = validate_avatar(args.avatar.as_ref()) {
+        Err(AvatarTooBig(error))
     } else {
         let create_group_args = c2c_create_group::Args {
             is_public: args.is_public,
@@ -114,13 +100,13 @@ fn prepare(args: Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Re
             gate: args.gate,
         };
         Ok(PrepareResult {
-            group_index_canister_id: runtime_state.data.group_index_canister_id,
+            group_index_canister_id: state.data.group_index_canister_id,
             create_group_args,
         })
     }
 }
 
-fn commit(chat_id: ChatId, runtime_state: &mut RuntimeState) {
-    let now = runtime_state.env.now();
-    runtime_state.data.group_chats.create(chat_id, now);
+fn commit(chat_id: ChatId, state: &mut RuntimeState) {
+    let now = state.env.now();
+    state.data.group_chats.create(chat_id, now);
 }

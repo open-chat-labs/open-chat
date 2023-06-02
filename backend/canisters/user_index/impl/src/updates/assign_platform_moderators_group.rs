@@ -13,9 +13,9 @@ fn assign_platform_moderators_group(args: Args) -> Response {
     Success
 }
 
-fn assign_platform_moderators_group_impl(group_id: ChatId, runtime_state: &mut RuntimeState) {
-    if runtime_state.data.platform_moderators_group.is_some() {
+fn assign_platform_moderators_group_impl(group_id: ChatId, state: &mut RuntimeState) {
+    if state.data.platform_moderators_group.is_some() {
         panic!();
     }
-    runtime_state.data.platform_moderators_group = Some(group_id);
+    state.data.platform_moderators_group = Some(group_id);
 }

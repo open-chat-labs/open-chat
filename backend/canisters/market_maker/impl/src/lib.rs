@@ -56,6 +56,7 @@ impl RuntimeState {
             wasm_version: WASM_VERSION.with(|v| **v.borrow()),
             git_commit_id: utils::git::git_commit_id().to_string(),
             exchanges: self.data.exchange_config.clone(),
+            market_makers_in_progress: self.data.market_makers_in_progress.clone(),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 cycles_dispenser: self.data.cycles_dispenser_canister_id,
@@ -74,6 +75,7 @@ struct Data {
     pub icp_ledger_canister_id: CanisterId,
     pub chat_ledger_canister_id: CanisterId,
     pub orders_log: OrdersLog,
+    pub market_makers_in_progress: HashMap<ExchangeId, TimestampMillis>,
     pub test_mode: bool,
 }
 
@@ -92,6 +94,7 @@ impl Data {
             icp_ledger_canister_id,
             chat_ledger_canister_id,
             orders_log: OrdersLog::default(),
+            market_makers_in_progress: HashMap::new(),
             test_mode,
         }
     }
@@ -105,6 +108,7 @@ pub struct Metrics {
     pub wasm_version: Version,
     pub git_commit_id: String,
     pub exchanges: HashMap<ExchangeId, Config>,
+    pub market_makers_in_progress: HashMap<ExchangeId, TimestampMillis>,
     pub canister_ids: CanisterIds,
 }
 

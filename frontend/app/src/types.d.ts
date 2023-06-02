@@ -42,3 +42,5 @@ declare global {
         platformOperator: any;
     }
 }
+
+declare function gtag(command: "event", name: "page_view", options?: any): void;

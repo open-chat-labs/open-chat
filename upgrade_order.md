@@ -1,7 +1,3 @@
-website -> user
-user_index -> local_user_index -> user
+Website -> User/Group
 
-Notes:
-
-Website before user because `created` has been added to pending transactions.
-UserIndex then LocalUserIndex then User because the OC bot messages have been added to the user canister init args.
+Website must go before user and group because the `chat_id` field has been removed from the `MessageMatch` type

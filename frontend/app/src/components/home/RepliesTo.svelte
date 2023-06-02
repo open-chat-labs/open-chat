@@ -17,7 +17,6 @@
     export let chatId: string;
     export let repliesTo: RehydratedReplyContext;
     export let readonly: boolean;
-    export let groupChat: boolean;
 
     let debug = false;
     $: userStore = client.userStore;
@@ -66,9 +65,7 @@
             <ChatMessageContent
                 {me}
                 {readonly}
-                {groupChat}
                 {chatId}
-                first={true}
                 messageId={repliesTo.messageId}
                 messageIndex={repliesTo.messageIndex}
                 senderId={repliesTo.senderId}
@@ -107,10 +104,6 @@
             background-color: var(--currentChat-msg-me-bg);
             border: 2px solid var(--currentChat-msg-me-bd);
             color: var(--currentChat-msg-me-txt);
-        }
-
-        &.crypto {
-            @include gold();
         }
 
         &:after {

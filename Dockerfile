@@ -3,7 +3,7 @@ FROM ubuntu:22.04 as builder
 SHELL ["bash", "-c"]
 
 ARG git_commit_id
-ARG rust_version=1.69.0
+ARG rust_version=1.70.0
 
 ENV GIT_COMMIT_ID=$git_commit_id
 ENV TZ=UTC
@@ -24,8 +24,8 @@ RUN curl --fail https://sh.rustup.rs -sSf \
     rustup default ${rust_version}-x86_64-unknown-linux-gnu && \
     rustup target add wasm32-unknown-unknown
 
-# Install IC CDK optimizer
-RUN cargo install --version 0.3.4 ic-cdk-optimizer
+# Install IC Wasm
+RUN cargo install --version 0.3.7 ic-wasm
 
 COPY . /build
 WORKDIR /build

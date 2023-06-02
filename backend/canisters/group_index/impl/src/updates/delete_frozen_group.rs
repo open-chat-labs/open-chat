@@ -45,12 +45,12 @@ struct PrepareResult {
     local_group_index_canister_id: CanisterId,
 }
 
-fn prepare(chat_id: &ChatId, runtime_state: &RuntimeState) -> Result<PrepareResult, Response> {
-    if let Some(local_group_index_canister_id) = runtime_state.data.local_index_map.get_index_canister(chat_id) {
-        match runtime_state.data.chat_frozen_info(chat_id) {
+fn prepare(chat_id: &ChatId, state: &RuntimeState) -> Result<PrepareResult, Response> {
+    if let Some(local_group_index_canister_id) = state.data.local_index_map.get_index_canister_for_group(chat_id) {
+        match state.data.group_frozen_info(chat_id) {
             Some(Some(_)) => Ok(PrepareResult {
-                caller: runtime_state.env.caller(),
-                user_index_canister_id: runtime_state.data.user_index_canister_id,
+                caller: state.env.caller(),
+                user_index_canister_id: state.data.user_index_canister_id,
                 local_group_index_canister_id,
             }),
             Some(None) => Err(ChatNotFrozen),

@@ -53,11 +53,11 @@ import {
     User,
     EditMessageResponse,
     RegisterUserResponse,
-    AddMembersResponse,
     RemoveMemberResponse,
     MemberRole,
     RegisterProposalVoteResponse,
     GroupSearchResponse,
+    GroupInvite,
     SearchGroupChatResponse,
     SearchDirectChatResponse,
     Cryptocurrency,
@@ -70,6 +70,9 @@ import {
     SetBioResponse,
     PendingCryptocurrencyWithdrawal,
     WithdrawCryptocurrencyResponse,
+    InviteCodeResponse,
+    EnableInviteCodeResponse,
+    DisableInviteCodeResponse,
     CandidateGroupChat,
     CreateGroupResponse,
     ChangeRoleResponse,
@@ -77,7 +80,6 @@ import {
     UnfreezeGroupResponse,
     SuspendUserResponse,
     UnsuspendUserResponse,
-    ChatStateFull,
     UpdatesResult,
     DeletedGroupMessageResponse,
     DeletedDirectMessageResponse,
@@ -96,6 +98,9 @@ import {
     ReferralLeaderboardRange,
     ReferralLeaderboardResponse,
     ReportMessageResponse,
+    InviteUsersResponse,
+    DeclineInvitationResponse,
+    ResetInviteCodeResponse,
 } from "openchat-shared";
 import type { OpenChatConfig } from "./config";
 import { v4 } from "uuid";
@@ -238,6 +243,7 @@ export class OpenChatAgentWorker extends EventTarget {
             ...req,
             correlationId: v4(),
         };
+
         this._worker.postMessage(correlated);
         const promise = new Promise<Resp>((resolve, reject) => {
             const sentAt = Date.now();
@@ -266,19 +272,10 @@ export class OpenChatAgentWorker extends EventTarget {
         });
     }
 
-    getInitialState(): Promise<UpdatesResult> {
-        return this.sendRequest({
-            kind: "getInitialState",
-            payload: {},
-        });
-    }
-
-    getUpdates(currentState: ChatStateFull): Promise<UpdatesResult> {
+    getUpdates(): Promise<UpdatesResult> {
         return this.sendRequest({
             kind: "getUpdates",
-            payload: {
-                currentState,
-            },
+            payload: {},
         });
     }
 
@@ -477,8 +474,7 @@ export class OpenChatAgentWorker extends EventTarget {
     }
 
     rehydrateMessage(
-        chatType: "direct_chat" | "group_chat",
-        currentChatId: string,
+        chatId: string,
         message: EventWrapper<Message>,
         threadRootMessageIndex: number | undefined,
         latestClientEventIndex: number | undefined
@@ -486,8 +482,7 @@ export class OpenChatAgentWorker extends EventTarget {
         return this.sendRequest({
             kind: "rehydrateMessage",
             payload: {
-                chatType,
-                currentChatId,
+                chatId,
                 message,
                 threadRootMessageIndex,
                 latestClientEventIndex,
@@ -820,6 +815,16 @@ export class OpenChatAgentWorker extends EventTarget {
         });
     }
 
+    unblockUserFromGroupChat(chatId: string, userId: string): Promise<UnblockUserResponse> {
+        return this.sendRequest({
+            kind: "unblockUserFromGroupChat",
+            payload: {
+                chatId,
+                userId,
+            },
+        });
+    }
+
     getProposalVoteDetails(
         governanceCanisterId: string,
         proposalId: bigint,
@@ -944,19 +949,12 @@ export class OpenChatAgentWorker extends EventTarget {
         });
     }
 
-    addMembers(
-        chatId: string,
-        userIds: string[],
-        myUsername: string,
-        allowBlocked: boolean
-    ): Promise<AddMembersResponse> {
+    inviteUsers(chatId: string, userIds: string[]): Promise<InviteUsersResponse> {
         return this.sendRequest({
-            kind: "addMembers",
+            kind: "inviteUsers",
             payload: {
                 chatId,
                 userIds,
-                myUsername,
-                allowBlocked,
             },
         });
     }
@@ -1030,6 +1028,15 @@ export class OpenChatAgentWorker extends EventTarget {
             kind: "dismissRecommendation",
             payload: {
                 chatId,
+            },
+        });
+    }
+
+    set groupInvite(value: GroupInvite) {
+        this.sendRequest({
+            kind: "groupInvite",
+            payload: {
+                value,
             },
         });
     }
@@ -1156,6 +1163,42 @@ export class OpenChatAgentWorker extends EventTarget {
                 chatId,
                 messageIndexes,
                 latestClientEventIndex,
+            },
+        });
+    }
+
+    getInviteCode(chatId: string): Promise<InviteCodeResponse> {
+        return this.sendRequest({
+            kind: "getInviteCode",
+            payload: {
+                chatId,
+            },
+        });
+    }
+
+    enableInviteCode(chatId: string): Promise<EnableInviteCodeResponse> {
+        return this.sendRequest({
+            kind: "enableInviteCode",
+            payload: {
+                chatId,
+            },
+        });
+    }
+
+    disableInviteCode(chatId: string): Promise<DisableInviteCodeResponse> {
+        return this.sendRequest({
+            kind: "disableInviteCode",
+            payload: {
+                chatId,
+            },
+        });
+    }
+
+    resetInviteCode(chatId: string): Promise<ResetInviteCodeResponse> {
+        return this.sendRequest({
+            kind: "resetInviteCode",
+            payload: {
+                chatId,
             },
         });
     }
@@ -1387,6 +1430,13 @@ export class OpenChatAgentWorker extends EventTarget {
                 notes,
                 threadRootMessageIndex,
             },
+        });
+    }
+
+    declineInvitation(chatId: string): Promise<DeclineInvitationResponse> {
+        return this.sendRequest({
+            kind: "declineInvitation",
+            payload: { chatId },
         });
     }
 }

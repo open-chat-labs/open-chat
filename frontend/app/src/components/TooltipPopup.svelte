@@ -1,10 +1,12 @@
 <script lang="ts">
     import { fade } from "svelte/transition";
     import { mobileWidth } from "../stores/screenDimensions";
+    import { rtlStore } from "../stores/rtl";
 
-    export let alignRight = false;
     export let textLength: number = 100;
     export let longestWord: number = 10;
+    export let position: "top" | "right" | "bottom" | "left" = "top";
+    export let align: "start" | "center" | "end" = "start";
 
     $: maxWidth = calculateMaxWidth(textLength, longestWord, $mobileWidth);
 
@@ -26,8 +28,8 @@
 
 <div
     transition:fade={{ duration: 100 }}
-    class="tooltip-popup"
-    class:right={alignRight}
+    class={`tooltip-popup ${position} ${align}`}
+    class:rtl={$rtlStore}
     style={`max-width: ${maxWidth}rem;`}>
     <slot />
 </div>
@@ -37,6 +39,8 @@
         background-color: var(--menu-bg);
         border: 1px solid var(--menu-bd);
         color: var(--menu-txt);
+        $chevron: 8px;
+        $offset: 12px;
 
         display: flex;
         flex-direction: column;
@@ -46,30 +50,93 @@
         @include z-index("tooltip");
         @include font-size(fs-50);
         width: max-content;
-        padding: $sp2 $sp3 $sp3 $sp3;
+        padding: $sp3;
         border-radius: $sp3;
         pointer-events: none;
         word-wrap: break-word;
-
-        &.right {
-            &:after {
-                right: 18px;
-                left: auto;
-            }
-        }
 
         &:after {
             display: block;
             position: absolute;
             background-color: inherit;
-            width: 8px;
-            height: 8px;
-            bottom: -5px;
-            left: 18px;
+            width: $chevron;
+            height: $chevron;
             transform: rotate(45deg);
+            content: "";
+        }
+
+        &.right:after {
+            left: -5px;
+            border-bottom: 1px solid var(--menu-bd);
+            border-left: 1px solid var(--menu-bd);
+        }
+
+        &.right.rtl:after {
+            left: unset;
+            right: -5px;
+            border-bottom: none;
+            border-left: none;
+            border-top: 1px solid var(--menu-bd);
+            border-right: 1px solid var(--menu-bd);
+        }
+
+        &.left:after {
+            right: -5px;
+            border-top: 1px solid var(--menu-bd);
+            border-right: 1px solid var(--menu-bd);
+        }
+
+        &.left.rtl:after {
+            right: unset;
+            left: -5px;
+            border-top: none;
+            border-right: none;
+            border-bottom: 1px solid var(--menu-bd);
+            border-left: 1px solid var(--menu-bd);
+        }
+
+        &.bottom:after {
+            top: -5px;
+            border-top: 1px solid var(--menu-bd);
+            border-left: 1px solid var(--menu-bd);
+        }
+
+        &.top:after {
+            bottom: -5px;
             border-bottom: 1px solid var(--menu-bd);
             border-right: 1px solid var(--menu-bd);
-            content: "";
+        }
+
+        &.left.start:after,
+        &.right.start:after {
+            top: $offset;
+        }
+        &.left.end:after,
+        &.right.end:after {
+            bottom: $offset;
+        }
+        &.left.center:after,
+        &.right.center:after {
+            top: calc(50% - 4px);
+        }
+
+        &.top.start:after,
+        &.bottom.start:after {
+            left: $offset;
+        }
+        &.top.rtl.start:after,
+        &.bottom.rtl.start:after {
+            left: unset;
+            right: $offset;
+        }
+        &.top.end:after,
+        &.bottom.end:after {
+            right: $offset;
+        }
+        &.top.rtl.end:after,
+        &.bottom.rtl.end:after {
+            right: unset;
+            left: $offset;
         }
     }
 </style>

@@ -1,12 +1,12 @@
 import "../../../libraries/types/can.did";
 
-type SendMessageArgs =
+type SendMessageV2Args =
     record {
         recipient: UserId;
         thread_root_message_index: opt MessageIndex;
         message_id: MessageId;
         sender_name: text;
-        content: MessageContent;
+        content: MessageContentInitial;
         replies_to: opt ReplyContext;
         forwarding: bool;
         correlation_id: nat64;
@@ -41,12 +41,12 @@ type SendMessageResponse =
         InternalError: text;
     };
 
-type EditMessageArgs =
+type EditMessageV2Args =
     record {
         user_id: UserId;
         thread_root_message_index: opt MessageIndex;
         message_id: MessageId;
-        content: MessageContent;
+        content: MessageContentInitial;
         correlation_id: nat64;
     };
 
@@ -185,8 +185,8 @@ type CreateGroupArgs =
         avatar: opt Avatar;
         history_visible_to_new_joiners: bool;
         permissions: opt GroupPermissions;
-        rules: GroupRules;
-        gate: opt GroupGate
+        rules: AccessRules;
+        gate: opt AccessGate
     };
 
 type CreateGroupSuccessResult =
@@ -243,6 +243,74 @@ type DeleteGroupResponse =
         ChatFrozen;
         InternalError: text;
     };
+
+type CreateCommunityArgs =
+    record {
+        is_public: bool;
+        name: text;
+        description: text;
+        avatar: opt Avatar;
+        history_visible_to_new_joiners: bool;
+        permissions: opt CommunityPermissions;
+        rules: AccessRules;
+        gate: opt AccessGate
+    };
+
+type CreateCommunitySuccessResult =
+    record {
+        community_id: CommunityId;
+    };
+
+type CreateCommunityResponse =
+    variant {
+        Success: CreateCommunitySuccessResult;
+        NameTooShort: FieldTooShortResult;
+        NameTooLong: FieldTooLongResult;
+        NameReserved;
+        DescriptionTooLong: FieldTooLongResult;
+        AvatarTooBig: FieldTooLongResult;
+        MaxCommunitiesCreated: nat32;
+        NameTaken;
+        Throttled;
+        InternalError;
+        RulesTooLong: FieldTooLongResult;
+        RulesTooShort: FieldTooShortResult;
+        UserSuspended;
+        Unauthorized;
+    };
+
+type LeaveCommunityArgs =
+    record {
+        community_id: CommunityId;
+    };
+
+type LeaveCommunityResponse =
+    variant {
+        Success;
+        CommunityNotFound;
+        CommunityNotPublic;
+        InternalError: text;
+        UserNotInCommunity;
+        LastOwnerCannotLeave;
+        UserSuspended;
+        CommunityFrozen;
+    };
+
+type DeleteCommunityArgs =
+    record {
+        community_id: CommunityId;
+    };
+
+type DeleteCommunityResponse =
+    variant {
+        Success;
+        NotAuthorized;
+        UserSuspended;
+        CommunityFrozen;
+        InternalError: text;
+    };
+
+
 
 type SetAvatarArgs =
     record {
@@ -348,19 +416,6 @@ type CancelMessageReminderArgs =
 type CancelMessageReminderResponse =
     variant {
         Success;
-    };
-
-type TransferCryptoWithinGroupArgs =
-    record {
-        message_id: MessageId;
-        group_id: ChatId;
-        thread_root_message_index: opt MessageIndex;
-        recipient: UserId;
-        content: CryptoContent;
-        sender_name: text;
-        replies_to: opt GroupReplyContext;
-        mentioned: vec User;
-        correlation_id: nat64;
     };
 
 type SendMessageWithTransferToGroupArgs =
@@ -522,6 +577,7 @@ type UpdatesV2Response =
             blocked_users_v2: opt vec UserId;
             pinned_chats: opt vec ChatId;
         };
+        SuccessNoUpdates;
     };
 
 type UserCanisterGroupChatSummary =
@@ -569,13 +625,6 @@ type EventsWindowArgs =
         max_messages: nat32;
         max_events: nat32;
         latest_client_event_index: opt EventIndex;
-    };
-
-type EventsSuccessResult =
-    record {
-        events: vec ChatEventWrapper;
-        latest_event_index: EventIndex;
-        timestamp: TimestampMillis;
     };
 
 type EventsResponse =
@@ -691,8 +740,8 @@ type DeletedMessageResponse =
     };
 
 service: {
-    send_message: (SendMessageArgs) -> (SendMessageResponse);
-    edit_message: (EditMessageArgs) -> (EditMessageResponse);
+    send_message_v2: (SendMessageV2Args) -> (SendMessageResponse);
+    edit_message_v2: (EditMessageV2Args) -> (EditMessageResponse);
     delete_messages: (DeleteMessagesArgs) -> (DeleteMessagesResponse);
     undelete_messages: (UndeleteMessagesArgs) -> (UndeleteMessagesResponse);
     add_reaction: (AddReactionArgs) -> (AddReactionResponse);
@@ -703,6 +752,9 @@ service: {
     create_group: (CreateGroupArgs) -> (CreateGroupResponse);
     leave_group: (LeaveGroupArgs) -> (LeaveGroupResponse);
     delete_group: (DeleteGroupArgs) -> (DeleteGroupResponse);
+    create_community: (CreateCommunityArgs) -> (CreateCommunityResponse);
+    leave_community: (LeaveCommunityArgs) -> (LeaveCommunityResponse);
+    delete_community: (DeleteCommunityArgs) -> (DeleteCommunityResponse);
     set_avatar: (SetAvatarArgs) -> (SetAvatarResponse);
     mute_notifications: (MuteNotificationsArgs) -> (MuteNotificationsResponse);
     unmute_notifications: (UnmuteNotificationsArgs) -> (UnmuteNotificationsResponse);
@@ -712,7 +764,6 @@ service: {
     set_message_reminder: (SetMessageReminderArgs) -> (SetMessageReminderResponse);
     cancel_message_reminder: (CancelMessageReminderArgs) -> (CancelMessageReminderResponse);
     send_message_with_transfer_to_group: (SendMessageWithTransferToGroupArgs) -> (SendMessageWithTransferToGroupResponse);
-    transfer_crypto_within_group_v2: (TransferCryptoWithinGroupArgs) -> (SendMessageWithTransferToGroupResponse);
     withdraw_crypto_v2: (WithdrawCryptoArgs) -> (WithdrawCryptoResponse);
     pin_chat: (PinChatRequest) -> (PinChatResponse);
     unpin_chat: (UnpinChatRequest) -> (UnpinChatResponse);

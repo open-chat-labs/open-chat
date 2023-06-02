@@ -1,4 +1,4 @@
-import type { Identity, SignIdentity } from "@dfinity/agent";
+import type { Identity } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
 import { idlFactory, UserIndexService } from "./candid/idl";
 import type {
@@ -8,7 +8,6 @@ import type {
     UsersArgs,
     UsersResponse,
     UserSummary,
-    RegisterUserResponse,
     SuspendUserResponse,
     UnsuspendUserResponse,
     MarkSuspectedBotResponse,
@@ -26,20 +25,19 @@ import {
     currentUserResponse,
     usersResponse,
     userSearchResponse,
-    registerUserResponse,
     suspendUserResponse,
     unsuspendUserResponse,
     apiCryptocurrency,
     apiDiamondDuration,
     payForDiamondMembershipResponse,
     referralLeaderboardResponse,
+    userRegistrationCanisterResponse,
 } from "./mappers";
 import { CachingUserIndexClient } from "./userIndex.caching.client";
 import type { IUserIndexClient } from "./userIndex.client.interface";
 import { profile } from "../common/profiling";
 import { apiOptional } from "../common/chatMappers";
 import type { AgentConfig } from "../../config";
-import { identity } from "../../utils/mapping";
 
 export class UserIndexClient extends CandidService implements IUserIndexClient {
     private userIndexService: UserIndexService;
@@ -67,17 +65,10 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
     }
 
     @profile("userIndexClient")
-    registerUser(
-        username: string,
-        referralCode: string | undefined
-    ): Promise<RegisterUserResponse> {
+    userRegistrationCanister(): Promise<string> {
         return this.handleResponse(
-            this.userIndexService.register_user_v2({
-                username,
-                referral_code: apiOptional(identity, referralCode),
-                public_key: new Uint8Array((this.identity as SignIdentity).getPublicKey().toDer()),
-            }),
-            registerUserResponse
+            this.userIndexService.user_registration_canister({}),
+            userRegistrationCanisterResponse
         );
     }
 

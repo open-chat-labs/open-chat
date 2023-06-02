@@ -1,16 +1,16 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
-use chat_events::ChatEventInternal;
 use group_canister::make_private::{Response::*, *};
+use group_chat_core::MakePrivateResult;
 use group_index_canister::c2c_make_private;
 use ic_cdk_macros::update;
 use tracing::error;
-use types::{CanisterId, ChatId, GroupVisibilityChanged, UserId};
+use types::{CanisterId, ChatId, UserId};
 
 #[update]
 #[trace]
-async fn make_private(args: Args) -> Response {
+async fn make_private(_args: Args) -> Response {
     run_regular_jobs();
 
     let PrepareResult {
@@ -31,7 +31,7 @@ async fn make_private(args: Args) -> Response {
                 InternalError
             }
             c2c_make_private::Response::Success => {
-                mutate_state(|state| commit(args, user_id, state));
+                mutate_state(|state| commit(user_id, state));
                 Success
             }
         },
@@ -45,45 +45,30 @@ struct PrepareResult {
     user_id: UserId,
 }
 
-fn prepare(runtime_state: &RuntimeState) -> Result<PrepareResult, Response> {
-    if runtime_state.data.is_frozen() {
+fn prepare(state: &RuntimeState) -> Result<PrepareResult, Response> {
+    if state.data.is_frozen() {
         return Err(ChatFrozen);
     }
 
-    let caller = runtime_state.env.caller();
-    if let Some(participant) = runtime_state.data.participants.get_by_principal(&caller) {
-        if participant.suspended.value {
-            Err(UserSuspended)
-        } else if !participant.role.can_change_group_visibility() {
-            Err(NotAuthorized)
-        } else if !runtime_state.data.is_public {
-            Err(AlreadyPrivate)
-        } else {
-            Ok(PrepareResult {
-                group_index_canister_id: runtime_state.data.group_index_canister_id,
-                chat_id: runtime_state.env.canister_id().into(),
-                user_id: participant.user_id,
-            })
+    if let Some(user_id) = state.data.lookup_user_id(state.env.caller()) {
+        match state.data.chat.can_make_private(user_id) {
+            MakePrivateResult::Success => Ok(PrepareResult {
+                group_index_canister_id: state.data.group_index_canister_id,
+                chat_id: state.env.canister_id().into(),
+                user_id,
+            }),
+            MakePrivateResult::UserSuspended => Err(UserSuspended),
+            MakePrivateResult::UserNotInGroup => Err(NotAuthorized),
+            MakePrivateResult::NotAuthorized => Err(NotAuthorized),
+            MakePrivateResult::AlreadyPrivate => Err(AlreadyPrivate),
         }
     } else {
         Err(NotAuthorized)
     }
 }
 
-fn commit(args: Args, user_id: UserId, runtime_state: &mut RuntimeState) {
-    runtime_state.data.is_public = false;
+fn commit(user_id: UserId, state: &mut RuntimeState) {
+    state.data.chat.do_make_private(user_id, state.env.now());
 
-    let now = runtime_state.env.now();
-    let event = GroupVisibilityChanged {
-        now_public: false,
-        changed_by: user_id,
-    };
-
-    runtime_state.data.events.push_main_event(
-        ChatEventInternal::GroupVisibilityChanged(Box::new(event)),
-        args.correlation_id,
-        now,
-    );
-
-    handle_activity_notification(runtime_state);
+    handle_activity_notification(state);
 }

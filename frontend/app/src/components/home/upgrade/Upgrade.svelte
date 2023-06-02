@@ -43,8 +43,8 @@
 </script>
 
 <Overlay>
-    <ModalContent hideFooter fill>
-        <span class="header" slot="header">
+    <ModalContent overflows hideFooter fill>
+        <div class="header" slot="header">
             {#if !confirming && !confirmed}
                 <div class="title">
                     {#if step === "features"}
@@ -70,8 +70,8 @@
                     </div>
                 {/if}
             {/if}
-        </span>
-        <span slot="body">
+        </div>
+        <div class="body" slot="body">
             {#if step === "features"}
                 <Features
                     canExtend={$canExtendDiamond}
@@ -89,7 +89,7 @@
                     on:cancel
                     on:features={() => (step = "features")} />
             {/if}
-        </span>
+        </div>
     </ModalContent>
 </Overlay>
 
@@ -98,5 +98,11 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
+    }
+
+    .body {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
     }
 </style>

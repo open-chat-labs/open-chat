@@ -5,8 +5,8 @@ use types::{HttpRequest, HttpResponse, TimestampMillis};
 
 #[query]
 fn http_request(request: HttpRequest) -> HttpResponse {
-    fn get_avatar_impl(requested_avatar_id: Option<u128>, runtime_state: &RuntimeState) -> HttpResponse {
-        get_avatar(requested_avatar_id, &runtime_state.data.avatar)
+    fn get_avatar_impl(requested_avatar_id: Option<u128>, state: &RuntimeState) -> HttpResponse {
+        get_avatar(requested_avatar_id, &state.data.chat.avatar)
     }
 
     fn get_logs_impl(since: Option<TimestampMillis>) -> HttpResponse {
@@ -17,8 +17,8 @@ fn http_request(request: HttpRequest) -> HttpResponse {
         encode_logs(canister_logger::export_traces(), since.unwrap_or(0))
     }
 
-    fn get_metrics_impl(runtime_state: &RuntimeState) -> HttpResponse {
-        build_json_response(&runtime_state.metrics())
+    fn get_metrics_impl(state: &RuntimeState) -> HttpResponse {
+        build_json_response(&state.metrics())
     }
 
     match extract_route(&request.url) {

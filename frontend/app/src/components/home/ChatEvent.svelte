@@ -159,6 +159,13 @@
         changedBy={event.event.addedBy}
         resourceKey={"addedBy"}
         timestamp={event.timestamp} />
+{:else if event.event.kind === "users_invited"}
+    <MembersChangedEvent
+        user={userSummary}
+        changed={event.event.userIds}
+        changedBy={event.event.invitedBy}
+        resourceKey={"invitedBy"}
+        timestamp={event.timestamp} />
 {:else if event.event.kind === "members_removed"}
     <MembersChangedEvent
         user={userSummary}

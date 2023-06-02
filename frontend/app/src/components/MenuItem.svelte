@@ -15,7 +15,7 @@
 {:else if separator}
     <hr class="separator" />
 {:else}
-    <div class="menu-item" on:click role="menuitem" class:selected class:warning>
+    <div tabindex="0" class="menu-item" on:click role="menuitem" class:selected class:warning>
         <span class="icon">
             <slot name="icon" />
         </span>
@@ -30,7 +30,7 @@
         color: var(--menu-txt);
         align-items: center;
         @include font-size(fs-90);
-        padding: 12px $sp4;
+        padding: 10px $sp4;
 
         &:last-child {
             border-bottom: none;
@@ -41,9 +41,13 @@
             background-color: var(--menu-hv);
         }
 
-        .icon {
+        .icon:not(:empty) {
             display: flex;
             flex: 0 0 toRem(34);
+        }
+
+        .icon:empty {
+            display: none;
         }
 
         &.disabled {

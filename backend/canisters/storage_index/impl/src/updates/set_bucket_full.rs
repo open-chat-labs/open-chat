@@ -11,7 +11,7 @@ fn set_bucket_full(args: Args) -> Response {
     mutate_state(|state| set_bucket_full_impl(args, state))
 }
 
-fn set_bucket_full_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    runtime_state.data.buckets.set_full(args.bucket, args.full);
+fn set_bucket_full_impl(args: Args, state: &mut RuntimeState) -> Response {
+    state.data.buckets.set_full(args.bucket, args.full);
     Success
 }

@@ -5,9 +5,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.704](https://github.com/open-ic/open-chat/releases/tag/v2.0.704-local_group_index)] - 2023-06-01
+
+### Added
+
+- Integrate Communities ([#3656](https://github.com/open-ic/open-chat/pull/3656))
+
+## [[2.0.691](https://github.com/open-ic/open-chat/releases/tag/v2.0.691-local_group_index)] - 2023-05-17
+
+### Changed
+
+- Added `moderator` role and removed `add_members` permission ([#3592](https://github.com/open-ic/open-chat/pull/3592))
+- Put back `add_members` permission with serde default ([#3599](https://github.com/open-ic/open-chat/pull/3599))
+
 ## [[2.0.664](https://github.com/open-ic/open-chat/releases/tag/v2.0.664-local_group_index)] - 2023-04-17
 
-# Added
+### Added
 
 - Implement 'Gated Groups' ([#3406](https://github.com/open-ic/open-chat/pull/3406))
 

@@ -5,10 +5,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.703](https://github.com/open-ic/open-chat/releases/tag/v2.0.703-group_index)] - 2023-06-01
+
+### Added
+
+- Integrate Communities ([#3656](https://github.com/open-ic/open-chat/pull/3656)), ([#3657](https://github.com/open-ic/open-chat/pull/3657)), ([#3687](https://github.com/open-ic/open-chat/pull/3687))
+
+## [[2.0.692](https://github.com/open-ic/open-chat/releases/tag/v2.0.692-group_index)] - 2023-05-17
+
 ### Changed
 
 - Removed time limit before frozen groups can be deleted ([#3490](https://github.com/open-ic/open-chat/pull/3490))
 - Reduce a few timer job intervals ([#3515](https://github.com/open-ic/open-chat/pull/3515))
+- Added `moderator` role and removed `add_members` permission ([#3592](https://github.com/open-ic/open-chat/pull/3592))
+- Put back `add_members` permission with serde default ([#3599](https://github.com/open-ic/open-chat/pull/3599))
+- Improve search by splitting "terms" into "tokens" ([#3689](https://github.com/open-ic/open-chat/pull/3689))
 
 ## [[2.0.665](https://github.com/open-ic/open-chat/releases/tag/v2.0.665-group_index)] - 2023-04-17
 

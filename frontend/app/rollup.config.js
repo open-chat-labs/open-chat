@@ -79,6 +79,9 @@ if (production && !process.env.ROLLBAR_ACCESS_TOKEN) {
 if (production && !process.env.USERGEEK_APIKEY) {
     throw Error("USERGEEK_APIKEY environment variable not set");
 }
+if (production && !process.env.METERED_APIKEY) {
+    throw Error("METERED_APIKEY environment variable not set");
+}
 const WEBPUSH_SERVICE_WORKER_PATH = "_/raw/push_sw.js";
 
 console.log("PROD", production);
@@ -228,6 +231,7 @@ export default {
             "process.env.LEDGER_CANISTER_CHAT": JSON.stringify(process.env.LEDGER_CANISTER_CHAT),
             "process.env.BLOB_URL_PATTERN": JSON.stringify(process.env.BLOB_URL_PATTERN),
             "process.env.USERGEEK_APIKEY": JSON.stringify(process.env.USERGEEK_APIKEY),
+            "process.env.METERED_APIKEY": JSON.stringify(process.env.METERED_APIKEY),
             "process.env.GIPHY_APIKEY": JSON.stringify(process.env.GIPHY_APIKEY),
             "process.env.PUBLIC_TRANSLATE_API_KEY": JSON.stringify(
                 process.env.PUBLIC_TRANSLATE_API_KEY

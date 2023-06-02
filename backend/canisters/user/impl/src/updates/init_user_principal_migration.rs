@@ -12,7 +12,7 @@ fn init_user_principal_migration(args: Args) -> Response {
     mutate_state(|state| init_user_principal_migration_impl(args, state))
 }
 
-fn init_user_principal_migration_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    runtime_state.data.pending_user_principal_migration = Some(args.new_principal);
+fn init_user_principal_migration_impl(args: Args, state: &mut RuntimeState) -> Response {
+    state.data.pending_user_principal_migration = Some(args.new_principal);
     Success
 }

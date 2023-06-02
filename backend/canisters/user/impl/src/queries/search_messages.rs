@@ -13,7 +13,7 @@ fn search_messages(args: Args) -> Response {
     read_state(|state| search_messages_impl(args, state))
 }
 
-fn search_messages_impl(args: Args, runtime_state: &RuntimeState) -> Response {
+fn search_messages_impl(args: Args, state: &RuntimeState) -> Response {
     let term_length = args.search_term.len() as u8;
 
     if term_length < MIN_TERM_LENGTH {
@@ -24,21 +24,18 @@ fn search_messages_impl(args: Args, runtime_state: &RuntimeState) -> Response {
         return TermTooLong(MAX_TERM_LENGTH);
     }
 
-    let direct_chat = match runtime_state.data.direct_chats.get(&args.user_id.into()) {
+    let direct_chat = match state.data.direct_chats.get(&args.user_id.into()) {
         None => return ChatNotFound,
         Some(dc) => dc,
     };
 
-    let my_user_id = runtime_state.env.canister_id().into();
-    let query = Query::parse(&args.search_term);
+    let my_user_id = state.env.canister_id().into();
+    let query = Query::parse(args.search_term);
 
-    let matches = direct_chat.events.search_messages(
-        runtime_state.env.now(),
-        EventIndex::default(),
-        &query,
-        args.max_results,
-        my_user_id,
-    );
+    let matches =
+        direct_chat
+            .events
+            .search_messages(state.env.now(), EventIndex::default(), &query, args.max_results, my_user_id);
 
     Success(SuccessResult { matches })
 }

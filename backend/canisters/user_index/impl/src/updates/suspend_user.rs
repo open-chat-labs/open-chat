@@ -34,11 +34,11 @@ pub(crate) async fn suspend_user_impl(
     }
 }
 
-fn prepare(user_id: &UserId, runtime_state: &RuntimeState) -> Result<UserId, Response> {
-    match runtime_state.data.users.is_user_suspended(user_id) {
+fn prepare(user_id: &UserId, state: &RuntimeState) -> Result<UserId, Response> {
+    match state.data.users.is_user_suspended(user_id) {
         Some(false) => {
-            let caller = runtime_state.env.caller();
-            Ok(runtime_state.data.users.get_by_principal(&caller).unwrap().user_id)
+            let caller = state.env.caller();
+            Ok(state.data.users.get_by_principal(&caller).unwrap().user_id)
         }
         Some(true) => Err(UserAlreadySuspended),
         None => Err(UserNotFound),
@@ -51,11 +51,11 @@ fn commit(
     reason: String,
     groups: Vec<ChatId>,
     suspended_by: UserId,
-    runtime_state: &mut RuntimeState,
+    state: &mut RuntimeState,
 ) {
-    let now = runtime_state.env.now();
+    let now = state.env.now();
     for group in groups {
-        runtime_state.data.timer_jobs.enqueue_job(
+        state.data.timer_jobs.enqueue_job(
             TimerJob::SetUserSuspendedInGroup(SetUserSuspendedInGroup {
                 user_id,
                 group,
@@ -67,20 +67,20 @@ fn commit(
         );
     }
 
-    runtime_state
+    state
         .data
         .users
         .suspend_user(&user_id, duration, reason.clone(), suspended_by, now);
 
     // If the user is only suspended for a specified duration, schedule them to be unsuspended
     if let Some(ms) = duration {
-        runtime_state
+        state
             .data
             .timer_jobs
             .enqueue_job(TimerJob::UnsuspendUser(UnsuspendUser { user_id }), now + ms, now);
     }
 
-    runtime_state.push_event_to_local_user_index(
+    state.push_event_to_local_user_index(
         user_id,
         Event::UserSuspended(UserSuspended {
             user_id,

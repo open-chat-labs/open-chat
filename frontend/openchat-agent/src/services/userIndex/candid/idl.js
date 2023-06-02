@@ -73,6 +73,7 @@ export const idlFactory = ({ IDL }) => {
       'canister_upgrade_status' : CanisterUpgradeStatus,
       'is_super_admin' : IDL.Bool,
       'suspension_details' : IDL.Opt(SuspensionDetails),
+      'is_platform_moderator' : IDL.Bool,
       'diamond_membership_details' : IDL.Opt(DiamondMembershipDetails),
     }),
     'UserNotFound' : IDL.Null,
@@ -149,24 +150,6 @@ export const idlFactory = ({ IDL }) => {
       'users_who_referred_90_percent_unpaid_diamond' : IDL.Nat32,
     }),
   });
-  const RegisterUserV2Args = IDL.Record({
-    'username' : IDL.Text,
-    'public_key' : IDL.Vec(IDL.Nat8),
-    'referral_code' : IDL.Opt(IDL.Text),
-  });
-  const RegisterUserResponse = IDL.Variant({
-    'UsernameTaken' : IDL.Null,
-    'UsernameTooShort' : IDL.Nat16,
-    'UsernameInvalid' : IDL.Null,
-    'AlreadyRegistered' : IDL.Null,
-    'UserLimitReached' : IDL.Null,
-    'UsernameTooLong' : IDL.Nat16,
-    'Success' : UserId,
-    'PublicKeyInvalid' : IDL.Text,
-    'InternalError' : IDL.Text,
-    'ReferralCodeInvalid' : IDL.Null,
-    'CyclesBalanceTooLow' : IDL.Null,
-  });
   const RemovePlatformModeratorArgs = IDL.Record({ 'user_id' : UserId });
   const RemovePlatformModeratorResponse = IDL.Variant({
     'Success' : IDL.Null,
@@ -240,6 +223,10 @@ export const idlFactory = ({ IDL }) => {
   const UserResponse = IDL.Variant({
     'Success' : UserSummary,
     'UserNotFound' : IDL.Null,
+  });
+  const UserRegistrationCanisterResponse = IDL.Variant({
+    'Success' : CanisterId,
+    'NewRegistrationsClosed' : IDL.Null,
   });
   const UsersArgs = IDL.Record({
     'user_groups' : IDL.Vec(
@@ -325,11 +312,6 @@ export const idlFactory = ({ IDL }) => {
         [ReferralMetricsResponse],
         ['query'],
       ),
-    'register_user_v2' : IDL.Func(
-        [RegisterUserV2Args],
-        [RegisterUserResponse],
-        [],
-      ),
     'remove_platform_moderator' : IDL.Func(
         [RemovePlatformModeratorArgs],
         [RemovePlatformModeratorResponse],
@@ -359,6 +341,11 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'user' : IDL.Func([UserArgs], [UserResponse], ['query']),
+    'user_registration_canister' : IDL.Func(
+        [EmptyArgs],
+        [UserRegistrationCanisterResponse],
+        ['query'],
+      ),
     'users' : IDL.Func([UsersArgs], [UsersResponse], ['query']),
   });
 };

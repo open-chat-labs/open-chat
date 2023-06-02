@@ -31,7 +31,7 @@
     </div>
     {#if !candidateGroup.isPublic && !editing}
         <div on:click={() => selectStep(4)} class:selected={step === 4} class="step">
-            {$_("group.members")}
+            {$_("group.invite.invite")}
         </div>
     {/if}
 </div>

@@ -146,12 +146,12 @@ type RemoveHotGroupExclusionResponse =
         InternalError: text;
     };
 
-type SetGroupUpgradeConcurrencyArgs =
+type SetUpgradeConcurrencyArgs =
     record {
         value: nat32;
     };
 
-type SetGroupUpgradeConcurrencyResponse =
+type SetUpgradeConcurrencyResponse =
     variant {
         Success;
         NotAuthorized;
@@ -171,5 +171,6 @@ service: {
     remove_hot_group_exclusion: (RemoveHotGroupExclusionArgs) -> (RemoveHotGroupExclusionResponse);
 
     // Only callable by "platform operators"
-    set_group_upgrade_concurrency: (SetGroupUpgradeConcurrencyArgs) -> (SetGroupUpgradeConcurrencyResponse);
+    set_group_upgrade_concurrency: (SetUpgradeConcurrencyArgs) -> (SetUpgradeConcurrencyResponse);
+    set_community_upgrade_concurrency: (SetUpgradeConcurrencyArgs) -> (SetUpgradeConcurrencyResponse);
 }

@@ -72,7 +72,7 @@ export interface IUserClient {
         event: EventWrapper<Message>,
         threadRootMessageIndex?: number
     ): Promise<[SendMessageResponse, Message]>;
-    sendGroupICPTransfer(
+    sendMessageWithTransferToGroup(
         groupId: string,
         recipientId: string,
         sender: CreatedUser,

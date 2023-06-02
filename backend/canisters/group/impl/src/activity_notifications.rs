@@ -6,25 +6,24 @@ use types::{CanisterId, PublicGroupActivity, TimestampMillis};
 use utils::time::{DAY_IN_MS, HOUR_IN_MS};
 
 // If needed, notify the group index canister that there has been activity in this group
-pub(crate) fn handle_activity_notification(runtime_state: &mut RuntimeState) {
-    let now = runtime_state.env.now();
-    let mark_active_duration = runtime_state.data.mark_active_duration;
+pub(crate) fn handle_activity_notification(state: &mut RuntimeState) {
+    let now = state.env.now();
+    let mark_active_duration = state.data.mark_active_duration;
 
-    let requires_notification = runtime_state
+    let requires_notification = state
         .data
         .activity_notification_state
         .start_if_required(now, mark_active_duration);
 
     if requires_notification {
-        let public_group_activity =
-            if runtime_state.data.is_public { Some(extract_activity(now, &runtime_state.data)) } else { None };
+        let public_group_activity = if state.data.chat.is_public { Some(extract_activity(now, &state.data)) } else { None };
 
         let args = c2c_mark_active::Args {
             duration: mark_active_duration,
             public_group_activity,
         };
 
-        ic_cdk::spawn(call_group_index_canister(runtime_state.data.group_index_canister_id, args));
+        ic_cdk::spawn(call_group_index_canister(state.data.group_index_canister_id, args));
     }
 
     fn extract_activity(now: TimestampMillis, data: &Data) -> PublicGroupActivity {
@@ -33,7 +32,7 @@ pub(crate) fn handle_activity_notification(runtime_state: &mut RuntimeState) {
 
         let mut activity = PublicGroupActivity {
             timestamp: now,
-            participant_count: data.participants.len(),
+            participant_count: data.chat.members.len(),
             ..Default::default()
         };
 
@@ -48,6 +47,7 @@ pub(crate) fn handle_activity_notification(runtime_state: &mut RuntimeState) {
         };
 
         for event in data
+            .chat
             .events
             .main_events_reader(now)
             .iter(None, false)
@@ -109,12 +109,12 @@ pub(crate) fn handle_activity_notification(runtime_state: &mut RuntimeState) {
         mutate_state(|state| handle_response(response.is_ok(), state));
     }
 
-    fn handle_response(success: bool, runtime_state: &mut RuntimeState) {
+    fn handle_response(success: bool, state: &mut RuntimeState) {
         if success {
-            let now = runtime_state.env.now();
-            runtime_state.data.activity_notification_state.mark_succeeded(now);
+            let now = state.env.now();
+            state.data.activity_notification_state.mark_succeeded(now);
         } else {
-            runtime_state.data.activity_notification_state.mark_failed();
+            state.data.activity_notification_state.mark_failed();
         }
     }
 }

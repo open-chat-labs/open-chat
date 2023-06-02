@@ -14,6 +14,7 @@
     import Overlay from "../Overlay.svelte";
     import Legend from "../Legend.svelte";
     import GuidelinesContent from "../landingpages/GuidelinesContent.svelte";
+    import ButtonGroup from "../ButtonGroup.svelte";
 
     const dispatch = createEventDispatcher();
 
@@ -32,6 +33,17 @@
     let showGuidelines = false;
     let validUsername: string | undefined = undefined;
     let checkingUsername: boolean;
+    let badCode = false;
+
+    function clearCodeAndRegister() {
+        client.clearReferralCode();
+        submitUsername();
+    }
+
+    function clearCodeAndLogout() {
+        client.clearReferralCode();
+        client.logout();
+    }
 
     function submitUsername() {
         if (validUsername !== undefined) {
@@ -43,32 +55,44 @@
     function registerUser(username: string): void {
         state.set({ kind: "spinning" });
         client.registerUser(username).then((resp) => {
+            badCode = false;
             state.set({ kind: "awaiting_username" });
-            if (resp === "username_taken") {
+            if (resp.kind === "username_taken") {
                 error.set("register.usernameTaken");
-            } else if (resp === "username_too_short") {
+            } else if (resp.kind === "username_too_short") {
                 error.set("register.usernameTooShort");
-            } else if (resp === "username_too_long") {
+            } else if (resp.kind === "username_too_long") {
                 error.set("register.usernameTooLong");
-            } else if (resp === "username_invalid") {
+            } else if (resp.kind === "username_invalid") {
                 error.set("register.usernameInvalid");
-            } else if (resp === "user_limit_reached") {
+            } else if (resp.kind === "user_limit_reached") {
                 error.set("register.userLimitReached");
-            } else if (resp === "internal_error") {
+            } else if (resp.kind === "internal_error") {
                 error.set("unexpectedError");
-            } else if (resp === "success") {
+            } else if (resp.kind === "referral_code_invalid") {
+                error.set("register.referralCodeInvalid");
+                badCode = true;
+            } else if (resp.kind === "referral_code_already_claimed") {
+                error.set("register.referralCodeAlreadyClaimed");
+                badCode = true;
+            }  else if (resp.kind === "referral_code_expired") {
+                error.set("register.referralCodeExpired");
+                badCode = true;
+            } else if (resp.kind === "success") {
                 error.set(undefined);
-                loadUser();
-            }
-        });
-    }
-
-    function loadUser(): void {
-        state.set({ kind: "spinning" });
-        client.getCurrentUser().then((resp) => {
-            if (resp.kind === "created_user") {
-                createdUser = resp;
-                dispatch("createdUser", createdUser);
+                createdUser = {
+                    kind: "created_user",
+                    username,
+                    cryptoAccount: resp.icpAccount,
+                    userId: resp.userId,
+                    canisterUpgradeStatus: "not_required",
+                    referrals: [],
+                    isPlatformModerator: false,
+                    suspensionDetails: undefined,
+                    isSuspectedBot: false,
+                    diamondMembership: undefined,
+                }
+                dispatch("createdUser", createdUser)
             }
         });
     }
@@ -96,22 +120,29 @@
 
 <ModalContent compactFooter on:close>
     <div class="header" slot="header">
-        {#if closed}
-            <div class="subtitle">
-                <div class="logo" />
+        <div class="subtitle">
+            <div class="logo" />
+            {#if closed}
                 <h4>{$_("register.closedTitle")}</h4>
-            </div>
-        {:else}
-            <div class="subtitle">
-                <div class="logo" />
+            {:else if badCode}
+                <h4>{$_("register.invalidCode")}</h4>
+            {:else}
                 <h4>{$_("register.enterUsername")}</h4>
-            </div>
-        {/if}
+            {/if}
+        </div>
     </div>
     <div class="body" slot="body">
         {#if closed}
             <div class="closed">
                 <h4>{$_("register.closed")}</h4>
+            </div>
+        {:else if badCode}
+            <div class="bad-code">
+                <img class="shirt" src="../assets/miami/miami_shirt.png" alt="Miami shirt" />
+                <div class="message">
+                    <h4 class="invalid">{$_("register.referralCodeInvalid")}</h4>
+                    <p>{$_("register.doYouWantToProceed")}</p>
+                </div>
             </div>
         {:else}
             <Legend label={$_("username")} rules={$_("usernameRules")} />
@@ -136,6 +167,14 @@
     <div class="footer" slot="footer">
         {#if closed}
             <Button on:click={() => (window.location.href = "/home")}>{$_("home")}</Button>
+        {:else if badCode}
+            <ButtonGroup>
+                <Button secondary on:click={clearCodeAndLogout}>{$_("cancel")}</Button>
+                <Button
+                    loading={checkingUsername || busy}
+                    disabled={validUsername === undefined || busy}
+                    on:click={clearCodeAndRegister}>{$_("register.proceed")}</Button>
+            </ButtonGroup>
         {:else}
             <Button
                 loading={checkingUsername || busy}
@@ -211,12 +250,23 @@
         display: flex;
         align-items: center;
         gap: $sp4;
-        @include font(bold, normal, fs-160);
+        @include font(bold, normal, fs-120);
 
         .logo {
             background-image: url("../assets/spinner.svg");
             width: toRem(30);
             height: toRem(30);
+        }
+    }
+
+    .bad-code {
+        display: flex;
+        gap: $sp5;
+        .shirt {
+            height: 200px;
+        }
+        .invalid {
+            margin-bottom: $sp4;
         }
     }
 

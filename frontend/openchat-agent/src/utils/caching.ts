@@ -19,7 +19,7 @@ import type {
 import type { Principal } from "@dfinity/principal";
 import { toRecord } from "./list";
 
-const CACHE_VERSION = 65;
+const CACHE_VERSION = 67;
 
 export type Database = Promise<IDBPDatabase<ChatSchema>>;
 
@@ -29,7 +29,7 @@ type EnhancedWrapper<T extends ChatEvent> = EventWrapper<T> & {
 };
 
 export interface ChatSchema extends DBSchema {
-    chats_v2: {
+    chats: {
         key: string;
         value: ChatStateFull;
     };
@@ -99,8 +99,8 @@ export function openCache(principal: Principal): Database {
             if (db.objectStoreNames.contains("thread_events")) {
                 db.deleteObjectStore("thread_events");
             }
-            if (db.objectStoreNames.contains("chats_v2")) {
-                db.deleteObjectStore("chats_v2");
+            if (db.objectStoreNames.contains("chats")) {
+                db.deleteObjectStore("chats");
             }
             if (db.objectStoreNames.contains("group_details")) {
                 db.deleteObjectStore("group_details");
@@ -115,7 +115,7 @@ export function openCache(principal: Principal): Database {
             chatEvents.createIndex("messageIdx", "messageKey");
             const threadEvents = db.createObjectStore("thread_events");
             threadEvents.createIndex("messageIdx", "messageKey");
-            db.createObjectStore("chats_v2");
+            db.createObjectStore("chats");
             db.createObjectStore("group_details");
             db.createObjectStore("failed_chat_messages");
             db.createObjectStore("failed_thread_messages");
@@ -136,7 +136,7 @@ export async function getCachedChats(
     db: Database,
     principal: Principal
 ): Promise<ChatStateFull | undefined> {
-    return await (await db).get("chats_v2", principal.toString());
+    return await (await db).get("chats", principal.toString());
 }
 
 export async function setCachedChats(
@@ -154,8 +154,8 @@ export async function setCachedChats(
         groupChats,
     };
 
-    const tx = (await db).transaction(["chats_v2", "chat_events", "thread_events"], "readwrite");
-    const chatsStore = tx.objectStore("chats_v2");
+    const tx = (await db).transaction(["chats", "chat_events", "thread_events"], "readwrite");
+    const chatsStore = tx.objectStore("chats");
     const eventsStore = tx.objectStore("chat_events");
     const threadsStore = tx.objectStore("thread_events");
 

@@ -1,10 +1,9 @@
-use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use tracing::trace;
-use types::{ChatId, EventIndex, EventWrapper, GroupGate, Message, Milliseconds, PublicGroupSummary, TimestampMillis};
+use types::{AccessGate, ChatId, EventIndex, EventWrapper, Message, Milliseconds, PublicGroupSummary, TimestampMillis};
 
-#[derive(CandidType, Serialize, Deserialize, Default)]
+#[derive(Serialize, Deserialize, Default)]
 pub struct CachedHotGroups {
     groups: Vec<CachedPublicGroupSummary>,
     last_updated: TimestampMillis,
@@ -34,7 +33,7 @@ impl CachedHotGroups {
     }
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct CachedPublicGroupSummary {
     pub chat_id: ChatId,
     pub last_updated: TimestampMillis,
@@ -42,7 +41,7 @@ pub struct CachedPublicGroupSummary {
     pub latest_event_index: EventIndex,
     pub participant_count: u32,
     pub events_ttl: Option<Milliseconds>,
-    pub gate: Option<GroupGate>,
+    pub gate: Option<AccessGate>,
 }
 
 impl From<PublicGroupSummary> for CachedPublicGroupSummary {

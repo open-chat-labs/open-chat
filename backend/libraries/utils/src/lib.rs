@@ -1,3 +1,4 @@
+pub mod avatar_validation;
 pub mod canister;
 pub mod canister_event_sync_queue;
 pub mod case_insensitive_hash_map;
@@ -16,3 +17,4 @@ pub mod mentions;
 pub mod regular_jobs;
 pub mod time;
 pub mod timestamped_map;
+pub mod username_validation;

@@ -1,0 +1,14 @@
+[package]
+name = "community_canister_c2c_client"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+canister_client = { path = "../../../libraries/canister_client" }
+community_canister = { path = "../api" }
+ic-cdk = { workspace = true }
+msgpack = { path = "../../../libraries/msgpack" }
+tracing = { workspace = true }
+types = { path = "../../../libraries/types" }

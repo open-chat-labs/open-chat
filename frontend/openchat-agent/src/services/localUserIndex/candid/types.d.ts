@@ -51,6 +51,7 @@ export type ChatEvent = { 'Empty' : null } |
   { 'GroupDescriptionChanged' : GroupDescriptionChanged } |
   { 'GroupChatCreated' : GroupChatCreated } |
   { 'MessagePinned' : MessagePinned } |
+  { 'UsersInvited' : UsersInvited } |
   { 'UsersBlocked' : UsersBlocked } |
   { 'MessageUnpinned' : MessageUnpinned } |
   { 'MessageReactionAdded' : UpdatedMessage } |
@@ -118,6 +119,38 @@ export interface ChatMetrics {
   'prize_messages' : bigint,
 }
 export interface ChatUnfrozen { 'unfrozen_by' : UserId }
+export interface CommunityCanisterCommunitySummary {
+  'is_public' : boolean,
+  'permissions' : CommunityPermissions,
+  'community_id' : CommunityId,
+  'gate' : [] | [GroupGate],
+  'name' : string,
+  'role' : CommunityRole,
+  'description' : string,
+  'last_updated' : TimestampMillis,
+  'joined' : TimestampMillis,
+  'avatar_id' : [] | [bigint],
+  'frozen' : [] | [FrozenGroupInfo],
+  'latest_event_index' : EventIndex,
+  'member_count' : number,
+}
+export type CommunityId = Principal;
+export type CommunityPermissionRole = { 'Owners' : null } |
+  { 'Admins' : null } |
+  { 'Members' : null };
+export interface CommunityPermissions {
+  'create_public_channel' : CommunityPermissionRole,
+  'block_users' : CommunityPermissionRole,
+  'change_permissions' : CommunityPermissionRole,
+  'update_details' : CommunityPermissionRole,
+  'remove_members' : CommunityPermissionRole,
+  'invite_users' : CommunityPermissionRole,
+  'change_roles' : CommunityPermissionRole,
+  'create_private_channel' : CommunityPermissionRole,
+}
+export type CommunityRole = { 'Member' : null } |
+  { 'Admin' : null } |
+  { 'Owner' : null };
 export type CompletedCryptoTransaction = {
     'NNS' : NnsCompletedCryptoTransaction
   } |
@@ -204,6 +237,7 @@ export interface DirectReactionAddedNotification {
   'timestamp' : TimestampMillis,
   'reaction' : string,
 }
+export type EmptyArgs = {};
 export type EventIndex = number;
 export type EventsTimeToLiveUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
@@ -214,8 +248,6 @@ export interface EventsTimeToLiveUpdated {
 }
 export type FailedCryptoTransaction = { 'NNS' : NnsFailedCryptoTransaction } |
   { 'SNS' : SnsFailedCryptoTransaction };
-export type FallbackRole = { 'Participant' : null } |
-  { 'Admin' : null };
 export interface FieldTooLongResult {
   'length_provided' : number,
   'max_length' : number,
@@ -468,16 +500,43 @@ export type InvalidPollReason = { 'DuplicateOptions' : null } |
   { 'OptionTooLong' : number } |
   { 'EndDateInThePast' : null } |
   { 'PollsNotValidForDirectChats' : null };
+export interface InviteUsersToGroupArgs {
+  'user_ids' : Array<UserId>,
+  'group_id' : ChatId,
+  'correlation_id' : bigint,
+}
+export type InviteUsersToGroupResponse = { 'GroupNotFound' : null } |
+  { 'CallerNotInGroup' : null } |
+  { 'ChatFrozen' : null } |
+  { 'NotAuthorized' : null } |
+  { 'Success' : null } |
+  { 'InternalError' : string } |
+  { 'TooManyInvites' : number };
+export interface JoinCommunityArgs {
+  'community_id' : CommunityId,
+  'invite_code' : [] | [bigint],
+}
+export type JoinCommunityResponse = { 'NotInvited' : null } |
+  { 'Blocked' : null } |
+  { 'CommunityNotFound' : null } |
+  { 'GateCheckFailed' : GateCheckFailedReason } |
+  { 'MemberLimitReached' : number } |
+  { 'Success' : CommunityCanisterCommunitySummary } |
+  { 'CommunityNotPublic' : null } |
+  { 'UserSuspended' : null } |
+  { 'CommunityFrozen' : null } |
+  { 'AlreadyInCommunity' : CommunityCanisterCommunitySummary } |
+  { 'InternalError' : string };
 export interface JoinGroupArgs {
   'invite_code' : [] | [bigint],
   'correlation_id' : bigint,
   'chat_id' : ChatId,
 }
-export type JoinGroupResponse = { 'Blocked' : null } |
+export type JoinGroupResponse = { 'NotInvited' : null } |
+  { 'Blocked' : null } |
   { 'GroupNotFound' : null } |
   { 'GroupNotPublic' : null } |
   { 'AlreadyInGroup' : null } |
-  { 'NotInvited' : null } |
   { 'GateCheckFailed' : GateCheckFailedReason } |
   { 'ChatFrozen' : null } |
   { 'Success' : GroupCanisterGroupChatSummary } |
@@ -552,7 +611,6 @@ export interface MessageMatch {
   'content' : MessageContent,
   'sender' : UserId,
   'score' : number,
-  'chat_id' : ChatId,
   'message_index' : MessageIndex,
 }
 export interface MessagePinned {
@@ -660,7 +718,10 @@ export interface Participant {
 }
 export interface ParticipantAssumesSuperAdmin { 'user_id' : UserId }
 export interface ParticipantDismissedAsSuperAdmin { 'user_id' : UserId }
-export interface ParticipantJoined { 'user_id' : UserId }
+export interface ParticipantJoined {
+  'user_id' : UserId,
+  'invited_by' : [] | [UserId],
+}
 export interface ParticipantLeft { 'user_id' : UserId }
 export interface ParticipantRelinquishesSuperAdmin { 'user_id' : UserId }
 export interface ParticipantsAdded {
@@ -674,7 +735,8 @@ export interface ParticipantsRemoved {
 }
 export type PendingCryptoTransaction = { 'NNS' : NnsPendingCryptoTransaction } |
   { 'SNS' : SnsPendingCryptoTransaction };
-export type PermissionRole = { 'Owner' : null } |
+export type PermissionRole = { 'Moderators' : null } |
+  { 'Owner' : null } |
   { 'Admins' : null } |
   { 'Members' : null };
 export interface PermissionsChanged {
@@ -759,6 +821,7 @@ export interface PublicGroupSummary {
   'avatar_id' : [] | [bigint],
   'frozen' : [] | [FrozenGroupInfo],
   'latest_event_index' : EventIndex,
+  'history_visible_to_new_joiners' : boolean,
   'chat_id' : ChatId,
   'participant_count' : number,
   'latest_message' : [] | [MessageEventWrapper],
@@ -768,6 +831,23 @@ export interface PushEventResult {
   'index' : EventIndex,
   'expires_at' : [] | [TimestampMillis],
 }
+export interface RegisterUserArgs {
+  'username' : string,
+  'public_key' : Uint8Array | number[],
+  'referral_code' : [] | [string],
+}
+export type RegisterUserResponse = { 'UsernameTooShort' : number } |
+  { 'UsernameInvalid' : null } |
+  { 'AlreadyRegistered' : null } |
+  { 'UserLimitReached' : null } |
+  { 'UsernameTooLong' : number } |
+  { 'Success' : { 'icp_account' : AccountIdentifier, 'user_id' : UserId } } |
+  { 'PublicKeyInvalid' : string } |
+  { 'ReferralCodeAlreadyClaimed' : null } |
+  { 'ReferralCodeExpired' : null } |
+  { 'InternalError' : string } |
+  { 'ReferralCodeInvalid' : null } |
+  { 'CyclesBalanceTooLow' : null };
 export type RegistrationFee = { 'ICP' : ICPRegistrationFee } |
   { 'Cycles' : CyclesRegistrationFee };
 export interface ReplyContext {
@@ -790,6 +870,7 @@ export interface ReportedMessage {
 }
 export type Role = { 'Participant' : null } |
   { 'Admin' : null } |
+  { 'Moderator' : null } |
   { 'Owner' : null };
 export interface RoleChanged {
   'user_ids' : Array<UserId>,
@@ -917,6 +998,10 @@ export interface UsersBlocked {
   'user_ids' : Array<UserId>,
   'blocked_by' : UserId,
 }
+export interface UsersInvited {
+  'user_ids' : Array<UserId>,
+  'invited_by' : UserId,
+}
 export interface UsersUnblocked {
   'user_ids' : Array<UserId>,
   'unblocked_by' : UserId,
@@ -938,6 +1023,12 @@ export interface VideoContent {
 export type VoteOperation = { 'RegisterVote' : null } |
   { 'DeleteVote' : null };
 export interface _SERVICE {
+  'invite_users_to_group' : ActorMethod<
+    [InviteUsersToGroupArgs],
+    InviteUsersToGroupResponse
+  >,
+  'join_community' : ActorMethod<[JoinCommunityArgs], JoinCommunityResponse>,
   'join_group' : ActorMethod<[JoinGroupArgs], JoinGroupResponse>,
+  'register_user' : ActorMethod<[RegisterUserArgs], RegisterUserResponse>,
   'report_message' : ActorMethod<[ReportMessageArgs], ReportMessageResponse>,
 }

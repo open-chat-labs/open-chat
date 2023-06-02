@@ -5,8 +5,6 @@ import {
     UsersResponse,
     UserSummary,
     PartialUserSummary,
-    RegisterUserResponse,
-    Version,
     UnsupportedValueError,
     SuspendUserResponse,
     UnsuspendUserResponse,
@@ -28,13 +26,13 @@ import type {
     ApiPayForDiamondMembershipResponse,
     ApiReferralLeaderboardResponse,
     ApiReferralStats,
-    ApiRegisterUserResponse,
     ApiSearchResponse,
     ApiSetUsernameResponse,
     ApiSuspendUserResponse,
     ApiSuspensionAction,
     ApiSuspensionDetails,
     ApiUnsuspendUserResponse,
+    ApiUserRegistrationCanisterResponse,
     ApiUsersResponse,
     ApiUserSummary,
 } from "./candid/idl";
@@ -94,49 +92,11 @@ export function userSummary(candid: ApiUserSummary, timestamp: bigint): UserSumm
     };
 }
 
-export function registerUserResponse(candid: ApiRegisterUserResponse): RegisterUserResponse {
-    if ("UsernameTaken" in candid) {
-        return "username_taken";
-    }
-    if ("UsernameTooShort" in candid) {
-        return "username_too_short";
-    }
-    if ("UsernameInvalid" in candid) {
-        return "username_invalid";
-    }
-    if ("AlreadyRegistered" in candid) {
-        return "already_registered";
-    }
-    if ("UserLimitReached" in candid) {
-        return "user_limit_reached";
-    }
-    if ("UsernameTooLong" in candid) {
-        return "username_too_long";
-    }
+export function userRegistrationCanisterResponse(candid: ApiUserRegistrationCanisterResponse): string {
     if ("Success" in candid) {
-        return "success";
+        return candid.Success.toString();
     }
-    if ("NotSupported" in candid) {
-        return "not_supported";
-    }
-    if ("InternalError" in candid) {
-        return "internal_error";
-    }
-    if ("CyclesBalanceTooLow" in candid) {
-        return "cycles_balance_too_low";
-    }
-    if ("PublicKeyInvalid" in candid) {
-        return "public_key_invalid";
-    }
-    if ("ReferralCodeInvalid" in candid) {
-        return "referral_code_invalid";
-    }
-
-    if ("ReferralCodeInvalid" in candid) {
-        return "referral_code_invalid";
-    }
-
-    throw new UnsupportedValueError("Unexpected ApiRegisterUserResponse type received", candid);
+    throw new Error(`Unexpected ApiUserRegistrationCanisterResponse type received: ${candid}`)
 }
 
 export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUserResponse {
@@ -144,7 +104,6 @@ export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUser
         const r = candid.Success;
 
         console.log("User: ", r);
-        const version = r.wasm_version;
         return {
             kind: "created_user",
             userId: r.user_id.toString(),
@@ -156,7 +115,6 @@ export function currentUserResponse(candid: ApiCurrentUserResponse): CurrentUser
                     : "NotRequired" in r.canister_upgrade_status
                     ? "not_required"
                     : "in_progress",
-            wasmVersion: new Version(version.major, version.minor, version.patch),
             referrals: r.referrals.map((p) => p.toString()),
             isPlatformModerator: r.is_super_admin,
             suspensionDetails: optional(r.suspension_details, suspensionDetails),

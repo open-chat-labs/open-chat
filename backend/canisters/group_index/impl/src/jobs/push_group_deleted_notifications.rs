@@ -11,8 +11,8 @@ thread_local! {
     static TIMER_ID: Cell<Option<TimerId>> = Cell::default();
 }
 
-pub(crate) fn start_job_if_required(runtime_state: &RuntimeState) -> bool {
-    if TIMER_ID.with(|t| t.get().is_none()) && runtime_state.data.deleted_groups.notifications_pending() > 0 {
+pub(crate) fn start_job_if_required(state: &RuntimeState) -> bool {
+    if TIMER_ID.with(|t| t.get().is_none()) && state.data.deleted_groups.notifications_pending() > 0 {
         let timer_id = ic_cdk_timers::set_timer_interval(Duration::ZERO, run);
         TIMER_ID.with(|t| t.set(Some(timer_id)));
         trace!("'push_group_deleted_notifications' job started");
@@ -33,13 +33,13 @@ fn run() {
     }
 }
 
-fn next_batch(runtime_state: &mut RuntimeState) -> Option<Vec<(UserId, DeletedGroupInfo)>> {
-    if runtime_state.data.deleted_groups.notifications_pending() == 0 {
+fn next_batch(state: &mut RuntimeState) -> Option<Vec<(UserId, DeletedGroupInfo)>> {
+    if state.data.deleted_groups.notifications_pending() == 0 {
         None
     } else {
         Some(
             (0..MAX_BATCH_SIZE)
-                .map_while(|_| runtime_state.data.deleted_groups.dequeue_group_deleted_notification())
+                .map_while(|_| state.data.deleted_groups.dequeue_group_deleted_notification())
                 .collect(),
         )
     }

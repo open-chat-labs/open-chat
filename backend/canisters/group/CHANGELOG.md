@@ -5,6 +5,68 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+## [[2.0.713](https://github.com/open-ic/open-chat/releases/tag/v2.0.713-group)] - 2023-06-02
+
+### Changed
+
+- Move invited_users from Data to GroupChatCore ([#3714](https://github.com/open-ic/open-chat/pull/3714))
+- Move invite_users logic into GroupChatCore ([#3716](https://github.com/open-ic/open-chat/pull/3716))
+
+### Fixed
+
+- Fix bug where user could be not found for c2c calls ([#3712](https://github.com/open-ic/open-chat/pull/3712))
+
+## [[2.0.705](https://github.com/open-ic/open-chat/releases/tag/v2.0.705-group)] - 2023-06-01
+
+### Added
+
+- Introduce `FireAndForgetHandler` which retries failed c2c calls ([#3639](https://github.com/open-ic/open-chat/pull/3639))
+
+### Changed
+
+- Split common group logic into new `group_chat_core` library ([#3620](https://github.com/open-ic/open-chat/pull/3620)), ([#3622](https://github.com/open-ic/open-chat/pull/3622)), ([#3624](https://github.com/open-ic/open-chat/pull/3624)), ([#3626](https://github.com/open-ic/open-chat/pull/3626)), ([#3633](https://github.com/open-ic/open-chat/pull/3633)), ([#3634](https://github.com/open-ic/open-chat/pull/3634)), ([#3662](https://github.com/open-ic/open-chat/pull/3662)),  ([#3665](https://github.com/open-ic/open-chat/pull/3665)), ([#3667](https://github.com/open-ic/open-chat/pull/3667)), ([#3668](https://github.com/open-ic/open-chat/pull/3668))
+- Simplify `c2c_update_proposals` ([#3621](https://github.com/open-ic/open-chat/pull/3621))
+- Simplify `remove_participant` ([#3641](https://github.com/open-ic/open-chat/pull/3641))
+- Avoid multi subnet calls when (un)muting group notifications ([#3685](https://github.com/open-ic/open-chat/pull/3685))
+- Refactor search ([#3689](https://github.com/open-ic/open-chat/pull/3689))
+- Don't send notifications to suspended users ([#3704](https://github.com/open-ic/open-chat/pull/3704))
+
+### Removed
+
+- Remove last remnants of `send_message` and `edit_message` ([#3603](https://github.com/open-ic/open-chat/pull/3603))
+
+## [[2.0.690](https://github.com/open-ic/open-chat/releases/tag/v2.0.690-group)] - 2023-05-16
+
+### Changed
+
+- Return `history_visible_to_new_joiners` from `group::public_summary` ([#3572](https://github.com/open-ic/open-chat/pull/3572))
+- Added `moderator` role and removed `add_members` permission ([#3592](https://github.com/open-ic/open-chat/pull/3592))
+- Put back `add_members` permission with serde default ([#3599](https://github.com/open-ic/open-chat/pull/3599))
+
+### Removed
+
+- Remove `send_message` and `edit_message` (there are now `v2` versions) ([#3578](https://github.com/open-ic/open-chat/pull/3578))
+- Remove `add_participants` endpoint ([#3589](https://github.com/open-ic/open-chat/pull/3589))
+
+### Fixed
+
+- Fix issue with group accessibility ([#3600](https://github.com/open-ic/open-chat/pull/3600))
+
+## [[2.0.686](https://github.com/open-ic/open-chat/releases/tag/v2.0.686-group)] - 2023-05-11
+
+### Added
+
+- Re-introduce invite by code on backend ([#3552](https://github.com/open-ic/open-chat/pull/3552))
+
+### Changed
+
+- Short circuit without calling `ic0.time()` if there have been no updates ([#3539](https://github.com/open-ic/open-chat/pull/3539))
+- Short circuit query calls prior to calling `ic0.time()` where possible ([#3542](https://github.com/open-ic/open-chat/pull/3542))
+- Invited users can't see private group messages ([#3558](https://github.com/open-ic/open-chat/pull/3558))
+- Handle `send_message_v2` and `edit_message_v2` in `inspect_message` ([#3560](https://github.com/open-ic/open-chat/pull/3560))
+
+## [[2.0.675](https://github.com/open-ic/open-chat/releases/tag/v2.0.675-group)] - 2023-04-29
+
 ### Added
 
 - Implement `edit_message_v2` ([#3504](https://github.com/open-ic/open-chat/pull/3504))

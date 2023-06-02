@@ -66,6 +66,7 @@ export type ChatEvent = { 'Empty' : null } |
   { 'GroupDescriptionChanged' : GroupDescriptionChanged } |
   { 'GroupChatCreated' : GroupChatCreated } |
   { 'MessagePinned' : MessagePinned } |
+  { 'UsersInvited' : UsersInvited } |
   { 'UsersBlocked' : UsersBlocked } |
   { 'MessageUnpinned' : MessageUnpinned } |
   { 'MessageReactionAdded' : UpdatedMessage } |
@@ -139,6 +140,38 @@ export type CheckUsernameResponse = { 'UsernameTaken' : null } |
   { 'UsernameInvalid' : null } |
   { 'UsernameTooLong' : number } |
   { 'Success' : null };
+export interface CommunityCanisterCommunitySummary {
+  'is_public' : boolean,
+  'permissions' : CommunityPermissions,
+  'community_id' : CommunityId,
+  'gate' : [] | [GroupGate],
+  'name' : string,
+  'role' : CommunityRole,
+  'description' : string,
+  'last_updated' : TimestampMillis,
+  'joined' : TimestampMillis,
+  'avatar_id' : [] | [bigint],
+  'frozen' : [] | [FrozenGroupInfo],
+  'latest_event_index' : EventIndex,
+  'member_count' : number,
+}
+export type CommunityId = Principal;
+export type CommunityPermissionRole = { 'Owners' : null } |
+  { 'Admins' : null } |
+  { 'Members' : null };
+export interface CommunityPermissions {
+  'create_public_channel' : CommunityPermissionRole,
+  'block_users' : CommunityPermissionRole,
+  'change_permissions' : CommunityPermissionRole,
+  'update_details' : CommunityPermissionRole,
+  'remove_members' : CommunityPermissionRole,
+  'invite_users' : CommunityPermissionRole,
+  'change_roles' : CommunityPermissionRole,
+  'create_private_channel' : CommunityPermissionRole,
+}
+export type CommunityRole = { 'Member' : null } |
+  { 'Admin' : null } |
+  { 'Owner' : null };
 export type CompletedCryptoTransaction = {
     'NNS' : NnsCompletedCryptoTransaction
   } |
@@ -167,6 +200,7 @@ export type CurrentUserResponse = {
       'canister_upgrade_status' : CanisterUpgradeStatus,
       'is_super_admin' : boolean,
       'suspension_details' : [] | [SuspensionDetails],
+      'is_platform_moderator' : boolean,
       'diamond_membership_details' : [] | [DiamondMembershipDetails],
     }
   } |
@@ -252,8 +286,6 @@ export interface EventsTimeToLiveUpdated {
 }
 export type FailedCryptoTransaction = { 'NNS' : NnsFailedCryptoTransaction } |
   { 'SNS' : SnsFailedCryptoTransaction };
-export type FallbackRole = { 'Participant' : null } |
-  { 'Admin' : null };
 export interface FieldTooLongResult {
   'length_provided' : number,
   'max_length' : number,
@@ -575,7 +607,6 @@ export interface MessageMatch {
   'content' : MessageContent,
   'sender' : UserId,
   'score' : number,
-  'chat_id' : ChatId,
   'message_index' : MessageIndex,
 }
 export interface MessagePinned {
@@ -683,7 +714,10 @@ export interface Participant {
 }
 export interface ParticipantAssumesSuperAdmin { 'user_id' : UserId }
 export interface ParticipantDismissedAsSuperAdmin { 'user_id' : UserId }
-export interface ParticipantJoined { 'user_id' : UserId }
+export interface ParticipantJoined {
+  'user_id' : UserId,
+  'invited_by' : [] | [UserId],
+}
 export interface ParticipantLeft { 'user_id' : UserId }
 export interface ParticipantRelinquishesSuperAdmin { 'user_id' : UserId }
 export interface ParticipantsAdded {
@@ -719,7 +753,8 @@ export type PayForDiamondMembershipResponse = {
   { 'InsufficientFunds' : bigint };
 export type PendingCryptoTransaction = { 'NNS' : NnsPendingCryptoTransaction } |
   { 'SNS' : SnsPendingCryptoTransaction };
-export type PermissionRole = { 'Owner' : null } |
+export type PermissionRole = { 'Moderators' : null } |
+  { 'Owner' : null } |
   { 'Admins' : null } |
   { 'Members' : null };
 export interface PermissionsChanged {
@@ -812,6 +847,7 @@ export interface PublicGroupSummary {
   'avatar_id' : [] | [bigint],
   'frozen' : [] | [FrozenGroupInfo],
   'latest_event_index' : EventIndex,
+  'history_visible_to_new_joiners' : boolean,
   'chat_id' : ChatId,
   'participant_count' : number,
   'latest_message' : [] | [MessageEventWrapper],
@@ -857,22 +893,6 @@ export interface ReferralStats {
 }
 export type ReferralType = { 'User' : null } |
   { 'BtcMiami' : null };
-export type RegisterUserResponse = { 'UsernameTaken' : null } |
-  { 'UsernameTooShort' : number } |
-  { 'UsernameInvalid' : null } |
-  { 'AlreadyRegistered' : null } |
-  { 'UserLimitReached' : null } |
-  { 'UsernameTooLong' : number } |
-  { 'Success' : UserId } |
-  { 'PublicKeyInvalid' : string } |
-  { 'InternalError' : string } |
-  { 'ReferralCodeInvalid' : null } |
-  { 'CyclesBalanceTooLow' : null };
-export interface RegisterUserV2Args {
-  'username' : string,
-  'public_key' : Uint8Array | number[],
-  'referral_code' : [] | [string],
-}
 export type RegistrationFee = { 'ICP' : ICPRegistrationFee } |
   { 'Cycles' : CyclesRegistrationFee };
 export interface RemovePlatformModeratorArgs { 'user_id' : UserId }
@@ -892,6 +912,7 @@ export interface ReportedMessage {
 }
 export type Role = { 'Participant' : null } |
   { 'Admin' : null } |
+  { 'Moderator' : null } |
   { 'Owner' : null };
 export interface RoleChanged {
   'user_ids' : Array<UserId>,
@@ -1046,6 +1067,8 @@ export interface UserArgs {
   'user_id' : [] | [UserId],
 }
 export type UserId = CanisterId;
+export type UserRegistrationCanisterResponse = { 'Success' : CanisterId } |
+  { 'NewRegistrationsClosed' : null };
 export type UserResponse = { 'Success' : UserSummary } |
   { 'UserNotFound' : null };
 export interface UserSummary {
@@ -1065,6 +1088,10 @@ export interface UsersArgs {
 export interface UsersBlocked {
   'user_ids' : Array<UserId>,
   'blocked_by' : UserId,
+}
+export interface UsersInvited {
+  'user_ids' : Array<UserId>,
+  'invited_by' : UserId,
 }
 export type UsersResponse = {
     'Success' : {
@@ -1133,7 +1160,6 @@ export interface _SERVICE {
     ReferralLeaderboardResponse
   >,
   'referral_metrics' : ActorMethod<[EmptyArgs], ReferralMetricsResponse>,
-  'register_user_v2' : ActorMethod<[RegisterUserV2Args], RegisterUserResponse>,
   'remove_platform_moderator' : ActorMethod<
     [RemovePlatformModeratorArgs],
     RemovePlatformModeratorResponse
@@ -1152,5 +1178,9 @@ export interface _SERVICE {
   'suspend_user' : ActorMethod<[SuspendUserArgs], SuspendUserResponse>,
   'unsuspend_user' : ActorMethod<[UnsuspendUserArgs], UnsuspendUserResponse>,
   'user' : ActorMethod<[UserArgs], UserResponse>,
+  'user_registration_canister' : ActorMethod<
+    [EmptyArgs],
+    UserRegistrationCanisterResponse
+  >,
   'users' : ActorMethod<[UsersArgs], UsersResponse>,
 }

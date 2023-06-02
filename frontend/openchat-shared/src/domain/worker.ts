@@ -1,12 +1,10 @@
 import type { AgentConfig } from "./config";
 import type {
-    AddMembersResponse,
     AddRemoveReactionResponse,
     BlockUserResponse,
     CandidateGroupChat,
     ChangeRoleResponse,
     ChatEvent,
-    ChatStateFull,
     ClaimPrizeResponse,
     CreateGroupResponse,
     DeletedDirectMessageResponse,
@@ -15,7 +13,9 @@ import type {
     DeleteGroupResponse,
     DeleteMessageResponse,
     DirectChatEvent,
+    DisableInviteCodeResponse,
     EditMessageResponse,
+    EnableInviteCodeResponse,
     EventsResponse,
     EventWrapper,
     FreezeGroupResponse,
@@ -27,6 +27,7 @@ import type {
     GroupPermissions,
     GroupRules,
     IndexRange,
+    InviteCodeResponse,
     JoinGroupResponse,
     LeaveGroupResponse,
     ListNervousSystemFunctionsResponse,
@@ -34,7 +35,6 @@ import type {
     MarkReadRequest,
     MarkReadResponse,
     MemberRole,
-    MergedUpdatesResponse,
     Message,
     PendingCryptocurrencyWithdrawal,
     PinMessageResponse,
@@ -54,6 +54,8 @@ import type {
     UpdatesResult,
     WithdrawCryptocurrencyResponse,
     ReportMessageResponse,
+    InviteUsersResponse,
+    ResetInviteCodeResponse,
 } from "./chat";
 import type { BlobReference, StorageStatus } from "./data/data";
 import type { UpdateMarketMakerConfigArgs, UpdateMarketMakerConfigResponse } from "./marketMaker";
@@ -109,7 +111,7 @@ export type WorkerRequest =
     | RegisterProposalVote
     | ChangeRole
     | RemoveMember
-    | AddMembers
+    | InviteUsers
     | PushSub
     | RemoveSub
     | SubscriptionExists
@@ -121,6 +123,7 @@ export type WorkerRequest =
     | GetProposalVoteDetailsRequest
     | ListNervousSystemFunctions
     | BlockUserFromGroup
+    | UnblockUserFromGroup
     | AddGroupChatReaction
     | RemoveGroupChatReaction
     | RemoveDirectChatReaction
@@ -175,6 +178,10 @@ export type WorkerRequest =
     | GetBio
     | WithdrawCrypto
     | GroupMessagesByMessageIndex
+    | GetInviteCode
+    | EnableInviteCode
+    | ResetInviteCode
+    | DisableInviteCode
     | CreateGroupChat
     | SetCachedMessageFromNotification
     | FreezeGroup
@@ -185,7 +192,6 @@ export type WorkerRequest =
     | SuspendUser
     | UnsuspendUser
     | MarkSuspectedBot
-    | GetInitialState
     | GetUpdates
     | GetDeletedGroupMessage
     | GetDeletedDirectMessage
@@ -199,7 +205,8 @@ export type WorkerRequest =
     | SetMessageReminder
     | CancelMessageReminder
     | ReferralLeaderboard
-    | ReportMessage;
+    | ReportMessage
+    | DeclineInvitation;
 
 type ReferralLeaderboard = Request<{
     args?: ReferralLeaderboardRange;
@@ -219,6 +226,30 @@ type CreateGroupChat = Request<{
     candidate: CandidateGroupChat;
 }> & {
     kind: "createGroupChat";
+};
+
+type DisableInviteCode = Request<{
+    chatId: string;
+}> & {
+    kind: "disableInviteCode";
+};
+
+type EnableInviteCode = Request<{
+    chatId: string;
+}> & {
+    kind: "enableInviteCode";
+};
+
+type ResetInviteCode = Request<{
+    chatId: string;
+}> & {
+    kind: "resetInviteCode";
+};
+
+type GetInviteCode = Request<{
+    chatId: string;
+}> & {
+    kind: "getInviteCode";
 };
 
 type GroupMessagesByMessageIndex = Request<{
@@ -351,13 +382,11 @@ type RemoveMember = Request<{
     kind: "removeMember";
 };
 
-type AddMembers = Request<{
+type InviteUsers = Request<{
     chatId: string;
     userIds: string[];
-    myUsername: string;
-    allowBlocked: boolean;
 }> & {
-    kind: "addMembers";
+    kind: "inviteUsers";
 };
 
 type RemoveSub = Request<{
@@ -438,6 +467,13 @@ type BlockUserFromGroup = Request<{
     userId: string;
 }> & {
     kind: "blockUserFromGroupChat";
+};
+
+type UnblockUserFromGroup = Request<{
+    chatId: string;
+    userId: string;
+}> & {
+    kind: "unblockUserFromGroupChat";
 };
 
 type AddGroupChatReaction = Request<{
@@ -664,8 +700,7 @@ type GroupChatEventsByEventIndex = Request<{
     kind: "groupChatEventsByEventIndex";
 };
 
-type RehydrateMessage = Request<{
-    chatType: "direct_chat" | "group_chat";
+export type RehydrateMessage = Request<{
     chatId: string;
     message: EventWrapper<Message>;
     threadRootMessageIndex: number | undefined;
@@ -794,14 +829,8 @@ type CreateUserClient = Request<{ userId: string }> & {
     kind: "createUserClient";
 };
 
-type GetUpdates = Request<{
-    currentState: ChatStateFull;
-}> & {
+type GetUpdates = Request<Record<string, never>> & {
     kind: "getUpdates";
-};
-
-type GetInitialState = Request<Record<string, never>> & {
-    kind: "getInitialState";
 };
 
 type GetDeletedGroupMessage = Request<{
@@ -833,6 +862,10 @@ export type WorkerError = {
  */
 export type WorkerResponse =
     | Response<CreateGroupResponse>
+    | Response<DisableInviteCodeResponse>
+    | Response<EnableInviteCodeResponse>
+    | Response<ResetInviteCodeResponse>
+    | Response<InviteCodeResponse>
     | Response<EventsResponse<Message>>
     | Response<WithdrawCryptocurrencyResponse>
     | Response<string>
@@ -849,7 +882,7 @@ export type WorkerResponse =
     | Response<GroupChatSummary[]>
     | Response<RegisterProposalVoteResponse>
     | Response<ChangeRoleResponse>
-    | Response<AddMembersResponse>
+    | Response<InviteUsersResponse>
     | Response<RemoveMemberResponse>
     | Response<boolean>
     | Response<RegisterUserResponse>
@@ -896,7 +929,6 @@ export type WorkerResponse =
     | Response<UsersResponse>
     | Response<undefined>
     | Response<CurrentUserResponse>
-    | Response<MergedUpdatesResponse>
     | Response<EventsResponse<ChatEvent>>
     | Response<FreezeGroupResponse>
     | Response<UnfreezeGroupResponse>
@@ -1010,3 +1042,11 @@ type ReportMessage = Request<{
 }> & {
     kind: "reportMessage";
 };
+
+type DeclineInvitation = Request<{
+    chatId: string;
+}> & {
+    kind: "declineInvitation";
+};
+
+export type InboundWorkerRequest = Omit<WorkerRequest, "correlationId">;

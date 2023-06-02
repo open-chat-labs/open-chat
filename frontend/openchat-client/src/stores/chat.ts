@@ -128,7 +128,7 @@ export const selectedThreadKey = derived(
 );
 export const chatsLoading = writable(false);
 export const chatsInitialised = writable(false);
-export const chatUpdatedStore: Writable<{ updatedEvents: UpdatedEvent[] } | undefined> =
+export const chatUpdatedStore: Writable<{ chatId: string, updatedEvents: UpdatedEvent[] } | undefined> =
     writable(undefined);
 
 export const selectedServerChatStore = derived(
@@ -261,6 +261,7 @@ export const chatStateStore = createChatSpecificObjectStore<ChatSpecificState>((
     detailsLoaded: false,
     members: [],
     blockedUsers: new Set<string>(),
+    invitedUsers: new Set<string>(),
     pinnedMessages: new Set<number>(),
     userIds: new Set<string>(),
     userGroupKeys: new Set<string>(),
@@ -375,6 +376,12 @@ export const currentChatBlockedUsers = createDerivedPropStore<ChatSpecificState,
     () => new Set<string>(),
     setsAreEqual
 );
+export const currentChatInvitedUsers = createDerivedPropStore<ChatSpecificState, "invitedUsers">(
+    chatStateStore,
+    "invitedUsers",
+    () => new Set<string>(),
+    setsAreEqual
+);
 export const currentChatPinnedMessages = createDerivedPropStore<
     ChatSpecificState,
     "pinnedMessages"
@@ -477,7 +484,7 @@ export function createDirectChat(chatId: string): void {
                 readByMeUpTo: undefined,
                 readByThemUpTo: undefined,
                 latestMessage: undefined,
-                latestEventIndex: -1,
+                latestEventIndex: 0,
                 dateCreated: BigInt(Date.now()),
                 notificationsMuted: false,
                 metrics: emptyChatMetrics(),

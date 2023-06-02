@@ -4,7 +4,7 @@ use canister_api_macros::proposal;
 use canister_tracing_macros::trace;
 use proposals_bot_canister::add_governance_canister::{Response::*, *};
 use std::fmt::Write;
-use types::{ChatId, GovernanceProposalsSubtype, GroupPermissions, GroupRules, GroupSubtype, PermissionRole};
+use types::{AccessRules, ChatId, GovernanceProposalsSubtype, GroupPermissionRole, GroupPermissions, GroupSubtype};
 
 // dfx --identity openchat canister --network ic call proposals_bot add_governance_canister '(record { governance_canister_id=principal "rrkah-fqaaa-aaaaa-aaaaq-cai"; name="NNS" })'
 #[proposal(guard = "caller_is_governance_principal")]
@@ -34,12 +34,12 @@ struct PrepareResult {
     is_nns: bool,
 }
 
-fn prepare(args: &Args, runtime_state: &RuntimeState) -> Result<PrepareResult, Response> {
-    if runtime_state.data.nervous_systems.exists(&args.governance_canister_id) {
+fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response> {
+    if state.data.nervous_systems.exists(&args.governance_canister_id) {
         Err(AlreadyAdded)
     } else {
         Ok(PrepareResult {
-            is_nns: args.governance_canister_id == runtime_state.data.nns_governance_canister_id,
+            is_nns: args.governance_canister_id == state.data.nns_governance_canister_id,
         })
     }
 }
@@ -51,7 +51,7 @@ async fn create_group(args: &Args, is_nns: bool) -> Result<ChatId, Response> {
         is_public: true,
         name: format!("{} Proposals", &args.name),
         description: args.description.clone().unwrap_or_else(|| default_description(&args.name)),
-        rules: GroupRules::default(),
+        rules: AccessRules::default(),
         subtype: Some(GroupSubtype::GovernanceProposals(GovernanceProposalsSubtype {
             governance_canister_id: args.governance_canister_id,
             is_nns,
@@ -59,8 +59,8 @@ async fn create_group(args: &Args, is_nns: bool) -> Result<ChatId, Response> {
         avatar: args.avatar.clone(),
         history_visible_to_new_joiners: true,
         permissions: Some(GroupPermissions {
-            create_polls: PermissionRole::Admins,
-            send_messages: PermissionRole::Admins,
+            create_polls: GroupPermissionRole::Admins,
+            send_messages: GroupPermissionRole::Admins,
             ..Default::default()
         }),
         events_ttl: None,

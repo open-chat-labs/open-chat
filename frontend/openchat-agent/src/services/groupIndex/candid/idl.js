@@ -90,6 +90,16 @@ export const idlFactory = ({ IDL }) => {
     'frozen_by' : UserId,
     'reason' : IDL.Opt(IDL.Text),
   });
+  const MessageReport = IDL.Record({
+    'notes' : IDL.Opt(IDL.Text),
+    'timestamp' : TimestampMillis,
+    'reported_by' : UserId,
+    'reason_code' : IDL.Nat32,
+  });
+  const ReportedMessage = IDL.Record({
+    'count' : IDL.Nat32,
+    'reports' : IDL.Vec(MessageReport),
+  });
   const GiphyImageVariant = IDL.Record({
     'url' : IDL.Text,
     'height' : IDL.Nat32,
@@ -359,6 +369,7 @@ export const idlFactory = ({ IDL }) => {
     'reminder_id' : IDL.Nat64,
   });
   const MessageContent = IDL.Variant({
+    'ReportedMessage' : ReportedMessage,
     'Giphy' : GiphyContent,
     'File' : FileContent,
     'Poll' : PollContent,
@@ -417,6 +428,7 @@ export const idlFactory = ({ IDL }) => {
     'avatar_id' : IDL.Opt(IDL.Nat),
     'frozen' : IDL.Opt(FrozenGroupInfo),
     'latest_event_index' : EventIndex,
+    'history_visible_to_new_joiners' : IDL.Bool,
     'chat_id' : ChatId,
     'participant_count' : IDL.Nat32,
     'latest_message' : IDL.Opt(MessageEventWrapper),
@@ -449,8 +461,8 @@ export const idlFactory = ({ IDL }) => {
     'TermTooLong' : IDL.Nat8,
     'InvalidTerm' : IDL.Null,
   });
-  const SetGroupUpgradeConcurrencyArgs = IDL.Record({ 'value' : IDL.Nat32 });
-  const SetGroupUpgradeConcurrencyResponse = IDL.Variant({
+  const SetUpgradeConcurrencyArgs = IDL.Record({ 'value' : IDL.Nat32 });
+  const SetUpgradeConcurrencyResponse = IDL.Variant({
     'NotAuthorized' : IDL.Null,
     'Success' : IDL.Null,
     'InternalError' : IDL.Text,
@@ -497,9 +509,14 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'search' : IDL.Func([SearchArgs], [SearchResponse], ['query']),
+    'set_community_upgrade_concurrency' : IDL.Func(
+        [SetUpgradeConcurrencyArgs],
+        [SetUpgradeConcurrencyResponse],
+        [],
+      ),
     'set_group_upgrade_concurrency' : IDL.Func(
-        [SetGroupUpgradeConcurrencyArgs],
-        [SetGroupUpgradeConcurrencyResponse],
+        [SetUpgradeConcurrencyArgs],
+        [SetUpgradeConcurrencyResponse],
         [],
       ),
     'unfreeze_group' : IDL.Func(

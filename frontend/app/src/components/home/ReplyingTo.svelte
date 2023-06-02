@@ -14,7 +14,6 @@
     export let replyingTo: EnhancedReplyContext;
     export let user: CreatedUser;
     export let readonly: boolean;
-    export let groupChat: boolean;
     export let chatId: string;
 
     $: me = replyingTo.sender?.userId === user?.userId;
@@ -41,10 +40,8 @@
     </h4>
     <ChatMessageContent
         {readonly}
-        {groupChat}
         {chatId}
         fill={false}
-        first={true}
         {me}
         messageId={replyingTo.messageId}
         messageIndex={replyingTo.messageIndex}
@@ -87,10 +84,6 @@
         &.me {
             background-color: var(--currentChat-msg-me-bg);
             color: #ffffff;
-        }
-
-        &.crypto {
-            @include gold();
         }
 
         &:after {

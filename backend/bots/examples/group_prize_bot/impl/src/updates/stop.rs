@@ -10,7 +10,7 @@ fn stop(_args: Args) -> Response {
     mutate_state(stop_impl)
 }
 
-fn stop_impl(runtime_state: &mut RuntimeState) -> Response {
-    runtime_state.data.started = false;
+fn stop_impl(state: &mut RuntimeState) -> Response {
+    state.data.started = false;
     Response::Success
 }

@@ -16,6 +16,7 @@ async fn join_group(args: Args) -> Response {
     let c2c_args = group_canister::c2c_join_group::Args {
         user_id: user_details.user_id,
         principal: user_details.principal,
+        invite_code: args.invite_code,
         correlation_id: args.correlation_id,
         is_platform_moderator: user_details.is_platform_moderator,
     };
@@ -52,9 +53,9 @@ struct UserDetails {
     is_platform_moderator: bool,
 }
 
-fn user_details(runtime_state: &RuntimeState) -> UserDetails {
-    let caller = runtime_state.env.caller();
-    let user = runtime_state.data.global_users.get(&caller).unwrap();
+fn user_details(state: &RuntimeState) -> UserDetails {
+    let caller = state.env.caller();
+    let user = state.data.global_users.get(&caller).unwrap();
 
     UserDetails {
         user_id: user.user_id,
@@ -63,9 +64,9 @@ fn user_details(runtime_state: &RuntimeState) -> UserDetails {
     }
 }
 
-fn commit(user_id: UserId, chat_id: ChatId, latest_message_index: Option<MessageIndex>, runtime_state: &mut RuntimeState) {
-    if runtime_state.data.local_users.get(&user_id).is_some() {
-        runtime_state.push_event_to_user(
+fn commit(user_id: UserId, chat_id: ChatId, latest_message_index: Option<MessageIndex>, state: &mut RuntimeState) {
+    if state.data.local_users.get(&user_id).is_some() {
+        state.push_event_to_user(
             user_id,
             UserEvent::UserJoinedGroup(Box::new(user_canister::UserJoinedGroup {
                 chat_id,
@@ -73,14 +74,13 @@ fn commit(user_id: UserId, chat_id: ChatId, latest_message_index: Option<Message
             })),
         );
     } else {
-        runtime_state.push_event_to_user_index(
-            runtime_state.data.user_index_canister_id,
-            UserIndexEvent::UserJoinedGroup(user_index_canister::UserJoinedGroup {
+        state.push_event_to_user_index(UserIndexEvent::UserJoinedGroup(Box::new(
+            user_index_canister::UserJoinedGroup {
                 user_id,
                 chat_id,
                 as_super_admin: false,
                 latest_message_index,
-            }),
-        );
+            },
+        )));
     }
 }

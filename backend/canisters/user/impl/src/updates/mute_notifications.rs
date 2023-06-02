@@ -52,26 +52,26 @@ async fn toggle_mute_notifications_impl(chat_id: ChatId, mute: bool) -> Response
     Response::ChatNotFound
 }
 
-fn is_group(chat_id: &ChatId, runtime_state: &RuntimeState) -> Option<bool> {
-    if runtime_state.data.group_chats.has(chat_id) {
+fn is_group(chat_id: &ChatId, state: &RuntimeState) -> Option<bool> {
+    if state.data.group_chats.has(chat_id) {
         Some(true)
-    } else if runtime_state.data.direct_chats.has(chat_id) {
+    } else if state.data.direct_chats.has(chat_id) {
         Some(false)
     } else {
         None
     }
 }
 
-fn commit_group_chat(chat_id: &ChatId, runtime_state: &mut RuntimeState) -> bool {
-    if let Some(group_chat) = runtime_state.data.group_chats.get_mut(chat_id) {
-        group_chat.last_changed_for_my_data = runtime_state.env.now();
+fn commit_group_chat(chat_id: &ChatId, state: &mut RuntimeState) -> bool {
+    if let Some(group_chat) = state.data.group_chats.get_mut(chat_id) {
+        group_chat.last_changed_for_my_data = state.env.now();
         true
     } else {
         false
     }
 }
 
-fn commit_direct_chat(chat_id: &ChatId, mute: bool, runtime_state: &mut RuntimeState) {
-    let direct_chat = runtime_state.data.direct_chats.get_mut(chat_id).unwrap();
-    direct_chat.notifications_muted = Timestamped::new(mute, runtime_state.env.now());
+fn commit_direct_chat(chat_id: &ChatId, mute: bool, state: &mut RuntimeState) {
+    let direct_chat = state.data.direct_chats.get_mut(chat_id).unwrap();
+    direct_chat.notifications_muted = Timestamped::new(mute, state.env.now());
 }

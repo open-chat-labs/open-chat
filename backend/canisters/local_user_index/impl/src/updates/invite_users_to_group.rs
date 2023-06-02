@@ -5,7 +5,6 @@ use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
 use local_user_index_canister::invite_users_to_group::{Response::*, *};
 use types::{ChatId, MessageContent, TextContent, UserId};
-use user_canister::Event as UserEvent;
 
 #[update(guard = "caller_is_openchat_user")]
 #[trace]
@@ -22,7 +21,7 @@ async fn invite_users_to_group(args: Args) -> Response {
         Ok(response) => match response {
             group_canister::c2c_invite_users::Response::Success(s) => {
                 mutate_state(|state| {
-                    commit(invited_by, args.group_id, s.group_name, &s.invited_users, state);
+                    commit(invited_by, args.group_id, s.group_name, s.invited_users, state);
                 });
                 Success
             }
@@ -40,33 +39,26 @@ struct PrepareResult {
     users: Vec<(UserId, Principal)>,
 }
 
-fn prepare(args: &Args, runtime_state: &RuntimeState) -> PrepareResult {
-    let caller = runtime_state.env.caller();
-    let invited_by = runtime_state.data.global_users.get(&caller).unwrap().user_id;
+fn prepare(args: &Args, state: &RuntimeState) -> PrepareResult {
+    let caller = state.env.caller();
+    let invited_by = state.data.global_users.get(&caller).unwrap().user_id;
     let users = args
         .user_ids
         .iter()
-        .filter_map(|user_id| runtime_state.data.global_users.get(&(*user_id).into()))
+        .filter_map(|user_id| state.data.global_users.get(&(*user_id).into()))
         .map(|user| (user.user_id, user.principal))
         .collect();
     PrepareResult { invited_by, users }
 }
 
-fn commit(
-    invited_by: UserId,
-    group_id: ChatId,
-    group_name: String,
-    invited_users: &Vec<UserId>,
-    runtime_state: &mut RuntimeState,
-) {
-    let message = format!("You have been invited to the group [{group_name}](/{group_id}) by @UserId({invited_by}).");
+fn commit(invited_by: UserId, group_id: ChatId, group_name: String, invited_users: Vec<UserId>, state: &mut RuntimeState) {
+    let text = format!("You have been invited to the group [{group_name}](/{group_id}) by @UserId({invited_by}).");
+    let message = MessageContent::Text(TextContent { text });
 
     for user_id in invited_users {
-        runtime_state.push_event_to_user(
-            *user_id,
-            UserEvent::OpenChatBotMessage(Box::new(MessageContent::Text(TextContent { text: message.clone() }))),
-        );
+        state.push_oc_bot_message_to_user(user_id, message.clone());
     }
 
-    crate::jobs::sync_events_to_user_canisters::start_job_if_required(runtime_state);
+    crate::jobs::sync_events_to_user_canisters::start_job_if_required(state);
+    crate::jobs::sync_events_to_user_index_canister::start_job_if_required(state);
 }

@@ -225,6 +225,7 @@ export function mergeGroupChatDetails(
                 removed: updates.blockedUsersRemoved,
             })
         ),
+        invitedUsers: updates.invitedUsers ?? previous.invitedUsers,
         pinnedMessages: mergePinnedMessages(
             previous.pinnedMessages,
             updates.pinnedMessagesAdded,

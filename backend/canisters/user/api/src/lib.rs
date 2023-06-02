@@ -2,8 +2,8 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use types::{
-    ChatId, Cryptocurrency, DiamondMembershipPlanDuration, MessageContent, MessageIndex, PhoneNumber, SuspensionDuration,
-    TimestampMillis, UserId,
+    ChatId, CommunityId, Cryptocurrency, DiamondMembershipPlanDuration, EventIndex, MessageContent, MessageIndex, PhoneNumber,
+    SuspensionDuration, TimestampMillis, UserId,
 };
 
 mod lifecycle;
@@ -16,6 +16,13 @@ mod _updates;
 pub use _updates::*;
 pub use lifecycle::*;
 pub use queries::*;
+
+#[derive(CandidType, Serialize, Deserialize, Debug)]
+pub enum EventsResponse {
+    Success(types::EventsResponse),
+    ChatNotFound,
+    ReplicaNotUpToDate(EventIndex),
+}
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct GroupChatSummary {
@@ -44,6 +51,7 @@ pub enum Event {
     UserSuspended(Box<UserSuspended>),
     OpenChatBotMessage(Box<MessageContent>),
     UserJoinedGroup(Box<UserJoinedGroup>),
+    UserJoinedCommunity(Box<UserJoinedCommunity>),
     DiamondMembershipPaymentReceived(Box<DiamondMembershipPaymentReceived>),
 }
 
@@ -84,6 +92,11 @@ pub struct UserSuspended {
 pub struct UserJoinedGroup {
     pub chat_id: ChatId,
     pub latest_message_index: Option<MessageIndex>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
+pub struct UserJoinedCommunity {
+    pub community_id: CommunityId,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]

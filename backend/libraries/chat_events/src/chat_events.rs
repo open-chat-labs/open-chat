@@ -1,13 +1,6 @@
 use crate::expiring_events::ExpiringEvents;
 use crate::last_updated_timestamps::LastUpdatedTimestamps;
 use crate::*;
-use ::types::{
-    ChatFrozen, ChatId, ChatMetrics, ChatUnfrozen, Cryptocurrency, DeletedBy, DirectChatCreated, EventIndex, EventWrapper,
-    EventsTimeToLiveUpdated, GroupCanisterThreadDetails, GroupChatCreated, Mention, MentionInternal, Message,
-    MessageContentInitial, MessageContentInternal, MessageId, MessageIndex, MessageMatch, Milliseconds, PollVotes,
-    ProposalStatusUpdate, PushEventResult, PushIfNotContains, RangeSet, Reaction, RegisterVoteResult, ReplyContext,
-    ThreadSummary, TimestampMillis, Timestamped, UserId, VoteOperation,
-};
 use candid::Principal;
 use ic_ledger_types::Tokens;
 use itertools::Itertools;
@@ -17,13 +10,19 @@ use sha2::{Digest, Sha256};
 use std::cmp::{max, Reverse};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
+use types::{
+    ChatId, ChatMetrics, Cryptocurrency, DeletedBy, DirectChatCreated, EventIndex, EventWrapper, EventsTimeToLiveUpdated,
+    GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen, Mention, MentionInternal, Message,
+    MessageContentInitial, MessageContentInternal, MessageId, MessageIndex, MessageMatch, Milliseconds, PollVotes,
+    ProposalUpdate, PushEventResult, PushIfNotContains, RangeSet, Reaction, RegisterVoteResult, ReplyContext, ThreadSummary,
+    TimestampMillis, Timestamped, UserId, VoteOperation,
+};
 use types::{Hash, MessageReport, ReportedMessageInternal};
 
 pub const OPENCHAT_BOT_USER_ID: UserId = UserId::new(Principal::from_slice(&[228, 104, 142, 9, 133, 211, 135, 217, 129, 1]));
 
 #[derive(Serialize, Deserialize)]
 pub struct ChatEvents {
-    chat_id: ChatId,
     chat_type: ChatType,
     main: ChatEventsList,
     threads: HashMap<MessageIndex, ChatEventsList>,
@@ -36,9 +35,8 @@ pub struct ChatEvents {
 }
 
 impl ChatEvents {
-    pub fn new_direct_chat(them: UserId, events_ttl: Option<Milliseconds>, now: TimestampMillis) -> ChatEvents {
+    pub fn new_direct_chat(events_ttl: Option<Milliseconds>, now: TimestampMillis) -> ChatEvents {
         let mut events = ChatEvents {
-            chat_id: them.into(),
             chat_type: ChatType::Direct,
             main: ChatEventsList::default(),
             threads: HashMap::new(),
@@ -56,7 +54,6 @@ impl ChatEvents {
     }
 
     pub fn new_group_chat(
-        chat_id: ChatId,
         name: String,
         description: String,
         created_by: UserId,
@@ -64,7 +61,6 @@ impl ChatEvents {
         now: TimestampMillis,
     ) -> ChatEvents {
         let mut events = ChatEvents {
-            chat_id,
             chat_type: ChatType::Group,
             main: ChatEventsList::default(),
             threads: HashMap::new(),
@@ -78,7 +74,7 @@ impl ChatEvents {
 
         events.push_event(
             None,
-            ChatEventInternal::GroupChatCreated(Box::new(GroupChatCreated {
+            ChatEventInternal::GroupChatCreated(Box::new(GroupCreated {
                 name,
                 description,
                 created_by,
@@ -194,6 +190,14 @@ impl ChatEvents {
         }
 
         EditMessageResult::NotFound
+    }
+
+    pub fn has_updates_since(&self, since: TimestampMillis) -> bool {
+        self.main.latest_event_timestamp().map_or(false, |ts| ts > since)
+            || self
+                .iter_recently_updated_events()
+                .next()
+                .map_or(false, |(_, _, ts)| ts > since)
     }
 
     pub fn delete_messages(&mut self, args: DeleteUndeleteMessagesArgs) -> Vec<(MessageId, DeleteMessageResult)> {
@@ -441,13 +445,14 @@ impl ChatEvents {
         }
     }
 
-    pub fn update_proposals(&mut self, user_id: UserId, updates: Vec<(MessageId, ProposalStatusUpdate)>, now: TimestampMillis) {
-        for (message_id, update) in updates {
-            if let Some((message, event_index)) = self.message_internal_mut(EventIndex::default(), None, message_id.into(), now)
+    pub fn update_proposals(&mut self, user_id: UserId, updates: Vec<ProposalUpdate>, now: TimestampMillis) {
+        for update in updates {
+            if let Some((message, event_index)) =
+                self.message_internal_mut(EventIndex::default(), None, update.message_id.into(), now)
             {
                 if message.sender == user_id {
                     if let MessageContentInternal::GovernanceProposal(p) = &mut message.content {
-                        p.proposal.update_status(update, now);
+                        p.proposal.update_status(update.into(), now);
                         message.last_updated = Some(now);
                         self.last_updated_timestamps.mark_updated(None, event_index, now);
                     }
@@ -815,7 +820,6 @@ impl ChatEvents {
             .rev()
             .take(max_results as usize)
             .map(|(score, message)| MessageMatch {
-                chat_id: self.chat_id,
                 message_index: message.message_index,
                 sender: message.sender,
                 content: message.content.hydrate(Some(my_user_id)),
@@ -935,7 +939,7 @@ impl ChatEvents {
     pub fn freeze(&mut self, user_id: UserId, reason: Option<String>, now: TimestampMillis) -> PushEventResult {
         let push_event_result = self.push_event(
             None,
-            ChatEventInternal::ChatFrozen(Box::new(ChatFrozen {
+            ChatEventInternal::ChatFrozen(Box::new(GroupFrozen {
                 frozen_by: user_id,
                 reason,
             })),
@@ -950,7 +954,7 @@ impl ChatEvents {
         self.frozen = false;
         self.push_event(
             None,
-            ChatEventInternal::ChatUnfrozen(Box::new(ChatUnfrozen { unfrozen_by: user_id })),
+            ChatEventInternal::ChatUnfrozen(Box::new(GroupUnfrozen { unfrozen_by: user_id })),
             0,
             now,
         )
@@ -1007,6 +1011,10 @@ impl ChatEvents {
                 now,
             ))
         }
+    }
+
+    pub fn latest_event_index(&self) -> Option<EventIndex> {
+        self.main.latest_event_index()
     }
 
     fn events_list(

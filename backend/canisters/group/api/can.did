@@ -1,10 +1,10 @@
 import "../../../libraries/types/can.did";
 
-type SendMessageArgs =
+type SendMessageV2Args =
     record {
         message_id: MessageId;
         thread_root_message_index: opt MessageIndex;
-        content: MessageContent;
+        content: MessageContentInitial;
         sender_name: text;
         replies_to: opt GroupReplyContext;
         mentioned: vec User;
@@ -31,23 +31,11 @@ type SendMessageResponse =
         ChatFrozen;
     };
 
-type SendMessageV2Args =
+type EditMessageV2Args =
     record {
-        message_id: MessageId;
         thread_root_message_index: opt MessageIndex;
+        message_id: MessageId;
         content: MessageContentInitial;
-        sender_name: text;
-        replies_to: opt GroupReplyContext;
-        mentioned: vec User;
-        forwarding: bool;
-        correlation_id: nat64;
-    };
-
-type EditMessageArgs =
-    record {
-        thread_root_message_index: opt MessageIndex;
-        message_id: MessageId;
-        content: MessageContent;
         correlation_id: nat64;
     };
 
@@ -129,7 +117,6 @@ type AddReactionArgs =
 type AddReactionResponse =
     variant {
         Success;
-        SuccessV2: PushEventResult;
         NoChange;
         InvalidReaction;
         MessageNotFound;
@@ -150,7 +137,6 @@ type RemoveReactionArgs =
 type RemoveReactionResponse =
     variant {
         Success;
-        SuccessV2: PushEventResult;
         NoChange;
         MessageNotFound;
         CallerNotInGroup;
@@ -196,49 +182,6 @@ type UnblockUserResponse =
         ChatFrozen;
     };
 
-type AddParticipantsArgs =
-    record {
-        user_ids: vec UserId;
-        added_by_name: text;
-        allow_blocked_users: bool;
-        correlation_id: nat64;
-    };
-
-type AddParticipantsResponse =
-    variant {
-        Success;
-        PartialSuccess: AddParticipantsPartialSuccessResult;
-        Failed: AddParticipantsFailedResult;
-        CallerNotInGroup;
-        ParticipantLimitReached: nat32;
-        NotAuthorized;
-        UserSuspended;
-        ChatFrozen;
-    };
-
-type AddParticipantsPartialSuccessResult =
-    record {
-        users_added: vec UserId;
-        users_already_in_group: vec UserId;
-        users_blocked_from_group: vec UserId;
-        users_who_blocked_request: vec UserId;
-        users_not_authorized_to_add: vec UserId;
-        users_who_failed_gate_check: vec UserId;
-        users_suspended: vec UserId;
-        errors: vec UserId;
-    };
-
-type AddParticipantsFailedResult =
-    record {
-        users_already_in_group: vec UserId;
-        users_blocked_from_group: vec UserId;
-        users_who_blocked_request: vec UserId;
-        users_not_authorized_to_add: vec UserId;
-        users_who_failed_gate_check: vec UserId;
-        users_suspended: vec UserId;
-        errors: vec UserId;
-    };
-
 type RemoveParticipantArgs =
     record {
         user_id: UserId;
@@ -261,7 +204,7 @@ type RemoveParticipantResponse =
 type ChangeRoleArgs =
     record {
         user_id: UserId;
-        new_role: Role;
+        new_role: GroupRole;
         correlation_id: nat64;
     };
 
@@ -281,11 +224,11 @@ type UpdateGroupV2Args =
     record {
         name: opt text;
         description: opt text;
-        rules: opt GroupRules;
+        rules: opt AccessRules;
         avatar: AvatarUpdate;
         permissions: opt OptionalGroupPermissions;
         events_ttl: EventsTimeToLiveUpdate;
-        gate: GroupGateUpdate;
+        gate: AccessGateUpdate;
         correlation_id: nat64;
     };
 
@@ -305,23 +248,6 @@ type UpdateGroupV2Response =
         RulesTooShort: FieldTooShortResult;
         UserSuspended;
         ChatFrozen;
-    };
-
-type OptionalGroupPermissions =
-    record {
-        change_permissions: opt PermissionRole;
-        change_roles: opt PermissionRole;
-        add_members: opt PermissionRole;
-        remove_members: opt PermissionRole;
-        block_users: opt PermissionRole;
-        delete_messages: opt PermissionRole;
-        update_group: opt PermissionRole;
-        pin_messages: opt PermissionRole;
-        invite_users: opt PermissionRole;
-        create_polls: opt PermissionRole;
-        send_messages: opt PermissionRole;
-        react_to_messages: opt PermissionRole;
-        reply_in_thread: opt PermissionRole;
     };
 
 type PinMessageArgs =
@@ -350,7 +276,6 @@ type UnpinMessageArgs =
 
 type UnpinMessageResponse =
     variant {
-        Success: EventIndex;
         SuccessV2: PushEventResult;
         NoChange;
         NotAuthorized;
@@ -462,7 +387,7 @@ type SelectedInitialSuccess =
         blocked_users: vec UserId;
         invited_users: vec UserId;
         pinned_messages: vec MessageIndex;
-        rules: GroupRules;
+        rules: AccessRules;
     };
 
 type SelectedInitialResponse =
@@ -487,7 +412,7 @@ type SelectedUpdatesSuccess =
         invited_users: opt vec UserId;
         pinned_messages_added: vec MessageIndex;
         pinned_messages_removed: vec MessageIndex;
-        rules: opt GroupRules;
+        rules: opt AccessRules;
     };
 
 type SelectedUpdatesResponse =
@@ -521,13 +446,6 @@ type EventsWindowArgs =
         max_messages: nat32;
         max_events: nat32;
         latest_client_event_index: opt EventIndex;
-    };
-
-type EventsSuccessResult =
-    record {
-        events: vec ChatEventWrapper;
-        latest_event_index: nat32;
-        timestamp: TimestampMillis;
     };
 
 type EventsResponse =
@@ -628,6 +546,11 @@ type SearchMessagesSuccessResult =
         matches: vec MessageMatch;
     };
 
+type PublicSummaryArgs =
+    record {
+        invite_code: opt nat64;
+    };    
+
 type PublicSummaryResponse =
     variant {
         Success: PublicSummarySuccess;
@@ -637,6 +560,11 @@ type PublicSummaryResponse =
 type PublicSummarySuccess =
     record {
         summary: PublicGroupSummary;
+    };
+
+type RulesArgs =
+    record {
+        invite_code: opt nat64;
     };
 
 type RulesResponse =
@@ -656,6 +584,72 @@ type DeclineInvitationResponse =
         NotInvited;
     };
 
+type ToggleMuteNotificationsArgs =
+    record {
+        mute: bool;
+    };
+
+type ToggleMuteNotificationsResponse =
+    variant {
+        Success;
+        CallerNotInGroup;
+    };
+
+type InviteCodeArgs =
+    record {
+    };
+
+type InviteCodeResponse =
+    variant {
+        Success: record {
+            code: opt nat64;
+        };
+        NotAuthorized;
+    };
+
+type EnableInviteCodeArgs =
+    record {
+        correlation_id: nat64;
+    };
+
+type EnableInviteCodeResponse =
+    variant {
+        Success: record {
+            code: nat64;
+        };
+        NotAuthorized;
+        UserSuspended;
+        ChatFrozen;
+    };
+
+type DisableInviteCodeArgs =
+    record {
+        correlation_id: nat64;
+    };
+
+type DisableInviteCodeResponse =
+    variant {
+        Success;
+        NotAuthorized;
+        UserSuspended;
+        ChatFrozen;
+    };
+
+type ResetInviteCodeArgs =
+    record {
+        correlation_id: nat64;
+    };
+
+type ResetInviteCodeResponse =
+    variant {
+        Success: record {
+            code: nat64;
+        };
+        NotAuthorized;
+        UserSuspended;
+        ChatFrozen;
+    };
+
 service: {
     // Owner only
     make_private: (MakePrivateArgs) -> (MakePrivateResponse);
@@ -668,14 +662,14 @@ service: {
     pin_message_v2: (PinMessageArgs) -> (PinMessageV2Response);
     unpin_message: (UnpinMessageArgs) -> (UnpinMessageResponse);
     change_role: (ChangeRoleArgs) -> (ChangeRoleResponse);
-
-    // Can be called by admins or regular users of public groups
-    add_participants: (AddParticipantsArgs) -> (AddParticipantsResponse);
+    invite_code: (InviteCodeArgs) -> (InviteCodeResponse) query;
+    enable_invite_code: (EnableInviteCodeArgs) -> (EnableInviteCodeResponse);
+    disable_invite_code: (DisableInviteCodeArgs) -> (DisableInviteCodeResponse);
+    reset_invite_code: (ResetInviteCodeArgs) -> (ResetInviteCodeResponse);
 
     // Regular users
-    send_message: (SendMessageArgs) -> (SendMessageResponse);
     send_message_v2: (SendMessageV2Args) -> (SendMessageResponse);
-    edit_message: (EditMessageArgs) -> (EditMessageResponse);
+    edit_message_v2: (EditMessageV2Args) -> (EditMessageResponse);
     delete_messages: (DeleteMessagesArgs) -> (DeleteMessagesResponse);
     undelete_messages: (UndeleteMessagesArgs) -> (UndeleteMessagesResponse);
     register_poll_vote: (RegisterPollVoteArgs) -> (RegisterPollVoteResponse);
@@ -685,6 +679,7 @@ service: {
     register_proposal_vote_v2: (RegisterProposalVoteArgs) -> (RegisterProposalVoteV2Response);
     claim_prize: (ClaimPrizeArgs) -> (ClaimPrizeResponse);
     decline_invitation: (EmptyArgs) -> (DeclineInvitationResponse);
+    toggle_mute_notifications: (ToggleMuteNotificationsArgs) -> (ToggleMuteNotificationsResponse);
 
     summary: (SummaryArgs) -> (SummaryResponse) query;
     summary_updates: (SummaryUpdatesArgs) -> (SummaryUpdatesResponse) query;
@@ -701,6 +696,6 @@ service: {
 
     search_messages: (SearchMessagesArgs) -> (SearchMessagesResponse) query; // Use Tantivy
 
-    public_summary: (EmptyArgs) -> (PublicSummaryResponse) query;
-    rules: (EmptyArgs) -> (RulesResponse) query;
+    public_summary: (PublicSummaryArgs) -> (PublicSummaryResponse) query;
+    rules: (RulesArgs) -> (RulesResponse) query;
 }

@@ -7,12 +7,12 @@ edition = "2021"
 
 [dependencies]
 candid = { workspace = true }
-ic-base-types = { workspace = true }
 ic-icrc1 = { workspace = true }
 ic-icrc1-client = { workspace = true }
 ic-icrc1-client-cdk = { workspace = true }
 ic-ledger-types = { workspace = true }
 ic-ledger-canister-core = { workspace = true }
+icrc-ledger-types = { workspace = true }
 serde = { workspace = true }
 serde_cbor = { workspace = true }
 sha2 = { workspace = true }

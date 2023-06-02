@@ -1,17 +1,17 @@
 {
   "cycles_dispenser": "139505181600965cc23c62720d3c782c4c35e4df",
-  "group": "717d2cf5c17c3014c20ff1f2a6acdd40a83c67e7",
-  "group_index": "717d2cf5c17c3014c20ff1f2a6acdd40a83c67e7",
-  "local_group_index": "717d2cf5c17c3014c20ff1f2a6acdd40a83c67e7",
-  "local_user_index": "717d2cf5c17c3014c20ff1f2a6acdd40a83c67e7",
-  "market_maker": "c7a496d445937acf51080748a0cb272f0b5095ad",
+  "group": "79f611b5f1b8143cda864f02eaf6891b8b726c50",
+  "group_index": "a8d0a6722a2b72c07b746411137571ac8d04fd35",
+  "local_group_index": "a8d0a6722a2b72c07b746411137571ac8d04fd35",
+  "local_user_index": "9392084ddcd0a45e5111a62c16de36923ed431c5",
+  "market_maker": "e6b3741cf5d6f59ed9b56bcb7f05e1e4cd7912b8",
   "notifications": "f3b8a5c45c062a6f6b7c48002be3fd9801901462",
   "notifications_index": "41d3ead0f47446ce3624cbad10f7250d281503c8",
   "online_users": "41d3ead0f47446ce3624cbad10f7250d281503c8",
+  "proposals_bot": "d155915394655e4fb115231d2084b46826fc72c2",
   "proposal_validation": "523ab8e175033df06e3969a5b5d5c13dfe2da948",
-  "proposals_bot": "326ce505088ff299fa7bbc2148b92b5929044c35",
-  "storage_bucket": "523ab8e175033df06e3969a5b5d5c13dfe2da948",
-  "storage_index": "523ab8e175033df06e3969a5b5d5c13dfe2da948",
-  "user": "80d99c2584c1491aafe5bbf3cff6fcadc8409a89",
-  "user_index": "3de7d8e29a5a323e0d9dc3fe85f27bb53b186804"
+  "storage_bucket": "e6b3741cf5d6f59ed9b56bcb7f05e1e4cd7912b8",
+  "storage_index": "e6b3741cf5d6f59ed9b56bcb7f05e1e4cd7912b8",
+  "user": "db0d52f193d5b411349c10f977800b325eb12373",
+  "user_index": "fe0d59f730ad79f4888faa78226f09ca32383b98"
 }

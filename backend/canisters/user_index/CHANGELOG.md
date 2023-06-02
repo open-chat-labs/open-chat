@@ -5,6 +5,60 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add `expiry` to referral codes ([#3705](https://github.com/open-ic/open-chat/pull/3705))
+
+## [[2.0.709](https://github.com/open-ic/open-chat/releases/tag/v2.0.709-user_index)] - 2023-06-01
+
+### Added
+
+- Add `is_platform_moderator` to `current_user` response ([#3640](https://github.com/open-ic/open-chat/pull/3640))
+
+## [[2.0.699](https://github.com/open-ic/open-chat/releases/tag/v2.0.699-user_index)] - 2023-05-18
+
+### Added
+
+- Added `JoinUserToGroup` event ([#3613](https://github.com/open-ic/open-chat/pull/3613))
+
+### Changed
+
+- Only retry transfers where the c2c call failed ([#3614](https://github.com/open-ic/open-chat/pull/3614))
+
+### Removed
+
+- Remove `register_user_v2` since users now register via a LocalUserIndex ([#3583](https://github.com/open-ic/open-chat/pull/3583))
+
+## [[2.0.684](https://github.com/open-ic/open-chat/releases/tag/v2.0.684-user_index)] - 2023-05-10
+
+### Fixed
+
+- Fix incorrect calculation in backdated referral rewards ([#3562](https://github.com/open-ic/open-chat/pull/3562))
+
+## [[2.0.683](https://github.com/open-ic/open-chat/releases/tag/v2.0.683-user_index)] - 2023-05-10
+
+### Changed
+
+- Restart payments job if final payment in queue fails ([#3551](https://github.com/open-ic/open-chat/pull/3551))
+- Append a suffix when registering if username is taken ([#3553](https://github.com/open-ic/open-chat/pull/3553))
+- Register users via LocalUserIndex to improve speed ([#3557](https://github.com/open-ic/open-chat/pull/3557))
+
+### Fixed
+
+- Fix the 'Top Referrers' leaderboard which has double counted referrals ([#3549](https://github.com/open-ic/open-chat/pull/3549))
+
+## [[2.0.679](https://github.com/open-ic/open-chat/releases/tag/v2.0.679-user_index)] - 2023-05-08
+
+### Changed
+
+- Bitcoin Miami welcome messages ([#3532](https://github.com/open-ic/open-chat/pull/3532))
+
+### Fixed
+
+- Fix group invite messages ([#3543](https://github.com/open-ic/open-chat/pull/3543))
+
+## [[2.0.673](https://github.com/open-ic/open-chat/releases/tag/v2.0.673-user_index)] - 2023-04-28
+
 ### Changed
 
 - Pass OpenChat bot messages in user canister init args ([#3517](https://github.com/open-ic/open-chat/pull/3517))

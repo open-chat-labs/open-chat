@@ -11,12 +11,12 @@ generate_query_call!(summary);
 generate_query_call!(summary_updates);
 
 // Updates
-generate_update_call!(add_participants);
 generate_update_call!(add_reaction);
 generate_update_call!(block_user);
 generate_update_call!(change_role);
 generate_update_call!(delete_messages);
 generate_update_call!(edit_message_v2);
+generate_update_call!(enable_invite_code);
 generate_update_call!(pin_message_v2);
 generate_update_call!(register_poll_vote);
 generate_update_call!(remove_participant);
@@ -33,27 +33,8 @@ pub mod happy_path {
     use ic_test_state_machine_client::StateMachine;
     use types::{
         ChatId, EventIndex, EventsResponse, GroupCanisterGroupChatSummary, GroupCanisterGroupChatSummaryUpdates,
-        MessageContentInitial, MessageId, MessageIndex, PollVotes, TextContent, TimestampMillis, UserId, VoteOperation,
+        MessageContentInitial, MessageId, MessageIndex, PollVotes, TextContent, TimestampMillis, VoteOperation,
     };
-
-    pub fn add_participants(env: &mut StateMachine, sender: &User, group_chat_id: ChatId, user_ids: Vec<UserId>) {
-        let response = super::add_participants(
-            env,
-            sender.principal,
-            group_chat_id.into(),
-            &group_canister::add_participants::Args {
-                user_ids,
-                added_by_name: sender.username(),
-                allow_blocked_users: false,
-                correlation_id: 0,
-            },
-        );
-
-        match response {
-            group_canister::add_participants::Response::Success => {}
-            response => panic!("'add_participants' error: {response:?}"),
-        }
-    }
 
     pub fn send_text_message(
         env: &mut StateMachine,
@@ -80,7 +61,7 @@ pub mod happy_path {
         );
 
         match response {
-            group_canister::send_message::Response::Success(result) => result,
+            group_canister::send_message_v2::Response::Success(result) => result,
             response => panic!("'send_message' error: {response:?}"),
         }
     }

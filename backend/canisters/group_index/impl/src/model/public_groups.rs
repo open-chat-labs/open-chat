@@ -39,8 +39,12 @@ impl PublicGroups {
         self.groups.get_mut(chat_id)
     }
 
+    pub fn is_name_taken(&self, name: &str) -> bool {
+        self.name_to_id_map.contains_key(name) || self.groups_pending.contains_key(name)
+    }
+
     pub fn reserve_name(&mut self, name: &str, now: TimestampMillis) -> bool {
-        if self.name_to_id_map.contains_key(name) || self.groups_pending.contains_key(name) {
+        if self.is_name_taken(name) {
             false
         } else {
             self.groups_pending.insert(name, now);
@@ -73,7 +77,7 @@ impl PublicGroups {
         self.groups_pending.remove(name);
     }
 
-    pub fn search(&self, search_term: &str, max_results: u8) -> Vec<GroupMatch> {
+    pub fn search(&self, search_term: String, max_results: u8) -> Vec<GroupMatch> {
         let query = Query::parse(search_term);
 
         self.iter()
@@ -96,6 +100,7 @@ impl PublicGroups {
             name: group.name.clone(),
             description: group.description.clone(),
             subtype: group.subtype.clone(),
+            history_visible_to_new_joiners: true,
             avatar_id: group.avatar_id,
             latest_message: summary.latest_message,
             latest_event_index: summary.latest_event_index,
@@ -286,19 +291,18 @@ impl From<&PublicGroupInfo> for Document {
     fn from(group: &PublicGroupInfo) -> Self {
         let mut document = Document::default();
         document
-            .add_field(group.name.to_owned(), 5.0)
-            .add_field(group.description.to_owned(), 1.0);
+            .add_field(group.name.to_owned(), 5.0, true)
+            .add_field(group.description.to_owned(), 1.0, true);
         document
     }
 }
 
 impl From<PublicGroupInfo> for PrivateGroupInfo {
     fn from(public_group_info: PublicGroupInfo) -> Self {
-        PrivateGroupInfo::from(
-            public_group_info.id,
-            public_group_info.created,
-            public_group_info.marked_active_until,
-        )
+        let mut private_group_info = PrivateGroupInfo::new(public_group_info.id, public_group_info.created);
+        private_group_info.mark_active(public_group_info.marked_active_until);
+        private_group_info.set_frozen(public_group_info.frozen);
+        private_group_info
     }
 }
 

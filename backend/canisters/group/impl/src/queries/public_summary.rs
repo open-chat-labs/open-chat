@@ -6,37 +6,46 @@ use group_canister::public_summary::{Response::*, *};
 use types::{Avatar, PublicGroupSummary, Version};
 
 #[query_candid_and_msgpack]
-fn public_summary(_args: Args) -> Response {
-    read_state(public_summary_impl)
+fn public_summary(args: Args) -> Response {
+    read_state(|state| public_summary_impl(args, state))
 }
 
-fn public_summary_impl(runtime_state: &RuntimeState) -> Response {
-    let caller = runtime_state.env.caller();
+fn public_summary_impl(args: Args, state: &RuntimeState) -> Response {
+    let caller = state.env.caller();
 
-    if !runtime_state.data.is_accessible_by_non_member(caller) {
+    if !state.data.is_accessible(caller, args.invite_code) {
         return NotAuthorized;
     }
 
-    let now = runtime_state.env.now();
-    let data = &runtime_state.data;
-    let events_reader = runtime_state.data.events.main_events_reader(now);
+    let is_public = state.data.chat.is_public;
+    let now = state.env.now();
+    let data = &state.data;
+    let events_reader = data.chat.events.main_events_reader(now);
     let latest_event_timestamp = events_reader.latest_event_timestamp().unwrap_or_default();
     let latest_event_index = events_reader.latest_event_index().unwrap_or_default();
 
+    // You can't see private group messages unless you are a member of the group
+    let latest_message = if is_public || state.data.get_member(caller).is_some() {
+        events_reader.latest_message_event(None)
+    } else {
+        None
+    };
+
     let summary = PublicGroupSummary {
-        chat_id: runtime_state.env.canister_id().into(),
+        chat_id: state.env.canister_id().into(),
         last_updated: latest_event_timestamp,
-        name: data.name.clone(),
-        description: data.description.clone(),
-        subtype: data.subtype.value.clone(),
-        avatar_id: Avatar::id(&data.avatar),
-        latest_message: events_reader.latest_message_event(None),
+        name: data.chat.name.clone(),
+        description: data.chat.description.clone(),
+        subtype: data.chat.subtype.value.clone(),
+        history_visible_to_new_joiners: data.chat.history_visible_to_new_joiners,
+        avatar_id: Avatar::id(&data.chat.avatar),
+        latest_message,
         latest_event_index,
-        participant_count: data.participants.len(),
-        is_public: runtime_state.data.is_public,
-        frozen: runtime_state.data.frozen.value.clone(),
-        events_ttl: runtime_state.data.events.get_events_time_to_live().value,
-        gate: runtime_state.data.gate.value.clone(),
+        participant_count: data.chat.members.len(),
+        is_public,
+        frozen: data.frozen.value.clone(),
+        events_ttl: data.chat.events.get_events_time_to_live().value,
+        gate: data.chat.gate.value.clone(),
         wasm_version: Version::default(),
     };
     Success(SuccessResult { summary })

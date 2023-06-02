@@ -10,30 +10,22 @@ use utils::consts::OPENCHAT_BOT_USER_ID;
 
 #[update(guard = "caller_is_owner")]
 #[trace]
-fn edit_message(args: user_canister::edit_message::Args) -> Response {
-    run_regular_jobs();
-
-    mutate_state(|state| edit_message_impl(args.into(), state))
-}
-
-#[update(guard = "caller_is_owner")]
-#[trace]
 fn edit_message_v2(args: Args) -> Response {
     run_regular_jobs();
 
     mutate_state(|state| edit_message_impl(args, state))
 }
 
-fn edit_message_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    if runtime_state.data.suspended.value {
+fn edit_message_impl(args: Args, state: &mut RuntimeState) -> Response {
+    if state.data.suspended.value {
         return UserSuspended;
     }
 
-    if runtime_state.data.blocked_users.contains(&args.user_id) {
+    if state.data.blocked_users.contains(&args.user_id) {
         UserBlocked
-    } else if let Some(chat) = runtime_state.data.direct_chats.get_mut(&args.user_id.into()) {
-        let my_user_id = runtime_state.env.canister_id().into();
-        let now = runtime_state.env.now();
+    } else if let Some(chat) = state.data.direct_chats.get_mut(&args.user_id.into()) {
+        let my_user_id = state.env.canister_id().into();
+        let now = state.env.now();
 
         let edit_message_args = EditMessageArgs {
             sender: my_user_id,

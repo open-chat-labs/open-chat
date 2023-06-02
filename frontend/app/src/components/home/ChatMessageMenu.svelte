@@ -94,11 +94,7 @@
     }
 
     function remindMe() {
-        if (!$isDiamond) {
-            dispatch("upgrade");
-        } else {
-            dispatch("remindMe");
-        }
+        dispatch("remindMe");
     }
 
     function cancelReminder() {
@@ -212,7 +208,7 @@
 </script>
 
 <div class="menu" class:rtl={$rtlStore}>
-    <MenuIcon centered>
+    <MenuIcon centered position={"right"} align={"end"}>
         <div class="menu-icon" slot="icon">
             <HoverIcon compact={true}>
                 <ChevronDown size="1.6em" color={me ? "#fff" : "var(--icon-txt)"} />
@@ -351,8 +347,10 @@
                         <div slot="text">
                             {#if !reportMessageEnabled}
                                 {me ? $_("deleteMessage") : $_("deleteMessageAndReport")}
-                            {:else}
+                            {:else if groupChat || me}
                                 {$_("deleteMessage")}
+                            {:else}
+                                {$_("deleteMessageForMe")}
                             {/if}
                         </div>
                     </MenuItem>

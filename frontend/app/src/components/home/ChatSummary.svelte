@@ -29,7 +29,6 @@
     const client = getContext<OpenChat>("client");
     const userId = client.user.userId;
 
-    export let index: number;
     export let chatSummary: ChatSummary;
     export let selected: boolean;
     export let visible: boolean;
@@ -180,7 +179,7 @@
     }
 
     function selectChat() {
-        dispatch("chatSelected", chatSummary.chatId);
+        dispatch("chatSelected", chatSummary);
     }
 
     function unarchiveChat() {
@@ -201,8 +200,8 @@
     <div
         role="button"
         class="chat-summary"
-        class:first={index === 0}
         class:selected
+        tabindex="0"
         use:swipe
         on:swiping={swiping}
         on:leftswipe={leftSwipe}
@@ -256,6 +255,7 @@
                         values: { count: unreadMentions.toString() },
                     })}
                     class:rtl={$rtlStore}
+                    class:muted
                     class="notification mention">
                     @
                 </div>
@@ -267,13 +267,14 @@
                         values: { count: unreadMessages.toString() },
                     })}
                     class:rtl={$rtlStore}
+                    class:muted
                     class="notification">
                     {unreadMessages > 999 ? "999+" : unreadMessages}
                 </div>
             {/if}
             {#if !client.isReadOnly()}
                 <div class="menu">
-                    <MenuIcon>
+                    <MenuIcon position={"bottom"} align={"end"}>
                         <div class="menu-icon" slot="icon">
                             <ChevronDown viewBox="0 -3 24 24" size="1.6em" color="var(--icon-txt" />
                         </div>
@@ -527,6 +528,10 @@
             left: $sp3;
             margin-right: 2px;
             margin-left: 0;
+        }
+
+        &.muted {
+            background-color: var(--chatSummary-bg-selected);
         }
     }
 

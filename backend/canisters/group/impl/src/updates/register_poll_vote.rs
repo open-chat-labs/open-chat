@@ -13,22 +13,22 @@ async fn register_poll_vote(args: Args) -> Response {
     mutate_state(|state| register_poll_vote_impl(args, state))
 }
 
-fn register_poll_vote_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    if runtime_state.data.is_frozen() {
+fn register_poll_vote_impl(args: Args, state: &mut RuntimeState) -> Response {
+    if state.data.is_frozen() {
         return ChatFrozen;
     }
 
-    let caller = runtime_state.env.caller();
-    if let Some(participant) = runtime_state.data.participants.get_by_principal(&caller) {
-        if participant.suspended.value {
+    let caller = state.env.caller();
+    if let Some(member) = state.data.get_member(caller) {
+        if member.suspended.value {
             return UserSuspended;
         }
 
-        let now = runtime_state.env.now();
-        let user_id = participant.user_id;
-        let min_visible_event_index = participant.min_visible_event_index();
+        let now = state.env.now();
+        let user_id = member.user_id;
+        let min_visible_event_index = member.min_visible_event_index();
 
-        let result = runtime_state.data.events.register_poll_vote(RegisterPollVoteArgs {
+        let result = state.data.chat.events.register_poll_vote(RegisterPollVoteArgs {
             user_id,
             min_visible_event_index,
             thread_root_message_index: args.thread_root_message_index,
@@ -41,7 +41,7 @@ fn register_poll_vote_impl(args: Args, runtime_state: &mut RuntimeState) -> Resp
 
         match result {
             RegisterPollVoteResult::Success(votes) => {
-                handle_activity_notification(runtime_state);
+                handle_activity_notification(state);
                 Success(votes)
             }
             RegisterPollVoteResult::SuccessNoChange(votes) => Success(votes),

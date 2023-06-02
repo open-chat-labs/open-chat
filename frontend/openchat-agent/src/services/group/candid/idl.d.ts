@@ -45,6 +45,10 @@ import {
     UnpinMessageResponse,
     RegisterPollVoteResponse,
     SearchMessagesResponse,
+    InviteCodeResponse,
+    EnableInviteCodeResponse,
+    DisableInviteCodeResponse,
+    ResetInviteCodeResponse,
     ThreadPreviewsResponse,
     ThreadPreview,
     RegisterProposalVoteResponse,
@@ -60,6 +64,7 @@ import {
     DeletedMessageResponse,
     ClaimPrizeResponse,
     GroupGateUpdate,
+    DeclineInvitationResponse
 } from "./types";
 export {
     _SERVICE as GroupService,
@@ -84,7 +89,6 @@ export {
     EventsSuccessResult as ApiEventsSuccessResult,
     EventsArgs as ApiEventsArgs,
     ChatEvent as ApiGroupChatEvent,
-    AddParticipantsResponse as ApiAddParticipantsResponse,
     ChangeRoleResponse as ApiChangeRoleResponse,
     RemoveParticipantResponse as ApiRemoveParticipantResponse,
     UpdateGroupResponse as ApiUpdateGroupResponse,
@@ -107,6 +111,10 @@ export {
     UnpinMessageResponse as ApiUnpinMessageResponse,
     RegisterPollVoteResponse as ApiRegisterPollVoteResponse,
     SearchMessagesResponse as ApiSearchGroupChatResponse,
+    InviteCodeResponse as ApiInviteCodeResponse,
+    EnableInviteCodeResponse as ApiEnableInviteCodeResponse,
+    DisableInviteCodeResponse as ApiDisableInviteCodeResponse,
+    ResetInviteCodeResponse as ApiResetInviteCodeResponse,
     ThreadPreviewsResponse as ApiThreadPreviewsResponse,
     ThreadPreview as ApiThreadPreview,
     RegisterProposalVoteResponse as ApiRegisterProposalVoteResponse,
@@ -122,6 +130,7 @@ export {
     DeletedMessageResponse as ApiDeletedGroupMessageResponse,
     ClaimPrizeResponse as ApiClaimPrizeResponse,
     GroupGateUpdate as ApiGroupGateUpdate,
+    DeclineInvitationResponse as ApiDeclineInvitationResponse,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

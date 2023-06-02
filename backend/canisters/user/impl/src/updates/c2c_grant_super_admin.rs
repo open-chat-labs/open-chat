@@ -12,7 +12,7 @@ fn c2c_grant_super_admin(_args: Args) -> Response {
     mutate_state(c2c_grant_super_admin_impl)
 }
 
-fn c2c_grant_super_admin_impl(runtime_state: &mut RuntimeState) -> Response {
-    runtime_state.data.is_platform_moderator = true;
+fn c2c_grant_super_admin_impl(state: &mut RuntimeState) -> Response {
+    state.data.is_platform_moderator = true;
     Success
 }

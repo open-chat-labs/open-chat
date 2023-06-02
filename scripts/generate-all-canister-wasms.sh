@@ -4,6 +4,7 @@ SCRIPT=$(readlink -f "$0")
 SCRIPT_DIR=$(dirname "$SCRIPT")
 cd $SCRIPT_DIR/..
 
+./scripts/generate-wasm.sh community
 ./scripts/generate-wasm.sh cycles_dispenser
 ./scripts/generate-wasm.sh group
 ./scripts/generate-wasm.sh group_index

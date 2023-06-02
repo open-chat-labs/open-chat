@@ -127,12 +127,13 @@ export function setBioResponse(candid: ApiSetBioResponse): SetBioResponse {
 }
 
 export function searchDirectChatResponse(
-    candid: ApiSearchDirectChatResponse
+    candid: ApiSearchDirectChatResponse,
+    chatId: string,
 ): SearchDirectChatResponse {
     if ("Success" in candid) {
         return {
             kind: "success",
-            matches: candid.Success.matches.map(messageMatch),
+            matches: candid.Success.matches.map((m) => messageMatch(m, chatId)),
         };
     }
     if ("TermTooShort" in candid) {
@@ -161,10 +162,10 @@ export function searchDirectChatResponse(
     );
 }
 
-export function messageMatch(candid: ApiMessageMatch): MessageMatch {
+export function messageMatch(candid: ApiMessageMatch, chatId: string): MessageMatch {
     const sender = candid.sender.toString();
     return {
-        chatId: candid.chat_id.toString(),
+        chatId,
         messageIndex: candid.message_index,
         content: messageContent(candid.content, sender),
         sender,
@@ -342,7 +343,7 @@ export function editMessageResponse(candid: ApiEditMessageResponse): EditMessage
     throw new UnsupportedValueError("Unexpected ApiEditMessageResponse type received", candid);
 }
 
-export function transferWithinGroupResponse(
+export function sendMessageWithTransferToGroupResponse(
     candid: ApiSendMessageWithTransferToGroupResponse,
     sender: string,
     recipient: string
@@ -711,6 +712,7 @@ export function initialStateResponse(candid: ApiInitialStateResponse): InitialSt
 export function getUpdatesResponse(candid: ApiUpdatesResponse): UpdatesResponse {
     if ("Success" in candid) {
         return {
+            kind: "success",
             timestamp: candid.Success.timestamp,
             directChatsAdded: candid.Success.direct_chats_added.map(directChatSummary),
             directChatsUpdated: candid.Success.direct_chats_updated.map(directChatSummaryUpdates),
@@ -725,6 +727,12 @@ export function getUpdatesResponse(candid: ApiUpdatesResponse): UpdatesResponse 
             ),
             pinnedChats: optional(candid.Success.pinned_chats, (p) => p.map((c) => c.toString())),
         };
+    }
+
+    if ("SuccessNoUpdates" in candid) {
+        return {
+            kind: "success_no_updates"
+        }
     }
 
     throw new Error(`Unexpected ApiUpdatesResponse type received: ${candid}`);
@@ -790,6 +798,9 @@ function updatedEvent([eventIndex, timestamp]: [number, bigint]): UpdatedEvent {
 function memberRole(candid: ApiRole): MemberRole {
     if ("Admin" in candid) {
         return "admin";
+    }
+    if ("Moderator" in candid) {
+        return "moderator";
     }
     if ("Participant" in candid) {
         return "participant";

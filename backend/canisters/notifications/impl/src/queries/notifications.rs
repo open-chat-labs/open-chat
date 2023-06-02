@@ -12,17 +12,17 @@ fn notifications(args: Args) -> Response {
     read_state(|state| notifications_impl(args, state))
 }
 
-fn notifications_impl(args: Args, runtime_state: &RuntimeState) -> Response {
-    let notifications = runtime_state
+fn notifications_impl(args: Args, state: &RuntimeState) -> Response {
+    let notifications = state
         .data
         .notifications
         .get(args.from_notification_index, MAX_NOTIFICATIONS_PER_BATCH);
 
-    let result = add_subscriptions(notifications, runtime_state);
+    let result = add_subscriptions(notifications, state);
     Success(result)
 }
 
-fn add_subscriptions(notifications: Vec<IndexedEvent<NotificationEnvelope>>, runtime_state: &RuntimeState) -> SuccessResult {
+fn add_subscriptions(notifications: Vec<IndexedEvent<NotificationEnvelope>>, state: &RuntimeState) -> SuccessResult {
     let mut active_notifications: Vec<IndexedEvent<NotificationEnvelope>> = Vec::new();
     let mut subscriptions: HashMap<UserId, Vec<SubscriptionInfo>> = HashMap::new();
 
@@ -30,7 +30,7 @@ fn add_subscriptions(notifications: Vec<IndexedEvent<NotificationEnvelope>>, run
         let mut has_subscriptions = false;
 
         for u in n.value.recipients.iter() {
-            if let Some(s) = runtime_state.data.subscriptions.get(u) {
+            if let Some(s) = state.data.subscriptions.get(u) {
                 subscriptions.insert(*u, s);
                 has_subscriptions = true;
             }
@@ -44,6 +44,6 @@ fn add_subscriptions(notifications: Vec<IndexedEvent<NotificationEnvelope>>, run
     SuccessResult {
         notifications: active_notifications,
         subscriptions,
-        timestamp: runtime_state.env.now(),
+        timestamp: state.env.now(),
     }
 }

@@ -147,17 +147,6 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
                     .catch(sendError(correlationId));
                 break;
 
-            case "getInitialState":
-                agent
-                    .getInitialState()
-                    .then((response) =>
-                        sendResponse(correlationId, {
-                            response,
-                        })
-                    )
-                    .catch(sendError(correlationId));
-                break;
-
             case "getDeletedGroupMessage":
                 agent
                     .getDeletedGroupMessage(
@@ -186,7 +175,7 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
 
             case "getUpdates":
                 agent
-                    .getUpdates(payload.currentState)
+                    .getUpdates()
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,
@@ -366,11 +355,11 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
             case "rehydrateMessage":
                 agent
                     .rehydrateMessage(
-                        payload.chatType,
                         payload.chatId,
                         payload.message,
                         payload.threadRootMessageIndex,
-                        payload.latestClientEventIndex
+                        payload.latestClientEventIndex,
+                        undefined,
                     )
                     .then((response) =>
                         sendResponse(correlationId, {
@@ -724,6 +713,17 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
                     .catch(sendError(correlationId));
                 break;
 
+            case "unblockUserFromGroupChat":
+                agent
+                    .unblockUserFromGroupChat(payload.chatId, payload.userId)
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
             case "getProposalVoteDetails":
                 agent
                     .getProposalVoteDetails(
@@ -850,14 +850,9 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
                     .catch(sendError(correlationId));
                 break;
 
-            case "addMembers":
+            case "inviteUsers":
                 agent
-                    .addMembers(
-                        payload.chatId,
-                        payload.userIds,
-                        payload.myUsername,
-                        payload.allowBlocked
-                    )
+                    .inviteUsers(payload.chatId, payload.userIds)
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,
@@ -941,6 +936,13 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
                         })
                     )
                     .catch(sendError(correlationId));
+                break;
+
+            case "groupInvite":
+                agent.groupInvite = payload.value;
+                sendResponse(correlationId, {
+                    response: undefined,
+                });
                 break;
 
             case "searchGroupChat":
@@ -1065,6 +1067,50 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
                         payload.messageIndexes,
                         payload.latestClientEventIndex
                     )
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
+           case "getInviteCode":
+                agent
+                    .getInviteCode(payload.chatId)
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
+            case "enableInviteCode":
+                agent
+                    .enableInviteCode(payload.chatId)
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
+            case "disableInviteCode":
+                agent
+                    .disableInviteCode(payload.chatId)
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
+            case "resetInviteCode":
+                agent
+                    .resetInviteCode(payload.chatId)
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,
@@ -1321,6 +1367,17 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
                         payload.notes,
                         payload.threadRootMessageIndex
                     )
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
+            case "declineInvitation":
+                agent
+                    .declineInvitation(payload.chatId)
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,

@@ -201,6 +201,7 @@ impl Job for JoinUserToGroup {
                 .map(|u| group_canister::c2c_join_group::Args {
                     user_id: self.user_id,
                     principal: u.principal,
+                    invite_code: None,
                     correlation_id: 0,
                     is_platform_moderator: state.data.platform_moderators.contains(&self.user_id),
                 })
@@ -218,7 +219,7 @@ impl Job for JoinUserToGroup {
                         LocalUserIndexEvent::UserJoinedGroup(UserJoinedGroup {
                             user_id: args.user_id,
                             chat_id: group_id,
-                            as_super_admin: args.is_platform_moderator,
+                            as_super_admin: false,
                             latest_message_index: s.latest_message.map(|m| m.event.message_index),
                         }),
                     )

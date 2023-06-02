@@ -1,6 +1,5 @@
 import type {
     User,
-    AddMembersResponse,
     EventsResponse,
     GroupChatEvent,
     SendMessageResponse,
@@ -24,7 +23,10 @@ import type {
     RegisterPollVoteResponse,
     GroupPermissions,
     MakeGroupPrivateResponse,
-    ThreadPreviewsResponse,
+    InviteCodeResponse,
+    EnableInviteCodeResponse,
+    DisableInviteCodeResponse,
+    ResetInviteCodeResponse,
     RegisterProposalVoteResponse,
     GroupRules,
     SearchGroupChatResponse,
@@ -35,6 +37,8 @@ import type {
     OptionUpdate,
     ClaimPrizeResponse,
     GroupGate,
+    ThreadPreviewsResponse,
+    DeclineInvitationResponse,
 } from "openchat-shared";
 
 export interface IGroupClient {
@@ -59,11 +63,6 @@ export interface IGroupClient {
         threadRootMessageIndex: number | undefined,
         latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<GroupChatEvent>>;
-    addMembers(
-        userIds: string[],
-        myUsername: string,
-        allowBlocked: boolean
-    ): Promise<AddMembersResponse>;
     sendMessage(
         senderName: string,
         mentioned: User[],
@@ -130,6 +129,10 @@ export interface IGroupClient {
         userIds: string[],
         maxResults: number
     ): Promise<SearchGroupChatResponse>;
+    getInviteCode(): Promise<InviteCodeResponse>;
+    enableInviteCode(): Promise<EnableInviteCodeResponse>;
+    disableInviteCode(): Promise<DisableInviteCodeResponse>;
+    resetInviteCode(): Promise<ResetInviteCodeResponse>;
     threadPreviews(
         threadRootMessageIndexes: number[],
         latestClientThreadUpdate: bigint | undefined
@@ -140,4 +143,6 @@ export interface IGroupClient {
         adopt: boolean
     ): Promise<RegisterProposalVoteResponse>;
     localUserIndex(): Promise<string>;
+    declineInvitation(): Promise<DeclineInvitationResponse>;
+    toggleMuteNotifications(mute: boolean): Promise<undefined>;
 }

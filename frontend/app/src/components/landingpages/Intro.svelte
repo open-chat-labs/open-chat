@@ -7,6 +7,7 @@
     import InternetIdentityLogo from "./InternetIdentityLogo.svelte";
     import { AuthProvider, OpenChat } from "openchat-client";
     import { getContext, onMount } from "svelte";
+    import FancyLoader from "../icons/FancyLoader.svelte";
 
     const client = getContext<OpenChat>("client");
 
@@ -28,7 +29,9 @@
 <div class="wrapper" style={introStyle}>
     <div class="intro">
         <div class="name">
-            <div class="logo-img" />
+            <div class="logo-img">
+                <FancyLoader loop={false} />
+            </div>
             <h1>OpenChat</h1>
         </div>
         <h2 class="title">A decentralized chat app governed by the people for the people</h2>
@@ -90,8 +93,6 @@
         align-items: center;
     }
     .logo-img {
-        background-image: url("../assets/spinner.svg");
-        background-repeat: no-repeat;
         height: 56px;
         width: 56px;
 

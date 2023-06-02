@@ -1,5 +1,7 @@
 // https://stackoverflow.com/questions/10687099/how-to-test-if-a-url-string-is-absolute-or-relative
 
+import type { RouteParams, RouteType } from "routes";
+
 const regex = new RegExp("^(?:[a-z]+:)?//", "i");
 
 export function isAbsoluteUrl(url: string): boolean {
@@ -32,28 +34,30 @@ export function removeQueryStringParam(name: string): string {
     return [...qs.keys()].length > 0 ? `${path}?${qs}` : path;
 }
 
-const nomenuRoutes = ["miami"];
-const scrollingRoutes = [
-    "features",
-    "roadmap",
-    "whitepaper",
-    "architecture",
-    "blog",
-    "miami",
-    "guidelines",
+const nomenuRoutes: RouteType[] = ["miami_route"];
+const scrollingRoutes: RouteType[] = [
+    "features_route",
+    "roadmap_route",
+    "whitepaper_route",
+    "architecture_route",
+    "blog_route",
+    "miami_route",
+    "guidelines_route",
+    "faq_route",
+    "diamond_route",
 ];
-const landingPageRoutes = ["home", ...scrollingRoutes];
+const landingPageRoutes: RouteType[] = ["home_landing_route", ...scrollingRoutes];
 
-export function isLandingPageRoute(path: string): boolean {
-    return landingPageRoutes.find((r) => path.slice(1).toLowerCase().startsWith(r)) !== undefined;
+export function isLandingPageRoute(route: RouteParams): boolean {
+    return landingPageRoutes.includes(route.kind);
 }
 
-export function showMenuForLandingRoute(path: string): boolean {
-    return nomenuRoutes.find((r) => path.slice(1).toLowerCase().startsWith(r)) === undefined;
+export function showMenuForLandingRoute(route: RouteParams): boolean {
+    return !nomenuRoutes.includes(route.kind);
 }
 
-export function isScrollingRoute(path: string): boolean {
-    return scrollingRoutes.includes(path.slice(1).toLowerCase());
+export function isScrollingRoute(route: RouteParams): boolean {
+    return scrollingRoutes.includes(route.kind);
 }
 
 // it is possible that old style landing page links will still get through the cloudfront redirect, so we will need to

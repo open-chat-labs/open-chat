@@ -1,6 +1,7 @@
 use crate::{CanisterId, TimestampNanos, UserId};
 use candid::{CandidType, Principal};
-use ic_ledger_types::Tokens;
+use ic_ledger_types::{Subaccount, Tokens};
+use icrc_ledger_types::icrc1::account::DEFAULT_SUBACCOUNT;
 use serde::{Deserialize, Serialize};
 
 #[derive(CandidType, Serialize, Deserialize, Copy, Clone, Debug, Eq, PartialEq, Hash)]
@@ -12,16 +13,16 @@ pub enum Cryptocurrency {
 }
 
 impl Cryptocurrency {
-    pub fn token_symbol(&self) -> String {
+    pub const fn token_symbol(&self) -> &'static str {
         match self {
-            Cryptocurrency::InternetComputer => "ICP".to_string(),
-            Cryptocurrency::SNS1 => "SNS1".to_string(),
-            Cryptocurrency::CKBTC => "ckBTC".to_string(),
-            Cryptocurrency::CHAT => "CHAT".to_string(),
+            Cryptocurrency::InternetComputer => "ICP",
+            Cryptocurrency::SNS1 => "SNS1",
+            Cryptocurrency::CKBTC => "ckBTC",
+            Cryptocurrency::CHAT => "CHAT",
         }
     }
 
-    pub fn decimals(&self) -> usize {
+    pub const fn decimals(&self) -> usize {
         match self {
             Cryptocurrency::InternetComputer => 8,
             Cryptocurrency::SNS1 => 8,
@@ -30,7 +31,7 @@ impl Cryptocurrency {
         }
     }
 
-    pub fn fee(&self) -> u128 {
+    pub const fn fee(&self) -> u128 {
         match self {
             Cryptocurrency::InternetComputer => 10_000,
             Cryptocurrency::SNS1 => 1_000,
@@ -124,12 +125,11 @@ impl PendingCryptoTransaction {
             PendingCryptoTransaction::NNS(t) => match t.to {
                 nns::UserOrAccount::User(u) => u == user_id,
                 nns::UserOrAccount::Account(a) => {
-                    a == ic_ledger_types::AccountIdentifier::new(&user_id.into(), &ic_ledger_types::DEFAULT_SUBACCOUNT)
+                    a == ic_ledger_types::AccountIdentifier::new(&user_id.into(), &Subaccount(*DEFAULT_SUBACCOUNT))
                 }
             },
             PendingCryptoTransaction::SNS(t) => {
-                t.to.owner == Principal::from(user_id).into()
-                    && t.to.subaccount.map_or(true, |s| s == *ic_icrc1::DEFAULT_SUBACCOUNT)
+                t.to.owner == user_id.into() && t.to.subaccount.map_or(true, |s| s == *DEFAULT_SUBACCOUNT)
             }
         }
     }
@@ -235,8 +235,8 @@ pub mod nns {
 
 pub mod sns {
     use super::*;
-    use ic_icrc1::Account;
     use ic_ledger_types::{BlockIndex, Memo, Tokens};
+    use icrc_ledger_types::icrc1::account::Account;
 
     #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
     pub enum CryptoAccount {

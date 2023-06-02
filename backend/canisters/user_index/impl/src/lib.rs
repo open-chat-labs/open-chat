@@ -10,14 +10,12 @@ use canister_timer_jobs::TimerJobs;
 use local_user_index_canister::Event as LocalUserIndexEvent;
 use model::local_user_index_map::LocalUserIndexMap;
 use model::pending_payments_queue::{PendingPayment, PendingPaymentsQueue};
-use model::referral_codes::{ReferralCodes, ReferralTypeMetrics};
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use types::{
     CanisterId, CanisterWasm, ChatId, Cryptocurrency, Cycles, Milliseconds, TimestampMillis, Timestamped, UserId, Version,
 };
-use user_index_canister::add_referral_codes::ReferralType;
 use utils::canister::{CanistersRequiringUpgrade, FailedUpgradeCount};
 use utils::canister_event_sync_queue::CanisterEventSyncQueue;
 use utils::consts::DEV_TEAM_DFX_PRINCIPAL;
@@ -128,35 +126,6 @@ impl RuntimeState {
         jobs::make_pending_payments::start_job_if_required(self);
     }
 
-    pub fn populate_user_referral_leaderboard(&mut self) {
-        let now = self.env.now();
-
-        for user in self.data.users.iter() {
-            if let Some(referred_by) = user.referred_by {
-                if let Some(referrer) = self.data.users.get_by_user_id(&referred_by) {
-                    if referrer.diamond_membership_details.is_active(now) {
-                        self.data.user_referral_leaderboards.add_referral(referred_by, now);
-
-                        let icp_raised_for_paid_diamond: u64 =
-                            user.diamond_membership_details.payments().iter().map(|p| p.amount_e8s).sum();
-                        if icp_raised_for_paid_diamond > 0 {
-                            self.data.user_referral_leaderboards.add_reward(
-                                referred_by,
-                                true,
-                                icp_raised_for_paid_diamond,
-                                now,
-                            );
-                        } else if user.diamond_membership_details.is_active(now) {
-                            self.data
-                                .user_referral_leaderboards
-                                .add_reward(referred_by, true, 75_000_000, now);
-                        }
-                    }
-                }
-            }
-        }
-    }
-
     pub fn metrics(&self) -> Metrics {
         let now = self.env.now();
         let canister_upgrades_metrics = self.data.canisters_requiring_upgrade.metrics();
@@ -184,7 +153,6 @@ impl RuntimeState {
             platform_operators: self.data.platform_operators.len() as u8,
             user_index_events_queue_length: self.data.user_index_event_sync_queue.len(),
             local_user_indexes: self.data.local_index_map.iter().map(|(c, i)| (*c, i.clone())).collect(),
-            referral_codes: self.data.referral_codes.metrics(),
             platform_moderators_group: self.data.platform_moderators_group,
             canister_ids: CanisterIds {
                 group_index: self.data.group_index_canister_id,
@@ -222,9 +190,6 @@ struct Data {
     pub timer_jobs: TimerJobs<TimerJob>,
     pub neuron_controllers_for_initial_airdrop: HashMap<UserId, Principal>,
     pub internet_identity_canister_id: CanisterId,
-    #[serde(skip_deserializing)]
-    pub next_user_upgrade_started: bool,
-    pub referral_codes: ReferralCodes,
     pub user_referral_leaderboards: UserReferralLeaderboards,
     pub platform_moderators_group: Option<ChatId>,
 }
@@ -268,8 +233,6 @@ impl Data {
             timer_jobs: TimerJobs::default(),
             neuron_controllers_for_initial_airdrop: HashMap::new(),
             internet_identity_canister_id,
-            next_user_upgrade_started: true, // for a new setup everything is on latest
-            referral_codes: ReferralCodes::default(),
             user_referral_leaderboards: UserReferralLeaderboards::default(),
             platform_moderators_group: None,
         };
@@ -278,7 +241,6 @@ impl Data {
         data.users.register(
             proposals_bot_user_id.into(),
             proposals_bot_user_id,
-            Version::default(),
             "ProposalsBot".to_string(),
             0,
             None,
@@ -317,8 +279,6 @@ impl Default for Data {
             timer_jobs: TimerJobs::default(),
             neuron_controllers_for_initial_airdrop: HashMap::new(),
             internet_identity_canister_id: Principal::anonymous(),
-            next_user_upgrade_started: false,
-            referral_codes: ReferralCodes::default(),
             user_referral_leaderboards: UserReferralLeaderboards::default(),
             platform_moderators_group: None,
         }
@@ -347,7 +307,6 @@ pub struct Metrics {
     pub platform_operators: u8,
     pub user_index_events_queue_length: usize,
     pub local_user_indexes: Vec<(CanisterId, LocalUserIndex)>,
-    pub referral_codes: HashMap<ReferralType, ReferralTypeMetrics>,
     pub platform_moderators_group: Option<ChatId>,
     pub canister_ids: CanisterIds,
 }

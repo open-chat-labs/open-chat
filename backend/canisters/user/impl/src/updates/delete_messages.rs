@@ -3,7 +3,9 @@ use crate::timer_job_types::HardDeleteMessageContentJob;
 use crate::{mutate_state, run_regular_jobs, RuntimeState, TimerJob};
 use canister_tracing_macros::trace;
 use chat_events::{DeleteMessageResult, DeleteUndeleteMessagesArgs};
+use fire_and_forget_handler::FireAndForgetHandler;
 use ic_cdk_macros::update;
+use msgpack::serialize_then_unwrap;
 use types::{CanisterId, EventIndex, MessageId};
 use user_canister::c2c_delete_messages;
 use user_canister::delete_messages::{Response::*, *};
@@ -18,14 +20,14 @@ fn delete_messages(args: Args) -> Response {
     mutate_state(|state| delete_messages_impl(args, state))
 }
 
-fn delete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    if runtime_state.data.suspended.value {
+fn delete_messages_impl(args: Args, state: &mut RuntimeState) -> Response {
+    if state.data.suspended.value {
         return UserSuspended;
     }
 
-    if let Some(chat) = runtime_state.data.direct_chats.get_mut(&args.user_id.into()) {
-        let my_user_id = runtime_state.env.canister_id().into();
-        let now = runtime_state.env.now();
+    if let Some(chat) = state.data.direct_chats.get_mut(&args.user_id.into()) {
+        let my_user_id = state.env.canister_id().into();
+        let now = state.env.now();
 
         let delete_message_results = chat.events.delete_messages(DeleteUndeleteMessagesArgs {
             caller: my_user_id,
@@ -52,7 +54,7 @@ fn delete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
         if !deleted.is_empty() {
             let remove_deleted_message_content_at = now + (5 * MINUTE_IN_MS);
             for (message_id, _) in deleted.iter().copied() {
-                runtime_state.data.timer_jobs.enqueue_job(
+                state.data.timer_jobs.enqueue_job(
                     TimerJob::HardDeleteMessageContent(Box::new(HardDeleteMessageContentJob {
                         chat_id: args.user_id.into(),
                         thread_root_message_index: None,
@@ -73,11 +75,7 @@ fn delete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
                     .collect();
 
                 if !my_messages.is_empty() {
-                    ic_cdk::spawn(delete_on_recipients_canister(
-                        args.user_id.into(),
-                        my_messages,
-                        args.correlation_id,
-                    ));
+                    delete_on_recipients_canister(args.user_id.into(), my_messages, &state.data.fire_and_forget_handler);
                 }
             }
         }
@@ -88,11 +86,18 @@ fn delete_messages_impl(args: Args, runtime_state: &mut RuntimeState) -> Respons
     }
 }
 
-// TODO retry this if it fails
-async fn delete_on_recipients_canister(canister_id: CanisterId, message_ids: Vec<MessageId>, correlation_id: u64) {
+fn delete_on_recipients_canister(
+    canister_id: CanisterId,
+    message_ids: Vec<MessageId>,
+    fire_and_forget_handler: &FireAndForgetHandler,
+) {
     let args = c2c_delete_messages::Args {
         message_ids,
-        correlation_id,
+        correlation_id: 0,
     };
-    let _ = user_canister_c2c_client::c2c_delete_messages(canister_id, &args).await;
+    fire_and_forget_handler.send(
+        canister_id,
+        "c2c_delete_messages_msgpack".to_string(),
+        serialize_then_unwrap(args),
+    );
 }

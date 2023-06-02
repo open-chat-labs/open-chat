@@ -1,17 +1,21 @@
 import {
     GateCheckFailedReason,
     GroupChatSummary,
+    InviteUsersResponse,
     JoinGroupResponse,
+    RegisterUserResponse,
     ReportMessageResponse,
     UnsupportedValueError,
 } from "openchat-shared";
 import type {
     ApiGateCheckFailedReason,
     ApiGroupCanisterGroupChatSummary,
+    ApiInviteUsersResponse,
     ApiJoinGroupResponse,
+    ApiRegisterUserResponse,
     ApiReportMessageResponse,
 } from "./candid/idl";
-import { identity, optional } from "../../utils/mapping";
+import { bytesToHexString, identity, optional } from "../../utils/mapping";
 import {
     apiGroupSubtype,
     chatMetrics,
@@ -21,6 +25,58 @@ import {
     message,
 } from "../common/chatMappers";
 
+export function registerUserResponse(candid: ApiRegisterUserResponse): RegisterUserResponse {
+    if ("Success" in candid) {
+        return {
+            kind: "success",
+            userId: candid.Success.user_id.toString(),
+            icpAccount: bytesToHexString(candid.Success.icp_account),
+        };
+    }
+
+    if ("UsernameTaken" in candid) {
+        return { kind: "username_taken" };
+    }
+    if ("UsernameTooShort" in candid) {
+        return { kind: "username_too_short" };
+    }
+    if ("UsernameInvalid" in candid) {
+        return { kind: "username_invalid" };
+    }
+    if ("AlreadyRegistered" in candid) {
+        return { kind: "already_registered" };
+    }
+    if ("UserLimitReached" in candid) {
+        return { kind: "user_limit_reached" };
+    }
+    if ("UsernameTooLong" in candid) {
+        return { kind: "username_too_long" };
+    }
+    if ("NotSupported" in candid) {
+        return { kind: "not_supported" };
+    }
+    if ("InternalError" in candid) {
+        return { kind: "internal_error" };
+    }
+    if ("CyclesBalanceTooLow" in candid) {
+        return { kind: "cycles_balance_too_low" };
+    }
+    if ("PublicKeyInvalid" in candid) {
+        return { kind: "public_key_invalid" };
+    }
+    if ("ReferralCodeInvalid" in candid) {
+        return { kind: "referral_code_invalid" };
+    }
+    if ("ReferralCodeAlreadyClaimed" in candid) {
+        return { kind: "referral_code_already_claimed" };
+    }
+    if ("ReferralCodeExpired" in candid) {
+        return { kind: "referral_code_expired" };
+    }
+
+    throw new UnsupportedValueError("Unexpected ApiRegisterUserResponse type received", candid);
+}
+
 export function reportMessageResponse(candid: ApiReportMessageResponse): ReportMessageResponse {
     if ("Success" in candid) {
         return "success";
@@ -29,6 +85,31 @@ export function reportMessageResponse(candid: ApiReportMessageResponse): ReportM
         return "failure";
     }
     throw new UnsupportedValueError("Unexpected ApiReportMessageResponse type received", candid);
+}
+
+export function inviteUsersResponse(candid: ApiInviteUsersResponse): InviteUsersResponse {
+    if ("Success" in candid) {
+        return "success";
+    }
+    if ("NotAuthorized" in candid) {
+        return "not_authorised";
+    }
+    if ("InternalError" in candid) {
+        return "internal_error";
+    }
+    if ("CallerNotInGroup" in candid) {
+        return "caller_not_in_group";
+    }
+    if ("GroupNotFound" in candid) {
+        return "group_not_found";
+    }
+    if ("TooManyInvites" in candid) {
+        return "too_many_invites";
+    }
+    if ("ChatFrozen" in candid) {
+        return "chat_frozen";
+    }
+    throw new UnsupportedValueError("Unexpected ApiInviteUsersResponse type received", candid);
 }
 
 export function joinGroupResponse(candid: ApiJoinGroupResponse): JoinGroupResponse {

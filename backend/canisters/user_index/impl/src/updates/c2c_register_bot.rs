@@ -1,10 +1,10 @@
-use crate::updates::set_username::{validate_username, UsernameValidationResult};
 use crate::{mutate_state, RuntimeState, USER_LIMIT};
 use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
 use local_user_index_canister::{Event, UserRegistered};
-use types::{Cycles, UserId, Version};
+use types::{Cycles, UserId};
 use user_index_canister::c2c_register_bot::{Response::*, *};
+use utils::username_validation::{validate_username, UsernameValidationError};
 
 const BOT_REGISTRATION_FEE: Cycles = 10_000_000_000_000; // 10T
 
@@ -14,29 +14,27 @@ fn c2c_register_bot(args: Args) -> Response {
     mutate_state(|state| c2c_register_bot_impl(args, state))
 }
 
-fn c2c_register_bot_impl(args: Args, runtime_state: &mut RuntimeState) -> Response {
-    let caller = runtime_state.env.caller();
+fn c2c_register_bot_impl(args: Args, state: &mut RuntimeState) -> Response {
+    let caller = state.env.caller();
     let user_id: UserId = caller.into();
-    let now = runtime_state.env.now();
+    let now = state.env.now();
 
-    if runtime_state.data.users.get_by_principal(&caller).is_some()
-        || runtime_state.data.users.get_by_user_id(&user_id).is_some()
-    {
+    if state.data.users.get_by_principal(&caller).is_some() || state.data.users.get_by_user_id(&user_id).is_some() {
         return AlreadyRegistered;
     }
 
-    if runtime_state.data.users.len() >= USER_LIMIT {
+    if state.data.users.len() >= USER_LIMIT {
         return UserLimitReached;
     }
 
     match validate_username(&args.username) {
-        UsernameValidationResult::TooShort(min_length) => return UsernameTooShort(min_length),
-        UsernameValidationResult::TooLong(max_length) => return UsernameTooLong(max_length),
-        UsernameValidationResult::Invalid => return UsernameInvalid,
-        _ => {}
+        Ok(_) => {}
+        Err(UsernameValidationError::TooShort(min_length)) => return UsernameTooShort(min_length),
+        Err(UsernameValidationError::TooLong(max_length)) => return UsernameTooLong(max_length),
+        Err(UsernameValidationError::Invalid) => return UsernameInvalid,
     };
 
-    if runtime_state.data.users.get_by_username(&args.username).is_some() {
+    if state.data.users.get_by_username(&args.username).is_some() {
         return UsernameTaken;
     }
 
@@ -46,12 +44,12 @@ fn c2c_register_bot_impl(args: Args, runtime_state: &mut RuntimeState) -> Respon
     }
     ic_cdk::api::call::msg_cycles_accept128(BOT_REGISTRATION_FEE);
 
-    runtime_state
+    state
         .data
         .users
-        .register(caller, user_id, Version::default(), args.username.clone(), now, None, true);
+        .register(caller, user_id, args.username.clone(), now, None, true);
 
-    runtime_state.push_event_to_all_local_user_indexes(
+    state.push_event_to_all_local_user_indexes(
         Event::UserRegistered(UserRegistered {
             user_id,
             user_principal: caller,

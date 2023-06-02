@@ -81,6 +81,7 @@ export type ChatEvent = { 'Empty' : null } |
   { 'GroupDescriptionChanged' : GroupDescriptionChanged } |
   { 'GroupChatCreated' : GroupChatCreated } |
   { 'MessagePinned' : MessagePinned } |
+  { 'UsersInvited' : UsersInvited } |
   { 'UsersBlocked' : UsersBlocked } |
   { 'MessageUnpinned' : MessageUnpinned } |
   { 'MessageReactionAdded' : UpdatedMessage } |
@@ -154,6 +155,38 @@ export interface ChatMetrics {
   'prize_messages' : bigint,
 }
 export interface ChatUnfrozen { 'unfrozen_by' : UserId }
+export interface CommunityCanisterCommunitySummary {
+  'is_public' : boolean,
+  'permissions' : CommunityPermissions,
+  'community_id' : CommunityId,
+  'gate' : [] | [GroupGate],
+  'name' : string,
+  'role' : CommunityRole,
+  'description' : string,
+  'last_updated' : TimestampMillis,
+  'joined' : TimestampMillis,
+  'avatar_id' : [] | [bigint],
+  'frozen' : [] | [FrozenGroupInfo],
+  'latest_event_index' : EventIndex,
+  'member_count' : number,
+}
+export type CommunityId = Principal;
+export type CommunityPermissionRole = { 'Owners' : null } |
+  { 'Admins' : null } |
+  { 'Members' : null };
+export interface CommunityPermissions {
+  'create_public_channel' : CommunityPermissionRole,
+  'block_users' : CommunityPermissionRole,
+  'change_permissions' : CommunityPermissionRole,
+  'update_details' : CommunityPermissionRole,
+  'remove_members' : CommunityPermissionRole,
+  'invite_users' : CommunityPermissionRole,
+  'change_roles' : CommunityPermissionRole,
+  'create_private_channel' : CommunityPermissionRole,
+}
+export type CommunityRole = { 'Member' : null } |
+  { 'Admin' : null } |
+  { 'Owner' : null };
 export type CompletedCryptoTransaction = {
     'NNS' : NnsCompletedCryptoTransaction
   } |
@@ -161,6 +194,31 @@ export type CompletedCryptoTransaction = {
 export interface Contact { 'nickname' : [] | [string], 'user_id' : UserId }
 export type ContactsArgs = {};
 export type ContactsResponse = { 'Success' : { 'contacts' : Array<Contact> } };
+export interface CreateCommunityArgs {
+  'is_public' : boolean,
+  'permissions' : [] | [CommunityPermissions],
+  'gate' : [] | [GroupGate],
+  'name' : string,
+  'description' : string,
+  'history_visible_to_new_joiners' : boolean,
+  'rules' : GroupRules,
+  'avatar' : [] | [Avatar],
+}
+export type CreateCommunityResponse = { 'NameReserved' : null } |
+  { 'RulesTooLong' : FieldTooLongResult } |
+  { 'DescriptionTooLong' : FieldTooLongResult } |
+  { 'NameTooShort' : FieldTooShortResult } |
+  { 'Throttled' : null } |
+  { 'AvatarTooBig' : FieldTooLongResult } |
+  { 'Success' : CreateCommunitySuccessResult } |
+  { 'Unauthorized' : null } |
+  { 'UserSuspended' : null } |
+  { 'RulesTooShort' : FieldTooShortResult } |
+  { 'NameTooLong' : FieldTooLongResult } |
+  { 'NameTaken' : null } |
+  { 'InternalError' : null } |
+  { 'MaxCommunitiesCreated' : number };
+export interface CreateCommunitySuccessResult { 'community_id' : CommunityId }
 export interface CreateGroupArgs {
   'is_public' : boolean,
   'permissions' : [] | [GroupPermissions],
@@ -208,6 +266,12 @@ export interface CyclesRegistrationFee {
   'valid_until' : TimestampMillis,
   'amount' : Cycles,
 }
+export interface DeleteCommunityArgs { 'community_id' : CommunityId }
+export type DeleteCommunityResponse = { 'NotAuthorized' : null } |
+  { 'Success' : null } |
+  { 'UserSuspended' : null } |
+  { 'CommunityFrozen' : null } |
+  { 'InternalError' : string };
 export interface DeleteGroupArgs { 'chat_id' : ChatId }
 export type DeleteGroupResponse = { 'ChatFrozen' : null } |
   { 'NotAuthorized' : null } |
@@ -293,18 +357,19 @@ export interface DirectReactionAddedNotification {
   'timestamp' : TimestampMillis,
   'reaction' : string,
 }
-export interface EditMessageArgs {
-  'content' : MessageContent,
-  'user_id' : UserId,
-  'correlation_id' : bigint,
-  'message_id' : MessageId,
-  'thread_root_message_index' : [] | [MessageIndex],
-}
 export type EditMessageResponse = { 'MessageNotFound' : null } |
   { 'ChatNotFound' : null } |
   { 'Success' : null } |
   { 'UserSuspended' : null } |
   { 'UserBlocked' : null };
+export interface EditMessageV2Args {
+  'content' : MessageContentInitial,
+  'user_id' : UserId,
+  'correlation_id' : bigint,
+  'message_id' : MessageId,
+  'thread_root_message_index' : [] | [MessageIndex],
+}
+export type EmptyArgs = {};
 export type EventIndex = number;
 export interface EventsArgs {
   'latest_client_event_index' : [] | [EventIndex],
@@ -346,8 +411,6 @@ export interface EventsWindowArgs {
 }
 export type FailedCryptoTransaction = { 'NNS' : NnsFailedCryptoTransaction } |
   { 'SNS' : SnsFailedCryptoTransaction };
-export type FallbackRole = { 'Participant' : null } |
-  { 'Admin' : null };
 export interface FieldTooLongResult {
   'length_provided' : number,
   'max_length' : number,
@@ -629,6 +692,15 @@ export type InvalidPollReason = { 'DuplicateOptions' : null } |
   { 'OptionTooLong' : number } |
   { 'EndDateInThePast' : null } |
   { 'PollsNotValidForDirectChats' : null };
+export interface LeaveCommunityArgs { 'community_id' : CommunityId }
+export type LeaveCommunityResponse = { 'CommunityNotFound' : null } |
+  { 'LastOwnerCannotLeave' : null } |
+  { 'Success' : null } |
+  { 'UserNotInCommunity' : null } |
+  { 'CommunityNotPublic' : null } |
+  { 'UserSuspended' : null } |
+  { 'CommunityFrozen' : null } |
+  { 'InternalError' : string };
 export interface LeaveGroupArgs {
   'correlation_id' : bigint,
   'chat_id' : ChatId,
@@ -710,7 +782,6 @@ export interface MessageMatch {
   'content' : MessageContent,
   'sender' : UserId,
   'score' : number,
-  'chat_id' : ChatId,
   'message_index' : MessageIndex,
 }
 export interface MessagePinned {
@@ -845,7 +916,10 @@ export interface Participant {
 }
 export interface ParticipantAssumesSuperAdmin { 'user_id' : UserId }
 export interface ParticipantDismissedAsSuperAdmin { 'user_id' : UserId }
-export interface ParticipantJoined { 'user_id' : UserId }
+export interface ParticipantJoined {
+  'user_id' : UserId,
+  'invited_by' : [] | [UserId],
+}
 export interface ParticipantLeft { 'user_id' : UserId }
 export interface ParticipantRelinquishesSuperAdmin { 'user_id' : UserId }
 export interface ParticipantsAdded {
@@ -859,7 +933,8 @@ export interface ParticipantsRemoved {
 }
 export type PendingCryptoTransaction = { 'NNS' : NnsPendingCryptoTransaction } |
   { 'SNS' : SnsPendingCryptoTransaction };
-export type PermissionRole = { 'Owner' : null } |
+export type PermissionRole = { 'Moderators' : null } |
+  { 'Owner' : null } |
   { 'Admins' : null } |
   { 'Members' : null };
 export interface PermissionsChanged {
@@ -947,6 +1022,7 @@ export interface PublicGroupSummary {
   'avatar_id' : [] | [bigint],
   'frozen' : [] | [FrozenGroupInfo],
   'latest_event_index' : EventIndex,
+  'history_visible_to_new_joiners' : boolean,
   'chat_id' : ChatId,
   'participant_count' : number,
   'latest_message' : [] | [MessageEventWrapper],
@@ -992,6 +1068,7 @@ export interface ReportedMessage {
 }
 export type Role = { 'Participant' : null } |
   { 'Admin' : null } |
+  { 'Moderator' : null } |
   { 'Owner' : null };
 export interface RoleChanged {
   'user_ids' : Array<UserId>,
@@ -1010,16 +1087,6 @@ export type SearchMessagesResponse = { 'TermTooShort' : number } |
   { 'TermTooLong' : number } |
   { 'InvalidTerm' : null };
 export interface SearchMessagesSuccessResult { 'matches' : Array<MessageMatch> }
-export interface SendMessageArgs {
-  'content' : MessageContent,
-  'recipient' : UserId,
-  'forwarding' : boolean,
-  'sender_name' : string,
-  'correlation_id' : bigint,
-  'message_id' : MessageId,
-  'replies_to' : [] | [ReplyContext],
-  'thread_root_message_index' : [] | [MessageIndex],
-}
 export type SendMessageResponse = { 'TextTooLong' : number } |
   {
     'TransferSuccessV2' : {
@@ -1049,6 +1116,16 @@ export type SendMessageResponse = { 'TextTooLong' : number } |
   { 'TransferFailed' : string } |
   { 'InternalError' : string } |
   { 'RecipientNotFound' : null };
+export interface SendMessageV2Args {
+  'content' : MessageContentInitial,
+  'recipient' : UserId,
+  'forwarding' : boolean,
+  'sender_name' : string,
+  'correlation_id' : bigint,
+  'message_id' : MessageId,
+  'replies_to' : [] | [ReplyContext],
+  'thread_root_message_index' : [] | [MessageIndex],
+}
 export interface SendMessageWithTransferToGroupArgs {
   'content' : MessageContentInitial,
   'mentioned' : Array<User>,
@@ -1211,17 +1288,6 @@ export type TotalPollVotes = { 'Anonymous' : Array<[number, number]> } |
   { 'Visible' : Array<[number, Array<UserId>]> } |
   { 'Hidden' : number };
 export type TransactionHash = Uint8Array | number[];
-export interface TransferCryptoWithinGroupArgs {
-  'content' : CryptoContent,
-  'recipient' : UserId,
-  'mentioned' : Array<User>,
-  'group_id' : ChatId,
-  'sender_name' : string,
-  'correlation_id' : bigint,
-  'message_id' : MessageId,
-  'replies_to' : [] | [GroupReplyContext],
-  'thread_root_message_index' : [] | [MessageIndex],
-}
 export interface UnArchiveChatArgs { 'chat_id' : ChatId }
 export type UnArchiveChatResponse = { 'ChatNotFound' : null } |
   { 'Success' : null };
@@ -1262,7 +1328,8 @@ export type UpdatesV2Response = {
       'direct_chats_updated' : Array<DirectChatSummaryUpdates>,
       'pinned_chats' : [] | [Array<ChatId>],
     }
-  };
+  } |
+  { 'SuccessNoUpdates' : null };
 export interface User { 'username' : string, 'user_id' : UserId }
 export interface UserCanisterGroupChatSummary {
   'read_by_me_up_to' : [] | [MessageIndex],
@@ -1291,6 +1358,10 @@ export interface UserSummary {
 export interface UsersBlocked {
   'user_ids' : Array<UserId>,
   'blocked_by' : UserId,
+}
+export interface UsersInvited {
+  'user_ids' : Array<UserId>,
+  'invited_by' : UserId,
 }
 export interface UsersUnblocked {
   'user_ids' : Array<UserId>,
@@ -1330,11 +1401,19 @@ export interface _SERVICE {
     CancelMessageReminderResponse
   >,
   'contacts' : ActorMethod<[ContactsArgs], ContactsResponse>,
+  'create_community' : ActorMethod<
+    [CreateCommunityArgs],
+    CreateCommunityResponse
+  >,
   'create_group' : ActorMethod<[CreateGroupArgs], CreateGroupResponse>,
+  'delete_community' : ActorMethod<
+    [DeleteCommunityArgs],
+    DeleteCommunityResponse
+  >,
   'delete_group' : ActorMethod<[DeleteGroupArgs], DeleteGroupResponse>,
   'delete_messages' : ActorMethod<[DeleteMessagesArgs], DeleteMessagesResponse>,
   'deleted_message' : ActorMethod<[DeletedMessageArgs], DeletedMessageResponse>,
-  'edit_message' : ActorMethod<[EditMessageArgs], EditMessageResponse>,
+  'edit_message_v2' : ActorMethod<[EditMessageV2Args], EditMessageResponse>,
   'events' : ActorMethod<[EventsArgs], EventsResponse>,
   'events_by_index' : ActorMethod<[EventsByIndexArgs], EventsResponse>,
   'events_window' : ActorMethod<[EventsWindowArgs], EventsResponse>,
@@ -1350,6 +1429,7 @@ export interface _SERVICE {
     [InitialStateV2Args],
     InitialStateV2Response
   >,
+  'leave_community' : ActorMethod<[LeaveCommunityArgs], LeaveCommunityResponse>,
   'leave_group' : ActorMethod<[LeaveGroupArgs], LeaveGroupResponse>,
   'mark_read_v2' : ActorMethod<[MarkReadArgs], MarkReadResponse>,
   'messages_by_message_index' : ActorMethod<
@@ -1368,7 +1448,7 @@ export interface _SERVICE {
   'public_profile' : ActorMethod<[PublicProfileArgs], PublicProfileResponse>,
   'remove_reaction' : ActorMethod<[RemoveReactionArgs], RemoveReactionResponse>,
   'search_messages' : ActorMethod<[SearchMessagesArgs], SearchMessagesResponse>,
-  'send_message' : ActorMethod<[SendMessageArgs], SendMessageResponse>,
+  'send_message_v2' : ActorMethod<[SendMessageV2Args], SendMessageResponse>,
   'send_message_with_transfer_to_group' : ActorMethod<
     [SendMessageWithTransferToGroupArgs],
     SendMessageWithTransferToGroupResponse
@@ -1379,10 +1459,6 @@ export interface _SERVICE {
   'set_message_reminder' : ActorMethod<
     [SetMessageReminderArgs],
     SetMessageReminderResponse
-  >,
-  'transfer_crypto_within_group_v2' : ActorMethod<
-    [TransferCryptoWithinGroupArgs],
-    SendMessageWithTransferToGroupResponse
   >,
   'unarchive_chat' : ActorMethod<[UnArchiveChatArgs], UnArchiveChatResponse>,
   'unblock_user' : ActorMethod<[UnblockUserArgs], UnblockUserResponse>,

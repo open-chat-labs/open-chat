@@ -45,6 +45,10 @@ export function getMinutesSince(date: Date): number {
     return diffMillis / 1000 / 60;
 }
 
+export function toMonthString(date: Date, locale: string): string {
+    return date.toLocaleDateString(locale, { month: "long" });
+}
+
 export function toDayOfWeekString(date: Date): string {
     return date.toLocaleDateString(undefined, { weekday: "long" });
 }

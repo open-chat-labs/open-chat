@@ -217,6 +217,36 @@ pub async fn upgrade_group_canister(
     println!("Group canister wasm upgraded to version {version}");
 }
 
+pub async fn upgrade_community_canister(
+    identity: BasicIdentity,
+    url: String,
+    group_index_canister_id: CanisterId,
+    version: Version,
+) {
+    let agent = build_ic_agent(url, identity).await;
+    let canister_wasm = get_canister_wasm(CanisterName::Community, version);
+    let args = UpgradeCanisterWasmArgs {
+        wasm: CanisterWasm {
+            version,
+            module: canister_wasm.module,
+        },
+        filter: None,
+        use_for_new_canisters: None,
+    };
+
+    let response = group_index_canister_client::upgrade_community_canister_wasm(&agent, &group_index_canister_id, &args)
+        .await
+        .unwrap();
+
+    if !matches!(
+        response,
+        group_index_canister::upgrade_community_canister_wasm::Response::Success
+    ) {
+        panic!("{response:?}");
+    }
+    println!("Community canister wasm upgraded to version {version}");
+}
+
 pub async fn upgrade_user_canister(identity: BasicIdentity, url: String, user_index_canister_id: CanisterId, version: Version) {
     let agent = build_ic_agent(url, identity).await;
     let canister_wasm = get_canister_wasm(CanisterName::User, version);
