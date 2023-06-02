@@ -28,7 +28,7 @@
     {/if}
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .deleted {
         @include font(light, italic, fs-80);
     }

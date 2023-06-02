@@ -6,7 +6,7 @@
 </script>
 
 {#if disabled}
-    <div disabled class:disabled class="menu-item" role="menuitem">
+    <div class:disabled class="menu-item" role="menuitem">
         <span class="icon">
             <slot name="icon" />
         </span>
@@ -23,7 +23,7 @@
     </div>
 {/if}
 
-<style type="text/scss">
+<style lang="scss">
     .menu-item {
         display: flex;
         cursor: pointer;

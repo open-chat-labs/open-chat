@@ -257,7 +257,7 @@
 <svelte:window on:resize={resize} on:error={unhandledError} on:orientationchange={resize} />
 <svelte:body on:click={() => menuStore.hideMenu()} />
 
-<style type="text/scss">
+<style lang="scss">
     :global {
         html,
         body,

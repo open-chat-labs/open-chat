@@ -158,7 +158,7 @@
     </div>
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .photo {
         text-align: center;
     }

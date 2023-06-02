@@ -20,7 +20,7 @@
     <div class="menu"><slot name="menu" /></div>
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .left-nav-item {
         display: flex;
         align-items: center;

@@ -64,7 +64,7 @@
     {/if}
 {/if}
 
-<style type="text/scss">
+<style lang="scss">
     $size: 32px;
     .icon {
         height: $size;

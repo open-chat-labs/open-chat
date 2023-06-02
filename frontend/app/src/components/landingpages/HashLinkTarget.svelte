@@ -28,7 +28,7 @@
     </div>
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     :global(.link-target) {
         transition: color ease-in-out 300ms;
     }

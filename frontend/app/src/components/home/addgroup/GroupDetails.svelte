@@ -54,7 +54,7 @@
         placeholder={interpolateLevel("newGroupDesc", candidateGroup.level, true)} />
 </section>
 
-<style type="text/scss">
+<style lang="scss">
     .photo {
         text-align: center;
         padding: $sp4 0;

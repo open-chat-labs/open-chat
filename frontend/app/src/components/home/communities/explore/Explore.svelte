@@ -114,7 +114,7 @@
     </div>
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .explore {
         display: flex;
         flex-direction: column;

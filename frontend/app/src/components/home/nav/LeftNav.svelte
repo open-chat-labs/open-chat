@@ -150,7 +150,7 @@
     </div>
 </Panel>
 
-<style type="text/scss">
+<style lang="scss">
     :global(.hover svg path) {
         transition: fill 250ms ease-in-out;
     }

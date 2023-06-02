@@ -17,7 +17,7 @@
     </div>
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     :global(option) {
         color: var(--txt);
         font-weight: normal;

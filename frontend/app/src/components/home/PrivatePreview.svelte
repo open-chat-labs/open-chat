@@ -34,7 +34,7 @@
     <LockOutline size={"6em"} color="var(--txt-light)" />
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .bubble {
         display: flex;
         gap: $sp4;

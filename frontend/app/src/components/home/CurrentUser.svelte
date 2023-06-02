@@ -55,7 +55,7 @@
     </span>
 </SectionHeader>
 
-<style type="text/scss">
+<style lang="scss">
     .current-user {
         display: flex;
         flex: 1;

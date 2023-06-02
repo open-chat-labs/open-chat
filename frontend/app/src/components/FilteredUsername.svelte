@@ -27,7 +27,7 @@
     {/if}
 {/if}
 
-<style type="text/scss">
+<style lang="scss">
     .match {
         color: var(--txt);
     }

@@ -130,7 +130,7 @@
     {/if}
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     h4 {
         flex: 1;
         margin: 0 $sp3;

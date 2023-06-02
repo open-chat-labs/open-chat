@@ -110,7 +110,7 @@
     </svg>
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .robot {
         width: 220px;
         height: 220px;

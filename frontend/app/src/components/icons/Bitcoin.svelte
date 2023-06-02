@@ -30,7 +30,7 @@
     </g>
 </svg>
 
-<style type="text/scss">
+<style lang="scss">
     // svg:hover {
     //     $speed: 100ms;
     //     .circle {

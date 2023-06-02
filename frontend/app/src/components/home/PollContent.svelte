@@ -146,7 +146,7 @@
     {/if}
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .poll {
         @include size-above(sm) {
             min-width: 300px;

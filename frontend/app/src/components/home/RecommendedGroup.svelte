@@ -91,7 +91,7 @@
     </Footer>
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .group-card {
         position: relative;
         display: flex;

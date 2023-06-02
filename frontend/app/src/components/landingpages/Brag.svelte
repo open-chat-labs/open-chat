@@ -17,7 +17,7 @@
     </div>
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .brag {
         position: absolute;
         top: 50%;

@@ -15,7 +15,7 @@
     <slot />
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .banner {
         position: relative;
         background-size: cover;

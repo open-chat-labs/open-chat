@@ -73,7 +73,7 @@
         placeholder={$_("communities.descriptionPlaceholder")} />
 </section>
 
-<style type="text/scss">
+<style lang="scss">
     .avatar {
         position: absolute;
         bottom: toRem(-32);

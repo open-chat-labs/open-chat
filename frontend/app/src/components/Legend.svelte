@@ -14,7 +14,7 @@
     {/if}
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .legend {
         margin-bottom: $sp2;
 

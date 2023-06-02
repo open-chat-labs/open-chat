@@ -35,7 +35,7 @@
     <path d="m100 900 100 50v100l-100 50-100-50V950Z" transform="rotate(-45 141.343 762.056)" />
 </svg>
 
-<style type="text/scss">
+<style lang="scss">
     .hex {
         position: absolute;
         bottom: 0;

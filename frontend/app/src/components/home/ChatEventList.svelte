@@ -516,7 +516,7 @@
     </Fab>
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .scrollable-list {
         @include message-list();
         background-color: var(--currentChat-msgs-bg);

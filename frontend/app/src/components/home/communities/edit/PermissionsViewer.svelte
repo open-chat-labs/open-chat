@@ -49,7 +49,7 @@
     {/each}
 </ul>
 
-<style type="text/scss">
+<style lang="scss">
     ul {
         list-style: none;
     }

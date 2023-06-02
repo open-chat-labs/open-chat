@@ -85,7 +85,7 @@
     </div>
 </Section>
 
-<style type="text/scss">
+<style lang="scss">
     .header {
         display: flex;
         justify-content: space-between;

@@ -9,7 +9,7 @@
     </div>
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .reload {
         display: flex;
         flex-direction: column;

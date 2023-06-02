@@ -8,7 +8,7 @@
     <slot />
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .menu {
         width: toRem(250);
         background-color: var(--menu-bg);

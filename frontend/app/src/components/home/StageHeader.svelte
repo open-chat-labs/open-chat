@@ -36,7 +36,7 @@
     {/each}
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .steps {
         display: flex;
         align-items: center;

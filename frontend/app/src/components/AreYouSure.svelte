@@ -67,7 +67,7 @@
     </ModalContent>
 </Overlay>
 
-<style type="text/scss">
+<style lang="scss">
     .challenge {
         margin: $sp3 0;
     }

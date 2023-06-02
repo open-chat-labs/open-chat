@@ -68,7 +68,7 @@
     {/if}
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .threads {
         height: 100%;
         overflow-x: hidden;

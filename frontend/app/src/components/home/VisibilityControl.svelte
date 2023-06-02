@@ -187,7 +187,7 @@
     </div>
 {/if}
 
-<style type="text/scss">
+<style lang="scss">
     .wrapper {
         display: flex;
         align-items: flex-start;

@@ -51,7 +51,7 @@
     </span>
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     :global(.menu-icon.open path) {
         fill: var(--icon-selected);
     }

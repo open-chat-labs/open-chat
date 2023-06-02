@@ -365,7 +365,7 @@
     </div>
 {/if}
 
-<style type="text/scss">
+<style lang="scss">
     .delete-chat {
         background-color: var(--chatSummary-del);
         padding: $sp3;

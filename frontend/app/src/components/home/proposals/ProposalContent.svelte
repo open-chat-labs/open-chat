@@ -42,7 +42,7 @@
     let summaryExpanded = false;
     let showNeuronInfo = false;
     let showPayload = false;
-    
+
     $: token = tokenByGovernanceCanisterLookup[content.governanceCanisterId];
     $: rootCanister = cryptoLookup[token].rootCanister;
     $: proposalTopicsStore = client.proposalTopicsStore;
@@ -275,7 +275,7 @@
     </Overlay>
 {/if}
 
-<style type="text/scss">
+<style lang="scss">
     .header {
         margin-bottom: toRem(4);
 

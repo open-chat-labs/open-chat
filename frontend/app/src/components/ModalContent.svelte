@@ -115,7 +115,7 @@
     {/if}
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .modal-content {
         @include font-size(fs-100);
         display: flex;

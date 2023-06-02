@@ -29,7 +29,7 @@
     <slot />
 </section>
 
-<style type="text/scss">
+<style lang="scss">
     $left-width: 40%;
     $right-width: 500px;
 

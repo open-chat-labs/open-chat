@@ -8,7 +8,7 @@
     </div>
 </section>
 
-<style type="text/scss">
+<style lang="scss">
     section {
         margin-bottom: toRem(100);
 

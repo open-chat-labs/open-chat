@@ -7,7 +7,7 @@
     <slot />
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     :global(.button-group.fill button) {
         flex: auto;
     }

@@ -54,7 +54,7 @@
     </span>
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .tooltip {
         position: absolute;
     }

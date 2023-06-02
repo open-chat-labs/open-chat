@@ -33,7 +33,7 @@
     <div class={`percentage ${mode}`}>{percentage}%</div>
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .vote-button {
         display: flex;
         flex-direction: column;

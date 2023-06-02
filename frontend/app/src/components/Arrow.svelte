@@ -18,7 +18,7 @@
         fill={color} />
 </svg>
 
-<style type="text/scss">
+<style lang="scss">
     svg {
         transition: transform 200ms ease-in-out;
         transform-origin: 50%;

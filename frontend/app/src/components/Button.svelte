@@ -29,7 +29,7 @@
     {/if}
 </button>
 
-<style type="text/scss">
+<style lang="scss">
     button {
         transition: background ease-in-out 200ms;
         background: var(--button-bg);

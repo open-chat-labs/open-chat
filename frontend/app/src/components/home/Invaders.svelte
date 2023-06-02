@@ -371,7 +371,7 @@
     {/if}
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     :global(.invaders button) {
         font-family: "Press Start 2P", cursive;
     }

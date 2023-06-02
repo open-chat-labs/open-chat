@@ -10,7 +10,7 @@
     </ButtonGroup>
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .footer {
         padding: $sp4 $sp5;
         position: relative;

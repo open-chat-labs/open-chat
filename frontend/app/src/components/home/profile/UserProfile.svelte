@@ -352,7 +352,7 @@
     </div>
 </form>
 
-<style type="text/scss">
+<style lang="scss">
     $vertical-gap: $sp4;
 
     .full-width-btn {

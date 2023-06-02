@@ -6,7 +6,7 @@
     <slot />
 </h4>
 
-<style type="text/scss">
+<style lang="scss">
     .error {
         @include font(bold, normal, fs-80);
         color: var(--error);

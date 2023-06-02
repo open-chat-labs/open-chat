@@ -180,7 +180,7 @@
     </div>
 {/if}
 
-<style type="text/scss">
+<style lang="scss">
     .cropper {
         position: relative;
         height: 400px;

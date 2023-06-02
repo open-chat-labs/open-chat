@@ -64,7 +64,7 @@
     {/if}
 </Panel>
 
-<style type="text/scss">
+<style lang="scss">
     .no-chat {
         height: 100%;
     }

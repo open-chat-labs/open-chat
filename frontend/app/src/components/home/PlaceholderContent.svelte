@@ -8,7 +8,7 @@
     {$_("placeholderContent")}
 </span>
 
-<style type="text/scss">
+<style lang="scss">
     .placeholder {
         padding: $sp4;
         @include font(light, italic, fs-90);

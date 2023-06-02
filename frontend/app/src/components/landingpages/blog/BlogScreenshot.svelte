@@ -29,7 +29,7 @@
     <div class="image-caption">{caption}</div>
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .blog-image {
         margin: $sp6 0;
     }

@@ -229,7 +229,7 @@
     <NotificationsBar />
 {/if}
 
-<style type="text/scss">
+<style lang="scss">
     .body {
         overflow: auto;
         flex: auto;

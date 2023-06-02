@@ -47,7 +47,7 @@
     </div>
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .menu-items {
         @include font(bold, normal, fs-100);
         display: flex;

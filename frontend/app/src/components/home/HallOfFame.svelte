@@ -77,7 +77,7 @@
                 args = { month, year };
                 break;
         }
-        
+
         client
             .getReferralLeaderboard(args)
             .then((result) => {
@@ -192,7 +192,7 @@
     </div>
 </ModalContent>
 
-<style type="text/scss">
+<style lang="scss">
     :global(.hof-footer button) {
         font-family: "Press Start 2P", cursive;
     }

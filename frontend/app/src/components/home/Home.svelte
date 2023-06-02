@@ -1046,7 +1046,7 @@
         viewBox={`0 0 361 ${bgClip}`} />
 {/if}
 
-<style type="text/scss">
+<style lang="scss">
     :global(.edited-msg) {
         @include font(light, normal, fs-70);
     }

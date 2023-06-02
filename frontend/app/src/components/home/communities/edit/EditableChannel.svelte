@@ -50,7 +50,7 @@
     </div>
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     :global(.channel-name .textbox) {
         padding-left: 38px;
     }

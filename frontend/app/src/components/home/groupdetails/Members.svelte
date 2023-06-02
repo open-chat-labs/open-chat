@@ -216,7 +216,7 @@
     </div>
 {/if}
 
-<style type="text/scss">
+<style lang="scss">
     .section-selector {
         display: flex;
         justify-content: flex-start;

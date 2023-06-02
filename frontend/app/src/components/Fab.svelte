@@ -2,7 +2,7 @@
     <slot />
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .fab {
         @include z-index("fab");
         transition: background-color ease-in-out 200ms;

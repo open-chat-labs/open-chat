@@ -15,7 +15,7 @@
     </div>
 </TooltipWrapper>
 
-<style type="text/scss">
+<style lang="scss">
     .help {
         cursor: pointer;
         margin: 2px 4px -2px 4px;

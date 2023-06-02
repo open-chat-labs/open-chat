@@ -25,7 +25,7 @@
     </span>
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .user-pill {
         background: var(--button-bg);
         color: var(--button-txt);

@@ -34,7 +34,7 @@
         placeholder={interpolateLevel("rules.placeholder", level, true)} />
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     :global(.rules.disabled textarea) {
         color: var(--disabledTxt);
     }

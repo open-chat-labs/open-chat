@@ -97,7 +97,7 @@
     </div>
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     :global(.target .input-wrapper input) {
         padding-right: 40px;
     }

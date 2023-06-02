@@ -223,7 +223,7 @@
     </div>
 {/if}
 
-<style type="text/scss">
+<style lang="scss">
     .grid {
         @include font(book, normal, fs-90);
         display: grid;

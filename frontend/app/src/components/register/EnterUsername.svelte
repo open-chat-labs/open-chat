@@ -46,7 +46,7 @@
     </Button>
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .username-wrapper {
         width: 80%;
         @include mobile() {

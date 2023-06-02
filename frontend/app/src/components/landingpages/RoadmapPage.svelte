@@ -228,7 +228,9 @@
                     Broadcast groups
                     <ul>
                         <li>stream video 1-many</li>
-                        <li>broadcast group roles (owner, admin, moderator, participant, viewer)</li>
+                        <li>
+                            broadcast group roles (owner, admin, moderator, participant, viewer)
+                        </li>
                         <li>viewers can tip using cycles</li>
                     </ul>
                 </li>
@@ -237,7 +239,7 @@
     </CollapsibleCard>
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .roadmap {
         text-align: left;
         @include lp-content-padding();

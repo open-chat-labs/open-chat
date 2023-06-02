@@ -24,7 +24,7 @@
     </div>
 {/if}
 
-<style type="text/scss">
+<style lang="scss">
     .toast {
         position: fixed;
         bottom: $sp7;

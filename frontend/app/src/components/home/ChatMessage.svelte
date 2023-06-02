@@ -601,7 +601,7 @@
     {/if}
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     $size: 10px;
 
     $avatar-width: 56px;

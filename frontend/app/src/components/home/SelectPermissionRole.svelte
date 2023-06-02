@@ -51,7 +51,7 @@
     </MenuIcon>
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .permission-select {
         max-width: toRem(300);
         background-color: var(--input-bg);

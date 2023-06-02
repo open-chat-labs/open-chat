@@ -28,5 +28,5 @@
     {/each}
 </Select>
 
-<style type="text/scss">
+<style lang="scss">
 </style>

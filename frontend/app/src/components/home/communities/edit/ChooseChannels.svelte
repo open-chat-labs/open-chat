@@ -79,7 +79,7 @@
     <ErrorMessage>{error}</ErrorMessage>
 {/if}
 
-<style type="text/scss">
+<style lang="scss">
     .info {
         @include font(book, normal, fs-80, 22);
         color: var(--txt-light);

@@ -66,7 +66,7 @@
     </div>
 </Section>
 
-<style type="text/scss">
+<style lang="scss">
     .bragbox {
         background-repeat: no-repeat;
         background-position: center;

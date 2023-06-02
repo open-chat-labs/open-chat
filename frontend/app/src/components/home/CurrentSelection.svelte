@@ -30,7 +30,7 @@
     </span>
 </SectionHeader>
 
-<style type="text/scss">
+<style lang="scss">
     .current-selection {
         display: flex;
         flex: 1;

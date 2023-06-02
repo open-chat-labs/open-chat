@@ -70,7 +70,7 @@
         fill={true}>{$_("group.inviteUsers")}</Button>
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     h4 {
         flex: 1;
         padding: 0 $sp4;

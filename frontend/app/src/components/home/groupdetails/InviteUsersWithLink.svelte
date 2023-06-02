@@ -214,7 +214,7 @@
     <ErrorMessage>{error}</ErrorMessage>
 {/if}
 
-<style type="text/scss">
+<style lang="scss">
     .qr-wrapper {
         border: 1px solid var(--bd);
         .qr {

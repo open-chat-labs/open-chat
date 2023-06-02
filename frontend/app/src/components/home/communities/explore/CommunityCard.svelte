@@ -60,7 +60,7 @@
     </div>
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .card {
         cursor: pointer;
         background-color: var(--recommended-bg);

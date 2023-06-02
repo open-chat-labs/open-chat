@@ -301,10 +301,7 @@
         if (faqMatch && faqMatch[2] !== undefined) {
             if (allQuestions.includes(faqMatch[2] as Questions)) {
                 const url = `/faq?q=${faqMatch[2]}`;
-                dispatch("sendMessage", [
-                    `[🤔 FAQ: ${$_(`faq.${faqMatch[2]}_q`)}](${url})`,
-                    [],
-                ]);
+                dispatch("sendMessage", [`[🤔 FAQ: ${$_(`faq.${faqMatch[2]}_q`)}](${url})`, []]);
             } else {
                 dispatch("sendMessage", [`[🤔 FAQs](/faq)`, []]);
             }
@@ -608,7 +605,7 @@
     {/if}
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .message-entry {
         position: relative;
         display: flex;

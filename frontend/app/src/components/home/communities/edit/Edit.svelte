@@ -166,7 +166,7 @@
     </span>
 </ModalContent>
 
-<style type="text/scss">
+<style lang="scss">
     :global(.community-buttons button:not(.loading)) {
         @include mobile() {
             min-width: 0 !important;

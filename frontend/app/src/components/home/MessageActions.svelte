@@ -139,7 +139,7 @@
     {/if}
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     :global(.message-actions.useDrawer.visible .wrapper) {
         background-color: var(--button-bg);
         @include box-shadow(1);

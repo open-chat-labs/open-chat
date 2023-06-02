@@ -6,7 +6,7 @@
     <slot />
 </span>
 
-<style type="text/scss">
+<style lang="scss">
     span {
         cursor: pointer;
         color: var(--txt);

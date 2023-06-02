@@ -40,7 +40,7 @@
     </div>
 </Panel>
 
-<style type="text/scss">
+<style lang="scss">
     .chat-list {
         display: flex;
         flex-direction: column;

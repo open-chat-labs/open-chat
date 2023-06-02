@@ -44,7 +44,7 @@
     </div>
 {/if}
 
-<style type="text/scss">
+<style lang="scss">
     .wrapper {
         display: flex;
         gap: $sp3;
