@@ -814,7 +814,7 @@ impl GroupChatCore {
                 .copied()
                 .collect();
 
-            if !self.is_public {
+            if !self.is_public && !invited_users.is_empty() {
                 // Check the max invite limit will not be exceeded
                 if self.invited_users.len() + invited_users.len() > MAX_INVITES {
                     return TooManyInvites(MAX_INVITES as u32);
