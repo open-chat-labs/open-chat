@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Changed
+
+- Expose `icp_account` in metrics ([#3375](https://github.com/open-ic/open-chat/pull/3728))
+
 ### Removed
 
 - Removed temporary code needed for release ([#3375](https://github.com/open-ic/open-chat/pull/3375))

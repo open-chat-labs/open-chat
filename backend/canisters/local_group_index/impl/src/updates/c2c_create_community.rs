@@ -81,6 +81,7 @@ fn prepare(args: Args, state: &mut RuntimeState) -> Result<PrepareOk, Response> 
         proposals_bot_user_id: state.data.proposals_bot_user_id,
         avatar: args.avatar,
         gate: args.gate,
+        default_channels: args.default_channels,
         wasm_version: canister_wasm.version,
         test_mode: state.data.test_mode,
     };

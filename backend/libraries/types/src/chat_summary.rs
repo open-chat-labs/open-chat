@@ -66,12 +66,6 @@ pub struct GroupChatSummary {
     pub next_message_expiry: Option<TimestampMillis>,
 }
 
-impl GroupChatSummary {
-    pub fn display_date(&self) -> TimestampMillis {
-        self.latest_message.as_ref().map_or(self.joined, |m| m.timestamp)
-    }
-}
-
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct DirectChatSummaryUpdates {
     pub chat_id: ChatId,

@@ -1,6 +1,6 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use types::{ChannelId, ChannelSummary, GateCheckFailedReason};
+use types::{ChannelId, CommunityCanisterChannelSummary, GateCheckFailedReason};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
@@ -9,8 +9,8 @@ pub struct Args {
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub enum Response {
-    Success(Box<ChannelSummary>),
-    AlreadyInCommunity(Box<ChannelSummary>),
+    Success(Box<CommunityCanisterChannelSummary>),
+    AlreadyInChannel(Box<CommunityCanisterChannelSummary>),
     GateCheckFailed(GateCheckFailedReason),
     UserNotInCommunity,
     ChannelNotFound,

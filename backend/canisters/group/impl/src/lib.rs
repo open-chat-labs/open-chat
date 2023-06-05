@@ -7,11 +7,11 @@ use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
 use chat_events::{ChatEventInternal, Reader};
 use fire_and_forget_handler::FireAndForgetHandler;
-use group_chat_core::{AddResult as AddMemberResult, GroupChatCore, GroupMemberInternal};
+use group_chat_core::{AddResult as AddMemberResult, GroupChatCore, GroupMemberInternal, InvitedUsersResult, UserInvitation};
 use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::ops::Deref;
 use types::{
     AccessGate, AccessRules, Avatar, CanisterId, Cryptocurrency, Cycles, EventIndex, FrozenGroupInfo,
@@ -340,8 +340,39 @@ impl Data {
     pub fn is_accessible(&self, caller: Principal, invite_code: Option<u64>) -> bool {
         self.chat.is_public
             || self.get_member(caller).is_some()
-            || self.chat.invited_users.get(&caller).is_some()
+            || self.get_invitation(caller).is_some()
             || self.is_invite_code_valid(invite_code)
+    }
+
+    pub fn get_invitation(&self, caller: Principal) -> Option<&UserInvitation> {
+        self.principal_to_user_id_map
+            .get(&caller)
+            .and_then(|user_id| self.chat.invited_users.get(user_id))
+    }
+
+    pub fn invite_users(
+        &mut self,
+        invited_by: UserId,
+        users: Vec<(UserId, Principal)>,
+        now: TimestampMillis,
+    ) -> InvitedUsersResult {
+        let user_ids: Vec<UserId> = users.iter().map(|(user_id, _)| *user_id).collect();
+        let result = self.chat.invite_users(invited_by, user_ids, now);
+
+        if let InvitedUsersResult::Success(success) = &result {
+            let invited_users: HashSet<UserId> = success.invited_users.iter().copied().collect();
+            for (user_id, principal) in users.into_iter().filter(|(user_id, _)| invited_users.contains(user_id)) {
+                self.principal_to_user_id_map.insert(principal, user_id);
+            }
+        }
+
+        result
+    }
+
+    pub fn remove_invitation(&mut self, caller: Principal, now: TimestampMillis) -> Option<UserInvitation> {
+        self.principal_to_user_id_map
+            .remove(&caller)
+            .and_then(|user_id| self.chat.invited_users.remove(&user_id, now))
     }
 
     pub fn remove_principal(&mut self, user_id: UserId) {
