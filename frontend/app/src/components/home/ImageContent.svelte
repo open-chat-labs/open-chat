@@ -144,7 +144,7 @@
     </Overlay>
 {/if}
 
-<style type="text/scss">
+<style lang="scss">
     $radius: $sp3;
 
     .img-wrapper {

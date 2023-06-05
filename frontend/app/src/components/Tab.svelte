@@ -23,7 +23,7 @@
     <slot />
 {/if}
 
-<style type="text/scss">
+<style lang="scss">
     .tab {
         cursor: pointer;
         padding: $sp3 $sp4;

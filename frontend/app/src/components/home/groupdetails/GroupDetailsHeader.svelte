@@ -8,8 +8,11 @@
     import { _ } from "svelte-i18n";
     import { iconSize } from "../../../stores/iconSize";
     import { mobileWidth } from "../../../stores/screenDimensions";
+    import type { Level } from "openchat-client";
+    import { interpolateLevel } from "../../../utils/i18n";
 
     export let canEdit: boolean;
+    export let level: Level;
 
     const dispatch = createEventDispatcher();
     function close() {
@@ -38,7 +41,7 @@
             </HoverIcon>
         </span>
     {/if}
-    <h4>{$_("groupDetails")}</h4>
+    <h4>{interpolateLevel("groupDetails", level)}</h4>
     <span title={$_("close")} class="close" on:click={close}>
         <HoverIcon>
             <Close size={$iconSize} color={"var(--icon-txt)"} />
@@ -46,7 +49,7 @@
     </span>
 </SectionHeader>
 
-<style type="text/scss">
+<style lang="scss">
     h4 {
         flex: 1;
         margin: 0;

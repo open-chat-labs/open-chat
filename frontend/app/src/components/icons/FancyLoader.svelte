@@ -142,7 +142,7 @@
 
 <canvas width="500" height="500" class="logo" bind:this={canvas} />
 
-<style type="text/scss">
+<style lang="scss">
     .logo {
         width: 100%;
     }

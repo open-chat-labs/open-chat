@@ -147,7 +147,7 @@
     </div>
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     $purple: #4e27c7;
     $gradient: linear-gradient(
         32deg,

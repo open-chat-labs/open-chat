@@ -10,7 +10,7 @@
         ChatEvent,
         EventWrapper,
         GroupChatSummary,
-        GroupRules,
+        AccessRules,
         MemberRole,
         Message,
         UserSummary,
@@ -213,7 +213,7 @@
         }
     }
 
-    function updateGroupRules(ev: CustomEvent<{ chatId: string; rules: GroupRules }>) {
+    function updateGroupRules(ev: CustomEvent<{ chatId: string; rules: AccessRules }>) {
         chatStateStore.setProp(ev.detail.chatId, "rules", ev.detail.rules);
     }
 
@@ -277,7 +277,7 @@
             on:closeThread={closeThread} />
     {:else if lastState.kind === "proposal_filters" && $selectedChatId !== undefined}
         <ProposalGroupFilters on:close={popRightPanelHistory} />
-    {:else if lastState.kind === "community_groups"}
+    {:else if lastState.kind === "community_channels"}
         <CommunityChannels communityId={lastState.communityId} />
     {/if}
 </Panel>

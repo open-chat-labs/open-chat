@@ -23,7 +23,7 @@
     <Home />
 {/if}
 
-<style type="text/scss">
+<style lang="scss">
     .loading {
         height: 100vh;
         width: 100vw;

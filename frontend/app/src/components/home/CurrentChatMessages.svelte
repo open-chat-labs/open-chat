@@ -434,7 +434,7 @@
     {/each}
 </ChatEventList>
 
-<style type="text/scss">
+<style lang="scss">
     .day-group {
         position: relative;
 

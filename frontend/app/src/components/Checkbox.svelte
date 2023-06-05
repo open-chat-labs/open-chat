@@ -25,7 +25,7 @@
     </label>
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     $size: 32px;
     $size-small: 21px;
 

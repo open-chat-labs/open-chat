@@ -1,3 +1,4 @@
+<!-- svelte-ignore a11y-click-events-have-key-events -->
 <script lang="ts">
     import CancelIcon from "svelte-material-icons/Cancel.svelte";
     import TickIcon from "svelte-material-icons/Check.svelte";
@@ -5,6 +6,7 @@
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
     import CheckboxMultipleMarked from "svelte-material-icons/CheckboxMultipleMarked.svelte";
     import LocationExit from "svelte-material-icons/LocationExit.svelte";
+    import ConvertToCommunity from "../icons/ConvertToCommunity.svelte";
     import FilterOutline from "svelte-material-icons/FilterOutline.svelte";
     import Pin from "svelte-material-icons/Pin.svelte";
     import Magnify from "svelte-material-icons/Magnify.svelte";
@@ -25,6 +27,7 @@
     import { mobileWidth } from "../../stores/screenDimensions";
     import { rightPanelHistory } from "../../stores/rightPanel";
     import { rtlStore } from "../../stores/rtl";
+    import { communitiesEnabled } from "../../utils/features";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -111,6 +114,10 @@
 
     function leaveGroup() {
         dispatch("leaveGroup", { kind: "leave", chatId: selectedChatSummary.chatId });
+    }
+
+    function convertToCommunity() {
+        dispatch("convertToCommunity", { chatId: selectedChatSummary.chatId });
     }
 
     function freezeGroup() {
@@ -313,6 +320,15 @@
                             <div slot="text">{$_("leaveGroup")}</div>
                         </MenuItem>
                     {/if}
+                    {#if $communitiesEnabled}
+                        <MenuItem warning on:click={convertToCommunity}>
+                            <ConvertToCommunity
+                                size={$iconSize}
+                                color={"var(--menu-warn)"}
+                                slot="icon" />
+                            <div slot="text">{$_("communities.convert")}</div>
+                        </MenuItem>
+                    {/if}
                 {/if}
                 {#if selectedChatSummary.kind === "direct_chat" && !isBot}
                     {#if hasPinned}
@@ -390,7 +406,7 @@
     </MenuIcon>
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .menu {
         flex: 0 0 20px;
     }

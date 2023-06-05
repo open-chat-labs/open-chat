@@ -31,7 +31,7 @@
     {/if}
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .expand {
         position: absolute;
         bottom: toRem(10);

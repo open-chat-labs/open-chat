@@ -313,7 +313,7 @@ export function mergeGroupChatUpdates(
             public: g?.public ?? c.public,
             myRole: g?.myRole ?? c.myRole,
             permissions: g?.permissions ?? c.permissions,
-            historyVisibleToNewJoiners: c.historyVisibleToNewJoiners,
+            historyVisible: c.historyVisible,
             latestThreads: mergeThreads(
                 c.latestThreads,
                 g?.latestThreads ?? [],
@@ -336,6 +336,7 @@ export function mergeGroupChatUpdates(
             dateLastPinned: g?.dateLastPinned ?? c.dateLastPinned,
             dateReadPinned: u?.dateReadPinned ?? c.dateReadPinned,
             gate: applyOptionUpdate(c.gate, g?.gate) ?? { kind: "no_gate" },
+            level: "group",
         };
     });
 }
@@ -363,7 +364,7 @@ export function mergeGroupChats(
             public: g.public,
             myRole: g.myRole,
             permissions: g.permissions,
-            historyVisibleToNewJoiners: g.historyVisibleToNewJoiners,
+            historyVisible: g.historyVisible,
             latestThreads: mergeThreads([], g.latestThreads, u.threadsRead),
             subtype: g.subtype,
             previewed: false,
@@ -380,6 +381,7 @@ export function mergeGroupChats(
             dateLastPinned: g.dateLastPinned,
             dateReadPinned: u?.dateReadPinned,
             gate: g.gate,
+            level: "group",
         };
     });
 }

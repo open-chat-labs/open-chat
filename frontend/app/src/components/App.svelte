@@ -3,6 +3,7 @@
 
     import "../i18n/i18n";
     import "../utils/markdown";
+    import "../utils/i18n";
     import { rtlStore } from "../stores/rtl";
     import { _ } from "svelte-i18n";
     import Router from "./Router.svelte";
@@ -25,6 +26,7 @@
     } from "../utils/urls";
     import { logger } from "../utils/logging";
     import page from "page";
+    import { menuStore } from "../stores/menu";
 
     let viewPortContent = "width=device-width, initial-scale=1";
 
@@ -216,6 +218,11 @@
         }
     }
 
+    function resize() {
+        menuStore.hideMenu();
+        calculateHeight();
+    }
+
     let isFirefox = navigator.userAgent.indexOf("Firefox") >= 0;
     $: burstPath = $themeStore.name === "dark" ? "../assets/burst_dark" : "../assets/burst_light";
     $: burstUrl = isFirefox ? `${burstPath}.png` : `${burstPath}.svg`;
@@ -247,9 +254,10 @@
 
 <UpgradeBanner />
 
-<svelte:window on:resize={calculateHeight} on:error={unhandledError} />
+<svelte:window on:resize={resize} on:error={unhandledError} on:orientationchange={resize} />
+<svelte:body on:click={() => menuStore.hideMenu()} />
 
-<style type="text/scss">
+<style lang="scss">
     :global {
         html,
         body,

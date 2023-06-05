@@ -34,7 +34,7 @@
         <div class="visibility">
             <div class={`img ${chat.public ? "public" : "private"}`} />
             <div class="name">
-                {chat.public ? $_("group.public") : $_("group.private")}
+                {chat.public ? $_("access.public") : $_("access.private")}
             </div>
         </div>
         <div class="members">
@@ -44,7 +44,7 @@
     </div>
 {/if}
 
-<style type="text/scss">
+<style lang="scss">
     .wrapper {
         display: flex;
         gap: $sp3;

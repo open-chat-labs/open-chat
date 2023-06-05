@@ -6,10 +6,10 @@
     <slot />
 </h4>
 
-<style type="text/scss">
+<style lang="scss">
     .error {
         @include font(bold, normal, fs-80);
-        color: var(--menu-warn);
+        color: var(--error);
         margin-bottom: $sp3;
     }
 </style>

@@ -8,7 +8,7 @@
     <p class="para">{$_("upgrade.congratulations")}</p>
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .confirmed {
         display: flex;
         flex-direction: column;

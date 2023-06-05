@@ -51,7 +51,7 @@
     {/if}
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .msg {
         cursor: pointer;
         text-align: center;

@@ -15,6 +15,6 @@
     </div>
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     @include spinning_coin(url("../assets/ckbtc_nobackground.svg"), 4rem);
 </style>

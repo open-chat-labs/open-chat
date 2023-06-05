@@ -23,6 +23,7 @@
             inp.focus();
         }
     });
+
     const handleInput = (e: { currentTarget: { value: string } }) => {
         if (type === "text") {
             value = e.currentTarget.value;
@@ -44,6 +45,7 @@
     }
 
     $: remaining = typeof value === "string" ? maxlength - value.length : 0;
+    $: warn = remaining <= 5;
 </script>
 
 <div class="input-wrapper">
@@ -58,16 +60,17 @@
         {placeholder}
         on:input={handleInput}
         on:keydown={keyDown}
+        on:blur
         bind:this={inp}
         {value}
         class={`textbox ${fontSize} ${align}`} />
+
     {#if countdown && maxlength < Number.MAX_VALUE && type === "text" && typeof value === "string"}
-        <div class:near-max={remaining <= 5} class="countdown">{remaining}</div>
+        <div class:warn class="countdown">{remaining}</div>
     {/if}
-    <slot />
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .input-wrapper {
         position: relative;
         margin-bottom: $sp3;
@@ -84,8 +87,8 @@
         @include font(light, normal, fs-80);
         color: var(--txt-light);
 
-        &.near-max {
-            color: var(--warn);
+        &.warn {
+            color: var(--menu-warn);
         }
     }
 

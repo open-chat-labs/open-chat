@@ -14,7 +14,7 @@
 </div>
 <ReminderNotes notes={content.notes} />
 
-<style type="text/scss">
+<style lang="scss">
     .datetime {
         font-weight: 700;
     }

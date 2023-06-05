@@ -35,7 +35,7 @@
     {/if}
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .msg-preview {
         min-width: 90px;
         margin-top: $sp4;

@@ -20,7 +20,7 @@
     </p>
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .timeline-event {
         padding: $sp2;
         background-color: var(--timeline-bg);

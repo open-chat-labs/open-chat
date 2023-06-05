@@ -10,7 +10,7 @@
     </div>
 {/if}
 
-<style type="text/scss">
+<style lang="scss">
     .notes {
         margin-top: $sp4;
         @include font(book, italic, fs-100);

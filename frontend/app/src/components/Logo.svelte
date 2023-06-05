@@ -77,7 +77,7 @@
     </svg>
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .logo {
         width: 80px;
         height: 80px;

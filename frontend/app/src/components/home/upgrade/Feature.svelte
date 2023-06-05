@@ -29,7 +29,7 @@
     {/if}
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .diamond {
         background-color: rgba(255, 255, 255, 0.05);
     }

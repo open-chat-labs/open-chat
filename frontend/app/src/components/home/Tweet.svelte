@@ -45,7 +45,7 @@
     </div>
 {/if}
 
-<style type="text/scss">
+<style lang="scss">
     .preview {
         display: flex;
         flex-direction: column;

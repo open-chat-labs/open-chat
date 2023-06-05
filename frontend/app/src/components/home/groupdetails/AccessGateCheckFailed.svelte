@@ -1,10 +1,10 @@
 <script lang="ts">
     import ModalContent from "../../ModalContent.svelte";
     import { _ } from "svelte-i18n";
-    import type { GroupGate } from "openchat-client";
-    import GroupGateSummary from "./GroupGateSummary.svelte";
+    import type { AccessGate } from "openchat-client";
+    import GroupGateSummary from "./AccessGateSummary.svelte";
     import { mobileWidth } from "../../../stores/screenDimensions";
-    export let gate: GroupGate;
+    export let gate: AccessGate;
 </script>
 
 <ModalContent fixedWidth={$mobileWidth} fitToContent={!$mobileWidth} on:close>

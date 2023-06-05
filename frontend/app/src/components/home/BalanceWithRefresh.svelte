@@ -63,7 +63,7 @@
     {/if}
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .container {
         display: flex;
         justify-content: flex-end;

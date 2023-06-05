@@ -161,7 +161,7 @@
     {/if}
 </SectionHeader>
 
-<style type="text/scss">
+<style lang="scss">
     .chat-name {
         @include font(book, normal, fs-120);
         @include ellipsis();

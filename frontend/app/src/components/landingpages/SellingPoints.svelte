@@ -61,7 +61,7 @@
     </div>
 </Section>
 
-<style type="text/scss">
+<style lang="scss">
     :global(.selling-points .icon) {
         width: toRem(40);
         height: toRem(40);

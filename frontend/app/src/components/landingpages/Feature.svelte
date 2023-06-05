@@ -25,7 +25,7 @@
     </div>
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .title {
         margin: 0;
         @include font(medium, normal, fs-230, 68);

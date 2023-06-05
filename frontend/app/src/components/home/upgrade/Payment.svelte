@@ -179,7 +179,7 @@
     {/if}
 </Footer>
 
-<style type="text/scss">
+<style lang="scss">
     .body {
         padding: $sp4 $sp5;
         min-height: 390px;

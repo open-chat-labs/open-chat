@@ -30,7 +30,7 @@ const defaultGroupChat: GroupChatSummary = {
     readByMeUpTo: undefined,
     latestMessage: undefined,
     public: true,
-    historyVisibleToNewJoiners: false,
+    historyVisible: false,
     joined: BigInt(0),
     minVisibleEventIndex: 0,
     minVisibleMessageIndex: 0,
@@ -70,6 +70,7 @@ const defaultGroupChat: GroupChatSummary = {
     dateLastPinned: undefined,
     dateReadPinned: undefined,
     gate: { kind: "no_gate" },
+    level: "group",
 };
 
 function createUser(userId: string, username: string): PartialUserSummary {

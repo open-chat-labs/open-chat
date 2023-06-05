@@ -68,7 +68,7 @@
     </div>
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .blueprint {
         display: none;
     }

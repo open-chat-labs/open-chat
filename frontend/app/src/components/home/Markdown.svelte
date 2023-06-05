@@ -63,7 +63,7 @@
     {@html sanitized}
 </p>
 
-<style type="text/scss">
+<style lang="scss">
     :global {
         .markdown-wrapper {
             h1 {

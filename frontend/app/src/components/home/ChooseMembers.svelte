@@ -1,24 +1,22 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
-    import SelectUsers from "../SelectUsers.svelte";
-    import type { CandidateGroupChat, UserSummary } from "openchat-client";
+    import SelectUsers from "./SelectUsers.svelte";
+    import type { CandidateMember, UserSummary } from "openchat-client";
 
-    export let candidateGroup: CandidateGroupChat;
+    export let members: CandidateMember[];
     export let busy: boolean;
 
-    $: selectedUsers = candidateGroup.members.map((m) => m.user);
+    $: selectedUsers = members.map((m) => m.user);
 
     function deleteMember(ev: CustomEvent<UserSummary>): void {
         if (busy) return;
-        candidateGroup.members = candidateGroup.members.filter(
-            (m) => m.user.userId !== ev.detail.userId
-        );
+        members = members.filter((m) => m.user.userId !== ev.detail.userId);
     }
 
     function addMember(ev: CustomEvent<UserSummary>): void {
         if (busy) return;
-        candidateGroup.members = [
-            ...candidateGroup.members,
+        members = [
+            ...members,
             {
                 role: "participant",
                 user: ev.detail,

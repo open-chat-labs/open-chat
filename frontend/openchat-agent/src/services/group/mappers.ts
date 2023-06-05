@@ -74,7 +74,7 @@ import {
     ThreadPreview,
     RegisterPollVoteResponse,
     RegisterProposalVoteResponse,
-    GroupRules,
+    AccessRules,
     GroupPermissions,
     SearchGroupChatResponse,
     codeToText,
@@ -183,7 +183,7 @@ function groupChatSummary(candid: ApiGroupCanisterGroupChatSummary): GroupCanist
         subtype: optional(candid.subtype, groupSubtype),
         avatarId: optional(candid.avatar_id, identity),
         public: candid.is_public,
-        historyVisibleToNewJoiners: candid.history_visible_to_new_joiners,
+        historyVisible: candid.history_visible_to_new_joiners,
         minVisibleEventIndex: candid.min_visible_event_index,
         minVisibleMessageIndex: candid.min_visible_message_index,
         latestMessage: optional(candid.latest_message, messageEvent),
@@ -317,14 +317,14 @@ function member(candid: ApiParticipant): Member {
     };
 }
 
-function groupRules(candid: ApiGroupRules): GroupRules {
+function groupRules(candid: ApiGroupRules): AccessRules {
     return {
         text: candid.text,
         enabled: candid.enabled,
     };
 }
 
-export function apiGroupRules(rules: GroupRules): ApiGroupRules {
+export function apiGroupRules(rules: AccessRules): ApiGroupRules {
     return {
         text: rules.text,
         enabled: rules.enabled,
@@ -356,7 +356,10 @@ export function groupDetailsUpdatesResponse(
             pinnedMessagesRemoved: new Set(candid.Success.pinned_messages_removed),
             latestEventIndex: candid.Success.latest_event_index,
             rules: optional(candid.Success.rules, groupRules),
-            invitedUsers: optional(candid.Success.invited_users, (invited_users) => new Set(invited_users.map((u) => u.toString()))),
+            invitedUsers: optional(
+                candid.Success.invited_users,
+                (invited_users) => new Set(invited_users.map((u) => u.toString()))
+            ),
         };
     }
     throw new UnsupportedValueError("Unexpected ApiDeleteMessageResponse type received", candid);
@@ -905,7 +908,7 @@ export async function getEventsResponse(
 
 export function searchGroupChatResponse(
     candid: ApiSearchGroupChatResponse,
-    chatId: string,
+    chatId: string
 ): SearchGroupChatResponse {
     if ("Success" in candid) {
         return {
@@ -1456,7 +1459,7 @@ export function registerProposalVoteResponse(
     throw new UnsupportedValueError("Unexpected ApiVoteOnProposalResponse type received", candid);
 }
 
-export function rulesResponse(candid: ApiRulesResponse): GroupRules | undefined {
+export function rulesResponse(candid: ApiRulesResponse): AccessRules | undefined {
     if ("Success" in candid) {
         const rules = optional(candid.Success.rules, identity);
         return {
@@ -1466,7 +1469,9 @@ export function rulesResponse(candid: ApiRulesResponse): GroupRules | undefined 
     }
 }
 
-export function declineInvitationResponse(candid: ApiDeclineInvitationResponse): DeclineInvitationResponse {
+export function declineInvitationResponse(
+    candid: ApiDeclineInvitationResponse
+): DeclineInvitationResponse {
     if ("Success" in candid) {
         return "success";
     }
@@ -1476,5 +1481,8 @@ export function declineInvitationResponse(candid: ApiDeclineInvitationResponse):
     if ("InternalError" in candid) {
         return "internal_error";
     }
-    throw new UnsupportedValueError("Unexpected ApiDeclineInvitationResponse type received", candid);
+    throw new UnsupportedValueError(
+        "Unexpected ApiDeclineInvitationResponse type received",
+        candid
+    );
 }

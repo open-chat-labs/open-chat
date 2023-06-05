@@ -8,7 +8,7 @@
     <slot />
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .wrapper {
         padding: $sp3;
         border-radius: 50%;

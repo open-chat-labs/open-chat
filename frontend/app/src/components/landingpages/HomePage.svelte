@@ -36,7 +36,7 @@
     <Team />
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .headline {
         display: grid;
         gap: $sp5;

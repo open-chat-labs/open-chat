@@ -23,7 +23,7 @@
 
 <div role="button" on:click={launch} class="launch">{txt}</div>
 
-<style type="text/scss">
+<style lang="scss">
     .launch {
         display: inline-block;
         transition: background-color ease-in-out 200ms;

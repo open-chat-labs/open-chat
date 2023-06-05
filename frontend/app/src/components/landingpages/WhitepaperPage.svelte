@@ -351,16 +351,16 @@
                 the OpenChat dapp, or you can configure your neuron to follow another neuron(s) per
                 proposal type, in which case your vote will be implicitly cast when it votes. By
                 default, newly created neurons will have no followees so this would need to be
-                manually configured.                 
+                manually configured.
             </p>
             <p>
-                The dev team will configure a small neuron to be a "beacon" which anyone is welcome 
-                to follow on any topic. This beacon neuron will itself follow the neurons of each 
+                The dev team will configure a small neuron to be a "beacon" which anyone is welcome
+                to follow on any topic. This beacon neuron will itself follow the neurons of each
                 member of the dev team and will implicitly vote when a majority of the dev team vote
                 the same way. The dev team will vote on every proposal so if you are happy to follow
                 their lead you will implicitly participate in every vote and so maximise your voting
-                rewards. After the SNS decentralization sale the dev team will publish their 
-                beacon neuron id.
+                rewards. After the SNS decentralization sale the dev team will publish their beacon
+                neuron id.
             </p>
             <p>
                 Each neuron has “voting power” which is calculated as the token value multiplied by
@@ -540,11 +540,11 @@
                 We think a reward system should be based on reputation. Each user would have a
                 reputation score taking into account positive and negative activity on the dapp.
                 Positive signals could include inviting other users (if they themselves go on to
-                gain a sufficiently high reputation), owner/admin/moderator of popular groups, sending
-                messages and reactions, moderating content and users, etc. Negative signals could
-                include cross-posting, sending spam messages, creating multiple accounts etc. We
-                expect to add a feature to allow users to mark messages as spam (or more generally
-                unwanted content).
+                gain a sufficiently high reputation), owner/admin/moderator of popular groups,
+                sending messages and reactions, moderating content and users, etc. Negative signals
+                could include cross-posting, sending spam messages, creating multiple accounts etc.
+                We expect to add a feature to allow users to mark messages as spam (or more
+                generally unwanted content).
             </p>
             <p>
                 We can also derive a positive signal for a user if they hold tokens (ICP, CHAT,
@@ -981,7 +981,7 @@
     </CollapsibleCard>
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .whitepaper {
         text-align: left;
         @include lp-content-padding();

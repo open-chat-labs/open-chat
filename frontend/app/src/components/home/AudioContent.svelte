@@ -78,7 +78,7 @@
 
 <ContentCaption caption={content.caption} {edited} />
 
-<style type="text/scss">
+<style lang="scss">
     $size: 120px;
 
     .circle {

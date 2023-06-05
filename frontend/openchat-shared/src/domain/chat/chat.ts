@@ -2,6 +2,10 @@ import type { BlobReference, DataContent } from "../data/data";
 import type { PartialUserSummary, UserSummary } from "../user/user";
 import type { OptionUpdate } from "../optionUpdate";
 import type { Cryptocurrency } from "../crypto";
+import type { AccessGate, AccessControlled, AccessRules } from "../access";
+import type { GroupPermissionRole, MemberRole, Permissioned } from "../permission";
+import type { HasIdentity } from "../identity";
+import type { HasLevel } from "../structure";
 
 export const Sns1GovernanceCanisterId = "zqfso-syaaa-aaaaq-aaafq-cai";
 export const OpenChatGovernanceCanisterId = "2jvtu-yqaaa-aaaaq-aaama-cai";
@@ -473,7 +477,7 @@ export type LocalChatSummaryUpdates = {
               notificationsMuted?: boolean;
               archived?: boolean;
               frozen?: boolean;
-              gate?: GroupGate;
+              gate?: AccessGate;
           };
     removedAtTimestamp?: bigint;
     lastUpdated: number;
@@ -894,8 +898,6 @@ export type ThreadSyncDetails = {
     latestMessageIndex: number;
 };
 
-export type MemberRole = "admin" | "moderator" | "participant" | "owner" | "previewer";
-
 export type Member = {
     role: MemberRole;
     userId: string;
@@ -903,21 +905,19 @@ export type Member = {
 
 export type FullMember = Member & PartialUserSummary;
 
-export type PermissionRole = "owner" | "admins" | "moderators" | "members";
-
 export type GroupPermissions = {
-    changePermissions: PermissionRole;
-    changeRoles: PermissionRole;
-    removeMembers: PermissionRole;
-    blockUsers: PermissionRole;
-    deleteMessages: PermissionRole;
-    updateGroup: PermissionRole;
-    pinMessages: PermissionRole;
-    inviteUsers: PermissionRole;
-    createPolls: PermissionRole;
-    sendMessages: PermissionRole;
-    reactToMessages: PermissionRole;
-    replyInThread: PermissionRole;
+    changePermissions: GroupPermissionRole;
+    changeRoles: GroupPermissionRole;
+    removeMembers: GroupPermissionRole;
+    blockUsers: GroupPermissionRole;
+    deleteMessages: GroupPermissionRole;
+    updateGroup: GroupPermissionRole;
+    pinMessages: GroupPermissionRole;
+    inviteUsers: GroupPermissionRole;
+    createPolls: GroupPermissionRole;
+    sendMessages: GroupPermissionRole;
+    reactToMessages: GroupPermissionRole;
+    replyInThread: GroupPermissionRole;
 };
 
 export type GroupChatDetailsResponse = "caller_not_in_group" | GroupChatDetails;
@@ -933,7 +933,7 @@ export type GroupChatDetails = {
     invitedUsers: Set<string>;
     pinnedMessages: Set<number>;
     latestEventIndex: number;
-    rules: GroupRules;
+    rules: AccessRules;
 };
 
 /**
@@ -947,7 +947,7 @@ export type ChatSpecificState = {
     invitedUsers: Set<string>;
     pinnedMessages: Set<number>;
     latestEventIndex?: number;
-    rules?: GroupRules;
+    rules?: AccessRules;
     userIds: Set<string>;
     focusMessageIndex?: number;
     focusThreadMessageIndex?: number;
@@ -955,17 +955,6 @@ export type ChatSpecificState = {
     serverEvents: EventWrapper<ChatEvent>[];
     expandedDeletedMessages: Set<number>;
 };
-
-export type GroupRules = {
-    text: string;
-    enabled: boolean;
-};
-
-export const defaultGroupRules = `- Do not impersonate others in a deceptive or misleading manner
-- Do not intentionally share false or misleading information
-- Keep messages relevant to the group
-
-If you break the rules you might be blocked and/or have your message(s) deleted.`;
 
 export type GroupChatDetailsUpdates = {
     membersAddedOrUpdated: Member[];
@@ -975,7 +964,7 @@ export type GroupChatDetailsUpdates = {
     pinnedMessagesRemoved: Set<number>;
     pinnedMessagesAdded: Set<number>;
     latestEventIndex: number;
-    rules?: GroupRules;
+    rules?: AccessRules;
     invitedUsers?: Set<string>;
 };
 
@@ -994,35 +983,6 @@ type ChatSummaryCommon = {
     archived: boolean;
 };
 
-export type GroupGate =
-    | NoGate
-    | Sns1NeuronGate
-    | OpenChatNeuronGate
-    | DiamondGate
-    | NnsNeuronGate
-    | NftGate;
-
-export type NoGate = { kind: "no_gate" };
-
-export type NnsNeuronGate = { kind: "nns_gate" };
-
-export type NftGate = { kind: "nft_gate" };
-
-type SnsNeuronGate = {
-    minStakeE8s?: number;
-    minDissolveDelay?: number;
-};
-
-export type Sns1NeuronGate = SnsNeuronGate & {
-    kind: "sns1_gate";
-};
-
-export type OpenChatNeuronGate = SnsNeuronGate & {
-    kind: "openchat_gate";
-};
-
-export type DiamondGate = { kind: "diamond_gate" };
-
 export type DirectChatSummary = ChatSummaryCommon & {
     kind: "direct_chat";
     them: string;
@@ -1031,7 +991,10 @@ export type DirectChatSummary = ChatSummaryCommon & {
 };
 
 export type GroupChatSummary = DataContent &
-    ChatSummaryCommon & {
+    ChatSummaryCommon &
+    AccessControlled &
+    HasLevel &
+    Permissioned<GroupPermissions> & {
         kind: "group_chat";
         name: string;
         description: string;
@@ -1041,17 +1004,11 @@ export type GroupChatSummary = DataContent &
         lastUpdated: bigint;
         memberCount: number;
         mentions: Mention[];
-        public: boolean;
-        myRole: MemberRole;
-        permissions: GroupPermissions;
-        historyVisibleToNewJoiners: boolean;
         latestThreads: ThreadSyncDetails[];
         subtype: GroupSubtype;
         previewed: boolean;
-        frozen: boolean;
         dateLastPinned: bigint | undefined;
         dateReadPinned: bigint | undefined;
-        gate: GroupGate;
     };
 
 export type GroupCanisterSummaryResponse = GroupCanisterGroupChatSummary | CallerNotInGroup;
@@ -1061,32 +1018,27 @@ export type GroupCanisterSummaryUpdatesResponse =
     | { kind: "success_no_updates" }
     | CallerNotInGroup;
 
-export type GroupCanisterGroupChatSummary = {
-    chatId: string;
-    lastUpdated: bigint;
-    name: string;
-    description: string;
-    subtype: GroupSubtype;
-    avatarId: bigint | undefined;
-    public: boolean;
-    historyVisibleToNewJoiners: boolean;
-    minVisibleEventIndex: number;
-    minVisibleMessageIndex: number;
-    latestMessage: EventWrapper<Message> | undefined;
-    latestEventIndex: number;
-    joined: bigint;
-    memberCount: number;
-    myRole: MemberRole;
-    mentions: Mention[];
-    permissions: GroupPermissions;
-    notificationsMuted: boolean;
-    metrics: ChatMetrics;
-    myMetrics: ChatMetrics;
-    latestThreads: GroupCanisterThreadDetails[];
-    frozen: boolean;
-    dateLastPinned: bigint | undefined;
-    gate: GroupGate;
-};
+export type GroupCanisterGroupChatSummary = AccessControlled &
+    Permissioned<GroupPermissions> & {
+        chatId: string;
+        lastUpdated: bigint;
+        name: string;
+        description: string;
+        subtype: GroupSubtype;
+        avatarId: bigint | undefined;
+        minVisibleEventIndex: number;
+        minVisibleMessageIndex: number;
+        latestMessage: EventWrapper<Message> | undefined;
+        latestEventIndex: number;
+        joined: bigint;
+        memberCount: number;
+        mentions: Mention[];
+        notificationsMuted: boolean;
+        metrics: ChatMetrics;
+        myMetrics: ChatMetrics;
+        latestThreads: GroupCanisterThreadDetails[];
+        dateLastPinned: bigint | undefined;
+    };
 
 export type UpdatedEvent = {
     eventIndex: number;
@@ -1115,7 +1067,7 @@ export type GroupCanisterGroupChatSummaryUpdates = {
     frozen: OptionUpdate<boolean>;
     updatedEvents: UpdatedEvent[];
     dateLastPinned: bigint | undefined;
-    gate: OptionUpdate<GroupGate>;
+    gate: OptionUpdate<AccessGate>;
 };
 
 export type GroupCanisterThreadDetails = {
@@ -1145,18 +1097,16 @@ export type CandidateMember = {
     user: UserSummary;
 };
 
-export type CandidateGroupChat = {
-    chatId?: string;
-    name: string;
-    description: string;
-    rules: GroupRules;
-    historyVisible: boolean;
-    isPublic: boolean;
-    members: CandidateMember[];
-    avatar?: DataContent;
-    permissions: GroupPermissions;
-    gate: GroupGate;
-};
+export type CandidateGroupChat = HasIdentity &
+    AccessControlled &
+    HasLevel &
+    Permissioned<GroupPermissions> & {
+        name: string;
+        description: string;
+        rules: AccessRules;
+        members: CandidateMember[];
+        avatar?: DataContent;
+    };
 
 // todo - there are all sorts of error conditions here that we need to deal with but - later
 export type CreateGroupResponse =

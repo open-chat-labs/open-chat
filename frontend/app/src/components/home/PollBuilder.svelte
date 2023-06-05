@@ -278,7 +278,7 @@
     </Overlay>
 {/if}
 
-<style type="text/scss">
+<style lang="scss">
     .section {
         padding-bottom: $sp4;
 

@@ -2,26 +2,28 @@
     import { _ } from "svelte-i18n";
     import ModalContent from "../../ModalContent.svelte";
     import Button from "../../Button.svelte";
+    import { menuCloser } from "../../../actions/closeMenu";
     import GroupDetails from "./GroupDetails.svelte";
-    import GroupVisibility from "./GroupVisibility.svelte";
-    import Rules from "../groupdetails/Rules.svelte";
+    import Rules from "../Rules.svelte";
     import GroupPermissionsEditor from "../GroupPermissionsEditor.svelte";
     import GroupPermissionsViewer from "../GroupPermissionsViewer.svelte";
     import { toastStore } from "../../../stores/toast";
     import { mobileWidth } from "../../../stores/screenDimensions";
-    import ChooseMembers from "./ChooseMembers.svelte";
+    import ChooseMembers from "../ChooseMembers.svelte";
     import {
         CandidateGroupChat,
         CreateGroupResponse,
-        GroupGate,
+        AccessGate,
         OpenChat,
         UnsupportedValueError,
         UpdateGroupResponse,
     } from "openchat-client";
-    import StageHeader from "./StageHeader.svelte";
+    import StageHeader from "../StageHeader.svelte";
     import { createEventDispatcher, getContext, tick } from "svelte";
     import page from "page";
     import AreYouSure from "../../AreYouSure.svelte";
+    import VisibilityControl from "../VisibilityControl.svelte";
+    import { interpolateLevel } from "../../../utils/i18n";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -33,7 +35,6 @@
     let confirming = false;
     let busy = false;
     let step = 0;
-    let user = client.user;
     let actualWidth = 0;
     let originalGroup = {
         ...candidateGroup,
@@ -41,15 +42,13 @@
         permissions: { ...candidateGroup.permissions },
         gate: { ...candidateGroup.gate },
     };
-    $: editing = candidateGroup.chatId !== undefined;
+    $: steps = getSteps(editing);
+    $: editing = candidateGroup.id !== "";
     $: padding = $mobileWidth ? 16 : 24; // yes this is horrible
     $: left = step * (actualWidth - padding);
     $: valid = candidateGroup.name.length > MIN_LENGTH && candidateGroup.name.length <= MAX_LENGTH;
-    $: finalStep = candidateGroup.isPublic ? 3 : 4;
     $: canEditPermissions =
-        candidateGroup.chatId === undefined
-            ? true
-            : client.canChangePermissions(candidateGroup.chatId);
+        candidateGroup.id === "" ? true : client.canChangePermissions(candidateGroup.id);
 
     $: permissionsDirty = client.havePermissionsChanged(
         originalGroup.permissions,
@@ -67,24 +66,27 @@
     $: nameDirty = editing && candidateGroup.name !== originalGroup.name;
     $: descDirty = editing && candidateGroup.description !== originalGroup.description;
     $: avatarDirty = editing && candidateGroup.avatar?.blobUrl !== originalGroup.avatar?.blobUrl;
-    $: visDirty = editing && candidateGroup.isPublic !== originalGroup.isPublic;
+    $: visDirty = editing && candidateGroup.public !== originalGroup.public;
     $: infoDirty = nameDirty || descDirty || avatarDirty;
-    $: gateDirty = gatesDifferent(candidateGroup.gate, originalGroup.gate);
+    $: gateDirty = client.hasAccessGateChanged(candidateGroup.gate, originalGroup.gate);
     $: dirty = infoDirty || rulesDirty || permissionsDirty || visDirty || gateDirty;
 
-    function gatesDifferent(current: GroupGate, original: GroupGate): boolean {
-        if (current === original) return false;
-        if (current.kind !== original.kind) return true;
-        if (
-            (current.kind === "openchat_gate" || current.kind === "sns1_gate") &&
-            (original.kind === "openchat_gate" || original.kind === "sns1_gate")
-        ) {
-            return (
-                current.minDissolveDelay !== original.minDissolveDelay ||
-                current.minStakeE8s !== original.minStakeE8s
-            );
+    function getSteps(editing: boolean) {
+        let steps = [
+            { labelKey: "group.details", valid: true },
+            { labelKey: "access.visibility", valid: true },
+            { labelKey: interpolateLevel("rules.rules", candidateGroup.level), valid: true },
+            { labelKey: "permissions.permissions", valid: true },
+        ];
+
+        if (!editing) {
+            steps.push({ labelKey: "group.invite.invite", valid: true });
         }
-        return false;
+        return steps;
+    }
+
+    function interpolateError(error: string): string {
+        return interpolateLevel(error, candidateGroup.level, true);
     }
 
     function groupUpdateErrorMessage(resp: UpdateGroupResponse): string | undefined {
@@ -120,7 +122,8 @@
         if (resp.kind === "rules_too_short") return "groupRulesTooShort";
         if (resp.kind === "rules_too_long") return "groupRulesTooLong";
         if (resp.kind === "user_suspended") return "userSuspended";
-        if (resp.kind === "unauthorized_to_create_public_group") return "unauthorizedToCreatePublicGroup";
+        if (resp.kind === "unauthorized_to_create_public_group")
+            return "unauthorizedToCreatePublicGroup";
         throw new UnsupportedValueError(`Unexpected CreateGroupResponse type received`, resp);
     }
 
@@ -131,7 +134,7 @@
         return client
             .inviteUsers(
                 canisterId,
-                candidateGroup.members.map((m) => m.user.userId),
+                candidateGroup.members.map((m) => m.user.userId)
             )
             .then((resp) => {
                 if (resp !== "success") {
@@ -143,7 +146,7 @@
     function updateGroup(yes: boolean = true): Promise<void> {
         busy = true;
 
-        const makePrivate = visDirty && !candidateGroup.isPublic && originalGroup.isPublic;
+        const makePrivate = visDirty && !candidateGroup.public && originalGroup.public;
 
         if (makePrivate && !confirming) {
             confirming = true;
@@ -153,7 +156,7 @@
         if (makePrivate && confirming && !yes) {
             confirming = false;
             busy = false;
-            candidateGroup.isPublic = true;
+            candidateGroup.public = true;
             return Promise.resolve();
         }
 
@@ -176,13 +179,13 @@
     }
 
     function doMakeGroupPrivate(): Promise<void> {
-        if (candidateGroup.chatId === undefined) return Promise.resolve();
+        if (candidateGroup.id === "") return Promise.resolve();
 
-        return client.makeGroupPrivate(candidateGroup.chatId).then((success) => {
+        return client.makeGroupPrivate(candidateGroup.id).then((success) => {
             if (success) {
                 originalGroup = {
                     ...originalGroup,
-                    isPublic: candidateGroup.isPublic,
+                    public: candidateGroup.public,
                 };
             } else {
                 toastStore.showFailureToast("makeGroupPrivateFailed");
@@ -191,11 +194,11 @@
     }
 
     function doUpdatePermissions(): Promise<void> {
-        if (candidateGroup.chatId === undefined) return Promise.resolve();
+        if (candidateGroup.id === "") return Promise.resolve();
 
         return client
             .updateGroupPermissions(
-                candidateGroup.chatId,
+                candidateGroup.id,
                 originalGroup.permissions,
                 candidateGroup.permissions
             )
@@ -212,12 +215,12 @@
             });
     }
 
-    function doUpdateGate(gate: GroupGate): Promise<void> {
-        if (candidateGroup.chatId === undefined) return Promise.resolve();
+    function doUpdateGate(gate: AccessGate): Promise<void> {
+        if (candidateGroup.id === "") return Promise.resolve();
 
         return client
             .updateGroup(
-                candidateGroup.chatId,
+                candidateGroup.id,
                 undefined,
                 undefined,
                 undefined,
@@ -228,7 +231,7 @@
             .then((resp) => {
                 const err = groupUpdateErrorMessage(resp);
                 if (err) {
-                    toastStore.showFailureToast(err);
+                    toastStore.showFailureToast(interpolateError(err));
                 } else {
                     originalGroup = {
                         ...originalGroup,
@@ -237,33 +240,33 @@
                 }
             })
             .catch(() => {
-                toastStore.showFailureToast("groupUpdateFailed");
+                toastStore.showFailureToast("groupUpdateFailed", {
+                    values: { level: candidateGroup.level },
+                });
             });
     }
 
     function doUpdateRules(): Promise<void> {
-        if (candidateGroup.chatId === undefined) return Promise.resolve();
+        if (candidateGroup.id === "") return Promise.resolve();
 
-        return client
-            .updateGroupRules(candidateGroup.chatId, candidateGroup.rules)
-            .then((success) => {
-                if (success) {
-                    dispatch("updateGroupRules", {
-                        chatId: candidateGroup.chatId,
-                        rules: candidateGroup.rules,
-                    });
-                } else {
-                    toastStore.showFailureToast("group.rulesUpdateFailed");
-                }
-            });
+        return client.updateGroupRules(candidateGroup.id, candidateGroup.rules).then((success) => {
+            if (success) {
+                dispatch("updateGroupRules", {
+                    chatId: candidateGroup.id,
+                    rules: candidateGroup.rules,
+                });
+            } else {
+                toastStore.showFailureToast(interpolateError("group.rulesUpdateFailed"));
+            }
+        });
     }
 
     function doUpdateInfo(): Promise<void> {
-        if (candidateGroup.chatId === undefined) return Promise.resolve();
+        if (candidateGroup.id === "") return Promise.resolve();
 
         return client
             .updateGroup(
-                candidateGroup.chatId,
+                candidateGroup.id,
                 nameDirty ? candidateGroup.name : undefined,
                 descDirty ? candidateGroup.description : undefined,
                 undefined,
@@ -274,7 +277,7 @@
             .then((resp) => {
                 const err = groupUpdateErrorMessage(resp);
                 if (err) {
-                    toastStore.showFailureToast(err);
+                    toastStore.showFailureToast(interpolateError(err));
                 } else {
                     originalGroup = {
                         ...originalGroup,
@@ -285,7 +288,9 @@
                 }
             })
             .catch(() => {
-                toastStore.showFailureToast("groupUpdateFailed");
+                toastStore.showFailureToast("groupUpdateFailed", {
+                    values: { level: candidateGroup.level },
+                });
             });
     }
 
@@ -297,7 +302,7 @@
             .then((resp) => {
                 if (resp.kind !== "success") {
                     const err = groupCreationErrorMessage(resp);
-                    if (err) toastStore.showFailureToast(err);
+                    if (err) toastStore.showFailureToast(interpolateError(err));
                     step = 0;
                 } else {
                     return optionallyInviteUsers(resp.canisterId)
@@ -318,10 +323,10 @@
     }
 
     function onGroupCreated(canisterId: string) {
-        const url = `/${canisterId}`;
+        const url = `/group/${canisterId}`;
         dispatch("groupCreated", {
             chatId: canisterId,
-            isPublic: candidateGroup.isPublic,
+            public: candidateGroup.public,
             rules: candidateGroup.rules,
         });
         dispatch("close");
@@ -342,34 +347,42 @@
 {/if}
 
 <ModalContent bind:actualWidth closeIcon on:close>
-    <div class="header" slot="header">{editing ? $_("group.edit") : $_("group.createTitle")}</div>
+    <div class="header" slot="header">
+        {editing
+            ? interpolateLevel("group.edit", candidateGroup.level, true)
+            : interpolateLevel("group.createTitle", candidateGroup.level, true)}
+    </div>
     <div class="body" slot="body">
-        <StageHeader {editing} {candidateGroup} enabled={valid} on:step={changeStep} {step} />
+        <StageHeader {steps} enabled={valid} on:step={changeStep} {step} />
         <div class="wrapper">
             <div class="sections" style={`left: -${left}px`}>
                 <div class="details" class:visible={step === 0}>
                     <GroupDetails {busy} bind:candidateGroup />
                 </div>
                 <div class="visibility" class:visible={step === 1}>
-                    <GroupVisibility on:upgrade {originalGroup} {editing} bind:candidateGroup />
+                    <VisibilityControl
+                        on:upgrade
+                        original={originalGroup}
+                        {editing}
+                        bind:candidate={candidateGroup} />
                 </div>
                 <div class="rules" class:visible={step === 2}>
-                    <Rules bind:rules={candidateGroup.rules} />
+                    <Rules level={candidateGroup.level} bind:rules={candidateGroup.rules} />
                 </div>
-                <div class="permissions" class:visible={step === 3}>
+                <div use:menuCloser class="permissions" class:visible={step === 3}>
                     {#if canEditPermissions}
                         <GroupPermissionsEditor
                             bind:permissions={candidateGroup.permissions}
-                            isPublic={candidateGroup.isPublic} />
+                            isPublic={candidateGroup.public} />
                     {:else}
                         <GroupPermissionsViewer
                             bind:permissions={candidateGroup.permissions}
-                            isPublic={candidateGroup.isPublic} />
+                            isPublic={candidateGroup.public} />
                     {/if}
                 </div>
-                {#if !candidateGroup.isPublic && !editing}
+                {#if !editing}
                     <div class="members" class:visible={step === 4}>
-                        <ChooseMembers bind:candidateGroup {busy} />
+                        <ChooseMembers bind:members={candidateGroup.members} {busy} />
                     </div>
                 {/if}
             </div>
@@ -400,8 +413,9 @@
                         loading={busy}
                         small={!$mobileWidth}
                         tiny={$mobileWidth}
-                        on:click={() => updateGroup()}>{$_("group.update")}</Button>
-                {:else if step < finalStep}
+                        on:click={() => updateGroup()}
+                        >{interpolateLevel("group.update", candidateGroup.level, true)}</Button>
+                {:else if step < 4}
                     <Button
                         disabled={!valid}
                         small={!$mobileWidth}
@@ -415,14 +429,15 @@
                         loading={busy}
                         small={!$mobileWidth}
                         tiny={$mobileWidth}
-                        on:click={createGroup}>{$_("group.create")}</Button>
+                        on:click={createGroup}
+                        >{interpolateLevel("group.create", candidateGroup.level, true)}</Button>
                 {/if}
             </div>
         </div>
     </span>
 </ModalContent>
 
-<style type="text/scss">
+<style lang="scss">
     :global(.group-buttons button:not(.loading)) {
         @include mobile() {
             min-width: 0 !important;

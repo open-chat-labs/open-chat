@@ -4,5 +4,5 @@
 
 <Features landing isDiamond={false} canExtend={false} />
 
-<style type="text/scss">
+<style lang="scss">
 </style>

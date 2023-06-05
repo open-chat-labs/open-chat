@@ -54,7 +54,7 @@
     </div>
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .qr-wrapper {
         padding: $sp5;
         display: flex;

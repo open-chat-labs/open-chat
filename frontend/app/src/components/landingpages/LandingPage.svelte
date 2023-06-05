@@ -138,7 +138,7 @@
     {/if}
 </main>
 
-<style type="text/scss">
+<style lang="scss">
     :global(.landing-page .card) {
         --bd: var(--landing-bd);
         --collapsible-closed-header-txt: var(--landing-txt-light);
