@@ -1,3 +1,5 @@
+use candid::Principal;
+
 mod invited_users;
 mod members;
 mod mentions;
@@ -17,7 +19,7 @@ use types::{
     AccessGate, AccessRules, Avatar, AvatarChanged, ContentValidationError, CryptoTransaction, EventIndex, EventWrapper,
     EventsResponse, FieldTooLongResult, FieldTooShortResult, GroupDescriptionChanged, GroupGateUpdated, GroupNameChanged,
     GroupPermissionRole, GroupPermissions, GroupReplyContext, GroupRole, GroupRulesChanged, GroupSubtype,
-    GroupVisibilityChanged, InvalidPollReason, MemberLeft, MembersRemoved, MentionInternal, Message, MessageContent,
+    GroupVisibilityChanged, InvalidPollReason, MemberLeft, MembersRemoved, Mention, MentionInternal, Message, MessageContent,
     MessageContentInitial, MessageContentInternal, MessageId, MessageIndex, MessageMatch, MessagePinned, MessageUnpinned,
     MessagesResponse, Milliseconds, OptionUpdate, OptionalGroupPermissions, PermissionsChanged, PushEventResult, Reaction,
     RoleChanged, ThreadPreview, TimestampMillis, Timestamped, User, UserId, UsersBlocked, UsersInvited,
@@ -91,6 +93,148 @@ impl GroupChatCore {
                 .and_then(|u| self.members.get(&u))
                 .map(|m| m.min_visible_event_index())
         }
+    }
+
+    pub fn has_updates_since_by_user_id(&self, user_id: &UserId, since: TimestampMillis) -> bool {
+        match self.members.get(user_id) {
+            Some(m) => self.has_updates_since(m, since),
+            _ => true,
+        }
+    }
+
+    pub fn has_updates_since(&self, member: &GroupMemberInternal, since: TimestampMillis) -> bool {
+        self.events.has_updates_since(since)
+            || self.invited_users.last_updated() > since
+            || member.date_added > since
+            || member.notifications_muted.timestamp > since
+    }
+
+    pub fn updates_from_events(
+        &self,
+        since: TimestampMillis,
+        member: &GroupMemberInternal,
+        now: TimestampMillis,
+    ) -> UpdatesFromEvents {
+        let events_reader = self.events.visible_main_events_reader(member.min_visible_event_index(), now);
+
+        let mut updates = UpdatesFromEvents {
+            // We need to handle this separately because the message may have been sent before 'since' but
+            // then subsequently updated after 'since', in this scenario the message would not be picked up
+            // during the iteration below.
+            latest_message: events_reader.latest_message_event_if_updated(since, Some(member.user_id)),
+            updated_events: self
+                .events
+                .iter_recently_updated_events()
+                .take_while(|(_, _, ts)| *ts > since)
+                .take(1000)
+                .collect(),
+            mentions: member.most_recent_mentions(Some(since), &self.events, now),
+            ..Default::default()
+        };
+
+        if self.subtype.timestamp > since {
+            updates.subtype = OptionUpdate::from_update(self.subtype.value.clone());
+        }
+
+        if self
+            .date_last_pinned
+            .map_or(false, |date_last_pinned| date_last_pinned > since)
+        {
+            updates.date_last_pinned = self.date_last_pinned;
+        }
+
+        if self.gate.timestamp > since {
+            updates.gate = OptionUpdate::from_update(self.gate.value.clone());
+        }
+
+        let new_proposal_votes =
+            member
+                .proposal_votes
+                .iter()
+                .rev()
+                .take_while(|(&t, _)| t > since)
+                .flat_map(|(&t, message_indexes)| {
+                    message_indexes
+                        .iter()
+                        .filter_map(|&m| events_reader.event_index(m.into()))
+                        .map(move |e| (None, e, t))
+                });
+
+        updates.updated_events.extend(new_proposal_votes);
+
+        // Iterate through events starting from most recent
+        for event_wrapper in events_reader.iter(None, false).take_while(|e| e.timestamp > since) {
+            if updates.latest_event_index.is_none() {
+                updates.latest_event_index = Some(event_wrapper.index);
+            }
+
+            match &event_wrapper.event {
+                ChatEventInternal::GroupNameChanged(n) => {
+                    if updates.name.is_none() {
+                        updates.name = Some(n.new_name.clone());
+                    }
+                }
+                ChatEventInternal::GroupDescriptionChanged(n) => {
+                    if updates.description.is_none() {
+                        updates.description = Some(n.new_description.clone());
+                    }
+                }
+                ChatEventInternal::AvatarChanged(a) => {
+                    if !updates.avatar_id.has_update() {
+                        updates.avatar_id = OptionUpdate::from_update(a.new_avatar);
+                    }
+                }
+                ChatEventInternal::RoleChanged(r) => {
+                    if r.user_ids.contains(&member.user_id) {
+                        updates.role_changed = true;
+                    }
+                }
+                ChatEventInternal::ParticipantAssumesSuperAdmin(p) => {
+                    if p.user_id == member.user_id {
+                        updates.role_changed = true;
+                    }
+                }
+                ChatEventInternal::ParticipantDismissedAsSuperAdmin(p) => {
+                    if p.user_id == member.user_id {
+                        updates.role_changed = true;
+                    }
+                }
+                ChatEventInternal::ParticipantRelinquishesSuperAdmin(p) => {
+                    if p.user_id == member.user_id {
+                        updates.role_changed = true;
+                    }
+                }
+                ChatEventInternal::ParticipantsAdded(_)
+                | ChatEventInternal::ParticipantsRemoved(_)
+                | ChatEventInternal::ParticipantJoined(_)
+                | ChatEventInternal::ParticipantLeft(_)
+                | ChatEventInternal::UsersBlocked(_)
+                | ChatEventInternal::UsersUnblocked(_) => {
+                    updates.members_changed = true;
+                }
+                ChatEventInternal::OwnershipTransferred(ownership) => {
+                    if ownership.new_owner == member.user_id || ownership.old_owner == member.user_id {
+                        updates.role_changed = true;
+                    }
+                }
+                ChatEventInternal::PermissionsChanged(p) => {
+                    if updates.permissions.is_none() {
+                        updates.permissions = Some(p.new_permissions.clone());
+                    }
+                }
+                ChatEventInternal::GroupVisibilityChanged(v) => {
+                    updates.is_public = Some(v.now_public);
+                }
+                ChatEventInternal::EventsTimeToLiveUpdated(u) => {
+                    if !updates.events_ttl.has_update() {
+                        updates.events_ttl = OptionUpdate::from_update(u.new_ttl);
+                    }
+                }
+                _ => {}
+            }
+        }
+
+        updates
     }
 
     pub fn events(
@@ -1431,4 +1575,23 @@ pub enum InvitedUsersResult {
 pub struct InvitedUsersSuccess {
     pub invited_users: Vec<UserId>,
     pub group_name: String,
+}
+
+#[derive(Default)]
+pub struct UpdatesFromEvents {
+    pub name: Option<String>,
+    pub description: Option<String>,
+    pub subtype: OptionUpdate<GroupSubtype>,
+    pub avatar_id: OptionUpdate<u128>,
+    pub latest_message: Option<EventWrapper<Message>>,
+    pub latest_event_index: Option<EventIndex>,
+    pub members_changed: bool,
+    pub role_changed: bool,
+    pub mentions: Vec<Mention>,
+    pub permissions: Option<GroupPermissions>,
+    pub updated_events: Vec<(Option<MessageIndex>, EventIndex, TimestampMillis)>,
+    pub is_public: Option<bool>,
+    pub date_last_pinned: Option<TimestampMillis>,
+    pub events_ttl: OptionUpdate<Milliseconds>,
+    pub gate: OptionUpdate<AccessGate>,
 }

@@ -39,7 +39,7 @@ fn delete_channel_impl(channel_id: ChannelId, state: &mut RuntimeState) -> Respo
                     );
 
                     for user_id in channel.chat.members.iter().map(|m| m.user_id) {
-                        state.data.members.mark_member_left_channel(&user_id, &channel_id);
+                        state.data.members.mark_member_left_channel(&user_id, channel_id, now);
                     }
 
                     Success
