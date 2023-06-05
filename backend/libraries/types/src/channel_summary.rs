@@ -1,6 +1,6 @@
 use crate::{
     AccessGate, ChannelId, ChatMetrics, EventIndex, EventWrapper, GroupCanisterThreadDetails, GroupPermissions, GroupRole,
-    GroupSubtype, Mention, Message, MessageIndex, Milliseconds, RangeSet, TimestampMillis,
+    GroupSubtype, Mention, Message, MessageIndex, Milliseconds, OptionUpdate, RangeSet, TimestampMillis,
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
@@ -33,4 +33,28 @@ pub struct CommunityCanisterChannelSummary {
     pub expired_messages: RangeSet<MessageIndex>,
     pub next_message_expiry: Option<TimestampMillis>,
     pub gate: Option<AccessGate>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct CommunityCanisterChannelSummaryUpdates {
+    pub channel_id: ChannelId,
+    pub last_updated: TimestampMillis,
+    pub name: Option<String>,
+    pub description: Option<String>,
+    pub subtype: OptionUpdate<GroupSubtype>,
+    pub avatar_id: OptionUpdate<u128>,
+    pub is_public: Option<bool>,
+    pub latest_message: Option<EventWrapper<Message>>,
+    pub latest_event_index: Option<EventIndex>,
+    pub member_count: Option<u32>,
+    pub role: Option<GroupRole>,
+    pub mentions: Vec<Mention>,
+    pub permissions: Option<GroupPermissions>,
+    pub notifications_muted: Option<bool>,
+    pub metrics: Option<ChatMetrics>,
+    pub my_metrics: Option<ChatMetrics>,
+    pub latest_threads: Vec<GroupCanisterThreadDetails>,
+    pub date_last_pinned: Option<TimestampMillis>,
+    pub events_ttl: OptionUpdate<Milliseconds>,
+    pub gate: OptionUpdate<AccessGate>,
 }
