@@ -79,7 +79,7 @@
 
 <ContentCaption caption={content.caption} {edited} {reply} />
 
-<style type="text/scss">
+<style lang="scss">
     .img-wrapper {
         position: relative;
     }

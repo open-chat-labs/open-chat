@@ -21,7 +21,7 @@
     class:selected
     on:click={clickLink}><slot /></a>
 
-<style type="text/scss">
+<style lang="scss">
     .menu {
         text-decoration: none;
         @include font-size(fs-100);

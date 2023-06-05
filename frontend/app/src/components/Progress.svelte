@@ -17,7 +17,7 @@
     </div>
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     $progress-bar-x-large: 40px;
 
     .bar {

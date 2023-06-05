@@ -17,7 +17,7 @@
     {/each}
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .blog {
         text-align: left;
         @include lp-content-padding();

@@ -34,7 +34,7 @@
     {/if} -->
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .container {
         display: flex;
         flex-direction: column;

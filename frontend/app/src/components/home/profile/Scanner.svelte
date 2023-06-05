@@ -108,7 +108,7 @@
 
 <canvas class="scanner" bind:this={canvasElement} hidden />
 
-<style type="text/scss">
+<style lang="scss">
     .scanner {
         margin-bottom: $sp4;
         border: 4px dashed var(--bd);

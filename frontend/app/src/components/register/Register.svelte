@@ -75,7 +75,7 @@
             } else if (resp.kind === "referral_code_already_claimed") {
                 error.set("register.referralCodeAlreadyClaimed");
                 badCode = true;
-            }  else if (resp.kind === "referral_code_expired") {
+            } else if (resp.kind === "referral_code_expired") {
                 error.set("register.referralCodeExpired");
                 badCode = true;
             } else if (resp.kind === "success") {
@@ -91,8 +91,8 @@
                     suspensionDetails: undefined,
                     isSuspectedBot: false,
                     diamondMembership: undefined,
-                }
-                dispatch("createdUser", createdUser)
+                };
+                dispatch("createdUser", createdUser);
             }
         });
     }
@@ -204,7 +204,7 @@
 
 <Toast />
 
-<style type="text/scss">
+<style lang="scss">
     :global(.guidelines-modal .card .header:not(.open) .arrow path) {
         fill: var(--txt);
     }

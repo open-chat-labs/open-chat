@@ -45,7 +45,7 @@
     {/if}
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     $online: limegreen;
     $status-size: 10px;
 

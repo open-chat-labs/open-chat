@@ -198,7 +198,7 @@
     </CollapsibleCard>
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     :global(.threads .link-button) {
         color: var(--timeline-txt);
         @include font(book, normal, fs-90);

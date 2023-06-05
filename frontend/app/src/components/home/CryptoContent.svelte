@@ -53,7 +53,7 @@
     <Markdown text={content.caption} inline={!reply} />
 {/if}
 
-<style type="text/scss">
+<style lang="scss">
     .unexpected {
         @include font(light, italic, fs-90);
     }

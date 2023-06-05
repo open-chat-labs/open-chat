@@ -36,7 +36,7 @@
     </div>
 {/if}
 
-<style type="text/scss">
+<style lang="scss">
     .row {
         display: flex;
         justify-content: space-between;

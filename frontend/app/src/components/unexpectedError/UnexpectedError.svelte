@@ -17,7 +17,7 @@
     </div>
 </ModalPage>
 
-<style type="text/scss">
+<style lang="scss">
     .content {
         display: flex;
         flex-direction: column;

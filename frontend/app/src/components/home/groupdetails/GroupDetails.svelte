@@ -19,9 +19,10 @@
     } from "../../../stores/settings";
     import AdvancedSection from "./AdvancedSection.svelte";
     import InviteUsersWithLink from "./InviteUsersWithLink.svelte";
-    import type { OpenChat, GroupChatSummary, GroupRules } from "openchat-client";
+    import type { OpenChat, GroupChatSummary, AccessRules } from "openchat-client";
     import { AvatarSize } from "openchat-client";
-    import GroupGateSummary from "./GroupGateSummary.svelte";
+    import GroupGateSummary from "./AccessGateSummary.svelte";
+    import { interpolateLevel } from "../../../utils/i18n";
 
     const dispatch = createEventDispatcher();
 
@@ -30,7 +31,7 @@
 
     export let chat: GroupChatSummary;
     export let memberCount: number;
-    export let rules: GroupRules | undefined;
+    export let rules: AccessRules | undefined;
 
     // capture a snapshot of the chat as it is right now
     $: canEdit = client.canEditGroupDetails(chat.chatId);
@@ -63,6 +64,7 @@
 </script>
 
 <GroupDetailsHeader
+    level={chat.level}
     {canEdit}
     on:showMembers={showMembers}
     on:close={clickClose}
@@ -73,7 +75,7 @@
         <CollapsibleCard
             on:toggle={groupInfoOpen.toggle}
             open={$groupInfoOpen}
-            headerText={$_("group.groupInfo")}>
+            headerText={interpolateLevel("group.groupInfo", chat.level)}>
             <div class="sub-section photo">
                 <Avatar url={avatarSrc} size={AvatarSize.Large} />
 
@@ -86,7 +88,7 @@
             {#if chat.description?.length > 0}
                 <fieldset>
                     <legend>
-                        <Legend label={$_("groupDesc")} />
+                        <Legend label={interpolateLevel("groupDesc", chat.level)} />
                     </legend>
                     <Markdown text={description(chat)} />
                 </fieldset>
@@ -95,20 +97,20 @@
         <CollapsibleCard
             on:toggle={groupVisibilityOpen.toggle}
             open={$groupVisibilityOpen}
-            headerText={$_("group.visibility")}>
+            headerText={$_("access.visibility")}>
             {#if chat.public}
-                <h4>{$_("group.publicGroup")}</h4>
+                <h4>{interpolateLevel("group.publicGroup", chat.level, true)}</h4>
             {:else}
-                <h4>{$_("group.privateGroup")}</h4>
+                <h4>{interpolateLevel("group.privateGroup", chat.level, true)}</h4>
             {/if}
             <div class="info">
                 {#if chat.public}
-                    <p>{$_("publicGroupInfo")}</p>
+                    <p>{interpolateLevel("publicGroupInfo", chat.level, true)}</p>
                 {:else}
-                    <p>{$_("group.privateGroupInfo")}</p>
+                    <p>{interpolateLevel("group.privateGroupInfo", chat.level, true)}</p>
                 {/if}
                 {#if !chat.public}
-                    {#if chat.historyVisibleToNewJoiners}
+                    {#if chat.historyVisible}
                         <p>{$_("historyOnInfo")}</p>
                     {:else}
                         <p>{$_("historyOffInfo")}</p>
@@ -121,7 +123,7 @@
             <CollapsibleCard
                 on:toggle={groupRulesOpen.toggle}
                 open={$groupRulesOpen}
-                headerText={$_("group.groupRules")}>
+                headerText={interpolateLevel("rules.rules", chat.level)}>
                 <Markdown inline={false} text={rules.text} />
             </CollapsibleCard>
         {/if}
@@ -136,13 +138,13 @@
         <CollapsibleCard
             on:toggle={groupPermissionsOpen.toggle}
             open={$groupPermissionsOpen}
-            headerText={$_("group.permissions.permissions")}>
+            headerText={$_("permissions.permissions")}>
             <GroupPermissionsViewer bind:permissions={chat.permissions} isPublic={chat.public} />
         </CollapsibleCard>
         <CollapsibleCard
             on:toggle={groupStatsOpen.toggle}
             open={$groupStatsOpen}
-            headerText={$_("stats.groupStats")}>
+            headerText={interpolateLevel("stats.groupStats", chat.level)}>
             <Stats showReported={false} stats={chat.metrics} />
         </CollapsibleCard>
         {#if client.canDeleteGroup(chat.chatId)}
@@ -156,7 +158,7 @@
     </div>
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .photo {
         text-align: center;
     }

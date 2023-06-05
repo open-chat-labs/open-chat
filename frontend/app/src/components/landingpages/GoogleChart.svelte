@@ -28,7 +28,7 @@
         {src} />
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .wrapper {
         margin-bottom: $sp5;
         overflow: hidden;

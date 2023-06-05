@@ -17,6 +17,7 @@
     });
 
     $: remaining = typeof value === "string" ? maxlength - value.length : 0;
+    $: warn = remaining <= 5;
 </script>
 
 <div class="outer-wrapper">
@@ -34,12 +35,12 @@
             class={"textbox"} />
     </div>
     {#if maxlength < Number.MAX_VALUE}
-        <div class:near-max={remaining <= 5} class="countdown">{value.length}/{maxlength}</div>
+        <div class:warn class="countdown">{value.length}/{maxlength}</div>
     {/if}
     <slot />
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .outer-wrapper {
         margin-bottom: $sp3;
     }
@@ -53,7 +54,7 @@
         @include font(light, normal, fs-80);
         color: var(--txt-light);
 
-        &.near-max {
+        &.warn {
             color: var(--warn);
         }
     }

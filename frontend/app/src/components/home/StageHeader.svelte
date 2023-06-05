@@ -1,13 +1,19 @@
 <script lang="ts">
-    import type { CandidateGroupChat } from "openchat-client";
     import { _ } from "svelte-i18n";
-    import { createEventDispatcher } from "svelte";
+    import { afterUpdate, createEventDispatcher } from "svelte";
+    import { menuStore } from "../../stores/menu";
     const dispatch = createEventDispatcher();
+
+    type Step = {
+        labelKey: string;
+        valid: boolean;
+    };
 
     export let step: number;
     export let enabled: boolean;
-    export let candidateGroup: CandidateGroupChat;
-    export let editing: boolean;
+    export let steps: Step[];
+
+    afterUpdate(() => menuStore.hideMenu());
 
     function selectStep(n: number) {
         if (enabled) {
@@ -17,26 +23,20 @@
 </script>
 
 <div class="steps" class:enabled>
-    <div on:click={() => selectStep(0)} class:selected={step === 0} class="step">
-        {$_("group.details")}
-    </div>
-    <div on:click={() => selectStep(1)} class:selected={step === 1} class="step">
-        {$_("group.visibility")}
-    </div>
-    <div on:click={() => selectStep(2)} class:selected={step === 2} class="step">
-        {$_("group.groupRules")}
-    </div>
-    <div on:click={() => selectStep(3)} class:selected={step === 3} class="step">
-        {$_("group.permissions.permissions")}
-    </div>
-    {#if !candidateGroup.isPublic && !editing}
-        <div on:click={() => selectStep(4)} class:selected={step === 4} class="step">
-            {$_("group.invite.invite")}
+    {#each steps as s, i}
+        <!-- svelte-ignore a11y-click-events-have-key-events -->
+        <div
+            role="button"
+            class:invalid={!s.valid}
+            on:click={() => selectStep(i)}
+            class:selected={step === i}
+            class="step">
+            {$_(s.labelKey)}
         </div>
-    {/if}
+    {/each}
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .steps {
         display: flex;
         align-items: center;
@@ -60,6 +60,10 @@
             &.selected {
                 color: var(--txt);
                 border-bottom: 4px solid var(--primary);
+            }
+            &.invalid::after {
+                content: "!";
+                color: var(--menu-warn);
             }
         }
 

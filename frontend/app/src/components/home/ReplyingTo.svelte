@@ -53,7 +53,7 @@
         reply={true} />
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     :global(.replying.me a) {
         color: inherit;
     }

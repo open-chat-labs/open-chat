@@ -29,7 +29,7 @@
     {/if}
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     $ckbtc: #4e27c7;
     .card {
         margin-bottom: $sp5;

@@ -109,7 +109,7 @@
     </div>
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     :global(.message-bubble .content a) {
         text-decoration: underline;
     }

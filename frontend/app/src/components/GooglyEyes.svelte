@@ -67,7 +67,7 @@
     height="15.579"
     style="stroke: rgb(51,51,51); fill: rgb(25, 25, 25);" />
 
-<style type="text/scss">
+<style lang="scss">
     .eye {
         transition: x 100ms ease-in-out, y 100ms ease-in-out;
     }

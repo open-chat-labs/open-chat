@@ -23,9 +23,7 @@ import type {
     GroupChatDetailsResponse,
     GroupChatEvent,
     GroupChatSummary,
-    GroupGate,
     GroupPermissions,
-    GroupRules,
     IndexRange,
     InviteCodeResponse,
     JoinGroupResponse,
@@ -34,7 +32,6 @@ import type {
     MakeGroupPrivateResponse,
     MarkReadRequest,
     MarkReadResponse,
-    MemberRole,
     Message,
     PendingCryptocurrencyWithdrawal,
     PinMessageResponse,
@@ -93,6 +90,8 @@ import type {
 } from "./search/search";
 import type { Cryptocurrency, Tokens } from "./crypto";
 import type { GroupInvite } from "./inviteCodes";
+import type { MemberRole } from "./permission";
+import type { AccessGate, AccessRules } from "./access";
 
 /**
  * Worker request types
@@ -547,10 +546,10 @@ type UpdateGroup = Request<{
     chatId: string;
     name?: string;
     desc?: string;
-    rules?: GroupRules;
+    rules?: AccessRules;
     permissions?: Partial<GroupPermissions>;
     avatar?: Uint8Array;
-    gate?: GroupGate;
+    gate?: AccessGate;
 }> & {
     kind: "updateGroup";
 };
@@ -878,7 +877,7 @@ export type WorkerResponse =
     | Response<SearchDirectChatResponse>
     | Response<SearchGroupChatResponse>
     | Response<GroupSearchResponse>
-    | Response<GroupRules | undefined>
+    | Response<AccessRules | undefined>
     | Response<GroupChatSummary[]>
     | Response<RegisterProposalVoteResponse>
     | Response<ChangeRoleResponse>

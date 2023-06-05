@@ -40,7 +40,7 @@ import {
     JoinGroupResponse,
     UpdateGroupResponse,
     GroupPermissions,
-    GroupRules,
+    AccessRules,
     RegisterPollVoteResponse,
     DeleteMessageResponse,
     UndeleteMessageResponse,
@@ -92,7 +92,7 @@ import {
     SetUserUpgradeConcurrencyResponse,
     UpdateMarketMakerConfigArgs,
     UpdateMarketMakerConfigResponse,
-    GroupGate,
+    AccessGate,
     ProposalVoteDetails,
     SetMessageReminderResponse,
     ReferralLeaderboardRange,
@@ -659,10 +659,10 @@ export class OpenChatAgentWorker extends EventTarget {
         chatId: string,
         name?: string,
         desc?: string,
-        rules?: GroupRules,
+        rules?: AccessRules,
         permissions?: Partial<GroupPermissions>,
         avatar?: Uint8Array,
-        gate?: GroupGate
+        gate?: AccessGate
     ): Promise<UpdateGroupResponse> {
         return this.sendRequest({
             kind: "updateGroup",
@@ -1004,7 +1004,7 @@ export class OpenChatAgentWorker extends EventTarget {
         });
     }
 
-    getGroupRules(chatId: string): Promise<GroupRules | undefined> {
+    getGroupRules(chatId: string): Promise<AccessRules | undefined> {
         return this.sendRequest({
             kind: "getGroupRules",
             payload: {

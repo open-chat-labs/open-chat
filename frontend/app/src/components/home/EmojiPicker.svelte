@@ -22,7 +22,7 @@
     class:dark={theme === "dark"}
     class:light={theme === "light" || theme === "original"} />
 
-<style type="text/scss">
+<style lang="scss">
     emoji-picker {
         width: 100%;
         --num-columns: 24;

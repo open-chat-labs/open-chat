@@ -10,7 +10,7 @@
     <Button on:click={() => page("/hotgroups")}>{$_("showHotGroups")}</Button>
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .wrapper {
         display: flex;
         flex-direction: column;

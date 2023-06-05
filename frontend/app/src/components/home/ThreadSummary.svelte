@@ -91,7 +91,7 @@
     {/if}
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     $avatar-width: 53px;
     $avatar-width-mob: 43px;
 

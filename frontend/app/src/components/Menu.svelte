@@ -8,9 +8,9 @@
     <slot />
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .menu {
-        width: toRem(200);
+        width: toRem(250);
         background-color: var(--menu-bg);
         box-shadow: var(--menu-sh);
         border-radius: $sp2;

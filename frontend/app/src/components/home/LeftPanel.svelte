@@ -29,6 +29,9 @@
             on:wallet
             on:upgrade
             on:toggleMuteNotifications
+            on:browseChannels
+            on:editCommunity
+            on:newChannel
             {searchResultsAvailable}
             {searchTerm}
             {searching}
@@ -37,7 +40,7 @@
     </div>
 </Panel>
 
-<style type="text/scss">
+<style lang="scss">
     .chat-list {
         display: flex;
         flex-direction: column;

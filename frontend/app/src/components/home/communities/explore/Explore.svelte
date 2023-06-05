@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { dummyCommunities } from "../../../../stores/community";
+    import { dummyCommunities, myCommunities } from "../../../../stores/community";
     import { _ } from "svelte-i18n";
     import Button from "../../../Button.svelte";
     import Select from "../../../Select.svelte";
@@ -8,12 +8,51 @@
     import Search from "../../..//Search.svelte";
     import { pathParams } from "../../../../routes";
     import { mobileWidth } from "../../../../stores/screenDimensions";
+    import Filters from "./Filters.svelte";
+    import type { Community, OpenChat } from "openchat-client";
+    import { createEventDispatcher, getContext } from "svelte";
+
+    const client = getContext<OpenChat>("client");
+    const dispatch = createEventDispatcher();
 
     let searchTerm = "";
     let searching = false;
+    let joining: Set<string> = new Set();
+    let canCreate = true; //TODO - permissions?
+
+    $: isDiamond = client.isDiamond;
 
     $: selectedCommunityId =
         $pathParams.kind === "communities_route" ? $pathParams.communityId : undefined;
+
+    $: myCommunitiesLookup = client.toRecord2(
+        $myCommunities,
+        (c) => c.id,
+        (c) => c
+    );
+
+    $: communities = $dummyCommunities.filter((c) => myCommunitiesLookup[c.id] === undefined);
+
+    function joinCommunity(ev: CustomEvent<Community>) {
+        joining.add(ev.detail.id);
+        joining = joining;
+
+        setTimeout(() => {
+            myCommunities.update((communities) => {
+                return [ev.detail, ...communities];
+            });
+            joining.delete(ev.detail.id);
+            joining = joining;
+        }, 2000);
+    }
+
+    function createCommunity() {
+        if (!$isDiamond) {
+            dispatch("upgrade");
+        } else {
+            dispatch("createCommunity");
+        }
+    }
 </script>
 
 <div class="explore">
@@ -30,15 +69,16 @@
                         bind:searching
                         placeholder={$_("communities.search")} />
                 </div>
-                <div class="create">
-                    <Button>Create a community</Button>
-                </div>
+                {#if canCreate}
+                    <div class="create">
+                        <Button on:click={createCommunity} hollow
+                            >{$_("communities.create")}</Button>
+                    </div>
+                {/if}
             {/if}
         </div>
         <div class="subtitle-row">
-            <div class="tags">
-                <p>All, Gaming, Crypto, Metaverse, Sport, Music</p>
-            </div>
+            <Filters />
             {#if $mobileWidth}
                 <div class="search">
                     <Search
@@ -63,18 +103,18 @@
     </div>
 
     <div class="communities">
-        {#each $dummyCommunities as community}
+        {#each communities as community}
             <CommunityCard
+                on:joinCommunity={joinCommunity}
                 selected={selectedCommunityId === community.id}
                 {community}
-                on:click={() => page(`/communities/${community.id}`)}>
-                {community.name}
-            </CommunityCard>
+                joining={joining.has(community.id)}
+                on:click={() => page(`/communities/${community.id}`)} />
         {/each}
     </div>
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .explore {
         display: flex;
         flex-direction: column;

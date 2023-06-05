@@ -126,7 +126,7 @@
 
 {#if user}
     {#if $communitiesEnabled}
-        <CurrentSelection />
+        <CurrentSelection on:newChannel on:editCommunity on:browseChannels />
     {:else}
         <CurrentUser
             on:wallet
@@ -229,7 +229,7 @@
     <NotificationsBar />
 {/if}
 
-<style type="text/scss">
+<style lang="scss">
     .body {
         overflow: auto;
         flex: auto;

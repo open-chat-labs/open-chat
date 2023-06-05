@@ -25,7 +25,7 @@
     </div>
 </Section>
 
-<style type="text/scss">
+<style lang="scss">
     h2 {
         margin-bottom: $sp6;
     }

@@ -9,7 +9,7 @@
     {$_("unresolvedReply")}
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .reply-wrapper {
         border-radius: $sp4;
         padding: $sp4;

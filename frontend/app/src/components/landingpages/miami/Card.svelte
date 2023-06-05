@@ -8,7 +8,7 @@
     <div class="step">{text}</div>
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .card {
         $ckbtc: #ad93ff;
 

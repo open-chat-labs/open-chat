@@ -104,7 +104,7 @@
     <ErrorMessage>{balanceError}</ErrorMessage>
 {/if}
 
-<style type="text/scss">
+<style lang="scss">
     :global(.manage .link-button) {
         padding: 0 0 0 $sp3;
         &:first-child {

@@ -95,7 +95,7 @@
     </div>
 {/if}
 
-<style type="text/scss">
+<style lang="scss">
     .timeline-event {
         max-width: 80%;
         padding: $sp2;

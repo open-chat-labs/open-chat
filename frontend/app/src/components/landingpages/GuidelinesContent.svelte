@@ -146,8 +146,8 @@
         </p>
 
         <p>
-            Group owners are also encouraged to create a trusted team of admins and moderators who are 
-            prepared to help to moderate the group.
+            Group owners are also encouraged to create a trusted team of admins and moderators who
+            are prepared to help to moderate the group.
         </p>
 
         <p>
@@ -238,7 +238,7 @@
     </div>
 </CollapsibleCard>
 
-<style type="text/scss">
+<style lang="scss">
     .body {
         padding: 0 0 toRem(30) toRem(80);
         max-width: 75%;

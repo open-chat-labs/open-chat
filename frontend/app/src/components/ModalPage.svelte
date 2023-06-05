@@ -41,7 +41,7 @@
     </div>
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     :global(.modal-page a) {
         color: var(--modalPage-txt);
     }

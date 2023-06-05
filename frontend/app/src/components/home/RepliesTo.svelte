@@ -85,7 +85,7 @@
     </div>
 </Link>
 
-<style type="text/scss">
+<style lang="scss">
     :global(.reply-wrapper.me a) {
         color: inherit;
     }

@@ -66,7 +66,7 @@
     </div>
 {/if}
 
-<style type="text/scss">
+<style lang="scss">
     .upgrade-banner {
         position: absolute;
         top: 0;

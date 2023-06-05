@@ -16,7 +16,7 @@
     {/if}
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .votes {
         display: flex;
         align-items: center;

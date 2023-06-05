@@ -15,7 +15,7 @@
     </div>
 </ModalPage>
 
-<style type="text/scss">
+<style lang="scss">
     .msg {
         @include font(bold, normal, fs-260);
         text-shadow: 3px 3px #000;

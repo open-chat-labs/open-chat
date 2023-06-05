@@ -22,7 +22,7 @@
     {/if}
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .post {
         text-align: left;
         width: 100%;

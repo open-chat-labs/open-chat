@@ -87,7 +87,7 @@
     {/if}
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .profiler {
         padding: $sp4;
         width: 400px;

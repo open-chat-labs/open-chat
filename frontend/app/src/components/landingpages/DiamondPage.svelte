@@ -9,7 +9,7 @@
     <DiamondContent />
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .diamond {
         text-align: left;
         @include lp-content-padding();

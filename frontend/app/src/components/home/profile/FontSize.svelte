@@ -20,7 +20,7 @@
     </div>
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     $trackHeight: 6px;
     $thumbSize: 16px;
     $trackColor: var(--button-bg);

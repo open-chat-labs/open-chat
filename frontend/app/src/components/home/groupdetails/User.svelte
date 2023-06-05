@@ -23,7 +23,7 @@
 
     function onClick() {
         dispatch("open", user.userId);
-    }        
+    }
 </script>
 
 <div
@@ -53,7 +53,7 @@
     <slot />
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .member {
         display: flex;
         justify-content: center;

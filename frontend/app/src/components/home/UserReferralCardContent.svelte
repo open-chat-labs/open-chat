@@ -29,7 +29,7 @@
     </div>
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .qr {
         background-color: #fff;
         width: 250px;

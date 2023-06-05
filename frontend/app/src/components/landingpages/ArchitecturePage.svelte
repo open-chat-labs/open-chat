@@ -588,7 +588,7 @@
     </div>
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .architecture {
         text-align: left;
         @include lp-content-padding();

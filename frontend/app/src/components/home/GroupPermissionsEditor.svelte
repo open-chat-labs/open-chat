@@ -1,48 +1,60 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
     import SelectPermissionRole from "./SelectPermissionRole.svelte";
-    import type { GroupPermissions } from "openchat-client";
+    import { GroupPermissions, groupRoles } from "openchat-client";
 
     export let permissions: GroupPermissions;
     export let isPublic: boolean;
 </script>
 
 <SelectPermissionRole
-    label={$_("group.permissions.changePermissions")}
+    roles={groupRoles}
+    label={$_("permissions.changePermissions")}
     bind:rolePermission={permissions.changePermissions} />
 <SelectPermissionRole
-    label={$_("group.permissions.changeRoles")}
+    roles={groupRoles}
+    label={$_("permissions.changeRoles")}
     bind:rolePermission={permissions.changeRoles} />
 {#if isPublic}
     <SelectPermissionRole
-        label={$_("group.permissions.blockUsers")}
+        roles={groupRoles}
+        label={$_("permissions.blockUsers")}
         bind:rolePermission={permissions.blockUsers} />
 {:else}
     <SelectPermissionRole
-        label={$_("group.permissions.removeMembers")}
+        roles={groupRoles}
+        label={$_("permissions.removeMembers")}
         bind:rolePermission={permissions.removeMembers} />
     <SelectPermissionRole
-        label={$_("group.permissions.inviteUsers")}
+        roles={groupRoles}
+        label={$_("permissions.inviteUsers")}
         bind:rolePermission={permissions.inviteUsers} />
 {/if}
 <SelectPermissionRole
-    label={$_("group.permissions.deleteMessages")}
+    roles={groupRoles}
+    label={$_("permissions.deleteMessages")}
     bind:rolePermission={permissions.deleteMessages} />
 <SelectPermissionRole
-    label={$_("group.permissions.updateGroup")}
+    roles={groupRoles}
+    label={$_("permissions.updateGroup")}
     bind:rolePermission={permissions.updateGroup} />
 <SelectPermissionRole
-    label={$_("group.permissions.pinMessages")}
+    roles={groupRoles}
+    label={$_("permissions.pinMessages")}
     bind:rolePermission={permissions.pinMessages} />
 <SelectPermissionRole
-    label={$_("group.permissions.createPolls")}
+    roles={groupRoles}
+    label={$_("permissions.createPolls")}
     bind:rolePermission={permissions.createPolls} />
 <SelectPermissionRole
-    label={$_("group.permissions.sendMessages")}
+    roles={groupRoles}
+    label={$_("permissions.sendMessages")}
     bind:rolePermission={permissions.sendMessages} />
 <SelectPermissionRole
-    label={$_("group.permissions.reactToMessages")}
+    roles={groupRoles}
+    label={$_("permissions.reactToMessages")}
     bind:rolePermission={permissions.reactToMessages} />
 <SelectPermissionRole
-    label={$_("group.permissions.replyInThread")}
+    roles={groupRoles}
+    label={$_("permissions.replyInThread")}
     bind:rolePermission={permissions.replyInThread} />

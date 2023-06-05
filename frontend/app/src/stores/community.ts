@@ -1,5 +1,16 @@
-import type { Community } from "openchat-client";
+import type { Community, CommunityPermissions } from "openchat-client";
 import { writable } from "svelte/store";
+
+// TODO - come back and decide on default permissions
+const defaultPermissions: CommunityPermissions = {
+    changePermissions: "owner",
+    changeRoles: "owner",
+    inviteUsers: "owner",
+    removeMembers: "owner",
+    updateDetails: "owner",
+    createPublicChannel: "owner",
+    createPrivateChannel: "owner",
+};
 
 function createDummyCommunity(
     id: string,
@@ -8,7 +19,7 @@ function createDummyCommunity(
     memberCount = 2000,
     channelCount = 15,
     unreadCount = 0
-) {
+): Community {
     return {
         name,
         id,
@@ -17,7 +28,15 @@ function createDummyCommunity(
         memberCount,
         channelCount,
         unreadCount,
-        blobUrl: url,
+        avatar: { blobUrl: url },
+        banner: {},
+        gate: { kind: "no_gate" },
+        public: true,
+        permissions: defaultPermissions,
+        myRole: "owner",
+        historyVisible: true,
+        frozen: false,
+        level: "community",
     };
 }
 
@@ -29,7 +48,7 @@ function createDummyCommunityChannel(id: string) {
     };
 }
 
-export const dummyCommunities = writable<Community[]>([
+const allCommunities: Community[] = [
     createDummyCommunity("1", "OpenChat community", "../assets/evil-robot.svg", 30515, 20, 5),
     createDummyCommunity("2", "SNS1 Idiots", "../assets/sns1_medium.png"),
     createDummyCommunity(
@@ -51,7 +70,13 @@ export const dummyCommunities = writable<Community[]>([
     createDummyCommunity("12"),
     createDummyCommunity("13"),
     createDummyCommunity("14"),
-]);
+];
+
+export const selectedCommunity = writable<Community>(allCommunities[0]);
+
+export const dummyCommunities = writable<Community[]>(allCommunities);
+
+export const myCommunities = writable<Community[]>(allCommunities.slice(0, 5));
 
 export const dummyCommunityChannels = writable<{ name: string; description: string }[]>([
     createDummyCommunityChannel("1"),
@@ -69,3 +94,23 @@ export const dummyCommunityChannels = writable<{ name: string; description: stri
     createDummyCommunityChannel("13"),
     createDummyCommunityChannel("14"),
 ]);
+
+export function createCandidateCommunity(id: string): Community {
+    return {
+        id,
+        name: "",
+        description: "",
+        memberCount: 0,
+        channelCount: 0,
+        unreadCount: 0,
+        avatar: {},
+        banner: {},
+        gate: { kind: "no_gate" },
+        public: true,
+        permissions: defaultPermissions,
+        myRole: "owner",
+        historyVisible: true,
+        frozen: false,
+        level: "community",
+    };
+}

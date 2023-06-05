@@ -7,6 +7,7 @@
     import SelectChatModal from "../SelectChatModal.svelte";
     import MiddlePanel from "./MiddlePanel.svelte";
     import RightPanel from "./RightPanel.svelte";
+    import EditCommunity from "./communities/edit/Edit.svelte";
     import {
         GroupSearchResponse,
         MessageMatch,
@@ -14,7 +15,7 @@
         ChatSummary,
         EnhancedReplyContext,
         GroupChatSummary,
-        GroupRules,
+        AccessRules,
         Message,
         OpenChat,
         ThreadSelected,
@@ -24,9 +25,11 @@
         ChatsUpdated,
         Notification,
         CandidateGroupChat,
-        defaultGroupRules,
+        defaultAccessRules,
         EventWrapper,
         ChatType,
+        Community,
+        Level,
     } from "openchat-client";
     import Overlay from "../Overlay.svelte";
     import { getContext, onMount, tick } from "svelte";
@@ -55,13 +58,15 @@
     import AccountsModal from "./profile/AccountsModal.svelte";
     import { querystring } from "routes";
     import { eventListScrollTop } from "../../stores/scrollPos";
-    import GateCheckFailed from "./groupdetails/GateCheckFailed.svelte";
+    import GateCheckFailed from "./groupdetails/AccessGateCheckFailed.svelte";
     import HallOfFame from "./HallOfFame.svelte";
     import LeftNav from "./nav/LeftNav.svelte";
+    import { createCandidateCommunity } from "../../stores/community";
 
     const client = getContext<OpenChat>("client");
     const user = client.user;
     let candidateGroup: CandidateGroupChat | undefined;
+    let candidateCommunity: Community | undefined;
 
     type ConfirmActionEvent = ConfirmLeaveEvent | ConfirmDeleteEvent | ConfirmRulesEvent;
 
@@ -93,6 +98,7 @@
         Wallet,
         GateCheckFailed,
         HallOfFame,
+        EditCommunity,
     }
 
     let modal = ModalType.None;
@@ -222,7 +228,7 @@
             if (pathParams.kind === "communities_route") {
                 if (pathParams.communityId !== undefined) {
                     rightPanelHistory.set([
-                        { kind: "community_groups", communityId: pathParams.communityId },
+                        { kind: "community_channels", communityId: pathParams.communityId },
                     ]);
                 } else {
                     rightPanelHistory.set([]);
@@ -337,6 +343,7 @@
     function closeModal() {
         modal = ModalType.None;
         candidateGroup = undefined;
+        candidateCommunity = undefined;
         joining = undefined;
     }
 
@@ -739,7 +746,7 @@
     }
 
     function groupCreated(
-        ev: CustomEvent<{ chatId: string; isPublic: boolean; rules: GroupRules }>
+        ev: CustomEvent<{ chatId: string; isPublic: boolean; rules: AccessRules }>
     ) {
         const { chatId, isPublic, rules } = ev.detail;
         chatStateStore.setProp(chatId, "rules", rules);
@@ -763,13 +770,20 @@
         modal = ModalType.Wallet;
     }
 
-    function newGroup() {
+    function newChannel() {
+        // TODO - come back to this
+        newGroup("channel");
+    }
+
+    function newGroup(level: Level = "group") {
         modal = ModalType.NewGroup;
         candidateGroup = {
+            id: "",
             name: "",
             description: "",
             historyVisible: true,
-            isPublic: false,
+            public: false,
+            frozen: false,
             members: [],
             permissions: {
                 changePermissions: "admins",
@@ -785,37 +799,35 @@
                 reactToMessages: "members",
                 replyInThread: "members",
             },
-            rules: {
-                text: defaultGroupRules,
-                enabled: false,
-            },
+            rules: defaultAccessRules,
             gate: { kind: "no_gate" },
+            myRole: "owner",
+            level,
         };
     }
 
-    function editGroup(ev: CustomEvent<{ chat: GroupChatSummary; rules: GroupRules | undefined }>) {
+    function editGroup(
+        ev: CustomEvent<{ chat: GroupChatSummary; rules: AccessRules | undefined }>
+    ) {
         modal = ModalType.NewGroup;
         const { chat, rules } = ev.detail;
         candidateGroup = {
-            chatId: chat.chatId,
+            id: chat.chatId,
             name: chat.name,
             description: chat.description,
-            historyVisible: chat.historyVisibleToNewJoiners,
-            isPublic: chat.public,
+            historyVisible: chat.historyVisible,
+            public: chat.public,
+            frozen: chat.frozen,
             members: [],
             permissions: { ...chat.permissions },
-            rules:
-                rules !== undefined
-                    ? { ...rules }
-                    : {
-                          text: defaultGroupRules,
-                          enabled: false,
-                      },
+            myRole: chat.myRole,
+            rules: rules !== undefined ? { ...rules } : defaultAccessRules,
             avatar: {
                 blobUrl: chat.blobUrl,
                 blobData: chat.blobData,
             },
             gate: chat.gate,
+            level: "group",
         };
     }
 
@@ -858,6 +870,20 @@
         rightPanelHistory.set([]);
     }
 
+    function browseChannels(ev: CustomEvent<Community>) {
+        rightPanelHistory.set([{ kind: "community_channels", communityId: ev.detail.id }]);
+    }
+
+    function createCommunity() {
+        modal = ModalType.EditCommunity;
+        candidateCommunity = createCandidateCommunity("");
+    }
+
+    function editCommunity(ev: CustomEvent<Community>) {
+        modal = ModalType.EditCommunity;
+        candidateCommunity = ev.detail;
+    }
+
     $: bgHeight = $dimensions.height * 0.9;
     $: bgClip = (($dimensions.height - 32) / bgHeight) * 361;
 </script>
@@ -867,10 +893,13 @@
         <LeftNav
             on:profile={showProfile}
             on:wallet={showWallet}
+            on:browseChannels={browseChannels}
             on:halloffame={() => (modal = ModalType.HallOfFame)}
             on:logout={() => client.logout()}
-            on:newGroup={newGroup}
+            on:newGroup={() => newGroup("group")}
+            on:editCommunity={editCommunity}
             on:showHomePage={showLandingPageRoute("/home")}
+            on:newChannel={newChannel}
             on:upgrade={upgrade} />
     {/if}
 
@@ -885,8 +914,10 @@
             on:searchEntered={performSearch}
             on:chatWith={chatWith}
             on:halloffame={() => (modal = ModalType.HallOfFame)}
-            on:newGroup={newGroup}
+            on:newGroup={() => newGroup("group")}
             on:profile={showProfile}
+            on:browseChannels={browseChannels}
+            on:editCommunity={editCommunity}
             on:logout={() => client.logout()}
             on:wallet={showWallet}
             on:deleteDirectChat={deleteDirectChat}
@@ -896,6 +927,7 @@
             on:archiveChat={onArchiveChat}
             on:unarchiveChat={onUnarchiveChat}
             on:toggleMuteNotifications={toggleMuteNotifications}
+            on:newChannel={newChannel}
             on:loadMessage={loadMessage} />
     {/if}
     {#if $layoutStore.showMiddle}
@@ -919,7 +951,8 @@
             on:showPinned={showPinned}
             on:toggleMuteNotifications={toggleMuteNotifications}
             on:goToMessageIndex={goToMessageIndex}
-            on:forward={forwardMessage} />
+            on:forward={forwardMessage}
+            on:createCommunity={createCommunity} />
     {/if}
     {#if $layoutStore.rightPanel === "inline"}
         <RightPanel
@@ -990,6 +1023,11 @@
             <GateCheckFailed on:close={closeModal} gate={joining.gate} />
         {:else if modal === ModalType.NewGroup && candidateGroup !== undefined}
             <NewGroup on:upgrade={upgrade} {candidateGroup} on:close={closeModal} />
+        {:else if modal === ModalType.EditCommunity && candidateCommunity !== undefined}
+            <EditCommunity
+                originalRules={defaultAccessRules}
+                original={candidateCommunity}
+                on:close={closeModal} />
         {:else if modal === ModalType.Wallet}
             <AccountsModal on:close={closeModal} />
         {:else if modal === ModalType.HallOfFame}
@@ -1008,7 +1046,7 @@
         viewBox={`0 0 361 ${bgClip}`} />
 {/if}
 
-<style type="text/scss">
+<style lang="scss">
     :global(.edited-msg) {
         @include font(light, normal, fs-70);
     }

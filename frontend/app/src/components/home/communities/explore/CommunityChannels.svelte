@@ -32,6 +32,7 @@
         {#if $mobileWidth}
             <SectionHeader border flush shadow>
                 <h4>{community.name}</h4>
+                <!-- svelte-ignore a11y-click-events-have-key-events -->
                 <span title={$_("close")} class="close" on:click={close}>
                     <HoverIcon>
                         <Close size={$iconSize} color={"var(--icon-txt)"} />
@@ -39,7 +40,7 @@
                 </span>
             </SectionHeader>
         {:else}
-            <CommunityCard header {community} selected={false} />
+            <CommunityCard joining={false} header {community} selected={false} />
         {/if}
         <div class="search">
             <Search
@@ -86,7 +87,7 @@
     </div>
 {/if}
 
-<style type="text/scss">
+<style lang="scss">
     .wrapper {
         position: relative;
         display: flex;

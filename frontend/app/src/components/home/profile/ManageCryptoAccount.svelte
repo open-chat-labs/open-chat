@@ -106,7 +106,7 @@
     </ModalContent>
 </Overlay>
 
-<style type="text/scss">
+<style lang="scss">
     .title {
         @include font(bold, normal, fs-120);
         margin-bottom: $sp4;

@@ -55,7 +55,7 @@
     {/if}
 </form>
 
-<style type="text/scss">
+<style lang="scss">
     .wrapper {
         margin: 0 $sp4 $sp4 $sp4;
         background-color: var(--chatSearch-bg);

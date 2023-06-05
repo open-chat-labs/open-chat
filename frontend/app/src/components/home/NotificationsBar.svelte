@@ -24,7 +24,7 @@
     </div>
 {/if}
 
-<style type="text/scss">
+<style lang="scss">
     :global(.links a) {
         margin-right: $sp3;
         text-decoration-color: var(--notificationBar-txt) !important;

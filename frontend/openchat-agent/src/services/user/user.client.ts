@@ -140,7 +140,7 @@ export class UserClient extends CandidService implements IUserClient {
     createGroup(group: CandidateGroupChat): Promise<CreateGroupResponse> {
         return this.handleResponse(
             this.userService.create_group({
-                is_public: group.isPublic,
+                is_public: group.public,
                 name: group.name,
                 description: group.description,
                 history_visible_to_new_joiners: group.historyVisible,
@@ -277,7 +277,10 @@ export class UserClient extends CandidService implements IUserClient {
                     message_id: message.messageId,
                     correlation_id: generateUint64(),
                 };
-                return this.handleResponse(this.userService.edit_message_v2(req), editMessageResponse);
+                return this.handleResponse(
+                    this.userService.edit_message_v2(req),
+                    editMessageResponse
+                );
             });
     }
 
@@ -328,7 +331,7 @@ export class UserClient extends CandidService implements IUserClient {
         const req: ApiSendMessageWithTransferToGroupArgs = {
             thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
             content: {
-                Crypto: content
+                Crypto: content,
             },
             sender_name: sender.username,
             mentioned: [],
@@ -340,8 +343,9 @@ export class UserClient extends CandidService implements IUserClient {
             ),
             correlation_id: generateUint64(),
         };
-        return this.handleResponse(this.userService.send_message_with_transfer_to_group(req), (resp) =>
-            sendMessageWithTransferToGroupResponse(resp, event.event.sender, recipientId)
+        return this.handleResponse(
+            this.userService.send_message_with_transfer_to_group(req),
+            (resp) => sendMessageWithTransferToGroupResponse(resp, event.event.sender, recipientId)
         ).then((resp) => [resp, event.event]);
     }
 

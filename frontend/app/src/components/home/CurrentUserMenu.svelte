@@ -70,7 +70,7 @@
     </MenuItem>
 </Menu>
 
-<style type="text/scss">
+<style lang="scss">
     .flame,
     .halloffame,
     .diamond-icon {

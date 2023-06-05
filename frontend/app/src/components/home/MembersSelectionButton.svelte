@@ -14,7 +14,7 @@
     </div>
 </Button>
 
-<style type="text/scss">
+<style lang="scss">
     .content {
         position: relative;
         display: flex;

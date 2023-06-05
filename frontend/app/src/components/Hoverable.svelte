@@ -111,7 +111,7 @@
     <slot />
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .noselect {
         -webkit-touch-callout: none; // Safari
         -webkit-user-select: none; // Safari

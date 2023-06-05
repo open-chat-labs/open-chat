@@ -94,7 +94,7 @@
 
 <svelte:body on:keydown={onKeyDown} />
 
-<style type="text/scss">
+<style lang="scss">
     :global(.picker .menu) {
         box-shadow: none;
         position: relative;

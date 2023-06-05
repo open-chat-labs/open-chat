@@ -49,7 +49,7 @@
     {/each}
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .faq {
         text-align: left;
         @include lp-content-padding();

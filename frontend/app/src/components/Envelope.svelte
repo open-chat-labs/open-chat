@@ -11,7 +11,7 @@
     <div class="top" />
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     // $color: slateblue;
     $color: crimson;
     $front: darken($color, 5%);

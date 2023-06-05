@@ -17,7 +17,7 @@
     </label>
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .radio {
         display: flex;
         align-items: center;

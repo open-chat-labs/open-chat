@@ -22,7 +22,7 @@ export function publicGroupSummary(candid: ApiPublicGroupSummary): GroupChatSumm
         name: candid.name,
         description: candid.description,
         public: candid.is_public,
-        historyVisibleToNewJoiners: false,
+        historyVisible: false,
         joined: BigInt(Date.now()),
         minVisibleEventIndex: 0,
         minVisibleMessageIndex: 0,
@@ -58,6 +58,7 @@ export function publicGroupSummary(candid: ApiPublicGroupSummary): GroupChatSumm
         dateLastPinned: undefined,
         dateReadPinned: undefined,
         gate: optional(candid.gate, groupGate) ?? { kind: "no_gate" },
+        level: "group",
     };
 }
 

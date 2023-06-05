@@ -23,7 +23,7 @@
     </div>
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .params {
         @include font(light, normal, fs-70);
         color: var(--txt-light);
