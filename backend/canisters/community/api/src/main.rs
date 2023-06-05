@@ -24,6 +24,7 @@ fn main() {
     generate_candid_method!(community, disable_invite_code, update);
     generate_candid_method!(community, edit_message, update);
     generate_candid_method!(community, enable_invite_code, update);
+    generate_candid_method!(community, invite_users_to_channel, update);
     generate_candid_method!(community, join_channel, update);
     generate_candid_method!(community, leave_channel, update);
     generate_candid_method!(community, make_channel_private, update);
