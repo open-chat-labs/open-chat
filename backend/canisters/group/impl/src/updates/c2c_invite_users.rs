@@ -21,7 +21,7 @@ fn c2c_invite_users_impl(args: Args, state: &mut RuntimeState) -> Response {
 
     let now = state.env.now();
 
-    match state.data.chat.invite_users(args.caller, args.users, now) {
+    match state.data.invite_users(args.caller, args.users, now) {
         InvitedUsersResult::Success(r) => {
             handle_activity_notification(state);
             Success(SuccessResult {

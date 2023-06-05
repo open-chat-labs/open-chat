@@ -2,7 +2,6 @@ mod invited_users;
 mod members;
 mod mentions;
 
-use candid::Principal;
 pub use invited_users::*;
 pub use members::*;
 pub use mentions::*;
@@ -793,12 +792,7 @@ impl GroupChatCore {
         }
     }
 
-    pub fn invite_users(
-        &mut self,
-        invited_by: UserId,
-        users: Vec<(UserId, Principal)>,
-        now: TimestampMillis,
-    ) -> InvitedUsersResult {
+    pub fn invite_users(&mut self, invited_by: UserId, user_ids: Vec<UserId>, now: TimestampMillis) -> InvitedUsersResult {
         use InvitedUsersResult::*;
 
         const MAX_INVITES: usize = 100;
@@ -814,15 +808,13 @@ impl GroupChatCore {
             }
 
             // Filter out users who are already members and those who have already been invited
-            let invited_users: Vec<_> = users
+            let invited_users: Vec<_> = user_ids
                 .iter()
-                .filter(|(user_id, principal)| self.members.get(user_id).is_none() && !self.invited_users.contains(principal))
+                .filter(|user_id| self.members.get(user_id).is_none() && !self.invited_users.contains(user_id))
                 .copied()
                 .collect();
 
-            let user_ids: Vec<_> = invited_users.iter().map(|(user_id, _)| user_id).copied().collect();
-
-            if !self.is_public {
+            if !self.is_public && !invited_users.is_empty() {
                 // Check the max invite limit will not be exceeded
                 if self.invited_users.len() + invited_users.len() > MAX_INVITES {
                     return TooManyInvites(MAX_INVITES as u32);
@@ -842,17 +834,14 @@ impl GroupChatCore {
                 };
 
                 // Add new invites
-                for (user_id, principal) in invited_users.iter() {
-                    self.invited_users.add(
-                        *principal,
-                        UserInvitation {
-                            invited: *user_id,
-                            invited_by: member.user_id,
-                            timestamp: now,
-                            min_visible_event_index,
-                            min_visible_message_index,
-                        },
-                    );
+                for user_id in invited_users.iter() {
+                    self.invited_users.add(UserInvitation {
+                        invited: *user_id,
+                        invited_by: member.user_id,
+                        timestamp: now,
+                        min_visible_event_index,
+                        min_visible_message_index,
+                    });
                 }
 
                 // Push a UsersInvited event
