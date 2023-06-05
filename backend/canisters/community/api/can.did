@@ -127,6 +127,14 @@ type SearchChannelResponse =
         UserNotInChannel;
     };
 
+type SummaryResponse =
+    variant {
+        Success: record {
+            summary: CommunityCanisterCommunitySummary;
+        };
+        UserNotInCommunity;
+    };
+
 type AddMembersToChannelArgs =
     record {
         channel_id: ChannelId;
@@ -377,8 +385,8 @@ type JoinChannelArgs =
 
 type JoinChannelResponse =
     variant {
-        Success: ChannelSummary;
-        AlreadyInCommunity: ChannelSummary;
+        Success: CommunityCanisterChannelSummary;
+        AlreadyInChannel: CommunityCanisterChannelSummary;
         GateCheckFailed: GateCheckFailedReason;
         UserNotInCommunity;
         ChannelNotFound;
@@ -677,6 +685,7 @@ service: {
     messages_by_message_index: (MessagesByMessageIndexArgs) -> (MessagesByMessageIndexResponse) query;
     rules: (RulesArgs) -> (RulesResponse) query;
     search_channel: (SearchChannelArgs) -> (SearchChannelResponse) query;
+    summary: (EmptyArgs) -> (SummaryResponse) query;
 
     add_members_to_channel: (AddMembersToChannelArgs) -> (AddMembersToChannelResponse);
     add_reaction: (AddReactionArgs) -> (AddReactionResponse);

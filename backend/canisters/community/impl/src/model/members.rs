@@ -2,7 +2,7 @@ use candid::Principal;
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::{HashMap, HashSet};
-use types::{CommunityMember, CommunityPermissions, CommunityRole, TimestampMillis, Timestamped, UserId};
+use types::{ChannelId, CommunityMember, CommunityPermissions, CommunityRole, TimestampMillis, Timestamped, UserId};
 
 const MAX_MEMBERS_PER_COMMUNITY: u32 = 100_000;
 
@@ -23,6 +23,7 @@ impl CommunityMembers {
             role: CommunityRole::Owner,
             notifications_muted: Timestamped::new(false, now),
             suspended: Timestamped::default(),
+            channels: HashSet::new(),
         };
 
         CommunityMembers {
@@ -46,6 +47,7 @@ impl CommunityMembers {
                         role: CommunityRole::Member,
                         notifications_muted: Timestamped::new(notifications_muted, now),
                         suspended: Timestamped::default(),
+                        channels: HashSet::new(),
                     };
                     e.insert(member.clone());
                     self.principal_to_user_id_map.insert(principal, user_id);
@@ -147,6 +149,18 @@ impl CommunityMembers {
         })
     }
 
+    pub fn mark_member_joined_channel(&mut self, user_id: &UserId, channel_id: ChannelId) {
+        if let Some(member) = self.members.get_mut(user_id) {
+            member.channels.insert(channel_id);
+        }
+    }
+
+    pub fn mark_member_left_channel(&mut self, user_id: &UserId, channel_id: &ChannelId) {
+        if let Some(member) = self.members.get_mut(user_id) {
+            member.channels.remove(channel_id);
+        }
+    }
+
     pub fn block(&mut self, user_id: UserId) {
         self.blocked.insert(user_id);
     }
@@ -227,6 +241,7 @@ pub struct CommunityMemberInternal {
     pub role: CommunityRole,
     pub notifications_muted: Timestamped<bool>,
     pub suspended: Timestamped<bool>,
+    pub channels: HashSet<ChannelId>,
 }
 
 #[allow(clippy::large_enum_variant)]

@@ -47,7 +47,7 @@ fn is_permitted_to_join(
             }
 
             if let Some(channel_member) = channel.chat.members.get(&member.user_id) {
-                Err(AlreadyInCommunity(Box::new(channel.summary(channel_member, state.env.now()))))
+                Err(AlreadyInChannel(Box::new(channel.summary(channel_member, state.env.now()))))
             } else {
                 Ok(channel
                     .chat
@@ -65,7 +65,7 @@ fn is_permitted_to_join(
 
 fn join_channel_impl(channel_id: ChannelId, state: &mut RuntimeState) -> Response {
     let caller = state.env.caller();
-    if let Some(member) = state.data.members.get(caller) {
+    if let Some(member) = state.data.members.get_mut(caller) {
         if let Some(channel) = state.data.channels.get_mut(&channel_id) {
             let now = state.env.now();
             let mut min_visible_event_index = EventIndex::default();
@@ -94,13 +94,14 @@ fn join_channel_impl(channel_id: ChannelId, state: &mut RuntimeState) -> Respons
                         now,
                     );
 
+                    member.channels.insert(channel_id);
                     let summary = channel.summary(&channel_member, now);
                     Success(Box::new(summary))
                 }
                 AddResult::AlreadyInGroup => {
-                    let channel_member = channel.chat.members.get(&member.user_id).unwrap();
-                    let summary = channel.summary(channel_member, now);
-                    AlreadyInCommunity(Box::new(summary))
+                    member.channels.insert(channel_id);
+                    let summary = channel.summary_if_member(&member.user_id, now).unwrap();
+                    AlreadyInChannel(Box::new(summary))
                 }
                 AddResult::Blocked => UserBlocked,
                 AddResult::UserLimitReached(limit) => UserLimitReached(limit),

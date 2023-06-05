@@ -74,6 +74,13 @@ impl RuntimeState {
     pub fn summary(&self, member: &CommunityMemberInternal, now: TimestampMillis) -> CommunityCanisterCommunitySummary {
         let data = &self.data;
 
+        let channels: Vec<_> = member
+            .channels
+            .iter()
+            .filter_map(|c| self.data.channels.get(c))
+            .filter_map(|c| c.summary_if_member(&member.user_id, now))
+            .collect();
+
         CommunityCanisterCommunitySummary {
             community_id: self.env.canister_id().into(),
             last_updated: now,
@@ -88,6 +95,7 @@ impl RuntimeState {
             permissions: data.permissions.clone(),
             frozen: data.frozen.value.clone(),
             gate: data.gate.value.clone(),
+            channels,
         }
     }
 
