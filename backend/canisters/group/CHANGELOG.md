@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Move invite_users logic into GroupChatCore ([#3716](https://github.com/open-ic/open-chat/pull/3716))
+- Refactor so that invited user principals moved out of GroupChatCore ([#3727](https://github.com/open-ic/open-chat/pull/3727))
 
 ## [[2.0.713](https://github.com/open-ic/open-chat/releases/tag/v2.0.713-group)] - 2023-06-02
 

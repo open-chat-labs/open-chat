@@ -45,7 +45,7 @@ fn accept_if_valid(state: &RuntimeState) {
             _ => false,
         }
     } else {
-        state.data.chat.invited_users.contains(&caller) && method_name == "decline_invitation"
+        state.data.get_invitation(caller).is_some() && method_name == "decline_invitation"
     };
 
     if is_valid {

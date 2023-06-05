@@ -1,4 +1,4 @@
-use candid::{Deserialize, Principal};
+use candid::Deserialize;
 use serde::Serialize;
 use std::collections::HashMap;
 use types::{EventIndex, MessageIndex, TimestampMillis, UserId};
@@ -6,7 +6,7 @@ use types::{EventIndex, MessageIndex, TimestampMillis, UserId};
 #[derive(Serialize, Deserialize, Default)]
 pub struct InvitedUsers {
     last_updated: TimestampMillis,
-    users: HashMap<Principal, UserInvitation>,
+    users: HashMap<UserId, UserInvitation>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -19,21 +19,21 @@ pub struct UserInvitation {
 }
 
 impl InvitedUsers {
-    pub fn add(&mut self, principal: Principal, invitation: UserInvitation) {
+    pub fn add(&mut self, invitation: UserInvitation) {
         self.last_updated = invitation.timestamp;
-        self.users.entry(principal).or_insert(invitation);
+        self.users.entry(invitation.invited).or_insert(invitation);
     }
 
-    pub fn remove(&mut self, principal: &Principal, now: TimestampMillis) -> Option<UserInvitation> {
-        let invitation = self.users.remove(principal);
+    pub fn remove(&mut self, user_id: &UserId, now: TimestampMillis) -> Option<UserInvitation> {
+        let invitation = self.users.remove(user_id);
         if invitation.is_some() {
             self.last_updated = now;
         }
         invitation
     }
 
-    pub fn get(&self, principal: &Principal) -> Option<&UserInvitation> {
-        self.users.get(principal)
+    pub fn get(&self, user_id: &UserId) -> Option<&UserInvitation> {
+        self.users.get(user_id)
     }
 
     pub fn users(&self) -> Vec<UserId> {
@@ -44,8 +44,8 @@ impl InvitedUsers {
         self.last_updated
     }
 
-    pub fn contains(&self, principal: &Principal) -> bool {
-        self.users.contains_key(principal)
+    pub fn contains(&self, user_id: &UserId) -> bool {
+        self.users.contains_key(user_id)
     }
 
     pub fn len(&self) -> usize {
