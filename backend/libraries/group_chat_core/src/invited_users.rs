@@ -1,4 +1,4 @@
-use candid::Deserialize;
+use candid::{Deserialize, Principal};
 use serde::Serialize;
 use std::collections::HashMap;
 use types::{EventIndex, MessageIndex, TimestampMillis, UserId};
@@ -9,7 +9,7 @@ pub struct InvitedUsers {
     users: HashMap<UserId, UserInvitation>,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct UserInvitation {
     pub invited: UserId,
     pub invited_by: UserId,
@@ -19,6 +19,24 @@ pub struct UserInvitation {
 }
 
 impl InvitedUsers {
+    pub fn rebuild_users_map(&mut self) -> Vec<(Principal, UserId)> {
+        let users = self
+            .users
+            .iter()
+            .map(|(user_id, invitation)| ((*user_id).into(), invitation.invited))
+            .filter(|(principal, user_id)| {
+                let p2: Principal = (*user_id).into();
+                *principal != p2
+            })
+            .collect();
+        self.users = self
+            .users
+            .values()
+            .map(|invitation| (invitation.invited, invitation.clone()))
+            .collect();
+        users
+    }
+
     pub fn add(&mut self, invitation: UserInvitation) {
         self.last_updated = invitation.timestamp;
         self.users.entry(invitation.invited).or_insert(invitation);
@@ -37,7 +55,7 @@ impl InvitedUsers {
     }
 
     pub fn users(&self) -> Vec<UserId> {
-        self.users.values().map(|invitation| invitation.invited).collect()
+        self.users.keys().copied().collect()
     }
 
     pub fn last_updated(&self) -> TimestampMillis {
