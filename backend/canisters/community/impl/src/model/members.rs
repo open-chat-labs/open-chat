@@ -24,6 +24,7 @@ impl CommunityMembers {
             notifications_muted: Timestamped::new(false, now),
             suspended: Timestamped::default(),
             channels: HashSet::new(),
+            channels_removed: Vec::new(),
         };
 
         CommunityMembers {
@@ -48,6 +49,7 @@ impl CommunityMembers {
                         notifications_muted: Timestamped::new(notifications_muted, now),
                         suspended: Timestamped::default(),
                         channels: HashSet::new(),
+                        channels_removed: Vec::new(),
                     };
                     e.insert(member.clone());
                     self.principal_to_user_id_map.insert(principal, user_id);
@@ -155,9 +157,11 @@ impl CommunityMembers {
         }
     }
 
-    pub fn mark_member_left_channel(&mut self, user_id: &UserId, channel_id: &ChannelId) {
+    pub fn mark_member_left_channel(&mut self, user_id: &UserId, channel_id: ChannelId, now: TimestampMillis) {
         if let Some(member) = self.members.get_mut(user_id) {
-            member.channels.remove(channel_id);
+            if member.channels.remove(&channel_id) {
+                member.channels_removed.push(Timestamped::new(channel_id, now));
+            }
         }
     }
 
@@ -242,6 +246,18 @@ pub struct CommunityMemberInternal {
     pub notifications_muted: Timestamped<bool>,
     pub suspended: Timestamped<bool>,
     pub channels: HashSet<ChannelId>,
+    pub channels_removed: Vec<Timestamped<ChannelId>>,
+}
+
+impl CommunityMemberInternal {
+    pub fn channels_removed_since(&self, since: TimestampMillis) -> Vec<ChannelId> {
+        self.channels_removed
+            .iter()
+            .rev()
+            .take_while(|t| t.timestamp > since)
+            .map(|t| t.value)
+            .collect()
+    }
 }
 
 #[allow(clippy::large_enum_variant)]
