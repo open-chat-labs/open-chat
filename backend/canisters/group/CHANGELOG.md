@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [unreleased]
 
+### Added
+
+- Add `selected_updates_v2` ([#3730](https://github.com/open-ic/open-chat/pull/3730))
+
 ### Changed
 
 - Move invite_users logic into GroupChatCore ([#3716](https://github.com/open-ic/open-chat/pull/3716))

@@ -132,7 +132,7 @@ type SelectedChannelInitialArgs =
         channel_id: ChannelId;
     };
 
-type SelectChannelInitialResponse =
+type SelectedChannelInitialResponse =
     variant {
         Success: record {
             timestamp: TimestampMillis;
@@ -154,20 +154,9 @@ type SelectedChannelUpdatesArgs =
         updates_since: TimestampMillis;
     };
 
-type SelectChannelUpdatesResponse =
+type SelectedChannelUpdatesResponse =
     variant {
-        Success: record {
-            timestamp: TimestampMillis;
-            latest_event_index: EventIndex;
-            members_added_or_updated: vec Participant;
-            members_removed: vec UserId;
-            blocked_users_added: vec UserId;
-            blocked_users_removed: vec UserId;
-            invited_users: opt vec UserId;
-            pinned_messages_added: vec MessageIndex;
-            pinned_messages_removed: vec MessageIndex;
-            rules: opt AccessRules;
-        };
+        Success: SelectedGroupUpdates;
         SuccessNoUpdates;
         UserNotInCommunity;
         UserNotInChannel;
@@ -746,8 +735,8 @@ service: {
     messages_by_message_index: (MessagesByMessageIndexArgs) -> (MessagesByMessageIndexResponse) query;
     rules: (RulesArgs) -> (RulesResponse) query;
     search_channel: (SearchChannelArgs) -> (SearchChannelResponse) query;
-    selected_channel_initial: (SelectedChannelInitialArgs) -> (SelectChannelInitialResponse) query;
-    selected_channel_updates: (SelectedChannelUpdatesArgs) -> (SelectChannelUpdatesResponse) query;
+    selected_channel_initial: (SelectedChannelInitialArgs) -> (SelectedChannelInitialResponse) query;
+    selected_channel_updates: (SelectedChannelUpdatesArgs) -> (SelectedChannelUpdatesResponse) query;
     summary: (EmptyArgs) -> (SummaryResponse) query;
     summary_updates: (SummaryUpdatesArgs) -> (SummaryUpdatesResponse) query;
 

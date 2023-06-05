@@ -435,6 +435,20 @@ type CommunityCanisterChannelSummaryUpdates =
         gate: AccessGateUpdate;
     };
 
+type SelectedGroupUpdates =
+    record {
+        timestamp: TimestampMillis;
+        latest_event_index: EventIndex;
+        members_added_or_updated: vec Participant;
+        members_removed: vec UserId;
+        blocked_users_added: vec UserId;
+        blocked_users_removed: vec UserId;
+        invited_users: opt vec UserId;
+        pinned_messages_added: vec MessageIndex;
+        pinned_messages_removed: vec MessageIndex;
+        rules: opt AccessRules;
+    };
+
 type GroupDescriptionChanged =
     record {
         new_description: text;
