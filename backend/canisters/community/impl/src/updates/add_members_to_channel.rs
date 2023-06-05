@@ -92,7 +92,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
                     return Err(NotAuthorized);
                 }
 
-                let (users_to_add, users_already_in_channel): (Vec<_>, Vec<_>) = args
+                let (users_already_in_channel, users_to_add): (Vec<_>, Vec<_>) = args
                     .user_ids
                     .iter()
                     .copied()
