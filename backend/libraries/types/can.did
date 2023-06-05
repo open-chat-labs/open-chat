@@ -359,22 +359,37 @@ type CommunityCanisterCommunitySummary =
         gate: opt AccessGate;
         last_updated: TimestampMillis;
         latest_event_index: EventIndex;
+        channels: vec CommunityCanisterChannelSummary;
     };
 
-type ChannelSummary =
+type CommunityCanisterChannelSummary =
     record {
         channel_id: ChannelId;
+        last_updated: TimestampMillis;
         name: text;
         description: text;
+        subtype: opt GroupSubtype;
         avatar_id: opt nat;
         is_public: bool;
+        history_visible_to_new_joiners: bool;
+        min_visible_event_index: EventIndex;
+        min_visible_message_index: MessageIndex;
+        latest_message: opt MessageEventWrapper;
+        latest_event_index: EventIndex;
         joined: TimestampMillis;
         member_count: nat32;
         role: GroupRole;
+        mentions: vec Mention;
         permissions: GroupPermissions;
+        notifications_muted: bool;
+        metrics: ChatMetrics;
+        my_metrics: ChatMetrics;
+        latest_threads: vec GroupCanisterThreadDetails;
+        date_last_pinned: opt TimestampMillis;
+        events_ttl: opt Milliseconds;
+        expired_messages: vec MessageIndexRange;
+        next_message_expiry: opt TimestampMillis;
         gate: opt AccessGate;
-        last_updated: TimestampMillis;
-        latest_event_index: EventIndex;
     };
 
 type GroupDescriptionChanged =

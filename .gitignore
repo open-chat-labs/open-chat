@@ -4,14 +4,14 @@ dist/
 node_modules/
 wasms/
 
-**/*.rs.bk
-
 .DS_Store
 **/*.env
 **/*.env_v1
 **/*.pem
+**/*.rs.bk
+ic-test-state-machine*
 msg.json
 notes.md
-ic-test-state-machine*
 notification.did
+summary.md
 temp.did
