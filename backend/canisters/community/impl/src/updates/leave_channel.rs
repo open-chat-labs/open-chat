@@ -16,14 +16,17 @@ fn leave_channel_impl(args: Args, state: &mut RuntimeState) -> Response {
     }
 
     let caller = state.env.caller();
-    if let Some(member) = state.data.members.get(caller) {
+    if let Some(member) = state.data.members.get_mut(caller) {
         if member.suspended.value {
             return UserSuspended;
         }
 
         if let Some(channel) = state.data.channels.get_mut(&args.channel_id) {
             match channel.chat.leave(member.user_id, state.env.now()) {
-                LeaveResult::Success => Success,
+                LeaveResult::Success => {
+                    member.channels.remove(&args.channel_id);
+                    Success
+                }
                 LeaveResult::UserSuspended => UserSuspended,
                 LeaveResult::LastOwnerCannotLeave => LastOwnerCannotLeave,
                 LeaveResult::UserNotInGroup => UserNotInChannel,

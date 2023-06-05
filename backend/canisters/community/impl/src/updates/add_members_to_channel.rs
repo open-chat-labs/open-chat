@@ -150,7 +150,10 @@ fn commit(
                 min_visible_message_index,
                 channel.chat.is_public,
             ) {
-                AddResult::Success(_) => users_added.push(user_id),
+                AddResult::Success(_) => {
+                    users_added.push(user_id);
+                    state.data.members.mark_member_joined_channel(&user_id, channel_id);
+                }
                 AddResult::AlreadyInGroup => users_already_in_channel.push(user_id),
                 AddResult::UserLimitReached(_) => users_limit_reached.push(user_id),
                 AddResult::Blocked => users_failed_with_error.push(UserFailedError {

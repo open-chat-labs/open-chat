@@ -1,4 +1,7 @@
-use crate::{AccessGate, CommunityId, CommunityPermissions, CommunityRole, EventIndex, FrozenGroupInfo, TimestampMillis};
+use crate::{
+    AccessGate, CommunityCanisterChannelSummary, CommunityId, CommunityPermissions, CommunityRole, EventIndex, FrozenGroupInfo,
+    TimestampMillis,
+};
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
@@ -17,6 +20,7 @@ pub struct CommunityCanisterCommunitySummary {
     pub gate: Option<AccessGate>,
     pub last_updated: TimestampMillis,
     pub latest_event_index: EventIndex,
+    pub channels: Vec<CommunityCanisterChannelSummary>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
