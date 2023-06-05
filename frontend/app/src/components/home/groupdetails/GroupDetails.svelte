@@ -21,7 +21,7 @@
     import InviteUsersWithLink from "./InviteUsersWithLink.svelte";
     import type { OpenChat, GroupChatSummary, AccessRules } from "openchat-client";
     import { AvatarSize } from "openchat-client";
-    import GroupGateSummary from "./AccessGateSummary.svelte";
+    import AccessGateSummary from "../AccessGateSummary.svelte";
     import { interpolateLevel } from "../../../utils/i18n";
 
     const dispatch = createEventDispatcher();
@@ -117,7 +117,7 @@
                     {/if}
                 {/if}
             </div>
-            <GroupGateSummary gate={chat.gate} />
+            <AccessGateSummary gate={chat.gate} />
         </CollapsibleCard>
         {#if rules !== undefined && rules.enabled}
             <CollapsibleCard

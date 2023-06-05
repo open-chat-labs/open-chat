@@ -30,7 +30,8 @@
         color: var(--menu-txt);
         align-items: center;
         @include font-size(fs-90);
-        padding: 10px $sp4;
+        padding: 10px;
+        gap: 10px;
 
         &:last-child {
             border-bottom: none;
@@ -43,7 +44,6 @@
 
         .icon:not(:empty) {
             display: flex;
-            flex: 0 0 toRem(34);
         }
 
         .icon:empty {
