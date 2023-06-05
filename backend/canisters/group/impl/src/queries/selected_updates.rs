@@ -1,9 +1,8 @@
-use crate::{read_state, Data, RuntimeState};
-use chat_events::{ChatEventInternal, Reader};
+use crate::{read_state, RuntimeState};
+use chat_events::Reader;
 use group_canister::selected_updates::{Response::*, *};
 use ic_cdk_macros::query;
-use std::collections::HashSet;
-use types::UserId;
+use types::EventIndex;
 
 #[query]
 fn selected_updates(args: Args) -> Response {
@@ -23,139 +22,34 @@ fn selected_updates_impl(args: Args, state: &RuntimeState) -> Response {
         return SuccessNoUpdates(latest_event_index);
     }
 
-    let min_visible_event_index = member.min_visible_event_index();
     let now = state.env.now();
-    let data = &state.data;
-    let events_reader = data.chat.events.visible_main_events_reader(min_visible_event_index, now);
-    let latest_event_index = events_reader.latest_event_index().unwrap();
-    let updates_since_time = events_reader
-        .get(args.updates_since.into())
-        .map(|e| e.timestamp)
-        .unwrap_or_default();
-
-    let invited_users = if data.chat.invited_users.last_updated() > updates_since_time {
-        Some(data.chat.invited_users.users())
-    } else {
-        None
-    };
-
-    let mut result = SuccessResult {
-        timestamp: now,
-        latest_event_index,
-        participants_added_or_updated: vec![],
-        participants_removed: vec![],
-        blocked_users_added: vec![],
-        blocked_users_removed: vec![],
-        invited_users,
-        pinned_messages_added: vec![],
-        pinned_messages_removed: vec![],
-        rules: None,
-    };
-
-    let mut user_updates_handler = UserUpdatesHandler {
-        data,
-        users_updated: HashSet::new(),
-    };
-
-    // Iterate through the new events starting from most recent
-    for event_wrapper in events_reader.iter(None, false).take_while(|e| e.index > args.updates_since) {
-        match &event_wrapper.event {
-            ChatEventInternal::OwnershipTransferred(e) => {
-                user_updates_handler.mark_participant_updated(&mut result, e.old_owner, false);
-                user_updates_handler.mark_participant_updated(&mut result, e.new_owner, false);
-            }
-            ChatEventInternal::ParticipantsAdded(p) => {
-                for user_id in p.user_ids.iter() {
-                    user_updates_handler.mark_participant_updated(&mut result, *user_id, false);
-                }
-                for user_id in p.unblocked.iter() {
-                    user_updates_handler.mark_user_blocked_updated(&mut result, *user_id, false);
-                }
-            }
-            ChatEventInternal::ParticipantsRemoved(p) => {
-                for user_id in p.user_ids.iter() {
-                    user_updates_handler.mark_participant_updated(&mut result, *user_id, true);
-                }
-            }
-            ChatEventInternal::ParticipantJoined(p) => {
-                user_updates_handler.mark_participant_updated(&mut result, p.user_id, false);
-            }
-            ChatEventInternal::ParticipantLeft(p) => {
-                user_updates_handler.mark_participant_updated(&mut result, p.user_id, true);
-            }
-            ChatEventInternal::RoleChanged(rc) => {
-                for user_id in rc.user_ids.iter() {
-                    user_updates_handler.mark_participant_updated(&mut result, *user_id, false);
-                }
-            }
-            ChatEventInternal::UsersBlocked(ub) => {
-                for user_id in ub.user_ids.iter() {
-                    user_updates_handler.mark_user_blocked_updated(&mut result, *user_id, true);
-                    user_updates_handler.mark_participant_updated(&mut result, *user_id, true);
-                }
-            }
-            ChatEventInternal::UsersUnblocked(ub) => {
-                for user_id in ub.user_ids.iter() {
-                    user_updates_handler.mark_user_blocked_updated(&mut result, *user_id, false);
-                }
-            }
-            ChatEventInternal::MessagePinned(p) => {
-                if !result.pinned_messages_removed.contains(&p.message_index) {
-                    result.pinned_messages_added.push(p.message_index);
-                }
-            }
-            ChatEventInternal::MessageUnpinned(u) => {
-                if !result.pinned_messages_added.contains(&u.message_index) {
-                    result.pinned_messages_removed.push(u.message_index);
-                }
-            }
-            ChatEventInternal::GroupRulesChanged(_) => {
-                if result.rules.is_none() {
-                    result.rules = Some(data.chat.rules.clone());
-                }
-            }
-            _ => {}
-        }
-    }
-
-    if result.participants_added_or_updated.is_empty()
-        && result.participants_removed.is_empty()
-        && result.blocked_users_added.is_empty()
-        && result.blocked_users_removed.is_empty()
-        && result.pinned_messages_added.is_empty()
-        && result.pinned_messages_removed.is_empty()
-        && result.rules.is_none()
+    let updates_since = match state
+        .data
+        .chat
+        .events
+        .events_reader(EventIndex::default(), None, now)
+        .and_then(|r| r.get(args.updates_since.into()).map(|e| e.timestamp))
     {
-        SuccessNoUpdates(latest_event_index)
+        Some(ts) => ts,
+        None => return SuccessNoUpdates(latest_event_index),
+    };
+
+    let updates = state.data.chat.selected_group_updates_from_events(updates_since, member, now);
+
+    if updates.has_updates() {
+        Success(SuccessResult {
+            timestamp: updates.timestamp,
+            latest_event_index: updates.latest_event_index,
+            participants_added_or_updated: updates.members_added_or_updated,
+            participants_removed: updates.members_removed,
+            blocked_users_added: updates.blocked_users_added,
+            blocked_users_removed: updates.blocked_users_removed,
+            invited_users: updates.invited_users,
+            pinned_messages_added: updates.pinned_messages_added,
+            pinned_messages_removed: updates.pinned_messages_removed,
+            rules: updates.rules,
+        })
     } else {
-        Success(result)
-    }
-}
-
-struct UserUpdatesHandler<'a> {
-    data: &'a Data,
-    users_updated: HashSet<UserId>,
-}
-
-impl<'a> UserUpdatesHandler<'a> {
-    pub fn mark_participant_updated(&mut self, result: &mut SuccessResult, user_id: UserId, removed: bool) {
-        if self.users_updated.insert(user_id) {
-            if removed {
-                result.participants_removed.push(user_id);
-            } else if let Some(member) = self.data.chat.members.get(&user_id) {
-                result.participants_added_or_updated.push(member.into());
-            }
-        }
-    }
-
-    pub fn mark_user_blocked_updated(&mut self, result: &mut SuccessResult, user_id: UserId, blocked: bool) {
-        if self.users_updated.insert(user_id) {
-            if blocked {
-                result.participants_removed.push(user_id);
-                result.blocked_users_added.push(user_id);
-            } else {
-                result.blocked_users_removed.push(user_id);
-            }
-        }
+        SuccessNoUpdates(latest_event_index)
     }
 }

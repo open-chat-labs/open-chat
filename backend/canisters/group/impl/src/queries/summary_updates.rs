@@ -32,7 +32,7 @@ fn summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
 
     let now = state.env.now();
     let newly_expired_messages = state.data.chat.events.expired_messages_since(updates_since, now);
-    let updates_from_events = state.data.chat.updates_from_events(updates_since, member, now);
+    let updates_from_events = state.data.chat.summary_updates_from_events(updates_since, member, now);
 
     let updates = GroupCanisterGroupChatSummaryUpdates {
         chat_id: state.env.canister_id().into(),

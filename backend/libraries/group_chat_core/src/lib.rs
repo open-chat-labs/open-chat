@@ -20,7 +20,7 @@ use types::{
     GroupVisibilityChanged, InvalidPollReason, MemberLeft, MembersRemoved, Mention, MentionInternal, Message, MessageContent,
     MessageContentInitial, MessageContentInternal, MessageId, MessageIndex, MessageMatch, MessagePinned, MessageUnpinned,
     MessagesResponse, Milliseconds, OptionUpdate, OptionalGroupPermissions, PermissionsChanged, PushEventResult, Reaction,
-    RoleChanged, ThreadPreview, TimestampMillis, Timestamped, User, UserId, UsersBlocked, UsersInvited,
+    RoleChanged, SelectedGroupUpdates, ThreadPreview, TimestampMillis, Timestamped, User, UserId, UsersBlocked, UsersInvited,
 };
 use utils::avatar_validation::validate_avatar;
 use utils::group_validation::{validate_description, validate_name, validate_rules, NameValidationError, RulesValidationError};
@@ -107,15 +107,15 @@ impl GroupChatCore {
             || member.notifications_muted.timestamp > since
     }
 
-    pub fn updates_from_events(
+    pub fn summary_updates_from_events(
         &self,
         since: TimestampMillis,
         member: &GroupMemberInternal,
         now: TimestampMillis,
-    ) -> UpdatesFromEvents {
+    ) -> SummaryUpdatesFromEvents {
         let events_reader = self.events.visible_main_events_reader(member.min_visible_event_index(), now);
 
-        let mut updates = UpdatesFromEvents {
+        let mut updates = SummaryUpdatesFromEvents {
             // We need to handle this separately because the message may have been sent before 'since' but
             // then subsequently updated after 'since', in this scenario the message would not be picked up
             // during the iteration below.
@@ -233,6 +233,122 @@ impl GroupChatCore {
         }
 
         updates
+    }
+
+    pub fn selected_group_updates_from_events(
+        &self,
+        since: TimestampMillis,
+        member: &GroupMemberInternal,
+        now: TimestampMillis,
+    ) -> SelectedGroupUpdates {
+        struct UserUpdatesHandler<'a> {
+            chat: &'a GroupChatCore,
+            users_updated: HashSet<UserId>,
+        }
+
+        impl<'a> UserUpdatesHandler<'a> {
+            pub fn mark_member_updated(&mut self, result: &mut SelectedGroupUpdates, user_id: UserId, removed: bool) {
+                if self.users_updated.insert(user_id) {
+                    if removed {
+                        result.members_removed.push(user_id);
+                    } else if let Some(member) = self.chat.members.get(&user_id) {
+                        result.members_added_or_updated.push(member.into());
+                    }
+                }
+            }
+
+            pub fn mark_user_blocked_updated(&mut self, result: &mut SelectedGroupUpdates, user_id: UserId, blocked: bool) {
+                if self.users_updated.insert(user_id) {
+                    if blocked {
+                        result.members_removed.push(user_id);
+                        result.blocked_users_added.push(user_id);
+                    } else {
+                        result.blocked_users_removed.push(user_id);
+                    }
+                }
+            }
+        }
+
+        let min_visible_event_index = member.min_visible_event_index();
+        let events_reader = self.events.visible_main_events_reader(min_visible_event_index, now);
+        let latest_event_index = events_reader.latest_event_index().unwrap();
+
+        let invited_users = if self.invited_users.last_updated() > since { Some(self.invited_users.users()) } else { None };
+
+        let mut result = SelectedGroupUpdates {
+            timestamp: now,
+            latest_event_index,
+            invited_users,
+            ..Default::default()
+        };
+
+        let mut user_updates_handler = UserUpdatesHandler {
+            chat: self,
+            users_updated: HashSet::new(),
+        };
+
+        // Iterate through the new events starting from most recent
+        for event_wrapper in events_reader.iter(None, false).take_while(|e| e.timestamp > since) {
+            match &event_wrapper.event {
+                ChatEventInternal::OwnershipTransferred(e) => {
+                    user_updates_handler.mark_member_updated(&mut result, e.old_owner, false);
+                    user_updates_handler.mark_member_updated(&mut result, e.new_owner, false);
+                }
+                ChatEventInternal::ParticipantsAdded(p) => {
+                    for user_id in p.user_ids.iter() {
+                        user_updates_handler.mark_member_updated(&mut result, *user_id, false);
+                    }
+                    for user_id in p.unblocked.iter() {
+                        user_updates_handler.mark_user_blocked_updated(&mut result, *user_id, false);
+                    }
+                }
+                ChatEventInternal::ParticipantsRemoved(p) => {
+                    for user_id in p.user_ids.iter() {
+                        user_updates_handler.mark_member_updated(&mut result, *user_id, true);
+                    }
+                }
+                ChatEventInternal::ParticipantJoined(p) => {
+                    user_updates_handler.mark_member_updated(&mut result, p.user_id, false);
+                }
+                ChatEventInternal::ParticipantLeft(p) => {
+                    user_updates_handler.mark_member_updated(&mut result, p.user_id, true);
+                }
+                ChatEventInternal::RoleChanged(rc) => {
+                    for user_id in rc.user_ids.iter() {
+                        user_updates_handler.mark_member_updated(&mut result, *user_id, false);
+                    }
+                }
+                ChatEventInternal::UsersBlocked(ub) => {
+                    for user_id in ub.user_ids.iter() {
+                        user_updates_handler.mark_user_blocked_updated(&mut result, *user_id, true);
+                        user_updates_handler.mark_member_updated(&mut result, *user_id, true);
+                    }
+                }
+                ChatEventInternal::UsersUnblocked(ub) => {
+                    for user_id in ub.user_ids.iter() {
+                        user_updates_handler.mark_user_blocked_updated(&mut result, *user_id, false);
+                    }
+                }
+                ChatEventInternal::MessagePinned(p) => {
+                    if !result.pinned_messages_removed.contains(&p.message_index) {
+                        result.pinned_messages_added.push(p.message_index);
+                    }
+                }
+                ChatEventInternal::MessageUnpinned(u) => {
+                    if !result.pinned_messages_added.contains(&u.message_index) {
+                        result.pinned_messages_removed.push(u.message_index);
+                    }
+                }
+                ChatEventInternal::GroupRulesChanged(_) => {
+                    if result.rules.is_none() {
+                        result.rules = Some(self.rules.clone());
+                    }
+                }
+                _ => {}
+            }
+        }
+
+        result
     }
 
     pub fn events(
@@ -1576,7 +1692,7 @@ pub struct InvitedUsersSuccess {
 }
 
 #[derive(Default)]
-pub struct UpdatesFromEvents {
+pub struct SummaryUpdatesFromEvents {
     pub name: Option<String>,
     pub description: Option<String>,
     pub subtype: OptionUpdate<GroupSubtype>,
