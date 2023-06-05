@@ -1616,6 +1616,7 @@ dependencies = [
  "ic-cdk-macros",
  "ic-cdk-timers",
  "ic-ledger-types",
+ "ledger_utils",
  "serde",
  "serde_bytes",
  "serde_json",

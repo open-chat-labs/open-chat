@@ -2,6 +2,7 @@ use crate::model::canisters::{CanisterMetrics, Canisters};
 use candid::{CandidType, Principal};
 use canister_state_macros::canister_state;
 use ic_ledger_types::{BlockIndex, Tokens};
+use ledger_utils::default_ledger_account;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashSet;
@@ -45,6 +46,7 @@ impl State {
             git_commit_id: utils::git::git_commit_id().to_string(),
             governance_principals: self.data.governance_principals.iter().copied().collect(),
             canisters: self.data.canisters.metrics(),
+            icp_account: default_ledger_account(self.env.canister_id()).to_string(),
             sns_root_canister: self.data.sns_root_canister,
             max_top_up_amount: self.data.max_top_up_amount,
             min_interval: self.data.min_interval,
@@ -110,6 +112,7 @@ pub struct Metrics {
     pub git_commit_id: String,
     pub governance_principals: Vec<Principal>,
     pub canisters: Vec<CanisterMetrics>,
+    pub icp_account: String,
     pub sns_root_canister: Option<CanisterId>,
     pub max_top_up_amount: Cycles,
     pub min_interval: Milliseconds,
