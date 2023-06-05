@@ -28,7 +28,7 @@
     import { pathParams } from "../../routes";
     import page from "page";
     import { compareRoles } from "openchat-shared";
-    import CommunityChannels from "./communities/explore/CommunityChannels.svelte";
+    import CommunityDetails from "./communities/details/CommunitySummary.svelte";
 
     const dispatch = createEventDispatcher();
 
@@ -278,6 +278,6 @@
     {:else if lastState.kind === "proposal_filters" && $selectedChatId !== undefined}
         <ProposalGroupFilters on:close={popRightPanelHistory} />
     {:else if lastState.kind === "community_channels"}
-        <CommunityChannels communityId={lastState.communityId} />
+        <CommunityDetails communityId={lastState.communityId} />
     {/if}
 </Panel>

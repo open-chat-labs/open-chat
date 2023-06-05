@@ -24,7 +24,6 @@
 
 <div class="steps" class:enabled>
     {#each steps as s, i}
-        <!-- svelte-ignore a11y-click-events-have-key-events -->
         <div
             role="button"
             class:invalid={!s.valid}

@@ -58,7 +58,7 @@
     import AccountsModal from "./profile/AccountsModal.svelte";
     import { querystring } from "routes";
     import { eventListScrollTop } from "../../stores/scrollPos";
-    import GateCheckFailed from "./groupdetails/AccessGateCheckFailed.svelte";
+    import GateCheckFailed from "./AccessGateCheckFailed.svelte";
     import HallOfFame from "./HallOfFame.svelte";
     import LeftNav from "./nav/LeftNav.svelte";
     import { createCandidateCommunity } from "../../stores/community";

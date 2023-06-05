@@ -16,7 +16,7 @@
     } from "openchat-client";
     import StageHeader from "../../StageHeader.svelte";
     import PermissionsEditor from "./PermissionsEditor.svelte";
-    import PermissionsViewer from "./PermissionsViewer.svelte";
+    import PermissionsViewer from "../PermissionsViewer.svelte";
     import Rules from "../../Rules.svelte";
     import Details from "./Details.svelte";
     import { dummyCommunities, createCandidateCommunity } from "stores/community";
