@@ -3,7 +3,10 @@ use group_chat_core::{GroupChatCore, GroupMemberInternal};
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::{HashMap, HashSet};
-use types::{Avatar, ChannelId, CommunityCanisterChannelSummary, TimestampMillis, UserId, MAX_THREADS_IN_SUMMARY};
+use types::{
+    AccessRules, Avatar, ChannelId, CommunityCanisterChannelSummary, GroupPermissions, TimestampMillis, UserId,
+    MAX_THREADS_IN_SUMMARY,
+};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct Channels {
@@ -59,7 +62,7 @@ impl Channels {
 }
 
 impl Channel {
-	pub fn default(id: ChannelId, name: String, created_by: UserId, now: TimestampMillis) -> Channel {
+    pub fn default(id: ChannelId, name: String, created_by: UserId, now: TimestampMillis) -> Channel {
         Channel {
             id,
             chat: GroupChatCore::new(
