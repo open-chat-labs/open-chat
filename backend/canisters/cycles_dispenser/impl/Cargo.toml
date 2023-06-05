@@ -22,6 +22,7 @@ ic-cdk = { workspace = true }
 ic-cdk-timers = { workspace = true }
 ic-cdk-macros = { workspace = true }
 ic-ledger-types = { workspace = true }
+ledger_utils = { path = "../../../libraries/ledger_utils" }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
 serde_json = { workspace = true }
