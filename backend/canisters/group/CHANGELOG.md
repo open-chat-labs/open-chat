@@ -14,6 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Changed
 
 - Move invited_users from Data to GroupChatCore ([#3714](https://github.com/open-ic/open-chat/pull/3714))
+- Move invite_users logic into GroupChatCore ([#3716](https://github.com/open-ic/open-chat/pull/3716))
 
 ### Fixed
 
