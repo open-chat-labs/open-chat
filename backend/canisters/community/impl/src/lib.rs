@@ -10,7 +10,7 @@ use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use types::{
-    AccessGate, AccessRules, Avatar, CanisterId, CommunityCanisterCommunitySummary, CommunityPermissions, Cycles,
+    AccessGate, AccessRules, Avatar, CanisterId, ChannelId, CommunityCanisterCommunitySummary, CommunityPermissions, Cycles,
     FrozenGroupInfo, Notification, TimestampMillis, Timestamped, UserId, Version,
 };
 use utils::env::Environment;
@@ -171,11 +171,13 @@ impl Data {
         notifications_canister_id: CanisterId,
         proposals_bot_user_id: UserId,
         gate: Option<AccessGate>,
+        default_channels: Vec<(ChannelId, String)>,
         test_mode: bool,
         now: TimestampMillis,
     ) -> Data {
         let members = CommunityMembers::new(created_by_principal, created_by_user_id, now);
         let events = CommunityEvents::new(name.clone(), description.clone(), created_by_user_id, now);
+        let channels = Channels::new(created_by_user_id, default_channels, now);
 
         Data {
             is_public,
@@ -193,7 +195,7 @@ impl Data {
             proposals_bot_user_id,
             date_created: now,
             members,
-            channels: Channels::default(),
+            channels,
             events,
             invited_users: InvitedUsers::default(),
             invite_code: None,

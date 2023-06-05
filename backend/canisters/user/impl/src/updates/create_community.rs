@@ -17,6 +17,7 @@ async fn create_community(mut args: Args) -> Response {
     args.name = args.name.trim().to_string();
     args.description = args.description.trim().to_string();
     args.rules.text = args.rules.text.trim().to_string();
+    args.default_channels = args.default_channels.into_iter().map(|c| c.trim().to_string()).collect();
 
     let prepare_result = match read_state(|state| prepare(args, state)) {
         Ok(ok) => ok,
@@ -85,6 +86,8 @@ fn prepare(args: Args, state: &RuntimeState) -> Result<PrepareResult, Response> 
         });
     } else if let Err(error) = validate_avatar(args.avatar.as_ref()) {
         Err(AvatarTooBig(error))
+    } else if !default_channels_valid(&args.default_channels) {
+        Err(DefaultChannelsInvalid)
     } else {
         let create_community_args = c2c_create_community::Args {
             is_public: args.is_public,
@@ -95,12 +98,17 @@ fn prepare(args: Args, state: &RuntimeState) -> Result<PrepareResult, Response> 
             avatar: args.avatar,
             permissions: args.permissions,
             gate: args.gate,
+            default_channels: args.default_channels,
         };
         Ok(PrepareResult {
             group_index_canister_id: state.data.group_index_canister_id,
             create_community_args,
         })
     }
+}
+
+fn default_channels_valid(default_channels: &Vec<String>) -> bool {
+    !default_channels.is_empty() && default_channels.iter().all(|channel| validate_name(channel, true).is_ok())
 }
 
 fn commit(community_id: CommunityId, state: &mut RuntimeState) {

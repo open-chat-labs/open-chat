@@ -3,12 +3,15 @@ use group_chat_core::{GroupChatCore, GroupMemberInternal};
 use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::{HashMap, HashSet};
-use types::{Avatar, ChannelId, CommunityCanisterChannelSummary, TimestampMillis, UserId, MAX_THREADS_IN_SUMMARY};
+use types::{
+    AccessRules, Avatar, ChannelId, CommunityCanisterChannelSummary, GroupPermissions, TimestampMillis, UserId,
+    MAX_THREADS_IN_SUMMARY,
+};
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct Channels {
     channels: HashMap<ChannelId, Channel>,
-    default_groups: HashSet<ChannelId>,
+    default_channels: HashSet<ChannelId>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -18,6 +21,19 @@ pub struct Channel {
 }
 
 impl Channels {
+    pub fn new(created_by: UserId, default_channels: Vec<(ChannelId, String)>, now: TimestampMillis) -> Channels {
+        let default_channel_ids = default_channels.iter().map(|(channel_id, _)| *channel_id).collect();
+        let channels = default_channels
+            .into_iter()
+            .map(|(id, name)| (id, Channel::default(id, name, created_by, now)))
+            .collect();
+
+        Channels {
+            channels,
+            default_channels: default_channel_ids,
+        }
+    }
+
     pub fn add(&mut self, channel: Channel) {
         match self.channels.entry(channel.id) {
             Vacant(e) => e.insert(channel),
@@ -46,6 +62,26 @@ impl Channels {
 }
 
 impl Channel {
+    pub fn default(id: ChannelId, name: String, created_by: UserId, now: TimestampMillis) -> Channel {
+        Channel {
+            id,
+            chat: GroupChatCore::new(
+                created_by,
+                true,
+                name,
+                String::new(),
+                AccessRules::default(),
+                None,
+                None,
+                true,
+                GroupPermissions::default(),
+                None,
+                None,
+                now,
+            ),
+        }
+    }
+
     pub fn summary_if_member(&self, user_id: &UserId, now: TimestampMillis) -> Option<CommunityCanisterChannelSummary> {
         let member = self.chat.members.get(user_id)?;
         Some(self.summary(member, now))

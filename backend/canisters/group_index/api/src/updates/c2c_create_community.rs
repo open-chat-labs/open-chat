@@ -12,6 +12,7 @@ pub struct Args {
     pub history_visible_to_new_joiners: bool,
     pub permissions: Option<CommunityPermissions>,
     pub gate: Option<AccessGate>,
+    pub default_channels: Vec<String>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
