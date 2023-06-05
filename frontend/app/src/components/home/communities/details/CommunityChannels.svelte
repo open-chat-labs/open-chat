@@ -1,18 +1,38 @@
 <script lang="ts">
-    // import ButtonGroup from "../../../ButtonGroup.svelte";
     import Markdown from "../../Markdown.svelte";
     import Avatar from "../../../Avatar.svelte";
     import { AvatarSize } from "openchat-client";
     import { _ } from "svelte-i18n";
+    import SectionHeader from "../../../SectionHeader.svelte";
+    import ArrowLeft from "svelte-material-icons/ArrowLeft.svelte";
+    import HoverIcon from "../../../HoverIcon.svelte";
     import Button from "../../../Button.svelte";
     import ButtonGroup from "../../..//ButtonGroup.svelte";
     import Search from "../../../Search.svelte";
     import { mobileWidth } from "../../../../stores/screenDimensions";
     import { dummyCommunityChannels } from "../../../../stores/community";
+    import { iconSize } from "../../../../stores/iconSize";
+    import { createEventDispatcher } from "svelte";
+    import { popRightPanelHistory } from "../../../../stores/rightPanel";
+
+    const dispatch = createEventDispatcher();
 
     let searchTerm = "";
     let searching = false;
+
+    function close() {
+        popRightPanelHistory();
+    }
 </script>
+
+<SectionHeader border flush shadow>
+    <h4>{$_("communities.channels")}</h4>
+    <span title={$_("back")} class="back" on:click={close}>
+        <HoverIcon>
+            <ArrowLeft size={$iconSize} color={"var(--icon-txt)"} />
+        </HoverIcon>
+    </span>
+</SectionHeader>
 
 <div class="search">
     <Search fill bind:searchTerm bind:searching placeholder={$_("communities.searchGroups")} />
@@ -67,6 +87,13 @@
         }
     }
 
+    .search {
+        margin-bottom: $sp4;
+        @include mobile() {
+            margin-bottom: $sp3;
+        }
+    }
+
     .channels {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(min(250px, 100%), 1fr));
@@ -96,5 +123,15 @@
                 }
             }
         }
+    }
+
+    h4 {
+        flex: 1;
+        margin: 0;
+        text-align: center;
+        @include font-size(fs-120);
+    }
+    .back {
+        flex: 0 0 30px;
     }
 </style>

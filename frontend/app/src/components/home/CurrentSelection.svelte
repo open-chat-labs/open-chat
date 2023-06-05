@@ -24,8 +24,9 @@
     <span class="menu">
         <CommunityMenu
             on:newChannel
-            on:editCommunity
-            on:browseChannels
+            on:communityDetails
+            on:leaveCommunity
+            on:deleteCommunity
             community={$selectedCommunity} />
     </span>
 </SectionHeader>

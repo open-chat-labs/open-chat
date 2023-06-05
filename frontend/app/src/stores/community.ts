@@ -24,7 +24,7 @@ function createDummyCommunity(
         name,
         id,
         description:
-            "This is an awsome community with lots of interesting things to see and do. Not too much racism. Not financial advice. HODL.",
+            "This is an awsome community with lots of interesting things to see and do. Blah blah blah, it _even supports markdown_. Not financial advice. HODL.",
         memberCount,
         channelCount,
         unreadCount,
@@ -50,7 +50,7 @@ function createDummyCommunityChannel(id: string) {
 
 const allCommunities: Community[] = [
     createDummyCommunity("1", "OpenChat community", "../assets/evil-robot.svg", 30515, 20, 5),
-    createDummyCommunity("2", "SNS1 Idiots", "../assets/sns1_medium.png"),
+    createDummyCommunity("2", "SNS1 fans", "../assets/sns1_medium.png"),
     createDummyCommunity(
         "3",
         "ckBTC Enthusiasts",
@@ -60,7 +60,7 @@ const allCommunities: Community[] = [
         1000
     ),
     createDummyCommunity("4", "8Year Gang"),
-    createDummyCommunity("5", "/biz Nazis"),
+    createDummyCommunity("5", "/biz Community"),
     createDummyCommunity("6"),
     createDummyCommunity("7"),
     createDummyCommunity("8"),

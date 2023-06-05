@@ -11,7 +11,7 @@
 
     function deleteCommunity() {
         dispatch("deleteCommunity", {
-            kind: "delete",
+            kind: "delete_community",
             id: community.id,
             doubleCheck: {
                 challenge: $_("typeGroupName", { values: { name: community.name } }),

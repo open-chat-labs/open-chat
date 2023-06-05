@@ -1,5 +1,5 @@
 <script lang="ts">
-    import type { AccessRules, Community } from "openchat-client";
+    import type { AccessRules, ChatMetrics, Community } from "openchat-client";
     import {
         communityAdvancedOpen,
         communityPermissionsOpen,
@@ -14,9 +14,11 @@
     import { _ } from "svelte-i18n";
     import AdvancedSection from "./AdvancedSection.svelte";
     import CollapsibleCard from "../../../CollapsibleCard.svelte";
+    import Stats from "../../Stats.svelte";
 
     export let community: Community;
     export let rules: AccessRules | undefined;
+    export let metrics: ChatMetrics;
     export let canDelete: boolean;
 
     // access
@@ -65,12 +67,12 @@
         headerText={$_("permissions.permissions")}>
         <PermissionsViewer bind:permissions={community.permissions} />
     </CollapsibleCard>
-    <!-- <CollapsibleCard
-                on:toggle={communityStatsOpen.toggle}
-                open={$communityStatsOpen}
-                headerText={interpolateLevel("stats.groupStats", community.level)}>
-                <Stats showReported={false} stats={community.metrics} />
-            </CollapsibleCard> -->
+    <CollapsibleCard
+        on:toggle={communityStatsOpen.toggle}
+        open={$communityStatsOpen}
+        headerText={interpolateLevel("stats.groupStats", community.level)}>
+        <Stats showReported={false} stats={metrics} />
+    </CollapsibleCard>
     {#if canDelete}
         <CollapsibleCard
             on:toggle={communityAdvancedOpen.toggle}
