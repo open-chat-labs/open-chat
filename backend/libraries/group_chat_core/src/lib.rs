@@ -1,5 +1,3 @@
-use candid::Principal;
-
 mod invited_users;
 mod members;
 mod mentions;
