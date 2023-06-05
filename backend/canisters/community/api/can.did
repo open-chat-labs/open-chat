@@ -135,6 +135,20 @@ type SummaryResponse =
         UserNotInCommunity;
     };
 
+type SummaryUpdatesArgs =
+    record {
+        updates_since: TimestampMillis;
+    };
+
+type SummaryUpdatesResponse =
+    variant {
+        Success: record {
+            updates: CommunityCanisterCommunitySummaryUpdates;
+        };
+        SuccessNoUpdates;
+        UserNotInCommunity;
+    };
+
 type AddMembersToChannelArgs =
     record {
         channel_id: ChannelId;
@@ -716,6 +730,7 @@ service: {
     rules: (RulesArgs) -> (RulesResponse) query;
     search_channel: (SearchChannelArgs) -> (SearchChannelResponse) query;
     summary: (EmptyArgs) -> (SummaryResponse) query;
+    summary_updates: (SummaryUpdatesArgs) -> (SummaryUpdatesResponse) query;
 
     add_members_to_channel: (AddMembersToChannelArgs) -> (AddMembersToChannelResponse);
     add_reaction: (AddReactionArgs) -> (AddReactionResponse);

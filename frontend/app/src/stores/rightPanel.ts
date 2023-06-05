@@ -7,10 +7,12 @@ export type RightPanelState =
     | InviteMembersPanel
     | ShowMembersPanel
     | ShowPinnedPanel
+    | ShowCommunityChannels
+    | ShowCommunityMembers
     | UserProfilePanel
     | MessageThreadPanel
     | ProposalFilterPanel
-    | CommunityChannels
+    | CommunityDetails
     | NoPanel;
 
 export type NoPanel = {
@@ -39,8 +41,18 @@ export type ShowMembersPanel = {
     kind: "show_members";
 };
 
-export type CommunityChannels = {
+export type CommunityDetails = {
+    kind: "community_details";
+    communityId: string;
+};
+
+export type ShowCommunityChannels = {
     kind: "community_channels";
+    communityId: string;
+};
+
+export type ShowCommunityMembers = {
+    kind: "community_members";
     communityId: string;
 };
 
@@ -88,4 +100,8 @@ export const rightPanelHistory = writable<RightPanelState[]>([]);
 
 export function popRightPanelHistory(): void {
     rightPanelHistory.update((history) => history.slice(0, history.length - 1));
+}
+
+export function pushRightPanelHistory(state: RightPanelState): void {
+    rightPanelHistory.update((history) => [...history, state]);
 }

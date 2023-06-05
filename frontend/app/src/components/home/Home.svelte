@@ -44,7 +44,11 @@
         closeNotifications,
         subscribeToNotifications,
     } from "../../utils/notifications";
-    import { filterByChatType, rightPanelHistory } from "../../stores/rightPanel";
+    import {
+        filterByChatType,
+        pushRightPanelHistory,
+        rightPanelHistory,
+    } from "../../stores/rightPanel";
     import Upgrade from "./upgrade/Upgrade.svelte";
     import AreYouSure from "../AreYouSure.svelte";
     import { removeQueryStringParam } from "../../utils/urls";
@@ -58,37 +62,59 @@
     import AccountsModal from "./profile/AccountsModal.svelte";
     import { querystring } from "routes";
     import { eventListScrollTop } from "../../stores/scrollPos";
-    import GateCheckFailed from "./groupdetails/AccessGateCheckFailed.svelte";
+    import GateCheckFailed from "./AccessGateCheckFailed.svelte";
     import HallOfFame from "./HallOfFame.svelte";
     import LeftNav from "./nav/LeftNav.svelte";
-    import { createCandidateCommunity } from "../../stores/community";
+    import {
+        createCandidateCommunity,
+        myCommunities,
+        dummyCommunities,
+        selectedCommunity,
+    } from "../../stores/community";
 
     const client = getContext<OpenChat>("client");
     const user = client.user;
     let candidateGroup: CandidateGroupChat | undefined;
     let candidateCommunity: Community | undefined;
 
-    type ConfirmActionEvent = ConfirmLeaveEvent | ConfirmDeleteEvent | ConfirmRulesEvent;
+    type ConfirmActionEvent =
+        | ConfirmLeaveEvent
+        | ConfirmDeleteEvent
+        | ConfirmRulesEvent
+        | ConfirmLeaveCommunityEvent
+        | ConfirmDeleteCommunityEvent;
 
-    interface ConfirmLeaveEvent {
+    type ConfirmLeaveCommunityEvent = {
+        kind: "leave_community";
+        communityId: string;
+        chatType: ChatType;
+    };
+
+    type ConfirmLeaveEvent = {
         kind: "leave";
         chatId: string;
         chatType: ChatType;
-    }
+    };
 
-    interface ConfirmDeleteEvent {
+    type ConfirmDeleteEvent = {
         kind: "delete";
         chatId: string;
         chatType: ChatType;
         doubleCheck: { challenge: string; response: string };
-    }
+    };
 
-    interface ConfirmRulesEvent {
+    type ConfirmDeleteCommunityEvent = {
+        kind: "delete_community";
+        communityId: string;
+        doubleCheck: { challenge: string; response: string };
+    };
+
+    type ConfirmRulesEvent = {
         kind: "rules";
         group: GroupChatSummary;
         select: boolean;
         rules: string;
-    }
+    };
 
     enum ModalType {
         None,
@@ -228,7 +254,7 @@
             if (pathParams.kind === "communities_route") {
                 if (pathParams.communityId !== undefined) {
                     rightPanelHistory.set([
-                        { kind: "community_channels", communityId: pathParams.communityId },
+                        { kind: "community_details", communityId: pathParams.communityId },
                     ]);
                 } else {
                     rightPanelHistory.set([]);
@@ -448,6 +474,10 @@
         switch (confirmActionEvent.kind) {
             case "leave":
                 return $_("confirmLeaveGroup");
+            case "leave_community":
+                return $_("communities.leaveMessage");
+            case "delete_community":
+                return $_("communities.deleteMessage");
             case "delete":
                 return $_("irreversible");
             case "rules": {
@@ -472,6 +502,12 @@
         switch (confirmActionEvent.kind) {
             case "leave":
                 return leaveGroup(confirmActionEvent.chatId, confirmActionEvent.chatType);
+            case "leave_community":
+                return leaveCommunity(confirmActionEvent.communityId);
+            case "delete_community":
+                return deleteCommunity(confirmActionEvent.communityId).then((_) => {
+                    rightPanelHistory.set([]);
+                });
             case "delete":
                 return deleteGroup(confirmActionEvent.chatId, confirmActionEvent.chatType).then(
                     (_) => {
@@ -483,6 +519,31 @@
             default:
                 return Promise.reject();
         }
+    }
+
+    function deleteCommunity(communityId: string) {
+        return new Promise<void>((resolve) => {
+            setTimeout(() => {
+                myCommunities.update((communities) => {
+                    return communities.filter((c) => c.id !== communityId);
+                });
+                dummyCommunities.update((communities) => {
+                    return communities.filter((c) => c.id !== communityId);
+                });
+                resolve();
+            }, 2000);
+        });
+    }
+
+    function leaveCommunity(communityId: string) {
+        return new Promise<void>((resolve) => {
+            setTimeout(() => {
+                myCommunities.update((communities) => {
+                    return communities.filter((c) => c.id !== communityId);
+                });
+                resolve();
+            }, 2000);
+        });
     }
 
     function deleteGroup(chatId: string, chatType: ChatType): Promise<void> {
@@ -578,9 +639,7 @@
             if (ev.detail) {
                 rightPanelHistory.set([{ kind: "show_members" }]);
             } else {
-                rightPanelHistory.update((history) => {
-                    return [...history, { kind: "show_members" }];
-                });
+                pushRightPanelHistory({ kind: "show_members" });
             }
         }
     }
@@ -608,6 +667,14 @@
                     },
                 ]);
             });
+        }
+    }
+
+    function communityDetails() {
+        if ($selectedCommunity !== undefined) {
+            rightPanelHistory.set([
+                { kind: "community_details", communityId: $selectedCommunity.id },
+            ]);
         }
     }
 
@@ -870,10 +937,6 @@
         rightPanelHistory.set([]);
     }
 
-    function browseChannels(ev: CustomEvent<Community>) {
-        rightPanelHistory.set([{ kind: "community_channels", communityId: ev.detail.id }]);
-    }
-
     function createCommunity() {
         modal = ModalType.EditCommunity;
         candidateCommunity = createCandidateCommunity("");
@@ -893,13 +956,14 @@
         <LeftNav
             on:profile={showProfile}
             on:wallet={showWallet}
-            on:browseChannels={browseChannels}
             on:halloffame={() => (modal = ModalType.HallOfFame)}
             on:logout={() => client.logout()}
             on:newGroup={() => newGroup("group")}
-            on:editCommunity={editCommunity}
+            on:communityDetails={communityDetails}
             on:showHomePage={showLandingPageRoute("/home")}
             on:newChannel={newChannel}
+            on:leaveCommunity={triggerConfirm}
+            on:deleteCommunity={triggerConfirm}
             on:upgrade={upgrade} />
     {/if}
 
@@ -916,8 +980,7 @@
             on:halloffame={() => (modal = ModalType.HallOfFame)}
             on:newGroup={() => newGroup("group")}
             on:profile={showProfile}
-            on:browseChannels={browseChannels}
-            on:editCommunity={editCommunity}
+            on:communityDetails={communityDetails}
             on:logout={() => client.logout()}
             on:wallet={showWallet}
             on:deleteDirectChat={deleteDirectChat}
@@ -928,6 +991,8 @@
             on:unarchiveChat={onUnarchiveChat}
             on:toggleMuteNotifications={toggleMuteNotifications}
             on:newChannel={newChannel}
+            on:leaveCommunity={triggerConfirm}
+            on:deleteCommunity={triggerConfirm}
             on:loadMessage={loadMessage} />
     {/if}
     {#if $layoutStore.showMiddle}
@@ -966,6 +1031,8 @@
             on:blockUser={blockUser}
             on:deleteGroup={triggerConfirm}
             on:editGroup={editGroup}
+            on:editCommunity={editCommunity}
+            on:deleteCommunity={triggerConfirm}
             on:groupCreated={groupCreated} />
     {/if}
 </main>
@@ -984,6 +1051,8 @@
                 on:blockUser={blockUser}
                 on:deleteGroup={triggerConfirm}
                 on:editGroup={editGroup}
+                on:editCommunity={editCommunity}
+                on:deleteCommunity={triggerConfirm}
                 on:groupCreated={groupCreated} />
         </div>
     </Overlay>
@@ -991,7 +1060,8 @@
 
 {#if confirmActionEvent !== undefined}
     <AreYouSure
-        doubleCheck={confirmActionEvent.kind === "delete"
+        doubleCheck={confirmActionEvent.kind === "delete" ||
+        confirmActionEvent.kind === "delete_community"
             ? confirmActionEvent.doubleCheck
             : undefined}
         title={confirmActionEvent.kind === "rules" ? $_("group.rules.acceptTitle") : undefined}

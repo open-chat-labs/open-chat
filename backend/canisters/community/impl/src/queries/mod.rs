@@ -11,4 +11,5 @@ mod search_channel;
 mod selected_initial;
 mod selected_updates;
 mod summary;
+mod summary_updates;
 mod thread_previews;

@@ -29,8 +29,9 @@
             on:wallet
             on:upgrade
             on:toggleMuteNotifications
-            on:browseChannels
-            on:editCommunity
+            on:communityDetails
+            on:leaveCommunity
+            on:deleteCommunity
             on:newChannel
             {searchResultsAvailable}
             {searchTerm}

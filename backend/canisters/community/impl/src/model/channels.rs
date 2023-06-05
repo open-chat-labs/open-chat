@@ -4,8 +4,8 @@ use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::{HashMap, HashSet};
 use types::{
-    AccessRules, Avatar, ChannelId, CommunityCanisterChannelSummary, GroupPermissions, TimestampMillis, UserId,
-    MAX_THREADS_IN_SUMMARY,
+    AccessRules, Avatar, ChannelId, CommunityCanisterChannelSummary, CommunityCanisterChannelSummaryUpdates, GroupPermissions,
+    TimestampMillis, UserId, MAX_THREADS_IN_SUMMARY,
 };
 
 #[derive(Serialize, Deserialize, Default)]
@@ -129,4 +129,50 @@ impl Channel {
             gate: chat.gate.value.clone(),
         }
     }
+
+    pub fn summary_updates(&self, user_id: &UserId, since: TimestampMillis, now: TimestampMillis) -> Option<ChannelUpdates> {
+        let member = match self.chat.members.get(user_id) {
+            Some(m) => m,
+            _ => return None,
+        };
+        if member.date_added > since {
+            Some(ChannelUpdates::Added(self.summary(member, now)))
+        } else {
+            let updates_from_events = self.chat.updates_from_events(since, member, now);
+
+            Some(ChannelUpdates::Updated(CommunityCanisterChannelSummaryUpdates {
+                channel_id: self.id,
+                last_updated: now,
+                name: updates_from_events.name,
+                description: updates_from_events.description,
+                subtype: updates_from_events.subtype,
+                avatar_id: updates_from_events.avatar_id,
+                is_public: updates_from_events.is_public,
+                latest_message: updates_from_events.latest_message,
+                latest_event_index: updates_from_events.latest_event_index,
+                member_count: updates_from_events.members_changed.then_some(self.chat.members.len()),
+                role: updates_from_events.role_changed.then_some(member.role),
+                mentions: updates_from_events.mentions,
+                permissions: updates_from_events.permissions,
+                notifications_muted: member.notifications_muted.if_set_after(since).cloned(),
+                metrics: Some(self.chat.events.metrics().clone()),
+                my_metrics: self.chat.events.user_metrics(&member.user_id, Some(since)).cloned(),
+                latest_threads: self.chat.events.latest_threads(
+                    member.min_visible_event_index(),
+                    member.threads.iter(),
+                    Some(since),
+                    MAX_THREADS_IN_SUMMARY,
+                    now,
+                ),
+                date_last_pinned: updates_from_events.date_last_pinned,
+                events_ttl: updates_from_events.events_ttl,
+                gate: updates_from_events.gate,
+            }))
+        }
+    }
+}
+
+pub enum ChannelUpdates {
+    Added(CommunityCanisterChannelSummary),
+    Updated(CommunityCanisterChannelSummaryUpdates),
 }

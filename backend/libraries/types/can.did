@@ -392,6 +392,49 @@ type CommunityCanisterChannelSummary =
         gate: opt AccessGate;
     };
 
+type CommunityCanisterCommunitySummaryUpdates =
+    record {
+        community_id: CommunityId;
+        last_updated: TimestampMillis;
+        name: opt text;
+        description: opt text;
+        avatar_id: AvatarIdUpdate;
+        is_public: opt bool;
+        member_count: opt nat32;
+        role: opt CommunityRole;
+        permissions: opt CommunityPermissions;
+        frozen: FrozenGroupUpdate;
+        gate: AccessGateUpdate;
+        latest_event_index: opt EventIndex;
+        channels_added: vec CommunityCanisterChannelSummary;
+        channels_updated: vec CommunityCanisterChannelSummaryUpdates;
+        channels_removed: vec ChannelId;
+    };
+
+type CommunityCanisterChannelSummaryUpdates =
+    record {
+        channel_id: ChannelId;
+        last_updated: TimestampMillis;
+        name: opt text;
+        description: opt text;
+        subtype: GroupSubtypeUpdate;
+        avatar_id: AvatarIdUpdate;
+        is_public: opt bool;
+        latest_message: opt MessageEventWrapper;
+        latest_event_index: opt EventIndex;
+        member_count: opt nat32;
+        role: opt GroupRole;
+        mentions: vec Mention;
+        permissions: opt GroupPermissions;
+        notifications_muted: opt bool;
+        metrics: opt ChatMetrics;
+        my_metrics: opt ChatMetrics;
+        latest_threads: vec GroupCanisterThreadDetails;
+        date_last_pinned: opt TimestampMillis;
+        events_ttl: EventsTimeToLiveUpdate;
+        gate: AccessGateUpdate;
+    };
+
 type GroupDescriptionChanged =
     record {
         new_description: text;

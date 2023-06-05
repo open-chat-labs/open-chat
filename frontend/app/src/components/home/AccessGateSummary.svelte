@@ -1,7 +1,7 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
     import type { AccessGate } from "openchat-client";
-    import AccessGateIcon from "../AccessGateIcon.svelte";
+    import AccessGateIcon from "./AccessGateIcon.svelte";
     import AccessGateParameters from "./AccessGateParameters.svelte";
 
     export let gate: AccessGate;
