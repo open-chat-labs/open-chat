@@ -66,8 +66,7 @@ fn create_channel_succeeds(is_public: bool) {
     assert!(summary
         .channels
         .iter()
-        .find(|c| c.channel_id == channel_id && c.is_public == is_public && c.name == channel_name)
-        .is_some());
+        .any(|c| c.channel_id == channel_id && c.is_public == is_public && c.name == channel_name));
 }
 
 fn init_test_data(
