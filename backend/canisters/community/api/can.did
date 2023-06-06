@@ -481,6 +481,7 @@ type JoinChannelResponse =
         UserBlocked;
         UserLimitReached: nat32;
         CommunityFrozen;
+        NotInvited;
         InternalError: text;
     };
 

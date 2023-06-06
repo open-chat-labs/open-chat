@@ -42,6 +42,10 @@ fn is_permitted_to_join(
         }
 
         if let Some(channel) = state.data.channels.get(&channel_id) {
+            if !channel.chat.is_public && channel.chat.invited_users.get(&member.user_id).is_none() {
+                return Err(NotInvited);
+            }
+
             if let Some(limit) = channel.chat.members.user_limit_reached() {
                 return Err(UserLimitReached(limit));
             }
@@ -68,14 +72,20 @@ fn join_channel_impl(channel_id: ChannelId, state: &mut RuntimeState) -> Respons
     if let Some(member) = state.data.members.get_mut(caller) {
         if let Some(channel) = state.data.channels.get_mut(&channel_id) {
             let now = state.env.now();
-            let mut min_visible_event_index = EventIndex::default();
-            let mut min_visible_message_index = MessageIndex::default();
+            let min_visible_event_index;
+            let min_visible_message_index;
 
-            if !channel.chat.history_visible_to_new_joiners {
+            if let Some(invitation) = channel.chat.invited_users.get(&member.user_id) {
+                min_visible_event_index = invitation.min_visible_event_index;
+                min_visible_message_index = invitation.min_visible_message_index;
+            } else if channel.chat.history_visible_to_new_joiners {
+                min_visible_event_index = EventIndex::default();
+                min_visible_message_index = MessageIndex::default();
+            } else {
                 let events_reader = channel.chat.events.main_events_reader(now);
                 min_visible_event_index = events_reader.next_event_index();
                 min_visible_message_index = events_reader.next_message_index();
-            }
+            };
 
             match channel.chat.members.add(
                 member.user_id,
@@ -85,10 +95,12 @@ fn join_channel_impl(channel_id: ChannelId, state: &mut RuntimeState) -> Respons
                 state.data.is_public,
             ) {
                 AddResult::Success(channel_member) => {
+                    let invitation = channel.chat.invited_users.remove(&member.user_id, now);
+
                     channel.chat.events.push_main_event(
                         ChatEventInternal::ParticipantJoined(Box::new(MemberJoined {
                             user_id: member.user_id,
-                            invited_by: None,
+                            invited_by: invitation.map(|i| i.invited_by),
                         })),
                         0,
                         now,
