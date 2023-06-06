@@ -41,7 +41,9 @@
     $: selectedChatId = client.selectedChatId;
     $: selectedChatStore = client.selectedChatStore;
     $: currentChatMembers = client.currentChatMembers;
+    $: currentChatInvited = client.currentChatInvitedUsers;
     $: currentChatPinnedMessages = client.currentChatPinnedMessages;
+    $: currentChatBlocked = client.currentChatBlockedUsers;
     $: currentChatRules = client.currentChatRules;
     $: chatStateStore = client.chatStateStore;
     $: eventsStore = client.eventsStore;
@@ -52,25 +54,25 @@
     $: groupChat = selectedChatStore as Readable<GroupChatSummary>;
     $: empty = $rightPanelHistory.length === 0;
 
-    function onChangeRole(
+    function onChangeGroupRole(
         ev: CustomEvent<{ userId: string; newRole: MemberRole; oldRole: MemberRole }>
     ): void {
         if ($selectedChatId !== undefined) {
             let { userId, newRole, oldRole } = ev.detail;
-            changeRole($selectedChatId, userId, newRole, oldRole);
+            changeGroupRole($selectedChatId, userId, newRole, oldRole);
         }
     }
 
-    function onRemoveMember(ev: CustomEvent<string>): void {
+    function onRemoveGroupMember(ev: CustomEvent<string>): void {
         if ($selectedChatId !== undefined) {
             chatStateStore.updateProp($selectedChatId, "members", (ps) =>
                 ps.filter((p) => p.userId !== ev.detail)
             );
-            removeMember($selectedChatId, ev.detail);
+            removeGroupMember($selectedChatId, ev.detail);
         }
     }
 
-    async function inviteUsers(ev: CustomEvent<UserSummary[]>) {
+    async function inviteGroupUsers(ev: CustomEvent<UserSummary[]>) {
         if ($selectedChatId !== undefined) {
             const userIds = ev.detail.map((u) => u.userId);
 
@@ -134,7 +136,7 @@
         }) as EventWrapper<Message> | undefined;
     }
 
-    function changeRole(
+    function changeGroupRole(
         chatId: string,
         userId: string,
         newRole: MemberRole,
@@ -178,7 +180,7 @@
             });
     }
 
-    function removeMember(chatId: string, userId: string): Promise<void> {
+    function removeGroupMember(chatId: string, userId: string): Promise<void> {
         return client
             .removeMember(chatId, userId)
             .then((resp) => {
@@ -192,7 +194,7 @@
             });
     }
 
-    async function onBlockUser(ev: CustomEvent<{ userId: string }>) {
+    async function onBlockGroupUser(ev: CustomEvent<{ userId: string }>) {
         if ($selectedChatId !== undefined) {
             const success = await client.blockUser($selectedChatId, ev.detail.userId);
             if (success) {
@@ -203,7 +205,7 @@
         }
     }
 
-    async function onUnblockUser(ev: CustomEvent<UserSummary>) {
+    async function onUnblockGroupUser(ev: CustomEvent<UserSummary>) {
         if ($selectedChatId !== undefined) {
             const success = await client.unblockUser($selectedChatId, ev.detail.userId);
             if (success) {
@@ -212,6 +214,14 @@
                 toastStore.showFailureToast("unblockUserFailed");
             }
         }
+    }
+
+    function showInviteGroupUsers(ev: CustomEvent<boolean>) {
+        dispatch("showInviteGroupUsers", ev.detail);
+    }
+
+    function showInviteCommunityUsers(ev: CustomEvent<boolean>) {
+        dispatch("showInviteGroupUsers", ev.detail);
     }
 
     function updateGroupRules(ev: CustomEvent<{ chatId: string; rules: AccessRules }>) {
@@ -235,24 +245,47 @@
             on:deleteGroup
             on:editGroup
             on:chatWith
-            on:showMembers />
-    {:else if lastState.kind === "invite_users"}
+            on:showGroupMembers />
+    {:else if lastState.kind === "invite_community_users"}
         <InviteUsers
             busy={invitingUsers}
             closeIcon={$rightPanelHistory.length > 1 ? "back" : "close"}
-            on:inviteUsers={inviteUsers}
+            on:inviteUsers={inviteGroupUsers}
             on:cancelInviteUsers={popRightPanelHistory} />
-    {:else if lastState.kind === "show_members" && $selectedChatId !== undefined}
+    {:else if lastState.kind === "show_community_members"}
         <Members
             closeIcon={$rightPanelHistory.length > 1 ? "back" : "close"}
-            chat={$groupChat}
+            collection={$groupChat}
+            invited={$currentChatInvited}
+            members={$currentChatMembers}
+            blocked={$currentChatBlocked}
             on:close={popRightPanelHistory}
-            on:blockUser={onBlockUser}
-            on:unblockUser={onUnblockUser}
+            on:blockUser={onBlockGroupUser}
+            on:unblockUser={onUnblockGroupUser}
             on:chatWith
-            on:showInviteUsers
-            on:removeMember={onRemoveMember}
-            on:changeRole={onChangeRole} />
+            on:showInviteUsers={showInviteCommunityUsers}
+            on:removeMember={onRemoveGroupMember}
+            on:changeRole={onChangeGroupRole} />
+    {:else if lastState.kind === "invite_group_users"}
+        <InviteUsers
+            busy={invitingUsers}
+            closeIcon={$rightPanelHistory.length > 1 ? "back" : "close"}
+            on:inviteUsers={inviteGroupUsers}
+            on:cancelInviteUsers={popRightPanelHistory} />
+    {:else if lastState.kind === "show_group_members" && $selectedChatId !== undefined}
+        <Members
+            closeIcon={$rightPanelHistory.length > 1 ? "back" : "close"}
+            collection={$groupChat}
+            invited={$currentChatInvited}
+            members={$currentChatMembers}
+            blocked={$currentChatBlocked}
+            on:close={popRightPanelHistory}
+            on:blockUser={onBlockGroupUser}
+            on:unblockUser={onUnblockGroupUser}
+            on:chatWith
+            on:showInviteUsers={showInviteGroupUsers}
+            on:removeMember={onRemoveGroupMember}
+            on:changeRole={onChangeGroupRole} />
     {:else if lastState.kind === "show_pinned" && $selectedChatId !== undefined}
         <PinnedMessages
             on:chatWith
@@ -280,15 +313,7 @@
         <ProposalGroupFilters on:close={popRightPanelHistory} />
     {:else if lastState.kind === "community_channels"}
         <CommunityChannels />
-    {:else if lastState.kind === "community_members"}
-        <div on:click={popRightPanelHistory}>
-            <h1>Community members</h1>
-        </div>
     {:else if lastState.kind === "community_details"}
-        <CommunityDetails
-            on:deleteCommunity
-            on:showMembers
-            on:editCommunity
-            communityId={lastState.communityId} />
+        <CommunityDetails on:deleteCommunity on:editCommunity communityId={lastState.communityId} />
     {/if}
 </Panel>

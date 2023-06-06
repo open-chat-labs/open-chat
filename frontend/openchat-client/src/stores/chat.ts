@@ -128,8 +128,9 @@ export const selectedThreadKey = derived(
 );
 export const chatsLoading = writable(false);
 export const chatsInitialised = writable(false);
-export const chatUpdatedStore: Writable<{ chatId: string, updatedEvents: UpdatedEvent[] } | undefined> =
-    writable(undefined);
+export const chatUpdatedStore: Writable<
+    { chatId: string; updatedEvents: UpdatedEvent[] } | undefined
+> = writable(undefined);
 
 export const selectedServerChatStore = derived(
     [serverChatSummariesStore, selectedChatId],
@@ -481,6 +482,7 @@ export function createDirectChat(chatId: string): void {
                 kind: "direct_chat",
                 them: chatId,
                 chatId,
+                id: chatId,
                 readByMeUpTo: undefined,
                 readByThemUpTo: undefined,
                 latestMessage: undefined,

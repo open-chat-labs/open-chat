@@ -4,11 +4,12 @@ import type { ChatSummary, GroupPermissions } from "openchat-client";
 
 export type RightPanelState =
     | GroupDetailsPanel
-    | InviteMembersPanel
-    | ShowMembersPanel
+    | InviteGroupMembersPanel
+    | InviteCommunityMembers
+    | ShowGroupMembersPanel
+    | ShowCommunityMembers
     | ShowPinnedPanel
     | ShowCommunityChannels
-    | ShowCommunityMembers
     | UserProfilePanel
     | MessageThreadPanel
     | ProposalFilterPanel
@@ -33,12 +34,16 @@ export type UserProfilePanel = {
     kind: "user_profile";
 };
 
-export type InviteMembersPanel = {
-    kind: "invite_users";
+export type InviteGroupMembersPanel = {
+    kind: "invite_group_users";
 };
 
-export type ShowMembersPanel = {
-    kind: "show_members";
+export type InviteCommunityMembers = {
+    kind: "invite_community_users";
+};
+
+export type ShowGroupMembersPanel = {
+    kind: "show_group_members";
 };
 
 export type CommunityDetails = {
@@ -52,7 +57,7 @@ export type ShowCommunityChannels = {
 };
 
 export type ShowCommunityMembers = {
-    kind: "community_members";
+    kind: "show_community_members";
     communityId: string;
 };
 

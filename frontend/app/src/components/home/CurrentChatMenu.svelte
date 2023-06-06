@@ -47,8 +47,8 @@
     $: lastState = $rightPanelHistory[$rightPanelHistory.length - 1] ?? { kind: "no_panel" };
     $: groupDetailsSelected = lastState.kind === "group_details";
     $: pinnedSelected = lastState.kind === "show_pinned";
-    $: membersSelected = lastState.kind === "show_members";
-    $: inviteMembersSelected = lastState.kind === "invite_users";
+    $: membersSelected = lastState.kind === "show_group_members";
+    $: inviteMembersSelected = lastState.kind === "invite_group_users";
     $: desktop = !$mobileWidth;
 
     let hasUnreadPinned = false;
@@ -88,8 +88,8 @@
         dispatch("showProposalFilters");
     }
 
-    function showMembers() {
-        dispatch("showMembers", true);
+    function showGroupMembers() {
+        dispatch("showGroupMembers", true);
     }
 
     function markAllRead() {
@@ -108,8 +108,8 @@
         }
     }
 
-    function showInviteUsers() {
-        dispatch("showInviteUsers", true);
+    function showInviteGroupUsers() {
+        dispatch("showInviteGroupUsers", true);
     }
 
     function leaveGroup() {
@@ -188,7 +188,7 @@
                     color={groupDetailsSelected ? "var(--icon-selected)" : "var(--icon-txt)"} />
             </HoverIcon>
         </span>
-        <span on:click={showMembers}>
+        <span on:click={showGroupMembers}>
             <HoverIcon title={$_("members")}>
                 <AccountMultiple
                     size={$iconSize}
@@ -196,7 +196,7 @@
             </HoverIcon>
         </span>
         {#if client.canInviteUsers(selectedChatSummary.chatId)}
-            <span on:click={showInviteUsers}>
+            <span on:click={showInviteGroupUsers}>
                 <HoverIcon title={$_("group.inviteUsers")}>
                     <AccountMultiplePlus
                         size={$iconSize}
@@ -252,7 +252,7 @@
                                 slot="icon" />
                             <div slot="text">{$_("groupDetails")}</div>
                         </MenuItem>
-                        <MenuItem on:click={showMembers}>
+                        <MenuItem on:click={showGroupMembers}>
                             <AccountMultiple
                                 size={$iconSize}
                                 color={"var(--icon-inverted-txt)"}
@@ -260,7 +260,7 @@
                             <div slot="text">{$_("members")}</div>
                         </MenuItem>
                         {#if client.canInviteUsers(selectedChatSummary.chatId)}
-                            <MenuItem on:click={showInviteUsers}>
+                            <MenuItem on:click={showInviteGroupUsers}>
                                 <AccountMultiplePlus
                                     size={$iconSize}
                                     color={"var(--icon-inverted-txt)"}

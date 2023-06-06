@@ -18,8 +18,8 @@
     function close() {
         dispatch("close");
     }
-    function showMembers() {
-        dispatch("showMembers");
+    function showGroupMembers() {
+        dispatch("showGroupMembers");
     }
     function editGroup() {
         if (canEdit) {
@@ -29,7 +29,7 @@
 </script>
 
 <SectionHeader border={false} flush={!$mobileWidth} shadow={true}>
-    <span title={$_("members")} class="members" on:click={showMembers}>
+    <span title={$_("members")} class="members" on:click={showGroupMembers}>
         <HoverIcon>
             <AccountMultiple size={$iconSize} color={"var(--icon-txt)"} />
         </HoverIcon>

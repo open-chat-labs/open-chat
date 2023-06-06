@@ -11,6 +11,7 @@ export function publicGroupSummary(candid: ApiPublicGroupSummary): GroupChatSumm
     return {
         kind: "group_chat",
         chatId: candid.chat_id.toString(),
+        id: candid.chat_id.toString(),
         readByMeUpTo: optional(candid.latest_message, (m) => m.event.message_index),
         latestEventIndex: candid.latest_event_index,
         latestMessage: optional(candid.latest_message, (ev) => ({

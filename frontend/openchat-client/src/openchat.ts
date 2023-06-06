@@ -3236,7 +3236,7 @@ export class OpenChat extends EventTarget {
     setUsername(userId: string, username: string): Promise<SetUsernameResponse> {
         return this.api.setUsername(userId, username).then((resp) => {
             if (resp === "success" && this._user !== undefined) {
-                this._user.username = username;
+                this._user = { ...this._user, username };
                 this.overwriteUserInStore(userId, (user) => ({ ...user, username }));
             }
             return resp;

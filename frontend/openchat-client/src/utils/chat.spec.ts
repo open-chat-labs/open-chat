@@ -26,6 +26,7 @@ const defaultGroupChat: GroupChatSummary = {
     name: "whatever",
     description: "whatever",
     chatId: "abc",
+    id: "abc",
     lastUpdated: BigInt(0),
     readByMeUpTo: undefined,
     latestMessage: undefined,

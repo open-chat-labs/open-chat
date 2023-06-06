@@ -601,13 +601,13 @@
         }
     }
 
-    function showInviteUsers(ev: CustomEvent<boolean>) {
+    function showInviteGroupUsers(ev: CustomEvent<boolean>) {
         if ($selectedChatId !== undefined) {
             if (ev.detail) {
-                rightPanelHistory.set([{ kind: "invite_users" }]);
+                rightPanelHistory.set([{ kind: "invite_group_users" }]);
             } else {
                 rightPanelHistory.update((history) => {
-                    return [...history, { kind: "invite_users" }];
+                    return [...history, { kind: "invite_group_users" }];
                 });
             }
         }
@@ -634,12 +634,12 @@
         modal = ModalType.SelectChat;
     }
 
-    function showMembers(ev: CustomEvent<boolean>) {
+    function showGroupMembers(ev: CustomEvent<boolean>) {
         if ($selectedChatId !== undefined) {
             if (ev.detail) {
-                rightPanelHistory.set([{ kind: "show_members" }]);
+                rightPanelHistory.set([{ kind: "show_group_members" }]);
             } else {
-                pushRightPanelHistory({ kind: "show_members" });
+                pushRightPanelHistory({ kind: "show_group_members" });
             }
         }
     }
@@ -1006,10 +1006,10 @@
             on:leaveGroup={triggerConfirm}
             on:chatWith={chatWith}
             on:replyPrivatelyTo={replyPrivatelyTo}
-            on:showInviteUsers={showInviteUsers}
+            on:showInviteGroupUsers={showInviteGroupUsers}
             on:showGroupDetails={showGroupDetails}
             on:showProposalFilters={showProposalFilters}
-            on:showMembers={showMembers}
+            on:showGroupMembers={showGroupMembers}
             on:joinGroup={joinGroup}
             on:cancelPreview={cancelPreview}
             on:upgrade={upgrade}
@@ -1024,8 +1024,8 @@
             on:userAvatarSelected={userAvatarSelected}
             on:goToMessageIndex={goToMessageIndex}
             on:replyPrivatelyTo={replyPrivatelyTo}
-            on:showInviteUsers={showInviteUsers}
-            on:showMembers={showMembers}
+            on:showInviteGroupUsers={showInviteGroupUsers}
+            on:showGroupMembers={showGroupMembers}
             on:chatWith={chatWith}
             on:upgrade={upgrade}
             on:blockUser={blockUser}
@@ -1044,8 +1044,8 @@
                 on:userAvatarSelected={userAvatarSelected}
                 on:goToMessageIndex={goToMessageIndex}
                 on:replyPrivatelyTo={replyPrivatelyTo}
-                on:showInviteUsers={showInviteUsers}
-                on:showMembers={showMembers}
+                on:showInviteGroupUsers={showInviteGroupUsers}
+                on:showGroupMembers={showGroupMembers}
                 on:chatWith={chatWith}
                 on:upgrade={upgrade}
                 on:blockUser={blockUser}
