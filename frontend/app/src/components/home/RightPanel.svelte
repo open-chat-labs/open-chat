@@ -40,12 +40,19 @@
 
     $: selectedChatId = client.selectedChatId;
     $: selectedChatStore = client.selectedChatStore;
+    $: chatStateStore = client.chatStateStore;
     $: currentChatMembers = client.currentChatMembers;
     $: currentChatInvited = client.currentChatInvitedUsers;
-    $: currentChatPinnedMessages = client.currentChatPinnedMessages;
     $: currentChatBlocked = client.currentChatBlockedUsers;
     $: currentChatRules = client.currentChatRules;
-    $: chatStateStore = client.chatStateStore;
+    $: currentChatPinnedMessages = client.currentChatPinnedMessages;
+
+    $: currentCommunityMembers = client.currentCommunityMembers;
+    $: currentCommunityInvited = client.currentCommunityInvitedUsers;
+    $: currentCommunityBlocked = client.currentCommunityBlockedUsers;
+    $: currentCommunityRules = client.currentCommunityRules;
+    $: selectedCommunity = client.selectedCommunity;
+
     $: eventsStore = client.eventsStore;
     $: userStore = client.userStore;
     $: user = $userStore[currentUser.userId] ?? client.nullUser("unknown");
@@ -70,6 +77,10 @@
             );
             removeGroupMember($selectedChatId, ev.detail);
         }
+    }
+
+    function onRemoveCommunityMember(ev: CustomEvent<string>): void {
+        toastStore.showSuccessToast("TODO - remove community member");
     }
 
     async function inviteGroupUsers(ev: CustomEvent<UserSummary[]>) {
@@ -205,6 +216,10 @@
         }
     }
 
+    async function onBlockCommunityUser(ev: CustomEvent<{ userId: string }>) {
+        toastStore.showSuccessToast("TODO - block community user");
+    }
+
     async function onUnblockGroupUser(ev: CustomEvent<UserSummary>) {
         if ($selectedChatId !== undefined) {
             const success = await client.unblockUser($selectedChatId, ev.detail.userId);
@@ -214,6 +229,10 @@
                 toastStore.showFailureToast("unblockUserFailed");
             }
         }
+    }
+
+    async function onUnblockCommnityUser(ev: CustomEvent<UserSummary>) {
+        toastStore.showSuccessToast("TODO - unblock community user");
     }
 
     function showInviteGroupUsers(ev: CustomEvent<boolean>) {
@@ -232,6 +251,8 @@
         lastState.kind === "message_thread_panel" && $selectedChatId !== undefined
             ? findMessage($eventsStore, lastState.threadRootMessageId)
             : undefined;
+
+    $: console.log("LastState: ", lastState);
 </script>
 
 <Panel right {empty}>
@@ -252,19 +273,19 @@
             closeIcon={$rightPanelHistory.length > 1 ? "back" : "close"}
             on:inviteUsers={inviteGroupUsers}
             on:cancelInviteUsers={popRightPanelHistory} />
-    {:else if lastState.kind === "show_community_members"}
+    {:else if lastState.kind === "show_community_members" && $selectedCommunity}
         <Members
             closeIcon={$rightPanelHistory.length > 1 ? "back" : "close"}
-            collection={$groupChat}
-            invited={$currentChatInvited}
-            members={$currentChatMembers}
-            blocked={$currentChatBlocked}
+            collection={$selectedCommunity}
+            invited={$currentCommunityInvited}
+            members={$currentCommunityMembers}
+            blocked={$currentCommunityBlocked}
             on:close={popRightPanelHistory}
-            on:blockUser={onBlockGroupUser}
-            on:unblockUser={onUnblockGroupUser}
+            on:blockUser={onBlockCommunityUser}
+            on:unblockUser={onUnblockCommnityUser}
             on:chatWith
             on:showInviteUsers={showInviteCommunityUsers}
-            on:removeMember={onRemoveGroupMember}
+            on:removeMember={onRemoveCommunityMember}
             on:changeRole={onChangeGroupRole} />
     {:else if lastState.kind === "invite_group_users"}
         <InviteUsers
@@ -314,6 +335,6 @@
     {:else if lastState.kind === "community_channels"}
         <CommunityChannels />
     {:else if lastState.kind === "community_details"}
-        <CommunityDetails on:deleteCommunity on:editCommunity communityId={lastState.communityId} />
+        <CommunityDetails on:deleteCommunity on:editCommunity />
     {/if}
 </Panel>

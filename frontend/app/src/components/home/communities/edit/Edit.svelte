@@ -19,7 +19,7 @@
     import PermissionsViewer from "../PermissionsViewer.svelte";
     import Rules from "../../Rules.svelte";
     import Details from "./Details.svelte";
-    import { dummyCommunities, createCandidateCommunity } from "stores/community";
+    import { createCandidateCommunity } from "stores/community";
     import VisibilityControl from "../../VisibilityControl.svelte";
     import ChooseChannels from "./ChooseChannels.svelte";
 
@@ -94,15 +94,11 @@
     }
 
     function save() {
-        // TODO this is a dummy save for now
-        dummyCommunities.update((communities) => {
-            if (editing) {
-                return communities.map((c) => (c.id === candidate.id ? candidate : c));
-            } else {
-                const next = (communities.length + 2).toString();
-                return [{ ...candidate, id: next }, ...communities];
-            }
-        });
+        if (editing) {
+            client.saveCommunity(candidate);
+        } else {
+            client.createCommunity(candidate);
+        }
     }
 </script>
 

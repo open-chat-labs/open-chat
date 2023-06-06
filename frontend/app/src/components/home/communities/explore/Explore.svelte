@@ -1,5 +1,4 @@
 <script lang="ts">
-    import { dummyCommunities, myCommunities } from "../../../../stores/community";
     import { _ } from "svelte-i18n";
     import Button from "../../../Button.svelte";
     import Select from "../../../Select.svelte";
@@ -20,30 +19,23 @@
     let joining: Set<string> = new Set();
     let canCreate = true; //TODO - permissions?
 
+    $: allCommunities = client.allCommunities;
+    $: myCommunities = client.communities;
     $: isDiamond = client.isDiamond;
 
     $: selectedCommunityId =
         $pathParams.kind === "communities_route" ? $pathParams.communityId : undefined;
 
-    $: myCommunitiesLookup = client.toRecord2(
-        $myCommunities,
-        (c) => c.id,
-        (c) => c
-    );
+    $: communities = $allCommunities.filter((c) => $myCommunities[c.id] === undefined);
 
-    $: communities = $dummyCommunities.filter((c) => myCommunitiesLookup[c.id] === undefined);
-
-    function joinCommunity(ev: CustomEvent<Community>) {
+    async function joinCommunity(ev: CustomEvent<Community>) {
         joining.add(ev.detail.id);
         joining = joining;
 
-        setTimeout(() => {
-            myCommunities.update((communities) => {
-                return [ev.detail, ...communities];
-            });
-            joining.delete(ev.detail.id);
-            joining = joining;
-        }, 2000);
+        await client.joinCommunity(ev.detail);
+
+        joining.delete(ev.detail.id);
+        joining = joining;
     }
 
     function createCommunity() {
@@ -52,6 +44,10 @@
         } else {
             dispatch("createCommunity");
         }
+    }
+
+    function selectCommunity(community: Community) {
+        page(`/communities/${community.id}`);
     }
 </script>
 
@@ -109,7 +105,7 @@
                 selected={selectedCommunityId === community.id}
                 {community}
                 joining={joining.has(community.id)}
-                on:click={() => page(`/communities/${community.id}`)} />
+                on:click={() => selectCommunity(community)} />
         {/each}
     </div>
 </div>

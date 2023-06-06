@@ -48,17 +48,14 @@ export type ShowGroupMembersPanel = {
 
 export type CommunityDetails = {
     kind: "community_details";
-    communityId: string;
 };
 
 export type ShowCommunityChannels = {
     kind: "community_channels";
-    communityId: string;
 };
 
 export type ShowCommunityMembers = {
     kind: "show_community_members";
-    communityId: string;
 };
 
 export type ShowPinnedPanel = {

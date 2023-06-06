@@ -303,6 +303,7 @@ import {
     ReferralLeaderboardResponse,
     CommunityPermissions,
     E8S_PER_TOKEN,
+    Community,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -311,6 +312,17 @@ import {
     isDiamond,
     diamondDurationToMs,
 } from "./stores/diamond";
+import {
+    allCommunities,
+    communities,
+    communitiesList,
+    currentCommunityBlockedUsers,
+    currentCommunityInvitedUsers,
+    currentCommunityMembers,
+    currentCommunityRules,
+    selectedCommunity,
+    selectedCommunityId,
+} from "./stores/community";
 
 const UPGRADE_POLL_INTERVAL = 1000;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -3867,6 +3879,81 @@ export class OpenChat extends EventTarget {
             : this.config.i18nFormatter("unknownUser");
     }
 
+    // **** Communities Stuff
+
+    // TODO - this will almost certainly need to be more complicated
+    setSelectedCommunity(communityId: string): void {
+        selectedCommunityId.set(communityId);
+    }
+
+    joinCommunity(community: Community): Promise<void> {
+        return new Promise((resolve) => {
+            setTimeout(() => {
+                communities.update((c) => {
+                    return {
+                        ...c,
+                        [community.id]: community,
+                    };
+                });
+                resolve();
+            }, 2000);
+        });
+    }
+
+    deleteCommunity(id: string): Promise<void> {
+        return new Promise<void>((resolve) => {
+            setTimeout(() => {
+                communities.update((c) => {
+                    delete c[id];
+                    return c;
+                });
+                allCommunities.update((communities) => {
+                    return communities.filter((c) => c.id !== id);
+                });
+                resolve();
+            }, 2000);
+        });
+    }
+
+    leaveCommunity(id: string): Promise<void> {
+        return new Promise<void>((resolve) => {
+            setTimeout(() => {
+                communities.update((c) => {
+                    delete c[id];
+                    return c;
+                });
+                resolve();
+            }, 2000);
+        });
+    }
+
+    createCommunity(candidate: Community): Promise<void> {
+        // TODO - this is just a dummy implementation
+        allCommunities.update((c) => [...c, candidate]);
+        communities.update((c) => {
+            const keys = Object.keys(c);
+            const next = (keys.length + 2).toString();
+            return {
+                ...c,
+                [next]: { ...candidate, id: next },
+            };
+        });
+        return Promise.resolve();
+    }
+
+    saveCommunity(candidate: Community): Promise<void> {
+        // TODO - this is just a dummy implementation
+        communities.update((c) => {
+            return {
+                ...c,
+                [candidate.id]: candidate,
+            };
+        });
+        return Promise.resolve();
+    }
+
+    // **** End of Communities stuff
+
     diamondDurationToMs = diamondDurationToMs;
 
     /**
@@ -3933,4 +4020,17 @@ export class OpenChat extends EventTarget {
     diamondMembership = diamondMembership;
     selectedThreadRootEvent = selectedThreadRootEvent;
     selectedThreadRootMessageIndex = selectedThreadRootMessageIndex;
+
+    // current community stores
+    selectedCommunityId = selectedCommunityId;
+    selectedCommunity = selectedCommunity;
+    communities = communities;
+    communitiesList = communitiesList;
+    currentCommunityMembers = currentCommunityMembers;
+    currentCommunityRules = currentCommunityRules;
+    currentCommunityBlockedUsers = currentCommunityBlockedUsers;
+    currentCommunityInvitedUsers = currentCommunityInvitedUsers;
+
+    // TODO - temporarily exposing a test store
+    allCommunities = allCommunities;
 }

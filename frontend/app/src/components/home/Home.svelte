@@ -65,12 +65,7 @@
     import GateCheckFailed from "./AccessGateCheckFailed.svelte";
     import HallOfFame from "./HallOfFame.svelte";
     import LeftNav from "./nav/LeftNav.svelte";
-    import {
-        createCandidateCommunity,
-        myCommunities,
-        dummyCommunities,
-        selectedCommunity,
-    } from "../../stores/community";
+    import { createCandidateCommunity } from "../../stores/community";
 
     const client = getContext<OpenChat>("client");
     const user = client.user;
@@ -150,6 +145,7 @@
     $: currentChatDraftMessage = client.currentChatDraftMessage;
     $: chatStateStore = client.chatStateStore;
     $: confirmMessage = getConfirmMessage(confirmActionEvent);
+    $: selectedCommunityId = client.selectedCommunityId;
 
     onMount(() => {
         subscribeToNotifications(client, (n) => client.notificationReceived(n));
@@ -253,6 +249,7 @@
         if (initialised) {
             if (pathParams.kind === "communities_route") {
                 if (pathParams.communityId !== undefined) {
+                    client.setSelectedCommunity(pathParams.communityId);
                     rightPanelHistory.set([
                         { kind: "community_details", communityId: pathParams.communityId },
                     ]);
@@ -503,9 +500,9 @@
             case "leave":
                 return leaveGroup(confirmActionEvent.chatId, confirmActionEvent.chatType);
             case "leave_community":
-                return leaveCommunity(confirmActionEvent.communityId);
+                return client.leaveCommunity(confirmActionEvent.communityId);
             case "delete_community":
-                return deleteCommunity(confirmActionEvent.communityId).then((_) => {
+                return client.deleteCommunity(confirmActionEvent.communityId).then((_) => {
                     rightPanelHistory.set([]);
                 });
             case "delete":
@@ -519,31 +516,6 @@
             default:
                 return Promise.reject();
         }
-    }
-
-    function deleteCommunity(communityId: string) {
-        return new Promise<void>((resolve) => {
-            setTimeout(() => {
-                myCommunities.update((communities) => {
-                    return communities.filter((c) => c.id !== communityId);
-                });
-                dummyCommunities.update((communities) => {
-                    return communities.filter((c) => c.id !== communityId);
-                });
-                resolve();
-            }, 2000);
-        });
-    }
-
-    function leaveCommunity(communityId: string) {
-        return new Promise<void>((resolve) => {
-            setTimeout(() => {
-                myCommunities.update((communities) => {
-                    return communities.filter((c) => c.id !== communityId);
-                });
-                resolve();
-            }, 2000);
-        });
     }
 
     function deleteGroup(chatId: string, chatType: ChatType): Promise<void> {
@@ -671,9 +643,9 @@
     }
 
     function communityDetails() {
-        if ($selectedCommunity !== undefined) {
+        if ($selectedCommunityId !== undefined) {
             rightPanelHistory.set([
-                { kind: "community_details", communityId: $selectedCommunity.id },
+                { kind: "community_details", communityId: $selectedCommunityId },
             ]);
         }
     }
