@@ -134,11 +134,31 @@ type RemoveReactionResponse =
 type MarkReadArgs =
     record {
         messages_read: vec ChatMessagesRead;
+        community_messages_read: vec CommunityMessagesRead;
+    };
+
+type MarkReadV2Args =
+    record {
+        messages_read: vec ChatMessagesRead;
     };
 
 type ChatMessagesRead =
     record {
         chat_id: ChatId;
+        read_up_to: opt MessageIndex;
+        threads: vec ThreadRead;
+        date_read_pinned: opt TimestampMillis;
+    };
+
+type CommunityMessagesRead =
+    record {
+        community_id: CommunityId;
+        channels_read: vec ChannelMessagesRead;
+    };
+
+type ChannelMessagesRead =
+    record {
+        channel_id: ChannelId;
         read_up_to: opt MessageIndex;
         threads: vec ThreadRead;
         date_read_pinned: opt TimestampMillis;
@@ -748,7 +768,8 @@ service: {
     undelete_messages: (UndeleteMessagesArgs) -> (UndeleteMessagesResponse);
     add_reaction: (AddReactionArgs) -> (AddReactionResponse);
     remove_reaction: (RemoveReactionArgs) -> (RemoveReactionResponse);
-    mark_read_v2: (MarkReadArgs) -> (MarkReadResponse);
+    mark_read: (MarkReadArgs) -> (MarkReadResponse);
+    mark_read_v2: (MarkReadV2Args) -> (MarkReadResponse);
     block_user: (BlockUserArgs) -> (BlockUserResponse);
     unblock_user: (UnblockUserArgs) -> (UnblockUserResponse);
     create_group: (CreateGroupArgs) -> (CreateGroupResponse);

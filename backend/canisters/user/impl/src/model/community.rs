@@ -38,15 +38,11 @@ impl Community {
         .unwrap()
     }
 
-    pub fn mark_read(
-        &mut self,
-        channels_read: HashMap<ChannelId, user_canister::mark_read::ChannelMessagesRead>,
-        now: TimestampMillis,
-    ) {
-        for (channel_id, channel_messages_read) in channels_read {
+    pub fn mark_read(&mut self, channels_read: Vec<user_canister::mark_read::ChannelMessagesRead>, now: TimestampMillis) {
+        for channel_messages_read in channels_read {
             self.channels
-                .entry(channel_id)
-                .or_insert(Channel::new(channel_id))
+                .entry(channel_messages_read.channel_id)
+                .or_insert(Channel::new(channel_messages_read.channel_id))
                 .messages_read
                 .mark_read(
                     channel_messages_read.read_up_to,

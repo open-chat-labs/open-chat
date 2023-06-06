@@ -1,6 +1,5 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 use types::{ChannelId, ChatId, CommunityId, MessageIndex, TimestampMillis};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
@@ -26,7 +25,7 @@ pub struct ThreadRead {
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct CommunityMessagesRead {
     pub community_id: CommunityId,
-    pub channels_read: HashMap<ChannelId, ChannelMessagesRead>,
+    pub channels_read: Vec<ChannelMessagesRead>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
