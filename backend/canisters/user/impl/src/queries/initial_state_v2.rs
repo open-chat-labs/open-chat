@@ -26,6 +26,8 @@ fn initial_state_impl(args: Args, state: &RuntimeState) -> Response {
         .map(|d| d.to_summary(my_user_id, now))
         .collect();
 
+    let communities = state.data.communities.iter().map(|c| c.to_summary()).collect();
+
     let disable_cache = args.disable_cache.unwrap_or_default();
 
     if let Some(cached) = (!disable_cache)
@@ -35,7 +37,7 @@ fn initial_state_impl(args: Args, state: &RuntimeState) -> Response {
         // We must handle the scenario where some groups are missing from the cache due to them
         // being inaccessible while the cache was refreshed. To do this, we get all groups, and any
         // groups not found in the cache are included in `group_chats_added`.
-        let mut group_chats: HashMap<_, _> = state.data.group_chats.get_all(None).map(|g| (g.chat_id, g)).collect();
+        let mut group_chats: HashMap<_, _> = state.data.group_chats.iter().map(|g| (g.chat_id, g)).collect();
 
         SuccessCached(SuccessCachedResult {
             timestamp: now,
@@ -48,6 +50,7 @@ fn initial_state_impl(args: Args, state: &RuntimeState) -> Response {
                 .map(|(c, g)| hydrate_cached_summary(c, g))
                 .collect(),
             group_chats_added: group_chats.values().map(|g| g.to_summary()).collect(),
+            communities,
             avatar_id,
             blocked_users,
             pinned_chats,
@@ -60,6 +63,7 @@ fn initial_state_impl(args: Args, state: &RuntimeState) -> Response {
             timestamp: now,
             direct_chats,
             group_chats,
+            communities,
             avatar_id,
             blocked_users,
             pinned_chats,
@@ -73,7 +77,7 @@ fn hydrate_cached_summary(cached: &GroupCanisterGroupChatSummary, user_details: 
     for thread in cached.latest_threads.iter() {
         threads.insert(thread.root_message_index, ThreadSyncDetails::from(thread));
     }
-    for (&root_message_index, read_up_to) in user_details.threads_read.iter() {
+    for (&root_message_index, read_up_to) in user_details.messages_read.threads_read.iter() {
         threads
             .entry(root_message_index)
             .or_insert(ThreadSyncDetails {
@@ -100,7 +104,7 @@ fn hydrate_cached_summary(cached: &GroupCanisterGroupChatSummary, user_details: 
         latest_message: cached.latest_message.clone(),
         latest_event_index: cached.latest_event_index,
         joined: cached.joined,
-        read_by_me_up_to: user_details.read_by_me_up_to.value,
+        read_by_me_up_to: user_details.messages_read.read_by_me_up_to.value,
         notifications_muted: cached.notifications_muted,
         participant_count: cached.participant_count,
         role: cached.role,
@@ -113,7 +117,7 @@ fn hydrate_cached_summary(cached: &GroupCanisterGroupChatSummary, user_details: 
         frozen: cached.frozen.clone(),
         wasm_version: Version::default(),
         date_last_pinned: cached.date_last_pinned,
-        date_read_pinned: user_details.date_read_pinned.value,
+        date_read_pinned: user_details.messages_read.date_read_pinned.value,
         events_ttl: cached.events_ttl,
         expired_messages: cached.expired_messages.clone(),
         next_message_expiry: cached.next_message_expiry,

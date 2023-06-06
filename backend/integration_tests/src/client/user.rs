@@ -10,11 +10,14 @@ generate_query_call!(updates_v2);
 // Updates
 generate_update_call!(add_reaction);
 generate_update_call!(block_user);
+generate_update_call!(cancel_message_reminder);
+generate_update_call!(create_community);
+generate_update_call!(create_group);
+generate_update_call!(delete_community);
 generate_update_call!(delete_group);
 generate_update_call!(delete_messages);
 generate_update_call!(edit_message_v2);
-generate_update_call!(cancel_message_reminder);
-generate_update_call!(create_group);
+generate_update_call!(leave_community);
 generate_update_call!(leave_group);
 generate_update_call!(mark_read_v2);
 generate_update_call!(mute_notifications);
@@ -32,8 +35,8 @@ pub mod happy_path {
     use crate::User;
     use ic_test_state_machine_client::StateMachine;
     use types::{
-        AccessRules, ChatId, EventIndex, EventsResponse, GroupChatSummary, MessageContentInitial, MessageId, MessageIndex,
-        Reaction, TextContent, ThreadSyncDetails, UserId,
+        AccessRules, ChatId, CommunityId, EventIndex, EventsResponse, GroupChatSummary, MessageContentInitial, MessageId,
+        MessageIndex, Reaction, TextContent, ThreadSyncDetails, UserId,
     };
     use user_canister::initial_state_v2::SuccessCachedResult;
 
@@ -97,6 +100,30 @@ pub mod happy_path {
         }
     }
 
+    pub fn create_community(env: &mut StateMachine, sender: &User, name: &str, is_public: bool) -> CommunityId {
+        let response = super::create_community(
+            env,
+            sender.principal,
+            sender.canister(),
+            &user_canister::create_community::Args {
+                is_public,
+                name: name.to_string(),
+                description: format!("{name}_description"),
+                avatar: None,
+                history_visible_to_new_joiners: is_public,
+                permissions: None,
+                rules: AccessRules::default(),
+                gate: None,
+                default_channels: vec!["abcde".to_string()],
+            },
+        );
+
+        match response {
+            user_canister::create_community::Response::Success(result) => result.community_id,
+            response => panic!("'create_community' error: {response:?}"),
+        }
+    }
+
     pub fn add_reaction(
         env: &mut StateMachine,
         sender: &User,
@@ -126,6 +153,7 @@ pub mod happy_path {
                 timestamp: result.timestamp,
                 direct_chats: result.direct_chats,
                 group_chats: convert_groups(result.cached_group_chat_summaries, result.group_chats_added),
+                communities: result.communities,
                 avatar_id: result.avatar_id,
                 blocked_users: result.blocked_users,
                 pinned_chats: result.pinned_chats,

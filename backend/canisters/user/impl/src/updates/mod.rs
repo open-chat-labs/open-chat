@@ -28,7 +28,7 @@ pub mod edit_message;
 pub mod init_user_principal_migration;
 pub mod leave_community;
 pub mod leave_group;
-pub mod mark_read_v2;
+pub mod mark_read;
 pub mod migrate_user_principal;
 pub mod mute_notifications;
 pub mod pin_chat;

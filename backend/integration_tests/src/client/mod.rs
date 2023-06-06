@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use crate::utils::tick_many;
 use crate::{CanisterIds, User, T};
 use candid::{CandidType, Principal};
@@ -8,6 +9,7 @@ use types::{CanisterId, CanisterWasm, DiamondMembershipPlanDuration};
 
 mod macros;
 
+pub mod community;
 pub mod cycles_dispenser;
 pub mod group;
 pub mod group_index;
