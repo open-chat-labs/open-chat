@@ -127,6 +127,42 @@ type SearchChannelResponse =
         UserNotInChannel;
     };
 
+type SelectedChannelInitialArgs =
+    record {
+        channel_id: ChannelId;
+    };
+
+type SelectedChannelInitialResponse =
+    variant {
+        Success: record {
+            timestamp: TimestampMillis;
+            latest_event_index: EventIndex;
+            members: vec Participant;
+            blocked_users: vec UserId;
+            invited_users: vec UserId;
+            pinned_messages: vec MessageIndex;
+            rules: AccessRules;
+        };
+        UserNotInCommunity;
+        UserNotInChannel;
+        ChannelNotFound;
+    };
+
+type SelectedChannelUpdatesArgs =
+    record {
+        channel_id: ChannelId;
+        updates_since: TimestampMillis;
+    };
+
+type SelectedChannelUpdatesResponse =
+    variant {
+        Success: SelectedGroupUpdates;
+        SuccessNoUpdates;
+        UserNotInCommunity;
+        UserNotInChannel;
+        ChannelNotFound;
+    };
+
 type SummaryResponse =
     variant {
         Success: record {
@@ -729,6 +765,8 @@ service: {
     messages_by_message_index: (MessagesByMessageIndexArgs) -> (MessagesByMessageIndexResponse) query;
     rules: (RulesArgs) -> (RulesResponse) query;
     search_channel: (SearchChannelArgs) -> (SearchChannelResponse) query;
+    selected_channel_initial: (SelectedChannelInitialArgs) -> (SelectedChannelInitialResponse) query;
+    selected_channel_updates: (SelectedChannelUpdatesArgs) -> (SelectedChannelUpdatesResponse) query;
     summary: (EmptyArgs) -> (SummaryResponse) query;
     summary_updates: (SummaryUpdatesArgs) -> (SummaryUpdatesResponse) query;
 
