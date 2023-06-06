@@ -82,11 +82,17 @@ fn send_oc_bot_message_to_each_user(
     local_user_index: CanisterId,
     fire_and_forget_handler: &mut FireAndForgetHandler,
 ) {
+    let text = format!("You have been invited to the channel [{channel_name}](/community/{community_id}/channel/{channel_id}) in the community [{community_name}](/community/{community_id}) by @UserId({invited_by}).");
+    let message = MessageContent::Text(TextContent { text });
+
     let args = c2c_notify_events::Args {
         events: user_ids
             .into_iter()
             .map(|user_id| {
-                build_bot_message_event(invited_by, user_id, community_id, channel_id, &community_name, &channel_name)
+                Event::OpenChatBotMessage(OpenChatBotMessage {
+                    user_id,
+                    message: message.clone(),
+                })
             })
             .collect(),
     };
@@ -96,18 +102,4 @@ fn send_oc_bot_message_to_each_user(
         "c2c_notify_events_msgpack".to_string(),
         serialize_then_unwrap(args),
     );
-}
-
-fn build_bot_message_event(
-    invited_by: UserId,
-    user_id: UserId,
-    community_id: CommunityId,
-    channel_id: ChannelId,
-    community_name: &str,
-    channel_name: &str,
-) -> Event {
-    let text = format!("You have been invited to the channel [{channel_name}](/community/{community_id}/channel/{channel_id}) in the community [{community_name}](/community/{community_id}) by @UserId({invited_by}).");
-    let message = MessageContent::Text(TextContent { text });
-
-    Event::OpenChatBotMessage(OpenChatBotMessage { user_id, message })
 }
