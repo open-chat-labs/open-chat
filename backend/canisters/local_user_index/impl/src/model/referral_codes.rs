@@ -52,6 +52,16 @@ pub enum ReferralCodeError {
 }
 
 impl ReferralCodes {
+    pub fn reactivate_btc_miami_codes(&mut self) {
+        for code in self
+            .codes
+            .values_mut()
+            .filter(|c| matches!(c.referral_type, ReferralType::BtcMiami))
+        {
+            code.expiry = None;
+        }
+    }
+
     pub fn add(
         &mut self,
         referral_type: ReferralType,
@@ -70,6 +80,22 @@ impl ReferralCodes {
                 });
                 true
             }
+        }
+    }
+
+    pub fn claim(&mut self, code: String, user_id: UserId, now: TimestampMillis) -> bool {
+        match self.codes.entry(code) {
+            Entry::Occupied(mut e) => {
+                let details = e.get_mut();
+                match details.claimed {
+                    Some(_) => false,
+                    None => {
+                        details.claimed = Some(ReferralCodeClaim { when: now, who: user_id });
+                        true
+                    }
+                }
+            }
+            Entry::Vacant(_) => false,
         }
     }
 
