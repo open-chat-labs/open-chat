@@ -9,7 +9,7 @@ use test_case::test_case;
 use types::CommunityId;
 
 #[test]
-fn create_community_with_default_channels_succeeds() {
+fn users_automatically_joined_to_default_channels() {
     let mut wrapper = ENV.deref().get();
     let TestEnv {
         env,
@@ -36,7 +36,7 @@ fn create_community_with_default_channels_succeeds() {
 
     let summary2 = client::community::happy_path::summary(env, &user2, community_id);
 
-    assert_eq!(summary2.channels.len(), 2);
+    assert_eq!(summary2.channels.len(), default_channels.len());
     assert_eq!(
         summary2.channels.into_iter().map(|c| c.name).sorted().collect_vec(),
         default_channels

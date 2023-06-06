@@ -1,13 +1,14 @@
 use crate::guards::caller_is_user_index_or_local_user_index;
 use crate::model::events::CommunityEvent;
 use crate::model::members::AddResult;
+use crate::updates::join_channel::join_channel_impl;
 use crate::{mutate_state, read_state, RuntimeState};
 use candid::Principal;
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use community_canister::c2c_join_community::{Response::*, *};
 use gated_groups::{check_if_passes_gate, CheckIfPassesGateResult};
-use types::{AccessGate, CanisterId, MemberJoined, UsersUnblocked};
+use types::{AccessGate, CanisterId, ChannelId, MemberJoined, UsersUnblocked};
 
 #[update_msgpack(guard = "caller_is_user_index_or_local_user_index")]
 #[trace]
@@ -24,7 +25,20 @@ async fn c2c_join_community(args: Args) -> Response {
         Err(response) => return response,
     };
 
-    mutate_state(|state| c2c_join_community_impl(args, state))
+    match mutate_state(|state| c2c_join_community_impl(&args, state)) {
+        Ok(default_channel_ids) => {
+            futures::future::join_all(default_channel_ids.into_iter().map(|c| join_channel_impl(c, args.principal))).await;
+            read_state(|state| {
+                if let Some(member) = state.data.members.get_by_user_id(&args.user_id) {
+                    let now = state.env.now();
+                    Success(Box::new(state.summary(&member, now)))
+                } else {
+                    InternalError("User not found in community".to_string())
+                }
+            })
+        }
+        Err(response) => response,
+    }
 }
 
 fn is_permitted_to_join(
@@ -52,7 +66,7 @@ fn is_permitted_to_join(
     }
 }
 
-fn c2c_join_community_impl(args: Args, state: &mut RuntimeState) -> Response {
+fn c2c_join_community_impl(args: &Args, state: &mut RuntimeState) -> Result<Vec<ChannelId>, Response> {
     let now = state.env.now();
 
     // Unblock "platform moderator" if necessary
@@ -75,7 +89,7 @@ fn c2c_join_community_impl(args: Args, state: &mut RuntimeState) -> Response {
         .members
         .add(args.user_id, args.principal, now, state.data.is_public)
     {
-        AddResult::Success(member) => {
+        AddResult::Success(_) => {
             let invitation = state.data.invited_users.remove(&args.principal, now);
 
             state.data.events.push_event(
@@ -85,18 +99,13 @@ fn c2c_join_community_impl(args: Args, state: &mut RuntimeState) -> Response {
                 })),
                 now,
             );
-
-            // TODO: Optionally join the user to the channel in the invitation
-            // TODO: Join the user to all default channels for the community
-
-            let summary = state.summary(&member, now);
-            Success(Box::new(summary))
+            Ok(state.data.channels.default_channels())
         }
         AddResult::AlreadyInCommunity => {
-            let member = state.data.members.get(args.principal).unwrap();
+            let member = state.data.members.get_by_user_id(&args.user_id).unwrap();
             let summary = state.summary(member, now);
-            AlreadyInCommunity(Box::new(summary))
+            Err(AlreadyInCommunity(Box::new(summary)))
         }
-        AddResult::Blocked => Blocked,
+        AddResult::Blocked => Err(Blocked),
     }
 }
