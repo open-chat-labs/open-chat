@@ -2,8 +2,8 @@ use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use types::{
-    ChatId, CommunityId, Cryptocurrency, DiamondMembershipPlanDuration, EventIndex, MessageContent, MessageIndex, PhoneNumber,
-    SuspensionDuration, TimestampMillis, UserId,
+    ChannelId, ChatId, CommunityId, Cryptocurrency, DiamondMembershipPlanDuration, EventIndex, MessageContent, MessageIndex,
+    PhoneNumber, SuspensionDuration, TimestampMillis, UserId,
 };
 
 mod lifecycle;
@@ -36,6 +36,38 @@ pub struct GroupChatSummary {
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct GroupChatSummaryUpdates {
     pub chat_id: ChatId,
+    pub read_by_me_up_to: Option<MessageIndex>,
+    pub threads_read: HashMap<MessageIndex, MessageIndex>,
+    pub archived: Option<bool>,
+    pub date_read_pinned: Option<TimestampMillis>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct CommunitySummary {
+    pub community_id: CommunityId,
+    pub channels: Vec<ChannelSummary>,
+    pub archived: bool,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct CommunitySummaryUpdates {
+    pub community_id: CommunityId,
+    pub channels: Vec<ChannelSummaryUpdates>,
+    pub archived: Option<bool>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct ChannelSummary {
+    pub channel_id: ChannelId,
+    pub read_by_me_up_to: Option<MessageIndex>,
+    pub threads_read: HashMap<MessageIndex, MessageIndex>,
+    pub archived: bool,
+    pub date_read_pinned: Option<TimestampMillis>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct ChannelSummaryUpdates {
+    pub channel_id: ChannelId,
     pub read_by_me_up_to: Option<MessageIndex>,
     pub threads_read: HashMap<MessageIndex, MessageIndex>,
     pub archived: Option<bool>,
