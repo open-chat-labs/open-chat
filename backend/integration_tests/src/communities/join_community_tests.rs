@@ -55,9 +55,11 @@ fn join_private_community_fails() {
         },
     );
 
-    assert!(matches!(response,local_user_index_canister::join_community::Response::NotInvited));
+    assert!(matches!(
+        response,
+        local_user_index_canister::join_community::Response::NotInvited
+    ));
 }
-
 
 #[test]
 fn join_private_community_with_invitation_succeeds() {
@@ -68,10 +70,10 @@ fn join_private_community_with_invitation_succeeds() {
         controller,
     } = wrapper.env();
 
-    let TestData { 
-        user1, 
-        user2, 
-        community_id 
+    let TestData {
+        user1,
+        user2,
+        community_id,
     } = init_test_data(env, canister_ids, *controller, false);
 
     client::local_user_index::happy_path::invite_users_to_community(
@@ -82,11 +84,7 @@ fn join_private_community_with_invitation_succeeds() {
         vec![user2.user_id],
     );
 
-    client::local_user_index::happy_path::join_community(
-        env, 
-        user2.principal, 
-        canister_ids.local_user_index, 
-        community_id);
+    client::local_user_index::happy_path::join_community(env, user2.principal, canister_ids.local_user_index, community_id);
 
     env.tick();
 
@@ -104,14 +102,13 @@ fn join_private_community_using_invite_code_succeeds() {
         controller,
     } = wrapper.env();
 
-    let TestData { user1, user2, community_id } = init_test_data(env, canister_ids, *controller, false);
+    let TestData {
+        user1,
+        user2,
+        community_id,
+    } = init_test_data(env, canister_ids, *controller, false);
 
-    let invite_code_response = client::community::enable_invite_code(
-        env,
-        user1.principal,
-        community_id.into(),
-        &Empty {},
-    );
+    let invite_code_response = client::community::enable_invite_code(env, user1.principal, community_id.into(), &Empty {});
 
     let invite_code = if let community_canister::enable_invite_code::Response::Success(result) = invite_code_response {
         result.code
@@ -129,7 +126,10 @@ fn join_private_community_using_invite_code_succeeds() {
         },
     );
 
-    assert!(matches!(response,local_user_index_canister::join_community::Response::Success(_)));
+    assert!(matches!(
+        response,
+        local_user_index_canister::join_community::Response::Success(_)
+    ));
 
     env.tick();
 
