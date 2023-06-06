@@ -49,10 +49,10 @@
             on:blockUser
             on:leaveGroup
             on:replyPrivatelyTo
-            on:showInviteUsers
+            on:showInviteGroupUsers
             on:showGroupDetails
             on:showProposalFilters
-            on:showMembers
+            on:showGroupMembers
             on:chatWith
             on:joinGroup
             on:upgrade

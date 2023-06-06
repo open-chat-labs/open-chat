@@ -972,7 +972,7 @@ export type ChatSummary = DirectChatSummary | GroupChatSummary;
 
 export type ChatType = ChatSummary["kind"];
 
-type ChatSummaryCommon = {
+type ChatSummaryCommon = HasIdentity & {
     chatId: string; // this represents a Principal
     readByMeUpTo: number | undefined;
     latestEventIndex: number;

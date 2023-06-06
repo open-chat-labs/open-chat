@@ -895,5 +895,6 @@
         "mustHaveOneChannel": "You must create at least one default channel",
         "mustHaveUniqueChannels": "You cannot have duplicate default channel names",
         "noBlankChannels": "All default channels must have a name"
-    }
+    },
+    "unableToSaveUserProfile": "Unable to save user profile"
 }

@@ -178,6 +178,7 @@ function groupChatSummary(candid: ApiGroupCanisterGroupChatSummary): GroupChatSu
     return {
         kind: "group_chat",
         chatId: candid.chat_id.toString(),
+        id: candid.chat_id.toString(),
         latestMessage,
         readByMeUpTo: latestMessage?.event.messageIndex,
         name: candid.name,

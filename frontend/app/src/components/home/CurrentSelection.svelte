@@ -5,21 +5,23 @@
     import { AvatarSize, OpenChat } from "openchat-client";
     import SectionHeader from "../SectionHeader.svelte";
     import CommunityMenu from "./communities/CommunityMenu.svelte";
-    import { selectedCommunity } from "../../stores/community";
     import { getContext } from "svelte";
+    import type { Community } from "openchat-shared";
 
     const client = getContext<OpenChat>("client");
+
+    export let community: Community;
 </script>
 
 <SectionHeader border={false}>
     <div class="current-selection" class:rtl={$rtlStore}>
         <div class="avatar">
             <Avatar
-                url={client.communityAvatarUrl($selectedCommunity.avatar)}
+                url={client.communityAvatarUrl(community.avatar)}
                 userId={undefined}
                 size={AvatarSize.Default} />
         </div>
-        <h4 class="name">{$selectedCommunity.name}</h4>
+        <h4 class="name">{community.name}</h4>
     </div>
     <span class="menu">
         <CommunityMenu
@@ -27,7 +29,7 @@
             on:communityDetails
             on:leaveCommunity
             on:deleteCommunity
-            community={$selectedCommunity} />
+            {community} />
     </span>
 </SectionHeader>
 

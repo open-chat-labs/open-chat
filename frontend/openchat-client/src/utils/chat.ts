@@ -657,6 +657,7 @@ export function groupChatFromCandidate(
     return {
         kind: "group_chat",
         chatId,
+        id: chatId,
         readByMeUpTo: undefined,
         latestEventIndex: 0,
         latestMessage: undefined,
