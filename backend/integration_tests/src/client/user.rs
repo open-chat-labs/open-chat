@@ -100,7 +100,13 @@ pub mod happy_path {
         }
     }
 
-    pub fn create_community(env: &mut StateMachine, sender: &User, name: &str, is_public: bool) -> CommunityId {
+    pub fn create_community(
+        env: &mut StateMachine,
+        sender: &User,
+        name: &str,
+        is_public: bool,
+        default_channels: Vec<String>,
+    ) -> CommunityId {
         let response = super::create_community(
             env,
             sender.principal,
@@ -114,7 +120,7 @@ pub mod happy_path {
                 permissions: None,
                 rules: AccessRules::default(),
                 gate: None,
-                default_channels: vec!["abcde".to_string()],
+                default_channels,
             },
         );
 
