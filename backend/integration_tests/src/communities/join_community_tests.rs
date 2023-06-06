@@ -36,7 +36,8 @@ fn init_test_data(env: &mut StateMachine, canister_ids: &CanisterIds, controller
 
     let community_name = random_string();
 
-    let community_id = client::user::happy_path::create_community(env, &user1, &community_name, public);
+    let community_id =
+        client::user::happy_path::create_community(env, &user1, &community_name, public, vec!["abcde".to_string()]);
 
     TestData {
         user1,
