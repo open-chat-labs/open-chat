@@ -250,7 +250,6 @@ import {
     type RegisterUserResponse,
     type CurrentUserResponse,
     type RemoveMemberResponse,
-    type ChangeRoleResponse,
     type RegisterProposalVoteResponse,
     type GroupSearchResponse,
     type GroupInvite,
