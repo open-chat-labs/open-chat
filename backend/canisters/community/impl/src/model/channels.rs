@@ -138,7 +138,7 @@ impl Channel {
         if member.date_added > since {
             Some(ChannelUpdates::Added(self.summary(member, now)))
         } else {
-            let updates_from_events = self.chat.updates_from_events(since, member, now);
+            let updates_from_events = self.chat.summary_updates_from_events(since, member, now);
 
             Some(ChannelUpdates::Updated(CommunityCanisterChannelSummaryUpdates {
                 channel_id: self.id,
