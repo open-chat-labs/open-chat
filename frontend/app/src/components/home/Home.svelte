@@ -250,9 +250,7 @@
             if (pathParams.kind === "communities_route") {
                 if (pathParams.communityId !== undefined) {
                     client.setSelectedCommunity(pathParams.communityId);
-                    rightPanelHistory.set([
-                        { kind: "community_details", communityId: pathParams.communityId },
-                    ]);
+                    rightPanelHistory.set([{ kind: "community_details" }]);
                 } else {
                     rightPanelHistory.set([]);
                 }
@@ -644,9 +642,7 @@
 
     function communityDetails() {
         if ($selectedCommunityId !== undefined) {
-            rightPanelHistory.set([
-                { kind: "community_details", communityId: $selectedCommunityId },
-            ]);
+            rightPanelHistory.set([{ kind: "community_details" }]);
         }
     }
 
