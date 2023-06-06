@@ -10,6 +10,8 @@ fn main() {
     generate_candid_method!(community, messages_by_message_index, query);
     generate_candid_method!(community, rules, query);
     generate_candid_method!(community, search_channel, query);
+    generate_candid_method!(community, selected_channel_initial, query);
+    generate_candid_method!(community, selected_channel_updates, query);
     generate_candid_method!(community, summary, query);
     generate_candid_method!(community, summary_updates, query);
 
@@ -25,6 +27,7 @@ fn main() {
     generate_candid_method!(community, disable_invite_code, update);
     generate_candid_method!(community, edit_message, update);
     generate_candid_method!(community, enable_invite_code, update);
+    generate_candid_method!(community, invite_users_to_channel, update);
     generate_candid_method!(community, join_channel, update);
     generate_candid_method!(community, leave_channel, update);
     generate_candid_method!(community, make_channel_private, update);

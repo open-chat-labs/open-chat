@@ -14,7 +14,6 @@ async fn invite_users_to_community(args: Args) -> Response {
     let c2c_args = community_canister::c2c_invite_users::Args {
         caller: invited_by,
         users,
-        channel: args.channel,
     };
 
     match community_canister_c2c_client::c2c_invite_users(args.community_id.into(), &c2c_args).await {

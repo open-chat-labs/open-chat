@@ -18,5 +18,6 @@ pub enum Response {
     UserBlocked,
     UserLimitReached(u32),
     CommunityFrozen,
+    NotInvited,
     InternalError(String),
 }
