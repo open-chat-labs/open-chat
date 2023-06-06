@@ -348,10 +348,17 @@ type CreateChannelResponse =
         CommunityFrozen;
     };
 
+type DeclineInvitationArgs =
+    record {
+        channel_id: opt ChannelId;
+    };
+
 type DeclineInvitationResponse =
     variant {
         Success;
         NotInvited;
+        UserNotInCommunity;
+        ChannelNotFound;
     };
 
 type DeleteChannelArgs =
@@ -776,7 +783,7 @@ service: {
     change_channel_role: (ChangeChannelRoleArgs) -> (ChangeChannelRoleResponse);
     change_role: (ChangeRoleArgs) -> (ChangeRoleResponse);
     create_channel: (CreateChannelArgs) -> (CreateChannelResponse);
-    decline_invitation: (EmptyArgs) -> (DeclineInvitationResponse);
+    decline_invitation: (DeclineInvitationArgs) -> (DeclineInvitationResponse);
     delete_channel: (DeleteChannelArgs) -> (DeleteChannelResponse);
     delete_messages: (DeleteMessagesArgs) -> (DeleteMessagesResponse);
     disable_invite_code: (EmptyArgs) -> (DisableInviteCodeResponse);
