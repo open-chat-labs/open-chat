@@ -32,6 +32,7 @@ fn create_community_with_default_channels_succeeds() {
     let user2 = client::local_user_index::happy_path::register_user(env, canister_ids.local_user_index);
 
     client::local_user_index::happy_path::join_community(env, user2.principal, canister_ids.local_user_index, community_id);
+    env.tick();
 
     let summary2 = client::community::happy_path::summary(env, &user2, community_id);
 
