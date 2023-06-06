@@ -5,6 +5,7 @@ pub mod events;
 pub mod events_by_index;
 pub mod events_window;
 pub mod hot_group_exclusions;
+pub mod initial_state;
 pub mod initial_state_v2;
 pub mod messages_by_message_index;
 pub mod public_profile;

@@ -31,7 +31,7 @@ fn new_platform_moderators_added_to_moderators_group() {
 
     tick_many(env, 5);
 
-    let initial_state = client::user::happy_path::initial_state_v2(env, &user2);
+    let initial_state = client::user::happy_path::initial_state(env, &user2);
 
     assert!(initial_state.group_chats.iter().any(|c| c.chat_id == moderators_group));
 }

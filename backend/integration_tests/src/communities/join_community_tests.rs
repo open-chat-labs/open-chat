@@ -25,7 +25,7 @@ fn join_public_community_succeeds() {
 
     env.tick();
 
-    let initial_state = client::user::happy_path::initial_state_v2(env, &user2);
+    let initial_state = client::user::happy_path::initial_state(env, &user2);
 
     assert!(initial_state.communities.iter().any(|c| c.community_id == community_id));
 }

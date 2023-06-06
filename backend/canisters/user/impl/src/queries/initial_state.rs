@@ -1,10 +1,15 @@
 use crate::guards::caller_is_owner;
 use crate::model::group_chat::GroupChat;
-use crate::{read_state, RuntimeState, WASM_VERSION};
+use crate::{read_state, RuntimeState};
 use ic_cdk_macros::query;
 use std::collections::HashMap;
 use types::{GroupCanisterGroupChatSummary, GroupChatSummary, ThreadSyncDetails, UserId, Version};
-use user_canister::initial_state_v2::{Response::*, *};
+use user_canister::initial_state::{Response::*, *};
+
+#[query(guard = "caller_is_owner")]
+fn initial_state(args: Args) -> user_canister::initial_state_v2::Response {
+    read_state(|state| initial_state_impl(args, state)).into()
+}
 
 #[query(guard = "caller_is_owner")]
 fn initial_state_v2(args: Args) -> Response {
@@ -17,7 +22,6 @@ fn initial_state_impl(args: Args, state: &RuntimeState) -> Response {
     let avatar_id = state.data.avatar.value.as_ref().map(|a| a.id);
     let blocked_users = state.data.blocked_users.value.iter().copied().collect();
     let pinned_chats = state.data.pinned_chats.value.clone();
-    let user_canister_wasm_version = WASM_VERSION.with(|version| version.borrow().value);
 
     let direct_chats = state
         .data
@@ -54,7 +58,6 @@ fn initial_state_impl(args: Args, state: &RuntimeState) -> Response {
             avatar_id,
             blocked_users,
             pinned_chats,
-            user_canister_wasm_version,
         })
     } else {
         let group_chats = state.data.group_chats.iter().map(|g| g.to_summary()).collect();
@@ -67,7 +70,6 @@ fn initial_state_impl(args: Args, state: &RuntimeState) -> Response {
             avatar_id,
             blocked_users,
             pinned_chats,
-            user_canister_wasm_version,
         })
     }
 }

@@ -123,11 +123,7 @@ pub mod happy_path {
             env,
             sender,
             local_user_index_canister_id,
-            &local_user_index_canister::invite_users_to_community::Args {
-                community_id,
-                user_ids,
-                channel: None,
-            },
+            &local_user_index_canister::invite_users_to_community::Args { community_id, user_ids },
         );
 
         match response {

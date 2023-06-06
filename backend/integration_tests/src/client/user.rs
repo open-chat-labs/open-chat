@@ -4,8 +4,8 @@ use user_canister::*;
 // Queries
 generate_query_call!(events);
 generate_query_call!(events_by_index);
-generate_query_call!(initial_state_v2);
-generate_query_call!(updates_v2);
+generate_query_call!(initial_state);
+generate_query_call!(updates);
 
 // Updates
 generate_update_call!(add_reaction);
@@ -38,7 +38,7 @@ pub mod happy_path {
         AccessRules, ChatId, CommunityId, EventIndex, EventsResponse, GroupChatSummary, MessageContentInitial, MessageId,
         MessageIndex, Reaction, TextContent, ThreadSyncDetails, UserId,
     };
-    use user_canister::initial_state_v2::SuccessCachedResult;
+    use user_canister::initial_state::SuccessCachedResult;
 
     pub fn send_text_message(
         env: &mut StateMachine,
@@ -147,9 +147,9 @@ pub mod happy_path {
         assert!(matches!(response, user_canister::add_reaction::Response::Success));
     }
 
-    pub fn initial_state_v2(env: &StateMachine, sender: &User) -> user_canister::initial_state_v2::SuccessResult {
-        fn convert_response(result: SuccessCachedResult) -> user_canister::initial_state_v2::SuccessResult {
-            user_canister::initial_state_v2::SuccessResult {
+    pub fn initial_state(env: &StateMachine, sender: &User) -> user_canister::initial_state::SuccessResult {
+        fn convert_response(result: SuccessCachedResult) -> user_canister::initial_state::SuccessResult {
+            user_canister::initial_state::SuccessResult {
                 timestamp: result.timestamp,
                 direct_chats: result.direct_chats,
                 group_chats: convert_groups(result.cached_group_chat_summaries, result.group_chats_added),
@@ -157,7 +157,6 @@ pub mod happy_path {
                 avatar_id: result.avatar_id,
                 blocked_users: result.blocked_users,
                 pinned_chats: result.pinned_chats,
-                user_canister_wasm_version: result.user_canister_wasm_version,
             }
         }
 
@@ -192,16 +191,16 @@ pub mod happy_path {
             threads_read
         }
 
-        let response = super::initial_state_v2(
+        let response = super::initial_state(
             env,
             sender.principal,
             sender.canister(),
-            &user_canister::initial_state_v2::Args { disable_cache: None },
+            &user_canister::initial_state::Args { disable_cache: None },
         );
 
         match response {
-            user_canister::initial_state_v2::Response::Success(result) => result,
-            user_canister::initial_state_v2::Response::SuccessCached(result) => convert_response(result),
+            user_canister::initial_state::Response::Success(result) => result,
+            user_canister::initial_state::Response::SuccessCached(result) => convert_response(result),
         }
     }
 
