@@ -3969,6 +3969,7 @@ name = "integration_tests"
 version = "0.1.0"
 dependencies = [
  "candid",
+ "community_canister",
  "cycles_dispenser_canister",
  "group_canister",
  "group_index_canister",

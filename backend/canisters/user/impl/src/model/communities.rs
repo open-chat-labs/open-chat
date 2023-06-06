@@ -63,6 +63,10 @@ impl Communities {
         self.communities.contains_key(community_id)
     }
 
+    pub fn updated_since(&self, updated_since: TimestampMillis) -> impl Iterator<Item = &Community> {
+        self.communities.values().filter(move |c| c.last_updated() > updated_since)
+    }
+
     pub fn iter(&self) -> impl Iterator<Item = &Community> {
         self.communities.values()
     }
