@@ -48,8 +48,8 @@
         dispatch("close");
     }
 
-    function showMembers() {
-        dispatch("showMembers");
+    function showGroupMembers() {
+        dispatch("showGroupMembers");
     }
 
     function description(chat: GroupChatSummary): string {
@@ -66,7 +66,7 @@
 <GroupDetailsHeader
     level={chat.level}
     {canEdit}
-    on:showMembers={showMembers}
+    on:showGroupMembers={showGroupMembers}
     on:close={clickClose}
     on:editGroup={editGroup} />
 

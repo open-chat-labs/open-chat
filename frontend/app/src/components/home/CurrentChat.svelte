@@ -254,10 +254,10 @@
             on:unblockUser
             on:markAllRead={onMarkAllRead}
             on:toggleMuteNotifications
-            on:showInviteUsers
+            on:showInviteGroupUsers
             on:showGroupDetails
             on:showProposalFilters
-            on:showMembers
+            on:showGroupMembers
             on:leaveGroup
             on:showPinned
             on:createPoll={createPoll}

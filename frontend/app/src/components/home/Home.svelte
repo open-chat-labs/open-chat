@@ -65,12 +65,7 @@
     import GateCheckFailed from "./AccessGateCheckFailed.svelte";
     import HallOfFame from "./HallOfFame.svelte";
     import LeftNav from "./nav/LeftNav.svelte";
-    import {
-        createCandidateCommunity,
-        myCommunities,
-        dummyCommunities,
-        selectedCommunity,
-    } from "../../stores/community";
+    import { createCandidateCommunity } from "../../stores/community";
 
     const client = getContext<OpenChat>("client");
     const user = client.user;
@@ -150,6 +145,7 @@
     $: currentChatDraftMessage = client.currentChatDraftMessage;
     $: chatStateStore = client.chatStateStore;
     $: confirmMessage = getConfirmMessage(confirmActionEvent);
+    $: selectedCommunityId = client.selectedCommunityId;
 
     onMount(() => {
         subscribeToNotifications(client, (n) => client.notificationReceived(n));
@@ -253,9 +249,8 @@
         if (initialised) {
             if (pathParams.kind === "communities_route") {
                 if (pathParams.communityId !== undefined) {
-                    rightPanelHistory.set([
-                        { kind: "community_details", communityId: pathParams.communityId },
-                    ]);
+                    client.setSelectedCommunity(pathParams.communityId);
+                    rightPanelHistory.set([{ kind: "community_details" }]);
                 } else {
                     rightPanelHistory.set([]);
                 }
@@ -503,9 +498,9 @@
             case "leave":
                 return leaveGroup(confirmActionEvent.chatId, confirmActionEvent.chatType);
             case "leave_community":
-                return leaveCommunity(confirmActionEvent.communityId);
+                return client.leaveCommunity(confirmActionEvent.communityId);
             case "delete_community":
-                return deleteCommunity(confirmActionEvent.communityId).then((_) => {
+                return client.deleteCommunity(confirmActionEvent.communityId).then((_) => {
                     rightPanelHistory.set([]);
                 });
             case "delete":
@@ -519,31 +514,6 @@
             default:
                 return Promise.reject();
         }
-    }
-
-    function deleteCommunity(communityId: string) {
-        return new Promise<void>((resolve) => {
-            setTimeout(() => {
-                myCommunities.update((communities) => {
-                    return communities.filter((c) => c.id !== communityId);
-                });
-                dummyCommunities.update((communities) => {
-                    return communities.filter((c) => c.id !== communityId);
-                });
-                resolve();
-            }, 2000);
-        });
-    }
-
-    function leaveCommunity(communityId: string) {
-        return new Promise<void>((resolve) => {
-            setTimeout(() => {
-                myCommunities.update((communities) => {
-                    return communities.filter((c) => c.id !== communityId);
-                });
-                resolve();
-            }, 2000);
-        });
     }
 
     function deleteGroup(chatId: string, chatType: ChatType): Promise<void> {
@@ -601,13 +571,13 @@
         }
     }
 
-    function showInviteUsers(ev: CustomEvent<boolean>) {
+    function showInviteGroupUsers(ev: CustomEvent<boolean>) {
         if ($selectedChatId !== undefined) {
             if (ev.detail) {
-                rightPanelHistory.set([{ kind: "invite_users" }]);
+                rightPanelHistory.set([{ kind: "invite_group_users" }]);
             } else {
                 rightPanelHistory.update((history) => {
-                    return [...history, { kind: "invite_users" }];
+                    return [...history, { kind: "invite_group_users" }];
                 });
             }
         }
@@ -634,12 +604,12 @@
         modal = ModalType.SelectChat;
     }
 
-    function showMembers(ev: CustomEvent<boolean>) {
+    function showGroupMembers(ev: CustomEvent<boolean>) {
         if ($selectedChatId !== undefined) {
             if (ev.detail) {
-                rightPanelHistory.set([{ kind: "show_members" }]);
+                rightPanelHistory.set([{ kind: "show_group_members" }]);
             } else {
-                pushRightPanelHistory({ kind: "show_members" });
+                pushRightPanelHistory({ kind: "show_group_members" });
             }
         }
     }
@@ -671,10 +641,8 @@
     }
 
     function communityDetails() {
-        if ($selectedCommunity !== undefined) {
-            rightPanelHistory.set([
-                { kind: "community_details", communityId: $selectedCommunity.id },
-            ]);
+        if ($selectedCommunityId !== undefined) {
+            rightPanelHistory.set([{ kind: "community_details" }]);
         }
     }
 
@@ -1006,10 +974,10 @@
             on:leaveGroup={triggerConfirm}
             on:chatWith={chatWith}
             on:replyPrivatelyTo={replyPrivatelyTo}
-            on:showInviteUsers={showInviteUsers}
+            on:showInviteGroupUsers={showInviteGroupUsers}
             on:showGroupDetails={showGroupDetails}
             on:showProposalFilters={showProposalFilters}
-            on:showMembers={showMembers}
+            on:showGroupMembers={showGroupMembers}
             on:joinGroup={joinGroup}
             on:cancelPreview={cancelPreview}
             on:upgrade={upgrade}
@@ -1024,8 +992,8 @@
             on:userAvatarSelected={userAvatarSelected}
             on:goToMessageIndex={goToMessageIndex}
             on:replyPrivatelyTo={replyPrivatelyTo}
-            on:showInviteUsers={showInviteUsers}
-            on:showMembers={showMembers}
+            on:showInviteGroupUsers={showInviteGroupUsers}
+            on:showGroupMembers={showGroupMembers}
             on:chatWith={chatWith}
             on:upgrade={upgrade}
             on:blockUser={blockUser}
@@ -1044,8 +1012,8 @@
                 on:userAvatarSelected={userAvatarSelected}
                 on:goToMessageIndex={goToMessageIndex}
                 on:replyPrivatelyTo={replyPrivatelyTo}
-                on:showInviteUsers={showInviteUsers}
-                on:showMembers={showMembers}
+                on:showInviteGroupUsers={showInviteGroupUsers}
+                on:showGroupMembers={showGroupMembers}
                 on:chatWith={chatWith}
                 on:upgrade={upgrade}
                 on:blockUser={blockUser}

@@ -250,7 +250,6 @@ import {
     type RegisterUserResponse,
     type CurrentUserResponse,
     type RemoveMemberResponse,
-    type ChangeRoleResponse,
     type RegisterProposalVoteResponse,
     type GroupSearchResponse,
     type GroupInvite,
@@ -303,6 +302,7 @@ import {
     ReferralLeaderboardResponse,
     CommunityPermissions,
     E8S_PER_TOKEN,
+    Community,
 } from "openchat-shared";
 import { failedMessagesStore } from "./stores/failedMessages";
 import {
@@ -311,6 +311,18 @@ import {
     isDiamond,
     diamondDurationToMs,
 } from "./stores/diamond";
+import {
+    allCommunities,
+    communities,
+    communitiesList,
+    communityStateStore,
+    currentCommunityBlockedUsers,
+    currentCommunityInvitedUsers,
+    currentCommunityMembers,
+    currentCommunityRules,
+    selectedCommunity,
+    selectedCommunityId,
+} from "./stores/community";
 
 const UPGRADE_POLL_INTERVAL = 1000;
 const MARK_ONLINE_INTERVAL = 61 * 1000;
@@ -3077,8 +3089,36 @@ export class OpenChat extends EventTarget {
         return this.api.removeMember(chatId, userId);
     }
 
-    changeRole(chatId: string, userId: string, newRole: MemberRole): Promise<ChangeRoleResponse> {
-        return this.api.changeRole(chatId, userId, newRole);
+    changeRole(
+        chatId: string,
+        userId: string,
+        newRole: MemberRole,
+        oldRole: MemberRole
+    ): Promise<boolean> {
+        if (newRole === oldRole) return Promise.resolve(true);
+
+        // Update the local store
+        chatStateStore.updateProp(chatId, "members", (ps) =>
+            ps.map((p) => (p.userId === userId ? { ...p, role: newRole } : p))
+        );
+        return this.api
+            .changeRole(chatId, userId, newRole)
+            .then((resp) => {
+                return resp === "success";
+            })
+            .catch((err) => {
+                this._logger.error("Error trying to change role: ", err);
+                return false;
+            })
+            .then((success) => {
+                if (!success) {
+                    // Revert the local store
+                    chatStateStore.updateProp(chatId, "members", (ps) =>
+                        ps.map((p) => (p.userId === userId ? { ...p, role: oldRole } : p))
+                    );
+                }
+                return success;
+            });
     }
 
     registerProposalVote(
@@ -3236,7 +3276,7 @@ export class OpenChat extends EventTarget {
     setUsername(userId: string, username: string): Promise<SetUsernameResponse> {
         return this.api.setUsername(userId, username).then((resp) => {
             if (resp === "success" && this._user !== undefined) {
-                this._user.username = username;
+                this._user = { ...this._user, username };
                 this.overwriteUserInStore(userId, (user) => ({ ...user, username }));
             }
             return resp;
@@ -3867,6 +3907,81 @@ export class OpenChat extends EventTarget {
             : this.config.i18nFormatter("unknownUser");
     }
 
+    // **** Communities Stuff
+
+    // TODO - this will almost certainly need to be more complicated
+    setSelectedCommunity(communityId: string): void {
+        selectedCommunityId.set(communityId);
+    }
+
+    joinCommunity(community: Community): Promise<void> {
+        return new Promise((resolve) => {
+            setTimeout(() => {
+                communities.update((c) => {
+                    return {
+                        ...c,
+                        [community.id]: community,
+                    };
+                });
+                resolve();
+            }, 2000);
+        });
+    }
+
+    deleteCommunity(id: string): Promise<void> {
+        return new Promise<void>((resolve) => {
+            setTimeout(() => {
+                communities.update((c) => {
+                    delete c[id];
+                    return c;
+                });
+                allCommunities.update((communities) => {
+                    return communities.filter((c) => c.id !== id);
+                });
+                resolve();
+            }, 2000);
+        });
+    }
+
+    leaveCommunity(id: string): Promise<void> {
+        return new Promise<void>((resolve) => {
+            setTimeout(() => {
+                communities.update((c) => {
+                    delete c[id];
+                    return c;
+                });
+                resolve();
+            }, 2000);
+        });
+    }
+
+    createCommunity(candidate: Community): Promise<void> {
+        // TODO - this is just a dummy implementation
+        allCommunities.update((c) => [...c, candidate]);
+        communities.update((c) => {
+            const keys = Object.keys(c);
+            const next = (keys.length + 2).toString();
+            return {
+                ...c,
+                [next]: { ...candidate, id: next },
+            };
+        });
+        return Promise.resolve();
+    }
+
+    saveCommunity(candidate: Community): Promise<void> {
+        // TODO - this is just a dummy implementation
+        communities.update((c) => {
+            return {
+                ...c,
+                [candidate.id]: candidate,
+            };
+        });
+        return Promise.resolve();
+    }
+
+    // **** End of Communities stuff
+
     diamondDurationToMs = diamondDurationToMs;
 
     /**
@@ -3933,4 +4048,18 @@ export class OpenChat extends EventTarget {
     diamondMembership = diamondMembership;
     selectedThreadRootEvent = selectedThreadRootEvent;
     selectedThreadRootMessageIndex = selectedThreadRootMessageIndex;
+
+    // current community stores
+    selectedCommunityId = selectedCommunityId;
+    selectedCommunity = selectedCommunity;
+    communities = communities;
+    communitiesList = communitiesList;
+    currentCommunityMembers = currentCommunityMembers;
+    currentCommunityRules = currentCommunityRules;
+    currentCommunityBlockedUsers = currentCommunityBlockedUsers;
+    currentCommunityInvitedUsers = currentCommunityInvitedUsers;
+    communityStateStore = communityStateStore;
+
+    // TODO - temporarily exposing a test store
+    allCommunities = allCommunities;
 }

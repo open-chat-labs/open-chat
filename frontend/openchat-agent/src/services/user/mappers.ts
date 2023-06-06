@@ -829,6 +829,7 @@ function groupChatSummary(candid: ApiGroupChatSummary, limitReadByMeUpTo = true)
     return {
         kind: "group_chat",
         chatId: candid.chat_id.toString(),
+        id: candid.chat_id.toString(),
         latestMessage,
         readByMeUpTo: optional(candid.read_by_me_up_to, (r) =>
             limitReadByMeUpTo && latestMessage !== undefined
@@ -883,6 +884,7 @@ function directChatSummary(candid: ApiDirectChatSummary): DirectChatSummary {
     return {
         kind: "direct_chat",
         chatId: candid.them.toString(),
+        id: candid.them.toString(),
         latestMessage: {
             index: candid.latest_message.index,
             timestamp: candid.latest_message.timestamp,

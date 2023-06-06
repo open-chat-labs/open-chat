@@ -19,7 +19,6 @@
     import LeftNavItem from "./LeftNavItem.svelte";
     import MainMenu from "./MainMenu.svelte";
     import { navOpen } from "../../../stores/layout";
-    import { myCommunities, selectedCommunity } from "../../../stores/community";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -27,6 +26,8 @@
     $: userStore = client.userStore;
     $: user = $userStore[createdUser.userId];
     $: avatarSize = $mobileWidth ? AvatarSize.Small : AvatarSize.Default;
+    $: communities = client.communitiesList;
+    $: selectedCommunity = client.selectedCommunity;
 
     let iconSize = $mobileWidth ? "1.2em" : "1.4em"; // in this case we don't want to use the standard store
 
@@ -56,8 +57,10 @@
     }
 
     function selectCommunity(community: Community) {
-        selectedCommunity.set(community);
+        client.setSelectedCommunity(community.id);
         page("/"); // TODO - we will need a new route here to represent the selected community
+        // TODO - we have two different concepts here that are not yet distinct. We can have a community that we are a member of selected *or* a community that we are browsing selected
+        // these two things are different but we don't have the mechanism to distinguish them at the moment
     }
 
     function closeIfOpen() {
@@ -116,7 +119,7 @@
     </div>
 
     <div class="middle">
-        {#each $myCommunities as community, i}
+        {#each $communities as community, i}
             <LeftNavItem
                 selected={community === $selectedCommunity}
                 unread={community.unreadCount}

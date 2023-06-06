@@ -1,4 +1,5 @@
-import type { AccessControlled } from "../access";
+import type { AccessControlled, AccessRules } from "../access";
+import type { Member } from "../chat";
 import type { DataContent } from "../data";
 import type { HasIdentity } from "../identity";
 import type { CommunityPermissionRole, Permissioned } from "../permission";
@@ -31,4 +32,11 @@ export type CommunityPermissions = {
 export type DefaultChannel = {
     name: string;
     createdAt: number;
+};
+
+export type CommunitySpecificState = {
+    members: Member[];
+    blockedUsers: Set<string>;
+    invitedUsers: Set<string>;
+    rules?: AccessRules;
 };

@@ -26,7 +26,7 @@
         popRightPanelHistory();
     }
     function showMembers() {
-        pushRightPanelHistory({ kind: "community_members", communityId: community.id });
+        pushRightPanelHistory({ kind: "show_community_members" });
     }
     function invite() {
         dispatch("invite");
