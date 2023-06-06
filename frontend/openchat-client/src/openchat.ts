@@ -316,6 +316,7 @@ import {
     allCommunities,
     communities,
     communitiesList,
+    communityStateStore,
     currentCommunityBlockedUsers,
     currentCommunityInvitedUsers,
     currentCommunityMembers,
@@ -3089,8 +3090,36 @@ export class OpenChat extends EventTarget {
         return this.api.removeMember(chatId, userId);
     }
 
-    changeRole(chatId: string, userId: string, newRole: MemberRole): Promise<ChangeRoleResponse> {
-        return this.api.changeRole(chatId, userId, newRole);
+    changeRole(
+        chatId: string,
+        userId: string,
+        newRole: MemberRole,
+        oldRole: MemberRole
+    ): Promise<boolean> {
+        if (newRole === oldRole) return Promise.resolve(true);
+
+        // Update the local store
+        chatStateStore.updateProp(chatId, "members", (ps) =>
+            ps.map((p) => (p.userId === userId ? { ...p, role: newRole } : p))
+        );
+        return this.api
+            .changeRole(chatId, userId, newRole)
+            .then((resp) => {
+                return resp === "success";
+            })
+            .catch((err) => {
+                this._logger.error("Error trying to change role: ", err);
+                return false;
+            })
+            .then((success) => {
+                if (!success) {
+                    // Revert the local store
+                    chatStateStore.updateProp(chatId, "members", (ps) =>
+                        ps.map((p) => (p.userId === userId ? { ...p, role: oldRole } : p))
+                    );
+                }
+                return success;
+            });
     }
 
     registerProposalVote(
@@ -4030,6 +4059,7 @@ export class OpenChat extends EventTarget {
     currentCommunityRules = currentCommunityRules;
     currentCommunityBlockedUsers = currentCommunityBlockedUsers;
     currentCommunityInvitedUsers = currentCommunityInvitedUsers;
+    communityStateStore = communityStateStore;
 
     // TODO - temporarily exposing a test store
     allCommunities = allCommunities;

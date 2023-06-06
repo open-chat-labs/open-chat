@@ -52,6 +52,7 @@
     $: currentCommunityBlocked = client.currentCommunityBlockedUsers;
     $: currentCommunityRules = client.currentCommunityRules;
     $: selectedCommunity = client.selectedCommunity;
+    $: communityStateStore = client.communityStateStore;
 
     $: eventsStore = client.eventsStore;
     $: userStore = client.userStore;
@@ -67,6 +68,15 @@
         if ($selectedChatId !== undefined) {
             let { userId, newRole, oldRole } = ev.detail;
             changeGroupRole($selectedChatId, userId, newRole, oldRole);
+        }
+    }
+
+    function onChangeCommunityRole(
+        ev: CustomEvent<{ userId: string; newRole: MemberRole; oldRole: MemberRole }>
+    ): void {
+        if ($selectedCommunity !== undefined) {
+            const { userId, newRole, oldRole } = ev.detail;
+            changeCommunityRole($selectedCommunity.id, userId, newRole, oldRole);
         }
     }
 
@@ -153,42 +163,26 @@
         newRole: MemberRole,
         oldRole: MemberRole
     ): Promise<void> {
-        if (newRole === oldRole) return Promise.resolve();
-
-        let promotion = compareRoles(newRole, oldRole) > 0;
-
-        function onError(err: any) {
-            // Revert the local store
-            chatStateStore.updateProp(chatId, "members", (ps) =>
-                ps.map((p) => (p.userId === userId ? { ...p, role: oldRole } : p))
-            );
-
-            let roleText = $_(newRole);
-            let message = $_(promotion ? "promoteFailed" : "demoteFailed", {
-                values: { role: roleText },
-            });
-            if (err) {
-                logger.error(message, err);
-            }
-            toastStore.showFailureToast(message);
-        }
-
-        // Update the local store
-        chatStateStore.updateProp(chatId, "members", (ps) =>
-            ps.map((p) => (p.userId === userId ? { ...p, role: newRole } : p))
-        );
-
         // Call backend to changeRole
-        return client
-            .changeRole(chatId, userId, newRole)
-            .then((resp) => {
-                if (resp !== "success") {
-                    onError(undefined);
-                }
-            })
-            .catch((err) => {
-                onError(err);
-            });
+        return client.changeRole(chatId, userId, newRole, oldRole).then((success) => {
+            if (!success) {
+                const roleText = $_(newRole);
+                const promotion = compareRoles(newRole, oldRole) > 0;
+                const message = $_(promotion ? "promoteFailed" : "demoteFailed", {
+                    values: { role: roleText },
+                });
+                toastStore.showFailureToast(message);
+            }
+        });
+    }
+
+    function changeCommunityRole(
+        _id: string,
+        _userId: string,
+        _newRole: MemberRole,
+        _oldRole: MemberRole
+    ) {
+        toastStore.showSuccessToast("TODO - change community role");
     }
 
     function removeGroupMember(chatId: string, userId: string): Promise<void> {
@@ -286,7 +280,7 @@
             on:chatWith
             on:showInviteUsers={showInviteCommunityUsers}
             on:removeMember={onRemoveCommunityMember}
-            on:changeRole={onChangeGroupRole} />
+            on:changeRole={onChangeCommunityRole} />
     {:else if lastState.kind === "invite_group_users"}
         <InviteUsers
             busy={invitingUsers}
