@@ -1,23 +1,18 @@
-import type {
-    ChatEvent,
-    ChatSummary,
-    EventsResponse,
-    IndexRange
-} from "openchat-shared";
+import type { ChatEvent, ChatSummary, EventsResponse, IndexRange } from "openchat-shared";
 import { compareChats, missingUserIds, userIdsFromEvents } from "openchat-shared";
 import { toRecord } from "./list";
 import { Poller } from "./poller";
-import type { OpenChatAgentWorker } from "../agentWorker";
 import { boolFromLS } from "../stores/localStorageSetting";
 import { messagesRead } from "../stores/markRead";
 import { userStore } from "../stores/user";
 import { get } from "svelte/store";
+import type { OpenChat } from "../openchat";
 
 export class CachePrimer {
     private pending: Record<string, ChatSummary> = {};
     private runner: Poller | undefined = undefined;
 
-    constructor(private api: OpenChatAgentWorker) {
+    constructor(private api: OpenChat) {
         debug("initialized");
     }
 
@@ -73,7 +68,10 @@ export class CachePrimer {
                 const missing = missingUserIds(get(userStore), userIds);
                 if (missing.length > 0) {
                     debug(`${chat.chatId} loading ${missing.length} users`);
-                    await this.api.getUsers({userGroups: [{users: missing, updatedSince: BigInt(0)}]}, true);
+                    await this.api.getUsers(
+                        { userGroups: [{ users: missing, updatedSince: BigInt(0) }] },
+                        true
+                    );
                 }
             }
             debug(chat.chatId + " completed");
@@ -86,38 +84,46 @@ export class CachePrimer {
         }
     }
 
-    private async getEventsWindow(chat: ChatSummary, firstUnreadMessage: number): Promise<EventsResponse<ChatEvent>> {
+    private async getEventsWindow(
+        chat: ChatSummary,
+        firstUnreadMessage: number
+    ): Promise<EventsResponse<ChatEvent>> {
         if (chat.kind === "direct_chat") {
-            return await this.api.directChatEventsWindow(
-                [0, chat.latestEventIndex],
-                chat.them,
-                firstUnreadMessage,
-                chat.latestEventIndex
-            );
+            return await this.api.sendRequest({
+                kind: "directChatEventsWindow",
+                eventIndexRange: [0, chat.latestEventIndex],
+                theirUserId: chat.them,
+                messageIndex: firstUnreadMessage,
+                latestClientMainEventIndex: chat.latestEventIndex,
+            });
         } else {
-            return await this.api.groupChatEventsWindow(
-                [chat.minVisibleEventIndex, chat.latestEventIndex],
-                chat.chatId,
-                firstUnreadMessage,
-                chat.latestEventIndex
-            );
+            return await this.api.sendRequest({
+                kind: "groupChatEventsWindow",
+                eventIndexRange: [chat.minVisibleEventIndex, chat.latestEventIndex],
+                chatId: chat.chatId,
+                messageIndex: firstUnreadMessage,
+                latestClientMainEventIndex: chat.latestEventIndex,
+                threadRootMessageIndex: undefined,
+            });
         }
     }
 
     private async getLatestEvents(chat: ChatSummary): Promise<EventsResponse<ChatEvent>> {
-        const range: IndexRange = chat.kind === "direct_chat"
-            ? [0, chat.latestEventIndex]
-            : [chat.minVisibleEventIndex, chat.latestEventIndex];
+        const range: IndexRange =
+            chat.kind === "direct_chat"
+                ? [0, chat.latestEventIndex]
+                : [chat.minVisibleEventIndex, chat.latestEventIndex];
 
-        return await this.api.chatEvents(
-            chat.kind,
-            chat.chatId,
-            range,
-            chat.latestEventIndex,
-            false,
-            undefined,
-            chat.latestEventIndex
-        );
+        return await this.api.sendRequest({
+            kind: "chatEvents",
+            chatType: chat.kind,
+            chatId: chat.chatId,
+            eventIndexRange: range,
+            startIndex: chat.latestEventIndex,
+            ascending: false,
+            threadRootMessageIndex: undefined,
+            latestClientEventIndex: chat.latestEventIndex,
+        });
     }
 }
 
@@ -127,6 +133,6 @@ function hasBeenUpdated(previous: ChatSummary | undefined, next: ChatSummary): b
 
 function debug(message: string) {
     if (boolFromLS("openchat_cache_primer_debug_enabled", false)) {
-        console.debug("CachePrimer - " + message)
+        console.debug("CachePrimer - " + message);
     }
 }
