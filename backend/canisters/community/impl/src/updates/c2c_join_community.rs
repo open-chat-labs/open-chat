@@ -31,7 +31,7 @@ async fn c2c_join_community(args: Args) -> Response {
             read_state(|state| {
                 if let Some(member) = state.data.members.get_by_user_id(&args.user_id) {
                     let now = state.env.now();
-                    Success(Box::new(state.summary(&member, now)))
+                    Success(Box::new(state.summary(member, now)))
                 } else {
                     InternalError("User not found in community".to_string())
                 }
