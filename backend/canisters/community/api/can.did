@@ -435,36 +435,6 @@ type EnableInviteCodeResponse =
         CommunityFrozen;
     };
 
-type InviteUsersToChannelArgs =
-    record {
-        channel_id: ChannelId;
-        user_ids: vec UserId;
-    };
-
-type InviteUsersToChannelResponse =
-    variant {
-        Success;
-        PartialSuccess: InviteUsersToChannelPartialSuccess;
-        Failed: InviteUsersToChannelFailed;
-        CommunityFrozen;
-        UserNotInCommunity;
-        ChannelNotFound;
-        UserNotInChannel;
-        UserSuspended;
-        NotAuthorized;
-        TooManyInvites: nat32;
-    };
-
-type InviteUsersToChannelPartialSuccess =
-    record {
-        users_not_in_community: vec UserId;
-    };
-
-type InviteUsersToChannelFailed =
-    record {
-        users_not_in_community: vec UserId;
-    };
-
 type JoinChannelArgs =
     record {
         channel_id: ChannelId;
@@ -790,7 +760,6 @@ service: {
     disable_invite_code: (EmptyArgs) -> (DisableInviteCodeResponse);
     edit_message: (EditMessageArgs) -> (EditMessageResponse);
     enable_invite_code: (EmptyArgs) -> (EnableInviteCodeResponse);
-    invite_users_to_channel: (InviteUsersToChannelArgs) -> (InviteUsersToChannelResponse);
     join_channel: (JoinChannelArgs) -> (JoinChannelResponse);
     leave_channel: (LeaveChannelArgs) -> (LeaveChannelResponse);
     make_channel_private: (MakeChannelPrivateArgs) -> (MakeChannelPrivateResponse);
