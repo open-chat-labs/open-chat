@@ -50,7 +50,7 @@ fn updates_impl(updates_since: TimestampMillis, state: &RuntimeState) -> Respons
     let mut direct_chats_added = Vec::new();
     let mut direct_chats_updated = Vec::new();
 
-    for direct_chat in state.data.direct_chats.get_all(Some(updates_since), now) {
+    for direct_chat in state.data.direct_chats.updated_since(updates_since) {
         if direct_chat.date_created > updates_since {
             direct_chats_added.push(direct_chat.to_summary(my_user_id, now));
         } else {

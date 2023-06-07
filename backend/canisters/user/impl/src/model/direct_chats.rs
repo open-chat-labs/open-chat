@@ -20,18 +20,12 @@ impl DirectChats {
         self.direct_chats.get_mut(chat_id)
     }
 
-    pub fn get_all(&self, updated_since: Option<TimestampMillis>, now: TimestampMillis) -> impl Iterator<Item = &DirectChat> {
-        self.direct_chats.values().filter(move |&c| {
-            if let Some(updated_since) = updated_since {
-                c.last_updated(now) > updated_since
-            } else {
-                true
-            }
-        })
+    pub fn updated_since(&self, since: TimestampMillis) -> impl Iterator<Item = &DirectChat> {
+        self.direct_chats.values().filter(move |c| c.has_updates_since(since))
     }
 
     pub fn any_updated(&self, since: TimestampMillis) -> bool {
-        self.direct_chats.values().any(|c| c.events.has_updates_since(since))
+        self.direct_chats.values().any(|c| c.has_updates_since(since))
     }
 
     pub fn iter(&self) -> impl Iterator<Item = &DirectChat> {
