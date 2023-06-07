@@ -56,14 +56,13 @@ type InviteUsersToChannelResponse =
         Success;
         PartialSuccess: InviteUsersToChannelPartialSuccess;
         Failed: InviteUsersToChannelFailed;
-        CommunityNotFound;
+        CommunityFrozen;
         UserNotInCommunity;
         ChannelNotFound;
         UserNotInChannel;
         NotAuthorized;
-        CommunityFrozen;
-        TooManyInvites: nat32;
         UserSuspended;
+        TooManyInvites: nat32;
         InternalError: text;
     };
 
@@ -84,7 +83,6 @@ type InviteUsersToCommunityArgs =
 type InviteUsersToCommunityResponse =
     variant {
         Success;
-        CommunityNotFound;
         UserNotInCommunity;
         NotAuthorized;
         CommunityFrozen;
