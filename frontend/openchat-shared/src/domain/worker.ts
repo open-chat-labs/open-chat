@@ -53,7 +53,6 @@ import type {
     ReportMessageResponse,
     InviteUsersResponse,
     ResetInviteCodeResponse,
-    GroupCanisterGroupChatSummary,
     AddHotGroupExclusionResponse,
     RemoveHotGroupExclusionResponse,
     SetGroupUpgradeConcurrencyResponse,
