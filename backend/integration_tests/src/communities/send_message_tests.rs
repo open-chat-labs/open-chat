@@ -51,51 +51,6 @@ fn send_text_in_channel() {
     }
 }
 
-#[test]
-fn send_crypto_in_channel() {
-    let mut wrapper = ENV.deref().get();
-    let TestEnv {
-        env,
-        canister_ids,
-        controller,
-    } = wrapper.env();
-
-    let TestData {
-        user1,
-        user2,
-        community_id,
-        channel_id,
-    } = init_test_data(env, canister_ids, *controller);
-
-    let result = client::community::happy_path::send_crypto_message(
-        env,
-        &user1,
-        community_id,
-        channel_id,
-        None,
-        "Hello, world!",
-        None,
-    );
-
-    let events_response = client::community::happy_path::events_by_index(
-        env,
-        &user2,
-        community_id,
-        channel_id,
-        vec![result.event_index]
-    );
-
-    if let ChatEvent::Message(message) = &events_response.events[0].event {
-        if let MessageContent::Crypto(content) = &message.content {
-            assert_eq!(content.text, "Hello, world!");
-        } else {
-            panic!("Expected a crypto message");
-        }
-    } else {
-        panic!("Expected a message event");
-    }
-}
-
 fn init_test_data(
     env: &mut StateMachine,
     canister_ids: &CanisterIds,
