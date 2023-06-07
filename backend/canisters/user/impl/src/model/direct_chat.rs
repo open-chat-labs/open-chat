@@ -37,24 +37,12 @@ impl DirectChat {
         }
     }
 
-    pub fn last_updated(&self, now: TimestampMillis) -> TimestampMillis {
-        let timestamps = [
-            self.events
-                .main_events_reader(now)
-                .latest_event_timestamp()
-                .unwrap_or_default(),
-            self.events
-                .iter_recently_updated_events()
-                .map(|(_, _, ts)| ts)
-                .next()
-                .unwrap_or_default(),
-            self.read_by_me_up_to.timestamp,
-            self.read_by_them_up_to.timestamp,
-            self.notifications_muted.timestamp,
-            self.archived.timestamp,
-        ];
-
-        timestamps.into_iter().max().unwrap()
+    pub fn has_updates_since(&self, since: TimestampMillis) -> bool {
+        self.events.has_updates_since(since)
+            || self.read_by_me_up_to.timestamp > since
+            || self.read_by_them_up_to.timestamp > since
+            || self.notifications_muted.timestamp > since
+            || self.archived.timestamp > since
     }
 
     pub fn mark_read_up_to(&mut self, message_index: MessageIndex, me: bool, now: TimestampMillis) -> bool {
