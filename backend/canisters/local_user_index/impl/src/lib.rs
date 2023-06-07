@@ -3,6 +3,7 @@ use crate::model::referral_codes::{ReferralCodes, ReferralTypeMetrics};
 use crate::timer_job_types::TimerJob;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
+use local_user_index_canister::GlobalUser;
 use model::global_user_map::GlobalUserMap;
 use model::local_user_map::LocalUserMap;
 use serde::{Deserialize, Serialize};
@@ -45,6 +46,11 @@ struct RuntimeState {
 impl RuntimeState {
     pub fn new(env: Box<dyn Environment>, data: Data) -> RuntimeState {
         RuntimeState { env, data }
+    }
+
+    pub fn calling_user(&self) -> GlobalUser {
+        let caller = self.env.caller();
+        self.data.global_users.get(&caller).unwrap()
     }
 
     pub fn is_caller_user_index_canister(&self) -> bool {

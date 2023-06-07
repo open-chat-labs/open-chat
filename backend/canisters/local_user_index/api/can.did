@@ -44,6 +44,37 @@ type JoinGroupResponse =
         InternalError: text;
     };
 
+type InviteUsersToChannelArgs =
+    record {
+        community_id: CommunityId;
+        channel_id: ChannelId;
+        user_ids: vec UserId;
+    };
+
+type InviteUsersToChannelResponse =
+    variant {
+        Success;
+        PartialSuccess: InviteUsersToChannelPartialSuccess;
+        Failed: InviteUsersToChannelFailed;
+        CommunityNotFound;
+        UserNotInCommunity;
+        ChannelNotFound;
+        UserNotInChannel;
+        NotAuthorized;
+        CommunityFrozen;
+        TooManyInvites: nat32;
+        UserSuspended;
+        InternalError: text;
+    };
+
+type InviteUsersToChannelPartialSuccess = record {
+    users_not_in_community: vec UserId;
+};
+
+type InviteUsersToChannelFailed = record {
+    users_not_in_community: vec UserId;
+};
+
 type InviteUsersToCommunityArgs =
     record {
         community_id: CommunityId;
@@ -124,6 +155,7 @@ type ReportMessageResponse =
 service: {
     join_community: (JoinCommunityArgs) -> (JoinCommunityResponse);
     join_group: (JoinGroupArgs) -> (JoinGroupResponse);
+    invite_users_to_channel: (InviteUsersToChannelArgs) -> (InviteUsersToChannelResponse);
     invite_users_to_community: (InviteUsersToCommunityArgs) -> (InviteUsersToCommunityResponse);
     invite_users_to_group: (InviteUsersToGroupArgs) -> (InviteUsersToGroupResponse);
     register_user: (RegisterUserArgs) -> (RegisterUserResponse);
