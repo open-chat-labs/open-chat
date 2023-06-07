@@ -16,14 +16,19 @@ pub struct CommunityMembers {
 }
 
 impl CommunityMembers {
-    pub fn new(creator_principal: Principal, creator_user_id: UserId, now: TimestampMillis) -> CommunityMembers {
+    pub fn new(
+        creator_principal: Principal,
+        creator_user_id: UserId,
+        default_channels: Vec<ChannelId>,
+        now: TimestampMillis,
+    ) -> CommunityMembers {
         let member = CommunityMemberInternal {
             user_id: creator_user_id,
             date_added: now,
             role: CommunityRole::Owner,
             notifications_muted: Timestamped::new(false, now),
             suspended: Timestamped::default(),
-            channels: HashSet::new(),
+            channels: default_channels.into_iter().collect(),
             channels_removed: Vec::new(),
         };
 

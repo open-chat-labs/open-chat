@@ -175,9 +175,9 @@ impl Data {
         test_mode: bool,
         now: TimestampMillis,
     ) -> Data {
-        let members = CommunityMembers::new(created_by_principal, created_by_user_id, now);
-        let events = CommunityEvents::new(name.clone(), description.clone(), created_by_user_id, now);
         let channels = Channels::new(created_by_user_id, default_channels, now);
+        let members = CommunityMembers::new(created_by_principal, created_by_user_id, channels.default_channels(), now);
+        let events = CommunityEvents::new(name.clone(), description.clone(), created_by_user_id, now);
 
         Data {
             is_public,
