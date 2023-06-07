@@ -1,10 +1,11 @@
 use crate::env::ENV;
 use crate::rng::random_string;
+use crate::utils::tick_many;
 use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
 use ic_test_state_machine_client::StateMachine;
 use std::ops::Deref;
-use types::{CommunityId, Empty};
+use types::{CommunityId, Empty, MessageContent};
 
 #[test]
 fn join_public_community_succeeds() {
@@ -136,6 +137,42 @@ fn join_private_community_using_invite_code_succeeds() {
     let initial_state = client::user::happy_path::initial_state(env, &user2);
 
     assert!(initial_state.communities.iter().any(|c| c.community_id == community_id));
+}
+
+#[test]
+fn invite_to_community_oc_bot_message_received() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let TestData {
+        user1,
+        user2,
+        community_id,
+    } = init_test_data(env, canister_ids, *controller, false);
+
+    client::local_user_index::happy_path::invite_users_to_community(
+        env,
+        user1.principal,
+        canister_ids.local_user_index,
+        community_id,
+        vec![user2.user_id],
+    );
+
+    tick_many(env, 3);
+
+    let initial_state = client::user::happy_path::initial_state(env, &user2);
+
+    assert!(initial_state.direct_chats.iter().any(|dc| {
+        if let MessageContent::Text(content) = &dc.latest_message.event.content {
+            content.text.contains("You have been invited to the community") && content.text.contains(&community_id.to_string())
+        } else {
+            false
+        }
+    }));
 }
 
 fn init_test_data(env: &mut StateMachine, canister_ids: &CanisterIds, controller: Principal, public: bool) -> TestData {
