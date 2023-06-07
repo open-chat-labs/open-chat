@@ -1,7 +1,6 @@
-use std::collections::{hash_map::Entry, HashMap};
-
 use candid::{Deserialize, Principal};
 use serde::Serialize;
+use std::collections::{hash_map::Entry, HashMap};
 use types::{ReferralType, TimestampMillis, UserId};
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -52,16 +51,6 @@ pub enum ReferralCodeError {
 }
 
 impl ReferralCodes {
-    pub fn reactivate_btc_miami_codes(&mut self) {
-        for code in self
-            .codes
-            .values_mut()
-            .filter(|c| matches!(c.referral_type, ReferralType::BtcMiami))
-        {
-            code.expiry = None;
-        }
-    }
-
     pub fn add(
         &mut self,
         referral_type: ReferralType,
