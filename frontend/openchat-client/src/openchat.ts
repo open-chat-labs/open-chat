@@ -529,7 +529,10 @@ export class OpenChat extends OpenChatAgentWorker {
                         );
                         if (principalMigrationUserId !== null) {
                             console.log("Migrating user principal", principalMigrationUserId);
-                            this._migrateUserPrincipal(principalMigrationUserId);
+                            this.sendRequest({
+                                kind: "migrateUserPrincipal",
+                                userId: principalMigrationUserId,
+                            });
                             return;
                         }
 
@@ -583,7 +586,10 @@ export class OpenChat extends OpenChatAgentWorker {
         if (principalMigrationNewPrincipal !== null) {
             console.log("Initializing user principal migration", principalMigrationNewPrincipal);
             this.sendRequest({ kind: "createUserClient", userId: user.userId });
-            this._initUserPrincipalMigration(principalMigrationNewPrincipal);
+            this.sendRequest({
+                kind: "initUserPrincipalMigration",
+                newPrincipal: principalMigrationNewPrincipal,
+            });
             return;
         }
 
@@ -605,7 +611,7 @@ export class OpenChat extends OpenChatAgentWorker {
             );
             new Poller(() => this.updateUsers(), USER_UPDATE_INTERVAL, USER_UPDATE_INTERVAL);
             initNotificationStores();
-            this._getUserStorageLimits().then(storageStore.set);
+            this.sendRequest({ kind: "getUserStorageLimits" }).then(storageStore.set);
             this.identityState.set("logged_in");
             this.initWebRtc();
 
@@ -707,7 +713,7 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     previewChat(chatId: string): Promise<boolean> {
-        return this._getPublicGroupSummary(chatId).then((maybeChat) => {
+        return this.sendRequest({ kind: "getPublicGroupSummary", chatId }).then((maybeChat) => {
             if (maybeChat === undefined || maybeChat.frozen) {
                 return false;
             }
@@ -721,9 +727,9 @@ export class OpenChat extends OpenChatAgentWorker {
         await this.getMissingUsers(users);
     }
 
-    toggleMuteNotifications(chatId: string, mute: boolean): Promise<boolean> {
-        localChatSummaryUpdates.markUpdated(chatId, { notificationsMuted: mute });
-        return this._toggleMuteNotifications(chatId, mute)
+    toggleMuteNotifications(chatId: string, muted: boolean): Promise<boolean> {
+        localChatSummaryUpdates.markUpdated(chatId, { notificationsMuted: muted });
+        return this.sendRequest({ kind: "toggleMuteNotifications", chatId, muted })
             .then((resp) => {
                 if (resp !== "success") {
                     localChatSummaryUpdates.markUpdated(chatId, { notificationsMuted: undefined });
@@ -739,7 +745,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
     archiveChat(chatId: string): Promise<boolean> {
         localChatSummaryUpdates.markUpdated(chatId, { archived: true });
-        return this._archiveChat(chatId)
+        return this.sendRequest({ kind: "archiveChat", chatId })
             .then((resp) => {
                 return resp === "success";
             })
@@ -752,7 +758,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
     unarchiveChat(chatId: string): Promise<boolean> {
         localChatSummaryUpdates.markUpdated(chatId, { archived: false });
-        return this._unarchiveChat(chatId)
+        return this.sendRequest({ kind: "unarchiveChat", chatId })
             .then((resp) => resp === "success")
             .catch((err) => {
                 this._logger.error("Error un-archiving chat", err);
@@ -768,7 +774,7 @@ export class OpenChat extends OpenChatAgentWorker {
         }
 
         pinnedChatsStore.pin(chatId);
-        return this._pinChat(chatId)
+        return this.sendRequest({ kind: "pinChat", chatId })
             .then((resp) => {
                 if (resp.kind === "pinned_limit_reached") {
                     pinnedChatsStore.unpin(chatId);
@@ -785,7 +791,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
     unpinChat(chatId: string): Promise<boolean> {
         pinnedChatsStore.unpin(chatId);
-        return this._unpinChat(chatId)
+        return this.sendRequest({ kind: "unpinChat", chatId })
             .then((_) => true)
             .catch((err) => {
                 this._logger.error("Error unpinning chat", err);
@@ -796,7 +802,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
     blockUserFromDirectChat(userId: string): Promise<boolean> {
         blockedUsers.add(userId);
-        return this._blockUserFromDirectChat(userId)
+        return this.sendRequest({ kind: "blockUserFromDirectChat", userId })
             .then((resp) => {
                 return resp === "success";
             })
@@ -809,7 +815,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
     unblockUserFromDirectChat(userId: string): Promise<boolean> {
         blockedUsers.delete(userId);
-        return this._unblockUserFromDirectChat(userId)
+        return this.sendRequest({ kind: "unblockUserFromDirectChat", userId })
             .then((resp) => {
                 return resp === "success";
             })
@@ -834,7 +840,7 @@ export class OpenChat extends OpenChatAgentWorker {
             });
         }
 
-        return this._setUserAvatar(data)
+        return this.sendRequest({ kind: "setUserAvatar", data })
             .then((_resp) => true)
             .catch((err) => {
                 this._logger.error("Failed to update user's avatar", err);
@@ -843,7 +849,7 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     makeGroupPrivate(chatId: string): Promise<boolean> {
-        return this._makeGroupPrivate(chatId)
+        return this.sendRequest({ kind: "makeGroupPrivate", chatId })
             .then((resp) => {
                 if (resp === "success") {
                     localChatSummaryUpdates.markUpdated(chatId, {
@@ -862,7 +868,7 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     deleteGroup(chatId: string): Promise<boolean> {
-        return this._deleteGroup(chatId)
+        return this.sendRequest({ kind: "deleteGroup", chatId })
             .then((resp) => {
                 if (resp === "success") {
                     this.removeChat(chatId);
@@ -879,7 +885,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
     leaveGroup(chatId: string): Promise<"success" | "failure" | "owner_cannot_leave"> {
         localChatSummaryUpdates.markRemoved(chatId);
-        return this._leaveGroup(chatId)
+        return this.sendRequest({ kind: "leaveGroup", chatId })
             .then((resp) => {
                 if (resp === "success" || resp === "not_in_group" || resp === "group_not_found") {
                     return "success";
@@ -902,7 +908,7 @@ export class OpenChat extends OpenChatAgentWorker {
     async joinGroup(
         group: GroupChatSummary
     ): Promise<"success" | "blocked" | "failure" | "gate_check_failed"> {
-        return this._joinGroup(group.chatId)
+        return this.sendRequest({ kind: "joinGroup", chatId: group.chatId })
             .then((resp) => {
                 if (resp.kind === "group_chat") {
                     localChatSummaryUpdates.markAdded(resp);
@@ -939,15 +945,7 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     updateGroupRules(chatId: string, rules: AccessRules | undefined): Promise<boolean> {
-        return this._updateGroup(
-            chatId,
-            undefined,
-            undefined,
-            rules,
-            undefined,
-            undefined,
-            undefined
-        )
+        return this.sendRequest({ kind: "updateGroup", chatId, rules })
             .then((resp) => resp === "success")
             .catch((err) => {
                 this._logger.error("Update group rules failed: ", err);
@@ -965,15 +963,7 @@ export class OpenChat extends OpenChatAgentWorker {
             updatedPermissions
         );
 
-        return this._updateGroup(
-            chatId,
-            undefined,
-            undefined,
-            undefined,
-            optionalPermissions,
-            undefined,
-            undefined
-        )
+        return this.sendRequest({ kind: "updateGroup", chatId, permissions: optionalPermissions })
             .then((resp) => {
                 if (resp !== "success") {
                     return false;
@@ -1151,25 +1141,26 @@ export class OpenChat extends OpenChatAgentWorker {
         chatId: string,
         threadRootMessageIndex: number | undefined,
         messageId: bigint,
-        messageIndex: number,
-        answerIndex: number,
+        messageIdx: number,
+        answerIdx: number,
         type: "register" | "delete"
     ): Promise<boolean> {
         const userId = this.user.userId;
 
         localMessageUpdates.markPollVote(messageId.toString(), {
-            answerIndex,
+            answerIndex: answerIdx,
             type,
             userId,
         });
 
-        return this._registerPollVote(
+        return this.sendRequest({
+            kind: "registerPollVote",
             chatId,
-            messageIndex,
-            answerIndex,
-            type,
-            threadRootMessageIndex
-        )
+            messageIdx,
+            answerIdx,
+            voteType: type,
+            threadRootMessageIndex,
+        })
             .then((resp) => resp === "success")
             .catch((err) => {
                 this._logger.error("Poll vote failed: ", err);
@@ -1218,13 +1209,14 @@ export class OpenChat extends OpenChatAgentWorker {
             localMessageUpdates.markUndeleted(messageIdString);
         }
 
-        return this._deleteMessage(
+        return this.sendRequest({
+            kind: "deleteMessage",
             chatType,
             chatId,
             messageId,
             threadRootMessageIndex,
-            asPlatformModerator
-        )
+            asPlatformModerator,
+        })
             .then((resp) => {
                 const success = resp === "success";
                 if (!success) {
@@ -1252,7 +1244,13 @@ export class OpenChat extends OpenChatAgentWorker {
 
         undeletingMessagesStore.add(msg.messageId);
 
-        return this._undeleteMessage(chat.kind, chatId, msg.messageId, threadRootMessageIndex)
+        return this.sendRequest({
+            kind: "undeleteMessage",
+            chatType: chat.kind,
+            chatId,
+            messageId: msg.messageId,
+            threadRootMessageIndex,
+        })
             .then((resp) => {
                 const success = resp.kind === "success";
                 if (success) {
@@ -1353,28 +1351,37 @@ export class OpenChat extends OpenChatAgentWorker {
         const result = (
             chat.kind === "direct_chat"
                 ? kind == "add"
-                    ? this._addDirectChatReaction(
-                          chatId,
+                    ? this.sendRequest({
+                          kind: "addDirectChatReaction",
+                          otherUserId: chatId,
                           messageId,
                           reaction,
                           username,
-                          threadRootMessageIndex
-                      )
-                    : this._removeDirectChatReaction(
-                          chatId,
+                          threadRootMessageIndex,
+                      })
+                    : this.sendRequest({
+                          kind: "removeDirectChatReaction",
+                          otherUserId: chatId,
                           messageId,
                           reaction,
-                          threadRootMessageIndex
-                      )
+                          threadRootMessageIndex,
+                      })
                 : kind === "add"
-                ? this._addGroupChatReaction(
+                ? this.sendRequest({
+                      kind: "addGroupChatReaction",
                       chatId,
                       messageId,
                       reaction,
                       username,
-                      threadRootMessageIndex
-                  )
-                : this._removeGroupChatReaction(chatId, messageId, reaction, threadRootMessageIndex)
+                      threadRootMessageIndex,
+                  })
+                : this.sendRequest({
+                      kind: "removeGroupChatReaction",
+                      chatId,
+                      messageId,
+                      reaction,
+                      threadRootMessageIndex,
+                  })
         )
             .then((resp) => {
                 if (resp !== "success" && resp !== "no_change") {
@@ -1576,7 +1583,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
     blockUser(chatId: string, userId: string): Promise<boolean> {
         this.blockUserLocally(chatId, userId);
-        return this._blockUserFromGroupChat(chatId, userId)
+        return this.sendRequest({ kind: "blockUserFromGroupChat", chatId, userId })
             .then((resp) => {
                 console.log("blockUser result", resp);
                 if (resp !== "success") {
@@ -1594,7 +1601,7 @@ export class OpenChat extends OpenChatAgentWorker {
 
     unblockUser(chatId: string, userId: string): Promise<boolean> {
         this.unblockUserLocally(chatId, userId, false);
-        return this._unblockUserFromGroupChat(chatId, userId)
+        return this.sendRequest({ kind: "unblockUserFromGroupChat", chatId, userId })
             .then((resp) => {
                 if (resp !== "success") {
                     this.blockUserLocally(chatId, userId);
@@ -2819,7 +2826,13 @@ export class OpenChat extends OpenChatAgentWorker {
         this._setCachedMessageFromNotification(chatId, threadRootMessageIndex, message);
 
         Promise.all([
-            this._rehydrateMessage(chatId, message, undefined, serverChat.latestEventIndex),
+            this.sendRequest({
+                kind: "rehydrateMessage",
+                chatId,
+                message,
+                threadRootMessageIndex: undefined,
+                latestClientEventIndex: serverChat.latestEventIndex,
+            }),
             this.addMissingUsersFromMessage(message),
         ]).then(([m, _]) => {
             updateSummaryWithConfirmedMessage(chatId, m);
@@ -3008,11 +3021,11 @@ export class OpenChat extends OpenChatAgentWorker {
     }
 
     checkUsername(username: string): Promise<CheckUsernameResponse> {
-        return this._checkUsername(username);
+        return this.sendRequest({ kind: "checkUsername", username });
     }
 
     searchUsers(searchTerm: string, maxResults = 20): Promise<UserSummary[]> {
-        return this._searchUsers(searchTerm, maxResults).then((resp) => {
+        return this.sendRequest({ kind: "searchUsers", searchTerm, maxResults }).then((resp) => {
             userStore.addMany(resp);
             return resp;
         });
@@ -3354,20 +3367,27 @@ export class OpenChat extends OpenChatAgentWorker {
             avatar,
             gate
         );
-        return this._updateGroup(chatId, name, description, rules, permissions, avatar, gate).then(
-            (resp) => {
-                if (resp === "success") {
-                    localChatSummaryUpdates.markUpdated(chatId, {
-                        kind: "group_chat",
-                        name,
-                        description,
-                        permissions,
-                        gate,
-                    });
-                }
-                return resp;
+        return this.sendRequest({
+            kind: "updateGroup",
+            chatId,
+            name,
+            description,
+            rules,
+            permissions,
+            avatar,
+            gate,
+        }).then((resp) => {
+            if (resp === "success") {
+                localChatSummaryUpdates.markUpdated(chatId, {
+                    kind: "group_chat",
+                    name,
+                    description,
+                    permissions,
+                    gate,
+                });
             }
-        );
+            return resp;
+        });
     }
 
     createGroupChat(candidate: CandidateGroupChat): Promise<CreateGroupResponse> {

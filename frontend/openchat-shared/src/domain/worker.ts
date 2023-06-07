@@ -1001,4 +1001,62 @@ export type WorkerResult<T> = T extends PinMessage
     ? EventsResponse<DirectChatEvent>
     : T extends GroupChatEventsByEventIndex
     ? EventsResponse<GroupChatEvent>
+    : T extends RehydrateMessage
+    ? EventWrapper<Message>
+    : T extends CheckUsername
+    ? CheckUsernameResponse
+    : T extends SearchUsers
+    ? UserSummary[]
+    : T extends MigrateUserPrincipal
+    ? MigrateUserPrincipalResponse
+    : T extends InitUserPrincipalMigration
+    ? void
+    : T extends GetUserStorageLimits
+    ? StorageStatus
+    : T extends GetPublicGroupSummary
+    ? GroupChatSummary | undefined
+    : T extends ToggleMuteNotifications
+    ? ToggleMuteNotificationResponse
+    : T extends ArchiveChat
+    ? ArchiveChatResponse
+    : T extends UnArchiveChat
+    ? ArchiveChatResponse
+    : T extends PinChat
+    ? PinChatResponse
+    : T extends UnpinChat
+    ? UnpinChatResponse
+    : T extends BlockUserFromDirectChat
+    ? BlockUserResponse
+    : T extends UnblockUserFromDirectChat
+    ? UnblockUserResponse
+    : T extends SetUserAvatar
+    ? BlobReference
+    : T extends MakeGroupPrivate
+    ? MakeGroupPrivateResponse
+    : T extends DeleteGroup
+    ? DeleteGroupResponse
+    : T extends LeaveGroup
+    ? LeaveGroupResponse
+    : T extends JoinGroup
+    ? JoinGroupResponse
+    : T extends UpdateGroup
+    ? UpdateGroupResponse
+    : T extends RegisterPollVote
+    ? RegisterPollVoteResponse
+    : T extends DeleteMessage
+    ? DeleteMessageResponse
+    : T extends UndeleteMessage
+    ? UndeleteMessageResponse
+    : T extends AddDirectChatReaction
+    ? AddRemoveReactionResponse
+    : T extends RemoveDirectChatReaction
+    ? AddRemoveReactionResponse
+    : T extends AddGroupChatReaction
+    ? AddRemoveReactionResponse
+    : T extends RemoveGroupChatReaction
+    ? AddRemoveReactionResponse
+    : T extends BlockUserFromGroup
+    ? BlockUserResponse
+    : T extends UnblockUserFromGroup
+    ? UnblockUserResponse
     : never;
