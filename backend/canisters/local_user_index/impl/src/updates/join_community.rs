@@ -47,8 +47,7 @@ struct UserDetails {
 }
 
 fn user_details(state: &RuntimeState) -> UserDetails {
-    let caller = state.env.caller();
-    let user = state.data.global_users.get(&caller).unwrap();
+    let user = state.calling_user();
 
     UserDetails {
         user_id: user.user_id,
