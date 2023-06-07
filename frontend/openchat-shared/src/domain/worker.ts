@@ -53,6 +53,7 @@ import type {
     ReportMessageResponse,
     InviteUsersResponse,
     ResetInviteCodeResponse,
+    GroupCanisterGroupChatSummary,
 } from "./chat";
 import type { BlobReference, StorageStatus } from "./data/data";
 import type { UpdateMarketMakerConfigArgs, UpdateMarketMakerConfigResponse } from "./marketMaker";
@@ -97,9 +98,8 @@ import type { AccessGate, AccessRules } from "./access";
  * Worker request types
  */
 
-type Request<T = unknown> = {
+export type CorrelatedWorkerRequest = WorkerRequest & {
     correlationId: string;
-    payload: T;
 };
 
 export type WorkerRequest =
@@ -207,342 +207,296 @@ export type WorkerRequest =
     | ReportMessage
     | DeclineInvitation;
 
-type ReferralLeaderboard = Request<{
+type ReferralLeaderboard = {
     args?: ReferralLeaderboardRange;
-}> & {
     kind: "getReferralLeaderboard";
 };
 
-type SetCachedMessageFromNotification = Request<{
+type SetCachedMessageFromNotification = {
     chatId: string;
     threadRootMessageIndex: number | undefined;
     message: EventWrapper<Message>;
-}> & {
     kind: "setCachedMessageFromNotification";
 };
 
-type CreateGroupChat = Request<{
+type CreateGroupChat = {
     candidate: CandidateGroupChat;
-}> & {
     kind: "createGroupChat";
 };
 
-type DisableInviteCode = Request<{
+type DisableInviteCode = {
     chatId: string;
-}> & {
     kind: "disableInviteCode";
 };
 
-type EnableInviteCode = Request<{
+type EnableInviteCode = {
     chatId: string;
-}> & {
     kind: "enableInviteCode";
 };
 
-type ResetInviteCode = Request<{
+type ResetInviteCode = {
     chatId: string;
-}> & {
     kind: "resetInviteCode";
 };
 
-type GetInviteCode = Request<{
+type GetInviteCode = {
     chatId: string;
-}> & {
     kind: "getInviteCode";
 };
 
-type GroupMessagesByMessageIndex = Request<{
+type GroupMessagesByMessageIndex = {
     chatId: string;
     messageIndexes: Set<number>;
     latestClientEventIndex: number | undefined;
-}> & {
     kind: "getGroupMessagesByMessageIndex";
 };
 
-type WithdrawCrypto = Request<{
+type WithdrawCrypto = {
     domain: PendingCryptocurrencyWithdrawal;
-}> & {
     kind: "withdrawCryptocurrency";
 };
 
-type GetBio = Request<{
+type GetBio = {
     userId?: string;
-}> & {
     kind: "getBio";
 };
 
-type SetBio = Request<{
+type SetBio = {
     bio: string;
-}> & {
     kind: "setBio";
 };
 
-type SetUsername = Request<{
+type SetUsername = {
     userId: string;
     username: string;
-}> & {
     kind: "setUsername";
 };
 
-type GetPublicProfile = Request<{
+type GetPublicProfile = {
     userId?: string;
-}> & {
     kind: "getPublicProfile";
 };
 
-type GetUser = Request<{
+type GetUser = {
     userId: string;
     allowStale: boolean;
-}> & {
     kind: "getUser";
 };
 
-type GetThreadPreviews = Request<{
+type GetThreadPreviews = {
     threadsByChat: Record<string, [ThreadSyncDetails[], number | undefined]>;
-}> & {
     kind: "threadPreviews";
 };
 
-type RefreshAccountBalance = Request<{
+type RefreshAccountBalance = {
     crypto: Cryptocurrency;
     principal: string;
-}> & {
     kind: "refreshAccountBalance";
 };
 
-type SearchDirectChat = Request<{
+type SearchDirectChat = {
     userId: string;
     searchTerm: string;
     maxResults: number;
-}> & {
     kind: "searchDirectChat";
 };
 
-type SearchGroupChat = Request<{
+type SearchGroupChat = {
     chatId: string;
     searchTerm: string;
     userIds: string[];
     maxResults: number;
-}> & {
     kind: "searchGroupChat";
 };
 
-type SetGroupInvite = Request<{
+type SetGroupInvite = {
     value: GroupInvite;
-}> & {
     kind: "groupInvite";
 };
 
-type DismissRecommendations = Request<{
+type DismissRecommendations = {
     chatId: string;
-}> & {
     kind: "dismissRecommendation";
 };
 
-type SearchGroups = Request<{
+type SearchGroups = {
     searchTerm: string;
     maxResults: number;
-}> & {
     kind: "searchGroups";
 };
 
-type GetGroupRules = Request<{
+type GetGroupRules = {
     chatId: string;
-}> & {
     kind: "getGroupRules";
 };
 
-type GetRecommendedGroups = Request<{
+type GetRecommendedGroups = {
     exclusions: string[];
-}> & {
     kind: "getRecommendedGroups";
 };
 
-type RegisterProposalVote = Request<{
+type RegisterProposalVote = {
     chatId: string;
     messageIndex: number;
     adopt: boolean;
-}> & {
     kind: "registerProposalVote";
 };
 
-type ChangeRole = Request<{
+type ChangeRole = {
     chatId: string;
     userId: string;
     newRole: MemberRole;
-}> & {
     kind: "changeRole";
 };
 
-type RemoveMember = Request<{
+type RemoveMember = {
     chatId: string;
     userId: string;
-}> & {
     kind: "removeMember";
 };
 
-type InviteUsers = Request<{
+type InviteUsers = {
     chatId: string;
     userIds: string[];
-}> & {
     kind: "inviteUsers";
 };
 
-type RemoveSub = Request<{
+type RemoveSub = {
     subscription: PushSubscriptionJSON;
-}> & {
     kind: "removeSubscription";
 };
 
-type PushSub = Request<{
+type PushSub = {
     subscription: PushSubscriptionJSON;
-}> & {
     kind: "pushSubscription";
 };
 
-type SubscriptionExists = Request<{
+type SubscriptionExists = {
     p256dh_key: string;
-}> & {
     kind: "subscriptionExists";
 };
 
-type RegisterUser = Request<{
+type RegisterUser = {
     username: string;
     referralCode: string | undefined;
-}> & {
     kind: "registerUser";
 };
 
-type EditMessage = Request<{
+type EditMessage = {
     chatType: "direct_chat" | "group_chat";
     chatId: string;
     msg: Message;
     threadRootMessageIndex?: number;
-}> & {
     kind: "editMessage";
 };
 
-type SendMessage = Request<{
+type SendMessage = {
     chatType: "direct_chat" | "group_chat";
     chatId: string;
     user: CreatedUser;
     mentioned: User[];
     event: EventWrapper<Message>;
     threadRootMessageIndex?: number;
-}> & {
     kind: "sendMessage";
 };
 
-type PinMessage = Request<{
+export type PinMessage = {
     chatId: string;
     messageIndex: number;
-}> & {
     kind: "pinMessage";
 };
 
-type UnpinMessage = Request<{
+export type UnpinMessage = {
     chatId: string;
     messageIndex: number;
-}> & {
     kind: "unpinMessage";
 };
 
-type GetProposalVoteDetailsRequest = Request<{
+type GetProposalVoteDetailsRequest = {
     governanceCanisterId: string;
     proposalId: bigint;
     isNns: boolean;
-}> & {
     kind: "getProposalVoteDetails";
 };
 
-type ListNervousSystemFunctions = Request<{
+type ListNervousSystemFunctions = {
     snsGovernanceCanisterId: string;
-}> & {
     kind: "listNervousSystemFunctions";
 };
 
-type BlockUserFromGroup = Request<{
+type BlockUserFromGroup = {
     chatId: string;
     userId: string;
-}> & {
     kind: "blockUserFromGroupChat";
 };
 
-type UnblockUserFromGroup = Request<{
+type UnblockUserFromGroup = {
     chatId: string;
     userId: string;
-}> & {
     kind: "unblockUserFromGroupChat";
 };
 
-type AddGroupChatReaction = Request<{
+type AddGroupChatReaction = {
     chatId: string;
     messageId: bigint;
     reaction: string;
     username: string;
     threadRootMessageIndex?: number;
-}> & {
     kind: "addGroupChatReaction";
 };
 
-type RemoveGroupChatReaction = Request<{
+type RemoveGroupChatReaction = {
     chatId: string;
     messageId: bigint;
     reaction: string;
     threadRootMessageIndex?: number;
-}> & {
     kind: "removeGroupChatReaction";
 };
 
-type RemoveDirectChatReaction = Request<{
+type RemoveDirectChatReaction = {
     otherUserId: string;
     messageId: bigint;
     reaction: string;
     threadRootMessageIndex?: number;
-}> & {
     kind: "removeDirectChatReaction";
 };
 
-type AddDirectChatReaction = Request<{
+type AddDirectChatReaction = {
     otherUserId: string;
     messageId: bigint;
     reaction: string;
     username: string;
     threadRootMessageIndex?: number;
-}> & {
     kind: "addDirectChatReaction";
 };
 
-type DeleteMessage = Request<{
+type DeleteMessage = {
     chatType: "direct_chat" | "group_chat";
     chatId: string;
     messageId: bigint;
     threadRootMessageIndex?: number;
     asPlatformModerator?: boolean;
-}> & {
     kind: "deleteMessage";
 };
 
-type UndeleteMessage = Request<{
+type UndeleteMessage = {
     chatType: "direct_chat" | "group_chat";
     chatId: string;
     messageId: bigint;
     threadRootMessageIndex?: number;
-}> & {
     kind: "undeleteMessage";
 };
 
-type RegisterPollVote = Request<{
+type RegisterPollVote = {
     chatId: string;
     messageIdx: number;
     answerIdx: number;
     voteType: "register" | "delete";
     threadRootMessageIndex?: number;
-}> & {
     kind: "registerPollVote";
 };
 
-type UpdateGroup = Request<{
+type UpdateGroup = {
     chatId: string;
     name?: string;
     desc?: string;
@@ -550,269 +504,237 @@ type UpdateGroup = Request<{
     permissions?: Partial<GroupPermissions>;
     avatar?: Uint8Array;
     gate?: AccessGate;
-}> & {
     kind: "updateGroup";
 };
 
-type JoinGroup = Request<{
+type JoinGroup = {
     chatId: string;
-}> & {
     kind: "joinGroup";
 };
 
-type LeaveGroup = Request<{
+type LeaveGroup = {
     chatId: string;
-}> & {
     kind: "leaveGroup";
 };
 
-type DeleteGroup = Request<{
+type DeleteGroup = {
     chatId: string;
-}> & {
     kind: "deleteGroup";
 };
 
-type MakeGroupPrivate = Request<{
+type MakeGroupPrivate = {
     chatId: string;
-}> & {
     kind: "makeGroupPrivate";
 };
 
-type SetUserAvatar = Request<{
+type SetUserAvatar = {
     data: Uint8Array;
-}> & {
     kind: "setUserAvatar";
 };
 
-type UnblockUserFromDirectChat = Request<{
+type UnblockUserFromDirectChat = {
     userId: string;
-}> & {
     kind: "unblockUserFromDirectChat";
 };
 
-type BlockUserFromDirectChat = Request<{
+type BlockUserFromDirectChat = {
     userId: string;
-}> & {
     kind: "blockUserFromDirectChat";
 };
 
-type UnpinChat = Request<{
+type UnpinChat = {
     chatId: string;
-}> & {
     kind: "unpinChat";
 };
 
-type PinChat = Request<{
+type PinChat = {
     chatId: string;
-}> & {
     kind: "pinChat";
 };
 
-type UnArchiveChat = Request<{
+type UnArchiveChat = {
     chatId: string;
-}> & {
     kind: "unarchiveChat";
 };
 
-type ArchiveChat = Request<{
+type ArchiveChat = {
     chatId: string;
-}> & {
     kind: "archiveChat";
 };
 
-type ToggleMuteNotifications = Request<{
+type ToggleMuteNotifications = {
     chatId: string;
     muted: boolean;
-}> & {
     kind: "toggleMuteNotifications";
 };
 
-type GetPublicGroupSummary = Request<{
+type GetPublicGroupSummary = {
     chatId: string;
-}> & {
     kind: "getPublicGroupSummary";
 };
 
-type GetUserStorageLimits = Request & {
+type GetUserStorageLimits = {
     kind: "getUserStorageLimits";
 };
 
-type InitUserPrincipalMigration = Request<{
+type InitUserPrincipalMigration = {
     newPrincipal: string;
-}> & {
     kind: "initUserPrincipalMigration";
 };
 
-type MigrateUserPrincipal = Request<{
+type MigrateUserPrincipal = {
     userId: string;
-}> & {
     kind: "migrateUserPrincipal";
 };
 
-type CheckUsername = Request<{
+type CheckUsername = {
     username: string;
-}> & {
     kind: "checkUsername";
 };
 
-type SearchUsers = Request<{
+type SearchUsers = {
     searchTerm: string;
     maxResults: number;
-}> & {
     kind: "searchUsers";
 };
 
-type DirectChatEventsWindow = Request<{
+type DirectChatEventsWindow = {
     eventIndexRange: IndexRange;
     theirUserId: string;
     messageIndex: number;
     latestClientMainEventIndex: number | undefined;
-}> & {
     kind: "directChatEventsWindow";
 };
 
-type GroupChatEventsWindow = Request<{
+type GroupChatEventsWindow = {
     eventIndexRange: IndexRange;
     chatId: string;
     messageIndex: number;
     latestClientMainEventIndex: number | undefined;
     threadRootMessageIndex: number | undefined;
-}> & {
     kind: "groupChatEventsWindow";
 };
 
-type DirectChatEventsByEventIndex = Request<{
+type DirectChatEventsByEventIndex = {
     theirUserId: string;
     eventIndexes: number[];
     threadRootMessageIndex: number | undefined;
     latestClientEventIndex: number | undefined;
-}> & {
     kind: "directChatEventsByEventIndex";
 };
 
-type GroupChatEventsByEventIndex = Request<{
+type GroupChatEventsByEventIndex = {
     chatId: string;
     eventIndexes: number[];
     threadRootMessageIndex: number | undefined;
     latestClientEventIndex: number | undefined;
-}> & {
     kind: "groupChatEventsByEventIndex";
 };
 
-export type RehydrateMessage = Request<{
+export type RehydrateMessage = {
     chatId: string;
     message: EventWrapper<Message>;
     threadRootMessageIndex: number | undefined;
     latestClientEventIndex: number | undefined;
-}> & {
     kind: "rehydrateMessage";
 };
 
-type Init = Request<Omit<AgentConfig, "logger">> & {
+type Init = Omit<AgentConfig, "logger"> & {
     kind: "init";
 };
 
-type CurrentUser = Request & {
+type CurrentUser = {
     kind: "getCurrentUser";
 };
 
-type MarkMessagesRead = Request<MarkReadRequest> & {
+type MarkMessagesRead = {
     kind: "markMessagesRead";
+    payload: MarkReadRequest;
 };
 
-type GetGroupDetails = Request<{
+type GetGroupDetails = {
     chatId: string;
     latestEventIndex: number;
-}> & {
     kind: "getGroupDetails";
 };
 
-type GetGroupDetailUpdates = Request<{
+type GetGroupDetailUpdates = {
     chatId: string;
     previous: GroupChatDetails;
-}> & {
     kind: "getGroupDetailsUpdates";
 };
 
-type GetAllCachedUsers = Request & {
+type GetAllCachedUsers = {
     kind: "getAllCachedUsers";
 };
 
-type LastOnline = Request<{
+type LastOnline = {
     userIds: string[];
-}> & {
     kind: "lastOnline";
 };
 
-type MarkAsOnline = Request & {
+type MarkAsOnline = {
     kind: "markAsOnline";
 };
 
-type FreezeGroup = Request<{
+type FreezeGroup = {
     chatId: string;
     reason: string | undefined;
-}> & {
     kind: "freezeGroup";
 };
 
-type UnfreezeGroup = Request<{
+type UnfreezeGroup = {
     chatId: string;
-}> & {
     kind: "unfreezeGroup";
 };
 
-type DeleteFrozenGroup = Request<{
+type DeleteFrozenGroup = {
     chatId: string;
-}> & {
     kind: "deleteFrozenGroup";
 };
 
-type AddHotGroupExclusion = Request<{
+type AddHotGroupExclusion = {
     chatId: string;
-}> & {
     kind: "addHotGroupExclusion";
 };
 
-type RemoveHotGroupExclusion = Request<{
+type RemoveHotGroupExclusion = {
     chatId: string;
-}> & {
     kind: "removeHotGroupExclusion";
 };
 
-type SuspendUser = Request<{
+type SuspendUser = {
     userId: string;
     reason: string;
-}> & {
     kind: "suspendUser";
 };
 
-type UnsuspendUser = Request<{
+type UnsuspendUser = {
     userId: string;
-}> & {
     kind: "unsuspendUser";
 };
 
-type SetGroupUpgradeConcurrency = Request<{
+type SetGroupUpgradeConcurrency = {
     value: number;
-}> & {
     kind: "setGroupUpgradeConcurrency";
 };
 
-type SetUserUpgradeConcurrency = Request<{
+type SetUserUpgradeConcurrency = {
     value: number;
-}> & {
     kind: "setUserUpgradeConcurrency";
 };
 
-type MarkSuspectedBot = Request<void> & {
+type MarkSuspectedBot = {
     kind: "markSuspectedBot";
 };
 
-type GetUsers = Request<{ users: UsersArgs; allowStale: boolean }> & {
+type GetUsers = {
+    users: UsersArgs;
+    allowStale: boolean;
     kind: "getUsers";
 };
 
-type ChatEvents = Request<{
+type ChatEvents = {
     chatType: "direct_chat" | "group_chat";
     chatId: string;
     eventIndexRange: IndexRange;
@@ -820,30 +742,28 @@ type ChatEvents = Request<{
     ascending: boolean;
     threadRootMessageIndex: number | undefined;
     latestClientEventIndex: number | undefined;
-}> & {
     kind: "chatEvents";
 };
 
-type CreateUserClient = Request<{ userId: string }> & {
+type CreateUserClient = {
+    userId: string;
     kind: "createUserClient";
 };
 
-type GetUpdates = Request<Record<string, never>> & {
+type GetUpdates = {
     kind: "getUpdates";
 };
 
-type GetDeletedGroupMessage = Request<{
+type GetDeletedGroupMessage = {
     chatId: string;
     messageId: bigint;
     threadRootMessageIndex: number | undefined;
-}> & {
     kind: "getDeletedGroupMessage";
 };
 
-type GetDeletedDirectMessage = Request<{
+type GetDeletedDirectMessage = {
     userId: string;
     messageId: bigint;
-}> & {
     kind: "getDeletedDirectMessage";
 };
 
@@ -983,69 +903,102 @@ export type RelayedUsersLoaded = WorkerEventCommon<{
     users: PartialUserSummary[];
 }>;
 
-type LoadFailedMessages = Request & {
+type LoadFailedMessages = {
     kind: "loadFailedMessages";
 };
 
-type DeleteFailedMessage = Request<{
+type DeleteFailedMessage = {
     chatId: string;
     messageId: bigint;
     threadRootMessageIndex: number | undefined;
-}> & {
     kind: "deleteFailedMessage";
 };
 
-type ClaimPrize = Request<{
+type ClaimPrize = {
     chatId: string;
     messageId: bigint;
-}> & {
     kind: "claimPrize";
 };
 
-type PayForDiamondMembership = Request<{
+type PayForDiamondMembership = {
     userId: string;
     token: Cryptocurrency;
     duration: DiamondMembershipDuration;
     recurring: boolean;
     expectedPriceE8s: bigint;
-}> & {
     kind: "payForDiamondMembership";
 };
 
-type UpdateMarketMakerConfig = Request<UpdateMarketMakerConfigArgs> & {
+type UpdateMarketMakerConfig = UpdateMarketMakerConfigArgs & {
     kind: "updateMarketMakerConfig";
 };
 
-type SetMessageReminder = Request<{
+type SetMessageReminder = {
     chatId: string;
     eventIndex: number;
     remindAt: number;
     notes?: string;
     threadRootMessageIndex?: number;
-}> & {
     kind: "setMessageReminder";
 };
 
-type CancelMessageReminder = Request<{
+type CancelMessageReminder = {
     reminderId: bigint;
-}> & {
     kind: "cancelMessageReminder";
 };
 
-type ReportMessage = Request<{
+type ReportMessage = {
     chatId: string;
     eventIndex: number;
     reasonCode: number;
     notes: string | undefined;
     threadRootMessageIndex: number | undefined;
-}> & {
     kind: "reportMessage";
 };
 
-type DeclineInvitation = Request<{
+type DeclineInvitation = {
     chatId: string;
-}> & {
     kind: "declineInvitation";
 };
 
-export type InboundWorkerRequest = Omit<WorkerRequest, "correlationId">;
+export type WorkerResult<T> = T extends PinMessage
+    ? PinMessageResponse
+    : T extends UnpinMessage
+    ? UnpinMessageResponse
+    : T extends GetUpdates
+    ? UpdatesResult
+    : T extends GetDeletedDirectMessage
+    ? DeletedDirectMessageResponse
+    : T extends GetDeletedGroupMessage
+    ? DeletedGroupMessageResponse
+    : T extends CreateUserClient
+    ? void
+    : T extends ChatEvents
+    ? EventsResponse<ChatEvent>
+    : T extends GetUsers
+    ? UsersResponse
+    : T extends MarkMessagesRead
+    ? MarkReadResponse
+    : T extends GetGroupDetails
+    ? GroupChatDetailsResponse
+    : T extends GetGroupDetailUpdates
+    ? GroupChatDetails
+    : T extends CurrentUser
+    ? CurrentUserResponse
+    : T extends CreateUserClient
+    ? void
+    : T extends GetAllCachedUsers
+    ? UserLookup
+    : T extends LastOnline
+    ? Record<string, number>
+    : T extends MarkAsOnline
+    ? void
+    : T extends DirectChatEventsWindow
+    ? EventsResponse<DirectChatEvent>
+    : T extends GroupChatEventsWindow
+    ? EventsResponse<GroupChatEvent>
+    : T extends DirectChatEventsByEventIndex
+    ? EventsResponse<DirectChatEvent>
+    : T extends GroupChatEventsByEventIndex
+    ? EventsResponse<GroupChatEvent>
+    : never;

@@ -1,22 +1,12 @@
 import {
-    CurrentUserResponse,
     WorkerRequest,
-    UserLookup,
-    UsersArgs,
-    UsersResponse,
     MessagesReadFromServer,
     FromWorker,
     StorageUpdated,
     UsersLoaded,
-    IndexRange,
     EventsResponse,
-    ChatEvent,
-    MarkReadRequest,
-    MarkReadResponse,
     WorkerResponse,
     WorkerError,
-    GroupChatDetailsResponse,
-    GroupChatDetails,
     DirectChatEvent,
     GroupChatEvent,
     EventWrapper,
@@ -80,9 +70,6 @@ import {
     UnfreezeGroupResponse,
     SuspendUserResponse,
     UnsuspendUserResponse,
-    UpdatesResult,
-    DeletedGroupMessageResponse,
-    DeletedDirectMessageResponse,
     ClaimPrizeResponse,
     DiamondMembershipDuration,
     PayForDiamondMembershipResponse,
@@ -101,6 +88,7 @@ import {
     InviteUsersResponse,
     DeclineInvitationResponse,
     ResetInviteCodeResponse,
+    WorkerResult,
 } from "openchat-shared";
 import type { OpenChatConfig } from "./config";
 import { v4 } from "uuid";
@@ -129,13 +117,13 @@ export class OpenChatAgentWorker extends EventTarget {
     private _unresolved: Map<string, UnresolvedRequest> = new Map(); // requests that never resolved
     public ready: Promise<boolean>;
 
-    constructor(private config: OpenChatConfig) {
+    constructor(protected config: OpenChatConfig) {
         super();
         console.debug("WORKER_CLIENT: loading worker with version: ", config.websiteVersion);
         this._worker = new Worker(`/worker.js?v=${config.websiteVersion}`);
-        const req: Omit<WorkerRequest, "correlationId"> = {
-            kind: "init",
-            payload: {
+        this.ready = new Promise((resolve) => {
+            this.sendRequest({
+                kind: "init",
                 icUrl: this.config.icUrl ?? window.location.origin,
                 iiDerivationOrigin: this.config.iiDerivationOrigin,
                 openStorageIndexCanister: this.config.openStorageIndexCanister,
@@ -154,10 +142,7 @@ export class OpenChatAgentWorker extends EventTarget {
                 blobUrlPattern: this.config.blobUrlPattern,
                 proposalBotCanister: this.config.proposalBotCanister,
                 marketMakerCanister: this.config.marketMakerCanister,
-            },
-        };
-        this.ready = new Promise((resolve) => {
-            this.sendRequest(req).then(() => {
+            }).then(() => {
                 resolve(true);
             });
         });
@@ -236,16 +221,16 @@ export class OpenChatAgentWorker extends EventTarget {
         this._unresolved.delete(data.correlationId);
     }
 
-    private sendRequest<Req extends Omit<WorkerRequest, "correlationId">, Resp = unknown>(
-        req: Req
-    ): Promise<Resp> {
+    async sendRequest<Req extends WorkerRequest>(req: Req): Promise<WorkerResult<Req>> {
+        await this.ready;
+
         const correlated = {
             ...req,
             correlationId: v4(),
         };
 
         this._worker.postMessage(correlated);
-        const promise = new Promise<Resp>((resolve, reject) => {
+        const promise = new Promise<WorkerResult<Req>>((resolve, reject) => {
             const sentAt = Date.now();
             this._pending.set(correlated.correlationId, {
                 resolve,
@@ -265,215 +250,7 @@ export class OpenChatAgentWorker extends EventTarget {
         return promise;
     }
 
-    getCurrentUser(): Promise<CurrentUserResponse> {
-        return this.sendRequest({
-            kind: "getCurrentUser",
-            payload: undefined,
-        });
-    }
-
-    getUpdates(): Promise<UpdatesResult> {
-        return this.sendRequest({
-            kind: "getUpdates",
-            payload: {},
-        });
-    }
-
-    getDeletedGroupMessage(
-        chatId: string,
-        messageId: bigint,
-        threadRootMessageIndex: number | undefined
-    ): Promise<DeletedGroupMessageResponse> {
-        return this.sendRequest({
-            kind: "getDeletedGroupMessage",
-            payload: {
-                chatId,
-                messageId,
-                threadRootMessageIndex,
-            },
-        });
-    }
-
-    getDeletedDirectMessage(
-        userId: string,
-        messageId: bigint
-    ): Promise<DeletedDirectMessageResponse> {
-        return this.sendRequest({
-            kind: "getDeletedDirectMessage",
-            payload: {
-                userId,
-                messageId,
-            },
-        });
-    }
-
-    createUserClient(userId: string): Promise<void> {
-        return this.sendRequest({
-            kind: "createUserClient",
-            payload: {
-                userId,
-            },
-        });
-    }
-
-    chatEvents(
-        chatType: "direct_chat" | "group_chat",
-        chatId: string,
-        eventIndexRange: IndexRange,
-        startIndex: number,
-        ascending: boolean,
-        threadRootMessageIndex: number | undefined,
-        // If threadRootMessageIndex is defined, then this should be the latest event index for that thread
-        latestClientEventIndex: number | undefined
-    ): Promise<EventsResponse<ChatEvent>> {
-        return this.sendRequest({
-            kind: "chatEvents",
-            payload: {
-                chatType,
-                chatId,
-                eventIndexRange,
-                startIndex,
-                ascending,
-                threadRootMessageIndex,
-                latestClientEventIndex,
-            },
-        });
-    }
-
-    getUsers(users: UsersArgs, allowStale = false): Promise<UsersResponse> {
-        return this.sendRequest({
-            kind: "getUsers",
-            payload: {
-                users,
-                allowStale,
-            },
-        });
-    }
-
-    getAllCachedUsers(): Promise<UserLookup> {
-        return this.sendRequest({
-            kind: "getAllCachedUsers",
-            payload: undefined,
-        });
-    }
-
-    markMessagesRead(request: MarkReadRequest): Promise<MarkReadResponse> {
-        return this.sendRequest({
-            kind: "markMessagesRead",
-            payload: request,
-        });
-    }
-
-    getGroupDetails(chatId: string, latestEventIndex: number): Promise<GroupChatDetailsResponse> {
-        return this.sendRequest({
-            kind: "getGroupDetails",
-            payload: {
-                chatId,
-                latestEventIndex,
-            },
-        });
-    }
-
-    async getGroupDetailsUpdates(
-        chatId: string,
-        previous: GroupChatDetails
-    ): Promise<GroupChatDetails> {
-        return this.sendRequest({
-            kind: "getGroupDetailsUpdates",
-            payload: {
-                chatId,
-                previous,
-            },
-        });
-    }
-
-    lastOnline(userIds: string[]): Promise<Record<string, number>> {
-        return this.sendRequest({
-            kind: "lastOnline",
-            payload: {
-                userIds,
-            },
-        });
-    }
-
-    markAsOnline(): Promise<void> {
-        return this.sendRequest({
-            kind: "markAsOnline",
-            payload: undefined,
-        });
-    }
-
-    directChatEventsWindow(
-        eventIndexRange: IndexRange,
-        theirUserId: string,
-        messageIndex: number,
-        latestClientMainEventIndex: number | undefined
-    ): Promise<EventsResponse<DirectChatEvent>> {
-        return this.sendRequest({
-            kind: "directChatEventsWindow",
-            payload: {
-                eventIndexRange,
-                theirUserId,
-                messageIndex,
-                latestClientMainEventIndex,
-            },
-        });
-    }
-
-    groupChatEventsWindow(
-        eventIndexRange: IndexRange,
-        chatId: string,
-        messageIndex: number,
-        latestClientMainEventIndex: number | undefined,
-        threadRootMessageIndex?: number
-    ): Promise<EventsResponse<GroupChatEvent>> {
-        return this.sendRequest({
-            kind: "groupChatEventsWindow",
-            payload: {
-                eventIndexRange,
-                chatId,
-                messageIndex,
-                threadRootMessageIndex,
-                latestClientMainEventIndex,
-            },
-        });
-    }
-
-    directChatEventsByEventIndex(
-        theirUserId: string,
-        eventIndexes: number[],
-        threadRootMessageIndex: number | undefined,
-        latestClientEventIndex: number | undefined
-    ): Promise<EventsResponse<DirectChatEvent>> {
-        return this.sendRequest({
-            kind: "directChatEventsByEventIndex",
-            payload: {
-                theirUserId,
-                eventIndexes,
-                threadRootMessageIndex,
-                latestClientEventIndex,
-            },
-        });
-    }
-
-    groupChatEventsByEventIndex(
-        chatId: string,
-        eventIndexes: number[],
-        threadRootMessageIndex: number | undefined,
-        latestClientEventIndex: number | undefined
-    ): Promise<EventsResponse<GroupChatEvent>> {
-        return this.sendRequest({
-            kind: "groupChatEventsByEventIndex",
-            payload: {
-                chatId,
-                eventIndexes,
-                threadRootMessageIndex,
-                latestClientEventIndex,
-            },
-        });
-    }
-
-    rehydrateMessage(
+    protected _rehydrateMessage(
         chatId: string,
         message: EventWrapper<Message>,
         threadRootMessageIndex: number | undefined,
@@ -481,181 +258,144 @@ export class OpenChatAgentWorker extends EventTarget {
     ): Promise<EventWrapper<Message>> {
         return this.sendRequest({
             kind: "rehydrateMessage",
-            payload: {
-                chatId,
-                message,
-                threadRootMessageIndex,
-                latestClientEventIndex,
-            },
+            chatId,
+            message,
+            threadRootMessageIndex,
+            latestClientEventIndex,
         });
     }
 
-    checkUsername(username: string): Promise<CheckUsernameResponse> {
+    protected _checkUsername(username: string): Promise<CheckUsernameResponse> {
         return this.sendRequest({
             kind: "checkUsername",
-            payload: {
-                username,
-            },
+            username,
         });
     }
 
-    searchUsers(searchTerm: string, maxResults = 20): Promise<UserSummary[]> {
+    protected _searchUsers(searchTerm: string, maxResults = 20): Promise<UserSummary[]> {
         return this.sendRequest({
             kind: "searchUsers",
-            payload: {
-                searchTerm,
-                maxResults,
-            },
+            searchTerm,
+            maxResults,
         });
     }
 
-    migrateUserPrincipal(userId: string): Promise<MigrateUserPrincipalResponse> {
+    protected _migrateUserPrincipal(userId: string): Promise<MigrateUserPrincipalResponse> {
         return this.sendRequest({
             kind: "migrateUserPrincipal",
-            payload: {
-                userId,
-            },
+            userId,
         });
     }
 
-    initUserPrincipalMigration(newPrincipal: string): Promise<void> {
+    protected _initUserPrincipalMigration(newPrincipal: string): Promise<void> {
         return this.sendRequest({
             kind: "initUserPrincipalMigration",
-            payload: {
-                newPrincipal,
-            },
+            newPrincipal,
         });
     }
 
-    getUserStorageLimits(): Promise<StorageStatus> {
+    protected _getUserStorageLimits(): Promise<StorageStatus> {
         return this.sendRequest({
             kind: "getUserStorageLimits",
-            payload: undefined,
         });
     }
 
-    getPublicGroupSummary(chatId: string): Promise<GroupChatSummary | undefined> {
+    protected _getPublicGroupSummary(chatId: string): Promise<GroupChatSummary | undefined> {
         return this.sendRequest({
             kind: "getPublicGroupSummary",
-            payload: {
-                chatId,
-            },
+            chatId,
         });
     }
 
-    toggleMuteNotifications(
+    protected _toggleMuteNotifications(
         chatId: string,
         muted: boolean
     ): Promise<ToggleMuteNotificationResponse> {
         return this.sendRequest({
             kind: "toggleMuteNotifications",
-            payload: {
-                chatId,
-                muted,
-            },
+            chatId,
+            muted,
         });
     }
 
-    archiveChat(chatId: string): Promise<ArchiveChatResponse> {
+    protected _archiveChat(chatId: string): Promise<ArchiveChatResponse> {
         return this.sendRequest({
             kind: "archiveChat",
-            payload: {
-                chatId,
-            },
+            chatId,
         });
     }
 
-    unarchiveChat(chatId: string): Promise<ArchiveChatResponse> {
+    protected _unarchiveChat(chatId: string): Promise<ArchiveChatResponse> {
         return this.sendRequest({
             kind: "unarchiveChat",
-            payload: {
-                chatId,
-            },
+            chatId,
         });
     }
 
-    pinChat(chatId: string): Promise<PinChatResponse> {
+    protected _pinChat(chatId: string): Promise<PinChatResponse> {
         return this.sendRequest({
             kind: "pinChat",
-            payload: {
-                chatId,
-            },
+            chatId,
         });
     }
 
-    unpinChat(chatId: string): Promise<UnpinChatResponse> {
+    protected _unpinChat(chatId: string): Promise<UnpinChatResponse> {
         return this.sendRequest({
             kind: "unpinChat",
-            payload: {
-                chatId,
-            },
+            chatId,
         });
     }
 
-    blockUserFromDirectChat(userId: string): Promise<BlockUserResponse> {
+    protected _blockUserFromDirectChat(userId: string): Promise<BlockUserResponse> {
         return this.sendRequest({
             kind: "blockUserFromDirectChat",
-            payload: {
-                userId,
-            },
+            userId,
         });
     }
 
-    unblockUserFromDirectChat(userId: string): Promise<UnblockUserResponse> {
+    protected _unblockUserFromDirectChat(userId: string): Promise<UnblockUserResponse> {
         return this.sendRequest({
             kind: "unblockUserFromDirectChat",
-            payload: {
-                userId,
-            },
+            userId,
         });
     }
 
-    setUserAvatar(data: Uint8Array): Promise<BlobReference> {
+    protected _setUserAvatar(data: Uint8Array): Promise<BlobReference> {
         return this.sendRequest({
             kind: "setUserAvatar",
-            payload: {
-                data,
-            },
+            data,
         });
     }
 
-    makeGroupPrivate(chatId: string): Promise<MakeGroupPrivateResponse> {
+    protected _makeGroupPrivate(chatId: string): Promise<MakeGroupPrivateResponse> {
         return this.sendRequest({
             kind: "makeGroupPrivate",
-            payload: {
-                chatId,
-            },
+            chatId,
         });
     }
 
-    deleteGroup(chatId: string): Promise<DeleteGroupResponse> {
+    protected _deleteGroup(chatId: string): Promise<DeleteGroupResponse> {
         return this.sendRequest({
             kind: "deleteGroup",
-            payload: {
-                chatId,
-            },
+            chatId,
         });
     }
 
-    leaveGroup(chatId: string): Promise<LeaveGroupResponse> {
+    protected _leaveGroup(chatId: string): Promise<LeaveGroupResponse> {
         return this.sendRequest({
             kind: "leaveGroup",
-            payload: {
-                chatId,
-            },
+            chatId,
         });
     }
 
-    joinGroup(chatId: string): Promise<JoinGroupResponse> {
+    protected _joinGroup(chatId: string): Promise<JoinGroupResponse> {
         return this.sendRequest({
             kind: "joinGroup",
-            payload: {
-                chatId,
-            },
+            chatId,
         });
     }
 
-    updateGroup(
+    protected _updateGroup(
         chatId: string,
         name?: string,
         desc?: string,
@@ -666,19 +406,17 @@ export class OpenChatAgentWorker extends EventTarget {
     ): Promise<UpdateGroupResponse> {
         return this.sendRequest({
             kind: "updateGroup",
-            payload: {
-                chatId,
-                name,
-                desc,
-                rules,
-                permissions,
-                avatar,
-                gate,
-            },
+            chatId,
+            name,
+            desc,
+            rules,
+            permissions,
+            avatar,
+            gate,
         });
     }
 
-    registerPollVote(
+    protected _registerPollVote(
         chatId: string,
         messageIdx: number,
         answerIdx: number,
@@ -687,17 +425,15 @@ export class OpenChatAgentWorker extends EventTarget {
     ): Promise<RegisterPollVoteResponse> {
         return this.sendRequest({
             kind: "registerPollVote",
-            payload: {
-                chatId,
-                messageIdx,
-                answerIdx,
-                voteType,
-                threadRootMessageIndex,
-            },
+            chatId,
+            messageIdx,
+            answerIdx,
+            voteType,
+            threadRootMessageIndex,
         });
     }
 
-    deleteMessage(
+    protected _deleteMessage(
         chatType: "direct_chat" | "group_chat",
         chatId: string,
         messageId: bigint,
@@ -706,17 +442,15 @@ export class OpenChatAgentWorker extends EventTarget {
     ): Promise<DeleteMessageResponse> {
         return this.sendRequest({
             kind: "deleteMessage",
-            payload: {
-                chatType,
-                chatId,
-                messageId,
-                threadRootMessageIndex,
-                asPlatformModerator,
-            },
+            chatType,
+            chatId,
+            messageId,
+            threadRootMessageIndex,
+            asPlatformModerator,
         });
     }
 
-    undeleteMessage(
+    protected _undeleteMessage(
         chatType: "direct_chat" | "group_chat",
         chatId: string,
         messageId: bigint,
@@ -724,16 +458,14 @@ export class OpenChatAgentWorker extends EventTarget {
     ): Promise<UndeleteMessageResponse> {
         return this.sendRequest({
             kind: "undeleteMessage",
-            payload: {
-                chatType,
-                chatId,
-                messageId,
-                threadRootMessageIndex,
-            },
+            chatType,
+            chatId,
+            messageId,
+            threadRootMessageIndex,
         });
     }
 
-    addDirectChatReaction(
+    protected _addDirectChatReaction(
         otherUserId: string,
         messageId: bigint,
         reaction: string,
@@ -742,17 +474,15 @@ export class OpenChatAgentWorker extends EventTarget {
     ): Promise<AddRemoveReactionResponse> {
         return this.sendRequest({
             kind: "addDirectChatReaction",
-            payload: {
-                otherUserId,
-                messageId,
-                reaction,
-                username,
-                threadRootMessageIndex,
-            },
+            otherUserId,
+            messageId,
+            reaction,
+            username,
+            threadRootMessageIndex,
         });
     }
 
-    removeDirectChatReaction(
+    protected _removeDirectChatReaction(
         otherUserId: string,
         messageId: bigint,
         reaction: string,
@@ -760,16 +490,14 @@ export class OpenChatAgentWorker extends EventTarget {
     ): Promise<AddRemoveReactionResponse> {
         return this.sendRequest({
             kind: "removeDirectChatReaction",
-            payload: {
-                otherUserId,
-                messageId,
-                reaction,
-                threadRootMessageIndex,
-            },
+            otherUserId,
+            messageId,
+            reaction,
+            threadRootMessageIndex,
         });
     }
 
-    addGroupChatReaction(
+    protected _addGroupChatReaction(
         chatId: string,
         messageId: bigint,
         reaction: string,
@@ -778,17 +506,15 @@ export class OpenChatAgentWorker extends EventTarget {
     ): Promise<AddRemoveReactionResponse> {
         return this.sendRequest({
             kind: "addGroupChatReaction",
-            payload: {
-                chatId,
-                messageId,
-                reaction,
-                username,
-                threadRootMessageIndex,
-            },
+            chatId,
+            messageId,
+            reaction,
+            username,
+            threadRootMessageIndex,
         });
     }
 
-    removeGroupChatReaction(
+    protected _removeGroupChatReaction(
         chatId: string,
         messageId: bigint,
         reaction: string,
@@ -796,47 +522,42 @@ export class OpenChatAgentWorker extends EventTarget {
     ): Promise<AddRemoveReactionResponse> {
         return this.sendRequest({
             kind: "removeGroupChatReaction",
-            payload: {
-                chatId,
-                messageId,
-                reaction,
-                threadRootMessageIndex,
-            },
+            chatId,
+            messageId,
+            reaction,
+            threadRootMessageIndex,
         });
     }
 
-    blockUserFromGroupChat(chatId: string, userId: string): Promise<BlockUserResponse> {
+    protected _blockUserFromGroupChat(chatId: string, userId: string): Promise<BlockUserResponse> {
         return this.sendRequest({
             kind: "blockUserFromGroupChat",
-            payload: {
-                chatId,
-                userId,
-            },
+            chatId,
+            userId,
         });
     }
 
-    unblockUserFromGroupChat(chatId: string, userId: string): Promise<UnblockUserResponse> {
+    protected _unblockUserFromGroupChat(
+        chatId: string,
+        userId: string
+    ): Promise<UnblockUserResponse> {
         return this.sendRequest({
             kind: "unblockUserFromGroupChat",
-            payload: {
-                chatId,
-                userId,
-            },
+            chatId,
+            userId,
         });
     }
 
-    getProposalVoteDetails(
+    protected _getProposalVoteDetails(
         governanceCanisterId: string,
         proposalId: bigint,
         isNns: boolean
     ): Promise<ProposalVoteDetails> {
         return this.sendRequest({
             kind: "getProposalVoteDetails",
-            payload: {
-                governanceCanisterId,
-                proposalId,
-                isNns,
-            },
+            governanceCanisterId,
+            proposalId,
+            isNns,
         });
     }
 
@@ -845,33 +566,28 @@ export class OpenChatAgentWorker extends EventTarget {
     ): Promise<ListNervousSystemFunctionsResponse> {
         return this.sendRequest({
             kind: "listNervousSystemFunctions",
-            payload: {
-                snsGovernanceCanisterId,
-            },
+            snsGovernanceCanisterId,
         });
     }
 
-    unpinMessage(chatId: string, messageIndex: number): Promise<UnpinMessageResponse> {
+    protected _unpinMessage(chatId: string, messageIndex: number): Promise<UnpinMessageResponse> {
         return this.sendRequest({
             kind: "unpinMessage",
-            payload: {
-                chatId,
-                messageIndex,
-            },
+            chatId,
+            messageIndex,
         });
     }
 
-    pinMessage(chatId: string, messageIndex: number): Promise<PinMessageResponse> {
-        return this.sendRequest({
+    protected _pinMessage(chatId: string, messageIndex: number): Promise<PinMessageResponse> {
+        const resp = this.sendRequest({
             kind: "pinMessage",
-            payload: {
-                chatId,
-                messageIndex,
-            },
+            chatId,
+            messageIndex,
         });
+        return resp;
     }
 
-    sendMessage(
+    protected _sendMessage(
         chatType: "direct_chat" | "group_chat",
         chatId: string,
         user: CreatedUser,
@@ -881,18 +597,16 @@ export class OpenChatAgentWorker extends EventTarget {
     ): Promise<[SendMessageResponse, Message]> {
         return this.sendRequest({
             kind: "sendMessage",
-            payload: {
-                chatType,
-                chatId,
-                user,
-                mentioned,
-                event,
-                threadRootMessageIndex,
-            },
+            chatType,
+            chatId,
+            user,
+            mentioned,
+            event,
+            threadRootMessageIndex,
         });
     }
 
-    editMessage(
+    protected _editMessage(
         chatType: "direct_chat" | "group_chat",
         chatId: string,
         msg: Message,
@@ -900,148 +614,124 @@ export class OpenChatAgentWorker extends EventTarget {
     ): Promise<EditMessageResponse> {
         return this.sendRequest({
             kind: "editMessage",
-            payload: {
-                chatType,
-                chatId,
-                msg,
-                threadRootMessageIndex,
-            },
+            chatType,
+            chatId,
+            msg,
+            threadRootMessageIndex,
         });
     }
 
-    registerUser(
+    protected _registerUser(
         username: string,
         referralCode: string | undefined
     ): Promise<RegisterUserResponse> {
         return this.sendRequest({
             kind: "registerUser",
-            payload: {
-                username,
-                referralCode,
-            },
+            username,
+            referralCode,
         });
     }
 
-    subscriptionExists(p256dh_key: string): Promise<boolean> {
+    protected _subscriptionExists(p256dh_key: string): Promise<boolean> {
         return this.sendRequest({
             kind: "subscriptionExists",
-            payload: {
-                p256dh_key,
-            },
+            p256dh_key,
         });
     }
 
-    pushSubscription(subscription: PushSubscriptionJSON): Promise<void> {
+    protected _pushSubscription(subscription: PushSubscriptionJSON): Promise<void> {
         return this.sendRequest({
             kind: "pushSubscription",
-            payload: {
-                subscription,
-            },
+            subscription,
         });
     }
 
-    removeSubscription(subscription: PushSubscriptionJSON): Promise<void> {
+    protected _removeSubscription(subscription: PushSubscriptionJSON): Promise<void> {
         return this.sendRequest({
             kind: "removeSubscription",
-            payload: {
-                subscription,
-            },
+            subscription,
         });
     }
 
-    inviteUsers(chatId: string, userIds: string[]): Promise<InviteUsersResponse> {
+    protected _inviteUsers(chatId: string, userIds: string[]): Promise<InviteUsersResponse> {
         return this.sendRequest({
             kind: "inviteUsers",
-            payload: {
-                chatId,
-                userIds,
-            },
+            chatId,
+            userIds,
         });
     }
 
-    removeMember(chatId: string, userId: string): Promise<RemoveMemberResponse> {
+    protected _removeMember(chatId: string, userId: string): Promise<RemoveMemberResponse> {
         return this.sendRequest({
             kind: "removeMember",
-            payload: {
-                chatId,
-                userId,
-            },
+            chatId,
+            userId,
         });
     }
 
-    changeRole(chatId: string, userId: string, newRole: MemberRole): Promise<ChangeRoleResponse> {
+    protected _changeRole(
+        chatId: string,
+        userId: string,
+        newRole: MemberRole
+    ): Promise<ChangeRoleResponse> {
         return this.sendRequest({
             kind: "changeRole",
-            payload: {
-                chatId,
-                userId,
-                newRole,
-            },
+            chatId,
+            userId,
+            newRole,
         });
     }
 
-    registerProposalVote(
+    protected _registerProposalVote(
         chatId: string,
         messageIndex: number,
         adopt: boolean
     ): Promise<RegisterProposalVoteResponse> {
         return this.sendRequest({
             kind: "registerProposalVote",
-            payload: {
-                chatId,
-                messageIndex,
-                adopt,
-            },
+            chatId,
+            messageIndex,
+            adopt,
         });
     }
 
-    getRecommendedGroups(exclusions: string[]): Promise<GroupChatSummary[]> {
+    protected _getRecommendedGroups(exclusions: string[]): Promise<GroupChatSummary[]> {
         return this.sendRequest({
             kind: "getRecommendedGroups",
-            payload: {
-                exclusions,
-            },
+            exclusions,
         });
     }
 
-    getGroupRules(chatId: string): Promise<AccessRules | undefined> {
+    protected _getGroupRules(chatId: string): Promise<AccessRules | undefined> {
         return this.sendRequest({
             kind: "getGroupRules",
-            payload: {
-                chatId,
-            },
+            chatId,
         });
     }
 
-    searchGroups(searchTerm: string, maxResults = 10): Promise<GroupSearchResponse> {
+    protected _searchGroups(searchTerm: string, maxResults = 10): Promise<GroupSearchResponse> {
         return this.sendRequest({
             kind: "searchGroups",
-            payload: {
-                searchTerm,
-                maxResults,
-            },
+            searchTerm,
+            maxResults,
         });
     }
 
-    dismissRecommendation(chatId: string): Promise<void> {
+    protected _dismissRecommendation(chatId: string): Promise<void> {
         return this.sendRequest({
             kind: "dismissRecommendation",
-            payload: {
-                chatId,
-            },
+            chatId,
         });
     }
 
-    set groupInvite(value: GroupInvite) {
+    protected set _groupInvite(value: GroupInvite) {
         this.sendRequest({
             kind: "groupInvite",
-            payload: {
-                value,
-            },
+            value,
         });
     }
 
-    searchGroupChat(
+    protected _searchGroupChat(
         chatId: string,
         searchTerm: string,
         userIds: string[],
@@ -1049,307 +739,261 @@ export class OpenChatAgentWorker extends EventTarget {
     ): Promise<SearchGroupChatResponse> {
         return this.sendRequest({
             kind: "searchGroupChat",
-            payload: {
-                chatId,
-                searchTerm,
-                userIds,
-                maxResults,
-            },
+            chatId,
+            searchTerm,
+            userIds,
+            maxResults,
         });
     }
 
-    searchDirectChat(
+    protected _searchDirectChat(
         userId: string,
         searchTerm: string,
         maxResults = 10
     ): Promise<SearchDirectChatResponse> {
         return this.sendRequest({
             kind: "searchDirectChat",
-            payload: {
-                userId,
-                searchTerm,
-                maxResults,
-            },
+            userId,
+            searchTerm,
+            maxResults,
         });
     }
 
-    refreshAccountBalance(crypto: Cryptocurrency, principal: string): Promise<Tokens> {
+    protected _refreshAccountBalance(crypto: Cryptocurrency, principal: string): Promise<Tokens> {
         return this.sendRequest({
             kind: "refreshAccountBalance",
-            payload: {
-                crypto,
-                principal,
-            },
+            crypto,
+            principal,
         });
     }
 
-    async threadPreviews(
+    protected async _threadPreviews(
         threadsByChat: Record<string, [ThreadSyncDetails[], number | undefined]>
     ): Promise<ThreadPreview[]> {
         return this.sendRequest({
             kind: "threadPreviews",
-            payload: {
-                threadsByChat,
-            },
+            threadsByChat,
         });
     }
 
-    async getUser(userId: string, allowStale = false): Promise<PartialUserSummary | undefined> {
+    protected async _getUser(
+        userId: string,
+        allowStale = false
+    ): Promise<PartialUserSummary | undefined> {
         return this.sendRequest({
             kind: "getUser",
-            payload: {
-                userId,
-                allowStale,
-            },
+            userId,
+            allowStale,
         });
     }
 
-    getPublicProfile(userId?: string): Promise<PublicProfile> {
+    protected _getPublicProfile(userId?: string): Promise<PublicProfile> {
         return this.sendRequest({
             kind: "getPublicProfile",
-            payload: {
-                userId,
-            },
+            userId,
         });
     }
 
-    setUsername(userId: string, username: string): Promise<SetUsernameResponse> {
+    protected _setUsername(userId: string, username: string): Promise<SetUsernameResponse> {
         return this.sendRequest({
             kind: "setUsername",
-            payload: {
-                userId,
-                username,
-            },
+            userId,
+            username,
         });
     }
 
-    setBio(bio: string): Promise<SetBioResponse> {
+    protected _setBio(bio: string): Promise<SetBioResponse> {
         return this.sendRequest({
             kind: "setBio",
-            payload: {
-                bio,
-            },
+            bio,
         });
     }
 
-    getBio(userId?: string): Promise<string> {
+    protected _getBio(userId?: string): Promise<string> {
         return this.sendRequest({
             kind: "getBio",
-            payload: {
-                userId,
-            },
+            userId,
         });
     }
 
-    withdrawCryptocurrency(
+    protected _withdrawCryptocurrency(
         domain: PendingCryptocurrencyWithdrawal
     ): Promise<WithdrawCryptocurrencyResponse> {
         return this.sendRequest({
             kind: "withdrawCryptocurrency",
-            payload: {
-                domain,
-            },
+            domain,
         });
     }
 
-    getGroupMessagesByMessageIndex(
+    protected _getGroupMessagesByMessageIndex(
         chatId: string,
         messageIndexes: Set<number>,
         latestClientEventIndex: number | undefined
     ): Promise<EventsResponse<Message>> {
         return this.sendRequest({
             kind: "getGroupMessagesByMessageIndex",
-            payload: {
-                chatId,
-                messageIndexes,
-                latestClientEventIndex,
-            },
+            chatId,
+            messageIndexes,
+            latestClientEventIndex,
         });
     }
 
-    getInviteCode(chatId: string): Promise<InviteCodeResponse> {
+    protected _getInviteCode(chatId: string): Promise<InviteCodeResponse> {
         return this.sendRequest({
             kind: "getInviteCode",
-            payload: {
-                chatId,
-            },
+            chatId,
         });
     }
 
-    enableInviteCode(chatId: string): Promise<EnableInviteCodeResponse> {
+    protected _enableInviteCode(chatId: string): Promise<EnableInviteCodeResponse> {
         return this.sendRequest({
             kind: "enableInviteCode",
-            payload: {
-                chatId,
-            },
+            chatId,
         });
     }
 
-    disableInviteCode(chatId: string): Promise<DisableInviteCodeResponse> {
+    protected _disableInviteCode(chatId: string): Promise<DisableInviteCodeResponse> {
         return this.sendRequest({
             kind: "disableInviteCode",
-            payload: {
-                chatId,
-            },
+            chatId,
         });
     }
 
-    resetInviteCode(chatId: string): Promise<ResetInviteCodeResponse> {
+    protected _resetInviteCode(chatId: string): Promise<ResetInviteCodeResponse> {
         return this.sendRequest({
             kind: "resetInviteCode",
-            payload: {
-                chatId,
-            },
+            chatId,
         });
     }
 
-    createGroupChat(candidate: CandidateGroupChat): Promise<CreateGroupResponse> {
+    protected _createGroupChat(candidate: CandidateGroupChat): Promise<CreateGroupResponse> {
         return this.sendRequest({
             kind: "createGroupChat",
-            payload: {
-                candidate,
-            },
+            candidate,
         });
     }
 
-    setCachedMessageFromNotification(
+    protected _setCachedMessageFromNotification(
         chatId: string,
         threadRootMessageIndex: number | undefined,
         message: EventWrapper<Message>
     ): Promise<void> {
         return this.sendRequest({
             kind: "setCachedMessageFromNotification",
-            payload: {
-                chatId,
-                threadRootMessageIndex,
-                message,
-            },
+            chatId,
+            threadRootMessageIndex,
+            message,
         });
     }
 
-    freezeGroup(chatId: string, reason: string | undefined): Promise<FreezeGroupResponse> {
+    protected _freezeGroup(
+        chatId: string,
+        reason: string | undefined
+    ): Promise<FreezeGroupResponse> {
         return this.sendRequest({
             kind: "freezeGroup",
-            payload: {
-                chatId,
-                reason,
-            },
+            chatId,
+            reason,
         });
     }
 
-    unfreezeGroup(chatId: string): Promise<UnfreezeGroupResponse> {
+    protected _unfreezeGroup(chatId: string): Promise<UnfreezeGroupResponse> {
         return this.sendRequest({
             kind: "unfreezeGroup",
-            payload: {
-                chatId,
-            },
+            chatId,
         });
     }
 
-    addHotGroupExclusion(chatId: string): Promise<AddHotGroupExclusionResponse> {
+    protected _addHotGroupExclusion(chatId: string): Promise<AddHotGroupExclusionResponse> {
         return this.sendRequest({
             kind: "addHotGroupExclusion",
-            payload: {
-                chatId,
-            },
+            chatId,
         });
     }
 
-    removeHotGroupExclusion(chatId: string): Promise<RemoveHotGroupExclusionResponse> {
+    protected _removeHotGroupExclusion(chatId: string): Promise<RemoveHotGroupExclusionResponse> {
         return this.sendRequest({
             kind: "removeHotGroupExclusion",
-            payload: {
-                chatId,
-            },
+            chatId,
         });
     }
 
-    deleteFrozenGroup(chatId: string): Promise<DeleteFrozenGroupResponse> {
+    protected _deleteFrozenGroup(chatId: string): Promise<DeleteFrozenGroupResponse> {
         return this.sendRequest({
             kind: "deleteFrozenGroup",
-            payload: {
-                chatId,
-            },
+            chatId,
         });
     }
 
-    suspendUser(userId: string, reason: string): Promise<SuspendUserResponse> {
+    protected _suspendUser(userId: string, reason: string): Promise<SuspendUserResponse> {
         return this.sendRequest({
             kind: "suspendUser",
-            payload: {
-                userId,
-                reason,
-            },
+            userId,
+            reason,
         });
     }
 
-    unsuspendUser(userId: string): Promise<UnsuspendUserResponse> {
+    protected _unsuspendUser(userId: string): Promise<UnsuspendUserResponse> {
         return this.sendRequest({
             kind: "unsuspendUser",
-            payload: {
-                userId,
-            },
+            userId,
         });
     }
 
-    setGroupUpgradeConcurrency(value: number): Promise<SetGroupUpgradeConcurrencyResponse> {
+    protected _setGroupUpgradeConcurrency(
+        value: number
+    ): Promise<SetGroupUpgradeConcurrencyResponse> {
         return this.sendRequest({
             kind: "setGroupUpgradeConcurrency",
-            payload: {
-                value,
-            },
+            value,
         });
     }
 
-    setUserUpgradeConcurrency(value: number): Promise<SetUserUpgradeConcurrencyResponse> {
+    protected _setUserUpgradeConcurrency(
+        value: number
+    ): Promise<SetUserUpgradeConcurrencyResponse> {
         return this.sendRequest({
             kind: "setUserUpgradeConcurrency",
-            payload: {
-                value,
-            },
+            value,
         });
     }
 
-    loadFailedMessages(): Promise<Record<string, Record<number, EventWrapper<Message>>>> {
+    protected _loadFailedMessages(): Promise<
+        Record<string, Record<number, EventWrapper<Message>>>
+    > {
         return this.sendRequest({
             kind: "loadFailedMessages",
-            payload: {},
         });
     }
 
-    deleteFailedMessage(
+    protected _deleteFailedMessage(
         chatId: string,
         messageId: bigint,
         threadRootMessageIndex?: number
     ): Promise<void> {
         return this.sendRequest({
             kind: "deleteFailedMessage",
-            payload: {
-                chatId,
-                messageId,
-                threadRootMessageIndex,
-            },
+            chatId,
+            messageId,
+            threadRootMessageIndex,
         });
     }
 
-    markSuspectedBot(): Promise<void> {
+    protected _markSuspectedBot(): Promise<void> {
         return this.sendRequest({
             kind: "markSuspectedBot",
-            payload: {},
         });
     }
 
-    claimPrize(chatId: string, messageId: bigint): Promise<ClaimPrizeResponse> {
+    protected _claimPrize(chatId: string, messageId: bigint): Promise<ClaimPrizeResponse> {
         return this.sendRequest({
             kind: "claimPrize",
-            payload: {
-                chatId,
-                messageId,
-            },
+            chatId,
+            messageId,
         });
     }
 
-    payForDiamondMembership(
+    protected _payForDiamondMembership(
         userId: string,
         token: Cryptocurrency,
         duration: DiamondMembershipDuration,
@@ -1358,26 +1002,24 @@ export class OpenChatAgentWorker extends EventTarget {
     ): Promise<PayForDiamondMembershipResponse> {
         return this.sendRequest({
             kind: "payForDiamondMembership",
-            payload: {
-                userId,
-                token,
-                duration,
-                recurring,
-                expectedPriceE8s,
-            },
+            userId,
+            token,
+            duration,
+            recurring,
+            expectedPriceE8s,
         });
     }
 
-    updateMarketMakerConfig(
+    protected _updateMarketMakerConfig(
         config: UpdateMarketMakerConfigArgs
     ): Promise<UpdateMarketMakerConfigResponse> {
         return this.sendRequest({
             kind: "updateMarketMakerConfig",
-            payload: config,
+            ...config,
         });
     }
 
-    setMessageReminder(
+    protected _setMessageReminder(
         chatId: string,
         eventIndex: number,
         remindAt: number,
@@ -1386,35 +1028,31 @@ export class OpenChatAgentWorker extends EventTarget {
     ): Promise<SetMessageReminderResponse> {
         return this.sendRequest({
             kind: "setMessageReminder",
-            payload: {
-                chatId,
-                eventIndex,
-                remindAt,
-                notes,
-                threadRootMessageIndex,
-            },
+            chatId,
+            eventIndex,
+            remindAt,
+            notes,
+            threadRootMessageIndex,
         });
     }
 
-    cancelMessageReminder(reminderId: bigint): Promise<boolean> {
+    protected _cancelMessageReminder(reminderId: bigint): Promise<boolean> {
         return this.sendRequest({
             kind: "cancelMessageReminder",
-            payload: {
-                reminderId,
-            },
+            reminderId,
         });
     }
 
-    getReferralLeaderboard(args?: ReferralLeaderboardRange): Promise<ReferralLeaderboardResponse> {
+    protected _getReferralLeaderboard(
+        args?: ReferralLeaderboardRange
+    ): Promise<ReferralLeaderboardResponse> {
         return this.sendRequest({
             kind: "getReferralLeaderboard",
-            payload: {
-                args,
-            },
+            ...args,
         });
     }
 
-    reportMessage(
+    protected _reportMessage(
         chatId: string,
         eventIndex: number,
         reasonCode: number,
@@ -1423,20 +1061,18 @@ export class OpenChatAgentWorker extends EventTarget {
     ): Promise<ReportMessageResponse> {
         return this.sendRequest({
             kind: "reportMessage",
-            payload: {
-                chatId,
-                eventIndex,
-                reasonCode,
-                notes,
-                threadRootMessageIndex,
-            },
+            chatId,
+            eventIndex,
+            reasonCode,
+            notes,
+            threadRootMessageIndex,
         });
     }
 
-    declineInvitation(chatId: string): Promise<DeclineInvitationResponse> {
+    protected _declineInvitation(chatId: string): Promise<DeclineInvitationResponse> {
         return this.sendRequest({
             kind: "declineInvitation",
-            payload: { chatId },
+            chatId,
         });
     }
 }

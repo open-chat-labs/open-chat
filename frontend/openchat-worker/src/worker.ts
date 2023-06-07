@@ -4,11 +4,11 @@ import type { Identity } from "@dfinity/agent";
 import { AuthClient, IdbStorage } from "@dfinity/auth-client";
 import { OpenChatAgent } from "openchat-agent";
 import {
+    CorrelatedWorkerRequest,
     MessagesReadFromServer,
     StorageUpdated,
     UsersLoaded,
     WorkerEvent,
-    WorkerRequest,
     WorkerResponse,
 } from "openchat-shared";
 
@@ -107,9 +107,11 @@ self.addEventListener("unhandledrejection", (err: PromiseRejectionEvent) => {
     console.error("WORKER: unhandled promise rejection: ", err);
 });
 
-self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
+self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) => {
     console.debug("WORKER: received ", msg.data.kind, msg.data.correlationId);
-    const { kind, payload, correlationId } = msg.data;
+    const payload = msg.data;
+    const kind = payload.kind;
+    const correlationId = payload.correlationId;
 
     try {
         if (kind === "init") {
@@ -234,7 +236,7 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
 
             case "markMessagesRead":
                 agent
-                    .markMessagesRead(payload)
+                    .markMessagesRead(payload.payload)
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,
@@ -359,7 +361,7 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
                         payload.message,
                         payload.threadRootMessageIndex,
                         payload.latestClientEventIndex,
-                        undefined,
+                        undefined
                     )
                     .then((response) =>
                         sendResponse(correlationId, {
@@ -1075,7 +1077,7 @@ self.addEventListener("message", (msg: MessageEvent<WorkerRequest>) => {
                     .catch(sendError(correlationId));
                 break;
 
-           case "getInviteCode":
+            case "getInviteCode":
                 agent
                     .getInviteCode(payload.chatId)
                     .then((response) =>
