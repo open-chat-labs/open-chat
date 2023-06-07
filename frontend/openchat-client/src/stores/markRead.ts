@@ -6,7 +6,6 @@ import type {
     ThreadSyncDetails,
 } from "openchat-shared";
 import { unconfirmed } from "./unconfirmed";
-import type { OpenChatAgentWorker } from "../agentWorker";
 import { bigIntMax } from "../utils/bigint";
 import type { OpenChat } from "../openchat";
 
