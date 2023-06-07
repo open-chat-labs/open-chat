@@ -1171,4 +1171,4 @@ export type WorkerResult<T> = T extends PinMessage
     ? ReportMessageResponse
     : T extends DeclineInvitation
     ? DeclineInvitationResponse
-    : unknown;
+    : never;
