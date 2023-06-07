@@ -53,6 +53,10 @@ impl Channels {
         self.channels.get_mut(channel_id)
     }
 
+    pub fn default_channels(&self) -> Vec<ChannelId> {
+        self.default_channels.iter().copied().collect()
+    }
+
     pub fn remove_member(&mut self, user_id: UserId) -> HashMap<ChannelId, GroupMemberInternal> {
         self.channels
             .iter_mut()

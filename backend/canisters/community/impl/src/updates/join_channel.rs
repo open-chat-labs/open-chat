@@ -1,5 +1,5 @@
-use crate::guards::caller_is_user_index_or_local_user_index;
 use crate::{mutate_state, read_state, RuntimeState};
+use candid::Principal;
 use canister_tracing_macros::trace;
 use chat_events::ChatEventInternal;
 use community_canister::join_channel::{Response::*, *};
@@ -8,10 +8,15 @@ use group_chat_core::AddResult;
 use ic_cdk_macros::update;
 use types::{AccessGate, CanisterId, ChannelId, EventIndex, MemberJoined, MessageIndex, UserId};
 
-#[update(guard = "caller_is_user_index_or_local_user_index")]
+#[update]
 #[trace]
 async fn join_channel(args: Args) -> Response {
-    match read_state(|state| is_permitted_to_join(args.channel_id, state)) {
+    let caller = read_state(|state| state.env.caller());
+    join_channel_impl(args.channel_id, caller).await
+}
+
+pub(crate) async fn join_channel_impl(channel_id: ChannelId, user_principal: Principal) -> Response {
+    match read_state(|state| is_permitted_to_join(channel_id, user_principal, state)) {
         Ok(Some((gate, user_index_canister_id, user_id))) => {
             match check_if_passes_gate(&gate, user_id, user_index_canister_id).await {
                 CheckIfPassesGateResult::Success => {}
@@ -23,20 +28,19 @@ async fn join_channel(args: Args) -> Response {
         Err(response) => return response,
     };
 
-    mutate_state(|state| join_channel_impl(args.channel_id, state))
+    mutate_state(|state| commit(channel_id, user_principal, state))
 }
 
 fn is_permitted_to_join(
     channel_id: ChannelId,
+    user_principal: Principal,
     state: &RuntimeState,
 ) -> Result<Option<(AccessGate, CanisterId, UserId)>, Response> {
     if state.data.is_frozen() {
         return Err(CommunityFrozen);
     }
 
-    let caller = state.env.caller();
-
-    if let Some(member) = state.data.members.get(caller) {
+    if let Some(member) = state.data.members.get(user_principal) {
         if member.suspended.value {
             return Err(UserSuspended);
         }
@@ -67,9 +71,8 @@ fn is_permitted_to_join(
     }
 }
 
-fn join_channel_impl(channel_id: ChannelId, state: &mut RuntimeState) -> Response {
-    let caller = state.env.caller();
-    if let Some(member) = state.data.members.get_mut(caller) {
+fn commit(channel_id: ChannelId, user_principal: Principal, state: &mut RuntimeState) -> Response {
+    if let Some(member) = state.data.members.get_mut(user_principal) {
         if let Some(channel) = state.data.channels.get_mut(&channel_id) {
             let now = state.env.now();
             let min_visible_event_index;

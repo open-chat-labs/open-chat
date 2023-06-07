@@ -4,6 +4,7 @@ use local_user_index_canister::*;
 // Queries
 
 // Updates
+generate_update_call!(invite_users_to_channel);
 generate_update_call!(invite_users_to_community);
 generate_update_call!(invite_users_to_group);
 generate_update_call!(join_community);
@@ -17,7 +18,7 @@ pub mod happy_path {
     use crate::User;
     use candid::Principal;
     use ic_test_state_machine_client::StateMachine;
-    use types::{CanisterId, ChatId, CommunityId, UserId};
+    use types::{CanisterId, ChannelId, ChatId, CommunityId, UserId};
 
     pub fn register_user(env: &mut StateMachine, canister_id: CanisterId) -> User {
         register_user_with_referrer(env, canister_id, None)
@@ -129,6 +130,31 @@ pub mod happy_path {
         match response {
             local_user_index_canister::invite_users_to_community::Response::Success => {}
             response => panic!("'invite_users_to_community' error: {response:?}"),
+        }
+    }
+
+    pub fn invite_users_to_channel(
+        env: &mut StateMachine,
+        sender: Principal,
+        local_user_index_canister_id: CanisterId,
+        community_id: CommunityId,
+        channel_id: ChannelId,
+        user_ids: Vec<UserId>,
+    ) {
+        let response = super::invite_users_to_channel(
+            env,
+            sender,
+            local_user_index_canister_id,
+            &local_user_index_canister::invite_users_to_channel::Args {
+                community_id,
+                channel_id,
+                user_ids,
+            },
+        );
+
+        match response {
+            local_user_index_canister::invite_users_to_channel::Response::Success => {}
+            response => panic!("'invite_users_to_channel' error: {response:?}"),
         }
     }
 

@@ -12,9 +12,11 @@ generate_query_call!(summary);
 generate_update_call!(add_reaction);
 generate_update_call!(block_user);
 generate_update_call!(change_role);
+generate_update_call!(create_channel);
 generate_update_call!(delete_messages);
 generate_update_call!(edit_message);
 generate_update_call!(enable_invite_code);
+generate_update_call!(join_channel);
 generate_update_call!(remove_member);
 generate_update_call!(remove_reaction);
 generate_update_call!(send_message);
@@ -24,11 +26,57 @@ generate_update_call!(undelete_messages);
 pub mod happy_path {
     use crate::rng::random_message_id;
     use crate::User;
+    use candid::Principal;
     use ic_test_state_machine_client::StateMachine;
     use types::{
-        ChannelId, CommunityCanisterCommunitySummary, CommunityId, EventIndex, EventsResponse, MessageContentInitial,
-        MessageId, MessageIndex, TextContent,
+        AccessRules, ChannelId, CommunityCanisterCommunitySummary, CommunityId, EventIndex, EventsResponse,
+        MessageContentInitial, MessageId, MessageIndex, TextContent,
     };
+
+    pub fn create_channel(
+        env: &mut StateMachine,
+        sender: Principal,
+        community_id: CommunityId,
+        is_public: bool,
+        name: String,
+    ) -> ChannelId {
+        let response = super::create_channel(
+            env,
+            sender,
+            community_id.into(),
+            &community_canister::create_channel::Args {
+                is_public,
+                name: name.clone(),
+                description: format!("{name}_description"),
+                rules: AccessRules::default(),
+                subtype: None,
+                avatar: None,
+                history_visible_to_new_joiners: is_public,
+                permissions: None,
+                events_ttl: None,
+                gate: None,
+            },
+        );
+
+        match response {
+            community_canister::create_channel::Response::Success(result) => result.channel_id,
+            response => panic!("'create_channel' error: {response:?}"),
+        }
+    }
+
+    pub fn join_channel(env: &mut StateMachine, sender: Principal, community_id: CommunityId, channel_id: ChannelId) {
+        let response = super::join_channel(
+            env,
+            sender,
+            community_id.into(),
+            &community_canister::join_channel::Args { channel_id },
+        );
+
+        match response {
+            community_canister::join_channel::Response::Success(_) => {}
+            response => panic!("'join_channel' error: {response:?}"),
+        }
+    }
 
     pub fn send_text_message(
         env: &mut StateMachine,

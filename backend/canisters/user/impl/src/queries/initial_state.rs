@@ -7,13 +7,13 @@ use types::{GroupCanisterGroupChatSummary, GroupChatSummary, ThreadSyncDetails, 
 use user_canister::initial_state::{Response::*, *};
 
 #[query(guard = "caller_is_owner")]
-fn initial_state(args: Args) -> user_canister::initial_state_v2::Response {
-    read_state(|state| initial_state_impl(args, state)).into()
+fn initial_state(args: Args) -> Response {
+    read_state(|state| initial_state_impl(args, state))
 }
 
 #[query(guard = "caller_is_owner")]
-fn initial_state_v2(args: Args) -> Response {
-    read_state(|state| initial_state_impl(args, state))
+fn initial_state_v2(args: Args) -> user_canister::initial_state_v2::Response {
+    read_state(|state| initial_state_impl(args, state)).into()
 }
 
 fn initial_state_impl(args: Args, state: &RuntimeState) -> Response {

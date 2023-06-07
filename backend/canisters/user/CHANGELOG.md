@@ -22,6 +22,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 - Remove `c2c_try_add_to_group` ([#3661](https://github.com/open-ic/open-chat/pull/3661))
 
+### Fixed
+
+- Fix `updates` returning early in some cases where it shouldn't ([#3743](https://github.com/open-ic/open-chat/pull/3743))
+
 ## [[2.0.698](https://github.com/open-ic/open-chat/releases/tag/v2.0.698-user)] - 2023-05-17
 
 ### Changed
