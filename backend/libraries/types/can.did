@@ -110,15 +110,6 @@ type DirectChatCreated =
     record {
     };
 
-type DirectChatEventWrapper =
-    record {
-        index: EventIndex;
-        timestamp: TimestampMillis;
-        correlation_id: nat64;
-        expires_at: opt TimestampMillis;
-        event: ChatEvent;
-    };
-
 type DirectChatSummary =
     record {
         them: UserId;
