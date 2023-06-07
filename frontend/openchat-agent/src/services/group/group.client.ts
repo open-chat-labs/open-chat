@@ -30,7 +30,7 @@ import type {
     ResetInviteCodeResponse,
     ThreadPreviewsResponse,
     RegisterProposalVoteResponse,
-    GroupRules,
+    AccessRules,
     SearchGroupChatResponse,
     User,
     GroupCanisterSummaryResponse,
@@ -39,7 +39,7 @@ import type {
     EventWrapper,
     OptionUpdate,
     ClaimPrizeResponse,
-    GroupGate,
+    AccessGate,
     DeclineInvitationResponse,
 } from "openchat-shared";
 import { textToCode } from "openchat-shared";
@@ -318,11 +318,11 @@ export class GroupClient extends CandidService implements IGroupClient {
     updateGroup(
         name?: string,
         description?: string,
-        rules?: GroupRules,
+        rules?: AccessRules,
         permissions?: Partial<GroupPermissions>,
         avatar?: Uint8Array,
         eventsTimeToLiveMs?: OptionUpdate<bigint>,
-        gate?: GroupGate
+        gate?: AccessGate
     ): Promise<UpdateGroupResponse> {
         return this.handleResponse(
             this.groupService.update_group_v2({
@@ -500,7 +500,7 @@ export class GroupClient extends CandidService implements IGroupClient {
     }
 
     @profile("groupClient")
-    getRules(): Promise<GroupRules | undefined> {
+    getRules(): Promise<AccessRules | undefined> {
         const args = { invite_code: apiOptional(textToCode, this.inviteCode) };
         return this.handleQueryResponse(
             () => this.groupService.rules(args),
@@ -716,7 +716,7 @@ export class GroupClient extends CandidService implements IGroupClient {
     toggleMuteNotifications(mute: boolean): Promise<undefined> {
         return this.handleResponse(
             this.groupService.toggle_mute_notifications({ mute }),
-            (_) => undefined,
+            (_) => undefined
         );
     }
 }

@@ -11,6 +11,7 @@ export function publicGroupSummary(candid: ApiPublicGroupSummary): GroupChatSumm
     return {
         kind: "group_chat",
         chatId: candid.chat_id.toString(),
+        id: candid.chat_id.toString(),
         readByMeUpTo: optional(candid.latest_message, (m) => m.event.message_index),
         latestEventIndex: candid.latest_event_index,
         latestMessage: optional(candid.latest_message, (ev) => ({
@@ -22,7 +23,7 @@ export function publicGroupSummary(candid: ApiPublicGroupSummary): GroupChatSumm
         name: candid.name,
         description: candid.description,
         public: candid.is_public,
-        historyVisibleToNewJoiners: false,
+        historyVisible: false,
         joined: BigInt(Date.now()),
         minVisibleEventIndex: 0,
         minVisibleMessageIndex: 0,
@@ -58,6 +59,7 @@ export function publicGroupSummary(candid: ApiPublicGroupSummary): GroupChatSumm
         dateLastPinned: undefined,
         dateReadPinned: undefined,
         gate: optional(candid.gate, groupGate) ?? { kind: "no_gate" },
+        level: "group",
     };
 }
 

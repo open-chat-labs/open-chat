@@ -49,17 +49,10 @@
         </div>
         <div slot="footer">
             <ButtonGroup>
-                <Button
-                    on:click={onSuspend}
-                    loading={suspending}
-                    small>
+                <Button on:click={onSuspend} loading={suspending} small>
                     {$_("suspend")}
                 </Button>
-                <Button
-                    on:click={() => dispatch("close")}
-                    disabled={suspending}
-                    small
-                    secondary>
+                <Button on:click={() => dispatch("close")} disabled={suspending} small secondary>
                     {$_("cancel")}
                 </Button>
             </ButtonGroup>

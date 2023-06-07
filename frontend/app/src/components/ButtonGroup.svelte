@@ -7,7 +7,7 @@
     <slot />
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     :global(.button-group.fill button) {
         flex: auto;
     }
@@ -15,6 +15,7 @@
     .button-group {
         display: flex;
         gap: $sp3;
+        flex-wrap: wrap;
 
         &.start {
             justify-content: flex-start;

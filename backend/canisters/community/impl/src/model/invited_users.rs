@@ -14,7 +14,6 @@ pub struct UserInvitation {
     pub invited: UserId,
     pub invited_by: UserId,
     pub timestamp: TimestampMillis,
-    pub channel: Option<ChannelInvitation>,
 }
 
 #[derive(Serialize, Deserialize)]

@@ -5,7 +5,7 @@
     <slot />
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     :global {
         .blog-post {
             padding-bottom: $sp5;

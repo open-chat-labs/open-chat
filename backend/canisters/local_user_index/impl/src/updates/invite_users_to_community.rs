@@ -14,7 +14,6 @@ async fn invite_users_to_community(args: Args) -> Response {
     let c2c_args = community_canister::c2c_invite_users::Args {
         caller: invited_by,
         users,
-        channel: args.channel,
     };
 
     match community_canister_c2c_client::c2c_invite_users(args.community_id.into(), &c2c_args).await {
@@ -41,8 +40,7 @@ struct PrepareResult {
 }
 
 fn prepare(args: &Args, state: &RuntimeState) -> PrepareResult {
-    let caller = state.env.caller();
-    let invited_by = state.data.global_users.get(&caller).unwrap().user_id;
+    let invited_by = state.calling_user().user_id;
     let users = args
         .user_ids
         .iter()

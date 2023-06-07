@@ -178,12 +178,13 @@ function groupChatSummary(candid: ApiGroupCanisterGroupChatSummary): GroupChatSu
     return {
         kind: "group_chat",
         chatId: candid.chat_id.toString(),
+        id: candid.chat_id.toString(),
         latestMessage,
         readByMeUpTo: latestMessage?.event.messageIndex,
         name: candid.name,
         description: candid.description,
         public: candid.is_public,
-        historyVisibleToNewJoiners: candid.history_visible_to_new_joiners,
+        historyVisible: candid.history_visible_to_new_joiners,
         joined: candid.joined,
         minVisibleEventIndex: candid.min_visible_event_index,
         minVisibleMessageIndex: candid.min_visible_message_index,
@@ -208,5 +209,6 @@ function groupChatSummary(candid: ApiGroupCanisterGroupChatSummary): GroupChatSu
         dateLastPinned: optional(candid.date_last_pinned, identity),
         dateReadPinned: undefined,
         gate: optional(candid.gate, groupGate) ?? { kind: "no_gate" },
+        level: "group",
     };
 }

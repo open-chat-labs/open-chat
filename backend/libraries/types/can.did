@@ -110,15 +110,6 @@ type DirectChatCreated =
     record {
     };
 
-type DirectChatEventWrapper =
-    record {
-        index: EventIndex;
-        timestamp: TimestampMillis;
-        correlation_id: nat64;
-        expires_at: opt TimestampMillis;
-        event: ChatEvent;
-    };
-
 type DirectChatSummary =
     record {
         them: UserId;
@@ -359,22 +350,94 @@ type CommunityCanisterCommunitySummary =
         gate: opt AccessGate;
         last_updated: TimestampMillis;
         latest_event_index: EventIndex;
+        channels: vec CommunityCanisterChannelSummary;
     };
 
-type ChannelSummary =
+type CommunityCanisterChannelSummary =
     record {
         channel_id: ChannelId;
+        last_updated: TimestampMillis;
         name: text;
         description: text;
+        subtype: opt GroupSubtype;
         avatar_id: opt nat;
         is_public: bool;
+        history_visible_to_new_joiners: bool;
+        min_visible_event_index: EventIndex;
+        min_visible_message_index: MessageIndex;
+        latest_message: opt MessageEventWrapper;
+        latest_event_index: EventIndex;
         joined: TimestampMillis;
         member_count: nat32;
         role: GroupRole;
+        mentions: vec Mention;
         permissions: GroupPermissions;
+        notifications_muted: bool;
+        metrics: ChatMetrics;
+        my_metrics: ChatMetrics;
+        latest_threads: vec GroupCanisterThreadDetails;
+        date_last_pinned: opt TimestampMillis;
+        events_ttl: opt Milliseconds;
+        expired_messages: vec MessageIndexRange;
+        next_message_expiry: opt TimestampMillis;
         gate: opt AccessGate;
+    };
+
+type CommunityCanisterCommunitySummaryUpdates =
+    record {
+        community_id: CommunityId;
         last_updated: TimestampMillis;
+        name: opt text;
+        description: opt text;
+        avatar_id: AvatarIdUpdate;
+        is_public: opt bool;
+        member_count: opt nat32;
+        role: opt CommunityRole;
+        permissions: opt CommunityPermissions;
+        frozen: FrozenGroupUpdate;
+        gate: AccessGateUpdate;
+        latest_event_index: opt EventIndex;
+        channels_added: vec CommunityCanisterChannelSummary;
+        channels_updated: vec CommunityCanisterChannelSummaryUpdates;
+        channels_removed: vec ChannelId;
+    };
+
+type CommunityCanisterChannelSummaryUpdates =
+    record {
+        channel_id: ChannelId;
+        last_updated: TimestampMillis;
+        name: opt text;
+        description: opt text;
+        subtype: GroupSubtypeUpdate;
+        avatar_id: AvatarIdUpdate;
+        is_public: opt bool;
+        latest_message: opt MessageEventWrapper;
+        latest_event_index: opt EventIndex;
+        member_count: opt nat32;
+        role: opt GroupRole;
+        mentions: vec Mention;
+        permissions: opt GroupPermissions;
+        notifications_muted: opt bool;
+        metrics: opt ChatMetrics;
+        my_metrics: opt ChatMetrics;
+        latest_threads: vec GroupCanisterThreadDetails;
+        date_last_pinned: opt TimestampMillis;
+        events_ttl: EventsTimeToLiveUpdate;
+        gate: AccessGateUpdate;
+    };
+
+type SelectedGroupUpdates =
+    record {
+        timestamp: TimestampMillis;
         latest_event_index: EventIndex;
+        members_added_or_updated: vec Participant;
+        members_removed: vec UserId;
+        blocked_users_added: vec UserId;
+        blocked_users_removed: vec UserId;
+        invited_users: opt vec UserId;
+        pinned_messages_added: vec MessageIndex;
+        pinned_messages_removed: vec MessageIndex;
+        rules: opt AccessRules;
     };
 
 type GroupDescriptionChanged =

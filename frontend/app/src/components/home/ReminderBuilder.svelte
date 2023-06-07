@@ -151,7 +151,7 @@
     </ModalContent>
 </Overlay>
 
-<style type="text/scss">
+<style lang="scss">
     .remind-at {
         color: var(--txt-light);
         @include font(book, normal, fs-80);

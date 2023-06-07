@@ -6,6 +6,7 @@ use ic_test_state_machine_client::StateMachine;
 use types::{CanisterId, Cycles, UserId};
 
 mod client;
+mod communities;
 mod cycles_dispenser_tests;
 mod delete_group_tests;
 mod delete_message_tests;

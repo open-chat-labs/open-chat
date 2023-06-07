@@ -13,7 +13,7 @@
     </div>
 </a>
 
-<style type="text/scss">
+<style lang="scss">
     .icon {
         position: relative;
         top: 3px;

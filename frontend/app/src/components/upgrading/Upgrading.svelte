@@ -11,7 +11,7 @@
     <div class="spinner" />
 </ModalPage>
 
-<style type="text/scss">
+<style lang="scss">
     .blurb {
         @include font(light, normal, fs-120);
         margin-bottom: $sp6;

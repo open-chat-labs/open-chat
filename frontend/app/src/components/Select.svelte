@@ -17,7 +17,7 @@
     </div>
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     :global(option) {
         color: var(--txt);
         font-weight: normal;
@@ -29,6 +29,7 @@
             position: absolute;
             right: 0.7em;
             top: 0.35em;
+            pointer-events: none;
         }
 
         &.rtl {

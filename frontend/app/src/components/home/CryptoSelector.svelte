@@ -76,7 +76,7 @@
 
 <svelte:window on:click={() => (selecting = false)} on:keydown={onKeyDown} />
 
-<style type="text/scss">
+<style lang="scss">
     .tokens {
         position: absolute;
         background-color: var(--menu-bg);

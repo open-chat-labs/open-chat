@@ -40,8 +40,7 @@ struct PrepareResult {
 }
 
 fn prepare(args: &Args, state: &RuntimeState) -> PrepareResult {
-    let caller = state.env.caller();
-    let invited_by = state.data.global_users.get(&caller).unwrap().user_id;
+    let invited_by = state.calling_user().user_id;
     let users = args
         .user_ids
         .iter()

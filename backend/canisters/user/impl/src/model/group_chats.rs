@@ -18,14 +18,8 @@ struct RemovedGroup {
 }
 
 impl GroupChats {
-    pub fn get_all(&self, updated_since: Option<TimestampMillis>) -> impl Iterator<Item = &GroupChat> {
-        self.group_chats.values().filter(move |&c| {
-            if let Some(updated_since) = updated_since {
-                c.last_updated() > updated_since
-            } else {
-                true
-            }
-        })
+    pub fn updated_since(&self, since: TimestampMillis) -> impl Iterator<Item = &GroupChat> {
+        self.group_chats.values().filter(move |c| c.last_updated() > since)
     }
 
     pub fn get(&self, chat_id: &ChatId) -> Option<&GroupChat> {

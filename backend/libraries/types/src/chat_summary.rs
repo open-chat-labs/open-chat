@@ -1,6 +1,7 @@
 use crate::{
-    AccessGate, CanisterId, ChatId, EventIndex, EventWrapper, FrozenGroupInfo, GroupPermissions, GroupRole, Mention, Message,
-    MessageIndex, Milliseconds, OptionUpdate, RangeSet, TimestampMillis, UserId, Version, MAX_RETURNED_MENTIONS,
+    AccessGate, CanisterId, ChatId, EventIndex, EventWrapper, FrozenGroupInfo, GroupMember, GroupPermissions, GroupRole,
+    Mention, Message, MessageIndex, Milliseconds, OptionUpdate, RangeSet, TimestampMillis, UserId, Version,
+    MAX_RETURNED_MENTIONS,
 };
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
@@ -64,12 +65,6 @@ pub struct GroupChatSummary {
     pub events_ttl: Option<Milliseconds>,
     pub expired_messages: RangeSet<MessageIndex>,
     pub next_message_expiry: Option<TimestampMillis>,
-}
-
-impl GroupChatSummary {
-    pub fn display_date(&self) -> TimestampMillis {
-        self.latest_message.as_ref().map_or(self.joined, |m| m.timestamp)
-    }
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
@@ -232,6 +227,33 @@ pub struct GroupCanisterGroupChatSummaryUpdates {
     pub newly_expired_messages: RangeSet<MessageIndex>,
     pub next_message_expiry: OptionUpdate<TimestampMillis>,
     pub gate: OptionUpdate<AccessGate>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Debug, Default)]
+pub struct SelectedGroupUpdates {
+    pub timestamp: TimestampMillis,
+    pub latest_event_index: EventIndex,
+    pub members_added_or_updated: Vec<GroupMember>,
+    pub members_removed: Vec<UserId>,
+    pub blocked_users_added: Vec<UserId>,
+    pub blocked_users_removed: Vec<UserId>,
+    pub invited_users: Option<Vec<UserId>>,
+    pub pinned_messages_added: Vec<MessageIndex>,
+    pub pinned_messages_removed: Vec<MessageIndex>,
+    pub rules: Option<AccessRules>,
+}
+
+impl SelectedGroupUpdates {
+    pub fn has_updates(&self) -> bool {
+        !self.members_added_or_updated.is_empty()
+            || !self.members_removed.is_empty()
+            || !self.blocked_users_added.is_empty()
+            || !self.blocked_users_removed.is_empty()
+            || self.invited_users.is_some()
+            || !self.pinned_messages_added.is_empty()
+            || !self.pinned_messages_removed.is_empty()
+            || self.rules.is_some()
+    }
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug, Default, Clone)]

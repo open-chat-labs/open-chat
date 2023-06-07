@@ -6,8 +6,9 @@
     import MembersHeader from "./MembersHeader.svelte";
     import VirtualList from "../../VirtualList.svelte";
     import type {
+        AccessControlled,
         FullMember,
-        GroupChatSummary,
+        HasIdentity,
         Member as MemberType,
         OpenChat,
         PartialUserSummary,
@@ -22,43 +23,43 @@
     const userId = client.user.userId;
 
     export let closeIcon: "close" | "back";
-    export let chat: GroupChatSummary;
+    export let collection: HasIdentity & AccessControlled;
+    export let invited: Set<string>;
+    export let members: MemberType[];
+    export let blocked: Set<string>;
 
-    $: members = client.currentChatMembers;
-    $: blocked = client.currentChatBlockedUsers;
-    $: invited = client.currentChatInvitedUsers;
     $: userStore = client.userStore;
-    $: knownUsers = getKnownUsers($userStore, $members);
+    $: knownUsers = getKnownUsers($userStore, members);
     $: me = knownUsers.find((u) => u.userId === userId);
     $: fullMembers = knownUsers
         .filter((u) => matchesSearch(searchTerm, u) && u.userId !== userId)
         .sort(compareMembers);
-    $: blockedUsers = Array.from($blocked)
+    $: blockedUsers = Array.from(blocked)
         .map((userId) => $userStore[userId])
         .filter((u) => matchesSearch(searchTerm, u) && u.userId !== userId);
-    $: invitedUsers = Array.from($invited)
+    $: invitedUsers = Array.from(invited)
         .map((userId) => $userStore[userId])
         .filter((u) => matchesSearch(searchTerm, u) && u.userId !== userId);
-    $: publicGroup = chat.public;
-    $: showBlocked = publicGroup && $blocked.size > 0;
-    $: showInvited = !publicGroup && $invited.size > 0;
-    $: canInvite = client.canInviteUsers(chat.chatId);
+    $: publicCollection = collection.public;
+    $: showBlocked = publicCollection && blocked.size > 0;
+    $: showInvited = !publicCollection && invited.size > 0;
+    $: canInvite = client.canInviteUsers(collection.id);
 
     let searchTerm = "";
-    let chatId = chat.chatId;
+    let id = collection.id;
     let membersList: VirtualList;
     let view: "members" | "blocked" | "invited" = "members";
     let profileUserId: string | undefined = undefined;
 
     $: {
-        if (chat.chatId !== chatId) {
-            chatId = chat.chatId;
+        if (collection.id !== id) {
+            id = collection.id;
             view = "members";
         }
 
         if (
-            (view === "blocked" && $blocked.size === 0) ||
-            (view === "invited" && $invited.size === 0)
+            (view === "blocked" && blocked.size === 0) ||
+            (view === "invited" && invited.size === 0)
         ) {
             view = "members";
         }
@@ -167,9 +168,9 @@
             me
             member={me}
             canPromoteToOwner={me.role !== "owner" && client.isPlatformModerator()}
-            canDemoteToAdmin={client.canDemote(chat.chatId, me.role, "admin")}
-            canDemoteToModerator={client.canDemote(chat.chatId, me.role, "moderator")}
-            canDemoteToMember={client.canDemote(chat.chatId, me.role, "participant")}
+            canDemoteToAdmin={client.canDemote(collection.id, me.role, "admin")}
+            canDemoteToModerator={client.canDemote(collection.id, me.role, "moderator")}
+            canDemoteToMember={client.canDemote(collection.id, me.role, "participant")}
             on:openUserProfile={openUserProfile}
             on:changeRole />
     {/if}
@@ -177,14 +178,14 @@
         <Member
             me={false}
             member={item}
-            canPromoteToOwner={client.canPromote(chat.chatId, item.role, "owner")}
-            canPromoteToAdmin={client.canPromote(chat.chatId, item.role, "admin")}
-            canDemoteToAdmin={client.canDemote(chat.chatId, item.role, "admin")}
-            canPromoteToModerator={client.canPromote(chat.chatId, item.role, "moderator")}
-            canDemoteToModerator={client.canDemote(chat.chatId, item.role, "moderator")}
-            canDemoteToMember={client.canDemote(chat.chatId, item.role, "participant")}
-            canBlockUser={client.canBlockUsers(chat.chatId)}
-            canRemoveMember={client.canRemoveMembers(chat.chatId)}
+            canPromoteToOwner={client.canPromote(collection.id, item.role, "owner")}
+            canPromoteToAdmin={client.canPromote(collection.id, item.role, "admin")}
+            canDemoteToAdmin={client.canDemote(collection.id, item.role, "admin")}
+            canPromoteToModerator={client.canPromote(collection.id, item.role, "moderator")}
+            canDemoteToModerator={client.canDemote(collection.id, item.role, "moderator")}
+            canDemoteToMember={client.canDemote(collection.id, item.role, "participant")}
+            canBlockUser={client.canBlockUsers(collection.id)}
+            canRemoveMember={client.canRemoveMembers(collection.id)}
             {searchTerm}
             on:blockUser
             on:chatWith
@@ -198,7 +199,7 @@
             <BlockedUser
                 {user}
                 {searchTerm}
-                canUnblockUser={client.canUnblockUsers(chat.chatId)}
+                canUnblockUser={client.canUnblockUsers(collection.id)}
                 on:openUserProfile={openUserProfile}
                 on:unblockUser />
         {/each}
@@ -216,7 +217,7 @@
     </div>
 {/if}
 
-<style type="text/scss">
+<style lang="scss">
     .section-selector {
         display: flex;
         justify-content: flex-start;

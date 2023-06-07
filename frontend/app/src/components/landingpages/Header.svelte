@@ -41,7 +41,7 @@
     </div>
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .wrapper {
         width: 100%;
         padding: 0;

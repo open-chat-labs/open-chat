@@ -4,7 +4,7 @@
     <div>.</div>
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .typing {
         padding-bottom: $sp2;
         margin-top: -$sp2;

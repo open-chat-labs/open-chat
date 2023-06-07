@@ -4,7 +4,9 @@ use local_user_index_canister::*;
 // Queries
 
 // Updates
+generate_update_call!(invite_users_to_community);
 generate_update_call!(invite_users_to_group);
+generate_update_call!(join_community);
 generate_update_call!(join_group);
 generate_update_call!(register_user);
 generate_update_call!(report_message);
@@ -15,7 +17,7 @@ pub mod happy_path {
     use crate::User;
     use candid::Principal;
     use ic_test_state_machine_client::StateMachine;
-    use types::{CanisterId, ChatId, UserId};
+    use types::{CanisterId, ChatId, CommunityId, UserId};
 
     pub fn register_user(env: &mut StateMachine, canister_id: CanisterId) -> User {
         register_user_with_referrer(env, canister_id, None)
@@ -105,6 +107,70 @@ pub mod happy_path {
 
         for (_, principal) in users {
             join_group(env, principal, local_user_index_canister_id, group_id);
+        }
+
+        env.tick();
+    }
+
+    pub fn invite_users_to_community(
+        env: &mut StateMachine,
+        sender: Principal,
+        local_user_index_canister_id: CanisterId,
+        community_id: CommunityId,
+        user_ids: Vec<UserId>,
+    ) {
+        let response = super::invite_users_to_community(
+            env,
+            sender,
+            local_user_index_canister_id,
+            &local_user_index_canister::invite_users_to_community::Args { community_id, user_ids },
+        );
+
+        match response {
+            local_user_index_canister::invite_users_to_community::Response::Success => {}
+            response => panic!("'invite_users_to_community' error: {response:?}"),
+        }
+    }
+
+    pub fn join_community(
+        env: &mut StateMachine,
+        sender: Principal,
+        local_user_index_canister_id: CanisterId,
+        community_id: CommunityId,
+    ) {
+        let response = super::join_community(
+            env,
+            sender,
+            local_user_index_canister_id,
+            &local_user_index_canister::join_community::Args {
+                community_id,
+                invite_code: None,
+            },
+        );
+
+        match response {
+            local_user_index_canister::join_community::Response::Success(_) => {}
+            response => panic!("'join_community' error: {response:?}"),
+        }
+    }
+
+    pub fn add_users_to_community(
+        env: &mut StateMachine,
+        sender: Principal,
+        local_user_index_canister_id: CanisterId,
+        community_id: CommunityId,
+        users: Vec<(UserId, Principal)>,
+    ) {
+        invite_users_to_community(
+            env,
+            sender,
+            local_user_index_canister_id,
+            community_id,
+            users.iter().map(|(user_id, _)| *user_id).collect(),
+        );
+
+        for (_, principal) in users {
+            join_community(env, principal, local_user_index_canister_id, community_id);
         }
 
         env.tick();

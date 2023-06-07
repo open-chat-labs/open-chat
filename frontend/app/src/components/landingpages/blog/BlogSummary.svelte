@@ -28,7 +28,7 @@
     </div>
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .blog-summary {
         padding-bottom: $sp5;
         border-bottom: 1px solid var(--landing-bd);

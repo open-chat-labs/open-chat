@@ -391,7 +391,7 @@
     </MenuIcon>
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .menu {
         $offset: -2px;
         position: absolute;

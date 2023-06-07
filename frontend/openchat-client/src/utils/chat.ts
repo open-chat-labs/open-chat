@@ -36,6 +36,8 @@ import {
     UnsupportedValueError,
     getContentAsText,
     eventIsVisible,
+    AccessControlled,
+    Permissioned,
 } from "openchat-shared";
 import { distinctBy, groupWhile } from "../utils/list";
 import { areOnSameDay } from "../utils/date";
@@ -56,12 +58,12 @@ import { tallyKey } from "../stores/proposalTallies";
 const MAX_RTC_CONNECTIONS_PER_CHAT = 10;
 const MERGE_MESSAGES_SENT_BY_SAME_USER_WITHIN_MILLIS = 60 * 1000; // 1 minute
 
-export function isPreviewing(chat: ChatSummary): boolean {
-    return chat.kind === "group_chat" && chat.myRole === "previewer";
+export function isPreviewing<T>(thing: Permissioned<T>): boolean {
+    return thing.myRole === "previewer";
 }
 
-export function isFrozen(chat: ChatSummary): boolean {
-    return chat.kind === "group_chat" && chat.frozen;
+export function isFrozen(thing: AccessControlled): boolean {
+    return thing.frozen;
 }
 
 export function newMessageId(): bigint {
@@ -348,7 +350,7 @@ export function mergeLocalSummaryUpdates(
     for (const [chatId, localUpdate] of Object.entries(localUpdates)) {
         if (localUpdate.added !== undefined) {
             const current = merged[chatId];
-            if (current === undefined || isPreviewing(current)) {
+            if (current === undefined || (current.kind === "group_chat" && isPreviewing(current))) {
                 merged[chatId] = localUpdate.added;
             }
         }
@@ -655,14 +657,15 @@ export function groupChatFromCandidate(
     return {
         kind: "group_chat",
         chatId,
+        id: chatId,
         readByMeUpTo: undefined,
         latestEventIndex: 0,
         latestMessage: undefined,
         notificationsMuted: false,
         name: candidate.name,
         description: candidate.description,
-        public: candidate.isPublic,
-        historyVisibleToNewJoiners: candidate.historyVisible,
+        public: candidate.public,
+        historyVisible: candidate.historyVisible,
         joined: BigInt(Date.now()),
         minVisibleEventIndex: 0,
         minVisibleMessageIndex: 0,
@@ -682,6 +685,7 @@ export function groupChatFromCandidate(
         dateLastPinned: undefined,
         dateReadPinned: undefined,
         gate: candidate.gate,
+        level: "group",
     };
 }
 
@@ -895,25 +899,26 @@ export function canReplyInThread(chat: ChatSummary): boolean {
     }
 }
 
-export function canLeaveGroup(chat: ChatSummary): boolean {
-    if (chat.kind === "group_chat" && !chat.frozen) {
-        return chat.myRole !== "owner";
+export function canLeaveGroup<T>(thing: AccessControlled & Permissioned<T>): boolean {
+    if (!thing.frozen) {
+        // TODO - this is not really correct - you should be able to leave if you are not the *only* owner
+        return thing.myRole !== "owner";
     } else {
         return false;
     }
 }
 
-export function canDeleteGroup(chat: ChatSummary): boolean {
-    if (chat.kind === "group_chat" && !chat.frozen) {
-        return hasOwnerRights(chat.myRole);
+export function canDeleteGroup<T>(thing: AccessControlled & Permissioned<T>): boolean {
+    if (!thing.frozen) {
+        return hasOwnerRights(thing.myRole);
     } else {
         return false;
     }
 }
 
-export function canMakeGroupPrivate(chat: ChatSummary): boolean {
-    if (chat.kind === "group_chat" && !chat.frozen) {
-        return chat.public && hasOwnerRights(chat.myRole);
+export function canMakePrivate<T>(thing: AccessControlled & Permissioned<T>): boolean {
+    if (!thing.frozen) {
+        return thing.public && hasOwnerRights(thing.myRole);
     } else {
         return false;
     }

@@ -37,7 +37,7 @@
 
 <ContentCaption caption={content.caption} {edited} {reply} />
 
-<style type="text/scss">
+<style lang="scss">
     .video {
         position: relative;
         cursor: pointer;

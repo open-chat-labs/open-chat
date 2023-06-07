@@ -6,7 +6,7 @@
 </script>
 
 {#if disabled}
-    <div disabled class:disabled class="menu-item" role="menuitem">
+    <div class:disabled class="menu-item" role="menuitem">
         <span class="icon">
             <slot name="icon" />
         </span>
@@ -23,14 +23,15 @@
     </div>
 {/if}
 
-<style type="text/scss">
+<style lang="scss">
     .menu-item {
         display: flex;
         cursor: pointer;
         color: var(--menu-txt);
         align-items: center;
         @include font-size(fs-90);
-        padding: 10px $sp4;
+        padding: 10px;
+        gap: 10px;
 
         &:last-child {
             border-bottom: none;
@@ -43,7 +44,6 @@
 
         .icon:not(:empty) {
             display: flex;
-            flex: 0 0 toRem(34);
         }
 
         .icon:empty {

@@ -295,7 +295,7 @@
     </div>
 </SectionHeader>
 
-<style type="text/scss">
+<style lang="scss">
     .wrapper {
         border-radius: 18px;
         padding: $sp3 $sp4;

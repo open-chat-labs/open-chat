@@ -58,7 +58,6 @@ fn c2c_invite_users_impl(args: Args, state: &mut RuntimeState) -> Response {
                         invited: *user_id,
                         invited_by: member.user_id,
                         timestamp: now,
-                        channel: None, // TODO: need to fill this in
                     },
                 );
             }

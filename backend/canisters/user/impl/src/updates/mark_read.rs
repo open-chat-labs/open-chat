@@ -3,17 +3,33 @@ use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use fire_and_forget_handler::FireAndForgetHandler;
 use ic_cdk_macros::update;
-use types::{ChatId, MessageIndex, Timestamped};
+use types::{ChatId, MessageIndex};
 use user_canister::c2c_mark_read_v2;
-use user_canister::mark_read_v2::{Response::*, *};
+use user_canister::mark_read::{Response::*, *};
 use utils::consts::OPENCHAT_BOT_USER_ID;
 
 #[update(guard = "caller_is_owner")]
 #[trace]
-fn mark_read_v2(args: Args) -> Response {
+fn mark_read(args: Args) -> Response {
     run_regular_jobs();
 
     mutate_state(|state| mark_read_impl(args, state))
+}
+
+#[update(guard = "caller_is_owner")]
+#[trace]
+fn mark_read_v2(args: user_canister::mark_read_v2::Args) -> Response {
+    run_regular_jobs();
+
+    mutate_state(|state| {
+        mark_read_impl(
+            Args {
+                messages_read: args.messages_read,
+                community_messages_read: Vec::new(),
+            },
+            state,
+        )
+    })
 }
 
 fn mark_read_impl(args: Args, state: &mut RuntimeState) -> Response {
@@ -21,19 +37,12 @@ fn mark_read_impl(args: Args, state: &mut RuntimeState) -> Response {
 
     for chat_messages_read in args.messages_read {
         if let Some(group_chat) = state.data.group_chats.get_mut(&chat_messages_read.chat_id) {
-            if let Some(read_up_to) = chat_messages_read.read_up_to {
-                group_chat.mark_read_up_to(read_up_to, now);
-            }
-
-            for thread in chat_messages_read.threads {
-                group_chat
-                    .threads_read
-                    .insert(thread.root_message_index, thread.read_up_to, now);
-            }
-
-            if chat_messages_read.date_read_pinned > group_chat.date_read_pinned.value {
-                group_chat.date_read_pinned = Timestamped::new(chat_messages_read.date_read_pinned, now);
-            }
+            group_chat.mark_read(
+                chat_messages_read.read_up_to,
+                chat_messages_read.threads,
+                chat_messages_read.date_read_pinned,
+                now,
+            );
         } else if let Some(direct_chat) = state.data.direct_chats.get_mut(&chat_messages_read.chat_id) {
             if let Some(read_up_to) = chat_messages_read.read_up_to {
                 if read_up_to
@@ -57,6 +66,12 @@ fn mark_read_impl(args: Args, state: &mut RuntimeState) -> Response {
                     }
                 }
             }
+        }
+    }
+
+    for community_messages_read in args.community_messages_read {
+        if let Some(community) = state.data.communities.get_mut(&community_messages_read.community_id) {
+            community.mark_read(community_messages_read.channels_read, now);
         }
     }
 

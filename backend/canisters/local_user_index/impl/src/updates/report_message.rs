@@ -47,9 +47,7 @@ struct PrepareResult {
 }
 
 fn prepare(state: &RuntimeState) -> PrepareResult {
-    let caller = state.env.caller();
-
-    let user_id = state.data.global_users.get_by_principal(&caller).unwrap().user_id;
+    let user_id = state.calling_user().user_id;
 
     PrepareResult {
         user_id,

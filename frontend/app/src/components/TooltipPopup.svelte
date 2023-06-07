@@ -34,7 +34,7 @@
     <slot />
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .tooltip-popup {
         background-color: var(--menu-bg);
         border: 1px solid var(--menu-bd);

@@ -262,6 +262,7 @@ export function mergeDirectChatUpdates(
 
         return {
             kind: "direct_chat",
+            id: c.them,
             chatId: c.them,
             them: c.them,
             readByThemUpTo: u.readByThemUpTo ?? c.readByThemUpTo,
@@ -302,6 +303,7 @@ export function mergeGroupChatUpdates(
         return {
             kind: "group_chat",
             chatId: c.chatId,
+            id: c.chatId,
             name: g?.name ?? c.name,
             description: g?.description ?? c.description,
             joined: c.joined,
@@ -313,7 +315,7 @@ export function mergeGroupChatUpdates(
             public: g?.public ?? c.public,
             myRole: g?.myRole ?? c.myRole,
             permissions: g?.permissions ?? c.permissions,
-            historyVisibleToNewJoiners: c.historyVisibleToNewJoiners,
+            historyVisible: c.historyVisible,
             latestThreads: mergeThreads(
                 c.latestThreads,
                 g?.latestThreads ?? [],
@@ -336,6 +338,7 @@ export function mergeGroupChatUpdates(
             dateLastPinned: g?.dateLastPinned ?? c.dateLastPinned,
             dateReadPinned: u?.dateReadPinned ?? c.dateReadPinned,
             gate: applyOptionUpdate(c.gate, g?.gate) ?? { kind: "no_gate" },
+            level: "group",
         };
     });
 }
@@ -352,6 +355,7 @@ export function mergeGroupChats(
         return {
             kind: "group_chat",
             chatId: g.chatId,
+            id: g.chatId,
             name: g.name,
             description: g.description,
             joined: g.joined,
@@ -363,7 +367,7 @@ export function mergeGroupChats(
             public: g.public,
             myRole: g.myRole,
             permissions: g.permissions,
-            historyVisibleToNewJoiners: g.historyVisibleToNewJoiners,
+            historyVisible: g.historyVisible,
             latestThreads: mergeThreads([], g.latestThreads, u.threadsRead),
             subtype: g.subtype,
             previewed: false,
@@ -380,6 +384,7 @@ export function mergeGroupChats(
             dateLastPinned: g.dateLastPinned,
             dateReadPinned: u?.dateReadPinned,
             gate: g.gate,
+            level: "group",
         };
     });
 }

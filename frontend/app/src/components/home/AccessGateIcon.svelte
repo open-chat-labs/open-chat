@@ -1,30 +1,29 @@
 <script lang="ts">
     import { _ } from "svelte-i18n";
-    import { rtlStore } from "../../stores/rtl";
     import TooltipWrapper from "../TooltipWrapper.svelte";
     import TooltipPopup from "../TooltipPopup.svelte";
-    import { E8S_PER_TOKEN, GroupGate } from "openchat-client";
+    import { E8S_PER_TOKEN, AccessGate } from "openchat-client";
     import { createEventDispatcher } from "svelte";
 
-    export let gate: GroupGate;
+    export let gate: AccessGate;
 
     const dispatch = createEventDispatcher();
 
     $: params = formatParams(gate);
 
-    function formatParams(gate: GroupGate): string {
+    function formatParams(gate: AccessGate): string {
         const parts = [];
         if (gate.kind === "openchat_gate" || gate.kind === "sns1_gate") {
             if (gate.minDissolveDelay) {
                 parts.push(
-                    `${$_("group.minDissolveDelayN", {
+                    `${$_("access.minDissolveDelayN", {
                         values: { n: gate.minDissolveDelay / (24 * 60 * 60 * 1000) },
                     })}`
                 );
             }
             if (gate.minStakeE8s) {
                 parts.push(
-                    `${$_("group.minStakeN", { values: { n: gate.minStakeE8s / E8S_PER_TOKEN } })}`
+                    `${$_("access.minStakeN", { values: { n: gate.minStakeE8s / E8S_PER_TOKEN } })}`
                 );
             }
         }
@@ -38,7 +37,7 @@
             <div on:click={() => dispatch("upgrade")} slot="target" class="diamond">💎</div>
             <div let:position let:align slot="tooltip">
                 <TooltipPopup {position} {align}>
-                    {$_("group.diamondGateInfo")}
+                    {$_("access.diamondGateInfo")}
                 </TooltipPopup>
             </div>
         </TooltipWrapper>
@@ -47,7 +46,7 @@
             <div slot="target" class="icon oc" />
             <div let:position let:align slot="tooltip">
                 <TooltipPopup {position} {align}>
-                    <p>{`${$_("group.chatHolderInfo")}`}</p>
+                    <p>{`${$_("access.chatHolderInfo")}`}</p>
                     <p class="params">{params}</p>
                 </TooltipPopup>
             </div>
@@ -57,7 +56,7 @@
             <div slot="target" class="icon sns1" />
             <div let:position let:align slot="tooltip">
                 <TooltipPopup {position} {align}>
-                    <p>{`${$_("group.sns1HolderInfo")}`}</p>
+                    <p>{`${$_("access.sns1HolderInfo")}`}</p>
                     <p class="params">{params}</p>
                 </TooltipPopup>
             </div>
@@ -65,7 +64,7 @@
     {/if}
 {/if}
 
-<style type="text/scss">
+<style lang="scss">
     $size: 32px;
     .icon {
         height: $size;

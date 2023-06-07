@@ -50,7 +50,7 @@
     {/if}
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .card {
         border-bottom: 1px solid var(--bd);
 

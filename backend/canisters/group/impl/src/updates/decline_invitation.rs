@@ -14,7 +14,7 @@ fn decline_invitation(_args: Args) -> Response {
 fn decline_invitation_impl(state: &mut RuntimeState) -> Response {
     let caller = state.env.caller();
     let now = state.env.now();
-    match state.data.chat.invited_users.remove(&caller, now) {
+    match state.data.remove_invitation(caller, now) {
         Some(_) => Success,
         None => NotInvited,
     }

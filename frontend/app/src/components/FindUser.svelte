@@ -116,7 +116,7 @@
     {/if}
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .search-form {
         margin: 0 $sp4 $sp4 $sp4;
         background-color: var(--chatSearch-bg);

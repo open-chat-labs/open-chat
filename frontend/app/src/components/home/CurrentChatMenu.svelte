@@ -1,3 +1,4 @@
+<!-- svelte-ignore a11y-click-events-have-key-events -->
 <script lang="ts">
     import CancelIcon from "svelte-material-icons/Cancel.svelte";
     import TickIcon from "svelte-material-icons/Check.svelte";
@@ -5,6 +6,7 @@
     import AccountMultiple from "svelte-material-icons/AccountMultiple.svelte";
     import CheckboxMultipleMarked from "svelte-material-icons/CheckboxMultipleMarked.svelte";
     import LocationExit from "svelte-material-icons/LocationExit.svelte";
+    import ConvertToCommunity from "../icons/ConvertToCommunity.svelte";
     import FilterOutline from "svelte-material-icons/FilterOutline.svelte";
     import Pin from "svelte-material-icons/Pin.svelte";
     import Magnify from "svelte-material-icons/Magnify.svelte";
@@ -25,6 +27,7 @@
     import { mobileWidth } from "../../stores/screenDimensions";
     import { rightPanelHistory } from "../../stores/rightPanel";
     import { rtlStore } from "../../stores/rtl";
+    import { communitiesEnabled } from "../../utils/features";
 
     const client = getContext<OpenChat>("client");
     const dispatch = createEventDispatcher();
@@ -44,8 +47,8 @@
     $: lastState = $rightPanelHistory[$rightPanelHistory.length - 1] ?? { kind: "no_panel" };
     $: groupDetailsSelected = lastState.kind === "group_details";
     $: pinnedSelected = lastState.kind === "show_pinned";
-    $: membersSelected = lastState.kind === "show_members";
-    $: inviteMembersSelected = lastState.kind === "invite_users";
+    $: membersSelected = lastState.kind === "show_group_members";
+    $: inviteMembersSelected = lastState.kind === "invite_group_users";
     $: desktop = !$mobileWidth;
 
     let hasUnreadPinned = false;
@@ -85,8 +88,8 @@
         dispatch("showProposalFilters");
     }
 
-    function showMembers() {
-        dispatch("showMembers", true);
+    function showGroupMembers() {
+        dispatch("showGroupMembers", true);
     }
 
     function markAllRead() {
@@ -105,12 +108,16 @@
         }
     }
 
-    function showInviteUsers() {
-        dispatch("showInviteUsers", true);
+    function showInviteGroupUsers() {
+        dispatch("showInviteGroupUsers", true);
     }
 
     function leaveGroup() {
         dispatch("leaveGroup", { kind: "leave", chatId: selectedChatSummary.chatId });
+    }
+
+    function convertToCommunity() {
+        dispatch("convertToCommunity", { chatId: selectedChatSummary.chatId });
     }
 
     function freezeGroup() {
@@ -181,7 +188,7 @@
                     color={groupDetailsSelected ? "var(--icon-selected)" : "var(--icon-txt)"} />
             </HoverIcon>
         </span>
-        <span on:click={showMembers}>
+        <span on:click={showGroupMembers}>
             <HoverIcon title={$_("members")}>
                 <AccountMultiple
                     size={$iconSize}
@@ -189,7 +196,7 @@
             </HoverIcon>
         </span>
         {#if client.canInviteUsers(selectedChatSummary.chatId)}
-            <span on:click={showInviteUsers}>
+            <span on:click={showInviteGroupUsers}>
                 <HoverIcon title={$_("group.inviteUsers")}>
                     <AccountMultiplePlus
                         size={$iconSize}
@@ -245,7 +252,7 @@
                                 slot="icon" />
                             <div slot="text">{$_("groupDetails")}</div>
                         </MenuItem>
-                        <MenuItem on:click={showMembers}>
+                        <MenuItem on:click={showGroupMembers}>
                             <AccountMultiple
                                 size={$iconSize}
                                 color={"var(--icon-inverted-txt)"}
@@ -253,7 +260,7 @@
                             <div slot="text">{$_("members")}</div>
                         </MenuItem>
                         {#if client.canInviteUsers(selectedChatSummary.chatId)}
-                            <MenuItem on:click={showInviteUsers}>
+                            <MenuItem on:click={showInviteGroupUsers}>
                                 <AccountMultiplePlus
                                     size={$iconSize}
                                     color={"var(--icon-inverted-txt)"}
@@ -311,6 +318,15 @@
                         <MenuItem warning on:click={leaveGroup}>
                             <LocationExit size={$iconSize} color={"var(--menu-warn)"} slot="icon" />
                             <div slot="text">{$_("leaveGroup")}</div>
+                        </MenuItem>
+                    {/if}
+                    {#if $communitiesEnabled}
+                        <MenuItem warning on:click={convertToCommunity}>
+                            <ConvertToCommunity
+                                size={$iconSize}
+                                color={"var(--menu-warn)"}
+                                slot="icon" />
+                            <div slot="text">{$_("communities.convert")}</div>
                         </MenuItem>
                     {/if}
                 {/if}
@@ -390,7 +406,7 @@
     </MenuIcon>
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .menu {
         flex: 0 0 20px;
     }

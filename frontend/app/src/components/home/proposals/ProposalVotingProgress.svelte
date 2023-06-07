@@ -46,7 +46,7 @@
     </div>
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .wrapper {
         flex: auto;
         position: relative;

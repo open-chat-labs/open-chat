@@ -1,5 +1,9 @@
+use crate::model::btc_miami_payments_queue::BtcMiamiPaymentsQueue;
 use crate::model::referral_codes::{ReferralCodes, ReferralTypeMetrics};
+use crate::timer_job_types::TimerJob;
 use canister_state_macros::canister_state;
+use canister_timer_jobs::TimerJobs;
+use local_user_index_canister::GlobalUser;
 use model::global_user_map::GlobalUserMap;
 use model::local_user_map::LocalUserMap;
 use serde::{Deserialize, Serialize};
@@ -22,6 +26,7 @@ mod lifecycle;
 mod memory;
 mod model;
 mod queries;
+mod timer_job_types;
 mod updates;
 
 const USER_CANISTER_INITIAL_CYCLES_BALANCE: Cycles = CYCLES_REQUIRED_FOR_UPGRADE + USER_CANISTER_TOP_UP_AMOUNT; // 0.18T cycles
@@ -41,6 +46,11 @@ struct RuntimeState {
 impl RuntimeState {
     pub fn new(env: Box<dyn Environment>, data: Data) -> RuntimeState {
         RuntimeState { env, data }
+    }
+
+    pub fn calling_user(&self) -> GlobalUser {
+        let caller = self.env.caller();
+        self.data.global_users.get(&caller).unwrap()
     }
 
     pub fn is_caller_user_index_canister(&self) -> bool {
@@ -139,6 +149,10 @@ struct Data {
     pub platform_moderators_group: Option<ChatId>,
     #[serde(default)]
     pub referral_codes: ReferralCodes,
+    #[serde(default)]
+    pub timer_jobs: TimerJobs<TimerJob>,
+    #[serde(default)]
+    pub btc_miami_payments_queue: BtcMiamiPaymentsQueue,
 }
 
 fn internet_identity_canister_id() -> CanisterId {
@@ -183,6 +197,8 @@ impl Data {
             user_upgrade_concurrency: 10,
             platform_moderators_group: None,
             referral_codes: ReferralCodes::default(),
+            timer_jobs: TimerJobs::default(),
+            btc_miami_payments_queue: BtcMiamiPaymentsQueue::default(),
         }
     }
 }

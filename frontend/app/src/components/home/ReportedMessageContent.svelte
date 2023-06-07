@@ -53,7 +53,7 @@
     })}
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .report {
         @include font(book, normal, fs-100);
         margin-bottom: $sp4;

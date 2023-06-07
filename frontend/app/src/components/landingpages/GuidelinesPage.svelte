@@ -20,7 +20,7 @@
     <GuidelinesContent {linked} />
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .guidelines {
         text-align: left;
         @include lp-content-padding();

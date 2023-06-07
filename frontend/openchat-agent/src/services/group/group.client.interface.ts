@@ -28,7 +28,7 @@ import type {
     DisableInviteCodeResponse,
     ResetInviteCodeResponse,
     RegisterProposalVoteResponse,
-    GroupRules,
+    AccessRules,
     SearchGroupChatResponse,
     GroupCanisterSummaryResponse,
     GroupCanisterSummaryUpdatesResponse,
@@ -36,7 +36,7 @@ import type {
     EventWrapper,
     OptionUpdate,
     ClaimPrizeResponse,
-    GroupGate,
+    AccessGate,
     ThreadPreviewsResponse,
     DeclineInvitationResponse,
 } from "openchat-shared";
@@ -75,11 +75,11 @@ export interface IGroupClient {
     updateGroup(
         name?: string,
         desc?: string,
-        rules?: GroupRules,
+        rules?: AccessRules,
         permissions?: Partial<GroupPermissions>,
         avatar?: Uint8Array,
         eventsTimeToLiveMs?: OptionUpdate<bigint>,
-        gate?: GroupGate
+        gate?: AccessGate
     ): Promise<UpdateGroupResponse>;
     addReaction(
         messageId: bigint,
@@ -107,7 +107,7 @@ export interface IGroupClient {
     getGroupDetailsUpdates(previous: GroupChatDetails): Promise<GroupChatDetails>;
     makeGroupPrivate(): Promise<MakeGroupPrivateResponse>;
     getPublicSummary(): Promise<GroupChatSummary | undefined>;
-    getRules(): Promise<GroupRules | undefined>;
+    getRules(): Promise<AccessRules | undefined>;
     getMessagesByMessageIndex(
         messageIndexes: Set<number>,
         latestClientEventIndex: number | undefined

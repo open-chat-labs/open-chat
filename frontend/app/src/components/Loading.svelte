@@ -6,7 +6,7 @@
 
 <div class={cls} />
 
-<style type="text/scss">
+<style lang="scss">
     .loading {
         height: 100%;
         width: 100%;

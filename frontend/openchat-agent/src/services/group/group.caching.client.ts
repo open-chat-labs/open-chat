@@ -32,7 +32,7 @@ import type {
     ResetInviteCodeResponse,
     ThreadPreviewsResponse,
     RegisterProposalVoteResponse,
-    GroupRules,
+    AccessRules,
     User,
     SearchGroupChatResponse,
     Logger,
@@ -40,7 +40,7 @@ import type {
     EventWrapper,
     OptionUpdate,
     ClaimPrizeResponse,
-    GroupGate,
+    AccessGate,
     DeclineInvitationResponse,
 } from "openchat-shared";
 import type { IGroupClient } from "./group.client.interface";
@@ -249,11 +249,11 @@ export class CachingGroupClient implements IGroupClient {
     updateGroup(
         name?: string,
         description?: string,
-        rules?: GroupRules,
+        rules?: AccessRules,
         permissions?: Partial<GroupPermissions>,
         avatar?: Uint8Array,
         eventsTimeToLiveMs?: OptionUpdate<bigint>,
-        gate?: GroupGate
+        gate?: AccessGate
     ): Promise<UpdateGroupResponse> {
         return this.client.updateGroup(
             name,
@@ -341,7 +341,7 @@ export class CachingGroupClient implements IGroupClient {
         return this.client.getPublicSummary();
     }
 
-    getRules(): Promise<GroupRules | undefined> {
+    getRules(): Promise<AccessRules | undefined> {
         return this.client.getRules();
     }
 

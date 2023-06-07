@@ -144,7 +144,7 @@
         on:createTestMessages />
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .footer {
         position: relative;
         flex: 0 0 toRem(60);

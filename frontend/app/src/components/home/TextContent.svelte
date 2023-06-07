@@ -87,7 +87,7 @@
     {/if}
 {/if}
 
-<style type="text/scss">
+<style lang="scss">
     .expand {
         cursor: pointer;
         padding: 0 $sp3;

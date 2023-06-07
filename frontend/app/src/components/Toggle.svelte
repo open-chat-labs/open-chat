@@ -22,7 +22,7 @@
     {/if}
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .toggle-wrapper {
         display: flex;
         align-items: center;

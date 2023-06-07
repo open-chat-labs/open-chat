@@ -73,7 +73,7 @@
     {/if}
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .selector {
         position: relative;
         margin-bottom: $sp4;

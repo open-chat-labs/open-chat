@@ -19,7 +19,7 @@ fn create_channel_impl(args: Args, state: &mut RuntimeState) -> Response {
     }
 
     let caller = state.env.caller();
-    if let Some(member) = state.data.members.get(caller) {
+    if let Some(member) = state.data.members.get_mut(caller) {
         if member.suspended.value {
             return UserSuspended;
         }
@@ -62,6 +62,7 @@ fn create_channel_impl(args: Args, state: &mut RuntimeState) -> Response {
                 state.env.now(),
             );
             state.data.channels.add(Channel { id: channel_id, chat });
+            member.channels.insert(channel_id);
             Success(SuccessResult { channel_id })
         }
     } else {

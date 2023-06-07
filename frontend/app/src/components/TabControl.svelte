@@ -33,7 +33,7 @@
     </div>
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .tab {
         display: flex;
         border-bottom: 1px solid var(--button-bg);

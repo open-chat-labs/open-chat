@@ -7,6 +7,7 @@
     import SelectChatModal from "../SelectChatModal.svelte";
     import MiddlePanel from "./MiddlePanel.svelte";
     import RightPanel from "./RightPanel.svelte";
+    import EditCommunity from "./communities/edit/Edit.svelte";
     import {
         GroupSearchResponse,
         MessageMatch,
@@ -14,7 +15,7 @@
         ChatSummary,
         EnhancedReplyContext,
         GroupChatSummary,
-        GroupRules,
+        AccessRules,
         Message,
         OpenChat,
         ThreadSelected,
@@ -24,9 +25,11 @@
         ChatsUpdated,
         Notification,
         CandidateGroupChat,
-        defaultGroupRules,
+        defaultAccessRules,
         EventWrapper,
         ChatType,
+        Community,
+        Level,
     } from "openchat-client";
     import Overlay from "../Overlay.svelte";
     import { getContext, onMount, tick } from "svelte";
@@ -41,7 +44,11 @@
         closeNotifications,
         subscribeToNotifications,
     } from "../../utils/notifications";
-    import { filterByChatType, rightPanelHistory } from "../../stores/rightPanel";
+    import {
+        filterByChatType,
+        pushRightPanelHistory,
+        rightPanelHistory,
+    } from "../../stores/rightPanel";
     import Upgrade from "./upgrade/Upgrade.svelte";
     import AreYouSure from "../AreYouSure.svelte";
     import { removeQueryStringParam } from "../../utils/urls";
@@ -55,35 +62,54 @@
     import AccountsModal from "./profile/AccountsModal.svelte";
     import { querystring } from "routes";
     import { eventListScrollTop } from "../../stores/scrollPos";
-    import GateCheckFailed from "./groupdetails/GateCheckFailed.svelte";
+    import GateCheckFailed from "./AccessGateCheckFailed.svelte";
     import HallOfFame from "./HallOfFame.svelte";
     import LeftNav from "./nav/LeftNav.svelte";
+    import { createCandidateCommunity } from "../../stores/community";
 
     const client = getContext<OpenChat>("client");
     const user = client.user;
     let candidateGroup: CandidateGroupChat | undefined;
+    let candidateCommunity: Community | undefined;
 
-    type ConfirmActionEvent = ConfirmLeaveEvent | ConfirmDeleteEvent | ConfirmRulesEvent;
+    type ConfirmActionEvent =
+        | ConfirmLeaveEvent
+        | ConfirmDeleteEvent
+        | ConfirmRulesEvent
+        | ConfirmLeaveCommunityEvent
+        | ConfirmDeleteCommunityEvent;
 
-    interface ConfirmLeaveEvent {
+    type ConfirmLeaveCommunityEvent = {
+        kind: "leave_community";
+        communityId: string;
+        chatType: ChatType;
+    };
+
+    type ConfirmLeaveEvent = {
         kind: "leave";
         chatId: string;
         chatType: ChatType;
-    }
+    };
 
-    interface ConfirmDeleteEvent {
+    type ConfirmDeleteEvent = {
         kind: "delete";
         chatId: string;
         chatType: ChatType;
         doubleCheck: { challenge: string; response: string };
-    }
+    };
 
-    interface ConfirmRulesEvent {
+    type ConfirmDeleteCommunityEvent = {
+        kind: "delete_community";
+        communityId: string;
+        doubleCheck: { challenge: string; response: string };
+    };
+
+    type ConfirmRulesEvent = {
         kind: "rules";
         group: GroupChatSummary;
         select: boolean;
         rules: string;
-    }
+    };
 
     enum ModalType {
         None,
@@ -93,6 +119,7 @@
         Wallet,
         GateCheckFailed,
         HallOfFame,
+        EditCommunity,
     }
 
     let modal = ModalType.None;
@@ -118,6 +145,7 @@
     $: currentChatDraftMessage = client.currentChatDraftMessage;
     $: chatStateStore = client.chatStateStore;
     $: confirmMessage = getConfirmMessage(confirmActionEvent);
+    $: selectedCommunityId = client.selectedCommunityId;
 
     onMount(() => {
         subscribeToNotifications(client, (n) => client.notificationReceived(n));
@@ -221,9 +249,8 @@
         if (initialised) {
             if (pathParams.kind === "communities_route") {
                 if (pathParams.communityId !== undefined) {
-                    rightPanelHistory.set([
-                        { kind: "community_groups", communityId: pathParams.communityId },
-                    ]);
+                    client.setSelectedCommunity(pathParams.communityId);
+                    rightPanelHistory.set([{ kind: "community_details" }]);
                 } else {
                     rightPanelHistory.set([]);
                 }
@@ -337,6 +364,7 @@
     function closeModal() {
         modal = ModalType.None;
         candidateGroup = undefined;
+        candidateCommunity = undefined;
         joining = undefined;
     }
 
@@ -441,6 +469,10 @@
         switch (confirmActionEvent.kind) {
             case "leave":
                 return $_("confirmLeaveGroup");
+            case "leave_community":
+                return $_("communities.leaveMessage");
+            case "delete_community":
+                return $_("communities.deleteMessage");
             case "delete":
                 return $_("irreversible");
             case "rules": {
@@ -465,6 +497,12 @@
         switch (confirmActionEvent.kind) {
             case "leave":
                 return leaveGroup(confirmActionEvent.chatId, confirmActionEvent.chatType);
+            case "leave_community":
+                return client.leaveCommunity(confirmActionEvent.communityId);
+            case "delete_community":
+                return client.deleteCommunity(confirmActionEvent.communityId).then((_) => {
+                    rightPanelHistory.set([]);
+                });
             case "delete":
                 return deleteGroup(confirmActionEvent.chatId, confirmActionEvent.chatType).then(
                     (_) => {
@@ -533,13 +571,13 @@
         }
     }
 
-    function showInviteUsers(ev: CustomEvent<boolean>) {
+    function showInviteGroupUsers(ev: CustomEvent<boolean>) {
         if ($selectedChatId !== undefined) {
             if (ev.detail) {
-                rightPanelHistory.set([{ kind: "invite_users" }]);
+                rightPanelHistory.set([{ kind: "invite_group_users" }]);
             } else {
                 rightPanelHistory.update((history) => {
-                    return [...history, { kind: "invite_users" }];
+                    return [...history, { kind: "invite_group_users" }];
                 });
             }
         }
@@ -566,14 +604,12 @@
         modal = ModalType.SelectChat;
     }
 
-    function showMembers(ev: CustomEvent<boolean>) {
+    function showGroupMembers(ev: CustomEvent<boolean>) {
         if ($selectedChatId !== undefined) {
             if (ev.detail) {
-                rightPanelHistory.set([{ kind: "show_members" }]);
+                rightPanelHistory.set([{ kind: "show_group_members" }]);
             } else {
-                rightPanelHistory.update((history) => {
-                    return [...history, { kind: "show_members" }];
-                });
+                pushRightPanelHistory({ kind: "show_group_members" });
             }
         }
     }
@@ -601,6 +637,12 @@
                     },
                 ]);
             });
+        }
+    }
+
+    function communityDetails() {
+        if ($selectedCommunityId !== undefined) {
+            rightPanelHistory.set([{ kind: "community_details" }]);
         }
     }
 
@@ -739,7 +781,7 @@
     }
 
     function groupCreated(
-        ev: CustomEvent<{ chatId: string; isPublic: boolean; rules: GroupRules }>
+        ev: CustomEvent<{ chatId: string; isPublic: boolean; rules: AccessRules }>
     ) {
         const { chatId, isPublic, rules } = ev.detail;
         chatStateStore.setProp(chatId, "rules", rules);
@@ -763,13 +805,20 @@
         modal = ModalType.Wallet;
     }
 
-    function newGroup() {
+    function newChannel() {
+        // TODO - come back to this
+        newGroup("channel");
+    }
+
+    function newGroup(level: Level = "group") {
         modal = ModalType.NewGroup;
         candidateGroup = {
+            id: "",
             name: "",
             description: "",
             historyVisible: true,
-            isPublic: false,
+            public: false,
+            frozen: false,
             members: [],
             permissions: {
                 changePermissions: "admins",
@@ -785,37 +834,35 @@
                 reactToMessages: "members",
                 replyInThread: "members",
             },
-            rules: {
-                text: defaultGroupRules,
-                enabled: false,
-            },
+            rules: defaultAccessRules,
             gate: { kind: "no_gate" },
+            myRole: "owner",
+            level,
         };
     }
 
-    function editGroup(ev: CustomEvent<{ chat: GroupChatSummary; rules: GroupRules | undefined }>) {
+    function editGroup(
+        ev: CustomEvent<{ chat: GroupChatSummary; rules: AccessRules | undefined }>
+    ) {
         modal = ModalType.NewGroup;
         const { chat, rules } = ev.detail;
         candidateGroup = {
-            chatId: chat.chatId,
+            id: chat.chatId,
             name: chat.name,
             description: chat.description,
-            historyVisible: chat.historyVisibleToNewJoiners,
-            isPublic: chat.public,
+            historyVisible: chat.historyVisible,
+            public: chat.public,
+            frozen: chat.frozen,
             members: [],
             permissions: { ...chat.permissions },
-            rules:
-                rules !== undefined
-                    ? { ...rules }
-                    : {
-                          text: defaultGroupRules,
-                          enabled: false,
-                      },
+            myRole: chat.myRole,
+            rules: rules !== undefined ? { ...rules } : defaultAccessRules,
             avatar: {
                 blobUrl: chat.blobUrl,
                 blobData: chat.blobData,
             },
             gate: chat.gate,
+            level: "group",
         };
     }
 
@@ -858,6 +905,16 @@
         rightPanelHistory.set([]);
     }
 
+    function createCommunity() {
+        modal = ModalType.EditCommunity;
+        candidateCommunity = createCandidateCommunity("");
+    }
+
+    function editCommunity(ev: CustomEvent<Community>) {
+        modal = ModalType.EditCommunity;
+        candidateCommunity = ev.detail;
+    }
+
     $: bgHeight = $dimensions.height * 0.9;
     $: bgClip = (($dimensions.height - 32) / bgHeight) * 361;
 </script>
@@ -869,8 +926,12 @@
             on:wallet={showWallet}
             on:halloffame={() => (modal = ModalType.HallOfFame)}
             on:logout={() => client.logout()}
-            on:newGroup={newGroup}
+            on:newGroup={() => newGroup("group")}
+            on:communityDetails={communityDetails}
             on:showHomePage={showLandingPageRoute("/home")}
+            on:newChannel={newChannel}
+            on:leaveCommunity={triggerConfirm}
+            on:deleteCommunity={triggerConfirm}
             on:upgrade={upgrade} />
     {/if}
 
@@ -885,8 +946,9 @@
             on:searchEntered={performSearch}
             on:chatWith={chatWith}
             on:halloffame={() => (modal = ModalType.HallOfFame)}
-            on:newGroup={newGroup}
+            on:newGroup={() => newGroup("group")}
             on:profile={showProfile}
+            on:communityDetails={communityDetails}
             on:logout={() => client.logout()}
             on:wallet={showWallet}
             on:deleteDirectChat={deleteDirectChat}
@@ -896,6 +958,9 @@
             on:archiveChat={onArchiveChat}
             on:unarchiveChat={onUnarchiveChat}
             on:toggleMuteNotifications={toggleMuteNotifications}
+            on:newChannel={newChannel}
+            on:leaveCommunity={triggerConfirm}
+            on:deleteCommunity={triggerConfirm}
             on:loadMessage={loadMessage} />
     {/if}
     {#if $layoutStore.showMiddle}
@@ -909,30 +974,33 @@
             on:leaveGroup={triggerConfirm}
             on:chatWith={chatWith}
             on:replyPrivatelyTo={replyPrivatelyTo}
-            on:showInviteUsers={showInviteUsers}
+            on:showInviteGroupUsers={showInviteGroupUsers}
             on:showGroupDetails={showGroupDetails}
             on:showProposalFilters={showProposalFilters}
-            on:showMembers={showMembers}
+            on:showGroupMembers={showGroupMembers}
             on:joinGroup={joinGroup}
             on:cancelPreview={cancelPreview}
             on:upgrade={upgrade}
             on:showPinned={showPinned}
             on:toggleMuteNotifications={toggleMuteNotifications}
             on:goToMessageIndex={goToMessageIndex}
-            on:forward={forwardMessage} />
+            on:forward={forwardMessage}
+            on:createCommunity={createCommunity} />
     {/if}
     {#if $layoutStore.rightPanel === "inline"}
         <RightPanel
             on:userAvatarSelected={userAvatarSelected}
             on:goToMessageIndex={goToMessageIndex}
             on:replyPrivatelyTo={replyPrivatelyTo}
-            on:showInviteUsers={showInviteUsers}
-            on:showMembers={showMembers}
+            on:showInviteGroupUsers={showInviteGroupUsers}
+            on:showGroupMembers={showGroupMembers}
             on:chatWith={chatWith}
             on:upgrade={upgrade}
             on:blockUser={blockUser}
             on:deleteGroup={triggerConfirm}
             on:editGroup={editGroup}
+            on:editCommunity={editCommunity}
+            on:deleteCommunity={triggerConfirm}
             on:groupCreated={groupCreated} />
     {/if}
 </main>
@@ -944,13 +1012,15 @@
                 on:userAvatarSelected={userAvatarSelected}
                 on:goToMessageIndex={goToMessageIndex}
                 on:replyPrivatelyTo={replyPrivatelyTo}
-                on:showInviteUsers={showInviteUsers}
-                on:showMembers={showMembers}
+                on:showInviteGroupUsers={showInviteGroupUsers}
+                on:showGroupMembers={showGroupMembers}
                 on:chatWith={chatWith}
                 on:upgrade={upgrade}
                 on:blockUser={blockUser}
                 on:deleteGroup={triggerConfirm}
                 on:editGroup={editGroup}
+                on:editCommunity={editCommunity}
+                on:deleteCommunity={triggerConfirm}
                 on:groupCreated={groupCreated} />
         </div>
     </Overlay>
@@ -958,7 +1028,8 @@
 
 {#if confirmActionEvent !== undefined}
     <AreYouSure
-        doubleCheck={confirmActionEvent.kind === "delete"
+        doubleCheck={confirmActionEvent.kind === "delete" ||
+        confirmActionEvent.kind === "delete_community"
             ? confirmActionEvent.doubleCheck
             : undefined}
         title={confirmActionEvent.kind === "rules" ? $_("group.rules.acceptTitle") : undefined}
@@ -990,6 +1061,11 @@
             <GateCheckFailed on:close={closeModal} gate={joining.gate} />
         {:else if modal === ModalType.NewGroup && candidateGroup !== undefined}
             <NewGroup on:upgrade={upgrade} {candidateGroup} on:close={closeModal} />
+        {:else if modal === ModalType.EditCommunity && candidateCommunity !== undefined}
+            <EditCommunity
+                originalRules={defaultAccessRules}
+                original={candidateCommunity}
+                on:close={closeModal} />
         {:else if modal === ModalType.Wallet}
             <AccountsModal on:close={closeModal} />
         {:else if modal === ModalType.HallOfFame}
@@ -1008,7 +1084,7 @@
         viewBox={`0 0 361 ${bgClip}`} />
 {/if}
 
-<style type="text/scss">
+<style lang="scss">
     :global(.edited-msg) {
         @include font(light, normal, fs-70);
     }

@@ -55,7 +55,7 @@
     </p>
 {/if}
 
-<style type="text/scss">
+<style lang="scss">
     .expiry {
         @include font(book, normal, fs-90);
         margin-bottom: $sp4;

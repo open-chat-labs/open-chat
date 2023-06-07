@@ -72,7 +72,7 @@
     </div>
 </TooltipWrapper>
 
-<style type="text/scss">
+<style lang="scss">
     .message-reaction {
         @include pop();
         border-radius: $sp2;

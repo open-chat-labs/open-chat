@@ -254,10 +254,10 @@
             on:unblockUser
             on:markAllRead={onMarkAllRead}
             on:toggleMuteNotifications
-            on:showInviteUsers
+            on:showInviteGroupUsers
             on:showGroupDetails
             on:showProposalFilters
-            on:showMembers
+            on:showGroupMembers
             on:leaveGroup
             on:showPinned
             on:createPoll={createPoll}
@@ -323,7 +323,7 @@
     {/if}
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .wrapper {
         display: flex;
         flex-direction: column;

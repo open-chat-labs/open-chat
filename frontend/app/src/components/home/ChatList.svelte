@@ -51,6 +51,7 @@
         !$discoverHotGroupsDismissed &&
         groupSearchResults === undefined &&
         userSearchResults === undefined;
+    $: selectedCommunity = client.selectedCommunity;
 
     function chatMatchesSearch(chat: ChatSummaryType): boolean {
         if (chat.kind === "group_chat") {
@@ -125,8 +126,13 @@
 </script>
 
 {#if user}
-    {#if $communitiesEnabled}
-        <CurrentSelection />
+    {#if $communitiesEnabled && $selectedCommunity}
+        <CurrentSelection
+            community={$selectedCommunity}
+            on:leaveCommunity
+            on:deleteCommunity
+            on:communityDetails
+            on:newChannel />
     {:else}
         <CurrentUser
             on:wallet
@@ -229,7 +235,7 @@
     <NotificationsBar />
 {/if}
 
-<style type="text/scss">
+<style lang="scss">
     .body {
         overflow: auto;
         flex: auto;

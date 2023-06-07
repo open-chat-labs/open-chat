@@ -1,7 +1,6 @@
-use std::collections::{hash_map::Entry, HashMap};
-
 use candid::{Deserialize, Principal};
 use serde::Serialize;
+use std::collections::{hash_map::Entry, HashMap};
 use types::{ReferralType, TimestampMillis, UserId};
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -70,6 +69,22 @@ impl ReferralCodes {
                 });
                 true
             }
+        }
+    }
+
+    pub fn claim(&mut self, code: String, user_id: UserId, now: TimestampMillis) -> bool {
+        match self.codes.entry(code) {
+            Entry::Occupied(mut e) => {
+                let details = e.get_mut();
+                match details.claimed {
+                    Some(_) => false,
+                    None => {
+                        details.claimed = Some(ReferralCodeClaim { when: now, who: user_id });
+                        true
+                    }
+                }
+            }
+            Entry::Vacant(_) => false,
         }
     }
 

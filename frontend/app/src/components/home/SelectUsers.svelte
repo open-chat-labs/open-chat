@@ -27,7 +27,7 @@
     <FindUser {enabled} {mode} on:selectUser />
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .selected {
         padding: 0 $sp4 $sp4 $sp4;
         display: flex;

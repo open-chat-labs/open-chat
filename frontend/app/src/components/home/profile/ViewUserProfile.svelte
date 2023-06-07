@@ -145,7 +145,7 @@
     </Overlay>
 {/if}
 
-<style type="text/scss">
+<style lang="scss">
     .body {
         position: relative;
         display: flex;

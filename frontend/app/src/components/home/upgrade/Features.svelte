@@ -115,6 +115,16 @@
     </Feature>
 
     <Feature {landing}>
+        <div slot="title">{$_("upgrade.createCommunities")}</div>
+        <div slot="free">
+            <Minus size={"1em"} color={"var(--menu-warn)"} />
+        </div>
+        <div slot="diamond">
+            <Check size={"1em"} color={"limegreen"} />
+        </div>
+    </Feature>
+
+    <Feature {landing}>
         <div slot="title">{$_("upgrade.directChats")}</div>
         <div slot="free">
             <Check size={"1em"} color={"limegreen"} />
@@ -213,7 +223,7 @@
     </div>
 {/if}
 
-<style type="text/scss">
+<style lang="scss">
     .grid {
         @include font(book, normal, fs-90);
         display: grid;

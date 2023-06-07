@@ -45,8 +45,8 @@
         dispatch("showGroupDetails");
     }
 
-    function showMembers() {
-        dispatch("showMembers");
+    function showGroupMembers() {
+        dispatch("showGroupMembers");
     }
 
     function normaliseChatSummary(now: number, chatSummary: ChatSummary, typing: TypersByKey) {
@@ -131,7 +131,7 @@
             {:else if chat.typing !== undefined}
                 {chat.typing} <Typing />
             {:else if isGroup}
-                <div class="members" on:click={showMembers}>
+                <div class="members" on:click={showGroupMembers}>
                     <ChatSubtext chat={selectedChatSummary} />
                 </div>
             {:else}
@@ -151,17 +151,17 @@
             on:showPinned
             on:searchChat
             on:showProposalFilters
-            on:showMembers
+            on:showGroupMembers
             on:createPoll
             on:markAllRead
             on:blockUser
             on:unblockUser
-            on:showInviteUsers
+            on:showInviteGroupUsers
             on:leaveGroup />
     {/if}
 </SectionHeader>
 
-<style type="text/scss">
+<style lang="scss">
     .chat-name {
         @include font(book, normal, fs-120);
         @include ellipsis();

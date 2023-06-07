@@ -87,7 +87,7 @@
     <Feature height={sectionHeight} backgroundColor={"#FEC000"} color={black} title={"Permissions"}>
         <p>
             Permissions are assigned to different types of users. As the group owner you will decide
-            who gets admin or moderator privileges. This will allow them to help you moderate the 
+            who gets admin or moderator privileges. This will allow them to help you moderate the
             group to make sure it works the way you want.
         </p>
     </Feature>
@@ -148,7 +148,7 @@
     </Feature>
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     p {
         @include font(light, normal, fs-120, 28);
         margin-bottom: toRem(24);

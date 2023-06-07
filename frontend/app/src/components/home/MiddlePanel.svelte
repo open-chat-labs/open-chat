@@ -28,7 +28,7 @@
     {#if $pathParams.kind === "hot_groups_route"}
         <RecommendedGroups {joining} on:joinGroup on:leaveGroup on:upgrade />
     {:else if $pathParams.kind === "communities_route"}
-        <ExploreCommunities />
+        <ExploreCommunities on:upgrade on:createCommunity />
     {:else if loadingChats}
         <Loading />
     {:else if $selectedChatId === undefined}
@@ -49,10 +49,10 @@
             on:blockUser
             on:leaveGroup
             on:replyPrivatelyTo
-            on:showInviteUsers
+            on:showInviteGroupUsers
             on:showGroupDetails
             on:showProposalFilters
-            on:showMembers
+            on:showGroupMembers
             on:chatWith
             on:joinGroup
             on:upgrade
@@ -64,7 +64,7 @@
     {/if}
 </Panel>
 
-<style type="text/scss">
+<style lang="scss">
     .no-chat {
         height: 100%;
     }

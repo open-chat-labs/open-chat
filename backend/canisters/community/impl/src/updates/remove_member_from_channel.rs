@@ -15,20 +15,25 @@ fn remove_member_from_channel_impl(args: Args, state: &mut RuntimeState) -> Resp
         return CommunityFrozen;
     }
 
+    let target_user_in_community = state.data.members.get_by_user_id(&args.user_id).is_some();
+
     let caller = state.env.caller();
-    if let Some(member) = state.data.members.get(caller) {
+    if let Some(member) = state.data.members.get_mut(caller) {
         if member.suspended.value {
             return UserSuspended;
         }
 
-        if state.data.members.get_by_user_id(&args.user_id).is_none() {
+        if !target_user_in_community {
             return TargetUserNotInCommunity;
         }
 
         if let Some(channel) = state.data.channels.get_mut(&args.channel_id) {
             let now = state.env.now();
             match channel.chat.remove_member(member.user_id, args.user_id, false, now) {
-                RemoveMemberResult::Success => Success,
+                RemoveMemberResult::Success => {
+                    member.channels.remove(&args.channel_id);
+                    Success
+                }
                 RemoveMemberResult::UserSuspended => UserSuspended,
                 RemoveMemberResult::UserNotInGroup => UserNotInChannel,
                 RemoveMemberResult::TargetUserNotInGroup => TargetUserNotInChannel,

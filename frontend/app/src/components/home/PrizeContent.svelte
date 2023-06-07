@@ -100,7 +100,7 @@
     </div>
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     $accent: var(--prize);
 
     :global(.claim button) {

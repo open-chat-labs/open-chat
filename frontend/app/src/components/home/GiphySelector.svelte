@@ -267,7 +267,7 @@
     </Overlay>
 {/if}
 
-<style type="text/scss">
+<style lang="scss">
     :global(.gif-body .input-wrapper) {
         margin-bottom: 0;
     }

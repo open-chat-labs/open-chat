@@ -264,7 +264,7 @@
     {/if}
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     $saturation: 80%;
     $lightness: 65%;
 

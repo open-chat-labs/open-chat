@@ -4,7 +4,8 @@
     import EditableAvatar from "../../EditableAvatar.svelte";
     import Input from "../../Input.svelte";
     import TextArea from "../../TextArea.svelte";
-    import FormField from "./FormField.svelte";
+    import Legend from "../../Legend.svelte";
+    import { interpolateLevel } from "../../../utils/i18n";
 
     const MIN_LENGTH = 3;
     const MAX_LENGTH = 25;
@@ -21,15 +22,18 @@
     }
 </script>
 
-<FormField label={"Group Image"}>
+<section>
+    <Legend label={interpolateLevel("group.image", candidateGroup.level)} />
     <div class="photo">
         <EditableAvatar
             overlayIcon
             image={candidateGroup.avatar?.blobUrl}
             on:imageSelected={groupAvatarSelected} />
     </div>
-</FormField>
-<FormField label={"Group name"} required>
+</section>
+
+<section>
+    <Legend label={interpolateLevel("group.name", candidateGroup.level)} required />
     <Input
         autofocus
         disabled={busy}
@@ -37,21 +41,27 @@
         minlength={MIN_LENGTH}
         maxlength={MAX_LENGTH}
         countdown
-        placeholder={$_("newGroupName")} />
-</FormField>
-<FormField label={"Description"}>
+        placeholder={interpolateLevel("newGroupName", candidateGroup.level, true)} />
+</section>
+
+<section>
+    <Legend label={interpolateLevel("group.description", candidateGroup.level)} />
     <TextArea
         rows={4}
         disabled={busy}
         bind:value={candidateGroup.description}
         maxlength={MAX_DESC_LENGTH}
-        placeholder={$_("newGroupDesc")} />
-</FormField>
+        placeholder={interpolateLevel("newGroupDesc", candidateGroup.level, true)} />
+</section>
 
-<style type="text/scss">
+<style lang="scss">
     .photo {
         text-align: center;
         padding: $sp4 0;
         margin-bottom: $sp3;
+    }
+
+    section {
+        margin-bottom: $sp5;
     }
 </style>

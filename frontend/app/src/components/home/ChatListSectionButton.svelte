@@ -27,7 +27,7 @@
     </div>
 </Button>
 
-<style type="text/scss">
+<style lang="scss">
     .wrapper {
         position: relative;
         display: flex;

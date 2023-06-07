@@ -1,5 +1,5 @@
-use crate::guards::caller_is_user_index_or_local_user_index;
 use crate::{mutate_state, read_state, RuntimeState};
+use candid::Principal;
 use canister_tracing_macros::trace;
 use chat_events::ChatEventInternal;
 use community_canister::join_channel::{Response::*, *};
@@ -8,10 +8,15 @@ use group_chat_core::AddResult;
 use ic_cdk_macros::update;
 use types::{AccessGate, CanisterId, ChannelId, EventIndex, MemberJoined, MessageIndex, UserId};
 
-#[update(guard = "caller_is_user_index_or_local_user_index")]
+#[update]
 #[trace]
 async fn join_channel(args: Args) -> Response {
-    match read_state(|state| is_permitted_to_join(args.channel_id, state)) {
+    let caller = read_state(|state| state.env.caller());
+    join_channel_impl(args.channel_id, caller).await
+}
+
+pub(crate) async fn join_channel_impl(channel_id: ChannelId, user_principal: Principal) -> Response {
+    match read_state(|state| is_permitted_to_join(channel_id, user_principal, state)) {
         Ok(Some((gate, user_index_canister_id, user_id))) => {
             match check_if_passes_gate(&gate, user_id, user_index_canister_id).await {
                 CheckIfPassesGateResult::Success => {}
@@ -23,31 +28,34 @@ async fn join_channel(args: Args) -> Response {
         Err(response) => return response,
     };
 
-    mutate_state(|state| join_channel_impl(args.channel_id, state))
+    mutate_state(|state| commit(channel_id, user_principal, state))
 }
 
 fn is_permitted_to_join(
     channel_id: ChannelId,
+    user_principal: Principal,
     state: &RuntimeState,
 ) -> Result<Option<(AccessGate, CanisterId, UserId)>, Response> {
     if state.data.is_frozen() {
         return Err(CommunityFrozen);
     }
 
-    let caller = state.env.caller();
-
-    if let Some(member) = state.data.members.get(caller) {
+    if let Some(member) = state.data.members.get(user_principal) {
         if member.suspended.value {
             return Err(UserSuspended);
         }
 
         if let Some(channel) = state.data.channels.get(&channel_id) {
+            if !channel.chat.is_public && channel.chat.invited_users.get(&member.user_id).is_none() {
+                return Err(NotInvited);
+            }
+
             if let Some(limit) = channel.chat.members.user_limit_reached() {
                 return Err(UserLimitReached(limit));
             }
 
             if let Some(channel_member) = channel.chat.members.get(&member.user_id) {
-                Err(AlreadyInCommunity(Box::new(channel.summary(channel_member, state.env.now()))))
+                Err(AlreadyInChannel(Box::new(channel.summary(channel_member, state.env.now()))))
             } else {
                 Ok(channel
                     .chat
@@ -63,19 +71,24 @@ fn is_permitted_to_join(
     }
 }
 
-fn join_channel_impl(channel_id: ChannelId, state: &mut RuntimeState) -> Response {
-    let caller = state.env.caller();
-    if let Some(member) = state.data.members.get(caller) {
+fn commit(channel_id: ChannelId, user_principal: Principal, state: &mut RuntimeState) -> Response {
+    if let Some(member) = state.data.members.get_mut(user_principal) {
         if let Some(channel) = state.data.channels.get_mut(&channel_id) {
             let now = state.env.now();
-            let mut min_visible_event_index = EventIndex::default();
-            let mut min_visible_message_index = MessageIndex::default();
+            let min_visible_event_index;
+            let min_visible_message_index;
 
-            if !channel.chat.history_visible_to_new_joiners {
+            if let Some(invitation) = channel.chat.invited_users.get(&member.user_id) {
+                min_visible_event_index = invitation.min_visible_event_index;
+                min_visible_message_index = invitation.min_visible_message_index;
+            } else if channel.chat.history_visible_to_new_joiners {
+                min_visible_event_index = EventIndex::default();
+                min_visible_message_index = MessageIndex::default();
+            } else {
                 let events_reader = channel.chat.events.main_events_reader(now);
                 min_visible_event_index = events_reader.next_event_index();
                 min_visible_message_index = events_reader.next_message_index();
-            }
+            };
 
             match channel.chat.members.add(
                 member.user_id,
@@ -85,22 +98,25 @@ fn join_channel_impl(channel_id: ChannelId, state: &mut RuntimeState) -> Respons
                 state.data.is_public,
             ) {
                 AddResult::Success(channel_member) => {
+                    let invitation = channel.chat.invited_users.remove(&member.user_id, now);
+
                     channel.chat.events.push_main_event(
                         ChatEventInternal::ParticipantJoined(Box::new(MemberJoined {
                             user_id: member.user_id,
-                            invited_by: None,
+                            invited_by: invitation.map(|i| i.invited_by),
                         })),
                         0,
                         now,
                     );
 
+                    member.channels.insert(channel_id);
                     let summary = channel.summary(&channel_member, now);
                     Success(Box::new(summary))
                 }
                 AddResult::AlreadyInGroup => {
-                    let channel_member = channel.chat.members.get(&member.user_id).unwrap();
-                    let summary = channel.summary(channel_member, now);
-                    AlreadyInCommunity(Box::new(summary))
+                    member.channels.insert(channel_id);
+                    let summary = channel.summary_if_member(&member.user_id, now).unwrap();
+                    AlreadyInChannel(Box::new(summary))
                 }
                 AddResult::Blocked => UserBlocked,
                 AddResult::UserLimitReached(limit) => UserLimitReached(limit),

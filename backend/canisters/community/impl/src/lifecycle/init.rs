@@ -3,6 +3,7 @@ use crate::Data;
 use canister_tracing_macros::trace;
 use community_canister::init::Args;
 use ic_cdk_macros::init;
+use rand::Rng;
 use tracing::info;
 use utils::env::Environment;
 
@@ -11,7 +12,13 @@ use utils::env::Environment;
 fn init(args: Args) {
     canister_logger::init(args.test_mode);
 
-    let env = init_env();
+    let mut env = init_env();
+
+    let default_channels = args
+        .default_channels
+        .into_iter()
+        .map(|name| (env.rng().gen(), name))
+        .collect();
 
     let data = Data::new(
         args.created_by_principal,
@@ -29,6 +36,7 @@ fn init(args: Args) {
         args.notifications_canister_id,
         args.proposals_bot_user_id,
         args.gate,
+        default_channels,
         args.test_mode,
         env.now(),
     );

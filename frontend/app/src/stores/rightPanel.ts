@@ -4,13 +4,16 @@ import type { ChatSummary, GroupPermissions } from "openchat-client";
 
 export type RightPanelState =
     | GroupDetailsPanel
-    | InviteMembersPanel
-    | ShowMembersPanel
+    | InviteGroupMembersPanel
+    | InviteCommunityMembers
+    | ShowGroupMembersPanel
+    | ShowCommunityMembers
     | ShowPinnedPanel
+    | ShowCommunityChannels
     | UserProfilePanel
     | MessageThreadPanel
     | ProposalFilterPanel
-    | CommunityGroups
+    | CommunityDetails
     | NoPanel;
 
 export type NoPanel = {
@@ -31,17 +34,28 @@ export type UserProfilePanel = {
     kind: "user_profile";
 };
 
-export type InviteMembersPanel = {
-    kind: "invite_users";
+export type InviteGroupMembersPanel = {
+    kind: "invite_group_users";
 };
 
-export type ShowMembersPanel = {
-    kind: "show_members";
+export type InviteCommunityMembers = {
+    kind: "invite_community_users";
 };
 
-export type CommunityGroups = {
-    kind: "community_groups";
-    communityId: string;
+export type ShowGroupMembersPanel = {
+    kind: "show_group_members";
+};
+
+export type CommunityDetails = {
+    kind: "community_details";
+};
+
+export type ShowCommunityChannels = {
+    kind: "community_channels";
+};
+
+export type ShowCommunityMembers = {
+    kind: "show_community_members";
 };
 
 export type ShowPinnedPanel = {
@@ -88,4 +102,8 @@ export const rightPanelHistory = writable<RightPanelState[]>([]);
 
 export function popRightPanelHistory(): void {
     rightPanelHistory.update((history) => history.slice(0, history.length - 1));
+}
+
+export function pushRightPanelHistory(state: RightPanelState): void {
+    rightPanelHistory.update((history) => [...history, state]);
 }

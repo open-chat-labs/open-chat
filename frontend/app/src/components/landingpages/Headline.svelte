@@ -1,6 +1,6 @@
 <h2><slot /></h2>
 
-<style type="text/scss">
+<style lang="scss">
     h2 {
         margin: 0;
         @include font(medium, normal, fs-230, 68);

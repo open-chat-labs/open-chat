@@ -25,7 +25,35 @@ fn join_public_group_succeeds() {
 
     env.tick();
 
-    let initial_state = client::user::happy_path::initial_state_v2(env, &user2);
+    let initial_state = client::user::happy_path::initial_state(env, &user2);
+
+    assert!(initial_state.group_chats.iter().any(|c| c.chat_id == group_id));
+}
+
+#[test]
+fn join_private_group_with_invitation_succeeds() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let TestData { user1, user2, group_id } = init_test_data(env, canister_ids, *controller, false);
+
+    client::local_user_index::happy_path::invite_users_to_group(
+        env,
+        user1.principal,
+        canister_ids.local_user_index,
+        group_id,
+        vec![user2.user_id],
+    );
+
+    client::local_user_index::happy_path::join_group(env, user2.principal, canister_ids.local_user_index, group_id);
+
+    env.tick();
+
+    let initial_state = client::user::happy_path::initial_state(env, &user2);
 
     assert!(initial_state.group_chats.iter().any(|c| c.chat_id == group_id));
 }
@@ -75,7 +103,7 @@ fn join_private_group_using_invite_code_succeeds() {
 
     env.tick();
 
-    let initial_state = client::user::happy_path::initial_state_v2(env, &user2);
+    let initial_state = client::user::happy_path::initial_state(env, &user2);
 
     assert!(initial_state.group_chats.iter().any(|c| c.chat_id == group_id));
 }

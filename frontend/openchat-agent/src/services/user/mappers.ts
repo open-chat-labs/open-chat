@@ -128,7 +128,7 @@ export function setBioResponse(candid: ApiSetBioResponse): SetBioResponse {
 
 export function searchDirectChatResponse(
     candid: ApiSearchDirectChatResponse,
-    chatId: string,
+    chatId: string
 ): SearchDirectChatResponse {
     if ("Success" in candid) {
         return {
@@ -731,8 +731,8 @@ export function getUpdatesResponse(candid: ApiUpdatesResponse): UpdatesResponse 
 
     if ("SuccessNoUpdates" in candid) {
         return {
-            kind: "success_no_updates"
-        }
+            kind: "success_no_updates",
+        };
     }
 
     throw new Error(`Unexpected ApiUpdatesResponse type received: ${candid}`);
@@ -829,6 +829,7 @@ function groupChatSummary(candid: ApiGroupChatSummary, limitReadByMeUpTo = true)
     return {
         kind: "group_chat",
         chatId: candid.chat_id.toString(),
+        id: candid.chat_id.toString(),
         latestMessage,
         readByMeUpTo: optional(candid.read_by_me_up_to, (r) =>
             limitReadByMeUpTo && latestMessage !== undefined
@@ -838,7 +839,7 @@ function groupChatSummary(candid: ApiGroupChatSummary, limitReadByMeUpTo = true)
         name: candid.name,
         description: candid.description,
         public: candid.is_public,
-        historyVisibleToNewJoiners: candid.history_visible_to_new_joiners,
+        historyVisible: candid.history_visible_to_new_joiners,
         joined: candid.joined,
         minVisibleEventIndex: candid.min_visible_event_index,
         minVisibleMessageIndex: candid.min_visible_message_index,
@@ -865,6 +866,7 @@ function groupChatSummary(candid: ApiGroupChatSummary, limitReadByMeUpTo = true)
         dateLastPinned: optional(candid.date_last_pinned, identity),
         dateReadPinned: optional(candid.date_read_pinned, identity),
         gate: optional(candid.gate, groupGate) ?? { kind: "no_gate" },
+        level: "group",
     };
 }
 
@@ -882,6 +884,7 @@ function directChatSummary(candid: ApiDirectChatSummary): DirectChatSummary {
     return {
         kind: "direct_chat",
         chatId: candid.them.toString(),
+        id: candid.them.toString(),
         latestMessage: {
             index: candid.latest_message.index,
             timestamp: candid.latest_message.timestamp,

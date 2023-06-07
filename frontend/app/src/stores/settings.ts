@@ -24,3 +24,15 @@ export const discoverHotGroupsDismissed = createLsBoolStore(
     configKeys.discoverHotGroupsDismissed,
     false
 );
+
+export const communityVisibilityOpen = createLsBoolStore(
+    configKeys.communityVisibilitySection,
+    true
+);
+export const communityRulesOpen = createLsBoolStore(configKeys.communityRulesSection, true);
+export const communityPermissionsOpen = createLsBoolStore(
+    configKeys.communityPermissionSection,
+    false
+);
+export const communityStatsOpen = createLsBoolStore(configKeys.communityStatsSection, false);
+export const communityAdvancedOpen = createLsBoolStore(configKeys.communityAdvancedSection, false);

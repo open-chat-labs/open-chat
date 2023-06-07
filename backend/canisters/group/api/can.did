@@ -398,7 +398,7 @@ type SelectedInitialResponse =
 
 type SelectedUpdatesArgs =
     record {
-        updates_since: EventIndex
+        updates_since: EventIndex;
     };
 
 type SelectedUpdatesSuccess =
@@ -419,6 +419,18 @@ type SelectedUpdatesResponse =
     variant {
         Success: SelectedUpdatesSuccess;
         SuccessNoUpdates: EventIndex;
+        CallerNotInGroup;
+    };
+
+type SelectedUpdatesV2Args =
+    record {
+        updates_since: TimestampMillis;
+    };
+
+type SelectedUpdatesV2Response =
+    variant {
+        Success: SelectedGroupUpdates;
+        SuccessNoUpdates: TimestampMillis;
         CallerNotInGroup;
     };
 
@@ -685,6 +697,7 @@ service: {
     summary_updates: (SummaryUpdatesArgs) -> (SummaryUpdatesResponse) query;
     selected_initial: (SelectedInitialArgs) -> (SelectedInitialResponse) query;
     selected_updates: (SelectedUpdatesArgs) -> (SelectedUpdatesResponse) query;
+    selected_updates_v2: (SelectedUpdatesV2Args) -> (SelectedUpdatesV2Response) query;
 
     events: (EventsArgs) -> (EventsResponse) query;
     events_by_index: (EventsByIndexArgs) -> (EventsResponse) query;

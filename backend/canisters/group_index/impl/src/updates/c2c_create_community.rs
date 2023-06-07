@@ -34,6 +34,7 @@ async fn c2c_create_community(args: Args) -> Response {
         history_visible_to_new_joiners: args.history_visible_to_new_joiners,
         permissions: args.permissions,
         gate: args.gate,
+        default_channels: args.default_channels,
     };
 
     match local_group_index_canister_c2c_client::c2c_create_community(local_group_index_canister, &c2c_create_community_args)

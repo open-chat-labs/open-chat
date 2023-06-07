@@ -64,7 +64,7 @@
     {/if}
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     :global(.time-and-ticks > svg) {
         width: 16px;
         height: 16px;

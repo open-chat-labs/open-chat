@@ -42,7 +42,7 @@
 
 <ContentCaption caption={content.caption} {edited} {reply} />
 
-<style type="text/scss">
+<style lang="scss">
     .file-content {
         height: 30px;
         display: block;

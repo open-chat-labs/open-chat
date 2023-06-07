@@ -69,7 +69,7 @@
     </div>
 {/if}
 
-<style type="text/scss">
+<style lang="scss">
     .logo {
         position: absolute;
         z-index: -1;

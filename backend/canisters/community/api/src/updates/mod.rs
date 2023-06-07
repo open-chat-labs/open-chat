@@ -4,6 +4,7 @@ pub mod block_user;
 pub mod c2c_delete_community;
 pub mod c2c_freeze_community;
 pub mod c2c_invite_users;
+pub mod c2c_invite_users_to_channel;
 pub mod c2c_join_community;
 pub mod c2c_leave_community;
 pub mod c2c_set_user_suspended;

@@ -229,7 +229,7 @@
     </ModalContent>
 </Overlay>
 
-<style type="text/scss">
+<style lang="scss">
     .header {
         display: flex;
         align-items: center;

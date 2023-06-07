@@ -21,7 +21,7 @@
     {/if}
 </div>
 
-<style type="text/scss">
+<style lang="scss">
     .search-result {
         display: flex;
         justify-content: center;

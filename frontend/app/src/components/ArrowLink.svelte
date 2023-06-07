@@ -13,7 +13,7 @@
     </div>
 </a>
 
-<style type="text/scss">
+<style lang="scss">
     a {
         position: relative;
         @include font(bold, normal, fs-100);
