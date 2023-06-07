@@ -1,5 +1,4 @@
 import type { Identity } from "@dfinity/agent";
-import type { IUserIndexClient } from "./userIndex/userIndex.client.interface";
 import type { IUserClient } from "./user/user.client.interface";
 import type { IGroupClient } from "./group/group.client.interface";
 import {
@@ -155,7 +154,7 @@ import { waitAll } from "../utils/promise";
 import { MessageContextMap } from "../utils/messageContext";
 
 export class OpenChatAgent extends EventTarget {
-    private _userIndexClient: IUserIndexClient;
+    private _userIndexClient: UserIndexClient;
     private _onlineClient: IOnlineClient;
     private _groupIndexClient: IGroupIndexClient;
     private _userClient?: IUserClient;

@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/ban-types */
 import type { Identity } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
 import { idlFactory, UserIndexService } from "./candid/idl";
@@ -33,13 +35,15 @@ import {
     referralLeaderboardResponse,
     userRegistrationCanisterResponse,
 } from "./mappers";
-import { CachingUserIndexClient } from "./userIndex.caching.client";
-import type { IUserIndexClient } from "./userIndex.client.interface";
-import { profile } from "../common/profiling";
+import {
+    getUsersDecorator,
+    payForDiamondMembershipDecorator,
+    setUsernameDecorator,
+} from "./decorators";
 import { apiOptional } from "../common/chatMappers";
 import type { AgentConfig } from "../../config";
 
-export class UserIndexClient extends CandidService implements IUserIndexClient {
+export class UserIndexClient extends CandidService {
     private userIndexService: UserIndexService;
 
     private constructor(identity: Identity, config: AgentConfig) {
@@ -52,11 +56,10 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
         );
     }
 
-    static create(identity: Identity, config: AgentConfig): IUserIndexClient {
-        return new CachingUserIndexClient(new UserIndexClient(identity, config), config.logger);
+    static create(identity: Identity, config: AgentConfig): UserIndexClient {
+        return new UserIndexClient(identity, config);
     }
 
-    @profile("userIndexClient")
     getCurrentUser(): Promise<CurrentUserResponse> {
         return this.handleQueryResponse(
             () => this.userIndexService.current_user({}),
@@ -64,7 +67,6 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
         );
     }
 
-    @profile("userIndexClient")
     userRegistrationCanister(): Promise<string> {
         return this.handleResponse(
             this.userIndexService.user_registration_canister({}),
@@ -72,7 +74,6 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
         );
     }
 
-    @profile("userIndexClient")
     searchUsers(searchTerm: string, maxResults = 20): Promise<UserSummary[]> {
         const args = {
             search_term: searchTerm,
@@ -85,7 +86,7 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
         );
     }
 
-    @profile("userIndexClient")
+    @getUsersDecorator()
     getUsers(users: UsersArgs, _allowStale: boolean): Promise<UsersResponse> {
         const userGroups = users.userGroups.filter((g) => g.users.length > 0);
 
@@ -108,7 +109,6 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
         );
     }
 
-    @profile("userIndexClient")
     checkUsername(username: string): Promise<CheckUsernameResponse> {
         const args = {
             username: username,
@@ -120,7 +120,7 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
         );
     }
 
-    @profile("userIndexClient")
+    @setUsernameDecorator()
     setUsername(_userId: string, username: string): Promise<SetUsernameResponse> {
         return this.handleResponse(
             this.userIndexService.set_username({
@@ -130,7 +130,6 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
         );
     }
 
-    @profile("userIndexClient")
     suspendUser(userId: string, reason: string): Promise<SuspendUserResponse> {
         return this.handleResponse(
             this.userIndexService.suspend_user({
@@ -142,7 +141,6 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
         );
     }
 
-    @profile("userIndexClient")
     unsuspendUser(userId: string): Promise<UnsuspendUserResponse> {
         return this.handleResponse(
             this.userIndexService.unsuspend_user({
@@ -152,12 +150,11 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
         );
     }
 
-    @profile("userIndexClient")
     markSuspectedBot(): Promise<MarkSuspectedBotResponse> {
         return this.handleResponse(this.userIndexService.mark_suspected_bot({}), () => "success");
     }
 
-    @profile("userIndexClient")
+    @payForDiamondMembershipDecorator()
     payForDiamondMembership(
         _userId: string,
         token: Cryptocurrency,
@@ -176,7 +173,6 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
         );
     }
 
-    @profile("userIndexClient")
     setUserUpgradeConcurrency(value: number): Promise<SetUserUpgradeConcurrencyResponse> {
         return this.handleResponse(
             this.userIndexService.set_user_upgrade_concurrency({ value }),
@@ -184,7 +180,6 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
         );
     }
 
-    @profile("userIndexClient")
     getReferralLeaderboard(req?: ReferralLeaderboardRange): Promise<ReferralLeaderboardResponse> {
         return this.handleResponse(
             this.userIndexService.referral_leaderboard({
@@ -202,7 +197,6 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
         );
     }
 
-    @profile("userIndexClient")
     getPlatformModeratorGroup(): Promise<string> {
         return this.handleResponse(this.userIndexService.platform_moderators_group({}), (res) =>
             res.Success.toString()
