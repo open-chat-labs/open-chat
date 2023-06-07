@@ -161,7 +161,7 @@ fn invite_to_community_oc_bot_message_received() {
         community_id,
         vec![user2.user_id],
     );
-    
+
     tick_many(env, 3);
 
     let initial_state = client::user::happy_path::initial_state(env, &user2);
