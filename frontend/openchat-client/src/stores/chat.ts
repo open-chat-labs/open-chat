@@ -33,12 +33,12 @@ import { filteredProposalsStore, resetFilteredProposalsStore } from "./filteredP
 import { createDerivedPropStore, createChatSpecificObjectStore } from "./dataByChatFactory";
 import { localMessageUpdates } from "./localMessageUpdates";
 import type { DraftMessage } from "./draftMessageFactory";
-import type { OpenChatAgentWorker } from "../agentWorker";
 import { localChatSummaryUpdates } from "./localChatSummaryUpdates";
 import { toRecordFiltered } from "../utils/list";
 import { setsAreEqual } from "../utils/set";
 import { failedMessagesStore } from "./failedMessages";
 import { proposalTallies } from "./proposalTallies";
+import type { OpenChat } from "../openchat";
 
 export const currentUserStore = immutableStore<CreatedUser | undefined>(undefined);
 
@@ -389,7 +389,7 @@ export const currentChatPinnedMessages = createDerivedPropStore<
 >(chatStateStore, "pinnedMessages", () => new Set<number>(), setsAreEqual);
 
 export function setSelectedChat(
-    api: OpenChatAgentWorker,
+    api: OpenChat,
     clientChat: ChatSummary,
     serverChat: ChatSummary | undefined,
     messageIndex?: number,
@@ -403,7 +403,10 @@ export function setSelectedChat(
         !clientChat.subtype.isNns
     ) {
         const { governanceCanisterId } = clientChat.subtype;
-        api.listNervousSystemFunctions(governanceCanisterId).then((val) => {
+        api.sendRequest({
+            kind: "listNervousSystemFunctions",
+            snsGovernanceCanisterId: governanceCanisterId,
+        }).then((val) => {
             snsFunctions.set(governanceCanisterId, val.functions);
             return val;
         });

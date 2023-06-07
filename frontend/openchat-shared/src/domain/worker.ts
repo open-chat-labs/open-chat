@@ -54,6 +54,10 @@ import type {
     InviteUsersResponse,
     ResetInviteCodeResponse,
     GroupCanisterGroupChatSummary,
+    AddHotGroupExclusionResponse,
+    RemoveHotGroupExclusionResponse,
+    SetGroupUpgradeConcurrencyResponse,
+    DeclineInvitationResponse,
 } from "./chat";
 import type { BlobReference, StorageStatus } from "./data/data";
 import type { UpdateMarketMakerConfigArgs, UpdateMarketMakerConfigResponse } from "./marketMaker";
@@ -83,6 +87,7 @@ import type {
     SetMessageReminderResponse,
     ReferralLeaderboardRange,
     ReferralLeaderboardResponse,
+    SetUserUpgradeConcurrencyResponse,
 } from "./user";
 import type {
     GroupSearchResponse,
@@ -1059,4 +1064,112 @@ export type WorkerResult<T> = T extends PinMessage
     ? BlockUserResponse
     : T extends UnblockUserFromGroup
     ? UnblockUserResponse
+    : T extends GetProposalVoteDetailsRequest
+    ? ProposalVoteDetails
+    : T extends ListNervousSystemFunctions
+    ? ListNervousSystemFunctionsResponse
+    : T extends SendMessage
+    ? [SendMessageResponse, Message]
+    : T extends EditMessage
+    ? EditMessageResponse
+    : T extends RegisterUser
+    ? RegisterUserResponse
+    : T extends SubscriptionExists
+    ? boolean
+    : T extends PushSub
+    ? void
+    : T extends RemoveSub
+    ? void
+    : T extends InviteUsers
+    ? InviteUsersResponse
+    : T extends RemoveMember
+    ? RemoveMemberResponse
+    : T extends ChangeRole
+    ? ChangeRoleResponse
+    : T extends RegisterProposalVote
+    ? RegisterProposalVoteResponse
+    : T extends GetRecommendedGroups
+    ? GroupChatSummary[]
+    : T extends GetGroupRules
+    ? AccessRules | undefined
+    : T extends SearchGroups
+    ? GroupSearchResponse
+    : T extends DismissRecommendations
+    ? void
+    : T extends GroupInvite
+    ? void
+    : T extends SearchGroupChat
+    ? SearchGroupChatResponse
+    : T extends SearchDirectChat
+    ? SearchDirectChatResponse
+    : T extends RefreshAccountBalance
+    ? Tokens
+    : T extends GetThreadPreviews
+    ? ThreadPreview[]
+    : T extends GetUser
+    ? PartialUserSummary | undefined
+    : T extends GetPublicProfile
+    ? PublicProfile
+    : T extends SetUsername
+    ? SetUsernameResponse
+    : T extends SetBio
+    ? SetBioResponse
+    : T extends GetBio
+    ? string
+    : T extends WithdrawCrypto
+    ? WithdrawCryptocurrencyResponse
+    : T extends GroupMessagesByMessageIndex
+    ? EventsResponse<Message>
+    : T extends GetInviteCode
+    ? InviteCodeResponse
+    : T extends EnableInviteCode
+    ? EnableInviteCodeResponse
+    : T extends DisableInviteCode
+    ? DisableInviteCodeResponse
+    : T extends ResetInviteCode
+    ? ResetInviteCodeResponse
+    : T extends CreateGroupChat
+    ? CreateGroupResponse
+    : T extends SetCachedMessageFromNotification
+    ? void
+    : T extends FreezeGroup
+    ? FreezeGroupResponse
+    : T extends UnfreezeGroup
+    ? UnfreezeGroupResponse
+    : T extends AddHotGroupExclusion
+    ? AddHotGroupExclusionResponse
+    : T extends RemoveHotGroupExclusion
+    ? RemoveHotGroupExclusionResponse
+    : T extends DeleteFrozenGroup
+    ? DeleteFrozenGroupResponse
+    : T extends SuspendUser
+    ? SuspendUserResponse
+    : T extends UnsuspendUser
+    ? UnsuspendUserResponse
+    : T extends SetGroupUpgradeConcurrency
+    ? SetGroupUpgradeConcurrencyResponse
+    : T extends SetUserUpgradeConcurrency
+    ? SetUserUpgradeConcurrencyResponse
+    : T extends LoadFailedMessages
+    ? Record<string, Record<number, EventWrapper<Message>>>
+    : T extends DeleteFailedMessage
+    ? void
+    : T extends MarkSuspectedBot
+    ? void
+    : T extends ClaimPrize
+    ? ClaimPrizeResponse
+    : T extends PayForDiamondMembership
+    ? PayForDiamondMembershipResponse
+    : T extends UpdateMarketMakerConfig
+    ? UpdateMarketMakerConfigResponse
+    : T extends SetMessageReminder
+    ? SetMessageReminderResponse
+    : T extends CancelMessageReminder
+    ? boolean
+    : T extends ReferralLeaderboard
+    ? ReferralLeaderboardResponse
+    : T extends ReportMessage
+    ? ReportMessageResponse
+    : T extends DeclineInvitation
+    ? DeclineInvitationResponse
     : never;
