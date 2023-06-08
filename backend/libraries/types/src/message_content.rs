@@ -51,23 +51,39 @@ pub enum MessageContent {
     Custom(CustomContent),
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum MessageContentInternal {
+    #[serde(rename = "t", alias = "Text")]
     Text(TextContent),
+    #[serde(rename = "i", alias = "Image")]
     Image(ImageContent),
+    #[serde(rename = "v", alias = "Video")]
     Video(VideoContent),
+    #[serde(rename = "a", alias = "Audio")]
     Audio(AudioContent),
+    #[serde(rename = "f", alias = "File")]
     File(FileContent),
+    #[serde(rename = "p", alias = "Poll")]
     Poll(PollContentInternal),
+    #[serde(rename = "c", alias = "Crypto")]
     Crypto(CryptoContent),
+    #[serde(rename = "d", alias = "Deleted")]
     Deleted(DeletedBy),
+    #[serde(rename = "g", alias = "Giphy")]
     Giphy(GiphyContent),
+    #[serde(rename = "gp", alias = "GovernanceProposal")]
     GovernanceProposal(ProposalContentInternal),
+    #[serde(rename = "pr", alias = "Prize")]
     Prize(PrizeContentInternal),
+    #[serde(rename = "pw", alias = "PrizeWinner")]
     PrizeWinner(PrizeWinnerContent),
+    #[serde(rename = "mrc", alias = "MessageReminderCreated")]
     MessageReminderCreated(MessageReminderCreatedContent),
+    #[serde(rename = "mr", alias = "MessageReminder")]
     MessageReminder(MessageReminderContent),
+    #[serde(rename = "rm", alias = "ReportedMessage")]
     ReportedMessage(ReportedMessageInternal),
+    #[serde(rename = "cu", alias = "Custom")]
     Custom(CustomContent),
 }
 

@@ -5,13 +5,13 @@ use std::collections::hash_map::Entry::Vacant;
 use std::collections::{BTreeMap, HashMap};
 use std::ops::Deref;
 use types::{
-    ChatEvent, EventIndex, EventWrapper, Mention, MentionInternal, Message, MessageId, MessageIndex, PollEnded,
-    PollVoteRegistered, ProposalUpdated, ProposalsUpdated, ThreadUpdated, TimestampMillis, UpdatedMessage, UserId,
+    ChatEvent, EventIndex, EventWrapper, EventWrapperInternal, Mention, MentionInternal, Message, MessageId, MessageIndex,
+    PollEnded, PollVoteRegistered, ProposalUpdated, ProposalsUpdated, ThreadUpdated, TimestampMillis, UpdatedMessage, UserId,
 };
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct ChatEventsList {
-    events_map: BTreeMap<EventIndex, EventWrapper<ChatEventInternal>>,
+    events_map: BTreeMap<EventIndex, EventWrapperInternal<ChatEventInternal>>,
     message_id_map: HashMap<MessageId, EventIndex>,
     message_index_map: BTreeMap<MessageIndex, EventIndex>,
     latest_event_index: Option<EventIndex>,
@@ -39,7 +39,7 @@ impl ChatEventsList {
 
         self.events_map.insert(
             event_index,
-            EventWrapper {
+            EventWrapperInternal {
                 index: event_index,
                 timestamp: now,
                 correlation_id,
@@ -58,7 +58,7 @@ impl ChatEventsList {
         event_key: EventKey,
         min_visible_event_index: EventIndex,
         now: TimestampMillis,
-    ) -> Option<&EventWrapper<ChatEventInternal>> {
+    ) -> Option<&EventWrapperInternal<ChatEventInternal>> {
         self.event_index(event_key)
             .filter(|e| *e >= min_visible_event_index)
             .and_then(|e| self.events_map.get(&e))
@@ -70,7 +70,7 @@ impl ChatEventsList {
         event_key: EventKey,
         min_visible_event_index: EventIndex,
         now: TimestampMillis,
-    ) -> Option<&mut EventWrapper<ChatEventInternal>> {
+    ) -> Option<&mut EventWrapperInternal<ChatEventInternal>> {
         self.event_index(event_key)
             .filter(|e| *e >= min_visible_event_index)
             .and_then(|e| self.events_map.get_mut(&e))
@@ -87,7 +87,7 @@ impl ChatEventsList {
         ascending: bool,
         min_visible_event_index: EventIndex,
         now: TimestampMillis,
-    ) -> Box<dyn Iterator<Item = &EventWrapper<ChatEventInternal>> + '_> {
+    ) -> Box<dyn Iterator<Item = &EventWrapperInternal<ChatEventInternal>> + '_> {
         let range = if let Some(start) = start {
             if let Some(event_index) = self.get(start, min_visible_event_index, now).map(|e| e.index) {
                 if ascending {
@@ -125,7 +125,7 @@ impl ChatEventsList {
             .count()
     }
 
-    pub fn remove_expired_event(&mut self, event_index: EventIndex) -> Option<EventWrapper<ChatEventInternal>> {
+    pub fn remove_expired_event(&mut self, event_index: EventIndex) -> Option<EventWrapperInternal<ChatEventInternal>> {
         let event = self.events_map.remove(&event_index)?;
 
         if let ChatEventInternal::Message(m) = &event.event {
@@ -156,7 +156,7 @@ impl ChatEventsList {
         self.latest_message_index.map_or(MessageIndex::default(), |m| m.incr())
     }
 
-    pub fn last(&self) -> Option<&EventWrapper<ChatEventInternal>> {
+    pub fn last(&self) -> Option<&EventWrapperInternal<ChatEventInternal>> {
         self.events_map.values().rev().next()
     }
 
@@ -210,9 +210,12 @@ impl<'r> ChatEventsListReader<'r> {
 }
 
 pub trait Reader {
-    fn get(&self, event_key: EventKey) -> Option<&EventWrapper<ChatEventInternal>>;
-    fn iter(&self, start: Option<EventKey>, ascending: bool)
-        -> Box<dyn Iterator<Item = &EventWrapper<ChatEventInternal>> + '_>;
+    fn get(&self, event_key: EventKey) -> Option<&EventWrapperInternal<ChatEventInternal>>;
+    fn iter(
+        &self,
+        start: Option<EventKey>,
+        ascending: bool,
+    ) -> Box<dyn Iterator<Item = &EventWrapperInternal<ChatEventInternal>> + '_>;
     fn iter_latest_messages(&self, my_user_id: Option<UserId>) -> Box<dyn Iterator<Item = EventWrapper<Message>> + '_>;
 
     fn event_index(&self, event_key: EventKey) -> Option<EventIndex> {
@@ -303,7 +306,11 @@ pub trait Reader {
             .filter(|m| m.event.last_updated.unwrap_or(m.timestamp) > since)
     }
 
-    fn hydrate_event(&self, event: &EventWrapper<ChatEventInternal>, my_user_id: Option<UserId>) -> EventWrapper<ChatEvent> {
+    fn hydrate_event(
+        &self,
+        event: &EventWrapperInternal<ChatEventInternal>,
+        my_user_id: Option<UserId>,
+    ) -> EventWrapper<ChatEvent> {
         let event_data = match &event.event {
             ChatEventInternal::Empty => ChatEvent::Empty,
             ChatEventInternal::DirectChatCreated(d) => ChatEvent::DirectChatCreated(*d),
@@ -425,7 +432,7 @@ pub trait Reader {
 
     fn cap_then_hydrate_events<'a>(
         &self,
-        iterator: impl Iterator<Item = &'a EventWrapper<ChatEventInternal>>,
+        iterator: impl Iterator<Item = &'a EventWrapperInternal<ChatEventInternal>>,
         max_messages: usize,
         max_events: usize,
         my_user_id: Option<UserId>,
@@ -450,7 +457,7 @@ pub trait Reader {
 }
 
 impl<'r> Reader for ChatEventsListReader<'r> {
-    fn get(&self, event_key: EventKey) -> Option<&EventWrapper<ChatEventInternal>> {
+    fn get(&self, event_key: EventKey) -> Option<&EventWrapperInternal<ChatEventInternal>> {
         self.events_list.get(event_key, self.min_visible_event_index, self.now)
     }
 
@@ -458,7 +465,7 @@ impl<'r> Reader for ChatEventsListReader<'r> {
         &self,
         start: Option<EventKey>,
         ascending: bool,
-    ) -> Box<dyn Iterator<Item = &EventWrapper<ChatEventInternal>> + '_> {
+    ) -> Box<dyn Iterator<Item = &EventWrapperInternal<ChatEventInternal>> + '_> {
         self.events_list
             .iter(start, ascending, self.min_visible_event_index, self.now)
     }
@@ -477,7 +484,7 @@ impl<'r> Reader for ChatEventsListReader<'r> {
 }
 
 fn try_into_message_event(
-    event: &EventWrapper<ChatEventInternal>,
+    event: &EventWrapperInternal<ChatEventInternal>,
     my_user_id: Option<UserId>,
 ) -> Option<EventWrapper<Message>> {
     let message = event.event.as_message()?;

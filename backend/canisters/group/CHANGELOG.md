@@ -15,6 +15,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Refactor so that invited user principals moved out of GroupChatCore ([#3727](https://github.com/open-ic/open-chat/pull/3727))
 - Move `updates_from_events` logic into GroupChatCore ([#3730](https://github.com/open-ic/open-chat/pull/3730))
 - Use FireAndForgetHandler for activity notification ([#3755](https://github.com/open-ic/open-chat/pull/3755))
+- Make (de)serializing events + users more efficient ([#3756](https://github.com/open-ic/open-chat/pull/3756))
 
 ## [[2.0.713](https://github.com/open-ic/open-chat/releases/tag/v2.0.713-group)] - 2023-06-02
 
