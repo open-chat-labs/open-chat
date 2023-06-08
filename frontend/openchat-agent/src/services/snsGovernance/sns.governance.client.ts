@@ -1,15 +1,18 @@
 import type { Identity } from "@dfinity/agent";
-import type { ListNervousSystemFunctionsResponse, ManageNeuronResponse, ProposalVoteDetails } from "openchat-shared";
+import type {
+    ListNervousSystemFunctionsResponse,
+    ManageNeuronResponse,
+    ProposalVoteDetails,
+} from "openchat-shared";
 import { idlFactory, SnsGovernanceService } from "./candid/idl";
 import { CandidService } from "../candidService";
-import type { ISnsGovernanceClient } from "./sns.governance.client.interface";
 import { getProposalVoteDetails, manageNeuronResponse, nervousSystemFunctions } from "./mappers";
 import type { AgentConfig } from "../../config";
 import { apiOptional, apiProposalVote } from "../common/chatMappers";
 import { identity } from "../../utils/mapping";
 import { toUint8Array } from "../../utils/base64";
 
-export class SnsGovernanceClient extends CandidService implements ISnsGovernanceClient {
+export class SnsGovernanceClient extends CandidService {
     private service: SnsGovernanceService;
 
     private constructor(identity: Identity, config: AgentConfig, canisterId: string) {
@@ -26,24 +29,25 @@ export class SnsGovernanceClient extends CandidService implements ISnsGovernance
         identity: Identity,
         config: AgentConfig,
         canisterId: string
-    ): ISnsGovernanceClient {
+    ): SnsGovernanceClient {
         return new SnsGovernanceClient(identity, config, canisterId);
     }
 
-    registerVote(neuronId: string, proposalId: bigint, vote: boolean): Promise<ManageNeuronResponse> {
+    registerVote(
+        neuronId: string,
+        proposalId: bigint,
+        vote: boolean
+    ): Promise<ManageNeuronResponse> {
         const args = {
             subaccount: toUint8Array(neuronId),
             command: apiOptional(identity, {
                 RegisterVote: {
                     vote: apiProposalVote(vote),
-                    proposal : apiOptional(identity, { id: proposalId })
-                }
-            })
+                    proposal: apiOptional(identity, { id: proposalId }),
+                },
+            }),
         };
-        return this.handleResponse(
-            this.service.manage_neuron(args),
-            manageNeuronResponse
-        );
+        return this.handleResponse(this.service.manage_neuron(args), manageNeuronResponse);
     }
 
     getProposalVoteDetails(proposalId: bigint): Promise<ProposalVoteDetails> {
@@ -57,7 +61,7 @@ export class SnsGovernanceClient extends CandidService implements ISnsGovernance
         return this.handleQueryResponse(
             () => this.service.list_proposals(args),
             getProposalVoteDetails
-        )
+        );
     }
 
     listNervousSystemFunctions(): Promise<ListNervousSystemFunctionsResponse> {
