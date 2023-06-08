@@ -16,21 +16,19 @@ import {
     ProjectedAllowance,
     StorageUserNotFound,
 } from "openchat-shared";
-import type { IStorageIndexClient } from "../storageIndex/storageIndex.client.interface";
 import { StorageIndexClient } from "../storageIndex/storageIndex.client";
 import { StorageBucketClient } from "../storageBucket/storageBucket.client";
 
 export class DataClient extends EventTarget {
     static create(identity: Identity, config: AgentConfig): DataClient {
         const storageIndexClient = StorageIndexClient.create(identity, config);
-
         return new DataClient(identity, config, storageIndexClient);
     }
 
     private constructor(
         private identity: Identity,
         private config: AgentConfig,
-        private storageIndexClient: IStorageIndexClient
+        private storageIndexClient: StorageIndexClient
     ) {
         super();
     }
