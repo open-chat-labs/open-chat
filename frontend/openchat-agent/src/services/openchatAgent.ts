@@ -1,7 +1,4 @@
 import type { Identity } from "@dfinity/agent";
-import type { IUserIndexClient } from "./userIndex/userIndex.client.interface";
-import type { IUserClient } from "./user/user.client.interface";
-import type { IGroupClient } from "./group/group.client.interface";
 import {
     Database,
     getCachedChats,
@@ -15,18 +12,12 @@ import { getAllUsers } from "../utils/userCache";
 import { UserIndexClient } from "./userIndex/userIndex.client";
 import { UserClient } from "./user/user.client";
 import { GroupClient } from "./group/group.client";
-import type { ILocalUserIndexClient } from "./localUserIndex/localUserIndex.client.interface";
 import { LocalUserIndexClient } from "./localUserIndex/localUserIndex.client";
-import type { INotificationsClient } from "./notifications/notifications.client.interface";
 import { NotificationsClient } from "./notifications/notifications.client";
-import type { IOnlineClient } from "./online/online.client.interface";
 import { OnlineClient } from "./online/online.client";
 import { DataClient } from "./data/data.client";
-import type { ILedgerClient } from "./ledger/ledger.client.interface";
 import { LedgerClient } from "./ledger/ledger.client";
-import type { IGroupIndexClient } from "./groupIndex/groupIndex.client.interface";
 import { GroupIndexClient } from "./groupIndex/groupIndex.client";
-import type { IMarketMakerClient } from "./marketMaker/marketMaker.client.interface";
 import { MarketMakerClient } from "./marketMaker/marketMaker.client";
 import { toRecord } from "../utils/list";
 import { measure } from "./common/profiling";
@@ -155,14 +146,14 @@ import { waitAll } from "../utils/promise";
 import { MessageContextMap } from "../utils/messageContext";
 
 export class OpenChatAgent extends EventTarget {
-    private _userIndexClient: IUserIndexClient;
-    private _onlineClient: IOnlineClient;
-    private _groupIndexClient: IGroupIndexClient;
-    private _userClient?: IUserClient;
-    private _notificationClient: INotificationsClient;
-    private _marketMakerClient: IMarketMakerClient;
-    private _ledgerClients: Record<Cryptocurrency, ILedgerClient>;
-    private _groupClients: Record<string, IGroupClient>;
+    private _userIndexClient: UserIndexClient;
+    private _onlineClient: OnlineClient;
+    private _groupIndexClient: GroupIndexClient;
+    private _userClient?: UserClient;
+    private _notificationClient: NotificationsClient;
+    private _marketMakerClient: MarketMakerClient;
+    private _ledgerClients: Record<Cryptocurrency, LedgerClient>;
+    private _groupClients: Record<string, GroupClient>;
     private _groupInvite: GroupInvite | undefined;
     private db: Database;
     private _logger: Logger;
@@ -172,7 +163,7 @@ export class OpenChatAgent extends EventTarget {
         this._logger = config.logger;
         this.db = initDb(this.principal);
         this._onlineClient = OnlineClient.create(identity, config);
-        this._userIndexClient = UserIndexClient.create(identity, config);
+        this._userIndexClient = new UserIndexClient(identity, config);
         this._groupIndexClient = GroupIndexClient.create(identity, config);
         this._notificationClient = NotificationsClient.create(identity, config);
         this._marketMakerClient = MarketMakerClient.create(identity, config);
@@ -212,7 +203,7 @@ export class OpenChatAgent extends EventTarget {
         return this;
     }
 
-    private getGroupClient(chatId: string): IGroupClient {
+    private getGroupClient(chatId: string): GroupClient {
         if (!this._groupClients[chatId]) {
             const inviteCode = this.getProvidedInviteCode(chatId);
             this._groupClients[chatId] = GroupClient.create(
@@ -226,14 +217,14 @@ export class OpenChatAgent extends EventTarget {
         return this._groupClients[chatId];
     }
 
-    private get userClient(): IUserClient {
+    private get userClient(): UserClient {
         if (this._userClient) {
             return this._userClient;
         }
         throw new Error("Attempted to use the user client before it has been initialised");
     }
 
-    private createLocalUserIndexClient(canisterId: string): ILocalUserIndexClient {
+    private createLocalUserIndexClient(canisterId: string): LocalUserIndexClient {
         return LocalUserIndexClient.create(this.identity, this.config, canisterId);
     }
 

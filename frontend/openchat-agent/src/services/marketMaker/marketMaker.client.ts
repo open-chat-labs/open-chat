@@ -2,13 +2,12 @@ import type { Identity } from "@dfinity/agent";
 import type { UpdateMarketMakerConfigArgs, UpdateMarketMakerConfigResponse } from "openchat-shared";
 import { idlFactory, MarketMakerService } from "./candid/idl";
 import { CandidService } from "../candidService";
-import type { IMarketMakerClient } from "./marketMaker.client.interface";
 import { updateConfigResponse } from "./mappers";
 import type { AgentConfig } from "../../config";
 import { apiOptional } from "../common/chatMappers";
 import { identity } from "../../utils/mapping";
 
-export class MarketMakerClient extends CandidService implements IMarketMakerClient {
+export class MarketMakerClient extends CandidService {
     private service: MarketMakerService;
 
     private constructor(identity: Identity, config: AgentConfig) {
@@ -21,10 +20,7 @@ export class MarketMakerClient extends CandidService implements IMarketMakerClie
         );
     }
 
-    static create(
-        identity: Identity,
-        config: AgentConfig,
-    ): IMarketMakerClient {
+    static create(identity: Identity, config: AgentConfig): MarketMakerClient {
         return new MarketMakerClient(identity, config);
     }
 
@@ -39,12 +35,15 @@ export class MarketMakerClient extends CandidService implements IMarketMakerClie
             min_sell_price: apiOptional(identity, config.minSellPrice),
             min_orders_per_direction: apiOptional(identity, config.minOrdersPerDirection),
             max_orders_per_direction: apiOptional(identity, config.maxOrdersPerDirection),
-            max_orders_to_make_per_iteration: apiOptional(identity, config.maxOrdersToMakePerIteration),
-            max_orders_to_cancel_per_iteration: apiOptional(identity, config.maxOrdersToCancelPerIteration),
+            max_orders_to_make_per_iteration: apiOptional(
+                identity,
+                config.maxOrdersToMakePerIteration
+            ),
+            max_orders_to_cancel_per_iteration: apiOptional(
+                identity,
+                config.maxOrdersToCancelPerIteration
+            ),
         };
-        return this.handleResponse(
-            this.service.update_config(args),
-            updateConfigResponse
-        )
+        return this.handleResponse(this.service.update_config(args), updateConfigResponse);
     }
 }

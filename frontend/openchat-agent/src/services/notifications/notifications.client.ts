@@ -2,12 +2,11 @@
 import type { Identity } from "@dfinity/agent";
 import { idlFactory, NotificationsService } from "./candid/idl";
 import { CandidService } from "../candidService";
-import type { INotificationsClient } from "./notifications.client.interface";
 import { subscriptionExistsResponse } from "./mappers";
 import { toVoid } from "../../utils/mapping";
 import type { AgentConfig } from "../../config";
 
-export class NotificationsClient extends CandidService implements INotificationsClient {
+export class NotificationsClient extends CandidService {
     private service: NotificationsService;
 
     private constructor(identity: Identity, config: AgentConfig) {
@@ -20,7 +19,7 @@ export class NotificationsClient extends CandidService implements INotifications
         );
     }
 
-    static create(identity: Identity, config: AgentConfig): INotificationsClient {
+    static create(identity: Identity, config: AgentConfig): NotificationsClient {
         return new NotificationsClient(identity, config);
     }
 

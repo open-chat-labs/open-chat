@@ -1,3 +1,4 @@
+import { groupBy } from "../../utils/list";
 import type { Identity } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
 import { idlFactory, UserIndexService } from "./candid/idl";
@@ -17,6 +18,7 @@ import type {
     SetUserUpgradeConcurrencyResponse,
     ReferralLeaderboardRange,
     ReferralLeaderboardResponse,
+    PartialUserSummary,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
@@ -33,16 +35,19 @@ import {
     referralLeaderboardResponse,
     userRegistrationCanisterResponse,
 } from "./mappers";
-import { CachingUserIndexClient } from "./userIndex.caching.client";
-import type { IUserIndexClient } from "./userIndex.client.interface";
-import { profile } from "../common/profiling";
 import { apiOptional } from "../common/chatMappers";
 import type { AgentConfig } from "../../config";
+import {
+    getCachedUsers,
+    setCachedUsers,
+    setUserDiamondStatusToTrueInCache,
+    setUsernameInCache,
+} from "../../utils/userCache";
 
-export class UserIndexClient extends CandidService implements IUserIndexClient {
+export class UserIndexClient extends CandidService {
     private userIndexService: UserIndexService;
 
-    private constructor(identity: Identity, config: AgentConfig) {
+    constructor(identity: Identity, config: AgentConfig) {
         super(identity);
 
         this.userIndexService = this.createServiceClient<UserIndexService>(
@@ -52,11 +57,6 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
         );
     }
 
-    static create(identity: Identity, config: AgentConfig): IUserIndexClient {
-        return new CachingUserIndexClient(new UserIndexClient(identity, config), config.logger);
-    }
-
-    @profile("userIndexClient")
     getCurrentUser(): Promise<CurrentUserResponse> {
         return this.handleQueryResponse(
             () => this.userIndexService.current_user({}),
@@ -64,7 +64,6 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
         );
     }
 
-    @profile("userIndexClient")
     userRegistrationCanister(): Promise<string> {
         return this.handleResponse(
             this.userIndexService.user_registration_canister({}),
@@ -72,7 +71,6 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
         );
     }
 
-    @profile("userIndexClient")
     searchUsers(searchTerm: string, maxResults = 20): Promise<UserSummary[]> {
         const args = {
             search_term: searchTerm,
@@ -85,8 +83,35 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
         );
     }
 
-    @profile("userIndexClient")
-    getUsers(users: UsersArgs, _allowStale: boolean): Promise<UsersResponse> {
+    async getUsers(users: UsersArgs, allowStale: boolean): Promise<UsersResponse> {
+        const allUsers = users.userGroups.flatMap((g) => g.users);
+
+        const fromCache = await getCachedUsers(allUsers);
+
+        // We throw away all of the updatedSince values passed in and instead use the values from the cache, this
+        // ensures the cache is always correct and doesn't miss any updates
+        const args = this.buildGetUsersArgs(allUsers, fromCache, allowStale);
+
+        const response = await this.getUsersFromBackend(users);
+
+        const requestedFromServer = new Set<string>([...args.userGroups.flatMap((g) => g.users)]);
+
+        // We return the fully hydrated users so that it is not possible for the Svelte store to miss any updates
+        const mergedResponse = this.mergeGetUsersResponse(
+            allUsers,
+            requestedFromServer,
+            response,
+            fromCache
+        );
+
+        setCachedUsers(mergedResponse.users.filter(this.isUserSummary)).catch((err) =>
+            console.error("Failed to save users to the cache", err)
+        );
+
+        return mergedResponse;
+    }
+
+    private getUsersFromBackend(users: UsersArgs): Promise<UsersResponse> {
         const userGroups = users.userGroups.filter((g) => g.users.length > 0);
 
         if (userGroups.length === 0) {
@@ -108,7 +133,93 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
         );
     }
 
-    @profile("userIndexClient")
+    private buildGetUsersArgs(
+        users: string[],
+        fromCache: UserSummary[],
+        allowStale: boolean
+    ): UsersArgs {
+        const fromCacheGrouped = groupBy(fromCache, (u) => u.updated);
+        const fromCacheSet = new Set<string>(fromCache.map((u) => u.userId));
+
+        const args: UsersArgs = {
+            userGroups: [],
+        };
+
+        // Add the users not found in the cache and ask for all updates
+        const notFoundInCache = users.filter((u) => !fromCacheSet.has(u));
+        if (notFoundInCache.length > 0) {
+            args.userGroups.push({
+                users: notFoundInCache,
+                updatedSince: BigInt(0),
+            });
+        }
+
+        if (!allowStale) {
+            // Add the users found in the cache but only ask for updates since the date they were last updated in the cache
+            for (const [updatedSince, users] of fromCacheGrouped) {
+                args.userGroups.push({
+                    users: users.map((u) => u.userId),
+                    updatedSince,
+                });
+            }
+        }
+
+        return args;
+    }
+
+    // Merges the cached values into the response
+    private mergeGetUsersResponse(
+        allUsers: string[],
+        requestedFromServer: Set<string>,
+        response: UsersResponse,
+        fromCache: UserSummary[]
+    ): UsersResponse {
+        if (fromCache.length === 0) {
+            return response;
+        }
+
+        const fromCacheMap = new Map<string, UserSummary>(fromCache.map((u) => [u.userId, u]));
+        const responseMap = new Map<string, PartialUserSummary>(
+            response.users.map((u) => [u.userId, u])
+        );
+
+        const users: PartialUserSummary[] = [];
+
+        for (const userId of allUsers) {
+            const cached = fromCacheMap.get(userId);
+            const userResponse = responseMap.get(userId);
+
+            if (userResponse !== undefined) {
+                users.push({
+                    ...userResponse,
+                    username: userResponse.username ?? cached?.username,
+                    blobReference: userResponse.blobReference ?? cached?.blobReference,
+                });
+            } else if (cached !== undefined) {
+                if (requestedFromServer.has(userId)) {
+                    // If this user was requested from the server but wasn't included in the response, then that means
+                    // our cached copy is up to date.
+                    users.push({
+                        ...cached,
+                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                        updated: response.serverTimestamp!,
+                    });
+                } else {
+                    users.push(cached);
+                }
+            }
+        }
+
+        return {
+            serverTimestamp: response.serverTimestamp,
+            users,
+        };
+    }
+
+    private isUserSummary(user: PartialUserSummary): user is UserSummary {
+        return user.username !== undefined;
+    }
+
     checkUsername(username: string): Promise<CheckUsernameResponse> {
         const args = {
             username: username,
@@ -120,17 +231,20 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
         );
     }
 
-    @profile("userIndexClient")
-    setUsername(_userId: string, username: string): Promise<SetUsernameResponse> {
+    setUsername(userId: string, username: string): Promise<SetUsernameResponse> {
         return this.handleResponse(
             this.userIndexService.set_username({
                 username: username,
             }),
             setUsernameResponse
-        );
+        ).then((res) => {
+            if (res === "success") {
+                setUsernameInCache(userId, username);
+            }
+            return res;
+        });
     }
 
-    @profile("userIndexClient")
     suspendUser(userId: string, reason: string): Promise<SuspendUserResponse> {
         return this.handleResponse(
             this.userIndexService.suspend_user({
@@ -142,7 +256,6 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
         );
     }
 
-    @profile("userIndexClient")
     unsuspendUser(userId: string): Promise<UnsuspendUserResponse> {
         return this.handleResponse(
             this.userIndexService.unsuspend_user({
@@ -152,14 +265,12 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
         );
     }
 
-    @profile("userIndexClient")
     markSuspectedBot(): Promise<MarkSuspectedBotResponse> {
         return this.handleResponse(this.userIndexService.mark_suspected_bot({}), () => "success");
     }
 
-    @profile("userIndexClient")
     payForDiamondMembership(
-        _userId: string,
+        userId: string,
         token: Cryptocurrency,
         duration: DiamondMembershipDuration,
         recurring: boolean,
@@ -173,10 +284,14 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
                 expected_price_e8s: expectedPriceE8s,
             }),
             payForDiamondMembershipResponse
-        );
+        ).then((res) => {
+            if (res.kind === "success") {
+                setUserDiamondStatusToTrueInCache(userId);
+            }
+            return res;
+        });
     }
 
-    @profile("userIndexClient")
     setUserUpgradeConcurrency(value: number): Promise<SetUserUpgradeConcurrencyResponse> {
         return this.handleResponse(
             this.userIndexService.set_user_upgrade_concurrency({ value }),
@@ -184,7 +299,6 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
         );
     }
 
-    @profile("userIndexClient")
     getReferralLeaderboard(req?: ReferralLeaderboardRange): Promise<ReferralLeaderboardResponse> {
         return this.handleResponse(
             this.userIndexService.referral_leaderboard({
@@ -202,7 +316,6 @@ export class UserIndexClient extends CandidService implements IUserIndexClient {
         );
     }
 
-    @profile("userIndexClient")
     getPlatformModeratorGroup(): Promise<string> {
         return this.handleResponse(this.userIndexService.platform_moderators_group({}), (res) =>
             res.Success.toString()

@@ -42,6 +42,8 @@ import type {
     DeletedDirectMessageResponse,
     EventWrapper,
     SetMessageReminderResponse,
+    ChatEvent,
+    EventsSuccessResult,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
@@ -72,10 +74,18 @@ import {
     deletedMessageResponse,
     setMessageReminderResponse,
 } from "./mappers";
-import type { IUserClient } from "./user.client.interface";
-import { MAX_EVENTS, MAX_MESSAGES } from "../../constants";
-import type { Database } from "../../utils/caching";
-import { CachingUserClient } from "./user.caching.client";
+import { MAX_EVENTS, MAX_MESSAGES, MAX_MISSING } from "../../constants";
+import {
+    Database,
+    getCachedEvents,
+    getCachedEventsByIndex,
+    getCachedEventsWindow,
+    mergeSuccessResponses,
+    recordFailedMessage,
+    removeFailedMessage,
+    setCachedEvents,
+    setCachedMessageFromSendResponse,
+} from "../../utils/caching";
 import {
     apiGroupPermissions,
     apiMaybeGroupGate,
@@ -88,16 +98,20 @@ import {
 import { DataClient } from "../data/data.client";
 import { muteNotificationsResponse } from "../notifications/mappers";
 import { identity, toVoid } from "../../utils/mapping";
-import { profile } from "../common/profiling";
 import { apiGroupRules } from "../group/mappers";
 import { generateUint64 } from "../../utils/rng";
 import type { AgentConfig } from "../../config";
 
-export class UserClient extends CandidService implements IUserClient {
+export class UserClient extends CandidService {
     private userService: UserService;
     userId: string;
 
-    constructor(identity: Identity, userId: string, private config: AgentConfig) {
+    constructor(
+        identity: Identity,
+        userId: string,
+        private config: AgentConfig,
+        private db: Database
+    ) {
         super(identity);
         this.userId = userId;
         this.userService = this.createServiceClient<UserService>(idlFactory, userId, config);
@@ -108,11 +122,46 @@ export class UserClient extends CandidService implements IUserClient {
         identity: Identity,
         config: AgentConfig,
         db: Database
-    ): IUserClient {
-        return new CachingUserClient(db, config, new UserClient(identity, userId, config));
+    ): UserClient {
+        return new UserClient(identity, userId, config, db);
     }
 
-    @profile("userClient")
+    private setCachedEvents<T extends ChatEvent>(
+        userId: string,
+        resp: EventsResponse<T>,
+        threadRootMessageIndex?: number
+    ): EventsResponse<T> {
+        setCachedEvents(this.db, userId, resp, threadRootMessageIndex).catch((err) =>
+            this.config.logger.error("Error writing cached group events", err)
+        );
+        return resp;
+    }
+
+    private handleMissingEvents(
+        userId: string,
+        [cachedEvents, missing]: [EventsSuccessResult<DirectChatEvent>, Set<number>],
+        threadRootMessageIndex: number | undefined,
+        latestClientEventIndex: number | undefined
+    ): Promise<EventsResponse<DirectChatEvent>> {
+        if (missing.size === 0) {
+            return Promise.resolve(cachedEvents);
+        } else {
+            return this.chatEventsByIndexFromBackend(
+                [...missing],
+                userId,
+                threadRootMessageIndex,
+                latestClientEventIndex
+            )
+                .then((resp) => this.setCachedEvents(userId, resp, threadRootMessageIndex))
+                .then((resp) => {
+                    if (resp !== "events_failed") {
+                        return mergeSuccessResponses(cachedEvents, resp);
+                    }
+                    return resp;
+                });
+        }
+    }
+
     getInitialState(): Promise<InitialStateResponse> {
         const args = {
             disable_cache: apiOptional(identity, false),
@@ -124,7 +173,6 @@ export class UserClient extends CandidService implements IUserClient {
         );
     }
 
-    @profile("userClient")
     getUpdates(updatesSince: bigint): Promise<UpdatesResponse> {
         const args = {
             updates_since: updatesSince,
@@ -136,7 +184,6 @@ export class UserClient extends CandidService implements IUserClient {
         );
     }
 
-    @profile("userClient")
     createGroup(group: CandidateGroupChat): Promise<CreateGroupResponse> {
         return this.handleResponse(
             this.userService.create_group({
@@ -159,7 +206,6 @@ export class UserClient extends CandidService implements IUserClient {
         );
     }
 
-    @profile("userClient")
     deleteGroup(chatId: string): Promise<DeleteGroupResponse> {
         return this.handleResponse(
             this.userService.delete_group({
@@ -169,8 +215,23 @@ export class UserClient extends CandidService implements IUserClient {
         );
     }
 
-    @profile("userClient")
     chatEventsByIndex(
+        eventIndexes: number[],
+        userId: string,
+        threadRootMessageIndex: number | undefined,
+        latestClientEventIndex: number | undefined
+    ): Promise<EventsResponse<DirectChatEvent>> {
+        return getCachedEventsByIndex<DirectChatEvent>(
+            this.db,
+            eventIndexes,
+            userId,
+            threadRootMessageIndex
+        ).then((res) =>
+            this.handleMissingEvents(userId, res, threadRootMessageIndex, latestClientEventIndex)
+        );
+    }
+
+    private chatEventsByIndexFromBackend(
         eventIndexes: number[],
         userId: string,
         threadRootMessageIndex: number | undefined,
@@ -189,9 +250,41 @@ export class UserClient extends CandidService implements IUserClient {
         );
     }
 
-    @profile("userClient")
     async chatEventsWindow(
-        _eventIndexRange: IndexRange,
+        eventIndexRange: IndexRange,
+        userId: string,
+        messageIndex: number,
+        latestClientEventIndex: number | undefined
+    ): Promise<EventsResponse<DirectChatEvent>> {
+        const [cachedEvents, missing, totalMiss] = await getCachedEventsWindow<DirectChatEvent>(
+            this.db,
+            eventIndexRange,
+            userId,
+            messageIndex
+        );
+        if (totalMiss || missing.size >= MAX_MISSING) {
+            // if we have exceeded the maximum number of missing events, let's just consider it a complete miss and go to the api
+            console.log(
+                "We didn't get enough back from the cache, going to the api",
+                missing.size,
+                totalMiss
+            );
+            return this.chatEventsWindowFromBackend(
+                userId,
+                messageIndex,
+                latestClientEventIndex
+            ).then((resp) => this.setCachedEvents(userId, resp));
+        } else {
+            return this.handleMissingEvents(
+                userId,
+                [cachedEvents, missing],
+                undefined,
+                latestClientEventIndex
+            );
+        }
+    }
+
+    private async chatEventsWindowFromBackend(
         userId: string,
         messageIndex: number,
         latestClientEventIndex: number | undefined
@@ -212,9 +305,45 @@ export class UserClient extends CandidService implements IUserClient {
         );
     }
 
-    @profile("userClient")
-    chatEvents(
-        _eventIndexRange: IndexRange,
+    async chatEvents(
+        eventIndexRange: IndexRange,
+        userId: string,
+        startIndex: number,
+        ascending: boolean,
+        threadRootMessageIndex: number | undefined,
+        latestClientEventIndex: number | undefined
+    ): Promise<EventsResponse<DirectChatEvent>> {
+        const [cachedEvents, missing] = await getCachedEvents<DirectChatEvent>(
+            this.db,
+            eventIndexRange,
+            userId,
+            startIndex,
+            ascending,
+            threadRootMessageIndex
+        );
+
+        // we may or may not have all of the requested events
+        if (missing.size >= MAX_MISSING) {
+            // if we have exceeded the maximum number of missing events, let's just consider it a complete miss and go to the api
+            console.log("We didn't get enough back from the cache, going to the api");
+            return this.chatEventsFromBackend(
+                userId,
+                startIndex,
+                ascending,
+                threadRootMessageIndex,
+                latestClientEventIndex
+            ).then((resp) => this.setCachedEvents(userId, resp, threadRootMessageIndex));
+        } else {
+            return this.handleMissingEvents(
+                userId,
+                [cachedEvents, missing],
+                threadRootMessageIndex,
+                latestClientEventIndex
+            );
+        }
+    }
+
+    private chatEventsFromBackend(
         userId: string,
         startIndex: number,
         ascending: boolean,
@@ -238,7 +367,6 @@ export class UserClient extends CandidService implements IUserClient {
         );
     }
 
-    @profile("userClient")
     setAvatar(bytes: Uint8Array): Promise<BlobReference> {
         const blobId = DataClient.newBlobId();
         return this.handleResponse(
@@ -261,7 +389,6 @@ export class UserClient extends CandidService implements IUserClient {
         });
     }
 
-    @profile("userClient")
     editMessage(
         recipientId: string,
         message: Message,
@@ -284,8 +411,29 @@ export class UserClient extends CandidService implements IUserClient {
             });
     }
 
-    @profile("userClient")
     sendMessage(
+        chatId: string,
+        sender: CreatedUser,
+        event: EventWrapper<Message>,
+        threadRootMessageIndex?: number
+    ): Promise<[SendMessageResponse, Message]> {
+        removeFailedMessage(this.db, this.userId, event.event.messageId, threadRootMessageIndex);
+        return this.sendMessageToBackend(chatId, sender, event, threadRootMessageIndex)
+            .then(
+                setCachedMessageFromSendResponse(
+                    this.db,
+                    this.userId,
+                    event,
+                    threadRootMessageIndex
+                )
+            )
+            .catch((err) => {
+                recordFailedMessage(this.db, this.userId, event, threadRootMessageIndex);
+                throw err;
+            });
+    }
+
+    sendMessageToBackend(
         chatId: string,
         sender: CreatedUser,
         event: EventWrapper<Message>,
@@ -318,8 +466,29 @@ export class UserClient extends CandidService implements IUserClient {
         });
     }
 
-    @profile("userClient")
     sendMessageWithTransferToGroup(
+        groupId: string,
+        recipientId: string,
+        sender: CreatedUser,
+        event: EventWrapper<Message>,
+        threadRootMessageIndex?: number
+    ): Promise<[SendMessageResponse, Message]> {
+        removeFailedMessage(this.db, this.userId, event.event.messageId, threadRootMessageIndex);
+        return this.sendMessageWithTransferToGroupToBackend(
+            groupId,
+            recipientId,
+            sender,
+            event,
+            threadRootMessageIndex
+        )
+            .then(setCachedMessageFromSendResponse(this.db, groupId, event, threadRootMessageIndex))
+            .catch((err) => {
+                recordFailedMessage(this.db, groupId, event);
+                throw err;
+            });
+    }
+
+    sendMessageWithTransferToGroupToBackend(
         groupId: string,
         recipientId: string,
         sender: CreatedUser,
@@ -349,7 +518,6 @@ export class UserClient extends CandidService implements IUserClient {
         ).then((resp) => [resp, event.event]);
     }
 
-    @profile("userClient")
     blockUser(userId: string): Promise<BlockUserResponse> {
         return this.handleResponse(
             this.userService.block_user({
@@ -359,7 +527,6 @@ export class UserClient extends CandidService implements IUserClient {
         );
     }
 
-    @profile("userClient")
     unblockUser(userId: string): Promise<UnblockUserResponse> {
         return this.handleResponse(
             this.userService.unblock_user({
@@ -369,7 +536,6 @@ export class UserClient extends CandidService implements IUserClient {
         );
     }
 
-    @profile("userClient")
     leaveGroup(chatId: string): Promise<LeaveGroupResponse> {
         return this.handleResponse(
             this.userService.leave_group({
@@ -380,7 +546,6 @@ export class UserClient extends CandidService implements IUserClient {
         );
     }
 
-    @profile("userClient")
     markMessagesRead(request: MarkReadRequest): Promise<MarkReadResponse> {
         return this.handleResponse(
             this.userService.mark_read_v2({
@@ -398,7 +563,6 @@ export class UserClient extends CandidService implements IUserClient {
         );
     }
 
-    @profile("userClient")
     addReaction(
         otherUserId: string,
         messageId: bigint,
@@ -419,7 +583,6 @@ export class UserClient extends CandidService implements IUserClient {
         );
     }
 
-    @profile("userClient")
     removeReaction(
         otherUserId: string,
         messageId: bigint,
@@ -438,7 +601,6 @@ export class UserClient extends CandidService implements IUserClient {
         );
     }
 
-    @profile("userClient")
     deleteMessage(
         otherUserId: string,
         messageId: bigint,
@@ -455,7 +617,6 @@ export class UserClient extends CandidService implements IUserClient {
         );
     }
 
-    @profile("userClient")
     undeleteMessage(
         otherUserId: string,
         messageId: bigint,
@@ -472,7 +633,6 @@ export class UserClient extends CandidService implements IUserClient {
         );
     }
 
-    @profile("userClient")
     searchDirectChat(
         userId: string,
         searchTerm: string,
@@ -490,7 +650,6 @@ export class UserClient extends CandidService implements IUserClient {
         );
     }
 
-    @profile("userClient")
     toggleMuteNotifications(
         chatId: string,
         muted: boolean
@@ -512,7 +671,6 @@ export class UserClient extends CandidService implements IUserClient {
         }
     }
 
-    @profile("userClient")
     dismissRecommendation(chatId: string): Promise<void> {
         return this.handleResponse(
             this.userService.add_hot_group_exclusions({
@@ -523,7 +681,6 @@ export class UserClient extends CandidService implements IUserClient {
         );
     }
 
-    @profile("userClient")
     getBio(): Promise<string> {
         return this.handleQueryResponse(
             () => this.userService.bio({}),
@@ -531,7 +688,6 @@ export class UserClient extends CandidService implements IUserClient {
         );
     }
 
-    @profile("userClient")
     getPublicProfile(): Promise<PublicProfile> {
         return this.handleQueryResponse(
             () => this.userService.public_profile({}),
@@ -539,12 +695,10 @@ export class UserClient extends CandidService implements IUserClient {
         );
     }
 
-    @profile("userClient")
     setBio(bio: string): Promise<SetBioResponse> {
         return this.handleResponse(this.userService.set_bio({ text: bio }), setBioResponse);
     }
 
-    @profile("userClient")
     withdrawCryptocurrency(
         domain: PendingCryptocurrencyWithdrawal
     ): Promise<WithdrawCryptocurrencyResponse> {
@@ -555,7 +709,6 @@ export class UserClient extends CandidService implements IUserClient {
         );
     }
 
-    @profile("userClient")
     pinChat(chatId: string): Promise<PinChatResponse> {
         return this.handleResponse(
             this.userService.pin_chat({
@@ -565,7 +718,6 @@ export class UserClient extends CandidService implements IUserClient {
         );
     }
 
-    @profile("userClient")
     unpinChat(chatId: string): Promise<UnpinChatResponse> {
         return this.handleResponse(
             this.userService.unpin_chat({
@@ -575,7 +727,6 @@ export class UserClient extends CandidService implements IUserClient {
         );
     }
 
-    @profile("userClient")
     archiveChat(chatId: string): Promise<ArchiveChatResponse> {
         return this.handleResponse(
             this.userService.archive_chat({
@@ -585,7 +736,6 @@ export class UserClient extends CandidService implements IUserClient {
         );
     }
 
-    @profile("userClient")
     unarchiveChat(chatId: string): Promise<ArchiveChatResponse> {
         return this.handleResponse(
             this.userService.unarchive_chat({
@@ -595,7 +745,6 @@ export class UserClient extends CandidService implements IUserClient {
         );
     }
 
-    @profile("userClient")
     initUserPrincipalMigration(newPrincipal: string): Promise<void> {
         return this.handleResponse(
             this.userService.init_user_principal_migration({
@@ -605,7 +754,6 @@ export class UserClient extends CandidService implements IUserClient {
         );
     }
 
-    @profile("userClient")
     migrateUserPrincipal(): Promise<MigrateUserPrincipalResponse> {
         return this.handleResponse(
             this.userService.migrate_user_principal({}),
@@ -613,7 +761,6 @@ export class UserClient extends CandidService implements IUserClient {
         );
     }
 
-    @profile("userClient")
     getDeletedMessage(userId: string, messageId: bigint): Promise<DeletedDirectMessageResponse> {
         return this.handleResponse(
             this.userService.deleted_message({
@@ -624,7 +771,6 @@ export class UserClient extends CandidService implements IUserClient {
         );
     }
 
-    @profile("userClient")
     setMessageReminder(
         chatId: string,
         eventIndex: number,
@@ -644,7 +790,6 @@ export class UserClient extends CandidService implements IUserClient {
         );
     }
 
-    @profile("userClient")
     cancelMessageReminder(reminderId: bigint): Promise<boolean> {
         return this.handleResponse(
             this.userService.cancel_message_reminder({
