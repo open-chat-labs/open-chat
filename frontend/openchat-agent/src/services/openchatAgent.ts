@@ -22,7 +22,6 @@ import { OnlineClient } from "./online/online.client";
 import { DataClient } from "./data/data.client";
 import type { ILedgerClient } from "./ledger/ledger.client.interface";
 import { LedgerClient } from "./ledger/ledger.client";
-import type { IGroupIndexClient } from "./groupIndex/groupIndex.client.interface";
 import { GroupIndexClient } from "./groupIndex/groupIndex.client";
 import type { IMarketMakerClient } from "./marketMaker/marketMaker.client.interface";
 import { MarketMakerClient } from "./marketMaker/marketMaker.client";
@@ -155,7 +154,7 @@ import { MessageContextMap } from "../utils/messageContext";
 export class OpenChatAgent extends EventTarget {
     private _userIndexClient: UserIndexClient;
     private _onlineClient: IOnlineClient;
-    private _groupIndexClient: IGroupIndexClient;
+    private _groupIndexClient: GroupIndexClient;
     private _userClient?: IUserClient;
     private _notificationClient: INotificationsClient;
     private _marketMakerClient: IMarketMakerClient;
