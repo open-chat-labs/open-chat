@@ -288,7 +288,7 @@ mod tests {
         let event_bytes_len = event_bytes.len();
 
         // Before optimisation: 177 239
-        // After optimisation: 53 71
+        // After optimisation: 53 65
         assert_eq!(message_bytes_len, 53);
         assert_eq!(event_bytes_len, 65);
 
@@ -338,7 +338,7 @@ mod tests {
         let event_bytes_len = event_bytes.len();
 
         // Before optimisation: 389 451
-        // After optimisation: 286 310
+        // After optimisation: 286 304
         assert_eq!(message_bytes_len, 286);
         assert_eq!(event_bytes_len, 304);
 
