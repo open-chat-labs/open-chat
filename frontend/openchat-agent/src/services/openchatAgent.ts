@@ -1,6 +1,5 @@
 import type { Identity } from "@dfinity/agent";
 import type { IUserClient } from "./user/user.client.interface";
-import type { IGroupClient } from "./group/group.client.interface";
 import {
     Database,
     getCachedChats,
@@ -161,7 +160,7 @@ export class OpenChatAgent extends EventTarget {
     private _notificationClient: INotificationsClient;
     private _marketMakerClient: IMarketMakerClient;
     private _ledgerClients: Record<Cryptocurrency, ILedgerClient>;
-    private _groupClients: Record<string, IGroupClient>;
+    private _groupClients: Record<string, GroupClient>;
     private _groupInvite: GroupInvite | undefined;
     private db: Database;
     private _logger: Logger;
@@ -211,7 +210,7 @@ export class OpenChatAgent extends EventTarget {
         return this;
     }
 
-    private getGroupClient(chatId: string): IGroupClient {
+    private getGroupClient(chatId: string): GroupClient {
         if (!this._groupClients[chatId]) {
             const inviteCode = this.getProvidedInviteCode(chatId);
             this._groupClients[chatId] = GroupClient.create(
