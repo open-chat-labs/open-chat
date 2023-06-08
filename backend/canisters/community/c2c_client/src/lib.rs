@@ -11,3 +11,4 @@ generate_c2c_call!(c2c_invite_users_to_channel);
 generate_c2c_call!(c2c_join_community);
 generate_c2c_call!(c2c_leave_community);
 generate_c2c_call!(c2c_unfreeze_community);
+generate_c2c_call!(send_message);
