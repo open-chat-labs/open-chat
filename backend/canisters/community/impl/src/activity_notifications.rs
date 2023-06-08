@@ -9,7 +9,7 @@ pub(crate) fn handle_activity_notification(state: &mut RuntimeState) {
     let now = state.env.now();
 
     if let Some(mark_active_duration) = state.data.activity_notification_state.notify_if_required(now) {
-        let public_community_activity = state.data.is_public.then_some(PublicCommunityActivity {
+        let public_community_activity = state.data.is_public.then(|| PublicCommunityActivity {
             timestamp: now,
             member_count: state.data.members.len(),
         });
