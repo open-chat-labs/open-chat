@@ -35,7 +35,7 @@ pub(crate) fn handle_activity_notification(state: &mut RuntimeState) {
 
         fire_and_forget_handler.send(
             canister_id,
-            "c2c_mark_community_active".to_string(),
+            "c2c_mark_community_active_msgpack".to_string(),
             serialize_then_unwrap(args),
         );
     }
