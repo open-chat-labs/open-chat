@@ -19,7 +19,7 @@ import type {
     ApiEditMessageResponse,
     ApiInitialStateResponse,
     ApiUpdatesResponse,
-    ApiRole,
+    ApiGroupRole,
     ApiMention,
     ApiSetBioResponse,
     ApiWithdrawCryptoResponse,
@@ -795,7 +795,7 @@ function updatedEvent([eventIndex, timestamp]: [number, bigint]): UpdatedEvent {
     };
 }
 
-function memberRole(candid: ApiRole): MemberRole {
+function memberRole(candid: ApiGroupRole): MemberRole {
     if ("Admin" in candid) {
         return "admin";
     }

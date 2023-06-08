@@ -45,165 +45,169 @@ import type {
 } from "./candid/idl";
 import { apiOptional } from "../common/chatMappers";
 
-export function addMembersToChannelResponse(candid: ApiAddMembersToChannelResponse): unknown {
+export function addMembersToChannelResponse(_candid: ApiAddMembersToChannelResponse): unknown {
     return {};
 }
 
-export function addReactionResponse(candid: ApiAddReactionResponse): unknown {
+export function addReactionResponse(_candid: ApiAddReactionResponse): unknown {
     return {};
 }
 
-export function blockUserResponse(candid: ApiBlockUserResponse): unknown {
+export function blockUserResponse(_candid: ApiBlockUserResponse): unknown {
     return {};
 }
 
-export function changeChannelRoleResponse(candid: ApiChangeChannelRoleResponse): unknown {
+export function changeChannelRoleResponse(_candid: ApiChangeChannelRoleResponse): unknown {
     return {};
 }
 
-export function changeRoleResponse(candid: ApiChangeRoleResponse): unknown {
+export function changeRoleResponse(_candid: ApiChangeRoleResponse): unknown {
     return {};
 }
 
-export function createChannelResponse(candid: ApiCreateChannelResponse): unknown {
+export function createChannelResponse(_candid: ApiCreateChannelResponse): unknown {
     return {};
 }
 
-export function declineInvitationResponse(candid: ApiDeclineInvitationResponse): unknown {
+export function declineInvitationResponse(_candid: ApiDeclineInvitationResponse): unknown {
     return {};
 }
 
-export function deleteChannelResponse(candid: ApiDeleteChannelResponse): unknown {
+export function deleteChannelResponse(_candid: ApiDeleteChannelResponse): unknown {
     return {};
 }
 
-export function deleteMessagesResponse(candid: ApiDeleteMessagesResponse): unknown {
+export function deleteMessagesResponse(_candid: ApiDeleteMessagesResponse): unknown {
     return {};
 }
 
-export function deleteMessageResponse(candid: ApiDeletedMessageResponse): unknown {
+export function deleteMessageResponse(_candid: ApiDeletedMessageResponse): unknown {
     return {};
 }
 
-export function disableInviteCodeResponse(candid: ApiDisableInviteCodeResponse): unknown {
+export function disableInviteCodeResponse(_candid: ApiDisableInviteCodeResponse): unknown {
     return {};
 }
 
-export function editMessageResponse(candid: ApiEditMessageResponse): unknown {
+export function editMessageResponse(_candid: ApiEditMessageResponse): unknown {
     return {};
 }
 
-export function enableInviteCodeResponse(candid: ApiEnableInviteCodeResponse): unknown {
+export function enableInviteCodeResponse(_candid: ApiEnableInviteCodeResponse): unknown {
     return {};
 }
 
-export function eventsResponse(candid: ApiEventsResponse): unknown {
+export function eventsResponse(_candid: ApiEventsResponse): unknown {
     return {};
 }
 
-export function inviteCodeResponse(candid: ApiInviteCodeResponse): unknown {
+export function inviteCodeResponse(_candid: ApiInviteCodeResponse): unknown {
     return {};
 }
 
-export function joinChannelResponse(candid: ApiJoinChannelResponse): unknown {
+export function joinChannelResponse(_candid: ApiJoinChannelResponse): unknown {
     return {};
 }
 
-export function leaveChannelResponse(candid: ApiLeaveChannelResponse): unknown {
+export function leaveChannelResponse(_candid: ApiLeaveChannelResponse): unknown {
     return {};
 }
 
-export function localUserIndexResponse(candid: ApiLocalUserIndexResponse): unknown {
+export function localUserIndexResponse(_candid: ApiLocalUserIndexResponse): unknown {
     return {};
 }
 
-export function makeChannelPrivateResponse(candid: ApiMakeChannelPrivateResponse): unknown {
+export function makeChannelPrivateResponse(_candid: ApiMakeChannelPrivateResponse): unknown {
     return {};
 }
 
-export function makePrivateResponse(candid: ApiMakePrivateResponse): unknown {
+export function makePrivateResponse(_candid: ApiMakePrivateResponse): unknown {
     return {};
 }
 
-export function messageByMessageIndexResponse(candid: ApiMessagesByMessageIndexResponse): unknown {
+export function messageByMessageIndexResponse(_candid: ApiMessagesByMessageIndexResponse): unknown {
     return {};
 }
 
-export function pinMessageResponse(candid: ApiPinMessageResponse): unknown {
+export function pinMessageResponse(_candid: ApiPinMessageResponse): unknown {
     return {};
 }
 
-export function removeMemberResponse(candid: ApiRemoveMemberResponse): unknown {
+export function removeMemberResponse(_candid: ApiRemoveMemberResponse): unknown {
     return {};
 }
 
 export function removeMemberFromChannelResponse(
-    candid: ApiRemoveMemberFromChannelResponse
+    _candid: ApiRemoveMemberFromChannelResponse
 ): unknown {
     return {};
 }
 
-export function removeReactionResponse(candid: ApiRemoveReactionResponse): unknown {
+export function removeReactionResponse(_candid: ApiRemoveReactionResponse): unknown {
     return {};
 }
 
-export function resetInviteCodeResponse(candid: ApiEnableInviteCodeResponse): unknown {
+export function resetInviteCodeResponse(_candid: ApiEnableInviteCodeResponse): unknown {
     return {};
 }
 
-export function rulesResponse(candid: ApiRulesResponse): unknown {
+export function rulesResponse(_candid: ApiRulesResponse): unknown {
     return {};
 }
 
-export function searchChannelResponse(candid: ApiSearchChannelResponse): unknown {
+export function searchChannelResponse(_candid: ApiSearchChannelResponse): unknown {
     return {};
 }
 
-export function selectedChannelInitialResponse(candid: ApiSelectedChannelInitialResponse): unknown {
+export function selectedChannelInitialResponse(
+    _candid: ApiSelectedChannelInitialResponse
+): unknown {
     return {};
 }
 
-export function selectedChannelUpdatesResponse(candid: ApiSelectedChannelUpdatesResponse): unknown {
+export function selectedChannelUpdatesResponse(
+    _candid: ApiSelectedChannelUpdatesResponse
+): unknown {
     return {};
 }
 
-export function sendMessageResponse(candid: ApiSendMessageResponse): unknown {
+export function sendMessageResponse(_candid: ApiSendMessageResponse): unknown {
     return {};
 }
 
-export function summaryResponse(candid: ApiSummaryResponse): unknown {
+export function summaryResponse(_candid: ApiSummaryResponse): unknown {
     return {};
 }
 
-export function summaryUpdatesResponse(candid: ApiSummaryUpdatesResponse): unknown {
+export function summaryUpdatesResponse(_candid: ApiSummaryUpdatesResponse): unknown {
     return {};
 }
 
 export function toggleMuteChannelNotificationsResponse(
-    candid: ApiToggleMuteChannelNotificationsResponse
+    _candid: ApiToggleMuteChannelNotificationsResponse
 ): unknown {
     return {};
 }
 
 export function toggleMuteNotificationsResponse(
-    candid: ApiToggleMuteNotificationsResponse
+    _candid: ApiToggleMuteNotificationsResponse
 ): unknown {
     return {};
 }
 
-export function unblockUserResponse(candid: ApiUnblockUserResponse): unknown {
+export function unblockUserResponse(_candid: ApiUnblockUserResponse): unknown {
     return {};
 }
 
-export function undeleteMessagesResponse(candid: ApiUndeleteMessagesResponse): unknown {
+export function undeleteMessagesResponse(_candid: ApiUndeleteMessagesResponse): unknown {
     return {};
 }
 
-export function updateChannelResponse(candid: ApiUpdateChannelResponse): unknown {
+export function updateChannelResponse(_candid: ApiUpdateChannelResponse): unknown {
     return {};
 }
 
-export function updateCommunityResponse(candid: ApiUpdateCommunityResponse): unknown {
+export function updateCommunityResponse(_candid: ApiUpdateCommunityResponse): unknown {
     return {};
 }
 
