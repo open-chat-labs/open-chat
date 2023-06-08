@@ -1,4 +1,14 @@
-import type { CommunityPermissionRole, CommunityPermissions, MemberRole } from "openchat-shared";
+import {
+    AddMembersToChannelResponse,
+    CommonResponses,
+    CommunityPermissionRole,
+    CommunityPermissions,
+    GateCheckFailedReason,
+    MemberRole,
+    UnsupportedValueError,
+    UserFailedError,
+    UserFailedGateCheck,
+} from "openchat-shared";
 import type {
     ApiAddReactionResponse,
     ApiAddMembersToChannelResponse,
@@ -42,11 +52,104 @@ import type {
     ApiCommunityRole,
     ApiOptionalCommunityPermissions,
     ApiCommunityPermissionRole,
+    ApiAddMembersToChannelFailed,
+    ApiAddMembersToChannelPartialSuccess,
+    ApiUserFailedGateCheck,
+    ApiUserFailedError,
 } from "./candid/idl";
 import { apiOptional } from "../common/chatMappers";
+import type { ApiGateCheckFailedReason } from "../localUserIndex/candid/idl";
 
-export function addMembersToChannelResponse(_candid: ApiAddMembersToChannelResponse): unknown {
-    return {};
+export function addMembersToChannelResponse(
+    candid: ApiAddMembersToChannelResponse
+): AddMembersToChannelResponse {
+    if ("Failed" in candid) {
+        return addToChannelFailed(candid.Failed);
+    }
+    if ("UserNotInChannel" in candid) {
+        return CommonResponses.userNotInChannel;
+    }
+    if ("PartialSuccess" in candid) {
+        return addToChannelPartialSuccess(candid.PartialSuccess);
+    }
+    if ("ChannelNotFound" in candid) {
+        return CommonResponses.channelNotFound;
+    }
+    if ("UserLimitReached" in candid) {
+        return CommonResponses.userLimitReached;
+    }
+    if ("NotAuthorized" in candid) {
+        return CommonResponses.notAuthorized;
+    }
+    if ("Success" in candid) {
+        return CommonResponses.success;
+    }
+    if ("UserNotInCommunity" in candid) {
+        return CommonResponses.userNotInCommunity;
+    }
+    if ("UserSuspended" in candid) {
+        return CommonResponses.userSuspended;
+    }
+    if ("CommunityFrozen" in candid) {
+        return CommonResponses.communityFrozen;
+    }
+    throw new UnsupportedValueError(
+        "Unexpected ApiAddMembersToChannelResponse type received",
+        candid
+    );
+}
+
+function addToChannelFailed(candid: ApiAddMembersToChannelFailed): AddMembersToChannelResponse {
+    return {
+        kind: "add_to_channel_failed",
+        usersLimitReached: candid.users_limit_reached.map((u) => u.toString()),
+        usersAlreadyInChannel: candid.users_already_in_channel.map((u) => u.toString()),
+        usersFailedGateCheck: candid.users_failed_gate_check.map(userFailedGateCheck),
+        usersFailedWithError: candid.users_failed_with_error.map(userFailedWithError),
+    };
+}
+
+function userFailedWithError(candid: ApiUserFailedError): UserFailedError {
+    return {
+        userId: candid.user_id.toString(),
+        error: candid.error,
+    };
+}
+
+function userFailedGateCheck(candid: ApiUserFailedGateCheck): UserFailedGateCheck {
+    return {
+        userId: candid.user_id.toString(),
+        reason: failedGateCheckReason(candid.reason),
+    };
+}
+
+function failedGateCheckReason(candid: ApiGateCheckFailedReason): GateCheckFailedReason {
+    if ("NotDiamondMember" in candid) {
+        return "not_diamond";
+    }
+    if ("NoSnsNeuronsFound" in candid) {
+        return "no_sns_neuron_found";
+    }
+    if ("NoSnsNeuronsWithRequiredDissolveDelayFound" in candid) {
+        return "dissolve_delay_not_met";
+    }
+    if ("NoSnsNeuronsWithRequiredStakeFound" in candid) {
+        return "min_stake_not_met";
+    }
+    throw new UnsupportedValueError("Unexpected ApiGateCheckFailedReason type received", candid);
+}
+
+function addToChannelPartialSuccess(
+    candid: ApiAddMembersToChannelPartialSuccess
+): AddMembersToChannelResponse {
+    return {
+        kind: "add_to_channel_partial_success",
+        usersLimitReached: candid.users_limit_reached.map((u) => u.toString()),
+        usersAlreadyInChannel: candid.users_already_in_channel.map((u) => u.toString()),
+        usersFailedGateCheck: candid.users_failed_gate_check.map(userFailedGateCheck),
+        usersFailedWithError: candid.users_failed_with_error.map(userFailedWithError),
+        usersAdded: candid.users_added.map((u) => u.toString()),
+    };
 }
 
 export function addReactionResponse(_candid: ApiAddReactionResponse): unknown {
