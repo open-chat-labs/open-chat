@@ -1,4 +1,4 @@
-import { MemberRole, UnsupportedValueError } from "openchat-shared";
+import type { CommunityPermissionRole, CommunityPermissions, MemberRole } from "openchat-shared";
 import type {
     ApiAddReactionResponse,
     ApiAddMembersToChannelResponse,
@@ -40,7 +40,10 @@ import type {
     ApiUpdateCommunityResponse,
     ApiGroupRole,
     ApiCommunityRole,
+    ApiOptionalCommunityPermissions,
+    ApiCommunityPermissionRole,
 } from "./candid/idl";
+import { apiOptional } from "../common/chatMappers";
 
 export function addMembersToChannelResponse(candid: ApiAddMembersToChannelResponse): unknown {
     return {};
@@ -144,7 +147,7 @@ export function removeReactionResponse(candid: ApiRemoveReactionResponse): unkno
     return {};
 }
 
-export function resetInviteCodeResponse(candid: ApiResetInviteCodeResponse): unknown {
+export function resetInviteCodeResponse(candid: ApiEnableInviteCodeResponse): unknown {
     return {};
 }
 
@@ -225,5 +228,39 @@ export function apiCommunityRole(newRole: MemberRole): ApiCommunityRole {
             return { Admin: null };
         default:
             return { Member: null };
+    }
+}
+
+export function apiOptionalCommunityPermissions(
+    permissions: Partial<CommunityPermissions>
+): ApiOptionalCommunityPermissions {
+    return {
+        create_public_channel: apiOptional(
+            apiCommunityPermissionRole,
+            permissions.createPublicChannel
+        ),
+        block_users: apiOptional(apiCommunityPermissionRole, permissions.blockUsers),
+        change_permissions: apiOptional(apiCommunityPermissionRole, permissions.changePermissions),
+        update_details: apiOptional(apiCommunityPermissionRole, permissions.updateDetails),
+        remove_members: apiOptional(apiCommunityPermissionRole, permissions.removeMembers),
+        invite_users: apiOptional(apiCommunityPermissionRole, permissions.inviteUsers),
+        change_roles: apiOptional(apiCommunityPermissionRole, permissions.changeRoles),
+        create_private_channel: apiOptional(
+            apiCommunityPermissionRole,
+            permissions.createPrivateChannel
+        ),
+    };
+}
+
+export function apiCommunityPermissionRole(
+    permissionRole: CommunityPermissionRole
+): ApiCommunityPermissionRole {
+    switch (permissionRole) {
+        case "owner":
+            return { Owners: null };
+        case "admins":
+            return { Admins: null };
+        case "members":
+            return { Members: null };
     }
 }

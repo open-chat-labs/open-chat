@@ -19,7 +19,7 @@ import { bytesToHexString, identity, optional } from "../../utils/mapping";
 import {
     apiGroupSubtype,
     chatMetrics,
-    groupGate,
+    accessGate,
     groupPermissions,
     memberRole,
     message,
@@ -208,7 +208,7 @@ function groupChatSummary(candid: ApiGroupCanisterGroupChatSummary): GroupChatSu
         frozen: candid.frozen.length > 0,
         dateLastPinned: optional(candid.date_last_pinned, identity),
         dateReadPinned: undefined,
-        gate: optional(candid.gate, groupGate) ?? { kind: "no_gate" },
+        gate: optional(candid.gate, accessGate) ?? { kind: "no_gate" },
         level: "group",
     };
 }

@@ -4,7 +4,7 @@ import type {
     ApiPublicSummaryResponse,
 } from "../../services/group/candid/idl";
 import { optional } from "../../utils/mapping";
-import { apiGroupSubtype, groupGate, message } from "./chatMappers";
+import { apiGroupSubtype, accessGate, message } from "./chatMappers";
 import type { GroupChatSummary } from "openchat-shared";
 
 export function publicGroupSummary(candid: ApiPublicGroupSummary): GroupChatSummary {
@@ -58,7 +58,7 @@ export function publicGroupSummary(candid: ApiPublicGroupSummary): GroupChatSumm
         frozen: candid.frozen.length > 0,
         dateLastPinned: undefined,
         dateReadPinned: undefined,
-        gate: optional(candid.gate, groupGate) ?? { kind: "no_gate" },
+        gate: optional(candid.gate, accessGate) ?? { kind: "no_gate" },
         level: "group",
     };
 }

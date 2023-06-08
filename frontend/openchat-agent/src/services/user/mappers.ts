@@ -90,7 +90,7 @@ import {
     apiGroupSubtype,
     chatMetrics,
     completedCryptoTransfer,
-    groupGate,
+    accessGate,
     groupPermissions,
     message,
     messageContent,
@@ -865,7 +865,7 @@ function groupChatSummary(candid: ApiGroupChatSummary, limitReadByMeUpTo = true)
         frozen: candid.frozen.length > 0,
         dateLastPinned: optional(candid.date_last_pinned, identity),
         dateReadPinned: optional(candid.date_read_pinned, identity),
-        gate: optional(candid.gate, groupGate) ?? { kind: "no_gate" },
+        gate: optional(candid.gate, accessGate) ?? { kind: "no_gate" },
         level: "group",
     };
 }
