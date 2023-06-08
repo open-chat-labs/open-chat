@@ -40,13 +40,13 @@ import type {
     ApiProposalRewardStatus,
     ApiChatMetrics,
     ApiGroupSubtype,
-    ApiRole,
     ApiPrizeWinnerContent,
-    ApiGroupGate,
+    ApiAccessGate,
     ApiMessageReminderCreated,
     ApiMessageReminder,
     ApiCustomMessageContent,
     ApiReportedMessage,
+    ApiGroupRole,
 } from "../user/candid/idl";
 import {
     type Message,
@@ -680,7 +680,7 @@ export function chatMetrics(candid: ApiChatMetrics): ChatMetrics {
     };
 }
 
-export function memberRole(candid: ApiRole): MemberRole {
+export function memberRole(candid: ApiGroupRole): MemberRole {
     if ("Admin" in candid) {
         return "admin";
     }
@@ -900,7 +900,7 @@ export function apiOptional<D, A>(mapper: (d: D) => A, domain: D | undefined): [
     return domain !== undefined ? [mapper(domain)] : [];
 }
 
-export function apiMaybeGroupGate(domain: AccessGate): [] | [ApiGroupGate] {
+export function apiMaybeAccessGate(domain: AccessGate): [] | [ApiAccessGate] {
     if (domain.kind === "no_gate") return [];
     if (domain.kind === "nft_gate") return []; // TODO
     if (domain.kind === "nns_gate") return []; // TODO
@@ -928,7 +928,7 @@ export function apiMaybeGroupGate(domain: AccessGate): [] | [ApiGroupGate] {
     return [];
 }
 
-export function apiGroupGate(domain: AccessGate): ApiGroupGate {
+export function apiAccessGate(domain: AccessGate): ApiAccessGate {
     if (domain.kind === "diamond_gate") return { DiamondMember: null };
     if (domain.kind === "openchat_gate")
         return {
@@ -949,7 +949,7 @@ export function apiGroupGate(domain: AccessGate): ApiGroupGate {
     throw new Error(`Received a domain level group gate that we cannot parse: ${domain}`);
 }
 
-export function groupGate(candid: ApiGroupGate): AccessGate {
+export function accessGate(candid: ApiAccessGate): AccessGate {
     if ("SnsNeuron" in candid) {
         const canisterId = candid.SnsNeuron.governance_canister_id.toString();
         if (canisterId === OpenChatGovernanceCanisterId) {

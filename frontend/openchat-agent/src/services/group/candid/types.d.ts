@@ -1,6 +1,12 @@
 import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
 
+export type AccessGate = { 'SnsNeuron' : SnsNeuronGate } |
+  { 'DiamondMember' : null };
+export type AccessGateUpdate = { 'NoChange' : null } |
+  { 'SetToNone' : null } |
+  { 'SetToSome' : AccessGate };
+export interface AccessRules { 'text' : string, 'enabled' : boolean }
 export type AccessorId = Principal;
 export type AccountIdentifier = Uint8Array | number[];
 export interface AddReactionArgs {
@@ -72,7 +78,7 @@ export interface CanisterWasm {
 }
 export interface ChangeRoleArgs {
   'user_id' : UserId,
-  'new_role' : Role,
+  'new_role' : GroupRole,
   'correlation_id' : bigint,
 }
 export type ChangeRoleResponse = { 'Invalid' : null } |
@@ -83,6 +89,7 @@ export type ChangeRoleResponse = { 'Invalid' : null } |
   { 'Success' : null } |
   { 'UserSuspended' : null } |
   { 'InternalError' : string };
+export type ChannelId = bigint;
 export type ChatEvent = { 'Empty' : null } |
   { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'ParticipantJoined' : ParticipantJoined } |
@@ -172,20 +179,88 @@ export type ClaimPrizeResponse = { 'PrizeFullyClaimed' : null } |
   { 'PrizeEnded' : null } |
   { 'FailedAfterTransfer' : [string, CompletedCryptoTransaction] } |
   { 'TransferFailed' : [string, FailedCryptoTransaction] };
+export interface CommunityCanisterChannelSummary {
+  'channel_id' : ChannelId,
+  'is_public' : boolean,
+  'permissions' : GroupPermissions,
+  'metrics' : ChatMetrics,
+  'subtype' : [] | [GroupSubtype],
+  'date_last_pinned' : [] | [TimestampMillis],
+  'min_visible_event_index' : EventIndex,
+  'gate' : [] | [AccessGate],
+  'name' : string,
+  'role' : GroupRole,
+  'notifications_muted' : boolean,
+  'description' : string,
+  'events_ttl' : [] | [Milliseconds],
+  'last_updated' : TimestampMillis,
+  'joined' : TimestampMillis,
+  'avatar_id' : [] | [bigint],
+  'next_message_expiry' : [] | [TimestampMillis],
+  'latest_threads' : Array<GroupCanisterThreadDetails>,
+  'latest_event_index' : EventIndex,
+  'history_visible_to_new_joiners' : boolean,
+  'min_visible_message_index' : MessageIndex,
+  'mentions' : Array<Mention>,
+  'member_count' : number,
+  'expired_messages' : Array<MessageIndexRange>,
+  'my_metrics' : ChatMetrics,
+  'latest_message' : [] | [MessageEventWrapper],
+}
+export interface CommunityCanisterChannelSummaryUpdates {
+  'channel_id' : ChannelId,
+  'is_public' : [] | [boolean],
+  'permissions' : [] | [GroupPermissions],
+  'metrics' : [] | [ChatMetrics],
+  'subtype' : GroupSubtypeUpdate,
+  'date_last_pinned' : [] | [TimestampMillis],
+  'gate' : AccessGateUpdate,
+  'name' : [] | [string],
+  'role' : [] | [GroupRole],
+  'notifications_muted' : [] | [boolean],
+  'description' : [] | [string],
+  'events_ttl' : EventsTimeToLiveUpdate,
+  'last_updated' : TimestampMillis,
+  'avatar_id' : AvatarIdUpdate,
+  'latest_threads' : Array<GroupCanisterThreadDetails>,
+  'latest_event_index' : [] | [EventIndex],
+  'mentions' : Array<Mention>,
+  'member_count' : [] | [number],
+  'my_metrics' : [] | [ChatMetrics],
+  'latest_message' : [] | [MessageEventWrapper],
+}
 export interface CommunityCanisterCommunitySummary {
   'is_public' : boolean,
   'permissions' : CommunityPermissions,
   'community_id' : CommunityId,
-  'gate' : [] | [GroupGate],
+  'gate' : [] | [AccessGate],
   'name' : string,
   'role' : CommunityRole,
   'description' : string,
   'last_updated' : TimestampMillis,
+  'channels' : Array<CommunityCanisterChannelSummary>,
   'joined' : TimestampMillis,
   'avatar_id' : [] | [bigint],
   'frozen' : [] | [FrozenGroupInfo],
   'latest_event_index' : EventIndex,
   'member_count' : number,
+}
+export interface CommunityCanisterCommunitySummaryUpdates {
+  'is_public' : [] | [boolean],
+  'permissions' : [] | [CommunityPermissions],
+  'community_id' : CommunityId,
+  'channels_updated' : Array<CommunityCanisterChannelSummaryUpdates>,
+  'gate' : AccessGateUpdate,
+  'name' : [] | [string],
+  'role' : [] | [CommunityRole],
+  'description' : [] | [string],
+  'last_updated' : TimestampMillis,
+  'channels_removed' : Array<ChannelId>,
+  'avatar_id' : AvatarIdUpdate,
+  'channels_added' : Array<CommunityCanisterChannelSummary>,
+  'frozen' : FrozenGroupUpdate,
+  'latest_event_index' : [] | [EventIndex],
+  'member_count' : [] | [number],
 }
 export type CommunityId = Principal;
 export type CommunityPermissionRole = { 'Owners' : null } |
@@ -267,13 +342,6 @@ export type DiamondMembershipPlanDuration = { 'OneYear' : null } |
   { 'ThreeMonths' : null } |
   { 'OneMonth' : null };
 export type DirectChatCreated = {};
-export interface DirectChatEventWrapper {
-  'event' : ChatEvent,
-  'timestamp' : TimestampMillis,
-  'index' : EventIndex,
-  'correlation_id' : bigint,
-  'expires_at' : [] | [TimestampMillis],
-}
 export interface DirectChatSummary {
   'read_by_them_up_to' : [] | [MessageIndex],
   'date_created' : TimestampMillis,
@@ -427,9 +495,9 @@ export interface GroupCanisterGroupChatSummary {
   'subtype' : [] | [GroupSubtype],
   'date_last_pinned' : [] | [TimestampMillis],
   'min_visible_event_index' : EventIndex,
-  'gate' : [] | [GroupGate],
+  'gate' : [] | [AccessGate],
   'name' : string,
-  'role' : Role,
+  'role' : GroupRole,
   'wasm_version' : Version,
   'notifications_muted' : boolean,
   'description' : string,
@@ -456,9 +524,9 @@ export interface GroupCanisterGroupChatSummaryUpdates {
   'metrics' : [] | [ChatMetrics],
   'subtype' : GroupSubtypeUpdate,
   'date_last_pinned' : [] | [TimestampMillis],
-  'gate' : GroupGateUpdate,
+  'gate' : AccessGateUpdate,
   'name' : [] | [string],
-  'role' : [] | [Role],
+  'role' : [] | [GroupRole],
   'wasm_version' : [] | [Version],
   'notifications_muted' : [] | [boolean],
   'description' : [] | [string],
@@ -495,9 +563,9 @@ export interface GroupChatSummary {
   'subtype' : [] | [GroupSubtype],
   'date_last_pinned' : [] | [TimestampMillis],
   'min_visible_event_index' : EventIndex,
-  'gate' : [] | [GroupGate],
+  'gate' : [] | [AccessGate],
   'name' : string,
-  'role' : Role,
+  'role' : GroupRole,
   'wasm_version' : Version,
   'notifications_muted' : boolean,
   'description' : string,
@@ -526,14 +594,9 @@ export interface GroupDescriptionChanged {
   'previous_description' : string,
   'changed_by' : UserId,
 }
-export type GroupGate = { 'SnsNeuron' : SnsNeuronGate } |
-  { 'DiamondMember' : null };
-export type GroupGateUpdate = { 'NoChange' : null } |
-  { 'SetToNone' : null } |
-  { 'SetToSome' : GroupGate };
 export interface GroupGateUpdated {
   'updated_by' : UserId,
-  'new_gate' : [] | [GroupGate],
+  'new_gate' : [] | [AccessGate],
 }
 export type GroupInviteCodeChange = { 'Enabled' : null } |
   { 'Disabled' : null } |
@@ -583,7 +646,10 @@ export interface GroupReactionAddedNotification {
   'reaction' : string,
 }
 export interface GroupReplyContext { 'event_index' : EventIndex }
-export interface GroupRules { 'text' : string, 'enabled' : boolean }
+export type GroupRole = { 'Participant' : null } |
+  { 'Admin' : null } |
+  { 'Moderator' : null } |
+  { 'Owner' : null };
 export interface GroupRulesChanged {
   'changed_by' : UserId,
   'enabled' : boolean,
@@ -750,6 +816,11 @@ export type MessagesByMessageIndexResponse = {
       'latest_event_index' : EventIndex,
     }
   };
+export interface MessagesSuccessResult {
+  'messages' : Array<MessageEventWrapper>,
+  'timestamp' : TimestampMillis,
+  'latest_event_index' : EventIndex,
+}
 export type Milliseconds = bigint;
 export interface NnsCompletedCryptoTransaction {
   'to' : NnsCryptoAccount,
@@ -811,6 +882,16 @@ export interface NotificationEnvelope {
   'notification' : Notification,
   'recipients' : Array<UserId>,
 }
+export interface OptionalCommunityPermissions {
+  'create_public_channel' : [] | [CommunityPermissionRole],
+  'block_users' : [] | [CommunityPermissionRole],
+  'change_permissions' : [] | [CommunityPermissionRole],
+  'update_details' : [] | [CommunityPermissionRole],
+  'remove_members' : [] | [CommunityPermissionRole],
+  'invite_users' : [] | [CommunityPermissionRole],
+  'change_roles' : [] | [CommunityPermissionRole],
+  'create_private_channel' : [] | [CommunityPermissionRole],
+}
 export interface OptionalGroupPermissions {
   'block_users' : [] | [PermissionRole],
   'change_permissions' : [] | [PermissionRole],
@@ -838,7 +919,7 @@ export interface PartialUserSummary {
   'suspended' : boolean,
 }
 export interface Participant {
-  'role' : Role,
+  'role' : GroupRole,
   'user_id' : UserId,
   'date_added' : TimestampMillis,
 }
@@ -951,7 +1032,7 @@ export interface ProposalsUpdated { 'proposals' : Array<ProposalUpdated> }
 export interface PublicGroupSummary {
   'is_public' : boolean,
   'subtype' : [] | [GroupSubtype],
-  'gate' : [] | [GroupGate],
+  'gate' : [] | [AccessGate],
   'name' : string,
   'wasm_version' : Version,
   'description' : string,
@@ -1050,15 +1131,11 @@ export type ResetInviteCodeResponse = { 'ChatFrozen' : null } |
   { 'NotAuthorized' : null } |
   { 'Success' : { 'code' : bigint } } |
   { 'UserSuspended' : null };
-export type Role = { 'Participant' : null } |
-  { 'Admin' : null } |
-  { 'Moderator' : null } |
-  { 'Owner' : null };
 export interface RoleChanged {
   'user_ids' : Array<UserId>,
   'changed_by' : UserId,
-  'old_role' : Role,
-  'new_role' : Role,
+  'old_role' : GroupRole,
+  'new_role' : GroupRole,
 }
 export interface RulesArgs { 'invite_code' : [] | [bigint] }
 export type RulesResponse = { 'NotAuthorized' : null } |
@@ -1076,6 +1153,18 @@ export type SearchMessagesResponse = { 'TermTooShort' : number } |
   { 'TermTooLong' : number } |
   { 'InvalidTerm' : null };
 export interface SearchMessagesSuccessResult { 'matches' : Array<MessageMatch> }
+export interface SelectedGroupUpdates {
+  'blocked_users_removed' : Array<UserId>,
+  'pinned_messages_removed' : Uint32Array | number[],
+  'invited_users' : [] | [Array<UserId>],
+  'members_added_or_updated' : Array<Participant>,
+  'pinned_messages_added' : Uint32Array | number[],
+  'members_removed' : Array<UserId>,
+  'timestamp' : TimestampMillis,
+  'latest_event_index' : EventIndex,
+  'rules' : [] | [AccessRules],
+  'blocked_users_added' : Array<UserId>,
+}
 export type SelectedInitialArgs = {};
 export type SelectedInitialResponse = { 'CallerNotInGroup' : null } |
   { 'Success' : SelectedInitialSuccess };
@@ -1086,7 +1175,7 @@ export interface SelectedInitialSuccess {
   'timestamp' : TimestampMillis,
   'pinned_messages' : Uint32Array | number[],
   'latest_event_index' : EventIndex,
-  'rules' : GroupRules,
+  'rules' : AccessRules,
 }
 export interface SelectedUpdatesArgs { 'updates_since' : EventIndex }
 export type SelectedUpdatesResponse = { 'CallerNotInGroup' : null } |
@@ -1101,9 +1190,13 @@ export interface SelectedUpdatesSuccess {
   'pinned_messages_added' : Uint32Array | number[],
   'timestamp' : TimestampMillis,
   'latest_event_index' : EventIndex,
-  'rules' : [] | [GroupRules],
+  'rules' : [] | [AccessRules],
   'blocked_users_added' : Array<UserId>,
 }
+export interface SelectedUpdatesV2Args { 'updates_since' : TimestampMillis }
+export type SelectedUpdatesV2Response = { 'CallerNotInGroup' : null } |
+  { 'Success' : SelectedGroupUpdates } |
+  { 'SuccessNoUpdates' : TimestampMillis };
 export type SendMessageResponse = { 'TextTooLong' : number } |
   { 'ThreadMessageNotFound' : null } |
   { 'CallerNotInGroup' : null } |
@@ -1294,12 +1387,12 @@ export type UnpinMessageResponse = { 'MessageNotFound' : null } |
   { 'SuccessV2' : PushEventResult };
 export interface UpdateGroupV2Args {
   'permissions' : [] | [OptionalGroupPermissions],
-  'gate' : GroupGateUpdate,
+  'gate' : AccessGateUpdate,
   'name' : [] | [string],
   'description' : [] | [string],
   'events_ttl' : EventsTimeToLiveUpdate,
   'correlation_id' : bigint,
-  'rules' : [] | [GroupRules],
+  'rules' : [] | [AccessRules],
   'avatar' : AvatarUpdate,
 }
 export type UpdateGroupV2Response = { 'NameReserved' : null } |
@@ -1422,6 +1515,10 @@ export interface _SERVICE {
   'selected_updates' : ActorMethod<
     [SelectedUpdatesArgs],
     SelectedUpdatesResponse
+  >,
+  'selected_updates_v2' : ActorMethod<
+    [SelectedUpdatesV2Args],
+    SelectedUpdatesV2Response
   >,
   'send_message_v2' : ActorMethod<[SendMessageV2Args], SendMessageResponse>,
   'summary' : ActorMethod<[SummaryArgs], SummaryResponse>,

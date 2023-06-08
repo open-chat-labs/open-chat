@@ -1,6 +1,12 @@
 import type { Principal } from '@dfinity/principal';
 import type { ActorMethod } from '@dfinity/agent';
 
+export type AccessGate = { 'SnsNeuron' : SnsNeuronGate } |
+  { 'DiamondMember' : null };
+export type AccessGateUpdate = { 'NoChange' : null } |
+  { 'SetToNone' : null } |
+  { 'SetToSome' : AccessGate };
+export interface AccessRules { 'text' : string, 'enabled' : boolean }
 export type AccessorId = Principal;
 export type AccountIdentifier = Uint8Array | number[];
 export interface AddPlatformModeratorArgs { 'user_id' : UserId }
@@ -59,6 +65,7 @@ export interface CanisterWasm {
   'version' : Version,
   'module' : Uint8Array | number[],
 }
+export type ChannelId = bigint;
 export type ChatEvent = { 'Empty' : null } |
   { 'MessageReactionRemoved' : UpdatedMessage } |
   { 'ParticipantJoined' : ParticipantJoined } |
@@ -140,20 +147,88 @@ export type CheckUsernameResponse = { 'UsernameTaken' : null } |
   { 'UsernameInvalid' : null } |
   { 'UsernameTooLong' : number } |
   { 'Success' : null };
+export interface CommunityCanisterChannelSummary {
+  'channel_id' : ChannelId,
+  'is_public' : boolean,
+  'permissions' : GroupPermissions,
+  'metrics' : ChatMetrics,
+  'subtype' : [] | [GroupSubtype],
+  'date_last_pinned' : [] | [TimestampMillis],
+  'min_visible_event_index' : EventIndex,
+  'gate' : [] | [AccessGate],
+  'name' : string,
+  'role' : GroupRole,
+  'notifications_muted' : boolean,
+  'description' : string,
+  'events_ttl' : [] | [Milliseconds],
+  'last_updated' : TimestampMillis,
+  'joined' : TimestampMillis,
+  'avatar_id' : [] | [bigint],
+  'next_message_expiry' : [] | [TimestampMillis],
+  'latest_threads' : Array<GroupCanisterThreadDetails>,
+  'latest_event_index' : EventIndex,
+  'history_visible_to_new_joiners' : boolean,
+  'min_visible_message_index' : MessageIndex,
+  'mentions' : Array<Mention>,
+  'member_count' : number,
+  'expired_messages' : Array<MessageIndexRange>,
+  'my_metrics' : ChatMetrics,
+  'latest_message' : [] | [MessageEventWrapper],
+}
+export interface CommunityCanisterChannelSummaryUpdates {
+  'channel_id' : ChannelId,
+  'is_public' : [] | [boolean],
+  'permissions' : [] | [GroupPermissions],
+  'metrics' : [] | [ChatMetrics],
+  'subtype' : GroupSubtypeUpdate,
+  'date_last_pinned' : [] | [TimestampMillis],
+  'gate' : AccessGateUpdate,
+  'name' : [] | [string],
+  'role' : [] | [GroupRole],
+  'notifications_muted' : [] | [boolean],
+  'description' : [] | [string],
+  'events_ttl' : EventsTimeToLiveUpdate,
+  'last_updated' : TimestampMillis,
+  'avatar_id' : AvatarIdUpdate,
+  'latest_threads' : Array<GroupCanisterThreadDetails>,
+  'latest_event_index' : [] | [EventIndex],
+  'mentions' : Array<Mention>,
+  'member_count' : [] | [number],
+  'my_metrics' : [] | [ChatMetrics],
+  'latest_message' : [] | [MessageEventWrapper],
+}
 export interface CommunityCanisterCommunitySummary {
   'is_public' : boolean,
   'permissions' : CommunityPermissions,
   'community_id' : CommunityId,
-  'gate' : [] | [GroupGate],
+  'gate' : [] | [AccessGate],
   'name' : string,
   'role' : CommunityRole,
   'description' : string,
   'last_updated' : TimestampMillis,
+  'channels' : Array<CommunityCanisterChannelSummary>,
   'joined' : TimestampMillis,
   'avatar_id' : [] | [bigint],
   'frozen' : [] | [FrozenGroupInfo],
   'latest_event_index' : EventIndex,
   'member_count' : number,
+}
+export interface CommunityCanisterCommunitySummaryUpdates {
+  'is_public' : [] | [boolean],
+  'permissions' : [] | [CommunityPermissions],
+  'community_id' : CommunityId,
+  'channels_updated' : Array<CommunityCanisterChannelSummaryUpdates>,
+  'gate' : AccessGateUpdate,
+  'name' : [] | [string],
+  'role' : [] | [CommunityRole],
+  'description' : [] | [string],
+  'last_updated' : TimestampMillis,
+  'channels_removed' : Array<ChannelId>,
+  'avatar_id' : AvatarIdUpdate,
+  'channels_added' : Array<CommunityCanisterChannelSummary>,
+  'frozen' : FrozenGroupUpdate,
+  'latest_event_index' : [] | [EventIndex],
+  'member_count' : [] | [number],
 }
 export type CommunityId = Principal;
 export type CommunityPermissionRole = { 'Owners' : null } |
@@ -227,13 +302,6 @@ export type DiamondMembershipPlanDuration = { 'OneYear' : null } |
   { 'ThreeMonths' : null } |
   { 'OneMonth' : null };
 export type DirectChatCreated = {};
-export interface DirectChatEventWrapper {
-  'event' : ChatEvent,
-  'timestamp' : TimestampMillis,
-  'index' : EventIndex,
-  'correlation_id' : bigint,
-  'expires_at' : [] | [TimestampMillis],
-}
 export interface DirectChatSummary {
   'read_by_them_up_to' : [] | [MessageIndex],
   'date_created' : TimestampMillis,
@@ -277,6 +345,11 @@ export interface DirectReactionAddedNotification {
 }
 export type EmptyArgs = {};
 export type EventIndex = number;
+export interface EventsSuccessResult {
+  'events' : Array<ChatEventWrapper>,
+  'timestamp' : TimestampMillis,
+  'latest_event_index' : number,
+}
 export type EventsTimeToLiveUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : Milliseconds };
@@ -337,9 +410,9 @@ export interface GroupCanisterGroupChatSummary {
   'subtype' : [] | [GroupSubtype],
   'date_last_pinned' : [] | [TimestampMillis],
   'min_visible_event_index' : EventIndex,
-  'gate' : [] | [GroupGate],
+  'gate' : [] | [AccessGate],
   'name' : string,
-  'role' : Role,
+  'role' : GroupRole,
   'wasm_version' : Version,
   'notifications_muted' : boolean,
   'description' : string,
@@ -366,9 +439,9 @@ export interface GroupCanisterGroupChatSummaryUpdates {
   'metrics' : [] | [ChatMetrics],
   'subtype' : GroupSubtypeUpdate,
   'date_last_pinned' : [] | [TimestampMillis],
-  'gate' : GroupGateUpdate,
+  'gate' : AccessGateUpdate,
   'name' : [] | [string],
-  'role' : [] | [Role],
+  'role' : [] | [GroupRole],
   'wasm_version' : [] | [Version],
   'notifications_muted' : [] | [boolean],
   'description' : [] | [string],
@@ -405,9 +478,9 @@ export interface GroupChatSummary {
   'subtype' : [] | [GroupSubtype],
   'date_last_pinned' : [] | [TimestampMillis],
   'min_visible_event_index' : EventIndex,
-  'gate' : [] | [GroupGate],
+  'gate' : [] | [AccessGate],
   'name' : string,
-  'role' : Role,
+  'role' : GroupRole,
   'wasm_version' : Version,
   'notifications_muted' : boolean,
   'description' : string,
@@ -436,14 +509,9 @@ export interface GroupDescriptionChanged {
   'previous_description' : string,
   'changed_by' : UserId,
 }
-export type GroupGate = { 'SnsNeuron' : SnsNeuronGate } |
-  { 'DiamondMember' : null };
-export type GroupGateUpdate = { 'NoChange' : null } |
-  { 'SetToNone' : null } |
-  { 'SetToSome' : GroupGate };
 export interface GroupGateUpdated {
   'updated_by' : UserId,
-  'new_gate' : [] | [GroupGate],
+  'new_gate' : [] | [AccessGate],
 }
 export type GroupInviteCodeChange = { 'Enabled' : null } |
   { 'Disabled' : null } |
@@ -493,7 +561,10 @@ export interface GroupReactionAddedNotification {
   'reaction' : string,
 }
 export interface GroupReplyContext { 'event_index' : EventIndex }
-export interface GroupRules { 'text' : string, 'enabled' : boolean }
+export type GroupRole = { 'Participant' : null } |
+  { 'Admin' : null } |
+  { 'Moderator' : null } |
+  { 'Owner' : null };
 export interface GroupRulesChanged {
   'changed_by' : UserId,
   'enabled' : boolean,
@@ -634,6 +705,11 @@ export interface MessageUnpinned {
   'unpinned_by' : UserId,
   'message_index' : MessageIndex,
 }
+export interface MessagesSuccessResult {
+  'messages' : Array<MessageEventWrapper>,
+  'timestamp' : TimestampMillis,
+  'latest_event_index' : EventIndex,
+}
 export type Milliseconds = bigint;
 export interface NnsCompletedCryptoTransaction {
   'to' : NnsCryptoAccount,
@@ -695,6 +771,30 @@ export interface NotificationEnvelope {
   'notification' : Notification,
   'recipients' : Array<UserId>,
 }
+export interface OptionalCommunityPermissions {
+  'create_public_channel' : [] | [CommunityPermissionRole],
+  'block_users' : [] | [CommunityPermissionRole],
+  'change_permissions' : [] | [CommunityPermissionRole],
+  'update_details' : [] | [CommunityPermissionRole],
+  'remove_members' : [] | [CommunityPermissionRole],
+  'invite_users' : [] | [CommunityPermissionRole],
+  'change_roles' : [] | [CommunityPermissionRole],
+  'create_private_channel' : [] | [CommunityPermissionRole],
+}
+export interface OptionalGroupPermissions {
+  'block_users' : [] | [PermissionRole],
+  'change_permissions' : [] | [PermissionRole],
+  'delete_messages' : [] | [PermissionRole],
+  'send_messages' : [] | [PermissionRole],
+  'remove_members' : [] | [PermissionRole],
+  'update_group' : [] | [PermissionRole],
+  'invite_users' : [] | [PermissionRole],
+  'change_roles' : [] | [PermissionRole],
+  'create_polls' : [] | [PermissionRole],
+  'pin_messages' : [] | [PermissionRole],
+  'reply_in_thread' : [] | [PermissionRole],
+  'react_to_messages' : [] | [PermissionRole],
+}
 export interface OwnershipTransferred {
   'old_owner' : UserId,
   'new_owner' : UserId,
@@ -708,7 +808,7 @@ export interface PartialUserSummary {
   'suspended' : boolean,
 }
 export interface Participant {
-  'role' : Role,
+  'role' : GroupRole,
   'user_id' : UserId,
   'date_added' : TimestampMillis,
 }
@@ -839,7 +939,7 @@ export interface ProposalsUpdated { 'proposals' : Array<ProposalUpdated> }
 export interface PublicGroupSummary {
   'is_public' : boolean,
   'subtype' : [] | [GroupSubtype],
-  'gate' : [] | [GroupGate],
+  'gate' : [] | [AccessGate],
   'name' : string,
   'wasm_version' : Version,
   'description' : string,
@@ -910,20 +1010,28 @@ export interface ReportedMessage {
   'count' : number,
   'reports' : Array<MessageReport>,
 }
-export type Role = { 'Participant' : null } |
-  { 'Admin' : null } |
-  { 'Moderator' : null } |
-  { 'Owner' : null };
 export interface RoleChanged {
   'user_ids' : Array<UserId>,
   'changed_by' : UserId,
-  'old_role' : Role,
-  'new_role' : Role,
+  'old_role' : GroupRole,
+  'new_role' : GroupRole,
 }
 export interface SearchArgs { 'max_results' : number, 'search_term' : string }
 export type SearchResponse = {
     'Success' : { 'timestamp' : TimestampMillis, 'users' : Array<UserSummary> }
   };
+export interface SelectedGroupUpdates {
+  'blocked_users_removed' : Array<UserId>,
+  'pinned_messages_removed' : Uint32Array | number[],
+  'invited_users' : [] | [Array<UserId>],
+  'members_added_or_updated' : Array<Participant>,
+  'pinned_messages_added' : Uint32Array | number[],
+  'members_removed' : Array<UserId>,
+  'timestamp' : TimestampMillis,
+  'latest_event_index' : EventIndex,
+  'rules' : [] | [AccessRules],
+  'blocked_users_added' : Array<UserId>,
+}
 export interface SetUserUpgradeConcurrencyArgs { 'value' : number }
 export type SetUserUpgradeConcurrencyResponse = { 'Success' : null };
 export interface SetUsernameArgs { 'username' : string }

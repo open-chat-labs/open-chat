@@ -9,6 +9,7 @@ const defaultPermissions: CommunityPermissions = {
     changeRoles: "owner",
     inviteUsers: "owner",
     removeMembers: "owner",
+    blockUsers: "owner",
     updateDetails: "owner",
     createPublicChannel: "owner",
     createPrivateChannel: "owner",
