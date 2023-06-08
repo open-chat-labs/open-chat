@@ -1,6 +1,5 @@
 import type { Identity } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
-import type { IDataClient } from "./data.client.interface";
 import { v1 as uuidv1 } from "uuid";
 import { sha3_256 } from "js-sha3";
 import type { AgentConfig } from "../../config";
@@ -21,14 +20,18 @@ import type { IStorageIndexClient } from "../storageIndex/storageIndex.client.in
 import { StorageIndexClient } from "../storageIndex/storageIndex.client";
 import { StorageBucketClient } from "../storageBucket/storageBucket.client";
 
-export class DataClient extends EventTarget implements IDataClient {
-    static create(identity: Identity, config: AgentConfig): IDataClient {
+export class DataClient extends EventTarget {
+    static create(identity: Identity, config: AgentConfig): DataClient {
         const storageIndexClient = StorageIndexClient.create(identity, config);
 
         return new DataClient(identity, config, storageIndexClient);
     }
 
-    private constructor(private identity: Identity, private config: AgentConfig, private storageIndexClient: IStorageIndexClient) {
+    private constructor(
+        private identity: Identity,
+        private config: AgentConfig,
+        private storageIndexClient: IStorageIndexClient
+    ) {
         super();
     }
 
@@ -68,8 +71,6 @@ export class DataClient extends EventTarget implements IDataClient {
             if (content.blobData && content.blobReference === undefined) {
                 const accessorIds = accessorCanisterIds.map((c) => Principal.fromText(c));
 
-
-
                 const response = await this.uploadFile(
                     content.mimeType,
                     accessorIds,
@@ -101,16 +102,8 @@ export class DataClient extends EventTarget implements IDataClient {
                 const accessorIds = accessorCanisterIds.map((c) => Principal.fromText(c));
 
                 await Promise.all([
-                    this.uploadFile(
-                        content.mimeType,
-                        accessorIds,
-                        content.videoData.blobData
-                    ),
-                    this.uploadFile(
-                        "image/jpg",
-                        accessorIds,
-                        content.imageData.blobData
-                    ),
+                    this.uploadFile(content.mimeType, accessorIds, content.videoData.blobData),
+                    this.uploadFile("image/jpg", accessorIds, content.imageData.blobData),
                 ]).then(([video, image]) => {
                     const videoRef = this.extractBlobReference(video);
                     const imageRef = this.extractBlobReference(image);
@@ -313,7 +306,7 @@ export class DataClient extends EventTarget implements IDataClient {
         const allocatedBucketResponse = await this.storageIndexClient.allocatedBucket(
             hash,
             BigInt(fileSize),
-            random128(),
+            random128()
         );
 
         if (allocatedBucketResponse.kind !== "success") {
@@ -326,7 +319,11 @@ export class DataClient extends EventTarget implements IDataClient {
         const chunkSize = allocatedBucketResponse.chunkSize;
         const chunkCount = Math.ceil(fileSize / chunkSize);
         const chunkIndexes = [...Array(chunkCount).keys()];
-        const bucketClient = StorageBucketClient.create(this.identity, this.config, bucketCanisterId);
+        const bucketClient = StorageBucketClient.create(
+            this.identity,
+            this.config,
+            bucketCanisterId
+        );
 
         let chunksCompleted = 0;
 
@@ -373,15 +370,26 @@ export class DataClient extends EventTarget implements IDataClient {
         };
     }
 
-    private async forwardFile(bucketCanisterId: string, fileId: bigint, accessors: Array<Principal>): Promise<ForwardFileResponse> {
-        const bucketClient = StorageBucketClient.create(this.identity, this.config, bucketCanisterId);
+    private async forwardFile(
+        bucketCanisterId: string,
+        fileId: bigint,
+        accessors: Array<Principal>
+    ): Promise<ForwardFileResponse> {
+        const bucketClient = StorageBucketClient.create(
+            this.identity,
+            this.config,
+            bucketCanisterId
+        );
 
         const fileInfoResponse = await bucketClient.fileInfo(fileId);
         if (fileInfoResponse.kind === "file_not_found") {
             return fileInfoResponse;
         }
 
-        const canForwardResponse = await this.storageIndexClient.canForward(fileInfoResponse.fileHash, fileInfoResponse.fileSize);
+        const canForwardResponse = await this.storageIndexClient.canForward(
+            fileInfoResponse.fileHash,
+            fileInfoResponse.fileSize
+        );
         switch (canForwardResponse.kind) {
             case "user_not_found":
             case "allowance_exceeded":
@@ -394,7 +402,7 @@ export class DataClient extends EventTarget implements IDataClient {
                 return {
                     kind: "success",
                     newFileId: forwardFileResponse.newFileId,
-                    projectedAllowance: canForwardResponse.projectedAllowance
+                    projectedAllowance: canForwardResponse.projectedAllowance,
                 };
 
             case "not_authorized":
@@ -415,11 +423,10 @@ type ForwardFileResponse =
     | AllowanceExceeded
     | StorageUserNotFound
     | { kind: "not_authorized" }
-    | { kind: "file_not_found" }
+    | { kind: "file_not_found" };
 
 type ForwardFileSuccess = {
-    kind: "success",
-    newFileId: bigint,
-    projectedAllowance: ProjectedAllowance,
-}
-
+    kind: "success";
+    newFileId: bigint;
+    projectedAllowance: ProjectedAllowance;
+};
