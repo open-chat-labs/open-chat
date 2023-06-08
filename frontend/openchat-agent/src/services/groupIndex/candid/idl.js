@@ -76,7 +76,7 @@ export const idlFactory = ({ IDL }) => {
     'min_dissolve_delay' : IDL.Opt(Milliseconds),
     'governance_canister_id' : CanisterId,
   });
-  const GroupGate = IDL.Variant({
+  const AccessGate = IDL.Variant({
     'SnsNeuron' : SnsNeuronGate,
     'DiamondMember' : IDL.Null,
   });
@@ -420,7 +420,7 @@ export const idlFactory = ({ IDL }) => {
   const PublicGroupSummary = IDL.Record({
     'is_public' : IDL.Bool,
     'subtype' : IDL.Opt(GroupSubtype),
-    'gate' : IDL.Opt(GroupGate),
+    'gate' : IDL.Opt(AccessGate),
     'name' : IDL.Text,
     'wasm_version' : Version,
     'description' : IDL.Text,

@@ -88,7 +88,7 @@ import {
 } from "../../utils/caching";
 import {
     apiGroupPermissions,
-    apiMaybeGroupGate,
+    apiMaybeAccessGate,
     apiMessageContent,
     apiOptional,
     apiPendingCryptoContent,
@@ -200,7 +200,7 @@ export class UserClient extends CandidService {
                 }, group.avatar?.blobData),
                 permissions: [apiGroupPermissions(group.permissions)],
                 rules: apiGroupRules(group.rules),
-                gate: apiMaybeGroupGate(group.gate),
+                gate: apiMaybeAccessGate(group.gate),
             }),
             createGroupResponse
         );

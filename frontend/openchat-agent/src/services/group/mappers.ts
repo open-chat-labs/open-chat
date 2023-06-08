@@ -96,7 +96,7 @@ import {
     apiOptional,
     apiPermissionRole,
     chatMetrics,
-    groupGate,
+    accessGate,
     groupPermissions,
     memberRole,
     message,
@@ -201,7 +201,7 @@ function groupChatSummary(candid: ApiGroupCanisterGroupChatSummary): GroupCanist
         latestThreads: candid.latest_threads.map(threadDetails),
         frozen: candid.frozen.length > 0,
         dateLastPinned: optional(candid.date_last_pinned, identity),
-        gate: optional(candid.gate, groupGate) ?? { kind: "no_gate" },
+        gate: optional(candid.gate, accessGate) ?? { kind: "no_gate" },
     };
 }
 
@@ -249,7 +249,7 @@ function groupChatSummaryUpdates(
         frozen: optionUpdate(candid.frozen, (_) => true),
         updatedEvents: candid.updated_events.map(updatedEvent),
         dateLastPinned: optional(candid.date_last_pinned, identity),
-        gate: optionUpdate(candid.gate, groupGate),
+        gate: optionUpdate(candid.gate, accessGate),
     };
 }
 
