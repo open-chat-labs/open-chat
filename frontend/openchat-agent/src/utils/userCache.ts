@@ -65,7 +65,7 @@ export async function writeCachedUsersToDatabase(
     await tx.done;
 }
 
-export async function setUsername(userId: string, username: string): Promise<void> {
+export async function setUsernameInCache(userId: string, username: string): Promise<void> {
     const tx = (await lazyOpenUserCache()).transaction("users", "readwrite", {
         durability: "relaxed",
     });
@@ -78,7 +78,7 @@ export async function setUsername(userId: string, username: string): Promise<voi
     await tx.done;
 }
 
-export async function setUserDiamondStatusToTrue(userId: string): Promise<void> {
+export async function setUserDiamondStatusToTrueInCache(userId: string): Promise<void> {
     const tx = (await lazyOpenUserCache()).transaction("users", "readwrite", {
         durability: "relaxed",
     });

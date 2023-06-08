@@ -171,7 +171,7 @@ export class OpenChatAgent extends EventTarget {
         this._logger = config.logger;
         this.db = initDb(this.principal);
         this._onlineClient = OnlineClient.create(identity, config);
-        this._userIndexClient = UserIndexClient.create(identity, config);
+        this._userIndexClient = new UserIndexClient(identity, config);
         this._groupIndexClient = GroupIndexClient.create(identity, config);
         this._notificationClient = NotificationsClient.create(identity, config);
         this._marketMakerClient = MarketMakerClient.create(identity, config);
