@@ -133,7 +133,7 @@ pub struct MessageInternal {
     pub content: MessageContentInternal,
     #[serde(rename = "p", alias = "replies_to", default, skip_serializing_if = "Option::is_none")]
     pub replies_to: Option<ReplyContext>,
-    #[serde(rename = "r", alias = "reactions", default, skip_serializing_if = "is_empty_array")]
+    #[serde(rename = "r", alias = "reactions", default, skip_serializing_if = "is_empty_slice")]
     pub reactions: Vec<(Reaction, HashSet<UserId>)>,
     #[serde(rename = "u", alias = "last_updated", default, skip_serializing_if = "Option::is_none")]
     pub last_updated: Option<TimestampMillis>,
