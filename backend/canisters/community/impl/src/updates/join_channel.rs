@@ -114,7 +114,7 @@ fn commit(channel_id: ChannelId, user_principal: Principal, state: &mut RuntimeS
                     let summary = channel.summary(&channel_member, now);
 
                     handle_activity_notification(state);
-                    
+
                     Success(Box::new(summary))
                 }
                 AddResult::AlreadyInGroup => {
