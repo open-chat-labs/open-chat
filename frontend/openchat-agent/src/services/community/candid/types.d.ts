@@ -9,19 +9,53 @@ export type AccessGateUpdate = { 'NoChange' : null } |
 export interface AccessRules { 'text' : string, 'enabled' : boolean }
 export type AccessorId = Principal;
 export type AccountIdentifier = Uint8Array | number[];
-export interface AddPlatformModeratorArgs { 'user_id' : UserId }
-export type AddPlatformModeratorResponse = {
-    'AlreadyPlatformModerator' : null
-  } |
-  { 'Success' : null } |
-  { 'InternalError' : string };
-export interface AddPlatformOperatorArgs { 'user_id' : UserId }
-export type AddPlatformOperatorResponse = { 'Success' : null };
-export interface AddReferralCodesArgs {
-  'codes' : Array<string>,
-  'referral_type' : ReferralType,
+export interface AddMembersToChannelArgs {
+  'channel_id' : ChannelId,
+  'user_ids' : Array<UserId>,
+  'added_by_name' : string,
 }
-export type AddReferralCodesResponse = { 'Success' : null };
+export interface AddMembersToChannelFailed {
+  'users_limit_reached' : Array<UserId>,
+  'users_failed_gate_check' : Array<UserFailedGateCheck>,
+  'users_already_in_channel' : Array<UserId>,
+  'users_failed_with_error' : Array<UserFailedError>,
+}
+export interface AddMembersToChannelPartialSuccess {
+  'users_limit_reached' : Array<UserId>,
+  'users_failed_gate_check' : Array<UserFailedGateCheck>,
+  'users_already_in_channel' : Array<UserId>,
+  'users_failed_with_error' : Array<UserFailedError>,
+  'users_added' : Array<UserId>,
+}
+export type AddMembersToChannelResponse = {
+    'Failed' : AddMembersToChannelFailed
+  } |
+  { 'UserNotInChannel' : null } |
+  { 'PartialSuccess' : AddMembersToChannelPartialSuccess } |
+  { 'ChannelNotFound' : null } |
+  { 'UserLimitReached' : number } |
+  { 'NotAuthorized' : null } |
+  { 'Success' : null } |
+  { 'UserNotInCommunity' : null } |
+  { 'UserSuspended' : null } |
+  { 'CommunityFrozen' : null };
+export interface AddReactionArgs {
+  'channel_id' : ChannelId,
+  'username' : string,
+  'message_id' : MessageId,
+  'thread_root_message_index' : [] | [MessageIndex],
+  'reaction' : string,
+}
+export type AddReactionResponse = { 'UserNotInChannel' : null } |
+  { 'MessageNotFound' : null } |
+  { 'NoChange' : null } |
+  { 'ChannelNotFound' : null } |
+  { 'NotAuthorized' : null } |
+  { 'Success' : null } |
+  { 'UserNotInCommunity' : null } |
+  { 'UserSuspended' : null } |
+  { 'CommunityFrozen' : null } |
+  { 'InvalidReaction' : null };
 export interface AddedToGroupNotification {
   'added_by_name' : string,
   'added_by' : UserId,
@@ -29,8 +63,6 @@ export interface AddedToGroupNotification {
   'chat_id' : ChatId,
   'group_name' : string,
 }
-export interface AssignPlatformModeratorsGroupArgs { 'group_id' : ChatId }
-export type AssignPlatformModeratorsGroupResponse = { 'Success' : null };
 export interface AudioContent {
   'mime_type' : string,
   'blob_reference' : [] | [BlobReference],
@@ -57,6 +89,17 @@ export interface BlobReference {
   'canister_id' : CanisterId,
 }
 export type BlockIndex = bigint;
+export interface BlockUserArgs { 'user_id' : UserId }
+export type BlockUserResponse = { 'NotAuthorized' : null } |
+  { 'Success' : null } |
+  { 'UserNotInCommunity' : null } |
+  { 'CommunityNotPublic' : null } |
+  { 'UserSuspended' : null } |
+  { 'CommunityFrozen' : null } |
+  { 'TargetUserNotInCommunity' : null } |
+  { 'InternalError' : string } |
+  { 'CannotBlockSelf' : null } |
+  { 'CannotBlockUser' : null };
 export type CanisterId = Principal;
 export type CanisterUpgradeStatus = { 'NotRequired' : null } |
   { 'InProgress' : null };
@@ -65,6 +108,32 @@ export interface CanisterWasm {
   'version' : Version,
   'module' : Uint8Array | number[],
 }
+export interface ChangeChannelRoleArgs {
+  'channel_id' : ChannelId,
+  'user_id' : UserId,
+  'new_role' : GroupRole,
+}
+export type ChangeChannelRoleResponse = { 'Invalid' : null } |
+  { 'UserNotInChannel' : null } |
+  { 'ChannelNotFound' : null } |
+  { 'NotAuthorized' : null } |
+  { 'Success' : null } |
+  { 'UserNotInCommunity' : null } |
+  { 'UserSuspended' : null } |
+  { 'CommunityFrozen' : null } |
+  { 'TargetUserNotInChannel' : null };
+export interface ChangeRoleArgs {
+  'user_id' : UserId,
+  'new_role' : CommunityRole,
+}
+export type ChangeRoleResponse = { 'Invalid' : null } |
+  { 'NotAuthorized' : null } |
+  { 'Success' : null } |
+  { 'UserNotInCommunity' : null } |
+  { 'UserSuspended' : null } |
+  { 'CommunityFrozen' : null } |
+  { 'TargetUserNotInCommunity' : null } |
+  { 'InternalError' : string };
 export type ChannelId = bigint;
 export type ChatEvent = { 'Empty' : null } |
   { 'MessageReactionRemoved' : UpdatedMessage } |
@@ -141,12 +210,6 @@ export interface ChatMetrics {
   'prize_messages' : bigint,
 }
 export interface ChatUnfrozen { 'unfrozen_by' : UserId }
-export interface CheckUsernameArgs { 'username' : string }
-export type CheckUsernameResponse = { 'UsernameTaken' : null } |
-  { 'UsernameTooShort' : number } |
-  { 'UsernameInvalid' : null } |
-  { 'UsernameTooLong' : number } |
-  { 'Success' : null };
 export interface CommunityCanisterChannelSummary {
   'channel_id' : ChannelId,
   'is_public' : boolean,
@@ -251,6 +314,31 @@ export type CompletedCryptoTransaction = {
     'NNS' : NnsCompletedCryptoTransaction
   } |
   { 'SNS' : SnsCompletedCryptoTransaction };
+export interface CreateChannelArgs {
+  'is_public' : boolean,
+  'permissions' : [] | [GroupPermissions],
+  'subtype' : [] | [GroupSubtype],
+  'gate' : [] | [AccessGate],
+  'name' : string,
+  'description' : string,
+  'events_ttl' : [] | [Milliseconds],
+  'history_visible_to_new_joiners' : boolean,
+  'rules' : AccessRules,
+  'avatar' : [] | [Avatar],
+}
+export type CreateChannelResponse = { 'MaxChannelsCreated' : number } |
+  { 'NameReserved' : null } |
+  { 'RulesTooLong' : FieldTooLongResult } |
+  { 'DescriptionTooLong' : FieldTooLongResult } |
+  { 'NameTooShort' : FieldTooShortResult } |
+  { 'NotAuthorized' : null } |
+  { 'AvatarTooBig' : FieldTooLongResult } |
+  { 'Success' : { 'channel_id' : ChannelId } } |
+  { 'UserSuspended' : null } |
+  { 'RulesTooShort' : FieldTooShortResult } |
+  { 'CommunityFrozen' : null } |
+  { 'NameTooLong' : FieldTooLongResult } |
+  { 'NameTaken' : null };
 export interface CryptoContent {
   'recipient' : UserId,
   'caption' : [] | [string],
@@ -263,23 +351,6 @@ export type Cryptocurrency = { 'InternetComputer' : null } |
   { 'CHAT' : null } |
   { 'SNS1' : null } |
   { 'CKBTC' : null };
-export type CurrentUserResponse = {
-    'Success' : {
-      'username' : string,
-      'wasm_version' : Version,
-      'icp_account' : AccountIdentifier,
-      'referrals' : Array<UserId>,
-      'user_id' : UserId,
-      'avatar_id' : [] | [bigint],
-      'is_suspected_bot' : boolean,
-      'canister_upgrade_status' : CanisterUpgradeStatus,
-      'is_super_admin' : boolean,
-      'suspension_details' : [] | [SuspensionDetails],
-      'is_platform_moderator' : boolean,
-      'diamond_membership_details' : [] | [DiamondMembershipDetails],
-    }
-  } |
-  { 'UserNotFound' : null };
 export interface CustomMessageContent {
   'data' : Uint8Array | number[],
   'kind' : string,
@@ -290,10 +361,51 @@ export interface CyclesRegistrationFee {
   'valid_until' : TimestampMillis,
   'amount' : Cycles,
 }
+export interface DeclineInvitationArgs { 'channel_id' : [] | [ChannelId] }
+export type DeclineInvitationResponse = { 'NotInvited' : null } |
+  { 'ChannelNotFound' : null } |
+  { 'Success' : null } |
+  { 'UserNotInCommunity' : null };
+export interface DeleteChannelArgs { 'channel_id' : ChannelId }
+export type DeleteChannelResponse = { 'UserNotInChannel' : null } |
+  { 'ChannelNotFound' : null } |
+  { 'NotAuthorized' : null } |
+  { 'Success' : null } |
+  { 'UserNotInCommunity' : null } |
+  { 'UserSuspended' : null } |
+  { 'CommunityFrozen' : null };
+export interface DeleteMessagesArgs {
+  'channel_id' : ChannelId,
+  'as_platform_moderator' : [] | [boolean],
+  'message_ids' : Array<MessageId>,
+  'thread_root_message_index' : [] | [MessageIndex],
+}
+export type DeleteMessagesResponse = { 'UserNotInChannel' : null } |
+  { 'MessageNotFound' : null } |
+  { 'ChannelNotFound' : null } |
+  { 'Success' : null } |
+  { 'UserNotInCommunity' : null } |
+  { 'UserSuspended' : null } |
+  { 'CommunityFrozen' : null } |
+  { 'NotPlatformModerator' : null } |
+  { 'InternalError' : string };
 export interface DeletedContent {
   'timestamp' : TimestampMillis,
   'deleted_by' : UserId,
 }
+export interface DeletedMessageArgs {
+  'channel_id' : ChannelId,
+  'message_id' : MessageId,
+  'thread_root_message_index' : [] | [MessageIndex],
+}
+export type DeletedMessageResponse = { 'UserNotInChannel' : null } |
+  { 'MessageNotFound' : null } |
+  { 'ChannelNotFound' : null } |
+  { 'NotAuthorized' : null } |
+  { 'Success' : { 'content' : MessageContent } } |
+  { 'UserNotInCommunity' : null } |
+  { 'MessageHardDeleted' : null } |
+  { 'MessageNotDeleted' : null };
 export interface DiamondMembershipDetails {
   'recurring' : [] | [DiamondMembershipPlanDuration],
   'expires_at' : TimestampMillis,
@@ -343,8 +455,50 @@ export interface DirectReactionAddedNotification {
   'timestamp' : TimestampMillis,
   'reaction' : string,
 }
+export type DisableInviteCodeResponse = { 'NotAuthorized' : null } |
+  { 'Success' : null } |
+  { 'UserSuspended' : null } |
+  { 'CommunityFrozen' : null };
+export interface EditMessageArgs {
+  'channel_id' : ChannelId,
+  'content' : MessageContentInitial,
+  'message_id' : MessageId,
+  'thread_root_message_index' : [] | [MessageIndex],
+}
+export type EditMessageResponse = { 'UserNotInChannel' : null } |
+  { 'MessageNotFound' : null } |
+  { 'ChannelNotFound' : null } |
+  { 'Success' : null } |
+  { 'UserNotInCommunity' : null } |
+  { 'UserSuspended' : null } |
+  { 'CommunityFrozen' : null };
 export type EmptyArgs = {};
+export type EnableInviteCodeResponse = { 'NotAuthorized' : null } |
+  { 'Success' : { 'code' : bigint } } |
+  { 'UserSuspended' : null } |
+  { 'CommunityFrozen' : null };
 export type EventIndex = number;
+export interface EventsArgs {
+  'channel_id' : ChannelId,
+  'latest_client_event_index' : [] | [EventIndex],
+  'max_messages' : number,
+  'max_events' : number,
+  'ascending' : boolean,
+  'thread_root_message_index' : [] | [MessageIndex],
+  'start_index' : EventIndex,
+}
+export interface EventsByIndexArgs {
+  'channel_id' : ChannelId,
+  'latest_client_event_index' : [] | [EventIndex],
+  'events' : Uint32Array | number[],
+  'thread_root_message_index' : [] | [MessageIndex],
+}
+export type EventsResponse = { 'ThreadNotFound' : null } |
+  { 'UserNotInChannel' : null } |
+  { 'ReplicaNotUpToDate' : EventIndex } |
+  { 'ChannelNotFound' : null } |
+  { 'Success' : EventsSuccessResult } |
+  { 'UserNotInCommunity' : null };
 export interface EventsSuccessResult {
   'events' : Array<ChatEventWrapper>,
   'timestamp' : TimestampMillis,
@@ -356,6 +510,14 @@ export type EventsTimeToLiveUpdate = { 'NoChange' : null } |
 export interface EventsTimeToLiveUpdated {
   'new_ttl' : [] | [Milliseconds],
   'updated_by' : UserId,
+}
+export interface EventsWindowArgs {
+  'channel_id' : ChannelId,
+  'latest_client_event_index' : [] | [EventIndex],
+  'mid_point' : MessageIndex,
+  'max_messages' : number,
+  'max_events' : number,
+  'thread_root_message_index' : [] | [MessageIndex],
 }
 export type FailedCryptoTransaction = { 'NNS' : NnsFailedCryptoTransaction } |
   { 'SNS' : SnsFailedCryptoTransaction };
@@ -609,8 +771,46 @@ export type InvalidPollReason = { 'DuplicateOptions' : null } |
   { 'OptionTooLong' : number } |
   { 'EndDateInThePast' : null } |
   { 'PollsNotValidForDirectChats' : null };
-export type MarkSuspectedBotArgs = {};
-export type MarkSuspectedBotResponse = { 'Success' : null };
+export type InviteCodeResponse = { 'NotAuthorized' : null } |
+  { 'Success' : { 'code' : [] | [bigint] } } |
+  { 'UserNotInCommunity' : null };
+export interface JoinChannelArgs { 'channel_id' : ChannelId }
+export type JoinChannelResponse = { 'NotInvited' : null } |
+  { 'AlreadyInChannel' : CommunityCanisterChannelSummary } |
+  { 'GateCheckFailed' : GateCheckFailedReason } |
+  { 'ChannelNotFound' : null } |
+  { 'UserLimitReached' : number } |
+  { 'Success' : CommunityCanisterChannelSummary } |
+  { 'UserNotInCommunity' : null } |
+  { 'UserSuspended' : null } |
+  { 'CommunityFrozen' : null } |
+  { 'InternalError' : string } |
+  { 'UserBlocked' : null };
+export interface LeaveChannelArgs { 'channel_id' : ChannelId }
+export type LeaveChannelResponse = { 'UserNotInChannel' : null } |
+  { 'LastOwnerCannotLeave' : null } |
+  { 'ChannelNotFound' : null } |
+  { 'Success' : null } |
+  { 'UserNotInCommunity' : null } |
+  { 'UserSuspended' : null } |
+  { 'CommunityFrozen' : null };
+export type LocalUserIndexResponse = { 'Success' : CanisterId };
+export interface MakeChannelPrivateArgs { 'channel_id' : ChannelId }
+export type MakeChannelPrivateResponse = { 'UserNotInChannel' : null } |
+  { 'ChannelNotFound' : null } |
+  { 'NotAuthorized' : null } |
+  { 'Success' : null } |
+  { 'UserNotInCommunity' : null } |
+  { 'UserSuspended' : null } |
+  { 'AlreadyPrivate' : null } |
+  { 'CommunityFrozen' : null };
+export type MakePrivateResponse = { 'NotAuthorized' : null } |
+  { 'Success' : null } |
+  { 'UserNotInCommunity' : null } |
+  { 'UserSuspended' : null } |
+  { 'AlreadyPrivate' : null } |
+  { 'CommunityFrozen' : null } |
+  { 'InternalError' : null };
 export type Memo = bigint;
 export interface Mention {
   'message_id' : MessageId,
@@ -705,6 +905,18 @@ export interface MessageUnpinned {
   'unpinned_by' : UserId,
   'message_index' : MessageIndex,
 }
+export interface MessagesByMessageIndexArgs {
+  'channel_id' : ChannelId,
+  'latest_client_event_index' : [] | [EventIndex],
+  'messages' : Uint32Array | number[],
+  'thread_root_message_index' : [] | [MessageIndex],
+}
+export type MessagesByMessageIndexResponse = { 'ThreadNotFound' : null } |
+  { 'UserNotInChannel' : null } |
+  { 'ReplicaNotUpToDate' : EventIndex } |
+  { 'ChannelNotFound' : null } |
+  { 'Success' : MessagesSuccessResult } |
+  { 'UserNotInCommunity' : null };
 export interface MessagesSuccessResult {
   'messages' : Array<MessageEventWrapper>,
   'timestamp' : TimestampMillis,
@@ -829,28 +1041,6 @@ export interface ParticipantsRemoved {
   'user_ids' : Array<UserId>,
   'removed_by' : UserId,
 }
-export interface PayForDiamondMembershipArgs {
-  'token' : Cryptocurrency,
-  'duration' : DiamondMembershipPlanDuration,
-  'recurring' : boolean,
-  'expected_price_e8s' : bigint,
-}
-export type PayForDiamondMembershipResponse = {
-    'PaymentAlreadyInProgress' : null
-  } |
-  { 'CurrencyNotSupported' : null } |
-  { 'Success' : DiamondMembershipDetails } |
-  { 'PriceMismatch' : null } |
-  { 'TransferFailed' : string } |
-  { 'InternalError' : string } |
-  {
-    'CannotExtend' : {
-      'can_extend_at' : TimestampMillis,
-      'diamond_membership_expires_at' : TimestampMillis,
-    }
-  } |
-  { 'UserNotFound' : null } |
-  { 'InsufficientFunds' : bigint };
 export type PendingCryptoTransaction = { 'NNS' : NnsPendingCryptoTransaction } |
   { 'SNS' : SnsPendingCryptoTransaction };
 export type PermissionRole = { 'Moderators' : null } |
@@ -862,17 +1052,22 @@ export interface PermissionsChanged {
   'old_permissions' : GroupPermissions,
   'new_permissions' : GroupPermissions,
 }
+export interface PinMessageArgs {
+  'channel_id' : ChannelId,
+  'message_index' : MessageIndex,
+}
+export type PinMessageResponse = { 'UserNotInChannel' : null } |
+  { 'MessageNotFound' : null } |
+  { 'NoChange' : null } |
+  { 'ChannelNotFound' : null } |
+  { 'NotAuthorized' : null } |
+  { 'Success' : PushEventResult } |
+  { 'UserNotInCommunity' : null } |
+  { 'UserSuspended' : null } |
+  { 'CommunityFrozen' : null };
 export type PinnedMessageUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : MessageIndex };
-export type PlatformModeratorsGroupResponse = { 'Success' : ChatId };
-export type PlatformModeratorsResponse = {
-    'Success' : { 'users' : Array<UserId> }
-  };
-export type PlatformOperatorsArgs = {};
-export type PlatformOperatorsResponse = {
-    'Success' : { 'users' : Array<UserId> }
-  };
 export interface PollConfig {
   'allow_multiple_votes_per_user' : boolean,
   'text' : [] | [string],
@@ -957,50 +1152,47 @@ export interface PushEventResult {
   'index' : EventIndex,
   'expires_at' : [] | [TimestampMillis],
 }
-export interface ReferralLeaderboardArgs {
-  'count' : number,
-  'filter' : [] | [
-    { 'CurrentMonth' : null } |
-      { 'Month' : { 'month' : number, 'year' : number } }
-  ],
-}
-export type ReferralLeaderboardResponse = { 'AllTime' : Array<ReferralStats> } |
-  {
-    'Month' : {
-      'month' : number,
-      'year' : number,
-      'results' : Array<ReferralStats>,
-    }
-  };
-export type ReferralMetricsResponse = {
-    'Success' : {
-      'users_who_referred' : number,
-      'users_who_referred_unpaid_diamond' : number,
-      'referrals_of_unpaid_diamond' : number,
-      'icp_raised_by_referrals_to_paid_diamond' : number,
-      'referrals_of_paid_diamond' : number,
-      'users_who_referred_paid_diamond' : number,
-      'referrals_other' : number,
-      'users_who_referred_90_percent_unpaid_diamond' : number,
-    }
-  };
-export interface ReferralStats {
-  'username' : string,
-  'total_users' : number,
-  'user_id' : UserId,
-  'diamond_members' : number,
-  'total_rewards_e8s' : bigint,
-}
-export type ReferralType = { 'User' : null } |
-  { 'BtcMiami' : null };
 export type RegistrationFee = { 'ICP' : ICPRegistrationFee } |
   { 'Cycles' : CyclesRegistrationFee };
-export interface RemovePlatformModeratorArgs { 'user_id' : UserId }
-export type RemovePlatformModeratorResponse = { 'Success' : null } |
-  { 'NotPlatformModerator' : null } |
+export interface RemoveMemberArgs { 'user_id' : UserId }
+export interface RemoveMemberFromChannelArgs {
+  'channel_id' : ChannelId,
+  'user_id' : UserId,
+}
+export type RemoveMemberFromChannelResponse = { 'UserNotInChannel' : null } |
+  { 'ChannelNotFound' : null } |
+  { 'NotAuthorized' : null } |
+  { 'Success' : null } |
+  { 'UserNotInCommunity' : null } |
+  { 'UserSuspended' : null } |
+  { 'CommunityFrozen' : null } |
+  { 'TargetUserNotInCommunity' : null } |
+  { 'TargetUserNotInChannel' : null } |
+  { 'CannotRemoveSelf' : null };
+export type RemoveMemberResponse = { 'NotAuthorized' : null } |
+  { 'Success' : null } |
+  { 'UserNotInCommunity' : null } |
+  { 'UserSuspended' : null } |
+  { 'CommunityFrozen' : null } |
+  { 'TargetUserNotInCommunity' : null } |
+  { 'CannotRemoveSelf' : null } |
+  { 'CannotRemoveUser' : null } |
   { 'InternalError' : string };
-export interface RemovePlatformOperatorArgs { 'user_id' : UserId }
-export type RemovePlatformOperatorResponse = { 'Success' : null };
+export interface RemoveReactionArgs {
+  'channel_id' : ChannelId,
+  'message_id' : MessageId,
+  'thread_root_message_index' : [] | [MessageIndex],
+  'reaction' : string,
+}
+export type RemoveReactionResponse = { 'UserNotInChannel' : null } |
+  { 'MessageNotFound' : null } |
+  { 'NoChange' : null } |
+  { 'ChannelNotFound' : null } |
+  { 'NotAuthorized' : null } |
+  { 'Success' : null } |
+  { 'UserNotInCommunity' : null } |
+  { 'UserSuspended' : null } |
+  { 'CommunityFrozen' : null };
 export interface ReplyContext {
   'event_list_if_other' : [] | [[ChatId, [] | [MessageIndex]]],
   'chat_id_if_other' : [] | [ChatId],
@@ -1016,10 +1208,47 @@ export interface RoleChanged {
   'old_role' : GroupRole,
   'new_role' : GroupRole,
 }
-export interface SearchArgs { 'max_results' : number, 'search_term' : string }
-export type SearchResponse = {
-    'Success' : { 'timestamp' : TimestampMillis, 'users' : Array<UserSummary> }
-  };
+export interface RulesArgs { 'invite_code' : [] | [bigint] }
+export type RulesResponse = { 'NotAuthorized' : null } |
+  { 'Success' : { 'rules' : [] | [string] } };
+export interface SearchChannelArgs {
+  'channel_id' : ChannelId,
+  'max_results' : number,
+  'users' : [] | [Array<UserId>],
+  'search_term' : string,
+}
+export type SearchChannelResponse = { 'TermTooShort' : number } |
+  { 'UserNotInChannel' : null } |
+  { 'ChannelNotFound' : null } |
+  { 'TooManyUsers' : number } |
+  { 'Success' : { 'matches' : Array<MessageMatch> } } |
+  { 'UserNotInCommunity' : null } |
+  { 'TermTooLong' : number } |
+  { 'InvalidTerm' : null };
+export interface SelectedChannelInitialArgs { 'channel_id' : ChannelId }
+export type SelectedChannelInitialResponse = { 'UserNotInChannel' : null } |
+  { 'ChannelNotFound' : null } |
+  {
+    'Success' : {
+      'members' : Array<Participant>,
+      'invited_users' : Array<UserId>,
+      'blocked_users' : Array<UserId>,
+      'timestamp' : TimestampMillis,
+      'pinned_messages' : Uint32Array | number[],
+      'latest_event_index' : EventIndex,
+      'rules' : AccessRules,
+    }
+  } |
+  { 'UserNotInCommunity' : null };
+export interface SelectedChannelUpdatesArgs {
+  'channel_id' : ChannelId,
+  'updates_since' : TimestampMillis,
+}
+export type SelectedChannelUpdatesResponse = { 'UserNotInChannel' : null } |
+  { 'ChannelNotFound' : null } |
+  { 'Success' : SelectedGroupUpdates } |
+  { 'UserNotInCommunity' : null } |
+  { 'SuccessNoUpdates' : null };
 export interface SelectedGroupUpdates {
   'blocked_users_removed' : Array<UserId>,
   'pinned_messages_removed' : Uint32Array | number[],
@@ -1032,15 +1261,35 @@ export interface SelectedGroupUpdates {
   'rules' : [] | [AccessRules],
   'blocked_users_added' : Array<UserId>,
 }
-export interface SetUserUpgradeConcurrencyArgs { 'value' : number }
-export type SetUserUpgradeConcurrencyResponse = { 'Success' : null };
-export interface SetUsernameArgs { 'username' : string }
-export type SetUsernameResponse = { 'UsernameTaken' : null } |
-  { 'UsernameTooShort' : number } |
-  { 'UsernameInvalid' : null } |
-  { 'UsernameTooLong' : number } |
-  { 'Success' : null } |
-  { 'UserNotFound' : null };
+export interface SendMessageArgs {
+  'channel_id' : ChannelId,
+  'content' : MessageContentInitial,
+  'mentioned' : Array<User>,
+  'forwarding' : boolean,
+  'sender_name' : string,
+  'message_id' : MessageId,
+  'replies_to' : [] | [GroupReplyContext],
+  'thread_root_message_index' : [] | [MessageIndex],
+}
+export type SendMessageResponse = { 'TextTooLong' : number } |
+  { 'ThreadMessageNotFound' : null } |
+  { 'UserNotInChannel' : null } |
+  { 'ChannelNotFound' : null } |
+  { 'NotAuthorized' : null } |
+  {
+    'Success' : {
+      'timestamp' : TimestampMillis,
+      'event_index' : EventIndex,
+      'expires_at' : [] | [TimestampMillis],
+      'message_index' : MessageIndex,
+    }
+  } |
+  { 'UserNotInCommunity' : null } |
+  { 'MessageEmpty' : null } |
+  { 'InvalidPoll' : InvalidPollReason } |
+  { 'UserSuspended' : null } |
+  { 'CommunityFrozen' : null } |
+  { 'InvalidRequest' : string };
 export type SnsAccount = { 'Mint' : null } |
   { 'Account' : Icrc1Account };
 export interface SnsCompletedCryptoTransaction {
@@ -1103,24 +1352,16 @@ export interface SubscriptionInfo {
   'keys' : SubscriptionKeys,
 }
 export interface SubscriptionKeys { 'auth' : string, 'p256dh' : string }
-export interface SuspectedBotsArgs { 'after' : [] | [UserId], 'count' : number }
-export type SuspectedBotsResponse = { 'Success' : { 'users' : Array<UserId> } };
-export interface SuspendUserArgs {
-  'duration' : [] | [Milliseconds],
-  'user_id' : UserId,
-  'reason' : string,
-}
-export type SuspendUserResponse = { 'UserAlreadySuspended' : null } |
-  { 'Success' : null } |
-  { 'InternalError' : string } |
-  { 'UserNotFound' : null };
-export type SuspensionAction = { 'Unsuspend' : TimestampMillis } |
-  { 'Delete' : TimestampMillis };
-export interface SuspensionDetails {
-  'action' : SuspensionAction,
-  'suspended_by' : UserId,
-  'reason' : string,
-}
+export type SummaryResponse = {
+    'Success' : { 'summary' : CommunityCanisterCommunitySummary }
+  } |
+  { 'UserNotInCommunity' : null };
+export interface SummaryUpdatesArgs { 'updates_since' : TimestampMillis }
+export type SummaryUpdatesResponse = {
+    'Success' : { 'updates' : CommunityCanisterCommunitySummaryUpdates }
+  } |
+  { 'UserNotInCommunity' : null } |
+  { 'SuccessNoUpdates' : null };
 export interface Tally {
   'no' : bigint,
   'yes' : bigint,
@@ -1154,31 +1395,106 @@ export type TimestampNanos = bigint;
 export type TimestampUpdate = { 'NoChange' : null } |
   { 'SetToNone' : null } |
   { 'SetToSome' : TimestampMillis };
+export interface ToggleMuteChannelNotificationsArgs {
+  'channel_id' : ChannelId,
+  'mute' : boolean,
+}
+export type ToggleMuteChannelNotificationsResponse = {
+    'UserNotInChannel' : null
+  } |
+  { 'ChannelNotFound' : null } |
+  { 'Success' : null } |
+  { 'UserNotInCommunity' : null } |
+  { 'UserSuspended' : null } |
+  { 'CommunityFrozen' : null };
+export interface ToggleMuteNotificationsArgs { 'mute' : boolean }
+export type ToggleMuteNotificationsResponse = { 'Success' : null } |
+  { 'UserNotInCommunity' : null } |
+  { 'UserSuspended' : null } |
+  { 'CommunityFrozen' : null };
 export interface Tokens { 'e8s' : bigint }
 export type TotalPollVotes = { 'Anonymous' : Array<[number, number]> } |
   { 'Visible' : Array<[number, Array<UserId>]> } |
   { 'Hidden' : number };
 export type TransactionHash = Uint8Array | number[];
-export interface UnsuspendUserArgs { 'user_id' : UserId }
-export type UnsuspendUserResponse = { 'UserNotSuspended' : null } |
+export interface UnblockUserArgs { 'user_id' : UserId }
+export type UnblockUserResponse = { 'CannotUnblockSelf' : null } |
+  { 'NotAuthorized' : null } |
   { 'Success' : null } |
-  { 'InternalError' : string } |
-  { 'UserNotFound' : null };
+  { 'UserNotInCommunity' : null } |
+  { 'CommunityNotPublic' : null } |
+  { 'UserSuspended' : null } |
+  { 'CommunityFrozen' : null };
+export interface UndeleteMessagesArgs {
+  'channel_id' : ChannelId,
+  'message_ids' : Array<MessageId>,
+  'thread_root_message_index' : [] | [MessageIndex],
+}
+export type UndeleteMessagesResponse = { 'GroupNotFound' : null } |
+  { 'UserNotInChannel' : null } |
+  { 'MessageNotFound' : null } |
+  { 'Success' : { 'messages' : Array<Message> } } |
+  { 'UserNotInCommunity' : null } |
+  { 'UserSuspended' : null } |
+  { 'CommunityFrozen' : null };
+export interface UpdateChannelArgs {
+  'channel_id' : ChannelId,
+  'permissions' : [] | [OptionalGroupPermissions],
+  'gate' : AccessGateUpdate,
+  'name' : [] | [string],
+  'description' : [] | [string],
+  'rules' : [] | [AccessRules],
+  'avatar' : AvatarUpdate,
+}
+export type UpdateChannelResponse = { 'NameReserved' : null } |
+  { 'RulesTooLong' : FieldTooLongResult } |
+  { 'DescriptionTooLong' : FieldTooLongResult } |
+  { 'NameTooShort' : FieldTooShortResult } |
+  { 'UserNotInChannel' : null } |
+  { 'ChannelNotFound' : null } |
+  { 'NotAuthorized' : null } |
+  { 'AvatarTooBig' : FieldTooLongResult } |
+  { 'Success' : null } |
+  { 'UserNotInCommunity' : null } |
+  { 'UserSuspended' : null } |
+  { 'RulesTooShort' : FieldTooShortResult } |
+  { 'CommunityFrozen' : null } |
+  { 'NameTooLong' : FieldTooLongResult } |
+  { 'NameTaken' : null };
+export interface UpdateCommunityArgs {
+  'permissions' : [] | [OptionalCommunityPermissions],
+  'gate' : AccessGateUpdate,
+  'name' : [] | [string],
+  'description' : [] | [string],
+  'rules' : [] | [AccessRules],
+  'avatar' : AvatarUpdate,
+}
+export type UpdateCommunityResponse = { 'NameReserved' : null } |
+  { 'RulesTooLong' : FieldTooLongResult } |
+  { 'DescriptionTooLong' : FieldTooLongResult } |
+  { 'NameTooShort' : FieldTooShortResult } |
+  { 'NotAuthorized' : null } |
+  { 'AvatarTooBig' : FieldTooLongResult } |
+  { 'Success' : null } |
+  { 'UserNotInCommunity' : null } |
+  { 'UserSuspended' : null } |
+  { 'RulesTooShort' : FieldTooShortResult } |
+  { 'CommunityFrozen' : null } |
+  { 'NameTooLong' : FieldTooLongResult } |
+  { 'NameTaken' : null } |
+  { 'InternalError' : null };
 export interface UpdatedMessage {
   'updated_by' : UserId,
   'message_id' : MessageId,
   'event_index' : EventIndex,
 }
 export interface User { 'username' : string, 'user_id' : UserId }
-export interface UserArgs {
-  'username' : [] | [string],
-  'user_id' : [] | [UserId],
+export interface UserFailedError { 'user_id' : UserId, 'error' : string }
+export interface UserFailedGateCheck {
+  'user_id' : UserId,
+  'reason' : GateCheckFailedReason,
 }
 export type UserId = CanisterId;
-export type UserRegistrationCanisterResponse = { 'Success' : CanisterId } |
-  { 'NewRegistrationsClosed' : null };
-export type UserResponse = { 'Success' : UserSummary } |
-  { 'UserNotFound' : null };
 export interface UserSummary {
   'username' : string,
   'diamond_member' : boolean,
@@ -1188,11 +1504,6 @@ export interface UserSummary {
   'seconds_since_last_online' : number,
   'suspended' : boolean,
 }
-export interface UsersArgs {
-  'user_groups' : Array<
-    { 'users' : Array<UserId>, 'updated_since' : TimestampMillis }
-  >,
-}
 export interface UsersBlocked {
   'user_ids' : Array<UserId>,
   'blocked_by' : UserId,
@@ -1201,12 +1512,6 @@ export interface UsersInvited {
   'user_ids' : Array<UserId>,
   'invited_by' : UserId,
 }
-export type UsersResponse = {
-    'Success' : {
-      'timestamp' : TimestampMillis,
-      'users' : Array<PartialUserSummary>,
-    }
-  };
 export interface UsersUnblocked {
   'user_ids' : Array<UserId>,
   'unblocked_by' : UserId,
@@ -1228,67 +1533,81 @@ export interface VideoContent {
 export type VoteOperation = { 'RegisterVote' : null } |
   { 'DeleteVote' : null };
 export interface _SERVICE {
-  'add_platform_moderator' : ActorMethod<
-    [AddPlatformModeratorArgs],
-    AddPlatformModeratorResponse
+  'add_members_to_channel' : ActorMethod<
+    [AddMembersToChannelArgs],
+    AddMembersToChannelResponse
   >,
-  'add_platform_operator' : ActorMethod<
-    [AddPlatformOperatorArgs],
-    AddPlatformOperatorResponse
+  'add_reaction' : ActorMethod<[AddReactionArgs], AddReactionResponse>,
+  'block_user' : ActorMethod<[BlockUserArgs], BlockUserResponse>,
+  'change_channel_role' : ActorMethod<
+    [ChangeChannelRoleArgs],
+    ChangeChannelRoleResponse
   >,
-  'add_referral_codes' : ActorMethod<
-    [AddReferralCodesArgs],
-    AddReferralCodesResponse
+  'change_role' : ActorMethod<[ChangeRoleArgs], ChangeRoleResponse>,
+  'create_channel' : ActorMethod<[CreateChannelArgs], CreateChannelResponse>,
+  'decline_invitation' : ActorMethod<
+    [DeclineInvitationArgs],
+    DeclineInvitationResponse
   >,
-  'assign_platform_moderators_group' : ActorMethod<
-    [AssignPlatformModeratorsGroupArgs],
-    AssignPlatformModeratorsGroupResponse
+  'delete_channel' : ActorMethod<[DeleteChannelArgs], DeleteChannelResponse>,
+  'delete_messages' : ActorMethod<[DeleteMessagesArgs], DeleteMessagesResponse>,
+  'deleted_message' : ActorMethod<[DeletedMessageArgs], DeletedMessageResponse>,
+  'disable_invite_code' : ActorMethod<[EmptyArgs], DisableInviteCodeResponse>,
+  'edit_message' : ActorMethod<[EditMessageArgs], EditMessageResponse>,
+  'enable_invite_code' : ActorMethod<[EmptyArgs], EnableInviteCodeResponse>,
+  'events' : ActorMethod<[EventsArgs], EventsResponse>,
+  'events_by_index' : ActorMethod<[EventsByIndexArgs], EventsResponse>,
+  'events_window' : ActorMethod<[EventsWindowArgs], EventsResponse>,
+  'invite_code' : ActorMethod<[EmptyArgs], InviteCodeResponse>,
+  'join_channel' : ActorMethod<[JoinChannelArgs], JoinChannelResponse>,
+  'leave_channel' : ActorMethod<[LeaveChannelArgs], LeaveChannelResponse>,
+  'local_user_index' : ActorMethod<[EmptyArgs], LocalUserIndexResponse>,
+  'make_channel_private' : ActorMethod<
+    [MakeChannelPrivateArgs],
+    MakeChannelPrivateResponse
   >,
-  'check_username' : ActorMethod<[CheckUsernameArgs], CheckUsernameResponse>,
-  'current_user' : ActorMethod<[EmptyArgs], CurrentUserResponse>,
-  'mark_suspected_bot' : ActorMethod<
-    [MarkSuspectedBotArgs],
-    MarkSuspectedBotResponse
+  'make_private' : ActorMethod<[EmptyArgs], MakePrivateResponse>,
+  'messages_by_message_index' : ActorMethod<
+    [MessagesByMessageIndexArgs],
+    MessagesByMessageIndexResponse
   >,
-  'pay_for_diamond_membership' : ActorMethod<
-    [PayForDiamondMembershipArgs],
-    PayForDiamondMembershipResponse
+  'pin_message' : ActorMethod<[PinMessageArgs], PinMessageResponse>,
+  'remove_member' : ActorMethod<[RemoveMemberArgs], RemoveMemberResponse>,
+  'remove_member_from_channel' : ActorMethod<
+    [RemoveMemberFromChannelArgs],
+    RemoveMemberFromChannelResponse
   >,
-  'platform_moderators' : ActorMethod<[EmptyArgs], PlatformModeratorsResponse>,
-  'platform_moderators_group' : ActorMethod<
-    [EmptyArgs],
-    PlatformModeratorsGroupResponse
+  'remove_reaction' : ActorMethod<[RemoveReactionArgs], RemoveReactionResponse>,
+  'reset_invite_code' : ActorMethod<[EmptyArgs], EnableInviteCodeResponse>,
+  'rules' : ActorMethod<[RulesArgs], RulesResponse>,
+  'search_channel' : ActorMethod<[SearchChannelArgs], SearchChannelResponse>,
+  'selected_channel_initial' : ActorMethod<
+    [SelectedChannelInitialArgs],
+    SelectedChannelInitialResponse
   >,
-  'platform_operators' : ActorMethod<
-    [PlatformOperatorsArgs],
-    PlatformOperatorsResponse
+  'selected_channel_updates' : ActorMethod<
+    [SelectedChannelUpdatesArgs],
+    SelectedChannelUpdatesResponse
   >,
-  'referral_leaderboard' : ActorMethod<
-    [ReferralLeaderboardArgs],
-    ReferralLeaderboardResponse
+  'send_message' : ActorMethod<[SendMessageArgs], SendMessageResponse>,
+  'summary' : ActorMethod<[EmptyArgs], SummaryResponse>,
+  'summary_updates' : ActorMethod<[SummaryUpdatesArgs], SummaryUpdatesResponse>,
+  'toggle_mute_channel_notifications' : ActorMethod<
+    [ToggleMuteChannelNotificationsArgs],
+    ToggleMuteChannelNotificationsResponse
   >,
-  'referral_metrics' : ActorMethod<[EmptyArgs], ReferralMetricsResponse>,
-  'remove_platform_moderator' : ActorMethod<
-    [RemovePlatformModeratorArgs],
-    RemovePlatformModeratorResponse
+  'toggle_mute_notifications' : ActorMethod<
+    [ToggleMuteNotificationsArgs],
+    ToggleMuteNotificationsResponse
   >,
-  'remove_platform_operator' : ActorMethod<
-    [RemovePlatformOperatorArgs],
-    RemovePlatformOperatorResponse
+  'unblock_user' : ActorMethod<[UnblockUserArgs], UnblockUserResponse>,
+  'undelete_messages' : ActorMethod<
+    [UndeleteMessagesArgs],
+    UndeleteMessagesResponse
   >,
-  'search' : ActorMethod<[SearchArgs], SearchResponse>,
-  'set_user_upgrade_concurrency' : ActorMethod<
-    [SetUserUpgradeConcurrencyArgs],
-    SetUserUpgradeConcurrencyResponse
+  'update_channel' : ActorMethod<[UpdateChannelArgs], UpdateChannelResponse>,
+  'update_community' : ActorMethod<
+    [UpdateCommunityArgs],
+    UpdateCommunityResponse
   >,
-  'set_username' : ActorMethod<[SetUsernameArgs], SetUsernameResponse>,
-  'suspected_bots' : ActorMethod<[SuspectedBotsArgs], SuspectedBotsResponse>,
-  'suspend_user' : ActorMethod<[SuspendUserArgs], SuspendUserResponse>,
-  'unsuspend_user' : ActorMethod<[UnsuspendUserArgs], UnsuspendUserResponse>,
-  'user' : ActorMethod<[UserArgs], UserResponse>,
-  'user_registration_canister' : ActorMethod<
-    [EmptyArgs],
-    UserRegistrationCanisterResponse
-  >,
-  'users' : ActorMethod<[UsersArgs], UsersResponse>,
 }

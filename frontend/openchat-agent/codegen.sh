@@ -37,6 +37,9 @@ didc bind ./src/services/nnsGovernance/candid/can.did -t js > ./src/services/nns
 didc bind ./src/services/snsGovernance/candid/can.did -t ts > ./src/services/snsGovernance/candid/types.d.ts
 didc bind ./src/services/snsGovernance/candid/can.did -t js > ./src/services/snsGovernance/candid/idl.js
 
+didc bind ../../backend/canisters/community/api/can.did -t ts > ./src/services/community/candid/types.d.ts
+didc bind ../../backend/canisters/community/api/can.did -t js > ./src/services/community/candid/idl.js
+
 SEARCH='const Notification'
 REPLACE='import { IDL } from "@dfinity\/candid"\n\nexport const Notification'
 cargo run --bin notification_candid_gen > notification.did

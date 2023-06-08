@@ -1,6 +1,45 @@
 export const idlFactory = ({ IDL }) => {
+  const ChannelId = IDL.Nat;
+  const CommunityId = IDL.Principal;
   const CanisterId = IDL.Principal;
   const UserId = CanisterId;
+  const InviteUsersToChannelArgs = IDL.Record({
+    'channel_id' : ChannelId,
+    'community_id' : CommunityId,
+    'user_ids' : IDL.Vec(UserId),
+  });
+  const InviteUsersToChannelFailed = IDL.Record({
+    'users_not_in_community' : IDL.Vec(UserId),
+  });
+  const InviteUsersToChannelPartialSuccess = IDL.Record({
+    'users_not_in_community' : IDL.Vec(UserId),
+  });
+  const InviteUsersToChannelResponse = IDL.Variant({
+    'Failed' : InviteUsersToChannelFailed,
+    'UserNotInChannel' : IDL.Null,
+    'PartialSuccess' : InviteUsersToChannelPartialSuccess,
+    'ChannelNotFound' : IDL.Null,
+    'NotAuthorized' : IDL.Null,
+    'Success' : IDL.Null,
+    'UserNotInCommunity' : IDL.Null,
+    'UserSuspended' : IDL.Null,
+    'CommunityFrozen' : IDL.Null,
+    'InternalError' : IDL.Text,
+    'TooManyInvites' : IDL.Nat32,
+  });
+  const InviteUsersToCommunityArgs = IDL.Record({
+    'community_id' : CommunityId,
+    'user_ids' : IDL.Vec(UserId),
+  });
+  const InviteUsersToCommunityResponse = IDL.Variant({
+    'NotAuthorized' : IDL.Null,
+    'Success' : IDL.Null,
+    'UserNotInCommunity' : IDL.Null,
+    'UserSuspended' : IDL.Null,
+    'CommunityFrozen' : IDL.Null,
+    'InternalError' : IDL.Text,
+    'TooManyInvites' : IDL.Nat32,
+  });
   const ChatId = CanisterId;
   const InviteUsersToGroupArgs = IDL.Record({
     'user_ids' : IDL.Vec(UserId),
@@ -16,7 +55,6 @@ export const idlFactory = ({ IDL }) => {
     'InternalError' : IDL.Text,
     'TooManyInvites' : IDL.Nat32,
   });
-  const CommunityId = IDL.Principal;
   const JoinCommunityArgs = IDL.Record({
     'community_id' : CommunityId,
     'invite_code' : IDL.Opt(IDL.Nat64),
@@ -48,7 +86,7 @@ export const idlFactory = ({ IDL }) => {
     'min_dissolve_delay' : IDL.Opt(Milliseconds),
     'governance_canister_id' : CanisterId,
   });
-  const GroupGate = IDL.Variant({
+  const AccessGate = IDL.Variant({
     'SnsNeuron' : SnsNeuronGate,
     'DiamondMember' : IDL.Null,
   });
@@ -58,45 +96,6 @@ export const idlFactory = ({ IDL }) => {
     'Owner' : IDL.Null,
   });
   const TimestampMillis = IDL.Nat64;
-  const FrozenGroupInfo = IDL.Record({
-    'timestamp' : TimestampMillis,
-    'frozen_by' : UserId,
-    'reason' : IDL.Opt(IDL.Text),
-  });
-  const EventIndex = IDL.Nat32;
-  const CommunityCanisterCommunitySummary = IDL.Record({
-    'is_public' : IDL.Bool,
-    'permissions' : CommunityPermissions,
-    'community_id' : CommunityId,
-    'gate' : IDL.Opt(GroupGate),
-    'name' : IDL.Text,
-    'role' : CommunityRole,
-    'description' : IDL.Text,
-    'last_updated' : TimestampMillis,
-    'joined' : TimestampMillis,
-    'avatar_id' : IDL.Opt(IDL.Nat),
-    'frozen' : IDL.Opt(FrozenGroupInfo),
-    'latest_event_index' : EventIndex,
-    'member_count' : IDL.Nat32,
-  });
-  const JoinCommunityResponse = IDL.Variant({
-    'NotInvited' : IDL.Null,
-    'Blocked' : IDL.Null,
-    'CommunityNotFound' : IDL.Null,
-    'GateCheckFailed' : GateCheckFailedReason,
-    'MemberLimitReached' : IDL.Nat32,
-    'Success' : CommunityCanisterCommunitySummary,
-    'CommunityNotPublic' : IDL.Null,
-    'UserSuspended' : IDL.Null,
-    'CommunityFrozen' : IDL.Null,
-    'AlreadyInCommunity' : CommunityCanisterCommunitySummary,
-    'InternalError' : IDL.Text,
-  });
-  const JoinGroupArgs = IDL.Record({
-    'invite_code' : IDL.Opt(IDL.Nat64),
-    'correlation_id' : IDL.Nat64,
-    'chat_id' : ChatId,
-  });
   const PermissionRole = IDL.Variant({
     'Moderators' : IDL.Null,
     'Owner' : IDL.Null,
@@ -151,16 +150,12 @@ export const idlFactory = ({ IDL }) => {
   const GroupSubtype = IDL.Variant({
     'GovernanceProposals' : GovernanceProposalsSubtype,
   });
-  const Role = IDL.Variant({
+  const EventIndex = IDL.Nat32;
+  const GroupRole = IDL.Variant({
     'Participant' : IDL.Null,
     'Admin' : IDL.Null,
     'Moderator' : IDL.Null,
     'Owner' : IDL.Null,
-  });
-  const Version = IDL.Record({
-    'major' : IDL.Nat32,
-    'minor' : IDL.Nat32,
-    'patch' : IDL.Nat32,
   });
   const MessageIndex = IDL.Nat32;
   const GroupCanisterThreadDetails = IDL.Record({
@@ -506,6 +501,78 @@ export const idlFactory = ({ IDL }) => {
     'correlation_id' : IDL.Nat64,
     'expires_at' : IDL.Opt(TimestampMillis),
   });
+  const CommunityCanisterChannelSummary = IDL.Record({
+    'channel_id' : ChannelId,
+    'is_public' : IDL.Bool,
+    'permissions' : GroupPermissions,
+    'metrics' : ChatMetrics,
+    'subtype' : IDL.Opt(GroupSubtype),
+    'date_last_pinned' : IDL.Opt(TimestampMillis),
+    'min_visible_event_index' : EventIndex,
+    'gate' : IDL.Opt(AccessGate),
+    'name' : IDL.Text,
+    'role' : GroupRole,
+    'notifications_muted' : IDL.Bool,
+    'description' : IDL.Text,
+    'events_ttl' : IDL.Opt(Milliseconds),
+    'last_updated' : TimestampMillis,
+    'joined' : TimestampMillis,
+    'avatar_id' : IDL.Opt(IDL.Nat),
+    'next_message_expiry' : IDL.Opt(TimestampMillis),
+    'latest_threads' : IDL.Vec(GroupCanisterThreadDetails),
+    'latest_event_index' : EventIndex,
+    'history_visible_to_new_joiners' : IDL.Bool,
+    'min_visible_message_index' : MessageIndex,
+    'mentions' : IDL.Vec(Mention),
+    'member_count' : IDL.Nat32,
+    'expired_messages' : IDL.Vec(MessageIndexRange),
+    'my_metrics' : ChatMetrics,
+    'latest_message' : IDL.Opt(MessageEventWrapper),
+  });
+  const FrozenGroupInfo = IDL.Record({
+    'timestamp' : TimestampMillis,
+    'frozen_by' : UserId,
+    'reason' : IDL.Opt(IDL.Text),
+  });
+  const CommunityCanisterCommunitySummary = IDL.Record({
+    'is_public' : IDL.Bool,
+    'permissions' : CommunityPermissions,
+    'community_id' : CommunityId,
+    'gate' : IDL.Opt(AccessGate),
+    'name' : IDL.Text,
+    'role' : CommunityRole,
+    'description' : IDL.Text,
+    'last_updated' : TimestampMillis,
+    'channels' : IDL.Vec(CommunityCanisterChannelSummary),
+    'joined' : TimestampMillis,
+    'avatar_id' : IDL.Opt(IDL.Nat),
+    'frozen' : IDL.Opt(FrozenGroupInfo),
+    'latest_event_index' : EventIndex,
+    'member_count' : IDL.Nat32,
+  });
+  const JoinCommunityResponse = IDL.Variant({
+    'NotInvited' : IDL.Null,
+    'Blocked' : IDL.Null,
+    'CommunityNotFound' : IDL.Null,
+    'GateCheckFailed' : GateCheckFailedReason,
+    'MemberLimitReached' : IDL.Nat32,
+    'Success' : CommunityCanisterCommunitySummary,
+    'CommunityNotPublic' : IDL.Null,
+    'UserSuspended' : IDL.Null,
+    'CommunityFrozen' : IDL.Null,
+    'AlreadyInCommunity' : CommunityCanisterCommunitySummary,
+    'InternalError' : IDL.Text,
+  });
+  const JoinGroupArgs = IDL.Record({
+    'invite_code' : IDL.Opt(IDL.Nat64),
+    'correlation_id' : IDL.Nat64,
+    'chat_id' : ChatId,
+  });
+  const Version = IDL.Record({
+    'major' : IDL.Nat32,
+    'minor' : IDL.Nat32,
+    'patch' : IDL.Nat32,
+  });
   const GroupCanisterGroupChatSummary = IDL.Record({
     'is_public' : IDL.Bool,
     'permissions' : GroupPermissions,
@@ -513,9 +580,9 @@ export const idlFactory = ({ IDL }) => {
     'subtype' : IDL.Opt(GroupSubtype),
     'date_last_pinned' : IDL.Opt(TimestampMillis),
     'min_visible_event_index' : EventIndex,
-    'gate' : IDL.Opt(GroupGate),
+    'gate' : IDL.Opt(AccessGate),
     'name' : IDL.Text,
-    'role' : Role,
+    'role' : GroupRole,
     'wasm_version' : Version,
     'notifications_muted' : IDL.Bool,
     'description' : IDL.Text,
@@ -584,6 +651,16 @@ export const idlFactory = ({ IDL }) => {
     'InternalError' : IDL.Text,
   });
   return IDL.Service({
+    'invite_users_to_channel' : IDL.Func(
+        [InviteUsersToChannelArgs],
+        [InviteUsersToChannelResponse],
+        [],
+      ),
+    'invite_users_to_community' : IDL.Func(
+        [InviteUsersToCommunityArgs],
+        [InviteUsersToCommunityResponse],
+        [],
+      ),
     'invite_users_to_group' : IDL.Func(
         [InviteUsersToGroupArgs],
         [InviteUsersToGroupResponse],

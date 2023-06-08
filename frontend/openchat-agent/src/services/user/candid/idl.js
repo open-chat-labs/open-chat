@@ -76,11 +76,11 @@ export const idlFactory = ({ IDL }) => {
     'min_dissolve_delay' : IDL.Opt(Milliseconds),
     'governance_canister_id' : CanisterId,
   });
-  const GroupGate = IDL.Variant({
+  const AccessGate = IDL.Variant({
     'SnsNeuron' : SnsNeuronGate,
     'DiamondMember' : IDL.Null,
   });
-  const GroupRules = IDL.Record({ 'text' : IDL.Text, 'enabled' : IDL.Bool });
+  const AccessRules = IDL.Record({ 'text' : IDL.Text, 'enabled' : IDL.Bool });
   const Avatar = IDL.Record({
     'id' : IDL.Nat,
     'data' : IDL.Vec(IDL.Nat8),
@@ -89,11 +89,12 @@ export const idlFactory = ({ IDL }) => {
   const CreateCommunityArgs = IDL.Record({
     'is_public' : IDL.Bool,
     'permissions' : IDL.Opt(CommunityPermissions),
-    'gate' : IDL.Opt(GroupGate),
+    'gate' : IDL.Opt(AccessGate),
     'name' : IDL.Text,
     'description' : IDL.Text,
     'history_visible_to_new_joiners' : IDL.Bool,
-    'rules' : GroupRules,
+    'default_channels' : IDL.Vec(IDL.Text),
+    'rules' : AccessRules,
     'avatar' : IDL.Opt(Avatar),
   });
   const FieldTooLongResult = IDL.Record({
@@ -109,6 +110,7 @@ export const idlFactory = ({ IDL }) => {
     'community_id' : CommunityId,
   });
   const CreateCommunityResponse = IDL.Variant({
+    'DefaultChannelsInvalid' : IDL.Null,
     'NameReserved' : IDL.Null,
     'RulesTooLong' : FieldTooLongResult,
     'DescriptionTooLong' : FieldTooLongResult,
@@ -148,11 +150,11 @@ export const idlFactory = ({ IDL }) => {
   const CreateGroupArgs = IDL.Record({
     'is_public' : IDL.Bool,
     'permissions' : IDL.Opt(GroupPermissions),
-    'gate' : IDL.Opt(GroupGate),
+    'gate' : IDL.Opt(AccessGate),
     'name' : IDL.Text,
     'description' : IDL.Text,
     'history_visible_to_new_joiners' : IDL.Bool,
-    'rules' : GroupRules,
+    'rules' : AccessRules,
     'avatar' : IDL.Opt(Avatar),
   });
   const CreateGroupSuccessResult = IDL.Record({ 'chat_id' : ChatId });
@@ -666,9 +668,9 @@ export const idlFactory = ({ IDL }) => {
   });
   const GroupGateUpdated = IDL.Record({
     'updated_by' : UserId,
-    'new_gate' : IDL.Opt(GroupGate),
+    'new_gate' : IDL.Opt(AccessGate),
   });
-  const Role = IDL.Variant({
+  const GroupRole = IDL.Variant({
     'Participant' : IDL.Null,
     'Admin' : IDL.Null,
     'Moderator' : IDL.Null,
@@ -677,8 +679,8 @@ export const idlFactory = ({ IDL }) => {
   const RoleChanged = IDL.Record({
     'user_ids' : IDL.Vec(UserId),
     'changed_by' : UserId,
-    'old_role' : Role,
-    'new_role' : Role,
+    'old_role' : GroupRole,
+    'new_role' : GroupRole,
   });
   const EventsTimeToLiveUpdated = IDL.Record({
     'new_ttl' : IDL.Opt(Milliseconds),
@@ -757,7 +759,7 @@ export const idlFactory = ({ IDL }) => {
   const EventsSuccessResult = IDL.Record({
     'events' : IDL.Vec(ChatEventWrapper),
     'timestamp' : TimestampMillis,
-    'latest_event_index' : EventIndex,
+    'latest_event_index' : IDL.Nat32,
   });
   const EventsResponse = IDL.Variant({
     'ReplicaNotUpToDate' : EventIndex,
@@ -887,9 +889,9 @@ export const idlFactory = ({ IDL }) => {
     'subtype' : IDL.Opt(GroupSubtype),
     'date_last_pinned' : IDL.Opt(TimestampMillis),
     'min_visible_event_index' : EventIndex,
-    'gate' : IDL.Opt(GroupGate),
+    'gate' : IDL.Opt(AccessGate),
     'name' : IDL.Text,
-    'role' : Role,
+    'role' : GroupRole,
     'wasm_version' : Version,
     'notifications_muted' : IDL.Bool,
     'description' : IDL.Text,
@@ -960,9 +962,20 @@ export const idlFactory = ({ IDL }) => {
     'UserSuspended' : IDL.Null,
     'InternalError' : IDL.Text,
   });
+  const ChannelId = IDL.Nat;
   const ThreadRead = IDL.Record({
     'root_message_index' : MessageIndex,
     'read_up_to' : MessageIndex,
+  });
+  const ChannelMessagesRead = IDL.Record({
+    'channel_id' : ChannelId,
+    'threads' : IDL.Vec(ThreadRead),
+    'read_up_to' : IDL.Opt(MessageIndex),
+    'date_read_pinned' : IDL.Opt(TimestampMillis),
+  });
+  const CommunityMessagesRead = IDL.Record({
+    'community_id' : CommunityId,
+    'channels_read' : IDL.Vec(ChannelMessagesRead),
   });
   const ChatMessagesRead = IDL.Record({
     'threads' : IDL.Vec(ThreadRead),
@@ -971,9 +984,13 @@ export const idlFactory = ({ IDL }) => {
     'date_read_pinned' : IDL.Opt(TimestampMillis),
   });
   const MarkReadArgs = IDL.Record({
+    'community_messages_read' : IDL.Vec(CommunityMessagesRead),
     'messages_read' : IDL.Vec(ChatMessagesRead),
   });
   const MarkReadResponse = IDL.Variant({ 'Success' : IDL.Null });
+  const MarkReadV2Args = IDL.Record({
+    'messages_read' : IDL.Vec(ChatMessagesRead),
+  });
   const MessagesByMessageIndexArgs = IDL.Record({
     'latest_client_event_index' : IDL.Opt(EventIndex),
     'messages' : IDL.Vec(MessageIndex),
@@ -1100,6 +1117,37 @@ export const idlFactory = ({ IDL }) => {
   });
   const User = IDL.Record({ 'username' : IDL.Text, 'user_id' : UserId });
   const GroupReplyContext = IDL.Record({ 'event_index' : EventIndex });
+  const SendMessageWithTransferToChannelArgs = IDL.Record({
+    'channel_id' : ChannelId,
+    'community_id' : CommunityId,
+    'content' : MessageContentInitial,
+    'mentioned' : IDL.Vec(User),
+    'sender_name' : IDL.Text,
+    'message_id' : MessageId,
+    'replies_to' : IDL.Opt(GroupReplyContext),
+    'thread_root_message_index' : IDL.Opt(MessageIndex),
+  });
+  const SendMessageWithTransferToChannelResponse = IDL.Variant({
+    'TextTooLong' : IDL.Nat32,
+    'UserNotInChannel' : CompletedCryptoTransaction,
+    'ChannelNotFound' : CompletedCryptoTransaction,
+    'TransferCannotBeZero' : IDL.Null,
+    'Success' : IDL.Record({
+      'timestamp' : TimestampMillis,
+      'event_index' : EventIndex,
+      'transfer' : CompletedCryptoTransaction,
+      'expires_at' : IDL.Opt(TimestampMillis),
+      'message_index' : MessageIndex,
+    }),
+    'UserNotInCommunity' : IDL.Opt(CompletedCryptoTransaction),
+    'RecipientBlocked' : IDL.Null,
+    'UserSuspended' : IDL.Null,
+    'CommunityFrozen' : IDL.Null,
+    'InvalidRequest' : IDL.Text,
+    'TransferFailed' : IDL.Text,
+    'InternalError' : IDL.Tuple(IDL.Text, CompletedCryptoTransaction),
+    'CryptocurrencyNotSupported' : Cryptocurrency,
+  });
   const SendMessageWithTransferToGroupArgs = IDL.Record({
     'content' : MessageContentInitial,
     'mentioned' : IDL.Vec(User),
@@ -1326,7 +1374,8 @@ export const idlFactory = ({ IDL }) => {
         [],
       ),
     'leave_group' : IDL.Func([LeaveGroupArgs], [LeaveGroupResponse], []),
-    'mark_read_v2' : IDL.Func([MarkReadArgs], [MarkReadResponse], []),
+    'mark_read' : IDL.Func([MarkReadArgs], [MarkReadResponse], []),
+    'mark_read_v2' : IDL.Func([MarkReadV2Args], [MarkReadResponse], []),
     'messages_by_message_index' : IDL.Func(
         [MessagesByMessageIndexArgs],
         [MessagesByMessageIndexResponse],
@@ -1361,6 +1410,11 @@ export const idlFactory = ({ IDL }) => {
     'send_message_v2' : IDL.Func(
         [SendMessageV2Args],
         [SendMessageResponse],
+        [],
+      ),
+    'send_message_with_transfer_to_channel' : IDL.Func(
+        [SendMessageWithTransferToChannelArgs],
+        [SendMessageWithTransferToChannelResponse],
         [],
       ),
     'send_message_with_transfer_to_group' : IDL.Func(
