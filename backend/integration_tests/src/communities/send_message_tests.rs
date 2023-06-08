@@ -1,10 +1,16 @@
 use crate::env::ENV;
-use crate::rng::random_string;
+use crate::rng::{random_message_id, random_string};
+use crate::utils::now_nanos;
 use crate::{client, CanisterIds, TestEnv, User};
 use candid::Principal;
+use ic_ledger_types::Tokens;
 use ic_test_state_machine_client::StateMachine;
 use std::ops::Deref;
-use types::{ChannelId, ChatEvent, CommunityId, MessageContent};
+use types::nns::{self, UserOrAccount};
+use types::{
+    ChannelId, ChatEvent, CommunityId, CryptoContent, CryptoTransaction, Cryptocurrency, MessageContent, MessageContentInitial,
+    PendingCryptoTransaction,
+};
 
 #[test]
 fn send_text_in_channel() {
@@ -36,6 +42,60 @@ fn send_text_in_channel() {
         }
     } else {
         panic!("Expected a message event");
+    }
+}
+
+#[test]
+fn send_crypto_in_channel() {
+    let mut wrapper = ENV.deref().get();
+    let TestEnv {
+        env,
+        canister_ids,
+        controller,
+    } = wrapper.env();
+
+    let TestData {
+        user1,
+        user2,
+        community_id,
+        channel_id,
+    } = init_test_data(env, canister_ids, *controller);
+
+    let send_message_result = client::user::send_message_with_transfer_to_channel(
+        env,
+        user1.principal,
+        user1.user_id.into(),
+        &user_canister::send_message_with_transfer_to_channel::Args {
+            community_id,
+            channel_id,
+            thread_root_message_index: None,
+            message_id: random_message_id(),
+            content: MessageContentInitial::Crypto(CryptoContent {
+                recipient: user2.user_id,
+                transfer: CryptoTransaction::Pending(PendingCryptoTransaction::NNS(nns::PendingCryptoTransaction {
+                    token: Cryptocurrency::InternetComputer,
+                    amount: Tokens::from_e8s(10000),
+                    to: UserOrAccount::User(user2.user_id),
+                    fee: None,
+                    memo: None,
+                    created: now_nanos(env),
+                })),
+                caption: None,
+            }),
+            sender_name: user1.username(),
+            replies_to: None,
+            mentioned: Vec::new(),
+        },
+    );
+
+    if matches!(
+        send_message_result,
+        user_canister::send_message_with_transfer_to_channel::Response::Success(_)
+    ) {
+        let user2_balance = client::icrc1::happy_path::balance_of(env, canister_ids.icp_ledger, user2.user_id.into());
+        assert_eq!(user2_balance, 10000);
+    } else {
+        panic!("{send_message_result:?}")
     }
 }
 

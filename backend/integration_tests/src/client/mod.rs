@@ -100,7 +100,7 @@ pub fn register_diamond_user(env: &mut StateMachine, canister_ids: &CanisterIds,
         controller,
         canister_ids.icp_ledger,
         user.user_id.into(),
-        1_000_000_000u64,
+        10_000_000_000u64,
     );
 
     user_index::happy_path::pay_for_diamond_membership(
