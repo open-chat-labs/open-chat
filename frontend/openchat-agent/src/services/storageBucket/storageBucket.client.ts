@@ -2,12 +2,21 @@ import type { Identity } from "@dfinity/agent";
 import type { Principal } from "@dfinity/principal";
 import { idlFactory, StorageBucketService } from "./candid/idl";
 import { CandidService } from "../candidService";
-import type { IStorageBucketClient } from "./storageBucket.client.interface";
-import { deleteFileResponse, fileInfoResponse, forwardFileResponse, uploadChunkResponse } from "./mappers";
-import type { DeleteFileResponse, FileInfoResponse, ForwardFileResponse, UploadChunkResponse } from "openchat-shared";
+import {
+    deleteFileResponse,
+    fileInfoResponse,
+    forwardFileResponse,
+    uploadChunkResponse,
+} from "./mappers";
+import type {
+    DeleteFileResponse,
+    FileInfoResponse,
+    ForwardFileResponse,
+    UploadChunkResponse,
+} from "openchat-shared";
 import type { AgentConfig } from "../../config";
 
-export class StorageBucketClient extends CandidService implements IStorageBucketClient {
+export class StorageBucketClient extends CandidService {
     private service: StorageBucketService;
 
     private constructor(identity: Identity, config: AgentConfig, canisterId: string) {
@@ -20,7 +29,11 @@ export class StorageBucketClient extends CandidService implements IStorageBucket
         );
     }
 
-    static create(identity: Identity, config: AgentConfig, canisterId: string): IStorageBucketClient {
+    static create(
+        identity: Identity,
+        config: AgentConfig,
+        canisterId: string
+    ): StorageBucketClient {
         return new StorageBucketClient(identity, config, canisterId);
     }
 
@@ -33,7 +46,7 @@ export class StorageBucketClient extends CandidService implements IStorageBucket
         chunkSize: number,
         chunkIndex: number,
         bytes: Uint8Array,
-        expiryTimestampMillis: bigint | undefined,
+        expiryTimestampMillis: bigint | undefined
     ): Promise<UploadChunkResponse> {
         return this.handleResponse(
             this.service.upload_chunk_v2({
@@ -45,7 +58,7 @@ export class StorageBucketClient extends CandidService implements IStorageBucket
                 total_size: totalSize,
                 bytes,
                 chunk_size: chunkSize,
-                expiry: expiryTimestampMillis !== undefined ? [expiryTimestampMillis] : []
+                expiry: expiryTimestampMillis !== undefined ? [expiryTimestampMillis] : [],
             }),
             uploadChunkResponse
         );
@@ -66,9 +79,6 @@ export class StorageBucketClient extends CandidService implements IStorageBucket
     }
 
     fileInfo(fileId: bigint): Promise<FileInfoResponse> {
-        return this.handleResponse(
-            this.service.file_info({ file_id: fileId }),
-            fileInfoResponse
-        )
+        return this.handleResponse(this.service.file_info({ file_id: fileId }), fileInfoResponse);
     }
 }
