@@ -1,5 +1,4 @@
 import type { Identity } from "@dfinity/agent";
-import type { IUserClient } from "./user/user.client.interface";
 import {
     Database,
     getCachedChats,
@@ -150,7 +149,7 @@ export class OpenChatAgent extends EventTarget {
     private _userIndexClient: UserIndexClient;
     private _onlineClient: OnlineClient;
     private _groupIndexClient: GroupIndexClient;
-    private _userClient?: IUserClient;
+    private _userClient?: UserClient;
     private _notificationClient: NotificationsClient;
     private _marketMakerClient: MarketMakerClient;
     private _ledgerClients: Record<Cryptocurrency, LedgerClient>;
@@ -218,7 +217,7 @@ export class OpenChatAgent extends EventTarget {
         return this._groupClients[chatId];
     }
 
-    private get userClient(): IUserClient {
+    private get userClient(): UserClient {
         if (this._userClient) {
             return this._userClient;
         }
