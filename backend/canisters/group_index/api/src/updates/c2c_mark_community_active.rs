@@ -1,0 +1,15 @@
+use candid::CandidType;
+use serde::{Deserialize, Serialize};
+use types::{Milliseconds, PublicCommunityActivity};
+
+#[derive(CandidType, Serialize, Deserialize, Debug)]
+pub struct Args {
+    pub duration: Milliseconds,
+    pub public_community_activity: Option<PublicCommunityActivity>,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Debug)]
+pub enum Response {
+    Success,
+    CommunityNotFound,
+}

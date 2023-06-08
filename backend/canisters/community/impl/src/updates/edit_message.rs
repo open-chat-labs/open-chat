@@ -1,4 +1,4 @@
-use crate::{mutate_state, RuntimeState};
+use crate::{activity_notifications::handle_activity_notification, mutate_state, RuntimeState};
 use canister_tracing_macros::trace;
 use chat_events::{EditMessageArgs, EditMessageResult};
 use community_canister::edit_message::{Response::*, *};
@@ -34,7 +34,10 @@ fn edit_message_impl(args: Args, state: &mut RuntimeState) -> Response {
                     content: args.content,
                     now,
                 }) {
-                    EditMessageResult::Success => Success,
+                    EditMessageResult::Success => {
+                        handle_activity_notification(state);
+                        Success
+                    }
                     EditMessageResult::NotAuthorized => MessageNotFound,
                     EditMessageResult::NotFound => MessageNotFound,
                 }

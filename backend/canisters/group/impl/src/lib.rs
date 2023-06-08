@@ -1,7 +1,7 @@
-use crate::model::activity_notification_state::ActivityNotificationState;
 use crate::model::new_joiner_rewards::{NewJoinerRewardMetrics, NewJoinerRewardStatus, NewJoinerRewards};
 use crate::new_joiner_rewards::process_new_joiner_reward;
 use crate::timer_job_types::TimerJob;
+use activity_notification_state::ActivityNotificationState;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
@@ -231,21 +231,20 @@ impl RuntimeState {
 struct Data {
     pub chat: GroupChatCore,
     pub principal_to_user_id_map: HashMap<Principal, UserId>,
-    pub mark_active_duration: Milliseconds,
     pub group_index_canister_id: CanisterId,
     pub local_group_index_canister_id: CanisterId,
     pub user_index_canister_id: CanisterId,
     pub local_user_index_canister_id: CanisterId,
     pub notifications_canister_id: CanisterId,
     pub proposals_bot_user_id: UserId,
-    pub activity_notification_state: ActivityNotificationState,
-    pub test_mode: bool,
     pub invite_code: Option<u64>,
     pub invite_code_enabled: bool,
     pub new_joiner_rewards: Option<NewJoinerRewards>,
     pub frozen: Timestamped<Option<FrozenGroupInfo>>,
     pub timer_jobs: TimerJobs<TimerJob>,
     pub fire_and_forget_handler: FireAndForgetHandler,
+    pub activity_notification_state: ActivityNotificationState,
+    pub test_mode: bool,
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -291,14 +290,13 @@ impl Data {
         Data {
             chat,
             principal_to_user_id_map: [(creator_principal, creator_user_id)].into_iter().collect(),
-            mark_active_duration,
             group_index_canister_id,
             local_group_index_canister_id,
             user_index_canister_id,
             local_user_index_canister_id,
             notifications_canister_id,
             proposals_bot_user_id,
-            activity_notification_state: ActivityNotificationState::new(now),
+            activity_notification_state: ActivityNotificationState::new(now, mark_active_duration),
             test_mode,
             invite_code: None,
             invite_code_enabled: false,

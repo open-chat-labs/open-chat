@@ -1,4 +1,4 @@
-use crate::{mutate_state, RuntimeState};
+use crate::{activity_notifications::handle_activity_notification, mutate_state, RuntimeState};
 use canister_tracing_macros::trace;
 use community_canister::make_channel_private::{Response::*, *};
 use group_chat_core::MakePrivateResult;
@@ -22,7 +22,10 @@ fn make_channel_private_impl(args: Args, state: &mut RuntimeState) -> Response {
 
         if let Some(channel) = state.data.channels.get_mut(&args.channel_id) {
             match channel.chat.make_private(member.user_id, state.env.now()) {
-                MakePrivateResult::Success => Success,
+                MakePrivateResult::Success => {
+                    handle_activity_notification(state);
+                    Success
+                }
                 MakePrivateResult::UserSuspended => UserSuspended,
                 MakePrivateResult::UserNotInGroup => UserNotInChannel,
                 MakePrivateResult::NotAuthorized => NotAuthorized,

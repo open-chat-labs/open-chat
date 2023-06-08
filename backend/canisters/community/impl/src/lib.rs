@@ -1,6 +1,7 @@
 use crate::model::channels::Channels;
 use crate::model::members::CommunityMembers;
 use crate::timer_job_types::TimerJob;
+use activity_notification_state::ActivityNotificationState;
 use candid::Principal;
 use canister_state_macros::canister_state;
 use canister_timer_jobs::TimerJobs;
@@ -11,10 +12,11 @@ use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use types::{
     AccessGate, AccessRules, Avatar, CanisterId, ChannelId, CommunityCanisterCommunitySummary, CommunityPermissions, Cycles,
-    FrozenGroupInfo, Notification, TimestampMillis, Timestamped, UserId, Version,
+    FrozenGroupInfo, Milliseconds, Notification, TimestampMillis, Timestamped, UserId, Version,
 };
 use utils::env::Environment;
 
+mod activity_notifications;
 mod guards;
 mod jobs;
 mod lifecycle;
@@ -150,6 +152,7 @@ struct Data {
     frozen: Timestamped<Option<FrozenGroupInfo>>,
     timer_jobs: TimerJobs<TimerJob>,
     fire_and_forget_handler: FireAndForgetHandler,
+    activity_notification_state: ActivityNotificationState,
     test_mode: bool,
 }
 
@@ -172,6 +175,7 @@ impl Data {
         proposals_bot_user_id: UserId,
         gate: Option<AccessGate>,
         default_channels: Vec<(ChannelId, String)>,
+        mark_active_duration: Milliseconds,
         test_mode: bool,
         now: TimestampMillis,
     ) -> Data {
@@ -203,6 +207,7 @@ impl Data {
             frozen: Timestamped::default(),
             timer_jobs: TimerJobs::default(),
             fire_and_forget_handler: FireAndForgetHandler::default(),
+            activity_notification_state: ActivityNotificationState::new(now, mark_active_duration),
             test_mode,
         }
     }

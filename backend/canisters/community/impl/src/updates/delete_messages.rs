@@ -1,3 +1,4 @@
+use crate::activity_notifications::handle_activity_notification;
 use crate::timer_job_types::HardDeleteMessageContentJob;
 use crate::{mutate_state, read_state, RuntimeState, TimerJob};
 use candid::Principal;
@@ -91,7 +92,7 @@ fn delete_messages_impl(user_id: UserId, args: Args, state: &mut RuntimeState) -
                     );
                 }
 
-                // handle_activity_notification(state);
+                handle_activity_notification(state);
 
                 Success
             }

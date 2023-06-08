@@ -1,3 +1,4 @@
+use crate::activity_notifications::handle_activity_notification;
 use crate::model::members::CommunityMembers;
 use crate::{mutate_state, RuntimeState};
 use canister_api_macros::update_candid_and_msgpack;
@@ -39,6 +40,7 @@ fn add_reaction_impl(args: Args, state: &mut RuntimeState) -> Response {
                     if let Some(message) = should_push_notification(&args, user_id, &channel.chat, &state.data.members, now) {
                         push_notification(args, user_id, channel.chat.name.clone(), message, now, state);
                     }
+                    handle_activity_notification(state);
                     Success
                 }
                 AddRemoveReactionResult::NoChange => NoChange,

@@ -1,4 +1,4 @@
-use crate::{model::events::CommunityEvent, mutate_state, RuntimeState};
+use crate::{activity_notifications::handle_activity_notification, model::events::CommunityEvent, mutate_state, RuntimeState};
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use community_canister::c2c_leave_community::{Response::*, *};
@@ -41,6 +41,8 @@ fn c2c_leave_community_impl(state: &mut RuntimeState) -> Response {
         .data
         .events
         .push_event(CommunityEvent::MemberLeft(Box::new(MemberLeft { user_id })), now);
+
+    handle_activity_notification(state);
 
     Success
 }

@@ -37,6 +37,7 @@ fn init(args: Args) {
         args.proposals_bot_user_id,
         args.gate,
         default_channels,
+        args.mark_active_duration,
         args.test_mode,
         env.now(),
     );
