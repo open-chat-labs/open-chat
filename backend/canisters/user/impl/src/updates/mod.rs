@@ -34,6 +34,7 @@ pub mod mute_notifications;
 pub mod pin_chat;
 pub mod remove_reaction;
 pub mod send_message;
+pub mod send_message_with_transfer_to_channel;
 pub mod send_message_with_transfer_to_group;
 pub mod set_avatar;
 pub mod set_bio;
