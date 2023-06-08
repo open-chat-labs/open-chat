@@ -1,4 +1,4 @@
-use crate::{model::events::CommunityEvent, mutate_state, RuntimeState};
+use crate::{activity_notifications::handle_activity_notification, model::events::CommunityEvent, mutate_state, RuntimeState};
 use canister_tracing_macros::trace;
 use community_canister::disable_invite_code::{Response::*, *};
 use ic_cdk_macros::update;
@@ -32,6 +32,8 @@ fn disable_invite_code_impl(state: &mut RuntimeState) -> Response {
                 })),
                 now,
             );
+
+            handle_activity_notification(state);
 
             return Success;
         }

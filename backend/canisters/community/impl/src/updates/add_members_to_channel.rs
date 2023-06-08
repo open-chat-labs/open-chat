@@ -1,4 +1,4 @@
-use crate::{mutate_state, read_state, RuntimeState};
+use crate::{activity_notifications::handle_activity_notification, mutate_state, read_state, RuntimeState};
 use canister_tracing_macros::trace;
 use chat_events::ChatEventInternal;
 use community_canister::add_members_to_channel::{Response::*, *};
@@ -194,6 +194,8 @@ fn commit(
         });
 
         state.push_notification(users_added.clone(), notification);
+
+        handle_activity_notification(state);
 
         if !users_already_in_channel.is_empty() || !users_failed_gate_check.is_empty() || !users_failed_with_error.is_empty() {
             PartialSuccess(PartialSuccessResult {

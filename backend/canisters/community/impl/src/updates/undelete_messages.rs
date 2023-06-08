@@ -1,4 +1,4 @@
-use crate::{mutate_state, RuntimeState, TimerJob};
+use crate::{activity_notifications::handle_activity_notification, mutate_state, RuntimeState, TimerJob};
 use canister_tracing_macros::trace;
 use community_canister::undelete_messages::{Response::*, *};
 use group_chat_core::UndeleteMessagesResult;
@@ -41,7 +41,7 @@ fn undelete_messages_impl(args: Args, state: &mut RuntimeState) -> Response {
                             }
                         });
 
-                        // handle_activity_notification(state);
+                        handle_activity_notification(state);
                     }
 
                     Success(SuccessResult { messages })

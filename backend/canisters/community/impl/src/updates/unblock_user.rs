@@ -1,3 +1,4 @@
+use crate::activity_notifications::handle_activity_notification;
 use crate::model::events::CommunityEvent;
 use crate::updates::unblock_user::Response::*;
 use crate::{mutate_state, RuntimeState};
@@ -43,6 +44,8 @@ fn unblock_user_impl(args: Args, state: &mut RuntimeState) -> Response {
                 .data
                 .events
                 .push_event(CommunityEvent::UsersUnblocked(Box::new(event)), now);
+
+            handle_activity_notification(state);
 
             Success
         } else {

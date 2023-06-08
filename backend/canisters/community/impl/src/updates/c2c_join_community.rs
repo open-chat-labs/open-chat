@@ -1,3 +1,4 @@
+use crate::activity_notifications::handle_activity_notification;
 use crate::guards::caller_is_user_index_or_local_user_index;
 use crate::model::events::CommunityEvent;
 use crate::model::members::AddResult;
@@ -99,6 +100,9 @@ fn c2c_join_community_impl(args: &Args, state: &mut RuntimeState) -> Result<Vec<
                 })),
                 now,
             );
+
+            handle_activity_notification(state);
+
             Ok(state.data.channels.default_channels())
         }
         AddResult::AlreadyInCommunity => {

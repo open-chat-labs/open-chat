@@ -1,4 +1,4 @@
-use crate::{mutate_state, RuntimeState};
+use crate::{activity_notifications::handle_activity_notification, mutate_state, RuntimeState};
 use canister_tracing_macros::trace;
 use community_canister::update_channel::{Response::*, *};
 use group_chat_core::UpdateResult;
@@ -33,7 +33,10 @@ fn update_channel_impl(mut args: Args, state: &mut RuntimeState) -> Response {
                 OptionUpdate::NoChange,
                 state.env.now(),
             ) {
-                UpdateResult::Success => Success,
+                UpdateResult::Success => {
+                    handle_activity_notification(state);
+                    Success
+                }
                 UpdateResult::UserSuspended => UserSuspended,
                 UpdateResult::UserNotInGroup => UserNotInChannel,
                 UpdateResult::NotAuthorized => NotAuthorized,

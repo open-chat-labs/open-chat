@@ -1,3 +1,4 @@
+use crate::activity_notifications::handle_activity_notification;
 use crate::model::events::CommunityEvent;
 use crate::{mutate_state, read_state, RuntimeState};
 use canister_tracing_macros::trace;
@@ -225,6 +226,8 @@ fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) {
             );
         }
     }
+
+    handle_activity_notification(state);
 }
 
 fn merge_permissions(new: OptionalCommunityPermissions, old: &CommunityPermissions) -> CommunityPermissions {

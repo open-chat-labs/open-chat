@@ -1,3 +1,4 @@
+use crate::activity_notifications::handle_activity_notification;
 use crate::guards::caller_is_local_user_index;
 use crate::{mutate_state, RuntimeState};
 use canister_api_macros::update_msgpack;
@@ -36,17 +37,24 @@ fn c2c_invite_users_to_channel_impl(args: Args, state: &mut RuntimeState) -> Res
 
             match channel.chat.invite_users(member.user_id, users_to_invite, now) {
                 InvitedUsersResult::Success(result) => {
+                    let community_name = state.data.name.clone();
+                    let channel_name = channel.chat.name.clone();
+
+                    if !channel.chat.is_public {
+                        handle_activity_notification(state);
+                    }
+
                     if users_not_in_community.is_empty() {
                         Success(SuccessResult {
                             invited_users: result.invited_users,
-                            community_name: state.data.name.clone(),
-                            channel_name: channel.chat.name.clone(),
+                            community_name,
+                            channel_name,
                         })
                     } else {
                         PartialSuccess(PartialSuccessResult {
                             invited_users: result.invited_users,
-                            community_name: state.data.name.clone(),
-                            channel_name: channel.chat.name.clone(),
+                            community_name,
+                            channel_name,
                             users_not_in_community,
                         })
                     }

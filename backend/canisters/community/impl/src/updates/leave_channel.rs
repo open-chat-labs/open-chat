@@ -1,4 +1,4 @@
-use crate::{mutate_state, RuntimeState};
+use crate::{activity_notifications::handle_activity_notification, mutate_state, RuntimeState};
 use canister_tracing_macros::trace;
 use community_canister::leave_channel::{Response::*, *};
 use group_chat_core::LeaveResult;
@@ -25,6 +25,7 @@ fn leave_channel_impl(args: Args, state: &mut RuntimeState) -> Response {
             match channel.chat.leave(member.user_id, state.env.now()) {
                 LeaveResult::Success => {
                     member.channels.remove(&args.channel_id);
+                    handle_activity_notification(state);
                     Success
                 }
                 LeaveResult::UserSuspended => UserSuspended,

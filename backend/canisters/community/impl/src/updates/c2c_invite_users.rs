@@ -1,3 +1,4 @@
+use crate::activity_notifications::handle_activity_notification;
 use crate::guards::caller_is_user_index_or_local_user_index;
 use crate::model::events::CommunityEvent;
 use crate::model::invited_users::UserInvitation;
@@ -70,6 +71,8 @@ fn c2c_invite_users_impl(args: Args, state: &mut RuntimeState) -> Response {
                 })),
                 now,
             );
+
+            handle_activity_notification(state);
         }
 
         Success(SuccessResult {
