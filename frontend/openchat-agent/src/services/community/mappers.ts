@@ -1,6 +1,6 @@
-import type { ApiResetInviteCodeResponse } from "../group/candid/idl";
-import type { ApiAddReactionResponse } from "../user/candid/idl";
+import { MemberRole, UnsupportedValueError } from "openchat-shared";
 import type {
+    ApiAddReactionResponse,
     ApiAddMembersToChannelResponse,
     ApiBlockUserResponse,
     ApiChangeChannelRoleResponse,
@@ -38,6 +38,8 @@ import type {
     ApiUndeleteMessagesResponse,
     ApiUpdateChannelResponse,
     ApiUpdateCommunityResponse,
+    ApiGroupRole,
+    ApiCommunityRole,
 } from "./candid/idl";
 
 export function addMembersToChannelResponse(candid: ApiAddMembersToChannelResponse): unknown {
@@ -200,4 +202,28 @@ export function updateChannelResponse(candid: ApiUpdateChannelResponse): unknown
 
 export function updateCommunityResponse(candid: ApiUpdateCommunityResponse): unknown {
     return {};
+}
+
+export function apiMemberRole(domain: MemberRole): ApiGroupRole {
+    switch (domain) {
+        case "owner":
+            return { Owner: null };
+        case "admin":
+            return { Admin: null };
+        case "moderator":
+            return { Moderator: null };
+        default:
+            return { Participant: null };
+    }
+}
+
+export function apiCommunityRole(newRole: MemberRole): ApiCommunityRole {
+    switch (newRole) {
+        case "owner":
+            return { Owner: null };
+        case "admin":
+            return { Admin: null };
+        default:
+            return { Member: null };
+    }
 }

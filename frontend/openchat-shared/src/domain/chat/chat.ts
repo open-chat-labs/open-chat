@@ -1108,6 +1108,8 @@ export type CandidateGroupChat = HasIdentity &
         avatar?: DataContent;
     };
 
+export type CandidateChannel = CandidateGroupChat;
+
 // todo - there are all sorts of error conditions here that we need to deal with but - later
 export type CreateGroupResponse =
     | CreateGroupSuccess

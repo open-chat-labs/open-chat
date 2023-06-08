@@ -2,7 +2,7 @@
 import type { Identity } from "@dfinity/agent";
 import { idlFactory, CommunityService } from "./candid/idl";
 import { CandidService } from "../candidService";
-import { toVoid } from "../../utils/mapping";
+import { identity, toVoid } from "../../utils/mapping";
 import type { AgentConfig } from "../../config";
 import {
     addMembersToChannelResponse,
@@ -44,7 +44,14 @@ import {
     undeleteMessagesResponse,
     updateChannelResponse,
     updateCommunityResponse,
+    apiMemberRole,
+    apiCommunityRole,
 } from "./mappers";
+import { Principal } from "@dfinity/principal";
+import { apiGroupPermissions, apiMaybeGroupGate, apiOptional } from "../common/chatMappers";
+import type { CandidateChannel, MemberRole } from "openchat-shared";
+import { apiGroupRules } from "../group/mappers";
+import { DataClient } from "../data/data.client";
 
 export class CommunityClient extends CandidService {
     private service: CommunityService;
@@ -63,43 +70,123 @@ export class CommunityClient extends CandidService {
         return new CommunityClient(identity, config);
     }
 
-    addMembersToChannel(): Promise<unknown> {
+    addMembersToChannel(channelId: string, userIds: string[], username: string): Promise<unknown> {
         return this.handleResponse(
-            this.service.add_members_to_channel({}),
+            this.service.add_members_to_channel({
+                channel_id: BigInt(channelId),
+                user_ids: userIds.map((u) => Principal.fromText(u)),
+                added_by_name: username,
+            }),
             addMembersToChannelResponse
         );
     }
 
-    addReaction(): Promise<unknown> {
-        return this.handleResponse(this.service.add_reaction({}), addReactionResponse);
+    addReaction(
+        channelId: string,
+        username: string,
+        messageId: bigint,
+        reaction: string,
+        threadRootMessageIndex: number | undefined
+    ): Promise<unknown> {
+        return this.handleResponse(
+            this.service.add_reaction({
+                channel_id: BigInt(channelId),
+                username,
+                message_id: messageId,
+                thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
+                reaction,
+            }),
+            addReactionResponse
+        );
     }
 
-    blockUser(): Promise<unknown> {
-        return this.handleResponse(this.service.block_user({}), blockUserResponse);
+    blockUser(userId: string): Promise<unknown> {
+        return this.handleResponse(
+            this.service.block_user({
+                user_id: Principal.fromText(userId),
+            }),
+            blockUserResponse
+        );
     }
 
-    changeChannelRole(): Promise<unknown> {
-        return this.handleResponse(this.service.change_channel_role({}), changeChannelRoleResponse);
+    changeChannelRole(channelId: string, userId: string, newRole: MemberRole): Promise<unknown> {
+        return this.handleResponse(
+            this.service.change_channel_role({
+                channel_id: BigInt(channelId),
+                user_id: Principal.fromText(userId),
+                new_role: apiMemberRole(newRole),
+            }),
+            changeChannelRoleResponse
+        );
     }
 
-    changeRole(): Promise<unknown> {
-        return this.handleResponse(this.service.change_role({}), changeRoleResponse);
+    changeRole(userId: string, newRole: MemberRole): Promise<unknown> {
+        return this.handleResponse(
+            this.service.change_role({
+                user_id: Principal.fromText(userId),
+                new_role: apiCommunityRole(newRole),
+            }),
+            changeRoleResponse
+        );
     }
 
-    createChannel(): Promise<unknown> {
-        return this.handleResponse(this.service.create_channel({}), createChannelResponse);
+    createChannel(channel: CandidateChannel): Promise<unknown> {
+        return this.handleResponse(
+            this.service.create_channel({
+                is_public: channel.public,
+                name: channel.name,
+                subtype: [],
+                events_ttl: [], // TODO - not sure what this is for
+                description: channel.description,
+                history_visible_to_new_joiners: channel.historyVisible,
+                avatar: apiOptional((data) => {
+                    return {
+                        id: DataClient.newBlobId(),
+                        data,
+                        mime_type: "image/jpg",
+                    };
+                }, channel.avatar?.blobData),
+                permissions: [apiGroupPermissions(channel.permissions)],
+                rules: apiGroupRules(channel.rules),
+                gate: apiMaybeGroupGate(channel.gate),
+            }),
+            createChannelResponse
+        );
     }
 
-    declineInvitation(): Promise<unknown> {
-        return this.handleResponse(this.service.decline_invitation({}), declineInvitationResponse);
+    declineInvitation(channelId: string): Promise<unknown> {
+        return this.handleResponse(
+            this.service.decline_invitation({
+                channel_id: [BigInt(channelId)],
+            }),
+            declineInvitationResponse
+        );
     }
 
-    deleteChannel(): Promise<unknown> {
-        return this.handleResponse(this.service.delete_channel({}), deleteChannelResponse);
+    deleteChannel(channelId: string): Promise<unknown> {
+        return this.handleResponse(
+            this.service.delete_channel({
+                channel_id: BigInt(channelId),
+            }),
+            deleteChannelResponse
+        );
     }
 
-    deleteMessages(): Promise<unknown> {
-        return this.handleResponse(this.service.delete_messages({}), deleteMessagesResponse);
+    deleteMessages(
+        channelId: string,
+        messageIds: bigint[],
+        threadRootMessageIndex: number | undefined,
+        asPlatformModerator: boolean | undefined
+    ): Promise<unknown> {
+        return this.handleResponse(
+            this.service.delete_messages({
+                channel_id: BigInt(channelId),
+                message_ids: messageIds,
+                as_platform_moderator: apiOptional(identity, asPlatformModerator),
+                thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
+            }),
+            deleteMessagesResponse
+        );
     }
 
     deleteMessage(): Promise<unknown> {
