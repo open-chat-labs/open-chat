@@ -2,12 +2,11 @@ import type { Identity } from "@dfinity/agent";
 import { Principal } from "@dfinity/principal";
 import { idlFactory, OnlineService } from "./candid/idl";
 import { CandidService } from "../candidService";
-import type { IOnlineClient } from "./online.client.interface";
 import { toVoid } from "../../utils/mapping";
 import type { AgentConfig } from "../../config";
 import { lastOnlineResponse } from "./mappers";
 
-export class OnlineClient extends CandidService implements IOnlineClient {
+export class OnlineClient extends CandidService {
     private service: OnlineService;
 
     private constructor(identity: Identity, config: AgentConfig) {
@@ -20,15 +19,15 @@ export class OnlineClient extends CandidService implements IOnlineClient {
         );
     }
 
-    static create(identity: Identity, config: AgentConfig): IOnlineClient {
+    static create(identity: Identity, config: AgentConfig): OnlineClient {
         return new OnlineClient(identity, config);
     }
 
     lastOnline(userIds: string[]): Promise<Record<string, number>> {
         const args = {
-            user_ids: userIds.map((u) => Principal.fromText(u))
+            user_ids: userIds.map((u) => Principal.fromText(u)),
         };
-        return this.handleQueryResponse(() => this.service.last_online(args), lastOnlineResponse)
+        return this.handleQueryResponse(() => this.service.last_online(args), lastOnlineResponse);
     }
 
     markAsOnline(): Promise<void> {
