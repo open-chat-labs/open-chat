@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::ops::{Deref, DerefMut};
 use types::{
-    is_default, is_empty_array, AvatarChanged, ChatMetrics, Cryptocurrency, DeletedBy, DirectChatCreated,
+    is_default, is_empty_slice, AvatarChanged, ChatMetrics, Cryptocurrency, DeletedBy, DirectChatCreated,
     EventsTimeToLiveUpdated, GroupCreated, GroupDescriptionChanged, GroupFrozen, GroupGateUpdated, GroupInviteCodeChanged,
     GroupNameChanged, GroupRulesChanged, GroupUnfrozen, GroupVisibilityChanged, MemberJoined, MemberLeft, MembersAdded,
     MembersRemoved, Message, MessageContent, MessageContentInternal, MessageId, MessageIndex, MessagePinned, MessageUnpinned,

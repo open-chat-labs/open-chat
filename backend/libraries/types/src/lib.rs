@@ -146,7 +146,7 @@ impl<T: PartialEq> PushIfNotContains<T> for Vec<T> {
     }
 }
 
-pub fn is_empty_array<T>(value: &[T]) -> bool {
+pub fn is_empty_slice<T>(value: &[T]) -> bool {
     value.is_empty()
 }
 
