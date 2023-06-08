@@ -13,7 +13,7 @@ use types::{
     UsersBlocked, UsersInvited, UsersUnblocked,
 };
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum ChatEventInternal {
     Empty,
     #[serde(rename = "m", alias = "Message")]
@@ -121,7 +121,7 @@ impl ChatEventInternal {
     }
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct MessageInternal {
     #[serde(rename = "x", alias = "message_index")]
     pub message_index: MessageIndex,

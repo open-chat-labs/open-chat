@@ -3,7 +3,6 @@ pub mod block_user;
 pub mod c2c_delete_group;
 pub mod c2c_end_poll;
 pub mod c2c_freeze_group;
-pub mod c2c_initialize_events;
 pub mod c2c_invite_users;
 pub mod c2c_join_group;
 pub mod c2c_leave_group;

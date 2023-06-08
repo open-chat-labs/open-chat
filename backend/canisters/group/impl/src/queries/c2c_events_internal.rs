@@ -25,6 +25,7 @@ fn c2c_events_internal_impl(args: Args, state: &RuntimeState) -> Response {
             .iter(Some(args.start_index.into()), true)
             .take(args.max_events as usize)
             .cloned()
+            .map(|e| e.into())
             .collect();
 
         Success(SuccessResult {
