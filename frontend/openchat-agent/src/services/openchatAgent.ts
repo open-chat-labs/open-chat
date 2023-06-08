@@ -14,7 +14,6 @@ import { UserIndexClient } from "./userIndex/userIndex.client";
 import { UserClient } from "./user/user.client";
 import { GroupClient } from "./group/group.client";
 import { LocalUserIndexClient } from "./localUserIndex/localUserIndex.client";
-import type { INotificationsClient } from "./notifications/notifications.client.interface";
 import { NotificationsClient } from "./notifications/notifications.client";
 import type { IOnlineClient } from "./online/online.client.interface";
 import { OnlineClient } from "./online/online.client";
@@ -153,7 +152,7 @@ export class OpenChatAgent extends EventTarget {
     private _onlineClient: IOnlineClient;
     private _groupIndexClient: GroupIndexClient;
     private _userClient?: IUserClient;
-    private _notificationClient: INotificationsClient;
+    private _notificationClient: NotificationsClient;
     private _marketMakerClient: MarketMakerClient;
     private _ledgerClients: Record<Cryptocurrency, LedgerClient>;
     private _groupClients: Record<string, GroupClient>;
