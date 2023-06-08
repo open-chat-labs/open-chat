@@ -1,42 +1,42 @@
-use crate::{mutate_state, RuntimeState};
+use crate::RuntimeState;
+use fire_and_forget_handler::FireAndForgetHandler;
 use group_index_canister::c2c_mark_community_active;
-use types::{CanisterId, PublicCommunityActivity};
+use msgpack::serialize_then_unwrap;
+use types::{CanisterId, Milliseconds, PublicCommunityActivity};
 
 // If needed, notify the group index canister that there has been activity in this community
 pub(crate) fn handle_activity_notification(state: &mut RuntimeState) {
     let now = state.env.now();
-    let mark_active_duration = state.data.mark_active_duration;
 
-    let requires_notification = state
-        .data
-        .activity_notification_state
-        .start_if_required(now, mark_active_duration);
-
-    if requires_notification {
+    if let Some(mark_active_duration) = state.data.activity_notification_state.notify_if_required(now) {
         let public_community_activity = state.data.is_public.then_some(PublicCommunityActivity {
             timestamp: now,
             member_count: state.data.members.len(),
         });
 
+        call_group_index_canister(
+            state.data.group_index_canister_id,
+            mark_active_duration,
+            public_community_activity,
+            &mut state.data.fire_and_forget_handler,
+        );
+    }
+
+    fn call_group_index_canister(
+        canister_id: CanisterId,
+        duration: Milliseconds,
+        public_community_activity: Option<PublicCommunityActivity>,
+        fire_and_forget_handler: &mut FireAndForgetHandler,
+    ) {
         let args = c2c_mark_community_active::Args {
-            duration: mark_active_duration,
+            duration,
             public_community_activity,
         };
 
-        ic_cdk::spawn(call_group_index_canister(state.data.group_index_canister_id, args));
-    }
-
-    async fn call_group_index_canister(canister_id: CanisterId, args: c2c_mark_community_active::Args) {
-        let response = group_index_canister_c2c_client::c2c_mark_community_active(canister_id, &args).await;
-        mutate_state(|state| handle_response(response.is_ok(), state));
-    }
-
-    fn handle_response(success: bool, state: &mut RuntimeState) {
-        if success {
-            let now = state.env.now();
-            state.data.activity_notification_state.mark_succeeded(now);
-        } else {
-            state.data.activity_notification_state.mark_failed();
-        }
+        fire_and_forget_handler.send(
+            canister_id,
+            "c2c_mark_community_active".to_string(),
+            serialize_then_unwrap(args),
+        );
     }
 }

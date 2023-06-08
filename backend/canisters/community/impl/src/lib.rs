@@ -152,7 +152,6 @@ struct Data {
     frozen: Timestamped<Option<FrozenGroupInfo>>,
     timer_jobs: TimerJobs<TimerJob>,
     fire_and_forget_handler: FireAndForgetHandler,
-    mark_active_duration: Milliseconds,
     activity_notification_state: ActivityNotificationState,
     test_mode: bool,
 }
@@ -208,8 +207,7 @@ impl Data {
             frozen: Timestamped::default(),
             timer_jobs: TimerJobs::default(),
             fire_and_forget_handler: FireAndForgetHandler::default(),
-            mark_active_duration,
-            activity_notification_state: ActivityNotificationState::new(now),
+            activity_notification_state: ActivityNotificationState::new(now, mark_active_duration),
             test_mode,
         }
     }

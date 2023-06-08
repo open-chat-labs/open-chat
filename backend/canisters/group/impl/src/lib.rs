@@ -243,7 +243,6 @@ struct Data {
     pub frozen: Timestamped<Option<FrozenGroupInfo>>,
     pub timer_jobs: TimerJobs<TimerJob>,
     pub fire_and_forget_handler: FireAndForgetHandler,
-    pub mark_active_duration: Milliseconds,
     pub activity_notification_state: ActivityNotificationState,
     pub test_mode: bool,
 }
@@ -291,14 +290,13 @@ impl Data {
         Data {
             chat,
             principal_to_user_id_map: [(creator_principal, creator_user_id)].into_iter().collect(),
-            mark_active_duration,
             group_index_canister_id,
             local_group_index_canister_id,
             user_index_canister_id,
             local_user_index_canister_id,
             notifications_canister_id,
             proposals_bot_user_id,
-            activity_notification_state: ActivityNotificationState::new(now),
+            activity_notification_state: ActivityNotificationState::new(now, mark_active_duration),
             test_mode,
             invite_code: None,
             invite_code_enabled: false,

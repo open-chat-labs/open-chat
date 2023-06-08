@@ -8,33 +8,29 @@ const ONE_MINUTE: Milliseconds = 60 * 1000;
 pub struct ActivityNotificationState {
     /// When we last notified the group_index canister of activity in this group
     last_notification_date: TimestampMillis,
-    notification_in_progress: bool,
+    #[serde(default = "default_mark_active_duration")]
+    mark_active_duration: Milliseconds,
+}
+
+fn default_mark_active_duration() -> Milliseconds {
+    10 * ONE_MINUTE
 }
 
 impl ActivityNotificationState {
-    pub fn new(last_notification_date: TimestampMillis) -> ActivityNotificationState {
+    pub fn new(last_notification_date: TimestampMillis, mark_active_duration: Milliseconds) -> ActivityNotificationState {
         ActivityNotificationState {
             last_notification_date,
-            notification_in_progress: false,
+            mark_active_duration,
         }
     }
 
-    pub fn start_if_required(&mut self, now: TimestampMillis, mark_active_duration: Milliseconds) -> bool {
-        let interval = mark_active_duration - ONE_MINUTE;
-        if self.notification_in_progress || self.last_notification_date > now.saturating_sub(interval) {
-            false
+    pub fn notify_if_required(&mut self, now: TimestampMillis) -> Option<Milliseconds> {
+        let interval = self.mark_active_duration - ONE_MINUTE;
+        if self.last_notification_date > now.saturating_sub(interval) {
+            None
         } else {
-            self.notification_in_progress = true;
-            true
+            self.last_notification_date = now;
+            Some(self.mark_active_duration)
         }
-    }
-
-    pub fn mark_succeeded(&mut self, now: TimestampMillis) {
-        self.notification_in_progress = false;
-        self.last_notification_date = now;
-    }
-
-    pub fn mark_failed(&mut self) {
-        self.notification_in_progress = false;
     }
 }
