@@ -51,7 +51,7 @@ pub enum MessageContent {
     Custom(CustomContent),
 }
 
-#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum MessageContentInternal {
     #[serde(rename = "t", alias = "Text")]
     Text(TextContent),
