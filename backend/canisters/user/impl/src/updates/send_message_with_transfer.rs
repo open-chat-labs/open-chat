@@ -93,7 +93,7 @@ async fn send_message_with_transfer_to_group(
 
     run_regular_jobs();
 
-    // Check that the user is a member of the community
+    // Check that the user is a member of the group
     if read_state(|state| state.data.group_chats.get(&args.group_id).is_none()) {
         return CallerNotInGroup(None);
     }
