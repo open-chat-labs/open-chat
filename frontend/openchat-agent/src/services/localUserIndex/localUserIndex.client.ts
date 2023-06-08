@@ -5,18 +5,21 @@ import type {
     InviteUsersResponse,
     JoinGroupResponse,
     RegisterUserResponse,
-    ReportMessageResponse
+    ReportMessageResponse,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
-import { inviteUsersResponse, joinGroupResponse, registerUserResponse, reportMessageResponse } from "./mappers";
-import type { ILocalUserIndexClient } from "./localUserIndex.client.interface";
-import { profile } from "../common/profiling";
+import {
+    inviteUsersResponse,
+    joinGroupResponse,
+    registerUserResponse,
+    reportMessageResponse,
+} from "./mappers";
 import type { AgentConfig } from "../../config";
 import { apiOptional } from "../common/chatMappers";
 import { textToCode } from "openchat-shared";
 import { identity } from "../../utils/mapping";
 
-export class LocalUserIndexClient extends CandidService implements ILocalUserIndexClient {
+export class LocalUserIndexClient extends CandidService {
     private localUserIndexService: LocalUserIndexService;
 
     private constructor(identity: Identity, config: AgentConfig, canisterId: string) {
@@ -33,11 +36,10 @@ export class LocalUserIndexClient extends CandidService implements ILocalUserInd
         identity: Identity,
         config: AgentConfig,
         canisterId: string
-    ): ILocalUserIndexClient {
+    ): LocalUserIndexClient {
         return new LocalUserIndexClient(identity, config, canisterId);
     }
 
-    @profile("localUserIndexClient")
     registerUser(
         username: string,
         referralCode: string | undefined
@@ -52,7 +54,6 @@ export class LocalUserIndexClient extends CandidService implements ILocalUserInd
         );
     }
 
-    @profile("localUserIndexClient")
     joinGroup(chatId: string, inviteCode: string | undefined): Promise<JoinGroupResponse> {
         return this.handleResponse(
             this.localUserIndexService.join_group({
@@ -64,7 +65,6 @@ export class LocalUserIndexClient extends CandidService implements ILocalUserInd
         );
     }
 
-    @profile("localUserIndexClient")
     reportMessage(
         chatId: string,
         eventIndex: number,
@@ -84,12 +84,14 @@ export class LocalUserIndexClient extends CandidService implements ILocalUserInd
         );
     }
 
-    @profile("localUserIndexClient")
     inviteUsersToGroup(chatId: string, userIds: string[]): Promise<InviteUsersResponse> {
-        return this.handleResponse(this.localUserIndexService.invite_users_to_group({
-            group_id: Principal.fromText(chatId),
-            user_ids: userIds.map((u) => Principal.fromText(u)),
-            correlation_id: BigInt(0)
-        }), inviteUsersResponse);
+        return this.handleResponse(
+            this.localUserIndexService.invite_users_to_group({
+                group_id: Principal.fromText(chatId),
+                user_ids: userIds.map((u) => Principal.fromText(u)),
+                correlation_id: BigInt(0),
+            }),
+            inviteUsersResponse
+        );
     }
 }

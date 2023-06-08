@@ -13,14 +13,12 @@ import { getAllUsers } from "../utils/userCache";
 import { UserIndexClient } from "./userIndex/userIndex.client";
 import { UserClient } from "./user/user.client";
 import { GroupClient } from "./group/group.client";
-import type { ILocalUserIndexClient } from "./localUserIndex/localUserIndex.client.interface";
 import { LocalUserIndexClient } from "./localUserIndex/localUserIndex.client";
 import type { INotificationsClient } from "./notifications/notifications.client.interface";
 import { NotificationsClient } from "./notifications/notifications.client";
 import type { IOnlineClient } from "./online/online.client.interface";
 import { OnlineClient } from "./online/online.client";
 import { DataClient } from "./data/data.client";
-import type { ILedgerClient } from "./ledger/ledger.client.interface";
 import { LedgerClient } from "./ledger/ledger.client";
 import { GroupIndexClient } from "./groupIndex/groupIndex.client";
 import type { IMarketMakerClient } from "./marketMaker/marketMaker.client.interface";
@@ -158,7 +156,7 @@ export class OpenChatAgent extends EventTarget {
     private _userClient?: IUserClient;
     private _notificationClient: INotificationsClient;
     private _marketMakerClient: IMarketMakerClient;
-    private _ledgerClients: Record<Cryptocurrency, ILedgerClient>;
+    private _ledgerClients: Record<Cryptocurrency, LedgerClient>;
     private _groupClients: Record<string, GroupClient>;
     private _groupInvite: GroupInvite | undefined;
     private db: Database;
@@ -230,7 +228,7 @@ export class OpenChatAgent extends EventTarget {
         throw new Error("Attempted to use the user client before it has been initialised");
     }
 
-    private createLocalUserIndexClient(canisterId: string): ILocalUserIndexClient {
+    private createLocalUserIndexClient(canisterId: string): LocalUserIndexClient {
         return LocalUserIndexClient.create(this.identity, this.config, canisterId);
     }
 
