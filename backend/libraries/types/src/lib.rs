@@ -1,6 +1,7 @@
 use candid::{CandidType, Principal};
 use ic_ledger_types::Tokens;
 use serde::{Deserialize, Serialize};
+use std::collections::{BTreeMap, HashSet};
 
 mod avatar;
 mod bots;
@@ -143,4 +144,20 @@ impl<T: PartialEq> PushIfNotContains<T> for Vec<T> {
             false
         }
     }
+}
+
+pub fn is_empty_array<T>(value: &[T]) -> bool {
+    value.is_empty()
+}
+
+pub fn is_empty_hashset<T>(value: &HashSet<T>) -> bool {
+    value.is_empty()
+}
+
+pub fn is_empty_btreemap<K, V>(value: &BTreeMap<K, V>) -> bool {
+    value.is_empty()
+}
+
+pub fn is_default<T: Default + Eq>(value: &T) -> bool {
+    *value == Default::default()
 }

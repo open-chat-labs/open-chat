@@ -5,7 +5,7 @@ use types::{MentionInternal, MessageIndex, PushIfNotContains, TimestampMillis};
 type MainMessageIndex = MessageIndex;
 type ThreadMessageIndex = MessageIndex;
 
-#[derive(Deserialize, Serialize, Default, Clone)]
+#[derive(Serialize, Deserialize, Default, Clone)]
 pub struct Mentions {
     mentions: BTreeSet<(MainMessageIndex, Option<ThreadMessageIndex>)>,
     by_timestamp: BTreeMap<TimestampMillis, Vec<MentionInternal>>,
@@ -33,5 +33,9 @@ impl Mentions {
             .rev()
             .take_while(move |(&t, _)| since.map_or(true, |s| t > s))
             .flat_map(|(_, m)| m.iter())
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.by_timestamp.is_empty()
     }
 }

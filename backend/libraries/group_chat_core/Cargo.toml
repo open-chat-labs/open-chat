@@ -13,3 +13,6 @@ serde = { workspace = true }
 types = { path = "../types" }
 utils = { path = "../utils" }
 
+[dev-dependencies]
+msgpack = { path = "../msgpack" }
+

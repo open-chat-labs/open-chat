@@ -1,11 +1,12 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 
-#[derive(CandidType, Serialize, Deserialize, Copy, Clone, Debug, Eq, PartialEq)]
+#[derive(CandidType, Serialize, Deserialize, Copy, Clone, Debug, Default, Eq, PartialEq)]
 pub enum GroupRole {
     Owner,
     Admin,
     Moderator,
+    #[default]
     Participant,
 }
 

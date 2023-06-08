@@ -1107,6 +1107,7 @@ dependencies = [
  "ic-ledger-types",
  "itertools",
  "ledger_utils",
+ "msgpack",
  "search",
  "serde",
  "sha2 0.10.6",
@@ -2478,6 +2479,7 @@ version = "0.1.0"
 dependencies = [
  "candid",
  "chat_events",
+ "msgpack",
  "search",
  "serde",
  "types",

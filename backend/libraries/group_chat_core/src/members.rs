@@ -4,8 +4,8 @@ use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::{BTreeMap, HashMap, HashSet};
 use types::{
-    EventIndex, GroupMember, GroupPermissions, GroupRole, Mention, MessageIndex, TimestampMillis, Timestamped, UserId,
-    MAX_RETURNED_MENTIONS,
+    is_default, is_empty_btreemap, is_empty_hashset, EventIndex, GroupMember, GroupPermissions, GroupRole, Mention,
+    MessageIndex, TimestampMillis, Timestamped, UserId, MAX_RETURNED_MENTIONS,
 };
 
 const MAX_MEMBERS_PER_GROUP: u32 = 100_000;
@@ -289,16 +289,36 @@ pub struct ChangeRoleSuccess {
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct GroupMemberInternal {
+    #[serde(rename = "u", alias = "user_id")]
     pub user_id: UserId,
+    #[serde(rename = "d", alias = "date_added")]
     pub date_added: TimestampMillis,
+    #[serde(rename = "r", alias = "role", default, skip_serializing_if = "is_default")]
     pub role: GroupRole,
+    #[serde(rename = "n", alias = "notifications_muted")]
     pub notifications_muted: Timestamped<bool>,
+    #[serde(rename = "m", alias = "mentions_v2", default, skip_serializing_if = "mentions_are_empty")]
     pub mentions_v2: Mentions,
+    #[serde(rename = "t", alias = "threads", default, skip_serializing_if = "is_empty_hashset")]
     pub threads: HashSet<MessageIndex>,
+    #[serde(rename = "p", alias = "proposal_votes", default, skip_serializing_if = "is_empty_btreemap")]
     pub proposal_votes: BTreeMap<TimestampMillis, Vec<MessageIndex>>,
+    #[serde(rename = "s", alias = "suspended", default, skip_serializing_if = "is_default")]
     pub suspended: Timestamped<bool>,
 
+    #[serde(
+        rename = "me",
+        alias = "min_visible_event_index",
+        default,
+        skip_serializing_if = "is_default"
+    )]
     min_visible_event_index: EventIndex,
+    #[serde(
+        rename = "mm",
+        alias = "min_visible_message_index",
+        default,
+        skip_serializing_if = "is_default"
+    )]
     min_visible_message_index: MessageIndex,
 }
 
@@ -352,5 +372,76 @@ impl From<&GroupMemberInternal> for GroupMember {
             date_added: p.date_added,
             role: p.role,
         }
+    }
+}
+
+fn mentions_are_empty(value: &Mentions) -> bool {
+    value.is_empty()
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{GroupMemberInternal, Mentions};
+    use candid::Principal;
+    use std::collections::{BTreeMap, HashSet};
+    use types::{GroupRole, MentionInternal, Timestamped};
+
+    #[test]
+    fn serialize_with_max_defaults() {
+        let member = GroupMemberInternal {
+            user_id: Principal::from_text("4bkt6-4aaaa-aaaaf-aaaiq-cai").unwrap().into(),
+            date_added: 1,
+            role: GroupRole::Participant,
+            notifications_muted: Timestamped::new(true, 1),
+            mentions_v2: Mentions::default(),
+            threads: HashSet::new(),
+            proposal_votes: BTreeMap::new(),
+            suspended: Timestamped::default(),
+            min_visible_event_index: 0.into(),
+            min_visible_message_index: 0.into(),
+        };
+
+        let member_bytes = msgpack::serialize_then_unwrap(&member);
+        let member_bytes_len = member_bytes.len();
+
+        // Before optimisation: 232
+        // After optimisation: 27
+        assert_eq!(member_bytes_len, 27);
+
+        let _deserialized: GroupMemberInternal = msgpack::deserialize_then_unwrap(&member_bytes);
+    }
+
+    #[test]
+    fn serialize_with_no_defaults() {
+        let mut mentions = Mentions::default();
+        mentions.add(
+            MentionInternal {
+                thread_root_message_index: Some(1.into()),
+                message_index: 1.into(),
+            },
+            1,
+        );
+
+        let member = GroupMemberInternal {
+            user_id: Principal::from_text("4bkt6-4aaaa-aaaaf-aaaiq-cai").unwrap().into(),
+            date_added: 1,
+            role: GroupRole::Owner,
+            notifications_muted: Timestamped::new(true, 1),
+            mentions_v2: mentions,
+            threads: HashSet::from([1.into()]),
+            proposal_votes: BTreeMap::from([(1, vec![1.into()])]),
+            suspended: Timestamped::new(true, 1),
+            min_visible_event_index: 1.into(),
+            min_visible_message_index: 1.into(),
+        };
+
+        let member_bytes = msgpack::serialize_then_unwrap(&member);
+        let member_bytes_len = member_bytes.len();
+
+        // Before optimisation: 278
+        // After optimisation: 137
+        assert_eq!(member_bytes_len, 137);
+
+        let _deserialized: GroupMemberInternal = msgpack::deserialize_then_unwrap(&member_bytes);
     }
 }
