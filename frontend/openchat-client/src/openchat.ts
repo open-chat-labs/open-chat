@@ -341,9 +341,8 @@ type PinChatResponse =
     | { kind: "limit_exceeded"; limit: number }
     | { kind: "failure" };
 
-export class OpenChat extends EventTarget {
+export class OpenChat extends OpenChatAgentWorker {
     private _authClient: Promise<AuthClient>;
-    private _workerApi: OpenChatAgentWorker | undefined;
     private _identity: Identity | undefined;
     private _user: CreatedUser | undefined;
     private _liveState: LiveState;
@@ -356,8 +355,10 @@ export class OpenChat extends EventTarget {
     private _membershipCheck: number | undefined;
     private _referralCode: string | undefined = undefined;
 
-    constructor(private config: OpenChatConfig) {
-        super();
+    constructor(config: OpenChatConfig) {
+        super(config);
+
+        this.addEventListener("openchat_event", (ev) => this.handleAgentEvent(ev));
 
         this._logger = config.logger;
         this._liveState = new LiveState();
@@ -516,13 +517,11 @@ export class OpenChat extends EventTarget {
     }
 
     private async loadUser() {
-        this._workerApi = new OpenChatAgentWorker(this.config);
-        this._workerApi.addEventListener("openchat_event", (ev) => this.handleAgentEvent(ev));
-        await this._workerApi.ready;
-        this._cachePrimer = new CachePrimer(this._workerApi);
-        this.api.loadFailedMessages().then((res) => failedMessagesStore.initialise(res));
-        this.api
-            .getCurrentUser()
+        this._cachePrimer = new CachePrimer(this);
+        this.sendRequest({ kind: "loadFailedMessages" }).then((res) =>
+            failedMessagesStore.initialise(res)
+        );
+        this.getCurrentUser()
             .then((user) => {
                 switch (user.kind) {
                     case "unknown_user":
@@ -532,7 +531,10 @@ export class OpenChat extends EventTarget {
                         );
                         if (principalMigrationUserId !== null) {
                             console.log("Migrating user principal", principalMigrationUserId);
-                            this.api.migrateUserPrincipal(principalMigrationUserId);
+                            this.sendRequest({
+                                kind: "migrateUserPrincipal",
+                                userId: principalMigrationUserId,
+                            });
                             return;
                         }
 
@@ -550,7 +552,7 @@ export class OpenChat extends EventTarget {
                     this.logout();
                 }
             });
-        this.api.getAllCachedUsers().then((users) => userStore.set(users));
+        this.sendRequest({ kind: "getAllCachedUsers" }).then((users) => userStore.set(users));
     }
 
     userIsDiamond(userId: string): boolean {
@@ -585,8 +587,11 @@ export class OpenChat extends EventTarget {
         );
         if (principalMigrationNewPrincipal !== null) {
             console.log("Initializing user principal migration", principalMigrationNewPrincipal);
-            this.api.createUserClient(user.userId);
-            this.api.initUserPrincipalMigration(principalMigrationNewPrincipal);
+            this.sendRequest({ kind: "createUserClient", userId: user.userId });
+            this.sendRequest({
+                kind: "initUserPrincipalMigration",
+                newPrincipal: principalMigrationNewPrincipal,
+            });
             return;
         }
 
@@ -595,8 +600,8 @@ export class OpenChat extends EventTarget {
             window.setTimeout(() => this.loadUser(), UPGRADE_POLL_INTERVAL);
         } else {
             currentUserStore.set(user);
-            this.api.createUserClient(user.userId);
-            startMessagesReadTracker(this.api);
+            this.sendRequest({ kind: "createUserClient", userId: user.userId });
+            startMessagesReadTracker(this);
             this.startOnlinePoller();
             startSwCheckPoller();
             this.startSession(id).then(() => this.logout());
@@ -608,12 +613,12 @@ export class OpenChat extends EventTarget {
             );
             new Poller(() => this.updateUsers(), USER_UPDATE_INTERVAL, USER_UPDATE_INTERVAL);
             initNotificationStores();
-            this.api.getUserStorageLimits().then(storageStore.set);
+            this.sendRequest({ kind: "getUserStorageLimits" }).then(storageStore.set);
             this.identityState.set("logged_in");
             this.initWebRtc();
 
             if (this._botDetected && !this._user?.isSuspectedBot) {
-                this.api.markSuspectedBot();
+                this.sendRequest({ kind: "markSuspectedBot" });
                 console.log("markSuspectedBot");
             }
         }
@@ -621,7 +626,7 @@ export class OpenChat extends EventTarget {
 
     private startOnlinePoller() {
         new Poller(
-            () => this.api.markAsOnline() ?? Promise.resolve(),
+            () => this.sendRequest({ kind: "markAsOnline" }) ?? Promise.resolve(),
             MARK_ONLINE_INTERVAL,
             undefined,
             true
@@ -632,14 +637,6 @@ export class OpenChat extends EventTarget {
         return this._authClient.then((c) => {
             return c.logout().then(() => window.location.replace("/"));
         });
-    }
-
-    private get api(): OpenChatAgentWorker {
-        if (this._workerApi === undefined)
-            throw new Error(
-                "OpenChat tried to make a worker api call before the api was available"
-            );
-        return this._workerApi;
     }
 
     get hasUser(): boolean {
@@ -718,7 +715,7 @@ export class OpenChat extends EventTarget {
     }
 
     previewChat(chatId: string): Promise<boolean> {
-        return this.api.getPublicGroupSummary(chatId).then((maybeChat) => {
+        return this.sendRequest({ kind: "getPublicGroupSummary", chatId }).then((maybeChat) => {
             if (maybeChat === undefined || maybeChat.frozen) {
                 return false;
             }
@@ -732,10 +729,9 @@ export class OpenChat extends EventTarget {
         await this.getMissingUsers(users);
     }
 
-    toggleMuteNotifications(chatId: string, mute: boolean): Promise<boolean> {
-        localChatSummaryUpdates.markUpdated(chatId, { notificationsMuted: mute });
-        return this.api
-            .toggleMuteNotifications(chatId, mute)
+    toggleMuteNotifications(chatId: string, muted: boolean): Promise<boolean> {
+        localChatSummaryUpdates.markUpdated(chatId, { notificationsMuted: muted });
+        return this.sendRequest({ kind: "toggleMuteNotifications", chatId, muted })
             .then((resp) => {
                 if (resp !== "success") {
                     localChatSummaryUpdates.markUpdated(chatId, { notificationsMuted: undefined });
@@ -751,8 +747,7 @@ export class OpenChat extends EventTarget {
 
     archiveChat(chatId: string): Promise<boolean> {
         localChatSummaryUpdates.markUpdated(chatId, { archived: true });
-        return this.api
-            .archiveChat(chatId)
+        return this.sendRequest({ kind: "archiveChat", chatId })
             .then((resp) => {
                 return resp === "success";
             })
@@ -765,8 +760,7 @@ export class OpenChat extends EventTarget {
 
     unarchiveChat(chatId: string): Promise<boolean> {
         localChatSummaryUpdates.markUpdated(chatId, { archived: false });
-        return this.api
-            .unarchiveChat(chatId)
+        return this.sendRequest({ kind: "unarchiveChat", chatId })
             .then((resp) => resp === "success")
             .catch((err) => {
                 this._logger.error("Error un-archiving chat", err);
@@ -782,8 +776,7 @@ export class OpenChat extends EventTarget {
         }
 
         pinnedChatsStore.pin(chatId);
-        return this.api
-            .pinChat(chatId)
+        return this.sendRequest({ kind: "pinChat", chatId })
             .then((resp) => {
                 if (resp.kind === "pinned_limit_reached") {
                     pinnedChatsStore.unpin(chatId);
@@ -800,8 +793,7 @@ export class OpenChat extends EventTarget {
 
     unpinChat(chatId: string): Promise<boolean> {
         pinnedChatsStore.unpin(chatId);
-        return this.api
-            .unpinChat(chatId)
+        return this.sendRequest({ kind: "unpinChat", chatId })
             .then((_) => true)
             .catch((err) => {
                 this._logger.error("Error unpinning chat", err);
@@ -812,8 +804,7 @@ export class OpenChat extends EventTarget {
 
     blockUserFromDirectChat(userId: string): Promise<boolean> {
         blockedUsers.add(userId);
-        return this.api
-            .blockUserFromDirectChat(userId)
+        return this.sendRequest({ kind: "blockUserFromDirectChat", userId })
             .then((resp) => {
                 return resp === "success";
             })
@@ -826,8 +817,7 @@ export class OpenChat extends EventTarget {
 
     unblockUserFromDirectChat(userId: string): Promise<boolean> {
         blockedUsers.delete(userId);
-        return this.api
-            .unblockUserFromDirectChat(userId)
+        return this.sendRequest({ kind: "unblockUserFromDirectChat", userId })
             .then((resp) => {
                 return resp === "success";
             })
@@ -852,8 +842,7 @@ export class OpenChat extends EventTarget {
             });
         }
 
-        return this.api
-            .setUserAvatar(data)
+        return this.sendRequest({ kind: "setUserAvatar", data })
             .then((_resp) => true)
             .catch((err) => {
                 this._logger.error("Failed to update user's avatar", err);
@@ -862,8 +851,7 @@ export class OpenChat extends EventTarget {
     }
 
     makeGroupPrivate(chatId: string): Promise<boolean> {
-        return this.api
-            .makeGroupPrivate(chatId)
+        return this.sendRequest({ kind: "makeGroupPrivate", chatId })
             .then((resp) => {
                 if (resp === "success") {
                     localChatSummaryUpdates.markUpdated(chatId, {
@@ -882,8 +870,7 @@ export class OpenChat extends EventTarget {
     }
 
     deleteGroup(chatId: string): Promise<boolean> {
-        return this.api
-            .deleteGroup(chatId)
+        return this.sendRequest({ kind: "deleteGroup", chatId })
             .then((resp) => {
                 if (resp === "success") {
                     this.removeChat(chatId);
@@ -900,8 +887,7 @@ export class OpenChat extends EventTarget {
 
     leaveGroup(chatId: string): Promise<"success" | "failure" | "owner_cannot_leave"> {
         localChatSummaryUpdates.markRemoved(chatId);
-        return this.api
-            .leaveGroup(chatId)
+        return this.sendRequest({ kind: "leaveGroup", chatId })
             .then((resp) => {
                 if (resp === "success" || resp === "not_in_group" || resp === "group_not_found") {
                     return "success";
@@ -924,8 +910,7 @@ export class OpenChat extends EventTarget {
     async joinGroup(
         group: GroupChatSummary
     ): Promise<"success" | "blocked" | "failure" | "gate_check_failed"> {
-        return this.api
-            .joinGroup(group.chatId)
+        return this.sendRequest({ kind: "joinGroup", chatId: group.chatId })
             .then((resp) => {
                 if (resp.kind === "group_chat") {
                     localChatSummaryUpdates.markAdded(resp);
@@ -962,8 +947,7 @@ export class OpenChat extends EventTarget {
     }
 
     updateGroupRules(chatId: string, rules: AccessRules | undefined): Promise<boolean> {
-        return this.api
-            .updateGroup(chatId, undefined, undefined, rules, undefined, undefined, undefined)
+        return this.sendRequest({ kind: "updateGroup", chatId, rules })
             .then((resp) => resp === "success")
             .catch((err) => {
                 this._logger.error("Update group rules failed: ", err);
@@ -981,16 +965,7 @@ export class OpenChat extends EventTarget {
             updatedPermissions
         );
 
-        return this.api
-            .updateGroup(
-                chatId,
-                undefined,
-                undefined,
-                undefined,
-                optionalPermissions,
-                undefined,
-                undefined
-            )
+        return this.sendRequest({ kind: "updateGroup", chatId, permissions: optionalPermissions })
             .then((resp) => {
                 if (resp !== "success") {
                     return false;
@@ -1168,20 +1143,26 @@ export class OpenChat extends EventTarget {
         chatId: string,
         threadRootMessageIndex: number | undefined,
         messageId: bigint,
-        messageIndex: number,
-        answerIndex: number,
+        messageIdx: number,
+        answerIdx: number,
         type: "register" | "delete"
     ): Promise<boolean> {
         const userId = this.user.userId;
 
         localMessageUpdates.markPollVote(messageId.toString(), {
-            answerIndex,
+            answerIndex: answerIdx,
             type,
             userId,
         });
 
-        return this.api
-            .registerPollVote(chatId, messageIndex, answerIndex, type, threadRootMessageIndex)
+        return this.sendRequest({
+            kind: "registerPollVote",
+            chatId,
+            messageIdx,
+            answerIdx,
+            voteType: type,
+            threadRootMessageIndex,
+        })
             .then((resp) => resp === "success")
             .catch((err) => {
                 this._logger.error("Poll vote failed: ", err);
@@ -1230,8 +1211,14 @@ export class OpenChat extends EventTarget {
             localMessageUpdates.markUndeleted(messageIdString);
         }
 
-        return this.api
-            .deleteMessage(chatType, chatId, messageId, threadRootMessageIndex, asPlatformModerator)
+        return this.sendRequest({
+            kind: "deleteMessage",
+            chatType,
+            chatId,
+            messageId,
+            threadRootMessageIndex,
+            asPlatformModerator,
+        })
             .then((resp) => {
                 const success = resp === "success";
                 if (!success) {
@@ -1259,8 +1246,13 @@ export class OpenChat extends EventTarget {
 
         undeletingMessagesStore.add(msg.messageId);
 
-        return this.api
-            .undeleteMessage(chat.kind, chatId, msg.messageId, threadRootMessageIndex)
+        return this.sendRequest({
+            kind: "undeleteMessage",
+            chatType: chat.kind,
+            chatId,
+            messageId: msg.messageId,
+            threadRootMessageIndex,
+        })
             .then((resp) => {
                 const success = resp.kind === "success";
                 if (success) {
@@ -1293,8 +1285,13 @@ export class OpenChat extends EventTarget {
 
         const result =
             chat.kind === "group_chat"
-                ? this.api.getDeletedGroupMessage(chatId, messageId, threadRootMessageIndex)
-                : this.api.getDeletedDirectMessage(chatId, messageId);
+                ? this.sendRequest({
+                      kind: "getDeletedGroupMessage",
+                      chatId,
+                      messageId,
+                      threadRootMessageIndex,
+                  })
+                : this.sendRequest({ kind: "getDeletedDirectMessage", userId: chatId, messageId });
 
         return result
             .then((resp) => {
@@ -1356,33 +1353,37 @@ export class OpenChat extends EventTarget {
         const result = (
             chat.kind === "direct_chat"
                 ? kind == "add"
-                    ? this.api.addDirectChatReaction(
-                          chatId,
+                    ? this.sendRequest({
+                          kind: "addDirectChatReaction",
+                          otherUserId: chatId,
                           messageId,
                           reaction,
                           username,
-                          threadRootMessageIndex
-                      )
-                    : this.api.removeDirectChatReaction(
-                          chatId,
+                          threadRootMessageIndex,
+                      })
+                    : this.sendRequest({
+                          kind: "removeDirectChatReaction",
+                          otherUserId: chatId,
                           messageId,
                           reaction,
-                          threadRootMessageIndex
-                      )
+                          threadRootMessageIndex,
+                      })
                 : kind === "add"
-                ? this.api.addGroupChatReaction(
+                ? this.sendRequest({
+                      kind: "addGroupChatReaction",
                       chatId,
                       messageId,
                       reaction,
                       username,
-                      threadRootMessageIndex
-                  )
-                : this.api.removeGroupChatReaction(
+                      threadRootMessageIndex,
+                  })
+                : this.sendRequest({
+                      kind: "removeGroupChatReaction",
                       chatId,
                       messageId,
                       reaction,
-                      threadRootMessageIndex
-                  )
+                      threadRootMessageIndex,
+                  })
         )
             .then((resp) => {
                 if (resp !== "success" && resp !== "no_change") {
@@ -1419,13 +1420,14 @@ export class OpenChat extends EventTarget {
 
         const threadRootMessageIndex = threadRootEvent.event.messageIndex;
 
-        const eventsResponse = await this.api.groupChatEventsWindow(
-            [0, threadRootEvent.event.thread.latestEventIndex],
+        const eventsResponse = await this.sendRequest({
+            kind: "groupChatEventsWindow",
+            eventIndexRange: [0, threadRootEvent.event.thread.latestEventIndex],
             chatId,
             messageIndex,
-            threadRootEvent.event.thread?.latestEventIndex,
-            threadRootEvent.event.messageIndex
-        );
+            latestClientMainEventIndex: threadRootEvent.event.thread?.latestEventIndex,
+            threadRootMessageIndex: threadRootEvent.event.messageIndex,
+        });
 
         if (eventsResponse === undefined || eventsResponse === "events_failed") {
             return undefined;
@@ -1470,18 +1472,21 @@ export class OpenChat extends EventTarget {
             const range = indexRangeForChat(clientChat);
             const eventsPromise: Promise<EventsResponse<ChatEvent>> =
                 clientChat.kind === "direct_chat"
-                    ? this.api.directChatEventsWindow(
-                          range,
+                    ? this.sendRequest({
+                          kind: "directChatEventsWindow",
+                          eventIndexRange: range,
+                          theirUserId: chatId,
+                          messageIndex,
+                          latestClientMainEventIndex: serverChat?.latestEventIndex,
+                      })
+                    : this.sendRequest({
+                          kind: "groupChatEventsWindow",
+                          eventIndexRange: range,
                           chatId,
                           messageIndex,
-                          serverChat?.latestEventIndex
-                      )
-                    : this.api.groupChatEventsWindow(
-                          range,
-                          chatId,
-                          messageIndex,
-                          serverChat?.latestEventIndex
-                      );
+                          latestClientMainEventIndex: serverChat?.latestEventIndex,
+                          threadRootMessageIndex: undefined,
+                      });
             const eventsResponse = await eventsPromise;
 
             if (eventsResponse === undefined || eventsResponse === "events_failed") {
@@ -1580,8 +1585,7 @@ export class OpenChat extends EventTarget {
 
     blockUser(chatId: string, userId: string): Promise<boolean> {
         this.blockUserLocally(chatId, userId);
-        return this.api
-            .blockUserFromGroupChat(chatId, userId)
+        return this.sendRequest({ kind: "blockUserFromGroupChat", chatId, userId })
             .then((resp) => {
                 console.log("blockUser result", resp);
                 if (resp !== "success") {
@@ -1599,8 +1603,7 @@ export class OpenChat extends EventTarget {
 
     unblockUser(chatId: string, userId: string): Promise<boolean> {
         this.unblockUserLocally(chatId, userId, false);
-        return this.api
-            .unblockUserFromGroupChat(chatId, userId)
+        return this.sendRequest({ kind: "unblockUserFromGroupChat", chatId, userId })
             .then((resp) => {
                 if (resp !== "success") {
                     this.blockUserLocally(chatId, userId);
@@ -1652,7 +1655,7 @@ export class OpenChat extends EventTarget {
             return;
         }
 
-        setSelectedChat(this.api, clientChat, serverChat, messageIndex, threadMessageIndex);
+        setSelectedChat(this, clientChat, serverChat, messageIndex, threadMessageIndex);
 
         const { selectedChat, focusMessageIndex } = this._liveState;
         if (selectedChat !== undefined) {
@@ -1724,15 +1727,16 @@ export class OpenChat extends EventTarget {
         const { selectedThreadKey } = this._liveState;
         if (selectedThreadKey === undefined) return;
 
-        const eventsResponse = await this.api.chatEvents(
-            chat.kind,
+        const eventsResponse = await this.sendRequest({
+            kind: "chatEvents",
+            chatType: chat.kind,
             chatId,
-            range,
+            eventIndexRange: range,
             startIndex,
             ascending,
             threadRootMessageIndex,
-            thread.latestEventIndex
-        );
+            latestClientEventIndex: thread.latestEventIndex,
+        });
 
         if (selectedThreadKey !== this._liveState.selectedThreadKey) {
             // the selected thread has changed while we were loading the messages
@@ -1925,15 +1929,16 @@ export class OpenChat extends EventTarget {
         startIndex: number,
         ascending: boolean
     ): Promise<EventsResponse<ChatEvent>> {
-        return this.api.chatEvents(
-            serverChat.kind,
-            serverChat.chatId,
-            indexRangeForChat(serverChat),
+        return this.sendRequest({
+            kind: "chatEvents",
+            chatType: serverChat.kind,
+            chatId: serverChat.chatId,
+            eventIndexRange: indexRangeForChat(serverChat),
             startIndex,
             ascending,
-            undefined,
-            serverChat.latestEventIndex
-        );
+            threadRootMessageIndex: undefined,
+            latestClientEventIndex: serverChat.latestEventIndex,
+        });
     }
 
     private previousMessagesCriteria(serverChat: ChatSummary): [number, boolean] | undefined {
@@ -2050,10 +2055,11 @@ export class OpenChat extends EventTarget {
         // currently this is only meaningful for group chats, but we'll set it up generically just in case
         if (clientChat.kind === "group_chat") {
             if (!chatStateStore.getProp(clientChat.chatId, "detailsLoaded")) {
-                const resp = await this.api.getGroupDetails(
-                    clientChat.chatId,
-                    clientChat.latestEventIndex
-                );
+                const resp = await this.sendRequest({
+                    kind: "getGroupDetails",
+                    chatId: clientChat.chatId,
+                    latestEventIndex: clientChat.latestEventIndex,
+                });
                 if (resp !== "caller_not_in_group") {
                     chatStateStore.setProp(clientChat.chatId, "detailsLoaded", true);
                     chatStateStore.setProp(
@@ -2082,14 +2088,18 @@ export class OpenChat extends EventTarget {
         if (clientChat.kind === "group_chat") {
             const latestEventIndex = chatStateStore.getProp(clientChat.chatId, "latestEventIndex");
             if (latestEventIndex !== undefined && latestEventIndex < clientChat.latestEventIndex) {
-                const gd = await this.api.getGroupDetailsUpdates(clientChat.chatId, {
-                    members: chatStateStore.getProp(clientChat.chatId, "members"),
-                    blockedUsers: chatStateStore.getProp(clientChat.chatId, "blockedUsers"),
-                    invitedUsers: chatStateStore.getProp(clientChat.chatId, "invitedUsers"),
-                    pinnedMessages: chatStateStore.getProp(clientChat.chatId, "pinnedMessages"),
-                    latestEventIndex,
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    rules: chatStateStore.getProp(clientChat.chatId, "rules")!,
+                const gd = await this.sendRequest({
+                    kind: "getGroupDetailsUpdates",
+                    chatId: clientChat.chatId,
+                    previous: {
+                        members: chatStateStore.getProp(clientChat.chatId, "members"),
+                        blockedUsers: chatStateStore.getProp(clientChat.chatId, "blockedUsers"),
+                        invitedUsers: chatStateStore.getProp(clientChat.chatId, "invitedUsers"),
+                        pinnedMessages: chatStateStore.getProp(clientChat.chatId, "pinnedMessages"),
+                        latestEventIndex,
+                        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                        rules: chatStateStore.getProp(clientChat.chatId, "rules")!,
+                    },
                 });
                 chatStateStore.setProp(clientChat.chatId, "members", gd.members);
                 chatStateStore.setProp(clientChat.chatId, "blockedUsers", gd.blockedUsers);
@@ -2155,38 +2165,40 @@ export class OpenChat extends EventTarget {
             currentChatEvents.length === 0
                 ? Promise.resolve()
                 : (serverChat.kind === "direct_chat"
-                      ? this.api.directChatEventsByEventIndex(
-                            serverChat.them,
-                            currentChatEvents,
-                            undefined,
-                            serverChat.latestEventIndex
-                        )
-                      : this.api.groupChatEventsByEventIndex(
-                            serverChat.chatId,
-                            currentChatEvents,
-                            undefined,
-                            serverChat.latestEventIndex
-                        )
+                      ? this.sendRequest({
+                            kind: "directChatEventsByEventIndex",
+                            theirUserId: serverChat.them,
+                            eventIndexes: currentChatEvents,
+                            threadRootMessageIndex: undefined,
+                            latestClientEventIndex: serverChat.latestEventIndex,
+                        })
+                      : this.sendRequest({
+                            kind: "groupChatEventsByEventIndex",
+                            chatId: serverChat.chatId,
+                            eventIndexes: currentChatEvents,
+                            threadRootMessageIndex: undefined,
+                            latestClientEventIndex: serverChat.latestEventIndex,
+                        })
                   ).then((resp) => this.handleEventsResponse(serverChat, resp));
 
         const threadEventPromise =
             currentThreadEvents.length === 0
                 ? Promise.resolve()
-                : this.api
-                      .groupChatEventsByEventIndex(
+                : this.sendRequest({
+                      kind: "groupChatEventsByEventIndex",
+                      chatId: serverChat.chatId,
+                      eventIndexes: currentThreadEvents,
+                      threadRootMessageIndex: selectedThreadRootMessageIndex,
+                      latestClientEventIndex:
+                          selectedThreadRootEvent?.event?.thread?.latestEventIndex,
+                  }).then((resp) =>
+                      this.handleThreadEventsResponse(
                           serverChat.chatId,
-                          currentThreadEvents,
-                          selectedThreadRootMessageIndex,
-                          selectedThreadRootEvent?.event?.thread?.latestEventIndex
+                          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                          selectedThreadRootMessageIndex!,
+                          resp
                       )
-                      .then((resp) =>
-                          this.handleThreadEventsResponse(
-                              serverChat.chatId,
-                              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                              selectedThreadRootMessageIndex!,
-                              resp
-                          )
-                      );
+                  );
 
         await Promise.all([chatEventsPromise, threadEventPromise]);
         return;
@@ -2252,8 +2264,7 @@ export class OpenChat extends EventTarget {
 
         if (chat?.kind === "group_chat") {
             this.removePinnedMessage(chatId, messageIndex);
-            return this.api
-                .unpinMessage(chatId, messageIndex)
+            return this.sendRequest({ kind: "unpinMessage", chatId, messageIndex })
                 .then((resp) => {
                     if (resp !== "success" && resp !== "no_change") {
                         this.addPinnedMessage(chatId, messageIndex);
@@ -2275,8 +2286,11 @@ export class OpenChat extends EventTarget {
 
         if (chat?.kind === "group_chat") {
             this.addPinnedMessage(chatId, messageIndex);
-            return this.api
-                .pinMessage(chatId, messageIndex)
+            return this.sendRequest({
+                kind: "pinMessage",
+                chatId,
+                messageIndex,
+            })
                 .then((resp) => {
                     if (resp.kind !== "success" && resp.kind !== "no_change") {
                         this.removePinnedMessage(chatId, messageIndex);
@@ -2352,8 +2366,14 @@ export class OpenChat extends EventTarget {
         };
         const event = { event: msg, index: nextEventIndex, timestamp: BigInt(Date.now()) };
 
-        this.api
-            .sendMessage(chat.kind, chatId, this.user, [], event)
+        this.sendRequest({
+            kind: "sendMessage",
+            chatType: chat.kind,
+            chatId,
+            user: this.user,
+            mentioned: [],
+            event,
+        })
             .then(([resp, msg]) => {
                 if (resp.kind === "success") {
                     this.onSendMessageSuccess(chatId, resp, msg, undefined);
@@ -2502,7 +2522,12 @@ export class OpenChat extends EventTarget {
     ): Promise<void> {
         const localKey = this.localMessagesKey(chatId, threadRootMessageIndex);
         failedMessagesStore.delete(localKey, event.event.messageId);
-        return this.api.deleteFailedMessage(chatId, event.event.messageId, threadRootMessageIndex);
+        return this.sendRequest({
+            kind: "deleteFailedMessage",
+            chatId,
+            messageId: event.event.messageId,
+            threadRootMessageIndex,
+        });
     }
 
     async retrySendMessage(
@@ -2544,8 +2569,15 @@ export class OpenChat extends EventTarget {
         unconfirmed.add(localKey, retryEvent);
 
         // TODO - what about mentions?
-        this.api
-            .sendMessage(chat.kind, chat.chatId, this.user, [], retryEvent, threadRootMessageIndex)
+        this.sendRequest({
+            kind: "sendMessage",
+            chatType: chat.kind,
+            chatId: chat.chatId,
+            user: this.user,
+            mentioned: [],
+            event: retryEvent,
+            threadRootMessageIndex,
+        })
             .then(([resp, msg]) => {
                 if (resp.kind === "success" || resp.kind === "transfer_success") {
                     this.onSendMessageSuccess(chatId, resp, msg, threadRootMessageIndex);
@@ -2636,8 +2668,15 @@ export class OpenChat extends EventTarget {
 
             const canRetry = this.canRetryMessage(msg.content);
 
-            this.api
-                .sendMessage(chat.kind, chatId, this.user, mentioned, event, threadRootMessageIndex)
+            this.sendRequest({
+                kind: "sendMessage",
+                chatType: chat.kind,
+                chatId,
+                user: this.user,
+                mentioned,
+                event,
+                threadRootMessageIndex,
+            })
                 .then(([resp, msg]) => {
                     if (resp.kind === "success" || resp.kind === "transfer_success") {
                         this.onSendMessageSuccess(chatId, resp, msg, threadRootMessageIndex);
@@ -2748,8 +2787,13 @@ export class OpenChat extends EventTarget {
                 currentChatDraftMessage.clear(chatId);
             }
 
-            return this.api
-                .editMessage(chat.kind, chat.chatId, msg, threadRootMessageIndex)
+            return this.sendRequest({
+                kind: "editMessage",
+                chatType: chat.kind,
+                chatId: chat.chatId,
+                msg,
+                threadRootMessageIndex,
+            })
                 .then((resp) => {
                     if (resp !== "success") {
                         localMessageUpdates.revertEditedContent(msg.messageId.toString());
@@ -2808,10 +2852,21 @@ export class OpenChat extends EventTarget {
             return;
         }
 
-        this.api.setCachedMessageFromNotification(chatId, threadRootMessageIndex, message);
+        this.sendRequest({
+            kind: "setCachedMessageFromNotification",
+            chatId,
+            threadRootMessageIndex,
+            message,
+        });
 
         Promise.all([
-            this.api.rehydrateMessage(chatId, message, undefined, serverChat.latestEventIndex),
+            this.sendRequest({
+                kind: "rehydrateMessage",
+                chatId,
+                message,
+                threadRootMessageIndex: undefined,
+                latestClientEventIndex: serverChat.latestEventIndex,
+            }),
             this.addMissingUsersFromMessage(message),
         ]).then(([m, _]) => {
             updateSummaryWithConfirmedMessage(chatId, m);
@@ -3000,11 +3055,11 @@ export class OpenChat extends EventTarget {
     }
 
     checkUsername(username: string): Promise<CheckUsernameResponse> {
-        return this.api.checkUsername(username);
+        return this.sendRequest({ kind: "checkUsername", username });
     }
 
     searchUsers(searchTerm: string, maxResults = 20): Promise<UserSummary[]> {
-        return this.api.searchUsers(searchTerm, maxResults).then((resp) => {
+        return this.sendRequest({ kind: "searchUsers", searchTerm, maxResults }).then((resp) => {
             userStore.addMany(resp);
             return resp;
         });
@@ -3028,7 +3083,11 @@ export class OpenChat extends EventTarget {
     }
 
     registerUser(username: string): Promise<RegisterUserResponse> {
-        return this.api.registerUser(username, this._referralCode).then((res) => {
+        return this.sendRequest({
+            kind: "registerUser",
+            username,
+            referralCode: this._referralCode,
+        }).then((res) => {
             if (res.kind === "success") {
                 this.clearReferralCode();
             }
@@ -3037,7 +3096,7 @@ export class OpenChat extends EventTarget {
     }
 
     getCurrentUser(): Promise<CurrentUserResponse> {
-        return this.api.getCurrentUser().then((response) => {
+        return this.sendRequest({ kind: "getCurrentUser" }).then((response) => {
             if (response.kind === "created_user") {
                 userCreatedStore.set(true);
                 selectedAuthProviderStore.init(AuthProvider.II);
@@ -3047,15 +3106,15 @@ export class OpenChat extends EventTarget {
     }
 
     subscriptionExists(p256dh_key: string): Promise<boolean> {
-        return this.api.subscriptionExists(p256dh_key);
+        return this.sendRequest({ kind: "subscriptionExists", p256dh_key });
     }
 
     pushSubscription(subscription: PushSubscriptionJSON): Promise<void> {
-        return this.api.pushSubscription(subscription);
+        return this.sendRequest({ kind: "pushSubscription", subscription });
     }
 
     removeSubscription(subscription: PushSubscriptionJSON): Promise<void> {
-        return this.api.removeSubscription(subscription);
+        return this.sendRequest({ kind: "removeSubscription", subscription });
     }
 
     private inviteUsersLocally(chatId: string, userIds: string[]): void {
@@ -3070,8 +3129,7 @@ export class OpenChat extends EventTarget {
 
     inviteUsers(chatId: string, userIds: string[]): Promise<InviteUsersResponse> {
         this.inviteUsersLocally(chatId, userIds);
-        return this.api
-            .inviteUsers(chatId, userIds)
+        return this.sendRequest({ kind: "inviteUsers", chatId, userIds })
             .then((resp) => {
                 if (resp !== "success") {
                     this.uninviteUsersLocally(chatId, userIds);
@@ -3086,7 +3144,7 @@ export class OpenChat extends EventTarget {
     }
 
     removeMember(chatId: string, userId: string): Promise<RemoveMemberResponse> {
-        return this.api.removeMember(chatId, userId);
+        return this.sendRequest({ kind: "removeMember", chatId, userId });
     }
 
     changeRole(
@@ -3101,8 +3159,7 @@ export class OpenChat extends EventTarget {
         chatStateStore.updateProp(chatId, "members", (ps) =>
             ps.map((p) => (p.userId === userId ? { ...p, role: newRole } : p))
         );
-        return this.api
-            .changeRole(chatId, userId, newRole)
+        return this.sendRequest({ kind: "changeRole", chatId, userId, newRole })
             .then((resp) => {
                 return resp === "success";
             })
@@ -3126,7 +3183,7 @@ export class OpenChat extends EventTarget {
         messageIndex: number,
         adopt: boolean
     ): Promise<RegisterProposalVoteResponse> {
-        return this.api.registerProposalVote(chatId, messageIndex, adopt);
+        return this.sendRequest({ kind: "registerProposalVote", chatId, messageIndex, adopt });
     }
 
     getProposalVoteDetails(
@@ -3134,12 +3191,15 @@ export class OpenChat extends EventTarget {
         proposalId: bigint,
         isNns: boolean
     ): Promise<ProposalVoteDetails> {
-        return this.api
-            .getProposalVoteDetails(governanceCanisterId, proposalId, isNns)
-            .then((resp) => {
-                proposalTallies.setTally(governanceCanisterId, proposalId, resp.latestTally);
-                return resp;
-            });
+        return this.sendRequest({
+            kind: "getProposalVoteDetails",
+            governanceCanisterId,
+            proposalId,
+            isNns,
+        }).then((resp) => {
+            proposalTallies.setTally(governanceCanisterId, proposalId, resp.latestTally);
+            return resp;
+        });
     }
 
     getRecommendedGroups(): Promise<GroupChatSummary[]> {
@@ -3153,24 +3213,27 @@ export class OpenChat extends EventTarget {
 
         recommendedGroupExclusions.value().forEach((c) => exclusions.add(c));
 
-        return this.api.getRecommendedGroups([...exclusions]);
+        return this.sendRequest({ kind: "getRecommendedGroups", exclusions: [...exclusions] });
     }
 
     getGroupRules(chatId: string): Promise<AccessRules | undefined> {
-        return this.api.getGroupRules(chatId);
+        return this.sendRequest({ kind: "getGroupRules", chatId });
     }
 
     searchGroups(searchTerm: string, maxResults = 10): Promise<GroupSearchResponse> {
-        return this.api.searchGroups(searchTerm, maxResults);
+        return this.sendRequest({ kind: "searchGroups", searchTerm, maxResults });
     }
 
     dismissRecommendation(chatId: string): Promise<void> {
         recommendedGroupExclusions.add(chatId);
-        return this.api.dismissRecommendation(chatId);
+        return this.sendRequest({ kind: "dismissRecommendation", chatId });
     }
 
     set groupInvite(value: GroupInvite) {
-        this.api.groupInvite = value;
+        this.sendRequest({
+            kind: "groupInvite",
+            value,
+        });
     }
 
     searchChat(
@@ -3184,29 +3247,43 @@ export class OpenChat extends EventTarget {
         if (chat === undefined) {
             return Promise.resolve({ kind: "chat_not_found" });
         } else if (chat.kind === "group_chat") {
-            return this.api.searchGroupChat(chat.chatId, searchTerm, userIds, maxResults);
+            return this.sendRequest({
+                kind: "searchGroupChat",
+                chatId: chat.chatId,
+                searchTerm,
+                userIds,
+                maxResults,
+            });
         } else {
-            return this.api.searchDirectChat(chat.chatId, searchTerm, maxResults);
+            return this.sendRequest({
+                kind: "searchDirectChat",
+                userId: chat.chatId,
+                searchTerm,
+                maxResults,
+            });
         }
     }
 
     refreshAccountBalance(crypto: Cryptocurrency, principal: string): Promise<Tokens> {
-        return this.api.refreshAccountBalance(crypto, principal).then((val) => {
-            cryptoBalance.set(crypto, val);
-            return val;
-        });
+        return this.sendRequest({ kind: "refreshAccountBalance", crypto, principal }).then(
+            (val) => {
+                cryptoBalance.set(crypto, val);
+                return val;
+            }
+        );
     }
 
     async threadPreviews(
         threadsByChat: Record<string, [ThreadSyncDetails[], number | undefined]>
     ): Promise<ThreadPreview[]> {
-        return this.api.threadPreviews(threadsByChat);
+        return this.sendRequest({ kind: "threadPreviews", threadsByChat });
     }
 
     getMissingUsers(userIds: string[] | Set<string>): Promise<UsersResponse> {
         const userIdsSet = Array.isArray(userIds) ? new Set<string>(userIds) : userIds;
-        return this.getUsers(
-            {
+        return this.sendRequest({
+            kind: "getUsers",
+            users: {
                 userGroups: [
                     {
                         users: this.missingUserIds(this._liveState.userStore, userIdsSet),
@@ -3214,8 +3291,8 @@ export class OpenChat extends EventTarget {
                     },
                 ],
             },
-            true
-        );
+            allowStale: true,
+        });
     }
 
     getUsers(users: UsersArgs, allowStale = false): Promise<UsersResponse> {
@@ -3226,22 +3303,24 @@ export class OpenChat extends EventTarget {
             });
         }
 
-        return this.api.getUsers({ userGroups }, allowStale).then((resp) => {
-            userStore.addMany(resp.users);
-            if (resp.serverTimestamp !== undefined) {
-                // If we went to the server, all users not returned are still up to date, so we mark them as such
-                const usersReturned = new Set<string>(resp.users.map((u) => u.userId));
-                const allOtherUsers = users.userGroups.flatMap((g) =>
-                    g.users.filter((u) => !usersReturned.has(u))
-                );
-                userStore.setUpdated(allOtherUsers, resp.serverTimestamp);
+        return this.sendRequest({ kind: "getUsers", users: { userGroups }, allowStale }).then(
+            (resp) => {
+                userStore.addMany(resp.users);
+                if (resp.serverTimestamp !== undefined) {
+                    // If we went to the server, all users not returned are still up to date, so we mark them as such
+                    const usersReturned = new Set<string>(resp.users.map((u) => u.userId));
+                    const allOtherUsers = users.userGroups.flatMap((g) =>
+                        g.users.filter((u) => !usersReturned.has(u))
+                    );
+                    userStore.setUpdated(allOtherUsers, resp.serverTimestamp);
+                }
+                return resp;
             }
-            return resp;
-        });
+        );
     }
 
     getUser(userId: string, allowStale = false): Promise<PartialUserSummary | undefined> {
-        return this.api.getUser(userId, allowStale).then((resp) => {
+        return this.sendRequest({ kind: "getUser", userId, allowStale }).then((resp) => {
             if (resp !== undefined) {
                 userStore.add(resp);
             }
@@ -3270,11 +3349,11 @@ export class OpenChat extends EventTarget {
     }
 
     getPublicProfile(userId?: string): Promise<PublicProfile> {
-        return this.api.getPublicProfile(userId);
+        return this.sendRequest({ kind: "getPublicProfile", userId });
     }
 
     setUsername(userId: string, username: string): Promise<SetUsernameResponse> {
-        return this.api.setUsername(userId, username).then((resp) => {
+        return this.sendRequest({ kind: "setUsername", userId, username }).then((resp) => {
             if (resp === "success" && this._user !== undefined) {
                 this._user = { ...this._user, username };
                 this.overwriteUserInStore(userId, (user) => ({ ...user, username }));
@@ -3284,17 +3363,17 @@ export class OpenChat extends EventTarget {
     }
 
     setBio(bio: string): Promise<SetBioResponse> {
-        return this.api.setBio(bio);
+        return this.sendRequest({ kind: "setBio", bio });
     }
 
     getBio(userId?: string): Promise<string> {
-        return this.api.getBio(userId);
+        return this.sendRequest({ kind: "getBio", userId });
     }
 
     withdrawCryptocurrency(
         domain: PendingCryptocurrencyWithdrawal
     ): Promise<WithdrawCryptocurrencyResponse> {
-        return this.api.withdrawCryptocurrency(domain);
+        return this.sendRequest({ kind: "withdrawCryptocurrency", domain });
     }
 
     getGroupMessagesByMessageIndex(
@@ -3303,27 +3382,28 @@ export class OpenChat extends EventTarget {
     ): Promise<EventsResponse<Message>> {
         const serverChat = this._liveState.serverChatSummaries[chatId];
 
-        return this.api.getGroupMessagesByMessageIndex(
+        return this.sendRequest({
+            kind: "getGroupMessagesByMessageIndex",
             chatId,
             messageIndexes,
-            serverChat?.latestEventIndex
-        );
+            latestClientEventIndex: serverChat?.latestEventIndex,
+        });
     }
 
     getInviteCode(chatId: string): Promise<InviteCodeResponse> {
-        return this.api.getInviteCode(chatId);
+        return this.sendRequest({ kind: "getInviteCode", chatId });
     }
 
     enableInviteCode(chatId: string): Promise<EnableInviteCodeResponse> {
-        return this.api.enableInviteCode(chatId);
+        return this.sendRequest({ kind: "enableInviteCode", chatId });
     }
 
     disableInviteCode(chatId: string): Promise<DisableInviteCodeResponse> {
-        return this.api.disableInviteCode(chatId);
+        return this.sendRequest({ kind: "disableInviteCode", chatId });
     }
 
     resetInviteCode(chatId: string): Promise<ResetInviteCodeResponse> {
-        return this.api.resetInviteCode(chatId);
+        return this.sendRequest({ kind: "resetInviteCode", chatId });
     }
 
     updateGroup(
@@ -3345,24 +3425,31 @@ export class OpenChat extends EventTarget {
             avatar,
             gate
         );
-        return this.api
-            .updateGroup(chatId, name, description, rules, permissions, avatar, gate)
-            .then((resp) => {
-                if (resp === "success") {
-                    localChatSummaryUpdates.markUpdated(chatId, {
-                        kind: "group_chat",
-                        name,
-                        description,
-                        permissions,
-                        gate,
-                    });
-                }
-                return resp;
-            });
+        return this.sendRequest({
+            kind: "updateGroup",
+            chatId,
+            name,
+            description,
+            rules,
+            permissions,
+            avatar,
+            gate,
+        }).then((resp) => {
+            if (resp === "success") {
+                localChatSummaryUpdates.markUpdated(chatId, {
+                    kind: "group_chat",
+                    name,
+                    description,
+                    permissions,
+                    gate,
+                });
+            }
+            return resp;
+        });
     }
 
     createGroupChat(candidate: CandidateGroupChat): Promise<CreateGroupResponse> {
-        return this.api.createGroupChat(candidate).then((resp) => {
+        return this.sendRequest({ kind: "createGroupChat", candidate }).then((resp) => {
             if (resp.kind === "success") {
                 const group = groupChatFromCandidate(resp.canisterId, candidate);
                 localChatSummaryUpdates.markAdded(group);
@@ -3389,8 +3476,7 @@ export class OpenChat extends EventTarget {
     }
 
     freezeGroup(chatId: string, reason: string | undefined): Promise<boolean> {
-        return this.api
-            .freezeGroup(chatId, reason)
+        return this.sendRequest({ kind: "freezeGroup", chatId, reason })
             .then((resp) => {
                 if (typeof resp !== "string") {
                     this.onChatFrozen(chatId, resp);
@@ -3405,8 +3491,7 @@ export class OpenChat extends EventTarget {
     }
 
     unfreezeGroup(chatId: string): Promise<boolean> {
-        return this.api
-            .unfreezeGroup(chatId)
+        return this.sendRequest({ kind: "unfreezeGroup", chatId })
             .then((resp) => {
                 if (typeof resp !== "string") {
                     this.onChatFrozen(chatId, resp);
@@ -3421,8 +3506,7 @@ export class OpenChat extends EventTarget {
     }
 
     deleteFrozenGroup(chatId: string): Promise<boolean> {
-        return this.api
-            .deleteFrozenGroup(chatId)
+        return this.sendRequest({ kind: "deleteFrozenGroup", chatId })
             .then((resp) => resp === "success")
             .catch((err) => {
                 this._logger.error("Unable to unfreeze group", err);
@@ -3431,8 +3515,7 @@ export class OpenChat extends EventTarget {
     }
 
     addHotGroupExclusion(chatId: string): Promise<boolean> {
-        return this.api
-            .addHotGroupExclusion(chatId)
+        return this.sendRequest({ kind: "addHotGroupExclusion", chatId })
             .then((resp) => resp === "success")
             .catch((err) => {
                 this._logger.error("Unable to add hot group exclusion", err);
@@ -3441,8 +3524,7 @@ export class OpenChat extends EventTarget {
     }
 
     removeHotGroupExclusion(chatId: string): Promise<boolean> {
-        return this.api
-            .removeHotGroupExclusion(chatId)
+        return this.sendRequest({ kind: "removeHotGroupExclusion", chatId })
             .then((resp) => resp === "success")
             .catch((err) => {
                 this._logger.error("Unable to remove hot group exclusion", err);
@@ -3451,8 +3533,7 @@ export class OpenChat extends EventTarget {
     }
 
     suspendUser(userId: string, reason: string): Promise<boolean> {
-        return this.api
-            .suspendUser(userId, reason)
+        return this.sendRequest({ kind: "suspendUser", userId, reason })
             .then((resp) => resp === "success")
             .catch((err) => {
                 this._logger.error("Unable to suspend user", err);
@@ -3461,8 +3542,7 @@ export class OpenChat extends EventTarget {
     }
 
     unsuspendUser(userId: string): Promise<boolean> {
-        return this.api
-            .unsuspendUser(userId)
+        return this.sendRequest({ kind: "unsuspendUser", userId })
             .then((resp) => resp === "success")
             .catch((err) => {
                 this._logger.error("Unable to un-suspend user", err);
@@ -3471,8 +3551,7 @@ export class OpenChat extends EventTarget {
     }
 
     setGroupUpgradeConcurrency(value: number): Promise<boolean> {
-        return this.api
-            .setGroupUpgradeConcurrency(value)
+        return this.sendRequest({ kind: "setGroupUpgradeConcurrency", value })
             .then((resp) => resp === "success")
             .catch((err) => {
                 this._logger.error("Unable to set group upgrade concurrency", err);
@@ -3481,8 +3560,7 @@ export class OpenChat extends EventTarget {
     }
 
     setUserUpgradeConcurrency(value: number): Promise<boolean> {
-        return this.api
-            .setUserUpgradeConcurrency(value)
+        return this.sendRequest({ kind: "setUserUpgradeConcurrency", value })
             .then((resp) => resp === "success")
             .catch((err) => {
                 this._logger.error("Unable to set user upgrade concurrency", err);
@@ -3588,7 +3666,7 @@ export class OpenChat extends EventTarget {
             const init = this._liveState.chatsInitialised;
             chatsLoading.set(!init);
 
-            const chatsResponse = await this.api.getUpdates();
+            const chatsResponse = await this.sendRequest({ kind: "getUpdates" });
 
             if (!init || chatsResponse.anyUpdates) {
                 const updatedChats = (chatsResponse.state.directChats as ChatSummary[]).concat(
@@ -3706,7 +3784,7 @@ export class OpenChat extends EventTarget {
         this._lastOnlineDatesPending.clear();
 
         try {
-            const response = await this.api.lastOnline(userIds);
+            const response = await this.sendRequest({ kind: "lastOnline", userIds });
             // for any userIds that did not come back in the response set the lastOnline value to 0
             // we still want to capture a value so that we don't keep trying to look up the same user over and over
             const updates = userIds.reduce((updates, userId) => {
@@ -3746,8 +3824,7 @@ export class OpenChat extends EventTarget {
     }
 
     claimPrize(chatId: string, messageId: bigint): Promise<boolean> {
-        return this.api
-            .claimPrize(chatId, messageId)
+        return this.sendRequest({ kind: "claimPrize", chatId, messageId })
             .then((resp) => {
                 if (resp.kind !== "success") {
                     return false;
@@ -3794,7 +3871,7 @@ export class OpenChat extends EventTarget {
                 }
                 const interval = expiry - now;
                 this._membershipCheck = window.setTimeout(() => {
-                    this.api.getCurrentUser().then((user) => {
+                    this.sendRequest({ kind: "getCurrentUser" }).then((user) => {
                         if (user.kind === "created_user") {
                             this.setDiamondMembership(user.diamondMembership);
                         } else {
@@ -3813,8 +3890,14 @@ export class OpenChat extends EventTarget {
         recurring: boolean,
         expectedPriceE8s: bigint
     ): Promise<boolean> {
-        return this.api
-            .payForDiamondMembership(this.user.userId, token, duration, recurring, expectedPriceE8s)
+        return this.sendRequest({
+            kind: "payForDiamondMembership",
+            userId: this.user.userId,
+            token,
+            duration,
+            recurring,
+            expectedPriceE8s,
+        })
             .then((resp) => {
                 if (resp.kind !== "success") {
                     return false;
@@ -3840,8 +3923,14 @@ export class OpenChat extends EventTarget {
         notes?: string,
         threadRootMessageIndex?: number
     ): Promise<boolean> {
-        return this.api
-            .setMessageReminder(chatId, eventIndex, remindAt, notes, threadRootMessageIndex)
+        return this.sendRequest({
+            kind: "setMessageReminder",
+            chatId,
+            eventIndex,
+            remindAt,
+            notes,
+            threadRootMessageIndex,
+        })
             .then((res) => {
                 return res === "success";
             })
@@ -3856,7 +3945,10 @@ export class OpenChat extends EventTarget {
         content: MessageReminderCreatedContent
     ): Promise<boolean> {
         localMessageUpdates.markCancelled(messageId.toString(), content);
-        return this.api.cancelMessageReminder(content.reminderId).catch((err) => {
+        return this.sendRequest({
+            kind: "cancelMessageReminder",
+            reminderId: content.reminderId,
+        }).catch((err) => {
             localMessageUpdates.revertCancelled(messageId.toString());
             this._logger.error("Unable to cancel message reminder", err);
             return false;
@@ -3870,8 +3962,14 @@ export class OpenChat extends EventTarget {
         notes: string | undefined,
         threadRootMessageIndex: number | undefined
     ): Promise<boolean> {
-        return this.api
-            .reportMessage(chatId, eventIndex, reasonCode, notes, threadRootMessageIndex)
+        return this.sendRequest({
+            kind: "reportMessage",
+            chatId,
+            eventIndex,
+            reasonCode,
+            notes,
+            threadRootMessageIndex,
+        })
             .then((resp) => resp === "success")
             .catch((err) => {
                 this._logger.error("Unable to set report message", err);
@@ -3880,8 +3978,7 @@ export class OpenChat extends EventTarget {
     }
 
     declineInvitation(chatId: string): Promise<boolean> {
-        return this.api
-            .declineInvitation(chatId)
+        return this.sendRequest({ kind: "declineInvitation", chatId })
             .then((res) => {
                 return res === "success";
             })
@@ -3894,11 +3991,11 @@ export class OpenChat extends EventTarget {
     updateMarketMakerConfig(
         config: UpdateMarketMakerConfigArgs
     ): Promise<UpdateMarketMakerConfigResponse> {
-        return this.api.updateMarketMakerConfig(config);
+        return this.sendRequest({ kind: "updateMarketMakerConfig", ...config });
     }
 
     getReferralLeaderboard(args?: ReferralLeaderboardRange): Promise<ReferralLeaderboardResponse> {
-        return this.api.getReferralLeaderboard(args);
+        return this.sendRequest({ kind: "getReferralLeaderboard", args });
     }
 
     usernameAndIcon(user?: PartialUserSummary): string {

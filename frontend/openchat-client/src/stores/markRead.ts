@@ -6,8 +6,8 @@ import type {
     ThreadSyncDetails,
 } from "openchat-shared";
 import { unconfirmed } from "./unconfirmed";
-import type { OpenChatAgentWorker } from "../agentWorker";
 import { bigIntMax } from "../utils/bigint";
+import type { OpenChat } from "../openchat";
 
 const MARK_READ_INTERVAL = 10 * 1000;
 
@@ -93,11 +93,11 @@ export class MessageReadTracker {
         };
     }
 
-    private triggerLoop(api: OpenChatAgentWorker): void {
+    private triggerLoop(api: OpenChat): void {
         this.timeout = window.setTimeout(() => this.sendToServer(api), MARK_READ_INTERVAL);
     }
 
-    start(api: OpenChatAgentWorker): void {
+    start(api: OpenChat): void {
         if (process.env.NODE_ENV !== "test") {
             this.triggerLoop(api);
         }
@@ -113,7 +113,7 @@ export class MessageReadTracker {
         }
     }
 
-    private sendToServer(api: OpenChatAgentWorker): void {
+    private sendToServer(api: OpenChat): void {
         const req = Object.entries(this.state).reduce<MarkReadRequest>((req, [chatId, data]) => {
             if (!data.empty()) {
                 req.push({
@@ -128,7 +128,9 @@ export class MessageReadTracker {
 
         if (req.length > 0) {
             console.log("Sending messages read to the server: ", JSON.stringify(req));
-            api.markMessagesRead(req).finally(() => this.triggerLoop(api));
+            api.sendRequest({ kind: "markMessagesRead", payload: req }).finally(() =>
+                this.triggerLoop(api)
+            );
         } else {
             this.triggerLoop(api);
         }
@@ -348,6 +350,6 @@ export class MessageReadTracker {
 
 export const messagesRead = new MessageReadTracker();
 
-export function startMessagesReadTracker(api: OpenChatAgentWorker): void {
+export function startMessagesReadTracker(api: OpenChat): void {
     messagesRead.start(api);
 }
