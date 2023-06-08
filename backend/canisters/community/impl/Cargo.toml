@@ -10,6 +10,7 @@ path = "src/lib.rs"
 crate-type = ["cdylib"]
 
 [dependencies]
+activity_notification_state = { path = "../../../libraries/activity_notification_state" }
 candid = { workspace = true }
 canister_api_macros = { path = "../../../libraries/canister_api_macros" }
 canister_logger = { workspace = true }

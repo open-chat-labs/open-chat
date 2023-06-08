@@ -1,4 +1,6 @@
-use crate::{model::events::CommunityEvent, mutate_state, read_state, RuntimeState};
+use crate::{
+    activity_notifications::handle_activity_notification, model::events::CommunityEvent, mutate_state, read_state, RuntimeState,
+};
 use canister_tracing_macros::trace;
 use community_canister::remove_member::{Response::*, *};
 use fire_and_forget_handler::FireAndForgetHandler;
@@ -121,6 +123,8 @@ fn commit(user_id: UserId, block: bool, removed_by: UserId, state: &mut RuntimeS
         CommunityEvent::MembersRemoved(Box::new(event))
     };
     state.data.events.push_event(event, state.env.now());
+
+    handle_activity_notification(state);
 
     // Fire-and-forget call to notify the user canister
     remove_membership_from_user_canister(

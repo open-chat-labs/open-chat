@@ -1,3 +1,4 @@
+use crate::activity_notifications::handle_activity_notification;
 use crate::model::events::CommunityEvent;
 use crate::{mutate_state, read_state, RuntimeState};
 use candid::Principal;
@@ -70,6 +71,8 @@ fn record_event(caller: Principal, change: GroupInviteCodeChange, state: &mut Ru
             })),
             now,
         );
+
+        handle_activity_notification(state);
     }
 }
 

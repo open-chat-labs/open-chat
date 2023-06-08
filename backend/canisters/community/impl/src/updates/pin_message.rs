@@ -1,4 +1,4 @@
-use crate::{mutate_state, RuntimeState};
+use crate::{activity_notifications::handle_activity_notification, mutate_state, RuntimeState};
 use canister_tracing_macros::trace;
 use community_canister::pin_message::{Response::*, *};
 use group_chat_core::PinUnpinMessageResult;
@@ -39,7 +39,10 @@ fn pin_message_impl(args: Args, pin: bool, state: &mut RuntimeState) -> Response
             };
 
             match result {
-                PinUnpinMessageResult::Success(r) => Success(r),
+                PinUnpinMessageResult::Success(r) => {
+                    handle_activity_notification(state);
+                    Success(r)
+                }
                 PinUnpinMessageResult::NoChange => NoChange,
                 PinUnpinMessageResult::NotAuthorized => NotAuthorized,
                 PinUnpinMessageResult::MessageNotFound => MessageNotFound,

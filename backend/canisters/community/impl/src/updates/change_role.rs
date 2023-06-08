@@ -1,4 +1,5 @@
 use crate::{
+    activity_notifications::handle_activity_notification,
     model::{events::CommunityEvent, members::ChangeRoleResult},
     mutate_state, read_state, RuntimeState,
 };
@@ -121,5 +122,6 @@ fn change_role_impl(
     };
 
     state.data.events.push_event(event, now);
+    handle_activity_notification(state);
     Success
 }

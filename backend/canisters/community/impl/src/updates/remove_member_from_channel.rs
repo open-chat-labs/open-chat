@@ -1,4 +1,4 @@
-use crate::{mutate_state, RuntimeState};
+use crate::{activity_notifications::handle_activity_notification, mutate_state, RuntimeState};
 use canister_tracing_macros::trace;
 use community_canister::remove_member_from_channel::{Response::*, *};
 use group_chat_core::RemoveMemberResult;
@@ -32,6 +32,7 @@ fn remove_member_from_channel_impl(args: Args, state: &mut RuntimeState) -> Resp
             match channel.chat.remove_member(member.user_id, args.user_id, false, now) {
                 RemoveMemberResult::Success => {
                     member.channels.remove(&args.channel_id);
+                    handle_activity_notification(state);
                     Success
                 }
                 RemoveMemberResult::UserSuspended => UserSuspended,

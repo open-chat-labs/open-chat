@@ -1,4 +1,4 @@
-use crate::{mutate_state, read_state, RuntimeState};
+use crate::{activity_notifications::handle_activity_notification, mutate_state, read_state, RuntimeState};
 use candid::Principal;
 use canister_tracing_macros::trace;
 use chat_events::ChatEventInternal;
@@ -110,7 +110,11 @@ fn commit(channel_id: ChannelId, user_principal: Principal, state: &mut RuntimeS
                     );
 
                     member.channels.insert(channel_id);
+
                     let summary = channel.summary(&channel_member, now);
+
+                    handle_activity_notification(state);
+                    
                     Success(Box::new(summary))
                 }
                 AddResult::AlreadyInGroup => {

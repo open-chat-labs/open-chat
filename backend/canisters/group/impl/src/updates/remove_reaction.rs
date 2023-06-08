@@ -1,4 +1,4 @@
-use crate::{mutate_state, run_regular_jobs, RuntimeState};
+use crate::{activity_notifications::handle_activity_notification, mutate_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
 use group_canister::remove_reaction::{Response::*, *};
 use group_chat_core::AddRemoveReactionResult;
@@ -26,7 +26,10 @@ fn remove_reaction_impl(args: Args, state: &mut RuntimeState) -> Response {
             .chat
             .remove_reaction(user_id, args.thread_root_message_index, args.message_id, args.reaction, now)
         {
-            AddRemoveReactionResult::Success => Success,
+            AddRemoveReactionResult::Success => {
+                handle_activity_notification(state);
+                Success
+            }
             AddRemoveReactionResult::NoChange | AddRemoveReactionResult::InvalidReaction => NoChange,
             AddRemoveReactionResult::MessageNotFound => MessageNotFound,
             AddRemoveReactionResult::UserNotInGroup => CallerNotInGroup,

@@ -1,4 +1,4 @@
-use crate::{model::channels::Channel, mutate_state, RuntimeState};
+use crate::{activity_notifications::handle_activity_notification, model::channels::Channel, mutate_state, RuntimeState};
 use canister_tracing_macros::trace;
 use community_canister::create_channel::{Response::*, *};
 use group_chat_core::GroupChatCore;
@@ -63,6 +63,7 @@ fn create_channel_impl(args: Args, state: &mut RuntimeState) -> Response {
             );
             state.data.channels.add(Channel { id: channel_id, chat });
             member.channels.insert(channel_id);
+            handle_activity_notification(state);
             Success(SuccessResult { channel_id })
         }
     } else {

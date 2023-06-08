@@ -1,4 +1,6 @@
-use crate::{model::events::CommunityEvent, mutate_state, read_state, RuntimeState};
+use crate::{
+    activity_notifications::handle_activity_notification, model::events::CommunityEvent, mutate_state, read_state, RuntimeState,
+};
 use canister_tracing_macros::trace;
 use community_canister::make_private::{Response::*, *};
 use group_index_canister::c2c_make_community_private;
@@ -81,4 +83,6 @@ fn commit(user_id: UserId, state: &mut RuntimeState) {
         .data
         .events
         .push_event(CommunityEvent::VisibilityChanged(Box::new(event)), now);
+
+    handle_activity_notification(state);
 }

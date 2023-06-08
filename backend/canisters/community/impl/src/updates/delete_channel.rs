@@ -1,4 +1,4 @@
-use crate::{model::events::CommunityEvent, mutate_state, RuntimeState};
+use crate::{activity_notifications::handle_activity_notification, model::events::CommunityEvent, mutate_state, RuntimeState};
 use canister_tracing_macros::trace;
 use community_canister::delete_channel::{Response::*, *};
 use ic_cdk_macros::update;
@@ -41,6 +41,8 @@ fn delete_channel_impl(channel_id: ChannelId, state: &mut RuntimeState) -> Respo
                     for user_id in channel.chat.members.iter().map(|m| m.user_id) {
                         state.data.members.mark_member_left_channel(&user_id, channel_id, now);
                     }
+
+                    handle_activity_notification(state);
 
                     Success
                 } else {

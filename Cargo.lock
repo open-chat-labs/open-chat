@@ -3,6 +3,15 @@
 version = 3
 
 [[package]]
+name = "activity_notification_state"
+version = "0.1.0"
+dependencies = [
+ "candid",
+ "serde",
+ "types",
+]
+
+[[package]]
 name = "adler"
 version = "1.0.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1271,6 +1280,7 @@ dependencies = [
 name = "community_canister_impl"
 version = "0.1.0"
 dependencies = [
+ "activity_notification_state",
  "candid",
  "canister_api_macros",
  "canister_logger",
@@ -2415,6 +2425,7 @@ dependencies = [
 name = "group_canister_impl"
 version = "0.1.0"
 dependencies = [
+ "activity_notification_state",
  "candid",
  "canister_api_macros",
  "canister_logger",

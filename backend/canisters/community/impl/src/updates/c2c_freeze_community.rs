@@ -1,3 +1,4 @@
+use crate::activity_notifications::handle_activity_notification;
 use crate::guards::caller_is_group_index_or_local_group_index;
 use crate::model::events::CommunityEvent;
 use crate::{mutate_state, RuntimeState};
@@ -43,6 +44,8 @@ fn c2c_freeze_community_impl(args: Args, state: &mut RuntimeState) -> Response {
                 reason: args.reason,
             },
         };
+
+        handle_activity_notification(state);
 
         if args.return_members {
             SuccessWithMembers(event, state.data.members.iter().map(|p| p.user_id).collect())

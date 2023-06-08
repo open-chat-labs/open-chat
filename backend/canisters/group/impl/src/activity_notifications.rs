@@ -16,7 +16,7 @@ pub(crate) fn handle_activity_notification(state: &mut RuntimeState) {
         .start_if_required(now, mark_active_duration);
 
     if requires_notification {
-        let public_group_activity = if state.data.chat.is_public { Some(extract_activity(now, &state.data)) } else { None };
+        let public_group_activity = state.data.chat.is_public.then_some(extract_activity(now, &state.data));
 
         let args = c2c_mark_active::Args {
             duration: mark_active_duration,
