@@ -34,6 +34,7 @@ fn main() {
     generate_candid_method!(user, mute_notifications, update);
     generate_candid_method!(user, pin_chat, update);
     generate_candid_method!(user, remove_reaction, update);
+    generate_candid_method!(user, send_message_with_transfer_to_channel, update);
     generate_candid_method!(user, send_message_with_transfer_to_group, update);
     generate_candid_method!(user, send_message_v2, update);
     generate_candid_method!(user, set_avatar, update);

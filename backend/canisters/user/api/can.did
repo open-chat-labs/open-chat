@@ -440,6 +440,41 @@ type CancelMessageReminderResponse =
         Success;
     };
 
+type SendMessageWithTransferToChannelArgs =
+    record {
+        community_id: CommunityId;
+        channel_id: ChannelId;
+        thread_root_message_index: opt MessageIndex;
+        message_id: MessageId;
+        content: MessageContentInitial;
+        sender_name: text;
+        replies_to: opt GroupReplyContext;
+        mentioned: vec User;
+    };
+
+type SendMessageWithTransferToChannelResponse =
+    variant {
+        Success: record {
+            event_index: EventIndex;
+            message_index: MessageIndex;
+            timestamp: TimestampMillis;
+            expires_at: opt TimestampMillis;
+            transfer: CompletedCryptoTransaction;
+        };
+        TextTooLong: nat32;
+        RecipientBlocked;
+        UserNotInCommunity: opt CompletedCryptoTransaction;
+        UserNotInChannel: CompletedCryptoTransaction;
+        ChannelNotFound: CompletedCryptoTransaction;
+        CryptocurrencyNotSupported: Cryptocurrency;
+        InvalidRequest: text;
+        TransferFailed: text;
+        TransferCannotBeZero;
+        UserSuspended;
+        CommunityFrozen;
+        InternalError: record { text; CompletedCryptoTransaction; };
+    };
+
 type SendMessageWithTransferToGroupArgs =
     record {
         group_id: ChatId;
@@ -786,6 +821,7 @@ service: {
     set_contact: (SetContactArgs) -> (SetContactResponse);
     set_message_reminder: (SetMessageReminderArgs) -> (SetMessageReminderResponse);
     cancel_message_reminder: (CancelMessageReminderArgs) -> (CancelMessageReminderResponse);
+    send_message_with_transfer_to_channel: (SendMessageWithTransferToChannelArgs) -> (SendMessageWithTransferToChannelResponse);
     send_message_with_transfer_to_group: (SendMessageWithTransferToGroupArgs) -> (SendMessageWithTransferToGroupResponse);
     withdraw_crypto_v2: (WithdrawCryptoArgs) -> (WithdrawCryptoResponse);
     pin_chat: (PinChatRequest) -> (PinChatResponse);
