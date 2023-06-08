@@ -256,7 +256,7 @@ mod tests {
     use crate::{ChatEventInternal, MessageInternal};
     use candid::Principal;
     use std::collections::HashSet;
-    use types::{DeletedBy, EventWrapper, MessageContentInternal, Reaction, ReplyContext, TextContent, ThreadSummary};
+    use types::{DeletedBy, EventWrapperInternal, MessageContentInternal, Reaction, ReplyContext, TextContent, ThreadSummary};
 
     #[test]
     fn serialize_with_max_defaults() {
@@ -276,7 +276,7 @@ mod tests {
 
         let message_bytes_len = msgpack::serialize_then_unwrap(&message).len();
 
-        let event = EventWrapper {
+        let event = EventWrapperInternal {
             index: 1.into(),
             timestamp: 1,
             correlation_id: 0,
@@ -292,7 +292,7 @@ mod tests {
         assert_eq!(message_bytes_len, 53);
         assert_eq!(event_bytes_len, 65);
 
-        let _deserialized: EventWrapper<ChatEventInternal> = msgpack::deserialize_then_unwrap(&event_bytes);
+        let _deserialized: EventWrapperInternal<ChatEventInternal> = msgpack::deserialize_then_unwrap(&event_bytes);
     }
 
     #[test]
@@ -326,7 +326,7 @@ mod tests {
 
         let message_bytes_len = msgpack::serialize_then_unwrap(&message).len();
 
-        let event = EventWrapper {
+        let event = EventWrapperInternal {
             index: 1.into(),
             timestamp: 1,
             correlation_id: 1,
@@ -342,6 +342,6 @@ mod tests {
         assert_eq!(message_bytes_len, 286);
         assert_eq!(event_bytes_len, 304);
 
-        let _deserialized: EventWrapper<ChatEventInternal> = msgpack::deserialize_then_unwrap(&event_bytes);
+        let _deserialized: EventWrapperInternal<ChatEventInternal> = msgpack::deserialize_then_unwrap(&event_bytes);
     }
 }
