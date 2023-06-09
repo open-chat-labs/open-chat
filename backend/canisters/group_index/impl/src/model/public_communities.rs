@@ -202,11 +202,11 @@ impl From<&PublicCommunityInfo> for CommunityMatch {
 }
 
 impl From<&PublicCommunityInfo> for Document {
-    fn from(group: &PublicCommunityInfo) -> Self {
+    fn from(community: &PublicCommunityInfo) -> Self {
         let mut document = Document::default();
         document
-            .add_field(group.name.to_owned(), 5.0, true)
-            .add_field(group.description.to_owned(), 1.0, true);
+            .add_field(community.name.to_string(), 5.0, true)
+            .add_field(community.description.to_string(), 1.0, true);
         document
     }
 }
