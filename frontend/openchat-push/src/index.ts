@@ -68,7 +68,7 @@ async function handlePushNotification(event: PushEvent): Promise<void> {
 
     // If notifications are disabled or an OC browser window already has the focus then don't show a notification
     const isClientFocused = windowClients.some((wc) => wc.focused && wc.visibilityState === "visible");
-    if (isClientFocused) {
+    if (isClientFocused && isMessageNotification(notification)) {
         console.debug("PUSH: suppressing notification because client focused", id);
         return;
     }
@@ -307,6 +307,10 @@ function extractMessageContentFromCryptoContent(
             text: `${senderName} sent a crypto transfer`,
         };
     }
+}
+
+function isMessageNotification(notification: Notification): boolean {
+    return notification.kind === "direct_notification" || notification.kind === "group_notification";
 }
 
 function toSymbol(token: Cryptocurrency): string {
