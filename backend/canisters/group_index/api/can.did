@@ -1,5 +1,25 @@
 import "../../../libraries/types/can.did";
 
+type ActiveGroupsArgs =
+    record {
+        group_ids: vec ChatId;
+        community_ids: vec CommunityId;
+        active_since: opt TimestampMillis;
+    };
+
+type ActiveGroupsResponse =
+    variant {
+        Success: record {
+            timestamp: TimestampMillis;
+            active_groups: vec ChatId;
+            active_communities: vec CommunityId;
+            deleted_groups: vec DeletedGroupInfo;
+            deleted_communities: vec DeletedCommunityInfo;
+            group_upgrades_in_progress: vec ChatId;
+            community_upgrades_in_progress: vec CommunityId;
+        };
+    };
+
 type FilterGroupsArgs =
     record {
         chat_ids: vec ChatId;
@@ -27,6 +47,15 @@ type RecommendedGroupsResponse =
         Success: record {
             groups: vec PublicGroupSummary;
         }
+    };
+
+type DeletedCommunityInfo =
+    record {
+        id: CommunityId;
+        timestamp: TimestampMillis;
+        deleted_by: UserId;
+        community_name: text;
+        public: bool;
     };
 
 type DeletedGroupInfo =
@@ -159,6 +188,7 @@ type SetUpgradeConcurrencyResponse =
     };
 
 service: {
+    active_groups: (ActiveGroupsArgs) -> (ActiveGroupsResponse) query;
     filter_groups: (FilterGroupsArgs) -> (FilterGroupsResponse) query;
     recommended_groups: (RecommendedGroupsArgs) -> (RecommendedGroupsResponse) query;
     search: (SearchArgs) -> (SearchResponse) query;
