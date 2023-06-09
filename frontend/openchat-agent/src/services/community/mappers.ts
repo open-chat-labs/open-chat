@@ -8,6 +8,7 @@ import {
     CommunityPermissionRole,
     CommunityPermissions,
     CreateChannelResponse,
+    DeclineChannelInvitationResponse,
     GateCheckFailedReason,
     MemberRole,
     UnsupportedValueError,
@@ -332,8 +333,25 @@ export function createChannelResponse(candid: ApiCreateChannelResponse): CreateC
     throw new UnsupportedValueError("Unexpected ApiCreateChannelResponse type received", candid);
 }
 
-export function declineInvitationResponse(_candid: ApiDeclineInvitationResponse): unknown {
-    return {};
+export function declineInvitationResponse(
+    candid: ApiDeclineInvitationResponse
+): DeclineChannelInvitationResponse {
+    if ("NotInvited" in candid) {
+        return { kind: "not_invited" };
+    }
+    if ("ChannelNotFound" in candid) {
+        return CommonResponses.channelNotFound;
+    }
+    if ("Success" in candid) {
+        return CommonResponses.success;
+    }
+    if ("UserNotInCommunity" in candid) {
+        return CommonResponses.userNotInCommunity;
+    }
+    throw new UnsupportedValueError(
+        "Unexpected ApiDeclineInvitationResponse type received",
+        candid
+    );
 }
 
 export function deleteChannelResponse(_candid: ApiDeleteChannelResponse): unknown {

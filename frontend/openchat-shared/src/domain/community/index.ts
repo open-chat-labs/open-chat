@@ -166,6 +166,12 @@ export type CreateChannelResponse =
     | { kind: "name_too_long" }
     | { kind: "name_taken" };
 
+export type DeclineChannelInvitationResponse =
+    | { kind: "not_invited" }
+    | ChannelNotFound
+    | Success
+    | UserNotInCommunity;
+
 export const CommonResponses = {
     userNotInChannel: { kind: "user_not_in_channel" } as UserNotInChannel,
     channelNotFound: { kind: "channel_not_found" } as ChannelNotFound,
