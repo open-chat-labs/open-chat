@@ -9,6 +9,7 @@ import {
     CommunityPermissions,
     CreateChannelResponse,
     DeclineChannelInvitationResponse,
+    DeleteChannelResponse,
     GateCheckFailedReason,
     MemberRole,
     UnsupportedValueError,
@@ -354,8 +355,29 @@ export function declineInvitationResponse(
     );
 }
 
-export function deleteChannelResponse(_candid: ApiDeleteChannelResponse): unknown {
-    return {};
+export function deleteChannelResponse(candid: ApiDeleteChannelResponse): DeleteChannelResponse {
+    if ("UserNotInChannel" in candid) {
+        return CommonResponses.userNotInChannel;
+    }
+    if ("ChannelNotFound" in candid) {
+        return CommonResponses.channelNotFound;
+    }
+    if ("NotAuthorized" in candid) {
+        return CommonResponses.notAuthorized;
+    }
+    if ("Success" in candid) {
+        return CommonResponses.success;
+    }
+    if ("UserNotInCommunity" in candid) {
+        return CommonResponses.userNotInCommunity;
+    }
+    if ("UserSuspended" in candid) {
+        return CommonResponses.userSuspended;
+    }
+    if ("CommunityFrozen" in candid) {
+        return CommonResponses.communityFrozen;
+    }
+    throw new UnsupportedValueError("Unexpected ApiDeleteChannelResponse type received", candid);
 }
 
 export function deleteMessagesResponse(_candid: ApiDeleteMessagesResponse): unknown {

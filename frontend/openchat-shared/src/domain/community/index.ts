@@ -172,6 +172,15 @@ export type DeclineChannelInvitationResponse =
     | Success
     | UserNotInCommunity;
 
+export type DeleteChannelResponse =
+    | UserNotInChannel
+    | ChannelNotFound
+    | NotAuthorised
+    | Success
+    | UserNotInCommunity
+    | UserSuspended
+    | CommunityFrozen;
+
 export const CommonResponses = {
     userNotInChannel: { kind: "user_not_in_channel" } as UserNotInChannel,
     channelNotFound: { kind: "channel_not_found" } as ChannelNotFound,
