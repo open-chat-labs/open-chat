@@ -2,10 +2,12 @@
 use super::private_communities::PrivateCommunityInfo;
 use crate::MARK_ACTIVE_DURATION;
 use candid::CandidType;
+use search::{Document, Query};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use types::{CommunityId, FrozenCommunityInfo, PublicCommunityActivity, TimestampMillis};
+use types::{CommunityId, CommunityMatch, FrozenCommunityInfo, PublicCommunityActivity, TimestampMillis};
 use utils::case_insensitive_hash_map::CaseInsensitiveHashMap;
+use utils::iterator_extensions::IteratorExtensions;
 
 #[derive(Serialize, Deserialize, Default)]
 #[serde(from = "PublicCommunitiesTrimmed")]
@@ -62,6 +64,22 @@ impl PublicCommunities {
 
     pub fn handle_community_creation_failed(&mut self, name: &str) {
         self.communities_pending.remove(name);
+    }
+
+    pub fn search(&self, search_term: String, max_results: u8) -> Vec<CommunityMatch> {
+        let query = Query::parse(search_term);
+
+        self.iter()
+            .filter(|g| !g.is_frozen())
+            .map(|g| {
+                let document: Document = g.into();
+                let score = document.calculate_score(&query);
+                (score, g)
+            })
+            .filter(|(score, _)| *score > 0)
+            .max_n_by(max_results as usize, |(score, _)| *score)
+            .map(|(_, g)| g.into())
+            .collect()
     }
 
     pub fn update_community(
@@ -169,6 +187,27 @@ impl PublicCommunityInfo {
 
     pub fn set_frozen(&mut self, info: Option<FrozenCommunityInfo>) {
         self.frozen = info;
+    }
+}
+
+impl From<&PublicCommunityInfo> for CommunityMatch {
+    fn from(community: &PublicCommunityInfo) -> Self {
+        CommunityMatch {
+            community_id: community.id,
+            name: community.name.clone(),
+            description: community.description.clone(),
+            avatar_id: community.avatar_id,
+        }
+    }
+}
+
+impl From<&PublicCommunityInfo> for Document {
+    fn from(group: &PublicCommunityInfo) -> Self {
+        let mut document = Document::default();
+        document
+            .add_field(group.name.to_owned(), 5.0, true)
+            .add_field(group.description.to_owned(), 1.0, true);
+        document
     }
 }
 
