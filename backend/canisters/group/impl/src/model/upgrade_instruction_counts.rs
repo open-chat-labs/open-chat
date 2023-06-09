@@ -5,8 +5,6 @@ use serde::{Deserialize, Serialize};
 use std::borrow::Cow;
 use types::{TimestampMillis, Version};
 
-const INSTRUCTION_COUNT_ENTRY_SIZE_BYTES: usize = 29;
-
 #[derive(Serialize, Deserialize)]
 pub struct InstructionCountsLog {
     #[serde(skip, default = "init_log")]
@@ -56,48 +54,17 @@ fn init_log() -> StableLog<InstructionCountEntry, Memory, Memory> {
 
 impl Storable for InstructionCountEntry {
     fn to_bytes(&self) -> Cow<[u8]> {
-        let mut bytes = [0u8; INSTRUCTION_COUNT_ENTRY_SIZE_BYTES];
-        bytes[..8].copy_from_slice(&self.timestamp.to_be_bytes());
-        bytes[8..12].copy_from_slice(&self.wasm_version.major.to_be_bytes());
-        bytes[12..16].copy_from_slice(&self.wasm_version.minor.to_be_bytes());
-        bytes[16..20].copy_from_slice(&self.wasm_version.patch.to_be_bytes());
-        bytes[20] = self.function_id as u8;
-        bytes[21..].copy_from_slice(&self.instruction_count.to_be_bytes());
-        Cow::Owned(bytes.to_vec())
+        Cow::Owned(msgpack::serialize_then_unwrap(self))
     }
 
     fn from_bytes(bytes: Cow<[u8]>) -> Self {
-        assert_eq!(bytes.len(), INSTRUCTION_COUNT_ENTRY_SIZE_BYTES);
-
-        let timestamp = u64::from_be_bytes(bytes[..8].try_into().unwrap());
-        let major = u32::from_be_bytes(bytes[8..12].try_into().unwrap());
-        let minor = u32::from_be_bytes(bytes[12..16].try_into().unwrap());
-        let patch = u32::from_be_bytes(bytes[16..20].try_into().unwrap());
-        let function_id = bytes[20].into();
-        let instruction_count = u64::from_be_bytes(bytes[21..].try_into().unwrap());
-
-        InstructionCountEntry {
-            timestamp,
-            wasm_version: Version { major, minor, patch },
-            function_id,
-            instruction_count,
-        }
+        msgpack::deserialize_then_unwrap(bytes.as_ref())
     }
 }
 
 impl Default for InstructionCountsLog {
     fn default() -> Self {
         Self { log: init_log() }
-    }
-}
-
-impl From<u8> for InstructionCountFunctionId {
-    fn from(value: u8) -> Self {
-        match value {
-            1 => InstructionCountFunctionId::PreUpgrade,
-            2 => InstructionCountFunctionId::PostUpgrade,
-            _ => InstructionCountFunctionId::Unknown,
-        }
     }
 }
 
