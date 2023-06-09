@@ -30,7 +30,7 @@ fn search_impl(args: Args, state: &RuntimeState) -> Response {
     let group_matches = search_groups
         .then(|| state.data.public_groups.search(args.search_term.clone(), args.max_results))
         .unwrap_or_default();
-    
+
     let community_matches = search_communities
         .then(|| state.data.public_communities.search(args.search_term, args.max_results))
         .unwrap_or_default();
