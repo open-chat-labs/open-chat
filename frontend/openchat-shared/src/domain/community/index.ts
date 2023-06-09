@@ -87,11 +87,15 @@ export type Success = { kind: "success" };
 export type UserNotInCommunity = { kind: "user_not_in_community" };
 export type UserSuspended = { kind: "user_suspended" };
 export type CommunityFrozen = { kind: "community_frozen" };
+export type CommunityNotPublic = { kind: "community_not_public" };
 export type MessageNotFound = {
     kind: "message_not_found";
 };
 export type NoChange = {
     kind: "no_change";
+};
+export type InteralError = {
+    kind: "internal_error";
 };
 
 export type AddReactionResponse =
@@ -108,6 +112,18 @@ export type AddReactionResponse =
 
 export type InvalidReaction = { kind: "invalid_reaction" };
 
+export type BlockCommunityUserResponse =
+    | NotAuthorised
+    | Success
+    | UserNotInCommunity
+    | CommunityNotPublic
+    | UserSuspended
+    | CommunityFrozen
+    | { kind: "target_user_not_in_community" }
+    | InteralError
+    | { kind: "cannot_block_self" }
+    | { kind: "cannot_block_user" };
+
 export const CommonResponses = {
     userNotInChannel: { kind: "user_not_in_channel" } as UserNotInChannel,
     channelNotFound: { kind: "channel_not_found" } as ChannelNotFound,
@@ -119,4 +135,6 @@ export const CommonResponses = {
     communityFrozen: { kind: "community_frozen" } as CommunityFrozen,
     messageNotFound: { kind: "message_not_found" } as MessageNotFound,
     noChange: { kind: "no_change" } as NoChange,
+    communityNotPublic: { kind: "community_not_public" } as CommunityNotPublic,
+    internalError: { kind: "internal_error" } as InteralError,
 };
