@@ -100,8 +100,13 @@ export type InteralError = {
 export type Invalid = {
     kind: "invalid";
 };
+
 export type TargetUserNotInCommunity = {
     kind: "target_user_not_in_community";
+};
+
+export type NotPlatformModerator = {
+    kind: "not_platform_moderator";
 };
 
 export type AddReactionResponse =
@@ -181,6 +186,17 @@ export type DeleteChannelResponse =
     | UserSuspended
     | CommunityFrozen;
 
+export type DeleteChannelMessagesResponse =
+    | UserNotInChannel
+    | MessageNotFound
+    | ChannelNotFound
+    | Success
+    | UserNotInCommunity
+    | UserSuspended
+    | CommunityFrozen
+    | NotPlatformModerator
+    | InteralError;
+
 export const CommonResponses = {
     userNotInChannel: { kind: "user_not_in_channel" } as UserNotInChannel,
     channelNotFound: { kind: "channel_not_found" } as ChannelNotFound,
@@ -196,4 +212,5 @@ export const CommonResponses = {
     internalError: { kind: "internal_error" } as InteralError,
     invalid: { kind: "invalid" } as Invalid,
     targetUserNotInCommunity: { kind: "target_user_not_in_community" } as TargetUserNotInCommunity,
+    notPlatformModerator: { kind: "not_platform_moderator" } as NotPlatformModerator,
 };
