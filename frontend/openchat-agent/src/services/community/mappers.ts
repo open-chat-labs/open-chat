@@ -3,6 +3,7 @@ import {
     AddReactionResponse,
     BlockCommunityUserResponse,
     ChangeChannelRoleResponse,
+    ChangeCommunityRoleResponse,
     CommonResponses,
     CommunityPermissionRole,
     CommunityPermissions,
@@ -209,7 +210,7 @@ export function blockUserResponse(candid: ApiBlockUserResponse): BlockCommunityU
         return CommonResponses.communityFrozen;
     }
     if ("TargetUserNotInCommunity" in candid) {
-        return { kind: "target_user_not_in_community" };
+        return CommonResponses.targetUserNotInCommunity;
     }
     if ("InternalError" in candid) {
         return CommonResponses.internalError;
@@ -253,11 +254,38 @@ export function changeChannelRoleResponse(
     if ("TargetUserNotInChannel" in candid) {
         return { kind: "target_user_not_in_channel" };
     }
-    throw new UnsupportedValueError("Unexpected ApiAddReactionResponse type received", candid);
+    throw new UnsupportedValueError(
+        "Unexpected ApiChangeChannelRoleResponse type received",
+        candid
+    );
 }
 
-export function changeRoleResponse(_candid: ApiChangeRoleResponse): unknown {
-    return {};
+export function changeRoleResponse(candid: ApiChangeRoleResponse): ChangeCommunityRoleResponse {
+    if ("Invalid" in candid) {
+        return CommonResponses.invalid;
+    }
+    if ("NotAuthorized" in candid) {
+        return CommonResponses.notAuthorized;
+    }
+    if ("Success" in candid) {
+        return CommonResponses.success;
+    }
+    if ("UserNotInCommunity" in candid) {
+        return CommonResponses.userNotInCommunity;
+    }
+    if ("UserSuspended" in candid) {
+        return CommonResponses.userSuspended;
+    }
+    if ("CommunityFrozen" in candid) {
+        return CommonResponses.communityFrozen;
+    }
+    if ("TargetUserNotInCommunity" in candid) {
+        return CommonResponses.targetUserNotInCommunity;
+    }
+    if ("InternalError" in candid) {
+        return CommonResponses.internalError;
+    }
+    throw new UnsupportedValueError("Unexpected ApiChangeRoleResponse type received", candid);
 }
 
 export function createChannelResponse(_candid: ApiCreateChannelResponse): unknown {

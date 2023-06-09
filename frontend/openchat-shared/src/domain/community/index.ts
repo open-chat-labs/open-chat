@@ -100,6 +100,9 @@ export type InteralError = {
 export type Invalid = {
     kind: "invalid";
 };
+export type TargetUserNotInCommunity = {
+    kind: "target_user_not_in_community";
+};
 
 export type AddReactionResponse =
     | UserNotInChannel
@@ -122,7 +125,7 @@ export type BlockCommunityUserResponse =
     | CommunityNotPublic
     | UserSuspended
     | CommunityFrozen
-    | { kind: "target_user_not_in_community" }
+    | TargetUserNotInCommunity
     | InteralError
     | { kind: "cannot_block_self" }
     | { kind: "cannot_block_user" };
@@ -138,6 +141,16 @@ export type ChangeChannelRoleResponse =
     | CommunityFrozen
     | { kind: "target_user_not_in_channel" };
 
+export type ChangeCommunityRoleResponse =
+    | Invalid
+    | NotAuthorised
+    | Success
+    | UserNotInCommunity
+    | UserSuspended
+    | CommunityFrozen
+    | TargetUserNotInCommunity
+    | InteralError;
+
 export const CommonResponses = {
     userNotInChannel: { kind: "user_not_in_channel" } as UserNotInChannel,
     channelNotFound: { kind: "channel_not_found" } as ChannelNotFound,
@@ -152,4 +165,5 @@ export const CommonResponses = {
     communityNotPublic: { kind: "community_not_public" } as CommunityNotPublic,
     internalError: { kind: "internal_error" } as InteralError,
     invalid: { kind: "invalid" } as Invalid,
+    targetUserNotInCommunity: { kind: "target_user_not_in_community" } as TargetUserNotInCommunity,
 };
