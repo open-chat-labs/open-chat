@@ -18,6 +18,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Use FireAndForgetHandler for activity notification ([#3755](https://github.com/open-ic/open-chat/pull/3755))
 - Make (de)serializing events + users more efficient ([#3756](https://github.com/open-ic/open-chat/pull/3756))
 
+### Fixed
+
+- Fix `is_user_an_owner` check ([#3761](https://github.com/open-ic/open-chat/pull/3761))
+
 ## [[2.0.713](https://github.com/open-ic/open-chat/releases/tag/v2.0.713-group)] - 2023-06-02
 
 ### Changed
