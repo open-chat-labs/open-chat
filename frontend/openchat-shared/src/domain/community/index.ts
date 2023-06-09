@@ -87,6 +87,26 @@ export type Success = { kind: "success" };
 export type UserNotInCommunity = { kind: "user_not_in_community" };
 export type UserSuspended = { kind: "user_suspended" };
 export type CommunityFrozen = { kind: "community_frozen" };
+export type MessageNotFound = {
+    kind: "message_not_found";
+};
+export type NoChange = {
+    kind: "no_change";
+};
+
+export type AddReactionResponse =
+    | UserNotInChannel
+    | ChannelNotFound
+    | MessageNotFound
+    | NoChange
+    | NotAuthorised
+    | Success
+    | UserNotInCommunity
+    | UserSuspended
+    | CommunityFrozen
+    | InvalidReaction;
+
+export type InvalidReaction = { kind: "invalid_reaction" };
 
 export const CommonResponses = {
     userNotInChannel: { kind: "user_not_in_channel" } as UserNotInChannel,
@@ -97,4 +117,6 @@ export const CommonResponses = {
     userNotInCommunity: { kind: "user_not_in_community" } as UserNotInCommunity,
     userSuspended: { kind: "user_suspended" } as UserSuspended,
     communityFrozen: { kind: "community_frozen" } as CommunityFrozen,
+    messageNotFound: { kind: "message_not_found" } as MessageNotFound,
+    noChange: { kind: "no_change" } as NoChange,
 };

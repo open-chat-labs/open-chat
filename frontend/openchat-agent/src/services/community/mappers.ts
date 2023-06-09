@@ -1,5 +1,6 @@
 import {
     AddMembersToChannelResponse,
+    AddReactionResponse,
     CommonResponses,
     CommunityPermissionRole,
     CommunityPermissions,
@@ -152,8 +153,38 @@ function addToChannelPartialSuccess(
     };
 }
 
-export function addReactionResponse(_candid: ApiAddReactionResponse): unknown {
-    return {};
+export function addReactionResponse(candid: ApiAddReactionResponse): AddReactionResponse {
+    if ("UserNotInChannel" in candid) {
+        return CommonResponses.userNotInChannel;
+    }
+    if ("MessageNotFound" in candid) {
+        return CommonResponses.messageNotFound;
+    }
+    if ("NoChange" in candid) {
+        return CommonResponses.noChange;
+    }
+    if ("ChannelNotFound" in candid) {
+        return CommonResponses.channelNotFound;
+    }
+    if ("NotAuthorized" in candid) {
+        return CommonResponses.notAuthorized;
+    }
+    if ("Success" in candid) {
+        return CommonResponses.success;
+    }
+    if ("UserNotInCommunity" in candid) {
+        return CommonResponses.userNotInCommunity;
+    }
+    if ("UserSuspended" in candid) {
+        return CommonResponses.userSuspended;
+    }
+    if ("CommunityFrozen" in candid) {
+        return CommonResponses.communityFrozen;
+    }
+    if ("InvalidReaction" in candid) {
+        return { kind: "invalid_reaction" };
+    }
+    throw new UnsupportedValueError("Unexpected ApiAddReactionResponse type received", candid);
 }
 
 export function blockUserResponse(_candid: ApiBlockUserResponse): unknown {
