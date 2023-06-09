@@ -151,6 +151,21 @@ export type ChangeCommunityRoleResponse =
     | TargetUserNotInCommunity
     | InteralError;
 
+export type CreateChannelResponse =
+    | { kind: "max_channels_created" }
+    | { kind: "name_reserved" }
+    | { kind: "rules_too_long" }
+    | { kind: "description_too_long" }
+    | { kind: "name_too_short" }
+    | NotAuthorised
+    | { kind: "avatar_too_big" }
+    | { kind: "success"; channelId: string }
+    | UserSuspended
+    | { kind: "rules_too_short" }
+    | CommunityFrozen
+    | { kind: "name_too_long" }
+    | { kind: "name_taken" };
+
 export const CommonResponses = {
     userNotInChannel: { kind: "user_not_in_channel" } as UserNotInChannel,
     channelNotFound: { kind: "channel_not_found" } as ChannelNotFound,

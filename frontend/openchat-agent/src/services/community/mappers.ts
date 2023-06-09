@@ -7,6 +7,7 @@ import {
     CommonResponses,
     CommunityPermissionRole,
     CommunityPermissions,
+    CreateChannelResponse,
     GateCheckFailedReason,
     MemberRole,
     UnsupportedValueError,
@@ -288,8 +289,47 @@ export function changeRoleResponse(candid: ApiChangeRoleResponse): ChangeCommuni
     throw new UnsupportedValueError("Unexpected ApiChangeRoleResponse type received", candid);
 }
 
-export function createChannelResponse(_candid: ApiCreateChannelResponse): unknown {
-    return {};
+export function createChannelResponse(candid: ApiCreateChannelResponse): CreateChannelResponse {
+    if ("MaxChannelsCreated" in candid) {
+        return { kind: "max_channels_created" };
+    }
+    if ("NameReserved" in candid) {
+        return { kind: "name_reserved" };
+    }
+    if ("RulesTooLong" in candid) {
+        return { kind: "rules_too_long" };
+    }
+    if ("DescriptionTooLong" in candid) {
+        return { kind: "description_too_long" };
+    }
+    if ("NameTooShort" in candid) {
+        return { kind: "name_too_short" };
+    }
+    if ("NotAuthorized" in candid) {
+        return CommonResponses.notAuthorized;
+    }
+    if ("AvatarTooBig" in candid) {
+        return { kind: "avatar_too_big" };
+    }
+    if ("Success" in candid) {
+        return { kind: "success", channelId: candid.Success.channel_id.toString() };
+    }
+    if ("UserSuspended" in candid) {
+        return CommonResponses.userSuspended;
+    }
+    if ("RulesTooShort" in candid) {
+        return { kind: "rules_too_short" };
+    }
+    if ("CommunityFrozen" in candid) {
+        return CommonResponses.communityFrozen;
+    }
+    if ("NameTooLong" in candid) {
+        return { kind: "name_too_long" };
+    }
+    if ("NameTaken" in candid) {
+        return { kind: "name_taken" };
+    }
+    throw new UnsupportedValueError("Unexpected ApiCreateChannelResponse type received", candid);
 }
 
 export function declineInvitationResponse(_candid: ApiDeclineInvitationResponse): unknown {
