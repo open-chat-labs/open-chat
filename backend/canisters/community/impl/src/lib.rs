@@ -11,7 +11,7 @@ use notifications_canister::c2c_push_notification;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use types::{
-    AccessGate, AccessRules, Avatar, CanisterId, ChannelId, CommunityCanisterCommunitySummary, CommunityPermissions, Cycles,
+    AccessGate, AccessRules, CanisterId, ChannelId, CommunityCanisterCommunitySummary, CommunityPermissions, Cycles, Document,
     FrozenGroupInfo, Milliseconds, Notification, TimestampMillis, Timestamped, UserId, Version,
 };
 use utils::env::Environment;
@@ -88,7 +88,7 @@ impl RuntimeState {
             last_updated: now,
             name: data.name.clone(),
             description: data.description.clone(),
-            avatar_id: Avatar::id(&data.avatar),
+            avatar_id: Document::id(&data.avatar),
             is_public: data.is_public,
             latest_event_index: data.events.latest_event_index(),
             joined: member.date_added,
@@ -133,7 +133,8 @@ struct Data {
     name: String,
     description: String,
     rules: AccessRules,
-    avatar: Option<Avatar>,
+    avatar: Option<Document>,
+    banner: Option<Document>,
     permissions: CommunityPermissions,
     gate: Timestamped<Option<AccessGate>>,
     user_index_canister_id: CanisterId,
@@ -165,7 +166,7 @@ impl Data {
         name: String,
         description: String,
         rules: AccessRules,
-        avatar: Option<Avatar>,
+        avatar: Option<Document>,
         permissions: CommunityPermissions,
         user_index_canister_id: CanisterId,
         local_user_index_canister_id: CanisterId,
@@ -189,6 +190,7 @@ impl Data {
             description,
             rules,
             avatar,
+            banner: None,
             permissions,
             gate: Timestamped::new(gate, now),
             user_index_canister_id,

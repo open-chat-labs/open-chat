@@ -1,11 +1,11 @@
 use candid::CandidType;
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
-use types::{Avatar, FieldTooLongResult};
+use types::{Document, FieldTooLongResult};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
-    pub avatar: Option<Avatar>,
+    pub avatar: Option<Document>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

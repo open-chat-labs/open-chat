@@ -202,7 +202,7 @@ type CreateGroupArgs =
         is_public: bool;
         name: text;
         description: text;
-        avatar: opt Avatar;
+        avatar: opt Document;
         history_visible_to_new_joiners: bool;
         permissions: opt GroupPermissions;
         rules: AccessRules;
@@ -269,7 +269,7 @@ type CreateCommunityArgs =
         is_public: bool;
         name: text;
         description: text;
-        avatar: opt Avatar;
+        avatar: opt Document;
         history_visible_to_new_joiners: bool;
         permissions: opt CommunityPermissions;
         rules: AccessRules;
@@ -336,7 +336,7 @@ type DeleteCommunityResponse =
 
 type SetAvatarArgs =
     record {
-        avatar: opt Avatar;
+        avatar: opt Document;
     };
 
 type SetAvatarResponse =

@@ -15,7 +15,7 @@ use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use std::ops::Deref;
 use types::{
-    AccessGate, AccessRules, Avatar, CanisterId, Cryptocurrency, Cycles, EventIndex, FrozenGroupInfo,
+    AccessGate, AccessRules, CanisterId, Cryptocurrency, Cycles, Document, EventIndex, FrozenGroupInfo,
     GroupCanisterGroupChatSummary, GroupPermissions, GroupSubtype, MessageIndex, Milliseconds, Notification, TimestampMillis,
     Timestamped, UserId, Version, MAX_THREADS_IN_SUMMARY,
 };
@@ -95,7 +95,7 @@ impl RuntimeState {
             name: chat.name.clone(),
             description: chat.description.clone(),
             subtype: chat.subtype.value.clone(),
-            avatar_id: Avatar::id(&chat.avatar),
+            avatar_id: Document::id(&chat.avatar),
             is_public: chat.is_public,
             history_visible_to_new_joiners: chat.history_visible_to_new_joiners,
             min_visible_event_index,
@@ -259,7 +259,7 @@ impl Data {
         description: String,
         rules: AccessRules,
         subtype: Option<GroupSubtype>,
-        avatar: Option<Avatar>,
+        avatar: Option<Document>,
         history_visible_to_new_joiners: bool,
         creator_principal: Principal,
         creator_user_id: UserId,

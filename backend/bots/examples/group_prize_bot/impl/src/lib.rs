@@ -4,7 +4,7 @@ use rand::RngCore;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashSet;
-use types::{Avatar, CanisterId, CompletedCryptoTransaction, Cryptocurrency, Cycles, TimestampMillis, Timestamped, Version};
+use types::{CanisterId, CompletedCryptoTransaction, Cryptocurrency, Cycles, Document, TimestampMillis, Timestamped, Version};
 use utils::env::Environment;
 
 mod guards;
@@ -75,7 +75,7 @@ impl RuntimeState {
 struct Data {
     pub user_index_canister_id: CanisterId,
     pub admins: HashSet<Principal>,
-    pub avatar: Timestamped<Option<Avatar>>,
+    pub avatar: Timestamped<Option<Document>>,
     pub test_mode: bool,
     pub username: String,
     pub prize_data: Option<PrizeData>,

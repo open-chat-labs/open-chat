@@ -119,6 +119,7 @@ type CommunityMatch =
         name: text;
         description: text;
         avatar_id: opt nat;
+        banner_id: opt nat;
     };
 
 type GroupMatch =

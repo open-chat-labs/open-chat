@@ -14,7 +14,7 @@ use search::Query;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use types::{
-    AccessGate, AccessRules, Avatar, AvatarChanged, ContentValidationError, CryptoTransaction, EventIndex, EventWrapper,
+    AccessGate, AccessRules, AvatarChanged, ContentValidationError, CryptoTransaction, Document, EventIndex, EventWrapper,
     EventsResponse, FieldTooLongResult, FieldTooShortResult, GroupDescriptionChanged, GroupGateUpdated, GroupNameChanged,
     GroupPermissionRole, GroupPermissions, GroupReplyContext, GroupRole, GroupRulesChanged, GroupSubtype,
     GroupVisibilityChanged, InvalidPollReason, MemberLeft, MembersRemoved, Mention, MentionInternal, Message, MessageContent,
@@ -32,7 +32,7 @@ pub struct GroupChatCore {
     pub description: String,
     pub rules: AccessRules,
     pub subtype: Timestamped<Option<GroupSubtype>>,
-    pub avatar: Option<Avatar>,
+    pub avatar: Option<Document>,
     pub history_visible_to_new_joiners: bool,
     pub members: GroupMembers,
     pub events: ChatEvents,
@@ -54,7 +54,7 @@ impl GroupChatCore {
         description: String,
         rules: AccessRules,
         subtype: Option<GroupSubtype>,
-        avatar: Option<Avatar>,
+        avatar: Option<Document>,
         history_visible_to_new_joiners: bool,
         permissions: GroupPermissions,
         gate: Option<AccessGate>,
@@ -1211,7 +1211,7 @@ impl GroupChatCore {
         name: Option<String>,
         description: Option<String>,
         rules: Option<AccessRules>,
-        avatar: OptionUpdate<Avatar>,
+        avatar: OptionUpdate<Document>,
         permissions: Option<OptionalGroupPermissions>,
         gate: OptionUpdate<AccessGate>,
         events_ttl: OptionUpdate<Milliseconds>,
@@ -1234,7 +1234,7 @@ impl GroupChatCore {
         name: &Option<String>,
         description: &Option<String>,
         rules: &Option<AccessRules>,
-        avatar: &OptionUpdate<Avatar>,
+        avatar: &OptionUpdate<Document>,
         permissions: &Option<OptionalGroupPermissions>,
     ) -> UpdateResult {
         use UpdateResult::*;
@@ -1294,7 +1294,7 @@ impl GroupChatCore {
         name: Option<String>,
         description: Option<String>,
         rules: Option<AccessRules>,
-        avatar: OptionUpdate<Avatar>,
+        avatar: OptionUpdate<Document>,
         permissions: Option<OptionalGroupPermissions>,
         gate: OptionUpdate<AccessGate>,
         events_ttl: OptionUpdate<Milliseconds>,
@@ -1351,8 +1351,8 @@ impl GroupChatCore {
         }
 
         if let Some(avatar) = avatar.expand() {
-            let previous_avatar_id = Avatar::id(&self.avatar);
-            let new_avatar_id = Avatar::id(&avatar);
+            let previous_avatar_id = Document::id(&self.avatar);
+            let new_avatar_id = Document::id(&avatar);
 
             if new_avatar_id != previous_avatar_id {
                 events.push_main_event(

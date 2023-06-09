@@ -3,6 +3,7 @@ use types::{FileId, TimestampMillis};
 
 pub enum Route {
     Avatar(Option<u128>),
+    Banner(Option<u128>),
     File(u128),
     Logs(Option<TimestampMillis>),
     Traces(Option<TimestampMillis>),
@@ -25,6 +26,10 @@ pub fn extract_route(path: &str) -> Route {
         "avatar" => {
             let blob_id = parts.get(1).and_then(|p| u128::from_str(p).ok());
             Route::Avatar(blob_id)
+        }
+        "banner" => {
+            let blob_id = parts.get(1).and_then(|p| u128::from_str(p).ok());
+            Route::Banner(blob_id)
         }
         "blobs" | "files" if parts.len() > 1 => {
             if let Ok(file_id) = FileId::from_str(parts[1]) {

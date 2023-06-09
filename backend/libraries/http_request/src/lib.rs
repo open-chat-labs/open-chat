@@ -1,4 +1,4 @@
-mod avatar_handler;
+mod document_handler;
 mod logs_handler;
 mod router;
 
@@ -7,7 +7,7 @@ use serde_bytes::ByteBuf;
 use std::borrow::Cow;
 use types::{HeaderField, HttpResponse};
 
-pub use avatar_handler::*;
+pub use document_handler::*;
 pub use logs_handler::*;
 pub use router::*;
 

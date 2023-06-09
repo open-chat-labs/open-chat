@@ -54,7 +54,7 @@ impl PublicCommunities {
     ) -> bool {
         if self.communities_pending.remove(&name).is_some() {
             self.name_to_id_map.insert(&name, community_id);
-            let community_info = PublicCommunityInfo::new(community_id, name, description, avatar_id, now);
+            let community_info = PublicCommunityInfo::new(community_id, name, description, avatar_id, None, now);
             self.communities.insert(community_id, community_info);
             true
         } else {
@@ -108,6 +108,16 @@ impl PublicCommunities {
         }
     }
 
+    pub fn update_banner(&mut self, community_id: &CommunityId, banner_id: Option<u128>) -> bool {
+        match self.communities.get_mut(community_id) {
+            None => false,
+            Some(mut community) => {
+                community.banner_id = banner_id;
+                true
+            }
+        }
+    }
+
     pub fn delete(&mut self, community_id: &CommunityId) -> Option<PublicCommunityInfo> {
         if let Some(community) = self.communities.remove(community_id) {
             self.name_to_id_map.remove(&community.name);
@@ -134,6 +144,7 @@ pub struct PublicCommunityInfo {
     name: String,
     description: String,
     avatar_id: Option<u128>,
+    banner_id: Option<u128>,
     activity: PublicCommunityActivity,
 }
 
@@ -150,6 +161,7 @@ impl PublicCommunityInfo {
         name: String,
         description: String,
         avatar_id: Option<u128>,
+        banner_id: Option<u128>,
         now: TimestampMillis,
     ) -> PublicCommunityInfo {
         PublicCommunityInfo {
@@ -157,6 +169,7 @@ impl PublicCommunityInfo {
             name,
             description,
             avatar_id,
+            banner_id,
             created: now,
             marked_active_until: now + MARK_ACTIVE_DURATION,
             activity: PublicCommunityActivity::default(),
@@ -197,6 +210,7 @@ impl From<&PublicCommunityInfo> for CommunityMatch {
             name: community.name.clone(),
             description: community.description.clone(),
             avatar_id: community.avatar_id,
+            banner_id: community.banner_id,
         }
     }
 }

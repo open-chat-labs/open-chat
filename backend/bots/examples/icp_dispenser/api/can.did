@@ -21,7 +21,7 @@ type RegisterBotResponse =
         InternalError: text;
     };
 
-type Avatar =
+type Document =
     record {
         id: nat;
         mime_type: text;
@@ -36,7 +36,7 @@ type FieldTooLongResult =
 
 type SetAvatarArgs =
     record {
-        avatar: opt Avatar;
+        avatar: opt Document;
     };
 
 type SetAvatarResponse =

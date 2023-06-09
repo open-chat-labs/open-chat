@@ -322,7 +322,7 @@ type CreateChannelArgs =
         description: text;
         rules: AccessRules;
         subtype: opt GroupSubtype;
-        avatar: opt Avatar;
+        avatar: opt Document;
         history_visible_to_new_joiners: bool;
         permissions: opt GroupPermissions;
         events_ttl: opt Milliseconds;
