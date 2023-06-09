@@ -193,7 +193,7 @@ impl PublicCommunityInfo {
 impl From<&PublicCommunityInfo> for CommunityMatch {
     fn from(community: &PublicCommunityInfo) -> Self {
         CommunityMatch {
-            community_id: community.id,
+            id: community.id,
             name: community.name.clone(),
             description: community.description.clone(),
             avatar_id: community.avatar_id,

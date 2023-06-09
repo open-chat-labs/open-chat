@@ -115,7 +115,7 @@ type SearchV2Success =
 
 type CommunityMatch =
     record {
-        community_id: CommunityId;
+        id: CommunityId;
         name: text;
         description: text;
         avatar_id: opt nat;
