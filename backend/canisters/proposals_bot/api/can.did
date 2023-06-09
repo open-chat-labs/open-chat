@@ -5,7 +5,7 @@ type AddGovernanceCanisterArgs =
         governance_canister_id: CanisterId;
         name: text;
         description: opt text;
-        avatar: opt Avatar;
+        avatar: opt Document;
     };
 
 type AddGovernanceCanisterResponse =

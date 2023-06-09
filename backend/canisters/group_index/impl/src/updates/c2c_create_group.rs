@@ -5,12 +5,12 @@ use candid::Principal;
 use canister_api_macros::update_msgpack;
 use canister_tracing_macros::trace;
 use group_index_canister::c2c_create_group::{Response::*, *};
-use types::{Avatar, CanisterId, ChatId, GroupSubtype, UserId};
+use types::{CanisterId, ChatId, Document, GroupSubtype, UserId};
 
 #[update_msgpack]
 #[trace]
 async fn c2c_create_group(args: Args) -> Response {
-    let avatar_id = Avatar::id(&args.avatar);
+    let avatar_id = Document::id(&args.avatar);
 
     let (user_id, principal) = match validate_caller().await {
         Ok((u, p)) => (u, p),

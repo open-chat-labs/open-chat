@@ -16,4 +16,5 @@ pub struct CommunityMatch {
     pub name: String,
     pub description: String,
     pub avatar_id: Option<u128>,
+    pub banner_id: Option<u128>,
 }

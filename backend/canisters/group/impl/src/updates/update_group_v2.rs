@@ -7,7 +7,7 @@ use group_chat_core::UpdateResult;
 use group_index_canister::c2c_update_group;
 use ic_cdk_macros::update;
 use tracing::error;
-use types::{Avatar, CanisterId, ChatId, UserId};
+use types::{CanisterId, ChatId, Document, UserId};
 
 #[update]
 #[trace]
@@ -92,7 +92,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
                     chat_id: state.env.canister_id().into(),
                     name: args.name.as_ref().unwrap_or(&state.data.chat.name).clone(),
                     description: args.description.as_ref().unwrap_or(&state.data.chat.description).clone(),
-                    avatar_id: avatar_update.map_or(Avatar::id(&state.data.chat.avatar), |avatar| avatar.map(|a| a.id)),
+                    avatar_id: avatar_update.map_or(Document::id(&state.data.chat.avatar), |avatar| avatar.map(|a| a.id)),
                 })
             }
             UpdateResult::UserSuspended => Err(UserSuspended),

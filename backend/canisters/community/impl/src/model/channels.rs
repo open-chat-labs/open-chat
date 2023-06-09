@@ -4,8 +4,8 @@ use serde::{Deserialize, Serialize};
 use std::collections::hash_map::Entry::Vacant;
 use std::collections::{HashMap, HashSet};
 use types::{
-    AccessRules, Avatar, ChannelId, CommunityCanisterChannelSummary, CommunityCanisterChannelSummaryUpdates, GroupPermissions,
-    TimestampMillis, UserId, MAX_THREADS_IN_SUMMARY,
+    AccessRules, ChannelId, CommunityCanisterChannelSummary, CommunityCanisterChannelSummaryUpdates, Document,
+    GroupPermissions, TimestampMillis, UserId, MAX_THREADS_IN_SUMMARY,
 };
 
 #[derive(Serialize, Deserialize, Default)]
@@ -104,7 +104,7 @@ impl Channel {
             name: chat.name.clone(),
             description: chat.description.clone(),
             subtype: chat.subtype.value.clone(),
-            avatar_id: Avatar::id(&chat.avatar),
+            avatar_id: Document::id(&chat.avatar),
             is_public: chat.is_public,
             history_visible_to_new_joiners: chat.history_visible_to_new_joiners,
             min_visible_event_index,

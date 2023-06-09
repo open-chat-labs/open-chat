@@ -39,7 +39,7 @@ type AudioContent =
         blob_reference: opt BlobReference;
     };
 
-type Avatar =
+type Document =
     record {
         id: nat;
         mime_type: text;
@@ -458,7 +458,7 @@ type AvatarUpdate =
     variant {
         NoChange;
         SetToNone;
-        SetToSome: Avatar;
+        SetToSome: Document;
     };
 
 type TextUpdate =
