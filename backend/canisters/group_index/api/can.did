@@ -52,7 +52,7 @@ type DeletedCommunityInfo =
         id: CommunityId;
         timestamp: TimestampMillis;
         deleted_by: UserId;
-        community_name: text;
+        name: text;
         public: bool;
     };
 
@@ -62,6 +62,7 @@ type DeletedGroupInfo =
         timestamp: TimestampMillis;
         deleted_by: UserId;
         group_name: text;
+        name: text;
         public: bool;
     };
 

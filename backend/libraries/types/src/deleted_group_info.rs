@@ -8,6 +8,7 @@ pub struct DeletedGroupInfo {
     pub timestamp: TimestampMillis,
     pub deleted_by: UserId,
     pub group_name: String,
+    pub name: String,
     pub public: bool,
 }
 
@@ -16,6 +17,6 @@ pub struct DeletedCommunityInfo {
     pub id: CommunityId,
     pub timestamp: TimestampMillis,
     pub deleted_by: UserId,
-    pub community_name: String,
+    pub name: String,
     pub public: bool,
 }

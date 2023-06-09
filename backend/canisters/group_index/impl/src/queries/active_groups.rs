@@ -10,16 +10,7 @@ fn active_groups(args: Args) -> Response {
 
 #[query_msgpack]
 fn c2c_active_groups(args: group_index_canister::c2c_active_groups::Args) -> group_index_canister::c2c_active_groups::Response {
-    read_state(|state| {
-        active_groups_impl(
-            Args {
-                group_ids: args.group_ids,
-                community_ids: args.community_ids,
-                active_since: args.active_in_last.map(|d| state.env.now().saturating_sub(d)),
-            },
-            state,
-        )
-    })
+    read_state(|state| active_groups_impl(args, state))
 }
 
 fn active_groups_impl(args: Args, state: &RuntimeState) -> Response {
