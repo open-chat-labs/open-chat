@@ -15,8 +15,6 @@ type ActiveGroupsResponse =
             active_communities: vec CommunityId;
             deleted_groups: vec DeletedGroupInfo;
             deleted_communities: vec DeletedCommunityInfo;
-            group_upgrades_in_progress: vec ChatId;
-            community_upgrades_in_progress: vec CommunityId;
         };
     };
 
