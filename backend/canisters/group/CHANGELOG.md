@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ### Added
 
 - Add `selected_updates_v2` ([#3730](https://github.com/open-ic/open-chat/pull/3730))
+- Record instruction counts during upgrades ([#3758](https://github.com/open-ic/open-chat/pull/3758))
 
 ### Changed
 
