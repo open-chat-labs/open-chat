@@ -85,6 +85,42 @@ type SearchSuccessResult =
         matches: vec GroupMatch;
     };
 
+type SearchV2Args =
+    record {
+        scope: SearchScope;
+        search_term: text;
+        max_results: nat8;
+    };
+
+type SearchScope =
+    variant {
+        All;
+        Communities;
+        Groups;
+    };
+
+type SearchV2Response =
+    variant {
+        Success: SearchV2Success;
+        TermTooShort: nat8;
+        TermTooLong: nat8;
+        InvalidTerm;
+    };
+
+type SearchV2Success =
+    record {
+        group_matches: vec GroupMatch;
+        community_matches: vec CommunityMatch;
+    };
+
+type CommunityMatch =
+    record {
+        id: CommunityId;
+        name: text;
+        description: text;
+        avatar_id: opt nat;
+    };
+
 type GroupMatch =
     record {
         chat_id: ChatId;
@@ -191,6 +227,7 @@ service: {
     filter_groups: (FilterGroupsArgs) -> (FilterGroupsResponse) query;
     recommended_groups: (RecommendedGroupsArgs) -> (RecommendedGroupsResponse) query;
     search: (SearchArgs) -> (SearchResponse) query;
+    search_v2: (SearchV2Args) -> (SearchV2Response) query;
 
     // Only callable by "platform moderators"
     freeze_group: (FreezeGroupArgs) -> (FreezeGroupResponse);
