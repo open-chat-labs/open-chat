@@ -70,7 +70,7 @@ pub(crate) async fn delete_group(
     Ok(response)
 }
 
-fn commit(chat_id: ChatId, deleted_by: UserId, group_name: String, members: Vec<UserId>, state: &mut RuntimeState) {
+fn commit(chat_id: ChatId, deleted_by: UserId, name: String, members: Vec<UserId>, state: &mut RuntimeState) {
     let now = state.env.now();
 
     let public = state.data.public_groups.delete(&chat_id).is_some();
@@ -83,7 +83,8 @@ fn commit(chat_id: ChatId, deleted_by: UserId, group_name: String, members: Vec<
             id: chat_id,
             timestamp: now,
             deleted_by,
-            group_name,
+            group_name: name.clone(),
+            name,
             public,
         },
         members,

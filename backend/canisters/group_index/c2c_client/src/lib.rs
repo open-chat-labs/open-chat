@@ -2,6 +2,7 @@ use canister_client::generate_c2c_call;
 use group_index_canister::*;
 
 // Queries
+generate_c2c_call!(c2c_active_groups);
 generate_c2c_call!(c2c_filter_groups);
 
 // Updates

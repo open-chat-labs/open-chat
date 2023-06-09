@@ -70,13 +70,7 @@ pub(crate) async fn delete_community(
     Ok(response)
 }
 
-fn commit(
-    community_id: CommunityId,
-    deleted_by: UserId,
-    community_name: String,
-    members: Vec<UserId>,
-    state: &mut RuntimeState,
-) {
+fn commit(community_id: CommunityId, deleted_by: UserId, name: String, members: Vec<UserId>, state: &mut RuntimeState) {
     let now = state.env.now();
 
     let public = state.data.public_communities.delete(&community_id).is_some();
@@ -89,7 +83,7 @@ fn commit(
             id: community_id,
             timestamp: now,
             deleted_by,
-            community_name,
+            name,
             public,
         },
         members,
