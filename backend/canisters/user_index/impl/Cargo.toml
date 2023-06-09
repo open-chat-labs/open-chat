@@ -49,6 +49,7 @@ serializer = { workspace = true }
 sha2 = { workspace = true }
 sns_governance_canister = { path = "../../../external_canisters/sns_governance/api" }
 sns_governance_canister_c2c_client = { path = "../../../external_canisters/sns_governance/c2c_client" }
+stable_memory = { path = "../../../libraries/stable_memory" }
 storage_index_canister = { path = "../../storage_index/api" }
 storage_index_canister_c2c_client = { path = "../../storage_index/c2c_client" }
 tracing = { workspace = true }

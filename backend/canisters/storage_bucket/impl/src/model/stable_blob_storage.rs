@@ -1,6 +1,7 @@
-use crate::memory::{get_blobs_memory, Memory};
+use crate::memory::get_blobs_memory;
 use ic_stable_structures::{BoundedStorable, StableBTreeMap, Storable};
 use serde::{Deserialize, Serialize};
+use stable_memory::Memory;
 use std::borrow::Cow;
 use std::mem::size_of;
 use types::Hash;

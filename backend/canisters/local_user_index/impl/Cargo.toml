@@ -34,11 +34,12 @@ icrc-ledger-types = { workspace = true }
 ledger_utils = { path = "../../../libraries/ledger_utils" }
 local_user_index_canister = { path = "../api" }
 msgpack = { path = "../../../libraries/msgpack" }
+satoshi_dice_canister = { path = "../../../bots/examples/satoshi_dice/api" }
+satoshi_dice_canister_c2c_client = { path = "../../../bots/examples/satoshi_dice/c2c_client" }
 serde = { workspace = true }
 serde_json = { workspace = true }
 serializer = { workspace = true }
-satoshi_dice_canister = { path = "../../../bots/examples/satoshi_dice/api" }
-satoshi_dice_canister_c2c_client = { path = "../../../bots/examples/satoshi_dice/c2c_client" }
+stable_memory = { path = "../../../libraries/stable_memory" }
 tracing = { workspace = true }
 types = { path = "../../../libraries/types" }
 user_canister = { path = "../../user/api" }

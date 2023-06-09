@@ -1310,6 +1310,7 @@ dependencies = [
  "rand",
  "serde",
  "serializer",
+ "stable_memory 0.1.0",
  "storage_bucket_client",
  "tracing",
  "types",
@@ -1631,7 +1632,7 @@ dependencies = [
  "serde",
  "serde_bytes",
  "serde_json",
- "stable_memory",
+ "stable_memory 0.1.0 (git+https://github.com/open-ic/ic-utils?rev=d54cadd47b1ceb325ae3f6bf9ec4e9d9aa6bc72e)",
  "tracing",
  "types",
  "utils",
@@ -2463,6 +2464,7 @@ dependencies = [
  "serde",
  "serde_bytes",
  "serializer",
+ "stable_memory 0.1.0",
  "storage_bucket_client",
  "tracing",
  "types",
@@ -2548,6 +2550,7 @@ dependencies = [
  "search",
  "serde",
  "serializer",
+ "stable_memory 0.1.0",
  "tracing",
  "types",
  "user_canister",
@@ -4293,6 +4296,7 @@ dependencies = [
  "serde_bytes",
  "serde_json",
  "serializer",
+ "stable_memory 0.1.0",
  "tracing",
  "types",
  "utils",
@@ -4356,6 +4360,7 @@ dependencies = [
  "serde",
  "serde_json",
  "serializer",
+ "stable_memory 0.1.0",
  "tracing",
  "types",
  "user_canister",
@@ -4486,6 +4491,7 @@ dependencies = [
  "serde",
  "serde_bytes",
  "serializer",
+ "stable_memory 0.1.0",
  "test-case",
  "tracing",
  "types",
@@ -4725,6 +4731,7 @@ dependencies = [
  "notifications_index_canister",
  "serde",
  "serializer",
+ "stable_memory 0.1.0",
  "tracing",
  "types",
  "user_index_canister",
@@ -4788,6 +4795,7 @@ dependencies = [
  "notifications_index_canister",
  "serde",
  "serializer",
+ "stable_memory 0.1.0",
  "tracing",
  "types",
  "user_index_canister",
@@ -4972,6 +4980,7 @@ dependencies = [
  "online_users_canister",
  "serde",
  "serializer",
+ "stable_memory 0.1.0",
  "tracing",
  "types",
  "user_index_canister",
@@ -5489,6 +5498,7 @@ dependencies = [
  "serde",
  "serializer",
  "sha2 0.10.6",
+ "stable_memory 0.1.0",
  "tracing",
  "types",
  "utils",
@@ -6505,6 +6515,13 @@ dependencies = [
 [[package]]
 name = "stable_memory"
 version = "0.1.0"
+dependencies = [
+ "ic-stable-structures",
+]
+
+[[package]]
+name = "stable_memory"
+version = "0.1.0"
 source = "git+https://github.com/open-ic/ic-utils?rev=d54cadd47b1ceb325ae3f6bf9ec4e9d9aa6bc72e#d54cadd47b1ceb325ae3f6bf9ec4e9d9aa6bc72e"
 dependencies = [
  "ic-cdk 0.7.3",
@@ -6559,6 +6576,7 @@ dependencies = [
  "serde",
  "serde_bytes",
  "serializer",
+ "stable_memory 0.1.0",
  "storage_bucket_canister",
  "storage_index_canister",
  "storage_index_canister_c2c_client",
@@ -6632,6 +6650,7 @@ dependencies = [
  "ic-stable-structures",
  "serde",
  "serializer",
+ "stable_memory 0.1.0",
  "storage_bucket_canister",
  "storage_bucket_canister_c2c_client",
  "storage_index_canister",
@@ -7306,7 +7325,7 @@ dependencies = [
  "serializer",
  "sns_governance_canister",
  "sns_governance_canister_c2c_client",
- "stable_memory",
+ "stable_memory 0.1.0 (git+https://github.com/open-ic/ic-utils?rev=d54cadd47b1ceb325ae3f6bf9ec4e9d9aa6bc72e)",
  "storage_bucket_client",
  "tracing",
  "types",
@@ -7396,6 +7415,7 @@ dependencies = [
  "sha2 0.10.6",
  "sns_governance_canister",
  "sns_governance_canister_c2c_client",
+ "stable_memory 0.1.0",
  "storage_index_canister",
  "storage_index_canister_c2c_client",
  "time 0.3.20",

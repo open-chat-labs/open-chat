@@ -1,7 +1,8 @@
-use crate::memory::{get_principal_to_user_id_map_memory, Memory};
+use crate::memory::get_principal_to_user_id_map_memory;
 use candid::Principal;
 use ic_stable_structures::StableBTreeMap;
 use serde::{Deserialize, Serialize};
+use stable_memory::Memory;
 use types::UserId;
 
 #[derive(Serialize, Deserialize)]

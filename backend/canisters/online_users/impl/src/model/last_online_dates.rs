@@ -1,7 +1,8 @@
-use crate::memory::{get_last_online_dates_memory, Memory};
+use crate::memory::get_last_online_dates_memory;
 use candid::Principal;
 use ic_stable_structures::StableBTreeMap;
 use serde::{Deserialize, Serialize};
+use stable_memory::Memory;
 use types::{TimestampMillis, UserId};
 
 #[derive(Serialize, Deserialize)]

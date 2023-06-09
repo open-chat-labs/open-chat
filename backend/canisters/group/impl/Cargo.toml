@@ -47,6 +47,7 @@ search = { path = "../../../libraries/search" }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
 serializer = { workspace = true }
+stable_memory = { path = "../../../libraries/stable_memory" }
 storage_bucket_client = { path = "../../../libraries/storage_bucket_client" }
 tracing = { workspace = true }
 types = { path = "../../../libraries/types" }

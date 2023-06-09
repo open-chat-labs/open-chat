@@ -33,6 +33,7 @@ msgpack = { path = "../../../libraries/msgpack" }
 serde = { workspace = true }
 serde_bytes = { workspace = true }
 serializer = { workspace = true }
+stable_memory = { path = "../../../libraries/stable_memory" }
 tracing = { workspace = true }
 types = { path = "../../../libraries/types" }
 user_index_canister_c2c_client = { path = "../../user_index/c2c_client" }

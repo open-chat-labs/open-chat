@@ -1,7 +1,5 @@
-use ic_stable_structures::{
-    memory_manager::{MemoryId, MemoryManager, VirtualMemory},
-    DefaultMemoryImpl,
-};
+use ic_stable_structures::memory_manager::MemoryId;
+use stable_memory::{get_memory, Memory};
 
 const UPGRADES: MemoryId = MemoryId::new(0);
 const FILES_BY_USER: MemoryId = MemoryId::new(1);
@@ -9,13 +7,6 @@ const BLOB_REFERENCE_COUNTS: MemoryId = MemoryId::new(2);
 const BLOB_SIZES: MemoryId = MemoryId::new(3);
 const TOTAL_FILE_BYTES: MemoryId = MemoryId::new(4);
 const TOTAL_BLOB_BYTES: MemoryId = MemoryId::new(5);
-
-pub type Memory = VirtualMemory<DefaultMemoryImpl>;
-
-thread_local! {
-    static MEMORY_MANAGER: MemoryManager<DefaultMemoryImpl>
-        = MemoryManager::init(DefaultMemoryImpl::default());
-}
 
 pub fn get_upgrades_memory() -> Memory {
     get_memory(UPGRADES)
@@ -39,8 +30,4 @@ pub fn get_total_file_bytes_memory() -> Memory {
 
 pub fn get_total_blob_bytes_memory() -> Memory {
     get_memory(TOTAL_BLOB_BYTES)
-}
-
-fn get_memory(id: MemoryId) -> Memory {
-    MEMORY_MANAGER.with(|m| m.get(id))
 }

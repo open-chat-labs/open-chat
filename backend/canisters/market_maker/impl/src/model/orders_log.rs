@@ -1,8 +1,9 @@
-use crate::memory::{get_orders_log_data_memory, get_orders_log_index_memory, Memory};
+use crate::memory::{get_orders_log_data_memory, get_orders_log_index_memory};
 use ic_stable_structures::{StableLog, Storable};
 use market_maker_canister::{CancelOrderRequest, ExchangeId, MakeOrderRequest};
 use msgpack::{deserialize_then_unwrap, serialize_then_unwrap};
 use serde::{Deserialize, Serialize};
+use stable_memory::Memory;
 use std::borrow::Cow;
 use std::fmt::{Display, Formatter};
 use types::TimestampMillis;

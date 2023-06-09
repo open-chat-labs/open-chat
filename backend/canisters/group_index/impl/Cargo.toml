@@ -34,6 +34,7 @@ rand = { workspace = true }
 search = { path = "../../../libraries/search" }
 serde = { workspace = true }
 serializer = { workspace = true }
+stable_memory = { path = "../../../libraries/stable_memory" }
 tracing = { workspace = true }
 types = { path = "../../../libraries/types" }
 user_canister = { path = "../../user/api" }

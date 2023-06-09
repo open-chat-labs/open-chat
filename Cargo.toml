@@ -88,6 +88,7 @@ members = [
     "backend/libraries/storage_bucket_client",
     "backend/libraries/search",
     "backend/libraries/sha256",
+    "backend/libraries/stable_memory",
     "backend/libraries/types",
     "backend/libraries/utils",
     "backend/notification_pusher/aws",

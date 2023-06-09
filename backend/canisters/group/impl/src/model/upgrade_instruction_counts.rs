@@ -1,7 +1,8 @@
-use crate::memory::{get_instruction_counts_data_memory, get_instruction_counts_index_memory, Memory};
+use crate::memory::{get_instruction_counts_data_memory, get_instruction_counts_index_memory};
 use ic_stable_structures::log::WriteError;
 use ic_stable_structures::{StableLog, Storable};
 use serde::{Deserialize, Serialize};
+use stable_memory::Memory;
 use std::borrow::Cow;
 use types::{TimestampMillis, Version};
 

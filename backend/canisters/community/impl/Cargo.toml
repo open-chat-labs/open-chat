@@ -39,6 +39,7 @@ notifications_canister_c2c_client = { path = "../../notifications/c2c_client" }
 rand = { workspace = true }
 serde = { workspace = true }
 serializer = { workspace = true }
+stable_memory = { path = "../../../libraries/stable_memory" }
 storage_bucket_client = { path = "../../../libraries/storage_bucket_client" }
 tracing = { workspace = true }
 types = { path = "../../../libraries/types" }
