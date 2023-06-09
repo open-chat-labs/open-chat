@@ -74,7 +74,7 @@ fn prepare(user_id: UserId, state: &RuntimeState) -> Result<PrepareResult, Respo
                         .role
                         .can_remove_members_with_role(member_to_remove.role, &state.data.chat.permissions)
                     {
-                        member.role.is_owner()
+                        member_to_remove.role.is_owner()
                     } else {
                         return Err(NotAuthorized);
                     }
