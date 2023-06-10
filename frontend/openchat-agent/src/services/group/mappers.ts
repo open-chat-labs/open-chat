@@ -890,6 +890,9 @@ export async function getEventsResponse(
     if ("ChatNotFound" in candid) {
         return "events_failed";
     }
+    if ("ThreadNotFound" in candid) {
+        return "events_failed";
+    }
     if ("CallerNotInGroup" in candid) {
         return "events_failed";
     }

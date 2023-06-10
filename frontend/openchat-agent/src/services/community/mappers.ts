@@ -15,7 +15,9 @@ import {
     DisableCommunityInviteCodeResponse,
     EditChannelMessageResponse,
     EnableCommunityInviteCodeResponse,
+    EventsResponse,
     GateCheckFailedReason,
+    GroupChatEvent,
     MemberRole,
     UnsupportedValueError,
     UserFailedError,
@@ -71,6 +73,8 @@ import type {
 } from "./candid/idl";
 import { apiOptional, messageContent } from "../common/chatMappers";
 import type { ApiGateCheckFailedReason } from "../localUserIndex/candid/idl";
+import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
+import type { Principal } from "@dfinity/principal";
 
 export function addMembersToChannelResponse(
     candid: ApiAddMembersToChannelResponse
@@ -512,10 +516,6 @@ export function enableInviteCodeResponse(
         return CommonResponses.communityFrozen;
     }
     throw new UnsupportedValueError("Unexpected ApiEnableInviteCodeResponse type received", candid);
-}
-
-export function eventsResponse(_candid: ApiEventsResponse): unknown {
-    return {};
 }
 
 export function inviteCodeResponse(_candid: ApiInviteCodeResponse): unknown {
