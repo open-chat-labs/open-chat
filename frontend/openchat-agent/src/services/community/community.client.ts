@@ -211,6 +211,7 @@ export class CommunityClient extends CandidService {
     deleteMessage(
         channelId: string,
         messageId: bigint,
+        sender: string,
         threadRootMessageIndex: number | undefined
     ): Promise<unknown> {
         return this.handleResponse(
@@ -219,7 +220,7 @@ export class CommunityClient extends CandidService {
                 message_id: messageId,
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
             }),
-            deleteMessageResponse
+            (res) => deleteMessageResponse(res, sender)
         );
     }
 

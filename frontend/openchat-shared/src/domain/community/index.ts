@@ -1,5 +1,5 @@
 import type { AccessControlled, AccessRules } from "../access";
-import type { GateCheckFailedReason, Member } from "../chat";
+import type { GateCheckFailedReason, Member, MessageContent } from "../chat";
 import type { DataContent } from "../data";
 import type { HasIdentity } from "../identity";
 import type { CommunityPermissionRole, Permissioned } from "../permission";
@@ -196,6 +196,16 @@ export type DeleteChannelMessagesResponse =
     | CommunityFrozen
     | NotPlatformModerator
     | InteralError;
+
+export type DeleteChannelMessageResponse =
+    | UserNotInChannel
+    | MessageNotFound
+    | ChannelNotFound
+    | NotAuthorised
+    | (Success & { content: MessageContent })
+    | UserNotInCommunity
+    | { kind: "message_hard_deleted" }
+    | { kind: "message_not_deleted" };
 
 export const CommonResponses = {
     userNotInChannel: { kind: "user_not_in_channel" } as UserNotInChannel,

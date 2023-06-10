@@ -9,6 +9,7 @@ import {
     CommunityPermissions,
     CreateChannelResponse,
     DeclineChannelInvitationResponse,
+    DeleteChannelMessageResponse,
     DeleteChannelMessagesResponse,
     DeleteChannelResponse,
     GateCheckFailedReason,
@@ -65,7 +66,7 @@ import type {
     ApiUserFailedGateCheck,
     ApiUserFailedError,
 } from "./candid/idl";
-import { apiOptional } from "../common/chatMappers";
+import { apiOptional, messageContent } from "../common/chatMappers";
 import type { ApiGateCheckFailedReason } from "../localUserIndex/candid/idl";
 
 export function addMembersToChannelResponse(
@@ -415,8 +416,35 @@ export function deleteMessagesResponse(
     throw new UnsupportedValueError("Unexpected ApiDeleteMessagesResponse type received", candid);
 }
 
-export function deleteMessageResponse(_candid: ApiDeletedMessageResponse): unknown {
-    return {};
+export function deleteMessageResponse(
+    candid: ApiDeletedMessageResponse,
+    sender: string
+): DeleteChannelMessageResponse {
+    if ("UserNotInChannel" in candid) {
+        return CommonResponses.userNotInChannel;
+    }
+    if ("MessageNotFound" in candid) {
+        return CommonResponses.messageNotFound;
+    }
+    if ("ChannelNotFound" in candid) {
+        return CommonResponses.channelNotFound;
+    }
+    if ("NotAuthorized" in candid) {
+        return CommonResponses.notAuthorized;
+    }
+    if ("Success" in candid) {
+        return { kind: "success", content: messageContent(candid.Success.content, sender) };
+    }
+    if ("UserNotInCommunity" in candid) {
+        return CommonResponses.userNotInCommunity;
+    }
+    if ("MessageHardDeleted" in candid) {
+        return { kind: "message_hard_deleted" };
+    }
+    if ("MessageNotDeleted" in candid) {
+        return { kind: "message_not_deleted" };
+    }
+    throw new UnsupportedValueError("Unexpected ApiDeleteMessageResponse type received", candid);
 }
 
 export function disableInviteCodeResponse(_candid: ApiDisableInviteCodeResponse): unknown {
