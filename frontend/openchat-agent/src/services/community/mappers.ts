@@ -12,6 +12,7 @@ import {
     DeleteChannelMessageResponse,
     DeleteChannelMessagesResponse,
     DeleteChannelResponse,
+    DisableCommunityInviteCodeResponse,
     GateCheckFailedReason,
     MemberRole,
     UnsupportedValueError,
@@ -447,8 +448,25 @@ export function deleteMessageResponse(
     throw new UnsupportedValueError("Unexpected ApiDeleteMessageResponse type received", candid);
 }
 
-export function disableInviteCodeResponse(_candid: ApiDisableInviteCodeResponse): unknown {
-    return {};
+export function disableInviteCodeResponse(
+    candid: ApiDisableInviteCodeResponse
+): DisableCommunityInviteCodeResponse {
+    if ("NotAuthorized" in candid) {
+        return CommonResponses.notAuthorized;
+    }
+    if ("Success" in candid) {
+        return CommonResponses.success;
+    }
+    if ("UserSuspended" in candid) {
+        return CommonResponses.userSuspended;
+    }
+    if ("CommunityFrozen" in candid) {
+        return CommonResponses.communityFrozen;
+    }
+    throw new UnsupportedValueError(
+        "Unexpected ApiDisableInviteCodeResponse type received",
+        candid
+    );
 }
 
 export function editMessageResponse(_candid: ApiEditMessageResponse): unknown {

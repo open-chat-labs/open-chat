@@ -207,6 +207,12 @@ export type DeleteChannelMessageResponse =
     | { kind: "message_hard_deleted" }
     | { kind: "message_not_deleted" };
 
+export type DisableCommunityInviteCodeResponse =
+    | NotAuthorised
+    | Success
+    | UserSuspended
+    | CommunityFrozen;
+
 export const CommonResponses = {
     userNotInChannel: { kind: "user_not_in_channel" } as UserNotInChannel,
     channelNotFound: { kind: "channel_not_found" } as ChannelNotFound,
