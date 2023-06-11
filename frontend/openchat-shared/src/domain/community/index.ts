@@ -1,11 +1,9 @@
 import type { AccessControlled, AccessRules } from "../access";
 import type {
-    EventsSuccessResult,
     GateCheckFailed,
     GateCheckFailedReason,
     GroupChatSummary,
     Member,
-    Message,
     MessageContent,
 } from "../chat";
 import type { DataContent } from "../data";
@@ -300,6 +298,8 @@ export type RemoveCommunityMemberResponse = Success | Failure;
 export type RemoveChannelMemberResponse = Success | Failure;
 
 export type RemoveChannelReactionResponse = Success | Failure;
+
+export type CommunityRulesResponse = Failure | (Success & { rules?: string });
 
 export const CommonResponses = {
     userNotInChannel: { kind: "user_not_in_channel" } as UserNotInChannel,

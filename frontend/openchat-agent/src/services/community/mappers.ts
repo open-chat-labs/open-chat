@@ -8,6 +8,7 @@ import {
     CommunityInviteCodeResponse,
     CommunityPermissionRole,
     CommunityPermissions,
+    CommunityRulesResponse,
     CreateChannelResponse,
     DeclineChannelInvitationResponse,
     DeleteChannelMessageResponse,
@@ -16,6 +17,7 @@ import {
     DisableCommunityInviteCodeResponse,
     EditChannelMessageResponse,
     EnableCommunityInviteCodeResponse,
+    EnableInviteCodeResponse,
     EventsResponse,
     GateCheckFailedReason,
     GroupChatSummary,
@@ -26,7 +28,6 @@ import {
     MemberRole,
     Message,
     PinChannelMessageResponse,
-    PinMessageResponse,
     RemoveChannelMemberResponse,
     RemoveChannelReactionResponse,
     RemoveCommunityMemberResponse,
@@ -779,12 +780,16 @@ export function removeReactionResponse(
     }
 }
 
-export function resetInviteCodeResponse(_candid: ApiEnableInviteCodeResponse): unknown {
-    return {};
-}
-
-export function rulesResponse(_candid: ApiRulesResponse): unknown {
-    return {};
+export function rulesResponse(candid: ApiRulesResponse): CommunityRulesResponse {
+    if ("Success" in candid) {
+        return {
+            kind: "success",
+            rules: optional(candid.Success.rules, identity),
+        };
+    } else {
+        console.warn("CommunityRules failed with", candid);
+        return CommonResponses.failure;
+    }
 }
 
 export function searchChannelResponse(_candid: ApiSearchChannelResponse): unknown {

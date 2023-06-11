@@ -411,7 +411,14 @@ export class CommunityClient extends CandidService {
                 latest_client_event_index: apiOptional(identity, latestClientEventIndex),
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
             }),
-            messagesByMessageIndexResponse
+            (res) =>
+                messagesByMessageIndexResponse(
+                    this.principal,
+                    res,
+                    channelId,
+                    threadRootMessageIndex,
+                    latestClientEventIndex
+                )
         );
     }
 
@@ -462,7 +469,7 @@ export class CommunityClient extends CandidService {
     }
 
     resetInviteCode(): Promise<unknown> {
-        return this.handleResponse(this.service.reset_invite_code({}), resetInviteCodeResponse);
+        return this.handleResponse(this.service.reset_invite_code({}), enableInviteCodeResponse);
     }
 
     rules(inviteCode: string | undefined): Promise<unknown> {
