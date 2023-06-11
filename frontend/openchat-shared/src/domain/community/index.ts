@@ -264,6 +264,16 @@ export type LeaveChannelResponse =
     | UserSuspended
     | CommunityFrozen;
 
+export type MakeChannelPrivateResponse =
+    | UserNotInChannel
+    | ChannelNotFound
+    | NotAuthorised
+    | Success
+    | UserNotInCommunity
+    | UserSuspended
+    | { kind: "channel_already_private" }
+    | CommunityFrozen;
+
 export const CommonResponses = {
     userNotInChannel: { kind: "user_not_in_channel" } as UserNotInChannel,
     channelNotFound: { kind: "channel_not_found" } as ChannelNotFound,

@@ -20,6 +20,7 @@ import {
     GroupChatSummary,
     JoinChannelResponse,
     LeaveChannelResponse,
+    MakeChannelPrivateResponse,
     MemberRole,
     UnsupportedValueError,
     UserFailedError,
@@ -611,8 +612,37 @@ export function localUserIndexResponse(candid: ApiLocalUserIndexResponse): strin
     throw new UnsupportedValueError("Unexpected ApiLocalUserIndexResponse type received", candid);
 }
 
-export function makeChannelPrivateResponse(_candid: ApiMakeChannelPrivateResponse): unknown {
-    return {};
+export function makeChannelPrivateResponse(
+    candid: ApiMakeChannelPrivateResponse
+): MakeChannelPrivateResponse {
+    if ("UserNotInChannel" in candid) {
+        return CommonResponses.userNotInChannel;
+    }
+    if ("ChannelNotFound" in candid) {
+        return CommonResponses.channelNotFound;
+    }
+    if ("NotAuthorized" in candid) {
+        return CommonResponses.notAuthorized;
+    }
+    if ("Success" in candid) {
+        return CommonResponses.success;
+    }
+    if ("UserNotInCommunity" in candid) {
+        return CommonResponses.userNotInCommunity;
+    }
+    if ("UserSuspended" in candid) {
+        return CommonResponses.userSuspended;
+    }
+    if ("AlreadyPrivate" in candid) {
+        return { kind: "channel_already_private" };
+    }
+    if ("CommunityFrozen" in candid) {
+        return CommonResponses.communityFrozen;
+    }
+    throw new UnsupportedValueError(
+        "Unexpected ApiMakeChannelPrivateResponse type received",
+        candid
+    );
 }
 
 export function makePrivateResponse(_candid: ApiMakePrivateResponse): unknown {
