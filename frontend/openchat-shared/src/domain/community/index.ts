@@ -317,6 +317,8 @@ export type UndeleteChannelMessagesResponse = Failure | (Success & { messages: M
 
 export type UpdateChannelResponse = Failure | Success;
 
+export type UpdateCommunityResponse = Failure | Success;
+
 export const CommonResponses = {
     userNotInChannel: { kind: "user_not_in_channel" } as UserNotInChannel,
     channelNotFound: { kind: "channel_not_found" } as ChannelNotFound,
