@@ -33,6 +33,7 @@ import {
     RemoveChannelReactionResponse,
     RemoveCommunityMemberResponse,
     SearchChannelResponse,
+    UnblockCommunityUserResponse,
     UnsupportedValueError,
     UserFailedError,
     UserFailedGateCheck,
@@ -853,8 +854,13 @@ export function toggleMuteNotificationsResponse(
     return {};
 }
 
-export function unblockUserResponse(_candid: ApiUnblockUserResponse): unknown {
-    return {};
+export function unblockUserResponse(candid: ApiUnblockUserResponse): UnblockCommunityUserResponse {
+    if ("Success" in candid) {
+        return CommonResponses.success;
+    } else {
+        console.warn("UnblockCommunityUser failed with", candid);
+        return CommonResponses.failure;
+    }
 }
 
 export function undeleteMessagesResponse(_candid: ApiUndeleteMessagesResponse): unknown {

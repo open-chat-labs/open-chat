@@ -310,6 +310,8 @@ export type ChannelMessageMatch = {
 
 export type SearchChannelResponse = Failure | (Success & { matches: ChannelMessageMatch[] });
 
+export type UnblockCommunityUserResponse = Failure | Success;
+
 export const CommonResponses = {
     userNotInChannel: { kind: "user_not_in_channel" } as UserNotInChannel,
     channelNotFound: { kind: "channel_not_found" } as ChannelNotFound,
