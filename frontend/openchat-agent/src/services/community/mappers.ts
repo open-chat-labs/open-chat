@@ -5,6 +5,7 @@ import {
     ChangeChannelRoleResponse,
     ChangeCommunityRoleResponse,
     CommonResponses,
+    CommunityInviteCodeResponse,
     CommunityPermissionRole,
     CommunityPermissions,
     CreateChannelResponse,
@@ -15,9 +16,7 @@ import {
     DisableCommunityInviteCodeResponse,
     EditChannelMessageResponse,
     EnableCommunityInviteCodeResponse,
-    EventsResponse,
     GateCheckFailedReason,
-    GroupChatEvent,
     MemberRole,
     UnsupportedValueError,
     UserFailedError,
@@ -36,7 +35,6 @@ import type {
     ApiDeletedMessageResponse,
     ApiDisableInviteCodeResponse,
     ApiEditMessageResponse,
-    ApiEventsResponse,
     ApiInviteCodeResponse,
     ApiJoinChannelResponse,
     ApiLeaveChannelResponse,
@@ -73,8 +71,7 @@ import type {
 } from "./candid/idl";
 import { apiOptional, messageContent } from "../common/chatMappers";
 import type { ApiGateCheckFailedReason } from "../localUserIndex/candid/idl";
-import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
-import type { Principal } from "@dfinity/principal";
+import { identity, optional } from "../../utils/mapping";
 
 export function addMembersToChannelResponse(
     candid: ApiAddMembersToChannelResponse
@@ -518,8 +515,17 @@ export function enableInviteCodeResponse(
     throw new UnsupportedValueError("Unexpected ApiEnableInviteCodeResponse type received", candid);
 }
 
-export function inviteCodeResponse(_candid: ApiInviteCodeResponse): unknown {
-    return {};
+export function inviteCodeResponse(candid: ApiInviteCodeResponse): CommunityInviteCodeResponse {
+    if ("NotAuthorized" in candid) {
+        return CommonResponses.notAuthorized;
+    }
+    if ("Success" in candid) {
+        return { kind: "success", code: optional(candid.Success.code, identity) };
+    }
+    if ("UserNotInCommunity" in candid) {
+        return CommonResponses.userNotInCommunity;
+    }
+    throw new UnsupportedValueError("Unexpected ApiEnableInviteCodeResponse type received", candid);
 }
 
 export function joinChannelResponse(_candid: ApiJoinChannelResponse): unknown {

@@ -43,6 +43,7 @@ import type {
     ApiGroupGateUpdate,
     ApiDeclineInvitationResponse,
 } from "./candid/idl";
+import type { ApiEventsResponse as ApiCommunityEventsResponse } from "../community/candid/idl";
 import {
     EventsResponse,
     EventWrapper,
@@ -866,7 +867,7 @@ export function messageWrapper(candid: ApiMessageEventWrapper): EventWrapper<Mes
 
 export async function getEventsResponse(
     principal: Principal,
-    candid: ApiEventsResponse,
+    candid: ApiEventsResponse | ApiCommunityEventsResponse,
     chatId: string,
     threadRootMessageIndex: number | undefined,
     latestClientEventIndexPreRequest: number | undefined
@@ -905,6 +906,15 @@ export async function getEventsResponse(
             latestClientEventIndexPreRequest ?? -1,
             false
         );
+    }
+    if ("UserNotInChannel" in candid) {
+        return "events_failed";
+    }
+    if ("UserNotInCommunity" in candid) {
+        return "events_failed";
+    }
+    if ("ChannelNotFound" in candid) {
+        return "events_failed";
     }
     throw new UnsupportedValueError("Unexpected ApiEventsResponse type received", candid);
 }
