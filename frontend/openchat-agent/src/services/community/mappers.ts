@@ -34,6 +34,7 @@ import {
     RemoveCommunityMemberResponse,
     SearchChannelResponse,
     UnblockCommunityUserResponse,
+    UndeleteChannelMessagesResponse,
     UnsupportedValueError,
     UserFailedError,
     UserFailedGateCheck,
@@ -863,8 +864,15 @@ export function unblockUserResponse(candid: ApiUnblockUserResponse): UnblockComm
     }
 }
 
-export function undeleteMessagesResponse(_candid: ApiUndeleteMessagesResponse): unknown {
-    return {};
+export function undeleteMessagesResponse(
+    candid: ApiUndeleteMessagesResponse
+): UndeleteChannelMessagesResponse {
+    if ("Success" in candid) {
+        return { kind: "success", messages: candid.Success.messages.map(message) };
+    } else {
+        console.warn("UndeleteChannelMessages failed with", candid);
+        return CommonResponses.failure;
+    }
 }
 
 export function updateChannelResponse(_candid: ApiUpdateChannelResponse): unknown {

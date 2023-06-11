@@ -4,6 +4,7 @@ import type {
     GateCheckFailedReason,
     GroupChatSummary,
     Member,
+    Message,
     MessageContent,
 } from "../chat";
 import type { DataContent } from "../data";
@@ -311,6 +312,8 @@ export type ChannelMessageMatch = {
 export type SearchChannelResponse = Failure | (Success & { matches: ChannelMessageMatch[] });
 
 export type UnblockCommunityUserResponse = Failure | Success;
+
+export type UndeleteChannelMessagesResponse = Failure | (Success & { messages: Message[] });
 
 export const CommonResponses = {
     userNotInChannel: { kind: "user_not_in_channel" } as UserNotInChannel,
