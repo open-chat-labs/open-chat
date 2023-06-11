@@ -255,6 +255,15 @@ export type JoinChannelResponse =
     | InteralError
     | UserBlocked;
 
+export type LeaveChannelResponse =
+    | UserNotInChannel
+    | { kind: "last_owner_cannot_leave" }
+    | ChannelNotFound
+    | Success
+    | UserNotInCommunity
+    | UserSuspended
+    | CommunityFrozen;
+
 export const CommonResponses = {
     userNotInChannel: { kind: "user_not_in_channel" } as UserNotInChannel,
     channelNotFound: { kind: "channel_not_found" } as ChannelNotFound,

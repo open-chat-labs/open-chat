@@ -19,6 +19,7 @@ import {
     GateCheckFailedReason,
     GroupChatSummary,
     JoinChannelResponse,
+    LeaveChannelResponse,
     MemberRole,
     UnsupportedValueError,
     UserFailedError,
@@ -578,8 +579,29 @@ export function joinChannelResponse(candid: ApiJoinChannelResponse): JoinChannel
     throw new UnsupportedValueError("Unexpected ApiJoinChannelResponse type received", candid);
 }
 
-export function leaveChannelResponse(_candid: ApiLeaveChannelResponse): unknown {
-    return {};
+export function leaveChannelResponse(candid: ApiLeaveChannelResponse): LeaveChannelResponse {
+    if ("UserNotInChannel" in candid) {
+        return CommonResponses.userNotInChannel;
+    }
+    if ("LastOwnerCannotLeave" in candid) {
+        return { kind: "last_owner_cannot_leave" };
+    }
+    if ("ChannelNotFound" in candid) {
+        return CommonResponses.channelNotFound;
+    }
+    if ("Success" in candid) {
+        return CommonResponses.success;
+    }
+    if ("UserNotInCommunity" in candid) {
+        return CommonResponses.userNotInCommunity;
+    }
+    if ("UserSuspended" in candid) {
+        return CommonResponses.userSuspended;
+    }
+    if ("CommunityFrozen" in candid) {
+        return CommonResponses.communityFrozen;
+    }
+    throw new UnsupportedValueError("Unexpected ApiLeaveChannelResponse type received", candid);
 }
 
 export function localUserIndexResponse(_candid: ApiLocalUserIndexResponse): unknown {
