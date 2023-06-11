@@ -36,6 +36,7 @@ import {
     UnblockCommunityUserResponse,
     UndeleteChannelMessagesResponse,
     UnsupportedValueError,
+    UpdateChannelResponse,
     UserFailedError,
     UserFailedGateCheck,
 } from "openchat-shared";
@@ -875,8 +876,13 @@ export function undeleteMessagesResponse(
     }
 }
 
-export function updateChannelResponse(_candid: ApiUpdateChannelResponse): unknown {
-    return {};
+export function updateChannelResponse(candid: ApiUpdateChannelResponse): UpdateChannelResponse {
+    if ("Success" in candid) {
+        return CommonResponses.success;
+    } else {
+        console.warn("UpdateChannel failed with", candid);
+        return CommonResponses.failure;
+    }
 }
 
 export function updateCommunityResponse(_candid: ApiUpdateCommunityResponse): unknown {
