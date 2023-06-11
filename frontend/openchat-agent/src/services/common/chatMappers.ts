@@ -96,8 +96,12 @@ import {
     CustomContent,
     MessageContext,
     ReportedMessageContent,
+    GroupChatSummary,
+    GateCheckFailedReason,
 } from "openchat-shared";
 import type { WithdrawCryptoArgs } from "../user/candid/types";
+import type { ApiGroupCanisterGroupChatSummary } from "../group/candid/idl";
+import type { ApiGateCheckFailedReason } from "../localUserIndex/candid/idl";
 
 const E8S_AS_BIGINT = BigInt(100_000_000);
 
@@ -1103,4 +1107,64 @@ function apiICP(amountE8s: bigint): ApiICP {
     return {
         e8s: amountE8s,
     };
+}
+
+export function groupChatSummary(candid: ApiGroupCanisterGroupChatSummary): GroupChatSummary {
+    const latestMessage = optional(candid.latest_message, (ev) => ({
+        index: ev.index,
+        timestamp: ev.timestamp,
+        event: message(ev.event),
+    }));
+    return {
+        kind: "group_chat",
+        chatId: candid.chat_id.toString(),
+        id: candid.chat_id.toString(),
+        latestMessage,
+        readByMeUpTo: latestMessage?.event.messageIndex,
+        name: candid.name,
+        description: candid.description,
+        public: candid.is_public,
+        historyVisible: candid.history_visible_to_new_joiners,
+        joined: candid.joined,
+        minVisibleEventIndex: candid.min_visible_event_index,
+        minVisibleMessageIndex: candid.min_visible_message_index,
+        latestEventIndex: candid.latest_event_index,
+        lastUpdated: candid.last_updated,
+        blobReference: optional(candid.avatar_id, (blobId) => ({
+            blobId,
+            canisterId: candid.chat_id.toString(),
+        })),
+        notificationsMuted: candid.notifications_muted,
+        memberCount: candid.participant_count,
+        myRole: memberRole(candid.role),
+        mentions: [],
+        permissions: groupPermissions(candid.permissions),
+        metrics: chatMetrics(candid.metrics),
+        myMetrics: chatMetrics(candid.my_metrics),
+        latestThreads: [],
+        subtype: optional(candid.subtype, apiGroupSubtype),
+        archived: false,
+        previewed: false,
+        frozen: candid.frozen.length > 0,
+        dateLastPinned: optional(candid.date_last_pinned, identity),
+        dateReadPinned: undefined,
+        gate: optional(candid.gate, accessGate) ?? { kind: "no_gate" },
+        level: "group",
+    };
+}
+
+export function gateCheckFailedReason(candid: ApiGateCheckFailedReason): GateCheckFailedReason {
+    if ("NotDiamondMember" in candid) {
+        return "not_diamond";
+    }
+    if ("NoSnsNeuronsFound" in candid) {
+        return "no_sns_neuron_found";
+    }
+    if ("NoSnsNeuronsWithRequiredDissolveDelayFound" in candid) {
+        return "dissolve_delay_not_met";
+    }
+    if ("NoSnsNeuronsWithRequiredStakeFound" in candid) {
+        return "min_stake_not_met";
+    }
+    throw new UnsupportedValueError("Unexpected ApiGateCheckFailedReason type received", candid);
 }

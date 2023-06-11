@@ -1,5 +1,11 @@
 import type { AccessControlled, AccessRules } from "../access";
-import type { GateCheckFailedReason, Member, MessageContent } from "../chat";
+import type {
+    GateCheckFailed,
+    GateCheckFailedReason,
+    GroupChatSummary,
+    Member,
+    MessageContent,
+} from "../chat";
 import type { DataContent } from "../data";
 import type { HasIdentity } from "../identity";
 import type { CommunityPermissionRole, Permissioned } from "../permission";
@@ -99,6 +105,9 @@ export type InteralError = {
 };
 export type Invalid = {
     kind: "invalid";
+};
+export type UserBlocked = {
+    kind: "user_blocked";
 };
 
 export type TargetUserNotInCommunity = {
@@ -233,6 +242,19 @@ export type CommunityInviteCodeResponse =
     | (Success & { code?: bigint })
     | UserNotInCommunity;
 
+export type JoinChannelResponse =
+    | { kind: "not_invited" }
+    | { kind: "already_in_channel" }
+    | GateCheckFailed
+    | ChannelNotFound
+    | UserLimitReached
+    | (Success & { channel: GroupChatSummary })
+    | UserNotInCommunity
+    | UserSuspended
+    | CommunityFrozen
+    | InteralError
+    | UserBlocked;
+
 export const CommonResponses = {
     userNotInChannel: { kind: "user_not_in_channel" } as UserNotInChannel,
     channelNotFound: { kind: "channel_not_found" } as ChannelNotFound,
@@ -249,4 +271,5 @@ export const CommonResponses = {
     invalid: { kind: "invalid" } as Invalid,
     targetUserNotInCommunity: { kind: "target_user_not_in_community" } as TargetUserNotInCommunity,
     notPlatformModerator: { kind: "not_platform_moderator" } as NotPlatformModerator,
+    userBlocked: { kind: "user_blocked" } as UserBlocked,
 };

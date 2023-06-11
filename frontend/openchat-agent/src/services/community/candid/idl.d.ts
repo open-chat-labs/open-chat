@@ -47,6 +47,7 @@ import {
     UndeleteMessagesResponse,
     UpdateChannelResponse,
     UpdateCommunityResponse,
+    CommunityCanisterChannelSummary,
 } from "./types";
 export {
     _SERVICE as CommunityService,
@@ -96,6 +97,7 @@ export {
     UndeleteMessagesResponse as ApiUndeleteMessagesResponse,
     UpdateChannelResponse as ApiUpdateChannelResponse,
     UpdateCommunityResponse as ApiUpdateCommunityResponse,
+    CommunityCanisterChannelSummary as ApiCommunityCanisterChannelSummary,
 };
 
 export const idlFactory: IDL.InterfaceFactory;

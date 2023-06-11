@@ -17,6 +17,8 @@ import {
     EditChannelMessageResponse,
     EnableCommunityInviteCodeResponse,
     GateCheckFailedReason,
+    GroupChatSummary,
+    JoinChannelResponse,
     MemberRole,
     UnsupportedValueError,
     UserFailedError,
@@ -68,8 +70,19 @@ import type {
     ApiAddMembersToChannelPartialSuccess,
     ApiUserFailedGateCheck,
     ApiUserFailedError,
+    ApiCommunityCanisterChannelSummary,
 } from "./candid/idl";
-import { apiOptional, messageContent } from "../common/chatMappers";
+import {
+    accessGate,
+    apiGroupSubtype,
+    apiOptional,
+    chatMetrics,
+    gateCheckFailedReason,
+    groupPermissions,
+    memberRole,
+    message,
+    messageContent,
+} from "../common/chatMappers";
 import type { ApiGateCheckFailedReason } from "../localUserIndex/candid/idl";
 import { identity, optional } from "../../utils/mapping";
 
@@ -528,8 +541,41 @@ export function inviteCodeResponse(candid: ApiInviteCodeResponse): CommunityInvi
     throw new UnsupportedValueError("Unexpected ApiEnableInviteCodeResponse type received", candid);
 }
 
-export function joinChannelResponse(_candid: ApiJoinChannelResponse): unknown {
-    return {};
+export function joinChannelResponse(candid: ApiJoinChannelResponse): JoinChannelResponse {
+    if ("NotInvited" in candid) {
+        return { kind: "not_invited" };
+    }
+    if ("AlreadyInChannel" in candid) {
+        return { kind: "already_in_channel" };
+    }
+    if ("GateCheckFailed" in candid) {
+        return { kind: "gate_check_failed", reason: gateCheckFailedReason(candid.GateCheckFailed) };
+    }
+    if ("ChannelNotFound" in candid) {
+        return CommonResponses.channelNotFound;
+    }
+    if ("UserLimitReached" in candid) {
+        return CommonResponses.userLimitReached;
+    }
+    if ("Success" in candid) {
+        return { kind: "success", channel: groupChatSummary(candid.Success) };
+    }
+    if ("UserNotInCommunity" in candid) {
+        return CommonResponses.userNotInCommunity;
+    }
+    if ("UserSuspended" in candid) {
+        return CommonResponses.userSuspended;
+    }
+    if ("CommunityFrozen" in candid) {
+        return CommonResponses.communityFrozen;
+    }
+    if ("InternalError" in candid) {
+        return CommonResponses.internalError;
+    }
+    if ("UserBlocked" in candid) {
+        return CommonResponses.userBlocked;
+    }
+    throw new UnsupportedValueError("Unexpected ApiJoinChannelResponse type received", candid);
 }
 
 export function leaveChannelResponse(_candid: ApiLeaveChannelResponse): unknown {
@@ -690,4 +736,48 @@ export function apiCommunityPermissionRole(
         case "members":
             return { Members: null };
     }
+}
+
+export function groupChatSummary(candid: ApiCommunityCanisterChannelSummary): GroupChatSummary {
+    const latestMessage = optional(candid.latest_message, (ev) => ({
+        index: ev.index,
+        timestamp: ev.timestamp,
+        event: message(ev.event),
+    }));
+    return {
+        kind: "group_chat",
+        chatId: candid.channel_id.toString(),
+        id: candid.channel_id.toString(),
+        latestMessage,
+        readByMeUpTo: latestMessage?.event.messageIndex,
+        name: candid.name,
+        description: candid.description,
+        public: candid.is_public,
+        historyVisible: candid.history_visible_to_new_joiners,
+        joined: candid.joined,
+        minVisibleEventIndex: candid.min_visible_event_index,
+        minVisibleMessageIndex: candid.min_visible_message_index,
+        latestEventIndex: candid.latest_event_index,
+        lastUpdated: candid.last_updated,
+        blobReference: optional(candid.avatar_id, (blobId) => ({
+            blobId,
+            canisterId: candid.channel_id.toString(),
+        })),
+        notificationsMuted: candid.notifications_muted,
+        memberCount: 0, //TODO this doesn't exist on commmunity channel
+        myRole: memberRole(candid.role),
+        mentions: [],
+        permissions: groupPermissions(candid.permissions),
+        metrics: chatMetrics(candid.metrics),
+        myMetrics: chatMetrics(candid.my_metrics),
+        latestThreads: [],
+        subtype: optional(candid.subtype, apiGroupSubtype),
+        archived: false,
+        previewed: false,
+        frozen: false, // TODO - doesn't exist
+        dateLastPinned: optional(candid.date_last_pinned, identity),
+        dateReadPinned: undefined,
+        gate: optional(candid.gate, accessGate) ?? { kind: "no_gate" },
+        level: "group",
+    };
 }
