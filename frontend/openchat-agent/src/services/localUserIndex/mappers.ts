@@ -1,5 +1,4 @@
 import {
-    GateCheckFailedReason,
     InviteUsersResponse,
     JoinGroupResponse,
     RegisterUserResponse,
@@ -7,7 +6,6 @@ import {
     UnsupportedValueError,
 } from "openchat-shared";
 import type {
-    ApiGateCheckFailedReason,
     ApiInviteUsersResponse,
     ApiJoinGroupResponse,
     ApiRegisterUserResponse,
@@ -83,7 +81,7 @@ export function inviteUsersResponse(candid: ApiInviteUsersResponse): InviteUsers
         return "success";
     }
     if ("NotAuthorized" in candid) {
-        return "not_authorised";
+        return "not_authorized";
     }
     if ("InternalError" in candid) {
         return "internal_error";

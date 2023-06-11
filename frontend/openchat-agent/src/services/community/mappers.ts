@@ -625,10 +625,7 @@ export function leaveChannelResponse(candid: ApiLeaveChannelResponse): LeaveChan
 }
 
 export function localUserIndexResponse(candid: ApiLocalUserIndexResponse): string {
-    if ("Success" in candid) {
-        return candid.Success.toString();
-    }
-    throw new UnsupportedValueError("Unexpected ApiLocalUserIndexResponse type received", candid);
+    return candid.Success.toString();
 }
 
 export function makeChannelPrivateResponse(

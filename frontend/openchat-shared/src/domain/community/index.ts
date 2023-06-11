@@ -1,4 +1,5 @@
 import type { AccessControlled, AccessRules } from "../access";
+import type { NotAuthorised } from "../auth";
 import type {
     GateCheckFailed,
     GateCheckFailedReason,
@@ -11,6 +12,7 @@ import type { DataContent } from "../data";
 import type { HasIdentity } from "../identity";
 import type { CommunityPermissionRole, Permissioned } from "../permission";
 import type { HasLevel } from "../structure";
+import type { UserSuspended } from "../user";
 
 export type Community = HasIdentity &
     AccessControlled &
@@ -89,10 +91,8 @@ export type AddMembersToChannelResponse =
 export type UserNotInChannel = { kind: "user_not_in_channel" };
 export type ChannelNotFound = { kind: "channel_not_found" };
 export type UserLimitReached = { kind: "user_limit_reached" };
-export type NotAuthorised = { kind: "not_authorized" };
 export type Success = { kind: "success" };
 export type UserNotInCommunity = { kind: "user_not_in_community" };
-export type UserSuspended = { kind: "user_suspended" };
 export type CommunityFrozen = { kind: "community_frozen" };
 export type CommunityNotPublic = { kind: "community_not_public" };
 export type MessageNotFound = {

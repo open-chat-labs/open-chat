@@ -394,7 +394,7 @@ export function makeGroupPrivateResponse(candid: ApiMakePrivateResponse): MakeGr
         return "internal_error";
     }
     if ("NotAuthorized" in candid) {
-        return "not_authorised";
+        return "not_authorized";
     }
     if ("UserSuspended" in candid) {
         return "user_suspended";
@@ -416,7 +416,7 @@ export function unblockUserResponse(candid: ApiUnblockUserResponse): UnblockUser
         return "caller_not_in_group";
     }
     if ("NotAuthorized" in candid) {
-        return "not_authorised";
+        return "not_authorized";
     }
     if ("CannotUnblockSelf" in candid) {
         return "cannot_unblock_self";
@@ -444,7 +444,7 @@ export function blockUserResponse(candid: ApiBlockUserResponse): BlockUserRespon
         return "caller_not_in_group";
     }
     if ("NotAuthorized" in candid) {
-        return "not_authorised";
+        return "not_authorized";
     }
     if ("InternalError" in candid) {
         return "internal_error";
@@ -536,7 +536,7 @@ export function addRemoveReactionResponse(
         return "not_in_group";
     }
     if ("NotAuthorized" in candid) {
-        return "not_authorised";
+        return "not_authorized";
     }
     if ("UserSuspended" in candid) {
         return "user_suspended";
@@ -575,7 +575,7 @@ export function updateGroupResponse(candid: ApiUpdateGroupResponse): UpdateGroup
         return "unchanged";
     }
     if ("NotAuthorized" in candid) {
-        return "not_authorised";
+        return "not_authorized";
     }
     if ("NameTaken" in candid) {
         return "name_taken";
@@ -651,7 +651,7 @@ export function sendMessageResponse(candid: ApiSendMessageResponse): SendMessage
         return { kind: "invalid_poll" };
     }
     if ("NotAuthorized" in candid) {
-        return { kind: "not_authorised" };
+        return { kind: "not_authorized" };
     }
     if ("ThreadMessageNotFound" in candid) {
         return { kind: "thread_message_not_found" };
@@ -677,7 +677,7 @@ export function changeRoleResponse(candid: ApiChangeRoleResponse): ChangeRoleRes
         return "caller_not_in_group";
     }
     if ("NotAuthorized" in candid) {
-        return "not_authorised";
+        return "not_authorized";
     }
     if ("Invalid" in candid) {
         return "invalid";
@@ -705,7 +705,7 @@ export function removeMemberResponse(candid: ApiRemoveParticipantResponse): Remo
         return "caller_not_in_group";
     }
     if ("NotAuthorized" in candid) {
-        return "not_authorised";
+        return "not_authorized";
     }
     if ("CannotRemoveSelf" in candid) {
         return "cannot_remove_self";
@@ -741,7 +741,7 @@ export function deletedMessageResponse(
         return { kind: "caller_not_in_group" };
     }
     if ("NotAuthorized" in candid) {
-        return { kind: "not_authorised" };
+        return { kind: "not_authorized" };
     }
     if ("MessageNotFound" in candid) {
         return { kind: "message_not_found" };
@@ -770,7 +770,7 @@ export function pinMessageResponse(candid: ApiPinMessageResponse): PinMessageRes
         return { kind: "caller_not_in_group" };
     }
     if ("NotAuthorized" in candid) {
-        return { kind: "not_authorised" };
+        return { kind: "not_authorized" };
     }
     if ("NoChange" in candid) {
         return { kind: "no_change" };
@@ -798,7 +798,7 @@ export function unpinMessageResponse(candid: ApiUnpinMessageResponse): UnpinMess
         return "caller_not_in_group";
     }
     if ("NotAuthorized" in candid) {
-        return "not_authorised";
+        return "not_authorized";
     }
     if ("NoChange" in candid) {
         return "no_change";
@@ -969,7 +969,7 @@ export function inviteCodeResponse(candid: ApiInviteCodeResponse): InviteCodeRes
     }
     if ("NotAuthorized" in candid) {
         return {
-            kind: "not_authorised",
+            kind: "not_authorized",
         };
     }
     throw new UnsupportedValueError("Unexpected Group.ApiInviteCodeResponse type received", candid);
@@ -986,7 +986,7 @@ export function enableInviteCodeResponse(
     }
     if ("NotAuthorized" in candid) {
         return {
-            kind: "not_authorised",
+            kind: "not_authorized",
         };
     }
     if ("UserSuspended" in candid) {
@@ -1010,7 +1010,7 @@ export function disableInviteCodeResponse(
         return "success";
     }
     if ("NotAuthorized" in candid) {
-        return "not_authorised";
+        return "not_authorized";
     }
     if ("UserSuspended" in candid) {
         return "user_suspended";
@@ -1082,7 +1082,7 @@ export function resetInviteCodeResponse(
     }
     if ("NotAuthorized" in candid) {
         return {
-            kind: "not_authorised",
+            kind: "not_authorized",
         };
     }
     if ("UserSuspended" in candid) {
