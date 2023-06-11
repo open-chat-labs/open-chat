@@ -297,6 +297,8 @@ export type PinChannelMessageResponse = Failure | (Success & { event: PushEventR
 
 export type RemoveCommunityMemberResponse = Success | Failure;
 
+export type RemoveChannelMemberResponse = Success | Failure;
+
 export const CommonResponses = {
     userNotInChannel: { kind: "user_not_in_channel" } as UserNotInChannel,
     channelNotFound: { kind: "channel_not_found" } as ChannelNotFound,
