@@ -1,9 +1,11 @@
 import type { AccessControlled, AccessRules } from "../access";
 import type {
+    EventsSuccessResult,
     GateCheckFailed,
     GateCheckFailedReason,
     GroupChatSummary,
     Member,
+    Message,
     MessageContent,
 } from "../chat";
 import type { DataContent } from "../data";
@@ -108,6 +110,9 @@ export type Invalid = {
 };
 export type UserBlocked = {
     kind: "user_blocked";
+};
+export type Failure = {
+    kind: "failure";
 };
 
 export type TargetUserNotInCommunity = {
@@ -300,4 +305,5 @@ export const CommonResponses = {
     targetUserNotInCommunity: { kind: "target_user_not_in_community" } as TargetUserNotInCommunity,
     notPlatformModerator: { kind: "not_platform_moderator" } as NotPlatformModerator,
     userBlocked: { kind: "user_blocked" } as UserBlocked,
+    failure: { kind: "failure" } as Failure,
 };

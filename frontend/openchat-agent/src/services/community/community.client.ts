@@ -24,7 +24,7 @@ import {
     localUserIndexResponse,
     makeChannelPrivateResponse,
     makeCommunityPrivateResponse,
-    messageByMessageIndexResponse,
+    messagesByMessageIndexResponse,
     pinMessageResponse,
     removeMemberResponse,
     removeMemberFromChannelResponse,
@@ -411,7 +411,7 @@ export class CommunityClient extends CandidService {
                 latest_client_event_index: apiOptional(identity, latestClientEventIndex),
                 thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
             }),
-            messageByMessageIndexResponse
+            messagesByMessageIndexResponse
         );
     }
 

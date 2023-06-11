@@ -16,6 +16,7 @@ import {
     DisableCommunityInviteCodeResponse,
     EditChannelMessageResponse,
     EnableCommunityInviteCodeResponse,
+    EventsResponse,
     GateCheckFailedReason,
     GroupChatSummary,
     JoinChannelResponse,
@@ -23,6 +24,7 @@ import {
     MakeChannelPrivateResponse,
     MakeCommunityPrivateResponse,
     MemberRole,
+    Message,
     UnsupportedValueError,
     UserFailedError,
     UserFailedGateCheck,
@@ -88,6 +90,10 @@ import {
 } from "../common/chatMappers";
 import type { ApiGateCheckFailedReason } from "../localUserIndex/candid/idl";
 import { identity, optional } from "../../utils/mapping";
+import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
+import type { Principal } from "@dfinity/principal";
+import { messageWrapper } from "../group/mappers";
+import { ReplicaNotUpToDateError } from "../error";
 
 export function addMembersToChannelResponse(
     candid: ApiAddMembersToChannelResponse
@@ -673,8 +679,50 @@ export function makeCommunityPrivateResponse(
     throw new UnsupportedValueError("Unexpected ApiMakePrivateResponse type received", candid);
 }
 
-export function messageByMessageIndexResponse(_candid: ApiMessagesByMessageIndexResponse): unknown {
-    return {};
+export async function messagesByMessageIndexResponse(
+    principal: Principal,
+    candid: ApiMessagesByMessageIndexResponse,
+    chatId: string,
+    threadRootMessageIndex: number | undefined,
+    latestClientEventIndexPreRequest: number | undefined
+): Promise<EventsResponse<Message>> {
+    if ("Success" in candid) {
+        const latestEventIndex = candid.Success.latest_event_index;
+
+        await ensureReplicaIsUpToDate(
+            principal,
+            chatId,
+            threadRootMessageIndex,
+            latestClientEventIndexPreRequest,
+            latestEventIndex
+        );
+
+        return {
+            events: candid.Success.messages.map(messageWrapper),
+            latestEventIndex,
+        };
+    }
+    if (
+        "CallerNotInGroup" in candid ||
+        "ThreadMessageNotFound" in candid ||
+        "ThreadNotFound" in candid ||
+        "ChannelNotFound" in candid ||
+        "UserNotInChannel" in candid ||
+        "UserNotInCommunity" in candid
+    ) {
+        return "events_failed";
+    }
+    if ("ReplicaNotUpToDate" in candid) {
+        throw ReplicaNotUpToDateError.byEventIndex(
+            candid.ReplicaNotUpToDate,
+            latestClientEventIndexPreRequest ?? -1,
+            false
+        );
+    }
+    throw new UnsupportedValueError(
+        "Unexpected ApiMessagesByMessageIndexResponse type received",
+        candid
+    );
 }
 
 export function pinMessageResponse(_candid: ApiPinMessageResponse): unknown {
