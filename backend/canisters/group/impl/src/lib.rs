@@ -1,4 +1,5 @@
 use crate::model::new_joiner_rewards::{NewJoinerRewardMetrics, NewJoinerRewardStatus, NewJoinerRewards};
+use crate::model::upgrade_instruction_counts::{InstructionCountEntry, InstructionCountFunctionId, InstructionCountsLog};
 use crate::new_joiner_rewards::process_new_joiner_reward;
 use crate::timer_job_types::TimerJob;
 use activity_notification_state::ActivityNotificationState;
@@ -14,7 +15,7 @@ use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
 use std::ops::Deref;
 use types::{
-    AccessGate, AccessRules, Avatar, CanisterId, Cryptocurrency, Cycles, EventIndex, FrozenGroupInfo,
+    AccessGate, AccessRules, CanisterId, Cryptocurrency, Cycles, Document, EventIndex, FrozenGroupInfo,
     GroupCanisterGroupChatSummary, GroupPermissions, GroupSubtype, MessageIndex, Milliseconds, Notification, TimestampMillis,
     Timestamped, UserId, Version, MAX_THREADS_IN_SUMMARY,
 };
@@ -94,7 +95,7 @@ impl RuntimeState {
             name: chat.name.clone(),
             description: chat.description.clone(),
             subtype: chat.subtype.value.clone(),
-            avatar_id: Avatar::id(&chat.avatar),
+            avatar_id: Document::id(&chat.avatar),
             is_public: chat.is_public,
             history_visible_to_new_joiners: chat.history_visible_to_new_joiners,
             min_visible_event_index,
@@ -214,6 +215,7 @@ impl RuntimeState {
             last_active: chat_metrics.last_active,
             new_joiner_rewards: self.data.new_joiner_rewards.as_ref().map(|r| r.metrics()),
             frozen: self.data.is_frozen(),
+            instruction_counts: self.data.instruction_counts_log.iter().collect(),
             canister_ids: CanisterIds {
                 user_index: self.data.user_index_canister_id,
                 group_index: self.data.group_index_canister_id,
@@ -244,6 +246,8 @@ struct Data {
     pub timer_jobs: TimerJobs<TimerJob>,
     pub fire_and_forget_handler: FireAndForgetHandler,
     pub activity_notification_state: ActivityNotificationState,
+    #[serde(default)]
+    pub instruction_counts_log: InstructionCountsLog,
     pub test_mode: bool,
 }
 
@@ -255,7 +259,7 @@ impl Data {
         description: String,
         rules: AccessRules,
         subtype: Option<GroupSubtype>,
-        avatar: Option<Avatar>,
+        avatar: Option<Document>,
         history_visible_to_new_joiners: bool,
         creator_principal: Principal,
         creator_user_id: UserId,
@@ -304,6 +308,7 @@ impl Data {
             frozen: Timestamped::default(),
             timer_jobs: TimerJobs::default(),
             fire_and_forget_handler: FireAndForgetHandler::default(),
+            instruction_counts_log: InstructionCountsLog::default(),
         }
     }
 
@@ -384,6 +389,15 @@ impl Data {
         }
     }
 
+    pub fn record_instructions_count(&self, function_id: InstructionCountFunctionId, now: TimestampMillis) {
+        let wasm_version = WASM_VERSION.with(|v| **v.borrow());
+        let instructions_count = ic_cdk::api::instruction_counter();
+
+        let _ = self
+            .instruction_counts_log
+            .record(function_id, instructions_count, wasm_version, now);
+    }
+
     fn is_invite_code_valid(&self, invite_code: Option<u64>) -> bool {
         if self.invite_code_enabled {
             if let Some(provided_code) = invite_code {
@@ -437,6 +451,7 @@ pub struct Metrics {
     pub last_active: TimestampMillis,
     pub new_joiner_rewards: Option<NewJoinerRewardMetrics>,
     pub frozen: bool,
+    pub instruction_counts: Vec<InstructionCountEntry>,
     pub canister_ids: CanisterIds,
 }
 

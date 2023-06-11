@@ -2,10 +2,12 @@
 use super::private_communities::PrivateCommunityInfo;
 use crate::MARK_ACTIVE_DURATION;
 use candid::CandidType;
+use search::{Document, Query};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use types::{CommunityId, FrozenCommunityInfo, PublicCommunityActivity, TimestampMillis};
+use types::{CommunityId, CommunityMatch, FrozenCommunityInfo, PublicCommunityActivity, TimestampMillis};
 use utils::case_insensitive_hash_map::CaseInsensitiveHashMap;
+use utils::iterator_extensions::IteratorExtensions;
 
 #[derive(Serialize, Deserialize, Default)]
 #[serde(from = "PublicCommunitiesTrimmed")]
@@ -52,7 +54,7 @@ impl PublicCommunities {
     ) -> bool {
         if self.communities_pending.remove(&name).is_some() {
             self.name_to_id_map.insert(&name, community_id);
-            let community_info = PublicCommunityInfo::new(community_id, name, description, avatar_id, now);
+            let community_info = PublicCommunityInfo::new(community_id, name, description, avatar_id, None, now);
             self.communities.insert(community_id, community_info);
             true
         } else {
@@ -62,6 +64,22 @@ impl PublicCommunities {
 
     pub fn handle_community_creation_failed(&mut self, name: &str) {
         self.communities_pending.remove(name);
+    }
+
+    pub fn search(&self, search_term: String, max_results: u8) -> Vec<CommunityMatch> {
+        let query = Query::parse(search_term);
+
+        self.iter()
+            .filter(|g| !g.is_frozen())
+            .map(|g| {
+                let document: Document = g.into();
+                let score = document.calculate_score(&query);
+                (score, g)
+            })
+            .filter(|(score, _)| *score > 0)
+            .max_n_by(max_results as usize, |(score, _)| *score)
+            .map(|(_, g)| g.into())
+            .collect()
     }
 
     pub fn update_community(
@@ -86,6 +104,16 @@ impl PublicCommunities {
                 community.description = description;
                 community.avatar_id = avatar_id;
                 UpdateCommunityResult::Success
+            }
+        }
+    }
+
+    pub fn update_banner(&mut self, community_id: &CommunityId, banner_id: Option<u128>) -> bool {
+        match self.communities.get_mut(community_id) {
+            None => false,
+            Some(mut community) => {
+                community.banner_id = banner_id;
+                true
             }
         }
     }
@@ -116,6 +144,7 @@ pub struct PublicCommunityInfo {
     name: String,
     description: String,
     avatar_id: Option<u128>,
+    banner_id: Option<u128>,
     activity: PublicCommunityActivity,
 }
 
@@ -132,6 +161,7 @@ impl PublicCommunityInfo {
         name: String,
         description: String,
         avatar_id: Option<u128>,
+        banner_id: Option<u128>,
         now: TimestampMillis,
     ) -> PublicCommunityInfo {
         PublicCommunityInfo {
@@ -139,6 +169,7 @@ impl PublicCommunityInfo {
             name,
             description,
             avatar_id,
+            banner_id,
             created: now,
             marked_active_until: now + MARK_ACTIVE_DURATION,
             activity: PublicCommunityActivity::default(),
@@ -169,6 +200,28 @@ impl PublicCommunityInfo {
 
     pub fn set_frozen(&mut self, info: Option<FrozenCommunityInfo>) {
         self.frozen = info;
+    }
+}
+
+impl From<&PublicCommunityInfo> for CommunityMatch {
+    fn from(community: &PublicCommunityInfo) -> Self {
+        CommunityMatch {
+            id: community.id,
+            name: community.name.clone(),
+            description: community.description.clone(),
+            avatar_id: community.avatar_id,
+            banner_id: community.banner_id,
+        }
+    }
+}
+
+impl From<&PublicCommunityInfo> for Document {
+    fn from(community: &PublicCommunityInfo) -> Self {
+        let mut document = Document::default();
+        document
+            .add_field(community.name.clone(), 5.0, true)
+            .add_field(community.description.clone(), 1.0, true);
+        document
     }
 }
 

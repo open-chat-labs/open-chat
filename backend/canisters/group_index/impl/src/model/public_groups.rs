@@ -291,8 +291,8 @@ impl From<&PublicGroupInfo> for Document {
     fn from(group: &PublicGroupInfo) -> Self {
         let mut document = Document::default();
         document
-            .add_field(group.name.to_owned(), 5.0, true)
-            .add_field(group.description.to_owned(), 1.0, true);
+            .add_field(group.name.clone(), 5.0, true)
+            .add_field(group.description.clone(), 1.0, true);
         document
     }
 }

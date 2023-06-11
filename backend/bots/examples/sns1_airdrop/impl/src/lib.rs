@@ -3,7 +3,7 @@ use canister_state_macros::canister_state;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::{HashMap, HashSet};
-use types::{Avatar, CanisterId, Cycles, TimestampMillis, Timestamped, UserId, Version};
+use types::{CanisterId, Cycles, Document, TimestampMillis, Timestamped, UserId, Version};
 use utils::env::Environment;
 
 mod guards;
@@ -52,7 +52,7 @@ struct Data {
     pub admins: HashSet<Principal>,
     pub users: HashMap<UserId, Option<Principal>>,
     pub principals: HashSet<Principal>,
-    pub avatar: Timestamped<Option<Avatar>>,
+    pub avatar: Timestamped<Option<Document>>,
     pub completed: bool,
     pub test_mode: bool,
 }

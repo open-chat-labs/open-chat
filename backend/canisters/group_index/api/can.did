@@ -1,5 +1,23 @@
 import "../../../libraries/types/can.did";
 
+type ActiveGroupsArgs =
+    record {
+        group_ids: vec ChatId;
+        community_ids: vec CommunityId;
+        active_since: opt TimestampMillis;
+    };
+
+type ActiveGroupsResponse =
+    variant {
+        Success: record {
+            timestamp: TimestampMillis;
+            active_groups: vec ChatId;
+            active_communities: vec CommunityId;
+            deleted_groups: vec DeletedGroupInfo;
+            deleted_communities: vec DeletedCommunityInfo;
+        };
+    };
+
 type FilterGroupsArgs =
     record {
         chat_ids: vec ChatId;
@@ -29,12 +47,22 @@ type RecommendedGroupsResponse =
         }
     };
 
+type DeletedCommunityInfo =
+    record {
+        id: CommunityId;
+        timestamp: TimestampMillis;
+        deleted_by: UserId;
+        name: text;
+        public: bool;
+    };
+
 type DeletedGroupInfo =
     record {
         id: ChatId;
         timestamp: TimestampMillis;
         deleted_by: UserId;
         group_name: text;
+        name: text;
         public: bool;
     };
 
@@ -55,6 +83,43 @@ type SearchResponse =
 type SearchSuccessResult =
     record {
         matches: vec GroupMatch;
+    };
+
+type SearchV2Args =
+    record {
+        scope: SearchScope;
+        search_term: text;
+        max_results: nat8;
+    };
+
+type SearchScope =
+    variant {
+        All;
+        Communities;
+        Groups;
+    };
+
+type SearchV2Response =
+    variant {
+        Success: SearchV2Success;
+        TermTooShort: nat8;
+        TermTooLong: nat8;
+        InvalidTerm;
+    };
+
+type SearchV2Success =
+    record {
+        group_matches: vec GroupMatch;
+        community_matches: vec CommunityMatch;
+    };
+
+type CommunityMatch =
+    record {
+        id: CommunityId;
+        name: text;
+        description: text;
+        avatar_id: opt nat;
+        banner_id: opt nat;
     };
 
 type GroupMatch =
@@ -159,9 +224,11 @@ type SetUpgradeConcurrencyResponse =
     };
 
 service: {
+    active_groups: (ActiveGroupsArgs) -> (ActiveGroupsResponse) query;
     filter_groups: (FilterGroupsArgs) -> (FilterGroupsResponse) query;
     recommended_groups: (RecommendedGroupsArgs) -> (RecommendedGroupsResponse) query;
     search: (SearchArgs) -> (SearchResponse) query;
+    search_v2: (SearchV2Args) -> (SearchV2Response) query;
 
     // Only callable by "platform moderators"
     freeze_group: (FreezeGroupArgs) -> (FreezeGroupResponse);

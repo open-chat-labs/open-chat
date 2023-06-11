@@ -7,8 +7,9 @@ use group_index_canister::c2c_update_community;
 use ic_cdk_macros::update;
 use tracing::error;
 use types::{
-    Avatar, AvatarChanged, CanisterId, CommunityId, CommunityPermissions, CommunityPermissionsChanged, GroupDescriptionChanged,
-    GroupGateUpdated, GroupNameChanged, GroupRulesChanged, OptionalCommunityPermissions, Timestamped, UserId,
+    AvatarChanged, CanisterId, CommunityId, CommunityPermissions, CommunityPermissionsChanged, Document,
+    GroupDescriptionChanged, GroupGateUpdated, GroupNameChanged, GroupRulesChanged, OptionalCommunityPermissions, Timestamped,
+    UserId,
 };
 use utils::avatar_validation::validate_avatar;
 use utils::group_validation::{validate_description, validate_name, validate_rules, NameValidationError, RulesValidationError};
@@ -37,7 +38,7 @@ async fn update_community(mut args: Args) -> Response {
                 c2c_update_community::Response::Success => {}
                 c2c_update_community::Response::NameTaken => return NameTaken,
                 c2c_update_community::Response::CommunityNotFound => {
-                    error!(chat_id = %prepare_result.ccommunity_id, "Community not found in index");
+                    error!(chat_id = %prepare_result.community_id, "Community not found in index");
                     return InternalError;
                 }
             },
@@ -62,7 +63,7 @@ struct PrepareResult {
     my_user_id: UserId,
     group_index_canister_id: CanisterId,
     is_public: bool,
-    ccommunity_id: CommunityId,
+    community_id: CommunityId,
     name: String,
     description: String,
     avatar_id: Option<u128>,
@@ -120,10 +121,10 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
                 my_user_id: member.user_id,
                 group_index_canister_id: state.data.group_index_canister_id,
                 is_public: state.data.is_public,
-                ccommunity_id: state.env.canister_id().into(),
+                community_id: state.env.canister_id().into(),
                 name: args.name.as_ref().unwrap_or(&state.data.name).clone(),
                 description: args.description.as_ref().unwrap_or(&state.data.description).clone(),
-                avatar_id: avatar_update.map_or(Avatar::id(&state.data.avatar), |avatar| avatar.map(|a| a.id)),
+                avatar_id: avatar_update.map_or(Document::id(&state.data.avatar), |avatar| avatar.map(|a| a.id)),
             })
         }
     } else {
@@ -181,8 +182,8 @@ fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) {
     }
 
     if let Some(avatar) = args.avatar.expand() {
-        let previous_avatar_id = Avatar::id(&state.data.avatar);
-        let new_avatar_id = Avatar::id(&avatar);
+        let previous_avatar_id = Document::id(&state.data.avatar);
+        let new_avatar_id = Document::id(&avatar);
 
         if new_avatar_id != previous_avatar_id {
             events.push_event(

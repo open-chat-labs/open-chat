@@ -1,12 +1,12 @@
 use crate::{read_state, RuntimeState};
-use http_request::{build_json_response, encode_logs, extract_route, get_avatar, Route};
+use http_request::{build_json_response, encode_logs, extract_route, get_document, Route};
 use ic_cdk_macros::query;
 use types::{HttpRequest, HttpResponse, TimestampMillis};
 
 #[query]
 fn http_request(request: HttpRequest) -> HttpResponse {
     fn get_avatar_impl(requested_avatar_id: Option<u128>, state: &RuntimeState) -> HttpResponse {
-        get_avatar(requested_avatar_id, &state.data.chat.avatar)
+        get_document(requested_avatar_id, &state.data.chat.avatar, "avatar")
     }
 
     fn get_logs_impl(since: Option<TimestampMillis>) -> HttpResponse {

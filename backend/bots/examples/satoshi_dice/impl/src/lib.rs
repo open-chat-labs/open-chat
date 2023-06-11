@@ -5,7 +5,7 @@ use canister_state_macros::canister_state;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashSet;
-use types::{Avatar, CanisterId, Cycles, TimestampMillis, Timestamped, Version};
+use types::{CanisterId, Cycles, Document, TimestampMillis, Timestamped, Version};
 use utils::env::Environment;
 
 mod guards;
@@ -75,7 +75,7 @@ struct Data {
     pub local_user_index_canister_id: CanisterId,
     pub ckbtc_ledger_canister_id: CanisterId,
     pub admins: HashSet<Principal>,
-    pub avatar: Timestamped<Option<Avatar>>,
+    pub avatar: Timestamped<Option<Document>>,
     pub username: String,
     pub users: UserMap,
     pub pending_actions_queue: PendingActionsQueue,

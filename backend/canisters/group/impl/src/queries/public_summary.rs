@@ -3,7 +3,7 @@ use crate::RuntimeState;
 use canister_api_macros::query_candid_and_msgpack;
 use chat_events::Reader;
 use group_canister::public_summary::{Response::*, *};
-use types::{Avatar, PublicGroupSummary, Version};
+use types::{Document, PublicGroupSummary, Version};
 
 #[query_candid_and_msgpack]
 fn public_summary(args: Args) -> Response {
@@ -38,7 +38,7 @@ fn public_summary_impl(args: Args, state: &RuntimeState) -> Response {
         description: data.chat.description.clone(),
         subtype: data.chat.subtype.value.clone(),
         history_visible_to_new_joiners: data.chat.history_visible_to_new_joiners,
-        avatar_id: Avatar::id(&data.chat.avatar),
+        avatar_id: Document::id(&data.chat.avatar),
         latest_message,
         latest_event_index,
         participant_count: data.chat.members.len(),

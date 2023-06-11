@@ -16,7 +16,9 @@ use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashSet;
 use std::ops::Deref;
-use types::{Avatar, CanisterId, ChatId, Cryptocurrency, Cycles, Notification, TimestampMillis, Timestamped, UserId, Version};
+use types::{
+    CanisterId, ChatId, Cryptocurrency, Cycles, Document, Notification, TimestampMillis, Timestamped, UserId, Version,
+};
 use utils::env::Environment;
 use utils::regular_jobs::RegularJobs;
 
@@ -141,7 +143,7 @@ struct Data {
     pub local_user_index_canister_id: CanisterId,
     pub group_index_canister_id: CanisterId,
     pub notifications_canister_id: CanisterId,
-    pub avatar: Timestamped<Option<Avatar>>,
+    pub avatar: Timestamped<Option<Document>>,
     pub test_mode: bool,
     pub is_platform_moderator: bool,
     pub hot_group_exclusions: HotGroupExclusions,

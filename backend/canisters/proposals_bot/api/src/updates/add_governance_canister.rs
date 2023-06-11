@@ -1,14 +1,14 @@
 use candid::CandidType;
 use human_readable::{HumanReadablePrincipal, ToHumanReadable};
 use serde::{Deserialize, Serialize};
-use types::{Avatar, CanisterId};
+use types::{CanisterId, Document};
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]
 pub struct Args {
     pub governance_canister_id: CanisterId,
     pub name: String,
     pub description: Option<String>,
-    pub avatar: Option<Avatar>,
+    pub avatar: Option<Document>,
 }
 
 #[derive(CandidType, Serialize, Deserialize, Debug)]

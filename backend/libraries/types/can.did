@@ -4,7 +4,7 @@ type BlockIndex = nat64;
 type CanisterId = principal;
 type ChannelId = nat;
 type ChatId = CanisterId;
-type CommunityId = principal;
+type CommunityId = CanisterId;
 type Cycles = nat;
 type EventIndex = nat32;
 type FileId = nat;
@@ -39,7 +39,7 @@ type AudioContent =
         blob_reference: opt BlobReference;
     };
 
-type Avatar =
+type Document =
     record {
         id: nat;
         mime_type: text;
@@ -458,7 +458,7 @@ type AvatarUpdate =
     variant {
         NoChange;
         SetToNone;
-        SetToSome: Avatar;
+        SetToSome: Document;
     };
 
 type TextUpdate =
