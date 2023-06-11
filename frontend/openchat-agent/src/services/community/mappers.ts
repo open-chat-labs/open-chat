@@ -27,6 +27,7 @@ import {
     Message,
     PinChannelMessageResponse,
     PinMessageResponse,
+    RemoveCommunityMemberResponse,
     UnsupportedValueError,
     UserFailedError,
     UserFailedGateCheck,
@@ -743,8 +744,15 @@ export function pinMessageResponse(candid: ApiPinMessageResponse): PinChannelMes
     }
 }
 
-export function removeMemberResponse(_candid: ApiRemoveMemberResponse): unknown {
-    return {};
+export function removeMemberResponse(
+    candid: ApiRemoveMemberResponse
+): RemoveCommunityMemberResponse {
+    if ("Success" in candid) {
+        return CommonResponses.success;
+    } else {
+        console.warn("RemoveCommunityMember failed with", candid);
+        return CommonResponses.failure;
+    }
 }
 
 export function removeMemberFromChannelResponse(
