@@ -25,6 +25,8 @@ import {
     MakeCommunityPrivateResponse,
     MemberRole,
     Message,
+    PinChannelMessageResponse,
+    PinMessageResponse,
     UnsupportedValueError,
     UserFailedError,
     UserFailedGateCheck,
@@ -725,8 +727,20 @@ export async function messagesByMessageIndexResponse(
     );
 }
 
-export function pinMessageResponse(_candid: ApiPinMessageResponse): unknown {
-    return {};
+export function pinMessageResponse(candid: ApiPinMessageResponse): PinChannelMessageResponse {
+    if ("Success" in candid) {
+        return {
+            kind: "success",
+            event: {
+                timestamp: candid.Success.timestamp,
+                index: candid.Success.index,
+                expiresAt: optional(candid.Success.expires_at, identity),
+            },
+        };
+    } else {
+        console.warn("PinChannelMessage failed with", candid);
+        return CommonResponses.failure;
+    }
 }
 
 export function removeMemberResponse(_candid: ApiRemoveMemberResponse): unknown {

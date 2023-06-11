@@ -288,6 +288,13 @@ export type MakeCommunityPrivateResponse =
     | CommunityFrozen
     | InteralError;
 
+export type PushEventResult = {
+    timestamp: bigint;
+    index: number;
+    expiresAt?: bigint;
+};
+export type PinChannelMessageResponse = Failure | (Success & { event: PushEventResult });
+
 export const CommonResponses = {
     userNotInChannel: { kind: "user_not_in_channel" } as UserNotInChannel,
     channelNotFound: { kind: "channel_not_found" } as ChannelNotFound,
