@@ -28,6 +28,7 @@ import {
     PinChannelMessageResponse,
     PinMessageResponse,
     RemoveChannelMemberResponse,
+    RemoveChannelReactionResponse,
     RemoveCommunityMemberResponse,
     UnsupportedValueError,
     UserFailedError,
@@ -767,8 +768,15 @@ export function removeMemberFromChannelResponse(
     }
 }
 
-export function removeReactionResponse(_candid: ApiRemoveReactionResponse): unknown {
-    return {};
+export function removeReactionResponse(
+    candid: ApiRemoveReactionResponse
+): RemoveChannelReactionResponse {
+    if ("Success" in candid) {
+        return CommonResponses.success;
+    } else {
+        console.warn("RemoveChannelReaction failed with", candid);
+        return CommonResponses.failure;
+    }
 }
 
 export function resetInviteCodeResponse(_candid: ApiEnableInviteCodeResponse): unknown {
