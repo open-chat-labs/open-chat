@@ -21,6 +21,7 @@ import {
     JoinChannelResponse,
     LeaveChannelResponse,
     MakeChannelPrivateResponse,
+    MakeCommunityPrivateResponse,
     MemberRole,
     UnsupportedValueError,
     UserFailedError,
@@ -645,8 +646,31 @@ export function makeChannelPrivateResponse(
     );
 }
 
-export function makePrivateResponse(_candid: ApiMakePrivateResponse): unknown {
-    return {};
+export function makeCommunityPrivateResponse(
+    candid: ApiMakePrivateResponse
+): MakeCommunityPrivateResponse {
+    if ("NotAuthorized" in candid) {
+        return CommonResponses.notAuthorized;
+    }
+    if ("Success" in candid) {
+        return CommonResponses.success;
+    }
+    if ("UserNotInCommunity" in candid) {
+        return CommonResponses.userNotInCommunity;
+    }
+    if ("UserSuspended" in candid) {
+        return CommonResponses.userSuspended;
+    }
+    if ("AlreadyPrivate" in candid) {
+        return { kind: "community_already_private" };
+    }
+    if ("CommunityFrozen" in candid) {
+        return CommonResponses.communityFrozen;
+    }
+    if ("InternalError" in candid) {
+        return CommonResponses.internalError;
+    }
+    throw new UnsupportedValueError("Unexpected ApiMakePrivateResponse type received", candid);
 }
 
 export function messageByMessageIndexResponse(_candid: ApiMessagesByMessageIndexResponse): unknown {

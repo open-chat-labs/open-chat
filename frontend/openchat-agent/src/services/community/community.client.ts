@@ -23,7 +23,7 @@ import {
     leaveChannelResponse,
     localUserIndexResponse,
     makeChannelPrivateResponse,
-    makePrivateResponse,
+    makeCommunityPrivateResponse,
     messageByMessageIndexResponse,
     pinMessageResponse,
     removeMemberResponse,
@@ -395,7 +395,7 @@ export class CommunityClient extends CandidService {
     }
 
     makePrivate(): Promise<unknown> {
-        return this.handleResponse(this.service.make_private({}), makePrivateResponse);
+        return this.handleResponse(this.service.make_private({}), makeCommunityPrivateResponse);
     }
 
     messageByMessageIndex(

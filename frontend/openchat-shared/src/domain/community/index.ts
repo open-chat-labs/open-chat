@@ -274,6 +274,15 @@ export type MakeChannelPrivateResponse =
     | { kind: "channel_already_private" }
     | CommunityFrozen;
 
+export type MakeCommunityPrivateResponse =
+    | NotAuthorised
+    | Success
+    | UserNotInCommunity
+    | UserSuspended
+    | { kind: "community_already_private" }
+    | CommunityFrozen
+    | InteralError;
+
 export const CommonResponses = {
     userNotInChannel: { kind: "user_not_in_channel" } as UserNotInChannel,
     channelNotFound: { kind: "channel_not_found" } as ChannelNotFound,
