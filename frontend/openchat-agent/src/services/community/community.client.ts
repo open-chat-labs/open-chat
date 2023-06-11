@@ -403,13 +403,14 @@ export class CommunityClient extends CandidService {
         latestClientEventIndex: number | undefined,
         threadRootMessageIndex: number | undefined
     ): Promise<unknown> {
-        return this.handleResponse(
-            this.service.messages_by_message_index({
-                channel_id: BigInt(channelId),
-                messages: messageIndexes,
-                latest_client_event_index: apiOptional(identity, latestClientEventIndex),
-                thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
-            }),
+        const args = {
+            channel_id: BigInt(channelId),
+            messages: messageIndexes,
+            latest_client_event_index: apiOptional(identity, latestClientEventIndex),
+            thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
+        };
+        return this.handleQueryResponse(
+            () => this.service.messages_by_message_index(args),
             (res) =>
                 messagesByMessageIndexResponse(
                     this.principal,
@@ -472,10 +473,11 @@ export class CommunityClient extends CandidService {
     }
 
     rules(inviteCode: string | undefined): Promise<unknown> {
-        return this.handleResponse(
-            this.service.rules({
-                invite_code: apiOptional((c) => BigInt(c), inviteCode),
-            }),
+        return this.handleQueryResponse(
+            () =>
+                this.service.rules({
+                    invite_code: apiOptional((c) => BigInt(c), inviteCode),
+                }),
             rulesResponse
         );
     }
@@ -486,32 +488,35 @@ export class CommunityClient extends CandidService {
         users: string[],
         searchTerm: string
     ): Promise<unknown> {
-        return this.handleResponse(
-            this.service.search_channel({
-                channel_id: BigInt(channelId),
-                max_results: maxResults,
-                users: users.length > 0 ? [users.map((u) => Principal.fromText(u))] : [],
-                search_term: searchTerm,
-            }),
+        return this.handleQueryResponse(
+            () =>
+                this.service.search_channel({
+                    channel_id: BigInt(channelId),
+                    max_results: maxResults,
+                    users: users.length > 0 ? [users.map((u) => Principal.fromText(u))] : [],
+                    search_term: searchTerm,
+                }),
             searchChannelResponse
         );
     }
 
     selectedChannelInitial(channelId: string): Promise<unknown> {
-        return this.handleResponse(
-            this.service.selected_channel_initial({
-                channel_id: BigInt(channelId),
-            }),
+        return this.handleQueryResponse(
+            () =>
+                this.service.selected_channel_initial({
+                    channel_id: BigInt(channelId),
+                }),
             selectedChannelInitialResponse
         );
     }
 
     selectedChannelUpdates(channelId: string, updatesSince: bigint): Promise<unknown> {
-        return this.handleResponse(
-            this.service.selected_channel_updates({
-                channel_id: BigInt(channelId),
-                updates_since: updatesSince,
-            }),
+        return this.handleQueryResponse(
+            () =>
+                this.service.selected_channel_updates({
+                    channel_id: BigInt(channelId),
+                    updates_since: updatesSince,
+                }),
             selectedChannelUpdatesResponse
         );
     }
@@ -550,14 +555,15 @@ export class CommunityClient extends CandidService {
     }
 
     summary(): Promise<unknown> {
-        return this.handleResponse(this.service.summary({}), summaryResponse);
+        return this.handleQueryResponse(() => this.service.summary({}), summaryResponse);
     }
 
     summaryUpdates(updatesSince: bigint): Promise<unknown> {
-        return this.handleResponse(
-            this.service.summary_updates({
-                updates_since: updatesSince,
-            }),
+        return this.handleQueryResponse(
+            () =>
+                this.service.summary_updates({
+                    updates_since: updatesSince,
+                }),
             summaryUpdatesResponse
         );
     }

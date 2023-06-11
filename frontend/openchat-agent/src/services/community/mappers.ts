@@ -18,7 +18,6 @@ import {
     DisableCommunityInviteCodeResponse,
     EditChannelMessageResponse,
     EnableCommunityInviteCodeResponse,
-    EnableInviteCodeResponse,
     EventsResponse,
     GateCheckFailedReason,
     GroupChatSummary,
