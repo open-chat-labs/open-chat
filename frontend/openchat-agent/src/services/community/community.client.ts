@@ -29,7 +29,6 @@ import {
     removeMemberResponse,
     removeMemberFromChannelResponse,
     removeReactionResponse,
-    resetInviteCodeResponse,
     rulesResponse,
     searchChannelResponse,
     selectedChannelInitialResponse,

@@ -301,6 +301,15 @@ export type RemoveChannelReactionResponse = Success | Failure;
 
 export type CommunityRulesResponse = Failure | (Success & { rules?: string });
 
+export type ChannelMessageMatch = {
+    content: MessageContent;
+    sender: string;
+    score: number;
+    messageIndex: number;
+};
+
+export type SearchChannelResponse = Failure | (Success & { matches: ChannelMessageMatch[] });
+
 export const CommonResponses = {
     userNotInChannel: { kind: "user_not_in_channel" } as UserNotInChannel,
     channelNotFound: { kind: "channel_not_found" } as ChannelNotFound,

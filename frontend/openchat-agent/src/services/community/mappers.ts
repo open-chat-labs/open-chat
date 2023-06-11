@@ -4,6 +4,7 @@ import {
     BlockCommunityUserResponse,
     ChangeChannelRoleResponse,
     ChangeCommunityRoleResponse,
+    ChannelMessageMatch,
     CommonResponses,
     CommunityInviteCodeResponse,
     CommunityPermissionRole,
@@ -31,6 +32,7 @@ import {
     RemoveChannelMemberResponse,
     RemoveChannelReactionResponse,
     RemoveCommunityMemberResponse,
+    SearchChannelResponse,
     UnsupportedValueError,
     UserFailedError,
     UserFailedGateCheck,
@@ -82,6 +84,7 @@ import type {
     ApiUserFailedGateCheck,
     ApiUserFailedError,
     ApiCommunityCanisterChannelSummary,
+    ApiMessageMatch,
 } from "./candid/idl";
 import {
     accessGate,
@@ -792,8 +795,26 @@ export function rulesResponse(candid: ApiRulesResponse): CommunityRulesResponse 
     }
 }
 
-export function searchChannelResponse(_candid: ApiSearchChannelResponse): unknown {
-    return {};
+export function searchChannelResponse(candid: ApiSearchChannelResponse): SearchChannelResponse {
+    if ("Success" in candid) {
+        return {
+            kind: "success",
+            matches: candid.Success.matches.map(messageMatch),
+        };
+    } else {
+        console.warn("SearchChannel failed with", candid);
+        return CommonResponses.failure;
+    }
+}
+
+export function messageMatch(candid: ApiMessageMatch): ChannelMessageMatch {
+    const sender = candid.sender.toString();
+    return {
+        content: messageContent(candid.content, sender),
+        sender,
+        score: candid.score,
+        messageIndex: candid.message_index,
+    };
 }
 
 export function selectedChannelInitialResponse(
