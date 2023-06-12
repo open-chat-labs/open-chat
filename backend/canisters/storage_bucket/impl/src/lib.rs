@@ -9,6 +9,7 @@ use types::{CanisterId, Cycles, FileId, TimestampMillis, Timestamped, Version};
 use utils::env::Environment;
 
 mod guards;
+mod jobs;
 mod lifecycle;
 mod memory;
 mod model;
@@ -63,6 +64,7 @@ impl RuntimeState {
             file_count: file_metrics.file_count,
             blob_count: file_metrics.blob_count,
             index_sync_queue_length: self.data.index_sync_state.queue_len(),
+            freezing_limit: self.data.freezing_limit.value.unwrap_or_default(),
         }
     }
 }
@@ -74,6 +76,8 @@ struct Data {
     files: Files,
     index_sync_state: IndexSyncState,
     created: TimestampMillis,
+    #[serde(default)]
+    freezing_limit: Timestamped<Option<Cycles>>,
     test_mode: bool,
 }
 
@@ -85,6 +89,7 @@ impl Data {
             files: Files::default(),
             index_sync_state: IndexSyncState::default(),
             created: now,
+            freezing_limit: Timestamped::default(),
             test_mode,
         }
     }
@@ -111,6 +116,7 @@ pub struct Metrics {
     pub file_count: u64,
     pub blob_count: u64,
     pub index_sync_queue_length: u32,
+    pub freezing_limit: Cycles,
 }
 
 pub fn calc_chunk_count(chunk_size: u32, total_size: u64) -> u32 {
