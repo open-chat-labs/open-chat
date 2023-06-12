@@ -1,10 +1,10 @@
 use crate::activity_notifications::handle_activity_notification;
 use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_tracing_macros::trace;
-use chat_events::{Reader, RecordProposalVoteResult};
+use chat_events::{MessageContentInternal, Reader, RecordProposalVoteResult};
 use group_canister::register_proposal_vote::{Response::*, *};
 use ic_cdk_macros::update;
-use types::{CanisterId, MessageContentInternal, ProposalId, UserId};
+use types::{CanisterId, ProposalId, UserId};
 
 #[update]
 #[trace]

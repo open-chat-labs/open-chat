@@ -27,13 +27,3 @@ pub struct ReplyContext {
 pub struct GroupReplyContext {
     pub event_index: EventIndex,
 }
-
-impl From<GroupReplyContext> for ReplyContext {
-    fn from(r: GroupReplyContext) -> Self {
-        ReplyContext {
-            chat_id_if_other: None,
-            event_list_if_other: None,
-            event_index: r.event_index,
-        }
-    }
-}

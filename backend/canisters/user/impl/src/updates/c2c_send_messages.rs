@@ -3,11 +3,11 @@ use crate::{mutate_state, read_state, run_regular_jobs, RuntimeState};
 use canister_api_macros::update_msgpack;
 use canister_timer_jobs::TimerJobs;
 use canister_tracing_macros::trace;
-use chat_events::{PushMessageArgs, Reader};
+use chat_events::{MessageContentInternal, PushMessageArgs, Reader, ReplyContextInternal};
 use ic_cdk_macros::update;
 use types::{
     BlobReference, CanisterId, DirectMessageNotification, EventWrapper, Message, MessageContent, MessageContentInitial,
-    MessageId, MessageIndex, Notification, ReplyContext, TimestampMillis, UserId,
+    MessageId, MessageIndex, Notification, TimestampMillis, UserId,
 };
 use user_canister::c2c_send_messages::{Response::*, *};
 
@@ -171,7 +171,7 @@ pub(crate) fn handle_message_impl(
 ) -> EventWrapper<Message> {
     let replies_to = convert_reply_context(args.replies_to, sender, args.now, state);
     let initial_content: MessageContentInitial = args.content.into();
-    let content = initial_content.new_content_into_internal();
+    let content = MessageContentInternal::from(initial_content);
     let files = content.blob_references();
 
     let push_message_args = PushMessageArgs {
@@ -219,7 +219,7 @@ fn convert_reply_context(
     sender: UserId,
     now: TimestampMillis,
     state: &RuntimeState,
-) -> Option<ReplyContext> {
+) -> Option<ReplyContextInternal> {
     match replies_to? {
         C2CReplyContext::ThisChat(message_id) => {
             let chat_id = sender.into();
@@ -228,19 +228,16 @@ fn convert_reply_context(
                 .direct_chats
                 .get(&chat_id)
                 .and_then(|chat| chat.events.main_events_reader(now).event_index(message_id.into()))
-                .map(|event_index| ReplyContext {
-                    chat_id_if_other: None,
+                .map(|event_index| ReplyContextInternal {
                     event_list_if_other: None,
                     event_index,
                 })
         }
-        C2CReplyContext::OtherChat(chat_id, event_index) => Some(ReplyContext {
-            chat_id_if_other: Some(chat_id),
+        C2CReplyContext::OtherChat(chat_id, event_index) => Some(ReplyContextInternal {
             event_list_if_other: Some((chat_id, None)),
             event_index,
         }),
-        C2CReplyContext::OtherEventList(chat_id, thread_root_message_index, event_index) => Some(ReplyContext {
-            chat_id_if_other: Some(chat_id),
+        C2CReplyContext::OtherEventList(chat_id, thread_root_message_index, event_index) => Some(ReplyContextInternal {
             event_list_if_other: Some((chat_id, thread_root_message_index)),
             event_index,
         }),

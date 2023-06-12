@@ -2,7 +2,7 @@ use crate::activity_notifications::handle_activity_notification;
 use crate::{mutate_state, run_regular_jobs, RuntimeState};
 use candid::Principal;
 use canister_tracing_macros::trace;
-use chat_events::{PushMessageArgs, ReservePrizeResult};
+use chat_events::{MessageContentInternal, PushMessageArgs, ReservePrizeResult};
 use group_canister::claim_prize::{Response::*, *};
 use ic_cdk_macros::update;
 use ic_ledger_types::Tokens;
@@ -10,8 +10,8 @@ use icrc_ledger_types::icrc1::account::Account;
 use ledger_utils::{nns, sns};
 use types::nns::UserOrAccount;
 use types::{
-    CanisterId, CompletedCryptoTransaction, Cryptocurrency, GroupMessageNotification, MessageContentInternal, MessageId,
-    Notification, PendingCryptoTransaction, PrizeWinnerContent, UserId,
+    CanisterId, CompletedCryptoTransaction, Cryptocurrency, GroupMessageNotification, MessageId, Notification,
+    PendingCryptoTransaction, PrizeWinnerContent, UserId,
 };
 use utils::consts::{OPENCHAT_BOT_USERNAME, OPENCHAT_BOT_USER_ID};
 

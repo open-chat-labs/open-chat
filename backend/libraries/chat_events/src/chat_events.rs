@@ -11,11 +11,10 @@ use std::cmp::{max, Reverse};
 use std::collections::hash_map::Entry::{Occupied, Vacant};
 use std::collections::HashMap;
 use types::{
-    ChatId, ChatMetrics, Cryptocurrency, DeletedBy, DirectChatCreated, EventIndex, EventWrapper, EventsTimeToLiveUpdated,
+    ChatId, ChatMetrics, Cryptocurrency, DirectChatCreated, EventIndex, EventWrapper, EventsTimeToLiveUpdated,
     GroupCanisterThreadDetails, GroupCreated, GroupFrozen, GroupUnfrozen, Mention, MentionInternal, Message,
-    MessageContentInitial, MessageContentInternal, MessageId, MessageIndex, MessageMatch, Milliseconds, PollVotes,
-    ProposalUpdate, PushEventResult, PushIfNotContains, RangeSet, Reaction, RegisterVoteResult, ReplyContext, ThreadSummary,
-    TimestampMillis, Timestamped, UserId, VoteOperation,
+    MessageContentInitial, MessageId, MessageIndex, MessageMatch, Milliseconds, PollVotes, ProposalUpdate, PushEventResult,
+    PushIfNotContains, RangeSet, Reaction, RegisterVoteResult, TimestampMillis, Timestamped, UserId, VoteOperation,
 };
 use types::{Hash, MessageReport, ReportedMessageInternal};
 
@@ -169,7 +168,7 @@ impl ChatEvents {
         ) {
             if message.sender == args.sender {
                 if !matches!(message.content, MessageContentInternal::Deleted(_)) {
-                    message.content = args.content.new_content_into_internal();
+                    message.content = args.content.into();
                     message.last_updated = Some(args.now);
                     message.last_edited = Some(args.now);
                     self.mark_event_updated(args.thread_root_message_index, event_index, args.now);
@@ -229,7 +228,7 @@ impl ChatEvents {
                     _ => {
                         let sender = message.sender;
                         message.last_updated = Some(args.now);
-                        message.deleted_by = Some(DeletedBy {
+                        message.deleted_by = Some(DeletedByInternal {
                             deleted_by: args.caller,
                             timestamp: args.now,
                         });
@@ -686,9 +685,8 @@ impl ChatEvents {
                     notes,
                 }],
             }),
-            replies_to: Some(ReplyContext {
+            replies_to: Some(ReplyContextInternal {
                 event_list_if_other: Some((chat_id, thread_root_message_index)),
-                chat_id_if_other: Some(chat_id),
                 event_index,
             }),
             forwarded: false,
@@ -711,7 +709,7 @@ impl ChatEvents {
 
         root_message.last_updated = Some(now);
 
-        let mut summary = root_message.thread_summary.get_or_insert_with(ThreadSummary::default);
+        let mut summary = root_message.thread_summary.get_or_insert_with(ThreadSummaryInternal::default);
         summary.latest_event_index = latest_event_index;
         summary.latest_event_timestamp = now;
 
@@ -1110,7 +1108,7 @@ pub struct PushMessageArgs {
     pub thread_root_message_index: Option<MessageIndex>,
     pub message_id: MessageId,
     pub content: MessageContentInternal,
-    pub replies_to: Option<ReplyContext>,
+    pub replies_to: Option<ReplyContextInternal>,
     pub forwarded: bool,
     pub correlation_id: u64,
     pub now: TimestampMillis,
