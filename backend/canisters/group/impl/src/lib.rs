@@ -104,7 +104,7 @@ impl RuntimeState {
             latest_event_index,
             joined: member.date_added,
             participant_count: chat.members.len(),
-            role: member.role,
+            role: member.role.into(),
             mentions: member.most_recent_mentions(None, &chat.events, now),
             permissions: chat.permissions.clone(),
             notifications_muted: member.notifications_muted.value,
@@ -246,7 +246,6 @@ struct Data {
     pub timer_jobs: TimerJobs<TimerJob>,
     pub fire_and_forget_handler: FireAndForgetHandler,
     pub activity_notification_state: ActivityNotificationState,
-    #[serde(default)]
     pub instruction_counts_log: InstructionCountsLog,
     pub test_mode: bool,
 }

@@ -1,10 +1,12 @@
 mod invited_users;
 mod members;
 mod mentions;
+mod roles;
 
 pub use invited_users::*;
 pub use members::*;
 pub use mentions::*;
+pub use roles::*;
 
 use chat_events::{
     AddRemoveReactionArgs, ChatEventInternal, ChatEvents, ChatEventsListReader, DeleteMessageResult,
@@ -22,7 +24,7 @@ use types::{
     MessagesResponse, Milliseconds, OptionUpdate, OptionalGroupPermissions, PermissionsChanged, PushEventResult, Reaction,
     RoleChanged, SelectedGroupUpdates, ThreadPreview, TimestampMillis, Timestamped, User, UserId, UsersBlocked, UsersInvited,
 };
-use utils::avatar_validation::validate_avatar;
+use utils::document_validation::validate_avatar;
 use utils::group_validation::{validate_description, validate_name, validate_rules, NameValidationError, RulesValidationError};
 
 #[derive(Serialize, Deserialize)]
@@ -935,7 +937,7 @@ impl GroupChatCore {
         let result = self.members.change_role(
             caller,
             target_user,
-            new_role,
+            new_role.into(),
             &self.permissions,
             is_caller_platform_moderator,
             is_user_platform_moderator,
@@ -944,7 +946,7 @@ impl GroupChatCore {
         if let ChangeRoleResult::Success(r) = &result {
             let event = RoleChanged {
                 user_ids: vec![target_user],
-                old_role: r.prev_role,
+                old_role: r.prev_role.into(),
                 new_role,
                 changed_by: caller,
             };

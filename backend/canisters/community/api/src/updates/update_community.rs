@@ -10,6 +10,7 @@ pub struct Args {
     pub description: Option<String>,
     pub rules: Option<AccessRules>,
     pub avatar: OptionUpdate<Document>,
+    pub banner: OptionUpdate<Document>,
     pub permissions: Option<OptionalCommunityPermissions>,
     pub gate: OptionUpdate<AccessGate>,
 }
@@ -24,6 +25,7 @@ pub enum Response {
     NameReserved,
     DescriptionTooLong(FieldTooLongResult),
     AvatarTooBig(FieldTooLongResult),
+    BannerTooBig(FieldTooLongResult),
     NameTaken,
     InternalError,
     RulesTooLong(FieldTooLongResult),

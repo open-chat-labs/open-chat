@@ -8,7 +8,7 @@ use ic_cdk_macros::update;
 use tracing::error;
 use types::{CanisterId, ChatId};
 use user_canister::create_group::{Response::*, *};
-use utils::avatar_validation::validate_avatar;
+use utils::document_validation::validate_avatar;
 use utils::group_validation::{validate_description, validate_name, validate_rules, NameValidationError, RulesValidationError};
 
 #[update(guard = "caller_is_owner")]

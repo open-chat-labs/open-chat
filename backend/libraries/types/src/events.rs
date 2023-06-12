@@ -98,6 +98,13 @@ pub struct AvatarChanged {
 }
 
 #[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
+pub struct BannerChanged {
+    pub new_banner: Option<u128>,
+    pub previous_banner: Option<u128>,
+    pub changed_by: UserId,
+}
+
+#[derive(CandidType, Serialize, Deserialize, Clone, Debug)]
 pub struct MembersAdded {
     pub user_ids: Vec<UserId>,
     pub added_by: UserId,

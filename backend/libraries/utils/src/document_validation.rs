@@ -1,7 +1,7 @@
 use types::{Document, FieldTooLongResult};
 
-const MAX_AVATAR_SIZE: u32 = 1024 * 1024; // 1MB
-const MAX_BANNER_SIZE: u32 = 10 * 1024 * 1024; // 10MB
+const MAX_AVATAR_SIZE: u32 = 1024 * 800; // 800KB
+const MAX_BANNER_SIZE: u32 = 1024 * 1024; // 1MB
 
 pub fn validate_avatar(avatar: Option<&Document>) -> Result<(), FieldTooLongResult> {
     validate_document(avatar, MAX_AVATAR_SIZE)

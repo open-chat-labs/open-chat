@@ -7,11 +7,11 @@ use group_index_canister::c2c_update_community;
 use ic_cdk_macros::update;
 use tracing::error;
 use types::{
-    AvatarChanged, CanisterId, CommunityId, CommunityPermissions, CommunityPermissionsChanged, Document,
+    AvatarChanged, BannerChanged, CanisterId, CommunityId, CommunityPermissions, CommunityPermissionsChanged, Document,
     GroupDescriptionChanged, GroupGateUpdated, GroupNameChanged, GroupRulesChanged, OptionalCommunityPermissions, Timestamped,
     UserId,
 };
-use utils::avatar_validation::validate_avatar;
+use utils::document_validation::{validate_avatar, validate_banner};
 use utils::group_validation::{validate_description, validate_name, validate_rules, NameValidationError, RulesValidationError};
 
 #[update]
@@ -76,6 +76,7 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
 
     let caller = state.env.caller();
     let avatar_update = args.avatar.as_ref().expand();
+    let banner_update = args.banner.as_ref().expand();
 
     if let Some(name) = &args.name {
         if let Err(error) = validate_name(name, state.data.is_public) {
@@ -104,6 +105,10 @@ fn prepare(args: &Args, state: &RuntimeState) -> Result<PrepareResult, Response>
 
     if let Err(error) = avatar_update.map_or(Ok(()), validate_avatar) {
         return Err(AvatarTooBig(error));
+    }
+
+    if let Err(error) = banner_update.map_or(Ok(()), validate_banner) {
+        return Err(BannerTooBig(error));
     }
 
     if let Some(member) = state.data.members.get(caller) {
@@ -196,6 +201,24 @@ fn commit(my_user_id: UserId, args: Args, state: &mut RuntimeState) {
             );
 
             state.data.avatar = avatar;
+        }
+    }
+
+    if let Some(banner) = args.banner.expand() {
+        let previous_banner_id = Document::id(&state.data.banner);
+        let new_banner_id = Document::id(&banner);
+
+        if new_banner_id != previous_banner_id {
+            events.push_event(
+                CommunityEvent::BannerChanged(Box::new(BannerChanged {
+                    new_banner: new_banner_id,
+                    previous_banner: previous_banner_id,
+                    changed_by: my_user_id,
+                })),
+                now,
+            );
+
+            state.data.banner = banner;
         }
     }
 
