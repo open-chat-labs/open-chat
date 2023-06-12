@@ -312,14 +312,8 @@ pub trait Reader {
         my_user_id: Option<UserId>,
     ) -> EventWrapper<ChatEvent> {
         let event_data = match &event.event {
-            ChatEventInternal::Empty => ChatEvent::Empty,
             ChatEventInternal::DirectChatCreated(d) => ChatEvent::DirectChatCreated(*d),
             ChatEventInternal::Message(m) => ChatEvent::Message(Box::new(m.hydrate(my_user_id))),
-            ChatEventInternal::MessageEdited(m) => ChatEvent::MessageEdited(self.hydrate_updated_message(m)),
-            ChatEventInternal::MessageDeleted(m) => ChatEvent::MessageDeleted(self.hydrate_updated_message(m)),
-            ChatEventInternal::MessageUndeleted(m) => ChatEvent::MessageUndeleted(self.hydrate_updated_message(m)),
-            ChatEventInternal::MessageReactionAdded(m) => ChatEvent::MessageReactionAdded(self.hydrate_updated_message(m)),
-            ChatEventInternal::MessageReactionRemoved(m) => ChatEvent::MessageReactionRemoved(self.hydrate_updated_message(m)),
             ChatEventInternal::GroupChatCreated(g) => ChatEvent::GroupChatCreated(*g.clone()),
             ChatEventInternal::GroupNameChanged(g) => ChatEvent::GroupNameChanged(*g.clone()),
             ChatEventInternal::GroupDescriptionChanged(g) => ChatEvent::GroupDescriptionChanged(*g.clone()),
@@ -339,13 +333,6 @@ pub trait Reader {
             ChatEventInternal::MessagePinned(p) => ChatEvent::MessagePinned(*p.clone()),
             ChatEventInternal::PermissionsChanged(p) => ChatEvent::PermissionsChanged(*p.clone()),
             ChatEventInternal::MessageUnpinned(u) => ChatEvent::MessageUnpinned(*u.clone()),
-            ChatEventInternal::PollVoteRegistered(v) => ChatEvent::PollVoteRegistered(self.hydrate_poll_vote_registered(v)),
-            ChatEventInternal::PollVoteDeleted(v) => ChatEvent::PollVoteDeleted(self.hydrate_updated_message(v)),
-            ChatEventInternal::PollEnded(m) => ChatEvent::PollEnded(self.hydrate_poll_ended(**m)),
-            ChatEventInternal::ThreadUpdated(m) => {
-                ChatEvent::ThreadUpdated(self.hydrate_thread_updated(m.message_index, m.latest_thread_message_index_if_updated))
-            }
-            ChatEventInternal::ProposalsUpdated(p) => ChatEvent::ProposalsUpdated(self.hydrate_proposals_updated(p)),
             ChatEventInternal::GroupVisibilityChanged(g) => ChatEvent::GroupVisibilityChanged(*g.clone()),
             ChatEventInternal::GroupInviteCodeChanged(g) => ChatEvent::GroupInviteCodeChanged(*g.clone()),
             ChatEventInternal::ChatFrozen(f) => ChatEvent::ChatFrozen(*f.clone()),
@@ -353,6 +340,7 @@ pub trait Reader {
             ChatEventInternal::EventsTimeToLiveUpdated(u) => ChatEvent::EventsTimeToLiveUpdated(*u.clone()),
             ChatEventInternal::GroupGateUpdated(g) => ChatEvent::GroupGateUpdated(*g.clone()),
             ChatEventInternal::UsersInvited(e) => ChatEvent::UsersInvited(*e.clone()),
+            ChatEventInternal::Empty => ChatEvent::Empty,
         };
 
         EventWrapper {

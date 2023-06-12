@@ -9,20 +9,14 @@ use types::{
     GroupNameChanged, GroupRulesChanged, GroupUnfrozen, GroupVisibilityChanged, MemberJoined, MemberLeft, MembersAdded,
     MembersRemoved, Message, MessageContent, MessageContentInternal, MessageId, MessageIndex, MessagePinned, MessageUnpinned,
     OwnershipTransferred, ParticipantAssumesSuperAdmin, ParticipantDismissedAsSuperAdmin, ParticipantRelinquishesSuperAdmin,
-    PermissionsChanged, PollVoteRegistered, Reaction, ReplyContext, RoleChanged, ThreadSummary, TimestampMillis, UserId,
-    UsersBlocked, UsersInvited, UsersUnblocked,
+    PermissionsChanged, Reaction, ReplyContext, RoleChanged, ThreadSummary, TimestampMillis, UserId, UsersBlocked,
+    UsersInvited, UsersUnblocked,
 };
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub enum ChatEventInternal {
-    Empty,
     #[serde(rename = "m", alias = "Message")]
     Message(Box<MessageInternal>),
-    MessageEdited(Box<UpdatedMessageInternal>),
-    MessageDeleted(Box<UpdatedMessageInternal>),
-    MessageUndeleted(Box<UpdatedMessageInternal>),
-    MessageReactionAdded(Box<UpdatedMessageInternal>),
-    MessageReactionRemoved(Box<UpdatedMessageInternal>),
     DirectChatCreated(DirectChatCreated),
     GroupChatCreated(Box<GroupCreated>),
     GroupNameChanged(Box<GroupNameChanged>),
@@ -42,19 +36,16 @@ pub enum ChatEventInternal {
     UsersUnblocked(Box<UsersUnblocked>),
     MessagePinned(Box<MessagePinned>),
     MessageUnpinned(Box<MessageUnpinned>),
-    PollVoteRegistered(Box<PollVoteRegistered>),
-    PollVoteDeleted(Box<UpdatedMessageInternal>),
-    PollEnded(Box<MessageIndex>),
     PermissionsChanged(Box<PermissionsChanged>),
     GroupVisibilityChanged(Box<GroupVisibilityChanged>),
     GroupInviteCodeChanged(Box<GroupInviteCodeChanged>),
-    ThreadUpdated(Box<ThreadUpdatedInternal>),
-    ProposalsUpdated(Box<ProposalsUpdatedInternal>),
     ChatFrozen(Box<GroupFrozen>),
     ChatUnfrozen(Box<GroupUnfrozen>),
     EventsTimeToLiveUpdated(Box<EventsTimeToLiveUpdated>),
     GroupGateUpdated(Box<GroupGateUpdated>),
     UsersInvited(Box<UsersInvited>),
+    #[serde(other)]
+    Empty,
 }
 
 impl ChatEventInternal {
