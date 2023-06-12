@@ -17,15 +17,9 @@ fn post_upgrade(args: Args) {
     let memory = get_upgrades_memory();
     let reader = BufferedReader::new(UPGRADE_BUFFER_SIZE, Reader::new(&memory, 0));
 
-    let (mut data, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>) = serializer::deserialize(reader).unwrap();
+    let (data, logs, traces): (Data, Vec<LogEntry>, Vec<LogEntry>) = serializer::deserialize(reader).unwrap();
 
     canister_logger::init_with_logs(data.test_mode, logs, traces);
-
-    // One-off code to migrate InvitedUsers to no longer hold principals
-    let users = data.chat.invited_users.rebuild_users_map();
-    for (principal, user_id) in users {
-        data.principal_to_user_id_map.insert(principal, user_id);
-    }
 
     init_state(env, data, args.wasm_version);
 

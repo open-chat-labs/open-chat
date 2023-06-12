@@ -246,7 +246,6 @@ struct Data {
     pub timer_jobs: TimerJobs<TimerJob>,
     pub fire_and_forget_handler: FireAndForgetHandler,
     pub activity_notification_state: ActivityNotificationState,
-    #[serde(default)]
     pub instruction_counts_log: InstructionCountsLog,
     pub test_mode: bool,
 }
