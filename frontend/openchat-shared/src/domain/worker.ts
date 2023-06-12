@@ -105,6 +105,7 @@ import type {
     ChangeChannelRoleResponse,
     ChangeCommunityRoleResponse,
     CreateChannelResponse,
+    DeclineChannelInvitationResponse,
 } from "./community";
 
 /**
@@ -224,6 +225,7 @@ export type WorkerRequest =
     | AddCommunityReaction
     | BlockCommunityUser
     | ChangeChannelRole
+    | DeclineChannelInvitation
     | ChangeCommunityRole;
 
 type ReferralLeaderboard = {
@@ -897,6 +899,7 @@ export type WorkerResponse =
     | Response<ChangeChannelRoleResponse>
     | Response<ChangeCommunityRoleResponse>
     | Response<CreateChannelResponse>
+    | Response<DeclineChannelInvitationResponse>
     | Response<AddMembersToChannelResponse>;
 
 type Response<T> = {
@@ -1022,6 +1025,12 @@ type ChangeChannelRole = {
     channelId: string;
     userId: string;
     newRole: MemberRole;
+};
+
+type DeclineChannelInvitation = {
+    kind: "declineChannelInvitation";
+    communityId: string;
+    channelId: string;
 };
 
 type ChangeCommunityRole = {
@@ -1249,4 +1258,6 @@ export type WorkerResult<T> = T extends PinMessage
     ? ChangeCommunityRoleResponse
     : T extends CreateChannel
     ? CreateChannelResponse
+    : T extends DeclineChannelInvitation
+    ? DeclineChannelInvitationResponse
     : never;
