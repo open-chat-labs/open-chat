@@ -8,7 +8,6 @@ use types::CanisterId;
 fn heartbeat() {
     sync_index::run();
     remove_expired_files::run();
-    check_cycles_balance::run();
 }
 
 mod sync_index {
@@ -81,16 +80,5 @@ mod remove_expired_files {
                 state.data.index_sync_state.enqueue(EventToSync::FileRemoved(file));
             }
         });
-    }
-}
-
-mod check_cycles_balance {
-    use super::*;
-
-    pub fn run() {
-        mutate_state(|state| {
-            let storage_index_canister_id = state.data.storage_index_canister_id;
-            utils::cycles::check_cycles_balance(storage_index_canister_id);
-        })
     }
 }
