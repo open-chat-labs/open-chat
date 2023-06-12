@@ -1482,7 +1482,7 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
             case "deleteChannel":
                 agent
                     .communityClient(payload.communityId)
-                    .deleteChannel(payload.channelId),
+                    .deleteChannel(payload.channelId)
                     .then((response) =>
                         sendResponse(correlationId, {
                             response,
@@ -1491,6 +1491,22 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     .catch(sendError(correlationId));
                 break;
 
+            case "deleteChannelMessages":
+                agent
+                    .communityClient(payload.communityId)
+                    .deleteMessages(
+                        payload.channelId,
+                        payload.messageIds,
+                        payload.threadRootMessageIndex,
+                        payload.asPlatformModerator
+                    )
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
 
             default:
                 console.debug("WORKER: unknown message kind received: ", kind);
