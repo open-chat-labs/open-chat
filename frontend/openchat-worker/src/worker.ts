@@ -1887,6 +1887,26 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     .catch(sendError(correlationId));
                 break;
 
+            case "updateCommunity":
+                agent
+                    .communityClient(payload.communityId)
+                    .updateCommunity(
+                        payload.name,
+                        payload.description,
+                        payload.rules,
+                        payload.permissions,
+                        payload.avatar,
+                        payload.banner,
+                        payload.gate
+                    )
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
             default:
                 console.debug("WORKER: unknown message kind received: ", kind);
         }

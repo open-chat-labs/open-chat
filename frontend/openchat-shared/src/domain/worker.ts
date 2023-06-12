@@ -105,6 +105,7 @@ import type {
     ChangeChannelRoleResponse,
     ChangeCommunityRoleResponse,
     CommunityInviteCodeResponse,
+    CommunityPermissions,
     CommunityRulesResponse,
     CreateChannelResponse,
     DeclineChannelInvitationResponse,
@@ -131,6 +132,7 @@ import type {
     UnblockCommunityUserResponse,
     UndeleteChannelMessagesResponse,
     UpdateChannelResponse,
+    UpdateCommunityResponse,
 } from "./community";
 
 /**
@@ -281,6 +283,7 @@ export type WorkerRequest =
     | UnblockCommunityUser
     | UndeleteChannelMessages
     | UpdateChannel
+    | UpdateCommunity
     | ChangeCommunityRole;
 
 type ReferralLeaderboard = {
@@ -980,6 +983,7 @@ export type WorkerResponse =
     | Response<UnblockCommunityUserResponse>
     | Response<UndeleteChannelMessagesResponse>
     | Response<UpdateChannelResponse>
+    | Response<UpdateCommunityResponse>
     | Response<AddMembersToChannelResponse>;
 
 type Response<T> = {
@@ -1332,6 +1336,18 @@ type UpdateChannel = {
     gate?: AccessGate;
 };
 
+type UpdateCommunity = {
+    kind: "updateCommunity";
+    communityId: string;
+    name?: string;
+    description?: string;
+    rules?: AccessRules;
+    permissions?: Partial<CommunityPermissions>;
+    avatar?: Uint8Array;
+    banner?: Uint8Array;
+    gate?: AccessGate;
+};
+
 type ChangeCommunityRole = {
     kind: "changeCommunityRole";
     communityId: string;
@@ -1617,4 +1633,6 @@ export type WorkerResult<T> = T extends PinMessage
     ? UndeleteChannelMessagesResponse
     : T extends UpdateChannel
     ? UpdateChannelResponse
+    : T extends UpdateCommunity
+    ? UpdateCommunityResponse
     : never;

@@ -98,6 +98,7 @@ import type {
     UnblockCommunityUserResponse,
     UndeleteChannelMessagesResponse,
     UpdateChannelResponse,
+    UpdateCommunityResponse,
     User,
 } from "openchat-shared";
 import { apiGroupRules, apiOptionalGroupPermissions } from "../group/mappers";
@@ -691,7 +692,7 @@ export class CommunityClient extends CandidService {
         avatar?: Uint8Array,
         _banner?: Uint8Array,
         gate?: AccessGate
-    ): Promise<unknown> {
+    ): Promise<UpdateCommunityResponse> {
         return this.handleResponse(
             this.service.update_community({
                 name: apiOptional(identity, name),
