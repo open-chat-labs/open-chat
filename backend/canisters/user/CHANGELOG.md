@@ -17,7 +17,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - Change `c2c_remove_from_group` to always remove the user ([#3641](https://github.com/open-ic/open-chat/pull/3641))
 - Refactor search ([#3689](https://github.com/open-ic/open-chat/pull/3689))
 - Don't send notifications to suspended users ([#3704](https://github.com/open-ic/open-chat/pull/3704))
-- Make (de)serializing events more efficient ([#3756](https://github.com/open-ic/open-chat/pull/3756)) 
+- Make (de)serializing events more efficient ([#3756](https://github.com/open-ic/open-chat/pull/3756))
+- Trim deprecated chat events to save space ([#3773](https://github.com/open-ic/open-chat/pull/3773))
 
 ### Removed
 

@@ -57,25 +57,26 @@ pub(crate) fn handle_activity_notification(state: &mut RuntimeState) {
                 }
                 ChatEventInternal::Message(m) => {
                     activity.last_day.messages += 1;
+                    activity.last_day.reactions += m.reactions.len() as u32;
+
                     if within_last_hour {
                         activity.last_hour.messages += 1;
+                        activity.last_hour.reactions += m.reactions.len() as u32
                     }
+
                     if message_unique_users.insert(m.sender) {
                         activity.last_day.message_unique_users += 1;
                         if within_last_hour {
                             activity.last_hour.message_unique_users += 1;
                         }
                     }
-                }
-                ChatEventInternal::MessageReactionAdded(r) => {
-                    activity.last_day.reactions += 1;
-                    if within_last_hour {
-                        activity.last_hour.reactions += 1;
-                    }
-                    if reaction_unique_users.insert(r.updated_by) {
-                        activity.last_day.reaction_unique_users += 1;
-                        if within_last_hour {
-                            activity.last_hour.reaction_unique_users += 1;
+
+                    for user_id in m.reactions.iter().flat_map(|(_, u)| u.iter()).copied() {
+                        if reaction_unique_users.insert(user_id) {
+                            activity.last_day.reaction_unique_users += 1;
+                            if within_last_hour {
+                                activity.last_hour.reaction_unique_users += 1;
+                            }
                         }
                     }
                 }
