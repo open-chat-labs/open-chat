@@ -104,11 +104,35 @@ import type {
     BlockCommunityUserResponse,
     ChangeChannelRoleResponse,
     ChangeCommunityRoleResponse,
+    CommunityInviteCodeResponse,
+    CommunityPermissions,
+    CommunityRulesResponse,
     CreateChannelResponse,
     DeclineChannelInvitationResponse,
     DeleteChannelMessageResponse,
     DeleteChannelMessagesResponse,
     DeleteChannelResponse,
+    DisableCommunityInviteCodeResponse,
+    EditChannelMessageResponse,
+    EnableCommunityInviteCodeResponse,
+    JoinChannelResponse,
+    LeaveChannelResponse,
+    MakeChannelPrivateResponse,
+    MakeCommunityPrivateResponse,
+    PinChannelMessageResponse,
+    RemoveChannelMemberResponse,
+    RemoveChannelReactionResponse,
+    RemoveCommunityMemberResponse,
+    SearchChannelResponse,
+    SelectedChannelInitialResponse,
+    SelectedChannelUpdatesResponse,
+    SendChannelMessageResponse,
+    ToggleMuteChannelNotificationsResponse,
+    ToggleMuteCommunityNotificationsResponse,
+    UnblockCommunityUserResponse,
+    UndeleteChannelMessagesResponse,
+    UpdateChannelResponse,
+    UpdateCommunityResponse,
 } from "./community";
 
 /**
@@ -232,6 +256,34 @@ export type WorkerRequest =
     | DeleteChannel
     | DeleteChannelMessages
     | DeleteChannelMessage
+    | DisableCommunityInviteCode
+    | EditChannelMessage
+    | EnableCommunityInviteCode
+    | ChannelEvents
+    | ChannelEventsByIndex
+    | ChannelEventsWindow
+    | CommunityInviteCode
+    | JoinChannel
+    | LeaveChannel
+    | MakeChannelPrivate
+    | MakeCommunityPrivate
+    | ChannelMessagesByMessageIndex
+    | PinChannelMessage
+    | RemoveCommunityMember
+    | RemoveChannelMember
+    | RemoveChannelReaction
+    | ResetCommunityInviteCode
+    | CommunityRules
+    | SearchChannel
+    | SelectedChannelInitial
+    | SelectedChannelUpdates
+    | SendChannelMessage
+    | ToggleMuteChannelNotifications
+    | ToggleMuteCommunityNotifications
+    | UnblockCommunityUser
+    | UndeleteChannelMessages
+    | UpdateChannel
+    | UpdateCommunity
     | ChangeCommunityRole;
 
 type ReferralLeaderboard = {
@@ -909,6 +961,29 @@ export type WorkerResponse =
     | Response<DeleteChannelResponse>
     | Response<DeleteChannelMessagesResponse>
     | Response<DeleteChannelMessageResponse>
+    | Response<DisableCommunityInviteCode>
+    | Response<EditChannelMessageResponse>
+    | Response<CommunityInviteCodeResponse>
+    | Response<JoinChannelResponse>
+    | Response<LeaveChannelResponse>
+    | Response<MakeChannelPrivateResponse>
+    | Response<MakeCommunityPrivateResponse>
+    | Response<PinChannelMessageResponse>
+    | Response<RemoveCommunityMemberResponse>
+    | Response<RemoveChannelMemberResponse>
+    | Response<RemoveChannelReactionResponse>
+    | Response<EnableCommunityInviteCodeResponse>
+    | Response<CommunityRulesResponse>
+    | Response<SearchChannelResponse>
+    | Response<SelectedChannelInitialResponse>
+    | Response<SelectedChannelUpdatesResponse>
+    | Response<SendChannelMessageResponse>
+    | Response<ToggleMuteChannelNotificationsResponse>
+    | Response<ToggleMuteCommunityNotificationsResponse>
+    | Response<UnblockCommunityUserResponse>
+    | Response<UndeleteChannelMessagesResponse>
+    | Response<UpdateChannelResponse>
+    | Response<UpdateCommunityResponse>
     | Response<AddMembersToChannelResponse>;
 
 type Response<T> = {
@@ -1064,6 +1139,213 @@ type DeleteChannelMessage = {
     messageId: bigint;
     sender: string;
     threadRootMessageIndex: number | undefined;
+};
+
+type DisableCommunityInviteCode = {
+    kind: "disableCommunityInviteCode";
+    communityId: string;
+};
+
+type EditChannelMessage = {
+    kind: "editChannelMessage";
+    communityId: string;
+    channelId: string;
+    message: Message;
+    threadRootMessageIndex: number | undefined;
+};
+
+type EnableCommunityInviteCode = {
+    kind: "enableCommunityInviteCode";
+    communityId: string;
+};
+
+type ChannelEvents = {
+    kind: "channelEvents";
+    communityId: string;
+    channelId: string;
+    startIndex: number;
+    ascending: boolean;
+    threadRootMessageIndex: number | undefined;
+    latestClientEventIndex: number | undefined;
+};
+
+type ChannelEventsByIndex = {
+    kind: "channelEventsByIndex";
+    communityId: string;
+    channelId: string;
+    eventIndexes: number[];
+    threadRootMessageIndex: number | undefined;
+    latestClientEventIndex: number | undefined;
+};
+
+type ChannelEventsWindow = {
+    kind: "channelEventsWindow";
+    communityId: string;
+    channelId: string;
+    messageIndex: number;
+    threadRootMessageIndex: number | undefined;
+    latestClientEventIndex: number | undefined;
+};
+
+type CommunityInviteCode = {
+    kind: "communityInviteCode";
+    communityId: string;
+};
+
+type JoinChannel = {
+    kind: "joinChannel";
+    communityId: string;
+    channelId: string;
+};
+
+type LeaveChannel = {
+    kind: "leaveChannel";
+    communityId: string;
+    channelId: string;
+};
+
+type MakeChannelPrivate = {
+    kind: "makeChannelPrivate";
+    communityId: string;
+    channelId: string;
+};
+
+type MakeCommunityPrivate = {
+    kind: "makeCommunityPrivate";
+    communityId: string;
+};
+
+type ChannelMessagesByMessageIndex = {
+    kind: "channelMessagesByMessageIndex";
+    communityId: string;
+    channelId: string;
+    messageIndexes: number[];
+    latestClientEventIndex: number | undefined;
+    threadRootMessageIndex: number | undefined;
+};
+
+type PinChannelMessage = {
+    kind: "pinChannelMessage";
+    communityId: string;
+    channelId: string;
+    messageIndex: number;
+};
+
+type RemoveCommunityMember = {
+    kind: "removeCommunityMember";
+    communityId: string;
+    userId: string;
+};
+
+type RemoveChannelMember = {
+    kind: "removeChannelMember";
+    communityId: string;
+    channelId: string;
+    userId: string;
+};
+
+type RemoveChannelReaction = {
+    kind: "removeChannelReaction";
+    communityId: string;
+    channelId: string;
+    messageId: bigint;
+    reaction: string;
+    threadRootMessageIndex: number | undefined;
+};
+
+type ResetCommunityInviteCode = {
+    kind: "resetCommunityInviteCode";
+    communityId: string;
+};
+
+type CommunityRules = {
+    kind: "communityRules";
+    communityId: string;
+    inviteCode: string | undefined;
+};
+
+type SearchChannel = {
+    kind: "searchChannel";
+    communityId: string;
+    channelId: string;
+    maxResults: number;
+    users: string[];
+    searchTerm: string;
+};
+
+type SelectedChannelInitial = {
+    kind: "selectedChannelInitial";
+    communityId: string;
+    channelId: string;
+};
+
+type SelectedChannelUpdates = {
+    kind: "selectedChannelUpdates";
+    communityId: string;
+    channelId: string;
+    updatesSince: bigint;
+};
+
+type SendChannelMessage = {
+    kind: "sendChannelMessage";
+    communityId: string;
+    channelId: string;
+    senderName: string;
+    mentioned: User[];
+    event: EventWrapper<Message>;
+    threadRootMessageIndex?: number;
+};
+
+type ToggleMuteChannelNotifications = {
+    kind: "toggleMuteChannelNotifications";
+    communityId: string;
+    channelId: string;
+    mute: boolean;
+};
+
+type ToggleMuteCommunityNotifications = {
+    kind: "toggleMuteCommunityNotifications";
+    communityId: string;
+    mute: boolean;
+};
+
+type UnblockCommunityUser = {
+    kind: "unblockCommunityUser";
+    communityId: string;
+    userId: string;
+};
+
+type UndeleteChannelMessages = {
+    kind: "undeleteChannelMessages";
+    communityId: string;
+    channelId: string;
+    messageIds: bigint[];
+    threadRootMessageIndex: number | undefined;
+};
+
+type UpdateChannel = {
+    kind: "updateChannel";
+    communityId: string;
+    channelId: string;
+    name?: string;
+    description?: string;
+    rules?: AccessRules;
+    permissions?: Partial<GroupPermissions>;
+    avatar?: Uint8Array;
+    banner?: Uint8Array;
+    gate?: AccessGate;
+};
+
+type UpdateCommunity = {
+    kind: "updateCommunity";
+    communityId: string;
+    name?: string;
+    description?: string;
+    rules?: AccessRules;
+    permissions?: Partial<CommunityPermissions>;
+    avatar?: Uint8Array;
+    banner?: Uint8Array;
+    gate?: AccessGate;
 };
 
 type ChangeCommunityRole = {
@@ -1299,4 +1581,58 @@ export type WorkerResult<T> = T extends PinMessage
     ? DeleteChannelMessagesResponse
     : T extends DeleteChannelMessage
     ? DeleteChannelMessageResponse
+    : T extends DisableCommunityInviteCode
+    ? DisableCommunityInviteCodeResponse
+    : T extends EditChannelMessage
+    ? EditChannelMessageResponse
+    : T extends ChannelEvents
+    ? EventsResponse<GroupChatEvent>
+    : T extends ChannelEventsByIndex
+    ? EventsResponse<GroupChatEvent>
+    : T extends ChannelEventsWindow
+    ? EventsResponse<GroupChatEvent>
+    : T extends CommunityInviteCode
+    ? CommunityInviteCodeResponse
+    : T extends JoinChannel
+    ? JoinChannelResponse
+    : T extends LeaveChannel
+    ? LeaveChannelResponse
+    : T extends MakeChannelPrivate
+    ? MakeChannelPrivateResponse
+    : T extends MakeCommunityPrivate
+    ? MakeCommunityPrivateResponse
+    : T extends ChannelMessagesByMessageIndex
+    ? EventsResponse<Message>
+    : T extends PinChannelMessage
+    ? PinChannelMessageResponse
+    : T extends RemoveCommunityMember
+    ? RemoveCommunityMemberResponse
+    : T extends RemoveChannelMember
+    ? RemoveChannelMemberResponse
+    : T extends RemoveChannelReaction
+    ? RemoveChannelReactionResponse
+    : T extends ResetCommunityInviteCode
+    ? EnableCommunityInviteCodeResponse
+    : T extends CommunityRules
+    ? CommunityRulesResponse
+    : T extends SearchChannel
+    ? SearchChannelResponse
+    : T extends SelectedChannelInitial
+    ? SelectedChannelInitialResponse
+    : T extends SelectedChannelUpdates
+    ? SelectedChannelUpdatesResponse
+    : T extends SendChannelMessage
+    ? SendChannelMessageResponse
+    : T extends ToggleMuteChannelNotifications
+    ? ToggleMuteChannelNotificationsResponse
+    : T extends ToggleMuteCommunityNotifications
+    ? ToggleMuteCommunityNotificationsResponse
+    : T extends UnblockCommunityUser
+    ? UnblockCommunityUserResponse
+    : T extends UndeleteChannelMessages
+    ? UndeleteChannelMessagesResponse
+    : T extends UpdateChannel
+    ? UpdateChannelResponse
+    : T extends UpdateCommunity
+    ? UpdateCommunityResponse
     : never;

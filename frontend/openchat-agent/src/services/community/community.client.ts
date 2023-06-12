@@ -64,7 +64,9 @@ import type {
     CandidateChannel,
     ChangeChannelRoleResponse,
     ChangeCommunityRoleResponse,
+    CommunityInviteCodeResponse,
     CommunityPermissions,
+    CommunityRulesResponse,
     CreateChannelResponse,
     DeclineChannelInvitationResponse,
     DeleteChannelMessageResponse,
@@ -77,8 +79,26 @@ import type {
     EventsResponse,
     GroupChatEvent,
     GroupPermissions,
+    JoinChannelResponse,
+    LeaveChannelResponse,
+    MakeChannelPrivateResponse,
+    MakeCommunityPrivateResponse,
     MemberRole,
     Message,
+    PinChannelMessageResponse,
+    RemoveChannelMemberResponse,
+    RemoveChannelReactionResponse,
+    RemoveCommunityMemberResponse,
+    SearchChannelResponse,
+    SelectedChannelInitialResponse,
+    SelectedChannelUpdatesResponse,
+    SendChannelMessageResponse,
+    ToggleMuteChannelNotificationsResponse,
+    ToggleMuteCommunityNotificationsResponse,
+    UnblockCommunityUserResponse,
+    UndeleteChannelMessagesResponse,
+    UpdateChannelResponse,
+    UpdateCommunityResponse,
     User,
 } from "openchat-shared";
 import { apiGroupRules, apiOptionalGroupPermissions } from "../group/mappers";
@@ -305,7 +325,7 @@ export class CommunityClient extends CandidService {
         eventIndexes: number[],
         threadRootMessageIndex: number | undefined,
         latestClientEventIndex: number | undefined
-    ): Promise<unknown> {
+    ): Promise<EventsResponse<GroupChatEvent>> {
         const args = {
             channel_id: BigInt(channelId),
             thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
@@ -331,7 +351,7 @@ export class CommunityClient extends CandidService {
         messageIndex: number,
         threadRootMessageIndex: number | undefined,
         latestClientEventIndex: number | undefined
-    ): Promise<unknown> {
+    ): Promise<EventsResponse<GroupChatEvent>> {
         const args = {
             channel_id: BigInt(channelId),
             thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
@@ -354,11 +374,11 @@ export class CommunityClient extends CandidService {
         );
     }
 
-    inviteCode(): Promise<unknown> {
+    inviteCode(): Promise<CommunityInviteCodeResponse> {
         return this.handleResponse(this.service.invite_code({}), inviteCodeResponse);
     }
 
-    joinChannel(channelId: string): Promise<unknown> {
+    joinChannel(channelId: string): Promise<JoinChannelResponse> {
         return this.handleResponse(
             this.service.join_channel({
                 channel_id: BigInt(channelId),
@@ -367,7 +387,7 @@ export class CommunityClient extends CandidService {
         );
     }
 
-    leaveChannel(channelId: string): Promise<unknown> {
+    leaveChannel(channelId: string): Promise<LeaveChannelResponse> {
         return this.handleResponse(
             this.service.leave_channel({
                 channel_id: BigInt(channelId),
@@ -380,7 +400,7 @@ export class CommunityClient extends CandidService {
         return this.handleResponse(this.service.local_user_index({}), localUserIndexResponse);
     }
 
-    makeChannelPrivate(channelId: string): Promise<unknown> {
+    makeChannelPrivate(channelId: string): Promise<MakeChannelPrivateResponse> {
         return this.handleResponse(
             this.service.make_channel_private({
                 channel_id: BigInt(channelId),
@@ -389,16 +409,16 @@ export class CommunityClient extends CandidService {
         );
     }
 
-    makePrivate(): Promise<unknown> {
+    makePrivate(): Promise<MakeCommunityPrivateResponse> {
         return this.handleResponse(this.service.make_private({}), makeCommunityPrivateResponse);
     }
 
-    messageByMessageIndex(
+    messagesByMessageIndex(
         channelId: string,
         messageIndexes: number[],
         latestClientEventIndex: number | undefined,
         threadRootMessageIndex: number | undefined
-    ): Promise<unknown> {
+    ): Promise<EventsResponse<Message>> {
         const args = {
             channel_id: BigInt(channelId),
             messages: messageIndexes,
@@ -418,7 +438,7 @@ export class CommunityClient extends CandidService {
         );
     }
 
-    pinMessage(channelId: string, messageIndex: number): Promise<unknown> {
+    pinMessage(channelId: string, messageIndex: number): Promise<PinChannelMessageResponse> {
         return this.handleResponse(
             this.service.pin_message({
                 channel_id: BigInt(channelId),
@@ -428,7 +448,7 @@ export class CommunityClient extends CandidService {
         );
     }
 
-    removeMember(userId: string): Promise<unknown> {
+    removeMember(userId: string): Promise<RemoveCommunityMemberResponse> {
         return this.handleResponse(
             this.service.remove_member({
                 user_id: Principal.fromText(userId),
@@ -437,7 +457,10 @@ export class CommunityClient extends CandidService {
         );
     }
 
-    removeMemberFromChannel(channelId: string, userId: string): Promise<unknown> {
+    removeMemberFromChannel(
+        channelId: string,
+        userId: string
+    ): Promise<RemoveChannelMemberResponse> {
         return this.handleResponse(
             this.service.remove_member_from_channel({
                 channel_id: BigInt(channelId),
@@ -452,7 +475,7 @@ export class CommunityClient extends CandidService {
         messageId: bigint,
         reaction: string,
         threadRootMessageIndex: number | undefined
-    ): Promise<unknown> {
+    ): Promise<RemoveChannelReactionResponse> {
         return this.handleResponse(
             this.service.remove_reaction({
                 channel_id: BigInt(channelId),
@@ -464,11 +487,11 @@ export class CommunityClient extends CandidService {
         );
     }
 
-    resetInviteCode(): Promise<unknown> {
+    resetInviteCode(): Promise<EnableCommunityInviteCodeResponse> {
         return this.handleResponse(this.service.reset_invite_code({}), enableInviteCodeResponse);
     }
 
-    rules(inviteCode: string | undefined): Promise<unknown> {
+    rules(inviteCode: string | undefined): Promise<CommunityRulesResponse> {
         return this.handleQueryResponse(
             () =>
                 this.service.rules({
@@ -483,7 +506,7 @@ export class CommunityClient extends CandidService {
         maxResults: number,
         users: string[],
         searchTerm: string
-    ): Promise<unknown> {
+    ): Promise<SearchChannelResponse> {
         return this.handleQueryResponse(
             () =>
                 this.service.search_channel({
@@ -496,7 +519,7 @@ export class CommunityClient extends CandidService {
         );
     }
 
-    selectedChannelInitial(channelId: string): Promise<unknown> {
+    selectedChannelInitial(channelId: string): Promise<SelectedChannelInitialResponse> {
         return this.handleQueryResponse(
             () =>
                 this.service.selected_channel_initial({
@@ -506,7 +529,10 @@ export class CommunityClient extends CandidService {
         );
     }
 
-    selectedChannelUpdates(channelId: string, updatesSince: bigint): Promise<unknown> {
+    selectedChannelUpdates(
+        channelId: string,
+        updatesSince: bigint
+    ): Promise<SelectedChannelUpdatesResponse> {
         return this.handleQueryResponse(
             () =>
                 this.service.selected_channel_updates({
@@ -523,7 +549,7 @@ export class CommunityClient extends CandidService {
         mentioned: User[],
         event: EventWrapper<Message>,
         threadRootMessageIndex?: number
-    ): Promise<unknown> {
+    ): Promise<SendChannelMessageResponse> {
         const dataClient = DataClient.create(this.identity, this.config);
         const uploadContentPromise = event.event.forwarded
             ? dataClient.forwardData(event.event.content, [channelId])
@@ -564,7 +590,10 @@ export class CommunityClient extends CandidService {
         );
     }
 
-    toggleMuteChannelNotifications(channelId: string, mute: boolean): Promise<unknown> {
+    toggleMuteChannelNotifications(
+        channelId: string,
+        mute: boolean
+    ): Promise<ToggleMuteChannelNotificationsResponse> {
         return this.handleResponse(
             this.service.toggle_mute_channel_notifications({
                 channel_id: BigInt(channelId),
@@ -574,7 +603,7 @@ export class CommunityClient extends CandidService {
         );
     }
 
-    toggleMuteNotifications(mute: boolean): Promise<unknown> {
+    toggleMuteNotifications(mute: boolean): Promise<ToggleMuteCommunityNotificationsResponse> {
         return this.handleResponse(
             this.service.toggle_mute_notifications({
                 mute,
@@ -583,7 +612,7 @@ export class CommunityClient extends CandidService {
         );
     }
 
-    unblockUser(userId: string): Promise<unknown> {
+    unblockUser(userId: string): Promise<UnblockCommunityUserResponse> {
         return this.handleResponse(
             this.service.unblock_user({
                 user_id: Principal.fromText(userId),
@@ -596,7 +625,7 @@ export class CommunityClient extends CandidService {
         channelId: string,
         messageIds: bigint[],
         threadRootMessageIndex: number | undefined
-    ): Promise<unknown> {
+    ): Promise<UndeleteChannelMessagesResponse> {
         return this.handleResponse(
             this.service.undelete_messages({
                 channel_id: BigInt(channelId),
@@ -614,8 +643,9 @@ export class CommunityClient extends CandidService {
         rules?: AccessRules,
         permissions?: Partial<GroupPermissions>,
         avatar?: Uint8Array,
+        _banner?: Uint8Array,
         gate?: AccessGate
-    ): Promise<unknown> {
+    ): Promise<UpdateChannelResponse> {
         return this.handleResponse(
             this.service.update_channel({
                 channel_id: BigInt(channelId),
@@ -662,7 +692,7 @@ export class CommunityClient extends CandidService {
         avatar?: Uint8Array,
         _banner?: Uint8Array,
         gate?: AccessGate
-    ): Promise<unknown> {
+    ): Promise<UpdateCommunityResponse> {
         return this.handleResponse(
             this.service.update_community({
                 name: apiOptional(identity, name),
