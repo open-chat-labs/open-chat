@@ -99,7 +99,7 @@
         if (resp === "name_taken") return "groupAlreadyExists";
         if (resp === "not_in_group") return "userNotInGroup";
         if (resp === "internal_error") return "groupUpdateFailed";
-        if (resp === "not_authorised") return "groupUpdateFailed";
+        if (resp === "not_authorized") return "groupUpdateFailed";
         if (resp === "avatar_too_big") return "avatarTooBig";
         if (resp === "rules_too_short") return "groupRulesTooShort";
         if (resp === "rules_too_long") return "groupRulesTooLong";

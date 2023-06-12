@@ -227,7 +227,7 @@ export function addRemoveReactionResponse(
         return "message_not_found";
     }
     if ("NotAuthorized" in candid) {
-        return "not_authorised";
+        return "not_authorized";
     }
     if ("UserSuspended" in candid) {
         return "user_suspended";
@@ -542,7 +542,7 @@ export function deleteGroupResponse(candid: ApiDeleteGroupResponse): DeleteGroup
         return "internal_error";
     }
     if ("NotAuthorized" in candid) {
-        return "not_authorised";
+        return "not_authorized";
     }
     if ("UserSuspended" in candid) {
         return "user_suspended";
@@ -1020,7 +1020,7 @@ export function deletedMessageResponse(
         return { kind: "chat_not_found" };
     }
     if ("NotAuthorized" in candid) {
-        return { kind: "not_authorised" };
+        return { kind: "not_authorized" };
     }
     if ("MessageNotFound" in candid) {
         return { kind: "message_not_found" };

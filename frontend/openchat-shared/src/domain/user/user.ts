@@ -136,10 +136,10 @@ export type SetBioResponse = "success" | "bio_too_long" | "user_suspended";
 
 export type RegisterUserResponse =
     | {
-        kind: "success",
-        userId: string,
-        icpAccount: string,
-    }
+          kind: "success";
+          userId: string;
+          icpAccount: string;
+      }
     | { kind: "user_limit_reached" }
     | { kind: "not_supported" }
     | { kind: "already_registered" }
@@ -223,3 +223,5 @@ export type ReferralStats = {
     diamondMembers: number;
     totalRewardsE8s: bigint;
 };
+
+export type UserSuspended = { kind: "user_suspended" };

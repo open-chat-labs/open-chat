@@ -1224,9 +1224,8 @@ export type RemoveMemberFromChannelResponse =
     | { UserNotInCommunity: null }
     | { UserSuspended: null }
     | { CommunityFrozen: null }
-    | { TargetUserNotInCommunity: null }
-    | { TargetUserNotInChannel: null }
-    | { CannotRemoveSelf: null };
+    | { TargetUserNotInCommunity: null };
+e | { TargetUserNotInChannel: null } | { CannotRemoveSelf: null };
 export type RemoveMemberResponse =
     | { NotAuthorized: null }
     | { Success: null }
