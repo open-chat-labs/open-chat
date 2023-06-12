@@ -250,6 +250,7 @@ export type WorkerRequest =
     | LeaveChannel
     | MakeChannelPrivate
     | MakeCommunityPrivate
+    | ChannelMessagesByMessageIndex
     | ChangeCommunityRole;
 
 type ReferralLeaderboard = {
@@ -1165,6 +1166,15 @@ type MakeCommunityPrivate = {
     communityId: string;
 };
 
+type ChannelMessagesByMessageIndex = {
+    kind: "channelMessagesByMessageIndex";
+    communityId: string;
+    channelId: string;
+    messageIndexes: number[];
+    latestClientEventIndex: number | undefined;
+    threadRootMessageIndex: number | undefined;
+};
+
 type ChangeCommunityRole = {
     kind: "changeCommunityRole";
     communityId: string;
@@ -1418,4 +1428,6 @@ export type WorkerResult<T> = T extends PinMessage
     ? MakeChannelPrivateResponse
     : T extends MakeCommunityPrivate
     ? MakeCommunityPrivateResponse
+    : T extends ChannelMessagesByMessageIndex
+    ? EventsResponse<Message>
     : never;

@@ -398,12 +398,12 @@ export class CommunityClient extends CandidService {
         return this.handleResponse(this.service.make_private({}), makeCommunityPrivateResponse);
     }
 
-    messageByMessageIndex(
+    messagesByMessageIndex(
         channelId: string,
         messageIndexes: number[],
         latestClientEventIndex: number | undefined,
         threadRootMessageIndex: number | undefined
-    ): Promise<unknown> {
+    ): Promise<EventsResponse<Message>> {
         const args = {
             channel_id: BigInt(channelId),
             messages: messageIndexes,
