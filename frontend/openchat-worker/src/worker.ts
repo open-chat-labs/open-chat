@@ -1388,6 +1388,49 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     .catch(sendError(correlationId));
                 break;
 
+            // Community level functions
+            case "addMembersToChannel":
+                agent
+                    .communityClient(payload.communityId)
+                    .addMembersToChannel(payload.channelId, payload.userIds, payload.username)
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
+            case "addCommunityReaction":
+                agent
+                    .communityClient(payload.communityId)
+                    .addReaction(
+                        payload.channelId,
+                        payload.username,
+                        payload.messageId,
+                        payload.reaction,
+                        payload.threadRootMessageIndex
+                    )
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
+            case "blockCommunityUser":
+                agent
+                    .communityClient(payload.communityId)
+                    .blockUser(payload.userId)
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
             default:
                 console.debug("WORKER: unknown message kind received: ", kind);
         }

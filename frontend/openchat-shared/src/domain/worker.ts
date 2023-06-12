@@ -97,6 +97,11 @@ import type { Cryptocurrency, Tokens } from "./crypto";
 import type { GroupInvite } from "./inviteCodes";
 import type { MemberRole } from "./permission";
 import type { AccessGate, AccessRules } from "./access";
+import type {
+    AddMembersToChannelResponse,
+    AddReactionResponse,
+    BlockCommunityUserResponse,
+} from "./community";
 
 /**
  * Worker request types
@@ -209,7 +214,10 @@ export type WorkerRequest =
     | CancelMessageReminder
     | ReferralLeaderboard
     | ReportMessage
-    | DeclineInvitation;
+    | DeclineInvitation
+    | AddMembersToChannel
+    | AddCommunityReaction
+    | BlockCommunityUser;
 
 type ReferralLeaderboard = {
     args?: ReferralLeaderboardRange;
@@ -870,7 +878,10 @@ export type WorkerResponse =
     | Response<UpdateMarketMakerConfigResponse>
     | Response<SetMessageReminderResponse>
     | Response<ReferralLeaderboardResponse>
-    | Response<ReportMessageResponse>;
+    | Response<ReportMessageResponse>
+    | Response<AddReactionResponse>
+    | Response<BlockCommunityUserResponse>
+    | Response<AddMembersToChannelResponse>;
 
 type Response<T> = {
     kind: "worker_response";
@@ -963,6 +974,30 @@ type ReportMessage = {
 type DeclineInvitation = {
     chatId: string;
     kind: "declineInvitation";
+};
+
+type AddMembersToChannel = {
+    kind: "addMembersToChannel";
+    communityId: string;
+    channelId: string;
+    userIds: string[];
+    username: string;
+};
+
+type AddCommunityReaction = {
+    kind: "addCommunityReaction";
+    communityId: string;
+    channelId: string;
+    username: string;
+    messageId: bigint;
+    reaction: string;
+    threadRootMessageIndex: number | undefined;
+};
+
+type BlockCommunityUser = {
+    kind: "blockCommunityUser";
+    communityId: string;
+    userId: string;
 };
 
 export type WorkerResult<T> = T extends PinMessage
@@ -1171,4 +1206,10 @@ export type WorkerResult<T> = T extends PinMessage
     ? ReportMessageResponse
     : T extends DeclineInvitation
     ? DeclineInvitationResponse
+    : T extends AddMembersToChannel
+    ? AddMembersToChannelResponse
+    : T extends AddCommunityReaction
+    ? AddReactionResponse
+    : T extends BlockCommunityUser
+    ? BlockCommunityUserResponse
     : never;
