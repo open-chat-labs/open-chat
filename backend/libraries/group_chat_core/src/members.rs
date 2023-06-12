@@ -382,11 +382,11 @@ fn mentions_are_empty(value: &Mentions) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use crate::members::GroupRoleInternal;
+    use crate::roles::GroupRoleInternal;
     use crate::{GroupMemberInternal, Mentions};
     use candid::Principal;
     use std::collections::{BTreeMap, HashSet};
-    use types::{GroupRoleInternal, MentionInternal, Timestamped};
+    use types::{MentionInternal, Timestamped};
 
     #[test]
     fn serialize_with_max_defaults() {
