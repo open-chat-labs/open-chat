@@ -327,7 +327,8 @@
         chatId: string,
         index: number,
         preserveFocus: boolean,
-        filling: boolean = false
+        filling: boolean = false,
+        hasLookedUpEvent: boolean = false
     ): Promise<void> {
         // it is possible for the chat to change while this function is recursing so double check
         if (chatId !== chat.chatId) return Promise.resolve();
@@ -362,9 +363,11 @@
             // check whether we have already loaded the event we are looking for
             const loaded = findMessageEvent(index);
             if (loaded === undefined) {
-                // we must only recurse if we have not already loaded the event, otherwise we will enter an infinite loop
-                await client.loadEventWindow(chatId, index, threadRootEvent);
-                return scrollToMessageIndex(chatId, index, preserveFocus);
+                if (!hasLookedUpEvent) {
+                    // we must only recurse if we have not already loaded the event, otherwise we will enter an infinite loop
+                    await client.loadEventWindow(chatId, index, threadRootEvent);
+                    return scrollToMessageIndex(chatId, index, preserveFocus, filling, true);
+                }
             } else {
                 // if we got here it means that we could not find the DOM element for and event that we
                 // have already loaded. This isn't necessarily an error since a message might have been hidden
