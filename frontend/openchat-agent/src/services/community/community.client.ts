@@ -79,6 +79,7 @@ import type {
     GroupChatEvent,
     GroupPermissions,
     JoinChannelResponse,
+    LeaveChannelResponse,
     MemberRole,
     Message,
     User,
@@ -369,7 +370,7 @@ export class CommunityClient extends CandidService {
         );
     }
 
-    leaveChannel(channelId: string): Promise<unknown> {
+    leaveChannel(channelId: string): Promise<LeaveChannelResponse> {
         return this.handleResponse(
             this.service.leave_channel({
                 channel_id: BigInt(channelId),

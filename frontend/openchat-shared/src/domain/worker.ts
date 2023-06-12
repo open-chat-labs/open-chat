@@ -113,6 +113,7 @@ import type {
     DisableCommunityInviteCodeResponse,
     EditChannelMessageResponse,
     JoinChannelResponse,
+    LeaveChannelResponse,
 } from "./community";
 
 /**
@@ -244,6 +245,7 @@ export type WorkerRequest =
     | ChannelEventsWindow
     | CommunityInviteCode
     | JoinChannel
+    | LeaveChannel
     | ChangeCommunityRole;
 
 type ReferralLeaderboard = {
@@ -925,6 +927,7 @@ export type WorkerResponse =
     | Response<EditChannelMessageResponse>
     | Response<CommunityInviteCodeResponse>
     | Response<JoinChannelResponse>
+    | Response<LeaveChannelResponse>
     | Response<AddMembersToChannelResponse>;
 
 type Response<T> = {
@@ -1135,6 +1138,12 @@ type CommunityInviteCode = {
 
 type JoinChannel = {
     kind: "joinChannel";
+    communityId: string;
+    channelId: string;
+};
+
+type LeaveChannel = {
+    kind: "leaveChannel";
     communityId: string;
     channelId: string;
 };
@@ -1386,4 +1395,6 @@ export type WorkerResult<T> = T extends PinMessage
     ? CommunityInviteCodeResponse
     : T extends JoinChannel
     ? JoinChannelResponse
+    : T extends LeaveChannel
+    ? LeaveChannelResponse
     : never;
