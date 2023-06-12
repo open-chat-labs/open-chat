@@ -1549,6 +1549,58 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     .catch(sendError(correlationId));
                 break;
 
+            case "channelEvents":
+                agent
+                    .communityClient(payload.communityId)
+                    .events(
+                        payload.channelId,
+                        payload.startIndex,
+                        payload.ascending,
+                        payload.threadRootMessageIndex,
+                        payload.latestClientEventIndex
+                    )
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
+            case "channelEventsByIndex":
+                agent
+                    .communityClient(payload.communityId)
+                    .eventsByIndex(
+                        payload.channelId,
+                        payload.eventIndexes,
+                        payload.threadRootMessageIndex,
+                        payload.latestClientEventIndex
+                    )
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
+            case "channelEventsWindow":
+                agent
+                    .communityClient(payload.communityId)
+                    .eventsWindow(
+                        payload.channelId,
+                        payload.messageIndex,
+                        payload.threadRootMessageIndex,
+                        payload.latestClientEventIndex
+                    )
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
             default:
                 console.debug("WORKER: unknown message kind received: ", kind);
         }

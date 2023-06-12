@@ -305,7 +305,7 @@ export class CommunityClient extends CandidService {
         eventIndexes: number[],
         threadRootMessageIndex: number | undefined,
         latestClientEventIndex: number | undefined
-    ): Promise<unknown> {
+    ): Promise<EventsResponse<GroupChatEvent>> {
         const args = {
             channel_id: BigInt(channelId),
             thread_root_message_index: apiOptional(identity, threadRootMessageIndex),
@@ -331,7 +331,7 @@ export class CommunityClient extends CandidService {
         messageIndex: number,
         threadRootMessageIndex: number | undefined,
         latestClientEventIndex: number | undefined
-    ): Promise<unknown> {
+    ): Promise<EventsResponse<GroupChatEvent>> {
         const args = {
             channel_id: BigInt(channelId),
             thread_root_message_index: apiOptional(identity, threadRootMessageIndex),

@@ -236,6 +236,10 @@ export type WorkerRequest =
     | DeleteChannelMessage
     | DisableCommunityInviteCode
     | EditChannelMessage
+    | EnableCommunityInviteCode
+    | ChannelEvents
+    | ChannelEventsByIndex
+    | ChannelEventsWindow
     | ChangeCommunityRole;
 
 type ReferralLeaderboard = {
@@ -1085,6 +1089,39 @@ type EditChannelMessage = {
     threadRootMessageIndex: number | undefined;
 };
 
+type EnableCommunityInviteCode = {
+    kind: "enableCommunityInviteCode";
+    communityId: string;
+};
+
+type ChannelEvents = {
+    kind: "channelEvents";
+    communityId: string;
+    channelId: string;
+    startIndex: number;
+    ascending: boolean;
+    threadRootMessageIndex: number | undefined;
+    latestClientEventIndex: number | undefined;
+};
+
+type ChannelEventsByIndex = {
+    kind: "channelEventsByIndex";
+    communityId: string;
+    channelId: string;
+    eventIndexes: number[];
+    threadRootMessageIndex: number | undefined;
+    latestClientEventIndex: number | undefined;
+};
+
+type ChannelEventsWindow = {
+    kind: "channelEventsWindow";
+    communityId: string;
+    channelId: string;
+    messageIndex: number;
+    threadRootMessageIndex: number | undefined;
+    latestClientEventIndex: number | undefined;
+};
+
 type ChangeCommunityRole = {
     kind: "changeCommunityRole";
     communityId: string;
@@ -1322,4 +1359,10 @@ export type WorkerResult<T> = T extends PinMessage
     ? DisableCommunityInviteCodeResponse
     : T extends EditChannelMessage
     ? EditChannelMessageResponse
+    : T extends ChannelEvents
+    ? EventsResponse<GroupChatEvent>
+    : T extends ChannelEventsByIndex
+    ? EventsResponse<GroupChatEvent>
+    : T extends ChannelEventsWindow
+    ? EventsResponse<GroupChatEvent>
     : never;
