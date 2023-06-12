@@ -127,6 +127,7 @@ import type {
     SelectedChannelUpdatesResponse,
     SendChannelMessageResponse,
     ToggleMuteChannelNotificationsResponse,
+    ToggleMuteCommunityNotificationsResponse,
 } from "./community";
 
 /**
@@ -273,6 +274,7 @@ export type WorkerRequest =
     | SelectedChannelUpdates
     | SendChannelMessage
     | ToggleMuteChannelNotifications
+    | ToggleMuteCommunityNotifications
     | ChangeCommunityRole;
 
 type ReferralLeaderboard = {
@@ -968,6 +970,7 @@ export type WorkerResponse =
     | Response<SelectedChannelUpdatesResponse>
     | Response<SendChannelMessageResponse>
     | Response<ToggleMuteChannelNotificationsResponse>
+    | Response<ToggleMuteCommunityNotificationsResponse>
     | Response<AddMembersToChannelResponse>;
 
 type Response<T> = {
@@ -1287,6 +1290,12 @@ type ToggleMuteChannelNotifications = {
     mute: boolean;
 };
 
+type ToggleMuteCommunityNotifications = {
+    kind: "toggleMuteCommunityNotifications";
+    communityId: string;
+    mute: boolean;
+};
+
 type ChangeCommunityRole = {
     kind: "changeCommunityRole";
     communityId: string;
@@ -1564,4 +1573,6 @@ export type WorkerResult<T> = T extends PinMessage
     ? SendChannelMessageResponse
     : T extends ToggleMuteChannelNotifications
     ? ToggleMuteChannelNotificationsResponse
+    : T extends ToggleMuteCommunityNotifications
+    ? ToggleMuteCommunityNotificationsResponse
     : never;
