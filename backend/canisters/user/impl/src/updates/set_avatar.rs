@@ -5,7 +5,7 @@ use canister_tracing_macros::trace;
 use ic_cdk_macros::update;
 use types::{CanisterId, Timestamped};
 use user_canister::set_avatar::*;
-use utils::avatar_validation::validate_avatar;
+use utils::document_validation::validate_avatar;
 
 #[update(guard = "caller_is_owner")]
 #[trace]

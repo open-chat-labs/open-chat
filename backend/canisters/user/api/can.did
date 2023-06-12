@@ -270,6 +270,7 @@ type CreateCommunityArgs =
         name: text;
         description: text;
         avatar: opt Document;
+        banner: opt Document;
         history_visible_to_new_joiners: bool;
         permissions: opt CommunityPermissions;
         rules: AccessRules;
@@ -290,6 +291,7 @@ type CreateCommunityResponse =
         NameReserved;
         DescriptionTooLong: FieldTooLongResult;
         AvatarTooBig: FieldTooLongResult;
+        BannerTooBig: FieldTooLongResult;
         MaxCommunitiesCreated: nat32;
         NameTaken;
         Throttled;
@@ -629,7 +631,7 @@ type UpdatesV2Response =
             group_chats_added: vec UserCanisterGroupChatSummary;
             group_chats_updated: vec UserCanisterGroupChatSummaryUpdates;
             chats_removed: vec ChatId;
-            avatar_id: AvatarIdUpdate;
+            avatar_id: DocumentIdUpdate;
             user_canister_wasm_version: opt Version;
             blocked_users_v2: opt vec UserId;
             pinned_chats: opt vec ChatId;

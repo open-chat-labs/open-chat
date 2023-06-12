@@ -10,6 +10,7 @@ use types::{CanisterId, CommunityId, Document, UserId};
 #[trace]
 async fn c2c_create_community(args: Args) -> Response {
     let avatar_id = Document::id(&args.avatar);
+    let banner_id = Document::id(&args.banner);
 
     let (user_id, principal) = match validate_caller().await {
         Ok((u, p)) => (u, p),
@@ -31,6 +32,7 @@ async fn c2c_create_community(args: Args) -> Response {
         description: args.description.clone(),
         rules: args.rules,
         avatar: args.avatar,
+        banner: args.banner,
         history_visible_to_new_joiners: args.history_visible_to_new_joiners,
         permissions: args.permissions,
         gate: args.gate,
@@ -48,6 +50,7 @@ async fn c2c_create_community(args: Args) -> Response {
                     args.name,
                     args.description,
                     avatar_id,
+                    banner_id,
                     local_group_index_canister,
                     state,
                 )
@@ -103,12 +106,14 @@ fn prepare(name: &str, is_public: bool, state: &mut RuntimeState) -> Result<Prep
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 fn commit(
     is_public: bool,
     community_id: CommunityId,
     name: String,
     description: String,
     avatar_id: Option<u128>,
+    banner_id: Option<u128>,
     local_group_index_canister: CanisterId,
     state: &mut RuntimeState,
 ) {
@@ -117,7 +122,7 @@ fn commit(
         state
             .data
             .public_communities
-            .handle_community_created(community_id, name, description, avatar_id, now);
+            .handle_community_created(community_id, name, description, avatar_id, banner_id, now);
     } else {
         state
             .data

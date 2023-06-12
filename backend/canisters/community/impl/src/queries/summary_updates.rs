@@ -62,6 +62,7 @@ fn summary_updates_impl(args: Args, state: &RuntimeState) -> Response {
                 name: updates_from_events.name,
                 description: updates_from_events.description,
                 avatar_id: updates_from_events.avatar_id,
+                banner_id: updates_from_events.banner_id,
                 is_public: updates_from_events.is_public,
                 member_count: updates_from_events.members_changed.then_some(state.data.members.len()),
                 role: updates_from_events.role_changed.then_some(member.role),
@@ -84,6 +85,7 @@ struct UpdatesFromEvents {
     name: Option<String>,
     description: Option<String>,
     avatar_id: OptionUpdate<u128>,
+    banner_id: OptionUpdate<u128>,
     latest_event_index: Option<EventIndex>,
     members_changed: bool,
     role_changed: bool,
@@ -124,6 +126,11 @@ fn process_events(since: TimestampMillis, member: &CommunityMemberInternal, data
             CommunityEvent::AvatarChanged(a) => {
                 if !updates.avatar_id.has_update() {
                     updates.avatar_id = OptionUpdate::from_update(a.new_avatar);
+                }
+            }
+            CommunityEvent::BannerChanged(a) => {
+                if !updates.banner_id.has_update() {
+                    updates.banner_id = OptionUpdate::from_update(a.new_banner);
                 }
             }
             CommunityEvent::RoleChanged(r) => {
