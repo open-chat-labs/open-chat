@@ -78,6 +78,7 @@ import type {
     EventsResponse,
     GroupChatEvent,
     GroupPermissions,
+    JoinChannelResponse,
     MemberRole,
     Message,
     User,
@@ -359,7 +360,7 @@ export class CommunityClient extends CandidService {
         return this.handleResponse(this.service.invite_code({}), inviteCodeResponse);
     }
 
-    joinChannel(channelId: string): Promise<unknown> {
+    joinChannel(channelId: string): Promise<JoinChannelResponse> {
         return this.handleResponse(
             this.service.join_channel({
                 channel_id: BigInt(channelId),

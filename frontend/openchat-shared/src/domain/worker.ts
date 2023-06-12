@@ -104,7 +104,6 @@ import type {
     BlockCommunityUserResponse,
     ChangeChannelRoleResponse,
     ChangeCommunityRoleResponse,
-    Community,
     CommunityInviteCodeResponse,
     CreateChannelResponse,
     DeclineChannelInvitationResponse,
@@ -113,6 +112,7 @@ import type {
     DeleteChannelResponse,
     DisableCommunityInviteCodeResponse,
     EditChannelMessageResponse,
+    JoinChannelResponse,
 } from "./community";
 
 /**
@@ -243,6 +243,7 @@ export type WorkerRequest =
     | ChannelEventsByIndex
     | ChannelEventsWindow
     | CommunityInviteCode
+    | JoinChannel
     | ChangeCommunityRole;
 
 type ReferralLeaderboard = {
@@ -923,6 +924,7 @@ export type WorkerResponse =
     | Response<DisableCommunityInviteCode>
     | Response<EditChannelMessageResponse>
     | Response<CommunityInviteCodeResponse>
+    | Response<JoinChannelResponse>
     | Response<AddMembersToChannelResponse>;
 
 type Response<T> = {
@@ -1129,6 +1131,12 @@ type ChannelEventsWindow = {
 type CommunityInviteCode = {
     kind: "communityInviteCode";
     communityId: string;
+};
+
+type JoinChannel = {
+    kind: "joinChannel";
+    communityId: string;
+    channelId: string;
 };
 
 type ChangeCommunityRole = {
@@ -1376,4 +1384,6 @@ export type WorkerResult<T> = T extends PinMessage
     ? EventsResponse<GroupChatEvent>
     : T extends CommunityInviteCode
     ? CommunityInviteCodeResponse
+    : T extends JoinChannel
+    ? JoinChannelResponse
     : never;
