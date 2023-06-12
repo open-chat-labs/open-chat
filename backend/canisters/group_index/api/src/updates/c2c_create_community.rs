@@ -9,6 +9,7 @@ pub struct Args {
     pub description: String,
     pub rules: AccessRules,
     pub avatar: Option<Document>,
+    pub banner: Option<Document>,
     pub history_visible_to_new_joiners: bool,
     pub permissions: Option<CommunityPermissions>,
     pub gate: Option<AccessGate>,

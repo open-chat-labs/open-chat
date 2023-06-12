@@ -681,7 +681,7 @@ type UpdateChannelArgs =
         name: opt text;
         description: opt text;
         rules: opt AccessRules;
-        avatar: AvatarUpdate;
+        avatar: DocumentUpdate;
         permissions: opt OptionalGroupPermissions;
         gate: AccessGateUpdate;
     };
@@ -710,7 +710,8 @@ type UpdateCommunityArgs =
         name: opt text;
         description: opt text;
         rules: opt AccessRules;
-        avatar: AvatarUpdate;
+        avatar: DocumentUpdate;
+        banner: DocumentUpdate;
         permissions: opt OptionalCommunityPermissions;
         gate: AccessGateUpdate;
     };
@@ -725,6 +726,7 @@ type UpdateCommunityResponse =
         NameReserved;
         DescriptionTooLong: FieldTooLongResult;
         AvatarTooBig: FieldTooLongResult;
+        BannerTooBig: FieldTooLongResult;
         NameTaken;
         InternalError;
         RulesTooLong: FieldTooLongResult;

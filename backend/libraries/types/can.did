@@ -313,7 +313,7 @@ type GroupCanisterGroupChatSummaryUpdates =
         name: opt text;
         description: opt text;
         subtype: GroupSubtypeUpdate;
-        avatar_id: AvatarIdUpdate;
+        avatar_id: DocumentIdUpdate;
         latest_message: opt MessageEventWrapper;
         latest_event_index: opt EventIndex;
         participant_count: opt nat32;
@@ -341,6 +341,7 @@ type CommunityCanisterCommunitySummary =
         name: text;
         description: text;
         avatar_id: opt nat;
+        banner_id: opt nat;
         is_public: bool;
         joined: TimestampMillis;
         member_count: nat32;
@@ -361,6 +362,7 @@ type CommunityCanisterChannelSummary =
         description: text;
         subtype: opt GroupSubtype;
         avatar_id: opt nat;
+        banner_id: opt nat;
         is_public: bool;
         history_visible_to_new_joiners: bool;
         min_visible_event_index: EventIndex;
@@ -389,7 +391,8 @@ type CommunityCanisterCommunitySummaryUpdates =
         last_updated: TimestampMillis;
         name: opt text;
         description: opt text;
-        avatar_id: AvatarIdUpdate;
+        avatar_id: DocumentIdUpdate;
+        banner_id: DocumentIdUpdate;
         is_public: opt bool;
         member_count: opt nat32;
         role: opt CommunityRole;
@@ -409,7 +412,7 @@ type CommunityCanisterChannelSummaryUpdates =
         name: opt text;
         description: opt text;
         subtype: GroupSubtypeUpdate;
-        avatar_id: AvatarIdUpdate;
+        avatar_id: DocumentIdUpdate;
         is_public: opt bool;
         latest_message: opt MessageEventWrapper;
         latest_event_index: opt EventIndex;
@@ -454,7 +457,14 @@ type AvatarChanged =
         changed_by: UserId;
     };
 
-type AvatarUpdate =
+type BannerChanged =
+    record {
+        new_banner: opt nat;
+        previous_banner: opt nat;
+        changed_by: UserId;
+    };
+
+type DocumentUpdate =
     variant {
         NoChange;
         SetToNone;
@@ -468,7 +478,7 @@ type TextUpdate =
         SetToSome: text;
     };
 
-type AvatarIdUpdate =
+type DocumentIdUpdate =
     variant {
         NoChange;
         SetToNone;

@@ -28,6 +28,7 @@ fn init(args: Args) {
         args.description,
         args.rules,
         args.avatar,
+        args.banner,
         args.permissions,
         args.user_index_canister_id,
         args.local_user_index_canister_id,
