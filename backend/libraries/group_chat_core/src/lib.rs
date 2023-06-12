@@ -1,10 +1,12 @@
 mod invited_users;
 mod members;
 mod mentions;
+mod roles;
 
 pub use invited_users::*;
 pub use members::*;
 pub use mentions::*;
+pub use roles::*;
 
 use chat_events::{
     AddRemoveReactionArgs, ChatEventInternal, ChatEvents, ChatEventsListReader, DeleteMessageResult,
@@ -935,7 +937,7 @@ impl GroupChatCore {
         let result = self.members.change_role(
             caller,
             target_user,
-            new_role,
+            new_role.into(),
             &self.permissions,
             is_caller_platform_moderator,
             is_user_platform_moderator,
@@ -944,7 +946,7 @@ impl GroupChatCore {
         if let ChangeRoleResult::Success(r) = &result {
             let event = RoleChanged {
                 user_ids: vec![target_user],
-                old_role: r.prev_role,
+                old_role: r.prev_role.into(),
                 new_role,
                 changed_by: caller,
             };
