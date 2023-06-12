@@ -57,6 +57,7 @@ import type {
     RemoveHotGroupExclusionResponse,
     SetGroupUpgradeConcurrencyResponse,
     DeclineInvitationResponse,
+    CandidateChannel,
 } from "./chat";
 import type { BlobReference, StorageStatus } from "./data/data";
 import type { UpdateMarketMakerConfigArgs, UpdateMarketMakerConfigResponse } from "./marketMaker";
@@ -101,6 +102,9 @@ import type {
     AddMembersToChannelResponse,
     AddReactionResponse,
     BlockCommunityUserResponse,
+    ChangeChannelRoleResponse,
+    ChangeCommunityRoleResponse,
+    CreateChannelResponse,
 } from "./community";
 
 /**
@@ -191,6 +195,7 @@ export type WorkerRequest =
     | ResetInviteCode
     | DisableInviteCode
     | CreateGroupChat
+    | CreateChannel
     | SetCachedMessageFromNotification
     | FreezeGroup
     | UnfreezeGroup
@@ -217,7 +222,9 @@ export type WorkerRequest =
     | DeclineInvitation
     | AddMembersToChannel
     | AddCommunityReaction
-    | BlockCommunityUser;
+    | BlockCommunityUser
+    | ChangeChannelRole
+    | ChangeCommunityRole;
 
 type ReferralLeaderboard = {
     args?: ReferralLeaderboardRange;
@@ -234,6 +241,12 @@ type SetCachedMessageFromNotification = {
 type CreateGroupChat = {
     candidate: CandidateGroupChat;
     kind: "createGroupChat";
+};
+
+type CreateChannel = {
+    candidate: CandidateChannel;
+    communityId: string;
+    kind: "createChannel";
 };
 
 type DisableInviteCode = {
@@ -881,6 +894,9 @@ export type WorkerResponse =
     | Response<ReportMessageResponse>
     | Response<AddReactionResponse>
     | Response<BlockCommunityUserResponse>
+    | Response<ChangeChannelRoleResponse>
+    | Response<ChangeCommunityRoleResponse>
+    | Response<CreateChannelResponse>
     | Response<AddMembersToChannelResponse>;
 
 type Response<T> = {
@@ -998,6 +1014,21 @@ type BlockCommunityUser = {
     kind: "blockCommunityUser";
     communityId: string;
     userId: string;
+};
+
+type ChangeChannelRole = {
+    kind: "changeChannelRole";
+    communityId: string;
+    channelId: string;
+    userId: string;
+    newRole: MemberRole;
+};
+
+type ChangeCommunityRole = {
+    kind: "changeCommunityRole";
+    communityId: string;
+    userId: string;
+    newRole: MemberRole;
 };
 
 export type WorkerResult<T> = T extends PinMessage
@@ -1212,4 +1243,10 @@ export type WorkerResult<T> = T extends PinMessage
     ? AddReactionResponse
     : T extends BlockCommunityUser
     ? BlockCommunityUserResponse
+    : T extends ChangeChannelRole
+    ? ChangeChannelRoleResponse
+    : T extends ChangeCommunityRole
+    ? ChangeCommunityRoleResponse
+    : T extends CreateChannel
+    ? CreateChannelResponse
     : never;

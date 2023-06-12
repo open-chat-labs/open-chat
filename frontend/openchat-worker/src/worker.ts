@@ -1431,6 +1431,42 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     .catch(sendError(correlationId));
                 break;
 
+            case "changeChannelRole":
+                agent
+                    .communityClient(payload.communityId)
+                    .changeChannelRole(payload.channelId, payload.userId, payload.newRole)
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
+            case "changeCommunityRole":
+                agent
+                    .communityClient(payload.communityId)
+                    .changeRole(payload.userId, payload.newRole)
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
+            case "createChannel":
+                agent
+                    .communityClient(payload.communityId)
+                    .createChannel(payload.candidate)
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
             default:
                 console.debug("WORKER: unknown message kind received: ", kind);
         }
