@@ -117,6 +117,7 @@ pub mod happy_path {
                 name: name.to_string(),
                 description: format!("{name}_description"),
                 avatar: None,
+                banner: None,
                 history_visible_to_new_joiners: is_public,
                 permissions: None,
                 rules: AccessRules::default(),

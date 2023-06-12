@@ -6,7 +6,7 @@ use ic_cdk_macros::update;
 use tracing::error;
 use types::{CanisterId, CommunityId};
 use user_canister::create_community::{Response::*, *};
-use utils::avatar_validation::validate_avatar;
+use utils::document_validation::{validate_avatar, validate_banner};
 use utils::group_validation::{validate_description, validate_name, validate_rules, NameValidationError, RulesValidationError};
 
 #[update(guard = "caller_is_owner")]
@@ -86,6 +86,8 @@ fn prepare(args: Args, state: &RuntimeState) -> Result<PrepareResult, Response> 
         });
     } else if let Err(error) = validate_avatar(args.avatar.as_ref()) {
         Err(AvatarTooBig(error))
+    } else if let Err(error) = validate_banner(args.banner.as_ref()) {
+        Err(BannerTooBig(error))
     } else if !default_channels_valid(&args.default_channels) {
         Err(DefaultChannelsInvalid)
     } else {
@@ -96,6 +98,7 @@ fn prepare(args: Args, state: &RuntimeState) -> Result<PrepareResult, Response> 
             rules: args.rules,
             history_visible_to_new_joiners: args.history_visible_to_new_joiners,
             avatar: args.avatar,
+            banner: args.banner,
             permissions: args.permissions,
             gate: args.gate,
             default_channels: args.default_channels,

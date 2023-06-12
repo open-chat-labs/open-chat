@@ -50,11 +50,12 @@ impl PublicCommunities {
         name: String,
         description: String,
         avatar_id: Option<u128>,
+        banner_id: Option<u128>,
         now: TimestampMillis,
     ) -> bool {
         if self.communities_pending.remove(&name).is_some() {
             self.name_to_id_map.insert(&name, community_id);
-            let community_info = PublicCommunityInfo::new(community_id, name, description, avatar_id, None, now);
+            let community_info = PublicCommunityInfo::new(community_id, name, description, avatar_id, banner_id, now);
             self.communities.insert(community_id, community_info);
             true
         } else {
