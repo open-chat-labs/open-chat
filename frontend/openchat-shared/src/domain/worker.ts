@@ -104,7 +104,9 @@ import type {
     BlockCommunityUserResponse,
     ChangeChannelRoleResponse,
     ChangeCommunityRoleResponse,
+    Community,
     CommunityInviteCodeResponse,
+    CommunityRulesResponse,
     CreateChannelResponse,
     DeclineChannelInvitationResponse,
     DeleteChannelMessageResponse,
@@ -261,6 +263,7 @@ export type WorkerRequest =
     | RemoveChannelMember
     | RemoveChannelReaction
     | ResetCommunityInviteCode
+    | CommunityRules
     | ChangeCommunityRole;
 
 type ReferralLeaderboard = {
@@ -950,6 +953,7 @@ export type WorkerResponse =
     | Response<RemoveChannelMemberResponse>
     | Response<RemoveChannelReactionResponse>
     | Response<EnableCommunityInviteCodeResponse>
+    | Response<CommunityRulesResponse>
     | Response<AddMembersToChannelResponse>;
 
 type Response<T> = {
@@ -1224,6 +1228,12 @@ type ResetCommunityInviteCode = {
     communityId: string;
 };
 
+type CommunityRules = {
+    kind: "communityRules";
+    communityId: string;
+    inviteCode: string | undefined;
+};
+
 type ChangeCommunityRole = {
     kind: "changeCommunityRole";
     communityId: string;
@@ -1489,4 +1499,6 @@ export type WorkerResult<T> = T extends PinMessage
     ? RemoveChannelReactionResponse
     : T extends ResetCommunityInviteCode
     ? EnableCommunityInviteCodeResponse
+    : T extends CommunityRules
+    ? CommunityRulesResponse
     : never;

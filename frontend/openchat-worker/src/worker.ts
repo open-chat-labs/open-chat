@@ -1734,7 +1734,20 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
             case "resetCommunityInviteCode":
                 agent
                     .communityClient(payload.communityId)
-                    .resetInviteCode.then((response) =>
+                    .resetInviteCode()
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
+
+            case "communityRules":
+                agent
+                    .communityClient(payload.communityId)
+                    .rules(payload.inviteCode)
+                    .then((response) =>
                         sendResponse(correlationId, {
                             response,
                         })

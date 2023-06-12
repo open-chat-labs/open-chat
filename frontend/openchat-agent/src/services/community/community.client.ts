@@ -66,6 +66,7 @@ import type {
     ChangeCommunityRoleResponse,
     CommunityInviteCodeResponse,
     CommunityPermissions,
+    CommunityRulesResponse,
     CreateChannelResponse,
     DeclineChannelInvitationResponse,
     DeleteChannelMessageResponse,
@@ -480,7 +481,7 @@ export class CommunityClient extends CandidService {
         return this.handleResponse(this.service.reset_invite_code({}), enableInviteCodeResponse);
     }
 
-    rules(inviteCode: string | undefined): Promise<unknown> {
+    rules(inviteCode: string | undefined): Promise<CommunityRulesResponse> {
         return this.handleQueryResponse(
             () =>
                 this.service.rules({
