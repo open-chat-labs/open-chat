@@ -130,6 +130,7 @@ import type {
     ToggleMuteCommunityNotificationsResponse,
     UnblockCommunityUserResponse,
     UndeleteChannelMessagesResponse,
+    UpdateChannelResponse,
 } from "./community";
 
 /**
@@ -279,6 +280,7 @@ export type WorkerRequest =
     | ToggleMuteCommunityNotifications
     | UnblockCommunityUser
     | UndeleteChannelMessages
+    | UpdateChannel
     | ChangeCommunityRole;
 
 type ReferralLeaderboard = {
@@ -977,6 +979,7 @@ export type WorkerResponse =
     | Response<ToggleMuteCommunityNotificationsResponse>
     | Response<UnblockCommunityUserResponse>
     | Response<UndeleteChannelMessagesResponse>
+    | Response<UpdateChannelResponse>
     | Response<AddMembersToChannelResponse>;
 
 type Response<T> = {
@@ -1316,6 +1319,19 @@ type UndeleteChannelMessages = {
     threadRootMessageIndex: number | undefined;
 };
 
+type UpdateChannel = {
+    kind: "updateChannel";
+    communityId: string;
+    channelId: string;
+    name?: string;
+    description?: string;
+    rules?: AccessRules;
+    permissions?: Partial<GroupPermissions>;
+    avatar?: Uint8Array;
+    banner?: Uint8Array;
+    gate?: AccessGate;
+};
+
 type ChangeCommunityRole = {
     kind: "changeCommunityRole";
     communityId: string;
@@ -1599,4 +1615,6 @@ export type WorkerResult<T> = T extends PinMessage
     ? UnblockCommunityUserResponse
     : T extends UndeleteChannelMessages
     ? UndeleteChannelMessagesResponse
+    : T extends UpdateChannel
+    ? UpdateChannelResponse
     : never;
