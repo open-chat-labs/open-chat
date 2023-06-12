@@ -44,6 +44,9 @@ import type {
     SetMessageReminderResponse,
     ChatEvent,
     EventsSuccessResult,
+    Community,
+    CreateCommunityResponse,
+    AccessRules,
 } from "openchat-shared";
 import { CandidService } from "../candidService";
 import {
@@ -73,6 +76,8 @@ import {
     archiveChatResponse,
     deletedMessageResponse,
     setMessageReminderResponse,
+    createCommunityResponse,
+    apiCommunityPermissions,
 } from "./mappers";
 import { MAX_EVENTS, MAX_MESSAGES, MAX_MISSING } from "../../constants";
 import {
@@ -181,6 +186,33 @@ export class UserClient extends CandidService {
             () => this.userService.updates_v2(args),
             getUpdatesResponse,
             args
+        );
+    }
+
+    createCommunity(
+        community: Community,
+        rules: AccessRules,
+        defaultChannels: string[]
+    ): Promise<CreateCommunityResponse> {
+        return this.handleResponse(
+            this.userService.create_community({
+                is_public: community.public,
+                name: community.name,
+                description: community.description,
+                history_visible_to_new_joiners: community.historyVisible,
+                avatar: apiOptional((data) => {
+                    return {
+                        id: DataClient.newBlobId(),
+                        data,
+                        mime_type: "image/jpg",
+                    };
+                }, community.avatar?.blobData),
+                permissions: [apiCommunityPermissions(community.permissions)],
+                rules: apiGroupRules(rules),
+                gate: apiMaybeAccessGate(community.gate),
+                default_channels: defaultChannels,
+            }),
+            createCommunityResponse
         );
     }
 

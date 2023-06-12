@@ -104,10 +104,12 @@ import type {
     BlockCommunityUserResponse,
     ChangeChannelRoleResponse,
     ChangeCommunityRoleResponse,
+    Community,
     CommunityInviteCodeResponse,
     CommunityPermissions,
     CommunityRulesResponse,
     CreateChannelResponse,
+    CreateCommunityResponse,
     DeclineChannelInvitationResponse,
     DeleteChannelMessageResponse,
     DeleteChannelMessagesResponse,
@@ -284,6 +286,7 @@ export type WorkerRequest =
     | UndeleteChannelMessages
     | UpdateChannel
     | UpdateCommunity
+    | CreateCommunity
     | ChangeCommunityRole;
 
 type ReferralLeaderboard = {
@@ -984,6 +987,7 @@ export type WorkerResponse =
     | Response<UndeleteChannelMessagesResponse>
     | Response<UpdateChannelResponse>
     | Response<UpdateCommunityResponse>
+    | Response<CreateCommunityResponse>
     | Response<AddMembersToChannelResponse>;
 
 type Response<T> = {
@@ -1348,6 +1352,13 @@ type UpdateCommunity = {
     gate?: AccessGate;
 };
 
+type CreateCommunity = {
+    kind: "createCommunity";
+    community: Community;
+    rules: AccessRules;
+    defaultChannels: string[];
+};
+
 type ChangeCommunityRole = {
     kind: "changeCommunityRole";
     communityId: string;
@@ -1635,4 +1646,6 @@ export type WorkerResult<T> = T extends PinMessage
     ? UpdateChannelResponse
     : T extends UpdateCommunity
     ? UpdateCommunityResponse
+    : T extends CreateCommunity
+    ? CreateCommunityResponse
     : never;

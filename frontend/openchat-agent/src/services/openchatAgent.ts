@@ -231,7 +231,7 @@ export class OpenChatAgent extends EventTarget {
         return this._groupClients[chatId];
     }
 
-    private get userClient(): UserClient {
+    get userClient(): UserClient {
         if (this._userClient) {
             return this._userClient;
         }

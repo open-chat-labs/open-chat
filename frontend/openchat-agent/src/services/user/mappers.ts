@@ -42,6 +42,8 @@ import type {
     ApiDirectChatSummaryUpdates,
     ApiDeletedDirectMessageResponse,
     ApiSetMessageReminderResponse,
+    ApiCreateCommunityResponse,
+    ApiCommunityPermissions,
 } from "./candid/idl";
 import {
     EventsResponse,
@@ -84,6 +86,9 @@ import {
     DeletedDirectMessageResponse,
     UpdatedEvent,
     SetMessageReminderResponse,
+    CommonResponses,
+    CreateCommunityResponse,
+    CommunityPermissions,
 } from "openchat-shared";
 import { bytesToHexString, identity, optional, optionUpdate } from "../../utils/mapping";
 import {
@@ -100,6 +105,7 @@ import {
 import { ensureReplicaIsUpToDate } from "../common/replicaUpToDateChecker";
 import { ReplicaNotUpToDateError } from "../error";
 import type { Principal } from "@dfinity/principal";
+import { apiCommunityPermissionRole } from "../community/mappers";
 
 export function publicProfileResponse(candid: ApiPublicProfileResponse): PublicProfile {
     const profile = candid.Success;
@@ -471,6 +477,32 @@ export function sendMessageResponse(
         return { kind: "internal_error" };
     }
     throw new UnsupportedValueError("Unexpected ApiSendMessageResponse type received", candid);
+}
+
+export function createCommunityResponse(
+    candid: ApiCreateCommunityResponse
+): CreateCommunityResponse {
+    if ("Success" in candid) {
+        return { kind: "success", id: candid.Success.community_id.toString() };
+    } else {
+        console.warn("CreateCommunit failed with", candid);
+        return CommonResponses.failure;
+    }
+}
+
+export function apiCommunityPermissions(
+    permissions: CommunityPermissions
+): ApiCommunityPermissions {
+    return {
+        create_public_channel: apiCommunityPermissionRole(permissions.createPublicChannel),
+        block_users: apiCommunityPermissionRole(permissions.blockUsers),
+        change_permissions: apiCommunityPermissionRole(permissions.changePermissions),
+        update_details: apiCommunityPermissionRole(permissions.updateDetails),
+        remove_members: apiCommunityPermissionRole(permissions.removeMembers),
+        invite_users: apiCommunityPermissionRole(permissions.inviteUsers),
+        change_roles: apiCommunityPermissionRole(permissions.changeRoles),
+        create_private_channel: apiCommunityPermissionRole(permissions.createPrivateChannel),
+    };
 }
 
 export function createGroupResponse(candid: ApiCreateGroupResponse): CreateGroupResponse {
