@@ -86,6 +86,7 @@ import type {
     Message,
     PinChannelMessageResponse,
     RemoveChannelMemberResponse,
+    RemoveChannelReactionResponse,
     RemoveCommunityMemberResponse,
     User,
 } from "openchat-shared";
@@ -463,7 +464,7 @@ export class CommunityClient extends CandidService {
         messageId: bigint,
         reaction: string,
         threadRootMessageIndex: number | undefined
-    ): Promise<unknown> {
+    ): Promise<RemoveChannelReactionResponse> {
         return this.handleResponse(
             this.service.remove_reaction({
                 channel_id: BigInt(channelId),

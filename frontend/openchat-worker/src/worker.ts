@@ -1714,6 +1714,22 @@ self.addEventListener("message", (msg: MessageEvent<CorrelatedWorkerRequest>) =>
                     .catch(sendError(correlationId));
                 break;
 
+            case "removeChannelReaction":
+                agent
+                    .communityClient(payload.communityId)
+                    .removeReaction(
+                        payload.channelId,
+                        payload.messageId,
+                        payload.reaction,
+                        payload.threadRootMessageIndex
+                    )
+                    .then((response) =>
+                        sendResponse(correlationId, {
+                            response,
+                        })
+                    )
+                    .catch(sendError(correlationId));
+                break;
             default:
                 console.debug("WORKER: unknown message kind received: ", kind);
         }
