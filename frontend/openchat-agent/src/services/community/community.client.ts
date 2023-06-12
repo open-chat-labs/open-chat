@@ -81,6 +81,7 @@ import type {
     JoinChannelResponse,
     LeaveChannelResponse,
     MakeChannelPrivateResponse,
+    MakeCommunityPrivateResponse,
     MemberRole,
     Message,
     User,
@@ -393,7 +394,7 @@ export class CommunityClient extends CandidService {
         );
     }
 
-    makePrivate(): Promise<unknown> {
+    makePrivate(): Promise<MakeCommunityPrivateResponse> {
         return this.handleResponse(this.service.make_private({}), makeCommunityPrivateResponse);
     }
 
